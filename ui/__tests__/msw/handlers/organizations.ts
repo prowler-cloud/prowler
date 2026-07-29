@@ -155,6 +155,30 @@ const providerResource = (provider: FixtureProvider) => ({
   },
 });
 
+/**
+ * Serves a collection the way the paginated API does: honours
+ * `page[number]`/`page[size]` and reports `meta.pagination.pages`, so a caller
+ * that stops after the first page visibly loses the rest.
+ */
+const paginatedCollection = <T>(items: T[], request: Request) => {
+  const params = new URL(request.url).searchParams;
+  const size = Number(params.get("page[size]")) || items.length || 1;
+  const page = Number(params.get("page[number]")) || 1;
+  const start = (page - 1) * size;
+
+  return {
+    data: items.slice(start, start + size),
+    meta: {
+      version: "v1",
+      pagination: {
+        page,
+        pages: Math.max(1, Math.ceil(items.length / size)),
+        count: items.length,
+      },
+    },
+  };
+};
+
 const applyResultResponse = (fx: OrgFixture) => ({
   data: {
     id: "apply-result-1",
@@ -254,11 +278,11 @@ export const handlersForOrganizations = (
       const url = new URL(request.url);
       const externalId = url.searchParams.get("filter[external_id]");
       const orgType = url.searchParams.get("filter[org_type]");
-      const data = organizations
+      const matches = organizations
         .filter((o) => (externalId ? o.externalId === externalId : true))
         .filter((o) => (orgType ? o.orgType === orgType : true))
         .map(orgResource);
-      return HttpResponse.json({ data, meta: { version: "v1" } });
+      return HttpResponse.json(paginatedCollection(matches, request));
     }),
 
     http.post(`${API}/organizations`, async ({ request }) => {
@@ -366,15 +390,17 @@ export const handlersForOrganizations = (
     ),
 
     // --- canonical organization-nodes ------------------------------------
-    http.get(`${API}/organization-nodes`, () =>
+    http.get(`${API}/organization-nodes`, ({ request }) =>
       hierarchyUnavailable
         ? HttpResponse.json(errorBody("Hierarchy unavailable", 500), {
             status: 500,
           })
-        : HttpResponse.json({
-            data: fx.nodes.map(organizationNodeResource),
-            meta: { version: "v1" },
-          }),
+        : HttpResponse.json(
+            paginatedCollection(
+              fx.nodes.map(organizationNodeResource),
+              request,
+            ),
+          ),
     ),
 
     http.delete<{ id: string }>(`${API}/organization-nodes/:id`, ({ params }) =>

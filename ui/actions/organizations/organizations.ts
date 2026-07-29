@@ -46,20 +46,52 @@ function hasActionError(result: unknown): result is { error: unknown } {
   );
 }
 
+const HIERARCHY_PAGE_SIZE = 100;
+/** Runaway guard, not an expected path: 50 × 100 = 5000 resources. */
+const HIERARCHY_MAX_PAGES = 50;
+
+/**
+ * Fetches a whole collection, following JSON:API pagination — the hierarchy
+ * needs every organization and node to group providers, so stopping at the
+ * first page would silently drop groups. Same traversal the providers page
+ * already does for providers and provider groups (`getAllProviders`).
+ *
+ * Any incompleteness (a failed page, or the guard) resolves to the degraded
+ * result: callers surface "grouping unavailable" and list providers flat, which
+ * is truthful, where a partial hierarchy would look complete.
+ */
 async function fetchOptionalCollection<T>(
   url: URL,
 ): Promise<CollectionFetch<T>> {
   const headers = await getAuthHeaders({ contentType: false });
+  const collected: T[] = [];
 
   try {
-    const response = await fetch(url.toString(), { headers });
+    for (let page = 1; page <= HIERARCHY_MAX_PAGES; page += 1) {
+      const pageUrl = new URL(url);
+      pageUrl.searchParams.set("page[number]", String(page));
+      pageUrl.searchParams.set("page[size]", String(HIERARCHY_PAGE_SIZE));
 
-    if (!response.ok) {
-      return { data: [], error: true };
+      const response = await fetch(pageUrl.toString(), { headers });
+
+      if (!response.ok) {
+        return { data: [], error: true };
+      }
+
+      const body = (await handleApiResponse(response)) as {
+        data?: T[];
+        meta?: { pagination?: { pages?: number } };
+      };
+      collected.push(...(body.data ?? []));
+
+      // A missing `pages` counts as "this was the only page"; reading it as
+      // "maybe more" would walk to the guard on every single-page response.
+      if (page >= (body.meta?.pagination?.pages ?? 1)) {
+        return { data: collected };
+      }
     }
 
-    const { data } = (await handleApiResponse(response)) as { data?: T[] };
-    return { data: data ?? [] };
+    return { data: [], error: true };
   } catch {
     return { data: [], error: true };
   }
@@ -176,37 +208,27 @@ export const listOrganizationsByExternalId = async (
 };
 
 /**
- * Lists all organizations for the current tenant, across organization types.
- *
- * Capped at the first page of 100 and does NOT follow JSON:API pagination: a
- * tenant with more organizations loses the surplus from the providers-page
- * grouping (their providers still render, ungrouped, as orphan rows). Accepted
- * for the initial release and tracked as a follow-up that blocks GCP production
- * enablement — see the hierarchy-pagination risk in the change's design notes.
+ * Lists every organization for the current tenant, across organization types.
  * GET /api/v1/organizations
  */
 export const listOrganizationsSafe = async (): Promise<
   CollectionFetch<OrganizationResource>
-> => {
-  const url = new URL(`${apiBaseUrl}/organizations`);
-  url.searchParams.set("page[size]", "100");
-
-  return fetchOptionalCollection<OrganizationResource>(url);
-};
+> =>
+  fetchOptionalCollection<OrganizationResource>(
+    new URL(`${apiBaseUrl}/organizations`),
+  );
 
 /**
- * Lists organization nodes. Same first-page-only cap as
- * `listOrganizationsSafe`.
+ * Lists every organization node. A large AWS organization can hold hundreds of
+ * OUs, so this is the collection most likely to span pages.
  * GET /api/v1/organization-nodes
  */
 export const listOrganizationNodesSafe = async (): Promise<
   CollectionFetch<OrganizationNodeResource>
-> => {
-  const url = new URL(`${apiBaseUrl}/organization-nodes`);
-  url.searchParams.set("page[size]", "100");
-
-  return fetchOptionalCollection<OrganizationNodeResource>(url);
-};
+> =>
+  fetchOptionalCollection<OrganizationNodeResource>(
+    new URL(`${apiBaseUrl}/organization-nodes`),
+  );
 
 /**
  * Creates an organization secret for the given secret payload.

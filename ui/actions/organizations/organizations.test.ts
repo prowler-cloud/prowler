@@ -156,7 +156,7 @@ describe("organizations actions", () => {
     expect(result).toEqual({ data: [] });
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(fetchMock.mock.calls[0]?.[0]).toBe(
-      "https://api.example.com/api/v1/organizations?page%5Bsize%5D=100",
+      "https://api.example.com/api/v1/organizations?page%5Bnumber%5D=1&page%5Bsize%5D=100",
     );
   });
 
@@ -177,8 +177,71 @@ describe("organizations actions", () => {
     expect(result).toEqual({ data: [] });
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(fetchMock.mock.calls[0]?.[0]).toBe(
-      "https://api.example.com/api/v1/organization-nodes?page%5Bsize%5D=100",
+      "https://api.example.com/api/v1/organization-nodes?page%5Bnumber%5D=1&page%5Bsize%5D=100",
     );
+  });
+
+  it("follows JSON:API pagination so hierarchy groups are never truncated", async () => {
+    // Given a collection spanning three pages.
+    const okResponse = () =>
+      new Response(JSON.stringify({}), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    fetchMock.mockResolvedValue(okResponse());
+    handleApiResponseMock
+      .mockResolvedValueOnce({
+        data: [{ id: "node-1" }],
+        meta: { pagination: { page: 1, pages: 3, count: 3 } },
+      })
+      .mockResolvedValueOnce({
+        data: [{ id: "node-2" }],
+        meta: { pagination: { page: 2, pages: 3, count: 3 } },
+      })
+      .mockResolvedValueOnce({
+        data: [{ id: "node-3" }],
+        meta: { pagination: { page: 3, pages: 3, count: 3 } },
+      });
+
+    // When
+    const result = await listOrganizationNodesSafe();
+
+    // Then every page is requested once and the pages are merged in order.
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(
+      fetchMock.mock.calls.map((call) =>
+        new URL(call[0] as string).searchParams.get("page[number]"),
+      ),
+    ).toEqual(["1", "2", "3"]);
+    expect(result).toEqual({
+      data: [{ id: "node-1" }, { id: "node-2" }, { id: "node-3" }],
+    });
+  });
+
+  it("degrades instead of returning a partial hierarchy when a later page fails", async () => {
+    // Given a first page announcing more pages, then a failure.
+    fetchMock
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({}), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response("Internal Server Error", { status: 500 }),
+      );
+    handleApiResponseMock.mockResolvedValueOnce({
+      data: [{ id: "node-1" }],
+      meta: { pagination: { page: 1, pages: 2, count: 2 } },
+    });
+
+    // When
+    const result = await listOrganizationNodesSafe();
+
+    // Then the half-fetched hierarchy is dropped: the page shows its degraded
+    // notice with a flat provider list instead of partial grouping.
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(result).toEqual({ data: [], error: true });
   });
 
   it("flags an empty organizations payload as degraded when the safe request fails", async () => {
