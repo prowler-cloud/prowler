@@ -444,6 +444,11 @@ export const handlersForOrganizations = (fx: OrgFixture) => {
       HttpResponse.json({ data: [], meta: collectionMeta(0) }),
     ),
 
+    // Cloud-only scan configurations, fetched alongside the view data.
+    http.get(`${API}/scan-configurations`, () =>
+      HttpResponse.json({ data: [], meta: collectionMeta(0) }),
+    ),
+
     // --- providers (uid resolution) + connection testing -----------------
     http.get<{ id: string }>(`${API}/providers/:id`, ({ params }) => {
       const provider = fx.providers.find((p) => p.id === params.id);

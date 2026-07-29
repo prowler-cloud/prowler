@@ -17,15 +17,13 @@ import { handlersForOrganizations } from "@/__tests__/msw/handlers/organizations
 import type { OrgFixture } from "@/__tests__/msw/handlers/organizations.fixtures";
 import { worker } from "@/__tests__/msw/worker";
 import { render } from "@/__tests__/render-browser";
-import { ProvidersAccountsView } from "@/components/providers/providers-accounts-view";
 import {
   ADD_PROVIDER_SEARCH_PARAM,
   ADD_PROVIDER_SEARCH_VALUE,
 } from "@/lib/providers-navigation";
-import { isCloud } from "@/lib/shared/env";
 import type { SearchParamsProps } from "@/types";
 
-import { loadProvidersAccountsViewData } from "./providers-page.utils";
+import { ProvidersTabContent } from "./providers-tab-content";
 
 const INITIAL_SCAN_LABEL = "Launch an initial scan now for immediate findings";
 
@@ -39,7 +37,7 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
     return this.countRequests("POST", "/apply");
   }
 
-  get connectionCallCount(): number {
+  private get connectionCallCount(): number {
     return this.countRequests("POST", "/connection");
   }
 
@@ -90,38 +88,25 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
   }
 
   /**
-   * Mount the page the way production assembles it: the real page-data loader
-   * fetches providers, groups, schedules and the organization hierarchy over
-   * MSW, and its output is spread into the view exactly as `providers/page.tsx`
-   * does. So the rendered rows are the ones the production loader produces —
-   * and a loader that stops requesting the hierarchy fails these tests instead
-   * of being papered over by fixture data. The shared `render` wraps it in the
-   * app shell (session, theme, Toaster) the production layout provides.
+   * Mount production's own providers-tab content, the component
+   * `providers/page.tsx` renders inside its Suspense boundary. It owns the whole
+   * data path — deriving `isCloud()`, loading the view data (providers, groups,
+   * schedules, organization hierarchy) and the scan configurations, then wiring
+   * them into the view — so nothing here duplicates it and drift can't hide in
+   * the harness. Requests go through MSW; the shared `render` supplies the app
+   * shell (session, theme, Toaster) the production layout provides.
+   *
+   * It's an async server component: React's client renderer can't render async
+   * components, so it is called and its returned element is what gets rendered.
+   * (`page.tsx`'s default export can't be used at all — it returns Suspense
+   * wrapping async children, which only a server renderer resolves.)
    */
   async mount({ openWizard = true }: MountOptions = {}): Promise<void> {
     this.seedWizardUrl(openWizard);
     worker.use(...handlersForOrganizations(this.fixture));
     this.trackRequests(worker);
 
-    // Single source of truth: the runtime-config island (seeded by the
-    // `seedRuntimeConfig` fixture) drives both `isCloud()` deep in the tree and
-    // the top-level prop, exactly as `providers/page.tsx` derives it in prod.
-    const cloud = isCloud();
-    const viewData = await loadProvidersAccountsViewData({
-      isCloud: cloud,
-      searchParams: this.searchParams(),
-    });
-
-    render(
-      <ProvidersAccountsView
-        isCloud={cloud}
-        filters={viewData.filters}
-        providers={viewData.providers}
-        providerGroups={viewData.providerGroups}
-        metadata={viewData.metadata}
-        rows={viewData.rows}
-      />,
-    );
+    render(await ProvidersTabContent({ searchParams: this.searchParams() }));
   }
 
   // --- Wizard: connect step ----------------------------------------------
