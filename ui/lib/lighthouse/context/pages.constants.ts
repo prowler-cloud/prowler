@@ -53,13 +53,14 @@ export const LIGHTHOUSE_PAGE_DEFINITION_INPUTS = [
     allowedSearchParams: PROVIDER_SCOPE_PARAMS,
     suggestions: [
       {
-        label: "Prioritize this overview",
-        prompt: "What should I prioritize from this overview?",
+        label: "Prioritize cross-surface risk",
+        prompt:
+          "Across my providers, services, and frameworks, which risk should I prioritize first, and why?",
       },
       {
         label: "Improve my ThreatScore",
         prompt:
-          "According to the Prowler ThreatScore, what do I need to improve, and why?",
+          "According to the Prowler ThreatScore, what do I need to improve first based on its trend and weakest section, and why?",
       },
       {
         label: "Plan today's security work",
@@ -316,12 +317,109 @@ export const LIGHTHOUSE_PAGE_DEFINITION_INPUTS = [
       },
     ],
   },
+  {
+    id: LIGHTHOUSE_PAGE_ID.ALERTS,
+    label: "Alerts",
+    match: (pathname) => pathname === "/alerts",
+    allowedSearchParams: [
+      "filter[search]",
+      "sort",
+      "filter[enabled]",
+      "filter[trigger]",
+    ],
+    suggestions: [
+      {
+        label: "Tune alert rules",
+        prompt: "Which alert rules should I enable or tune?",
+      },
+      {
+        label: "Find alerting gaps",
+        prompt: "Summarize my alerting coverage and its gaps.",
+      },
+      {
+        label: "Review noisy rules",
+        prompt: "Could any alert rule be too noisy or too broad?",
+      },
+      {
+        label: "Design critical alerts",
+        prompt: "Design an alerting strategy for critical findings.",
+      },
+    ],
+  },
+  {
+    id: LIGHTHOUSE_PAGE_ID.SERVICES,
+    label: "Services",
+    match: (pathname) => pathname === "/services",
+    allowedSearchParams: [...PROVIDER_SCOPE_PARAMS, ...COMMON_LIST_PARAMS],
+    suggestions: [
+      {
+        label: "Prioritize risky services",
+        prompt: "Which services carry the most failing findings?",
+      },
+      {
+        label: "Compare service risk",
+        prompt: "Compare risk across my cloud services.",
+      },
+      {
+        label: "Choose services to harden",
+        prompt: "Which services should I harden first?",
+      },
+      {
+        label: "Review service coverage",
+        prompt: "Summarize service coverage across providers.",
+      },
+    ],
+  },
+  {
+    id: LIGHTHOUSE_PAGE_ID.WORKLOADS,
+    label: "Workloads",
+    match: (pathname) => pathname === "/workloads",
+    allowedSearchParams: [...PROVIDER_SCOPE_PARAMS],
+    suggestions: [
+      {
+        label: "Find exposed workloads",
+        prompt: "Which workloads look most exposed?",
+      },
+      {
+        label: "Group workloads for triage",
+        prompt: "How should I group workloads for triage?",
+      },
+      {
+        label: "Prioritize workloads",
+        prompt: "Which workloads need attention first?",
+      },
+      {
+        label: "Build workload hardening plan",
+        prompt: "Build a workload hardening plan.",
+      },
+    ],
+  },
+  {
+    id: LIGHTHOUSE_PAGE_ID.MUTELIST,
+    label: "Mute list",
+    match: (pathname) => pathname === "/mutelist",
+    allowedSearchParams: [...COMMON_LIST_PARAMS, "tab"],
+    suggestions: [
+      {
+        label: "Explain active mute rules",
+        prompt: "Which mute rules are active and why?",
+      },
+      {
+        label: "Find hidden findings",
+        prompt: "Could a mute rule be hiding important findings?",
+      },
+      {
+        label: "Review risky exclusions",
+        prompt: "Review my mute rules for risky exclusions.",
+      },
+      {
+        label: "Structure mute rules safely",
+        prompt: "How should I structure mute rules safely?",
+      },
+    ],
+  },
 ] as const satisfies readonly LighthousePageDefinitionInput[];
 
 export const LIGHTHOUSE_KNOWN_ROUTE_LABELS = {
-  alerts: "Alerts",
   integrations: "Integrations",
-  mutelist: "Mute list",
-  services: "Services",
-  workloads: "Workloads",
 } as const;

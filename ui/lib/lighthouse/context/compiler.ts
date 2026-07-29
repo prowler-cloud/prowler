@@ -13,7 +13,7 @@ import {
 } from "./schema";
 import { getApiLighthouseContextByteLength } from "./transport";
 
-const LIGHTHOUSE_CONTEXT_MAX_BYTES = 2 * 1024;
+const LIGHTHOUSE_CONTEXT_MAX_BYTES = 4 * 1024;
 
 export function prepareLighthouseContext(
   value: unknown,

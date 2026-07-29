@@ -19,6 +19,10 @@ describe("resolveLighthousePage", () => {
     ["/attack-paths/query-builder", "attack-paths"],
     ["/scans", "scans"],
     ["/providers", "providers"],
+    ["/alerts", "alerts"],
+    ["/services", "services"],
+    ["/workloads", "workloads"],
+    ["/mutelist", "mutelist"],
   ])("should resolve %s as %s", (pathname, expectedPageId) => {
     // Given / When
     const page = resolveLighthousePage(pathname);
@@ -30,11 +34,11 @@ describe("resolveLighthousePage", () => {
 
   it("should create a labeled fallback for other application pages", () => {
     // Given / When
-    const page = resolveLighthousePage("/alerts/");
+    const page = resolveLighthousePage("/integrations/");
 
     // Then
     expect(page.id).toBe("other");
-    expect(page.label).toBe("Alerts");
+    expect(page.label).toBe("Integrations");
     expectValidSuggestions(page.suggestions);
   });
 
@@ -136,6 +140,24 @@ describe("buildLighthousePageContext", () => {
     expect(context.filters).toEqual({
       scanId: ["scan-1"],
       tab: ["completed"],
+    });
+  });
+
+  it("should preserve the filter names emitted by the alerts page", () => {
+    const context = buildLighthousePageContext(
+      "/alerts",
+      new URLSearchParams({
+        "filter[enabled]": "true",
+        "filter[trigger]": "new_failing_findings",
+        "filter[search]": "s3",
+        edit: "alert-1",
+      }),
+    );
+
+    expect(context.filters).toEqual({
+      enabled: ["true"],
+      search: ["s3"],
+      trigger: ["new_failing_findings"],
     });
   });
 
