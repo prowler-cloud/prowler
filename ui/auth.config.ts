@@ -121,24 +121,55 @@ const applyDecodedClaims = (
   }
 };
 
-const refreshTokenPromises = new Map<string, Promise<AuthToken>>();
+interface RotatedCredentials {
+  accessToken: string;
+  refreshToken: string;
+}
 
-const refreshAccessToken = async (token: AuthToken): Promise<AuthToken> => {
-  const refreshToken = token.refreshToken;
+type RefreshOutcome =
+  | { status: "rotated"; credentials: RotatedCredentials }
+  | { status: "failed" };
 
-  if (!refreshToken) {
-    return {
-      ...token,
-      error: "MissingRefreshToken",
-    };
+/**
+ * The API rotates refresh tokens and blacklists the previous one
+ * (ROTATE_REFRESH_TOKENS + BLACKLIST_AFTER_ROTATION), while NextAuth can only
+ * persist the resulting cookie where Set-Cookie is allowed — the proxy, Route
+ * Handlers and Server Actions, never a Server Component render. A refresh
+ * performed outside those contexts therefore consumes the stored refresh token
+ * without saving its replacement, and the next request replays a blacklisted
+ * token and looks like an expired session.
+ *
+ * Keeping the rotated pair keyed by the token that produced it lets any request
+ * still carrying the stale cookie reuse the replacement instead. The cache is
+ * per-process, so it narrows the window rather than closing it across replicas.
+ */
+const ROTATED_CREDENTIALS_TTL_MS = 60 * 1000;
+
+interface RefreshCacheEntry {
+  outcome: Promise<RefreshOutcome>;
+  expiresAt: number;
+}
+
+const refreshOutcomes = new Map<string, RefreshCacheEntry>();
+
+const readPendingOutcome = (
+  refreshToken: string,
+): Promise<RefreshOutcome> | undefined => {
+  const entry = refreshOutcomes.get(refreshToken);
+
+  if (!entry) return undefined;
+
+  if (Date.now() >= entry.expiresAt) {
+    refreshOutcomes.delete(refreshToken);
+    return undefined;
   }
 
-  const existingPromise = refreshTokenPromises.get(refreshToken);
+  return entry.outcome;
+};
 
-  if (existingPromise) {
-    return existingPromise;
-  }
-
+const requestRotatedCredentials = async (
+  refreshToken: string,
+): Promise<RefreshOutcome> => {
   const url = new URL(`${apiBaseUrl}/tokens/refresh`);
 
   const bodyData = {
@@ -150,75 +181,112 @@ const refreshAccessToken = async (token: AuthToken): Promise<AuthToken> => {
     },
   };
 
-  const refreshPromise = (async () => {
-    try {
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/vnd.api+json",
-          Accept: "application/vnd.api+json",
-        },
-        body: JSON.stringify(bodyData),
-      });
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/vnd.api+json",
+        Accept: "application/vnd.api+json",
+      },
+      body: JSON.stringify(bodyData),
+    });
 
-      const payload = await response.json().catch(() => undefined);
+    const payload = await response.json().catch(() => undefined);
 
-      if (!response.ok) {
-        const detail = payload?.errors?.[0]?.detail;
-        // eslint-disable-next-line no-console
-        console.warn(
-          "Failed to refresh access token:",
-          detail || `HTTP error ${response.status}`,
-        );
-        return {
-          ...token,
-          error: "RefreshAccessTokenError",
-        };
-      }
+    if (!response.ok) {
+      const detail = payload?.errors?.[0]?.detail;
+      // eslint-disable-next-line no-console
+      console.warn(
+        "Failed to refresh access token:",
+        detail || `HTTP error ${response.status}`,
+      );
+      return { status: "failed" };
+    }
 
-      const newAccessToken = payload?.data?.attributes?.access as
-        | string
-        | undefined;
-      const nextRefreshToken =
-        (payload?.data?.attributes?.refresh as string | undefined) ??
-        refreshToken;
+    const newAccessToken = payload?.data?.attributes?.access as
+      | string
+      | undefined;
 
-      if (!newAccessToken) {
-        // eslint-disable-next-line no-console
-        console.warn("Missing access token in refresh response");
-        return {
-          ...token,
-          error: "RefreshAccessTokenError",
-        };
-      }
+    if (!newAccessToken) {
+      // eslint-disable-next-line no-console
+      console.warn("Missing access token in refresh response");
+      return { status: "failed" };
+    }
 
-      const nextToken: AuthToken = {
-        ...token,
+    const nextRefreshToken =
+      (payload?.data?.attributes?.refresh as string | undefined) ??
+      refreshToken;
+
+    return {
+      status: "rotated",
+      credentials: {
         accessToken: newAccessToken,
         refreshToken: nextRefreshToken,
-        error: undefined,
-      };
-
-      applyDecodedClaims(nextToken, newAccessToken, "refreshed access token");
-
-      return nextToken;
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.warn("Error refreshing access token:", error);
-      return {
-        ...token,
-        error: "RefreshAccessTokenError",
-      };
-    }
-  })();
-
-  refreshTokenPromises.set(refreshToken, refreshPromise);
-
-  try {
-    return await refreshPromise;
-  } finally {
-    refreshTokenPromises.delete(refreshToken);
+      },
+    };
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.warn("Error refreshing access token:", error);
+    return { status: "failed" };
   }
+};
+
+const refreshAccessToken = async (token: AuthToken): Promise<AuthToken> => {
+  const refreshToken = token.refreshToken;
+
+  if (!refreshToken) {
+    return {
+      ...token,
+      error: "MissingRefreshToken",
+    };
+  }
+
+  let pendingOutcome = readPendingOutcome(refreshToken);
+
+  if (!pendingOutcome) {
+    pendingOutcome = requestRotatedCredentials(refreshToken);
+    const entry: RefreshCacheEntry = {
+      outcome: pendingOutcome,
+      // In-flight requests must always dedupe; the real expiry is set once the
+      // rotated pair is known.
+      expiresAt: Number.POSITIVE_INFINITY,
+    };
+    refreshOutcomes.set(refreshToken, entry);
+
+    void pendingOutcome.then((outcome) => {
+      if (outcome.status === "failed") {
+        // A failure must not be cached: the next attempt has to reach the API.
+        refreshOutcomes.delete(refreshToken);
+        return;
+      }
+
+      entry.expiresAt = Date.now() + ROTATED_CREDENTIALS_TTL_MS;
+    });
+  }
+
+  const outcome = await pendingOutcome;
+
+  if (outcome.status === "failed") {
+    return {
+      ...token,
+      error: "RefreshAccessTokenError",
+    };
+  }
+
+  const nextToken: AuthToken = {
+    ...token,
+    accessToken: outcome.credentials.accessToken,
+    refreshToken: outcome.credentials.refreshToken,
+    error: undefined,
+  };
+
+  applyDecodedClaims(
+    nextToken,
+    outcome.credentials.accessToken,
+    "refreshed access token",
+  );
+
+  return nextToken;
 };
 
 export const authConfig = {
