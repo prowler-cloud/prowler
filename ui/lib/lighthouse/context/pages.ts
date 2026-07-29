@@ -54,10 +54,10 @@ const COMMON_LIST_PARAMS = [
 ] as const;
 
 const GLOBAL_SUGGESTIONS = [
-  "Summarize my most critical open findings and what to fix first.",
-  "What are my highest-impact compliance gaps right now?",
-  "Find risky attack paths and explain the exposure.",
-  "How can I improve my cloud security posture today?",
+  "Pull my findings, compliance gaps, and attack paths together into one picture. What's my single biggest security risk right now, and how confident are you?",
+  "Which of my mute rules are hiding something that now matters — rules written for a resource that changed, or an exception nobody has revisited?",
+  "Look at my most serious findings from the last month. Which of them produced no alert from Prowler, and what rule would have caught them?",
+  "Turn my top security work into Jira tickets: group related findings into one ticket per root cause, write each so an engineer can act on it without coming back to ask me questions, and tell me which project each should go to.",
 ] as const satisfies LighthousePageSuggestions;
 
 const PAGE_DEFINITIONS: readonly LighthousePageDefinition[] = [
@@ -68,9 +68,9 @@ const PAGE_DEFINITIONS: readonly LighthousePageDefinition[] = [
     allowedSearchParams: PROVIDER_SCOPE_PARAMS,
     suggestions: [
       "What should I prioritize from this overview?",
-      "Explain the visible threat score and its main drivers.",
-      "Which accounts or services appear to carry the most risk?",
+      "According to the Prowler ThreatScore, what do I need to improve, and why?",
       "Build a practical security plan for today.",
+      "What's missing from this dashboard that should worry me — providers not onboarded, regions or services with no scan coverage, checks that never run?",
     ],
   }),
   createPageDefinition({
@@ -97,9 +97,9 @@ const PAGE_DEFINITIONS: readonly LighthousePageDefinition[] = [
       "filter[muted]",
     ],
     suggestions: [
-      "Which visible critical findings need attention first?",
-      "Prioritize remediation for the current findings.",
-      "Identify likely root causes across these findings.",
+      "Give me the actual remediation for the top failing check here: the commands and IaC changes (of possible and Terraform preferred), the blast radius of applying them, and what to verify afterwards",
+      "Severity here is the check's label, not my actual risk. Re-rank these by real exposure, whether the affected resource is internet-facing, production, or holds data; and give me the true top five.",
+      "Group these by the underlying change that fixes them, the same IAM policy, module, or baseline; not by check. Which single change clears the most findings?",
       "Create a remediation plan for this findings view.",
     ],
   }),
@@ -116,9 +116,9 @@ const PAGE_DEFINITIONS: readonly LighthousePageDefinition[] = [
       "filter[groups__in]",
     ],
     suggestions: [
-      "Which visible resources carry the most risk?",
-      "Find likely exposures among these resources.",
-      "Identify security patterns across the current resources.",
+      "What's the first thing among this resources you'd target in an attack, what would it give you, and how far could you pivot from there?",
+      "What does this inventory tell you about how this environment was built, and where does that design create security debt?",
+      "Turn this inventory into a per-team action list. Infer likely owners from tags and naming, and give each team their top three fixes.",
       "Recommend a hardening plan for this resource scope.",
     ],
   }),
@@ -140,8 +140,8 @@ const PAGE_DEFINITIONS: readonly LighthousePageDefinition[] = [
     ],
     suggestions: [
       "Which failed requirements need attention first?",
-      "Prioritize remediation for this compliance framework.",
-      "Which sections are weakest and why?",
+      "Which requirements here can't be satisfied by scanning at all? Tell me exactly what evidence to collect, who owns it, and what good evidence looks like.",
+      "Play the auditor for my weakest section. What will you ask me, what evidence will you want to see, and where am I going to struggle?",
       "Create a plan to improve this framework score.",
     ],
   }),
@@ -165,7 +165,7 @@ const PAGE_DEFINITIONS: readonly LighthousePageDefinition[] = [
       "Summarize the most important compliance gaps.",
       "Which frameworks should I prioritize?",
       "Explain the visible compliance score.",
-      "Which controls need remediation first?",
+      "How much work is it to take my weakest framework to passing? Break each provider account it into a few sprints with what lands first",
     ],
   }),
   createPageDefinition({
@@ -195,9 +195,9 @@ const PAGE_DEFINITIONS: readonly LighthousePageDefinition[] = [
     ],
     suggestions: [
       "Summarize recent scan activity.",
-      "Which visible scans look problematic?",
-      "Explain the most important scan failures.",
-      "What should I investigate next from this scans view?",
+      "I'm shipping to production. Scan now and tell me if anything regressed versus the last run",
+      "Which providers have never been scanned or haven't been scanned recently? Rescan the ones that matter.",
+      "Which of my providers have no recurring scan? Tell me which ones should, and set up scheduled scans and with what frequency.",
     ],
   }),
   createPageDefinition({
@@ -213,9 +213,9 @@ const PAGE_DEFINITIONS: readonly LighthousePageDefinition[] = [
     ],
     suggestions: [
       "Which visible providers need attention?",
-      "Assess security coverage across these providers.",
-      "Which providers may have stale scans?",
-      "What should I improve in provider onboarding?",
+      "What parts of my cloud estate aren't onboarded? Provider accounts that exist but Prowler isn't scanning.",
+      "Group this provider accounts by what they're actually for, based on names, tags, and what's running in them. Which of those groupings should exist as provider groups in Prowler but don't?",
+      "Which accounts were added recently but never fully configured — no schedule, no groups, no successful scan?",
     ],
   }),
 ];
