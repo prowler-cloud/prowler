@@ -17,7 +17,11 @@ vi.mock("next/navigation", () => ({
   redirect: redirectMock,
 }));
 
-import { getRequiredAuthHeaders, redirectToSignIn } from "./server-auth";
+import {
+  getAuthHeadersIfAvailable,
+  getRequiredAuthHeaders,
+  redirectToSignIn,
+} from "./server-auth";
 
 describe("server authentication", () => {
   beforeEach(() => {
@@ -51,6 +55,31 @@ describe("server authentication", () => {
     expect(redirectMock).toHaveBeenCalledOnce();
   });
 
+  it("returns no headers for a terminal session without redirecting", () => {
+    // Given
+    const accessToken = "stale-access-token";
+
+    // When
+    const result = getAuthHeadersIfAvailable(
+      accessToken,
+      undefined,
+      "RefreshAccessTokenError",
+    );
+
+    // Then
+    expect(result).toBeNull();
+    expect(redirectMock).not.toHaveBeenCalled();
+  });
+
+  it("returns no headers for a missing session without redirecting", () => {
+    // When
+    const result = getAuthHeadersIfAvailable(undefined);
+
+    // Then
+    expect(result).toBeNull();
+    expect(redirectMock).not.toHaveBeenCalled();
+  });
+
   it("creates bearer headers only when an access token is present", async () => {
     // Given
     const accessToken = "access-token";
@@ -73,6 +102,16 @@ describe("server authentication", () => {
     // When / Then
     await expect(redirectToSignIn()).rejects.toThrow(
       "NEXT_REDIRECT:/sign-in?callbackUrl=%2Fproviders%3Fpage%3D2",
+    );
+  });
+
+  it("falls back to the root callback when the current path is unavailable", async () => {
+    // Given
+    headersMock.mockResolvedValue(new Headers());
+
+    // When / Then
+    await expect(redirectToSignIn()).rejects.toThrow(
+      "NEXT_REDIRECT:/sign-in?callbackUrl=%2F",
     );
   });
 });

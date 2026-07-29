@@ -17,13 +17,13 @@ export const redirectToSignIn = async (): Promise<never> => {
 
 type SessionError = "RefreshAccessTokenError" | (string & {});
 
-export const getRequiredAuthHeaders = async (
+export const getAuthHeadersIfAvailable = (
   accessToken: string | undefined,
   options?: { contentType?: boolean },
   sessionError?: SessionError,
 ) => {
   if (!accessToken || sessionError === "RefreshAccessTokenError") {
-    return redirectToSignIn();
+    return null;
   }
 
   const authHeaders: Record<string, string> = {
@@ -33,6 +33,23 @@ export const getRequiredAuthHeaders = async (
 
   if (options?.contentType) {
     authHeaders["Content-Type"] = "application/vnd.api+json";
+  }
+
+  return authHeaders;
+};
+
+export const getRequiredAuthHeaders = async (
+  accessToken: string | undefined,
+  options?: { contentType?: boolean },
+  sessionError?: SessionError,
+) => {
+  const authHeaders = getAuthHeadersIfAvailable(
+    accessToken,
+    options,
+    sessionError,
+  );
+  if (!authHeaders) {
+    return redirectToSignIn();
   }
 
   return authHeaders;

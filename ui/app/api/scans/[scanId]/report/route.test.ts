@@ -2,8 +2,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { GET } from "./route";
 
-const { getAuthHeadersMock } = vi.hoisted(() => ({
-  getAuthHeadersMock: vi.fn(),
+const { getRouteAuthHeadersMock } = vi.hoisted(() => ({
+  getRouteAuthHeadersMock: vi.fn(),
 }));
 
 vi.mock("@/lib", () => ({
@@ -11,13 +11,31 @@ vi.mock("@/lib", () => ({
 }));
 
 vi.mock("@/lib/auth-headers", () => ({
-  getAuthHeaders: getAuthHeadersMock,
+  getRouteAuthHeaders: getRouteAuthHeadersMock,
 }));
 
 describe("GET /api/scans/[scanId]/report", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
     vi.clearAllMocks();
+  });
+
+  it("returns 401 without fetching upstream when authentication is invalid", async () => {
+    // Given
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    getRouteAuthHeadersMock.mockResolvedValue(null);
+
+    // When
+    const response = await GET(new Request("http://localhost/api"), {
+      params: Promise.resolve({ scanId: "scan-123" }),
+    });
+
+    // Then
+    expect(response.status).toBe(401);
+    await expect(response.json()).resolves.toEqual({ error: "Unauthorized." });
+    expect(response.headers.get("location")).toBeNull();
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("streams the upstream report body without buffering it", async () => {
@@ -37,7 +55,9 @@ describe("GET /api/scans/[scanId]/report", () => {
       }),
     );
     vi.stubGlobal("fetch", fetchMock);
-    getAuthHeadersMock.mockResolvedValue({ Authorization: "Bearer token" });
+    getRouteAuthHeadersMock.mockResolvedValue({
+      Authorization: "Bearer token",
+    });
 
     const response = await GET(new Request("http://localhost/api"), {
       params: Promise.resolve({ scanId: "scan-123" }),
@@ -72,7 +92,9 @@ describe("GET /api/scans/[scanId]/report", () => {
       "fetch",
       vi.fn().mockResolvedValue(new Response(upstreamBody, { status: 200 })),
     );
-    getAuthHeadersMock.mockResolvedValue({ Authorization: "Bearer token" });
+    getRouteAuthHeadersMock.mockResolvedValue({
+      Authorization: "Bearer token",
+    });
 
     const response = await GET(
       new Request("http://localhost/api?preflight=1"),
@@ -95,7 +117,9 @@ describe("GET /api/scans/[scanId]/report", () => {
       }),
     );
     vi.stubGlobal("fetch", fetchMock);
-    getAuthHeadersMock.mockResolvedValue({ Authorization: "Bearer token" });
+    getRouteAuthHeadersMock.mockResolvedValue({
+      Authorization: "Bearer token",
+    });
 
     const response = await GET(new Request("http://localhost/api"), {
       params: Promise.resolve({ scanId: "scan-123" }),
@@ -122,7 +146,9 @@ describe("GET /api/scans/[scanId]/report", () => {
         }),
       ),
     );
-    getAuthHeadersMock.mockResolvedValue({ Authorization: "Bearer token" });
+    getRouteAuthHeadersMock.mockResolvedValue({
+      Authorization: "Bearer token",
+    });
 
     const response = await GET(
       new Request("http://localhost/api?preflight=1"),
@@ -145,7 +171,9 @@ describe("GET /api/scans/[scanId]/report", () => {
           Response.json({ data: { id: "task-1" } }, { status: 202 }),
         ),
     );
-    getAuthHeadersMock.mockResolvedValue({ Authorization: "Bearer token" });
+    getRouteAuthHeadersMock.mockResolvedValue({
+      Authorization: "Bearer token",
+    });
 
     const response = await GET(new Request("http://localhost/api"), {
       params: Promise.resolve({ scanId: "scan-123" }),
@@ -160,7 +188,9 @@ describe("GET /api/scans/[scanId]/report", () => {
       "fetch",
       vi.fn().mockRejectedValue(new DOMException("Timed out", "TimeoutError")),
     );
-    getAuthHeadersMock.mockResolvedValue({ Authorization: "Bearer token" });
+    getRouteAuthHeadersMock.mockResolvedValue({
+      Authorization: "Bearer token",
+    });
 
     const response = await GET(
       new Request("http://localhost/api?preflight=1"),
@@ -187,7 +217,9 @@ describe("GET /api/scans/[scanId]/report", () => {
         ),
       ),
     );
-    getAuthHeadersMock.mockResolvedValue({ Authorization: "Bearer token" });
+    getRouteAuthHeadersMock.mockResolvedValue({
+      Authorization: "Bearer token",
+    });
 
     const response = await GET(
       new Request("http://localhost/api?preflight=1"),
