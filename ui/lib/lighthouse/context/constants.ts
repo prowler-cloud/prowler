@@ -6,6 +6,7 @@ export const LIGHTHOUSE_CONTEXT_KIND = {
   ATTACK_PATH: "attack_path",
   SCAN: "scan",
   PROVIDER: "provider",
+  ALERT: "alert",
 } as const;
 
 export const LIGHTHOUSE_CONTEXT_SOURCE = {
@@ -22,7 +23,8 @@ export const LIGHTHOUSE_CONTEXT_TRANSPORT = {
 export const LIGHTHOUSE_CONTEXT_LIMIT = {
   STRING_LENGTH: 256,
   FILTER_VALUES: 20,
-  ITEMS: 8,
+  ITEMS: 12,
+  SEVERITY_COUNTS: 5,
   ATTACK_PATH_PARAMETERS: 8,
   ATTACK_PATH_REDACTED_PARAMETERS: 8,
   ATTACK_PATH_TYPE_COUNTS: 12,
@@ -51,5 +53,9 @@ export const LIGHTHOUSE_PAGE_ID = {
   ATTACK_PATHS: "attack-paths",
   SCANS: "scans",
   PROVIDERS: "providers",
+  ALERTS: "alerts",
+  SERVICES: "services",
+  WORKLOADS: "workloads",
+  MUTELIST: "mutelist",
   OTHER: "other",
 } as const;

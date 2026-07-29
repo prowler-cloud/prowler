@@ -121,12 +121,10 @@ function getContextItemDescription(
   item: LighthouseContextItem,
 ): ContextItemDescription | null {
   if (item.kind === LIGHTHOUSE_CONTEXT_KIND.PAGE) return null;
-  if (
-    item.source === LIGHTHOUSE_CONTEXT_SOURCE.AUTOMATIC &&
-    item.id === "summary"
-  ) {
-    return { id: `${item.kind}:${item.id}`, text: `Summary: ${item.label}` };
-  }
+  // Automatic items are the page's own ambient snapshot (a bit of everything
+  // on Overview); they travel to the agent but only user-chosen focused and
+  // selection items are worth enumerating in the tooltip.
+  if (item.source === LIGHTHOUSE_CONTEXT_SOURCE.AUTOMATIC) return null;
 
   switch (item.kind) {
     case LIGHTHOUSE_CONTEXT_KIND.FINDING:
@@ -158,6 +156,11 @@ function getContextItemDescription(
       return {
         id: `${item.kind}:${item.id}`,
         text: `Provider: ${item.providerUid ?? item.providerId ?? item.id}`,
+      };
+    case LIGHTHOUSE_CONTEXT_KIND.ALERT:
+      return {
+        id: `${item.kind}:${item.id}`,
+        text: `Alert rule: ${item.label}`,
       };
     default: {
       const exhaustiveItem: never = item;

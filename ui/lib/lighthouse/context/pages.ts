@@ -68,8 +68,8 @@ const PAGE_DEFINITIONS: readonly LighthousePageDefinition[] = [
     allowedSearchParams: PROVIDER_SCOPE_PARAMS,
     suggestions: [
       "What should I prioritize from this overview?",
-      "Explain the visible threat score and its main drivers.",
-      "Which accounts or services appear to carry the most risk?",
+      "Explain my threat score, its trend, and weakest section.",
+      "Which providers, services, or frameworks carry the most risk?",
       "Build a practical security plan for today.",
     ],
   }),
@@ -218,14 +218,63 @@ const PAGE_DEFINITIONS: readonly LighthousePageDefinition[] = [
       "What should I improve in provider onboarding?",
     ],
   }),
+  createPageDefinition({
+    id: LIGHTHOUSE_PAGE_ID.ALERTS,
+    label: "Alerts",
+    match: (pathname) => pathname === "/alerts",
+    allowedSearchParams: [
+      "filter[search]",
+      "sort",
+      "filter[enabled]",
+      "filter[trigger]",
+    ],
+    suggestions: [
+      "Which alert rules should I enable or tune?",
+      "Summarize my alerting coverage and its gaps.",
+      "Could any alert rule be too noisy or too broad?",
+      "Design an alerting strategy for critical findings.",
+    ],
+  }),
+  createPageDefinition({
+    id: LIGHTHOUSE_PAGE_ID.SERVICES,
+    label: "Services",
+    match: (pathname) => pathname === "/services",
+    allowedSearchParams: [...PROVIDER_SCOPE_PARAMS, ...COMMON_LIST_PARAMS],
+    suggestions: [
+      "Which services carry the most failing findings?",
+      "Compare risk across my cloud services.",
+      "Which services should I harden first?",
+      "Summarize service coverage across providers.",
+    ],
+  }),
+  createPageDefinition({
+    id: LIGHTHOUSE_PAGE_ID.WORKLOADS,
+    label: "Workloads",
+    match: (pathname) => pathname === "/workloads",
+    allowedSearchParams: [...PROVIDER_SCOPE_PARAMS],
+    suggestions: [
+      "Which workloads look most exposed?",
+      "How should I group workloads for triage?",
+      "Which workloads need attention first?",
+      "Build a workload hardening plan.",
+    ],
+  }),
+  createPageDefinition({
+    id: LIGHTHOUSE_PAGE_ID.MUTELIST,
+    label: "Mute list",
+    match: (pathname) => pathname === "/mutelist",
+    allowedSearchParams: [...COMMON_LIST_PARAMS, "tab"],
+    suggestions: [
+      "Which mute rules are active and why?",
+      "Could a mute rule be hiding important findings?",
+      "Review my mute rules for risky exclusions.",
+      "How should I structure mute rules safely?",
+    ],
+  }),
 ];
 
 const KNOWN_ROUTE_LABELS = {
-  alerts: "Alerts",
   integrations: "Integrations",
-  mutelist: "Mute list",
-  services: "Services",
-  workloads: "Workloads",
 } as const;
 
 function normalizeLighthousePath(pathname: string): string {

@@ -218,7 +218,7 @@ describe("createLighthouseChatStore", () => {
         displayText: "Prioritize findings",
         context: {
           ...context,
-          items: context.items.slice(0, 3),
+          items: context.items.slice(0, 6),
         },
       }),
     );

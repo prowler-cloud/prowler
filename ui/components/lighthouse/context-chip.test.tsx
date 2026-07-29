@@ -49,10 +49,27 @@ describe("LighthouseCurrentContextBadge", () => {
     expect(tooltip).toHaveTextContent("Finding: finding-1");
   });
 
+  it("should keep ambient automatic summaries out of the tooltip", async () => {
+    // Given the Overview publishes a bit of everything automatically
+    const user = userEvent.setup();
+    render(<LighthouseCurrentContextBadge context={overviewContext()} />);
+
+    // When
+    await user.hover(screen.getByLabelText("Overview context"));
+
+    // Then the tooltip names the page without enumerating page snapshots
+    const tooltip = await screen.findByRole("tooltip");
+    expect(tooltip).toHaveTextContent("Overview");
+    expect(tooltip).not.toHaveTextContent("Prowler ThreatScore");
+    expect(tooltip).not.toHaveTextContent("80 failed / 320 passed findings");
+    expect(tooltip).not.toHaveTextContent("Failing findings by severity");
+    expect(tooltip).not.toHaveTextContent("Service: cloudwatch");
+    expect(tooltip).not.toHaveTextContent("status-summary");
+  });
+
   it.each([
     ["resource", resourceContext(), "Resource: resource-1 (bucket-1)"],
     ["scan", scanContext(), "Scan: scan-1"],
-    ["Attack Path", attackPathContext(), "Attack Path: query-1 (scan scan-1)"],
   ])("should identify included %s context", async (_, context, expected) => {
     // Given
     const user = userEvent.setup();
@@ -80,6 +97,61 @@ describe("LighthouseContextBadge", () => {
     ).not.toBeInTheDocument();
   });
 });
+
+function overviewContext(): LighthouseContextEnvelope {
+  return {
+    schemaVersion: 1,
+    transport: "inline",
+    items: [
+      {
+        kind: "page",
+        id: "overview",
+        source: "automatic",
+        scopeKey: "overview:/",
+        label: "Overview",
+        path: "/",
+      },
+      {
+        kind: "compliance",
+        id: "prowler-threat-score",
+        source: "automatic",
+        scopeKey: "overview:/",
+        label: "Prowler ThreatScore",
+        framework: "Prowler ThreatScore",
+        score: 62.4,
+      },
+      {
+        kind: "finding",
+        id: "status-summary",
+        source: "automatic",
+        scopeKey: "overview:/",
+        label: "80 failed / 320 passed findings",
+        findingId: "status-summary",
+        passed: 320,
+        failed: 80,
+      },
+      {
+        kind: "finding",
+        id: "severity-summary",
+        source: "automatic",
+        scopeKey: "overview:/",
+        label: "Failing findings by severity",
+        findingId: "severity-summary",
+        severityCounts: { critical: 4 },
+      },
+      {
+        kind: "resource",
+        id: "service-cloudwatch",
+        source: "automatic",
+        scopeKey: "overview:/",
+        label: "Service: cloudwatch",
+        resourceId: "service-cloudwatch",
+        service: "cloudwatch",
+        failedFindingsCount: 34,
+      },
+    ],
+  };
+}
 
 function findingsContext(): LighthouseContextEnvelope {
   return {

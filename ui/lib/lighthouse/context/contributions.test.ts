@@ -4,19 +4,26 @@ import { ATTACK_PATH_QUERY_KIND } from "@/types/attack-paths";
 
 import { LIGHTHOUSE_COMPLIANCE_CONTEXT_MODE } from "./constants";
 import {
+  buildAlertSummaryContext,
   buildAttackPathContext,
   buildComplianceContext,
+  buildFilteredProviderContext,
   buildFindingGroupContext,
   buildFindingResourceContext,
+  buildFindingSeveritySummaryContext,
+  buildFindingStatusSummaryContext,
   buildFindingSummaryContext,
+  buildFocusedAlertContext,
   buildFocusedFindingContext,
   buildFocusedResourceContext,
   buildProviderContext,
+  buildProviderGroupContext,
   buildProviderSummaryContext,
   buildResourceContext,
   buildResourceSummaryContext,
   buildScanContext,
   buildScanSummaryContext,
+  buildServiceSummaryContext,
 } from "./contributions";
 
 describe("Lighthouse page contributions", () => {
@@ -205,6 +212,179 @@ describe("Lighthouse page contributions", () => {
       region: "eu-west-1",
       score: 80,
       totals: { passed: 8, failed: 2, total: 10 },
+    });
+  });
+
+  it("builds an enriched ThreatScore snapshot with delta and weakest section", () => {
+    expect(
+      buildComplianceContext({
+        pathname: "/",
+        id: "prowler-threat-score",
+        framework: "Prowler ThreatScore",
+        score: 62.4,
+        scoreDelta: -3.21,
+        criticalRequirementsCount: 5,
+        worstSection: "1.2 Attack Surface",
+        worstSectionScore: 38.6,
+        passed: 120,
+        failed: 40,
+        total: 160,
+      }),
+    ).toEqual({
+      kind: "compliance",
+      id: "prowler-threat-score",
+      source: "automatic",
+      scopeKey: "overview:/",
+      label: "Prowler ThreatScore",
+      framework: "Prowler ThreatScore",
+      score: 62.4,
+      scoreDelta: -3.21,
+      criticalRequirementsCount: 5,
+      worstSection: "1.2 Attack Surface",
+      worstSectionScore: 38.6,
+      totals: { passed: 120, failed: 40, total: 160 },
+    });
+  });
+
+  it("builds a bounded alert rules summary", () => {
+    expect(buildAlertSummaryContext(12, 9)).toEqual({
+      kind: "alert",
+      id: "summary",
+      source: "automatic",
+      scopeKey: "alerts:/alerts",
+      label: "12 alert rules",
+      total: 12,
+      enabledCount: 9,
+    });
+  });
+
+  it("builds a focused snapshot for the alert rule being edited", () => {
+    expect(
+      buildFocusedAlertContext({
+        id: "alert-1",
+        name: "Critical S3 findings",
+        trigger: "new_failing_findings",
+        enabled: true,
+      }),
+    ).toEqual({
+      kind: "alert",
+      id: "alert-1",
+      source: "focused",
+      scopeKey: "alerts:/alerts",
+      label: "Critical S3 findings",
+      alertId: "alert-1",
+      trigger: "new_failing_findings",
+      enabled: true,
+    });
+  });
+
+  it("builds an overview findings status summary", () => {
+    expect(
+      buildFindingStatusSummaryContext({
+        pathname: "/",
+        passed: 320,
+        failed: 80,
+        newPassed: 12,
+        newFailed: 7,
+      }),
+    ).toEqual({
+      kind: "finding",
+      id: "status-summary",
+      source: "automatic",
+      scopeKey: "overview:/",
+      label: "80 failed / 320 passed findings",
+      findingId: "status-summary",
+      passed: 320,
+      failed: 80,
+      newPassed: 12,
+      newFailed: 7,
+    });
+  });
+
+  it("builds an overview severity summary for failing findings", () => {
+    expect(
+      buildFindingSeveritySummaryContext({
+        pathname: "/",
+        severityCounts: {
+          critical: 4,
+          high: 18,
+          medium: 40,
+          low: 15,
+          informational: 3,
+        },
+      }),
+    ).toEqual({
+      kind: "finding",
+      id: "severity-summary",
+      source: "automatic",
+      scopeKey: "overview:/",
+      label: "Failing findings by severity",
+      findingId: "severity-summary",
+      severityCounts: {
+        critical: 4,
+        high: 18,
+        medium: 40,
+        low: 15,
+        informational: 3,
+      },
+    });
+  });
+
+  it("builds an automatic summary for the riskiest service", () => {
+    expect(
+      buildServiceSummaryContext({
+        pathname: "/",
+        service: "s3",
+        failedFindingsCount: 34,
+        total: 120,
+      }),
+    ).toEqual({
+      kind: "resource",
+      id: "service-s3",
+      source: "automatic",
+      scopeKey: "overview:/",
+      label: "Service: s3",
+      resourceId: "service-s3",
+      service: "s3",
+      failedFindingsCount: 34,
+      total: 120,
+    });
+  });
+
+  it("builds automatic provider context for URL-filtered providers", () => {
+    expect(
+      buildFilteredProviderContext({
+        pathname: "/",
+        id: "prov-1",
+        uid: "123456789012",
+        type: "aws",
+        alias: "Production",
+      }),
+    ).toEqual({
+      kind: "provider",
+      id: "prov-1",
+      source: "automatic",
+      scopeKey: "overview:/",
+      label: "Provider: Production",
+      providerId: "prov-1",
+      providerUid: "123456789012",
+      providerType: "aws",
+    });
+  });
+
+  it("builds automatic context for a URL-filtered provider group", () => {
+    expect(
+      buildProviderGroupContext({
+        pathname: "/",
+        id: "group-uuid-1",
+        name: "Production accounts",
+      }),
+    ).toEqual({
+      kind: "provider",
+      id: "group-group-uuid-1",
+      source: "automatic",
+      scopeKey: "overview:/",
+      label: "Provider group: Production accounts",
     });
   });
 
