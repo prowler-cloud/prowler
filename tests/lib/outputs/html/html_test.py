@@ -722,6 +722,54 @@ class TestHTML:
         assert "&#x2022;key&amp;&lt;&gt;&#39;&#34;&lt;img" in output_data
         assert "=value&amp;&lt;&gt;&#39;&#34;&lt;img" in output_data
 
+    def test_transform_escapes_metadata_fields(self):
+        finding = generate_finding_output()
+        finding.metadata.Severity = MagicMock(value='<img data-field="severity" src=x>')
+        finding.metadata.ServiceName = '<img data-field="service" src=x>'
+        finding.metadata.CheckID = '<img data-field="check_id" src=x>_suffix'
+        finding.metadata.CheckTitle = '<img data-field="check_title" src=x>'
+        finding.metadata.Risk = '**Risk** <img data-field="risk" src=x>'
+        finding.metadata.Remediation.Recommendation.Text = (
+            '**Recommendation** <img data-field="recommendation" src=x>'
+        )
+        finding.metadata.Remediation.Recommendation.Url = (
+            'https://example.com"><img data-field="url" src=x>'
+        )
+
+        output_data = HTML([finding]).data[0]
+
+        raw_payloads = (
+            '<img data-field="severity" src=x>',
+            '<img data-field="service" src=x>',
+            '<img data-field="check_id" src=x>_suffix',
+            '<img data-field="check_title" src=x>',
+            '<img data-field="risk" src=x>',
+            '<img data-field="recommendation" src=x>',
+            'href="https://example.com"><img data-field="url" src=x>"',
+        )
+        for payload in raw_payloads:
+            assert payload not in output_data
+
+        assert "&lt;img data-field=&#34;severity&#34; src=x&gt;" in output_data
+        assert "&lt;img data-field=&#34;service&#34; src=x&gt;" in output_data
+        assert (
+            "&lt;img data-field=&#34;check<wbr />_id&#34; src=x&gt;<wbr />_suffix"
+            in output_data
+        )
+        assert "&lt;img data-field=&#34;check_title&#34; src=x&gt;" in output_data
+        assert (
+            "<strong>Risk</strong> &lt;img data-field=&#34;risk&#34; src=x&gt;"
+            in output_data
+        )
+        assert (
+            "<strong>Recommendation</strong> &lt;img "
+            "data-field=&#34;recommendation&#34; src=x&gt;" in output_data
+        )
+        assert (
+            'href="https://example.com&#34;&gt;&lt;img '
+            'data-field=&#34;url&#34; src=x&gt;"' in output_data
+        )
+
     def test_transform_pass_finding(self):
         findings = [
             generate_finding_output(

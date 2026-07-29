@@ -77,16 +77,16 @@ class HTML(Output):
                 self._data.append(f"""
                         <tr class="{row_class}">
                             <td>{finding_status}</td>
-                            <td>{finding.metadata.Severity.value}</td>
-                            <td>{finding.metadata.ServiceName}</td>
+                            <td>{str(escape(finding.metadata.Severity.value))}</td>
+                            <td>{str(escape(finding.metadata.ServiceName))}</td>
                             <td>{str(escape(finding.region.lower()))}</td>
-                            <td>{finding.metadata.CheckID.replace("_", "<wbr />_")}</td>
-                            <td>{finding.metadata.CheckTitle}</td>
+                            <td>{str(escape(finding.metadata.CheckID)).replace("_", "<wbr />_")}</td>
+                            <td>{str(escape(finding.metadata.CheckTitle))}</td>
                             <td>{str(escape(finding.resource_uid)).replace("_", "<wbr />_")}</td>
                             <td>{parse_html_string(str(escape(unroll_dict(finding.resource_tags))))}</td>
                             <td>{str(escape(finding.status_extended)).replace("_", "<wbr />_")}</td>
-                            <td><p class="show-read-more">{HTML.process_markdown(finding.metadata.Risk)}</p></td>
-                            <td><p class="show-read-more">{HTML.process_markdown(finding.metadata.Remediation.Recommendation.Text)}</p> <a class="read-more" href="{finding.metadata.Remediation.Recommendation.Url}"><i class="fas fa-external-link-alt"></i></a></td>
+                            <td><p class="show-read-more">{HTML.process_markdown(str(escape(finding.metadata.Risk)))}</p></td>
+                            <td><p class="show-read-more">{HTML.process_markdown(str(escape(finding.metadata.Remediation.Recommendation.Text)))}</p> <a class="read-more" href="{str(escape(finding.metadata.Remediation.Recommendation.Url))}"><i class="fas fa-external-link-alt"></i></a></td>
                             <td><p class="show-read-more">{parse_html_string(unroll_dict(finding.compliance, separator=": "))}</p></td>
                         </tr>
                         """)
