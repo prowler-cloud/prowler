@@ -1,79 +1,22 @@
-import tarfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from contextlib import contextmanager
 from datetime import datetime
-from io import BytesIO
 from json import loads
 from typing import Optional
 
-import requests
-import zstd
 from botocore.exceptions import ClientError
 from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
+from prowler.providers.aws.services.ecr.image_inspection import ImageInspector
 
-# Manifest media types that wrap several per-architecture manifests (a "fat
-# manifest") rather than a single scannable image.
-_MANIFEST_LIST_MEDIA_TYPES = {
-    "application/vnd.docker.distribution.manifest.list.v2+json",
-    "application/vnd.oci.image.index.v1+json",
-}
-
-# Compressed size of a single layer, checked against the manifest-declared
-# size before downloading, and re-checked against actual bytes received.
-MAX_LAYER_DOWNLOAD_BYTES = 100 * 1024 * 1024
-# Size of a single extracted file considered for scanning.
-MAX_FILE_BYTES = 1 * 1024 * 1024
-# Hard cap on the number of files scanned per image, across all its layers.
-MAX_FILES_PER_IMAGE = 5000
-# Hard cap on total decompressed bytes read per image, across all its layers.
-MAX_TOTAL_BYTES_PER_IMAGE = 500 * 1024 * 1024
-LAYER_DOWNLOAD_TIMEOUT_SECONDS = 30
 # Concurrency for the image-scan pipeline (_get_image_scan_data). Kept smaller
 # than the shared MAX_WORKERS metadata pool because each task can retain up to
 # MAX_LAYER_DOWNLOAD_BYTES compressed plus MAX_TOTAL_BYTES_PER_IMAGE decompressed
-# content, so a high worker count would multiply peak memory into several GB.
+# content (see image_inspection), so a high worker count would multiply peak
+# memory into several GB.
 IMAGE_SCAN_MAX_WORKERS = 4
-
-
-class _LayerTooLargeError(Exception):
-    """Raised when a streamed layer exceeds MAX_LAYER_DOWNLOAD_BYTES."""
-
-
-class _CappedLayerReader:
-    """A minimal read-only file object that caps the bytes it will yield.
-
-    Wraps a streaming HTTP body (urllib3's ``response.raw``) so ``tarfile`` can
-    read a gzip/uncompressed layer incrementally while enforcing an upper bound
-    on the compressed bytes consumed. A manifest that under-declares a layer's
-    size (the declared size is pre-checked separately) cannot make this buffer
-    an unbounded amount of untrusted data: once ``max_bytes`` is exceeded the
-    read raises ``_LayerTooLargeError`` instead of continuing.
-    """
-
-    def __init__(self, raw, max_bytes: int):
-        """Store the underlying raw stream and the remaining byte budget."""
-        self._raw = raw
-        self._remaining = max_bytes
-
-    def read(self, size: int = -1) -> bytes:
-        """Read up to ``size`` bytes, never exceeding the remaining budget.
-
-        A negative/None ``size`` (``read all``) is treated as "read what's left
-        of the budget, plus one" so a lying stream can never pull an unbounded
-        amount into memory and an over-cap layer is still detected.
-        """
-        if size is None or size < 0:
-            size = self._remaining + 1
-        to_read = min(size, self._remaining + 1)
-        chunk = self._raw.read(to_read)
-        self._remaining -= len(chunk)
-        if self._remaining < 0:
-            raise _LayerTooLargeError()
-        return chunk
 
 
 class ECR(AWSService):
@@ -406,6 +349,7 @@ class ECR(AWSService):
             or retrieved, so the caller can report it rather than drop it.
         """
         logger.info("ECR - Fetching image manifests, configs, and layers...")
+        inspector = ImageInspector()
         with ThreadPoolExecutor(max_workers=IMAGE_SCAN_MAX_WORKERS) as executor:
             images_to_fetch = {}
             for registry in self.registries.values():
@@ -413,8 +357,14 @@ class ECR(AWSService):
                     image = self._get_scan_target_image(repository)
                     if image is None:
                         continue
+                    client = self.regional_clients[repository.region]
+                    registry_id = self.registries[repository.region].id
                     future = executor.submit(
-                        self._fetch_image_scan_data, repository, image
+                        inspector.fetch_image_scan_data,
+                        client,
+                        registry_id,
+                        repository.name,
+                        image.latest_digest,
                     )
                     images_to_fetch[future] = (repository, image)
 
@@ -428,440 +378,6 @@ class ECR(AWSService):
                         f"{repository.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
                 yield repository, image, scan_data
-
-    def _fetch_image_scan_data(self, repository, image) -> Optional["ImageScanData"]:
-        """Resolve one image's manifest and return its scannable content.
-
-        Downloads the config blob (environment variables, build history)
-        and every filesystem layer's file contents, bounded by the module's
-        size/count limits.
-
-        Returns:
-            An ImageScanData, or None if the manifest could not be resolved.
-        """
-        client = self.regional_clients[repository.region]
-        registry_id = self.registries[repository.region].id
-
-        manifest = self._resolve_image_manifest(
-            client, registry_id, repository.name, image.latest_digest
-        )
-        if manifest is None:
-            return None
-
-        env = []
-        history = []
-        config_digest = (manifest.get("config") or {}).get("digest")
-        if config_digest:
-            config_bytes = self._download_layer(
-                client,
-                registry_id,
-                repository.name,
-                config_digest,
-                max_bytes=MAX_FILE_BYTES,
-            )
-            if config_bytes is not None:
-                try:
-                    config_json = loads(config_bytes)
-                    env = config_json.get("config", {}).get("Env", []) or []
-                    history = [
-                        step.get("created_by", "")
-                        for step in config_json.get("history", [])
-                        if step.get("created_by")
-                    ]
-                except Exception as error:
-                    logger.warning(
-                        f"{repository.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                    )
-
-        files = []
-        total_bytes = 0
-        truncated = False
-        for layer in manifest.get("layers", []):
-            if (
-                len(files) >= MAX_FILES_PER_IMAGE
-                or total_bytes >= MAX_TOTAL_BYTES_PER_IMAGE
-            ):
-                truncated = True
-                break
-
-            layer_digest = layer.get("digest")
-            layer_size = layer.get("size", 0)
-            if layer_size and layer_size > MAX_LAYER_DOWNLOAD_BYTES:
-                truncated = True
-                continue
-
-            try:
-                with self._open_layer_tar_stream(
-                    client,
-                    registry_id,
-                    repository.name,
-                    layer_digest,
-                    layer.get("mediaType", ""),
-                    remaining_budget=MAX_TOTAL_BYTES_PER_IMAGE - total_bytes,
-                ) as tar_stream:
-                    if tar_stream is None:
-                        truncated = True
-                        continue
-                    for member in tar_stream:
-                        if (
-                            len(files) >= MAX_FILES_PER_IMAGE
-                            or total_bytes >= MAX_TOTAL_BYTES_PER_IMAGE
-                        ):
-                            truncated = True
-                            break
-                        if not member.isfile():
-                            continue
-                        base_name = member.name.rsplit("/", 1)[-1]
-                        if base_name.startswith(".wh."):
-                            # Whiteout marker: a deletion recorded by the union
-                            # filesystem, not real file content.
-                            continue
-                        if member.size > MAX_FILE_BYTES:
-                            truncated = True
-                            continue
-                        try:
-                            content = (
-                                tar_stream.extractfile(member).read().decode("latin-1")
-                            )
-                        except _LayerTooLargeError:
-                            # Over-cap while reading this member: truncate the
-                            # whole layer rather than silently skipping one file.
-                            raise
-                        except Exception:
-                            continue
-                        files.append(
-                            ImageScanFile(
-                                path=member.name,
-                                layer_digest=layer_digest,
-                                content=content,
-                            )
-                        )
-                        total_bytes += member.size
-            except _LayerTooLargeError:
-                # The layer streamed more bytes than MAX_LAYER_DOWNLOAD_BYTES
-                # (a manifest under-declaring its size); skip it and disclose
-                # the partial coverage rather than buffer unbounded data.
-                truncated = True
-                continue
-
-        return ImageScanData(env=env, history=history, files=files, truncated=truncated)
-
-    def _resolve_image_manifest(
-        self, client, registry_id, repository_name, image_digest
-    ) -> Optional[dict]:
-        """Resolve an image digest to a single scannable image manifest.
-
-        Multi-arch images are stored as a manifest list/image index pointing
-        at one manifest per platform (plus, often, an attestation manifest
-        that isn't a real image). This picks one real platform manifest to
-        scan; the other architectures in the same list are not scanned.
-        """
-        try:
-            manifest, media_type = self._batch_get_manifest(
-                client, registry_id, repository_name, image_digest
-            )
-            if manifest is None:
-                return None
-
-            if media_type in _MANIFEST_LIST_MEDIA_TYPES:
-                child_digest = self._select_child_manifest_digest(manifest)
-                if not child_digest:
-                    return None
-                manifest, _ = self._batch_get_manifest(
-                    client, registry_id, repository_name, child_digest
-                )
-            if manifest is not None and not (
-                manifest.get("config") or manifest.get("layers")
-            ):
-                # A resolved manifest with neither a config nor layers has
-                # nothing to scan (e.g. a nested manifest list, or an
-                # unsupported manifest shape) — treat it as unresolvable so
-                # the caller reports MANUAL instead of a false PASS.
-                return None
-            return manifest
-        except Exception as error:
-            logger.error(
-                f"{client.meta.region_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-            return None
-
-    @staticmethod
-    def _batch_get_manifest(client, registry_id, repository_name, image_digest):
-        """Fetch and parse the raw manifest JSON for a single image digest.
-
-        Returns:
-            A (manifest, media_type) tuple, or (None, None) if not found.
-        """
-        response = client.batch_get_image(
-            registryId=registry_id,
-            repositoryName=repository_name,
-            imageIds=[{"imageDigest": image_digest}],
-        )
-        images = response.get("images", [])
-        if not images:
-            return None, None
-        manifest = loads(images[0]["imageManifest"])
-        media_type = manifest.get("mediaType") or images[0].get(
-            "imageManifestMediaType"
-        )
-        return manifest, media_type
-
-    @staticmethod
-    def _select_child_manifest_digest(manifest_list: dict) -> Optional[str]:
-        """Pick one real platform manifest's digest from a manifest list.
-
-        Prefers linux/amd64, falling back to the first remaining candidate
-        once attestation manifests (platform "unknown/unknown", or
-        annotated as an attestation manifest) are excluded.
-
-        Returns:
-            The chosen manifest's digest, or None if no candidate remains.
-        """
-        candidates = []
-        for entry in manifest_list.get("manifests", []):
-            platform = entry.get("platform", {}) or {}
-            annotations = entry.get("annotations", {}) or {}
-            if (
-                platform.get("architecture") == "unknown"
-                or platform.get("os") == "unknown"
-            ):
-                # Attestation manifests (SBOMs, provenance, signatures) are
-                # attached to the index as "unknown/unknown" platform entries.
-                continue
-            if annotations.get("vnd.docker.reference.type") == "attestation-manifest":
-                continue
-            candidates.append(entry)
-
-        for entry in candidates:
-            platform = entry.get("platform", {}) or {}
-            if (
-                platform.get("architecture") == "amd64"
-                and platform.get("os") == "linux"
-            ):
-                return entry.get("digest")
-
-        return candidates[0].get("digest") if candidates else None
-
-    @staticmethod
-    def _get_layer_download_url(
-        client, registry_id, repository_name, layer_digest
-    ) -> Optional[str]:
-        """Resolve the presigned download URL for one layer or config blob.
-
-        Returns:
-            The presigned URL, or None if ECR did not return one.
-        """
-        response = client.get_download_url_for_layer(
-            registryId=registry_id,
-            repositoryName=repository_name,
-            layerDigest=layer_digest,
-        )
-        return response.get("downloadUrl")
-
-    @staticmethod
-    def _download_layer(
-        client, registry_id, repository_name, layer_digest, max_bytes=None
-    ) -> Optional[bytes]:
-        """Download one layer or config blob via its presigned URL.
-
-        Streams the response, aborting once `max_bytes` is exceeded, so a
-        lying or oversized blob is never buffered in full. Used for the config
-        blob and for zstd layers (which cannot be streamed into tarfile);
-        gzip/uncompressed layers are streamed by `_open_layer_tar_stream`.
-
-        Returns:
-            The blob's bytes, or None if it could not be downloaded or
-            exceeded `max_bytes`.
-        """
-        try:
-            download_url = ECR._get_layer_download_url(
-                client, registry_id, repository_name, layer_digest
-            )
-            if not download_url:
-                return None
-
-            downloaded = bytearray()
-            with requests.get(
-                download_url,
-                stream=True,
-                timeout=LAYER_DOWNLOAD_TIMEOUT_SECONDS,
-                allow_redirects=False,
-            ) as http_response:
-                http_response.raise_for_status()
-                for chunk in http_response.iter_content(chunk_size=1024 * 1024):
-                    downloaded.extend(chunk)
-                    if max_bytes and len(downloaded) > max_bytes:
-                        return None
-            return bytes(downloaded)
-        except Exception as error:
-            logger.warning(
-                f"{repository_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-            return None
-
-    @contextmanager
-    def _open_layer_tar_stream(
-        self,
-        client,
-        registry_id,
-        repository_name,
-        layer_digest,
-        media_type: str,
-        remaining_budget: int,
-    ):
-        """Yield an open TarFile for one layer, streaming where possible.
-
-        gzip and uncompressed tar layers are streamed straight from the
-        download into `tarfile` (streaming mode reads a file-like object
-        sequentially), so neither the compressed blob nor a decompressed copy
-        is buffered in full; a `_CappedLayerReader` still enforces
-        `MAX_LAYER_DOWNLOAD_BYTES` against a manifest that under-declares the
-        layer size. zstd layers cannot be streamed (the `zstd` library exposes
-        no streaming API), so they fall back to the buffered path, bounded by
-        the existing frame-content-size check in `_open_layer_tar`.
-
-        Yields:
-            An open TarFile, or None for an unrecognized media type or a
-            download/decompression failure. Raises `_LayerTooLargeError` if a
-            streamed layer exceeds `MAX_LAYER_DOWNLOAD_BYTES`.
-        """
-        if media_type.endswith("zstd"):
-            layer_bytes = self._download_layer(
-                client,
-                registry_id,
-                repository_name,
-                layer_digest,
-                max_bytes=MAX_LAYER_DOWNLOAD_BYTES,
-            )
-            if layer_bytes is None:
-                yield None
-                return
-            tar_stream = self._open_layer_tar(layer_bytes, media_type, remaining_budget)
-            if tar_stream is None:
-                yield None
-                return
-            with tar_stream:
-                yield tar_stream
-            return
-
-        if media_type.endswith("gzip"):
-            mode = "r|gz"
-        elif media_type.endswith("tar"):
-            mode = "r|"
-        else:
-            yield None
-            return
-
-        # Only the setup (URL resolution, connection, tar-header parse) is
-        # guarded here; a failure yields None. The `yield tar_stream` below is
-        # kept out of this try so exceptions raised while the caller iterates
-        # members (e.g. _LayerTooLargeError) propagate instead of triggering a
-        # forbidden second yield.
-        try:
-            download_url = ECR._get_layer_download_url(
-                client, registry_id, repository_name, layer_digest
-            )
-            if not download_url:
-                yield None
-                return
-            http_response = requests.get(
-                download_url,
-                stream=True,
-                timeout=LAYER_DOWNLOAD_TIMEOUT_SECONDS,
-                allow_redirects=False,
-            )
-            try:
-                http_response.raise_for_status()
-                capped = _CappedLayerReader(http_response.raw, MAX_LAYER_DOWNLOAD_BYTES)
-                tar_stream = tarfile.open(fileobj=capped, mode=mode)
-            except Exception:
-                http_response.close()
-                raise
-        except Exception as error:
-            logger.warning(
-                f"{repository_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-            yield None
-            return
-
-        with http_response, tar_stream:
-            yield tar_stream
-
-    @staticmethod
-    def _zstd_frame_content_size(data: bytes) -> Optional[int]:
-        """Read the declared decompressed size from a zstd frame header.
-
-        Parses the frame header fields (RFC 8878 3.1.1) needed to locate the
-        Frame_Content_Size field without decompressing any data.
-
-        Returns:
-            The declared decompressed size, or None if the input isn't a
-            standard zstd frame or the size is absent from its header.
-        """
-        if len(data) < 6 or data[:4] != b"\x28\xb5\x2f\xfd":
-            return None
-
-        descriptor = data[4]
-        single_segment = bool(descriptor & 0x20)
-        fcs_flag = descriptor >> 6
-        dict_id_size = {0: 0, 1: 1, 2: 2, 3: 4}[descriptor & 0x03]
-
-        offset = 5
-        if not single_segment:
-            offset += 1  # Window_Descriptor byte
-        offset += dict_id_size
-
-        if single_segment:
-            fcs_size = {0: 1, 1: 2, 2: 4, 3: 8}[fcs_flag]
-        else:
-            fcs_size = {0: 0, 1: 2, 2: 4, 3: 8}[fcs_flag]
-        if fcs_size == 0 or len(data) < offset + fcs_size:
-            return None
-
-        content_size = int.from_bytes(data[offset : offset + fcs_size], "little")
-        if fcs_size == 2:
-            # Per the spec, the 2-byte encoding adds a 256 offset so it
-            # can't overlap the 1-byte encoding's value range.
-            content_size += 256
-        return content_size
-
-    @staticmethod
-    def _open_layer_tar(layer_bytes: bytes, media_type: str, remaining_budget: int):
-        """Open a downloaded layer's bytes as a tar archive by media type.
-
-        Args:
-            remaining_budget: Decompressed bytes still allowed for this
-                image (MAX_TOTAL_BYTES_PER_IMAGE minus what prior layers
-                already contributed), used to bound zstd decompression.
-
-        Returns:
-            An open TarFile for gzip, zstd, or uncompressed tar layers, or
-            None for an unrecognized media type or a decompression failure.
-        """
-        try:
-            if media_type.endswith("zstd"):
-                # Unlike gzip (streamed incrementally by tarfile, with each
-                # member's size checked before its content is read), zstd
-                # decompression here happens all at once. Refuse to expand a
-                # frame whose declared decompressed size is unknown or would
-                # exceed what's left of the image's total budget, instead of
-                # buffering an unbounded amount of untrusted data in memory.
-                content_size = ECR._zstd_frame_content_size(layer_bytes)
-                if content_size is None or content_size > remaining_budget:
-                    return None
-                return tarfile.open(
-                    fileobj=BytesIO(zstd.decompress(layer_bytes)), mode="r:"
-                )
-            if media_type.endswith("gzip"):
-                return tarfile.open(fileobj=BytesIO(layer_bytes), mode="r:gz")
-            if media_type.endswith("tar"):
-                return tarfile.open(fileobj=BytesIO(layer_bytes), mode="r:")
-            return None
-        except Exception as error:
-            logger.warning(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-            return None
 
     @staticmethod
     def _artifact_type(artifact_media_type: Optional[str]) -> str:
@@ -1012,25 +528,6 @@ class Repository(BaseModel):
     images_details: Optional[list[ImageDetails]]
     lifecycle_policy: Optional[str]
     tags: Optional[list] = []
-
-
-class ImageScanFile(BaseModel):
-    """A single file extracted from an image layer for secret scanning."""
-
-    path: str
-    layer_digest: str
-    content: str
-
-
-class ImageScanData(BaseModel):
-    """An image's scannable content: config env/history and layer files."""
-
-    env: list[str] = []
-    history: list[str] = []
-    files: list[ImageScanFile] = []
-    # True when a layer/file exceeded a configured size or count limit and
-    # was not scanned, so PASS results can disclose partial coverage.
-    truncated: bool = False
 
 
 class ScanningRule(BaseModel):

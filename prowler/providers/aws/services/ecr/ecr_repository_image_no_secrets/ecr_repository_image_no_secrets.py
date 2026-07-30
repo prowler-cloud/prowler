@@ -16,13 +16,13 @@ class ecr_repository_image_no_secrets(Check):
     scanned) and scanned for plaintext secrets in its configuration
     (environment variables, build history) and every filesystem layer's
     file contents. Older tagged images are not scanned.
-    - PASS: no secrets detected. Layers or files skipped for exceeding a
-      configured size limit are disclosed in the message, not silently
-      treated as clean.
+    - PASS: no secrets detected and the whole image was scanned.
     - FAIL: a potential secret was detected; the variable, build step, or
       file is reported, never the secret value.
-    - MANUAL: the image manifest could not be retrieved or resolved, or the
-      scan itself failed.
+    - MANUAL: the image could not be scanned in full, so a clean result would
+      be misleading -- the manifest could not be retrieved or resolved, the
+      scan itself failed, or part of the image exceeded configured size limits
+      or could not be retrieved.
     """
 
     def execute(self) -> list[Check_Report_AWS]:
@@ -56,6 +56,11 @@ class ecr_repository_image_no_secrets(Check):
                     yield (index, "history"), "\n".join(scan_data.history)
                 for file_index, scanned_file in enumerate(scan_data.files):
                     yield (index, f"file:{file_index}"), scanned_file.content
+                    # Free the file's contents once handed to the scanner. The
+                    # report phase needs only its path and layer digest, so
+                    # retained memory stays flat instead of growing with the
+                    # number of repositories scanned.
+                    scanned_file.content = ""
 
         # Phase 2: batch — one call, chunked Kingfisher subprocesses. This
         # must fully consume image_payloads() so every image is appended to
@@ -110,14 +115,6 @@ class ecr_repository_image_no_secrets(Check):
                 findings.append(report)
                 continue
 
-            report.status = "PASS"
-            report.status_extended = f"No secrets found in the {image_reference}."
-            if scan_data.truncated:
-                report.status_extended += (
-                    " Some layers or files exceeded configured size limits "
-                    "and were not scanned."
-                )
-
             env_findings = batch_results.get((index, "environment"), [])
             history_findings = batch_results.get((index, "history"), [])
             file_findings_by_index = {
@@ -132,8 +129,15 @@ class ecr_repository_image_no_secrets(Check):
 
                 for secret in env_findings:
                     line_index = secret["line_number"] - 1
+                    variable = None
                     if 0 <= line_index < len(scan_data.env):
-                        variable = scan_data.env[line_index].split("=", 1)[0]
+                        entry = scan_data.env[line_index]
+                        # Only a well-formed "NAME=value" entry has a name safe
+                        # to report; an entry with no "=" may itself be the
+                        # secret, so it is never echoed back.
+                        if "=" in entry:
+                            variable = entry.split("=", 1)[0]
+                    if variable is not None:
                         secrets_found.append(
                             f"{secret['type']} in environment variable {variable}"
                         )
@@ -161,10 +165,24 @@ class ecr_repository_image_no_secrets(Check):
                 )
                 if scan_data.truncated:
                     report.status_extended += (
-                        " Some layers or files exceeded configured size limits "
-                        "and were not scanned."
+                        " Some of the image could not be retrieved or exceeded "
+                        "configured size limits and was not scanned."
                     )
                 annotate_verified_secrets(report, all_secrets)
+            elif scan_data.truncated:
+                # No secrets in what was scanned, but coverage was incomplete
+                # (size/count limits, or the config could not be retrieved), so
+                # a clean result would be misleading.
+                report.status = "MANUAL"
+                report.status_extended = (
+                    f"No secrets were found in the scanned portion of the "
+                    f"{image_reference}, but part of it could not be retrieved "
+                    f"or exceeded configured size limits and was not scanned; "
+                    f"manual review is required."
+                )
+            else:
+                report.status = "PASS"
+                report.status_extended = f"No secrets found in the {image_reference}."
 
             findings.append(report)
 
