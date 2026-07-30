@@ -10,9 +10,8 @@
 # Scanned by: .github/actions/trivy-scan via .github/workflows/sdk-container-checks.yml
 # and .github/workflows/api-container-checks.yml
 
-# perl-base is Debian "Essential: yes" and cannot be removed. Trivy attributes
-# src:perl CVEs to every binary package it produces, so perl-base gets flagged for
-# modules that ship in perl-modules-5.36 — which these images do not install.
+# perl-base is Debian "Essential: yes". Trivy spreads src:perl CVEs across every
+# binary package, so perl-base gets flagged for modules only perl-modules-5.36 ships.
 
 # Archive::Tar path traversal. Not installed: `perl -MArchive::Tar -e1` cannot locate it.
 CVE-2026-42496 pkg:perl-base exp:2027-01-31
@@ -23,24 +22,18 @@ CVE-2026-57433 pkg:perl-base exp:2027-01-31
 # Regex heap overflow on 32-bit builds only; both published arches are 64-bit.
 CVE-2026-8376 pkg:perl-base exp:2027-01-31
 
-# Regex trie overflow. Upstream says 5.36.0 predates the regression; Debian still
-# marks bookworm vulnerable. Shorter expiry — needs Debian or NVD to correct.
+# Regex trie overflow. Upstream says 5.36.0 predates it; Debian disagrees. Short expiry.
 # Ref: https://github.com/Perl/perl5/issues/23388
 CVE-2026-13221 pkg:perl-base exp:2026-11-30
 
-# The next two are fixed in trixie, so their expiries land after PROWLER-2299
-# rebases onto it and they get retired rather than renewed.
+# The next two are fixed in trixie; expiries land after PROWLER-2299 retires them.
 
-# SQLite overflow affecting 3.39.2-3.41.1, via CPython's stdlib sqlite3. Prowler
-# never opens user-supplied databases. trixie ships 3.46.1.
+# SQLite overflow via CPython's stdlib sqlite3; Prowler never opens user-supplied DBs.
 CVE-2025-7458 pkg:libsqlite3-0 exp:2026-10-31
 
-# zlib MiniZip overflow. Debian marks bookworm <ignored> because minizip is not
-# built, so the symbol is absent from the shipped libz.so. trixie ships 1.3.1.
+# zlib MiniZip overflow. Debian marks bookworm <ignored> — minizip is not built.
 # Ref: https://security-tracker.debian.org/tracker/CVE-2023-45853
 CVE-2023-45853 pkg:zlib1g exp:2026-10-31
 
-# libssh2 OOB write, reachable only when acting as an SSH/SCP/SFTP client. Arrives
-# via libcurl in the SDK image; Prowler uses HTTPS only. Gone from the API image
-# since git was purged. No bookworm fix.
+# libssh2 OOB write, only reachable as an SSH/SCP/SFTP client; Prowler uses HTTPS only.
 CVE-2026-55200 pkg:libssh2-1 exp:2026-10-15
