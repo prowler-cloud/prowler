@@ -1,3 +1,4 @@
+from api.db_router import MainRouter
 from api.db_utils import delete_related_daily_task
 from api.models import (
     LighthouseProviderConfiguration,
@@ -47,8 +48,15 @@ def revoke_user_api_keys(sender, instance, **kwargs):  # noqa: F841
 
     The entity field will be set to NULL by on_delete=SET_NULL,
     but we explicitly revoke the keys to prevent further use.
+
+    The update runs on the admin connection because `api_keys` is RLS protected and its
+    policy denies every row when `api.tenant_id` is unset. Users are deleted through the
+    admin connection and may belong to several tenants, so going through the default
+    connection would silently revoke nothing, or only the keys of the active tenant.
     """
-    TenantAPIKey.objects.filter(entity=instance).update(revoked=True)
+    TenantAPIKey.objects.using(MainRouter.admin_db).filter(entity=instance).update(
+        revoked=True
+    )
 
 
 @receiver(post_delete, sender=Membership)
@@ -58,8 +66,12 @@ def revoke_membership_api_keys(sender, instance, **kwargs):  # noqa: F841
 
     When a membership is deleted, all API keys created by that user
     in that tenant should be revoked to prevent further access.
+
+    Uses the admin connection for the same reason as `revoke_user_api_keys`: the RLS
+    policy on `api_keys` denies every row when `api.tenant_id` is unset, which is the
+    case when the membership is removed as a cascade of a user deletion.
     """
-    TenantAPIKey.objects.filter(
+    TenantAPIKey.objects.using(MainRouter.admin_db).filter(
         entity_id=instance.user_id, tenant_id=instance.tenant_id
     ).update(revoked=True)
 

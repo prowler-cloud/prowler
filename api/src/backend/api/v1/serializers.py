@@ -1,8 +1,10 @@
 import base64
 import json
+import logging
 from datetime import UTC, datetime, timedelta
 
 import yaml
+from api.celery_utils import decode_celery_field
 from api.db_router import MainRouter
 from api.exceptions import ConflictException
 from api.models import (
@@ -59,6 +61,7 @@ from api.v1.serializer_utils.lighthouse import (
 from api.v1.serializer_utils.processors import ProcessorConfigField
 from api.v1.serializer_utils.providers import ProviderSecretField
 from api.validators import validate_lighthouse_openai_compatible_base_url
+from config.custom_logging import BackendLogger
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import update_last_login
@@ -78,6 +81,8 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.settings import api_settings
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.utils import get_md5_hash_password
+
+logger = logging.getLogger(BackendLogger.API)
 
 # Base
 
@@ -122,6 +127,20 @@ class RLSSerializer(BaseModelSerializerV1):
         tenant_id = self.context.get("tenant_id")
         validated_data["tenant_id"] = tenant_id
         return super().create(validated_data)
+
+
+class ScopedProviderFieldMixin:
+    provider_field_name = "provider"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        provider_queryset = self.context.get("provider_queryset")
+        provider_field = self.fields.get(self.provider_field_name)
+        if provider_queryset is None or provider_field is None:
+            return
+
+        related_field = getattr(provider_field, "child_relation", provider_field)
+        related_field.queryset = provider_queryset
 
 
 class StateEnumSerializerField(serializers.ChoiceField):
@@ -607,13 +626,24 @@ class TaskSerializer(RLSSerializer, TaskBase):
 
     @extend_schema_field(serializers.JSONField())
     def get_task_args(self, obj):
-        task_args = self.get_json_field(obj, "task_kwargs")
-        # Celery task_kwargs are stored as a double string JSON in the database when not empty
-        if isinstance(task_args, str):
-            task_args = json.loads(task_args.replace("'", '"').replace("None", "null"))
-        # Remove tenant_id from task_kwargs if present
-        task_args.pop("tenant_id", None)
+        task_kwargs = (
+            getattr(obj.task_runner_task, "task_kwargs", None)
+            if obj.task_runner_task
+            else None
+        )
+        try:
+            task_args = decode_celery_field(task_kwargs, {})
+            if not isinstance(task_args, dict):
+                raise ValueError("Decoded task kwargs must be a dictionary")
+        except ValueError:
+            logger.warning(
+                "Unable to decode task kwargs for task %s; returning empty task_args.",
+                obj.id,
+            )
+            return {}
 
+        task_args = task_args.copy()
+        task_args.pop("tenant_id", None)
         return task_args
 
     @staticmethod
@@ -693,7 +723,10 @@ class MembershipIncludeSerializer(serializers.ModelSerializer):
 
 
 # Provider Groups
-class ProviderGroupSerializer(RLSSerializer, BaseWriteSerializer):
+class ProviderGroupSerializer(
+    ScopedProviderFieldMixin, RLSSerializer, BaseWriteSerializer
+):
+    provider_field_name = "providers"
     providers = serializers.ResourceRelatedField(
         queryset=Provider.objects.all(), many=True, required=False
     )
@@ -851,9 +884,27 @@ class ProviderGroupMembershipSerializer(RLSSerializer, BaseWriteSerializer):
         help_text="List of resource identifier objects representing providers.",
     )
 
+    def get_providers(self, validated_data):
+        provider_ids = {item["id"] for item in validated_data["providers"]}
+        provider_queryset = self.context.get("provider_queryset")
+        if provider_queryset is None:
+            provider_queryset = Provider.objects.filter(
+                tenant_id=self.context.get("tenant_id")
+            )
+
+        providers = list(provider_queryset.filter(id__in=provider_ids))
+        if {provider.id for provider in providers} != provider_ids:
+            raise serializers.ValidationError(
+                {
+                    "providers": (
+                        "One or more providers do not exist or are not accessible."
+                    )
+                }
+            )
+        return providers
+
     def create(self, validated_data):
-        provider_ids = [item["id"] for item in validated_data["providers"]]
-        providers = Provider.objects.filter(id__in=provider_ids)
+        providers = self.get_providers(validated_data)
         tenant_id = self.context.get("tenant_id")
 
         new_relationships = [
@@ -869,8 +920,7 @@ class ProviderGroupMembershipSerializer(RLSSerializer, BaseWriteSerializer):
         return self.context.get("provider_group")
 
     def update(self, instance, validated_data):
-        provider_ids = [item["id"] for item in validated_data["providers"]]
-        providers = Provider.objects.filter(id__in=provider_ids)
+        providers = self.get_providers(validated_data)
         tenant_id = self.context.get("tenant_id")
 
         instance.providers.clear()
@@ -1109,7 +1159,9 @@ class ScanIncludeSerializer(RLSSerializer):
     }
 
 
-class ScanCreateSerializer(RLSSerializer, BaseWriteSerializer):
+class ScanCreateSerializer(
+    ScopedProviderFieldMixin, RLSSerializer, BaseWriteSerializer
+):
     class Meta:
         model = Scan
         # TODO: add mutelist when implemented
@@ -1974,7 +2026,9 @@ class ProviderSecretSerializer(RLSSerializer):
         ]
 
 
-class ProviderSecretCreateSerializer(RLSSerializer, BaseWriteProviderSecretSerializer):
+class ProviderSecretCreateSerializer(
+    ScopedProviderFieldMixin, RLSSerializer, BaseWriteProviderSecretSerializer
+):
     secret = ProviderSecretField(write_only=True)
 
     class Meta:
