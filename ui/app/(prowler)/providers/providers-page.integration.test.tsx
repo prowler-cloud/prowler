@@ -84,6 +84,29 @@ describe("AWS Organizations onboarding (baseline)", () => {
     expect(harness.applyCallCount).toBe(1);
   }, 60000);
 
+  it("settles each account the moment its own test finishes", async () => {
+    // Given — one account connects on the first read, the other stays running.
+    const harness = new ProvidersPageHarness(
+      awsOnboardingFixture({
+        connectionByUid: {
+          "111111111111": { connected: true },
+          "222222222222": { connected: true, executingPolls: 2 },
+        },
+      }),
+    );
+    await onboardToSelection(harness);
+
+    // When
+    await harness.testConnections();
+    await harness.waitForCandidateConnectionState(/111111111111/, "success");
+
+    // Then — the finished account reports while the slow one is still testing,
+    // instead of the whole tree spinning until the last account answers.
+    expect(harness.candidateConnectionState(/222222222222/)).toBe("testing");
+
+    await harness.waitForAccountsConnected();
+  }, 60000);
+
   it("re-applies when the selection changes after an apply", async () => {
     const harness = new ProvidersPageHarness(partialConnectionFixture());
     await onboardToSelection(harness);

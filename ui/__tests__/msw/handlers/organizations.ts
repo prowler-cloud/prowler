@@ -305,6 +305,8 @@ export const handlersForOrganizations = (
   );
   let orgSeq = 0;
   let secretSeq = 0;
+  /** Reads per connection task, so `executingPolls` can hold one task running. */
+  const connectionTaskReads = new Map<string, number>();
 
   const unitNodeIds = (org: FixtureOrganization): string[] =>
     org.nodeIds.filter((id) =>
@@ -599,6 +601,13 @@ export const handlersForOrganizations = (
         const providerId = taskId.slice(CONNECTION_TASK_PREFIX.length);
         const uid = uidForProviderId(fx, providerId);
         const outcome = uid ? fx.connectionByUid[uid] : undefined;
+        const reads = (connectionTaskReads.get(taskId) ?? 0) + 1;
+        connectionTaskReads.set(taskId, reads);
+
+        if (outcome?.executingPolls && reads <= outcome.executingPolls) {
+          return HttpResponse.json(taskResource(taskId, "executing", {}));
+        }
+
         const connected = outcome?.connected ?? true;
         return HttpResponse.json(
           taskResource(taskId, "completed", {

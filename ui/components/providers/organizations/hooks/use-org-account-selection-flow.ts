@@ -5,8 +5,9 @@ import { useEffect, useRef, useState } from "react";
 import { applyDiscovery } from "@/actions/organizations/organizations";
 import { buildApplyPayload } from "@/actions/organizations/organizations.adapter";
 import {
-  checkConnectionProvider,
   getProviderUidsByIds,
+  revalidateProviders,
+  startProviderConnectionChecks,
 } from "@/actions/providers/providers";
 import {
   WIZARD_FOOTER_ACTION_TYPE,
@@ -24,8 +25,7 @@ import {
   buildCandidateToProviderMap,
   canAdvanceToLaunchStep,
   getLaunchableProviderIds,
-  pollConnectionTask,
-  runWithConcurrencyLimit,
+  pollConnectionTasks,
 } from "../org-account-selection.utils";
 
 import { extractErrorMessage } from "./error-utils";
@@ -286,64 +286,83 @@ export function useOrgAccountSelectionFlow({
       setConnectionError(id, null);
     }
 
+    const settleProvider = (
+      providerId: string,
+      result: { success: boolean; error?: string },
+    ) => {
+      if (!isMountedRef.current || signal.aborted) {
+        return;
+      }
+      setConnectionResult(
+        providerId,
+        result.success
+          ? CONNECTION_TEST_STATUS.SUCCESS
+          : CONNECTION_TEST_STATUS.ERROR,
+      );
+      setConnectionError(
+        providerId,
+        result.success
+          ? null
+          : result.error || "Connection failed for this account.",
+      );
+    };
+
     try {
-      await runWithConcurrencyLimit(providerIds, 5, async (providerId) => {
-        if (!isMountedRef.current || signal.aborted) {
-          return;
-        }
+      // One action dispatches every check and one action reads every pending
+      // task per round: Next runs client-invoked server actions one at a time,
+      // so a per-provider loop here would serialize the whole batch no matter
+      // what concurrency it asked for.
+      const outcomes = await startProviderConnectionChecks(providerIds);
+      if (!isMountedRef.current || signal.aborted) {
+        return;
+      }
 
-        try {
-          const formData = new FormData();
-          formData.set("providerId", providerId);
+      const providerIdByTaskId = new Map<string, string>();
 
-          const checkResult = await checkConnectionProvider(formData);
-          if (!isMountedRef.current || signal.aborted) {
-            return;
-          }
+      for (const providerId of providerIds) {
+        const outcome = outcomes[providerId];
 
-          if (checkResult?.error || checkResult?.errors?.length) {
-            setConnectionResult(providerId, CONNECTION_TEST_STATUS.ERROR);
-            setConnectionError(
-              providerId,
-              extractErrorMessage(checkResult, "Connection test failed."),
-            );
-            return;
-          }
-
-          const taskId = checkResult?.data?.id;
-          if (!taskId) {
-            setConnectionResult(providerId, CONNECTION_TEST_STATUS.SUCCESS);
-            setConnectionError(providerId, null);
-            return;
-          }
-
-          const taskResult = await pollConnectionTask(taskId, { signal });
-          if (!isMountedRef.current || signal.aborted) {
-            return;
-          }
-          setConnectionResult(
-            providerId,
-            taskResult.success
-              ? CONNECTION_TEST_STATUS.SUCCESS
-              : CONNECTION_TEST_STATUS.ERROR,
-          );
-          setConnectionError(
-            providerId,
-            taskResult.success
-              ? null
-              : taskResult.error || "Connection failed for this account.",
-          );
-        } catch {
-          if (!isMountedRef.current || signal.aborted) {
-            return;
-          }
+        if (!outcome || outcome.error) {
           setConnectionResult(providerId, CONNECTION_TEST_STATUS.ERROR);
           setConnectionError(
             providerId,
-            "Unexpected error during connection test.",
+            extractErrorMessage(outcome?.error, "Connection test failed."),
           );
+          continue;
         }
+
+        if (!outcome.taskId) {
+          settleProvider(providerId, { success: true });
+          continue;
+        }
+
+        providerIdByTaskId.set(outcome.taskId, providerId);
+      }
+
+      await pollConnectionTasks(Array.from(providerIdByTaskId.keys()), {
+        signal,
+        onSettled: (taskId, result) => {
+          const providerId = providerIdByTaskId.get(taskId);
+          if (providerId) {
+            settleProvider(providerId, result);
+          }
+        },
       });
+    } catch {
+      if (isMountedRef.current && !signal.aborted) {
+        for (const providerId of providerIds) {
+          if (
+            useOrgSetupStore.getState().connectionResults[providerId] ===
+            CONNECTION_TEST_STATUS.PENDING
+          ) {
+            setConnectionResult(providerId, CONNECTION_TEST_STATUS.ERROR);
+            setConnectionError(
+              providerId,
+              "Unexpected error during connection test.",
+            );
+          }
+        }
+      }
     } finally {
       if (connectionTestAbortControllerRef.current === abortController) {
         connectionTestAbortControllerRef.current = null;
@@ -356,6 +375,9 @@ export function useOrgAccountSelectionFlow({
     if (!isMountedRef.current || signal.aborted) {
       return;
     }
+
+    // Once for the batch, where the checks used to revalidate once per provider.
+    void revalidateProviders();
 
     const latestResults = useOrgSetupStore.getState().connectionResults;
     const allPassed =

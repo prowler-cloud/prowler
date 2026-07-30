@@ -577,6 +577,33 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
     await this.user.fill(input, alias);
   }
 
+  /**
+   * What a candidate's row currently shows for its connection test: a settled
+   * verdict, a spinner, or nothing yet.
+   */
+  candidateConnectionState(
+    idText: RegExp,
+  ): "success" | "error" | "testing" | "none" {
+    const item = this.treeItemByText(idText);
+    if (!item) return "none";
+    if (item.querySelector('[aria-label="Success"]')) return "success";
+    if (item.querySelector('[aria-label="Error"]')) return "error";
+    if (item.querySelector('[aria-label="Loading"]')) return "testing";
+    return "none";
+  }
+
+  /** Wait until a candidate's row settles on the given connection verdict. */
+  async waitForCandidateConnectionState(
+    idText: RegExp,
+    state: "success" | "error",
+    timeoutMs = 20000,
+  ): Promise<void> {
+    await this.waitFor(
+      () => this.candidateConnectionState(idText) === state,
+      timeoutMs,
+    );
+  }
+
   /** The `aria-checked` state of a tree row's checkbox (e.g. "mixed"). */
   candidateCheckboxState(idText: RegExp): string | null {
     const item = this.treeItemByText(idText);

@@ -99,6 +99,12 @@ export interface FixtureOrganization {
 export interface FixtureConnectionOutcome {
   connected: boolean;
   error?: string;
+  /**
+   * Reads that answer `executing` before the task settles. Lets a test hold one
+   * account testing while another has already settled, which is the only way to
+   * observe that rows resolve per provider rather than all at the end.
+   */
+  executingPolls?: number;
 }
 
 /**

@@ -6,8 +6,7 @@ import {
   buildCandidateToProviderMap,
   canAdvanceToLaunchStep,
   getLaunchableProviderIds,
-  pollConnectionTask,
-  runWithConcurrencyLimit,
+  pollConnectionTasks,
 } from "./org-account-selection.utils";
 
 describe("buildCandidateToProviderMap", () => {
@@ -57,52 +56,65 @@ describe("buildCandidateToProviderMap", () => {
   });
 });
 
-describe("runWithConcurrencyLimit", () => {
-  it("processes work with the configured concurrency cap", async () => {
-    // Given
-    const items = Array.from({ length: 8 }, (_, index) => index + 1);
-    let activeWorkers = 0;
-    let maxActiveWorkers = 0;
-
-    // When
-    const results = await runWithConcurrencyLimit(items, 3, async (item) => {
-      activeWorkers += 1;
-      maxActiveWorkers = Math.max(maxActiveWorkers, activeWorkers);
-      await new Promise((resolve) => setTimeout(resolve, 1));
-      activeWorkers -= 1;
-      return item * 2;
-    });
-
-    // Then
-    expect(maxActiveWorkers).toBeLessThanOrEqual(3);
-    expect(results).toEqual([2, 4, 6, 8, 10, 12, 14, 16]);
-  });
+const executing = { data: { attributes: { state: "executing" } } };
+const completed = (connected: boolean, error?: string) => ({
+  data: { attributes: { state: "completed", result: { connected, error } } },
 });
 
-describe("pollConnectionTask", () => {
-  it("uses progressive delays and returns connection result from the final task payload", async () => {
-    // Given
+describe("pollConnectionTasks", () => {
+  it("reports each task the round it settles instead of waiting for the slowest", async () => {
+    // Given — one account connects on the first round, the other three rounds later.
+    const rounds: string[][] = [];
+    const getTasksByIds = vi.fn(async (taskIds: string[]) => {
+      rounds.push([...taskIds]);
+      const round = rounds.length;
+      return {
+        "task-fast": round >= 1 ? completed(true) : executing,
+        "task-slow":
+          round >= 3
+            ? completed(false, "Role trust policy mismatch.")
+            : executing,
+      };
+    });
+    const settled: Array<[string, unknown]> = [];
+
+    // When
+    await pollConnectionTasks(["task-fast", "task-slow"], {
+      onSettled: (taskId, result) => settled.push([taskId, result]),
+      getTasksByIds,
+      sleep: async () => {},
+      maxRetries: 5,
+    });
+
+    // Then — the fast one is reported after round 1, while the slow one is
+    // still pending, and it is dropped from every later read.
+    expect(settled).toEqual([
+      ["task-fast", { success: true }],
+      ["task-slow", { success: false, error: "Role trust policy mismatch." }],
+    ]);
+    expect(rounds).toEqual([
+      ["task-fast", "task-slow"],
+      ["task-slow"],
+      ["task-slow"],
+    ]);
+  });
+
+  it("reads every pending task in one call per round, with progressive delays", async () => {
+    // Given — a client-side loop would cost one round trip per task per round.
     const sleeps: number[] = [];
-    const getTaskById = vi
+    const getTasksByIds = vi
       .fn()
+      .mockResolvedValueOnce({ "task-a": executing, "task-b": executing })
+      .mockResolvedValueOnce({ "task-a": executing, "task-b": executing })
       .mockResolvedValueOnce({
-        data: { attributes: { state: "executing" } },
-      })
-      .mockResolvedValueOnce({
-        data: { attributes: { state: "executing" } },
-      })
-      .mockResolvedValueOnce({
-        data: {
-          attributes: {
-            state: "completed",
-            result: { connected: false, error: "Role trust policy mismatch." },
-          },
-        },
+        "task-a": completed(true),
+        "task-b": completed(true),
       });
 
     // When
-    const result = await pollConnectionTask("task-1", {
-      getTaskById,
+    await pollConnectionTasks(["task-a", "task-b"], {
+      onSettled: () => {},
+      getTasksByIds,
       sleep: async (delay) => {
         sleeps.push(delay);
       },
@@ -110,38 +122,84 @@ describe("pollConnectionTask", () => {
     });
 
     // Then
+    expect(getTasksByIds).toHaveBeenCalledTimes(3);
     expect(sleeps).toEqual([2000, 3000]);
-    expect(getTaskById).toHaveBeenCalledTimes(3);
-    expect(result).toEqual({
-      success: false,
-      error: "Role trust policy mismatch.",
-    });
   });
 
-  it("stops polling when aborted", async () => {
+  it("stops polling when aborted and cancels whatever had not settled", async () => {
     // Given
     const abortController = new AbortController();
-    const getTaskById = vi
-      .fn()
-      .mockResolvedValue({ data: { attributes: { state: "executing" } } });
+    const getTasksByIds = vi.fn(async () => ({
+      "task-a": completed(true),
+      "task-b": executing,
+    }));
     const sleep = vi.fn(async () => {
       abortController.abort();
     });
+    const settled: Array<[string, unknown]> = [];
 
     // When
-    const result = await pollConnectionTask("task-1", {
-      getTaskById,
+    await pollConnectionTasks(["task-a", "task-b"], {
+      onSettled: (taskId, result) => settled.push([taskId, result]),
+      getTasksByIds,
       sleep,
       signal: abortController.signal,
       maxRetries: 5,
     });
 
-    // Then
-    expect(getTaskById).toHaveBeenCalledTimes(1);
-    expect(result).toEqual({
-      success: false,
-      error: "Connection test cancelled.",
+    // Then — the settled result stands; the pending one is reported cancelled.
+    expect(getTasksByIds).toHaveBeenCalledTimes(1);
+    expect(settled).toEqual([
+      ["task-a", { success: true }],
+      ["task-b", { success: false, error: "Connection test cancelled." }],
+    ]);
+  });
+
+  it("times out only the tasks that never settled", async () => {
+    // Given
+    const getTasksByIds = vi.fn(async () => ({
+      "task-a": completed(true),
+      "task-b": executing,
+    }));
+    const settled: Array<[string, unknown]> = [];
+
+    // When
+    await pollConnectionTasks(["task-a", "task-b"], {
+      onSettled: (taskId, result) => settled.push([taskId, result]),
+      getTasksByIds,
+      sleep: async () => {},
+      maxRetries: 2,
     });
+
+    // Then
+    expect(settled).toEqual([
+      ["task-a", { success: true }],
+      ["task-b", { success: false, error: "Connection test timed out." }],
+    ]);
+  });
+
+  it("surfaces a per-task read failure without touching the rest of the batch", async () => {
+    // Given — the batch read reports one task's failure under its own key.
+    const getTasksByIds = vi.fn(async () => ({
+      "task-a": completed(true),
+      "task-b": { error: "Task not found." },
+    }));
+    const settled: Array<[string, unknown]> = [];
+
+    // When
+    await pollConnectionTasks(["task-a", "task-b"], {
+      onSettled: (taskId, result) => settled.push([taskId, result]),
+      getTasksByIds,
+      sleep: async () => {},
+      maxRetries: 5,
+    });
+
+    // Then
+    expect(getTasksByIds).toHaveBeenCalledTimes(1);
+    expect(settled).toEqual([
+      ["task-a", { success: true }],
+      ["task-b", { success: false, error: "Task not found." }],
+    ]);
   });
 });
 
