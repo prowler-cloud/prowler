@@ -190,10 +190,14 @@ def test_execute_query_injects_provider_label_when_migrated(
 
     executed_cypher = sink_backend_stub.execute_read_query.call_args[0][1]
     assert executed_cypher != definition.cypher
-    # Every node pattern is scoped, and injection only inserted labels
-    # (stripping them restores the original cypher verbatim).
-    assert f":{plabel}" in executed_cypher
-    assert executed_cypher.replace(f":{plabel}", "") == definition.cypher
+    # Both node patterns are scoped - not just one. Asserting the exact rewrite
+    # (rather than `f":{plabel}" in executed_cypher`, which a partial injection
+    # would still satisfy) proves every node got the label and that injection
+    # inserted labels and nothing else.
+    assert executed_cypher == (
+        f"MATCH (aws:AWSAccount:{plabel})--(target_role:AWSRole:{plabel}) "
+        "RETURN target_role"
+    )
     # Parameters are passed through untouched.
     assert sink_backend_stub.execute_read_query.call_args[0][2] == parameters
 

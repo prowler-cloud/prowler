@@ -1,5 +1,6 @@
 """Unit tests for the Cypher sanitizer (validation + provider-label injection)."""
 
+import re
 from unittest.mock import patch
 
 import pytest
@@ -20,6 +21,38 @@ def _inject(cypher: str) -> str:
         "api.attack_paths.cypher_sanitizer.get_provider_label", return_value=LABEL
     ):
         return inject_provider_label(cypher, PROVIDER_ID)
+
+
+# String literals and line comments can contain parentheses that look like node
+# patterns; strip them first. Implemented here independently of the sanitizer so
+# the node count is an oracle for the injector rather than a copy of its regexes.
+_STRING_OR_COMMENT_RE = re.compile(r"'(?:[^'\\]|\\.)*'|\"(?:[^\"\\]|\\.)*\"|//[^\n]*")
+
+# A node pattern is `(`, not preceded by a word char (which would make it a
+# function call), wrapping an optional variable, zero or more `:Label`s and an
+# optional `{property map}` - and nothing else, which excludes parenthesized
+# expressions such as `(a OR b)` in a WHERE clause.
+_NODE_PATTERN_RE = re.compile(
+    r"(?<![\w`])\("
+    r"\s*(?:[a-zA-Z_]\w*)?"
+    r"(?:\s*:\s*(?:`[^`]*`|[a-zA-Z_]\w*))*"
+    r"(?:\s*\{[^{}]*\})?"
+    r"\s*\)"
+)
+
+
+def _count_node_patterns(cypher: str) -> int:
+    """Count node patterns in a query, independently of the injector.
+
+    Injection appends exactly one provider label per node pattern, so the
+    number of injected labels must equal this count - proving *every* node is
+    scoped, not just one."""
+    stripped = _STRING_OR_COMMENT_RE.sub("", cypher)
+    return sum(
+        1
+        for match in _NODE_PATTERN_RE.finditer(stripped)
+        if match.group(0)[1:-1].strip()
+    )
 
 
 def test_generic_inject_label_reuses_provider_injection_pipeline():
@@ -470,10 +503,13 @@ class TestPredefinedCatalogInjection:
     def test_injection_is_lossless(self, cypher):
         injected = _inject(cypher)
 
-        # Something was scoped ...
-        assert f":{LABEL}" in injected
-        # ... and stripping the injected tokens restores the query verbatim,
-        # proving injection changed nothing but the labels.
+        # Every node pattern is scoped - not just one. A partial-injection
+        # regression that missed some nodes would still satisfy a bare
+        # `f":{LABEL}" in injected` check, so assert the label count matches the
+        # number of node patterns.
+        assert injected.count(f":{LABEL}") == _count_node_patterns(cypher)
+        # Stripping the injected tokens restores the query verbatim, proving
+        # injection changed nothing but the labels.
         assert injected.replace(f":{LABEL}", "") == cypher
 
     @pytest.mark.parametrize(
@@ -483,8 +519,6 @@ class TestPredefinedCatalogInjection:
     )
     def test_injection_preserves_parameter_placeholders(self, cypher):
         # Label injection must never touch `$param` bindings.
-        import re
-
         original_params = sorted(set(re.findall(r"\$\w+", cypher)))
         injected_params = sorted(set(re.findall(r"\$\w+", _inject(cypher))))
 
