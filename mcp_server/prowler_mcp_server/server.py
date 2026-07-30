@@ -60,3 +60,6 @@ async def health_check(_request) -> JSONResponse:
 
 
 setup_main_server()
+
+# ASGI app for uvicorn deployments; stateless to avoid retaining sessions
+app = prowler_mcp_server.http_app(stateless_http=True)
