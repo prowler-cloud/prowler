@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { apiBaseUrl, getAuthHeaders, getFormValue, wait } from "@/lib";
+import { runWithConcurrencyLimit } from "@/lib/concurrency";
 import { buildSecretConfig } from "@/lib/provider-credentials/build-credentials";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 import { appendSanitizedProviderInFilters } from "@/lib/provider-filters";
@@ -355,19 +356,92 @@ export const updateCredentialsProvider = async (
   }
 };
 
-export const checkConnectionProvider = async (formData: FormData) => {
+/** Padding that keeps the single-provider spinner visible long enough to read. */
+const CONNECTION_SETTLE_DELAY_MS = 2000;
+
+export const checkConnectionProvider = async (
+  formData: FormData,
+  {
+    settleDelayMs = CONNECTION_SETTLE_DELAY_MS,
+    revalidate = true,
+  }: { settleDelayMs?: number; revalidate?: boolean } = {},
+) => {
   const headers = await getAuthHeaders({ contentType: false });
   const providerId = formData.get(ProviderCredentialFields.PROVIDER_ID);
   const url = new URL(`${apiBaseUrl}/providers/${providerId}/connection`);
 
   try {
     const response = await fetch(url.toString(), { method: "POST", headers });
-    await wait(2000);
+    // A batch opts out of both the padding and the revalidation: its pollers
+    // already report progress, the API creates the Task row before answering
+    // the 202 (so an immediate first poll cannot miss it), and revalidating per
+    // provider would re-render the providers page once per account.
+    if (settleDelayMs > 0) {
+      await wait(settleDelayMs);
+    }
 
-    return handleApiResponse(response, "/providers");
+    return handleApiResponse(response, revalidate ? "/providers" : undefined);
   } catch (error) {
     return handleApiError(error);
   }
+};
+
+/** Connection checks in flight at once inside one batch. */
+const CONNECTION_CHECK_CONCURRENCY_LIMIT = 10;
+
+/**
+ * Dispatches a connection check for each provider and returns the task each one
+ * is being tested by, keyed by provider id.
+ *
+ * The fan-out has to happen here rather than in the caller: every server action
+ * a client invokes goes through Next's global action queue, which runs them
+ * strictly one at a time, so a client-side loop is serialized no matter what
+ * concurrency limit it declares — 60 accounts meant 60 sequential round trips
+ * before the first row could turn green. Taking the whole batch in one action
+ * lets the requests actually overlap, the same way `launchOrganizationScans`
+ * does for the launch step.
+ *
+ * A provider whose dispatch failed carries the action result under `error` so
+ * the caller can render it with the copy it already uses; one failure never
+ * cancels the rest of the batch.
+ */
+export const startProviderConnectionChecks = async (
+  providerIds: string[],
+): Promise<Record<string, { taskId?: string; error?: unknown }>> => {
+  const uniqueIds = Array.from(new Set(providerIds.filter(Boolean)));
+  const outcomes: Record<string, { taskId?: string; error?: unknown }> = {};
+
+  await runWithConcurrencyLimit(
+    uniqueIds,
+    CONNECTION_CHECK_CONCURRENCY_LIMIT,
+    async (providerId) => {
+      const formData = new FormData();
+      formData.set(ProviderCredentialFields.PROVIDER_ID, providerId);
+
+      try {
+        const result = await checkConnectionProvider(formData, {
+          settleDelayMs: 0,
+          revalidate: false,
+        });
+
+        if (result?.error || result?.errors?.length) {
+          outcomes[providerId] = { error: result };
+          return;
+        }
+
+        outcomes[providerId] = { taskId: result?.data?.id };
+      } catch (error) {
+        outcomes[providerId] = { error: handleApiError(error) };
+      }
+    },
+  );
+
+  return outcomes;
+};
+
+/** Refreshes the providers page after a batch of checks has settled. */
+export const revalidateProviders = async () => {
+  revalidatePath("/providers");
 };
 
 export const deleteCredentials = async (secretId: string) => {
