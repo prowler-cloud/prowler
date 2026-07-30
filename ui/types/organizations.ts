@@ -394,11 +394,6 @@ export interface OrganizationResource {
   relationships?: OrganizationRelationships;
 }
 
-export interface OrganizationListResponse {
-  data: OrganizationResource[];
-  meta?: CollectionMeta;
-}
-
 export interface OrganizationNodeAttributes {
   name: string;
   kind: NodeKind;
@@ -420,11 +415,6 @@ export interface OrganizationNodeResource {
   type: "organization-nodes";
   attributes: OrganizationNodeAttributes;
   relationships: OrganizationNodeRelationships;
-}
-
-export interface OrganizationNodeListResponse {
-  data: OrganizationNodeResource[];
-  meta?: CollectionMeta;
 }
 
 /**

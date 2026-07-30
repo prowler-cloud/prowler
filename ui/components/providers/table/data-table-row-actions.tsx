@@ -16,6 +16,7 @@ import { useState } from "react";
 import { updateOrganizationName } from "@/actions/organizations/organizations";
 import { updateProvider } from "@/actions/providers";
 import { getSchedule } from "@/actions/schedules";
+import { hasOrgSetupStrategy } from "@/components/providers/organizations/hooks/org-setup-strategy";
 import {
   ORG_WIZARD_INTENT,
   OrgWizardInitialData,
@@ -39,7 +40,6 @@ import { testProviderConnection } from "@/lib/provider-helpers";
 import { getScanScheduleCapability } from "@/lib/schedules";
 import { isCloud } from "@/lib/shared/env";
 import {
-  isOrgFlowType,
   ORG_SETUP_PHASE,
   ORG_WIZARD_STEP,
   OrgFlowType,
@@ -176,9 +176,9 @@ function OrgGroupDropdownActions({
   const nodeLabel = getNodeLabel(rowData.orgType, rowData.kind);
   const entityLabel = isOrgKind ? "organization" : nodeLabel.toLowerCase();
   const nameSourceLabel = getNameSourceLabel(rowData.orgType);
-  // Credential updates re-enter the organization wizard, which only exists for
-  // organization types with an onboarding flow.
-  const orgFlowType: OrgFlowType | null = isOrgFlowType(rowData.orgType)
+  // Credential updates re-enter the organization wizard, so this needs a
+  // *registered* setup strategy.
+  const orgFlowType: OrgFlowType | null = hasOrgSetupStrategy(rowData.orgType)
     ? rowData.orgType
     : null;
 

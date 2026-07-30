@@ -97,7 +97,9 @@ export function getNameSourceLabel(orgType: OrganizationType): string {
   return terminologyFor(orgType).nameSourceLabel;
 }
 
-/** What discovered candidates are called for this organization type. */
+/**
+ * What discovered candidates are called for this organization type.
+ */
 export function getCandidateNoun(orgType: OrganizationType): CandidateNoun {
   return terminologyFor(orgType).candidateNoun;
 }

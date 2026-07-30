@@ -49,4 +49,33 @@ describe("useOrgSetupStore", () => {
     expect(persistedValue).toBeTruthy();
     expect(localStorage.getItem("org-setup-store")).toBeNull();
   });
+
+  it.each([
+    ["an organization type with no onboarding flow", ORGANIZATION_TYPE.AZURE],
+    ["a prototype key", "__proto__"],
+    ["a non-string", 42],
+  ])("discards %s rehydrated as the organization type", (_label, stored) => {
+    // Given — sessionStorage is untrusted, and this slot is a discriminant.
+    sessionStorage.setItem(
+      "org-setup-store",
+      JSON.stringify({
+        state: {
+          organizationType: stored,
+          organizationId: "org-9",
+          selectedCandidateIds: [],
+        },
+        version: 1,
+      }),
+    );
+
+    // When
+    useOrgSetupStore.persist.rehydrate();
+
+    // Then — the snapshot was read (so this is not passing by rehydration
+    // silently not happening), but the bad discriminant did not survive it.
+    expect(useOrgSetupStore.getState().organizationId).toBe("org-9");
+    expect(useOrgSetupStore.getState().organizationType).toBe(
+      ORGANIZATION_TYPE.AWS,
+    );
+  });
 });

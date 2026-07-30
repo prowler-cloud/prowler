@@ -13,6 +13,7 @@ import {
   OrgFlowType,
   OrgHierarchy,
   ORGANIZATION_TYPE,
+  toOrgFlowType,
 } from "@/types/organizations";
 import { TreeDataItem } from "@/types/tree";
 
@@ -45,7 +46,7 @@ function buildDerivedDiscoveryState(
 }
 
 interface OrgSetupState {
-  // Discriminant
+  // Discriminant.
   organizationType: OrgFlowType;
 
   // Identity
@@ -209,6 +210,9 @@ export const useOrgSetupStore = create<OrgSetupState>()(
         return {
           ...mergedState,
           ...derivedState,
+          organizationType:
+            toOrgFlowType(mergedState.organizationType) ??
+            currentState.organizationType,
           selectedCandidateIds: mergedState.selectedCandidateIds.filter(
             (candidateId) =>
               derivedState.selectableCandidateIdSet.has(candidateId),

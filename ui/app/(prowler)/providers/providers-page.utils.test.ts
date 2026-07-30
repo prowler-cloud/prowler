@@ -490,6 +490,142 @@ describe("buildProvidersTableRows", () => {
     expect(ouChild.subRows![0].rowType).toBe(PROVIDERS_ROW_TYPE.PROVIDER);
   });
 
+  it("builds each organization's hierarchy from its own parent link shape", () => {
+    // Given — two organizations whose nodes are serialized differently: org-a
+    // carries the canonical `parent` relationship, org-b only the legacy
+    // `parent_external_id` attribute. Deciding the mode across the whole
+    // collection made org-b read every parent as null, so its intermediate node
+    // ended up empty and was filtered away.
+    const providers = [
+      toProviderRow(providersResponse.data[0]),
+      toProviderRow(providersResponse.data[1]),
+    ];
+
+    // When
+    const rows = buildProvidersTableRows({
+      providers,
+      organizations: [
+        {
+          id: "org-a",
+          type: "organizations",
+          attributes: {
+            name: "Canonical Organization",
+            org_type: "aws",
+            external_id: "o-aaaa",
+            metadata: {},
+            root_external_id: "r-a",
+          },
+          relationships: {},
+        },
+        {
+          id: "org-b",
+          type: "organizations",
+          attributes: {
+            name: "Legacy Organization",
+            org_type: "gcp",
+            external_id: "o-bbbb",
+            metadata: {},
+            root_external_id: "r-b",
+          },
+          relationships: {},
+        },
+      ],
+      organizationNodes: [
+        {
+          id: "a-parent",
+          type: "organization-nodes",
+          attributes: {
+            kind: NODE_KIND.ORGANIZATIONAL_UNIT,
+            name: "A Parent",
+            external_id: "ou-a-parent",
+            parent_external_id: null,
+            metadata: {},
+          },
+          relationships: {
+            organization: { data: { type: "organizations", id: "org-a" } },
+            parent: { data: null },
+          },
+        },
+        {
+          id: "a-child",
+          type: "organization-nodes",
+          attributes: {
+            kind: NODE_KIND.ORGANIZATIONAL_UNIT,
+            name: "A Child",
+            external_id: "ou-a-child",
+            parent_external_id: null,
+            metadata: {},
+          },
+          relationships: {
+            organization: { data: { type: "organizations", id: "org-a" } },
+            parent: { data: { type: "organization-nodes", id: "a-parent" } },
+            providers: { data: [{ type: "providers", id: "provider-1" }] },
+          },
+        },
+        {
+          id: "b-parent",
+          type: "organization-nodes",
+          attributes: {
+            kind: NODE_KIND.FOLDER,
+            name: "B Parent",
+            external_id: "folder-b-parent",
+            parent_external_id: "r-b",
+            metadata: {},
+          },
+          relationships: {
+            organization: { data: { type: "organizations", id: "org-b" } },
+          },
+        },
+        {
+          id: "b-child",
+          type: "organization-nodes",
+          attributes: {
+            kind: NODE_KIND.FOLDER,
+            name: "B Child",
+            external_id: "folder-b-child",
+            parent_external_id: "folder-b-parent",
+            metadata: {},
+          },
+          relationships: {
+            organization: { data: { type: "organizations", id: "org-b" } },
+            providers: { data: [{ type: "providers", id: "provider-2" }] },
+          },
+        },
+      ],
+      isCloud: true,
+    });
+
+    // Then — both organizations keep their full two-level chain, and no provider
+    // is stranded at the top level.
+    expect(rows).toHaveLength(2);
+    expect(
+      rows.every((row) => row.rowType === PROVIDERS_ROW_TYPE.ORGANIZATION),
+    ).toBe(true);
+
+    for (const [organizationId, parentName, childName] of [
+      ["org-a", "A Parent", "A Child"],
+      ["org-b", "B Parent", "B Child"],
+    ]) {
+      const orgRow = rows.find((row) => row.id === organizationId)!;
+      expect(orgRow.subRows).toHaveLength(1);
+
+      const parentRow = orgRow.subRows![0];
+      if (!isProvidersOrganizationRow(parentRow)) {
+        throw new Error(`Expected ${parentName} to be an organization row`);
+      }
+      expect(parentRow.name).toBe(parentName);
+      expect(parentRow.subRows).toHaveLength(1);
+
+      const childRow = parentRow.subRows[0];
+      if (!isProvidersOrganizationRow(childRow)) {
+        throw new Error(`Expected ${childName} to be an organization row`);
+      }
+      expect(childRow.name).toBe(childName);
+      expect(childRow.subRows).toHaveLength(1);
+      expect(childRow.subRows[0].rowType).toBe(PROVIDERS_ROW_TYPE.PROVIDER);
+    }
+  });
+
   it("does not duplicate providers that appear in both org relationships and OU assignments", () => {
     // Given — provider-1 is linked to org-1 AND assigned to ou-1.
     // Uses the deprecated `organization_unit` alias (rather than the canonical

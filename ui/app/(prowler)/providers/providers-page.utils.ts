@@ -391,10 +391,6 @@ export function buildProvidersTableRows({
     }
   }
 
-  const useParentIdRelationships = organizationNodes.some(
-    (organizationNode) => organizationNode.relationships.parent !== undefined,
-  );
-
   // Build a set of provider IDs that are assigned to nodes, so we can
   // exclude them from the org's direct children and avoid duplication.
   const providersAssignedToNode = new Set(
@@ -406,6 +402,17 @@ export function buildProvidersTableRows({
   const organizationRows = organizations
     .map((organization) => {
       const organizationType = organization.attributes.org_type;
+      // Which parent link to follow is decided per organization, not across the
+      // whole collection: one organization serving `parent` would otherwise make
+      // every organization read its nodes that way, and those lacking the
+      // relationship would resolve every parent to null — collapsing their nodes
+      // to the root, emptying the intermediate rows and dropping them entirely.
+      const useParentIdRelationships = organizationNodes.some(
+        (organizationNode) =>
+          organizationNode.relationships.organization.data.id ===
+            organization.id &&
+          organizationNode.relationships.parent !== undefined,
+      );
       const organizationNodeRows = buildOrganizationNodeRows({
         organizationId: organization.id,
         organizationType,

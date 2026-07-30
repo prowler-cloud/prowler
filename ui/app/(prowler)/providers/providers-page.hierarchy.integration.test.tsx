@@ -50,6 +50,24 @@ describe("Providers page — mixed AWS + GCP hierarchy display", () => {
     // Tripwire: those rows came from a real fetch of the canonical route.
     expect(harness.hierarchyFetchCount).toBeGreaterThan(0);
   }, 30000);
+
+  it("offers no wizard re-entry for an organization type whose setup form has not landed", async () => {
+    const harness = new ProvidersPageHarness(mixedHierarchyFixture());
+    await harness.mount({ openWizard: false });
+
+    await harness.waitForOrganizationRow("My GCP Organization");
+
+    // GCP is display-ready but its setup form ships in a later phase. Offering
+    // "Update Credentials" would open the AWS form on a GCP external id, which
+    // cannot validate and cannot be backed out of. Renaming is a plain PATCH.
+    const actions = await harness.actionLabelsFor("My GCP Organization");
+    expect(actions).toContain("Edit Organization Name");
+    expect(actions).not.toContain("Update Credentials");
+
+    // The AWS organization in the same table keeps it.
+    const awsActions = await harness.actionLabelsFor("My AWS Organization");
+    expect(awsActions).toContain("Update Credentials");
+  }, 30000);
 });
 
 describe("Providers page — organization type without an onboarding flow", () => {

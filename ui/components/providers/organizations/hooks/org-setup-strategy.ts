@@ -4,10 +4,12 @@ import {
 } from "@/actions/organizations/organizations.adapter";
 import {
   AwsDiscoveryResult,
+  isOrgFlowType,
   OrgFlowType,
   OrgHierarchy,
   ORG_SECRET_TYPE,
   ORGANIZATION_TYPE,
+  OrganizationType,
   OrgSecretPayload,
 } from "@/types/organizations";
 
@@ -106,6 +108,27 @@ const ORG_SETUP_STRATEGIES: Partial<Record<OrgFlowType, OrgSetupStrategy>> = {
   [ORGANIZATION_TYPE.AWS]: awsOrgSetupStrategy,
 };
 
+/**
+ * Whether a registered strategy exists for this organization type — i.e. whether
+ * the wizard can actually drive its onboarding. `OrgFlowType` says a type is
+ * *planned* for onboarding; this says the implementation has landed, so surfaces
+ * that re-enter the wizard stay hidden until it has.
+ */
+export function hasOrgSetupStrategy(
+  orgType: OrganizationType,
+): orgType is OrgFlowType {
+  return (
+    isOrgFlowType(orgType) &&
+    Object.prototype.hasOwnProperty.call(ORG_SETUP_STRATEGIES, orgType)
+  );
+}
+
 export function getOrgSetupStrategy(orgType: OrgFlowType): OrgSetupStrategy {
-  return ORG_SETUP_STRATEGIES[orgType] ?? awsOrgSetupStrategy;
+  const strategy = hasOrgSetupStrategy(orgType)
+    ? ORG_SETUP_STRATEGIES[orgType]
+    : undefined;
+
+  // Falls back rather than throwing: callers invoke this outside their try, so a
+  // throw would escape as an unhandled rejection instead of a form error.
+  return strategy ?? awsOrgSetupStrategy;
 }

@@ -24,6 +24,14 @@ import {
 const DISCOVERY_POLL_INTERVAL_MS = 3000;
 const DISCOVERY_MAX_RETRIES = 60;
 
+/**
+ * Used once discovery has already come back successfully: from that point the
+ * credentials are proven good, so a later failure must not send the user off to
+ * re-check them.
+ */
+const UNEXPECTED_DISCOVERY_RESULT =
+  "The organization was authenticated, but its discovery result could not be read. Please try again.";
+
 function sleepWithAbort(ms: number, signal: AbortSignal): Promise<void> {
   return new Promise((resolve) => {
     if (signal.aborted) {
@@ -126,7 +134,12 @@ export function useOrgSetupSubmission({
         return null;
       }
 
-      const status = result.data.attributes.status;
+      const status = result?.data?.attributes?.status;
+
+      if (!status) {
+        setApiError(UNEXPECTED_DISCOVERY_RESULT);
+        return null;
+      }
 
       if (status === DISCOVERY_STATUS.SUCCEEDED) {
         return result.data.attributes.result;
@@ -167,6 +180,8 @@ export function useOrgSetupSubmission({
         setApiError(message);
       }
     };
+
+    let hasDiscovered = false;
 
     try {
       if (!isCancelled()) {
@@ -295,6 +310,8 @@ export function useOrgSetupSubmission({
         return;
       }
 
+      hasDiscovered = true;
+
       const { hierarchy, defaultSelection } = strategy.ingestDiscovery(
         resolvedDiscoveryResult,
         data,
@@ -304,7 +321,13 @@ export function useOrgSetupSubmission({
       onNext();
     } catch {
       if (!isCancelled()) {
-        setApiError(strategy.authFailureMessage());
+        // Ingesting the result is the only work left once `hasDiscovered` is set,
+        // and a malformed result is not a credentials problem.
+        setApiError(
+          hasDiscovered
+            ? UNEXPECTED_DISCOVERY_RESULT
+            : strategy.authFailureMessage(),
+        );
       }
     } finally {
       if (discoveryAbortControllerRef.current === abortController) {
