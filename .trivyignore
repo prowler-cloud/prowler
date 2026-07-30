@@ -11,7 +11,8 @@
 # and .github/workflows/api-container-checks.yml
 
 # perl-base is Debian "Essential: yes". Trivy spreads src:perl CVEs across every
-# binary package, so perl-base gets flagged for modules only perl-modules-5.36 ships.
+# binary package, so perl-base gets flagged for modules only perl-modules-5.40 ships.
+# Neither image installs perl-modules-5.40, and nothing in either invokes perl.
 
 # Archive::Tar path traversal. Not installed: `perl -MArchive::Tar -e1` cannot locate it.
 CVE-2026-42496 pkg:perl-base exp:2027-01-31
@@ -22,18 +23,8 @@ CVE-2026-57433 pkg:perl-base exp:2027-01-31
 # Regex heap overflow on 32-bit builds only; both published arches are 64-bit.
 CVE-2026-8376 pkg:perl-base exp:2027-01-31
 
-# Regex trie overflow. Upstream says 5.36.0 predates it; Debian disagrees. Short expiry.
+# Regex trie bug giving silently wrong matches above 65535 alternation branches. Now on
+# perl 5.40.1, which is in range (the 5.36-predates-it argument no longer applies), so this
+# rests on nothing invoking perl. Short expiry to force a re-look.
 # Ref: https://github.com/Perl/perl5/issues/23388
 CVE-2026-13221 pkg:perl-base exp:2026-11-30
-
-# The next two are fixed in trixie; expiries land after PROWLER-2299 retires them.
-
-# SQLite overflow via CPython's stdlib sqlite3; Prowler never opens user-supplied DBs.
-CVE-2025-7458 pkg:libsqlite3-0 exp:2026-10-31
-
-# zlib MiniZip overflow. Debian marks bookworm <ignored> — minizip is not built.
-# Ref: https://security-tracker.debian.org/tracker/CVE-2023-45853
-CVE-2023-45853 pkg:zlib1g exp:2026-10-31
-
-# libssh2 OOB write, only reachable as an SSH/SCP/SFTP client; Prowler uses HTTPS only.
-CVE-2026-55200 pkg:libssh2-1 exp:2026-10-15
