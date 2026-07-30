@@ -244,6 +244,46 @@ function getProviderRowsByIds({
     .filter((provider): provider is ProvidersProviderRow => Boolean(provider));
 }
 
+/**
+ * Resolves a group's direct providers: the `providers` relationship when the API
+ * serves one, the reverse-lookup map otherwise.
+ */
+function resolveProviderRowsAndIds({
+  relationships,
+  fallbackProviders,
+  providerLookup,
+  excludeIds,
+}: {
+  relationships: Parameters<typeof getRelationshipProviderIds>[0];
+  fallbackProviders: ProvidersProviderRow[];
+  providerLookup: Map<string, ProvidersProviderRow>;
+  excludeIds?: ReadonlySet<string>;
+}): { providerRows: ProvidersProviderRow[]; directProviderIds: string[] } {
+  const isIncluded = (provider: ProvidersProviderRow) =>
+    !excludeIds?.has(provider.id);
+  const relationshipProviderIds = getRelationshipProviderIds(relationships);
+  const rowsFromRelationships = getProviderRowsByIds({
+    providerIds: relationshipProviderIds,
+    providerLookup,
+  }).filter(isIncluded);
+
+  if (rowsFromRelationships.length > 0) {
+    return {
+      providerRows: rowsFromRelationships,
+      // The relationship ids, not the resolved rows: the lookup holds only the
+      // current page, while the id set drives the group's counts and filtering.
+      directProviderIds: relationshipProviderIds,
+    };
+  }
+
+  const providerRows = fallbackProviders.filter(isIncluded);
+
+  return {
+    providerRows,
+    directProviderIds: providerRows.map((provider) => provider.id),
+  };
+}
+
 function dedupeIds(ids: string[]): string[] {
   return Array.from(new Set(ids));
 }
@@ -313,19 +353,13 @@ function buildOrganizationNodeRows({
         useParentIdRelationships,
         maxDepth: maxDepth - 1,
       });
-      const providerRowsFromRelationships = getProviderRowsByIds({
-        providerIds: getRelationshipProviderIds(organizationNode.relationships),
+      const { providerRows, directProviderIds } = resolveProviderRowsAndIds({
+        relationships: organizationNode.relationships,
+        fallbackProviders:
+          providersByOrganizationNodeId.get(organizationNode.id) ?? [],
         providerLookup,
       });
-      const providerRows =
-        providerRowsFromRelationships.length > 0
-          ? providerRowsFromRelationships
-          : (providersByOrganizationNodeId.get(organizationNode.id) ?? []);
       const subRows = [...childOrganizationNodeRows, ...providerRows];
-      const directProviderIds =
-        providerRowsFromRelationships.length > 0
-          ? getRelationshipProviderIds(organizationNode.relationships)
-          : providerRows.map((provider) => provider.id);
       const childProviderIds = collectOrganizationRowProviderIds(
         childOrganizationNodeRows,
       );
@@ -438,25 +472,21 @@ export function buildProvidersTableRows({
       }
       collectNodeProviderIds(organizationNodeRows);
 
-      const organizationProvidersFromRelationships = getProviderRowsByIds({
-        providerIds: getRelationshipProviderIds(organization.relationships),
-        providerLookup,
-      }).filter(
-        (provider) =>
-          !providersAssignedToNode.has(provider.id) &&
-          !providersInNodes.has(provider.id),
-      );
-      const organizationProviders =
-        organizationProvidersFromRelationships.length > 0
-          ? organizationProvidersFromRelationships
-          : (providersByOrganizationId.get(organization.id) ?? []).filter(
-              (provider) => !providersInNodes.has(provider.id),
-            );
+      // One exclude set for both branches: the fallback map skips providers that
+      // carry a node relationship, so `providersAssignedToNode` can only ever
+      // match on the relationship branch.
+      const { providerRows: organizationProviders, directProviderIds } =
+        resolveProviderRowsAndIds({
+          relationships: organization.relationships,
+          fallbackProviders:
+            providersByOrganizationId.get(organization.id) ?? [],
+          providerLookup,
+          excludeIds: new Set([
+            ...Array.from(providersAssignedToNode),
+            ...Array.from(providersInNodes),
+          ]),
+        });
       const subRows = [...organizationProviders, ...organizationNodeRows];
-      const directProviderIds =
-        organizationProvidersFromRelationships.length > 0
-          ? getRelationshipProviderIds(organization.relationships)
-          : organizationProviders.map((provider) => provider.id);
       const organizationNodeProviderIds =
         collectOrganizationRowProviderIds(organizationNodeRows);
 
