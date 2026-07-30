@@ -28,7 +28,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libtool \
     libxslt1-dev \
     python3-dev \
-    git \
     && rm -rf /var/lib/apt/lists/*
 
 # Install PowerShell
@@ -109,9 +108,11 @@ RUN .venv/bin/python -m prowler.providers.m365.lib.powershell.m365_powershell
 USER root
 
 # Remove build-only packages from the final image after Python dependencies are installed.
+# git is only needed by uv sync for the `prowler @ git+...` dependency; purging it drops perl too.
 RUN apt-get purge -y --auto-remove \
     gcc \
     g++ \
+    git \
     make \
     libxml2-dev \
     libxmlsec1-dev \
