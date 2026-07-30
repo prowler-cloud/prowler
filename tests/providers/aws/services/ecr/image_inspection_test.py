@@ -225,6 +225,46 @@ class Test_ImageInspector:
         assert scan_data.truncated is True
         assert sum(len(f.content) for f in scan_data.files) <= 1000
 
+    @mock_aws
+    def test_fetch_image_scan_data_oversized_members_count_toward_budget(self):
+        """Members skipped for size still count toward the per-image budget.
+
+        A streaming reader must decompress each member to advance past it, so
+        oversized-and-skipped members must still consume budget; otherwise a
+        layer of many just-over-limit files would decompress unbounded. The
+        loop must stop before reaching a later scannable member.
+        """
+        MANIFESTS_BY_DIGEST[IMAGE_DIGEST] = SIMPLE_MANIFEST
+        BLOBS_BY_DIGEST[CONFIG_DIGEST] = json.dumps(CONFIG_JSON).encode()
+        # Ten 300-byte members (each over the patched 100-byte MAX_FILE_BYTES,
+        # so each is skipped for content) followed by a small, scannable file.
+        layer = {f"app/big{i}.bin": "x" * 300 for i in range(10)}
+        layer["app/reachable.txt"] = "hello"
+        BLOBS_BY_DIGEST[LAYER_DIGEST] = build_gzip_tar(layer)
+
+        ecr_client = client("ecr", region_name=AWS_REGION_EU_WEST_1)
+        with (
+            patch(_REQUESTS_GET, new=mock_requests_get),
+            patch(
+                "prowler.providers.aws.services.ecr.image_inspection.MAX_FILE_BYTES",
+                100,
+            ),
+            patch(
+                "prowler.providers.aws.services.ecr.image_inspection.MAX_TOTAL_BYTES_PER_IMAGE",
+                1000,
+            ),
+        ):
+            scan_data = ImageInspector().fetch_image_scan_data(
+                ecr_client, AWS_ACCOUNT_NUMBER, REPO_NAME, IMAGE_DIGEST
+            )
+
+        assert scan_data is not None
+        # The oversized members exhaust the 1000-byte budget after ~3 of them,
+        # so the loop stops before ever reaching app/reachable.txt. If skipped
+        # members were not counted, reachable.txt would be scanned.
+        assert scan_data.files == []
+        assert scan_data.truncated is True
+
     def test_select_child_manifest_digest_falls_back_to_non_amd64(self):
         """With no amd64/linux entry, the first non-attestation candidate is picked."""
         manifest_list = {
@@ -307,6 +347,26 @@ class Test_ImageInspector:
             )
             is not None
         )
+
+    def test_open_layer_tar_zstd_rejects_when_actual_exceeds_budget(self):
+        """A zstd frame that under-declares its size is rejected post-decompress.
+
+        The zstd library does not enforce the frame header, so the header check
+        alone can be bypassed by a lying header; the actual output must still be
+        rejected when it exceeds the remaining budget.
+        """
+        media_type = "application/vnd.oci.image.layer.v1.tar+zstd"
+        compressed = zstd.compress(build_tar({"app/config.py": "x" * 5000}))
+
+        # Simulate a header that under-declares the size (returns 10), so it
+        # passes the header check against a 100-byte budget; the real output
+        # (~5 KB) must then be caught by the post-decompress guard.
+        with patch.object(ImageInspector, "_zstd_frame_content_size", return_value=10):
+            result = ImageInspector._open_layer_tar(
+                compressed, media_type, remaining_budget=100
+            )
+
+        assert result is None
 
     @mock_aws
     def test_fetch_image_scan_data_rejects_oversized_zstd_frame(self):

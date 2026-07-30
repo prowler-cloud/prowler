@@ -188,6 +188,15 @@ class ImageInspector:
                             break
                         if not member.isfile():
                             continue
+                        # A streaming tar reader must decompress each member's
+                        # bytes just to advance past it, so every regular member
+                        # counts against the per-image budget whether or not we
+                        # keep it. Stop before the decompressed total would
+                        # exceed the cap, so it is a true upper bound.
+                        if total_bytes + member.size > MAX_TOTAL_BYTES_PER_IMAGE:
+                            truncated = True
+                            break
+                        total_bytes += member.size
                         base_name = member.name.rsplit("/", 1)[-1]
                         if base_name.startswith(".wh."):
                             # Whiteout marker: a deletion recorded by the union
@@ -196,12 +205,6 @@ class ImageInspector:
                         if member.size > MAX_FILE_BYTES:
                             truncated = True
                             continue
-                        if member.size > MAX_TOTAL_BYTES_PER_IMAGE - total_bytes:
-                            # Reading this member would push the decompressed
-                            # total past the per-image budget; stop here so the
-                            # budget is an upper bound, never overshot.
-                            truncated = True
-                            break
                         try:
                             content = (
                                 tar_stream.extractfile(member).read().decode("latin-1")
@@ -219,7 +222,6 @@ class ImageInspector:
                                 content=content,
                             )
                         )
-                        total_bytes += member.size
             except _LayerTooLargeError:
                 # The layer streamed more bytes than MAX_LAYER_DOWNLOAD_BYTES
                 # (a manifest under-declaring its size); skip it and disclose
@@ -525,16 +527,22 @@ class ImageInspector:
             if media_type.endswith("zstd"):
                 # Unlike gzip (streamed incrementally by tarfile, with each
                 # member's size checked before its content is read), zstd
-                # decompression here happens all at once. Refuse to expand a
-                # frame whose declared decompressed size is unknown or would
-                # exceed what's left of the image's total budget, instead of
-                # buffering an unbounded amount of untrusted data in memory.
+                # decompression here happens all at once. First refuse a frame
+                # whose declared decompressed size is unknown or already exceeds
+                # the image's remaining budget.
                 content_size = ImageInspector._zstd_frame_content_size(layer_bytes)
                 if content_size is None or content_size > remaining_budget:
                     return None
-                return tarfile.open(
-                    fileobj=BytesIO(zstd.decompress(layer_bytes)), mode="r:"
-                )
+                # The zstd library (one-shot decompress, no output cap) does not
+                # enforce the declared size, so a crafted frame can under-declare
+                # it. Re-check the actual output and reject an over-budget layer
+                # rather than scan it. This bounds what is held and scanned; the
+                # transient decompression itself is bounded by the compressed
+                # download cap (MAX_LAYER_DOWNLOAD_BYTES) applied upstream.
+                decompressed = zstd.decompress(layer_bytes)
+                if len(decompressed) > remaining_budget:
+                    return None
+                return tarfile.open(fileobj=BytesIO(decompressed), mode="r:")
             if media_type.endswith("gzip"):
                 return tarfile.open(fileobj=BytesIO(layer_bytes), mode="r:gz")
             if media_type.endswith("tar"):
