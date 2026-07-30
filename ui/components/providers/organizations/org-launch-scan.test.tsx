@@ -77,11 +77,8 @@ describe("OrgLaunchScan", () => {
     });
     updateSchedulesBulkMock.mockResolvedValue({
       data: {
-        type: "schedules-bulk",
-        attributes: {
-          updated: PROVIDER_IDS,
-          failed: [],
-        },
+        updated: PROVIDER_IDS,
+        failed: [],
       },
     });
     useOrgSetupStore.getState().reset();
@@ -137,11 +134,8 @@ describe("OrgLaunchScan", () => {
       const onFooterChange = vi.fn();
       updateSchedulesBulkMock.mockResolvedValue({
         data: {
-          type: "schedules-bulk",
-          attributes: {
-            updated: ["provider-2"],
-            failed: [{ id: "provider-1", error: "Denied" }],
-          },
+          updated: ["provider-2"],
+          failed: [{ id: "provider-1", error: "Denied" }],
         },
       });
 
@@ -251,14 +245,11 @@ describe("OrgLaunchScan", () => {
       const onFooterChange = vi.fn();
       updateSchedulesBulkMock.mockResolvedValue({
         data: {
-          type: "schedules-bulk",
-          attributes: {
-            updated: [],
-            failed: [
-              { id: "provider-1", error: "Denied" },
-              { id: "provider-2", error: "Denied" },
-            ],
-          },
+          updated: [],
+          failed: [
+            { id: "provider-1", error: "Denied" },
+            { id: "provider-2", error: "Denied" },
+          ],
         },
       });
 
@@ -283,7 +274,8 @@ describe("OrgLaunchScan", () => {
           expect.objectContaining({
             variant: "destructive",
             title: "Unable to save scan schedules",
-            description: "The scan schedule could not be saved for 2 accounts.",
+            description:
+              "The scan schedule could not be saved for 2 accounts: Denied.",
           }),
         ),
       );
@@ -297,11 +289,8 @@ describe("OrgLaunchScan", () => {
       const onFooterChange = vi.fn();
       updateSchedulesBulkMock.mockResolvedValue({
         data: {
-          type: "schedules-bulk",
-          attributes: {
-            updated: ["provider-2"],
-            failed: [{ provider_id: "provider-1", error: "Denied" }],
-          },
+          updated: ["provider-2"],
+          failed: [{ id: "provider-1", error: "Denied" }],
         },
       });
 
@@ -326,9 +315,51 @@ describe("OrgLaunchScan", () => {
         expect.objectContaining({
           title: "Scan schedules saved",
           description:
-            "The schedule was saved for 1 account, but 1 account could not be updated.",
+            "The schedule was saved for 1 account, but 1 account could not be updated: Denied.",
         }),
       );
+    });
+
+    it("should proceed when the response carries no result lists", async () => {
+      // Given — an empty 200/204 body. The endpoint commits each schedule before
+      // answering, so a body we cannot read must not be reported as a failure.
+      const user = userEvent.setup();
+      const onFooterChange = vi.fn();
+      updateSchedulesBulkMock.mockResolvedValue({ success: true });
+
+      render(
+        <OrgLaunchScan
+          onClose={vi.fn()}
+          onBack={vi.fn()}
+          onFooterChange={onFooterChange}
+          capability={SCAN_SCHEDULE_CAPABILITY.ADVANCED}
+        />,
+      );
+
+      // When
+      await user.click(
+        await screen.findByRole("checkbox", {
+          name: /launch an initial scan now/i,
+        }),
+      );
+      await act(async () => {
+        lastFooterConfig(onFooterChange)?.onAction?.();
+      });
+
+      // Then — every created provider is treated as saved and scanned.
+      await waitFor(() =>
+        expect(launchOrganizationScansMock).toHaveBeenCalledWith(
+          PROVIDER_IDS,
+          "single",
+        ),
+      );
+      expect(toastMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: "Scan schedules saved and initial scans launched",
+          description: "The scan schedule was saved for 2 accounts.",
+        }),
+      );
+      expect(pushMock).toHaveBeenCalledWith("/providers");
     });
   });
 

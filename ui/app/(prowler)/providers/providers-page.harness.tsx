@@ -502,6 +502,35 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
     );
   }
 
+  /** Wait for the "saved for some, failed for others" report. */
+  async waitForPartialScheduleSave(
+    saved: number,
+    failed: number,
+    timeoutMs = 20000,
+  ): Promise<void> {
+    await this.waitForText(
+      new RegExp(
+        `saved for ${saved} \\w+, but ${failed} \\w+ could not be updated`,
+      ),
+      timeoutMs,
+    );
+  }
+
+  /** Wait for the report that no schedule could be saved at all. */
+  async waitForScheduleSaveFailure(timeoutMs = 20000): Promise<void> {
+    await this.waitForText(/could not be saved for/, timeoutMs);
+  }
+
+  /** Whether the reason the API gave for a failure reached the user. */
+  hasScheduleFailureReason(reason: string): boolean {
+    return this.containsText(new RegExp(reason));
+  }
+
+  /** Whether the wizard is still showing the launch step (it did not navigate). */
+  isStillOnLaunchStep(): boolean {
+    return this.containsText(/Scan Schedule/);
+  }
+
   // --- Table: grouping + row actions --------------------------------------
 
   private get tableRows(): HTMLElement[] {

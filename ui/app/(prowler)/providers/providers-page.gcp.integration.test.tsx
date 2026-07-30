@@ -4,6 +4,7 @@ import { it } from "@/__tests__/fixtures";
 import {
   buildGcpDiscoveryResult,
   DISCOVERY_STATUS_VALUE,
+  GCP_CREATED_PROVIDER_IDS,
   GCP_ORG_ID,
   gcpOnboardingFixture,
   mixedHierarchyFixture,
@@ -92,6 +93,78 @@ describe("GCP Organizations onboarding (Phase 2)", () => {
 
     expect(harness.hasDocsLinkTo(GCP_ORG_DOCS)).toBe(true);
   }, 30000);
+
+  // The launch step reads `/schedules/bulk`'s per-provider lists. The endpoint
+  // returns them directly under `data` (no `attributes` level), so these three
+  // cases pin that read: a client looking one level too deep sees no lists at
+  // all and cannot tell these outcomes apart.
+  it("launches initial scans only for the projects whose schedule was saved", async () => {
+    const harness = new ProvidersPageHarness(
+      gcpOnboardingFixture({
+        scheduleBulk: {
+          updated: [GCP_CREATED_PROVIDER_IDS[0]],
+          failed: [{ id: GCP_CREATED_PROVIDER_IDS[1], error: "Denied" }],
+          shape: "flat",
+        },
+      }),
+    );
+    await onboardGcpToSelection(harness);
+    await harness.testConnections();
+    await harness.waitForProjectsConnected();
+
+    await harness.enableInitialScan();
+    await harness.saveScheduleAndLaunch();
+    await harness.waitForPartialScheduleSave(1, 1);
+
+    // The reason the API gave must reach the user — a count alone is unactionable.
+    expect(harness.hasScheduleFailureReason("Denied")).toBe(true);
+    expect(harness.scanLaunchCount).toBe(1);
+  }, 40000);
+
+  it("keeps the user on the launch step when no schedule could be saved", async () => {
+    const harness = new ProvidersPageHarness(
+      gcpOnboardingFixture({
+        scheduleBulk: {
+          updated: [],
+          failed: GCP_CREATED_PROVIDER_IDS.map((id) => ({
+            id,
+            error: "Denied",
+          })),
+          shape: "flat",
+        },
+      }),
+    );
+    await onboardGcpToSelection(harness);
+    await harness.testConnections();
+    await harness.waitForProjectsConnected();
+
+    await harness.enableInitialScan();
+    await harness.saveScheduleAndLaunch();
+    await harness.waitForScheduleSaveFailure();
+
+    expect(harness.hasScheduleFailureReason("Denied")).toBe(true);
+    expect(harness.isStillOnLaunchStep()).toBe(true);
+    expect(harness.scanLaunchCount).toBe(0);
+  }, 40000);
+
+  it("proceeds when the schedule response carries no result lists", async () => {
+    // The POST commits each schedule before answering, so an unreadable body must
+    // not strand the user on a schedule that already exists.
+    const harness = new ProvidersPageHarness(
+      gcpOnboardingFixture({
+        scheduleBulk: { updated: null, failed: [], shape: "bare" },
+      }),
+    );
+    await onboardGcpToSelection(harness);
+    await harness.testConnections();
+    await harness.waitForProjectsConnected();
+
+    await harness.enableInitialScan();
+    await harness.saveScheduleAndLaunch();
+    await harness.waitForLaunchComplete();
+
+    expect(harness.scanLaunchCount).toBe(GCP_CREATED_PROVIDER_IDS.length);
+  }, 40000);
 
   it("sends a projects-only apply payload (no accounts, no organizational units)", async () => {
     const harness = new ProvidersPageHarness(gcpOnboardingFixture());

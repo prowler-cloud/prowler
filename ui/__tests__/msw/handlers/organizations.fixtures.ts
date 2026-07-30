@@ -123,6 +123,18 @@ export interface FixtureDiscovery {
   error: string | null;
 }
 
+export interface FixtureScheduleBulkOutcome {
+  /** Ids reported committed; `null` echoes every requested id minus `failed`. */
+  updated: string[] | null;
+  failed: Array<{ id: string; error: string }>;
+  /**
+   * Body variant: `flat` is what the API really returns, `attributes` the
+   * serializer-rendered form the client also tolerates, `bare` a body carrying
+   * neither list (an empty 200/204).
+   */
+  shape: "flat" | "attributes" | "bare";
+}
+
 export interface OrgFixture {
   organizations: FixtureOrganization[];
   nodes: FixtureNode[];
@@ -135,6 +147,8 @@ export interface OrgFixture {
   duplicateSecret: boolean;
   /** Terminal state the deletion task settles into. */
   deletionTaskState: TaskState;
+  /** How `POST /schedules/bulk` answers the launch step. */
+  scheduleBulk: FixtureScheduleBulkOutcome;
   /** Transition window: AWS bodies carry deprecated aliases alongside canonical. */
   includeAwsAliases: boolean;
   /** Tripwire (task 2.10): when false the deprecated `/organizational-units` routes are unregistered. */
@@ -335,7 +349,7 @@ const AWS_CREATED_PROVIDER_IDS = [
   "aaaaaaa1-1111-4111-8111-111111111111",
   "aaaaaaa2-2222-4222-8222-222222222222",
 ];
-const GCP_CREATED_PROVIDER_IDS = [
+export const GCP_CREATED_PROVIDER_IDS = [
   "bbbbbbb1-1111-4111-8111-111111111111",
   "bbbbbbb2-2222-4222-8222-222222222222",
 ];
@@ -358,6 +372,7 @@ const baseFixture = (): OrgFixture => ({
   connectionByUid: {},
   duplicateSecret: false,
   deletionTaskState: "completed",
+  scheduleBulk: { updated: null, failed: [], shape: "flat" },
   // Deprecated AWS FIELDS stay in bodies (mirrors production's facade period)…
   includeAwsAliases: true,
   // …but the deprecated `/organizational-units` ROUTES are gone (Phase 1

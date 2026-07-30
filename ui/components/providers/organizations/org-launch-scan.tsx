@@ -27,8 +27,10 @@ import { UsageLimitMessage } from "@/components/shared/usage-limit-message";
 import { getActionErrorMessage, hasActionError } from "@/lib/action-errors";
 import {
   buildScheduleUpdatePayload,
+  describeSchedulesBulkFailures,
   getScanScheduleCapability,
   getScheduleFormDefaults,
+  parseSchedulesBulkResult,
   scheduleFormSchema,
 } from "@/lib/schedules";
 import { isCloud } from "@/lib/shared/env";
@@ -38,7 +40,6 @@ import {
   SCAN_SCHEDULE_CAPABILITY,
   type ScanScheduleCapability,
   type ScheduleFormValues,
-  type SchedulesBulkResponse,
 } from "@/types";
 import { TREE_ITEM_STATUS } from "@/types/tree";
 
@@ -72,26 +73,6 @@ const SCAN_SCHEDULE = {
 } as const;
 
 type ScanScheduleOption = (typeof SCAN_SCHEDULE)[keyof typeof SCAN_SCHEDULE];
-
-function getStringArray(value: unknown): string[] {
-  return Array.isArray(value)
-    ? value.filter((item): item is string => typeof item === "string")
-    : [];
-}
-
-/**
- * Providers whose schedule was actually saved. The backend reports successes
- * under `updated`, populated only after each provider's schedule commits, so
- * it already excludes failures — no client-side subtraction is needed.
- */
-function getUpdatedProviderIds(result: SchedulesBulkResponse): string[] {
-  return getStringArray(result.data?.attributes?.updated);
-}
-
-function getFailedCount(result: SchedulesBulkResponse): number {
-  const failed = result.data?.attributes?.failed;
-  return Array.isArray(failed) ? failed.length : 0;
-}
 
 function formatCandidateCount(count: number, noun: OrgCandidateNoun): string {
   return `${count} ${count === 1 ? noun.singular : noun.plural}`;
@@ -192,12 +173,18 @@ export function OrgLaunchScan({
       return;
     }
 
-    const updatedProviderIds = getUpdatedProviderIds(result);
-    const failedCount = getFailedCount(result);
+    const outcome = parseSchedulesBulkResult(result);
+    const failedCount = outcome.failures.length;
+    const failureReasons = describeSchedulesBulkFailures(outcome.failures);
+    // A body we cannot read is not a failure: the endpoint commits each schedule
+    // before answering, so blocking here would strand a schedule that already
+    // exists and push the user to save it again.
+    const updatedProviderIds = outcome.isIndeterminate
+      ? createdProviderIds
+      : outcome.updatedProviderIds;
 
-    // No provider was actually updated (e.g. the endpoint returned 200 but every
-    // schedule failed). Surface it as an error and keep the wizard open to retry
-    // instead of navigating away with a misleading "saved for 0 accounts" toast.
+    // Every provider failed. Keep the wizard open to retry, and name the reason —
+    // without it the user has nothing to act on.
     if (updatedProviderIds.length === 0) {
       setIsLaunching(false);
       toast({
@@ -205,7 +192,7 @@ export function OrgLaunchScan({
         title: "Unable to save scan schedules",
         description:
           failedCount > 0
-            ? `The scan schedule could not be saved for ${formatCandidateCount(failedCount, noun)}.`
+            ? `The scan schedule could not be saved for ${formatCandidateCount(failedCount, noun)}${failureReasons ? `: ${failureReasons}.` : "."}`
             : `The scan schedule could not be saved for any ${noun.singular}.`,
       });
       return;
@@ -229,7 +216,7 @@ export function OrgLaunchScan({
     const updatedCount = updatedProviderIds.length;
     const description =
       failedCount > 0
-        ? `The schedule was saved for ${formatCandidateCount(updatedCount, noun)}, but ${formatCandidateCount(failedCount, noun)} could not be updated.`
+        ? `The schedule was saved for ${formatCandidateCount(updatedCount, noun)}, but ${formatCandidateCount(failedCount, noun)} could not be updated${failureReasons ? `: ${failureReasons}.` : "."}`
         : `The scan schedule was saved for ${formatCandidateCount(updatedCount, noun)}.`;
     const targetTab =
       initialScanSuccessCount > 0

@@ -8,6 +8,8 @@ import "@/styles/globals.css";
 
 import { afterAll, afterEach, beforeAll, vi } from "vitest";
 
+import { resetToasts } from "@/components/shadcn/toast/use-toast";
+
 import { worker } from "./__tests__/msw/worker";
 
 // Server Actions ("use server") are bundled by Vite as plain async functions
@@ -69,6 +71,10 @@ beforeAll(async () => {
 
 afterEach(() => {
   worker.resetHandlers();
+  // The toast store is module-level and keeps dismissed toasts for ~17 minutes,
+  // so one raised here would re-render on the next test's mount and its
+  // fixed-position host would intercept clicks aimed at the page.
+  resetToasts();
 });
 
 afterAll(() => {

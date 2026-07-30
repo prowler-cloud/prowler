@@ -583,17 +583,29 @@ export const handlersForOrganizations = (
       const body = (await request.json()) as {
         data?: { attributes?: { provider_ids?: string[] } };
       };
-      // Echo the requested ids back as `updated`: the launch step reads that
-      // list to decide the flow succeeded, and treats an empty one as a
-      // total failure.
-      const updated = body?.data?.attributes?.provider_ids ?? [];
-      return HttpResponse.json({
-        data: {
-          id: "schedules-bulk-1",
-          type: "schedules-bulk",
-          attributes: { updated, failed: [] },
-        },
-      });
+      const requestedIds = body?.data?.attributes?.provider_ids ?? [];
+      const { failed, shape } = fx.scheduleBulk;
+      const failedIds = new Set(failed.map((failure) => failure.id));
+      // `updated` defaults to the requested ids minus the failures, mirroring the
+      // API: each provider commits in its own transaction, so the list already
+      // excludes failures.
+      const updated =
+        fx.scheduleBulk.updated ??
+        requestedIds.filter((id) => !failedIds.has(id));
+
+      // The real endpoint returns a plain dict that the JSON:API renderer wraps
+      // in `data` — no `attributes` level. The other shapes exist so the client
+      // can be proven tolerant of a serializer-rendered body and of one carrying
+      // no lists at all.
+      if (shape === "attributes") {
+        return HttpResponse.json({
+          data: { type: "schedules-bulk", attributes: { updated, failed } },
+        });
+      }
+      if (shape === "bare") {
+        return HttpResponse.json({ data: {} });
+      }
+      return HttpResponse.json({ data: { updated, failed } });
     }),
   ];
 
