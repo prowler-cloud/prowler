@@ -212,6 +212,26 @@ const EXPECTED_MODAL_HEADER_LABEL: Record<KnownProviderType, string> = {
   okta: "Okta",
 };
 
+// Method-specific labels for the credentials step. Providers with per-method
+// docs subsections (AWS, M365, Alibaba Cloud, Cloudflare) must round-trip
+// through `getProviderWizardDocsDestination` into a specific label —
+// otherwise the URL in `PROVIDER_CREDENTIALS_METHOD_DOCS_URL` and the label
+// in `docsSectionLabelMap` have drifted apart. Providers without a per-method
+// deep link (GCP, GitHub, and every single-method provider) fall through to
+// the generic `EXPECTED_MODAL_HEADER_LABEL` above and are not listed here.
+const EXPECTED_METHOD_MODAL_HEADER_LABEL: Array<
+  [KnownProviderType, string, string]
+> = [
+  ["aws", "role", "AWS Assume Role"],
+  ["aws", "credentials", "AWS Credentials"],
+  ["m365", "app_certificate", "M365 Certificate"],
+  ["m365", "app_client_secret", "M365 Client Secret"],
+  ["alibabacloud", "role", "Alibaba Cloud RAM Role"],
+  ["alibabacloud", "credentials", "Alibaba Cloud Credentials"],
+  ["cloudflare", "api_token", "Cloudflare API Token"],
+  ["cloudflare", "api_key", "Cloudflare API Key"],
+];
+
 describe("provider label parity", () => {
   const STEPS = [
     PROVIDER_WIZARD_STEP.CONNECT,
@@ -230,6 +250,30 @@ describe("provider label parity", () => {
           `Modal header label drift for provider="${provider}" step=${step}: getProviderHelpText returned "${link}" which the parser resolved to "${label}" instead of "${EXPECTED_MODAL_HEADER_LABEL[provider]}". Check destinationLabelMap in provider-wizard-modal.utils.ts.`,
         ).toBe(EXPECTED_MODAL_HEADER_LABEL[provider]);
       }
+    }
+  });
+
+  it("resolves the expected modal header label for every method-specific credentials deep link", () => {
+    // Round-trip check: catches drift between the URLs in
+    // `PROVIDER_CREDENTIALS_METHOD_DOCS_URL` (external-urls.ts) and the
+    // section labels in `docsSectionLabelMap` (this file). A hash typo on
+    // either side would otherwise slip past the individual literal-URL tests
+    // in both files.
+    for (const [
+      provider,
+      method,
+      expected,
+    ] of EXPECTED_METHOD_MODAL_HEADER_LABEL) {
+      const { link } = getProviderHelpText(
+        provider,
+        PROVIDER_WIZARD_STEP.CREDENTIALS,
+        method,
+      );
+      const label = getProviderWizardDocsDestination(link);
+      expect(
+        label,
+        `Method-specific label drift for provider="${provider}" method="${method}": getProviderHelpText returned "${link}" which the parser resolved to "${label}" instead of "${expected}". Ensure PROVIDER_CREDENTIALS_METHOD_DOCS_URL and docsSectionLabelMap agree on the anchor.`,
+      ).toBe(expected);
     }
   });
 });
