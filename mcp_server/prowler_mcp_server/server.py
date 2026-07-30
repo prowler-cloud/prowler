@@ -60,6 +60,3 @@ async def health_check(_request) -> JSONResponse:
 
 
 setup_main_server()
-
-# Stateless: nothing needs per-session state, and retained sessions leak memory.
-app = prowler_mcp_server.http_app(stateless_http=True)
