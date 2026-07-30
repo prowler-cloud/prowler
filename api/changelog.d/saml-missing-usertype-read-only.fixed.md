@@ -1,0 +1,1 @@
+SAML users without a `userType` attribute and without an existing role in the SAML tenant now receive a least-privilege `read_only` fallback role; a numeric suffix is used when that name belongs to a role with different permissions

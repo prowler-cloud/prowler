@@ -814,6 +814,21 @@ class TenantFinishACSView(FinishACSView):
             User.objects.using(MainRouter.admin_db).filter(id=saml_user_id).delete()
             request.session.pop("saml_user_created", None)
 
+    @staticmethod
+    def _user_has_tenant_role(user_id, tenant_id):
+        return (
+            UserRoleRelationship.objects.using(MainRouter.admin_db)
+            .filter(user_id=user_id, tenant_id=tenant_id)
+            .exists()
+        )
+
+    @staticmethod
+    def _is_read_only_fallback_role(role):
+        return (
+            not any(getattr(role, permission) for permission in Role.PERMISSION_FIELDS)
+            and role.unlimited_visibility
+        )
+
     def dispatch(self, request, organization_slug):
         try:
             super().dispatch(request, organization_slug)
@@ -879,11 +894,56 @@ class TenantFinishACSView(FinishACSView):
             user.name = "N/A"
         user.save()
 
-        # Only remap roles when the IdP provides a userType attribute.
-        # Without it, the user's current roles are left untouched.
+        # Only remap existing roles when the IdP provides a userType attribute.
+        # Without it, preserve current roles or assign a read-only fallback.
         role_name = (
             extra.get("userType", [""])[0].strip() if extra.get("userType") else ""
         )
+        if not role_name:
+            with rls_transaction(str(tenant.id), using=MainRouter.admin_db):
+                with transaction.atomic(using=MainRouter.admin_db):
+                    # Serialize concurrent ACS callbacks for the same user.
+                    (
+                        User.objects.using(MainRouter.admin_db)
+                        .select_for_update()
+                        .only("id")
+                        .get(pk=user_id)
+                    )
+                    user_has_roles = self._user_has_tenant_role(user_id, tenant.id)
+                    if not user_has_roles:
+                        read_only_defaults = dict.fromkeys(
+                            Role.PERMISSION_FIELDS, False
+                        )
+                        read_only_defaults["unlimited_visibility"] = True
+                        role, role_created = Role.objects.using(
+                            MainRouter.admin_db
+                        ).get_or_create(
+                            name="read_only",
+                            tenant=tenant,
+                            defaults=read_only_defaults,
+                        )
+                        role_is_read_only = self._is_read_only_fallback_role(role)
+                        if not role_created and not role_is_read_only:
+                            suffix = 0
+                            while not role_created and not role_is_read_only:
+                                role, role_created = Role.objects.using(
+                                    MainRouter.admin_db
+                                ).get_or_create(
+                                    name=f"read_only_{suffix}",
+                                    tenant=tenant,
+                                    defaults=read_only_defaults,
+                                )
+                                role_is_read_only = self._is_read_only_fallback_role(
+                                    role
+                                )
+                                suffix += 1
+                        UserRoleRelationship.objects.using(
+                            MainRouter.admin_db
+                        ).get_or_create(
+                            user=user,
+                            role=role,
+                            defaults={"tenant": tenant},
+                        )
         if role_name:
             with transaction.atomic(using=MainRouter.admin_db):
                 role = (

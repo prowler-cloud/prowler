@@ -3,9 +3,11 @@ import io
 import json
 import os
 import tempfile
+from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
+from threading import Event, Lock
 from types import SimpleNamespace
 from unittest.mock import ANY, MagicMock, Mock, patch
 from urllib.parse import parse_qs, urlparse
@@ -74,7 +76,7 @@ from conftest import (
     today_after_n_days,
 )
 from django.conf import settings
-from django.db import connection
+from django.db import close_old_connections, connection
 from django.db.models import Count
 from django.http import JsonResponse
 from django.test import RequestFactory
@@ -14843,19 +14845,94 @@ class TestTenantFinishACSView:
         # Verify no new role was created
         assert Role.objects.using(MainRouter.admin_db).count() == roles_before
 
-    def test_dispatch_assigns_no_role_to_new_user_when_usertype_missing(
+    @pytest.mark.parametrize(
+        (
+            "existing_role_attributes",
+            "existing_suffixes",
+            "expected_role_name",
+            "expected_role_created",
+        ),
+        [
+            (None, (), "read_only", True),
+            ({"unlimited_visibility": True}, (), "read_only", False),
+            (
+                {"manage_users": True, "unlimited_visibility": True},
+                (
+                    ("read_only_0", {"unlimited_visibility": True}),
+                    ("read_only_1", {"unlimited_visibility": True}),
+                ),
+                "read_only_0",
+                False,
+            ),
+            (
+                {"manage_users": True, "unlimited_visibility": True},
+                (
+                    (
+                        "read_only_0",
+                        {"manage_users": True, "unlimited_visibility": True},
+                    ),
+                    ("read_only_1", {"unlimited_visibility": True}),
+                ),
+                "read_only_1",
+                False,
+            ),
+            ({"unlimited_visibility": False}, (), "read_only_0", True),
+        ],
+        ids=[
+            "creates-role",
+            "reuses-safe-role",
+            "reuses-first-safe-suffixed-role",
+            "skips-unsafe-suffixed-role",
+            "avoids-restricted-visibility",
+        ],
+    )
+    def test_dispatch_assigns_read_only_role_when_usertype_missing(
         self,
         create_test_user,
         tenants_fixture,
         saml_setup,
         settings,
         monkeypatch,
+        existing_role_attributes,
+        existing_suffixes,
+        expected_role_name,
+        expected_role_created,
     ):
-        """Test that a user without roles gets none assigned when userType is missing"""
+        """Test safe fallback role assignment when userType is missing"""
         monkeypatch.setenv("SAML_SSO_CALLBACK_URL", "http://localhost/sso-complete")
         user = create_test_user
         tenant = tenants_fixture[0]
-        roles_before = Role.objects.using(MainRouter.admin_db).count()
+        other_tenant = tenants_fixture[1]
+
+        other_tenant_role = Role.objects.using(MainRouter.admin_db).create(
+            name="read_only",
+            tenant=other_tenant,
+            unlimited_visibility=True,
+        )
+        other_tenant_relationship = UserRoleRelationship.objects.using(
+            MainRouter.admin_db
+        ).create(
+            user=user,
+            role=other_tenant_role,
+            tenant=other_tenant,
+        )
+
+        existing_role = None
+        if existing_role_attributes is not None:
+            existing_role = Role.objects.using(MainRouter.admin_db).create(
+                name="read_only",
+                tenant=tenant,
+                **existing_role_attributes,
+            )
+        for role_name, role_attributes in existing_suffixes:
+            Role.objects.using(MainRouter.admin_db).create(
+                name=role_name,
+                tenant=tenant,
+                **role_attributes,
+            )
+        roles_before = (
+            Role.objects.using(MainRouter.admin_db).filter(tenant=tenant).count()
+        )
 
         social_account = SocialAccount(
             user=user,
@@ -14908,12 +14985,44 @@ class TestTenantFinishACSView:
 
         assert response.status_code == 302
 
-        # Verify no role was created or assigned
-        assert Role.objects.using(MainRouter.admin_db).count() == roles_before
-        assert not (
+        # Verify the fallback role was created or reused with read-only access
+        expected_role_count = roles_before + expected_role_created
+        assert (
+            Role.objects.using(MainRouter.admin_db).filter(tenant=tenant).count()
+            == expected_role_count
+        )
+        role = Role.objects.using(MainRouter.admin_db).get(
+            name=expected_role_name, tenant=tenant
+        )
+        if existing_role is not None and expected_role_name == "read_only":
+            assert role == existing_role
+        assert not role.manage_users
+        assert not role.manage_account
+        assert not role.manage_billing
+        assert not role.manage_providers
+        assert not role.manage_integrations
+        assert not role.manage_scans
+        assert role.unlimited_visibility
+        assert (
+            UserRoleRelationship.objects.using(MainRouter.admin_db)
+            .filter(user=user, role=role, tenant_id=tenant.id)
+            .exists()
+        )
+        assert (
+            UserRoleRelationship.objects.using(MainRouter.admin_db)
+            .filter(
+                id=other_tenant_relationship.id,
+                user=user,
+                role=other_tenant_role,
+                tenant_id=other_tenant.id,
+            )
+            .exists()
+        )
+        assert (
             UserRoleRelationship.objects.using(MainRouter.admin_db)
             .filter(user=user, tenant_id=tenant.id)
-            .exists()
+            .count()
+            == 1
         )
 
         # Membership is still created so the user belongs to the tenant
@@ -14921,6 +15030,131 @@ class TestTenantFinishACSView:
             Membership.objects.using(MainRouter.admin_db)
             .filter(user=user, tenant=tenant)
             .exists()
+        )
+
+    @pytest.mark.django_db(transaction=True)
+    def test_dispatch_serializes_concurrent_fallback_role_assignment(
+        self,
+        create_test_user,
+        tenants_fixture,
+        saml_setup,
+        monkeypatch,
+    ):
+        """Test concurrent callbacks assign only one fallback role"""
+        monkeypatch.setenv("SAML_SSO_CALLBACK_URL", "http://localhost/sso-complete")
+        user = create_test_user
+        tenant = tenants_fixture[0]
+
+        Role.objects.using(MainRouter.admin_db).create(
+            name="read_only",
+            tenant=tenant,
+            manage_users=True,
+            unlimited_visibility=True,
+        )
+
+        social_account = SocialAccount(
+            user=user,
+            provider="saml",
+            extra_data={
+                "firstName": ["John"],
+                "lastName": ["Doe"],
+                "organization": ["testing_company"],
+            },
+        )
+        # Without the user lock, both callbacks reach this query before either
+        # creates a fallback. With the lock, the first callback times out here
+        # while the second waits for the transaction to finish.
+        second_role_check_reached = Event()
+        concurrent_role_checks_detected = Event()
+        role_check_count_lock = Lock()
+        role_check_count = 0
+        original_role_check = TenantFinishACSView._user_has_tenant_role
+
+        def synchronize_role_checks(user_id, tenant_id):
+            nonlocal role_check_count
+            with role_check_count_lock:
+                role_check_count += 1
+                is_first_role_check = role_check_count == 1
+                if role_check_count == 2:
+                    second_role_check_reached.set()
+            if is_first_role_check and second_role_check_reached.wait(timeout=1):
+                concurrent_role_checks_detected.set()
+            return original_role_check(user_id, tenant_id)
+
+        def dispatch_callback():
+            close_old_connections()
+            try:
+                thread_user = User.objects.using(MainRouter.admin_db).get(pk=user.pk)
+                request = RequestFactory().get(
+                    reverse(
+                        "saml_finish_acs",
+                        kwargs={"organization_slug": saml_setup["domain"]},
+                    )
+                )
+                request.user = thread_user
+                request.session = {}
+                response = TenantFinishACSView.as_view()(
+                    request, organization_slug=saml_setup["domain"]
+                )
+                return response
+            finally:
+                close_old_connections()
+
+        with (
+            patch(
+                "allauth.socialaccount.providers.saml.views.get_app_or_404"
+            ) as mock_get_app_or_404,
+            patch(
+                "allauth.socialaccount.models.SocialApp.objects.get"
+            ) as mock_socialapp_get,
+            patch(
+                "allauth.socialaccount.models.SocialAccount.objects.get"
+            ) as mock_sa_get,
+            patch("api.models.SAMLDomainIndex.objects.get") as mock_saml_domain_get,
+            patch("api.models.SAMLConfiguration.objects.get") as mock_saml_config_get,
+            patch("api.models.User.objects.get") as mock_user_get,
+            patch.object(
+                TenantFinishACSView,
+                "_user_has_tenant_role",
+                side_effect=synchronize_role_checks,
+            ),
+        ):
+            mock_get_app_or_404.return_value = MagicMock(
+                provider="saml",
+                client_id=saml_setup["domain"],
+                name="Test App",
+                settings={},
+            )
+            mock_sa_get.return_value = social_account
+            mock_socialapp_get.return_value = MagicMock(provider_id="saml")
+            mock_saml_domain_get.return_value = SimpleNamespace(tenant_id=tenant.id)
+            mock_saml_config_get.return_value = SimpleNamespace(
+                email_domain=saml_setup["domain"], tenant=tenant
+            )
+            mock_user_get.side_effect = lambda *_args, **_kwargs: User.objects.using(
+                MainRouter.admin_db
+            ).get(pk=user.pk)
+
+            with ThreadPoolExecutor(max_workers=2) as executor:
+                responses = list(executor.map(lambda _: dispatch_callback(), range(2)))
+
+        assert role_check_count == 2
+        assert not concurrent_role_checks_detected.is_set()
+        for response in responses:
+            assert response.status_code == status.HTTP_302_FOUND
+            parsed_redirect = urlparse(response.url)
+            assert parsed_redirect.path == "/sso-complete"
+            assert set(parse_qs(parsed_redirect.query)) == {"id"}
+        relationships = UserRoleRelationship.objects.using(MainRouter.admin_db).filter(
+            user=user, tenant_id=tenant.id
+        )
+        assert relationships.count() == 1
+        assert relationships.get().role.name == "read_only_0"
+        assert (
+            Role.objects.using(MainRouter.admin_db)
+            .filter(tenant=tenant, name__startswith="read_only_")
+            .count()
+            == 1
         )
 
     def test_dispatch_skips_role_mapping_when_last_manage_account_user_maps_to_new_role(
