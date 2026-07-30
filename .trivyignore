@@ -5,89 +5,42 @@
 # Entries are scoped per-package so suppressions cannot drift onto unrelated
 # packages that may be assigned the same CVE in the future.
 #
-# Expiries are deliberately staggered. They previously all shared one date, which
-# meant every container gate would have gone red on the same day.
-#
-# Reviewed 2026-07-30 against a build of both images. 23 entries were dropped as
-# dead: the packages are not installed, so a suppression only implied an exposure
-# that does not exist. If a future change reintroduces one, the finding should
-# surface and force a fresh decision rather than be silently pre-suppressed.
-#   - perl, perl-modules-5.36, libperl5.36 (12 entries): removed from the API image
-#     along with git, which was the only thing pulling them in.
-#   - python3.11 / libpython3.11* (7 entries): never present in either image; the
-#     "python3-dev pulls in a system python3.11" premise did not hold.
-#   - libunbound8 (2), linux-libc-dev (1), zlib1g-dev (1): never present.
+# Keep expiries staggered, and only suppress packages the images actually install.
 #
 # Scanned by: .github/actions/trivy-scan via .github/workflows/sdk-container-checks.yml
 # and .github/workflows/api-container-checks.yml
 
-# --- perl-base ---
-# perl-base is in Debian's "Essential: yes" set and cannot be removed without
-# breaking dpkg. It is the only perl package left in either image; the full perl
-# distribution and perl-modules-5.36 are no longer installed. Trivy attributes
-# CVEs from the `perl` source package to every binary package it produces, which
-# is why perl-base is flagged for modules it does not ship.
+# perl-base is Debian "Essential: yes" and cannot be removed. Trivy attributes
+# src:perl CVEs to every binary package it produces, so perl-base gets flagged for
+# modules that ship in perl-modules-5.36 — which these images do not install.
 
-# CVE-2026-42496 — path traversal via crafted symlinks in Archive::Tar.
-# Not applicable: Archive::Tar ships in perl-modules-5.36, which is not installed.
-# Verified in-image: absent from `dpkg -L perl-base`, absent from disk, and
-# `perl -MArchive::Tar -e1` fails with "Can't locate Archive/Tar.pm in @INC".
+# Archive::Tar path traversal. Not installed: `perl -MArchive::Tar -e1` cannot locate it.
 CVE-2026-42496 pkg:perl-base exp:2027-01-31
 
-# CVE-2026-57433 — signed integer overflow in Storable when deserializing a
-# crafted SX_HOOK record (retrieve_hook_common passes a wrapped negative count
-# to av_extend).
-# Not applicable: Storable ships in perl-modules-5.36, which is not installed.
-# Verified in-image the same way — `perl -MStorable -e1` cannot locate it.
+# Storable integer overflow. Not installed: `perl -MStorable -e1` cannot locate it.
 CVE-2026-57433 pkg:perl-base exp:2027-01-31
 
-# CVE-2026-8376 — heap buffer overflow compiling regexes with a repeated fixed
-# string, "on 32-bit builds": Perl_study_chunk sizes the joined substring buffer
-# in characters rather than bytes, and mincount * l overflows SSize_t.
-# Not applicable: both published architectures are 64-bit (linux/amd64 and
-# linux/arm64), so the overflow cannot be reached.
+# Regex heap overflow on 32-bit builds only; both published arches are 64-bit.
 CVE-2026-8376 pkg:perl-base exp:2027-01-31
 
-# CVE-2026-13221 — Perl regex trie overflow producing silently incorrect matches
-# above 65535 fixed-string alternation branches.
-# Why ignored: upstream confirms Perl 5.36.0 is not affected; the regression was
-# introduced after this version. Debian still marks bookworm vulnerable, which is
-# what Trivy reports. Shorter expiry than the entries above because this depends
-# on Debian or NVD correcting the record rather than on a structural fact.
+# Regex trie overflow. Upstream says 5.36.0 predates the regression; Debian still
+# marks bookworm vulnerable. Shorter expiry — needs Debian or NVD to correct.
 # Ref: https://github.com/Perl/perl5/issues/23388
 CVE-2026-13221 pkg:perl-base exp:2026-11-30
 
-# --- Cleared by the Debian 13 (trixie) rebase — see PROWLER-2299 ---
-# Both entries below are fixed in trixie and verified absent there. Expiries land
-# after that rebase so they are retired rather than renewed.
+# The next two are fixed in trixie, so their expiries land after PROWLER-2299
+# rebases onto it and they get retired rather than renewed.
 
-# CVE-2025-7458 — SQLite integer overflow in sqlite3KeyInfoFromExprList,
-# affecting 3.39.2 through 3.41.1.
-# Why ignored: transitive dependency of CPython's stdlib sqlite3 module. Prowler
-# does not open user-supplied SQLite databases; usage is internal and bounded.
-# No Debian bookworm fix. trixie ships 3.46.1, outside the affected range.
+# SQLite overflow affecting 3.39.2-3.41.1, via CPython's stdlib sqlite3. Prowler
+# never opens user-supplied databases. trixie ships 3.46.1.
 CVE-2025-7458 pkg:libsqlite3-0 exp:2026-10-31
 
-# CVE-2023-45853 — zlib MiniZip integer overflow and resultant heap overflow in
-# zipOpenNewFileInZip4_64.
-# Why ignored: Debian's status for bookworm is <ignored>, with the published
-# rationale "contrib/minizip not built and src:zlib not producing binary
-# packages" — the vulnerable symbol is not in the libz.so Debian ships. The NVD
-# text also notes MiniZip is not a supported part of zlib. Real-not-affected
-# rather than unpatched. trixie ships 1.3.1.
+# zlib MiniZip overflow. Debian marks bookworm <ignored> because minizip is not
+# built, so the symbol is absent from the shipped libz.so. trixie ships 1.3.1.
 # Ref: https://security-tracker.debian.org/tracker/CVE-2023-45853
 CVE-2023-45853 pkg:zlib1g exp:2026-10-31
 
-# --- SDK image only ---
-
-# CVE-2026-55200 — libssh2 out-of-bounds write in ssh2_transport_read() from an
-# unchecked packet_length field (heap corruption, possible RCE).
-# Why ignored: libssh2-1 arrives only as a transitive dependency of libcurl in
-# the SDK image. The vulnerable path is reached exclusively when libssh2 acts as
-# an SSH/SCP/SFTP client parsing transport packets from a server. Prowler never
-# uses libcurl's SSH/SCP/SFTP transports; it talks to cloud provider HTTPS
-# endpoints only. No longer present in the API image at all — purging git took
-# libcurl3-gnutls and libssh2-1 with it. Fixed upstream in commit 97acf3df
-# (PR #2052); no Debian bookworm fix yet.
-# Ref: https://security-tracker.debian.org/tracker/CVE-2026-55200
+# libssh2 OOB write, reachable only when acting as an SSH/SCP/SFTP client. Arrives
+# via libcurl in the SDK image; Prowler uses HTTPS only. Gone from the API image
+# since git was purged. No bookworm fix.
 CVE-2026-55200 pkg:libssh2-1 exp:2026-10-15
