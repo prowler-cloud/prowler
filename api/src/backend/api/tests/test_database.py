@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import pytest
 from api.db_router import (
@@ -73,12 +73,15 @@ class TestMainDatabaseRouter:
         assert get_write_db_alias() is None
 
     def test_write_db_alias_context_manager_resets_after_error(self, router):
+        fail = Mock(side_effect=RuntimeError("Simulated failure"))
+
         with pytest.raises(RuntimeError, match="Simulated failure"):
             with write_db_alias(MainRouter.admin_db):
                 assert get_write_db_alias() == MainRouter.admin_db
                 assert router.db_for_write(Tenant) == MainRouter.admin_db
-                raise RuntimeError("Simulated failure")
+                fail()
 
+        fail.assert_called_once_with()
         assert get_write_db_alias() is None
         assert router.db_for_write(Tenant) == "default"
 
