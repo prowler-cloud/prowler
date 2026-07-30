@@ -28,7 +28,7 @@ def build_cluster(tls_enabled: bool) -> Cluster:
 
 class Test_memorydb_cluster_in_transit_encryption_enabled:
     def test_no_clusters(self):
-        memorydb_client = mock.MagicMock
+        memorydb_client = mock.MagicMock()
         memorydb_client.clusters = {}
 
         with (
@@ -48,7 +48,7 @@ class Test_memorydb_cluster_in_transit_encryption_enabled:
             assert len(result) == 0
 
     def test_cluster_in_transit_encryption_disabled(self):
-        memorydb_client = mock.MagicMock
+        memorydb_client = mock.MagicMock()
         memorydb_client.clusters = {memorydb_arn: build_cluster(tls_enabled=False)}
 
         with (
@@ -77,7 +77,7 @@ class Test_memorydb_cluster_in_transit_encryption_enabled:
             assert result[0].resource_tags == []
 
     def test_cluster_in_transit_encryption_enabled(self):
-        memorydb_client = mock.MagicMock
+        memorydb_client = mock.MagicMock()
         memorydb_client.clusters = {memorydb_arn: build_cluster(tls_enabled=True)}
 
         with (
