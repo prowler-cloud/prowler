@@ -1,5 +1,6 @@
 from unittest import mock
 
+import botocore
 from boto3 import client
 from moto import mock_aws
 
@@ -19,15 +20,38 @@ CHECK_PATH = "prowler.providers.aws.services.backup.backup_vaults_lock_enabled.b
 PROVIDER_PATH = "prowler.providers.common.provider.Provider.get_global_provider"
 
 
-def create_vault(locked: bool) -> None:
-    backup_client = client("backup", region_name=AWS_REGION_EU_WEST_1)
-    backup_client.create_backup_vault(
+make_api_call = botocore.client.BaseClient._make_api_call
+
+
+def create_vault() -> None:
+    client("backup", region_name=AWS_REGION_EU_WEST_1).create_backup_vault(
         BackupVaultName=VAULT_NAME, EncryptionKeyArn=KMS_KEY_ARN
     )
-    if locked:
-        backup_client.put_backup_vault_lock_configuration(
-            BackupVaultName=VAULT_NAME, ChangeableForDays=3, MinRetentionDays=7
-        )
+
+
+def mock_locked_vault(self, operation_name, kwargs):
+    """Report the vault as locked, which moto cannot do on its own.
+
+    The pinned moto answers PutBackupVaultLockConfiguration with "Not yet
+    implemented", so Vault Lock cannot be turned on through the API. Only this
+    one response is replaced; the vault is still created by moto and the
+    service parses this payload exactly as it would parse AWS's.
+    """
+    if operation_name == "ListBackupVaults":
+        return {
+            "BackupVaultList": [
+                {
+                    "BackupVaultName": VAULT_NAME,
+                    "BackupVaultArn": VAULT_ARN,
+                    "EncryptionKeyArn": KMS_KEY_ARN,
+                    "NumberOfRecoveryPoints": 0,
+                    "Locked": True,
+                    "MinRetentionDays": 7,
+                    "MaxRetentionDays": 365,
+                }
+            ]
+        }
+    return make_api_call(self, operation_name, kwargs)
 
 
 class Test_backup_vaults_lock_enabled:
@@ -74,7 +98,7 @@ class Test_backup_vaults_lock_enabled:
     def test_backup_vault_not_locked(self):
         from prowler.providers.aws.services.backup.backup_service import Backup
 
-        create_vault(locked=False)
+        create_vault()
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
         with mock.patch(PROVIDER_PATH, return_value=aws_provider):
@@ -101,11 +125,15 @@ class Test_backup_vaults_lock_enabled:
     def test_backup_vault_locked(self):
         from prowler.providers.aws.services.backup.backup_service import Backup
 
-        create_vault(locked=True)
+        create_vault()
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        with mock.patch(
+            "botocore.client.BaseClient._make_api_call", new=mock_locked_vault
+        ):
+            backup = Backup(aws_provider)
 
         with mock.patch(PROVIDER_PATH, return_value=aws_provider):
-            with mock.patch(CHECK_PATH, new=Backup(aws_provider)):
+            with mock.patch(CHECK_PATH, new=backup):
                 from prowler.providers.aws.services.backup.backup_vaults_lock_enabled.backup_vaults_lock_enabled import (
                     backup_vaults_lock_enabled,
                 )
