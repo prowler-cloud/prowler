@@ -51,6 +51,15 @@ export interface GcpOrgSetupData extends BaseOrgSetupData {
  */
 export type OrgSetupSubmissionData = AwsOrgSetupData | GcpOrgSetupData;
 
+export type OrgSetupErrorField =
+  | "organizationName"
+  | "awsOrgId"
+  | "gcpOrgId"
+  | "serviceAccountKey"
+  | "clientId"
+  | "clientSecret"
+  | "refreshToken";
+
 /**
  * Per-organization-type pieces of the shared setup submission chain
  * (find-or-create org → create/replace secret → discover → poll → select).
@@ -61,7 +70,7 @@ export type OrgSetupSubmissionData = AwsOrgSetupData | GcpOrgSetupData;
 interface OrgSetupStrategy<D extends OrgSetupSubmissionData> {
   orgType: D["orgType"];
   /** Form field the organization external-id error attaches to. */
-  externalIdField: string;
+  externalIdField: OrgSetupErrorField;
   /** External id used to match/create the organization. */
   getExternalId: (data: D) => string;
   /** Display name to store (falls back to the external id). */
@@ -72,7 +81,7 @@ interface OrgSetupStrategy<D extends OrgSetupSubmissionData> {
    * Maps a secret-scoped server-error pointer (`/data/attributes/secret/...`)
    * to the form field it belongs to, or null to surface it in the error banner.
    */
-  mapSecretErrorPointer: (pointer: string) => string | null;
+  mapSecretErrorPointer: (pointer: string) => OrgSetupErrorField | null;
   /**
    * Normalize the raw discovery result into the common hierarchy model and pick
    * the candidates to pre-select.
@@ -92,11 +101,11 @@ interface OrgSetupStrategy<D extends OrgSetupSubmissionData> {
  */
 export interface BoundOrgSetupStrategy {
   orgType: OrgFlowType;
-  externalIdField: string;
+  externalIdField: OrgSetupErrorField;
   externalId: string;
   resolvedName: string;
   buildSecretPayload: (externalId: string) => OrgSecretPayload;
-  mapSecretErrorPointer: (pointer: string) => string | null;
+  mapSecretErrorPointer: (pointer: string) => OrgSetupErrorField | null;
   ingestDiscovery: (rawResult: unknown) => {
     hierarchy: OrgHierarchy;
     defaultSelection: string[];

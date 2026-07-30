@@ -6,6 +6,7 @@ import { useOrgSetupStore } from "@/store/organizations/store";
 import {
   APPLY_STATUS,
   DISCOVERY_STATUS,
+  ORG_SECRET_TYPE,
   ORGANIZATION_TYPE,
 } from "@/types/organizations";
 
@@ -46,6 +47,15 @@ const AWS_DISCOVERY_RESULT = {
     },
   ],
 };
+
+const GCP_STATIC_SUBMIT_DATA = {
+  orgType: ORGANIZATION_TYPE.GCP,
+  gcpOrgId: "123456789012",
+  credentialMethod: ORG_SECRET_TYPE.STATIC,
+  clientId: "client-id",
+  clientSecret: "client-secret",
+  refreshToken: "refresh-token",
+} as const;
 
 function mockFreshSetupChain() {
   organizationsActionsMock.listOrganizationsByExternalId.mockResolvedValue({
@@ -116,7 +126,8 @@ describe("useOrgSetupSubmission", () => {
   it("completes the setup chain and stores selectable candidates", async () => {
     // Given
     const onNext = vi.fn();
-    const setFieldError = vi.fn();
+    // `true` = the form owns the field and rendered the error on it.
+    const setFieldError = vi.fn(() => true);
     const discoveryResult = {
       roots: [
         { id: "r-root", arn: "arn:root", name: "Root", policy_types: [] },
@@ -226,7 +237,7 @@ describe("useOrgSetupSubmission", () => {
     // Given — a discovery that stays running until the client budget is spent.
     vi.useFakeTimers();
     const onNext = vi.fn();
-    const setFieldError = vi.fn();
+    const setFieldError = vi.fn(() => true);
     mockFreshSetupChain();
     organizationsActionsMock.getDiscovery.mockResolvedValue({
       data: { attributes: { status: DISCOVERY_STATUS.RUNNING, result: {} } },
@@ -284,7 +295,7 @@ describe("useOrgSetupSubmission", () => {
   it("retry triggers a fresh discovery after a failed one", async () => {
     // Given — a discovery that completes as failed.
     const onNext = vi.fn();
-    const setFieldError = vi.fn();
+    const setFieldError = vi.fn(() => true);
     mockFreshSetupChain();
     organizationsActionsMock.getDiscovery.mockResolvedValueOnce({
       data: {
@@ -341,7 +352,7 @@ describe("useOrgSetupSubmission", () => {
   it("maps external_id server errors to awsOrgId field errors", async () => {
     // Given
     const onNext = vi.fn();
-    const setFieldError = vi.fn();
+    const setFieldError = vi.fn(() => true);
     organizationsActionsMock.listOrganizationsByExternalId.mockResolvedValue({
       data: [],
     });
@@ -441,6 +452,80 @@ describe("useOrgSetupSubmission", () => {
 
     // Then
     expect(result.current.apiError).toBe(UNEXPECTED_DISCOVERY_RESULT);
+    expect(onNext).not.toHaveBeenCalled();
+  });
+
+  it("routes a secret field error to the form when the form owns the field", async () => {
+    // Given
+    const onNext = vi.fn();
+    const setFieldError = vi.fn(() => true);
+    mockFreshSetupChain();
+    organizationsActionsMock.createOrganizationSecret.mockResolvedValue({
+      error: "Invalid credentials",
+      errors: [
+        {
+          detail: "Client id is not valid.",
+          source: { pointer: "/data/attributes/secret/client_id" },
+        },
+      ],
+    });
+
+    const { result } = renderHook(() =>
+      useOrgSetupSubmission({
+        stackSetExternalId: "",
+        onNext,
+        setFieldError,
+      }),
+    );
+
+    // When
+    await act(async () => {
+      await result.current.submitOrganizationSetup(GCP_STATIC_SUBMIT_DATA);
+    });
+
+    // Then — the field renders it, so the banner stays clear.
+    expect(setFieldError).toHaveBeenCalledWith(
+      "clientId",
+      "Client id is not valid.",
+    );
+    expect(result.current.apiError).toBeNull();
+    expect(onNext).not.toHaveBeenCalled();
+  });
+
+  it("falls back to the banner when the form does not own the field", async () => {
+    // Given — a form that cannot render the mapped field (reports it unhandled).
+    const onNext = vi.fn();
+    const setFieldError = vi.fn(() => false);
+    mockFreshSetupChain();
+    organizationsActionsMock.createOrganizationSecret.mockResolvedValue({
+      error: "Invalid credentials",
+      errors: [
+        {
+          detail: "Client id is not valid.",
+          source: { pointer: "/data/attributes/secret/client_id" },
+        },
+      ],
+    });
+
+    const { result } = renderHook(() =>
+      useOrgSetupSubmission({
+        stackSetExternalId: "",
+        onNext,
+        setFieldError,
+      }),
+    );
+
+    // When
+    await act(async () => {
+      await result.current.submitOrganizationSetup(GCP_STATIC_SUBMIT_DATA);
+    });
+
+    // Then — the message surfaces in the banner instead of being swallowed.
+    expect(setFieldError).toHaveBeenCalledWith(
+      "clientId",
+      "Client id is not valid.",
+    );
+    expect(result.current.apiError).toBe("Client id is not valid.");
     expect(onNext).not.toHaveBeenCalled();
   });
 });

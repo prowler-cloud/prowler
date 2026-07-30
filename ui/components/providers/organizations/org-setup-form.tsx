@@ -176,7 +176,14 @@ export function OrgSetupForm({
     stackSetExternalId,
     onNext,
     setFieldError: (field, message) => {
-      setError(field as keyof OrgSetupFormData, { message });
+      switch (field) {
+        case "organizationName":
+        case "awsOrgId":
+          setError(field, { message });
+          return true;
+        default:
+          return false;
+      }
     },
   });
 

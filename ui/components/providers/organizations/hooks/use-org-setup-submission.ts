@@ -18,6 +18,7 @@ import { extractErrorMessage } from "./error-utils";
 import {
   bindOrgSetupStrategy,
   BoundOrgSetupStrategy,
+  OrgSetupErrorField,
   OrgSetupSubmissionData,
 } from "./org-setup-strategy";
 
@@ -54,9 +55,7 @@ function sleepWithAbort(ms: number, signal: AbortSignal): Promise<void> {
 interface UseOrgSetupSubmissionProps {
   stackSetExternalId: string;
   onNext: () => void;
-  // Field key is org-type-specific (`awsOrgId`/`gcpOrgId`, secret fields for
-  // GCP), resolved by the active strategy; the form casts to its own field path.
-  setFieldError: (field: string, message: string) => void;
+  setFieldError: (field: OrgSetupErrorField, message: string) => boolean;
 }
 
 interface ServerErrorResult {
@@ -146,15 +145,15 @@ export function useOrgSetupSubmission({
           setFieldError(strategy.externalIdField, err.detail);
           setApiError(err.detail);
         } else if (pointer.includes("name")) {
-          setFieldError("organizationName", err.detail);
+          if (!setFieldError("organizationName", err.detail)) {
+            setApiError(err.detail);
+          }
         } else {
           const secretField =
             context === "Secret"
               ? strategy.mapSecretErrorPointer(pointer)
               : null;
-          if (secretField) {
-            setFieldError(secretField, err.detail);
-          } else {
+          if (!secretField || !setFieldError(secretField, err.detail)) {
             setApiError(err.detail);
           }
         }

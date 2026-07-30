@@ -173,8 +173,22 @@ export function GcpOrgSetupForm({
     // secrets), so the tenant external id is not part of the payload.
     stackSetExternalId: "",
     onNext,
+    // The hook's field union spans both organization types; these are the ones
+    // this form actually renders. Anything else goes back unhandled so the hook
+    // banners it — a setError on an unregistered field would render nowhere.
     setFieldError: (field, message) => {
-      setError(field as keyof GcpOrgSetupFormData, { message });
+      switch (field) {
+        case "organizationName":
+        case "gcpOrgId":
+        case "serviceAccountKey":
+        case "clientId":
+        case "clientSecret":
+        case "refreshToken":
+          setError(field, { message });
+          return true;
+        default:
+          return false;
+      }
     },
   });
 
