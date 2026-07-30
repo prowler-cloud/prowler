@@ -4,7 +4,13 @@ import { it } from "@/__tests__/fixtures";
 import {
   buildGcpDiscoveryResult,
   DISCOVERY_STATUS_VALUE,
+  GCP_BLOCKED_FOLDER,
+  GCP_BLOCKED_FOLDER_NAME,
+  GCP_BLOCKED_FOLDER_PROJECT,
   GCP_CREATED_PROVIDER_IDS,
+  GCP_EMPTY_FOLDER,
+  GCP_EMPTY_FOLDER_NAME,
+  GCP_LONG_PROJECT_ID,
   GCP_ORG_ID,
   gcpOnboardingFixture,
   mixedHierarchyFixture,
@@ -93,6 +99,102 @@ describe("GCP Organizations onboarding (Phase 2)", () => {
 
     expect(harness.hasDocsLinkTo(GCP_ORG_DOCS)).toBe(true);
   }, 30000);
+
+  it("nests each project under its discovered folder and renders every folder once", async () => {
+    const harness = new ProvidersPageHarness(gcpOnboardingFixture());
+    await onboardGcpToSelection(harness);
+
+    // Folder identity is the resource `name`, which is what children carry as
+    // `parent`. Reading it from any other field detaches every child: the tree
+    // flattens and the folders collapse onto one repeated row.
+    expect(harness.countContainerRows("Engineering")).toBe(1);
+    expect(harness.countContainerRows("Platform")).toBe(1);
+    expect(harness.containerRowUids().sort()).toEqual([
+      "folders/1000000001",
+      "folders/1000000002",
+      GCP_EMPTY_FOLDER,
+      GCP_BLOCKED_FOLDER,
+    ]);
+
+    expect(
+      harness.isCandidateNestedUnder("prod-analytics", "Engineering"),
+    ).toBe(true);
+    expect(harness.isCandidateNestedUnder("prod-platform", "Platform")).toBe(
+      true,
+    );
+  }, 40000);
+
+  it("prefills a project alias with its display name, never its resource name", async () => {
+    const harness = new ProvidersPageHarness(gcpOnboardingFixture());
+    await onboardGcpToSelection(harness);
+
+    expect(harness.candidateAliasValue(/prod-analytics/)).toBe(
+      "Prod Analytics",
+    );
+    expect(harness.candidateAliasValue(/prod-analytics/)).not.toMatch(
+      /^projects\//,
+    );
+  }, 40000);
+
+  it("marks a folder with nothing selectable as inert, in project wording", async () => {
+    const harness = new ProvidersPageHarness(gcpOnboardingFixture());
+    await onboardGcpToSelection(harness);
+
+    // Discovery lists every ACTIVE folder, so project-less ones do reach the
+    // tree. Clicking them cannot select anything — say so instead of going
+    // silent, and never in the AWS nouns.
+    expect(harness.isContainerInert(GCP_EMPTY_FOLDER_NAME)).toBe(true);
+    expect(harness.inertContainerNote(GCP_EMPTY_FOLDER_NAME)).toBe(
+      "No projects available to select in this folder.",
+    );
+    expect(harness.isContainerInert(GCP_BLOCKED_FOLDER_NAME)).toBe(true);
+
+    // A folder holding a ready project stays selectable.
+    expect(harness.isContainerInert("Engineering")).toBe(false);
+    expect(harness.inertContainerNote("Engineering")).toBeNull();
+    expect(harness.usesAccountWording()).toBe(false);
+  }, 40000);
+
+  it("still opens an inert folder so its blocked projects are visible", async () => {
+    const harness = new ProvidersPageHarness(gcpOnboardingFixture());
+    await onboardGcpToSelection(harness);
+
+    expect(
+      harness.isCandidateNestedUnder(
+        GCP_BLOCKED_FOLDER_PROJECT,
+        GCP_BLOCKED_FOLDER_NAME,
+      ),
+    ).toBe(true);
+
+    // Clicking the row collapses and re-expands it rather than selecting: an
+    // inert folder that could not be opened would never explain itself.
+    await harness.clickContainerRow(GCP_BLOCKED_FOLDER_NAME);
+    await harness.waitForTransition();
+    expect(harness.isCandidateVisible(GCP_BLOCKED_FOLDER_PROJECT)).toBe(false);
+
+    await harness.clickContainerRow(GCP_BLOCKED_FOLDER_NAME);
+    await harness.waitForTransition();
+    expect(harness.isCandidateVisible(GCP_BLOCKED_FOLDER_PROJECT)).toBe(true);
+    expect(harness.hasSelectedProjectCount(2, 2)).toBe(true);
+  }, 40000);
+
+  it("keeps a long project id inside its column instead of over the alias input", async () => {
+    const harness = new ProvidersPageHarness(
+      gcpOnboardingFixture({
+        discovery: {
+          id: "disc-gcp-1",
+          status: DISCOVERY_STATUS_VALUE.SUCCEEDED,
+          result: buildGcpDiscoveryResult({ includeLongIdProject: true }),
+          error: null,
+        },
+      }),
+    );
+    await onboardGcpToSelection(harness);
+
+    // Real layout, not class names: a leaf row that cannot shrink below its
+    // content pushes the id over its neighbour instead of ellipsizing.
+    expect(harness.candidateRowOverflows(GCP_LONG_PROJECT_ID)).toBe(false);
+  }, 40000);
 
   // The launch step reads `/schedules/bulk`'s per-provider lists. The endpoint
   // returns them directly under `data` (no `attributes` level), so these three

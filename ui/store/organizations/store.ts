@@ -197,8 +197,11 @@ export const useOrgSetupStore = create<OrgSetupState>()(
       // release landed. The persisted shape changed (normalized hierarchy,
       // organization type, discovery-resume fields) and this is per-tab
       // sessionStorage holding only wizard progress, so re-entering the flow is
-      // cheaper and safer than migrating a shape we removed.
-      version: 1,
+      // cheaper and safer than migrating a shape we removed. Bumped to 2 so a
+      // GCP hierarchy normalized by the pre-fix mapper (folder ids read from a
+      // field the wire never had, hence `undefined`) is discarded instead of
+      // rehydrated into a tree that cannot nest.
+      version: 2,
       storage: createJSONStorage(() => sessionStorage),
       merge: (persistedState, currentState) => {
         const mergedState = {

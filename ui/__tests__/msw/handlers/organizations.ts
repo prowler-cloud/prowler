@@ -73,26 +73,44 @@ const organizationResource = (
   },
 });
 
-/** Canonical `organization-nodes` resource (carries `kind`). */
-const organizationNodeResource = (node: FixtureNode) => ({
-  id: node.id,
-  type: "organization-nodes",
-  attributes: {
-    name: node.name,
-    kind: node.kind,
-    external_id: node.externalId,
-    parent_external_id: node.parentExternalId,
-    metadata: {},
-    inserted_at: TS,
-    updated_at: TS,
-  },
-  relationships: {
-    organization: {
-      data: { type: "organizations", id: node.organizationId },
+/**
+ * Canonical `organization-nodes` resource (carries `kind`).
+ *
+ * The parent is a relationship, not an attribute: the serializer has no
+ * `parent_external_id`, and DJA always emits the `parent` key — `data: null` for
+ * a top-level node, since neither the AWS root nor a GCP organization is itself
+ * a node. The fixtures keep expressing structure as `parentExternalId` because
+ * that reads better; it is resolved to a node ref here.
+ */
+const organizationNodeResource = (node: FixtureNode, all: FixtureNode[]) => {
+  const parent = all.find(
+    (candidate) =>
+      candidate.organizationId === node.organizationId &&
+      candidate.externalId === node.parentExternalId,
+  );
+
+  return {
+    id: node.id,
+    type: "organization-nodes",
+    attributes: {
+      name: node.name,
+      kind: node.kind,
+      external_id: node.externalId,
+      metadata: {},
+      inserted_at: TS,
+      updated_at: TS,
     },
-    providers: { data: providerRefs(node.providerIds) },
-  },
-});
+    relationships: {
+      organization: {
+        data: { type: "organizations", id: node.organizationId },
+      },
+      parent: {
+        data: parent ? { type: "organization-nodes", id: parent.id } : null,
+      },
+      providers: { data: providerRefs(node.providerIds) },
+    },
+  };
+};
 
 /** Deprecated AWS-only `organizational-units` resource (no `kind`). */
 const organizationalUnitResource = (node: FixtureNode) => ({
@@ -409,7 +427,7 @@ export const handlersForOrganizations = (
           })
         : HttpResponse.json(
             paginatedCollection(
-              fx.nodes.map(organizationNodeResource),
+              fx.nodes.map((node) => organizationNodeResource(node, fx.nodes)),
               request,
             ),
           ),

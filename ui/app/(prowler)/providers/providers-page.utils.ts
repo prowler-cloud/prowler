@@ -372,7 +372,8 @@ function buildOrganizationNodeRows({
         name: organizationNode.attributes.name,
         externalId: organizationNode.attributes.external_id,
         organizationId,
-        parentExternalId: organizationNode.attributes.parent_external_id,
+        parentExternalId:
+          organizationNode.attributes.parent_external_id ?? null,
         providerIds: dedupeIds([...childProviderIds, ...directProviderIds]),
         subRows,
       });

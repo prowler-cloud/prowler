@@ -337,6 +337,128 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
     return this.waitFor(() => this.tree);
   }
 
+  /** A container row identifies itself by its uid: a GCP folder ref or an AWS OU id. */
+  private static readonly CONTAINER_UID = /folders\/\d+|ou-[\w-]+/;
+
+  private get containerRows(): HTMLElement[] {
+    return this.treeItems.filter((item) =>
+      ProvidersPageHarness.CONTAINER_UID.test(item.textContent ?? ""),
+    );
+  }
+
+  /**
+   * Container rows carrying this label. Counted over rows rather than through
+   * `treeItemByText` (which returns only the first match) so a container
+   * rendered more than once is visible instead of silently deduplicated.
+   */
+  countContainerRows(label: string): number {
+    return this.containerRows.filter((item) =>
+      (item.textContent ?? "").includes(label),
+    ).length;
+  }
+
+  /** Uids rendered by container rows — a row with an unresolved id has none. */
+  containerRowUids(): string[] {
+    return this.containerRows.flatMap(
+      (item) =>
+        item.textContent?.match(ProvidersPageHarness.CONTAINER_UID) ?? [],
+    );
+  }
+
+  /** Whether a candidate row is rendered inside the subtree of a container. */
+  isCandidateNestedUnder(
+    candidateUid: string,
+    containerLabel: string,
+  ): boolean {
+    const container = this.treeItems.find(
+      (item) =>
+        (item.textContent ?? "").includes(containerLabel) &&
+        item.parentElement?.querySelector('[role="group"]') !== null,
+    );
+    const group = container?.parentElement?.querySelector('[role="group"]');
+    return (group?.textContent ?? "").includes(candidateUid);
+  }
+
+  /**
+   * The note a container row shows when nothing under it can be selected, read
+   * from the icon's accessible label so the assertion needs no hover.
+   */
+  inertContainerNote(containerLabel: string): string | null {
+    const row = this.containerRows.find((item) =>
+      (item.textContent ?? "").includes(containerLabel),
+    );
+    return (
+      row?.querySelector('[role="img"]')?.getAttribute("aria-label") ?? null
+    );
+  }
+
+  /** Whether a container row is inert (present, visibly non-selectable). */
+  isContainerInert(containerLabel: string): boolean {
+    const row = this.containerRows.find((item) =>
+      (item.textContent ?? "").includes(containerLabel),
+    );
+    return row?.getAttribute("aria-disabled") === "true";
+  }
+
+  /** Whether a candidate currently has a row in the tree at all. */
+  isCandidateVisible(uid: string): boolean {
+    return this.treeItemByText(new RegExp(uid)) !== null;
+  }
+
+  /**
+   * Click a container row itself (not its checkbox or chevron) to expand or
+   * collapse it.
+   *
+   * Dispatched directly rather than through user-event: an `aria-disabled` row
+   * fails Playwright's actionability check, while a real pointer is not blocked
+   * by it (nothing sets `pointer-events: none`, and no overlay covers the row).
+   * The row is what the assertion is about, so it clicks the row.
+   */
+  async clickContainerRow(containerLabel: string): Promise<void> {
+    const row = await this.waitFor(
+      () =>
+        this.containerRows.find((item) =>
+          (item.textContent ?? "").includes(containerLabel),
+        ) ?? null,
+    );
+    row.click();
+  }
+
+  /**
+   * Whether a candidate row's id spills out of its column or collides with the
+   * alias input next to it. Measured from real layout boxes, so it answers the
+   * question the CSS actually decides rather than restating the class list.
+   */
+  candidateRowOverflows(uid: string): boolean {
+    const row = this.treeItemByText(new RegExp(uid));
+    const idText = Array.from(
+      row?.querySelectorAll<HTMLElement>("span") ?? [],
+    ).find((span) => span.textContent === uid);
+    const alias = row?.querySelector<HTMLInputElement>(
+      "input:not([type='checkbox'])",
+    );
+    if (!idText || !alias) {
+      throw new Error(`candidate ${uid} has no id text or no alias input`);
+    }
+
+    const idRect = idText.getBoundingClientRect();
+    const columnRect = idText.parentElement!.getBoundingClientRect();
+    // Sub-pixel layout rounding, not overflow.
+    return (
+      idRect.right > columnRect.right + 1 ||
+      idRect.right > alias.getBoundingClientRect().left
+    );
+  }
+
+  /** Current value of a candidate row's alias input. */
+  candidateAliasValue(idText: RegExp): string | null {
+    const item = this.treeItemByText(idText);
+    const input = item?.querySelector<HTMLInputElement>(
+      "input:not([type='checkbox'])",
+    );
+    return input?.value ?? null;
+  }
+
   /** Wait until account discovery finishes and the selection summary renders. */
   async waitForAccountSelection(timeoutMs = 15000): Promise<void> {
     await this.waitForText(/of \d+ accounts selected/, timeoutMs);

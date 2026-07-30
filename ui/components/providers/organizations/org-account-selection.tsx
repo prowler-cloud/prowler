@@ -168,6 +168,7 @@ export function OrgAccountSelection({
             <OrgAccountTreeItem
               params={params}
               mode={TREE_ITEM_MODE.SELECTION}
+              orgType={hierarchy.orgType}
               candidateLookup={candidateLookup}
               aliases={candidateAliases}
               onAliasChange={setCandidateAlias}

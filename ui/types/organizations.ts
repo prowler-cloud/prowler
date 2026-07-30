@@ -183,22 +183,31 @@ export interface AwsDiscoveryResult {
 
 // ─── GCP Discovery Result (wire) ───────────────────────────────────────────────
 
+/**
+ * Identity in a GCP discovery result is the canonical resource `name`
+ * (`organizations/{id}`, `folders/{id}`) — there is no separate `id` field, and a
+ * child's `parent` is exactly its parent's `name`. `display_name` is the only
+ * human label: a project's `name` is `projects/{number}`, never a label.
+ */
 export interface GcpDiscoveredOrganization {
-  id: string;
-  uid: string;
+  name: string;
   display_name: string;
 }
 
 export interface GcpDiscoveredFolder {
-  id: string;
+  name: string;
   display_name: string;
   parent: string;
+  state?: string;
 }
 
 export interface GcpDiscoveredProject {
   project_id: string;
   name: string;
+  display_name: string;
   parent: string;
+  state?: string;
+  labels?: Record<string, string>;
   registration?: CandidateRegistration;
 }
 
@@ -398,7 +407,12 @@ export interface OrganizationNodeAttributes {
   name: string;
   kind: NodeKind;
   external_id: string;
-  parent_external_id: string | null;
+  /**
+   * Not served by `organization-nodes`: the parent is the `parent` relationship,
+   * which DJA always emits. Kept optional for the legacy attribute-parented
+   * grouping branch, which is unreachable against the real API.
+   */
+  parent_external_id?: string | null;
   metadata: Record<string, unknown>;
   inserted_at?: string;
   updated_at?: string;

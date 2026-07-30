@@ -4,7 +4,8 @@
  *
  * The wire shapes are declared here rather than imported from
  * `@/types/organizations` so refactors to that module don't force the mock
- * handlers and fixtures to churn.
+ * handlers and fixtures to churn. The GCP discovery result is the one exception
+ * (see `GcpFixtureDiscoveryResult`).
  *
  * A fixture is a self-contained snapshot of the API "world" a single test
  * exercises: seeded organizations/nodes/providers for the providers-page
@@ -13,6 +14,10 @@
  */
 
 import { ORGANIZATION_TYPE } from "@/types/organizations";
+import type {
+  GcpDiscoveredProject,
+  GcpDiscoveryResult,
+} from "@/types/organizations";
 import type { TaskState } from "@/types/tasks";
 
 export const DISCOVERY_STATUS_VALUE = {
@@ -267,24 +272,69 @@ const buildAwsDiscoveryResult = ({
 export const GCP_ORG_ID = "456123789012";
 const GCP_FOLDER_A = "folders/1000000001";
 const GCP_FOLDER_B = "folders/1000000002";
+/**
+ * Two folders with nothing selectable in them — discovery lists every ACTIVE
+ * folder, and real organizations hold both kinds: one with no projects at all
+ * (Google's own `system-gsuite`) and one holding only blocked projects. Neither
+ * changes the selectable count, so every `N of M projects selected` assertion
+ * stays valid.
+ */
+export const GCP_EMPTY_FOLDER = "folders/1000000003";
+export const GCP_EMPTY_FOLDER_NAME = "system-gsuite";
+export const GCP_BLOCKED_FOLDER = "folders/1000000004";
+export const GCP_BLOCKED_FOLDER_NAME = "Archived";
+export const GCP_BLOCKED_FOLDER_PROJECT = "archived-legacy";
+
+/** A project id long enough to fill the fixed-width id column of a tree row. */
+export const GCP_LONG_PROJECT_ID = "sys-33751773248373676292";
 
 interface GcpResultOverrides {
   /** Project ids whose registration reports `will_replace` (existing provider). */
   replaceProjectIds?: string[];
+  /**
+   * Adds `GCP_LONG_PROJECT_ID` as a fourth, selectable project. Opt-in: it
+   * raises the selectable count every `N of M projects selected` assertion
+   * pins, and it has to be selectable to have an alias input to collide with.
+   */
+  includeLongIdProject?: boolean;
 }
 
+/**
+ * Pinned to the app's own wire interfaces — a deliberate exception to this
+ * file's decoupling rule, so a change on either side has to be an edit on both.
+ * These three shapes are verified against the merged API, and inventing them
+ * here alongside the types is precisely what let a flattened tree ship green.
+ * Registration keeps the fixture's looser value types.
+ */
+type GcpFixtureDiscoveryResult = Omit<GcpDiscoveryResult, "projects"> & {
+  projects: (Omit<GcpDiscoveredProject, "registration"> & {
+    registration: FixtureRegistration;
+  })[];
+};
+
+/**
+ * The GCP discovery result as the API really shapes it: identity is the
+ * canonical resource `name` (there is no `id` field), a child's `parent` is
+ * exactly its parent's `name`, and `display_name` is the only human label — a
+ * project's `name` is `projects/{number}`. Reading `name` as a label, or
+ * expecting an `id`, is what flattened the tree in production.
+ */
 export const buildGcpDiscoveryResult = ({
   replaceProjectIds = [],
-}: GcpResultOverrides = {}) => {
+  includeLongIdProject = false,
+}: GcpResultOverrides = {}): GcpFixtureDiscoveryResult => {
   const project = (
     projectId: string,
-    name: string,
+    resourceName: string,
+    displayName: string,
     parent: string,
     registration: FixtureRegistration,
   ) => ({
     project_id: projectId,
-    name,
+    name: resourceName,
+    display_name: displayName,
     parent,
+    state: "ACTIVE",
     registration,
   });
 
@@ -299,41 +349,75 @@ export const buildGcpDiscoveryResult = ({
 
   return {
     organization: {
-      id: `organizations/${GCP_ORG_ID}`,
-      uid: GCP_ORG_ID,
+      name: `organizations/${GCP_ORG_ID}`,
       display_name: "example.com",
     },
     folders: [
       {
-        id: GCP_FOLDER_A,
+        name: GCP_FOLDER_A,
         display_name: "Engineering",
         parent: `organizations/${GCP_ORG_ID}`,
+        state: "ACTIVE",
       },
       {
-        id: GCP_FOLDER_B,
+        name: GCP_FOLDER_B,
         display_name: "Platform",
         parent: GCP_FOLDER_A,
+        state: "ACTIVE",
+      },
+      {
+        name: GCP_EMPTY_FOLDER,
+        display_name: GCP_EMPTY_FOLDER_NAME,
+        parent: `organizations/${GCP_ORG_ID}`,
+        state: "ACTIVE",
+      },
+      {
+        name: GCP_BLOCKED_FOLDER,
+        display_name: GCP_BLOCKED_FOLDER_NAME,
+        parent: `organizations/${GCP_ORG_ID}`,
+        state: "ACTIVE",
       },
     ],
     projects: [
       project(
         "prod-analytics",
+        "projects/1000000010",
         "Prod Analytics",
         GCP_FOLDER_A,
         readyRegFor("prod-analytics"),
       ),
       project(
         "prod-platform",
+        "projects/1000000011",
         "Prod Platform",
         GCP_FOLDER_B,
         readyRegFor("prod-platform"),
       ),
       project(
         "legacy-sandbox",
+        "projects/1000000012",
         "Legacy Sandbox",
         `organizations/${GCP_ORG_ID}`,
         blockedRegistration(["Project is pending deletion"]),
       ),
+      project(
+        GCP_BLOCKED_FOLDER_PROJECT,
+        "projects/1000000014",
+        "Archived Legacy",
+        GCP_BLOCKED_FOLDER,
+        blockedRegistration(["Project is pending deletion"]),
+      ),
+      ...(includeLongIdProject
+        ? [
+            project(
+              GCP_LONG_PROJECT_ID,
+              "projects/1000000013",
+              "System Generated",
+              GCP_FOLDER_A,
+              readyRegFor(GCP_LONG_PROJECT_ID),
+            ),
+          ]
+        : []),
     ],
   };
 };
@@ -569,7 +653,10 @@ export const mixedHierarchyFixture = (
         orgType: ORGANIZATION_TYPE.GCP,
         name: "My GCP Organization",
         externalId: GCP_ORG_ID,
-        rootExternalId: `organizations/${GCP_ORG_ID}`,
+        // Only the AWS apply writes `root_external_id` (the root OU); a GCP
+        // organization never has one, and its top-level folders are the ones with
+        // no parent node.
+        rootExternalId: null,
         providerIds: [],
         nodeIds: gcpNodes.map((n) => n.id),
         secretId: "secret-gcp-1",
