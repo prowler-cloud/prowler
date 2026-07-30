@@ -25,6 +25,7 @@ class Lambda(AWSService):
         # Functions are listed first, then trimmed to the subset selected for
         # analysis before expensive per-function detail is hydrated.
         self.functions = {}
+        self.layers = {}
         self.security_groups_in_use = set()
         self.regions_with_functions = set()
         self.function_limit = get_resource_scan_limit(
@@ -32,6 +33,7 @@ class Lambda(AWSService):
         )
         self.__threading_call__(self._list_functions)
         self._select_functions_for_analysis()
+        self._collect_layers()
         self._list_tags_for_resource()
         self.__threading_call__(self._get_policy)
         self.__threading_call__(self._get_function_url_config)
@@ -105,6 +107,11 @@ class Lambda(AWSService):
                 self.function_limit,
             )
         }
+
+    def _collect_layers(self):
+        for function in self.functions.values():
+            for layer in function.layers:
+                self.layers.setdefault(layer.arn, layer)
 
     def _list_event_source_mappings(self, regional_client):
         logger.info("Lambda - Listing Event Source Mappings...")
@@ -212,6 +219,47 @@ class Lambda(AWSService):
             )
             raise
 
+    def _get_layers_code(self):
+        logger.info("Lambda - Getting Layer Code...")
+        # Use a thread pool to handle the queueing and execution of the
+        # _fetch_layer_code tasks, up to max_workers tasks concurrently.
+        layers_to_fetch = {
+            self.thread_pool.submit(
+                self._fetch_layer_code, layer.name, layer.version, layer.region
+            ): layer
+            for layer in self.layers.values()
+        }
+
+        for fetched_layer_code in as_completed(layers_to_fetch):
+            layer = layers_to_fetch[fetched_layer_code]
+            try:
+                layer_code = fetched_layer_code.result()
+                if layer_code:
+                    yield layer, layer_code
+            except Exception as error:
+                logger.error(
+                    f"{layer.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
+    def _fetch_layer_code(self, layer_name, layer_version_number, layer_region):
+        try:
+            regional_client = self.regional_clients[layer_region]
+            layer_version = regional_client.get_layer_version(
+                LayerName=layer_name, VersionNumber=int(layer_version_number)
+            )
+            if "Location" in layer_version.get("Content", {}):
+                code_location_uri = layer_version["Content"]["Location"]
+                raw_code_zip = requests.get(code_location_uri).content
+                return LambdaCode(
+                    location=code_location_uri,
+                    code_zip=zipfile.ZipFile(io.BytesIO(raw_code_zip)),
+                )
+        except Exception as error:
+            logger.error(
+                f"{layer_region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            raise
+
     def _get_policy(self, regional_client):
         logger.info("Lambda - Getting Policy...")
         try:
@@ -307,6 +355,28 @@ class Layer(BaseModel):
         """Extract the account ID from the layer ARN."""
         parts = self.arn.split(":")
         return parts[4] if len(parts) >= 5 else ""
+
+    @property
+    def region(self) -> str:
+        """Extract the region from the layer ARN.
+
+        A layer can only be attached to a function in the same region, so
+        this is always one of the regions already being audited.
+        """
+        parts = self.arn.split(":")
+        return parts[3] if len(parts) >= 4 else ""
+
+    @property
+    def name(self) -> str:
+        """Extract the layer name from the ARN."""
+        parts = self.arn.split(":")
+        return parts[6] if len(parts) >= 7 else self.arn
+
+    @property
+    def version(self) -> str:
+        """Extract the layer version from the ARN."""
+        parts = self.arn.split(":")
+        return parts[7] if len(parts) >= 8 else ""
 
 
 class DeadLetterConfig(BaseModel):
