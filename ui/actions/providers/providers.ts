@@ -146,6 +146,62 @@ export const getProvider = async (formData: FormData) => {
   }
 };
 
+/** Server max for `page[size]`, which also caps how many ids one list can cover. */
+const PROVIDERS_PAGE_MAX = 100;
+
+/**
+ * Uids of the given providers, keyed by provider id.
+ *
+ * A provider's `uid` is the candidate it was created for (AWS account id / GCP
+ * project id), so this is how an apply's created providers are matched back to
+ * the selection. Read with `filter[id__in]` rather than one `GET
+ * /providers/{id}` each: a 60-project organization would otherwise cost 60
+ * requests. Ids are batched at the server's page maximum, so the cost is
+ * ceil(n/100) requests, and a batch that fails contributes nothing rather than
+ * failing the others.
+ */
+export const getProviderUidsByIds = async (
+  providerIds: string[],
+): Promise<Record<string, string>> => {
+  const uniqueIds = Array.from(new Set(providerIds.filter(Boolean)));
+  if (uniqueIds.length === 0) {
+    return {};
+  }
+
+  const headers = await getAuthHeaders({ contentType: false });
+  const batches: string[][] = [];
+  for (let start = 0; start < uniqueIds.length; start += PROVIDERS_PAGE_MAX) {
+    batches.push(uniqueIds.slice(start, start + PROVIDERS_PAGE_MAX));
+  }
+
+  const uidById: Record<string, string> = {};
+
+  for (const batch of batches) {
+    const url = new URL(`${apiBaseUrl}/providers`);
+    url.searchParams.set("filter[id__in]", batch.join(","));
+    url.searchParams.set("page[size]", String(PROVIDERS_PAGE_MAX));
+
+    try {
+      const response = await fetch(url.toString(), { headers });
+      const result = (await handleApiResponse(response)) as
+        | ProvidersApiResponse
+        | undefined;
+
+      for (const provider of result?.data ?? []) {
+        const uid = provider?.attributes?.uid;
+        if (typeof provider?.id === "string" && typeof uid === "string") {
+          uidById[provider.id] = uid;
+        }
+      }
+    } catch {
+      // A failed batch leaves its providers unmapped; the caller degrades to the
+      // providers it could resolve rather than losing the whole apply.
+    }
+  }
+
+  return uidById;
+};
+
 export const updateProvider = async (formData: FormData) => {
   const headers = await getAuthHeaders({ contentType: true });
   const providerId = formData.get(ProviderCredentialFields.PROVIDER_ID);

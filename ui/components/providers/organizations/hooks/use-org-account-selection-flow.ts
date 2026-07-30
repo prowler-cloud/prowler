@@ -6,7 +6,7 @@ import { applyDiscovery } from "@/actions/organizations/organizations";
 import { buildApplyPayload } from "@/actions/organizations/organizations.adapter";
 import {
   checkConnectionProvider,
-  getProvider,
+  getProviderUidsByIds,
 } from "@/actions/providers/providers";
 import {
   WIZARD_FOOTER_ACTION_TYPE,
@@ -413,20 +413,7 @@ export function useOrgAccountSelectionFlow({
     const mapping = await buildCandidateToProviderMap({
       selectedCandidateIds: currentSelectedCandidateIds,
       providerIds,
-      applyResult: result,
-      resolveProviderUidById: async (providerId) => {
-        const providerFormData = new FormData();
-        providerFormData.set("id", providerId);
-        const providerResponse = await getProvider(providerFormData);
-
-        if (providerResponse?.error || providerResponse?.errors?.length) {
-          return null;
-        }
-
-        return typeof providerResponse?.data?.attributes?.uid === "string"
-          ? providerResponse.data.attributes.uid
-          : null;
-      },
+      resolveProviderUids: getProviderUidsByIds,
     });
     if (!isMountedRef.current) {
       return;

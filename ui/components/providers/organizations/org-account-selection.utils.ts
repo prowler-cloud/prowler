@@ -3,20 +3,15 @@ import {
   ConnectionTestStatus,
 } from "@/types/organizations";
 
-const DEFAULT_CONCURRENCY_LIMIT = 5;
 const DEFAULT_POLL_DELAYS_MS = [2000, 3000, 5000] as const;
-
-/** A created provider paired with the candidate it was created for. */
-interface CandidateProviderMapping {
-  candidateId: string;
-  providerId: string;
-}
 
 interface BuildCandidateToProviderMapParams {
   selectedCandidateIds: string[];
   providerIds: string[];
-  applyResult: unknown;
-  resolveProviderUidById: (providerId: string) => Promise<string | null>;
+  /** Uids of the given providers, keyed by provider id. */
+  resolveProviderUids: (
+    providerIds: string[],
+  ) => Promise<Record<string, string>>;
 }
 
 interface PollConnectionTaskOptions {
@@ -79,43 +74,6 @@ function sleepWithAbort(
   });
 }
 
-function normalizeIncludedProvider(
-  value: unknown,
-): CandidateProviderMapping | null {
-  if (!isRecord(value) || value.type !== "providers") {
-    return null;
-  }
-
-  const attributes = isRecord(value.attributes) ? value.attributes : null;
-  const providerId = typeof value.id === "string" ? value.id : null;
-  const candidateId =
-    typeof attributes?.uid === "string" ? attributes.uid : null;
-
-  if (!candidateId || !providerId) {
-    return null;
-  }
-
-  return { candidateId, providerId };
-}
-
-/**
- * Candidate → provider pairs from the apply response's `included` providers.
- *
- * A provider's `uid` *is* the candidate id it was created for (AWS account id /
- * GCP project id), so the compound document requested with `?include=providers`
- * answers the whole mapping in the apply response itself. Absent — an API that
- * ignored the include — the caller falls back to fetching each provider.
- */
-function extractIncludedProviderMappings(applyResult: unknown) {
-  if (!isRecord(applyResult) || !Array.isArray(applyResult.included)) {
-    return [];
-  }
-
-  return applyResult.included
-    .map(normalizeIncludedProvider)
-    .filter((mapping): mapping is CandidateProviderMapping => mapping !== null);
-}
-
 export async function runWithConcurrencyLimit<T, R>(
   items: T[],
   concurrencyLimit: number,
@@ -149,51 +107,33 @@ export async function runWithConcurrencyLimit<T, R>(
   return results;
 }
 
+/**
+ * Candidate id → the provider created for it.
+ *
+ * The apply response carries provider *ids* only — it cannot be asked to include
+ * the providers themselves — so the uids that identify each candidate are read
+ * separately. Providers whose uid was not resolved, or that belong to a candidate
+ * outside this selection, are left out rather than guessed at by position: the
+ * relationship order is not the selection order.
+ */
 export async function buildCandidateToProviderMap({
   selectedCandidateIds,
   providerIds,
-  applyResult,
-  resolveProviderUidById,
+  resolveProviderUids,
 }: BuildCandidateToProviderMapParams): Promise<Map<string, string>> {
   const selectedCandidateIdSet = new Set(selectedCandidateIds);
+  const uidByProviderId = await resolveProviderUids(providerIds);
+  const mapping = new Map<string, string>();
 
-  const explicitMappings = extractIncludedProviderMappings(applyResult);
-  if (explicitMappings.length > 0) {
-    const mappedProviders = new Map<string, string>();
-
-    for (const mapping of explicitMappings) {
-      if (!selectedCandidateIdSet.has(mapping.candidateId)) {
-        continue;
-      }
-      mappedProviders.set(mapping.candidateId, mapping.providerId);
-    }
-
-    if (mappedProviders.size > 0) {
-      return mappedProviders;
-    }
-  }
-
-  const fallbackEntries = await runWithConcurrencyLimit(
-    providerIds,
-    DEFAULT_CONCURRENCY_LIMIT,
-    async (providerId) => {
-      const providerUid = await resolveProviderUidById(providerId);
-      if (!providerUid || !selectedCandidateIdSet.has(providerUid)) {
-        return null;
-      }
-      return { candidateId: providerUid, providerId };
-    },
-  );
-
-  const fallbackMapping = new Map<string, string>();
-  for (const entry of fallbackEntries) {
-    if (!entry) {
+  for (const providerId of providerIds) {
+    const candidateId = uidByProviderId[providerId];
+    if (!candidateId || !selectedCandidateIdSet.has(candidateId)) {
       continue;
     }
-    fallbackMapping.set(entry.candidateId, entry.providerId);
+    mapping.set(candidateId, providerId);
   }
 
-  return fallbackMapping;
+  return mapping;
 }
 
 export async function pollConnectionTask(

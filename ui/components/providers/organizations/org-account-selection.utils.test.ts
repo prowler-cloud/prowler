@@ -11,66 +11,49 @@ import {
 } from "./org-account-selection.utils";
 
 describe("buildCandidateToProviderMap", () => {
-  it("maps candidates from the apply response's included providers", async () => {
-    // Given — the compound document `?include=providers` returns: a provider's
-    // `uid` is the candidate it was created for, so the mapping needs no extra
-    // request even when the relationship order doesn't match the selection.
-    const resolveProviderUidById = vi.fn();
+  it("matches providers to candidates by uid, not by position", async () => {
+    // Given — the apply response's relationship order is not the selection order,
+    // so pairing them by index would silently mismatch every candidate.
     const selectedCandidateIds = ["111111111111", "222222222222"];
     const providerIds = ["provider-b", "provider-a"];
-    const applyResult = {
-      data: { relationships: { providers: { data: providerIds } } },
-      included: [
-        {
-          id: "provider-a",
-          type: "providers",
-          attributes: { uid: "111111111111" },
-        },
-        {
-          id: "provider-b",
-          type: "providers",
-          attributes: { uid: "222222222222" },
-        },
-        // Other included types are ignored, not mistaken for providers.
-        { id: "secret-1", type: "secrets", attributes: { uid: "nonsense" } },
-      ],
-    };
+    const resolveProviderUids = vi.fn(async () => ({
+      "provider-a": "111111111111",
+      "provider-b": "222222222222",
+    }));
 
     // When
     const map = await buildCandidateToProviderMap({
       selectedCandidateIds,
       providerIds,
-      applyResult,
-      resolveProviderUidById,
+      resolveProviderUids,
     });
 
-    // Then
+    // Then — resolved in one call, for all providers at once.
     expect(map.get("111111111111")).toBe("provider-a");
     expect(map.get("222222222222")).toBe("provider-b");
-    expect(resolveProviderUidById).not.toHaveBeenCalled();
+    expect(resolveProviderUids).toHaveBeenCalledTimes(1);
+    expect(resolveProviderUids).toHaveBeenCalledWith(providerIds);
   });
 
-  it("falls back to provider uid matching when the response carries no include", async () => {
-    // Given
+  it("leaves out providers whose uid did not resolve or is outside the selection", async () => {
+    // Given — one provider resolves to a candidate nobody selected, one not at all.
     const selectedCandidateIds = ["111111111111", "222222222222"];
     const providerIds = ["provider-a", "provider-b", "provider-c"];
-    const resolveProviderUidById = vi.fn(async (providerId: string) => {
-      if (providerId === "provider-a") return "222222222222";
-      if (providerId === "provider-c") return "111111111111";
-      return "999999999999";
-    });
+    const resolveProviderUids = vi.fn(async () => ({
+      "provider-a": "222222222222",
+      "provider-b": "999999999999",
+    }));
 
     // When
     const map = await buildCandidateToProviderMap({
       selectedCandidateIds,
       providerIds,
-      applyResult: {},
-      resolveProviderUidById,
+      resolveProviderUids,
     });
 
     // Then
-    expect(map.get("111111111111")).toBe("provider-c");
     expect(map.get("222222222222")).toBe("provider-a");
+    expect(map.size).toBe(1);
   });
 });
 

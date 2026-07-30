@@ -92,6 +92,21 @@ describe("GCP Organizations onboarding (Phase 2)", () => {
     expect(harness.applyCallCount).toBe(1);
   }, 40000);
 
+  it("resolves the created providers' uids with one filtered list, and no include", async () => {
+    const harness = new ProvidersPageHarness(gcpOnboardingFixture());
+    await onboardGcpToSelection(harness);
+
+    await harness.testConnections();
+    await harness.waitForProjectsConnected();
+
+    // The apply view rejects `include` and fails the whole request, so the uids
+    // that map providers back to candidates are read from `/providers` — once for
+    // all of them, not once each.
+    expect(harness.applySentIncludeParam()).toBe(false);
+    expect(harness.providerUidLookupCount).toBe(1);
+    expect(harness.singleProviderFetchCount).toBe(0);
+  }, 40000);
+
   it("links the wizard docs to the GCP organizations tutorial", async () => {
     const harness = new ProvidersPageHarness(gcpOnboardingFixture());
     await harness.mount();

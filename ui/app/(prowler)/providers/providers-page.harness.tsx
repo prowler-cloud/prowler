@@ -43,6 +43,36 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
     return this.countRequests("POST", "/apply");
   }
 
+  /**
+   * Whether any apply asked the endpoint to include related resources. The apply
+   * view rejects `include` outright and fails the whole request, so this is a
+   * tripwire, not a preference.
+   */
+  applySentIncludeParam(): boolean {
+    return this.requestLog.some(
+      (entry) =>
+        entry.method === "POST" &&
+        entry.url.includes("/apply") &&
+        entry.url.includes("include="),
+    );
+  }
+
+  /** Single-provider reads — one per created provider is the N+1 this avoids. */
+  get singleProviderFetchCount(): number {
+    return this.requestLog.filter(
+      (entry) =>
+        entry.method === "GET" && /\/providers\/[^/?]+$/.test(entry.url),
+    ).length;
+  }
+
+  /** Filtered provider-list reads, which resolve every created uid at once. */
+  get providerUidLookupCount(): number {
+    return this.requestLog.filter(
+      (entry) =>
+        entry.method === "GET" && entry.url.includes("filter%5Bid__in%5D"),
+    ).length;
+  }
+
   private get connectionCallCount(): number {
     return this.countRequests("POST", "/connection");
   }

@@ -213,6 +213,20 @@ const uidForProviderId = (
   return provider?.uid ?? null;
 };
 
+/**
+ * The provider behind an id, seeded or apply-created. A created provider exists
+ * only as an id plus its candidate mapping, so the rest is filled in the way the
+ * single-provider route already does (`aws` is a placeholder; only `id` and `uid`
+ * are read by the flow that looks these up).
+ */
+const providerForId = (fx: OrgFixture, id: string): FixtureProvider => {
+  const seeded = fx.providers.find((provider) => provider.id === id);
+  if (seeded) return seeded;
+
+  const uid = uidForProviderId(fx, id) ?? id;
+  return { id, provider: "aws", uid, alias: uid, connected: true };
+};
+
 const applyResultResponse = (fx: OrgFixture) => ({
   data: {
     id: "apply-result-1",
@@ -246,14 +260,9 @@ const applyResultResponse = (fx: OrgFixture) => ({
       }),
     },
   },
-  // The compound document `?include=providers` asks for: each created provider
-  // with its `uid`, which is the candidate it was created for. There is no
-  // mapping attribute on the apply result — the include is the whole mapping.
-  included: fx.apply.createdProviderIds.map((providerId) => ({
-    id: providerId,
-    type: "providers",
-    attributes: { uid: uidForProviderId(fx, providerId) },
-  })),
+  // No `included`: the apply view serves provider *ids* only and rejects an
+  // `include` parameter outright, so the created providers' uids have to be read
+  // from `/providers` afterwards.
 });
 
 const taskResource = (id: string, state: string, result: unknown) => ({
@@ -514,13 +523,25 @@ export const handlersForOrganizations = (
     ),
 
     // --- providers-page loader (providers list, groups, schedules) --------
-    http.get(`${API}/providers`, () =>
-      HttpResponse.json({
-        data: fx.providers.map(providerResource),
+    http.get(`${API}/providers`, ({ request }) => {
+      // `filter[id__in]` is how the apply flow resolves the uids of the providers
+      // it just created — one request for all of them, since the apply response
+      // cannot include them. Those providers are not seeded in `fx.providers`, so
+      // they are synthesized here exactly as `/providers/:id` does.
+      const idFilter = new URL(request.url).searchParams.get("filter[id__in]");
+      const data = idFilter
+        ? idFilter
+            .split(",")
+            .filter(Boolean)
+            .map((id) => providerResource(providerForId(fx, id)))
+        : fx.providers.map(providerResource);
+
+      return HttpResponse.json({
+        data,
         included: [],
-        meta: collectionMeta(fx.providers.length),
-      }),
-    ),
+        meta: collectionMeta(data.length),
+      });
+    }),
 
     http.get(`${API}/provider-groups`, () =>
       HttpResponse.json({ data: [], meta: collectionMeta(0) }),
