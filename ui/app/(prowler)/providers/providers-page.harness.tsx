@@ -386,7 +386,9 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
    * say "accounts", so this is the negative half of the terminology assertions.
    */
   usesAccountWording(): boolean {
-    return this.containsText(/accounts selected|Accounts Connected!/);
+    return this.containsText(
+      /accounts selected|Accounts Connected!|accounts under this Organization/,
+    );
   }
 
   /** Toggle a discovered candidate's selection by the text of its tree row. */

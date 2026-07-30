@@ -70,7 +70,7 @@ interface ApplyRequestBody {
 }
 
 describe("GCP Organizations onboarding (Phase 2)", () => {
-  it("completes the happy path: setup → discovery → selection → apply → connect → launch", async () => {
+  it("completes the happy path: setup → discovery → selection → apply → connect → launch step", async () => {
     const harness = new ProvidersPageHarness(gcpOnboardingFixture());
     await onboardGcpToSelection(harness);
 

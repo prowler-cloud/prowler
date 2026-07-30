@@ -349,6 +349,132 @@ describe("useOrgSetupSubmission", () => {
     expect(result.current.discoveryFailed).toBe(false);
   });
 
+  it("keeps the retry affordance when the retry itself cannot be triggered", async () => {
+    // Given — a failed discovery, so the retry button is showing.
+    const onNext = vi.fn();
+    mockFreshSetupChain();
+    organizationsActionsMock.getDiscovery.mockResolvedValue({
+      data: {
+        attributes: {
+          status: DISCOVERY_STATUS.FAILED,
+          error: "boom",
+          result: {},
+        },
+      },
+    });
+
+    const { result } = renderHook(() =>
+      useOrgSetupSubmission({
+        stackSetExternalId: "tenant-external-id",
+        onNext,
+        setFieldError: vi.fn(() => true),
+      }),
+    );
+
+    await act(async () => {
+      await result.current.submitOrganizationSetup({
+        orgType: ORGANIZATION_TYPE.AWS,
+        awsOrgId: "o-abc123def4",
+        roleArn: "arn:aws:iam::123456789012:role/ProwlerOrgRole",
+      });
+    });
+    expect(result.current.discoveryFailed).toBe(true);
+
+    // When — the retry's own trigger call fails.
+    organizationsActionsMock.triggerDiscovery.mockResolvedValue({
+      error: "Rate limited",
+    });
+    await act(async () => {
+      await result.current.retryDiscovery();
+    });
+
+    // Then — the affordance the user just clicked is still there.
+    expect(result.current.apiError).toBe("Rate limited");
+    expect(result.current.discoveryFailed).toBe(true);
+  });
+
+  it("reports an unreadable discovery response without blaming credentials", async () => {
+    // Given — a 2xx poll response with no body, as handleApiResponse returns it.
+    const onNext = vi.fn();
+    mockFreshSetupChain();
+    organizationsActionsMock.getDiscovery.mockResolvedValue({ success: true });
+
+    const { result } = renderHook(() =>
+      useOrgSetupSubmission({
+        stackSetExternalId: "tenant-external-id",
+        onNext,
+        setFieldError: vi.fn(() => true),
+      }),
+    );
+
+    await act(async () => {
+      await result.current.submitOrganizationSetup({
+        orgType: ORGANIZATION_TYPE.AWS,
+        awsOrgId: "o-abc123def4",
+        roleArn: "arn:aws:iam::123456789012:role/ProwlerOrgRole",
+      });
+    });
+
+    // Then — the credentials were accepted, so the copy must not blame them.
+    expect(result.current.apiError).toContain(
+      "discovery result could not be read",
+    );
+    expect(result.current.apiError).not.toContain("Authentication failed");
+    expect(result.current.discoveryFailed).toBe(true);
+    expect(onNext).not.toHaveBeenCalled();
+  });
+
+  it("reports the chain as pending while a resumed discovery is in flight", async () => {
+    // Given — a discovery that times out, leaving a resume context.
+    const onNext = vi.fn();
+    mockFreshSetupChain();
+    organizationsActionsMock.getDiscovery.mockResolvedValue({
+      data: { attributes: { status: DISCOVERY_STATUS.RUNNING, result: {} } },
+    });
+
+    const { result } = renderHook(() =>
+      useOrgSetupSubmission({
+        stackSetExternalId: "tenant-external-id",
+        onNext,
+        setFieldError: vi.fn(() => true),
+      }),
+    );
+
+    vi.useFakeTimers();
+    let submitPromise: Promise<void>;
+    await act(async () => {
+      submitPromise = result.current.submitOrganizationSetup({
+        orgType: ORGANIZATION_TYPE.AWS,
+        awsOrgId: "o-abc123def4",
+        roleArn: "arn:aws:iam::123456789012:role/ProwlerOrgRole",
+      });
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(3000 * 61);
+      await submitPromise;
+    });
+    expect(result.current.discoveryTimedOut).toBe(true);
+    expect(result.current.isSubmissionPending).toBe(false);
+
+    // When — keep waiting, without letting the resumed poll finish.
+    let resumePromise: Promise<void>;
+    await act(async () => {
+      resumePromise = result.current.keepWaitingForDiscovery();
+    });
+
+    // Then — the forms have something to hang a spinner and a disabled footer
+    // on; react-hook-form's isSubmitting is false for this path.
+    expect(result.current.isSubmissionPending).toBe(true);
+    expect(result.current.discoveryTimedOut).toBe(false);
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(3000 * 61);
+      await resumePromise;
+    });
+    expect(result.current.isSubmissionPending).toBe(false);
+    vi.useRealTimers();
+  });
+
   it("maps external_id server errors to awsOrgId field errors", async () => {
     // Given
     const onNext = vi.fn();

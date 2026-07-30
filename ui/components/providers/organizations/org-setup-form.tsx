@@ -170,6 +170,7 @@ export function OrgSetupForm({
     cancelSecretReplace,
     discoveryTimedOut,
     discoveryFailed,
+    isSubmissionPending,
     keepWaitingForDiscovery,
     retryDiscovery,
   } = useOrgSetupSubmission({
@@ -186,6 +187,11 @@ export function OrgSetupForm({
       }
     },
   });
+
+  // `isSubmitting` only covers a submit react-hook-form started itself, but the
+  // chain is also re-entered by confirming a secret replacement, keeping waiting
+  // and retrying — all of which must still show progress and hold the footer.
+  const isBusy = isSubmitting || isSubmissionPending;
 
   useEffect(() => {
     onPhaseChange(setupPhase);
@@ -211,20 +217,20 @@ export function OrgSetupForm({
     onFooterChange({
       showBack: !isEditCredentials,
       backLabel: "Back",
-      backDisabled: isSubmitting,
+      backDisabled: isBusy,
       onBack: () => setSetupPhase(ORG_SETUP_PHASE.DETAILS),
       showAction: true,
       actionLabel: "Authenticate",
-      actionDisabled: isSubmitting || !isValid || !stackSetExternalId,
+      actionDisabled: isBusy || !isValid || !stackSetExternalId,
       actionType: WIZARD_FOOTER_ACTION_TYPE.SUBMIT,
       actionFormId: formId,
     });
   }, [
     formId,
     intent,
+    isBusy,
     isOrgIdValid,
     isSaving,
-    isSubmitting,
     isValid,
     onBack,
     onFooterChange,
@@ -338,7 +344,7 @@ export function OrgSetupForm({
           </div>
         )}
 
-        {setupPhase === ORG_SETUP_PHASE.ACCESS && isSubmitting && (
+        {setupPhase === ORG_SETUP_PHASE.ACCESS && isBusy && (
           <div className="flex min-h-[220px] items-center justify-center">
             <div className="flex items-center gap-3 py-2">
               <Spinner className="size-6" />
@@ -357,7 +363,7 @@ export function OrgSetupForm({
 
         {setupPhase === ORG_SETUP_PHASE.ACCESS &&
           discoveryTimedOut &&
-          !isSubmitting && (
+          !isBusy && (
             <DiscoveryTimeoutNotice
               onKeepWaiting={() => void keepWaitingForDiscovery()}
               onRetry={() => void retryDiscovery()}
@@ -366,7 +372,7 @@ export function OrgSetupForm({
 
         {setupPhase === ORG_SETUP_PHASE.ACCESS &&
           discoveryFailed &&
-          !isSubmitting && (
+          !isBusy && (
             <Button
               type="button"
               variant="outline"
@@ -411,7 +417,7 @@ export function OrgSetupForm({
           </div>
         )}
 
-        {setupPhase === ORG_SETUP_PHASE.ACCESS && !isSubmitting && (
+        {setupPhase === ORG_SETUP_PHASE.ACCESS && !isBusy && (
           <div className="flex flex-col gap-8">
             {/* External ID - shown first for both deployment steps */}
             <div className="flex flex-col gap-4">

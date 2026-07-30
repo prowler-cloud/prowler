@@ -166,6 +166,7 @@ export function GcpOrgSetupForm({
     cancelSecretReplace,
     discoveryTimedOut,
     discoveryFailed,
+    isSubmissionPending,
     keepWaitingForDiscovery,
     retryDiscovery,
   } = useOrgSetupSubmission({
@@ -192,6 +193,11 @@ export function GcpOrgSetupForm({
     },
   });
 
+  // `isSubmitting` only covers a submit react-hook-form started itself, but the
+  // chain is also re-entered by confirming a secret replacement, keeping waiting
+  // and retrying — all of which must still show progress and hold the footer.
+  const isBusy = isSubmitting || isSubmissionPending;
+
   useEffect(() => {
     onPhaseChange(setupPhase);
   }, [onPhaseChange, setupPhase]);
@@ -216,20 +222,20 @@ export function GcpOrgSetupForm({
     onFooterChange({
       showBack: !isEditCredentials,
       backLabel: "Back",
-      backDisabled: isSubmitting,
+      backDisabled: isBusy,
       onBack: () => setSetupPhase(ORG_SETUP_PHASE.DETAILS),
       showAction: true,
       actionLabel: "Authenticate",
-      actionDisabled: isSubmitting || !isValid,
+      actionDisabled: isBusy || !isValid,
       actionType: WIZARD_FOOTER_ACTION_TYPE.SUBMIT,
       actionFormId: formId,
     });
   }, [
     formId,
     intent,
+    isBusy,
     isOrgIdValid,
     isSaving,
-    isSubmitting,
     isValid,
     onBack,
     onFooterChange,
@@ -340,7 +346,7 @@ export function GcpOrgSetupForm({
           </div>
         )}
 
-        {setupPhase === ORG_SETUP_PHASE.ACCESS && isSubmitting && (
+        {setupPhase === ORG_SETUP_PHASE.ACCESS && isBusy && (
           <div className="flex min-h-[220px] items-center justify-center">
             <div className="flex items-center gap-3 py-2">
               <Spinner className="size-6" />
@@ -359,7 +365,7 @@ export function GcpOrgSetupForm({
 
         {setupPhase === ORG_SETUP_PHASE.ACCESS &&
           discoveryTimedOut &&
-          !isSubmitting && (
+          !isBusy && (
             <DiscoveryTimeoutNotice
               onKeepWaiting={() => void keepWaitingForDiscovery()}
               onRetry={() => void retryDiscovery()}
@@ -368,7 +374,7 @@ export function GcpOrgSetupForm({
 
         {setupPhase === ORG_SETUP_PHASE.ACCESS &&
           discoveryFailed &&
-          !isSubmitting && (
+          !isBusy && (
             <Button
               type="button"
               variant="outline"
@@ -409,7 +415,7 @@ export function GcpOrgSetupForm({
           </div>
         )}
 
-        {setupPhase === ORG_SETUP_PHASE.ACCESS && !isSubmitting && (
+        {setupPhase === ORG_SETUP_PHASE.ACCESS && !isBusy && (
           <div className="flex flex-col gap-6">
             <p className="text-text-neutral-primary text-sm leading-7 font-normal">
               Choose how Prowler authenticates to your Google Cloud

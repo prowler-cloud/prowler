@@ -26,8 +26,8 @@ const DISCOVERY_POLL_INTERVAL_MS = 3000;
 const DISCOVERY_MAX_RETRIES = 60;
 
 /**
- * Used once discovery has already come back successfully: from that point the
- * credentials are proven good, so a later failure must not send the user off to
+ * Used once the credentials have already been accepted: from that point they are
+ * proven good, so a response we cannot read must not send the user off to
  * re-check them.
  */
 const UNEXPECTED_DISCOVERY_RESULT =
@@ -100,6 +100,8 @@ export function useOrgSetupSubmission({
   // Set when discovery completes with a failed status; the sanitized error is in
   // apiError and the form offers a retry (a fresh discovery).
   const [discoveryFailed, setDiscoveryFailed] = useState(false);
+  // True whenever the setup chain is running.
+  const [isSubmissionPending, setIsSubmissionPending] = useState(false);
   const isMountedRef = useRef(true);
   const pendingSubmitDataRef = useRef<OrgSetupSubmissionData | null>(null);
   // Enough context to resume polling the same discovery (keep waiting) or
@@ -190,7 +192,7 @@ export function useOrgSetupSubmission({
 
       if (!status) {
         setApiError(UNEXPECTED_DISCOVERY_RESULT);
-        return null;
+        return { kind: "failed" };
       }
 
       if (status === DISCOVERY_STATUS.SUCCEEDED) {
@@ -242,7 +244,14 @@ export function useOrgSetupSubmission({
       return;
     }
     if (outcome.kind === "resolved") {
-      applyResolvedDiscovery(discoveryId, outcome.result, strategy);
+      // Ingesting the result is all that is left once discovery succeeded, and a
+      // result we cannot map is not a credentials problem
+      try {
+        applyResolvedDiscovery(discoveryId, outcome.result, strategy);
+      } catch {
+        setApiError(UNEXPECTED_DISCOVERY_RESULT);
+        setDiscoveryFailed(true);
+      }
       return;
     }
     if (outcome.kind === "timeout") {
@@ -279,6 +288,7 @@ export function useOrgSetupSubmission({
         setApiError(null);
         setDiscoveryTimedOut(false);
         setDiscoveryFailed(false);
+        setIsSubmissionPending(true);
       }
       clearValidationState();
 
@@ -328,7 +338,7 @@ export function useOrgSetupSubmission({
           return;
         }
 
-        orgId = orgResult.data.id;
+        orgId = orgResult?.data?.id;
       }
 
       if (!orgId) {
@@ -395,7 +405,11 @@ export function useOrgSetupSubmission({
         return;
       }
 
-      const discoveryId = discoveryResult.data.id;
+      const discoveryId = discoveryResult?.data?.id;
+      if (!discoveryId) {
+        setApiErrorIfActive(UNEXPECTED_DISCOVERY_RESULT);
+        return;
+      }
       // Persist the discovery id at trigger time so an interrupted discovery
       // can be resumed on wizard re-entry.
       setDiscoveryTriggered(discoveryId);
@@ -423,8 +437,11 @@ export function useOrgSetupSubmission({
         );
       }
     } finally {
+      // Only the newest chain clears the flag: if a later one superseded this
+      // controller it owns the pending state and is still running.
       if (discoveryAbortControllerRef.current === abortController) {
         discoveryAbortControllerRef.current = null;
+        setIsSubmissionPending(false);
       }
     }
   };
@@ -453,6 +470,7 @@ export function useOrgSetupSubmission({
     discoveryAbortControllerRef.current = abortController;
     setDiscoveryTimedOut(false);
     setDiscoveryFailed(false);
+    setIsSubmissionPending(true);
 
     try {
       const outcome = await pollDiscoveryResult(
@@ -469,11 +487,17 @@ export function useOrgSetupSubmission({
       );
     } catch {
       if (isMountedRef.current && !abortController.signal.aborted) {
-        setApiError(ctx.strategy.authFailureMessage());
+        setApiError(UNEXPECTED_DISCOVERY_RESULT);
+        // The same discovery is still running server-side, so restore the
+        // two-action notice rather than forcing a fresh POST /discoveries.
+        setDiscoveryTimedOut(true);
       }
     } finally {
+      // Only the newest chain clears the flag: if a later one superseded this
+      // controller it owns the pending state and is still running.
       if (discoveryAbortControllerRef.current === abortController) {
         discoveryAbortControllerRef.current = null;
+        setIsSubmissionPending(false);
       }
     }
   };
@@ -490,9 +514,8 @@ export function useOrgSetupSubmission({
     discoveryAbortControllerRef.current = abortController;
     setDiscoveryTimedOut(false);
     setDiscoveryFailed(false);
-    if (!abortController.signal.aborted) {
-      setApiError(null);
-    }
+    setIsSubmissionPending(true);
+    setApiError(null);
 
     try {
       const discoveryResult = await triggerDiscovery(ctx.orgId);
@@ -501,10 +524,18 @@ export function useOrgSetupSubmission({
       }
       if (discoveryResult?.error) {
         setApiError(discoveryResult.error);
+        // A retry that could not even be triggered is itself a discovery
+        // failure: without this the retry button we were clicked from vanishes.
+        setDiscoveryFailed(true);
         return;
       }
 
-      const discoveryId = discoveryResult.data.id;
+      const discoveryId = discoveryResult?.data?.id;
+      if (!discoveryId) {
+        setApiError(UNEXPECTED_DISCOVERY_RESULT);
+        setDiscoveryFailed(true);
+        return;
+      }
       setDiscoveryTriggered(discoveryId);
       resumeContextRef.current = { ...ctx, discoveryId };
 
@@ -522,11 +553,17 @@ export function useOrgSetupSubmission({
       );
     } catch {
       if (isMountedRef.current && !abortController.signal.aborted) {
-        setApiError(ctx.strategy.authFailureMessage());
+        // Reaching a retry means the credentials were already accepted once, so
+        // this cannot be an authentication problem.
+        setApiError(UNEXPECTED_DISCOVERY_RESULT);
+        setDiscoveryFailed(true);
       }
     } finally {
+      // Only the newest chain clears the flag: if a later one superseded this
+      // controller it owns the pending state and is still running.
       if (discoveryAbortControllerRef.current === abortController) {
         discoveryAbortControllerRef.current = null;
+        setIsSubmissionPending(false);
       }
     }
   };
@@ -540,6 +577,7 @@ export function useOrgSetupSubmission({
     cancelSecretReplace,
     discoveryTimedOut,
     discoveryFailed,
+    isSubmissionPending,
     keepWaitingForDiscovery,
     retryDiscovery,
   };
