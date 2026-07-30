@@ -10,7 +10,10 @@ from prowler.providers.aws.services.batch.batch_client import batch_client
 
 
 class batch_job_definition_no_secrets(Check):
+    """Detect secrets in AWS Batch job definition environment variables and commands."""
+
     def execute(self):
+        """Scan job definitions for hardcoded secrets in env vars and commands."""
         findings = []
 
         secrets_ignore_patterns = batch_client.audit_config.get(
@@ -23,6 +26,7 @@ class batch_job_definition_no_secrets(Check):
         job_definitions = batch_client.job_definitions
 
         def scan_payloads():
+            """Yield index-keyed payloads for each env var and the command."""
             for jd_index, job_definition in enumerate(job_definitions):
                 container = job_definition.container_properties
 

@@ -8,17 +8,23 @@ from prowler.providers.aws.lib.service.service import AWSService
 
 
 class ContainerEnvVariable(BaseModel):
+    """An environment variable name-value pair."""
+
     name: str
     value: str
 
 
 class BatchContainerProperties(BaseModel):
+    """Container properties for an AWS Batch job definition."""
+
     image: Optional[str]
     command: list[str] = []
     environment: list[ContainerEnvVariable] = []
 
 
 class BatchJobDefinition(BaseModel):
+    """An AWS Batch job definition with its container properties."""
+
     name: str
     arn: str
     revision: int
@@ -27,6 +33,8 @@ class BatchJobDefinition(BaseModel):
 
 
 class Batch(AWSService):
+    """AWS Batch service client for listing job definitions."""
+
     def __init__(self, provider):
         super().__init__(__class__.__name__, provider)
 
@@ -38,6 +46,7 @@ class Batch(AWSService):
         self.__threading_call__(self._list_job_definitions)
 
     def _list_job_definitions(self, regional_client):
+        """List job definitions for a regional client."""
         logger.info("Batch - Listing Job Definitions...")
 
         try:

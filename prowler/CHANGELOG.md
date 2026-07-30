@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [Unreleased]
+
+### 🚀 Added
+
+- New `batch_job_definition_no_secrets` check that detects hardcoded secrets in AWS Batch job definition environment variables and command parameters [(#12117)](https://github.com/prowler-cloud/prowler/pull/12117)
+
+---
+
 ## [5.33.0] (Prowler v5.33.0)
 
 ### 🐞 Fixed
