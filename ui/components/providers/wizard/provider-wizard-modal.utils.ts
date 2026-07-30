@@ -62,8 +62,26 @@ export function getProviderWizardDocsDestination(docsLink: string) {
 
   try {
     const parsed = new URL(docsLink);
+    // Labels for method-specific credentials-step deep links. Keyed by the
+    // docs URL slug (which can differ from the wizard provider key — e.g.
+    // the docs use `microsoft365` while the wizard uses `m365`). Providers
+    // whose credentials-step URL is the general step anchor are omitted
+    // here and fall back to the provider label ("AWS", "Google Workspace",
+    // etc.) via the `destinationLabelMap` below.
     const docsSectionLabelMap: Record<string, string> = {
       "aws#assume-role-recommended": "AWS Assume Role",
+      "aws#credentials-static-access-keys": "AWS Credentials",
+      "microsoft365#application-certificate-authentication-recommended":
+        "M365 Certificate",
+      "microsoft365#application-client-secret-authentication":
+        "M365 Client Secret",
+      "alibabacloud#ram-role-assumption-recommended": "Alibaba Cloud RAM Role",
+      "alibabacloud#credentials-static-access-keys":
+        "Alibaba Cloud Credentials",
+      "cloudflare#user-api-token-authentication-recommended":
+        "Cloudflare API Token",
+      "cloudflare#api-key-and-email-authentication-legacy":
+        "Cloudflare API Key",
     };
     const pathSegments = parsed.pathname
       .split("/")

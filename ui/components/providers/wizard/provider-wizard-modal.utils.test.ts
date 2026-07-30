@@ -82,6 +82,51 @@ describe("getProviderWizardDocsDestination", () => {
     expect(destination).toBe("AWS Assume Role");
   });
 
+  it("returns a method-specific label for every subsection deep-link", () => {
+    // Locks the docsSectionLabelMap keys to the URLs the frontend emits.
+    // Adding a new (provider, method) subsection URL requires wiring a
+    // matching label here or the modal header regresses to just the provider
+    // name.
+    const cases: Array<[string, string]> = [
+      [
+        "https://docs.prowler.com/user-guide/providers/aws/getting-started-aws#assume-role-recommended",
+        "AWS Assume Role",
+      ],
+      [
+        "https://docs.prowler.com/user-guide/providers/aws/getting-started-aws#credentials-static-access-keys",
+        "AWS Credentials",
+      ],
+      [
+        "https://docs.prowler.com/user-guide/providers/microsoft365/getting-started-m365#application-certificate-authentication-recommended",
+        "M365 Certificate",
+      ],
+      [
+        "https://docs.prowler.com/user-guide/providers/microsoft365/getting-started-m365#application-client-secret-authentication",
+        "M365 Client Secret",
+      ],
+      [
+        "https://docs.prowler.com/user-guide/providers/alibabacloud/getting-started-alibabacloud#ram-role-assumption-recommended",
+        "Alibaba Cloud RAM Role",
+      ],
+      [
+        "https://docs.prowler.com/user-guide/providers/alibabacloud/getting-started-alibabacloud#credentials-static-access-keys",
+        "Alibaba Cloud Credentials",
+      ],
+      [
+        "https://docs.prowler.com/user-guide/providers/cloudflare/getting-started-cloudflare#user-api-token-authentication-recommended",
+        "Cloudflare API Token",
+      ],
+      [
+        "https://docs.prowler.com/user-guide/providers/cloudflare/getting-started-cloudflare#api-key-and-email-authentication-legacy",
+        "Cloudflare API Key",
+      ],
+    ];
+
+    for (const [url, expected] of cases) {
+      expect(getProviderWizardDocsDestination(url)).toBe(expected);
+    }
+  });
+
   it("ignores a #authentication anchor when deriving the label", () => {
     // The credentials step falls back to a shortlink + anchor for providers
     // without a dedicated auth page (Kubernetes). The label shown in the

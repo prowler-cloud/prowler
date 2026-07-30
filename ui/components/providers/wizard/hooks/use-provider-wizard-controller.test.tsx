@@ -170,10 +170,10 @@ describe("useProviderWizardController", () => {
     });
     expect(result.current.modalTitle).toBe("Update Provider Credentials");
     expect(result.current.isProviderFlow).toBe(true);
-    // Update mode enters at the credentials step, so the docs link points to
-    // the dedicated authentication docs page for that provider.
+    // Update mode enters at the credentials step, so the docs link scrolls
+    // the getting-started page to the credentials/authentication section.
     expect(result.current.docsLink).toBe(
-      "https://docs.prowler.com/user-guide/providers/aws/authentication",
+      "https://docs.prowler.com/user-guide/providers/aws/getting-started-aws#step-3-set-up-aws-authentication",
     );
 
     const state = useProviderWizardStore.getState();
