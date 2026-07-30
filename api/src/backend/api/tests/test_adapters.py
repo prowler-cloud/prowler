@@ -481,6 +481,7 @@ class TestProwlerSocialAccountAdapterMultiDatabase:
             User(name="Frank", email=email),
             uid="frank-multidb-rollback-google-account",
         )
+        tenants_before = Tenant.objects.using("admin").count()
 
         assert connections["default"] is not connections["admin"]
         assert (
@@ -515,6 +516,7 @@ class TestProwlerSocialAccountAdapterMultiDatabase:
             .exists()
         )
         assert not EmailAddress.objects.using("admin").filter(email=email).exists()
+        assert Tenant.objects.using("admin").count() == tenants_before
         assert get_write_db_alias() is None
 
     def test_save_user_commits_complete_signup_across_production_aliases(self, rf):

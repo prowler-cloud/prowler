@@ -2540,37 +2540,28 @@ def finding_groups_title_variants_fixture(
     return findings
 
 
+def _ensure_mirrored_test_alias(alias: str) -> None:
+    default_database = settings.DATABASES["default"]
+    if alias not in settings.DATABASES:
+        settings.DATABASES[alias] = {
+            **default_database,
+            "TEST": {
+                **default_database.get("TEST", {}),
+                "MIRROR": "default",
+            },
+        }
+    django_connections.databases[alias] = settings.DATABASES[alias]
+
+
 def pytest_collection_modifyitems(items):
     """Ensure test_rbac.py is executed first."""
     items.sort(key=lambda item: 0 if "test_rbac.py" in item.nodeid else 1)
 
     if any(item.get_closest_marker("requires_test_admin_alias") for item in items):
-        default_database = settings.DATABASES["default"]
-        if TEST_ADMIN_ALIAS not in settings.DATABASES:
-            settings.DATABASES[TEST_ADMIN_ALIAS] = {
-                **default_database,
-                "TEST": {
-                    **default_database.get("TEST", {}),
-                    "MIRROR": "default",
-                },
-            }
-        django_connections.databases[TEST_ADMIN_ALIAS] = settings.DATABASES[
-            TEST_ADMIN_ALIAS
-        ]
+        _ensure_mirrored_test_alias(TEST_ADMIN_ALIAS)
 
     if any(item.get_closest_marker("requires_test_replica_alias") for item in items):
-        default_database = settings.DATABASES["default"]
-        if TEST_REPLICA_ALIAS not in settings.DATABASES:
-            settings.DATABASES[TEST_REPLICA_ALIAS] = {
-                **default_database,
-                "TEST": {
-                    **default_database.get("TEST", {}),
-                    "MIRROR": "default",
-                },
-            }
-        django_connections.databases[TEST_REPLICA_ALIAS] = settings.DATABASES[
-            TEST_REPLICA_ALIAS
-        ]
+        _ensure_mirrored_test_alias(TEST_REPLICA_ALIAS)
 
 
 def pytest_configure(config):

@@ -1,7 +1,7 @@
 from allauth.account.models import EmailAddress
 from allauth.core.exceptions import ImmediateHttpResponse
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
-from api.db_router import MainRouter, reset_write_db_alias, set_write_db_alias
+from api.db_router import MainRouter, write_db_alias
 from api.db_utils import rls_transaction
 from api.models import (
     Membership,
@@ -109,11 +109,8 @@ class ProwlerSocialAccountAdapter(DefaultSocialAccountAdapter):
         with transaction.atomic(using=MainRouter.admin_db):
             # Allauth saves the user without an explicit alias. Route that save
             # through admin so every signup record shares this transaction.
-            write_alias_token = set_write_db_alias(MainRouter.admin_db)
-            try:
+            with write_db_alias(MainRouter.admin_db):
                 user = super().save_user(request, sociallogin, form)
-            finally:
-                reset_write_db_alias(write_alias_token)
             provider = sociallogin.provider.id
             extra = sociallogin.account.extra_data
 

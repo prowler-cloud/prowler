@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 from contextvars import ContextVar
 
 from django.conf import settings
@@ -36,6 +37,15 @@ def get_write_db_alias() -> str | None:
 def reset_write_db_alias(token) -> None:
     if token is not None:
         _write_db_alias.reset(token)
+
+
+@contextmanager
+def write_db_alias(alias: str | None):
+    token = set_write_db_alias(alias)
+    try:
+        yield
+    finally:
+        reset_write_db_alias(token)
 
 
 class MainRouter:

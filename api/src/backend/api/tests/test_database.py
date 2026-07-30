@@ -6,6 +6,7 @@ from api.db_router import (
     get_write_db_alias,
     reset_write_db_alias,
     set_write_db_alias,
+    write_db_alias,
 )
 from api.rls import Tenant
 from config.django.base import DATABASE_ROUTERS as PROD_DATABASE_ROUTERS
@@ -68,6 +69,23 @@ class TestMainDatabaseRouter:
             )
         finally:
             reset_write_db_alias(token)
+
+        assert get_write_db_alias() is None
+
+    def test_write_db_alias_context_manager_resets_after_error(self, router):
+        with pytest.raises(RuntimeError, match="Simulated failure"):
+            with write_db_alias(MainRouter.admin_db):
+                assert get_write_db_alias() == MainRouter.admin_db
+                assert router.db_for_write(Tenant) == MainRouter.admin_db
+                raise RuntimeError("Simulated failure")
+
+        assert get_write_db_alias() is None
+        assert router.db_for_write(Tenant) == "default"
+
+    def test_write_db_alias_context_manager_ignores_empty_alias(self, router):
+        with write_db_alias(None):
+            assert get_write_db_alias() is None
+            assert router.db_for_write(Tenant) == "default"
 
         assert get_write_db_alias() is None
 
