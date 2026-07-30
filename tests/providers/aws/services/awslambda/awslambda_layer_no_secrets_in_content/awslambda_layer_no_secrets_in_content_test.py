@@ -20,6 +20,11 @@ LAMBDA_LAYER_ARN = (
     f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:layer:"
     f"{LAMBDA_LAYER_NAME}:1"
 )
+LAMBDA_UNFETCHED_LAYER_NAME = "unfetched-layer"
+LAMBDA_UNFETCHED_LAYER_ARN = (
+    f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:layer:"
+    f"{LAMBDA_UNFETCHED_LAYER_NAME}:2"
+)
 LAMBDA_LAYER_CONTENT_WITH_SECRETS = """
 db_password = "Tr0ub4dor3xKq9vLmZ"
 """
@@ -72,6 +77,14 @@ def mock_get_layers_code_with_secrets():
 
 
 def mock_get_layers_code_without_secrets():
+    yield create_lambda_layer(), get_lambda_layer_code(
+        LAMBDA_LAYER_CONTENT_WITHOUT_SECRETS
+    )
+
+
+def mock_get_layers_code_partial_fetch_failure():
+    # Only the fetchable layer is yielded; the client's failing fetch for
+    # the other layer already logged and skipped it (see _get_layers_code).
     yield create_lambda_layer(), get_lambda_layer_code(
         LAMBDA_LAYER_CONTENT_WITHOUT_SECRETS
     )
@@ -224,6 +237,43 @@ class Test_awslambda_layer_no_secrets_in_content:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
+
+    def test_partial_fetch_failure_reports_manual_for_unfetched_layer(self):
+        lambda_client = mock.MagicMock
+        lambda_client.layers = {
+            LAMBDA_LAYER_ARN: create_lambda_layer(),
+            LAMBDA_UNFETCHED_LAYER_ARN: Layer(arn=LAMBDA_UNFETCHED_LAYER_ARN),
+        }
+        lambda_client._get_layers_code = mock_get_layers_code_partial_fetch_failure
+        lambda_client.audit_config = {"secrets_ignore_patterns": []}
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.awslambda.awslambda_layer_no_secrets_in_content.awslambda_layer_no_secrets_in_content.awslambda_client",
+                new=lambda_client,
+            ),
+        ):
+            from prowler.providers.aws.services.awslambda.awslambda_layer_no_secrets_in_content.awslambda_layer_no_secrets_in_content import (
+                awslambda_layer_no_secrets_in_content,
+            )
+
+            check = awslambda_layer_no_secrets_in_content()
+            result = check.execute()
+
+            assert len(result) == 2
+            by_arn = {r.resource_arn: r for r in result}
+
+            assert by_arn[LAMBDA_LAYER_ARN].status == "PASS"
+
+            unfetched = by_arn[LAMBDA_UNFETCHED_LAYER_ARN]
+            assert unfetched.status == "MANUAL"
+            assert unfetched.resource_id == LAMBDA_UNFETCHED_LAYER_NAME
+            assert unfetched.region == AWS_REGION_US_EAST_1
+            assert "manual review is required" in unfetched.status_extended
 
     def test_scan_failure_reports_manual_not_pass(self):
         from prowler.lib.utils.utils import SecretsScanError

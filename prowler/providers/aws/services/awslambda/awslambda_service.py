@@ -17,6 +17,11 @@ from prowler.lib.resource_limit import (
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
+# Presigned code/layer download URLs are short-lived S3 URLs, not AWS API
+# calls, so a hung request here would otherwise block a worker thread
+# indefinitely instead of failing like the surrounding boto3 calls do.
+CODE_DOWNLOAD_TIMEOUT_SECONDS = 30
+
 
 class Lambda(AWSService):
     def __init__(self, provider):
@@ -200,6 +205,15 @@ class Lambda(AWSService):
                     f"{function.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
+    def _download_code(self, code_location_uri):
+        raw_code_zip = requests.get(
+            code_location_uri, timeout=CODE_DOWNLOAD_TIMEOUT_SECONDS
+        ).content
+        return LambdaCode(
+            location=code_location_uri,
+            code_zip=zipfile.ZipFile(io.BytesIO(raw_code_zip)),
+        )
+
     def _fetch_function_code(self, function_name, function_region):
         try:
             regional_client = self.regional_clients[function_region]
@@ -207,12 +221,7 @@ class Lambda(AWSService):
                 FunctionName=function_name
             )
             if "Location" in function_information["Code"]:
-                code_location_uri = function_information["Code"]["Location"]
-                raw_code_zip = requests.get(code_location_uri).content
-                return LambdaCode(
-                    location=code_location_uri,
-                    code_zip=zipfile.ZipFile(io.BytesIO(raw_code_zip)),
-                )
+                return self._download_code(function_information["Code"]["Location"])
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -248,12 +257,7 @@ class Lambda(AWSService):
                 LayerName=layer_name, VersionNumber=int(layer_version_number)
             )
             if "Location" in layer_version.get("Content", {}):
-                code_location_uri = layer_version["Content"]["Location"]
-                raw_code_zip = requests.get(code_location_uri).content
-                return LambdaCode(
-                    location=code_location_uri,
-                    code_zip=zipfile.ZipFile(io.BytesIO(raw_code_zip)),
-                )
+                return self._download_code(layer_version["Content"]["Location"])
         except Exception as error:
             logger.error(
                 f"{layer_region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

@@ -119,4 +119,20 @@ class awslambda_layer_no_secrets_in_content(Check):
 
             findings.append(report)
 
+        # Layers whose content could not be fetched (network error, missing
+        # permissions, etc.) never reach layers_with_code above, so report
+        # them as MANUAL rather than silently omitting them from the scan.
+        fetched_arns = {layer.arn for layer in layers_with_code}
+        for layer in awslambda_client.layers.values():
+            if layer.arn in fetched_arns:
+                continue
+            report = Check_Report_AWS(metadata=self.metadata(), resource=layer)
+            report.status = "MANUAL"
+            report.status_extended = (
+                f"Could not retrieve content of Lambda layer {layer.name} "
+                f"(version {layer.version}) to scan for secrets; manual "
+                "review is required."
+            )
+            findings.append(report)
+
         return findings
