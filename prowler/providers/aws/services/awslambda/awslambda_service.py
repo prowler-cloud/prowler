@@ -249,7 +249,7 @@ class Lambda(AWSService):
             )
             if "Location" in layer_version.get("Content", {}):
                 code_location_uri = layer_version["Content"]["Location"]
-                raw_code_zip = requests.get(code_location_uri).content
+                raw_code_zip = requests.get(code_location_uri, timeout=30).content
                 return LambdaCode(
                     location=code_location_uri,
                     code_zip=zipfile.ZipFile(io.BytesIO(raw_code_zip)),
@@ -259,7 +259,6 @@ class Lambda(AWSService):
                 f"{layer_region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             raise
-
     def _get_policy(self, regional_client):
         logger.info("Lambda - Getting Policy...")
         try:
