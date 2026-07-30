@@ -136,7 +136,7 @@ class Test_glue_catalog_connection_no_secrets:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "No secrets found in Glue connection jdbc-clean."
+                == "No secrets found in Glue Data Catalog connection jdbc-clean properties."
             )
             assert result[0].resource_id == "jdbc-clean"
             assert result[0].resource_arn == connection_arn
@@ -175,8 +175,9 @@ class Test_glue_catalog_connection_no_secrets:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert "Potential secret found" in result[0].status_extended
+            assert "Potential secrets found" in result[0].status_extended
             assert "jdbc-secret" in result[0].status_extended
+            assert "in property PASSWORD" in result[0].status_extended
             assert "AKIAsupersecretkey1234" not in result[0].status_extended
             assert result[0].resource_id == "jdbc-secret"
             assert result[0].resource_arn == connection_arn
@@ -218,9 +219,52 @@ class Test_glue_catalog_connection_no_secrets:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "No secrets found in Glue connection empty-props."
+                == "No secrets found in Glue Data Catalog connection empty-props properties."
             )
             assert result[0].resource_id == "empty-props"
             assert result[0].resource_arn == connection_arn
             assert result[0].resource_tags == [{}]
+            assert result[0].region == AWS_REGION_US_EAST_1
+
+    @mock_aws
+    @mock.patch(
+        "botocore.client.BaseClient._make_api_call", new=mock_make_api_call_with_secrets
+    )
+    def test_glue_connection_scan_error(self):
+        from prowler.lib.utils.utils import SecretsScanError
+        from prowler.providers.aws.services.glue.glue_service import Glue
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        connection_arn = (
+            f"arn:aws:glue:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:"
+            f"connection/jdbc-secret"
+        )
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.glue.glue_catalog_connection_no_secrets.glue_catalog_connection_no_secrets.glue_client",
+                new=Glue(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.glue.glue_catalog_connection_no_secrets.glue_catalog_connection_no_secrets.detect_secrets_scan_batch",
+                side_effect=SecretsScanError("secret scan failed"),
+            ),
+        ):
+            from prowler.providers.aws.services.glue.glue_catalog_connection_no_secrets.glue_catalog_connection_no_secrets import (
+                glue_catalog_connection_no_secrets,
+            )
+
+            check = glue_catalog_connection_no_secrets()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert "manual review is required" in result[0].status_extended
+            assert "jdbc-secret" in result[0].status_extended
+            assert result[0].resource_id == "jdbc-secret"
+            assert result[0].resource_arn == connection_arn
             assert result[0].region == AWS_REGION_US_EAST_1
