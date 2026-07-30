@@ -314,6 +314,26 @@ describe("column-finding-groups — accessibility of check title cell", () => {
     expect(columnIds.at(-1)).toBe("actions");
   });
 
+  it("should not expose the manual-only Resolved path on group-level rows", () => {
+    // Given
+    const columns = getColumnFindingGroups({
+      rowSelection: {},
+      selectableRowCount: 1,
+      onDrillDown: vi.fn(),
+    });
+
+    // When
+    const columnIds = columns.map(
+      (column) =>
+        (column as { id?: string; accessorKey?: string }).id ??
+        (column as { id?: string; accessorKey?: string }).accessorKey,
+    );
+
+    // Then
+    expect(columnIds).not.toContain("triage");
+    expect(screen.queryByRole("option", { name: "Resolved" })).toBeNull();
+  });
+
   it("should render the first provider icon with its provider name", () => {
     // Given
     renderFindingGroupTitleCell({ providers: ["iac"] });

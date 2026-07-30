@@ -3,6 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 
 import {
+  loadFindingTriageDetail,
   loadLatestFindingTriageNote,
   updateFindingTriage,
 } from "@/actions/findings";
@@ -12,8 +13,7 @@ import { FindingProps } from "@/types";
 export const ColumnLatestFindings: ColumnDef<FindingProps>[] =
   getStandaloneFindingColumns({
     includeUpdatedAt: true,
-    onTriageUpdateAction: async (input) => {
-      await updateFindingTriage(input);
-    },
+    onTriageUpdateAction: updateFindingTriage,
     onTriageNoteLoadAction: loadLatestFindingTriageNote,
+    onTriageDetailLoadAction: loadFindingTriageDetail,
   });

@@ -25,7 +25,10 @@ import type { ProviderType } from "@/types/providers";
 
 import { canMuteFindingGroup } from "./finding-group-selection";
 import type { FindingTriageContext } from "./finding-note-modal";
-import { FindingNoteActionItem } from "./finding-triage-cells";
+import {
+  FindingNoteActionItem,
+  type FindingTriageDetailLoadHandler,
+} from "./finding-triage-cells";
 import type { FindingTriageUpdateHandler } from "./finding-triage-status-control";
 import { FindingsSelectionContext } from "./findings-selection-context";
 
@@ -100,6 +103,7 @@ interface DataTableRowActionsProps<T extends FindingRowData> {
   onTriageNoteLoadAction?: (
     triage: FindingTriageSummary,
   ) => Promise<FindingTriageLoadedNote>;
+  onTriageDetailLoadAction?: FindingTriageDetailLoadHandler;
 }
 
 export function DataTableRowActions<T extends FindingRowData>({
@@ -108,6 +112,7 @@ export function DataTableRowActions<T extends FindingRowData>({
   findingContext,
   onTriageUpdateAction,
   onTriageNoteLoadAction,
+  onTriageDetailLoadAction,
 }: DataTableRowActionsProps<T>) {
   const router = useRouter();
   const finding = row.original;
@@ -258,6 +263,7 @@ export function DataTableRowActions<T extends FindingRowData>({
               findingContext={resolvedFindingContext}
               onTriageUpdateAction={onTriageUpdateAction}
               onTriageNoteLoadAction={onTriageNoteLoadAction}
+              onTriageDetailLoadAction={onTriageDetailLoadAction}
             />
           )}
           <ActionDropdownItem

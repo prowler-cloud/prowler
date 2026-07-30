@@ -24,7 +24,10 @@ import type {
 
 import { DataTableRowActions } from "./data-table-row-actions";
 import { FindingDetailDrawer } from "./finding-detail-drawer";
-import { FindingTriageStatusCell } from "./finding-triage-cells";
+import {
+  type FindingTriageDetailLoadHandler,
+  FindingTriageStatusCell,
+} from "./finding-triage-cells";
 import type { FindingTriageUpdateHandler } from "./finding-triage-status-control";
 import { DeltaValues, NotificationIndicator } from "./notification-indicator";
 import { ProviderIconCell } from "./provider-icon-cell";
@@ -36,6 +39,7 @@ interface GetStandaloneFindingColumnsOptions {
   onTriageNoteLoadAction?: (
     triage: FindingTriageSummary,
   ) => Promise<FindingTriageLoadedNote>;
+  onTriageDetailLoadAction?: FindingTriageDetailLoadHandler;
 }
 
 const getFindingsData = (row: { original: FindingProps }) => {
@@ -93,6 +97,7 @@ export function getStandaloneFindingColumns({
   openFindingId = null,
   onTriageUpdateAction,
   onTriageNoteLoadAction,
+  onTriageDetailLoadAction,
 }: GetStandaloneFindingColumnsOptions = {}): ColumnDef<FindingProps>[] {
   const columns: ColumnDef<FindingProps>[] = [
     {
@@ -292,12 +297,27 @@ export function getStandaloneFindingColumns({
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Triage" />
       ),
-      cell: ({ row }) => (
-        <FindingTriageStatusCell
-          triage={row.original.triage}
-          onTriageUpdateAction={onTriageUpdateAction}
-        />
-      ),
+      cell: ({ row }) => {
+        const resourceName = getResourceData(row, "name");
+        const providerAlias = getProviderData(row, "alias");
+        const providerType = getProviderData(row, "provider");
+
+        return (
+          <FindingTriageStatusCell
+            triage={row.original.triage}
+            findingContext={{
+              title: row.original.attributes.check_metadata.checktitle,
+              resource: getOptionalText(resourceName),
+              provider: getOptionalText(providerAlias),
+              providerType: getOptionalText(providerType) as
+                | ProviderType
+                | undefined,
+            }}
+            onTriageUpdateAction={onTriageUpdateAction}
+            onTriageDetailLoadAction={onTriageDetailLoadAction}
+          />
+        );
+      },
       enableSorting: false,
     },
     {
@@ -322,6 +342,7 @@ export function getStandaloneFindingColumns({
             }}
             onTriageUpdateAction={onTriageUpdateAction}
             onTriageNoteLoadAction={onTriageNoteLoadAction}
+            onTriageDetailLoadAction={onTriageDetailLoadAction}
           />
         );
       },

@@ -3,6 +3,10 @@ import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
+vi.mock("@/actions/findings/findings-triage", () => ({
+  loadFindingTriageDetail: vi.fn(),
+}));
+
 vi.mock("@/components/shadcn/modal", () => ({
   Modal: ({
     children,
@@ -73,6 +77,8 @@ import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 import {
   FINDING_TRIAGE_DISABLED_REASON,
   FINDING_TRIAGE_STATUS,
+  RAW_FINDING_STATUS,
+  type FindingTriageDetail,
   type FindingTriageSummary,
 } from "@/types/findings-triage";
 
@@ -96,6 +102,22 @@ function makeTriageSummary(
     isMuted: false,
     canEdit: true,
     billingHref: "https://prowler.com/pricing",
+    ...overrides,
+  };
+}
+
+function makeTriageDetail(
+  overrides?: Partial<FindingTriageDetail>,
+): FindingTriageDetail {
+  return {
+    ...makeTriageSummary({ rawFindingStatus: RAW_FINDING_STATUS.MANUAL }),
+    noteId: null,
+    noteBody: "",
+    maxNoteLength: 500,
+    rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+    manualPassCreatedByName: null,
+    manualPassCreatedAt: null,
+    manualPassExpiresAt: null,
     ...overrides,
   };
 }
@@ -251,6 +273,366 @@ describe("finding triage cells", () => {
         "False Positive",
       ),
     ).toHaveClass("text-text-neutral-secondary");
+    expect(screen.queryByRole("option", { name: "Resolved" })).toBeNull();
+  });
+
+  it("should show Resolved as a normal enabled option only for an authoritative MANUAL finding", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(
+      <FindingTriageStatusCell
+        triage={makeTriageSummary({
+          rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+        })}
+        onTriageUpdateAction={vi.fn()}
+        onTriageDetailLoadAction={vi.fn()}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("combobox", { name: "Triage status" }));
+
+    // Then
+    const resolvedOption = screen.getByRole("option", {
+      name: "Resolved",
+    });
+    expect(resolvedOption).not.toHaveAttribute("aria-disabled");
+    expect(resolvedOption).not.toHaveAttribute("disabled");
+    expect(resolvedOption).not.toHaveAttribute("data-disabled");
+    expect(screen.queryByRole("option", { name: "Pass" })).toBeNull();
+  });
+
+  it.each([RAW_FINDING_STATUS.FAIL, RAW_FINDING_STATUS.PASS] as const)(
+    "should not show the extra Resolved workflow for a %s raw finding",
+    async (rawFindingStatus) => {
+      // Given
+      const user = userEvent.setup();
+      render(
+        <FindingTriageStatusCell
+          triage={makeTriageSummary({ rawFindingStatus })}
+          onTriageUpdateAction={vi.fn()}
+          onTriageDetailLoadAction={vi.fn()}
+        />,
+      );
+
+      // When
+      await user.click(screen.getByRole("combobox", { name: "Triage status" }));
+
+      // Then
+      expect(screen.queryByRole("option", { name: "Resolved" })).toBeNull();
+    },
+  );
+
+  it("should explain the gated manual pass action on hover", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(
+      <FindingTriageStatusCell
+        triage={makeTriageSummary({
+          rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+        })}
+        onTriageUpdateAction={vi.fn()}
+        onTriageDetailLoadAction={vi.fn()}
+      />,
+    );
+    await user.click(screen.getByRole("combobox", { name: "Triage status" }));
+    const resolvedOption = screen.getByRole("option", {
+      name: "Resolved",
+    });
+
+    // When
+    await user.hover(resolvedOption);
+
+    // Then
+    const hoverCopy = (
+      await screen.findAllByText(
+        "Add a Triage Note explaining why this finding passes.",
+      )
+    ).find(
+      (element) => element.getAttribute("data-slot") === "tooltip-content",
+    );
+    expect(hoverCopy).toBeVisible();
+  });
+
+  it("should explain the gated manual pass action on keyboard focus", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(
+      <FindingTriageStatusCell
+        triage={makeTriageSummary({
+          rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+        })}
+        onTriageUpdateAction={vi.fn()}
+        onTriageDetailLoadAction={vi.fn()}
+      />,
+    );
+    await user.click(screen.getByRole("combobox", { name: "Triage status" }));
+
+    // When
+    await user.keyboard("{End}");
+
+    // Then
+    const resolvedOption = screen.getByRole("option", {
+      name: "Resolved",
+    });
+    expect(resolvedOption).toHaveFocus();
+    const focusCopy = (
+      await screen.findAllByText(
+        "Add a Triage Note explaining why this finding passes.",
+      )
+    ).find(
+      (element) => element.getAttribute("data-slot") === "tooltip-content",
+    );
+    expect(focusCopy).toBeVisible();
+  });
+
+  it("should open Triage Note with Resolved preselected without a direct update", async () => {
+    // Given
+    const user = userEvent.setup();
+    const triage = makeTriageSummary({
+      rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+    });
+    const detail = makeTriageDetail();
+    const onTriageUpdateAction = vi.fn();
+    const onTriageDetailLoadAction = vi.fn().mockResolvedValue(detail);
+    render(
+      <FindingTriageStatusCell
+        triage={triage}
+        findingContext={{ title: "S3 bucket allows public reads" }}
+        onTriageUpdateAction={onTriageUpdateAction}
+        onTriageDetailLoadAction={onTriageDetailLoadAction}
+      />,
+    );
+    await user.click(screen.getByRole("combobox", { name: "Triage status" }));
+
+    // When
+    await user.click(screen.getByRole("option", { name: "Resolved" }));
+
+    // Then
+    expect(onTriageUpdateAction).not.toHaveBeenCalled();
+    expect(onTriageDetailLoadAction).toHaveBeenCalledWith(triage);
+    const dialog = await screen.findByRole("dialog", {
+      name: "Add Triage Note",
+    });
+    expect(dialog).toBeVisible();
+    expect(
+      within(dialog).getByRole("combobox", { name: "Triage status" }),
+    ).toHaveTextContent("Resolved");
+    expect(within(dialog).queryByText("Pass")).not.toBeInTheDocument();
+    expect(within(dialog).queryByText("Manual")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Manual pass evidence")).toHaveValue("");
+  });
+
+  it("should use fresh detail status instead of stale MANUAL summary preselection", async () => {
+    // Given
+    const user = userEvent.setup();
+    const staleTriage = makeTriageSummary({
+      rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+    });
+    const freshDetail = makeTriageDetail({
+      status: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
+      rawFindingStatus: RAW_FINDING_STATUS.FAIL,
+    });
+    render(
+      <FindingTriageStatusCell
+        triage={staleTriage}
+        onTriageUpdateAction={vi.fn()}
+        onTriageDetailLoadAction={vi.fn().mockResolvedValue(freshDetail)}
+      />,
+    );
+    await user.click(screen.getByRole("combobox", { name: "Triage status" }));
+
+    // When
+    await user.click(screen.getByRole("option", { name: "Resolved" }));
+
+    // Then
+    const dialog = await screen.findByRole("dialog", {
+      name: "Add Triage Note",
+    });
+    expect(
+      within(dialog).getByRole("combobox", { name: "Triage status" }),
+    ).toHaveTextContent("Under Review");
+    expect(within(dialog).queryByLabelText("Manual pass evidence")).toBeNull();
+  });
+
+  it("should optimistically show Resolved after manual pass submission", async () => {
+    // Given
+    const user = userEvent.setup();
+    const onTriageUpdateAction = vi.fn();
+    render(
+      <FindingTriageStatusCell
+        triage={makeTriageSummary({
+          rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+        })}
+        onTriageUpdateAction={onTriageUpdateAction}
+        onTriageDetailLoadAction={vi.fn().mockResolvedValue(makeTriageDetail())}
+      />,
+    );
+    await user.click(screen.getByRole("combobox", { name: "Triage status" }));
+    await user.click(screen.getByRole("option", { name: "Resolved" }));
+    await user.type(
+      await screen.findByLabelText("Manual pass evidence"),
+      "Verified by the control owner.",
+    );
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    // Then
+    await waitFor(() => expect(onTriageUpdateAction).toHaveBeenCalledOnce());
+    expect(
+      screen.getByRole("combobox", { name: "Triage status" }),
+    ).toHaveTextContent("Resolved");
+    expect(screen.getByText("Manually verified")).toBeVisible();
+  });
+
+  it("should clear cancelled manual pass evidence before reopening", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(
+      <FindingTriageStatusCell
+        triage={makeTriageSummary({
+          rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+        })}
+        onTriageUpdateAction={vi.fn()}
+        onTriageDetailLoadAction={vi.fn().mockResolvedValue(makeTriageDetail())}
+      />,
+    );
+    await user.click(screen.getByRole("combobox", { name: "Triage status" }));
+    await user.click(screen.getByRole("option", { name: "Resolved" }));
+    await user.type(
+      await screen.findByLabelText("Manual pass evidence"),
+      "Evidence that must not leak.",
+    );
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+    await user.click(screen.getByRole("combobox", { name: "Triage status" }));
+    await user.click(screen.getByRole("option", { name: "Resolved" }));
+
+    // Then
+    expect(await screen.findByLabelText("Manual pass evidence")).toHaveValue(
+      "",
+    );
+  });
+
+  it("should show accessible loading state and prevent duplicate manual pass requests", async () => {
+    // Given
+    const user = userEvent.setup();
+    let resolveDetail: (detail: FindingTriageDetail) => void = () => {};
+    const onTriageDetailLoadAction = vi.fn(
+      () =>
+        new Promise<FindingTriageDetail>((resolve) => {
+          resolveDetail = resolve;
+        }),
+    );
+    render(
+      <FindingTriageStatusCell
+        triage={makeTriageSummary({
+          rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+        })}
+        onTriageUpdateAction={vi.fn()}
+        onTriageDetailLoadAction={onTriageDetailLoadAction}
+      />,
+    );
+    await user.click(screen.getByRole("combobox", { name: "Triage status" }));
+
+    // When
+    await user.click(screen.getByRole("option", { name: "Resolved" }));
+
+    // Then
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Loading current triage details...",
+    );
+    expect(screen.getByRole("status")).toBeVisible();
+    expect(
+      screen.getByRole("combobox", { name: "Triage status" }),
+    ).toBeDisabled();
+    expect(onTriageDetailLoadAction).toHaveBeenCalledOnce();
+
+    resolveDetail(makeTriageDetail());
+    expect(
+      await screen.findByRole("dialog", { name: "Add Triage Note" }),
+    ).toBeVisible();
+  });
+
+  it("should open Triage Note from keyboard activation without a direct update", async () => {
+    // Given
+    const user = userEvent.setup();
+    const triage = makeTriageSummary({
+      rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+    });
+    const onTriageUpdateAction = vi.fn();
+    const onTriageDetailLoadAction = vi
+      .fn()
+      .mockResolvedValue(makeTriageDetail());
+    render(
+      <FindingTriageStatusCell
+        triage={triage}
+        onTriageUpdateAction={onTriageUpdateAction}
+        onTriageDetailLoadAction={onTriageDetailLoadAction}
+      />,
+    );
+    await user.click(screen.getByRole("combobox", { name: "Triage status" }));
+    await user.keyboard("{End}");
+
+    // When
+    await user.keyboard("{Enter}");
+
+    // Then
+    expect(onTriageUpdateAction).not.toHaveBeenCalled();
+    expect(onTriageDetailLoadAction).toHaveBeenCalledWith(triage);
+    expect(
+      await screen.findByRole("dialog", { name: "Add Triage Note" }),
+    ).toBeVisible();
+    expect(screen.getByLabelText("Manual pass evidence")).toHaveValue("");
+  });
+
+  it("should show Resolved as current triage and manual verification as secondary provenance", () => {
+    // Given / When
+    const { rerender } = render(
+      <FindingTriageStatusCell
+        triage={makeTriageSummary({
+          status: FINDING_TRIAGE_STATUS.RESOLVED,
+          label: "Resolved",
+          manualPassProvenance: "Manually verified",
+          rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+        })}
+        onTriageUpdateAction={vi.fn()}
+      />,
+    );
+
+    // Then
+    expect(
+      screen.getByRole("combobox", { name: "Triage status" }),
+    ).toHaveTextContent("Resolved");
+    expect(
+      screen.getByRole("combobox", { name: "Triage status" }),
+    ).not.toHaveTextContent("Pass");
+    expect(screen.getByText("Manually verified")).toBeVisible();
+    expect(
+      screen.getByRole("combobox", { name: "Triage status" }),
+    ).not.toHaveTextContent("Manual");
+
+    // When
+    rerender(
+      <FindingTriageStatusCell
+        triage={makeTriageSummary({
+          status: FINDING_TRIAGE_STATUS.RESOLVED,
+          label: "Resolved",
+          rawFindingStatus: RAW_FINDING_STATUS.PASS,
+        })}
+        onTriageUpdateAction={vi.fn()}
+      />,
+    );
+
+    // Then
+    expect(
+      screen.getByRole("combobox", { name: "Triage status" }),
+    ).toHaveTextContent("Resolved");
+    expect(
+      screen.getByRole("combobox", { name: "Triage status" }),
+    ).not.toHaveTextContent("Manually verified");
   });
 
   it("renders a read-only triage status badge with the status color", () => {
@@ -484,6 +866,31 @@ describe("finding triage cells", () => {
     expect(
       screen.queryByRole("dialog", { name: "Add Triage Note" }),
     ).not.toBeInTheDocument();
+  });
+
+  it("should visibly announce when current triage details cannot load", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(
+      <FindingTriageStatusCell
+        triage={makeTriageSummary({
+          rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+        })}
+        onTriageUpdateAction={vi.fn()}
+        onTriageDetailLoadAction={vi
+          .fn()
+          .mockRejectedValue(new Error("load failed"))}
+      />,
+    );
+    await user.click(screen.getByRole("combobox", { name: "Triage status" }));
+
+    // When
+    await user.click(screen.getByRole("option", { name: "Resolved" }));
+
+    // Then
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("Could not load current triage details.");
+    expect(alert).toBeVisible();
   });
 
   it("should keep the optimistic table status while stale props are rendered during update", async () => {

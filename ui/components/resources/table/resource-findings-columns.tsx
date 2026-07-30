@@ -4,6 +4,7 @@ import { ColumnDef, RowSelectionState } from "@tanstack/react-table";
 
 import {
   DataTableRowActions,
+  type FindingTriageDetailLoadHandler,
   FindingTriageStatusCell,
 } from "@/components/findings/table";
 import type { FindingTriageUpdateHandler } from "@/components/findings/table/finding-triage-status-control";
@@ -50,6 +51,7 @@ export const getResourceFindingsColumns = (
   onTriageNoteLoadAction?: (
     triage: FindingTriageSummary,
   ) => Promise<FindingTriageLoadedNote>,
+  onTriageDetailLoadAction?: FindingTriageDetailLoadHandler,
 ): ColumnDef<ResourceFinding>[] => {
   const selectedCount = Object.values(rowSelection).filter(Boolean).length;
   const isAllSelected =
@@ -157,7 +159,12 @@ export const getResourceFindingsColumns = (
       cell: ({ row }) => (
         <FindingTriageStatusCell
           triage={row.original.triage}
+          findingContext={{
+            title:
+              row.original.attributes.check_metadata?.checktitle || "Finding",
+          }}
           onTriageUpdateAction={onTriageUpdateAction}
+          onTriageDetailLoadAction={onTriageDetailLoadAction}
         />
       ),
       enableSorting: false,
@@ -171,6 +178,7 @@ export const getResourceFindingsColumns = (
           onMuteComplete={onMuteComplete}
           onTriageUpdateAction={onTriageUpdateAction}
           onTriageNoteLoadAction={onTriageNoteLoadAction}
+          onTriageDetailLoadAction={onTriageDetailLoadAction}
         />
       ),
       enableSorting: false,

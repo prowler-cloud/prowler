@@ -10,16 +10,25 @@ import {
   SelectItem,
   SelectTrigger,
 } from "@/components/shadcn/select/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/shadcn/tooltip";
 import { cn } from "@/lib/utils";
 import {
   FINDING_TRIAGE_MANUAL_STATUS_VALUES,
+  FINDING_TRIAGE_MODAL_STATUS_VALUES,
   FINDING_TRIAGE_ORIGIN,
+  FINDING_TRIAGE_STATUS,
   FINDING_TRIAGE_STATUS_LABELS,
+  RAW_FINDING_STATUS,
   type FindingTriageManualStatus,
+  type FindingTriageModalStatus,
   type FindingTriageStatus,
   type FindingTriageSummary,
+  type FindingTriageUpdateResult,
   getFindingTriageMuteInfoCopy,
-  isManualStatus,
   isMutelistShortcutStatus,
   isTriageStatusLocked,
   type UpdateFindingTriageInput,
@@ -27,7 +36,10 @@ import {
 
 export type FindingTriageUpdateHandler = (
   input: UpdateFindingTriageInput,
-) => void | Promise<void>;
+) =>
+  | FindingTriageUpdateResult
+  | void
+  | Promise<FindingTriageUpdateResult | void>;
 
 type TriageStatusPickerSize = NonNullable<
   ComponentProps<typeof SelectTrigger>["size"]
@@ -44,25 +56,31 @@ export const TRIAGE_STATUS_TEXT_CLASS = {
 } as const satisfies Record<FindingTriageStatus, string>;
 
 const MUTELIST_CONFIRMATION_TITLE = "Mute finding?";
+export const MANUAL_PASS_NOTE_REQUIRED_COPY =
+  "Add a Triage Note explaining why this finding passes.";
 
 function TriageStatusPicker({
   disabled,
   size = "sm",
   value,
+  statusValues,
+  showManualPassTooltip = false,
   onValueChange,
 }: {
   disabled: boolean;
   size?: TriageStatusPickerSize;
   value: FindingTriageStatus;
-  onValueChange: (status: FindingTriageManualStatus) => void;
+  statusValues: readonly FindingTriageModalStatus[];
+  showManualPassTooltip?: boolean;
+  onValueChange: (status: FindingTriageModalStatus) => void;
 }) {
   return (
     <Select
       value={value}
       disabled={disabled}
       onValueChange={(nextStatus) => {
-        if (isManualStatus(nextStatus as FindingTriageStatus)) {
-          onValueChange(nextStatus as FindingTriageManualStatus);
+        if (statusValues.includes(nextStatus as FindingTriageModalStatus)) {
+          onValueChange(nextStatus as FindingTriageModalStatus);
         }
       }}
     >
@@ -77,13 +95,30 @@ function TriageStatusPicker({
         </span>
       </SelectTrigger>
       <SelectContent>
-        {FINDING_TRIAGE_MANUAL_STATUS_VALUES.map((status) => (
-          <SelectItem key={status} value={status}>
-            <span className={cn("truncate", TRIAGE_STATUS_TEXT_CLASS[status])}>
-              {FINDING_TRIAGE_STATUS_LABELS[status]}
-            </span>
-          </SelectItem>
-        ))}
+        {statusValues.map((status) => {
+          const shouldExplainManualPass =
+            showManualPassTooltip && status === FINDING_TRIAGE_STATUS.RESOLVED;
+          const item = (
+            <SelectItem key={status} value={status}>
+              <span
+                className={cn("truncate", TRIAGE_STATUS_TEXT_CLASS[status])}
+              >
+                {FINDING_TRIAGE_STATUS_LABELS[status]}
+              </span>
+            </SelectItem>
+          );
+
+          return shouldExplainManualPass ? (
+            <Tooltip key={status}>
+              <TooltipTrigger asChild>{item}</TooltipTrigger>
+              <TooltipContent side="right" maxWidth="md">
+                {MANUAL_PASS_NOTE_REQUIRED_COPY}
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            item
+          );
+        })}
       </SelectContent>
     </Select>
   );
@@ -93,13 +128,15 @@ type TableStatusControlProps = {
   origin: typeof FINDING_TRIAGE_ORIGIN.TABLE;
   triage: FindingTriageSummary;
   onTriageUpdateAction?: FindingTriageUpdateHandler;
+  onManualPassRequest?: () => void;
 };
 
 type ModalStatusControlProps = {
   origin: typeof FINDING_TRIAGE_ORIGIN.MODAL;
   triage: FindingTriageSummary;
-  value: FindingTriageStatus;
-  onValueChange: (status: FindingTriageManualStatus) => void;
+  value: FindingTriageModalStatus;
+  includeManualPass: boolean;
+  onValueChange: (status: FindingTriageModalStatus) => void;
 };
 
 type FindingTriageStatusControlProps =
@@ -120,6 +157,11 @@ export function FindingTriageStatusControl(
       <TriageStatusPicker
         disabled={!triage.canEdit || isTriageStatusLocked(triage.status)}
         value={props.value}
+        statusValues={
+          props.includeManualPass
+            ? FINDING_TRIAGE_MODAL_STATUS_VALUES
+            : FINDING_TRIAGE_MANUAL_STATUS_VALUES
+        }
         onValueChange={props.onValueChange}
       />
     );
@@ -130,6 +172,10 @@ export function FindingTriageStatusControl(
     Boolean(props.onTriageUpdateAction) &&
     !isTableUpdating &&
     !isTriageStatusLocked(triage.status);
+  const isAuthoritativeManual =
+    triage.rawFindingStatus === RAW_FINDING_STATUS.MANUAL;
+  const includeManualPass =
+    isAuthoritativeManual && Boolean(props.onManualPassRequest);
 
   const applyTableStatus = async (status: FindingTriageManualStatus) => {
     if (!props.onTriageUpdateAction || status === triage.status) {
@@ -161,8 +207,13 @@ export function FindingTriageStatusControl(
     isMutelistShortcutStatus(status) &&
     !isMutelistShortcutStatus(triage.status);
 
-  const handleTableValueChange = (status: FindingTriageManualStatus) => {
+  const handleTableValueChange = (status: FindingTriageModalStatus) => {
     if (!props.onTriageUpdateAction || status === triage.status) {
+      return;
+    }
+
+    if (status === FINDING_TRIAGE_STATUS.RESOLVED) {
+      props.onManualPassRequest?.();
       return;
     }
 
@@ -181,6 +232,12 @@ export function FindingTriageStatusControl(
           disabled={!canMutateFromTable}
           size="xs"
           value={triage.status}
+          statusValues={
+            includeManualPass
+              ? FINDING_TRIAGE_MODAL_STATUS_VALUES
+              : FINDING_TRIAGE_MANUAL_STATUS_VALUES
+          }
+          showManualPassTooltip={includeManualPass}
           onValueChange={handleTableValueChange}
         />
       </div>

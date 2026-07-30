@@ -3,11 +3,15 @@ import {
   FINDING_TRIAGE_NOTE_MAX_LENGTH,
   FINDING_TRIAGE_STATUS,
   FINDING_TRIAGE_STATUS_LABELS,
+  MANUAL_PASS_PROVENANCE,
+  RAW_FINDING_STATUS,
   type FindingTriageDetail,
   type FindingTriageDisabledReason,
   type FindingTriageLoadedNote,
   type FindingTriageStatus,
   type FindingTriageSummary,
+  type FindingTriageUpdateResult,
+  type RawFindingStatus,
 } from "@/types/findings-triage";
 
 // API/backend triage implementation is external to this UI slice. Keep final
@@ -25,6 +29,7 @@ interface FindingTriageAttributes {
   uid?: string;
   triage_id?: string;
   triage_notes_count?: number;
+  notes_count?: number;
   triage_status?: unknown;
   triage_has_note?: boolean;
   status?: unknown;
@@ -34,6 +39,11 @@ interface FindingTriageAttributes {
   note?: string;
   has_note?: boolean;
   note_id?: string;
+  raw_finding_status?: unknown;
+  raw_status?: unknown;
+  manual_pass_created_by_name?: unknown;
+  manual_pass_created_at?: unknown;
+  manual_pass_expires_at?: unknown;
 }
 
 interface JsonApiResource {
@@ -59,10 +69,14 @@ const isFindingTriageStatus = (value: unknown): value is FindingTriageStatus =>
   typeof value === "string" &&
   Object.values(FINDING_TRIAGE_STATUS).includes(value as FindingTriageStatus);
 
+const isRawFindingStatus = (value: unknown): value is RawFindingStatus =>
+  typeof value === "string" &&
+  Object.values(RAW_FINDING_STATUS).includes(value as RawFindingStatus);
+
 const fallbackStatusFromFindingStatus = (
   findingStatus: unknown,
 ): FindingTriageStatus =>
-  findingStatus === "PASS"
+  findingStatus === RAW_FINDING_STATUS.PASS
     ? FINDING_TRIAGE_STATUS.RESOLVED
     : FINDING_TRIAGE_STATUS.OPEN;
 
@@ -93,6 +107,13 @@ const createSummary = (
   options: FindingTriageAdapterOptions,
 ): FindingTriageSummary => {
   const attributes = finding.attributes ?? {};
+  const rawFindingStatus = isRawFindingStatus(attributes.raw_finding_status)
+    ? attributes.raw_finding_status
+    : isRawFindingStatus(attributes.raw_status)
+      ? attributes.raw_status
+      : isRawFindingStatus(attributes.status)
+        ? attributes.status
+        : null;
   const summary: FindingTriageSummary = {
     findingId: attributes.finding_id || finding.id || "",
     findingUid: attributes.uid || attributes.finding_uid || "",
@@ -105,6 +126,13 @@ const createSummary = (
       typeof attributes.muted === "boolean"
         ? attributes.muted
         : attributes.status === "MUTED",
+    rawFindingStatus,
+    manualPassProvenance:
+      attributes.status === RAW_FINDING_STATUS.PASS &&
+      rawFindingStatus === RAW_FINDING_STATUS.MANUAL &&
+      triageFields.status === FINDING_TRIAGE_STATUS.RESOLVED
+        ? MANUAL_PASS_PROVENANCE
+        : null,
     canEdit: options.canEdit ?? false,
     billingHref: options.billingHref ?? FINDING_TRIAGE_BILLING_HREF,
   };
@@ -192,19 +220,24 @@ export function adaptFindingTriageDetailResponse(
       : typeof attributes.note === "string"
         ? attributes.note
         : "";
+  const notesCount =
+    attributes.triage_notes_count ??
+    attributes.notes_count ??
+    (noteBody.length > 0 ? 1 : 0);
   const summary = createSummary(
     {
       id: attributes.finding_id || data?.id || "",
       attributes: {
         finding_uid: attributes.finding_uid || "",
         triage_id: data?.id,
-        triage_notes_count:
-          attributes.triage_notes_count ?? (noteBody.length > 0 ? 1 : 0),
+        triage_notes_count: notesCount,
+        raw_finding_status: attributes.raw_finding_status,
       },
     },
     {
       status,
-      hasVisibleNote: attributes.has_note === true || noteBody.length > 0,
+      hasVisibleNote:
+        attributes.has_note === true || notesCount > 0 || noteBody.length > 0,
     },
     options,
   );
@@ -214,5 +247,34 @@ export function adaptFindingTriageDetailResponse(
     noteId: attributes.note_id || null,
     noteBody,
     maxNoteLength: FINDING_TRIAGE_NOTE_MAX_LENGTH,
+    rawFindingStatus: isRawFindingStatus(attributes.raw_finding_status)
+      ? attributes.raw_finding_status
+      : null,
+    manualPassCreatedByName:
+      typeof attributes.manual_pass_created_by_name === "string"
+        ? attributes.manual_pass_created_by_name
+        : null,
+    manualPassCreatedAt:
+      typeof attributes.manual_pass_created_at === "string"
+        ? attributes.manual_pass_created_at
+        : null,
+    manualPassExpiresAt:
+      typeof attributes.manual_pass_expires_at === "string"
+        ? attributes.manual_pass_expires_at
+        : null,
+  };
+}
+
+export function adaptFindingTriageUpdateResponse(
+  apiResponse: unknown,
+): FindingTriageUpdateResult {
+  const data =
+    isRecord(apiResponse) && isJsonApiResource(apiResponse.data)
+      ? apiResponse.data
+      : undefined;
+  const expiresAt = data?.attributes?.manual_pass_expires_at;
+
+  return {
+    manualPassExpiresAt: typeof expiresAt === "string" ? expiresAt : null,
   };
 }

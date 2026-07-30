@@ -10,13 +10,16 @@ import {
   Badge,
   Button,
   Textarea,
+  useToast,
 } from "@/components/shadcn";
+import { DateWithTime } from "@/components/shadcn/entities";
 import { Modal } from "@/components/shadcn/modal";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
+import { formatLocalDate } from "@/lib/date-utils";
 import { DOCS_URLS } from "@/lib/external-urls";
 import { useCloudUpgradeStore } from "@/store";
 import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
@@ -25,9 +28,12 @@ import {
   FINDING_TRIAGE_ORIGIN,
   FINDING_TRIAGE_RESOLVED_LOCKED_COPY,
   FINDING_TRIAGE_STATUS,
+  MANUAL_PASS_PROVENANCE,
   type FindingTriageDetail,
-  type FindingTriageStatus,
+  type FindingTriageModalStatus,
+  RAW_FINDING_STATUS,
   getFindingTriageMuteInfoCopy,
+  isManualStatus,
   isMutelistShortcutStatus,
   isTriageStatusLocked,
 } from "@/types/findings-triage";
@@ -51,6 +57,7 @@ interface FindingNoteModalProps {
   onOpenChange: (open: boolean) => void;
   triage: FindingTriageDetail;
   findingContext: FindingTriageContext;
+  initialStatus?: FindingTriageModalStatus;
   onTriageUpdateAction?: FindingTriageUpdateHandler;
 }
 
@@ -62,31 +69,49 @@ export function FindingNoteModal({
   onOpenChange,
   triage,
   findingContext,
+  initialStatus,
   onTriageUpdateAction,
 }: FindingNoteModalProps) {
   const openCloudUpgrade = useCloudUpgradeStore(
     (state) => state.openCloudUpgrade,
   );
+  const { toast } = useToast();
+  const initialSelectedStatus =
+    initialStatus ??
+    (triage.status === FINDING_TRIAGE_STATUS.RESOLVED ||
+    isManualStatus(triage.status)
+      ? triage.status
+      : FINDING_TRIAGE_STATUS.OPEN);
   // Local state needed: modal edits are buffered until the user chooses Update.
-  const [selectedStatus, setSelectedStatus] = useState<FindingTriageStatus>(
-    triage.status,
-  );
+  const [selectedStatus, setSelectedStatus] =
+    useState<FindingTriageModalStatus>(initialSelectedStatus);
   const [note, setNote] = useState(triage.noteBody);
+  const [manualPassEvidence, setManualPassEvidence] = useState("");
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const noteTextareaRef = useRef<HTMLTextAreaElement>(null);
-  const canSubmit =
+  const canEdit =
     triage.canEdit && Boolean(onTriageUpdateAction) && !isSubmitting;
+  const isManualPassSelected =
+    selectedStatus === FINDING_TRIAGE_STATUS.RESOLVED &&
+    triage.rawFindingStatus === RAW_FINDING_STATUS.MANUAL &&
+    triage.status !== FINDING_TRIAGE_STATUS.RESOLVED;
+  const canSubmit =
+    canEdit && (!isManualPassSelected || manualPassEvidence.trim().length > 0);
   const isCloudOnly =
     triage.disabledReason === FINDING_TRIAGE_DISABLED_REASON.CLOUD_ONLY;
   const shouldShowMutelistInfo =
-    canSubmit &&
+    canEdit &&
     !triage.isMuted &&
     selectedStatus !== triage.status &&
     isMutelistShortcutStatus(selectedStatus);
   const shouldShowRemediatingInfo =
     selectedStatus === FINDING_TRIAGE_STATUS.REMEDIATING;
   const isStatusLocked = isTriageStatusLocked(triage.status);
+  const shouldShowManualPassProvenance =
+    triage.status === FINDING_TRIAGE_STATUS.RESOLVED &&
+    triage.manualPassCreatedAt !== null &&
+    triage.manualPassExpiresAt !== null;
   // Opened from a dropdown item: move focus into the dialog on mount so Radix's
   // aria-hidden is not applied to the still-focused dropdown that opened it.
   const handleOpenAutoFocus = (event: Event) => {
@@ -96,6 +121,16 @@ export function FindingNoteModal({
       textarea.focus();
     }
     // Otherwise let Radix auto-focus the first control inside the dialog.
+  };
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen) {
+      setSelectedStatus(initialSelectedStatus);
+      setNote(triage.noteBody);
+      setManualPassEvidence("");
+      setSubmitError(null);
+    }
+    onOpenChange(nextOpen);
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -113,6 +148,7 @@ export function FindingNoteModal({
         triage,
         selectedStatus,
         noteBody: note,
+        manualPassEvidence,
       });
 
       if (!updateInput) {
@@ -120,10 +156,26 @@ export function FindingNoteModal({
         return;
       }
 
-      await onTriageUpdateAction?.(updateInput);
-      onOpenChange(false);
-    } catch {
-      setSubmitError("Could not update the note. Please try again.");
+      const updateResult = await onTriageUpdateAction?.(updateInput);
+
+      if (isManualPassSelected && updateResult?.manualPassExpiresAt) {
+        const formattedExpiry = formatLocalDate(
+          updateResult.manualPassExpiresAt,
+        );
+
+        toast({
+          title: "Finding manually verified as Pass",
+          description: `Triage: Resolved · Valid until ${formattedExpiry}`,
+        });
+      }
+
+      handleOpenChange(false);
+    } catch (error) {
+      setSubmitError(
+        error instanceof Error
+          ? error.message
+          : "Could not update the note. Please try again.",
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -132,7 +184,7 @@ export function FindingNoteModal({
   return (
     <Modal
       open={open}
-      onOpenChange={onOpenChange}
+      onOpenChange={handleOpenChange}
       onOpenAutoFocus={handleOpenAutoFocus}
       title="Add Triage Note"
       size="lg"
@@ -192,8 +244,11 @@ export function FindingNoteModal({
           <div className="w-1/2 min-w-44">
             <FindingTriageStatusControl
               origin={FINDING_TRIAGE_ORIGIN.MODAL}
-              triage={triage}
+              triage={isSubmitting ? { ...triage, canEdit: false } : triage}
               value={selectedStatus}
+              includeManualPass={
+                triage.rawFindingStatus === RAW_FINDING_STATUS.MANUAL
+              }
               onValueChange={setSelectedStatus}
             />
           </div>
@@ -203,6 +258,38 @@ export function FindingNoteModal({
           <Alert variant="info">
             <AlertDescription>
               {FINDING_TRIAGE_RESOLVED_LOCKED_COPY}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {shouldShowManualPassProvenance && (
+          <Alert variant="info">
+            <AlertDescription>
+              <div className="flex flex-col gap-2">
+                <span>
+                  {MANUAL_PASS_PROVENANCE}
+                  {triage.manualPassCreatedByName
+                    ? ` by ${triage.manualPassCreatedByName}`
+                    : ""}
+                  .
+                </span>
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-2">
+                    <span>Attested</span>
+                    <DateWithTime
+                      inline
+                      dateTime={triage.manualPassCreatedAt}
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span>Valid until</span>
+                    <DateWithTime
+                      inline
+                      dateTime={triage.manualPassExpiresAt}
+                    />
+                  </div>
+                </div>
+              </div>
             </AlertDescription>
           </Alert>
         )}
@@ -228,19 +315,32 @@ export function FindingNoteModal({
         )}
 
         <div className="space-y-2">
-          <Textarea
-            ref={noteTextareaRef}
-            id="finding-triage-note"
-            aria-label="Note text"
-            value={note}
-            maxLength={triage.maxNoteLength}
-            disabled={!canSubmit}
-            textareaSize="lg"
-            onChange={(event) => setNote(event.target.value)}
-          />
+          {isManualPassSelected ? (
+            <Textarea
+              id="finding-manual-pass-evidence"
+              aria-label="Manual pass evidence"
+              value={manualPassEvidence}
+              maxLength={triage.maxNoteLength}
+              disabled={!canEdit}
+              textareaSize="lg"
+              onChange={(event) => setManualPassEvidence(event.target.value)}
+            />
+          ) : (
+            <Textarea
+              ref={noteTextareaRef}
+              id="finding-triage-note"
+              aria-label="Note text"
+              value={note}
+              maxLength={triage.maxNoteLength}
+              disabled={!canEdit}
+              textareaSize="lg"
+              onChange={(event) => setNote(event.target.value)}
+            />
+          )}
           <div className="flex items-center justify-end">
             <p className="text-text-neutral-tertiary shrink-0 text-xs">
-              {note.length}/{triage.maxNoteLength}
+              {isManualPassSelected ? manualPassEvidence.length : note.length}/
+              {triage.maxNoteLength}
             </p>
           </div>
         </div>
@@ -252,7 +352,8 @@ export function FindingNoteModal({
             type="button"
             variant="outline"
             size="lg"
-            onClick={() => onOpenChange(false)}
+            disabled={isSubmitting}
+            onClick={() => handleOpenChange(false)}
           >
             Cancel
           </Button>
@@ -277,7 +378,7 @@ export function FindingNoteModal({
             >
               {isSubmitting
                 ? "Saving..."
-                : canSubmit || isCloudOnly
+                : canEdit || isCloudOnly
                   ? "Save"
                   : "Unavailable"}
             </Button>

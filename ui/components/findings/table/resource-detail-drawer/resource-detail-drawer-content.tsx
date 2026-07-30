@@ -17,6 +17,7 @@ import { useState } from "react";
 
 import { getCompliancesOverview } from "@/actions/compliances";
 import {
+  loadFindingTriageDetail,
   loadLatestFindingTriageNote,
   type ResourceDrawerFinding,
   updateFindingTriage,
@@ -82,7 +83,10 @@ import { getRecommendationLinkLabel } from "@/lib/vulnerability-references";
 import { SIDE_PANEL_TAB, useSidePanelStore } from "@/store/side-panel";
 import type { ComplianceOverviewData } from "@/types/compliance";
 import type { FindingResourceRow } from "@/types/findings-table";
-import type { UpdateFindingTriageInput } from "@/types/findings-triage";
+import type {
+  FindingTriageUpdateResult,
+  UpdateFindingTriageInput,
+} from "@/types/findings-triage";
 import { JIRA_DISPATCH_TARGET } from "@/types/integrations";
 
 import { Muted } from "../../muted";
@@ -485,13 +489,14 @@ export function ResourceDetailDrawerContent({
   const showOverviewStatusExtended = Boolean(overviewStatusExtended);
 
   const handleDrawerTriageUpdate = async (input: UpdateFindingTriageInput) => {
-    await updateFindingTriage(input);
+    const result = await updateFindingTriage(input);
     if (shouldRefreshAfterTriageUpdate(input)) {
       onMuteComplete();
-      return;
+      return result;
     }
 
     onTriageUpdate?.(input);
+    return result;
   };
 
   const handleAnalyzeFinding = () => {
@@ -850,6 +855,7 @@ export function ResourceDetailDrawerContent({
                         }}
                         onTriageUpdateAction={handleDrawerTriageUpdate}
                         onTriageNoteLoadAction={loadLatestFindingTriageNote}
+                        onTriageDetailLoadAction={loadFindingTriageDetail}
                       />
                     )}
                     <ActionDropdownItem
@@ -1561,7 +1567,9 @@ function OtherFindingRow({
   finding: ResourceDrawerFinding;
   isOptimisticallyMuted: boolean;
   onMuted: () => void;
-  onTriageUpdateAction: (input: UpdateFindingTriageInput) => Promise<void>;
+  onTriageUpdateAction: (
+    input: UpdateFindingTriageInput,
+  ) => Promise<FindingTriageUpdateResult | void>;
 }) {
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
   const isMuted = finding.isMuted || isOptimisticallyMuted;
@@ -1623,7 +1631,14 @@ function OtherFindingRow({
         <TableCell>
           <FindingTriageStatusCell
             triage={finding.triage}
+            findingContext={{
+              title: finding.checkTitle,
+              resource: finding.resourceName,
+              provider: finding.providerAlias,
+              providerType: finding.providerType,
+            }}
             onTriageUpdateAction={onTriageUpdateAction}
+            onTriageDetailLoadAction={loadFindingTriageDetail}
           />
         </TableCell>
         <TableCell className={OTHER_FINDINGS_ACTION_CELL_CLASS}>
@@ -1640,6 +1655,7 @@ function OtherFindingRow({
                   }}
                   onTriageUpdateAction={onTriageUpdateAction}
                   onTriageNoteLoadAction={loadLatestFindingTriageNote}
+                  onTriageDetailLoadAction={loadFindingTriageDetail}
                 />
               )}
               <ActionDropdownItem

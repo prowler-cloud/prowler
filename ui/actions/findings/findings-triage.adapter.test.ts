@@ -160,6 +160,57 @@ describe("adaptLatestFindingTriageNote", () => {
 });
 
 describe("adaptFindingTriageSummariesResponse", () => {
+  it("should keep Resolved as triage while exposing effective Pass and manual provenance", () => {
+    // Given
+    const input = {
+      data: [
+        {
+          id: "finding-manual-1",
+          type: "findings",
+          attributes: {
+            uid: "prowler-finding-manual-uid-1",
+            status: "PASS",
+            raw_status: "MANUAL",
+            triage_status: FINDING_TRIAGE_STATUS.RESOLVED,
+            manual_pass_created_at: "2026-06-03T10:00:00Z",
+            manual_pass_expires_at: "2026-09-01T10:00:00Z",
+          },
+        },
+      ],
+    };
+
+    // When
+    const [summary] = adaptFindingTriageSummariesResponse(input);
+
+    // Then
+    expect(summary.rawFindingStatus).toBe("MANUAL");
+    expect(input.data[0].attributes.status).toBe("PASS");
+    expect(summary.label).toBe("Resolved");
+    expect(summary.manualPassProvenance).toBe("Manually verified");
+  });
+
+  it("should keep natural Pass free of manual provenance", () => {
+    const input = {
+      data: [
+        {
+          id: "finding-natural-pass",
+          type: "findings",
+          attributes: {
+            uid: "natural-pass-uid",
+            status: "PASS",
+            raw_status: "PASS",
+            triage_status: FINDING_TRIAGE_STATUS.RESOLVED,
+          },
+        },
+      ],
+    };
+
+    const [summary] = adaptFindingTriageSummariesResponse(input);
+
+    expect(summary.rawFindingStatus).toBe("PASS");
+    expect(summary.manualPassProvenance).toBeNull();
+  });
+
   it("should return [] when the provisional API response is malformed", () => {
     // Given
     const input = { meta: { count: 0 } };
@@ -395,6 +446,10 @@ describe("adaptFindingTriageDetailResponse", () => {
         findingId: "finding-1",
         findingUid: "prowler-finding-uid-1",
         status: FINDING_TRIAGE_STATUS.RISK_ACCEPTED,
+        rawFindingStatus: "MANUAL",
+        manualPassCreatedByName: "Alex Security",
+        manualPassCreatedAt: "2026-06-03T10:00:00Z",
+        manualPassExpiresAt: "2026-06-17T10:00:00Z",
         label: "Risk Accepted",
         hasVisibleNote: true,
         canEdit: true,

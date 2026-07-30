@@ -30,6 +30,7 @@ import { JIRA_DISPATCH_TARGET } from "@/types/integrations";
 import { canMuteFindingResource } from "./finding-resource-selection";
 import {
   FindingNoteActionItem,
+  type FindingTriageDetailLoadHandler,
   FindingTriageStatusCell,
 } from "./finding-triage-cells";
 import type { FindingTriageUpdateHandler } from "./finding-triage-status-control";
@@ -44,6 +45,7 @@ const ResourceRowActions = ({
   findingTitle,
   onTriageUpdateAction,
   onTriageNoteLoadAction,
+  onTriageDetailLoadAction,
 }: {
   row: Row<FindingResourceRow>;
   findingTitle?: string;
@@ -51,6 +53,7 @@ const ResourceRowActions = ({
   onTriageNoteLoadAction?: (
     triage: FindingTriageSummary,
   ) => Promise<FindingTriageLoadedNote>;
+  onTriageDetailLoadAction?: FindingTriageDetailLoadHandler;
 }) => {
   const resource = row.original;
   const canMute = canMuteFindingResource(resource);
@@ -143,6 +146,7 @@ const ResourceRowActions = ({
             }}
             onTriageUpdateAction={onTriageUpdateAction}
             onTriageNoteLoadAction={onTriageNoteLoadAction}
+            onTriageDetailLoadAction={onTriageDetailLoadAction}
           />
           <ActionDropdownItem
             icon={
@@ -178,6 +182,7 @@ interface GetColumnFindingResourcesOptions {
   onTriageNoteLoadAction?: (
     triage: FindingTriageSummary,
   ) => Promise<FindingTriageLoadedNote>;
+  onTriageDetailLoadAction?: FindingTriageDetailLoadHandler;
 }
 
 export function getColumnFindingResources({
@@ -186,6 +191,7 @@ export function getColumnFindingResources({
   findingTitle,
   onTriageUpdateAction,
   onTriageNoteLoadAction,
+  onTriageDetailLoadAction,
 }: GetColumnFindingResourcesOptions): ColumnDef<FindingResourceRow>[] {
   const selectedCount = Object.values(rowSelection).filter(Boolean).length;
   const isAllSelected =
@@ -355,7 +361,14 @@ export function getColumnFindingResources({
         <InfoField label="Triage" variant="compact">
           <FindingTriageStatusCell
             triage={row.original.triage}
+            findingContext={{
+              title: findingTitle || row.original.checkId,
+              resource: row.original.resourceName,
+              provider: row.original.providerAlias,
+              providerType: row.original.providerType,
+            }}
             onTriageUpdateAction={onTriageUpdateAction}
+            onTriageDetailLoadAction={onTriageDetailLoadAction}
           />
         </InfoField>
       ),
@@ -372,6 +385,7 @@ export function getColumnFindingResources({
           findingTitle={findingTitle}
           onTriageUpdateAction={onTriageUpdateAction}
           onTriageNoteLoadAction={onTriageNoteLoadAction}
+          onTriageDetailLoadAction={onTriageDetailLoadAction}
         />
       ),
       enableSorting: false,

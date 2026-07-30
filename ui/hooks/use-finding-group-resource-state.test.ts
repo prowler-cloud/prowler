@@ -288,8 +288,9 @@ describe("useFindingGroupResourceState", () => {
     });
 
     // When
+    let updateResult;
     await act(async () => {
-      await result.current.updateTriageOptimistically(
+      updateResult = await result.current.updateTriageOptimistically(
         {
           findingId: "finding-1",
           findingUid: "finding-uid-1",
@@ -299,7 +300,9 @@ describe("useFindingGroupResourceState", () => {
           previousStatus: FINDING_TRIAGE_STATUS.OPEN,
           isMuted: true,
         },
-        async () => undefined,
+        async () => ({
+          manualPassExpiresAt: "2026-10-28T12:00:00Z",
+        }),
       );
     });
 
@@ -310,5 +313,8 @@ describe("useFindingGroupResourceState", () => {
         mutedReason: "Existing mute rule",
       }),
     );
+    expect(updateResult).toEqual({
+      manualPassExpiresAt: "2026-10-28T12:00:00Z",
+    });
   });
 });
