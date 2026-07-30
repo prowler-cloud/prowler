@@ -51,14 +51,14 @@ class CodeCommit(AWSService):
         """
         logger.info("CodeCommit - Listing repositories...")
         try:
+            if self.repositories is None:
+                self.repositories = {}
             list_repositories_paginator = regional_client.get_paginator(
                 "list_repositories"
             )
             for page in list_repositories_paginator.paginate():
                 for repository in page["repositories"]:
                     repository_arn = f"arn:{self.audited_partition}:codecommit:{regional_client.region}:{self.audited_account}:{repository['repositoryName']}"
-                    if self.repositories is None:
-                        self.repositories = {}
                     self.repositories[repository_arn] = Repository(
                         repository_id=repository["repositoryId"],
                         name=repository["repositoryName"],
@@ -66,7 +66,10 @@ class CodeCommit(AWSService):
                         region=regional_client.region,
                     )
         except ClientError as error:
-            if error.response["Error"]["Code"] == "AccessDenied":
+            if error.response["Error"]["Code"] in (
+                "AccessDenied",
+                "AccessDeniedException",
+            ):
                 logger.error(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
@@ -155,7 +158,7 @@ class CodeCommit(AWSService):
 
     def get_repository_files_content(
         self, repository: "Repository"
-    ) -> Generator[Tuple[str, bytes], None, None]:
+    ) -> Generator[Tuple[str, Optional[bytes]], None, None]:
         """Walks the repository tree for the default branch and yields file content.
 
         This performs the (potentially expensive) tree walk and blob download
@@ -166,7 +169,11 @@ class CodeCommit(AWSService):
             repository: Repository object to fetch files for.
 
         Yields:
-            Tuple[str, bytes]: The absolute file path and its raw content.
+            Tuple[str, Optional[bytes]]: The absolute file (or folder) path and
+            its raw content. The content is None when it could not be
+            retrieved (for example, files larger than 6 MB raise
+            FileTooLargeException, or a folder listing fails), so callers can
+            tell unscannable content apart from empty files.
         """
         if not repository.default_branch or not repository.default_branch_commit_id:
             return
@@ -186,11 +193,13 @@ class CodeCommit(AWSService):
                 logger.error(
                     f"{repository.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
+                yield folder_path, None
                 continue
             except Exception as error:
                 logger.error(
                     f"{repository.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
+                yield folder_path, None
                 continue
 
             for sub_folder in folder.get("subFolders", []):
@@ -207,10 +216,12 @@ class CodeCommit(AWSService):
                     logger.error(
                         f"{repository.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
+                    yield file_info["absolutePath"], None
                 except Exception as error:
                     logger.error(
                         f"{repository.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
+                    yield file_info["absolutePath"], None
 
 
 class Repository(BaseModel):

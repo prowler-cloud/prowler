@@ -1,8 +1,10 @@
 from unittest import mock
 
-from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, AWS_REGION_EU_WEST_1
-
-AWS_COMMERCIAL_PARTITION = "aws"
+from tests.providers.aws.utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_COMMERCIAL_PARTITION,
+    AWS_REGION_EU_WEST_1,
+)
 
 repository_name = "test-repo"
 repository_arn = f"arn:{AWS_COMMERCIAL_PARTITION}:codecommit:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:{repository_name}"
@@ -72,7 +74,7 @@ class Test_codecommit_repository_no_secrets:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"CodeCommit repository {repository_name} does not have secrets in its default branch."
+                == f"CodeCommit repository {repository_name} has no default branch, so there is no content to scan for secrets."
             )
             assert result[0].resource_id == repository_name
             assert result[0].resource_arn == repository_arn
@@ -264,7 +266,7 @@ class Test_codecommit_repository_no_secrets:
             assert result[0].region == AWS_REGION_EU_WEST_1
 
     def test_repository_empty_file_content(self):
-        """A file with no/empty content is safely skipped and the check still passes."""
+        """A file with empty content is safely skipped and the check still passes."""
         from prowler.providers.aws.services.codecommit.codecommit_service import (
             Repository,
         )
@@ -284,7 +286,6 @@ class Test_codecommit_repository_no_secrets:
         codecommit_client.get_repository_files_content.return_value = iter(
             [
                 ("empty.txt", b""),
-                ("binary.png", None),
             ]
         )
 
@@ -307,6 +308,163 @@ class Test_codecommit_repository_no_secrets:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
+
+    def test_repository_unretrievable_file_reports_manual(self):
+        """A file whose content could not be retrieved (e.g. larger than 6 MB)
+        is reported as MANUAL instead of a false PASS."""
+        from prowler.providers.aws.services.codecommit.codecommit_service import (
+            Repository,
+        )
+
+        codecommit_client = mock.MagicMock()
+        codecommit_client.repositories = {
+            repository_arn: Repository(
+                repository_id="repo-id-1",
+                name=repository_name,
+                arn=repository_arn,
+                region=AWS_REGION_EU_WEST_1,
+                default_branch="main",
+                default_branch_commit_id="commit-1234",
+            )
+        }
+        codecommit_client.audit_config = {"secrets_ignore_patterns": []}
+        codecommit_client.get_repository_files_content.return_value = iter(
+            [
+                ("app.py", b"print('hello world')\n"),
+                ("large-file.bin", None),
+            ]
+        )
+
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.codecommit.codecommit_service.CodeCommit",
+                codecommit_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.codecommit.codecommit_repository_no_secrets.codecommit_repository_no_secrets.codecommit_client",
+                codecommit_client,
+            ),
+        ):
+            from prowler.providers.aws.services.codecommit.codecommit_repository_no_secrets.codecommit_repository_no_secrets import (
+                codecommit_repository_no_secrets,
+            )
+
+            check = codecommit_repository_no_secrets()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert "Could not retrieve the content of large-file.bin" in (
+                result[0].status_extended
+            )
+            assert result[0].resource_id == repository_name
+            assert result[0].resource_arn == repository_arn
+            assert result[0].region == AWS_REGION_EU_WEST_1
+
+    def test_repository_with_secrets_and_unretrievable_file_still_fails(self):
+        """A detected secret takes precedence over unretrievable files: the
+        repository is reported as FAIL, not MANUAL."""
+        from prowler.providers.aws.services.codecommit.codecommit_service import (
+            Repository,
+        )
+
+        codecommit_client = mock.MagicMock()
+        codecommit_client.repositories = {
+            repository_arn: Repository(
+                repository_id="repo-id-1",
+                name=repository_name,
+                arn=repository_arn,
+                region=AWS_REGION_EU_WEST_1,
+                default_branch="main",
+                default_branch_commit_id="commit-1234",
+            )
+        }
+        codecommit_client.audit_config = {"secrets_ignore_patterns": []}
+        codecommit_client.get_repository_files_content.return_value = iter(
+            [
+                ("large-file.bin", None),
+                (
+                    "src/secrets.py",
+                    b'AUTH_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U"\n',
+                ),
+            ]
+        )
+
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.codecommit.codecommit_service.CodeCommit",
+                codecommit_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.codecommit.codecommit_repository_no_secrets.codecommit_repository_no_secrets.codecommit_client",
+                codecommit_client,
+            ),
+        ):
+            from prowler.providers.aws.services.codecommit.codecommit_repository_no_secrets.codecommit_repository_no_secrets import (
+                codecommit_repository_no_secrets,
+            )
+
+            check = codecommit_repository_no_secrets()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert "src/secrets.py" in result[0].status_extended
+
+    def test_repository_secrets_ignore_files(self):
+        """A secret inside a file matched by secrets_ignore_files is skipped."""
+        from prowler.providers.aws.services.codecommit.codecommit_service import (
+            Repository,
+        )
+
+        codecommit_client = mock.MagicMock()
+        codecommit_client.repositories = {
+            repository_arn: Repository(
+                repository_id="repo-id-1",
+                name=repository_name,
+                arn=repository_arn,
+                region=AWS_REGION_EU_WEST_1,
+                default_branch="main",
+                default_branch_commit_id="commit-1234",
+            )
+        }
+        codecommit_client.audit_config = {
+            "secrets_ignore_patterns": [],
+            "secrets_ignore_files": ["package-lock.json"],
+        }
+        codecommit_client.get_repository_files_content.return_value = iter(
+            [
+                ("README.md", b"# Test repository\n"),
+                (
+                    "/package-lock.json",
+                    b'AUTH_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U"\n',
+                ),
+            ]
+        )
+
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.codecommit.codecommit_service.CodeCommit",
+                codecommit_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.codecommit.codecommit_repository_no_secrets.codecommit_repository_no_secrets.codecommit_client",
+                codecommit_client,
+            ),
+        ):
+            from prowler.providers.aws.services.codecommit.codecommit_repository_no_secrets.codecommit_repository_no_secrets import (
+                codecommit_repository_no_secrets,
+            )
+
+            check = codecommit_repository_no_secrets()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"CodeCommit repository {repository_name} does not have secrets in its default branch."
+            )
 
     def test_scan_failure_reports_manual(self):
         """A secret scanner failure is reported as MANUAL, never as a silent PASS."""

@@ -1,3 +1,4 @@
+import fnmatch
 from collections import defaultdict
 from typing import List
 
@@ -23,7 +24,10 @@ class codecommit_repository_no_secrets(Check):
 
     - PASS: No secrets are detected in the files of the default branch.
     - FAIL: A secret is detected in one or more files of the default branch.
-    - MANUAL: The secret scan could not be completed and requires manual review.
+    - MANUAL: The secret scan could not be completed — either the scanner
+      failed or some file content could not be retrieved (for example, files
+      larger than 6 MB that the CodeCommit API refuses to return) — and
+      manual review is required.
     """
 
     def execute(self) -> List[Check_Report_AWS]:
@@ -41,6 +45,11 @@ class codecommit_repository_no_secrets(Check):
         secrets_ignore_patterns = codecommit_client.audit_config.get(
             "secrets_ignore_patterns", []
         )
+        # Glob patterns of file paths inside the repository to skip when
+        # scanning for secrets (e.g. "*.deps.json" or "package-lock.json").
+        secrets_ignore_files = (
+            codecommit_client.audit_config.get("secrets_ignore_files", []) or []
+        )
         validate = codecommit_client.audit_config.get("secrets_validate", False)
         repositories = (
             list(codecommit_client.repositories.values())
@@ -51,7 +60,11 @@ class codecommit_repository_no_secrets(Check):
         # Collect every file tracked at the tip of each repository's default
         # branch and scan them in batched invocations instead of one
         # subprocess per file. Findings are keyed by (repository index, file
-        # path) so they can be grouped back per repository.
+        # path) so they can be grouped back per repository. Files whose
+        # content could not be retrieved are recorded so the repository is
+        # reported as MANUAL instead of a false PASS.
+        unscanned_files_by_repository = defaultdict(list)
+
         def payloads():
             for repo_index, repository in enumerate(repositories):
                 if (
@@ -63,6 +76,14 @@ class codecommit_repository_no_secrets(Check):
                     file_path,
                     file_content,
                 ) in codecommit_client.get_repository_files_content(repository):
+                    if any(
+                        fnmatch.fnmatch(file_path.lstrip("/"), pattern)
+                        for pattern in secrets_ignore_files
+                    ):
+                        continue
+                    if file_content is None:
+                        unscanned_files_by_repository[repo_index].append(file_path)
+                        continue
                     if not file_content:
                         continue
                     yield (repo_index, file_path), file_content.decode("latin-1")
@@ -89,7 +110,15 @@ class codecommit_repository_no_secrets(Check):
                 repository.default_branch and repository.default_branch_commit_id
             )
 
-            if scan_error and has_default_branch:
+            if not has_default_branch:
+                report.status_extended = (
+                    f"CodeCommit repository {repository.name} has no default "
+                    f"branch, so there is no content to scan for secrets."
+                )
+                findings.append(report)
+                continue
+
+            if scan_error:
                 report.status = "MANUAL"
                 report.status_extended = (
                     f"Could not scan CodeCommit repository {repository.name} "
@@ -99,6 +128,7 @@ class codecommit_repository_no_secrets(Check):
                 continue
 
             files_with_secrets = findings_by_repository.get(repo_index)
+            unscanned_files = unscanned_files_by_repository.get(repo_index)
             if files_with_secrets:
                 all_secrets = []
                 secrets_found = []
@@ -117,6 +147,16 @@ class codecommit_repository_no_secrets(Check):
                     f"{repository.default_branch} (commit {repository.default_branch_commit_id}) -> {secrets_string}."
                 )
                 annotate_verified_secrets(report, all_secrets)
+            elif unscanned_files:
+                report.status = "MANUAL"
+                report.status_extended = (
+                    f"Could not retrieve the content of "
+                    f"{', '.join(unscanned_files)} in CodeCommit repository "
+                    f"{repository.name} default branch (for example, files "
+                    f"larger than 6 MB cannot be downloaded through the "
+                    f"CodeCommit API), so they were not scanned for secrets; "
+                    f"manual review is required."
+                )
 
             findings.append(report)
 

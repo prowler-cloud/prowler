@@ -80,8 +80,10 @@ def mock_generate_regional_clients(provider, service):
 
 def mock_make_api_call_list_repositories_access_denied(self, operation_name, kwarg):
     if operation_name == "ListRepositories":
+        # CodeCommit is a JSON-protocol API, so real IAM denials surface as
+        # AccessDeniedException (the service also accepts plain AccessDenied).
         raise ClientError(
-            {"Error": {"Code": "AccessDenied", "Message": "Access Denied"}},
+            {"Error": {"Code": "AccessDeniedException", "Message": "Access Denied"}},
             operation_name,
         )
     return make_api_call(self, operation_name, kwarg)
@@ -553,7 +555,8 @@ class Test_CodeCommit_Service:
     )
     @mock_aws
     def test_get_repository_files_content_handles_errors(self):
-        """Broken folders and blobs are skipped without crashing the tree walk."""
+        """Broken folders and blobs are yielded with None content so callers
+        can report them as unscanned instead of silently passing."""
         codecommit = CodeCommit(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
         repository = codecommit.repositories[repository_arn]
 
@@ -562,4 +565,8 @@ class Test_CodeCommit_Service:
         assert files == {
             "README.md": b"# Test repository\n",
             "/src/secrets.py": b'AWS_ACCESS_KEY_ID = "AKIAIOSFODNN7EXAMPLE"\n',
+            "/broken-folder": None,
+            "/broken-folder-2": None,
+            "bad-blob.txt": None,
+            "error-blob.txt": None,
         }
