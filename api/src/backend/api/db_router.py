@@ -5,6 +5,7 @@ from django.conf import settings
 ALLOWED_APPS = ("django", "socialaccount", "account", "authtoken", "silk")
 
 _read_db_alias = ContextVar("read_db_alias", default=None)
+_write_db_alias = ContextVar("write_db_alias", default=None)
 
 
 def set_read_db_alias(alias: str | None):
@@ -20,6 +21,21 @@ def get_read_db_alias() -> str | None:
 def reset_read_db_alias(token) -> None:
     if token is not None:
         _read_db_alias.reset(token)
+
+
+def set_write_db_alias(alias: str | None):
+    if not alias:
+        return None
+    return _write_db_alias.set(alias)
+
+
+def get_write_db_alias() -> str | None:
+    return _write_db_alias.get()
+
+
+def reset_write_db_alias(token) -> None:
+    if token is not None:
+        _write_db_alias.reset(token)
 
 
 class MainRouter:
@@ -43,6 +59,9 @@ class MainRouter:
         model_table_name = model._meta.db_table
         if any(model_table_name.startswith(f"{app}_") for app in ALLOWED_APPS):
             return self.admin_db
+        write_alias = get_write_db_alias()
+        if write_alias:
+            return write_alias
         return None
 
     def allow_migrate(self, db, app_label, model_name=None, **hints):  # noqa: F841
