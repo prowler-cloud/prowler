@@ -5,6 +5,7 @@ on:
     branches:
       - 'master'
       - 'v5.*'
+      - 'integration/PROWLER-2291'
     paths:
       - 'docs/user-guide/providers/**/getting-started-*.mdx'
       - 'docs/scripts/generate_provider_cards.py'

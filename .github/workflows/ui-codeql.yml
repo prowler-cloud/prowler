@@ -15,6 +15,7 @@ on:
     branches:
       - 'master'
       - 'v5.*'
+      - 'integration/PROWLER-2291'
     paths:
       - 'ui/**'
       - '.github/workflows/ui-codeql.yml'

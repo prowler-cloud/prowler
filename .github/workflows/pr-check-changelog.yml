@@ -11,6 +11,7 @@ on:
     branches:
       - 'master'
       - 'v5.*'
+      - 'integration/PROWLER-2291'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}

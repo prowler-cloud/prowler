@@ -5,6 +5,7 @@ on:
     branches:
       - 'master'
       - 'v5.*'
+      - 'integration/PROWLER-2291'
     paths:
       - 'tests/providers/**/*_test.py'
       - '.github/workflows/sdk-check-duplicate-test-names.yml'
