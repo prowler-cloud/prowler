@@ -24,7 +24,7 @@ import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { getAWSOrgDeploymentQuickLink } from "@/lib";
 import { useOrgSetupStore } from "@/store/organizations/store";
 import type { OrgSetupPhase } from "@/types/organizations";
-import { ORG_SETUP_PHASE } from "@/types/organizations";
+import { ORG_SETUP_PHASE, ORGANIZATION_TYPE } from "@/types/organizations";
 
 import { useOrgSetupSubmission } from "./hooks/use-org-setup-submission";
 
@@ -268,7 +268,9 @@ export function OrgSetupForm({
       return;
     }
 
-    void handleSubmit((data) => submitOrganizationSetup(data))(event);
+    void handleSubmit((data) =>
+      submitOrganizationSetup({ ...data, orgType: ORGANIZATION_TYPE.AWS }),
+    )(event);
   };
 
   useEffect(() => {

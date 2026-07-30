@@ -13,7 +13,11 @@
  */
 
 import { BrowserHarness } from "@/__tests__/browser-harness";
-import { handlersForOrganizations } from "@/__tests__/msw/handlers/organizations";
+import {
+  handlersForOrganizations,
+  HIERARCHY_READ_FAILURE,
+  type HierarchyReadFailure,
+} from "@/__tests__/msw/handlers/organizations";
 import type { OrgFixture } from "@/__tests__/msw/handlers/organizations.fixtures";
 import { worker } from "@/__tests__/msw/worker";
 import { render } from "@/__tests__/render-browser";
@@ -30,6 +34,8 @@ const INITIAL_SCAN_LABEL = "Launch an initial scan now for immediate findings";
 interface MountOptions {
   /** Seed `?addProvider=true` so the wizard opens on mount. Default true. */
   openWizard?: boolean;
+  /** Which hierarchy read fails, so the loader derives the status. Default none. */
+  hierarchyFailure?: HierarchyReadFailure;
 }
 
 export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
@@ -101,9 +107,12 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
    * (`page.tsx`'s default export can't be used at all — it returns Suspense
    * wrapping async children, which only a server renderer resolves.)
    */
-  async mount({ openWizard = true }: MountOptions = {}): Promise<void> {
+  async mount({
+    openWizard = true,
+    hierarchyFailure = HIERARCHY_READ_FAILURE.NONE,
+  }: MountOptions = {}): Promise<void> {
     this.seedWizardUrl(openWizard);
-    worker.use(...handlersForOrganizations(this.fixture));
+    worker.use(...handlersForOrganizations(this.fixture, { hierarchyFailure }));
     this.trackRequests(worker);
 
     render(await ProvidersTabContent({ searchParams: this.searchParams() }));
@@ -362,6 +371,23 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
     return this.containsText(new RegExp(`${count} Providers`));
   }
 
+  // --- Table: degraded-hierarchy notice ------------------------------------
+
+  /** Wait until the notice for a failed hierarchy fetch surfaces. */
+  async waitForDegradedHierarchyNotice(): Promise<void> {
+    await this.waitForText(/Organization grouping is incomplete/);
+  }
+
+  /** Whether the degraded-hierarchy notice is present. */
+  hasDegradedHierarchyNotice(): boolean {
+    return this.containsText(/Organization grouping is incomplete/);
+  }
+
+  /** Whether the notice warns that providers may be ungrouped. */
+  hasUngroupedProvidersNotice(): boolean {
+    return this.containsText(/Some providers may appear ungrouped/);
+  }
+
   /** Open the row-actions dropdown for the organization named `name`. */
   private async openActionsFor(name: string): Promise<void> {
     const trigger = await this.waitFor(() => {
@@ -374,6 +400,15 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
       );
     });
     await this.user.click(trigger);
+  }
+
+  /** The row-action labels offered for the organization named `name`. */
+  async actionLabelsFor(name: string): Promise<string[]> {
+    await this.openActionsFor(name);
+    await this.waitFor(() => this.q('[role="menuitem"]'));
+    return Array.from(
+      document.querySelectorAll<HTMLElement>('[role="menuitem"]'),
+    ).map((item) => item.textContent?.trim() ?? "");
   }
 
   /** Open the "Edit Organization Name" flow for the organization `name`. */

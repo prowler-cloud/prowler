@@ -5,8 +5,15 @@ import { revalidatePath } from "next/cache";
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
 import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 import {
-  OrganizationListResponse,
-  OrganizationUnitListResponse,
+  ApplyDiscoveryPayload,
+  CollectionFetch,
+  CollectionPage,
+  ORGANIZATION_TYPE,
+  OrganizationNodeResource,
+  OrganizationResource,
+  OrganizationType,
+  OrgSecretPayload,
+  toOrgFlowType,
 } from "@/types";
 
 const PATH_IDENTIFIER_PATTERN = /^[A-Za-z0-9_-]+$/;
@@ -41,26 +48,73 @@ function hasActionError(result: unknown): result is { error: unknown } {
   );
 }
 
-async function fetchOptionalCollection<T extends { data: unknown[] }>(
+const HIERARCHY_PAGE_SIZE = 100;
+/** Runaway guard, not an expected path: 50 × 100 = 5000 resources. */
+const HIERARCHY_MAX_PAGES = 50;
+
+/**
+ * Fetches a whole collection, following JSON:API pagination — the hierarchy
+ * needs every organization and node to group providers, so stopping at the
+ * first page would silently drop groups. Same traversal the providers page
+ * already does for providers and provider groups (`getAllProviders`).
+ *
+ * Any incompleteness (a failed page, or the guard) resolves to the degraded
+ * result: callers surface "grouping unavailable" and list providers flat, which
+ * is truthful, where a partial hierarchy would look complete.
+ */
+async function fetchOptionalCollection<T>(
   url: URL,
-): Promise<T> {
-  const headers = await getAuthHeaders({ contentType: false });
+): Promise<CollectionFetch<T>> {
+  const collected: T[] = [];
 
+  // Headers inside the try: an expired session throws, and these are awaited in
+  // the providers page's `Promise.all`, which has no catch.
   try {
-    const response = await fetch(url.toString(), { headers });
+    const headers = await getAuthHeaders({ contentType: false });
 
-    if (!response.ok) {
-      return { data: [] } as unknown as T;
+    for (let page = 1; page <= HIERARCHY_MAX_PAGES; page += 1) {
+      const pageUrl = new URL(url);
+      pageUrl.searchParams.set("page[number]", String(page));
+      pageUrl.searchParams.set("page[size]", String(HIERARCHY_PAGE_SIZE));
+
+      const response = await fetch(pageUrl.toString(), { headers });
+
+      // Failures go through `handleApiResponse` too — it is the shared
+      // reporting point, and short-circuiting on `!response.ok` skipped it.
+      const body = (await handleApiResponse(response)) as CollectionPage<T>;
+
+      if (!response.ok) {
+        return { data: [], error: true };
+      }
+
+      collected.push(...(body.data ?? []));
+
+      // A missing `pages` counts as "this was the only page"; reading it as
+      // "maybe more" would walk to the guard on every single-page response.
+      if (page >= (body.meta?.pagination?.pages ?? 1)) {
+        return { data: collected };
+      }
     }
 
-    return (await handleApiResponse(response)) as T;
-  } catch {
-    return { data: [] } as unknown as T;
+    // Guard exhaustion is not an ordinary fetch failure, and must not look
+    // like one in Sentry: report the concrete cause so estates above the cap
+    // are triageable instead of silently degraded.
+    handleApiError(
+      new Error(
+        `Organization hierarchy pagination guard exhausted after ${HIERARCHY_MAX_PAGES} pages (${HIERARCHY_MAX_PAGES * HIERARCHY_PAGE_SIZE} resources) for ${url.pathname}`,
+      ),
+    );
+
+    return { data: [], error: true };
+  } catch (error) {
+    handleApiError(error);
+
+    return { data: [], error: true };
   }
 }
 
 /**
- * Creates an AWS Organization resource.
+ * Creates an Organization resource for the given organization type.
  * POST /api/v1/organizations
  */
 export const createOrganization = async (formData: FormData) => {
@@ -69,6 +123,16 @@ export const createOrganization = async (formData: FormData) => {
 
   const name = formData.get("name") as string;
   const externalId = formData.get("externalId") as string;
+
+  // Absent means AWS (the flow predates the field); unrecognized is rejected,
+  // not coerced to AWS.
+  const rawOrgType = formData.get("orgType");
+  const orgType =
+    rawOrgType === null ? ORGANIZATION_TYPE.AWS : toOrgFlowType(rawOrgType);
+
+  if (!orgType) {
+    return { error: "Invalid organization type" };
+  }
 
   try {
     const response = await fetch(url.toString(), {
@@ -79,7 +143,7 @@ export const createOrganization = async (formData: FormData) => {
           type: "organizations",
           attributes: {
             name,
-            org_type: "aws",
+            org_type: orgType,
             external_id: externalId,
           },
         },
@@ -93,7 +157,7 @@ export const createOrganization = async (formData: FormData) => {
 };
 
 /**
- * Updates an AWS Organization's name.
+ * Updates an Organization's name.
  * PATCH /api/v1/organizations/{id}
  */
 export const updateOrganizationName = async (
@@ -146,14 +210,17 @@ export const updateOrganizationName = async (
 };
 
 /**
- * Lists AWS Organizations filtered by external ID.
- * GET /api/v1/organizations?filter[external_id]={externalId}&filter[org_type]=aws
+ * Lists organizations filtered by external ID and organization type.
+ * GET /api/v1/organizations?filter[external_id]={externalId}&filter[org_type]={orgType}
  */
-export const listOrganizationsByExternalId = async (externalId: string) => {
+export const listOrganizationsByExternalId = async (
+  externalId: string,
+  orgType: OrganizationType = ORGANIZATION_TYPE.AWS,
+) => {
   const headers = await getAuthHeaders({ contentType: false });
   const url = new URL(`${apiBaseUrl}/organizations`);
   url.searchParams.set("filter[external_id]", externalId);
-  url.searchParams.set("filter[org_type]", "aws");
+  url.searchParams.set("filter[org_type]", orgType);
 
   try {
     const response = await fetch(url.toString(), { headers });
@@ -164,66 +231,38 @@ export const listOrganizationsByExternalId = async (externalId: string) => {
 };
 
 /**
- * Lists AWS organizations available for the current tenant.
- * GET /api/v1/organizations?filter[org_type]=aws
+ * Lists every organization for the current tenant, across organization types.
+ * GET /api/v1/organizations
  */
-export const listOrganizations = async () => {
-  const headers = await getAuthHeaders({ contentType: false });
-  const url = new URL(`${apiBaseUrl}/organizations`);
-  url.searchParams.set("filter[org_type]", "aws");
-
-  try {
-    const response = await fetch(url.toString(), { headers });
-    return await handleApiResponse(response);
-  } catch (error) {
-    return handleApiError(error);
-  }
-};
-
-export const listOrganizationsSafe =
-  async (): Promise<OrganizationListResponse> => {
-    const url = new URL(`${apiBaseUrl}/organizations`);
-    url.searchParams.set("filter[org_type]", "aws");
-    url.searchParams.set("page[size]", "100");
-
-    return fetchOptionalCollection<OrganizationListResponse>(url);
-  };
+export const listOrganizationsSafe = async (): Promise<
+  CollectionFetch<OrganizationResource>
+> =>
+  fetchOptionalCollection<OrganizationResource>(
+    new URL(`${apiBaseUrl}/organizations`),
+  );
 
 /**
- * Lists organization units available for the current tenant.
- * GET /api/v1/organizational-units
+ * Lists every organization node. A large AWS organization can hold hundreds of
+ * OUs, so this is the collection most likely to span pages.
+ * GET /api/v1/organization-nodes
  */
-export const listOrganizationUnits = async () => {
-  const headers = await getAuthHeaders({ contentType: false });
-  const url = new URL(`${apiBaseUrl}/organizational-units`);
-
-  try {
-    const response = await fetch(url.toString(), { headers });
-    return await handleApiResponse(response);
-  } catch (error) {
-    return handleApiError(error);
-  }
-};
-
-export const listOrganizationUnitsSafe =
-  async (): Promise<OrganizationUnitListResponse> => {
-    const url = new URL(`${apiBaseUrl}/organizational-units`);
-    url.searchParams.set("page[size]", "100");
-
-    return fetchOptionalCollection<OrganizationUnitListResponse>(url);
-  };
+export const listOrganizationNodesSafe = async (): Promise<
+  CollectionFetch<OrganizationNodeResource>
+> =>
+  fetchOptionalCollection<OrganizationNodeResource>(
+    new URL(`${apiBaseUrl}/organization-nodes`),
+  );
 
 /**
- * Creates an organization secret (role-based credentials).
+ * Creates an organization secret for the given secret payload.
  * POST /api/v1/organization-secrets
  */
-export const createOrganizationSecret = async (formData: FormData) => {
+export const createOrganizationSecret = async (
+  organizationId: string,
+  payload: OrgSecretPayload,
+) => {
   const headers = await getAuthHeaders({ contentType: true });
   const url = new URL(`${apiBaseUrl}/organization-secrets`);
-
-  const organizationId = formData.get("organizationId") as string;
-  const roleArn = formData.get("roleArn") as string;
-  const externalId = formData.get("externalId") as string;
 
   try {
     const response = await fetch(url.toString(), {
@@ -233,11 +272,8 @@ export const createOrganizationSecret = async (formData: FormData) => {
         data: {
           type: "organization-secrets",
           attributes: {
-            secret_type: "role",
-            secret: {
-              role_arn: roleArn,
-              external_id: externalId,
-            },
+            secret_type: payload.secretType,
+            secret: payload.secret,
           },
           relationships: {
             organization: {
@@ -258,16 +294,14 @@ export const createOrganizationSecret = async (formData: FormData) => {
 };
 
 /**
- * Updates an organization secret (role-based credentials).
+ * Updates an organization secret with the given secret payload.
  * PATCH /api/v1/organization-secrets/{id}
  */
-export const updateOrganizationSecret = async (formData: FormData) => {
+export const updateOrganizationSecret = async (
+  organizationSecretId: string,
+  payload: OrgSecretPayload,
+) => {
   const headers = await getAuthHeaders({ contentType: true });
-  const organizationSecretId = formData.get("organizationSecretId") as
-    | string
-    | null;
-  const roleArn = formData.get("roleArn") as string;
-  const externalId = formData.get("externalId") as string;
 
   const organizationSecretIdValidation = validatePathIdentifier(
     organizationSecretId,
@@ -291,11 +325,8 @@ export const updateOrganizationSecret = async (formData: FormData) => {
           type: "organization-secrets",
           id: organizationSecretIdValidation.value,
           attributes: {
-            secret_type: "role",
-            secret: {
-              role_arn: roleArn,
-              external_id: externalId,
-            },
+            secret_type: payload.secretType,
+            secret: payload.secret,
           },
         },
       }),
@@ -327,7 +358,7 @@ export const listOrganizationSecretsByOrganizationId = async (
 };
 
 /**
- * Deletes an AWS Organization resource.
+ * Deletes an Organization resource.
  * DELETE /api/v1/organizations/{id}
  */
 export const deleteOrganization = async (organizationId: string) => {
@@ -359,25 +390,23 @@ export const deleteOrganization = async (organizationId: string) => {
 };
 
 /**
- * Deletes an organizational unit.
- * DELETE /api/v1/organizational-units/{id}
+ * Deletes an organization node.
+ * DELETE /api/v1/organization-nodes/{id}
  */
-export const deleteOrganizationalUnit = async (
-  organizationalUnitId: string,
-) => {
+export const deleteOrganizationNode = async (organizationNodeId: string) => {
   const headers = await getAuthHeaders({ contentType: false });
 
   const idValidation = validatePathIdentifier(
-    organizationalUnitId,
-    "Organizational unit ID is required",
-    "Invalid organizational unit ID",
+    organizationNodeId,
+    "Organization node ID is required",
+    "Invalid organization node ID",
   );
   if ("error" in idValidation) {
     return idValidation;
   }
 
   const url = new URL(
-    `${apiBaseUrl}/organizational-units/${encodeURIComponent(idValidation.value)}`,
+    `${apiBaseUrl}/organization-nodes/${encodeURIComponent(idValidation.value)}`,
   );
 
   try {
@@ -393,7 +422,7 @@ export const deleteOrganizationalUnit = async (
 };
 
 /**
- * Triggers an async discovery of the AWS Organization.
+ * Triggers an async discovery of the Organization.
  * POST /api/v1/organizations/{id}/discover
  */
 export const triggerDiscovery = async (organizationId: string) => {
@@ -461,14 +490,16 @@ export const getDiscovery = async (
 };
 
 /**
- * Applies discovery results — creates providers, links to org/OUs, auto-generates secrets.
+ * Applies discovery results — creates providers, links to org/nodes,
+ * auto-generates secrets. The payload is discriminated by organization type:
+ * AWS sends `accounts` + client-side-derived `organizational_units`; GCP sends
+ * `projects` only (folder ancestors are derived server-side).
  * POST /api/v1/organizations/{orgId}/discoveries/{discoveryId}/apply
  */
 export const applyDiscovery = async (
   organizationId: string,
   discoveryId: string,
-  accounts: Array<{ id: string; alias?: string }>,
-  organizationalUnits: Array<{ id: string }>,
+  payload: ApplyDiscoveryPayload,
 ) => {
   const headers = await getAuthHeaders({ contentType: true });
   const organizationIdValidation = validatePathIdentifier(
@@ -491,6 +522,14 @@ export const applyDiscovery = async (
     `${apiBaseUrl}/organizations/${encodeURIComponent(organizationIdValidation.value)}/discoveries/${encodeURIComponent(discoveryIdValidation.value)}/apply`,
   );
 
+  const attributes =
+    payload.orgType === ORGANIZATION_TYPE.AWS
+      ? {
+          accounts: payload.accounts,
+          organizational_units: payload.organizationalUnits,
+        }
+      : { projects: payload.projects };
+
   try {
     const response = await fetch(url.toString(), {
       method: "POST",
@@ -498,10 +537,7 @@ export const applyDiscovery = async (
       body: JSON.stringify({
         data: {
           type: "organization-discoveries",
-          attributes: {
-            accounts,
-            organizational_units: organizationalUnits,
-          },
+          attributes,
         },
       }),
     });

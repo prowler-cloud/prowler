@@ -11,14 +11,26 @@ import {
   triggerDiscovery,
   updateOrganizationSecret,
 } from "@/actions/organizations/organizations";
-import { getSelectableAccountIdsForTarget } from "@/actions/organizations/organizations.adapter";
 import { useOrgSetupStore } from "@/store/organizations/store";
-import { DISCOVERY_STATUS, DiscoveryResult } from "@/types/organizations";
+import { DISCOVERY_STATUS } from "@/types/organizations";
 
 import { extractErrorMessage } from "./error-utils";
+import {
+  getOrgSetupStrategy,
+  OrgSetupStrategy,
+  OrgSetupSubmissionData,
+} from "./org-setup-strategy";
 
 const DISCOVERY_POLL_INTERVAL_MS = 3000;
 const DISCOVERY_MAX_RETRIES = 60;
+
+/**
+ * Used once discovery has already come back successfully: from that point the
+ * credentials are proven good, so a later failure must not send the user off to
+ * re-check them.
+ */
+const UNEXPECTED_DISCOVERY_RESULT =
+  "The organization was authenticated, but its discovery result could not be read. Please try again.";
 
 function sleepWithAbort(ms: number, signal: AbortSignal): Promise<void> {
   return new Promise((resolve) => {
@@ -37,15 +49,6 @@ function sleepWithAbort(ms: number, signal: AbortSignal): Promise<void> {
       { once: true },
     );
   });
-}
-
-interface OrgSetupSubmissionData {
-  organizationName?: string;
-  awsOrgId: string;
-  roleArn: string;
-  // OU or root ID the StackSet was deployed to. Used to scope the default
-  // account selection to what was actually rolled out.
-  organizationalUnitId?: string;
 }
 
 interface UseOrgSetupSubmissionProps {
@@ -72,8 +75,9 @@ export function useOrgSetupSubmission({
   const discoveryAbortControllerRef = useRef<AbortController | null>(null);
   const {
     setOrganization,
+    setDiscoveryTriggered,
     setDiscovery,
-    setSelectedAccountIds,
+    setSelectedCandidateIds,
     clearValidationState,
   } = useOrgSetupStore();
 
@@ -113,7 +117,8 @@ export function useOrgSetupSubmission({
     organizationId: string,
     discoveryId: string,
     signal: AbortSignal,
-  ): Promise<DiscoveryResult | null> => {
+    strategy: OrgSetupStrategy,
+  ): Promise<unknown | null> => {
     for (let attempt = 0; attempt < DISCOVERY_MAX_RETRIES; attempt += 1) {
       if (signal.aborted || !isMountedRef.current) {
         return null;
@@ -125,24 +130,27 @@ export function useOrgSetupSubmission({
       }
 
       if (result?.error) {
-        setApiError(
-          `Authentication failed. Please verify the StackSet deployment and Role ARN, then try again. ${result.error}`,
-        );
+        setApiError(strategy.authFailureMessage(result.error));
         return null;
       }
 
-      const status = result.data.attributes.status;
+      const status = result?.data?.attributes?.status;
+
+      if (!status) {
+        setApiError(UNEXPECTED_DISCOVERY_RESULT);
+        return null;
+      }
 
       if (status === DISCOVERY_STATUS.SUCCEEDED) {
-        return result.data.attributes.result as DiscoveryResult;
+        return result.data.attributes.result;
       }
 
       if (status === DISCOVERY_STATUS.FAILED) {
         const backendError = result.data.attributes.error;
         setApiError(
           backendError
-            ? `Authentication failed. Please verify the StackSet deployment and Role ARN, then try again. ${backendError}`
-            : "Authentication failed. Please verify the StackSet deployment and Role ARN, then try again.",
+            ? strategy.authFailureMessage(backendError)
+            : strategy.authFailureMessage(),
         );
         return null;
       }
@@ -154,13 +162,14 @@ export function useOrgSetupSubmission({
       return null;
     }
 
-    setApiError(
-      "Authentication timed out. Please verify the credentials and try again.",
-    );
+    setApiError(strategy.timeoutMessage);
     return null;
   };
 
   const submitOrganizationSetup = async (data: OrgSetupSubmissionData) => {
+    // The form's own tag picks the strategy, so the collected fields and the
+    // credentials/discovery built from them always belong to the same type.
+    const strategy = getOrgSetupStrategy(data.orgType);
     discoveryAbortControllerRef.current?.abort();
     const abortController = new AbortController();
     discoveryAbortControllerRef.current = abortController;
@@ -172,17 +181,20 @@ export function useOrgSetupSubmission({
       }
     };
 
+    let hasDiscovered = false;
+
     try {
       if (!isCancelled()) {
         setApiError(null);
       }
       clearValidationState();
 
-      const resolvedOrganizationName =
-        data.organizationName?.trim() || data.awsOrgId;
+      const externalId = strategy.getExternalId(data);
+      const resolvedOrganizationName = strategy.getResolvedName(data);
 
       const existingOrganizationsResult = await listOrganizationsByExternalId(
-        data.awsOrgId,
+        externalId,
+        strategy.orgType,
       );
       if (isCancelled()) {
         return;
@@ -201,8 +213,8 @@ export function useOrgSetupSubmission({
               id: string;
               attributes?: { external_id?: string; org_type?: string };
             }) =>
-              organization?.attributes?.external_id === data.awsOrgId &&
-              organization?.attributes?.org_type === "aws",
+              organization?.attributes?.external_id === externalId &&
+              organization?.attributes?.org_type === strategy.orgType,
           )
         : null;
 
@@ -211,7 +223,8 @@ export function useOrgSetupSubmission({
       if (!orgId) {
         const orgFormData = new FormData();
         orgFormData.set("name", resolvedOrganizationName);
-        orgFormData.set("externalId", data.awsOrgId);
+        orgFormData.set("externalId", externalId);
+        orgFormData.set("orgType", strategy.orgType);
 
         const orgResult = await createOrganization(orgFormData);
         if (isCancelled()) {
@@ -235,7 +248,7 @@ export function useOrgSetupSubmission({
 
       const organizationNameForStore =
         existingOrganization?.attributes?.name ?? resolvedOrganizationName;
-      setOrganization(orgId, organizationNameForStore, data.awsOrgId);
+      setOrganization(orgId, organizationNameForStore, externalId);
 
       const existingSecretsResult =
         await listOrganizationSecretsByOrganizationId(orgId);
@@ -254,20 +267,14 @@ export function useOrgSetupSubmission({
           ? (existingSecretsResult.data[0]?.id as string | undefined)
           : undefined;
 
-      let secretResult;
-      if (existingSecretId) {
-        const patchSecretFormData = new FormData();
-        patchSecretFormData.set("organizationSecretId", existingSecretId);
-        patchSecretFormData.set("roleArn", data.roleArn);
-        patchSecretFormData.set("externalId", stackSetExternalId);
-        secretResult = await updateOrganizationSecret(patchSecretFormData);
-      } else {
-        const createSecretFormData = new FormData();
-        createSecretFormData.set("organizationId", orgId);
-        createSecretFormData.set("roleArn", data.roleArn);
-        createSecretFormData.set("externalId", stackSetExternalId);
-        secretResult = await createOrganizationSecret(createSecretFormData);
-      }
+      const secretPayload = strategy.buildSecretPayload(
+        data,
+        stackSetExternalId,
+      );
+
+      const secretResult = existingSecretId
+        ? await updateOrganizationSecret(existingSecretId, secretPayload)
+        : await createOrganizationSecret(orgId, secretPayload);
       if (isCancelled()) {
         return;
       }
@@ -288,33 +295,38 @@ export function useOrgSetupSubmission({
       }
 
       const discoveryId = discoveryResult.data.id;
+      // Persist the discovery id at trigger time so an interrupted discovery
+      // can be resumed on wizard re-entry.
+      setDiscoveryTriggered(discoveryId);
+
       const resolvedDiscoveryResult = await pollDiscoveryResult(
         orgId,
         discoveryId,
         abortController.signal,
+        strategy,
       );
 
       if (!resolvedDiscoveryResult || isCancelled()) {
         return;
       }
 
-      // The deployment (management/delegated admin) account is where the local
-      // role is created; its ID is the one embedded in the Role ARN.
-      const deploymentAccountId = data.roleArn.match(
-        /^arn:aws:iam::(\d{12}):role\//,
-      )?.[1];
-      const selectableAccountIds = getSelectableAccountIdsForTarget(
+      hasDiscovered = true;
+
+      const { hierarchy, defaultSelection } = strategy.ingestDiscovery(
         resolvedDiscoveryResult,
-        data.organizationalUnitId ?? "",
-        deploymentAccountId,
+        data,
       );
-      setDiscovery(discoveryId, resolvedDiscoveryResult);
-      setSelectedAccountIds(selectableAccountIds);
+      setDiscovery(discoveryId, hierarchy);
+      setSelectedCandidateIds(defaultSelection);
       onNext();
     } catch {
       if (!isCancelled()) {
+        // Ingesting the result is the only work left once `hasDiscovered` is set,
+        // and a malformed result is not a credentials problem.
         setApiError(
-          "Authentication failed. Please verify the StackSet deployment and Role ARN, then try again.",
+          hasDiscovered
+            ? UNEXPECTED_DISCOVERY_RESULT
+            : strategy.authFailureMessage(),
         );
       }
     } finally {

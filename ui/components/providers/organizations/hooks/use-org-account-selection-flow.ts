@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import { applyDiscovery } from "@/actions/organizations/organizations";
-import { getOuIdsForSelectedAccounts } from "@/actions/organizations/organizations.adapter";
+import { buildApplyPayload } from "@/actions/organizations/organizations.adapter";
 import {
   checkConnectionProvider,
   getProvider,
@@ -20,7 +20,7 @@ import {
 import { TREE_ITEM_STATUS, TreeDataItem } from "@/types/tree";
 
 import {
-  buildAccountToProviderMap,
+  buildCandidateToProviderMap,
   canAdvanceToLaunchStep,
   getLaunchableProviderIds,
   pollConnectionTask,
@@ -179,18 +179,18 @@ export function useOrgAccountSelectionFlow({
     organizationId,
     organizationExternalId,
     discoveryId,
-    discoveryResult,
+    hierarchy,
     treeData,
-    accountLookup,
-    selectableAccountIds,
-    selectableAccountIdSet,
-    selectedAccountIds,
-    accountAliases,
+    candidateLookup,
+    selectableCandidateIds,
+    selectableCandidateIdSet,
+    selectedCandidateIds,
+    candidateAliases,
     createdProviderIds,
     connectionResults,
     connectionErrors,
-    setSelectedAccountIds,
-    setAccountAlias,
+    setSelectedCandidateIds,
+    setCandidateAlias,
     setCreatedProviderIds,
     clearValidationState,
     setConnectionError,
@@ -201,7 +201,7 @@ export function useOrgAccountSelectionFlow({
   const [isApplying, setIsApplying] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
   const [applyError, setApplyError] = useState<string | null>(null);
-  const [accountToProviderMap, setAccountToProviderMap] = useState<
+  const [candidateToProviderMap, setCandidateToProviderMap] = useState<
     Map<string, string>
   >(new Map());
   const isMountedRef = useRef(true);
@@ -210,18 +210,18 @@ export function useOrgAccountSelectionFlow({
   const lastAppliedSelectionKeyRef = useRef<string>("");
   const startTestingActionRef = useRef<() => void>(() => {});
 
-  const sanitizedSelectedAccountIds = selectedAccountIds.filter((id) =>
-    selectableAccountIdSet.has(id),
+  const sanitizedSelectedCandidateIds = selectedCandidateIds.filter((id) =>
+    selectableCandidateIdSet.has(id),
   );
-  const selectedAccountKey = getSelectionKey(sanitizedSelectedAccountIds);
+  const selectedCandidateKey = getSelectionKey(sanitizedSelectedCandidateIds);
   const selectedIdsForTree = buildTreeSelectedIds(
     treeData,
-    sanitizedSelectedAccountIds,
-    selectableAccountIdSet,
+    sanitizedSelectedCandidateIds,
+    selectableCandidateIdSet,
   );
-  const selectedAccountIdSet = new Set(sanitizedSelectedAccountIds);
-  const selectedCount = sanitizedSelectedAccountIds.length;
-  const totalAccounts = selectableAccountIds.length;
+  const selectedCandidateIdSet = new Set(sanitizedSelectedCandidateIds);
+  const selectedCount = sanitizedSelectedCandidateIds.length;
+  const totalCandidates = selectableCandidateIds.length;
   const hasConnectionErrors = Object.values(connectionResults).some(
     (status) => status === CONNECTION_TEST_STATUS.ERROR,
   );
@@ -238,8 +238,8 @@ export function useOrgAccountSelectionFlow({
   const treeDataWithConnectionState = isTestingView
     ? buildTreeWithConnectionState(
         treeData,
-        selectedAccountIdSet,
-        accountToProviderMap,
+        selectedCandidateIdSet,
+        candidateToProviderMap,
         connectionResults,
         connectionErrors,
         isApplying || isTesting,
@@ -353,34 +353,28 @@ export function useOrgAccountSelectionFlow({
   };
 
   const handleApplyAndTest = async () => {
-    if (!organizationId || !discoveryId || !discoveryResult) {
+    if (!organizationId || !discoveryId || !hierarchy) {
       return;
     }
 
     setApplyError(null);
     setIsApplying(true);
 
-    const currentSelectedAccountIds = useOrgSetupStore
+    const currentSelectedCandidateIds = useOrgSetupStore
       .getState()
-      .selectedAccountIds.filter((id) => selectableAccountIdSet.has(id));
-    const currentSelectionKey = getSelectionKey(currentSelectedAccountIds);
+      .selectedCandidateIds.filter((id) => selectableCandidateIdSet.has(id));
+    const currentSelectionKey = getSelectionKey(currentSelectedCandidateIds);
 
-    const accounts = currentSelectedAccountIds.map((id) => ({
-      id,
-      ...(accountAliases[id] ? { alias: accountAliases[id] } : {}),
-    }));
-    const ouIds = getOuIdsForSelectedAccounts(
-      discoveryResult,
-      currentSelectedAccountIds,
+    // Per-type apply payload, discriminated by the hierarchy being applied: AWS
+    // derives OU ancestors client-side; GCP sends projects only (folder
+    // ancestors are derived server-side).
+    const payload = buildApplyPayload(
+      hierarchy,
+      currentSelectedCandidateIds,
+      candidateAliases,
     );
-    const organizationalUnits = ouIds.map((id) => ({ id }));
 
-    const result = await applyDiscovery(
-      organizationId,
-      discoveryId,
-      accounts,
-      organizationalUnits,
-    );
+    const result = await applyDiscovery(organizationId, discoveryId, payload);
     if (!isMountedRef.current) {
       return;
     }
@@ -398,8 +392,8 @@ export function useOrgAccountSelectionFlow({
       ) ?? [];
 
     setCreatedProviderIds(providerIds);
-    const mapping = await buildAccountToProviderMap({
-      selectedAccountIds: currentSelectedAccountIds,
+    const mapping = await buildCandidateToProviderMap({
+      selectedCandidateIds: currentSelectedCandidateIds,
       providerIds,
       applyResult: result,
       resolveProviderUidById: async (providerId) => {
@@ -420,7 +414,7 @@ export function useOrgAccountSelectionFlow({
       return;
     }
 
-    setAccountToProviderMap(mapping);
+    setCandidateToProviderMap(mapping);
     setIsApplying(false);
     lastAppliedSelectionKeyRef.current = currentSelectionKey;
 
@@ -438,7 +432,7 @@ export function useOrgAccountSelectionFlow({
 
     const shouldApplySelection =
       !hasAppliedRef.current ||
-      lastAppliedSelectionKeyRef.current !== selectedAccountKey;
+      lastAppliedSelectionKeyRef.current !== selectedCandidateKey;
 
     if (shouldApplySelection) {
       hasAppliedRef.current = true;
@@ -520,26 +514,26 @@ export function useOrgAccountSelectionFlow({
   ]);
 
   const handleTreeSelectionChange = (ids: string[]) => {
-    const filteredIds = ids.filter((id) => selectableAccountIdSet.has(id));
-    const nextSelectedAccountKey = getSelectionKey(filteredIds);
+    const filteredIds = ids.filter((id) => selectableCandidateIdSet.has(id));
+    const nextSelectedCandidateKey = getSelectionKey(filteredIds);
 
-    if (nextSelectedAccountKey !== selectedAccountKey) {
+    if (nextSelectedCandidateKey !== selectedCandidateKey) {
       hasAppliedRef.current = false;
       lastAppliedSelectionKeyRef.current = "";
       setApplyError(null);
-      setAccountToProviderMap(new Map());
+      setCandidateToProviderMap(new Map());
       clearValidationState();
     }
 
-    setSelectedAccountIds(filteredIds);
+    setSelectedCandidateIds(filteredIds);
   };
 
   return {
-    accountAliases,
-    accountLookup,
+    candidateAliases,
+    candidateLookup,
     applyError,
     canAdvanceToLaunch,
-    discoveryResult,
+    hierarchy,
     handleTreeSelectionChange,
     hasConnectionErrors,
     isTesting,
@@ -548,9 +542,9 @@ export function useOrgAccountSelectionFlow({
     organizationExternalId,
     selectedCount,
     selectedIdsForTree,
-    setAccountAlias,
+    setCandidateAlias,
     showHeaderHelperText,
-    totalAccounts,
+    totalCandidates,
     treeDataWithConnectionState,
   };
 }

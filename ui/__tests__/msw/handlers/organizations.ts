@@ -155,6 +155,30 @@ const providerResource = (provider: FixtureProvider) => ({
   },
 });
 
+/**
+ * Serves a collection the way the paginated API does: honours
+ * `page[number]`/`page[size]` and reports `meta.pagination.pages`, so a caller
+ * that stops after the first page visibly loses the rest.
+ */
+const paginatedCollection = <T>(items: T[], request: Request) => {
+  const params = new URL(request.url).searchParams;
+  const size = Number(params.get("page[size]")) || items.length || 1;
+  const page = Number(params.get("page[number]")) || 1;
+  const start = (page - 1) * size;
+
+  return {
+    data: items.slice(start, start + size),
+    meta: {
+      version: "v1",
+      pagination: {
+        page,
+        pages: Math.max(1, Math.ceil(items.length / size)),
+        count: items.length,
+      },
+    },
+  };
+};
+
 const applyResultResponse = (fx: OrgFixture) => ({
   data: {
     id: "apply-result-1",
@@ -211,7 +235,32 @@ const uidForProviderId = (
 const CONNECTION_TASK_PREFIX = "conn-task-";
 const DELETION_TASK_PREFIX = "del-task-";
 
-export const handlersForOrganizations = (fx: OrgFixture) => {
+interface HandlerOptions {
+  /**
+   * Which hierarchy read 500s. The `…Safe` actions turn that into their
+   * degraded flag and the page derives `hierarchyStatus` — never an injected
+   * prop.
+   */
+  hierarchyFailure?: HierarchyReadFailure;
+}
+
+export const HIERARCHY_READ_FAILURE = {
+  NONE: "none",
+  /** Both `/organizations` and `/organization-nodes` fail. */
+  ALL: "all",
+  /** Only `/organization-nodes` fails. */
+  NODES: "nodes",
+} as const;
+
+export type HierarchyReadFailure =
+  (typeof HIERARCHY_READ_FAILURE)[keyof typeof HIERARCHY_READ_FAILURE];
+
+export const handlersForOrganizations = (
+  fx: OrgFixture,
+  { hierarchyFailure = HIERARCHY_READ_FAILURE.NONE }: HandlerOptions = {},
+) => {
+  const organizationReadFails = hierarchyFailure === HIERARCHY_READ_FAILURE.ALL;
+  const nodeReadFails = hierarchyFailure !== HIERARCHY_READ_FAILURE.NONE;
   // Mutable working copy for resources created during the test lifecycle.
   const organizations = [...fx.organizations];
   const createdSecretIds = new Set(
@@ -233,14 +282,19 @@ export const handlersForOrganizations = (fx: OrgFixture) => {
   const handlers = [
     // --- organizations CRUD + filters ------------------------------------
     http.get(`${API}/organizations`, ({ request }) => {
+      if (organizationReadFails) {
+        return HttpResponse.json(errorBody("Hierarchy unavailable", 500), {
+          status: 500,
+        });
+      }
       const url = new URL(request.url);
       const externalId = url.searchParams.get("filter[external_id]");
       const orgType = url.searchParams.get("filter[org_type]");
-      const data = organizations
+      const matches = organizations
         .filter((o) => (externalId ? o.externalId === externalId : true))
         .filter((o) => (orgType ? o.orgType === orgType : true))
         .map(orgResource);
-      return HttpResponse.json({ data, meta: { version: "v1" } });
+      return HttpResponse.json(paginatedCollection(matches, request));
     }),
 
     http.post(`${API}/organizations`, async ({ request }) => {
@@ -348,11 +402,17 @@ export const handlersForOrganizations = (fx: OrgFixture) => {
     ),
 
     // --- canonical organization-nodes ------------------------------------
-    http.get(`${API}/organization-nodes`, () =>
-      HttpResponse.json({
-        data: fx.nodes.map(organizationNodeResource),
-        meta: { version: "v1" },
-      }),
+    http.get(`${API}/organization-nodes`, ({ request }) =>
+      nodeReadFails
+        ? HttpResponse.json(errorBody("Hierarchy unavailable", 500), {
+            status: 500,
+          })
+        : HttpResponse.json(
+            paginatedCollection(
+              fx.nodes.map(organizationNodeResource),
+              request,
+            ),
+          ),
     ),
 
     http.delete<{ id: string }>(`${API}/organization-nodes/:id`, ({ params }) =>

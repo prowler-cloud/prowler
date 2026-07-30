@@ -3,7 +3,11 @@ import { createElement, type PropsWithChildren, StrictMode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useOrgSetupStore } from "@/store/organizations/store";
-import { APPLY_STATUS, DISCOVERY_STATUS } from "@/types/organizations";
+import {
+  APPLY_STATUS,
+  DISCOVERY_STATUS,
+  ORGANIZATION_TYPE,
+} from "@/types/organizations";
 
 import { useOrgSetupSubmission } from "./use-org-setup-submission";
 
@@ -26,6 +30,35 @@ function StrictModeWrapper({ children }: PropsWithChildren) {
   return createElement(StrictMode, null, children);
 }
 
+/** Mocks the chain up to (and including) triggering discovery, all succeeding. */
+function mockChainThroughDiscoveryTrigger() {
+  organizationsActionsMock.listOrganizationsByExternalId.mockResolvedValue({
+    data: [],
+  });
+  organizationsActionsMock.createOrganization.mockResolvedValue({
+    data: { id: "org-1" },
+  });
+  organizationsActionsMock.listOrganizationSecretsByOrganizationId.mockResolvedValue(
+    { data: [] },
+  );
+  organizationsActionsMock.createOrganizationSecret.mockResolvedValue({
+    data: { id: "secret-1" },
+  });
+  organizationsActionsMock.triggerDiscovery.mockResolvedValue({
+    data: { id: "discovery-1" },
+  });
+}
+
+const AWS_SETUP_DATA = {
+  orgType: ORGANIZATION_TYPE.AWS,
+  organizationName: "Acme",
+  awsOrgId: "o-abc123def4",
+  roleArn: "arn:aws:iam::123456789012:role/ProwlerOrgRole",
+} as const;
+
+const UNEXPECTED_DISCOVERY_RESULT =
+  "The organization was authenticated, but its discovery result could not be read. Please try again.";
+
 describe("useOrgSetupSubmission", () => {
   beforeEach(() => {
     sessionStorage.clear();
@@ -36,7 +69,7 @@ describe("useOrgSetupSubmission", () => {
     }
   });
 
-  it("completes the setup chain and stores selectable accounts", async () => {
+  it("completes the setup chain and stores selectable candidates", async () => {
     // Given
     const onNext = vi.fn();
     const setFieldError = vi.fn();
@@ -59,7 +92,7 @@ describe("useOrgSetupSubmission", () => {
             provider_exists: false,
             provider_id: null,
             organization_relation: "link_required",
-            organizational_unit_relation: "not_applicable",
+            organization_node_relation: "not_applicable",
             provider_secret_state: "will_create",
             apply_status: APPLY_STATUS.READY,
             blocked_reasons: [],
@@ -78,7 +111,7 @@ describe("useOrgSetupSubmission", () => {
             provider_exists: false,
             provider_id: null,
             organization_relation: "link_required",
-            organizational_unit_relation: "not_applicable",
+            organization_node_relation: "not_applicable",
             provider_secret_state: "will_create",
             apply_status: APPLY_STATUS.BLOCKED,
             blocked_reasons: ["Already linked"],
@@ -126,6 +159,7 @@ describe("useOrgSetupSubmission", () => {
     // When
     await act(async () => {
       await result.current.submitOrganizationSetup({
+        orgType: ORGANIZATION_TYPE.AWS,
         organizationName: "Acme",
         awsOrgId: "o-abc123def4",
         roleArn: "arn:aws:iam::123456789012:role/ProwlerOrgRole",
@@ -140,8 +174,8 @@ describe("useOrgSetupSubmission", () => {
     expect(state.organizationId).toBe("org-1");
     expect(state.organizationExternalId).toBe("o-abc123def4");
     expect(state.discoveryId).toBe("discovery-1");
-    expect(state.selectedAccountIds).toEqual(["111111111111"]);
-    expect(state.selectableAccountIds).toEqual(["111111111111"]);
+    expect(state.selectedCandidateIds).toEqual(["111111111111"]);
+    expect(state.selectableCandidateIds).toEqual(["111111111111"]);
   });
 
   it("maps external_id server errors to awsOrgId field errors", async () => {
@@ -171,6 +205,7 @@ describe("useOrgSetupSubmission", () => {
     // When
     await act(async () => {
       await result.current.submitOrganizationSetup({
+        orgType: ORGANIZATION_TYPE.AWS,
         organizationName: "Acme",
         awsOrgId: "o-abc123def4",
         roleArn: "arn:aws:iam::123456789012:role/ProwlerOrgRole",
@@ -189,5 +224,63 @@ describe("useOrgSetupSubmission", () => {
     expect(
       organizationsActionsMock.createOrganizationSecret,
     ).not.toHaveBeenCalled();
+  });
+
+  it("blames the discovery result, not the credentials, when the result cannot be mapped", async () => {
+    // Given — discovery succeeded, so the credentials are proven good, but the
+    // payload carries no root organization and the AWS mapper throws on it.
+    const onNext = vi.fn();
+    mockChainThroughDiscoveryTrigger();
+    organizationsActionsMock.getDiscovery.mockResolvedValue({
+      data: {
+        attributes: {
+          status: DISCOVERY_STATUS.SUCCEEDED,
+          result: { roots: [], organizational_units: [], accounts: [] },
+        },
+      },
+    });
+
+    const { result } = renderHook(() =>
+      useOrgSetupSubmission({
+        stackSetExternalId: "tenant-external-id",
+        onNext,
+        setFieldError: vi.fn(),
+      }),
+    );
+
+    // When
+    await act(async () => {
+      await result.current.submitOrganizationSetup({ ...AWS_SETUP_DATA });
+    });
+
+    // Then — must not send the user off to re-check a Role ARN that works.
+    expect(result.current.apiError).toBe(UNEXPECTED_DISCOVERY_RESULT);
+    expect(result.current.apiError).not.toMatch(/Role ARN/);
+    expect(onNext).not.toHaveBeenCalled();
+  });
+
+  it("reports a discovery poll response with no payload without blaming credentials", async () => {
+    // Given — a 200 with no body makes the response helper return `{success: true}`,
+    // which used to throw while reading the status and surface as an auth failure.
+    const onNext = vi.fn();
+    mockChainThroughDiscoveryTrigger();
+    organizationsActionsMock.getDiscovery.mockResolvedValue({ success: true });
+
+    const { result } = renderHook(() =>
+      useOrgSetupSubmission({
+        stackSetExternalId: "tenant-external-id",
+        onNext,
+        setFieldError: vi.fn(),
+      }),
+    );
+
+    // When
+    await act(async () => {
+      await result.current.submitOrganizationSetup({ ...AWS_SETUP_DATA });
+    });
+
+    // Then
+    expect(result.current.apiError).toBe(UNEXPECTED_DISCOVERY_RESULT);
+    expect(onNext).not.toHaveBeenCalled();
   });
 });

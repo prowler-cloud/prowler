@@ -6,13 +6,14 @@ import {
 const DEFAULT_CONCURRENCY_LIMIT = 5;
 const DEFAULT_POLL_DELAYS_MS = [2000, 3000, 5000] as const;
 
-interface AccountProviderMapping {
-  account_id: string;
-  provider_id: string;
+/** Normalized form of the wire's `account_provider_mappings` entries. */
+interface CandidateProviderMapping {
+  candidateId: string;
+  providerId: string;
 }
 
-interface BuildAccountToProviderMapParams {
-  selectedAccountIds: string[];
+interface BuildCandidateToProviderMapParams {
+  selectedCandidateIds: string[];
   providerIds: string[];
   applyResult: unknown;
   resolveProviderUidById: (providerId: string) => Promise<string | null>;
@@ -78,15 +79,15 @@ function sleepWithAbort(
   });
 }
 
-function normalizeAccountProviderMapping(
+function normalizeCandidateProviderMapping(
   value: unknown,
-): AccountProviderMapping | null {
+): CandidateProviderMapping | null {
   if (!isRecord(value)) {
     return null;
   }
 
   const attributes = isRecord(value.attributes) ? value.attributes : null;
-  const accountId =
+  const candidateId =
     (typeof value.account_id === "string" && value.account_id) ||
     (typeof attributes?.account_id === "string" && attributes.account_id) ||
     (typeof value.id === "string" && value.id) ||
@@ -97,17 +98,14 @@ function normalizeAccountProviderMapping(
     (typeof attributes?.provider_id === "string" && attributes.provider_id) ||
     null;
 
-  if (!accountId || !providerId) {
+  if (!candidateId || !providerId) {
     return null;
   }
 
-  return {
-    account_id: accountId,
-    provider_id: providerId,
-  };
+  return { candidateId, providerId };
 }
 
-function extractAccountProviderMappings(applyResult: unknown) {
+function extractCandidateProviderMappings(applyResult: unknown) {
   if (!isRecord(applyResult)) {
     return [];
   }
@@ -133,8 +131,8 @@ function extractAccountProviderMappings(applyResult: unknown) {
     : [];
 
   return [...attributeMappings, ...relationshipMappings]
-    .map(normalizeAccountProviderMapping)
-    .filter((mapping): mapping is AccountProviderMapping => mapping !== null);
+    .map(normalizeCandidateProviderMapping)
+    .filter((mapping): mapping is CandidateProviderMapping => mapping !== null);
 }
 
 export async function runWithConcurrencyLimit<T, R>(
@@ -170,23 +168,23 @@ export async function runWithConcurrencyLimit<T, R>(
   return results;
 }
 
-export async function buildAccountToProviderMap({
-  selectedAccountIds,
+export async function buildCandidateToProviderMap({
+  selectedCandidateIds,
   providerIds,
   applyResult,
   resolveProviderUidById,
-}: BuildAccountToProviderMapParams): Promise<Map<string, string>> {
-  const selectedAccountIdSet = new Set(selectedAccountIds);
+}: BuildCandidateToProviderMapParams): Promise<Map<string, string>> {
+  const selectedCandidateIdSet = new Set(selectedCandidateIds);
 
-  const explicitMappings = extractAccountProviderMappings(applyResult);
+  const explicitMappings = extractCandidateProviderMappings(applyResult);
   if (explicitMappings.length > 0) {
     const mappedProviders = new Map<string, string>();
 
     for (const mapping of explicitMappings) {
-      if (!selectedAccountIdSet.has(mapping.account_id)) {
+      if (!selectedCandidateIdSet.has(mapping.candidateId)) {
         continue;
       }
-      mappedProviders.set(mapping.account_id, mapping.provider_id);
+      mappedProviders.set(mapping.candidateId, mapping.providerId);
     }
 
     if (mappedProviders.size > 0) {
@@ -199,10 +197,10 @@ export async function buildAccountToProviderMap({
     DEFAULT_CONCURRENCY_LIMIT,
     async (providerId) => {
       const providerUid = await resolveProviderUidById(providerId);
-      if (!providerUid || !selectedAccountIdSet.has(providerUid)) {
+      if (!providerUid || !selectedCandidateIdSet.has(providerUid)) {
         return null;
       }
-      return { accountId: providerUid, providerId };
+      return { candidateId: providerUid, providerId };
     },
   );
 
@@ -211,7 +209,7 @@ export async function buildAccountToProviderMap({
     if (!entry) {
       continue;
     }
-    fallbackMapping.set(entry.accountId, entry.providerId);
+    fallbackMapping.set(entry.candidateId, entry.providerId);
   }
 
   return fallbackMapping;

@@ -4,10 +4,12 @@ import { Dispatch, SetStateAction, useState } from "react";
 
 import {
   deleteOrganization,
-  deleteOrganizationalUnit,
+  deleteOrganizationNode,
 } from "@/actions/organizations/organizations";
 import { DeleteIcon } from "@/components/icons";
 import { Button, useToast } from "@/components/shadcn";
+import { getNodeLabel } from "@/lib/organizations";
+import { NodeKind, OrganizationType } from "@/types/organizations";
 import {
   PROVIDERS_GROUP_KIND,
   ProvidersGroupKind,
@@ -17,6 +19,8 @@ interface DeleteOrganizationFormProps {
   id: string;
   name: string;
   variant: ProvidersGroupKind;
+  orgType: OrganizationType;
+  kind?: NodeKind;
   setIsOpen: Dispatch<SetStateAction<boolean>>;
 }
 
@@ -24,20 +28,24 @@ export function DeleteOrganizationForm({
   id,
   name,
   variant,
+  orgType,
+  kind,
   setIsOpen,
 }: DeleteOrganizationFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
   const isOrg = variant === PROVIDERS_GROUP_KIND.ORGANIZATION;
-  const entityLabel = isOrg ? "organization" : "organizational unit";
+  const entityLabel = isOrg
+    ? "organization"
+    : getNodeLabel(orgType, kind).toLowerCase();
 
   const handleDelete = async () => {
     setIsLoading(true);
 
     const result = isOrg
       ? await deleteOrganization(id)
-      : await deleteOrganizationalUnit(id);
+      : await deleteOrganizationNode(id);
 
     setIsLoading(false);
 

@@ -3,18 +3,24 @@ import { describe, expect, it } from "vitest";
 import {
   APPLY_STATUS,
   ApplyStatus,
-  DiscoveryResult,
+  AwsDiscoveryResult,
+  AwsOrgHierarchy,
+  GcpOrgHierarchy,
+  NODE_KIND,
+  ORGANIZATION_TYPE,
 } from "@/types/organizations";
 
 import {
-  buildAccountLookup,
+  buildApplyPayload,
+  buildCandidateLookup,
   buildOrgTreeData,
-  getOuIdsForSelectedAccounts,
-  getSelectableAccountIds,
-  getSelectableAccountIdsForTarget,
+  getNodeIdsForSelectedCandidates,
+  getSelectableCandidateIds,
+  getSelectableCandidateIdsForTarget,
+  mapAwsDiscovery,
 } from "./organizations.adapter";
 
-const discoveryFixture: DiscoveryResult = {
+const awsDiscoveryFixture: AwsDiscoveryResult = {
   roots: [
     {
       id: "r-root",
@@ -51,7 +57,7 @@ const discoveryFixture: DiscoveryResult = {
         provider_exists: false,
         provider_id: null,
         organization_relation: "link_required",
-        organizational_unit_relation: "link_required",
+        organization_node_relation: "link_required",
         provider_secret_state: "will_create",
         apply_status: APPLY_STATUS.READY,
         blocked_reasons: [],
@@ -70,8 +76,8 @@ const discoveryFixture: DiscoveryResult = {
         provider_exists: false,
         provider_id: null,
         organization_relation: "link_required",
-        organizational_unit_relation: "link_required",
-        provider_secret_state: "manual_required",
+        organization_node_relation: "link_required",
+        provider_secret_state: "will_create",
         apply_status: APPLY_STATUS.BLOCKED,
         blocked_reasons: ["role_missing"],
       },
@@ -89,10 +95,49 @@ const discoveryFixture: DiscoveryResult = {
   ],
 };
 
+// The normalized model is the store currency; every downstream function
+// consumes it. Ingestion happens once here.
+const hierarchy = mapAwsDiscovery(awsDiscoveryFixture);
+
+describe("mapAwsDiscovery", () => {
+  it("normalizes the AWS wire result into the common hierarchy model", () => {
+    expect(hierarchy.orgType).toBe(ORGANIZATION_TYPE.AWS);
+    expect(hierarchy.organization).toEqual({ uid: "r-root", name: "Root" });
+
+    // OUs become nodes with the organizational-unit kind, preserving parentage.
+    expect(hierarchy.nodes).toEqual([
+      {
+        id: "ou-parent",
+        kind: NODE_KIND.ORGANIZATIONAL_UNIT,
+        name: "Parent OU",
+        parentId: "r-root",
+      },
+      {
+        id: "ou-child",
+        kind: NODE_KIND.ORGANIZATIONAL_UNIT,
+        name: "Child OU",
+        parentId: "ou-parent",
+      },
+    ]);
+
+    // Accounts become candidates keyed by their provider uid (account id).
+    expect(hierarchy.candidates.map((candidate) => candidate.uid)).toEqual([
+      "111111111111",
+      "222222222222",
+      "333333333333",
+    ]);
+    expect(hierarchy.candidates[0]).toMatchObject({
+      uid: "111111111111",
+      label: "App Account",
+      parentId: "ou-child",
+    });
+  });
+});
+
 describe("buildOrgTreeData", () => {
-  it("builds nested tree structure and marks blocked accounts as disabled", () => {
+  it("builds nested tree structure and marks blocked candidates as disabled", () => {
     // Given / When
-    const treeData = buildOrgTreeData(discoveryFixture);
+    const treeData = buildOrgTreeData(hierarchy);
 
     // Then
     expect(treeData).toHaveLength(2);
@@ -106,25 +151,25 @@ describe("buildOrgTreeData", () => {
       expect.arrayContaining(["ou-child", "222222222222"]),
     );
 
-    const blockedAccount = parentOuNode?.children?.find(
+    const blockedCandidate = parentOuNode?.children?.find(
       (node) => node.id === "222222222222",
     );
-    expect(blockedAccount?.disabled).toBe(true);
+    expect(blockedCandidate?.disabled).toBe(true);
   });
 });
 
-describe("getSelectableAccountIds", () => {
-  it("returns all accounts except explicitly blocked ones", () => {
-    const selectableIds = getSelectableAccountIds(discoveryFixture);
+describe("getSelectableCandidateIds", () => {
+  it("returns all candidates except explicitly blocked ones", () => {
+    const selectableIds = getSelectableCandidateIds(hierarchy);
 
     expect(selectableIds).toEqual(["111111111111", "333333333333"]);
   });
 
-  it("excludes accounts with explicit non-ready status values", () => {
-    const discoveryWithUnexpectedStatus = {
-      ...discoveryFixture,
+  it("excludes candidates with explicit non-ready status values", () => {
+    const hierarchyWithUnexpectedStatus = mapAwsDiscovery({
+      ...awsDiscoveryFixture,
       accounts: [
-        ...discoveryFixture.accounts,
+        ...awsDiscoveryFixture.accounts,
         {
           id: "444444444444",
           arn: "arn:aws:organizations::123:account/o-example/444444444444",
@@ -138,60 +183,54 @@ describe("getSelectableAccountIds", () => {
             provider_exists: false,
             provider_id: null,
             organization_relation: "link_required",
-            organizational_unit_relation: "link_required",
+            organization_node_relation: "link_required",
             provider_secret_state: "will_create",
             apply_status: "pending" as unknown as ApplyStatus,
             blocked_reasons: [],
           },
         },
       ],
-    } satisfies DiscoveryResult;
+    });
 
-    const selectableIds = getSelectableAccountIds(
-      discoveryWithUnexpectedStatus,
+    const selectableIds = getSelectableCandidateIds(
+      hierarchyWithUnexpectedStatus,
     );
 
     expect(selectableIds).toEqual(["111111111111", "333333333333"]);
   });
 });
 
-describe("buildAccountLookup", () => {
-  it("creates a lookup map for all discovered accounts", () => {
-    const lookup = buildAccountLookup(discoveryFixture);
+describe("buildCandidateLookup", () => {
+  it("creates a lookup map for all discovered candidates", () => {
+    const lookup = buildCandidateLookup(hierarchy);
 
-    expect(lookup.get("111111111111")?.name).toBe("App Account");
-    expect(lookup.get("333333333333")?.name).toBe("Legacy Account");
+    expect(lookup.get("111111111111")?.label).toBe("App Account");
+    expect(lookup.get("333333333333")?.label).toBe("Legacy Account");
     expect(lookup.size).toBe(3);
   });
 });
 
-describe("getSelectableAccountIdsForTarget", () => {
-  it("scopes selection to accounts under a target OU, including nested OUs", () => {
+describe("getSelectableCandidateIdsForTarget", () => {
+  it("scopes selection to candidates under a target node, including nested nodes", () => {
     // ou-parent contains ou-child (holds 111...) and the blocked 222...
-    const scoped = getSelectableAccountIdsForTarget(
-      discoveryFixture,
-      "ou-parent",
-    );
+    const scoped = getSelectableCandidateIdsForTarget(hierarchy, "ou-parent");
 
     // Only the selectable descendant is returned; blocked 222... is excluded,
-    // and 333... (under the root, outside the OU) is not included.
+    // and 333... (under the root, outside the node) is not included.
     expect(scoped).toEqual(["111111111111"]);
   });
 
-  it("scopes selection to a leaf OU", () => {
-    const scoped = getSelectableAccountIdsForTarget(
-      discoveryFixture,
-      "ou-child",
-    );
+  it("scopes selection to a leaf node", () => {
+    const scoped = getSelectableCandidateIdsForTarget(hierarchy, "ou-child");
 
     expect(scoped).toEqual(["111111111111"]);
   });
 
-  it("includes the deployment account even when it lives outside the target OU", () => {
+  it("includes the deployment candidate even when it lives outside the target node", () => {
     // Deployment (management) account 333... sits under the root, but gets the
-    // role via DeployLocalRole, so it must be pre-selected alongside the OU.
-    const scoped = getSelectableAccountIdsForTarget(
-      discoveryFixture,
+    // role via DeployLocalRole, so it must be pre-selected alongside the node.
+    const scoped = getSelectableCandidateIdsForTarget(
+      hierarchy,
       "ou-child",
       "333333333333",
     );
@@ -199,10 +238,10 @@ describe("getSelectableAccountIdsForTarget", () => {
     expect(scoped).toEqual(["111111111111", "333333333333"]);
   });
 
-  it("does not include a deployment account that is not selectable", () => {
-    // 222... is blocked, so even as the deployment account it stays unselected.
-    const scoped = getSelectableAccountIdsForTarget(
-      discoveryFixture,
+  it("does not include a deployment candidate that is not selectable", () => {
+    // 222... is blocked, so even as the deployment candidate it stays unselected.
+    const scoped = getSelectableCandidateIdsForTarget(
+      hierarchy,
       "ou-child",
       "222222222222",
     );
@@ -210,31 +249,128 @@ describe("getSelectableAccountIdsForTarget", () => {
     expect(scoped).toEqual(["111111111111"]);
   });
 
-  it("returns every selectable account for a root target (whole organization)", () => {
-    const scoped = getSelectableAccountIdsForTarget(discoveryFixture, "r-root");
+  it("returns every selectable candidate for a root target (whole organization)", () => {
+    const scoped = getSelectableCandidateIdsForTarget(hierarchy, "r-root");
 
     expect(scoped).toEqual(["111111111111", "333333333333"]);
   });
 
-  it("falls back to all selectable accounts for an empty or unknown target", () => {
-    expect(getSelectableAccountIdsForTarget(discoveryFixture, "")).toEqual([
+  it("falls back to all selectable candidates for an empty or unknown target", () => {
+    expect(getSelectableCandidateIdsForTarget(hierarchy, "")).toEqual([
       "111111111111",
       "333333333333",
     ]);
     expect(
-      getSelectableAccountIdsForTarget(discoveryFixture, "ou-does-not-exist"),
+      getSelectableCandidateIdsForTarget(hierarchy, "ou-does-not-exist"),
     ).toEqual(["111111111111", "333333333333"]);
   });
 });
 
-describe("getOuIdsForSelectedAccounts", () => {
-  it("collects all ancestor OUs for selected accounts without duplicates", () => {
-    const ouIds = getOuIdsForSelectedAccounts(discoveryFixture, [
+describe("getNodeIdsForSelectedCandidates", () => {
+  it("collects all ancestor nodes for selected candidates without duplicates", () => {
+    const nodeIds = getNodeIdsForSelectedCandidates(hierarchy, [
       "111111111111",
       "222222222222",
     ]);
 
-    expect(ouIds).toEqual(expect.arrayContaining(["ou-parent", "ou-child"]));
-    expect(ouIds.length).toBe(2);
+    expect(nodeIds).toEqual(expect.arrayContaining(["ou-parent", "ou-child"]));
+    expect(nodeIds.length).toBe(2);
+  });
+
+  it("terminates on a cyclic parent chain instead of hanging", () => {
+    // Parent ids are wire data. A cycle must not spin the ancestor walk: the
+    // collected ids live in a Set, so nothing about re-adding them would ever
+    // end the loop. Each node in the cycle is still reported once.
+    const cyclicHierarchy: AwsOrgHierarchy = {
+      orgType: ORGANIZATION_TYPE.AWS,
+      organization: { uid: "o-cycle", name: "Cyclic Org" },
+      nodes: [
+        {
+          id: "ou-a",
+          kind: NODE_KIND.ORGANIZATIONAL_UNIT,
+          name: "A",
+          parentId: "ou-b",
+        },
+        {
+          id: "ou-b",
+          kind: NODE_KIND.ORGANIZATIONAL_UNIT,
+          name: "B",
+          parentId: "ou-a",
+        },
+        {
+          id: "ou-self",
+          kind: NODE_KIND.ORGANIZATIONAL_UNIT,
+          name: "Self",
+          parentId: "ou-self",
+        },
+      ],
+      candidates: [
+        { uid: "111111111111", label: "In cycle", parentId: "ou-a" },
+        { uid: "222222222222", label: "Self-parented", parentId: "ou-self" },
+      ],
+    };
+
+    const nodeIds = getNodeIdsForSelectedCandidates(cyclicHierarchy, [
+      "111111111111",
+      "222222222222",
+    ]);
+
+    expect([...nodeIds].sort()).toEqual(["ou-a", "ou-b", "ou-self"]);
+  });
+});
+
+describe("buildApplyPayload", () => {
+  it("builds the AWS payload with client-side derived organizational units", () => {
+    const payload = buildApplyPayload(hierarchy, ["111111111111"], {
+      "111111111111": "Renamed App",
+    });
+
+    expect(payload).toEqual({
+      orgType: ORGANIZATION_TYPE.AWS,
+      accounts: [{ id: "111111111111", alias: "Renamed App" }],
+      organizationalUnits: [{ id: "ou-child" }, { id: "ou-parent" }],
+    });
+  });
+
+  it("omits the alias when the candidate was not renamed", () => {
+    const payload = buildApplyPayload(hierarchy, ["333333333333"], {});
+
+    expect(payload).toEqual({
+      orgType: ORGANIZATION_TYPE.AWS,
+      accounts: [{ id: "333333333333" }],
+      // 333... hangs off the root, so no node ancestors are derived.
+      organizationalUnits: [],
+    });
+  });
+
+  it("builds the GCP payload with projects only (folders are server-derived)", () => {
+    const gcpHierarchy: GcpOrgHierarchy = {
+      orgType: ORGANIZATION_TYPE.GCP,
+      organization: { uid: "456123789012", name: "example.com" },
+      nodes: [
+        {
+          id: "folders/1000000001",
+          kind: NODE_KIND.FOLDER,
+          name: "Engineering",
+          parentId: "organizations/456123789012",
+        },
+      ],
+      candidates: [
+        {
+          uid: "prod-analytics",
+          label: "Prod Analytics",
+          parentId: "folders/1000000001",
+        },
+      ],
+    };
+
+    const payload = buildApplyPayload(gcpHierarchy, ["prod-analytics"], {
+      "prod-analytics": "Analytics",
+    });
+
+    expect(payload).toEqual({
+      orgType: ORGANIZATION_TYPE.GCP,
+      projects: [{ project_id: "prod-analytics", alias: "Analytics" }],
+    });
   });
 });
