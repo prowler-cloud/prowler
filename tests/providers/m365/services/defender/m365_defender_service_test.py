@@ -1,5 +1,7 @@
+import asyncio
+from types import SimpleNamespace
 from unittest import mock
-from unittest.mock import patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from prowler.providers.m365.models import M365IdentityInfo
 from prowler.providers.m365.services.defender.defender_service import (
@@ -9,6 +11,7 @@ from prowler.providers.m365.services.defender.defender_service import (
     Defender,
     DefenderInboundSpamPolicy,
     DkimConfig,
+    DomainDmarcConfiguration,
     InboundSpamRule,
     MalwarePolicy,
     MalwareRule,
@@ -210,6 +213,19 @@ def mock_defender_get_outbound_spam_filter_rule(_):
             users=["test@example.com"],
             groups=["example_group"],
             domains=["example.com"],
+        ),
+    }
+
+
+async def mock_defender_get_domain_dmarc_configurations(_):
+    return {
+        "domain1.com": DomainDmarcConfiguration(
+            domain="domain1.com",
+            dmarc_record="v=DMARC1; p=reject",
+        ),
+        "domain2.com": DomainDmarcConfiguration(
+            domain="domain2.com",
+            dmarc_record=None,
         ),
     }
 
@@ -554,3 +570,96 @@ class Test_Defender_Service:
             assert report_submission_policy.report_not_junk_addresses == []
             assert report_submission_policy.report_phish_addresses == []
             assert report_submission_policy.report_chat_message_enabled is True
+
+    @patch(
+        "prowler.providers.m365.services.defender.defender_service.Defender._get_domain_dmarc_configurations",
+        new=mock_defender_get_domain_dmarc_configurations,
+    )
+    def test_get_domain_dmarc_configurations(self):
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+        ):
+            defender_client = Defender(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+            domain_dmarc_configurations = defender_client.domain_dmarc_configurations
+            assert len(domain_dmarc_configurations) == 2
+            assert (
+                domain_dmarc_configurations["domain1.com"].dmarc_record
+                == "v=DMARC1; p=reject"
+            )
+            assert domain_dmarc_configurations["domain2.com"].dmarc_record is None
+            defender_client.powershell.close()
+
+    def test_get_dmarc_txt_record_found(self):
+        class FakeAnswer:
+            def __init__(self, strings):
+                self.strings = strings
+
+        with mock.patch(
+            "prowler.providers.m365.services.defender.defender_service.dns.asyncresolver.resolve",
+            new=AsyncMock(return_value=[FakeAnswer([b"v=DMARC1; p=reject"])]),
+        ):
+            record = asyncio.run(Defender._get_dmarc_txt_record("domain1.com"))
+            assert record == "v=DMARC1; p=reject"
+
+    def test_get_dmarc_txt_record_not_found(self):
+        import dns.resolver
+
+        with mock.patch(
+            "prowler.providers.m365.services.defender.defender_service.dns.asyncresolver.resolve",
+            new=AsyncMock(side_effect=dns.resolver.NXDOMAIN),
+        ):
+            record = asyncio.run(Defender._get_dmarc_txt_record("domain2.com"))
+            assert record is None
+
+
+def test_defender__get_domain_dmarc_configurations_handles_pagination():
+    defender_service = Defender.__new__(Defender)
+
+    domains_page_one = [
+        SimpleNamespace(id="domain1.com", is_verified=True),
+        SimpleNamespace(id="unverified.com", is_verified=False),
+    ]
+    domains_page_two = [
+        SimpleNamespace(id="domain2.com", is_verified=True),
+    ]
+
+    domains_response_page_one = SimpleNamespace(
+        value=domains_page_one,
+        odata_next_link="next-link",
+    )
+    domains_response_page_two = SimpleNamespace(
+        value=domains_page_two, odata_next_link=None
+    )
+
+    domains_with_url_builder = SimpleNamespace(
+        get=AsyncMock(return_value=domains_response_page_two)
+    )
+    with_url_mock = MagicMock(return_value=domains_with_url_builder)
+
+    domains_builder = SimpleNamespace(
+        get=AsyncMock(return_value=domains_response_page_one),
+        with_url=with_url_mock,
+    )
+
+    defender_service.client = SimpleNamespace(domains=domains_builder)
+
+    with mock.patch(
+        "prowler.providers.m365.services.defender.defender_service.Defender._get_dmarc_txt_record",
+        new=AsyncMock(return_value="v=DMARC1; p=reject"),
+    ):
+        domain_dmarc_configurations = asyncio.run(
+            defender_service._get_domain_dmarc_configurations()
+        )
+
+    assert set(domain_dmarc_configurations) == {"domain1.com", "domain2.com"}
+    assert (
+        domain_dmarc_configurations["domain1.com"].dmarc_record == "v=DMARC1; p=reject"
+    )
+    assert domains_builder.get.await_count == 1
+    with_url_mock.assert_called_once_with("next-link")

@@ -1,0 +1,1 @@
+Add check defender_domain_dmarc_records_published for M365
