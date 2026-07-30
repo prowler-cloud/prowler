@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
@@ -244,6 +245,92 @@ class TestFinding:
         assert finding_output.resource_type == "mock_resource_type"
         assert finding_output.service_name == "service"
         assert finding_output.raw == {}
+
+    def _secrets_check_output(self, provider, status, categories):
+        check_metadata = mock_check_metadata(provider="aws")
+        check_metadata.Categories = categories
+        check_output = MagicMock()
+        check_output.resource_id = "jdbc-secret"
+        check_output.resource_arn = "test_resource_arn"
+        check_output.resource_details = ""
+        check_output.resource_tags = {}
+        check_output.region = "us-east-1"
+        check_output.partition = "aws"
+        check_output.status = status
+        check_output.status_extended = "mock_status_extended"
+        check_output.muted = False
+        check_output.check_metadata = check_metadata
+        check_output.resource = {
+            "name": "jdbc-secret",
+            "properties": {
+                "JDBC_CONNECTION_URL": "jdbc:mysql://db.example.com:3306/app",
+                "PASSWORD": "AKIAsupersecretkey1234",
+            },
+        }
+        check_output.compliance = {}
+        return check_output
+
+    def test_generate_output_redacts_secret_in_failed_secrets_finding(self):
+        provider = MagicMock()
+        provider.type = "aws"
+        provider.identity.profile = "mock_auth"
+        provider.identity.account = "mock_account_uid"
+        provider.identity.partition = "aws"
+        provider.organizations_metadata.account_name = "mock_account_name"
+        provider.organizations_metadata.account_email = "mock_account_email"
+        provider.organizations_metadata.organization_arn = "mock_account_org_uid"
+        provider.organizations_metadata.organization_id = "mock_account_org_name"
+        provider.organizations_metadata.account_tags = {"tag1": "value1"}
+        provider.organizations_metadata.account_ou_id = "ou-test-12345678"
+        provider.organizations_metadata.account_ou_name = "TestOU/SubOU"
+        output_options = MagicMock()
+        output_options.unix_timestamp = False
+
+        check_output = self._secrets_check_output(provider, Status.FAIL, ["secrets"])
+
+        finding_output = Finding.generate_output(provider, check_output, output_options)
+
+        # The flagged secret value is masked in the serialized resource metadata.
+        assert (
+            finding_output.resource_metadata["properties"]["PASSWORD"]
+            == "<REDACTED:potential-secret>"
+        )
+        # Non-secret context is preserved.
+        assert (
+            finding_output.resource_metadata["properties"]["JDBC_CONNECTION_URL"]
+            == "jdbc:mysql://db.example.com:3306/app"
+        )
+        # The raw secret is nowhere in the finding's resource metadata.
+        assert "AKIAsupersecretkey1234" not in json.dumps(
+            finding_output.resource_metadata
+        )
+
+    def test_generate_output_does_not_redact_non_secrets_finding(self):
+        # A FAIL from a non-secrets check is not re-scanned, so its metadata is
+        # left untouched (redaction is gated to the secrets-check family).
+        provider = MagicMock()
+        provider.type = "aws"
+        provider.identity.profile = "mock_auth"
+        provider.identity.account = "mock_account_uid"
+        provider.identity.partition = "aws"
+        provider.organizations_metadata.account_name = "mock_account_name"
+        provider.organizations_metadata.account_email = "mock_account_email"
+        provider.organizations_metadata.organization_arn = "mock_account_org_uid"
+        provider.organizations_metadata.organization_id = "mock_account_org_name"
+        provider.organizations_metadata.account_tags = {"tag1": "value1"}
+        provider.organizations_metadata.account_ou_id = "ou-test-12345678"
+        provider.organizations_metadata.account_ou_name = "TestOU/SubOU"
+        output_options = MagicMock()
+        output_options.unix_timestamp = False
+
+        check_output = self._secrets_check_output(provider, Status.FAIL, [])
+
+        finding_output = Finding.generate_output(provider, check_output, output_options)
+
+        assert (
+            finding_output.resource_metadata["properties"]["PASSWORD"]
+            == "AKIAsupersecretkey1234"
+        )
 
     def test_generate_output_aws_without_organizations_metadata(self):
         # Simulates running without --organizations-role

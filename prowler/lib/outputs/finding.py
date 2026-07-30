@@ -17,7 +17,11 @@ from prowler.lib.logger import logger
 from prowler.lib.outputs.common import Status, fill_common_finding_data
 from prowler.lib.outputs.compliance.compliance_check import get_check_compliance
 from prowler.lib.outputs.utils import unroll_tags
-from prowler.lib.utils.utils import dict_to_lowercase, get_nested_attribute
+from prowler.lib.utils.utils import (
+    dict_to_lowercase,
+    get_nested_attribute,
+    redact_scanned_secrets,
+)
 from prowler.providers.common.provider import Provider
 from prowler.providers.github.models import GithubAppIdentityInfo, GithubIdentityInfo
 
@@ -136,7 +140,22 @@ class Finding(BaseModel):
             )
         try:
             output_data["provider"] = provider.type
-            output_data["resource_metadata"] = check_output.resource
+            resource_metadata = check_output.resource
+            # Secret-scanning checks embed the scanned resource verbatim, which
+            # would write the raw secret to every output. Redact detected secrets
+            # from the resource metadata of failing secrets-category findings,
+            # centrally, so no individual check has to sanitize its own resource.
+            try:
+                categories = (
+                    getattr(check_output.check_metadata, "Categories", []) or []
+                )
+                if check_output.status == "FAIL" and "secrets" in categories:
+                    resource_metadata = redact_scanned_secrets(resource_metadata)
+            except Exception as error:
+                logger.warning(
+                    f"Could not redact secrets from resource metadata: {error}"
+                )
+            output_data["resource_metadata"] = resource_metadata
 
             if provider.type == "aws":
                 output_data["account_uid"] = get_nested_attribute(
