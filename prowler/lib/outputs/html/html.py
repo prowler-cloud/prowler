@@ -18,7 +18,6 @@ from prowler.lib.outputs.output import Finding, Output
 from prowler.lib.outputs.utils import parse_html_string, unroll_dict
 from prowler.providers.common.provider import Provider
 
-
 _SAFE_URL_SCHEMES = {"http", "https"}
 
 
