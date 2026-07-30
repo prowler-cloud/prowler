@@ -65,6 +65,7 @@ from api.v1.views import (
 )
 from botocore.exceptions import ClientError, NoCredentialsError
 from celery import states
+from celery.utils.saferepr import saferepr
 from conftest import (
     API_JSON_CONTENT_TYPE,
     TEST_PASSWORD,
@@ -5043,10 +5044,59 @@ class TestTaskViewSet:
             reverse("task-detail", kwargs={"pk": task1.id}),
         )
         assert response.status_code == status.HTTP_200_OK
+        assert response.json()["data"]["attributes"]["task_args"] == {
+            "kwarg1": "value1"
+        }
         assert (
             response.json()["data"]["attributes"]["name"]
             == task1.task_runner_task.task_name
         )
+
+    def test_tasks_retrieve_hides_tenant_id(
+        self, authenticated_client, tasks_fixture, tenants_fixture
+    ):
+        task, *_ = tasks_fixture
+        task.task_runner_task.task_kwargs = json.dumps(
+            repr(
+                {
+                    "tenant_id": str(tenants_fixture[0].id),
+                    "enabled": True,
+                    "scan_id": None,
+                    "label": "True North",
+                }
+            )
+        )
+        task.task_runner_task.save(update_fields=["task_kwargs"])
+
+        response = authenticated_client.get(
+            reverse("task-detail", kwargs={"pk": task.id}),
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["data"]["attributes"]["task_args"] == {
+            "enabled": True,
+            "scan_id": None,
+            "label": "True North",
+        }
+
+    def test_tasks_retrieve_with_truncated_kwargs_returns_empty_task_args(
+        self, authenticated_client, tasks_fixture
+    ):
+        task, *_ = tasks_fixture
+        kwargs_repr = saferepr(
+            {"finding_ids": [str(uuid4()) for _ in range(30)]}, maxlen=1024
+        )
+        assert "..." in kwargs_repr
+        task.task_runner_task.task_kwargs = json.dumps(kwargs_repr)
+        task.task_runner_task.save(update_fields=["task_kwargs"])
+
+        response = authenticated_client.get(
+            reverse("task-detail", kwargs={"pk": task.id}),
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.headers["Content-Type"] == API_JSON_CONTENT_TYPE
+        assert response.json()["data"]["attributes"]["task_args"] == {}
 
     def test_tasks_invalid_retrieve(self, authenticated_client):
         response = authenticated_client.get(
@@ -15747,6 +15797,23 @@ class TestTenantApiKeyViewSet:
         assert response.status_code == status.HTTP_200_OK
         data = response.json()["data"]
         assert len(data) == len(api_keys_fixture)
+
+    def test_api_keys_list_with_orphaned_key(
+        self, authenticated_client, api_keys_fixture
+    ):
+        """Test listing keys whose owner was deleted: `entity` is serialized as null."""
+        orphaned_key = api_keys_fixture[0]
+        TenantAPIKey.objects.filter(id=orphaned_key.id).update(entity=None)
+
+        response = authenticated_client.get(reverse("api-key-list"))
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == len(api_keys_fixture)
+        serialized_key = next(
+            item for item in data if item["id"] == str(orphaned_key.id)
+        )
+        assert serialized_key["relationships"]["entity"]["data"] is None
 
     def test_api_keys_list_empty(self, authenticated_client, tenants_fixture):
         """Test listing API keys when none exist returns empty list."""

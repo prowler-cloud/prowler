@@ -1,4 +1,6 @@
 import { getFindingsBySeverity } from "@/actions/overview";
+import { LighthouseContextContributor } from "@/components/lighthouse/context-contributor";
+import { buildFindingSeveritySummaryContext } from "@/lib/lighthouse/context/contributions";
 
 import { pickFilterParams } from "../_lib/filter-params";
 import { SSRComponentProps } from "../_types";
@@ -31,12 +33,21 @@ export const RiskSeverityChartSSR = async ({
   } = findingsBySeverity?.data?.attributes || {};
 
   return (
-    <RiskSeverityChart
-      critical={critical}
-      high={high}
-      medium={medium}
-      low={low}
-      informational={informational}
-    />
+    <>
+      <LighthouseContextContributor
+        contributorId="overview-severity-summary"
+        item={buildFindingSeveritySummaryContext({
+          pathname: "/",
+          severityCounts: { critical, high, medium, low, informational },
+        })}
+      />
+      <RiskSeverityChart
+        critical={critical}
+        high={high}
+        medium={medium}
+        low={low}
+        informational={informational}
+      />
+    </>
   );
 };

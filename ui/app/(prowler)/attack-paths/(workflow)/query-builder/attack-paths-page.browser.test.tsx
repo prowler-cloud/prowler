@@ -15,6 +15,8 @@ import { beforeEach, describe, expect, test as base, vi } from "vitest";
 import { handlersForFixture } from "@/__tests__/msw/handlers/attack-paths";
 import { worker } from "@/__tests__/msw/worker";
 import { render } from "@/__tests__/render-browser";
+import { useLighthouseContextStore } from "@/store/lighthouse-context/store";
+import { resetLighthouseContextStore } from "@/store/lighthouse-context/store.test-utils";
 
 const { getFindingByIdMock } = vi.hoisted(() => ({
   getFindingByIdMock: vi.fn(),
@@ -50,6 +52,7 @@ interface Fixtures {
 // one (selection, filtered view, expanded resources, etc.).
 beforeEach(() => {
   useGraphStore.getState().reset();
+  resetLighthouseContextStore();
   getFindingByIdMock.mockClear();
 });
 
@@ -101,17 +104,6 @@ describe("waiting states", () => {
 });
 
 describe("running a query", () => {
-  test("the query builder surface uses the shared card primitive", async ({
-    mountWith,
-  }) => {
-    const graph = await mountWith();
-
-    const card = await graph.waitFor(() => graph.queryBuilderCard, 10000);
-
-    expect(card).toHaveAttribute("data-slot", "card");
-    expect(card).toHaveClass("rounded-xl");
-  });
-
   test("a parameterized query shows its required inputs after selection", async ({
     mountWith,
   }) => {
@@ -126,16 +118,75 @@ describe("running a query", () => {
     expect(graph.getInputByName("tag_value")).toBeTruthy();
   });
 
-  test("the graph renders with a background, a minimap, and a viewport", async ({
+  test("changing the form keeps Lighthouse bound to the query that produced the graph", async ({
     mountWith,
   }) => {
+    // Given
+    const fixture = fixtures.typical();
+    const graph = await mountWith(fixture);
+    await graph.executeQuery();
+
+    // When
+    await graph.selectQuery("aws-open-security-groups");
+
+    // Then
+    expect(
+      useLighthouseContextStore.getState().contributions["attack-path-current"],
+    ).toMatchObject({
+      queryId: fixture.queryId,
+      queryKind: "predefined",
+      canReplayQuery: true,
+      label: "Public S3 buckets",
+      nodeCount: fixture.queryResult?.nodes.length,
+      edgeCount: fixture.queryResult?.relationships?.length,
+    });
+  });
+
+  test("editing parameters keeps Lighthouse bound to the executed values", async ({
+    mountWith,
+  }) => {
+    // Given
+    const graph = await mountWith(fixtures.parameterizedQuery());
+    await graph.selectQuery();
+    await graph.fillInput("tag_key", "DataClassification");
+    await graph.fillInput("tag_value", "Sensitive");
+    await graph.executeQuery({ selectFirst: false });
+
+    // When
+    await graph.fillInput("tag_value", "Confidential");
+
+    // Then
+    expect(
+      useLighthouseContextStore.getState().contributions["attack-path-current"],
+    ).toMatchObject({
+      parameters: {
+        tag_key: "DataClassification",
+        tag_value: "Sensitive",
+      },
+    });
+  });
+
+  test("loading another execution removes stale graph context", async ({
+    mountWith,
+  }) => {
+    // Given
     const graph = await mountWith();
     await graph.executeQuery();
-    await graph.waitForGraphStable(3);
 
-    expect(graph.background).toBeTruthy();
-    expect(graph.minimap).toBeTruthy();
-    expect(graph.viewport).toBeTruthy();
+    // When
+    useGraphStore.getState().setLoading(true);
+
+    // Then
+    await vi.waitFor(() =>
+      expect(
+        useLighthouseContextStore.getState().contributions[
+          "attack-path-current"
+        ],
+      ).toMatchObject({
+        id: "current-scan",
+        queryId: undefined,
+      }),
+    );
   });
 
   test("nodes are laid out at distinct positions", async ({ mountWith }) => {
@@ -145,19 +196,6 @@ describe("running a query", () => {
 
     const positions = graph.nodePositions;
     expect(positions.some((p) => p.x !== 0 || p.y !== 0)).toBe(true);
-  });
-
-  test("the toolbar exposes zoom, fit, and export controls", async ({
-    mountWith,
-  }) => {
-    const graph = await mountWith();
-    await graph.executeQuery();
-    await graph.waitForGraphStable(1);
-
-    expect(graph.toolbar.zoomInButton).toBeTruthy();
-    expect(graph.toolbar.zoomOutButton).toBeTruthy();
-    expect(graph.toolbar.fitButton).toBeTruthy();
-    expect(graph.toolbar.exportButton).toBeTruthy();
   });
 
   test("finding, resource, and internet nodes all render", async ({

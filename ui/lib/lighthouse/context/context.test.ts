@@ -1,7 +1,17 @@
 import { describe, expect, it } from "vitest";
 
 import { compileLighthouseContext } from "./compiler";
+import {
+  buildComplianceContext,
+  buildFilteredProviderContext,
+  buildFindingSeveritySummaryContext,
+  buildFindingStatusSummaryContext,
+  buildProviderGroupContext,
+  buildServiceSummaryContext,
+} from "./contributions";
+import { buildLighthousePageContext } from "./pages";
 import { lighthouseContextEnvelopeSchema } from "./schema";
+import { getApiLighthouseContextByteLength } from "./transport";
 
 describe("lighthouseContextEnvelopeSchema", () => {
   describe("when validating an inline page context", () => {
@@ -133,7 +143,7 @@ describe("lighthouseContextEnvelopeSchema", () => {
       expect(result.success).toBe(false);
     });
 
-    it("should reject more than eight context items", () => {
+    it("should reject more than twelve context items", () => {
       // Given
       const item = {
         kind: "page",
@@ -148,7 +158,7 @@ describe("lighthouseContextEnvelopeSchema", () => {
       const result = lighthouseContextEnvelopeSchema.safeParse({
         schemaVersion: 1,
         transport: "inline",
-        items: Array.from({ length: 9 }, (_, index) => ({
+        items: Array.from({ length: 13 }, (_, index) => ({
           ...item,
           id: `page-${index}`,
         })),
@@ -340,7 +350,7 @@ describe("compileLighthouseContext", () => {
     });
   });
 
-  describe("when serialized context exceeds 2 KiB", () => {
+  describe("when serialized context exceeds the byte limit", () => {
     it("should drop lowest-priority items until the context fits", () => {
       // Given
       const scopeKey = "findings:/findings";
@@ -383,10 +393,13 @@ describe("compileLighthouseContext", () => {
         "findings",
         "finding-1",
         "summary-0",
+        "summary-1",
+        "summary-2",
+        "summary-3",
       ]);
     });
 
-    it("should preserve only the page when selection data is still too large", () => {
+    it("should drop oversized selections while keeping the page", () => {
       // Given
       const scopeKey = "findings:/findings";
       const page = {
@@ -397,9 +410,9 @@ describe("compileLighthouseContext", () => {
         label: "Findings",
         path: "/findings",
       };
-      const selection = {
+      const selections = Array.from({ length: 2 }, (_, index) => ({
         kind: "finding",
-        id: "finding-1",
+        id: `finding-${index}`,
         source: "selection",
         scopeKey,
         label: "x".repeat(256),
@@ -410,17 +423,20 @@ describe("compileLighthouseContext", () => {
         providerUid: "p".repeat(256),
         resourceUid: "r".repeat(256),
         region: "g".repeat(256),
-      };
+      }));
 
       // When
-      const context = compileLighthouseContext([selection, page], scopeKey);
+      const context = compileLighthouseContext([...selections, page], scopeKey);
 
       // Then
-      expect(context?.items.map((item) => item.id)).toEqual(["findings"]);
+      expect(context?.items.map((item) => item.id)).toEqual([
+        "findings",
+        "finding-0",
+      ]);
     });
   });
 
-  describe("when context exceeds the eight-item limit", () => {
+  describe("when context exceeds the item limit", () => {
     it("should progressively drop only the lowest-priority items", () => {
       // Given
       const scopeKey = "findings:/findings";
@@ -448,7 +464,7 @@ describe("compileLighthouseContext", () => {
         label: `Selected finding ${index}`,
         findingId: `selection-${index}`,
       }));
-      const summaries = Array.from({ length: 6 }, (_, index) => ({
+      const summaries = Array.from({ length: 12 }, (_, index) => ({
         kind: "finding",
         id: `summary-${index}`,
         source: "automatic",
@@ -474,7 +490,99 @@ describe("compileLighthouseContext", () => {
         "summary-1",
         "summary-2",
         "summary-3",
+        "summary-4",
+        "summary-5",
+        "summary-6",
+        "summary-7",
       ]);
+    });
+  });
+
+  describe("when the Overview publishes every contributor", () => {
+    it("should fit a fully populated Overview within transport limits", () => {
+      // Given every real Overview contributor plus the page item
+      const candidates = [
+        buildLighthousePageContext(
+          "/",
+          new URLSearchParams(
+            "filter[provider_id__in]=b81165a0-4f28-4b5c-9a41-1e2d3c4b5a69&filter[provider_type__in]=aws",
+          ),
+        ),
+        buildComplianceContext({
+          pathname: "/",
+          id: "prowler-threat-score",
+          framework: "Prowler ThreatScore",
+          score: 62.4,
+          scoreDelta: -3.21,
+          criticalRequirementsCount: 5,
+          worstSection: "1.2 Attack Surface",
+          worstSectionScore: 38.6,
+          passed: 120,
+          failed: 40,
+          total: 160,
+        }),
+        buildFindingStatusSummaryContext({
+          pathname: "/",
+          passed: 320,
+          failed: 80,
+          newPassed: 12,
+          newFailed: 7,
+        }),
+        buildFindingSeveritySummaryContext({
+          pathname: "/",
+          severityCounts: {
+            critical: 4,
+            high: 18,
+            medium: 40,
+            low: 15,
+            informational: 3,
+          },
+        }),
+        buildComplianceContext({
+          pathname: "/",
+          id: "watchlist-ens_rd2022_aws",
+          framework: "ENS RD2022",
+          score: 30,
+        }),
+        buildComplianceContext({
+          pathname: "/",
+          id: "watchlist-cis_1.5_aws",
+          framework: "CIS AWS 1.5",
+          score: 45,
+        }),
+        buildServiceSummaryContext({
+          pathname: "/",
+          service: "s3",
+          failedFindingsCount: 34,
+          total: 120,
+        }),
+        buildFilteredProviderContext({
+          pathname: "/",
+          id: "b81165a0-4f28-4b5c-9a41-1e2d3c4b5a69",
+          uid: "123456789012",
+          type: "aws",
+          alias: "Production",
+        }),
+        buildProviderGroupContext({
+          pathname: "/",
+          id: "3f2a1b0c-9d8e-7f60-5a4b-3c2d1e0f9a8b",
+          name: "Production accounts",
+        }),
+      ];
+
+      // When
+      const context = compileLighthouseContext(candidates, "overview:/");
+
+      // Then every real Overview contributor fits within the budget
+      expect(context).toBeDefined();
+      expect(context?.items).toHaveLength(candidates.length);
+      expect(context?.items[0]?.kind).toBe("page");
+      expect(context?.items.some((item) => item.id.startsWith("group-"))).toBe(
+        true,
+      );
+      expect(getApiLighthouseContextByteLength(context!)).toBeLessThanOrEqual(
+        4 * 1024,
+      );
     });
   });
 

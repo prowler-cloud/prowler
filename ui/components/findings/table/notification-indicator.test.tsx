@@ -1,4 +1,4 @@
-import { render } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
@@ -61,6 +61,39 @@ vi.mock("@/components/shadcn/tooltip", () => ({
 import { NotificationIndicator } from "./notification-indicator";
 
 describe("NotificationIndicator", () => {
+  it("does not show a ring around the delta trigger", () => {
+    // Given
+    render(<NotificationIndicator delta="new" />);
+
+    // When
+    const deltaTrigger = screen.getByRole("button");
+
+    // Then
+    expect(deltaTrigger).toHaveClass("outline-none", "ring-0");
+  });
+
+  it("uses the design-system fail color for new findings", () => {
+    // Given
+    const { container } = render(<NotificationIndicator delta="new" />);
+
+    // When
+    const deltaDot = container.querySelector(".rounded-full");
+
+    // Then
+    expect(deltaDot).toHaveClass("bg-bg-fail");
+  });
+
+  it("uses the design-system warning color for changed findings", () => {
+    // Given
+    const { container } = render(<NotificationIndicator delta="changed" />);
+
+    // When
+    const deltaDot = container.querySelector(".rounded-full");
+
+    // Then
+    expect(deltaDot).toHaveClass("bg-bg-warning");
+  });
+
   it("reserves the muted slot for delta-only rows when requested", () => {
     const { container } = render(
       <NotificationIndicator delta="new" showDeltaWhenMuted reserveMutedSlot />,

@@ -21,6 +21,7 @@ import {
   type ResourceDrawerFinding,
   updateFindingTriage,
 } from "@/actions/findings";
+import { requestPanelChatMessage } from "@/app/(prowler)/lighthouse/_lib/panel-chat-store";
 import { JiraDispatchActionItem } from "@/components/findings/jira-dispatch-action-item";
 import { MarkdownContainer } from "@/components/findings/markdown-container";
 import { MuteFindingsModal } from "@/components/findings/mute-findings-modal";
@@ -70,13 +71,15 @@ import {
   type QueryEditorLanguage,
 } from "@/components/shared/query-code-editor";
 import { ResourceMetadataPanel } from "@/components/shared/resource-metadata-panel";
+import { useLighthouseCurrentContext } from "@/hooks/use-lighthouse-context";
 import { getFailingForLabel, formatDuration } from "@/lib/date-utils";
 import { shouldRefreshAfterTriageUpdate } from "@/lib/finding-triage";
 import { buildJiraActionLabel } from "@/lib/jira-dispatch-action";
 import { createJiraDispatchPayload } from "@/lib/jira-dispatch-selection";
-import { buildFindingAnalysisPrompt } from "@/lib/lighthouse/prompts";
 import { getRegionFlag } from "@/lib/region-flags";
+import { isCloud } from "@/lib/shared/env";
 import { getRecommendationLinkLabel } from "@/lib/vulnerability-references";
+import { SIDE_PANEL_TAB, useSidePanelStore } from "@/store/side-panel";
 import type { ComplianceOverviewData } from "@/types/compliance";
 import type { FindingResourceRow } from "@/types/findings-table";
 import type { UpdateFindingTriageInput } from "@/types/findings-triage";
@@ -362,6 +365,8 @@ export function ResourceDetailDrawerContent({
   onTriageUpdate,
 }: ResourceDetailDrawerContentProps) {
   const searchParams = useSearchParams();
+  const openSidePanel = useSidePanelStore((state) => state.openPanel);
+  const lighthouseContext = useLighthouseCurrentContext();
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
   const [resolvingFramework, setResolvingFramework] = useState<string | null>(
     null,
@@ -478,16 +483,6 @@ export function ResourceDetailDrawerContent({
   const overviewStatusExtended =
     currentResource?.statusExtended || f?.statusExtended;
   const showOverviewStatusExtended = Boolean(overviewStatusExtended);
-  const findingAnalysisPrompt = buildFindingAnalysisPrompt({
-    findingId: currentResource?.findingId ?? f?.id,
-    providerUid,
-    resourceUid,
-    checkId: currentResource?.checkId ?? checkMeta.checkId,
-    severity: findingSeverity,
-    status: findingStatus,
-    detail: overviewStatusExtended,
-    risk: f?.risk || checkMeta.risk,
-  });
 
   const handleDrawerTriageUpdate = async (input: UpdateFindingTriageInput) => {
     await updateFindingTriage(input);
@@ -497,6 +492,11 @@ export function ResourceDetailDrawerContent({
     }
 
     onTriageUpdate?.(input);
+  };
+
+  const handleAnalyzeFinding = () => {
+    openSidePanel(SIDE_PANEL_TAB.AI_CHAT);
+    requestPanelChatMessage("Analyze this finding", lighthouseContext.context);
   };
 
   const handleOpenCompliance = async (framework: string) => {
@@ -1384,9 +1384,10 @@ export function ResourceDetailDrawerContent({
       </div>
 
       {/* Lighthouse AI button */}
-      {!isNavigating && (
-        <a
-          href={`/lighthouse?${new URLSearchParams({ prompt: findingAnalysisPrompt }).toString()}`}
+      {isCloud() && !isNavigating && (
+        <button
+          type="button"
+          onClick={handleAnalyzeFinding}
           className="flex items-center gap-1.5 rounded-lg px-4 py-3 text-sm font-bold text-slate-900 transition-opacity hover:opacity-90"
           style={{
             background: "var(--gradient-lighthouse)",
@@ -1394,7 +1395,7 @@ export function ResourceDetailDrawerContent({
         >
           <CircleArrowRight className="size-5" />
           Analyze This Finding With Lighthouse AI
-        </a>
+        </button>
       )}
     </div>
   );
