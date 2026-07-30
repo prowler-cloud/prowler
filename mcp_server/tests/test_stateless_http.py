@@ -22,10 +22,8 @@ INITIALIZE = {
 
 
 def test_initialize_issues_no_session_id():
-    """A stateful server returns mcp-session-id and then retains that session
-    until the client sends DELETE /mcp. Most clients never do, so each session
-    is held for the process lifetime and the server leaks memory in proportion
-    to traffic. Asserting the header is absent keeps the app stateless.
+    """A stateful server issues mcp-session-id and then retains that session for
+    the process lifetime, since most clients never send DELETE /mcp.
     """
     with TestClient(app) as client:
         response = client.post("/mcp/", json=INITIALIZE, headers=MCP_HEADERS)
@@ -35,9 +33,7 @@ def test_initialize_issues_no_session_id():
 
 
 def test_tools_list_works_without_a_session():
-    """Stateless mode must serve requests that carry no session, otherwise any
-    replica behind a load balancer would need session affinity to work.
-    """
+    """Without this, any replica behind a load balancer needs session affinity."""
     with TestClient(app) as client:
         client.post("/mcp/", json=INITIALIZE, headers=MCP_HEADERS)
 
