@@ -1,11 +1,10 @@
 import tarfile
 from contextlib import contextmanager
-from io import BytesIO
 from json import loads
 from typing import Optional
 
 import requests
-import zstd
+import zstandard
 from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
@@ -177,7 +176,6 @@ class ImageInspector:
                     repository_name,
                     layer_digest,
                     layer.get("mediaType", ""),
-                    remaining_budget=MAX_TOTAL_BYTES_PER_IMAGE - total_bytes,
                 ) as tar_stream:
                     if tar_stream is None:
                         truncated = True
@@ -392,47 +390,33 @@ class ImageInspector:
         repository_name,
         layer_digest,
         media_type: str,
-        remaining_budget: int,
     ):
-        """Yield an open TarFile for one layer, streaming where possible.
+        """Yield an open TarFile for one layer, streamed from the download.
 
-        gzip and uncompressed tar layers are streamed straight from the
-        download into `tarfile` (streaming mode reads a file-like object
-        sequentially), so neither the compressed blob nor a decompressed copy
-        is buffered in full; a `_CappedLayerReader` still enforces
-        `MAX_LAYER_DOWNLOAD_BYTES` against a manifest that under-declares the
-        layer size. zstd layers cannot be streamed (the `zstd` library exposes
-        no streaming API), so they fall back to the buffered path, bounded by
-        the existing frame-content-size check in `_open_layer_tar`.
+        gzip, zstd, and uncompressed tar layers are all streamed straight from
+        the download into `tarfile` (streaming mode reads a file-like object
+        sequentially), so neither the compressed blob nor a decompressed copy is
+        ever buffered in full. A `_CappedLayerReader` enforces
+        `MAX_LAYER_DOWNLOAD_BYTES` on the compressed bytes (guarding a manifest
+        that under-declares the layer size); zstd is decompressed incrementally
+        via `zstandard`'s streaming reader, so a crafted frame can no longer
+        expand unbounded in memory, and the decompressed side is bounded by the
+        caller's per-image budget as it iterates members.
 
         Yields:
             An open TarFile, or None for an unrecognized media type or a
             download/decompression failure. Raises `_LayerTooLargeError` if a
-            streamed layer exceeds `MAX_LAYER_DOWNLOAD_BYTES`.
+            streamed layer's compressed bytes exceed `MAX_LAYER_DOWNLOAD_BYTES`.
         """
-        if media_type.endswith("zstd"):
-            layer_bytes = self._download_layer(
-                client,
-                registry_id,
-                repository_name,
-                layer_digest,
-                max_bytes=MAX_LAYER_DOWNLOAD_BYTES,
-            )
-            if layer_bytes is None:
-                yield None
-                return
-            tar_stream = self._open_layer_tar(layer_bytes, media_type, remaining_budget)
-            if tar_stream is None:
-                yield None
-                return
-            with tar_stream:
-                yield tar_stream
-            return
-
         if media_type.endswith("gzip"):
             mode = "r|gz"
+            decompress_zstd = False
+        elif media_type.endswith("zstd"):
+            mode = "r|"
+            decompress_zstd = True
         elif media_type.endswith("tar"):
             mode = "r|"
+            decompress_zstd = False
         else:
             yield None
             return
@@ -457,8 +441,13 @@ class ImageInspector:
             )
             try:
                 http_response.raise_for_status()
-                capped = _CappedLayerReader(http_response.raw, MAX_LAYER_DOWNLOAD_BYTES)
-                tar_stream = tarfile.open(fileobj=capped, mode=mode)
+                # Cap the compressed bytes read from the network; for zstd,
+                # decompress that capped stream incrementally so the decompressed
+                # data is never materialized in full.
+                source = _CappedLayerReader(http_response.raw, MAX_LAYER_DOWNLOAD_BYTES)
+                if decompress_zstd:
+                    source = zstandard.ZstdDecompressor().stream_reader(source)
+                tar_stream = tarfile.open(fileobj=source, mode=mode)
             except Exception:
                 http_response.close()
                 raise
@@ -471,85 +460,3 @@ class ImageInspector:
 
         with http_response, tar_stream:
             yield tar_stream
-
-    @staticmethod
-    def _zstd_frame_content_size(data: bytes) -> Optional[int]:
-        """Read the declared decompressed size from a zstd frame header.
-
-        Parses the frame header fields (RFC 8878 3.1.1) needed to locate the
-        Frame_Content_Size field without decompressing any data.
-
-        Returns:
-            The declared decompressed size, or None if the input isn't a
-            standard zstd frame or the size is absent from its header.
-        """
-        if len(data) < 6 or data[:4] != b"\x28\xb5\x2f\xfd":
-            return None
-
-        descriptor = data[4]
-        single_segment = bool(descriptor & 0x20)
-        fcs_flag = descriptor >> 6
-        dict_id_size = {0: 0, 1: 1, 2: 2, 3: 4}[descriptor & 0x03]
-
-        offset = 5
-        if not single_segment:
-            offset += 1  # Window_Descriptor byte
-        offset += dict_id_size
-
-        if single_segment:
-            fcs_size = {0: 1, 1: 2, 2: 4, 3: 8}[fcs_flag]
-        else:
-            fcs_size = {0: 0, 1: 2, 2: 4, 3: 8}[fcs_flag]
-        if fcs_size == 0 or len(data) < offset + fcs_size:
-            return None
-
-        content_size = int.from_bytes(data[offset : offset + fcs_size], "little")
-        if fcs_size == 2:
-            # Per the spec, the 2-byte encoding adds a 256 offset so it
-            # can't overlap the 1-byte encoding's value range.
-            content_size += 256
-        return content_size
-
-    @staticmethod
-    def _open_layer_tar(layer_bytes: bytes, media_type: str, remaining_budget: int):
-        """Open a downloaded layer's bytes as a tar archive by media type.
-
-        Args:
-            remaining_budget: Decompressed bytes still allowed for this
-                image (MAX_TOTAL_BYTES_PER_IMAGE minus what prior layers
-                already contributed), used to bound zstd decompression.
-
-        Returns:
-            An open TarFile for gzip, zstd, or uncompressed tar layers, or
-            None for an unrecognized media type or a decompression failure.
-        """
-        try:
-            if media_type.endswith("zstd"):
-                # Unlike gzip (streamed incrementally by tarfile, with each
-                # member's size checked before its content is read), zstd
-                # decompression here happens all at once. First refuse a frame
-                # whose declared decompressed size is unknown or already exceeds
-                # the image's remaining budget.
-                content_size = ImageInspector._zstd_frame_content_size(layer_bytes)
-                if content_size is None or content_size > remaining_budget:
-                    return None
-                # The zstd library (one-shot decompress, no output cap) does not
-                # enforce the declared size, so a crafted frame can under-declare
-                # it. Re-check the actual output and reject an over-budget layer
-                # rather than scan it. This bounds what is held and scanned; the
-                # transient decompression itself is bounded by the compressed
-                # download cap (MAX_LAYER_DOWNLOAD_BYTES) applied upstream.
-                decompressed = zstd.decompress(layer_bytes)
-                if len(decompressed) > remaining_budget:
-                    return None
-                return tarfile.open(fileobj=BytesIO(decompressed), mode="r:")
-            if media_type.endswith("gzip"):
-                return tarfile.open(fileobj=BytesIO(layer_bytes), mode="r:gz")
-            if media_type.endswith("tar"):
-                return tarfile.open(fileobj=BytesIO(layer_bytes), mode="r:")
-            return None
-        except Exception as error:
-            logger.warning(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-            return None
