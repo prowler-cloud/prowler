@@ -96,6 +96,15 @@ async function fetchOptionalCollection<T>(
       }
     }
 
+    // Guard exhaustion is not an ordinary fetch failure, and must not look
+    // like one in Sentry: report the concrete cause so estates above the cap
+    // are triageable instead of silently degraded.
+    handleApiError(
+      new Error(
+        `Organization hierarchy pagination guard exhausted after ${HIERARCHY_MAX_PAGES} pages (${HIERARCHY_MAX_PAGES * HIERARCHY_PAGE_SIZE} resources) for ${url.pathname}`,
+      ),
+    );
+
     return { data: [], error: true };
   } catch (error) {
     handleApiError(error);

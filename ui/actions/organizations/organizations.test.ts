@@ -370,6 +370,37 @@ describe("organizations actions", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it("reports guard exhaustion instead of degrading silently past 50 pages", async () => {
+    // Given a collection that always announces more pages than fetched, so the
+    // runaway guard fires (50 × 100 = 5,000 resources). An estate that large
+    // degrading with only a boolean would be indistinguishable from ordinary
+    // fetch failures in Sentry.
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({}), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+    handleApiResponseMock.mockResolvedValue({
+      data: [{ id: "node-1" }],
+      meta: { pagination: { page: 1, pages: 51, count: 5100 } },
+    });
+
+    // When
+    const result = await listOrganizationNodesSafe();
+
+    // Then the hierarchy degrades, and the guard firing is reported as a
+    // concrete error through the shared reporting point on its way there.
+    expect(fetchMock).toHaveBeenCalledTimes(50);
+    expect(result).toEqual({ data: [], error: true });
+    expect(handleApiErrorMock).toHaveBeenCalledTimes(1);
+    expect(handleApiErrorMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: expect.stringContaining("pagination guard"),
+      }),
+    );
+  });
+
   it("reports a 4xx page through the shared helper before degrading", async () => {
     // Given a 403. The real helper reports it and RETURNS (only 5xx throws), so
     // the degraded result must not depend on an exception — and the report must
