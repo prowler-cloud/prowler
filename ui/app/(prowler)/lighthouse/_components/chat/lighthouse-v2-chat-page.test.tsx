@@ -421,7 +421,7 @@ describe("LighthouseV2ChatPage", () => {
     await waitFor(() =>
       expect(sendMessageMock).toHaveBeenCalledWith({
         sessionId: "session-1",
-        text: "Summarize findings",
+        displayText: "Summarize findings",
         provider: "openai",
         model: "gpt-5.1",
       }),

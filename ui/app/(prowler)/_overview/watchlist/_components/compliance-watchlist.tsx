@@ -3,6 +3,8 @@
 import Image, { type StaticImageData } from "next/image";
 import { useState } from "react";
 
+import { buildPerScanComplianceHref } from "@/lib/compliance/compliance-tab-url";
+
 import { SortToggleButton } from "./sort-toggle-button";
 import { WatchlistCard } from "./watchlist-card";
 
@@ -47,7 +49,7 @@ export const ComplianceWatchlist = ({ items }: { items: ComplianceData[] }) => {
       title="Compliance Watchlist"
       items={sortedItems}
       ctaLabel="Explore Compliance for Each Scan"
-      ctaHref="/compliance"
+      ctaHref={buildPerScanComplianceHref()}
       headerAction={
         <SortToggleButton
           isAscending={isAsc}
