@@ -1,5 +1,4 @@
 import { checkConnectionProvider } from "@/actions/providers/providers";
-import { getTask } from "@/actions/task/tasks";
 import {
   ProviderEntity,
   ProviderProps,
@@ -181,7 +180,9 @@ export interface TestConnectionResult {
  * Tests a provider's connection end-to-end: submits the task, polls until
  * completion, and returns the real connection result.
  *
- * Used by both the Provider Wizard (single) and bulk test (via concurrency limit).
+ * Used by the single-provider paths — the Provider Wizard and the table's
+ * per-row action. A batch goes through `startProviderConnectionChecks` instead,
+ * which fans the requests out server-side.
  */
 export async function testProviderConnection(
   providerId: string,
@@ -212,11 +213,15 @@ export async function testProviderConnection(
     };
   }
 
-  const task = await getTask(taskId);
-  const { connected, error } = task.data.attributes.result;
+  // The poller already read the settled task; asking for it again cost one more
+  // request per provider. A completed task with no readable `connected` counts
+  // as connected, the same rule the batched poller applies.
+  const result = taskResult.task?.data?.attributes?.result;
+  const connected =
+    typeof result?.connected === "boolean" ? result.connected : true;
 
   return {
     connected,
-    error: connected ? null : error || "Unknown error",
+    error: connected ? null : result?.error || "Unknown error",
   };
 }

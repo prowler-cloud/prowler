@@ -15,7 +15,12 @@ import { useState } from "react";
 
 import { updateOrganizationName } from "@/actions/organizations/organizations";
 import { updateProvider } from "@/actions/providers";
+import {
+  revalidateProviders,
+  startProviderConnectionChecks,
+} from "@/actions/providers/providers";
 import { getSchedule } from "@/actions/schedules";
+import { pollConnectionTasks } from "@/components/providers/organizations/org-account-selection.utils";
 import {
   ORG_WIZARD_INTENT,
   OrgWizardInitialData,
@@ -33,7 +38,6 @@ import {
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
 import { Modal } from "@/components/shadcn/modal";
-import { runWithConcurrencyLimit } from "@/lib/concurrency";
 import { getNameSourceLabel, getNodeLabel } from "@/lib/organizations";
 import { testProviderConnection } from "@/lib/provider-helpers";
 import { getScanScheduleCapability } from "@/lib/schedules";
@@ -371,16 +375,46 @@ export function DataTableRowActions({
     if (ids.length === 0) return;
     setLoading(true);
 
-    const results = await runWithConcurrencyLimit(ids, 10, async (id) => {
-      try {
-        return await testProviderConnection(id);
-      } catch {
-        return { connected: false, error: "Unexpected error" };
-      }
-    });
+    // Dispatched and polled in batches: client-invoked server actions run one
+    // at a time through Next's queue, so testing provider by provider from here
+    // serialized the whole run however much concurrency it asked for.
+    let succeeded = 0;
+    let failed = 0;
+    const pendingTaskIds: string[] = [];
 
-    const succeeded = results.filter((r) => r.connected).length;
-    const failed = results.length - succeeded;
+    try {
+      const outcomes = await startProviderConnectionChecks(ids);
+
+      for (const id of ids) {
+        const outcome = outcomes[id];
+
+        if (!outcome || outcome.error) {
+          failed += 1;
+          continue;
+        }
+
+        if (!outcome.taskId) {
+          succeeded += 1;
+          continue;
+        }
+
+        pendingTaskIds.push(outcome.taskId);
+      }
+
+      await pollConnectionTasks(pendingTaskIds, {
+        onSettled: (_taskId, result) => {
+          if (result.success) {
+            succeeded += 1;
+          } else {
+            failed += 1;
+          }
+        },
+      });
+    } catch {
+      failed = ids.length - succeeded;
+    }
+
+    await revalidateProviders();
 
     if (failed === 0) {
       toast({
@@ -391,7 +425,7 @@ export function DataTableRowActions({
       toast({
         variant: "destructive",
         title: "Connection test completed",
-        description: `${succeeded} succeeded, ${failed} failed out of ${results.length} providers.`,
+        description: `${succeeded} succeeded, ${failed} failed out of ${ids.length} providers.`,
       });
     }
 
