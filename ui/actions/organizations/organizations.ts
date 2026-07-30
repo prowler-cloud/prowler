@@ -521,6 +521,10 @@ export const applyDiscovery = async (
   const url = new URL(
     `${apiBaseUrl}/organizations/${encodeURIComponent(organizationIdValidation.value)}/discoveries/${encodeURIComponent(discoveryIdValidation.value)}/apply`,
   );
+  // The created providers come back as compound documents carrying their `uid`,
+  // which is what maps each one back to the candidate it was created for. Without
+  // it the caller has to GET every provider it just created, one request each.
+  url.searchParams.set("include", "providers");
 
   const attributes =
     payload.orgType === ORGANIZATION_TYPE.AWS

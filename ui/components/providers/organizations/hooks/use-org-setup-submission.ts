@@ -14,7 +14,12 @@ import {
 import { useOrgSetupStore } from "@/store/organizations/store";
 import { DISCOVERY_STATUS } from "@/types/organizations";
 
-import { extractErrorMessage } from "./error-utils";
+import {
+  apiErrorFieldNames,
+  ApiErrorObject,
+  describeApiError,
+  extractErrorMessage,
+} from "./error-utils";
 import {
   bindOrgSetupStrategy,
   BoundOrgSetupStrategy,
@@ -60,7 +65,7 @@ interface UseOrgSetupSubmissionProps {
 
 interface ServerErrorResult {
   error?: string;
-  errors?: Array<{ detail: string; source?: { pointer: string } }>;
+  errors?: ApiErrorObject[];
 }
 
 type PollOutcome =
@@ -141,22 +146,25 @@ export function useOrgSetupSubmission({
 
     if (result.errors?.length) {
       for (const err of result.errors) {
-        const pointer = err.source?.pointer ?? "";
+        // Both halves tolerate a `detail`-less error: the field can be named by
+        // the error's own key, and the message can live under it.
+        const fieldNames = apiErrorFieldNames(err);
+        const message = describeApiError(err) ?? `Failed to create ${context}`;
 
-        if (pointer.includes("external_id") && context === "Organization") {
-          setFieldError(strategy.externalIdField, err.detail);
-          setApiError(err.detail);
-        } else if (pointer.includes("name")) {
-          if (!setFieldError("organizationName", err.detail)) {
-            setApiError(err.detail);
+        if (fieldNames.includes("external_id") && context === "Organization") {
+          setFieldError(strategy.externalIdField, message);
+          setApiError(message);
+        } else if (fieldNames.includes("name")) {
+          if (!setFieldError("organizationName", message)) {
+            setApiError(message);
           }
         } else {
           const secretField =
             context === "Secret"
-              ? strategy.mapSecretErrorPointer(pointer)
+              ? strategy.mapSecretErrorField(fieldNames)
               : null;
-          if (!secretField || !setFieldError(secretField, err.detail)) {
-            setApiError(err.detail);
+          if (!secretField || !setFieldError(secretField, message)) {
+            setApiError(message);
           }
         }
       }
@@ -200,11 +208,11 @@ export function useOrgSetupSubmission({
       }
 
       if (status === DISCOVERY_STATUS.FAILED) {
-        const backendError = result.data.attributes.error;
+        // `attributes.error` is a machine code (`gcp_invalid_organization_id`,
+        // `gcp_service_unavailable`, …), not user copy, and only some of them
+        // are credential problems.
         setApiError(
-          backendError
-            ? strategy.authFailureMessage(backendError)
-            : strategy.authFailureMessage(),
+          strategy.discoveryFailureMessage(result.data.attributes.error),
         );
         return { kind: "failed" };
       }

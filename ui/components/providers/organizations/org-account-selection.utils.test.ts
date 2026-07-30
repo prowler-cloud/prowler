@@ -11,26 +11,29 @@ import {
 } from "./org-account-selection.utils";
 
 describe("buildCandidateToProviderMap", () => {
-  it("uses explicit candidate-provider mappings when apply response is unordered", async () => {
-    // Given
+  it("maps candidates from the apply response's included providers", async () => {
+    // Given — the compound document `?include=providers` returns: a provider's
+    // `uid` is the candidate it was created for, so the mapping needs no extra
+    // request even when the relationship order doesn't match the selection.
     const resolveProviderUidById = vi.fn();
     const selectedCandidateIds = ["111111111111", "222222222222"];
     const providerIds = ["provider-b", "provider-a"];
     const applyResult = {
-      data: {
-        attributes: {
-          account_provider_mappings: [
-            {
-              account_id: "111111111111",
-              provider_id: "provider-a",
-            },
-            {
-              account_id: "222222222222",
-              provider_id: "provider-b",
-            },
-          ],
+      data: { relationships: { providers: { data: providerIds } } },
+      included: [
+        {
+          id: "provider-a",
+          type: "providers",
+          attributes: { uid: "111111111111" },
         },
-      },
+        {
+          id: "provider-b",
+          type: "providers",
+          attributes: { uid: "222222222222" },
+        },
+        // Other included types are ignored, not mistaken for providers.
+        { id: "secret-1", type: "secrets", attributes: { uid: "nonsense" } },
+      ],
     };
 
     // When
@@ -47,7 +50,7 @@ describe("buildCandidateToProviderMap", () => {
     expect(resolveProviderUidById).not.toHaveBeenCalled();
   });
 
-  it("falls back to provider uid matching when explicit mappings are missing", async () => {
+  it("falls back to provider uid matching when the response carries no include", async () => {
     // Given
     const selectedCandidateIds = ["111111111111", "222222222222"];
     const providerIds = ["provider-a", "provider-b", "provider-c"];

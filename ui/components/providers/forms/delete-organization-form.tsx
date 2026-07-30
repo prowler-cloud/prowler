@@ -78,9 +78,12 @@ export function DeleteOrganizationForm({
       return;
     }
 
-    // The API answers deletion with `202` + a task; report success only once
-    // the task completes. On failure/cancellation it restores the soft-deleted
-    // subtree, so refetch the hierarchy to bring the rows back.
+    // The API answers deletion with `202` + a task. That task completes when the
+    // per-provider deletions have been *dispatched*, not when they finish, and a
+    // rollback runs in a separate errback task that has no id the UI can poll —
+    // so a completed task means "accepted and under way", never "done". Both
+    // outcomes refetch: a rollback restores the soft-deleted subtree, and the
+    // rows have to reappear.
     const taskId = extractTaskId(result);
     const taskResult = taskId
       ? await pollTaskCompletion(taskId)
@@ -102,8 +105,8 @@ export function DeleteOrganizationForm({
     }
 
     toast({
-      title: "Success!",
-      description: `The ${entityLabel} "${name}" was removed successfully.`,
+      title: "Deletion started",
+      description: `Prowler is deleting the ${entityLabel} "${name}" and its providers. If any part of it fails, the rows reappear on a later refresh.`,
     });
     setIsOpen(false);
     router.refresh();

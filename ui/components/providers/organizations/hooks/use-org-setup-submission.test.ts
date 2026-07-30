@@ -654,4 +654,198 @@ describe("useOrgSetupSubmission", () => {
     expect(result.current.apiError).toBe("Client id is not valid.");
     expect(onNext).not.toHaveBeenCalled();
   });
+
+  // The validation errors these endpoints return carry no `detail`: the message
+  // sits under the offending field's own key, and the pointer stops at the
+  // attribute that contains it. Reading only `detail` leaves an empty banner.
+  it("routes a field-keyed secret error to its form field", async () => {
+    // Given
+    const onNext = vi.fn();
+    const setFieldError = vi.fn(() => true);
+    mockFreshSetupChain();
+    organizationsActionsMock.createOrganizationSecret.mockResolvedValue({
+      error: '{"errors":[{"service_account_key":"Invalid key."}]}',
+      errors: [
+        {
+          service_account_key: "Invalid service account key: missing token_uri",
+          source: { pointer: "/data/attributes/secret" },
+        },
+      ],
+    });
+
+    const { result } = renderHook(() =>
+      useOrgSetupSubmission({
+        stackSetExternalId: "",
+        onNext,
+        setFieldError,
+      }),
+    );
+
+    // When
+    await act(async () => {
+      await result.current.submitOrganizationSetup({
+        orgType: ORGANIZATION_TYPE.GCP,
+        gcpOrgId: "123456789012",
+        credentialMethod: ORG_SECRET_TYPE.SERVICE_ACCOUNT,
+        serviceAccountKey: '{"type":"service_account"}',
+      });
+    });
+
+    // Then — the field name comes from the error's own key, and the message from
+    // its value; never an empty banner, never the raw body.
+    expect(setFieldError).toHaveBeenCalledWith(
+      "serviceAccountKey",
+      "Service account key: Invalid service account key: missing token_uri",
+    );
+    expect(result.current.apiError).toBeNull();
+  });
+
+  it("never paints an empty banner for a detail-less error", async () => {
+    // Given — nothing owns the field, so the banner is what renders it.
+    const onNext = vi.fn();
+    const setFieldError = vi.fn(() => false);
+    mockFreshSetupChain();
+    organizationsActionsMock.createOrganization.mockResolvedValue({
+      error: '{"errors":[{"alias":"too long"}]}',
+      errors: [
+        {
+          alias: "Ensure this field has no more than 100 characters.",
+          source: { pointer: "/data/attributes" },
+        },
+      ],
+    });
+
+    const { result } = renderHook(() =>
+      useOrgSetupSubmission({
+        stackSetExternalId: "",
+        onNext,
+        setFieldError,
+      }),
+    );
+
+    // When
+    await act(async () => {
+      await result.current.submitOrganizationSetup(AWS_SETUP_DATA);
+    });
+
+    // Then — readable copy, not the raw JSON body the request-level message is.
+    expect(result.current.apiError).toBe(
+      "Alias: Ensure this field has no more than 100 characters.",
+    );
+    expect(result.current.apiError).not.toContain("{");
+  });
+
+  it.each([
+    [
+      "gcp_invalid_organization_id",
+      /organization ID is not valid/,
+      "invalid org id",
+    ],
+    [
+      "gcp_service_unavailable",
+      /Nothing is wrong with your credentials/,
+      "an outage",
+    ],
+    [
+      "gcp_insufficient_permissions",
+      /Folder Viewer and Project Viewer/,
+      "missing permissions",
+    ],
+  ])(
+    "translates the %s discovery failure code into copy about %s",
+    async (code, expectedCopy) => {
+      // Given — a failed discovery reporting a machine code.
+      const onNext = vi.fn();
+      mockFreshSetupChain();
+      organizationsActionsMock.getDiscovery.mockResolvedValue({
+        data: {
+          attributes: {
+            status: DISCOVERY_STATUS.FAILED,
+            error: code,
+            result: {},
+          },
+        },
+      });
+
+      const { result } = renderHook(() =>
+        useOrgSetupSubmission({
+          stackSetExternalId: "",
+          onNext,
+          setFieldError: vi.fn(() => true),
+        }),
+      );
+
+      // When
+      await act(async () => {
+        await result.current.submitOrganizationSetup(GCP_STATIC_SUBMIT_DATA);
+      });
+
+      // Then — human copy, and no snake_case token leaking into the banner.
+      expect(result.current.apiError).toMatch(expectedCopy);
+      expect(result.current.apiError).not.toContain(code);
+      expect(result.current.discoveryFailed).toBe(true);
+    },
+  );
+
+  it("does not frame a non-credential discovery failure as an auth failure", async () => {
+    // Given — a Google outage, with working credentials.
+    mockFreshSetupChain();
+    organizationsActionsMock.getDiscovery.mockResolvedValue({
+      data: {
+        attributes: {
+          status: DISCOVERY_STATUS.FAILED,
+          error: "gcp_service_unavailable",
+          result: {},
+        },
+      },
+    });
+
+    const { result } = renderHook(() =>
+      useOrgSetupSubmission({
+        stackSetExternalId: "",
+        onNext: vi.fn(),
+        setFieldError: vi.fn(() => true),
+      }),
+    );
+
+    // When
+    await act(async () => {
+      await result.current.submitOrganizationSetup(GCP_STATIC_SUBMIT_DATA);
+    });
+
+    // Then
+    expect(result.current.apiError).not.toContain("Authentication failed");
+  });
+
+  it("keeps the auth-failure copy for an unrecognized failure code", async () => {
+    // Given — a code this build has no copy for. An unknown token is a support
+    // detail, so the framing stays generic and the token is not shown.
+    mockFreshSetupChain();
+    organizationsActionsMock.getDiscovery.mockResolvedValue({
+      data: {
+        attributes: {
+          status: DISCOVERY_STATUS.FAILED,
+          error: "gcp_some_future_code",
+          result: {},
+        },
+      },
+    });
+
+    const { result } = renderHook(() =>
+      useOrgSetupSubmission({
+        stackSetExternalId: "",
+        onNext: vi.fn(),
+        setFieldError: vi.fn(() => true),
+      }),
+    );
+
+    // When
+    await act(async () => {
+      await result.current.submitOrganizationSetup(GCP_STATIC_SUBMIT_DATA);
+    });
+
+    // Then
+    expect(result.current.apiError).toContain("Authentication failed");
+    expect(result.current.apiError).not.toContain("gcp_some_future_code");
+  });
 });

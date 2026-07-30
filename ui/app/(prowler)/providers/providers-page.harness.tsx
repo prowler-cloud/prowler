@@ -860,9 +860,18 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
     await this.waitForRequest("GET", `/tasks/${taskIdPrefix}`);
   }
 
-  /** Wait until the deletion is reported as completed (success toast). */
-  async waitForDeletionSuccess(timeoutMs = 15000): Promise<void> {
-    await this.waitForText(/removed successfully/, timeoutMs);
+  /**
+   * Wait until the deletion is reported as accepted. Deliberately not "removed
+   * successfully": the task the UI polls completes when the per-provider
+   * deletions are dispatched, so that is all the copy may claim.
+   */
+  async waitForDeletionAccepted(timeoutMs = 15000): Promise<void> {
+    await this.waitForText(/Deletion started/, timeoutMs);
+  }
+
+  /** Whether any copy overclaims a deletion that is only under way. */
+  claimsDeletionFinished(): boolean {
+    return this.containsText(/removed successfully|was deleted/);
   }
 
   /** Wait until a failed deletion task is reported instead of a false success. */

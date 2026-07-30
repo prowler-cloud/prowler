@@ -101,9 +101,14 @@ export interface FixtureConnectionOutcome {
   error?: string;
 }
 
-export interface FixtureAccountProviderMapping {
-  account_id: string;
-  provider_id: string;
+/**
+ * Fixture-side pairing of a discovered candidate with the provider an apply
+ * creates for it. Not a wire field: the API answers the mapping through the
+ * created providers' own `uid` (requested with `?include=providers`).
+ */
+export interface FixtureCandidateProviderId {
+  candidateId: string;
+  providerId: string;
 }
 
 export interface FixtureApplyError {
@@ -116,7 +121,7 @@ export interface FixtureApplyOutcome {
   providersCreatedCount: number;
   providersLinkedCount: number;
   nodesCreatedCount: number;
-  accountProviderMappings: FixtureAccountProviderMapping[];
+  candidateProviderIds: FixtureCandidateProviderId[];
   error: FixtureApplyError | null;
 }
 
@@ -443,7 +448,7 @@ const emptyApply = (): FixtureApplyOutcome => ({
   providersCreatedCount: 0,
   providersLinkedCount: 0,
   nodesCreatedCount: 0,
-  accountProviderMappings: [],
+  candidateProviderIds: [],
   error: null,
 });
 
@@ -487,9 +492,9 @@ export const awsOnboardingFixture = (
       createdProviderIds,
       providersCreatedCount: 2,
       nodesCreatedCount: 2,
-      accountProviderMappings: [
-        { account_id: "111111111111", provider_id: createdProviderIds[0] },
-        { account_id: "222222222222", provider_id: createdProviderIds[1] },
+      candidateProviderIds: [
+        { candidateId: "111111111111", providerId: createdProviderIds[0] },
+        { candidateId: "222222222222", providerId: createdProviderIds[1] },
       ],
     },
     connectionByUid: {
@@ -518,9 +523,9 @@ export const gcpOnboardingFixture = (
       createdProviderIds,
       providersCreatedCount: 2,
       nodesCreatedCount: 2,
-      accountProviderMappings: [
-        { account_id: "prod-analytics", provider_id: createdProviderIds[0] },
-        { account_id: "prod-platform", provider_id: createdProviderIds[1] },
+      candidateProviderIds: [
+        { candidateId: "prod-analytics", providerId: createdProviderIds[0] },
+        { candidateId: "prod-platform", providerId: createdProviderIds[1] },
       ],
     },
     connectionByUid: {

@@ -78,10 +78,13 @@ interface OrgSetupStrategy<D extends OrgSetupSubmissionData> {
   /** Credential payload for the organization secret. */
   buildSecretPayload: (data: D, externalId: string) => OrgSecretPayload;
   /**
-   * Maps a secret-scoped server-error pointer (`/data/attributes/secret/...`)
-   * to the form field it belongs to, or null to surface it in the error banner.
+   * Maps a secret-scoped server error to the form field it belongs to, or null
+   * to surface it in the error banner. Matched against the field names the error
+   * mentions, because the field arrives either inside the pointer
+   * (`/data/attributes/secret/service_account_key`) or as the error object's own
+   * key with the pointer stopping at `/data/attributes/secret`.
    */
-  mapSecretErrorPointer: (pointer: string) => OrgSetupErrorField | null;
+  mapSecretErrorField: (fieldNames: string) => OrgSetupErrorField | null;
   /**
    * Normalize the raw discovery result into the common hierarchy model and pick
    * the candidates to pre-select.
@@ -95,6 +98,43 @@ interface OrgSetupStrategy<D extends OrgSetupSubmissionData> {
 }
 
 /**
+ * Human copy for the machine codes a failed discovery reports in
+ * `attributes.error`. Only some of them are credential problems, so the code
+ * decides the framing too: appending a raw `gcp_service_unavailable` to
+ * "Authentication failed…" sends the user to re-check working credentials
+ * during a Google outage.
+ */
+const DISCOVERY_ERROR_COPY: Record<string, string> = {
+  gcp_invalid_organization_id:
+    "That organization ID is not valid. Copy the numeric ID from the Google Cloud console and try again.",
+  gcp_organization_not_found:
+    "No organization with that ID was found. Check the ID, and that the service account has been granted access to the organization.",
+  gcp_insufficient_permissions:
+    "The service account cannot list this organization's folders and projects. Grant it the Folder Viewer and Project Viewer roles at the organization level, then try again.",
+  gcp_service_unavailable:
+    "Google Cloud did not respond while reading the organization. Nothing is wrong with your credentials — try again in a few minutes.",
+  hierarchy_depth_exceeded:
+    "This organization's folder hierarchy is deeper than Prowler can read. Contact support so we can help you onboard it.",
+};
+
+/**
+ * Copy for a failed discovery. A known code becomes its own sentence; anything
+ * else falls back to the type's auth-failure copy without the raw token, which
+ * is a support detail rather than something to show a user.
+ */
+function describeDiscoveryFailure(
+  code: string | undefined,
+  authFailure: string,
+): string {
+  const trimmedCode = code?.trim();
+  if (!trimmedCode) {
+    return authFailure;
+  }
+
+  return DISCOVERY_ERROR_COPY[trimmedCode] ?? authFailure;
+}
+
+/**
  * A strategy with its submission data already applied. The submission chain
  * drives the flow through this, so the hook never holds a strategy and a
  * data object it could pair with the wrong type.
@@ -105,12 +145,14 @@ export interface BoundOrgSetupStrategy {
   externalId: string;
   resolvedName: string;
   buildSecretPayload: (externalId: string) => OrgSecretPayload;
-  mapSecretErrorPointer: (pointer: string) => OrgSetupErrorField | null;
+  mapSecretErrorField: (fieldNames: string) => OrgSetupErrorField | null;
   ingestDiscovery: (rawResult: unknown) => {
     hierarchy: OrgHierarchy;
     defaultSelection: string[];
   };
   authFailureMessage: (detail?: string) => string;
+  /** Copy for a discovery that failed with a machine error code. */
+  discoveryFailureMessage: (code?: string) => string;
 }
 
 const AWS_AUTH_FAILURE =
@@ -129,7 +171,7 @@ const awsOrgSetupStrategy: OrgSetupStrategy<AwsOrgSetupData> = {
     },
   }),
   // AWS role-secret field errors surface in the banner (no dedicated fields).
-  mapSecretErrorPointer: () => null,
+  mapSecretErrorField: () => null,
   ingestDiscovery: (rawResult, data) => {
     const hierarchy = mapAwsDiscovery(rawResult as AwsDiscoveryResult);
     // The deployment (management/delegated admin) account is where the local
@@ -179,11 +221,11 @@ const gcpOrgSetupStrategy: OrgSetupStrategy<GcpOrgSetupData> = {
       },
     };
   },
-  mapSecretErrorPointer: (pointer) => {
-    if (pointer.includes("service_account_key")) return "serviceAccountKey";
-    if (pointer.includes("client_id")) return "clientId";
-    if (pointer.includes("client_secret")) return "clientSecret";
-    if (pointer.includes("refresh_token")) return "refreshToken";
+  mapSecretErrorField: (fieldNames) => {
+    if (fieldNames.includes("service_account_key")) return "serviceAccountKey";
+    if (fieldNames.includes("client_id")) return "clientId";
+    if (fieldNames.includes("client_secret")) return "clientSecret";
+    if (fieldNames.includes("refresh_token")) return "refreshToken";
     return null;
   },
   ingestDiscovery: (rawResult) => {
@@ -211,9 +253,11 @@ function bind<D extends OrgSetupSubmissionData>(
     resolvedName: strategy.getResolvedName(data),
     buildSecretPayload: (externalId) =>
       strategy.buildSecretPayload(data, externalId),
-    mapSecretErrorPointer: strategy.mapSecretErrorPointer,
+    mapSecretErrorField: strategy.mapSecretErrorField,
     ingestDiscovery: (rawResult) => strategy.ingestDiscovery(rawResult, data),
     authFailureMessage: strategy.authFailureMessage,
+    discoveryFailureMessage: (code) =>
+      describeDiscoveryFailure(code, strategy.authFailureMessage()),
   };
 }
 

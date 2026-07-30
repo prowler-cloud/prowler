@@ -447,9 +447,12 @@ describe("GCP Organizations providers page (Phase 2)", () => {
     await harness.confirmDelete();
 
     await harness.waitForNodeDelete(GCP_FOLDER_NODE_ID);
-    // 202 + task the UI polls to completion.
+    // 202 + task the UI polls to completion. That task completes when the
+    // per-provider deletions are dispatched, not when they finish, so the copy
+    // must report acceptance and never claim the folder is gone.
     await harness.waitForTaskPoll("del-task-");
-    await harness.waitForDeletionSuccess();
+    await harness.waitForDeletionAccepted();
+    expect(harness.claimsDeletionFinished()).toBe(false);
   }, 30000);
 
   it("reports a failed deletion task instead of a false success", async () => {

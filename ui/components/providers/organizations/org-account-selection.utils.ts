@@ -6,7 +6,7 @@ import {
 const DEFAULT_CONCURRENCY_LIMIT = 5;
 const DEFAULT_POLL_DELAYS_MS = [2000, 3000, 5000] as const;
 
-/** Normalized form of the wire's `account_provider_mappings` entries. */
+/** A created provider paired with the candidate it was created for. */
 interface CandidateProviderMapping {
   candidateId: string;
   providerId: string;
@@ -79,24 +79,17 @@ function sleepWithAbort(
   });
 }
 
-function normalizeCandidateProviderMapping(
+function normalizeIncludedProvider(
   value: unknown,
 ): CandidateProviderMapping | null {
-  if (!isRecord(value)) {
+  if (!isRecord(value) || value.type !== "providers") {
     return null;
   }
 
   const attributes = isRecord(value.attributes) ? value.attributes : null;
+  const providerId = typeof value.id === "string" ? value.id : null;
   const candidateId =
-    (typeof value.account_id === "string" && value.account_id) ||
-    (typeof attributes?.account_id === "string" && attributes.account_id) ||
-    (typeof value.id === "string" && value.id) ||
-    null;
-
-  const providerId =
-    (typeof value.provider_id === "string" && value.provider_id) ||
-    (typeof attributes?.provider_id === "string" && attributes.provider_id) ||
-    null;
+    typeof attributes?.uid === "string" ? attributes.uid : null;
 
   if (!candidateId || !providerId) {
     return null;
@@ -105,33 +98,21 @@ function normalizeCandidateProviderMapping(
   return { candidateId, providerId };
 }
 
-function extractCandidateProviderMappings(applyResult: unknown) {
-  if (!isRecord(applyResult)) {
+/**
+ * Candidate → provider pairs from the apply response's `included` providers.
+ *
+ * A provider's `uid` *is* the candidate id it was created for (AWS account id /
+ * GCP project id), so the compound document requested with `?include=providers`
+ * answers the whole mapping in the apply response itself. Absent — an API that
+ * ignored the include — the caller falls back to fetching each provider.
+ */
+function extractIncludedProviderMappings(applyResult: unknown) {
+  if (!isRecord(applyResult) || !Array.isArray(applyResult.included)) {
     return [];
   }
 
-  const data = isRecord(applyResult.data) ? applyResult.data : null;
-  if (!data) {
-    return [];
-  }
-
-  const attributes = isRecord(data.attributes) ? data.attributes : null;
-  const relationships = isRecord(data.relationships)
-    ? data.relationships
-    : null;
-
-  const attributeMappings = Array.isArray(attributes?.account_provider_mappings)
-    ? attributes.account_provider_mappings
-    : [];
-  const relationshipNode = isRecord(relationships?.account_provider_mappings)
-    ? relationships.account_provider_mappings
-    : null;
-  const relationshipMappings = Array.isArray(relationshipNode?.data)
-    ? relationshipNode.data
-    : [];
-
-  return [...attributeMappings, ...relationshipMappings]
-    .map(normalizeCandidateProviderMapping)
+  return applyResult.included
+    .map(normalizeIncludedProvider)
     .filter((mapping): mapping is CandidateProviderMapping => mapping !== null);
 }
 
@@ -176,7 +157,7 @@ export async function buildCandidateToProviderMap({
 }: BuildCandidateToProviderMapParams): Promise<Map<string, string>> {
   const selectedCandidateIdSet = new Set(selectedCandidateIds);
 
-  const explicitMappings = extractCandidateProviderMappings(applyResult);
+  const explicitMappings = extractIncludedProviderMappings(applyResult);
   if (explicitMappings.length > 0) {
     const mappedProviders = new Map<string, string>();
 
@@ -361,6 +342,11 @@ export async function pollTaskCompletion(
           (typeof result?.error === "string" && result.error) ||
           "The deletion task failed.",
       };
+    }
+
+    // A revoked task is a real terminal state, not something unreadable.
+    if (state === "cancelled") {
+      return { success: false, error: "The deletion was cancelled." };
     }
 
     if (!state || !inProgressStates.has(state)) {

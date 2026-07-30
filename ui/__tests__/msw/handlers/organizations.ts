@@ -197,6 +197,22 @@ const paginatedCollection = <T>(items: T[], request: Request) => {
   };
 };
 
+/**
+ * Map a created-provider id back to its uid (AWS account id / GCP project id).
+ * `apply.candidateProviderIds` is a fixture-side mapping, not a wire field.
+ */
+const uidForProviderId = (
+  fx: OrgFixture,
+  providerId: string,
+): string | null => {
+  const mapping = fx.apply.candidateProviderIds.find(
+    (m) => m.providerId === providerId,
+  );
+  if (mapping) return mapping.candidateId;
+  const provider = fx.providers.find((p) => p.id === providerId);
+  return provider?.uid ?? null;
+};
+
 const applyResultResponse = (fx: OrgFixture) => ({
   data: {
     id: "apply-result-1",
@@ -211,7 +227,6 @@ const applyResultResponse = (fx: OrgFixture) => ({
       ...(fx.includeAwsAliases && {
         organizational_units_created_count: fx.apply.nodesCreatedCount,
       }),
-      account_provider_mappings: fx.apply.accountProviderMappings,
     },
     relationships: {
       providers: {
@@ -231,24 +246,19 @@ const applyResultResponse = (fx: OrgFixture) => ({
       }),
     },
   },
+  // The compound document `?include=providers` asks for: each created provider
+  // with its `uid`, which is the candidate it was created for. There is no
+  // mapping attribute on the apply result — the include is the whole mapping.
+  included: fx.apply.createdProviderIds.map((providerId) => ({
+    id: providerId,
+    type: "providers",
+    attributes: { uid: uidForProviderId(fx, providerId) },
+  })),
 });
 
 const taskResource = (id: string, state: string, result: unknown) => ({
   data: { id, type: "tasks", attributes: { state, result } },
 });
-
-/** Map a created-provider id back to its uid (AWS account id / GCP project). */
-const uidForProviderId = (
-  fx: OrgFixture,
-  providerId: string,
-): string | null => {
-  const mapping = fx.apply.accountProviderMappings.find(
-    (m) => m.provider_id === providerId,
-  );
-  if (mapping) return mapping.account_id;
-  const provider = fx.providers.find((p) => p.id === providerId);
-  return provider?.uid ?? null;
-};
 
 const CONNECTION_TASK_PREFIX = "conn-task-";
 const DELETION_TASK_PREFIX = "del-task-";
