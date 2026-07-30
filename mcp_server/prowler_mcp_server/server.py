@@ -61,4 +61,7 @@ async def health_check(_request) -> JSONResponse:
 
 setup_main_server()
 
-app = prowler_mcp_server.http_app()
+# Stateless: every tool call carries its own bearer token and nothing here needs
+# per-session state, so retaining sessions only leaks memory for clients that
+# never send DELETE /mcp. Also lets any replica serve any request.
+app = prowler_mcp_server.http_app(stateless_http=True)
