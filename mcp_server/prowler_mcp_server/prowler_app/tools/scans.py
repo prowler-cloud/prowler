@@ -1,4 +1,4 @@
-"""Security Scans tools for Prowler App MCP Server.
+"""Security Scans tools for Prowler MCP Server.
 
 This module provides tools for managing and monitoring Prowler security scans.
 """
@@ -20,18 +20,18 @@ class ScansTools(BaseTool):
     """Tools for security scan operations.
 
     Provides tools for:
-    - prowler_app_list_scans: Search and filter scans with rich filtering capabilities
-    - prowler_app_get_scan: Get comprehensive details about a specific scan
-    - prowler_app_trigger_scan: Trigger manual security scans for providers
-    - prowler_app_schedule_daily_scan: Schedule automated daily scans for continuous monitoring
-    - prowler_app_update_scan: Update scan names for better organization
+    - prowler_list_scans: Search and filter scans with rich filtering capabilities
+    - prowler_get_scan: Get comprehensive details about a specific scan
+    - prowler_trigger_scan: Trigger manual security scans for providers
+    - prowler_schedule_daily_scan: Schedule automated daily scans for continuous monitoring
+    - prowler_update_scan: Update scan names for better organization
     """
 
     async def list_scans(
         self,
         provider_id: list[str] = Field(
             default=[],
-            description="Filter by Prowler's internal UUID(s) (v4) for specific provider(s), generated when the provider was registered. Use `prowler_app_search_providers` tool to find provider IDs",
+            description="Filter by Prowler's internal UUID(s) (v4) for specific provider(s), generated when the provider was registered. Use `prowler_search_providers` tool to find provider IDs",
         ),
         provider_type: list[str] = Field(
             default=[],
@@ -56,7 +56,7 @@ class ScansTools(BaseTool):
         ),
         trigger: Literal["manual", "scheduled"] | None = Field(
             default=None,
-            description="Filter by how the scan was initiated. Options: 'manual' (user-initiated via prowler_app_trigger_scan), 'scheduled' (automated via prowler_app_schedule_daily_scan)",
+            description="Filter by how the scan was initiated. Options: 'manual' (user-initiated via prowler_trigger_scan), 'scheduled' (automated via prowler_schedule_daily_scan)",
         ),
         name: str | None = Field(
             default=None,
@@ -75,7 +75,7 @@ class ScansTools(BaseTool):
 
         IMPORTANT: This tool returns LIGHTWEIGHT scan information. Use this for fast searching and filtering
         across many scans. For complete scan details including progress, duration, and resource counts,
-        use prowler_app_get_scan on specific scans of interest.
+        use prowler_get_scan on specific scans of interest.
 
         Default behavior:
         - Returns all scans
@@ -83,15 +83,15 @@ class ScansTools(BaseTool):
         - Includes all scan states (available, scheduled, executing, completed, failed, cancelled)
 
         Each scan includes:
-        - Core identification: id (UUID for prowler_app_get_scan), name
+        - Core identification: id (UUID for prowler_get_scan), name
         - Execution context: state, trigger (manual/scheduled)
         - Temporal data: started_at, completed_at
         - Provider relationship: provider_id
 
         Workflow:
         1. Use this tool to search and filter scans by provider, state, or date range
-        2. Use prowler_app_get_scan with the scan 'id' to get progress, duration, and resource counts
-        3. Use prowler_app_search_security_findings filtered by scan dates to analyze scan results
+        2. Use prowler_get_scan with the scan 'id' to get progress, duration, and resource counts
+        3. Use prowler_search_security_findings filtered by scan dates to analyze scan results
         """
         # Validate pagination
         self.api_client.validate_page_size(page_size)
@@ -128,15 +128,15 @@ class ScansTools(BaseTool):
     async def get_scan(
         self,
         scan_id: str = Field(
-            description="Prowler's internal UUID (v4) for the scan to retrieve, generated when the scan was created (e.g., '123e4567-e89b-12d3-a456-426614174000'). Use `prowler_app_list_scans` tool to find scan IDs"
+            description="Prowler's internal UUID (v4) for the scan to retrieve, generated when the scan was created (e.g., '123e4567-e89b-12d3-a456-426614174000'). Use `prowler_list_scans` tool to find scan IDs"
         ),
     ) -> dict[str, Any]:
         """Retrieve comprehensive details about a specific scan by its ID.
 
         IMPORTANT: This tool returns COMPLETE scan details.
-        Use this after finding a specific scan via prowler_app_list_scans.
+        Use this after finding a specific scan via prowler_list_scans.
 
-        This tool provides ALL information that prowler_app_list_scans returns PLUS:
+        This tool provides ALL information that prowler_list_scans returns PLUS:
 
         1. Execution Details:
            - progress: Scan completion progress as percentage (0-100%)
@@ -155,9 +155,9 @@ class ScansTools(BaseTool):
         - Understanding scan scheduling patterns
 
         Workflow:
-        1. Use prowler_app_list_scans to browse and filter scans
+        1. Use prowler_list_scans to browse and filter scans
         2. Use this tool with the scan 'id' to monitor progress or view detailed results
-        3. For completed scans, use prowler_app_search_security_findings filtered by date to analyze findings
+        3. For completed scans, use prowler_search_security_findings filtered by date to analyze findings
         """
         # Fetch scan with all fields
         params = {
@@ -172,7 +172,7 @@ class ScansTools(BaseTool):
     async def trigger_scan(
         self,
         provider_id: str = Field(
-            description="Prowler's internal UUID (v4) for the provider to scan, generated when the provider was registered in the system (e.g., '4d0e2614-6385-4fa7-bf0b-c2e2f75c6877'). Use `prowler_app_search_providers` tool to find the provider ID"
+            description="Prowler's internal UUID (v4) for the provider to scan, generated when the provider was registered in the system (e.g., '4d0e2614-6385-4fa7-bf0b-c2e2f75c6877'). Use `prowler_search_providers` tool to find the provider ID"
         ),
         name: str | None = Field(
             default=None,
@@ -182,14 +182,14 @@ class ScansTools(BaseTool):
         """Trigger a manual security scan for a provider.
 
         IMPORTANT: This tool returns immediately once the scan is created.
-        The scan will continue running in the background. Use `prowler_app_get_scan`
+        The scan will continue running in the background. Use `prowler_get_scan`
         with the returned scan ID to monitor progress and check when it completes.
 
         Example Useful Workflow:
-        1. Use `prowler_app_search_providers` to find the provider_id you want to scan
+        1. Use `prowler_search_providers` to find the provider_id you want to scan
         2. Use this tool to trigger the scan
-        3. Use `prowler_app_get_scan` with the returned scan 'id' to monitor progress
-        4. Once completed, use `prowler_app_search_security_findings` to analyze results
+        3. Use `prowler_get_scan` with the returned scan 'id' to monitor progress
+        4. Once completed, use `prowler_search_security_findings` to analyze results
         """
         try:
             # Build request data
@@ -231,7 +231,7 @@ class ScansTools(BaseTool):
             return ScanCreationResult(
                 scan=scan_info,
                 status="success",
-                message=f"Scan {scan_id} created successfully. The scan may take some time to complete. Use prowler_app_get_scan tool with this ID to monitor progress.",
+                message=f"Scan {scan_id} created successfully. The scan may take some time to complete. Use prowler_get_scan tool with this ID to monitor progress.",
             ).model_dump()
 
         except Exception as e:
@@ -245,7 +245,7 @@ class ScansTools(BaseTool):
     async def schedule_daily_scan(
         self,
         provider_id: str = Field(
-            description="Prowler's internal UUID (v4) for the provider to scan, generated when the provider was registered in the system (e.g., '4d0e2614-6385-4fa7-bf0b-c2e2f75c6877'). Use `prowler_app_search_providers` tool to find the provider ID"
+            description="Prowler's internal UUID (v4) for the provider to scan, generated when the provider was registered in the system (e.g., '4d0e2614-6385-4fa7-bf0b-c2e2f75c6877'). Use `prowler_search_providers` tool to find the provider ID"
         ),
     ) -> dict[str, Any]:
         """Schedule automated daily scans for a provider for continuous security monitoring.
@@ -256,17 +256,17 @@ class ScansTools(BaseTool):
         you're not actively using the system.
 
         IMPORTANT: This tool returns immediately once the daily schedule is created.
-        The schedule will be set up in the background. Use `prowler_app_list_scans`
+        The schedule will be set up in the background. Use `prowler_list_scans`
         filtered by provider_id and trigger='scheduled' to view scheduled scans.
 
         IMPORTANT: This creates a PERSISTENT schedule. The provider will be scanned
         automatically every 24 hours until the provider is deleted.
 
         Example Useful Workflow:
-        1. Use `prowler_app_search_providers` to find the provider_id you want to monitor
+        1. Use `prowler_search_providers` to find the provider_id you want to monitor
         2. Use this tool to create the daily schedule
-        3. Use `prowler_app_list_scans` filtered by provider_id to view scheduled and completed scans
-        4. Monitor findings over time with `prowler_app_search_security_findings`
+        3. Use `prowler_list_scans` filtered by provider_id to view scheduled and completed scans
+        4. Monitor findings over time with `prowler_search_security_findings`
         """
         self.logger.info(f"Creating daily schedule for provider {provider_id}")
         task_response = await self.api_client.post(
@@ -285,7 +285,7 @@ class ScansTools(BaseTool):
         )
 
         if task_state == "available":
-            return_message = "Daily schedule created successfully. The schedule is being set up in the background. Use prowler_app_list_scans with provider_id filter to view scheduled scans."
+            return_message = "Daily schedule created successfully. The schedule is being set up in the background. Use prowler_list_scans with provider_id filter to view scheduled scans."
         else:
             return_message = "Daily schedule creation failed. Please try again later."
 
@@ -297,7 +297,7 @@ class ScansTools(BaseTool):
     async def update_scan(
         self,
         scan_id: str = Field(
-            description="Prowler's internal UUID (v4) for the scan to update, generated when the scan was created (e.g., '123e4567-e89b-12d3-a456-426614174000'). Use `prowler_app_list_scans` tool to find the scan ID if you only know the provider or scan name. Returns an error if the scan ID is invalid or not found."
+            description="Prowler's internal UUID (v4) for the scan to update, generated when the scan was created (e.g., '123e4567-e89b-12d3-a456-426614174000'). Use `prowler_list_scans` tool to find the scan ID if you only know the provider or scan name. Returns an error if the scan ID is invalid or not found."
         ),
         name: str = Field(
             description="New human-friendly name for the scan (3-100 characters). Use descriptive names to improve organization and tracking, e.g., 'Production Security Audit - Q4 2025', 'Post-Deployment Compliance Check'. IMPORTANT: Only the scan name can be updated - other attributes (state, progress, duration) are read-only and managed by the system."
@@ -309,7 +309,7 @@ class ScansTools(BaseTool):
         (state, progress, duration, etc.) are read-only and managed by the system.
 
         Example Useful Workflow:
-        1. Use `prowler_app_list_scans` to find the scan you want to rename
+        1. Use `prowler_list_scans` to find the scan you want to rename
         2. Use this tool with the scan 'id' and new name
         """
         api_response = await self.api_client.patch(

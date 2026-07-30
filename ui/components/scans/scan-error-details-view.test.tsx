@@ -5,7 +5,7 @@ import type { ScanErrorDetails } from "@/actions/task/task.adapter";
 
 import { ScanErrorDetailsView } from "./scan-error-details-view";
 
-vi.mock("@/components/ui/code-snippet/code-snippet", () => ({
+vi.mock("@/components/shadcn/code-snippet/code-snippet", () => ({
   CodeSnippet: ({
     value,
     formatter,

@@ -8,7 +8,8 @@ vi.mock("lucide-react", () => ({
 }));
 
 // Mock @/components/shadcn to avoid next-auth import chain
-vi.mock("@/components/shadcn", () => ({
+vi.mock("@/components/shadcn", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   Button: ({
     children,
     disabled,

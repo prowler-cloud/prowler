@@ -194,6 +194,28 @@ describe("LighthouseV2SessionHistory", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("explains the new chat button in a tooltip", async () => {
+    // Given
+    renderHistory();
+    vi.useRealTimers();
+    const user = userEvent.setup();
+
+    // When
+    await user.hover(screen.getByRole("button", { name: "New chat" }));
+
+    // Then
+    const tooltip = await screen.findByRole("tooltip");
+    expect(tooltip).toHaveTextContent("New chat");
+  });
+
+  it("disables the new chat button while already on a new chat", () => {
+    // Given / When
+    renderHistory({ newChatDisabled: true });
+
+    // Then
+    expect(screen.getByRole("button", { name: "New chat" })).toBeDisabled();
+  });
+
   it("shows the full trimmed title in a right-side tooltip", async () => {
     // Given
     const fullTitle =
@@ -234,6 +256,7 @@ function renderHistory(
       onNewSession={props?.onNewSession ?? vi.fn()}
       onOpenSession={props?.onOpenSession ?? vi.fn()}
       onArchiveSession={props?.onArchiveSession ?? vi.fn()}
+      newChatDisabled={props?.newChatDisabled}
       compact={props?.compact}
     />,
   );

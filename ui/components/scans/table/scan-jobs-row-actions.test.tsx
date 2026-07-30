@@ -27,7 +27,8 @@ vi.mock("next/navigation", () => ({
   }),
 }));
 
-vi.mock("@/components/ui", () => ({
+vi.mock("@/components/shadcn", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   useToast: () => ({ toast: toastMock }),
 }));
 
@@ -150,7 +151,7 @@ describe("ScanJobsRowActions", () => {
 
   it("opens Edit Scan Schedule for Prowler Cloud subscribed scan rows", async () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
     const user = userEvent.setup();
 
     render(<ScanJobsRowActions scan={makeScan()} tab="scheduled" />);
@@ -172,7 +173,7 @@ describe("ScanJobsRowActions", () => {
 
   it("hides Edit Scan Schedule outside Prowler Cloud (OSS)", async () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
     const user = userEvent.setup();
 
     render(<ScanJobsRowActions scan={makeScan()} tab="scheduled" />);
@@ -190,7 +191,7 @@ describe("ScanJobsRowActions", () => {
 
   it("hides Edit Scan Schedule outside the Scheduled tab even on Cloud", async () => {
     // Given - advanced capability (Cloud) but rendered in the Completed tab.
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
     const user = userEvent.setup();
 
     render(
@@ -213,7 +214,7 @@ describe("ScanJobsRowActions", () => {
 
   it("hides Edit Scan Schedule for manual-only Cloud scan rows", async () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
     const user = userEvent.setup();
 
     render(
@@ -237,7 +238,7 @@ describe("ScanJobsRowActions", () => {
 
   it("hides Edit Scan Schedule for blocked Cloud scan rows", async () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
     const user = userEvent.setup();
 
     render(
@@ -281,7 +282,9 @@ describe("ScanJobsRowActions", () => {
     );
 
     // Then
-    expect(pushMock).toHaveBeenCalledWith("/compliance?scanId=scan-1");
+    expect(pushMock).toHaveBeenCalledWith(
+      "/compliance?tab=per-scan&scanId=scan-1",
+    );
   });
 
   it("renames the completed scan report download action", async () => {
@@ -332,7 +335,7 @@ describe("ScanJobsRowActions", () => {
 
     // Then
     expect(pushMock).toHaveBeenCalledWith(
-      "/findings?filter[scan]=scan-1&filter[inserted_at]=2026-01-01&filter[status__in]=FAIL",
+      "/findings?filter[scan__in]=scan-1&filter[inserted_at]=2026-01-01&filter[status__in]=FAIL",
     );
   });
 

@@ -6,8 +6,9 @@ import { LighthouseV2ConfigPage } from "@/app/(prowler)/lighthouse/_components/c
 import {
   LighthouseSettings,
   LLMProvidersTable,
+  ManagedLighthouseCallout,
 } from "@/components/lighthouse-v1";
-import { ContentLayout } from "@/components/ui";
+import { ContentLayout } from "@/components/shadcn/content-layout";
 import { isCloud } from "@/lib/shared/env";
 
 export const dynamic = "force-dynamic";
@@ -42,6 +43,8 @@ export default async function LighthouseSettingsPage() {
 
   return (
     <ContentLayout title="Settings">
+      <ManagedLighthouseCallout />
+      <div className="h-8" aria-hidden="true" />
       <LLMProvidersTable />
       <div className="h-8" aria-hidden="true" />
       <LighthouseSettings />

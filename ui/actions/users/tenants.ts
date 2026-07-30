@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
+import { signOut } from "@/auth.config";
 import { apiBaseUrl, getAuthHeaders } from "@/lib/helper";
 import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 
@@ -285,6 +286,47 @@ export async function deleteTenant(
   } catch (error) {
     return handleApiError(error);
   }
+}
+
+export async function deleteTenantThenSignOut(
+  _prevState: DeleteTenantState | null,
+  formData: FormData,
+): Promise<DeleteTenantState> {
+  const formDataObject = Object.fromEntries(formData);
+  const validatedData = deleteTenantSchema.safeParse(formDataObject);
+
+  if (!validatedData.success) {
+    return { error: "Invalid tenant ID" };
+  }
+
+  const { tenantId } = validatedData.data;
+  const headers = await getAuthHeaders({ contentType: false });
+
+  try {
+    const url = new URL(`${apiBaseUrl}/tenants/${tenantId}`);
+    const response = await fetch(url.toString(), {
+      method: "DELETE",
+      headers,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+      const errorDetail =
+        errorData?.errors?.[0]?.detail ||
+        `Failed to delete tenant: ${response.statusText}`;
+      throw new Error(errorDetail);
+    }
+  } catch (error) {
+    return handleApiError(error);
+  }
+
+  // Deleting the last tenant also removes the user account server-side, so
+  // there is no profile left to revalidate; close the session instead.
+  // signOut redirects by throwing, so it must stay outside the try/catch.
+  await signOut({ redirectTo: "/sign-in" });
+
+  // Unreachable: signOut always redirects. Present to satisfy the return type.
+  return { success: true };
 }
 
 interface SwitchThenDeleteSuccess {

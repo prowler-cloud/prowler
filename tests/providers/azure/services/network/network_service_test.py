@@ -286,6 +286,73 @@ class Test_Network_get_security_groups:
         mock_client.network_security_groups.list_all.assert_not_called()
         assert result[AZURE_SUBSCRIPTION_ID] == []
 
+    def test_get_security_groups_with_multiple_resource_groups(self):
+        mock_client = MagicMock()
+        mock_client.network_security_groups = MagicMock()
+        mock_client.network_security_groups.list.return_value = []
+
+        with (
+            patch(
+                "prowler.providers.azure.services.network.network_service.Network._get_security_groups",
+                new=mock_network_get_security_groups,
+            ),
+            patch(
+                "prowler.providers.azure.services.network.network_service.Network._get_bastion_hosts",
+                new=mock_network_get_bastion_hosts,
+            ),
+            patch(
+                "prowler.providers.azure.services.network.network_service.Network._get_network_watchers",
+                new=mock_network_get_network_watchers,
+            ),
+            patch(
+                "prowler.providers.azure.services.network.network_service.Network._get_public_ip_addresses",
+                new=mock_network_get_public_ip_addresses,
+            ),
+        ):
+            network = Network(set_mocked_azure_provider())
+
+        network.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        network.resource_groups = {AZURE_SUBSCRIPTION_ID: RESOURCE_GROUP_LIST}
+
+        result = network._get_security_groups()
+
+        assert mock_client.network_security_groups.list.call_count == 2
+        assert AZURE_SUBSCRIPTION_ID in result
+
+    def test_get_security_groups_with_mixed_case_resource_group(self):
+        mock_client = MagicMock()
+        mock_client.network_security_groups = MagicMock()
+        mock_client.network_security_groups.list.return_value = []
+
+        with (
+            patch(
+                "prowler.providers.azure.services.network.network_service.Network._get_security_groups",
+                new=mock_network_get_security_groups,
+            ),
+            patch(
+                "prowler.providers.azure.services.network.network_service.Network._get_bastion_hosts",
+                new=mock_network_get_bastion_hosts,
+            ),
+            patch(
+                "prowler.providers.azure.services.network.network_service.Network._get_network_watchers",
+                new=mock_network_get_network_watchers,
+            ),
+            patch(
+                "prowler.providers.azure.services.network.network_service.Network._get_public_ip_addresses",
+                new=mock_network_get_public_ip_addresses,
+            ),
+        ):
+            network = Network(set_mocked_azure_provider())
+
+        network.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        network.resource_groups = {AZURE_SUBSCRIPTION_ID: ["RG"]}
+
+        network._get_security_groups()
+
+        mock_client.network_security_groups.list.assert_called_once_with(
+            resource_group_name="RG"
+        )
+
 
 class Test_Network_get_network_watchers:
     def test_get_network_watchers_no_resource_groups(self):
@@ -599,73 +666,6 @@ class Test_Network_get_public_ip_addresses:
         mock_client.public_ip_addresses.list.assert_not_called()
         mock_client.public_ip_addresses.list_all.assert_not_called()
         assert result[AZURE_SUBSCRIPTION_ID] == []
-
-    def test_get_security_groups_with_multiple_resource_groups(self):
-        mock_client = MagicMock()
-        mock_client.network_security_groups = MagicMock()
-        mock_client.network_security_groups.list.return_value = []
-
-        with (
-            patch(
-                "prowler.providers.azure.services.network.network_service.Network._get_security_groups",
-                new=mock_network_get_security_groups,
-            ),
-            patch(
-                "prowler.providers.azure.services.network.network_service.Network._get_bastion_hosts",
-                new=mock_network_get_bastion_hosts,
-            ),
-            patch(
-                "prowler.providers.azure.services.network.network_service.Network._get_network_watchers",
-                new=mock_network_get_network_watchers,
-            ),
-            patch(
-                "prowler.providers.azure.services.network.network_service.Network._get_public_ip_addresses",
-                new=mock_network_get_public_ip_addresses,
-            ),
-        ):
-            network = Network(set_mocked_azure_provider())
-
-        network.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
-        network.resource_groups = {AZURE_SUBSCRIPTION_ID: RESOURCE_GROUP_LIST}
-
-        result = network._get_security_groups()
-
-        assert mock_client.network_security_groups.list.call_count == 2
-        assert AZURE_SUBSCRIPTION_ID in result
-
-    def test_get_security_groups_with_mixed_case_resource_group(self):
-        mock_client = MagicMock()
-        mock_client.network_security_groups = MagicMock()
-        mock_client.network_security_groups.list.return_value = []
-
-        with (
-            patch(
-                "prowler.providers.azure.services.network.network_service.Network._get_security_groups",
-                new=mock_network_get_security_groups,
-            ),
-            patch(
-                "prowler.providers.azure.services.network.network_service.Network._get_bastion_hosts",
-                new=mock_network_get_bastion_hosts,
-            ),
-            patch(
-                "prowler.providers.azure.services.network.network_service.Network._get_network_watchers",
-                new=mock_network_get_network_watchers,
-            ),
-            patch(
-                "prowler.providers.azure.services.network.network_service.Network._get_public_ip_addresses",
-                new=mock_network_get_public_ip_addresses,
-            ),
-        ):
-            network = Network(set_mocked_azure_provider())
-
-        network.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
-        network.resource_groups = {AZURE_SUBSCRIPTION_ID: ["RG"]}
-
-        network._get_security_groups()
-
-        mock_client.network_security_groups.list.assert_called_once_with(
-            resource_group_name="RG"
-        )
 
 
 class Test_Network_get_network_watchers_extra:

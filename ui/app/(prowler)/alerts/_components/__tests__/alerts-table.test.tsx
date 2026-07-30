@@ -22,7 +22,7 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(navigationMocks.currentSearch),
 }));
 
-vi.mock("@/components/ui/table/data-table", () => ({
+vi.mock("@/components/shadcn/table/data-table", () => ({
   DataTable: ({
     columns,
     data,
@@ -81,7 +81,7 @@ vi.mock("@/components/ui/table/data-table", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/table/data-table-column-header", () => ({
+vi.mock("@/components/shadcn/table/data-table-column-header", () => ({
   DataTableColumnHeader: ({ title }: { title: string }) => <span>{title}</span>,
 }));
 

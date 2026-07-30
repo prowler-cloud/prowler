@@ -18,6 +18,39 @@ describe("Badge", () => {
     expect(badge?.className).toContain("text-bg-data-info");
   });
 
+  it("applies the Cloud variant and compact size", () => {
+    // Given / When
+    render(
+      <Badge variant="cloud" size="sm">
+        Cloud
+      </Badge>,
+    );
+
+    // Then
+    expect(screen.getByText("Cloud")).toHaveClass(
+      "bg-feature-cloud",
+      "h-5",
+      "rounded-md",
+      "text-[10px]",
+    );
+  });
+
+  it("applies the New feature variant tokens", () => {
+    // Given / When
+    render(
+      <Badge variant="new" size="sm">
+        New
+      </Badge>,
+    );
+
+    // Then
+    expect(screen.getByText("New")).toHaveClass(
+      "bg-bg-feature-new",
+      "text-text-feature-new",
+      "h-5",
+    );
+  });
+
   it("merges a custom className", () => {
     const { container } = render(
       <Badge variant="tag" className="extra-class">

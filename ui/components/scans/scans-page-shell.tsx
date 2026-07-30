@@ -17,6 +17,7 @@ import {
   LAUNCH_SCAN_SEARCH_PARAM,
   LAUNCH_SCAN_SEARCH_VALUE,
 } from "@/lib/scans-navigation";
+import { isCloud } from "@/lib/shared/env";
 import { buildViewFirstScanTour } from "@/lib/tours/view-first-scan.tour";
 import { useScansStore } from "@/store";
 import { SCAN_JOBS_TAB, SCAN_TAB_LABELS, type ScanJobsTab } from "@/types";
@@ -67,7 +68,7 @@ export function ScansPageShell({
   const hasConnectedProviders = providers.some(
     (provider) => provider.attributes.connection.connected === true,
   );
-  const isCloudEnvironment = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
+  const isCloudEnvironment = isCloud();
   const launchDisabled = !hasManageScansPermission || !hasConnectedProviders;
   const launchOpen = isLaunchScanModalOpen || urlLaunchOpen;
   // When a scan is already running, the tour highlights its row (anchored in

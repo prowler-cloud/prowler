@@ -26,11 +26,16 @@ const comboboxTriggerVariants = cva("", {
       default:
         "w-full justify-between rounded-lg border border-border-neutral-secondary bg-bg-neutral-secondary hover:bg-bg-neutral-tertiary",
       ghost:
-        "border-none bg-transparent shadow-none hover:bg-accent hover:text-foreground",
+        "border-none bg-transparent shadow-none hover:bg-accent hover:text-text-neutral-primary",
+    },
+    size: {
+      default: "",
+      sm: "",
     },
   },
   defaultVariants: {
     variant: "default",
+    size: "default",
   },
 });
 
@@ -89,6 +94,7 @@ export function Combobox({
   triggerClassName,
   contentClassName,
   variant = "default",
+  size = "default",
   disabled = false,
   showSelectedFirst = true,
   loading = false,
@@ -113,12 +119,13 @@ export function Combobox({
       <PopoverTrigger asChild>
         <Button
           variant="outline"
+          size={size}
           role="combobox"
           aria-label={ariaLabel}
           aria-expanded={open}
           disabled={disabled}
           className={cn(
-            comboboxTriggerVariants({ variant }),
+            comboboxTriggerVariants({ variant, size }),
             triggerClassName,
             className,
           )}

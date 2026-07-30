@@ -1,4 +1,4 @@
-import { ContentLayout } from "@/components/ui";
+import { ContentLayout } from "@/components/shadcn/content-layout";
 
 export default async function Workloads() {
   return (

@@ -1,4 +1,5 @@
 export * from "./authFormSchema";
+export * from "./cloud-upgrade";
 export * from "./components";
 export * from "./filters";
 export * from "./findings-table";

@@ -1,8 +1,8 @@
 "use client";
 
 import { MessageSquare, Plus } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useState, useSyncExternalStore } from "react";
 
 import {
   archiveLighthouseV2Session,
@@ -11,6 +11,7 @@ import {
 import {
   LIGHTHOUSE_V2_SESSIONS_CHANGED_EVENT,
   notifyLighthouseV2NewChat,
+  notifyLighthouseV2SessionArchived,
 } from "@/app/(prowler)/lighthouse/_lib/session-events";
 import type { LighthouseV2Session } from "@/app/(prowler)/lighthouse/_types";
 import { Button } from "@/components/shadcn/button/button";
@@ -20,13 +21,22 @@ import {
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
 import { useMountEffect } from "@/hooks/use-mount-effect";
+import { LIGHTHOUSE_ROUTE } from "@/lib/lighthouse-routes";
 
 import { LighthouseV2SessionHistory } from "../history";
 
 export function LighthouseV2SidebarChat({ isOpen }: { isOpen: boolean }) {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const activeSessionId = searchParams.get("session");
+  const browserUrlSessionId = useBrowserUrlSessionId();
+  // A pristine new chat is the chat route with no session anywhere; there,
+  // starting yet another new chat is a no-op.
+  const isOnNewChat =
+    pathname === LIGHTHOUSE_ROUTE.CHAT &&
+    !activeSessionId &&
+    !browserUrlSessionId;
   const [sessions, setSessions] = useState<LighthouseV2Session[]>([]);
   const [search, setSearch] = useState("");
 
@@ -63,6 +73,12 @@ export function LighthouseV2SidebarChat({ isOpen }: { isOpen: boolean }) {
         setSessions((current) =>
           current.filter((session) => session.id !== sessionId),
         );
+        // Covers live-created sessions the router can't see (replaceState URL).
+        notifyLighthouseV2SessionArchived(sessionId);
+        if (sessionId === activeSessionId) {
+          // The archived session no longer exists; leave its URL.
+          router.push("/lighthouse");
+        }
       }
     } catch {
       // Archiving is recoverable from the sidebar; ignore transient failures.
@@ -87,6 +103,7 @@ export function LighthouseV2SidebarChat({ isOpen }: { isOpen: boolean }) {
               type="button"
               aria-label="New chat"
               size="icon"
+              disabled={isOnNewChat}
               onClick={handleNewSession}
             >
               <Plus />
@@ -110,7 +127,31 @@ export function LighthouseV2SidebarChat({ isOpen }: { isOpen: boolean }) {
         onNewSession={handleNewSession}
         onOpenSession={handleOpenSession}
         onArchiveSession={handleArchiveSession}
+        newChatDisabled={isOnNewChat}
       />
     </div>
   );
+}
+
+// Sessions created live set their URL via replaceState, invisible to Next's
+// router, so the real browser URL is the only reliable session source.
+function useBrowserUrlSessionId() {
+  return useSyncExternalStore(
+    subscribeToSessionUrl,
+    readBrowserUrlSessionId,
+    () => null,
+  );
+}
+
+function subscribeToSessionUrl(onChange: () => void) {
+  window.addEventListener(LIGHTHOUSE_V2_SESSIONS_CHANGED_EVENT, onChange);
+  window.addEventListener("popstate", onChange);
+  return () => {
+    window.removeEventListener(LIGHTHOUSE_V2_SESSIONS_CHANGED_EVENT, onChange);
+    window.removeEventListener("popstate", onChange);
+  };
+}
+
+function readBrowserUrlSessionId() {
+  return new URLSearchParams(window.location.search).get("session");
 }

@@ -1,3 +1,4 @@
+import yaml from "js-yaml";
 import { z } from "zod";
 
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
@@ -5,7 +6,46 @@ import { validateMutelistYaml, validateYaml } from "@/lib/yaml";
 
 import { PROVIDER_TYPES, ProviderType } from "./providers";
 
-export const addRoleFormSchema = z.object({
+export const KUBECONFIG_UNSUPPORTED_COMMAND_AUTHENTICATION_ERROR =
+  "Kubernetes kubeconfig command-based authentication is not supported in Prowler Cloud for security reasons.";
+
+const isRecord = (value: unknown): value is Record<string, unknown> => {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+};
+
+export const kubeconfigContainsUnsupportedCommandAuthentication = (
+  value: string,
+): boolean => {
+  try {
+    const parsed = yaml.load(value);
+
+    if (!isRecord(parsed) || !Array.isArray(parsed.users)) {
+      return false;
+    }
+
+    return parsed.users.some((userEntry) => {
+      if (!isRecord(userEntry) || !isRecord(userEntry.user)) {
+        return false;
+      }
+
+      if ("exec" in userEntry.user) {
+        return true;
+      }
+
+      const authProvider = userEntry.user["auth-provider"];
+      if (!isRecord(authProvider) || !isRecord(authProvider.config)) {
+        return false;
+      }
+
+      return "cmd-path" in authProvider.config;
+    });
+  } catch {
+    return false;
+  }
+};
+
+// Create and edit share the same shape, so a single schema backs both flows.
+export const roleFormSchema = z.object({
   name: z.string().min(1, "Name is required"),
   manage_users: z.boolean().default(false),
   manage_account: z.boolean().default(false),
@@ -18,18 +58,7 @@ export const addRoleFormSchema = z.object({
   groups: z.array(z.string()).optional(),
 });
 
-export const editRoleFormSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  manage_users: z.boolean().default(false),
-  manage_account: z.boolean().default(false),
-  manage_billing: z.boolean().default(false),
-  manage_providers: z.boolean().default(false),
-  manage_integrations: z.boolean().default(false),
-  manage_scans: z.boolean().default(false),
-  manage_alerts: z.boolean().default(false),
-  unlimited_visibility: z.boolean().default(false),
-  groups: z.array(z.string()).optional(),
-});
+export type RoleFormValues = z.input<typeof roleFormSchema>;
 
 export const onDemandScanFormSchema = () =>
   z.object({
@@ -207,7 +236,17 @@ export const addCredentialsFormSchema = (
               ? {
                   [ProviderCredentialFields.KUBECONFIG_CONTENT]: z
                     .string()
-                    .min(1, "Kubeconfig Content is required"),
+                    .min(1, "Kubeconfig Content is required")
+                    .refine(
+                      (value) =>
+                        !kubeconfigContainsUnsupportedCommandAuthentication(
+                          value,
+                        ),
+                      {
+                        error:
+                          KUBECONFIG_UNSUPPORTED_COMMAND_AUTHENTICATION_ERROR,
+                      },
+                    ),
                 }
               : providerType === "m365"
                 ? {
@@ -262,9 +301,6 @@ export const addCredentialsFormSchema = (
                           [ProviderCredentialFields.OCI_TENANCY]: z
                             .string()
                             .min(1, "Tenancy OCID is required"),
-                          [ProviderCredentialFields.OCI_REGION]: z
-                            .string()
-                            .min(1, "Region is required"),
                           [ProviderCredentialFields.OCI_PASS_PHRASE]: z
                             .union([z.string(), z.literal("")])
                             .optional(),

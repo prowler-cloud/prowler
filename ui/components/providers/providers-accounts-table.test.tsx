@@ -21,7 +21,7 @@ const { dataTableMockState, getColumnProvidersMock } = vi.hoisted(() => ({
   getColumnProvidersMock: vi.fn((..._args: unknown[]) => []),
 }));
 
-vi.mock("@/components/ui/table", () => ({
+vi.mock("@/components/shadcn/table", () => ({
   DataTable: ({
     onRowSelectionChange,
   }: {
@@ -35,6 +35,20 @@ vi.mock("@/components/ui/table", () => ({
         Apply selection
       </button>
     </div>
+  ),
+}));
+
+vi.mock("@/components/lighthouse/context-contributor", () => ({
+  LighthouseContextContributor: ({
+    contributorId,
+    item,
+  }: {
+    contributorId: string;
+    item: unknown;
+  }) => (
+    <output data-testid={`context-${contributorId}`}>
+      {JSON.stringify(item)}
+    </output>
   ),
 }));
 
@@ -64,6 +78,7 @@ const createProviderRow = (
     type: "providers",
     attributes: {
       provider: "aws",
+      is_dynamic: false,
       uid,
       alias,
       status: "completed",
@@ -163,6 +178,54 @@ describe("ProvidersAccountsTable", () => {
       expect.any(Function),
       expect.any(Function),
       SCAN_SCHEDULE_CAPABILITY.MANUAL_ONLY,
+      [],
+      SCAN_CONFIGURATION_LIST_STATUS.AVAILABLE,
+      expect.any(Map),
+    );
+  });
+
+  it("publishes the loaded total and selected providers as context", async () => {
+    const user = userEvent.setup();
+    dataTableMockState.nextSelection = { "0": true };
+
+    render(
+      <ProvidersAccountsTable
+        isCloud
+        metadata={{
+          pagination: { page: 1, pages: 1, count: 4 },
+          version: "v1",
+        }}
+        rows={[providerOne]}
+        onOpenProviderWizard={vi.fn()}
+        onOpenOrganizationWizard={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByTestId("context-providers-summary")).toHaveTextContent(
+      '"total":4',
+    );
+
+    await user.click(screen.getByRole("button", { name: "Apply selection" }));
+
+    expect(screen.getByTestId("context-provider-provider-1")).toHaveTextContent(
+      '"providerUid":"111111111111"',
+    );
+    expect(getColumnProvidersMock).toHaveBeenLastCalledWith(
+      { "0": true },
+      ["provider-1"],
+      ["provider-1"],
+      [
+        {
+          providerAlias: "Prod",
+          providerId: "provider-1",
+          providerType: "aws",
+          providerUid: "111111111111",
+        },
+      ],
+      expect.any(Function),
+      expect.any(Function),
+      expect.any(Function),
+      undefined,
       [],
       SCAN_CONFIGURATION_LIST_STATUS.AVAILABLE,
       expect.any(Map),
@@ -282,82 +345,5 @@ describe("ProvidersAccountsTable", () => {
       // Then
       expect(result.providerIds).toEqual(["provider-2", "provider-3"]);
     });
-  });
-
-  it("passes selected provider ids to provider row action columns", async () => {
-    // Given
-    const user = userEvent.setup();
-    dataTableMockState.nextSelection = { "0": true };
-    render(
-      <ProvidersAccountsTable
-        isCloud
-        metadata={metadata}
-        rows={[providerOne]}
-        scanScheduleCapability={SCAN_SCHEDULE_CAPABILITY.ADVANCED}
-        onOpenProviderWizard={vi.fn()}
-        onOpenOrganizationWizard={vi.fn()}
-      />,
-    );
-
-    // When
-    await user.click(screen.getByRole("button", { name: "Apply selection" }));
-
-    // Then
-    expect(getColumnProvidersMock).toHaveBeenLastCalledWith(
-      expect.any(Object),
-      ["provider-1"],
-      ["provider-1"],
-      [
-        expect.objectContaining({
-          providerId: "provider-1",
-          providerType: "aws",
-          providerUid: "111111111111",
-          providerAlias: "Prod",
-        }),
-      ],
-      expect.any(Function),
-      expect.any(Function),
-      expect.any(Function),
-      SCAN_SCHEDULE_CAPABILITY.ADVANCED,
-      [],
-      SCAN_CONFIGURATION_LIST_STATUS.AVAILABLE,
-      expect.any(Map),
-    );
-  });
-
-  it("passes selected organization provider ids and visible providers to provider row action columns", async () => {
-    // Given
-    const user = userEvent.setup();
-    dataTableMockState.nextSelection = { "0": true };
-    render(
-      <ProvidersAccountsTable
-        isCloud
-        metadata={metadata}
-        rows={[organizationRow]}
-        scanScheduleCapability={SCAN_SCHEDULE_CAPABILITY.ADVANCED}
-        onOpenProviderWizard={vi.fn()}
-        onOpenOrganizationWizard={vi.fn()}
-      />,
-    );
-
-    await user.click(screen.getByRole("button", { name: "Apply selection" }));
-
-    // Then
-    expect(getColumnProvidersMock).toHaveBeenLastCalledWith(
-      expect.any(Object),
-      [],
-      ["provider-1", "provider-2", "provider-hidden"],
-      [
-        expect.objectContaining({ providerId: "provider-1" }),
-        expect.objectContaining({ providerId: "provider-2" }),
-      ],
-      expect.any(Function),
-      expect.any(Function),
-      expect.any(Function),
-      SCAN_SCHEDULE_CAPABILITY.ADVANCED,
-      [],
-      SCAN_CONFIGURATION_LIST_STATUS.AVAILABLE,
-      expect.any(Map),
-    );
   });
 });

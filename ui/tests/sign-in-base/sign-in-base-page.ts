@@ -68,9 +68,9 @@ export class SignInPage extends BasePage {
     this.backButton = page.getByRole("button", { name: "Back" });
 
     // UI elements - title is a <p> element, not a heading
-    this.logo = page.locator('svg[width="300"]');
+    this.logo = page.getByRole("img", { name: /Prowler/ });
     // Use text matching with exact=true to avoid matching other elements
-    this.pageTitle = page.getByText("Sign in", { exact: true });
+    this.pageTitle = page.getByText("Welcome back", { exact: true });
 
     // Error messages - form validation errors appear as <p> with specific classes
     this.errorMessages = page.locator(
@@ -160,7 +160,7 @@ export class SignInPage extends BasePage {
     await expect(this.page).toHaveTitle(/Prowler/);
     await expect(this.logo).toBeVisible();
     await expect(this.pageTitle).toBeVisible();
-    await expect(this.pageTitle).toHaveText("Sign in");
+    await expect(this.pageTitle).toHaveText("Welcome back");
   }
 
   async verifyFormElements(): Promise<void> {
@@ -215,7 +215,7 @@ export class SignInPage extends BasePage {
   }
 
   async verifyNormalModeActive(): Promise<void> {
-    await expect(this.pageTitle).toHaveText("Sign in");
+    await expect(this.pageTitle).toHaveText("Welcome back");
     await expect(this.passwordInput).toBeVisible();
   }
 

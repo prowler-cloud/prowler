@@ -13,11 +13,13 @@ import {
   loadLatestFindingTriageNote,
   updateFindingTriage,
 } from "@/actions/findings";
+import { LighthouseContextContributor } from "@/components/lighthouse/context-contributor";
 import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
 import { LoadingState } from "@/components/shadcn/spinner/loading-state";
-import { TableCell, TableRow } from "@/components/ui/table";
+import { TableCell, TableRow } from "@/components/shadcn/table";
 import { useFindingGroupResourceState } from "@/hooks/use-finding-group-resource-state";
 import { useScrollHint } from "@/hooks/use-scroll-hint";
+import { buildFindingResourceContext } from "@/lib/lighthouse/context/contributions";
 import { cn } from "@/lib/utils";
 import { FindingGroupRow } from "@/types";
 
@@ -45,6 +47,7 @@ interface InlineResourceContainerProps {
   columnCount: number;
   /** Called with selected finding IDs (real UUIDs) for parent-level mute */
   onResourceSelectionChange: (findingIds: string[]) => void;
+  contextSelectionLimit: number;
   ref?: React.Ref<InlineResourceContainerHandle>;
 }
 
@@ -91,11 +94,7 @@ function ResourceSkeletonRow({
           <div className="bg-bg-input-primary border-border-input-primary size-5 rounded-sm border shadow-[0_1px_2px_0_rgba(0,0,0,0.1)]" />
         </div>
       </TableCell>
-      {/* Status */}
-      <TableCell className={cellClassName}>
-        <Skeleton className="h-6 w-11 rounded-md" />
-      </TableCell>
-      {/* Resource: name + uid */}
+      {/* Affected failing resource: name + uid */}
       <TableCell className={cellClassName}>
         <div className="space-y-1.5">
           <Skeleton className="h-4 w-32 rounded" />
@@ -155,6 +154,7 @@ export function InlineResourceContainer({
   resourceSearch,
   columnCount,
   onResourceSelectionChange,
+  contextSelectionLimit,
   ref,
 }: InlineResourceContainerProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -181,8 +181,10 @@ export function InlineResourceContainer({
     refresh,
     drawer,
     handleDrawerMuteComplete,
+    selectedResources,
     selectedFindingIds,
     selectableRowCount,
+    getRowId,
     getRowCanSelect,
     clearSelection,
     isSelected,
@@ -226,6 +228,7 @@ export function InlineResourceContainer({
     data: resources,
     columns,
     enableRowSelection: getRowCanSelect,
+    getRowId,
     getCoreRowModel: getCoreRowModel(),
     onRowSelectionChange: handleRowSelectionChange,
     manualPagination: true,
@@ -247,6 +250,13 @@ export function InlineResourceContainer({
         onMuteComplete: handleMuteComplete,
       }}
     >
+      {selectedResources.slice(0, contextSelectionLimit).map((finding) => (
+        <LighthouseContextContributor
+          key={`finding-resource-${finding.findingId}`}
+          contributorId={`finding-resource-${finding.findingId}`}
+          item={buildFindingResourceContext(finding)}
+        />
+      ))}
       <tr>
         <td colSpan={columnCount} className="max-w-0 p-0">
           <AnimatePresence initial>

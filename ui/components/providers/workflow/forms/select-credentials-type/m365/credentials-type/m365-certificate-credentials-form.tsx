@@ -17,10 +17,10 @@ export const M365CertificateCredentialsForm = ({
   return (
     <>
       <div className="flex flex-col">
-        <div className="text-md text-default-foreground leading-9 font-bold">
+        <div className="text-md text-text-neutral-primary leading-9 font-bold">
           App Certificate Credentials
         </div>
-        <div className="text-default-500 text-sm">
+        <div className="text-text-neutral-tertiary text-sm">
           Please provide your Microsoft 365 application credentials with
           certificate authentication.
         </div>
@@ -55,7 +55,7 @@ export const M365CertificateCredentialsForm = ({
         isRequired
         minRows={4}
       />
-      <p className="text-default-500 text-sm">
+      <p className="text-text-neutral-tertiary text-sm">
         The certificate content must be base64 encoded from an unsigned
         certificate. For detailed instructions on how to generate and encode
         your certificate, please refer to the{" "}

@@ -124,7 +124,12 @@ from api.models import (
     UserRoleRelationship,
 )
 from api.pagination import ComplianceOverviewPagination
-from api.rbac.permissions import Permissions, get_providers, get_role
+from api.rbac.permissions import (
+    Permissions,
+    get_integrations,
+    get_providers,
+    get_role,
+)
 from api.renderers import APIJSONRenderer, PlainTextRenderer
 from api.rls import Tenant
 from api.utils import (
@@ -141,6 +146,7 @@ from api.v1.mixins import (
     JsonApiFilterMixin,
     PaginateByPkMixin,
     ProviderFilterParamsMixin,
+    ProviderVisibilityMixin,
     TaskManagementMixin,
 )
 from api.v1.serializers import (
@@ -237,7 +243,7 @@ from api.v1.serializers import (
     UserUpdateSerializer,
 )
 from botocore.exceptions import ClientError, NoCredentialsError, ParamValidationError
-from celery import chain, states
+from celery import chain
 from celery.result import AsyncResult
 from config.custom_logging import BackendLogger
 from config.env import env
@@ -281,9 +287,9 @@ from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.dateparse import parse_date
 from django.utils.decorators import method_decorator
+from django.utils.functional import cached_property
 from django.views.decorators.cache import cache_control
 from django_celery_beat.models import PeriodicTask
-from django_celery_results.models import TaskResult
 from drf_spectacular.settings import spectacular_settings
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import (
@@ -322,17 +328,20 @@ from tasks.beat import schedule_provider_scan
 from tasks.jobs.attack_paths import db_utils as attack_paths_db_utils
 from tasks.jobs.export import get_s3_client
 from tasks.tasks import (
+    QUEUED_SCAN_TASK_STATE,
     backfill_compliance_summaries_task,
     backfill_scan_resource_summaries_task,
     check_integration_connection_task,
     check_lighthouse_connection_task,
     check_lighthouse_provider_connection_task,
     check_provider_connection_task,
+    create_scan_task_record,
     delete_provider_task,
     delete_tenant_task,
+    enqueue_scan_execution_on_commit,
+    get_active_provider_scan,
     jira_integration_task,
     mute_historical_findings_task,
-    perform_scan_task,
     reaggregate_all_finding_group_summaries_task,
     refresh_lighthouse_provider_models_task,
 )
@@ -805,6 +814,21 @@ class TenantFinishACSView(FinishACSView):
             User.objects.using(MainRouter.admin_db).filter(id=saml_user_id).delete()
             request.session.pop("saml_user_created", None)
 
+    @staticmethod
+    def _user_has_tenant_role(user_id, tenant_id):
+        return (
+            UserRoleRelationship.objects.using(MainRouter.admin_db)
+            .filter(user_id=user_id, tenant_id=tenant_id)
+            .exists()
+        )
+
+    @staticmethod
+    def _is_read_only_fallback_role(role):
+        return (
+            not any(getattr(role, permission) for permission in Role.PERMISSION_FIELDS)
+            and role.unlimited_visibility
+        )
+
     def dispatch(self, request, organization_slug):
         try:
             super().dispatch(request, organization_slug)
@@ -870,11 +894,56 @@ class TenantFinishACSView(FinishACSView):
             user.name = "N/A"
         user.save()
 
-        # Only remap roles when the IdP provides a userType attribute.
-        # Without it, the user's current roles are left untouched.
+        # Only remap existing roles when the IdP provides a userType attribute.
+        # Without it, preserve current roles or assign a read-only fallback.
         role_name = (
             extra.get("userType", [""])[0].strip() if extra.get("userType") else ""
         )
+        if not role_name:
+            with rls_transaction(str(tenant.id), using=MainRouter.admin_db):
+                with transaction.atomic(using=MainRouter.admin_db):
+                    # Serialize concurrent ACS callbacks for the same user.
+                    (
+                        User.objects.using(MainRouter.admin_db)
+                        .select_for_update()
+                        .only("id")
+                        .get(pk=user_id)
+                    )
+                    user_has_roles = self._user_has_tenant_role(user_id, tenant.id)
+                    if not user_has_roles:
+                        read_only_defaults = dict.fromkeys(
+                            Role.PERMISSION_FIELDS, False
+                        )
+                        read_only_defaults["unlimited_visibility"] = True
+                        role, role_created = Role.objects.using(
+                            MainRouter.admin_db
+                        ).get_or_create(
+                            name="read_only",
+                            tenant=tenant,
+                            defaults=read_only_defaults,
+                        )
+                        role_is_read_only = self._is_read_only_fallback_role(role)
+                        if not role_created and not role_is_read_only:
+                            suffix = 0
+                            while not role_created and not role_is_read_only:
+                                role, role_created = Role.objects.using(
+                                    MainRouter.admin_db
+                                ).get_or_create(
+                                    name=f"read_only_{suffix}",
+                                    tenant=tenant,
+                                    defaults=read_only_defaults,
+                                )
+                                role_is_read_only = self._is_read_only_fallback_role(
+                                    role
+                                )
+                                suffix += 1
+                        UserRoleRelationship.objects.using(
+                            MainRouter.admin_db
+                        ).get_or_create(
+                            user=user,
+                            role=role,
+                            defaults={"tenant": tenant},
+                        )
         if role_name:
             with transaction.atomic(using=MainRouter.admin_db):
                 role = (
@@ -1624,7 +1693,7 @@ class TenantMembersViewSet(BaseTenantViewset):
     ),
     update=extend_schema(exclude=True),
 )
-class ProviderGroupViewSet(BaseRLSViewSet):
+class ProviderGroupViewSet(ProviderVisibilityMixin, BaseRLSViewSet):
     queryset = ProviderGroup.objects.all()
     serializer_class = ProviderGroupSerializer
     filterset_class = ProviderGroupFilter
@@ -1645,14 +1714,13 @@ class ProviderGroupViewSet(BaseRLSViewSet):
             self.required_permissions = [Permissions.MANAGE_PROVIDERS]
 
     def get_queryset(self):
-        user_roles = get_role(self.request.user, self.request.tenant_id)
-        # Check if any of the user's roles have UNLIMITED_VISIBILITY
-        if user_roles.unlimited_visibility:
-            # User has unlimited visibility, return all provider groups
-            return ProviderGroup.objects.prefetch_related("providers", "roles")
-
-        # Collect provider groups associated with the user's roles
-        return user_roles.provider_groups.all().prefetch_related("providers", "roles")
+        if self.user_role.unlimited_visibility:
+            queryset = ProviderGroup.objects.filter(tenant_id=self.request.tenant_id)
+        else:
+            queryset = self.user_role.provider_groups.filter(
+                tenant_id=self.request.tenant_id
+            )
+        return queryset.prefetch_related("providers", "roles")
 
     def get_serializer_class(self):
         if self.action == "create":
@@ -1693,7 +1761,9 @@ class ProviderGroupViewSet(BaseRLSViewSet):
         },
     ),
 )
-class ProviderGroupProvidersRelationshipView(RelationshipView, BaseRLSViewSet):
+class ProviderGroupProvidersRelationshipView(
+    ProviderVisibilityMixin, RelationshipView, BaseRLSViewSet
+):
     queryset = ProviderGroup.objects.all()
     serializer_class = ProviderGroupMembershipSerializer
     resource_name = "providers"
@@ -1703,7 +1773,9 @@ class ProviderGroupProvidersRelationshipView(RelationshipView, BaseRLSViewSet):
     required_permissions = [Permissions.MANAGE_PROVIDERS]
 
     def get_queryset(self):
-        return ProviderGroup.objects.filter(tenant_id=self.request.tenant_id)
+        if self.user_role.unlimited_visibility:
+            return ProviderGroup.objects.filter(tenant_id=self.request.tenant_id)
+        return self.user_role.provider_groups.filter(tenant_id=self.request.tenant_id)
 
     def create(self, request, *args, **kwargs):
         provider_group = self.get_object()
@@ -1725,6 +1797,7 @@ class ProviderGroupProvidersRelationshipView(RelationshipView, BaseRLSViewSet):
             data={"providers": request.data},
             context={
                 "provider_group": provider_group,
+                "provider_queryset": self.get_provider_queryset(),
                 "tenant_id": self.request.tenant_id,
                 "request": request,
             },
@@ -1739,7 +1812,11 @@ class ProviderGroupProvidersRelationshipView(RelationshipView, BaseRLSViewSet):
         serializer = self.get_serializer(
             instance=provider_group,
             data={"providers": request.data},
-            context={"tenant_id": self.request.tenant_id, "request": request},
+            context={
+                "provider_queryset": self.get_provider_queryset(),
+                "tenant_id": self.request.tenant_id,
+                "request": request,
+            },
         )
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -1856,7 +1933,7 @@ class ProviderViewSet(DisablePaginationMixin, BaseRLSViewSet):
     )
     @action(detail=True, methods=["post"], url_name="connection")
     def connection(self, request, pk=None):
-        get_object_or_404(Provider, pk=pk)
+        self.get_object()
         with transaction.atomic():
             task = check_provider_connection_task.delay(
                 provider_id=pk, tenant_id=self.request.tenant_id
@@ -1874,7 +1951,7 @@ class ProviderViewSet(DisablePaginationMixin, BaseRLSViewSet):
         )
 
     def destroy(self, request, *args, pk=None, **kwargs):
-        provider = get_object_or_404(Provider, pk=pk)
+        provider = self.get_object()
         provider.is_deleted = True
         provider.save()
         task_name = f"scan-perform-scheduled-{pk}"
@@ -2096,7 +2173,7 @@ class ProviderViewSet(DisablePaginationMixin, BaseRLSViewSet):
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 @method_decorator(CACHE_DECORATOR, name="retrieve")
-class ScanViewSet(BaseRLSViewSet):
+class ScanViewSet(ProviderVisibilityMixin, BaseRLSViewSet):
     queryset = Scan.objects.all()
     serializer_class = ScanSerializer
     http_method_names = ["get", "post", "patch"]
@@ -2125,13 +2202,7 @@ class ScanViewSet(BaseRLSViewSet):
             self.required_permissions = [Permissions.MANAGE_SCANS]
 
     def get_queryset(self):
-        user_roles = get_role(self.request.user, self.request.tenant_id)
-        if user_roles.unlimited_visibility:
-            # User has unlimited visibility, return all scans
-            queryset = Scan.objects.filter(tenant_id=self.request.tenant_id)
-        else:
-            # User lacks permission, filter providers based on provider groups associated with the role
-            queryset = Scan.objects.filter(provider__in=get_providers(user_roles))
+        queryset = Scan.objects.filter(provider__in=self.get_provider_queryset())
         return queryset.select_related("provider", "task")
 
     def get_serializer_class(self):
@@ -2717,12 +2788,24 @@ class ScanViewSet(BaseRLSViewSet):
     def create(self, request, *args, **kwargs):
         input_serializer = self.get_serializer(data=request.data)
         input_serializer.is_valid(raise_exception=True)
+        provider = input_serializer.validated_data.get("provider")
+        active_scan = None
 
         # Broker publish is deferred to on_commit so the worker cannot read
         # Scan before BaseRLSViewSet's dispatch-wide atomic commits.
         pre_task_id = str(uuid.uuid4())
 
         with transaction.atomic():
+            if provider:
+                provider = Provider.objects.select_for_update().get(
+                    id=provider.id,
+                    tenant_id=self.request.tenant_id,
+                    id__in=self.get_provider_queryset().values("id"),
+                )
+                active_scan = get_active_provider_scan(
+                    self.request.tenant_id, provider.id
+                )
+
             scan = input_serializer.save()
             scan.task_id = pre_task_id
             scan.save(update_fields=["task_id"])
@@ -2733,29 +2816,18 @@ class ScanViewSet(BaseRLSViewSet):
                 provider_id=str(scan.provider_id),
             )
 
-            task_result, _ = TaskResult.objects.get_or_create(
-                task_id=pre_task_id,
-                defaults={"status": states.PENDING, "task_name": "scan-perform"},
-            )
-            prowler_task, _ = Task.objects.update_or_create(
-                id=pre_task_id,
+            prowler_task = create_scan_task_record(
                 tenant_id=self.request.tenant_id,
-                defaults={"task_runner_task": task_result},
+                task_id=pre_task_id,
+                task_status=(QUEUED_SCAN_TASK_STATE if active_scan else None),
             )
 
-            scan_kwargs = {
-                "tenant_id": self.request.tenant_id,
-                "scan_id": str(scan.id),
-                "provider_id": str(scan.provider_id),
-                # Disabled for now
-                # checks_to_execute=scan.scanner_args.get("checks_to_execute")
-            }
-
-            transaction.on_commit(
-                lambda: perform_scan_task.apply_async(
-                    kwargs=scan_kwargs, task_id=pre_task_id
+            if not active_scan:
+                enqueue_scan_execution_on_commit(
+                    tenant_id=self.request.tenant_id,
+                    scan=scan,
+                    task_id=pre_task_id,
                 )
-            )
 
         self.response_serializer_class = TaskSerializer
         output_serializer = self.get_serializer(prowler_task)
@@ -4303,7 +4375,7 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 @method_decorator(CACHE_DECORATOR, name="retrieve")
-class ProviderSecretViewSet(BaseRLSViewSet):
+class ProviderSecretViewSet(ProviderVisibilityMixin, BaseRLSViewSet):
     queryset = ProviderSecret.objects.all()
     serializer_class = ProviderSecretSerializer
     filterset_class = ProviderSecretFilter
@@ -4319,7 +4391,7 @@ class ProviderSecretViewSet(BaseRLSViewSet):
     required_permissions = [Permissions.MANAGE_PROVIDERS]
 
     def get_queryset(self):
-        return ProviderSecret.objects.filter(tenant_id=self.request.tenant_id)
+        return ProviderSecret.objects.filter(provider__in=self.get_provider_queryset())
 
     def get_serializer_class(self):
         if self.action == "create":
@@ -6600,7 +6672,7 @@ class OverviewViewSet(ProviderFilterParamsMixin, BaseRLSViewSet):
         responses={202: OpenApiResponse(response=TaskSerializer)},
     )
 )
-class ScheduleViewSet(BaseRLSViewSet):
+class ScheduleViewSet(ProviderVisibilityMixin, BaseRLSViewSet):
     # TODO: change to Schedule when implemented
     queryset = Task.objects.none()
     http_method_names = ["post"]
@@ -6627,7 +6699,9 @@ class ScheduleViewSet(BaseRLSViewSet):
         serializer.is_valid(raise_exception=True)
         provider_id = serializer.validated_data["provider_id"]
 
-        provider_instance = get_object_or_404(Provider, pk=provider_id)
+        provider_instance = get_object_or_404(
+            self.get_provider_queryset(), pk=provider_id
+        )
         with transaction.atomic():
             task = schedule_provider_scan(provider_instance)
 
@@ -6650,27 +6724,34 @@ class ScheduleViewSet(BaseRLSViewSet):
     list=extend_schema(
         tags=["Integration"],
         summary="List all integrations",
-        description="Retrieve a list of all configured integrations with options for filtering by various criteria.",
+        description="Retrieve a list of all configured integrations with options for filtering by various criteria.\n\n"
+        "Integrations attached to one or more providers are only returned when the role can access at least one of "
+        "those providers, and each integration lists only the providers visible to the role. Integrations not "
+        "attached to any provider, such as Jira, are tenant-wide and are returned for every role.",
     ),
     retrieve=extend_schema(
         tags=["Integration"],
         summary="Retrieve integration details",
-        description="Fetch detailed information about a specific integration by its ID.",
+        description="Fetch detailed information about a specific integration by its ID. Integrations outside the "
+        "provider visibility of the role are reported the same way as one that does not exist.",
     ),
     create=extend_schema(
         tags=["Integration"],
         summary="Create a new integration",
-        description="Register a new integration with the system, providing necessary configuration details.",
+        description="Register a new integration with the system, providing necessary configuration details. Only "
+        "providers visible to the role can be attached to the integration.",
     ),
     partial_update=extend_schema(
         tags=["Integration"],
         summary="Partially update an integration",
-        description="Modify certain fields of an existing integration without affecting other settings.",
+        description="Modify certain fields of an existing integration without affecting other settings. Integrations "
+        "attached to providers outside the visibility of the role cannot be modified by it.",
     ),
     destroy=extend_schema(
         tags=["Integration"],
         summary="Delete an integration",
-        description="Remove an integration from the system by its ID.",
+        description="Remove an integration from the system by its ID. Integrations attached to providers outside "
+        "the visibility of the role cannot be deleted by it.",
     ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
@@ -6683,18 +6764,27 @@ class IntegrationViewSet(BaseRLSViewSet):
     ordering = ["integration_type", "-inserted_at"]
     # RBAC required permissions
     required_permissions = [Permissions.MANAGE_INTEGRATIONS]
-    allowed_providers = None
+
+    @cached_property
+    def allowed_providers(self):
+        """
+        Providers the role can access, or None when it has unlimited visibility.
+
+        Resolved per request and independently of the action, so that writes are scoped
+        as tightly as reads.
+        """
+        if self.user_role.unlimited_visibility:
+            return None
+        return get_providers(self.user_role)
 
     def get_queryset(self):
-        user_roles = get_role(self.request.user, self.request.tenant_id)
-        if user_roles.unlimited_visibility:
-            # User has unlimited visibility, return all integrations
-            queryset = Integration.objects.filter(tenant_id=self.request.tenant_id)
-        else:
-            # User lacks permission, filter providers based on provider groups associated with the role
-            allowed_providers = get_providers(user_roles)
-            queryset = Integration.objects.filter(providers__in=allowed_providers)
-            self.allowed_providers = allowed_providers
+        queryset = get_integrations(self.user_role, providers=self.allowed_providers)
+        if self.allowed_providers is not None and self.action in ("list", "retrieve"):
+            # Restrict the relationship itself, so that the providers hidden to the role
+            # are left out of the sideloaded resources of `?include=providers` too
+            queryset = queryset.prefetch_related(
+                Prefetch("providers", queryset=self.allowed_providers)
+            )
         return queryset
 
     def get_serializer_class(self):
@@ -6709,16 +6799,33 @@ class IntegrationViewSet(BaseRLSViewSet):
         context["allowed_providers"] = self.allowed_providers
         return context
 
+    def get_object(self):
+        instance = super().get_object()
+        # Writes on an integration shared with providers hidden to the role would reach
+        # beyond its visibility, so both editing and deleting are rejected consistently
+        if (
+            self.action in ("partial_update", "destroy")
+            and self.allowed_providers is not None
+            and instance.providers.exclude(
+                id__in=self.allowed_providers.values("id")
+            ).exists()
+        ):
+            raise PermissionDenied(
+                "The integration is attached to providers outside the visibility of your role."
+            )
+        return instance
+
     @extend_schema(
         tags=["Integration"],
         summary="Check integration connection",
-        description="Try to verify integration connection",
+        description="Try to verify integration connection. Integrations outside the provider visibility of the role "
+        "are reported the same way as one that does not exist.",
         request=None,
         responses={202: OpenApiResponse(response=TaskSerializer)},
     )
     @action(detail=True, methods=["post"], url_name="connection")
     def connection(self, request, pk=None):
-        get_object_or_404(Integration, pk=pk)
+        get_object_or_404(self.get_queryset(), pk=pk)
         with transaction.atomic():
             task = check_integration_connection_task.delay(
                 integration_id=pk, tenant_id=self.request.tenant_id
@@ -6741,7 +6848,8 @@ class IntegrationViewSet(BaseRLSViewSet):
         tags=["Integration"],
         summary="Send findings to a Jira integration",
         description="Send a set of filtered findings to the given integration. At least one finding filter must be "
-        "provided.\n\n"
+        "provided. Jira integrations are tenant-wide and do not require unlimited visibility, while the findings "
+        "sent are limited to the providers the role can access.\n\n"
         "## Known Limitations\n\n"
         "### Issue Types with Required Custom Fields\n\n"
         "Certain Jira issue types (such as Epic) may require mandatory custom fields that Prowler does not "
@@ -6785,24 +6893,37 @@ class IntegrationJiraViewSet(BaseRLSViewSet):
             return []
         return super().get_filter_backends()
 
-    def get_queryset(self):
-        tenant_id = self.request.tenant_id
-        user_roles = get_role(self.request.user, self.request.tenant_id)
-        if user_roles.unlimited_visibility:
-            # User has unlimited visibility, return all findings
-            queryset = Finding.all_objects.filter(tenant_id=tenant_id)
-        else:
-            # User lacks permission, filter findings based on provider groups associated with the role
-            queryset = Finding.all_objects.filter(
-                scan__provider__in=get_providers(user_roles)
-            )
+    @cached_property
+    def allowed_providers(self):
+        """
+        Providers the role can access, or None when it has unlimited visibility.
 
-        return queryset
+        Resolved once per request and shared between the findings queryset and the
+        integration lookup.
+        """
+        if self.user_role.unlimited_visibility:
+            return None
+        return get_providers(self.user_role)
+
+    def get_queryset(self):
+        if self.allowed_providers is None:
+            # User has unlimited visibility, return all findings
+            return Finding.all_objects.filter(tenant_id=self.request.tenant_id)
+        # Findings are limited to the providers the role can access
+        return Finding.all_objects.filter(scan__provider__in=self.allowed_providers)
+
+    def get_integration(self, integration_pk):
+        """Retrieve the integration, honoring the provider visibility of the user's role."""
+        return get_object_or_404(
+            get_integrations(self.user_role, providers=self.allowed_providers),
+            pk=integration_pk,
+        )
 
     @extend_schema(
         tags=["Integration"],
         summary="Get available issue types for a Jira project",
-        description="Fetch the available issue types from Jira for a given project key and update the integration configuration.",
+        description="Fetch the available issue types from Jira for a given project key and update the integration "
+        "configuration. Jira integrations are tenant-wide and do not require unlimited visibility.",
         parameters=[
             OpenApiParameter(
                 name="project_key",
@@ -6815,7 +6936,7 @@ class IntegrationJiraViewSet(BaseRLSViewSet):
     )
     @action(detail=False, methods=["get"], url_name="issue-types")
     def issue_types(self, request, integration_pk=None):
-        integration = get_object_or_404(Integration, pk=integration_pk)
+        integration = self.get_integration(integration_pk)
 
         project_key = request.query_params.get("project_key")
         if not project_key:
@@ -6860,16 +6981,11 @@ class IntegrationJiraViewSet(BaseRLSViewSet):
 
     @action(detail=False, methods=["post"], url_name="dispatches")
     def dispatches(self, request, integration_pk=None):
-        get_object_or_404(Integration, pk=integration_pk)
+        self.get_integration(integration_pk)
         serializer = self.get_serializer(
             data=request.data, context={"integration_id": integration_pk}
         )
         serializer.is_valid(raise_exception=True)
-
-        if self.filter_queryset(self.get_queryset()).count() == 0:
-            raise ValidationError(
-                {"findings": "No findings match the provided filters"}
-            )
 
         finding_ids = [
             str(finding_id)
@@ -6877,6 +6993,11 @@ class IntegrationJiraViewSet(BaseRLSViewSet):
                 "id", flat=True
             )
         ]
+        if not finding_ids:
+            raise ValidationError(
+                {"findings": "No findings match the provided filters"}
+            )
+
         project_key = serializer.validated_data["project_key"]
         issue_type = serializer.validated_data["issue_type"]
 

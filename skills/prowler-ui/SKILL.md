@@ -2,11 +2,11 @@
 name: prowler-ui
 description: >
   Prowler UI-specific patterns. For generic patterns, see: typescript, react-19, nextjs-16, tailwind-4.
-  Trigger: When working inside ui/ on Prowler-specific conventions (shadcn vs HeroUI legacy, folder placement, actions/adapters, shared types/hooks/lib).
+  Trigger: When working inside ui/ on Prowler-specific conventions (shadcn, folder placement, actions/adapters, shared types/hooks/lib).
 license: Apache-2.0
 metadata:
   author: prowler-cloud
-  version: "1.0"
+  version: "1.1"
   scope: [root, ui]
   auto_invoke:
     - "Creating/modifying Prowler UI components"
@@ -32,13 +32,12 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 Next.js 16.2.3 | React 19.2.5 | Tailwind 4.1.18 | shadcn/ui
 Zod 4.1.11 | React Hook Form 7.62.0 | Zustand 5.0.8
 NextAuth 5.0.0-beta.30 | Recharts 2.15.4
-HeroUI 2.8.4 (LEGACY - do not add new components)
 ```
 
 ## CRITICAL: Component Library Rule
 
 - **ALWAYS**: Use `shadcn/ui` + Tailwind (`components/shadcn/`)
-- **NEVER**: Add new HeroUI components (`components/ui/` is legacy only)
+- **NEVER**: Add components to `components/ui/` (temporary re-export shims for the prowler-cloud overlay only)
 
 ## Design System Discipline (REQUIRED)
 
@@ -57,12 +56,11 @@ When reviewing UI PRs, flag: custom modals/primitives that duplicate shadcn, cal
 ### Component Placement
 
 ```text
-New feature UI? → shadcn/ui + Tailwind
-Existing HeroUI feature? → Keep HeroUI (don't mix)
-Used 1 feature? → features/{feature}/components/
-Used 2+ features? → components/shared/
-Needs state/hooks? → "use client"
-Server component? → No directive needed
+New UI primitive?   → components/shadcn/ (shadcn/ui + Tailwind)
+Used by 1 domain?   → components/{domain}/
+Used by 2+ domains? → components/shared/
+Needs state/hooks?  → "use client"
+Server component?    → No directive needed
 ```
 
 ### Code Location
@@ -76,9 +74,15 @@ Utils (shared 2+)  → lib/
 Utils (local 1)    → {feature}/utils/
 Hooks (shared 2+)  → hooks/
 Hooks (local 1)    → {feature}/hooks.ts
-shadcn components  → components/shadcn/
-HeroUI components  → components/ui/ (LEGACY)
+UI primitive       → components/shadcn/
+Domain component   → components/{domain}/
 ```
+
+> **Deprecated:** `components/ui/` is a temporary re-export shim that maps
+> legacy import paths to `components/shadcn/` for the prowler-cloud overlay.
+> HeroUI is fully removed. Never add or import components here — use
+> `@/components/shadcn` (primitives) or `@/components/{domain}` instead.
+> Delete the shim once the cloud repo migrates to `@/components/shadcn`.
 
 ### Styling Decision
 
@@ -110,8 +114,9 @@ ui/
 │       ├── services/
 │       └── integrations/
 ├── components/
-│   ├── shadcn/              # shadcn/ui (USE THIS)
-│   ├── ui/                  # HeroUI (LEGACY)
+│   ├── shadcn/              # shadcn/ui primitives (USE THIS)
+│   ├── shared/             # Cross-domain composed components (2+ domains)
+│   ├── ui/                  # DEPRECATED shim → re-exports shadcn (do not use)
 │   ├── {domain}/            # Domain-specific (compliance, findings, providers, etc.)
 │   ├── filters/             # Filter components
 │   ├── graphs/              # Chart components
@@ -323,16 +328,6 @@ Before requesting re-review from a reviewer:
 - [ ] If you agreed with a comment: the change is committed and the commit hash is mentioned in the reply
 - [ ] If you disagreed: the reply explains why with clear reasoning — do not leave threads silently open
 - [ ] Re-request review only after all threads are in a clean state
-
-## Migrations Reference
-
-| From | To | Key Changes |
-|------|-----|-------------|
-| React 18 | 19.1 | Async components, React Compiler (no useMemo/useCallback) |
-| Next.js 14 | 15.5 | Improved App Router, better streaming |
-| NextUI | HeroUI 2.8.4 | Package rename only, same API |
-| Zod 3 | 4 | `z.email()` not `z.string().email()`, `error` not `message` |
-| AI SDK 4 | 5 | `@ai-sdk/react`, `sendMessage` not `handleSubmit`, `parts` not `content` |
 
 ## Resources
 

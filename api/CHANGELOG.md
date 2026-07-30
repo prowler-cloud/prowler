@@ -2,6 +2,96 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+<!-- changelog: release notes start -->
+
+## [1.37.0] (Prowler v5.36.0)
+
+### 🔄 Changed
+
+- OCI provider secrets no longer require `region`; legacy `region` input is accepted for backwards compatibility but ignored before storing or scanning [(#11741)](https://github.com/prowler-cloud/prowler/pull/11741)
+- Compliance overview ingest now runs in a single transaction per scan with a configurable `COPY` batch size (`DJANGO_COMPLIANCE_COPY_BATCH_SIZE`, default 2000), reducing write pressure on the database [(#11875)](https://github.com/prowler-cloud/prowler/pull/11875)
+
+### 🐞 Fixed
+
+- Scan findings now recover resources missing from the in-memory cache after resource pre-resolution, preventing valid findings from being skipped [(#12002)](https://github.com/prowler-cloud/prowler/pull/12002)
+- Tenant-wide integrations that are not attached to any provider, such as Jira, are now visible and manageable by roles with `manage_integrations` and without unlimited visibility [(#12060)](https://github.com/prowler-cloud/prowler/pull/12060)
+- Output generation now removes the scan's temporary output directory before writing, so a re-run of the task for the same scan (e.g. broker redelivery after a worker is killed mid-run) no longer appends to the previous run's files and duplicates finding rows in the exported CSV and other outputs [(#12097)](https://github.com/prowler-cloud/prowler/pull/12097)
+
+### 🔐 Security
+
+- Integration responses no longer disclose providers outside the visibility of the role, including the resources sideloaded through `?include=providers` [(#12060)](https://github.com/prowler-cloud/prowler/pull/12060)
+- Integration connection checks, Jira issue type lookups and Jira dispatches now resolve the integration through the provider visibility of the role instead of the whole tenant [(#12060)](https://github.com/prowler-cloud/prowler/pull/12060)
+- Roles without unlimited visibility can no longer attach an integration to providers they cannot see, nor edit or delete an integration bound to them [(#12060)](https://github.com/prowler-cloud/prowler/pull/12060)
+- Kubernetes kubeconfig validation now rejects legacy `auth-provider.config.cmd-path` command authentication in Prowler Cloud/API [(#12091)](https://github.com/prowler-cloud/prowler/pull/12091)
+
+---
+
+## [1.36.0] (Prowler v5.35.0)
+
+### 🐞 Fixed
+
+- `attack-paths-scan-perform` Celery tasks now use the configurable long-task time limits instead of the six-hour defaults [(#12009)](https://github.com/prowler-cloud/prowler/pull/12009)
+- Attack Paths scans handle provider deletion races cleanly, detect stale tasks after 16 hours, use backend-specific graph synchronization batches, and report exhausted Neptune write retries with the original database error [(#12019)](https://github.com/prowler-cloud/prowler/pull/12019)
+
+### 🔐 Security
+
+- Jira integration credentials only accept bare Atlassian site names containing letters, numbers, and hyphens [(#12012)](https://github.com/prowler-cloud/prowler/pull/12012)
+- Social account linking requires a verified matching email from both the identity provider and the existing user account without sending account connection notifications [(#12013)](https://github.com/prowler-cloud/prowler/pull/12013)
+
+---
+
+## [1.35.0] (Prowler v5.34.0)
+
+### 🐞 Fixed
+
+- `rls_transaction` now falls back directly to the primary DB for connection-level mid-query read replica failures via `execute_wrapper`, reducing non-streaming read crashes during replica recovery [(#10379)](https://github.com/prowler-cloud/prowler/pull/10379)
+- RBAC permission gates now combine permissions from every role assigned to a user in the active tenant [(#11979)](https://github.com/prowler-cloud/prowler/pull/11979)
+- `attack-paths-cleanup-stale-scans` now retries worker pings and checks recent scan activity before failing scans and removing temporary databases [(#11986)](https://github.com/prowler-cloud/prowler/pull/11986)
+
+### 🔐 Security
+
+- User role relationship updates are limited to the active tenant to preserve role assignments in other tenants [(#11903)](https://github.com/prowler-cloud/prowler/pull/11903)
+- `api` container image removes the unused Debian `libxml2` runtime package and scopes the `CVE-2026-13221` Trivy exception to unaffected Perl 5.36 packages [(#11991)](https://github.com/prowler-cloud/prowler/pull/11991)
+
+---
+
+## [1.34.2] (Prowler v5.33.2)
+
+### 🐞 Fixed
+
+- Attack Paths graph mutations now retry transient Neptune concurrency and deadline failures, while Neo4j mutations use managed transaction retries [(#11968)](https://github.com/prowler-cloud/prowler/pull/11968)
+- Attack Paths scans now use bounded child node identifiers for normalized list values in Neo4j and Neptune, preventing Neo4j RANGE index key size failures [(#11969)](https://github.com/prowler-cloud/prowler/pull/11969)
+- `scan-summary` aggregation now upserts summaries in deterministic conflict-key order, preventing PostgreSQL deadlocks during concurrent reaggregation [(#11971)](https://github.com/prowler-cloud/prowler/pull/11971)
+
+---
+
+## [1.34.1] (Prowler v5.33.1)
+
+### 🐞 Fixed
+
+- Session tokens are rejected after account password updates [(#11914)](https://github.com/prowler-cloud/prowler/pull/11914)
+- Jira dispatch task results now surface user-facing Jira failure messages [(#11925)](https://github.com/prowler-cloud/prowler/pull/11925)
+- AWS Attack Paths privilege escalation queries no longer fail on Neo4j with `Aggregation column contains implicit grouping expressions` [(#11939)](https://github.com/prowler-cloud/prowler/pull/11939)
+
+### 🔐 Security
+
+- OpenAI-compatible Lighthouse provider base URLs are restricted before connection checks [(#11940)](https://github.com/prowler-cloud/prowler/pull/11940)
+- `LIGHTHOUSE_AI_OPENAI_COMPATIBLE_ALLOWED_HOSTS` environment variable to allow internal hosts as OpenAI-compatible Lighthouse AI base URLs [(#11942)](https://github.com/prowler-cloud/prowler/pull/11942)
+
+---
+
+## [1.34.0] (Prowler v5.33.0)
+
+### 🚀 Added
+
+- Compliance PDF reports no longer require provider credentials: findings are enriched from the provider metadata stored in the database, so reports generate even after the provider secret is deleted or its credentials become invalid [(#11845)](https://github.com/prowler-cloud/prowler/pull/11845)
+
+### 🐞 Fixed
+
+- Provider scans now queue behind active provider scans instead of dispatching concurrently, and resource failed-finding counters retry database conflicts with stable row locking [(#11848)](https://github.com/prowler-cloud/prowler/pull/11848)
+
+---
+
 ## [1.33.1] (Prowler v5.32.1)
 
 ### 🐞 Fixed
@@ -12,6 +102,7 @@ All notable changes to the **Prowler API** are documented in this file.
 ### 🔐 Security
 
 - User profile updates now allow users to update their own account while requiring user-management permissions to update other users in the same tenant [(#11792)](https://github.com/prowler-cloud/prowler/pull/11792)
+- Kubernetes provider credentials now reject kubeconfigs using `exec` authentication in Prowler Cloud, preventing user-supplied commands from running on Cloud workers [(#11753)](https://github.com/prowler-cloud/prowler/pull/11753)
 
 ---
 
@@ -31,6 +122,8 @@ All notable changes to the **Prowler API** are documented in this file.
 
 - Attack Paths: Provider graph cleanup now deletes Neo4j and Neptune relationships in directed batches before deleting nodes [(#11755)](https://github.com/prowler-cloud/prowler/pull/11755)
 - `scan-perform` no longer reports an error when a provider is deleted during a running scan [(#11696)](https://github.com/prowler-cloud/prowler/pull/11696)
+
+---
 
 ## [1.32.1] (Prowler v5.31.1)
 

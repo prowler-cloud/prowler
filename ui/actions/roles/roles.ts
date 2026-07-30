@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
 import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
+import { isCloud } from "@/lib/shared/env";
 
 export const getRoles = async ({
   page = 1,
@@ -108,7 +109,7 @@ export const addRole = async (formData: FormData) => {
   };
 
   // Conditionally include Prowler Cloud permissions.
-  if (process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true") {
+  if (isCloud()) {
     payload.data.attributes.manage_billing =
       formData.get("manage_billing") === "true";
     payload.data.attributes.manage_alerts =
@@ -165,7 +166,7 @@ export const updateRole = async (formData: FormData, roleId: string) => {
   };
 
   // Conditionally include Prowler Cloud permissions.
-  if (process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true") {
+  if (isCloud()) {
     payload.data.attributes.manage_billing =
       formData.get("manage_billing") === "true";
     payload.data.attributes.manage_alerts =

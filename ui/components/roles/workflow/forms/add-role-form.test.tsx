@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { AddRoleForm } from "./add-role-form";
 
@@ -72,9 +72,21 @@ vi.mock("@/components/shadcn/select/enhanced-multi-select", () => ({
   EnhancedMultiSelect: () => <div data-testid="group-select" />,
 }));
 
-vi.mock("@/components/ui", () => ({
+vi.mock("@/components/shadcn", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   useToast: () => ({ toast: vi.fn() }),
 }));
+
+beforeAll(() => {
+  class ResizeObserverMock {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  }
+
+  globalThis.ResizeObserver = ResizeObserverMock;
+  window.ResizeObserver = ResizeObserverMock;
+});
 
 describe("AddRoleForm", () => {
   afterEach(() => {
@@ -84,7 +96,7 @@ describe("AddRoleForm", () => {
 
   it("shows Manage Alerts in Prowler Cloud", () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
 
     // When
     render(<AddRoleForm groups={[]} />);
@@ -96,7 +108,7 @@ describe("AddRoleForm", () => {
 
   it("hides Manage Alerts outside Prowler Cloud", () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
 
     // When
     render(<AddRoleForm groups={[]} />);
@@ -116,5 +128,214 @@ describe("AddRoleForm", () => {
 
     // Then
     expect(routerMocks.push).toHaveBeenCalledWith("/roles");
+  });
+
+  it("shows a subtle inline Unlimited Visibility description", () => {
+    // Given / When
+    render(<AddRoleForm groups={[]} />);
+
+    // Then
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Checking the box below grants visibility into every provider: resources, findings, scans, and compliance results, regardless of the provider groups selected.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/required to use the Jira integration/i),
+    ).toHaveProperty("tagName", "STRONG");
+    expect(
+      screen.getByRole("link", { name: /learn more about provider groups/i }),
+    ).toHaveAttribute(
+      "href",
+      "https://docs.prowler.com/user-guide/tutorials/prowler-app-rbac#provider-groups",
+    );
+    expect(
+      screen.queryByRole("heading", { name: "Unlimited Visibility" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(
+        /does not grant admin actions such as managing users, providers, scans, integrations, billing, or alerts/i,
+      ),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(
+        /enable it only for roles that need organization-wide security visibility/i,
+      ),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(
+        /manage providers enables unlimited visibility in this form because provider administration needs organization-wide provider-group context/i,
+      ),
+    ).not.toBeInTheDocument();
+
+    const visibilityHeading = screen.getByText("Visibility");
+    const unlimitedVisibilityCheckbox = screen.getByRole("checkbox", {
+      name: "Enable Unlimited Visibility for this role",
+    });
+
+    expect(
+      visibilityHeading.compareDocumentPosition(unlimitedVisibilityCheckbox) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("keeps the Visibility section and hides only groups when Unlimited Visibility is enabled", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(<AddRoleForm groups={[{ id: "group-1", name: "Production" }]} />);
+
+    // When
+    await user.click(
+      screen.getByRole("checkbox", {
+        name: "Enable Unlimited Visibility for this role",
+      }),
+    );
+
+    // Then
+    expect(screen.getByText("Visibility")).toBeInTheDocument();
+    expect(
+      screen.getByRole("checkbox", {
+        name: "Enable Unlimited Visibility for this role",
+      }),
+    ).toBeChecked();
+    expect(
+      screen.getByText(/checking the box below grants visibility/i),
+    ).toBeInTheDocument();
+    expect(screen.queryByTestId("group-select")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/select the groups this role will have access to/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it("does not force Unlimited Visibility when Manage Providers is selected", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(<AddRoleForm groups={[]} />);
+
+    // When
+    await user.click(
+      screen.getByRole("checkbox", { name: "Manage Providers" }),
+    );
+
+    // Then
+    expect(
+      screen.getByRole("checkbox", {
+        name: "Enable Unlimited Visibility for this role",
+      }),
+    ).not.toBeChecked();
+    expect(
+      screen.queryByText(
+        /Manage Providers is selected, so Unlimited Visibility stays enabled in this form/i,
+      ),
+    ).not.toBeInTheDocument();
+  });
+
+  it("does not force Unlimited Visibility when granting all admin permissions", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(<AddRoleForm groups={[]} />);
+
+    // When
+    await user.click(
+      screen.getByRole("checkbox", { name: "Grant all admin permissions" }),
+    );
+
+    // Then
+    expect(
+      screen.getByRole("checkbox", { name: "Manage Providers" }),
+    ).toBeChecked();
+    expect(
+      screen.getByRole("checkbox", {
+        name: "Enable Unlimited Visibility for this role",
+      }),
+    ).not.toBeChecked();
+  });
+
+  it("keeps Unlimited Visibility user-controlled when Manage Providers is selected", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(<AddRoleForm groups={[]} />);
+
+    // When
+    await user.click(
+      screen.getByRole("checkbox", { name: "Manage Providers" }),
+    );
+    await user.click(
+      screen.getByRole("checkbox", {
+        name: "Enable Unlimited Visibility for this role",
+      }),
+    );
+    await user.click(
+      screen.getByRole("checkbox", {
+        name: "Enable Unlimited Visibility for this role",
+      }),
+    );
+
+    // Then
+    expect(
+      screen.getByRole("checkbox", { name: "Manage Providers" }),
+    ).toBeChecked();
+    expect(
+      screen.getByRole("checkbox", {
+        name: "Enable Unlimited Visibility for this role",
+      }),
+    ).not.toBeChecked();
+    expect(screen.getByTestId("group-select")).toBeInTheDocument();
+  });
+
+  it("keeps explicitly enabled Unlimited Visibility when all admin permissions are toggled off", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(<AddRoleForm groups={[]} />);
+
+    // When
+    await user.click(
+      screen.getByRole("checkbox", {
+        name: "Enable Unlimited Visibility for this role",
+      }),
+    );
+    await user.click(
+      screen.getByRole("checkbox", { name: "Grant all admin permissions" }),
+    );
+    await user.click(
+      screen.getByRole("checkbox", { name: "Grant all admin permissions" }),
+    );
+
+    // Then
+    expect(
+      screen.getByRole("checkbox", { name: "Manage Providers" }),
+    ).not.toBeChecked();
+    expect(
+      screen.getByRole("checkbox", {
+        name: "Enable Unlimited Visibility for this role",
+      }),
+    ).toBeChecked();
+  });
+
+  it("does not show extra Manage Providers guidance for explicitly enabled Unlimited Visibility", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(<AddRoleForm groups={[]} />);
+
+    // When
+    await user.click(
+      screen.getByRole("checkbox", {
+        name: "Enable Unlimited Visibility for this role",
+      }),
+    );
+    await user.click(
+      screen.getByRole("checkbox", { name: "Manage Providers" }),
+    );
+
+    // Then
+    expect(
+      screen.queryByText(
+        /Manage Providers is selected, so Unlimited Visibility stays enabled in this form/i,
+      ),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/remove this automatic visibility grant/i),
+    ).not.toBeInTheDocument();
   });
 });

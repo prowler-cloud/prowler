@@ -29,7 +29,8 @@ vi.mock("next/navigation", () => ({
 
 // Action feedback is delivered through toasts (rendered by the layout Toaster),
 // so we assert the dispatched toast rather than in-page banner text.
-vi.mock("@/components/ui", () => ({
+vi.mock("@/components/shadcn", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   useToast: () => ({ toast: toastMock, dismiss: vi.fn() }),
 }));
 
@@ -264,6 +265,44 @@ describe("LighthouseV2ConfigPage", () => {
         screen.getByRole("button", { name: /OpenAI-compatible/i }),
       ).getByText("Connected"),
     ).toBeInTheDocument();
+  });
+
+  it("hints at stored credentials with a masked placeholder", async () => {
+    // Given / When: OpenAI and Bedrock already have stored configurations
+    const user = userEvent.setup();
+    renderPage();
+
+    // Then: secret fields simulate the hidden stored key instead of looking
+    // empty, at a length resembling a real API key
+    const maskedKey = "•".repeat(36);
+    expect(screen.getByLabelText("API key")).toHaveAttribute(
+      "placeholder",
+      maskedKey,
+    );
+
+    await user.click(screen.getByRole("button", { name: /Amazon Bedrock/i }));
+    expect(screen.getByLabelText("AWS access key ID")).toHaveAttribute(
+      "placeholder",
+      maskedKey,
+    );
+    expect(screen.getByLabelText("AWS secret access key")).toHaveAttribute(
+      "placeholder",
+      maskedKey,
+    );
+  });
+
+  it("shows no masked placeholder before credentials are stored", async () => {
+    // Given
+    const user = userEvent.setup();
+    renderPage();
+
+    // When: OpenAI-compatible has no configuration yet
+    await user.click(
+      screen.getByRole("button", { name: /OpenAI-compatible/i }),
+    );
+
+    // Then
+    expect(screen.getByLabelText("API key")).not.toHaveAttribute("placeholder");
   });
 
   it("blocks OpenAI-compatible save when base URL is missing", async () => {

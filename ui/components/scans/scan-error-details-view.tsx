@@ -2,7 +2,7 @@
 
 import type { ScanErrorDetails } from "@/actions/task/task.adapter";
 import { Field, FieldLabel, LabeledField } from "@/components/shadcn";
-import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
+import { CodeSnippet } from "@/components/shadcn/code-snippet/code-snippet";
 
 interface ScanErrorDetailsViewProps {
   details: ScanErrorDetails;

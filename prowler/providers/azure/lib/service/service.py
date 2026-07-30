@@ -1,3 +1,4 @@
+from collections.abc import Callable, Iterable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from kiota_authentication_azure.azure_identity_authentication_provider import (
@@ -50,7 +51,25 @@ class AzureService:
 
         return results
 
-    def list_with_rg_scope(self, subscription_id, list_all_fn, list_by_rg_fn):
+    def list_with_rg_scope(
+        self,
+        subscription_id: str,
+        list_all_fn: Callable[[], Iterable[object]],
+        list_by_rg_fn: Callable[..., Iterable[object]],
+    ) -> list[object]:
+        """List Azure resources using the provider resource group scope.
+
+        Args:
+            subscription_id: Subscription ID whose resource group scope should be used.
+            list_all_fn: Callable that lists all resources in the subscription when
+                no resource group filter is configured.
+            list_by_rg_fn: Callable that lists resources for a single resource
+                group. It must accept ``resource_group_name`` as a keyword argument.
+
+        Returns:
+            A list containing the resources returned by the selected Azure SDK
+            list operation.
+        """
         if not self.resource_groups:
             return list(list_all_fn())
         resource_groups = self.resource_groups.get(subscription_id, [])

@@ -23,6 +23,7 @@ interface LighthouseV2SessionHistoryProps {
   onNewSession: () => void;
   onOpenSession: (sessionId: string) => void;
   onArchiveSession: (sessionId: string) => void;
+  newChatDisabled?: boolean;
   compact?: boolean;
 }
 
@@ -34,6 +35,7 @@ export function LighthouseV2SessionHistory({
   onNewSession,
   onOpenSession,
   onArchiveSession,
+  newChatDisabled = false,
   compact = false,
 }: LighthouseV2SessionHistoryProps) {
   const [sessionPendingArchive, setSessionPendingArchive] =
@@ -69,14 +71,20 @@ export function LighthouseV2SessionHistory({
           onChange={(event) => onSearchChange(event.target.value)}
           onClear={() => onSearchChange("")}
         />
-        <Button
-          type="button"
-          aria-label="New chat"
-          size={compact ? "icon-sm" : "icon"}
-          onClick={onNewSession}
-        >
-          <Plus />
-        </Button>
+        <Tooltip delayDuration={100}>
+          <TooltipTrigger asChild>
+            <Button
+              type="button"
+              aria-label="New chat"
+              size={compact ? "icon-sm" : "icon"}
+              disabled={newChatDisabled}
+              onClick={onNewSession}
+            >
+              <Plus />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="right">New chat</TooltipContent>
+        </Tooltip>
       </div>
 
       <div className="minimal-scrollbar min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto">

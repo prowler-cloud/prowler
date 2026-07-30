@@ -62,6 +62,7 @@ const providersResponse: ProvidersApiResponse = {
       type: "providers",
       attributes: {
         provider: "aws",
+        is_dynamic: false,
         uid: "111111111111",
         alias: "AWS App Account",
         status: "completed",
@@ -107,6 +108,7 @@ const providersResponse: ProvidersApiResponse = {
       type: "providers",
       attributes: {
         provider: "aws",
+        is_dynamic: false,
         uid: "222222222222",
         alias: "Standalone Account",
         status: "completed",

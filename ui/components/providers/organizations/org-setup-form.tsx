@@ -1,37 +1,30 @@
 "use client";
 
-import { useClipboard } from "@heroui/use-clipboard";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Check, Copy, ExternalLink } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { FormEvent, useEffect, useState } from "react";
+import type { FormEvent } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { updateOrganizationName } from "@/actions/organizations/organizations";
 import { AWSProviderBadge } from "@/components/icons/providers-badge";
-import {
-  WIZARD_FOOTER_ACTION_TYPE,
-  WizardFooterConfig,
-} from "@/components/providers/wizard/steps/footer-controls";
-import {
-  ORG_WIZARD_INTENT,
-  OrgWizardIntent,
-} from "@/components/providers/wizard/types";
+import type { WizardFooterConfig } from "@/components/providers/wizard/steps/footer-controls";
+import { WIZARD_FOOTER_ACTION_TYPE } from "@/components/providers/wizard/steps/footer-controls";
+import type { OrgWizardIntent } from "@/components/providers/wizard/types";
+import { ORG_WIZARD_INTENT } from "@/components/providers/wizard/types";
 import { WizardInputField } from "@/components/providers/workflow/forms/fields";
+import { useToast } from "@/components/shadcn";
 import { Alert, AlertDescription } from "@/components/shadcn/alert";
 import { Button } from "@/components/shadcn/button/button";
 import { Checkbox } from "@/components/shadcn/checkbox/checkbox";
+import { Form } from "@/components/shadcn/form";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
-import { useToast } from "@/components/ui";
-import { Form } from "@/components/ui/form";
-import {
-  getAWSCredentialsTemplateLinks,
-  PROWLER_CF_TEMPLATE_URL,
-  STACKSET_CONSOLE_URL,
-} from "@/lib";
+import { getAWSOrgDeploymentQuickLink } from "@/lib";
 import { useOrgSetupStore } from "@/store/organizations/store";
-import { ORG_SETUP_PHASE, OrgSetupPhase } from "@/types/organizations";
+import type { OrgSetupPhase } from "@/types/organizations";
+import { ORG_SETUP_PHASE } from "@/types/organizations";
 
 import { useOrgSetupSubmission } from "./hooks/use-org-setup-submission";
 
@@ -48,13 +41,19 @@ const orgSetupSchema = z.object({
   roleArn: z
     .string()
     .trim()
-    .min(1, "Role ARN is required")
+    .min(1, "IAM Role ARN is required")
     .regex(
       /^arn:aws:iam::\d{12}:role\//,
       "Must be a valid IAM Role ARN (e.g., arn:aws:iam::123456789012:role/ProwlerScan)",
     ),
+  // OU or root id the StackSet deploys to. UI-only: used to build the
+  // CloudFormation quick-create link, not sent to the backend. Its format is
+  // validated inline (isOrgUnitIdValid) to gate the deployment button, so a
+  // malformed value never blocks the Authenticate submit.
+  organizationalUnitId: z.string().trim().optional(),
+  deployFromDelegatedAdmin: z.boolean().optional(),
   stackSetDeployed: z.boolean().refine((value) => value, {
-    message: "You must confirm the StackSet deployment before continuing.",
+    error: "You must confirm the deployment before continuing.",
   }),
 });
 
@@ -90,12 +89,25 @@ export function OrgSetupForm({
   const stackSetExternalId = session?.tenantId ?? "";
   const { organizationId } = useOrgSetupStore();
   const { toast } = useToast();
-  const { copied: isExternalIdCopied, copy: copyExternalId } = useClipboard({
-    timeout: 1500,
-  });
-  const { copied: isTemplateUrlCopied, copy: copyTemplateUrl } = useClipboard({
-    timeout: 1500,
-  });
+  const COPY_RESET_TIMEOUT = 1500;
+  const [isExternalIdCopied, setIsExternalIdCopied] = useState(false);
+  const externalIdCopyTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  // Copies text and flips the copied flag back after the timeout, without effects
+  const copyWithFeedback = (
+    text: string,
+    setCopied: (copied: boolean) => void,
+    timerRef: { current: ReturnType<typeof setTimeout> | undefined },
+  ) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(() => setCopied(false), COPY_RESET_TIMEOUT);
+    });
+  };
+
+  const copyExternalId = (text: string) =>
+    copyWithFeedback(text, setIsExternalIdCopied, externalIdCopyTimer);
   const [setupPhase, setSetupPhase] = useState<OrgSetupPhase>(initialPhase);
   const [isSaving, setIsSaving] = useState(false);
   const formId = "org-wizard-setup-form";
@@ -110,6 +122,8 @@ export function OrgSetupForm({
       organizationName: initialValues?.organizationName ?? "",
       awsOrgId: initialValues?.awsOrgId ?? "",
       roleArn: "",
+      organizationalUnitId: "",
+      deployFromDelegatedAdmin: false,
       stackSetDeployed: false,
     },
   });
@@ -123,10 +137,27 @@ export function OrgSetupForm({
 
   const awsOrgId = watch("awsOrgId") || "";
   const isOrgIdValid = /^o-[a-z0-9]{10,32}$/.test(awsOrgId.trim());
-  const templateLinks = stackSetExternalId
-    ? getAWSCredentialsTemplateLinks(stackSetExternalId)
-    : null;
-  const orgQuickLink = templateLinks?.cloudformationOrgQuickLink;
+
+  const organizationalUnitId = watch("organizationalUnitId") || "";
+  const deployFromDelegatedAdmin = watch("deployFromDelegatedAdmin") || false;
+  const deploymentAccountName = deployFromDelegatedAdmin
+    ? "delegated administrator account"
+    : "management account";
+  const deploymentAccountLabel = deployFromDelegatedAdmin
+    ? "Delegated Administrator Account"
+    : "Management Account";
+  const isOrgUnitIdValid =
+    /^(ou-[a-z0-9]{4,32}-[a-z0-9]{8,32}|r-[a-z0-9]{4,32})$/.test(
+      organizationalUnitId.trim(),
+    );
+  const orgQuickLink =
+    stackSetExternalId && isOrgUnitIdValid
+      ? getAWSOrgDeploymentQuickLink({
+          externalId: stackSetExternalId,
+          organizationalUnitId: organizationalUnitId.trim(),
+          deployFromDelegatedAdmin,
+        })
+      : null;
 
   const { apiError, setApiError, submitOrganizationSetup } =
     useOrgSetupSubmission({
@@ -365,91 +396,115 @@ export function OrgSetupForm({
               </div>
             </div>
 
-            {/* Step 1: Management account - CloudFormation Stack */}
+            {/* Step 1: Choose the deployment target */}
             <div className="flex flex-col gap-4">
               <p className="text-text-neutral-primary text-sm leading-7 font-normal">
-                1) Deploy the ProwlerScan role in your{" "}
-                <strong>management account</strong> using a CloudFormation
-                Stack.
+                1) Choose the AWS <strong>Organizational Unit</strong> (or root)
+                to deploy to. Prowler creates the IAM Role in your deployment
+                account and rolls it out to every member account under this
+                target.
               </p>
-              <Button
-                variant="outline"
-                size="lg"
-                className="border-border-input-primary bg-bg-input-primary text-button-tertiary hover:bg-bg-input-primary active:bg-bg-input-primary h-12 w-full justify-start"
-                disabled={!orgQuickLink}
-                asChild
-              >
-                <a
-                  href={orgQuickLink || "#"}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <ExternalLink className="size-5" />
-                  <span>Create Stack in Management Account</span>
-                </a>
-              </Button>
+              <WizardInputField
+                control={control}
+                name="organizationalUnitId"
+                label="Organizational Unit or Root ID"
+                labelPlacement="outside"
+                placeholder="e.g. r-abcd or ou-abcd-1a2b3c4d"
+                isRequired={false}
+                normalizeValue={(value) => value.toLowerCase()}
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+              />
+              <p className="text-text-neutral-tertiary text-xs leading-5">
+                Find this in the AWS Organizations console. Use your{" "}
+                <strong>root ID</strong> (starts with <code>r-</code>) to deploy
+                to the whole organization, or an <strong>OU ID</strong> (starts
+                with <code>ou-</code>) to target a specific unit.
+              </p>
+              <div className="flex items-center gap-3">
+                <Controller
+                  name="deployFromDelegatedAdmin"
+                  control={control}
+                  render={({ field }) => (
+                    <>
+                      <Checkbox
+                        id="deployFromDelegatedAdmin"
+                        size="sm"
+                        checked={field.value}
+                        onCheckedChange={(checked) =>
+                          field.onChange(Boolean(checked))
+                        }
+                      />
+                      <label
+                        htmlFor="deployFromDelegatedAdmin"
+                        className="text-text-neutral-secondary text-sm leading-5 font-medium"
+                      >
+                        I&apos;m deploying from a Delegated Administrator
+                        Account (not the Management Account)
+                      </label>
+                    </>
+                  )}
+                />
+              </div>
             </div>
 
-            {/* Step 2: Member accounts - CloudFormation StackSet */}
+            {/* Step 2: Single CloudFormation Stack (role + StackSet) */}
             <div className="flex flex-col gap-4">
               <p className="text-text-neutral-primary text-sm leading-7 font-normal">
-                2) Deploy the ProwlerScan role to{" "}
-                <strong>member accounts</strong> using a CloudFormation
-                StackSet.
+                2) Create the CloudFormation Stack in your{" "}
+                <strong>{deploymentAccountName}</strong>. It deploys the
+                ProwlerScan IAM Role and a service-managed StackSet that rolls
+                the IAM Role out to your member accounts in one step.
               </p>
-              <p className="text-text-neutral-tertiary text-xs leading-5">
-                Open the StackSets console, select{" "}
-                <strong>Service-managed permissions</strong>, and paste the
-                template URL below. Set the <strong>ExternalId</strong>{" "}
-                parameter to the value shown above.
-              </p>
-              <div className="bg-bg-neutral-tertiary border-border-input-primary flex items-center gap-3 rounded-lg border px-4 py-2.5">
-                <span className="text-text-neutral-primary min-w-0 flex-1 truncate font-mono text-xs">
-                  {PROWLER_CF_TEMPLATE_URL}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => copyTemplateUrl(PROWLER_CF_TEMPLATE_URL)}
-                  className="text-text-neutral-secondary hover:text-text-neutral-primary shrink-0 transition-colors"
-                  aria-label="Copy template URL"
+              {orgQuickLink ? (
+                <Button
+                  variant="default"
+                  size="xl"
+                  className="w-full justify-start"
+                  asChild
                 >
-                  {isTemplateUrlCopied ? (
-                    <Check className="size-4" />
-                  ) : (
-                    <Copy className="size-4" />
-                  )}
-                </button>
-              </div>
-              <Button
-                variant="outline"
-                size="lg"
-                className="border-border-input-primary bg-bg-input-primary text-button-tertiary hover:bg-bg-input-primary active:bg-bg-input-primary h-12 w-full justify-start"
-                disabled={!isExternalIdCopied}
-                asChild
-              >
-                <a
-                  href={STACKSET_CONSOLE_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  <a
+                    href={orgQuickLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <ExternalLink className="size-5" />
+                    <span>{`Create Stack in ${deploymentAccountLabel}`}</span>
+                  </a>
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  variant="default"
+                  size="xl"
+                  className="w-full justify-start"
+                  disabled
                 >
                   <ExternalLink className="size-5" />
-                  <span>Open StackSets Console</span>
-                </a>
-              </Button>
+                  <span>{`Create Stack in ${deploymentAccountLabel}`}</span>
+                </Button>
+              )}
+              {!isOrgUnitIdValid && (
+                <p className="text-text-error-primary text-xs leading-5">
+                  Enter a valid Organizational Unit or Root ID above to enable
+                  deployment.
+                </p>
+              )}
             </div>
 
             {/* Step 3: Role ARN + confirm */}
             <div className="flex flex-col gap-4">
               <p className="text-text-neutral-primary text-sm leading-7 font-normal">
-                3) Paste the management account Role ARN and confirm both
-                deployments are complete.
+                3) Paste the {deploymentAccountName} IAM Role ARN and confirm
+                the deployment is complete.
               </p>
             </div>
 
             <WizardInputField
               control={control}
               name="roleArn"
-              label="Management Account Role ARN"
+              label={`${deploymentAccountLabel} IAM Role ARN`}
               labelPlacement="outside"
               placeholder="e.g. arn:aws:iam::123456789012:role/ProwlerScan"
               isRequired={false}
@@ -461,7 +516,7 @@ export function OrgSetupForm({
               ARN
             </p>
 
-            <div className="flex items-start gap-4">
+            <div className="flex items-center gap-3">
               <Controller
                 name="stackSetDeployed"
                 control={control}
@@ -469,7 +524,7 @@ export function OrgSetupForm({
                   <>
                     <Checkbox
                       id="stackSetDeployed"
-                      className="mt-0.5"
+                      size="sm"
                       checked={field.value}
                       onCheckedChange={(checked) =>
                         field.onChange(Boolean(checked))
@@ -479,8 +534,7 @@ export function OrgSetupForm({
                       htmlFor="stackSetDeployed"
                       className="text-text-neutral-tertiary text-xs leading-5 font-normal"
                     >
-                      The Stack and StackSet have been successfully deployed in
-                      AWS
+                      The Stack has been successfully deployed in AWS
                       <span className="text-text-error-primary">*</span>
                     </label>
                   </>

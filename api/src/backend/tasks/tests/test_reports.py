@@ -45,12 +45,46 @@ from tasks.jobs.reports import (
     get_color_for_risk_level,
     get_color_for_weight,
 )
+from tasks.jobs.reports import cis as cis_report_module
+from tasks.jobs.reports import csa as csa_report_module
+from tasks.jobs.reports import ens as ens_report_module
+from tasks.jobs.reports import nis2 as nis2_report_module
+from tasks.jobs.reports import threatscore as threatscore_report_module
 from tasks.jobs.threatscore_utils import (
     _aggregate_requirement_statistics_from_database,
     _load_findings_for_requirement_checks,
 )
+from tasks.tests.report_test_helpers import patch_chart_helpers, patch_report_gc
 
 matplotlib.use("Agg")  # Use non-interactive backend for tests
+
+
+@pytest.fixture
+def patch_report_rendering(monkeypatch):
+    patch_report_gc(monkeypatch)
+    patch_chart_helpers(
+        monkeypatch,
+        cis_report_module,
+        (
+            "create_pie_chart",
+            "create_horizontal_bar_chart",
+            "create_stacked_bar_chart",
+        ),
+    )
+    patch_chart_helpers(
+        monkeypatch, csa_report_module, ("create_horizontal_bar_chart",)
+    )
+    patch_chart_helpers(
+        monkeypatch,
+        ens_report_module,
+        ("create_horizontal_bar_chart", "create_radar_chart"),
+    )
+    patch_chart_helpers(
+        monkeypatch, nis2_report_module, ("create_horizontal_bar_chart",)
+    )
+    patch_chart_helpers(
+        monkeypatch, threatscore_report_module, ("create_vertical_bar_chart",)
+    )
 
 
 @pytest.mark.django_db
@@ -355,7 +389,7 @@ class TestPDFStylesCreation:
 class TestLoadFindingsForChecks:
     """Test suite for _load_findings_for_requirement_checks function."""
 
-    def test_empty_check_ids_returns_empty(self, tenants_fixture, providers_fixture):
+    def test_empty_check_ids_returns_empty(self, tenants_fixture):
         """Test that empty check_ids list returns empty dict."""
         tenant = tenants_fixture[0]
 
@@ -1041,23 +1075,24 @@ class TestStaleCleanupProtectionHelpers:
 
 
 @pytest.mark.django_db
+@pytest.mark.usefixtures("patch_report_rendering")
 class TestGenerateThreatscoreReportFunction:
     """Test suite for generate_threatscore_report function."""
 
-    @patch("tasks.jobs.reports.base.initialize_prowler_provider")
+    @patch("tasks.jobs.reports.base.build_provider_metadata")
     def test_generate_threatscore_report_exception_handling(
         self,
-        mock_initialize_provider,
+        mock_build_provider_metadata,
         tenants_fixture,
         scans_fixture,
-        providers_fixture,
+        aws_provider,
     ):
         """Test that exceptions during report generation are properly handled."""
         tenant = tenants_fixture[0]
         scan = scans_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
 
-        mock_initialize_provider.side_effect = Exception("Test exception")
+        mock_build_provider_metadata.side_effect = Exception("Test exception")
 
         with pytest.raises(Exception) as exc_info:
             generate_threatscore_report(
@@ -1072,6 +1107,7 @@ class TestGenerateThreatscoreReportFunction:
 
 
 @pytest.mark.django_db
+@pytest.mark.usefixtures("patch_report_rendering")
 class TestGenerateComplianceReportsOptimized:
     """Test suite for generate_compliance_reports function."""
 
@@ -1087,12 +1123,12 @@ class TestGenerateComplianceReportsOptimized:
         mock_upload,
         tenants_fixture,
         scans_fixture,
-        providers_fixture,
+        aws_provider,
     ):
         """Test that function returns early when scan has no findings."""
         tenant = tenants_fixture[0]
         scan = scans_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
 
         result = generate_compliance_reports(
             tenant_id=str(tenant.id),
@@ -1144,14 +1180,14 @@ class TestGenerateComplianceReportsOptimized:
         mock_upload,
         tenants_fixture,
         scans_fixture,
-        providers_fixture,
+        aws_provider,
     ):
         """Scan with no findings and ``generate_cis=True`` must yield a flat
         ``{"upload": False, "path": ""}`` entry, consistent with the other
         frameworks (no nested dict, no sentinel keys)."""
         tenant = tenants_fixture[0]
         scan = scans_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
 
         result = generate_compliance_reports(
             tenant_id=str(tenant.id),
@@ -1167,7 +1203,6 @@ class TestGenerateComplianceReportsOptimized:
         assert result["cis"] == {"upload": False, "path": ""}
         mock_cis.assert_not_called()
 
-    @patch("api.utils.initialize_prowler_provider")
     @patch("tasks.jobs.report.rmtree")
     @patch("tasks.jobs.report._upload_to_s3")
     @patch("tasks.jobs.report.generate_cis_report")
@@ -1194,7 +1229,6 @@ class TestGenerateComplianceReportsOptimized:
         mock_cis,
         mock_upload_to_s3,
         mock_rmtree,
-        mock_init_provider,
     ):
         """After each framework finishes, exclusive entries are evicted.
 
@@ -1223,7 +1257,6 @@ class TestGenerateComplianceReportsOptimized:
         mock_aggregate_stats.return_value = {}
         mock_generate_output_dir.return_value = "/tmp/tenant/scan/x/prowler-out"
         mock_upload_to_s3.return_value = "s3://bucket/tenant/scan/x/report.pdf"
-        mock_init_provider.return_value = Mock(name="prowler_provider")
 
         # Seed the cache as if both frameworks had already loaded their
         # findings. We mutate it indirectly: each generator wrapper is a
@@ -1266,7 +1299,7 @@ class TestGenerateComplianceReportsOptimized:
             "shared must remain in cache because ENS still needs it"
         )
 
-    @patch("tasks.jobs.report.initialize_prowler_provider")
+    @patch("tasks.jobs.report.build_provider_metadata")
     @patch("tasks.jobs.report.rmtree")
     @patch("tasks.jobs.report._upload_to_s3")
     @patch("tasks.jobs.report.generate_cis_report")
@@ -1279,7 +1312,7 @@ class TestGenerateComplianceReportsOptimized:
     @patch("tasks.jobs.report.Compliance.get_bulk")
     @patch("tasks.jobs.report.Provider.objects.get")
     @patch("tasks.jobs.report.ScanSummary.objects.filter")
-    def test_prowler_provider_initialized_once(
+    def test_provider_metadata_built_once(
         self,
         mock_scan_summary_filter,
         mock_provider_get,
@@ -1293,11 +1326,11 @@ class TestGenerateComplianceReportsOptimized:
         mock_cis,
         mock_upload_to_s3,
         mock_rmtree,
-        mock_init_provider,
+        mock_build_metadata,
     ):
-        """``initialize_prowler_provider`` must be called exactly once for
-        the whole batch (PROWLER-1733). Previously each generator re-init'd
-        the SDK provider in ``_load_compliance_data`` → 5 inits per scan.
+        """``build_provider_metadata`` must be called exactly once for the
+        whole batch and its result shared across all 5 reports
+        (PROWLER-1733 / PROWLER-2145).
         """
         mock_scan_summary_filter.return_value.exists.return_value = True
         mock_provider_get.return_value = Mock(uid="provider-uid", provider="aws")
@@ -1306,7 +1339,7 @@ class TestGenerateComplianceReportsOptimized:
         mock_aggregate_stats.return_value = {}
         mock_generate_output_dir.return_value = "/tmp/tenant/scan/x/prowler-out"
         mock_upload_to_s3.return_value = "s3://bucket/tenant/scan/x/report.pdf"
-        mock_init_provider.return_value = Mock(name="prowler_provider")
+        mock_build_metadata.return_value = Mock(name="prowler_provider")
 
         generate_compliance_reports(
             tenant_id=str(uuid.uuid4()),
@@ -1325,14 +1358,14 @@ class TestGenerateComplianceReportsOptimized:
         mock_nis2.assert_called_once()
         mock_csa.assert_called_once()
         mock_cis.assert_called_once()
-        # …but the SDK provider was initialized only once.
-        assert mock_init_provider.call_count == 1, (
-            f"expected 1 init, got {mock_init_provider.call_count} "
+        # …but the provider metadata stub was built only once.
+        assert mock_build_metadata.call_count == 1, (
+            f"expected 1 build, got {mock_build_metadata.call_count} "
             f"(prowler_provider must be shared across reports)"
         )
 
         # The shared instance must reach every wrapper as kwargs.
-        shared = mock_init_provider.return_value
+        shared = mock_build_metadata.return_value
         for mock_wrapper in (
             mock_threatscore,
             mock_ens,
@@ -1442,6 +1475,7 @@ class TestGenerateComplianceReportsOptimized:
 
 
 @pytest.mark.django_db
+@pytest.mark.usefixtures("patch_report_rendering")
 class TestGenerateComplianceReportsCIS:
     """Test suite covering the CIS branch of generate_compliance_reports."""
 
@@ -1471,7 +1505,7 @@ class TestGenerateComplianceReportsCIS:
         monkeypatch,
         tenants_fixture,
         scans_fixture,
-        providers_fixture,
+        aws_provider,
     ):
         """CIS branch should generate a single PDF for the highest version.
 
@@ -1481,7 +1515,7 @@ class TestGenerateComplianceReportsCIS:
         """
         tenant = tenants_fixture[0]
         scan = scans_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
 
         self._force_scan_has_findings(monkeypatch)
 
@@ -1530,12 +1564,12 @@ class TestGenerateComplianceReportsCIS:
         monkeypatch,
         tenants_fixture,
         scans_fixture,
-        providers_fixture,
+        aws_provider,
     ):
         """A failure in the latest CIS variant must be surfaced in the flat results entry."""
         tenant = tenants_fixture[0]
         scan = scans_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
 
         self._force_scan_has_findings(monkeypatch)
 
@@ -1577,14 +1611,14 @@ class TestGenerateComplianceReportsCIS:
         monkeypatch,
         tenants_fixture,
         scans_fixture,
-        providers_fixture,
+        aws_provider,
     ):
         """When ``Compliance.get_bulk`` returns no CIS entry the CIS branch
         must skip cleanly and record a flat ``{"upload": False, "path": ""}``
         entry — no hard-coded provider whitelist is consulted."""
         tenant = tenants_fixture[0]
         scan = scans_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
 
         self._force_scan_has_findings(monkeypatch)
         mock_stats.return_value = {}
@@ -1616,12 +1650,12 @@ class TestGenerateComplianceReportsCIS:
         monkeypatch,
         tenants_fixture,
         scans_fixture,
-        providers_fixture,
+        aws_provider,
     ):
         """CIS output dir errors must be captured in results (not raised)."""
         tenant = tenants_fixture[0]
         scan = scans_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
 
         self._force_scan_has_findings(monkeypatch)
         mock_stats.return_value = {}

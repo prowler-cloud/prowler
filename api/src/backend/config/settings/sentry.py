@@ -91,6 +91,13 @@ def before_send(event, hint):
         log_msg = log_record.getMessage()
         log_lvl = log_record.levelno
 
+        if (
+            getattr(log_record, "name", "") == "cartography.graph.job"
+            and "Neo.ClientError.Database.DatabaseNotFound" in log_msg
+            and "db-tmp-scan-" in log_msg
+        ):
+            return None
+
         # The Neo4j driver logs transient connection errors (defunct
         # connections, resets) at ERROR level via the `neo4j.io` logger.
         # `RetryableSession` handles these with retries. If all retries
@@ -115,19 +122,27 @@ def before_send(event, hint):
     return event
 
 
-sentry_sdk.init(
-    dsn=env.str("DJANGO_SENTRY_DSN", ""),
-    # Add data like request headers and IP for users,
-    # see https://docs.sentry.io/platforms/python/data-management/data-collected/ for more info
-    before_send=before_send,
-    send_default_pii=True,
-    traces_sample_rate=env.float("DJANGO_SENTRY_TRACES_SAMPLE_RATE", default=0.02),
-    _experiments={
-        # Set continuous_profiling_auto_start to True
-        # to automatically start the profiler on when
-        # possible.
-        "continuous_profiling_auto_start": True,
-    },
-    attach_stacktrace=True,
-    ignore_errors=IGNORED_EXCEPTIONS,
-)
+def initialize_sentry():
+    sentry_dsn = env.str("DJANGO_SENTRY_DSN", "")
+    if not sentry_dsn:
+        return
+
+    sentry_sdk.init(
+        dsn=sentry_dsn,
+        # Add data like request headers and IP for users,
+        # see https://docs.sentry.io/platforms/python/data-management/data-collected/ for more info
+        before_send=before_send,
+        send_default_pii=True,
+        traces_sample_rate=env.float("DJANGO_SENTRY_TRACES_SAMPLE_RATE", default=0.02),
+        _experiments={
+            # Set continuous_profiling_auto_start to True
+            # to automatically start the profiler on when
+            # possible.
+            "continuous_profiling_auto_start": True,
+        },
+        attach_stacktrace=True,
+        ignore_errors=IGNORED_EXCEPTIONS,
+    )
+
+
+initialize_sentry()

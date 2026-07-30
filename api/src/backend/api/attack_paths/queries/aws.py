@@ -418,7 +418,8 @@ AWS_APPRUNNER_PRIVESC_UPDATE_SERVICE = AttackPathsQueryDefinition(
         // Find existing App Runner services with roles attached (potential targets)
         MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'tasks.apprunner.amazonaws.com'}})
 
-        WITH principal_paths + collect(DISTINCT path_target) AS paths
+        WITH principal_paths, collect(DISTINCT path_target) AS target_paths
+        WITH principal_paths + target_paths AS paths
         UNWIND paths AS p
         UNWIND nodes(p) AS n
 
@@ -523,7 +524,8 @@ AWS_BEDROCK_PRIVESC_INVOKE_CODE_INTERPRETER = AttackPathsQueryDefinition(
         // Find roles that trust the Bedrock AgentCore service (already attached to existing code interpreters)
         MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'bedrock-agentcore.amazonaws.com'}})
 
-        WITH principal_paths + collect(DISTINCT path_target) AS paths
+        WITH principal_paths, collect(DISTINCT path_target) AS target_paths
+        WITH principal_paths + target_paths AS paths
         UNWIND paths AS p
         UNWIND nodes(p) AS n
 
@@ -607,7 +609,8 @@ AWS_CLOUDFORMATION_PRIVESC_UPDATE_STACK = AttackPathsQueryDefinition(
         // Find roles that trust CloudFormation service (already attached to existing stacks)
         MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'cloudformation.amazonaws.com'}})
 
-        WITH principal_paths + collect(DISTINCT path_target) AS paths
+        WITH principal_paths, collect(DISTINCT path_target) AS target_paths
+        WITH principal_paths + target_paths AS paths
         UNWIND paths AS p
         UNWIND nodes(p) AS n
 
@@ -753,7 +756,8 @@ AWS_CLOUDFORMATION_PRIVESC_CHANGESET = AttackPathsQueryDefinition(
         // Find roles that trust CloudFormation service (already attached to existing stacks)
         MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'cloudformation.amazonaws.com'}})
 
-        WITH principal_paths + collect(DISTINCT path_target) AS paths
+        WITH principal_paths, collect(DISTINCT path_target) AS target_paths
+        WITH principal_paths + target_paths AS paths
         UNWIND paths AS p
         UNWIND nodes(p) AS n
 
@@ -844,7 +848,8 @@ AWS_CODEBUILD_PRIVESC_START_BUILD = AttackPathsQueryDefinition(
         // Find roles that trust CodeBuild service (already attached to existing projects)
         MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'codebuild.amazonaws.com'}})
 
-        WITH principal_paths + collect(DISTINCT path_target) AS paths
+        WITH principal_paths, collect(DISTINCT path_target) AS target_paths
+        WITH principal_paths + target_paths AS paths
         UNWIND paths AS p
         UNWIND nodes(p) AS n
 
@@ -880,7 +885,8 @@ AWS_CODEBUILD_PRIVESC_START_BUILD_BATCH = AttackPathsQueryDefinition(
         // Find roles that trust CodeBuild service (already attached to existing projects)
         MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'codebuild.amazonaws.com'}})
 
-        WITH principal_paths + collect(DISTINCT path_target) AS paths
+        WITH principal_paths, collect(DISTINCT path_target) AS target_paths
+        WITH principal_paths + target_paths AS paths
         UNWIND paths AS p
         UNWIND nodes(p) AS n
 
@@ -1096,7 +1102,8 @@ AWS_EC2_PRIVESC_MODIFY_INSTANCE_ATTRIBUTE = AttackPathsQueryDefinition(
         // Find EC2 instances with instance profiles (potential targets)
         MATCH path_target = (aws)--(ec2:EC2Instance)-[:STS_ASSUMEROLE_ALLOW]->(target_role:AWSRole)
 
-        WITH principal_paths + collect(DISTINCT path_target) AS paths
+        WITH principal_paths, collect(DISTINCT path_target) AS target_paths
+        WITH principal_paths + target_paths AS paths
         UNWIND paths AS p
         UNWIND nodes(p) AS n
 
@@ -1187,7 +1194,8 @@ AWS_EC2_PRIVESC_LAUNCH_TEMPLATE = AttackPathsQueryDefinition(
         // Find launch templates in the account (potential targets)
         MATCH path_target = (aws)--(template:LaunchTemplate)
 
-        WITH principal_paths + collect(DISTINCT path_target) AS paths
+        WITH principal_paths, collect(DISTINCT path_target) AS target_paths
+        WITH principal_paths + target_paths AS paths
         UNWIND paths AS p
         UNWIND nodes(p) AS n
 
@@ -1223,7 +1231,8 @@ AWS_EC2INSTANCECONNECT_PRIVESC_SEND_SSH_PUBLIC_KEY = AttackPathsQueryDefinition(
         // Find EC2 instances with attached roles (targets for credential theft via IMDS)
         MATCH path_target = (aws)--(ec2:EC2Instance)-[:STS_ASSUMEROLE_ALLOW]->(target_role:AWSRole)
 
-        WITH principal_paths + collect(DISTINCT path_target) AS paths
+        WITH principal_paths, collect(DISTINCT path_target) AS target_paths
+        WITH principal_paths + target_paths AS paths
         UNWIND paths AS p
         UNWIND nodes(p) AS n
 
@@ -1539,7 +1548,8 @@ AWS_ECS_PRIVESC_EXECUTE_COMMAND = AttackPathsQueryDefinition(
         // Target: roles already attached to running tasks (trust ECS tasks service)
         MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'ecs-tasks.amazonaws.com'}})
 
-        WITH principal_paths + collect(DISTINCT path_target) AS paths
+        WITH principal_paths, collect(DISTINCT path_target) AS target_paths
+        WITH principal_paths + target_paths AS paths
         UNWIND paths AS p
         UNWIND nodes(p) AS n
 
@@ -1622,7 +1632,8 @@ AWS_GLUE_PRIVESC_UPDATE_DEV_ENDPOINT = AttackPathsQueryDefinition(
         // Find roles that trust Glue service (already attached to existing dev endpoints)
         MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'glue.amazonaws.com'}})
 
-        WITH principal_paths + collect(DISTINCT path_target) AS paths
+        WITH principal_paths, collect(DISTINCT path_target) AS target_paths
+        WITH principal_paths + target_paths AS paths
         UNWIND paths AS p
         UNWIND nodes(p) AS n
 
@@ -1916,12 +1927,20 @@ AWS_IAM_PRIVESC_CREATE_ACCESS_KEY = AttackPathsQueryDefinition(
             OR act.value = '*'
         WITH DISTINCT aws, principal, stmt, path_principal
 
-        // Find target users that the principal can create access keys for
-        MATCH path_target = (aws)--(target_user:AWSUser)
+        // Pre-aggregate this statement's resource values into a list so the user
+        // match below is evaluated once per user (in-memory `any`) instead of
+        // building an (all-users x all-resource-items) cartesian product.
         MATCH (stmt)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)
-        WHERE res.value = '*'
-            OR res.value CONTAINS target_user.name
-            OR target_user.arn CONTAINS res.value
+        WITH aws, path_principal, collect(DISTINCT res.value) AS res_values
+        WITH aws, path_principal, res_values, ('*' IN res_values) AS res_wildcard
+
+        // Find target users that the principal can create access keys for.
+        // Bind name/arn once so the `any` predicate reads locals.
+        MATCH path_target = (aws)--(target_user:AWSUser)
+        WITH path_principal, path_target, res_values, res_wildcard,
+             target_user.name AS uname, target_user.arn AS uarn
+        WHERE res_wildcard
+           OR size([rv IN res_values WHERE rv CONTAINS uname OR uarn CONTAINS rv]) > 0
 
         WITH DISTINCT path_principal, path_target
         WITH collect(path_principal) + collect(path_target) AS paths
@@ -1964,16 +1983,24 @@ AWS_IAM_PRIVESC_DELETE_CREATE_ACCESS_KEY = AttackPathsQueryDefinition(
            OR act2.value = '*'
         WITH DISTINCT aws, principal, stmt, stmt2, path_principal
 
-        // Find target users that the principal can rotate access keys for
-        MATCH path_target = (aws)--(target_user:AWSUser)
+        // Pre-aggregate both statements' resource values into lists so the user
+        // match below is evaluated once per user (in-memory `any`) instead of
+        // building an (all-users x res x res2) cartesian product.
         MATCH (stmt)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)
-        WHERE res.value = '*'
-           OR res.value CONTAINS target_user.name
-           OR target_user.arn CONTAINS res.value
+        WITH aws, stmt2, path_principal, collect(DISTINCT res.value) AS res_values
         MATCH (stmt2)-[:HAS_RESOURCE]->(res2:AWSPolicyStatementResourceItem)
-        WHERE res2.value = '*'
-           OR res2.value CONTAINS target_user.name
-           OR target_user.arn CONTAINS res2.value
+        WITH aws, path_principal, res_values, collect(DISTINCT res2.value) AS res2_values
+        WITH aws, path_principal, res_values, res2_values,
+             ('*' IN res_values) AS res_wildcard,
+             ('*' IN res2_values) AS res2_wildcard
+
+        // Find target users that the principal can rotate access keys for.
+        // Bind name/arn once so the `any` predicates read locals.
+        MATCH path_target = (aws)--(target_user:AWSUser)
+        WITH path_principal, path_target, res_values, res_wildcard, res2_values, res2_wildcard,
+             target_user.name AS uname, target_user.arn AS uarn
+        WHERE (res_wildcard OR size([rv IN res_values WHERE rv CONTAINS uname OR uarn CONTAINS rv]) > 0)
+          AND (res2_wildcard OR size([rv IN res2_values WHERE rv CONTAINS uname OR uarn CONTAINS rv]) > 0)
 
         WITH DISTINCT path_principal, path_target
         WITH collect(path_principal) + collect(path_target) AS paths
@@ -2008,12 +2035,20 @@ AWS_IAM_PRIVESC_CREATE_LOGIN_PROFILE = AttackPathsQueryDefinition(
             OR act.value = '*'
         WITH DISTINCT aws, principal, stmt, path_principal
 
-        // Find target users that the principal can create login profiles for
-        MATCH path_target = (aws)--(target_user:AWSUser)
+        // Pre-aggregate this statement's resource values into a list so the user
+        // match below is evaluated once per user (in-memory `any`) instead of
+        // building an (all-users x all-resource-items) cartesian product.
         MATCH (stmt)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)
-        WHERE res.value = '*'
-            OR res.value CONTAINS target_user.name
-            OR target_user.arn CONTAINS res.value
+        WITH aws, path_principal, collect(DISTINCT res.value) AS res_values
+        WITH aws, path_principal, res_values, ('*' IN res_values) AS res_wildcard
+
+        // Find target users that the principal can create login profiles for.
+        // Bind name/arn once so the `any` predicate reads locals.
+        MATCH path_target = (aws)--(target_user:AWSUser)
+        WITH path_principal, path_target, res_values, res_wildcard,
+             target_user.name AS uname, target_user.arn AS uarn
+        WHERE res_wildcard
+           OR size([rv IN res_values WHERE rv CONTAINS uname OR uarn CONTAINS rv]) > 0
 
         WITH DISTINCT path_principal, path_target
         WITH collect(path_principal) + collect(path_target) AS paths
@@ -2086,12 +2121,20 @@ AWS_IAM_PRIVESC_UPDATE_LOGIN_PROFILE = AttackPathsQueryDefinition(
             OR act.value = '*'
         WITH DISTINCT aws, principal, stmt, path_principal
 
-        // Find target users that the principal can update login profiles for
-        MATCH path_target = (aws)--(target_user:AWSUser)
+        // Pre-aggregate this statement's resource values into a list so the user
+        // match below is evaluated once per user (in-memory `any`) instead of
+        // building an (all-users x all-resource-items) cartesian product.
         MATCH (stmt)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)
-        WHERE res.value = '*'
-            OR res.value CONTAINS target_user.name
-            OR target_user.arn CONTAINS res.value
+        WITH aws, path_principal, collect(DISTINCT res.value) AS res_values
+        WITH aws, path_principal, res_values, ('*' IN res_values) AS res_wildcard
+
+        // Find target users that the principal can update login profiles for.
+        // Bind name/arn once so the `any` predicate reads locals.
+        MATCH path_target = (aws)--(target_user:AWSUser)
+        WITH path_principal, path_target, res_values, res_wildcard,
+             target_user.name AS uname, target_user.arn AS uarn
+        WHERE res_wildcard
+           OR size([rv IN res_values WHERE rv CONTAINS uname OR uarn CONTAINS rv]) > 0
 
         WITH DISTINCT path_principal, path_target
         WITH collect(path_principal) + collect(path_target) AS paths
@@ -2322,12 +2365,21 @@ AWS_IAM_PRIVESC_UPDATE_ASSUME_ROLE_POLICY = AttackPathsQueryDefinition(
         // Collapse the action-item fan-out: one row per (statement chain), not per matching action
         WITH DISTINCT aws, stmt, path_principal
 
-        // Find target roles whose trust policy this statement's resource can target
-        MATCH path_target = (aws)--(target_role:AWSRole)
+        // Pre-aggregate this statement's resource values into a list so the role
+        // match below is evaluated once per role (in-memory `any`) instead of
+        // building an (all-roles x all-resource-items) cartesian product.
         MATCH (stmt)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)
-        WHERE res.value = '*'
-           OR res.value CONTAINS target_role.name
-           OR target_role.arn CONTAINS res.value
+        WITH aws, path_principal, collect(DISTINCT res.value) AS res_values
+        WITH aws, path_principal, res_values, ('*' IN res_values) AS res_wildcard
+
+        // Find target roles whose trust policy this statement's resource can target.
+        // Bind the role's name/arn once so the `any` predicate reads them from a
+        // local variable instead of re-reading the property store per resource.
+        MATCH path_target = (aws)--(target_role:AWSRole)
+        WITH path_principal, path_target, res_values, res_wildcard,
+             target_role.name AS rname, target_role.arn AS rarn
+        WHERE res_wildcard
+           OR size([rv IN res_values WHERE rv CONTAINS rname OR rarn CONTAINS rv]) > 0
 
         WITH DISTINCT path_principal, path_target
         WITH collect(path_principal) + collect(path_target) AS paths
@@ -2362,12 +2414,20 @@ AWS_IAM_PRIVESC_ADD_USER_TO_GROUP = AttackPathsQueryDefinition(
             OR act.value = '*'
         WITH DISTINCT aws, principal, stmt, path_principal
 
-        // Find target groups the principal can add users to
-        MATCH path_target = (aws)--(target_group:AWSGroup)
+        // Pre-aggregate this statement's resource values into a list so the group
+        // match below is evaluated once per group (in-memory `any`) instead of
+        // building an (all-groups x all-resource-items) cartesian product.
         MATCH (stmt)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)
-        WHERE res.value = '*'
-            OR res.value CONTAINS target_group.name
-            OR target_group.arn CONTAINS res.value
+        WITH aws, path_principal, collect(DISTINCT res.value) AS res_values
+        WITH aws, path_principal, res_values, ('*' IN res_values) AS res_wildcard
+
+        // Find target groups the principal can add users to.
+        // Bind name/arn once so the `any` predicate reads locals.
+        MATCH path_target = (aws)--(target_group:AWSGroup)
+        WITH path_principal, path_target, res_values, res_wildcard,
+             target_group.name AS gname, target_group.arn AS garn
+        WHERE res_wildcard
+           OR size([rv IN res_values WHERE rv CONTAINS gname OR garn CONTAINS rv]) > 0
 
         WITH DISTINCT path_principal, path_target
         WITH collect(path_principal) + collect(path_target) AS paths
@@ -2451,16 +2511,24 @@ AWS_IAM_PRIVESC_ATTACH_USER_POLICY_CREATE_ACCESS_KEY = AttackPathsQueryDefinitio
            OR act2.value = '*'
         WITH DISTINCT aws, principal, stmt, stmt2, path_principal
 
-        // Find target users the principal can attach policies to and create keys for
-        MATCH path_target = (aws)--(target_user:AWSUser)
+        // Pre-aggregate both statements' resource values into lists so the user
+        // match below is evaluated once per user (in-memory `any`) instead of
+        // building an (all-users x res x res2) cartesian product.
         MATCH (stmt)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)
-        WHERE res.value = '*'
-           OR res.value CONTAINS target_user.name
-           OR target_user.arn CONTAINS res.value
+        WITH aws, stmt2, path_principal, collect(DISTINCT res.value) AS res_values
         MATCH (stmt2)-[:HAS_RESOURCE]->(res2:AWSPolicyStatementResourceItem)
-        WHERE res2.value = '*'
-           OR res2.value CONTAINS target_user.name
-           OR target_user.arn CONTAINS res2.value
+        WITH aws, path_principal, res_values, collect(DISTINCT res2.value) AS res2_values
+        WITH aws, path_principal, res_values, res2_values,
+             ('*' IN res_values) AS res_wildcard,
+             ('*' IN res2_values) AS res2_wildcard
+
+        // Find target users the principal can attach policies to and create keys for.
+        // Bind name/arn once so the `any` predicates read locals.
+        MATCH path_target = (aws)--(target_user:AWSUser)
+        WITH path_principal, path_target, res_values, res_wildcard, res2_values, res2_wildcard,
+             target_user.name AS uname, target_user.arn AS uarn
+        WHERE (res_wildcard OR size([rv IN res_values WHERE rv CONTAINS uname OR uarn CONTAINS rv]) > 0)
+          AND (res2_wildcard OR size([rv IN res2_values WHERE rv CONTAINS uname OR uarn CONTAINS rv]) > 0)
 
         WITH DISTINCT path_principal, path_target
         WITH collect(path_principal) + collect(path_target) AS paths
@@ -2585,16 +2653,24 @@ AWS_IAM_PRIVESC_PUT_USER_POLICY_CREATE_ACCESS_KEY = AttackPathsQueryDefinition(
            OR act2.value = '*'
         WITH DISTINCT aws, principal, stmt, stmt2, path_principal
 
-        // Find target users the principal can put policies on and create keys for
-        MATCH path_target = (aws)--(target_user:AWSUser)
+        // Pre-aggregate both statements' resource values into lists so the user
+        // match below is evaluated once per user (in-memory `any`) instead of
+        // building an (all-users x res x res2) cartesian product.
         MATCH (stmt)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)
-        WHERE res.value = '*'
-           OR res.value CONTAINS target_user.name
-           OR target_user.arn CONTAINS res.value
+        WITH aws, stmt2, path_principal, collect(DISTINCT res.value) AS res_values
         MATCH (stmt2)-[:HAS_RESOURCE]->(res2:AWSPolicyStatementResourceItem)
-        WHERE res2.value = '*'
-           OR res2.value CONTAINS target_user.name
-           OR target_user.arn CONTAINS res2.value
+        WITH aws, path_principal, res_values, collect(DISTINCT res2.value) AS res2_values
+        WITH aws, path_principal, res_values, res2_values,
+             ('*' IN res_values) AS res_wildcard,
+             ('*' IN res2_values) AS res2_wildcard
+
+        // Find target users the principal can put policies on and create keys for.
+        // Bind name/arn once so the `any` predicates read locals.
+        MATCH path_target = (aws)--(target_user:AWSUser)
+        WITH path_principal, path_target, res_values, res_wildcard, res2_values, res2_wildcard,
+             target_user.name AS uname, target_user.arn AS uarn
+        WHERE (res_wildcard OR size([rv IN res_values WHERE rv CONTAINS uname OR uarn CONTAINS rv]) > 0)
+          AND (res2_wildcard OR size([rv IN res2_values WHERE rv CONTAINS uname OR uarn CONTAINS rv]) > 0)
 
         WITH DISTINCT path_principal, path_target
         WITH collect(path_principal) + collect(path_target) AS paths
@@ -2636,16 +2712,24 @@ AWS_IAM_PRIVESC_ATTACH_ROLE_POLICY_UPDATE_ASSUME_ROLE = AttackPathsQueryDefiniti
            OR act2.value = '*'
         WITH DISTINCT aws, principal, stmt, stmt2, path_principal
 
-        // Find target roles the principal can attach policies to and update trust policy for
-        MATCH path_target = (aws)--(target_role:AWSRole)
+        // Pre-aggregate both statements' resource values into lists so the role
+        // match below is evaluated once per role (in-memory `any`) instead of
+        // building an (all-roles x res x res2) cartesian product.
         MATCH (stmt)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)
-        WHERE res.value = '*'
-           OR res.value CONTAINS target_role.name
-           OR target_role.arn CONTAINS res.value
+        WITH aws, stmt2, path_principal, collect(DISTINCT res.value) AS res_values
         MATCH (stmt2)-[:HAS_RESOURCE]->(res2:AWSPolicyStatementResourceItem)
-        WHERE res2.value = '*'
-           OR res2.value CONTAINS target_role.name
-           OR target_role.arn CONTAINS res2.value
+        WITH aws, path_principal, res_values, collect(DISTINCT res2.value) AS res2_values
+        WITH aws, path_principal, res_values, res2_values,
+             ('*' IN res_values) AS res_wildcard,
+             ('*' IN res2_values) AS res2_wildcard
+
+        // Find target roles the principal can attach policies to and update trust
+        // policy for. Bind name/arn once so the `any` predicates read locals.
+        MATCH path_target = (aws)--(target_role:AWSRole)
+        WITH path_principal, path_target, res_values, res_wildcard, res2_values, res2_wildcard,
+             target_role.name AS rname, target_role.arn AS rarn
+        WHERE (res_wildcard OR size([rv IN res_values WHERE rv CONTAINS rname OR rarn CONTAINS rv]) > 0)
+          AND (res2_wildcard OR size([rv IN res2_values WHERE rv CONTAINS rname OR rarn CONTAINS rv]) > 0)
 
         WITH DISTINCT path_principal, path_target
         WITH collect(path_principal) + collect(path_target) AS paths
@@ -2687,17 +2771,31 @@ AWS_IAM_PRIVESC_CREATE_POLICY_VERSION_UPDATE_ASSUME_ROLE = AttackPathsQueryDefin
            OR act2.value = '*'
         WITH DISTINCT aws, principal, stmt, stmt2, path_principal
 
-        // Find target roles with customer-managed policies the principal can modify and update trust policy for
-        MATCH path_target = (aws)--(target_role:AWSRole)
+        // Pre-aggregate both statements' resource values into lists so the role
+        // and policy matches below are evaluated with an in-memory `any` instead
+        // of building an (all-roles x res2) x (policies x res) cartesian product.
         MATCH (stmt2)-[:HAS_RESOURCE]->(res2:AWSPolicyStatementResourceItem)
-        WHERE res2.value = '*'
-           OR res2.value CONTAINS target_role.name
-           OR target_role.arn CONTAINS res2.value
-        MATCH (target_role)-[:POLICY]->(target_policy:AWSPolicy)
-        WHERE target_policy.arn CONTAINS $provider_uid
+        WITH aws, stmt, path_principal, collect(DISTINCT res2.value) AS res2_values
         MATCH (stmt)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)
-        WHERE res.value = '*'
-           OR target_policy.arn CONTAINS res.value
+        WITH aws, path_principal, res2_values, collect(DISTINCT res.value) AS res_values
+        WITH aws, path_principal, res2_values, res_values,
+             ('*' IN res2_values) AS res2_wildcard,
+             ('*' IN res_values) AS res_wildcard
+
+        // Find target roles with customer-managed policies the principal can
+        // modify and update trust policy for. Bind name/arn once so the `any`
+        // predicates read locals instead of re-reading the property store.
+        MATCH path_target = (aws)--(target_role:AWSRole)
+        WITH path_principal, path_target, target_role, res_values, res_wildcard,
+             res2_values, res2_wildcard,
+             target_role.name AS rname, target_role.arn AS rarn
+        WHERE res2_wildcard
+           OR size([rv IN res2_values WHERE rv CONTAINS rname OR rarn CONTAINS rv]) > 0
+        MATCH (target_role)-[:POLICY]->(target_policy:AWSPolicy)
+        WITH path_principal, path_target, res_values, res_wildcard,
+             target_policy.arn AS parn
+        WHERE parn CONTAINS $provider_uid
+          AND (res_wildcard OR size([rv IN res_values WHERE parn CONTAINS rv]) > 0)
 
         WITH DISTINCT path_principal, path_target
         WITH collect(path_principal) + collect(path_target) AS paths
@@ -2739,16 +2837,24 @@ AWS_IAM_PRIVESC_PUT_ROLE_POLICY_UPDATE_ASSUME_ROLE = AttackPathsQueryDefinition(
            OR act2.value = '*'
         WITH DISTINCT aws, principal, stmt, stmt2, path_principal
 
-        // Find target roles the principal can put inline policies on and update trust policy for
-        MATCH path_target = (aws)--(target_role:AWSRole)
+        // Pre-aggregate both statements' resource values into lists so the role
+        // match below is evaluated once per role (in-memory `any`) instead of
+        // building an (all-roles x res x res2) cartesian product.
         MATCH (stmt)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)
-        WHERE res.value = '*'
-           OR res.value CONTAINS target_role.name
-           OR target_role.arn CONTAINS res.value
+        WITH aws, stmt2, path_principal, collect(DISTINCT res.value) AS res_values
         MATCH (stmt2)-[:HAS_RESOURCE]->(res2:AWSPolicyStatementResourceItem)
-        WHERE res2.value = '*'
-           OR res2.value CONTAINS target_role.name
-           OR target_role.arn CONTAINS res2.value
+        WITH aws, path_principal, res_values, collect(DISTINCT res2.value) AS res2_values
+        WITH aws, path_principal, res_values, res2_values,
+             ('*' IN res_values) AS res_wildcard,
+             ('*' IN res2_values) AS res2_wildcard
+
+        // Find target roles the principal can put inline policies on and update
+        // trust policy for. Bind name/arn once so the `any` predicates read locals.
+        MATCH path_target = (aws)--(target_role:AWSRole)
+        WITH path_principal, path_target, res_values, res_wildcard, res2_values, res2_wildcard,
+             target_role.name AS rname, target_role.arn AS rarn
+        WHERE (res_wildcard OR size([rv IN res_values WHERE rv CONTAINS rname OR rarn CONTAINS rv]) > 0)
+          AND (res2_wildcard OR size([rv IN res2_values WHERE rv CONTAINS rname OR rarn CONTAINS rv]) > 0)
 
         WITH DISTINCT path_principal, path_target
         WITH collect(path_principal) + collect(path_target) AS paths
@@ -3337,7 +3443,8 @@ AWS_SSM_PRIVESC_START_SESSION = AttackPathsQueryDefinition(
         // Find EC2 instances with attached roles (targets for credential theft via IMDS)
         MATCH path_target = (aws)--(ec2:EC2Instance)-[:STS_ASSUMEROLE_ALLOW]->(target_role:AWSRole)
 
-        WITH principal_paths + collect(DISTINCT path_target) AS paths
+        WITH principal_paths, collect(DISTINCT path_target) AS target_paths
+        WITH principal_paths + target_paths AS paths
         UNWIND paths AS p
         UNWIND nodes(p) AS n
 
@@ -3373,7 +3480,8 @@ AWS_SSM_PRIVESC_SEND_COMMAND = AttackPathsQueryDefinition(
         // Find EC2 instances with attached roles (targets for credential theft via IMDS)
         MATCH path_target = (aws)--(ec2:EC2Instance)-[:STS_ASSUMEROLE_ALLOW]->(target_role:AWSRole)
 
-        WITH principal_paths + collect(DISTINCT path_target) AS paths
+        WITH principal_paths, collect(DISTINCT path_target) AS target_paths
+        WITH principal_paths + target_paths AS paths
         UNWIND paths AS p
         UNWIND nodes(p) AS n
 

@@ -9,6 +9,7 @@ from prowler.config.schema.aws import AWSProviderConfig
 from prowler.config.schema.azure import AzureProviderConfig
 from prowler.config.schema.base import ProviderConfigBase
 from prowler.config.schema.cloudflare import CloudflareProviderConfig
+from prowler.config.schema.e2enetworks import E2eNetworksProviderConfig
 from prowler.config.schema.gcp import GCPProviderConfig
 from prowler.config.schema.github import GitHubProviderConfig
 from prowler.config.schema.kubernetes import KubernetesProviderConfig
@@ -27,6 +28,7 @@ SCHEMAS: dict[str, type[ProviderConfigBase]] = {
     "github": GitHubProviderConfig,
     "mongodbatlas": MongoDBAtlasProviderConfig,
     "cloudflare": CloudflareProviderConfig,
+    "e2enetworks": E2eNetworksProviderConfig,
     "vercel": VercelProviderConfig,
     "okta": OktaProviderConfig,
     "alibabacloud": AlibabaCloudProviderConfig,

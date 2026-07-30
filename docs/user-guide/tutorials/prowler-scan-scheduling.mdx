@@ -1,6 +1,7 @@
 ---
 title: 'Scan Scheduling'
-description: 'Create, edit, and monitor recurring scans in Prowler Cloud and Enterprise.'
+sidebarTitle: 'Scheduling'
+description: 'Create, edit, and monitor recurring scans in Prowler Cloud and Prowler Private Cloud.'
 ---
 
 import { VersionBadge } from "/snippets/version-badge.mdx"
@@ -21,11 +22,11 @@ Before creating or editing scan schedules, ensure that:
 
 ## Schedule Options
 
-A Prowler Cloud or Enterprise subscription supports the following custom recurring schedule options. Prowler self-hosted runs a daily scan automatically and does not expose custom cadence controls.
+A Prowler Cloud or Prowler Private Cloud subscription supports the following custom recurring schedule options. Prowler Local Server runs a daily scan automatically and does not expose custom cadence controls.
 
-| Schedule Option | Description | Cloud & Enterprise | Self-Hosted |
-|-----------------|-------------|--------------------|-------------|
-| Daily | Runs one scan every day at the selected time. | Yes | Yes |
+| Schedule Option | Description | Prowler Cloud & Prowler Private Cloud | Prowler Local Server |
+|-----------------|-------------|---------------------------------------|----------------------|
+| Daily | Runs one scan every day at the selected time. | Yes | Automatic |
 | Every 48 hours | Runs one scan every 48 hours, anchored to the selected time. | Yes | — |
 | Weekly | Runs one scan every week on the selected day and time. | Yes | — |
 | Monthly | Runs one scan every month on the selected day, from day 1 to day 28. | Yes | — |

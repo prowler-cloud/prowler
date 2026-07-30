@@ -19,6 +19,7 @@ import {
 import { ScanEntity } from "@/types/scans";
 
 import { getComplianceIcon } from "../icons";
+
 import { ComplianceDownloadContainer } from "./compliance-download-container";
 
 interface ComplianceCardProps {
@@ -118,7 +119,7 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
         <div className="flex w-full flex-col gap-3">
           <div className="flex items-center gap-3 pr-9">
             {getComplianceIcon(title) && (
-              <div className="flex h-10 w-10 min-w-10 shrink-0 items-center justify-center rounded-md border border-gray-300 bg-white">
+              <div className="border-border-neutral-tertiary flex h-10 w-10 min-w-10 shrink-0 items-center justify-center rounded-md border bg-slate-50">
                 <Image
                   src={getComplianceIcon(title)}
                   alt={`${title} logo`}
@@ -131,7 +132,7 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
             <div className="flex min-w-0 flex-1 flex-col">
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <h4 className="text-small truncate leading-5 font-bold">
+                  <h4 className="truncate text-sm leading-5 font-bold">
                     {formatTitle(title)}
                     {version ? ` - ${version}` : ""}
                   </h4>

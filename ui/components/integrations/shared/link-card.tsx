@@ -3,10 +3,8 @@
 import { ExternalLinkIcon, LucideIcon } from "lucide-react";
 import Link from "next/link";
 
-import { Button } from "@/components/shadcn";
-import { CustomLink } from "@/components/ui/custom/custom-link";
-
-import { Card, CardContent, CardHeader } from "../../shadcn";
+import { Button, Card, CardContent, CardHeader } from "@/components/shadcn";
+import { CustomLink } from "@/components/shadcn/custom/custom-link";
 
 interface LinkCardProps {
   icon: LucideIcon;
@@ -34,7 +32,7 @@ export const LinkCard = ({
       <CardHeader>
         <div className="flex w-full flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
-            <div className="dark:bg-prowler-blue-800 flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100">
+            <div className="bg-bg-neutral-tertiary flex h-10 w-10 items-center justify-center rounded-lg">
               <Icon size={24} className="text-gray-700 dark:text-gray-200" />
             </div>
             <div className="flex flex-col gap-1">

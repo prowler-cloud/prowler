@@ -9,11 +9,11 @@ import type {
 } from "@/components/providers/wizard/types";
 import { Badge } from "@/components/shadcn";
 import { Checkbox } from "@/components/shadcn/checkbox/checkbox";
-import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
-import { DateWithTime, EntityInfo } from "@/components/ui/entities";
-import { DataTableColumnHeader } from "@/components/ui/table";
-import { DataTableExpandAllToggle } from "@/components/ui/table/data-table-expand-all-toggle";
-import { DataTableExpandableCell } from "@/components/ui/table/data-table-expandable-cell";
+import { CodeSnippet } from "@/components/shadcn/code-snippet/code-snippet";
+import { DateWithTime, EntityInfo } from "@/components/shadcn/entities";
+import { DataTableColumnHeader } from "@/components/shadcn/table";
+import { DataTableExpandAllToggle } from "@/components/shadcn/table/data-table-expand-all-toggle";
+import { DataTableExpandableCell } from "@/components/shadcn/table/data-table-expandable-cell";
 import {
   isProvidersOrganizationRow,
   PROVIDERS_GROUP_KIND,
@@ -31,6 +31,7 @@ import type {
 } from "@/types/schedules";
 
 import { LinkToScans } from "../link-to-scans";
+
 import { DataTableRowActions } from "./data-table-row-actions";
 
 interface GroupNameChipsProps {
@@ -198,6 +199,11 @@ export function getColumnProviders(
               cloudProvider={provider.attributes.provider}
               entityAlias={provider.attributes.alias}
               entityId={provider.attributes.uid}
+              nameAction={
+                provider.attributes.is_dynamic ? (
+                  <Badge variant="info">Custom</Badge>
+                ) : undefined
+              }
             />
           </DataTableExpandableCell>
         );

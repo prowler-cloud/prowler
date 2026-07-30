@@ -62,6 +62,7 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Action | Skill |
 |--------|-------|
 | Add changelog entry for a PR or feature | `prowler-changelog` |
+| Adding ConfigRequirements guardrails to compliance requirements | `prowler-compliance` |
 | Adding DRF pagination or permissions | `django-drf` |
 | Adding a compliance output formatter (per-provider class + table dispatcher) | `prowler-compliance` |
 | Adding indexes or constraints to database tables | `django-migration-psql` |
@@ -84,6 +85,7 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Creating ViewSets, serializers, or filters in api/ | `django-drf` |
 | Creating Zod schemas | `zod-4` |
 | Creating a git commit | `prowler-commit` |
+| Creating a universal (multi-provider) compliance framework | `prowler-compliance` |
 | Creating new checks | `prowler-sdk-check` |
 | Creating new skills | `skill-creator` |
 | Creating or reviewing Django migrations | `django-migration-psql` |

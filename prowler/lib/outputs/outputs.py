@@ -24,6 +24,8 @@ def stdout_report(finding, color, verbose, status, fix, provider=None):
         details = finding.location
     elif finding.check_metadata.Provider == "nhn":
         details = finding.location
+    elif finding.check_metadata.Provider == "e2enetworks":
+        details = finding.location
     elif finding.check_metadata.Provider == "stackit":
         details = finding.location
     elif finding.check_metadata.Provider == "llm":
@@ -33,6 +35,8 @@ def stdout_report(finding, color, verbose, status, fix, provider=None):
     elif finding.check_metadata.Provider == "oraclecloud":
         details = finding.region
     elif finding.check_metadata.Provider == "alibabacloud":
+        details = finding.region
+    elif finding.check_metadata.Provider == "huaweicloud":
         details = finding.region
     elif finding.check_metadata.Provider == "openstack":
         details = finding.region

@@ -19,9 +19,13 @@ import "@/lib/env";
 
 import * as Sentry from "@sentry/nextjs";
 
-import { readEnv } from "@/lib/runtime-env";
+import { readGatedEnv } from "@/lib/integrations";
 
-const sentryDsn = readEnv("UI_SENTRY_DSN", "NEXT_PUBLIC_SENTRY_DSN");
+const sentryDsn = readGatedEnv(
+  "UI_SENTRY_ENABLED",
+  "UI_SENTRY_DSN",
+  "NEXT_PUBLIC_SENTRY_DSN",
+);
 
 export async function register() {
   // Skip Sentry initialization if DSN is not configured

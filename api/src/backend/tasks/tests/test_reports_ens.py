@@ -2,9 +2,11 @@ import io
 from unittest.mock import Mock, patch
 
 import pytest
-from reportlab.platypus import PageBreak, Paragraph, Table
+from reportlab.platypus import Image, PageBreak, Paragraph, Table
 from tasks.jobs.reports import FRAMEWORK_REGISTRY, ComplianceData, RequirementData
+from tasks.jobs.reports import ens as ens_report_module
 from tasks.jobs.reports.ens import ENSReportGenerator
+from tasks.tests.report_test_helpers import patch_chart_helpers
 
 
 # Use string status values directly to avoid Django DB initialization
@@ -27,6 +29,15 @@ def ens_generator():
     """Create an ENSReportGenerator instance for testing."""
     config = FRAMEWORK_REGISTRY["ens"]
     return ENSReportGenerator(config)
+
+
+@pytest.fixture
+def patched_ens_charts(monkeypatch):
+    return patch_chart_helpers(
+        monkeypatch,
+        ens_report_module,
+        ("create_horizontal_bar_chart", "create_radar_chart"),
+    )
 
 
 @pytest.fixture
@@ -355,7 +366,7 @@ class TestENSChartsSection:
     """Test suite for ENS charts section generation."""
 
     def test_charts_section_has_page_breaks(
-        self, ens_generator, basic_ens_compliance_data
+        self, ens_generator, basic_ens_compliance_data, patched_ens_charts
     ):
         """Test that charts section has page breaks between charts."""
         basic_ens_compliance_data.requirements = []
@@ -365,9 +376,25 @@ class TestENSChartsSection:
 
         page_breaks = [e for e in elements if isinstance(e, PageBreak)]
         assert len(page_breaks) >= 2  # At least 2 page breaks for different charts
+        assert any(isinstance(e, Image) for e in elements)
+        assert len(patched_ens_charts["create_horizontal_bar_chart"]) == 1
+        assert len(patched_ens_charts["create_radar_chart"]) == 1
+
+        marco_kwargs = patched_ens_charts["create_horizontal_bar_chart"][0]["kwargs"]
+        assert marco_kwargs["labels"] == []
+        assert marco_kwargs["values"] == []
+
+        radar_kwargs = patched_ens_charts["create_radar_chart"][0]["kwargs"]
+        assert radar_kwargs["labels"] == ens_report_module.DIMENSION_NAMES
+        assert radar_kwargs["values"] == [100, 100, 100, 100, 100]
+        assert radar_kwargs["color"] == "#2196F3"
 
     def test_charts_section_has_marco_category_chart(
-        self, ens_generator, basic_ens_compliance_data, mock_ens_requirement_attribute
+        self,
+        ens_generator,
+        basic_ens_compliance_data,
+        mock_ens_requirement_attribute,
+        patched_ens_charts,
     ):
         """Test that charts section contains Marco/Categoría chart."""
         basic_ens_compliance_data.requirements = [
@@ -391,9 +418,18 @@ class TestENSChartsSection:
         paragraphs = [e for e in elements if isinstance(e, Paragraph)]
         content = " ".join(str(p.text) for p in paragraphs)
         assert "Marco" in content or "Categoría" in content
+        assert any(isinstance(e, Image) for e in elements)
+        chart_kwargs = patched_ens_charts["create_horizontal_bar_chart"][0]["kwargs"]
+        assert chart_kwargs["labels"] == ["Operacional - Gestión de incidentes"]
+        assert chart_kwargs["values"] == [100.0]
+        assert chart_kwargs["xlabel"] == "Porcentaje de Cumplimiento (%)"
 
     def test_charts_section_has_dimensions_radar(
-        self, ens_generator, basic_ens_compliance_data, mock_ens_requirement_attribute
+        self,
+        ens_generator,
+        basic_ens_compliance_data,
+        mock_ens_requirement_attribute,
+        patched_ens_charts,
     ):
         """Test that charts section contains dimensions radar chart."""
         basic_ens_compliance_data.requirements = [
@@ -417,9 +453,17 @@ class TestENSChartsSection:
         paragraphs = [e for e in elements if isinstance(e, Paragraph)]
         content = " ".join(str(p.text) for p in paragraphs)
         assert "Dimensiones" in content or "dimensiones" in content.lower()
+        radar_kwargs = patched_ens_charts["create_radar_chart"][0]["kwargs"]
+        assert radar_kwargs["labels"] == ens_report_module.DIMENSION_NAMES
+        assert radar_kwargs["values"] == [100, 100, 100.0, 100.0, 100]
+        assert radar_kwargs["color"] == "#2196F3"
 
     def test_charts_section_has_tipo_distribution(
-        self, ens_generator, basic_ens_compliance_data, mock_ens_requirement_attribute
+        self,
+        ens_generator,
+        basic_ens_compliance_data,
+        mock_ens_requirement_attribute,
+        patched_ens_charts,
     ):
         """Test that charts section contains tipo distribution."""
         basic_ens_compliance_data.requirements = [
@@ -443,6 +487,8 @@ class TestENSChartsSection:
         paragraphs = [e for e in elements if isinstance(e, Paragraph)]
         content = " ".join(str(p.text) for p in paragraphs)
         assert "Tipo" in content or "tipo" in content.lower()
+        assert len(patched_ens_charts["create_horizontal_bar_chart"]) == 1
+        assert len(patched_ens_charts["create_radar_chart"]) == 1
 
 
 # =============================================================================
@@ -829,7 +875,11 @@ class TestENSDimensionHandling:
     """Test suite for ENS security dimension handling."""
 
     def test_dimensions_as_list(
-        self, ens_generator, basic_ens_compliance_data, mock_ens_requirement_attribute
+        self,
+        ens_generator,
+        basic_ens_compliance_data,
+        mock_ens_requirement_attribute,
+        patched_ens_charts,
     ):
         """Test handling dimensions as a list."""
         # mock_ens_requirement_attribute has Dimensiones as list
@@ -837,9 +887,9 @@ class TestENSDimensionHandling:
             RequirementData(
                 id="REQ-001",
                 description="Test requirement",
-                status=StatusChoices.PASS,
-                passed_findings=10,
-                failed_findings=0,
+                status=StatusChoices.FAIL,
+                passed_findings=0,
+                failed_findings=10,
                 total_findings=10,
             ),
         ]
@@ -854,12 +904,16 @@ class TestENSDimensionHandling:
             basic_ens_compliance_data
         )
         assert isinstance(chart_buffer, io.BytesIO)
+        chart_kwargs = patched_ens_charts["create_radar_chart"][0]["kwargs"]
+        assert chart_kwargs["labels"] == ens_report_module.DIMENSION_NAMES
+        assert chart_kwargs["values"] == [100, 100, 0.0, 0.0, 100]
 
     def test_dimensions_as_string(
         self,
         ens_generator,
         basic_ens_compliance_data,
         mock_ens_requirement_attribute_medio,
+        patched_ens_charts,
     ):
         """Test handling dimensions as comma-separated string."""
         # mock_ens_requirement_attribute_medio has Dimensiones as string
@@ -867,9 +921,9 @@ class TestENSDimensionHandling:
             RequirementData(
                 id="REQ-001",
                 description="Test requirement",
-                status=StatusChoices.PASS,
-                passed_findings=10,
-                failed_findings=0,
+                status=StatusChoices.FAIL,
+                passed_findings=0,
+                failed_findings=10,
                 total_findings=10,
             ),
         ]
@@ -884,12 +938,16 @@ class TestENSDimensionHandling:
             basic_ens_compliance_data
         )
         assert isinstance(chart_buffer, io.BytesIO)
+        chart_kwargs = patched_ens_charts["create_radar_chart"][0]["kwargs"]
+        assert chart_kwargs["labels"] == ens_report_module.DIMENSION_NAMES
+        assert chart_kwargs["values"] == [0.0, 0.0, 100, 100, 100]
 
     def test_dimensions_empty(
         self,
         ens_generator,
         basic_ens_compliance_data,
         mock_ens_requirement_attribute_opcional,
+        patched_ens_charts,
     ):
         """Test handling empty dimensions."""
         # mock_ens_requirement_attribute_opcional has empty Dimensiones
@@ -916,6 +974,9 @@ class TestENSDimensionHandling:
             basic_ens_compliance_data
         )
         assert isinstance(chart_buffer, io.BytesIO)
+        chart_kwargs = patched_ens_charts["create_radar_chart"][0]["kwargs"]
+        assert chart_kwargs["labels"] == ens_report_module.DIMENSION_NAMES
+        assert chart_kwargs["values"] == [100, 100, 100, 100, 100]
 
 
 # =============================================================================
@@ -1061,7 +1122,11 @@ class TestENSMarcoCategoryChart:
     """Test suite for ENS Marco/Categoría chart."""
 
     def test_marco_category_chart_creation(
-        self, ens_generator, basic_ens_compliance_data, mock_ens_requirement_attribute
+        self,
+        ens_generator,
+        basic_ens_compliance_data,
+        mock_ens_requirement_attribute,
+        patched_ens_charts,
     ):
         """Test that Marco/Categoría chart is created successfully."""
         basic_ens_compliance_data.requirements = [
@@ -1086,9 +1151,17 @@ class TestENSMarcoCategoryChart:
 
         assert isinstance(chart_buffer, io.BytesIO)
         assert chart_buffer.getvalue()  # Not empty
+        chart_kwargs = patched_ens_charts["create_horizontal_bar_chart"][0]["kwargs"]
+        assert chart_kwargs["labels"] == ["Operacional - Gestión de incidentes"]
+        assert chart_kwargs["values"] == [100.0]
+        assert chart_kwargs["xlabel"] == "Porcentaje de Cumplimiento (%)"
 
     def test_marco_category_chart_excludes_manual(
-        self, ens_generator, basic_ens_compliance_data, mock_ens_requirement_attribute
+        self,
+        ens_generator,
+        basic_ens_compliance_data,
+        mock_ens_requirement_attribute,
+        patched_ens_charts,
     ):
         """Test that manual requirements are excluded from chart."""
         basic_ens_compliance_data.requirements = [
@@ -1123,6 +1196,9 @@ class TestENSMarcoCategoryChart:
             basic_ens_compliance_data
         )
         assert isinstance(chart_buffer, io.BytesIO)
+        chart_kwargs = patched_ens_charts["create_horizontal_bar_chart"][0]["kwargs"]
+        assert chart_kwargs["labels"] == ["Operacional - Gestión de incidentes"]
+        assert chart_kwargs["values"] == [100.0]
 
 
 # =============================================================================

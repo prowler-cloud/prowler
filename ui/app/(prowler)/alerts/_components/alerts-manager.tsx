@@ -15,12 +15,10 @@ import {
   ALERT_TRIGGER_KINDS,
   type AlertRule,
 } from "@/app/(prowler)/alerts/_types";
-import { Button } from "@/components/shadcn";
+import { Button, useToast } from "@/components/shadcn";
 import { Modal } from "@/components/shadcn/modal";
-import { useToast } from "@/components/ui";
 import { DOCS_URLS } from "@/lib/external-urls";
-import type { MetaDataProps } from "@/types";
-import type { ScanEntity } from "@/types";
+import type { MetaDataProps, ScanEntity } from "@/types";
 import type { ProviderProps } from "@/types/providers";
 
 import { toAlertPayload } from "../_lib/alert-adapter";
@@ -29,6 +27,7 @@ import type {
   AlertFormSubmitResult,
   AlertFormValues,
 } from "../_types/alert-form";
+
 import { AlertFormModal } from "./alert-form-modal";
 import { AlertsEmptyState } from "./alerts-empty-state";
 import { AlertsTable } from "./alerts-table";

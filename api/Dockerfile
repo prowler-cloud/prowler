@@ -102,7 +102,9 @@ ENV PATH="/home/prowler/.local/bin:$PATH"
 RUN uv sync --locked --no-install-project && \
     rm -rf ~/.cache/uv
 
-RUN .venv/bin/python .venv/lib/python3.12/site-packages/prowler/providers/m365/lib/powershell/m365_powershell.py
+# Invoked as a module so the base image's Python minor version is not baked
+# into a site-packages path.
+RUN .venv/bin/python -m prowler.providers.m365.lib.powershell.m365_powershell
 
 USER root
 
@@ -113,6 +115,7 @@ RUN apt-get purge -y --auto-remove \
     make \
     libxml2-dev \
     libxmlsec1-dev \
+    libxmlsec1-openssl \
     pkg-config \
     libtool \
     libxslt1-dev \

@@ -1,0 +1,36 @@
+{
+  "Provider": "e2enetworks",
+  "CheckID": "database_cluster_ip_whitelist_configured",
+  "CheckTitle": "E2E Networks database clusters with public IPs have IP whitelisting configured",
+  "CheckType": [],
+  "ServiceName": "database",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "database",
+  "Description": "**E2E Networks database clusters** that expose a public IP should restrict connectivity through an **IP whitelist** instead of accepting connections from any address (`0.0.0.0/0`).",
+  "Risk": "Publicly exposed database clusters without IP whitelisting accept connections from **any source on the internet**, greatly increasing the risk of unauthorized access and data exfiltration.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.e2enetworks.com/api/myaccount/database/rds/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure an **IP whitelist** on publicly exposed database clusters to allow only trusted source ranges, or move the cluster onto private networking.",
+      "Url": "https://hub.prowler.com/check/database_cluster_ip_whitelist_configured"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

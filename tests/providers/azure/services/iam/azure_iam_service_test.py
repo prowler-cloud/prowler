@@ -30,7 +30,9 @@ class Test_IAM_get_roles:
 
         builtin, custom = iam._get_roles()
 
-        mock_client.role_definitions.list.assert_called_once()
+        mock_client.role_definitions.list.assert_called_once_with(
+            scope=f"/subscriptions/{AZURE_SUBSCRIPTION_ID}"
+        )
         assert AZURE_SUBSCRIPTION_ID in builtin
         assert AZURE_SUBSCRIPTION_ID in custom
 
@@ -55,7 +57,9 @@ class Test_IAM_get_roles:
 
         builtin, custom = iam._get_roles()
 
-        mock_client.role_definitions.list.assert_called_once()
+        mock_client.role_definitions.list.assert_called_once_with(
+            scope=f"/subscriptions/{AZURE_SUBSCRIPTION_ID}"
+        )
         assert AZURE_SUBSCRIPTION_ID in builtin
         assert AZURE_SUBSCRIPTION_ID in custom
 
@@ -80,7 +84,9 @@ class Test_IAM_get_roles:
 
         builtin, custom = iam._get_roles()
 
-        mock_client.role_definitions.list.assert_called_once()
+        mock_client.role_definitions.list.assert_called_once_with(
+            scope=f"/subscriptions/{AZURE_SUBSCRIPTION_ID}"
+        )
         assert AZURE_SUBSCRIPTION_ID in builtin
         assert AZURE_SUBSCRIPTION_ID in custom
 
@@ -108,7 +114,9 @@ class Test_IAM_get_role_assignments:
 
         result = iam._get_role_assignments()
 
-        mock_client.role_assignments.list_for_subscription.assert_called_once()
+        mock_client.role_assignments.list_for_subscription.assert_called_once_with(
+            filter="atScope()"
+        )
         assert AZURE_SUBSCRIPTION_ID in result
 
     def test_get_role_assignments_with_resource_group(self):
@@ -133,7 +141,9 @@ class Test_IAM_get_role_assignments:
 
         result = iam._get_role_assignments()
 
-        mock_client.role_assignments.list_for_subscription.assert_called_once()
+        mock_client.role_assignments.list_for_subscription.assert_called_once_with(
+            filter="atScope()"
+        )
         assert AZURE_SUBSCRIPTION_ID in result
 
     def test_get_role_assignments_empty_resource_group_for_subscription(self):
@@ -158,5 +168,7 @@ class Test_IAM_get_role_assignments:
 
         result = iam._get_role_assignments()
 
-        mock_client.role_assignments.list_for_subscription.assert_called_once()
+        mock_client.role_assignments.list_for_subscription.assert_called_once_with(
+            filter="atScope()"
+        )
         assert AZURE_SUBSCRIPTION_ID in result

@@ -2,6 +2,7 @@ import sys
 from io import TextIOWrapper
 
 import markdown
+from markupsafe import escape
 
 from prowler.config.config import (
     html_logo_url,
@@ -1397,6 +1398,46 @@ class HTML(Output):
             return ""
 
     @staticmethod
+    def get_e2enetworks_assessment_summary(provider: Provider) -> str:
+        """Get the HTML assessment summary for the E2E Networks provider."""
+        try:
+            locations = escape(", ".join(provider.identity.locations))
+            project_id = escape(str(provider.identity.project_id))
+            return f"""
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            E2E Networks Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>Project ID:</b> {project_id}
+                            </li>
+                            <li class="list-group-item">
+                                <b>Locations:</b> {locations}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            E2E Networks Credentials
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>Authentication:</b> API Key + Bearer Token
+                            </li>
+                        </ul>
+                    </div>
+                </div>"""
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
+
+    @staticmethod
     def get_vercel_assessment_summary(provider: Provider) -> str:
         """
         get_vercel_assessment_summary gets the HTML assessment summary for the Vercel provider
@@ -1632,6 +1673,78 @@ class HTML(Output):
                         <ul class="list-group list-group-flush">{credentials_items}
                         </ul>
                     </div>
+                </div>"""
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
+
+    @staticmethod
+    def get_huaweicloud_assessment_summary(provider: Provider) -> str:
+        """
+        get_huaweicloud_assessment_summary gets the HTML assessment summary for the Huawei Cloud provider
+
+        Args:
+            provider (Provider): the Huawei Cloud provider object
+
+        Returns:
+            str: HTML assessment summary for the Huawei Cloud provider
+        """
+        try:
+            profile = (
+                provider.identity.profile
+                if provider.identity.profile is not None
+                else "default"
+            )
+            if isinstance(provider.identity.regions, set):
+                audited_regions = ", ".join(sorted(provider.identity.regions))
+            elif not provider.identity.regions:
+                audited_regions = "All Regions"
+            else:
+                audited_regions = ", ".join(provider.identity.regions)
+            return f"""
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            Huawei Cloud Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>Account ID:</b> {provider.identity.account_id}
+                            </li>
+                            <li class="list-group-item">
+                                <b>Account Name:</b> {provider.identity.account_name}
+                            </li>
+                            <li class="list-group-item">
+                                <b>Profile:</b> {profile}
+                            </li>
+                            <li class="list-group-item">
+                                <b>Audited Regions:</b> {audited_regions}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        Huawei Cloud Credentials
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <b>Domain ID:</b> {provider.identity.domain_id}
+                        </li>
+                        <li class="list-group-item">
+                            <b>User ID:</b> {provider.identity.user_id}
+                        </li>
+                        <li class="list-group-item">
+                            <b>User Name:</b> {provider.identity.user_name}
+                        </li>
+                        <li class="list-group-item">
+                            <b>Identity Type:</b> {provider.identity.identity_type}
+                        </li>
+                    </ul>
+                </div>
                 </div>"""
         except Exception as error:
             logger.error(

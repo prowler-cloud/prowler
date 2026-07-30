@@ -26,7 +26,7 @@ vi.mock("@/actions/schedules", () => ({
   updateSchedulesBulk: updateSchedulesBulkMock,
 }));
 
-vi.mock("@/components/ui/toast", () => ({
+vi.mock("@/components/shadcn/toast", () => ({
   toast: toastMock,
 }));
 
@@ -40,7 +40,7 @@ vi.mock("@/components/icons/providers-badge/provider-type-icon", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/entities", () => ({
+vi.mock("@/components/shadcn/entities", () => ({
   EntityInfo: ({
     badge,
     cloudProvider,

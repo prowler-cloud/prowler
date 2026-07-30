@@ -24,6 +24,9 @@ const {
   mockNotificationIndicator,
   mockUpdateFindingTriage,
   mockLoadLatestFindingTriageNote,
+  mockRequestPanelChatMessage,
+  mockIsCloud,
+  mockCurrentLighthouseContext,
 } = vi.hoisted(() => ({
   mockGetComplianceIcon: vi.fn((_: string) => null as string | null),
   mockGetCompliancesOverview: vi.fn(),
@@ -33,6 +36,23 @@ const {
   mockNotificationIndicator: vi.fn(),
   mockUpdateFindingTriage: vi.fn(),
   mockLoadLatestFindingTriageNote: vi.fn(),
+  mockRequestPanelChatMessage: vi.fn(),
+  mockIsCloud: vi.fn(() => true),
+  mockCurrentLighthouseContext: {
+    schemaVersion: 1,
+    transport: "inline",
+    items: [
+      {
+        kind: "finding",
+        id: "finding-1",
+        source: "focused",
+        scopeKey: "/findings",
+        label: "S3 Check",
+        findingId: "finding-1",
+        checkId: "s3_check",
+      },
+    ],
+  },
 }));
 
 vi.mock("next/navigation", () => ({
@@ -64,11 +84,12 @@ vi.mock("next/link", () => ({
 }));
 
 // Mock the entire shadcn barrel to avoid auth import chain
-vi.mock("@/components/shadcn", () => {
+vi.mock("@/components/shadcn", async (importOriginal) => {
   const Passthrough = ({ children }: { children?: ReactNode }) => (
     <>{children}</>
   );
   return {
+    ...(await importOriginal<Record<string, unknown>>()),
     Badge: ({
       children,
       className,
@@ -129,7 +150,8 @@ vi.mock("@/components/shadcn", () => {
   };
 });
 
-vi.mock("@/components/shadcn/card/card", () => ({
+vi.mock("@/components/shadcn/card/card", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   Card: ({ children, variant }: { children: ReactNode; variant?: string }) => (
     <div data-slot="card" data-variant={variant}>
       {children}
@@ -272,7 +294,7 @@ vi.mock("@/components/icons/services/IconServices", () => ({
   JiraIcon: () => null,
 }));
 
-vi.mock("@/components/ui/code-snippet/code-snippet", () => ({
+vi.mock("@/components/shadcn/code-snippet/code-snippet", () => ({
   CodeSnippet: ({
     value,
     formatter,
@@ -291,11 +313,11 @@ vi.mock("@/components/ui/code-snippet/code-snippet", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/entities/date-with-time", () => ({
+vi.mock("@/components/shadcn/entities/date-with-time", () => ({
   DateWithTime: ({ dateTime }: { dateTime: string }) => <span>{dateTime}</span>,
 }));
 
-vi.mock("@/components/ui/entities/entity-info", () => ({
+vi.mock("@/components/shadcn/entities/entity-info", () => ({
   EntityInfo: ({
     nameAction,
     idAction,
@@ -313,7 +335,7 @@ vi.mock("@/components/ui/entities/entity-info", () => ({
     ) : null,
 }));
 
-vi.mock("@/components/ui/table", () => ({
+vi.mock("@/components/shadcn/table", () => ({
   Table: ({ children }: { children: ReactNode }) => <table>{children}</table>,
   TableBody: ({ children }: { children: ReactNode }) => (
     <tbody>{children}</tbody>
@@ -332,13 +354,13 @@ vi.mock("@/components/ui/table", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/table/severity-badge", () => ({
+vi.mock("@/components/shadcn/table/severity-badge", () => ({
   SeverityBadge: ({ severity }: { severity: string }) => (
     <span>{severity}</span>
   ),
 }));
 
-vi.mock("@/components/ui/table/status-finding-badge", () => ({
+vi.mock("@/components/shadcn/table/status-finding-badge", () => ({
   FindingStatus: {},
   StatusFindingBadge: ({ status }: { status: string }) => <span>{status}</span>,
 }));
@@ -354,6 +376,20 @@ vi.mock("@/lib/region-flags", () => ({
 vi.mock("@/lib/date-utils", () => ({
   getFailingForLabel: vi.fn(() => "2 days"),
   formatDuration: vi.fn(() => "5m"),
+}));
+
+vi.mock("@/lib/shared/env", () => ({
+  isCloud: mockIsCloud,
+}));
+
+vi.mock("@/app/(prowler)/lighthouse/_lib/panel-chat-store", () => ({
+  requestPanelChatMessage: mockRequestPanelChatMessage,
+}));
+
+vi.mock("@/hooks/use-lighthouse-context", () => ({
+  useLighthouseCurrentContext: () => ({
+    context: mockCurrentLighthouseContext,
+  }),
 }));
 
 vi.mock("@/lib/utils", () => ({
@@ -482,6 +518,7 @@ vi.mock("../../muted", () => ({
 // ---------------------------------------------------------------------------
 
 import type { ResourceDrawerFinding } from "@/actions/findings";
+import { SIDE_PANEL_TAB, useSidePanelStore } from "@/store/side-panel";
 import type { FindingResourceRow } from "@/types";
 import {
   FINDING_TRIAGE_STATUS,
@@ -497,6 +534,11 @@ afterEach(() => {
   mockGetComplianceIcon.mockImplementation(
     (_: string) => null as string | null,
   );
+  mockIsCloud.mockReturnValue(true);
+  useSidePanelStore.setState({
+    isOpen: false,
+    selectedTab: SIDE_PANEL_TAB.AI_CHAT,
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -663,53 +705,10 @@ describe("ResourceDetailDrawerContent — triage drawer actions", () => {
       within(row as HTMLElement).getByRole("button", { name: "Mute" }),
     ).toBeInTheDocument();
     expect(
-      within(row as HTMLElement).getByRole("button", { name: "Send to Jira" }),
-    ).toBeInTheDocument();
-  });
-
-  it("should keep the other findings actions cell sticky on the right edge", () => {
-    // Given
-    const otherFinding: ResourceDrawerFinding = {
-      ...mockFinding,
-      id: "finding-2",
-      uid: "uid-2",
-      checkId: "ec2_check",
-      checkTitle: "EC2 Check",
-      triage: makeTriageSummary({
-        findingId: "finding-2",
-        findingUid: "uid-2",
+      within(row as HTMLElement).getByRole("button", {
+        name: "Send 1 Finding to Jira",
       }),
-    };
-
-    render(
-      <ResourceDetailDrawerContent
-        isLoading={false}
-        isNavigating={false}
-        checkMeta={mockCheckMeta}
-        currentIndex={0}
-        totalResources={1}
-        currentFinding={mockFinding}
-        otherFindings={[otherFinding]}
-        onNavigatePrev={vi.fn()}
-        onNavigateNext={vi.fn()}
-        onMuteComplete={vi.fn()}
-      />,
-    );
-
-    // When
-    const row = screen.getByText("EC2 Check").closest("tr");
-    expect(row).not.toBeNull();
-    const actionsCell = within(row as HTMLElement)
-      .getByRole("button", { name: "Send to Jira" })
-      .closest("td");
-
-    // Then
-    expect(actionsCell).toHaveClass("sticky");
-    expect(actionsCell).toHaveClass("right-0");
-    expect(actionsCell).toHaveClass("z-20");
-    expect(actionsCell).toHaveClass("bg-bg-neutral-secondary");
-    expect(actionsCell).toHaveClass("before:bg-gradient-to-r");
-    expect(actionsCell).toHaveClass("before:to-bg-neutral-secondary");
+    ).toBeInTheDocument();
   });
 
   it("should update simple drawer triage without using the mute refresh path", async () => {
@@ -774,14 +773,15 @@ const mockResourceRow: FindingResourceRow = {
   lastSeenAt: null,
 };
 
-// ---------------------------------------------------------------------------
-// Fix 1: Lighthouse AI button text change
-// ---------------------------------------------------------------------------
-
-describe("ResourceDetailDrawerContent — Fix 1: Lighthouse AI button text", () => {
-  it("should say 'Analyze this finding with Lighthouse AI' instead of 'View This Finding'", () => {
+describe("ResourceDetailDrawerContent — Lighthouse AI", () => {
+  it("should open the Lighthouse tab and submit a contextual analysis", async () => {
     // Given
-    const { container } = render(
+    const user = userEvent.setup();
+    useSidePanelStore.setState({
+      isOpen: true,
+      selectedTab: SIDE_PANEL_TAB.CONTEXT,
+    });
+    render(
       <ResourceDetailDrawerContent
         isLoading={false}
         isNavigating={false}
@@ -796,20 +796,54 @@ describe("ResourceDetailDrawerContent — Fix 1: Lighthouse AI button text", () 
       />,
     );
 
-    // When — look for the lighthouse link
-    const allText = container.textContent ?? "";
+    // When
+    await user.click(
+      screen.getByRole("button", {
+        name: "Analyze This Finding With Lighthouse AI",
+      }),
+    );
 
-    // Then — correct text must be present, old text must be absent
-    expect(allText.toLowerCase()).toContain("analyze this finding");
-    expect(allText.toLowerCase()).not.toContain("view this finding");
+    // Then
+    expect(mockRequestPanelChatMessage).toHaveBeenCalledWith(
+      "Analyze this finding",
+      mockCurrentLighthouseContext,
+    );
+    expect(useSidePanelStore.getState()).toMatchObject({
+      isOpen: true,
+      selectedTab: SIDE_PANEL_TAB.AI_CHAT,
+    });
+  });
+
+  it("should hide the action when the Lighthouse panel tab is unavailable", () => {
+    // Given
+    mockIsCloud.mockReturnValue(false);
+
+    // When
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={mockFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // Then
+    expect(
+      screen.queryByRole("button", {
+        name: "Analyze This Finding With Lighthouse AI",
+      }),
+    ).not.toBeInTheDocument();
   });
 });
 
-// ---------------------------------------------------------------------------
-// Fix 2: Remediation heading labels — remove "Command" suffix
-// ---------------------------------------------------------------------------
-
-describe("ResourceDetailDrawerContent — Fix 2: Remediation heading labels", () => {
+describe("ResourceDetailDrawerContent — remediation code editors", () => {
   const checkMetaWithCommands: CheckMeta = {
     ...mockCheckMeta,
     remediation: {
@@ -822,80 +856,6 @@ describe("ResourceDetailDrawerContent — Fix 2: Remediation heading labels", ()
       },
     },
   };
-
-  it("should render 'Terraform' heading without 'Command' suffix", () => {
-    // Given
-    const { container } = render(
-      <ResourceDetailDrawerContent
-        isLoading={false}
-        isNavigating={false}
-        checkMeta={checkMetaWithCommands}
-        currentIndex={0}
-        totalResources={1}
-        currentFinding={mockFinding}
-        otherFindings={[]}
-        onNavigatePrev={vi.fn()}
-        onNavigateNext={vi.fn()}
-        onMuteComplete={vi.fn()}
-      />,
-    );
-
-    // When
-    const allText = container.textContent ?? "";
-
-    // Then — "Terraform" present, "Terraform Command" absent
-    expect(allText).toContain("Terraform");
-    expect(allText).not.toContain("Terraform Command");
-  });
-
-  it("should render 'CloudFormation' heading without 'Command' suffix", () => {
-    // Given
-    const { container } = render(
-      <ResourceDetailDrawerContent
-        isLoading={false}
-        isNavigating={false}
-        checkMeta={checkMetaWithCommands}
-        currentIndex={0}
-        totalResources={1}
-        currentFinding={mockFinding}
-        otherFindings={[]}
-        onNavigatePrev={vi.fn()}
-        onNavigateNext={vi.fn()}
-        onMuteComplete={vi.fn()}
-      />,
-    );
-
-    // When
-    const allText = container.textContent ?? "";
-
-    // Then — "CloudFormation" present, "CloudFormation Command" absent
-    expect(allText).toContain("CloudFormation");
-    expect(allText).not.toContain("CloudFormation Command");
-  });
-
-  it("should still render 'CLI Command' label for CLI section", () => {
-    // Given
-    const { container } = render(
-      <ResourceDetailDrawerContent
-        isLoading={false}
-        isNavigating={false}
-        checkMeta={checkMetaWithCommands}
-        currentIndex={0}
-        totalResources={1}
-        currentFinding={mockFinding}
-        otherFindings={[]}
-        onNavigatePrev={vi.fn()}
-        onNavigateNext={vi.fn()}
-        onMuteComplete={vi.fn()}
-      />,
-    );
-
-    // When
-    const allText = container.textContent ?? "";
-
-    // Then — CLI Command label must remain
-    expect(allText).toContain("CLI Command");
-  });
 
   it("should render CLI remediation in the code editor without line numbers and copy without the visual prompt", async () => {
     // Given
@@ -1211,69 +1171,6 @@ describe("ResourceDetailDrawerContent — CVE recommendation button", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// Fix 5 & 6: Risk section has danger styling, sections have separators and bigger headings
-// ---------------------------------------------------------------------------
-
-describe("ResourceDetailDrawerContent — Risk section styling", () => {
-  it("should render the Risk section with a vertical accent border (no danger card)", () => {
-    // Given
-    const { container } = render(
-      <ResourceDetailDrawerContent
-        isLoading={false}
-        isNavigating={false}
-        checkMeta={mockCheckMeta}
-        currentIndex={0}
-        totalResources={1}
-        currentFinding={mockFinding}
-        otherFindings={[]}
-        onNavigatePrev={vi.fn()}
-        onNavigateNext={vi.fn()}
-        onMuteComplete={vi.fn()}
-      />,
-    );
-
-    // When — find the Risk heading and walk up to the section wrapper
-    const riskHeading = Array.from(container.querySelectorAll("span")).find(
-      (el) => el.textContent?.trim() === "Risk:",
-    );
-    const riskSection = riskHeading?.parentElement;
-
-    // Then — Risk wrapper has a left accent border, not a danger Card
-    expect(riskSection).toBeDefined();
-    expect(riskSection?.className).toMatch(/border-l/);
-    expect(riskSection?.getAttribute("data-variant")).toBeNull();
-  });
-
-  it("should use larger heading size for section labels (text-sm → text-base or larger)", () => {
-    // Given
-    const { container } = render(
-      <ResourceDetailDrawerContent
-        isLoading={false}
-        isNavigating={false}
-        checkMeta={mockCheckMeta}
-        currentIndex={0}
-        totalResources={1}
-        currentFinding={mockFinding}
-        otherFindings={[]}
-        onNavigatePrev={vi.fn()}
-        onNavigateNext={vi.fn()}
-        onMuteComplete={vi.fn()}
-      />,
-    );
-
-    // When — look for section heading span with "Risk:"
-    const headingSpans = Array.from(container.querySelectorAll("span")).filter(
-      (el) => el.textContent?.trim() === "Risk:",
-    );
-
-    // Then — heading must not be tiny text-xs; should be text-sm or larger with font-semibold/font-medium
-    expect(headingSpans.length).toBeGreaterThan(0);
-    const riskHeading = headingSpans[0];
-    expect(riskHeading.className).not.toContain("text-xs");
-  });
-});
-
 describe("ResourceDetailDrawerContent — compliance navigation", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
@@ -1559,64 +1456,6 @@ describe("ResourceDetailDrawerContent — synthetic resource empty state", () =>
 });
 
 describe("ResourceDetailDrawerContent — current resource row display", () => {
-  it("should place service and region in the primary metadata row after provider and resource", () => {
-    // Given/When
-    render(
-      <ResourceDetailDrawerContent
-        isLoading={false}
-        isNavigating={false}
-        checkMeta={mockCheckMeta}
-        currentIndex={0}
-        totalResources={1}
-        currentFinding={mockFinding}
-        otherFindings={[]}
-        onNavigatePrev={vi.fn()}
-        onNavigateNext={vi.fn()}
-        onMuteComplete={vi.fn()}
-      />,
-    );
-
-    // Then
-    const primaryMetadataRow = screen.getByTestId(
-      "resource-detail-primary-metadata-row",
-    );
-    expect(primaryMetadataRow).toHaveClass("grid-cols-2");
-    expect(primaryMetadataRow).toHaveClass(
-      "@md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.55fr)_minmax(0,0.7fr)]",
-    );
-    expect(
-      within(primaryMetadataRow).getByText("Provider"),
-    ).toBeInTheDocument();
-    expect(
-      within(primaryMetadataRow).getByText("Resource"),
-    ).toBeInTheDocument();
-    expect(within(primaryMetadataRow).getByText("Service")).toBeInTheDocument();
-    expect(within(primaryMetadataRow).getByText("Region")).toBeInTheDocument();
-    expect(within(primaryMetadataRow).getByText("s3")).toHaveClass(
-      "truncate",
-      "whitespace-nowrap",
-    );
-    expect(within(primaryMetadataRow).getByText("us-east-1")).toHaveClass(
-      "truncate",
-    );
-
-    const secondaryMetadataRow = screen.getByTestId(
-      "resource-detail-secondary-metadata-row",
-    );
-    expect(secondaryMetadataRow).toHaveClass("grid-cols-2");
-    expect(secondaryMetadataRow).toHaveClass("@md:grid-cols-3");
-    expect(
-      within(secondaryMetadataRow).queryByText("Service"),
-    ).not.toBeInTheDocument();
-    expect(
-      within(secondaryMetadataRow).queryByText("Region"),
-    ).not.toBeInTheDocument();
-    expect(within(secondaryMetadataRow).getByText("2 days")).toHaveClass(
-      "truncate",
-      "whitespace-nowrap",
-    );
-  });
-
   it("should render resource card fields from the current resource row instead of the fetched finding", () => {
     // Given
     const currentResource: FindingResourceRow = {
@@ -1825,7 +1664,7 @@ describe("ResourceDetailDrawerContent — header skeleton while navigating", () 
     expect(screen.queryByText("Status Extended:")).not.toBeInTheDocument();
     expect(screen.queryByText("uid-1")).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("link", {
+      screen.queryByRole("button", {
         name: "Analyze This Finding With Lighthouse AI",
       }),
     ).not.toBeInTheDocument();
@@ -2008,14 +1847,6 @@ describe("ResourceDetailDrawerContent — other findings delta/muted indicator",
     });
   });
 
-  it("should forward delta='changed' to the NotificationIndicator for a changed other finding", () => {
-    renderWithOtherFinding({ delta: "changed" });
-
-    expect(lastNotificationIndicatorPropsForOtherRow()).toMatchObject({
-      delta: "changed",
-    });
-  });
-
   it("should pass delta=undefined when the finding has delta='none'", () => {
     renderWithOtherFinding({ delta: "none" });
 
@@ -2048,29 +1879,6 @@ describe("ResourceDetailDrawerContent — Metadata tab", () => {
         (editor) =>
           editor.getAttribute("data-aria-label") === "Resource metadata",
       );
-
-  it("should render a Metadata tab trigger", () => {
-    // Given/When
-    render(
-      <ResourceDetailDrawerContent
-        isLoading={false}
-        isNavigating={false}
-        checkMeta={mockCheckMeta}
-        currentIndex={0}
-        totalResources={1}
-        currentFinding={mockFinding}
-        otherFindings={[]}
-        onNavigatePrev={vi.fn()}
-        onNavigateNext={vi.fn()}
-        onMuteComplete={vi.fn()}
-      />,
-    );
-
-    // Then
-    expect(
-      screen.getByRole("button", { name: "Evidence" }),
-    ).toBeInTheDocument();
-  });
 
   it("should render the resource metadata as formatted JSON and copy it to the clipboard", async () => {
     // Given

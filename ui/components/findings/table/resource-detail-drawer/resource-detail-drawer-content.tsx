@@ -21,11 +21,11 @@ import {
   type ResourceDrawerFinding,
   updateFindingTriage,
 } from "@/actions/findings";
+import { requestPanelChatMessage } from "@/app/(prowler)/lighthouse/_lib/panel-chat-store";
+import { JiraDispatchActionItem } from "@/components/findings/jira-dispatch-action-item";
 import { MarkdownContainer } from "@/components/findings/markdown-container";
 import { MuteFindingsModal } from "@/components/findings/mute-findings-modal";
-import { SendToJiraModal } from "@/components/findings/send-to-jira-modal";
 import { getComplianceIcon } from "@/components/icons";
-import { JiraIcon } from "@/components/icons/services/IconServices";
 import {
   Badge,
   Button,
@@ -36,12 +36,28 @@ import {
   TabsTrigger,
 } from "@/components/shadcn";
 import { Card } from "@/components/shadcn/card/card";
+import { CodeSnippet } from "@/components/shadcn/code-snippet/code-snippet";
 import {
   ActionDropdown,
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
+import { DateWithTime } from "@/components/shadcn/entities/date-with-time";
+import { EntityInfo } from "@/components/shadcn/entities/entity-info";
 import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
 import { LoadingState } from "@/components/shadcn/spinner/loading-state";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/shadcn/table";
+import { SeverityBadge } from "@/components/shadcn/table/severity-badge";
+import {
+  type FindingStatus,
+  StatusFindingBadge,
+} from "@/components/shadcn/table/status-finding-badge";
 import {
   Tooltip,
   TooltipContent,
@@ -55,30 +71,19 @@ import {
   type QueryEditorLanguage,
 } from "@/components/shared/query-code-editor";
 import { ResourceMetadataPanel } from "@/components/shared/resource-metadata-panel";
-import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
-import { DateWithTime } from "@/components/ui/entities/date-with-time";
-import { EntityInfo } from "@/components/ui/entities/entity-info";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { SeverityBadge } from "@/components/ui/table/severity-badge";
-import {
-  type FindingStatus,
-  StatusFindingBadge,
-} from "@/components/ui/table/status-finding-badge";
-import { getFailingForLabel } from "@/lib/date-utils";
-import { formatDuration } from "@/lib/date-utils";
+import { useLighthouseCurrentContext } from "@/hooks/use-lighthouse-context";
+import { getFailingForLabel, formatDuration } from "@/lib/date-utils";
 import { shouldRefreshAfterTriageUpdate } from "@/lib/finding-triage";
+import { buildJiraActionLabel } from "@/lib/jira-dispatch-action";
+import { createJiraDispatchPayload } from "@/lib/jira-dispatch-selection";
 import { getRegionFlag } from "@/lib/region-flags";
+import { isCloud } from "@/lib/shared/env";
 import { getRecommendationLinkLabel } from "@/lib/vulnerability-references";
+import { SIDE_PANEL_TAB, useSidePanelStore } from "@/store/side-panel";
 import type { ComplianceOverviewData } from "@/types/compliance";
 import type { FindingResourceRow } from "@/types/findings-table";
 import type { UpdateFindingTriageInput } from "@/types/findings-triage";
+import { JIRA_DISPATCH_TARGET } from "@/types/integrations";
 
 import { Muted } from "../../muted";
 import { DeltaIndicator } from "../delta-indicator";
@@ -88,6 +93,7 @@ import {
   FindingTriageStatusCell,
 } from "../finding-triage-cells";
 import { DeltaValues, NotificationIndicator } from "../notification-indicator";
+
 import { ResourceDetailSkeleton } from "./resource-detail-skeleton";
 import type { CheckMeta } from "./use-resource-detail-drawer";
 
@@ -359,8 +365,9 @@ export function ResourceDetailDrawerContent({
   onTriageUpdate,
 }: ResourceDetailDrawerContentProps) {
   const searchParams = useSearchParams();
+  const openSidePanel = useSidePanelStore((state) => state.openPanel);
+  const lighthouseContext = useLighthouseCurrentContext();
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
-  const [isJiraModalOpen, setIsJiraModalOpen] = useState(false);
   const [resolvingFramework, setResolvingFramework] = useState<string | null>(
     null,
   );
@@ -410,6 +417,11 @@ export function ResourceDetailDrawerContent({
   // During carousel navigation we only trust row-backed data until the next
   // finding payload is fully ready, otherwise stale details flash briefly.
   const f = isNavigating ? null : currentFinding;
+  const jiraPayload = createJiraDispatchPayload({
+    targetIds: f ? [f.id] : [],
+    targetType: JIRA_DISPATCH_TARGET.FINDING_ID,
+    findingTitle: checkMeta.checkTitle,
+  });
   const isCheckMetaFresh =
     !currentResource?.checkId || currentResource.checkId === checkMeta.checkId;
   const showCheckMetaContent = !isNavigating || isCheckMetaFresh;
@@ -482,6 +494,11 @@ export function ResourceDetailDrawerContent({
     onTriageUpdate?.(input);
   };
 
+  const handleAnalyzeFinding = () => {
+    openSidePanel(SIDE_PANEL_TAB.AI_CHAT);
+    requestPanelChatMessage("Analyze this finding", lighthouseContext.context);
+  };
+
   const handleOpenCompliance = async (framework: string) => {
     if (!complianceScanId || resolvingFramework) {
       return;
@@ -534,15 +551,6 @@ export function ResourceDetailDrawerContent({
           }}
         />
       )}
-      {f && (
-        <SendToJiraModal
-          isOpen={isJiraModalOpen}
-          onOpenChange={setIsJiraModalOpen}
-          findingId={f.id}
-          findingTitle={checkMeta.checkTitle}
-        />
-      )}
-
       {/* Header: keep row-backed badges visible; only hide stale check metadata */}
       <div className="flex flex-col gap-2">
         <div className="flex flex-wrap items-center gap-3">
@@ -712,7 +720,10 @@ export function ResourceDetailDrawerContent({
           <>
             <div className="flex items-start gap-4">
               {/* Resource info grid — 4 data columns */}
-              <div className="@container flex min-w-0 flex-1 flex-col gap-4">
+              <div
+                data-responsive-container
+                className="@container flex min-w-0 flex-1 flex-col gap-4"
+              >
                 {/* Row 1: Provider, Resource, Service, Region */}
                 <div
                   className="grid min-w-0 grid-cols-2 gap-4 @md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.55fr)_minmax(0,0.7fr)] @md:gap-x-8"
@@ -853,10 +864,9 @@ export function ResourceDetailDrawerContent({
                       disabled={f.isMuted}
                       onSelect={() => setIsMuteModalOpen(true)}
                     />
-                    <ActionDropdownItem
-                      icon={<JiraIcon size={20} />}
-                      label="Send to Jira"
-                      onSelect={() => setIsJiraModalOpen(true)}
+                    <JiraDispatchActionItem
+                      label={buildJiraActionLabel({ findingCount: 1 })}
+                      payload={jiraPayload}
                     />
                     {externalResourceTarget && (
                       <ActionDropdownItem
@@ -1374,9 +1384,10 @@ export function ResourceDetailDrawerContent({
       </div>
 
       {/* Lighthouse AI button */}
-      {!isNavigating && (
-        <a
-          href={`/lighthouse?${new URLSearchParams({ prompt: `Analyze this security finding and provide remediation guidance:\n\n- **Finding**: ${checkMeta.checkTitle}\n- **Check ID**: ${checkMeta.checkId}\n- **Severity**: ${f?.severity ?? "unknown"}\n- **Status**: ${f?.status ?? "unknown"}${f?.statusExtended ? `\n- **Detail**: ${f.statusExtended}` : ""}${checkMeta.risk ? `\n- **Risk**: ${checkMeta.risk}` : ""}` }).toString()}`}
+      {isCloud() && !isNavigating && (
+        <button
+          type="button"
+          onClick={handleAnalyzeFinding}
           className="flex items-center gap-1.5 rounded-lg px-4 py-3 text-sm font-bold text-slate-900 transition-opacity hover:opacity-90"
           style={{
             background: "var(--gradient-lighthouse)",
@@ -1384,7 +1395,7 @@ export function ResourceDetailDrawerContent({
         >
           <CircleArrowRight className="size-5" />
           Analyze This Finding With Lighthouse AI
-        </a>
+        </button>
       )}
     </div>
   );
@@ -1553,8 +1564,12 @@ function OtherFindingRow({
   onTriageUpdateAction: (input: UpdateFindingTriageInput) => Promise<void>;
 }) {
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
-  const [isJiraModalOpen, setIsJiraModalOpen] = useState(false);
   const isMuted = finding.isMuted || isOptimisticallyMuted;
+  const jiraPayload = createJiraDispatchPayload({
+    targetIds: [finding.id],
+    targetType: JIRA_DISPATCH_TARGET.FINDING_ID,
+    findingTitle: finding.checkTitle,
+  });
 
   const findingUrl = `/findings?filter%5Bcheck_id__in%5D=${encodeURIComponent(finding.checkId)}&filter%5Bmuted%5D=include`;
 
@@ -1571,12 +1586,6 @@ function OtherFindingRow({
           }}
         />
       )}
-      <SendToJiraModal
-        isOpen={isJiraModalOpen}
-        onOpenChange={setIsJiraModalOpen}
-        findingId={finding.id}
-        findingTitle={finding.checkTitle}
-      />
       <TableRow
         className="group cursor-pointer"
         onClick={() => window.open(findingUrl, "_blank", "noopener,noreferrer")}
@@ -1645,10 +1654,9 @@ function OtherFindingRow({
                 disabled={isMuted}
                 onSelect={() => setIsMuteModalOpen(true)}
               />
-              <ActionDropdownItem
-                icon={<JiraIcon size={20} />}
-                label="Send to Jira"
-                onSelect={() => setIsJiraModalOpen(true)}
+              <JiraDispatchActionItem
+                label={buildJiraActionLabel({ findingCount: 1 })}
+                payload={jiraPayload}
               />
             </ActionDropdown>
           </div>

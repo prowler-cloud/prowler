@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { ATTACK_PATHS_VIEW_STATES } from "../_lib/get-attack-paths-view-state";
+
 import { AttackPathsStatusPanel } from "./attack-paths-status-panel";
 
 describe("AttackPathsStatusPanel", () => {

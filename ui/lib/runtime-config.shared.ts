@@ -6,9 +6,14 @@ export interface RuntimePublicConfig {
   googleTagManagerId: string | null;
   apiBaseUrl: string | null;
   apiDocsUrl: string | null;
-  posthogKey: string | null; // reserved
-  posthogHost: string | null; // reserved
+  posthogEnabled: boolean;
+  posthogKey: string | null;
+  posthogHost: string | null;
   reoDevClientId: string | null; // reserved
+  cloudEnabled: boolean;
+  cloudBillingEnabled: boolean;
+  stripePublishableKey: string | null; // reserved
+  stripePublishableKeyV2: string | null; // reserved
 }
 
 export const RUNTIME_CONFIG_SCRIPT_ID = "__PROWLER_RUNTIME_CONFIG__";
@@ -20,7 +25,48 @@ export const EMPTY_RUNTIME_PUBLIC_CONFIG: RuntimePublicConfig = {
   googleTagManagerId: null,
   apiBaseUrl: null,
   apiDocsUrl: null,
+  posthogEnabled: false,
   posthogKey: null,
   posthogHost: null,
   reoDevClientId: null,
+  cloudEnabled: false,
+  cloudBillingEnabled: false,
+  stripePublishableKey: null,
+  stripePublishableKeyV2: null,
 };
+
+// Explicit per-key copy (not a spread) so unexpected island keys can't leak through.
+const pickConfig = (
+  parsed: Partial<RuntimePublicConfig>,
+): RuntimePublicConfig => ({
+  sentryDsn: parsed.sentryDsn ?? null,
+  sentryEnvironment: parsed.sentryEnvironment ?? null,
+  googleTagManagerId: parsed.googleTagManagerId ?? null,
+  apiBaseUrl: parsed.apiBaseUrl ?? null,
+  apiDocsUrl: parsed.apiDocsUrl ?? null,
+  posthogEnabled: parsed.posthogEnabled ?? false,
+  posthogKey: parsed.posthogKey ?? null,
+  posthogHost: parsed.posthogHost ?? null,
+  reoDevClientId: parsed.reoDevClientId ?? null,
+  cloudEnabled: parsed.cloudEnabled ?? false,
+  cloudBillingEnabled: parsed.cloudBillingEnabled ?? false,
+  stripePublishableKey: parsed.stripePublishableKey ?? null,
+  stripePublishableKeyV2: parsed.stripePublishableKeyV2 ?? null,
+});
+
+// Reads and validates the <head> island. Null when there is no DOM (server /
+// edge), no island (jsdom unit tests), or the JSON is malformed — callers
+// choose the fallback. Deliberately uncached: a module-level cache would
+// leak state across jsdom tests.
+export function readRuntimeConfigIsland(): RuntimePublicConfig | null {
+  if (typeof document === "undefined") return null;
+  const el = document.getElementById(RUNTIME_CONFIG_SCRIPT_ID);
+  if (!el?.textContent) return null;
+  try {
+    return pickConfig(
+      JSON.parse(el.textContent) as Partial<RuntimePublicConfig>,
+    );
+  } catch {
+    return null;
+  }
+}

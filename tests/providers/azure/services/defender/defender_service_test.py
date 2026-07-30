@@ -58,7 +58,7 @@ def mock_defender_get_assessments(_):
     }
 
 
-def mock_defender_get_security_contacts(*args, **kwargs):
+def mock_defender_get_security_contacts(*_args, **_kwargs):
     from prowler.providers.azure.services.defender.defender_service import (
         NotificationsByRole,
     )
@@ -447,6 +447,53 @@ class Test_Defender_get_iot_security_solutions:
         mock_client.iot_security_solution.list_by_subscription.assert_not_called()
         assert result[AZURE_SUBSCRIPTION_ID] == {}
 
+    def test_get_iot_security_solutions_with_multiple_resource_groups(self):
+        mock_client = MagicMock()
+        mock_client.iot_security_solution.list_by_resource_group.return_value = []
+
+        with (
+            patch(DEFENDER_INIT_PATCHES[0], return_value={}),
+            patch(DEFENDER_INIT_PATCHES[1], return_value={}),
+            patch(DEFENDER_INIT_PATCHES[2], return_value={}),
+            patch(DEFENDER_INIT_PATCHES[3], return_value={}),
+            patch(DEFENDER_INIT_PATCHES[4], return_value={}),
+            patch(DEFENDER_INIT_PATCHES[5], return_value={}),
+            patch(DEFENDER_INIT_PATCHES[6], return_value={}),
+        ):
+            defender = Defender(set_mocked_azure_provider())
+
+        defender.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        defender.resource_groups = {AZURE_SUBSCRIPTION_ID: RESOURCE_GROUP_LIST}
+
+        result = defender._get_iot_security_solutions()
+
+        assert mock_client.iot_security_solution.list_by_resource_group.call_count == 2
+        assert AZURE_SUBSCRIPTION_ID in result
+
+    def test_get_iot_security_solutions_with_mixed_case_resource_group(self):
+        mock_client = MagicMock()
+        mock_client.iot_security_solution.list_by_resource_group.return_value = []
+
+        with (
+            patch(DEFENDER_INIT_PATCHES[0], return_value={}),
+            patch(DEFENDER_INIT_PATCHES[1], return_value={}),
+            patch(DEFENDER_INIT_PATCHES[2], return_value={}),
+            patch(DEFENDER_INIT_PATCHES[3], return_value={}),
+            patch(DEFENDER_INIT_PATCHES[4], return_value={}),
+            patch(DEFENDER_INIT_PATCHES[5], return_value={}),
+            patch(DEFENDER_INIT_PATCHES[6], return_value={}),
+        ):
+            defender = Defender(set_mocked_azure_provider())
+
+        defender.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        defender.resource_groups = {AZURE_SUBSCRIPTION_ID: ["RG"]}
+
+        defender._get_iot_security_solutions()
+
+        mock_client.iot_security_solution.list_by_resource_group.assert_called_once_with(
+            resource_group_name="RG"
+        )
+
 
 class Test_Defender_get_jit_policies:
     def test_get_jit_policies_no_resource_groups(self):
@@ -522,55 +569,6 @@ class Test_Defender_get_jit_policies:
         mock_client.jit_network_access_policies.list.assert_not_called()
         assert result[AZURE_SUBSCRIPTION_ID] == {}
 
-    def test_get_iot_security_solutions_with_multiple_resource_groups(self):
-        mock_client = MagicMock()
-        mock_client.iot_security_solution.list_by_resource_group.return_value = []
-
-        with (
-            patch(DEFENDER_INIT_PATCHES[0], return_value={}),
-            patch(DEFENDER_INIT_PATCHES[1], return_value={}),
-            patch(DEFENDER_INIT_PATCHES[2], return_value={}),
-            patch(DEFENDER_INIT_PATCHES[3], return_value={}),
-            patch(DEFENDER_INIT_PATCHES[4], return_value={}),
-            patch(DEFENDER_INIT_PATCHES[5], return_value={}),
-            patch(DEFENDER_INIT_PATCHES[6], return_value={}),
-        ):
-            defender = Defender(set_mocked_azure_provider())
-
-        defender.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
-        defender.resource_groups = {AZURE_SUBSCRIPTION_ID: RESOURCE_GROUP_LIST}
-
-        result = defender._get_iot_security_solutions()
-
-        assert mock_client.iot_security_solution.list_by_resource_group.call_count == 2
-        assert AZURE_SUBSCRIPTION_ID in result
-
-    def test_get_iot_security_solutions_with_mixed_case_resource_group(self):
-        mock_client = MagicMock()
-        mock_client.iot_security_solution.list_by_resource_group.return_value = []
-
-        with (
-            patch(DEFENDER_INIT_PATCHES[0], return_value={}),
-            patch(DEFENDER_INIT_PATCHES[1], return_value={}),
-            patch(DEFENDER_INIT_PATCHES[2], return_value={}),
-            patch(DEFENDER_INIT_PATCHES[3], return_value={}),
-            patch(DEFENDER_INIT_PATCHES[4], return_value={}),
-            patch(DEFENDER_INIT_PATCHES[5], return_value={}),
-            patch(DEFENDER_INIT_PATCHES[6], return_value={}),
-        ):
-            defender = Defender(set_mocked_azure_provider())
-
-        defender.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
-        defender.resource_groups = {AZURE_SUBSCRIPTION_ID: ["RG"]}
-
-        defender._get_iot_security_solutions()
-
-        mock_client.iot_security_solution.list_by_resource_group.assert_called_once_with(
-            resource_group_name="RG"
-        )
-
-
-class Test_Defender_get_jit_policies_extra:
     def test_get_jit_policies_with_multiple_resource_groups(self):
         mock_client = MagicMock()
         mock_client.jit_network_access_policies.list_by_resource_group.return_value = []

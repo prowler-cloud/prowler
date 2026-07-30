@@ -1,0 +1,1 @@
+Attack Paths predefined queries on migrated graphs are now scoped with the provider label, letting the graph database seed from its label index instead of a global label scan and preventing query timeouts on Neptune
