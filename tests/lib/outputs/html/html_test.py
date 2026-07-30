@@ -1185,3 +1185,37 @@ class TestHTML:
         assert "<strong>alternate contacts</strong>" in output_data
         assert "<code>monitored aliases</code>" in output_data
         assert "<br />" in output_data  # Line breaks converted
+
+    def test_process_markdown_strips_javascript_links(self):
+        """Markdown links with javascript: scheme must not produce clickable hrefs."""
+        result = HTML.process_markdown(
+            "Click [here](javascript:alert(&#34;xss&#34;)) to continue"
+        )
+        assert 'href="javascript:' not in result
+        assert "here" in result
+
+    def test_process_markdown_keeps_https_links(self):
+        """Markdown links with https: scheme must be preserved."""
+        result = HTML.process_markdown("[docs](https://docs.prowler.com)")
+        assert 'href="https://docs.prowler.com"' in result
+        assert "<a" in result
+
+    def test_transform_recommendation_url_javascript_scheme_is_blocked(self):
+        """Recommendation.Url with javascript: scheme must render as empty href."""
+        finding = generate_finding_output(
+            remediation_recommendation_url="https://hub.prowler.com/check/check-id"
+        )
+        finding.metadata.Remediation.Recommendation.Url = "javascript:alert(1)"
+        output_data = HTML([finding]).data[0]
+        assert 'href="javascript:' not in output_data
+        assert 'href=""' in output_data
+
+    def test_transform_recommendation_url_https_is_kept(self):
+        """Recommendation.Url with https: scheme must appear unchanged in href."""
+        findings = [
+            generate_finding_output(
+                remediation_recommendation_url="https://hub.prowler.com/check/check-id"
+            )
+        ]
+        output_data = HTML(findings).data[0]
+        assert 'href="https://hub.prowler.com/check/check-id"' in output_data
