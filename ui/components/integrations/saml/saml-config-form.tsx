@@ -316,17 +316,15 @@ export const SamlConfigForm = ({
               <span className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
                 ACS URL:
               </span>
-              {acsUrl ? (
-                <CodeSnippet
-                  value={acsUrl}
-                  ariaLabel="Copy ACS URL"
-                  className="h-10 w-full"
-                />
-              ) : (
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Enter your email domain above to generate the ACS URL.
-                </p>
-              )}
+              <CodeSnippet
+                value={
+                  acsUrl ||
+                  "Enter your email domain above to generate the ACS URL."
+                }
+                ariaLabel="Copy ACS URL"
+                hideCopyButton={!acsUrl}
+                className="h-10 w-full"
+              />
             </div>
 
             <div>
