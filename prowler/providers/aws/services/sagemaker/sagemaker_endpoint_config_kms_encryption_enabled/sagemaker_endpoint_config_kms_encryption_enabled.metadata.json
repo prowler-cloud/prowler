@@ -10,7 +10,7 @@
   "ServiceName": "sagemaker",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
+  "Severity": "medium",
   "ResourceType": "Other",
   "ResourceGroup": "ai_ml",
   "Description": "**Amazon SageMaker endpoint configurations** are assessed for **at-rest encryption** using an AWS KMS key. The finding reflects whether a `KmsKeyId` is configured on the endpoint configuration so inference data volumes and related storage use KMS encryption.",
