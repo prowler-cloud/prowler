@@ -4,8 +4,11 @@ import { getAllProviderGroups } from "@/actions/manage-groups/manage-groups";
 import { getAllProviders } from "@/actions/providers";
 import { getComplianceIcon } from "@/components/icons/compliance/IconCompliance";
 import { ProviderTypeIcon } from "@/components/icons/providers-badge/provider-type-icon";
+import { LighthouseContextContributor } from "@/components/lighthouse/context-contributor";
 import { Alert, AlertDescription } from "@/components/shadcn/alert";
 import { getComplianceMapper } from "@/lib/compliance/compliance-mapper";
+import { LIGHTHOUSE_COMPLIANCE_CONTEXT_MODE } from "@/lib/lighthouse/context/constants";
+import { buildComplianceContext } from "@/lib/lighthouse/context/contributions";
 import {
   type KnownProviderType,
   PROVIDER_DISPLAY_NAMES,
@@ -163,52 +166,69 @@ export const CrossAccountDetail = async ({
   ).map((group) => ({ id: group.id, name: group.attributes.name }));
 
   return (
-    <AggregatedComplianceDetail
-      compliancetitle={compliancetitle}
-      logoPath={logoPath}
-      title={
-        <span className="truncate text-sm font-medium">
-          {attrs.name || compliancetitle.split("-").join(" ")}
-        </span>
-      }
-      description={
-        <p className="text-text-neutral-tertiary flex items-center gap-1.5 text-xs">
-          <ProviderTypeIcon type={providerType} size={14} />
-          {PROVIDER_DISPLAY_NAMES[providerType]} · {attrs.accounts.length}{" "}
-          {attrs.accounts.length === 1 ? "account" : "accounts"} aggregated ·{" "}
-          {attrs.scan_ids.length}{" "}
-          {attrs.scan_ids.length === 1 ? "scan" : "scans"}
-        </p>
-      }
-      reportAction={
-        <CrossProviderPdfButton
-          complianceId={complianceId}
-          providerType={providerType}
-          filters={{ ...filters, scanIds: attrs.scan_ids }}
-          latestPdf={latestPdf}
-        />
-      }
-      filters={
-        <CrossProviderFilters
-          providerAccounts={providerAccounts}
-          providerGroups={providerGroups}
-        />
-      }
-      totals={totals}
-      coverage={
-        <ProviderCoverageCard
-          rows={coverageRows}
-          title="Account Coverage"
-          emptyMessage="No scanned accounts for this framework yet."
-        />
-      }
-      topFailed={{
-        sections: topFailedResult.items,
-        dataType: topFailedResult.type,
-        prepopulated: topFailedResult.prepopulated,
-      }}
-      accordionItems={accordionItems}
-      initialExpandedKeys={initialExpandedKeys}
-    />
+    <>
+      <LighthouseContextContributor
+        key={`cross-account-detail-${complianceId}-${totals.pass}-${totals.fail}`}
+        contributorId="compliance-detail"
+        item={buildComplianceContext({
+          pathname: `/compliance/${compliancetitle}`,
+          id: complianceId,
+          framework: attrs.name || attrs.framework,
+          version: attrs.version,
+          mode: LIGHTHOUSE_COMPLIANCE_CONTEXT_MODE.CROSS_ACCOUNT,
+          section: targetSection,
+          passed: totals.pass,
+          failed: totals.fail,
+          total: totals.pass + totals.fail + totals.manual,
+        })}
+      />
+      <AggregatedComplianceDetail
+        compliancetitle={compliancetitle}
+        logoPath={logoPath}
+        title={
+          <span className="truncate text-sm font-medium">
+            {attrs.name || compliancetitle.split("-").join(" ")}
+          </span>
+        }
+        description={
+          <p className="text-text-neutral-tertiary flex items-center gap-1.5 text-xs">
+            <ProviderTypeIcon type={providerType} size={14} />
+            {PROVIDER_DISPLAY_NAMES[providerType]} · {attrs.accounts.length}{" "}
+            {attrs.accounts.length === 1 ? "account" : "accounts"} aggregated ·{" "}
+            {attrs.scan_ids.length}{" "}
+            {attrs.scan_ids.length === 1 ? "scan" : "scans"}
+          </p>
+        }
+        reportAction={
+          <CrossProviderPdfButton
+            complianceId={complianceId}
+            providerType={providerType}
+            filters={{ ...filters, scanIds: attrs.scan_ids }}
+            latestPdf={latestPdf}
+          />
+        }
+        filters={
+          <CrossProviderFilters
+            providerAccounts={providerAccounts}
+            providerGroups={providerGroups}
+          />
+        }
+        totals={totals}
+        coverage={
+          <ProviderCoverageCard
+            rows={coverageRows}
+            title="Account Coverage"
+            emptyMessage="No scanned accounts for this framework yet."
+          />
+        }
+        topFailed={{
+          sections: topFailedResult.items,
+          dataType: topFailedResult.type,
+          prepopulated: topFailedResult.prepopulated,
+        }}
+        accordionItems={accordionItems}
+        initialExpandedKeys={initialExpandedKeys}
+      />
+    </>
   );
 };

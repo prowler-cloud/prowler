@@ -15798,6 +15798,23 @@ class TestTenantApiKeyViewSet:
         data = response.json()["data"]
         assert len(data) == len(api_keys_fixture)
 
+    def test_api_keys_list_with_orphaned_key(
+        self, authenticated_client, api_keys_fixture
+    ):
+        """Test listing keys whose owner was deleted: `entity` is serialized as null."""
+        orphaned_key = api_keys_fixture[0]
+        TenantAPIKey.objects.filter(id=orphaned_key.id).update(entity=None)
+
+        response = authenticated_client.get(reverse("api-key-list"))
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == len(api_keys_fixture)
+        serialized_key = next(
+            item for item in data if item["id"] == str(orphaned_key.id)
+        )
+        assert serialized_key["relationships"]["entity"]["data"] is None
+
     def test_api_keys_list_empty(self, authenticated_client, tenants_fixture):
         """Test listing API keys when none exist returns empty list."""
         response = authenticated_client.get(reverse("api-key-list"))

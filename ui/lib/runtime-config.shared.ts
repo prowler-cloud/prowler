@@ -6,8 +6,9 @@ export interface RuntimePublicConfig {
   googleTagManagerId: string | null;
   apiBaseUrl: string | null;
   apiDocsUrl: string | null;
-  posthogKey: string | null; // reserved
-  posthogHost: string | null; // reserved
+  posthogEnabled: boolean;
+  posthogKey: string | null;
+  posthogHost: string | null;
   reoDevClientId: string | null; // reserved
   cloudEnabled: boolean;
   cloudBillingEnabled: boolean;
@@ -24,6 +25,7 @@ export const EMPTY_RUNTIME_PUBLIC_CONFIG: RuntimePublicConfig = {
   googleTagManagerId: null,
   apiBaseUrl: null,
   apiDocsUrl: null,
+  posthogEnabled: false,
   posthogKey: null,
   posthogHost: null,
   reoDevClientId: null,
@@ -42,6 +44,7 @@ const pickConfig = (
   googleTagManagerId: parsed.googleTagManagerId ?? null,
   apiBaseUrl: parsed.apiBaseUrl ?? null,
   apiDocsUrl: parsed.apiDocsUrl ?? null,
+  posthogEnabled: parsed.posthogEnabled ?? false,
   posthogKey: parsed.posthogKey ?? null,
   posthogHost: parsed.posthogHost ?? null,
   reoDevClientId: parsed.reoDevClientId ?? null,
