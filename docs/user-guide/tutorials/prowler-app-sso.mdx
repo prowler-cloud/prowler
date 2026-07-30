@@ -98,7 +98,7 @@ Choose a Method:
 
         <VersionBadge version="5.37.0" />
 
-        If `userType` is not defined, the user's existing roles are left unchanged. Users without an existing role in that tenant receive a least-privilege `read_only` fallback role. If `read_only` already belongs to a role with different permissions, Prowler Cloud creates the fallback with the next available numeric suffix, starting with `read_only_0`. A Prowler administrator can then assign the appropriate role through the [RBAC Management tab](/user-guide/tutorials/prowler-app-rbac).
+        If `userType` is not defined, the user's existing roles are left unchanged. Users without an existing role in that tenant receive a least-privilege `read_only` fallback role. If `read_only` already belongs to a role with different permissions, Prowler Cloud checks suffixed names in order, starting with `read_only_0`. It reuses the first role with the fallback permissions or creates the first available name. A Prowler administrator can then assign the appropriate role through the [RBAC Management tab](/user-guide/tutorials/prowler-app-rbac).
 
         <Info>
         **IdP Attribute Mapping**
@@ -175,7 +175,7 @@ Choose a Method:
 
             <VersionBadge version="5.37.0" />
 
-            If `userType` is not defined in the user's Okta profile, the user's existing roles in Prowler Cloud are left unchanged. Users without an existing role in that tenant receive a least-privilege `read_only` fallback role until a Prowler administrator assigns another role. If `read_only` already belongs to a role with different permissions, Prowler Cloud creates the fallback with the next available numeric suffix, starting with `read_only_0`.
+            If `userType` is not defined in the user's Okta profile, the user's existing roles in Prowler Cloud are left unchanged. Users without an existing role in that tenant receive a least-privilege `read_only` fallback role until a Prowler administrator assigns another role. If `read_only` already belongs to a role with different permissions, Prowler Cloud checks suffixed names in order, starting with `read_only_0`. It reuses the first role with the fallback permissions or creates the first available name.
 
             **Example:** To assign the `IT` role to a user, set the `userType` value to `IT` in Okta. If a role named `IT` already exists in Prowler Cloud, the user receives it automatically upon login. If it does not exist, Prowler Cloud creates a new role called `IT` with read-only access, and a Prowler administrator can adjust its permissions as needed.
 

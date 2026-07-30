@@ -119,7 +119,7 @@ The `userType` attribute controls which Prowler role is assigned to the user:
 
 <VersionBadge version="5.37.0" />
 
-If `userType` is not set, the user's existing roles are left unchanged. Users without an existing role in that tenant receive a least-privilege `read_only` fallback role until a Prowler administrator assigns another role. If `read_only` already belongs to a role with different permissions, Prowler Cloud creates the fallback with the next available numeric suffix, starting with `read_only_0`.
+If `userType` is not set, the user's existing roles are left unchanged. Users without an existing role in that tenant receive a least-privilege `read_only` fallback role until a Prowler administrator assigns another role. If `read_only` already belongs to a role with different permissions, Prowler Cloud checks suffixed names in order, starting with `read_only_0`. It reuses the first role with the fallback permissions or creates the first available name.
 
 The `userType` value is **case-sensitive** - for example, `Backend` and `backend` are treated as different roles.
 

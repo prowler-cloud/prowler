@@ -4,11 +4,10 @@ import json
 import os
 import tempfile
 from concurrent.futures import ThreadPoolExecutor
-from contextlib import suppress
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
-from threading import Barrier, BrokenBarrierError
+from threading import Event, Lock
 from types import SimpleNamespace
 from unittest.mock import ANY, MagicMock, Mock, patch
 from urllib.parse import parse_qs, urlparse
@@ -77,7 +76,7 @@ from conftest import (
 )
 from django.conf import settings
 from django.db import close_old_connections, connection
-from django.db.models import Count, QuerySet
+from django.db.models import Count
 from django.http import JsonResponse
 from django.test import RequestFactory
 from django.test.utils import CaptureQueriesContext
@@ -14799,7 +14798,7 @@ class TestTenantFinishACSView:
     @pytest.mark.parametrize(
         (
             "existing_role_attributes",
-            "occupied_suffixes",
+            "existing_suffixes",
             "expected_role_name",
             "expected_role_created",
         ),
@@ -14808,16 +14807,32 @@ class TestTenantFinishACSView:
             ({"unlimited_visibility": True}, (), "read_only", False),
             (
                 {"manage_users": True, "unlimited_visibility": True},
-                ("read_only_0", "read_only_1"),
-                "read_only_2",
-                True,
+                (
+                    ("read_only_0", {"unlimited_visibility": True}),
+                    ("read_only_1", {"unlimited_visibility": True}),
+                ),
+                "read_only_0",
+                False,
+            ),
+            (
+                {"manage_users": True, "unlimited_visibility": True},
+                (
+                    (
+                        "read_only_0",
+                        {"manage_users": True, "unlimited_visibility": True},
+                    ),
+                    ("read_only_1", {"unlimited_visibility": True}),
+                ),
+                "read_only_1",
+                False,
             ),
             ({"unlimited_visibility": False}, (), "read_only_0", True),
         ],
         ids=[
             "creates-role",
             "reuses-safe-role",
-            "avoids-management-permissions",
+            "reuses-first-safe-suffixed-role",
+            "skips-unsafe-suffixed-role",
             "avoids-restricted-visibility",
         ],
     )
@@ -14829,7 +14844,7 @@ class TestTenantFinishACSView:
         settings,
         monkeypatch,
         existing_role_attributes,
-        occupied_suffixes,
+        existing_suffixes,
         expected_role_name,
         expected_role_created,
     ):
@@ -14859,13 +14874,15 @@ class TestTenantFinishACSView:
                 tenant=tenant,
                 **existing_role_attributes,
             )
-        for role_name in occupied_suffixes:
+        for role_name, role_attributes in existing_suffixes:
             Role.objects.using(MainRouter.admin_db).create(
                 name=role_name,
                 tenant=tenant,
-                unlimited_visibility=True,
+                **role_attributes,
             )
-        roles_before = Role.objects.using(MainRouter.admin_db).count()
+        roles_before = (
+            Role.objects.using(MainRouter.admin_db).filter(tenant=tenant).count()
+        )
 
         social_account = SocialAccount(
             user=user,
@@ -14920,7 +14937,10 @@ class TestTenantFinishACSView:
 
         # Verify the fallback role was created or reused with read-only access
         expected_role_count = roles_before + expected_role_created
-        assert Role.objects.using(MainRouter.admin_db).count() == expected_role_count
+        assert (
+            Role.objects.using(MainRouter.admin_db).filter(tenant=tenant).count()
+            == expected_role_count
+        )
         role = Role.objects.using(MainRouter.admin_db).get(
             name=expected_role_name, tenant=tenant
         )
@@ -14991,17 +15011,25 @@ class TestTenantFinishACSView:
                 "organization": ["testing_company"],
             },
         )
-        # Without the user lock, both callbacks reach this check before either
+        # Without the user lock, both callbacks reach this query before either
         # creates a fallback. With the lock, the first callback times out here
         # while the second waits for the transaction to finish.
-        concurrent_role_checks = Barrier(2)
-        original_exists = QuerySet.exists
+        second_role_check_reached = Event()
+        concurrent_role_checks_detected = Event()
+        role_check_count_lock = Lock()
+        role_check_count = 0
+        original_role_check = TenantFinishACSView._user_has_tenant_role
 
-        def synchronize_role_checks(queryset):
-            if queryset.model is UserRoleRelationship:
-                with suppress(BrokenBarrierError):
-                    concurrent_role_checks.wait(timeout=1)
-            return original_exists(queryset)
+        def synchronize_role_checks(user_id, tenant_id):
+            nonlocal role_check_count
+            with role_check_count_lock:
+                role_check_count += 1
+                is_first_role_check = role_check_count == 1
+                if role_check_count == 2:
+                    second_role_check_reached.set()
+            if is_first_role_check and second_role_check_reached.wait(timeout=1):
+                concurrent_role_checks_detected.set()
+            return original_role_check(user_id, tenant_id)
 
         def dispatch_callback():
             close_old_connections()
@@ -15018,7 +15046,7 @@ class TestTenantFinishACSView:
                 response = TenantFinishACSView.as_view()(
                     request, organization_slug=saml_setup["domain"]
                 )
-                return response.status_code
+                return response
             finally:
                 close_old_connections()
 
@@ -15035,7 +15063,11 @@ class TestTenantFinishACSView:
             patch("api.models.SAMLDomainIndex.objects.get") as mock_saml_domain_get,
             patch("api.models.SAMLConfiguration.objects.get") as mock_saml_config_get,
             patch("api.models.User.objects.get") as mock_user_get,
-            patch.object(QuerySet, "exists", synchronize_role_checks),
+            patch.object(
+                TenantFinishACSView,
+                "_user_has_tenant_role",
+                side_effect=synchronize_role_checks,
+            ),
         ):
             mock_get_app_or_404.return_value = MagicMock(
                 provider="saml",
@@ -15054,11 +15086,15 @@ class TestTenantFinishACSView:
             ).get(pk=user.pk)
 
             with ThreadPoolExecutor(max_workers=2) as executor:
-                status_codes = list(
-                    executor.map(lambda _: dispatch_callback(), range(2))
-                )
+                responses = list(executor.map(lambda _: dispatch_callback(), range(2)))
 
-        assert status_codes == [status.HTTP_302_FOUND, status.HTTP_302_FOUND]
+        assert role_check_count == 2
+        assert not concurrent_role_checks_detected.is_set()
+        for response in responses:
+            assert response.status_code == status.HTTP_302_FOUND
+            parsed_redirect = urlparse(response.url)
+            assert parsed_redirect.path == "/sso-complete"
+            assert set(parse_qs(parsed_redirect.query)) == {"id"}
         relationships = UserRoleRelationship.objects.using(MainRouter.admin_db).filter(
             user=user, tenant_id=tenant.id
         )
