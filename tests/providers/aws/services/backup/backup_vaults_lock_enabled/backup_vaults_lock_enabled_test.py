@@ -25,7 +25,7 @@ def build_vault(locked: bool) -> BackupVault:
 
 class Test_backup_vaults_lock_enabled:
     def test_no_backup_vaults(self):
-        backup_client = mock.MagicMock
+        backup_client = mock.MagicMock()
         backup_client.backup_vaults = []
 
         with (
@@ -45,7 +45,7 @@ class Test_backup_vaults_lock_enabled:
             assert len(result) == 0
 
     def test_backup_vaults_none(self):
-        backup_client = mock.MagicMock
+        backup_client = mock.MagicMock()
         backup_client.backup_vaults = None
 
         with (
@@ -65,7 +65,7 @@ class Test_backup_vaults_lock_enabled:
             assert len(result) == 0
 
     def test_backup_vault_not_locked(self):
-        backup_client = mock.MagicMock
+        backup_client = mock.MagicMock()
         backup_client.backup_vaults = [build_vault(locked=False)]
 
         with (
@@ -94,7 +94,7 @@ class Test_backup_vaults_lock_enabled:
             assert result[0].resource_tags == []
 
     def test_backup_vault_locked(self):
-        backup_client = mock.MagicMock
+        backup_client = mock.MagicMock()
         backup_client.backup_vaults = [build_vault(locked=True)]
 
         with (

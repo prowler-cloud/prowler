@@ -3,7 +3,18 @@ from prowler.providers.aws.services.backup.backup_client import backup_client
 
 
 class backup_vaults_lock_enabled(Check):
-    def execute(self):
+    """Verify that every AWS Backup vault has Vault Lock enabled.
+
+    A vault PASSES when ``Locked`` is set. ``ListBackupVaults`` reports the same
+    flag for governance and compliance mode, so the mode itself is not asserted.
+    """
+
+    def execute(self) -> list[Check_Report_AWS]:
+        """Execute the AWS Backup Vault Lock check.
+
+        Returns:
+            A list of reports with each backup vault Vault Lock status.
+        """
         findings = []
         if backup_client.backup_vaults:
             for backup_vault in backup_client.backup_vaults:
