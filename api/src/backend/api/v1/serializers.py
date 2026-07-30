@@ -1,8 +1,10 @@
 import base64
 import json
+import logging
 from datetime import UTC, datetime, timedelta
 
 import yaml
+from api.celery_utils import decode_celery_field
 from api.db_router import MainRouter
 from api.exceptions import ConflictException
 from api.models import (
@@ -59,6 +61,7 @@ from api.v1.serializer_utils.lighthouse import (
 from api.v1.serializer_utils.processors import ProcessorConfigField
 from api.v1.serializer_utils.providers import ProviderSecretField
 from api.validators import validate_lighthouse_openai_compatible_base_url
+from config.custom_logging import BackendLogger
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import update_last_login
@@ -78,6 +81,8 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.settings import api_settings
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.utils import get_md5_hash_password
+
+logger = logging.getLogger(BackendLogger.API)
 
 # Base
 
@@ -621,13 +626,24 @@ class TaskSerializer(RLSSerializer, TaskBase):
 
     @extend_schema_field(serializers.JSONField())
     def get_task_args(self, obj):
-        task_args = self.get_json_field(obj, "task_kwargs")
-        # Celery task_kwargs are stored as a double string JSON in the database when not empty
-        if isinstance(task_args, str):
-            task_args = json.loads(task_args.replace("'", '"').replace("None", "null"))
-        # Remove tenant_id from task_kwargs if present
-        task_args.pop("tenant_id", None)
+        task_kwargs = (
+            getattr(obj.task_runner_task, "task_kwargs", None)
+            if obj.task_runner_task
+            else None
+        )
+        try:
+            task_args = decode_celery_field(task_kwargs, {})
+            if not isinstance(task_args, dict):
+                raise ValueError("Decoded task kwargs must be a dictionary")
+        except ValueError:
+            logger.warning(
+                "Unable to decode task kwargs for task %s; returning empty task_args.",
+                obj.id,
+            )
+            return {}
 
+        task_args = task_args.copy()
+        task_args.pop("tenant_id", None)
         return task_args
 
     @staticmethod
