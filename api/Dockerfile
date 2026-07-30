@@ -1,4 +1,4 @@
-FROM python:3.12.13-slim-bookworm@sha256:8a7e7cc04fd3e2bd787f7f24e22d5d119aa590d429b50c95dfe12b3abe52f48b AS build
+FROM python:3.12.13-slim-trixie@sha256:57cd7c3a7a273101a6485ba99423ee568157882804b1124b4dd04266317710de AS build
 
 LABEL maintainer="https://github.com/prowler-cloud/api"
 
@@ -17,7 +17,7 @@ ENV ZIZMOR_VERSION=${ZIZMOR_VERSION}
 RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \
     git \
-    libicu72 \
+    libicu76 \
     gcc \
     g++ \
     make \
@@ -117,6 +117,8 @@ RUN apt-get purge -y --auto-remove \
     libxml2-dev \
     libxmlsec1-dev \
     libxmlsec1-openssl \
+    libxmlsec1t64 \
+    libxmlsec1t64-openssl \
     pkg-config \
     libtool \
     libxslt1-dev \
