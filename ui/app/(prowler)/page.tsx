@@ -15,6 +15,7 @@ import { isCloud } from "@/lib/shared/env";
 import { SearchParamsProps } from "@/types";
 
 import { OverviewBanner } from "./_overview/_components/overview-banner";
+import { OverviewProviderContext } from "./_overview/_components/overview-provider-context";
 import { getLighthouseOverviewBannerHref } from "./_overview/_lib/lighthouse-banner";
 import { OVERVIEW_BANNER_VARIANT } from "./_overview/_lib/overview-banner";
 import {
@@ -60,6 +61,11 @@ export default async function Home({
   return (
     <ContentLayout title="Overview" icon="lucide:square-chart-gantt">
       <AppSidebarModeSync mode={APP_SIDEBAR_MODE.BROWSE} />
+      <OverviewProviderContext
+        searchParams={resolvedSearchParams}
+        providers={providersData?.data ?? []}
+        groups={providerGroupsData?.data ?? []}
+      />
       {/* Agents banner shows everywhere; Lighthouse is Cloud-only, so on a
           local server the agents banner is the only child and fills the row. */}
       <div className="mb-6 flex flex-col gap-6 lg:flex-row">

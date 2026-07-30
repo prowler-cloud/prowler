@@ -8,9 +8,11 @@ import {
   LIGHTHOUSE_PAGE_ID,
 } from "@/lib/lighthouse/context/constants";
 import type {
+  lighthouseAlertContextItemSchema,
   lighthouseAttackPathContextItemSchema,
   lighthouseAttackPathParameterSchema,
   lighthouseAttackPathParametersSchema,
+  lighthouseAttackPathTypeCountsSchema,
   lighthouseComplianceContextItemSchema,
   lighthouseComplianceTotalsSchema,
   lighthouseContextEnvelopeSchema,
@@ -70,6 +72,9 @@ export type LighthouseAttackPathParameter = z.infer<
 export type LighthouseAttackPathParameters = z.infer<
   typeof lighthouseAttackPathParametersSchema
 >;
+export type LighthouseAttackPathTypeCounts = z.infer<
+  typeof lighthouseAttackPathTypeCountsSchema
+>;
 export type LighthouseAttackPathContextItem = z.infer<
   typeof lighthouseAttackPathContextItemSchema
 >;
@@ -78,6 +83,9 @@ export type LighthouseScanContextItem = z.infer<
 >;
 export type LighthouseProviderContextItem = z.infer<
   typeof lighthouseProviderContextItemSchema
+>;
+export type LighthouseAlertContextItem = z.infer<
+  typeof lighthouseAlertContextItemSchema
 >;
 export type LighthouseContextItem = z.infer<typeof lighthouseContextItemSchema>;
 export type LighthouseContextEnvelope = z.infer<
