@@ -102,14 +102,12 @@ gcloud organizations list
 
 2. Select **Google Cloud** as the provider.
 
-{/* SCREENSHOT: Provider selection step of the wizard with the Google Cloud card highlighted. */}
 <Frame>
   <img src="/images/organizations/gcp/select-gcp-provider.png" alt="Provider selection modal with Google Cloud highlighted" />
 </Frame>
 
 3. Choose **Add Multiple Projects With GCP Organization**.
 
-{/* SCREENSHOT: Method selector showing "Add A Single GCP Project" and "Add Multiple Projects With GCP Organization", with the second option highlighted. */}
 <Frame>
   <img src="/images/organizations/gcp/select-gcp-organizations-method.png" alt="Method selector showing Add Multiple Projects With GCP Organization option highlighted" />
 </Frame>
@@ -123,7 +121,6 @@ In Prowler Local Server the organization option is marked **Cloud** and opens an
 - **Organization ID**: the numeric ID of your Google Cloud organization (for example, `123456789012`). Non-numeric values are rejected before submission.
 - **Name** (optional): a display name for the organization in Prowler. If left blank, Prowler uses the name stored in Google Cloud.
 
-{/* SCREENSHOT: "Google Cloud (GCP) / Organization Details" step with Organization ID and Name fields filled. */}
 <Frame>
   <img src="/images/organizations/gcp/gcp-organization-details-form.png" alt="Organization Details form with the Google Cloud organization ID and Name fields" />
 </Frame>
@@ -134,7 +131,6 @@ Click **Next** to proceed to the authentication phase. Prowler matches the organ
 
 The **Authentication Details** step collects the credential Prowler uses to read your hierarchy and, later, to scan each project. Choose one of two methods.
 
-{/* SCREENSHOT: "Google Cloud (GCP) / Authentication Details" step showing both credential method cards and the Service Account Key textarea. */}
 <Frame>
   <img src="/images/organizations/gcp/gcp-authentication-details.png" alt="Authentication Details step showing the Service Account Key and Client ID methods" />
 </Frame>
@@ -172,7 +168,6 @@ Click **Authenticate**. Prowler then:
 - Triggers an asynchronous discovery that walks your hierarchy through the Cloud Resource Manager API.
 - Shows a **"Gathering GCP Projects..."** spinner while it waits.
 
-{/* SCREENSHOT: The "Gathering GCP Projects..." spinner during discovery. */}
 <Frame>
   <img src="/images/organizations/gcp/gcp-gathering-projects.png" alt="Gathering GCP Projects spinner shown while discovery runs" />
 </Frame>
@@ -199,7 +194,6 @@ If discovery fails outright, the wizard explains why and offers **Retry discover
 
 Once discovery completes, the wizard renders your organization as a hierarchical tree:
 
-{/* SCREENSHOT: Selection tree with nested folders, projects, checkboxes, alias inputs, and the "X of Y projects selected" header. */}
 <Frame>
   <img src="/images/organizations/gcp/gcp-tree-view-projects.png" alt="Hierarchical tree view showing folders and projects with selection checkboxes" />
 </Frame>
@@ -221,7 +215,6 @@ A project is shown grayed out and cannot be selected when onboarding it would co
 | `organization_node_conflict` | The project is already grouped under a different folder in Prowler — for example, it moved in Google Cloud after it was onboarded. |
 | `provider_type_conflict` | A provider with the same identifier exists in Prowler for another cloud provider. |
 
-{/* SCREENSHOT: A blocked project row grayed out with its reason tooltip open. */}
 <Frame>
   <img src="/images/organizations/gcp/gcp-blocked-project.png" alt="Blocked project row with the reason shown in a tooltip" />
 </Frame>
@@ -230,7 +223,6 @@ A project is shown grayed out and cannot be selected when onboarding it would co
 
 A folder that holds no projects, or whose projects are all blocked, is shown disabled with the note *"No projects available to select in this folder."* The folder still expands, so you can see the blocked projects it holds and why they are blocked.
 
-{/* SCREENSHOT: A disabled folder row with the "No projects available to select in this folder." note, expanded to reveal blocked projects. */}
 <Frame>
   <img src="/images/organizations/gcp/gcp-inert-folder.png" alt="Disabled folder row noting that no projects are available to select" />
 </Frame>
@@ -243,7 +235,6 @@ Each project row carries an editable name, prefilled with the project's display 
 
 Applying your selection stores the organization credential on every selected project. When a selected project is already connected to Prowler with its own credential, that credential is **overwritten** — so the wizard asks first, naming the affected projects:
 
-{/* SCREENSHOT: "Replace existing credentials?" modal listing the affected projects, with Cancel and "Replace and continue". */}
 <Frame>
   <img src="/images/organizations/gcp/gcp-replace-credentials-apply.png" alt="Replace existing credentials modal listing the projects whose credentials will be replaced" />
 </Frame>
@@ -258,7 +249,6 @@ Click **Replace and continue** to proceed, or **Cancel** to adjust your selectio
 
 Click **Test Connections** to verify that Prowler can authenticate against each selected project. Prowler creates one provider per project — identified by its Google Cloud project ID — and then tests every connection.
 
-{/* SCREENSHOT: Connection testing in progress, with spinners and success icons on individual project rows. */}
 <Frame>
   <img src="/images/organizations/gcp/gcp-test-connections.png" alt="Connection testing in progress with status icons on each project" />
 </Frame>
@@ -293,7 +283,6 @@ The Organizations wizard uses the same schedule controls described in [Scan Sche
 
 Click **Save**, **Save and launch scan**, or **Launch scan**, depending on the selected schedule option. A toast notification confirms whether the schedule was saved, scans were launched, or both, and links to the **Scans** page. Prowler then redirects to the **Providers** page. Scans launch only for projects that passed connection testing.
 
-{/* SCREENSHOT: Launch step showing "Projects Connected!", the schedule selector, and the launch action. */}
 <Frame>
   <img src="/images/organizations/gcp/gcp-launch-scan.png" alt="Launch Scan step showing Projects Connected confirmation and the scan schedule selector" />
 </Frame>
@@ -304,7 +293,6 @@ After launching:
 - Results populate the **Overview** and **Findings** pages.
 - On the **Providers** page, your projects are grouped under the organization and, when they live in a folder, under that folder.
 
-{/* SCREENSHOT: Providers page with the GCP organization row expanded, showing folder rows and project providers beneath them. */}
 <Frame>
   <img src="/images/organizations/gcp/gcp-providers-grouping.png" alt="Providers page showing projects grouped under GCP folders and the organization" />
 </Frame>
@@ -313,7 +301,6 @@ After launching:
 
 Open the row actions menu on the organization row on the **Providers** page.
 
-{/* SCREENSHOT: Row actions menu open on a GCP organization row, showing every available action. */}
 <Frame>
   <img src="/images/organizations/gcp/gcp-organization-row-actions.png" alt="Row actions menu on a GCP organization row" />
 </Frame>
@@ -334,7 +321,6 @@ Projects added to your Google Cloud organization after onboarding are not picked
 
 Choosing **Update Credentials** re-enters the Authentication Details step. Because the organization already holds a credential, Prowler warns before overwriting it and names how many providers re-authenticate with the new one:
 
-{/* SCREENSHOT: "Replace existing credentials?" modal showing the affected provider count, with Cancel and "Replace credentials". */}
 <Frame>
   <img src="/images/organizations/gcp/gcp-replace-credentials-setup.png" alt="Replace existing credentials modal showing how many providers re-authenticate" />
 </Frame>
@@ -345,7 +331,6 @@ Storing a new credential runs a fresh discovery, so any discovery already in pro
 
 Deleting an organization or a folder **cascades to every provider grouped under it**, along with their scans and findings. Both dialogs state how many providers are affected before you confirm.
 
-{/* SCREENSHOT: Delete confirmation dialog for a GCP organization, showing the cascade provider count. */}
 <Frame>
   <img src="/images/organizations/gcp/gcp-delete-organization.png" alt="Delete organization dialog showing how many providers are deleted with it" />
 </Frame>
