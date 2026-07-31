@@ -388,13 +388,9 @@ export function DataTableRowActions({
       for (const id of ids) {
         const outcome = outcomes[id];
 
-        if (!outcome || outcome.error) {
+        // No task id means nothing was ever tested, so it cannot count as passing.
+        if (!outcome || outcome.error || !outcome.taskId) {
           failed += 1;
-          continue;
-        }
-
-        if (!outcome.taskId) {
-          succeeded += 1;
           continue;
         }
 
