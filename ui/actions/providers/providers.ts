@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { apiBaseUrl, getAuthHeaders, getFormValue, wait } from "@/lib";
+import { runWithConcurrencyLimit } from "@/lib/concurrency";
 import { buildSecretConfig } from "@/lib/provider-credentials/build-credentials";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 import { appendSanitizedProviderInFilters } from "@/lib/provider-filters";
@@ -144,6 +145,56 @@ export const getProvider = async (formData: FormData) => {
   } catch (error) {
     return handleApiError(error);
   }
+};
+
+/** Server max for `page[size]`, which also bounds the id batch size. */
+const PROVIDERS_PAGE_MAX = 100;
+
+/**
+ * Uids of the given providers, keyed by provider id. A provider's `uid` is the
+ * candidate it was created for (AWS account id / GCP project id), so this is what
+ * matches an apply's created providers back to the selection. Batched with
+ * `filter[id__in]` rather than one `GET /providers/{id}` per id.
+ */
+export const getProviderUidsByIds = async (
+  providerIds: string[],
+): Promise<Record<string, string>> => {
+  const uniqueIds = Array.from(new Set(providerIds.filter(Boolean)));
+  if (uniqueIds.length === 0) {
+    return {};
+  }
+
+  const headers = await getAuthHeaders({ contentType: false });
+  const batches: string[][] = [];
+  for (let start = 0; start < uniqueIds.length; start += PROVIDERS_PAGE_MAX) {
+    batches.push(uniqueIds.slice(start, start + PROVIDERS_PAGE_MAX));
+  }
+
+  const uidById: Record<string, string> = {};
+
+  for (const batch of batches) {
+    const url = new URL(`${apiBaseUrl}/providers`);
+    url.searchParams.set("filter[id__in]", batch.join(","));
+    url.searchParams.set("page[size]", String(PROVIDERS_PAGE_MAX));
+
+    try {
+      const response = await fetch(url.toString(), { headers });
+      const result = (await handleApiResponse(response)) as
+        | ProvidersApiResponse
+        | undefined;
+
+      for (const provider of result?.data ?? []) {
+        const uid = provider?.attributes?.uid;
+        if (typeof provider?.id === "string" && typeof uid === "string") {
+          uidById[provider.id] = uid;
+        }
+      }
+    } catch {
+      // A failed batch leaves its providers unmapped rather than failing the rest.
+    }
+  }
+
+  return uidById;
 };
 
 export const updateProvider = async (formData: FormData) => {
@@ -299,19 +350,83 @@ export const updateCredentialsProvider = async (
   }
 };
 
-export const checkConnectionProvider = async (formData: FormData) => {
+/** Padding that keeps the single-provider spinner visible long enough to read. */
+const CONNECTION_SETTLE_DELAY_MS = 2000;
+
+export const checkConnectionProvider = async (
+  formData: FormData,
+  {
+    settleDelayMs = CONNECTION_SETTLE_DELAY_MS,
+    revalidate = true,
+  }: { settleDelayMs?: number; revalidate?: boolean } = {},
+) => {
   const headers = await getAuthHeaders({ contentType: false });
   const providerId = formData.get(ProviderCredentialFields.PROVIDER_ID);
   const url = new URL(`${apiBaseUrl}/providers/${providerId}/connection`);
 
   try {
     const response = await fetch(url.toString(), { method: "POST", headers });
-    await wait(2000);
+    // Batches opt out of both: their pollers already report progress, and
+    // revalidating here would re-render the providers page once per provider.
+    if (settleDelayMs > 0) {
+      await wait(settleDelayMs);
+    }
 
-    return handleApiResponse(response, "/providers");
+    return handleApiResponse(response, revalidate ? "/providers" : undefined);
   } catch (error) {
     return handleApiError(error);
   }
+};
+
+/** Connection checks in flight at once. */
+const CONNECTION_CHECK_CONCURRENCY_LIMIT = 10;
+
+/**
+ * Dispatches a connection check per provider, returning the task testing each
+ * one keyed by provider id. A failed dispatch is reported under `error` and
+ * never cancels the rest of the batch.
+ *
+ * The fan-out belongs here, not in the caller: client-invoked server actions run
+ * one at a time through Next's action queue, so a client-side loop is serialized
+ * whatever concurrency it declares.
+ */
+export const startProviderConnectionChecks = async (
+  providerIds: string[],
+): Promise<Record<string, { taskId?: string; error?: unknown }>> => {
+  const uniqueIds = Array.from(new Set(providerIds.filter(Boolean)));
+  const outcomes: Record<string, { taskId?: string; error?: unknown }> = {};
+
+  await runWithConcurrencyLimit(
+    uniqueIds,
+    CONNECTION_CHECK_CONCURRENCY_LIMIT,
+    async (providerId) => {
+      const formData = new FormData();
+      formData.set(ProviderCredentialFields.PROVIDER_ID, providerId);
+
+      try {
+        const result = await checkConnectionProvider(formData, {
+          settleDelayMs: 0,
+          revalidate: false,
+        });
+
+        if (result?.error || result?.errors?.length) {
+          outcomes[providerId] = { error: result };
+          return;
+        }
+
+        outcomes[providerId] = { taskId: result?.data?.id };
+      } catch (error) {
+        outcomes[providerId] = { error: handleApiError(error) };
+      }
+    },
+  );
+
+  return outcomes;
+};
+
+/** Called once after a batch of checks, which revalidate nothing themselves. */
+export const revalidateProviders = async () => {
+  revalidatePath("/providers");
 };
 
 export const deleteCredentials = async (secretId: string) => {

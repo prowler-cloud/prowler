@@ -5,6 +5,7 @@ import {
   ApplyStatus,
   AwsDiscoveryResult,
   AwsOrgHierarchy,
+  GcpDiscoveryResult,
   GcpOrgHierarchy,
   NODE_KIND,
   ORGANIZATION_TYPE,
@@ -18,7 +19,62 @@ import {
   getSelectableCandidateIds,
   getSelectableCandidateIdsForTarget,
   mapAwsDiscovery,
+  mapGcpDiscovery,
 } from "./organizations.adapter";
+
+// Shaped after the real payload: identity is the resource `name` (there is no
+// `id`), a child's `parent` is its parent's `name`, and `display_name` is the
+// only human label.
+const gcpDiscoveryFixture: GcpDiscoveryResult = {
+  organization: {
+    name: "organizations/456123789012",
+    display_name: "example.com",
+  },
+  folders: [
+    {
+      name: "folders/1000000001",
+      display_name: "Engineering",
+      parent: "organizations/456123789012",
+    },
+    {
+      name: "folders/1000000002",
+      display_name: "Platform",
+      parent: "folders/1000000001",
+    },
+  ],
+  projects: [
+    {
+      project_id: "prod-analytics",
+      name: "projects/1000000010",
+      display_name: "Prod Analytics",
+      parent: "folders/1000000001",
+      registration: {
+        provider_exists: false,
+        provider_id: null,
+        organization_relation: "link_required",
+        organization_node_relation: "link_required",
+        provider_secret_state: "will_create",
+        apply_status: APPLY_STATUS.READY,
+        blocked_reasons: [],
+      },
+    },
+    {
+      project_id: "legacy-sandbox",
+      name: "projects/1000000011",
+      display_name: "Legacy Sandbox",
+      parent: "organizations/456123789012",
+      registration: {
+        provider_exists: false,
+        provider_id: null,
+        organization_relation: "link_required",
+        organization_node_relation: "link_required",
+        provider_secret_state: "will_create",
+        apply_status: APPLY_STATUS.BLOCKED,
+        blocked_reasons: ["Project is pending deletion"],
+      },
+    },
+  ],
+};
 
 const awsDiscoveryFixture: AwsDiscoveryResult = {
   roots: [
@@ -134,6 +190,116 @@ describe("mapAwsDiscovery", () => {
   });
 });
 
+describe("mapGcpDiscovery", () => {
+  it("normalizes the GCP wire result into the common hierarchy model", () => {
+    // Given / When
+    const gcpHierarchy = mapGcpDiscovery(gcpDiscoveryFixture);
+
+    // Then
+    expect(gcpHierarchy.orgType).toBe(ORGANIZATION_TYPE.GCP);
+    // The uid is the bare numeric id, not the `organizations/{id}` resource name.
+    expect(gcpHierarchy.organization).toEqual({
+      uid: "456123789012",
+      name: "example.com",
+    });
+
+    // Folders become nodes keyed by their `folders/{id}` ref, keeping the parent
+    // name-ref that nesting matches on.
+    expect(gcpHierarchy.nodes).toEqual([
+      {
+        id: "folders/1000000001",
+        kind: NODE_KIND.FOLDER,
+        name: "Engineering",
+        parentId: "organizations/456123789012",
+      },
+      {
+        id: "folders/1000000002",
+        kind: NODE_KIND.FOLDER,
+        name: "Platform",
+        parentId: "folders/1000000001",
+      },
+    ]);
+
+    // Projects become candidates keyed by their provider uid (project_id).
+    expect(gcpHierarchy.candidates.map((candidate) => candidate.uid)).toEqual([
+      "prod-analytics",
+      "legacy-sandbox",
+    ]);
+    // The label is the display name: a project's `name` is `projects/{number}`,
+    // which must never surface as one (it would also prefill the alias input).
+    expect(gcpHierarchy.candidates[0]).toMatchObject({
+      uid: "prod-analytics",
+      label: "Prod Analytics",
+      parentId: "folders/1000000001",
+    });
+    expect(
+      gcpHierarchy.candidates.some((candidate) =>
+        candidate.label.startsWith("projects/"),
+      ),
+    ).toBe(false);
+  });
+
+  it("builds a folder/project tree with org-level projects at the top level", () => {
+    // Given
+    const gcpHierarchy = mapGcpDiscovery(gcpDiscoveryFixture);
+
+    // When
+    const treeData = buildOrgTreeData(gcpHierarchy);
+
+    // Then — exact, not `arrayContaining`: a subset matcher also passes on the
+    // flattened tree a parent-ref mismatch produces.
+    expect(treeData.map((node) => node.id)).toEqual([
+      "folders/1000000001",
+      "legacy-sandbox",
+    ]);
+    const engineering = treeData[0];
+    expect(engineering.children?.map((node) => node.id)).toEqual([
+      "folders/1000000002",
+      "prod-analytics",
+    ]);
+    const blockedProject = treeData[1];
+    expect(blockedProject.disabled).toBe(true);
+  });
+
+  it("gives two folders sharing a display name a row each", () => {
+    // Given — display names are unique only among siblings, so repeats are legal.
+    const hierarchy = mapGcpDiscovery({
+      ...gcpDiscoveryFixture,
+      folders: [
+        {
+          name: "folders/1000000001",
+          display_name: "qa-folder",
+          parent: "organizations/456123789012",
+        },
+        {
+          name: "folders/1000000002",
+          display_name: "qa-folder",
+          parent: "organizations/456123789012",
+        },
+      ],
+      projects: [],
+    });
+
+    // When
+    const treeData = buildOrgTreeData(hierarchy);
+
+    // Then — two rows, one per resource name.
+    expect(treeData.map((node) => node.id)).toEqual([
+      "folders/1000000001",
+      "folders/1000000002",
+    ]);
+    expect(treeData.every((node) => node.name === "qa-folder")).toBe(true);
+  });
+
+  it("treats only ready projects as selectable", () => {
+    // Given
+    const gcpHierarchy = mapGcpDiscovery(gcpDiscoveryFixture);
+
+    // When / Then
+    expect(getSelectableCandidateIds(gcpHierarchy)).toEqual(["prod-analytics"]);
+  });
+});
+
 describe("buildOrgTreeData", () => {
   it("builds nested tree structure and marks blocked candidates as disabled", () => {
     // Given / When
@@ -155,6 +321,94 @@ describe("buildOrgTreeData", () => {
       (node) => node.id === "222222222222",
     );
     expect(blockedCandidate?.disabled).toBe(true);
+  });
+
+  // The selection flow filters non-selectable ids out, so a click on such a row
+  // would be a silent no-op.
+  describe("containers with nothing selectable", () => {
+    const gcpTreeWith = (
+      folders: GcpDiscoveryResult["folders"],
+      projects: GcpDiscoveryResult["projects"],
+    ) =>
+      buildOrgTreeData(
+        mapGcpDiscovery({ ...gcpDiscoveryFixture, folders, projects }),
+      );
+
+    const folder = (id: string, parent: string) => ({
+      name: `folders/${id}`,
+      display_name: `Folder ${id}`,
+      parent,
+    });
+
+    const project = (
+      projectId: string,
+      parent: string,
+      applyStatus: ApplyStatus,
+    ) => ({
+      project_id: projectId,
+      name: `projects/${projectId}`,
+      display_name: projectId,
+      parent,
+      registration: {
+        provider_exists: false,
+        provider_id: null,
+        organization_relation: "link_required" as const,
+        organization_node_relation: "link_required" as const,
+        provider_secret_state: "will_create" as const,
+        apply_status: applyStatus,
+        blocked_reasons: applyStatus === APPLY_STATUS.BLOCKED ? ["reason"] : [],
+      },
+    });
+
+    const ORG = "organizations/456123789012";
+
+    it("disables a folder holding no projects at all", () => {
+      const treeData = gcpTreeWith([folder("1", ORG)], []);
+
+      expect(treeData[0].disabled).toBe(true);
+    });
+
+    it("disables a folder whose only projects are blocked", () => {
+      const treeData = gcpTreeWith(
+        [folder("1", ORG)],
+        [project("blocked-one", "folders/1", APPLY_STATUS.BLOCKED)],
+      );
+
+      expect(treeData[0].disabled).toBe(true);
+      // The blocked project keeps its own row: the folder still opens to show why.
+      expect(treeData[0].children?.map((node) => node.id)).toEqual([
+        "blocked-one",
+      ]);
+    });
+
+    it("keeps a folder enabled when a nested folder holds a ready project", () => {
+      const treeData = gcpTreeWith(
+        [folder("1", ORG), folder("2", "folders/1")],
+        [project("ready-one", "folders/2", APPLY_STATUS.READY)],
+      );
+
+      expect(treeData[0].disabled).toBe(false);
+      expect(treeData[0].children?.[0].disabled).toBe(false);
+    });
+
+    it("disables every folder on a branch that dead-ends", () => {
+      const treeData = gcpTreeWith(
+        [folder("1", ORG), folder("2", "folders/1")],
+        [project("blocked-one", "folders/2", APPLY_STATUS.BLOCKED)],
+      );
+
+      expect(treeData[0].disabled).toBe(true);
+      expect(treeData[0].children?.[0].disabled).toBe(true);
+    });
+
+    it("leaves a ready candidate's own disabled flag alone", () => {
+      const treeData = gcpTreeWith(
+        [folder("1", ORG)],
+        [project("ready-one", "folders/1", APPLY_STATUS.READY)],
+      );
+
+      expect(treeData[0].children?.[0].disabled).toBe(false);
+    });
   });
 });
 

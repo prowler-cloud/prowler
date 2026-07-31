@@ -14,6 +14,7 @@
 
 import { http, HttpResponse } from "msw";
 
+import { NODE_KIND } from "./organizations.fixtures";
 import type {
   FixtureNode,
   FixtureOrganization,
@@ -73,26 +74,43 @@ const organizationResource = (
   },
 });
 
-/** Canonical `organization-nodes` resource (carries `kind`). */
-const organizationNodeResource = (node: FixtureNode) => ({
-  id: node.id,
-  type: "organization-nodes",
-  attributes: {
-    name: node.name,
-    kind: node.kind,
-    external_id: node.externalId,
-    parent_external_id: node.parentExternalId,
-    metadata: {},
-    inserted_at: TS,
-    updated_at: TS,
-  },
-  relationships: {
-    organization: {
-      data: { type: "organizations", id: node.organizationId },
+/**
+ * Canonical `organization-nodes` resource (carries `kind`).
+ *
+ * The parent is a relationship, not an attribute, and DJA always emits the key —
+ * `data: null` for a top-level node, since neither the AWS root nor a GCP
+ * organization is itself a node. Fixtures still express structure as
+ * `parentExternalId`, resolved to a node ref here.
+ */
+const organizationNodeResource = (node: FixtureNode, all: FixtureNode[]) => {
+  const parent = all.find(
+    (candidate) =>
+      candidate.organizationId === node.organizationId &&
+      candidate.externalId === node.parentExternalId,
+  );
+
+  return {
+    id: node.id,
+    type: "organization-nodes",
+    attributes: {
+      name: node.name,
+      kind: node.kind,
+      external_id: node.externalId,
+      metadata: {},
+      inserted_at: TS,
+      updated_at: TS,
     },
-    providers: { data: providerRefs(node.providerIds) },
-  },
-});
+    relationships: {
+      organization: {
+        data: { type: "organizations", id: node.organizationId },
+      },
+      parent: {
+        data: parent ? { type: "organization-nodes", id: parent.id } : null,
+      },
+      providers: { data: providerRefs(node.providerIds) },
+    },
+  };
+};
 
 /** Deprecated AWS-only `organizational-units` resource (no `kind`). */
 const organizationalUnitResource = (node: FixtureNode) => ({
@@ -179,6 +197,35 @@ const paginatedCollection = <T>(items: T[], request: Request) => {
   };
 };
 
+/**
+ * Map a created-provider id back to its uid (AWS account id / GCP project id).
+ * `apply.candidateProviderIds` is a fixture-side mapping, not a wire field.
+ */
+const uidForProviderId = (
+  fx: OrgFixture,
+  providerId: string,
+): string | null => {
+  const mapping = fx.apply.candidateProviderIds.find(
+    (m) => m.providerId === providerId,
+  );
+  if (mapping) return mapping.candidateId;
+  const provider = fx.providers.find((p) => p.id === providerId);
+  return provider?.uid ?? null;
+};
+
+/**
+ * The provider behind an id, seeded or apply-created. A created provider exists
+ * only as an id plus its candidate mapping, so the rest is synthesized as
+ * `/providers/:id` does; only `id` and `uid` are ever read back.
+ */
+const providerForId = (fx: OrgFixture, id: string): FixtureProvider => {
+  const seeded = fx.providers.find((provider) => provider.id === id);
+  if (seeded) return seeded;
+
+  const uid = uidForProviderId(fx, id) ?? id;
+  return { id, provider: "aws", uid, alias: uid, connected: true };
+};
+
 const applyResultResponse = (fx: OrgFixture) => ({
   data: {
     id: "apply-result-1",
@@ -193,7 +240,6 @@ const applyResultResponse = (fx: OrgFixture) => ({
       ...(fx.includeAwsAliases && {
         organizational_units_created_count: fx.apply.nodesCreatedCount,
       }),
-      account_provider_mappings: fx.apply.accountProviderMappings,
     },
     relationships: {
       providers: {
@@ -213,24 +259,13 @@ const applyResultResponse = (fx: OrgFixture) => ({
       }),
     },
   },
+  // No `included`: the apply view serves provider ids only and rejects `include`,
+  // so the created providers' uids are read from `/providers` afterwards.
 });
 
 const taskResource = (id: string, state: string, result: unknown) => ({
   data: { id, type: "tasks", attributes: { state, result } },
 });
-
-/** Map a created-provider id back to its uid (AWS account id / GCP project). */
-const uidForProviderId = (
-  fx: OrgFixture,
-  providerId: string,
-): string | null => {
-  const mapping = fx.apply.accountProviderMappings.find(
-    (m) => m.provider_id === providerId,
-  );
-  if (mapping) return mapping.account_id;
-  const provider = fx.providers.find((p) => p.id === providerId);
-  return provider?.uid ?? null;
-};
 
 const CONNECTION_TASK_PREFIX = "conn-task-";
 const DELETION_TASK_PREFIX = "del-task-";
@@ -268,10 +303,14 @@ export const handlersForOrganizations = (
   );
   let orgSeq = 0;
   let secretSeq = 0;
+  /** Reads per connection task, so `executingPolls` can hold one task running. */
+  const connectionTaskReads = new Map<string, number>();
 
   const unitNodeIds = (org: FixtureOrganization): string[] =>
     org.nodeIds.filter((id) =>
-      fx.nodes.some((n) => n.id === id && n.kind === "organizational-unit"),
+      fx.nodes.some(
+        (n) => n.id === id && n.kind === NODE_KIND.ORGANIZATIONAL_UNIT,
+      ),
     );
   const orgResource = (org: FixtureOrganization) =>
     organizationResource(org, {
@@ -409,7 +448,7 @@ export const handlersForOrganizations = (
           })
         : HttpResponse.json(
             paginatedCollection(
-              fx.nodes.map(organizationNodeResource),
+              fx.nodes.map((node) => organizationNodeResource(node, fx.nodes)),
               request,
             ),
           ),
@@ -486,13 +525,24 @@ export const handlersForOrganizations = (
     ),
 
     // --- providers-page loader (providers list, groups, schedules) --------
-    http.get(`${API}/providers`, () =>
-      HttpResponse.json({
-        data: fx.providers.map(providerResource),
+    http.get(`${API}/providers`, ({ request }) => {
+      // `filter[id__in]` is how the apply flow resolves the uids of the providers
+      // it just created. Those are not seeded in `fx.providers`, so they are
+      // synthesized here as `/providers/:id` does.
+      const idFilter = new URL(request.url).searchParams.get("filter[id__in]");
+      const data = idFilter
+        ? idFilter
+            .split(",")
+            .filter(Boolean)
+            .map((id) => providerResource(providerForId(fx, id)))
+        : fx.providers.map(providerResource);
+
+      return HttpResponse.json({
+        data,
         included: [],
-        meta: collectionMeta(fx.providers.length),
-      }),
-    ),
+        meta: collectionMeta(data.length),
+      });
+    }),
 
     http.get(`${API}/provider-groups`, () =>
       HttpResponse.json({ data: [], meta: collectionMeta(0) }),
@@ -550,6 +600,13 @@ export const handlersForOrganizations = (
         const providerId = taskId.slice(CONNECTION_TASK_PREFIX.length);
         const uid = uidForProviderId(fx, providerId);
         const outcome = uid ? fx.connectionByUid[uid] : undefined;
+        const reads = (connectionTaskReads.get(taskId) ?? 0) + 1;
+        connectionTaskReads.set(taskId, reads);
+
+        if (outcome?.executingPolls && reads <= outcome.executingPolls) {
+          return HttpResponse.json(taskResource(taskId, "executing", {}));
+        }
+
         const connected = outcome?.connected ?? true;
         return HttpResponse.json(
           taskResource(taskId, "completed", {
@@ -583,17 +640,27 @@ export const handlersForOrganizations = (
       const body = (await request.json()) as {
         data?: { attributes?: { provider_ids?: string[] } };
       };
-      // Echo the requested ids back as `updated`: the launch step reads that
-      // list to decide the flow succeeded, and treats an empty one as a
-      // total failure.
-      const updated = body?.data?.attributes?.provider_ids ?? [];
-      return HttpResponse.json({
-        data: {
-          id: "schedules-bulk-1",
-          type: "schedules-bulk",
-          attributes: { updated, failed: [] },
-        },
-      });
+      const requestedIds = body?.data?.attributes?.provider_ids ?? [];
+      const { failed, shape } = fx.scheduleBulk;
+      const failedIds = new Set(failed.map((failure) => failure.id));
+      // `updated` defaults to the requested ids minus the failures: each provider
+      // commits in its own transaction, so the API's list already excludes them.
+      const updated =
+        fx.scheduleBulk.updated ??
+        requestedIds.filter((id) => !failedIds.has(id));
+
+      // The real endpoint returns a plain dict the JSON:API renderer wraps in
+      // `data`, with no `attributes` level; the other shapes exercise the client's
+      // tolerance of a serializer-rendered body and of one carrying no lists.
+      if (shape === "attributes") {
+        return HttpResponse.json({
+          data: { type: "schedules-bulk", attributes: { updated, failed } },
+        });
+      }
+      if (shape === "bare") {
+        return HttpResponse.json({ data: {} });
+      }
+      return HttpResponse.json({ data: { updated, failed } });
     }),
   ];
 
@@ -603,7 +670,7 @@ export const handlersForOrganizations = (
     http.get(`${API}/organizational-units`, () =>
       HttpResponse.json({
         data: fx.nodes
-          .filter((n) => n.kind === "organizational-unit")
+          .filter((n) => n.kind === NODE_KIND.ORGANIZATIONAL_UNIT)
           .map(organizationalUnitResource),
         meta: { version: "v1" },
       }),

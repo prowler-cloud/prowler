@@ -18,13 +18,21 @@ import {
 import type { ScanConfigurationData } from "@/types/scan-configurations";
 import { SCAN_SCHEDULE_CAPABILITY } from "@/types/schedules";
 
-const { checkConnectionProviderMock, getScheduleMock, pushMock } = vi.hoisted(
-  () => ({
-    checkConnectionProviderMock: vi.fn(),
-    getScheduleMock: vi.fn(),
-    pushMock: vi.fn(),
-  }),
-);
+const {
+  checkConnectionProviderMock,
+  getScheduleMock,
+  getTasksByIdsMock,
+  pushMock,
+  revalidateProvidersMock,
+  startProviderConnectionChecksMock,
+} = vi.hoisted(() => ({
+  checkConnectionProviderMock: vi.fn(),
+  getScheduleMock: vi.fn(),
+  getTasksByIdsMock: vi.fn(),
+  pushMock: vi.fn(),
+  revalidateProvidersMock: vi.fn(),
+  startProviderConnectionChecksMock: vi.fn(),
+}));
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: pushMock }),
@@ -36,6 +44,12 @@ vi.mock("@/actions/organizations/organizations", () => ({
 
 vi.mock("@/actions/providers/providers", () => ({
   checkConnectionProvider: checkConnectionProviderMock,
+  revalidateProviders: revalidateProvidersMock,
+  startProviderConnectionChecks: startProviderConnectionChecksMock,
+}));
+
+vi.mock("@/actions/task/tasks", () => ({
+  getTasksByIds: getTasksByIdsMock,
 }));
 
 vi.mock("@/actions/schedules", () => ({
@@ -698,6 +712,57 @@ describe("DataTableRowActions", () => {
     // Should show count of selected testable providers (2), not all org children (1)
     expect(screen.getByText("Test Connections (2)")).toBeInTheDocument();
     expect(screen.queryByText("Test Connections (1)")).not.toBeInTheDocument();
+  });
+
+  it("tests every selected provider in one dispatch, not one call each", async () => {
+    // Given — Next's action queue serializes a per-provider loop, so the batch has
+    // to leave in a single action.
+    const user = userEvent.setup();
+    const testableProviderIds = ["provider-child-1", "provider-standalone"];
+    startProviderConnectionChecksMock.mockResolvedValue({
+      "provider-child-1": { taskId: "task-1" },
+      "provider-standalone": { taskId: "task-2" },
+    });
+    getTasksByIdsMock.mockResolvedValue({
+      "task-1": {
+        data: {
+          attributes: { state: "completed", result: { connected: true } },
+        },
+      },
+      "task-2": {
+        data: {
+          attributes: { state: "completed", result: { connected: true } },
+        },
+      },
+    });
+
+    render(
+      <DataTableRowActions
+        row={createOrgRow()}
+        hasSelection={true}
+        isRowSelected={false}
+        testableProviderIds={testableProviderIds}
+        onClearSelection={vi.fn()}
+        onOpenProviderWizard={vi.fn()}
+        onOpenOrganizationWizard={vi.fn()}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button"));
+    await user.click(screen.getByText("Test Connections (2)"));
+
+    // Then — one dispatch for the batch, one batched read, one revalidation.
+    await vi.waitFor(() =>
+      expect(revalidateProvidersMock).toHaveBeenCalledTimes(1),
+    );
+    expect(startProviderConnectionChecksMock).toHaveBeenCalledTimes(1);
+    expect(startProviderConnectionChecksMock).toHaveBeenCalledWith(
+      testableProviderIds,
+    );
+    expect(getTasksByIdsMock).toHaveBeenCalledTimes(1);
+    expect(getTasksByIdsMock).toHaveBeenCalledWith(["task-1", "task-2"]);
+    expect(checkConnectionProviderMock).not.toHaveBeenCalled();
   });
 
   it("shows selected provider count in Test Connections when OU row has active selection", async () => {

@@ -38,6 +38,11 @@ const WIZARD_VARIANT = {
 
 type WizardVariant = (typeof WIZARD_VARIANT)[keyof typeof WIZARD_VARIANT];
 
+const ORG_DOCS_URL = {
+  [ORGANIZATION_TYPE.AWS]: DOCS_URLS.AWS_ORGANIZATIONS,
+  [ORGANIZATION_TYPE.GCP]: DOCS_URLS.GCP_ORGANIZATIONS,
+} as const satisfies Record<OrgFlowType, string>;
+
 const EMPTY_FOOTER_CONFIG: WizardFooterConfig = {
   showBack: false,
   backLabel: "Back",
@@ -106,6 +111,7 @@ export function useProviderWizardController({
     reset: resetOrgWizard,
     setOrganization,
     setOrganizationType,
+    organizationType,
   } = useOrgSetupStore();
 
   useEffect(() => {
@@ -264,7 +270,7 @@ export function useProviderWizardController({
   const isProviderFlow = wizardVariant === WIZARD_VARIANT.PROVIDER;
   const docsLink = isProviderFlow
     ? getProviderHelpText(providerTypeHint ?? providerType ?? "").link
-    : DOCS_URLS.AWS_ORGANIZATIONS;
+    : ORG_DOCS_URL[organizationType];
   const resolvedFooterConfig: WizardFooterConfig = footerConfig;
   const modalTitle = getProviderWizardModalTitle(mode);
 
@@ -280,6 +286,7 @@ export function useProviderWizardController({
     mode,
     modalTitle,
     openOrganizationsFlow,
+    organizationType,
     orgCurrentStep,
     orgSetupPhase,
     providerTypeHint,

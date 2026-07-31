@@ -5,6 +5,8 @@ import {
   ApplyDiscoveryPayload,
   AwsDiscoveryResult,
   AwsOrgHierarchy,
+  GcpDiscoveryResult,
+  GcpOrgHierarchy,
   NODE_KIND,
   OrgCandidate,
   OrgHierarchy,
@@ -45,6 +47,43 @@ export function mapAwsDiscovery(result: AwsDiscoveryResult): AwsOrgHierarchy {
   };
 }
 
+/** Bare id of a canonical resource name (`folders/123` → `123`). */
+function resourceId(name: string): string {
+  return name.split("/").at(-1) ?? name;
+}
+
+/**
+ * Ingestion mapper: GCP discovery wire result → normalized hierarchy model.
+ *
+ * A folder's identity is its resource `name` (`folders/{id}`), which is exactly
+ * what its children carry as `parent`, so nesting matches on that ref. Parents
+ * pointing at the organization are absent from the node set, so tree rebuild
+ * treats those folders/projects as top-level.
+ */
+export function mapGcpDiscovery(result: GcpDiscoveryResult): GcpOrgHierarchy {
+  return {
+    orgType: ORGANIZATION_TYPE.GCP,
+    organization: {
+      // Bare id: what the user typed and what the organization stores as
+      // `external_id`.
+      uid: resourceId(result.organization.name),
+      name: result.organization.display_name,
+    },
+    nodes: result.folders.map((folder) => ({
+      id: folder.name,
+      kind: NODE_KIND.FOLDER,
+      name: folder.display_name || folder.name,
+      parentId: folder.parent,
+    })),
+    candidates: result.projects.map((project) => ({
+      uid: project.project_id,
+      label: project.display_name || project.project_id,
+      parentId: project.parent,
+      registration: project.registration,
+    })),
+  };
+}
+
 /**
  * Transforms the normalized hierarchy into hierarchical TreeDataItem[] for
  * TreeView. Container nodes (OUs / folders) nest candidates (accounts /
@@ -54,6 +93,7 @@ export function mapAwsDiscovery(result: AwsDiscoveryResult): AwsOrgHierarchy {
  */
 export function buildOrgTreeData(hierarchy: OrgHierarchy): TreeDataItem[] {
   const itemMap = new Map<string, TreeDataItem>();
+  const parentById = new Map<string, string>();
   const nodeIds = new Set(hierarchy.nodes.map((node) => node.id));
 
   for (const node of hierarchy.nodes) {
@@ -64,6 +104,7 @@ export function buildOrgTreeData(hierarchy: OrgHierarchy): TreeDataItem[] {
       kind: node.kind,
       children: [],
     });
+    parentById.set(node.id, node.parentId);
   }
 
   for (const candidate of hierarchy.candidates) {
@@ -75,6 +116,7 @@ export function buildOrgTreeData(hierarchy: OrgHierarchy): TreeDataItem[] {
       icon: Box,
       disabled: isBlocked,
     });
+    parentById.set(candidate.uid, candidate.parentId);
   }
 
   const topLevel: TreeDataItem[] = [];
@@ -94,15 +136,42 @@ export function buildOrgTreeData(hierarchy: OrgHierarchy): TreeDataItem[] {
     }
   };
 
-  // Nodes before candidates so containers render above their sibling leaves.
-  for (const node of hierarchy.nodes) {
-    link(node.id, node.parentId);
+  // Iterating the identity map, not the source arrays, so a duplicate wire id
+  // collapses into one row instead of rendering N times. Insertion order keeps
+  // containers above their sibling leaves.
+  for (const id of Array.from(itemMap.keys())) {
+    link(id, parentById.get(id) ?? "");
   }
-  for (const candidate of hierarchy.candidates) {
-    link(candidate.uid, candidate.parentId);
+
+  for (const item of topLevel) {
+    markInertContainers(item, nodeIds);
   }
 
   return topLevel;
+}
+
+/**
+ * Marks containers with nothing selectable underneath as disabled, bottom-up.
+ * Discovery lists every folder, including project-less ones, and clicking such a
+ * row would otherwise do nothing at all. Returns whether the subtree holds a
+ * selectable candidate.
+ */
+function markInertContainers(
+  item: TreeDataItem,
+  nodeIds: Set<string>,
+): boolean {
+  if (!nodeIds.has(item.id)) {
+    return !item.disabled;
+  }
+
+  // No short-circuit: every nested container has to be visited to be marked.
+  let hasSelectable = false;
+  for (const child of item.children ?? []) {
+    hasSelectable = markInertContainers(child, nodeIds) || hasSelectable;
+  }
+  item.disabled = !hasSelectable;
+
+  return hasSelectable;
 }
 
 /**

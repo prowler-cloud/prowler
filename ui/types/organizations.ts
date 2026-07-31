@@ -183,22 +183,31 @@ export interface AwsDiscoveryResult {
 
 // ─── GCP Discovery Result (wire) ───────────────────────────────────────────────
 
+/**
+ * Identity here is the canonical resource `name` (`organizations/{id}`,
+ * `folders/{id}`) — there is no `id` field, and a child's `parent` is exactly its
+ * parent's `name`. `display_name` is the only human label: a project's `name` is
+ * `projects/{number}`.
+ */
 export interface GcpDiscoveredOrganization {
-  id: string;
-  uid: string;
+  name: string;
   display_name: string;
 }
 
 export interface GcpDiscoveredFolder {
-  id: string;
+  name: string;
   display_name: string;
   parent: string;
+  state?: string;
 }
 
 export interface GcpDiscoveredProject {
   project_id: string;
   name: string;
+  display_name: string;
   parent: string;
+  state?: string;
+  labels?: Record<string, string>;
   registration?: CandidateRegistration;
 }
 
@@ -398,7 +407,11 @@ export interface OrganizationNodeAttributes {
   name: string;
   kind: NodeKind;
   external_id: string;
-  parent_external_id: string | null;
+  /**
+   * Not served by `organization-nodes`, which parents through the `parent`
+   * relationship. Kept for the legacy attribute-parented grouping branch.
+   */
+  parent_external_id?: string | null;
   metadata: Record<string, unknown>;
   inserted_at?: string;
   updated_at?: string;

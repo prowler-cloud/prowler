@@ -84,6 +84,28 @@ describe("AWS Organizations onboarding (baseline)", () => {
     expect(harness.applyCallCount).toBe(1);
   }, 60000);
 
+  it("settles each account the moment its own test finishes", async () => {
+    // Given — one account connects on the first read, the other stays running.
+    const harness = new ProvidersPageHarness(
+      awsOnboardingFixture({
+        connectionByUid: {
+          "111111111111": { connected: true },
+          "222222222222": { connected: true, executingPolls: 2 },
+        },
+      }),
+    );
+    await onboardToSelection(harness);
+
+    // When
+    await harness.testConnections();
+    await harness.waitForCandidateConnectionState(/111111111111/, "success");
+
+    // Then — the finished account reports while the slow one is still testing.
+    expect(harness.candidateConnectionState(/222222222222/)).toBe("testing");
+
+    await harness.waitForAccountsConnected();
+  }, 60000);
+
   it("re-applies when the selection changes after an apply", async () => {
     const harness = new ProvidersPageHarness(partialConnectionFixture());
     await onboardToSelection(harness);
@@ -166,22 +188,23 @@ describe("AWS Organizations providers page (baseline)", () => {
     expect(harness.hasBackButton()).toBe(false);
   }, 30000);
 
-  it("deletes an organization as a fire-and-forget request (no task polling)", async () => {
+  it("deletes an organization with a cascade warning and deletion-task polling", async () => {
     const harness = new ProvidersPageHarness(awsHierarchyFixture());
     await harness.mount({ openWizard: false });
     await harness.waitForOrganizationRow(AWS_ORG_NAME);
 
     await harness.openDeleteFor(AWS_ORG_NAME);
 
-    // Cascade confirmation dialog.
+    // Cascade confirmation dialog, stating the affected provider count.
     await harness.waitForDeleteConfirmation();
     expect(harness.hasDeleteWarning()).toBe(true);
+    expect(harness.hasCascadeWarning(3)).toBe(true);
 
     await harness.confirmDelete();
 
     await harness.waitForOrganizationDelete(AWS_HIERARCHY_ORG_ID);
-    // Current behaviour: single DELETE, no deletion-task polling (Phase 2 adds it).
-    expect(harness.taskPollCount).toBe(0);
+    // Deletion is a 202 + task: nothing is reported until the UI has polled it.
+    await harness.waitForTaskPoll();
   }, 30000);
 
   it("renders a flat provider list (no org/OU grouping) on-prem", async ({

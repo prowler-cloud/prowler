@@ -7,7 +7,8 @@
  * subclasses build their semantic API on top of them and tests don't reach
  * them directly. The public members are the deliberate exceptions: `user`
  * (harness tests spy on it) and the request-tracking assertion helpers
- * (`requestLog`, `countRequests`) that page harnesses expose as domain vocab.
+ * (`requestLog`, `countRequests`, `lastRequestBody`) that page harnesses expose
+ * as domain vocab.
  *
  * Mount-agnostic on purpose: some pages are mounted by their harness, others
  * (attack-paths) are rendered by the test directly, so a `render` here would
@@ -27,8 +28,16 @@ type RequestStartListener = (event: { request: Request }) => void;
 export abstract class BrowserHarness<TFixture> {
   readonly user = userEvent;
 
-  /** Every request MSW saw since `trackRequests` was wired, for assertions. */
-  readonly requestLog: Array<{ method: string; url: string }> = [];
+  /**
+   * Every request MSW saw since `trackRequests` was wired, for assertions. The
+   * entry keeps a clone, so a payload assertion can read a body the app's own
+   * fetch already consumed.
+   */
+  readonly requestLog: Array<{
+    method: string;
+    url: string;
+    request: Request;
+  }> = [];
 
   private trackedWorker: SetupWorker | null = null;
   private requestListener: RequestStartListener | null = null;
@@ -40,7 +49,11 @@ export abstract class BrowserHarness<TFixture> {
   /** Start recording MSW requests into `requestLog`. Call once, after mounting. */
   protected trackRequests(worker: SetupWorker): void {
     const listener: RequestStartListener = ({ request }) => {
-      this.requestLog.push({ method: request.method, url: request.url });
+      this.requestLog.push({
+        method: request.method,
+        url: request.url,
+        request: request.clone(),
+      });
     };
     this.trackedWorker = worker;
     this.requestListener = listener;
@@ -66,6 +79,17 @@ export abstract class BrowserHarness<TFixture> {
     return this.requestLog.filter(
       (r) => r.method === method && r.url.includes(pathIncludes),
     ).length;
+  }
+
+  /** Parsed JSON body of the most recent request matching method + path. */
+  async lastRequestBody<T = unknown>(
+    method: string,
+    pathIncludes: string,
+  ): Promise<T | null> {
+    const entry = [...this.requestLog]
+      .reverse()
+      .find((r) => r.method === method && r.url.includes(pathIncludes));
+    return entry ? ((await entry.request.clone().json()) as T) : null;
   }
 
   // --- Low-level DOM ------------------------------------------------------

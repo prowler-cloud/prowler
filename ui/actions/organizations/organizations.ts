@@ -521,6 +521,9 @@ export const applyDiscovery = async (
   const url = new URL(
     `${apiBaseUrl}/organizations/${encodeURIComponent(organizationIdValidation.value)}/discoveries/${encodeURIComponent(discoveryIdValidation.value)}/apply`,
   );
+  // No `include`: the apply view rejects the parameter outright and fails the
+  // whole request. The created providers' uids are read afterwards instead, with
+  // `getProviderUidsByIds`.
 
   const attributes =
     payload.orgType === ORGANIZATION_TYPE.AWS

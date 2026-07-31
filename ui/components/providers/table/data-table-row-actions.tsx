@@ -15,8 +15,12 @@ import { useState } from "react";
 
 import { updateOrganizationName } from "@/actions/organizations/organizations";
 import { updateProvider } from "@/actions/providers";
+import {
+  revalidateProviders,
+  startProviderConnectionChecks,
+} from "@/actions/providers/providers";
 import { getSchedule } from "@/actions/schedules";
-import { hasOrgSetupStrategy } from "@/components/providers/organizations/hooks/org-setup-strategy";
+import { pollConnectionTasks } from "@/components/providers/organizations/org-account-selection.utils";
 import {
   ORG_WIZARD_INTENT,
   OrgWizardInitialData,
@@ -34,12 +38,12 @@ import {
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
 import { Modal } from "@/components/shadcn/modal";
-import { runWithConcurrencyLimit } from "@/lib/concurrency";
 import { getNameSourceLabel, getNodeLabel } from "@/lib/organizations";
 import { testProviderConnection } from "@/lib/provider-helpers";
 import { getScanScheduleCapability } from "@/lib/schedules";
 import { isCloud } from "@/lib/shared/env";
 import {
+  isOrgFlowType,
   ORG_SETUP_PHASE,
   ORG_WIZARD_STEP,
   OrgFlowType,
@@ -176,9 +180,9 @@ function OrgGroupDropdownActions({
   const nodeLabel = getNodeLabel(rowData.orgType, rowData.kind);
   const entityLabel = isOrgKind ? "organization" : nodeLabel.toLowerCase();
   const nameSourceLabel = getNameSourceLabel(rowData.orgType);
-  // Credential updates re-enter the organization wizard, so this needs a
-  // *registered* setup strategy.
-  const orgFlowType: OrgFlowType | null = hasOrgSetupStrategy(rowData.orgType)
+  // Credential updates re-enter the organization wizard, so this needs an
+  // organization type with an onboarding flow.
+  const orgFlowType: OrgFlowType | null = isOrgFlowType(rowData.orgType)
     ? rowData.orgType
     : null;
 
@@ -221,7 +225,13 @@ function OrgGroupDropdownActions({
         open={isDeleteOrgOpen}
         onOpenChange={setIsDeleteOrgOpen}
         title="Are you absolutely sure?"
-        description={`This action cannot be undone. This will permanently delete this ${entityLabel} and all associated data.`}
+        description={`This action cannot be undone. This will permanently delete this ${entityLabel}${
+          rowData.providerCount > 0
+            ? ` and cascade to its ${rowData.providerCount} ${
+                rowData.providerCount === 1 ? "provider" : "providers"
+              }`
+            : ""
+        }.`}
       >
         <DeleteOrganizationForm
           id={rowData.id}
@@ -229,6 +239,7 @@ function OrgGroupDropdownActions({
           variant={rowData.groupKind}
           orgType={rowData.orgType}
           kind={rowData.kind}
+          providerCount={rowData.providerCount}
           setIsOpen={setIsDeleteOrgOpen}
         />
       </Modal>
@@ -364,16 +375,42 @@ export function DataTableRowActions({
     if (ids.length === 0) return;
     setLoading(true);
 
-    const results = await runWithConcurrencyLimit(ids, 10, async (id) => {
-      try {
-        return await testProviderConnection(id);
-      } catch {
-        return { connected: false, error: "Unexpected error" };
-      }
-    });
+    // Dispatched and polled in batches: client-invoked server actions run one at a
+    // time through Next's queue, so a loop here serializes whatever concurrency it
+    // asks for.
+    let succeeded = 0;
+    let failed = 0;
+    const pendingTaskIds: string[] = [];
 
-    const succeeded = results.filter((r) => r.connected).length;
-    const failed = results.length - succeeded;
+    try {
+      const outcomes = await startProviderConnectionChecks(ids);
+
+      for (const id of ids) {
+        const outcome = outcomes[id];
+
+        // No task id means nothing was ever tested, so it cannot count as passing.
+        if (!outcome || outcome.error || !outcome.taskId) {
+          failed += 1;
+          continue;
+        }
+
+        pendingTaskIds.push(outcome.taskId);
+      }
+
+      await pollConnectionTasks(pendingTaskIds, {
+        onSettled: (_taskId, result) => {
+          if (result.success) {
+            succeeded += 1;
+          } else {
+            failed += 1;
+          }
+        },
+      });
+    } catch {
+      failed = ids.length - succeeded;
+    }
+
+    await revalidateProviders();
 
     if (failed === 0) {
       toast({
@@ -384,7 +421,7 @@ export function DataTableRowActions({
       toast({
         variant: "destructive",
         title: "Connection test completed",
-        description: `${succeeded} succeeded, ${failed} failed out of ${results.length} providers.`,
+        description: `${succeeded} succeeded, ${failed} failed out of ${ids.length} providers.`,
       });
     }
 
