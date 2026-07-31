@@ -3011,9 +3011,10 @@ class IntegrationSerializer(IntegrationProviderVisibilityMixin, RLSSerializer):
             instance.integration_type == Integration.IntegrationChoices.JIRA
             and "configuration" in representation
         ):
-            representation["configuration"].update(
-                {"domain": instance.credentials.get("domain")}
-            )
+            representation["configuration"] = {
+                **representation["configuration"],
+                "domain": instance.credentials.get("domain"),
+            }
         return representation
 
 
@@ -3153,9 +3154,10 @@ class IntegrationUpdateSerializer(
             instance.integration_type == Integration.IntegrationChoices.JIRA
             and "configuration" in representation
         ):
-            representation["configuration"].update(
-                {"domain": instance.credentials.get("domain")}
-            )
+            representation["configuration"] = {
+                **representation["configuration"],
+                "domain": instance.credentials.get("domain"),
+            }
         return representation
 
 

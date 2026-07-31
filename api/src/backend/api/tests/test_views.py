@@ -13548,6 +13548,11 @@ class TestIntegrationViewSet:
         with rls_transaction(str(jira_integration_fixture.tenant_id)):
             jira_integration_fixture.refresh_from_db()
         assert jira_integration_fixture.enabled is False
+        # Omitting `configuration` from the fieldset must not rewrite it, and the
+        # serialized `domain` must not leak into the stored value
+        assert jira_integration_fixture.configuration == {
+            "projects": {"TEST": "Test project"}
+        }
 
     def test_integrations_retrieve_jira_keeps_domain_in_configuration(
         self, authenticated_client, jira_integration_fixture
