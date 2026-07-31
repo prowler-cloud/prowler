@@ -9,10 +9,20 @@ export const USER_SIGN_IN_METHOD = {
 export type UserSignInMethodType =
   (typeof USER_SIGN_IN_METHOD)[keyof typeof USER_SIGN_IN_METHOD];
 
-export interface UserSignInMethod {
-  method: UserSignInMethodType;
-  domain?: string;
-}
+type NonSamlUserSignInMethodType = Exclude<
+  UserSignInMethodType,
+  typeof USER_SIGN_IN_METHOD.SAML
+>;
+
+export type UserSignInMethod =
+  | {
+      method: typeof USER_SIGN_IN_METHOD.SAML;
+      domain?: string;
+    }
+  | {
+      method: NonSamlUserSignInMethodType;
+      domain?: never;
+    };
 
 export interface UserAttributes {
   name: string;

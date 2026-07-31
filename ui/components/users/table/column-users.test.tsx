@@ -1,7 +1,7 @@
 import type { CellContext } from "@tanstack/react-table";
 import { render, screen } from "@testing-library/react";
 import type { ReactElement, ReactNode } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, expectTypeOf, it, vi } from "vitest";
 
 import type { UserProps } from "@/types";
 import type { UserSignInMethod } from "@/types/users";
@@ -61,6 +61,25 @@ const renderSignInMethodsCell = (signInMethods?: UserSignInMethod[]) => {
 };
 
 describe("getColumnsUser", () => {
+  it("should only allow domains on SAML sign-in methods", () => {
+    // Given
+    type NonSamlMethodWithDomain = {
+      method: "google";
+      domain: string;
+    };
+    type SamlMethodWithoutDomain = {
+      method: "saml";
+    };
+
+    // When
+    const nonSamlMethod = expectTypeOf<NonSamlMethodWithDomain>();
+    const samlMethod = expectTypeOf<SamlMethodWithoutDomain>();
+
+    // Then
+    nonSamlMethod.not.toExtend<UserSignInMethod>();
+    samlMethod.toExtend<UserSignInMethod>();
+  });
+
   it("should include non-sortable sign-in methods only in Cloud", () => {
     // Given
     const signInMethodsColumnId = "sign_in_methods";
