@@ -3445,7 +3445,7 @@ AWS_IAM_PRIVESC_DELETE_ROLE_BOUNDARY_ASSUME_ROLE = AttackPathsQueryDefinition(
     id="aws-iam-privesc-delete-role-boundary-assume-role",
     name="Role Permissions Boundary Removal with Role Assumption (IAM-023)",
     short_description="Delete an assumable role's permissions boundary to unlock its full permissions, then assume it.",
-    description="Detect principals who can delete a role's permissions boundary and also assume that role. Removing the boundary restores the role's broader attached permissions, which the actor then gains by assuming the role.",
+    description="Detect principals who can delete a role's permissions boundary and also assume that role. Removing the boundary restores the role's broader attached permissions, which the actor then gains by assuming the role. The graph does not record whether a boundary is actually attached to the target role, so each result needs manual review.",
     attribution=AttackPathsQueryAttribution(
         text="pathfinding.cloud - IAM-023 - iam:DeleteRolePermissionsBoundary + sts:AssumeRole",
         link="https://pathfinding.cloud/paths/iam-023",
@@ -3453,19 +3453,25 @@ AWS_IAM_PRIVESC_DELETE_ROLE_BOUNDARY_ASSUME_ROLE = AttackPathsQueryDefinition(
     provider="aws",
     cypher=f"""
         // Find principals with iam:DeleteRolePermissionsBoundary permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(:AWSPolicyStatement {{effect: 'Allow'}})-[:HAS_ACTION]->(act:AWSPolicyStatementActionItem)
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {{effect: 'Allow'}})-[:HAS_ACTION]->(act:AWSPolicyStatementActionItem)
         WHERE toLower(act.value) IN ['iam:*', 'iam:deleterolepermissionsboundary']
             OR act.value = '*'
-        WITH DISTINCT aws, principal, path_principal
+        WITH DISTINCT aws, principal, stmt, path_principal
 
         // Find sts:AssumeRole permission on the same principal
         MATCH (principal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(:AWSPolicyStatement {{effect: 'Allow'}})-[:HAS_ACTION]->(act2:AWSPolicyStatementActionItem)
         WHERE toLower(act2.value) IN ['sts:*', 'sts:assumerole']
             OR act2.value = '*'
-        WITH DISTINCT aws, principal, path_principal
+        WITH DISTINCT aws, principal, stmt, path_principal
 
         // Target role the principal can assume (bidirectional trust via Cartography)
         MATCH path_target = (aws)--(target_role:AWSRole)<-[:STS_ASSUMEROLE_ALLOW]-(principal)
+
+        // Keep only when the boundary can be removed from that same assumable role
+        MATCH (stmt)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)
+        WHERE res.value = '*'
+            OR res.value = target_role.arn
+            OR (res.value ENDS WITH '*' AND target_role.arn STARTS WITH replace(res.value, '*', ''))
 
         WITH DISTINCT path_principal, path_target
         WITH collect(path_principal) + collect(path_target) AS paths
@@ -4478,6 +4484,10 @@ AWS_SSO_PRIVESC_ATTACH_MANAGED_POLICY = AttackPathsQueryDefinition(
         WHERE toLower(act.value) IN ['sso:*', 'sso:attachmanagedpolicytopermissionset']
             OR act.value = '*'
 
+        // Require the action on a wildcard resource (permission sets are not graph nodes)
+        MATCH (stmt)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)
+        WHERE res.value = '*'
+
         WITH DISTINCT path_principal
         WITH collect(path_principal) AS paths
         UNWIND paths AS p
@@ -4510,6 +4520,10 @@ AWS_SSO_PRIVESC_PUT_INLINE_POLICY = AttackPathsQueryDefinition(
         MATCH (stmt)-[:HAS_ACTION]->(act:AWSPolicyStatementActionItem)
         WHERE toLower(act.value) IN ['sso:*', 'sso:putinlinepolicytopermissionset']
             OR act.value = '*'
+
+        // Require the action on a wildcard resource (permission sets are not graph nodes)
+        MATCH (stmt)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)
+        WHERE res.value = '*'
 
         WITH DISTINCT path_principal
         WITH collect(path_principal) AS paths
