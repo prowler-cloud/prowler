@@ -109,12 +109,18 @@ rss: true
 
   Read more in the [AWS documentation](/user-guide/providers/aws/getting-started-aws). Explore all AWS checks at [Prowler Hub](https://hub.prowler.com/check?provider=aws).
 
+  ### 🐞 Fixed
+
+  - AWS Security Hub integrations now persist successful recovery checks during finding delivery, keeping connection status and the last-checked time accurate.
+  - Social sign-up now creates authentication, tenant, and membership records in a single transaction, fully rolling back failed provisioning to prevent incomplete accounts.
+  - The SAML configuration form keeps the ACS URL field stable while generating the callback URL and exposes the copy action only after a valid URL is available.
+  - SAML users without a `userType` attribute and without an existing role now receive a least-privilege `read_only` fallback role, so role-dependent operations continue to work without granting management permissions.
+
   ### 🔐 Security
 
   - Provider deletion, connection checks, scan creation, provider secrets, provider groups, and daily schedules now respect role provider-group visibility.
   - HTML reports escape provider-originated finding fields, preventing stored cross-site scripting through malicious cloud resource tags.
   - Authentication with an API key whose owning user was deleted now returns `401`, and user deletion revokes the user's API keys across all their tenants.
-  - SAML users without a `userType` attribute and without an existing role now receive a least-privilege `read_only` fallback role instead of elevated permissions.
 
   ### 🙌 External Contributors
 
