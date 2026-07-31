@@ -144,6 +144,22 @@ Here's what happens behind the scenes:
 - An asynchronous discovery is triggered to query your AWS Organization structure.
 - You will see a **"Gathering AWS Accounts..."** spinner — this typically takes **30 seconds to 2 minutes** depending on your organization size.
 
+#### When Discovery Takes Too Long
+
+<VersionBadge version="5.37.0" />
+
+Prowler waits up to **3 minutes** for a result. Past that, the wizard stops waiting — but the discovery keeps running in the background — and offers two actions:
+
+- **Keep waiting** — resume the same discovery. Nothing is re-read from AWS.
+- **Retry** — start a fresh discovery, which queries your Organization structure again.
+
+{/* SCREENSHOT: The "Discovery is taking longer than expected" warning with the Keep waiting and Retry buttons. */}
+<Frame>
+  <img src="/images/organizations/discovery-timeout.png" alt="Discovery timeout notice offering Keep waiting and Retry" />
+</Frame>
+
+If discovery fails outright, the wizard reports the error and offers **Retry discovery**.
+
 ## Step 3: Select Accounts to Scan
 
 ### Understanding the Tree View
@@ -186,7 +202,25 @@ You can edit the display name for each account before connecting. This alias is 
 
 ### Blocked Accounts
 
-Some accounts may appear as **blocked** (grayed out, not selectable) when the account is **already linked to a different organization** in Prowler (`linked_to_other_organization`). Hover over the blocked account to see the specific reason.
+Some accounts appear as **blocked** (grayed out, not selectable) when onboarding them would conflict with something Prowler already stores. Hover over the blocked account to see the specific reason.
+
+| Reason | What it means |
+|--------|---------------|
+| `organization_conflict` | The account is already connected under a **different** Prowler organization. |
+| `organization_node_conflict` | The account is already grouped under a different organizational unit in Prowler — for example, it moved in AWS after it was onboarded. |
+
+### Accounts That Already Have Credentials
+
+<VersionBadge version="5.37.0" />
+
+Applying your selection stores the organization credential on every selected account. When a selected account is already connected to Prowler with its own credential, that credential is **overwritten** — so the wizard asks first, naming the affected accounts:
+
+{/* SCREENSHOT: "Replace existing credentials?" modal listing the affected accounts, with Cancel and "Replace and continue". */}
+<Frame>
+  <img src="/images/organizations/replace-credentials-apply.png" alt="Replace existing credentials modal listing the accounts whose credentials will be replaced" />
+</Frame>
+
+Click **Replace and continue** to proceed, or **Cancel** to adjust your selection. Historical scans and findings are preserved either way — only the credential changes.
 
 ## Step 4: Test Connections
 
@@ -235,6 +269,57 @@ After launching:
 - Scans appear in the **Scans** page as they start and complete.
 - Results populate the **Overview** and **Findings** pages.
 - Prowler runs an **automatic sync every 6 hours** to detect accounts added to or removed from your Organization. New accounts under the targeted OU or root are onboarded automatically.
+
+## Manage Your Organization After Onboarding
+
+<VersionBadge version="5.37.0" />
+
+Open the row actions menu on the organization row on the **Providers** page.
+
+{/* SCREENSHOT: Row actions menu open on an AWS organization row, showing every available action. */}
+<Frame>
+  <img src="/images/organizations/organization-row-actions.png" alt="Row actions menu on an AWS organization row" />
+</Frame>
+
+| Action | What it does |
+|--------|--------------|
+| **Edit Organization Name** | Renames the organization in Prowler. Leave it blank to fall back to the name stored in AWS. |
+| **Update Credentials** | Reopens the Authentication Details step to store a new Role ARN. |
+| **Edit Scan Schedule** | Applies one schedule to every connected account in the organization. |
+| **Test Connections (N)** | Re-tests every account in the organization. |
+| **Delete Organization** | Deletes the organization and cascades to its providers. |
+
+Organizational unit rows carry the same **Test Connections** and **Delete Organizational Unit** actions, scoped to the accounts beneath them.
+
+### Update Organization Credentials
+
+Choosing **Update Credentials** re-enters the Authentication Details step. Because the organization already holds a credential, Prowler warns before overwriting it and names how many providers re-authenticate with the new one:
+
+{/* SCREENSHOT: "Replace existing credentials?" modal showing the affected provider count, with Cancel and "Replace credentials". */}
+<Frame>
+  <img src="/images/organizations/replace-credentials-setup.png" alt="Replace existing credentials modal showing how many providers re-authenticate" />
+</Frame>
+
+Storing a new credential runs a fresh discovery, so any discovery already in progress is discarded — discovery authenticates with the credential it started from.
+
+### Delete an Organization or Organizational Unit
+
+Deleting an organization or an organizational unit **cascades to every provider grouped under it**, along with their scans and findings. Both dialogs state how many providers are affected before you confirm.
+
+{/* SCREENSHOT: Delete confirmation dialog for an AWS organization, showing the cascade provider count. */}
+<Frame>
+  <img src="/images/organizations/delete-organization.png" alt="Delete organization dialog showing how many providers are deleted with it" />
+</Frame>
+
+Deletion runs in the background. Prowler confirms with a **"Deletion started"** notification; if any part of it fails, the affected rows reappear on a later refresh.
+
+<Danger>
+Deleting an organization **permanently deletes every account provider grouped under it**, including their historical scans and findings. This action cannot be undone.
+</Danger>
+
+### When Grouping Is Unavailable
+
+If Prowler cannot read your hierarchy while loading the Providers page, a notice reads *"Organization grouping is incomplete. Some providers may appear ungrouped."* Your providers are still listed, just flat. Reload the page to try again.
 
 ## Billing Impact
 
