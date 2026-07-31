@@ -3006,7 +3006,11 @@ class IntegrationSerializer(IntegrationProviderVisibilityMixin, RLSSerializer):
         representation = self.hide_restricted_providers(
             super().to_representation(instance)
         )
-        if instance.integration_type == Integration.IntegrationChoices.JIRA:
+        # `configuration` is missing when the request asks for a subset of the fields
+        if (
+            instance.integration_type == Integration.IntegrationChoices.JIRA
+            and "configuration" in representation
+        ):
             representation["configuration"].update(
                 {"domain": instance.credentials.get("domain")}
             )
@@ -3143,8 +3147,12 @@ class IntegrationUpdateSerializer(
         representation = self.hide_restricted_providers(
             super().to_representation(instance)
         )
-        # Ensure JIRA integrations show updated domain in configuration from credentials
-        if instance.integration_type == Integration.IntegrationChoices.JIRA:
+        # Ensure JIRA integrations show updated domain in configuration from credentials.
+        # `configuration` is missing when the request asks for a subset of the fields
+        if (
+            instance.integration_type == Integration.IntegrationChoices.JIRA
+            and "configuration" in representation
+        ):
             representation["configuration"].update(
                 {"domain": instance.credentials.get("domain")}
             )

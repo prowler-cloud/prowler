@@ -1292,22 +1292,6 @@ class TestLimitedVisibility:
         )
 
     @pytest.fixture
-    def jira_integration(self, tenants_fixture):
-        # Jira is a tenant-wide integration: it is not attached to any provider
-        return Integration.objects.create(
-            tenant_id=tenants_fixture[0].id,
-            enabled=True,
-            connected=True,
-            integration_type=Integration.IntegrationChoices.JIRA,
-            configuration={"projects": {"TEST": "Test project"}},
-            credentials={
-                "domain": "test",
-                "user_mail": "a@b.com",
-                "api_token": "token",
-            },
-        )
-
-    @pytest.fixture
     def out_of_scope_integration(self, tenants_fixture, provider_factory):
         tenant_id = tenants_fixture[0].id
         integration = Integration.objects.create(
@@ -1332,7 +1316,7 @@ class TestLimitedVisibility:
         self,
         authenticated_client_rbac_limited,
         integrations_fixture,
-        jira_integration,
+        jira_integration_fixture,
         aws_provider_pair,
     ):
         # Integration 2 is attached to both providers, so make both visible to the role
@@ -1348,13 +1332,16 @@ class TestLimitedVisibility:
         assert response.status_code == status.HTTP_200_OK
         integration_ids = [item["id"] for item in response.json()["data"]]
         # The tenant-wide Jira integration is visible without unlimited visibility
-        assert str(jira_integration.id) in integration_ids
+        assert str(jira_integration_fixture.id) in integration_ids
         # Integrations attached to more than one visible provider are not duplicated
         assert integration_ids.count(str(integrations_fixture[1].id)) == 1
         assert response.json()["meta"]["pagination"]["count"] == len(integration_ids)
 
     def test_integrations_list_without_provider_groups_keeps_tenant_wide_integration(
-        self, authenticated_client_rbac_limited, integrations_fixture, jira_integration
+        self,
+        authenticated_client_rbac_limited,
+        integrations_fixture,
+        jira_integration_fixture,
     ):
         # A role with no provider group at all sees no provider, but still needs Jira
         RoleProviderGroupRelationship.objects.all().delete()
@@ -1363,7 +1350,7 @@ class TestLimitedVisibility:
 
         assert response.status_code == status.HTTP_200_OK
         integration_ids = [item["id"] for item in response.json()["data"]]
-        assert integration_ids == [str(jira_integration.id)]
+        assert integration_ids == [str(jira_integration_fixture.id)]
 
     def test_integrations_include_providers_hides_out_of_scope_providers(
         self, authenticated_client_rbac_limited, integrations_fixture, aws_provider_pair
@@ -1382,13 +1369,19 @@ class TestLimitedVisibility:
         assert str(hidden_provider.id) not in included_ids
 
     def test_integrations_list_with_sparse_fields(
-        self, authenticated_client_rbac_limited, integrations_fixture
+        self,
+        authenticated_client_rbac_limited,
+        integrations_fixture,
+        jira_integration_fixture,
     ):
         response = authenticated_client_rbac_limited.get(
             reverse("integration-list"), {"fields[integrations]": "enabled"}
         )
 
         assert response.status_code == status.HTTP_200_OK
+        assert str(jira_integration_fixture.id) in [
+            item["id"] for item in response.json()["data"]
+        ]
         assert all(
             list(item["attributes"].keys()) == ["enabled"]
             for item in response.json()["data"]
@@ -1424,7 +1417,10 @@ class TestLimitedVisibility:
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     def test_integration_update_allowed_when_fully_visible(
-        self, authenticated_client_rbac_limited, integrations_fixture, jira_integration
+        self,
+        authenticated_client_rbac_limited,
+        integrations_fixture,
+        jira_integration_fixture,
     ):
         # Integration 1 is only related to provider1, which the role can access
         integration = integrations_fixture[0]
@@ -1458,20 +1454,20 @@ class TestLimitedVisibility:
         payload = {
             "data": {
                 "type": "integrations",
-                "id": str(jira_integration.id),
+                "id": str(jira_integration_fixture.id),
                 "attributes": {"enabled": False},
             }
         }
 
         response = authenticated_client_rbac_limited.patch(
-            reverse("integration-detail", kwargs={"pk": jira_integration.id}),
+            reverse("integration-detail", kwargs={"pk": jira_integration_fixture.id}),
             data=json.dumps(payload),
             content_type="application/vnd.api+json",
         )
 
         assert response.status_code == status.HTTP_200_OK
-        jira_integration.refresh_from_db()
-        assert jira_integration.enabled is False
+        jira_integration_fixture.refresh_from_db()
+        assert jira_integration_fixture.enabled is False
 
     def test_integration_create_rejects_out_of_scope_provider(
         self, authenticated_client_rbac_limited, aws_provider_pair
@@ -1571,7 +1567,10 @@ class TestLimitedVisibility:
         assert Integration.objects.filter(id=integration.id).exists()
 
     def test_integration_delete_allowed_when_fully_visible(
-        self, authenticated_client_rbac_limited, integrations_fixture, jira_integration
+        self,
+        authenticated_client_rbac_limited,
+        integrations_fixture,
+        jira_integration_fixture,
     ):
         # Integration 1 is only related to provider1, which the role can access
         integration = integrations_fixture[0]
@@ -1585,20 +1584,20 @@ class TestLimitedVisibility:
 
         # Tenant-wide integrations have no provider restricting the role
         response = authenticated_client_rbac_limited.delete(
-            reverse("integration-detail", kwargs={"pk": jira_integration.id})
+            reverse("integration-detail", kwargs={"pk": jira_integration_fixture.id})
         )
 
         assert response.status_code == status.HTTP_204_NO_CONTENT
 
     def test_jira_issue_types_allowed_without_unlimited_visibility(
-        self, authenticated_client_rbac_limited, jira_integration
+        self, authenticated_client_rbac_limited, jira_integration_fixture
     ):
         with patch("api.v1.views.initialize_prowler_integration") as mock_jira:
             mock_jira.return_value.get_available_issue_types.return_value = ["Task"]
             response = authenticated_client_rbac_limited.get(
                 reverse(
                     "integration-jira-issue-types",
-                    kwargs={"integration_pk": jira_integration.id},
+                    kwargs={"integration_pk": jira_integration_fixture.id},
                 ),
                 {"project_key": "TEST"},
             )
@@ -1634,12 +1633,12 @@ class TestLimitedVisibility:
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     def test_jira_dispatches_allowed_without_unlimited_visibility(
-        self, authenticated_client_rbac_limited, jira_integration
+        self, authenticated_client_rbac_limited, jira_integration_fixture
     ):
         response = authenticated_client_rbac_limited.post(
             reverse(
                 "integration-jira-dispatches",
-                kwargs={"integration_pk": jira_integration.id},
+                kwargs={"integration_pk": jira_integration_fixture.id},
             ),
             data=json.dumps({}),
             content_type="application/vnd.api+json",
