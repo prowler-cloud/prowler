@@ -13,6 +13,29 @@
 # perl-base is Debian "Essential: yes". Trivy spreads src:perl CVEs across every
 # binary package, so perl-base gets flagged for modules only perl-modules-5.40 ships.
 # Neither image installs perl-modules-5.40, and nothing in either invokes perl.
+#
+# Why these four cannot be fixed rather than accepted (reviewed 2026-07-31):
+#
+#   1. No fix exists. All four report no fixed version on perl-base 5.40.1-6.
+#      Debian's tracker marks CVE-2026-42496 "fix_deferred" and the other three
+#      "affected". Updating the base image, apt upgrade, or moving to a newer
+#      Debian release changes nothing, because Debian has not shipped a fix.
+#   2. The package cannot be removed. "Essential: yes" means removal needs
+#      dpkg --force-remove-essential, which also breaks apt for anything built
+#      downstream from these images.
+#   3. Changing base distribution was evaluated and rejected. Alpine removes
+#      perl entirely, but PowerShell publishes no linux-musl-arm64 build in any
+#      release, so M365 scanning would break on arm64 — which is what we run in
+#      production. Wolfi keeps glibc and drops perl, but pinnable versioned tags
+#      are a paid tier, so builds would not be reproducibly pinnable.
+#
+# Not-invoked claim verified by sweeping both images for: files with a perl
+# shebang, shell/python callers of perl, ELF binaries containing "perl", and
+# .pl/.pm files or perl subprocess calls anywhere in site-packages. The only
+# consumers found are dpkg/debconf/adduser/pam tooling, none of which runs at
+# runtime, plus one build-time script inside the ExchangeOnlineManagement
+# PowerShell module that is never invoked (it generates that module's manifest,
+# and lives in its netFramework/ path, while Linux loads netCore/).
 
 # Archive::Tar path traversal. Not installed: `perl -MArchive::Tar -e1` cannot locate it.
 CVE-2026-42496 pkg:perl-base exp:2027-01-31
