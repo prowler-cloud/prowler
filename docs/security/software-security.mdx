@@ -150,7 +150,7 @@ The controls applied across all three:
 - **uv itself pinned** in the [`setup-python-uv`](https://github.com/prowler-cloud/prowler/tree/master/.github/actions/setup-python-uv) composite action.
 
 <Note>
-The MCP Server has a small direct-dependency surface and does not yet declare a separate constraint set. Its lock file is the source of truth.
+The MCP Server declares a small constraint set of its own, covering transitive pins that `fastmcp` does not raise on its own. Its lock file remains the source of truth for everything else.
 </Note>
 
 ### JavaScript/TypeScript (pnpm)
