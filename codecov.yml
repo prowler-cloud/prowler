@@ -7,5 +7,11 @@ component_management:
       paths:
         - "api/**"
 
+flags:
+  api:
+    paths:
+      - "api/**"
+    carryforward: true
+
 comment:
   layout: "header, diff, flags, components"

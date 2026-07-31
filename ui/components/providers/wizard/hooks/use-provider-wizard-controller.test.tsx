@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useOrgSetupStore } from "@/store/organizations/store";
 import { useProviderWizardStore } from "@/store/provider-wizard/store";
-import { ORG_WIZARD_STEP } from "@/types/organizations";
+import { ORG_WIZARD_STEP, ORGANIZATION_TYPE } from "@/types/organizations";
 import {
   PROVIDER_WIZARD_MODE,
   PROVIDER_WIZARD_STEP,
@@ -202,6 +202,10 @@ describe("useProviderWizardController", () => {
     expect(result.current.wizardVariant).toBe("organizations");
     expect(result.current.isProviderFlow).toBe(false);
     expect(result.current.orgCurrentStep).toBe(ORG_WIZARD_STEP.SETUP);
+    // The flow tags the store with the type it was opened for; AWS by default.
+    expect(useOrgSetupStore.getState().organizationType).toBe(
+      ORGANIZATION_TYPE.AWS,
+    );
     expect(result.current.docsLink).toBe(
       "https://docs.prowler.com/user-guide/tutorials/prowler-cloud-aws-organizations",
     );
@@ -314,9 +318,10 @@ describe("useProviderWizardController", () => {
         .getState()
         .setOrganization("org-1", "My Org", "o-abc123def4");
       useOrgSetupStore.getState().setDiscovery("disc-1", {
-        roots: [],
-        organizational_units: [],
-        accounts: [],
+        orgType: ORGANIZATION_TYPE.AWS,
+        organization: { uid: "o-abc123def4", name: "My Org" },
+        nodes: [],
+        candidates: [],
       });
     });
 

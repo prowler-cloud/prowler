@@ -114,6 +114,7 @@ jobs:
             pyproject.toml
             uv.lock
             .github/workflows/sdk-container-checks.yml
+            .github/actions/trivy-scan/**
           files_ignore: |
             prowler/CHANGELOG.md
             prowler/changelog.d/**

@@ -8,6 +8,8 @@ import "@/styles/globals.css";
 
 import { afterAll, afterEach, beforeAll, vi } from "vitest";
 
+import { resetToasts } from "@/components/shadcn/toast/use-toast";
+
 import { worker } from "./__tests__/msw/worker";
 
 // Server Actions ("use server") are bundled by Vite as plain async functions
@@ -23,6 +25,18 @@ vi.mock("@/auth.config", () => ({
   signIn: vi.fn(),
   signOut: vi.fn(),
   handlers: {},
+}));
+
+// Server Actions call `revalidatePath`/`revalidateTag` from `next/cache` after
+// mutations. Those read Next's static-generation store, which only exists
+// inside a Next request scope — in the browser test they throw "Invariant:
+// static generation store missing", aborting the action before the UI can
+// react. Stub them as no-ops; the tests assert on UI state, not cache
+// invalidation.
+vi.mock("next/cache", () => ({
+  revalidatePath: vi.fn(),
+  revalidateTag: vi.fn(),
+  unstable_cache: <T>(fn: T) => fn,
 }));
 
 // Next.js's App Router context (`useRouter`, `useSearchParams`, `usePathname`)
@@ -57,6 +71,9 @@ beforeAll(async () => {
 
 afterEach(() => {
   worker.resetHandlers();
+  // Module-level store: a toast raised here would re-render on the next test's
+  // mount and intercept clicks aimed at the page.
+  resetToasts();
 });
 
 afterAll(() => {

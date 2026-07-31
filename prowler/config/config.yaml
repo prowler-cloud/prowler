@@ -467,9 +467,11 @@ aws:
   secrets_ignore_patterns: []
 
   # aws.awslambda_function_no_secrets_in_code
-  # Glob patterns of file names inside the Lambda deployment package to skip
-  # when scanning for secrets. Useful to suppress known false positives such
-  # as .NET dependency manifests.
+  # aws.codecommit_repository_no_secrets
+  # Glob patterns of file names inside the Lambda deployment package or the
+  # CodeCommit repository to skip when scanning for secrets. Useful to
+  # suppress known false positives such as .NET dependency manifests or
+  # package lock files.
   # Example:
   #   secrets_ignore_files:
   #     - "*.deps.json"

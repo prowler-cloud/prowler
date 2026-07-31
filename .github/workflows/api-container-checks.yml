@@ -106,7 +106,9 @@ jobs:
         id: check-changes
         uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
-          files: api/**
+          files: |
+            api/**
+            .github/actions/trivy-scan/**
           files_ignore: |
             api/docs/**
             api/README.md

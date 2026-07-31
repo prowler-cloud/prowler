@@ -70,6 +70,7 @@ API_JSON_CONTENT_TYPE = "application/vnd.api+json"
 NO_TENANT_HTTP_STATUS = status.HTTP_401_UNAUTHORIZED
 TEST_USER = "dev@prowler.com"
 TEST_PASSWORD = "testing_psswd"
+TEST_ADMIN_ALIAS = "admin"
 TEST_REPLICA_ALIAS = "test_replica"
 
 
@@ -2539,26 +2540,36 @@ def finding_groups_title_variants_fixture(
     return findings
 
 
+def _ensure_mirrored_test_alias(alias: str) -> None:
+    default_database = settings.DATABASES["default"]
+    if alias not in settings.DATABASES:
+        settings.DATABASES[alias] = {
+            **default_database,
+            "TEST": {
+                **default_database.get("TEST", {}),
+                "MIRROR": "default",
+            },
+        }
+    django_connections.databases[alias] = settings.DATABASES[alias]
+
+
 def pytest_collection_modifyitems(items):
     """Ensure test_rbac.py is executed first."""
     items.sort(key=lambda item: 0 if "test_rbac.py" in item.nodeid else 1)
 
+    if any(item.get_closest_marker("requires_test_admin_alias") for item in items):
+        _ensure_mirrored_test_alias(TEST_ADMIN_ALIAS)
+
     if any(item.get_closest_marker("requires_test_replica_alias") for item in items):
-        default_database = settings.DATABASES["default"]
-        if TEST_REPLICA_ALIAS not in settings.DATABASES:
-            settings.DATABASES[TEST_REPLICA_ALIAS] = {
-                **default_database,
-                "TEST": {
-                    **default_database.get("TEST", {}),
-                    "MIRROR": "default",
-                },
-            }
-        django_connections.databases[TEST_REPLICA_ALIAS] = settings.DATABASES[
-            TEST_REPLICA_ALIAS
-        ]
+        _ensure_mirrored_test_alias(TEST_REPLICA_ALIAS)
 
 
 def pytest_configure(config):
+    config.addinivalue_line(
+        "markers",
+        "requires_test_admin_alias: creates a test-only admin alias mirrored "
+        "to default",
+    )
     config.addinivalue_line(
         "markers",
         "requires_test_replica_alias: creates a test-only replica alias mirrored "

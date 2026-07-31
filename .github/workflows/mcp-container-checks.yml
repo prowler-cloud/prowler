@@ -99,7 +99,9 @@ jobs:
         id: check-changes
         uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
-          files: mcp_server/**
+          files: |
+            mcp_server/**
+            .github/actions/trivy-scan/**
           files_ignore: |
             mcp_server/README.md
             mcp_server/CHANGELOG.md

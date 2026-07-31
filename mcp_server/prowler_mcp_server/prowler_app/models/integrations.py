@@ -225,7 +225,7 @@ class JiraIssueTypes(MinimalSerializerMixin, BaseModel):
     model_config = ConfigDict(frozen=True)
 
     project_key: str = Field(
-        description="Jira project key the issue types belong to (e.g. 'PRWLR')"
+        description="Jira project key the issue types belong to (e.g. 'PROJ')"
     )
     issue_types: list[str] = Field(
         description="Issue types that can be used when sending findings to this project (e.g. 'Task', 'Bug', 'Story')"
