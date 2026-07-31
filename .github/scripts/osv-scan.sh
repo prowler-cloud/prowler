@@ -51,7 +51,8 @@ STDERR="$(mktemp)"
 trap 'rm -f "${STDERR}"' EXIT
 
 set +e
-OUTPUT="$(osv-scanner scan source "${SCAN_ARGS[@]}" --format=json "$@" 2>"${STDERR}")"
+# ${a[@]+...} guard: an empty array trips `set -u` on bash before 4.4.
+OUTPUT="$(osv-scanner scan source ${SCAN_ARGS[@]+"${SCAN_ARGS[@]}"} --format=json "$@" 2>"${STDERR}")"
 RC=$?
 set -e
 
@@ -100,7 +101,7 @@ FINDINGS="$(printf '%s' "${OUTPUT}" | jq --argjson sevs "${SEVERITY_JSON}" '
   ]
 ')"
 
-COUNT="$(printf '%s' "${FINDINGS}" | jq 'length')"
+COUNT="$(printf '%s' "${FINDINGS}" | jq 'length' 2>/dev/null || echo 0)"
 
 # Write the findings JSON to OSV_REPORT_FILE so callers (e.g. the composite
 # action's PR-comment step) can consume the same data the gate decision uses.
@@ -108,7 +109,7 @@ if [ -n "${OSV_REPORT_FILE:-}" ]; then
   printf '%s' "${FINDINGS}" > "${OSV_REPORT_FILE}"
 fi
 
-if [ "${COUNT}" -gt 0 ]; then
+if [ "${COUNT:-0}" -gt 0 ]; then
   echo "osv-scanner: ${COUNT} finding(s) at severity ${SEVERITY_LEVELS}"
   printf '%s' "${FINDINGS}" | jq -r '
     .[] | "  [\(.severity)\(if .score then " \(.score)" else "" end)] \(.id) \(.ecosystem)/\(.package)@\(.version) — \(.summary // "(no summary)")"
