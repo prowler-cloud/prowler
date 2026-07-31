@@ -101,7 +101,9 @@ FINDINGS="$(printf '%s' "${OUTPUT}" | jq --argjson sevs "${SEVERITY_JSON}" '
   ]
 ')"
 
-COUNT="$(printf '%s' "${FINDINGS}" | jq 'length' 2>/dev/null || echo 0)"
+# jq exits 0 with no output on empty stdin, but non-zero on malformed JSON.
+# Let the failure abort under set -e rather than reporting zero findings.
+COUNT="$(printf '%s' "${FINDINGS}" | jq 'length')"
 
 # Write the findings JSON to OSV_REPORT_FILE so callers (e.g. the composite
 # action's PR-comment step) can consume the same data the gate decision uses.
