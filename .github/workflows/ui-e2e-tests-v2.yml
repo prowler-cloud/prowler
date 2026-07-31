@@ -415,6 +415,11 @@ jobs:
     permissions:
       contents: read
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: audit
+
       - name: Report unavailable E2E tests
         run: |
           echo "## E2E Tests Skipped" >> "$GITHUB_STEP_SUMMARY"
