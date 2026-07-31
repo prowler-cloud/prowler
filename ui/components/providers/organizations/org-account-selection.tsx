@@ -84,7 +84,9 @@ export function OrgAccountSelection({
         {replaceWarning && (
           <div className="flex flex-col gap-4">
             <p className="text-text-neutral-secondary text-sm">
-              The following {noun.plural} will have their credentials replaced:{" "}
+              {replaceWarning.names.length === 1
+                ? `The following ${noun.singular} will have its credentials replaced: `
+                : `The following ${noun.plural} will have their credentials replaced: `}
               <strong>{replaceWarning.names.join(", ")}</strong>.
             </p>
             <div className="flex w-full justify-end gap-4">
