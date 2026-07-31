@@ -152,18 +152,16 @@ export interface SchedulesBulkOutcome {
   updatedProviderIds: string[];
   failures: SchedulesBulkFailure[];
   /**
-   * The response carried neither list. `/schedules/bulk` commits each provider
-   * before it answers, so this means "saved, shape unreadable" — never "nothing
-   * was saved".
+   * Neither list was present. `/schedules/bulk` commits each provider before it
+   * answers, so this means "saved, shape unreadable" — never "nothing was saved".
    */
   isIndeterminate: boolean;
 }
 
 /**
- * Single reader for the `/schedules/bulk` body. The API returns the lists
- * directly under `data`; the `data.attributes` form is tolerated only so a
- * future server-side JSON:API normalization cannot silently read as an empty
- * result. Unusable entries are dropped rather than trusted.
+ * Single reader for the `/schedules/bulk` body. The API returns the lists directly
+ * under `data`; the `data.attributes` form is tolerated only so a future
+ * server-side JSON:API normalization cannot read as an empty result.
  */
 export function parseSchedulesBulkResult(
   result: SchedulesBulkResponse,

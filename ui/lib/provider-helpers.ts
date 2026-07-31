@@ -180,9 +180,8 @@ export interface TestConnectionResult {
  * Tests a provider's connection end-to-end: submits the task, polls until
  * completion, and returns the real connection result.
  *
- * Used by the single-provider paths — the Provider Wizard and the table's
- * per-row action. A batch goes through `startProviderConnectionChecks` instead,
- * which fans the requests out server-side.
+ * Single-provider paths only (the wizard and the table's per-row action); a batch
+ * goes through `startProviderConnectionChecks`, which fans out server-side.
  */
 export async function testProviderConnection(
   providerId: string,
@@ -213,9 +212,8 @@ export async function testProviderConnection(
     };
   }
 
-  // The poller already read the settled task; asking for it again cost one more
-  // request per provider. A completed task with no readable `connected` counts
-  // as connected, the same rule the batched poller applies.
+  // Read from the task the poller already fetched. A completed task with no
+  // readable `connected` counts as connected, as in the batched poller.
   const result = taskResult.task?.data?.attributes?.result;
   const connected =
     typeof result?.connected === "boolean" ? result.connected : true;

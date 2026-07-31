@@ -90,8 +90,7 @@ export function TreeLeaf({
         />
       )}
 
-      {/* Same shrink wrapper as TreeNode: without it a leaf row cannot shrink
-          below its rendered content, so a long id overruns its neighbours. */}
+      {/* Same shrink wrapper as TreeNode, or a long id overruns its neighbours. */}
       <div className="min-w-0 flex-1">
         {renderItem ? (
           renderItem({

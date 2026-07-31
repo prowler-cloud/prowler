@@ -165,9 +165,8 @@ function applyBackStep({
   setPrevStep: Dispatch<SetStateAction<number>>;
   setMethod: Dispatch<SetStateAction<"single" | null>>;
 }) {
-  // For providers with a method choice (AWS/GCP), "Back" from the single
-  // account/project form returns to the method selector rather than the
-  // provider picker.
+  // With a method choice, "Back" from the single account/project form returns to
+  // the method selector rather than the provider picker.
   if (
     prevStep === 2 &&
     method === "single" &&
@@ -202,7 +201,6 @@ export const ConnectAccountForm = ({
 }: ConnectAccountFormProps) => {
   const { toast } = useToast();
   const [prevStep, setPrevStep] = useState(1);
-  // Whether the user picked the single account/project method (AWS/GCP fork).
   const [method, setMethod] = useState<"single" | null>(null);
   const router = useRouter();
 
@@ -335,8 +333,7 @@ export const ConnectAccountForm = ({
     });
   }, [onBackHandlerChange, prevStep, method, providerType, form]);
 
-  // Providers with a method choice (AWS/GCP) show the UID form only after the
-  // user picks the single account/project method.
+  // Providers with a method choice reach the UID form only through "single".
   const showUidForm =
     !providerHasOrgMethod(providerType) || method === "single";
 

@@ -105,8 +105,8 @@ export interface SchedulesBulkLists {
 
 /**
  * `/schedules/bulk` answers with a plain dict that the JSON:API renderer wraps in
- * `data`, so the lists sit directly on it — there is no `attributes` level and no
- * `type`, despite what the endpoint's documented response schema implies.
+ * `data`, so the lists sit directly on it: no `attributes` level and no `type`,
+ * despite what the endpoint's documented response schema says.
  */
 export interface SchedulesBulkData extends SchedulesBulkLists {
   type?: "schedules-bulk";

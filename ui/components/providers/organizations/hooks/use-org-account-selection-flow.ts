@@ -107,6 +107,7 @@ function buildTreeWithConnectionState(
   connectionResults: Record<string, ConnectionTestStatus>,
   connectionErrors: Record<string, string>,
   showPendingState: boolean,
+  hasAppliedProviders: boolean,
 ): TreeDataItem[] {
   return nodes.map((node) => {
     const children = node.children
@@ -117,6 +118,7 @@ function buildTreeWithConnectionState(
           connectionResults,
           connectionErrors,
           showPendingState,
+          hasAppliedProviders,
         )
       : undefined;
 
@@ -146,6 +148,13 @@ function buildTreeWithConnectionState(
         isLoading = true;
         status = undefined;
         errorMessage = undefined;
+      } else if (hasAppliedProviders) {
+        // Applied, but no outcome ever arrived for this account — typically an
+        // unresolved provider uid. Without this the row falls back to a plain
+        // checked box and reads as if the test had passed.
+        isLoading = false;
+        status = TREE_ITEM_STATUS.ERROR;
+        errorMessage = "Connection result unavailable for this account.";
       }
     }
 
@@ -202,8 +211,8 @@ export function useOrgAccountSelectionFlow({
   const [isApplying, setIsApplying] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
   const [applyError, setApplyError] = useState<string | null>(null);
-  // Pre-apply credential-replacement warning: apply overwrites the credentials
-  // of already-onboarded providers whose registration is `will_replace`.
+  // Apply overwrites the credentials of already-onboarded providers whose
+  // registration is `will_replace`, so it is confirmed first.
   const [replaceWarning, setReplaceWarning] = useState<{
     names: string[];
   } | null>(null);
@@ -232,8 +241,6 @@ export function useOrgAccountSelectionFlow({
   const hasConnectionErrors = Object.values(connectionResults).some(
     (status) => status === CONNECTION_TEST_STATUS.ERROR,
   );
-  // Selected candidates whose apply would overwrite an existing provider's
-  // credential (registration `will_replace`).
   const willReplaceSelectedNames = sanitizedSelectedCandidateIds
     .map((id) => candidateLookup.get(id))
     .filter(
@@ -261,6 +268,7 @@ export function useOrgAccountSelectionFlow({
         connectionResults,
         connectionErrors,
         isApplying || isTesting,
+        createdProviderIds.length > 0,
       )
     : treeData;
 
@@ -308,10 +316,9 @@ export function useOrgAccountSelectionFlow({
     };
 
     try {
-      // One action dispatches every check and one action reads every pending
-      // task per round: Next runs client-invoked server actions one at a time,
-      // so a per-provider loop here would serialize the whole batch no matter
-      // what concurrency it asked for.
+      // One action dispatches every check and one reads every pending task per
+      // round: Next runs client-invoked server actions one at a time, so a loop
+      // here would serialize the batch whatever concurrency it asked for.
       const outcomes = await startProviderConnectionChecks(providerIds);
       if (!isMountedRef.current || signal.aborted) {
         return;
@@ -376,7 +383,7 @@ export function useOrgAccountSelectionFlow({
       return;
     }
 
-    // Once for the batch, where the checks used to revalidate once per provider.
+    // Once for the whole batch: the checks themselves revalidate nothing.
     void revalidateProviders();
 
     const latestResults = useOrgSetupStore.getState().connectionResults;
@@ -462,8 +469,6 @@ export function useOrgAccountSelectionFlow({
       lastAppliedSelectionKeyRef.current !== selectedCandidateKey;
 
     if (shouldApplySelection) {
-      // Warn before an apply that would overwrite existing provider
-      // credentials, unless the user already confirmed this selection.
       if (willReplaceSelectedNames.length > 0 && !replaceConfirmedRef.current) {
         setReplaceWarning({ names: willReplaceSelectedNames });
         return;

@@ -100,17 +100,16 @@ export interface FixtureConnectionOutcome {
   connected: boolean;
   error?: string;
   /**
-   * Reads that answer `executing` before the task settles. Lets a test hold one
-   * account testing while another has already settled, which is the only way to
-   * observe that rows resolve per provider rather than all at the end.
+   * Reads that answer `executing` before the task settles, so a test can hold one
+   * account testing while another has already settled.
    */
   executingPolls?: number;
 }
 
 /**
- * Fixture-side pairing of a discovered candidate with the provider an apply
- * creates for it. Not a wire field: the API answers the mapping through the
- * created providers' own `uid` (requested with `?include=providers`).
+ * Fixture-side pairing of a discovered candidate with the provider an apply creates
+ * for it. Not a wire field: the API answers the mapping through the created
+ * providers' own `uid`.
  */
 export interface FixtureCandidateProviderId {
   candidateId: string;
@@ -284,11 +283,9 @@ export const GCP_ORG_ID = "456123789012";
 const GCP_FOLDER_A = "folders/1000000001";
 const GCP_FOLDER_B = "folders/1000000002";
 /**
- * Two folders with nothing selectable in them — discovery lists every ACTIVE
- * folder, and real organizations hold both kinds: one with no projects at all
- * (Google's own `system-gsuite`) and one holding only blocked projects. Neither
- * changes the selectable count, so every `N of M projects selected` assertion
- * stays valid.
+ * The two kinds of folder with nothing selectable in them, both of which real
+ * organizations hold: no projects at all (Google's own `system-gsuite`), and only
+ * blocked projects. Neither changes the selectable count.
  */
 export const GCP_EMPTY_FOLDER = "folders/1000000003";
 export const GCP_EMPTY_FOLDER_NAME = "system-gsuite";
@@ -303,19 +300,16 @@ interface GcpResultOverrides {
   /** Project ids whose registration reports `will_replace` (existing provider). */
   replaceProjectIds?: string[];
   /**
-   * Adds `GCP_LONG_PROJECT_ID` as a fourth, selectable project. Opt-in: it
-   * raises the selectable count every `N of M projects selected` assertion
-   * pins, and it has to be selectable to have an alias input to collide with.
+   * Adds `GCP_LONG_PROJECT_ID` as a fourth, selectable project. Opt-in, because it
+   * raises the selectable count that `N of M projects selected` assertions pin.
    */
   includeLongIdProject?: boolean;
 }
 
 /**
- * Pinned to the app's own wire interfaces — a deliberate exception to this
- * file's decoupling rule, so a change on either side has to be an edit on both.
- * These three shapes are verified against the merged API, and inventing them
- * here alongside the types is precisely what let a flattened tree ship green.
- * Registration keeps the fixture's looser value types.
+ * Pinned to the app's own wire interfaces — a deliberate exception to this file's
+ * decoupling rule, so a shape verified against the API cannot be re-invented here
+ * and drift. Registration keeps the fixture's looser value types.
  */
 type GcpFixtureDiscoveryResult = Omit<GcpDiscoveryResult, "projects"> & {
   projects: (Omit<GcpDiscoveredProject, "registration"> & {
@@ -324,11 +318,10 @@ type GcpFixtureDiscoveryResult = Omit<GcpDiscoveryResult, "projects"> & {
 };
 
 /**
- * The GCP discovery result as the API really shapes it: identity is the
- * canonical resource `name` (there is no `id` field), a child's `parent` is
- * exactly its parent's `name`, and `display_name` is the only human label — a
- * project's `name` is `projects/{number}`. Reading `name` as a label, or
- * expecting an `id`, is what flattened the tree in production.
+ * The GCP discovery result as the API shapes it: identity is the resource `name`
+ * (there is no `id` field), a child's `parent` is its parent's `name`, and
+ * `display_name` is the only human label — a project's `name` is
+ * `projects/{number}`.
  */
 export const buildGcpDiscoveryResult = ({
   replaceProjectIds = [],
@@ -664,9 +657,8 @@ export const mixedHierarchyFixture = (
         orgType: ORGANIZATION_TYPE.GCP,
         name: "My GCP Organization",
         externalId: GCP_ORG_ID,
-        // Only the AWS apply writes `root_external_id` (the root OU); a GCP
-        // organization never has one, and its top-level folders are the ones with
-        // no parent node.
+        // `root_external_id` is the AWS root OU; a GCP organization has none, and
+        // its top-level folders are the ones with no parent node.
         rootExternalId: null,
         providerIds: [],
         nodeIds: gcpNodes.map((n) => n.id),

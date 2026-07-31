@@ -322,7 +322,7 @@ describe("OrgLaunchScan", () => {
 
     it("should proceed when the response carries no result lists", async () => {
       // Given — an empty 200/204 body. The endpoint commits each schedule before
-      // answering, so a body we cannot read must not be reported as a failure.
+      // answering, so this is not a failure.
       const user = userEvent.setup();
       const onFooterChange = vi.fn();
       updateSchedulesBulkMock.mockResolvedValue({ success: true });

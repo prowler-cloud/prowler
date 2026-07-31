@@ -11,9 +11,8 @@ interface DiscoveryTimeoutNoticeProps {
 }
 
 /**
- * Client-side discovery timeout: the worker keeps running past the client
- * budget, so the user is offered two distinct actions — keep waiting (resume
- * polling the same discovery, free) or retry (trigger a fresh discovery).
+ * The worker keeps running past the client's polling budget, so a timeout offers
+ * two actions: keep waiting (resume the same discovery) or retry (a fresh one).
  */
 export function DiscoveryTimeoutNotice({
   onKeepWaiting,

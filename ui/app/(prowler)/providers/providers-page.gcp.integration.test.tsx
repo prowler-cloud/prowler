@@ -20,13 +20,9 @@ import { ORGANIZATION_TYPE } from "@/types/organizations";
 
 import { ProvidersPageHarness } from "./providers-page.harness";
 
-// Phase 2 GCP coverage (the Phase 0 AWS baseline + Phase 1 hierarchy suites stay
-// untouched): the GCP Organization flow reuses the generalized lifecycle —
-// method fork, numeric-org-id setup, service-account credentials, folder/project
-// selection tree, projects-only apply, and the shared safety UX (credential
-// replacement warnings, cascade deletion + task polling). Discovery
-// timeout/keep-waiting/resume live in the submission unit tests (they need fake
-// timers); the fast, user-facing branches are covered here.
+// The GCP Organization flow end to end: method fork, setup, selection tree, apply,
+// and the shared safety UX. Discovery timeout/keep-waiting/resume live in the
+// submission unit tests instead, since they need fake timers.
 
 const VALID_SA_KEY = JSON.stringify({
   type: "service_account",
@@ -99,9 +95,8 @@ describe("GCP Organizations onboarding (Phase 2)", () => {
     await harness.testConnections();
     await harness.waitForProjectsConnected();
 
-    // The apply view rejects `include` and fails the whole request, so the uids
-    // that map providers back to candidates are read from `/providers` — once for
-    // all of them, not once each.
+    // The apply view rejects `include`, so the uids that map providers back to
+    // candidates are read from `/providers` — once for all of them, not once each.
     expect(harness.applySentIncludeParam()).toBe(false);
     expect(harness.providerUidLookupCount).toBe(1);
     expect(harness.singleProviderFetchCount).toBe(0);
@@ -120,8 +115,7 @@ describe("GCP Organizations onboarding (Phase 2)", () => {
     await onboardGcpToSelection(harness);
 
     // Folder identity is the resource `name`, which is what children carry as
-    // `parent`. Reading it from any other field detaches every child: the tree
-    // flattens and the folders collapse onto one repeated row.
+    // `parent`; reading it from any other field flattens the tree.
     expect(harness.countContainerRows("Engineering")).toBe(1);
     expect(harness.countContainerRows("Platform")).toBe(1);
     expect(harness.containerRowUids().sort()).toEqual([
@@ -155,9 +149,8 @@ describe("GCP Organizations onboarding (Phase 2)", () => {
     const harness = new ProvidersPageHarness(gcpOnboardingFixture());
     await onboardGcpToSelection(harness);
 
-    // Discovery lists every ACTIVE folder, so project-less ones do reach the
-    // tree. Clicking them cannot select anything — say so instead of going
-    // silent, and never in the AWS nouns.
+    // Project-less folders do reach the tree, and clicking them selects nothing —
+    // which the row has to say, in GCP's own nouns.
     expect(harness.isContainerInert(GCP_EMPTY_FOLDER_NAME)).toBe(true);
     expect(harness.inertContainerNote(GCP_EMPTY_FOLDER_NAME)).toBe(
       "No projects available to select in this folder.",
@@ -181,8 +174,8 @@ describe("GCP Organizations onboarding (Phase 2)", () => {
       ),
     ).toBe(true);
 
-    // Clicking the row collapses and re-expands it rather than selecting: an
-    // inert folder that could not be opened would never explain itself.
+    // The row collapses and re-expands rather than selecting: an inert folder that
+    // could not be opened would never explain itself.
     await harness.clickContainerRow(GCP_BLOCKED_FOLDER_NAME);
     await harness.waitForTransition();
     expect(harness.isCandidateVisible(GCP_BLOCKED_FOLDER_PROJECT)).toBe(false);
@@ -206,15 +199,13 @@ describe("GCP Organizations onboarding (Phase 2)", () => {
     );
     await onboardGcpToSelection(harness);
 
-    // Real layout, not class names: a leaf row that cannot shrink below its
-    // content pushes the id over its neighbour instead of ellipsizing.
+    // Real layout, not class names: a leaf row that cannot shrink pushes the id
+    // over its neighbour instead of ellipsizing.
     expect(harness.candidateRowOverflows(GCP_LONG_PROJECT_ID)).toBe(false);
   }, 40000);
 
-  // The launch step reads `/schedules/bulk`'s per-provider lists. The endpoint
-  // returns them directly under `data` (no `attributes` level), so these three
-  // cases pin that read: a client looking one level too deep sees no lists at
-  // all and cannot tell these outcomes apart.
+  // These three cases pin how `/schedules/bulk`'s per-provider lists are read: a
+  // client looking one level too deep sees no lists and cannot tell them apart.
   it("launches initial scans only for the projects whose schedule was saved", async () => {
     const harness = new ProvidersPageHarness(
       gcpOnboardingFixture({
@@ -369,8 +360,8 @@ describe("GCP Organizations onboarding (Phase 2)", () => {
     const harness = new ProvidersPageHarness(fixture);
     await authenticateGcpOrg(harness);
 
-    // The credential is replaced only after the user confirms; the warning
-    // states how many onboarded providers it re-authenticates.
+    // The credential is replaced only after the user confirms, and the warning
+    // states how many onboarded providers that re-authenticates.
     await harness.waitForCredentialReplaceWarning();
     expect(harness.hasCredentialReplaceProviderCount(2)).toBe(true);
 
@@ -423,7 +414,7 @@ describe("GCP Organizations onboarding (Phase 2)", () => {
     await harness.waitForDiscoveryFailure();
     await harness.waitForDiscoveryCount(1);
 
-    // Retry triggers a brand-new discovery (a fresh Cloud Resource Manager snapshot).
+    // Retry triggers a brand-new discovery, not a resumed poll.
     await harness.retryDiscovery();
     await harness.waitForDiscoveryCount(2);
   }, 40000);
@@ -462,9 +453,8 @@ describe("GCP Organizations providers page (Phase 2)", () => {
     await harness.confirmDelete();
 
     await harness.waitForNodeDelete(GCP_FOLDER_NODE_ID);
-    // 202 + task the UI polls to completion. That task completes when the
-    // per-provider deletions are dispatched, not when they finish, so the copy
-    // must report acceptance and never claim the folder is gone.
+    // The polled task completes when the per-provider deletions are dispatched, so
+    // the copy may report acceptance and never that the folder is gone.
     await harness.waitForTaskPoll("del-task-");
     await harness.waitForDeletionAccepted();
     expect(harness.claimsDeletionFinished()).toBe(false);
@@ -484,8 +474,8 @@ describe("GCP Organizations providers page (Phase 2)", () => {
 
     await harness.confirmDelete();
 
-    // The deletion task fails; the UI communicates it did not complete (and
-    // refetches the hierarchy so the restored subtree reappears).
+    // A failed task is reported as not completed, and the hierarchy refetched so
+    // the restored subtree reappears.
     await harness.waitForDeletionFailure();
   }, 30000);
 });

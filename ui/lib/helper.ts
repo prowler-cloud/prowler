@@ -352,10 +352,8 @@ export const isGithubOAuthEnabled =
   !!process.env.SOCIAL_GITHUB_OAUTH_CLIENT_SECRET;
 
 /**
- * Polls a task until it settles.
- *
- * The settled task is returned alongside the verdict so callers can read its
- * result without asking for the same task again.
+ * Polls a task until it settles. The settled task comes back with the verdict so
+ * callers can read its result without fetching the same task again.
  */
 export const checkTaskStatus = async (
   taskId: string,

@@ -9,10 +9,9 @@ import type { IconSvgProps } from "@/types/components";
 import { ORGANIZATION_TYPE, OrgFlowType } from "@/types/organizations";
 
 /**
- * Component-side organization vocabulary. The words themselves come from the
- * shared terminology table (`lib/organizations`), so wizard copy and the
- * providers table cannot drift; this module adds only what the wizard needs on
- * top — a capitalized plural for headings and the badge to render.
+ * The words come from the shared terminology table (`lib/organizations`), so
+ * wizard copy and the providers table cannot drift. This module only adds what
+ * the wizard needs on top: a capitalized plural and the badge to render.
  */
 export interface OrgCandidateNoun {
   singular: string;
@@ -21,10 +20,7 @@ export interface OrgCandidateNoun {
   Plural: string;
 }
 
-/**
- * User-facing noun for a discovered candidate: GCP flows say "project(s)" where
- * AWS flows say "account(s)" (see ui-terminology spec).
- */
+/** User-facing candidate noun: "project(s)" for GCP, "account(s)" for AWS. */
 export function getOrgCandidateNoun(orgType: OrgFlowType): OrgCandidateNoun {
   const { singular, plural } = getCandidateNoun(orgType);
 
@@ -35,9 +31,8 @@ export function getOrgCandidateNoun(orgType: OrgFlowType): OrgCandidateNoun {
   };
 }
 
-// Typed `satisfies Record<OrgFlowType, …>`, so an organization type that gains
-// an onboarding flow is a compile error until it brings its own badge — it can
-// never silently render the AWS one.
+// `satisfies Record<OrgFlowType, …>`: a new onboarding flow is a compile error
+// until it brings its own badge, instead of silently rendering the AWS one.
 const ORG_PROVIDER_BADGE = {
   [ORGANIZATION_TYPE.AWS]: AWSProviderBadge,
   [ORGANIZATION_TYPE.GCP]: GCPProviderBadge,

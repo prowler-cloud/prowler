@@ -44,9 +44,8 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
   }
 
   /**
-   * Whether any apply asked the endpoint to include related resources. The apply
-   * view rejects `include` outright and fails the whole request, so this is a
-   * tripwire, not a preference.
+   * Whether any apply asked the endpoint to include related resources, which it
+   * rejects outright — a tripwire, not a preference.
    */
   applySentIncludeParam(): boolean {
     return this.requestLog.some(
@@ -292,8 +291,8 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
   }
 
   /**
-   * Whether the pre-apply warning states how many already-onboarded candidates
-   * the apply would overwrite, naming them.
+   * Whether the pre-apply warning states how many already-onboarded candidates the
+   * apply would overwrite, and names them.
    */
   hasApplyOverwriteWarning(
     projectCount: number,
@@ -343,8 +342,7 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
     return this.treeItems.find((el) => text.test(el.textContent ?? "")) ?? null;
   }
 
-  // Candidate-noun-agnostic on purpose: the selection copy says "accounts" for
-  // AWS and "projects" for GCP (see the ui-terminology spec).
+  // Noun-agnostic on purpose: the copy says "accounts" for AWS, "projects" for GCP.
   private selectedCountText(): string {
     return (
       this.container.textContent?.match(
@@ -377,9 +375,8 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
   }
 
   /**
-   * Container rows carrying this label. Counted over rows rather than through
-   * `treeItemByText` (which returns only the first match) so a container
-   * rendered more than once is visible instead of silently deduplicated.
+   * Container rows carrying this label. Counted over rows, not through
+   * `treeItemByText` (first match only), so a duplicated container is visible.
    */
   countContainerRows(label: string): number {
     return this.containerRows.filter((item) =>
@@ -437,12 +434,9 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
 
   /**
    * Click a container row itself (not its checkbox or chevron) to expand or
-   * collapse it.
-   *
-   * Dispatched directly rather than through user-event: an `aria-disabled` row
-   * fails Playwright's actionability check, while a real pointer is not blocked
-   * by it (nothing sets `pointer-events: none`, and no overlay covers the row).
-   * The row is what the assertion is about, so it clicks the row.
+   * collapse it. Dispatched directly rather than through user-event, whose
+   * actionability check rejects an `aria-disabled` row a real pointer can still
+   * reach.
    */
   async clickContainerRow(containerLabel: string): Promise<void> {
     const row = await this.waitFor(
@@ -456,8 +450,7 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
 
   /**
    * Whether a candidate row's id spills out of its column or collides with the
-   * alias input next to it. Measured from real layout boxes, so it answers the
-   * question the CSS actually decides rather than restating the class list.
+   * alias input next to it. Measured from real layout boxes, not class names.
    */
   candidateRowOverflows(uid: string): boolean {
     const row = this.treeItemByText(new RegExp(uid));
@@ -534,8 +527,8 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
   }
 
   /**
-   * Whether any visible copy uses the AWS candidate noun. A GCP flow must never
-   * say "accounts", so this is the negative half of the terminology assertions.
+   * Whether any visible copy uses the AWS candidate noun, which a GCP flow must
+   * never say — the negative half of the terminology assertions.
    */
   usesAccountWording(): boolean {
     return this.containsText(
@@ -822,8 +815,8 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
   }
 
   /**
-   * Open the delete flow for a hierarchy node whose kind labels it a folder —
-   * the GCP counterpart of `openDeleteFor` (AWS says "Organizational Unit").
+   * Open the delete flow for a folder — the GCP counterpart of `openDeleteFor`,
+   * which says "Organizational Unit".
    */
   async openDeleteFolderFor(name: string): Promise<void> {
     await this.openActionsFor(name);
@@ -858,7 +851,7 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
   }
 
   /**
-   * Whether the dialog warns about permanently deleting the given entity — the
+   * Whether the dialog warns about permanently deleting the given entity, whose
    * label follows the node kind ("folder" for GCP, "organizational unit" for AWS).
    */
   hasDeleteWarningFor(entityLabel: string): boolean {
@@ -918,9 +911,8 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
   }
 
   /**
-   * Wait until the deletion is reported as accepted. Deliberately not "removed
-   * successfully": the task the UI polls completes when the per-provider
-   * deletions are dispatched, so that is all the copy may claim.
+   * Wait until the deletion is reported as accepted — not "removed successfully",
+   * since the polled task completes on dispatch, not on completion.
    */
   async waitForDeletionAccepted(timeoutMs = 15000): Promise<void> {
     await this.waitForText(/Deletion started/, timeoutMs);

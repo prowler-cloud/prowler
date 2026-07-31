@@ -170,13 +170,11 @@ export function GcpOrgSetupForm({
     keepWaitingForDiscovery,
     retryDiscovery,
   } = useOrgSetupSubmission({
-    // GCP secrets are self-contained (no external-id echo like AWS role
-    // secrets), so the tenant external id is not part of the payload.
+    // Unlike an AWS role secret, a GCP secret echoes no external id.
     stackSetExternalId: "",
     onNext,
-    // The hook's field union spans both organization types; these are the ones
-    // this form actually renders. Anything else goes back unhandled so the hook
-    // banners it — a setError on an unregistered field would render nowhere.
+    // Only the fields this form renders: a `setError` on an unregistered field
+    // would render nowhere, so anything else goes back for the hook to banner.
     setFieldError: (field, message) => {
       switch (field) {
         case "organizationName":
@@ -193,9 +191,8 @@ export function GcpOrgSetupForm({
     },
   });
 
-  // `isSubmitting` only covers a submit react-hook-form started itself, but the
-  // chain is also re-entered by confirming a secret replacement, keeping waiting
-  // and retrying — all of which must still show progress and hold the footer.
+  // `isSubmitting` only covers a submit react-hook-form started itself, not the
+  // chain re-entered by confirming a replacement, keeping waiting or retrying.
   const isBusy = isSubmitting || isSubmissionPending;
 
   useEffect(() => {

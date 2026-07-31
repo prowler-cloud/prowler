@@ -192,10 +192,10 @@ function useToast() {
 }
 
 /**
- * Clears the module-level store outright. Tests need this: toasts stay in state
- * for `TOAST_REMOVE_DELAY` (~17 min), so one raised by an earlier test renders
- * again on the next mount and its fixed-position host swallows clicks meant for
- * the page. Dismissing is not enough — that only marks them closed.
+ * Clears the module-level store. Tests need this: toasts stay in state for
+ * `TOAST_REMOVE_DELAY` (~17 min), so one raised by an earlier test re-renders on
+ * the next mount and its fixed-position host swallows clicks meant for the page.
+ * Dismissing is not enough — that only marks them closed.
  */
 function resetToasts() {
   memoryState = { toasts: [] };

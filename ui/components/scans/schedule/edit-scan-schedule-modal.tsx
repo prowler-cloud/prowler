@@ -139,7 +139,7 @@ function EditScanScheduleForm({
     }
 
     // A bulk save reports per-provider outcomes, so a 200 does not mean every
-    // provider was updated. Only the single-provider PATCH can be trusted flat.
+    // provider was updated. Only the single-provider PATCH is flat.
     const bulkOutcome = isBulk
       ? parseSchedulesBulkResult(result as SchedulesBulkResponse)
       : null;

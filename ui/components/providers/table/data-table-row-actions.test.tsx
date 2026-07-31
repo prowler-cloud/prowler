@@ -715,8 +715,8 @@ describe("DataTableRowActions", () => {
   });
 
   it("tests every selected provider in one dispatch, not one call each", async () => {
-    // Given — a per-provider loop here is serialized by Next's action queue, so
-    // the whole batch has to leave in a single action.
+    // Given — Next's action queue serializes a per-provider loop, so the batch has
+    // to leave in a single action.
     const user = userEvent.setup();
     const testableProviderIds = ["provider-child-1", "provider-standalone"];
     startProviderConnectionChecksMock.mockResolvedValue({

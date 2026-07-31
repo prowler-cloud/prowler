@@ -64,8 +64,7 @@ export type OrgSetupErrorField =
  * Per-organization-type pieces of the shared setup submission chain
  * (find-or-create org → create/replace secret → discover → poll → select).
  * Shared machinery (ordering, polling, cancellation) stays in the hook; only
- * these type-specific bits are dispatched on the discriminant. Each strategy is
- * typed on its own data arm, so no strategy can read another type's fields.
+ * these type-specific bits are dispatched on the discriminant.
  */
 interface OrgSetupStrategy<D extends OrgSetupSubmissionData> {
   orgType: D["orgType"];
@@ -78,11 +77,9 @@ interface OrgSetupStrategy<D extends OrgSetupSubmissionData> {
   /** Credential payload for the organization secret. */
   buildSecretPayload: (data: D, externalId: string) => OrgSecretPayload;
   /**
-   * Maps a secret-scoped server error to the form field it belongs to, or null
-   * to surface it in the error banner. Matched against the field names the error
-   * mentions, because the field arrives either inside the pointer
-   * (`/data/attributes/secret/service_account_key`) or as the error object's own
-   * key with the pointer stopping at `/data/attributes/secret`.
+   * Maps a secret-scoped server error to the form field it belongs to, or null to
+   * surface it in the banner. Matched on names rather than the pointer, which may
+   * stop at `/data/attributes/secret` and leave the field as the error's own key.
    */
   mapSecretErrorField: (fieldNames: string) => OrgSetupErrorField | null;
   /**
@@ -99,10 +96,8 @@ interface OrgSetupStrategy<D extends OrgSetupSubmissionData> {
 
 /**
  * Human copy for the machine codes a failed discovery reports in
- * `attributes.error`. Only some of them are credential problems, so the code
- * decides the framing too: appending a raw `gcp_service_unavailable` to
- * "Authentication failed…" sends the user to re-check working credentials
- * during a Google outage.
+ * `attributes.error`. The code decides the framing too: only some of them are
+ * credential problems, so "Authentication failed…" is wrong for the rest.
  */
 const DISCOVERY_ERROR_COPY: Record<string, string> = {
   gcp_invalid_organization_id:
@@ -118,9 +113,8 @@ const DISCOVERY_ERROR_COPY: Record<string, string> = {
 };
 
 /**
- * Copy for a failed discovery. A known code becomes its own sentence; anything
- * else falls back to the type's auth-failure copy without the raw token, which
- * is a support detail rather than something to show a user.
+ * Copy for a failed discovery. An unknown code falls back to the type's
+ * auth-failure copy without the raw token, which is a support detail.
  */
 function describeDiscoveryFailure(
   code: string | undefined,
@@ -135,9 +129,8 @@ function describeDiscoveryFailure(
 }
 
 /**
- * A strategy with its submission data already applied. The submission chain
- * drives the flow through this, so the hook never holds a strategy and a
- * data object it could pair with the wrong type.
+ * A strategy with its submission data already applied, so the hook never holds a
+ * strategy and a data object it could pair with the wrong type.
  */
 export interface BoundOrgSetupStrategy {
   orgType: OrgFlowType;
@@ -213,7 +206,7 @@ const gcpOrgSetupStrategy: OrgSetupStrategy<GcpOrgSetupData> = {
         },
       };
     }
-    // The form validates service-account key JSON before submission.
+    // The form validates this JSON before submit, so the parse cannot throw here.
     return {
       secretType: ORG_SECRET_TYPE.SERVICE_ACCOUNT,
       secret: {
@@ -231,8 +224,8 @@ const gcpOrgSetupStrategy: OrgSetupStrategy<GcpOrgSetupData> = {
   ingestDiscovery: (rawResult) => {
     const hierarchy = mapGcpDiscovery(rawResult as GcpDiscoveryResult);
 
-    // Folder ancestors are derived server-side, so every ready project is a
-    // whole-organization default (no StackSet-style target scoping for GCP).
+    // GCP has no StackSet-style target scoping, so the default is every ready
+    // project; folder ancestors are derived server-side.
     return {
       hierarchy,
       defaultSelection: getSelectableCandidateIds(hierarchy),
@@ -262,9 +255,8 @@ function bind<D extends OrgSetupSubmissionData>(
 }
 
 /**
- * Binds the submission data to the strategy its own tag names. Exhaustive on the
- * discriminant: a new organization type is a compile error here until it brings
- * a strategy.
+ * Binds the submission data to the strategy its own tag names. The switch has no
+ * default, so a new organization type is a compile error until it brings one.
  */
 export function bindOrgSetupStrategy(
   data: OrgSetupSubmissionData,

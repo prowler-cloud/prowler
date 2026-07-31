@@ -31,9 +31,8 @@ const DISCOVERY_POLL_INTERVAL_MS = 3000;
 const DISCOVERY_MAX_RETRIES = 60;
 
 /**
- * Used once the credentials have already been accepted: from that point they are
- * proven good, so a response we cannot read must not send the user off to
- * re-check them.
+ * Used once the credentials have already been accepted: from there on a response
+ * we cannot read must not send the user off to re-check them.
  */
 const UNEXPECTED_DISCOVERY_RESULT =
   "The organization was authenticated, but its discovery result could not be read. Please try again.";
@@ -94,24 +93,19 @@ export function useOrgSetupSubmission({
   setFieldError,
 }: UseOrgSetupSubmissionProps) {
   const [apiError, setApiError] = useState<string | null>(null);
-  // Set when submission finds an existing organization secret that a
-  // replacement would overwrite; the form confirms before proceeding.
+  // Set when setup finds an existing secret a replacement would overwrite.
   const [replaceSecretWarning, setReplaceSecretWarning] = useState<{
     providerCount: number;
   } | null>(null);
-  // Set when discovery polling exhausts its client-side budget while the worker
-  // is still running; the form offers *keep waiting* (resume) vs *retry* (new).
+  // Set when polling exhausts its client budget while the worker keeps running.
   const [discoveryTimedOut, setDiscoveryTimedOut] = useState(false);
-  // Set when discovery completes with a failed status; the sanitized error is in
-  // apiError and the form offers a retry (a fresh discovery).
+  // Set when discovery reports a failed status; the copy is already in apiError.
   const [discoveryFailed, setDiscoveryFailed] = useState(false);
-  // True whenever the setup chain is running.
   const [isSubmissionPending, setIsSubmissionPending] = useState(false);
   const isMountedRef = useRef(true);
   const pendingSubmitDataRef = useRef<OrgSetupSubmissionData | null>(null);
-  // Enough context to resume polling the same discovery (keep waiting) or
-  // trigger a fresh one (retry) after a client-side timeout. The strategy
-  // carries its submission data, so resuming cannot re-pair the two.
+  // Enough context to resume the same discovery, or trigger a fresh one, after a
+  // client-side timeout.
   const resumeContextRef = useRef<{
     orgId: string;
     discoveryId: string;
@@ -146,8 +140,8 @@ export function useOrgSetupSubmission({
 
     if (result.errors?.length) {
       for (const err of result.errors) {
-        // Both halves tolerate a `detail`-less error: the field can be named by
-        // the error's own key, and the message can live under it.
+        // Both tolerate a `detail`-less error, where the error's own key names the
+        // field and holds the message.
         const fieldNames = apiErrorFieldNames(err);
         const message = describeApiError(err) ?? `Failed to create ${context}`;
 
@@ -173,8 +167,7 @@ export function useOrgSetupSubmission({
     }
   };
 
-  // Timeout no longer sets apiError itself — the caller surfaces the two-action
-  // timeout state (keep waiting / retry). Failure/cancellation are terminal.
+  // A timeout sets no apiError: the caller renders the keep-waiting/retry choice.
   const pollDiscoveryResult = async (
     organizationId: string,
     discoveryId: string,
@@ -208,9 +201,7 @@ export function useOrgSetupSubmission({
       }
 
       if (status === DISCOVERY_STATUS.FAILED) {
-        // `attributes.error` is a machine code (`gcp_invalid_organization_id`,
-        // `gcp_service_unavailable`, …), not user copy, and only some of them
-        // are credential problems.
+        // `attributes.error` is a machine code, not user copy.
         setApiError(
           strategy.discoveryFailureMessage(result.data.attributes.error),
         );
@@ -227,8 +218,7 @@ export function useOrgSetupSubmission({
     return { kind: "timeout" };
   };
 
-  // Maps a resolved discovery into the store, seeds the default selection, and
-  // advances to the selection step. Shared by initial submit, resume, and retry.
+  // Shared by initial submit, resume and retry.
   const applyResolvedDiscovery = (
     discoveryId: string,
     result: unknown,
@@ -240,8 +230,6 @@ export function useOrgSetupSubmission({
     onNext();
   };
 
-  // Handles a poll outcome uniformly: resolved → advance; timeout → offer
-  // keep-waiting/retry; failed/cancelled → nothing more (apiError already set).
   const handlePollOutcome = (
     outcome: PollOutcome,
     discoveryId: string,
@@ -252,8 +240,7 @@ export function useOrgSetupSubmission({
       return;
     }
     if (outcome.kind === "resolved") {
-      // Ingesting the result is all that is left once discovery succeeded, and a
-      // result we cannot map is not a credentials problem
+      // A result we cannot map is not a credentials problem.
       try {
         applyResolvedDiscovery(discoveryId, outcome.result, strategy);
       } catch {
@@ -445,8 +432,8 @@ export function useOrgSetupSubmission({
         );
       }
     } finally {
-      // Only the newest chain clears the flag: if a later one superseded this
-      // controller it owns the pending state and is still running.
+      // Only the newest chain clears the flag; a later one that superseded this
+      // controller owns the pending state and is still running.
       if (discoveryAbortControllerRef.current === abortController) {
         discoveryAbortControllerRef.current = null;
         setIsSubmissionPending(false);
@@ -466,8 +453,7 @@ export function useOrgSetupSubmission({
     setReplaceSecretWarning(null);
   };
 
-  // *Keep waiting*: resume polling the SAME discovery with a fresh attempt
-  // budget — free, because the worker kept running past the client timeout.
+  // *Keep waiting*: resume polling the same discovery with a fresh attempt budget.
   const keepWaitingForDiscovery = async () => {
     const ctx = resumeContextRef.current;
     if (!ctx) {
@@ -496,13 +482,13 @@ export function useOrgSetupSubmission({
     } catch {
       if (isMountedRef.current && !abortController.signal.aborted) {
         setApiError(UNEXPECTED_DISCOVERY_RESULT);
-        // The same discovery is still running server-side, so restore the
-        // two-action notice rather than forcing a fresh POST /discoveries.
+        // The discovery is still running server-side, so restore the two-action
+        // notice rather than forcing a fresh one.
         setDiscoveryTimedOut(true);
       }
     } finally {
-      // Only the newest chain clears the flag: if a later one superseded this
-      // controller it owns the pending state and is still running.
+      // Only the newest chain clears the flag; a later one that superseded this
+      // controller owns the pending state and is still running.
       if (discoveryAbortControllerRef.current === abortController) {
         discoveryAbortControllerRef.current = null;
         setIsSubmissionPending(false);
@@ -510,8 +496,7 @@ export function useOrgSetupSubmission({
     }
   };
 
-  // *Retry*: trigger a NEW discovery on the same organization (a fresh snapshot
-  // that re-hits Cloud Resource Manager), then poll it.
+  // *Retry*: trigger a new discovery on the same organization, then poll it.
   const retryDiscovery = async () => {
     const ctx = resumeContextRef.current;
     if (!ctx) {
@@ -532,8 +517,8 @@ export function useOrgSetupSubmission({
       }
       if (discoveryResult?.error) {
         setApiError(discoveryResult.error);
-        // A retry that could not even be triggered is itself a discovery
-        // failure: without this the retry button we were clicked from vanishes.
+        // A retry that could not be triggered is itself a discovery failure —
+        // without this the retry button disappears.
         setDiscoveryFailed(true);
         return;
       }
@@ -561,14 +546,13 @@ export function useOrgSetupSubmission({
       );
     } catch {
       if (isMountedRef.current && !abortController.signal.aborted) {
-        // Reaching a retry means the credentials were already accepted once, so
-        // this cannot be an authentication problem.
+        // The credentials were accepted once already, so this is not an auth problem.
         setApiError(UNEXPECTED_DISCOVERY_RESULT);
         setDiscoveryFailed(true);
       }
     } finally {
-      // Only the newest chain clears the flag: if a later one superseded this
-      // controller it owns the pending state and is still running.
+      // Only the newest chain clears the flag; a later one that superseded this
+      // controller owns the pending state and is still running.
       if (discoveryAbortControllerRef.current === abortController) {
         discoveryAbortControllerRef.current = null;
         setIsSubmissionPending(false);

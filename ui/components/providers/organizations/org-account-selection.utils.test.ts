@@ -11,8 +11,8 @@ import {
 
 describe("buildCandidateToProviderMap", () => {
   it("matches providers to candidates by uid, not by position", async () => {
-    // Given — the apply response's relationship order is not the selection order,
-    // so pairing them by index would silently mismatch every candidate.
+    // Given — relationship order is not selection order, so pairing them by index
+    // would mismatch every candidate.
     const selectedCandidateIds = ["111111111111", "222222222222"];
     const providerIds = ["provider-b", "provider-a"];
     const resolveProviderUids = vi.fn(async () => ({
@@ -86,8 +86,8 @@ describe("pollConnectionTasks", () => {
       maxRetries: 5,
     });
 
-    // Then — the fast one is reported after round 1, while the slow one is
-    // still pending, and it is dropped from every later read.
+    // Then — the fast one is reported after round 1 and dropped from later reads,
+    // while the slow one is still pending.
     expect(settled).toEqual([
       ["task-fast", { success: true }],
       ["task-slow", { success: false, error: "Role trust policy mismatch." }],

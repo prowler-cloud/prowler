@@ -20,21 +20,17 @@ export const getTask = async (taskId: string) => {
   }
 };
 
-/** Task reads in flight at once inside one round of polling. */
+/** Task reads in flight at once. */
 const TASK_READ_CONCURRENCY_LIMIT = 10;
 
 /**
- * Reads several tasks in one call, keyed by task id, each entry shaped exactly
- * like {@link getTask}'s so callers parse one payload shape either way.
+ * Reads several tasks in one call, keyed by task id, each entry shaped like
+ * {@link getTask}'s.
  *
- * A caller polling N tasks cannot loop over `getTask`: client-invoked server
- * actions run one at a time through Next's global action queue, so N tasks per
- * round means N sequential round trips, and the polls compete with whatever
- * else the flow is doing. This collapses a round into a single action.
- *
- * The reads are still one request per task — `TaskFilter` exposes no id filter,
- * so the collection cannot be asked for a specific set — but they overlap here
- * instead of queueing on the client.
+ * Client-invoked server actions run one at a time through Next's action queue,
+ * so polling N tasks with `getTask` costs N sequential round trips per round.
+ * The reads are still one request per task — `TaskFilter` exposes no id filter —
+ * but they overlap here instead of queueing on the client.
  */
 export const getTasksByIds = async (
   taskIds: string[],

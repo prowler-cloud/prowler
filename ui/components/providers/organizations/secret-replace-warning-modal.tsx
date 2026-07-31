@@ -10,9 +10,8 @@ interface SecretReplaceWarningModalProps {
 }
 
 /**
- * Confirm-before-replace guard shown when organization setup would overwrite an
- * existing credential — replacing it re-authenticates every provider already
- * onboarded under the organization (organization-lifecycle-safety spec).
+ * Shown when organization setup would overwrite an existing credential, which
+ * re-authenticates every provider already onboarded under the organization.
  */
 export function SecretReplaceWarningModal({
   warning,

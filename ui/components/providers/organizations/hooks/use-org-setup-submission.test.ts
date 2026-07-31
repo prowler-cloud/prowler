@@ -462,8 +462,8 @@ describe("useOrgSetupSubmission", () => {
       resumePromise = result.current.keepWaitingForDiscovery();
     });
 
-    // Then — the forms have something to hang a spinner and a disabled footer
-    // on; react-hook-form's isSubmitting is false for this path.
+    // Then — the forms have a flag to hang a spinner on, since react-hook-form's
+    // isSubmitting is false for this path.
     expect(result.current.isSubmissionPending).toBe(true);
     expect(result.current.discoveryTimedOut).toBe(false);
 
@@ -655,9 +655,8 @@ describe("useOrgSetupSubmission", () => {
     expect(onNext).not.toHaveBeenCalled();
   });
 
-  // The validation errors these endpoints return carry no `detail`: the message
-  // sits under the offending field's own key, and the pointer stops at the
-  // attribute that contains it. Reading only `detail` leaves an empty banner.
+  // These endpoints' validation errors carry no `detail`: the message sits under
+  // the offending field's own key, and the pointer stops at the attribute above it.
   it("routes a field-keyed secret error to its form field", async () => {
     // Given
     const onNext = vi.fn();
@@ -691,8 +690,7 @@ describe("useOrgSetupSubmission", () => {
       });
     });
 
-    // Then — the field name comes from the error's own key, and the message from
-    // its value; never an empty banner, never the raw body.
+    // Then — field name from the error's own key, message from its value.
     expect(setFieldError).toHaveBeenCalledWith(
       "serviceAccountKey",
       "Service account key: Invalid service account key: missing token_uri",
@@ -818,8 +816,7 @@ describe("useOrgSetupSubmission", () => {
   });
 
   it("keeps the auth-failure copy for an unrecognized failure code", async () => {
-    // Given — a code this build has no copy for. An unknown token is a support
-    // detail, so the framing stays generic and the token is not shown.
+    // Given — a code this build has no copy for; the token is a support detail.
     mockFreshSetupChain();
     organizationsActionsMock.getDiscovery.mockResolvedValue({
       data: {

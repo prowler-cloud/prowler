@@ -55,9 +55,8 @@ describe("useOrgSetupStore", () => {
     ["a prototype key", "__proto__"],
     ["a non-string", 42],
   ])("discards %s rehydrated as the organization type", (_label, stored) => {
-    // Given — sessionStorage is untrusted, and this slot is a discriminant. The
-    // version is read from the store so a bump doesn't turn this into a
-    // vacuously-passing "the snapshot was discarded" test.
+    // Given — sessionStorage is untrusted and this slot is a discriminant. The
+    // version comes from the store so a bump cannot make this pass vacuously.
     sessionStorage.setItem(
       "org-setup-store",
       JSON.stringify({

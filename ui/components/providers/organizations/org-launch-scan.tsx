@@ -177,14 +177,12 @@ export function OrgLaunchScan({
     const failedCount = outcome.failures.length;
     const failureReasons = describeSchedulesBulkFailures(outcome.failures);
     // A body we cannot read is not a failure: the endpoint commits each schedule
-    // before answering, so blocking here would strand a schedule that already
-    // exists and push the user to save it again.
+    // before answering, so blocking here would ask the user to save one twice.
     const updatedProviderIds = outcome.isIndeterminate
       ? createdProviderIds
       : outcome.updatedProviderIds;
 
-    // Every provider failed. Keep the wizard open to retry, and name the reason —
-    // without it the user has nothing to act on.
+    // Every provider failed: keep the wizard open to retry, and name the reason.
     if (updatedProviderIds.length === 0) {
       setIsLaunching(false);
       toast({

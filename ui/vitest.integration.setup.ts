@@ -71,9 +71,8 @@ beforeAll(async () => {
 
 afterEach(() => {
   worker.resetHandlers();
-  // The toast store is module-level and keeps dismissed toasts for ~17 minutes,
-  // so one raised here would re-render on the next test's mount and its
-  // fixed-position host would intercept clicks aimed at the page.
+  // Module-level store: a toast raised here would re-render on the next test's
+  // mount and intercept clicks aimed at the page.
   resetToasts();
 });
 

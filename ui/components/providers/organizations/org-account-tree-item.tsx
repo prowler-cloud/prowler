@@ -38,13 +38,10 @@ interface OrgAccountTreeItemProps {
 }
 
 /**
- * Why a container row is inert, in this organization's own vocabulary — "No
- * projects available to select in this folder." for GCP, and the account/OU
- * wording for AWS (the ui-terminology spec forbids crossing them).
- *
- * The label is on the icon rather than only in the tooltip: it has to be
- * readable by a screen reader, and it is what makes the note assertable without
- * driving a hover.
+ * Why a container row is inert, in this organization's own vocabulary ("No
+ * projects available to select in this folder." for GCP, accounts/OUs for AWS).
+ * The note is also the icon's `aria-label` so a screen reader reaches it without
+ * a hover.
  */
 function InertContainerNote({
   orgType,
@@ -73,7 +70,7 @@ function InertContainerNote({
 /**
  * An identifier in the fixed-width id column. GCP project ids run to 30
  * characters and AWS OU ids longer still, so the text ellipsizes and the full
- * value moves to a tooltip — the repo's pattern for constrained identifiers.
+ * value moves to a tooltip.
  */
 function TruncatedId({
   value,
@@ -103,8 +100,8 @@ export function OrgAccountTreeItem({
   const { item, isLeaf } = params;
   const candidate = candidateLookup.get(item.id);
   const ItemIcon = item.icon;
-  // `min-w-0` alongside the fixed width so the id inside can ellipsize instead
-  // of forcing the column wider than 176px and overrunning the alias input.
+  // `min-w-0` alongside the fixed width, or a long id widens the column past
+  // 176px and overruns the alias input instead of ellipsizing.
   const idColumnClass = "w-44 min-w-0 shrink-0";
   const aliasInputClass = "h-9 w-full max-w-64 text-sm";
 
@@ -113,8 +110,7 @@ export function OrgAccountTreeItem({
   // input; other container kinds (e.g. GCP folders) render read-only.
   if (!candidate) {
     const nodeDisplayName = aliases[item.id] ?? item.name;
-    // A disabled container has nothing to apply, so its name would never be
-    // transmitted — read-only text, not a live input.
+    // A disabled container has nothing to apply, so its name would never be sent.
     const isEditableNode =
       mode === TREE_ITEM_MODE.SELECTION &&
       onAliasChange &&

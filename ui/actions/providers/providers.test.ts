@@ -167,8 +167,7 @@ describe("startProviderConnectionChecks", () => {
   });
 
   it("skips the single-provider padding and the per-provider revalidation", async () => {
-    // Given — 60 accounts meant 60 revalidations of the page under the wizard,
-    // and two minutes of spinner padding nobody was reading.
+    // Given
     handleApiResponseMock.mockResolvedValue({ data: { id: "task-1" } });
 
     // When

@@ -375,9 +375,9 @@ export function DataTableRowActions({
     if (ids.length === 0) return;
     setLoading(true);
 
-    // Dispatched and polled in batches: client-invoked server actions run one
-    // at a time through Next's queue, so testing provider by provider from here
-    // serialized the whole run however much concurrency it asked for.
+    // Dispatched and polled in batches: client-invoked server actions run one at a
+    // time through Next's queue, so a loop here serializes whatever concurrency it
+    // asks for.
     let succeeded = 0;
     let failed = 0;
     const pendingTaskIds: string[] = [];

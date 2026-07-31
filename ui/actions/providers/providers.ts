@@ -147,19 +147,14 @@ export const getProvider = async (formData: FormData) => {
   }
 };
 
-/** Server max for `page[size]`, which also caps how many ids one list can cover. */
+/** Server max for `page[size]`, which also bounds the id batch size. */
 const PROVIDERS_PAGE_MAX = 100;
 
 /**
- * Uids of the given providers, keyed by provider id.
- *
- * A provider's `uid` is the candidate it was created for (AWS account id / GCP
- * project id), so this is how an apply's created providers are matched back to
- * the selection. Read with `filter[id__in]` rather than one `GET
- * /providers/{id}` each: a 60-project organization would otherwise cost 60
- * requests. Ids are batched at the server's page maximum, so the cost is
- * ceil(n/100) requests, and a batch that fails contributes nothing rather than
- * failing the others.
+ * Uids of the given providers, keyed by provider id. A provider's `uid` is the
+ * candidate it was created for (AWS account id / GCP project id), so this is what
+ * matches an apply's created providers back to the selection. Batched with
+ * `filter[id__in]` rather than one `GET /providers/{id}` per id.
  */
 export const getProviderUidsByIds = async (
   providerIds: string[],
@@ -195,8 +190,7 @@ export const getProviderUidsByIds = async (
         }
       }
     } catch {
-      // A failed batch leaves its providers unmapped; the caller degrades to the
-      // providers it could resolve rather than losing the whole apply.
+      // A failed batch leaves its providers unmapped rather than failing the rest.
     }
   }
 
@@ -372,10 +366,8 @@ export const checkConnectionProvider = async (
 
   try {
     const response = await fetch(url.toString(), { method: "POST", headers });
-    // A batch opts out of both the padding and the revalidation: its pollers
-    // already report progress, the API creates the Task row before answering
-    // the 202 (so an immediate first poll cannot miss it), and revalidating per
-    // provider would re-render the providers page once per account.
+    // Batches opt out of both: their pollers already report progress, and
+    // revalidating here would re-render the providers page once per provider.
     if (settleDelayMs > 0) {
       await wait(settleDelayMs);
     }
@@ -386,24 +378,17 @@ export const checkConnectionProvider = async (
   }
 };
 
-/** Connection checks in flight at once inside one batch. */
+/** Connection checks in flight at once. */
 const CONNECTION_CHECK_CONCURRENCY_LIMIT = 10;
 
 /**
- * Dispatches a connection check for each provider and returns the task each one
- * is being tested by, keyed by provider id.
+ * Dispatches a connection check per provider, returning the task testing each
+ * one keyed by provider id. A failed dispatch is reported under `error` and
+ * never cancels the rest of the batch.
  *
- * The fan-out has to happen here rather than in the caller: every server action
- * a client invokes goes through Next's global action queue, which runs them
- * strictly one at a time, so a client-side loop is serialized no matter what
- * concurrency limit it declares — 60 accounts meant 60 sequential round trips
- * before the first row could turn green. Taking the whole batch in one action
- * lets the requests actually overlap, the same way `launchOrganizationScans`
- * does for the launch step.
- *
- * A provider whose dispatch failed carries the action result under `error` so
- * the caller can render it with the copy it already uses; one failure never
- * cancels the rest of the batch.
+ * The fan-out belongs here, not in the caller: client-invoked server actions run
+ * one at a time through Next's action queue, so a client-side loop is serialized
+ * whatever concurrency it declares.
  */
 export const startProviderConnectionChecks = async (
   providerIds: string[],
@@ -439,7 +424,7 @@ export const startProviderConnectionChecks = async (
   return outcomes;
 };
 
-/** Refreshes the providers page after a batch of checks has settled. */
+/** Called once after a batch of checks, which revalidate nothing themselves. */
 export const revalidateProviders = async () => {
   revalidatePath("/providers");
 };

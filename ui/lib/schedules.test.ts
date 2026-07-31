@@ -573,8 +573,8 @@ describe("buildProviderScheduleSummary", () => {
 
 describe("parseSchedulesBulkResult", () => {
   it("reads the lists the API actually returns, directly under `data`", () => {
-    // Given — the real body: the endpoint returns a plain dict that the JSON:API
-    // renderer wraps in `data`, so there is no `attributes` level.
+    // Given — the real body: a plain dict the JSON:API renderer wraps in `data`,
+    // with no `attributes` level.
     const result = {
       data: {
         updated: ["provider-1", "provider-2"],
@@ -600,7 +600,7 @@ describe("parseSchedulesBulkResult", () => {
       },
     };
 
-    // When / Then — tolerated so a server-side normalization cannot read as
+    // When / Then — tolerated, so a server-side normalization cannot read as
     // "nothing was updated".
     expect(parseSchedulesBulkResult(result).updatedProviderIds).toEqual([
       "provider-1",
@@ -610,8 +610,8 @@ describe("parseSchedulesBulkResult", () => {
 
   it("reports a body carrying neither list as indeterminate, not as failure", () => {
     // Given — an empty/204 body, which `handleApiResponse` turns into this.
-    // When / Then — the POST commits before it answers, so the caller must not
-    // read this as "nothing was saved".
+    // When / Then — the POST commits before answering, so this is not "nothing
+    // was saved".
     expect(parseSchedulesBulkResult({ success: true }).isIndeterminate).toBe(
       true,
     );

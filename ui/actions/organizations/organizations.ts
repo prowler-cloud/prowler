@@ -521,11 +521,9 @@ export const applyDiscovery = async (
   const url = new URL(
     `${apiBaseUrl}/organizations/${encodeURIComponent(organizationIdValidation.value)}/discoveries/${encodeURIComponent(discoveryIdValidation.value)}/apply`,
   );
-  // No `include` here: the apply view is not a relationship-serializing viewset,
-  // and it rejects the parameter outright ("This endpoint does not support the
-  // include parameter"), failing the whole apply. The created providers' uids —
-  // which is what maps each one back to its candidate — are read afterwards with
-  // one filtered `/providers` list instead (`getProviderUidsByIds`).
+  // No `include`: the apply view rejects the parameter outright and fails the
+  // whole request. The created providers' uids are read afterwards instead, with
+  // `getProviderUidsByIds`.
 
   const attributes =
     payload.orgType === ORGANIZATION_TYPE.AWS

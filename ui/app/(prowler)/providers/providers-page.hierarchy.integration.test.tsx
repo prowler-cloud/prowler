@@ -57,8 +57,8 @@ describe("Providers page — mixed AWS + GCP hierarchy display", () => {
 
     await harness.waitForOrganizationRow("My GCP Organization");
 
-    // GCP owns a setup form as of this phase, so "Update Credentials" re-enters
-    // the wizard on the GCP form. Renaming is a plain PATCH either way.
+    // GCP now owns a setup form, so "Update Credentials" re-enters the wizard on
+    // it. Renaming is a plain PATCH either way.
     const actions = await harness.actionLabelsFor("My GCP Organization");
     expect(actions).toContain("Edit Organization Name");
     expect(actions).toContain("Update Credentials");

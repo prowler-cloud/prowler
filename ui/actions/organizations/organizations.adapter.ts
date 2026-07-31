@@ -57,16 +57,15 @@ function resourceId(name: string): string {
  *
  * A folder's identity is its resource `name` (`folders/{id}`), which is exactly
  * what its children carry as `parent`, so nesting matches on that ref. Parents
- * pointing at the organization (`organizations/{id}`) are absent from the node
- * set, so tree rebuild treats those folders/projects as top-level. Folders with
- * no projects do occur — discovery lists every ACTIVE folder — and render inert.
+ * pointing at the organization are absent from the node set, so tree rebuild
+ * treats those folders/projects as top-level.
  */
 export function mapGcpDiscovery(result: GcpDiscoveryResult): GcpOrgHierarchy {
   return {
     orgType: ORGANIZATION_TYPE.GCP,
     organization: {
-      // The bare numeric id, matching what the user typed and what the
-      // organization resource stores as its `external_id`.
+      // Bare id: what the user typed and what the organization stores as
+      // `external_id`.
       uid: resourceId(result.organization.name),
       name: result.organization.display_name,
     },
@@ -78,8 +77,6 @@ export function mapGcpDiscovery(result: GcpDiscoveryResult): GcpOrgHierarchy {
     })),
     candidates: result.projects.map((project) => ({
       uid: project.project_id,
-      // `name` is the resource name; the server falls back the same way when it
-      // derives a provider alias.
       label: project.display_name || project.project_id,
       parentId: project.parent,
       registration: project.registration,
@@ -139,11 +136,9 @@ export function buildOrgTreeData(hierarchy: OrgHierarchy): TreeDataItem[] {
     }
   };
 
-  // Driven by the identity map, not the source arrays: one entry per id means no
-  // item can be linked — and rendered — twice, so wire data with a duplicate or
-  // missing id collapses into a single row instead of repeating N times. Map
-  // iteration is insertion order, and nodes were inserted first, so containers
-  // still render above their sibling leaves.
+  // Iterating the identity map, not the source arrays, so a duplicate wire id
+  // collapses into one row instead of rendering N times. Insertion order keeps
+  // containers above their sibling leaves.
   for (const id of Array.from(itemMap.keys())) {
     link(id, parentById.get(id) ?? "");
   }
@@ -157,12 +152,9 @@ export function buildOrgTreeData(hierarchy: OrgHierarchy): TreeDataItem[] {
 
 /**
  * Marks containers with nothing selectable underneath as disabled, bottom-up.
- * Discovery lists every folder — including project-less ones — and a folder can
- * also hold only blocked projects; the selection flow drops non-selectable ids,
- * so such a row would answer a click with silence. `disabled` turns that into a
- * visibly inert row (and the item renderer explains why).
- *
- * Returns whether the subtree holds a selectable candidate.
+ * Discovery lists every folder, including project-less ones, and clicking such a
+ * row would otherwise do nothing at all. Returns whether the subtree holds a
+ * selectable candidate.
  */
 function markInertContainers(
   item: TreeDataItem,

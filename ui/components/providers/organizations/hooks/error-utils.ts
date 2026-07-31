@@ -1,11 +1,8 @@
 /**
- * One error object from a JSON:API error body.
- *
- * `detail` is not guaranteed: the organization endpoints' validation errors put
- * the message under the offending field's own key and let the pointer stop at
- * the containing attribute — `{"service_account_key": "…", "source": {"pointer":
- * "/data/attributes/secret"}}`. Reading only `detail` there paints an empty
- * banner, and falling through to the request-level message shows the raw body.
+ * One error object from a JSON:API error body. `detail` is not guaranteed: the
+ * organization endpoints put the message under the offending field's own key and
+ * let the pointer stop at the containing attribute —
+ * `{"service_account_key": "…", "source": {"pointer": "/data/attributes/secret"}}`.
  */
 export interface ApiErrorObject {
   detail?: string;
@@ -49,8 +46,8 @@ function findFieldMessage(
 
 /**
  * Readable text for a single server error: `detail` when present, otherwise the
- * field-keyed message prefixed with the field it belongs to — in that form the
- * key is the only thing saying which input the message is about.
+ * field-keyed message prefixed with its field — in that shape the key is the only
+ * thing naming the input the message is about.
  */
 export function describeApiError(error: ApiErrorObject): string | null {
   if (typeof error.detail === "string" && error.detail.trim()) {
@@ -67,7 +64,7 @@ export function describeApiError(error: ApiErrorObject): string | null {
 
 /**
  * The field names an error mentions — pointer segments plus its own keys — so a
- * form field can be matched whichever of the two shapes the error arrived in.
+ * form field matches whichever of the two shapes the error arrived in.
  */
 export function apiErrorFieldNames(error: ApiErrorObject): string {
   const pointer = error.source?.pointer ?? "";

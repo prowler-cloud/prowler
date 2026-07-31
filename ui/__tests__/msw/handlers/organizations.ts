@@ -76,11 +76,10 @@ const organizationResource = (
 /**
  * Canonical `organization-nodes` resource (carries `kind`).
  *
- * The parent is a relationship, not an attribute: the serializer has no
- * `parent_external_id`, and DJA always emits the `parent` key — `data: null` for
- * a top-level node, since neither the AWS root nor a GCP organization is itself
- * a node. The fixtures keep expressing structure as `parentExternalId` because
- * that reads better; it is resolved to a node ref here.
+ * The parent is a relationship, not an attribute, and DJA always emits the key —
+ * `data: null` for a top-level node, since neither the AWS root nor a GCP
+ * organization is itself a node. Fixtures still express structure as
+ * `parentExternalId`, resolved to a node ref here.
  */
 const organizationNodeResource = (node: FixtureNode, all: FixtureNode[]) => {
   const parent = all.find(
@@ -215,9 +214,8 @@ const uidForProviderId = (
 
 /**
  * The provider behind an id, seeded or apply-created. A created provider exists
- * only as an id plus its candidate mapping, so the rest is filled in the way the
- * single-provider route already does (`aws` is a placeholder; only `id` and `uid`
- * are read by the flow that looks these up).
+ * only as an id plus its candidate mapping, so the rest is synthesized as
+ * `/providers/:id` does; only `id` and `uid` are ever read back.
  */
 const providerForId = (fx: OrgFixture, id: string): FixtureProvider => {
   const seeded = fx.providers.find((provider) => provider.id === id);
@@ -260,9 +258,8 @@ const applyResultResponse = (fx: OrgFixture) => ({
       }),
     },
   },
-  // No `included`: the apply view serves provider *ids* only and rejects an
-  // `include` parameter outright, so the created providers' uids have to be read
-  // from `/providers` afterwards.
+  // No `included`: the apply view serves provider ids only and rejects `include`,
+  // so the created providers' uids are read from `/providers` afterwards.
 });
 
 const taskResource = (id: string, state: string, result: unknown) => ({
@@ -527,9 +524,8 @@ export const handlersForOrganizations = (
     // --- providers-page loader (providers list, groups, schedules) --------
     http.get(`${API}/providers`, ({ request }) => {
       // `filter[id__in]` is how the apply flow resolves the uids of the providers
-      // it just created — one request for all of them, since the apply response
-      // cannot include them. Those providers are not seeded in `fx.providers`, so
-      // they are synthesized here exactly as `/providers/:id` does.
+      // it just created. Those are not seeded in `fx.providers`, so they are
+      // synthesized here as `/providers/:id` does.
       const idFilter = new URL(request.url).searchParams.get("filter[id__in]");
       const data = idFilter
         ? idFilter
@@ -644,17 +640,15 @@ export const handlersForOrganizations = (
       const requestedIds = body?.data?.attributes?.provider_ids ?? [];
       const { failed, shape } = fx.scheduleBulk;
       const failedIds = new Set(failed.map((failure) => failure.id));
-      // `updated` defaults to the requested ids minus the failures, mirroring the
-      // API: each provider commits in its own transaction, so the list already
-      // excludes failures.
+      // `updated` defaults to the requested ids minus the failures: each provider
+      // commits in its own transaction, so the API's list already excludes them.
       const updated =
         fx.scheduleBulk.updated ??
         requestedIds.filter((id) => !failedIds.has(id));
 
-      // The real endpoint returns a plain dict that the JSON:API renderer wraps
-      // in `data` — no `attributes` level. The other shapes exist so the client
-      // can be proven tolerant of a serializer-rendered body and of one carrying
-      // no lists at all.
+      // The real endpoint returns a plain dict the JSON:API renderer wraps in
+      // `data`, with no `attributes` level; the other shapes exercise the client's
+      // tolerance of a serializer-rendered body and of one carrying no lists.
       if (shape === "attributes") {
         return HttpResponse.json({
           data: { type: "schedules-bulk", attributes: { updated, failed } },

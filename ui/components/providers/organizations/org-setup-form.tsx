@@ -188,9 +188,8 @@ export function OrgSetupForm({
     },
   });
 
-  // `isSubmitting` only covers a submit react-hook-form started itself, but the
-  // chain is also re-entered by confirming a secret replacement, keeping waiting
-  // and retrying — all of which must still show progress and hold the footer.
+  // `isSubmitting` only covers a submit react-hook-form started itself, not the
+  // chain re-entered by confirming a replacement, keeping waiting or retrying.
   const isBusy = isSubmitting || isSubmissionPending;
 
   useEffect(() => {

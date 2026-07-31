@@ -42,8 +42,7 @@ describe("getTasksByIds", () => {
     // When
     const snapshots = await getTasksByIds(["task-a", "task-b"]);
 
-    // Then — `TaskFilter` exposes no id filter, so these stay one request each,
-    // but they overlap here instead of queueing as separate client actions.
+    // Then — one request per task (`TaskFilter` has no id filter), overlapping.
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(getAuthHeadersMock).toHaveBeenCalledTimes(1);
     expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([

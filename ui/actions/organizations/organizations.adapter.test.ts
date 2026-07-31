@@ -22,10 +22,9 @@ import {
   mapGcpDiscovery,
 } from "./organizations.adapter";
 
-// Shaped after the real discovery payload: identity is the canonical resource
-// `name` (there is no `id`), a child's `parent` is exactly its parent's `name`,
-// and `display_name` is the only human label — a project's `name` is
-// `projects/{number}`.
+// Shaped after the real payload: identity is the resource `name` (there is no
+// `id`), a child's `parent` is its parent's `name`, and `display_name` is the
+// only human label.
 const gcpDiscoveryFixture: GcpDiscoveryResult = {
   organization: {
     name: "organizations/456123789012",
@@ -198,16 +197,14 @@ describe("mapGcpDiscovery", () => {
 
     // Then
     expect(gcpHierarchy.orgType).toBe(ORGANIZATION_TYPE.GCP);
-    // The uid is the bare numeric id — what the user typed and what the
-    // organization resource stores — not the `organizations/{id}` resource name.
+    // The uid is the bare numeric id, not the `organizations/{id}` resource name.
     expect(gcpHierarchy.organization).toEqual({
       uid: "456123789012",
       name: "example.com",
     });
 
-    // Folders become nodes keyed by their canonical `folders/{id}` ref, keeping
-    // the parent name-ref so org-level folders read as top-level and nested
-    // folders match their parent folder ref.
+    // Folders become nodes keyed by their `folders/{id}` ref, keeping the parent
+    // name-ref that nesting matches on.
     expect(gcpHierarchy.nodes).toEqual([
       {
         id: "folders/1000000001",
@@ -228,8 +225,8 @@ describe("mapGcpDiscovery", () => {
       "prod-analytics",
       "legacy-sandbox",
     ]);
-    // The label is the display name; a project's `name` is `projects/{number}`
-    // and must never surface as one (it would also prefill the alias input).
+    // The label is the display name: a project's `name` is `projects/{number}`,
+    // which must never surface as one (it would also prefill the alias input).
     expect(gcpHierarchy.candidates[0]).toMatchObject({
       uid: "prod-analytics",
       label: "Prod Analytics",
@@ -249,9 +246,8 @@ describe("mapGcpDiscovery", () => {
     // When
     const treeData = buildOrgTreeData(gcpHierarchy);
 
-    // Then — exact, not `arrayContaining`: a subset matcher passes on a
-    // flattened tree with the nested rows promoted alongside, which is exactly
-    // the shape a parent-ref mismatch produces.
+    // Then — exact, not `arrayContaining`: a subset matcher also passes on the
+    // flattened tree a parent-ref mismatch produces.
     expect(treeData.map((node) => node.id)).toEqual([
       "folders/1000000001",
       "legacy-sandbox",
@@ -327,8 +323,8 @@ describe("buildOrgTreeData", () => {
     expect(blockedCandidate?.disabled).toBe(true);
   });
 
-  // A container the selection flow can do nothing with: it filters non-selectable
-  // ids out, so a click on such a row would be a silent no-op.
+  // The selection flow filters non-selectable ids out, so a click on such a row
+  // would be a silent no-op.
   describe("containers with nothing selectable", () => {
     const gcpTreeWith = (
       folders: GcpDiscoveryResult["folders"],

@@ -82,13 +82,10 @@ function sleepWithAbort(
 }
 
 /**
- * Candidate id → the provider created for it.
- *
- * The apply response carries provider *ids* only — it cannot be asked to include
- * the providers themselves — so the uids that identify each candidate are read
- * separately. Providers whose uid was not resolved, or that belong to a candidate
- * outside this selection, are left out rather than guessed at by position: the
- * relationship order is not the selection order.
+ * Candidate id → the provider created for it. The apply response carries provider
+ * ids only, so the uids identifying each candidate are read separately. A provider
+ * with no resolved uid is left out rather than matched by position, which the
+ * relationship order does not guarantee.
  */
 export async function buildCandidateToProviderMap({
   selectedCandidateIds,
@@ -120,7 +117,7 @@ const IN_PROGRESS_TASK_STATES = new Set([
 
 /**
  * The connection outcome a task payload carries, or `null` while it is still
- * running — an unreadable payload counts as terminal rather than polled forever.
+ * running. An unreadable payload counts as terminal rather than polled forever.
  */
 function readConnectionOutcome(
   taskResponse: unknown,
@@ -168,14 +165,13 @@ function readConnectionOutcome(
 }
 
 /**
- * Polls a whole batch of connection tasks, reporting each one through
- * `onSettled` the round it settles.
+ * Polls a whole batch of connection tasks, reporting each one through `onSettled`
+ * the round it settles.
  *
  * Whatever is still running is read in a single call per round: client-invoked
- * server actions run one at a time through Next's global action queue, so
- * polling task by task would cost one round trip per task per round and stall
- * every other action behind it. A task that never settles times out on its own
- * without holding back the ones that did.
+ * server actions run one at a time through Next's action queue, so polling task
+ * by task would cost a round trip per task per round and stall every other action
+ * behind it.
  */
 export async function pollConnectionTasks(
   taskIds: string[],
@@ -221,8 +217,8 @@ export async function pollConnectionTasks(
     }
 
     for (const taskId of Array.from(pending)) {
-      // A task missing from the batch read stays pending: it gets another round
-      // rather than being reported as a failure the API never stated.
+      // A task missing from the batch read gets another round rather than being
+      // reported as a failure the API never stated.
       if (!(taskId in snapshots)) {
         continue;
       }
@@ -247,10 +243,9 @@ export async function pollConnectionTasks(
 }
 
 /**
- * Polls a generic async task until it settles, reporting success only when the
- * task completes. Unlike {@link pollConnectionTasks} it does not interpret a
- * connection result — it is used for organization/node deletion, which the API
- * returns as a `202` + task. Injectable for tests (getTaskById/sleep/signal).
+ * Polls a generic async task until it settles. Unlike {@link pollConnectionTasks}
+ * it does not interpret a connection result; it is used for organization/node
+ * deletion, which the API answers with a `202` + task.
  */
 export async function pollTaskCompletion(
   taskId: string,
@@ -306,7 +301,7 @@ export async function pollTaskCompletion(
       };
     }
 
-    // A revoked task is a real terminal state, not something unreadable.
+    // A cancelled task is a real terminal state, not an unreadable one.
     if (state === "cancelled") {
       return { success: false, error: "The deletion was cancelled." };
     }

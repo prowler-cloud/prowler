@@ -69,7 +69,7 @@ export function TreeNode({
   };
 
   // A disabled node still expands on click: it is the only way to look inside a
-  // container that offers nothing to select and see why.
+  // container that offers nothing to select.
   const handleContentClick =
     showCheckboxes && !item.disabled ? handleSelect : handleToggleExpand;
 
@@ -102,17 +102,14 @@ export function TreeNode({
           "flex items-center gap-2 rounded-md px-2 py-1.5",
           "cursor-pointer hover:bg-white/5",
           "focus-visible:ring-border-input-primary-press focus-visible:ring-2 focus-visible:outline-none",
-          // No `cursor-not-allowed`: a disabled node still expands, so the row
-          // is not inert to the pointer the way a disabled leaf is.
+          // No `cursor-not-allowed`: unlike a disabled leaf, the row still expands.
           item.disabled && "opacity-50",
           item.className,
         )}
         style={{ paddingLeft: getTreeNodePadding(level) }}
         role="treeitem"
-        // Focusable even when disabled: expanding stays available, and
-        // `aria-disabled` (not `disabled`) is what states the row can't be
-        // selected. Dropping it from the tab order would leave a keyboard user
-        // unable to look inside.
+        // Focusable even when disabled, or a keyboard user could not expand it;
+        // `aria-disabled` below is what states the row cannot be selected.
         tabIndex={0}
         aria-expanded={isExpanded}
         aria-selected={isSelected}

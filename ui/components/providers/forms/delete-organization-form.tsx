@@ -78,12 +78,10 @@ export function DeleteOrganizationForm({
       return;
     }
 
-    // The API answers deletion with `202` + a task. That task completes when the
-    // per-provider deletions have been *dispatched*, not when they finish, and a
-    // rollback runs in a separate errback task that has no id the UI can poll —
-    // so a completed task means "accepted and under way", never "done". Both
-    // outcomes refetch: a rollback restores the soft-deleted subtree, and the
-    // rows have to reappear.
+    // The task completes once the per-provider deletions are *dispatched*, and any
+    // rollback runs in an errback task with no id to poll — so a completed task
+    // means "accepted", never "done". Both outcomes refetch, because a rollback
+    // restores the subtree and its rows have to reappear.
     const taskId = extractTaskId(result);
     const taskResult = taskId
       ? await pollTaskCompletion(taskId)

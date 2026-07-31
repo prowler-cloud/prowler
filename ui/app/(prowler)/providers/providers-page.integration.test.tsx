@@ -100,8 +100,7 @@ describe("AWS Organizations onboarding (baseline)", () => {
     await harness.testConnections();
     await harness.waitForCandidateConnectionState(/111111111111/, "success");
 
-    // Then — the finished account reports while the slow one is still testing,
-    // instead of the whole tree spinning until the last account answers.
+    // Then — the finished account reports while the slow one is still testing.
     expect(harness.candidateConnectionState(/222222222222/)).toBe("testing");
 
     await harness.waitForAccountsConnected();
@@ -204,8 +203,7 @@ describe("AWS Organizations providers page (baseline)", () => {
     await harness.confirmDelete();
 
     await harness.waitForOrganizationDelete(AWS_HIERARCHY_ORG_ID);
-    // The API answers deletion with 202 + a task; success is reported only once
-    // the UI has polled it to completion (AWS inherits this from Phase 2).
+    // Deletion is a 202 + task: nothing is reported until the UI has polled it.
     await harness.waitForTaskPoll();
   }, 30000);
 
