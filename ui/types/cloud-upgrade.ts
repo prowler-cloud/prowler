@@ -5,6 +5,7 @@ export const CLOUD_UPGRADE_FEATURE = {
   CLI_IMPORT: "cli_import",
   CROSS_PROVIDER_COMPLIANCE: "cross_provider_compliance",
   FINDING_TRIAGE: "finding_triage",
+  GCP_ORGANIZATIONS: "gcp_organizations",
   JIRA_DISPATCH: "jira_dispatch",
   LIGHTHOUSE_AI: "lighthouse_ai",
   GENERAL: "general",
