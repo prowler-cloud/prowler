@@ -4019,6 +4019,12 @@ AWS_IMAGEBUILDER_PRIVESC_PASSROLE_CREATE_IMAGE = AttackPathsQueryDefinition(
             OR act4.value = '*'
         WITH DISTINCT aws, principal, stmt_passrole, path_principal
 
+        // Find imagebuilder:createimagerecipe permission
+        MATCH (principal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(:AWSPolicyStatement {{effect: 'Allow'}})-[:HAS_ACTION]->(act5:AWSPolicyStatementActionItem)
+        WHERE toLower(act5.value) IN ['imagebuilder:*', 'imagebuilder:createimagerecipe']
+            OR act5.value = '*'
+        WITH DISTINCT aws, principal, stmt_passrole, path_principal
+
         // Pre-aggregate the PassRole statement resources (see docs: Avoiding Cartesian Products)
         MATCH (stmt_passrole)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)
         WITH aws, principal, path_principal, collect(DISTINCT res.value) AS res_values
@@ -4133,6 +4139,12 @@ AWS_OMICS_PRIVESC_PASSROLE_START_RUN = AttackPathsQueryDefinition(
         MATCH (principal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(:AWSPolicyStatement {{effect: 'Allow'}})-[:HAS_ACTION]->(act3:AWSPolicyStatementActionItem)
         WHERE toLower(act3.value) IN ['omics:*', 'omics:startrun']
             OR act3.value = '*'
+        WITH DISTINCT aws, principal, stmt_passrole, path_principal
+
+        // Find s3:getobject permission (read the workflow definition object)
+        MATCH (principal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(:AWSPolicyStatement {{effect: 'Allow'}})-[:HAS_ACTION]->(act4:AWSPolicyStatementActionItem)
+        WHERE toLower(act4.value) IN ['s3:*', 's3:getobject']
+            OR act4.value = '*'
         WITH DISTINCT aws, principal, stmt_passrole, path_principal
 
         // Pre-aggregate the PassRole statement resources (see docs: Avoiding Cartesian Products)
@@ -4388,6 +4400,12 @@ AWS_CODEDEPLOY_PRIVESC_CREATE_DEPLOYMENT = AttackPathsQueryDefinition(
         MATCH (principal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(:AWSPolicyStatement {{effect: 'Allow'}})-[:HAS_ACTION]->(act2:AWSPolicyStatementActionItem)
         WHERE toLower(act2.value) IN ['codedeploy:*', 'codedeploy:registerapplicationrevision']
             OR act2.value = '*'
+        WITH DISTINCT aws, principal, path_principal
+
+        // Find codedeploy:getdeploymentconfig permission
+        MATCH (principal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(:AWSPolicyStatement {{effect: 'Allow'}})-[:HAS_ACTION]->(act3:AWSPolicyStatementActionItem)
+        WHERE toLower(act3.value) IN ['codedeploy:*', 'codedeploy:getdeploymentconfig']
+            OR act3.value = '*'
         WITH DISTINCT aws, principal, path_principal
 
         // Target role attached to the existing resource, trusting the codedeploy.amazonaws.com service
