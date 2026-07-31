@@ -123,6 +123,9 @@ RUN apt-get purge -y --auto-remove \
     libtool \
     libxslt1-dev \
     python3-dev \
+    wget \
+    gnupg \
+    apt-transport-https \
     && rm -rf /var/lib/apt/lists/*
 
 USER prowler
