@@ -71,17 +71,28 @@ rss: true
 
   Read more in the [Lighthouse AI documentation](/getting-started/products/prowler-cloud-lighthouse).
 
-  ### 🔌 Prowler MCP — New Tool Families
+  ### 🔌 Prowler MCP — Integrations, Users, and Roles
 
-  Prowler MCP now manages integrations, users, and roles:
+  Prowler MCP gained three tool families, available on both the Cloud and the self-hosted Local MCP Server:
 
-  - **Integrations** — list, create, update, and delete Amazon S3, AWS Security Hub, and Jira integrations, and send findings to Jira.
-  - **Users** — read-only tools to list tenant users and identify the authenticated user.
-  - **Roles** — browse RBAC roles and set the role a user holds.
+  - **[Integrations](/getting-started/basic-usage/prowler-mcp-tools#integrations-management)** — manage where Prowler sends its results, with the full lifecycle for Amazon S3, AWS Security Hub, and Jira: create them, update credentials, configuration and attached providers, re-check connections, and delete them — plus turning findings into Jira work items directly from a conversation.
+  - **[Users](/getting-started/basic-usage/prowler-mcp-tools#user-management)** — read-only tools to list the tenant users with their emails and identify the authenticated user.
+  - **[Roles](/getting-started/basic-usage/prowler-mcp-tools#role-management)** — browse the RBAC roles defined in the tenant, inspect the capabilities each one grants, and set the role a user holds.
 
-  With a Prowler Cloud subscription, `prowler_cloud_*` tools also cover scan configurations, scan schedules, finding triage, and alerts (rules, recipients, and events).
+  ### ☁️ Prowler MCP — Cloud-Only Tools
 
-  Read more in the [Prowler MCP tools reference](/getting-started/basic-usage/prowler-mcp-tools).
+  <Note>
+  These tools are exposed only by the Cloud MCP Server at `https://mcp.prowler.com/mcp`, because they manage features that exist only in **Prowler Cloud**. A self-hosted Local MCP Server does not include them.
+  </Note>
+
+  A new `prowler_cloud_*` namespace adds 32 tools so your AI assistant can run Prowler Cloud workflows end to end instead of only reading from them:
+
+  - **[Alerts](/getting-started/basic-usage/prowler-mcp-tools#alerts)** — create and manage alert rules and email recipients, and browse the fired-alert history. Rule conditions can be dry-run before saving, so you can see what a rule would match without persisting anything.
+  - **[Findings Triage](/getting-started/basic-usage/prowler-mcp-tools#findings-triage)** — set a finding's triage status and attach notes documenting the decision. Unlike muting, the finding stays visible.
+  - **[Scan Scheduling](/getting-started/basic-usage/prowler-mcp-tools#scan-scheduling)** — configure daily, interval, weekly, or monthly recurring scans, one provider at a time or applied across many at once.
+  - **[Scan Configurations](/getting-started/basic-usage/prowler-mcp-tools#scan-configurations)** — build reusable check and compliance selections and attach them to providers.
+
+  Read more in the [Prowler MCP tools reference](/getting-started/basic-usage/prowler-mcp-tools#prowler-cloud-tools).
 
   ### 📤 OCSF Output — MITRE ATT&CK Enrichment
 
