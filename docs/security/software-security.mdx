@@ -181,7 +181,7 @@ Container images get scanned twice: once in CI before they push to a registry, a
 
 ### Pre-Publish (CI)
 
-- **Trivy** scans for OS-package and application-dependency vulnerabilities. Runs in [`sdk-container-checks.yml`](https://github.com/prowler-cloud/prowler/blob/master/.github/workflows/sdk-container-checks.yml), [`api-container-checks.yml`](https://github.com/prowler-cloud/prowler/blob/master/.github/workflows/api-container-checks.yml), [`ui-container-checks.yml`](https://github.com/prowler-cloud/prowler/blob/master/.github/workflows/ui-container-checks.yml), and [`mcp-container-checks.yml`](https://github.com/prowler-cloud/prowler/blob/master/.github/workflows/mcp-container-checks.yml). Trivy uploads SARIF to the GitHub Security tab and posts a summary on the PR. Builds can fail on critical findings when configured to.
+- **Trivy** scans for OS-package and application-dependency vulnerabilities. Runs in [`sdk-container-checks.yml`](https://github.com/prowler-cloud/prowler/blob/master/.github/workflows/sdk-container-checks.yml), [`api-container-checks.yml`](https://github.com/prowler-cloud/prowler/blob/master/.github/workflows/api-container-checks.yml), [`ui-container-checks.yml`](https://github.com/prowler-cloud/prowler/blob/master/.github/workflows/ui-container-checks.yml), and [`mcp-container-checks.yml`](https://github.com/prowler-cloud/prowler/blob/master/.github/workflows/mcp-container-checks.yml). Trivy uploads SARIF to the GitHub Security tab and posts a summary on the PR. Builds fail on critical findings. Accepted findings live in [`.trivyignore`](https://github.com/prowler-cloud/prowler/blob/master/.trivyignore), scoped per package and each carrying a reason and an expiry date, the same policy `osv-scanner.toml` follows.
 - **Hadolint** validates Dockerfile syntax and structure against secure-build best practices. Runs in pre-commit and in the same `*-container-checks.yml` workflows linked above.
 
 ### Post-Publish (Registries)
@@ -189,6 +189,23 @@ Container images get scanned twice: once in CI before they push to a registry, a
 - **Amazon ECR:** ECR continuously scans published images for vulnerabilities. New advisories disclosed after publish surface on the image without requiring a rebuild.
 - **Docker Hub:** Docker Hub continuously scans the same images mirrored from ECR.
 - The security team reviews findings from both registries for triage and remediation.
+
+### Known Findings
+
+Some findings cannot be resolved by Prowler and remain in the published images. To see the current set for any image, scan it directly:
+
+```bash
+trivy image prowlercloud/prowler:latest
+```
+
+What remains falls into four groups:
+
+- **Distribution packages with no upstream fix.** Debian has not released patched versions, so no base-image refresh or `apt upgrade` changes them. They clear when Debian ships a fix and the images rebuild.
+- **Packages that cannot be removed.** `perl-base` is Debian `Essential: yes`; removing it requires `dpkg --force-remove-essential`, which breaks `apt` for anything built downstream. Trivy attributes `src:perl` CVEs across every package built from that source, so `perl-base` is flagged for modules only `perl-modules-*` ships, and the images do not install those. Nothing in them invokes perl.
+- **Components declared in vendored SBOMs.** The `MicrosoftTeams` PowerShell module, used for Microsoft 365 scanning, ships an SPDX manifest listing the components Microsoft built it with. Trivy reports those as installed packages. They are not Prowler dependencies, and only Microsoft can change them.
+- **Scanner artifacts.** A few findings refer to packages that are not present in the image, or report a version older than the one installed, because they are read from that same vendored SBOM metadata rather than from the filesystem. These are reporting artifacts rather than accepted risk, and are worth verifying inside the image before acting on them.
+
+Alternative base distributions have been evaluated. None currently satisfies both the vulnerability profile and the runtime requirements of every supported provider.
 
 ## Secrets Detection
 

@@ -548,8 +548,7 @@
             "group": "Security & Compliance",
             "pages": [
               "security/index",
-              "security/software-security",
-              "security/container-images"
+              "security/software-security"
             ]
           },
           {
