@@ -105,6 +105,9 @@ RUN apt-get purge -y --auto-remove \
     pkg-config \
     libzstd-dev \
     zlib1g-dev \
+    wget \
+    gnupg \
+    apt-transport-https \
     && rm -rf /var/lib/apt/lists/*
 
 USER prowler
