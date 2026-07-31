@@ -5,67 +5,15 @@ rss: true
 ---
 
 <Update label="v5.37.0" description="July 31, 2026">
-  ### 🏢 New Provider — Huawei Cloud
-
-  Prowler now scans [**Huawei Cloud**](https://www.huaweicloud.com/), with **25 checks** across ten services: CTS, ECS, ELB, EVS, IAM, KMS, OBS, RDS, VPC, and WAF, plus the CIS Huawei Cloud Foundations Benchmark 1.0 compliance framework. Thanks to @tomitobio for their 1st provider in Prowler!
-
-  To scan a Huawei Cloud account, export the IAM user's access key credentials and run Prowler CLI:
-
-  ```bash
-  export HUAWEICLOUD_ACCESS_KEY_ID="your-access-key-id"
-  export HUAWEICLOUD_SECRET_ACCESS_KEY="your-secret-access-key"
-
-  prowler huaweicloud
-  ```
-
-  Read more in the [Huawei Cloud documentation](/user-guide/providers/huaweicloud/getting-started-huaweicloud). Explore all Huawei Cloud checks at [Prowler Hub](https://hub.prowler.com/check?provider=huaweicloud).
-
-  ### 🧭 Cross-Provider Compliance — Across Accounts
-
-  <Note>
-  This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
-  </Note>
-
-  One framework, every account, a single answer. Building on the cross-provider-type roll-up from v5.34.0, the Compliance section now also aggregates a **single-provider framework** — CIS AWS, CIS GCP, ENS for Azure — across the latest completed scan of every account of that provider type. Each framework card rolls up into a consolidated posture with a per-account breakdown, a findings drill-down, and a combined executive PDF report. Requirement status follows the same strict precedence (FAIL over PASS over MANUAL), so one failing account flags the requirement for the whole estate.
-
-  ![Across providers compliance section](/images/compliance/prowler-app-across-providers-expanded.png)
-
-  The Compliance tabs were also renamed to say what they aggregate: "Per Scan" is now **Single Scan**, "Cross-Provider" is now **Multiple Scans**, and `/compliance` lands on Multiple Scans by default.
-
-  ![Cross-provider compliance detail across accounts](/images/compliance/prowler-app-across-providers-detail.png)
-
-  Read more in the [Cross-Provider Compliance documentation](/user-guide/compliance/tutorials/cross-provider-compliance).
-
-  ### 🕸️ Attack Paths — More Privilege Escalation Queries
-
-  Attack Paths adds four AWS privilege-escalation detection queries from [pathfinding.cloud](https://pathfinding.cloud), contributed by @paramanandmallik — thanks!
-
-  - **STS-002** — cross-account role trust
-  - **STS-003** — wildcard role trust
-  - **IAM-022** — user permissions-boundary removal
-  - **SSO-001** — IAM Identity Center permission-set escalation
-
-  The query info panel now links every query to its page on [Prowler Hub](https://hub.prowler.com), and the IAM privilege-escalation queries were reworked to run efficiently on accounts with many IAM roles, users, or groups, fixing runtime errors and timeouts on large graphs.
-
-  Read more in the [Attack Paths documentation](/user-guide/tutorials/prowler-app-attack-paths).
-
-  ### ☁️ GCP Organization Onboarding
-
-  <Note>
-  This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
-  </Note>
-
-  Onboarding an entire Google Cloud organization is now a single guided flow. Provide an organization-level credential and Prowler discovers the full hierarchy — every folder and project — through the organization-node API. Pick the folders and projects to onboard from a selection tree, set custom aliases, test the connection, and launch: each selected project is registered as a provider, with no need to add them one by one. Post-onboarding management is covered too, including credential replacement and organization-wide deletion.
-
-  Read more in the [GCP Organizations documentation](/user-guide/tutorials/prowler-cloud-gcp-organizations).
-
   ### 💬 Lighthouse AI — Context-Aware Chat and a Bigger Toolbox
 
   <Note>
   This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
   </Note>
 
-  Lighthouse AI now knows where you are in the app. Messages carry page-aware context — the page you are on, the finding or resource open in the side panel, and its metadata — so "explain this" just works, and each page offers concise contextual suggestions to start from.
+  Lighthouse AI is now aware of your working context when in Prowler Cloud. Messages carry page-aware context — the page you are on, the finding or resource open in the side panel, and its metadata — so "explain this" just works, and each page offers concise contextual suggestions to start from.
+
+  ![Lighthouse AI answering "explain this finding" from the side panel, with the page context chip highlighted in the composer](/images/prowler-app/lighthouse/prowler-cloud/side-panel-context-aware.png)
 
   Lighthouse also gained access to every tool family the Prowler MCP server advertises: scan configurations, scan scheduling, finding triage, alert rules and recipients, integrations, users, and roles. Every action remains gated by RBAC: Lighthouse can only do what the user asking could do themselves.
 
@@ -82,10 +30,10 @@ rss: true
   ### ☁️ Prowler MCP — Cloud-Only Tools
 
   <Note>
-  These tools are exposed only by the Cloud MCP Server at `https://mcp.prowler.com/mcp`, because they manage features that exist only in **Prowler Cloud**. A self-hosted Local MCP Server does not include them.
+  This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
   </Note>
 
-  A new `prowler_cloud_*` namespace adds 32 tools so your AI assistant can run Prowler Cloud workflows end to end instead of only reading from them:
+  These tools are exposed only by the Cloud MCP Server at `https://mcp.prowler.com/mcp`; the self-hosted Local MCP Server does not include them. A new `prowler_cloud_*` namespace adds 32 tools so your AI assistant can run Prowler Cloud workflows end to end instead of only reading from them:
 
   - **[Alerts](/getting-started/basic-usage/prowler-mcp-tools#alerts)** — create and manage alert rules and email recipients, and browse the fired-alert history. Rule conditions can be dry-run before saving, so you can see what a rule would match without persisting anything.
   - **[Findings Triage](/getting-started/basic-usage/prowler-mcp-tools#findings-triage)** — set a finding's triage status and attach notes documenting the decision. Unlike muting, the finding stays visible.
@@ -93,6 +41,60 @@ rss: true
   - **[Scan Configurations](/getting-started/basic-usage/prowler-mcp-tools#scan-configurations)** — build reusable check and compliance selections and attach them to providers.
 
   Read more in the [Prowler MCP tools reference](/getting-started/basic-usage/prowler-mcp-tools#prowler-cloud-tools).
+
+  ### 🧭 Compliance — Grouped by provider of the same type
+
+  <Note>
+  This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
+  </Note>
+
+  One framework, every provider, a single answer. Building on the cross-provider-type roll-up from v5.34.0, the Compliance section now groups compliance for all providers of the same type: a **single-provider framework** — CIS AWS, CIS GCP, ENS for Azure — is aggregated across the latest completed scan of every provider of that type. Each framework card rolls up into a consolidated posture with a per-provider breakdown, a findings drill-down, and a combined executive PDF report. Requirement status follows the same strict precedence (FAIL over PASS over MANUAL), so one failing provider flags the requirement for the whole estate.
+
+  ![Across providers compliance section](/images/compliance/prowler-app-across-providers-expanded.png)
+
+  The Compliance tabs were also renamed to say what they aggregate: "Per Scan" is now **Single Scan**, "Cross-Provider" is now **Multiple Scans**, and `/compliance` lands on Multiple Scans by default.
+
+  ![Cross-provider compliance detail across providers](/images/compliance/prowler-app-across-providers-detail.png)
+
+  Read more in the [Cross-Provider Compliance documentation](/user-guide/compliance/tutorials/cross-provider-compliance).
+
+  ### ☁️ GCP Organization Onboarding
+
+  <Note>
+  This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
+  </Note>
+
+  Onboarding an entire Google Cloud organization is now a single guided flow. Provide an organization-level credential and Prowler discovers the full hierarchy, every folder and project. Pick the folders and projects to onboard from a selection tree, set custom aliases, test the connection, and launch: each selected project is registered as a provider, with no need to add them one by one. Post-onboarding management is covered too, including credential replacement and organization-wide deletion.
+
+  Read more in the [GCP Organizations documentation](/user-guide/tutorials/prowler-cloud-gcp-organizations).
+
+  ### 🕸️ Attack Paths — More Privilege Escalation Queries
+
+  Attack Paths adds four AWS privilege-escalation detection queries from [pathfinding.cloud](https://pathfinding.cloud). Thanks to @paramanandmallik!
+
+  - **[STS-002](https://hub.prowler.com/attack-paths/aws-sts-privesc-cross-account-trust)** — cross-account role trust
+  - **[STS-003](https://hub.prowler.com/attack-paths/aws-sts-privesc-wildcard-trust)** — wildcard role trust
+  - **[IAM-022](https://hub.prowler.com/attack-paths/aws-iam-privesc-delete-user-permissions-boundary)** — user permissions-boundary removal
+  - **[SSO-001](https://hub.prowler.com/attack-paths/aws-sso-privesc-permission-set-escalation)** — IAM Identity Center permission-set escalation
+
+  The query info panel now links every query to its page on [Prowler Hub](https://hub.prowler.com), and the IAM privilege-escalation queries were reworked to run efficiently on accounts with many IAM roles, users, or groups, fixing runtime errors and timeouts on large graphs.
+
+  Read more in the [Attack Paths documentation](/user-guide/tutorials/prowler-app-attack-paths).
+
+  ### 🏢 New Provider — Huawei Cloud
+
+  Prowler now scans [**Huawei Cloud**](https://www.huaweicloud.com/), with **25 checks** across ten services: CTS, ECS, ELB, EVS, IAM, KMS, OBS, RDS, VPC, and WAF, plus the CIS Huawei Cloud Foundations Benchmark 1.0 compliance framework. Thanks to @tomitobio for their 1st provider in Prowler!
+
+  To scan a Huawei Cloud account, export the IAM user's access key credentials and run Prowler CLI:
+
+  ```bash
+  export HUAWEICLOUD_ACCESS_KEY_ID="your-access-key-id"
+  export HUAWEICLOUD_SECRET_ACCESS_KEY="your-secret-access-key"
+
+  prowler huaweicloud
+  ```
+
+  Read more in the [Huawei Cloud documentation](/user-guide/providers/huaweicloud/getting-started-huaweicloud). Explore all Huawei Cloud checks at [Prowler Hub](https://hub.prowler.com/check?provider=huaweicloud).
 
   ### 📤 OCSF Output — MITRE ATT&CK Enrichment
 
@@ -119,7 +121,7 @@ rss: true
   ### 🔐 Security
 
   - Provider deletion, connection checks, scan creation, provider secrets, provider groups, and daily schedules now respect role provider-group visibility.
-  - HTML reports escape provider-originated finding fields, preventing stored cross-site scripting through malicious cloud resource tags.
+  - HTML reports escape provider-originated finding fields, preventing stored cross-site scripting through malicious cloud resource tags. https://github.com/prowler-cloud/prowler/security/advisories/GHSA-c2jg-2778-ggm4
   - Authentication with an API key whose owning user was deleted now returns `401`, and user deletion revokes the user's API keys across all their tenants.
 
   ### 🙌 External Contributors

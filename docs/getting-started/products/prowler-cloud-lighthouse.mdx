@@ -3,6 +3,7 @@ title: 'Overview'
 ---
 
 import { SubscriptionBanner } from "/snippets/subscription-banner.mdx"
+import { VersionBadge } from "/snippets/version-badge.mdx"
 
 Prowler Cloud runs an enhanced version of Lighthouse AI in Open Source repository, the Agentic Cloud Defender that helps teams understand, prioritize, and remediate security findings across cloud environments.
 
@@ -34,6 +35,8 @@ The Agentic Cloud Defender does more than answer questions, it helps teams **fin
 
 ## Chat View
 
+<VersionBadge version="5.33.0" />
+
 Lighthouse AI is no longer a separate section in the left navigation. Prowler Cloud now offers two application views: a normal view for browsing dashboards, findings, and configuration, and an agentic chat view, powered by Lighthouse AI, for conversational, multi-step security analysis. Conversations are saved automatically, so earlier sessions can be reopened and resumed at any time.
 
 Promoting the chat to a top-level view gives Lighthouse AI the room it needs for a fully agentic workflow and makes the Agentic Cloud Defender a primary way to work in Prowler Cloud.
@@ -41,6 +44,8 @@ Promoting the chat to a top-level view gives Lighthouse AI the room it needs for
 <img src="/images/prowler-app/lighthouse/prowler-cloud/main-chat-page.png" alt="Lighthouse AI chat view in Prowler Cloud" />
 
 ### Side Panel
+
+<VersionBadge version="5.35.0" />
 
 You do not have to switch to the full chat view to reach Lighthouse AI. A side panel is available on every page of Prowler Cloud. While collapsed it stays out of the way; open it from any dashboard, findings list, or configuration screen to ask questions without leaving what you are working on. Open it using the Lighthouse AI button, circled in red in the image below.
 
@@ -53,6 +58,14 @@ Once open, the panel slides in alongside your current page and shares the same a
 - **Available everywhere:** Summon the assistant from any page while you keep working in the normal view.
 - **Context-aware help:** Ask about the findings, resources, or compliance data you are currently looking at.
 - **Continuous sessions:** Conversations opened in the side panel are saved alongside the rest of your chat history.
+
+### Context-aware chat
+
+<VersionBadge version="5.37.0" />
+
+The panel knows where you are in the app. Messages carry the page you are on and, when a finding or resource is open in the side panel, its metadata too, so questions like "explain this" resolve against what is on screen. The active context appears as a chip in the composer, circled in red in the image below, and each page offers contextual suggestions to start from.
+
+<img src="/images/prowler-app/lighthouse/prowler-cloud/side-panel-context-aware.png" alt="Lighthouse AI answering a question about the open finding from the side panel, with the page context chip highlighted in red in the composer" />
 
 ### Tool Usage
 
