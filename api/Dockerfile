@@ -109,6 +109,7 @@ USER root
 
 # Remove build-only packages from the final image after Python dependencies are installed.
 # git is only needed by uv sync for the `prowler @ git+...` dependency; purging it drops perl too.
+# wget stays: the compose healthcheck shells out to it.
 RUN apt-get purge -y --auto-remove \
     gcc \
     g++ \
@@ -123,7 +124,6 @@ RUN apt-get purge -y --auto-remove \
     libtool \
     libxslt1-dev \
     python3-dev \
-    wget \
     gnupg \
     apt-transport-https \
     && rm -rf /var/lib/apt/lists/*
