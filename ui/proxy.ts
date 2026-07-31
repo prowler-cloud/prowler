@@ -92,7 +92,16 @@ export default auth((req: NextAuthRequest) => {
     }
   }
 
-  return withSecurityHeaders(NextResponse.next());
+  const requestHeaders = new Headers(req.headers);
+  requestHeaders.set("x-prowler-current-path", pathname + req.nextUrl.search);
+
+  return withSecurityHeaders(
+    NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    }),
+  );
 });
 
 export const config = {

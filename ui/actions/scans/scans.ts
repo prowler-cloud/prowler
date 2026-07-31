@@ -6,9 +6,9 @@ import { redirect } from "next/navigation";
 import {
   apiBaseUrl,
   GENERIC_SERVER_ERROR_MESSAGE,
-  getAuthHeaders,
   getErrorMessage,
 } from "@/lib";
+import { getAuthHeaders } from "@/lib/auth-headers";
 import {
   COMPLIANCE_REPORT_DISPLAY_NAMES,
   type ComplianceReportType,

@@ -10,10 +10,10 @@ import {
   FG_RECENT_LAST_SEEN,
   FG_SEVERITY_HIGH_FIRST,
   FINDING_GROUP_RESOURCES_DEFAULT_SORT,
-  getAuthHeaders,
   includesMutedFindings,
   splitCsvFilterValues,
 } from "@/lib";
+import { getAuthHeaders } from "@/lib/auth-headers";
 import { appendSanitizedProviderFilters } from "@/lib/provider-filters";
 import { handleApiResponse } from "@/lib/server-actions-helper";
 

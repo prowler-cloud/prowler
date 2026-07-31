@@ -24,9 +24,12 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("@/lib", () => ({
   apiBaseUrl: "https://api.example.com/api/v1",
-  getAuthHeaders: getAuthHeadersMock,
   getFormValue: getFormValueMock,
   wait: vi.fn(),
+}));
+
+vi.mock("@/lib/auth-headers", () => ({
+  getAuthHeaders: getAuthHeadersMock,
 }));
 
 vi.mock("@/lib/provider-credentials/build-credentials", () => ({

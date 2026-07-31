@@ -1,6 +1,7 @@
 "use server";
 
-import { apiBaseUrl, getAuthHeaders } from "@/lib";
+import { apiBaseUrl } from "@/lib";
+import { getAuthHeaders } from "@/lib/auth-headers";
 import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 
 export const getTask = async (taskId: string) => {

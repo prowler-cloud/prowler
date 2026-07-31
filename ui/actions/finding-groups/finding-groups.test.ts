@@ -29,7 +29,6 @@ import {
 
 vi.mock("@/lib", () => ({
   apiBaseUrl: "https://api.example.com/api/v1",
-  getAuthHeaders: getAuthHeadersMock,
   composeSort,
   FG_FAIL_FIRST,
   FG_RECENT_LAST_SEEN,
@@ -37,6 +36,10 @@ vi.mock("@/lib", () => ({
   FINDING_GROUP_RESOURCES_DEFAULT_SORT,
   includesMutedFindings,
   splitCsvFilterValues,
+}));
+
+vi.mock("@/lib/auth-headers", () => ({
+  getAuthHeaders: getAuthHeadersMock,
 }));
 
 vi.mock("@/lib/provider-filters", () => ({

@@ -4,7 +4,8 @@ import {
   getDateFromForTimeRange,
   type TimeRange,
 } from "@/app/(prowler)/_overview/severity-over-time/_constants/time-range.constants";
-import { apiBaseUrl, getAuthHeaders } from "@/lib";
+import { apiBaseUrl } from "@/lib";
+import { getAuthHeaders } from "@/lib/auth-headers";
 import { appendSanitizedProviderTypeFilters } from "@/lib/provider-filters";
 import { handleApiResponse } from "@/lib/server-actions-helper";
 

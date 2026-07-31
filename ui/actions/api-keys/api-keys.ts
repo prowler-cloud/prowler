@@ -9,7 +9,8 @@ import {
   SingleApiKeyResponse,
   UpdateApiKeyPayload,
 } from "@/components/users/profile/api-keys/types";
-import { apiBaseUrl, getAuthHeaders } from "@/lib";
+import { apiBaseUrl } from "@/lib";
+import { getAuthHeaders } from "@/lib/auth-headers";
 import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 
 import { adaptApiKeysResponse } from "./api-keys.adapter";

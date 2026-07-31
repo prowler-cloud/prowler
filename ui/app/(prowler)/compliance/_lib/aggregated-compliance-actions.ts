@@ -1,12 +1,9 @@
 import * as Sentry from "@sentry/nextjs";
 
 import type { ScanBinaryResult } from "@/actions/scans/scans";
-import {
-  GENERIC_SERVER_ERROR_MESSAGE,
-  getAuthHeaders,
-  getErrorMessage,
-} from "@/lib";
+import { GENERIC_SERVER_ERROR_MESSAGE, getErrorMessage } from "@/lib";
 import { hasActionError, type ActionErrorResult } from "@/lib/action-errors";
+import { getAuthHeaders } from "@/lib/auth-headers";
 import { handleApiResponse } from "@/lib/server-actions-helper";
 import { SentryErrorSource, SentryErrorType } from "@/sentry";
 

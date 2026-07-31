@@ -1,7 +1,8 @@
 "use server";
 
 import { pollTaskUntilSettled } from "@/actions/task/poll";
-import { apiBaseUrl, getAuthHeaders } from "@/lib";
+import { apiBaseUrl } from "@/lib";
+import { getAuthHeaders } from "@/lib/auth-headers";
 import { evaluateJiraDispatchTask } from "@/lib/jira-dispatch-result";
 import { handleApiError } from "@/lib/server-actions-helper";
 import type {

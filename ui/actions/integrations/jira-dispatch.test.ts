@@ -7,7 +7,6 @@ const { fetchMock, pollTaskUntilSettledMock } = vi.hoisted(() => ({
 
 vi.mock("@/lib", () => ({
   apiBaseUrl: "https://api.example.com/api/v1",
-  getAuthHeaders: vi.fn().mockResolvedValue({ Authorization: "Bearer token" }),
 }));
 
 vi.mock("@/lib/server-actions-helper", () => ({
@@ -16,6 +15,10 @@ vi.mock("@/lib/server-actions-helper", () => ({
 
 vi.mock("@/actions/task/poll", () => ({
   pollTaskUntilSettled: pollTaskUntilSettledMock,
+}));
+
+vi.mock("@/lib/auth-headers", () => ({
+  getAuthHeaders: vi.fn().mockResolvedValue({ Authorization: "Bearer token" }),
 }));
 
 import { pollJiraDispatchTask, sendJiraDispatch } from "./jira-dispatch";

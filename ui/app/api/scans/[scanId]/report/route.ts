@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
-import { apiBaseUrl, getAuthHeaders } from "@/lib";
+import { apiBaseUrl } from "@/lib";
+import { getRouteAuthHeaders } from "@/lib/auth-headers";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -63,7 +64,14 @@ export async function GET(
   { params }: ScanReportRouteContext,
 ) {
   const { scanId } = await params;
-  const headers = await getAuthHeaders({ contentType: false });
+  const headers = await getRouteAuthHeaders({ contentType: false });
+  if (!headers) {
+    return NextResponse.json(
+      { error: "Unauthorized." },
+      { status: 401, headers: { "Cache-Control": "no-store" } },
+    );
+  }
+
   const upstreamUrl = `${apiBaseUrl}/scans/${encodeURIComponent(scanId)}/report`;
   const isPreflight =
     new URL(request.url).searchParams.get("preflight") === "1";

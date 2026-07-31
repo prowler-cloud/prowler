@@ -15,9 +15,12 @@ const {
 vi.mock("@/lib", () => ({
   apiBaseUrl: "https://api.test/api/v1",
   GENERIC_SERVER_ERROR_MESSAGE: "Generic server error.",
-  getAuthHeaders: getAuthHeadersMock,
   getErrorMessage: (error: unknown) =>
     error instanceof Error ? error.message : String(error),
+}));
+
+vi.mock("@/lib/auth-headers", () => ({
+  getAuthHeaders: getAuthHeadersMock,
 }));
 
 vi.mock("@/lib/server-actions-helper", () => ({

@@ -10,6 +10,9 @@ const { fetchMock, getAuthHeadersMock, handleApiResponseMock } = vi.hoisted(
 
 vi.mock("@/lib", () => ({
   apiBaseUrl: "https://api.example.com/api/v1",
+}));
+
+vi.mock("@/lib/auth-headers", () => ({
   getAuthHeaders: getAuthHeadersMock,
 }));
 

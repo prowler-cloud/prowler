@@ -5,7 +5,8 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { auth } from "@/auth.config";
-import { apiBaseUrl, getAuthHeaders } from "@/lib";
+import { apiBaseUrl } from "@/lib";
+import { getAuthHeaders } from "@/lib/auth-headers";
 import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 import {
   TENANT_MEMBERSHIP_ROLE,

@@ -27,7 +27,6 @@ import {
 
 vi.mock("@/lib", () => ({
   apiBaseUrl: "https://api.example.com/api/v1",
-  getAuthHeaders: getAuthHeadersMock,
   GENERIC_SERVER_ERROR_MESSAGE:
     "Server is temporarily unavailable. Please try again in a few minutes.",
   sanitizeErrorMessage: (message: string, fallback: string) =>
@@ -41,6 +40,10 @@ vi.mock("@/lib", () => ({
   RESOURCE_DRAWER_OTHER_FINDINGS_SORT,
   includesMutedFindings,
   splitCsvFilterValues,
+}));
+
+vi.mock("@/lib/auth-headers", () => ({
+  getAuthHeaders: getAuthHeadersMock,
 }));
 
 vi.mock("@/lib/server-actions-helper", () => ({

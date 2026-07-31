@@ -2,7 +2,8 @@
 
 import { adaptLatestFindingTriageNote } from "@/actions/findings/findings-triage.adapter";
 import { createMuteRule } from "@/actions/mute-rules";
-import { apiBaseUrl, getAuthHeaders } from "@/lib";
+import { apiBaseUrl } from "@/lib";
+import { getAuthHeaders } from "@/lib/auth-headers";
 import { handleApiResponse } from "@/lib/server-actions-helper";
 import {
   FINDING_TRIAGE_STATUS_LABELS,

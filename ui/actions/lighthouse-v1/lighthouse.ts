@@ -1,6 +1,7 @@
 "use server";
 
-import { apiBaseUrl, getAuthHeaders } from "@/lib/helper";
+import { getAuthHeaders } from "@/lib/auth-headers";
+import { apiBaseUrl } from "@/lib/helper";
 import {
   validateBaseUrl,
   validateCredentials,

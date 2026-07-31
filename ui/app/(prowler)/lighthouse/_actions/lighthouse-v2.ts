@@ -13,7 +13,8 @@ import type {
   LighthouseV2SupportedModel,
   LighthouseV2SupportedProvider,
 } from "@/app/(prowler)/lighthouse/_types";
-import { apiBaseUrl, getAuthHeaders } from "@/lib/helper";
+import { getAuthHeaders } from "@/lib/auth-headers";
+import { apiBaseUrl } from "@/lib/helper";
 import { LIGHTHOUSE_ROUTE } from "@/lib/lighthouse-routes";
 import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 import type { JsonApiDocument } from "@/types/jsonapi";

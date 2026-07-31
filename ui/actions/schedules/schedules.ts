@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
-import { apiBaseUrl, getAuthHeaders } from "@/lib";
+import { apiBaseUrl } from "@/lib";
+import { getAuthHeaders } from "@/lib/auth-headers";
 import { scheduleUpdatePayloadSchema } from "@/lib/schedules";
 import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 import type {
