@@ -14,6 +14,7 @@
 
 import { http, HttpResponse } from "msw";
 
+import { NODE_KIND } from "./organizations.fixtures";
 import type {
   FixtureNode,
   FixtureOrganization,
@@ -307,7 +308,9 @@ export const handlersForOrganizations = (
 
   const unitNodeIds = (org: FixtureOrganization): string[] =>
     org.nodeIds.filter((id) =>
-      fx.nodes.some((n) => n.id === id && n.kind === "organizational-unit"),
+      fx.nodes.some(
+        (n) => n.id === id && n.kind === NODE_KIND.ORGANIZATIONAL_UNIT,
+      ),
     );
   const orgResource = (org: FixtureOrganization) =>
     organizationResource(org, {
@@ -667,7 +670,7 @@ export const handlersForOrganizations = (
     http.get(`${API}/organizational-units`, () =>
       HttpResponse.json({
         data: fx.nodes
-          .filter((n) => n.kind === "organizational-unit")
+          .filter((n) => n.kind === NODE_KIND.ORGANIZATIONAL_UNIT)
           .map(organizationalUnitResource),
         meta: { version: "v1" },
       }),

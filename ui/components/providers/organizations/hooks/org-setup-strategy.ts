@@ -74,8 +74,12 @@ interface OrgSetupStrategy<D extends OrgSetupSubmissionData> {
   getExternalId: (data: D) => string;
   /** Display name to store (falls back to the external id). */
   getResolvedName: (data: D) => string;
-  /** Credential payload for the organization secret. */
-  buildSecretPayload: (data: D, externalId: string) => OrgSecretPayload;
+  /**
+   * Credential payload for the organization secret. `stackSetExternalId` is the
+   * tenant id AWS trusts as `sts:ExternalId` — not `getExternalId`'s
+   * organization external id.
+   */
+  buildSecretPayload: (data: D, stackSetExternalId: string) => OrgSecretPayload;
   /**
    * Maps a secret-scoped server error to the form field it belongs to, or null to
    * surface it in the banner. Matched on names rather than the pointer, which may
@@ -135,9 +139,10 @@ function describeDiscoveryFailure(
 export interface BoundOrgSetupStrategy {
   orgType: OrgFlowType;
   externalIdField: OrgSetupErrorField;
+  /** External id used to match/create the organization. */
   externalId: string;
   resolvedName: string;
-  buildSecretPayload: (externalId: string) => OrgSecretPayload;
+  buildSecretPayload: (stackSetExternalId: string) => OrgSecretPayload;
   mapSecretErrorField: (fieldNames: string) => OrgSetupErrorField | null;
   ingestDiscovery: (rawResult: unknown) => {
     hierarchy: OrgHierarchy;
@@ -156,11 +161,11 @@ const awsOrgSetupStrategy: OrgSetupStrategy<AwsOrgSetupData> = {
   externalIdField: "awsOrgId",
   getExternalId: (data) => data.awsOrgId,
   getResolvedName: (data) => data.organizationName?.trim() || data.awsOrgId,
-  buildSecretPayload: (data, externalId) => ({
+  buildSecretPayload: (data, stackSetExternalId) => ({
     secretType: ORG_SECRET_TYPE.ROLE,
     secret: {
       role_arn: data.roleArn,
-      external_id: externalId,
+      external_id: stackSetExternalId,
     },
   }),
   // AWS role-secret field errors surface in the banner (no dedicated fields).
@@ -244,8 +249,8 @@ function bind<D extends OrgSetupSubmissionData>(
     externalIdField: strategy.externalIdField,
     externalId: strategy.getExternalId(data),
     resolvedName: strategy.getResolvedName(data),
-    buildSecretPayload: (externalId) =>
-      strategy.buildSecretPayload(data, externalId),
+    buildSecretPayload: (stackSetExternalId) =>
+      strategy.buildSecretPayload(data, stackSetExternalId),
     mapSecretErrorField: strategy.mapSecretErrorField,
     ingestDiscovery: (rawResult) => strategy.ingestDiscovery(rawResult, data),
     authFailureMessage: strategy.authFailureMessage,

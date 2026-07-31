@@ -787,13 +787,25 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
     await this.user.click(trigger);
   }
 
+  /**
+   * Dismiss the open row-actions menu and wait until it is gone. The menu is
+   * modal, so leaving it open makes the next row's trigger click land on the
+   * dismiss layer and the reader below re-read the previous row's items.
+   */
+  private async closeActionsMenu(): Promise<void> {
+    await this.user.keyboard("{Escape}");
+    await this.waitFor(() => this.q('[role="menu"]') === null);
+  }
+
   /** The row-action labels offered for the organization named `name`. */
   async actionLabelsFor(name: string): Promise<string[]> {
     await this.openActionsFor(name);
-    await this.waitFor(() => this.q('[role="menuitem"]'));
-    return Array.from(
-      document.querySelectorAll<HTMLElement>('[role="menuitem"]'),
+    const menu = await this.waitFor(() => this.q('[role="menu"]'));
+    const labels = Array.from(
+      menu.querySelectorAll<HTMLElement>('[role="menuitem"]'),
     ).map((item) => item.textContent?.trim() ?? "");
+    await this.closeActionsMenu();
+    return labels;
   }
 
   /** Open the "Edit Organization Name" flow for the organization `name`. */
