@@ -3571,16 +3571,16 @@ AWS_STS_PRIVESC_CROSS_ACCOUNT_TRUST = AttackPathsQueryDefinition(
 # STS-003
 AWS_STS_PRIVESC_WILDCARD_TRUST = AttackPathsQueryDefinition(
     id="aws-sts-privesc-wildcard-trust",
-    name="Wildcard Role Trust for Privilege Escalation (STS-003)",
-    short_description="Roles whose trust policy principal is a wildcard can be assumed by any AWS principal in any account.",
-    description='Detect IAM roles whose trust policy uses a wildcard principal ("AWS": "*"), allowing any principal in any AWS account that holds sts:AssumeRole to assume the role and gain its permissions. This is the most permissive trust misconfiguration and exposes the role\'s privileges to every AWS account.',
+    name="Potential Wildcard Role Trust (STS-003)",
+    short_description="Potential wildcard role trusts that need manual review before they are treated as assumable.",
+    description='Find IAM roles linked to a wildcard principal ("AWS": "*"). The ingested graph does not preserve trust-policy Effect or Condition fields, so a match can come from a Deny statement or a restricted Allow statement. Treat each result as a candidate for manual review, not as a confirmed assumable role.',
     attribution=AttackPathsQueryAttribution(
         text="pathfinding.cloud - STS-003 - sts:AssumeRole",
         link="https://pathfinding.cloud/paths/sts-003",
     ),
     provider="aws",
     cypher=f"""
-        // Find roles whose trust policy allows a wildcard principal (any account)
+        // Find roles linked to a wildcard principal for manual review
         MATCH path_target = (aws:AWSAccount {{id: $provider_uid}})--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(trusted:AWSPrincipal)
         WHERE trusted.arn = '*'
 
@@ -3603,19 +3603,26 @@ AWS_STS_PRIVESC_WILDCARD_TRUST = AttackPathsQueryDefinition(
 AWS_IAM_PRIVESC_DELETE_USER_PERMISSIONS_BOUNDARY = AttackPathsQueryDefinition(
     id="aws-iam-privesc-delete-user-permissions-boundary",
     name="Permissions Boundary Removal for Self-Escalation (IAM-022)",
-    short_description="Delete a user's permissions boundary to unlock the broader permissions its attached policies already grant.",
-    description="Detect principals who can call iam:DeleteUserPermissionsBoundary. A permissions boundary caps a user's effective permissions; removing it restores the full set granted by the user's attached policies. A principal that can delete the boundary constraining it can escalate to the unconstrained permissions the boundary was hiding.",
+    short_description="IAM users that can remove their own permissions boundary, if one is attached.",
+    description="Find IAM users whose policies allow iam:DeleteUserPermissionsBoundary on their own user ARN. The graph does not record whether a boundary is attached or whether removing it grants more access, so each result needs manual review.",
     attribution=AttackPathsQueryAttribution(
         text="pathfinding.cloud - IAM-022 - iam:DeleteUserPermissionsBoundary",
         link="https://pathfinding.cloud/paths/iam-022",
     ),
     provider="aws",
     cypher=f"""
-        // Find principals with iam:DeleteUserPermissionsBoundary permission
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(policy:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {{effect: 'Allow'}})
+        // Find IAM users with iam:DeleteUserPermissionsBoundary permission
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSUser)-[:POLICY]->(policy:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {{effect: 'Allow'}})
         MATCH (stmt)-[:HAS_ACTION]->(act:AWSPolicyStatementActionItem)
         WHERE toLower(act.value) IN ['iam:*', 'iam:deleteuserpermissionsboundary']
             OR act.value = '*'
+        WITH DISTINCT principal, stmt, path_principal
+
+        // Keep only users that can remove the boundary from their own user ARN
+        MATCH (stmt)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)
+        WHERE res.value = '*'
+            OR res.value = principal.arn
+            OR (res.value ENDS WITH '*' AND principal.arn STARTS WITH replace(res.value, '*', ''))
 
         WITH DISTINCT path_principal
         WITH collect(path_principal) AS paths
@@ -3649,18 +3656,24 @@ AWS_SSO_PRIVESC_PERMISSION_SET_ESCALATION = AttackPathsQueryDefinition(
         MATCH (stmt)-[:HAS_ACTION]->(act:AWSPolicyStatementActionItem)
         WHERE toLower(act.value) IN ['sso:*', 'sso:createpermissionset']
             OR act.value = '*'
+        MATCH (stmt)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)
+        WHERE res.value = '*'
         WITH DISTINCT aws, principal, path_principal
 
         // Find sso:AttachManagedPolicyToPermissionSet permission on the same principal
-        MATCH (principal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(:AWSPolicyStatement {{effect: 'Allow'}})-[:HAS_ACTION]->(act2:AWSPolicyStatementActionItem)
+        MATCH (principal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(stmt2:AWSPolicyStatement {{effect: 'Allow'}})-[:HAS_ACTION]->(act2:AWSPolicyStatementActionItem)
         WHERE toLower(act2.value) IN ['sso:*', 'sso:attachmanagedpolicytopermissionset']
             OR act2.value = '*'
-        WITH DISTINCT aws, principal, path_principal
+        MATCH (stmt2)-[:HAS_RESOURCE]->(res2:AWSPolicyStatementResourceItem)
+        WHERE res2.value = '*'
+        WITH DISTINCT principal, path_principal
 
         // Find sso:CreateAccountAssignment permission on the same principal
-        MATCH (principal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(:AWSPolicyStatement {{effect: 'Allow'}})-[:HAS_ACTION]->(act3:AWSPolicyStatementActionItem)
+        MATCH (principal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(stmt3:AWSPolicyStatement {{effect: 'Allow'}})-[:HAS_ACTION]->(act3:AWSPolicyStatementActionItem)
         WHERE toLower(act3.value) IN ['sso:*', 'sso:createaccountassignment']
             OR act3.value = '*'
+        MATCH (stmt3)-[:HAS_RESOURCE]->(res3:AWSPolicyStatementResourceItem)
+        WHERE res3.value = '*'
 
         WITH DISTINCT path_principal
         WITH collect(path_principal) AS paths

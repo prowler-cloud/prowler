@@ -197,6 +197,38 @@ class TestNewPathfindingQueriesCypher:
         )
 
 
+class TestNewPathfindingQueriesAccuracy:
+    """Query-specific contracts that prevent known false positives."""
+
+    def test_wildcard_trust_is_presented_as_a_manual_review_candidate(self):
+        query = AWS_STS_PRIVESC_WILDCARD_TRUST
+        text = f"{query.name} {query.short_description} {query.description}".lower()
+        assert all(
+            word in text
+            for word in ("potential", "effect", "condition", "manual review")
+        )
+
+    def test_permissions_boundary_removal_is_scoped_to_the_same_user(self):
+        query = AWS_IAM_PRIVESC_DELETE_USER_PERMISSIONS_BOUNDARY
+        assert "(principal:AWSUser)" in query.cypher
+        assert (
+            "(stmt)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)"
+            in query.cypher
+        )
+        assert "principal.arn" in query.cypher
+        assert "manual review" in query.description.lower()
+
+    def test_permission_set_escalation_requires_global_resources(self):
+        query = AWS_SSO_PRIVESC_PERMISSION_SET_ESCALATION
+        for suffix in ("", "2", "3"):
+            resource_match = (
+                f"(stmt{suffix})-[:HAS_RESOURCE]->"
+                f"(res{suffix}:AWSPolicyStatementResourceItem)"
+            )
+            assert resource_match in query.cypher
+            assert f"WHERE res{suffix}.value = '*'" in query.cypher
+
+
 class TestAllQueriesUniqueIds:
     """No duplicate IDs in the full registry."""
 
