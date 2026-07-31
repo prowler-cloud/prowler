@@ -23,6 +23,7 @@ from api.attack_paths import (
 )
 from api.compliance import get_compliance_frameworks
 from api.db_router import MainRouter
+from api.db_utils import rls_transaction
 from api.models import (
     AttackSurfaceOverview,
     ComplianceOverviewSummary,
@@ -13544,7 +13545,8 @@ class TestIntegrationViewSet:
 
         assert response.status_code == status.HTTP_200_OK
         assert "configuration" not in response.json()["data"]["attributes"]
-        jira_integration_fixture.refresh_from_db()
+        with rls_transaction(str(jira_integration_fixture.tenant_id)):
+            jira_integration_fixture.refresh_from_db()
         assert jira_integration_fixture.enabled is False
 
     def test_integrations_retrieve_jira_keeps_domain_in_configuration(

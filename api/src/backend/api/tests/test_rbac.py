@@ -2,6 +2,7 @@ import json
 from unittest.mock import ANY, Mock, patch
 
 import pytest
+from api.db_utils import rls_transaction
 from api.models import (
     Integration,
     IntegrationProviderRelationship,
@@ -1466,7 +1467,8 @@ class TestLimitedVisibility:
         )
 
         assert response.status_code == status.HTTP_200_OK
-        jira_integration_fixture.refresh_from_db()
+        with rls_transaction(str(jira_integration_fixture.tenant_id)):
+            jira_integration_fixture.refresh_from_db()
         assert jira_integration_fixture.enabled is False
 
     def test_integration_create_rejects_out_of_scope_provider(

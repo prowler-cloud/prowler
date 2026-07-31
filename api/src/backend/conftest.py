@@ -1454,18 +1454,20 @@ def integrations_fixture(aws_provider_pair):
 def jira_integration_fixture(tenants_fixture):
     # Jira is a tenant-wide integration: it is not attached to any provider, and its
     # `domain` is read from the credentials when the integration is serialized
-    return Integration.objects.create(
-        tenant_id=tenants_fixture[0].id,
-        enabled=True,
-        connected=True,
-        integration_type=Integration.IntegrationChoices.JIRA,
-        configuration={"projects": {"TEST": "Test project"}},
-        credentials={
-            "domain": "test",
-            "user_mail": "a@b.com",
-            "api_token": "token",
-        },
-    )
+    tenant_id = tenants_fixture[0].id
+    with rls_transaction(str(tenant_id)):
+        return Integration.objects.create(
+            tenant_id=tenant_id,
+            enabled=True,
+            connected=True,
+            integration_type=Integration.IntegrationChoices.JIRA,
+            configuration={"projects": {"TEST": "Test project"}},
+            credentials={
+                "domain": "test",
+                "user_mail": "a@b.com",
+                "api_token": "token",
+            },
+        )
 
 
 @pytest.fixture
