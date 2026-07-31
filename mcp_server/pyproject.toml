@@ -12,7 +12,7 @@ dev = [
 
 [project]
 dependencies = [
-  "fastmcp==3.4.4",
+  "fastmcp==3.4.5",
   "httpx==0.28.1"
 ]
 description = "MCP server for Prowler ecosystem"
@@ -47,3 +47,11 @@ extend-select = [
 
 [tool.uv]
 package = true
+
+# Transitive pins fastmcp does not raise on its own; each carries a known HIGH.
+constraint-dependencies = [
+  "cryptography==48.0.1",
+  "joserfc==1.6.8",
+  "mcp==1.28.1",
+  "python-multipart==0.0.30"
+]
