@@ -237,7 +237,7 @@ If every account connects successfully, you automatically advance to the next st
 
 ### When Some Tests Fail
 
-An error banner appears: **"There was a problem connecting to some accounts."** You have two options:
+An error banner appears: **"There was a problem connecting to some accounts. Hover each account to check the error."** You have two options:
 
 **a) Fix and retry:**
 1. Go to the AWS Console and verify the StackSet deployed to the failing accounts.
@@ -251,7 +251,7 @@ Click **Skip Connection Validation** to proceed with only the accounts that conn
   <img src="/images/organizations/connection-failures-skip.png" alt="Connection test results showing failed accounts with error banner and Skip Connection Validation button" />
 </Frame>
 
-If **no accounts** connected successfully, you cannot proceed. Fix the underlying connection issues — see [Troubleshooting](#troubleshooting) — and retry before launching scans.
+If **no accounts** connected successfully, the banner instead reads *"No accounts connected successfully. Fix the connection errors and retry before launching scans."* and you cannot proceed. Fix the underlying connection issues — see [Troubleshooting](#troubleshooting) — and retry before launching scans.
 
 ## Step 5: Launch Scans
 

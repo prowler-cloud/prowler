@@ -85,9 +85,10 @@ Prowler identifies your organization by its numeric Google Cloud organization ID
 gcloud organizations list
 ```
 
-{/* SCREENSHOT: Google Cloud console, IAM & Admin > Settings, with the numeric Organization ID highlighted. */}
+In the Google Cloud console, the ID sits in the **ID** column next to the organization on the [Manage Resources](https://console.cloud.google.com/cloud-resource-manager) page, above the folders and projects it holds:
+
 <Frame>
-  <img src="/images/organizations/gcp/gcp-console-org-id.png" alt="Google Cloud console showing the numeric organization ID" />
+  <img src="/images/organizations/gcp/gcp-console-org-id.png" alt="Manage Resources page in the Google Cloud console, with the organization ID highlighted next to the organization" />
 </Frame>
 
 ## Step 1: Start the Organization Wizard
@@ -262,7 +263,7 @@ If every project connects successfully, you advance to the next step automatical
 
 ### When Some Tests Fail
 
-An error banner appears: **"There was a problem connecting to some projects."** You have two options:
+An error banner appears: **"There was a problem connecting to some projects. Hover each project to check the error."** You have two options:
 
 **a) Fix and retry:**
 
@@ -274,7 +275,7 @@ An error banner appears: **"There was a problem connecting to some projects."** 
 
 Click **Skip Connection Validation** to proceed with the projects that connected successfully. Failed projects stay onboarded and visible on the Providers page, but they are not scanned. This option appears only when at least one project connected.
 
-If **no project** connects, you cannot proceed. Fix the underlying problem — see [Troubleshooting](#troubleshooting) — and retry.
+If **no project** connects, the banner instead reads *"No projects connected successfully. Fix the connection errors and retry before launching scans."* and you cannot proceed. Fix the underlying problem — see [Troubleshooting](#troubleshooting) — and retry.
 
 ## Step 5: Launch Scans
 
