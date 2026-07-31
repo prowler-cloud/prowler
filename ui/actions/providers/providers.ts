@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { apiBaseUrl, getAuthHeaders, getFormValue, wait } from "@/lib";
+import { apiBaseUrl, getAuthHeaders, getFormValue } from "@/lib";
 import { runWithConcurrencyLimit } from "@/lib/concurrency";
 import { buildSecretConfig } from "@/lib/provider-credentials/build-credentials";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
@@ -350,15 +350,9 @@ export const updateCredentialsProvider = async (
   }
 };
 
-/** Padding that keeps the single-provider spinner visible long enough to read. */
-const CONNECTION_SETTLE_DELAY_MS = 2000;
-
 export const checkConnectionProvider = async (
   formData: FormData,
-  {
-    settleDelayMs = CONNECTION_SETTLE_DELAY_MS,
-    revalidate = true,
-  }: { settleDelayMs?: number; revalidate?: boolean } = {},
+  { revalidate = true }: { revalidate?: boolean } = {},
 ) => {
   const headers = await getAuthHeaders({ contentType: false });
   const providerId = formData.get(ProviderCredentialFields.PROVIDER_ID);
@@ -366,12 +360,9 @@ export const checkConnectionProvider = async (
 
   try {
     const response = await fetch(url.toString(), { method: "POST", headers });
-    // Batches opt out of both: their pollers already report progress, and
-    // revalidating here would re-render the providers page once per provider.
-    if (settleDelayMs > 0) {
-      await wait(settleDelayMs);
-    }
 
+    // Batches opt out: revalidating here would re-render the providers page
+    // once per provider.
     return handleApiResponse(response, revalidate ? "/providers" : undefined);
   } catch (error) {
     return handleApiError(error);
@@ -405,7 +396,6 @@ export const startProviderConnectionChecks = async (
 
       try {
         const result = await checkConnectionProvider(formData, {
-          settleDelayMs: 0,
           revalidate: false,
         });
 
