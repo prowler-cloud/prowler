@@ -2,7 +2,11 @@ import "server-only";
 
 import { connection } from "next/server";
 
-import { readGatedEnv } from "@/lib/integrations";
+import {
+  GATED_INTEGRATIONS,
+  isGatedIntegrationEnabled,
+  readGatedEnv,
+} from "@/lib/integrations";
 import { type RuntimePublicConfig } from "@/lib/runtime-config.shared";
 import { readBoolEnv, readEnv } from "@/lib/runtime-env";
 
@@ -33,6 +37,7 @@ export async function getRuntimePublicConfig(): Promise<RuntimePublicConfig> {
     ),
     apiBaseUrl: readEnv("UI_API_BASE_URL", "NEXT_PUBLIC_API_BASE_URL"),
     apiDocsUrl: readEnv("UI_API_DOCS_URL", "NEXT_PUBLIC_API_DOCS_URL"),
+    posthogEnabled: isGatedIntegrationEnabled(GATED_INTEGRATIONS.posthog),
     posthogKey: readGatedEnv(
       "UI_POSTHOG_ENABLED",
       "UI_POSTHOG_KEY",

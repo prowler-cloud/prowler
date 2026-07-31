@@ -4,6 +4,28 @@ All notable changes to the **Prowler API** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [1.37.0] (Prowler v5.36.0)
+
+### 🔄 Changed
+
+- OCI provider secrets no longer require `region`; legacy `region` input is accepted for backwards compatibility but ignored before storing or scanning [(#11741)](https://github.com/prowler-cloud/prowler/pull/11741)
+- Compliance overview ingest now runs in a single transaction per scan with a configurable `COPY` batch size (`DJANGO_COMPLIANCE_COPY_BATCH_SIZE`, default 2000), reducing write pressure on the database [(#11875)](https://github.com/prowler-cloud/prowler/pull/11875)
+
+### 🐞 Fixed
+
+- Scan findings now recover resources missing from the in-memory cache after resource pre-resolution, preventing valid findings from being skipped [(#12002)](https://github.com/prowler-cloud/prowler/pull/12002)
+- Tenant-wide integrations that are not attached to any provider, such as Jira, are now visible and manageable by roles with `manage_integrations` and without unlimited visibility [(#12060)](https://github.com/prowler-cloud/prowler/pull/12060)
+- Output generation now removes the scan's temporary output directory before writing, so a re-run of the task for the same scan (e.g. broker redelivery after a worker is killed mid-run) no longer appends to the previous run's files and duplicates finding rows in the exported CSV and other outputs [(#12097)](https://github.com/prowler-cloud/prowler/pull/12097)
+
+### 🔐 Security
+
+- Integration responses no longer disclose providers outside the visibility of the role, including the resources sideloaded through `?include=providers` [(#12060)](https://github.com/prowler-cloud/prowler/pull/12060)
+- Integration connection checks, Jira issue type lookups and Jira dispatches now resolve the integration through the provider visibility of the role instead of the whole tenant [(#12060)](https://github.com/prowler-cloud/prowler/pull/12060)
+- Roles without unlimited visibility can no longer attach an integration to providers they cannot see, nor edit or delete an integration bound to them [(#12060)](https://github.com/prowler-cloud/prowler/pull/12060)
+- Kubernetes kubeconfig validation now rejects legacy `auth-provider.config.cmd-path` command authentication in Prowler Cloud/API [(#12091)](https://github.com/prowler-cloud/prowler/pull/12091)
+
+---
+
 ## [1.36.0] (Prowler v5.35.0)
 
 ### 🐞 Fixed

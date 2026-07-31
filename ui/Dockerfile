@@ -1,5 +1,5 @@
 # Keep in sync with ui/.nvmrc.
-FROM node:24.13.0-alpine@sha256:cd6fb7efa6490f039f3471a189214d5f548c11df1ff9e5b181aa49e22c14383e AS base
+FROM node:24.15.0-alpine@sha256:d1b3b4da11eefd5941e7f0b9cf17783fc99d9c6fc34884a665f40a06dbdfc94f AS base
 
 LABEL maintainer="https://github.com/prowler-cloud"
 
@@ -87,7 +87,7 @@ ENV HOSTNAME="0.0.0.0"
 #     NEXT_PUBLIC_GOOGLE_TAG_MANAGER_ID, POSTHOG_KEY/HOST) still work:
 #       UI_SENTRY_ENABLED + UI_SENTRY_DSN (+ optional UI_SENTRY_ENVIRONMENT)
 #       UI_GOOGLE_TAG_MANAGER_ENABLED + UI_GOOGLE_TAG_MANAGER_ID
-#       UI_POSTHOG_ENABLED + UI_POSTHOG_KEY + UI_POSTHOG_HOST (no consumer yet)
+#       UI_POSTHOG_ENABLED + UI_POSTHOG_KEY + UI_POSTHOG_HOST (feedback survey)
 #   - reserved: REO_DEV_CLIENT_ID (no consumer yet)
 # server.js is created by next build from the standalone output
 # https://nextjs.org/docs/pages/api-reference/next-config-js/output

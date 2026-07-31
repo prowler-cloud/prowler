@@ -192,12 +192,37 @@ export function getStandaloneFindingColumns({
       ),
       cell: ({ row }) => {
         const provider = getProviderData(row, "provider");
+        const rawAlias = getProviderData(row, "alias");
+        const rawUid = getProviderData(row, "uid");
+        // getProviderData's union includes the provider's connection object;
+        // only string attribute values are renderable here.
+        const alias = typeof rawAlias === "string" ? rawAlias : "-";
+        const uid = typeof rawUid === "string" ? rawUid : "-";
+        // The icon alone cannot tell accounts of the same type apart — the
+        // cross-provider/cross-account drill-downs merge findings from
+        // several accounts into this one table, so each row carries its
+        // account label (alias when set, uid otherwise).
+        const label = alias !== "-" ? alias : uid;
 
         return (
-          <ProviderIconCell
-            provider={provider as ProviderType}
-            className="size-8"
-          />
+          <div className="flex items-center gap-2">
+            <ProviderIconCell
+              provider={provider as ProviderType}
+              className="size-8 shrink-0"
+            />
+            {label !== "-" && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="text-text-neutral-secondary max-w-[110px] truncate text-xs">
+                    {label}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {alias !== "-" && uid !== "-" ? `${alias} (${uid})` : label}
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
         );
       },
       enableSorting: false,

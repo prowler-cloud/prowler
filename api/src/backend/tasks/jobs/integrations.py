@@ -1,5 +1,6 @@
 import os
 import time
+from datetime import UTC, datetime
 from glob import glob
 
 from api.db_router import READ_REPLICA_ALIAS, MainRouter
@@ -214,8 +215,10 @@ def get_security_hub_client_from_integration(
         for region in set(all_security_hub_regions):
             regions_status[region] = region in connection.enabled_regions
 
-        # Save regions information in the integration configuration
+        # Persist the successful connection check and regions information
         with rls_transaction(tenant_id, using=MainRouter.default_db):
+            integration.connected = True
+            integration.connection_last_checked_at = datetime.now(tz=UTC)
             integration.configuration["regions"] = regions_status
             integration.save()
 

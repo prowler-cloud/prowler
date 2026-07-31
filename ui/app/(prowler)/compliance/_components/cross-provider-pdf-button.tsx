@@ -18,7 +18,13 @@ import {
   useTaskWatcherStore,
 } from "@/store/task-watcher/store";
 
+import { generateCrossAccountPdf } from "../_actions/cross-account";
 import { generateCrossProviderPdf } from "../_actions/cross-provider";
+import {
+  buildCrossAccountPdfTaskScope,
+  CROSS_ACCOUNT_PDF_TASK_KIND,
+  downloadCrossAccountPdf,
+} from "../_lib/cross-account-pdf";
 import {
   buildCrossProviderPdfTaskScope,
   CROSS_PROVIDER_PDF_TASK_KIND,
@@ -31,6 +37,10 @@ import type {
 
 interface CrossProviderPdfButtonProps {
   complianceId: string;
+  /** Set to switch the button to cross-account mode: same UI, but the
+   *  generate/download/latest plumbing targets the cross-account endpoints
+   *  and task kind for this provider type's accounts. */
+  providerType?: string;
   /** The filters (and exact scan ids) of the view currently on screen, so
    *  the generated PDF matches what the user is looking at. */
   filters: CrossProviderApiFilters;
@@ -41,18 +51,28 @@ interface CrossProviderPdfButtonProps {
 
 export const CrossProviderPdfButton = ({
   complianceId,
+  providerType,
   filters,
   latestPdf,
 }: CrossProviderPdfButtonProps) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [reportName, setReportName] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const taskScope = buildCrossProviderPdfTaskScope(complianceId, filters);
+  const isCrossAccount = providerType !== undefined;
+  const taskKind = isCrossAccount
+    ? CROSS_ACCOUNT_PDF_TASK_KIND
+    : CROSS_PROVIDER_PDF_TASK_KIND;
+  const downloadPdf = isCrossAccount
+    ? downloadCrossAccountPdf
+    : downloadCrossProviderPdf;
+  const taskScope = isCrossAccount
+    ? buildCrossAccountPdfTaskScope(complianceId, providerType, filters)
+    : buildCrossProviderPdfTaskScope(complianceId, filters);
 
   const isGenerating = useTaskWatcherStore((state) =>
     Object.values(state.tasks).some(
       (task) =>
-        task.kind === CROSS_PROVIDER_PDF_TASK_KIND &&
+        task.kind === taskKind &&
         task.status === TASK_WATCHER_STATUS.PENDING &&
         task.meta.scopeKey === taskScope,
     ),
@@ -61,7 +81,7 @@ export const CrossProviderPdfButton = ({
     Object.values(state.tasks).reduce<(typeof state.tasks)[string] | undefined>(
       (latest, task) => {
         if (
-          task.kind !== CROSS_PROVIDER_PDF_TASK_KIND ||
+          task.kind !== taskKind ||
           task.status !== TASK_WATCHER_STATUS.READY ||
           task.meta.scopeKey !== taskScope
         ) {
@@ -83,11 +103,18 @@ export const CrossProviderPdfButton = ({
   const handleGenerate = async () => {
     setSubmitting(true);
     try {
-      const result = await generateCrossProviderPdf({
-        complianceId,
-        filters,
-        reportName: reportName.trim() || undefined,
-      });
+      const result = isCrossAccount
+        ? await generateCrossAccountPdf({
+            complianceId,
+            providerType,
+            filters,
+            reportName: reportName.trim() || undefined,
+          })
+        : await generateCrossProviderPdf({
+            complianceId,
+            filters,
+            reportName: reportName.trim() || undefined,
+          });
 
       if ("error" in result) {
         toast({
@@ -106,7 +133,7 @@ export const CrossProviderPdfButton = ({
       });
       await trackAndPollTask({
         taskId: result.taskId,
-        kind: CROSS_PROVIDER_PDF_TASK_KIND,
+        kind: taskKind,
         meta: {
           complianceId,
           scopeKey: taskScope,
@@ -158,7 +185,7 @@ export const CrossProviderPdfButton = ({
               icon={<DownloadIcon />}
               label={`Download latest${formatGeneratedAt(availablePdf.completedAt)}`}
               description={availablePdf.filename}
-              onSelect={() => downloadCrossProviderPdf(availablePdf.taskId)}
+              onSelect={() => downloadPdf(availablePdf.taskId)}
             />
           )}
           <ActionDropdownItem
@@ -172,8 +199,16 @@ export const CrossProviderPdfButton = ({
       <Modal
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        title="Generate Cross-Provider Report"
-        description="The report covers the providers, accounts and filters currently applied to this view."
+        title={
+          isCrossAccount
+            ? "Generate Cross-Account Report"
+            : "Generate Cross-Provider Report"
+        }
+        description={
+          isCrossAccount
+            ? "The report covers the accounts and filters currently applied to this view."
+            : "The report covers the providers, accounts and filters currently applied to this view."
+        }
         size="xl"
       >
         <form

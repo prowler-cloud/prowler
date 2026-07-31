@@ -282,7 +282,9 @@ describe("ScanJobsRowActions", () => {
     );
 
     // Then
-    expect(pushMock).toHaveBeenCalledWith("/compliance?scanId=scan-1");
+    expect(pushMock).toHaveBeenCalledWith(
+      "/compliance?tab=per-scan&scanId=scan-1",
+    );
   });
 
   it("renames the completed scan report download action", async () => {

@@ -18,6 +18,7 @@ export {
   resolveHiddenFindingIds,
 } from "./graph-utils";
 export { layoutWithDagre } from "./layout";
+export { isProwlerFindingLabel, isProwlerFindingNode } from "./node-types";
 export {
   NODE_CATEGORY,
   type NodeCategory,
