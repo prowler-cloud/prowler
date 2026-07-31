@@ -12,17 +12,26 @@ Full access to your Prowler data (Prowler Cloud, Prowler Private Cloud, or Prowl
 - **Findings Analysis**: Query, filter, and analyze security findings across all your cloud environments
 - **Finding Groups Analysis**: Triage findings grouped by check ID and drill down into affected resources
 - **Provider Management**: Create, configure, and manage your configured Prowler providers (AWS, Azure, GCP, etc.)
-- **Scan Orchestration**: Trigger on-demand scans and schedule recurring security assessments
+- **Scan Orchestration**: Trigger on-demand scans, track their progress, and schedule a daily scan
 - **Resource Inventory**: Search and view detailed information about your audited resources
 - **Muting Management**: Create and manage muting rules to suppress non-critical findings
 - **Compliance Reporting**: View compliance status across frameworks and drill into requirement-level details
+- **Attack Paths Analysis**: Analyze privilege escalation chains through graph-based analysis of cloud resource relationships
 - **Integrations Management**: Set up and troubleshoot where Prowler sends its results (Amazon S3, AWS Security Hub, Jira), and turn findings into Jira work items
 - **User & Role Management**: List the users in your tenant, identify the authenticated user, browse RBAC roles, and set the role a user holds
+
+### Prowler Cloud Management
+
+Prowler Cloud-only workflow and configuration features (`prowler_cloud_*` tools). These are available only on the [hosted Prowler MCP](#1-hosted-prowler-mcp-recommended), since they manage features that exist only in Prowler Cloud:
+- **Scan Configurations**: Read, create, update, and delete reusable scan configurations and attach them to providers (providers without one use the default)
+- **Findings Triage**: Read and set a finding's triage status and leave notes documenting the decision, without suppressing the finding
+- **Scan Scheduling**: Read and configure recurring scan schedules (daily, interval, weekly, monthly), one provider at a time or in bulk
+- **Alerts**: Read and manage alert rules and recipients, dry-run rule conditions before saving, and browse the fired-alert history
 
 ### Prowler Hub
 
 Access to Prowler's comprehensive security knowledge base:
-- **Security Checks Catalog**: Browse and search **over 1000 security checks** across multiple Prowler providers
+- **Security Checks Catalog**: Browse and search **over 2,000 security checks** across multiple Prowler providers
 - **Check Implementation**: View the Python code that powers each security check
 - **Automated Fixers**: Access remediation scripts for common security issues
 - **Compliance Frameworks**: Explore mappings to **over 70 compliance standards and frameworks**
@@ -129,6 +138,7 @@ For complete tool descriptions and parameters, see the [Tools Reference](https:/
 
 All tools follow a consistent naming pattern with prefixes:
 - `prowler_*` - Prowler Cloud, Prowler Private Cloud & Prowler Local Server management tools
+- `prowler_cloud_*` - Prowler Cloud-only management tools (hosted Prowler MCP only)
 - `prowler_hub_*` - Prowler Hub catalog and compliance tools
 - `prowler_docs_*` - Prowler documentation search and retrieval
 
@@ -136,7 +146,7 @@ All tools follow a consistent naming pattern with prefixes:
 
 ```text
 prowler_mcp_server/
-├── server.py                 # Main orchestrator (imports sub-servers with prefixes)
+├── server.py                 # Main orchestrator (mounts sub-servers with namespaces)
 ├── main.py                   # CLI entry point
 ├── prowler_hub/              # tools - no authentication required
 ├── prowler_app/              # tools - authentication required
@@ -160,7 +170,15 @@ The Prowler MCP Server enables powerful workflows through AI assistants:
 
 - "Show me all critical findings from my AWS production accounts"
 - "Register my new AWS account in Prowler and run a scheduled scan every day"
-- "List all muted findings and detect what findgings are muted by a not enough good reason in relation to their severity"
+- "List all muted findings and flag the ones whose mute reason is too weak for their severity"
+- "Send my failed CIS findings for this provider to Jira as work items"
+
+### Prowler Cloud Management
+
+- "Preview an alert rule for critical AWS findings and create it for my confirmed recipients"
+- "Show the triage notes for this finding and mark it as under review"
+- "Apply a weekly Monday 06:00 scan schedule to every AWS provider"
+- "Create a scan configuration that runs only CIS checks and attach it to my production providers"
 
 ### Security Research
 
@@ -186,7 +204,7 @@ The Prowler MCP Server enables powerful workflows through AI assistants:
   - `https://docs.prowler.com` (for Prowler Documentation)
   - Prowler Cloud API or Prowler Local Server API (for Prowler features)
 
-> **No Authentication Required**: Prowler Hub and Prowler Documentation features work without authentication. A Prowler API key is only required to access Prowler features (Prowler Cloud, Prowler Private Cloud, or Prowler Local Server).
+> **No Authentication Required**: Prowler Hub and Prowler Documentation features work without authentication. A Prowler API key is only required for the `prowler_*` and `prowler_cloud_*` tools (Prowler Cloud, Prowler Private Cloud, or Prowler Local Server).
 
 ## Configuring MCP Hosts
 
