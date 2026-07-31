@@ -338,8 +338,12 @@ export function useOrgAccountSelectionFlow({
           continue;
         }
 
+        // No task id means no check ever ran, so it cannot count as passing.
         if (!outcome.taskId) {
-          settleProvider(providerId, { success: true });
+          settleProvider(providerId, {
+            success: false,
+            error: "Connection test did not start.",
+          });
           continue;
         }
 
