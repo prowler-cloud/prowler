@@ -25,7 +25,7 @@ from prowler_mcp_server.prowler_app.tools.base import BaseTool
 # detailed view returned by prowler_get_integration
 INTEGRATION_LIST_FIELDS = (
     "enabled,connected,connection_last_checked_at,integration_type,providers,"
-    "inserted_at,updated_at"
+    "configuration,inserted_at,updated_at"
 )
 
 CONNECTION_CHECK_TIMEOUT = 120
@@ -639,7 +639,7 @@ class IntegrationsTools(BaseTool):
             description="UUID of the Jira integration. Use prowler_list_integrations with integration_type=['jira'] to find it."
         ),
         project_key: str = Field(
-            description="Key of the Jira project to read the issue types from (e.g. 'PRWLR'). It must be one of the keys in the 'projects' mapping of the integration configuration."
+            description="Key of the Jira project to read the issue types from (e.g. 'PROJ'). It must be one of the keys in the 'projects' mapping of the integration configuration."
         ),
     ) -> dict[str, Any]:
         """List the issue types available in a Jira project.
@@ -677,7 +677,7 @@ class IntegrationsTools(BaseTool):
             description="UUID of the Jira integration to send the findings through. It must be enabled."
         ),
         project_key: str = Field(
-            description="Key of the Jira project the work items are created in (e.g. 'PRWLR'). It must be one of the keys in the 'projects' mapping of the integration configuration."
+            description="Key of the Jira project the work items are created in (e.g. 'PROJ'). It must be one of the keys in the 'projects' mapping of the integration configuration."
         ),
         issue_type: str = Field(
             description="Jira issue type for the created work items (e.g. 'Task', 'Bug', 'Story'). It must be one of the values returned by prowler_get_jira_issue_types for this project."
