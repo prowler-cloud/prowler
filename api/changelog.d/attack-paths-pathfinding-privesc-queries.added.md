@@ -1,0 +1,1 @@
+Attack Paths adds four AWS privilege-escalation detection queries from pathfinding.cloud: cross-account role trust (STS-002), wildcard role trust (STS-003), user permissions-boundary removal (IAM-022), and IAM Identity Center permission-set escalation (SSO-001)

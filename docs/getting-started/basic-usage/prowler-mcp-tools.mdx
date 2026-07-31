@@ -10,7 +10,7 @@ Complete reference guide for all tools available in the Prowler MCP Server. Tool
 |----------|------------|------------------------|
 | Prowler Hub | 10 tools | No |
 | Prowler Documentation | 2 tools | No |
-| Prowler Cloud, Private Cloud & Local Server | 39 tools | Yes |
+| Prowler Cloud, Private Cloud & Local Server | 42 tools | Yes |
 
 ## Tool Naming Convention
 
@@ -88,6 +88,29 @@ Tools for managing finding muting, including pattern-based bulk muting (mutelist
 - **`prowler_create_mute_rule`** - Create a new mute rule to mute specific findings with documentation and audit trail
 - **`prowler_update_mute_rule`** - Update a mute rule's name, reason, or enabled status
 - **`prowler_delete_mute_rule`** - Delete a mute rule from the system
+
+### Integrations Management
+
+Tools for managing where Prowler sends its results: Amazon S3 buckets, AWS Security Hub, and Jira. Requires the **Manage Integrations** permission.
+
+#### Integration Lifecycle
+
+- **`prowler_list_integrations`** - List the configured integrations with their enabled and connection state, optionally filtered by integration type
+- **`prowler_get_integration`** - Get an integration with its complete, type-specific configuration (bucket and output directory, Security Hub settings and enabled regions, or Jira projects and issue types)
+- **`prowler_update_integration`** - Update credentials, configuration, attached providers, or enabled state. Configuration changes are merged with the current one, and the connection is re-checked automatically whenever credentials, configuration, or attached providers change
+- **`prowler_delete_integration`** - Permanently remove an integration and its stored credentials
+- **`prowler_test_integration_connection`** - Check an integration connection and refresh the configuration Prowler discovers from the remote system (Jira projects, Security Hub regions)
+
+#### Integration Setup
+
+- **`prowler_create_amazon_s3_integration`** - Export scan outputs (CSV, HTML, OCSF JSON, compliance reports) to an S3 bucket, using an IAM role or static credentials
+- **`prowler_create_aws_security_hub_integration`** - Send findings to AWS Security Hub in ASFF format for a single AWS provider, reusing the provider credentials or dedicated ones
+- **`prowler_create_jira_integration`** - Connect an Atlassian Jira site so findings can be turned into work items. Tenant-wide, not attached to any provider
+
+#### Jira Operations
+
+- **`prowler_get_jira_issue_types`** - List the issue types available in a Jira project, fetched live from Jira
+- **`prowler_send_findings_to_jira`** - Create one Jira work item per finding, with its severity, resource, risk, and remediation steps
 
 ### Attack Paths Analysis
 
