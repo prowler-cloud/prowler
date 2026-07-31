@@ -153,7 +153,6 @@ Prowler waits up to **3 minutes** for a result. Past that, the wizard stops wait
 - **Keep waiting** — resume the same discovery. Nothing is re-read from AWS.
 - **Retry** — start a fresh discovery, which queries your Organization structure again.
 
-{/* SCREENSHOT: The "Discovery is taking longer than expected" warning with the Keep waiting and Retry buttons. */}
 <Frame>
   <img src="/images/organizations/discovery-timeout.png" alt="Discovery timeout notice offering Keep waiting and Retry" />
 </Frame>
@@ -215,7 +214,6 @@ Some accounts appear as **blocked** (grayed out, not selectable) when onboarding
 
 Applying your selection stores the organization credential on every selected account. When a selected account is already connected to Prowler with its own credential, that credential is **overwritten** — so the wizard asks first, naming the affected accounts:
 
-{/* SCREENSHOT: "Replace existing credentials?" modal listing the affected accounts, with Cancel and "Replace and continue". */}
 <Frame>
   <img src="/images/organizations/replace-credentials-apply.png" alt="Replace existing credentials modal listing the accounts whose credentials will be replaced" />
 </Frame>
@@ -276,7 +274,6 @@ After launching:
 
 Open the row actions menu on the organization row on the **Providers** page.
 
-{/* SCREENSHOT: Row actions menu open on an AWS organization row, showing every available action. */}
 <Frame>
   <img src="/images/organizations/organization-row-actions.png" alt="Row actions menu on an AWS organization row" />
 </Frame>
@@ -295,7 +292,6 @@ Organizational unit rows carry the same **Test Connections** and **Delete Organi
 
 Choosing **Update Credentials** re-enters the Authentication Details step. Because the organization already holds a credential, Prowler warns before overwriting it and names how many providers re-authenticate with the new one:
 
-{/* SCREENSHOT: "Replace existing credentials?" modal showing the affected provider count, with Cancel and "Replace credentials". */}
 <Frame>
   <img src="/images/organizations/replace-credentials-setup.png" alt="Replace existing credentials modal showing how many providers re-authenticate" />
 </Frame>
@@ -306,7 +302,6 @@ Storing a new credential runs a fresh discovery, so any discovery already in pro
 
 Deleting an organization or an organizational unit **cascades to every provider grouped under it**, along with their scans and findings. Both dialogs state how many providers are affected before you confirm.
 
-{/* SCREENSHOT: Delete confirmation dialog for an AWS organization, showing the cascade provider count. */}
 <Frame>
   <img src="/images/organizations/delete-organization.png" alt="Delete organization dialog showing how many providers are deleted with it" />
 </Frame>
