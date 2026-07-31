@@ -1,3 +1,19 @@
+export const USER_SIGN_IN_METHOD = {
+  EMAIL_PASSWORD: "email_password",
+  GOOGLE: "google",
+  GITHUB: "github",
+  SAML: "saml",
+  PARTNER_SSO: "partner_sso",
+} as const;
+
+export type UserSignInMethodType =
+  (typeof USER_SIGN_IN_METHOD)[keyof typeof USER_SIGN_IN_METHOD];
+
+export interface UserSignInMethod {
+  method: UserSignInMethodType;
+  domain?: string;
+}
+
 export interface UserAttributes {
   name: string;
   email: string;
