@@ -366,10 +366,15 @@ class TestCleanupStaleScans:
 
         assert result == {"cleaned_up_count": 0, "scan_ids": [], "queues_checked": 0}
 
+    @patch(
+        "tasks.jobs.scan_cleanup.SCAN_CLEANUP_CONFIG_ERROR",
+        "invalid stale-scan thresholds",
+    )
     @patch("tasks.jobs.scan_cleanup.SCAN_CLEANUP_ENABLED", False)
     @patch("tasks.jobs.scan_cleanup._ping_workers")
+    @patch("tasks.jobs.scan_cleanup.logger.error")
     def test_no_ops_when_disabled_by_invalid_configuration(
-        self, mock_ping, tenants_fixture, aws_provider
+        self, mock_log_error, mock_ping, tenants_fixture, aws_provider
     ):
         # An unsafe threshold policy must not reap anything, however stale.
         tenant = tenants_fixture[0]
@@ -388,6 +393,8 @@ class TestCleanupStaleScans:
         mock_ping.assert_not_called()
         scan = Scan.objects.get(provider=aws_provider)
         assert scan.state == StateChoices.EXECUTING
+        mock_log_error.assert_called_once()
+        assert "invalid stale-scan thresholds" in str(mock_log_error.call_args)
 
     @patch("tasks.jobs.scan_cleanup._ping_workers", return_value=(set(), set()))
     def test_safety_net_dispatches_orphaned_queued_scan(
