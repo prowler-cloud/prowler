@@ -13,6 +13,10 @@ const nextConfig = {
     !process.env.CI && {
       output: "standalone",
       outputFileTracingRoot: __dirname,
+      // sharp 0.35 loads its native binary dynamically, so tracing misses it.
+      outputFileTracingIncludes: {
+        "**": ["./node_modules/.pnpm/@img+sharp-libvips-linuxmusl-*/**/*"],
+      },
     }),
   // React Compiler is now stable in Next.js 16
   reactCompiler: true,
