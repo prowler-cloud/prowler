@@ -40,6 +40,7 @@ from api.models import Scan, StateChoices
 from celery import current_app, states
 from celery.utils.log import get_task_logger
 from config.django.base import (
+    SCAN_CLEANUP_CONFIG_ERROR,
     SCAN_CLEANUP_ENABLED,
     SCAN_INACTIVITY_THRESHOLD_MINUTES,
     SCAN_STALE_THRESHOLD_MINUTES,
@@ -66,9 +67,12 @@ def cleanup_stale_scans() -> dict:
     many provider queues were checked for a pending release.
     """
     if not SCAN_CLEANUP_ENABLED:
+        # Carry the reason rather than pointing at the startup log: settings are
+        # imported before Django configures `LOGGING`, so that message never
+        # reaches the structured handlers. This one does.
         logger.error(
-            "Stale scan cleanup skipped: invalid threshold configuration, see "
-            "the configuration error logged at startup"
+            "Stale scan cleanup skipped: invalid threshold configuration - %s",
+            SCAN_CLEANUP_CONFIG_ERROR,
         )
         return {"cleaned_up_count": 0, "scan_ids": [], "queues_checked": 0}
 

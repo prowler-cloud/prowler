@@ -342,6 +342,10 @@ elif SCAN_STALE_THRESHOLD_MINUTES < SCAN_INACTIVITY_THRESHOLD_MINUTES:
     )
 
 SCAN_CLEANUP_ENABLED = _scan_cleanup_config_error is None
+# Exported so the task can log the reason itself. Settings are imported before
+# Django applies `LOGGING`, so the message below is emitted by the logging
+# last-resort handler and does not reach the configured structured handlers.
+SCAN_CLEANUP_CONFIG_ERROR = _scan_cleanup_config_error
 
 if _scan_cleanup_config_error:
     logging.getLogger(__name__).error(
