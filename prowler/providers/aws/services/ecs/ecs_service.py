@@ -149,8 +149,8 @@ class ECS(AWSService):
                     "TAGS",
                 ],
             )
-            container_definitions = response["taskDefinition"]["containerDefinitions"]
-            for container in container_definitions:
+            container_definitions = []
+            for container in response["taskDefinition"]["containerDefinitions"]:
                 environment = []
                 if "environment" in container:
                     for env_var in container["environment"]:
@@ -159,7 +159,7 @@ class ECS(AWSService):
                                 name=env_var["name"], value=env_var["value"]
                             )
                         )
-                task_definition.container_definitions.append(
+                container_definitions.append(
                     ContainerDefinition(
                         name=container["name"],
                         privileged=container.get("privileged", False),
@@ -176,6 +176,7 @@ class ECS(AWSService):
                         .get("mode", ""),
                     )
                 )
+            task_definition.container_definitions = container_definitions
             task_definition.pid_mode = response["taskDefinition"].get("pidMode", "")
             task_definition.registered_at = response["taskDefinition"].get(
                 "registeredAt"
@@ -298,11 +299,31 @@ class ContainerDefinition(BaseModel):
 
 
 class TaskDefinition(BaseModel):
+    """ECS task definition model.
+
+    Attributes:
+        name: Task definition family name, without the revision suffix.
+        arn: Full task definition ARN.
+        revision: Task definition revision.
+        region: AWS region where the task definition was listed.
+        container_definitions: Container definitions populated only by a
+            successful ``DescribeTaskDefinition`` call.  ``None`` means the
+            call failed and the evidence was never gathered; ``[]`` means a
+            successful describe with no containers.  Checks must skip task
+            definitions whose evidence is ``None`` instead of reporting an
+            unexamined resource as compliant.
+        pid_mode: PID mode of the task definition (``"host"`` when the host
+            process namespace is shared with the containers).
+        registered_at: Registration timestamp of the task definition.
+        tags: Tags attached to the task definition.
+        network_mode: Network mode of the task definition.
+    """
+
     name: str
     arn: str
     revision: str
     region: str
-    container_definitions: list[ContainerDefinition] = []
+    container_definitions: Optional[list[ContainerDefinition]] = None
     pid_mode: Optional[str]
     registered_at: Optional[datetime] = None
     tags: Optional[list] = []

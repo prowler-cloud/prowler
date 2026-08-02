@@ -3,9 +3,22 @@ from prowler.providers.aws.services.ecs.ecs_client import ecs_client
 
 
 class ecs_task_definitions_logging_block_mode(Check):
-    def execute(self):
+    """Verify ECS task definition containers use non-blocking logging mode.
+
+    Task definitions whose describe call failed are skipped so an
+    unexamined resource is never reported as compliant.
+    """
+
+    def execute(self) -> list[Check_Report_AWS]:
+        """Execute the check.
+
+        Returns:
+            A list of check reports, one per ECS task definition.
+        """
         findings = []
         for task_definition in ecs_client.task_definitions.values():
+            if task_definition.container_definitions is None:
+                continue
             report = Check_Report_AWS(
                 metadata=self.metadata(), resource=task_definition
             )
