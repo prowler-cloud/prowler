@@ -128,6 +128,14 @@ RUN apt-get purge -y --auto-remove \
     apt-transport-https \
     && rm -rf /var/lib/apt/lists/*
 
+# pip is build-only; the entrypoint runs uv against the prepared venv. uv stays.
+RUN rm -rf /usr/local/lib/python3.12/site-packages/pip \
+    /usr/local/lib/python3.12/site-packages/pip-*.dist-info \
+    /home/prowler/.local/lib/python3.12/site-packages/pip \
+    /home/prowler/.local/lib/python3.12/site-packages/pip-*.dist-info \
+    /usr/local/bin/pip /usr/local/bin/pip3 /usr/local/bin/pip3.12 \
+    /home/prowler/.local/bin/pip /home/prowler/.local/bin/pip3 /home/prowler/.local/bin/pip3.12
+
 USER prowler
 
 COPY --chown=prowler:prowler src/backend/ ./backend/

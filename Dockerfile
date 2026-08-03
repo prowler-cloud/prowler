@@ -116,5 +116,15 @@ USER prowler
 RUN pip uninstall dash-html-components -y && \
     pip uninstall dash-core-components -y
 
+USER root
+
+# pip is build-only; the entrypoint runs the venv directly.
+RUN rm -rf /usr/local/lib/python3.12/site-packages/pip \
+    /usr/local/lib/python3.12/site-packages/pip-*.dist-info \
+    /home/prowler/.local/lib/python3.12/site-packages/pip \
+    /home/prowler/.local/lib/python3.12/site-packages/pip-*.dist-info \
+    /usr/local/bin/pip /usr/local/bin/pip3 /usr/local/bin/pip3.12 \
+    /home/prowler/.local/bin/pip /home/prowler/.local/bin/pip3 /home/prowler/.local/bin/pip3.12
+
 USER prowler
 ENTRYPOINT ["/home/prowler/.venv/bin/prowler"]
