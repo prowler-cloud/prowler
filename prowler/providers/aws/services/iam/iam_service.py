@@ -49,7 +49,6 @@ class IAM(AWSService):
         )
         self.users = self._get_users()
         self.roles = self._get_roles()
-        self.instance_profiles = self._list_instance_profiles()
         self.account_summary = self._get_account_summary()
         self.virtual_mfa_devices = self._list_virtual_mfa_devices()
         self.credential_report = self._get_credential_report()
@@ -155,33 +154,6 @@ class IAM(AWSService):
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return roles
-
-    def _list_instance_profiles(self):
-        """Map instance-profile ARN → list of role names contained in it.
-
-        A single ``list_instance_profiles`` call returns each profile with its
-        embedded ``Roles`` array, so no per-profile follow-up is needed.
-        """
-        logger.info("IAM - List Instance Profiles...")
-        instance_profiles = {}
-        try:
-            paginator = self.client.get_paginator("list_instance_profiles")
-            for page in paginator.paginate():
-                for profile in page.get("InstanceProfiles", []):
-                    arn = profile.get("Arn")
-                    if not arn:
-                        continue
-                    role_names = [
-                        r["RoleName"]
-                        for r in profile.get("Roles") or []
-                        if "RoleName" in r
-                    ]
-                    instance_profiles[arn] = role_names
-        except Exception as error:
-            logger.error(
-                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-        return instance_profiles
 
     def _get_credential_report(self):
         logger.info("IAM - Get Credential Report...")

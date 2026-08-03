@@ -38,15 +38,6 @@ ENCLAVE_UNKNOWN_IMAGE_CONFIG_TARGET_KEYS_KEY = "enclave_unknown_image_target_key
 ENCLAVE_UNKNOWN_IMAGE_CONFIG_SEVERITY_KEY = "enclave_unknown_image_severity"
 ENCLAVE_UNKNOWN_IMAGE_ALLOWED_SEVERITIES = ("medium", "high")
 
-_PCR_FIELDS = (
-    "attestationDocumentEnclaveImageDigest",
-    "attestationDocumentEnclavePCR1",
-    "attestationDocumentEnclavePCR2",
-    "attestationDocumentEnclavePCR3",
-    "attestationDocumentEnclavePCR4",
-    "attestationDocumentEnclavePCR8",
-)
-
 # Fields that debug mode zeros. Verified against AWS's official
 # aws-nitro-enclaves-cli README: "All the platform configuration registers
 # (PCRs) except for PCR3, PCR4 and PCR8 will have all their values set to 0".
@@ -69,8 +60,6 @@ _DEBUG_ZEROED_PCR_FIELDS = (
 # All comparisons canonicalize to 48 raw bytes and are re-rendered as lower
 # hex for storage/display.
 _PCR_BYTE_LENGTH = 48
-_PCR_HEX_LENGTH = 96
-_PCR_BASE64_LENGTH = 64
 _PCR_HEX_RE = re.compile(r"^[0-9a-fA-F]{96}$")
 _PCR_BASE64_RE = re.compile(r"^[A-Za-z0-9+/]{64}$")
 _ALL_ZERO_PCR_BYTES = b"\x00" * _PCR_BYTE_LENGTH

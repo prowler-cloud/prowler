@@ -340,42 +340,6 @@ class Test_IAM_Service:
         # Hybrid role should return False even though it has a service principal
         assert not is_service_role(hybrid_role)
 
-    # Test IAM List Instance Profiles
-    @mock_aws
-    def test_list_instance_profiles(self):
-        iam_client = client("iam")
-        assume_role_policy = {
-            "Version": "2012-10-17",
-            "Statement": [
-                {
-                    "Effect": "Allow",
-                    "Principal": {"Service": "ec2.amazonaws.com"},
-                    "Action": "sts:AssumeRole",
-                }
-            ],
-        }
-        # Divergent-name case: profile "app-profile" contains role "app-role".
-        iam_client.create_role(
-            RoleName="app-role",
-            AssumeRolePolicyDocument=dumps(assume_role_policy),
-        )
-        profile = iam_client.create_instance_profile(
-            InstanceProfileName="app-profile"
-        )["InstanceProfile"]
-        iam_client.add_role_to_instance_profile(
-            InstanceProfileName="app-profile", RoleName="app-role"
-        )
-        # Empty profile with no role attached.
-        empty_profile = iam_client.create_instance_profile(
-            InstanceProfileName="empty-profile"
-        )["InstanceProfile"]
-
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
-        iam = IAM(aws_provider)
-
-        assert iam.instance_profiles[profile["Arn"]] == ["app-role"]
-        assert iam.instance_profiles[empty_profile["Arn"]] == []
-
     # Test IAM Get Groups
     @mock_aws
     def test_get_groups(self):
