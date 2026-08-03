@@ -81,6 +81,35 @@ describe("LighthouseCurrentContextBadge", () => {
     expect(tooltip).toHaveTextContent("Only the current page name is shared.");
   });
 
+  it("should not claim a bare page for a single non-page item", async () => {
+    // Given a historical envelope whose only item is not a page item
+    const user = userEvent.setup();
+    const context: LighthouseContextEnvelope = {
+      schemaVersion: 1,
+      transport: "inline",
+      items: [
+        {
+          kind: "scan",
+          id: "scan-1",
+          source: "selection",
+          scopeKey: "scans:/scans",
+          label: "Selected scan",
+          scanId: "scan-1",
+        },
+      ],
+    };
+    render(<LighthouseCurrentContextBadge context={context} />);
+
+    // When
+    await user.hover(screen.getByLabelText("Context context"));
+
+    // Then
+    const tooltip = await screen.findByRole("tooltip");
+    expect(tooltip).not.toHaveTextContent(
+      "Only the current page name is shared.",
+    );
+  });
+
   it("should not claim a bare page when filters or items travel too", async () => {
     // Given
     const user = userEvent.setup();

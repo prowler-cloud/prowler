@@ -49,6 +49,17 @@ describe("resolveLighthousePage", () => {
     expectValidSuggestions(page.suggestions);
   });
 
+  it("should not match routes that only share a page's prefix", () => {
+    for (const pathname of [
+      "/roles-preview",
+      "/users-report",
+      "/invitations-archive",
+      "/integrations-beta",
+    ]) {
+      expect(resolveLighthousePage(pathname).id).toBe("other");
+    }
+  });
+
   it("should use the known route label for fallback pages that declare one", () => {
     const page = resolveLighthousePage("/manage-groups");
 

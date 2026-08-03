@@ -421,7 +421,8 @@ export const LIGHTHOUSE_PAGE_DEFINITION_INPUTS = [
   {
     id: LIGHTHOUSE_PAGE_ID.ROLES,
     label: "Roles",
-    match: (pathname) => pathname.startsWith("/roles"),
+    match: (pathname) =>
+      pathname === "/roles" || pathname.startsWith("/roles/"),
     allowedSearchParams: [...COMMON_LIST_PARAMS],
     suggestions: [
       {
@@ -449,7 +450,8 @@ export const LIGHTHOUSE_PAGE_DEFINITION_INPUTS = [
   {
     id: LIGHTHOUSE_PAGE_ID.USERS,
     label: "Users",
-    match: (pathname) => pathname.startsWith("/users"),
+    match: (pathname) =>
+      pathname === "/users" || pathname.startsWith("/users/"),
     allowedSearchParams: [...COMMON_LIST_PARAMS],
     suggestions: [
       {
@@ -477,7 +479,8 @@ export const LIGHTHOUSE_PAGE_DEFINITION_INPUTS = [
   {
     id: LIGHTHOUSE_PAGE_ID.INVITATIONS,
     label: "Invitations",
-    match: (pathname) => pathname.startsWith("/invitations"),
+    match: (pathname) =>
+      pathname === "/invitations" || pathname.startsWith("/invitations/"),
     allowedSearchParams: [...COMMON_LIST_PARAMS],
     suggestions: [
       {
@@ -505,7 +508,8 @@ export const LIGHTHOUSE_PAGE_DEFINITION_INPUTS = [
   {
     id: LIGHTHOUSE_PAGE_ID.INTEGRATIONS,
     label: "Integrations",
-    match: (pathname) => pathname.startsWith("/integrations"),
+    match: (pathname) =>
+      pathname === "/integrations" || pathname.startsWith("/integrations/"),
     allowedSearchParams: [...COMMON_LIST_PARAMS, "filter[integration_type]"],
     suggestions: [
       {

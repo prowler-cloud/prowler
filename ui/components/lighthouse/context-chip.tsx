@@ -96,7 +96,10 @@ function LighthouseContextTooltip({ context }: LighthouseContextBadgeProps) {
     .filter((description) => description !== null);
   // A single filterless page item means the model only learns which page the
   // user is on — say so instead of implying richer context travels with it.
-  const sharesOnlyPage = context.items.length === 1 && !filters;
+  const sharesOnlyPage =
+    page?.kind === LIGHTHOUSE_CONTEXT_KIND.PAGE &&
+    context.items.length === 1 &&
+    !filters;
 
   return (
     <TooltipContent maxWidth="md">
