@@ -55,6 +55,12 @@ jobs:
         # Pin must match .pre-commit-config.yaml so prek and CI behave identically.
         # pnpm dlx doesn't accept --ignore-scripts as a flag; the env var
         # disables postinstall scripts on transitives the same way.
+        #
+        # Files are enumerated with `git ls-files` rather than passed as a
+        # `**/*.md` glob: neither markdownlint's own glob expansion nor a bare
+        # `.` traverses dot-directories, so `.github/**/*.md` was never linted
+        # here while the prek hook (which receives changed files explicitly)
+        # did check it. `.markdownlintignore` still applies to the listed paths.
         env:
           pnpm_config_ignore_scripts: 'true'
-        run: pnpm dlx markdownlint-cli@0.45.0 '**/*.md'
+        run: git ls-files -z '*.md' | xargs -0 -r pnpm dlx markdownlint-cli@0.45.0 --
