@@ -4,12 +4,17 @@ import { RadioGroupItem } from "@/components/shadcn/radio-group/radio-group";
 import { cn } from "@/lib/utils";
 
 interface CustomRadioProps {
+  ariaLabel?: string;
   description?: string;
   value?: string;
   children?: React.ReactNode;
 }
 
-export const CustomRadio = ({ value, children }: CustomRadioProps) => {
+export const CustomRadio = ({
+  ariaLabel,
+  value,
+  children,
+}: CustomRadioProps) => {
   return (
     <label
       className={cn(
@@ -18,7 +23,7 @@ export const CustomRadio = ({ value, children }: CustomRadioProps) => {
         "has-[[data-state=checked]]:border-button-primary",
       )}
     >
-      <RadioGroupItem value={value || ""} />
+      <RadioGroupItem value={value || ""} aria-label={ariaLabel} />
       <span>{children}</span>
     </label>
   );

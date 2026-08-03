@@ -31,9 +31,10 @@ import {
   getNodeColor,
   getPathEdges,
   GRAPH_EDGE_HIGHLIGHT_COLOR,
+  isProwlerFindingNode,
   resolveHiddenFindingIds,
 } from "../../_lib";
-import { isFindingNode, layoutWithDagre } from "../../_lib/layout";
+import { layoutWithDagre } from "../../_lib/layout";
 
 import { FindingNode } from "./nodes/finding-node";
 import { InternetNode } from "./nodes/internet-node";
@@ -388,7 +389,7 @@ const GraphCanvas = ({
   const findingToResources = new Map<string, Set<string>>();
 
   nodes.forEach((n) => {
-    if (isFindingNode(n.labels)) findingNodeIds.add(n.id);
+    if (isProwlerFindingNode(n.labels)) findingNodeIds.add(n.id);
   });
 
   const resourcesWithFindings = new Set<string>();
@@ -460,7 +461,7 @@ const GraphCanvas = ({
     hidden: hiddenFindingIds.has(node.id),
     className: cn(
       node.className,
-      isFindingNode(node.data.graphNode.labels) ||
+      isProwlerFindingNode(node.data.graphNode.labels) ||
         resourcesWithFindings.has(node.id)
         ? "cursor-pointer"
         : "cursor-default",

@@ -232,7 +232,10 @@ def _scan_batch_chunk(
                     encoding=encoding_format_utf_8,
                     errors="replace",
                 ) as f:
-                    source_lines_cache[file_name] = f.read().splitlines()
+                    # Kingfisher reports LF-delimited line numbers. Unlike
+                    # splitlines(), this does not treat ASCII control characters
+                    # such as FS, GS, and RS as additional line boundaries.
+                    source_lines_cache[file_name] = f.read().split("\n")
             return source_lines_cache[file_name]
 
         for entry in kingfisher_output.get("findings", []):

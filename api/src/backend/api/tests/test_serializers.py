@@ -6,10 +6,13 @@ from api.v1.serializer_utils.integrations import (
 from api.v1.serializer_utils.providers import ProviderSecretField
 from api.v1.serializers import (
     ImageProviderSecret,
+    IntegrationSerializer,
+    IntegrationUpdateSerializer,
     KubernetesProviderSecret,
     OracleCloudProviderSecret,
 )
 from rest_framework.exceptions import ValidationError
+from rest_framework.test import APIRequestFactory
 
 
 class TestS3ConfigSerializer:
@@ -309,6 +312,36 @@ current-context: test-context
         assert not serializer.is_valid()
         assert "kubeconfig_content" in serializer.errors
 
+    def test_kubeconfig_with_auth_provider_cmd_path_is_rejected(self):
+        kubeconfig_content = """
+apiVersion: v1
+kind: Config
+clusters:
+  - name: test-cluster
+    cluster:
+      server: https://kubernetes.example.test
+users:
+  - name: test-user
+    user:
+      auth-provider:
+        name: gcp
+        config:
+          cmd-path: /bin/sh
+contexts:
+  - name: test-context
+    context:
+      cluster: test-cluster
+      user: test-user
+current-context: test-context
+"""
+
+        serializer = KubernetesProviderSecret(
+            data={"kubeconfig_content": kubeconfig_content}
+        )
+
+        assert not serializer.is_valid()
+        assert "kubeconfig_content" in serializer.errors
+
     def test_malformed_kubeconfig_is_rejected(self):
         serializer = KubernetesProviderSecret(
             data={"kubeconfig_content": "apiVersion: ["}
@@ -322,3 +355,25 @@ current-context: test-context
 
         assert not serializer.is_valid()
         assert "kubeconfig_content" in serializer.errors
+
+
+@pytest.mark.django_db
+class TestIntegrationSerializerJiraDomain:
+    """The serialized Jira `domain` must not reach the model instance."""
+
+    @pytest.mark.parametrize(
+        "serializer_class", [IntegrationSerializer, IntegrationUpdateSerializer]
+    )
+    def test_to_representation_does_not_mutate_configuration(
+        self, serializer_class, jira_integration_fixture
+    ):
+        # `IntegrationUpdateSerializer` exposes a `HyperlinkedIdentityField`
+        context = {"request": APIRequestFactory().get("/")}
+        representation = serializer_class(
+            jira_integration_fixture, context=context
+        ).data
+
+        assert representation["configuration"]["domain"] == "test"
+        assert jira_integration_fixture.configuration == {
+            "projects": {"TEST": "Test project"}
+        }

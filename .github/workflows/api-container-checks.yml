@@ -105,13 +105,24 @@ jobs:
         id: check-changes
         uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
-          files: api/**
+          files: |
+            api/**
+            .github/actions/trivy-scan/**
           files_ignore: |
             api/docs/**
             api/README.md
             api/CHANGELOG.md
             api/changelog.d/**
             api/AGENTS.md
+
+      # api-container-build-push.yml resolves the SDK pin to the branch tip
+      # before building, so match it here and scan what ships. Push only: PRs
+      # stay deterministic against the committed lock.
+      - name: Refresh prowler SDK pin to current branch tip
+        if: steps.check-changes.outputs.any_changed == 'true' && github.event_name == 'push'
+        run: |
+          pip install --no-cache-dir "uv==0.11.14"
+          (cd api && uv lock --upgrade-package prowler)
 
       - name: Set up Docker Buildx
         if: steps.check-changes.outputs.any_changed == 'true'

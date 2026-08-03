@@ -797,12 +797,34 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
         if name not in frameworks_bulk and universal_bulk[name].outputs
     }
     frameworks_avail = get_compliance_frameworks(provider_type)
+    # Idempotency: a previous run of this task for the same scan may have left
+    # output files behind (e.g. broker redelivery after a worker was killed
+    # mid-run with task_acks_late, or a successful run on a deployment without
+    # S3 where the tmp dir is not removed). Output writers open files in append
+    # mode with a deterministic path (derived from scan.started_at), so reusing
+    # them would append every finding row again and duplicate the CSV/output
+    # rows. Start from a clean slate before (re)generating.
+    scan_tmp_dir = _scan_tmp_output_directory(tenant_id, scan_id)
+    if os.path.exists(scan_tmp_dir):
+        rmtree(scan_tmp_dir, ignore_errors=True)
+        # The writers below open output files in append mode with deterministic
+        # paths (derived from scan.started_at). Any stale file that survives the
+        # cleanup would get every finding row appended again, which is the exact
+        # duplication this guards against. Continuing is therefore unsafe: abort
+        # so `ScanReportRLSTask.on_failure` removes the tmp dir and the retry
+        # starts from a clean slate instead of publishing duplicated rows.
+        if os.path.exists(scan_tmp_dir):
+            raise RuntimeError(
+                "Could not remove stale output directory for scan "
+                f"{scan_id} before generating outputs; aborting to avoid "
+                "duplicated rows in appended outputs."
+            )
+
     out_dir, comp_dir = _generate_output_directory(
         DJANGO_TMP_OUTPUT_DIRECTORY, provider_uid, tenant_id, scan_id
     )
     # Removed on success here and on failure by ScanReportRLSTask.on_failure,
     # so partial artifacts do not accumulate and fill the disk (ENOSPC).
-    scan_tmp_dir = _scan_tmp_output_directory(tenant_id, scan_id)
 
     def get_writer(writer_map, name, factory, is_last):
         """

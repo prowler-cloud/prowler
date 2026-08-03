@@ -35,6 +35,20 @@ CVE-2026-13221 pkg:perl-base exp:2026-08-15
 CVE-2026-13221 pkg:perl-modules-5.36 exp:2026-08-15
 CVE-2026-13221 pkg:libperl5.36 exp:2026-08-15
 
+# CVE-2026-57433 — Perl Storable signed integer overflow when deserializing a
+# crafted SX_HOOK record (retrieve_hook_common passes a wrapped negative count
+# to av_extend).
+# Packages: perl, perl-base, perl-modules-5.36, libperl5.36.
+# Why ignored: perl-base is part of Debian's "Essential: yes" set; it cannot be
+# removed without breaking dpkg. Prowler does not invoke perl at runtime and
+# never calls Storable's thaw/retrieve on attacker-controlled blobs, so the
+# vulnerable deserialization path is unreachable. Fixed upstream in
+# Storable 3.41; no Debian bookworm fix is available yet.
+CVE-2026-57433 pkg:perl exp:2026-08-15
+CVE-2026-57433 pkg:perl-base exp:2026-08-15
+CVE-2026-57433 pkg:perl-modules-5.36 exp:2026-08-15
+CVE-2026-57433 pkg:libperl5.36 exp:2026-08-15
+
 # CVE-2025-7458 — SQLite integer overflow.
 # Package: libsqlite3-0.
 # Why ignored: transitive dependency of CPython's stdlib sqlite3 module. The

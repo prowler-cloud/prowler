@@ -179,7 +179,7 @@ describe("ScansPageShell", () => {
   });
 
   it("does not render an imported findings tab", () => {
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
 
     render(
       <ScansPageShell providers={providers} hasManageScansPermission>
@@ -197,7 +197,7 @@ describe("ScansPageShell", () => {
   });
 
   it("uses the shared scan filter bar for scan filters", () => {
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
 
     render(
       <ScansPageShell providers={providers} hasManageScansPermission>
@@ -215,7 +215,7 @@ describe("ScansPageShell", () => {
   });
 
   it("clears the active sort when switching tabs", async () => {
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
     searchParamsValue.current = "tab=active&sort=trigger";
     const user = userEvent.setup();
 
@@ -234,7 +234,7 @@ describe("ScansPageShell", () => {
   });
 
   it("uses a generic type filter label in Cloud", () => {
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
 
     render(
       <ScansPageShell providers={providers} hasManageScansPermission>
@@ -246,7 +246,7 @@ describe("ScansPageShell", () => {
   });
 
   it("shows the CLI import banner in Cloud", () => {
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
 
     render(
       <ScansPageShell providers={providers} hasManageScansPermission>
@@ -264,7 +264,7 @@ describe("ScansPageShell", () => {
   });
 
   it("hides the CLI import banner outside Cloud", () => {
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
 
     render(
       <ScansPageShell providers={providers} hasManageScansPermission>
@@ -276,7 +276,7 @@ describe("ScansPageShell", () => {
   });
 
   it("keeps launch scan with filters and mutelist with tabs", () => {
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
 
     render(
       <ScansPageShell providers={providers} hasManageScansPermission>
@@ -298,7 +298,7 @@ describe("ScansPageShell", () => {
   });
 
   it("shows the active scans count in the in progress tab", () => {
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
 
     render(
       <ScansPageShell
@@ -317,7 +317,7 @@ describe("ScansPageShell", () => {
   });
 
   it("opens the launch scan modal from the URL", () => {
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
     searchParamsValue.current = "launchScan=true";
 
     render(
@@ -375,7 +375,7 @@ describe("ScansPageShell", () => {
   });
 
   it("strips the launchScan URL param via the History API when closing the URL-opened modal", async () => {
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
     searchParamsValue.current = "tab=completed&launchScan=true";
     const replaceStateSpy = vi.spyOn(window.history, "replaceState");
     const user = userEvent.setup();
@@ -403,7 +403,7 @@ describe("ScansPageShell", () => {
   });
 
   it("opens and closes the launch scan modal from client state without navigation", async () => {
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
     const user = userEvent.setup();
     useScansStore.getState().openLaunchScanModal();
 
@@ -422,7 +422,7 @@ describe("ScansPageShell", () => {
   });
 
   it("shows the status filter only on the completed tab", () => {
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
     searchParamsValue.current = "tab=completed";
 
     render(
@@ -437,7 +437,7 @@ describe("ScansPageShell", () => {
   });
 
   it("hides the status filter outside of the completed tab", () => {
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
     searchParamsValue.current = "tab=active";
 
     render(
@@ -452,7 +452,7 @@ describe("ScansPageShell", () => {
   });
 
   it("clears status filter when switching scan tabs", async () => {
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
     searchParamsValue.current = "tab=completed&filter%5Bstate__in%5D=failed";
     const user = userEvent.setup();
 
@@ -470,7 +470,7 @@ describe("ScansPageShell", () => {
   });
 
   it("clears type filter when switching to scheduled scans", async () => {
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
     searchParamsValue.current = "tab=completed&filter%5Btrigger%5D=manual";
     const user = userEvent.setup();
 

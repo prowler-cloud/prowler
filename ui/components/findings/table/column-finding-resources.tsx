@@ -4,9 +4,8 @@ import { ColumnDef, Row, RowSelectionState } from "@tanstack/react-table";
 import { CornerDownRight, VolumeOff, VolumeX } from "lucide-react";
 import { useContext, useState } from "react";
 
+import { JiraDispatchActionItem } from "@/components/findings/jira-dispatch-action-item";
 import { MuteFindingsModal } from "@/components/findings/mute-findings-modal";
-import { SendToJiraModal } from "@/components/findings/send-to-jira-modal";
-import { JiraIcon } from "@/components/icons/services/IconServices";
 import { Checkbox } from "@/components/shadcn";
 import {
   ActionDropdown,
@@ -18,16 +17,15 @@ import { InfoField } from "@/components/shadcn/info-field/info-field";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { SeverityBadge } from "@/components/shadcn/table";
 import { DataTableColumnHeader } from "@/components/shadcn/table/data-table-column-header";
-import {
-  type FindingStatus,
-  StatusFindingBadge,
-} from "@/components/shadcn/table/status-finding-badge";
 import { getFailingForLabel } from "@/lib/date-utils";
+import { buildJiraActionLabel } from "@/lib/jira-dispatch-action";
+import { createJiraDispatchPayload } from "@/lib/jira-dispatch-selection";
 import { FindingResourceRow } from "@/types";
 import type {
   FindingTriageLoadedNote,
   FindingTriageSummary,
 } from "@/types/findings-triage";
+import { JIRA_DISPATCH_TARGET } from "@/types/integrations";
 
 import { canMuteFindingResource } from "./finding-resource-selection";
 import {
@@ -57,7 +55,6 @@ const ResourceRowActions = ({
   const resource = row.original;
   const canMute = canMuteFindingResource(resource);
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
-  const [isJiraModalOpen, setIsJiraModalOpen] = useState(false);
   const [resolvedIds, setResolvedIds] = useState<string[]>([]);
   const [isResolving, setIsResolving] = useState(false);
 
@@ -83,6 +80,14 @@ const ResourceRowActions = ({
     if (ids.length > 1) return `Mute ${ids.length}`;
     return "Mute";
   };
+  const displayIds = getDisplayIds();
+  const jiraPayload = createJiraDispatchPayload({
+    targetIds: displayIds,
+    targetType: JIRA_DISPATCH_TARGET.FINDING_ID,
+    findingTitle: findingTitle || resource.checkId,
+    selectedResourceCount: displayIds.length,
+    isFindingGroupSelection: true,
+  });
 
   const handleMuteClick = async () => {
     const displayIds = getDisplayIds();
@@ -123,12 +128,6 @@ const ResourceRowActions = ({
           onComplete={handleMuteComplete}
         />
       )}
-      <SendToJiraModal
-        isOpen={isJiraModalOpen}
-        onOpenChange={setIsJiraModalOpen}
-        findingId={resource.findingId}
-        findingTitle={resource.checkId}
-      />
       <div
         className="flex items-center justify-end"
         onClick={(e) => e.stopPropagation()}
@@ -159,10 +158,11 @@ const ResourceRowActions = ({
             disabled={!canMute || isResolving}
             onSelect={handleMuteClick}
           />
-          <ActionDropdownItem
-            icon={<JiraIcon size={20} />}
-            label="Send to Jira"
-            onSelect={() => setIsJiraModalOpen(true)}
+          <JiraDispatchActionItem
+            label={buildJiraActionLabel({
+              findingCount: displayIds.length,
+            })}
+            payload={jiraPayload}
           />
         </ActionDropdown>
       </div>
@@ -243,24 +243,14 @@ export function getColumnFindingResources({
       enableSorting: false,
       enableHiding: false,
     },
-    // Status
-    {
-      id: "status",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Status" />
-      ),
-      cell: ({ row }) => {
-        return (
-          <StatusFindingBadge status={row.original.status as FindingStatus} />
-        );
-      },
-      enableSorting: false,
-    },
-    // Resource — name + uid
+    // Affected failing resource — name + uid
     {
       id: "resource",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Resource" />
+        <DataTableColumnHeader
+          column={column}
+          title="Affected failing resource"
+        />
       ),
       cell: ({ row }) => (
         <div className="max-w-[240px]">

@@ -26,6 +26,8 @@ const CLOUD_UPGRADE_UTM_CONTENT = {
   [CLOUD_UPGRADE_FEATURE.CROSS_PROVIDER_COMPLIANCE]:
     "cross-provider-compliance",
   [CLOUD_UPGRADE_FEATURE.FINDING_TRIAGE]: "findings",
+  [CLOUD_UPGRADE_FEATURE.GCP_ORGANIZATIONS]: "gcp-organization",
+  [CLOUD_UPGRADE_FEATURE.JIRA_DISPATCH]: "jira-dispatch",
   [CLOUD_UPGRADE_FEATURE.LIGHTHOUSE_AI]: "lighthouse-ai",
   [CLOUD_UPGRADE_FEATURE.GENERAL]: "general",
   [CLOUD_UPGRADE_FEATURE.SCAN_CONFIGURATION]: "scan-configuration",
@@ -65,6 +67,17 @@ export const CLOUD_UPGRADE_CONTENT = {
     ],
     primaryCta: "Set Up AWS Organizations in Prowler Cloud",
   },
+  [CLOUD_UPGRADE_FEATURE.GCP_ORGANIZATIONS]: {
+    title: "Add Your Entire GCP Organization",
+    description:
+      "Discover folders and projects, then manage them from one place.",
+    benefits: [
+      "Discover folders and projects automatically",
+      "Choose exactly which projects to onboard",
+      "Apply schedules across the selected projects",
+    ],
+    primaryCta: "Set Up GCP Organizations in Prowler Cloud",
+  },
   [CLOUD_UPGRADE_FEATURE.CLI_IMPORT]: {
     title: "Bring CLI Findings into One Cloud View",
     description:
@@ -82,6 +95,7 @@ export const CLOUD_UPGRADE_CONTENT = {
       "Replace separate scan reports with a consolidated compliance view.",
     benefits: [
       "Compare framework posture across providers",
+      "Roll up every account in a Provider Group",
       "Find coverage gaps without switching scans",
       "Generate a consolidated compliance report",
     ],
@@ -97,6 +111,17 @@ export const CLOUD_UPGRADE_CONTENT = {
       "Keep triage history with future scans",
     ],
     primaryCta: "Triage Findings in Prowler Cloud",
+  },
+  [CLOUD_UPGRADE_FEATURE.JIRA_DISPATCH]: {
+    title: "Send Findings to Jira at Scale",
+    description:
+      "Create Jira issues from selected findings and finding groups without handling each item separately.",
+    benefits: [
+      "Send selected findings or finding groups in one action",
+      "Choose between grouped and individual Jira issues",
+      "Track dispatch progress and retry failed findings",
+    ],
+    primaryCta: "Send Findings to Jira in Prowler Cloud",
   },
   [CLOUD_UPGRADE_FEATURE.LIGHTHOUSE_AI]: {
     title: "Use The Agent Cloud Defender",

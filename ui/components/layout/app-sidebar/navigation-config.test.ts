@@ -31,7 +31,7 @@ describe("getNavigationConfig", () => {
 
   it("groups the Local Server navigation without losing available features", () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
 
     // When
     const sections = getNavigationConfig({
@@ -71,7 +71,7 @@ describe("getNavigationConfig", () => {
 
   it("models Local Server Cloud features as contextual upgrade actions", () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
 
     // When
     const children = getConfigurationChildren();
@@ -108,7 +108,7 @@ describe("getNavigationConfig", () => {
 
   it("uses Cloud destinations and current New badges", () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
 
     // When
     const sections = getNavigationConfig({
@@ -148,7 +148,7 @@ describe("getNavigationConfig", () => {
 
   it("keeps the Cloud Billing destination for users with billing permission", () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
     const permissions = {
       manage_billing: true,
     } as RolePermissionAttributes;
@@ -178,7 +178,7 @@ describe("getNavigationConfig", () => {
     const permissions = {
       manage_billing: false,
     } as RolePermissionAttributes;
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
 
     // When
     const cloudItems = getNavigationConfig({
@@ -193,7 +193,7 @@ describe("getNavigationConfig", () => {
       cloudBillingEnabled: false,
       permissions: { ...permissions, manage_billing: true },
     }).flatMap((section) => section.items);
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
     const localItems = getNavigationConfig({
       pathname: "/",
       apiDocsUrl: null,
@@ -211,7 +211,7 @@ describe("getNavigationConfig", () => {
 
   it("keeps environment-specific API documentation destinations", () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
 
     // When
     const localApiReference = getNavigationConfig({
@@ -221,7 +221,7 @@ describe("getNavigationConfig", () => {
       .flatMap((section) => section.items)
       .find((item) => item.label === "API Reference");
 
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
     const cloudApiReference = getNavigationConfig({
       pathname: "/",
       apiDocsUrl: "https://ignored.example/docs",
@@ -240,7 +240,7 @@ describe("getNavigationConfig", () => {
 
   it("omits the Local Server API reference when no URL is configured", () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
 
     // When
     const items = getNavigationConfig({
@@ -256,7 +256,7 @@ describe("getNavigationConfig", () => {
 
   it("filters navigation by required permission after visible copy changes", () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
     const sections = getNavigationConfig({
       pathname: "/integrations",
       apiDocsUrl: null,
@@ -294,7 +294,7 @@ describe("getNavigationConfig", () => {
 
   it("keeps navigation when the required permission is granted", () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
     const permissions = {
       manage_integrations: true,
     } as RolePermissionAttributes;
@@ -320,7 +320,7 @@ describe("getNavigationConfig", () => {
 
   it("matches complete route segments without stealing nested settings routes", () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
 
     // When
     const scanDetails = getNavigationConfig({

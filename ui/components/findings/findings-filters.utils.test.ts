@@ -5,6 +5,7 @@ import { ProviderProps } from "@/types/providers";
 import { ScanEntity } from "@/types/scans";
 
 import {
+  buildFindingGroupFilterOption,
   buildFindingsFilterChips,
   getFindingsFilterDisplayValue,
 } from "./findings-filters.utils";
@@ -164,6 +165,30 @@ describe("getFindingsFilterDisplayValue", () => {
     );
   });
 
+  it("uses the finding group title for check_id filters when available", () => {
+    expect(
+      getFindingsFilterDisplayValue(
+        "filter[check_id]",
+        "teams_external_users_can_join",
+        {
+          checkTitles: {
+            teams_external_users_can_join:
+              "External Teams users can join meetings",
+          },
+        },
+      ),
+    ).toBe("External Teams users can join meetings");
+  });
+
+  it("keeps the check id when no finding group title is available", () => {
+    expect(
+      getFindingsFilterDisplayValue(
+        "filter[check_id]",
+        "teams_external_users_can_join",
+      ),
+    ).toBe("teams_external_users_can_join");
+  });
+
   it("uses the provider display name regardless of account alias/uid", () => {
     expect(
       getFindingsFilterDisplayValue("filter[scan__in]", "scan-2", {
@@ -298,6 +323,45 @@ describe("buildFindingsFilterChips", () => {
     expect(chipsPlural[0].displayValues).toEqual(["New", "Changed"]);
   });
 
+  it("renders filter[check_id] as a first-class Finding Group chip", () => {
+    // Given - exact deep-link params from the grouped findings page.
+    const chips = buildFindingsFilterChips(
+      {
+        "filter[check_id]": ["teams_external_users_can_join"],
+      },
+      {
+        checkTitles: {
+          teams_external_users_can_join:
+            "External Teams users can join meetings",
+        },
+      },
+    );
+
+    expect(chips).toEqual([
+      {
+        key: "filter[check_id]",
+        label: "Finding Group",
+        value: "teams_external_users_can_join",
+        displayValue: "External Teams users can join meetings",
+      },
+    ]);
+  });
+
+  it("renders filter[check_id__in] with the Finding Group chip label", () => {
+    const chips = buildFindingsFilterChips({
+      "filter[check_id__in]": ["teams_external_users_can_join"],
+    });
+
+    expect(chips).toEqual([
+      {
+        key: "filter[check_id__in]",
+        label: "Finding Group",
+        value: "teams_external_users_can_join",
+        displayValue: "teams_external_users_can_join",
+      },
+    ]);
+  });
+
   it("skips muted filters because the table toolbar owns that control", () => {
     const chips = buildFindingsFilterChips({
       "filter[muted]": ["include"],
@@ -322,5 +386,49 @@ describe("buildFindingsFilterChips", () => {
         displayValue: "Value",
       },
     ]);
+  });
+});
+
+describe("buildFindingGroupFilterOption", () => {
+  it("builds a selectable Finding Group filter from fetched options and URL-backed values", () => {
+    // Given
+    const filter = buildFindingGroupFilterOption({
+      checkOptions: [
+        {
+          checkId: "teams_external_users_can_join",
+          checkTitle: "External Teams users can join meetings",
+        },
+      ],
+      selectedCheckIds: ["s3_bucket_public_access"],
+      selectedCheckIdsIn: ["teams_external_users_can_join"],
+      checkTitles: {
+        teams_external_users_can_join: "External Teams users can join meetings",
+      },
+    });
+
+    // Then
+    expect(filter).toMatchObject({
+      key: "check_id__in",
+      labelCheckboxGroup: "Finding Group",
+      values: ["teams_external_users_can_join", "s3_bucket_public_access"],
+      index: 3,
+    });
+    expect(filter?.labelFormatter?.("teams_external_users_can_join")).toBe(
+      "External Teams users can join meetings",
+    );
+    expect(filter?.labelFormatter?.("s3_bucket_public_access")).toBe(
+      "s3_bucket_public_access",
+    );
+  });
+
+  it("omits the Finding Group filter when there are no selectable or URL-backed values", () => {
+    expect(
+      buildFindingGroupFilterOption({
+        checkOptions: [],
+        selectedCheckIds: [],
+        selectedCheckIdsIn: [],
+        checkTitles: {},
+      }),
+    ).toBeNull();
   });
 });

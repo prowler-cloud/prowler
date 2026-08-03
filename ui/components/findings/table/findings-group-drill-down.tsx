@@ -30,9 +30,12 @@ import {
   getFindingGroupImpactedCounts,
   isFindingGroupMuted,
 } from "@/lib/findings-groups";
+import { buildJiraActionLabel } from "@/lib/jira-dispatch-action";
+import { createJiraDispatchPayload } from "@/lib/jira-dispatch-selection";
 import { FindingGroupRow } from "@/types";
+import { JIRA_DISPATCH_TARGET } from "@/types/integrations";
 
-import { FloatingMuteButton } from "../floating-mute-button";
+import { FloatingSelectionActions } from "../floating-selection-actions";
 
 import { getColumnFindingResources } from "./column-finding-resources";
 import { FindingsSelectionContext } from "./findings-selection-context";
@@ -73,6 +76,7 @@ export function FindingsGroupDrillDown({
     handleDrawerMuteComplete,
     selectedFindingIds,
     selectableRowCount,
+    getRowId,
     getRowCanSelect,
     clearSelection,
     isSelected,
@@ -99,6 +103,7 @@ export function FindingsGroupDrillDown({
     data: resources,
     columns,
     enableRowSelection: getRowCanSelect,
+    getRowId,
     getCoreRowModel: getCoreRowModel(),
     onRowSelectionChange: handleRowSelectionChange,
     manualPagination: true,
@@ -113,6 +118,13 @@ export function FindingsGroupDrillDown({
   const impactedCounts = getFindingGroupImpactedCounts(group);
 
   const rows = table.getRowModel().rows;
+  const jiraPayload = createJiraDispatchPayload({
+    targetIds: selectedFindingIds,
+    targetType: JIRA_DISPATCH_TARGET.FINDING_ID,
+    findingTitle: group.checkTitle,
+    selectedResourceCount: selectedFindingIds.length,
+    isFindingGroupSelection: true,
+  });
 
   return (
     <FindingsSelectionContext.Provider
@@ -127,7 +139,7 @@ export function FindingsGroupDrillDown({
     >
       <div
         className={cn(
-          "minimal-scrollbar border-border-neutral-secondary bg-bg-neutral-secondary rounded-[14px] shadow-sm",
+          "minimal-scrollbar rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary",
           "flex w-full flex-col overflow-auto border",
         )}
       >
@@ -231,15 +243,22 @@ export function FindingsGroupDrillDown({
         </div>
       </div>
 
-      {selectedFindingIds.length > 0 && (
-        <FloatingMuteButton
+      {selectedFindingIds.length > 0 && jiraPayload && (
+        <FloatingSelectionActions
           selectedCount={selectedFindingIds.length}
           selectedFindingIds={selectedFindingIds}
+          muteLabel={`Mute ${selectedFindingIds.length} ${
+            selectedFindingIds.length === 1 ? "Finding" : "Findings"
+          }`}
           onBeforeOpen={async () => {
             return resolveSelectedFindingIds(selectedFindingIds);
           }}
           onComplete={handleMuteComplete}
-          isBulkOperation
+          isBulkOperation={selectedFindingIds.length > 1}
+          jiraPayload={jiraPayload}
+          jiraLabel={buildJiraActionLabel({
+            findingCount: selectedFindingIds.length,
+          })}
         />
       )}
 

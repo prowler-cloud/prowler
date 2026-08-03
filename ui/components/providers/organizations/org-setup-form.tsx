@@ -24,9 +24,11 @@ import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { getAWSOrgDeploymentQuickLink } from "@/lib";
 import { useOrgSetupStore } from "@/store/organizations/store";
 import type { OrgSetupPhase } from "@/types/organizations";
-import { ORG_SETUP_PHASE } from "@/types/organizations";
+import { ORG_SETUP_PHASE, ORGANIZATION_TYPE } from "@/types/organizations";
 
+import { DiscoveryTimeoutNotice } from "./discovery-timeout-notice";
 import { useOrgSetupSubmission } from "./hooks/use-org-setup-submission";
+import { SecretReplaceWarningModal } from "./secret-replace-warning-modal";
 
 const orgSetupSchema = z.object({
   organizationName: z.string().trim().optional(),
@@ -159,14 +161,36 @@ export function OrgSetupForm({
         })
       : null;
 
-  const { apiError, setApiError, submitOrganizationSetup } =
-    useOrgSetupSubmission({
-      stackSetExternalId,
-      onNext,
-      setFieldError: (field, message) => {
-        setError(field, { message });
-      },
-    });
+  const {
+    apiError,
+    setApiError,
+    submitOrganizationSetup,
+    replaceSecretWarning,
+    confirmSecretReplace,
+    cancelSecretReplace,
+    discoveryTimedOut,
+    discoveryFailed,
+    isSubmissionPending,
+    keepWaitingForDiscovery,
+    retryDiscovery,
+  } = useOrgSetupSubmission({
+    stackSetExternalId,
+    onNext,
+    setFieldError: (field, message) => {
+      switch (field) {
+        case "organizationName":
+        case "awsOrgId":
+          setError(field, { message });
+          return true;
+        default:
+          return false;
+      }
+    },
+  });
+
+  // `isSubmitting` only covers a submit react-hook-form started itself, not the
+  // chain re-entered by confirming a replacement, keeping waiting or retrying.
+  const isBusy = isSubmitting || isSubmissionPending;
 
   useEffect(() => {
     onPhaseChange(setupPhase);
@@ -192,20 +216,20 @@ export function OrgSetupForm({
     onFooterChange({
       showBack: !isEditCredentials,
       backLabel: "Back",
-      backDisabled: isSubmitting,
+      backDisabled: isBusy,
       onBack: () => setSetupPhase(ORG_SETUP_PHASE.DETAILS),
       showAction: true,
       actionLabel: "Authenticate",
-      actionDisabled: isSubmitting || !isValid || !stackSetExternalId,
+      actionDisabled: isBusy || !isValid || !stackSetExternalId,
       actionType: WIZARD_FOOTER_ACTION_TYPE.SUBMIT,
       actionFormId: formId,
     });
   }, [
     formId,
     intent,
+    isBusy,
     isOrgIdValid,
     isSaving,
-    isSubmitting,
     isValid,
     onBack,
     onFooterChange,
@@ -268,7 +292,9 @@ export function OrgSetupForm({
       return;
     }
 
-    void handleSubmit((data) => submitOrganizationSetup(data))(event);
+    void handleSubmit((data) =>
+      submitOrganizationSetup({ ...data, orgType: ORGANIZATION_TYPE.AWS }),
+    )(event);
   };
 
   useEffect(() => {
@@ -280,6 +306,11 @@ export function OrgSetupForm({
 
   return (
     <Form {...form}>
+      <SecretReplaceWarningModal
+        warning={replaceSecretWarning}
+        onConfirm={confirmSecretReplace}
+        onCancel={cancelSecretReplace}
+      />
       <form
         id={formId}
         onSubmit={handleFormSubmit}
@@ -312,7 +343,7 @@ export function OrgSetupForm({
           </div>
         )}
 
-        {setupPhase === ORG_SETUP_PHASE.ACCESS && isSubmitting && (
+        {setupPhase === ORG_SETUP_PHASE.ACCESS && isBusy && (
           <div className="flex min-h-[220px] items-center justify-center">
             <div className="flex items-center gap-3 py-2">
               <Spinner className="size-6" />
@@ -328,6 +359,29 @@ export function OrgSetupForm({
             </AlertDescription>
           </Alert>
         )}
+
+        {setupPhase === ORG_SETUP_PHASE.ACCESS &&
+          discoveryTimedOut &&
+          !isBusy && (
+            <DiscoveryTimeoutNotice
+              onKeepWaiting={() => void keepWaitingForDiscovery()}
+              onRetry={() => void retryDiscovery()}
+            />
+          )}
+
+        {setupPhase === ORG_SETUP_PHASE.ACCESS &&
+          discoveryFailed &&
+          !isBusy && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="self-start"
+              onClick={() => void retryDiscovery()}
+            >
+              Retry discovery
+            </Button>
+          )}
 
         {setupPhase === ORG_SETUP_PHASE.DETAILS && (
           <div className="flex flex-col gap-4">
@@ -362,7 +416,7 @@ export function OrgSetupForm({
           </div>
         )}
 
-        {setupPhase === ORG_SETUP_PHASE.ACCESS && !isSubmitting && (
+        {setupPhase === ORG_SETUP_PHASE.ACCESS && !isBusy && (
           <div className="flex flex-col gap-8">
             {/* External ID - shown first for both deployment steps */}
             <div className="flex flex-col gap-4">
@@ -486,7 +540,7 @@ export function OrgSetupForm({
                 </Button>
               )}
               {!isOrgUnitIdValid && (
-                <p className="text-text-neutral-tertiary text-xs leading-5">
+                <p className="text-text-error-primary text-xs leading-5">
                   Enter a valid Organizational Unit or Root ID above to enable
                   deployment.
                 </p>

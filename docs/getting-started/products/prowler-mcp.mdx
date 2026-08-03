@@ -26,11 +26,11 @@ The fastest way to get started is the **Cloud MCP Server** at `https://mcp.prowl
 ```
 
 <Card title="Connect Your MCP Client to the Cloud MCP Server" icon="cloud" href="/getting-started/basic-usage/prowler-mcp#cloud-mcp-server-configuration-recommended" horizontal>
-  Step-by-step setup for Claude Desktop, Claude Code, Cursor, and other clients.
+  Step-by-step setup for Claude Code, Codex, Cursor, VS Code, and other agents.
 </Card>
 
 <Note>
-Prefer to run it yourself? The **Local MCP Server** runs on your own machine or infrastructure. The Cloud MCP Server additionally provides tools for Prowler Cloud-specific features such as [Alerts](/user-guide/tutorials/prowler-alerts), [Scan Scheduling](/user-guide/tutorials/prowler-scan-scheduling), and [Findings Triage](/user-guide/tutorials/prowler-app-findings-triage). See [Cloud vs Local MCP Server](#cloud-vs-local-mcp-server).
+Prefer to run it yourself? The **Local MCP Server** runs on your own machine or infrastructure. The Cloud MCP Server additionally provides the `prowler_cloud_*` tools for Prowler Cloud-specific features: [Alerts](/user-guide/tutorials/prowler-alerts), [Findings Triage](/user-guide/tutorials/prowler-app-findings-triage), [Scan Scheduling](/user-guide/tutorials/prowler-scan-scheduling), and Scan Configurations. See [Cloud vs Local MCP Server](#cloud-vs-local-mcp-server).
 </Note>
 
 ## What is the Model Context Protocol?
@@ -39,19 +39,30 @@ The [Model Context Protocol (MCP)](https://modelcontextprotocol.io) is an open s
 
 ## Key Capabilities
 
-The Prowler MCP Server provides three main integration points:
+The Prowler MCP Server provides four integration points:
 
 ### 1. Prowler Cloud, Private Cloud & Local Server
 
 Full access to your Prowler deployment — Prowler Cloud, Prowler Private Cloud, or Prowler Local Server — for:
 - **Findings Analysis**: Query, filter, and analyze security findings across all your cloud environments
 - **Provider Management**: Create, configure, and manage your configured Prowler providers (AWS, Azure, GCP, etc.)
-- **Scan Orchestration**: Trigger on-demand scans and schedule recurring security assessments
+- **Scan Orchestration**: Trigger on-demand scans, track their progress, and schedule a daily scan
 - **Resource Inventory**: Search and view detailed information about your audited resources
 - **Muting Management**: Create and manage muting lists/rules to suppress non-relevant findings
 - **Attack Paths Analysis**: Analyze privilege escalation chains and security misconfigurations through graph-based analysis of cloud resource relationships
+- **Integrations Management**: Set up and troubleshoot where Prowler sends its results (Amazon S3, AWS Security Hub, Jira), and turn findings into Jira work items
+- **User & Role Management**: List the users in your tenant, identify the authenticated user, browse RBAC roles, and set the role a user holds
 
-### 2. Prowler Hub
+### 2. Prowler Cloud Management
+
+Prowler Cloud-only tools for configuration and workflows that a Prowler Local Server does not provide. These are exposed only by the [Cloud MCP Server](#cloud-vs-local-mcp-server):
+
+- **Scan Configurations**: Create reusable check and compliance selections and attach them to providers.
+- **Findings Triage**: Record review statuses and notes for individual findings, without suppressing them.
+- **Scan Scheduling**: Configure daily, interval, weekly, or monthly recurring scans, one provider at a time or in bulk.
+- **Alerts**: Build and dry-run alert rule conditions, manage email recipients, and review fired alerts.
+
+### 3. Prowler Hub
 
 Access to Prowler's comprehensive security knowledge base:
 - **Security Checks Catalog**: Browse and search **over 2,000 security checks** across multiple cloud providers.
@@ -60,7 +71,7 @@ Access to Prowler's comprehensive security knowledge base:
 - **Compliance Frameworks**: Explore mappings to **over 70 compliance standards and frameworks**.
 - **Provider Services**: View available services and checks for each cloud provider.
 
-### 3. Prowler Documentation
+### 4. Prowler Documentation
 
 Search and retrieve official Prowler documentation:
 - **Intelligent Search**: Full-text search across all Prowler documentation.
@@ -69,7 +80,7 @@ Search and retrieve official Prowler documentation:
 
 ## MCP Server Architecture
 
-The following diagram illustrates the Prowler MCP Server architecture and its integration points. MCP clients connect to either the **Cloud MCP Server** (recommended) or a **Local MCP Server**; both expose the same tools and reach the same Prowler backends:
+The following diagram illustrates the Prowler MCP Server architecture and its integration points. MCP clients connect to either the **Cloud MCP Server** (recommended) or a **Local MCP Server**. Both reach the same Prowler backends and share the `prowler_*`, `prowler_hub_*`, and `prowler_docs_*` tools; the Cloud MCP Server additionally exposes the Cloud-only `prowler_cloud_*` tools:
 
 ```mermaid
 flowchart LR
@@ -81,12 +92,13 @@ flowchart LR
 
     subgraph SERVERS["Prowler MCP Server"]
         direction TB
-        cloud["☁️ Cloud MCP Server (Recommended)<br/>mcp.prowler.com/mcp · HTTP<br/>Managed by Prowler · always up to date<br/>Adds Cloud-only tools (Alerts,<br/>Scan Scheduling, Findings Triage)"]
-        local["💻 Local MCP Server<br/>Self-run · STDIO or HTTP<br/>Python 3.12+ or Docker<br/>You manage updates"]
+        cloud["Cloud MCP Server (Recommended)<br/>mcp.prowler.com/mcp · HTTP<br/>Managed by Prowler · always up to date<br/>Adds the Cloud-only prowler_cloud_* tools"]
+        local["Local MCP Server<br/>Self-run · STDIO or HTTP<br/>Python 3.12+ or Docker<br/>You manage updates"]
     end
 
     subgraph TOOLS["Prowler MCP Tools"]
-        prowler_tools["prowler_* tools<br/>(API key or JWT auth)<br/>Findings · Providers · Scans<br/>Resources · Muting · Compliance<br/>Attack Paths"]
+        prowler_tools["prowler_* tools<br/>(API key or JWT auth)<br/>Findings · Finding Groups · Providers<br/>Scans · Resources · Muting · Compliance<br/>Attack Paths · Integrations · Users · Roles"]
+        cloud_tools["prowler_cloud_* tools<br/>(API key or JWT auth · Cloud only)<br/>Alerts · Findings Triage<br/>Scan Scheduling · Scan Configurations"]
         hub_tools["prowler_hub_* tools<br/>(no auth)<br/>Checks Catalog · Check Code<br/>Fixers · Compliance Frameworks"]
         docs_tools["prowler_docs_* tools<br/>(no auth)<br/>Search · Document Retrieval"]
     end
@@ -103,6 +115,7 @@ flowchart LR
     apps -->|STDIO or HTTP| local
 
     cloud --> prowler_tools
+    cloud --> cloud_tools
     cloud --> hub_tools
     cloud --> docs_tools
     local --> prowler_tools
@@ -110,12 +123,14 @@ flowchart LR
     local --> docs_tools
 
     prowler_tools -->|REST| api
+    cloud_tools -->|REST| api
     hub_tools -->|REST| hub
     docs_tools -->|REST| docs
 ```
 
-The architecture shows how AI assistants connect through the MCP protocol to access Prowler's three main components:
+The architecture shows how AI assistants connect through the MCP protocol to access Prowler's four namespaced components:
 - Prowler Cloud, Prowler Private Cloud, or Prowler Local Server for security operations
+- Prowler Cloud management for Cloud-only configuration and workflows
 - Prowler Hub for security knowledge
 - Prowler Documentation for guidance and reference.
 
@@ -126,8 +141,15 @@ The Prowler MCP Server enables powerful workflows through AI assistants:
 **Security Operations**
 - "Show me all critical findings from my AWS production accounts"
 - "Register my new AWS account in Prowler and run a scheduled scan every day"
-- "List all muted findings and detect what findgings are muted by a not enough good reason in relation to their severity"
+- "List all muted findings and flag the ones whose mute reason is too weak for their severity"
 - "Run an attack paths query to find EC2 instances exposed to the Internet with access to sensitive S3 buckets"
+- "Send my failed CIS findings for this provider to Jira as work items"
+
+**Prowler Cloud Management** (Cloud MCP Server only)
+- "Preview an alert rule for critical AWS findings and create it for my confirmed recipients"
+- "Show the triage notes for this finding and mark it as under review"
+- "Apply a weekly Monday 06:00 scan schedule to every AWS provider"
+- "Create a scan configuration that runs only CIS checks and attach it to my production providers"
 
 **Security Research**
 - "Explain what the S3 bucket public access Prowler check does"
@@ -198,17 +220,17 @@ There are two ways to run the Prowler MCP Server. For almost everyone, the **Clo
 
 | | ☁️ **Cloud MCP Server** (Recommended) | 💻 **Local MCP Server** |
 |---|---|---|
+| **Cloud-only tools** (`prowler_cloud_*`) | ✅ Alerts, Findings Triage, Scan Scheduling, Scan Configurations | ❌ Not available |
 | **Endpoint** | `https://mcp.prowler.com/mcp` | Runs on your machine or infrastructure |
 | **Setup** | Just configure your MCP client | Install via Docker, or source |
 | **Transport** | HTTP | STDIO (subprocess) or self-hosted HTTP |
 | **Maintenance** | Managed by Prowler, always up to date | You manage updates |
 | **Requirements** | None (just an MCP client) | Python 3.12+ or Docker |
-| **Cloud-only tools** | ✅ Alerts, Scan Scheduling, Findings Triage | ❌ Not available |
 | **Authentication** | API key or JWT token | API key/JWT (HTTP) or env vars (STDIO) |
 
 ### ☁️ Cloud MCP Server (Recommended)
 
-Prowler's managed MCP server at `https://mcp.prowler.com/mcp`. No installation, always up to date, and it includes tools for Prowler Cloud-specific features such as Alerts, Scan Scheduling, and Findings Triage. This is the path we recommend for nearly all users — go straight to the [Configuration guide](/getting-started/basic-usage/prowler-mcp#cloud-mcp-server-configuration-recommended).
+Prowler's managed MCP server at `https://mcp.prowler.com/mcp`. No installation, always up to date, and it includes the `prowler_cloud_*` tools for Prowler Cloud-specific features: Alerts, Findings Triage, Scan Scheduling, and Scan Configurations. This is the path we recommend for nearly all users — go straight to the [Configuration guide](/getting-started/basic-usage/prowler-mcp#cloud-mcp-server-configuration-recommended).
 
 ### 💻 Local MCP Server
 
