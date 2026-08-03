@@ -390,9 +390,3 @@ jobs:
       run: |
         rm -f prowler_changelog.md api_changelog.md ui_changelog.md mcp_changelog.md combined_changelog.md
 
-    - name: Disable release freeze
-      if: always()
-      env:
-        GH_TOKEN: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
-      run: |
-        gh variable set RELEASE_FREEZE --body false --repo "${GITHUB_REPOSITORY}" || true
