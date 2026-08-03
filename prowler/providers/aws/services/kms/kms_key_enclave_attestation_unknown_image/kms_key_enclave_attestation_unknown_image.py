@@ -155,12 +155,18 @@ class kms_key_enclave_attestation_unknown_image(Check):
                     any_coverage_gap = True
                     coverage_errors.append(f"{region}:{event_name} ({error})")
                     continue
-                for raw in page_events or []:
+                page_events = page_events or []
+                # Honour ``max_events`` at page granularity: with a cap of N
+                # and a 50-event page, process only the first ``N-total`` and
+                # flag coverage-incomplete for the rest.
+                remaining = max_events - total_processed
+                for raw in page_events[:remaining]:
                     parsed = parse_enclave_kms_event(raw)
                     if parsed is None:
                         continue
                     if parsed["is_debug"]:
-                        # Debug events are Check 10-A's scope.
+                        # Debug events belong to
+                        # ``kms_key_enclave_debug_attestation_detected``.
                         continue
                     key_arn = parsed["key_arn"]
                     if key_arn is None:
@@ -174,7 +180,9 @@ class kms_key_enclave_attestation_unknown_image(Check):
                     events_by_key.setdefault(key_arn, []).append(
                         {**parsed, "unknown": unknown}
                     )
-                total_processed += len(page_events or [])
+                total_processed += min(len(page_events), remaining)
+                if len(page_events) > remaining:
+                    any_coverage_gap = True
                 if truncated:
                     any_coverage_gap = True
 

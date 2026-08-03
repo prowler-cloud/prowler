@@ -11,7 +11,7 @@
   "Severity": "medium",
   "ResourceType": "AwsKmsKey",
   "ResourceGroup": "security",
-  "Description": "Scans CloudTrail for runtime attestation activity and flags PCR values not in `enclave_golden_pcr_values` **for buckets that have a configured golden list**. Buckets without golden are not evaluated. Complements `kms_key_enclave_attestation_pcr_mismatch` by catching real enclave calls that reached the key with an unrecognized image. MEDIUM by default, overridable to HIGH via `enclave_unknown_image_severity`.",
+  "Description": "Scans CloudTrail attestation activity and flags PCR values missing from `enclave_golden_pcr_values` (only for buckets with a configured golden list). Complements `kms_key_enclave_attestation_pcr_mismatch` by catching real enclave calls with an unrecognized image. MEDIUM by default, overridable to HIGH via `enclave_unknown_image_severity`.",
   "Risk": "An attestation event whose PCRs cannot be traced back to a known-good enclave build indicates either a stale golden list, a policy broad enough to accept unaudited images, or a compromise scenario in which an unknown image is being executed with legitimate KMS access. Materiality depends on the operator's threat model.",
   "RelatedUrl": "",
   "AdditionalURLs": [

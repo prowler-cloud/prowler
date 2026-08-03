@@ -65,10 +65,13 @@ class kms_key_enclave_debug_attestation_detected(Check):
         )
         # Fall back to defaults if the operator writes a non-numeric value in
         # ``audit_config`` (e.g. a stray string). Do not abort the check.
+        # Normalize ``lookback_hours`` in place so status messages report the
+        # value actually used for the CloudTrail lookup, not the invalid input.
         try:
-            lookback_minutes = max(1, int(lookback_hours) * 60)
+            lookback_hours = max(1, int(lookback_hours))
         except (TypeError, ValueError):
-            lookback_minutes = max(1, DEFAULT_ENCLAVE_DEBUG_LOOKBACK_HOURS * 60)
+            lookback_hours = DEFAULT_ENCLAVE_DEBUG_LOOKBACK_HOURS
+        lookback_minutes = lookback_hours * 60
         try:
             max_events = max(1, int(max_events))
         except (TypeError, ValueError):
