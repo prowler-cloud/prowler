@@ -85,12 +85,17 @@ function LighthouseContextTooltip({ context }: LighthouseContextBadgeProps) {
   const page = context.items.find(
     (item) => item.kind === LIGHTHOUSE_CONTEXT_KIND.PAGE,
   );
-  const filters =
+  // Entries with no values (possible in stored envelopes) carry nothing, so
+  // they count neither for the filters line nor against the page-only notice.
+  const filterEntries =
     page?.kind === LIGHTHOUSE_CONTEXT_KIND.PAGE
-      ? Object.entries(page.filters ?? {})
-          .map(([key, values]) => `${key}: ${values.join(", ")}`)
-          .join("; ")
-      : "";
+      ? Object.entries(page.filters ?? {}).filter(
+          ([, values]) => values.length > 0,
+        )
+      : [];
+  const filters = filterEntries
+    .map(([key, values]) => `${key}: ${values.join(", ")}`)
+    .join("; ");
   const itemDescriptions = context.items
     .map(getContextItemDescription)
     .filter((description) => description !== null);
@@ -99,7 +104,7 @@ function LighthouseContextTooltip({ context }: LighthouseContextBadgeProps) {
   const sharesOnlyPage =
     page?.kind === LIGHTHOUSE_CONTEXT_KIND.PAGE &&
     context.items.length === 1 &&
-    !filters;
+    filterEntries.length === 0;
 
   return (
     <TooltipContent maxWidth="md">

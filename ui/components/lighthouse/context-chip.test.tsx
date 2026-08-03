@@ -81,6 +81,30 @@ describe("LighthouseCurrentContextBadge", () => {
     expect(tooltip).toHaveTextContent("Only the current page name is shared.");
   });
 
+  it("should treat empty filter entries as a bare page", async () => {
+    // Given a stored envelope whose page filters only carry empty values
+    const user = userEvent.setup();
+    const bareContext = barePageContext();
+    const [pageItem] = bareContext.items;
+    if (pageItem.kind !== "page") throw new Error("expected page item");
+    render(
+      <LighthouseCurrentContextBadge
+        context={{
+          ...bareContext,
+          items: [{ ...pageItem, filters: { status: [] } }],
+        }}
+      />,
+    );
+
+    // When
+    await user.hover(screen.getByLabelText("Manage Groups context"));
+
+    // Then no filters line renders and the page-only notice does
+    const tooltip = await screen.findByRole("tooltip");
+    expect(tooltip).not.toHaveTextContent("Filters:");
+    expect(tooltip).toHaveTextContent("Only the current page name is shared.");
+  });
+
   it("should not claim a bare page for a single non-page item", async () => {
     // Given a historical envelope whose only item is not a page item
     const user = userEvent.setup();
