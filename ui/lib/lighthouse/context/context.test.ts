@@ -636,8 +636,9 @@ describe("compileLighthouseContext", () => {
       expect(context).toBeUndefined();
     });
 
-    it("should discard valid items together with an invalid same-scope item", () => {
-      // Given / When
+    it("should drop only the invalid item and keep the valid ones", () => {
+      // Given a valid page plus a finding whose optional field was
+      // normalized to null (e.g. by a backend or storage layer)
       const context = compileLighthouseContext(
         [
           {
@@ -653,14 +654,100 @@ describe("compileLighthouseContext", () => {
             id: "finding-1",
             source: "selection",
             scopeKey: "findings:/findings",
-            label: "Invalid finding without findingId",
+            label: "Selected finding",
+            findingId: "finding-1",
+            checkId: null,
+          },
+          {
+            kind: "finding",
+            id: "finding-2",
+            source: "selection",
+            scopeKey: "findings:/findings",
+            label: "Selected finding",
+            findingId: "finding-2",
+          },
+        ],
+        "findings:/findings",
+      );
+
+      // Then the null-carrying item drops alone
+      expect(context?.items.map((item) => item.id)).toEqual([
+        "findings",
+        "finding-2",
+      ]);
+    });
+
+    it("should drop items of unknown kinds without voiding the envelope", () => {
+      // Given an item kind from a newer (or rolled-back) UI build
+      const context = compileLighthouseContext(
+        [
+          {
+            kind: "page",
+            id: "findings",
+            source: "automatic",
+            scopeKey: "findings:/findings",
+            label: "Findings",
+            path: "/findings",
+          },
+          {
+            kind: "future-widget",
+            id: "widget-1",
+            source: "automatic",
+            scopeKey: "findings:/findings",
+            label: "Unknown widget",
           },
         ],
         "findings:/findings",
       );
 
       // Then
-      expect(context).toBeUndefined();
+      expect(context?.items.map((item) => item.id)).toEqual(["findings"]);
+    });
+  });
+
+  describe("when automatic items compete for the byte budget", () => {
+    it("should evict provider labels before posture summaries", () => {
+      // Given a page, a ThreatScore summary, and enough oversized provider
+      // labels to exceed the byte budget regardless of arrival order
+      const scopeKey = "overview:/";
+      const page = {
+        kind: "page",
+        id: "overview",
+        source: "automatic",
+        scopeKey,
+        label: "Overview",
+        path: "/",
+      };
+      const threatScore = {
+        kind: "compliance",
+        id: "prowler-threat-score",
+        source: "automatic",
+        scopeKey,
+        label: "Prowler ThreatScore",
+        framework: "Prowler ThreatScore",
+        score: 62.4,
+      };
+      const providers = Array.from({ length: 10 }, (_, index) => ({
+        kind: "provider",
+        id: `provider-${index}`,
+        source: "automatic",
+        scopeKey,
+        label: `Provider ${index} ${"x".repeat(240)}`,
+        providerUid: `uid-${index}-${"y".repeat(240)}`,
+      }));
+
+      // When the providers mount before the ThreatScore summary
+      const context = compileLighthouseContext(
+        [page, ...providers, threatScore],
+        scopeKey,
+      );
+
+      // Then the summary survives and only provider labels are evicted
+      expect(context?.items.map((item) => item.kind)).toContain("compliance");
+      expect(
+        context?.items.filter((item) => item.kind === "provider").length,
+      ).toBeLessThan(providers.length);
+      expect(context?.items[1]?.id).toBe("prowler-threat-score");
     });
   });
 });
