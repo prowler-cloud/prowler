@@ -137,7 +137,7 @@ describe("scans page rendering", () => {
     expect(props?.onboardingAction).toEqual({ flowId: "view-first-scan" });
   });
 
-  it("falls back to add-provider onboarding when no provider is connected", async () => {
+  it("falls back to add-provider onboarding when a permitted user has no connected provider", async () => {
     getAllProvidersMock.mockResolvedValue({ data: [disconnectedProvider] });
 
     await renderPage();
@@ -149,6 +149,29 @@ describe("scans page rendering", () => {
       useFallback: true,
     });
   });
+
+  // ScansPageShell only mounts the view-first-scan trigger when Launch Scan is
+  // usable, so offering the navbar action without manage_scans yields an enabled
+  // button that can never start a tour.
+  it.each([
+    ["a provider is connected", [connectedProvider]],
+    ["no provider is connected", [disconnectedProvider]],
+    ["there are no providers", [] as ProviderProps[]],
+  ])(
+    "omits the onboarding action when manage_scans is missing and %s",
+    async (_state, providers) => {
+      authMock.mockResolvedValue({
+        user: { permissions: { manage_scans: false } },
+      });
+      getAllProvidersMock.mockResolvedValue({ data: providers });
+
+      await renderPage();
+
+      const props = contentLayoutSpy.mock.calls.at(-1)?.[0];
+      expect(props).toHaveProperty("onboardingAction");
+      expect(props?.onboardingAction).toBeUndefined();
+    },
+  );
 });
 
 describe("scans page scheduled tab source", () => {

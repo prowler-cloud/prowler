@@ -194,13 +194,19 @@ export default async function Scans({
     session?.user?.permissions?.manage_scans,
   );
   const activeScanCount = await getActiveScanCount(resolvedSearchParams);
-  const onboardingAction = hasConnectedProvider
-    ? { flowId: "view-first-scan" }
-    : {
-        flowId: "view-first-scan",
-        fallbackFlowId: "add-provider",
-        useFallback: true,
-      };
+  // Mirrors ScansPageShell's launch gate: it only mounts the view-first-scan trigger
+  // when Launch Scan is usable (manage_scans + a connected provider). Without the
+  // permission nothing can consume the navbar action, so offer none rather than an
+  // enabled button that starts no tour.
+  const onboardingAction = !hasManageScansPermission
+    ? undefined
+    : hasConnectedProvider
+      ? { flowId: "view-first-scan" }
+      : {
+          flowId: "view-first-scan",
+          fallbackFlowId: "add-provider",
+          useFallback: true,
+        };
 
   return (
     <ContentLayout
