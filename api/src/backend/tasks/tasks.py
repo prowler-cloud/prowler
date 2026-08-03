@@ -11,6 +11,7 @@ from api.compliance import (
 from api.db_router import READ_REPLICA_ALIAS
 from api.db_utils import delete_related_daily_task, rls_transaction
 from api.decorators import handle_provider_deletion, set_tenant
+from api.exceptions import ProviderDeletedException
 from api.models import (
     Finding,
     Integration,
@@ -666,7 +667,13 @@ class AttackPathsScanRLSTask(RLSTask):
         scan_id = kwargs.get("scan_id")
 
         if tenant_id and scan_id:
-            logger.error(f"Attack paths scan task {task_id} failed: {exc}")
+            if isinstance(exc, ProviderDeletedException):
+                logger.warning(
+                    f"Attack paths scan task {task_id} stopped because its provider "
+                    f"or tenant was deleted: {exc}"
+                )
+            else:
+                logger.error(f"Attack paths scan task {task_id} failed: {exc}")
             attack_paths_db_utils.fail_attack_paths_scan(tenant_id, scan_id, str(exc))
 
 
@@ -790,12 +797,34 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
         if name not in frameworks_bulk and universal_bulk[name].outputs
     }
     frameworks_avail = get_compliance_frameworks(provider_type)
+    # Idempotency: a previous run of this task for the same scan may have left
+    # output files behind (e.g. broker redelivery after a worker was killed
+    # mid-run with task_acks_late, or a successful run on a deployment without
+    # S3 where the tmp dir is not removed). Output writers open files in append
+    # mode with a deterministic path (derived from scan.started_at), so reusing
+    # them would append every finding row again and duplicate the CSV/output
+    # rows. Start from a clean slate before (re)generating.
+    scan_tmp_dir = _scan_tmp_output_directory(tenant_id, scan_id)
+    if os.path.exists(scan_tmp_dir):
+        rmtree(scan_tmp_dir, ignore_errors=True)
+        # The writers below open output files in append mode with deterministic
+        # paths (derived from scan.started_at). Any stale file that survives the
+        # cleanup would get every finding row appended again, which is the exact
+        # duplication this guards against. Continuing is therefore unsafe: abort
+        # so `ScanReportRLSTask.on_failure` removes the tmp dir and the retry
+        # starts from a clean slate instead of publishing duplicated rows.
+        if os.path.exists(scan_tmp_dir):
+            raise RuntimeError(
+                "Could not remove stale output directory for scan "
+                f"{scan_id} before generating outputs; aborting to avoid "
+                "duplicated rows in appended outputs."
+            )
+
     out_dir, comp_dir = _generate_output_directory(
         DJANGO_TMP_OUTPUT_DIRECTORY, provider_uid, tenant_id, scan_id
     )
     # Removed on success here and on failure by ScanReportRLSTask.on_failure,
     # so partial artifacts do not accumulate and fill the disk (ENOSPC).
-    scan_tmp_dir = _scan_tmp_output_directory(tenant_id, scan_id)
 
     def get_writer(writer_map, name, factory, is_last):
         """

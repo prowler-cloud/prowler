@@ -306,10 +306,10 @@
   {
     "section": "dependencies",
     "name": "@sentry/nextjs",
-    "from": "10.11.0",
-    "to": "10.27.0",
+    "from": "10.27.0",
+    "to": "10.65.0",
     "strategy": "installed",
-    "generatedAt": "2025-12-15T11:18:25.093Z"
+    "generatedAt": "2026-07-16T15:35:58.334Z"
   },
   {
     "section": "dependencies",
@@ -435,17 +435,17 @@
     "section": "dependencies",
     "name": "import-in-the-middle",
     "from": "2.0.0",
-    "to": "2.0.0",
+    "to": "3.3.1",
     "strategy": "installed",
-    "generatedAt": "2025-12-16T08:33:37.278Z"
+    "generatedAt": "2026-07-16T15:35:58.334Z"
   },
   {
     "section": "dependencies",
     "name": "js-yaml",
-    "from": "4.1.0",
-    "to": "4.1.1",
+    "from": "4.1.1",
+    "to": "4.3.0",
     "strategy": "installed",
-    "generatedAt": "2025-12-15T11:18:25.093Z"
+    "generatedAt": "2026-07-16T15:29:57.887Z"
   },
   {
     "section": "dependencies",
@@ -498,18 +498,18 @@
   {
     "section": "dependencies",
     "name": "next",
-    "from": "16.2.6",
-    "to": "16.2.9",
+    "from": "16.2.9",
+    "to": "16.2.11",
     "strategy": "installed",
-    "generatedAt": "2026-06-15T07:49:41.143Z"
+    "generatedAt": "2026-07-24T08:32:45.227Z"
   },
   {
     "section": "dependencies",
     "name": "next-auth",
-    "from": "5.0.0-beta.29",
-    "to": "5.0.0-beta.30",
+    "from": "5.0.0-beta.30",
+    "to": "5.0.0-beta.32",
     "strategy": "installed",
-    "generatedAt": "2025-12-15T11:18:25.093Z"
+    "generatedAt": "2026-07-24T08:32:45.227Z"
   },
   {
     "section": "dependencies",
@@ -518,6 +518,14 @@
     "to": "0.2.1",
     "strategy": "installed",
     "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "posthog-js",
+    "from": "1.260.1",
+    "to": "1.407.2",
+    "strategy": "installed",
+    "generatedAt": "2026-07-27T08:35:41.397Z"
   },
   {
     "section": "dependencies",
@@ -630,14 +638,6 @@
     "to": "1.1.1",
     "strategy": "installed",
     "generatedAt": "2025-12-15T08:24:46.195Z"
-  },
-  {
-    "section": "dependencies",
-    "name": "vaul",
-    "from": "1.1.2",
-    "to": "1.1.2",
-    "strategy": "installed",
-    "generatedAt": "2026-01-05T16:21:23.125Z"
   },
   {
     "section": "dependencies",
@@ -769,22 +769,6 @@
   },
   {
     "section": "devDependencies",
-    "name": "@typescript-eslint/eslint-plugin",
-    "from": "7.18.0",
-    "to": "8.53.0",
-    "strategy": "installed",
-    "generatedAt": "2026-01-19T13:54:24.770Z"
-  },
-  {
-    "section": "devDependencies",
-    "name": "@typescript-eslint/parser",
-    "from": "7.18.0",
-    "to": "8.53.0",
-    "strategy": "installed",
-    "generatedAt": "2026-01-19T13:54:24.770Z"
-  },
-  {
-    "section": "devDependencies",
     "name": "@vitejs/plugin-react",
     "from": "5.1.2",
     "to": "5.1.2",
@@ -794,26 +778,26 @@
   {
     "section": "devDependencies",
     "name": "@vitest/browser",
-    "from": "4.0.18",
-    "to": "4.1.8",
+    "from": "4.1.8",
+    "to": "4.1.10",
     "strategy": "installed",
-    "generatedAt": "2026-06-02T11:34:46.264Z"
+    "generatedAt": "2026-07-24T08:32:45.227Z"
   },
   {
     "section": "devDependencies",
     "name": "@vitest/browser-playwright",
-    "from": "4.0.18",
-    "to": "4.1.8",
+    "from": "4.1.8",
+    "to": "4.1.10",
     "strategy": "installed",
-    "generatedAt": "2026-06-02T11:34:46.264Z"
+    "generatedAt": "2026-07-24T08:32:45.227Z"
   },
   {
     "section": "devDependencies",
     "name": "@vitest/coverage-v8",
-    "from": "4.0.18",
-    "to": "4.1.8",
+    "from": "4.1.8",
+    "to": "4.1.10",
     "strategy": "installed",
-    "generatedAt": "2026-06-02T11:34:46.264Z"
+    "generatedAt": "2026-07-24T08:32:45.227Z"
   },
   {
     "section": "devDependencies",
@@ -857,17 +841,25 @@
   },
   {
     "section": "devDependencies",
-    "name": "eslint-plugin-jsx-a11y",
-    "from": "6.10.2",
-    "to": "6.10.2",
+    "name": "eslint-import-resolver-typescript",
+    "from": "4.4.4",
+    "to": "4.4.4",
     "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
+    "generatedAt": "2026-05-13T15:04:07.559Z"
   },
   {
     "section": "devDependencies",
-    "name": "eslint-plugin-prettier",
-    "from": "5.5.1",
-    "to": "5.5.1",
+    "name": "eslint-plugin-import-x",
+    "from": "4.16.2",
+    "to": "4.16.2",
+    "strategy": "installed",
+    "generatedAt": "2026-05-13T15:02:04.867Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "eslint-plugin-jsx-a11y",
+    "from": "6.10.2",
+    "to": "6.10.2",
     "strategy": "installed",
     "generatedAt": "2025-10-22T12:36:37.962Z"
   },
@@ -897,27 +889,19 @@
   },
   {
     "section": "devDependencies",
-    "name": "eslint-plugin-simple-import-sort",
-    "from": "12.1.1",
-    "to": "12.1.1",
-    "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
-  },
-  {
-    "section": "devDependencies",
-    "name": "eslint-plugin-unused-imports",
-    "from": "3.2.0",
-    "to": "4.3.0",
-    "strategy": "installed",
-    "generatedAt": "2026-01-19T13:54:24.770Z"
-  },
-  {
-    "section": "devDependencies",
     "name": "globals",
     "from": "17.0.0",
     "to": "17.0.0",
     "strategy": "installed",
     "generatedAt": "2026-01-19T13:54:24.770Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "jiti",
+    "from": "2.7.0",
+    "to": "2.7.0",
+    "strategy": "installed",
+    "generatedAt": "2026-05-13T15:02:04.867Z"
   },
   {
     "section": "devDependencies",
@@ -993,11 +977,19 @@
   },
   {
     "section": "devDependencies",
-    "name": "vitest",
-    "from": "4.0.18",
-    "to": "4.1.8",
+    "name": "typescript-eslint",
+    "from": "8.59.3",
+    "to": "8.59.3",
     "strategy": "installed",
-    "generatedAt": "2026-06-02T11:34:46.264Z"
+    "generatedAt": "2026-05-13T15:02:04.867Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "vitest",
+    "from": "4.1.8",
+    "to": "4.1.10",
+    "strategy": "installed",
+    "generatedAt": "2026-07-24T08:32:45.227Z"
   },
   {
     "section": "devDependencies",

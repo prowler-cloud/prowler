@@ -2,8 +2,21 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { useJiraDispatchStore } from "@/store/jira-dispatch/store";
+import {
+  FINDING_TRIAGE_DISABLED_REASON,
+  FINDING_TRIAGE_STATUS,
+  type FindingTriageSummary,
+} from "@/types/findings-triage";
+
+import {
+  DataTableRowActions,
+  type FindingRowData,
+} from "./data-table-row-actions";
+import { FindingsSelectionContext } from "./findings-selection-context";
+
 const { MuteFindingsModalMock } = vi.hoisted(() => ({
-  MuteFindingsModalMock: vi.fn(() => null),
+  MuteFindingsModalMock: vi.fn((_props: unknown) => null),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -14,12 +27,13 @@ vi.mock("@/components/findings/mute-findings-modal", () => ({
   MuteFindingsModal: MuteFindingsModalMock,
 }));
 
-vi.mock("@/components/findings/send-to-jira-modal", () => ({
-  SendToJiraModal: () => null,
-}));
-
 vi.mock("@/components/icons/services/IconServices", () => ({
   JiraIcon: () => null,
+}));
+
+vi.mock("@/lib/deployment", () => ({
+  isGroupedJiraDispatchEnabled: () => true,
+  PROWLER_CLOUD_ONLY_TOOLTIP: "Available only in Prowler Cloud",
 }));
 
 vi.mock("@/components/shadcn/dropdown", () => ({
@@ -74,18 +88,6 @@ vi.mock("./finding-note-modal", () => ({
     ) : null,
 }));
 
-import {
-  FINDING_TRIAGE_DISABLED_REASON,
-  FINDING_TRIAGE_STATUS,
-  type FindingTriageSummary,
-} from "@/types/findings-triage";
-
-import {
-  DataTableRowActions,
-  type FindingRowData,
-} from "./data-table-row-actions";
-import { FindingsSelectionContext } from "./findings-selection-context";
-
 function deferredPromise<T>() {
   let resolve!: (value: T) => void;
   let reject!: (reason?: unknown) => void;
@@ -134,6 +136,7 @@ function makeFindingRow(overrides?: Partial<FindingRowData>) {
 describe("DataTableRowActions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    useJiraDispatchStore.getState().closeJiraDispatch();
   });
 
   it("opens the mute modal immediately in preparing state for finding groups", async () => {
@@ -176,41 +179,18 @@ describe("DataTableRowActions", () => {
     );
 
     // Then
-    const preparingCall = (
-      MuteFindingsModalMock.mock.calls as unknown as Array<
-        [
-          {
-            isOpen: boolean;
-            isPreparing?: boolean;
-            findingIds: string[];
-          },
-        ]
-      >
-    ).at(-1);
-
-    expect(preparingCall?.[0]).toMatchObject({
+    expect(MuteFindingsModalMock.mock.calls.at(-1)?.[0]).toMatchObject({
       isOpen: true,
       isPreparing: true,
       findingIds: [],
     });
 
-    // And when the resolver finishes
+    // When
     deferred.resolve(["finding-1", "finding-2"]);
 
+    // Then
     await waitFor(() => {
-      const resolvedCall = (
-        MuteFindingsModalMock.mock.calls as unknown as Array<
-          [
-            {
-              isOpen: boolean;
-              isPreparing?: boolean;
-              findingIds: string[];
-            },
-          ]
-        >
-      ).at(-1);
-
-      expect(resolvedCall?.[0]).toMatchObject({
+      expect(MuteFindingsModalMock.mock.calls.at(-1)?.[0]).toMatchObject({
         isOpen: true,
         isPreparing: false,
         findingIds: ["finding-1", "finding-2"],
@@ -219,6 +199,7 @@ describe("DataTableRowActions", () => {
   });
 
   it("disables the mute action for groups without impacted resources", () => {
+    // Given / When
     render(
       <FindingsSelectionContext.Provider
         value={{
@@ -247,9 +228,58 @@ describe("DataTableRowActions", () => {
       </FindingsSelectionContext.Provider>,
     );
 
+    // Then
     expect(
       screen.getByRole("button", { name: "Mute Finding Group" }),
     ).toBeDisabled();
+  });
+
+  it("opens Jira from the row action for a finding group", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(
+      <FindingsSelectionContext.Provider
+        value={{
+          selectedFindingIds: [],
+          selectedFindings: [],
+          clearSelection: vi.fn(),
+          isSelected: vi.fn(),
+          resolveMuteIds: vi.fn(),
+        }}
+      >
+        <DataTableRowActions
+          row={
+            {
+              original: {
+                id: "group-row-1",
+                rowType: "group",
+                checkId: "s3_bucket_public_access",
+                checkTitle: "S3 bucket public access",
+                mutedCount: 0,
+                resourcesFail: 2,
+                resourcesTotal: 2,
+              },
+            } as never
+          }
+        />
+      </FindingsSelectionContext.Provider>,
+    );
+
+    // When
+    await user.click(
+      screen.getByRole("button", { name: "Send 1 Finding Group to Jira" }),
+    );
+
+    // Then
+    expect(useJiraDispatchStore.getState().activePayload).toEqual({
+      selection: {
+        kind: "single",
+        targetId: "s3_bucket_public_access",
+        targetType: "check_id",
+      },
+      findingTitle: "S3 bucket public access",
+      selectedResourceCount: 2,
+    });
   });
 
   it("shows Add Triage Note for editable findings without a note", () => {

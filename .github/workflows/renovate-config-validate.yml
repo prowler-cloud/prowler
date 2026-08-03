@@ -34,6 +34,7 @@ jobs:
           allowed-endpoints: >
             api.github.com:443
             github.com:443
+            raw.githubusercontent.com:443
             objects.githubusercontent.com:443
             codeload.github.com:443
             release-assets.githubusercontent.com:443
@@ -41,6 +42,7 @@ jobs:
             files.pythonhosted.org:443
             registry.npmjs.org:443
             nodejs.org:443
+            releases.astral.sh:443
 
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2

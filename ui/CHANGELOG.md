@@ -4,6 +4,87 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [1.36.0] (Prowler v5.36.0)
+
+### 🚀 Added
+
+- Finding Groups and grouped selections can be sent to Jira in Cloud with deep links, filter chip display, and Jira feedback toasts [(#12001)](https://github.com/prowler-cloud/prowler/pull/12001)
+- In Prowler Cloud, the Attack Paths query selector now lists only queries that returned data for the selected scan, hiding empty ones [(#12010)](https://github.com/prowler-cloud/prowler/pull/12010)
+- Overview banner linking to the AI agents documentation, shown next to the Lighthouse AI banner in Cloud and full width on self-hosted deployments [(#12074)](https://github.com/prowler-cloud/prowler/pull/12074)
+
+### 🐞 Fixed
+
+- Findings Severity Over Time chart Y-axis labels no longer overflow for large findings counts [(#11545)](https://github.com/prowler-cloud/prowler/pull/11545)
+- UI Sentry alerts now suppress non-actionable warnings and expected API/control-flow noise while preserving actionable runtime failures [(#11665)](https://github.com/prowler-cloud/prowler/pull/11665)
+- OCI provider E2E tests no longer require or submit a region when adding or updating credentials [(#11741)](https://github.com/prowler-cloud/prowler/pull/11741)
+- Billing navigation is hidden when Cloud billing is disabled, including Enterprise deployments [(#12047)](https://github.com/prowler-cloud/prowler/pull/12047)
+- AWS Organizations setup modal now shows the "Enter a valid Organizational Unit or Root ID" hint in the error color, clarifying why the deployment button is disabled [(#12063)](https://github.com/prowler-cloud/prowler/pull/12063)
+- Sidebar logo top spacing in the main app sidebar [(#12066)](https://github.com/prowler-cloud/prowler/pull/12066)
+- Contextual Cloud upgrade modal content remains stable throughout the closing animation [(#12067)](https://github.com/prowler-cloud/prowler/pull/12067)
+- Tenant switches now refresh session user permissions for the selected tenant [(#12087)](https://github.com/prowler-cloud/prowler/pull/12087)
+
+### 🔐 Security
+
+- Removed the unused `npm` CLI from the UI container image, eliminating the bundled `node-tar` `CVE-2026-59873` (and future bundled-npm CVEs); the image builds with `pnpm` via `corepack` and does not use `npm` [(#12065)](https://github.com/prowler-cloud/prowler/pull/12065)
+- Bumped `vitest` and `@vitest/browser`, `@vitest/browser-playwright`, `@vitest/coverage-v8` from `4.1.8` to `4.1.10`, resolving the critical `@vitest/browser` Browser Mode file-access permission bypass (`GHSA-p63j-vcc4-9vmv`) flagged by `pnpm audit`; dev dependencies only, no runtime impact [(#12077)](https://github.com/prowler-cloud/prowler/pull/12077)
+- Kubernetes credential forms now reject kubeconfig files using legacy `auth-provider.config.cmd-path` command authentication [(#12091)](https://github.com/prowler-cloud/prowler/pull/12091)
+- Next.js from 16.2.9 to 16.2.11, patching 4 high- and 5 medium-severity vulnerabilities [(#12093)](https://github.com/prowler-cloud/prowler/pull/12093)
+- next-auth from 5.0.0-beta.30 to 5.0.0-beta.32, patching 2 critical Auth.js advisories (GHSA-8fpg-xm3f-6cx3 fail-open auth checks, GHSA-7rqj-j65f-68wh email homoglyph bypass) [(#12108)](https://github.com/prowler-cloud/prowler/pull/12108)
+
+---
+
+## [1.35.0] (Prowler v5.35.0)
+
+### 🔄 Changed
+
+- AWS Organizations onboarding now deploys the management account role and the member-account StackSet from a single CloudFormation stack, replacing the manual StackSet console step [(#11927)](https://github.com/prowler-cloud/prowler/pull/11927)
+- Dynamic providers can now be renamed and deleted from the Providers table [(#11957)](https://github.com/prowler-cloud/prowler/pull/11957)
+- Sidebar navigation with grouped sections, clearer active states, and a responsive mobile overlay [(#11994)](https://github.com/prowler-cloud/prowler/pull/11994)
+- Core Prowler tools in Lighthouse use the `prowler_*` namespace while preserving legacy `prowler_app_*` compatibility [(#12017)](https://github.com/prowler-cloud/prowler/pull/12017)
+
+### 🐞 Fixed
+
+- The AWS S3 integration CloudFormation quick-create link now sets the bucket owner account ID, preventing a stack validation error when S3 integration is enabled [(#11927)](https://github.com/prowler-cloud/prowler/pull/11927)
+- `Scan ID` filter on the Findings page now shows the active scan when opening findings from a scan's `View Findings` action [(#11997)](https://github.com/prowler-cloud/prowler/pull/11997)
+
+### 🔐 Security
+
+- `js-yaml` to 4.3.0, `@sentry/nextjs` to 10.65.0 with `import-in-the-middle` 3.3.1, and transitive `hono`, `dompurify`, `ws`, `vite`, `@babel/core` and `@opentelemetry/core` to patched versions, resolving 13 npm audit advisories (3 high, 9 moderate, 1 low) plus `hono` CVE-2026-59896, published on NVD but not yet in the npm audit feed [(#12029)](https://github.com/prowler-cloud/prowler/pull/12029)
+
+---
+
+## [1.34.0] (Prowler v5.34.0)
+
+### 🚀 Added
+
+- Dynamically registered providers are now listed, filtered, and rendered across the UI, using a generic icon and humanized label when no bespoke assets exist, a "Custom" badge, and read-only handling for non-configurable providers [(#11869)](https://github.com/prowler-cloud/prowler/pull/11869)
+- Prowler Local Server branding and contextual Prowler Cloud upgrade prompts across navigation, scans, providers, compliance, findings, alerts, and Lighthouse AI [(#11982)](https://github.com/prowler-cloud/prowler/pull/11982)
+
+### 🔄 Changed
+
+- UI components migrated from HeroUI to shared shadcn primitives [(#11532)](https://github.com/prowler-cloud/prowler/pull/11532)
+- UI integration enable flags renamed to past tense — `UI_SENTRY_ENABLE` → `UI_SENTRY_ENABLED`, `UI_GOOGLE_TAG_MANAGER_ENABLE` → `UI_GOOGLE_TAG_MANAGER_ENABLED`, `UI_POSTHOG_ENABLE` → `UI_POSTHOG_ENABLED`; deployments that set the former names must update them [(#11917)](https://github.com/prowler-cloud/prowler/pull/11917)
+
+### 🐞 Fixed
+
+- Fixed metronome billing failing to start when PostHog was enabled, caused by a stale reference to the renamed UI_POSTHOG_ENABLED flag [(#11938)](https://github.com/prowler-cloud/prowler/pull/11938)
+- Lighthouse AI overview entry now starts a new remediation conversation, and returning to Overview restores app navigation mode [(#11955)](https://github.com/prowler-cloud/prowler/pull/11955)
+
+---
+
+## [1.33.1] (Prowler v5.33.1)
+
+### 🔄 Changed
+
+- RBAC role forms now explain Unlimited Visibility inside the Visibility section and keep the setting visible while group selection is hidden [(#11890)](https://github.com/prowler-cloud/prowler/pull/11890)
+
+### 🐞 Fixed
+
+- CIS Level 1 and Level 2 compliance filters now match profiles prefixed with a license tier (e.g. "E3 Level 1"), so M365 CIS requirements are no longer hidden [(#11924)](https://github.com/prowler-cloud/prowler/pull/11924)
+- Jira dispatch polling now reports failed issue creation tasks instead of treating partial failures as successful [(#11925)](https://github.com/prowler-cloud/prowler/pull/11925)
+
+---
+
 ## [1.33.0] (Prowler v5.33.0)
 
 ### 🚀 Added

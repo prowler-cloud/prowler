@@ -227,6 +227,23 @@ class Test_detect_secrets_scan_batch:
         )
         assert results == {}
 
+    @pytest.mark.parametrize("separator", ["\x1c", "\x1d", "\x1e"])
+    def test_batch_excluded_secrets_uses_lf_line_numbers(self, separator):
+        payload = (
+            f'const characterTable = "prefix{separator}suffix";\n'
+            'DB_ALLOW_EMPTY_PASSWORD = "Tr0ub4dor3xKq9vLmZ"'
+        )
+        with patch(
+            "prowler.lib.utils.utils.subprocess.run",
+            side_effect=_fake_kingfisher_run_with_findings([(0, 2)]),
+        ):
+            results = detect_secrets_scan_batch(
+                {"a": payload},
+                excluded_secrets=[".*ALLOW_EMPTY_PASSWORD.*"],
+            )
+
+        assert results == {}
+
     def test_batch_chunking_maps_all_keys(self):
         payloads = {f"k{i}": f'password = "S3cr3tV4lu3xy{i}z"' for i in range(5)}
         results = detect_secrets_scan_batch(payloads, chunk_size=2)

@@ -1,4 +1,6 @@
 import { getFindingsByStatus } from "@/actions/overview";
+import { LighthouseContextContributor } from "@/components/lighthouse/context-contributor";
+import { buildFindingStatusSummaryContext } from "@/lib/lighthouse/context/contributions";
 
 import { pickFilterParams } from "../_lib/filter-params";
 import { SSRComponentProps } from "../_types";
@@ -22,15 +24,27 @@ export const CheckFindingsSSR = async ({ searchParams }: SSRComponentProps) => {
   const { fail = 0, pass = 0, fail_new = 0, pass_new = 0 } = attributes;
 
   return (
-    <StatusChart
-      failFindingsData={{
-        total: fail,
-        new: fail_new,
-      }}
-      passFindingsData={{
-        total: pass,
-        new: pass_new,
-      }}
-    />
+    <>
+      <LighthouseContextContributor
+        contributorId="overview-status-summary"
+        item={buildFindingStatusSummaryContext({
+          pathname: "/",
+          passed: pass,
+          failed: fail,
+          newPassed: pass_new,
+          newFailed: fail_new,
+        })}
+      />
+      <StatusChart
+        failFindingsData={{
+          total: fail,
+          new: fail_new,
+        }}
+        passFindingsData={{
+          total: pass,
+          new: pass_new,
+        }}
+      />
+    </>
   );
 };

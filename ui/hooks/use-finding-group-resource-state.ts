@@ -33,8 +33,10 @@ interface UseFindingGroupResourceStateReturn {
   totalCount: number | null;
   drawer: ReturnType<typeof useResourceDetailDrawer>;
   handleDrawerMuteComplete: () => void;
+  selectedResources: FindingResourceRow[];
   selectedFindingIds: string[];
   selectableRowCount: number;
+  getRowId: (resource: FindingResourceRow) => string;
   getRowCanSelect: (row: Row<FindingResourceRow>) => boolean;
   clearSelection: () => void;
   isSelected: (id: string) => boolean;
@@ -46,6 +48,21 @@ interface UseFindingGroupResourceStateReturn {
     updateAction: (input: UpdateFindingTriageInput) => Promise<void>,
   ) => Promise<void>;
 }
+
+function getSelectedResources(
+  resources: FindingResourceRow[],
+  selection: RowSelectionState,
+): FindingResourceRow[] {
+  const selectedFindingIds = new Set(
+    Object.keys(selection).filter((key) => selection[key]),
+  );
+  return resources.filter((resource) =>
+    selectedFindingIds.has(resource.findingId),
+  );
+}
+
+const getFindingResourceRowId = (resource: FindingResourceRow) =>
+  resource.findingId;
 
 export function useFindingGroupResourceState({
   group,
@@ -173,10 +190,10 @@ export function useFindingGroupResourceState({
     refresh();
   };
 
-  const selectedFindingIds = Object.keys(rowSelection)
-    .filter((key) => rowSelection[key])
-    .map((idx) => resources[parseInt(idx)]?.findingId)
-    .filter((id): id is string => Boolean(id));
+  const selectedResources = getSelectedResources(resources, rowSelection);
+  const selectedFindingIds = selectedResources.map(
+    (resource) => resource.findingId,
+  );
 
   const selectableRowCount = resources.filter(canMuteFindingResource).length;
 
@@ -208,10 +225,9 @@ export function useFindingGroupResourceState({
     setRowSelection(newSelection);
 
     if (onResourceSelectionChange) {
-      const newFindingIds = Object.keys(newSelection)
-        .filter((key) => newSelection[key])
-        .map((idx) => resources[parseInt(idx)]?.findingId)
-        .filter((id): id is string => Boolean(id));
+      const newFindingIds = getSelectedResources(resources, newSelection).map(
+        (resource) => resource.findingId,
+      );
       onResourceSelectionChange(newFindingIds);
     }
   };
@@ -278,8 +294,10 @@ export function useFindingGroupResourceState({
     totalCount,
     drawer,
     handleDrawerMuteComplete,
+    selectedResources,
     selectedFindingIds,
     selectableRowCount,
+    getRowId: getFindingResourceRowId,
     getRowCanSelect,
     clearSelection,
     isSelected,

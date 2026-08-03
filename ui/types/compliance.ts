@@ -1,3 +1,5 @@
+import type { ProviderType } from "./providers";
+
 export const REQUIREMENT_STATUS = {
   PASS: "PASS",
   FAIL: "FAIL",
@@ -7,6 +9,17 @@ export const REQUIREMENT_STATUS = {
 
 export type RequirementStatus =
   (typeof REQUIREMENT_STATUS)[keyof typeof REQUIREMENT_STATUS];
+
+/** Tabs of the compliance overview page. Multiple Scans is the default
+ *  landing tab, so it owns the bare `/compliance` route and Single Scan is
+ *  reachable through `?tab=per-scan`. */
+export const COMPLIANCE_TAB = {
+  PER_SCAN: "per-scan",
+  CROSS_PROVIDER: "cross-provider",
+} as const;
+
+export type ComplianceTab =
+  (typeof COMPLIANCE_TAB)[keyof typeof COMPLIANCE_TAB];
 
 export const COMPLIANCE_OVERVIEW_TYPE = {
   OVERVIEW: "compliance-overviews",
@@ -47,6 +60,10 @@ export interface Requirement {
   // because each compliance has different keys
   [key: string]: string | string[] | number | boolean | object[] | undefined;
 }
+
+/** Check id → provider types it belongs to, for provider-labeled check
+ *  lists in the cross-provider view (a check can exist in several). */
+export type CheckProviderTypesMap = Partial<Record<string, ProviderType[]>>;
 
 export interface Control {
   label: string;

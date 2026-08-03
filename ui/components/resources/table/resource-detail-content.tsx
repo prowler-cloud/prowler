@@ -8,7 +8,7 @@ import {
   loadLatestFindingTriageNote,
   updateFindingTriage,
 } from "@/actions/findings";
-import { FloatingMuteButton } from "@/components/findings/floating-mute-button";
+import { FloatingSelectionActions } from "@/components/findings/floating-selection-actions";
 import { FindingDetailDrawer } from "@/components/findings/table";
 import {
   Tabs,
@@ -18,8 +18,6 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/shadcn";
-import {
   BreadcrumbNavigation,
   CustomBreadcrumbItem,
 } from "@/components/shadcn";
@@ -408,9 +406,12 @@ export const ResourceDetailContent = ({
                     isLoading={findingsLoading}
                   />
                   {selectedFindingIds.length > 0 && (
-                    <FloatingMuteButton
+                    <FloatingSelectionActions
                       selectedCount={selectedFindingIds.length}
                       selectedFindingIds={selectedFindingIds}
+                      muteLabel={`Mute ${selectedFindingIds.length} ${
+                        selectedFindingIds.length === 1 ? "Finding" : "Findings"
+                      }`}
                       onComplete={handleMuteComplete}
                     />
                   )}

@@ -52,7 +52,7 @@ function defaultOptions(overrides?: Record<string, unknown>) {
   return {
     enabled: true,
     checkIds: ["check_1", "check_2"],
-    scanId: "scan-1",
+    scanIds: ["scan-1"],
     pageNumber: "1",
     pageSize: "10",
     sort: "+severity",
@@ -84,13 +84,31 @@ describe("useRequirementFindings", () => {
     expect(findingsActionsMock.getFindings).toHaveBeenCalledWith({
       filters: {
         "filter[check_id__in]": "check_1,check_2",
-        "filter[scan]": "scan-1",
+        "filter[scan__in]": "scan-1",
         "filter[muted]": "false",
       },
       page: 1,
       pageSize: 10,
       sort: "severity",
     });
+  });
+
+  it("should query all scans at once when given several scan ids", async () => {
+    // Given / When
+    renderHook(() =>
+      useRequirementFindings(defaultOptions({ scanIds: ["scan-1", "scan-2"] })),
+    );
+    await flushAsync();
+
+    // Then — one combined request, not one per scan.
+    expect(findingsActionsMock.getFindings).toHaveBeenCalledTimes(1);
+    expect(findingsActionsMock.getFindings).toHaveBeenCalledWith(
+      expect.objectContaining({
+        filters: expect.objectContaining({
+          "filter[scan__in]": "scan-1,scan-2",
+        }),
+      }),
+    );
   });
 
   it("should expand findings with their included scan, resource, and provider", async () => {
@@ -110,12 +128,13 @@ describe("useRequirementFindings", () => {
     expect(result.current.findings?.meta?.pagination?.count).toBe(1);
   });
 
-  it("should not fetch when disabled or without check ids", async () => {
+  it("should not fetch when disabled, without check ids, or without scan ids", async () => {
     // Given / When
     renderHook(() =>
       useRequirementFindings(defaultOptions({ enabled: false })),
     );
     renderHook(() => useRequirementFindings(defaultOptions({ checkIds: [] })));
+    renderHook(() => useRequirementFindings(defaultOptions({ scanIds: [] })));
     await flushAsync();
 
     // Then
@@ -130,11 +149,15 @@ describe("useRequirementFindings", () => {
     const withoutChecks = renderHook(() =>
       useRequirementFindings(defaultOptions({ checkIds: [] })),
     );
+    const withoutScans = renderHook(() =>
+      useRequirementFindings(defaultOptions({ scanIds: [] })),
+    );
     await flushAsync();
 
     // Then — a skipped fetch must not look like a pending one.
     expect(disabled.result.current.isLoading).toBe(false);
     expect(withoutChecks.result.current.isLoading).toBe(false);
+    expect(withoutScans.result.current.isLoading).toBe(false);
   });
 
   it("should report loading until the fetch settles", async () => {

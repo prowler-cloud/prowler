@@ -213,6 +213,15 @@ class AWSProviderConfig(ProviderConfigBase):
             "per NIST CM-3 — anything older is a security smell)."
         ),
     )
+    max_ec2_instance_stopped_days: Optional[int] = Field(
+        default=None,
+        ge=1,
+        le=1095,
+        description=(
+            "Days an EC2 instance can remain stopped before being flagged. "
+            "Range: 1..1095 (3 years)."
+        ),
+    )
     ec2_allowed_interface_types: Optional[list[str]] = None
     ec2_allowed_instance_owners: Optional[list[str]] = None
     ec2_high_risk_ports: Annotated[
@@ -414,6 +423,10 @@ class AWSProviderConfig(ProviderConfigBase):
         ge=1,
         le=6,
         description="Min AZs an Application/Network LB must span. Range: 1..6.",
+    )
+    elbv2_listener_pqc_tls_allowed_policies: Optional[list[str]] = Field(
+        default=None,
+        description="ELBv2 SSL policies that satisfy the PQ TLS listener check.",
     )
 
     # --- ElastiCache -----------------------------------------------------

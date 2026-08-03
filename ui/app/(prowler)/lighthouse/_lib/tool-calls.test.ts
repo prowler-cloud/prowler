@@ -11,7 +11,7 @@ describe("getToolCallContent", () => {
     // Given
     const content = {
       tool_call_id: "call_1",
-      tool_name: "prowler_app_search_security_findings",
+      tool_name: "prowler_search_security_findings",
       arguments: { severity: "high" },
       result: { count: 3 },
       outcome: "success",
@@ -23,7 +23,7 @@ describe("getToolCallContent", () => {
     // Then
     expect(parsed).toEqual({
       toolCallId: "call_1",
-      toolName: "prowler_app_search_security_findings",
+      toolName: "prowler_search_security_findings",
       arguments: { severity: "high" },
       result: { count: 3 },
       outcome: "success",
@@ -53,10 +53,16 @@ describe("getToolCallContent", () => {
 
 describe("formatToolName", () => {
   it("should strip the prowler prefix and title-case", () => {
-    expect(formatToolName("prowler_app_search_security_findings")).toBe(
+    expect(formatToolName("prowler_search_security_findings")).toBe(
       "Search security findings",
     );
     expect(formatToolName("prowler_hub_list_checks")).toBe("List checks");
+  });
+
+  it("should still strip the legacy prowler_app_ prefix", () => {
+    expect(formatToolName("prowler_app_search_security_findings")).toBe(
+      "Search security findings",
+    );
   });
 
   it("should humanize prefix-less tools", () => {

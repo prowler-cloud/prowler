@@ -67,12 +67,44 @@ const memberships = [
   },
 ] satisfies MembershipDetailData[];
 
+const inactiveMembership = {
+  id: "membership-2",
+  type: "memberships",
+  attributes: {
+    role: "owner",
+    date_joined: "2026-06-23T10:00:00Z",
+  },
+  relationships: {
+    tenant: {
+      data: {
+        type: "tenants",
+        id: "tenant-2",
+      },
+    },
+  },
+} satisfies MembershipDetailData;
+
 const tenantsMap = {
   "tenant-1": {
     id: "tenant-1",
     type: "tenants",
     attributes: {
       name: "Prowler Labs",
+    },
+    relationships: {
+      memberships: {
+        meta: {
+          count: 1,
+        },
+        data: [],
+      },
+    },
+  },
+  "tenant-2": {
+    id: "tenant-2",
+    type: "tenants",
+    attributes: {
+      name: "Prowler Sandbox",
     },
     relationships: {
       memberships: {
@@ -117,6 +149,25 @@ describe("MembershipsCardClient", () => {
     expect(cells[0]).toHaveTextContent("owner");
     expect(cells[1]).toHaveTextContent("Active");
     expect(cells[2]).toHaveTextContent("Prowler Labs");
+  });
+
+  it("leaves inactive organization status empty", () => {
+    // Given / When
+    render(
+      <MembershipsCardClient
+        memberships={[...memberships, inactiveMembership]}
+        tenantsMap={tenantsMap}
+        hasManageAccount
+        sessionTenantId="tenant-1"
+      />,
+    );
+
+    // Then
+    const inactiveRow = screen.getByRole("row", {
+      name: /owner prowler sandbox/i,
+    });
+    expect(within(inactiveRow).queryByText("Inactive")).not.toBeInTheDocument();
+    expect(screen.getByText("Active")).toBeInTheDocument();
   });
 
   it("keeps organization edit and delete actions inside the actions menu", async () => {

@@ -1,6 +1,7 @@
 import logging
 from unittest.mock import MagicMock, patch
 
+import pytest
 from config.settings import sentry as sentry_settings
 from config.settings.sentry import before_send
 
@@ -80,6 +81,45 @@ def test_before_send_passes_through_non_ignored_log():
 
     # Assert that the event was passed through
     assert result == event
+
+
+def test_before_send_ignores_cartography_missing_temporary_database_log():
+    log_record = _make_log_record(
+        msg="Cartography job failed with %s for database %s",
+        name="cartography.graph.job",
+        args=(
+            "Neo.ClientError.Database.DatabaseNotFound",
+            "db-tmp-scan-12345678",
+        ),
+    )
+
+    event = MagicMock()
+
+    assert before_send(event, {"log_record": log_record}) is None
+
+
+@pytest.mark.parametrize(
+    ("logger_name", "message"),
+    [
+        (
+            "cartography.graph.job.worker",
+            "Neo.ClientError.Database.DatabaseNotFound for db-tmp-scan-12345678",
+        ),
+        (
+            "cartography.graph.job",
+            "DatabaseNotFound for db-tmp-scan-12345678",
+        ),
+        (
+            "cartography.graph.job",
+            "Neo.ClientError.Database.DatabaseNotFound for db-tenant-12345678",
+        ),
+    ],
+)
+def test_before_send_passes_through_similar_cartography_logs(logger_name, message):
+    log_record = _make_log_record(msg=message, name=logger_name)
+    event = MagicMock()
+
+    assert before_send(event, {"log_record": log_record}) is event
 
 
 def test_before_send_passes_through_non_ignored_exception():

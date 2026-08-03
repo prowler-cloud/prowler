@@ -6,6 +6,7 @@ import {
   addCredentialsFormSchema,
   addCredentialsRoleFormSchema,
   addProviderFormSchema,
+  KUBECONFIG_UNSUPPORTED_COMMAND_AUTHENTICATION_ERROR,
 } from "./formSchemas";
 
 const BASE_AWS_ROLE_VALUES = {
@@ -194,8 +195,55 @@ users:
     expect(result.error.issues).toContainEqual(
       expect.objectContaining({
         path: [ProviderCredentialFields.KUBECONFIG_CONTENT],
+        message: KUBECONFIG_UNSUPPORTED_COMMAND_AUTHENTICATION_ERROR,
       }),
     );
+  });
+
+  it("reports kubeconfig auth-provider cmd-path on kubeconfig_content field", () => {
+    const schema = addCredentialsFormSchema("kubernetes");
+
+    const result = schema.safeParse({
+      ...BASE_KUBERNETES_VALUES,
+      [ProviderCredentialFields.KUBECONFIG_CONTENT]: `apiVersion: v1
+kind: Config
+users:
+  - name: test-user
+    user:
+      auth-provider:
+        name: gcp
+        config:
+          cmd-path: /bin/sh`,
+    });
+
+    expect(result.success).toBe(false);
+    if (result.success) return;
+
+    expect(result.error.issues).toContainEqual(
+      expect.objectContaining({
+        path: [ProviderCredentialFields.KUBECONFIG_CONTENT],
+        message: KUBECONFIG_UNSUPPORTED_COMMAND_AUTHENTICATION_ERROR,
+      }),
+    );
+  });
+
+  it("accepts kubeconfig auth-provider without cmd-path", () => {
+    const schema = addCredentialsFormSchema("kubernetes");
+
+    const result = schema.safeParse({
+      ...BASE_KUBERNETES_VALUES,
+      [ProviderCredentialFields.KUBECONFIG_CONTENT]: `apiVersion: v1
+kind: Config
+users:
+  - name: test-user
+    user:
+      auth-provider:
+        name: oidc
+        config:
+          client-id: prowler`,
+    });
+
+    expect(result.success).toBe(true);
   });
 
   it("accepts malformed kubeconfig content for backend validation", () => {
@@ -216,6 +264,26 @@ users:
       ...BASE_KUBERNETES_VALUES,
       [ProviderCredentialFields.KUBECONFIG_CONTENT]: "[]",
     });
+
+    expect(result.success).toBe(true);
+  });
+});
+
+describe("addCredentialsFormSchema - oraclecloud", () => {
+  const BASE_OCI_VALUES = {
+    [ProviderCredentialFields.PROVIDER_ID]: "provider-oci-1",
+    [ProviderCredentialFields.PROVIDER_TYPE]: "oraclecloud",
+    [ProviderCredentialFields.OCI_USER]: "ocid1.user.oc1..example",
+    [ProviderCredentialFields.OCI_FINGERPRINT]: "aa:bb:cc:dd",
+    [ProviderCredentialFields.OCI_KEY_CONTENT]:
+      "-----BEGIN PRIVATE KEY-----\nMIIEvQ...\n-----END PRIVATE KEY-----",
+    [ProviderCredentialFields.OCI_TENANCY]: "ocid1.tenancy.oc1..example",
+  } as const;
+
+  it("accepts OCI API key credentials without region", () => {
+    const schema = addCredentialsFormSchema("oraclecloud");
+
+    const result = schema.safeParse(BASE_OCI_VALUES);
 
     expect(result.success).toBe(true);
   });

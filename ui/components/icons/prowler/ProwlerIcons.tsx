@@ -1,6 +1,58 @@
+import Image from "next/image";
 import React from "react";
 
+import { isCloud } from "@/lib/shared/env";
+import { cn } from "@/lib/utils";
+
 import { IconSvgProps } from "../../../types/index";
+
+const PROWLER_BRAND = {
+  CLOUD: {
+    name: "Prowler Cloud",
+    lightLogo: "/logos/prowler-cloud-light.svg",
+    darkLogo: "/logos/prowler-cloud-dark.svg",
+  },
+  LOCAL_SERVER: {
+    name: "Prowler Local Server",
+    lightLogo: "/logos/prowler-local-server-light.svg",
+    darkLogo: "/logos/prowler-local-server-dark.svg",
+  },
+} as const;
+
+interface ProwlerBrandProps {
+  className?: string;
+}
+
+export const ProwlerBrand = ({ className }: ProwlerBrandProps) => {
+  const brand = isCloud() ? PROWLER_BRAND.CLOUD : PROWLER_BRAND.LOCAL_SERVER;
+
+  return (
+    <span
+      role="img"
+      aria-label={brand.name}
+      className={cn("inline-grid", className)}
+    >
+      <Image
+        src={brand.lightLogo}
+        alt=""
+        aria-hidden="true"
+        width={200}
+        height={63.14}
+        unoptimized
+        className="col-start-1 row-start-1 h-auto w-full dark:hidden"
+      />
+      <Image
+        src={brand.darkLogo}
+        alt=""
+        aria-hidden="true"
+        width={200}
+        height={63.14}
+        unoptimized
+        className="col-start-1 row-start-1 hidden h-auto w-full dark:block"
+      />
+    </span>
+  );
+};
 
 export const ProwlerExtended: React.FC<IconSvgProps> = ({
   size,

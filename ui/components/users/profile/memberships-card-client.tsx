@@ -166,9 +166,7 @@ const membershipColumns: ColumnDef<MembershipRow>[] = [
     cell: ({ row }) =>
       row.original.isActiveTenant ? (
         <Badge variant="success">Active</Badge>
-      ) : (
-        <Badge variant="outline">Inactive</Badge>
-      ),
+      ) : null,
     enableSorting: false,
   },
   {

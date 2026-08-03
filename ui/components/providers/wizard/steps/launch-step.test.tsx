@@ -76,7 +76,7 @@ describe("LaunchStep", () => {
 
   describe("Prowler OSS (non-Cloud)", () => {
     beforeEach(() => {
-      vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+      vi.stubEnv("UI_CLOUD_ENABLED", "false");
       scanOnDemandMock.mockResolvedValue({ data: { id: "scan-1" } });
     });
 
@@ -174,7 +174,7 @@ describe("LaunchStep", () => {
 
   describe("Prowler Cloud subscribed", () => {
     beforeEach(() => {
-      vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+      vi.stubEnv("UI_CLOUD_ENABLED", "true");
       updateScheduleMock.mockResolvedValue({ data: { id: "provider-1" } });
     });
 
@@ -370,8 +370,33 @@ describe("LaunchStep", () => {
 
   describe("Prowler Cloud trial/onboarding (manual scan only)", () => {
     beforeEach(() => {
-      vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+      vi.stubEnv("UI_CLOUD_ENABLED", "true");
       scanOnDemandMock.mockResolvedValue({ data: { id: "scan-1" } });
+    });
+
+    it("uses a warning badge for the subscription requirement", () => {
+      // Given
+      seedConnectedProvider();
+
+      // When
+      render(
+        <LaunchStep
+          onBack={vi.fn()}
+          onClose={vi.fn()}
+          onFooterChange={vi.fn()}
+          capability={SCAN_SCHEDULE_CAPABILITY.MANUAL_ONLY}
+        />,
+      );
+
+      // Then
+      expect(screen.getByText("Requires subscription")).toHaveClass(
+        "bg-bg-warning-secondary/20",
+        "text-text-warning-primary",
+      );
+      expect(screen.getByText("Requires subscription")).toHaveAttribute(
+        "data-slot",
+        "badge",
+      );
     });
 
     it("defaults to run now, locks schedule mode, and only launches a manual scan", async () => {

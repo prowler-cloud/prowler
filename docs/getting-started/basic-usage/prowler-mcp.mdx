@@ -7,10 +7,10 @@ Configure your MCP client to connect to Prowler MCP Server.
 ## Step 1: Get Your API Key
 
 <Note>
-**Authentication is optional**: Prowler Hub and Prowler Documentation features work without authentication. An API key is only required for Prowler Cloud and Prowler App (Self-Managed) features.
+**Authentication is optional**: Prowler Hub and Prowler Documentation features work without authentication. An API key is only required for Prowler tools (Prowler Cloud, Prowler Private Cloud, or Prowler Local Server).
 </Note>
 
-To use Prowler Cloud or Prowler App (Self-Managed) features. To get the API key, please refer to the [API Keys](/user-guide/tutorials/prowler-app-api-keys) guide.
+An API key authenticates the Prowler tools (Prowler Cloud, Prowler Private Cloud, or Prowler Local Server). To get the API key, please refer to the [API Keys](/user-guide/tutorials/prowler-app-api-keys) guide.
 
 <Warning>
 Keep the API key secure. Never share it publicly or commit it to version control.
@@ -18,12 +18,36 @@ Keep the API key secure. Never share it publicly or commit it to version control
 
 ## Step 2: Configure Your MCP Host/Client
 
-Choose the configuration based on your deployment:
+Most users should use the **Cloud MCP Server** — it needs no installation and is maintained by Prowler. The [Local MCP Server](#local-mcp-server-configuration) configuration is provided afterwards for users who run the server themselves.
 
-- **HTTP Mode**: Prowler Cloud MCP Server or self-hosted Prowler MCP Server.
-- **STDIO Mode**: Local installation only (runs as subprocess of your MCP client).
+- **Cloud MCP Server (HTTP)**: the managed server at `https://mcp.prowler.com/mcp` (or your own self-hosted HTTP server).
+- **Local MCP Server (STDIO)**: local installation only (runs as a subprocess of your MCP client).
 
-### HTTP Mode
+### Step-by-Step Guides Per Agent
+
+The tabs below are a quick configuration reference. For a walkthrough with screenshots, troubleshooting, and client-specific caveats, follow the dedicated guide for your agent:
+
+<CardGroup cols={2}>
+  <Card title="Claude Code" icon="terminal" href="/user-guide/ai-agents/claude-code">
+    Plugin vs. MCP-only, and which Claude surfaces work
+  </Card>
+  <Card title="Claude Desktop App (Chat)" icon="comment" href="/user-guide/ai-agents/claude-desktop">
+    The Chat tab, via a local bridge
+  </Card>
+  <Card title="Codex" icon="code" href="/user-guide/ai-agents/codex">
+    CLI and the VS Code extension
+  </Card>
+  <Card title="Cursor" icon="arrow-pointer" href="/user-guide/ai-agents/cursor">
+    Global and project scopes
+  </Card>
+  <Card title="VS Code / Copilot" icon="microsoft" href="/user-guide/ai-agents/vscode">
+    Agent mode with secure key prompts
+  </Card>
+</CardGroup>
+
+## Cloud MCP Server Configuration (Recommended)
+
+Connect to the **Cloud MCP Server** at `https://mcp.prowler.com/mcp` over HTTP. This is the recommended path — no installation, always up to date. The same configuration works for a self-hosted HTTP server: just swap the URL.
 
 <Tabs>
   <Tab title="Generic Native HTTP Support">
@@ -61,10 +85,10 @@ Choose the configuration based on your deployment:
           "args": [
             "https://mcp.prowler.com/mcp", // or your self-hosted Prowler MCP Server URL
             "--header",
-            "Authorization: Bearer ${PROWLER_APP_API_KEY}"
+            "Authorization: Bearer ${PROWLER_API_KEY}"
           ],
           "env": {
-            "PROWLER_APP_API_KEY": "<your-api-key-here>"
+            "PROWLER_API_KEY": "<your-api-key-here>"
           }
         }
       }
@@ -74,72 +98,11 @@ Choose the configuration based on your deployment:
     The `mcp-remote` tool acts as a bridge for clients that don't support HTTP natively. Learn more at [mcp-remote on npm](https://www.npmjs.com/package/mcp-remote).
     </Info>
   </Tab>
-
-  <Tab title="Claude Desktop">
-    1. Open Claude Desktop settings
-    2. Go to "Developer" tab
-    3. Click in "Edit Config" button
-    4. Edit the `claude_desktop_config.json` file with your favorite editor
-    5. Install a reviewed version of `mcp-remote` in a dedicated local workspace:
-    ```bash
-    mkdir -p ~/.local/share/prowler-mcp-bridge
-    cd ~/.local/share/prowler-mcp-bridge
-    npm init -y
-    npm install --save-exact mcp-remote@0.1.38
-    ```
-    6. Add the following configuration:
-    ```json
-    {
-      "mcpServers": {
-        "prowler": {
-          "command": "/absolute/path/to/.local/share/prowler-mcp-bridge/node_modules/.bin/mcp-remote",
-          "args": [
-            "https://mcp.prowler.com/mcp",
-            "--header",
-            "Authorization: Bearer ${PROWLER_APP_API_KEY}"
-          ],
-          "env": {
-            "PROWLER_APP_API_KEY": "<your-api-key-here>"
-          }
-        }
-      }
-    }
-    ```
-  </Tab>
-
-  <Tab title="Claude Code">
-    Run the following command:
-    ```bash
-    export PROWLER_APP_API_KEY="<your-api-key-here>"
-    claude mcp add --transport http prowler https://mcp.prowler.com/mcp --header "Authorization: Bearer $PROWLER_APP_API_KEY" --scope user
-    ```
-  </Tab>
-
-  <Tab title="Cursor">
-    1. Open Cursor settings
-    2. Go to "Tools & MCP"
-    3. Click in "New MCP Server" button
-    4. Add to the JSON Configuration the following:
-    ```json
-    {
-      "mcpServers": {
-        "prowler": {
-          "url": "https://mcp.prowler.com/mcp",
-          "headers": {
-            "Authorization": "Bearer <your-api-key-here>"
-          }
-        }
-      }
-    }
-    ```
-  </Tab>
-
-
 </Tabs>
 
-### STDIO Mode
+## Local MCP Server Configuration
 
-STDIO mode is only available when running the MCP server locally.
+STDIO mode is only available when running the **Local MCP Server** on your own machine. See the [Installation guide](/getting-started/installation/prowler-mcp) to set it up first.
 
 <Tabs>
   <Tab title="Generic uvx installation">
@@ -152,7 +115,7 @@ STDIO mode is only available when running the MCP server locally.
           "command": "uvx",
           "args": ["/absolute/path/to/prowler/mcp_server/"],
           "env": {
-            "PROWLER_APP_API_KEY": "<your-api-key-here>",
+            "PROWLER_API_KEY": "<your-api-key-here>",
             "API_BASE_URL": "https://api.prowler.com/api/v1"
           }
         }
@@ -179,7 +142,7 @@ STDIO mode is only available when running the MCP server locally.
             "--rm",
             "-i",
             "--env",
-            "PROWLER_APP_API_KEY=<your-api-key-here>",
+            "PROWLER_API_KEY=<your-api-key-here>",
             "--env",
             "API_BASE_URL=https://api.prowler.com/api/v1",
             "prowlercloud/prowler-mcp"
@@ -205,7 +168,7 @@ Restart your MCP client and start asking questions:
 
 ## Authentication Methods
 
-Prowler MCP Server supports two authentication methods to connect to Prowler Cloud or Prowler App (Self-Managed):
+Prowler MCP Server supports two authentication methods to connect to Prowler (Prowler Cloud, Prowler Private Cloud, or Prowler Local Server):
 
 ### API Key (Recommended)
 

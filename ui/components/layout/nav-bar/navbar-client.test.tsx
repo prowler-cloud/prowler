@@ -6,8 +6,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getFlowById } from "@/lib/onboarding";
 import { localStorageAdapter } from "@/lib/tours/store/local-storage-adapter";
 import { usePageReadyStore } from "@/store/page-ready";
+import { SIDE_PANEL_TAB, useSidePanelStore } from "@/store/side-panel";
 
-import { NavbarClient } from "./navbar-client";
+import { FeedsLoadingFallback, NavbarClient } from "./navbar-client";
 
 const navigationMocks = vi.hoisted(() => ({
   pathname: "/findings",
@@ -16,6 +17,11 @@ const navigationMocks = vi.hoisted(() => ({
 }));
 
 const requestReplayMock = vi.hoisted(() => vi.fn());
+
+/** `replayFlow` reads the live query from `window` (not `useSearchParams`), so
+ *  the CSR bailout stays inside the Suspense boundary NavbarClient renders. */
+const setLocationSearch = (search: string) =>
+  window.history.replaceState(null, "", `/${search}`);
 
 vi.mock("next/navigation", () => ({
   usePathname: () => navigationMocks.pathname,
@@ -29,10 +35,6 @@ vi.mock("@/store/onboarding-replay", () => {
   hook.getState = () => state;
   return { useOnboardingReplayStore: hook };
 });
-
-vi.mock("@/hooks/use-sidebar", () => ({
-  useSidebar: () => ({ isOpen: true, toggleOpen: vi.fn() }),
-}));
 
 vi.mock("@/components/ThemeSwitch", () => ({
   ThemeSwitch: () => <button type="button">Theme switch</button>,
@@ -54,12 +56,8 @@ vi.mock("@/components/shadcn", async (importOriginal) => ({
   ),
 }));
 
-vi.mock("../sidebar/sheet-menu", () => ({
-  SheetMenu: () => <button type="button">Open menu</button>,
-}));
-
-vi.mock("../sidebar/sidebar-toggle", () => ({
-  SidebarToggle: () => <button type="button">Toggle sidebar</button>,
+vi.mock("@/components/layout/app-sidebar", () => ({
+  MobileAppSidebar: () => <button type="button">Open menu</button>,
 }));
 
 vi.mock("../user-nav/user-nav", () => ({
@@ -72,11 +70,16 @@ describe("NavbarClient", () => {
     navigationMocks.push.mockClear();
     requestReplayMock.mockClear();
     navigationMocks.searchParams = new URLSearchParams();
+    setLocationSearch("");
     window.localStorage.clear();
     // Replay icon is Cloud-only.
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
     // Default: the current route's content has loaded, so the icon is enabled.
     usePageReadyStore.setState({ readyPath: "/findings" });
+    useSidePanelStore.setState({
+      isOpen: false,
+      selectedTab: SIDE_PANEL_TAB.AI_CHAT,
+    });
   });
 
   it("renders an accessible contextual onboarding button in the breadcrumb", async () => {
@@ -149,8 +152,34 @@ describe("NavbarClient", () => {
 
   it("starts the replay in-memory (no navigation) when already on the flow's route", async () => {
     // Given the user is already on the flow's page
+    navigationMocks.pathname = "/findings";
+    usePageReadyStore.setState({ readyPath: "/findings" });
+    const user = userEvent.setup();
+    render(
+      <NavbarClient
+        title="Findings"
+        onboardingAction={{ flowId: "explore-findings" }}
+      />,
+    );
+
+    // When
+    await user.click(
+      screen.getByRole("button", {
+        name: /start product tour: explore your findings/i,
+      }),
+    );
+
+    // Then the replay is requested via the in-memory store — no router.push, so no
+    // `?onboarding=` URL param and no Next.js RSC refetch of the page.
+    expect(requestReplayMock).toHaveBeenCalledWith("explore-findings");
+    expect(navigationMocks.push).not.toHaveBeenCalled();
+  });
+
+  it("navigates when the flow pins a tab the current route does not carry", async () => {
+    // Given the user is on the bare /compliance route (Multiple Scans), while
+    // the tour anchors live on the Single Scan tab.
     navigationMocks.pathname = "/compliance";
-    navigationMocks.searchParams = new URLSearchParams("scanId=scan-1&foo=bar");
+    setLocationSearch("");
     usePageReadyStore.setState({ readyPath: "/compliance" });
     const user = userEvent.setup();
     render(
@@ -167,8 +196,37 @@ describe("NavbarClient", () => {
       }),
     );
 
-    // Then the replay is requested via the in-memory store — no router.push, so no
-    // `?onboarding=` URL param and no Next.js RSC refetch of the page.
+    // Then a real navigation switches tabs before the tour starts.
+    expect(requestReplayMock).not.toHaveBeenCalled();
+    expect(navigationMocks.push).toHaveBeenCalledWith(
+      "/compliance?tab=per-scan&onboarding=view-compliance",
+    );
+  });
+
+  it("replays in-memory when the pinned tab is already active, keeping the selected scan", async () => {
+    // Given the user is on Single Scan with a scan and a filter picked — a
+    // navigation here would reset both, so the pinned tab must not force one.
+    navigationMocks.pathname = "/compliance";
+    setLocationSearch(
+      "?tab=per-scan&scanId=scan-1&filter%5Bregion__in%5D=eu-west-1",
+    );
+    usePageReadyStore.setState({ readyPath: "/compliance" });
+    const user = userEvent.setup();
+    render(
+      <NavbarClient
+        title="Compliance"
+        onboardingAction={{ flowId: "view-compliance" }}
+      />,
+    );
+
+    // When
+    await user.click(
+      screen.getByRole("button", {
+        name: /start product tour: check compliance/i,
+      }),
+    );
+
+    // Then
     expect(requestReplayMock).toHaveBeenCalledWith("view-compliance");
     expect(navigationMocks.push).not.toHaveBeenCalled();
   });
@@ -226,7 +284,7 @@ describe("NavbarClient", () => {
   });
 
   it("hides the replay icon entirely in self-hosted (OSS) deployments", () => {
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
 
     render(
       <NavbarClient
@@ -236,6 +294,61 @@ describe("NavbarClient", () => {
     );
     expect(
       screen.queryByRole("button", { name: /start product tour/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows the Lighthouse AI side-panel trigger in cloud", () => {
+    // Given / When
+    render(<NavbarClient title="Findings" />);
+
+    // Then
+    expect(screen.getByTestId("side-panel-ai-trigger")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Ask Lighthouse AI" }),
+    ).toBeInTheDocument();
+  });
+
+  it("hides the Lighthouse AI trigger while the AI chat panel is already open", () => {
+    // Given
+    useSidePanelStore.setState({
+      isOpen: true,
+      selectedTab: SIDE_PANEL_TAB.AI_CHAT,
+    });
+
+    // When
+    render(<NavbarClient title="Findings" />);
+
+    // Then
+    expect(
+      screen.queryByTestId("side-panel-ai-trigger"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps the Lighthouse AI trigger while the panel shows a detail tab", () => {
+    // Given: the panel is open but on the context (detail) tab, so the trigger
+    // is still the way to switch to the AI chat.
+    useSidePanelStore.setState({
+      isOpen: true,
+      selectedTab: SIDE_PANEL_TAB.CONTEXT,
+    });
+
+    // When
+    render(<NavbarClient title="Findings" />);
+
+    // Then
+    expect(screen.getByTestId("side-panel-ai-trigger")).toBeInTheDocument();
+  });
+
+  it("hides the Lighthouse AI side-panel trigger in self-hosted (OSS) deployments", () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+
+    // When
+    render(<NavbarClient title="Findings" />);
+
+    // Then
+    expect(
+      screen.queryByTestId("side-panel-ai-trigger"),
     ).not.toBeInTheDocument();
   });
 
@@ -252,5 +365,30 @@ describe("NavbarClient", () => {
     expect(
       screen.queryByRole("button", { name: /start product tour/i }),
     ).not.toBeInTheDocument();
+  });
+
+  it("draws a bottom separator that reaches the sidebar's edge", () => {
+    // Given / When
+    render(<NavbarClient title="Findings" />);
+
+    // Then: same token as the sidebar's border-r, bled 16px left to meet it
+    const header = screen.getByRole("banner");
+    expect(header).toHaveClass(
+      "border-b",
+      "border-border-neutral-secondary",
+      "-ml-4",
+      "pl-4",
+    );
+    expect(header).not.toHaveClass("w-full");
+  });
+
+  it("keeps the feeds fallback on the shared ghost icon treatment", () => {
+    // Given / When
+    render(<FeedsLoadingFallback />);
+
+    // Then: same 32px square as the rest of the navbar action cluster
+    const button = screen.getByRole("button", { name: "Loading updates" });
+    expect(button).toHaveClass("size-8");
+    expect(button).not.toHaveClass("rounded-full");
   });
 });

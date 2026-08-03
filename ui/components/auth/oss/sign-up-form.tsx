@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm, useWatch } from "react-hook-form";
 
 import { createNewUser } from "@/actions/auth";
@@ -15,8 +15,7 @@ import { AuthFooterLink } from "@/components/auth/oss/auth-footer-link";
 import { AuthLayout } from "@/components/auth/oss/auth-layout";
 import { PasswordRequirementsMessage } from "@/components/auth/oss/password-validator";
 import { SocialButtons } from "@/components/auth/oss/social-buttons";
-import { Button, Checkbox } from "@/components/shadcn";
-import { useToast } from "@/components/shadcn";
+import { Button, Checkbox, useToast } from "@/components/shadcn";
 import { CustomInput } from "@/components/shadcn/custom";
 import { CustomLink } from "@/components/shadcn/custom/custom-link";
 import {
@@ -25,7 +24,9 @@ import {
   FormField,
   FormMessage,
 } from "@/components/shadcn/form";
+import { appendAttributionToCallbackPath } from "@/lib/auth-callback-url";
 import { stripPasswordManagerHighlight } from "@/lib/password-manager";
+import { extractUtmParams } from "@/lib/utm";
 import { ApiError, SignUpFormData, signUpSchema } from "@/types";
 
 const AUTH_ERROR_PATHS = {
@@ -55,10 +56,16 @@ export const SignUpForm = ({
   isGithubOAuthEnabled?: boolean;
 }) => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
-  const callbackUrl = invitationToken
+  const utmParams = extractUtmParams(searchParams);
+  const baseCallbackUrl = invitationToken
     ? `/invitation/accept?invitation_token=${encodeURIComponent(invitationToken)}`
     : "/";
+  const callbackUrl = appendAttributionToCallbackPath(
+    baseCallbackUrl,
+    utmParams,
+  );
 
   const form = useForm<SignUpFormData>({
     resolver: zodResolver(signUpSchema),
@@ -90,7 +97,7 @@ export const SignUpForm = ({
   const isSocialAuthDisabled = Boolean(isCloudEnv && !termsAccepted);
 
   const onSubmit = async (data: SignUpFormData) => {
-    const newUser = await createNewUser(data);
+    const newUser = await createNewUser(data, utmParams);
 
     if (!newUser.errors) {
       toast({
@@ -161,7 +168,16 @@ export const SignUpForm = ({
   };
 
   return (
-    <AuthLayout title="Sign up">
+    <AuthLayout
+      title="Get started"
+      footer={
+        <AuthFooterLink
+          text="Already have an account?"
+          linkText="Log in"
+          href="/sign-in"
+        />
+      }
+    >
       <Form {...form}>
         <form
           ref={stripPasswordManagerHighlight}
@@ -263,7 +279,7 @@ export const SignUpForm = ({
       {(!invitationToken || isCloudEnv) && (
         <>
           <AuthDivider />
-          <div className="flex flex-col gap-2">
+          <div className="flex gap-2">
             <SocialButtons
               googleAuthUrl={googleAuthUrl}
               githubAuthUrl={githubAuthUrl}
@@ -276,12 +292,6 @@ export const SignUpForm = ({
           </div>
         </>
       )}
-
-      <AuthFooterLink
-        text="Already have an account?"
-        linkText="Log in"
-        href="/sign-in"
-      />
     </AuthLayout>
   );
 };

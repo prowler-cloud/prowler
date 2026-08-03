@@ -14,9 +14,11 @@ import { DateWithTime, EntityInfo } from "@/components/shadcn/entities";
 import { DataTableColumnHeader } from "@/components/shadcn/table";
 import { DataTableExpandAllToggle } from "@/components/shadcn/table/data-table-expand-all-toggle";
 import { DataTableExpandableCell } from "@/components/shadcn/table/data-table-expandable-cell";
+import { getNodeLabel } from "@/lib/organizations";
 import {
   isProvidersOrganizationRow,
   PROVIDERS_GROUP_KIND,
+  ProvidersGroupKind,
   ProvidersProviderRow,
   ProvidersTableRow,
 } from "@/types/providers-table";
@@ -31,13 +33,14 @@ import type {
 } from "@/types/schedules";
 
 import { LinkToScans } from "../link-to-scans";
+
 import { DataTableRowActions } from "./data-table-row-actions";
 
 interface GroupNameChipsProps {
   groupNames?: string[];
 }
 
-const OrganizationIcon = ({ groupKind }: { groupKind: string }) => {
+const OrganizationIcon = ({ groupKind }: { groupKind: ProvidersGroupKind }) => {
   const Icon =
     groupKind === PROVIDERS_GROUP_KIND.ORGANIZATION ? Building2 : FolderTree;
 
@@ -216,12 +219,15 @@ export function getColumnProviders(
       ),
       cell: ({ row }) => {
         if (isProvidersOrganizationRow(row.original)) {
+          // Node label comes from the terminology table: node `kind` decides,
+          // organization type is the fallback — never an ID prefix.
+          const label =
+            row.original.groupKind === PROVIDERS_GROUP_KIND.ORGANIZATION
+              ? "Organization"
+              : getNodeLabel(row.original.orgType, row.original.kind);
+
           return (
-            <span className="text-text-neutral-tertiary text-sm">
-              {row.original.groupKind === PROVIDERS_GROUP_KIND.ORGANIZATION
-                ? "Organization"
-                : "Organizational Unit"}
-            </span>
+            <span className="text-text-neutral-tertiary text-sm">{label}</span>
           );
         }
 

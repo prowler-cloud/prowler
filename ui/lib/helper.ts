@@ -188,9 +188,14 @@ export const downloadScanZip = async (
 };
 
 /**
- * Generic function to download a file from base64 data
+ * Generic function to download a file from base64 data.
+ *
+ * Exported so feature-local wrappers (e.g. the cross-provider PDF download in
+ * app/(prowler)/compliance/_lib) reuse the base64→blob handling instead of
+ * duplicating it; those wrappers cannot live here because their server
+ * actions import the @/lib barrel, which would create a cycle.
  */
-const downloadFile = async (
+export const downloadFile = async (
   result: ScanBinaryResult,
   outputType: string,
   successMessage: string,
@@ -346,11 +351,15 @@ export const isGithubOAuthEnabled =
   !!process.env.SOCIAL_GITHUB_OAUTH_CLIENT_ID &&
   !!process.env.SOCIAL_GITHUB_OAUTH_CLIENT_SECRET;
 
+/**
+ * Polls a task until it settles. The settled task comes back with the verdict so
+ * callers can read its result without fetching the same task again.
+ */
 export const checkTaskStatus = async (
   taskId: string,
   maxRetries: number = 20,
   retryDelay: number = 1500,
-): Promise<{ completed: boolean; error?: string }> => {
+): Promise<{ completed: boolean; error?: string; task?: any }> => {
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     const task = await getTask(taskId);
 
@@ -363,9 +372,13 @@ export const checkTaskStatus = async (
 
     switch (state) {
       case "completed":
-        return { completed: true };
+        return { completed: true, task };
       case "failed":
-        return { completed: false, error: task.data.attributes.result.error };
+        return {
+          completed: false,
+          error: task.data.attributes.result.error,
+          task,
+        };
       case "available":
       case "scheduled":
       case "executing":
@@ -433,7 +446,7 @@ export const permissionFormFields: PermissionInfo[] = [
     field: "unlimited_visibility",
     label: "Unlimited Visibility",
     description:
-      "Grants tenant-wide visibility across all providers, accounts, resources, findings, scans, and compliance results without granting admin actions.",
+      "Grants organization-wide visibility across all providers, resources, findings, scans, and compliance results without granting admin actions.",
   },
   {
     field: "manage_providers",

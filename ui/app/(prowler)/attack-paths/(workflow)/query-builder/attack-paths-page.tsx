@@ -13,6 +13,7 @@ import {
 } from "@/actions/attack-paths";
 import { adaptQueryResultToGraphData } from "@/actions/attack-paths/query-result.adapter";
 import { FindingDetailDrawer } from "@/components/findings/table";
+import { LighthouseContextContributor } from "@/components/lighthouse/context-contributor";
 import { PageReady } from "@/components/onboarding";
 import { useFindingDetails } from "@/components/resources/table/use-finding-details";
 import { AutoRefresh } from "@/components/scans";
@@ -27,21 +28,26 @@ import {
 } from "@/components/shadcn/dialog";
 import { StatusAlert } from "@/components/shared/status-alert";
 import { useMountEffect } from "@/hooks/use-mount-effect";
+import { buildAttackPathContext } from "@/lib/lighthouse/context/contributions";
 import { isCloud } from "@/lib/shared/env";
+import { attackPathsEmptyTour } from "@/lib/tours/attack-paths-empty.tour";
 import {
   attackPathsTour,
   type AttackPathsTourTarget,
   pickDemoQuery,
   pickDemoScan,
 } from "@/lib/tours/attack-paths.tour";
-import { attackPathsEmptyTour } from "@/lib/tours/attack-paths-empty.tour";
 import { advanceActiveTour, useDriverTour } from "@/lib/tours/use-driver-tour";
 import type {
   AttackPathQuery,
   AttackPathQueryError,
   GraphNode,
 } from "@/types/attack-paths";
-import { ATTACK_PATH_QUERY_IDS, SCAN_STATES } from "@/types/attack-paths";
+import {
+  ATTACK_PATH_QUERY_IDS,
+  ATTACK_PATH_QUERY_KIND,
+  SCAN_STATES,
+} from "@/types/attack-paths";
 
 import {
   AttackPathGraph,
@@ -60,7 +66,7 @@ import type { GraphHandle } from "./_components/graph/attack-path-graph";
 import { useAttackPathScans } from "./_hooks/use-attack-path-scans";
 import { useGraphState } from "./_hooks/use-graph-state";
 import { useQueryBuilder } from "./_hooks/use-query-builder";
-import { exportGraphAsPNG } from "./_lib";
+import { exportGraphAsPNG, isProwlerFindingNode } from "./_lib";
 import {
   ATTACK_PATHS_VIEW_STATES,
   getAttackPathsViewState,
@@ -258,12 +264,14 @@ export default function AttackPathsPage() {
     graphState.setError(null);
 
     try {
-      const parameters = queryBuilder.getQueryParameters();
-      const isCustomQuery =
-        queryBuilder.selectedQuery === ATTACK_PATH_QUERY_IDS.CUSTOM;
+      const queryId = queryBuilder.selectedQuery;
+      const queryLabel =
+        queryBuilder.selectedQueryData?.attributes.name ?? queryId;
+      const parameters = { ...queryBuilder.getQueryParameters() };
+      const isCustomQuery = queryId === ATTACK_PATH_QUERY_IDS.CUSTOM;
       const result = isCustomQuery
         ? await executeCustomQuery(scanId, String(parameters?.query ?? ""))
-        : await executeQuery(scanId, queryBuilder.selectedQuery, parameters);
+        : await executeQuery(scanId, queryId, parameters);
 
       if (result && "error" in result) {
         const apiError = result as AttackPathQueryError;
@@ -289,7 +297,14 @@ export default function AttackPathsPage() {
         }
       } else if (result?.data?.attributes) {
         const graphData = adaptQueryResultToGraphData(result.data.attributes);
-        graphState.updateGraphData(graphData);
+        graphState.updateGraphData(graphData, {
+          queryId,
+          queryLabel,
+          queryKind: isCustomQuery
+            ? ATTACK_PATH_QUERY_KIND.CUSTOM
+            : ATTACK_PATH_QUERY_KIND.PREDEFINED,
+          parameters,
+        });
         toast({
           title: "Success",
           description: "Query executed successfully",
@@ -325,9 +340,7 @@ export default function AttackPathsPage() {
   };
 
   const handleNodeClick = (node: GraphNode) => {
-    const isFinding = node.labels.some((label) =>
-      label.toLowerCase().includes("finding"),
-    );
+    const isFinding = isProwlerFindingNode(node.labels);
 
     if (isFinding) {
       if (findingNavigationInFlightRef.current) {
@@ -347,9 +360,7 @@ export default function AttackPathsPage() {
       if (edge.source !== node.id && edge.target !== node.id) return false;
       const otherId = edge.source === node.id ? edge.target : edge.source;
       const otherNode = sourceData.nodes?.find(({ id }) => id === otherId);
-      return otherNode?.labels.some((label) =>
-        label.toLowerCase().includes("finding"),
-      );
+      return otherNode ? isProwlerFindingNode(otherNode.labels) : false;
     });
 
     if (hasFindings) {
@@ -400,6 +411,29 @@ export default function AttackPathsPage() {
     }
   };
 
+  const lighthouseSelectedNode =
+    graphState.selectedNode ?? graphState.filteredNode;
+  const lighthouseGraphData = graphState.fullData ?? graphState.data;
+  const lighthouseExecution = graphState.loading ? null : graphState.execution;
+  const lighthouseContext = scanId
+    ? buildAttackPathContext({
+        pathname,
+        scanId,
+        queryId: lighthouseExecution?.queryId,
+        queryLabel: lighthouseExecution?.queryLabel,
+        queryKind: lighthouseExecution?.queryKind,
+        parameters: lighthouseExecution?.parameters,
+        graphData: lighthouseExecution ? lighthouseGraphData : null,
+        selectedNode:
+          lighthouseExecution && lighthouseSelectedNode
+            ? {
+                id: lighthouseSelectedNode.id,
+                type: lighthouseSelectedNode.labels[0],
+              }
+            : null,
+      })
+    : null;
+
   return (
     <div className="flex flex-col gap-6">
       <AutoRefresh
@@ -413,6 +447,14 @@ export default function AttackPathsPage() {
 
       {/* Enables the navbar replay icon once the initial scan load resolves. */}
       {!scansLoading && <PageReady />}
+
+      {lighthouseContext && (
+        <LighthouseContextContributor
+          key={JSON.stringify(lighthouseContext)}
+          contributorId="attack-path-current"
+          item={lighthouseContext}
+        />
+      )}
 
       <div data-tour-id="attack-paths-intro">
         <p className="text-text-neutral-secondary text-sm">

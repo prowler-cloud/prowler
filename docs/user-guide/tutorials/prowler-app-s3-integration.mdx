@@ -1,12 +1,16 @@
 ---
 title: 'Amazon S3 Integration'
+sidebarTitle: 'Amazon S3'
 ---
 
 import { VersionBadge } from "/snippets/version-badge.mdx"
+import { AppliesTo } from "/snippets/applies-to.mdx"
 
 <VersionBadge version="5.10.0" />
 
-**Prowler App** allows automatic export of scan results to Amazon S3 buckets, providing seamless integration with existing data workflows and storage infrastructure. This comprehensive guide demonstrates configuration and management of Amazon S3 integrations to streamline security finding management and reporting.
+<AppliesTo />
+
+**Prowler Cloud** allows automatic export of scan results to Amazon S3 buckets, providing seamless integration with existing data workflows and storage infrastructure. This comprehensive guide demonstrates configuration and management of Amazon S3 integrations to streamline security finding management and reporting.
 
 When enabled and configured, scan results are automatically stored in the configured bucket. Results are provided in `csv`, `html` and `json-ocsf` formats, offering flexibility for custom integrations:
 
@@ -201,7 +205,7 @@ Replace `<SOURCE ACCOUNT ID>` with the AWS account ID that contains the IAM role
 </Note>
 ### Available Templates
 
-**Prowler App** provides Infrastructure as Code (IaC) templates to automate IAM role setup with S3 integration permissions.
+**Prowler Cloud** provides Infrastructure as Code (IaC) templates to automate IAM role setup with S3 integration permissions.
 
 <Note>
 Templates are optional. Custom IAM roles or static credentials can be used instead.
@@ -278,7 +282,7 @@ If using Prowler's CloudFormation template, execute the following command to upd
 
 3. Edit `terraform.tfvars` with your specific values:
    ```hcl
-   # Required: External ID from Prowler App
+   # Required: External ID from Prowler Cloud
    external_id = "your-unique-external-id-here"
 
    # S3 Integration Configuration
@@ -310,7 +314,7 @@ For detailed information, refer to the [Terraform README](https://github.com/pro
 
 ## Configuration
 
-Once the required permissions are set up, proceed to configure the S3 integration in **Prowler App**.
+Once the required permissions are set up, proceed to configure the S3 integration in **Prowler Cloud**.
 
 1. Navigate to "Integrations"
     ![Navigate to integrations](/images/prowler-app/s3/s3-integration-ui-1.png)

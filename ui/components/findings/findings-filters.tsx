@@ -26,7 +26,9 @@ import { DATA_TABLE_FILTER_MODE } from "@/types/filters";
 import { ProviderProps } from "@/types/providers";
 
 import {
+  buildFindingGroupFilterOption,
   buildFindingsFilterChips,
+  type FindingCheckFilterOption,
   getFindingsFilterDisplayValue,
 } from "./findings-filters.utils";
 
@@ -42,6 +44,7 @@ interface FindingsFiltersProps {
   uniqueResourceTypes: string[];
   uniqueCategories: string[];
   uniqueGroups: string[];
+  checkOptions?: FindingCheckFilterOption[];
   trailingControls?: ReactNode;
   variant?: "default" | "alerts-edit";
 }
@@ -71,6 +74,7 @@ const countVisibleFilterKeys = (filters: Record<string, string[]>): number =>
 const FILTER_CONTROL_COLUMN_CLASS =
   "min-w-0 flex-none basis-full sm:basis-[calc((100%_-_0.75rem)/2)] lg:basis-[calc((100%_-_1.5rem)/3)] xl:basis-[calc((100%_-_2.25rem)/4)] 2xl:basis-[calc((100%_-_3rem)/5)]";
 const FILTER_GRID_ITEM_CLASS = "min-w-0";
+const FINDING_GROUP_FILTER_KEYS = ["filter[check_id]", "filter[check_id__in]"];
 
 export const FindingsFilterBatchControls = ({
   providers,
@@ -85,6 +89,7 @@ export const FindingsFilterBatchControls = ({
   uniqueResourceTypes,
   uniqueCategories,
   uniqueGroups,
+  checkOptions = [],
   trailingControls,
   appliedFilters,
   pendingFilters,
@@ -102,6 +107,18 @@ export const FindingsFilterBatchControls = ({
 }: FindingsFilterBatchControlsProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const isAlertsEdit = variant === "alerts-edit";
+  const checkTitles = Object.fromEntries(
+    checkOptions.map(({ checkId, checkTitle }) => [
+      checkId,
+      checkTitle || checkId,
+    ]),
+  );
+  const findingGroupFilterOption = buildFindingGroupFilterOption({
+    checkOptions,
+    selectedCheckIds: getFilterValue("filter[check_id]"),
+    selectedCheckIdsIn: getFilterValue("filter[check_id__in]"),
+    checkTitles,
+  });
 
   const customFilters = [
     ...filterFindings
@@ -112,39 +129,41 @@ export const FindingsFilterBatchControls = ({
           getFindingsFilterDisplayValue(`filter[${filter.key}]`, value, {
             providers,
             scans: scanDetails,
+            checkTitles,
           }),
       })),
+    ...(findingGroupFilterOption ? [findingGroupFilterOption] : []),
     {
       key: FILTER_FIELD.REGION,
       labelCheckboxGroup: "Regions",
       values: uniqueRegions,
-      index: 3,
+      index: 4,
     },
     {
       key: FILTER_FIELD.SERVICE,
       labelCheckboxGroup: "Services",
       values: uniqueServices,
-      index: 4,
+      index: 5,
     },
     {
       key: FILTER_FIELD.RESOURCE_TYPE,
       labelCheckboxGroup: "Resource Type",
       values: uniqueResourceTypes,
-      index: 8,
+      index: 9,
     },
     {
       key: FILTER_FIELD.CATEGORY,
       labelCheckboxGroup: "Category",
       values: uniqueCategories,
       labelFormatter: getCategoryLabel,
-      index: 5,
+      index: 6,
     },
     {
       key: FILTER_FIELD.RESOURCE_GROUPS,
       labelCheckboxGroup: "Resource Group",
       values: uniqueGroups,
       labelFormatter: getGroupLabel,
-      index: 6,
+      index: 7,
     },
     ...(isAlertsEdit
       ? []
@@ -164,7 +183,7 @@ export const FindingsFilterBatchControls = ({
                   scans: scanDetails,
                 },
               ),
-            index: 7,
+            index: 8,
           },
         ]),
   ];
@@ -177,6 +196,7 @@ export const FindingsFilterBatchControls = ({
       providers,
       providerGroups,
       scans: scanDetails,
+      checkTitles,
     },
   );
   const pendingFilterChips: FilterChip[] = buildFindingsFilterChips(
@@ -185,6 +205,7 @@ export const FindingsFilterBatchControls = ({
       providers,
       providerGroups,
       scans: scanDetails,
+      checkTitles,
     },
   );
   const appliedCount = countVisibleFilterKeys(appliedFilters);
@@ -347,6 +368,7 @@ export const FindingsFilters = (props: FindingsFiltersProps) => {
     getFilterValue,
   } = useFilterBatch({
     defaultParams: { "filter[muted]": "false" },
+    exclusiveFilterGroups: [FINDING_GROUP_FILTER_KEYS],
   });
 
   return (
