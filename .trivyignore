@@ -2,8 +2,13 @@
 # Each entry below documents (a) the affected package and why it ships in the
 # image, (b) why the CVE is not exploitable in Prowler's runtime, and (c) the
 # upstream fix status. Entries carry an expiry so they auto-force re-review.
-# Entries are scoped per-package so suppressions cannot drift onto unrelated
-# packages that may be assigned the same CVE in the future.
+# The `pkg:` selector on each line is documentation only. Trivy's classic
+# .trivyignore format parses the CVE ID and ignores the rest, so each entry
+# suppresses its CVE across every package in the image, not just the one named.
+# Verified against Trivy 0.65.0: an entry written `pkg:zlib1g` still suppressed
+# the finding on perl-base. Real per-package scoping needs .trivyignore.yaml
+# with purls — tracked in PROWLER-2327.
+# `exp:` IS honoured: an entry dated in the past correctly lapses.
 #
 # Keep expiries staggered, and only suppress packages the images actually install.
 #
