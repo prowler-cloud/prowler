@@ -4,6 +4,32 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [5.37.0] (Prowler v5.37.0)
+
+### 🚀 Added
+
+- OCSF detection finding output now populates `finding_info.analytic` as the Prowler check rule and `finding_info.attacks` as MITRE ATT&CK technique and tactic objects for findings with MITRE-ATTACK compliance metadata [(#11492)](https://github.com/prowler-cloud/prowler/pull/11492)
+- `codecommit` service and `codecommit_repository_no_secrets` check for AWS provider, scanning files tracked at the tip of each repository's default branch for hardcoded secrets [(#11846)](https://github.com/prowler-cloud/prowler/pull/11846)
+- Huawei Cloud provider, with CTS, ECS, ELB, EVS, IAM, KMS, OBS, RDS, VPC and WAF services and a CIS 1.0 compliance benchmark [(#11950)](https://github.com/prowler-cloud/prowler/pull/11950)
+- `glue_catalog_connection_no_secrets` check to detect secrets in Glue Data Catalog connection properties [(#11963)](https://github.com/prowler-cloud/prowler/pull/11963)
+- `ec2_instance_stopped_older_than_specific_days` check for AWS provider, detecting EC2 instances stopped longer than a configurable number of days (default 30) [(#12076)](https://github.com/prowler-cloud/prowler/pull/12076)
+- `sagemaker_endpoint_config_kms_encryption_enabled` check verifying SageMaker endpoint configurations use a KMS key for storage volume encryption [(#12118)](https://github.com/prowler-cloud/prowler/pull/12118)
+- 11 AWS Nitro Enclaves security checks providing the first CSPM coverage for confidential computing workloads, covering both host environment (`ec2_confidential_workload_host_*`) and KMS attestation policy (`kms_key_enclave_*`), fully passive via boto3 and CloudTrail LookupEvents [(#12283)](https://github.com/prowler-cloud/prowler/pull/12283)
+
+### 🐞 Fixed
+
+- Scan configuration schema no longer exposes SDK/CLI-only providers such as `e2enetworks`; the aggregated schema served by `/scan-configurations/schema` now includes only app providers (`sdk_only = False`) [(#12094)](https://github.com/prowler-cloud/prowler/pull/12094)
+- GCP Cloud Functions gen2 IAM policy retrieval now uses a per-request HTTP client, preventing a process crash from concurrent thread-unsafe `httplib2` access when a project has several gen2 functions [(#12107)](https://github.com/prowler-cloud/prowler/pull/12107)
+- GCP firewall SSH and RDP checks now detect exposed target ports in any position within multi-port rules [(#12115)](https://github.com/prowler-cloud/prowler/pull/12115)
+- Secret ignore patterns now use Kingfisher-compatible LF line indexing for scanned content containing ASCII control characters [(#12141)](https://github.com/prowler-cloud/prowler/pull/12141)
+- Jira descriptions with inline code nested in bold or italic Markdown now render as valid ADF [(#12158)](https://github.com/prowler-cloud/prowler/pull/12158)
+
+### 🔐 Security
+
+- HTML reports escape provider-originated finding fields to prevent stored cross-site scripting through malicious cloud resource tags [(#12221)](https://github.com/prowler-cloud/prowler/pull/12221)
+
+---
+
 ## [5.36.0] (Prowler v5.36.0)
 
 ### 🚀 Added
