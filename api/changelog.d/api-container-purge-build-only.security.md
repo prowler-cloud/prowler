@@ -1,1 +1,1 @@
-Removed `wget`, `gnupg` and `apt-transport-https` from the API container image, clearing 9 high-severity CVEs with no upstream fix
+Removed `gnupg` and `apt-transport-https` from the API container image; `wget` is retained because the Compose healthcheck invokes it
