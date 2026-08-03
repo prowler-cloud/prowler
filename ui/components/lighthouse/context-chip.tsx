@@ -94,6 +94,9 @@ function LighthouseContextTooltip({ context }: LighthouseContextBadgeProps) {
   const itemDescriptions = context.items
     .map(getContextItemDescription)
     .filter((description) => description !== null);
+  // A single filterless page item means the model only learns which page the
+  // user is on — say so instead of implying richer context travels with it.
+  const sharesOnlyPage = context.items.length === 1 && !filters;
 
   return (
     <TooltipContent maxWidth="md">
@@ -104,6 +107,7 @@ function LighthouseContextTooltip({ context }: LighthouseContextBadgeProps) {
           </p>
         )}
         {filters && <p>Filters: {filters}</p>}
+        {sharesOnlyPage && <p>Only the current page name is shared.</p>}
         {itemDescriptions.map(({ id, text }) => (
           <p key={id}>{text}</p>
         ))}

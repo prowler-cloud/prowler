@@ -67,6 +67,35 @@ describe("LighthouseCurrentContextBadge", () => {
     expect(tooltip).not.toHaveTextContent("status-summary");
   });
 
+  it("should say when only the page name is shared", async () => {
+    // Given an unregistered route contributes a bare, filterless page item
+    const user = userEvent.setup();
+    render(<LighthouseCurrentContextBadge context={barePageContext()} />);
+
+    // When
+    await user.hover(screen.getByLabelText("Manage Groups context"));
+
+    // Then
+    const tooltip = await screen.findByRole("tooltip");
+    expect(tooltip).toHaveTextContent("Manage Groups");
+    expect(tooltip).toHaveTextContent("Only the current page name is shared.");
+  });
+
+  it("should not claim a bare page when filters or items travel too", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(<LighthouseCurrentContextBadge context={findingsContext()} />);
+
+    // When
+    await user.hover(screen.getByLabelText("Findings context"));
+
+    // Then
+    const tooltip = await screen.findByRole("tooltip");
+    expect(tooltip).not.toHaveTextContent(
+      "Only the current page name is shared.",
+    );
+  });
+
   it.each([
     ["resource", resourceContext(), "Resource: resource-1 (bucket-1)"],
     ["scan", scanContext(), "Scan: scan-1"],
@@ -97,6 +126,23 @@ describe("LighthouseContextBadge", () => {
     ).not.toBeInTheDocument();
   });
 });
+
+function barePageContext(): LighthouseContextEnvelope {
+  return {
+    schemaVersion: 1,
+    transport: "inline",
+    items: [
+      {
+        kind: "page",
+        id: "other",
+        source: "automatic",
+        scopeKey: "other:/manage-groups",
+        label: "Manage Groups",
+        path: "/manage-groups",
+      },
+    ],
+  };
+}
 
 function overviewContext(): LighthouseContextEnvelope {
   return {
