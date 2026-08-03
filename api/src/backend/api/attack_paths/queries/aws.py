@@ -469,8 +469,8 @@ AWS_BATCH_PRIVESC_PASSROLE_SUBMIT_JOB = AttackPathsQueryDefinition(
         WITH aws, principal, path_principal, collect(DISTINCT res.value) AS res_values
         WITH aws, principal, path_principal, res_values, ('*' IN res_values) AS res_wildcard
 
-        // Target role that trusts the batch.amazonaws.com service and can be passed
-        MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'batch.amazonaws.com'}})
+        // Target Batch job role that trusts the ecs-tasks.amazonaws.com service and can be passed
+        MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'ecs-tasks.amazonaws.com'}})
         WITH path_principal, path_target, res_values, res_wildcard,
              target_role.name AS rname, target_role.arn AS rarn
         WHERE res_wildcard
@@ -509,8 +509,8 @@ AWS_BATCH_PRIVESC_SUBMIT_EXISTING_JOB = AttackPathsQueryDefinition(
             OR act.value = '*'
         WITH DISTINCT aws, principal, path_principal
 
-        // Target role attached to the existing resource, trusting the batch.amazonaws.com service
-        MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'batch.amazonaws.com'}})
+        // Target Batch job role attached to the existing job definition, trusting the ecs-tasks.amazonaws.com service
+        MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'ecs-tasks.amazonaws.com'}})
 
         WITH DISTINCT path_principal, path_target
         WITH collect(path_principal) + collect(path_target) AS paths
@@ -1104,9 +1104,9 @@ AWS_CODEBUILD_PRIVESC_PASSROLE_CREATE_PROJECT_BATCH = AttackPathsQueryDefinition
 # CODEDEPLOY-001
 AWS_CODEDEPLOY_PRIVESC_CREATE_DEPLOYMENT = AttackPathsQueryDefinition(
     id="aws-codedeploy-privesc-create-deployment",
-    name="CodeDeploy Deployment with Existing Service Role (CODEDEPLOY-001)",
-    short_description="Create a CodeDeploy deployment on an existing application to run lifecycle hooks with its privileged service role.",
-    description="Detect principals who can create CodeDeploy deployments. Using an existing application and deployment group bound to a privileged service role, an actor can deploy a revision whose lifecycle hooks run as that role.",
+    name="CodeDeploy Deployment with Existing Instance Role (CODEDEPLOY-001)",
+    short_description="Create a CodeDeploy deployment on an existing application to run lifecycle hooks with the target instances' privileged EC2 role.",
+    description="Detect principals who can create CodeDeploy deployments. Using an existing application and deployment group bound to EC2 instances with a privileged instance-profile role, an actor can deploy a revision whose lifecycle hooks run on those instances as that role.",
     attribution=AttackPathsQueryAttribution(
         text="pathfinding.cloud - CODEDEPLOY-001 - codedeploy:CreateDeployment + codedeploy:RegisterApplicationRevision",
         link="https://pathfinding.cloud/paths/codedeploy-001",
@@ -1131,8 +1131,8 @@ AWS_CODEDEPLOY_PRIVESC_CREATE_DEPLOYMENT = AttackPathsQueryDefinition(
             OR act3.value = '*'
         WITH DISTINCT aws, principal, path_principal
 
-        // Target role attached to the existing resource, trusting the codedeploy.amazonaws.com service
-        MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'codedeploy.amazonaws.com'}})
+        // Target EC2 instance role whose credentials the lifecycle hooks run with, trusting the ec2.amazonaws.com service
+        MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'ec2.amazonaws.com'}})
 
         WITH DISTINCT path_principal, path_target
         WITH collect(path_principal) + collect(path_target) AS paths
@@ -1864,8 +1864,8 @@ AWS_ECS_PRIVESC_PASSROLE_START_EXISTING_TASK = AttackPathsQueryDefinition(
 AWS_EMR_PRIVESC_PASSROLE_RUN_JOB_FLOW = AttackPathsQueryDefinition(
     id="aws-emr-privesc-passrole-run-job-flow",
     name="EMR Cluster Launch with Privileged Role (EMR-001)",
-    short_description="Launch an EMR cluster with a privileged service role to execute steps that use that role's permissions.",
-    description="Detect principals who can pass IAM roles and run EMR job flows. An actor can launch a cluster with a privileged EMR service role and run steps that act with that role's permissions.",
+    short_description="Launch an EMR cluster with a privileged EC2 instance (JobFlow) role to execute steps that use that role's permissions.",
+    description="Detect principals who can pass IAM roles and run EMR job flows. An actor can launch a cluster with a privileged EC2 instance (JobFlow) role and run steps that act with that role's permissions.",
     attribution=AttackPathsQueryAttribution(
         text="pathfinding.cloud - EMR-001 - iam:PassRole + elasticmapreduce:RunJobFlow",
         link="https://pathfinding.cloud/paths/emr-001",
@@ -1890,8 +1890,8 @@ AWS_EMR_PRIVESC_PASSROLE_RUN_JOB_FLOW = AttackPathsQueryDefinition(
         WITH aws, principal, path_principal, collect(DISTINCT res.value) AS res_values
         WITH aws, principal, path_principal, res_values, ('*' IN res_values) AS res_wildcard
 
-        // Target role that trusts the elasticmapreduce.amazonaws.com service and can be passed
-        MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'elasticmapreduce.amazonaws.com'}})
+        // Target EC2 instance (JobFlow) role that trusts the ec2.amazonaws.com service and can be passed
+        MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'ec2.amazonaws.com'}})
         WITH path_principal, path_target, res_values, res_wildcard,
              target_role.name AS rname, target_role.arn AS rarn
         WHERE res_wildcard
@@ -1977,7 +1977,7 @@ AWS_GAMELIFT_PRIVESC_PASSROLE_CREATE_FLEET = AttackPathsQueryDefinition(
     short_description="Create a GameLift build and fleet with a privileged instance role to run arbitrary code as that role.",
     description="Detect principals who can pass IAM roles, upload a GameLift build, and create a fleet. The fleet instances run the build with an attached privileged role, allowing arbitrary code execution as that role.",
     attribution=AttackPathsQueryAttribution(
-        text="pathfinding.cloud - GAMELIFT-001 - iam:PassRole + gamelift:CreateBuild + gamelift:CreateFleet",
+        text="pathfinding.cloud - GAMELIFT-001 - iam:PassRole + gamelift:CreateBuild + gamelift:RequestUploadCredentials + gamelift:CreateFleet",
         link="https://pathfinding.cloud/paths/gamelift-001",
     ),
     provider="aws",
@@ -3423,7 +3423,7 @@ AWS_IAM_PRIVESC_DELETE_USER_PERMISSIONS_BOUNDARY = AttackPathsQueryDefinition(
         MATCH (stmt)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)
         WHERE res.value = '*'
             OR res.value = principal.arn
-            OR (res.value ENDS WITH '*' AND principal.arn STARTS WITH replace(res.value, '*', ''))
+            OR (res.value ENDS WITH '*' AND principal.arn STARTS WITH left(res.value, size(res.value) - 1))
 
         WITH DISTINCT path_principal
         WITH collect(path_principal) AS paths
@@ -3471,7 +3471,7 @@ AWS_IAM_PRIVESC_DELETE_ROLE_BOUNDARY_ASSUME_ROLE = AttackPathsQueryDefinition(
         MATCH (stmt)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)
         WHERE res.value = '*'
             OR res.value = target_role.arn
-            OR (res.value ENDS WITH '*' AND target_role.arn STARTS WITH replace(res.value, '*', ''))
+            OR (res.value ENDS WITH '*' AND target_role.arn STARTS WITH left(res.value, size(res.value) - 1))
 
         WITH DISTINCT path_principal, path_target
         WITH collect(path_principal) + collect(path_target) AS paths
