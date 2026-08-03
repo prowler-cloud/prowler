@@ -1,1 +1,1 @@
-Removed `wget`, `gnupg` and `apt-transport-https` from the SDK and API runtime images, clearing 9 high-severity CVEs that have no upstream fix
+Removed `wget`, `gnupg` and `apt-transport-https` from the SDK runtime image; the API image keeps `wget` because its Compose healthcheck invokes it
