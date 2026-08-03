@@ -431,11 +431,20 @@ For development I recommend to use the [Model Context Protocol Inspector](https:
 Tests live in `mcp_server/tests/`, mirroring the source tree, and use the `test_*.py`
 prefix (the same convention as the API, not the SDK's `*_test.py` suffix).
 
+From `mcp_server/`:
+
 ```bash
-cd mcp_server && uv run pytest                              # Whole suite
-cd mcp_server && uv run pytest tests/prowler_app/models     # One area
-cd mcp_server && uv run pytest --cov=./prowler_mcp_server   # With coverage
-make test-mcp                                               # Mirrors CI, from the repo root
+cd mcp_server
+
+uv run pytest                              # Whole suite
+uv run pytest tests/prowler_app/models     # One area
+uv run pytest --cov=./prowler_mcp_server   # With coverage
+```
+
+From the repository root:
+
+```bash
+make test-mcp   # Runs the MCP suite exactly as CI does
 ```
 
 Async tests need no marker — `asyncio_mode` is set to `auto`.

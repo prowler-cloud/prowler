@@ -13,15 +13,31 @@ NAMESPACES = ("prowler_hub_", "prowler_docs_", "prowler_")
 
 
 def assert_tool_contract(tool: Tool) -> None:
-    """Assert the tool and all of its parameters carry a description."""
-    assert (tool.description or "").strip(), (
-        f"Tool '{tool.name}' has no description; its docstring is what the model reads"
+    """Assert the tool and all of its parameters carry a usable description.
+
+    Missing and blank are asserted separately because they are different
+    mistakes: a missing description was never written, a blank one exists but was
+    left empty. One truthiness check would report both the same way.
+    """
+    assert tool.description is not None, (
+        f"Tool '{tool.name}' has no description. Its docstring is what the model reads."
     )
-    properties = (tool.inputSchema or {}).get("properties", {})
-    for parameter, schema in properties.items():
-        assert schema.get("description"), (
-            f"Parameter '{parameter}' of tool '{tool.name}' has no description; "
-            "declare it with pydantic Field(description=...)"
+    assert tool.description.strip(), (
+        f"Tool '{tool.name}' has a blank description. "
+        "Its docstring is what the model reads."
+    )
+
+    # `inputSchema` is a required field of the MCP Tool type, so it is always a
+    # dict; a tool that takes no arguments simply has no `properties`.
+    for parameter, schema in tool.inputSchema.get("properties", {}).items():
+        description = schema.get("description")
+        assert description is not None, (
+            f"Parameter '{parameter}' of tool '{tool.name}' has no description. "
+            "Declare it with pydantic Field(description=...)."
+        )
+        assert description.strip(), (
+            f"Parameter '{parameter}' of tool '{tool.name}' has a blank description. "
+            "Declare it with pydantic Field(description=...)."
         )
 
 

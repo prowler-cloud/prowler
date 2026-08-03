@@ -86,14 +86,23 @@ mcp_server/prowler_mcp_server/
 
 ## COMMANDS
 
-```bash
-cd mcp_server && uv run prowler-mcp                              # STDIO mode
-cd mcp_server && uv run prowler-mcp --transport http --port 8000 # HTTP mode
+From `mcp_server/`:
 
-cd mcp_server && uv run pytest                                   # Run the test suite
-cd mcp_server && uv run pytest tests/prowler_app/models          # Run one area
-cd mcp_server && uv run pytest --cov=./prowler_mcp_server        # With coverage
-make test-mcp                                                    # Mirrors CI, from the repo root
+```bash
+cd mcp_server
+
+uv run prowler-mcp                              # STDIO mode
+uv run prowler-mcp --transport http --port 8000 # HTTP mode
+
+uv run pytest                                   # Run the test suite
+uv run pytest tests/prowler_app/models          # Run one area
+uv run pytest --cov=./prowler_mcp_server        # With coverage
+```
+
+From the repository root:
+
+```bash
+make test-mcp   # Run the MCP test suite exactly as CI does
 ```
 
 ---
@@ -106,5 +115,7 @@ make test-mcp                                                    # Mirrors CI, f
 - [ ] No hardcoded secrets
 - [ ] Error handling returns structured responses
 - [ ] Parameter descriptions use Pydantic `Field()`
-- [ ] Tests added under `mcp_server/tests/` mirroring the source path
+- [ ] Tests added under `mcp_server/tests/`, mirroring the source path below the
+      package root (`prowler_mcp_server/prowler_app/tools/` -> `tests/prowler_app/tools/`),
+      as the SDK does for `prowler/` -> `tests/`
 - [ ] `uv run pytest` passes

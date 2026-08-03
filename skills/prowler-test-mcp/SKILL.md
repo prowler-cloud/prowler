@@ -49,7 +49,9 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 
 ## 1. Layout
 
-Mirror the source tree:
+Mirror the source tree *below the package root* — drop the `prowler_mcp_server/`
+level, exactly as the SDK maps `prowler/providers/...` to `tests/providers/...`.
+So `prowler_mcp_server/prowler_app/tools/` is tested in `tests/prowler_app/tools/`.
 
 ```text
 mcp_server/tests/
@@ -140,11 +142,20 @@ the test module that uses them. Do not add feature fixtures to `helpers/`.
 
 ## 4. Commands
 
+From `mcp_server/`:
+
 ```bash
-cd mcp_server && uv run pytest                              # whole suite
-cd mcp_server && uv run pytest tests/prowler_app/models     # one area
-cd mcp_server && uv run pytest --cov=./prowler_mcp_server   # with coverage
-make test-mcp                                               # mirrors CI, from the repo root
+cd mcp_server
+
+uv run pytest                              # whole suite
+uv run pytest tests/prowler_app/models     # one area
+uv run pytest --cov=./prowler_mcp_server   # with coverage
+```
+
+From the repository root:
+
+```bash
+make test-mcp   # runs the MCP suite exactly as CI does
 ```
 
 ---

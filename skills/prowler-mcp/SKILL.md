@@ -78,6 +78,6 @@ Use `@mcp.tool()` decorator directly—no BaseTool or models required.
 
 ## Resources
 
-- **Full Guide**: [docs/developer-guide/mcp-server.mdx](../../../docs/developer-guide/mcp-server.mdx)
+- **Full Guide**: [docs/developer-guide/mcp-server.mdx](../../docs/developer-guide/mcp-server.mdx)
 - **Templates**: See [assets/](assets/) for tool and model templates
 - **Testing**: See [prowler-test-mcp](../prowler-test-mcp/SKILL.md) for fixtures and test patterns
