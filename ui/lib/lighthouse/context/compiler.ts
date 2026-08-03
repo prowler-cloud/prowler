@@ -34,15 +34,11 @@ export function prepareLighthouseContext(
 }
 
 function findCandidateScopeKey(candidates: unknown[]): string | undefined {
+  // Scope comes from the first item that survives validation — a malformed
+  // item carrying a foreign scopeKey must not decide the compiled scope.
   for (const candidate of candidates) {
-    if (
-      typeof candidate === "object" &&
-      candidate !== null &&
-      "scopeKey" in candidate &&
-      typeof candidate.scopeKey === "string"
-    ) {
-      return candidate.scopeKey;
-    }
+    const result = lighthouseContextItemSchema.safeParse(candidate);
+    if (result.success) return result.data.scopeKey;
   }
   return undefined;
 }

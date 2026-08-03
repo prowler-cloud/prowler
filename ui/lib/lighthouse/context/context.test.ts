@@ -805,6 +805,30 @@ describe("prepareLighthouseContext", () => {
     expect(context?.items.map((item) => item.id)).toEqual(["findings"]);
   });
 
+  it("should not let a malformed foreign-scope item decide the scope", () => {
+    // Given a malformed leading item whose scopeKey points at another page
+    const context = prepareLighthouseContext({
+      schemaVersion: 1,
+      transport: "inline",
+      items: [
+        { kind: "resource", id: "broken", scopeKey: "resources:/resources" },
+        {
+          kind: "page",
+          id: "findings",
+          source: "automatic",
+          scopeKey: "findings:/findings",
+          label: "Findings",
+          path: "/findings",
+        },
+      ],
+    });
+
+    // Then the valid page defines the scope and compiles
+    expect(context?.items.map((item) => item.scopeKey)).toEqual([
+      "findings:/findings",
+    ]);
+  });
+
   it("should return no context for values without an item list", () => {
     expect(prepareLighthouseContext(undefined)).toBeUndefined();
     expect(prepareLighthouseContext({ items: "not-a-list" })).toBeUndefined();
