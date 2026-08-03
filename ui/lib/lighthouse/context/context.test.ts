@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { compileLighthouseContext } from "./compiler";
+import { compileLighthouseContext, prepareLighthouseContext } from "./compiler";
 import {
   buildComplianceContext,
   buildFilteredProviderContext,
@@ -749,5 +749,43 @@ describe("compileLighthouseContext", () => {
       ).toBeLessThan(providers.length);
       expect(context?.items[1]?.id).toBe("prowler-threat-score");
     });
+  });
+});
+
+describe("prepareLighthouseContext", () => {
+  it("should keep the valid items when one carries a malformed optional", () => {
+    // Given a stored envelope whose finding had checkId normalized to null
+    const context = prepareLighthouseContext({
+      schemaVersion: 1,
+      transport: "inline",
+      items: [
+        {
+          kind: "page",
+          id: "findings",
+          source: "automatic",
+          scopeKey: "findings:/findings",
+          label: "Findings",
+          path: "/findings",
+        },
+        {
+          kind: "finding",
+          id: "finding-1",
+          source: "selection",
+          scopeKey: "findings:/findings",
+          label: "Selected finding",
+          findingId: "finding-1",
+          checkId: null,
+        },
+      ],
+    });
+
+    // Then the malformed item drops alone instead of voiding the send
+    expect(context?.items.map((item) => item.id)).toEqual(["findings"]);
+  });
+
+  it("should return no context for values without an item list", () => {
+    expect(prepareLighthouseContext(undefined)).toBeUndefined();
+    expect(prepareLighthouseContext({ items: "not-a-list" })).toBeUndefined();
+    expect(prepareLighthouseContext({ items: [] })).toBeUndefined();
   });
 });

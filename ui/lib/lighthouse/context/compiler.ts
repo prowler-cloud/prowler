@@ -18,12 +18,27 @@ const LIGHTHOUSE_CONTEXT_MAX_BYTES = 4 * 1024;
 export function prepareLighthouseContext(
   value: unknown,
 ): LighthouseContextEnvelope | undefined {
-  const result = lighthouseContextEnvelopeSchema.safeParse(value);
-  if (!result.success) return undefined;
+  // Only the wrapper is checked here; compileLighthouseContext validates each
+  // item so a single malformed one drops alone instead of voiding the send.
+  if (
+    typeof value !== "object" ||
+    value === null ||
+    !("items" in value) ||
+    !Array.isArray(value.items)
+  ) {
+    return undefined;
+  }
 
-  const scopeKey = result.data.items[0]?.scopeKey;
-  return scopeKey
-    ? compileLighthouseContext(result.data.items, scopeKey)
+  const scopeKey = getCandidateScopeKey(value.items[0]);
+  return scopeKey ? compileLighthouseContext(value.items, scopeKey) : undefined;
+}
+
+function getCandidateScopeKey(candidate: unknown): string | undefined {
+  return typeof candidate === "object" &&
+    candidate !== null &&
+    "scopeKey" in candidate &&
+    typeof candidate.scopeKey === "string"
+    ? candidate.scopeKey
     : undefined;
 }
 
