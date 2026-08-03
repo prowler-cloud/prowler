@@ -192,20 +192,15 @@ Container images get scanned twice: once in CI before they push to a registry, a
 
 ### Known Findings
 
-Some findings cannot be resolved by Prowler and remain in the published images. To see the current set for any image, scan it directly:
+A small number of findings remain in the published images and cannot be resolved by Prowler: the upstream project has released no fix, the package cannot be removed without breaking the image, or the finding comes from a vendored SBOM rather than from a package that is actually installed. Alternative base distributions have been evaluated and none currently satisfies both the vulnerability profile and the runtime requirements of every supported provider.
+
+Each suppression is recorded in [`.trivyignore`](https://github.com/prowler-cloud/prowler/blob/master/.trivyignore) with the reason it cannot be fixed, why it is not exploitable in Prowler's runtime, and an expiry date that forces re-review. Nothing is suppressed without that rationale, and a build fails on any critical finding that is not listed there.
+
+To see the current set for any image, scan it directly:
 
 ```bash
 trivy image prowlercloud/prowler:latest
 ```
-
-What remains falls into four groups:
-
-- **Distribution packages with no upstream fix.** Debian has not released patched versions, so no base-image refresh or `apt upgrade` changes them. They clear when Debian ships a fix and the images rebuild.
-- **Packages that cannot be removed.** `perl-base` is Debian `Essential: yes`; removing it requires `dpkg --force-remove-essential`, which breaks `apt` for anything built downstream. Trivy attributes `src:perl` CVEs across every package built from that source, so `perl-base` is flagged for modules only `perl-modules-*` ships, and the images do not install those. Nothing in them invokes perl.
-- **Components declared in vendored SBOMs.** The `MicrosoftTeams` PowerShell module, used for Microsoft 365 scanning, ships an SPDX manifest listing the components Microsoft built it with. Trivy reports those as installed packages. They are not Prowler dependencies, and only Microsoft can change them.
-- **Scanner artifacts.** A few findings refer to packages that are not present in the image, or report a version older than the one installed, because they are read from that same vendored SBOM metadata rather than from the filesystem. These are reporting artifacts rather than accepted risk, and are worth verifying inside the image before acting on them.
-
-Alternative base distributions have been evaluated. None currently satisfies both the vulnerability profile and the runtime requirements of every supported provider.
 
 ## Secrets Detection
 
