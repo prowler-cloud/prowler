@@ -352,7 +352,7 @@ result = await self.api_client.poll_task_until_complete(
 
 ### Tool Docstrings
 
-Tool docstrings become description that is going to be read by the LLM. Provide clear usage instructions and common workflows:
+Tool docstrings become the description that is going to be read by the LLM. Provide clear usage instructions and common workflows:
 
 ```python
 async def search_items(self, status: str = Field(...)) -> dict:
