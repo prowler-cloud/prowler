@@ -1,5 +1,4 @@
 import asyncio
-import json
 from typing import List, Optional
 
 from pydantic.v1 import BaseModel
@@ -49,16 +48,12 @@ class AdminCenter(M365Service):
                 self._get_directory_roles(),
                 self._get_groups(),
                 self._get_password_policy(),
-                self._get_apps_and_services_settings(),
-                self._get_forms_settings(),
             )
         )
 
         self.directory_roles = attributes[0]
         self.groups = attributes[1]
         self.password_policy = attributes[2]
-        self.apps_and_services_settings = attributes[3]
-        self.forms_settings = attributes[4]
 
         if created_loop:
             asyncio.set_event_loop(None)
@@ -268,71 +263,6 @@ class AdminCenter(M365Service):
             )
         return password_policy
 
-    async def _get_apps_and_services_settings(self):
-        """Retrieve the org-wide apps and services settings (beta Graph).
-
-        Fetches ``admin/appsAndServices/settings`` from the beta Graph endpoint to
-        read whether users can access the Office Store and start trials.
-
-        Returns:
-            Optional[AppsAndServicesSettings]: The parsed settings, or None on error.
-        """
-        logger.info("M365 - Getting apps and services settings...")
-        settings = None
-        try:
-            builder = self.client.admin.with_url(
-                "https://graph.microsoft.com/beta/admin/appsAndServices/settings"
-            )
-            request_info = builder.to_get_request_information()
-            response = await self.client.request_adapter.send_primitive_async(
-                request_info, "bytes", {}
-            )
-            if response:
-                data = json.loads(response)
-                settings = AppsAndServicesSettings(
-                    office_store_enabled=data.get("isOfficeStoreEnabled", True),
-                    app_and_services_trial_enabled=data.get(
-                        "isAppAndServicesTrialEnabled", True
-                    ),
-                )
-        except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-        return settings
-
-    async def _get_forms_settings(self):
-        """Retrieve the Microsoft Forms org settings (beta Graph).
-
-        Fetches ``admin/forms/settings`` from the beta Graph endpoint to read whether
-        internal phishing protection is enabled.
-
-        Returns:
-            Optional[FormsSettings]: The parsed settings, or None on error.
-        """
-        logger.info("M365 - Getting Microsoft Forms settings...")
-        settings = None
-        try:
-            builder = self.client.admin.with_url(
-                "https://graph.microsoft.com/beta/admin/forms/settings"
-            )
-            request_info = builder.to_get_request_information()
-            response = await self.client.request_adapter.send_primitive_async(
-                request_info, "bytes", {}
-            )
-            if response:
-                data = json.loads(response)
-                settings = FormsSettings(
-                    in_org_forms_phishing_scan_enabled=data.get(
-                        "isInOrgFormsPhishingScanEnabled", False
-                    ),
-                )
-        except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-        return settings
-
 
 class User(BaseModel):
     id: str
@@ -385,27 +315,3 @@ class SharingPolicy(BaseModel):
     name: str
     guid: str
     enabled: bool
-
-
-class AppsAndServicesSettings(BaseModel):
-    """Represents the org-wide apps and services settings.
-
-    Attributes:
-        office_store_enabled: Whether users can access the Office Store.
-        app_and_services_trial_enabled: Whether users can start trials on behalf
-            of the organization.
-    """
-
-    office_store_enabled: bool = True
-    app_and_services_trial_enabled: bool = True
-
-
-class FormsSettings(BaseModel):
-    """Represents the Microsoft Forms org settings.
-
-    Attributes:
-        in_org_forms_phishing_scan_enabled: Whether internal phishing protection
-            scans forms for phishing keywords.
-    """
-
-    in_org_forms_phishing_scan_enabled: bool = False

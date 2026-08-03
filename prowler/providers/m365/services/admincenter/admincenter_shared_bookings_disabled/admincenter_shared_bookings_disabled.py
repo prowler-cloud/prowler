@@ -46,10 +46,16 @@ class admincenter_shared_bookings_disabled(Check):
             resource_id=organization_config.guid,
         )
         report.status = "FAIL"
-        report.status_extended = (
-            "Shared Bookings is enabled at the tenant level and in the default OWA "
-            "mailbox policy."
-        )
+        if default_policy:
+            report.status_extended = (
+                "Shared Bookings is enabled at the tenant level and the default OWA "
+                "mailbox policy allows Bookings mailbox creation."
+            )
+        else:
+            report.status_extended = (
+                "Shared Bookings is enabled at the tenant level and no default OWA "
+                "mailbox policy was found."
+            )
 
         tenant_disabled = not organization_config.bookings_enabled
         policy_disabled = bool(
