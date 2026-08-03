@@ -14,6 +14,8 @@ export const DOCS_URLS = {
     "https://docs.prowler.com/user-guide/tutorials/prowler-app-findings-triage",
   AWS_ORGANIZATIONS:
     "https://docs.prowler.com/user-guide/tutorials/prowler-cloud-aws-organizations",
+  GCP_ORGANIZATIONS:
+    "https://docs.prowler.com/user-guide/tutorials/prowler-cloud-gcp-organizations",
   ALERTS: "https://docs.prowler.com/user-guide/tutorials/prowler-app-alerts",
   SCAN_CONFIGURATION:
     "https://docs.prowler.com/user-guide/tutorials/prowler-app-scan-configuration",
@@ -21,6 +23,14 @@ export const DOCS_URLS = {
     "https://docs.prowler.com/user-guide/tutorials/prowler-app-attack-paths#writing-custom-opencypher-queries",
   AI_AGENTS: "https://docs.prowler.com/user-guide/ai-agents/",
 } as const;
+
+// Prowler Hub — the public catalog of Prowler artifacts (checks, compliance,
+// attack paths). Every built-in Attack Paths query has a page keyed by its
+// query id, e.g. https://hub.prowler.com/attack-paths/aws-sts-privesc-assume-role
+export const PROWLER_HUB_URL = "https://hub.prowler.com";
+
+export const getAttackPathHubUrl = (queryId: string): string =>
+  `${PROWLER_HUB_URL}/attack-paths/${encodeURIComponent(queryId)}`;
 
 // CloudFormation template URL for the ProwlerScan role.
 // Also used (URL-encoded) as the templateURL param in the quick-create links

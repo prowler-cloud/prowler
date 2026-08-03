@@ -31,6 +31,7 @@ export function getProviderWizardModalTitle(mode: ProviderWizardMode) {
 export function getProviderWizardDocsDestination(docsLink: string) {
   const destinationLabelMap: Record<string, string> = {
     "aws-organizations": "AWS Organizations",
+    "gcp-organizations": "GCP Organizations",
     aws: "AWS",
     azure: "Azure",
     m365: "Microsoft 365",

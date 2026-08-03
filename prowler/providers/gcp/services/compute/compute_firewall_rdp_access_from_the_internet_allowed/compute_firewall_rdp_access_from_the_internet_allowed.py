@@ -31,7 +31,7 @@ class compute_firewall_rdp_access_from_the_internet_allowed(Check):
                                     break
                             elif int(port) == 3389:
                                 opened_port = True
-                            break
+                                break
             if (
                 "0.0.0.0/0" in firewall.source_ranges
                 and firewall.direction == "INGRESS"

@@ -10,6 +10,17 @@ export const REQUIREMENT_STATUS = {
 export type RequirementStatus =
   (typeof REQUIREMENT_STATUS)[keyof typeof REQUIREMENT_STATUS];
 
+/** Tabs of the compliance overview page. Multiple Scans is the default
+ *  landing tab, so it owns the bare `/compliance` route and Single Scan is
+ *  reachable through `?tab=per-scan`. */
+export const COMPLIANCE_TAB = {
+  PER_SCAN: "per-scan",
+  CROSS_PROVIDER: "cross-provider",
+} as const;
+
+export type ComplianceTab =
+  (typeof COMPLIANCE_TAB)[keyof typeof COMPLIANCE_TAB];
+
 export const COMPLIANCE_OVERVIEW_TYPE = {
   OVERVIEW: "compliance-overviews",
   REQUIREMENTS_STATUS: "compliance-requirements-status",

@@ -1,3 +1,5 @@
+import type { LighthouseContextEnvelope } from "@/types/lighthouse-context";
+
 import type { LighthouseV2ProviderType } from "./config";
 
 export const LIGHTHOUSE_V2_MESSAGE_ROLE = {
@@ -56,7 +58,8 @@ export interface LighthouseV2Message {
 
 export interface LighthouseV2SendMessageInput {
   sessionId: string;
-  text: string;
+  displayText: string;
+  context?: LighthouseContextEnvelope;
   provider: LighthouseV2ProviderType;
   model?: string | null;
 }

@@ -1,7 +1,12 @@
 import type { ComponentType, PropsWithChildren, ReactElement } from "react";
 import { render as vitestRender } from "vitest-browser-react";
 
-const TestProviders = ({ children }: PropsWithChildren) => <>{children}</>;
+import { TestAppShell } from "./app-shell";
+
+/** Every browser-mode render gets the shared app shell (see `app-shell.tsx`). */
+const TestProviders = ({ children }: PropsWithChildren) => (
+  <TestAppShell>{children}</TestAppShell>
+);
 
 type RenderOptions = Parameters<typeof vitestRender>[1];
 
