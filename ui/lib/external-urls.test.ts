@@ -335,6 +335,22 @@ describe("getProviderHelpText", () => {
 
     expect(link).toBe("https://goto.prowler.com/provider-help");
   });
+
+  it("falls back for unknown providers colliding with Object.prototype", () => {
+    // Given
+    const providers = ["constructor", "toString", "__proto__"];
+
+    for (const provider of providers) {
+      // When
+      const { link } = getProviderHelpText(
+        provider,
+        PROVIDER_WIZARD_STEP.CREDENTIALS,
+      );
+
+      // Then
+      expect(link).toBe("https://goto.prowler.com/provider-help");
+    }
+  });
 });
 
 describe("Prowler CloudFormation template", () => {

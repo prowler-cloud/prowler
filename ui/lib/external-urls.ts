@@ -159,21 +159,34 @@ const PROVIDER_CREDENTIALS_METHOD_DOCS_URL: Record<
 
 const PROVIDER_HELP_FALLBACK_URL = "https://goto.prowler.com/provider-help";
 
+const getOwnRecordValue = <T>(
+  record: Readonly<Record<string, T>>,
+  key: string,
+): T | undefined => (Object.hasOwn(record, key) ? record[key] : undefined);
+
 const resolveDocsLink = (
   provider: string,
   step?: ProviderWizardStep,
   credentialsMethod?: string | null,
 ) => {
-  const shortlink = PROVIDER_DOCS_SHORTLINK[provider];
+  const shortlink = getOwnRecordValue(PROVIDER_DOCS_SHORTLINK, provider);
 
   if (step === PROVIDER_WIZARD_STEP.CREDENTIALS) {
     if (credentialsMethod) {
-      const methodUrl =
-        PROVIDER_CREDENTIALS_METHOD_DOCS_URL[provider]?.[credentialsMethod];
+      const methodDocs = getOwnRecordValue(
+        PROVIDER_CREDENTIALS_METHOD_DOCS_URL,
+        provider,
+      );
+      const methodUrl = methodDocs
+        ? getOwnRecordValue(methodDocs, credentialsMethod)
+        : undefined;
       if (methodUrl) return methodUrl;
     }
 
-    const stepUrl = PROVIDER_CREDENTIALS_STEP_DOCS_URL[provider];
+    const stepUrl = getOwnRecordValue(
+      PROVIDER_CREDENTIALS_STEP_DOCS_URL,
+      provider,
+    );
     if (stepUrl) return stepUrl;
   }
 
@@ -216,7 +229,9 @@ export const getProviderHelpText = (
   }
 
   return {
-    text: PROVIDER_HELP_TEXT[provider] ?? "Need help connecting your provider?",
+    text:
+      getOwnRecordValue(PROVIDER_HELP_TEXT, provider) ??
+      "Need help connecting your provider?",
     link,
   };
 };
