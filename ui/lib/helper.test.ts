@@ -1,6 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { getTask } from "@/actions/task";
+
 import {
+  checkTaskStatus,
   downloadScanZip,
   getErrorMessage,
   permissionFormFields,
@@ -137,6 +140,72 @@ describe("getErrorMessage", () => {
     expect(message).toBe(
       "Server is temporarily unavailable. Please try again in a few minutes.",
     );
+  });
+});
+
+describe("checkTaskStatus", () => {
+  const taskWithState = (state: string, result?: unknown) => ({
+    data: { id: "task-1", attributes: { state, result } },
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("reports the task's own error when it was cancelled", async () => {
+    // Given a revoked task, which the API reports as `cancelled`
+    vi.mocked(getTask).mockResolvedValue(
+      taskWithState("cancelled", { error: "Worker lost the connection" }),
+    );
+
+    // When
+    const status = await checkTaskStatus("task-1", 1, 0);
+
+    // Then
+    expect(status.completed).toBe(false);
+    expect(status.error).toBe("Worker lost the connection");
+    expect(status.task).toBeDefined();
+  });
+
+  it("names the state when a settled task carries no result", async () => {
+    // Given a settled task with no `result`
+    vi.mocked(getTask).mockResolvedValue(taskWithState("cancelled"));
+
+    // When
+    const status = await checkTaskStatus("task-1", 1, 0);
+
+    // Then
+    expect(status).toMatchObject({ completed: false, error: "Task cancelled" });
+  });
+
+  it("still reports a failed task's error", async () => {
+    // Given
+    vi.mocked(getTask).mockResolvedValue(
+      taskWithState("failed", { error: "Invalid credentials" }),
+    );
+
+    // When
+    const status = await checkTaskStatus("task-1", 1, 0);
+
+    // Then
+    expect(status).toMatchObject({
+      completed: false,
+      error: "Invalid credentials",
+    });
+  });
+
+  it("keeps polling while the task is still executing", async () => {
+    // Given a task that settles on the second read
+    vi.mocked(getTask)
+      .mockResolvedValueOnce(taskWithState("executing"))
+      .mockResolvedValueOnce(taskWithState("completed"));
+
+    // When
+    const status = await checkTaskStatus("task-1", 3, 0);
+
+    // Then
+    expect(status.completed).toBe(true);
+    expect(getTask).toHaveBeenCalledTimes(2);
   });
 });
 

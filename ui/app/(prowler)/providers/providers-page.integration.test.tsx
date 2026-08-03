@@ -6,6 +6,7 @@ import {
   awsOnboardingFixture,
   type OrgFixture,
 } from "@/__tests__/msw/handlers/organizations.fixtures";
+import { SCAN_SCHEDULE_CAPABILITY } from "@/types/schedules";
 
 import { ProvidersPageHarness } from "./providers-page.harness";
 
@@ -222,5 +223,33 @@ describe("AWS Organizations providers page (baseline)", () => {
     expect(harness.hasNodeKindLabel("Organizational Unit")).toBe(false);
     // On-prem never asks for the organization hierarchy at all.
     expect(harness.hierarchyFetchCount).toBe(0);
+  }, 30000);
+});
+
+describe("Providers page — injected scan-scheduling access", () => {
+  it("falls back to the environment capability when nothing is injected", async () => {
+    const harness = new ProvidersPageHarness(awsHierarchyFixture());
+    await harness.mount({ openWizard: false });
+    await harness.waitForOrganizationRow(AWS_ORG_NAME);
+
+    // The cloud-enabled island resolves to ADVANCED, which offers the editor.
+    const actions = await harness.actionLabelsFor(AWS_ORG_NAME);
+    expect(actions).toContain("Edit Scan Schedule");
+  }, 30000);
+
+  it("lets an injected capability override that fallback", async () => {
+    const harness = new ProvidersPageHarness(awsHierarchyFixture());
+    await harness.mount({
+      openWizard: false,
+      scanScheduling: {
+        capability: SCAN_SCHEDULE_CAPABILITY.MANUAL_ONLY,
+        isScanLimitReached: true,
+      },
+    });
+    await harness.waitForOrganizationRow(AWS_ORG_NAME);
+
+    // Same island as above, so only the injection explains the editor going away.
+    const actions = await harness.actionLabelsFor(AWS_ORG_NAME);
+    expect(actions).not.toContain("Edit Scan Schedule");
   }, 30000);
 });

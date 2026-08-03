@@ -370,24 +370,29 @@ export const checkTaskStatus = async (
 
     const state = task.data.attributes.state;
 
-    switch (state) {
-      case "completed":
-        return { completed: true, task };
-      case "failed":
-        return {
-          completed: false,
-          error: task.data.attributes.result.error,
-          task,
-        };
-      case "available":
-      case "scheduled":
-      case "executing":
-        // Continue waiting if the task is still in progress
-        await new Promise((resolve) => setTimeout(resolve, retryDelay));
-        break;
-      default:
-        return { completed: false, error: "Unexpected task state" };
+    if (
+      state === "available" ||
+      state === "scheduled" ||
+      state === "executing"
+    ) {
+      // Continue waiting if the task is still in progress
+      await new Promise((resolve) => setTimeout(resolve, retryDelay));
+      continue;
     }
+
+    if (state === "completed") {
+      return { completed: true, task };
+    }
+
+    // Every other settled state is a failure, including `cancelled` — what the
+    // API reports for a revoked task. Tested by exclusion (as
+    // `actions/task/poll.ts` does) so a new `StateChoices` entry still surfaces
+    // the task's own error. `result` is absent on some settled tasks.
+    return {
+      completed: false,
+      error: task.data.attributes.result?.error ?? `Task ${state}`,
+      task,
+    };
   }
 
   return { completed: false, error: "Max retries exceeded" };

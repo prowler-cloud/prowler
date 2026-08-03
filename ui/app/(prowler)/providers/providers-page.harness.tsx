@@ -26,6 +26,7 @@ import {
   ADD_PROVIDER_SEARCH_VALUE,
 } from "@/lib/providers-navigation";
 import type { SearchParamsProps } from "@/types";
+import type { ScanSchedulingAccess } from "@/types/schedules";
 
 import { ProvidersTabContent } from "./providers-tab-content";
 
@@ -36,6 +37,8 @@ interface MountOptions {
   openWizard?: boolean;
   /** Which hierarchy read fails, so the loader derives the status. Default none. */
   hierarchyFailure?: HierarchyReadFailure;
+  /** Injected scheduling access. Default none, which is how OSS renders. */
+  scanScheduling?: ScanSchedulingAccess;
 }
 
 export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
@@ -139,12 +142,20 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
   async mount({
     openWizard = true,
     hierarchyFailure = HIERARCHY_READ_FAILURE.NONE,
+    scanScheduling,
   }: MountOptions = {}): Promise<void> {
     this.seedWizardUrl(openWizard);
     worker.use(...handlersForOrganizations(this.fixture, { hierarchyFailure }));
     this.trackRequests(worker);
 
-    render(await ProvidersTabContent({ searchParams: this.searchParams() }));
+    render(
+      await ProvidersTabContent({
+        searchParams: this.searchParams(),
+        loadScanScheduling: scanScheduling
+          ? async () => scanScheduling
+          : undefined,
+      }),
+    );
   }
 
   // --- Wizard: connect step ----------------------------------------------

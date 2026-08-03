@@ -25,6 +25,12 @@ import { userEvent } from "vitest/browser";
 
 type RequestStartListener = (event: { request: Request }) => void;
 
+/**
+ * The predicate stayed falsy for the whole timeout. `waitForOrNull` swallows
+ * only this, so a throwing predicate still surfaces as the bug it is.
+ */
+class WaitForPending extends Error {}
+
 export abstract class BrowserHarness<TFixture> {
   readonly user = userEvent;
 
@@ -144,20 +150,45 @@ export abstract class BrowserHarness<TFixture> {
 
   // --- Sync helpers -------------------------------------------------------
 
-  /** Wait until the predicate returns truthy and return that value. */
+  /**
+   * Wait until the predicate returns truthy and return that value. `label`
+   * names what was awaited, so the timeout message identifies the caller.
+   */
   protected async waitFor<T>(
     fn: () => T | null | undefined | false,
     timeoutMs = 5000,
+    label?: string,
     intervalMs = 30,
   ): Promise<T> {
     return vi.waitFor(
       () => {
         const v = fn();
-        if (!v) throw new Error("waitFor predicate not yet truthy");
+        if (!v) {
+          throw new WaitForPending(
+            `waitFor: timed out waiting for ${label ?? "predicate to be truthy"}`,
+          );
+        }
         return v;
       },
       { timeout: timeoutMs, interval: intervalMs },
     ) as Promise<T>;
+  }
+
+  /**
+   * Like `waitFor`, but resolves to null when the predicate never became
+   * truthy. A throwing predicate still propagates.
+   */
+  protected async waitForOrNull<T>(
+    fn: () => T | null | undefined | false,
+    timeoutMs = 5000,
+    label?: string,
+  ): Promise<T | null> {
+    try {
+      return await this.waitFor(fn, timeoutMs, label);
+    } catch (error) {
+      if (error instanceof WaitForPending) return null;
+      throw error;
+    }
   }
 
   protected async waitForText(
@@ -207,9 +238,36 @@ export abstract class BrowserHarness<TFixture> {
     await this.user.click(btn);
   }
 
-  /** Click a dropdown/menu item (rendered in a Radix portal) by its label. */
+  /**
+   * Click a dropdown/menu item (rendered in a Radix portal) by its label.
+   *
+   * Native click, not `user.click`: the portal animates in while the row behind
+   * it re-renders, and Playwright rejects the element as unstable or detached.
+   * A native click needs no stability check but is lost silently on a detached
+   * node, so re-resolve each attempt and stop once the menu unmounts.
+   *
+   * Only for items that close the menu — a checkbox, radio or submenu item
+   * needs its own helper.
+   */
   protected async clickMenuItem(name: RegExp): Promise<void> {
-    const item = await this.waitFor(() => this.byRoleName("menuitem", name));
-    await this.user.click(item);
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      // The menu is already mounted after the first attempt, so keep the
+      // re-resolve short to bound the retry tail inside the test budget.
+      const item = await this.waitFor(
+        () => this.byRoleName("menuitem", name),
+        attempt === 0 ? 5000 : 500,
+        `menu item ${name}`,
+      );
+      item.click();
+      const closed = await this.waitForOrNull(
+        () => this.q('[role="menu"]') === null,
+        2000,
+        `the menu to close after clicking ${name}`,
+      );
+      if (closed) return;
+    }
+    throw new Error(
+      `clickMenuItem: menu stayed open after clicking ${name} 3 times`,
+    );
   }
 }
