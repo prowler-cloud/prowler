@@ -29,7 +29,7 @@ describe("ScansProvidersEmptyState", () => {
   });
 
   it("mentions imported scans in the disconnected hint only in Cloud", () => {
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
 
     render(<ScansProvidersEmptyState thereIsNoProviders={false} />);
 
@@ -39,7 +39,7 @@ describe("ScansProvidersEmptyState", () => {
   });
 
   it("omits the imported-scans copy in the disconnected hint outside Cloud", () => {
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
 
     render(<ScansProvidersEmptyState thereIsNoProviders={false} />);
 

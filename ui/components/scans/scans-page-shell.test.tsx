@@ -330,7 +330,7 @@ describe("ScansPageShell", () => {
   });
 
   it("does not open the launch scan modal from the URL when no provider is connected", () => {
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
     searchParamsValue.current = "launchScan=true";
 
     render(
@@ -346,7 +346,7 @@ describe("ScansPageShell", () => {
   });
 
   it("does not open the launch scan modal from client state when no provider is connected", () => {
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
     useScansStore.getState().openLaunchScanModal();
 
     render(
@@ -362,7 +362,7 @@ describe("ScansPageShell", () => {
   });
 
   it("does not open the launch scan modal from the URL without manage scans permission", () => {
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
     searchParamsValue.current = "launchScan=true";
 
     render(
@@ -488,7 +488,7 @@ describe("ScansPageShell", () => {
   });
 
   it("shows a non-blocking hint when no provider is connected, while still rendering the table", () => {
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
 
     render(
       <ScansPageShell
@@ -505,7 +505,7 @@ describe("ScansPageShell", () => {
   });
 
   it("shows the no-providers hint when there are no providers, while still rendering the table", () => {
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
 
     render(
       <ScansPageShell providers={[]} hasManageScansPermission>
@@ -518,7 +518,7 @@ describe("ScansPageShell", () => {
   });
 
   it("does not show the providers hint when a provider is connected", () => {
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
 
     render(
       <ScansPageShell providers={providers} hasManageScansPermission>
@@ -535,7 +535,7 @@ describe("ScansPageShell", () => {
   });
 
   it("starts the view-first-scan tour when a provider is connected", () => {
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
 
     render(
       <ScansPageShell providers={providers} hasManageScansPermission>
@@ -547,7 +547,7 @@ describe("ScansPageShell", () => {
   });
 
   it("suppresses the view-first-scan tour when no provider is connected, since Launch Scan is disabled", () => {
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
 
     render(
       <ScansPageShell
@@ -564,7 +564,7 @@ describe("ScansPageShell", () => {
   });
 
   it("suppresses the view-first-scan tour when there are no providers", () => {
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
 
     render(
       <ScansPageShell providers={[]} hasManageScansPermission>
@@ -576,7 +576,7 @@ describe("ScansPageShell", () => {
   });
 
   it("suppresses the view-first-scan tour when a provider is connected but manage scans is missing", () => {
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
 
     render(
       <ScansPageShell providers={providers} hasManageScansPermission={false}>
@@ -591,7 +591,7 @@ describe("ScansPageShell", () => {
   });
 
   it("still signals page-ready without a connected provider so the navbar replay fallback works", () => {
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
 
     render(
       <ScansPageShell providers={[]} hasManageScansPermission>
