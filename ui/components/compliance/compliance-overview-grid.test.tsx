@@ -318,6 +318,51 @@ describe("ComplianceOverviewGrid tour anchor", () => {
   const searchHandlers = () =>
     capturedStepHandlers.current[VIEW_COMPLIANCE_TOUR_TARGETS.SEARCH];
 
+  it("carries the anchor on exactly one card", () => {
+    // `tour:check` only greps for the attribute; that exactly one element gets
+    // it — the first card the user sees — is this test's job. Anchoring the
+    // whole grid lit up the viewport and scrolled the page to the bottom.
+    const { container } = renderGrid();
+
+    const anchored = container.querySelectorAll(
+      '[data-tour-id="view-compliance-frameworks"]',
+    );
+    expect(anchored).toHaveLength(1);
+    expect(anchored[0]).toHaveTextContent("CIS");
+  });
+
+  it("moves the anchor to the first pinned card, matching the render order", () => {
+    renderGrid({
+      catalogEntries: [
+        catalogEntry("cis_1.4_aws", false),
+        catalogEntry("gdpr_aws", true),
+        catalogEntry("iso27001_aws", false),
+      ],
+      providerType: "aws",
+    });
+
+    expect(
+      document.querySelector('[data-tour-id="view-compliance-frameworks"]'),
+    ).toHaveTextContent("GDPR");
+  });
+
+  it("drops the anchor entirely when the filter hides every card", () => {
+    useComplianceWatchlistViewStore.setState({ showOnlyWatchlist: true });
+
+    renderGrid({
+      catalogEntries: [
+        catalogEntry("cis_1.4_aws", false),
+        catalogEntry("gdpr_aws", false),
+        catalogEntry("iso27001_aws", false),
+      ],
+      providerType: "aws",
+    });
+
+    expect(
+      document.querySelector('[data-tour-id="view-compliance-frameworks"]'),
+    ).toBeNull();
+  });
+
   it("waits for the framework card when one will render", async () => {
     const waitForStep = vi
       .fn()

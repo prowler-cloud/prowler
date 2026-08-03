@@ -154,11 +154,13 @@ export const ComplianceOverviewGrid = ({
         return (
           // Anchor the tour to a single card, not the whole grid: highlighting the
           // grid lit up the entire viewport and scrolled the page to the bottom.
+          // Spread rather than a conditional attribute value so the literal sits
+          // next to the attribute name — the shape `tour:check` scans for.
           <div
             key={id}
-            data-tour-id={
-              id === tourAnchorId ? "view-compliance-frameworks" : undefined
-            }
+            {...(id === tourAnchorId
+              ? { "data-tour-id": "view-compliance-frameworks" }
+              : {})}
             className="h-full [&>*]:h-full"
           >
             <ComplianceCard
