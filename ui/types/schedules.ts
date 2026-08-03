@@ -47,9 +47,8 @@ export type ScanScheduleCapability =
   (typeof SCAN_SCHEDULE_CAPABILITY)[keyof typeof SCAN_SCHEDULE_CAPABILITY];
 
 /**
- * Deployment-resolved scan-scheduling access. Nothing supplies it in OSS, which
- * falls back to `getScanScheduleCapability`; the prowler-cloud overlay resolves
- * it from billing and injects it.
+ * Deployment-resolved scan-scheduling access. Unset here falls back to
+ * `getScanScheduleCapability`.
  */
 export interface ScanSchedulingAccess {
   capability?: ScanScheduleCapability;

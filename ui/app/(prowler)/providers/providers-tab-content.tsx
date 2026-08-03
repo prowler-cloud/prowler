@@ -13,9 +13,8 @@ import { loadProvidersAccountsViewData } from "./providers-page.utils";
 interface ProvidersTabContentProps {
   searchParams: SearchParamsProps;
   /**
-   * Injected so the billing chain it comes from in Prowler Cloud stays out of
-   * this file. A thunk, not a value, so it resolves inside the `Promise.all`
-   * below rather than ahead of the provider reads.
+   * Injected so the chain it comes from stays out of this file. A thunk so it
+   * resolves inside the `Promise.all` below, not ahead of it.
    */
   loadScanScheduling?: () => Promise<ScanSchedulingAccess>;
 }
@@ -46,7 +45,7 @@ const resolveScanScheduling = async (
   try {
     return await load();
   } catch (error) {
-    // Suspense does not catch errors: rejecting here would hand the whole route
+    // Suspense does not catch errors: rejecting would hand the whole route
     // segment to the error boundary instead of degrading one affordance.
     console.error("Error loading scan scheduling access:", error);
     return null;
