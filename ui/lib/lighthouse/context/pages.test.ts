@@ -23,6 +23,13 @@ describe("resolveLighthousePage", () => {
     ["/services", "services"],
     ["/workloads", "workloads"],
     ["/mutelist", "mutelist"],
+    ["/roles", "roles"],
+    ["/roles/new", "roles"],
+    ["/users", "users"],
+    ["/invitations", "invitations"],
+    ["/invitations/new", "invitations"],
+    ["/integrations", "integrations"],
+    ["/integrations/jira", "integrations"],
   ])("should resolve %s as %s", (pathname, expectedPageId) => {
     // Given / When
     const page = resolveLighthousePage(pathname);
@@ -34,12 +41,20 @@ describe("resolveLighthousePage", () => {
 
   it("should create a labeled fallback for other application pages", () => {
     // Given / When
-    const page = resolveLighthousePage("/integrations/");
+    const page = resolveLighthousePage("/profile");
 
     // Then
     expect(page.id).toBe("other");
-    expect(page.label).toBe("Integrations");
+    expect(page.label).toBe("Profile");
     expectValidSuggestions(page.suggestions);
+  });
+
+  it("should use the known route label for fallback pages that declare one", () => {
+    const page = resolveLighthousePage("/manage-groups");
+
+    expect(page.id).toBe("other");
+    expect(page.label).toBe("Manage Groups");
+    expect(page.allowedSearchParams).toEqual([]);
   });
 
   it("should resolve encoded and decoded dynamic paths to the same scope", () => {
@@ -159,6 +174,29 @@ describe("buildLighthousePageContext", () => {
       search: ["s3"],
       trigger: ["new_failing_findings"],
     });
+  });
+
+  it("should preserve the search and sort filters on tenant admin pages", () => {
+    const roles = buildLighthousePageContext(
+      "/roles",
+      new URLSearchParams({ "filter[search]": "admin", sort: "name" }),
+    );
+    const users = buildLighthousePageContext(
+      "/users",
+      new URLSearchParams({ "filter[search]": "alice" }),
+    );
+
+    expect(roles.filters).toEqual({ search: ["admin"], sort: ["name"] });
+    expect(users.filters).toEqual({ search: ["alice"] });
+  });
+
+  it("should preserve the integration type filter on the integrations page", () => {
+    const context = buildLighthousePageContext(
+      "/integrations",
+      new URLSearchParams({ "filter[integration_type]": "jira" }),
+    );
+
+    expect(context.filters).toEqual({ integration_type: ["jira"] });
   });
 
   it("should preserve the filter names emitted by list-page controls", () => {

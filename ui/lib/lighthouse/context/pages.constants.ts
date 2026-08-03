@@ -418,8 +418,120 @@ export const LIGHTHOUSE_PAGE_DEFINITION_INPUTS = [
       },
     ],
   },
+  {
+    id: LIGHTHOUSE_PAGE_ID.ROLES,
+    label: "Roles",
+    match: (pathname) => pathname.startsWith("/roles"),
+    allowedSearchParams: [...COMMON_LIST_PARAMS],
+    suggestions: [
+      {
+        label: "Review role permissions",
+        prompt:
+          "Review the roles on this page. Which ones grant more than their name implies, and what would you trim first?",
+      },
+      {
+        label: "Find overlapping roles",
+        prompt:
+          "Which of these roles overlap enough to be merged, and does any combination of them add up to an escalation risk?",
+      },
+      {
+        label: "Design least privilege",
+        prompt:
+          "Propose a least-privilege role set for my team: which roles should exist, what should each allow, and how do I migrate from the current ones?",
+      },
+      {
+        label: "Audit unlimited visibility",
+        prompt:
+          "Which roles have unlimited visibility across providers, and who actually needs to keep it?",
+      },
+    ],
+  },
+  {
+    id: LIGHTHOUSE_PAGE_ID.USERS,
+    label: "Users",
+    match: (pathname) => pathname.startsWith("/users"),
+    allowedSearchParams: [...COMMON_LIST_PARAMS],
+    suggestions: [
+      {
+        label: "Audit user access",
+        prompt:
+          "Review the users listed here. Who holds admin-level roles, and does anyone look over-privileged for what they do?",
+      },
+      {
+        label: "Find concentrated ownership",
+        prompt:
+          "Is any critical responsibility — provider management, user administration, billing — concentrated in a single person here?",
+      },
+      {
+        label: "Plan an access review",
+        prompt:
+          "Turn this user list into a quarterly access review: who reviews whom, and what should each reviewer verify?",
+      },
+      {
+        label: "Prepare safe offboarding",
+        prompt:
+          "Draft an offboarding checklist for this tenant: what should be revoked or transferred when one of these users leaves?",
+      },
+    ],
+  },
+  {
+    id: LIGHTHOUSE_PAGE_ID.INVITATIONS,
+    label: "Invitations",
+    match: (pathname) => pathname.startsWith("/invitations"),
+    allowedSearchParams: [...COMMON_LIST_PARAMS],
+    suggestions: [
+      {
+        label: "Review pending invitations",
+        prompt:
+          "Which pending invitations here should be revoked — expired, unfamiliar domains, or broader roles than the invitee needs?",
+      },
+      {
+        label: "Tighten invitation roles",
+        prompt:
+          "Do any open invitations grant admin or unlimited-visibility roles? Suggest a safer default role for new members.",
+      },
+      {
+        label: "Draft onboarding steps",
+        prompt:
+          "Draft the checklist a new member should follow after accepting one of these invitations.",
+      },
+      {
+        label: "Explain invitation lifecycle",
+        prompt:
+          "Explain how invitations work in Prowler: what happens when one expires, and how do I resend or revoke one safely?",
+      },
+    ],
+  },
+  {
+    id: LIGHTHOUSE_PAGE_ID.INTEGRATIONS,
+    label: "Integrations",
+    match: (pathname) => pathname.startsWith("/integrations"),
+    allowedSearchParams: [...COMMON_LIST_PARAMS, "filter[integration_type]"],
+    suggestions: [
+      {
+        label: "Review integration coverage",
+        prompt:
+          "Which integrations am I missing that would get findings to the right team faster — ticketing, chat, or storage?",
+      },
+      {
+        label: "Check integration health",
+        prompt:
+          "Review the integrations configured here. Are any disconnected, misconfigured, or pointing at destinations nobody watches?",
+      },
+      {
+        label: "Route findings to teams",
+        prompt:
+          "Design how findings should flow from Prowler into my existing tools so each team only sees what they own.",
+      },
+      {
+        label: "Harden integration credentials",
+        prompt:
+          "What credentials do these integrations rely on, and how should I scope and rotate them safely?",
+      },
+    ],
+  },
 ] as const satisfies readonly LighthousePageDefinitionInput[];
 
 export const LIGHTHOUSE_KNOWN_ROUTE_LABELS = {
-  integrations: "Integrations",
+  "manage-groups": "Manage Groups",
 } as const;
