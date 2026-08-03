@@ -104,4 +104,36 @@ describe("ThreatScoreSSR", () => {
       '"totals":{"passed":120,"failed":40,"total":160}',
     );
   });
+
+  it("renders the empty state and publishes no context on a 4xx response", async () => {
+    // handleApiResponse resolves truthy {error, status} objects for 4xx.
+    vi.mocked(getThreatScore).mockResolvedValueOnce({
+      error: "Invalid filter",
+      status: 400,
+    } as unknown as Awaited<ReturnType<typeof getThreatScore>>);
+
+    render(await ThreatScoreSSR({ searchParams: {} }));
+
+    expect(screen.queryByTestId("overview-context")).not.toBeInTheDocument();
+  });
+
+  it("publishes a zero critical count when the field is absent", async () => {
+    vi.mocked(getThreatScore).mockResolvedValueOnce({
+      data: [
+        {
+          attributes: {
+            overall_score: "70",
+            score_delta: null,
+            section_scores: {},
+          },
+        },
+      ],
+    } as unknown as Awaited<ReturnType<typeof getThreatScore>>);
+
+    render(await ThreatScoreSSR({ searchParams: {} }));
+
+    expect(screen.getByTestId("overview-context")).toHaveTextContent(
+      '"criticalRequirementsCount":0',
+    );
+  });
 });
