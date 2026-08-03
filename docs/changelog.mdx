@@ -15,7 +15,7 @@ rss: true
 
   ![Lighthouse AI answering "explain this finding" from the side panel, with the page context chip highlighted in the composer](/images/prowler-app/lighthouse/prowler-cloud/side-panel-context-aware.png)
 
-  Lighthouse also gained access to every tool family the Prowler MCP server advertises: scan configurations, scan scheduling, finding triage, alert rules and recipients, integrations, users, and roles. Every action remains gated by RBAC: Lighthouse can only do what the user asking could do themselves.
+  Lighthouse also gained access to every tool family the Prowler MCP server advertises: scan configurations, scan scheduling, finding triage, alert rules and recipients, integrations, users, and roles. Every action remains gated by RBAC: Lighthouse AI can only do what the user asking could do themselves.
 
   Read more in the [Lighthouse AI documentation](/getting-started/products/prowler-cloud-lighthouse).
 
@@ -30,10 +30,10 @@ rss: true
   ### ☁️ Prowler MCP — Cloud-Only Tools
 
   <Note>
-  This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
+  This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing). These tools are exposed only by the Cloud MCP Server at `https://mcp.prowler.com/mcp`; the self-hosted Local MCP Server **does not** include them.
   </Note>
 
-  These tools are exposed only by the Cloud MCP Server at `https://mcp.prowler.com/mcp`; the self-hosted Local MCP Server does not include them. A new `prowler_cloud_*` namespace adds 32 tools so your AI assistant can run Prowler Cloud workflows end to end instead of only reading from them:
+  A new `prowler_cloud_*` namespace adds 32 tools so your AI assistant can run Prowler Cloud workflows end to end instead of only reading from them:
 
   - **[Alerts](/getting-started/basic-usage/prowler-mcp-tools#alerts)** — create and manage alert rules and email recipients, and browse the fired-alert history. Rule conditions can be dry-run before saving, so you can see what a rule would match without persisting anything.
   - **[Findings Triage](/getting-started/basic-usage/prowler-mcp-tools#findings-triage)** — set a finding's triage status and attach notes documenting the decision. Unlike muting, the finding stays visible.
@@ -48,11 +48,11 @@ rss: true
   This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
   </Note>
 
-  One framework, every provider, a single answer. Building on the cross-provider-type roll-up from v5.34.0, the Compliance section now groups compliance for all providers of the same type: a **single-provider framework** — CIS AWS, CIS GCP, ENS for Azure — is aggregated across the latest completed scan of every provider of that type. Each framework card rolls up into a consolidated posture with a per-provider breakdown, a findings drill-down, and a combined executive PDF report. Requirement status follows the same strict precedence (FAIL over PASS over MANUAL), so one failing provider flags the requirement for the whole estate.
+  One framework, every provider, a single answer. Building on the cross-provider-type roll-up, the Compliance section now groups compliance for all providers of the same type: a **single-provider framework** — CIS AWS, CIS GCP, ENS for Azure — is aggregated across the latest completed scan of every provider of that type. Each framework card rolls up into a consolidated posture with a per-provider breakdown, a findings drill-down, and a combined executive PDF report. Requirement status follows the same strict precedence (FAIL over PASS over MANUAL), so one failing provider flags the requirement for the whole estate.
 
   ![Across providers compliance section](/images/compliance/prowler-app-across-providers-expanded.png)
 
-  The Compliance tabs were also renamed to say what they aggregate: "Per Scan" is now **Single Scan**, "Cross-Provider" is now **Multiple Scans**, and `/compliance` lands on Multiple Scans by default.
+  The Compliance tabs were also renamed to say what they aggregate: "Per Scan" is now **Single Scan**, "Cross-Provider" is now **Multiple Scans**, and Compliance lands on Multiple Scans by default.
 
   ![Cross-provider compliance detail across providers](/images/compliance/prowler-app-across-providers-detail.png)
 
@@ -89,6 +89,8 @@ rss: true
   - **KMS attestation policy** — six `kms_key_enclave_*` checks for the key policies gating enclave secrets: attestation not enforced or bypassable, missing deployment binding, debug-mode attestations, PCR mismatches, and unknown enclave images.
 
   All checks are fully passive, using AWS APIs and CloudTrail with no instance access or SSM agent required, and are mapped across 23 compliance frameworks, including NIST 800-53 Rev 5, PCI-DSS v4.0, ISO 27001:2022, SOC 2, HIPAA, and MITRE ATT&CK.
+
+  Read more about it this [blog post](https://prowler.com/blog/your-llm-runs-in-a-nitro-enclave-who-is-checking-the-enclave).
 
   Try them out now at [cloud.prowler.com](https://cloud.prowler.com/sign-up)!
 
