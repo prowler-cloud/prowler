@@ -1,1 +1,0 @@
-11 AWS Nitro Enclaves security checks providing the first CSPM coverage for confidential computing workloads, covering both host environment (`ec2_confidential_workload_host_*`) and KMS attestation policy (`kms_key_enclave_*`), fully passive via boto3 and CloudTrail LookupEvents

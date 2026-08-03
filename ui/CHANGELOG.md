@@ -4,6 +4,34 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [1.37.0] (Prowler v5.37.0)
+
+### 🚀 Added
+
+- Lighthouse AI contextual messages with page-aware prompts, focused side-panel details, selected-resource metadata, and retry-safe historical badges [(#12069)](https://github.com/prowler-cloud/prowler/pull/12069)
+- Cross-account compliance view in the Multiple Scans tab: an "Across providers" section listing single-provider frameworks aggregatable across every account of the same provider type, with a per-account detail, findings drill-down and combined PDF report (Prowler Cloud only) [(#12086)](https://github.com/prowler-cloud/prowler/pull/12086)
+- In Prowler Cloud, authenticated users can send product feedback through a persistent widget backed by a PostHog headless survey, rendered with native Prowler components and editable from the PostHog dashboard [(#12116)](https://github.com/prowler-cloud/prowler/pull/12116)
+- Attack Paths query info panel now links every query to its page on Prowler Hub [(#12145)](https://github.com/prowler-cloud/prowler/pull/12145)
+- Warning before replacing an organization credential or deleting an organization, listing the providers affected [(#12255)](https://github.com/prowler-cloud/prowler/pull/12255)
+- GCP organization onboarding in the provider wizard: add every project of an organization at once, choosing which discovered projects to include (Prowler Cloud only) [(#12255)](https://github.com/prowler-cloud/prowler/pull/12255)
+- Sign-up campaign attribution preserves `promo_code` and `utm_*` params across auth redirects, sign-in/sign-up links, Google/GitHub OAuth callbacks, and `POST /users` [(#12269)](https://github.com/prowler-cloud/prowler/pull/12269)
+
+### 🔄 Changed
+
+- `/compliance` now lands on the Multiple Scans tab; links carrying a `scanId` keep opening Single Scan [(#12086)](https://github.com/prowler-cloud/prowler/pull/12086)
+- Compliance tab naming: "Per Scan" is now "Single Scan" and "Cross-Provider" is now "Multiple Scans", with matching "Across provider types" and "Across providers" section headers explaining each aggregation axis [(#12086)](https://github.com/prowler-cloud/prowler/pull/12086)
+- Lighthouse contextual suggestions now show concise actions while preserving detailed prompts for chat [(#12219)](https://github.com/prowler-cloud/prowler/pull/12219)
+- Providers page groups GCP projects under their organization and folders [(#12255)](https://github.com/prowler-cloud/prowler/pull/12255)
+
+### 🐞 Fixed
+
+- Attack Paths now classify cloud-provider finding resources separately from Prowler findings [(#11244)](https://github.com/prowler-cloud/prowler/pull/11244)
+- Finding delta colors and integration update button labels restored [(#12160)](https://github.com/prowler-cloud/prowler/pull/12160)
+- Long unbroken messages in Lighthouse chat no longer overflow their message bubble [(#12215)](https://github.com/prowler-cloud/prowler/pull/12215)
+- SAML ACS URL field remains visible while generating the callback URL from the email domain [(#12236)](https://github.com/prowler-cloud/prowler/pull/12236)
+
+---
+
 ## [1.36.0] (Prowler v5.36.0)
 
 ### 🚀 Added
