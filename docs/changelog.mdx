@@ -81,6 +81,17 @@ rss: true
 
   Read more in the [Attack Paths documentation](/user-guide/tutorials/prowler-app-attack-paths).
 
+  ### 🛡️ AWS Confidential Computing — Nitro Enclaves Checks
+
+  Prowler adds the first CSPM coverage for confidential computing workloads on AWS, with **11 new checks** for [Nitro Enclaves](https://aws.amazon.com/ec2/nitro/nitro-enclaves/), developed together with [Guillermo Ruiz](https://www.linkedin.com/in/gruizesteban/) from AWS.
+
+  - **Workload host environment (EC2)** — five `ec2_confidential_workload_host_*` checks for the parent instance: IMDSv2 not enforced, public IP exposure, unrestricted ingress, exposed vsock proxy ports, and hosts not running.
+  - **KMS attestation policy** — six `kms_key_enclave_*` checks for the key policies gating enclave secrets: attestation not enforced or bypassable, missing deployment binding, debug-mode attestations, PCR mismatches, and unknown enclave images.
+
+  All checks are fully passive, using AWS APIs and CloudTrail with no instance access or SSM agent required, and are mapped across 23 compliance frameworks, including NIST 800-53 Rev 5, PCI-DSS v4.0, ISO 27001:2022, SOC 2, HIPAA, and MITRE ATT&CK.
+
+  Try them out now at cloud.prowler.com!
+
   ### 🏢 New Provider — Huawei Cloud
 
   Prowler now scans [**Huawei Cloud**](https://www.huaweicloud.com/), with **25 checks** across ten services: CTS, ECS, ELB, EVS, IAM, KMS, OBS, RDS, VPC, and WAF, plus the CIS Huawei Cloud Foundations Benchmark 1.0 compliance framework. Thanks to @tomitobio for their 1st provider in Prowler!
@@ -96,10 +107,6 @@ rss: true
 
   Read more in the [Huawei Cloud documentation](/user-guide/providers/huaweicloud/getting-started-huaweicloud). Explore all Huawei Cloud checks at [Prowler Hub](https://hub.prowler.com/check?provider=huaweicloud).
 
-  ### 📤 OCSF Output — MITRE ATT&CK Enrichment
-
-  OCSF detection finding output now populates `finding_info.analytic` with the Prowler check rule and `finding_info.attacks` with MITRE ATT&CK technique and tactic objects for findings with MITRE ATT&CK compliance metadata. Thanks to @AlexanderSanin!
-
   ### 🔍 Checks
 
   #### AWS
@@ -110,6 +117,10 @@ rss: true
   - `sagemaker_endpoint_config_kms_encryption_enabled` verifies SageMaker endpoint configurations use a KMS key for storage volume encryption. Thanks to @Nithin078 and @l46983284-cpu!
 
   Read more in the [AWS documentation](/user-guide/providers/aws/getting-started-aws). Explore all AWS checks at [Prowler Hub](https://hub.prowler.com/check?provider=aws).
+
+  ### 📤 OCSF Output — MITRE ATT&CK Enrichment
+
+  OCSF detection finding output now populates `finding_info.analytic` with the Prowler check rule and `finding_info.attacks` with MITRE ATT&CK technique and tactic objects for findings with MITRE ATT&CK compliance metadata. Thanks to @AlexanderSanin!
 
   ### 🐞 Fixed
 
