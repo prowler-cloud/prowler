@@ -75,3 +75,25 @@ class TestIsBuiltinCheck:
             side_effect=ModuleNotFoundError(f"No module named '{module}'", name=module),
         ):
             assert is_builtin_check("aws", "ec2", "ec2_instance_public_ip") is False
+
+    @pytest.mark.parametrize(
+        "error",
+        [
+            ValueError("namespace package edge case"),
+            ImportError("partially initialised"),
+        ],
+        ids=["value_error", "import_error"],
+    )
+    def test_false_when_find_spec_raises_something_other_than_not_found(self, error):
+        """Mirrors the guard `is_builtin_provider` already carries.
+
+        `find_spec` can fail for reasons that are not "the module is absent" —
+        a namespace-package edge case raises ValueError, a partially
+        initialised package raises ImportError. Neither says the check ships
+        with the SDK, so both fall through to the entry points.
+        """
+        with patch(
+            "prowler.providers.common.builtin.importlib.util.find_spec",
+            side_effect=error,
+        ):
+            assert is_builtin_check("aws", "ec2", "ec2_instance_public_ip") is False
