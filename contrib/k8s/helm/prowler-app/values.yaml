@@ -443,16 +443,39 @@ worker:
       sslmode: "disable"
     # -- The scaler divides the query result by this value to get the desired replica count.
     targetQueryValue: "1"
-    # -- Query the scaler runs to measure pending work. The default counts scans that
-    # represent real work: those executing or available (bounded to rows updated in the
-    # last 24h so orphaned rows do not pin the worker up), plus scheduled scans that are
-    # due (no lower bound, so an overdue backlog still scales up). This replaces the
-    # previous 2-hour scheduled-only window, which missed manual scans, older backlogs,
-    # and in-progress scans. Override to tune scaling for your workload.
+    # -- Query the scaler runs to measure pending work. It replaces the previous
+    # 2-hour scheduled-only window, which missed manual scans, older backlogs and
+    # in-progress scans. Override to tune scaling for your workload.
+    #
+    # The default sums three signals:
+    #   1. Scans executing or available, bounded to rows updated in the last 24h so
+    #      orphaned rows do not pin the worker up, plus scheduled scans that are due
+    #      (no lower bound, so an overdue backlog still scales up).
+    #   2. Scan tasks published in the last 48h that no worker has finished. A PENDING
+    #      TaskResult is written at publish time (before_task_publish in api/signals.py),
+    #      so Beat's daily publishes are visible even with zero workers. Signal 1 alone
+    #      deadlocks with minReplicas 0: every scan row after the first is created by
+    #      the worker, so once the initial row ages out of the 24h bound there is
+    #      nothing to count and nothing to create more.
+    #   3. Non-scan tasks pending in the last hour. Provider connection checks,
+    #      deletions, reports and backfills never touch the scans table, so without
+    #      this they are never picked up while the worker is scaled to zero.
+    #      reconcile-orphan-tasks is excluded: it is a watchdog that runs every two
+    #      minutes and only recovers orphans left behind by a worker, so counting it
+    #      would wake the worker continuously and defeat scale-to-zero.
     query: >-
-      SELECT COUNT(*) FROM scans
+      SELECT
+      (SELECT COUNT(*) FROM scans
       WHERE (state IN ('executing', 'available') AND updated_at > NOW() - INTERVAL '24 hours')
-      OR (state = 'scheduled' AND scheduled_at < NOW())
+      OR (state = 'scheduled' AND scheduled_at < NOW()))
+      + (SELECT COUNT(*) FROM django_celery_results_taskresult
+      WHERE task_name IN ('scan-perform', 'scan-perform-scheduled')
+      AND status IN ('PENDING', 'RECEIVED', 'STARTED')
+      AND date_created > NOW() - INTERVAL '48 hours')
+      + (SELECT COUNT(*) FROM django_celery_results_taskresult
+      WHERE task_name NOT IN ('scan-perform', 'scan-perform-scheduled', 'reconcile-orphan-tasks')
+      AND status IN ('PENDING', 'RECEIVED', 'STARTED')
+      AND date_created > NOW() - INTERVAL '1 hour')
 
 worker_beat:
   # This will set the replicaset count more information can be found here: https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/
