@@ -108,6 +108,7 @@ class KMS(AWSService):
                             )["Policy"]
                         )
                     except Exception as error:
+                        key.policy_fetch_error = error.__class__.__name__
                         logger.error(
                             f"{regional_client.region} -- {error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
                         )
@@ -151,10 +152,7 @@ class KMS(AWSService):
                             alias["AliasName"]
                         )
             for key in self.keys:
-                if (
-                    key.region == regional_client.region
-                    and key.id in aliases_by_key_id
-                ):
+                if key.region == regional_client.region and key.id in aliases_by_key_id:
                     key.aliases = aliases_by_key_id[key.id]
         except Exception as error:
             logger.error(
@@ -170,6 +168,11 @@ class Key(BaseModel):
     manager: Optional[str]
     rotation_enabled: Optional[bool]
     policy: Optional[dict]
+    # Populated by _get_key_policy on API failure. Distinguishes "policy not
+    # applicable" (None + no error) from "policy could not be fetched" (None +
+    # error class name). Checks that make security assertions from the policy
+    # should emit MANUAL when this is set, not silently skip the key.
+    policy_fetch_error: Optional[str] = None
     spec: Optional[str]
     region: str
     multi_region: Optional[bool]
