@@ -1,3 +1,4 @@
+import copy
 import json
 import os
 from operator import attrgetter
@@ -360,6 +361,75 @@ def annotate_verified_secrets(report, secrets: list) -> None:
         report.status_extended += (
             " One or more of these secrets were confirmed to be live."
         )
+
+
+SECRET_REDACTED_PLACEHOLDER = "<REDACTED:potential-secret>"
+
+
+def _iter_secret_scan_leaves(obj, path=()):
+    """Yield ``(path, payload)`` for each scannable string leaf of ``obj``.
+
+    ``path`` is the tuple of dict keys / list indices locating the leaf. Each
+    dict value is emitted as a ``{"key": value}`` JSON payload so keyword-based
+    rules (Generic Password, etc.) fire exactly as they do in the secret checks,
+    which scan the same ``{key: value}`` shape; list items and their nested
+    values are scanned as bare strings.
+    """
+    if isinstance(obj, dict):
+        for key, value in obj.items():
+            if isinstance(value, (dict, list)):
+                yield from _iter_secret_scan_leaves(value, path + (key,))
+            elif isinstance(value, str) and value:
+                yield path + (key,), json.dumps({str(key): value})
+    elif isinstance(obj, list):
+        for index, value in enumerate(obj):
+            if isinstance(value, (dict, list)):
+                yield from _iter_secret_scan_leaves(value, path + (index,))
+            elif isinstance(value, str) and value:
+                yield path + (index,), json.dumps(value)
+
+
+def _set_at_path(obj, path, value):
+    """Set ``value`` at the ``(key/index, ...)`` ``path`` inside ``obj``."""
+    for key in path[:-1]:
+        obj = obj[key]
+    obj[path[-1]] = value
+
+
+def redact_scanned_secrets(resource_metadata):
+    """Return a copy of ``resource_metadata`` with detected secrets masked.
+
+    Secret-scanning checks embed the scanned resource verbatim in their finding,
+    and that resource is serialized into every output (OCSF, CSV, JSON) and any
+    uploaded findings, so a plaintext secret would be written out even though the
+    finding message only names the offending field. This re-scans the resource's
+    string values and replaces any value flagged as a secret with a placeholder,
+    centralizing redaction for the whole secrets-check family in the output path
+    instead of requiring each check to sanitize its own resource.
+
+    The scan runs fully offline (no live validation, no exclude patterns: masking
+    an excluded token in the output is harmless). It is best-effort: on any scan
+    error the metadata is returned unchanged, since the finding is already
+    reported as containing a secret.
+    """
+    if not isinstance(resource_metadata, (dict, list)):
+        return resource_metadata
+    redacted = copy.deepcopy(resource_metadata)
+    leaves = list(_iter_secret_scan_leaves(redacted))
+    if not leaves:
+        return redacted
+    try:
+        batch_results = detect_secrets_scan_batch(
+            ((path, payload) for path, payload in leaves),
+            excluded_secrets=[],
+            validate=False,
+        )
+    except SecretsScanError:
+        return redacted
+    for path, _ in leaves:
+        if batch_results.get(path):
+            _set_at_path(redacted, path, SECRET_REDACTED_PLACEHOLDER)
+    return redacted
 
 
 def validate_ip_address(ip_string):

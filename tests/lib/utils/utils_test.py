@@ -1,3 +1,4 @@
+import json
 import os
 import subprocess
 import tempfile
@@ -8,6 +9,7 @@ import pytest
 from mock import patch
 
 from prowler.lib.utils.utils import (
+    SECRET_REDACTED_PLACEHOLDER,
     SecretsScanError,
     detect_secrets_scan_batch,
     file_exists,
@@ -17,9 +19,52 @@ from prowler.lib.utils.utils import (
     open_file,
     outputs_unix_timestamp,
     parse_json_file,
+    redact_scanned_secrets,
     strip_ansi_codes,
     validate_ip_address,
 )
+
+
+class Test_redact_scanned_secrets:
+    def test_masks_flagged_values_preserves_context(self):
+        resource = {
+            "name": "c1",
+            "properties": {
+                "JDBC_CONNECTION_URL": "jdbc:mysql://db.example.com:3306/app",
+                "USERNAME": "app_user",
+                "PASSWORD": "AKIAsupersecretkey1234",
+            },
+        }
+
+        out = redact_scanned_secrets(resource)
+
+        # The flagged secret value is masked...
+        assert out["properties"]["PASSWORD"] == SECRET_REDACTED_PLACEHOLDER
+        # ...while non-secret context is preserved.
+        assert out["properties"]["USERNAME"] == "app_user"
+        assert (
+            out["properties"]["JDBC_CONNECTION_URL"]
+            == "jdbc:mysql://db.example.com:3306/app"
+        )
+        # The raw secret is absent from the serialized output.
+        assert "AKIAsupersecretkey1234" not in json.dumps(out)
+        # The input is never mutated (only a copy is redacted).
+        assert resource["properties"]["PASSWORD"] == "AKIAsupersecretkey1234"
+
+    def test_non_mapping_input_returned_as_is(self):
+        assert redact_scanned_secrets("plain string") == "plain string"
+        assert redact_scanned_secrets(None) is None
+
+    def test_scan_error_returns_metadata_unchanged(self):
+        resource = {"properties": {"PASSWORD": "AKIAsupersecretkey1234"}}
+
+        with patch(
+            "prowler.lib.utils.utils.detect_secrets_scan_batch",
+            side_effect=SecretsScanError("scanner failed"),
+        ):
+            out = redact_scanned_secrets(resource)
+
+        assert out == resource
 
 
 def _fake_kingfisher_run(output_content=None, returncode=0, stderr=""):
