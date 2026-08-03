@@ -7,6 +7,7 @@ import {
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
 import { appendSanitizedProviderTypeFilters } from "@/lib/provider-filters";
 import { handleApiResponse } from "@/lib/server-actions-helper";
+import type { ApiResult } from "@/types/server-actions";
 
 import { adaptSeverityTrendsResponse } from "./severity-trends.adapter";
 import {
@@ -35,7 +36,7 @@ const getFindingsSeverityTrends = async ({
       headers,
     });
 
-    const apiResponse: FindingsSeverityOverTimeResponse | undefined =
+    const apiResponse: ApiResult<FindingsSeverityOverTimeResponse> | undefined =
       await handleApiResponse(response);
 
     if (!apiResponse?.data || !Array.isArray(apiResponse.data)) {
