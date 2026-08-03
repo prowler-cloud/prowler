@@ -1,7 +1,12 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { Survey } from "posthog-js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+import { clampSidePanelWidth } from "@/lib/ui-layout";
 
 type SurveyCallback = (surveys: Survey[]) => void;
 
@@ -12,6 +17,7 @@ const mocks = vi.hoisted(() => ({
   onSurveysLoaded: vi.fn(),
   capture: vi.fn(),
   moduleLoaded: vi.fn(),
+  isPushViewport: false,
   // Mirrors the singleton's `__loaded` flag: true when a PostHog instance
   // already exists (as on Prowler Cloud, initialized in app/providers.tsx).
   loaded: false,
@@ -20,6 +26,9 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/lib/shared/env", () => ({ isCloud: mocks.isCloud }));
 vi.mock("@/hooks/use-runtime-config", () => ({
   useRuntimeConfig: mocks.useRuntimeConfig,
+}));
+vi.mock("@/hooks/use-media-query", () => ({
+  useMediaQuery: () => mocks.isPushViewport,
 }));
 vi.mock("posthog-js", () => {
   mocks.moduleLoaded();
@@ -36,6 +45,10 @@ vi.mock("posthog-js", () => {
 });
 
 const POSTHOG_KEY = "phc_key";
+const GLOBAL_STYLES = readFileSync(
+  resolve(process.cwd(), "styles/globals.css"),
+  "utf8",
+);
 
 const SURVEY_FIXTURE = {
   id: "survey-123",
@@ -77,6 +90,8 @@ describe("FeedbackSurvey", () => {
     vi.resetModules();
     vi.resetAllMocks();
     mocks.loaded = false;
+    mocks.isPushViewport = false;
+    localStorage.clear();
     mocks.isCloud.mockReturnValue(true);
     mocks.useRuntimeConfig.mockReturnValue({
       cloudEnabled: true,
@@ -90,9 +105,10 @@ describe("FeedbackSurvey", () => {
   afterEach(() => {
     vi.restoreAllMocks();
     vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
   });
 
-  it("renders the feedback trigger when Cloud and the survey is available", async () => {
+  it("renders an accessible icon-only circular feedback trigger", async () => {
     // When
     await renderSurvey();
 
@@ -101,7 +117,85 @@ describe("FeedbackSurvey", () => {
       name: "Give feedback",
     });
     expect(trigger).toBeVisible();
-    expect(trigger).toHaveTextContent("Feedback");
+    expect(trigger).toHaveAccessibleName("Give feedback");
+    expect(trigger).not.toHaveTextContent("Feedback");
+    expect(trigger.querySelector("svg")).toBeInTheDocument();
+    expect(trigger).toHaveClass("rounded-full", "size-10");
+  });
+
+  it("activates feedback clearance only on the semantic main page scroller", async () => {
+    // When
+    await renderSurvey();
+
+    // Then
+    const trigger = await screen.findByRole("button", {
+      name: "Give feedback",
+    });
+    expect(trigger).toHaveAttribute("data-feedback-survey-trigger");
+    expect(GLOBAL_STYLES).toMatch(
+      /body:has\(\[data-feedback-survey-trigger\]\)\s+main\[data-responsive-container\]\s*{\s*@apply pb-36;\s*}/,
+    );
+    expect(GLOBAL_STYLES).not.toMatch(
+      /body:has\(\[data-feedback-survey-trigger\]\)\s+\[data-responsive-container\]\s*{/,
+    );
+  });
+
+  it("keeps the normal right gutter above page content when the side panel is closed", async () => {
+    // Given
+    mocks.isPushViewport = true;
+
+    // When
+    await renderSurvey();
+
+    // Then
+    const trigger = await screen.findByRole("button", {
+      name: "Give feedback",
+    });
+    expect(trigger).toHaveClass("right-6", "z-50");
+    expect(trigger.style.right).toBe("");
+  });
+
+  it("moves left by the clamped panel width on push viewports", async () => {
+    // Given - persisted widths are consumed defensively, just like MainLayout.
+    const persistedWidth = 2000;
+    vi.stubGlobal("innerWidth", 1200);
+    mocks.isPushViewport = true;
+    const { useSidePanelStore } = await import("@/store/side-panel");
+    useSidePanelStore.setState({
+      isOpen: true,
+      width: persistedWidth,
+    });
+
+    // When
+    await renderSurvey();
+
+    // Then
+    const trigger = await screen.findByRole("button", {
+      name: "Give feedback",
+    });
+    await waitFor(() =>
+      expect(trigger).toHaveStyle({
+        right: `${clampSidePanelWidth(persistedWidth) + 24}px`,
+      }),
+    );
+    expect(trigger).toHaveClass("transition-[right,transform]", "duration-200");
+  });
+
+  it("keeps the normal right gutter when the side panel overlays on mobile", async () => {
+    // Given
+    mocks.isPushViewport = false;
+    const { useSidePanelStore } = await import("@/store/side-panel");
+    useSidePanelStore.setState({ isOpen: true, width: 720 });
+
+    // When
+    await renderSurvey();
+
+    // Then
+    const trigger = await screen.findByRole("button", {
+      name: "Give feedback",
+    });
+    expect(trigger).toHaveClass("right-6");
+    expect(trigger.style.right).toBe("");
   });
 
   it("ignores a same-name non-API survey and selects the API survey", async () => {
