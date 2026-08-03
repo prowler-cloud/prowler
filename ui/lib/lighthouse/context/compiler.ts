@@ -29,17 +29,22 @@ export function prepareLighthouseContext(
     return undefined;
   }
 
-  const scopeKey = getCandidateScopeKey(value.items[0]);
+  const scopeKey = findCandidateScopeKey(value.items);
   return scopeKey ? compileLighthouseContext(value.items, scopeKey) : undefined;
 }
 
-function getCandidateScopeKey(candidate: unknown): string | undefined {
-  return typeof candidate === "object" &&
-    candidate !== null &&
-    "scopeKey" in candidate &&
-    typeof candidate.scopeKey === "string"
-    ? candidate.scopeKey
-    : undefined;
+function findCandidateScopeKey(candidates: unknown[]): string | undefined {
+  for (const candidate of candidates) {
+    if (
+      typeof candidate === "object" &&
+      candidate !== null &&
+      "scopeKey" in candidate &&
+      typeof candidate.scopeKey === "string"
+    ) {
+      return candidate.scopeKey;
+    }
+  }
+  return undefined;
 }
 
 export function compileLighthouseContext(

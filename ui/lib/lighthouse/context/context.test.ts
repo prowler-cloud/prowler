@@ -783,6 +783,28 @@ describe("prepareLighthouseContext", () => {
     expect(context?.items.map((item) => item.id)).toEqual(["findings"]);
   });
 
+  it("should scope from the first usable item when the leading one is malformed", () => {
+    // Given a leading item with no scopeKey at all
+    const context = prepareLighthouseContext({
+      schemaVersion: 1,
+      transport: "inline",
+      items: [
+        { kind: "finding", id: "broken" },
+        {
+          kind: "page",
+          id: "findings",
+          source: "automatic",
+          scopeKey: "findings:/findings",
+          label: "Findings",
+          path: "/findings",
+        },
+      ],
+    });
+
+    // Then the later valid page item still compiles
+    expect(context?.items.map((item) => item.id)).toEqual(["findings"]);
+  });
+
   it("should return no context for values without an item list", () => {
     expect(prepareLighthouseContext(undefined)).toBeUndefined();
     expect(prepareLighthouseContext({ items: "not-a-list" })).toBeUndefined();
