@@ -72,6 +72,7 @@ Use `@mcp.tool()` decorator directly—no BaseTool or models required.
 - [ ] Error handling returns `{"error": str, "status": "failed"}`
 - [ ] Parameters use `Field()` with descriptions
 - [ ] No hardcoded secrets
+- [ ] Tests added under `mcp_server/tests/`
 
 ---
 
@@ -79,3 +80,4 @@ Use `@mcp.tool()` decorator directly—no BaseTool or models required.
 
 - **Full Guide**: [docs/developer-guide/mcp-server.mdx](../../../docs/developer-guide/mcp-server.mdx)
 - **Templates**: See [assets/](assets/) for tool and model templates
+- **Testing**: See [prowler-test-mcp](../prowler-test-mcp/SKILL.md) for fixtures and test patterns

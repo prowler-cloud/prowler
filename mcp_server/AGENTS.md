@@ -15,6 +15,7 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Review changelog format and conventions | `prowler-changelog` |
 | Update CHANGELOG.md in any component | `prowler-changelog` |
 | Working on MCP server tools | `prowler-mcp` |
+| Writing tests for the MCP server | `prowler-test-mcp` |
 
 ## Project Overview
 
@@ -48,9 +49,9 @@ The Prowler MCP Server provides AI agents access to the Prowler ecosystem throug
 ### Three Sub-Servers
 
 ```python
-await prowler_mcp_server.import_server(hub_mcp_server, prefix="prowler_hub")
-await prowler_mcp_server.import_server(app_mcp_server, prefix="prowler_app")
-await prowler_mcp_server.import_server(docs_mcp_server, prefix="prowler_docs")
+prowler_mcp_server.mount(hub_mcp_server, namespace="prowler_hub")
+prowler_mcp_server.mount(app_mcp_server, namespace="prowler")
+prowler_mcp_server.mount(docs_mcp_server, namespace="prowler_docs")
 ```
 
 ### Tool Naming
@@ -62,7 +63,7 @@ await prowler_mcp_server.import_server(docs_mcp_server, prefix="prowler_docs")
 
 ## TECH STACK
 
-Python 3.12+ | FastMCP 2.13.1 | httpx (async) | Pydantic | uv
+Python 3.12+ | FastMCP 3.4.4 | httpx (async) | Pydantic | uv | pytest
 
 ---
 
@@ -88,6 +89,11 @@ mcp_server/prowler_mcp_server/
 ```bash
 cd mcp_server && uv run prowler-mcp                              # STDIO mode
 cd mcp_server && uv run prowler-mcp --transport http --port 8000 # HTTP mode
+
+cd mcp_server && uv run pytest                                   # Run the test suite
+cd mcp_server && uv run pytest tests/prowler_app/models          # Run one area
+cd mcp_server && uv run pytest --cov=./prowler_mcp_server        # With coverage
+make test-mcp                                                    # Mirrors CI, from the repo root
 ```
 
 ---
@@ -100,3 +106,5 @@ cd mcp_server && uv run prowler-mcp --transport http --port 8000 # HTTP mode
 - [ ] No hardcoded secrets
 - [ ] Error handling returns structured responses
 - [ ] Parameter descriptions use Pydantic `Field()`
+- [ ] Tests added under `mcp_server/tests/` mirroring the source path
+- [ ] `uv run pytest` passes
