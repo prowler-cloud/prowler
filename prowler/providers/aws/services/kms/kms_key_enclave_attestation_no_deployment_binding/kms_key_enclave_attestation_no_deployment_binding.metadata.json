@@ -20,7 +20,7 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "aws kms put-key-policy --key-id <key-id> --policy-name default --policy file://enclave-policy-with-deployment-binding.json",
       "NativeIaC": "",
       "Other": "1. Pair every image binding (kms:RecipientAttestation:PCR0/PCR1/PCR2) with at least one deployment-context binding: kms:RecipientAttestation:PCR3 (parent IAM role, AWS-recommended), PCR4 (parent instance ID), or PCR8 (EIF signing certificate). AWS recommends PCR3 + PCR8 together for portability.\n2. Alternatively add an account/org condition (aws:PrincipalAccount, aws:SourceAccount, aws:PrincipalOrgID, aws:ResourceAccount, aws:PrincipalOrgPaths) so only calls from the audited account or organization can present the attestation.\n3. Ensure operators are restrictive (StringEquals, ArnEquals) and values do not contain wildcards.",
       "Terraform": ""

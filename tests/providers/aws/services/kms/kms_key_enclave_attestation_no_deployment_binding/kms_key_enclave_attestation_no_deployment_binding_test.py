@@ -125,7 +125,7 @@ class Test_kms_key_enclave_attestation_no_deployment_binding:
         assert "attestation_not_enforced" in result[0].status_extended
 
     @mock_aws
-    def test_pcr0_only_reports_informational(self):
+    def test_pcr0_only_reports_fail(self):
         policy = _policy(
             _sensitive_allow(
                 {"StringEqualsIgnoreCase": {"kms:RecipientAttestation:PCR0": PCR0_HASH}}
@@ -170,7 +170,7 @@ class Test_kms_key_enclave_attestation_no_deployment_binding:
         assert result[0].status == "PASS"
 
     @mock_aws
-    def test_pcr0_and_pcr1_informational(self):
+    def test_pcr0_and_pcr1_fail(self):
         # PCR1 (kernel) is image identity, not deployment context.
         # Per AWS docs, only PCR3/PCR4/PCR8 bind deployment.
         policy = _policy(
@@ -188,7 +188,7 @@ class Test_kms_key_enclave_attestation_no_deployment_binding:
         assert result[0].status == "FAIL"
 
     @mock_aws
-    def test_pcr0_and_pcr2_informational(self):
+    def test_pcr0_and_pcr2_fail(self):
         # PCR2 (application) is image identity, not deployment context.
         policy = _policy(
             _sensitive_allow(
@@ -238,7 +238,7 @@ class Test_kms_key_enclave_attestation_no_deployment_binding:
         assert result[0].status == "PASS"
 
     @mock_aws
-    def test_account_condition_without_attestation_informational(self):
+    def test_account_condition_without_attestation_manual(self):
         # aws:PrincipalAccount alone without any RecipientAttestation binding
         # is NOT deployment binding for this check (attestation must exist).
         policy = _policy(
@@ -250,7 +250,7 @@ class Test_kms_key_enclave_attestation_no_deployment_binding:
         assert result[0].status == "MANUAL"
 
     @mock_aws
-    def test_wildcard_account_value_not_restrictive_informational(self):
+    def test_wildcard_account_value_not_restrictive_fail(self):
         # aws:PrincipalAccount with a wildcard value is not restrictive.
         policy = _policy(
             _sensitive_allow(
@@ -267,7 +267,7 @@ class Test_kms_key_enclave_attestation_no_deployment_binding:
         assert result[0].status == "FAIL"
 
     @mock_aws
-    def test_imagesha384_alone_informational(self):
+    def test_imagesha384_alone_fail(self):
         # ImageSha384 collapses to PCR0; without PCR4/PCR8/account → INFO.
         policy = _policy(
             _sensitive_allow(
@@ -315,7 +315,7 @@ class Test_kms_key_enclave_attestation_no_deployment_binding:
         assert "PCR0Only" in result[0].status_extended
 
     @mock_aws
-    def test_forallvalues_pcr4_without_null_guard_informational(self):
+    def test_forallvalues_pcr4_without_null_guard_manual(self):
         # ForAllValues:StringEquals is vacuous-true when the key is absent
         # unless Null:false locks presence. Without Null:false → not counted.
         policy = _policy(
@@ -480,28 +480,13 @@ class Test_kms_key_enclave_attestation_no_deployment_binding:
         assert result[0].status == "FAIL"
 
     @mock_aws
-    def test_arn_equals_account_condition_binds(self):
-        # ArnEquals is strictly restrictive (no wildcards, exact ARN match).
+    def test_arn_equals_on_non_account_key_does_not_bind_fail(self):
+        # Only ``aws:PrincipalAccount``, ``aws:SourceAccount``,
+        # ``aws:PrincipalOrgID``, ``aws:ResourceAccount``, and
+        # ``aws:PrincipalOrgPaths`` count as account/org bindings —
+        # ``aws:SourceArn`` and ``aws:PrincipalArn`` do not, regardless of
+        # operator. Documents the intentional scope of the account allow-list.
         policy = _policy(
-            _sensitive_allow(
-                {
-                    "StringEqualsIgnoreCase": {
-                        "kms:RecipientAttestation:PCR0": PCR0_HASH
-                    },
-                    "ArnEquals": {
-                        "aws:PrincipalArn": (
-                            "arn:aws:iam::123456789012:role/enclave-parent"
-                        )
-                    },
-                }
-            )
-        )
-        # ArnEquals with a non-wildcard value on an account-family key should
-        # satisfy binding. Note: aws:PrincipalArn is NOT in
-        # _DEPLOYMENT_ACCOUNT_CONDITION_KEYS by design (we only accept account
-        # and org keys). Use aws:PrincipalAccount instead.
-        _ = policy
-        pass_policy = _policy(
             _sensitive_allow(
                 {
                     "StringEqualsIgnoreCase": {
@@ -515,9 +500,6 @@ class Test_kms_key_enclave_attestation_no_deployment_binding:
                 }
             )
         )
-        # Neither aws:PrincipalArn nor aws:SourceArn is in the account key
-        # allow-list, so this should NOT bind either. This test documents the
-        # scope: only account/org keys count, regardless of operator.
-        result, _ = _run(pass_policy)
+        result, _ = _run(policy)
         assert len(result) == 1
         assert result[0].status == "FAIL"

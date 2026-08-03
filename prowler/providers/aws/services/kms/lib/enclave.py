@@ -2,6 +2,7 @@ import base64
 import binascii
 import json
 import re
+from typing import Any
 
 from py_iam_expand.actions import InvalidActionHandling, expand_actions
 
@@ -94,7 +95,7 @@ def _pcr_bytes_to_hex(pcr_bytes):
     return pcr_bytes.hex().lower()
 
 
-def extract_pcrs_from_recipient(recipient) -> dict:
+def extract_pcrs_from_recipient(recipient: dict) -> dict:
     """Return ``{PCR_id: hex_value_lower}`` from a CloudTrail recipient block.
 
     ``ImageSha384`` (equivalent to PCR0 per the RFC) is collapsed under
@@ -122,7 +123,7 @@ def extract_pcrs_from_recipient(recipient) -> dict:
     return per_pcr
 
 
-def is_debug_attestation(recipient) -> bool:
+def is_debug_attestation(recipient: dict) -> bool:
     """Return True when a CloudTrail attestation recipient looks debug-mode.
 
     Reality vs docs: the RFC v2.6 and the AWS user guide describe debug mode
@@ -167,7 +168,7 @@ def _extract_key_arn(raw, event):
     return None
 
 
-def parse_enclave_kms_event(raw) -> dict | None:
+def parse_enclave_kms_event(raw: dict) -> dict | None:
     """Return a parsed enclave-KMS event or ``None`` when non-relevant.
 
     ``raw`` is a single CloudTrail Event as returned by ``lookup_events``: a
@@ -201,7 +202,7 @@ def parse_enclave_kms_event(raw) -> dict | None:
     }
 
 
-def unknown_pcrs(observed, golden) -> dict:
+def unknown_pcrs(observed: dict, golden: dict) -> dict:
     """Return observed PCRs not present in the golden list for their bucket.
 
     Semantics: only PCR IDs that have a golden list configured are evaluated.
@@ -233,7 +234,7 @@ def unknown_pcrs(observed, golden) -> dict:
     return unknown
 
 
-def key_id_from_arn(arn) -> str:
+def key_id_from_arn(arn: str) -> str:
     """Return the KMS key-id suffix of a full ARN, or the input verbatim.
 
     Accepts both aliases (``arn:aws:kms:*:*:key/<uuid>``) and non-KMS or
@@ -327,12 +328,13 @@ def _expanded_actions(patterns) -> set:
             # debugged in production.
             logger.error(
                 f"expand_actions failed on pattern {pattern!r}: "
-                f"{error.__class__.__name__}: {error}"
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: "
+                f"{error}"
             )
     return expanded
 
 
-def is_enclave_key(key) -> bool:
+def is_enclave_key(key: Any) -> bool:
     """Return True when the KMS key looks like a Nitro Enclave workload key.
 
     Any signal suffices: tag ``prowler:enclave-key=true``, alias or
@@ -443,8 +445,19 @@ def _deny_covers_missing_attestation(deny_stmt, sensitive_actions) -> bool:
     if not isinstance(deny_stmt, dict) or deny_stmt.get("Effect") != "Deny":
         return False
     principal = deny_stmt.get("Principal")
-    if principal not in ("*", {"AWS": "*"}):
-        # NotPrincipal is not evaluated (limitation documented in the check).
+    # Accept every AWS-idiomatic way of writing "everyone":
+    #   - ``"*"``
+    #   - ``{"AWS": "*"}``
+    #   - ``{"AWS": ["*"]}``  (list form is a legitimate policy variant)
+    # NotPrincipal is intentionally NOT evaluated here.
+    is_everyone = principal == "*" or (
+        isinstance(principal, dict)
+        and (
+            principal.get("AWS") == "*"
+            or (isinstance(principal.get("AWS"), list) and "*" in principal["AWS"])
+        )
+    )
+    if not is_everyone:
         return False
     # A Deny with NotAction denies everything except the listed set. It
     # covers the sensitive Allow when the NotAction list does NOT include

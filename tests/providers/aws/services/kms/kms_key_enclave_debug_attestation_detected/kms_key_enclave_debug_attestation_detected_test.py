@@ -412,7 +412,9 @@ class Test_kms_key_enclave_debug_attestation_detected:
 
             kms_key_enclave_debug_attestation_detected().execute()
 
-        # Every region hit once per sensitive event name (4 event names).
+        # Every region hit once per sensitive event name (5 event names:
+        # Decrypt, DeriveSharedSecret, GenerateDataKey, GenerateDataKeyPair,
+        # GenerateRandom).
         assert set(calls_per_region.keys()) == {"us-east-1", "eu-west-1", "ap-south-1"}
         assert all(
             v == len(SENSITIVE_ENCLAVE_KMS_EVENTS) for v in calls_per_region.values()

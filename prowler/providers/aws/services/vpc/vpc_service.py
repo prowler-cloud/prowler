@@ -367,23 +367,29 @@ class VPC(AWSService):
                                 "RouteTables"
                             ):
                                 for route in route_table.get("Routes"):
-                                    if (
+                                    # ``igw-*`` is a full internet gateway; the
+                                    # egress-only variant is ``eigw-*`` and must
+                                    # NOT match (outbound-only, does not make the
+                                    # subnet reachable from the Internet).
+                                    is_igw = (
                                         "GatewayId" in route
-                                        and "igw" in route["GatewayId"]
+                                        and isinstance(route["GatewayId"], str)
+                                        and route["GatewayId"].startswith("igw-")
+                                    )
+                                    if (
+                                        is_igw
                                         and route.get("DestinationCidrBlock", "")
                                         == "0.0.0.0/0"
                                     ):
                                         # If the route table has a default route to an internet gateway, the subnet is public
                                         public = True
                                     if (
-                                        "GatewayId" in route
-                                        and "igw" in route["GatewayId"]
+                                        is_igw
                                         and route.get("DestinationIpv6CidrBlock", "")
                                         == "::/0"
                                     ):
                                         # ::/0 → IGW makes the subnet reachable
-                                        # from the public IPv6 Internet. Egress-only
-                                        # IGWs are outbound-only and do not count.
+                                        # from the public IPv6 Internet.
                                         public_ipv6 = True
                                     if "NatGatewayId" in route:
                                         nat_gateway = True

@@ -11,7 +11,7 @@
   "Severity": "high",
   "ResourceType": "AwsKmsKey",
   "ResourceGroup": "security",
-  "Description": "**Customer-managed KMS keys** that back Nitro Enclave workloads are identified by the `prowler:enclave-key=true` tag or by *enclave* in description or tags. Every `Allow` statement covering sensitive actions (`kms:Decrypt`, `kms:DeriveSharedSecret`, `kms:GenerateDataKey`, `kms:GenerateDataKeyPair`, `kms:GenerateRandom`, `kms:*`, `*`) is evaluated for a `kms:RecipientAttestation:*` condition.",
+  "Description": "**Customer-managed KMS keys** used with Nitro Enclaves (identified by `prowler:enclave-key=true` tag, `enclave` in description/tags/aliases, or a policy referencing `kms:RecipientAttestation:*`). Every `Allow` on sensitive actions (`kms:Decrypt`, `DeriveSharedSecret`, `GenerateDataKey*`, `GenerateRandom`, `kms:*`, `*`) must require a `kms:RecipientAttestation:*` condition.",
   "Risk": "Without an attestation condition, any principal with decrypt permission (including a compromised parent instance) can use the key. **Attestation** is the cryptographic mechanism that binds usage to the measured enclave image; its absence removes the trust boundary the enclave was designed to enforce.",
   "RelatedUrl": "",
   "AdditionalURLs": [

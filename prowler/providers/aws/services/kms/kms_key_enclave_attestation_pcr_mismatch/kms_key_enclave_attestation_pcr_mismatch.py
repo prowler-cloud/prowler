@@ -2,6 +2,7 @@ from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.kms.kms_client import kms_client
 from prowler.providers.aws.services.kms.lib.enclave import (
     GOLDEN_PCR_CONFIG_KEY,
+    _pcr_to_bytes,
     attestation_values_by_pcr,
     is_enclave_key,
     normalize_golden_pcr_config,
@@ -98,7 +99,17 @@ class kms_key_enclave_attestation_pcr_mismatch(Check):
                 seen = observed.get(pcr_id)
                 if not seen:
                     continue
-                bad = sorted(seen - allowed)
+                # Compare on canonical bytes (48 raw bytes from hex or
+                # base64) so hex vs base64 mismatches between the golden
+                # config and the policy do not produce false positives.
+                allowed_bytes = {
+                    b for a in allowed if (b := _pcr_to_bytes(a)) is not None
+                }
+                bad = sorted(
+                    v
+                    for v in seen
+                    if (vb := _pcr_to_bytes(v)) is None or vb not in allowed_bytes
+                )
                 if bad:
                     mismatches.append((pcr_id, bad))
 

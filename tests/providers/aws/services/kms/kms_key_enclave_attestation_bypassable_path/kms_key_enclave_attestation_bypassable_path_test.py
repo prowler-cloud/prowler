@@ -206,9 +206,10 @@ class Test_kms_key_enclave_attestation_bypassable_path:
         assert result[0].status == "PASS"
 
     @mock_aws
-    def test_allow_without_attestation_but_deny_partial_actions_fail(self):
-        # Deny only covers kms:Decrypt but Allow granted GenerateDataKey too.
-        # Deny does NOT neutralize.
+    def test_allow_decrypt_deny_decrypt_missing_attestation_pass(self):
+        # The Allow grants only kms:Decrypt and the Deny neutralises exactly
+        # that action when attestation is absent, so the sensitive-action
+        # coverage set matches and the finding is PASS.
         kms = client("kms", region_name=AWS_REGION_US_EAST_1)
         _create_enclave_key(
             kms,
@@ -217,9 +218,6 @@ class Test_kms_key_enclave_attestation_bypassable_path:
                 _deny_when_attestation_absent(actions=["kms:Decrypt"]),
             ),
         )
-        # This test verifies the "action coverage" path. Because the Allow
-        # only grants Decrypt and the Deny only denies Decrypt (matching
-        # sensitive set = {Decrypt}), this is actually PASS. Let's verify:
         result = _run()
         assert len(result) == 1
         assert result[0].status == "PASS"

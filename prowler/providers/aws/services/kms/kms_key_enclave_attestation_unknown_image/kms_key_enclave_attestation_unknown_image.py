@@ -26,11 +26,11 @@ from prowler.providers.aws.services.kms.lib.enclave import (
 class kms_key_enclave_attestation_unknown_image(Check):
     """Detect KMS attestation events from unrecognized enclave images.
 
-    Complementary to ``kms_key_enclave_attestation_pcr_mismatch`` (Check 13):
+    Complementary to ``kms_key_enclave_attestation_pcr_mismatch``:
 
-    - Check 13 audits the KMS **key policy** (config-time). It detects when
-      a policy authorises PCR values not present in the operator's golden
-      list.
+    - ``kms_key_enclave_attestation_pcr_mismatch`` audits the KMS **key
+      policy** (config-time). It detects when a policy authorises PCR
+      values not present in the operator's golden list.
     - This check audits **runtime CloudTrail activity**. It detects when
       any enclave actually calls KMS with PCR values not present in the
       golden list — even if the key policy would happen to allow them.
@@ -139,6 +139,9 @@ class kms_key_enclave_attestation_unknown_image(Check):
         total_processed = 0
 
         for region in regions_to_scan:
+            if total_processed >= max_events:
+                any_coverage_gap = True
+                break
             for event_name in SENSITIVE_ENCLAVE_KMS_EVENTS:
                 if total_processed >= max_events:
                     any_coverage_gap = True

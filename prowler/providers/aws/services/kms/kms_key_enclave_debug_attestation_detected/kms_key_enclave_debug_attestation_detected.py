@@ -63,8 +63,16 @@ class kms_key_enclave_debug_attestation_detected(Check):
         target_key_ids = set(
             kms_client.audit_config.get(ENCLAVE_DEBUG_CONFIG_TARGET_KEYS_KEY, []) or []
         )
-        lookback_minutes = max(1, int(lookback_hours) * 60)
-        max_events = max(1, int(max_events))
+        # Fall back to defaults if the operator writes a non-numeric value in
+        # ``audit_config`` (e.g. a stray string). Do not abort the check.
+        try:
+            lookback_minutes = max(1, int(lookback_hours) * 60)
+        except (TypeError, ValueError):
+            lookback_minutes = max(1, DEFAULT_ENCLAVE_DEBUG_LOOKBACK_HOURS * 60)
+        try:
+            max_events = max(1, int(max_events))
+        except (TypeError, ValueError):
+            max_events = DEFAULT_ENCLAVE_DEBUG_MAX_EVENTS
 
         trails = (
             list(cloudtrail_client.trails.values()) if cloudtrail_client.trails else []
@@ -193,7 +201,21 @@ class kms_key_enclave_debug_attestation_detected(Check):
             findings.append(report)
         return findings
 
-    def _emit_no_trail_manual(self, target_key_ids):
+    def _emit_no_trail_manual(self, target_key_ids: set[str]) -> list[Check_Report_AWS]:
+        """Emit MANUAL findings when no CloudTrail trail is configured.
+
+        Without a trail the check has no data source, so it fails closed
+        with MANUAL against every candidate key (or a synthetic
+        account-scoped resource when the account has no KMS keys either).
+
+        Args:
+            target_key_ids: Optional filter of KMS key-ids to report on.
+                When empty every customer-managed key is a candidate.
+
+        Returns:
+            list[Check_Report_AWS]: One MANUAL report per candidate key,
+            or a single account-scoped MANUAL when no keys exist.
+        """
         findings = []
         candidate_keys = [
             k

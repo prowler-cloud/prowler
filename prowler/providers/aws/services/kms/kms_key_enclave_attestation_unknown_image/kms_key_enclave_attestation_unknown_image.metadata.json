@@ -11,7 +11,7 @@
   "Severity": "medium",
   "ResourceType": "AwsKmsKey",
   "ResourceGroup": "security",
-  "Description": "Scans CloudTrail for runtime attestation activity and flags PCR values not in `enclave_golden_pcr_values` **for buckets that have a configured golden list**. Buckets without golden are not evaluated. Complements Check 13 by catching real enclave calls that reached the key with an unrecognized image. MEDIUM by default, overridable to HIGH via `enclave_unknown_image_severity`.",
+  "Description": "Scans CloudTrail for runtime attestation activity and flags PCR values not in `enclave_golden_pcr_values` **for buckets that have a configured golden list**. Buckets without golden are not evaluated. Complements `kms_key_enclave_attestation_pcr_mismatch` by catching real enclave calls that reached the key with an unrecognized image. MEDIUM by default, overridable to HIGH via `enclave_unknown_image_severity`.",
   "Risk": "An attestation event whose PCRs cannot be traced back to a known-good enclave build indicates either a stale golden list, a policy broad enough to accept unaudited images, or a compromise scenario in which an unknown image is being executed with legitimate KMS access. Materiality depends on the operator's threat model.",
   "RelatedUrl": "",
   "AdditionalURLs": [
@@ -21,8 +21,8 @@
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "```yaml\nenclave_golden_pcr_values:\n  PCR0:\n    - <trusted-pcr0-hash-from-ci>\n  PCR8:\n    - <trusted-signing-cert-hash>\nenclave_unknown_image_severity: high  # optional escalation\n```",
-      "Other": "1. Compare the flagged PCR values against your enclave CI/CD build catalogue. If they map to a legitimate build that is missing from `enclave_golden_pcr_values`, extend the list.\n2. If the PCR values do NOT map to any legitimate build, treat as a suspected incident: identify the enclave via CloudTrail's `attestationDocumentModuleId`, terminate it, and audit the launch pipeline.\n3. Consider tightening the KMS key policy so only golden PCRs are accepted (paired with Check 13).",
+      "NativeIaC": "",
+      "Other": "1. Configure the Prowler `audit_config` with your golden PCR list, e.g. `enclave_golden_pcr_values: {PCR0: [<trusted-pcr0-hash-from-ci>], PCR8: [<trusted-signing-cert-hash>]}`. Optionally set `enclave_unknown_image_severity: high` to escalate findings.\n2. Compare the flagged PCR values against your enclave CI/CD build catalogue. If they map to a legitimate build that is missing from `enclave_golden_pcr_values`, extend the list.\n3. If the PCR values do NOT map to any legitimate build, treat as a suspected incident: identify the enclave via CloudTrail's `attestationDocumentModuleId`, terminate it, and audit the launch pipeline.\n4. Consider tightening the KMS key policy so only golden PCRs are accepted (paired with `kms_key_enclave_attestation_pcr_mismatch`).",
       "Terraform": ""
     },
     "Recommendation": {

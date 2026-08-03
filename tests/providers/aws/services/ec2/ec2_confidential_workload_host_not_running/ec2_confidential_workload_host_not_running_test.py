@@ -13,12 +13,6 @@ CHECK_MODULE = (
 )
 
 
-def _mocked_provider(state, enclaves_enabled=True):
-    ec2 = resource("ec2", region_name=AWS_REGION_US_EAST_1)
-    ec2.create_instances(ImageId=EXAMPLE_AMI_ID, MinCount=1, MaxCount=1)
-    return state, enclaves_enabled
-
-
 class Test_ec2_confidential_workload_host_not_running:
     @mock_aws
     def test_no_instances(self):

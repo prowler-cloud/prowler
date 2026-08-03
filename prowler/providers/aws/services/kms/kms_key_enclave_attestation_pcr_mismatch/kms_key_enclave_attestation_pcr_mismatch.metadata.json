@@ -21,8 +21,8 @@
   "Remediation": {
     "Code": {
       "CLI": "aws kms put-key-policy --key-id <key-id> --policy-name default --policy file://enclave-policy.json",
-      "NativeIaC": "```yaml\nenclave_golden_pcr_values:\n  PCR0:\n    - <trusted-pcr0-hash-from-ci>\n  PCR8:\n    - <trusted-signing-cert-hash>\n```",
-      "Other": "1. Enumerate the trusted PCR values produced by your enclave CI/CD pipeline and record them under `enclave_golden_pcr_values` in the Prowler `audit_config` (per PCR bucket).\n2. When rotating enclave images, publish the new PCRs to the golden list _before_ the KMS policy is updated so any drift surfaces immediately.\n3. Rotate KMS policies whose PCRs are not in the golden list, or update the golden list to reflect the newly audited image.",
+      "NativeIaC": "",
+      "Other": "1. Configure the Prowler `audit_config` with the trusted PCR values produced by your enclave CI/CD pipeline under `enclave_golden_pcr_values` (per PCR bucket), e.g. `enclave_golden_pcr_values: {PCR0: [<trusted-pcr0-hash-from-ci>], PCR8: [<trusted-signing-cert-hash>]}`.\n2. When rotating enclave images, publish the new PCRs to the golden list _before_ the KMS policy is updated so any drift surfaces immediately.\n3. Rotate KMS policies whose PCRs are not in the golden list, or update the golden list to reflect the newly audited image.",
       "Terraform": "```hcl\ncondition {\n  test = \"StringEqualsIgnoreCase\"\n  variable = \"kms:RecipientAttestation:PCR0\"\n  values = [var.golden_pcr0]\n}\n```"
     },
     "Recommendation": {
