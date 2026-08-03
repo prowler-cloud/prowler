@@ -3,10 +3,13 @@
 import Image, { type StaticImageData } from "next/image";
 import { useState } from "react";
 
-import { buildPerScanComplianceHref } from "@/lib/compliance/compliance-tab-url";
+import {
+  buildMultipleScansComplianceHref,
+  buildPerScanComplianceHref,
+} from "@/lib/compliance/compliance-tab-url";
 
 import { SortToggleButton } from "./sort-toggle-button";
-import { WatchlistCard } from "./watchlist-card";
+import { WATCHLIST_CARD_HEIGHT, WatchlistCard } from "./watchlist-card";
 
 export interface ComplianceData {
   id: string;
@@ -16,10 +19,24 @@ export interface ComplianceData {
   score: number;
 }
 
-// Display 7 items to match the card's min-height (405px) without scrolling
+// Upper bound only: the card now grows with the list, so this just keeps a
+// watchlist of thirty frameworks from turning the overview into a wall.
 const ITEMS_TO_DISPLAY = 7;
 
-export const ComplianceWatchlist = ({ items }: { items: ComplianceData[] }) => {
+export const ComplianceWatchlist = ({
+  items,
+  hasWatchlist = true,
+}: {
+  items: ComplianceData[];
+  /** Whether this deployment has a compliance watchlist at all.
+   *
+   *  With one, the list is the organization's pinned selection and the way to
+   *  curate it is the Multiple Scans tab. Without one (OSS), the list is the
+   *  full ranking of every framework with data, and Multiple Scans is a locked
+   *  upsell tab that would bounce the visitor back to Single Scan — so both the
+   *  empty state and the CTA follow this flag. */
+  hasWatchlist?: boolean;
+}) => {
   const [isAsc, setIsAsc] = useState(true);
 
   // Sort all items and take top 7 based on current sort order
@@ -48,8 +65,19 @@ export const ComplianceWatchlist = ({ items }: { items: ComplianceData[] }) => {
     <WatchlistCard
       title="Compliance Watchlist"
       items={sortedItems}
-      ctaLabel="Explore Compliance for Each Scan"
-      ctaHref={buildPerScanComplianceHref()}
+      height={WATCHLIST_CARD_HEIGHT.FIT}
+      // Multiple Scans, not Single Scan: these scores are aggregated across
+      // scans, and it is also where frameworks get pinned.
+      ctaLabel={
+        hasWatchlist
+          ? "Explore Compliance for Multiple Scans"
+          : "Explore Compliance for Each Scan"
+      }
+      ctaHref={
+        hasWatchlist
+          ? buildMultipleScansComplianceHref()
+          : buildPerScanComplianceHref()
+      }
       headerAction={
         <SortToggleButton
           isAscending={isAsc}
@@ -58,11 +86,18 @@ export const ComplianceWatchlist = ({ items }: { items: ComplianceData[] }) => {
           descendingLabel="Sort by lowest score"
         />
       }
-      // TODO: Enable full emptyState with description once API endpoint is implemented
-      // Full emptyState: { message: "...", description: "to add compliance frameworks to your watchlist.", linkText: "Compliance Dashboard" }
-      emptyState={{
-        message: "No compliance data available.",
-      }}
+      // With a watchlist, empty means "nobody pinned anything", not "no data",
+      // so the way out is the compliance page. Without one there is nothing to
+      // pin and empty means exactly what it used to.
+      emptyState={
+        hasWatchlist
+          ? {
+              message: "No frameworks pinned yet.",
+              description: "to add compliance frameworks to your watchlist.",
+              linkText: "Compliance Dashboard",
+            }
+          : { message: "No compliance data available." }
+      }
     />
   );
 };

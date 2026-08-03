@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
+import type { ReactNode } from "react";
 
 import { Card, CardContent } from "@/components/shadcn/card/card";
 import { Progress } from "@/components/shadcn/progress";
@@ -16,6 +17,7 @@ import {
   getScoreIndicatorClass,
   type ScoreColorVariant,
 } from "@/lib/compliance/score-utils";
+import { cn } from "@/lib/utils";
 import { ScanEntity } from "@/types/scans";
 
 import { getComplianceIcon } from "../icons";
@@ -40,6 +42,13 @@ interface ComplianceCardProps {
    * Ignored for non-CIS frameworks.
    */
   isLatestCisForProvider?: boolean;
+  /**
+   * Watchlist control rendered in the card's top-right corner, beside the
+   * export action, so it costs no vertical room. Cloud-only and gated on
+   * MANAGE_SCANS, so it is absent (rather than disabled) whenever the
+   * viewer cannot curate the organization's watchlist.
+   */
+  watchlistAction?: ReactNode;
 }
 
 export const ComplianceCard: React.FC<ComplianceCardProps> = ({
@@ -51,6 +60,7 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
   complianceId,
   id,
   isLatestCisForProvider = false,
+  watchlistAction,
 }) => {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -90,7 +100,7 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
       onClick={navigateToDetail}
     >
       <div
-        className="absolute top-2 right-2 z-10"
+        className="absolute top-2 right-2 z-10 flex items-center gap-1"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
@@ -114,10 +124,16 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
           )}
           disabled={hasRegionFilter}
         />
+        {watchlistAction}
       </div>
       <CardContent className="p-0">
         <div className="flex w-full flex-col gap-3">
-          <div className="flex items-center gap-3 pr-9">
+          <div
+            className={cn(
+              "flex items-center gap-3",
+              watchlistAction ? "pr-16" : "pr-9",
+            )}
+          >
             {getComplianceIcon(title) && (
               <div className="border-border-neutral-tertiary flex h-10 w-10 min-w-10 shrink-0 items-center justify-center rounded-md border bg-slate-50">
                 <Image

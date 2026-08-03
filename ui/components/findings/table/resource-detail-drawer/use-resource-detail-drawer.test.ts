@@ -9,27 +9,47 @@ const {
   getFindingByIdMock,
   getLatestFindingsByResourceUidMock,
   adaptFindingsByResourceResponseMock,
+  getFindingComplianceFrameworksMock,
+  isCloudMock,
 } = vi.hoisted(() => ({
   getFindingByIdMock: vi.fn(),
   getLatestFindingsByResourceUidMock: vi.fn(),
   adaptFindingsByResourceResponseMock: vi.fn(),
+  // Shaped like the action's real result, not a bare array: the hook
+  // destructures it, and a mock that lies about that hides the strip never
+  // being populated.
+  getFindingComplianceFrameworksMock: vi.fn(async () => ({
+    frameworks: [] as FindingComplianceFramework[],
+    unavailable: false,
+  })),
+  isCloudMock: vi.fn(() => true),
 }));
 
 vi.mock("@/actions/findings", () => ({
   getFindingById: getFindingByIdMock,
   getLatestFindingsByResourceUid: getLatestFindingsByResourceUidMock,
   adaptFindingsByResourceResponse: adaptFindingsByResourceResponseMock,
+  getFindingComplianceFrameworks: getFindingComplianceFrameworksMock,
 }));
 
 vi.mock("next/navigation", () => ({
   redirect: vi.fn(),
 }));
 
+// The setup file clears UI_CLOUD_ENABLED, so without this every test would run
+// the OSS branch and the Cloud one would go uncovered.
+vi.mock("@/lib/shared/env", () => ({
+  isCloud: isCloudMock,
+}));
+
 // ---------------------------------------------------------------------------
 // Import after mocks
 // ---------------------------------------------------------------------------
 
-import type { ResourceDrawerFinding } from "@/actions/findings";
+import type {
+  FindingComplianceFramework,
+  ResourceDrawerFinding,
+} from "@/actions/findings";
 import type { FindingResourceRow } from "@/types";
 import {
   FINDING_TRIAGE_STATUS,
@@ -137,6 +157,11 @@ describe("useResourceDetailDrawer — unmount cleanup", () => {
     vi.clearAllMocks();
     vi.restoreAllMocks();
     getLatestFindingsByResourceUidMock.mockResolvedValue({ data: [] });
+    getFindingComplianceFrameworksMock.mockResolvedValue({
+      frameworks: [],
+      unavailable: false,
+    });
+    isCloudMock.mockReturnValue(true);
   });
 
   it("should abort the in-flight fetch controller when the hook unmounts", async () => {
@@ -910,5 +935,78 @@ describe("useResourceDetailDrawer — other findings filtering", () => {
     expect(getLatestFindingsByResourceUidMock).toHaveBeenCalledTimes(
       resourceFetchCount,
     );
+  });
+
+  describe("compliance frameworks strip", () => {
+    const openWithFinding = async (
+      finding: Partial<ResourceDrawerFinding> = {},
+    ) => {
+      getFindingByIdMock.mockResolvedValue({ data: [] });
+      adaptFindingsByResourceResponseMock.mockReturnValue([
+        makeDrawerFinding(finding),
+      ]);
+
+      const { result } = renderHook(() =>
+        useResourceDetailDrawer({ resources: [makeResource()] }),
+      );
+
+      await act(async () => {
+        result.current.openDrawer(0);
+        await Promise.resolve();
+      });
+      // The strip is fetched after the panel has its data, so it lands a tick
+      // later than everything else the drawer renders.
+      await act(async () => {
+        await Promise.resolve();
+      });
+
+      return result;
+    };
+
+    it("fills the strip from the API in Cloud", async () => {
+      getFindingComplianceFrameworksMock.mockResolvedValue({
+        frameworks: [
+          {
+            id: "*:dora_2022_2554",
+            complianceId: "dora_2022_2554",
+            providerType: "*",
+            scope: "universal",
+            framework: "DORA",
+            name: "DORA",
+            version: "",
+            inWatchlist: true,
+          },
+        ],
+        unavailable: false,
+      });
+
+      const result = await openWithFinding();
+
+      expect(getFindingComplianceFrameworksMock).toHaveBeenCalledWith(
+        "finding-1",
+        { inWatchlist: true },
+      );
+      expect(result.current.checkMeta?.complianceFrameworks).toHaveLength(1);
+      expect(
+        result.current.checkMeta?.complianceFrameworks[0].complianceId,
+      ).toBe("dora_2022_2554");
+    });
+
+    it("falls back to the check's own framework names off Cloud", async () => {
+      // No request is made at all there — the endpoint does not exist — but the
+      // strip must keep showing what the finding already carries.
+      isCloudMock.mockReturnValue(false);
+
+      const result = await openWithFinding({
+        complianceFrameworks: ["CIS", "SOC2"],
+      });
+
+      expect(getFindingComplianceFrameworksMock).not.toHaveBeenCalled();
+      expect(
+        result.current.checkMeta?.complianceFrameworks.map(
+          (entry) => entry.framework,
+        ),
+      ).toEqual(["CIS", "SOC2"]);
+    });
   });
 });

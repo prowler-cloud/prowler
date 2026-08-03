@@ -8,6 +8,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
+import { cn } from "@/lib/utils";
 
 interface AggregatedFrameworkCardProps {
   frameworkTitle: string;
@@ -16,6 +17,14 @@ interface AggregatedFrameworkCardProps {
   onActivate: () => void;
   subtitle: ReactNode;
   tooltip?: string;
+  /**
+   * Controls that are not part of the card's own activation, e.g. the
+   * watchlist toggle. Pinned to the card's top-right corner so they cost no
+   * vertical room and every card in a grid keeps the same height; the slot's
+   * contents are responsible for stopping event propagation, since the card
+   * itself is a button.
+   */
+  actions?: ReactNode;
   children: ReactNode;
 }
 
@@ -26,6 +35,7 @@ export const AggregatedFrameworkCard = ({
   onActivate,
   subtitle,
   tooltip,
+  actions,
   children,
 }: AggregatedFrameworkCardProps) => {
   const handleKeyDown: KeyboardEventHandler<HTMLDivElement> = (event) => {
@@ -49,10 +59,12 @@ export const AggregatedFrameworkCard = ({
       aria-label={ariaLabel}
       tabIndex={0}
       onKeyDown={handleKeyDown}
+      className="relative"
     >
+      {actions && <div className="absolute top-2 right-2 z-10">{actions}</div>}
       <CardContent>
         <div className="flex w-full flex-col gap-3">
-          <div className="flex items-center gap-3">
+          <div className={cn("flex items-center gap-3", actions && "pr-8")}>
             {logo && (
               <div className="border-border-neutral-tertiary flex h-10 w-10 min-w-10 shrink-0 items-center justify-center rounded-md border bg-slate-50">
                 <Image

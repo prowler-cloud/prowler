@@ -1,6 +1,7 @@
 "use server";
 
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
+import { IN_WATCHLIST_FILTER_KEY } from "@/lib/compliance/watchlist";
 import { appendSanitizedProviderTypeFilters } from "@/lib/provider-filters";
 import { handleApiResponse } from "@/lib/server-actions-helper";
 
@@ -8,8 +9,12 @@ import { ComplianceWatchlistResponse } from "./compliance-watchlist.types";
 
 export const getComplianceWatchlist = async ({
   filters = {},
+  inWatchlist = false,
 }: {
   filters?: Record<string, string | string[] | undefined>;
+  /** Restrict the response to the frameworks the organization pinned. Off by
+   *  default so callers that want the full ranking keep getting it. */
+  inWatchlist?: boolean;
 } = {}): Promise<ComplianceWatchlistResponse | undefined> => {
   const headers = await getAuthHeaders({ contentType: false });
   const url = new URL(`${apiBaseUrl}/overviews/compliance-watchlist`);
@@ -17,6 +22,10 @@ export const getComplianceWatchlist = async ({
   // Append filter parameters (provider_id, provider_type, etc.)
   // Exclude filter[search] as this endpoint doesn't support text search
   appendSanitizedProviderTypeFilters(url, filters);
+
+  if (inWatchlist) {
+    url.searchParams.set(IN_WATCHLIST_FILTER_KEY, "true");
+  }
 
   try {
     const response = await fetch(url.toString(), { headers });

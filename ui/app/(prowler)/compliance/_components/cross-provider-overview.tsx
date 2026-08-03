@@ -11,6 +11,7 @@ import {
   SectionHeader,
   SectionTitle,
 } from "@/components/shadcn/section/section";
+import { buildWatchlistIndex } from "@/lib/compliance/watchlist";
 import {
   LIGHTHOUSE_COMPLIANCE_CONTEXT_MODE,
   LIGHTHOUSE_CONTEXT_CONTRIBUTOR_LIMIT,
@@ -26,6 +27,8 @@ import {
   type CrossProviderFrameworkEntry,
   parseCrossProviderFilters,
 } from "../_lib/cross-provider-frameworks";
+import { resolveUniversalWatchlistState } from "../_lib/universal-watchlist";
+import { loadComplianceWatchlistContext } from "../_lib/watchlist-context";
 import type { CrossProviderFrameworkSummary } from "../_types";
 import { CROSS_PROVIDER_OVERVIEW_RESULT_STATUS } from "../_types";
 
@@ -35,7 +38,7 @@ import type {
   CrossProviderGroupOption,
 } from "./cross-provider-filters";
 import { CrossProviderFilters } from "./cross-provider-filters";
-import { CrossProviderFrameworkCard } from "./cross-provider-framework-card";
+import { CrossProviderFrameworkGrid } from "./cross-provider-framework-grid";
 
 /** Zero-state summary: the framework renders with every compatible provider
  *  chip dimmed when the API returned nothing usable (e.g. no scans yet). */
@@ -74,18 +77,22 @@ export const CrossProviderOverview = async ({
 }) => {
   const filters = parseCrossProviderFilters(searchParams);
 
-  const [responses, providersData, providerGroupsData] = await Promise.all([
-    Promise.all(
-      CROSS_PROVIDER_FRAMEWORKS.map((entry) =>
-        getCrossProviderComplianceOverview({
-          complianceId: entry.complianceId,
-          filters,
-        }).then((result) => ({ entry, result })),
+  const [responses, providersData, providerGroupsData, watchlist] =
+    await Promise.all([
+      Promise.all(
+        CROSS_PROVIDER_FRAMEWORKS.map((entry) =>
+          getCrossProviderComplianceOverview({
+            complianceId: entry.complianceId,
+            filters,
+          }).then((result) => ({ entry, result })),
+        ),
       ),
-    ),
-    getAllProviders(),
-    getAllProviderGroups(),
-  ]);
+      getAllProviders(),
+      getAllProviderGroups(),
+      // No provider type narrowing: a universal framework spans many types and
+      // its pinned state depends on all of them.
+      loadComplianceWatchlistContext(),
+    ]);
 
   // Action errors (402 usage limit, 403) gate the whole feature, not one
   // framework, so any of them replaces the tab instead of degrading it.
@@ -162,6 +169,23 @@ export const CrossProviderOverview = async ({
     providerGroupsData?.data || []
   ).map((group) => ({ id: group.id, name: group.attributes.name }));
 
+  // The cross-provider endpoint has no `filter[in_watchlist]`, so pinned state
+  // is resolved by joining the catalog on `(compliance_id, provider_type)`.
+  const catalogIndex = buildWatchlistIndex(watchlist.entries);
+
+  const cards = summaries.map((summary) => ({
+    summary,
+    watchlist: resolveUniversalWatchlistState({
+      complianceId: summary.complianceId,
+      compatibleProviders:
+        CROSS_PROVIDER_FRAMEWORKS.find(
+          (entry) => entry.complianceId === summary.complianceId,
+        )?.compatibleProviders ?? [],
+      eligibleProviderTypes: watchlist.eligibleProviderTypes,
+      catalogIndex,
+    }),
+  }));
+
   return (
     <div className="flex flex-col gap-6">
       {summaries
@@ -220,14 +244,11 @@ export const CrossProviderOverview = async ({
           </SectionDescription>
         </SectionHeader>
         <SectionContent>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
-            {summaries.map((summary) => (
-              <CrossProviderFrameworkCard
-                key={summary.complianceId}
-                {...summary}
-              />
-            ))}
-          </div>
+          <CrossProviderFrameworkGrid
+            cards={cards}
+            canManageWatchlist={watchlist.canManage}
+            watchlistEnabled={watchlist.entries.length > 0}
+          />
         </SectionContent>
       </Section>
     </div>

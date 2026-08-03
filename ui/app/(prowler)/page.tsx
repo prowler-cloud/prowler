@@ -112,8 +112,18 @@ export default async function Home({
 
       <div className="mt-6 flex flex-col gap-6 xl:flex-row">
         {/* Watchlists: stacked on mobile, row on tablet, stacked on desktop */}
-        <div className="flex min-w-0 flex-col gap-6 overflow-hidden sm:flex-row sm:flex-wrap sm:items-stretch xl:w-[312px] xl:shrink-0 xl:flex-col">
-          <div className="min-w-0 sm:flex-1 xl:flex-auto [&>*]:h-full">
+        {/* No `flex-wrap` here: a multi-line flex container sizes its items to
+            the line's max-content rather than to its own 312px, and a card wider
+            than the column loses its right border and padding to
+            `overflow-hidden`. It never wrapped anyway. */}
+        <div className="flex min-w-0 flex-col gap-6 overflow-hidden sm:flex-row sm:items-stretch xl:w-[312px] xl:shrink-0 xl:flex-col">
+          {/* Sized to its own list, unlike the service card below: this one is
+              as long as the organization made its watchlist, so growing it to
+              fill the column puts a hole under two pinned frameworks. */}
+          {/* `h-full` only where the cards sit side by side and share a row
+              height. In the column it would hand the card the stretched
+              wrapper's height and undo the fit-to-content sizing. */}
+          <div className="min-w-0 sm:flex-1 xl:flex-none sm:[&>*]:h-full xl:[&>*]:h-auto">
             <Suspense fallback={<WatchlistCardSkeleton />}>
               <ComplianceWatchlistSSR searchParams={resolvedSearchParams} />
             </Suspense>

@@ -20,3 +20,15 @@ export function buildPerScanComplianceHref(
 
   return `/compliance?${search.toString()}`;
 }
+
+/**
+ * Builds a `/compliance` URL for the Multiple Scans tab.
+ *
+ * Deliberately the bare route rather than `?tab=cross-provider`: Multiple Scans
+ * is the landing tab, so pinning it would only add a parameter the page then
+ * has to strip. Named all the same, so call sites read as a destination instead
+ * of relying on that default holding.
+ */
+export function buildMultipleScansComplianceHref(): string {
+  return "/compliance";
+}
