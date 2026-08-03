@@ -23,10 +23,6 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Lighthouse contextual suggestions now show concise actions while preserving detailed prompts for chat [(#12219)](https://github.com/prowler-cloud/prowler/pull/12219)
 - Providers page groups GCP projects under their organization and folders [(#12255)](https://github.com/prowler-cloud/prowler/pull/12255)
 
-### ⚠️ Deprecated
-
-- Unused `NEXT_PUBLIC_PROWLER_DEPLOYMENT_MODE` variable and its `getDeploymentMode` helper; Cloud versus self-hosted behavior is decided solely by the runtime `UI_CLOUD_ENABLED` flag [(#12292)](https://github.com/prowler-cloud/prowler/pull/12292)
-
 ### 🐞 Fixed
 
 - Attack Paths now classify cloud-provider finding resources separately from Prowler findings [(#11244)](https://github.com/prowler-cloud/prowler/pull/11244)

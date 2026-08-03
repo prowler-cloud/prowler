@@ -8,7 +8,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### 🚀 Added
 
-- Attack Paths adds four AWS privilege-escalation detection queries from pathfinding.cloud: cross-account role trust (STS-002), wildcard role trust (STS-003), user permissions-boundary removal (IAM-022), and IAM Identity Center permission-set escalation (SSO-001) [(#11460)](https://github.com/prowler-cloud/prowler/pull/11460)
+- Attack Paths: four AWS privilege-escalation detection queries from pathfinding.cloud: cross-account role trust (STS-002), wildcard role trust (STS-003), user permissions-boundary removal (IAM-022), and IAM Identity Center permission-set escalation (SSO-001) [(#11460)](https://github.com/prowler-cloud/prowler/pull/11460)
 
 ### 🐞 Fixed
 

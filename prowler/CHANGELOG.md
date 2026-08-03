@@ -10,8 +10,8 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 - OCSF detection finding output now populates `finding_info.analytic` as the Prowler check rule and `finding_info.attacks` as MITRE ATT&CK technique and tactic objects for findings with MITRE-ATTACK compliance metadata [(#11492)](https://github.com/prowler-cloud/prowler/pull/11492)
 - `codecommit` service and `codecommit_repository_no_secrets` check for AWS provider, scanning files tracked at the tip of each repository's default branch for hardcoded secrets [(#11846)](https://github.com/prowler-cloud/prowler/pull/11846)
-- Support for the Huawei Cloud provider, with CTS, ECS, ELB, EVS, IAM, KMS, OBS, RDS, VPC and WAF services and a CIS 1.0 compliance benchmark [(#11950)](https://github.com/prowler-cloud/prowler/pull/11950)
-- Add glue_catalog_connection_no_secrets check to detect secrets in Glue Data Catalog connection properties [(#11963)](https://github.com/prowler-cloud/prowler/pull/11963)
+- Huawei Cloud provider, with CTS, ECS, ELB, EVS, IAM, KMS, OBS, RDS, VPC and WAF services and a CIS 1.0 compliance benchmark [(#11950)](https://github.com/prowler-cloud/prowler/pull/11950)
+- `glue_catalog_connection_no_secrets` check to detect secrets in Glue Data Catalog connection properties [(#11963)](https://github.com/prowler-cloud/prowler/pull/11963)
 - `ec2_instance_stopped_older_than_specific_days` check for AWS provider, detecting EC2 instances stopped longer than a configurable number of days (default 30) [(#12076)](https://github.com/prowler-cloud/prowler/pull/12076)
 - `sagemaker_endpoint_config_kms_encryption_enabled` check verifying SageMaker endpoint configurations use a KMS key for storage volume encryption [(#12118)](https://github.com/prowler-cloud/prowler/pull/12118)
 - 11 AWS Nitro Enclaves security checks providing the first CSPM coverage for confidential computing workloads, covering both host environment (`ec2_confidential_workload_host_*`) and KMS attestation policy (`kms_key_enclave_*`), fully passive via boto3 and CloudTrail LookupEvents [(#12283)](https://github.com/prowler-cloud/prowler/pull/12283)
