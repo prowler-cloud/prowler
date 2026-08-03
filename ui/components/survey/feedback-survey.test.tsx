@@ -181,7 +181,7 @@ describe("FeedbackSurvey", () => {
     expect(trigger).toHaveClass("transition-[right,transform]", "duration-200");
   });
 
-  it("keeps the normal right gutter when the side panel overlays on mobile", async () => {
+  it("hides the feedback trigger when the side panel overlays on mobile", async () => {
     // Given
     mocks.isPushViewport = false;
     const { useSidePanelStore } = await import("@/store/side-panel");
@@ -191,11 +191,10 @@ describe("FeedbackSurvey", () => {
     await renderSurvey();
 
     // Then
-    const trigger = await screen.findByRole("button", {
-      name: "Give feedback",
-    });
-    expect(trigger).toHaveClass("right-6");
-    expect(trigger.style.right).toBe("");
+    await waitFor(() => expect(mocks.onSurveysLoaded).toHaveBeenCalled());
+    expect(
+      screen.queryByRole("button", { name: "Give feedback" }),
+    ).not.toBeInTheDocument();
   });
 
   it("ignores a same-name non-API survey and selects the API survey", async () => {

@@ -74,6 +74,7 @@ export default function RuntimeFeedbackSurvey({
 
   const question = survey?.questions?.[0];
   if (!survey || question?.type !== "open") return null;
+  if (sidePanelOpen && !isPushViewport) return null;
 
   const questionId = question.id ?? "";
   const appearance = survey.appearance;
