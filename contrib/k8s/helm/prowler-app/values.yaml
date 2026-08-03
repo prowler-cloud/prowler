@@ -460,9 +460,10 @@ worker:
     #   3. Non-scan tasks pending in the last hour. Provider connection checks,
     #      deletions, reports and backfills never touch the scans table, so without
     #      this they are never picked up while the worker is scaled to zero.
-    #      reconcile-orphan-tasks is excluded: it is a watchdog that runs every two
-    #      minutes and only recovers orphans left behind by a worker, so counting it
-    #      would wake the worker continuously and defeat scale-to-zero.
+    #      This includes reconcile-orphan-tasks, a Beat watchdog that runs every two
+    #      minutes, so with minReplicas 0 the worker is woken about that often. Add
+    #      it to the excluded task names below, or raise cooldownPeriod, if you would
+    #      rather trade watchdog latency for longer idle periods.
     query: >-
       SELECT
       (SELECT COUNT(*) FROM scans
@@ -473,7 +474,7 @@ worker:
       AND status IN ('PENDING', 'RECEIVED', 'STARTED')
       AND date_created > NOW() - INTERVAL '48 hours')
       + (SELECT COUNT(*) FROM django_celery_results_taskresult
-      WHERE task_name NOT IN ('scan-perform', 'scan-perform-scheduled', 'reconcile-orphan-tasks')
+      WHERE task_name NOT IN ('scan-perform', 'scan-perform-scheduled')
       AND status IN ('PENDING', 'RECEIVED', 'STARTED')
       AND date_created > NOW() - INTERVAL '1 hour')
 
