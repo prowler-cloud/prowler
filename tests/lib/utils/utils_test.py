@@ -5,6 +5,7 @@ from datetime import datetime
 from time import mktime
 
 import pytest
+import yaml
 from mock import patch
 
 from prowler.lib.utils.utils import (
@@ -276,6 +277,35 @@ class Test_detect_secrets_scan_batch_jdbc:
     def _jdbc_findings(self, connection_string):
         results = detect_secrets_scan_batch({"a": connection_string})
         return [f for f in results.get("a", []) if f["type"] == JDBC_RULE]
+
+    def test_override_keeps_every_non_pattern_field_of_the_builtin(self):
+        """Replacing the built-in rule drops any field the override omits.
+
+        Losing ``validation`` would silently stop ``--scan-secrets-validate``
+        from confirming a JDBC credential is live, and losing
+        ``pattern_requirements`` would stop placeholder values being discarded —
+        neither of which any behavioral test would catch. Only ``pattern`` and
+        ``examples`` are meant to diverge.
+        """
+        with open(
+            os.path.join(secrets_rules_path, "kingfisher_jdbc_1.yaml"),
+            encoding="utf-8",
+        ) as f:
+            rule = yaml.safe_load(f)["rules"][0]
+
+        # Verbatim from crates/kingfisher-rules/data/rules/jdbc.yml upstream.
+        assert rule["id"] == "kingfisher.jdbc.1"
+        assert rule["name"] == JDBC_RULE
+        assert rule["confidence"] == "medium"
+        assert rule["min_entropy"] == 3.3
+        assert rule["validation"] == {"type": "Jdbc"}
+        assert rule["tls_mode"] == "lax"
+        assert rule["pattern_requirements"] == {
+            "min_special_chars": 2,
+            "special_chars": ";=/?@&",
+            "ignore_if_contains": ["****", "xxxx", "example"],
+        }
+        assert rule["references"]
 
     def test_rules_path_is_passed_to_kingfisher(self):
         """The override is only in effect if the directory is actually shipped
