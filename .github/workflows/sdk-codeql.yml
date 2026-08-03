@@ -17,7 +17,6 @@ on:
     branches:
       - 'master'
       - 'v5.*'
-      - 'integration/PROWLER-2291'
     paths:
       - 'prowler/**'
       - 'tests/**'

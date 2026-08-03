@@ -4,7 +4,6 @@ on:
   pull_request:
     branches:
       - 'master'
-      - 'integration/PROWLER-2291'
     paths:
       - '.github/renovate.json'
       - '.pre-commit-config.yaml'
