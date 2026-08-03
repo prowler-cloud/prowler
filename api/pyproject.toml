@@ -93,7 +93,8 @@ extend-select = [
 
 [tool.uv]
 # Transitive pins matching master to avoid silent drift; bump deliberately.
-# workos and pyopenssl run ahead of master: both cap cryptography below 48 (PROWLER-2310).
+# workos and pyopenssl run ahead of master: the versions master pins cap cryptography
+# below 48, so both were bumped to versions that allow it (PROWLER-2310).
 constraint-dependencies = [
   "about-time==4.2.1",
   "adal==1.2.7",
