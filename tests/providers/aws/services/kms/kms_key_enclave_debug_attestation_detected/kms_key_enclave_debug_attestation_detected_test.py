@@ -414,7 +414,9 @@ class Test_kms_key_enclave_debug_attestation_detected:
 
         # Every region hit once per sensitive event name (4 event names).
         assert set(calls_per_region.keys()) == {"us-east-1", "eu-west-1", "ap-south-1"}
-        assert all(v == len(SENSITIVE_ENCLAVE_KMS_EVENTS) for v in calls_per_region.values())
+        assert all(
+            v == len(SENSITIVE_ENCLAVE_KMS_EVENTS) for v in calls_per_region.values()
+        )
 
     def test_lookup_error_reported_as_incomplete_coverage(self):
         result = _run(
@@ -488,6 +490,7 @@ class Test_kms_key_enclave_debug_attestation_detected:
         assert result[0].status == "MANUAL"
         assert "No KMS-from-enclave" in result[0].status_extended
 
+
 # Base64 encoding of a SHA384 hash (48 bytes = 64 base64 chars). CloudTrail
 # records PCR values in this format, hex is only used by nitro-cli / audit_config.
 ZERO_PCR_BASE64 = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
@@ -550,15 +553,17 @@ class Test_debug_attestation_base64_encoding:
         assert result["PCR0"] == result["PCR0"].lower()
         # And it should equal the hex form of the same bytes
         import base64
+
         assert result["PCR0"] == base64.b64decode(REAL_PCR_BASE64).hex()
 
     def test_unknown_pcrs_cross_encoding_hex_golden_vs_base64_observed(self):
         # The playground scenario: user configures golden in hex (from
         # nitro-cli describe-eif), CloudTrail returns base64. They must match.
+        import base64
+
         from prowler.providers.aws.services.kms.lib.enclave import (
             unknown_pcrs,
         )
-        import base64
 
         real_hex = base64.b64decode(REAL_PCR_BASE64).hex()
         observed = {"PCR0": real_hex}  # already canonicalized to hex

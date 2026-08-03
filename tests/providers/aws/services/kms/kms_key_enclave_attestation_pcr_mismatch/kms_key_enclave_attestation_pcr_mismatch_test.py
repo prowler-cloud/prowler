@@ -469,9 +469,7 @@ class Test_kms_key_enclave_attestation_pcr_mismatch:
         kms_service = KMS(aws_provider)
         # Configure golden PCRs directly on the service (aws_provider.audit_config
         # is a read-only property).
-        kms_service.audit_config = {
-            "enclave_golden_pcr_values": {"PCR0": [PCR0_GOLD]}
-        }
+        kms_service.audit_config = {"enclave_golden_pcr_values": {"PCR0": [PCR0_GOLD]}}
         for k in kms_service.keys:
             if k.id == key["KeyId"]:
                 k.policy = None

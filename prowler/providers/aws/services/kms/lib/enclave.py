@@ -17,13 +17,17 @@ SENSITIVE_ENCLAVE_KMS_EVENTS = (
     "GenerateDataKeyPair",
     "GenerateRandom",
 )
-DEFAULT_ENCLAVE_DEBUG_LOOKBACK_HOURS = 2160  # 90 days, matches CloudTrail management-event retention
+DEFAULT_ENCLAVE_DEBUG_LOOKBACK_HOURS = (
+    2160  # 90 days, matches CloudTrail management-event retention
+)
 DEFAULT_ENCLAVE_DEBUG_MAX_EVENTS = 5000
 ENCLAVE_DEBUG_CONFIG_LOOKBACK_KEY = "enclave_debug_lookback_window_hours"
 ENCLAVE_DEBUG_CONFIG_MAX_EVENTS_KEY = "enclave_debug_max_events"
 ENCLAVE_DEBUG_CONFIG_TARGET_KEYS_KEY = "enclave_debug_target_key_ids"
 
-DEFAULT_ENCLAVE_UNKNOWN_IMAGE_LOOKBACK_HOURS = 2160  # 90 days, matches CloudTrail management-event retention
+DEFAULT_ENCLAVE_UNKNOWN_IMAGE_LOOKBACK_HOURS = (
+    2160  # 90 days, matches CloudTrail management-event retention
+)
 DEFAULT_ENCLAVE_UNKNOWN_IMAGE_MAX_EVENTS = 5000
 DEFAULT_ENCLAVE_UNKNOWN_IMAGE_SEVERITY = "medium"
 ENCLAVE_UNKNOWN_IMAGE_CONFIG_LOOKBACK_KEY = (

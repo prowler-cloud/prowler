@@ -374,7 +374,9 @@ class Test_kms_key_enclave_attestation_unknown_image:
             kms_key_enclave_attestation_unknown_image().execute()
 
         assert set(calls_per_region.keys()) == {"us-east-1", "eu-west-1", "ap-south-1"}
-        assert all(v == len(SENSITIVE_ENCLAVE_KMS_EVENTS) for v in calls_per_region.values())
+        assert all(
+            v == len(SENSITIVE_ENCLAVE_KMS_EVENTS) for v in calls_per_region.values()
+        )
 
     def test_lookup_error_reported_as_incomplete_coverage(self):
         result = _run(
