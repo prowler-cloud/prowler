@@ -17,6 +17,7 @@ from prowler.lib.utils.utils import (
     open_file,
     outputs_unix_timestamp,
     parse_json_file,
+    secrets_rules_path,
     strip_ansi_codes,
     validate_ip_address,
 )
@@ -257,6 +258,84 @@ class Test_detect_secrets_scan_batch:
             iter([("x", 'password = "Tr0ub4dor3xKq9vLmZ"')])
         )
         assert "x" in results
+
+
+JDBC_RULE = "JDBC connection string with embedded credentials"
+
+
+class Test_detect_secrets_scan_batch_jdbc:
+    """The bundled override of Kingfisher's built-in ``kingfisher.jdbc.1``.
+
+    The built-in rule matches a bare ``jdbc:<scheme>:`` prefix followed by any 10
+    non-space characters, so every JDBC connection string was reported as an
+    embedded credential. The override in
+    ``prowler/lib/utils/kingfisher_rules/kingfisher_jdbc_1.yaml`` requires an
+    actual credential; these tests pin both halves of that behavior.
+    """
+
+    def _jdbc_findings(self, connection_string):
+        results = detect_secrets_scan_batch({"a": connection_string})
+        return [f for f in results.get("a", []) if f["type"] == JDBC_RULE]
+
+    def test_rules_path_is_passed_to_kingfisher(self):
+        """The override is only in effect if the directory is actually shipped
+        and handed to Kingfisher."""
+        assert os.path.isdir(secrets_rules_path)
+        assert os.path.isfile(
+            os.path.join(secrets_rules_path, "kingfisher_jdbc_1.yaml")
+        )
+
+        with patch(
+            "prowler.lib.utils.utils.subprocess.run",
+            side_effect=_fake_kingfisher_run(output_content="{}"),
+        ) as mocked_run:
+            detect_secrets_scan_batch({"a": "data"})
+
+        command = mocked_run.call_args[0][0]
+        assert "--rules-path" in command
+        assert command[command.index("--rules-path") + 1] == secrets_rules_path
+
+    @pytest.mark.parametrize(
+        "connection_string",
+        [
+            "jdbc:postgresql://mydb.cluster-abc123.eu-west-1.rds.amazonaws.com:5432/appdb",  # trufflehog:ignore
+            "jdbc:oracle:thin:@ora.corp.internal:1521/ORCLPDB1",  # trufflehog:ignore
+            "jdbc:oracle:thin:@//ora.corp.internal:1521/SVC",  # trufflehog:ignore
+            "jdbc:mysql://prod.internal:3306/inventory?useSSL=true",  # trufflehog:ignore
+            "jdbc:sqlserver://sql.corp.internal:1433;databaseName=inv;integratedSecurity=true",  # trufflehog:ignore
+            "jdbc:redshift://cluster.abc.us-east-1.redshift.amazonaws.com:5439/dev",  # trufflehog:ignore
+            # A username alone is not a credential.
+            "jdbc:mysql://prod.internal:3306/inventory?user=admin",  # trufflehog:ignore
+            # An empty password is not a credential.
+            "jdbc:postgresql://pg.corp.internal/app?password=",  # trufflehog:ignore
+            # The exact payload shape of a CloudFormation Output
+            # ("OutputKey:OutputValue"), which is how this was reported.
+            "DatabaseUrl:jdbc:postgresql://mydb.eu-west-1.rds.amazonaws.com:5432/appdb",  # trufflehog:ignore
+        ],
+    )
+    def test_credential_free_connection_string_is_not_reported(self, connection_string):
+        assert self._jdbc_findings(connection_string) == []
+
+    @pytest.mark.parametrize(
+        "connection_string",
+        [
+            # URL userinfo.
+            "jdbc:mysql://admin:s3cr3t@prod.internal:3306/inventory",  # trufflehog:ignore
+            # Password as a query parameter.
+            "jdbc:postgresql://pg.corp.internal:5432/app?user=admin&password=Tr0ub4dor3",  # trufflehog:ignore
+            "jdbc:postgresql://pg.corp.internal/app?password=Xk29fjWa02",  # trufflehog:ignore
+            "jdbc:mysql://prod.internal/db?user=a&pwd=Zq81ncPl42",  # trufflehog:ignore
+            # Password as a semicolon-delimited property.
+            "jdbc:sqlserver://sql.corp.internal:1433;databaseName=inv;user=sa;password=S3cr3t99",  # trufflehog:ignore
+            "jdbc:sqlserver://sql.corp.internal:1433;Password=Vb73msQr18;user=sa",  # trufflehog:ignore
+            # Oracle TNS userinfo.
+            "jdbc:oracle:thin:scott/tiger99@ora.corp.internal:1521:ORCL",  # trufflehog:ignore
+            # Two-character scheme, which the built-in pattern could not match.
+            "jdbc:h2:file:./data/store;CIPHER=AES;PASSWORD=Nf62kdTp07",  # trufflehog:ignore
+        ],
+    )
+    def test_embedded_credential_is_still_reported(self, connection_string):
+        assert self._jdbc_findings(connection_string) != []
 
 
 class Test_detect_secrets_scan_batch_failures:

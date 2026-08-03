@@ -1,0 +1,40 @@
+# Override of Kingfisher's built-in `kingfisher.jdbc.1`. Loading this file with
+# `--rules-path` replaces the built-in rule of the same id (see
+# `_build_kingfisher_command` in prowler/lib/utils/utils.py).
+#
+# The built-in pattern matches a bare `jdbc:<scheme>:` prefix plus any 10
+# non-space characters, so every JDBC connection string is reported as an
+# embedded credential even when it carries none. The defect is upstream
+# (https://github.com/mongodb/kingfisher), still present in 1.110.0.
+#
+# Drop this file when a `kingfisher-bin` bump makes the credential-free cases in
+# `Test_detect_secrets_scan_batch_jdbc` pass without it.
+rules:
+  - name: JDBC connection string with embedded credentials
+    id: kingfisher.jdbc.1
+    confidence: medium
+    visible: true
+    # The `{1,32}` scheme quantifier (upstream uses `{2,32}`) also lets
+    # two-character schemes such as `jdbc:h2:` match.
+    pattern: |
+      (?xi)
+      (
+        jdbc:
+        [a-z][a-z0-9+.-]{1,32}
+        (?:[:][a-z0-9+.-]{1,32})*
+        :
+        [^\s"'<>,(){}\[\]]{0,384}?
+        (?:
+            // [^\s"'<>/@:]{1,64} : [^\s"'<>/@]{1,64} @
+          | :  [^\s"'<>/@:]{1,64} /  [^\s"'<>/@]{1,64} @
+          | [?&;] [ \t]* (?:password|passwd|pwd|secret) [ \t]* = [ \t]* [^\s"'<>&;]{1,128}
+        )
+        [^\s"'<>,(){}\[\]]{0,192}
+      )
+    # Enforced at load time: Kingfisher rejects the rule if one does not match.
+    examples:
+      - "jdbc:mysql://admin:s3cr3t@prod.internal:3306/inventory"  # trufflehog:ignore
+      - "jdbc:postgresql://db.example.com:5432/app?user=admin&password=s3cr3t"  # trufflehog:ignore
+      - "jdbc:sqlserver://sql.example.org:1433;databaseName=inventory;user=sa;password=s3cr3t!"  # trufflehog:ignore
+      - "jdbc:oracle:thin:scott/tiger@ora.example.net:1521:ORCL"  # trufflehog:ignore
+      - "jdbc:h2:file:./data/store;CIPHER=AES;PASSWORD=filepwd"  # trufflehog:ignore
