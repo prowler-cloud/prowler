@@ -6,8 +6,8 @@
     "Software and Configuration Checks/AWS Security Best Practices"
   ],
   "ServiceName": "ec2",
-  "SubServiceName": "confidential-workload-host",
-  "ResourceIdTemplate": "arn:partition:ec2:region:account-id:instance/instance-id",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsEc2Instance",
   "ResourceGroup": "compute",

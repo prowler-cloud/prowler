@@ -6,8 +6,8 @@
     "Software and Configuration Checks/AWS Security Best Practices"
   ],
   "ServiceName": "kms",
-  "SubServiceName": "nitro-enclaves",
-  "ResourceIdTemplate": "arn:partition:kms:region:account-id:key/key-id",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsKmsKey",
   "ResourceGroup": "security",
