@@ -3,6 +3,7 @@
 import { Pin } from "lucide-react";
 
 import { Checkbox } from "@/components/shadcn";
+import { useShowOnlyWatchlist } from "@/hooks/use-show-only-watchlist";
 import { useComplianceWatchlistViewStore } from "@/store";
 
 const CHECKBOX_ID = "show-only-watchlist";
@@ -17,9 +18,7 @@ const CHECKBOX_ID = "show-only-watchlist";
  * them.
  */
 export const WatchlistFilterToggle = () => {
-  const showOnlyWatchlist = useComplianceWatchlistViewStore(
-    (state) => state.showOnlyWatchlist,
-  );
+  const showOnlyWatchlist = useShowOnlyWatchlist();
   const setShowOnlyWatchlist = useComplianceWatchlistViewStore(
     (state) => state.setShowOnlyWatchlist,
   );

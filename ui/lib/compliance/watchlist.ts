@@ -44,8 +44,11 @@ const universalKey = (complianceId: string): string =>
  * A universal framework is one card across every compatible provider type, so
  * the catalog keys it under `*` — but surfaces legitimately ask for it with a
  * concrete type (the per-scan view of an AWS scan lists CIS Controls under
- * `aws`). Trying `*` first is what makes all three surfaces agree on one row
- * instead of each looking up a key the catalog never emits.
+ * `aws`). Falling back to `*` is what makes all three surfaces agree on one row
+ * instead of each looking up a key the catalog never emits. The exact key is
+ * tried first regardless: a universal framework never also has a concrete-type
+ * row, so nothing is lost, and a provider-scoped row can never be shadowed by a
+ * universal one that happens to share its `compliance_id`.
  *
  * The last attempt peels a legacy per-provider suffix (`csa_ccm_4.0_aws`, from
  * scans predating the universal frameworks) the same way the API does on write.
@@ -59,8 +62,8 @@ export const resolveCatalogEntry = (
   target: ComplianceWatchlistTarget,
 ): ComplianceCatalogEntry | undefined => {
   const exact =
-    index.get(universalKey(target.complianceId)) ??
-    index.get(watchlistKey(target));
+    index.get(watchlistKey(target)) ??
+    index.get(universalKey(target.complianceId));
   if (exact) return exact;
 
   const legacySuffix = `_${target.providerType}`;

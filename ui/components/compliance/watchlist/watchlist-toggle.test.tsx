@@ -195,10 +195,18 @@ describe("WatchlistToggle mutations", () => {
 
     await user.click(screen.getByRole("button"));
 
+    // The pin state itself, not merely the button's presence: the accessible
+    // name never changes, so asserting on it would pass with the optimistic
+    // update removed entirely.
     await waitFor(() =>
-      expect(
-        screen.getByRole("button", { name: "Watchlist" }),
-      ).toBeInTheDocument(),
+      expect(screen.getByRole("button", { name: "Watchlist" })).toHaveAttribute(
+        "data-pin-state",
+        WATCHLIST_PIN_STATE.PINNED,
+      ),
+    );
+    expect(screen.getByRole("button", { name: "Watchlist" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
     );
 
     resolveAction({ success: "ok" });
@@ -224,9 +232,18 @@ describe("WatchlistToggle mutations", () => {
         expect.objectContaining({ variant: "destructive" }),
       ),
     );
-    expect(
-      screen.getByRole("button", { name: "Watchlist" }),
-    ).toBeInTheDocument();
+    // `useOptimistic` reverts once the transition settles, so the rejected
+    // change must leave the card reading exactly as it did before the click.
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Watchlist" })).toHaveAttribute(
+        "data-pin-state",
+        WATCHLIST_PIN_STATE.UNPINNED,
+      ),
+    );
+    expect(screen.getByRole("button", { name: "Watchlist" })).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
   });
 
   it("toasts on success", async () => {

@@ -10,9 +10,11 @@ import {
   buildWatchlistIndex,
   computeWatchlistDiff,
   exceedsWatchlistBulkLimit,
+  formatWatchlistBulkSummary,
   isFrameworkPinned,
   MAX_WATCHLIST_BULK,
   resolveWatchlistEntryId,
+  resolveWatchlistTarget,
   watchlistKey,
 } from "./watchlist";
 
@@ -164,6 +166,29 @@ describe("isFrameworkPinned", () => {
         }),
       ).toBeNull();
     });
+
+    it("does not let a universal row shadow a concrete one sharing its id", () => {
+      // A universal framework never also has a per-provider row, but reading
+      // `*` first would make one unreachable if it ever did — and every write
+      // for it would then be rewritten onto the wrong card.
+      const collidingIndex = buildWatchlistIndex([
+        entry({
+          complianceId: "shared_id",
+          providerType: UNIVERSAL_PROVIDER_TYPE,
+          inWatchlist: true,
+          watchlistEntryId: "entry-universal",
+        }),
+        entry({
+          complianceId: "shared_id",
+          providerType: "aws",
+          watchlistEntryId: "entry-aws",
+        }),
+      ]);
+      const target = { complianceId: "shared_id", providerType: "aws" };
+
+      expect(isFrameworkPinned(collidingIndex, target)).toBe(false);
+      expect(resolveWatchlistTarget(collidingIndex, target)).toEqual(target);
+    });
   });
 
   it("resolves the delete target without a lookup round trip", () => {
@@ -179,6 +204,42 @@ describe("isFrameworkPinned", () => {
         providerType: "aws",
       }),
     ).toBeNull();
+  });
+});
+
+describe("resolveWatchlistTarget", () => {
+  const index = buildWatchlistIndex([
+    entry({
+      complianceId: "csa_ccm_4.0",
+      providerType: UNIVERSAL_PROVIDER_TYPE,
+    }),
+    entry({ complianceId: "cis_1.4_aws", providerType: "aws" }),
+  ]);
+
+  it("collapses a concrete provider target onto the universal row", () => {
+    // The write key has to match what the API stores, or an add and a remove
+    // of the same framework land in one bulk call under two keys.
+    expect(
+      resolveWatchlistTarget(index, {
+        complianceId: "csa_ccm_4.0",
+        providerType: "aws",
+      }),
+    ).toEqual({
+      complianceId: "csa_ccm_4.0",
+      providerType: UNIVERSAL_PROVIDER_TYPE,
+    });
+  });
+
+  it("leaves a provider-scoped target on its own provider type", () => {
+    const target = { complianceId: "cis_1.4_aws", providerType: "aws" };
+
+    expect(resolveWatchlistTarget(index, target)).toEqual(target);
+  });
+
+  it("returns the input target when the catalog has no row", () => {
+    const target = { complianceId: "unknown", providerType: "aws" };
+
+    expect(resolveWatchlistTarget(index, target)).toEqual(target);
   });
 });
 
@@ -276,6 +337,31 @@ describe("exceedsWatchlistBulkLimit", () => {
 
     expect(exceedsWatchlistBulkLimit({ add, remove: [target(9999)] })).toBe(
       true,
+    );
+  });
+});
+
+describe("formatWatchlistBulkSummary", () => {
+  it("joins added and removed counts", () => {
+    expect(formatWatchlistBulkSummary({ added: 2, removed: 1 })).toBe(
+      "2 added · 1 removed",
+    );
+  });
+
+  it("reports only the side that changed", () => {
+    expect(formatWatchlistBulkSummary({ added: 3, removed: 0 })).toBe(
+      "3 added",
+    );
+    expect(formatWatchlistBulkSummary({ added: 0, removed: 4 })).toBe(
+      "4 removed",
+    );
+  });
+
+  it("falls back when the API applied nothing", () => {
+    // A diff can be non-empty and still change nothing — a framework someone
+    // else unpinned in the meantime — so the toast needs its own copy.
+    expect(formatWatchlistBulkSummary({ added: 0, removed: 0 })).toBe(
+      "No changes",
     );
   });
 });

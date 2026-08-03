@@ -460,4 +460,20 @@ describe("CrossAccountOverviewSection watchlist", () => {
 
     expect(screen.getByText(/2 frameworks/)).toBeInTheDocument();
   });
+
+  it("reports no pin state at all when the catalog is missing", async () => {
+    // A degraded catalog with the permission still granted: every state the
+    // card could report would be invented, and "unpinned" is itself enough to
+    // render a control backed by no catalog row.
+    withWatchlist([], true);
+
+    await renderSection();
+    await userEvent
+      .setup()
+      .click(screen.getByRole("button", { name: "Item aws" }));
+
+    screen
+      .getAllByTestId("cross-account-card")
+      .forEach((card) => expect(card).not.toHaveAttribute("data-pin-state"));
+  });
 });

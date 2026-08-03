@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import type { ComplianceCatalog } from "@/types/compliance-watchlist";
+import { WATCHLIST_SCOPE } from "@/types/compliance-watchlist";
+
 const { getComplianceCatalogMock, authMock, isCloudMock } = vi.hoisted(() => ({
   getComplianceCatalogMock: vi.fn(),
   authMock: vi.fn(),
@@ -23,12 +26,16 @@ import {
   loadComplianceWatchlistContext,
 } from "../watchlist-context";
 
-const catalog = {
+// Typed against the contract so a catalog field added to the adapter cannot
+// drift out of this fixture unnoticed.
+const catalog: ComplianceCatalog = {
   entries: [
     {
       id: "aws:cis_1.4_aws",
       complianceId: "cis_1.4_aws",
       providerType: "aws",
+      scope: WATCHLIST_SCOPE.PROVIDER,
+      providerTypes: ["aws"],
       framework: "CIS",
       name: "CIS",
       version: "1.4",
@@ -108,5 +115,42 @@ describe("loadComplianceWatchlistContext in Cloud", () => {
     authMock.mockResolvedValue(null);
 
     expect((await loadComplianceWatchlistContext()).canManage).toBe(false);
+  });
+
+  it("degrades to the empty context when the session lookup rejects", async () => {
+    // The catalog already swallows its own failures; `auth()` rejecting has to
+    // cost the page its watchlist affordances rather than its compliance data,
+    // since every surface awaits this loader during the server render.
+    authMock.mockRejectedValue(new Error("session unavailable"));
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+
+    expect(await loadComplianceWatchlistContext()).toEqual(
+      EMPTY_WATCHLIST_CONTEXT,
+    );
+
+    consoleError.mockRestore();
+  });
+
+  it("omits the narrowing filter when no provider types are given", async () => {
+    await loadComplianceWatchlistContext();
+
+    expect(getComplianceCatalogMock).toHaveBeenCalledWith({
+      providerTypes: undefined,
+    });
+  });
+
+  it("normalizes the provider types so an equivalent list hits one cache entry", async () => {
+    // `cache()` keys on argument identity, so the memoized call takes a single
+    // normalized string: two surfaces asking for the same narrowed catalog in a
+    // different order must not fetch it twice.
+    await loadComplianceWatchlistContext({
+      providerTypes: ["azure", "aws", "aws"],
+    });
+
+    expect(getComplianceCatalogMock).toHaveBeenCalledWith({
+      providerTypes: ["aws", "azure"],
+    });
   });
 });

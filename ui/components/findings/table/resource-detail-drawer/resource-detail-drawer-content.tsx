@@ -400,7 +400,10 @@ export function ResourceDetailDrawerContent({
     window.open(
       buildComplianceDetailHref({
         complianceId: framework.complianceId,
-        framework: framework.framework,
+        // Same fallback the chip's label uses: `framework` is empty for one the
+        // SDK exposes no metadata for, and it is a path segment here, so
+        // without it the destination collapses to `/compliance/`.
+        framework: framework.framework || framework.name,
         version: framework.version,
         scanId: complianceScanId,
         regionFilter,

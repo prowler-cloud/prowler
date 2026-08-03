@@ -41,4 +41,13 @@ describe("useComplianceWatchlistViewStore", () => {
       '"showOnlyWatchlist":true',
     );
   });
+
+  it("persists the flag alone, never the setter", () => {
+    useComplianceWatchlistViewStore.getState().setShowOnlyWatchlist(true);
+
+    expect(
+      JSON.parse(localStorage.getItem("compliance-watchlist-view") ?? "{}")
+        .state,
+    ).toEqual({ showOnlyWatchlist: true });
+  });
 });

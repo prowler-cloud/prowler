@@ -18,6 +18,10 @@ interface ComplianceWatchlistViewState {
  *
  * Off by default: a viewer who has never touched the filter sees the full
  * catalog, so a framework can never silently go missing.
+ *
+ * Read it through `useShowOnlyWatchlist`, never with a bare selector: the
+ * compliance surfaces are server-rendered with the default, and `persist` reads
+ * localStorage as the store is created.
  */
 export const useComplianceWatchlistViewStore =
   create<ComplianceWatchlistViewState>()(
@@ -28,6 +32,12 @@ export const useComplianceWatchlistViewStore =
       }),
       {
         name: "compliance-watchlist-view",
+        version: 1,
+        // Only the flag: the setter is rebuilt on every load, and persisting it
+        // would freeze today's implementation into localStorage.
+        partialize: (state) => ({
+          showOnlyWatchlist: state.showOnlyWatchlist,
+        }),
       },
     ),
   );

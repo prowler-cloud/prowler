@@ -44,6 +44,17 @@ const CATALOG_PAGE_SIZE = 100;
 // Backstop so a malformed `meta.pagination.pages` can't spin the loop: 100
 // pages is ~10k frameworks, far above any real tenant.
 const MAX_CATALOG_PAGES = 100;
+// The remaining pages are fetched in batches rather than all at once: the
+// catalog is read during the compliance page's server render, and a response
+// reporting a large `meta.pagination.pages` would otherwise open one socket
+// per page against an API that re-runs the whole roll-up for each of them.
+const CATALOG_FETCH_CONCURRENCY = 5;
+
+// Every request here is awaited by a server render, so a stalled API must fail
+// the affordance instead of hanging the page until the platform's own socket
+// timeout — which is what makes the documented "degrades to an empty catalog"
+// fallback reachable for a stall and not only for an error.
+const REQUEST_TIMEOUT_MS = 15_000;
 
 const EMPTY_CATALOG: ComplianceCatalog = {
   entries: [],
@@ -109,16 +120,25 @@ export const getComplianceCatalog = async ({
     const fetchPage = async (
       page: number,
     ): Promise<ComplianceCatalog | null> => {
-      const pageResponse = await fetch(buildCatalogUrl(page, providerTypes), {
-        headers,
-      });
-      if (!pageResponse.ok) return null;
-      const body = (await pageResponse.json()) as ComplianceCatalogResponse;
-      return adaptCatalogResponse(body);
+      try {
+        const pageResponse = await fetch(buildCatalogUrl(page, providerTypes), {
+          headers,
+          signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+        });
+        if (!pageResponse.ok) return null;
+        const body = (await pageResponse.json()) as ComplianceCatalogResponse;
+        return adaptCatalogResponse(body);
+      } catch (error) {
+        // A timed-out or malformed page drops out on its own: letting it reach
+        // the outer catch would void every other page too.
+        console.error(`Error fetching compliance catalog page ${page}:`, error);
+        return null;
+      }
     };
 
     const response = await fetch(buildCatalogUrl(1, providerTypes), {
       headers,
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
     if (!response.ok) return EMPTY_CATALOG;
 
@@ -131,14 +151,20 @@ export const getComplianceCatalog = async ({
     );
     if (pageCount <= 1) return firstPage;
 
-    const rest = await Promise.all(
-      Array.from({ length: pageCount - 1 }, (_, index) => fetchPage(index + 2)),
-    );
+    const rest: ComplianceCatalog[] = [];
+    for (let page = 2; page <= pageCount; page += CATALOG_FETCH_CONCURRENCY) {
+      const batch = await Promise.all(
+        Array.from(
+          { length: Math.min(CATALOG_FETCH_CONCURRENCY, pageCount - page + 1) },
+          (_, index) => fetchPage(page + index),
+        ),
+      );
+      rest.push(
+        ...batch.filter((page): page is ComplianceCatalog => page !== null),
+      );
+    }
 
-    return mergeCatalogPages([
-      firstPage,
-      ...rest.filter((page): page is ComplianceCatalog => page !== null),
-    ]);
+    return mergeCatalogPages([firstPage, ...rest]);
   } catch (error) {
     console.error("Error fetching compliance catalog:", error);
     return EMPTY_CATALOG;
@@ -157,6 +183,7 @@ export const addComplianceToWatchlist = async (
     const response = await fetch(`${apiBaseUrl}${ENTRIES_ENDPOINT}`, {
       method: "POST",
       headers,
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
       body: JSON.stringify({
         data: {
           type: COMPLIANCE_WATCHLIST_ENTRY_TYPE,
@@ -197,7 +224,11 @@ export const removeComplianceFromWatchlist = async (
     const headers = await getAuthHeaders({ contentType: true });
     const response = await fetch(
       `${apiBaseUrl}${ENTRIES_ENDPOINT}/${parsed.data}`,
-      { method: "DELETE", headers },
+      {
+        method: "DELETE",
+        headers,
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      },
     );
 
     if (!response.ok) {
@@ -243,6 +274,7 @@ export const bulkUpdateComplianceWatchlist = async (
     const response = await fetch(`${apiBaseUrl}${ENTRIES_ENDPOINT}/bulk`, {
       method: "POST",
       headers,
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
       body: JSON.stringify({
         data: {
           type: COMPLIANCE_WATCHLIST_BULK_TYPE,

@@ -7,6 +7,7 @@ import { ComplianceCard } from "@/components/compliance/compliance-card";
 import { LighthouseContextContributor } from "@/components/lighthouse/context-contributor";
 import { OnboardingTrigger, PageReady } from "@/components/onboarding";
 import { DataTableSearch } from "@/components/shadcn/table/data-table-search";
+import { useShowOnlyWatchlist } from "@/hooks/use-show-only-watchlist";
 import { buildComplianceDetailPath } from "@/lib/compliance/compliance-detail-url";
 import {
   buildWatchlistIndex,
@@ -20,7 +21,6 @@ import {
 import { buildComplianceContext } from "@/lib/lighthouse/context/contributions";
 import { getFlowById } from "@/lib/onboarding";
 import { createViewComplianceTourStepHandlers } from "@/lib/tours/view-compliance.tour";
-import { useComplianceWatchlistViewStore } from "@/store";
 import type { ComplianceOverviewData } from "@/types/compliance";
 import type { ComplianceCatalogEntry } from "@/types/compliance-watchlist";
 import { WATCHLIST_PIN_STATE } from "@/types/compliance-watchlist";
@@ -76,9 +76,7 @@ export const ComplianceOverviewGrid = ({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [searchTerm, setSearchTerm] = useState("");
-  const showOnlyWatchlist = useComplianceWatchlistViewStore(
-    (state) => state.showOnlyWatchlist,
-  );
+  const showOnlyWatchlist = useShowOnlyWatchlist();
 
   const filteredFrameworks = frameworks.filter((compliance) =>
     compliance.attributes.framework
@@ -121,11 +119,19 @@ export const ComplianceOverviewGrid = ({
 
   const resetSearch = () => {
     setSearchTerm("");
-    return frameworks.length > 0;
+    // Clearing the search does not bring the anchor back while the persisted
+    // watchlist filter is on and nothing is pinned: the grid renders the empty
+    // state instead, so the tour has to skip the step rather than wait for a
+    // selector that never mounts.
+    return filterToWatchlist ? pinnedTotal > 0 : frameworks.length > 0;
   };
 
   const openFirstFramework = () => {
-    const first = visibleFrameworks[0] ?? frameworks[0];
+    // The fallback covers a search that filtered every card away — never the
+    // watchlist filter, where opening a hidden framework would contradict the
+    // list the user is looking at.
+    const first =
+      visibleFrameworks[0] ?? (filterToWatchlist ? undefined : frameworks[0]);
     if (!first) return;
     router.push(
       buildComplianceDetailPath({

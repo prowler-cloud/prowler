@@ -4,7 +4,7 @@ import { WatchlistEmptyState } from "@/components/compliance/watchlist/watchlist
 import { ProviderTypeIcon } from "@/components/icons/providers-badge/provider-type-icon";
 import type { AccordionItemProps } from "@/components/shadcn/accordion/Accordion";
 import { Accordion } from "@/components/shadcn/accordion/Accordion";
-import { useComplianceWatchlistViewStore } from "@/store";
+import { useShowOnlyWatchlist } from "@/hooks/use-show-only-watchlist";
 import { WATCHLIST_PIN_STATE } from "@/types/compliance-watchlist";
 import {
   type KnownProviderType,
@@ -58,9 +58,7 @@ export const CrossAccountFrameworkList = ({
   canManageWatchlist,
   watchlistEnabled,
 }: CrossAccountFrameworkListProps) => {
-  const showOnlyWatchlist = useComplianceWatchlistViewStore(
-    (state) => state.showOnlyWatchlist,
-  );
+  const showOnlyWatchlist = useShowOnlyWatchlist();
 
   const renderCard = (entry: CrossAccountListEntry) => (
     <CrossAccountFrameworkCard
@@ -70,8 +68,15 @@ export const CrossAccountFrameworkList = ({
       version={entry.version}
       providerType={entry.providerType}
       accountCount={entry.accountCount}
+      // Left undefined without a catalog so the card hides the pin entirely:
+      // every state it could report there would be made up, and UNPINNED is
+      // itself truthy, so passing it renders a control backed by nothing.
       watchlistState={
-        entry.pinned ? WATCHLIST_PIN_STATE.PINNED : WATCHLIST_PIN_STATE.UNPINNED
+        watchlistEnabled
+          ? entry.pinned
+            ? WATCHLIST_PIN_STATE.PINNED
+            : WATCHLIST_PIN_STATE.UNPINNED
+          : undefined
       }
       watchlistEntryId={entry.watchlistEntryId}
       canManageWatchlist={canManageWatchlist}

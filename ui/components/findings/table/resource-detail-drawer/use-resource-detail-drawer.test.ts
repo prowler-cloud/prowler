@@ -992,6 +992,26 @@ describe("useResourceDetailDrawer — other findings filtering", () => {
       ).toBe("dora_2022_2554");
     });
 
+    it("falls back to the check's own framework names when the endpoint cannot answer", async () => {
+      // Cloud, but the request failed. `unavailable` is what tells this apart
+      // from a genuinely empty watchlist, which must leave the strip empty.
+      getFindingComplianceFrameworksMock.mockResolvedValue({
+        frameworks: [],
+        unavailable: true,
+      });
+
+      const result = await openWithFinding({
+        complianceFrameworks: ["CIS", "SOC2"],
+      });
+
+      expect(getFindingComplianceFrameworksMock).toHaveBeenCalled();
+      expect(
+        result.current.checkMeta?.complianceFrameworks.map(
+          (entry) => entry.framework,
+        ),
+      ).toEqual(["CIS", "SOC2"]);
+    });
+
     it("falls back to the check's own framework names off Cloud", async () => {
       // No request is made at all there — the endpoint does not exist — but the
       // strip must keep showing what the finding already carries.

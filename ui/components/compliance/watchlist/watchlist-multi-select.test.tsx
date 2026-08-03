@@ -1,8 +1,15 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { MAX_WATCHLIST_BULK } from "@/lib/compliance/watchlist";
 import type { ComplianceCatalogEntry } from "@/types/compliance-watchlist";
 import {
   UNIVERSAL_PROVIDER_TYPE,
@@ -248,6 +255,33 @@ describe("WatchlistMultiSelect editing", () => {
     );
     expect(screen.getByRole("combobox")).toHaveTextContent(
       "Watchlist · 1 pinned",
+    );
+  });
+
+  it("refuses a batch over the API's limit instead of sending it", async () => {
+    // The API rejects an oversized batch with `bulk_limit_exceeded`, so the
+    // guard here is what keeps the buffer from claiming changes that were
+    // never written.
+    const oversized = Array.from({ length: MAX_WATCHLIST_BULK + 1 }, (_, i) =>
+      entry({ complianceId: `framework_${i}`, providerType: "aws" }),
+    );
+    const user = userEvent.setup();
+    render(<WatchlistMultiSelect entries={oversized} />);
+
+    await user.click(screen.getByRole("button", { name: "open-dropdown" }));
+    screen.getAllByRole("option").forEach((option) => fireEvent.click(option));
+    await user.click(screen.getByRole("button", { name: "close-dropdown" }));
+
+    await waitFor(() =>
+      expect(toastMock).toHaveBeenCalledWith(
+        expect.objectContaining({ variant: "destructive" }),
+      ),
+    );
+    expect(bulkUpdateComplianceWatchlistMock).not.toHaveBeenCalled();
+    // The buffer is reset to the server state rather than left holding a batch
+    // nothing will ever apply.
+    expect(screen.getByRole("combobox")).toHaveTextContent(
+      "Watchlist · none pinned",
     );
   });
 

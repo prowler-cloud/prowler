@@ -1,5 +1,3 @@
-"use client";
-
 import { Pin } from "lucide-react";
 
 import { Alert, AlertDescription } from "@/components/shadcn/alert";

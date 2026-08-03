@@ -2,10 +2,16 @@ import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import type { TourStepHandlers } from "@/lib/tours/tour-types";
+import type { ViewComplianceTourTarget } from "@/lib/tours/view-compliance.tour";
+import { VIEW_COMPLIANCE_TOUR_TARGETS } from "@/lib/tours/view-compliance.tour";
 import { useComplianceWatchlistViewStore } from "@/store/compliance/store";
 import type { ComplianceOverviewData } from "@/types/compliance";
 import type { ComplianceCatalogEntry } from "@/types/compliance-watchlist";
-import { WATCHLIST_SCOPE } from "@/types/compliance-watchlist";
+import {
+  UNIVERSAL_PROVIDER_TYPE,
+  WATCHLIST_SCOPE,
+} from "@/types/compliance-watchlist";
 
 import { ComplianceOverviewGrid } from "./compliance-overview-grid";
 
@@ -19,8 +25,25 @@ vi.mock("@/components/lighthouse/context-contributor", () => ({
   LighthouseContextContributor: () => null,
 }));
 
+type ViewComplianceStepHandlers = {
+  [K in ViewComplianceTourTarget]?: TourStepHandlers<ViewComplianceTourTarget>;
+};
+
+// Captured so the tour's own step handlers can be exercised: the trigger is a
+// driver.js host, and the handlers are the only part of it this grid owns.
+const capturedStepHandlers = vi.hoisted(() => ({
+  current: {} as ViewComplianceStepHandlers,
+}));
+
 vi.mock("@/components/onboarding", () => ({
-  OnboardingTrigger: () => null,
+  OnboardingTrigger: ({
+    stepHandlers,
+  }: {
+    stepHandlers: ViewComplianceStepHandlers;
+  }) => {
+    capturedStepHandlers.current = stepHandlers;
+    return null;
+  },
   PageReady: () => null,
 }));
 
@@ -235,5 +258,96 @@ describe("ComplianceOverviewGrid with an empty watchlist", () => {
       screen.queryByText(/no frameworks pinned yet/i),
     ).not.toBeInTheDocument();
     expect(screen.getByTestId("card-CIS")).toBeInTheDocument();
+  });
+});
+
+describe("ComplianceOverviewGrid with a universal framework", () => {
+  // The catalog keys a universal framework under `*`, while this per-scan grid
+  // only knows the scan's own provider type — the wildcard fallback is what
+  // makes the two agree.
+  const universalEntries = [
+    {
+      ...catalogEntry("cis_controls_8.1", true),
+      id: `${UNIVERSAL_PROVIDER_TYPE}:cis_controls_8.1`,
+      providerType: UNIVERSAL_PROVIDER_TYPE,
+      scope: WATCHLIST_SCOPE.UNIVERSAL,
+      providerTypes: ["aws", "azure"],
+    },
+    catalogEntry("gdpr_aws", false),
+  ];
+  const universalFrameworks = [
+    framework("cis_controls_8.1", "CIS-Controls"),
+    framework("gdpr_aws", "GDPR"),
+  ];
+
+  it("reads the pinned state of a universal framework from the wildcard row", () => {
+    render(
+      <ComplianceOverviewGrid
+        frameworks={universalFrameworks}
+        scanId="scan-1"
+        catalogEntries={universalEntries}
+        providerType="aws"
+        canManageWatchlist
+      />,
+    );
+
+    const toggles = screen.getAllByRole("button", { name: "Watchlist" });
+    expect(toggles).toHaveLength(2);
+    expect(toggles[0]).toHaveAttribute("aria-pressed", "true");
+    expect(toggles[1]).toHaveAttribute("aria-pressed", "false");
+  });
+
+  it("keeps the universal framework under the filter", () => {
+    useComplianceWatchlistViewStore.setState({ showOnlyWatchlist: true });
+
+    render(
+      <ComplianceOverviewGrid
+        frameworks={universalFrameworks}
+        scanId="scan-1"
+        catalogEntries={universalEntries}
+        providerType="aws"
+      />,
+    );
+
+    expect(screen.getByTestId("card-CIS-Controls")).toBeInTheDocument();
+    expect(screen.queryByTestId("card-GDPR")).not.toBeInTheDocument();
+  });
+});
+
+describe("ComplianceOverviewGrid tour anchor", () => {
+  const searchHandlers = () =>
+    capturedStepHandlers.current[VIEW_COMPLIANCE_TOUR_TARGETS.SEARCH];
+
+  it("waits for the framework card when one will render", async () => {
+    const waitForStep = vi
+      .fn()
+      .mockResolvedValue(document.createElement("div"));
+
+    renderGrid();
+    await searchHandlers()?.onNext?.({ waitForStep });
+
+    expect(waitForStep).toHaveBeenCalledWith("frameworks");
+  });
+
+  it("skips the wait when the persisted filter leaves no card to anchor to", async () => {
+    // The filter survives reloads, so the tour can start on a grid that renders
+    // the empty state instead of a card — and waiting for an anchor that never
+    // mounts would hang it there.
+    useComplianceWatchlistViewStore.setState({ showOnlyWatchlist: true });
+    const waitForStep = vi
+      .fn()
+      .mockResolvedValue(document.createElement("div"));
+
+    renderGrid({
+      catalogEntries: [
+        catalogEntry("cis_1.4_aws", false),
+        catalogEntry("gdpr_aws", false),
+        catalogEntry("iso27001_aws", false),
+      ],
+      providerType: "aws",
+    });
+    await searchHandlers()?.onNext?.({ waitForStep });
+
+    expect(waitForStep).not.toHaveBeenCalled();
   });
 });

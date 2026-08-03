@@ -39,26 +39,53 @@ export const EMPTY_WATCHLIST_CONTEXT: ComplianceWatchlistContext = {
  * bar's controls, the cross-provider grid and the cross-account list — share
  * one catalog instead of fetching it once each. The catalog is paginated at
  * 100, and every page re-runs the whole server-side roll-up, so the duplicates
- * were not free. Deduplication is per argument list: call it with no arguments
- * unless a surface genuinely needs a narrowed catalog.
+ * were not free. `cache()` keys on argument identity, so the memoized function
+ * takes the normalized provider types as a single string: two surfaces asking
+ * for the same narrowed catalog would otherwise pass two distinct objects and
+ * miss each other's entry.
+ *
+ * Never throws. `getComplianceCatalog` already degrades to an empty catalog,
+ * and `auth()` is contained the same way, because a session lookup that
+ * rejects must cost the page its watchlist affordances, not its compliance
+ * data.
  */
-export const loadComplianceWatchlistContext = cache(
-  async ({
-    providerTypes,
-  }: {
-    providerTypes?: string[];
-  } = {}): Promise<ComplianceWatchlistContext> => {
-    if (!isCloud()) return EMPTY_WATCHLIST_CONTEXT;
+const loadContextForKey = cache(
+  async (providerTypesKey: string): Promise<ComplianceWatchlistContext> => {
+    try {
+      const providerTypes = providerTypesKey
+        ? providerTypesKey.split(",")
+        : undefined;
 
-    const [catalog, session] = await Promise.all([
-      getComplianceCatalog({ providerTypes }),
-      auth(),
-    ]);
+      const [catalog, session] = await Promise.all([
+        getComplianceCatalog({ providerTypes }),
+        auth(),
+      ]);
 
-    return {
-      entries: catalog.entries,
-      eligibleProviderTypes: catalog.meta.eligibleProviderTypes,
-      canManage: Boolean(session?.user?.permissions?.manage_scans),
-    };
+      return {
+        entries: catalog.entries,
+        eligibleProviderTypes: catalog.meta.eligibleProviderTypes,
+        canManage: Boolean(session?.user?.permissions?.manage_scans),
+      };
+    } catch (error) {
+      console.error("Error loading the compliance watchlist context:", error);
+      return EMPTY_WATCHLIST_CONTEXT;
+    }
   },
 );
+
+/** Sorted and deduplicated so two surfaces that ask for the same provider
+ *  types in a different order still share one cache entry. */
+const buildProviderTypesKey = (providerTypes?: string[]): string =>
+  providerTypes && providerTypes.length > 0
+    ? Array.from(new Set(providerTypes)).sort().join(",")
+    : "";
+
+export const loadComplianceWatchlistContext = ({
+  providerTypes,
+}: {
+  providerTypes?: string[];
+} = {}): Promise<ComplianceWatchlistContext> => {
+  if (!isCloud()) return Promise.resolve(EMPTY_WATCHLIST_CONTEXT);
+
+  return loadContextForKey(buildProviderTypesKey(providerTypes));
+};

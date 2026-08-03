@@ -14,8 +14,9 @@ import {
 
 export interface UniversalWatchlistState {
   state: WatchlistPinState;
-  /** The pair a toggle mutates. Exactly one — or none when the tenant has no
-   *  compatible provider type onboarded, which makes the card unpinnable. */
+  /** The pair a toggle mutates. Exactly one — or none when the card is
+   *  unpinned and the tenant has no compatible provider type onboarded, which
+   *  makes it unpinnable. */
   targets: ComplianceWatchlistTarget[];
   /** Onboarded provider types the card actually covers, for the caller's
    *  "covers N provider types" copy. */
@@ -69,11 +70,15 @@ export const resolveUniversalWatchlistState = ({
   // reporting UNPINNED made the card contradict the bulk modal, which reads the
   // same catalog and still shows it ticked. `eligibleCount` decides whether the
   // framework can be pinned, never what it currently is.
+  const pinned = isFrameworkPinned(catalogIndex, target);
+
   return {
-    state: isFrameworkPinned(catalogIndex, target)
-      ? WATCHLIST_PIN_STATE.PINNED
-      : WATCHLIST_PIN_STATE.UNPINNED,
-    targets: eligibleCount === 0 ? [] : [target],
+    state: pinned ? WATCHLIST_PIN_STATE.PINNED : WATCHLIST_PIN_STATE.UNPINNED,
+    // A pinned card keeps its target even with nothing eligible left, or the
+    // caller would hide the only control that can unpin it and the row would
+    // outlive every provider it covered. Empty targets mean "not pinnable",
+    // which is only true while the card is also unpinned.
+    targets: eligibleCount === 0 && !pinned ? [] : [target],
     eligibleCount,
     entryId: resolveWatchlistEntryId(catalogIndex, target),
   };

@@ -90,6 +90,20 @@ describe("resolveUniversalWatchlistState", () => {
     expect(result.eligibleCount).toBe(0);
   });
 
+  it("keeps a pinned card removable after the last compatible type is offboarded", () => {
+    // Zero eligibility means "cannot be pinned", not "cannot be unpinned":
+    // dropping the target here left the row pinned with no control able to
+    // clear it, because the caller hides the toggle on an empty target list.
+    const result = resolve([universalEntry(true)], []);
+
+    expect(result.state).toBe(WATCHLIST_PIN_STATE.PINNED);
+    expect(result.eligibleCount).toBe(0);
+    expect(result.targets).toEqual([
+      { complianceId: COMPLIANCE_ID, providerType: UNIVERSAL_PROVIDER_TYPE },
+    ]);
+    expect(result.entryId).toBe("entry-universal");
+  });
+
   it("treats a framework missing from the catalog as unpinned", () => {
     const result = resolve([], ["aws"]);
 

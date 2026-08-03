@@ -1383,6 +1383,70 @@ describe("ResourceDetailDrawerContent — compliance navigation", () => {
       "noopener,noreferrer",
     );
   });
+
+  it("should fall back to the framework's name for the URL, as the label does", async () => {
+    // Given: a framework the SDK exposes no metadata for, so `framework` is
+    // empty. It is a path segment, so without the same fallback the label uses
+    // the destination collapses to `/compliance/`.
+    const user = userEvent.setup();
+    vi.stubGlobal("open", mockWindowOpen);
+    const findingWithScan = {
+      ...mockFinding,
+      scan: {
+        id: "scan-from-finding",
+        name: "Nightly scan",
+        trigger: "manual",
+        state: "completed",
+        uniqueResourceCount: 25,
+        progress: 100,
+        duration: 300,
+        startedAt: "2026-03-30T10:00:00Z",
+        completedAt: "2026-03-30T10:05:00Z",
+        insertedAt: "2026-03-30T09:59:00Z",
+        scheduledAt: null,
+      },
+    };
+
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={{
+          ...mockCheckMeta,
+          complianceFrameworks: [
+            complianceFramework({
+              id: "aws:mitre_attack_aws",
+              complianceId: "mitre_attack_aws",
+              framework: "",
+              name: "MITRE-ATTACK",
+              version: "1.0",
+            }),
+          ],
+        }}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={findingWithScan}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // When
+    await user.click(
+      screen.getByRole("button", {
+        name: "Open MITRE-ATTACK 1.0 compliance details",
+      }),
+    );
+
+    // Then
+    expect(mockWindowOpen).toHaveBeenCalledWith(
+      "/compliance/MITRE-ATTACK?complianceId=mitre_attack_aws&version=1.0&scanId=scan-from-finding",
+      "_blank",
+      "noopener,noreferrer",
+    );
+  });
 });
 
 describe("ResourceDetailDrawerContent — other findings mute refresh", () => {

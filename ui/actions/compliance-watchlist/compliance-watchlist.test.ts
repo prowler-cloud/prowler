@@ -70,9 +70,10 @@ const lastFetchUrl = (): URL => {
   return new URL(String(call[0]));
 };
 
-const lastFetchBody = (): any => {
+const lastFetchBody = (): unknown => {
   const call = fetchMock.mock.calls.at(-1);
-  return JSON.parse(String(call![1].body));
+  if (!call) throw new Error("fetch was not called");
+  return JSON.parse(String(call[1].body));
 };
 
 beforeEach(() => {
@@ -169,6 +170,59 @@ describe("getComplianceCatalog", () => {
     const catalog = await getComplianceCatalog();
 
     expect(catalog.entries).toEqual([]);
+  });
+
+  it("keeps the rest of the catalog when a single page fails", async () => {
+    fetchMock
+      .mockResolvedValueOnce(
+        jsonResponse(catalogPage("cis_1.4_aws", { page: 1, pages: 3 })),
+      )
+      .mockRejectedValueOnce(new Error("timed out"))
+      .mockResolvedValueOnce(
+        jsonResponse(catalogPage("iso27001_aws", { page: 3, pages: 3 })),
+      );
+
+    const catalog = await getComplianceCatalog();
+
+    expect(catalog.entries.map((entry) => entry.complianceId)).toEqual([
+      "cis_1.4_aws",
+      "iso27001_aws",
+    ]);
+  });
+
+  it("bounds how many pages it requests at once", async () => {
+    // A page-1 response reporting a large page count would otherwise open one
+    // socket per page against an API that re-runs the whole roll-up for each.
+    let inFlight = 0;
+    let peak = 0;
+    fetchMock.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          inFlight += 1;
+          peak = Math.max(peak, inFlight);
+          setTimeout(() => {
+            inFlight -= 1;
+            resolve(
+              jsonResponse(catalogPage("cis_1.4_aws", { page: 1, pages: 40 })),
+            );
+          }, 0);
+        }),
+    );
+
+    await getComplianceCatalog();
+
+    expect(fetchMock).toHaveBeenCalledTimes(40);
+    expect(peak).toBeLessThanOrEqual(5);
+  });
+
+  it("bounds every request with a timeout", async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse(catalogPage("cis_1.4_aws", { page: 1, pages: 1 })),
+    );
+
+    await getComplianceCatalog();
+
+    expect(fetchMock.mock.calls.at(-1)?.[1].signal).toBeInstanceOf(AbortSignal);
   });
 });
 

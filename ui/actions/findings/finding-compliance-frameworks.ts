@@ -10,6 +10,8 @@ import type {
   FindingComplianceFrameworksResult,
 } from "./finding-compliance-frameworks.types";
 
+const REQUEST_TIMEOUT_MS = 10_000;
+
 /**
  * The compliance frameworks whose requirements include this finding's check.
  *
@@ -45,7 +47,13 @@ export const getFindingComplianceFrameworks = async (
       url.searchParams.set(IN_WATCHLIST_FILTER_KEY, "true");
     }
 
-    const response = await fetch(url.toString(), { headers });
+    // The drawer awaits this before it can paint the compliance strip, so a
+    // stalled API has to surface as `unavailable` — the fallback path — rather
+    // than leaving the strip pending for as long as the socket stays open.
+    const response = await fetch(url.toString(), {
+      headers,
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    });
     if (!response.ok) {
       return { frameworks: [], unavailable: true };
     }

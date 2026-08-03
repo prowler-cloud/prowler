@@ -1,7 +1,7 @@
 "use client";
 
 import { WatchlistEmptyState } from "@/components/compliance/watchlist/watchlist-empty-state";
-import { useComplianceWatchlistViewStore } from "@/store";
+import { useShowOnlyWatchlist } from "@/hooks/use-show-only-watchlist";
 import { WATCHLIST_PIN_STATE } from "@/types/compliance-watchlist";
 
 import type { UniversalWatchlistState } from "../_lib/universal-watchlist";
@@ -41,9 +41,7 @@ export const CrossProviderFrameworkGrid = ({
   canManageWatchlist,
   watchlistEnabled,
 }: CrossProviderFrameworkGridProps) => {
-  const showOnlyWatchlist = useComplianceWatchlistViewStore(
-    (state) => state.showOnlyWatchlist,
-  );
+  const showOnlyWatchlist = useShowOnlyWatchlist();
 
   const filterToWatchlist = watchlistEnabled && showOnlyWatchlist;
   const isPinned = (card: CrossProviderCard) =>
