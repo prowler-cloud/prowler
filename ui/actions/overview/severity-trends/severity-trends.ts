@@ -39,7 +39,13 @@ const getFindingsSeverityTrends = async ({
     const apiResponse: ApiResult<FindingsSeverityOverTimeResponse> | undefined =
       await handleApiResponse(response);
 
-    if (!apiResponse?.data || !Array.isArray(apiResponse.data)) {
+    // 4xx resolves a truthy {error, status} shape — surface it as an error
+    // instead of misreporting the trend as empty.
+    if (!apiResponse || "error" in apiResponse) {
+      return { status: "error" };
+    }
+
+    if (!apiResponse.data || !Array.isArray(apiResponse.data)) {
       return { status: "empty" };
     }
 
