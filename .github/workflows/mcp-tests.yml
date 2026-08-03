@@ -43,6 +43,8 @@ jobs:
           egress-policy: block
           # hub.prowler.com and raw.githubusercontent.com are deliberately absent:
           # the suite mocks every outbound call, so a real one must fail the job.
+          # The sentry.io entry is not the test suite: the Codecov uploader sends
+          # its own telemetry there, so api-tests.yml and sdk-tests.yml allow it too.
           allowed-endpoints: >
             github.com:443
             pypi.org:443
@@ -50,6 +52,7 @@ jobs:
             cli.codecov.io:443
             keybase.io:443
             ingest.codecov.io:443
+            o26192.ingest.us.sentry.io:443
             storage.googleapis.com:443
             api.github.com:443
 
