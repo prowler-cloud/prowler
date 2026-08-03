@@ -23,6 +23,7 @@ from api.attack_paths import (
 )
 from api.compliance import get_compliance_frameworks
 from api.db_router import MainRouter
+from api.db_utils import rls_transaction
 from api.models import (
     AttackSurfaceOverview,
     ComplianceOverviewSummary,
@@ -13497,6 +13498,73 @@ class TestIntegrationViewSet:
             assert any(d.get("type") == expected_type for d in included_data), (
                 f"Expected type '{expected_type}' not found in included data"
             )
+
+    # Serializing a Jira integration reads `configuration` to add the domain from the
+    # credentials, and a sparse fieldset can leave that field out of the representation
+
+    def test_integrations_list_sparse_fields_without_configuration(
+        self, authenticated_client, jira_integration_fixture
+    ):
+        response = authenticated_client.get(
+            reverse("integration-list"),
+            {"fields[integrations]": "enabled,integration_type"},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        attributes = response.json()["data"][0]["attributes"]
+        assert sorted(attributes.keys()) == ["enabled", "integration_type"]
+
+    def test_integrations_retrieve_sparse_fields_without_configuration(
+        self, authenticated_client, jira_integration_fixture
+    ):
+        response = authenticated_client.get(
+            reverse("integration-detail", kwargs={"pk": jira_integration_fixture.id}),
+            {"fields[integrations]": "enabled,integration_type"},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert "configuration" not in response.json()["data"]["attributes"]
+
+    def test_integrations_partial_update_sparse_fields_without_configuration(
+        self, authenticated_client, jira_integration_fixture
+    ):
+        data = {
+            "data": {
+                "type": "integrations",
+                "id": str(jira_integration_fixture.id),
+                "attributes": {"enabled": False},
+            }
+        }
+
+        url = reverse("integration-detail", kwargs={"pk": jira_integration_fixture.id})
+        response = authenticated_client.patch(
+            f"{url}?fields[integrations]=enabled,integration_type",
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert "configuration" not in response.json()["data"]["attributes"]
+        with rls_transaction(str(jira_integration_fixture.tenant_id)):
+            jira_integration_fixture.refresh_from_db()
+        assert jira_integration_fixture.enabled is False
+        # Omitting `configuration` from the fieldset must not rewrite it, and the
+        # serialized `domain` must not leak into the stored value
+        assert jira_integration_fixture.configuration == {
+            "projects": {"TEST": "Test project"}
+        }
+
+    def test_integrations_retrieve_jira_keeps_domain_in_configuration(
+        self, authenticated_client, jira_integration_fixture
+    ):
+        response = authenticated_client.get(
+            reverse("integration-detail", kwargs={"pk": jira_integration_fixture.id})
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        configuration = response.json()["data"]["attributes"]["configuration"]
+        assert configuration["domain"] == "test"
+        assert configuration["projects"] == {"TEST": "Test project"}
 
     @pytest.mark.parametrize(
         "integration_type, configuration, credentials",
