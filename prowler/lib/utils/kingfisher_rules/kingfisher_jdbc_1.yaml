@@ -28,24 +28,33 @@ rules:
     pattern: |
       (?xi)
       (
-        jdbc:
-        [a-z][a-z0-9+.-]{1,32}
-        (?:[:][a-z0-9+.-]{1,32})*
-        :
         (?:
-            # URL userinfo, anchored to the `//` that opens the authority. Both
-            # halves also exclude `?&;#` so neither can reach into the query
-            # string or the property list looking for an `@`.
-            // [^\s"'<>/@:?&;\#]{1,64} : [^\s"'<>/@?&;\#]{1,64} @
-            # Oracle TNS userinfo, `jdbc:oracle:<drivertype>:user/password@db`.
-            # Anchored too: `<drivertype>` is alphanumeric, so the scheme
-            # repetition above already consumes it.
-          | [^\s"'<>/@:?&;\#]{1,64} / [^\s"'<>/@?&;\#]{1,64} @
-            # Password as a query parameter or a `;`-delimited property. Only
-            # this one keeps a leading `.*?`, because its match starts at the
-            # delimiter before the keyword, anywhere in the string.
-          | [^\s"'<>,(){}\[\]]{0,384}?
-            [?&;] [ \t]* (?:password|passwd|pwd|secret) [ \t]* = [ \t]* [^\s"'<>&;]{1,128}
+          # Credential forms that any JDBC subprotocol can carry.
+          jdbc:
+          [a-z][a-z0-9+.-]{1,32}
+          (?:[:][a-z0-9+.-]{1,32})*
+          :
+          (?:
+              # URL userinfo, anchored to the `//` that opens the authority.
+              # Both halves also exclude `?&;#` so neither can reach into the
+              # query string or the property list looking for an `@`.
+              // [^\s"'<>/@:?&;\#]{1,64} : [^\s"'<>/@?&;\#]{1,64} @
+              # Password as a query parameter or a `;`-delimited property. Only
+              # this one keeps a leading `.*?`, because its match starts at the
+              # delimiter before the keyword, anywhere in the string.
+            | [^\s"'<>,(){}\[\]]{0,384}?
+              [?&;] [ \t]* (?:password|passwd|pwd|secret) [ \t]* = [ \t]* [^\s"'<>&;]{1,128}
+          )
+          # Oracle TNS userinfo, `jdbc:oracle:<drivertype>:user/password@db`.
+          # Spelled out as its own top-level alternative rather than as a third
+          # branch above, because `user/password@` is a credential only after an
+          # Oracle prefix: every other subprotocol reads `a/b@c` as part of a
+          # path or a host, so sharing the branch reported credential-free
+          # strings such as `jdbc:derby:team/ops@corp.internal`.
+        | jdbc:oracle:
+          [a-z0-9+.-]{1,32}
+          :
+          [^\s"'<>/@:?&;\#]{1,64} / [^\s"'<>/@?&;\#]{1,64} @
         )
         [^\s"'<>,(){}\[\]]{0,192}
       )

@@ -347,6 +347,12 @@ class Test_detect_secrets_scan_batch_jdbc:
             "jdbc:mysql://db.internal:3306?path=a:b/c@corp.internal",  # trufflehog:ignore
             # And against a `;`-delimited property list.
             "jdbc:sqlserver://sql.corp.internal:1433;user=sa@corp.internal",  # trufflehog:ignore
+            # `user/password@` is Oracle TNS syntax and a credential only after
+            # an Oracle prefix. Every other subprotocol reads `a/b@c` as part of
+            # a path or a host, so the alternative must not apply to them.
+            "jdbc:derby:team/ops@corp.internal",  # trufflehog:ignore
+            "jdbc:sqlite:team/ops@corp.internal",  # trufflehog:ignore
+            "jdbc:h2:file:team/ops@corp.internal",  # trufflehog:ignore
             # The exact payload shape of a CloudFormation Output
             # ("OutputKey:OutputValue"), which is how this was reported.
             "DatabaseUrl:jdbc:postgresql://mydb.eu-west-1.rds.amazonaws.com:5432/appdb",  # trufflehog:ignore
@@ -367,8 +373,9 @@ class Test_detect_secrets_scan_batch_jdbc:
             # Password as a semicolon-delimited property.
             "jdbc:sqlserver://sql.corp.internal:1433;databaseName=inv;user=sa;password=S3cr3t99",  # trufflehog:ignore
             "jdbc:sqlserver://sql.corp.internal:1433;Password=Vb73msQr18;user=sa",  # trufflehog:ignore
-            # Oracle TNS userinfo.
+            # Oracle TNS userinfo, for each driver type.
             "jdbc:oracle:thin:scott/tiger99@ora.corp.internal:1521:ORCL",  # trufflehog:ignore
+            "jdbc:oracle:oci:scott/tiger99@ora.corp.internal:1521:ORCL",  # trufflehog:ignore
             # Two-character scheme, which the built-in pattern could not match.
             "jdbc:h2:file:./data/store;CIPHER=AES;PASSWORD=Nf62kdTp07",  # trufflehog:ignore
         ],
