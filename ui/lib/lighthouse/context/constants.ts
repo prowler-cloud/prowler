@@ -57,5 +57,9 @@ export const LIGHTHOUSE_PAGE_ID = {
   SERVICES: "services",
   WORKLOADS: "workloads",
   MUTELIST: "mutelist",
+  ROLES: "roles",
+  USERS: "users",
+  INVITATIONS: "invitations",
+  INTEGRATIONS: "integrations",
   OTHER: "other",
 } as const;
