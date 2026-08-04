@@ -45,12 +45,7 @@ dependencies = [
   "gunicorn==26.0.0",
   "uvloop==0.22.1",
   "lxml==6.1.0",
-<<<<<<< HEAD
   "prowler @ git+https://github.com/prowler-cloud/prowler.git@v5.37",
-=======
-  # Integration branch while PROWLER-2291 is in flight; revert to @master at the final merge.
-  "prowler @ git+https://github.com/prowler-cloud/prowler.git@integration/PROWLER-2291",
->>>>>>> 8ebb4a1ee (fix(container): clear the Private Cloud image vulnerabilities (PROWLER-2291) (#12258))
   "psycopg2-binary==2.9.9",
   "pytest-celery[redis] (==1.3.0)",
   "sentry-sdk[django] (==2.56.0)",
@@ -97,8 +92,6 @@ extend-select = [
 
 [tool.uv]
 # Transitive pins matching master to avoid silent drift; bump deliberately.
-# workos and pyopenssl run ahead of master: the versions master pins cap cryptography
-# below 48, so both were bumped to versions that allow it (PROWLER-2310).
 constraint-dependencies = [
   "about-time==4.2.1",
   "adal==1.2.7",
@@ -135,7 +128,7 @@ constraint-dependencies = [
   "alibabacloud-sls20201230==5.9.0",
   "alibabacloud-sts20150401==1.1.6",
   "alibabacloud-tea==0.4.3",
-  "alibabacloud-tea-openapi==0.4.5",
+  "alibabacloud-tea-openapi==0.4.4",
   "alibabacloud-tea-util==0.3.14",
   "alibabacloud-tea-xml==0.0.3",
   "alibabacloud-vpc20160428==6.13.0",
@@ -217,9 +210,9 @@ constraint-dependencies = [
   "coverage==7.5.4",
   "cron-descriptor==1.4.5",
   "crowdstrike-falconpy==1.6.0",
-  "cryptography==48.0.1",
+  "cryptography==46.0.7",
   "cycler==0.12.1",
-  "darabonba-core==1.0.8",
+  "darabonba-core==1.0.5",
   "dash==3.1.1",
   "dash-bootstrap-components==2.0.3",
   "debugpy==1.8.20",
@@ -284,7 +277,7 @@ constraint-dependencies = [
   "h2==4.3.0",
   "hpack==4.1.0",
   "httpcore==1.0.9",
-  "httplib2==0.32.0",
+  "httplib2==0.31.2",
   "httpx==0.28.1",
   "humanfriendly==10.0",
   "hyperframe==6.1.0",
@@ -344,7 +337,7 @@ constraint-dependencies = [
   "nltk==3.9.4",
   "numpy==2.2.6",
   "oauthlib==3.3.1",
-  "oci==2.183.0",
+  "oci==2.169.0",
   "openai==1.109.1",
   "openstacksdk==4.2.0",
   "opentelemetry-api==1.39.1",
@@ -356,7 +349,7 @@ constraint-dependencies = [
   "pagerduty==6.1.0",
   "pandas==2.2.3",
   "pbr==7.0.3",
-  "pillow==12.3.0",
+  "pillow==12.2.0",
   "pkginfo==1.12.1.2",
   "platformdirs==4.5.1",
   "plotly==6.5.2",
@@ -372,8 +365,8 @@ constraint-dependencies = [
   "psycopg2-binary==2.9.9",
   "py-deviceid==0.1.1",
   "py-iam-expand==0.3.0",
-  "py-ocsf-models==0.10.0",
-  "pyasn1==0.6.4",
+  "py-ocsf-models==0.8.1",
+  "pyasn1==0.6.3",
   "pyasn1-modules==0.4.2",
   "pycodestyle==2.14.0",
   "pycparser==3.0",
@@ -385,7 +378,7 @@ constraint-dependencies = [
   "pylint==3.2.5",
   "pymsalruntime==0.18.1",
   "pynacl==1.6.2",
-  "pyopenssl==26.2.0",
+  "pyopenssl==26.0.0",
   "pyparsing==3.3.2",
   "pyreadline3==3.5.4",
   "pysocks==1.7.1",
@@ -454,7 +447,7 @@ constraint-dependencies = [
   "wcwidth==0.5.3",
   "websocket-client==1.9.0",
   "werkzeug==3.1.7",
-  "workos==8.3.0",
+  "workos==6.0.8",
   "wrapt==1.17.3",
   "xlsxwriter==3.2.9",
   "xmlsec==1.3.17",
