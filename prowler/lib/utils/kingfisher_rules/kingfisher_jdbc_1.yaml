@@ -21,6 +21,10 @@ rules:
     # Only this and `examples` diverge from the built-in rule. The `{1,32}`
     # scheme quantifier (upstream uses `{2,32}`) also lets two-character schemes
     # such as `jdbc:h2:` match.
+    #
+    # `#` is escaped even inside character classes: under `(?x)` a bare one
+    # opens a comment there too, and Kingfisher then fails to compile the rule
+    # and aborts the whole scan.
     pattern: |
       (?xi)
       (
@@ -28,11 +32,20 @@ rules:
         [a-z][a-z0-9+.-]{1,32}
         (?:[:][a-z0-9+.-]{1,32})*
         :
-        [^\s"'<>,(){}\[\]]{0,384}?
         (?:
-            // [^\s"'<>/@:]{1,64} : [^\s"'<>/@]{1,64} @
-          | :  [^\s"'<>/@:]{1,64} /  [^\s"'<>/@]{1,64} @
-          | [?&;] [ \t]* (?:password|passwd|pwd|secret) [ \t]* = [ \t]* [^\s"'<>&;]{1,128}
+            # URL userinfo, anchored to the `//` that opens the authority. Both
+            # halves also exclude `?&;#` so neither can reach into the query
+            # string or the property list looking for an `@`.
+            // [^\s"'<>/@:?&;\#]{1,64} : [^\s"'<>/@?&;\#]{1,64} @
+            # Oracle TNS userinfo, `jdbc:oracle:<drivertype>:user/password@db`.
+            # Anchored too: `<drivertype>` is alphanumeric, so the scheme
+            # repetition above already consumes it.
+          | [^\s"'<>/@:?&;\#]{1,64} / [^\s"'<>/@?&;\#]{1,64} @
+            # Password as a query parameter or a `;`-delimited property. Only
+            # this one keeps a leading `.*?`, because its match starts at the
+            # delimiter before the keyword, anywhere in the string.
+          | [^\s"'<>,(){}\[\]]{0,384}?
+            [?&;] [ \t]* (?:password|passwd|pwd|secret) [ \t]* = [ \t]* [^\s"'<>&;]{1,128}
         )
         [^\s"'<>,(){}\[\]]{0,192}
       )

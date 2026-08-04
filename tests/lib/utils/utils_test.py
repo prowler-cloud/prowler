@@ -338,6 +338,15 @@ class Test_detect_secrets_scan_batch_jdbc:
             "jdbc:mysql://prod.internal:3306/inventory?user=admin",  # trufflehog:ignore
             # An empty password is not a credential.
             "jdbc:postgresql://pg.corp.internal/app?password=",  # trufflehog:ignore
+            # An `@` in the query string must not turn the host and port into
+            # `user:password`: without the userinfo alternative being anchored
+            # to `//`, `db.internal:3306?user=alice` reads as a credential.
+            "jdbc:mysql://db.internal:3306?user=alice@corp.internal",  # trufflehog:ignore
+            # The same backtrack against the `user/password@` alternative.
+            "jdbc:mysql://db.internal:3306?owner=team/ops@corp.internal",  # trufflehog:ignore
+            "jdbc:mysql://db.internal:3306?path=a:b/c@corp.internal",  # trufflehog:ignore
+            # And against a `;`-delimited property list.
+            "jdbc:sqlserver://sql.corp.internal:1433;user=sa@corp.internal",  # trufflehog:ignore
             # The exact payload shape of a CloudFormation Output
             # ("OutputKey:OutputValue"), which is how this was reported.
             "DatabaseUrl:jdbc:postgresql://mydb.eu-west-1.rds.amazonaws.com:5432/appdb",  # trufflehog:ignore
