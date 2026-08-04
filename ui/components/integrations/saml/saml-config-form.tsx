@@ -1,8 +1,9 @@
 "use client";
 
+import { PlusIcon, XIcon } from "lucide-react";
 import {
-  Dispatch,
-  SetStateAction,
+  type Dispatch,
+  type SetStateAction,
   useActionState,
   useEffect,
   useRef,
@@ -14,9 +15,14 @@ import { createSamlConfig, updateSamlConfig } from "@/actions/integrations";
 import { AddIcon } from "@/components/icons";
 import {
   Button,
+  Badge,
   Card,
   CardContent,
   CardHeader,
+  Field,
+  FieldError,
+  FieldLabel,
+  Input,
   useToast,
 } from "@/components/shadcn";
 import { CodeSnippet } from "@/components/shadcn/code-snippet/code-snippet";
@@ -24,6 +30,11 @@ import { CustomServerInput } from "@/components/shadcn/custom";
 import { CustomLink } from "@/components/shadcn/custom/custom-link";
 import { FormButtons } from "@/components/shadcn/form";
 import { useRuntimeConfig } from "@/hooks/use-runtime-config";
+import { isCloud } from "@/lib/shared/env";
+import { useCloudUpgradeStore } from "@/store";
+import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
+import { samlEmailDomainSchema } from "@/types/formSchemas";
+import type { SamlConfiguration } from "@/types/saml";
 
 const validateXMLContent = (
   xmlContent: string,
@@ -120,7 +131,7 @@ export const SamlConfigForm = ({
   samlConfig,
 }: {
   setIsOpen: Dispatch<SetStateAction<boolean>>;
-  samlConfig?: any;
+  samlConfig?: SamlConfiguration;
 }) => {
   const [state, formAction, isPending] = useActionState(
     samlConfig?.id ? updateSamlConfig : createSamlConfig,
@@ -129,6 +140,13 @@ export const SamlConfigForm = ({
   const [emailDomain, setEmailDomain] = useState(
     samlConfig?.attributes?.email_domain || "",
   );
+  const [additionalEmailDomains, setAdditionalEmailDomains] = useState(
+    samlConfig?.attributes?.additional_email_domains ?? [],
+  );
+  const [additionalDomainDraft, setAdditionalDomainDraft] = useState("");
+  const [additionalDomainsError, setAdditionalDomainsError] = useState<
+    string | null
+  >(null);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [clientErrors, setClientErrors] = useState<{
     email_domain?: string | null;
@@ -136,6 +154,49 @@ export const SamlConfigForm = ({
   }>({});
   const formRef = useRef<HTMLFormElement>(null);
   const { toast } = useToast();
+  const isCloudEnv = isCloud();
+  const openCloudUpgrade = useCloudUpgradeStore(
+    (storeState) => storeState.openCloudUpgrade,
+  );
+
+  const addAdditionalDomain = () => {
+    const validation = samlEmailDomainSchema.safeParse(additionalDomainDraft);
+    if (!validation.success) {
+      setAdditionalDomainsError(validation.error.issues[0]?.message ?? null);
+      return;
+    }
+
+    const normalizedDomain = validation.data;
+    if (normalizedDomain === emailDomain.trim().toLowerCase()) {
+      setAdditionalDomainsError(
+        "An additional domain must differ from the primary email domain.",
+      );
+      return;
+    }
+
+    if (additionalEmailDomains.includes(normalizedDomain)) {
+      setAdditionalDomainsError("This domain has already been added.");
+      return;
+    }
+
+    if (additionalEmailDomains.length >= 19) {
+      setAdditionalDomainsError(
+        "A SAML configuration supports up to 19 additional email domains.",
+      );
+      return;
+    }
+
+    setAdditionalEmailDomains([...additionalEmailDomains, normalizedDomain]);
+    setAdditionalDomainDraft("");
+    setAdditionalDomainsError(null);
+  };
+
+  const removeAdditionalDomain = (domainToRemove: string) => {
+    setAdditionalEmailDomains(
+      additionalEmailDomains.filter((domain) => domain !== domainToRemove),
+    );
+    setAdditionalDomainsError(null);
+  };
 
   // Client-side validation function
   const validateFields = (email: string, hasFile: boolean) => {
@@ -284,8 +345,8 @@ export const SamlConfigForm = ({
       <input type="hidden" name="id" value={samlConfig?.id || ""} />
       <CustomServerInput
         name="email_domain"
-        label="Email Domain"
-        placeholder="Enter your email domain (e.g., company.com)"
+        label="Primary Email Domain"
+        placeholder="Enter your primary email domain (e.g., company.com)"
         labelPlacement="outside"
         variant="bordered"
         isRequired={true}
@@ -305,6 +366,118 @@ export const SamlConfigForm = ({
           setEmailDomain(newValue);
         }}
       />
+
+      <Field>
+        <div className="flex items-center justify-between gap-2">
+          <FieldLabel
+            htmlFor={isCloudEnv ? "additional_email_domain" : undefined}
+          >
+            Additional Email Domains
+          </FieldLabel>
+          {isCloudEnv ? (
+            <span
+              aria-live="polite"
+              className="text-text-neutral-tertiary text-xs"
+            >
+              {additionalEmailDomains.length} / 19 domains
+            </span>
+          ) : (
+            <Button
+              type="button"
+              variant="bare"
+              size="link-sm"
+              aria-label="Additional email domains are available in Prowler Cloud"
+              onClick={() =>
+                openCloudUpgrade(CLOUD_UPGRADE_FEATURE.SAML_DOMAINS)
+              }
+            >
+              <Badge variant="cloud">Available in Prowler Cloud</Badge>
+            </Button>
+          )}
+        </div>
+        <p className="text-text-neutral-tertiary text-xs">
+          Allow users from other verified domains to use this same SAML
+          configuration. The ACS URL always uses the primary domain.
+        </p>
+        {isCloudEnv && (
+          <>
+            <div className="flex items-center gap-2">
+              <Input
+                id="additional_email_domain"
+                aria-label="Additional Email Domain"
+                placeholder="Enter an additional domain"
+                value={additionalDomainDraft}
+                disabled={isPending || additionalEmailDomains.length >= 19}
+                aria-invalid={
+                  Boolean(
+                    additionalDomainsError ||
+                      state?.errors?.additional_email_domains,
+                  ) || undefined
+                }
+                onChange={(event) => {
+                  setAdditionalDomainDraft(event.target.value);
+                  setAdditionalDomainsError(null);
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    addAdditionalDomain();
+                  }
+                }}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                disabled={isPending || additionalEmailDomains.length >= 19}
+                onClick={addAdditionalDomain}
+                aria-label="Add domain"
+              >
+                <PlusIcon aria-hidden="true" />
+                Add
+              </Button>
+            </div>
+            {(additionalDomainsError ||
+              state?.errors?.additional_email_domains) && (
+              <FieldError>
+                {additionalDomainsError ||
+                  state?.errors?.additional_email_domains}
+              </FieldError>
+            )}
+            {additionalEmailDomains.length > 0 && (
+              <ul
+                aria-label="Additional email domains"
+                className="minimal-scrollbar border-border-neutral-secondary bg-bg-neutral-secondary flex max-h-24 flex-wrap content-start gap-2 overflow-y-auto rounded-lg border p-2"
+              >
+                {additionalEmailDomains.map((domain) => (
+                  <li key={domain}>
+                    <Badge variant="tag">
+                      {domain}
+                      <Button
+                        type="button"
+                        variant="bare"
+                        size="icon-xs"
+                        disabled={isPending}
+                        aria-label={`Remove ${domain}`}
+                        onClick={() => removeAdditionalDomain(domain)}
+                      >
+                        <XIcon aria-hidden="true" />
+                      </Button>
+                    </Badge>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {additionalEmailDomains.map((domain) => (
+              <input
+                key={domain}
+                type="hidden"
+                name="additional_email_domains"
+                value={domain}
+              />
+            ))}
+          </>
+        )}
+      </Field>
 
       <Card variant="inner">
         <CardHeader className="mb-2">

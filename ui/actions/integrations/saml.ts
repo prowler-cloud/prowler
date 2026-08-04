@@ -4,12 +4,67 @@ import { revalidatePath } from "next/cache";
 
 import { apiBaseUrl, getAuthHeaders } from "@/lib/helper";
 import { handleApiResponse } from "@/lib/server-actions-helper";
+import { isCloud } from "@/lib/shared/env";
+import type { ApiResponse } from "@/types/components";
 import { samlConfigFormSchema } from "@/types/formSchemas";
+import {
+  SAML_CONFIGURATION_RESOURCE_TYPE,
+  type SamlConfigurationActionState,
+  type SamlConfigurationErrors,
+  type SamlConfigurationRequestAttributes,
+} from "@/types/saml";
 
-export const createSamlConfig = async (_prevState: any, formData: FormData) => {
+const parseSamlFormData = (formData: FormData) =>
+  samlConfigFormSchema.safeParse({
+    email_domain: formData.get("email_domain"),
+    additional_email_domains: formData.getAll("additional_email_domains"),
+    metadata_xml: formData.get("metadata_xml"),
+  });
+
+const mapApiErrorsToFields = (
+  result: ApiResponse,
+  fallback: string,
+): SamlConfigurationErrors => {
+  const errors: SamlConfigurationErrors = {};
+
+  result.errors?.forEach((error) => {
+    const pointer = error.source?.pointer;
+    if (pointer?.includes("additional_email_domains")) {
+      errors.additional_email_domains = error.detail;
+    } else if (pointer?.includes("email_domain")) {
+      errors.email_domain = error.detail;
+    } else if (pointer?.includes("metadata_xml")) {
+      errors.metadata_xml = error.detail;
+    } else {
+      errors.general = error.detail;
+    }
+  });
+
+  if (Object.keys(errors).length === 0) {
+    errors.general = result.error || fallback;
+  }
+
+  return errors;
+};
+
+const buildRequestAttributes = (
+  emailDomain: string,
+  additionalEmailDomains: string[],
+  metadataXml: string,
+): SamlConfigurationRequestAttributes => ({
+  email_domain: emailDomain,
+  metadata_xml: metadataXml,
+  ...(isCloud() && {
+    additional_email_domains: additionalEmailDomains,
+  }),
+});
+
+export const createSamlConfig = async (
+  _prevState: SamlConfigurationActionState,
+  formData: FormData,
+): Promise<SamlConfigurationActionState> => {
   const headers = await getAuthHeaders({ contentType: true });
-  const formDataObject = Object.fromEntries(formData);
-  const validatedData = samlConfigFormSchema.safeParse(formDataObject);
+  const validatedData = parseSamlFormData(formData);
 
   if (!validatedData.success) {
     const formFieldErrors = validatedData.error.flatten().fieldErrors;
@@ -17,12 +72,15 @@ export const createSamlConfig = async (_prevState: any, formData: FormData) => {
     return {
       errors: {
         email_domain: formFieldErrors?.email_domain?.[0],
+        additional_email_domains:
+          formFieldErrors?.additional_email_domains?.[0],
         metadata_xml: formFieldErrors?.metadata_xml?.[0],
       },
     };
   }
 
-  const { email_domain, metadata_xml } = validatedData.data;
+  const { email_domain, additional_email_domains, metadata_xml } =
+    validatedData.data;
 
   try {
     const url = new URL(`${apiBaseUrl}/saml-config`);
@@ -31,24 +89,27 @@ export const createSamlConfig = async (_prevState: any, formData: FormData) => {
       headers,
       body: JSON.stringify({
         data: {
-          type: "saml-configurations",
-          attributes: {
-            email_domain: email_domain.trim(),
-            metadata_xml: metadata_xml.trim(),
-          },
+          type: SAML_CONFIGURATION_RESOURCE_TYPE,
+          attributes: buildRequestAttributes(
+            email_domain,
+            additional_email_domains,
+            metadata_xml,
+          ),
         },
       }),
     });
 
-    const result = await handleApiResponse(response, "/integrations", false);
+    const result = (await handleApiResponse(
+      response,
+      "/profile",
+      false,
+    )) as ApiResponse;
     if (result.error) {
       return {
-        errors: {
-          general:
-            result.error instanceof Error
-              ? result.error.message
-              : "Error creating SAML configuration. Please try again.",
-        },
+        errors: mapApiErrorsToFields(
+          result,
+          "Error creating SAML configuration. Please try again.",
+        ),
       };
     }
 
@@ -66,10 +127,13 @@ export const createSamlConfig = async (_prevState: any, formData: FormData) => {
   }
 };
 
-export const updateSamlConfig = async (_prevState: any, formData: FormData) => {
+export const updateSamlConfig = async (
+  _prevState: SamlConfigurationActionState,
+  formData: FormData,
+): Promise<SamlConfigurationActionState> => {
   const headers = await getAuthHeaders({ contentType: true });
-  const formDataObject = Object.fromEntries(formData);
-  const validatedData = samlConfigFormSchema.safeParse(formDataObject);
+  const id = String(formData.get("id") || "");
+  const validatedData = parseSamlFormData(formData);
 
   if (!validatedData.success) {
     const formFieldErrors = validatedData.error.flatten().fieldErrors;
@@ -77,31 +141,47 @@ export const updateSamlConfig = async (_prevState: any, formData: FormData) => {
     return {
       errors: {
         email_domain: formFieldErrors?.email_domain?.[0],
+        additional_email_domains:
+          formFieldErrors?.additional_email_domains?.[0],
         metadata_xml: formFieldErrors?.metadata_xml?.[0],
       },
     };
   }
 
-  const { email_domain, metadata_xml } = validatedData.data;
+  const { email_domain, additional_email_domains, metadata_xml } =
+    validatedData.data;
 
   try {
-    const url = new URL(`${apiBaseUrl}/saml-config/${formDataObject.id}`);
+    const url = new URL(`${apiBaseUrl}/saml-config/${id}`);
     const response = await fetch(url.toString(), {
       method: "PATCH",
       headers,
       body: JSON.stringify({
         data: {
-          type: "saml-configurations",
-          id: formDataObject.id,
-          attributes: {
-            email_domain: email_domain.trim(),
-            metadata_xml: metadata_xml.trim(),
-          },
+          type: SAML_CONFIGURATION_RESOURCE_TYPE,
+          id,
+          attributes: buildRequestAttributes(
+            email_domain,
+            additional_email_domains,
+            metadata_xml,
+          ),
         },
       }),
     });
 
-    await handleApiResponse(response, "/integrations", false);
+    const result = (await handleApiResponse(
+      response,
+      "/profile",
+      false,
+    )) as ApiResponse;
+    if (result.error) {
+      return {
+        errors: mapApiErrorsToFields(
+          result,
+          "Error updating SAML configuration. Please try again.",
+        ),
+      };
+    }
     return { success: "SAML configuration updated successfully!" };
   } catch (error) {
     console.error("Error updating SAML config:", error);
@@ -110,7 +190,7 @@ export const updateSamlConfig = async (_prevState: any, formData: FormData) => {
         general:
           error instanceof Error
             ? error.message
-            : "Error creating SAML configuration. Please try again.",
+            : "Error updating SAML configuration. Please try again.",
       },
     };
   }

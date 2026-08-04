@@ -722,16 +722,48 @@ export const editUserFormSchema = () =>
     role: z.string().optional(),
   });
 
-export const samlConfigFormSchema = z.object({
-  email_domain: z
-    .string()
-    .trim()
-    .min(1, { message: "Email domain is required" }),
-  metadata_xml: z
-    .string()
-    .trim()
-    .min(1, { message: "Metadata XML is required" }),
-});
+export const samlEmailDomainSchema = z
+  .string()
+  .trim()
+  .min(1, { message: "Email domain is required" })
+  .transform((domain) => domain.toLowerCase());
+
+export const samlConfigFormSchema = z
+  .object({
+    email_domain: samlEmailDomainSchema,
+    additional_email_domains: z
+      .array(samlEmailDomainSchema)
+      .max(19, {
+        message:
+          "A SAML configuration supports up to 19 additional email domains.",
+      })
+      .default([]),
+    metadata_xml: z
+      .string()
+      .trim()
+      .min(1, { message: "Metadata XML is required" }),
+  })
+  .superRefine((data, ctx) => {
+    if (
+      new Set(data.additional_email_domains).size !==
+      data.additional_email_domains.length
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Additional email domains must be unique.",
+        path: ["additional_email_domains"],
+      });
+    }
+
+    if (data.additional_email_domains.includes(data.email_domain)) {
+      ctx.addIssue({
+        code: "custom",
+        message:
+          "Additional email domains must differ from the primary email domain.",
+        path: ["additional_email_domains"],
+      });
+    }
+  });
 
 export const mutedFindingsConfigFormSchema = z.object({
   configuration: z

@@ -10,6 +10,7 @@ export const CLOUD_UPGRADE_FEATURE = {
   LIGHTHOUSE_AI: "lighthouse_ai",
   GENERAL: "general",
   SCAN_CONFIGURATION: "scan_configuration",
+  SAML_DOMAINS: "saml_domains",
 } as const;
 
 export type CloudUpgradeFeature =

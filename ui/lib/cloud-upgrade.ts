@@ -31,6 +31,7 @@ const CLOUD_UPGRADE_UTM_CONTENT = {
   [CLOUD_UPGRADE_FEATURE.LIGHTHOUSE_AI]: "lighthouse-ai",
   [CLOUD_UPGRADE_FEATURE.GENERAL]: "general",
   [CLOUD_UPGRADE_FEATURE.SCAN_CONFIGURATION]: "scan-configuration",
+  [CLOUD_UPGRADE_FEATURE.SAML_DOMAINS]: "saml-domains",
 } as const satisfies Record<CloudUpgradeFeature, string>;
 
 export const CLOUD_UPGRADE_CONTENT = {
@@ -156,6 +157,17 @@ export const CLOUD_UPGRADE_CONTENT = {
       "Manage scan behavior from one place",
     ],
     primaryCta: "Configure Scans in Prowler Cloud",
+  },
+  [CLOUD_UPGRADE_FEATURE.SAML_DOMAINS]: {
+    title: "Use One SAML Configuration Across Domains",
+    description:
+      "Let users from multiple verified email domains share one SAML identity provider configuration.",
+    benefits: [
+      "Keep one primary domain and canonical ACS URL",
+      "Authorize up to 19 additional email domains",
+      "Manage every domain from the same SAML configuration",
+    ],
+    primaryCta: "Manage SAML Domains in Prowler Cloud",
   },
 } as const satisfies Record<CloudUpgradeFeature, CloudUpgradeContent>;
 
