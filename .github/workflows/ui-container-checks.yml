@@ -102,6 +102,7 @@ jobs:
           files: |
             ui/**
             .github/actions/trivy-scan/**
+            .github/actions/grype-scan/**
           files_ignore: |
             ui/CHANGELOG.md
             ui/changelog.d/**
@@ -134,3 +135,11 @@ jobs:
           image-tag: ${{ github.sha }}
           fail-on-critical: 'true'
           severity: 'CRITICAL'
+
+      - name: Scan UI container with Grype
+        if: steps.check-changes.outputs.any_changed == 'true'
+        uses: ./.github/actions/grype-scan
+        with:
+          image-name: ${{ env.IMAGE_NAME }}
+          image-tag: ${{ github.sha }}
+          fail-on-critical: 'false'

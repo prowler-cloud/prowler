@@ -108,6 +108,7 @@ jobs:
           files: |
             api/**
             .github/actions/trivy-scan/**
+            .github/actions/grype-scan/**
           files_ignore: |
             api/docs/**
             api/README.md
@@ -147,3 +148,11 @@ jobs:
           image-tag: ${{ github.sha }}
           fail-on-critical: 'true'
           severity: 'CRITICAL'
+
+      - name: Scan container with Grype
+        if: steps.check-changes.outputs.any_changed == 'true'
+        uses: ./.github/actions/grype-scan
+        with:
+          image-name: ${{ env.IMAGE_NAME }}
+          image-tag: ${{ github.sha }}
+          fail-on-critical: 'false'
