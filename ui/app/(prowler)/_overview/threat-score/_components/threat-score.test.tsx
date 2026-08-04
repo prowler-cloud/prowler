@@ -11,6 +11,7 @@ describe("ThreatScore", () => {
       .getByText("Prowler ThreatScore")
       .closest('[data-slot="card"]');
 
-    expect(card).toHaveClass("min-[1304px]:max-w-[312px]");
+    expect(card).toHaveClass("min-w-0", "flex-1", "min-[485px]:min-w-[312px]");
+    expect(card).not.toHaveClass("max-w-[312px]");
   });
 });

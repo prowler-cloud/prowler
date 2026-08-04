@@ -90,7 +90,7 @@ export default async function Home({
         <ProviderGroupSelector groups={providerGroupsData?.data ?? []} />
       </div>
 
-      <div className="flex flex-col gap-6 min-[1304px]:flex-row min-[1304px]:flex-wrap min-[1304px]:items-stretch">
+      <div className="flex flex-col gap-6 min-[485px]:flex-row min-[485px]:flex-wrap min-[485px]:items-stretch">
         <Suspense fallback={<ThreatScoreSkeleton />}>
           <ThreatScoreSSR searchParams={resolvedSearchParams} />
         </Suspense>

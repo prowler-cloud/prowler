@@ -26,9 +26,9 @@ describe("Overview page", () => {
     expect(bannersRenderBeforeFilters).toBe(true);
   });
 
-  it("keeps the primary metric row horizontal at the lg container breakpoint", () => {
+  it("keeps the primary metric row horizontal and wrapping at every width", () => {
     expect(source).toMatch(
-      /className="flex flex-col gap-6 min-\[1304px\]:flex-row min-\[1304px\]:flex-wrap min-\[1304px\]:items-stretch"/,
+      /className="flex flex-col gap-6 min-\[485px\]:flex-row min-\[485px\]:flex-wrap min-\[485px\]:items-stretch"/,
     );
   });
 
@@ -48,7 +48,9 @@ describe("Overview page", () => {
       "utf8",
     );
 
-    expect(statusChartSource).toMatch(/min-w-\[485px\]/);
-    expect(riskSeveritySource).toMatch(/min-w-\[485px\]/);
+    expect(statusChartSource).toMatch(/min-\[485px\]:min-w-\[485px\]/);
+    expect(riskSeveritySource).toMatch(/min-\[485px\]:min-w-\[485px\]/);
+    expect(statusChartSource).toMatch(/min-\[485px\]:w-auto/);
+    expect(riskSeveritySource).toMatch(/min-\[485px\]:w-auto/);
   });
 });
