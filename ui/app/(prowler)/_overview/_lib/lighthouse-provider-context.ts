@@ -10,8 +10,8 @@ import type { ProviderProps } from "@/types/providers";
 import { parseFilterIds } from "./provider-scope";
 
 const OVERVIEW_PATHNAME = "/";
-// Bounded so provider items cannot crowd out the page, ThreatScore, and
-// posture summaries within the shared context item budget.
+// Bounded so provider items take a small share of the context item budget;
+// under byte pressure the compiler additionally evicts provider items first.
 const MAX_PROVIDER_ITEMS = 2;
 const MAX_TOTAL_ITEMS = 3;
 
@@ -26,8 +26,14 @@ export function buildOverviewProviderContextItems({
   providers,
   groups,
 }: OverviewProviderContextInput): LighthouseProviderContextItem[] {
-  const providerIds = parseFilterIds(searchParams["filter[provider_id__in]"]);
-  const groupIds = parseFilterIds(searchParams["filter[provider_groups__in]"]);
+  // Dedupe before slicing so a repeated id cannot fill the bounded slots and
+  // silently push the remaining selected providers out of the context.
+  const providerIds = Array.from(
+    new Set(parseFilterIds(searchParams["filter[provider_id__in]"])),
+  );
+  const groupIds = Array.from(
+    new Set(parseFilterIds(searchParams["filter[provider_groups__in]"])),
+  );
 
   const providerItems = providerIds
     .map((id) => providers.find((provider) => provider.id === id))
