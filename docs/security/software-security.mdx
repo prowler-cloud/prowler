@@ -196,10 +196,16 @@ A small number of findings remain in the published images and cannot be resolved
 
 Each suppression is recorded in [`.trivyignore.yaml`](https://github.com/prowler-cloud/prowler/blob/master/.trivyignore.yaml) with the reason it cannot be fixed, why it is not exploitable in Prowler's runtime, and an expiry date that forces re-review. Nothing is suppressed without that rationale, and a build fails on any critical finding that is not listed there.
 
-To see the current set for any image, scan it directly:
+To see the current set for any image, scan it directly. This reports everything, including the accepted findings above, because Trivy does not read `.trivyignore.yaml` unless it is named:
 
 ```bash
 trivy image prowlercloud/prowler:latest
+```
+
+To see only what is *not* already accepted, point Trivy at the suppression file:
+
+```bash
+trivy image --ignorefile .trivyignore.yaml prowlercloud/prowler:latest
 ```
 
 ## Secrets Detection
