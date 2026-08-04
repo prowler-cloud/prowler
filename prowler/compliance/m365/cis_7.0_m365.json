@@ -323,7 +323,9 @@
     {
       "Id": "1.3.9",
       "Description": "Shared Bookings allows you to invite your team members and create booking pages and let your customers book time with you and your team. It contains various settings to define services, manage staff members, configure schedules and availability, business hours and customize how appointments are scheduled. These pages can be customized to fit the diverse needs of your organization. It is an extension of Person Bookings. The recommended state is to restrict the OwaMailboxPolicy-Default policy or disable at the organization level.",
-      "Checks": [],
+      "Checks": [
+        "admincenter_shared_bookings_disabled"
+      ],
       "Attributes": [
         {
           "Section": "1 Microsoft 365 admin center",
