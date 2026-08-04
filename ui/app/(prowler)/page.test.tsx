@@ -25,4 +25,13 @@ describe("Overview page", () => {
     expect(firstProviderFilterPosition).toBeGreaterThan(-1);
     expect(bannersRenderBeforeFilters).toBe(true);
   });
+
+  it("keeps the primary metric row horizontal at the lg container breakpoint", () => {
+    expect(source).toMatch(
+      /className="flex flex-row flex-wrap items-stretch gap-6"/,
+    );
+    expect(source).not.toMatch(
+      /className="flex flex-col gap-6 xl:flex-row xl:flex-wrap xl:items-stretch"/,
+    );
+  });
 });
