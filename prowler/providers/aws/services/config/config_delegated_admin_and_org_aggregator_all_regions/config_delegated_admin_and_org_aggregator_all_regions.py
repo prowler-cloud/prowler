@@ -99,14 +99,15 @@ class config_delegated_admin_and_org_aggregator_all_regions(Check):
                 elif delegated_admin_unknown:
                     # Not being able to read the delegated administrator is a lack
                     # of visibility, not a misconfiguration: the Organizations API
-                    # is only available to the management account.
+                    # is only available to the management or delegated
+                    # administrator account.
                     report.status = "MANUAL"
                     report.status_extended = (
                         f"AWS Config aggregator {aggregator.name} in region {region} "
                         f"is an organization aggregator covering all AWS regions, but "
                         f"the delegated administrator status for config.amazonaws.com "
                         f"could not be determined; run this check from the "
-                        f"organization management account."
+                        f"organization management or delegated administrator account."
                     )
                 else:
                     report.status = "PASS"

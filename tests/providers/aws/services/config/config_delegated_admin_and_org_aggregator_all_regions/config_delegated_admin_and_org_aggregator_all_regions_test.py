@@ -438,7 +438,7 @@ class Test_config_delegated_admin_and_org_aggregator_all_regions:
                     "not be determined" in eu_west_1_result.status_extended
                 )
                 assert (
-                    "organization management account"
+                    "organization management or delegated administrator account"
                     in eu_west_1_result.status_extended
                 )
 

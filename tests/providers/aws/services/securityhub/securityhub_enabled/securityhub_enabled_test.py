@@ -5,6 +5,9 @@ from prowler.providers.aws.services.securityhub.securityhub_service import (
 )
 from tests.providers.aws.utils import AWS_ACCOUNT_NUMBER, AWS_REGION_EU_WEST_1
 
+# Patching the check client imports securityhub_client, which instantiates
+# SecurityHub against the global provider at module level. Stubbing the class
+# first keeps that import from reaching AWS when this file runs on its own.
 SERVICE_MODULE = "prowler.providers.aws.services.securityhub.securityhub_service"
 CHECK_MODULE = (
     "prowler.providers.aws.services.securityhub.securityhub_enabled.securityhub_enabled"
@@ -44,7 +47,7 @@ class Test_securityhub_enabled:
         )
 
         with (
-            mock.patch(f"{SERVICE_MODULE}.SecurityHub", new=securityhub_client),
+            mock.patch(f"{SERVICE_MODULE}.SecurityHub", new=mock.MagicMock()),
             mock.patch(f"{CHECK_MODULE}.securityhub_client", new=securityhub_client),
         ):
             # Test Check
@@ -79,7 +82,7 @@ class Test_securityhub_enabled:
         )
 
         with (
-            mock.patch(f"{SERVICE_MODULE}.SecurityHub", new=securityhub_client),
+            mock.patch(f"{SERVICE_MODULE}.SecurityHub", new=mock.MagicMock()),
             mock.patch(f"{CHECK_MODULE}.securityhub_client", new=securityhub_client),
         ):
             # Test Check
@@ -117,7 +120,7 @@ class Test_securityhub_enabled:
         )
 
         with (
-            mock.patch(f"{SERVICE_MODULE}.SecurityHub", new=securityhub_client),
+            mock.patch(f"{SERVICE_MODULE}.SecurityHub", new=mock.MagicMock()),
             mock.patch(f"{CHECK_MODULE}.securityhub_client", new=securityhub_client),
         ):
             # Test Check
@@ -155,7 +158,7 @@ class Test_securityhub_enabled:
         )
 
         with (
-            mock.patch(f"{SERVICE_MODULE}.SecurityHub", new=securityhub_client),
+            mock.patch(f"{SERVICE_MODULE}.SecurityHub", new=mock.MagicMock()),
             mock.patch(f"{CHECK_MODULE}.securityhub_client", new=securityhub_client),
         ):
             # Test Check
@@ -195,7 +198,7 @@ class Test_securityhub_enabled:
         )
 
         with (
-            mock.patch(f"{SERVICE_MODULE}.SecurityHub", new=securityhub_client),
+            mock.patch(f"{SERVICE_MODULE}.SecurityHub", new=mock.MagicMock()),
             mock.patch(f"{CHECK_MODULE}.securityhub_client", new=securityhub_client),
         ):
             # Test Check

@@ -2,8 +2,11 @@ from unittest import mock
 
 from tests.providers.aws.utils import AWS_REGION_EU_WEST_1
 
+# Patching the fixer client imports securityhub_client, which instantiates
+# SecurityHub against the global provider at module level. Stubbing the class
+# first keeps that import from reaching AWS when this file runs on its own.
 SERVICE_MODULE = "prowler.providers.aws.services.securityhub.securityhub_service"
-FIXER_MODULE = "prowler.providers.aws.services.securityhub.securityhub_enabled.securityhub_enabled_fixer"
+FIXER_MODULE ="prowler.providers.aws.services.securityhub.securityhub_enabled.securityhub_enabled_fixer"
 
 
 def _mocked_securityhub_client(fixer_config: dict) -> tuple:
@@ -23,7 +26,7 @@ class Test_securityhub_enabled_fixer:
         )
 
         with (
-            mock.patch(f"{SERVICE_MODULE}.SecurityHub", new=securityhub_client),
+            mock.patch(f"{SERVICE_MODULE}.SecurityHub", new=mock.MagicMock()),
             mock.patch(f"{FIXER_MODULE}.securityhub_client", new=securityhub_client),
         ):
             # Test Fixer
@@ -44,7 +47,7 @@ class Test_securityhub_enabled_fixer:
         )
 
         with (
-            mock.patch(f"{SERVICE_MODULE}.SecurityHub", new=securityhub_client),
+            mock.patch(f"{SERVICE_MODULE}.SecurityHub", new=mock.MagicMock()),
             mock.patch(f"{FIXER_MODULE}.securityhub_client", new=securityhub_client),
         ):
             # Test Fixer
@@ -66,7 +69,7 @@ class Test_securityhub_enabled_fixer:
         )
 
         with (
-            mock.patch(f"{SERVICE_MODULE}.SecurityHub", new=securityhub_client),
+            mock.patch(f"{SERVICE_MODULE}.SecurityHub", new=mock.MagicMock()),
             mock.patch(f"{FIXER_MODULE}.securityhub_client", new=securityhub_client),
         ):
             # Test Fixer
