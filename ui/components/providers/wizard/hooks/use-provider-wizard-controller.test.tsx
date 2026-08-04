@@ -170,8 +170,10 @@ describe("useProviderWizardController", () => {
     });
     expect(result.current.modalTitle).toBe("Update Provider Credentials");
     expect(result.current.isProviderFlow).toBe(true);
+    // Update mode enters at the credentials step, so the docs link scrolls
+    // the getting-started page to the credentials/authentication section.
     expect(result.current.docsLink).toBe(
-      "https://goto.prowler.com/provider-aws",
+      "https://docs.prowler.com/user-guide/providers/aws/getting-started-aws#step-3-set-up-aws-authentication",
     );
 
     const state = useProviderWizardStore.getState();
@@ -181,6 +183,36 @@ describe("useProviderWizardController", () => {
     expect(state.providerAlias).toBe("production");
     expect(state.secretId).toBe("secret-1");
     expect(state.mode).toBe(PROVIDER_WIZARD_MODE.UPDATE);
+  });
+
+  it("updates the credentials docs link when AWS assume role is selected", async () => {
+    const onOpenChange = vi.fn();
+    const { result } = renderHook(() =>
+      useProviderWizardController({
+        open: true,
+        onOpenChange,
+        initialData: {
+          providerId: "provider-1",
+          providerType: "aws",
+          providerUid: "111111111111",
+          providerAlias: "production",
+          secretId: null,
+          mode: PROVIDER_WIZARD_MODE.ADD,
+        },
+      }),
+    );
+
+    await waitFor(() => {
+      expect(result.current.currentStep).toBe(PROVIDER_WIZARD_STEP.CREDENTIALS);
+    });
+
+    act(() => {
+      useProviderWizardStore.getState().setVia("role");
+    });
+
+    expect(result.current.docsLink).toBe(
+      "https://docs.prowler.com/user-guide/providers/aws/getting-started-aws#assume-role-recommended",
+    );
   });
 
   it("switches into and out of organizations flow", () => {

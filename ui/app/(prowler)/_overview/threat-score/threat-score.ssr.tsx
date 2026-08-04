@@ -43,7 +43,8 @@ export const ThreatScoreSSR = async ({ searchParams }: SSRComponentProps) => {
           framework: "Prowler ThreatScore",
           score,
           scoreDelta: scoreDelta ?? undefined,
-          criticalRequirementsCount: attributes.critical_requirements.length,
+          criticalRequirementsCount:
+            attributes.critical_requirements?.length ?? 0,
           worstSection: worstSectionEntry?.[0],
           worstSectionScore: worstSectionEntry?.[1],
           passed: attributes.passed_requirements,

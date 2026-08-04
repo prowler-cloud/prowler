@@ -12,7 +12,6 @@ import {
 
 import {
   LIGHTHOUSE_GLOBAL_SUGGESTIONS,
-  LIGHTHOUSE_KNOWN_ROUTE_LABELS,
   LIGHTHOUSE_PAGE_DEFINITION_INPUTS,
 } from "./pages.constants";
 
@@ -103,10 +102,7 @@ function buildLighthouseScopeKey(
 
 function createFallbackDefinition(pathname: string): LighthousePageDefinition {
   const segment = pathname.split("/").filter(Boolean)[0] ?? "overview";
-  const label =
-    LIGHTHOUSE_KNOWN_ROUTE_LABELS[
-      segment as keyof typeof LIGHTHOUSE_KNOWN_ROUTE_LABELS
-    ] ?? toTitleCase(segment);
+  const label = toTitleCase(segment);
   return createPageDefinition({
     id: LIGHTHOUSE_PAGE_ID.OTHER,
     label,

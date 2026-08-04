@@ -1,0 +1,63 @@
+# Trivy suppressions for the prowlercloud/prowler SDK and API container images.
+#
+# This file replaces the classic .trivyignore, which parsed only the CVE id: the
+# `pkg:` selector written on each line was documentation and the entry suppressed
+# its CVE across every package in the image. The `purls` field below is honoured,
+# so each entry is scoped to the package it names. Verified against Trivy 0.71.2:
+# an entry given the wrong purl leaves the finding reported, where the classic
+# format suppressed it.
+#
+# `expired_at` forces re-review. Keep the dates staggered.
+#
+# perl-base is Debian "Essential: yes". Trivy spreads src:perl CVEs across every
+# binary package built from that source, so perl-base is flagged for modules only
+# perl-modules-* ships. Neither image installs those, and nothing in either
+# invokes perl.
+#
+# Why these four are accepted rather than fixed (reviewed 2026-07-31):
+#
+#   1. No fix exists. All four report no fixed version on perl-base 5.40.1-6.
+#      Debian marks CVE-2026-42496 "fix_deferred" and the other three "affected".
+#      A newer base image, apt upgrade, or a newer Debian release changes nothing.
+#   2. The package cannot be removed. "Essential: yes" means removal needs
+#      dpkg --force-remove-essential, which breaks apt for anything built
+#      downstream from these images.
+#   3. Changing base distribution was evaluated and rejected. Alpine drops perl
+#      entirely, but PowerShell publishes no linux-musl-arm64 build in any
+#      release, so M365 scanning would break on arm64 -- which is what we run in
+#      production. Wolfi keeps glibc and drops perl, but pinnable versioned tags
+#      are a paid tier, so builds would not be reproducibly pinnable.
+#
+# Not-invoked claim verified by sweeping both images for files with a perl
+# shebang, shell/python callers of perl, ELF binaries containing "perl", and
+# .pl/.pm files or perl subprocess calls anywhere in site-packages. The only
+# consumers found are dpkg/debconf/adduser/pam tooling, none of which runs at
+# runtime, plus one build-time script inside the ExchangeOnlineManagement
+# PowerShell module that is never invoked.
+
+vulnerabilities:
+  # Archive::Tar path traversal. Not installed: `perl -MArchive::Tar -e1` cannot locate it.
+  - id: CVE-2026-42496
+    purls:
+      - "pkg:deb/debian/perl-base"
+    expired_at: 2027-01-31
+
+  # Storable integer overflow. Not installed: `perl -MStorable -e1` cannot locate it.
+  - id: CVE-2026-57433
+    purls:
+      - "pkg:deb/debian/perl-base"
+    expired_at: 2027-01-31
+
+  # Regex heap overflow on 32-bit builds only; both published arches are 64-bit.
+  - id: CVE-2026-8376
+    purls:
+      - "pkg:deb/debian/perl-base"
+    expired_at: 2027-01-31
+
+  # Regex trie bug giving silently wrong matches above 65535 alternation branches.
+  # perl 5.40.1 is in range, so this rests on nothing invoking perl. Short expiry
+  # to force a re-look. Ref: https://github.com/Perl/perl5/issues/23388
+  - id: CVE-2026-13221
+    purls:
+      - "pkg:deb/debian/perl-base"
+    expired_at: 2026-11-30

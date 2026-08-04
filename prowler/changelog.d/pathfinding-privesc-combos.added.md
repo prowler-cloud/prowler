@@ -1,0 +1,1 @@
+The IAM privilege-escalation check now detects 22 additional pathfinding.cloud escalation paths across AWS Batch, Braket, CodeDeploy, Cognito Identity, ECS, EMR, EMR Serverless, GameLift, Glue, EC2 Image Builder, Kinesis Analytics, HealthOmics, EventBridge Scheduler, SSM Automation, Step Functions, IAM permissions boundaries, and IAM Identity Center (SSO)
