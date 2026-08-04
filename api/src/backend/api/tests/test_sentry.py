@@ -191,6 +191,19 @@ def test_before_send_passes_non_defunct_neo4j_log():
     assert before_send(event, hint) == event
 
 
+def _filesystem_hint(exception, msg="Error generating output directory"):
+    """Build the hint the logging integration sends for a filesystem failure."""
+    exc_info = (type(exception), exception, exception.__traceback__)
+    log_record = _make_log_record(msg)
+    log_record.exc_info = exc_info
+    setattr(
+        log_record,
+        sentry_settings.ERROR_CATEGORY_ATTRIBUTE,
+        sentry_settings.FILESYSTEM_ERROR_CATEGORY,
+    )
+    return {"log_record": log_record, "exc_info": exc_info}
+
+
 @pytest.mark.parametrize(
     ("error_number", "message", "expected_suffix"),
     [
@@ -203,10 +216,9 @@ def test_before_send_fingerprints_oserror_by_errno(
     error_number, message, expected_suffix
 ):
     """Filesystem failures raised from the same call site must not be merged."""
-    exception = OSError(error_number, message)
     event = {}
 
-    result = before_send(event, {"exc_info": (OSError, exception, None)})
+    result = before_send(event, _filesystem_hint(OSError(error_number, message)))
 
     assert result is event
     assert event["fingerprint"] == ["{{ default }}", expected_suffix]
@@ -218,18 +230,11 @@ def test_before_send_fingerprints_differ_per_errno():
     enoent_event = {}
 
     before_send(
-        enospc_event,
-        {"exc_info": (OSError, OSError(errno.ENOSPC, "No space left on device"), None)},
+        enospc_event, _filesystem_hint(OSError(errno.ENOSPC, "No space left on device"))
     )
     before_send(
         enoent_event,
-        {
-            "exc_info": (
-                OSError,
-                OSError(errno.ENOENT, "No such file or directory"),
-                None,
-            )
-        },
+        _filesystem_hint(OSError(errno.ENOENT, "No such file or directory")),
     )
 
     assert enospc_event["fingerprint"] != enoent_event["fingerprint"]
@@ -244,7 +249,7 @@ def test_before_send_fingerprints_wrapped_oserror():
             raise RuntimeError("Error generating output directory") from os_error
     except RuntimeError as wrapper:
         event = {}
-        before_send(event, {"exc_info": (RuntimeError, wrapper, None)})
+        before_send(event, _filesystem_hint(wrapper))
 
     assert event["fingerprint"] == ["{{ default }}", "errno:ENOSPC"]
 
@@ -253,17 +258,80 @@ def test_before_send_does_not_fingerprint_non_oserror():
     """Non-filesystem exceptions keep Sentry's default grouping."""
     event = {}
 
-    result = before_send(event, {"exc_info": (ValueError, ValueError("boom"), None)})
+    result = before_send(event, _filesystem_hint(ValueError("boom")))
 
     assert result is event
     assert "fingerprint" not in event
+
+
+def test_before_send_does_not_fingerprint_unrelated_oserror_log():
+    """Only records declaring the filesystem category opt into the errno grouping."""
+    exception = OSError(errno.ENOSPC, "No space left on device")
+    log_record = _make_log_record("Unrelated failure")
+    exc_info = (OSError, exception, None)
+    log_record.exc_info = exc_info
+    event = {}
+
+    result = before_send(event, {"log_record": log_record, "exc_info": exc_info})
+
+    assert result is event
+    assert "fingerprint" not in event
+
+
+def test_before_send_does_not_fingerprint_exception_events():
+    """Exception events without a log record keep Sentry's default grouping."""
+    event = {}
+
+    result = before_send(
+        event,
+        {"exc_info": (OSError, OSError(errno.ENOSPC, "No space left on device"), None)},
+    )
+
+    assert result is event
+    assert "fingerprint" not in event
+
+
+def test_before_send_keeps_existing_fingerprint():
+    """A fingerprint set by a scope or an integration is never overwritten."""
+    event = {"fingerprint": ["scope-fingerprint"]}
+
+    before_send(
+        event, _filesystem_hint(OSError(errno.ENOSPC, "No space left on device"))
+    )
+
+    assert event["fingerprint"] == ["scope-fingerprint"]
+
+
+def test_before_send_ignores_suppressed_context():
+    """`raise ... from None` hides the context, so it must not group the event."""
+    try:
+        try:
+            raise OSError(errno.ENOSPC, "No space left on device")
+        except OSError:
+            raise RuntimeError("Error generating output directory") from None
+    except RuntimeError as wrapper:
+        event = {}
+        before_send(event, _filesystem_hint(wrapper))
+
+    assert "fingerprint" not in event
+
+
+def test_errno_fingerprint_follows_implicit_context():
+    """An implicit `raise` during handling still exposes the original errno."""
+    try:
+        try:
+            raise OSError(errno.EACCES, "Permission denied")
+        except OSError:
+            raise RuntimeError("Error generating output directory")
+    except RuntimeError as wrapper:
+        assert errno_fingerprint(wrapper) == "errno:EACCES"
 
 
 def test_before_send_does_not_fingerprint_oserror_without_errno():
     """An OSError without errno has nothing to split the issue by."""
     event = {}
 
-    before_send(event, {"exc_info": (OSError, OSError("no errno here"), None)})
+    before_send(event, _filesystem_hint(OSError("no errno here")))
 
     assert "fingerprint" not in event
 

@@ -16,7 +16,11 @@ from api.models import (
     StateChoices,
     StatusChoices,
 )
-from config.settings.sentry import before_send
+from config.settings.sentry import (
+    ERROR_CATEGORY_ATTRIBUTE,
+    FILESYSTEM_ERROR_CATEGORY,
+    before_send,
+)
 from prowler.lib.check.models import Severity
 from reportlab.lib import colors
 from tasks.jobs.report import (
@@ -1735,6 +1739,11 @@ class TestGenerateComplianceReportsCIS:
             # Without exc_info the Sentry event carries no exception at all and
             # nothing can tell the two failures apart.
             assert record.exc_info is not None
+            # The category is what scopes the errno fingerprint to this record.
+            assert (
+                getattr(record, ERROR_CATEGORY_ATTRIBUTE, None)
+                == FILESYSTEM_ERROR_CATEGORY
+            )
 
             # Same hint the Sentry logging integration builds for this record.
             event = {}
