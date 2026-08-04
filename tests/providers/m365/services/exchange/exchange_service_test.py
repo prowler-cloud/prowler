@@ -26,6 +26,7 @@ def mock_exchange_get_organization_config(_):
         mailtips_external_recipient_enabled=False,
         mailtips_group_metrics_enabled=True,
         mailtips_large_audience_threshold=25,
+        reject_direct_send=True,
     )
 
 
@@ -214,6 +215,7 @@ class Test_Exchange_Service:
             assert organization_config.mailtips_group_metrics_enabled is True
             assert organization_config.mailtips_large_audience_threshold == 25
             assert organization_config.total_paid_licenses == 6000
+            assert organization_config.reject_direct_send is True
 
             exchange_client.powershell.close()
 
@@ -300,6 +302,9 @@ class Test_Exchange_Service:
             {
                 "Id": "test",
                 "AdditionalStorageProvidersAvailable": True,
+                "IsDefault": True,
+                "PersonalAccountsEnabled": False,
+                "PersonalAccountCalendarsEnabled": False,
             }
         ],
     )
@@ -319,6 +324,9 @@ class Test_Exchange_Service:
             assert len(mailbox_policies) == 1
             assert mailbox_policies[0].id == "test"
             assert mailbox_policies[0].additional_storage_enabled is True
+            assert mailbox_policies[0].is_default is True
+            assert mailbox_policies[0].personal_accounts_enabled is False
+            assert mailbox_policies[0].personal_account_calendars_enabled is False
             exchange_client.powershell.close()
 
     @patch(
@@ -344,6 +352,41 @@ class Test_Exchange_Service:
             assert len(mailbox_policies) == 1
             assert mailbox_policies[0].id == "test_single"
             assert mailbox_policies[0].additional_storage_enabled is False
+            assert mailbox_policies[0].is_default is False
+            assert mailbox_policies[0].personal_accounts_enabled is True
+            assert mailbox_policies[0].personal_account_calendars_enabled is True
+            exchange_client.powershell.close()
+
+    @patch(
+        "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.get_mailbox_policy",
+        return_value={
+            "Id": "OwaMailboxPolicy-Default",
+            "AdditionalStorageProvidersAvailable": True,
+            "IsDefault": True,
+            "PersonalAccountsEnabled": None,
+            "PersonalAccountCalendarsEnabled": None,
+        },
+    )
+    def test_get_mailbox_policy_null_personal_accounts(self, _mock_get_mailbox_policy):
+        # Tenants where the personal accounts settings were never configured
+        # return null; null must keep the platform default (enabled).
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online",
+                return_value=True,
+            ),
+        ):
+            exchange_client = Exchange(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+            mailbox_policies = exchange_client.mailbox_policies
+            assert len(mailbox_policies) == 1
+            assert mailbox_policies[0].id == "OwaMailboxPolicy-Default"
+            assert mailbox_policies[0].is_default is True
+            assert mailbox_policies[0].personal_accounts_enabled is True
+            assert mailbox_policies[0].personal_account_calendars_enabled is True
             exchange_client.powershell.close()
 
     @patch(

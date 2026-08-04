@@ -35,15 +35,18 @@ class exchange_owa_mailbox_policy_personal_accounts_disabled(Check):
                 resource_name=f"Exchange Mailbox Policy - {mailbox_policy.id}",
                 resource_id=mailbox_policy.id,
             )
-            report.status = "FAIL"
-            report.status_extended = f"Default OWA mailbox policy '{mailbox_policy.id}' allows personal account integration."
+            report.status = "PASS"
+            report.status_extended = f"Default OWA mailbox policy '{mailbox_policy.id}' disables personal account integration."
 
-            if (
-                not mailbox_policy.personal_accounts_enabled
-                and not mailbox_policy.personal_account_calendars_enabled
-            ):
-                report.status = "PASS"
-                report.status_extended = f"Default OWA mailbox policy '{mailbox_policy.id}' disables personal account integration."
+            allowed_settings = []
+            if mailbox_policy.personal_accounts_enabled:
+                allowed_settings.append("personal accounts")
+            if mailbox_policy.personal_account_calendars_enabled:
+                allowed_settings.append("personal account calendars")
+
+            if allowed_settings:
+                report.status = "FAIL"
+                report.status_extended = f"Default OWA mailbox policy '{mailbox_policy.id}' allows {' and '.join(allowed_settings)}."
 
             findings.append(report)
 

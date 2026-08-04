@@ -137,9 +137,12 @@ class Exchange(M365Service):
                     delayed_delicensing_enabled=organization_configuration.get(
                         "DelayedDelicensingEnabled", False
                     ),
+                    # Can be null on tenants where the setting was never
+                    # configured; null keeps the platform default (disabled).
                     reject_direct_send=organization_configuration.get(
-                        "RejectDirectSend", False
-                    ),
+                        "RejectDirectSend"
+                    )
+                    is True,
                 )
         except Exception as error:
             logger.error(
@@ -259,13 +262,18 @@ class Exchange(M365Service):
                                 additional_storage_enabled=policy.get(
                                     "AdditionalStorageProvidersAvailable", True
                                 ),
-                                is_default=policy.get("IsDefault", False),
+                                # These properties can be null on tenants where the
+                                # setting was never configured; null keeps the
+                                # platform default.
+                                is_default=policy.get("IsDefault") is True,
                                 personal_accounts_enabled=policy.get(
-                                    "PersonalAccountsEnabled", True
-                                ),
+                                    "PersonalAccountsEnabled"
+                                )
+                                is not False,
                                 personal_account_calendars_enabled=policy.get(
-                                    "PersonalAccountCalendarsEnabled", True
-                                ),
+                                    "PersonalAccountCalendarsEnabled"
+                                )
+                                is not False,
                             )
                         )
         except Exception as error:
