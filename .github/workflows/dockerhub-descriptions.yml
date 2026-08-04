@@ -32,11 +32,11 @@ jobs:
           - repository: prowlercloud/prowler
             short_description: 'Prowler CLI: the Open Cloud Security tool for AWS, Azure, Google Cloud, Kubernetes, M365 and GitHub'
           - repository: prowlercloud/prowler-api
-            short_description: 'This image contains the JSON API and Task Runner components for Prowler.'
+            short_description: 'Prowler Local Server - API: the JSON API and Task Runner components of Prowler'
           - repository: prowlercloud/prowler-ui
-            short_description: 'This image hosts the UI component for Prowler, providing a web interface to interact with Prowler.'
+            short_description: 'Prowler Local Server - UI: the web interface to run Prowler scans and explore findings'
           - repository: prowlercloud/prowler-mcp
-            short_description: 'Prowler MCP Server provides AI assistants with access to the entire Prowler ecosystem'
+            short_description: 'Prowler MCP: the interface for agents, including IDE plugins and agent integrations'
 
     steps:
       - name: Harden Runner

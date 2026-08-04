@@ -20,10 +20,10 @@ All Prowler images are built from a single repository — [github.com/prowler-cl
 
 | Image | What it is | Dockerfile |
 |---|---|---|
-| [`prowlercloud/prowler`](https://hub.docker.com/r/prowlercloud/prowler) | **Prowler CLI/SDK.** Runs scans from your terminal, a CI job, a Kubernetes Job or any container platform. | [`Dockerfile`](https://github.com/prowler-cloud/prowler/blob/master/Dockerfile) |
-| [`prowlercloud/prowler-api`](https://hub.docker.com/r/prowlercloud/prowler-api) | **Prowler App — API.** Django REST backend plus the Celery worker and scheduler that run scans and store results. | [`api/Dockerfile`](https://github.com/prowler-cloud/prowler/blob/master/api/Dockerfile) |
-| [`prowlercloud/prowler-ui`](https://hub.docker.com/r/prowlercloud/prowler-ui) | **Prowler App — UI.** Next.js web interface for launching scans and exploring findings. | [`ui/Dockerfile`](https://github.com/prowler-cloud/prowler/blob/master/ui/Dockerfile) |
-| [`prowlercloud/prowler-mcp`](https://hub.docker.com/r/prowlercloud/prowler-mcp) | **Prowler MCP Server.** Gives AI assistants access to the Prowler ecosystem over the Model Context Protocol. | [`mcp_server/Dockerfile`](https://github.com/prowler-cloud/prowler/blob/master/mcp_server/Dockerfile) |
+| [`prowlercloud/prowler`](https://hub.docker.com/r/prowlercloud/prowler) | **Prowler CLI.** Runs scans from your terminal, a CI job, a Kubernetes Job or any container platform. | [`Dockerfile`](https://github.com/prowler-cloud/prowler/blob/master/Dockerfile) |
+| [`prowlercloud/prowler-api`](https://hub.docker.com/r/prowlercloud/prowler-api) | **Prowler Local Server — API.** Django REST backend plus the Celery worker and scheduler that run scans and store results. | [`api/Dockerfile`](https://github.com/prowler-cloud/prowler/blob/master/api/Dockerfile) |
+| [`prowlercloud/prowler-ui`](https://hub.docker.com/r/prowlercloud/prowler-ui) | **Prowler Local Server — UI.** Next.js web interface for launching scans and exploring findings. | [`ui/Dockerfile`](https://github.com/prowler-cloud/prowler/blob/master/ui/Dockerfile) |
+| [`prowlercloud/prowler-mcp`](https://hub.docker.com/r/prowlercloud/prowler-mcp) | **Prowler MCP.** Gives AI assistants access to the Prowler ecosystem over the Model Context Protocol. | [`mcp_server/Dockerfile`](https://github.com/prowler-cloud/prowler/blob/master/mcp_server/Dockerfile) |
 | [`toniblyx/prowler`](https://hub.docker.com/r/toniblyx/prowler) | **Legacy home of the Prowler CLI image.** Still mirrored on every release for backwards compatibility. New deployments should use `prowlercloud/prowler`. | [`Dockerfile`](https://github.com/prowler-cloud/prowler/blob/master/Dockerfile) |
 
 All images are published for `linux/amd64` and `linux/arm64`.
@@ -47,7 +47,7 @@ The Prowler CLI image is also available on AWS Public ECR: [`public.ecr.aws/prow
 
 # Quick start
 
-## Prowler App (UI + API)
+## Prowler Local Server (UI + API)
 
 ```console
 curl -LO https://raw.githubusercontent.com/prowler-cloud/prowler/refs/heads/master/docker-compose.yml
@@ -57,7 +57,7 @@ docker compose up -d
 
 Then open http://localhost:3000 and sign up with your email and password.
 
-Full guide: [Prowler App installation](https://docs.prowler.com/getting-started/installation/prowler-app)
+Full guide: [Prowler Local Server installation](https://docs.prowler.com/getting-started/installation/prowler-app)
 
 ## Prowler CLI
 
@@ -75,7 +75,7 @@ Swap `aws` for `azure`, `gcp`, `kubernetes`, `m365` or `github` to scan another 
 
 Full guide: [Prowler CLI installation](https://docs.prowler.com/getting-started/installation/prowler-cli)
 
-## Prowler MCP Server
+## Prowler MCP
 
 ```console
 # STDIO mode (for local MCP clients)
@@ -86,7 +86,7 @@ docker run --rm -p 8000:8000 prowlercloud/prowler-mcp \
   --transport http --host 0.0.0.0 --port 8000
 ```
 
-Full guide: [Prowler MCP Server installation](https://docs.prowler.com/getting-started/installation/prowler-mcp)
+Full guide: [Prowler MCP installation](https://docs.prowler.com/getting-started/installation/prowler-mcp)
 
 > **Note on architecture:** if your workstation's architecture is incompatible, set `DOCKER_DEFAULT_PLATFORM=linux/amd64` or pass `--platform linux/amd64` to your Docker command.
 
