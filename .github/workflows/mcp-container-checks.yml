@@ -105,6 +105,7 @@ jobs:
             .github/actions/trivy-scan/**
             .github/actions/grype-scan/**
             .grype.yaml
+            .github/scripts/grype-pr-comment.js
           files_ignore: |
             mcp_server/README.md
             mcp_server/CHANGELOG.md

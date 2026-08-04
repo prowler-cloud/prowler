@@ -106,6 +106,7 @@ jobs:
             .github/actions/trivy-scan/**
             .github/actions/grype-scan/**
             .grype.yaml
+            .github/scripts/grype-pr-comment.js
           files_ignore: |
             ui/CHANGELOG.md
             ui/changelog.d/**

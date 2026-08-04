@@ -18,6 +18,10 @@ inputs:
     description: 'Upload results to GitHub Security tab'
     required: false
     default: 'true'
+  create-pr-comment:
+    description: 'Create a comment on the PR with scan results'
+    required: false
+    default: 'true'
   artifact-retention-days:
     description: 'Days to retain the Grype report artifact'
     required: false
@@ -45,6 +49,7 @@ runs:
         output-file: 'grype-report.json'
         fail-build: 'false'
         by-cve: 'true' # Report CVE ids rather than GHSA, so findings line up with Trivy's
+        only-fixed: 'true' # A finding with no available fix is not actionable, so it must not gate
         cache-db: 'true'
         grype-version: 'v0.116.1'
 
@@ -58,6 +63,7 @@ runs:
         fail-build: 'false'
         severity-cutoff: 'high'
         by-cve: 'true'
+        only-fixed: 'true' # A finding with no available fix is not actionable, so it must not gate
         cache-db: 'true'
         grype-version: 'v0.116.1'
 
@@ -100,6 +106,51 @@ runs:
       env:
         INPUTS_IMAGE_NAME: ${{ inputs.image-name }}
         INPUTS_IMAGE_TAG: ${{ inputs.image-tag }}
+
+    # Before the gate, so the comment is there to explain a failure rather than absent because of it
+    - name: Comment scan results on PR
+      if: >-
+        inputs.create-pr-comment == 'true'
+        && github.event_name == 'pull_request'
+        && github.event.pull_request.head.repo.full_name == github.repository
+      uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+      env:
+        IMAGE_NAME: ${{ inputs.image-name }}
+        GITHUB_SHA: ${{ inputs.image-tag }}
+        CUTOFF: ${{ inputs.fail-on-severity }}
+      with:
+        script: |
+          const comment = require('./.github/scripts/grype-pr-comment.js');
+
+          // Unique identifier to find our comment
+          const marker = `<!-- grype-scan-comment:${process.env.IMAGE_NAME} -->`;
+          const body = marker + '\n' + comment;
+
+          const { data: comments } = await github.rest.issues.listComments({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+          });
+
+          const existingComment = comments.find(c => c.body?.includes(marker));
+
+          if (existingComment) {
+            await github.rest.issues.updateComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: existingComment.id,
+              body: body
+            });
+            console.log('✅ Updated existing Grype scan comment');
+          } else {
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: body
+            });
+            console.log('✅ Created new Grype scan comment');
+          }
 
     - name: Check for blocking vulnerabilities
       if: inputs.fail-on-severity != 'none'
