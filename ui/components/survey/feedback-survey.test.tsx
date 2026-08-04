@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { Survey } from "posthog-js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -17,6 +17,7 @@ const mocks = vi.hoisted(() => ({
   onSurveysLoaded: vi.fn(),
   capture: vi.fn(),
   moduleLoaded: vi.fn(),
+  pathname: "/",
   isPushViewport: false,
   // Mirrors the singleton's `__loaded` flag: true when a PostHog instance
   // already exists (as on Prowler Cloud, initialized in app/providers.tsx).
@@ -29,6 +30,9 @@ vi.mock("@/hooks/use-runtime-config", () => ({
 }));
 vi.mock("@/hooks/use-media-query", () => ({
   useMediaQuery: () => mocks.isPushViewport,
+}));
+vi.mock("next/navigation", () => ({
+  usePathname: () => mocks.pathname,
 }));
 vi.mock("posthog-js", () => {
   mocks.moduleLoaded();
@@ -90,6 +94,7 @@ describe("FeedbackSurvey", () => {
     vi.resetModules();
     vi.resetAllMocks();
     mocks.loaded = false;
+    mocks.pathname = "/";
     mocks.isPushViewport = false;
     localStorage.clear();
     mocks.isCloud.mockReturnValue(true);
@@ -181,6 +186,24 @@ describe("FeedbackSurvey", () => {
     expect(trigger).toHaveClass("transition-[right,transform]", "duration-200");
   });
 
+  it("keeps the normal gutter on Lighthouse when stale state says the absent panel is open", async () => {
+    // Given
+    mocks.pathname = "/lighthouse";
+    mocks.isPushViewport = true;
+    const { useSidePanelStore } = await import("@/store/side-panel");
+    useSidePanelStore.setState({ isOpen: true, width: 720 });
+
+    // When
+    await renderSurvey();
+
+    // Then
+    const trigger = await screen.findByRole("button", {
+      name: "Give feedback",
+    });
+    expect(trigger).toBeVisible();
+    expect(trigger.style.right).toBe("");
+  });
+
   it("hides the feedback trigger when the side panel overlays on mobile", async () => {
     // Given
     mocks.isPushViewport = false;
@@ -194,6 +217,38 @@ describe("FeedbackSurvey", () => {
     await waitFor(() => expect(mocks.onSurveysLoaded).toHaveBeenCalled());
     expect(
       screen.queryByRole("button", { name: "Give feedback" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps the feedback form closed after the mobile side panel closes", async () => {
+    // Given
+    mocks.isPushViewport = false;
+    const user = userEvent.setup();
+    const { useSidePanelStore } = await import("@/store/side-panel");
+    useSidePanelStore.setState({ isOpen: false });
+    await renderSurvey();
+    await user.click(
+      await screen.findByRole("button", { name: "Give feedback" }),
+    );
+    expect(
+      await screen.findByRole("heading", { name: "What could we do better?" }),
+    ).toBeVisible();
+
+    // When
+    act(() => useSidePanelStore.setState({ isOpen: true }));
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("button", { name: "Give feedback" }),
+      ).not.toBeInTheDocument(),
+    );
+    act(() => useSidePanelStore.setState({ isOpen: false }));
+
+    // Then
+    expect(
+      await screen.findByRole("button", { name: "Give feedback" }),
+    ).toBeVisible();
+    expect(
+      screen.queryByRole("heading", { name: "What could we do better?" }),
     ).not.toBeInTheDocument();
   });
 
