@@ -770,7 +770,9 @@
     {
       "Id": "2.4.1",
       "Description": "Identify priority accounts to utilize Microsoft 365's advanced custom security features. This is an essential tool to bolster protection for users who are frequently targeted due to their critical positions, such as executives, leaders, managers, or others who have access to sensitive, confidential, financial, or high-priority information. Once these accounts are identified, several services and features can be enabled, including threat policies, enhanced sign-in protection through conditional access policies, and alert policies, enabling faster response times for incident response teams.",
-      "Checks": [],
+      "Checks": [
+        "defender_priority_account_protection_enabled"
+      ],
       "Attributes": [
         {
           "Section": "2 Microsoft Defender",
@@ -791,7 +793,9 @@
     {
       "Id": "2.4.2",
       "Description": "Preset security policies have been established by Microsoft, utilizing observations and experiences within datacenters to strike a balance between the exclusion of malicious content from users and limiting unwarranted disruptions. These policies can apply to all, or select users and encompass recommendations for addressing spam, malware, and phishing threats. The policy parameters are pre-determined and non-adjustable. Strict protection has the most aggressive protection of the 3 presets. - EOP: Anti-spam, Anti-malware and Anti-phishing - Defender: Spoof protection, Impersonation protection and Advanced phishing - Defender: Safe Links and Safe Attachments NOTE: The preset security polices cannot target Priority account TAGS currently, groups should be used instead.",
-      "Checks": [],
+      "Checks": [
+        "defender_strict_preset_security_policy_enabled"
+      ],
       "Attributes": [
         {
           "Section": "2 Microsoft Defender",
