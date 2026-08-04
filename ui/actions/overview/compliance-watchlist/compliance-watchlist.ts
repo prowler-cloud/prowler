@@ -4,6 +4,7 @@ import { apiBaseUrl, getAuthHeaders } from "@/lib";
 import { IN_WATCHLIST_FILTER_KEY } from "@/lib/compliance/watchlist";
 import { appendSanitizedProviderTypeFilters } from "@/lib/provider-filters";
 import { handleApiResponse } from "@/lib/server-actions-helper";
+import type { ApiResult } from "@/types/server-actions";
 
 import { ComplianceWatchlistResponse } from "./compliance-watchlist.types";
 
@@ -12,10 +13,8 @@ export const getComplianceWatchlist = async ({
   inWatchlist = false,
 }: {
   filters?: Record<string, string | string[] | undefined>;
-  /** Restrict the response to the frameworks the organization pinned. Off by
-   *  default so callers that want the full ranking keep getting it. */
   inWatchlist?: boolean;
-} = {}): Promise<ComplianceWatchlistResponse | undefined> => {
+} = {}): Promise<ApiResult<ComplianceWatchlistResponse> | undefined> => {
   const headers = await getAuthHeaders({ contentType: false });
   const url = new URL(`${apiBaseUrl}/overviews/compliance-watchlist`);
 

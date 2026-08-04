@@ -339,6 +339,7 @@ class VPC(AWSService):
                                 regional_client.region
                             ]
                             public = False
+                            public_ipv6 = False
                             nat_gateway = False
                             route_tables_for_subnet = (
                                 regional_client_for_subnet.describe_route_tables(
@@ -366,14 +367,30 @@ class VPC(AWSService):
                                 "RouteTables"
                             ):
                                 for route in route_table.get("Routes"):
-                                    if (
+                                    # ``igw-*`` is a full internet gateway; the
+                                    # egress-only variant is ``eigw-*`` and must
+                                    # NOT match (outbound-only, does not make the
+                                    # subnet reachable from the Internet).
+                                    is_igw = (
                                         "GatewayId" in route
-                                        and "igw" in route["GatewayId"]
+                                        and isinstance(route["GatewayId"], str)
+                                        and route["GatewayId"].startswith("igw-")
+                                    )
+                                    if (
+                                        is_igw
                                         and route.get("DestinationCidrBlock", "")
                                         == "0.0.0.0/0"
                                     ):
                                         # If the route table has a default route to an internet gateway, the subnet is public
                                         public = True
+                                    if (
+                                        is_igw
+                                        and route.get("DestinationIpv6CidrBlock", "")
+                                        == "::/0"
+                                    ):
+                                        # ::/0 → IGW makes the subnet reachable
+                                        # from the public IPv6 Internet.
+                                        public_ipv6 = True
                                     if "NatGatewayId" in route:
                                         nat_gateway = True
                             subnet_name = ""
@@ -391,6 +408,7 @@ class VPC(AWSService):
                                 region=regional_client.region,
                                 availability_zone=subnet["AvailabilityZone"],
                                 public=public,
+                                public_ipv6=public_ipv6,
                                 nat_gateway=nat_gateway,
                                 tags=subnet.get("Tags"),
                                 mapPublicIpOnLaunch=subnet["MapPublicIpOnLaunch"],
@@ -449,6 +467,7 @@ class VpcSubnet(BaseModel):
     cidr_block: Optional[str]
     availability_zone: str
     public: bool
+    public_ipv6: bool = False
     in_use: bool = False
     nat_gateway: bool
     region: str

@@ -267,7 +267,13 @@ export default async function ComplianceDetail({
       const snapshot = threatScoreResponse.data[0];
       threatScoreData = {
         overallScore: parseFloat(snapshot.attributes.overall_score),
-        sectionScores: snapshot.attributes.section_scores,
+        // The multi-provider aggregation branch serializes section scores as
+        // decimal strings.
+        sectionScores: Object.fromEntries(
+          Object.entries(snapshot.attributes.section_scores).map(
+            ([name, value]) => [name, Number(value)],
+          ),
+        ),
       };
     }
   }

@@ -1,14 +1,14 @@
-FROM python:3.12.13-slim-bookworm@sha256:8a7e7cc04fd3e2bd787f7f24e22d5d119aa590d429b50c95dfe12b3abe52f48b AS build
+FROM python:3.12.13-slim-trixie@sha256:57cd7c3a7a273101a6485ba99423ee568157882804b1124b4dd04266317710de AS build
 
 LABEL maintainer="https://github.com/prowler-cloud/prowler"
 LABEL org.opencontainers.image.source="https://github.com/prowler-cloud/prowler"
 
-ARG POWERSHELL_VERSION=7.5.0
+ARG POWERSHELL_VERSION=7.5.9
 ENV POWERSHELL_VERSION=${POWERSHELL_VERSION}
 # Opt out of PowerShell telemetry (Application Insights -> dc.services.visualstudio.com)
 ENV POWERSHELL_TELEMETRY_OPTOUT=1
 
-ARG TRIVY_VERSION=0.71.2
+ARG TRIVY_VERSION=0.72.0
 ENV TRIVY_VERSION=${TRIVY_VERSION}
 
 ARG ZIZMOR_VERSION=1.24.1
@@ -16,7 +16,7 @@ ENV ZIZMOR_VERSION=${ZIZMOR_VERSION}
 
 # hadolint ignore=DL3008
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    wget libicu72 libunwind8 libssl3 libcurl4 ca-certificates apt-transport-https gnupg \
+    wget libicu76 libunwind8 libssl3 libcurl4 ca-certificates apt-transport-https gnupg \
     build-essential pkg-config libzstd-dev zlib1g-dev \
     && rm -rf /var/lib/apt/lists/*
 
@@ -89,7 +89,7 @@ ENV HOME='/home/prowler'
 ENV PATH="${HOME}/.local/bin:${PATH}"
 #hadolint ignore=DL3013
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir uv==0.11.14
+    pip install --no-cache-dir uv==0.12.0
 
 RUN uv sync --locked --compile-bytecode && \
     rm -rf ~/.cache/uv
@@ -105,6 +105,9 @@ RUN apt-get purge -y --auto-remove \
     pkg-config \
     libzstd-dev \
     zlib1g-dev \
+    wget \
+    gnupg \
+    apt-transport-https \
     && rm -rf /var/lib/apt/lists/*
 
 USER prowler
@@ -112,6 +115,16 @@ USER prowler
 # Remove deprecated dash dependencies
 RUN pip uninstall dash-html-components -y && \
     pip uninstall dash-core-components -y
+
+USER root
+
+# pip is build-only; the entrypoint runs the venv directly.
+RUN rm -rf /usr/local/lib/python3.12/site-packages/pip \
+    /usr/local/lib/python3.12/site-packages/pip-*.dist-info \
+    /home/prowler/.local/lib/python3.12/site-packages/pip \
+    /home/prowler/.local/lib/python3.12/site-packages/pip-*.dist-info \
+    /usr/local/bin/pip /usr/local/bin/pip3 /usr/local/bin/pip3.12 \
+    /home/prowler/.local/bin/pip /home/prowler/.local/bin/pip3 /home/prowler/.local/bin/pip3.12
 
 USER prowler
 ENTRYPOINT ["/home/prowler/.venv/bin/prowler"]

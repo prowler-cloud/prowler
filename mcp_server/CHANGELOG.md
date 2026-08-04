@@ -4,6 +4,33 @@ All notable changes to the **Prowler MCP Server** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [0.9.1] (Prowler v5.37.1)
+
+### 🔐 Security
+
+- Bumped `fastmcp` and pinned `cryptography`, `joserfc`, `mcp` and `python-multipart`, clearing all 7 high-severity CVEs from the MCP image [(#12307)](https://github.com/prowler-cloud/prowler/pull/12307)
+
+---
+
+## [0.9.0] (Prowler v5.37.0)
+
+### 🚀 Added
+
+- Read-only user management tools `prowler_list_users`, `prowler_get_user`, and `prowler_get_current_user` for listing tenant users with their emails and identifying the authenticated user [(#12088)](https://github.com/prowler-cloud/prowler/pull/12088)
+- RBAC role tools `prowler_list_roles`, `prowler_get_role`, `prowler_get_user_roles`, and `prowler_set_user_role` for browsing roles and setting the role a user holds [(#12088)](https://github.com/prowler-cloud/prowler/pull/12088)
+- Integrations tools to manage Amazon S3, AWS Security Hub and Jira integrations, and to send findings to Jira [(#12138)](https://github.com/prowler-cloud/prowler/pull/12138)
+
+### 🔄 Changed
+
+- README now documents the Cloud-only `prowler_cloud_*` tools available on the hosted Prowler MCP (alerts, findings triage, scan scheduling, scan configurations), and corrects the Prowler Hub check count and the scan orchestration capabilities [(#12266)](https://github.com/prowler-cloud/prowler/pull/12266)
+
+### 🐞 Fixed
+
+- Memory leak in HTTP mode caused by streamable-HTTP sessions being retained for the process lifetime when clients never sent `DELETE /mcp`; the server now runs stateless [(#12235)](https://github.com/prowler-cloud/prowler/pull/12235)
+- `prowler_list_integrations` failing with a 500 error on tenants with a Jira integration, caused by the request leaving `configuration` out of the sparse fieldset [(#12259)](https://github.com/prowler-cloud/prowler/pull/12259)
+
+---
+
 ## [0.8.0] (Prowler v5.35.0)
 
 ### 🔄 Changed
