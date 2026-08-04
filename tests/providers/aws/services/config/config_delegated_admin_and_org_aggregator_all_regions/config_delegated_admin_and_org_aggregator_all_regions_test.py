@@ -430,10 +430,15 @@ class Test_config_delegated_admin_and_org_aggregator_all_regions:
 
                 assert eu_west_1_result is not None
                 # The check still runs; aggregator coverage is satisfied but the
-                # delegated-admin status is unknown, so it must FAIL.
-                assert eu_west_1_result.status == "FAIL"
+                # delegated-admin status is unknown, which is a lack of visibility
+                # rather than a misconfiguration.
+                assert eu_west_1_result.status == "MANUAL"
                 assert (
-                    "delegated administrator status for config.amazonaws.com could not be determined"
+                    "delegated administrator status for config.amazonaws.com could "
+                    "not be determined" in eu_west_1_result.status_extended
+                )
+                assert (
+                    "organization management account"
                     in eu_west_1_result.status_extended
                 )
 

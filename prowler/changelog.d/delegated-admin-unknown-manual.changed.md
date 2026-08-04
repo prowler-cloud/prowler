@@ -1,0 +1,1 @@
+The `securityhub_delegated_admin_enabled_all_regions`, `guardduty_delegated_admin_enabled_all_regions` and `config_delegated_admin_and_org_aggregator_all_regions` checks now report MANUAL instead of FAIL when the delegated administrator status cannot be read, which happens on every member account because the API is restricted to the organization management account
