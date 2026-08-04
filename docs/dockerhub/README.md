@@ -1,4 +1,7 @@
 <p align="center">
+  <img src="https://raw.githubusercontent.com/prowler-cloud/prowler/master/docs/dockerhub/prowler-logo.svg" width="252" alt="Prowler">
+</p>
+<p align="center">
   <b>Prowler</b> is the Open Cloud Security platform trusted by thousands to automate security and compliance in any cloud environment — AWS, Azure, Google Cloud, Kubernetes, M365, GitHub and more.
 </p>
 <p align="center">
