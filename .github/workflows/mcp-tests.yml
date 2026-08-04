@@ -85,6 +85,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           working-directory: ./mcp_server
+          update-sdk-lock: 'false'
 
       - name: Run tests with pytest
         if: steps.check-changes.outputs.any_changed == 'true'
