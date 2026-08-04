@@ -154,6 +154,7 @@ export const SamlConfigForm = ({
     metadata_xml?: string | null;
   }>({});
   const formRef = useRef<HTMLFormElement>(null);
+  const activeFileReaderRef = useRef<FileReader | null>(null);
   const { toast } = useToast();
   const isCloudEnv = isCloud();
   const openCloudUpgrade = useCloudUpgradeStore(
@@ -227,7 +228,14 @@ export const SamlConfigForm = ({
     setClientErrors(newErrors);
   };
 
+  const invalidateActiveFileRead = () => {
+    const activeReader = activeFileReaderRef.current;
+    activeFileReaderRef.current = null;
+    activeReader?.abort();
+  };
+
   const clearMetadataFile = (fileInput: HTMLInputElement) => {
+    invalidateActiveFileRead();
     fileInput.value = "";
     const metadataInput = formRef.current?.elements.namedItem("metadata_xml");
     if (metadataInput instanceof HTMLInputElement) {
@@ -277,8 +285,14 @@ export const SamlConfigForm = ({
       return;
     }
 
+    invalidateActiveFileRead();
     const reader = new FileReader();
+    activeFileReaderRef.current = reader;
     reader.onload = (e) => {
+      if (activeFileReaderRef.current !== reader) {
+        return;
+      }
+      activeFileReaderRef.current = null;
       const content = e.target?.result as string;
 
       // Comprehensive XML validation
@@ -309,6 +323,10 @@ export const SamlConfigForm = ({
     };
 
     reader.onerror = () => {
+      if (activeFileReaderRef.current !== reader) {
+        return;
+      }
+      activeFileReaderRef.current = null;
       toast({
         variant: "destructive",
         title: "File read error",

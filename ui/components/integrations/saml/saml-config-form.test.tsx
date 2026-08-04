@@ -1,8 +1,9 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderToString } from "react-dom/server";
 import {
   afterAll,
+  afterEach,
   beforeAll,
   beforeEach,
   describe,
@@ -53,6 +54,43 @@ const runtimeConfig: RuntimePublicConfig = {
   stripePublishableKeyV2: null,
 };
 
+const capturePendingFileReads = () => {
+  const readers: FileReader[] = [];
+  vi.spyOn(FileReader.prototype, "readAsText").mockImplementation(function (
+    this: FileReader,
+  ) {
+    readers.push(this);
+  });
+  vi.spyOn(FileReader.prototype, "abort").mockImplementation(() => {});
+  return readers;
+};
+
+const finishFileRead = (reader: FileReader, content: string) => {
+  Object.defineProperty(reader, "result", {
+    configurable: true,
+    value: content,
+  });
+  reader.dispatchEvent(new ProgressEvent("load"));
+};
+
+const renderSamlUpdateForm = () => {
+  isCloudMock.mockReturnValue(true);
+  const samlConfig = {
+    type: SAML_CONFIGURATION_RESOURCE_TYPE,
+    id: "saml-1",
+    attributes: {
+      email_domain: "primary.example.com",
+      metadata_xml: "<EntityDescriptor />",
+    },
+  };
+  render(<SamlConfigForm setIsOpen={vi.fn()} samlConfig={samlConfig} />);
+
+  return {
+    fileInput: document.getElementById("metadata_xml_file") as HTMLInputElement,
+    metadataInput: document.getElementById("metadata_xml") as HTMLInputElement,
+  };
+};
+
 beforeAll(() => {
   const runtimeConfigScript = document.createElement("script");
   runtimeConfigScript.id = RUNTIME_CONFIG_SCRIPT_ID;
@@ -64,6 +102,10 @@ beforeAll(() => {
 beforeEach(() => {
   isCloudMock.mockReturnValue(false);
   useCloudUpgradeStore.getState().closeCloudUpgrade();
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
 });
 
 afterAll(() => {
@@ -167,19 +209,10 @@ describe("SamlConfigForm", () => {
   });
 
   it("does not mark metadata XML as required when updating", () => {
-    // Given
-    isCloudMock.mockReturnValue(true);
-    const samlConfig = {
-      type: SAML_CONFIGURATION_RESOURCE_TYPE,
-      id: "saml-1",
-      attributes: {
-        email_domain: "primary.example.com",
-        metadata_xml: "<EntityDescriptor />",
-      },
-    };
+    // Given - An existing SAML configuration
 
     // When
-    render(<SamlConfigForm setIsOpen={vi.fn()} samlConfig={samlConfig} />);
+    renderSamlUpdateForm();
 
     // Then
     expect(screen.getByText("Metadata XML File")).not.toHaveTextContent("*");
@@ -187,23 +220,8 @@ describe("SamlConfigForm", () => {
 
   it("does not require metadata when an update file selection is cleared", async () => {
     // Given
-    isCloudMock.mockReturnValue(true);
     const user = userEvent.setup();
-    const samlConfig = {
-      type: SAML_CONFIGURATION_RESOURCE_TYPE,
-      id: "saml-1",
-      attributes: {
-        email_domain: "primary.example.com",
-        metadata_xml: "<EntityDescriptor />",
-      },
-    };
-    render(<SamlConfigForm setIsOpen={vi.fn()} samlConfig={samlConfig} />);
-    const fileInput = document.getElementById(
-      "metadata_xml_file",
-    ) as HTMLInputElement;
-    const metadataInput = document.getElementById(
-      "metadata_xml",
-    ) as HTMLInputElement;
+    const { fileInput, metadataInput } = renderSamlUpdateForm();
     const metadataFile = new File(["<EntityDescriptor />"], "metadata.xml", {
       type: "application/xml",
     });
@@ -220,6 +238,61 @@ describe("SamlConfigForm", () => {
     expect(
       screen.queryByText("Metadata XML is required"),
     ).not.toBeInTheDocument();
+  });
+
+  it("ignores a discarded metadata file when its read finishes", async () => {
+    // Given
+    const readers = capturePendingFileReads();
+    const user = userEvent.setup();
+    const { fileInput, metadataInput } = renderSamlUpdateForm();
+    const discardedFile = new File(
+      ['<EntityDescriptor entityID="discarded" />'],
+      "discarded.xml",
+      { type: "application/xml" },
+    );
+    await user.upload(fileInput, discardedFile);
+    expect(readers).toHaveLength(1);
+
+    // When
+    await user.upload(fileInput, []);
+    act(() => {
+      finishFileRead(readers[0], '<EntityDescriptor entityID="discarded" />');
+    });
+
+    // Then
+    expect(metadataInput).toHaveValue("");
+    expect(screen.queryByText("discarded.xml")).not.toBeInTheDocument();
+  });
+
+  it("keeps the latest metadata file when an earlier read finishes last", async () => {
+    // Given
+    const readers = capturePendingFileReads();
+    const user = userEvent.setup();
+    const { fileInput, metadataInput } = renderSamlUpdateForm();
+    const earlierFile = new File(
+      ['<EntityDescriptor entityID="earlier" />'],
+      "earlier.xml",
+      { type: "application/xml" },
+    );
+    const latestFile = new File(
+      ['<EntityDescriptor entityID="latest" />'],
+      "latest.xml",
+      { type: "application/xml" },
+    );
+    await user.upload(fileInput, earlierFile);
+    await user.upload(fileInput, latestFile);
+    expect(readers).toHaveLength(2);
+
+    // When
+    act(() => {
+      finishFileRead(readers[1], '<EntityDescriptor entityID="latest" />');
+      finishFileRead(readers[0], '<EntityDescriptor entityID="earlier" />');
+    });
+
+    // Then
+    expect(metadataInput).toHaveValue('<EntityDescriptor entityID="latest" />');
+    expect(screen.getByText("latest.xml")).toBeVisible();
+    expect(screen.queryByText("earlier.xml")).not.toBeInTheDocument();
   });
 
   it("marks metadata XML as required when creating", () => {
