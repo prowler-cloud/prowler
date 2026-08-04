@@ -16,6 +16,17 @@ class rds_instance_certificate_expiration(Check):
         findings = []
         for db_instance in rds_client.db_instances.values():
             report = Check_Report_AWS(metadata=self.metadata(), resource=db_instance)
+
+            # An empty certificate list means the CA certificate could not be
+            # retrieved, not that the certificate is expired. Reporting it as a
+            # failure would be a false positive, so it is flagged for manual review.
+            if not db_instance.cert:
+                report.status = "MANUAL"
+                report.check_metadata.Severity = Severity.informational
+                report.status_extended = f"RDS Instance {db_instance.id} certificate expiration could not be determined because no CA certificate information was retrieved."
+                findings.append(report)
+                continue
+
             report.status = "FAIL"
             report.check_metadata.Severity = Severity.critical
             report.status_extended = (

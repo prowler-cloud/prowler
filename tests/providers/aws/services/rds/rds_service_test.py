@@ -146,6 +146,55 @@ class Test_RDS_Service:
         assert db_instance.copy_tags_to_snapshot
         assert db_instance.port == 5432
 
+    # Neptune shares the RDS control plane, so its resources are returned by the RDS
+    # API. They must be skipped because they are audited by the neptune service.
+    @mock_aws
+    def test_neptune_resources_are_excluded(self):
+        conn = client("rds", region_name=AWS_REGION_US_EAST_1)
+        conn.create_db_cluster(
+            DBClusterIdentifier="neptune-cluster",
+            Engine="neptune",
+            DBClusterInstanceClass="db.r5.large",
+            MasterUsername="root",
+            MasterUserPassword="hunter2000",
+        )
+        conn.create_db_instance(
+            DBInstanceIdentifier="neptune-instance-1",
+            DBInstanceClass="db.r5.large",
+            Engine="neptune",
+            DBClusterIdentifier="neptune-cluster",
+        )
+        conn.create_db_cluster_snapshot(
+            DBClusterIdentifier="neptune-cluster",
+            DBClusterSnapshotIdentifier="neptune-snapshot-1",
+        )
+        conn.create_db_cluster(
+            DBClusterIdentifier="postgres-cluster",
+            Engine="postgres",
+            DBClusterInstanceClass="db.m1.small",
+            MasterUsername="root",
+            MasterUserPassword="hunter2000",
+        )
+        conn.create_db_instance(
+            DBInstanceIdentifier="postgres-instance-1",
+            DBInstanceClass="db.m1.small",
+            Engine="postgres",
+            AllocatedStorage=10,
+        )
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        rds = RDS(aws_provider)
+
+        assert [instance.id for instance in rds.db_instances.values()] == [
+            "postgres-instance-1"
+        ]
+        assert [cluster.id for cluster in rds.db_clusters.values()] == [
+            "postgres-cluster"
+        ]
+        assert all(
+            "neptune" not in snapshot.id for snapshot in rds.db_cluster_snapshots
+        )
+
     @mock_aws
     def test_describe_db_parameters(self):
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)

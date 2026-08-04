@@ -1,0 +1,1 @@
+`rds_instance_certificate_expiration` no longer reports false positives on Neptune resources, which are now excluded from the RDS inventory, or on instances whose CA certificate could not be retrieved, which are reported as MANUAL instead of a critical failure

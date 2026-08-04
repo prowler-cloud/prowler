@@ -8,6 +8,12 @@ from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
+# Engines that are returned by the RDS API but belong to a different AWS service.
+# DocumentDB and Neptune share the RDS control plane, so their resources show up in
+# describe_db_* calls even though RDS checks do not apply to them. Each one has its
+# own dedicated Prowler service (docdb, neptune) that audits them properly.
+NON_RDS_ENGINES = ["docdb", "neptune"]
+
 
 class RDS(AWSService):
     def __init__(self, provider):
@@ -52,7 +58,7 @@ class RDS(AWSService):
                     if not self.audit_resources or (
                         is_resource_filtered(arn, self.audit_resources)
                     ):
-                        if instance["Engine"] != "docdb":
+                        if instance["Engine"] not in NON_RDS_ENGINES:
                             self.db_instances[arn] = DBInstance(
                                 id=instance["DBInstanceIdentifier"],
                                 arn=arn,
@@ -199,7 +205,7 @@ class RDS(AWSService):
                     if not self.audit_resources or (
                         is_resource_filtered(arn, self.audit_resources)
                     ):
-                        if snapshot["Engine"] != "docdb":
+                        if snapshot["Engine"] not in NON_RDS_ENGINES:
                             self.db_snapshots.append(
                                 DBSnapshot(
                                     id=snapshot["DBSnapshotIdentifier"],
@@ -253,7 +259,7 @@ class RDS(AWSService):
                                     db_cluster_arn, self.audit_resources
                                 )
                             ):
-                                if cluster["Engine"] != "docdb":
+                                if cluster["Engine"] not in NON_RDS_ENGINES:
                                     db_cluster = DBCluster(
                                         id=cluster["DBClusterIdentifier"],
                                         arn=db_cluster_arn,
@@ -376,7 +382,7 @@ class RDS(AWSService):
                             self.audit_resources,
                         )
                     ):
-                        if snapshot["Engine"] != "docdb":
+                        if snapshot["Engine"] not in NON_RDS_ENGINES:
                             self.db_cluster_snapshots.append(
                                 ClusterSnapshot(
                                     id=snapshot["DBClusterSnapshotIdentifier"],

@@ -805,3 +805,116 @@ class Test_rds_instance_certificate_expiration:
                 == f"arn:aws:rds:{AWS_REGION}:{AWS_ACCOUNT_NUMBER_CON}:db:db-master-1"
             )
             assert result[0].resource_tags == []
+
+    def test_rds_instance_without_ca_certificate_identifier(self):
+        rds_client = mock.MagicMock
+        instance_arn = (
+            f"arn:aws:rds:{AWS_REGION}:{AWS_ACCOUNT_NUMBER_CON}:db:db-master-1"
+        )
+        rds_client.db_instances = {
+            instance_arn: DBInstance(
+                id="db-master-1",
+                arn=instance_arn,
+                engine="postgres",
+                engine_version="aurora14",
+                status="available",
+                public=False,
+                encrypted=True,
+                deletion_protection=True,
+                auto_minor_version_upgrade=False,
+                multi_az=True,
+                username="test",
+                iam_auth=False,
+                region=AWS_REGION,
+                ca_cert=None,
+                endpoint={},
+                cert=[],
+            )
+        }
+
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.rds.rds_service.RDS",
+                new=rds_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.rds.rds_client.rds_client",
+                new=rds_client,
+            ),
+        ):
+            # Test Check
+            from prowler.providers.aws.services.rds.rds_instance_certificate_expiration.rds_instance_certificate_expiration import (
+                rds_instance_certificate_expiration,
+            )
+
+            check = rds_instance_certificate_expiration()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert result[0].check_metadata.Severity == "informational"
+            assert (
+                result[0].status_extended
+                == "RDS Instance db-master-1 certificate expiration could not be determined because no CA certificate information was retrieved."
+            )
+            assert result[0].resource_id == "db-master-1"
+            assert result[0].region == AWS_REGION
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:rds:{AWS_REGION}:{AWS_ACCOUNT_NUMBER_CON}:db:db-master-1"
+            )
+            assert result[0].resource_tags == []
+
+    def test_rds_instance_with_unretrievable_certificate(self):
+        rds_client = mock.MagicMock
+        instance_arn = (
+            f"arn:aws:rds:{AWS_REGION}:{AWS_ACCOUNT_NUMBER_CON}:db:db-master-1"
+        )
+        rds_client.db_instances = {
+            instance_arn: DBInstance(
+                id="db-master-1",
+                arn=instance_arn,
+                engine="postgres",
+                engine_version="aurora14",
+                status="available",
+                public=False,
+                encrypted=True,
+                deletion_protection=True,
+                auto_minor_version_upgrade=False,
+                multi_az=True,
+                username="test",
+                iam_auth=False,
+                region=AWS_REGION,
+                # The instance reports a CA identifier but DescribeCertificates raised
+                # CertificateNotFound, so no certificate could be collected.
+                ca_cert="rds-ca-rsa2048-g1",
+                endpoint={},
+                cert=[],
+            )
+        }
+
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.rds.rds_service.RDS",
+                new=rds_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.rds.rds_client.rds_client",
+                new=rds_client,
+            ),
+        ):
+            # Test Check
+            from prowler.providers.aws.services.rds.rds_instance_certificate_expiration.rds_instance_certificate_expiration import (
+                rds_instance_certificate_expiration,
+            )
+
+            check = rds_instance_certificate_expiration()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert result[0].check_metadata.Severity == "informational"
+            assert (
+                result[0].status_extended
+                == "RDS Instance db-master-1 certificate expiration could not be determined because no CA certificate information was retrieved."
+            )
