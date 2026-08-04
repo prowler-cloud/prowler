@@ -64,8 +64,9 @@ runs:
         scanners: 'vuln'
         timeout: '5m'
         version: 'v0.71.2'
-        # Explicit: Trivy only auto-loads the classic .trivyignore, never the YAML one.
-        trivyignores: '.trivyignore.yaml'
+      # Not trivyignores: that input drops the .yaml extension Trivy parses by.
+      env:
+        TRIVY_IGNOREFILE: '.trivyignore.yaml'
 
     - name: Run Trivy vulnerability scan (SARIF)
       if: inputs.upload-sarif == 'true' && github.event_name == 'push'
@@ -79,8 +80,9 @@ runs:
         scanners: 'vuln'
         timeout: '5m'
         version: 'v0.71.2'
-        # Explicit: Trivy only auto-loads the classic .trivyignore, never the YAML one.
-        trivyignores: '.trivyignore.yaml'
+      # Not trivyignores: that input drops the .yaml extension Trivy parses by.
+      env:
+        TRIVY_IGNOREFILE: '.trivyignore.yaml'
 
     - name: Upload Trivy results to GitHub Security tab
       if: inputs.upload-sarif == 'true' && github.event_name == 'push'
