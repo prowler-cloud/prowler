@@ -107,15 +107,18 @@ runs:
       run: |
         if [ "$CUTOFF" = "critical" ]; then
           BLOCKING=$CRITICAL
+          SEVERITIES='["Critical"]'
         else
           BLOCKING=$((CRITICAL + HIGH))
+          SEVERITIES='["Critical","High"]'
         fi
 
         if [ "$BLOCKING" -gt 0 ]; then
           echo "::error::Found $BLOCKING vulnerabilities at severity ${CUTOFF} or above ($CRITICAL critical, $HIGH high)"
           echo "::warning::Update the package, or add it to .grype.yaml with a reason if nothing can be done"
-          jq -r '.matches[] | select(.vulnerability.severity=="Critical" or .vulnerability.severity=="High")
-                 | "  \(.vulnerability.severity)\t\(.vulnerability.id)\t\(.artifact.name) \(.artifact.version)"' \
+          jq -r --argjson severities "$SEVERITIES" \
+            '.matches[] | select(.vulnerability.severity | IN($severities[]))
+             | "  \(.vulnerability.severity)\t\(.vulnerability.id)\t\(.artifact.name) \(.artifact.version)"' \
             grype-report.json | sort -u
           exit 1
         fi
