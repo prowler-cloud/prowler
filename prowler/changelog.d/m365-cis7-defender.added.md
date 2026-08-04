@@ -1,1 +1,1 @@
-2 M365 defender checks covering CIS Microsoft 365 Foundations Benchmark v7.0.0 controls 2.4.1 and 2.4.2
+`defender_priority_account_protection_enabled` and `defender_strict_preset_security_policy_enabled` checks for M365 provider, covering CIS Microsoft 365 Foundations Benchmark v7.0.0 controls 2.4.1 and 2.4.2

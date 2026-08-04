@@ -59,8 +59,8 @@ class Defender(M365Service):
         self.safe_links_policies = {}
         self.safe_links_rules = {}
         self.teams_protection_policy = None
-        self.eop_protection_policy_rules = []
-        self.atp_protection_policy_rules = []
+        self.eop_protection_policy_rules = None
+        self.atp_protection_policy_rules = None
         self.email_tenant_settings = None
         if self.powershell:
             if self.powershell.connect_exchange_online():
@@ -126,6 +126,13 @@ class Defender(M365Service):
         return [value]
 
     def _get_eop_protection_policy_rules(self):
+        """Retrieve the EOP preset security policy rules.
+
+        Returns:
+            Optional[List[PresetSecurityPolicyRule]]: The parsed rules (empty when
+            the tenant has none), or None on error so checks can skip instead of
+            reporting on missing data.
+        """
         logger.info("M365 - Getting Defender EOP protection policy rules...")
         try:
             return self._parse_protection_policy_rules(
@@ -135,9 +142,16 @@ class Defender(M365Service):
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            return []
+            return None
 
     def _get_atp_protection_policy_rules(self):
+        """Retrieve the Defender for Office 365 (ATP) preset security policy rules.
+
+        Returns:
+            Optional[List[PresetSecurityPolicyRule]]: The parsed rules (empty when
+            the tenant has none), or None on error so checks can skip instead of
+            reporting on missing data.
+        """
         logger.info("M365 - Getting Defender ATP protection policy rules...")
         try:
             return self._parse_protection_policy_rules(
@@ -147,7 +161,7 @@ class Defender(M365Service):
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            return []
+            return None
 
     def _get_email_tenant_settings(self):
         logger.info("M365 - Getting Defender email tenant settings...")
@@ -912,18 +926,16 @@ class TeamsProtectionPolicy(BaseModel):
 
 
 class PresetSecurityPolicyRule(BaseModel):
-    """Model for a preset security policy rule (EOP or ATP)."""
+    """Model for a preset security policy rule (EOP or ATP).
+
+    Empty recipient conditions mean the rule applies to all recipients.
+    """
 
     name: str = ""
     state: str = ""
     sent_to: list = []
     sent_to_member_of: list = []
     recipient_domain_is: list = []
-
-    @property
-    def has_recipients(self) -> bool:
-        """True if the rule targets at least one recipient scope."""
-        return bool(self.sent_to or self.sent_to_member_of or self.recipient_domain_is)
 
 
 class EmailTenantSettings(BaseModel):
