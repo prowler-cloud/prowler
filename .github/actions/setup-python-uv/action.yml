@@ -18,6 +18,10 @@ inputs:
     description: 'Install Python dependencies with uv'
     required: false
     default: 'true'
+  update-sdk-lock:
+      description: 'Rewrite uv.lock to pin the latest prowler SDK commit on master'
+      required: false
+      default: 'true'
 
 runs:
   using: 'composite'
