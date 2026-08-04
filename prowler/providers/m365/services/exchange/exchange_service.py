@@ -108,6 +108,16 @@ class Exchange(M365Service):
             return None
 
     def _get_organization_config(self):
+        """Retrieve the Exchange Online organization configuration.
+
+        Reads Get-OrganizationConfig via Exchange Online PowerShell. Boolean
+        properties that can come back null (never configured) are normalized to
+        their platform defaults, e.g. RejectDirectSend to False.
+
+        Returns:
+            Optional[Organization]: The parsed organization configuration, or
+            None when unavailable or on error.
+        """
         logger.info("Microsoft365 - Getting Exchange Organization configuration...")
         organization_config = None
         try:
@@ -247,6 +257,15 @@ class Exchange(M365Service):
         return transport_config
 
     def _get_mailbox_policy(self):
+        """Retrieve the OWA mailbox policies.
+
+        Reads Get-OwaMailboxPolicy via Exchange Online PowerShell. The personal
+        account properties can come back null (never configured) and are
+        normalized to their platform defaults (enabled).
+
+        Returns:
+            List[MailboxPolicy]: The parsed OWA mailbox policies, empty on error.
+        """
         logger.info("Microsoft365 - Getting mailbox policy configuration...")
         mailbox_policies = []
         try:

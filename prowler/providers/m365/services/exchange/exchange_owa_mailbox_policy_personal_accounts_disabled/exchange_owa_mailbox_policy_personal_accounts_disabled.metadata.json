@@ -9,7 +9,7 @@
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "collaboration",
-  "Description": "The default Outlook on the web (OWA) mailbox policy should have **PersonalAccountsEnabled** and **PersonalAccountCalendarsEnabled** set to false. These settings control whether users can add personal email accounts (e.g., Outlook.com, Gmail, Yahoo) and personal calendars in the new Outlook for Windows.",
+  "Description": "The default Outlook on the web (OWA) mailbox policy should have **PersonalAccountsEnabled** and **PersonalAccountCalendarsEnabled** set to false. The former controls adding personal email accounts (e.g., Outlook.com, Gmail) in the new Outlook for Windows; the latter controls connecting personal Outlook.com or Google calendars in Outlook on the web.",
   "Risk": "Allowing personal account integration lets corporate and personal data mix within the same client, increasing the risk of data leakage and reducing the organization's ability to govern and audit access to corporate mail and calendars.",
   "RelatedUrl": "",
   "AdditionalURLs": [
@@ -23,7 +23,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Disable PersonalAccountsEnabled and PersonalAccountCalendarsEnabled on the default OWA mailbox policy to prevent users from integrating personal email accounts and calendars into the new Outlook for Windows.",
+      "Text": "Disable PersonalAccountsEnabled and PersonalAccountCalendarsEnabled on the default OWA mailbox policy to prevent users from adding personal email accounts in the new Outlook for Windows and connecting personal calendars in Outlook on the web.",
       "Url": "https://hub.prowler.com/check/exchange_owa_mailbox_policy_personal_accounts_disabled"
     }
   },

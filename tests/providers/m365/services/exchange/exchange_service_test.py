@@ -220,6 +220,58 @@ class Test_Exchange_Service:
             exchange_client.powershell.close()
 
     @patch(
+        "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.get_organization_config",
+        return_value={
+            "Name": "test-org",
+            "Guid": "org-guid",
+            "RejectDirectSend": True,
+        },
+    )
+    def test_get_organization_config_reject_direct_send(
+        self, _mock_get_organization_config
+    ):
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online",
+                return_value=True,
+            ),
+        ):
+            exchange_client = Exchange(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+            assert exchange_client.organization_config.reject_direct_send is True
+            exchange_client.powershell.close()
+
+    @patch(
+        "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.get_organization_config",
+        return_value={
+            "Name": "test-org",
+            "Guid": "org-guid",
+            "RejectDirectSend": None,
+        },
+    )
+    def test_get_organization_config_reject_direct_send_null(
+        self, _mock_get_organization_config
+    ):
+        # Null means the setting was never configured; it must keep the
+        # platform default (disabled).
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online",
+                return_value=True,
+            ),
+        ):
+            exchange_client = Exchange(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+            assert exchange_client.organization_config.reject_direct_send is False
+            exchange_client.powershell.close()
+
+    @patch(
         "prowler.providers.m365.services.exchange.exchange_service.Exchange._get_mailbox_audit_config",
         new=mock_exchange_get_mailbox_audit_config,
     )

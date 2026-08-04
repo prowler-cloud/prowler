@@ -7,10 +7,11 @@ from prowler.providers.m365.services.exchange.exchange_client import exchange_cl
 class exchange_owa_mailbox_policy_personal_accounts_disabled(Check):
     """Check if the default OWA mailbox policy disables personal account integration.
 
-    Outlook on the web mailbox policies expose PersonalAccountsEnabled and
-    PersonalAccountCalendarsEnabled, which control whether users can add personal
-    email accounts and personal calendars in the new Outlook for Windows. Only the
-    default OWA mailbox policy is required for compliance with this control.
+    Outlook on the web mailbox policies expose PersonalAccountsEnabled, which
+    controls whether users can add personal email accounts in the new Outlook for
+    Windows, and PersonalAccountCalendarsEnabled, which controls whether users can
+    connect personal Outlook.com or Google calendars in Outlook on the web. Only
+    the default OWA mailbox policy is required for compliance with this control.
 
     - PASS: The default OWA mailbox policy disables personal accounts and personal
       account calendars.
