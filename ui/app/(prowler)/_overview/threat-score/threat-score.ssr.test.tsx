@@ -54,7 +54,7 @@ describe("ThreatScoreSSR", () => {
           },
         },
       ],
-    });
+    } as unknown as Awaited<ReturnType<typeof getThreatScore>>);
 
     render(await ThreatScoreSSR({ searchParams: {} }));
 
@@ -91,7 +91,7 @@ describe("ThreatScoreSSR", () => {
           },
         },
       ],
-    });
+    } as unknown as Awaited<ReturnType<typeof getThreatScore>>);
 
     render(await ThreatScoreSSR({ searchParams: {} }));
 
