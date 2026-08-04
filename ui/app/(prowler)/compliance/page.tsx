@@ -56,17 +56,11 @@ export default async function Compliance({
     ? getComplianceTab(resolvedSearchParams.tab, resolvedSearchParams.scanId)
     : COMPLIANCE_TAB.PER_SCAN;
 
-  // Loaded once for the whole page rather than per tab: the watchlist controls
-  // live on the tab bar and edit the same tenant-wide list from both tabs, so
-  // the catalog is deliberately not narrowed to the active tab's provider
-  // types. Cloud-only by construction — in OSS this resolves to an empty
-  // catalog and the controls render nothing.
-  const watchlist = await loadComplianceWatchlistContext();
+  const watchlistPromise = loadComplianceWatchlistContext();
   const watchlistControls = (
-    <WatchlistControls
-      entries={watchlist.entries}
-      canManageWatchlist={watchlist.canManage}
-    />
+    <Suspense fallback={null}>
+      <ComplianceWatchlistControls watchlistPromise={watchlistPromise} />
+    </Suspense>
   );
 
   // Only the active tab's payload is built: switching tabs is a real
@@ -277,7 +271,7 @@ export default async function Compliance({
           searchParams={resolvedSearchParams}
           scanId={selectedScanId}
           selectedScan={selectedScanData}
-          watchlist={watchlist}
+          watchlistPromise={watchlistPromise}
         />
       </Suspense>
     </>
@@ -306,16 +300,12 @@ const SSRComplianceGrid = async ({
   searchParams,
   scanId,
   selectedScan,
-  watchlist,
+  watchlistPromise,
 }: {
   searchParams: SearchParamsProps;
   scanId: string | null;
   selectedScan?: ScanEntity;
-  /** Catalog already loaded by the page for the tab bar's controls; reused
-   *  here so the tab does not fetch it a second time. `resolveCatalogEntry`
-   *  keys on `(compliance_id, provider_type)`, so the un-narrowed catalog
-   *  resolves this scan's cards exactly like a narrowed one would. */
-  watchlist: ComplianceWatchlistContext;
+  watchlistPromise: Promise<ComplianceWatchlistContext>;
 }) => {
   const regionFilter = searchParams["filter[region__in]"]?.toString() || "";
 
@@ -372,6 +362,7 @@ const SSRComplianceGrid = async ({
   // The watchlist is keyed by `(compliance_id, provider_type)`, and on this
   // surface the provider type is fixed by the selected scan.
   const providerType = selectedScan?.providerInfo.provider;
+  const watchlist = await watchlistPromise;
 
   return (
     <ComplianceOverviewPanel>
@@ -385,6 +376,21 @@ const SSRComplianceGrid = async ({
         canManageWatchlist={watchlist.canManage}
       />
     </ComplianceOverviewPanel>
+  );
+};
+
+const ComplianceWatchlistControls = async ({
+  watchlistPromise,
+}: {
+  watchlistPromise: Promise<ComplianceWatchlistContext>;
+}) => {
+  const watchlist = await watchlistPromise;
+
+  return (
+    <WatchlistControls
+      entries={watchlist.entries}
+      canManageWatchlist={watchlist.canManage}
+    />
   );
 };
 

@@ -40,8 +40,6 @@ import type {
 import { CrossProviderFilters } from "./cross-provider-filters";
 import { CrossProviderFrameworkGrid } from "./cross-provider-framework-grid";
 
-/** Zero-state summary: the framework renders with every compatible provider
- *  chip dimmed when the API returned nothing usable (e.g. no scans yet). */
 const emptySummary = (
   entry: CrossProviderFrameworkEntry,
 ): CrossProviderFrameworkSummary => ({
@@ -64,12 +62,6 @@ const emptySummary = (
   })),
 });
 
-/**
- * Server island for the Cross-Provider tab: fetches the roll-up for every
- * catalog framework in parallel and renders the filter row plus the cards
- * grid. Rendered only in Prowler Cloud with the tab active, so OSS and the
- * Per Scan tab never pay for these aggregation calls.
- */
 export const CrossProviderOverview = async ({
   searchParams,
 }: {
@@ -169,8 +161,6 @@ export const CrossProviderOverview = async ({
     providerGroupsData?.data || []
   ).map((group) => ({ id: group.id, name: group.attributes.name }));
 
-  // The cross-provider endpoint has no `filter[in_watchlist]`, so pinned state
-  // is resolved by joining the catalog on `(compliance_id, provider_type)`.
   const catalogIndex = buildWatchlistIndex(watchlist.entries);
 
   const cards = summaries.map((summary) => ({

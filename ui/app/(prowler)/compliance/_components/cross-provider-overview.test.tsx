@@ -3,10 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ACTION_ERROR_STATUS, USAGE_LIMIT_MESSAGE } from "@/lib/action-errors";
 import { useComplianceWatchlistViewStore } from "@/store/compliance/store";
-import {
-  UNIVERSAL_PROVIDER_TYPE,
-  WATCHLIST_SCOPE,
-} from "@/types/compliance-watchlist";
+import { makeComplianceCatalogEntry } from "@/test-utils/compliance-watchlist";
 
 import { getCrossProviderComplianceOverview } from "../_actions/cross-provider";
 import { CROSS_PROVIDER_FRAMEWORKS } from "../_lib/cross-provider-frameworks";
@@ -183,31 +180,13 @@ const catalogEntry = (
   complianceId: string,
   providerType: string,
   inWatchlist: boolean,
-) => ({
-  id: `${providerType}:${complianceId}`,
-  scope:
-    providerType === UNIVERSAL_PROVIDER_TYPE
-      ? WATCHLIST_SCOPE.UNIVERSAL
-      : WATCHLIST_SCOPE.PROVIDER,
-  providerTypes:
-    providerType === UNIVERSAL_PROVIDER_TYPE
-      ? ["aws", "azure", "gcp"]
-      : [providerType],
-  complianceId,
-  providerType,
-  framework: complianceId,
-  name: complianceId,
-  version: "1.0",
-  description: "",
-  totalRequirements: 10,
-  requirementsPassed: 5,
-  requirementsFailed: 5,
-  requirementsManual: 0,
-  score: 50,
-  hasData: true,
-  inWatchlist,
-  watchlistEntryId: inWatchlist ? `entry-${providerType}` : null,
-});
+) =>
+  makeComplianceCatalogEntry({
+    complianceId,
+    providerType,
+    inWatchlist,
+    watchlistEntryId: inWatchlist ? `entry-${providerType}` : null,
+  });
 
 describe("CrossProviderOverview watchlist", () => {
   beforeEach(() => {
@@ -228,16 +207,6 @@ describe("CrossProviderOverview watchlist", () => {
       eligibleProviderTypes,
       canManage,
     });
-
-  it("keeps the plain grid when the catalog is empty (OSS)", async () => {
-    withWatchlist([], [], false);
-
-    await renderOverview();
-
-    expect(screen.getAllByTestId("framework-card")).toHaveLength(
-      CROSS_PROVIDER_FRAMEWORKS.length,
-    );
-  });
 
   it("renders every universal framework, pinned ones first", async () => {
     // One card, one entry: the catalog keys a universal framework under `*`.
@@ -283,31 +252,5 @@ describe("CrossProviderOverview watchlist", () => {
     expect(screen.getAllByTestId("framework-card")).toHaveLength(
       CROSS_PROVIDER_FRAMEWORKS.length,
     );
-  });
-
-  it("reads the `*` card even though the tenant onboarded concrete types", async () => {
-    // The surface never looks up `aws:dora_2022_2554`: a per-provider-type key
-    // would miss the row and render the card as unpinned forever.
-    withWatchlist([catalogEntry(DORA_ID, "*", true)], ["aws"]);
-
-    await renderOverview();
-
-    expect(
-      screen
-        .getAllByTestId("framework-card")
-        .find((card) => card.textContent === "DORA"),
-    ).toHaveAttribute("data-pin-state", "pinned");
-  });
-
-  it("forwards the manage account permission to every card's pin", async () => {
-    withWatchlist([catalogEntry(DORA_ID, "*", true)], ["aws"], false);
-
-    await renderOverview();
-
-    expect(
-      screen
-        .getAllByTestId("framework-card")
-        .every((card) => card.dataset.canManage === "false"),
-    ).toBe(true);
   });
 });

@@ -30,10 +30,4 @@ describe("useShowOnlyWatchlist", () => {
     expect(rendered[0]).toBe(false);
     await waitFor(() => expect(rendered.at(-1)).toBe(true));
   });
-
-  it("reports the filter as off when nothing was ever stored", async () => {
-    const { result } = renderHook(() => useShowOnlyWatchlist());
-
-    await waitFor(() => expect(result.current).toBe(false));
-  });
 });

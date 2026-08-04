@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 
 import {
   adaptFindingsByResourceResponse,
-  type FindingComplianceFramework,
   getFindingById,
   getFindingComplianceFrameworks,
   getLatestFindingsByResourceUid,
@@ -17,7 +16,10 @@ import {
 } from "@/lib/finding-triage";
 import { isCloud } from "@/lib/shared/env";
 import { FindingResourceRow } from "@/types";
-import { WATCHLIST_SCOPE } from "@/types/compliance-watchlist";
+import {
+  type FindingComplianceFramework,
+  WATCHLIST_SCOPE,
+} from "@/types/compliance-watchlist";
 import type { UpdateFindingTriageInput } from "@/types/findings-triage";
 
 // Keep fast carousel navigations in a loading state for one short beat so

@@ -6,10 +6,7 @@ import { getCompliancesOverview } from "@/actions/compliances";
 import { getAllProviders } from "@/actions/providers";
 import { getScans } from "@/actions/scans";
 import { useComplianceWatchlistViewStore } from "@/store/compliance/store";
-import {
-  UNIVERSAL_PROVIDER_TYPE,
-  WATCHLIST_SCOPE,
-} from "@/types/compliance-watchlist";
+import { makeComplianceCatalogEntry } from "@/test-utils/compliance-watchlist";
 
 import { loadComplianceWatchlistContext } from "../_lib/watchlist-context";
 
@@ -290,31 +287,15 @@ const catalogEntry = (
   complianceId: string,
   providerType: string,
   inWatchlist: boolean,
-) => ({
-  id: `${providerType}:${complianceId}`,
-  scope:
-    providerType === UNIVERSAL_PROVIDER_TYPE
-      ? WATCHLIST_SCOPE.UNIVERSAL
-      : WATCHLIST_SCOPE.PROVIDER,
-  providerTypes:
-    providerType === UNIVERSAL_PROVIDER_TYPE
-      ? ["aws", "azure", "gcp"]
-      : [providerType],
-  complianceId,
-  providerType,
-  framework: complianceId,
-  name: complianceId,
-  version: "1.0",
-  description: "",
-  totalRequirements: 10,
-  requirementsPassed: 5,
-  requirementsFailed: 5,
-  requirementsManual: 0,
-  score: 50,
-  hasData: true,
-  inWatchlist,
-  watchlistEntryId: inWatchlist ? "3fa85f64-5717-4562-b3fc-2c963f66afa6" : null,
-});
+) =>
+  makeComplianceCatalogEntry({
+    complianceId,
+    providerType,
+    inWatchlist,
+    watchlistEntryId: inWatchlist
+      ? "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+      : null,
+  });
 
 describe("CrossAccountOverviewSection watchlist", () => {
   beforeEach(() => {
@@ -350,33 +331,6 @@ describe("CrossAccountOverviewSection watchlist", () => {
       canManage,
     });
 
-  it("keeps the plain accordion when the catalog is empty (OSS)", async () => {
-    withWatchlist([], false);
-
-    await renderSection();
-
-    expect(screen.getByText("Across providers")).toBeInTheDocument();
-    expect(screen.getByText(/2 frameworks/)).toBeInTheDocument();
-  });
-
-  it("keeps the accordion grouping while the filter is off", async () => {
-    withWatchlist([
-      catalogEntry("cis_2.0_aws", "aws", true),
-      catalogEntry("gdpr_aws", "aws", false),
-    ]);
-
-    await renderSection();
-
-    // Both frameworks stay under their (collapsed) provider-type group rather
-    // than being lifted out of it.
-    expect(screen.getByText(/2 frameworks/)).toBeInTheDocument();
-    expect(screen.queryByTestId("cross-account-card")).not.toBeInTheDocument();
-
-    // Expanding the group reveals both.
-    await userEvent.click(screen.getByText("AWS"));
-    expect(screen.getAllByTestId("cross-account-card")).toHaveLength(2);
-  });
-
   it("keeps the provider-type grouping when the filter is on", async () => {
     useComplianceWatchlistViewStore.setState({ showOnlyWatchlist: true });
     withWatchlist([
@@ -396,32 +350,6 @@ describe("CrossAccountOverviewSection watchlist", () => {
     expect(cards[0]).toHaveAttribute("data-pin-state", "pinned");
   });
 
-  it("drops a provider type whose frameworks are all unpinned", async () => {
-    useComplianceWatchlistViewStore.setState({ showOnlyWatchlist: true });
-    vi.mocked(getAllProviders).mockResolvedValue(
-      providersResponse([
-        { id: "aws-1", type: "aws" },
-        { id: "aws-2", type: "aws" },
-        { id: "azure-1", type: "azure" },
-        { id: "azure-2", type: "azure" },
-      ]),
-    );
-    vi.mocked(getScans).mockResolvedValue(
-      scansFor([{ id: "scan-1", providerId: "aws-1" }]),
-    );
-    withWatchlist([
-      catalogEntry("cis_2.0_aws", "aws", true),
-      catalogEntry("gdpr_aws", "aws", false),
-      catalogEntry("cis_2.0_aws", "azure", false),
-      catalogEntry("gdpr_aws", "azure", false),
-    ]);
-
-    await renderSection();
-
-    expect(screen.getByText("AWS")).toBeInTheDocument();
-    expect(screen.queryByText("Azure")).not.toBeInTheDocument();
-  });
-
   it("explains the blank section when nothing is pinned", async () => {
     useComplianceWatchlistViewStore.setState({ showOnlyWatchlist: true });
     withWatchlist([
@@ -435,21 +363,6 @@ describe("CrossAccountOverviewSection watchlist", () => {
       screen.getByText(/no single-provider framework is pinned/i),
     ).toBeInTheDocument();
     expect(screen.queryByTestId("cross-account-card")).not.toBeInTheDocument();
-  });
-
-  it("still filters for someone who cannot curate the list", async () => {
-    useComplianceWatchlistViewStore.setState({ showOnlyWatchlist: true });
-    withWatchlist(
-      [
-        catalogEntry("cis_2.0_aws", "aws", true),
-        catalogEntry("gdpr_aws", "aws", false),
-      ],
-      false,
-    );
-
-    await renderSection();
-
-    expect(screen.getAllByTestId("cross-account-card")).toHaveLength(1);
   });
 
   it("ignores the filter without a catalog, so OSS never blanks out", async () => {

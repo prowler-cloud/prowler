@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import { WatchlistToggle } from "@/components/compliance/watchlist/watchlist-toggle";
 import { ProviderTypeIcon } from "@/components/icons/providers-badge/provider-type-icon";
+import { formatComplianceFrameworkTitle } from "@/lib/compliance/framework-title";
 import type { WatchlistPinState } from "@/types/compliance-watchlist";
 import { PROVIDER_DISPLAY_NAMES } from "@/types/providers";
 
@@ -41,7 +42,7 @@ export const CrossAccountFrameworkCard = ({
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const formattedTitle = `${title.split("-").join(" ")}${version ? ` - ${version}` : ""}`;
+  const formattedTitle = formatComplianceFrameworkTitle(title, version);
 
   const navigateToDetail = () => {
     router.push(
@@ -61,7 +62,7 @@ export const CrossAccountFrameworkCard = ({
       actions={
         watchlistState && canManageWatchlist ? (
           <WatchlistToggle
-            targets={[{ complianceId, providerType }]}
+            target={{ complianceId, providerType }}
             state={watchlistState}
             entryId={watchlistEntryId}
           />

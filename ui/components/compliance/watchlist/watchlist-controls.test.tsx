@@ -1,8 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import type { ComplianceCatalogEntry } from "@/types/compliance-watchlist";
-import { WATCHLIST_SCOPE } from "@/types/compliance-watchlist";
+import { makeComplianceCatalogEntry } from "@/test-utils/compliance-watchlist";
 
 import { WatchlistControls } from "./watchlist-controls";
 
@@ -14,25 +13,13 @@ vi.mock("./watchlist-multi-select", () => ({
   WatchlistMultiSelect: () => <div data-testid="multi-select" />,
 }));
 
-const ENTRY: ComplianceCatalogEntry = {
-  id: "aws:cis_1.4_aws",
-  scope: WATCHLIST_SCOPE.PROVIDER,
-  providerTypes: ["aws"],
+const ENTRY = makeComplianceCatalogEntry({
   complianceId: "cis_1.4_aws",
   providerType: "aws",
   framework: "CIS",
   name: "CIS",
   version: "1.4",
-  description: "",
-  totalRequirements: 10,
-  requirementsPassed: 5,
-  requirementsFailed: 5,
-  requirementsManual: 0,
-  score: 50,
-  hasData: true,
-  inWatchlist: false,
-  watchlistEntryId: null,
-};
+});
 
 describe("WatchlistControls", () => {
   it("renders nothing without a catalog, keeping the feature Cloud-only", () => {

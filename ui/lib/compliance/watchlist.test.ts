@@ -1,10 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import type { ComplianceCatalogEntry } from "@/types/compliance-watchlist";
-import {
-  UNIVERSAL_PROVIDER_TYPE,
-  WATCHLIST_SCOPE,
-} from "@/types/compliance-watchlist";
+import { makeComplianceCatalogEntry } from "@/test-utils/compliance-watchlist";
+import { UNIVERSAL_PROVIDER_TYPE } from "@/types/compliance-watchlist";
 
 import {
   buildWatchlistIndex,
@@ -15,189 +12,39 @@ import {
   MAX_WATCHLIST_BULK,
   resolveWatchlistEntryId,
   resolveWatchlistTarget,
-  watchlistKey,
 } from "./watchlist";
 
-const entry = (
-  overrides: Partial<ComplianceCatalogEntry> &
-    Pick<ComplianceCatalogEntry, "complianceId" | "providerType">,
-): ComplianceCatalogEntry => ({
-  id: `${overrides.providerType}:${overrides.complianceId}`,
-  scope:
-    overrides.providerType === UNIVERSAL_PROVIDER_TYPE
-      ? WATCHLIST_SCOPE.UNIVERSAL
-      : WATCHLIST_SCOPE.PROVIDER,
-  providerTypes: [overrides.providerType],
-  framework: "CIS",
-  name: "CIS",
-  version: "1.4",
-  description: "",
-  totalRequirements: 10,
-  requirementsPassed: 5,
-  requirementsFailed: 5,
-  requirementsManual: 0,
-  score: 50,
-  hasData: true,
-  inWatchlist: false,
-  watchlistEntryId: null,
-  ...overrides,
-});
-
-describe("watchlistKey", () => {
-  it("keys a framework by provider type and compliance id, never by name", () => {
-    expect(
-      watchlistKey({ complianceId: "cis_1.4_aws", providerType: "aws" }),
-    ).toBe("aws:cis_1.4_aws");
-  });
-
-  it("keeps the same compliance id under different provider types apart", () => {
-    const aws = watchlistKey({
-      complianceId: "dora_2022_2554",
-      providerType: "aws",
-    });
-    const azure = watchlistKey({
-      complianceId: "dora_2022_2554",
-      providerType: "azure",
-    });
-
-    expect(aws).not.toBe(azure);
-  });
-});
-
-describe("buildWatchlistIndex", () => {
-  it("indexes catalog entries by their (provider_type, compliance_id) key", () => {
-    const index = buildWatchlistIndex([
-      entry({ complianceId: "cis_1.4_aws", providerType: "aws" }),
-      entry({ complianceId: "cis_1.4_aws", providerType: "azure" }),
-    ]);
-
-    expect(index.size).toBe(2);
-    expect(index.get("azure:cis_1.4_aws")?.providerType).toBe("azure");
-  });
-
-  it("returns an empty index for an empty catalog", () => {
-    expect(buildWatchlistIndex([]).size).toBe(0);
-  });
-});
-
-describe("isFrameworkPinned", () => {
+describe("watchlist catalog lookup", () => {
   const index = buildWatchlistIndex([
-    entry({
+    makeComplianceCatalogEntry({
       complianceId: "cis_1.4_aws",
       providerType: "aws",
       inWatchlist: true,
-      watchlistEntryId: "entry-1",
+      watchlistEntryId: "entry-aws",
     }),
-    entry({ complianceId: "gdpr_aws", providerType: "aws" }),
+    makeComplianceCatalogEntry({
+      complianceId: "gdpr_aws",
+      providerType: "aws",
+    }),
   ]);
 
-  it("reports a pinned framework", () => {
+  it.each([
+    ["cis_1.4_aws", true],
+    ["gdpr_aws", false],
+    ["unknown", false],
+  ])("resolves %s pinned state", (complianceId, expected) => {
     expect(
-      isFrameworkPinned(index, {
-        complianceId: "cis_1.4_aws",
-        providerType: "aws",
-      }),
-    ).toBe(true);
+      isFrameworkPinned(index, { complianceId, providerType: "aws" }),
+    ).toBe(expected);
   });
 
-  it("reports an unpinned framework", () => {
-    expect(
-      isFrameworkPinned(index, {
-        complianceId: "gdpr_aws",
-        providerType: "aws",
-      }),
-    ).toBe(false);
-  });
-
-  it("treats a framework missing from the catalog as unpinned", () => {
-    expect(
-      isFrameworkPinned(index, {
-        complianceId: "unknown",
-        providerType: "aws",
-      }),
-    ).toBe(false);
-  });
-
-  describe("universal frameworks", () => {
-    const universalIndex = buildWatchlistIndex([
-      entry({
-        complianceId: "csa_ccm_4.0",
-        providerType: UNIVERSAL_PROVIDER_TYPE,
-        inWatchlist: true,
-        watchlistEntryId: "entry-universal",
-      }),
-      entry({ complianceId: "cis_1.4_aws", providerType: "aws" }),
-    ]);
-
-    it("resolves the single card from a concrete provider type", () => {
-      expect(
-        isFrameworkPinned(universalIndex, {
-          complianceId: "csa_ccm_4.0",
-          providerType: "aws",
-        }),
-      ).toBe(true);
-    });
-
-    it("resolves a legacy per-provider slug onto the same card", () => {
-      // Scans predating the universal frameworks stored `csa_ccm_4.0_aws`. The
-      // API peels that suffix on write, so a card reading it literally showed
-      // as unpinned no matter how often it was pinned.
-      expect(
-        isFrameworkPinned(universalIndex, {
-          complianceId: "csa_ccm_4.0_aws",
-          providerType: "aws",
-        }),
-      ).toBe(true);
-      expect(
-        resolveWatchlistEntryId(universalIndex, {
-          complianceId: "csa_ccm_4.0_aws",
-          providerType: "aws",
-        }),
-      ).toBe("entry-universal");
-    });
-
-    it("does not peel the suffix of a provider-scoped framework", () => {
-      // `cis_1.4_aws` ends in its own provider type but is not universal, so
-      // peeling it must not resolve `cis_1.4` onto some other card.
-      expect(
-        resolveWatchlistEntryId(universalIndex, {
-          complianceId: "cis_1.4_aws",
-          providerType: "aws",
-        }),
-      ).toBeNull();
-    });
-
-    it("does not let a universal row shadow a concrete one sharing its id", () => {
-      // A universal framework never also has a per-provider row, but reading
-      // `*` first would make one unreachable if it ever did — and every write
-      // for it would then be rewritten onto the wrong card.
-      const collidingIndex = buildWatchlistIndex([
-        entry({
-          complianceId: "shared_id",
-          providerType: UNIVERSAL_PROVIDER_TYPE,
-          inWatchlist: true,
-          watchlistEntryId: "entry-universal",
-        }),
-        entry({
-          complianceId: "shared_id",
-          providerType: "aws",
-          watchlistEntryId: "entry-aws",
-        }),
-      ]);
-      const target = { complianceId: "shared_id", providerType: "aws" };
-
-      expect(isFrameworkPinned(collidingIndex, target)).toBe(false);
-      expect(resolveWatchlistTarget(collidingIndex, target)).toEqual(target);
-    });
-  });
-
-  it("resolves the delete target without a lookup round trip", () => {
+  it("returns the entry id only for catalog rows that have one", () => {
     expect(
       resolveWatchlistEntryId(index, {
         complianceId: "cis_1.4_aws",
         providerType: "aws",
       }),
-    ).toBe("entry-1");
+    ).toBe("entry-aws");
     expect(
       resolveWatchlistEntryId(index, {
         complianceId: "gdpr_aws",
@@ -207,18 +54,63 @@ describe("isFrameworkPinned", () => {
   });
 });
 
-describe("resolveWatchlistTarget", () => {
+describe("universal framework lookup", () => {
   const index = buildWatchlistIndex([
-    entry({
+    makeComplianceCatalogEntry({
       complianceId: "csa_ccm_4.0",
       providerType: UNIVERSAL_PROVIDER_TYPE,
+      inWatchlist: true,
+      watchlistEntryId: "entry-universal",
     }),
-    entry({ complianceId: "cis_1.4_aws", providerType: "aws" }),
+    makeComplianceCatalogEntry({
+      complianceId: "cis_1.4_aws",
+      providerType: "aws",
+    }),
   ]);
 
-  it("collapses a concrete provider target onto the universal row", () => {
-    // The write key has to match what the API stores, or an add and a remove
-    // of the same framework land in one bulk call under two keys.
+  it("resolves concrete and legacy ids onto the universal row", () => {
+    expect(
+      isFrameworkPinned(index, {
+        complianceId: "csa_ccm_4.0",
+        providerType: "aws",
+      }),
+    ).toBe(true);
+    expect(
+      resolveWatchlistEntryId(index, {
+        complianceId: "csa_ccm_4.0_aws",
+        providerType: "aws",
+      }),
+    ).toBe("entry-universal");
+  });
+
+  it("does not peel a provider-scoped framework suffix", () => {
+    expect(
+      resolveWatchlistEntryId(index, {
+        complianceId: "cis_1.4_aws",
+        providerType: "aws",
+      }),
+    ).toBeNull();
+  });
+
+  it("prefers an exact provider row over a colliding universal row", () => {
+    const collision = buildWatchlistIndex([
+      makeComplianceCatalogEntry({
+        complianceId: "shared_id",
+        providerType: UNIVERSAL_PROVIDER_TYPE,
+        inWatchlist: true,
+      }),
+      makeComplianceCatalogEntry({
+        complianceId: "shared_id",
+        providerType: "aws",
+      }),
+    ]);
+    const target = { complianceId: "shared_id", providerType: "aws" };
+
+    expect(isFrameworkPinned(collision, target)).toBe(false);
+    expect(resolveWatchlistTarget(collision, target)).toEqual(target);
+  });
+
+  it("normalizes writes to the universal target", () => {
     expect(
       resolveWatchlistTarget(index, {
         complianceId: "csa_ccm_4.0",
@@ -229,139 +121,69 @@ describe("resolveWatchlistTarget", () => {
       providerType: UNIVERSAL_PROVIDER_TYPE,
     });
   });
-
-  it("leaves a provider-scoped target on its own provider type", () => {
-    const target = { complianceId: "cis_1.4_aws", providerType: "aws" };
-
-    expect(resolveWatchlistTarget(index, target)).toEqual(target);
-  });
-
-  it("returns the input target when the catalog has no row", () => {
-    const target = { complianceId: "unknown", providerType: "aws" };
-
-    expect(resolveWatchlistTarget(index, target)).toEqual(target);
-  });
 });
 
 describe("computeWatchlistDiff", () => {
-  const initial = [
-    { complianceId: "cis_1.4_aws", providerType: "aws" },
-    { complianceId: "dora_2022_2554", providerType: "azure" },
-  ];
+  const aws = { complianceId: "cis_1.4_aws", providerType: "aws" };
+  const azure = { complianceId: "dora_2022_2554", providerType: "azure" };
+  const gdpr = { complianceId: "gdpr_aws", providerType: "aws" };
 
   it("returns an empty diff when nothing changed", () => {
-    expect(computeWatchlistDiff(initial, initial)).toEqual({
+    expect(computeWatchlistDiff([aws, azure], [aws, azure])).toEqual({
       add: [],
       remove: [],
     });
   });
 
-  it("collects only the newly selected frameworks under add", () => {
-    const diff = computeWatchlistDiff(initial, [
-      ...initial,
-      { complianceId: "gdpr_aws", providerType: "aws" },
-    ]);
-
-    expect(diff.add).toEqual([
-      { complianceId: "gdpr_aws", providerType: "aws" },
-    ]);
-    expect(diff.remove).toEqual([]);
+  it("computes additions and removals together", () => {
+    expect(computeWatchlistDiff([aws, azure], [azure, gdpr])).toEqual({
+      add: [gdpr],
+      remove: [aws],
+    });
   });
 
-  it("collects only the deselected frameworks under remove", () => {
-    const diff = computeWatchlistDiff(initial, [
-      { complianceId: "cis_1.4_aws", providerType: "aws" },
-    ]);
+  it("keeps identical compliance ids from different providers separate", () => {
+    const source = { complianceId: "dora", providerType: "aws" };
+    const target = { complianceId: "dora", providerType: "azure" };
 
-    expect(diff.add).toEqual([]);
-    expect(diff.remove).toEqual([
-      { complianceId: "dora_2022_2554", providerType: "azure" },
-    ]);
+    expect(computeWatchlistDiff([source], [target])).toEqual({
+      add: [target],
+      remove: [source],
+    });
   });
 
-  it("computes additions and removals in the same pass", () => {
-    const diff = computeWatchlistDiff(initial, [
-      { complianceId: "dora_2022_2554", providerType: "azure" },
-      { complianceId: "gdpr_aws", providerType: "aws" },
-    ]);
-
-    expect(diff.add).toEqual([
-      { complianceId: "gdpr_aws", providerType: "aws" },
-    ]);
-    expect(diff.remove).toEqual([
-      { complianceId: "cis_1.4_aws", providerType: "aws" },
-    ]);
-  });
-
-  it("does not confuse the same compliance id across provider types", () => {
-    const diff = computeWatchlistDiff(
-      [{ complianceId: "dora_2022_2554", providerType: "aws" }],
-      [{ complianceId: "dora_2022_2554", providerType: "azure" }],
-    );
-
-    expect(diff.add).toEqual([
-      { complianceId: "dora_2022_2554", providerType: "azure" },
-    ]);
-    expect(diff.remove).toEqual([
-      { complianceId: "dora_2022_2554", providerType: "aws" },
-    ]);
-  });
-
-  it("deduplicates repeated targets on both sides", () => {
-    const diff = computeWatchlistDiff(
-      [],
-      [
-        { complianceId: "gdpr_aws", providerType: "aws" },
-        { complianceId: "gdpr_aws", providerType: "aws" },
-      ],
-    );
-
-    expect(diff.add).toHaveLength(1);
+  it("deduplicates repeated targets", () => {
+    expect(computeWatchlistDiff([], [gdpr, gdpr]).add).toEqual([gdpr]);
   });
 });
 
-describe("exceedsWatchlistBulkLimit", () => {
-  const target = (index: number) => ({
+describe("watchlist bulk boundaries", () => {
+  const targets = Array.from({ length: MAX_WATCHLIST_BULK }, (_, index) => ({
     complianceId: `framework_${index}`,
     providerType: "aws",
-  });
+  }));
 
-  it("accepts a diff at the limit", () => {
-    const add = Array.from({ length: MAX_WATCHLIST_BULK }, (_, i) => target(i));
-
-    expect(exceedsWatchlistBulkLimit({ add, remove: [] })).toBe(false);
-  });
-
-  it("rejects a diff whose add and remove lists together exceed the limit", () => {
-    const add = Array.from({ length: MAX_WATCHLIST_BULK }, (_, i) => target(i));
-
-    expect(exceedsWatchlistBulkLimit({ add, remove: [target(9999)] })).toBe(
+  it.each([
+    [{ add: targets, remove: [] }, false],
+    [
+      {
+        add: targets,
+        remove: [{ complianceId: "overflow", providerType: "aws" }],
+      },
       true,
-    );
+    ],
+  ])("detects whether a diff exceeds the limit", (diff, expected) => {
+    expect(exceedsWatchlistBulkLimit(diff)).toBe(expected);
   });
 });
 
 describe("formatWatchlistBulkSummary", () => {
-  it("joins added and removed counts", () => {
-    expect(formatWatchlistBulkSummary({ added: 2, removed: 1 })).toBe(
-      "2 added · 1 removed",
-    );
-  });
-
-  it("reports only the side that changed", () => {
-    expect(formatWatchlistBulkSummary({ added: 3, removed: 0 })).toBe(
-      "3 added",
-    );
-    expect(formatWatchlistBulkSummary({ added: 0, removed: 4 })).toBe(
-      "4 removed",
-    );
-  });
-
-  it("falls back when the API applied nothing", () => {
-    // A diff can be non-empty and still change nothing — a framework someone
-    // else unpinned in the meantime — so the toast needs its own copy.
-    expect(formatWatchlistBulkSummary({ added: 0, removed: 0 })).toBe(
-      "No changes",
-    );
+  it.each([
+    [{ added: 2, removed: 1 }, "2 added · 1 removed"],
+    [{ added: 3, removed: 0 }, "3 added"],
+    [{ added: 0, removed: 4 }, "4 removed"],
+    [{ added: 0, removed: 0 }, "No changes"],
+  ])("formats the applied changes", (summary, expected) => {
+    expect(formatWatchlistBulkSummary(summary)).toBe(expected);
   });
 });

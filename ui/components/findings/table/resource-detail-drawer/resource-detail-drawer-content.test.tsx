@@ -517,12 +517,10 @@ vi.mock("../../muted", () => ({
 // Import after mocks
 // ---------------------------------------------------------------------------
 
-import type {
-  FindingComplianceFramework,
-  ResourceDrawerFinding,
-} from "@/actions/findings";
+import type { ResourceDrawerFinding } from "@/actions/findings";
 import { SIDE_PANEL_TAB, useSidePanelStore } from "@/store/side-panel";
 import type { FindingResourceRow } from "@/types";
+import type { FindingComplianceFramework } from "@/types/compliance-watchlist";
 import { WATCHLIST_SCOPE } from "@/types/compliance-watchlist";
 import {
   FINDING_TRIAGE_STATUS,

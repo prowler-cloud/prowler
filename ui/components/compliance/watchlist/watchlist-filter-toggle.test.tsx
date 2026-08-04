@@ -12,48 +12,24 @@ beforeEach(() => {
 });
 
 describe("WatchlistFilterToggle", () => {
-  it("renders unchecked while the full catalog is shown", () => {
-    render(<WatchlistFilterToggle />);
-
-    expect(
-      screen.getByRole("checkbox", { name: "Show only watchlist" }),
-    ).not.toBeChecked();
-  });
-
-  it("turns the filter on when checked", async () => {
+  it("updates the shared filter in both directions", async () => {
+    // Given
     const user = userEvent.setup();
     render(<WatchlistFilterToggle />);
+    const checkbox = screen.getByRole("checkbox", {
+      name: "Show only watchlist",
+    });
 
     // When
-    await user.click(
-      screen.getByRole("checkbox", { name: "Show only watchlist" }),
-    );
+    await user.click(checkbox);
 
     // Then
     expect(useComplianceWatchlistViewStore.getState().showOnlyWatchlist).toBe(
       true,
     );
-  });
-
-  it("reflects a filter already turned on elsewhere", () => {
-    useComplianceWatchlistViewStore.setState({ showOnlyWatchlist: true });
-
-    render(<WatchlistFilterToggle />);
-
-    expect(
-      screen.getByRole("checkbox", { name: "Show only watchlist" }),
-    ).toBeChecked();
-  });
-
-  it("turns the filter back off when unchecked", async () => {
-    useComplianceWatchlistViewStore.setState({ showOnlyWatchlist: true });
-    const user = userEvent.setup();
-    render(<WatchlistFilterToggle />);
 
     // When
-    await user.click(
-      screen.getByRole("checkbox", { name: "Show only watchlist" }),
-    );
+    await user.click(checkbox);
 
     // Then
     expect(useComplianceWatchlistViewStore.getState().showOnlyWatchlist).toBe(

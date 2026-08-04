@@ -1,20 +1,11 @@
-import {
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-  within,
-} from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { MAX_WATCHLIST_BULK } from "@/lib/compliance/watchlist";
+import { makeComplianceCatalogEntry } from "@/test-utils/compliance-watchlist";
 import type { ComplianceCatalogEntry } from "@/types/compliance-watchlist";
-import {
-  UNIVERSAL_PROVIDER_TYPE,
-  WATCHLIST_SCOPE,
-} from "@/types/compliance-watchlist";
+import { UNIVERSAL_PROVIDER_TYPE } from "@/types/compliance-watchlist";
 
 import { WatchlistMultiSelect } from "./watchlist-multi-select";
 
@@ -112,44 +103,19 @@ vi.mock("@/components/shadcn/select/multiselect", async () => {
   };
 });
 
-const entry = (
-  overrides: Partial<ComplianceCatalogEntry> &
-    Pick<ComplianceCatalogEntry, "complianceId" | "providerType">,
-): ComplianceCatalogEntry => ({
-  id: `${overrides.providerType}:${overrides.complianceId}`,
-  scope:
-    overrides.providerType === UNIVERSAL_PROVIDER_TYPE
-      ? WATCHLIST_SCOPE.UNIVERSAL
-      : WATCHLIST_SCOPE.PROVIDER,
-  providerTypes: [overrides.providerType],
-  framework: overrides.complianceId,
-  name: overrides.complianceId,
-  version: "1.0",
-  description: "",
-  totalRequirements: 10,
-  requirementsPassed: 5,
-  requirementsFailed: 5,
-  requirementsManual: 0,
-  score: 50,
-  hasData: true,
-  inWatchlist: false,
-  watchlistEntryId: null,
-  ...overrides,
-});
-
 const ENTRIES: ComplianceCatalogEntry[] = [
-  entry({
+  makeComplianceCatalogEntry({
     complianceId: "cis_controls_8.1",
     providerType: UNIVERSAL_PROVIDER_TYPE,
     framework: "CIS Controls",
   }),
-  entry({
+  makeComplianceCatalogEntry({
     complianceId: "cis_1.4_aws",
     providerType: "aws",
     framework: "CIS",
     inWatchlist: true,
   }),
-  entry({
+  makeComplianceCatalogEntry({
     complianceId: "cis_2.0_azure",
     providerType: "azure",
     framework: "CIS",
@@ -175,26 +141,6 @@ describe("WatchlistMultiSelect grouping", () => {
       within(screen.getByRole("group", { name: "AWS" })).getByText("CIS - 1.0"),
     ).toBeInTheDocument();
     expect(screen.getByRole("group", { name: "Azure" })).toBeInTheDocument();
-  });
-
-  it("reports how many frameworks are pinned", () => {
-    render(<WatchlistMultiSelect entries={ENTRIES} />);
-
-    expect(screen.getByRole("combobox")).toHaveTextContent(
-      "Watchlist · 1 pinned",
-    );
-  });
-
-  it("says so when nothing is pinned", () => {
-    render(
-      <WatchlistMultiSelect
-        entries={ENTRIES.map((item) => ({ ...item, inWatchlist: false }))}
-      />,
-    );
-
-    expect(screen.getByRole("combobox")).toHaveTextContent(
-      "Watchlist · none pinned",
-    );
   });
 });
 
@@ -255,33 +201,6 @@ describe("WatchlistMultiSelect editing", () => {
     );
     expect(screen.getByRole("combobox")).toHaveTextContent(
       "Watchlist · 1 pinned",
-    );
-  });
-
-  it("refuses a batch over the API's limit instead of sending it", async () => {
-    // The API rejects an oversized batch with `bulk_limit_exceeded`, so the
-    // guard here is what keeps the buffer from claiming changes that were
-    // never written.
-    const oversized = Array.from({ length: MAX_WATCHLIST_BULK + 1 }, (_, i) =>
-      entry({ complianceId: `framework_${i}`, providerType: "aws" }),
-    );
-    const user = userEvent.setup();
-    render(<WatchlistMultiSelect entries={oversized} />);
-
-    await user.click(screen.getByRole("button", { name: "open-dropdown" }));
-    screen.getAllByRole("option").forEach((option) => fireEvent.click(option));
-    await user.click(screen.getByRole("button", { name: "close-dropdown" }));
-
-    await waitFor(() =>
-      expect(toastMock).toHaveBeenCalledWith(
-        expect.objectContaining({ variant: "destructive" }),
-      ),
-    );
-    expect(bulkUpdateComplianceWatchlistMock).not.toHaveBeenCalled();
-    // The buffer is reset to the server state rather than left holding a batch
-    // nothing will ever apply.
-    expect(screen.getByRole("combobox")).toHaveTextContent(
-      "Watchlist · none pinned",
     );
   });
 

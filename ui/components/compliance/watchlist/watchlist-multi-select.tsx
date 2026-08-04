@@ -26,16 +26,10 @@ import { WATCHLIST_SCOPE } from "@/types/compliance-watchlist";
 import { getProviderDisplayName } from "@/types/providers";
 
 interface WatchlistMultiSelectProps {
-  /** Every framework the tenant may pin, across both compliance tabs. Their
-   *  `inWatchlist` flags are the baseline the submitted diff is computed
-   *  against. */
   entries: ComplianceCatalogEntry[];
   id?: string;
 }
 
-/** Heading of the group a universal framework belongs to. Universal frameworks
- *  span every compatible provider type, so they get their own band instead of
- *  being repeated under each one. */
 const UNIVERSAL_GROUP_LABEL = "Universal";
 
 interface WatchlistGroup {
@@ -47,12 +41,6 @@ interface WatchlistGroup {
 const frameworkLabel = (entry: ComplianceCatalogEntry): string =>
   `${entry.framework}${entry.version ? ` - ${entry.version}` : ""}`;
 
-/**
- * Universal frameworks first, then one group per provider type in display-name
- * order. The heading rides above the first framework of each band, which is
- * what tells CIS Controls (universal) apart from CIS AWS at a glance — the two
- * are otherwise a single alphabetical list of near-identical names.
- */
 const buildGroups = (entries: ComplianceCatalogEntry[]): WatchlistGroup[] => {
   const universal = entries.filter(
     (entry) => entry.scope === WATCHLIST_SCOPE.UNIVERSAL,
@@ -106,15 +94,6 @@ const toTarget = (
   providerType: entry.providerType,
 });
 
-/**
- * Watchlist editor that lives next to the compliance tabs, replacing the
- * full-width curated section each tab used to carry.
- *
- * Edits are buffered and submitted as one diff when the dropdown closes, so
- * ticking a dozen frameworks costs a single request — and only the entries this
- * user actually touched are written, leaving a concurrent edit by another
- * member intact. Per-card pins remain the quick path for a single framework.
- */
 export const WatchlistMultiSelect = ({
   entries,
   id = "compliance-watchlist-selector",
@@ -147,8 +126,6 @@ export const WatchlistMultiSelect = ({
         title: "Too many changes at once",
         description: `A single update may reference at most ${MAX_WATCHLIST_BULK} frameworks. Apply the changes in smaller batches.`,
       });
-      // Discard the oversized batch rather than leaving the dropdown claiming
-      // changes the server never received.
       setSelectedKeys(pinnedKeys(entries));
       return;
     }
@@ -171,8 +148,6 @@ export const WatchlistMultiSelect = ({
   };
 
   const handleOpenChange = (nextOpen: boolean) => {
-    // Reopening re-reads the server state, so a pin toggled from a card — or by
-    // another member — is reflected instead of being undone by a stale buffer.
     if (nextOpen) {
       setSelectedKeys(pinnedKeys(entries));
     } else {
@@ -201,8 +176,6 @@ export const WatchlistMultiSelect = ({
           disabled={isPending}
           aria-labelledby={labelId}
         >
-          {/* Not `MultiSelectValue`: a badge per pinned framework would spill
-              past the tab bar once a handful are pinned. */}
           <span className="truncate">
             {pinnedCount > 0
               ? `Watchlist · ${pinnedCount.toLocaleString()} pinned`

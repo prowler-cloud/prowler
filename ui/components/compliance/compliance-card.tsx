@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { ReactNode } from "react";
 
-import { Card, CardContent } from "@/components/shadcn/card/card";
+import { Card, CardAction, CardContent } from "@/components/shadcn/card/card";
 import { Progress } from "@/components/shadcn/progress";
 import {
   Tooltip,
@@ -13,6 +13,7 @@ import {
 } from "@/components/shadcn/tooltip";
 import { buildComplianceDetailPath } from "@/lib/compliance/compliance-detail-url";
 import { getReportTypeForCompliance } from "@/lib/compliance/compliance-report-types";
+import { formatComplianceFrameworkTitle } from "@/lib/compliance/framework-title";
 import {
   getScoreIndicatorClass,
   type ScoreColorVariant,
@@ -66,9 +67,7 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
   const router = useRouter();
   const hasRegionFilter = searchParams.has("filter[region__in]");
 
-  const formatTitle = (title: string) => {
-    return title.split("-").join(" ");
-  };
+  const formattedTitle = formatComplianceFrameworkTitle(title, version);
 
   const ratingPercentage = Math.floor(
     (passingRequirements / totalRequirements) * 100,
@@ -93,22 +92,74 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
   };
 
   return (
-    <Card
-      variant="base"
-      padding="md"
-      className="relative cursor-pointer transition-shadow hover:shadow-md"
-      onClick={navigateToDetail}
-    >
-      <div
+    <Card variant="base" padding="none" interactive className="relative">
+      <button
+        type="button"
+        aria-label={`Open ${formattedTitle} compliance details`}
+        onClick={navigateToDetail}
+        className="focus-visible:ring-border-neutral-secondary/50 w-full rounded-xl bg-transparent px-4 py-3 text-left outline-none focus-visible:ring-2"
+      >
+        <CardContent>
+          <div className="flex w-full flex-col gap-3">
+            <div
+              className={cn(
+                "flex items-center gap-3",
+                watchlistAction ? "pr-16" : "pr-9",
+              )}
+            >
+              {getComplianceIcon(title) && (
+                <div className="border-border-neutral-tertiary bg-bg-neutral-tertiary flex h-10 w-10 min-w-10 shrink-0 items-center justify-center rounded-md border">
+                  <Image
+                    src={getComplianceIcon(title)}
+                    alt={`${title} logo`}
+                    width={32}
+                    height={32}
+                    className="h-8 w-8 object-contain"
+                  />
+                </div>
+              )}
+              <div className="flex min-w-0 flex-1 flex-col">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <h4 className="truncate text-sm leading-5 font-bold">
+                      {formattedTitle}
+                    </h4>
+                  </TooltipTrigger>
+                  <TooltipContent>{formattedTitle}</TooltipContent>
+                </Tooltip>
+                <small className="truncate">
+                  <span className="mr-1 text-xs font-semibold">
+                    {passingRequirements} / {totalRequirements}
+                  </span>
+                  Passing Requirements
+                </small>
+              </div>
+            </div>
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between gap-3 text-xs">
+                <span className="text-text-neutral-secondary font-medium tracking-wider">
+                  Score:
+                </span>
+                <span className="text-text-neutral-secondary">
+                  {ratingPercentage}%
+                </span>
+              </div>
+              <Progress
+                aria-label="Compliance score"
+                value={ratingPercentage}
+                className="border-border-neutral-secondary h-2.5 border drop-shadow-sm"
+                indicatorClassName={getScoreIndicatorClass(
+                  getRatingVariant(ratingPercentage),
+                )}
+              />
+            </div>
+          </div>
+        </CardContent>
+      </button>
+      <CardAction
         className="absolute top-2 right-2 z-10 flex items-center gap-1"
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.stopPropagation();
-          }
-        }}
         role="group"
-        tabIndex={0}
+        aria-label="Compliance actions"
       >
         <ComplianceDownloadContainer
           compact
@@ -125,67 +176,7 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
           disabled={hasRegionFilter}
         />
         {watchlistAction}
-      </div>
-      <CardContent className="p-0">
-        <div className="flex w-full flex-col gap-3">
-          <div
-            className={cn(
-              "flex items-center gap-3",
-              watchlistAction ? "pr-16" : "pr-9",
-            )}
-          >
-            {getComplianceIcon(title) && (
-              <div className="border-border-neutral-tertiary flex h-10 w-10 min-w-10 shrink-0 items-center justify-center rounded-md border bg-slate-50">
-                <Image
-                  src={getComplianceIcon(title)}
-                  alt={`${title} logo`}
-                  width={32}
-                  height={32}
-                  className="h-8 w-8 object-contain"
-                />
-              </div>
-            )}
-            <div className="flex min-w-0 flex-1 flex-col">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <h4 className="truncate text-sm leading-5 font-bold">
-                    {formatTitle(title)}
-                    {version ? ` - ${version}` : ""}
-                  </h4>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {formatTitle(title)}
-                  {version ? ` - ${version}` : ""}
-                </TooltipContent>
-              </Tooltip>
-              <small className="truncate">
-                <span className="mr-1 text-xs font-semibold">
-                  {passingRequirements} / {totalRequirements}
-                </span>
-                Passing Requirements
-              </small>
-            </div>
-          </div>
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between gap-3 text-xs">
-              <span className="text-text-neutral-secondary font-medium tracking-wider">
-                Score:
-              </span>
-              <span className="text-text-neutral-secondary">
-                {ratingPercentage}%
-              </span>
-            </div>
-            <Progress
-              aria-label="Compliance score"
-              value={ratingPercentage}
-              className="border-border-neutral-secondary h-2.5 border drop-shadow-sm"
-              indicatorClassName={getScoreIndicatorClass(
-                getRatingVariant(ratingPercentage),
-              )}
-            />
-          </div>
-        </div>
-      </CardContent>
+      </CardAction>
     </Card>
   );
 };

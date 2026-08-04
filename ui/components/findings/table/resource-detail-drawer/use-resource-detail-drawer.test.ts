@@ -46,11 +46,9 @@ vi.mock("@/lib/shared/env", () => ({
 // Import after mocks
 // ---------------------------------------------------------------------------
 
-import type {
-  FindingComplianceFramework,
-  ResourceDrawerFinding,
-} from "@/actions/findings";
+import type { ResourceDrawerFinding } from "@/actions/findings";
 import type { FindingResourceRow } from "@/types";
+import type { FindingComplianceFramework } from "@/types/compliance-watchlist";
 import {
   FINDING_TRIAGE_STATUS,
   type FindingTriageSummary,

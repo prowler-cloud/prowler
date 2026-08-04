@@ -16,7 +16,6 @@ import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 import {
-  type FindingComplianceFramework,
   loadLatestFindingTriageNote,
   type ResourceDrawerFinding,
   updateFindingTriage,
@@ -80,6 +79,7 @@ import { getRegionFlag } from "@/lib/region-flags";
 import { isCloud } from "@/lib/shared/env";
 import { getRecommendationLinkLabel } from "@/lib/vulnerability-references";
 import { SIDE_PANEL_TAB, useSidePanelStore } from "@/store/side-panel";
+import type { FindingComplianceFramework } from "@/types/compliance-watchlist";
 import type { FindingResourceRow } from "@/types/findings-table";
 import type { UpdateFindingTriageInput } from "@/types/findings-triage";
 import { JIRA_DISPATCH_TARGET } from "@/types/integrations";
@@ -174,6 +174,55 @@ function complianceFrameworkLabel(
 ): string {
   const name = framework.framework || framework.name;
   return framework.version ? `${name} ${framework.version}` : name;
+}
+
+interface ComplianceFrameworkChipProps {
+  framework: FindingComplianceFramework;
+  isNavigable: boolean;
+  onOpen: (framework: FindingComplianceFramework) => void;
+}
+
+function ComplianceFrameworkChip({
+  framework,
+  isNavigable,
+  onOpen,
+}: ComplianceFrameworkChipProps) {
+  const icon = getComplianceIcon(framework.complianceId);
+  const label = complianceFrameworkLabel(framework);
+  const content = icon ? (
+    <Image
+      src={icon}
+      alt={label}
+      width={20}
+      height={20}
+      className="size-5 object-contain"
+    />
+  ) : (
+    label
+  );
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        {isNavigable ? (
+          <Button
+            type="button"
+            variant="outline"
+            size={icon ? "icon-xs" : "sm"}
+            aria-label={`Open ${label} compliance details`}
+            onClick={() => onOpen(framework)}
+          >
+            {content}
+          </Button>
+        ) : (
+          <Badge variant="tag" size="sm" aria-label={label}>
+            {content}
+          </Badge>
+        )}
+      </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
+  );
 }
 
 function parseSelectedScanIds(scanFilterValue: string | null): string[] {
@@ -460,78 +509,14 @@ export function ResourceDetailDrawerContent({
                   Compliance Frameworks:
                 </span>
                 <div className="flex flex-wrap items-center gap-2">
-                  {checkMeta.complianceFrameworks.map((framework) => {
-                    // Resolve the logo by id, not by display name: the id
-                    // carries the keywords the resolver matches on, and the
-                    // name can be empty for a framework the SDK exposes no
-                    // metadata for.
-                    const icon = getComplianceIcon(framework.complianceId);
-                    // The framework name alone is not unique: eight AWS
-                    // frameworks are called "CIS". Without the version the
-                    // strip renders eight identical chips — same icon, same
-                    // tooltip, same accessible name — each opening a different
-                    // benchmark.
-                    const label = complianceFrameworkLabel(framework);
-                    const isNavigable = Boolean(complianceScanId);
-
-                    return icon ? (
-                      <Tooltip key={framework.id}>
-                        <TooltipTrigger asChild>
-                          {isNavigable ? (
-                            <button
-                              type="button"
-                              aria-label={`Open ${label} compliance details`}
-                              onClick={() =>
-                                void handleOpenCompliance(framework)
-                              }
-                              className="flex size-7 shrink-0 items-center justify-center rounded-md border border-gray-300 bg-white p-0.5 transition-shadow hover:shadow-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-wait disabled:opacity-70"
-                            >
-                              <Image
-                                src={icon}
-                                alt={label}
-                                width={20}
-                                height={20}
-                                className="size-5 object-contain"
-                              />
-                            </button>
-                          ) : (
-                            <div className="flex size-7 shrink-0 items-center justify-center rounded-md border border-gray-300 bg-white p-0.5">
-                              <Image
-                                src={icon}
-                                alt={label}
-                                width={20}
-                                height={20}
-                                className="size-5 object-contain"
-                              />
-                            </div>
-                          )}
-                        </TooltipTrigger>
-                        <TooltipContent>{label}</TooltipContent>
-                      </Tooltip>
-                    ) : (
-                      <Tooltip key={framework.id}>
-                        <TooltipTrigger asChild>
-                          {isNavigable ? (
-                            <button
-                              type="button"
-                              aria-label={`Open ${label} compliance details`}
-                              onClick={() =>
-                                void handleOpenCompliance(framework)
-                              }
-                              className="text-text-neutral-secondary inline-flex h-7 shrink-0 items-center rounded-md border border-gray-300 bg-white px-1.5 text-xs transition-shadow hover:shadow-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-wait disabled:opacity-70"
-                            >
-                              {label}
-                            </button>
-                          ) : (
-                            <span className="text-text-neutral-secondary inline-flex h-7 shrink-0 items-center rounded-md border border-gray-300 bg-white px-1.5 text-xs">
-                              {label}
-                            </span>
-                          )}
-                        </TooltipTrigger>
-                        <TooltipContent>{label}</TooltipContent>
-                      </Tooltip>
-                    );
-                  })}
+                  {checkMeta.complianceFrameworks.map((framework) => (
+                    <ComplianceFrameworkChip
+                      key={framework.id}
+                      framework={framework}
+                      isNavigable={Boolean(complianceScanId)}
+                      onOpen={handleOpenCompliance}
+                    />
+                  ))}
                 </div>
               </div>
             )}

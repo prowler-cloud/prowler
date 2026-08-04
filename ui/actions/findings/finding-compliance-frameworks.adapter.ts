@@ -1,9 +1,7 @@
 import { WATCHLIST_SCOPE } from "@/types/compliance-watchlist";
+import type { FindingComplianceFramework } from "@/types/compliance-watchlist";
 
-import type {
-  FindingComplianceFramework,
-  FindingComplianceFrameworksResponse,
-} from "./finding-compliance-frameworks.types";
+import type { FindingComplianceFrameworksResponse } from "./finding-compliance-frameworks.types";
 
 export const adaptFindingComplianceFrameworks = (
   response: FindingComplianceFrameworksResponse | undefined,

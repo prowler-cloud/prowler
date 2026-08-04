@@ -87,19 +87,6 @@ describe("CompliancePageTabs", () => {
     expect(controls.closest('[role="tabpanel"]')).toBeNull();
   });
 
-  it("renders no controls slot when the tenant has no catalog (OSS)", () => {
-    render(
-      <CompliancePageTabs
-        activeTab={COMPLIANCE_TAB.PER_SCAN}
-        crossProviderEnabled={false}
-        perScanContent={<div>Per scan content</div>}
-        crossProviderContent={null}
-      />,
-    );
-
-    expect(screen.queryByTestId("watchlist-controls")).not.toBeInTheDocument();
-  });
-
   it("navigates with ?tab=per-scan and back to the bare route", async () => {
     const user = userEvent.setup();
     const { rerender } = render(

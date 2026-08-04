@@ -1,7 +1,4 @@
-// Raw JSON:API shapes returned by the compliance catalog and watchlist
-// endpoints. The API does not camelize field names, so these mirror the
-// backend serializers verbatim; the adapter maps them to the UI types in
-// `@/types/compliance-watchlist`.
+import type { JsonApiDocument, JsonApiResource } from "@/types/jsonapi";
 
 export interface ComplianceCatalogEntryAttributes {
   compliance_id: string;
@@ -23,11 +20,8 @@ export interface ComplianceCatalogEntryAttributes {
   watchlist_entry_id: string | null;
 }
 
-export interface ComplianceCatalogEntryResource {
-  type: string;
-  id: string;
-  attributes: ComplianceCatalogEntryAttributes;
-}
+export type ComplianceCatalogEntryResource =
+  JsonApiResource<ComplianceCatalogEntryAttributes>;
 
 export interface ComplianceCatalogPaginationMeta {
   page?: number;
@@ -42,10 +36,10 @@ export interface ComplianceCatalogResponseMeta {
   eligible_provider_types?: string[];
 }
 
-export interface ComplianceCatalogResponse {
-  data?: ComplianceCatalogEntryResource[];
-  meta?: ComplianceCatalogResponseMeta;
-}
+export type ComplianceCatalogResponse = JsonApiDocument<
+  ComplianceCatalogEntryResource[],
+  ComplianceCatalogResponseMeta
+>;
 
 export interface ComplianceWatchlistBulkResponseMeta {
   added?: number;
@@ -55,7 +49,7 @@ export interface ComplianceWatchlistBulkResponseMeta {
   watchlist_count?: number;
 }
 
-export interface ComplianceWatchlistBulkResponse {
-  data?: unknown[];
-  meta?: ComplianceWatchlistBulkResponseMeta;
-}
+export type ComplianceWatchlistBulkResponse = JsonApiDocument<
+  unknown[],
+  ComplianceWatchlistBulkResponseMeta
+>;

@@ -1,5 +1,6 @@
 "use client";
 
+import { ComplianceFrameworkGrid } from "@/components/compliance/compliance-framework-grid";
 import { WatchlistEmptyState } from "@/components/compliance/watchlist/watchlist-empty-state";
 import { useShowOnlyWatchlist } from "@/hooks/use-show-only-watchlist";
 import { WATCHLIST_PIN_STATE } from "@/types/compliance-watchlist";
@@ -13,9 +14,6 @@ interface CrossProviderCard {
   summary: CrossProviderFrameworkSummary;
   watchlist: UniversalWatchlistState;
 }
-
-const GRID_CLASSES =
-  "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4";
 
 /** Copy for the one thing this grid can filter away. */
 const NOTHING_PINNED_HINT =
@@ -56,7 +54,7 @@ export const CrossProviderFrameworkGrid = ({
   }
 
   return (
-    <div className={GRID_CLASSES}>
+    <ComplianceFrameworkGrid>
       {visibleCards.map((card) => (
         <CrossProviderFrameworkCard
           key={card.summary.complianceId}
@@ -65,6 +63,6 @@ export const CrossProviderFrameworkGrid = ({
           canManageWatchlist={canManageWatchlist}
         />
       ))}
-    </div>
+    </ComplianceFrameworkGrid>
   );
 };

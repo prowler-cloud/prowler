@@ -10,6 +10,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
+import { formatComplianceFrameworkTitle } from "@/lib/compliance/framework-title";
 import type { ScoreColorVariant } from "@/lib/compliance/score-utils";
 import { cn } from "@/lib/utils";
 import { PROVIDER_DISPLAY_NAMES } from "@/types/providers";
@@ -45,7 +46,7 @@ export const CrossProviderFrameworkCard = ({
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const formattedTitle = `${title.split("-").join(" ")}${version ? ` - ${version}` : ""}`;
+  const formattedTitle = formatComplianceFrameworkTitle(title, version);
 
   const ratingPercentage =
     totalRequirements > 0
@@ -76,9 +77,9 @@ export const CrossProviderFrameworkCard = ({
       onActivate={navigateToDetail}
       tooltip={description}
       actions={
-        watchlist && canManageWatchlist && watchlist.targets.length > 0 ? (
+        watchlist?.target && canManageWatchlist ? (
           <WatchlistToggle
-            targets={watchlist.targets}
+            target={watchlist.target}
             state={watchlist.state}
             entryId={watchlist.entryId}
           />

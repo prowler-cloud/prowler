@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 
 import { ComplianceCard } from "@/components/compliance/compliance-card";
+import { ComplianceFrameworkGrid } from "@/components/compliance/compliance-framework-grid";
 import { LighthouseContextContributor } from "@/components/lighthouse/context-contributor";
 import { OnboardingTrigger, PageReady } from "@/components/onboarding";
 import { DataTableSearch } from "@/components/shadcn/table/data-table-search";
@@ -38,29 +39,13 @@ const VIEW_COMPLIANCE_TOUR_CONFIG = {
   doneBtnText: "Open Compliance",
 };
 
-const GRID_CLASSES =
-  "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4";
-
 interface ComplianceOverviewGridProps {
   frameworks: ComplianceOverviewData[];
   scanId: string;
   selectedScan?: ScanEntity;
-  /**
-   * Subset of compliance_ids that represent the latest CIS variant per
-   * provider. Only those cards expose the PDF download button, matching
-   * the backend's latest-only CIS PDF generation.
-   */
   latestCisIds?: ReadonlySet<string>;
-  /**
-   * Compliance catalog scoped to the selected scan's provider type. Cloud
-   * only: fetched by the page behind `isCloud()`, so in OSS it is absent and
-   * no watchlist affordance renders at all.
-   */
   catalogEntries?: ComplianceCatalogEntry[];
-  /** Provider type of the selected scan — the other half of the watchlist key. */
   providerType?: string;
-  /** MANAGE_SCANS. Without it the write affordances are not rendered (rather
-   *  than rendered disabled), because they would 403. */
   canManageWatchlist?: boolean;
 }
 
@@ -107,8 +92,6 @@ export const ComplianceOverviewGrid = ({
     ? frameworks.filter((compliance) => isPinned(compliance.id)).length
     : 0;
 
-  // The filter only bites where there is a watchlist to filter by: without a
-  // catalog (OSS) every framework stays visible regardless of the stored flag.
   const filterToWatchlist = watchlistEnabled && showOnlyWatchlist;
   // Pinned frameworks render first even unfiltered, so the tour anchor and
   // "open the first framework" step follow the same order the user sees.
@@ -145,17 +128,13 @@ export const ComplianceOverviewGrid = ({
   };
 
   const renderGrid = (items: ComplianceOverviewData[]) => (
-    <div className={GRID_CLASSES}>
+    <ComplianceFrameworkGrid>
       {items.map((compliance) => {
         const { attributes, id } = compliance;
         const { framework, version, requirements_passed, total_requirements } =
           attributes;
 
         return (
-          // Anchor the tour to a single card, not the whole grid: highlighting the
-          // grid lit up the entire viewport and scrolled the page to the bottom.
-          // Spread rather than a conditional attribute value so the literal sits
-          // next to the attribute name — the shape `tour:check` scans for.
           <div
             key={id}
             {...(id === tourAnchorId
@@ -178,9 +157,7 @@ export const ComplianceOverviewGrid = ({
               watchlistAction={
                 watchlistEnabled && canManageWatchlist ? (
                   <WatchlistToggle
-                    targets={[
-                      { complianceId: id, providerType: providerType! },
-                    ]}
+                    target={{ complianceId: id, providerType: providerType! }}
                     state={
                       isPinned(id)
                         ? WATCHLIST_PIN_STATE.PINNED
@@ -197,7 +174,7 @@ export const ComplianceOverviewGrid = ({
           </div>
         );
       })}
-    </div>
+    </ComplianceFrameworkGrid>
   );
 
   return (

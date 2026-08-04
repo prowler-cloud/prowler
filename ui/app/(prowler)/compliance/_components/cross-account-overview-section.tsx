@@ -23,23 +23,8 @@ import type { CrossAccountFrameworkEntry } from "../_types";
 import type { CrossAccountGroup } from "./cross-account-framework-list";
 import { CrossAccountFrameworkList } from "./cross-account-framework-list";
 
-/** Only provider types with at least this many accounts get cross-account
- *  cards — with a single account the view is identical to the per-scan one. */
 const MIN_ACCOUNTS = 2;
 
-/**
- * Server island for the "across accounts" section of the Cross-Provider tab:
- * for every provider type with 2+ accounts, lists the regular (per-provider)
- * frameworks that can be viewed aggregated across that type's accounts.
- *
- * The framework list per type comes from a completed scan of any account of
- * that type (frameworks are a property of the provider type, not of the
- * account). Universal frameworks are excluded — they already have
- * their own cross-provider cards above. Renders nothing when no provider
- * type qualifies, keeping the tab unchanged for single-account tenants.
- * Best-effort by design: a type whose scan or framework list fails to load
- * is dropped from the section rather than failing the tab.
- */
 export const CrossAccountOverviewSection = async ({
   searchParams,
 }: {
@@ -141,19 +126,9 @@ export const CrossAccountOverviewSection = async ({
     .sort((a, b) => a[0].providerType.localeCompare(b[0].providerType));
   if (groups.length === 0) return null;
 
-  // The cross-account endpoints have no `filter[in_watchlist]` either, so
-  // pinned state comes from joining the catalog on the same key. Deliberately
-  // un-narrowed: the join keys on `(compliance_id, provider_type)`, so the full
-  // catalog resolves these cards exactly like a narrowed one — and the full one
-  // is already loaded for the tab bar and the cross-provider grid, which makes
-  // this a deduplicated call rather than a second paginated fetch.
   const watchlist = await loadComplianceWatchlistContext();
   const catalogIndex = buildWatchlistIndex(watchlist.entries);
 
-  // Pinned state is resolved here rather than in the client shell: the join
-  // against the catalog is server data, and the shell only decides what the
-  // stored filter lets through. One lookup per framework — the pinned flag and
-  // the entry id come off the same catalog row.
   const listGroups: CrossAccountGroup[] = groups.map((entries) => ({
     providerType: entries[0].providerType,
     accountCount: entries[0].accountCount,
