@@ -1,0 +1,41 @@
+---
+title: "Active Queries"
+sidebarTitle: "Active Queries"
+description: "Focus on the Attack Paths queries active in the environment: Prowler Cloud and Prowler Private Cloud record query results after each scan and hide confirmed-empty queries from the selector."
+---
+
+import { VersionBadge } from "/snippets/version-badge.mdx";
+import { SubscriptionBanner } from "/snippets/subscription-banner.mdx";
+
+<VersionBadge version="5.36.0" />
+
+<SubscriptionBanner />
+
+Active Queries extends the base [Attack Paths](/user-guide/tutorials/prowler-app-attack-paths) feature with capabilities that rely on managed scan infrastructure. This capability is available only in Prowler Cloud and Prowler Private Cloud.
+
+## Focusing on Queries with Data
+
+Running an Attack Paths query against a scan that contains no matching pattern returns an empty graph. Without automatic filtering, identifying the queries that apply to an account means opening each one and checking whether it produces a result. Running the RDS inventory query on an account with no RDS instances, for example, returns a "No data found" message.
+
+![Attack Paths query returning no data](/images/prowler-app/attack-paths/query-no-data.png)
+
+Prowler Cloud removes that trial and error. At the end of each scan, Prowler Cloud records which built-in queries returned data. The query selector then hides the queries confirmed empty for the selected scan, so only the queries that surface a real path remain visible. Following the example above, the RDS inventory query no longer appears in the selector.
+
+![Attack Paths query selector with confirmed-empty queries hidden](/images/prowler-app/attack-paths/query-selector-hidden-empty.png)
+
+A query stays available whenever its result is not a confirmed empty graph:
+
+- **Errored queries** remain listed. An error is not the same as an empty result and still requires investigation.
+- **Unknown queries** remain listed. Their result for the scan has not been recorded yet.
+- **Parameterized queries** remain listed. Their output depends on the input values provided at run time.
+
+## Browsing the Full Query Catalog on Prowler Hub
+
+The query selector shows the queries relevant to the selected scan, not the entire catalog. To review every built-in Attack Paths query, including the ones hidden for a given scan, browse the complete catalog on [Prowler Hub](https://hub.prowler.com).
+
+Prowler Hub lists each query with its name, description, and the technique it detects, so security teams can plan coverage and understand detection scope without running a scan first.
+
+## Related Pages
+
+- [Attack Paths](/user-guide/tutorials/prowler-app-attack-paths) - Run built-in and custom queries and explore the resulting graph.
+- [Attack Paths Queries](/developer-guide/attack-paths-queries) - Write and maintain openCypher queries in the Developer Guide.

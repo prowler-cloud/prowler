@@ -12,6 +12,8 @@ import { useProviderWizardStore } from "@/store/provider-wizard/store";
 import {
   ORG_SETUP_PHASE,
   ORG_WIZARD_STEP,
+  ORGANIZATION_TYPE,
+  OrgFlowType,
   OrgSetupPhase,
   OrgWizardStep,
 } from "@/types/organizations";
@@ -35,6 +37,11 @@ const WIZARD_VARIANT = {
 } as const;
 
 type WizardVariant = (typeof WIZARD_VARIANT)[keyof typeof WIZARD_VARIANT];
+
+const ORG_DOCS_URL = {
+  [ORGANIZATION_TYPE.AWS]: DOCS_URLS.AWS_ORGANIZATIONS,
+  [ORGANIZATION_TYPE.GCP]: DOCS_URLS.GCP_ORGANIZATIONS,
+} as const satisfies Record<OrgFlowType, string>;
 
 const EMPTY_FOOTER_CONFIG: WizardFooterConfig = {
   showBack: false,
@@ -99,8 +106,14 @@ export function useProviderWizardController({
     setMode,
     mode,
     providerType,
+    via,
   } = useProviderWizardStore();
-  const { reset: resetOrgWizard, setOrganization } = useOrgSetupStore();
+  const {
+    reset: resetOrgWizard,
+    setOrganization,
+    setOrganizationType,
+    organizationType,
+  } = useOrgSetupStore();
 
   useEffect(() => {
     if (!open) {
@@ -116,6 +129,7 @@ export function useProviderWizardController({
     if (orgInitialData) {
       setWizardVariant(WIZARD_VARIANT.ORGANIZATIONS);
       resetOrgWizard();
+      setOrganizationType(orgInitialData.organizationType);
       setOrganization(
         orgInitialData.organizationId,
         orgInitialData.organizationName,
@@ -174,6 +188,7 @@ export function useProviderWizardController({
     resetProviderWizard,
     setMode,
     setOrganization,
+    setOrganizationType,
     setProvider,
     setSecretId,
     setVia,
@@ -229,11 +244,14 @@ export function useProviderWizardController({
     setCurrentStep(PROVIDER_WIZARD_STEP.LAUNCH);
   };
 
-  const openOrganizationsFlow = () => {
-    // AWS Organizations diverges from the credentials path the tour guides toward; end
+  const openOrganizationsFlow = (
+    orgType: OrgFlowType = ORGANIZATION_TYPE.AWS,
+  ) => {
+    // Organizations diverges from the credentials path the tour guides toward; end
     // it so it doesn't dangle on a step that no longer fits. No-op off-onboarding.
     endActiveTour();
     resetOrgWizard();
+    setOrganizationType(orgType);
     setWizardVariant(WIZARD_VARIANT.ORGANIZATIONS);
     setOrgCurrentStep(ORG_WIZARD_STEP.SETUP);
     setFooterConfig(EMPTY_FOOTER_CONFIG);
@@ -252,8 +270,12 @@ export function useProviderWizardController({
 
   const isProviderFlow = wizardVariant === WIZARD_VARIANT.PROVIDER;
   const docsLink = isProviderFlow
-    ? getProviderHelpText(providerTypeHint ?? providerType ?? "").link
-    : DOCS_URLS.AWS_ORGANIZATIONS;
+    ? getProviderHelpText(
+        providerTypeHint ?? providerType ?? "",
+        currentStep,
+        via,
+      ).link
+    : ORG_DOCS_URL[organizationType];
   const resolvedFooterConfig: WizardFooterConfig = footerConfig;
   const modalTitle = getProviderWizardModalTitle(mode);
 
@@ -269,6 +291,7 @@ export function useProviderWizardController({
     mode,
     modalTitle,
     openOrganizationsFlow,
+    organizationType,
     orgCurrentStep,
     orgSetupPhase,
     providerTypeHint,

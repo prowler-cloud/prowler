@@ -2,12 +2,17 @@ import json
 from unittest.mock import ANY, Mock, patch
 
 import pytest
+from api.db_utils import rls_transaction
 from api.models import (
+    Integration,
+    IntegrationProviderRelationship,
     Membership,
     ProviderGroup,
     ProviderGroupMembership,
+    ProviderSecret,
     Role,
     RoleProviderGroupRelationship,
+    Scan,
     User,
     UserRoleRelationship,
 )
@@ -664,6 +669,612 @@ class TestLimitedVisibility:
             limited_admin_user, tenants_fixture[0]
         )
 
+    @pytest.fixture
+    def hidden_provider_secret(self, aws_provider_pair):
+        hidden_provider = aws_provider_pair[1]
+        return ProviderSecret.objects.create(
+            tenant_id=hidden_provider.tenant_id,
+            provider=hidden_provider,
+            secret_type=ProviderSecret.TypeChoices.STATIC,
+            secret={
+                "aws_access_key_id": "hidden-key",
+                "aws_secret_access_key": "hidden-secret",
+            },
+            name="Hidden provider secret",
+        )
+
+    @pytest.fixture
+    def limited_provider_group(self, limited_admin_user):
+        return ProviderGroup.objects.get(name="limited_visibility_group")
+
+    @patch("api.v1.views.enqueue_scan_execution_on_commit")
+    def test_scan_create_out_of_scope_provider_is_rejected(
+        self,
+        mock_enqueue_scan,
+        authenticated_client_rbac_limited,
+        aws_provider_pair,
+    ):
+        hidden_provider = aws_provider_pair[1]
+
+        response = authenticated_client_rbac_limited.post(
+            reverse("scan-list"),
+            data=json.dumps(
+                {
+                    "data": {
+                        "type": "scans",
+                        "attributes": {"name": "Out of scope scan"},
+                        "relationships": {
+                            "provider": {
+                                "data": {
+                                    "type": "providers",
+                                    "id": str(hidden_provider.id),
+                                }
+                            }
+                        },
+                    }
+                }
+            ),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert not Scan.objects.filter(
+            provider=hidden_provider, name="Out of scope scan"
+        ).exists()
+        mock_enqueue_scan.assert_not_called()
+
+    @patch("api.v1.views.enqueue_scan_execution_on_commit")
+    def test_scan_create_in_scope_provider_is_accepted(
+        self,
+        mock_enqueue_scan,
+        authenticated_client_rbac_limited,
+        aws_provider,
+    ):
+        response = authenticated_client_rbac_limited.post(
+            reverse("scan-list"),
+            data=json.dumps(
+                {
+                    "data": {
+                        "type": "scans",
+                        "attributes": {"name": "In scope scan"},
+                        "relationships": {
+                            "provider": {
+                                "data": {
+                                    "type": "providers",
+                                    "id": str(aws_provider.id),
+                                }
+                            }
+                        },
+                    }
+                }
+            ),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_202_ACCEPTED
+        assert Scan.objects.filter(provider=aws_provider, name="In scope scan").exists()
+        mock_enqueue_scan.assert_called_once()
+
+    def test_provider_secret_retrieve_out_of_scope_returns_404(
+        self,
+        authenticated_client_rbac_limited,
+        hidden_provider_secret,
+    ):
+        response = authenticated_client_rbac_limited.get(
+            reverse(
+                "providersecret-detail",
+                kwargs={"pk": hidden_provider_secret.id},
+            )
+        )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_provider_secret_list_excludes_out_of_scope_provider(
+        self,
+        authenticated_client_rbac_limited,
+        hidden_provider_secret,
+    ):
+        response = authenticated_client_rbac_limited.get(reverse("providersecret-list"))
+
+        assert response.status_code == status.HTTP_200_OK
+        assert str(hidden_provider_secret.id) not in {
+            item["id"] for item in response.json()["data"]
+        }
+
+    def test_provider_secret_create_out_of_scope_provider_is_rejected(
+        self,
+        authenticated_client_rbac_limited,
+        aws_provider_pair,
+    ):
+        hidden_provider = aws_provider_pair[1]
+        response = authenticated_client_rbac_limited.post(
+            reverse("providersecret-list"),
+            data=json.dumps(
+                {
+                    "data": {
+                        "type": "provider-secrets",
+                        "attributes": {
+                            "name": "Out of scope secret",
+                            "secret_type": ProviderSecret.TypeChoices.STATIC,
+                            "secret": {
+                                "aws_access_key_id": "hidden-key",
+                                "aws_secret_access_key": "hidden-secret",
+                            },
+                        },
+                        "relationships": {
+                            "provider": {
+                                "data": {
+                                    "type": "providers",
+                                    "id": str(hidden_provider.id),
+                                }
+                            }
+                        },
+                    }
+                }
+            ),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert not ProviderSecret.objects.filter(provider=hidden_provider).exists()
+
+    def test_provider_secret_create_in_scope_provider_is_accepted(
+        self,
+        authenticated_client_rbac_limited,
+        aws_provider,
+    ):
+        response = authenticated_client_rbac_limited.post(
+            reverse("providersecret-list"),
+            data=json.dumps(
+                {
+                    "data": {
+                        "type": "provider-secrets",
+                        "attributes": {
+                            "name": "In scope secret",
+                            "secret_type": ProviderSecret.TypeChoices.STATIC,
+                            "secret": {
+                                "aws_access_key_id": "visible-key",
+                                "aws_secret_access_key": "visible-secret",
+                            },
+                        },
+                        "relationships": {
+                            "provider": {
+                                "data": {
+                                    "type": "providers",
+                                    "id": str(aws_provider.id),
+                                }
+                            }
+                        },
+                    }
+                }
+            ),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_201_CREATED
+        assert ProviderSecret.objects.filter(provider=aws_provider).exists()
+
+    def test_provider_secret_update_out_of_scope_returns_404(
+        self,
+        authenticated_client_rbac_limited,
+        hidden_provider_secret,
+    ):
+        response = authenticated_client_rbac_limited.patch(
+            reverse(
+                "providersecret-detail",
+                kwargs={"pk": hidden_provider_secret.id},
+            ),
+            data=json.dumps(
+                {
+                    "data": {
+                        "type": "provider-secrets",
+                        "id": str(hidden_provider_secret.id),
+                        "attributes": {"name": "Updated hidden secret"},
+                    }
+                }
+            ),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        hidden_provider_secret.refresh_from_db()
+        assert hidden_provider_secret.name == "Hidden provider secret"
+
+    def test_provider_secret_delete_out_of_scope_returns_404(
+        self,
+        authenticated_client_rbac_limited,
+        hidden_provider_secret,
+    ):
+        response = authenticated_client_rbac_limited.delete(
+            reverse(
+                "providersecret-detail",
+                kwargs={"pk": hidden_provider_secret.id},
+            )
+        )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert ProviderSecret.objects.filter(id=hidden_provider_secret.id).exists()
+
+    def test_provider_group_create_out_of_scope_provider_is_rejected(
+        self,
+        authenticated_client_rbac_limited,
+        aws_provider_pair,
+    ):
+        hidden_provider = aws_provider_pair[1]
+        response = authenticated_client_rbac_limited.post(
+            reverse("providergroup-list"),
+            data=json.dumps(
+                {
+                    "data": {
+                        "type": "provider-groups",
+                        "attributes": {"name": "Out of scope group"},
+                        "relationships": {
+                            "providers": {
+                                "data": [
+                                    {
+                                        "type": "providers",
+                                        "id": str(hidden_provider.id),
+                                    }
+                                ]
+                            }
+                        },
+                    }
+                }
+            ),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert not ProviderGroup.objects.filter(name="Out of scope group").exists()
+
+    def test_provider_group_create_in_scope_provider_is_accepted(
+        self,
+        authenticated_client_rbac_limited,
+        aws_provider,
+    ):
+        response = authenticated_client_rbac_limited.post(
+            reverse("providergroup-list"),
+            data=json.dumps(
+                {
+                    "data": {
+                        "type": "provider-groups",
+                        "attributes": {"name": "In scope group"},
+                        "relationships": {
+                            "providers": {
+                                "data": [
+                                    {
+                                        "type": "providers",
+                                        "id": str(aws_provider.id),
+                                    }
+                                ]
+                            }
+                        },
+                    }
+                }
+            ),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_201_CREATED
+        provider_group = ProviderGroup.objects.get(name="In scope group")
+        assert set(provider_group.providers.all()) == {aws_provider}
+
+    def test_provider_group_update_out_of_scope_provider_is_rejected(
+        self,
+        authenticated_client_rbac_limited,
+        limited_provider_group,
+        aws_provider_pair,
+    ):
+        visible_provider, hidden_provider = aws_provider_pair
+        response = authenticated_client_rbac_limited.patch(
+            reverse(
+                "providergroup-detail",
+                kwargs={"pk": limited_provider_group.id},
+            ),
+            data=json.dumps(
+                {
+                    "data": {
+                        "type": "provider-groups",
+                        "id": str(limited_provider_group.id),
+                        "relationships": {
+                            "providers": {
+                                "data": [
+                                    {
+                                        "type": "providers",
+                                        "id": str(hidden_provider.id),
+                                    }
+                                ]
+                            }
+                        },
+                    }
+                }
+            ),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert set(limited_provider_group.providers.all()) == {visible_provider}
+
+    def test_provider_group_relationship_create_out_of_scope_provider_is_rejected(
+        self,
+        authenticated_client_rbac_limited,
+        limited_provider_group,
+        aws_provider_pair,
+    ):
+        hidden_provider = aws_provider_pair[1]
+        response = authenticated_client_rbac_limited.post(
+            reverse(
+                "provider_group-providers-relationship",
+                kwargs={"pk": limited_provider_group.id},
+            ),
+            data={
+                "data": [
+                    {"type": "providers", "id": str(hidden_provider.id)},
+                ]
+            },
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert not ProviderGroupMembership.objects.filter(
+            provider_group=limited_provider_group,
+            provider=hidden_provider,
+        ).exists()
+
+    def test_provider_group_relationship_update_out_of_scope_provider_is_rejected(
+        self,
+        authenticated_client_rbac_limited,
+        limited_provider_group,
+        aws_provider_pair,
+    ):
+        visible_provider, hidden_provider = aws_provider_pair
+        response = authenticated_client_rbac_limited.patch(
+            reverse(
+                "provider_group-providers-relationship",
+                kwargs={"pk": limited_provider_group.id},
+            ),
+            data={
+                "data": [
+                    {"type": "providers", "id": str(hidden_provider.id)},
+                ]
+            },
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert set(limited_provider_group.providers.all()) == {visible_provider}
+
+    def test_provider_group_relationship_create_in_scope_provider_is_accepted(
+        self,
+        authenticated_client_rbac_limited,
+        limited_provider_group,
+        aws_provider_pair,
+    ):
+        additional_provider = aws_provider_pair[1]
+        additional_group = ProviderGroup.objects.create(
+            tenant_id=additional_provider.tenant_id,
+            name="Additional visible group",
+        )
+        ProviderGroupMembership.objects.create(
+            tenant_id=additional_provider.tenant_id,
+            provider_group=additional_group,
+            provider=additional_provider,
+        )
+        RoleProviderGroupRelationship.objects.create(
+            tenant_id=additional_provider.tenant_id,
+            role=limited_provider_group.roles.get(),
+            provider_group=additional_group,
+        )
+
+        response = authenticated_client_rbac_limited.post(
+            reverse(
+                "provider_group-providers-relationship",
+                kwargs={"pk": limited_provider_group.id},
+            ),
+            data={
+                "data": [
+                    {"type": "providers", "id": str(additional_provider.id)},
+                ]
+            },
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        assert ProviderGroupMembership.objects.filter(
+            provider_group=limited_provider_group,
+            provider=additional_provider,
+        ).exists()
+
+    def test_provider_group_relationship_delete_out_of_scope_group_returns_404(
+        self,
+        authenticated_client_rbac_limited,
+        aws_provider_pair,
+    ):
+        hidden_provider = aws_provider_pair[1]
+        hidden_group = ProviderGroup.objects.create(
+            tenant_id=hidden_provider.tenant_id,
+            name="Unassigned provider group",
+        )
+        ProviderGroupMembership.objects.create(
+            tenant_id=hidden_provider.tenant_id,
+            provider_group=hidden_group,
+            provider=hidden_provider,
+        )
+
+        response = authenticated_client_rbac_limited.delete(
+            reverse(
+                "provider_group-providers-relationship",
+                kwargs={"pk": hidden_group.id},
+            )
+        )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert ProviderGroupMembership.objects.filter(
+            provider_group=hidden_group,
+            provider=hidden_provider,
+        ).exists()
+
+    @patch("api.v1.views.Task.objects.get")
+    @patch("api.v1.views.delete_provider_task.delay")
+    def test_provider_delete_out_of_scope_returns_404(
+        self,
+        mock_delete_task,
+        mock_task_get,
+        authenticated_client_rbac_limited,
+        aws_provider_pair,
+        tasks_fixture,
+    ):
+        hidden_provider = aws_provider_pair[1]
+        prowler_task = tasks_fixture[0]
+        mock_delete_task.return_value.id = prowler_task.id
+        mock_task_get.return_value = prowler_task
+
+        response = authenticated_client_rbac_limited.delete(
+            reverse("provider-detail", kwargs={"pk": hidden_provider.id})
+        )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        hidden_provider.refresh_from_db()
+        assert hidden_provider.is_deleted is False
+        mock_delete_task.assert_not_called()
+        mock_task_get.assert_not_called()
+
+    @patch("api.v1.views.Task.objects.get")
+    @patch("api.v1.views.delete_provider_task.delay")
+    def test_provider_delete_in_scope_returns_202(
+        self,
+        mock_delete_task,
+        mock_task_get,
+        authenticated_client_rbac_limited,
+        aws_provider,
+        tasks_fixture,
+    ):
+        prowler_task = tasks_fixture[0]
+        mock_delete_task.return_value.id = prowler_task.id
+        mock_task_get.return_value = prowler_task
+
+        response = authenticated_client_rbac_limited.delete(
+            reverse("provider-detail", kwargs={"pk": aws_provider.id})
+        )
+
+        assert response.status_code == status.HTTP_202_ACCEPTED
+        mock_delete_task.assert_called_once_with(
+            provider_id=str(aws_provider.id), tenant_id=ANY
+        )
+        mock_task_get.assert_called_once_with(id=prowler_task.id)
+
+    @patch("api.v1.views.Task.objects.get")
+    @patch("api.v1.views.check_provider_connection_task.delay")
+    def test_provider_connection_out_of_scope_returns_404(
+        self,
+        mock_provider_connection,
+        mock_task_get,
+        authenticated_client_rbac_limited,
+        aws_provider_pair,
+        tasks_fixture,
+    ):
+        hidden_provider = aws_provider_pair[1]
+        prowler_task = tasks_fixture[0]
+        mock_provider_connection.return_value.id = prowler_task.id
+        mock_task_get.return_value = prowler_task
+
+        response = authenticated_client_rbac_limited.post(
+            reverse("provider-connection", kwargs={"pk": hidden_provider.id})
+        )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        mock_provider_connection.assert_not_called()
+        mock_task_get.assert_not_called()
+
+    @patch("api.v1.views.Task.objects.get")
+    @patch("api.v1.views.check_provider_connection_task.delay")
+    def test_provider_connection_in_scope_returns_202(
+        self,
+        mock_provider_connection,
+        mock_task_get,
+        authenticated_client_rbac_limited,
+        aws_provider,
+        tasks_fixture,
+    ):
+        prowler_task = tasks_fixture[0]
+        mock_provider_connection.return_value.id = prowler_task.id
+        mock_task_get.return_value = prowler_task
+
+        response = authenticated_client_rbac_limited.post(
+            reverse("provider-connection", kwargs={"pk": aws_provider.id})
+        )
+
+        assert response.status_code == status.HTTP_202_ACCEPTED
+        mock_provider_connection.assert_called_once_with(
+            provider_id=str(aws_provider.id), tenant_id=ANY
+        )
+        mock_task_get.assert_called_once_with(id=prowler_task.id)
+
+    @patch("api.v1.views.Task.objects.get")
+    @patch("api.v1.views.schedule_provider_scan")
+    def test_schedule_daily_out_of_scope_returns_404(
+        self,
+        mock_schedule_scan,
+        mock_task_get,
+        authenticated_client_rbac_limited,
+        aws_provider_pair,
+        tasks_fixture,
+    ):
+        hidden_provider = aws_provider_pair[1]
+        prowler_task = tasks_fixture[0]
+        mock_schedule_scan.return_value.id = prowler_task.id
+        mock_task_get.return_value = prowler_task
+
+        response = authenticated_client_rbac_limited.post(
+            reverse("schedule-daily"),
+            data=json.dumps(
+                {
+                    "data": {
+                        "type": "daily-schedules",
+                        "attributes": {"provider_id": str(hidden_provider.id)},
+                    }
+                }
+            ),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.wsgi_request.content_type == "application/vnd.api+json"
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        mock_schedule_scan.assert_not_called()
+        mock_task_get.assert_not_called()
+
+    @patch("api.v1.views.Task.objects.get")
+    @patch("api.v1.views.schedule_provider_scan")
+    def test_schedule_daily_in_scope_returns_202(
+        self,
+        mock_schedule_scan,
+        mock_task_get,
+        authenticated_client_rbac_limited,
+        aws_provider,
+        tasks_fixture,
+    ):
+        prowler_task = tasks_fixture[0]
+        mock_schedule_scan.return_value.id = prowler_task.id
+        mock_task_get.return_value = prowler_task
+
+        response = authenticated_client_rbac_limited.post(
+            reverse("schedule-daily"),
+            data=json.dumps(
+                {
+                    "data": {
+                        "type": "daily-schedules",
+                        "attributes": {"provider_id": str(aws_provider.id)},
+                    }
+                }
+            ),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.wsgi_request.content_type == "application/vnd.api+json"
+        assert response.status_code == status.HTTP_202_ACCEPTED
+        mock_schedule_scan.assert_called_once_with(aws_provider)
+        mock_task_get.assert_called_once_with(id=prowler_task.id)
+
     def test_integrations(
         self, authenticated_client_rbac_limited, integrations_fixture
     ):
@@ -680,6 +1291,363 @@ class TestLimitedVisibility:
         assert (
             response.json()["data"]["relationships"]["providers"]["meta"]["count"] == 1
         )
+
+    @pytest.fixture
+    def out_of_scope_integration(self, tenants_fixture, provider_factory):
+        tenant_id = tenants_fixture[0].id
+        integration = Integration.objects.create(
+            tenant_id=tenant_id,
+            enabled=True,
+            connected=True,
+            integration_type=Integration.IntegrationChoices.AMAZON_S3,
+            configuration={
+                "bucket_name": "bucket",
+                "output_directory": "output",
+            },
+            credentials={"aws_access_key_id": "key"},
+        )
+        IntegrationProviderRelationship.objects.create(
+            tenant_id=tenant_id,
+            integration=integration,
+            provider=provider_factory(),
+        )
+        return integration
+
+    def test_integrations_list_includes_tenant_wide_integration(
+        self,
+        authenticated_client_rbac_limited,
+        integrations_fixture,
+        jira_integration_fixture,
+        aws_provider_pair,
+    ):
+        # Integration 2 is attached to both providers, so make both visible to the role
+        # to assert the provider join does not duplicate it in the listing
+        ProviderGroupMembership.objects.create(
+            tenant_id=aws_provider_pair[1].tenant_id,
+            provider=aws_provider_pair[1],
+            provider_group=ProviderGroup.objects.get(name="limited_visibility_group"),
+        )
+
+        response = authenticated_client_rbac_limited.get(reverse("integration-list"))
+
+        assert response.status_code == status.HTTP_200_OK
+        integration_ids = [item["id"] for item in response.json()["data"]]
+        # The tenant-wide Jira integration is visible without unlimited visibility
+        assert str(jira_integration_fixture.id) in integration_ids
+        # Integrations attached to more than one visible provider are not duplicated
+        assert integration_ids.count(str(integrations_fixture[1].id)) == 1
+        assert response.json()["meta"]["pagination"]["count"] == len(integration_ids)
+
+    def test_integrations_list_without_provider_groups_keeps_tenant_wide_integration(
+        self,
+        authenticated_client_rbac_limited,
+        integrations_fixture,
+        jira_integration_fixture,
+    ):
+        # A role with no provider group at all sees no provider, but still needs Jira
+        RoleProviderGroupRelationship.objects.all().delete()
+
+        response = authenticated_client_rbac_limited.get(reverse("integration-list"))
+
+        assert response.status_code == status.HTTP_200_OK
+        integration_ids = [item["id"] for item in response.json()["data"]]
+        assert integration_ids == [str(jira_integration_fixture.id)]
+
+    def test_integrations_include_providers_hides_out_of_scope_providers(
+        self, authenticated_client_rbac_limited, integrations_fixture, aws_provider_pair
+    ):
+        # Integration 2 is related to provider1 (visible) and provider2 (not visible)
+        hidden_provider = aws_provider_pair[1]
+
+        response = authenticated_client_rbac_limited.get(
+            reverse("integration-list"), {"include": "providers"}
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        included_ids = {item["id"] for item in response.json().get("included", [])}
+        assert str(aws_provider_pair[0].id) in included_ids
+        # Sideloaded resources must not disclose the provider the role cannot see
+        assert str(hidden_provider.id) not in included_ids
+
+    def test_integrations_list_with_sparse_fields(
+        self,
+        authenticated_client_rbac_limited,
+        integrations_fixture,
+        jira_integration_fixture,
+    ):
+        response = authenticated_client_rbac_limited.get(
+            reverse("integration-list"), {"fields[integrations]": "enabled"}
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert str(jira_integration_fixture.id) in [
+            item["id"] for item in response.json()["data"]
+        ]
+        assert all(
+            list(item["attributes"].keys()) == ["enabled"]
+            for item in response.json()["data"]
+        )
+
+    def test_integrations_list_excludes_out_of_scope_integration(
+        self, authenticated_client_rbac_limited, out_of_scope_integration
+    ):
+        response = authenticated_client_rbac_limited.get(reverse("integration-list"))
+
+        assert response.status_code == status.HTTP_200_OK
+        integration_ids = [item["id"] for item in response.json()["data"]]
+        assert str(out_of_scope_integration.id) not in integration_ids
+
+    def test_integration_detail_out_of_scope_returns_404(
+        self, authenticated_client_rbac_limited, out_of_scope_integration
+    ):
+        response = authenticated_client_rbac_limited.get(
+            reverse("integration-detail", kwargs={"pk": out_of_scope_integration.id})
+        )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_integration_connection_out_of_scope_returns_404(
+        self, authenticated_client_rbac_limited, out_of_scope_integration
+    ):
+        response = authenticated_client_rbac_limited.post(
+            reverse(
+                "integration-connection", kwargs={"pk": out_of_scope_integration.id}
+            )
+        )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_integration_update_allowed_when_fully_visible(
+        self,
+        authenticated_client_rbac_limited,
+        integrations_fixture,
+        jira_integration_fixture,
+    ):
+        # Integration 1 is only related to provider1, which the role can access
+        integration = integrations_fixture[0]
+        payload = {
+            "data": {
+                "type": "integrations",
+                "id": str(integration.id),
+                "attributes": {
+                    "enabled": False,
+                    # integration_type is `amazon_s3`
+                    "credentials": {"aws_access_key_id": "new_value"},
+                    "configuration": {
+                        "bucket_name": "new_bucket_name",
+                        "output_directory": "new_output_directory",
+                    },
+                },
+            }
+        }
+
+        response = authenticated_client_rbac_limited.patch(
+            reverse("integration-detail", kwargs={"pk": integration.id}),
+            data=json.dumps(payload),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        integration.refresh_from_db()
+        assert integration.enabled is False
+
+        # Tenant-wide integrations have no provider restricting the role
+        payload = {
+            "data": {
+                "type": "integrations",
+                "id": str(jira_integration_fixture.id),
+                "attributes": {"enabled": False},
+            }
+        }
+
+        response = authenticated_client_rbac_limited.patch(
+            reverse("integration-detail", kwargs={"pk": jira_integration_fixture.id}),
+            data=json.dumps(payload),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        with rls_transaction(str(jira_integration_fixture.tenant_id)):
+            jira_integration_fixture.refresh_from_db()
+        assert jira_integration_fixture.enabled is False
+
+    def test_integration_create_rejects_out_of_scope_provider(
+        self, authenticated_client_rbac_limited, aws_provider_pair
+    ):
+        # provider2 is not in any provider group assigned to the role
+        payload = {
+            "data": {
+                "type": "integrations",
+                "attributes": {
+                    "integration_type": "amazon_s3",
+                    "configuration": {
+                        "bucket_name": "attacker_bucket",
+                        "output_directory": "output",
+                    },
+                    "credentials": {"aws_access_key_id": "key"},
+                },
+                "relationships": {
+                    "providers": {
+                        "data": [
+                            {"type": "providers", "id": str(aws_provider_pair[1].id)}
+                        ]
+                    }
+                },
+            }
+        }
+
+        response = authenticated_client_rbac_limited.post(
+            reverse("integration-list"),
+            data=json.dumps(payload),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert not Integration.objects.filter(
+            integrationproviderrelationship__provider=aws_provider_pair[1],
+            configuration__bucket_name="attacker_bucket",
+        ).exists()
+
+    @pytest.mark.parametrize("submitted_providers", [True, False])
+    def test_integration_update_denied_when_shared_with_hidden_provider(
+        self,
+        authenticated_client_rbac_limited,
+        integrations_fixture,
+        aws_provider_pair,
+        submitted_providers,
+    ):
+        # Integration 2 is related to provider1 (visible) and provider2 (not visible).
+        # Editing it would reach beyond the visibility of the role, just like deleting
+        # it, so both are rejected consistently
+        integration = integrations_fixture[1]
+        visible_provider, hidden_provider = aws_provider_pair
+        payload = {
+            "data": {
+                "type": "integrations",
+                "id": str(integration.id),
+                "attributes": {
+                    "enabled": False,
+                    # integration_type is `amazon_s3`
+                    "credentials": {"aws_access_key_id": "new_value"},
+                    "configuration": {
+                        "bucket_name": "new_bucket_name",
+                        "output_directory": "new_output_directory",
+                    },
+                },
+            }
+        }
+        if submitted_providers:
+            payload["data"]["relationships"] = {
+                "providers": {
+                    "data": [{"type": "providers", "id": str(visible_provider.id)}]
+                }
+            }
+
+        response = authenticated_client_rbac_limited.patch(
+            reverse("integration-detail", kwargs={"pk": integration.id}),
+            data=json.dumps(payload),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        integration.refresh_from_db()
+        assert integration.enabled is True
+        assert integration.providers.filter(id=hidden_provider.id).exists()
+        assert integration.providers.filter(id=visible_provider.id).exists()
+
+    def test_integration_delete_denied_when_shared_with_hidden_provider(
+        self, authenticated_client_rbac_limited, integrations_fixture
+    ):
+        # Integration 2 is related to provider1 (visible) and provider2 (not visible)
+        integration = integrations_fixture[1]
+
+        response = authenticated_client_rbac_limited.delete(
+            reverse("integration-detail", kwargs={"pk": integration.id})
+        )
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert Integration.objects.filter(id=integration.id).exists()
+
+    def test_integration_delete_allowed_when_fully_visible(
+        self,
+        authenticated_client_rbac_limited,
+        integrations_fixture,
+        jira_integration_fixture,
+    ):
+        # Integration 1 is only related to provider1, which the role can access
+        integration = integrations_fixture[0]
+
+        response = authenticated_client_rbac_limited.delete(
+            reverse("integration-detail", kwargs={"pk": integration.id})
+        )
+
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        assert not Integration.objects.filter(id=integration.id).exists()
+
+        # Tenant-wide integrations have no provider restricting the role
+        response = authenticated_client_rbac_limited.delete(
+            reverse("integration-detail", kwargs={"pk": jira_integration_fixture.id})
+        )
+
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+
+    def test_jira_issue_types_allowed_without_unlimited_visibility(
+        self, authenticated_client_rbac_limited, jira_integration_fixture
+    ):
+        with patch("api.v1.views.initialize_prowler_integration") as mock_jira:
+            mock_jira.return_value.get_available_issue_types.return_value = ["Task"]
+            response = authenticated_client_rbac_limited.get(
+                reverse(
+                    "integration-jira-issue-types",
+                    kwargs={"integration_pk": jira_integration_fixture.id},
+                ),
+                {"project_key": "TEST"},
+            )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["data"]["attributes"]["issue_types"] == ["Task"]
+
+    def test_jira_issue_types_out_of_scope_returns_404(
+        self, authenticated_client_rbac_limited, out_of_scope_integration
+    ):
+        response = authenticated_client_rbac_limited.get(
+            reverse(
+                "integration-jira-issue-types",
+                kwargs={"integration_pk": out_of_scope_integration.id},
+            ),
+            {"project_key": "TEST"},
+        )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_jira_dispatches_out_of_scope_returns_404(
+        self, authenticated_client_rbac_limited, out_of_scope_integration
+    ):
+        response = authenticated_client_rbac_limited.post(
+            reverse(
+                "integration-jira-dispatches",
+                kwargs={"integration_pk": out_of_scope_integration.id},
+            ),
+            data=json.dumps({}),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_jira_dispatches_allowed_without_unlimited_visibility(
+        self, authenticated_client_rbac_limited, jira_integration_fixture
+    ):
+        response = authenticated_client_rbac_limited.post(
+            reverse(
+                "integration-jira-dispatches",
+                kwargs={"integration_pk": jira_integration_fixture.id},
+            ),
+            data=json.dumps({}),
+            content_type="application/vnd.api+json",
+        )
+
+        # The integration is reachable: the request fails on payload validation, not RBAC
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     @pytest.mark.usefixtures("scan_summaries_fixture")
     def test_overviews_providers(

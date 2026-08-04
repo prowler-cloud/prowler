@@ -4,6 +4,75 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [1.37.1] (Prowler v5.37.1)
+
+### 🐞 Fixed
+
+- Fixed image optimization in the production container: Next.js standalone tracing omitted `sharp`'s native `libvips` library, so every image was served unoptimized [(#12307)](https://github.com/prowler-cloud/prowler/pull/12307)
+
+### 🔐 Security
+
+- The UI container image now patches musl and zlib alongside OpenSSL, and `sharp` is pinned to 0.35.3, clearing the image's remaining CVEs [(#12307)](https://github.com/prowler-cloud/prowler/pull/12307)
+
+---
+
+## [1.37.0] (Prowler v5.37.0)
+
+### 🚀 Added
+
+- Lighthouse AI contextual messages with page-aware prompts, focused side-panel details, selected-resource metadata, and retry-safe historical badges [(#12069)](https://github.com/prowler-cloud/prowler/pull/12069)
+- Cross-account compliance view in the Multiple Scans tab: an "Across providers" section listing single-provider frameworks aggregatable across every account of the same provider type, with a per-account detail, findings drill-down and combined PDF report (Prowler Cloud only) [(#12086)](https://github.com/prowler-cloud/prowler/pull/12086)
+- In Prowler Cloud, authenticated users can send product feedback through a persistent widget backed by a PostHog headless survey, rendered with native Prowler components and editable from the PostHog dashboard [(#12116)](https://github.com/prowler-cloud/prowler/pull/12116)
+- Attack Paths query info panel now links every query to its page on Prowler Hub [(#12145)](https://github.com/prowler-cloud/prowler/pull/12145)
+- Warning before replacing an organization credential or deleting an organization, listing the providers affected [(#12255)](https://github.com/prowler-cloud/prowler/pull/12255)
+- GCP organization onboarding in the provider wizard: add every project of an organization at once, choosing which discovered projects to include (Prowler Cloud only) [(#12255)](https://github.com/prowler-cloud/prowler/pull/12255)
+- Sign-up campaign attribution preserves `promo_code` and `utm_*` params across auth redirects, sign-in/sign-up links, Google/GitHub OAuth callbacks, and `POST /users` [(#12269)](https://github.com/prowler-cloud/prowler/pull/12269)
+
+### 🔄 Changed
+
+- `/compliance` now lands on the Multiple Scans tab; links carrying a `scanId` keep opening Single Scan [(#12086)](https://github.com/prowler-cloud/prowler/pull/12086)
+- Compliance tab naming: "Per Scan" is now "Single Scan" and "Cross-Provider" is now "Multiple Scans", with matching "Across provider types" and "Across providers" section headers explaining each aggregation axis [(#12086)](https://github.com/prowler-cloud/prowler/pull/12086)
+- Lighthouse contextual suggestions now show concise actions while preserving detailed prompts for chat [(#12219)](https://github.com/prowler-cloud/prowler/pull/12219)
+- Providers page groups GCP projects under their organization and folders [(#12255)](https://github.com/prowler-cloud/prowler/pull/12255)
+
+### 🐞 Fixed
+
+- Attack Paths now classify cloud-provider finding resources separately from Prowler findings [(#11244)](https://github.com/prowler-cloud/prowler/pull/11244)
+- Finding delta colors and integration update button labels restored [(#12160)](https://github.com/prowler-cloud/prowler/pull/12160)
+- Long unbroken messages in Lighthouse chat no longer overflow their message bubble [(#12215)](https://github.com/prowler-cloud/prowler/pull/12215)
+- SAML ACS URL field remains visible while generating the callback URL from the email domain [(#12236)](https://github.com/prowler-cloud/prowler/pull/12236)
+
+---
+
+## [1.36.0] (Prowler v5.36.0)
+
+### 🚀 Added
+
+- Finding Groups and grouped selections can be sent to Jira in Cloud with deep links, filter chip display, and Jira feedback toasts [(#12001)](https://github.com/prowler-cloud/prowler/pull/12001)
+- In Prowler Cloud, the Attack Paths query selector now lists only queries that returned data for the selected scan, hiding empty ones [(#12010)](https://github.com/prowler-cloud/prowler/pull/12010)
+- Overview banner linking to the AI agents documentation, shown next to the Lighthouse AI banner in Cloud and full width on self-hosted deployments [(#12074)](https://github.com/prowler-cloud/prowler/pull/12074)
+
+### 🐞 Fixed
+
+- Findings Severity Over Time chart Y-axis labels no longer overflow for large findings counts [(#11545)](https://github.com/prowler-cloud/prowler/pull/11545)
+- UI Sentry alerts now suppress non-actionable warnings and expected API/control-flow noise while preserving actionable runtime failures [(#11665)](https://github.com/prowler-cloud/prowler/pull/11665)
+- OCI provider E2E tests no longer require or submit a region when adding or updating credentials [(#11741)](https://github.com/prowler-cloud/prowler/pull/11741)
+- Billing navigation is hidden when Cloud billing is disabled, including Enterprise deployments [(#12047)](https://github.com/prowler-cloud/prowler/pull/12047)
+- AWS Organizations setup modal now shows the "Enter a valid Organizational Unit or Root ID" hint in the error color, clarifying why the deployment button is disabled [(#12063)](https://github.com/prowler-cloud/prowler/pull/12063)
+- Sidebar logo top spacing in the main app sidebar [(#12066)](https://github.com/prowler-cloud/prowler/pull/12066)
+- Contextual Cloud upgrade modal content remains stable throughout the closing animation [(#12067)](https://github.com/prowler-cloud/prowler/pull/12067)
+- Tenant switches now refresh session user permissions for the selected tenant [(#12087)](https://github.com/prowler-cloud/prowler/pull/12087)
+
+### 🔐 Security
+
+- Removed the unused `npm` CLI from the UI container image, eliminating the bundled `node-tar` `CVE-2026-59873` (and future bundled-npm CVEs); the image builds with `pnpm` via `corepack` and does not use `npm` [(#12065)](https://github.com/prowler-cloud/prowler/pull/12065)
+- Bumped `vitest` and `@vitest/browser`, `@vitest/browser-playwright`, `@vitest/coverage-v8` from `4.1.8` to `4.1.10`, resolving the critical `@vitest/browser` Browser Mode file-access permission bypass (`GHSA-p63j-vcc4-9vmv`) flagged by `pnpm audit`; dev dependencies only, no runtime impact [(#12077)](https://github.com/prowler-cloud/prowler/pull/12077)
+- Kubernetes credential forms now reject kubeconfig files using legacy `auth-provider.config.cmd-path` command authentication [(#12091)](https://github.com/prowler-cloud/prowler/pull/12091)
+- Next.js from 16.2.9 to 16.2.11, patching 4 high- and 5 medium-severity vulnerabilities [(#12093)](https://github.com/prowler-cloud/prowler/pull/12093)
+- next-auth from 5.0.0-beta.30 to 5.0.0-beta.32, patching 2 critical Auth.js advisories (GHSA-8fpg-xm3f-6cx3 fail-open auth checks, GHSA-7rqj-j65f-68wh email homoglyph bypass) [(#12108)](https://github.com/prowler-cloud/prowler/pull/12108)
+
+---
+
 ## [1.35.0] (Prowler v5.35.0)
 
 ### 🔄 Changed

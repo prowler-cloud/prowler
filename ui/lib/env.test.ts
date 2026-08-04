@@ -169,3 +169,111 @@ describe("lib/env gated integration validation", () => {
     await expect(import("@/lib/env")).resolves.toBeDefined();
   });
 });
+
+describe("lib/env billing and Stripe boot warnings", () => {
+  // Clear billing, cloud, Stripe and gated flags so ambient shell env cannot
+  // affect assertions, then satisfy the unconditional REQUIRED vars.
+  const CLEARED_ENV_VARS = [
+    "UI_CLOUD_ENABLED",
+    "CLOUD_BILLING_ENABLED",
+    "UI_SENTRY_ENABLED",
+    "UI_SENTRY_DSN",
+    "NEXT_PUBLIC_SENTRY_DSN",
+    "UI_SENTRY_ENVIRONMENT",
+    "NEXT_PUBLIC_SENTRY_ENVIRONMENT",
+    "UI_GOOGLE_TAG_MANAGER_ENABLED",
+    "UI_GOOGLE_TAG_MANAGER_ID",
+    "NEXT_PUBLIC_GOOGLE_TAG_MANAGER_ID",
+    "UI_POSTHOG_ENABLED",
+    "UI_POSTHOG_KEY",
+    "POSTHOG_KEY",
+    "UI_POSTHOG_HOST",
+    "POSTHOG_HOST",
+    "UI_CLOUD_STRIPE_PUBLISHABLE_KEY",
+    "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY",
+    "UI_CLOUD_STRIPE_PUBLISHABLE_KEY_V2",
+    "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY_V2",
+  ] as const;
+
+  let warnSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    vi.resetModules();
+    for (const key of CLEARED_ENV_VARS) {
+      vi.stubEnv(key, undefined);
+    }
+    vi.stubEnv("UI_API_BASE_URL", "https://api.example.com/api/v1");
+    vi.stubEnv("AUTH_URL", "http://localhost:3000");
+    vi.stubEnv("AUTH_SECRET", "secret");
+    warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.restoreAllMocks();
+  });
+
+  it('warns when billing is "legacy" without the cloud flag', async () => {
+    vi.stubEnv("CLOUD_BILLING_ENABLED", "legacy");
+
+    await import("@/lib/env");
+
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining(
+        'CLOUD_BILLING_ENABLED is "legacy" but UI_CLOUD_ENABLED is not "true"',
+      ),
+    );
+  });
+
+  it('warns when billing is "metronome" (PostHog enabled) without the cloud flag', async () => {
+    vi.stubEnv("CLOUD_BILLING_ENABLED", "metronome");
+    vi.stubEnv("UI_POSTHOG_ENABLED", "true");
+    vi.stubEnv("UI_POSTHOG_KEY", "phc_key");
+    vi.stubEnv("UI_POSTHOG_HOST", "https://eu.i.posthog.com");
+
+    await import("@/lib/env");
+
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining(
+        'CLOUD_BILLING_ENABLED is "metronome" but UI_CLOUD_ENABLED is not "true"',
+      ),
+    );
+  });
+
+  it("does not warn about billing when the cloud flag is set", async () => {
+    vi.stubEnv("CLOUD_BILLING_ENABLED", "legacy");
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+
+    await import("@/lib/env");
+
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
+
+  it("does not warn when billing is off and no Stripe keys are set", async () => {
+    await import("@/lib/env");
+
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
+
+  it("warns when a Stripe key is set without billing enabled", async () => {
+    vi.stubEnv("UI_CLOUD_STRIPE_PUBLISHABLE_KEY", "pk_test_123");
+
+    await import("@/lib/env");
+
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining(
+        "UI_CLOUD_STRIPE_PUBLISHABLE_KEY is set but CLOUD_BILLING_ENABLED is not enabled; Stripe will not load.",
+      ),
+    );
+  });
+
+  it("does not warn about Stripe when cloud, billing, and Stripe are all set", async () => {
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    vi.stubEnv("CLOUD_BILLING_ENABLED", "legacy");
+    vi.stubEnv("UI_CLOUD_STRIPE_PUBLISHABLE_KEY", "pk_test_123");
+
+    await import("@/lib/env");
+
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
+});

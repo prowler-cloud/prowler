@@ -3,6 +3,7 @@ import { type ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import { type MuteRuleTableData } from "./mute-rule-target-previews";
+import { MuteRuleTargetsModal } from "./mute-rule-targets-modal";
 
 vi.mock("@/components/shadcn/modal", () => ({
   Modal: ({
@@ -20,8 +21,6 @@ vi.mock("@/components/shadcn/modal", () => ({
       </div>
     ) : null,
 }));
-
-import { MuteRuleTargetsModal } from "./mute-rule-targets-modal";
 
 const longMuteRule: MuteRuleTableData = {
   type: "mute-rules",

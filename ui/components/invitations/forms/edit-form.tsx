@@ -5,7 +5,7 @@ import { Controller, useForm } from "react-hook-form";
 import * as z from "zod";
 
 import { updateInvite } from "@/actions/invitations/invitation";
-import { useToast } from "@/components/shadcn";
+import { useToast, Card, CardContent } from "@/components/shadcn";
 import { CustomInput } from "@/components/shadcn/custom";
 import { Form, FormButtons } from "@/components/shadcn/form";
 import {
@@ -16,8 +16,6 @@ import {
   SelectValue,
 } from "@/components/shadcn/select/select";
 import { editInviteFormSchema } from "@/types";
-
-import { Card, CardContent } from "../../shadcn";
 
 export const EditForm = ({
   invitationId,

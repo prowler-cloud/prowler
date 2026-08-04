@@ -18,6 +18,11 @@ const navigationMocks = vi.hoisted(() => ({
 
 const requestReplayMock = vi.hoisted(() => vi.fn());
 
+/** `replayFlow` reads the live query from `window` (not `useSearchParams`), so
+ *  the CSR bailout stays inside the Suspense boundary NavbarClient renders. */
+const setLocationSearch = (search: string) =>
+  window.history.replaceState(null, "", `/${search}`);
+
 vi.mock("next/navigation", () => ({
   usePathname: () => navigationMocks.pathname,
   useRouter: () => ({ push: navigationMocks.push }),
@@ -65,9 +70,10 @@ describe("NavbarClient", () => {
     navigationMocks.push.mockClear();
     requestReplayMock.mockClear();
     navigationMocks.searchParams = new URLSearchParams();
+    setLocationSearch("");
     window.localStorage.clear();
     // Replay icon is Cloud-only.
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
     // Default: the current route's content has loaded, so the icon is enabled.
     usePageReadyStore.setState({ readyPath: "/findings" });
     useSidePanelStore.setState({
@@ -146,8 +152,34 @@ describe("NavbarClient", () => {
 
   it("starts the replay in-memory (no navigation) when already on the flow's route", async () => {
     // Given the user is already on the flow's page
+    navigationMocks.pathname = "/findings";
+    usePageReadyStore.setState({ readyPath: "/findings" });
+    const user = userEvent.setup();
+    render(
+      <NavbarClient
+        title="Findings"
+        onboardingAction={{ flowId: "explore-findings" }}
+      />,
+    );
+
+    // When
+    await user.click(
+      screen.getByRole("button", {
+        name: /start product tour: explore your findings/i,
+      }),
+    );
+
+    // Then the replay is requested via the in-memory store — no router.push, so no
+    // `?onboarding=` URL param and no Next.js RSC refetch of the page.
+    expect(requestReplayMock).toHaveBeenCalledWith("explore-findings");
+    expect(navigationMocks.push).not.toHaveBeenCalled();
+  });
+
+  it("navigates when the flow pins a tab the current route does not carry", async () => {
+    // Given the user is on the bare /compliance route (Multiple Scans), while
+    // the tour anchors live on the Single Scan tab.
     navigationMocks.pathname = "/compliance";
-    navigationMocks.searchParams = new URLSearchParams("scanId=scan-1&foo=bar");
+    setLocationSearch("");
     usePageReadyStore.setState({ readyPath: "/compliance" });
     const user = userEvent.setup();
     render(
@@ -164,8 +196,37 @@ describe("NavbarClient", () => {
       }),
     );
 
-    // Then the replay is requested via the in-memory store — no router.push, so no
-    // `?onboarding=` URL param and no Next.js RSC refetch of the page.
+    // Then a real navigation switches tabs before the tour starts.
+    expect(requestReplayMock).not.toHaveBeenCalled();
+    expect(navigationMocks.push).toHaveBeenCalledWith(
+      "/compliance?tab=per-scan&onboarding=view-compliance",
+    );
+  });
+
+  it("replays in-memory when the pinned tab is already active, keeping the selected scan", async () => {
+    // Given the user is on Single Scan with a scan and a filter picked — a
+    // navigation here would reset both, so the pinned tab must not force one.
+    navigationMocks.pathname = "/compliance";
+    setLocationSearch(
+      "?tab=per-scan&scanId=scan-1&filter%5Bregion__in%5D=eu-west-1",
+    );
+    usePageReadyStore.setState({ readyPath: "/compliance" });
+    const user = userEvent.setup();
+    render(
+      <NavbarClient
+        title="Compliance"
+        onboardingAction={{ flowId: "view-compliance" }}
+      />,
+    );
+
+    // When
+    await user.click(
+      screen.getByRole("button", {
+        name: /start product tour: check compliance/i,
+      }),
+    );
+
+    // Then
     expect(requestReplayMock).toHaveBeenCalledWith("view-compliance");
     expect(navigationMocks.push).not.toHaveBeenCalled();
   });
@@ -223,7 +284,7 @@ describe("NavbarClient", () => {
   });
 
   it("hides the replay icon entirely in self-hosted (OSS) deployments", () => {
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
 
     render(
       <NavbarClient
@@ -280,7 +341,7 @@ describe("NavbarClient", () => {
 
   it("hides the Lighthouse AI side-panel trigger in self-hosted (OSS) deployments", () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
 
     // When
     render(<NavbarClient title="Findings" />);

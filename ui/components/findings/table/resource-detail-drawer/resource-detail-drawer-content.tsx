@@ -21,11 +21,11 @@ import {
   type ResourceDrawerFinding,
   updateFindingTriage,
 } from "@/actions/findings";
+import { requestPanelChatMessage } from "@/app/(prowler)/lighthouse/_lib/panel-chat-store";
+import { JiraDispatchActionItem } from "@/components/findings/jira-dispatch-action-item";
 import { MarkdownContainer } from "@/components/findings/markdown-container";
 import { MuteFindingsModal } from "@/components/findings/mute-findings-modal";
-import { SendToJiraModal } from "@/components/findings/send-to-jira-modal";
 import { getComplianceIcon } from "@/components/icons";
-import { JiraIcon } from "@/components/icons/services/IconServices";
 import {
   Badge,
   Button,
@@ -71,15 +71,19 @@ import {
   type QueryEditorLanguage,
 } from "@/components/shared/query-code-editor";
 import { ResourceMetadataPanel } from "@/components/shared/resource-metadata-panel";
-import { getFailingForLabel } from "@/lib/date-utils";
-import { formatDuration } from "@/lib/date-utils";
+import { useLighthouseCurrentContext } from "@/hooks/use-lighthouse-context";
+import { getFailingForLabel, formatDuration } from "@/lib/date-utils";
 import { shouldRefreshAfterTriageUpdate } from "@/lib/finding-triage";
-import { buildFindingAnalysisPrompt } from "@/lib/lighthouse/prompts";
+import { buildJiraActionLabel } from "@/lib/jira-dispatch-action";
+import { createJiraDispatchPayload } from "@/lib/jira-dispatch-selection";
 import { getRegionFlag } from "@/lib/region-flags";
+import { isCloud } from "@/lib/shared/env";
 import { getRecommendationLinkLabel } from "@/lib/vulnerability-references";
+import { SIDE_PANEL_TAB, useSidePanelStore } from "@/store/side-panel";
 import type { ComplianceOverviewData } from "@/types/compliance";
 import type { FindingResourceRow } from "@/types/findings-table";
 import type { UpdateFindingTriageInput } from "@/types/findings-triage";
+import { JIRA_DISPATCH_TARGET } from "@/types/integrations";
 
 import { Muted } from "../../muted";
 import { DeltaIndicator } from "../delta-indicator";
@@ -89,6 +93,7 @@ import {
   FindingTriageStatusCell,
 } from "../finding-triage-cells";
 import { DeltaValues, NotificationIndicator } from "../notification-indicator";
+
 import { ResourceDetailSkeleton } from "./resource-detail-skeleton";
 import type { CheckMeta } from "./use-resource-detail-drawer";
 
@@ -360,8 +365,9 @@ export function ResourceDetailDrawerContent({
   onTriageUpdate,
 }: ResourceDetailDrawerContentProps) {
   const searchParams = useSearchParams();
+  const openSidePanel = useSidePanelStore((state) => state.openPanel);
+  const lighthouseContext = useLighthouseCurrentContext();
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
-  const [isJiraModalOpen, setIsJiraModalOpen] = useState(false);
   const [resolvingFramework, setResolvingFramework] = useState<string | null>(
     null,
   );
@@ -411,6 +417,11 @@ export function ResourceDetailDrawerContent({
   // During carousel navigation we only trust row-backed data until the next
   // finding payload is fully ready, otherwise stale details flash briefly.
   const f = isNavigating ? null : currentFinding;
+  const jiraPayload = createJiraDispatchPayload({
+    targetIds: f ? [f.id] : [],
+    targetType: JIRA_DISPATCH_TARGET.FINDING_ID,
+    findingTitle: checkMeta.checkTitle,
+  });
   const isCheckMetaFresh =
     !currentResource?.checkId || currentResource.checkId === checkMeta.checkId;
   const showCheckMetaContent = !isNavigating || isCheckMetaFresh;
@@ -472,16 +483,6 @@ export function ResourceDetailDrawerContent({
   const overviewStatusExtended =
     currentResource?.statusExtended || f?.statusExtended;
   const showOverviewStatusExtended = Boolean(overviewStatusExtended);
-  const findingAnalysisPrompt = buildFindingAnalysisPrompt({
-    findingId: currentResource?.findingId ?? f?.id,
-    providerUid,
-    resourceUid,
-    checkId: currentResource?.checkId ?? checkMeta.checkId,
-    severity: findingSeverity,
-    status: findingStatus,
-    detail: overviewStatusExtended,
-    risk: f?.risk || checkMeta.risk,
-  });
 
   const handleDrawerTriageUpdate = async (input: UpdateFindingTriageInput) => {
     await updateFindingTriage(input);
@@ -491,6 +492,11 @@ export function ResourceDetailDrawerContent({
     }
 
     onTriageUpdate?.(input);
+  };
+
+  const handleAnalyzeFinding = () => {
+    openSidePanel(SIDE_PANEL_TAB.AI_CHAT);
+    requestPanelChatMessage("Analyze this finding", lighthouseContext.context);
   };
 
   const handleOpenCompliance = async (framework: string) => {
@@ -545,15 +551,6 @@ export function ResourceDetailDrawerContent({
           }}
         />
       )}
-      {f && (
-        <SendToJiraModal
-          isOpen={isJiraModalOpen}
-          onOpenChange={setIsJiraModalOpen}
-          findingId={f.id}
-          findingTitle={checkMeta.checkTitle}
-        />
-      )}
-
       {/* Header: keep row-backed badges visible; only hide stale check metadata */}
       <div className="flex flex-col gap-2">
         <div className="flex flex-wrap items-center gap-3">
@@ -867,10 +864,9 @@ export function ResourceDetailDrawerContent({
                       disabled={f.isMuted}
                       onSelect={() => setIsMuteModalOpen(true)}
                     />
-                    <ActionDropdownItem
-                      icon={<JiraIcon size={20} />}
-                      label="Send to Jira"
-                      onSelect={() => setIsJiraModalOpen(true)}
+                    <JiraDispatchActionItem
+                      label={buildJiraActionLabel({ findingCount: 1 })}
+                      payload={jiraPayload}
                     />
                     {externalResourceTarget && (
                       <ActionDropdownItem
@@ -1388,9 +1384,10 @@ export function ResourceDetailDrawerContent({
       </div>
 
       {/* Lighthouse AI button */}
-      {!isNavigating && (
-        <a
-          href={`/lighthouse?${new URLSearchParams({ prompt: findingAnalysisPrompt }).toString()}`}
+      {isCloud() && !isNavigating && (
+        <button
+          type="button"
+          onClick={handleAnalyzeFinding}
           className="flex items-center gap-1.5 rounded-lg px-4 py-3 text-sm font-bold text-slate-900 transition-opacity hover:opacity-90"
           style={{
             background: "var(--gradient-lighthouse)",
@@ -1398,7 +1395,7 @@ export function ResourceDetailDrawerContent({
         >
           <CircleArrowRight className="size-5" />
           Analyze This Finding With Lighthouse AI
-        </a>
+        </button>
       )}
     </div>
   );
@@ -1567,8 +1564,12 @@ function OtherFindingRow({
   onTriageUpdateAction: (input: UpdateFindingTriageInput) => Promise<void>;
 }) {
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
-  const [isJiraModalOpen, setIsJiraModalOpen] = useState(false);
   const isMuted = finding.isMuted || isOptimisticallyMuted;
+  const jiraPayload = createJiraDispatchPayload({
+    targetIds: [finding.id],
+    targetType: JIRA_DISPATCH_TARGET.FINDING_ID,
+    findingTitle: finding.checkTitle,
+  });
 
   const findingUrl = `/findings?filter%5Bcheck_id__in%5D=${encodeURIComponent(finding.checkId)}&filter%5Bmuted%5D=include`;
 
@@ -1585,12 +1586,6 @@ function OtherFindingRow({
           }}
         />
       )}
-      <SendToJiraModal
-        isOpen={isJiraModalOpen}
-        onOpenChange={setIsJiraModalOpen}
-        findingId={finding.id}
-        findingTitle={finding.checkTitle}
-      />
       <TableRow
         className="group cursor-pointer"
         onClick={() => window.open(findingUrl, "_blank", "noopener,noreferrer")}
@@ -1659,10 +1654,9 @@ function OtherFindingRow({
                 disabled={isMuted}
                 onSelect={() => setIsMuteModalOpen(true)}
               />
-              <ActionDropdownItem
-                icon={<JiraIcon size={20} />}
-                label="Send to Jira"
-                onSelect={() => setIsJiraModalOpen(true)}
+              <JiraDispatchActionItem
+                label={buildJiraActionLabel({ findingCount: 1 })}
+                payload={jiraPayload}
               />
             </ActionDropdown>
           </div>

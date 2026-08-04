@@ -235,7 +235,7 @@ describe("adaptFindingGroupResourcesResponse — malformed input", () => {
 
   it("should attach adapter-produced triage DTOs to finding-level resource rows", () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
     const input = {
       data: [
         {
@@ -291,7 +291,7 @@ describe("adaptFindingGroupResourcesResponse — malformed input", () => {
 
   it("should leave triage editing disabled until a real capability is provided", () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
     const input = {
       data: [
         {

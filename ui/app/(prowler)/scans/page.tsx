@@ -11,6 +11,8 @@ import {
 import { getSchedules, getSchedulesPage } from "@/actions/schedules";
 import { auth } from "@/auth.config";
 import { PageReady } from "@/components/onboarding";
+import { ScansPageShell } from "@/components/scans/scans-page-shell";
+import { ScansProvidersEmptyState } from "@/components/scans/scans-providers-empty-state";
 import {
   appendPendingScheduleRowsToPage,
   buildScheduledTabRows,
@@ -20,8 +22,6 @@ import {
   getScanJobsUserFilters,
   pickScheduleProviderFilters,
 } from "@/components/scans/scans.utils";
-import { ScansPageShell } from "@/components/scans/scans-page-shell";
-import { ScansProvidersEmptyState } from "@/components/scans/scans-providers-empty-state";
 import { SkeletonTableScans } from "@/components/scans/table";
 import { ScanJobsTable } from "@/components/scans/table/scan-jobs-table";
 import { ContentLayout } from "@/components/shadcn/content-layout";

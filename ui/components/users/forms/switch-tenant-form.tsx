@@ -23,15 +23,32 @@ export const SwitchTenantForm = ({
 
     const handleSwitch = async () => {
       if ("success" in state) {
-        await update({
-          accessToken: state.accessToken,
-          refreshToken: state.refreshToken,
-        });
-        toast({
-          title: "Organization switched",
-          description: "The page will reload to apply the change.",
-        });
-        reloadPage();
+        try {
+          const updatedSession = await update({
+            accessToken: state.accessToken,
+            refreshToken: state.refreshToken,
+          });
+
+          if (
+            !updatedSession ||
+            ("error" in updatedSession && updatedSession.error)
+          ) {
+            throw new Error("Session update failed");
+          }
+
+          toast({
+            title: "Organization switched",
+            description: "The page will reload to apply the change.",
+          });
+          reloadPage();
+        } catch {
+          toast({
+            variant: "destructive",
+            title: "Oops! Something went wrong",
+            description: "Unable to switch organization. Please try again.",
+          });
+          setIsOpen(false);
+        }
       } else {
         toast({
           variant: "destructive",

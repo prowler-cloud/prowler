@@ -581,8 +581,20 @@
     bottom: 3rem !important;
   }
 
-  /* Lighthouse overview banner animated gradient layers */
-  .lighthouse-banner-gradient-neutral {
+  /* Overview banner animated gradient layers */
+  .overview-banner-gradient {
+    --overview-banner-gradient-primary: var(--bg-button-primary);
+    --overview-banner-gradient-primary-hover: var(--bg-button-primary-hover);
+    --overview-banner-gradient-primary-press: var(--bg-button-primary-press);
+  }
+
+  .overview-banner-gradient-agents {
+    --overview-banner-gradient-primary: var(--color-violet-400);
+    --overview-banner-gradient-primary-hover: var(--color-fuchsia-300);
+    --overview-banner-gradient-primary-press: var(--color-indigo-500);
+  }
+
+  .overview-banner-gradient-neutral {
     background: radial-gradient(
         circle at center,
         var(--bg-neutral-tertiary) 0,
@@ -591,28 +603,28 @@
       no-repeat;
   }
 
-  .lighthouse-banner-gradient-primary {
+  .overview-banner-gradient-primary {
     background: radial-gradient(
         circle at center,
-        var(--bg-button-primary) 0,
+        var(--overview-banner-gradient-primary) 0,
         transparent 50%
       )
       no-repeat;
   }
 
-  .lighthouse-banner-gradient-primary-hover {
+  .overview-banner-gradient-primary-hover {
     background: radial-gradient(
         circle at center,
-        var(--bg-button-primary-hover) 0,
+        var(--overview-banner-gradient-primary-hover) 0,
         transparent 50%
       )
       no-repeat;
   }
 
-  .lighthouse-banner-gradient-primary-press {
+  .overview-banner-gradient-primary-press {
     background: radial-gradient(
         circle at center,
-        var(--bg-button-primary-press) 0,
+        var(--overview-banner-gradient-primary-press) 0,
         transparent 50%
       )
       no-repeat;

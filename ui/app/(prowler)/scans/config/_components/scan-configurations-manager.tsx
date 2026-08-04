@@ -10,8 +10,7 @@ import {
 import { AccountsSelector } from "@/app/(prowler)/_overview/_components/accounts-selector";
 import { BatchFiltersLayout } from "@/components/filters/batch-filters-layout";
 import { ClearFiltersButton } from "@/components/filters/clear-filters-button";
-import { Button, Card } from "@/components/shadcn";
-import { useToast } from "@/components/shadcn";
+import { Button, Card, useToast } from "@/components/shadcn";
 import { CustomLink } from "@/components/shadcn/custom/custom-link";
 import { Modal } from "@/components/shadcn/modal";
 import { DataTable } from "@/components/shadcn/table";

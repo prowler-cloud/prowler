@@ -4,8 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useCloudUpgradeStore } from "@/store";
 import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
+import { COMPLIANCE_TAB } from "@/types/compliance";
 
-import { COMPLIANCE_TAB } from "../_types";
 import { CompliancePageTabs } from "./compliance-page-tabs";
 import { getComplianceTab } from "./compliance-page-tabs.shared";
 
@@ -20,11 +20,26 @@ vi.mock("next/navigation", () => ({
 }));
 
 describe("getComplianceTab", () => {
-  it("falls back to per-scan for missing or invalid values", () => {
-    expect(getComplianceTab(undefined)).toBe(COMPLIANCE_TAB.PER_SCAN);
-    expect(getComplianceTab(["cross-provider"])).toBe(COMPLIANCE_TAB.PER_SCAN);
-    expect(getComplianceTab("bogus")).toBe(COMPLIANCE_TAB.PER_SCAN);
+  it("falls back to cross-provider for missing or invalid values", () => {
+    expect(getComplianceTab(undefined)).toBe(COMPLIANCE_TAB.CROSS_PROVIDER);
+    expect(getComplianceTab(["per-scan"])).toBe(COMPLIANCE_TAB.CROSS_PROVIDER);
+    expect(getComplianceTab("bogus")).toBe(COMPLIANCE_TAB.CROSS_PROVIDER);
+    expect(getComplianceTab("per-scan")).toBe(COMPLIANCE_TAB.PER_SCAN);
     expect(getComplianceTab("cross-provider")).toBe(
+      COMPLIANCE_TAB.CROSS_PROVIDER,
+    );
+  });
+
+  it("keeps pre-split links alive: a bare scanId still opens Single Scan", () => {
+    expect(getComplianceTab(undefined, "scan-1")).toBe(COMPLIANCE_TAB.PER_SCAN);
+    expect(getComplianceTab("bogus", "scan-1")).toBe(COMPLIANCE_TAB.PER_SCAN);
+    // An explicit tab always wins over the inferred one.
+    expect(getComplianceTab("cross-provider", "scan-1")).toBe(
+      COMPLIANCE_TAB.CROSS_PROVIDER,
+    );
+    // Empty or repeated scanId carries no selection to honour.
+    expect(getComplianceTab(undefined, "")).toBe(COMPLIANCE_TAB.CROSS_PROVIDER);
+    expect(getComplianceTab(undefined, ["scan-1"])).toBe(
       COMPLIANCE_TAB.CROSS_PROVIDER,
     );
   });
@@ -39,21 +54,8 @@ describe("CompliancePageTabs", () => {
     useCloudUpgradeStore.getState().closeCloudUpgrade();
   });
 
-  it("navigates with ?tab=cross-provider and back to the bare route", async () => {
-    const user = userEvent.setup();
-    const { rerender } = render(
-      <CompliancePageTabs
-        activeTab={COMPLIANCE_TAB.PER_SCAN}
-        crossProviderEnabled
-        perScanContent={<div>Per scan content</div>}
-        crossProviderContent={<div>Cross provider content</div>}
-      />,
-    );
-
-    await user.click(screen.getByRole("tab", { name: /cross-provider/i }));
-    expect(pushMock).toHaveBeenCalledWith("/compliance?tab=cross-provider");
-
-    rerender(
+  it("renders Multiple Scans as the first tab", () => {
+    render(
       <CompliancePageTabs
         activeTab={COMPLIANCE_TAB.CROSS_PROVIDER}
         crossProviderEnabled
@@ -62,7 +64,35 @@ describe("CompliancePageTabs", () => {
       />,
     );
 
-    await user.click(screen.getByRole("tab", { name: /per scan/i }));
+    expect(
+      screen.getAllByRole("tab").map((tab) => tab.textContent),
+    ).toStrictEqual(["Multiple Scans", "Single Scan"]);
+  });
+
+  it("navigates with ?tab=per-scan and back to the bare route", async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(
+      <CompliancePageTabs
+        activeTab={COMPLIANCE_TAB.CROSS_PROVIDER}
+        crossProviderEnabled
+        perScanContent={<div>Per scan content</div>}
+        crossProviderContent={<div>Cross provider content</div>}
+      />,
+    );
+
+    await user.click(screen.getByRole("tab", { name: /single scan/i }));
+    expect(pushMock).toHaveBeenCalledWith("/compliance?tab=per-scan");
+
+    rerender(
+      <CompliancePageTabs
+        activeTab={COMPLIANCE_TAB.PER_SCAN}
+        crossProviderEnabled
+        perScanContent={<div>Per scan content</div>}
+        crossProviderContent={<div>Cross provider content</div>}
+      />,
+    );
+
+    await user.click(screen.getByRole("tab", { name: /multiple scans/i }));
     expect(pushMock).toHaveBeenCalledWith("/compliance");
   });
 
@@ -78,7 +108,7 @@ describe("CompliancePageTabs", () => {
     );
 
     const crossProviderTab = screen.getByRole("tab", {
-      name: /cross-provider/i,
+      name: /multiple scans/i,
     });
     await user.click(crossProviderTab);
 

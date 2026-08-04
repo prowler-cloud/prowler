@@ -9,10 +9,10 @@ import { z } from "zod";
 
 import { addProvider } from "@/actions/providers/providers";
 import { AwsMethodSelector } from "@/components/providers/organizations/aws-method-selector";
+import { GcpMethodSelector } from "@/components/providers/organizations/gcp-method-selector";
 import { WizardInputField } from "@/components/providers/workflow/forms/fields";
 import { ProviderTitleDocs } from "@/components/providers/workflow/provider-title-docs";
-import { Button } from "@/components/shadcn";
-import { useToast } from "@/components/shadcn";
+import { Button, useToast } from "@/components/shadcn";
 import { Form } from "@/components/shadcn/form";
 import {
   addProviderFormSchema,
@@ -20,6 +20,7 @@ import {
   KnownProviderType,
   ProviderType,
 } from "@/types";
+import { ORGANIZATION_TYPE, OrgFlowType } from "@/types/organizations";
 
 import { RadioGroupProvider } from "../../radio-group-provider";
 
@@ -32,9 +33,19 @@ export interface ConnectAccountSuccessData {
   alias: string | null;
 }
 
+/** Provider types that offer an organization-onboarding method choice. */
+function providerHasOrgMethod(
+  providerType: ProviderType | undefined,
+): providerType is OrgFlowType {
+  return (
+    providerType === ORGANIZATION_TYPE.AWS ||
+    providerType === ORGANIZATION_TYPE.GCP
+  );
+}
+
 interface ConnectAccountFormProps {
   onSuccess?: (data: ConnectAccountSuccessData) => void;
-  onSelectOrganizations?: () => void;
+  onSelectOrganizations?: (orgType: OrgFlowType) => void;
   onProviderTypeChange?: (providerType: ProviderType | null) => void;
   formId?: string;
   hideNavigation?: boolean;
@@ -141,19 +152,27 @@ const getProviderFieldDetails = (providerType?: ProviderType) => {
 
 function applyBackStep({
   prevStep,
-  awsMethod,
+  method,
+  providerType,
   form,
   setPrevStep,
-  setAwsMethod,
+  setMethod,
 }: {
   prevStep: number;
-  awsMethod: "single" | null;
+  method: "single" | null;
+  providerType: ProviderType | undefined;
   form: Pick<UseFormReturn<FormValues>, "setValue" | "clearErrors">;
   setPrevStep: Dispatch<SetStateAction<number>>;
-  setAwsMethod: Dispatch<SetStateAction<"single" | null>>;
+  setMethod: Dispatch<SetStateAction<"single" | null>>;
 }) {
-  if (prevStep === 2 && awsMethod === "single") {
-    setAwsMethod(null);
+  // With a method choice, "Back" from the single account/project form returns to
+  // the method selector rather than the provider picker.
+  if (
+    prevStep === 2 &&
+    method === "single" &&
+    providerHasOrgMethod(providerType)
+  ) {
+    setMethod(null);
     form.setValue("providerUid", "", { shouldValidate: false });
     form.setValue("providerAlias", "", { shouldValidate: false });
     return;
@@ -164,7 +183,7 @@ function applyBackStep({
     form.setValue("providerType", undefined as unknown as KnownProviderType, {
       shouldValidate: false,
     });
-    setAwsMethod(null);
+    setMethod(null);
   }
   form.setValue("providerUid", "", { shouldValidate: false });
   form.setValue("providerAlias", "", { shouldValidate: false });
@@ -182,7 +201,7 @@ export const ConnectAccountForm = ({
 }: ConnectAccountFormProps) => {
   const { toast } = useToast();
   const [prevStep, setPrevStep] = useState(1);
-  const [awsMethod, setAwsMethod] = useState<"single" | null>(null);
+  const [method, setMethod] = useState<"single" | null>(null);
   const router = useRouter();
 
   const formSchema = addProviderFormSchema;
@@ -283,10 +302,11 @@ export const ConnectAccountForm = ({
   const handleBackStep = () => {
     applyBackStep({
       prevStep,
-      awsMethod,
+      method,
+      providerType,
       form,
       setPrevStep,
-      setAwsMethod,
+      setMethod,
     });
   };
 
@@ -304,36 +324,39 @@ export const ConnectAccountForm = ({
     onBackHandlerChange?.(() => {
       applyBackStep({
         prevStep,
-        awsMethod,
+        method,
+        providerType,
         form,
         setPrevStep,
-        setAwsMethod,
+        setMethod,
       });
     });
-  }, [onBackHandlerChange, prevStep, awsMethod, form]);
+  }, [onBackHandlerChange, prevStep, method, providerType, form]);
+
+  // Providers with a method choice reach the UID form only through "single".
+  const showUidForm =
+    !providerHasOrgMethod(providerType) || method === "single";
 
   useEffect(() => {
     const canSubmit =
       prevStep === 2 &&
-      (providerType !== "aws" || awsMethod === "single") &&
+      showUidForm &&
       providerUid.trim().length > 0 &&
       form.formState.isValid;
 
     onUiStateChange?.({
       showBack: prevStep === 2,
-      showAction:
-        prevStep === 2 && (providerType !== "aws" || awsMethod === "single"),
+      showAction: prevStep === 2 && showUidForm,
       actionLabel: "Next",
       actionDisabled: !canSubmit || isLoading,
       isLoading,
     });
   }, [
-    awsMethod,
+    showUidForm,
     form.formState.isValid,
     isLoading,
     onUiStateChange,
     prevStep,
-    providerType,
     providerUid,
   ]);
 
@@ -354,45 +377,57 @@ export const ConnectAccountForm = ({
             />
           </div>
         )}
-        {/* Step 2: AWS method selector (only for AWS, before choosing method) */}
-        {prevStep === 2 && providerType === "aws" && awsMethod === null && (
+        {/* Step 2: AWS method selector (before choosing a method) */}
+        {prevStep === 2 && providerType === "aws" && method === null && (
           <>
             <ProviderTitleDocs providerType={providerType} />
             <AwsMethodSelector
-              onSelectSingle={() => setAwsMethod("single")}
-              onSelectOrganizations={() => {
-                onSelectOrganizations?.();
-              }}
+              onSelectSingle={() => setMethod("single")}
+              onSelectOrganizations={() =>
+                onSelectOrganizations?.(ORGANIZATION_TYPE.AWS)
+              }
             />
           </>
         )}
-        {/* Step 2: UID, alias form (non-AWS or AWS single account) */}
-        {prevStep === 2 &&
-          (providerType !== "aws" || awsMethod === "single") && (
-            <>
-              <ProviderTitleDocs providerType={providerType} />
-              <WizardInputField
-                control={form.control}
-                name="providerUid"
-                type="text"
-                label={providerFieldDetails.label}
-                labelPlacement="inside"
-                placeholder={providerFieldDetails.placeholder}
-                variant="bordered"
-                isRequired
-              />
-              <WizardInputField
-                control={form.control}
-                name="providerAlias"
-                type="text"
-                label="Provider alias (optional)"
-                labelPlacement="inside"
-                placeholder="Enter the provider alias"
-                variant="bordered"
-                isRequired={false}
-              />
-            </>
-          )}
+        {/* Step 2: GCP method selector (before choosing a method) */}
+        {prevStep === 2 && providerType === "gcp" && method === null && (
+          <>
+            <ProviderTitleDocs providerType={providerType} />
+            <GcpMethodSelector
+              onSelectSingle={() => setMethod("single")}
+              onSelectOrganizations={() =>
+                onSelectOrganizations?.(ORGANIZATION_TYPE.GCP)
+              }
+            />
+          </>
+        )}
+        {/* Step 2: UID, alias form (providers without a method choice, or the
+            AWS/GCP single account/project method) */}
+        {prevStep === 2 && showUidForm && (
+          <>
+            <ProviderTitleDocs providerType={providerType} />
+            <WizardInputField
+              control={form.control}
+              name="providerUid"
+              type="text"
+              label={providerFieldDetails.label}
+              labelPlacement="inside"
+              placeholder={providerFieldDetails.placeholder}
+              variant="bordered"
+              isRequired
+            />
+            <WizardInputField
+              control={form.control}
+              name="providerAlias"
+              type="text"
+              label="Provider alias (optional)"
+              labelPlacement="inside"
+              placeholder="Enter the provider alias"
+              variant="bordered"
+              isRequired={false}
+            />
+          </>
+        )}
         {!hideNavigation && (
           <div className="flex w-full justify-end gap-4">
             {prevStep === 2 && (
@@ -407,22 +442,21 @@ export const ConnectAccountForm = ({
                 Back
               </Button>
             )}
-            {prevStep === 2 &&
-              (providerType !== "aws" || awsMethod === "single") && (
-                <Button
-                  type="submit"
-                  variant="default"
-                  size="lg"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <Loader2 className="animate-spin" />
-                  ) : (
-                    <ChevronRightIcon size={24} />
-                  )}
-                  {isLoading ? "Loading" : "Next"}
-                </Button>
-              )}
+            {prevStep === 2 && showUidForm && (
+              <Button
+                type="submit"
+                variant="default"
+                size="lg"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <Loader2 className="animate-spin" />
+                ) : (
+                  <ChevronRightIcon size={24} />
+                )}
+                {isLoading ? "Loading" : "Next"}
+              </Button>
+            )}
           </div>
         )}
       </form>

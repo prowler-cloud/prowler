@@ -3,22 +3,36 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ORG_SETUP_PHASE, ORG_WIZARD_STEP } from "@/types/organizations";
+import {
+  NODE_KIND,
+  ORG_SETUP_PHASE,
+  ORG_WIZARD_STEP,
+  ORGANIZATION_TYPE,
+} from "@/types/organizations";
 import {
   PROVIDERS_GROUP_KIND,
   PROVIDERS_ROW_TYPE,
+  ProvidersOrganizationRow,
   ProvidersTableRow,
 } from "@/types/providers-table";
 import type { ScanConfigurationData } from "@/types/scan-configurations";
 import { SCAN_SCHEDULE_CAPABILITY } from "@/types/schedules";
 
-const { checkConnectionProviderMock, getScheduleMock, pushMock } = vi.hoisted(
-  () => ({
-    checkConnectionProviderMock: vi.fn(),
-    getScheduleMock: vi.fn(),
-    pushMock: vi.fn(),
-  }),
-);
+const {
+  checkConnectionProviderMock,
+  getScheduleMock,
+  getTasksByIdsMock,
+  pushMock,
+  revalidateProvidersMock,
+  startProviderConnectionChecksMock,
+} = vi.hoisted(() => ({
+  checkConnectionProviderMock: vi.fn(),
+  getScheduleMock: vi.fn(),
+  getTasksByIdsMock: vi.fn(),
+  pushMock: vi.fn(),
+  revalidateProvidersMock: vi.fn(),
+  startProviderConnectionChecksMock: vi.fn(),
+}));
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: pushMock }),
@@ -30,6 +44,12 @@ vi.mock("@/actions/organizations/organizations", () => ({
 
 vi.mock("@/actions/providers/providers", () => ({
   checkConnectionProvider: checkConnectionProviderMock,
+  revalidateProviders: revalidateProvidersMock,
+  startProviderConnectionChecks: startProviderConnectionChecksMock,
+}));
+
+vi.mock("@/actions/task/tasks", () => ({
+  getTasksByIds: getTasksByIdsMock,
 }));
 
 vi.mock("@/actions/schedules", () => ({
@@ -192,6 +212,7 @@ const createOrgRow = () =>
       id: "org-1",
       rowType: PROVIDERS_ROW_TYPE.ORGANIZATION,
       groupKind: PROVIDERS_GROUP_KIND.ORGANIZATION,
+      orgType: ORGANIZATION_TYPE.AWS,
       name: "My AWS Organization",
       externalId: "o-abc123def4",
       parentExternalId: null,
@@ -225,6 +246,8 @@ const createOuRow = () =>
       id: "ou-1",
       rowType: PROVIDERS_ROW_TYPE.ORGANIZATION,
       groupKind: PROVIDERS_GROUP_KIND.ORGANIZATION_UNIT,
+      orgType: ORGANIZATION_TYPE.AWS,
+      kind: NODE_KIND.ORGANIZATIONAL_UNIT,
       name: "Production OU",
       externalId: "ou-abc123",
       parentExternalId: "o-abc123def4",
@@ -393,7 +416,7 @@ describe("DataTableRowActions", () => {
 
   it("opens Edit Scan Schedule for Prowler Cloud subscribed provider rows", async () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
     const user = userEvent.setup();
 
     render(
@@ -420,7 +443,7 @@ describe("DataTableRowActions", () => {
 
   it("hides Edit Scan Schedule for manual-only Cloud provider rows", async () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
     const user = userEvent.setup();
 
     render(
@@ -445,7 +468,7 @@ describe("DataTableRowActions", () => {
 
   it("hides Edit Scan Schedule for blocked Cloud provider rows", async () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
     const user = userEvent.setup();
 
     render(
@@ -470,7 +493,7 @@ describe("DataTableRowActions", () => {
 
   it("opens scan config management with the precomputed current config id", async () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
     const user = userEvent.setup();
 
     render(
@@ -500,7 +523,7 @@ describe("DataTableRowActions", () => {
 
   it("shows scan config management as unavailable when scan configs failed to load", async () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
     const user = userEvent.setup();
 
     render(
@@ -528,7 +551,7 @@ describe("DataTableRowActions", () => {
 
   it("hides Edit Scan Configuration for dynamic providers in Prowler Cloud", async () => {
     // Given a dynamic provider in a Cloud tenant with scan configs available.
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
     const user = userEvent.setup();
 
     render(
@@ -666,7 +689,8 @@ describe("DataTableRowActions", () => {
     await user.click(screen.getByRole("button"));
 
     expect(screen.getByText("Test Connections (1)")).toBeInTheDocument();
-    expect(screen.getByText("Delete Organization Unit")).toBeInTheDocument();
+    // Node action copy follows the node's kind.
+    expect(screen.getByText("Delete Organizational Unit")).toBeInTheDocument();
   });
 
   it("shows selected provider count in Test Connections when org row has active selection", async () => {
@@ -688,6 +712,57 @@ describe("DataTableRowActions", () => {
     // Should show count of selected testable providers (2), not all org children (1)
     expect(screen.getByText("Test Connections (2)")).toBeInTheDocument();
     expect(screen.queryByText("Test Connections (1)")).not.toBeInTheDocument();
+  });
+
+  it("tests every selected provider in one dispatch, not one call each", async () => {
+    // Given — Next's action queue serializes a per-provider loop, so the batch has
+    // to leave in a single action.
+    const user = userEvent.setup();
+    const testableProviderIds = ["provider-child-1", "provider-standalone"];
+    startProviderConnectionChecksMock.mockResolvedValue({
+      "provider-child-1": { taskId: "task-1" },
+      "provider-standalone": { taskId: "task-2" },
+    });
+    getTasksByIdsMock.mockResolvedValue({
+      "task-1": {
+        data: {
+          attributes: { state: "completed", result: { connected: true } },
+        },
+      },
+      "task-2": {
+        data: {
+          attributes: { state: "completed", result: { connected: true } },
+        },
+      },
+    });
+
+    render(
+      <DataTableRowActions
+        row={createOrgRow()}
+        hasSelection={true}
+        isRowSelected={false}
+        testableProviderIds={testableProviderIds}
+        onClearSelection={vi.fn()}
+        onOpenProviderWizard={vi.fn()}
+        onOpenOrganizationWizard={vi.fn()}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button"));
+    await user.click(screen.getByText("Test Connections (2)"));
+
+    // Then — one dispatch for the batch, one batched read, one revalidation.
+    await vi.waitFor(() =>
+      expect(revalidateProvidersMock).toHaveBeenCalledTimes(1),
+    );
+    expect(startProviderConnectionChecksMock).toHaveBeenCalledTimes(1);
+    expect(startProviderConnectionChecksMock).toHaveBeenCalledWith(
+      testableProviderIds,
+    );
+    expect(getTasksByIdsMock).toHaveBeenCalledTimes(1);
+    expect(getTasksByIdsMock).toHaveBeenCalledWith(["task-1", "task-2"]);
+    expect(checkConnectionProviderMock).not.toHaveBeenCalled();
   });
 
   it("shows selected provider count in Test Connections when OU row has active selection", async () => {
@@ -831,6 +906,7 @@ describe("DataTableRowActions", () => {
 
     // Then
     expect(onOpenOrganizationWizard).toHaveBeenCalledWith({
+      organizationType: ORGANIZATION_TYPE.AWS,
       organizationId: "org-1",
       organizationName: "My AWS Organization",
       externalId: "o-abc123def4",
@@ -838,5 +914,32 @@ describe("DataTableRowActions", () => {
       targetPhase: ORG_SETUP_PHASE.ACCESS,
       intent: "edit-credentials",
     });
+  });
+
+  it("hides Update Credentials for an organization type without an onboarding flow", async () => {
+    // Given: an organization type the wizard cannot onboard (display-only).
+    const user = userEvent.setup();
+    const row = createOrgRow();
+    (row.original as ProvidersOrganizationRow).orgType =
+      ORGANIZATION_TYPE.AZURE;
+
+    render(
+      <DataTableRowActions
+        row={row}
+        hasSelection={false}
+        isRowSelected={false}
+        testableProviderIds={[]}
+        onClearSelection={vi.fn()}
+        onOpenProviderWizard={vi.fn()}
+        onOpenOrganizationWizard={vi.fn()}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button"));
+
+    // Then: the name edit stays (a plain PATCH), the wizard re-entry is gone.
+    expect(screen.getByText("Edit Organization Name")).toBeInTheDocument();
+    expect(screen.queryByText("Update Credentials")).not.toBeInTheDocument();
   });
 });

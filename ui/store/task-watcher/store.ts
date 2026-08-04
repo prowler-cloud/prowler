@@ -28,11 +28,29 @@ export interface WatchedTask {
   meta: Record<string, string>;
   startedAt: number;
   error?: string;
+  /** Serializable task result. Persisted so another tab or a reload can
+   *  finish feature-specific handling without polling the task again. */
+  result?: unknown;
 }
 
 export interface TaskKindHandler {
   onReady: (task: WatchedTask) => void;
   onError: (task: WatchedTask) => void;
+}
+
+export interface TaskTrackingResult<R = unknown> {
+  status: TaskWatcherStatus;
+  error?: string;
+  result?: R;
+}
+
+export interface TrackAndPollTaskInput {
+  taskId: string;
+  kind: string;
+  meta: Record<string, string>;
+  /** Let the awaiting caller aggregate notifications. If this tab reloads,
+   *  the persisted task resumes with its registered handler as usual. */
+  notifyHandler?: boolean;
 }
 
 interface TaskWatcherState {
@@ -42,6 +60,7 @@ interface TaskWatcherState {
     taskId: string,
     status: TaskWatcherStatus,
     error?: string,
+    result?: unknown,
   ) => void;
   dismissTask: (taskId: string) => void;
 }
@@ -69,12 +88,15 @@ export const useTaskWatcherStore = create<TaskWatcherState>()(
       tasks: {},
       upsertTask: (task) =>
         set((state) => ({ tasks: { ...state.tasks, [task.taskId]: task } })),
-      resolveTask: (taskId, status, error) =>
+      resolveTask: (taskId, status, error, result) =>
         set((state) => {
           const task = state.tasks[taskId];
           if (!task) return state;
           return {
-            tasks: { ...state.tasks, [taskId]: { ...task, status, error } },
+            tasks: {
+              ...state.tasks,
+              [taskId]: { ...task, status, error, result },
+            },
           };
         }),
       dismissTask: (taskId) =>
@@ -92,25 +114,35 @@ export const useTaskWatcherStore = create<TaskWatcherState>()(
 
 // In-memory only: poll loops alive in THIS tab. Never persisted, so a reload
 // naturally re-enters through resumePendingTasks without double-polling.
-const activePolls = new Set<string>();
+const activePolls = new Map<string, Promise<TaskTrackingResult<unknown>>>();
+const suppressedHandlers = new Set<string>();
 
 const settleTask = (
   taskId: string,
   status: TaskWatcherStatus,
   error?: string,
-) => {
+  result?: unknown,
+): TaskTrackingResult => {
   const store = useTaskWatcherStore.getState();
   const currentTask = store.tasks[taskId];
   if (!currentTask || currentTask.status !== TASK_WATCHER_STATUS.PENDING) {
-    return;
+    return {
+      status: currentTask?.status ?? TASK_WATCHER_STATUS.ERROR,
+      ...(currentTask?.error ? { error: currentTask.error } : {}),
+      ...(currentTask?.result !== undefined
+        ? { result: currentTask.result }
+        : {}),
+    };
   }
 
-  store.resolveTask(taskId, status, error);
+  store.resolveTask(taskId, status, error, result);
   const task = useTaskWatcherStore.getState().tasks[taskId];
-  if (!task) return;
+  if (!task) {
+    return { status: TASK_WATCHER_STATUS.ERROR, error: "Task unavailable." };
+  }
 
   const handler = handlers.get(task.kind);
-  if (handler) {
+  if (handler && !suppressedHandlers.has(taskId)) {
     if (status === TASK_WATCHER_STATUS.READY) handler.onReady(task);
     else handler.onError(task);
   }
@@ -120,107 +152,141 @@ const settleTask = (
   if (status === TASK_WATCHER_STATUS.ERROR) {
     store.dismissTask(taskId);
   }
+
+  return {
+    status,
+    ...(error ? { error } : {}),
+    ...(result !== undefined ? { result } : {}),
+  };
 };
 
-const runPollLoop = async (taskId: string): Promise<void> => {
+const runPollLoop = async <R>(
+  taskId: string,
+): Promise<TaskTrackingResult<R>> => {
   for (let round = 0; round < MAX_POLL_ROUNDS; round++) {
-    const result = await pollTaskUntilSettled(taskId);
+    const result = await pollTaskUntilSettled<R>(taskId);
 
     if (result.ok) {
       if (result.state === "completed") {
-        settleTask(taskId, TASK_WATCHER_STATUS.READY);
+        return settleTask(
+          taskId,
+          TASK_WATCHER_STATUS.READY,
+          undefined,
+          result.result,
+        ) as TaskTrackingResult<R>;
       } else {
-        settleTask(
+        return settleTask(
           taskId,
           TASK_WATCHER_STATUS.ERROR,
           `Task ended in state "${result.state}".`,
-        );
+          result.result,
+        ) as TaskTrackingResult<R>;
       }
-      return;
     }
 
     // "Task timeout" just means this server round expired while the task
     // is still running — keep polling. Real errors settle immediately.
     if (result.error !== "Task timeout") {
-      settleTask(taskId, TASK_WATCHER_STATUS.ERROR, result.error);
-      return;
+      return settleTask(
+        taskId,
+        TASK_WATCHER_STATUS.ERROR,
+        result.error,
+        result.result,
+      ) as TaskTrackingResult<R>;
     }
   }
 
-  settleTask(
+  return settleTask(
     taskId,
     TASK_WATCHER_STATUS.ERROR,
     "The task is taking too long. Try again later.",
-  );
+  ) as TaskTrackingResult<R>;
 };
 
-const pollUntilDone = async (taskId: string): Promise<void> => {
-  if (activePolls.has(taskId)) return;
-  activePolls.add(taskId);
+const pollUntilDone = <R>(taskId: string): Promise<TaskTrackingResult<R>> => {
+  const existingPoll = activePolls.get(taskId);
+  if (existingPoll) return existingPoll as Promise<TaskTrackingResult<R>>;
 
-  try {
-    const runIfPending = async () => {
-      // A different tab may have completed the task while this one waited for
-      // the cross-tab lock. Refresh persisted state before polling or notifying.
-      await useTaskWatcherStore.persist.rehydrate();
-      const task = useTaskWatcherStore.getState().tasks[taskId];
-      if (task?.status !== TASK_WATCHER_STATUS.PENDING) return;
-      await runPollLoop(taskId);
-    };
+  const pollPromise = (async (): Promise<TaskTrackingResult<R>> => {
+    try {
+      const runIfPending = async (): Promise<TaskTrackingResult<R>> => {
+        // A different tab may have completed the task while this one waited for
+        // the cross-tab lock. Refresh persisted state before polling or notifying.
+        await useTaskWatcherStore.persist.rehydrate();
+        const task = useTaskWatcherStore.getState().tasks[taskId];
+        if (task?.status !== TASK_WATCHER_STATUS.PENDING) {
+          return {
+            status: task?.status ?? TASK_WATCHER_STATUS.ERROR,
+            ...(task?.error ? { error: task.error } : {}),
+            ...(task?.result !== undefined ? { result: task.result as R } : {}),
+          };
+        }
+        return runPollLoop<R>(taskId);
+      };
 
-    if (typeof navigator !== "undefined" && navigator.locks) {
-      await navigator.locks.request(`task-watcher:${taskId}`, runIfPending);
-    } else {
-      await runIfPending();
+      if (typeof navigator !== "undefined" && navigator.locks) {
+        return await navigator.locks.request(
+          `task-watcher:${taskId}`,
+          runIfPending,
+        );
+      }
+
+      return await runIfPending();
+    } catch {
+      // A thrown poll (e.g. the server-action RPC failing on a network drop)
+      // must still settle the task, or it stays PENDING in the persisted
+      // store and blocks the UI until the staleness ceiling.
+      return settleTask(
+        taskId,
+        TASK_WATCHER_STATUS.ERROR,
+        "Tracking the task failed unexpectedly. Try again later.",
+      ) as TaskTrackingResult<R>;
+    } finally {
+      activePolls.delete(taskId);
     }
-  } catch {
-    // A thrown poll (e.g. the server-action RPC failing on a network drop)
-    // must still settle the task, or it stays PENDING in the persisted
-    // store and blocks the UI until the staleness ceiling.
-    settleTask(
-      taskId,
-      TASK_WATCHER_STATUS.ERROR,
-      "Tracking the task failed unexpectedly. Try again later.",
-    );
-  } finally {
-    activePolls.delete(taskId);
-  }
+  })();
+
+  activePolls.set(taskId, pollPromise);
+  return pollPromise;
 };
 
 /** Track a freshly dispatched backend task and poll it to completion. The
  *  poll loop lives at module scope (fired from the click handler), so it
  *  survives client-side navigation without any effect subscriptions. */
-export const trackAndPollTask = async ({
+export const trackAndPollTask = async <R = unknown>({
   taskId,
   kind,
   meta,
-}: {
-  taskId: string;
-  kind: string;
-  meta: Record<string, string>;
-}): Promise<void> => {
+  notifyHandler = true,
+}: TrackAndPollTaskInput): Promise<TaskTrackingResult<R>> => {
+  if (!notifyHandler) suppressedHandlers.add(taskId);
+
   const existing = useTaskWatcherStore.getState().tasks[taskId];
-  if (existing?.status === TASK_WATCHER_STATUS.PENDING) {
-    return pollUntilDone(taskId);
+  try {
+    if (existing?.status === TASK_WATCHER_STATUS.PENDING) {
+      return await pollUntilDone<R>(taskId);
+    }
+
+    const store = useTaskWatcherStore.getState();
+    Object.values(store.tasks)
+      .filter(
+        (task) =>
+          task.kind === kind && task.status !== TASK_WATCHER_STATUS.PENDING,
+      )
+      .forEach((task) => store.dismissTask(task.taskId));
+
+    store.upsertTask({
+      taskId,
+      kind,
+      status: TASK_WATCHER_STATUS.PENDING,
+      meta,
+      startedAt: Date.now(),
+    });
+
+    return await pollUntilDone<R>(taskId);
+  } finally {
+    suppressedHandlers.delete(taskId);
   }
-
-  const store = useTaskWatcherStore.getState();
-  Object.values(store.tasks)
-    .filter(
-      (task) =>
-        task.kind === kind && task.status !== TASK_WATCHER_STATUS.PENDING,
-    )
-    .forEach((task) => store.dismissTask(task.taskId));
-
-  store.upsertTask({
-    taskId,
-    kind,
-    status: TASK_WATCHER_STATUS.PENDING,
-    meta,
-    startedAt: Date.now(),
-  });
-
-  return pollUntilDone(taskId);
 };
 
 /** Resume polling every persisted pending task after a hard reload; tasks

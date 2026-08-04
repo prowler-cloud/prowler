@@ -7,8 +7,7 @@ import { Controller, useForm } from "react-hook-form";
 import * as z from "zod";
 
 import { updateUser, updateUserRole } from "@/actions/users/users";
-import { Card } from "@/components/shadcn";
-import { useToast } from "@/components/shadcn";
+import { Card, useToast } from "@/components/shadcn";
 import { CustomInput } from "@/components/shadcn/custom";
 import { Form, FormButtons } from "@/components/shadcn/form";
 import {

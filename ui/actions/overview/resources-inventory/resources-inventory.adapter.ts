@@ -1,5 +1,5 @@
-import { LucideIcon } from "lucide-react";
 import {
+  LucideIcon,
   Activity,
   BarChart3,
   Bot,
@@ -18,6 +18,8 @@ import {
   UserRoundSearch,
   Webhook,
 } from "lucide-react";
+
+import type { ApiResult } from "@/types/server-actions";
 
 import {
   ResourceGroupOverview,
@@ -191,7 +193,7 @@ function formatResourceGroupLabel(id: string): string {
  * @returns An array of ResourceInventoryItem objects sorted by the predefined order
  */
 export function adaptResourceGroupOverview(
-  response: ResourceGroupOverviewResponse | undefined,
+  response: ApiResult<ResourceGroupOverviewResponse> | undefined,
 ): ResourceInventoryItem[] {
   if (!response?.data || response.data.length === 0) {
     return [];

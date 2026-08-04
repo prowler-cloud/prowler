@@ -12,8 +12,13 @@ import { z } from "zod";
 
 import { createSamlConfig, updateSamlConfig } from "@/actions/integrations";
 import { AddIcon } from "@/components/icons";
-import { Button, Card, CardContent, CardHeader } from "@/components/shadcn";
-import { useToast } from "@/components/shadcn";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  useToast,
+} from "@/components/shadcn";
 import { CodeSnippet } from "@/components/shadcn/code-snippet/code-snippet";
 import { CustomServerInput } from "@/components/shadcn/custom";
 import { CustomLink } from "@/components/shadcn/custom/custom-link";
@@ -311,17 +316,15 @@ export const SamlConfigForm = ({
               <span className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
                 ACS URL:
               </span>
-              {acsUrl ? (
-                <CodeSnippet
-                  value={acsUrl}
-                  ariaLabel="Copy ACS URL"
-                  className="h-10 w-full"
-                />
-              ) : (
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Enter your email domain above to generate the ACS URL.
-                </p>
-              )}
+              <CodeSnippet
+                value={
+                  acsUrl ||
+                  "Enter your email domain above to generate the ACS URL."
+                }
+                ariaLabel="Copy ACS URL"
+                hideCopyButton={!acsUrl}
+                className="h-10 w-full"
+              />
             </div>
 
             <div>

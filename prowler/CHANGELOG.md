@@ -4,6 +4,72 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [5.37.1] (Prowler v5.37.1)
+
+### 🔄 Changed
+
+- Huawei Cloud exception codes moved from `19000`-`19007` to `20000`-`20007`, resolving a collision with E2E Networks which reserves `19000`-`19999` [(#12306)](https://github.com/prowler-cloud/prowler/pull/12306)
+
+### 🐞 Fixed
+
+- Checks registered through the `prowler.checks.<provider>` entry-point group can now run against built-in providers. The built-in probe in `_resolve_check_module` used a bare `find_spec`, which imports the parent package to search it and so raised `ModuleNotFoundError` for a plug-in check instead of returning `None`, aborting the lookup before the entry points were consulted. Such a check was discovered, listed and selected for execution, then silently produced no findings. [(#12312)](https://github.com/prowler-cloud/prowler/pull/12312)
+- Entra Conditional Access guest-user checks no longer report false FAILs: microsoft-kiota packages bumped to 1.9.10 so `guestOrExternalUserTypes` (a flags enum Graph serializes as a comma-separated string) deserializes correctly instead of returning an empty list [(#12315)](https://github.com/prowler-cloud/prowler/pull/12315)
+
+### 🔐 Security
+
+- Bumped the Compose `postgres` and `valkey` images, clearing 10 critical CVEs [(#12307)](https://github.com/prowler-cloud/prowler/pull/12307)
+- Bumped PowerShell, Trivy, uv and `joserfc` in the container images, clearing 14 high-severity CVEs from the SDK and API images [(#12307)](https://github.com/prowler-cloud/prowler/pull/12307)
+- Bumped `httplib2` to 0.32.0 and `pyasn1` to 0.6.4 to resolve known CVEs [(#12307)](https://github.com/prowler-cloud/prowler/pull/12307)
+- The SDK container image now builds on Debian 13 (trixie), clearing the unfixable `libsqlite3-0` and `zlib1g` criticals [(#12307)](https://github.com/prowler-cloud/prowler/pull/12307)
+- Bumped `cryptography` to 48.0.1 to resolve GHSA-537c-gmf6-5ccf, along with the `oci`, `alibabacloud-tea-openapi`, `darabonba-core` and `py-ocsf-models` bumps it requires [(#12307)](https://github.com/prowler-cloud/prowler/pull/12307)
+- Removed `pip` from the SDK container image, clearing two high-severity CVEs in the vendored copies of `setuptools` and `msgpack` [(#12307)](https://github.com/prowler-cloud/prowler/pull/12307)
+- Removed `wget`, `gnupg` and `apt-transport-https` from the SDK runtime image [(#12307)](https://github.com/prowler-cloud/prowler/pull/12307)
+
+---
+
+## [5.37.0] (Prowler v5.37.0)
+
+### 🚀 Added
+
+- OCSF detection finding output now populates `finding_info.analytic` as the Prowler check rule and `finding_info.attacks` as MITRE ATT&CK technique and tactic objects for findings with MITRE-ATTACK compliance metadata [(#11492)](https://github.com/prowler-cloud/prowler/pull/11492)
+- `codecommit` service and `codecommit_repository_no_secrets` check for AWS provider, scanning files tracked at the tip of each repository's default branch for hardcoded secrets [(#11846)](https://github.com/prowler-cloud/prowler/pull/11846)
+- Huawei Cloud provider, with CTS, ECS, ELB, EVS, IAM, KMS, OBS, RDS, VPC and WAF services and a CIS 1.0 compliance benchmark [(#11950)](https://github.com/prowler-cloud/prowler/pull/11950)
+- `glue_catalog_connection_no_secrets` check to detect secrets in Glue Data Catalog connection properties [(#11963)](https://github.com/prowler-cloud/prowler/pull/11963)
+- `ec2_instance_stopped_older_than_specific_days` check for AWS provider, detecting EC2 instances stopped longer than a configurable number of days (default 30) [(#12076)](https://github.com/prowler-cloud/prowler/pull/12076)
+- `sagemaker_endpoint_config_kms_encryption_enabled` check verifying SageMaker endpoint configurations use a KMS key for storage volume encryption [(#12118)](https://github.com/prowler-cloud/prowler/pull/12118)
+- 11 AWS Nitro Enclaves security checks providing the first CSPM coverage for confidential computing workloads, covering both host environment (`ec2_confidential_workload_host_*`) and KMS attestation policy (`kms_key_enclave_*`), fully passive via boto3 and CloudTrail LookupEvents [(#12283)](https://github.com/prowler-cloud/prowler/pull/12283)
+
+### 🐞 Fixed
+
+- Scan configuration schema no longer exposes SDK/CLI-only providers such as `e2enetworks`; the aggregated schema served by `/scan-configurations/schema` now includes only app providers (`sdk_only = False`) [(#12094)](https://github.com/prowler-cloud/prowler/pull/12094)
+- GCP Cloud Functions gen2 IAM policy retrieval now uses a per-request HTTP client, preventing a process crash from concurrent thread-unsafe `httplib2` access when a project has several gen2 functions [(#12107)](https://github.com/prowler-cloud/prowler/pull/12107)
+- GCP firewall SSH and RDP checks now detect exposed target ports in any position within multi-port rules [(#12115)](https://github.com/prowler-cloud/prowler/pull/12115)
+- Secret ignore patterns now use Kingfisher-compatible LF line indexing for scanned content containing ASCII control characters [(#12141)](https://github.com/prowler-cloud/prowler/pull/12141)
+- Jira descriptions with inline code nested in bold or italic Markdown now render as valid ADF [(#12158)](https://github.com/prowler-cloud/prowler/pull/12158)
+
+### 🔐 Security
+
+- HTML reports escape provider-originated finding fields to prevent stored cross-site scripting through malicious cloud resource tags [(#12221)](https://github.com/prowler-cloud/prowler/pull/12221)
+
+---
+
+## [5.36.0] (Prowler v5.36.0)
+
+### 🚀 Added
+
+- `sagemaker_notebook_instance_no_secrets` check for AWS provider, scanning SageMaker notebook instance lifecycle configuration scripts (`OnCreate` and `OnStart`) for hardcoded secrets such as API keys, passwords, tokens, and connection strings [(#11843)](https://github.com/prowler-cloud/prowler/pull/11843)
+
+### 🔄 Changed
+
+- Jira output rendering supports grouped Finding Group issues with caller-provided links and capped or uncapped finding copy [(#12035)](https://github.com/prowler-cloud/prowler/pull/12035)
+
+### 🐞 Fixed
+
+- Fix invalid escape sequence `SyntaxWarning` raised on startup by the S3 bucket name validation regex [(#12041)](https://github.com/prowler-cloud/prowler/pull/12041)
+- Alibaba Cloud SSH and RDP security group checks no longer produce false negatives when allowed rules use capitalized `Policy="Accept"` values [(#12049)](https://github.com/prowler-cloud/prowler/pull/12049)
+
+---
+
 ## [5.35.0] (Prowler v5.35.0)
 
 ### 🚀 Added

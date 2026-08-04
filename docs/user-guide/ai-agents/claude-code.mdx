@@ -1,0 +1,294 @@
+---
+title: "Connect Claude Code to Prowler MCP Server"
+sidebarTitle: "Claude Code"
+---
+
+Connect [Claude Code](https://www.claude.com/product/claude-code) to the Prowler Cloud MCP Server at `https://mcp.prowler.com/mcp`.
+
+## Where Claude Code Runs
+
+Claude Code runs in two places. Both read the same configuration file, so you set it up **once from a terminal** and it works in both.
+
+| Surface | How you open it | Reads | Covered by |
+|---|---|---|---|
+| **Claude Code CLI** | `claude` in a terminal | `~/.claude.json` | This guide |
+| **Claude Code in the desktop app** | The **Code** tab inside the Claude app | `~/.claude.json` — the same file | This guide, [set up from a terminal](#claude-code-in-the-desktop-app-code-tab) |
+| **Claude app Chat** | The **Chat** tab inside the Claude app | `claude_desktop_config.json` | [Claude App Chat](/user-guide/ai-agents/claude-desktop) — a separate setup |
+
+<Warning>
+**The Chat tab is not Claude Code.** It is a different product surface with its own configuration file and its own connection method (a local bridge). Nothing on this page applies to it. If you want Prowler in Chat, use the [Claude App Chat](/user-guide/ai-agents/claude-desktop) guide instead.
+</Warning>
+
+## Choose Your Setup
+
+There are two ways to connect. Both end with the same MCP Server connection, the difference is what comes with it.
+
+| | 🔌 **Prowler Plugin** | ⚙️ **MCP Connection Only** |
+|---|---|---|
+| **What you get** | The MCP connection **plus** the official Prowler skills for cloud security tasks | The MCP connection |
+| **Setup** | Two slash commands, prompts for the API key | One `claude mcp add` command |
+| **Guided workflows** | ✅ Skills drive multi-step security work end to end | ❌ You drive the conversation |
+| **Best for** | Structured cloud security work, such as taking an account to compliance | Ad-hoc queries and your own workflows |
+| **Where to use it** | Claude Code CLI | Claude Code CLI, and the **recommended setup for the desktop app's [Code tab](#claude-code-in-the-desktop-app-code-tab)** |
+
+<Note>
+**The plugin already includes the MCP connection.** If you install the plugin, do **not** also run `claude mcp add` — you would end up with the server configured twice.
+</Note>
+
+## Prerequisites
+
+- **Claude Code** installed and signed in. See the [official install guide](https://www.claude.com/product/claude-code).
+- **A Prowler Cloud account.** The free tier is enough to start. Sign up at [cloud.prowler.com](https://cloud.prowler.com).
+
+## Get Your Prowler API Key
+
+Create an API key in Prowler Cloud and copy it. The key begins with `pk_` and is shown only once. Check the [API Keys](/user-guide/tutorials/prowler-app-api-keys#creating-api-keys) guide for details.
+
+---
+
+# Option 1: Install the Prowler Plugin
+
+<Warning>
+**Preview**: this plugin is under active development. Please report issues on [GitHub](https://github.com/prowler-cloud/prowler/issues) or join the [Slack community](https://goto.prowler.com/slack) for feedback.
+</Warning>
+
+End-to-end cloud security from inside Claude Code, powered by the Prowler MCP server. The plugin bundles the official Prowler skills, task-specific workflows that let Claude carry out multi-step security work against a Prowler Cloud-connected account, rather than answering one question at a time.
+
+### Included Skills
+
+| Skill | What it does |
+| --- | --- |
+| `prowler:framework-compliance-triage` | Walks an account through a compliance assessment and remediates findings until the chosen security or industry framework is compliant. |
+
+<Note>
+More skills are on the way. Installing the plugin keeps you current — new skills arrive with plugin updates, no extra configuration required.
+</Note>
+
+## Installation (Claude Code CLI)
+
+<Tabs>
+  <Tab title="From GitHub (recommended)">
+    Inside a Claude Code session:
+
+    ```text
+    /plugin marketplace add prowler-cloud/prowler
+    /plugin install prowler@prowler-plugins
+    ```
+  </Tab>
+  <Tab title="From a local clone">
+    If you already have the repository checked out:
+
+    ```text
+    /plugin marketplace add /absolute/path/to/prowler
+    /plugin install prowler@prowler-plugins
+    ```
+  </Tab>
+</Tabs>
+
+On first install, Claude Code prompts for your **Prowler API key**. The value is stored securely (macOS keychain or `~/.claude/.credentials.json`) and used to authenticate against Prowler Cloud.
+
+## Verify the Installation
+
+In a Claude Code session:
+
+```text
+/mcp          → "prowler" appears as a connected server
+/plugin       → "prowler" enabled, with the bundled Prowler skills listed
+```
+
+If `/mcp` reports the `prowler` server as failed, the most common cause is a rejected API key, re-issue one in Prowler Cloud and reinstall the plugin so it re-prompts.
+
+## Usage
+
+Describe the security task you want done and Claude selects the matching skill.
+
+### Framework Compliance Triage
+
+Mention the framework you want to comply with:
+
+- *"Make my AWS production account compliant with CIS 4.0."*
+- *"Make my current Terraform project compliant with Prowler ThreatScore Compliance Framework based on the latest scan results."*
+- *"Help me get to 100% on PCI-DSS for this GCP project."*
+
+You pick a **primary tool** (Terraform, gh / az / aws CLI, web console, or mixed) and a **mode**:
+
+<CardGroup cols={2}>
+  <Card title="Claude-assisted (default)" icon="hand">
+    Claude shows each fix — target resource, exact commands, side effects, reversibility — and waits for your go-ahead before applying.
+  </Card>
+  <Card title="Claude autonomous" icon="robot">
+    Claude presents a single up-front plan grouped by shared fixes, waits for one confirmation, then proceeds. It pauses mid-loop if a fix has wide blast radius or a finding is not applicable.
+  </Card>
+</CardGroup>
+
+Claude tracks progress in a markdown report under `.prowler/` at your project root — one file per framework × account. Open it any time to see exactly where the flow is. When all findings are addressed, Claude proposes a fresh Prowler scan to verify everything end-to-end.
+
+## Uninstalling
+
+```text
+/plugin uninstall prowler@prowler-plugins
+/plugin marketplace remove prowler-plugins
+```
+
+The stored API key is removed automatically.
+
+---
+
+# Option 2: Connect the MCP Server Only
+
+Choose this when you want Prowler's tools available without the Prowler skills.
+
+## Add the Server
+
+Claude Code connects to remote HTTP MCP servers natively and supports custom headers, so no bridge is required.
+
+```bash
+export PROWLER_API_KEY="pk_your_api_key_here"
+
+claude mcp add --transport http prowler https://mcp.prowler.com/mcp \
+  --header "Authorization: Bearer $PROWLER_API_KEY" \
+  --scope user
+```
+
+<Frame>
+  <img src="/images/prowler-mcp/claude/claude-code-mcp-add.png" alt="Terminal showing the claude mcp add command and its confirmation output" />
+</Frame>
+
+<Warning>
+**Always pass `--scope user`.** The default scope is `local`, which binds the server to the single directory you ran the command in. A locally-scoped server does not load when you open Claude Code anywhere else — this is the most common reason Prowler tools appear to vanish.
+</Warning>
+
+| Scope | Loads in | Shared | Stored in |
+|-------|----------|--------|-----------|
+| `user` | All your projects | No | `~/.claude.json`, top-level `mcpServers` |
+| `project` | Current project only | Yes, via version control | `.mcp.json` in the project root |
+| `local` (default) | Current project only | No | `~/.claude.json`, under that project's entry |
+
+When the same server name exists in more than one scope, precedence is **local → project → user**. The winning entry is used whole; fields are not merged.
+
+<Warning>
+Avoid `--scope project` for Prowler. That writes `.mcp.json` into your repository, and committing the file would publish your API key.
+</Warning>
+
+<Note>
+**Local server:** Replace the URL with your own HTTP endpoint. Everything else stays the same.
+</Note>
+
+## Verify the Connection
+
+```bash
+claude mcp get prowler   # shows which scope holds the definition
+claude mcp list          # lists all servers and their status
+```
+
+Inside a Claude Code session, run `/mcp` to see connected servers and their tools.
+
+<Frame>
+  <img src="/images/prowler-mcp/claude/claude-code-mcp-command.png" alt="Claude Code session showing the /mcp command output with the Prowler server connected" />
+</Frame>
+
+## Start Using Prowler MCP
+
+- *"Show me all critical findings from my AWS accounts"*
+- *"What does the S3 bucket public access check do?"*
+- *"Onboard this new AWS account in my Prowler organization"*
+
+<Frame>
+  <img src="/images/prowler-mcp/claude/claude-code-prowler-query.png" alt="Claude Code answering a question about critical findings using Prowler MCP tools" />
+</Frame>
+
+---
+
+# Claude Code in the Desktop App (Code Tab)
+
+The **Code** tab in the Claude desktop app runs the same Claude Code as the CLI, and reads the same `~/.claude.json`. There is no separate Prowler setup for it — you configure it **from a terminal** and the Code tab picks it up.
+
+<Note>
+**Use [Option 2](#option-2-connect-the-mcp-server-only) with `--scope user` here.** It is the recommended setup for the Code tab. The Prowler plugin ([Option 1](#option-1-install-the-prowler-plugin)) is not the recommended route for the desktop app — install it in the Claude Code CLI instead.
+</Note>
+
+<Warning>
+**You cannot do this from inside the app.** The desktop app has no interface for adding an MCP server to a Claude Code session. **Settings → Connectors** configures the **Chat** tab, not the **Code** tab, so anything added there never reaches Claude Code. Trying to configure it from the app is the main reason this appears not to work.
+</Warning>
+
+<Steps>
+  <Step title="Add the server at user scope from a terminal">
+    In a normal terminal — not inside the app:
+
+    ```bash
+    export PROWLER_API_KEY="pk_your_api_key_here"
+
+    claude mcp add --transport http prowler https://mcp.prowler.com/mcp \
+      --header "Authorization: Bearer $PROWLER_API_KEY" \
+      --scope user
+    ```
+
+    `--scope user` is what makes this work. It writes to `~/.claude.json`, the file the Code tab reads.
+  </Step>
+
+  <Step title="Confirm it landed at user scope">
+    ```bash
+    claude mcp get prowler
+    ```
+
+    The scope must be `user`. A `local`-scoped server is bound to the directory you ran the command in and will not load in an app session opened elsewhere.
+  </Step>
+
+  <Step title="Restart the Claude app">
+    Quit the app completely and reopen it. Configuration is read at startup.
+  </Step>
+
+  <Step title="Verify in the Code tab">
+    Open a **Code** tab session and ask for a Prowler tool: "Do you have access to the Prowler MCP tools?", it should respond with a list of available tools or confirming that it has access.
+  </Step>
+</Steps>
+
+---
+
+# Claude App Chat (Chat Tab)
+
+Not covered by this page. The **Chat** tab is a separate surface: it does not read `~/.claude.json`, so a server added with `claude mcp add` appears in the CLI and in the Code tab but **never** in Chat. That is expected behavior, not a broken setup.
+
+Chat reads `claude_desktop_config.json` and reaches the Prowler MCP Server through a local bridge.
+
+<Card title="Connect the Claude App Chat" icon="comment" href="/user-guide/ai-agents/claude-desktop" horizontal>
+  Separate guide: local bridge and its own configuration file
+</Card>
+
+---
+
+# Troubleshooting
+
+| Symptom | Likely cause | Fix |
+| --- | --- | --- |
+| `/mcp` shows `prowler` as failed | Rejected API key | Generate a new one in Prowler Cloud. With the plugin, reinstall it to re-prompt. |
+| No MCP servers configured | Server added at `local` scope from another directory | Run `claude mcp get prowler`, then re-add with `--scope user`. |
+| A stale entry overrides a working one | Precedence is local → project → user | `claude mcp remove prowler --scope local` |
+| Tools appear in the CLI but not in the app's **Code** tab | Server added at `local` scope, or the app was not restarted | Re-add with `--scope user`, then quit and reopen the app. See [Claude Code in the Desktop App](#claude-code-in-the-desktop-app-code-tab). |
+| Tools appear in the **Code** tab but not the **Chat** tab | Chat is a different surface with its own config file | Expected. Set Chat up separately, see [Claude App Chat](/user-guide/ai-agents/claude-desktop). |
+| No way to add the server from inside the app | The app has no MCP interface for Claude Code sessions | Configure it from a terminal with `--scope user`, then restart the app. See [Claude Code in the Desktop App](#claude-code-in-the-desktop-app-code-tab). |
+| Skill not invoked when expected | The prompt didn't match any skill's description | Name the task explicitly. For compliance triage, mention the framework plus "compliance" or "compliant". |
+| "Framework not supported" | Prowler Hub does not list the framework for that provider | Open an issue or PR at [github.com/prowler-cloud/prowler](https://github.com/prowler-cloud/prowler). |
+
+### Authentication Fails With 401
+
+- Confirm the header value includes the `Bearer ` prefix.
+- Check that `PROWLER_API_KEY` was set when you ran `claude mcp add` — the shell expands it at that moment and stores the resulting literal value. If the variable was empty, the stored header reads `Bearer ` with nothing after it. Verify with `claude mcp get prowler`.
+- Confirm the key has not been revoked in Prowler Cloud.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Tools Reference" icon="wrench" href="/getting-started/basic-usage/prowler-mcp-tools">
+    Explore all available tools and capabilities
+  </Card>
+  <Card title="All MCP Clients" icon="plug" href="/getting-started/basic-usage/prowler-mcp">
+    Configuration reference for every supported client
+  </Card>
+</CardGroup>
+
+## Getting Help
+
+- Search for existing [GitHub issues](https://github.com/prowler-cloud/prowler/issues)
+- Ask for help in our [Slack community](https://goto.prowler.com/slack)
+- Report a new issue on [GitHub](https://github.com/prowler-cloud/prowler/issues/new)

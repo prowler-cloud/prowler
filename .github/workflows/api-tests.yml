@@ -107,6 +107,7 @@ jobs:
           files: |
             api/**
             .github/workflows/api-tests.yml
+            codecov.yml
           files_ignore: |
             api/docs/**
             api/README.md

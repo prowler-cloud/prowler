@@ -37,7 +37,7 @@ class TestEcsSecurityGroupRestrictRdpInternet:
                         "ip_protocol": "tcp",
                         "source_cidr_ip": "0.0.0.0/0",
                         "port_range": "3389/3389",
-                        "policy": "accept",
+                        "policy": "Accept",
                     }
                 ],
             )
@@ -80,7 +80,7 @@ class TestEcsSecurityGroupRestrictRdpInternet:
                         "ip_protocol": "tcp",
                         "source_cidr_ip": "10.0.0.0/24",
                         "port_range": "3389/3389",
-                        "policy": "accept",
+                        "policy": "Accept",
                     }
                 ],
             )

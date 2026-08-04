@@ -2,7 +2,20 @@ import { AlertTriangle, Info } from "lucide-react";
 
 import { getAllProviderGroups } from "@/actions/manage-groups/manage-groups";
 import { getAllProviders } from "@/actions/providers";
+import { LighthouseContextContributor } from "@/components/lighthouse/context-contributor";
 import { Alert, AlertDescription } from "@/components/shadcn/alert";
+import {
+  Section,
+  SectionContent,
+  SectionDescription,
+  SectionHeader,
+  SectionTitle,
+} from "@/components/shadcn/section/section";
+import {
+  LIGHTHOUSE_COMPLIANCE_CONTEXT_MODE,
+  LIGHTHOUSE_CONTEXT_CONTRIBUTOR_LIMIT,
+} from "@/lib/lighthouse/context/constants";
+import { buildComplianceContext } from "@/lib/lighthouse/context/contributions";
 import { SearchParamsProps } from "@/types";
 import type { KnownProviderType } from "@/types/providers";
 
@@ -15,6 +28,7 @@ import {
 } from "../_lib/cross-provider-frameworks";
 import type { CrossProviderFrameworkSummary } from "../_types";
 import { CROSS_PROVIDER_OVERVIEW_RESULT_STATUS } from "../_types";
+
 import { CrossProviderErrorAlert } from "./cross-provider-error-alert";
 import type {
   CrossProviderAccountOption,
@@ -150,6 +164,24 @@ export const CrossProviderOverview = async ({
 
   return (
     <div className="flex flex-col gap-6">
+      {summaries
+        .slice(0, LIGHTHOUSE_CONTEXT_CONTRIBUTOR_LIMIT.AFTER_PAGE)
+        .map((summary) => (
+          <LighthouseContextContributor
+            key={`cross-provider-${summary.complianceId}-${summary.requirementsPassed}-${summary.requirementsFailed}`}
+            contributorId={`cross-provider-${summary.complianceId}`}
+            item={buildComplianceContext({
+              pathname: "/compliance",
+              id: summary.complianceId,
+              framework: summary.title,
+              version: summary.version,
+              mode: LIGHTHOUSE_COMPLIANCE_CONTEXT_MODE.CROSS_PROVIDER,
+              passed: summary.requirementsPassed,
+              failed: summary.requirementsFailed,
+              total: summary.totalRequirements,
+            })}
+          />
+        ))}
       <CrossProviderFilters
         providerTypes={compatibleTypes}
         providerAccounts={providerAccounts}
@@ -179,11 +211,25 @@ export const CrossProviderOverview = async ({
           </Alert>
         )}
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
-        {summaries.map((summary) => (
-          <CrossProviderFrameworkCard key={summary.complianceId} {...summary} />
-        ))}
-      </div>
+      <Section>
+        <SectionHeader>
+          <SectionTitle>Across provider types</SectionTitle>
+          <SectionDescription>
+            Universal frameworks aggregated across every compatible provider
+            type, using the latest completed scan of each provider.
+          </SectionDescription>
+        </SectionHeader>
+        <SectionContent>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+            {summaries.map((summary) => (
+              <CrossProviderFrameworkCard
+                key={summary.complianceId}
+                {...summary}
+              />
+            ))}
+          </div>
+        </SectionContent>
+      </Section>
     </div>
   );
 };

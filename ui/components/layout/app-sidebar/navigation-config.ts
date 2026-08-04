@@ -31,6 +31,7 @@ import {
 interface NavigationConfigOptions {
   pathname: string;
   apiDocsUrl?: string | null;
+  cloudBillingEnabled?: boolean;
   permissions?: RolePermissionAttributes;
 }
 
@@ -106,6 +107,7 @@ export function filterNavigationByPermissions(
 export function getNavigationConfig({
   pathname,
   apiDocsUrl = null,
+  cloudBillingEnabled = false,
   permissions,
 }: NavigationConfigOptions): NavigationSection[] {
   const isCloudEnvironment = isCloud();
@@ -265,7 +267,7 @@ export function getNavigationConfig({
             },
           ],
         },
-        ...(isCloudEnvironment
+        ...(isCloudEnvironment && cloudBillingEnabled
           ? [
               {
                 kind: NAVIGATION_ITEM_KIND.LINK,
