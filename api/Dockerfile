@@ -1,13 +1,13 @@
-FROM python:3.12.13-slim-bookworm@sha256:8a7e7cc04fd3e2bd787f7f24e22d5d119aa590d429b50c95dfe12b3abe52f48b AS build
+FROM python:3.12.13-slim-trixie@sha256:57cd7c3a7a273101a6485ba99423ee568157882804b1124b4dd04266317710de AS build
 
 LABEL maintainer="https://github.com/prowler-cloud/api"
 
-ARG POWERSHELL_VERSION=7.5.0
+ARG POWERSHELL_VERSION=7.5.9
 ENV POWERSHELL_VERSION=${POWERSHELL_VERSION}
 # Opt out of PowerShell telemetry (Application Insights -> dc.services.visualstudio.com)
 ENV POWERSHELL_TELEMETRY_OPTOUT=1
 
-ARG TRIVY_VERSION=0.71.2
+ARG TRIVY_VERSION=0.72.0
 ENV TRIVY_VERSION=${TRIVY_VERSION}
 
 ARG ZIZMOR_VERSION=1.24.1
@@ -17,7 +17,7 @@ ENV ZIZMOR_VERSION=${ZIZMOR_VERSION}
 RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \
     git \
-    libicu72 \
+    libicu76 \
     gcc \
     g++ \
     make \
@@ -28,7 +28,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libtool \
     libxslt1-dev \
     python3-dev \
-    git \
     && rm -rf /var/lib/apt/lists/*
 
 # Install PowerShell
@@ -94,7 +93,7 @@ RUN mkdir -p /tmp/prowler_api_output
 COPY --chown=prowler:prowler pyproject.toml uv.lock ./
 
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir uv==0.11.14
+    pip install --no-cache-dir uv==0.12.0
 
 ENV PATH="/home/prowler/.local/bin:$PATH"
 
@@ -109,18 +108,33 @@ RUN .venv/bin/python -m prowler.providers.m365.lib.powershell.m365_powershell
 USER root
 
 # Remove build-only packages from the final image after Python dependencies are installed.
+# git is only needed by uv sync for the `prowler @ git+...` dependency; purging it drops perl too.
+# wget stays: the compose healthcheck shells out to it.
 RUN apt-get purge -y --auto-remove \
     gcc \
     g++ \
+    git \
     make \
     libxml2-dev \
     libxmlsec1-dev \
     libxmlsec1-openssl \
+    libxmlsec1t64 \
+    libxmlsec1t64-openssl \
     pkg-config \
     libtool \
     libxslt1-dev \
     python3-dev \
+    gnupg \
+    apt-transport-https \
     && rm -rf /var/lib/apt/lists/*
+
+# pip is build-only; the entrypoint runs uv against the prepared venv. uv stays.
+RUN rm -rf /usr/local/lib/python3.12/site-packages/pip \
+    /usr/local/lib/python3.12/site-packages/pip-*.dist-info \
+    /home/prowler/.local/lib/python3.12/site-packages/pip \
+    /home/prowler/.local/lib/python3.12/site-packages/pip-*.dist-info \
+    /usr/local/bin/pip /usr/local/bin/pip3 /usr/local/bin/pip3.12 \
+    /home/prowler/.local/bin/pip /home/prowler/.local/bin/pip3 /home/prowler/.local/bin/pip3.12
 
 USER prowler
 
