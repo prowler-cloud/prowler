@@ -14,6 +14,7 @@ import type {
   LighthouseV2SupportedModel,
   LighthouseV2SupportedProvider,
 } from "@/app/(prowler)/lighthouse/_types";
+import type { LighthouseContextEnvelope } from "@/types/lighthouse-context";
 
 const {
   createSessionMock,
@@ -72,15 +73,7 @@ describe("createLighthouseChatStore", () => {
     updateConfigurationMock.mockReset();
     eventSources = stubEventSource();
 
-    createSessionMock.mockResolvedValue({
-      data: {
-        id: "session-1",
-        title: "Summarize findings",
-        isArchived: false,
-        insertedAt: "2026-06-24T10:00:00Z",
-        updatedAt: "2026-06-24T10:00:00Z",
-      },
-    });
+    createSessionMock.mockResolvedValue(sessionResult());
     getMessagesMock.mockResolvedValue({ data: [] });
     sendMessageMock.mockResolvedValue({
       data: {
@@ -126,6 +119,109 @@ describe("createLighthouseChatStore", () => {
       text: "Summarize findings",
     });
     expect(store.getState().streamState.activeTaskId).toBe("task-1");
+  });
+
+  it("captures and sends the validated context with unmodified display text", async () => {
+    // Given
+    const store = makeStore();
+    const context = findingsContext();
+
+    // When
+    await store
+      .getState()
+      .submitMessage("  Summarize critical findings  ", context);
+
+    // Then
+    expect(createSessionMock).toHaveBeenCalledWith(
+      "Summarize critical findings",
+    );
+    expect(sendMessageMock).toHaveBeenCalledWith({
+      sessionId: "session-1",
+      displayText: "  Summarize critical findings  ",
+      context,
+      provider: "openai",
+      model: "gpt-5.1",
+    });
+    expect(store.getState().lastSubmission).toEqual({
+      displayText: "  Summarize critical findings  ",
+      context,
+    });
+  });
+
+  it("uses the model selected when submission starts", async () => {
+    // Given
+    const store = makeStore();
+    let resolveCreate: (value: unknown) => void = () => {};
+    createSessionMock.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveCreate = resolve;
+      }),
+    );
+    updateConfigurationMock.mockResolvedValue({ data: configurations[0] });
+    const submitting = store.getState().submitMessage("Summarize findings");
+    await vi.waitFor(() => expect(createSessionMock).toHaveBeenCalledOnce());
+
+    // When
+    await store.getState().selectModel({
+      providerType: "openai",
+      modelId: "gpt-5.2",
+    });
+    resolveCreate(sessionResult());
+    await submitting;
+
+    // Then
+    expect(sendMessageMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        provider: "openai",
+        model: "gpt-5.1",
+      }),
+    );
+  });
+
+  it("retries with the original context snapshot", async () => {
+    // Given
+    const store = makeStore();
+    const context = focusedFindingsContext();
+    await store.getState().submitMessage("Prioritize findings", context);
+    context.items[1].label = "Mutated after send";
+    eventSources[0].fail(2 /* EventSource.CLOSED */);
+    sendMessageMock.mockResolvedValueOnce({
+      data: {
+        task: { id: "task-2", name: "lighthouse-run", state: "executing" },
+      },
+    });
+
+    // When
+    await store.getState().retryLastMessage();
+
+    // Then
+    expect(sendMessageMock).toHaveBeenNthCalledWith(2, {
+      sessionId: "session-1",
+      displayText: "Prioritize findings",
+      context: focusedFindingsContext(),
+      provider: "openai",
+      model: "gpt-5.1",
+    });
+  });
+
+  it("degrades oversized context before sending without blocking the message", async () => {
+    // Given
+    const store = makeStore();
+    const context = oversizedFindingsContext();
+
+    // When
+    await store.getState().submitMessage("Prioritize findings", context);
+
+    // Then
+    expect(sendMessageMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        displayText: "Prioritize findings",
+        context: {
+          ...context,
+          items: context.items.slice(0, 6),
+        },
+      }),
+    );
   });
 
   it("does not touch the URL when syncUrlToSession is off (panel surface)", async () => {
@@ -285,15 +381,7 @@ describe("createLighthouseChatStore", () => {
     store.getState().destroy();
 
     // When
-    resolveCreate({
-      data: {
-        id: "session-1",
-        title: "Summarize findings",
-        isArchived: false,
-        insertedAt: "2026-06-24T10:00:00Z",
-        updatedAt: "2026-06-24T10:00:00Z",
-      },
-    });
+    resolveCreate(sessionResult());
     await submitting;
 
     // Then: no URL rewrite on whatever page is now open, no orphan stream
@@ -315,15 +403,7 @@ describe("createLighthouseChatStore", () => {
 
     // When: the user opens another conversation before creation resolves
     await store.getState().openSession("session-9");
-    resolveCreate({
-      data: {
-        id: "session-1",
-        title: "Summarize findings",
-        isArchived: false,
-        insertedAt: "2026-06-24T10:00:00Z",
-        updatedAt: "2026-06-24T10:00:00Z",
-      },
-    });
+    resolveCreate(sessionResult());
     await submitting;
 
     // Then: the stale creation cannot replace or submit into the open chat
@@ -345,20 +425,56 @@ describe("createLighthouseChatStore", () => {
 
     // When: the user resets to a new chat before creation resolves
     store.getState().resetToNewChat();
-    resolveCreate({
-      data: {
-        id: "session-1",
-        title: "Summarize findings",
-        isArchived: false,
-        insertedAt: "2026-06-24T10:00:00Z",
-        updatedAt: "2026-06-24T10:00:00Z",
-      },
-    });
+    resolveCreate(sessionResult());
     await submitting;
 
     // Then
     expect(store.getState().activeSessionId).toBeNull();
     expect(sendMessageMock).not.toHaveBeenCalled();
+  });
+
+  it("keeps a replacement submission locked when an older submit settles", async () => {
+    // Given: two new-chat submissions are creating sessions concurrently
+    const store = makeStore();
+    let resolveFirstCreate: (value: unknown) => void = () => {};
+    let resolveSecondCreate: (value: unknown) => void = () => {};
+    createSessionMock
+      .mockReturnValueOnce(
+        new Promise((resolve) => {
+          resolveFirstCreate = resolve;
+        }),
+      )
+      .mockReturnValueOnce(
+        new Promise((resolve) => {
+          resolveSecondCreate = resolve;
+        }),
+      );
+    const firstSubmission = store.getState().submitMessage("First question");
+    await vi.waitFor(() => expect(createSessionMock).toHaveBeenCalledOnce());
+    store.getState().resetToNewChat();
+    const replacementSubmission = store
+      .getState()
+      .submitMessage("Replacement question");
+    await vi.waitFor(() => expect(createSessionMock).toHaveBeenCalledTimes(2));
+
+    // When: the cancelled submission settles before its replacement
+    resolveFirstCreate(sessionResult("session-stale", "First question"));
+    await firstSubmission;
+
+    // Then: only the replacement still owns the submission lock
+    expect(store.getState().isSubmitting).toBe(true);
+
+    resolveSecondCreate(
+      sessionResult("session-current", "Replacement question"),
+    );
+    await replacementSubmission;
+    expect(sendMessageMock).toHaveBeenCalledOnce();
+    expect(sendMessageMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sessionId: "session-current",
+        displayText: "Replacement question",
+      }),
+    );
   });
 
   it("opens an existing session client-side without navigation", async () => {
@@ -466,6 +582,18 @@ function makeStore(
   });
 }
 
+function sessionResult(id = "session-1", title = "Summarize findings") {
+  return {
+    data: {
+      id,
+      title,
+      isArchived: false,
+      insertedAt: "2026-06-24T10:00:00Z",
+      updatedAt: "2026-06-24T10:00:00Z",
+    },
+  };
+}
+
 function model(id: string, name = id): LighthouseV2SupportedModel {
   return {
     id,
@@ -498,6 +626,70 @@ function message(
         insertedAt: "2026-06-25T10:00:00Z",
         updatedAt: "2026-06-25T10:00:00Z",
       },
+    ],
+  };
+}
+
+function findingsContext(): LighthouseContextEnvelope {
+  return {
+    schemaVersion: 1,
+    transport: "inline",
+    items: [
+      {
+        kind: "page",
+        id: "findings",
+        source: "automatic",
+        scopeKey: "findings:/findings",
+        label: "Findings",
+        path: "/findings",
+      },
+    ],
+  };
+}
+
+function focusedFindingsContext(): LighthouseContextEnvelope {
+  const context = findingsContext();
+  return {
+    ...context,
+    items: [
+      ...context.items,
+      {
+        kind: "finding",
+        id: "finding-1",
+        source: "focused",
+        scopeKey: "findings:/findings",
+        label: "Focused finding",
+        findingId: "finding-1",
+        checkId: "aws_s3_bucket_public_access",
+      },
+    ],
+  };
+}
+
+function oversizedFindingsContext(): LighthouseContextEnvelope {
+  const context = findingsContext();
+  return {
+    ...context,
+    items: [
+      ...context.items,
+      {
+        kind: "finding",
+        id: "finding-1",
+        source: "selection",
+        scopeKey: "findings:/findings",
+        label: "Selected finding",
+        findingId: "finding-1",
+      },
+      ...Array.from({ length: 6 }, (_, index) => ({
+        kind: "finding" as const,
+        id: `summary-${index}`,
+        source: "automatic" as const,
+        scopeKey: "findings:/findings",
+        label: `Summary ${index} ${"x".repeat(240)}`,
+        findingId: `summary-${index}`,
+        checkId: `check-${index}-${"y".repeat(240)}`,
+        providerUid: `provider-${index}-${"z".repeat(237)}`,
+      })),
     ],
   };
 }

@@ -26,6 +26,7 @@ const CLOUD_UPGRADE_UTM_CONTENT = {
   [CLOUD_UPGRADE_FEATURE.CROSS_PROVIDER_COMPLIANCE]:
     "cross-provider-compliance",
   [CLOUD_UPGRADE_FEATURE.FINDING_TRIAGE]: "findings",
+  [CLOUD_UPGRADE_FEATURE.GCP_ORGANIZATIONS]: "gcp-organization",
   [CLOUD_UPGRADE_FEATURE.JIRA_DISPATCH]: "jira-dispatch",
   [CLOUD_UPGRADE_FEATURE.LIGHTHOUSE_AI]: "lighthouse-ai",
   [CLOUD_UPGRADE_FEATURE.GENERAL]: "general",
@@ -66,6 +67,17 @@ export const CLOUD_UPGRADE_CONTENT = {
     ],
     primaryCta: "Set Up AWS Organizations in Prowler Cloud",
   },
+  [CLOUD_UPGRADE_FEATURE.GCP_ORGANIZATIONS]: {
+    title: "Add Your Entire GCP Organization",
+    description:
+      "Discover folders and projects, then manage them from one place.",
+    benefits: [
+      "Discover folders and projects automatically",
+      "Choose exactly which projects to onboard",
+      "Apply schedules across the selected projects",
+    ],
+    primaryCta: "Set Up GCP Organizations in Prowler Cloud",
+  },
   [CLOUD_UPGRADE_FEATURE.CLI_IMPORT]: {
     title: "Bring CLI Findings into One Cloud View",
     description:
@@ -83,6 +95,7 @@ export const CLOUD_UPGRADE_CONTENT = {
       "Replace separate scan reports with a consolidated compliance view.",
     benefits: [
       "Compare framework posture across providers",
+      "Roll up every account in a Provider Group",
       "Find coverage gaps without switching scans",
       "Generate a consolidated compliance report",
     ],

@@ -658,7 +658,7 @@ uv run pytest -n auto \
   tests/lib/outputs/compliance/
 ```
 
-## Version handling
+## Version Handling
 
 Prowler matches frameworks by concatenating `Framework` and `Version`. A missing or empty `Version` collapses several frameworks to the same key and breaks CLI filtering with `--compliance`.
 
@@ -756,7 +756,7 @@ uv run pytest -n auto tests/lib/check/universal_compliance_models_test.py \
 
 For guidance on writing Prowler SDK tests, refer to [Unit Testing](/developer-guide/unit-testing).
 
-## Running and listing your framework
+## Running and Listing Your Framework
 
 Once the file is in place, the CLI auto-discovers it:
 
@@ -769,7 +769,7 @@ prowler <provider> --compliance <framework_key> --list-compliance-requirements <
 
 For end-user-facing tutorials (recommended for high-profile frameworks), add a dedicated page under `docs/user-guide/compliance/tutorials/` and register it in the `"Compliance"` group of `docs/docs.json`. See `docs/user-guide/compliance/tutorials/threatscore.mdx` as a reference.
 
-## Submitting the pull request
+## Submitting the Pull Request
 
 Before opening the pull request:
 
@@ -794,7 +794,7 @@ The following issues are the most common when contributing a compliance framewor
 - **CSV file is missing after the scan (legacy).** The transformer class is not registered in `prowler/lib/outputs/compliance/compliance_output.py`, or `transform()` raises silently. Run the scan with `--log-level DEBUG`.
 - **Findings do not roll up under a requirement.** A check listed in `Checks` either does not exist for that provider or is spelled incorrectly. Run `--list-checks | grep <check_name>` to confirm, or run the check-existence cross-check from "Validating Your Framework".
 
-## Reference examples
+## Reference Examples
 
 Use the following files as templates when modeling a new contribution.
 
