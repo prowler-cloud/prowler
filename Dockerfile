@@ -14,6 +14,20 @@ ENV TRIVY_VERSION=${TRIVY_VERSION}
 ARG ZIZMOR_VERSION=1.24.1
 ENV ZIZMOR_VERSION=${ZIZMOR_VERSION}
 
+# Checksums of the third-party binaries fetched below. They are pinned here rather
+# than downloaded alongside the artefact: a compromised release would ship a matching
+# checksum file. CVE-2026-33634 was exactly that -- a malicious Trivy release published
+# with stolen credentials.
+# Trivy and PowerShell values are the vendors' published checksums. zizmor publishes
+# none, so its values were computed from the current artefacts and pin them against
+# future substitution.
+ARG TRIVY_SHA256_AMD64=bbb64b9695866ce4a7a8f5c9592002c5961cab378577fa3f8a040df362b9b2ea
+ARG TRIVY_SHA256_ARM64=2ca2c023109c2db6b2b77366b6717291452d4531167377d95c79547f0c8e3467
+ARG POWERSHELL_SHA256_AMD64=492ff26bb958336bf61e597ce19e07648b4003bd2a08659e02f0e3e0446ebfe0
+ARG POWERSHELL_SHA256_ARM64=2503b71da3e83635592b092df59a0aca4c3606b4d9b068217bb00be989cb0d56
+ARG ZIZMOR_SHA256_AMD64=a8000f3c683319a523d3b20df0e75457ba591f049cfcbfa98966631b56733c03
+ARG ZIZMOR_SHA256_ARM64=d66e37ef8a375fb07939c630ebf9709a6e0f20242bdc3faf672a7ed97e0b768d
+
 # hadolint ignore=DL3008
 RUN apt-get update && apt-get install -y --no-install-recommends \
     wget libicu76 libunwind8 libssl3 libcurl4 ca-certificates apt-transport-https gnupg \
@@ -29,6 +43,8 @@ RUN ARCH=$(uname -m) && \
     else \
         echo "Unsupported architecture: $ARCH" && exit 1 ; \
     fi && \
+    if [ "$ARCH" = "x86_64" ]; then EXPECT="$POWERSHELL_SHA256_AMD64" ; else EXPECT="$POWERSHELL_SHA256_ARM64" ; fi && \
+    echo "$EXPECT  /tmp/powershell.tar.gz" | sha256sum -c - && \
     mkdir -p /opt/microsoft/powershell/7 && \
     tar zxf /tmp/powershell.tar.gz -C /opt/microsoft/powershell/7 && \
     chmod +x /opt/microsoft/powershell/7/pwsh && \
@@ -45,6 +61,8 @@ RUN ARCH=$(uname -m) && \
         echo "Unsupported architecture for Trivy: $ARCH" && exit 1 ; \
     fi && \
     wget --progress=dot:giga "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_${TRIVY_ARCH}.tar.gz" -O /tmp/trivy.tar.gz && \
+    if [ "$ARCH" = "x86_64" ]; then EXPECT="$TRIVY_SHA256_AMD64" ; else EXPECT="$TRIVY_SHA256_ARM64" ; fi && \
+    echo "$EXPECT  /tmp/trivy.tar.gz" | sha256sum -c - && \
     tar zxf /tmp/trivy.tar.gz -C /tmp && \
     mv /tmp/trivy /usr/local/bin/trivy && \
     chmod +x /usr/local/bin/trivy && \
@@ -63,6 +81,8 @@ RUN ARCH=$(uname -m) && \
         echo "Unsupported architecture for zizmor: $ARCH" && exit 1 ; \
     fi && \
     wget --progress=dot:giga "https://github.com/zizmorcore/zizmor/releases/download/v${ZIZMOR_VERSION}/zizmor-${ZIZMOR_ARCH}.tar.gz" -O /tmp/zizmor.tar.gz && \
+    if [ "$ARCH" = "x86_64" ]; then EXPECT="$ZIZMOR_SHA256_AMD64" ; else EXPECT="$ZIZMOR_SHA256_ARM64" ; fi && \
+    echo "$EXPECT  /tmp/zizmor.tar.gz" | sha256sum -c - && \
     mkdir -p /tmp/zizmor-extract && \
     tar zxf /tmp/zizmor.tar.gz -C /tmp/zizmor-extract && \
     mv /tmp/zizmor-extract/zizmor /usr/local/bin/zizmor && \
