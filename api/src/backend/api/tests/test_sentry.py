@@ -294,13 +294,14 @@ def test_before_send_does_not_fingerprint_exception_events():
 @pytest.mark.parametrize("fingerprint", [["scope-fingerprint"], []])
 def test_before_send_keeps_existing_fingerprint(fingerprint):
     """A fingerprint set by a scope or an integration is never overwritten."""
+    expected_fingerprint = fingerprint.copy()
     event = {"fingerprint": fingerprint}
 
     before_send(
         event, _filesystem_hint(OSError(errno.ENOSPC, "No space left on device"))
     )
 
-    assert event["fingerprint"] == fingerprint
+    assert event["fingerprint"] == expected_fingerprint
 
 
 def test_before_send_ignores_suppressed_context():
