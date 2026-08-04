@@ -1,1 +1,0 @@
-README now documents the Cloud-only `prowler_cloud_*` tools available on the hosted Prowler MCP (alerts, findings triage, scan scheduling, scan configurations), and corrects the Prowler Hub check count and the scan orchestration capabilities

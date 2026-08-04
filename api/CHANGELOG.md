@@ -4,6 +4,29 @@ All notable changes to the **Prowler API** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [1.38.0] (Prowler v5.37.0)
+
+### 🚀 Added
+
+- Attack Paths: four AWS privilege-escalation detection queries from pathfinding.cloud: cross-account role trust (STS-002), wildcard role trust (STS-003), user permissions-boundary removal (IAM-022), and IAM Identity Center permission-set escalation (SSO-001) [(#11460)](https://github.com/prowler-cloud/prowler/pull/11460)
+
+### 🐞 Fixed
+
+- Attack Paths IAM privilege-escalation queries no longer build an all-nodes × all-resource-items cartesian product, fixing runtime errors and timeouts on accounts with many IAM roles, users, or groups [(#12136)](https://github.com/prowler-cloud/prowler/pull/12136)
+- `task_args` serialization no longer returns HTTP 500 errors when Celery truncates stored task keyword arguments [(#12165)](https://github.com/prowler-cloud/prowler/pull/12165)
+- Attack Paths predefined queries on migrated graphs are now scoped with the provider label, letting the graph database seed from its label index instead of a global label scan and preventing query timeouts on Neptune [(#12167)](https://github.com/prowler-cloud/prowler/pull/12167)
+- Authentication with an API key whose owning user was deleted now returns `401` instead of an unhandled `AttributeError`, and user deletion now revokes the user's API keys across all their tenants [(#12210)](https://github.com/prowler-cloud/prowler/pull/12210)
+- AWS Security Hub integrations now persist successful connection checks during finding delivery so their connection status and last checked timestamp stay current [(#12212)](https://github.com/prowler-cloud/prowler/pull/12212)
+- SAML users without a `userType` attribute and without an existing role in the SAML tenant now receive a least-privilege `read_only` fallback role; a numeric suffix is used when that name belongs to a role with different permissions [(#12223)](https://github.com/prowler-cloud/prowler/pull/12223)
+- Social signups create users and authentication records in one database transaction, preventing incomplete accounts when provisioning fails [(#12245)](https://github.com/prowler-cloud/prowler/pull/12245)
+- Requesting integrations with a sparse fieldset that leaves out `configuration` no longer returns HTTP 500 errors when the tenant has a Jira integration [(#12261)](https://github.com/prowler-cloud/prowler/pull/12261)
+
+### 🔐 Security
+
+- Provider deletion and connection checks, scan creation, provider secrets, provider groups, and daily schedules now respect role provider-group visibility [(#12216)](https://github.com/prowler-cloud/prowler/pull/12216)
+
+---
+
 ## [1.37.0] (Prowler v5.36.0)
 
 ### 🔄 Changed
