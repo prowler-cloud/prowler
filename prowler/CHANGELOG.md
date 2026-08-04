@@ -4,6 +4,29 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [5.37.1] (Prowler v5.37.1)
+
+### 🔄 Changed
+
+- Huawei Cloud exception codes moved from `19000`-`19007` to `20000`-`20007`, resolving a collision with E2E Networks which reserves `19000`-`19999` [(#12306)](https://github.com/prowler-cloud/prowler/pull/12306)
+
+### 🐞 Fixed
+
+- Checks registered through the `prowler.checks.<provider>` entry-point group can now run against built-in providers. The built-in probe in `_resolve_check_module` used a bare `find_spec`, which imports the parent package to search it and so raised `ModuleNotFoundError` for a plug-in check instead of returning `None`, aborting the lookup before the entry points were consulted. Such a check was discovered, listed and selected for execution, then silently produced no findings. [(#12312)](https://github.com/prowler-cloud/prowler/pull/12312)
+- Entra Conditional Access guest-user checks no longer report false FAILs: microsoft-kiota packages bumped to 1.9.10 so `guestOrExternalUserTypes` (a flags enum Graph serializes as a comma-separated string) deserializes correctly instead of returning an empty list [(#12315)](https://github.com/prowler-cloud/prowler/pull/12315)
+
+### 🔐 Security
+
+- Bumped the Compose `postgres` and `valkey` images, clearing 10 critical CVEs [(#12307)](https://github.com/prowler-cloud/prowler/pull/12307)
+- Bumped PowerShell, Trivy, uv and `joserfc` in the container images, clearing 14 high-severity CVEs from the SDK and API images [(#12307)](https://github.com/prowler-cloud/prowler/pull/12307)
+- Bumped `httplib2` to 0.32.0 and `pyasn1` to 0.6.4 to resolve known CVEs [(#12307)](https://github.com/prowler-cloud/prowler/pull/12307)
+- The SDK container image now builds on Debian 13 (trixie), clearing the unfixable `libsqlite3-0` and `zlib1g` criticals [(#12307)](https://github.com/prowler-cloud/prowler/pull/12307)
+- Bumped `cryptography` to 48.0.1 to resolve GHSA-537c-gmf6-5ccf, along with the `oci`, `alibabacloud-tea-openapi`, `darabonba-core` and `py-ocsf-models` bumps it requires [(#12307)](https://github.com/prowler-cloud/prowler/pull/12307)
+- Removed `pip` from the SDK container image, clearing two high-severity CVEs in the vendored copies of `setuptools` and `msgpack` [(#12307)](https://github.com/prowler-cloud/prowler/pull/12307)
+- Removed `wget`, `gnupg` and `apt-transport-https` from the SDK runtime image [(#12307)](https://github.com/prowler-cloud/prowler/pull/12307)
+
+---
+
 ## [5.37.0] (Prowler v5.37.0)
 
 ### 🚀 Added
