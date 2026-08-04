@@ -203,6 +203,21 @@ describe("SamlConfigForm", () => {
     ).toHaveLength(0);
   });
 
+  it("shows a contextual error when an additional domain is required", async () => {
+    // Given
+    isCloudMock.mockReturnValue(true);
+    const user = userEvent.setup();
+    render(<SamlConfigForm setIsOpen={vi.fn()} />);
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Add domain" }));
+
+    // Then
+    expect(
+      screen.getByText("Additional email domain is required"),
+    ).toBeVisible();
+  });
+
   it("keeps the maximum alias set inside a compact scroll region", () => {
     // Given
     isCloudMock.mockReturnValue(true);

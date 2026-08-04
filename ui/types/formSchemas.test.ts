@@ -328,6 +328,23 @@ describe("samlConfigFormSchema", () => {
     expect(result.success && result.data.additional_email_domains).toEqual([]);
   });
 
+  it("uses contextual required messages for SAML domains", () => {
+    // Given / When
+    const result = samlConfigFormSchema.safeParse({
+      email_domain: "",
+      additional_email_domains: [""],
+      metadata_xml: "<EntityDescriptor />",
+    });
+
+    // Then
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    expect(result.error.flatten().fieldErrors).toMatchObject({
+      email_domain: ["Email domain is required"],
+      additional_email_domains: ["Additional email domain is required"],
+    });
+  });
+
   it("rejects duplicate additional domains after normalization", () => {
     // Given / When
     const result = samlConfigFormSchema.safeParse({

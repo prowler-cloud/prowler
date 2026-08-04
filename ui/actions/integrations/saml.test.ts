@@ -116,6 +116,25 @@ describe("SAML configuration actions", () => {
     });
   });
 
+  it("rejects updates without a SAML configuration ID", async () => {
+    // Given
+    const formData = buildFormData({
+      additionalEmailDomains: ["alias.example.com"],
+    });
+
+    // When
+    const result = await updateSamlConfig(null, formData);
+
+    // Then
+    expect(result).toEqual({
+      errors: {
+        general: "SAML configuration ID is required for update.",
+      },
+    });
+    expect(getAuthHeadersMock).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("omits additional domains in OSS while preserving the SAML configuration flow", async () => {
     // Given
     vi.stubEnv("UI_CLOUD_ENABLED", "false");

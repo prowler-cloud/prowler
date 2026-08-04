@@ -156,8 +156,16 @@ export const updateSamlConfig = async (
   _prevState: SamlConfigurationActionState,
   formData: FormData,
 ): Promise<SamlConfigurationActionState> => {
-  const headers = await getAuthHeaders({ contentType: true });
   const id = String(formData.get("id") || "");
+  if (!id) {
+    return {
+      errors: {
+        general: "SAML configuration ID is required for update.",
+      },
+    };
+  }
+
+  const headers = await getAuthHeaders({ contentType: true });
   const validatedData = parseSamlUpdateFormData(formData);
 
   if (!validatedData.success) {

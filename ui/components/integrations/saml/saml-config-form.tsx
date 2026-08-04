@@ -33,7 +33,7 @@ import { useRuntimeConfig } from "@/hooks/use-runtime-config";
 import { isCloud } from "@/lib/shared/env";
 import { useCloudUpgradeStore } from "@/store";
 import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
-import { samlEmailDomainSchema } from "@/types/formSchemas";
+import { samlAdditionalEmailDomainSchema } from "@/types/formSchemas";
 import type { SamlConfiguration } from "@/types/saml";
 
 const validateXMLContent = (
@@ -160,7 +160,9 @@ export const SamlConfigForm = ({
   );
 
   const addAdditionalDomain = () => {
-    const validation = samlEmailDomainSchema.safeParse(additionalDomainDraft);
+    const validation = samlAdditionalEmailDomainSchema.safeParse(
+      additionalDomainDraft,
+    );
     if (!validation.success) {
       setAdditionalDomainsError(validation.error.issues[0]?.message ?? null);
       return;
