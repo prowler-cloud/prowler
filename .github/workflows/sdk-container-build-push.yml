@@ -202,7 +202,7 @@ jobs:
           tags: |
             ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.setup.outputs.latest_tag }}-${{ matrix.arch }}
           labels: |
-            org.opencontainers.image.title=Prowler
+            org.opencontainers.image.title=Prowler CLI
             org.opencontainers.image.description=Open Source security tool for cloud security assessments, audits, incident response, continuous monitoring, hardening and forensics readiness
             org.opencontainers.image.vendor=ProwlerPro, Inc.
             org.opencontainers.image.source=https://github.com/${{ github.repository }}

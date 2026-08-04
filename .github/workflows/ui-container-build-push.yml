@@ -148,8 +148,8 @@ jobs:
           tags: |
             ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.setup.outputs.short-sha }}-${{ matrix.arch }}
           labels: |
-            org.opencontainers.image.title=Prowler UI
-            org.opencontainers.image.description=Prowler's web UI (Next.js)
+            org.opencontainers.image.title=Prowler Local Server UI
+            org.opencontainers.image.description=Web UI for Prowler Local Server (Next.js)
             org.opencontainers.image.vendor=ProwlerPro, Inc.
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}

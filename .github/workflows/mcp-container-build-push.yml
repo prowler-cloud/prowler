@@ -145,7 +145,7 @@ jobs:
           tags: |
             ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.setup.outputs.short-sha }}-${{ matrix.arch }}
           labels: |
-            org.opencontainers.image.title=Prowler MCP Server
+            org.opencontainers.image.title=Prowler MCP
             org.opencontainers.image.description=Model Context Protocol server for Prowler
             org.opencontainers.image.vendor=ProwlerPro, Inc.
             org.opencontainers.image.source=https://github.com/${{ github.repository }}

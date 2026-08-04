@@ -163,8 +163,8 @@ jobs:
           tags: |
             ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.setup.outputs.short-sha }}-${{ matrix.arch }}
           labels: |
-            org.opencontainers.image.title=Prowler API
-            org.opencontainers.image.description=Prowler's API (Django/DRF)
+            org.opencontainers.image.title=Prowler Local Server API
+            org.opencontainers.image.description=API for Prowler Local Server (Django/DRF)
             org.opencontainers.image.vendor=ProwlerPro, Inc.
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
