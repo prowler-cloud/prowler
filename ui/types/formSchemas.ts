@@ -726,7 +726,7 @@ const createSamlEmailDomainSchema = (requiredMessage: string) =>
   z
     .string()
     .trim()
-    .min(1, { message: requiredMessage })
+    .min(1, { error: requiredMessage })
     .transform((domain) => domain.toLowerCase());
 
 export const samlEmailDomainSchema = createSamlEmailDomainSchema(
@@ -742,8 +742,7 @@ const samlConfigDomainSchema = z.object({
   additional_email_domains: z
     .array(samlAdditionalEmailDomainSchema)
     .max(19, {
-      message:
-        "A SAML configuration supports up to 19 additional email domains.",
+      error: "A SAML configuration supports up to 19 additional email domains.",
     })
     .default([]),
 });
@@ -751,7 +750,7 @@ const samlConfigDomainSchema = z.object({
 const samlMetadataXmlSchema = z
   .string()
   .trim()
-  .min(1, { message: "Metadata XML is required" });
+  .min(1, { error: "Metadata XML is required" });
 
 const validateSamlDomains = (
   data: z.output<typeof samlConfigDomainSchema>,
