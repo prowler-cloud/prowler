@@ -160,18 +160,38 @@ export abstract class BrowserHarness<TFixture> {
     label?: string,
     intervalMs = 30,
   ): Promise<T> {
-    return vi.waitFor(
-      () => {
-        const v = fn();
-        if (!v) {
-          throw new WaitForPending(
-            `waitFor: timed out waiting for ${label ?? "predicate to be truthy"}`,
-          );
-        }
-        return v;
-      },
-      { timeout: timeoutMs, interval: intervalMs },
-    ) as Promise<T>;
+    // `vi.waitFor` rejects with the *last* callback error, so a predicate that
+    // throws and then goes falsy would time out as a bare `WaitForPending`.
+    // Keep its error so the sentinel never outranks a real one.
+    let predicateThrew = false;
+    let predicateError: unknown;
+
+    try {
+      return (await vi.waitFor(
+        () => {
+          let v: T | null | undefined | false;
+          try {
+            v = fn();
+          } catch (error) {
+            predicateThrew = true;
+            predicateError = error;
+            throw error;
+          }
+          if (!v) {
+            throw new WaitForPending(
+              `waitFor: timed out waiting for ${label ?? "predicate to be truthy"}`,
+            );
+          }
+          return v;
+        },
+        { timeout: timeoutMs, interval: intervalMs },
+      )) as T;
+    } catch (error) {
+      if (error instanceof WaitForPending && predicateThrew) {
+        throw predicateError;
+      }
+      throw error;
+    }
   }
 
   /**

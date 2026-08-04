@@ -39,7 +39,22 @@ interface MountOptions {
   hierarchyFailure?: HierarchyReadFailure;
   /** Injected scheduling access. Default none, which is how OSS renders. */
   scanScheduling?: ScanSchedulingAccess;
+  /** Make the injected loader reject, as a failed access read does. */
+  scanSchedulingFails?: boolean;
 }
+
+/** Injected loader: absent (OSS), resolving, or rejecting like a failed read. */
+const schedulingLoader = (
+  access: ScanSchedulingAccess | undefined,
+  fails: boolean,
+): (() => Promise<ScanSchedulingAccess>) | undefined => {
+  if (fails) {
+    return async () => {
+      throw new Error("scan-scheduling lookup failed");
+    };
+  }
+  return access ? async () => access : undefined;
+};
 
 export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
   get applyCallCount(): number {
@@ -143,6 +158,7 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
     openWizard = true,
     hierarchyFailure = HIERARCHY_READ_FAILURE.NONE,
     scanScheduling,
+    scanSchedulingFails = false,
   }: MountOptions = {}): Promise<void> {
     this.seedWizardUrl(openWizard);
     worker.use(...handlersForOrganizations(this.fixture, { hierarchyFailure }));
@@ -151,9 +167,10 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
     render(
       await ProvidersTabContent({
         searchParams: this.searchParams(),
-        loadScanScheduling: scanScheduling
-          ? async () => scanScheduling
-          : undefined,
+        loadScanScheduling: schedulingLoader(
+          scanScheduling,
+          scanSchedulingFails,
+        ),
       }),
     );
   }

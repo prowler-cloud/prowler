@@ -6,7 +6,10 @@ import {
   SCAN_CONFIGURATION_LIST_STATUS,
   type ScanConfigurationListState,
 } from "@/types/scan-configurations";
-import type { ScanSchedulingAccess } from "@/types/schedules";
+import {
+  SCAN_SCHEDULE_CAPABILITY,
+  type ScanSchedulingAccess,
+} from "@/types/schedules";
 
 import { loadProvidersAccountsViewData } from "./providers-page.utils";
 
@@ -37,9 +40,22 @@ const loadScanConfigs = async (
   }
 };
 
+/**
+ * A failed lookup must not read as "no lookup": `null` lets the consumers fall
+ * back to the environment default, which is `ADVANCED` in Cloud — so an access
+ * read that throws would hand out the very actions it gates. Deny them until it
+ * recovers. `isScanLimitReached` stays false because no limit was observed; the
+ * capability is what blocks.
+ */
+const SCAN_SCHEDULING_UNAVAILABLE: ScanSchedulingAccess = {
+  capability: SCAN_SCHEDULE_CAPABILITY.BLOCKED,
+  isScanLimitReached: false,
+};
+
 const resolveScanScheduling = async (
   load?: () => Promise<ScanSchedulingAccess>,
 ): Promise<ScanSchedulingAccess | null> => {
+  // Only an omitted loader means "this deployment has no scheduling gate".
   if (!load) return null;
 
   try {
@@ -48,7 +64,7 @@ const resolveScanScheduling = async (
     // Suspense does not catch errors: rejecting would hand the whole route
     // segment to the error boundary instead of degrading one affordance.
     console.error("Error loading scan scheduling access:", error);
-    return null;
+    return SCAN_SCHEDULING_UNAVAILABLE;
   }
 };
 

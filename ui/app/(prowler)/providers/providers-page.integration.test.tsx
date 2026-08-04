@@ -252,4 +252,15 @@ describe("Providers page — injected scan-scheduling access", () => {
     const actions = await harness.actionLabelsFor(AWS_ORG_NAME);
     expect(actions).not.toContain("Edit Scan Schedule");
   }, 30000);
+
+  it("denies the editor when the injected loader fails", async () => {
+    const harness = new ProvidersPageHarness(awsHierarchyFixture());
+    await harness.mount({ openWizard: false, scanSchedulingFails: true });
+    await harness.waitForOrganizationRow(AWS_ORG_NAME);
+
+    // A failed read must not land on the same ADVANCED default as an omitted
+    // one, which is what the first case in this block asserts.
+    const actions = await harness.actionLabelsFor(AWS_ORG_NAME);
+    expect(actions).not.toContain("Edit Scan Schedule");
+  }, 30000);
 });

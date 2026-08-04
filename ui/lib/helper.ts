@@ -375,8 +375,11 @@ export const checkTaskStatus = async (
       state === "scheduled" ||
       state === "executing"
     ) {
-      // Continue waiting if the task is still in progress
-      await new Promise((resolve) => setTimeout(resolve, retryDelay));
+      // Continue waiting if the task is still in progress — but not after the
+      // final read, whose delay only postpones "Max retries exceeded".
+      if (attempt < maxRetries - 1) {
+        await new Promise((resolve) => setTimeout(resolve, retryDelay));
+      }
       continue;
     }
 
