@@ -9,6 +9,11 @@
 #
 # `expired_at` forces re-review. Keep the dates staggered.
 #
+# The four entries below are currently redundant: the scan runs with ignore-unfixed,
+# and none of them has a published fix, so they never reach the gate either way. They
+# are kept because the reasoning is what justifies accepting them, and because they
+# apply again the moment any of them gains a fix we do not take.
+#
 # perl-base is Debian "Essential: yes". Trivy spreads src:perl CVEs across every
 # binary package built from that source, so perl-base is flagged for modules only
 # perl-modules-* ships. Neither image installs those, and nothing in either

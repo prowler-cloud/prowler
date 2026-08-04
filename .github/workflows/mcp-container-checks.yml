@@ -132,8 +132,8 @@ jobs:
         with:
           image-name: ${{ env.IMAGE_NAME }}
           image-tag: ${{ github.sha }}
-          fail-on-critical: 'true'
-          severity: 'CRITICAL'
+          fail-on-severity: 'high'
+          severity: 'CRITICAL,HIGH'
 
       - name: Scan MCP container with Grype
         if: steps.check-changes.outputs.any_changed == 'true'
