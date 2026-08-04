@@ -80,12 +80,6 @@ export const ComplianceOverviewGrid = ({
       providerType: providerType!,
     });
 
-  const pinnedFrameworks = watchlistEnabled
-    ? filteredFrameworks.filter((compliance) => isPinned(compliance.id))
-    : [];
-  const otherFrameworks = watchlistEnabled
-    ? filteredFrameworks.filter((compliance) => !isPinned(compliance.id))
-    : filteredFrameworks;
   // Counted before the search, so a term that matches nothing pinned does not
   // make the empty state claim the organization has pinned nothing.
   const pinnedTotal = watchlistEnabled
@@ -93,11 +87,9 @@ export const ComplianceOverviewGrid = ({
     : 0;
 
   const filterToWatchlist = watchlistEnabled && showOnlyWatchlist;
-  // Pinned frameworks render first even unfiltered, so the tour anchor and
-  // "open the first framework" step follow the same order the user sees.
   const visibleFrameworks = filterToWatchlist
-    ? pinnedFrameworks
-    : [...pinnedFrameworks, ...otherFrameworks];
+    ? filteredFrameworks.filter((compliance) => isPinned(compliance.id))
+    : filteredFrameworks;
   const tourAnchorId = visibleFrameworks[0]?.id;
 
   const resetSearch = () => {

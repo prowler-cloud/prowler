@@ -208,7 +208,7 @@ describe("CrossProviderOverview watchlist", () => {
       canManage,
     });
 
-  it("renders every universal framework, pinned ones first", async () => {
+  it("keeps the configured framework order when one is pinned", async () => {
     // One card, one entry: the catalog keys a universal framework under `*`.
     withWatchlist([catalogEntry(DORA_ID, "*", true)], ["aws", "azure"]);
 
@@ -216,8 +216,10 @@ describe("CrossProviderOverview watchlist", () => {
 
     const cards = screen.getAllByTestId("framework-card");
     expect(cards).toHaveLength(CROSS_PROVIDER_FRAMEWORKS.length);
-    expect(cards[0]).toHaveTextContent("DORA");
-    expect(cards[0]).toHaveAttribute("data-pin-state", "pinned");
+    expect(cards.map((card) => card.textContent)).toEqual(
+      CROSS_PROVIDER_FRAMEWORKS.map((framework) => framework.title),
+    );
+    expect(cards[2]).toHaveAttribute("data-pin-state", "pinned");
   });
 
   it("narrows the grid to the pinned frameworks when the filter is on", async () => {

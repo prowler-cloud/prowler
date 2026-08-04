@@ -44,10 +44,7 @@ export const CrossProviderFrameworkGrid = ({
   const filterToWatchlist = watchlistEnabled && showOnlyWatchlist;
   const isPinned = (card: CrossProviderCard) =>
     card.watchlist.state === WATCHLIST_PIN_STATE.PINNED;
-  // Pinned first even unfiltered, matching the other two surfaces.
-  const visibleCards = filterToWatchlist
-    ? cards.filter(isPinned)
-    : [...cards.filter(isPinned), ...cards.filter((card) => !isPinned(card))];
+  const visibleCards = filterToWatchlist ? cards.filter(isPinned) : cards;
 
   if (filterToWatchlist && visibleCards.length === 0) {
     return <WatchlistEmptyState message={NOTHING_PINNED_HINT} />;

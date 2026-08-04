@@ -131,6 +131,21 @@ describe("ComplianceOverviewGrid with a curated watchlist", () => {
     catalogEntry("iso27001_aws", false),
   ];
 
+  it("keeps the framework order when a later card is pinned", () => {
+    renderGrid({
+      catalogEntries: [
+        catalogEntry("cis_1.4_aws", false),
+        catalogEntry("gdpr_aws", true),
+        catalogEntry("iso27001_aws", false),
+      ],
+      providerType: "aws",
+    });
+
+    expect(
+      screen.getAllByTestId(/^card-/).map((card) => card.textContent),
+    ).toEqual(["CIS", "GDPR", "ISO27001"]);
+  });
+
   it("narrows the grid to the pinned frameworks when the filter is on", () => {
     useComplianceWatchlistViewStore.setState({ showOnlyWatchlist: true });
 
@@ -242,7 +257,7 @@ describe("ComplianceOverviewGrid tour anchor", () => {
   const searchHandlers = () =>
     capturedStepHandlers.current[VIEW_COMPLIANCE_TOUR_TARGETS.SEARCH];
 
-  it("moves the anchor to the first pinned card, matching the render order", () => {
+  it("keeps the anchor on the first rendered card regardless of pin state", () => {
     renderGrid({
       catalogEntries: [
         catalogEntry("cis_1.4_aws", false),
@@ -254,7 +269,7 @@ describe("ComplianceOverviewGrid tour anchor", () => {
 
     expect(
       document.querySelector('[data-tour-id="view-compliance-frameworks"]'),
-    ).toHaveTextContent("GDPR");
+    ).toHaveTextContent("CIS");
   });
 
   it("waits for the framework card when one will render", async () => {
