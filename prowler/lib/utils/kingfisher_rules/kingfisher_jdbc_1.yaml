@@ -55,6 +55,20 @@ rules:
           [a-z0-9+.-]{1,32}
           :
           [^\s"'<>/@:?&;\#]{1,64} / [^\s"'<>/@?&;\#]{1,64} @
+          # MySQL Connector/J host-list credentials. Keep both forms anchored
+          # to the MySQL prefix so this syntax cannot affect other drivers.
+        | jdbc:mysql://
+          (?:
+              \(
+              [ \t]* host [ \t]* = [ \t]* [^,()\s"'<>/]{1,128}
+              [ \t]* , [ \t]* user [ \t]* = [ \t]* [^,()\s"'<>/]{1,64}
+              [ \t]* , [ \t]* password [ \t]* = [ \t]* [^,()\s"'<>/]{1,128}
+              [ \t]* \)
+            | address [ \t]* =
+              [ \t]* \( [ \t]* host [ \t]* = [ \t]* [^()\s"'<>/]{1,128} [ \t]* \)
+              [ \t]* \( [ \t]* user [ \t]* = [ \t]* [^()\s"'<>/]{1,64} [ \t]* \)
+              [ \t]* \( [ \t]* password [ \t]* = [ \t]* [^()\s"'<>/]{1,128} [ \t]* \)
+          )
         )
         [^\s"'<>,(){}\[\]]{0,192}
       )

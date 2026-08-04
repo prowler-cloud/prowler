@@ -338,6 +338,13 @@ class Test_detect_secrets_scan_batch_jdbc:
             "jdbc:mysql://prod.internal:3306/inventory?user=admin",  # trufflehog:ignore
             # An empty password is not a credential.
             "jdbc:postgresql://pg.corp.internal/app?password=",  # trufflehog:ignore
+            "jdbc:mysql://(host=db.internal,user=alice,password=)/app",  # trufflehog:ignore
+            "jdbc:mysql://address=(host=db.internal)(user=alice)(password=)/app",  # trufflehog:ignore
+            # Connector/J host-list credentials require a non-empty username.
+            "jdbc:mysql://(host=db.internal,user=,password=Zq81ncPl42)/app",  # trufflehog:ignore
+            "jdbc:mysql://address=(host=db.internal)(user=)(password=Zq81ncPl42)/app",  # trufflehog:ignore
+            # Connector/J host-list syntax must not apply to other drivers.
+            "jdbc:postgresql://(host=db.internal,user=alice,password=Zq81ncPl42)/app",  # trufflehog:ignore
             # An `@` in the query string must not turn the host and port into
             # `user:password`: without the userinfo alternative being anchored
             # to `//`, `db.internal:3306?user=alice` reads as a credential.
@@ -366,6 +373,9 @@ class Test_detect_secrets_scan_batch_jdbc:
         [
             # URL userinfo.
             "jdbc:mysql://admin:s3cr3t@prod.internal:3306/inventory",  # trufflehog:ignore
+            # MySQL Connector/J host-list credentials.
+            "jdbc:mysql://(host=db.internal,user=alice,password=Zq81ncPl42)/app",  # trufflehog:ignore
+            "jdbc:mysql://address=(host=db.internal)(user=alice)(password=Zq81ncPl42)/app",  # trufflehog:ignore
             # Password as a query parameter.
             "jdbc:postgresql://pg.corp.internal:5432/app?user=admin&password=Tr0ub4dor3",  # trufflehog:ignore
             "jdbc:postgresql://pg.corp.internal/app?password=Xk29fjWa02",  # trufflehog:ignore
