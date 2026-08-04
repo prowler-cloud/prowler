@@ -4936,7 +4936,7 @@ dependencies = [
 
 [[package]]
 name = "prowler-api"
-version = "1.39.0"
+version = "1.38.1"
 source = { virtual = "." }
 dependencies = [
     { name = "cartography" },
