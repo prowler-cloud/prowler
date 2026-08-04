@@ -54,6 +54,7 @@ jobs:
     timeout-minutes: 5
     outputs:
       prowler_version: ${{ steps.get-prowler-version.outputs.prowler_version }}
+      created: ${{ steps.get-prowler-version.outputs.created }}
       latest_tag: ${{ steps.get-prowler-version.outputs.latest_tag }}
       stable_tag: ${{ steps.get-prowler-version.outputs.stable_tag }}
     permissions:
@@ -86,6 +87,7 @@ jobs:
           fi
           echo "latest_tag=latest" >> "${GITHUB_OUTPUT}"
           echo "stable_tag=stable" >> "${GITHUB_OUTPUT}"
+          echo "created=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "${GITHUB_OUTPUT}"
 
   notify-release-started:
     if: github.repository == 'prowler-cloud/prowler' && (github.event_name == 'release' || github.event_name == 'workflow_dispatch')
@@ -207,8 +209,8 @@ jobs:
             org.opencontainers.image.vendor=ProwlerPro, Inc.
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
-            org.opencontainers.image.created=${{ github.event_name == 'release' && github.event.release.published_at || github.event.head_commit.timestamp }}
-            ${{ github.event_name == 'release' && format('org.opencontainers.image.version={0}', needs.setup.outputs.prowler_version) || '' }}
+            org.opencontainers.image.created=${{ needs.setup.outputs.created }}
+            org.opencontainers.image.version=${{ needs.setup.outputs.prowler_version }}
           cache-from: type=gha,scope=${{ matrix.arch }}
           cache-to: type=gha,mode=${{ github.event_name == 'pull_request' && 'min' || 'max' }},scope=${{ matrix.arch }}
 

@@ -42,6 +42,7 @@ jobs:
     timeout-minutes: 5
     outputs:
       short-sha: ${{ steps.set-short-sha.outputs.short-sha }}
+      created: ${{ steps.set-short-sha.outputs.created }}
     permissions:
       contents: read
     steps:
@@ -52,7 +53,9 @@ jobs:
 
       - name: Calculate short SHA
         id: set-short-sha
-        run: echo "short-sha=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+        run: |
+          echo "short-sha=${GITHUB_SHA::7}" >> "${GITHUB_OUTPUT}"
+          echo "created=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "${GITHUB_OUTPUT}"
 
   notify-release-started:
     if: github.repository == 'prowler-cloud/prowler' && (github.event_name == 'release' || github.event_name == 'workflow_dispatch')
@@ -168,8 +171,8 @@ jobs:
             org.opencontainers.image.vendor=ProwlerPro, Inc.
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
-            org.opencontainers.image.created=${{ github.event_name == 'release' && github.event.release.published_at || github.event.head_commit.timestamp }}
-            ${{ github.event_name == 'release' && format('org.opencontainers.image.version={0}', env.RELEASE_TAG) || '' }}
+            org.opencontainers.image.created=${{ needs.setup.outputs.created }}
+            ${{ (github.event_name == 'release' || github.event_name == 'workflow_dispatch') && format('org.opencontainers.image.version={0}', env.RELEASE_TAG) || '' }}
           cache-from: type=gha,scope=${{ matrix.arch }}
           cache-to: type=gha,mode=${{ github.event_name == 'pull_request' && 'min' || 'max' }},scope=${{ matrix.arch }}
 
