@@ -79,7 +79,7 @@ export const RiskSeverityChart = ({
   return (
     <Card
       variant="base"
-      className="flex min-h-[372px] min-w-[312px] flex-1 flex-col md:min-w-[380px]"
+      className="flex min-h-[372px] min-w-[485px] flex-1 flex-col"
     >
       <CardHeader>
         <CardTitle>Risk Severity</CardTitle>

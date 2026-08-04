@@ -28,10 +28,27 @@ describe("Overview page", () => {
 
   it("keeps the primary metric row horizontal at the lg container breakpoint", () => {
     expect(source).toMatch(
-      /className="flex flex-row flex-wrap items-stretch gap-6"/,
+      /className="flex flex-col gap-6 min-\[1304px\]:flex-row min-\[1304px\]:flex-wrap min-\[1304px\]:items-stretch"/,
     );
-    expect(source).not.toMatch(
-      /className="flex flex-col gap-6 xl:flex-row xl:flex-wrap xl:items-stretch"/,
+  });
+
+  it("keeps findings metric cards at their minimum readable width", () => {
+    const statusChartSource = readFileSync(
+      path.join(
+        currentDir,
+        "_overview/status-chart/_components/status-chart.tsx",
+      ),
+      "utf8",
     );
+    const riskSeveritySource = readFileSync(
+      path.join(
+        currentDir,
+        "_overview/risk-severity/_components/risk-severity-chart.tsx",
+      ),
+      "utf8",
+    );
+
+    expect(statusChartSource).toMatch(/min-w-\[485px\]/);
+    expect(riskSeveritySource).toMatch(/min-w-\[485px\]/);
   });
 });

@@ -93,7 +93,7 @@ export const StatusChart = ({
   return (
     <Card
       variant="base"
-      className="flex min-h-[372px] min-w-[312px] flex-1 flex-col justify-between md:min-w-[380px]"
+      className="flex min-h-[372px] min-w-[485px] flex-1 flex-col justify-between"
     >
       <CardHeader>
         <CardTitle>Check Findings</CardTitle>

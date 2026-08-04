@@ -115,7 +115,7 @@ export function ThreatScore({
   return (
     <Card
       variant="base"
-      className="flex min-h-[372px] w-full flex-col justify-between lg:max-w-[312px]"
+      className="flex min-h-[372px] w-full flex-col justify-between min-[1304px]:max-w-[312px]"
     >
       <CardHeader>
         <CardTitle>Prowler ThreatScore</CardTitle>
