@@ -1207,6 +1207,34 @@ describe("ResourceDetailDrawerContent — compliance navigation", () => {
     vi.unstubAllGlobals();
   });
 
+  it("should keep compliance logo canvases light in every navigation state", () => {
+    // Given
+    mockGetComplianceIcon.mockReturnValue("/compliance.svg");
+    const props = {
+      isLoading: false,
+      isNavigating: false,
+      checkMeta: mockCheckMeta,
+      currentIndex: 0,
+      totalResources: 1,
+      currentFinding: mockFinding,
+      otherFindings: [],
+      onNavigatePrev: vi.fn(),
+      onNavigateNext: vi.fn(),
+      onMuteComplete: vi.fn(),
+    };
+    const { rerender } = render(<ResourceDetailDrawerContent {...props} />);
+
+    // When / Then - No scan: static logo
+    const staticLogo = screen.getByRole("img", { name: "PCI-DSS 4.0" });
+    expect(staticLogo.parentElement).toHaveClass("bg-slate-50");
+
+    // When / Then - Selected scan: navigable logo
+    mockSearchParamsState.value = "filter[scan__in]=scan-selected";
+    rerender(<ResourceDetailDrawerContent {...props} />);
+    const navigableLogo = screen.getByRole("img", { name: "PCI-DSS 4.0" });
+    expect(navigableLogo.parentElement).toHaveClass("bg-slate-50");
+  });
+
   it("should navigate straight to the framework the API identified, without querying the scan's overview", async () => {
     // Given
     const user = userEvent.setup();
