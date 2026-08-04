@@ -17,13 +17,13 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🔐 Security
 
-- Aligned the `postgres` and `valkey` image pins in the compose files with the rest of the estate, clearing 10 criticals [(#12307)](https://github.com/prowler-cloud/prowler/pull/12307)
+- Bumped the Compose `postgres` and `valkey` images, clearing 10 critical CVEs [(#12307)](https://github.com/prowler-cloud/prowler/pull/12307)
 - Bumped PowerShell, Trivy, uv and `joserfc` in the container images, clearing 14 high-severity CVEs from the SDK and API images [(#12307)](https://github.com/prowler-cloud/prowler/pull/12307)
 - Bumped `httplib2` to 0.32.0 and `pyasn1` to 0.6.4 to resolve known CVEs [(#12307)](https://github.com/prowler-cloud/prowler/pull/12307)
 - The SDK container image now builds on Debian 13 (trixie), clearing the unfixable `libsqlite3-0` and `zlib1g` criticals [(#12307)](https://github.com/prowler-cloud/prowler/pull/12307)
 - Bumped `cryptography` to 48.0.1 to resolve GHSA-537c-gmf6-5ccf, along with the `oci`, `alibabacloud-tea-openapi`, `darabonba-core` and `py-ocsf-models` bumps it requires [(#12307)](https://github.com/prowler-cloud/prowler/pull/12307)
-- Removed `pip` from the SDK container image, clearing two high-severity CVEs in the copies of `setuptools` and `msgpack` that pip vendors. The entrypoint runs the prepared virtualenv directly, so nothing at runtime needs pip; `uv` is retained [(#12307)](https://github.com/prowler-cloud/prowler/pull/12307)
-- Removed `wget`, `gnupg` and `apt-transport-https` from the SDK runtime image; the API image keeps `wget` because its Compose healthcheck invokes it [(#12307)](https://github.com/prowler-cloud/prowler/pull/12307)
+- Removed `pip` from the SDK container image, clearing two high-severity CVEs in the vendored copies of `setuptools` and `msgpack` [(#12307)](https://github.com/prowler-cloud/prowler/pull/12307)
+- Removed `wget`, `gnupg` and `apt-transport-https` from the SDK runtime image [(#12307)](https://github.com/prowler-cloud/prowler/pull/12307)
 
 ---
 
