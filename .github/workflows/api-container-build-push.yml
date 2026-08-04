@@ -162,6 +162,14 @@ jobs:
           platforms: ${{ matrix.platform }}
           tags: |
             ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.setup.outputs.short-sha }}-${{ matrix.arch }}
+          labels: |
+            org.opencontainers.image.title=Prowler API
+            org.opencontainers.image.description=Prowler's API (Django/DRF)
+            org.opencontainers.image.vendor=ProwlerPro, Inc.
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.created=${{ github.event_name == 'release' && github.event.release.published_at || github.event.head_commit.timestamp }}
+            ${{ github.event_name == 'release' && format('org.opencontainers.image.version={0}', env.RELEASE_TAG) || '' }}
           cache-from: type=gha,scope=${{ matrix.arch }}
           cache-to: type=gha,mode=${{ github.event_name == 'pull_request' && 'min' || 'max' }},scope=${{ matrix.arch }}
 
@@ -179,12 +187,12 @@ jobs:
         with:
           egress-policy: block
           allowed-endpoints: >
-            github.com:443
-            release-assets.githubusercontent.com:443
-            registry-1.docker.io:443
             auth.docker.io:443
+            github.com:443
             production.cloudflare.docker.com:443
             production.cloudfront.docker.com:443
+            registry-1.docker.io:443
+            release-assets.githubusercontent.com:443
       - name: Login to DockerHub
         uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
         with:
