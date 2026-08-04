@@ -22,13 +22,15 @@ import { createSamlConfig, updateSamlConfig } from "./saml";
 const buildFormData = ({
   additionalEmailDomains = [],
   id,
+  metadataXml = " <EntityDescriptor /> ",
 }: {
   additionalEmailDomains?: string[];
   id?: string;
+  metadataXml?: string;
 }) => {
   const formData = new FormData();
   formData.set("email_domain", " Primary.Example.com ");
-  formData.set("metadata_xml", " <EntityDescriptor /> ");
+  formData.set("metadata_xml", metadataXml);
   if (id) formData.set("id", id);
   additionalEmailDomains.forEach((domain) =>
     formData.append("additional_email_domains", domain),
@@ -93,12 +95,34 @@ describe("SAML configuration actions", () => {
     );
   });
 
+  it("updates Cloud aliases without requiring unchanged metadata XML", async () => {
+    // Given
+    const formData = buildFormData({
+      additionalEmailDomains: ["alias.example.com"],
+      id: "saml-1",
+      metadataXml: "",
+    });
+
+    // When
+    const result = await updateSamlConfig(null, formData);
+
+    // Then
+    expect(result).toEqual({
+      success: "SAML configuration updated successfully!",
+    });
+    expect(getRequestBody().data.attributes).toEqual({
+      email_domain: "primary.example.com",
+      additional_email_domains: ["alias.example.com"],
+    });
+  });
+
   it("omits additional domains in OSS while preserving the SAML configuration flow", async () => {
     // Given
     vi.stubEnv("UI_CLOUD_ENABLED", "false");
     const formData = buildFormData({
       additionalEmailDomains: ["alias.example.com"],
       id: "saml-1",
+      metadataXml: "",
     });
 
     // When
@@ -107,7 +131,6 @@ describe("SAML configuration actions", () => {
     // Then
     expect(getRequestBody().data.attributes).toEqual({
       email_domain: "primary.example.com",
-      metadata_xml: "<EntityDescriptor />",
     });
   });
 

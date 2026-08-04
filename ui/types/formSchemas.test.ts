@@ -360,7 +360,28 @@ describe("samlConfigFormSchema", () => {
     );
   });
 
-  it("allows at most nineteen aliases in addition to the primary domain", () => {
+  it("accepts exactly nineteen aliases in addition to the primary domain", () => {
+    // Given
+    const aliases = Array.from(
+      { length: 19 },
+      (_, index) => `alias-${index}.example.com`,
+    );
+
+    // When
+    const result = samlConfigFormSchema.safeParse({
+      email_domain: "primary.example.com",
+      additional_email_domains: aliases,
+      metadata_xml: "<EntityDescriptor />",
+    });
+
+    // Then
+    expect(result.success).toBe(true);
+    expect(result.success && result.data.additional_email_domains).toEqual(
+      aliases,
+    );
+  });
+
+  it("rejects more than nineteen aliases in addition to the primary domain", () => {
     // Given
     const aliases = Array.from(
       { length: 20 },

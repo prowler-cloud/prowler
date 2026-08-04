@@ -6,20 +6,29 @@ import { apiBaseUrl, getAuthHeaders } from "@/lib/helper";
 import { handleApiResponse } from "@/lib/server-actions-helper";
 import { isCloud } from "@/lib/shared/env";
 import type { ApiResponse } from "@/types/components";
-import { samlConfigFormSchema } from "@/types/formSchemas";
+import {
+  samlConfigFormSchema,
+  samlConfigUpdateFormSchema,
+} from "@/types/formSchemas";
 import {
   SAML_CONFIGURATION_RESOURCE_TYPE,
   type SamlConfigurationActionState,
+  type SamlConfigurationCreateRequestAttributes,
   type SamlConfigurationErrors,
-  type SamlConfigurationRequestAttributes,
+  type SamlConfigurationUpdateRequestAttributes,
 } from "@/types/saml";
 
-const parseSamlFormData = (formData: FormData) =>
-  samlConfigFormSchema.safeParse({
-    email_domain: formData.get("email_domain"),
-    additional_email_domains: formData.getAll("additional_email_domains"),
-    metadata_xml: formData.get("metadata_xml"),
-  });
+const getSamlFormValues = (formData: FormData) => ({
+  email_domain: formData.get("email_domain"),
+  additional_email_domains: formData.getAll("additional_email_domains"),
+  metadata_xml: formData.get("metadata_xml"),
+});
+
+const parseSamlCreateFormData = (formData: FormData) =>
+  samlConfigFormSchema.safeParse(getSamlFormValues(formData));
+
+const parseSamlUpdateFormData = (formData: FormData) =>
+  samlConfigUpdateFormSchema.safeParse(getSamlFormValues(formData));
 
 const mapApiErrorsToFields = (
   result: ApiResponse,
@@ -47,16 +56,32 @@ const mapApiErrorsToFields = (
   return errors;
 };
 
-const buildRequestAttributes = (
+const buildSamlRequestAttributes = (
   emailDomain: string,
   additionalEmailDomains: string[],
-  metadataXml: string,
-): SamlConfigurationRequestAttributes => ({
+): SamlConfigurationUpdateRequestAttributes => ({
   email_domain: emailDomain,
-  metadata_xml: metadataXml,
   ...(isCloud() && {
     additional_email_domains: additionalEmailDomains,
   }),
+});
+
+const buildSamlCreateRequestAttributes = (
+  emailDomain: string,
+  additionalEmailDomains: string[],
+  metadataXml: string,
+): SamlConfigurationCreateRequestAttributes => ({
+  ...buildSamlRequestAttributes(emailDomain, additionalEmailDomains),
+  metadata_xml: metadataXml,
+});
+
+const buildSamlUpdateRequestAttributes = (
+  emailDomain: string,
+  additionalEmailDomains: string[],
+  metadataXml?: string,
+): SamlConfigurationUpdateRequestAttributes => ({
+  ...buildSamlRequestAttributes(emailDomain, additionalEmailDomains),
+  ...(metadataXml !== undefined && { metadata_xml: metadataXml }),
 });
 
 export const createSamlConfig = async (
@@ -64,7 +89,7 @@ export const createSamlConfig = async (
   formData: FormData,
 ): Promise<SamlConfigurationActionState> => {
   const headers = await getAuthHeaders({ contentType: true });
-  const validatedData = parseSamlFormData(formData);
+  const validatedData = parseSamlCreateFormData(formData);
 
   if (!validatedData.success) {
     const formFieldErrors = validatedData.error.flatten().fieldErrors;
@@ -90,7 +115,7 @@ export const createSamlConfig = async (
       body: JSON.stringify({
         data: {
           type: SAML_CONFIGURATION_RESOURCE_TYPE,
-          attributes: buildRequestAttributes(
+          attributes: buildSamlCreateRequestAttributes(
             email_domain,
             additional_email_domains,
             metadata_xml,
@@ -133,7 +158,7 @@ export const updateSamlConfig = async (
 ): Promise<SamlConfigurationActionState> => {
   const headers = await getAuthHeaders({ contentType: true });
   const id = String(formData.get("id") || "");
-  const validatedData = parseSamlFormData(formData);
+  const validatedData = parseSamlUpdateFormData(formData);
 
   if (!validatedData.success) {
     const formFieldErrors = validatedData.error.flatten().fieldErrors;
@@ -160,7 +185,7 @@ export const updateSamlConfig = async (
         data: {
           type: SAML_CONFIGURATION_RESOURCE_TYPE,
           id,
-          attributes: buildRequestAttributes(
+          attributes: buildSamlUpdateRequestAttributes(
             email_domain,
             additional_email_domains,
             metadata_xml,

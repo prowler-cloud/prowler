@@ -26,8 +26,17 @@ export type SamlConfigurationActionState = {
   success?: string;
 } | null;
 
-export interface SamlConfigurationRequestAttributes {
+interface SamlConfigurationRequestAttributes {
   email_domain: string;
   additional_email_domains?: string[];
+}
+
+export interface SamlConfigurationCreateRequestAttributes
+  extends SamlConfigurationRequestAttributes {
   metadata_xml: string;
+}
+
+export interface SamlConfigurationUpdateRequestAttributes
+  extends SamlConfigurationRequestAttributes {
+  metadata_xml?: string;
 }
