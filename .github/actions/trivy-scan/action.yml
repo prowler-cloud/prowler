@@ -64,8 +64,7 @@ runs:
         scanners: 'vuln'
         timeout: '5m'
         version: 'v0.71.2'
-      # trivyignores: concatenates into a file Trivy parses as the classic format,
-      # which silently drops YAML suppressions. TRIVY_IGNOREFILE keeps the extension.
+      # Not trivyignores: that input drops the .yaml extension Trivy parses by.
       env:
         TRIVY_IGNOREFILE: '.trivyignore.yaml'
 
@@ -81,8 +80,7 @@ runs:
         scanners: 'vuln'
         timeout: '5m'
         version: 'v0.71.2'
-      # trivyignores: concatenates into a file Trivy parses as the classic format,
-      # which silently drops YAML suppressions. TRIVY_IGNOREFILE keeps the extension.
+      # Not trivyignores: that input drops the .yaml extension Trivy parses by.
       env:
         TRIVY_IGNOREFILE: '.trivyignore.yaml'
 
