@@ -5,7 +5,11 @@ requires = ["setuptools>=61.0", "wheel"]
 [dependency-groups]
 dev = [
   "bandit==1.8.3",
+  "coverage==7.15.2",
   "pytest==9.0.3",
+  "pytest-asyncio==1.4.0",
+  "pytest-cov==6.0.0",
+  "pytest-env==1.1.5",
   "ruff==0.15.11",
   "vulture==2.14"
 ]
@@ -27,7 +31,31 @@ prowler-mcp = "prowler_mcp_server.main:main"
 [tool.pytest]
 
 [tool.pytest.ini_options]
+addopts = "--strict-markers --strict-config"
+# `asyncio_mode = "auto"` lets `async def test_*` run without a per-test marker;
+# the server is async end to end, so requiring one would be pure noise. Setting
+# the fixture loop scope explicitly silences a pytest-asyncio deprecation warning.
+asyncio_default_fixture_loop_scope = "function"
+asyncio_mode = "auto"
+filterwarnings = [
+  "error",
+  # Starlette's TestClient warns that it will require httpx2. The httpx pin is a
+  # deliberate project-wide choice, so this stays allowed until that pin moves.
+  "default::starlette.exceptions.StarletteDeprecationWarning"
+]
+pythonpath = ["."]
 testpaths = ["tests"]
+
+# Applied before any conftest or test module is imported, which is what makes it
+# work: `prowler_app/server.py` builds every tool at import time, and a tool whose
+# construction raises (as it does without an API key) is swallowed by
+# `load_all_tools`, leaving the `prowler_*` namespace silently empty. Pinning a
+# fake key here keeps the full tool surface loadable and stops a developer's
+# `mcp_server/.env` from reaching the suite.
+[tool.pytest_env]
+API_BASE_URL = "https://api.testing.invalid/api/v1"
+PROWLER_API_KEY = "pk_fake_api_key_for_unit_testing_only"
+PROWLER_MCP_TRANSPORT_MODE = "stdio"
 
 # Shared ruff baseline (kept in sync with api/pyproject.toml).
 # target-version tracks this project's lowest supported Python.
