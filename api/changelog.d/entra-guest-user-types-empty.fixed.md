@@ -1,0 +1,1 @@
+Entra Conditional Access guest-user checks no longer report false FAILs in M365 scans: microsoft-kiota packages overridden to 1.9.10 so `guestOrExternalUserTypes` (a flags enum Graph serializes as a comma-separated string) deserializes correctly instead of returning an empty list
