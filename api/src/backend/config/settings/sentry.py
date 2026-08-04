@@ -177,7 +177,7 @@ def before_send(event, hint):
         and exc_info
         and getattr(log_record, ERROR_CATEGORY_ATTRIBUTE, None)
         == FILESYSTEM_ERROR_CATEGORY
-        and not event.get("fingerprint")
+        and "fingerprint" not in event
     ):
         fingerprint_suffix = errno_fingerprint(exc_info[1])
         if fingerprint_suffix:
