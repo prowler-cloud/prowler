@@ -14,13 +14,7 @@ ENV TRIVY_VERSION=${TRIVY_VERSION}
 ARG ZIZMOR_VERSION=1.24.1
 ENV ZIZMOR_VERSION=${ZIZMOR_VERSION}
 
-# Checksums of the third-party binaries fetched below. They are pinned here rather
-# than downloaded alongside the artefact: a compromised release would ship a matching
-# checksum file. CVE-2026-33634 was exactly that -- a malicious Trivy release published
-# with stolen credentials.
-# Trivy and PowerShell values are the vendors' published checksums. zizmor publishes
-# none, so its values were computed from the current artefacts and pin them against
-# future substitution.
+# Pinned here, not fetched with the artefact: a compromised release ships its own checksum.
 ARG TRIVY_SHA256_AMD64=bbb64b9695866ce4a7a8f5c9592002c5961cab378577fa3f8a040df362b9b2ea
 ARG TRIVY_SHA256_ARM64=2ca2c023109c2db6b2b77366b6717291452d4531167377d95c79547f0c8e3467
 ARG POWERSHELL_SHA256_AMD64=492ff26bb958336bf61e597ce19e07648b4003bd2a08659e02f0e3e0446ebfe0
