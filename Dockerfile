@@ -38,7 +38,8 @@ RUN ARCH=$(uname -m) && \
         echo "Unsupported architecture: $ARCH" && exit 1 ; \
     fi && \
     if [ "$ARCH" = "x86_64" ]; then EXPECT="$POWERSHELL_SHA256_AMD64" ; else EXPECT="$POWERSHELL_SHA256_ARM64" ; fi && \
-    echo "$EXPECT  /tmp/powershell.tar.gz" | sha256sum -c - && \
+    echo "$EXPECT  /tmp/powershell.tar.gz" > /tmp/powershell.sha256 && \
+    sha256sum -c /tmp/powershell.sha256 && rm /tmp/powershell.sha256 && \
     mkdir -p /opt/microsoft/powershell/7 && \
     tar zxf /tmp/powershell.tar.gz -C /opt/microsoft/powershell/7 && \
     chmod +x /opt/microsoft/powershell/7/pwsh && \
@@ -56,7 +57,8 @@ RUN ARCH=$(uname -m) && \
     fi && \
     wget --progress=dot:giga "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_${TRIVY_ARCH}.tar.gz" -O /tmp/trivy.tar.gz && \
     if [ "$ARCH" = "x86_64" ]; then EXPECT="$TRIVY_SHA256_AMD64" ; else EXPECT="$TRIVY_SHA256_ARM64" ; fi && \
-    echo "$EXPECT  /tmp/trivy.tar.gz" | sha256sum -c - && \
+    echo "$EXPECT  /tmp/trivy.tar.gz" > /tmp/trivy.sha256 && \
+    sha256sum -c /tmp/trivy.sha256 && rm /tmp/trivy.sha256 && \
     tar zxf /tmp/trivy.tar.gz -C /tmp && \
     mv /tmp/trivy /usr/local/bin/trivy && \
     chmod +x /usr/local/bin/trivy && \
@@ -76,7 +78,8 @@ RUN ARCH=$(uname -m) && \
     fi && \
     wget --progress=dot:giga "https://github.com/zizmorcore/zizmor/releases/download/v${ZIZMOR_VERSION}/zizmor-${ZIZMOR_ARCH}.tar.gz" -O /tmp/zizmor.tar.gz && \
     if [ "$ARCH" = "x86_64" ]; then EXPECT="$ZIZMOR_SHA256_AMD64" ; else EXPECT="$ZIZMOR_SHA256_ARM64" ; fi && \
-    echo "$EXPECT  /tmp/zizmor.tar.gz" | sha256sum -c - && \
+    echo "$EXPECT  /tmp/zizmor.tar.gz" > /tmp/zizmor.sha256 && \
+    sha256sum -c /tmp/zizmor.sha256 && rm /tmp/zizmor.sha256 && \
     mkdir -p /tmp/zizmor-extract && \
     tar zxf /tmp/zizmor.tar.gz -C /tmp/zizmor-extract && \
     mv /tmp/zizmor-extract/zizmor /usr/local/bin/zizmor && \
