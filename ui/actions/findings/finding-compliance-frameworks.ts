@@ -1,5 +1,7 @@
 "use server";
 
+import { z } from "zod";
+
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
 import { IN_WATCHLIST_FILTER_KEY } from "@/lib/compliance/watchlist";
 import { isCloud } from "@/lib/shared/env";
@@ -9,18 +11,33 @@ import { adaptFindingComplianceFrameworks } from "./finding-compliance-framework
 import type { FindingComplianceFrameworksResponse } from "./finding-compliance-frameworks.types";
 
 const REQUEST_TIMEOUT_MS = 10_000;
+const findingIdSchema = z.string().trim().min(1);
+const findingComplianceFrameworkOptionsSchema = z.object({
+  inWatchlist: z.boolean().optional(),
+});
 
 export const getFindingComplianceFrameworks = async (
   findingId: string,
-  { inWatchlist = false }: { inWatchlist?: boolean } = {},
+  options: { inWatchlist?: boolean } = {},
 ): Promise<FindingComplianceFrameworksResult> => {
-  if (!findingId) return { frameworks: [], unavailable: false };
+  const parsedFindingId = findingIdSchema.safeParse(findingId);
+  if (!parsedFindingId.success) {
+    return { frameworks: [], unavailable: false };
+  }
+
+  const parsedOptions =
+    findingComplianceFrameworkOptionsSchema.safeParse(options);
+  if (!parsedOptions.success) {
+    return { frameworks: [], unavailable: true };
+  }
+
+  const { inWatchlist = false } = parsedOptions.data;
   if (!isCloud()) return { frameworks: [], unavailable: true };
 
   try {
     const headers = await getAuthHeaders({ contentType: false });
     const url = new URL(
-      `${apiBaseUrl}/findings/${encodeURIComponent(findingId)}/compliance-frameworks`,
+      `${apiBaseUrl}/findings/${encodeURIComponent(parsedFindingId.data)}/compliance-frameworks`,
     );
     if (inWatchlist) {
       url.searchParams.set(IN_WATCHLIST_FILTER_KEY, "true");

@@ -47,8 +47,17 @@ const EMPTY_CATALOG: ComplianceCatalog = {
 
 const GENERIC_ERROR = "Could not update the compliance watchlist.";
 
-// Watchlist entry IDs are UUIDs. Validate before interpolating into request
-// URLs so a malformed/crafted value can't inject path segments.
+const watchlistTargetSchema = z.object({
+  complianceId: z.string().trim().min(1),
+  providerType: z.string().trim().min(1),
+});
+const complianceCatalogInputSchema = z.object({
+  providerTypes: z.array(z.string().trim().min(1)).optional(),
+});
+const complianceWatchlistBulkDiffSchema = z.object({
+  add: z.array(watchlistTargetSchema),
+  remove: z.array(watchlistTargetSchema),
+});
 const watchlistEntryIdSchema = z.uuid();
 
 interface CatalogPageResult {
@@ -86,11 +95,14 @@ const buildCatalogUrl = (page: number, providerTypes?: string[]): string => {
   return url.toString();
 };
 
-export const getComplianceCatalog = async ({
-  providerTypes,
-}: {
-  providerTypes?: string[];
-} = {}): Promise<ComplianceCatalog> => {
+export const getComplianceCatalog = async (
+  input: { providerTypes?: string[] } = {},
+): Promise<ComplianceCatalog> => {
+  const parsedInput = complianceCatalogInputSchema.safeParse(input);
+  if (!parsedInput.success) return EMPTY_CATALOG;
+
+  const { providerTypes } = parsedInput.data;
+
   try {
     const headers = await getAuthHeaders({ contentType: false });
 
@@ -144,7 +156,8 @@ export const getComplianceCatalog = async ({
 export const addComplianceToWatchlist = async (
   target: ComplianceWatchlistTarget,
 ): Promise<ComplianceWatchlistActionResult> => {
-  if (!target?.complianceId?.trim() || !target?.providerType?.trim()) {
+  const parsedTarget = watchlistTargetSchema.safeParse(target);
+  if (!parsedTarget.success) {
     return { error: "A framework and its provider type are required." };
   }
 
@@ -158,8 +171,8 @@ export const addComplianceToWatchlist = async (
         data: {
           type: COMPLIANCE_WATCHLIST_ENTRY_TYPE,
           attributes: {
-            compliance_id: target.complianceId,
-            provider_type: target.providerType,
+            compliance_id: parsedTarget.data.complianceId,
+            provider_type: parsedTarget.data.providerType,
           },
         },
       }),
@@ -221,10 +234,15 @@ export const removeComplianceFromWatchlist = async (
 export const bulkUpdateComplianceWatchlist = async (
   diff: ComplianceWatchlistBulkDiff,
 ): Promise<ComplianceWatchlistActionResult> => {
-  if (isEmptyWatchlistDiff(diff)) {
+  const parsedDiff = complianceWatchlistBulkDiffSchema.safeParse(diff);
+  if (!parsedDiff.success) {
+    return { error: "Invalid compliance watchlist update." };
+  }
+
+  if (isEmptyWatchlistDiff(parsedDiff.data)) {
     return { error: "Select at least one framework to add or remove." };
   }
-  if (exceedsWatchlistBulkLimit(diff)) {
+  if (exceedsWatchlistBulkLimit(parsedDiff.data)) {
     return {
       error: `A single update may reference at most ${MAX_WATCHLIST_BULK} frameworks.`,
     };
@@ -240,11 +258,11 @@ export const bulkUpdateComplianceWatchlist = async (
         data: {
           type: COMPLIANCE_WATCHLIST_BULK_TYPE,
           attributes: {
-            add: diff.add.map((target) => ({
+            add: parsedDiff.data.add.map((target) => ({
               compliance_id: target.complianceId,
               provider_type: target.providerType,
             })),
-            remove: diff.remove.map((target) => ({
+            remove: parsedDiff.data.remove.map((target) => ({
               compliance_id: target.complianceId,
               provider_type: target.providerType,
             })),

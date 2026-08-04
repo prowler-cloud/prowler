@@ -37,6 +37,13 @@ beforeEach(() => {
 });
 
 describe("getComplianceWatchlist", () => {
+  it("rejects a null Server Action payload before fetching", async () => {
+    const result = await getComplianceWatchlist(null as never);
+
+    expect(result).toBeUndefined();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("narrows the response to the watchlist when asked to", async () => {
     await getComplianceWatchlist({ inWatchlist: true });
 

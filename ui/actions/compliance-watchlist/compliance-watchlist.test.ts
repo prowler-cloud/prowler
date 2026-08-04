@@ -83,6 +83,20 @@ beforeEach(() => {
 });
 
 describe("getComplianceCatalog", () => {
+  it("rejects a null Server Action payload before fetching", async () => {
+    const catalog = await getComplianceCatalog(null as never);
+
+    expect(catalog).toEqual({
+      entries: [],
+      meta: {
+        totalEntries: 0,
+        watchlistCount: 0,
+        eligibleProviderTypes: [],
+      },
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("requests the maximum page size so a whole catalog needs as few calls as possible", async () => {
     fetchMock.mockResolvedValue(
       jsonResponse(catalogPage("cis_1.4_aws", { page: 1, pages: 1 })),
@@ -227,6 +241,16 @@ describe("getComplianceCatalog", () => {
 });
 
 describe("addComplianceToWatchlist", () => {
+  it("rejects non-string target fields before fetching", async () => {
+    const result = await addComplianceToWatchlist({
+      complianceId: 42,
+      providerType: "aws",
+    } as never);
+
+    expect(result.error).toBeDefined();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("posts a single JSON:API entry and revalidates the compliance route", async () => {
     fetchMock.mockResolvedValue(jsonResponse({ data: {} }, 201));
 
@@ -307,6 +331,16 @@ describe("removeComplianceFromWatchlist", () => {
 });
 
 describe("bulkUpdateComplianceWatchlist", () => {
+  it.each([null, {}, { add: [], remove: null }])(
+    "rejects a malformed Server Action diff %# before fetching",
+    async (diff) => {
+      const result = await bulkUpdateComplianceWatchlist(diff as never);
+
+      expect(result.error).toBeDefined();
+      expect(fetchMock).not.toHaveBeenCalled();
+    },
+  );
+
   it("sends one call carrying both lists and reports the meta summary", async () => {
     fetchMock.mockResolvedValue(
       jsonResponse({

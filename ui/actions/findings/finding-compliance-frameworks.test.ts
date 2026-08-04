@@ -53,6 +53,16 @@ beforeEach(() => {
 });
 
 describe("getFindingComplianceFrameworks", () => {
+  it("rejects a null options payload before fetching", async () => {
+    const result = await getFindingComplianceFrameworks(
+      "finding-1",
+      null as never,
+    );
+
+    expect(result).toEqual({ frameworks: [], unavailable: true });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("asks only for the watchlisted frameworks when told to", async () => {
     await getFindingComplianceFrameworks("finding-1", { inWatchlist: true });
 
