@@ -1,0 +1,1 @@
+Removed `pip` from the SDK container image, clearing two high-severity CVEs in the copies of `setuptools` and `msgpack` that pip vendors. The entrypoint runs the prepared virtualenv directly, so nothing at runtime needs pip; `uv` is retained
