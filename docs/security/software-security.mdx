@@ -181,7 +181,7 @@ Container images get scanned twice: once in CI before they push to a registry, a
 
 ### Pre-Publish (CI)
 
-- **Trivy** scans for OS-package and application-dependency vulnerabilities. Runs on every pull request and push that touches an image or its dependencies. Trivy uploads SARIF to the GitHub Security tab and posts a summary on the PR. Builds fail on any critical finding that is not explicitly accepted. Accepted findings live in [`.trivyignore`](https://github.com/prowler-cloud/prowler/blob/master/.trivyignore), each carrying a reason and an expiry date, the same policy `osv-scanner.toml` follows. A local `trivy image` run applies the same suppressions whenever it is launched from a directory containing `.trivyignore`, which Trivy loads automatically. To see the unsuppressed set, run it from elsewhere or point `--ignorefile` at an empty file.
+- **Trivy** scans for OS-package and application-dependency vulnerabilities. Runs on every pull request and push that touches an image or its dependencies. Trivy uploads SARIF to the GitHub Security tab and posts a summary on the PR. Builds fail on any critical finding that is not explicitly accepted. Accepted findings live in [`.trivyignore.yaml`](https://github.com/prowler-cloud/prowler/blob/master/.trivyignore.yaml), each carrying a reason and an expiry date, the same policy `osv-scanner.toml` follows. A local `trivy image` run does not apply these suppressions unless you pass `--ignorefile .trivyignore.yaml`: Trivy auto-loads only the classic `.trivyignore` format, never the YAML one.
 - **Hadolint** validates Dockerfile syntax and structure against secure-build best practices. Runs in pre-commit and alongside the image scans above.
 
 ### Post-Publish (Registries)
@@ -194,7 +194,7 @@ Container images get scanned twice: once in CI before they push to a registry, a
 
 A small number of findings remain in the published images and cannot be resolved by Prowler: the upstream project has released no fix, the package cannot be removed without breaking the image, or the finding comes from a vendored SBOM rather than from a package that is actually installed. Alternative base distributions have been evaluated and none currently satisfies both the vulnerability profile and the runtime requirements of every supported provider.
 
-Each suppression is recorded in [`.trivyignore`](https://github.com/prowler-cloud/prowler/blob/master/.trivyignore) with the reason it cannot be fixed, why it is not exploitable in Prowler's runtime, and an expiry date that forces re-review. Nothing is suppressed without that rationale, and a build fails on any critical finding that is not listed there.
+Each suppression is recorded in [`.trivyignore.yaml`](https://github.com/prowler-cloud/prowler/blob/master/.trivyignore.yaml) with the reason it cannot be fixed, why it is not exploitable in Prowler's runtime, and an expiry date that forces re-review. Nothing is suppressed without that rationale, and a build fails on any critical finding that is not listed there.
 
 To see the current set for any image, scan it directly:
 
