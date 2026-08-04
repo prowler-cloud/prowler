@@ -4,6 +4,18 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [1.37.1] (Prowler v5.37.1)
+
+### 🐞 Fixed
+
+- Fixed image optimization in the production container: Next.js standalone tracing omitted `sharp`'s native `libvips` library, so every image was served unoptimized [(#12307)](https://github.com/prowler-cloud/prowler/pull/12307)
+
+### 🔐 Security
+
+- The UI container image now patches musl and zlib alongside OpenSSL, and `sharp` is pinned to 0.35.3, clearing the image's remaining CVEs [(#12307)](https://github.com/prowler-cloud/prowler/pull/12307)
+
+---
+
 ## [1.37.0] (Prowler v5.37.0)
 
 ### 🚀 Added
