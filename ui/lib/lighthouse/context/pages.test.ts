@@ -60,7 +60,7 @@ describe("resolveLighthousePage", () => {
     }
   });
 
-  it("should use the known route label for fallback pages that declare one", () => {
+  it("should title-case multi-segment fallback routes", () => {
     const page = resolveLighthousePage("/manage-groups");
 
     expect(page.id).toBe("other");
@@ -187,27 +187,46 @@ describe("buildLighthousePageContext", () => {
     });
   });
 
-  it("should preserve the search and sort filters on tenant admin pages", () => {
+  it("should preserve the filter names emitted by tenant admin pages", () => {
     const roles = buildLighthousePageContext(
       "/roles",
-      new URLSearchParams({ "filter[search]": "admin", sort: "name" }),
+      new URLSearchParams({
+        "filter[search]": "admin",
+        sort: "name",
+        "filter[permission_state]": "unlimited",
+      }),
     );
     const users = buildLighthousePageContext(
       "/users",
       new URLSearchParams({ "filter[search]": "alice" }),
     );
-
-    expect(roles.filters).toEqual({ search: ["admin"], sort: ["name"] });
-    expect(users.filters).toEqual({ search: ["alice"] });
-  });
-
-  it("should preserve the integration type filter on the integrations page", () => {
-    const context = buildLighthousePageContext(
-      "/integrations",
-      new URLSearchParams({ "filter[integration_type]": "jira" }),
+    const invitations = buildLighthousePageContext(
+      "/invitations",
+      new URLSearchParams({ "filter[state]": "expired" }),
     );
 
-    expect(context.filters).toEqual({ integration_type: ["jira"] });
+    expect(roles.filters).toEqual({
+      permission_state: ["unlimited"],
+      search: ["admin"],
+      sort: ["name"],
+    });
+    expect(users.filters).toEqual({ search: ["alice"] });
+    expect(invitations.filters).toEqual({ state: ["expired"] });
+  });
+
+  it("should capture only sort on integrations pages", () => {
+    // The integration sub-pages pin filter[integration_type] server-side; the
+    // open integration reaches Lighthouse through the page item's path.
+    const context = buildLighthousePageContext(
+      "/integrations/jira",
+      new URLSearchParams({
+        sort: "-inserted_at",
+        "filter[integration_type]": "jira",
+      }),
+    );
+
+    expect(context.path).toBe("/integrations/jira");
+    expect(context.filters).toEqual({ sort: ["-inserted_at"] });
   });
 
   it("should preserve the filter names emitted by list-page controls", () => {

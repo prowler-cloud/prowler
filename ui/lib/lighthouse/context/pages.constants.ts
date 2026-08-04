@@ -423,7 +423,7 @@ export const LIGHTHOUSE_PAGE_DEFINITION_INPUTS = [
     label: "Roles",
     match: (pathname) =>
       pathname === "/roles" || pathname.startsWith("/roles/"),
-    allowedSearchParams: [...COMMON_LIST_PARAMS],
+    allowedSearchParams: [...COMMON_LIST_PARAMS, "filter[permission_state]"],
     suggestions: [
       {
         label: "Review role permissions",
@@ -481,7 +481,7 @@ export const LIGHTHOUSE_PAGE_DEFINITION_INPUTS = [
     label: "Invitations",
     match: (pathname) =>
       pathname === "/invitations" || pathname.startsWith("/invitations/"),
-    allowedSearchParams: [...COMMON_LIST_PARAMS],
+    allowedSearchParams: [...COMMON_LIST_PARAMS, "filter[state]"],
     suggestions: [
       {
         label: "Review pending invitations",
@@ -510,7 +510,10 @@ export const LIGHTHOUSE_PAGE_DEFINITION_INPUTS = [
     label: "Integrations",
     match: (pathname) =>
       pathname === "/integrations" || pathname.startsWith("/integrations/"),
-    allowedSearchParams: [...COMMON_LIST_PARAMS, "filter[integration_type]"],
+    // The grid page takes no params and sub-pages pin their integration type
+    // server-side, so the open integration travels in `path`; only the
+    // sub-page tables' sort ever reaches the URL.
+    allowedSearchParams: ["sort"],
     suggestions: [
       {
         label: "Review integration coverage",
@@ -535,7 +538,3 @@ export const LIGHTHOUSE_PAGE_DEFINITION_INPUTS = [
     ],
   },
 ] as const satisfies readonly LighthousePageDefinitionInput[];
-
-export const LIGHTHOUSE_KNOWN_ROUTE_LABELS = {
-  "manage-groups": "Manage Groups",
-} as const;
