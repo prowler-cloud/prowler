@@ -10,14 +10,10 @@ inputs:
     description: 'Container image tag to scan'
     required: true
     default: ${{ github.sha }}
-  severity-cutoff:
-    description: 'Minimum severity that counts as a failure when fail-on-critical is enabled'
+  fail-on-severity:
+    description: 'Fail the build on findings at this severity or above: critical, high, or none'
     required: false
-    default: 'critical'
-  fail-on-critical:
-    description: 'Fail the build if critical vulnerabilities are found'
-    required: false
-    default: 'false'
+    default: 'high'
   upload-sarif:
     description: 'Upload results to GitHub Security tab'
     required: false
@@ -105,12 +101,25 @@ runs:
         INPUTS_IMAGE_NAME: ${{ inputs.image-name }}
         INPUTS_IMAGE_TAG: ${{ inputs.image-tag }}
 
-    - name: Check for critical vulnerabilities
-      if: inputs.fail-on-critical == 'true' && steps.security-check.outputs.critical != '0'
+    - name: Check for blocking vulnerabilities
+      if: inputs.fail-on-severity != 'none'
       shell: bash
       run: |
-        echo "::error::Found ${STEPS_SECURITY_CHECK_OUTPUTS_CRITICAL} critical vulnerabilities"
-        echo "::warning::Please update packages or use a different base image"
-        exit 1
+        if [ "$CUTOFF" = "critical" ]; then
+          BLOCKING=$CRITICAL
+        else
+          BLOCKING=$((CRITICAL + HIGH))
+        fi
+
+        if [ "$BLOCKING" -gt 0 ]; then
+          echo "::error::Found $BLOCKING vulnerabilities at severity ${CUTOFF} or above ($CRITICAL critical, $HIGH high)"
+          echo "::warning::Update the package, or add it to .grype.yaml with a reason if nothing can be done"
+          jq -r '.matches[] | select(.vulnerability.severity=="Critical" or .vulnerability.severity=="High")
+                 | "  \(.vulnerability.severity)\t\(.vulnerability.id)\t\(.artifact.name) \(.artifact.version)"' \
+            grype-report.json | sort -u
+          exit 1
+        fi
       env:
-        STEPS_SECURITY_CHECK_OUTPUTS_CRITICAL: ${{ steps.security-check.outputs.critical }}
+        CUTOFF: ${{ inputs.fail-on-severity }}
+        CRITICAL: ${{ steps.security-check.outputs.critical }}
+        HIGH: ${{ steps.security-check.outputs.high }}

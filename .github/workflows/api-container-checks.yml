@@ -81,6 +81,9 @@ jobs:
             auth.docker.io:443
             production.cloudflare.docker.com:443
             production.cloudfront.docker.com:443
+            raw.githubusercontent.com:443
+            objects.githubusercontent.com:443
+            grype.anchore.io:443
             debian.map.fastlydns.net:80
             release-assets.githubusercontent.com:443
             objects.githubusercontent.com:443
@@ -109,6 +112,7 @@ jobs:
             api/**
             .github/actions/trivy-scan/**
             .github/actions/grype-scan/**
+            .grype.yaml
           files_ignore: |
             api/docs/**
             api/README.md
@@ -155,4 +159,4 @@ jobs:
         with:
           image-name: ${{ env.IMAGE_NAME }}
           image-tag: ${{ github.sha }}
-          fail-on-critical: 'false'
+          fail-on-severity: 'high'

@@ -83,6 +83,9 @@ jobs:
             api.github.com:443
             mirror.gcr.io:443
             check.trivy.dev:443
+            raw.githubusercontent.com:443
+            objects.githubusercontent.com:443
+            grype.anchore.io:443
             debian.map.fastlydns.net:80
             release-assets.githubusercontent.com:443
             objects.githubusercontent.com:443
@@ -115,6 +118,7 @@ jobs:
             .github/workflows/sdk-container-checks.yml
             .github/actions/trivy-scan/**
             .github/actions/grype-scan/**
+            .grype.yaml
           files_ignore: |
             prowler/CHANGELOG.md
             prowler/changelog.d/**
@@ -150,4 +154,4 @@ jobs:
         with:
           image-name: ${{ env.IMAGE_NAME }}
           image-tag: ${{ github.sha }}
-          fail-on-critical: 'false'
+          fail-on-severity: 'high'

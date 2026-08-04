@@ -87,6 +87,8 @@ jobs:
             get.trivy.dev:443
             release-assets.githubusercontent.com:443
             objects.githubusercontent.com:443
+            raw.githubusercontent.com:443
+            grype.anchore.io:443
 
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -102,6 +104,7 @@ jobs:
             mcp_server/**
             .github/actions/trivy-scan/**
             .github/actions/grype-scan/**
+            .grype.yaml
           files_ignore: |
             mcp_server/README.md
             mcp_server/CHANGELOG.md
@@ -137,4 +140,4 @@ jobs:
         with:
           image-name: ${{ env.IMAGE_NAME }}
           image-tag: ${{ github.sha }}
-          fail-on-critical: 'false'
+          fail-on-severity: 'high'
