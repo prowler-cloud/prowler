@@ -1,5 +1,11 @@
+from errno import errorcode
+
 import sentry_sdk
 from config.env import env
+
+# How many links of the __cause__/__context__ chain are inspected when looking
+# for the OSError that actually caused the event.
+MAX_EXCEPTION_CHAIN_DEPTH = 10
 
 IGNORED_EXCEPTIONS = [
     # Provider is not connected due to credentials errors
@@ -80,6 +86,29 @@ IGNORED_EXCEPTIONS = [
 ]
 
 
+def errno_fingerprint(exception):
+    """
+    Return an errno-based fingerprint suffix for OSError-like exceptions.
+
+    Filesystem failures such as ENOSPC (disk full), ENOENT (missing mount point)
+    or EACCES (wrong permissions) are all OSError raised from the same call
+    site, so Sentry's default grouping merges them into a single issue even
+    when the exception is attached to the event. Appending the errno keeps the
+    default grouping and splits the issue per failure cause.
+
+    Returns None when no OSError with an errno is found in the exception chain.
+    """
+    seen = set()
+    for _ in range(MAX_EXCEPTION_CHAIN_DEPTH):
+        if exception is None or id(exception) in seen:
+            break
+        seen.add(id(exception))
+        if isinstance(exception, OSError) and exception.errno is not None:
+            return f"errno:{errorcode.get(exception.errno, exception.errno)}"
+        exception = exception.__cause__ or exception.__context__
+    return None
+
+
 def before_send(event, hint):
     """
     before_send handles the Sentry events in order to send them or not
@@ -115,9 +144,16 @@ def before_send(event, hint):
 
     # Ignore exceptions with the ignored_exceptions
     if "exc_info" in hint and hint["exc_info"]:
-        exc_value = str(hint["exc_info"][1])
+        exception = hint["exc_info"][1]
+        exc_value = str(exception)
         if any(ignored in exc_value for ignored in IGNORED_EXCEPTIONS):
             return None  # Explicitly return None to drop the event
+
+        # Split OSError issues per errno instead of grouping every filesystem
+        # failure raised from the same call site under a single issue.
+        fingerprint_suffix = errno_fingerprint(exception)
+        if fingerprint_suffix:
+            event["fingerprint"] = ["{{ default }}", fingerprint_suffix]
 
     return event
 

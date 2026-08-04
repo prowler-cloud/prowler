@@ -1,9 +1,10 @@
+import errno
 import logging
 from unittest.mock import MagicMock, patch
 
 import pytest
 from config.settings import sentry as sentry_settings
-from config.settings.sentry import before_send
+from config.settings.sentry import before_send, errno_fingerprint
 
 
 def test_initialize_sentry_skips_without_dsn():
@@ -188,3 +189,95 @@ def test_before_send_passes_non_defunct_neo4j_log():
     event = MagicMock()
 
     assert before_send(event, hint) == event
+
+
+@pytest.mark.parametrize(
+    ("error_number", "message", "expected_suffix"),
+    [
+        (errno.ENOSPC, "No space left on device", "errno:ENOSPC"),
+        (errno.ENOENT, "No such file or directory", "errno:ENOENT"),
+        (errno.EACCES, "Permission denied", "errno:EACCES"),
+    ],
+)
+def test_before_send_fingerprints_oserror_by_errno(
+    error_number, message, expected_suffix
+):
+    """Filesystem failures raised from the same call site must not be merged."""
+    exception = OSError(error_number, message)
+    event = {}
+
+    result = before_send(event, {"exc_info": (OSError, exception, None)})
+
+    assert result is event
+    assert event["fingerprint"] == ["{{ default }}", expected_suffix]
+
+
+def test_before_send_fingerprints_differ_per_errno():
+    """ENOSPC and ENOENT from the same call site produce different issues."""
+    enospc_event = {}
+    enoent_event = {}
+
+    before_send(
+        enospc_event,
+        {"exc_info": (OSError, OSError(errno.ENOSPC, "No space left on device"), None)},
+    )
+    before_send(
+        enoent_event,
+        {
+            "exc_info": (
+                OSError,
+                OSError(errno.ENOENT, "No such file or directory"),
+                None,
+            )
+        },
+    )
+
+    assert enospc_event["fingerprint"] != enoent_event["fingerprint"]
+
+
+def test_before_send_fingerprints_wrapped_oserror():
+    """The errno is found even when the OSError is wrapped by another error."""
+    try:
+        try:
+            raise OSError(errno.ENOSPC, "No space left on device")
+        except OSError as os_error:
+            raise RuntimeError("Error generating output directory") from os_error
+    except RuntimeError as wrapper:
+        event = {}
+        before_send(event, {"exc_info": (RuntimeError, wrapper, None)})
+
+    assert event["fingerprint"] == ["{{ default }}", "errno:ENOSPC"]
+
+
+def test_before_send_does_not_fingerprint_non_oserror():
+    """Non-filesystem exceptions keep Sentry's default grouping."""
+    event = {}
+
+    result = before_send(event, {"exc_info": (ValueError, ValueError("boom"), None)})
+
+    assert result is event
+    assert "fingerprint" not in event
+
+
+def test_before_send_does_not_fingerprint_oserror_without_errno():
+    """An OSError without errno has nothing to split the issue by."""
+    event = {}
+
+    before_send(event, {"exc_info": (OSError, OSError("no errno here"), None)})
+
+    assert "fingerprint" not in event
+
+
+def test_errno_fingerprint_uses_raw_number_for_unknown_errno():
+    """Unmapped errno values still split the issue instead of being dropped."""
+    assert errno_fingerprint(OSError(9999, "unknown")) == "errno:9999"
+
+
+def test_errno_fingerprint_stops_on_self_referencing_chain():
+    """A cyclic exception chain must not hang the fingerprint lookup."""
+    first = ValueError("first")
+    second = ValueError("second")
+    first.__cause__ = second
+    second.__cause__ = first
+
+    assert errno_fingerprint(first) is None

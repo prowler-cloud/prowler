@@ -1,3 +1,5 @@
+import errno
+import logging
 import os
 import time
 import uuid
@@ -14,6 +16,7 @@ from api.models import (
     StateChoices,
     StatusChoices,
 )
+from config.settings.sentry import before_send
 from prowler.lib.check.models import Severity
 from reportlab.lib import colors
 from tasks.jobs.report import (
@@ -1675,6 +1678,73 @@ class TestGenerateComplianceReportsCIS:
 
         assert result["cis"]["upload"] is False
         assert result["cis"]["error"] == "dir boom"
+
+    @patch("tasks.jobs.report._aggregate_requirement_statistics_from_database")
+    @patch("tasks.jobs.report._generate_compliance_output_directory")
+    @patch("tasks.jobs.report.Compliance.get_bulk")
+    def test_output_directory_failures_are_grouped_per_errno(
+        self,
+        mock_get_bulk,
+        mock_generate_output_dir,
+        mock_stats,
+        monkeypatch,
+        caplog,
+        tenants_fixture,
+        scans_fixture,
+        aws_provider,
+    ):
+        """A full disk and a missing mount point must not share a Sentry issue.
+
+        Both are OSError raised from the same ``os.makedirs`` call, so they only
+        stay apart if the exception reaches ``before_send``, which fingerprints
+        it by errno.
+        """
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        provider = aws_provider
+
+        self._force_scan_has_findings(monkeypatch)
+        mock_stats.return_value = {}
+        mock_get_bulk.return_value = {"cis_5.0_aws": Mock()}
+
+        fingerprints = []
+        for error_number, message in (
+            (errno.ENOSPC, "No space left on device: '/tmp/prowler_api_output'"),
+            (errno.ENOENT, "No such file or directory: '/mnt/output'"),
+        ):
+            mock_generate_output_dir.side_effect = OSError(error_number, message)
+            caplog.clear()
+
+            with caplog.at_level(logging.ERROR, logger="tasks.jobs.report"):
+                generate_compliance_reports(
+                    tenant_id=str(tenant.id),
+                    scan_id=str(scan.id),
+                    provider_id=str(provider.id),
+                    generate_threatscore=False,
+                    generate_ens=False,
+                    generate_nis2=False,
+                    generate_csa=False,
+                    generate_cis=True,
+                )
+
+            record = next(
+                record
+                for record in caplog.records
+                if "Error generating output directory" in record.getMessage()
+            )
+            # Without exc_info the Sentry event carries no exception at all and
+            # nothing can tell the two failures apart.
+            assert record.exc_info is not None
+
+            # Same hint the Sentry logging integration builds for this record.
+            event = {}
+            before_send(event, {"log_record": record, "exc_info": record.exc_info})
+            fingerprints.append(event["fingerprint"])
+
+        assert fingerprints == [
+            ["{{ default }}", "errno:ENOSPC"],
+            ["{{ default }}", "errno:ENOENT"],
+        ]
 
 
 class TestPickLatestCisVariant:
