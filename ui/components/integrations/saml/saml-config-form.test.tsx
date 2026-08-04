@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderToString } from "react-dom/server";
 import {
@@ -201,15 +201,22 @@ describe("SamlConfigForm", () => {
     const fileInput = document.getElementById(
       "metadata_xml_file",
     ) as HTMLInputElement;
+    const metadataInput = document.getElementById(
+      "metadata_xml",
+    ) as HTMLInputElement;
     const metadataFile = new File(["<EntityDescriptor />"], "metadata.xml", {
       type: "application/xml",
     });
     await user.upload(fileInput, metadataFile);
+    await waitFor(() =>
+      expect(metadataInput).toHaveValue("<EntityDescriptor />"),
+    );
 
     // When
     await user.upload(fileInput, []);
 
     // Then
+    expect(metadataInput).toHaveValue("");
     expect(
       screen.queryByText("Metadata XML is required"),
     ).not.toBeInTheDocument();

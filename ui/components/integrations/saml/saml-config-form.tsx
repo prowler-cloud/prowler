@@ -227,6 +227,16 @@ export const SamlConfigForm = ({
     setClientErrors(newErrors);
   };
 
+  const clearMetadataFile = (fileInput: HTMLInputElement) => {
+    fileInput.value = "";
+    const metadataInput = formRef.current?.elements.namedItem("metadata_xml");
+    if (metadataInput instanceof HTMLInputElement) {
+      metadataInput.value = "";
+    }
+    setUploadedFile(null);
+    validateFields(emailDomain, false);
+  };
+
   useEffect(() => {
     if (state?.success) {
       toast({
@@ -246,8 +256,7 @@ export const SamlConfigForm = ({
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) {
-      setUploadedFile(null);
-      validateFields(emailDomain, false);
+      clearMetadataFile(event.target);
       return;
     }
 
@@ -263,10 +272,7 @@ export const SamlConfigForm = ({
         title: "Invalid file type",
         description: "Please select a valid XML file (.xml extension).",
       });
-      // Clear the file input
-      event.target.value = "";
-      setUploadedFile(null);
-      validateFields(emailDomain, false);
+      clearMetadataFile(event.target);
 
       return;
     }
@@ -283,19 +289,14 @@ export const SamlConfigForm = ({
           title: "Invalid XML content",
           description: xmlValidationResult.error,
         });
-        // Clear the file input
-        event.target.value = "";
-        setUploadedFile(null);
-        validateFields(emailDomain, false);
+        clearMetadataFile(event.target);
         return;
       }
 
       // Set the XML content in a hidden input
-      const xmlInput = document.getElementById(
-        "metadata_xml",
-      ) as HTMLInputElement;
-      if (xmlInput) {
-        xmlInput.value = content;
+      const metadataInput = formRef.current?.elements.namedItem("metadata_xml");
+      if (metadataInput instanceof HTMLInputElement) {
+        metadataInput.value = content;
       }
 
       setUploadedFile(file);
@@ -313,10 +314,7 @@ export const SamlConfigForm = ({
         title: "File read error",
         description: "Failed to read the selected file.",
       });
-      // Clear the file input
-      event.target.value = "";
-      setUploadedFile(null);
-      validateFields(emailDomain, false);
+      clearMetadataFile(event.target);
     };
 
     reader.readAsText(file);
