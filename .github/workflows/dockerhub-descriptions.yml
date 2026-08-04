@@ -20,7 +20,7 @@ permissions: {}
 
 jobs:
   prowlercloud:
-    if: github.repository == 'prowler-cloud/prowler'
+    if: github.repository == 'prowler-cloud/prowler' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -62,7 +62,7 @@ jobs:
           readme-filepath: ${{ env.OVERVIEW_FILE }}
 
   toniblyx:
-    if: github.repository == 'prowler-cloud/prowler'
+    if: github.repository == 'prowler-cloud/prowler' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
