@@ -6,7 +6,7 @@ from tests.providers.aws.utils import AWS_REGION_EU_WEST_1
 # SecurityHub against the global provider at module level. Stubbing the class
 # first keeps that import from reaching AWS when this file runs on its own.
 SERVICE_MODULE = "prowler.providers.aws.services.securityhub.securityhub_service"
-FIXER_MODULE ="prowler.providers.aws.services.securityhub.securityhub_enabled.securityhub_enabled_fixer"
+FIXER_MODULE = "prowler.providers.aws.services.securityhub.securityhub_enabled.securityhub_enabled_fixer"
 
 
 def _mocked_securityhub_client(fixer_config: dict) -> tuple:
