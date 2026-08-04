@@ -104,7 +104,7 @@ services:
       retries: 3
 
   neo4j:
-    image: graphstack/dozerdb:5.26.3.0@sha256:a77526ea3918fdc46d1fff70c4aea7d71d3874a26ecec059179d6775845b1247
+    image: graphstack/dozerdb:5.26.27.0@sha256:9b54d6b3a98a76c00bd23e8e78d8c82081ff168162aebd47b25c234e092cb0a0
     hostname: "neo4j"
     volumes:
       - ./_data/neo4j:/data
