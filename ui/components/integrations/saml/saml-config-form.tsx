@@ -133,8 +133,9 @@ export const SamlConfigForm = ({
   setIsOpen: Dispatch<SetStateAction<boolean>>;
   samlConfig?: SamlConfiguration;
 }) => {
+  const isUpdate = Boolean(samlConfig?.id);
   const [state, formAction, isPending] = useActionState(
-    samlConfig?.id ? updateSamlConfig : createSamlConfig,
+    isUpdate ? updateSamlConfig : createSamlConfig,
     null,
   );
   const [emailDomain, setEmailDomain] = useState(
@@ -212,7 +213,7 @@ export const SamlConfigForm = ({
       .string()
       .trim()
       .min(1, { message: "Metadata XML is required" })
-      .safeParse(hasFile ? "dummy_xml_content" : "");
+      .safeParse(hasFile || isUpdate ? "dummy_xml_content" : "");
 
     const newErrors = {
       email_domain: emailValidation.success
@@ -549,7 +550,7 @@ export const SamlConfigForm = ({
       <div className="flex flex-col items-start gap-2">
         <span className="text-xs text-gray-700 dark:text-gray-300">
           Metadata XML File{" "}
-          {!samlConfig?.id && <span className="text-red-500">*</span>}
+          {!isUpdate && <span className="text-red-500">*</span>}
         </span>
         <Button
           type="button"

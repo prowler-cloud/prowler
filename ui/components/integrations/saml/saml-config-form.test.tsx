@@ -185,6 +185,36 @@ describe("SamlConfigForm", () => {
     expect(screen.getByText("Metadata XML File")).not.toHaveTextContent("*");
   });
 
+  it("does not require metadata when an update file selection is cleared", async () => {
+    // Given
+    isCloudMock.mockReturnValue(true);
+    const user = userEvent.setup();
+    const samlConfig = {
+      type: SAML_CONFIGURATION_RESOURCE_TYPE,
+      id: "saml-1",
+      attributes: {
+        email_domain: "primary.example.com",
+        metadata_xml: "<EntityDescriptor />",
+      },
+    };
+    render(<SamlConfigForm setIsOpen={vi.fn()} samlConfig={samlConfig} />);
+    const fileInput = document.getElementById(
+      "metadata_xml_file",
+    ) as HTMLInputElement;
+    const metadataFile = new File(["<EntityDescriptor />"], "metadata.xml", {
+      type: "application/xml",
+    });
+    await user.upload(fileInput, metadataFile);
+
+    // When
+    await user.upload(fileInput, []);
+
+    // Then
+    expect(
+      screen.queryByText("Metadata XML is required"),
+    ).not.toBeInTheDocument();
+  });
+
   it("marks metadata XML as required when creating", () => {
     // Given
     isCloudMock.mockReturnValue(true);
