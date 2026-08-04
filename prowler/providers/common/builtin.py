@@ -61,7 +61,9 @@ def is_builtin_check(provider: str, service: str, check_name: str) -> bool:
         # (or a prefix of it) the check does not ship with the SDK. Anything
         # else — a missing third-party dependency, say — belongs to a built-in
         # check that does exist and must stay loud.
-        if error.name is None or not module.startswith(error.name):
+        if error.name is None or (
+            error.name != module and not module.startswith(f"{error.name}.")
+        ):
             raise
         return False
     except ValueError:

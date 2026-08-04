@@ -76,6 +76,19 @@ class TestIsBuiltinCheck:
         ):
             assert is_builtin_check("aws", "ec2", "ec2_instance_public_ip") is False
 
+    def test_reraises_when_missing_module_name_is_only_a_textual_prefix(self):
+        """A sibling module prefix must not read as the check's missing parent."""
+        sibling_prefix = "prowler.providers.aws.services.ec2.ec2"
+
+        with patch(
+            "prowler.providers.common.builtin.importlib.util.find_spec",
+            side_effect=ModuleNotFoundError(
+                f"No module named '{sibling_prefix}'", name=sibling_prefix
+            ),
+        ):
+            with pytest.raises(ModuleNotFoundError):
+                is_builtin_check("aws", "ec2", "ec2_instance_public_ip")
+
     @pytest.mark.parametrize(
         "error",
         [
