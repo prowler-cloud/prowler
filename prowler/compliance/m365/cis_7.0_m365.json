@@ -2577,7 +2577,9 @@
     {
       "Id": "6.3.2",
       "Description": "Outlook on the web (OWA) mailbox policies include two settings that control personal account integration in Outlook. PersonalAccountsEnabled controls whether users can add personal email accounts (e.g., Outlook.com, Gmail, Yahoo) in the new Outlook for Windows. PersonalAccountCalendarsEnabled controls whether users can connect personal Outlook.com or Google calendars in Outlook on the web. Neither setting applies to classic Outlook for Windows, Outlook for Mac, or Outlook mobile apps. The recommended state for the default OWA Mailbox Policy is: - PersonalAccountsEnabled is set to False - PersonalAccountCalendarsEnabled is set to False",
-      "Checks": [],
+      "Checks": [
+        "exchange_owa_mailbox_policy_personal_accounts_disabled"
+      ],
       "Attributes": [
         {
           "Section": "6 Exchange admin center",
@@ -2698,7 +2700,9 @@
     {
       "Id": "6.5.5",
       "Description": "Direct Send is a method used to send emails directly to an Exchange Online customer's hosted mailboxes from on-premises devices, applications, or third-party cloud services using the customer's own accepted domain. This method does not require any form of authentication because, by its nature, it mimics incoming anonymous emails from the internet, apart from the sender domain. The recommended state is to configure RejectDirectSend to True.",
-      "Checks": [],
+      "Checks": [
+        "exchange_organization_reject_direct_send_enabled"
+      ],
       "Attributes": [
         {
           "Section": "6 Exchange admin center",

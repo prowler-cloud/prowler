@@ -1055,8 +1055,11 @@ class M365PowerShell(PowerShellSession):
                 }
             ]
         """
+        # -ErrorAction SilentlyContinue: tenants with no application access
+        # policies raise a localized "object not found" error instead of
+        # returning an empty result; the error output never carries data.
         return self.execute(
-            "Get-ApplicationAccessPolicy | ConvertTo-Json -Depth 10",
+            "Get-ApplicationAccessPolicy -ErrorAction SilentlyContinue | ConvertTo-Json -Depth 10",
             json_parse=True,
         )
 
