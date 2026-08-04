@@ -4,6 +4,26 @@ All notable changes to the **Prowler API** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [1.38.1] (Prowler v5.37.1)
+
+### 🐞 Fixed
+
+- Restored `wget` in the API container image, which the Compose healthcheck depends on [(#12311)](https://github.com/prowler-cloud/prowler/pull/12311)
+- Pointed the SDK dependency at the integration branch so the API image builds while the dependency bumps are in flight [(#12311)](https://github.com/prowler-cloud/prowler/pull/12311)
+- Entra Conditional Access guest-user checks no longer report false FAILs in M365 scans: microsoft-kiota packages overridden to 1.9.10 so `guestOrExternalUserTypes` (a flags enum Graph serializes as a comma-separated string) deserializes correctly instead of returning an empty list [(#12315)](https://github.com/prowler-cloud/prowler/pull/12315)
+
+### 🔐 Security
+
+- The API container image now builds on Debian 13 (trixie), taking its critical CVE count from 18 to 4 [(#12311)](https://github.com/prowler-cloud/prowler/pull/12311)
+- Bumped PowerShell, Trivy and uv in the API container image, clearing 14 high-severity CVEs [(#12311)](https://github.com/prowler-cloud/prowler/pull/12311)
+- Bumped `workos` and `pyopenssl`, which capped `cryptography` below 47, so the API can move to `cryptography` 48.0.1 alongside the SDK [(#12311)](https://github.com/prowler-cloud/prowler/pull/12311)
+- Removed `gnupg` and `apt-transport-https` from the API container image; `wget` is retained because the Compose healthcheck invokes it [(#12311)](https://github.com/prowler-cloud/prowler/pull/12311)
+- The API container image no longer ships `git`; removing it also dropped `perl`, `perl-modules`, `libperl` and `liberror-perl`, clearing 12 critical CVEs. Only `perl-base` remains, which Debian marks Essential and cannot be removed [(#12311)](https://github.com/prowler-cloud/prowler/pull/12311)
+- Removed `pip` from the API container image, clearing two high-severity CVEs in the copies of `setuptools` and `msgpack` that pip vendors. `uv` is retained because the entrypoint runs every command through `uv run` [(#12311)](https://github.com/prowler-cloud/prowler/pull/12311)
+- Bumped `pillow` to 12.3.0, `httplib2` to 0.32.0 and `pyasn1` to 0.6.4 to resolve known CVEs [(#12311)](https://github.com/prowler-cloud/prowler/pull/12311)
+
+---
+
 ## [1.38.0] (Prowler v5.37.0)
 
 ### 🚀 Added

@@ -4,6 +4,14 @@ All notable changes to the **Prowler MCP Server** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [0.9.1] (Prowler v5.37.1)
+
+### 🔐 Security
+
+- Bumped `fastmcp` and pinned `cryptography`, `joserfc`, `mcp` and `python-multipart`, clearing all 7 high-severity CVEs from the MCP image [(#12307)](https://github.com/prowler-cloud/prowler/pull/12307)
+
+---
+
 ## [0.9.0] (Prowler v5.37.0)
 
 ### 🚀 Added
