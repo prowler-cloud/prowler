@@ -48,7 +48,7 @@ export const AggregatedFrameworkCard = ({
           <div className="flex w-full flex-col gap-3">
             <div className={cn("flex items-center gap-3", actions && "pr-8")}>
               {logo && (
-                <div className="border-border-neutral-tertiary bg-bg-neutral-tertiary flex h-10 w-10 min-w-10 shrink-0 items-center justify-center rounded-md border">
+                <div className="border-border-neutral-tertiary flex h-10 w-10 min-w-10 shrink-0 items-center justify-center rounded-md border bg-slate-50">
                   <Image
                     src={logo}
                     alt={`${frameworkTitle} logo`}

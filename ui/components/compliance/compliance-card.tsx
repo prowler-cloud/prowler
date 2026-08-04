@@ -108,7 +108,7 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
               )}
             >
               {getComplianceIcon(title) && (
-                <div className="border-border-neutral-tertiary bg-bg-neutral-tertiary flex h-10 w-10 min-w-10 shrink-0 items-center justify-center rounded-md border">
+                <div className="border-border-neutral-tertiary flex h-10 w-10 min-w-10 shrink-0 items-center justify-center rounded-md border bg-slate-50">
                   <Image
                     src={getComplianceIcon(title)}
                     alt={`${title} logo`}

@@ -4,6 +4,28 @@ import { describe, expect, it, vi } from "vitest";
 import { AggregatedFrameworkCard } from "./aggregated-framework-card";
 
 describe("AggregatedFrameworkCard", () => {
+  it("keeps the logo canvas light in dark mode", () => {
+    // Given / When
+    render(
+      <AggregatedFrameworkCard
+        frameworkTitle="CIS"
+        formattedTitle="CIS"
+        ariaLabel="Open CIS"
+        onActivate={vi.fn()}
+        subtitle={<span>Framework summary</span>}
+      >
+        <span>Framework details</span>
+      </AggregatedFrameworkCard>,
+    );
+
+    // Then
+    const logoCanvas = screen.getByRole("img", {
+      name: "CIS logo",
+    }).parentElement;
+    expect(logoCanvas).toHaveClass("bg-slate-50");
+    expect(logoCanvas).not.toHaveClass("bg-bg-neutral-tertiary");
+  });
+
   it("keeps card actions outside the navigation control", () => {
     // Given
     render(
