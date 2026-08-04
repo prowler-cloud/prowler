@@ -1,1 +1,0 @@
-The API container image no longer ships `git`; removing it also dropped `perl`, `perl-modules`, `libperl` and `liberror-perl`, clearing 12 critical CVEs. Only `perl-base` remains, which Debian marks Essential and cannot be removed

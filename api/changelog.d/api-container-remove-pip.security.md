@@ -1,1 +1,0 @@
-Removed `pip` from the API container image, clearing two high-severity CVEs in the copies of `setuptools` and `msgpack` that pip vendors. `uv` is retained because the entrypoint runs every command through `uv run`
