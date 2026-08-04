@@ -80,20 +80,27 @@ class TestIsBuiltinCheck:
         "error",
         [
             ValueError("namespace package edge case"),
-            ImportError("partially initialised"),
         ],
-        ids=["value_error", "import_error"],
+        ids=["value_error"],
     )
-    def test_false_when_find_spec_raises_something_other_than_not_found(self, error):
+    def test_false_when_find_spec_raises_value_error(self, error):
         """Mirrors the guard `is_builtin_provider` already carries.
 
         `find_spec` can fail for reasons that are not "the module is absent" —
-        a namespace-package edge case raises ValueError, a partially
-        initialised package raises ImportError. Neither says the check ships
-        with the SDK, so both fall through to the entry points.
+        a namespace-package edge case raises ValueError. That does not say the
+        check ships with the SDK, so it falls through to the entry points.
         """
         with patch(
             "prowler.providers.common.builtin.importlib.util.find_spec",
             side_effect=error,
         ):
             assert is_builtin_check("aws", "ec2", "ec2_instance_public_ip") is False
+
+    def test_reraises_plain_import_error(self):
+        """A plain ImportError can indicate a broken built-in check import."""
+        with patch(
+            "prowler.providers.common.builtin.importlib.util.find_spec",
+            side_effect=ImportError("partially initialised"),
+        ):
+            with pytest.raises(ImportError, match="partially initialised"):
+                is_builtin_check("aws", "ec2", "ec2_instance_public_ip")

@@ -64,5 +64,5 @@ def is_builtin_check(provider: str, service: str, check_name: str) -> bool:
         if error.name is None or not module.startswith(error.name):
             raise
         return False
-    except (ImportError, ValueError):
+    except ValueError:
         return False
