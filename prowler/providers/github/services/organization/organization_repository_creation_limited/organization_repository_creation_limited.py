@@ -17,6 +17,8 @@ def _join_human_readable(items: List[str]) -> str:
 
 PUBLIC_CREATION_TYPES = {"all", "public"}
 NON_PUBLIC_CREATION_TYPES = {"private", "internal"}
+PUBLIC_DISABLED_CREATION_TYPES = NON_PUBLIC_CREATION_TYPES | {"none"}
+KNOWN_CREATION_TYPES = PUBLIC_CREATION_TYPES | PUBLIC_DISABLED_CREATION_TYPES
 
 
 class organization_repository_creation_limited(Check):
@@ -66,7 +68,7 @@ class organization_repository_creation_limited(Check):
                 if global_creation:
                     public_known_disabled = (
                         public_creation is False
-                        or normalized_type in NON_PUBLIC_CREATION_TYPES
+                        or normalized_type in PUBLIC_DISABLED_CREATION_TYPES
                     )
                     if not public_known_disabled:
                         enabled_types.append("repositories of any type")
@@ -121,8 +123,9 @@ class organization_repository_creation_limited(Check):
                         or internal_creation is True
                         or normalized_type in NON_PUBLIC_CREATION_TYPES
                     )
-                    public_known = public_creation is not None or normalized_type in (
-                        PUBLIC_CREATION_TYPES | NON_PUBLIC_CREATION_TYPES | {"none"}
+                    public_known = (
+                        public_creation is not None
+                        or normalized_type in KNOWN_CREATION_TYPES
                     )
 
                     if not public_allowed and non_public_allowed and public_known:

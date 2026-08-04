@@ -174,6 +174,45 @@ class Test_organization_repository_creation_limited:
                 == f"Organization {org_name} has disabled repository creation for members."
             )
 
+    def test_repository_creation_type_none_with_private_enabled(self):
+        organization_client = mock.MagicMock
+        org_name = "test-organization"
+        organization_client.organizations = {
+            1: Org(
+                id=1,
+                name=org_name,
+                mfa_required=None,
+                members_can_create_repositories=True,
+                members_allowed_repository_creation_type="none",
+                members_can_create_private_repositories=True,
+            ),
+        }
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_github_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.github.services.organization.organization_repository_creation_limited.organization_repository_creation_limited.organization_client",
+                new=organization_client,
+            ),
+        ):
+            from prowler.providers.github.services.organization.organization_repository_creation_limited.organization_repository_creation_limited import (
+                organization_repository_creation_limited,
+            )
+
+            check = organization_repository_creation_limited()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert result[0].check_metadata.Severity == Severity.low
+            assert "repositories of any type" not in result[0].status_extended
+            assert "private repositories" in result[0].status_extended
+            assert (
+                "Public repository creation is disabled." in result[0].status_extended
+            )
+
     def test_repository_creation_public_flag_only(self):
         organization_client = mock.MagicMock
         org_name = "test-organization"
