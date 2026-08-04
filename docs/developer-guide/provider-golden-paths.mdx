@@ -28,9 +28,18 @@ This page answers **"how far does this provider need to reach?"** (CLI-only, ext
 
 **Checklist:**
 
-1. Classify the provider type (SDK / API / Tool / Hybrid) and whether it is regional, using [Classifying your Provider](./provider#classifying-your-provider).
-2. Create `prowler/providers/<name>/` following the structure in the `prowler-provider` skill (`skills/prowler-provider/SKILL.md`) and [Step 1: Create the Provider Backend](./provider#step-1-create-the-provider-backend-cli-integration) in the full guide.
-3. **Discovery is automatic.** `Provider.get_available_providers()` (`prowler/providers/common/provider.py`) finds any package under `prowler/providers/` (other than `common`) whose `<name>_provider.py` defines a `<Name>Provider` class inheriting from `Provider`. No manual registration is required just for the class to exist and be importable.
+1. Decide the provider's contract before writing code. These are the inputs the rest of the checklist assumes, and each one is a decision no template can make for you:
+    - **Provider kind** — SDK / API / Tool / Hybrid, per [Classifying your Provider](./provider#classifying-your-provider). Determines which implementation guide you follow.
+    - **Regional behavior** — whether findings are scoped per region, per [Determining Regional vs Non-Regional Architecture](./provider#determining-regional-vs-non-regional-architecture).
+    - **Authentication mode** — which credential sources you accept (environment variables, a token, a key file, a browser or device flow) and what `setup_session()` returns. The base `Provider` class declares `setup_session()` abstract; the shape is yours.
+    - **Identity shape** — what identifies an audited target and appears in output: the fields of your `<Name>IdentityInfo` model in `prowler/providers/<name>/models.py`, returned by the abstract `identity` property.
+    - **Application exposure** — CLI/SDK only, or also selectable in the API and UI. `sdk_only` on the provider class defaults to `True`; only a provider that sets `sdk_only = False` is listed by `Provider.get_app_providers()`, which is what the app enumerates. Choosing exposure here decides whether you stop at Scope 1 or continue to Scope 3.
+2. Create `prowler/providers/<name>/` following the structure in the `prowler-provider` skill (`skills/prowler-provider/SKILL.md`) and [Step 1: Create the Provider Backend](./provider#step-1-create-the-provider-backend-cli-integration) in the full guide. Only part of that layout is a hard requirement:
+    - **Required:** `__init__.py`, `<name>_provider.py` defining `<Name>Provider(Provider)`, and `models.py` for the identity and session models. Discovery and instantiation depend on these.
+    - **Depends on the provider kind:** `services/`, `config.py`, `exceptions/`, and `lib/`. A provider that audits a live API needs services and usually its own config and exception types; a provider that does not will not have them. `iac` and `llm` ship today with no `config.py`, `exceptions/`, or `services/` at all, so treat a missing directory as a signal about the provider's kind rather than an incomplete implementation.
+3. **Discovery is automatic, and it happens in two layers** (both in `prowler/providers/common/provider.py`). No manual registration is required for either.
+    - `Provider.get_available_providers()` **enumerates names only**: every package directory under `prowler/providers/` other than `common`, plus the names of any `prowler.providers` entry points. It imports nothing and validates nothing, so a name can appear here and still fail to load.
+    - `Provider.get_class(<name>)` **does the import and the validation**: for a built-in it imports `prowler/providers/<name>/<name>_provider.py` and looks up `<Name>Provider` (Python's `str.capitalize()` on the name, plus `Provider`, so `googleworkspace` must define `GoogleworkspaceProvider` and not `GoogleWorkspaceProvider`), raising `ImportError` if that class is absent; for an entry point it loads the object and enforces that it is a `Provider` subclass.
 4. **CLI help text is also automatic for new providers.** `prowler/lib/cli/parser.py` keeps a hardcoded `known_providers` set for formatting reasons, but any provider not in that set is appended to the CLI usage/help text automatically, using a `_cli_help_text` class attribute on your provider class (empty string if unset). Set `_cli_help_text` on your provider class to get a real description instead of a blank one — you do not need to edit `parser.py` itself.
 5. **Argument parsing and instantiation are still manual today.** Every current provider is wired into the `elif` chain in `init_global_provider()` (`prowler/providers/common/provider.py`) to parse its provider-specific CLI arguments and instantiate itself correctly. The base `Provider` class exposes a `from_cli_args()` override point intended to let a provider handle this itself instead of extending that chain, but as of this writing no built-in provider implements it — treat it as an available option, not the established pattern to copy.
 6. Add SDK unit tests (see the `prowler-test-sdk` skill and [Unit Testing](./unit-testing)).
@@ -50,7 +59,7 @@ The `Provider` enum in `prowler/config/config.py` ("Step 12: Add to Config" in t
 
 **Checklist:**
 
-1. Same provider-class and service/check structure as a built-in provider (Scope 1, steps 1-2), packaged in your own installable Python project instead of `prowler/providers/`.
+1. Same provider-class and service/check structure as a built-in provider (Scope 1, steps 1-2), packaged in your own installable Python project instead of `prowler/providers/`. The directory layout there is an in-repo convention, not a contract you have to reproduce: what Prowler requires of an external provider is the public runtime surface below — a `Provider` subclass reachable from your entry point, plus `init_parser` and `from_cli_args` on it. Organize the rest of your package however you like.
 2. Register your provider class under the `prowler.providers` entry-point group in your package's `pyproject.toml` (or equivalent), matching how `prowler/providers/common/provider.py` discovers entry points via `importlib.metadata.entry_points(group="prowler.providers")`. This is discovery only: it makes the class importable, not usable from the CLI on its own.
 3. **Implement `init_parser(self)` on your provider class** to register its CLI arguments. Built-in providers expose this as a module-level function in `<name>/lib/arguments/arguments.py`, but external providers expose it on the class, because `prowler/providers/common/arguments.py` calls `cls.init_parser(self)` on each entry-point provider (guarded by `hasattr`) to build its argument subparser. Without it, `prowler <name>` has no provider-specific flags.
 4. **Implement the `from_cli_args(cls, arguments, fixer_config)` classmethod** to parse those arguments and return an initialized provider instance. Built-in providers are instead wired into the `elif` chain in `init_global_provider()`; external providers cannot be, so that method's dynamic fallback (`prowler/providers/common/provider.py`) calls `provider_class.from_cli_args(...)` for any name it does not recognize. This is the required instantiation contract for the external CLI path — the base `Provider` class raises `NotImplementedError` until you override it.
@@ -66,7 +75,7 @@ There is currently no first-party reference implementation of this path in this 
 
 ---
 
-## Scope 3: Full-Stack Provider (SDK + API + UI)
+## Scope 3: Full-Stack Provider covering SDK, API and UI
 
 **Checklist:**
 

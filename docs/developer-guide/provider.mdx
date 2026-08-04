@@ -1966,6 +1966,10 @@ class APIProviderService(BaseService):
 
 #### Step 9: Register in CLI
 
+<Note>
+Optional, exactly as for SDK providers: a provider missing from this hardcoded list is still discovered and appended to the CLI help text via `_cli_help_text`. See the note on [Step 9 for SDK providers](#step-9-register-in-cli) for what editing the file does and does not change.
+</Note>
+
 **Explanation:**
 Add your provider to the available providers in the CLI.
 
@@ -1992,6 +1996,10 @@ This is needed to be able to use the provider in the generic checks. The provide
 This step is the same as the [SDK providers](#step-11-register-in-the-list-of-providers).
 
 #### Step 12: Add to Config
+
+<Note>
+As with SDK providers, this `Provider` enum has no other references in the codebase as of this writing, so a missing entry is not a functional gap. See the note on [Step 12 for SDK providers](#step-12-add-to-config).
+</Note>
 
 **Explanation:**
 Configuration registration ensures your API provider is recognized by Prowler's configuration system. This enables proper handling of provider-specific settings and defaults.
@@ -3345,7 +3353,7 @@ def __init__(
 
 ## Step 3: Integrate the Provider in the UI
 
-TBD — this section is tracked as its own phase of [issue #12026](https://github.com/prowler-cloud/prowler/issues/12026). In the meantime, see [Scope 3](./provider-golden-paths#scope-3-full-stack-provider-sdk-api-ui) in Provider Golden Paths for a pointer to using an existing full-stack provider as a working reference.
+TBD — this section is tracked as its own phase of [issue #12026](https://github.com/prowler-cloud/prowler/issues/12026). In the meantime, see [Scope 3](./provider-golden-paths#scope-3-full-stack-provider-covering-sdk-api-and-ui) in Provider Golden Paths for a pointer to using an existing full-stack provider as a working reference.
 
 ---
 

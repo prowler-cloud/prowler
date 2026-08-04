@@ -146,31 +146,16 @@ from prowler.providers.{provider}.services.{service}.{service}_service import {S
 
 ## Supported Providers
 
-Current providers (`prowler/providers/`, excluding the shared `common/` package):
-- AWS (Amazon Web Services)
-- Azure (Microsoft Azure)
-- GCP (Google Cloud Platform)
-- Kubernetes
-- GitHub
-- Google Workspace
-- M365 (Microsoft 365)
-- Okta
-- OracleCloud (Oracle Cloud Infrastructure)
-- AlibabaCloud
-- Cloudflare
-- MongoDB Atlas
-- NHN (NHN Cloud, community-maintained)
-- LLM (Beta)
-- IaC (Infrastructure as Code)
-- Image (container images)
-- OpenStack
-- Scaleway
-- Stackit
-- Vercel
-- Linode
-- E2ENetworks (E2E Networks)
+Do not keep a list here — it goes stale. Enumerate the providers instead:
 
-This list drifts — cross-check `prowler/providers/` directly, or `Provider.get_available_providers()` in `prowler/providers/common/provider.py`, before relying on it.
+```bash
+ls -d prowler/providers/*/ | grep -v common   # built-in providers
+```
+
+`Provider.get_available_providers()` in `prowler/providers/common/provider.py` is the
+runtime equivalent, and also includes any external `prowler.providers` entry points
+installed alongside Prowler. `Provider.get_app_providers()` narrows that to the
+providers the API and UI may expose (those setting `sdk_only = False`).
 
 ## Commands
 
