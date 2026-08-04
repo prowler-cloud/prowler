@@ -548,7 +548,8 @@ export const SamlConfigForm = ({
       </Card>
       <div className="flex flex-col items-start gap-2">
         <span className="text-xs text-gray-700 dark:text-gray-300">
-          Metadata XML File <span className="text-red-500">*</span>
+          Metadata XML File{" "}
+          {!samlConfig?.id && <span className="text-red-500">*</span>}
         </span>
         <Button
           type="button"

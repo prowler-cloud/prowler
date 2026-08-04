@@ -166,6 +166,36 @@ describe("SamlConfigForm", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("does not mark metadata XML as required when updating", () => {
+    // Given
+    isCloudMock.mockReturnValue(true);
+    const samlConfig = {
+      type: SAML_CONFIGURATION_RESOURCE_TYPE,
+      id: "saml-1",
+      attributes: {
+        email_domain: "primary.example.com",
+        metadata_xml: "<EntityDescriptor />",
+      },
+    };
+
+    // When
+    render(<SamlConfigForm setIsOpen={vi.fn()} samlConfig={samlConfig} />);
+
+    // Then
+    expect(screen.getByText("Metadata XML File")).not.toHaveTextContent("*");
+  });
+
+  it("marks metadata XML as required when creating", () => {
+    // Given
+    isCloudMock.mockReturnValue(true);
+
+    // When
+    render(<SamlConfigForm setIsOpen={vi.fn()} />);
+
+    // Then
+    expect(screen.getByText("Metadata XML File")).toHaveTextContent("*");
+  });
+
   it("adds normalized aliases and removes them in Cloud", async () => {
     // Given
     isCloudMock.mockReturnValue(true);
