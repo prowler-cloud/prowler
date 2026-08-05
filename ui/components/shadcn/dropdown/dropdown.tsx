@@ -170,7 +170,10 @@ function DropdownMenuSeparator({
   return (
     <DropdownMenuPrimitive.Separator
       data-slot="dropdown-menu-separator"
-      className={cn("bg-border -mx-1 my-1 h-px", className)}
+      // bg-border-neutral-secondary, not shadcn's bg-border: this theme never
+      // defines --color-border, so bg-border compiles to nothing and the
+      // separator renders invisible.
+      className={cn("bg-border-neutral-secondary -mx-1 my-1 h-px", className)}
       {...props}
     />
   );
