@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { type ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
@@ -76,6 +76,149 @@ describe("MessageBubble", () => {
     // Then
     expect(screen.getByText("Question")).toBeInTheDocument();
     expect(screen.queryByText(/PROWLER_UI_CONTEXT_V1/)).not.toBeInTheDocument();
+  });
+
+  it("should render a skill launch as a card instead of the raw prompt", () => {
+    // Given
+    const skillMessage: LighthouseV2Message = {
+      id: "message-user-skill",
+      role: LIGHTHOUSE_V2_MESSAGE_ROLE.USER,
+      model: null,
+      tokenUsage: null,
+      insertedAt: "2026-06-25T10:00:00Z",
+      parts: [
+        {
+          id: "part-user-skill",
+          type: LIGHTHOUSE_V2_PART_TYPE.TEXT,
+          content: {
+            text: "[PROWLER_UI_SKILL_V1]\ninstructions\n[/PROWLER_UI_SKILL_V1]\n\nVerify exploitability",
+            display_text: "Verify exploitability",
+            ui_skill: {
+              skill_id: "verify-exploitability",
+              name: "Verify exploitability",
+              version: 1,
+            },
+            ui_context: {
+              schema_version: 1,
+              transport: "inline",
+              items: [
+                {
+                  kind: "finding",
+                  id: "finding-1",
+                  source: "focused",
+                  scope_key: "findings:/findings",
+                  label:
+                    "Inline IAM policy does not allow '*:*' administrative privileges",
+                  finding_id: "finding-1",
+                },
+              ],
+            },
+          },
+          toolCallOutcome: null,
+          insertedAt: "2026-06-25T10:00:00Z",
+          updatedAt: "2026-06-25T10:00:00Z",
+        },
+      ],
+    };
+
+    // When
+    render(<MessageBubble message={skillMessage} />);
+
+    // Then
+    expect(screen.getByText("Skill")).toBeInTheDocument();
+    expect(screen.getByText("Verify exploitability")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Inline IAM policy does not allow '*:*' administrative privileges",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/PROWLER_UI_SKILL_V1/)).not.toBeInTheDocument();
+  });
+
+  it("should render a skill response with receipt and follow-up actions", () => {
+    // Given
+    const assistantMessage: LighthouseV2Message = {
+      id: "message-assistant-skill",
+      role: LIGHTHOUSE_V2_MESSAGE_ROLE.ASSISTANT,
+      model: null,
+      tokenUsage: null,
+      insertedAt: "2026-06-25T10:00:42Z",
+      parts: [
+        {
+          id: "part-tool-1",
+          type: LIGHTHOUSE_V2_PART_TYPE.TOOL_CALL,
+          content: {
+            tool_call_id: "tool-1",
+            tool_name: "get_finding",
+            arguments: {},
+            result: "ok",
+          },
+          toolCallOutcome: "success",
+          insertedAt: "2026-06-25T10:00:10Z",
+          updatedAt: "2026-06-25T10:00:12Z",
+        },
+        {
+          id: "part-answer",
+          type: LIGHTHOUSE_V2_PART_TYPE.TEXT,
+          content: { text: "The finding is exploitable in practice." },
+          toolCallOutcome: null,
+          insertedAt: "2026-06-25T10:00:40Z",
+          updatedAt: "2026-06-25T10:00:40Z",
+        },
+      ],
+    };
+    const onLaunchSkill = vi.fn();
+
+    // When
+    render(
+      <MessageBubble
+        message={assistantMessage}
+        skillRun={{
+          ref: {
+            skillId: "verify-exploitability",
+            name: "Verify exploitability",
+            version: 1,
+          },
+          launchedAt: "2026-06-25T10:00:00Z",
+          context: {
+            schemaVersion: 1,
+            transport: "inline",
+            items: [
+              {
+                kind: "finding",
+                id: "finding-1",
+                source: "focused",
+                scopeKey: "findings:/findings",
+                label: "Inline IAM policy finding",
+                findingId: "finding-1",
+              },
+            ],
+          },
+        }}
+        onLaunchSkill={onLaunchSkill}
+      />,
+    );
+
+    // Then: receipt with steps, tools and duration
+    expect(screen.getByText(/5 steps · 1 tool · 42s/)).toBeInTheDocument();
+    expect(
+      screen.getByText("The finding is exploitable in practice."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Create Jira ticket" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Mute finding" }),
+    ).toBeInTheDocument();
+
+    // And the suggested next skill launches through the callback
+    fireEvent.click(
+      screen.getByRole("button", { name: /Next: Generate remediation/ }),
+    );
+    expect(onLaunchSkill).toHaveBeenCalledOnce();
+    expect(onLaunchSkill.mock.calls[0][0]).toMatchObject({
+      id: "generate-remediation",
+    });
   });
 
   it("should render persisted user context as a read-only historical badge", () => {
