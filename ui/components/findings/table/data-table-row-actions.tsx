@@ -1,12 +1,13 @@
 "use client";
 
 import { Row } from "@tanstack/react-table";
-import { Sparkles, VolumeOff, VolumeX } from "lucide-react";
+import { VolumeOff, VolumeX } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useContext, useState } from "react";
 
 import { JiraDispatchActionItem } from "@/components/findings/jira-dispatch-action-item";
 import { MuteFindingsModal } from "@/components/findings/mute-findings-modal";
+import { LighthouseIcon } from "@/components/icons";
 import {
   ActionDropdown,
   ActionDropdownItem,
@@ -312,10 +313,7 @@ export function DataTableRowActions<T extends FindingRowData>({
               <DropdownMenuSeparator />
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger className="hover:bg-bg-neutral-tertiary flex cursor-pointer items-center gap-2 rounded-md">
-                  <Sparkles
-                    className="text-text-lighthouse size-4"
-                    aria-hidden
-                  />
+                  <LighthouseIcon size={16} aria-hidden />
                   Lighthouse Skills
                 </DropdownMenuSubTrigger>
                 <DropdownMenuSubContent className="border-border-neutral-secondary bg-bg-neutral-secondary w-72 rounded-xl">

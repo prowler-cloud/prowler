@@ -7,7 +7,7 @@ import {
 } from "@tanstack/react-table";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronsDown } from "lucide-react";
-import { useImperativeHandle, useRef } from "react";
+import { useImperativeHandle, useRef, useState } from "react";
 
 import {
   loadLatestFindingTriageNote,
@@ -21,6 +21,7 @@ import { useFindingGroupResourceState } from "@/hooks/use-finding-group-resource
 import { useScrollHint } from "@/hooks/use-scroll-hint";
 import { buildFindingResourceContext } from "@/lib/lighthouse/context/contributions";
 import { cn } from "@/lib/utils";
+import { SIDE_PANEL_TAB, useSidePanelStore } from "@/store/side-panel";
 import { FindingGroupRow } from "@/types";
 
 import { getColumnFindingResources } from "./column-finding-resources";
@@ -215,10 +216,18 @@ export function InlineResourceContainer({
 
   useImperativeHandle(ref, () => ({ refresh, clearSelection }));
 
+  // A skill launch opens the drawer behind the chat: the Details tab must
+  // register without stealing the AI tab the launch just selected.
+  const [isSkillLaunchDrawer, setIsSkillLaunchDrawer] = useState(false);
+
   const columns = getColumnFindingResources({
     rowSelection,
     selectableRowCount,
     findingTitle: group.checkTitle,
+    onSkillLaunchOpenDrawer: (rowIndex) => {
+      setIsSkillLaunchDrawer(true);
+      drawer.openDrawer(rowIndex);
+    },
     onTriageUpdateAction: (input) =>
       updateTriageOptimistically(input, updateFindingTriage),
     onTriageNoteLoadAction: loadLatestFindingTriageNote,
@@ -272,10 +281,16 @@ export function InlineResourceContainer({
               <div className="relative">
                 <div
                   ref={combinedScrollRef}
-                  className="minimal-scrollbar max-h-[440px] overflow-auto pl-6"
+                  // ml (not pl): padding lives inside the scroll area, so the
+                  // horizontal scrollbar track and scrolled content would start
+                  // 24px left of the rows and the left-6 overlay gradients.
+                  className="minimal-scrollbar ml-6 max-h-[440px] overflow-auto"
                 >
-                  {/* Resource rows or skeleton placeholder */}
-                  <table className="-mt-2.5 w-max min-w-full border-separate border-spacing-y-4">
+                  {/* Resource rows or skeleton placeholder. No w-max: auto
+                      table layout compresses truncatable cells to fit, so
+                      horizontal scroll (and its extra trackpad gestures) only
+                      appears when columns genuinely can't fit. */}
+                  <table className="-mt-2.5 min-w-full border-separate border-spacing-y-4">
                     <tbody>
                       {isLoading && rows.length === 0 ? (
                         Array.from({ length: skeletonRowCount }).map((_, i) => (
@@ -300,7 +315,14 @@ export function InlineResourceContainer({
                                 )
                               )
                                 return;
+                              setIsSkillLaunchDrawer(false);
                               drawer.openDrawer(row.index);
+                              // The drawer may already be mounted (e.g. after
+                              // a skill launch left the AI tab in front):
+                              // a row click always fronts the Details tab.
+                              useSidePanelStore
+                                .getState()
+                                .openPanel(SIDE_PANEL_TAB.CONTEXT);
                             }}
                           >
                             {row.getVisibleCells().map((cell) => (
@@ -371,8 +393,12 @@ export function InlineResourceContainer({
       <ResourceDetailDrawer
         open={drawer.isOpen}
         onOpenChange={(open) => {
-          if (!open) drawer.closeDrawer();
+          if (!open) {
+            drawer.closeDrawer();
+            setIsSkillLaunchDrawer(false);
+          }
         }}
+        selectTabOnOpen={!isSkillLaunchDrawer}
         isLoading={drawer.isLoading}
         isNavigating={drawer.isNavigating}
         checkMeta={drawer.checkMeta}

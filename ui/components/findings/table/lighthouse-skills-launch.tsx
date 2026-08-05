@@ -1,7 +1,6 @@
 "use client";
 
-import { Sparkles } from "lucide-react";
-
+import { LighthouseIcon } from "@/components/icons";
 import {
   ActionDropdown,
   ActionDropdownItem,
@@ -71,8 +70,12 @@ export const LIGHTHOUSE_SKILLS_PILL_WIDTH_CLASS = "w-16";
 // rest, revealed on row hover, keyboard focus, or while its menu is open.
 export function LighthouseSkillsRowButton({
   findingItem,
+  onSkillLaunch,
 }: {
   findingItem: LighthouseFindingContextItem;
+  // Fired on launch so the owning table can open this row's finding detail
+  // drawer behind the chat tab.
+  onSkillLaunch?: () => void;
 }) {
   const launchSkill = useLighthouseSkillLaunch();
 
@@ -89,13 +92,16 @@ export function LighthouseSkillsRowButton({
             "opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100",
           )}
         >
-          <Sparkles className="size-3.5" aria-hidden />
+          <LighthouseIcon size={14} aria-hidden />
           Skills
         </button>
       }
     >
       <LighthouseSkillsMenuItems
-        onLaunch={(skill) => launchSkill(skill, findingItem)}
+        onLaunch={(skill) => {
+          onSkillLaunch?.();
+          launchSkill(skill, findingItem);
+        }}
       />
     </ActionDropdown>
   );

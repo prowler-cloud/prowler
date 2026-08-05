@@ -1,11 +1,12 @@
 "use client";
 
 import { ColumnDef, Row, RowSelectionState } from "@tanstack/react-table";
-import { CornerDownRight, Sparkles, VolumeOff, VolumeX } from "lucide-react";
+import { CornerDownRight, VolumeOff, VolumeX } from "lucide-react";
 import { useContext, useState } from "react";
 
 import { JiraDispatchActionItem } from "@/components/findings/jira-dispatch-action-item";
 import { MuteFindingsModal } from "@/components/findings/mute-findings-modal";
+import { LighthouseIcon } from "@/components/icons";
 import { Checkbox } from "@/components/shadcn";
 import {
   ActionDropdown,
@@ -69,11 +70,13 @@ const buildResourceFindingItem = (resource: FindingResourceRow) =>
 const ResourceRowActions = ({
   row,
   findingTitle,
+  onSkillLaunchOpenDrawer,
   onTriageUpdateAction,
   onTriageNoteLoadAction,
 }: {
   row: Row<FindingResourceRow>;
   findingTitle?: string;
+  onSkillLaunchOpenDrawer?: (rowIndex: number) => void;
   onTriageUpdateAction?: FindingTriageUpdateHandler;
   onTriageNoteLoadAction?: (
     triage: FindingTriageSummary,
@@ -197,17 +200,15 @@ const ResourceRowActions = ({
               <DropdownMenuSeparator />
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger className="hover:bg-bg-neutral-tertiary flex cursor-pointer items-center gap-2 rounded-md">
-                  <Sparkles
-                    className="text-text-lighthouse size-4"
-                    aria-hidden
-                  />
+                  <LighthouseIcon size={16} aria-hidden />
                   Lighthouse Skills
                 </DropdownMenuSubTrigger>
                 <DropdownMenuSubContent className="border-border-neutral-secondary bg-bg-neutral-secondary w-72 rounded-xl">
                   <LighthouseSkillsMenuItems
-                    onLaunch={(skill) =>
-                      launchSkill(skill, buildResourceFindingItem(resource))
-                    }
+                    onLaunch={(skill) => {
+                      onSkillLaunchOpenDrawer?.(row.index);
+                      launchSkill(skill, buildResourceFindingItem(resource));
+                    }}
                   />
                 </DropdownMenuSubContent>
               </DropdownMenuSub>
@@ -223,6 +224,9 @@ interface GetColumnFindingResourcesOptions {
   rowSelection: RowSelectionState;
   selectableRowCount: number;
   findingTitle?: string;
+  // Skill launch (pill or ⋮ submenu) opens this row's finding drawer behind
+  // the chat tab, so the run and the finding share the side panel.
+  onSkillLaunchOpenDrawer?: (rowIndex: number) => void;
   onTriageUpdateAction?: FindingTriageUpdateHandler;
   onTriageNoteLoadAction?: (
     triage: FindingTriageSummary,
@@ -233,6 +237,7 @@ export function getColumnFindingResources({
   rowSelection,
   selectableRowCount,
   findingTitle,
+  onSkillLaunchOpenDrawer,
   onTriageUpdateAction,
   onTriageNoteLoadAction,
 }: GetColumnFindingResourcesOptions): ColumnDef<FindingResourceRow>[] {
@@ -281,6 +286,7 @@ export function getColumnFindingResources({
           {isCloud() && (
             <LighthouseSkillsRowButton
               findingItem={buildResourceFindingItem(row.original)}
+              onSkillLaunch={() => onSkillLaunchOpenDrawer?.(row.index)}
             />
           )}
           <NotificationIndicator
@@ -430,6 +436,7 @@ export function getColumnFindingResources({
         <ResourceRowActions
           row={row}
           findingTitle={findingTitle}
+          onSkillLaunchOpenDrawer={onSkillLaunchOpenDrawer}
           onTriageUpdateAction={onTriageUpdateAction}
           onTriageNoteLoadAction={onTriageNoteLoadAction}
         />
