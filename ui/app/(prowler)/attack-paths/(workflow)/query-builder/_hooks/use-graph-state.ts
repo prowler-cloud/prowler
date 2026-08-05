@@ -20,6 +20,9 @@ interface FilteredViewState {
   // swaps that happen when entering/exiting filtered view. Reset only on
   // fresh data loads (new query / scan) — see `setGraphData`.
   expandedResources: Set<string>;
+  // Which resource-class groups are expanded to their members. Multi-select:
+  // any number of classes can be open at once. Reset on fresh data loads.
+  expandedClasses: Set<string>;
 }
 
 interface GraphStore extends GraphState, FilteredViewState {
@@ -37,6 +40,8 @@ interface GraphStore extends GraphState, FilteredViewState {
     fullData: AttackPathGraphData | null,
   ) => void;
   toggleExpandedResource: (resourceId: string) => void;
+  toggleExpandedClass: (classKey: string) => void;
+  collapseAllClasses: () => void;
   reset: () => void;
 }
 
@@ -50,6 +55,7 @@ const initialState: GraphState & FilteredViewState = {
   filteredNodeId: null,
   fullData: null,
   expandedResources: new Set(),
+  expandedClasses: new Set(),
 };
 
 export const useGraphStore = create<GraphStore>((set) => ({
@@ -64,6 +70,7 @@ export const useGraphStore = create<GraphStore>((set) => ({
       filteredNodeId: null,
       // Fresh data → drop any stale expansion from the previous graph.
       expandedResources: new Set(),
+      expandedClasses: new Set(),
     }),
   setSelectedNodeId: (nodeId) => set({ selectedNodeId: nodeId }),
   setLoading: (loading) => set({ loading }),
@@ -83,6 +90,14 @@ export const useGraphStore = create<GraphStore>((set) => ({
         : new Set([resourceId]);
       return { expandedResources: next };
     }),
+  toggleExpandedClass: (classKey) =>
+    set((state) => {
+      const next = new Set(state.expandedClasses);
+      if (next.has(classKey)) next.delete(classKey);
+      else next.add(classKey);
+      return { expandedClasses: next };
+    }),
+  collapseAllClasses: () => set({ expandedClasses: new Set() }),
   reset: () => set(initialState),
 }));
 
@@ -181,6 +196,9 @@ export const useGraphState = () => {
     filteredNode: getFilteredNode(),
     expandedResources: store.expandedResources,
     toggleExpandedResource: store.toggleExpandedResource,
+    expandedClasses: store.expandedClasses,
+    toggleExpandedClass: store.toggleExpandedClass,
+    collapseAllClasses: store.collapseAllClasses,
     updateGraphData,
     selectNode,
     startLoading,
