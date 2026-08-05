@@ -86,6 +86,7 @@ jobs:
             raw.githubusercontent.com:443
             objects.githubusercontent.com:443
             grype.anchore.io:443
+            get.anchore.io:443
             debian.map.fastlydns.net:80
             release-assets.githubusercontent.com:443
             objects.githubusercontent.com:443
@@ -119,6 +120,7 @@ jobs:
             .github/actions/trivy-scan/**
             .github/actions/grype-scan/**
             .grype.yaml
+            .github/scripts/grype-pr-comment.js
           files_ignore: |
             prowler/CHANGELOG.md
             prowler/changelog.d/**
@@ -145,8 +147,8 @@ jobs:
         with:
           image-name: ${{ env.IMAGE_NAME }}
           image-tag: ${{ github.sha }}
-          fail-on-critical: 'true'
-          severity: 'CRITICAL'
+          fail-on-severity: 'high'
+          severity: 'CRITICAL,HIGH'
 
       - name: Scan SDK container with Grype
         if: steps.check-changes.outputs.any_changed == 'true'
