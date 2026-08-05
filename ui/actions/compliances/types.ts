@@ -1,6 +1,11 @@
 import { StaticImageData } from "next/image";
 
 import { ComplianceOverviewData } from "@/types/compliance";
+import type { TaskAttributes } from "@/types/tasks";
+
+export const COMPLIANCE_OVERVIEW_RESOURCE_TYPE = {
+  TASK: "tasks",
+} as const;
 
 /**
  * Raw API response from /compliance-overviews endpoint
@@ -15,6 +20,20 @@ export interface ComplianceOverviewsResponse {
     };
   };
 }
+
+export interface ComplianceOverviewTaskResource {
+  id: string;
+  type: typeof COMPLIANCE_OVERVIEW_RESOURCE_TYPE.TASK;
+  attributes?: TaskAttributes;
+}
+
+export interface ComplianceOverviewTaskResponse {
+  data: ComplianceOverviewTaskResource;
+}
+
+export type ComplianceOverviewApiResponse =
+  | ComplianceOverviewsResponse
+  | ComplianceOverviewTaskResponse;
 
 /**
  * Enriched compliance overview with computed fields
