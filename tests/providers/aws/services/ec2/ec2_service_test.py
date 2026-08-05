@@ -382,6 +382,60 @@ class Test_EC2_Service:
         assert ec2.instances[0].network_interfaces is not None
         assert ec2.instances[0].virtualization_type == "hvm"
 
+    # Test EC2 Describe Instances maps EnclaveOptions, HibernationOptions, Platform
+    @mock_aws
+    def test_describe_instances_maps_enclave_hibernation_platform(self):
+        # moto does not persist EnclaveOptions/HibernationOptions/Platform on
+        # describe_instances, so we mock the paginator's response and verify
+        # that _describe_instances extracts these fields into the model.
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
+        ec2 = EC2(aws_provider)
+
+        fake_page = {
+            "Reservations": [
+                {
+                    "Instances": [
+                        {
+                            "InstanceId": "i-0123456789abcdef0",
+                            "State": {"Name": "running"},
+                            "InstanceType": "m5.xlarge",
+                            "ImageId": EXAMPLE_AMI_ID,
+                            "LaunchTime": MOCK_DATETIME,
+                            "PrivateDnsName": "ip-10-0-0-1.ec2.internal",
+                            "PrivateIpAddress": "10.0.0.1",
+                            "SubnetId": "subnet-1234",
+                            "Monitoring": {"State": "disabled"},
+                            "MetadataOptions": {
+                                "HttpTokens": "required",
+                                "HttpEndpoint": "enabled",
+                            },
+                            "EnclaveOptions": {"Enabled": True},
+                            "HibernationOptions": {"Configured": True},
+                            "Platform": "windows",
+                        }
+                    ]
+                }
+            ]
+        }
+
+        fake_paginator = mock.MagicMock()
+        fake_paginator.paginate.return_value = iter([fake_page])
+
+        regional_client = ec2.regional_clients[AWS_REGION_US_EAST_1]
+        with mock.patch.object(
+            regional_client, "get_paginator", return_value=fake_paginator
+        ):
+            ec2.instances = []
+            ec2._describe_instances(regional_client)
+
+        matched = [i for i in ec2.instances if i.id == "i-0123456789abcdef0"]
+        assert len(matched) == 1
+        assert matched[0].enclaves_enabled is True
+        assert matched[0].hibernation_enabled is True
+        assert matched[0].platform == "windows"
+
     # Test EC2 Describe Security Groups
     @mock_aws
     def test_describe_security_groups(self):

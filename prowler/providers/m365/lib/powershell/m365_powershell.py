@@ -402,6 +402,39 @@ class M365PowerShell(PowerShellSession):
             "Get-MalwareFilterPolicy | ConvertTo-Json -Depth 10", json_parse=True
         )
 
+    def get_eop_protection_policy_rule(self) -> dict:
+        """
+        Get Exchange Online Protection (EOP) preset security policy rules.
+
+        Returns:
+            dict: EOP protection policy rules in JSON format.
+        """
+        return self.execute(
+            "Get-EOPProtectionPolicyRule | ConvertTo-Json -Depth 10", json_parse=True
+        )
+
+    def get_atp_protection_policy_rule(self) -> dict:
+        """
+        Get Defender for Office 365 (ATP) preset security policy rules.
+
+        Returns:
+            dict: ATP protection policy rules in JSON format.
+        """
+        return self.execute(
+            "Get-ATPProtectionPolicyRule | ConvertTo-Json -Depth 10", json_parse=True
+        )
+
+    def get_email_tenant_settings(self) -> dict:
+        """
+        Get Defender email tenant settings.
+
+        Returns:
+            dict: Email tenant settings (e.g. EnablePriorityAccountProtection).
+        """
+        return self.execute(
+            "Get-EmailTenantSettings | ConvertTo-Json -Depth 10", json_parse=True
+        )
+
     def get_malware_filter_rule(self) -> dict:
         """
         Get Defender Malware Filter Rule.
@@ -1022,8 +1055,11 @@ class M365PowerShell(PowerShellSession):
                 }
             ]
         """
+        # -ErrorAction SilentlyContinue: tenants with no application access
+        # policies raise a localized "object not found" error instead of
+        # returning an empty result; the error output never carries data.
         return self.execute(
-            "Get-ApplicationAccessPolicy | ConvertTo-Json -Depth 10",
+            "Get-ApplicationAccessPolicy -ErrorAction SilentlyContinue | ConvertTo-Json -Depth 10",
             json_parse=True,
         )
 
