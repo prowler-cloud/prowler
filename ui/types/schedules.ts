@@ -46,15 +46,6 @@ export const SCAN_SCHEDULE_CAPABILITY = {
 export type ScanScheduleCapability =
   (typeof SCAN_SCHEDULE_CAPABILITY)[keyof typeof SCAN_SCHEDULE_CAPABILITY];
 
-/**
- * Deployment-resolved scan-scheduling access. Unset here falls back to
- * `getScanScheduleCapability`.
- */
-export interface ScanSchedulingAccess {
-  capability?: ScanScheduleCapability;
-  isScanLimitReached: boolean;
-}
-
 export interface ScheduleAttributes {
   scan_enabled: boolean;
   scan_frequency: ScheduleFrequency;

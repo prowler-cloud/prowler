@@ -26,7 +26,6 @@ import {
   ADD_PROVIDER_SEARCH_VALUE,
 } from "@/lib/providers-navigation";
 import type { SearchParamsProps } from "@/types";
-import type { ScanSchedulingAccess } from "@/types/schedules";
 
 import { ProvidersTabContent } from "./providers-tab-content";
 
@@ -37,24 +36,7 @@ interface MountOptions {
   openWizard?: boolean;
   /** Which hierarchy read fails, so the loader derives the status. Default none. */
   hierarchyFailure?: HierarchyReadFailure;
-  /** Injected scheduling access. Default none, which is how OSS renders. */
-  scanScheduling?: ScanSchedulingAccess;
-  /** Make the injected loader reject, as a failed access read does. */
-  scanSchedulingFails?: boolean;
 }
-
-/** Injected loader: absent (OSS), resolving, or rejecting like a failed read. */
-const schedulingLoader = (
-  access: ScanSchedulingAccess | undefined,
-  fails: boolean,
-): (() => Promise<ScanSchedulingAccess>) | undefined => {
-  if (fails) {
-    return async () => {
-      throw new Error("scan-scheduling lookup failed");
-    };
-  }
-  return access ? async () => access : undefined;
-};
 
 export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
   get applyCallCount(): number {
@@ -157,22 +139,12 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
   async mount({
     openWizard = true,
     hierarchyFailure = HIERARCHY_READ_FAILURE.NONE,
-    scanScheduling,
-    scanSchedulingFails = false,
   }: MountOptions = {}): Promise<void> {
     this.seedWizardUrl(openWizard);
     worker.use(...handlersForOrganizations(this.fixture, { hierarchyFailure }));
     this.trackRequests(worker);
 
-    render(
-      await ProvidersTabContent({
-        searchParams: this.searchParams(),
-        loadScanScheduling: schedulingLoader(
-          scanScheduling,
-          scanSchedulingFails,
-        ),
-      }),
-    );
+    render(await ProvidersTabContent({ searchParams: this.searchParams() }));
   }
 
   // --- Wizard: connect step ----------------------------------------------
