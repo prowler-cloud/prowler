@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
+import { MAX_SAML_ADDITIONAL_EMAIL_DOMAINS } from "@/types/saml";
 
 import {
   addCredentialsFormSchema,
@@ -380,7 +381,7 @@ describe("samlConfigFormSchema", () => {
   it("accepts exactly nineteen aliases in addition to the primary domain", () => {
     // Given
     const aliases = Array.from(
-      { length: 19 },
+      { length: MAX_SAML_ADDITIONAL_EMAIL_DOMAINS },
       (_, index) => `alias-${index}.example.com`,
     );
 
@@ -401,7 +402,7 @@ describe("samlConfigFormSchema", () => {
   it("rejects more than nineteen aliases in addition to the primary domain", () => {
     // Given
     const aliases = Array.from(
-      { length: 20 },
+      { length: MAX_SAML_ADDITIONAL_EMAIL_DOMAINS + 1 },
       (_, index) => `alias-${index}.example.com`,
     );
 
@@ -416,7 +417,9 @@ describe("samlConfigFormSchema", () => {
     expect(result.success).toBe(false);
     if (result.success) return;
     expect(result.error.flatten().fieldErrors.additional_email_domains).toEqual(
-      ["A SAML configuration supports up to 19 additional email domains."],
+      [
+        `A SAML configuration supports up to ${MAX_SAML_ADDITIONAL_EMAIL_DOMAINS} additional email domains.`,
+      ],
     );
   });
 });

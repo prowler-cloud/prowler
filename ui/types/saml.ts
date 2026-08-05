@@ -1,4 +1,5 @@
 export const SAML_CONFIGURATION_RESOURCE_TYPE = "saml-configurations" as const;
+export const MAX_SAML_ADDITIONAL_EMAIL_DOMAINS = 19;
 
 export interface SamlConfigurationAttributes {
   email_domain: string;

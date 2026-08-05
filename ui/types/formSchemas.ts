@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 import { validateMutelistYaml, validateYaml } from "@/lib/yaml";
+import { MAX_SAML_ADDITIONAL_EMAIL_DOMAINS } from "@/types/saml";
 
 import { PROVIDER_TYPES, ProviderType } from "./providers";
 
@@ -741,8 +742,8 @@ const samlConfigDomainSchema = z.object({
   email_domain: samlEmailDomainSchema,
   additional_email_domains: z
     .array(samlAdditionalEmailDomainSchema)
-    .max(19, {
-      error: "A SAML configuration supports up to 19 additional email domains.",
+    .max(MAX_SAML_ADDITIONAL_EMAIL_DOMAINS, {
+      error: `A SAML configuration supports up to ${MAX_SAML_ADDITIONAL_EMAIL_DOMAINS} additional email domains.`,
     })
     .default([]),
 });
@@ -751,6 +752,8 @@ const samlMetadataXmlSchema = z
   .string()
   .trim()
   .min(1, { error: "Metadata XML is required" });
+
+const samlOptionalMetadataXmlSchema = z.string().trim();
 
 const validateSamlDomains = (
   data: z.output<typeof samlConfigDomainSchema>,
@@ -784,9 +787,23 @@ const validateSamlDomains = (
   }
 };
 
-export const samlConfigFormSchema = samlConfigDomainSchema
-  .extend({ metadata_xml: samlMetadataXmlSchema })
-  .superRefine(validateSamlDomains);
+export const getSamlConfigFormSchema = (isUpdate: boolean) =>
+  samlConfigDomainSchema
+    .extend({
+      metadata_xml: isUpdate
+        ? samlOptionalMetadataXmlSchema
+        : samlMetadataXmlSchema,
+    })
+    .superRefine(validateSamlDomains);
+
+export type SamlConfigFormInput = z.input<
+  ReturnType<typeof getSamlConfigFormSchema>
+>;
+export type SamlConfigFormValues = z.output<
+  ReturnType<typeof getSamlConfigFormSchema>
+>;
+
+export const samlConfigFormSchema = getSamlConfigFormSchema(false);
 
 export const samlConfigUpdateFormSchema = samlConfigDomainSchema
   .extend({

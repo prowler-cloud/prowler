@@ -2,6 +2,7 @@ import {
   CLOUD_UPGRADE_FEATURE,
   type CloudUpgradeFeature,
 } from "@/types/cloud-upgrade";
+import { MAX_SAML_ADDITIONAL_EMAIL_DOMAINS } from "@/types/saml";
 
 interface CloudUpgradeContent {
   title: string;
@@ -164,7 +165,7 @@ export const CLOUD_UPGRADE_CONTENT = {
       "Let users from multiple verified email domains share one SAML identity provider configuration.",
     benefits: [
       "Keep one primary domain and canonical ACS URL",
-      "Authorize up to 19 additional email domains",
+      `Authorize up to ${MAX_SAML_ADDITIONAL_EMAIL_DOMAINS} additional email domains`,
       "Manage every domain from the same SAML configuration",
     ],
     primaryCta: "Manage SAML Domains in Prowler Cloud",

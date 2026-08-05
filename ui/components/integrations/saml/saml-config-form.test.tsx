@@ -12,27 +12,34 @@ import {
   vi,
 } from "vitest";
 
+import { updateSamlConfig } from "@/actions/integrations";
 import {
   RUNTIME_CONFIG_SCRIPT_ID,
   type RuntimePublicConfig,
 } from "@/lib/runtime-config.shared";
 import { useCloudUpgradeStore } from "@/store";
 import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
-import { SAML_CONFIGURATION_RESOURCE_TYPE } from "@/types/saml";
+import {
+  MAX_SAML_ADDITIONAL_EMAIL_DOMAINS,
+  SAML_CONFIGURATION_RESOURCE_TYPE,
+} from "@/types/saml";
 
 import { SamlConfigForm } from "./saml-config-form";
 
+const { isCloudMock, updateSamlConfigMock } = vi.hoisted(() => ({
+  isCloudMock: vi.fn(),
+  updateSamlConfigMock: vi.fn(),
+}));
+
 vi.mock("@/actions/integrations", () => ({
   createSamlConfig: vi.fn(),
-  updateSamlConfig: vi.fn(),
+  updateSamlConfig: updateSamlConfigMock,
 }));
 
 vi.mock("@/components/shadcn", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   useToast: () => ({ toast: vi.fn() }),
 }));
-
-const { isCloudMock } = vi.hoisted(() => ({ isCloudMock: vi.fn() }));
 
 vi.mock("@/lib/shared/env", () => ({
   isCloud: isCloudMock,
@@ -101,6 +108,7 @@ beforeAll(() => {
 
 beforeEach(() => {
   isCloudMock.mockReturnValue(false);
+  vi.mocked(updateSamlConfig).mockReset();
   useCloudUpgradeStore.getState().closeCloudUpgrade();
 });
 
@@ -409,6 +417,70 @@ describe("SamlConfigForm", () => {
     ]);
   });
 
+  it("submits a normalized pending domain through the update action", async () => {
+    // Given
+    isCloudMock.mockReturnValue(true);
+    vi.mocked(updateSamlConfig).mockResolvedValue({
+      success: "SAML configuration updated successfully!",
+    });
+    const setIsOpen = vi.fn();
+    const user = userEvent.setup();
+    const samlConfig = {
+      type: SAML_CONFIGURATION_RESOURCE_TYPE,
+      id: "saml-1",
+      attributes: {
+        email_domain: "primary.example.com",
+        additional_email_domains: ["existing.example.com"],
+        metadata_xml: "<EntityDescriptor />",
+      },
+    };
+    render(<SamlConfigForm setIsOpen={setIsOpen} samlConfig={samlConfig} />);
+    await user.type(
+      screen.getByLabelText("Additional Email Domain"),
+      " Pending.Example.com ",
+    );
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Update" }));
+
+    // Then
+    await waitFor(() => expect(updateSamlConfig).toHaveBeenCalledOnce());
+    const submittedFormData = vi.mocked(updateSamlConfig).mock.calls[0][1];
+    expect(submittedFormData.get("email_domain")).toBe("primary.example.com");
+    expect(submittedFormData.getAll("additional_email_domains")).toEqual([
+      "existing.example.com",
+      "pending.example.com",
+    ]);
+    expect(setIsOpen).toHaveBeenCalledWith(false);
+  });
+
+  it("shows an additional-domain error returned by the update action", async () => {
+    // Given
+    isCloudMock.mockReturnValue(true);
+    vi.mocked(updateSamlConfig).mockResolvedValue({
+      errors: {
+        additional_email_domains: "Domain is already in use.",
+      },
+    });
+    const user = userEvent.setup();
+    const samlConfig = {
+      type: SAML_CONFIGURATION_RESOURCE_TYPE,
+      id: "saml-1",
+      attributes: {
+        email_domain: "primary.example.com",
+        additional_email_domains: ["alias.example.com"],
+        metadata_xml: "<EntityDescriptor />",
+      },
+    };
+    render(<SamlConfigForm setIsOpen={vi.fn()} samlConfig={samlConfig} />);
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Update" }));
+
+    // Then
+    expect(await screen.findByText("Domain is already in use.")).toBeVisible();
+  });
+
   it("shows a contextual error when an additional domain is required", async () => {
     // Given
     isCloudMock.mockReturnValue(true);
@@ -428,7 +500,7 @@ describe("SamlConfigForm", () => {
     // Given
     isCloudMock.mockReturnValue(true);
     const additionalEmailDomains = Array.from(
-      { length: 19 },
+      { length: MAX_SAML_ADDITIONAL_EMAIL_DOMAINS },
       (_, index) => `alias-${index + 1}.example.com`,
     );
     const samlConfig = {
@@ -445,7 +517,11 @@ describe("SamlConfigForm", () => {
     render(<SamlConfigForm setIsOpen={vi.fn()} samlConfig={samlConfig} />);
 
     // Then
-    expect(screen.getByText("19 / 19 domains")).toBeVisible();
+    expect(
+      screen.getByText(
+        `${MAX_SAML_ADDITIONAL_EMAIL_DOMAINS} / ${MAX_SAML_ADDITIONAL_EMAIL_DOMAINS} domains`,
+      ),
+    ).toBeVisible();
     expect(
       screen.getByRole("list", { name: "Additional email domains" }),
     ).toHaveClass("max-h-24", "overflow-y-auto");
@@ -453,7 +529,7 @@ describe("SamlConfigForm", () => {
     expect(screen.getByRole("button", { name: "Add domain" })).toBeDisabled();
     expect(
       screen.getAllByRole("button", { name: /^Remove alias-/ }),
-    ).toHaveLength(19);
+    ).toHaveLength(MAX_SAML_ADDITIONAL_EMAIL_DOMAINS);
   });
 
   it("rejects a duplicate alias before submission", async () => {
