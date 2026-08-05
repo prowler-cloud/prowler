@@ -84,6 +84,7 @@ jobs:
             raw.githubusercontent.com:443
             objects.githubusercontent.com:443
             grype.anchore.io:443
+            get.anchore.io:443
             debian.map.fastlydns.net:80
             release-assets.githubusercontent.com:443
             objects.githubusercontent.com:443
