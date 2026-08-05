@@ -114,6 +114,7 @@ export default defineConfig(() => {
         "next/image",
         "next/cache",
         "next/server",
+        "next/dynamic",
         "next-auth",
         "next-auth/react",
         "next-auth/providers/credentials",
