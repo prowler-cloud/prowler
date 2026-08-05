@@ -66,3 +66,86 @@ vulnerabilities:
     purls:
       - "pkg:deb/debian/perl-base"
     expired_at: 2026-11-30
+
+  # Declared in the SPDX manifest that ships inside PowerShell's MicrosoftTeams module
+  # (Modules/MicrosoftTeams/7.9.0/_manifest/spdx_2.2/manifest.spdx.json). Trivy reads that
+  # SBOM and reports what it declares, which is not the same as what the image contains:
+  # there is no Node runtime and no node_modules anywhere in the image, and the .NET
+  # assemblies target net472, a Windows-only framework. Nothing here is reachable, and none
+  # of it is a dependency we declare -- only Microsoft can change the module's contents.
+  - id: CVE-2020-0606
+    purls:
+      - "pkg:nuget/Microsoft.WindowsDesktop.App.Ref"
+    expired_at: 2027-01-31
+  - id: CVE-2019-0820
+    purls:
+      - "pkg:nuget/System.Text.RegularExpressions"
+    expired_at: 2027-01-31
+  - id: CVE-2026-47302
+    purls:
+      - "pkg:nuget/System.Security.Cryptography.Xml"
+    expired_at: 2027-01-31
+  - id: CVE-2026-47304
+    purls:
+      - "pkg:nuget/System.Security.Cryptography.Xml"
+    expired_at: 2027-01-31
+  - id: CVE-2026-50525
+    purls:
+      - "pkg:nuget/System.Security.Cryptography.Xml"
+    expired_at: 2027-01-31
+  - id: CVE-2026-50527
+    purls:
+      - "pkg:nuget/System.Security.Cryptography.Xml"
+    expired_at: 2027-01-31
+  - id: CVE-2026-50648
+    purls:
+      - "pkg:nuget/System.Security.Cryptography.Xml"
+    expired_at: 2027-01-31
+  - id: CVE-2026-13676
+    purls:
+      - "pkg:npm/fast-uri"
+    expired_at: 2027-01-31
+  - id: CVE-2026-16221
+    purls:
+      - "pkg:npm/fast-uri"
+    expired_at: 2027-01-31
+  - id: CVE-2026-18446
+    purls:
+      - "pkg:npm/fast-uri"
+    expired_at: 2027-01-31
+  - id: CVE-2026-69192
+    purls:
+      - "pkg:npm/ip-address"
+    expired_at: 2027-01-31
+
+  # Modules compiled into the Trivy binary the images ship. The binary is pinned by version
+  # and verified by checksum in the Dockerfile; only a rebuild by its vendor moves these.
+  - id: CVE-2026-56852
+    purls:
+      - "pkg:golang/golang.org/x/text"
+    expired_at: 2026-12-31
+  - id: GHSA-hrxh-6v49-42gf
+    purls:
+      - "pkg:golang/google.golang.org/grpc"
+    expired_at: 2026-12-31
+  - id: CVE-2026-50151
+    purls:
+      - "pkg:golang/oras.land/oras-go/v2"
+    expired_at: 2026-12-31
+  - id: CVE-2026-39822
+    purls:
+      - "pkg:golang/stdlib"
+    expired_at: 2026-12-31
+
+  # cryptography is held below 49 by alibabacloud-tea-openapi==0.4.5, which requires
+  # cryptography>=3.0.0,<49.0.0. The fixes are in 49.0.0 and 50.0.0, so both sit above the
+  # ceiling. Verified by attempting the upgrade: resolution fails. Reachable again only when
+  # that dependency raises its bound.
+  - id: CVE-2026-69247
+    purls:
+      - "pkg:pypi/cryptography"
+    expired_at: 2026-11-30
+  - id: CVE-2026-69249
+    purls:
+      - "pkg:pypi/cryptography"
+    expired_at: 2026-11-30
