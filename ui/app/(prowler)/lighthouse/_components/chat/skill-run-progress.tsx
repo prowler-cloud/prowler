@@ -1,6 +1,6 @@
 "use client";
 
-import { Bot, ChevronDown, Loader2 } from "lucide-react";
+import { Bot, ChevronDown } from "lucide-react";
 import { useState, useSyncExternalStore } from "react";
 
 import {
@@ -17,6 +17,7 @@ import {
   type LighthouseV2StreamToolCallActivityItem,
 } from "@/app/(prowler)/lighthouse/_lib/event-reducer";
 import { formatToolName } from "@/app/(prowler)/lighthouse/_lib/tool-calls";
+import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { cn } from "@/lib/utils";
 import type { LighthouseSkillDefinition } from "@/types/lighthouse-skills";
 
@@ -173,7 +174,7 @@ function SkillStepTimeline({
             icon={
               getStepStatus(stepNumber, currentStep) ===
               CHAIN_OF_THOUGHT_STATUS.ACTIVE
-                ? Loader2
+                ? Spinner
                 : undefined
             }
           >
@@ -186,7 +187,7 @@ function SkillStepTimeline({
                   >
                     {toolCall.status ===
                       LIGHTHOUSE_V2_TOOL_CALL_STATUS.RUNNING && (
-                      <Loader2 className="size-3 animate-spin" aria-hidden />
+                      <Spinner className="size-3" />
                     )}
                     {formatToolName(toolCall.name)}
                   </ChainOfThoughtSearchResult>

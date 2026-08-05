@@ -226,6 +226,39 @@ describe("MessageBubble", () => {
     });
   });
 
+  it("should expand the receipt into flat tool rows without a nested disclosure", () => {
+    // Given: a finished skill run with one tool call
+    const assistantMessage = buildAssistantMessage([
+      toolCallPart("part-tool-1", "get_finding"),
+      textPart("part-answer", "Done."),
+    ]);
+
+    render(
+      <MessageBubble
+        message={assistantMessage}
+        skillRun={{
+          ref: {
+            skillId: "verify-exploitability",
+            name: "Verify exploitability",
+            version: 1,
+          },
+          launchedAt: "2026-06-25T10:00:00Z",
+        }}
+      />,
+    );
+
+    // When: the receipt line is expanded
+    fireEvent.click(screen.getByRole("button", { name: /Ran/ }));
+
+    // Then: the tool row shows directly — no second "Used N tools" chevron
+    expect(
+      screen.getByRole("button", { name: /Get finding/ }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Used 1 tool/ }),
+    ).not.toBeInTheDocument();
+  });
+
   it("should render persisted user context as a read-only historical badge", () => {
     // Given
     const userMessage: LighthouseV2Message = {

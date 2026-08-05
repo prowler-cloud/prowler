@@ -24,19 +24,26 @@ import {
 import { LIGHTHOUSE_CONTEXT_KIND } from "@/types/lighthouse-context";
 import type { LighthouseSkillDefinition } from "@/types/lighthouse-skills";
 
-import { ToolCalls } from "./tool-call-part";
+import { ToolCallList } from "./tool-call-part";
 
 // Lazy-loaded: the Jira/Mute machinery (and its server-action imports) only
 // loads when the user actually opens one of these from a finished skill run.
-const SendToJiraModal = dynamic(() =>
-  import("@/components/findings/send-to-jira-modal").then(
-    (module) => module.SendToJiraModal,
-  ),
+// `loading` gives each modal its own Suspense boundary — without it the lazy
+// load suspends up to the chat panel's boundary and swaps the whole
+// conversation for its skeleton fallback while the chunk downloads.
+const SendToJiraModal = dynamic(
+  () =>
+    import("@/components/findings/send-to-jira-modal").then(
+      (module) => module.SendToJiraModal,
+    ),
+  { loading: () => null },
 );
-const MuteFindingsModal = dynamic(() =>
-  import("@/components/findings/mute-findings-modal").then(
-    (module) => module.MuteFindingsModal,
-  ),
+const MuteFindingsModal = dynamic(
+  () =>
+    import("@/components/findings/mute-findings-modal").then(
+      (module) => module.MuteFindingsModal,
+    ),
+  { loading: () => null },
 );
 
 // One-line receipt of a finished run (design 1j): the chain of thought
@@ -71,9 +78,11 @@ export function SkillRunReceipt({
         </span>
         {summary && ` · ${summary}`}
       </ChainOfThoughtHeader>
+      {/* Flat rows: the receipt header is the single disclosure — nesting the
+          "Used N tools" collapsible here would stack two chevrons. */}
       {toolParts.length > 0 && (
-        <ChainOfThoughtContent>
-          <ToolCalls parts={toolParts} />
+        <ChainOfThoughtContent className="space-y-1.5">
+          <ToolCallList parts={toolParts} />
         </ChainOfThoughtContent>
       )}
     </ChainOfThought>
