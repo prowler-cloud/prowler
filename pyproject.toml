@@ -68,7 +68,7 @@ dependencies = [
   "boto3==1.40.61",
   "botocore==1.40.61",
   "colorama==0.4.6",
-  "cryptography==48.0.1",
+  "cryptography==50.0.0",
   "dash==3.1.1",
   "dash-bootstrap-components==2.0.3",
   "defusedxml==0.7.1",
@@ -389,7 +389,11 @@ constraint-dependencies = [
   "zipp==3.23.1",
   "zstd==1.5.7.3"
 ]
-override-dependencies = ["okta==3.4.2"]
+override-dependencies = [
+  "okta==3.4.2",
+  # alibabacloud-tea-openapi 0.4.5 caps cryptography below 49 and is the latest release.
+  "cryptography==50.0.0",
+]
 
 [tool.vulture]
 # Suppress known false positives. The CI command only passes --exclude and
