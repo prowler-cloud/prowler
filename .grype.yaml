@@ -1,153 +1,11 @@
 # Findings excluded from the Grype gate, each with a reason.
 # Anything not listed here blocks the pull request at critical or high severity.
 # Pairs are explicit: a new CVE against an already-listed package still blocks.
+#
+# Every entry below has a published fix we cannot take. Findings with no fix at all are
+# not listed: the scan runs with only-fixed, so they never reach the gate.
 
 ignore:
-
-  # Operating-system packages with no fix available.
-  # Debian and Alpine have either published no fix or marked these will-not-fix.
-  # perl-base additionally cannot be removed: the distribution marks it Essential.
-  - vulnerability: CVE-2026-41992
-    package:
-      name: gzip
-  - vulnerability: CVE-2026-54369
-    package:
-      name: libacl1
-  - vulnerability: CVE-2026-54370
-    package:
-      name: libacl1
-  - vulnerability: CVE-2026-5435
-    package:
-      name: libc-bin
-  - vulnerability: CVE-2026-5450
-    package:
-      name: libc-bin
-  - vulnerability: CVE-2026-5928
-    package:
-      name: libc-bin
-  - vulnerability: CVE-2026-5435
-    package:
-      name: libc6
-  - vulnerability: CVE-2026-5450
-    package:
-      name: libc6
-  - vulnerability: CVE-2026-5928
-    package:
-      name: libc6
-  - vulnerability: CVE-2026-10536
-    package:
-      name: libcurl4t64
-  - vulnerability: CVE-2026-11856
-    package:
-      name: libcurl4t64
-  - vulnerability: CVE-2026-12064
-    package:
-      name: libcurl4t64
-  - vulnerability: CVE-2026-8286
-    package:
-      name: libcurl4t64
-  - vulnerability: CVE-2026-8924
-    package:
-      name: libcurl4t64
-  - vulnerability: CVE-2026-8926
-    package:
-      name: libcurl4t64
-  - vulnerability: CVE-2026-8927
-    package:
-      name: libcurl4t64
-  - vulnerability: CVE-2026-8932
-    package:
-      name: libcurl4t64
-  - vulnerability: CVE-2026-9079
-    package:
-      name: libcurl4t64
-  - vulnerability: CVE-2026-9080
-    package:
-      name: libcurl4t64
-  - vulnerability: CVE-2026-9545
-    package:
-      name: libcurl4t64
-  - vulnerability: CVE-2025-69720
-    package:
-      name: libncursesw6
-  - vulnerability: CVE-2026-11822
-    package:
-      name: libsqlite3-0
-  - vulnerability: CVE-2026-11824
-    package:
-      name: libsqlite3-0
-  - vulnerability: CVE-2026-66032
-    package:
-      name: libssh2-1t64
-  - vulnerability: CVE-2026-66033
-    package:
-      name: libssh2-1t64
-  - vulnerability: CVE-2026-66034
-    package:
-      name: libssh2-1t64
-  - vulnerability: CVE-2026-66035
-    package:
-      name: libssh2-1t64
-  - vulnerability: CVE-2025-69720
-    package:
-      name: libtinfo6
-  - vulnerability: CVE-2025-69720
-    package:
-      name: ncurses-base
-  - vulnerability: CVE-2025-69720
-    package:
-      name: ncurses-bin
-  - vulnerability: CVE-2026-12087
-    package:
-      name: perl-base
-  - vulnerability: CVE-2026-13221
-    package:
-      name: perl-base
-  - vulnerability: CVE-2026-42496
-    package:
-      name: perl-base
-  - vulnerability: CVE-2026-42497
-    package:
-      name: perl-base
-  - vulnerability: CVE-2026-48959
-    package:
-      name: perl-base
-  - vulnerability: CVE-2026-48961
-    package:
-      name: perl-base
-  - vulnerability: CVE-2026-48962
-    package:
-      name: perl-base
-  - vulnerability: CVE-2026-57432
-    package:
-      name: perl-base
-  - vulnerability: CVE-2026-57433
-    package:
-      name: perl-base
-  - vulnerability: CVE-2026-7017
-    package:
-      name: perl-base
-  - vulnerability: CVE-2026-8376
-    package:
-      name: perl-base
-  - vulnerability: CVE-2026-9538
-    package:
-      name: perl-base
-  - vulnerability: CVE-2026-11822
-    package:
-      name: sqlite-libs
-  - vulnerability: CVE-2026-11824
-    package:
-      name: sqlite-libs
-  - vulnerability: CVE-2026-58469
-    package:
-      name: wget
-  - vulnerability: CVE-2026-58471
-    package:
-      name: wget
-  - vulnerability: CVE-2026-58472
-    package:
-      name: wget
 
   # Modules compiled into the Trivy binary we ship.
   # Only a Trivy rebuild by its vendor can change these; the version is pinned in our Dockerfile.
@@ -167,18 +25,17 @@ ignore:
     package:
       name: Microsoft.Bcl.Memory
 
-  # cryptography is capped below 49 by alibabacloud-tea-openapi==0.4.5,
-  # which requires cryptography>=3.0.0,<49.0.0. The fix is in 50.0.0, so it is
-  # unreachable until that dependency raises its ceiling.
+  # cryptography is capped below 49 by alibabacloud-tea-openapi==0.4.5, which requires
+  # cryptography>=3.0.0,<49.0.0. The fix is in 50.0.0, so it is unreachable until that
+  # dependency raises its ceiling. Verified by attempting the upgrade: resolution fails.
   - vulnerability: CVE-2026-69247
     package:
       name: cryptography
 
   # The CPython interpreter, compiled into the official base image.
-  # TEMPORARY, unlike the entries above: these are reachable by moving to Python 3.13,
-  # which is a runtime upgrade pending its own evaluation. Three of them (CVE-2026-11940,
-  # CVE-2026-11972, CVE-2026-15308) need 3.15 and remain unfixable either way -- the MCP
-  # image already runs 3.13.14 and still reports them.
+  # TEMPORARY, unlike the entries above: moving to Python 3.13 clears seven of these, and
+  # that is a runtime upgrade pending its own evaluation. The remaining three need 3.15 and
+  # are unfixable either way -- the MCP image already runs 3.13.14 and still reports them.
   - vulnerability: CVE-2026-11940
     package:
       name: python
