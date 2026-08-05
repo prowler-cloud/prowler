@@ -32,6 +32,29 @@ export const BILLING_URL = "https://cloud.prowler.com/billing";
 const CF_QUICKCREATE_BASE_URL =
   "https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/quickcreate";
 
+// Deep links that open each provider's cloud console with the credential
+// creation form pre-filled with the exact permissions, scopes and name
+// Prowler needs. Users click, review and submit — no manual permission
+// picking. Only providers whose console admits query-parameter pre-fill are
+// listed: Azure Portal, GCP Console, OCI, MongoDB Atlas, Alibaba RAM,
+// Vercel and Okta don't support this by design (see PROWLER-2187 audit).
+// AWS has its own CloudFormation quick-create link built in
+// `getAWSCredentialsTemplateLinks` below.
+export const PRECONFIGURED_CREDENTIAL_URLS = {
+  // Opens the Cloudflare "Create Custom Token" form pre-filled with the four
+  // read-only scopes (`Account Settings`, `Zone`, `Zone Settings`, `DNS`)
+  // and the token name. Kept in sync with the URL published in
+  // docs/user-guide/providers/cloudflare/authentication.mdx.
+  CLOUDFLARE_API_TOKEN:
+    "https://dash.cloudflare.com/profile/api-tokens?permissionGroupKeys=%5B%7B%22key%22%3A%22account_settings%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22zone%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22zone_settings%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22dns%22%2C%22type%22%3A%22read%22%7D%5D&accountId=%2A&zoneId=all&name=Prowler%20Security%20Scanner",
+  // Opens the GitHub fine-grained PAT creation form pre-filled with the
+  // read-only permissions Prowler needs to scan repos and org settings.
+  // Kept in sync with the URL published in
+  // docs/user-guide/providers/github/getting-started-github.mdx.
+  GITHUB_PERSONAL_ACCESS_TOKEN:
+    "https://github.com/settings/personal-access-tokens/new?name=Prowler+Security+Scanner&description=Fine-grained+PAT+for+Prowler+security+scanning&expires_in=90&administration=read&contents=read&vulnerability_alerts=read&emails=read",
+} as const;
+
 export interface AWSOrgDeploymentQuickLinkParams {
   externalId: string;
   organizationalUnitId: string;

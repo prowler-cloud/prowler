@@ -3,6 +3,8 @@
 import { Control } from "react-hook-form";
 
 import { WizardInputField } from "@/components/providers/workflow/forms/fields";
+import { Button } from "@/components/shadcn";
+import { PRECONFIGURED_CREDENTIAL_URLS } from "@/lib/external-urls";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 import { CloudflareTokenCredentials } from "@/types";
 
@@ -33,6 +35,20 @@ export const CloudflareApiTokenCredentialsForm = ({
         variant="bordered"
         isRequired
       />
+      <Button
+        aria-label="Create a pre-configured API Token on Cloudflare"
+        variant="link"
+        className="h-auto w-fit min-w-0 p-0"
+        asChild
+      >
+        <a
+          href={PRECONFIGURED_CREDENTIAL_URLS.CLOUDFLARE_API_TOKEN}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Create a pre-configured API Token on Cloudflare
+        </a>
+      </Button>
       <div className="text-text-neutral-tertiary text-xs">
         Tokens never leave your browser unencrypted and are stored as secrets in
         the backend. You can revoke the token from the Cloudflare dashboard
