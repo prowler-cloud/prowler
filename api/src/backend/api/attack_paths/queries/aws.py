@@ -4462,7 +4462,7 @@ AWS_SSM_PRIVESC_PASSROLE_AUTOMATION = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/ssm-003",
     ),
     provider="aws",
-    outcome=AttackPathsQueryOutcome.PRIVILEGE_ESCALATION,
+    outcome=AttackPathsQueryOutcome.CODE_EXECUTION,
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(passrole_policy:AWSPolicy)-[:STATEMENT]->(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
