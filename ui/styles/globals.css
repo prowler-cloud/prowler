@@ -386,6 +386,7 @@
 
   /* Background images */
   --background-image-feature-cloud: var(--gradient-feature-cloud);
+  --background-image-lighthouse: var(--gradient-lighthouse);
   --background-image-lighthouse-soft: var(--gradient-lighthouse-soft);
 
   /* Lighthouse AI accent */

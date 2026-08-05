@@ -18,10 +18,7 @@ export function LighthouseSkillsBlock({
   onAskAnything,
 }: LighthouseSkillsBlockProps) {
   return (
-    <div
-      className="rounded-xl p-px"
-      style={{ background: "var(--gradient-lighthouse)" }}
-    >
+    <div className="bg-lighthouse rounded-xl p-px">
       <div className="bg-bg-neutral-primary flex flex-col gap-3 rounded-[11px] p-4">
         <div className="flex items-center gap-2">
           <LighthouseIcon size={16} />

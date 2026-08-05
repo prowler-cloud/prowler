@@ -1,5 +1,3 @@
-"use client";
-
 import { Badge } from "@/components/shadcn/badge/badge";
 import type { LighthouseSkillDefinition } from "@/types/lighthouse-skills";
 
