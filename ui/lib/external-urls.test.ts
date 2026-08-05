@@ -141,16 +141,20 @@ describe("PRECONFIGURED_CREDENTIAL_URLS", () => {
     expect(parsed.searchParams.get("zoneId")).toBe("all");
   });
 
-  it("keeps the GitHub fine-grained PAT URL pointing at the new-token form with the four required read permissions", () => {
+  it("keeps the GitHub fine-grained PAT URL pointing at the new-token form pre-filled with every required read permission", () => {
     // Snapshot check: fixes the exact URL so any accidental scope broadening
     // (or a rename of `expires_in` / permission slugs on GitHub's side) trips
-    // a failing test.
+    // a failing test. The URL is the superset of the personal and org
+    // templates published in docs/user-guide/providers/github/authentication.mdx:
+    // `organization_administration` and `members` only surface in GitHub's UI
+    // when the token Resource Owner is set to an organization (silently
+    // ignored for personal accounts), so a single link serves both flows.
     expect(PRECONFIGURED_CREDENTIAL_URLS.GITHUB_PERSONAL_ACCESS_TOKEN).toBe(
-      "https://github.com/settings/personal-access-tokens/new?name=Prowler+Security+Scanner&description=Fine-grained+PAT+for+Prowler+security+scanning&expires_in=90&administration=read&contents=read&vulnerability_alerts=read&emails=read",
+      "https://github.com/settings/personal-access-tokens/new?name=Prowler+Security+Scanner&description=Fine-grained+PAT+for+Prowler+security+scanning&expires_in=90&administration=read&contents=read&vulnerability_alerts=read&emails=read&organization_administration=read&members=read",
     );
   });
 
-  it("carries only read-level permissions and the Prowler token name/expiry", () => {
+  it("carries only read-level permissions and the Prowler token name/expiry on the GitHub PAT URL", () => {
     // Semantic contract: every permission query-param must be `read`, the
     // token must expire in 90 days, and the name must match what the
     // Cloudflare token uses to keep the "Prowler" audit trail consistent.
@@ -173,6 +177,21 @@ describe("PRECONFIGURED_CREDENTIAL_URLS", () => {
         `permission "${key}" should be granted at "read" level`,
       ).toBe("read");
     }
+  });
+
+  it("includes the two organization-only permissions so organization scans work when the Resource Owner is switched", () => {
+    // The two params `organization_administration` and `members` are hidden in
+    // GitHub's UI for personal accounts but appear pre-checked once the user
+    // switches the token Resource Owner to their organization. Without them
+    // Prowler cannot run organization-level checks (MFA policy, member audit,
+    // etc.). Matches the org-scope URL published in
+    // docs/user-guide/providers/github/authentication.mdx.
+    const parsed = new URL(
+      PRECONFIGURED_CREDENTIAL_URLS.GITHUB_PERSONAL_ACCESS_TOKEN,
+    );
+
+    expect(parsed.searchParams.get("organization_administration")).toBe("read");
+    expect(parsed.searchParams.get("members")).toBe("read");
   });
 });
 

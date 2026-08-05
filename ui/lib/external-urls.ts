@@ -62,11 +62,15 @@ export const PRECONFIGURED_CREDENTIAL_URLS = {
   CLOUDFLARE_API_TOKEN:
     "https://dash.cloudflare.com/profile/api-tokens?permissionGroupKeys=%5B%7B%22key%22%3A%22account_settings%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22zone%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22zone_settings%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22dns%22%2C%22type%22%3A%22read%22%7D%5D&accountId=%2A&zoneId=all&name=Prowler%20Security%20Scanner",
   // Opens the GitHub fine-grained PAT creation form pre-filled with the
-  // read-only permissions Prowler needs to scan repos and org settings.
+  // read-only permissions Prowler needs. The URL is the superset of the
+  // personal and organization scopes: it includes `organization_administration`
+  // and `members`, which GitHub only surfaces when the token's Resource Owner
+  // is an organization (silently ignored for personal accounts). This lets one
+  // link serve both scenarios without asking the user to pick upfront.
   // Kept in sync with the URL published in
-  // docs/user-guide/providers/github/getting-started-github.mdx.
+  // docs/user-guide/providers/github/authentication.mdx.
   GITHUB_PERSONAL_ACCESS_TOKEN:
-    "https://github.com/settings/personal-access-tokens/new?name=Prowler+Security+Scanner&description=Fine-grained+PAT+for+Prowler+security+scanning&expires_in=90&administration=read&contents=read&vulnerability_alerts=read&emails=read",
+    "https://github.com/settings/personal-access-tokens/new?name=Prowler+Security+Scanner&description=Fine-grained+PAT+for+Prowler+security+scanning&expires_in=90&administration=read&contents=read&vulnerability_alerts=read&emails=read&organization_administration=read&members=read",
 } as const;
 
 export interface AWSOrgDeploymentQuickLinkParams {
