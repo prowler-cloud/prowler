@@ -15,7 +15,6 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 
-import { getCompliancesOverview } from "@/actions/compliances";
 import {
   loadLatestFindingTriageNote,
   type ResourceDrawerFinding,
@@ -80,7 +79,7 @@ import { getRegionFlag } from "@/lib/region-flags";
 import { isCloud } from "@/lib/shared/env";
 import { getRecommendationLinkLabel } from "@/lib/vulnerability-references";
 import { SIDE_PANEL_TAB, useSidePanelStore } from "@/store/side-panel";
-import type { ComplianceOverviewData } from "@/types/compliance";
+import type { FindingComplianceFramework } from "@/types/compliance-watchlist";
 import type { FindingResourceRow } from "@/types/findings-table";
 import type { UpdateFindingTriageInput } from "@/types/findings-triage";
 import { JIRA_DISPATCH_TARGET } from "@/types/integrations";
@@ -168,94 +167,66 @@ function renderRemediationCodeBlock({
   );
 }
 
-function normalizeComplianceFrameworkName(framework: string): string {
-  return framework
-    .trim()
-    .toLowerCase()
-    .replace(/[\s_]+/g, "-")
-    .replace(/-+/g, "-");
+/** Frameworks are not uniquely named — eight AWS ones are called "CIS" — so the
+ *  version is part of the label, not decoration. */
+function complianceFrameworkLabel(
+  framework: FindingComplianceFramework,
+): string {
+  const name = framework.framework || framework.name;
+  return framework.version ? `${name} ${framework.version}` : name;
 }
 
-function stripComplianceVersionSuffix(framework: string): string {
-  return framework.replace(/-\d+(?:\.\d+)*$/g, "");
+interface ComplianceFrameworkChipProps {
+  framework: FindingComplianceFramework;
+  isNavigable: boolean;
+  onOpen: (framework: FindingComplianceFramework) => void;
 }
 
-function canonicalComplianceKey(framework: string): string {
-  return stripComplianceVersionSuffix(
-    normalizeComplianceFrameworkName(framework),
-  )
-    .replace(/[^a-z0-9]+/g, "")
-    .trim();
-}
-
-function complianceTokens(framework: string): string[] {
-  return stripComplianceVersionSuffix(
-    normalizeComplianceFrameworkName(framework),
-  )
-    .split("-")
-    .map((token) => token.trim())
-    .filter(Boolean)
-    .filter((token) => !/^\d+(?:\.\d+)*$/.test(token));
-}
-
-function complianceMatchScore(
-  sourceFramework: string,
-  targetFramework: string,
-): number {
-  const normalizedSource = normalizeComplianceFrameworkName(sourceFramework);
-  const normalizedTarget = normalizeComplianceFrameworkName(targetFramework);
-
-  if (normalizedSource === normalizedTarget) {
-    return 5;
-  }
-
-  const canonicalSource = canonicalComplianceKey(sourceFramework);
-  const canonicalTarget = canonicalComplianceKey(targetFramework);
-
-  if (canonicalSource === canonicalTarget) {
-    return 4;
-  }
-
-  if (canonicalSource && canonicalTarget) {
-    const sourceTokens = canonicalSource.split("-");
-    const targetTokens = canonicalTarget.split("-");
-    if (
-      sourceTokens.length !== targetTokens.length &&
-      (sourceTokens.every((t) => targetTokens.includes(t)) ||
-        targetTokens.every((t) => sourceTokens.includes(t)))
-    ) {
-      return 3;
-    }
-  }
-
-  const sourceTokens = complianceTokens(sourceFramework);
-  const targetTokens = complianceTokens(targetFramework);
-  if (!sourceTokens.length || !targetTokens.length) {
-    return 0;
-  }
-
-  const sourceMatchesTarget = sourceTokens.every((token) =>
-    targetTokens.includes(token),
-  );
-  const targetMatchesSource = targetTokens.every((token) =>
-    sourceTokens.includes(token),
+function ComplianceFrameworkChip({
+  framework,
+  isNavigable,
+  onOpen,
+}: ComplianceFrameworkChipProps) {
+  const icon = getComplianceIcon(framework.complianceId);
+  const label = complianceFrameworkLabel(framework);
+  const content = icon ? (
+    <span className="border-border-neutral-tertiary flex size-7 shrink-0 items-center justify-center rounded-md border bg-slate-50">
+      <Image
+        src={icon}
+        alt={label}
+        width={20}
+        height={20}
+        className="size-5 object-contain"
+      />
+    </span>
+  ) : (
+    label
   );
 
-  if (sourceMatchesTarget || targetMatchesSource) {
-    return 2;
-  }
-
-  if (
-    sourceTokens.some((token) => targetTokens.includes(token)) &&
-    canonicalSource &&
-    canonicalTarget &&
-    (canonicalTarget.includes(canonicalSource) ||
-      canonicalSource.includes(canonicalTarget))
-  ) {
-    return 1;
-  }
-
-  return 0;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        {isNavigable ? (
+          <Button
+            type="button"
+            variant={icon ? "bare" : "outline"}
+            size={icon ? "icon-xs" : "sm"}
+            aria-label={`Open ${label} compliance details`}
+            onClick={() => onOpen(framework)}
+          >
+            {content}
+          </Button>
+        ) : icon ? (
+          content
+        ) : (
+          <Badge variant="tag" size="sm" aria-label={label}>
+            {content}
+          </Badge>
+        )}
+      </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
+  );
 }
 
 function parseSelectedScanIds(scanFilterValue: string | null): string[] {
@@ -267,37 +238,6 @@ function parseSelectedScanIds(scanFilterValue: string | null): string[] {
     .split(",")
     .map((scanId) => scanId.trim())
     .filter(Boolean);
-}
-
-function resolveComplianceMatch(
-  compliances: ComplianceOverviewData[] | undefined,
-  framework: string,
-): {
-  complianceId: string;
-  framework: string;
-  version: string;
-} | null {
-  if (!compliances?.length) {
-    return null;
-  }
-
-  const match = compliances
-    .map((compliance) => ({
-      compliance,
-      score: complianceMatchScore(framework, compliance.attributes.framework),
-    }))
-    .filter(({ score }) => score > 0)
-    .sort((a, b) => b.score - a.score)[0]?.compliance;
-
-  if (!match) {
-    return null;
-  }
-
-  return {
-    complianceId: match.id,
-    framework: match.attributes.framework,
-    version: match.attributes.version,
-  };
 }
 
 function buildComplianceDetailHref({
@@ -368,9 +308,6 @@ export function ResourceDetailDrawerContent({
   const openSidePanel = useSidePanelStore((state) => state.openPanel);
   const lighthouseContext = useLighthouseCurrentContext();
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
-  const [resolvingFramework, setResolvingFramework] = useState<string | null>(
-    null,
-  );
   const [optimisticallyMutedIds, setOptimisticallyMutedIds] = useState<
     Set<string>
   >(new Set());
@@ -499,42 +436,34 @@ export function ResourceDetailDrawerContent({
     requestPanelChatMessage("Analyze this finding", lighthouseContext.context);
   };
 
-  const handleOpenCompliance = async (framework: string) => {
-    if (!complianceScanId || resolvingFramework) {
+  /**
+   * The API hands us the framework's `complianceId`, which is the same string
+   * the per-scan detail page keys on — universal frameworks included, since
+   * their id is the SDK's file stem and the provider template carries it
+   * verbatim. So the destination is known up front: no lookup against the
+   * scan's overview, no matching by display name, and `window.open` stays
+   * inside the click gesture instead of running after an `await`, where a
+   * pop-up blocker would eat it.
+   */
+  const handleOpenCompliance = (framework: FindingComplianceFramework) => {
+    if (!complianceScanId) {
       return;
     }
 
-    setResolvingFramework(framework);
-
-    try {
-      const compliancesOverview = await getCompliancesOverview({
+    window.open(
+      buildComplianceDetailHref({
+        complianceId: framework.complianceId,
+        // Same fallback the chip's label uses: `framework` is empty for one the
+        // SDK exposes no metadata for, and it is a path segment here, so
+        // without it the destination collapses to `/compliance/`.
+        framework: framework.framework || framework.name,
+        version: framework.version,
         scanId: complianceScanId,
-      });
-      const complianceMatch = resolveComplianceMatch(
-        compliancesOverview?.data,
-        framework,
-      );
-
-      if (!complianceMatch) {
-        return;
-      }
-
-      window.open(
-        buildComplianceDetailHref({
-          complianceId: complianceMatch.complianceId,
-          framework: complianceMatch.framework,
-          version: complianceMatch.version,
-          scanId: complianceScanId,
-          regionFilter,
-        }),
-        "_blank",
-        "noopener,noreferrer",
-      );
-    } catch (error) {
-      console.error("Error resolving compliance detail:", error);
-    } finally {
-      setResolvingFramework(null);
-    }
+        regionFilter,
+      }),
+      "_blank",
+      "noopener,noreferrer",
+    );
   };
 
   return (
@@ -584,81 +513,14 @@ export function ResourceDetailDrawerContent({
                   Compliance Frameworks:
                 </span>
                 <div className="flex flex-wrap items-center gap-2">
-                  {checkMeta.complianceFrameworks.map((framework) => {
-                    const icon = getComplianceIcon(framework);
-                    const isNavigable = Boolean(complianceScanId);
-                    const isResolving = resolvingFramework === framework;
-
-                    return icon ? (
-                      <Tooltip key={framework}>
-                        <TooltipTrigger asChild>
-                          {isNavigable ? (
-                            <button
-                              type="button"
-                              aria-label={`Open ${framework} compliance details`}
-                              onClick={() =>
-                                void handleOpenCompliance(framework)
-                              }
-                              disabled={Boolean(resolvingFramework)}
-                              className="flex size-7 shrink-0 items-center justify-center rounded-md border border-gray-300 bg-white p-0.5 transition-shadow hover:shadow-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-wait disabled:opacity-70"
-                            >
-                              <Image
-                                src={icon}
-                                alt={framework}
-                                width={20}
-                                height={20}
-                                className="size-5 object-contain"
-                              />
-                              {isResolving && (
-                                <span className="sr-only">
-                                  Opening compliance
-                                </span>
-                              )}
-                            </button>
-                          ) : (
-                            <div className="flex size-7 shrink-0 items-center justify-center rounded-md border border-gray-300 bg-white p-0.5">
-                              <Image
-                                src={icon}
-                                alt={framework}
-                                width={20}
-                                height={20}
-                                className="size-5 object-contain"
-                              />
-                            </div>
-                          )}
-                        </TooltipTrigger>
-                        <TooltipContent>{framework}</TooltipContent>
-                      </Tooltip>
-                    ) : (
-                      <Tooltip key={framework}>
-                        <TooltipTrigger asChild>
-                          {isNavigable ? (
-                            <button
-                              type="button"
-                              aria-label={`Open ${framework} compliance details`}
-                              onClick={() =>
-                                void handleOpenCompliance(framework)
-                              }
-                              disabled={Boolean(resolvingFramework)}
-                              className="text-text-neutral-secondary inline-flex h-7 shrink-0 items-center rounded-md border border-gray-300 bg-white px-1.5 text-xs transition-shadow hover:shadow-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-wait disabled:opacity-70"
-                            >
-                              {framework}
-                              {isResolving && (
-                                <span className="sr-only">
-                                  Opening compliance
-                                </span>
-                              )}
-                            </button>
-                          ) : (
-                            <span className="text-text-neutral-secondary inline-flex h-7 shrink-0 items-center rounded-md border border-gray-300 bg-white px-1.5 text-xs">
-                              {framework}
-                            </span>
-                          )}
-                        </TooltipTrigger>
-                        <TooltipContent>{framework}</TooltipContent>
-                      </Tooltip>
-                    );
-                  })}
+                  {checkMeta.complianceFrameworks.map((framework) => (
+                    <ComplianceFrameworkChip
+                      key={framework.id}
+                      framework={framework}
+                      isNavigable={Boolean(complianceScanId)}
+                      onOpen={handleOpenCompliance}
+                    />
+                  ))}
                 </div>
               </div>
             )}
