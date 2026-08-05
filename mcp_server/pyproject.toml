@@ -50,7 +50,7 @@ package = true
 
 # Transitive pins fastmcp does not raise on its own; each carries a known HIGH.
 constraint-dependencies = [
-  "cryptography==48.0.1",
+  "cryptography==50.0.0",
   "joserfc==1.6.8",
   "mcp==1.28.1",
   "python-multipart==0.0.30"
