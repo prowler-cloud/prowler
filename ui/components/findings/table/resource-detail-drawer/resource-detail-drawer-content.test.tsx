@@ -520,6 +520,8 @@ vi.mock("../../muted", () => ({
 import type { ResourceDrawerFinding } from "@/actions/findings";
 import { SIDE_PANEL_TAB, useSidePanelStore } from "@/store/side-panel";
 import type { FindingResourceRow } from "@/types";
+import type { FindingComplianceFramework } from "@/types/compliance-watchlist";
+import { WATCHLIST_SCOPE } from "@/types/compliance-watchlist";
 import {
   FINDING_TRIAGE_STATUS,
   type FindingTriageSummary,
@@ -545,12 +547,41 @@ afterEach(() => {
 // Helpers
 // ---------------------------------------------------------------------------
 
+/** A watchlisted framework as the API reports it for a finding. Provider-scoped
+ *  by default, which is the case that navigates without a lookup. */
+const complianceFramework = (
+  overrides: Partial<FindingComplianceFramework> = {},
+): FindingComplianceFramework => ({
+  id: "aws:cis_1.4_aws",
+  complianceId: "cis_1.4_aws",
+  providerType: "aws",
+  scope: WATCHLIST_SCOPE.PROVIDER,
+  framework: "CIS-1.4",
+  name: "CIS",
+  version: "1.4",
+  inWatchlist: true,
+  ...overrides,
+});
+
 const mockCheckMeta: CheckMeta = {
   checkId: "s3_check",
   checkTitle: "S3 Check",
   risk: "High",
   description: "S3 description",
-  complianceFrameworks: ["CIS-1.4", "PCI-DSS"],
+  complianceFrameworks: [
+    complianceFramework({
+      id: "aws:cis_1.4_aws",
+      complianceId: "cis_1.4_aws",
+      framework: "CIS-1.4",
+      version: "1.4",
+    }),
+    complianceFramework({
+      id: "aws:pci_dss_4.0_aws",
+      complianceId: "pci_dss_4.0_aws",
+      framework: "PCI-DSS",
+      version: "4.0",
+    }),
+  ],
   categories: ["security"],
   remediation: {
     recommendation: { text: "Fix it", url: "https://example.com" },
@@ -1176,28 +1207,40 @@ describe("ResourceDetailDrawerContent — compliance navigation", () => {
     vi.unstubAllGlobals();
   });
 
-  it("should resolve the clicked framework against the selected scan and navigate to compliance detail", async () => {
+  it("should keep compliance logo canvases light in every navigation state", () => {
+    // Given
+    mockGetComplianceIcon.mockReturnValue("/compliance.svg");
+    const props = {
+      isLoading: false,
+      isNavigating: false,
+      checkMeta: mockCheckMeta,
+      currentIndex: 0,
+      totalResources: 1,
+      currentFinding: mockFinding,
+      otherFindings: [],
+      onNavigatePrev: vi.fn(),
+      onNavigateNext: vi.fn(),
+      onMuteComplete: vi.fn(),
+    };
+    const { rerender } = render(<ResourceDetailDrawerContent {...props} />);
+
+    // When / Then - No scan: static logo
+    const staticLogo = screen.getByRole("img", { name: "PCI-DSS 4.0" });
+    expect(staticLogo.parentElement).toHaveClass("bg-slate-50");
+
+    // When / Then - Selected scan: navigable logo
+    mockSearchParamsState.value = "filter[scan__in]=scan-selected";
+    rerender(<ResourceDetailDrawerContent {...props} />);
+    const navigableLogo = screen.getByRole("img", { name: "PCI-DSS 4.0" });
+    expect(navigableLogo.parentElement).toHaveClass("bg-slate-50");
+  });
+
+  it("should navigate straight to the framework the API identified, without querying the scan's overview", async () => {
     // Given
     const user = userEvent.setup();
     vi.stubGlobal("open", mockWindowOpen);
     mockSearchParamsState.value =
       "filter[scan__in]=scan-selected&filter[region__in]=eu-west-1";
-    mockGetCompliancesOverview.mockResolvedValue({
-      data: [
-        {
-          id: "compliance-1",
-          type: "compliance-overviews",
-          attributes: {
-            framework: "PCI-DSS",
-            version: "4.0",
-            requirements_passed: 10,
-            requirements_failed: 2,
-            requirements_manual: 0,
-            total_requirements: 12,
-          },
-        },
-      ],
-    });
 
     render(
       <ResourceDetailDrawerContent
@@ -1217,16 +1260,14 @@ describe("ResourceDetailDrawerContent — compliance navigation", () => {
     // When
     await user.click(
       screen.getByRole("button", {
-        name: "Open PCI-DSS compliance details",
+        name: "Open PCI-DSS 4.0 compliance details",
       }),
     );
 
     // Then
-    expect(mockGetCompliancesOverview).toHaveBeenCalledWith({
-      scanId: "scan-selected",
-    });
+    expect(mockGetCompliancesOverview).not.toHaveBeenCalled();
     expect(mockWindowOpen).toHaveBeenCalledWith(
-      "/compliance/PCI-DSS?complianceId=compliance-1&version=4.0&scanId=scan-selected&filter%5Bregion__in%5D=eu-west-1",
+      "/compliance/PCI-DSS?complianceId=pci_dss_4.0_aws&version=4.0&scanId=scan-selected&filter%5Bregion__in%5D=eu-west-1",
       "_blank",
       "noopener,noreferrer",
     );
@@ -1236,22 +1277,6 @@ describe("ResourceDetailDrawerContent — compliance navigation", () => {
     // Given
     const user = userEvent.setup();
     vi.stubGlobal("open", mockWindowOpen);
-    mockGetCompliancesOverview.mockResolvedValue({
-      data: [
-        {
-          id: "compliance-2",
-          type: "compliance-overviews",
-          attributes: {
-            framework: "PCI-DSS",
-            version: "4.0",
-            requirements_passed: 10,
-            requirements_failed: 2,
-            requirements_manual: 0,
-            total_requirements: 12,
-          },
-        },
-      ],
-    });
     const findingWithScan = {
       ...mockFinding,
       scan: {
@@ -1287,22 +1312,19 @@ describe("ResourceDetailDrawerContent — compliance navigation", () => {
     // When
     await user.click(
       screen.getByRole("button", {
-        name: "Open PCI-DSS compliance details",
+        name: "Open PCI-DSS 4.0 compliance details",
       }),
     );
 
     // Then
-    expect(mockGetCompliancesOverview).toHaveBeenCalledWith({
-      scanId: "scan-from-finding",
-    });
     expect(mockWindowOpen).toHaveBeenCalledWith(
-      "/compliance/PCI-DSS?complianceId=compliance-2&version=4.0&scanId=scan-from-finding",
+      "/compliance/PCI-DSS?complianceId=pci_dss_4.0_aws&version=4.0&scanId=scan-from-finding",
       "_blank",
       "noopener,noreferrer",
     );
   });
 
-  it("should navigate when the finding framework is a short alias of the compliance overview framework", async () => {
+  it("should navigate a universal framework by its own id too, without a lookup", async () => {
     // Given
     const user = userEvent.setup();
     vi.stubGlobal("open", mockWindowOpen);
@@ -1348,7 +1370,16 @@ describe("ResourceDetailDrawerContent — compliance navigation", () => {
         isNavigating={false}
         checkMeta={{
           ...mockCheckMeta,
-          complianceFrameworks: ["KISA"],
+          complianceFrameworks: [
+            complianceFramework({
+              id: "*:kisa_isms_p",
+              complianceId: "kisa_isms_p",
+              providerType: "*",
+              scope: WATCHLIST_SCOPE.UNIVERSAL,
+              framework: "KISA",
+              version: "1.0",
+            }),
+          ],
         }}
         currentIndex={0}
         totalResources={1}
@@ -1363,16 +1394,81 @@ describe("ResourceDetailDrawerContent — compliance navigation", () => {
     // When
     await user.click(
       screen.getByRole("button", {
-        name: "Open KISA compliance details",
+        name: "Open KISA 1.0 compliance details",
       }),
     );
 
     // Then
-    expect(mockGetCompliancesOverview).toHaveBeenCalledWith({
-      scanId: "scan-from-finding",
-    });
+    // A universal framework's id is the SDK's file stem, which the per-scan
+    // detail page keys on just like any other, so there is no lookup and no
+    // `window.open` after an await for a pop-up blocker to swallow.
+    expect(mockGetCompliancesOverview).not.toHaveBeenCalled();
     expect(mockWindowOpen).toHaveBeenCalledWith(
-      "/compliance/KISA-ISMS-P?complianceId=compliance-kisa&version=1.0&scanId=scan-from-finding",
+      "/compliance/KISA?complianceId=kisa_isms_p&version=1.0&scanId=scan-from-finding",
+      "_blank",
+      "noopener,noreferrer",
+    );
+  });
+
+  it("should fall back to the framework's name for the URL, as the label does", async () => {
+    // Given: a framework the SDK exposes no metadata for, so `framework` is
+    // empty. It is a path segment, so without the same fallback the label uses
+    // the destination collapses to `/compliance/`.
+    const user = userEvent.setup();
+    vi.stubGlobal("open", mockWindowOpen);
+    const findingWithScan = {
+      ...mockFinding,
+      scan: {
+        id: "scan-from-finding",
+        name: "Nightly scan",
+        trigger: "manual",
+        state: "completed",
+        uniqueResourceCount: 25,
+        progress: 100,
+        duration: 300,
+        startedAt: "2026-03-30T10:00:00Z",
+        completedAt: "2026-03-30T10:05:00Z",
+        insertedAt: "2026-03-30T09:59:00Z",
+        scheduledAt: null,
+      },
+    };
+
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={{
+          ...mockCheckMeta,
+          complianceFrameworks: [
+            complianceFramework({
+              id: "aws:mitre_attack_aws",
+              complianceId: "mitre_attack_aws",
+              framework: "",
+              name: "MITRE-ATTACK",
+              version: "1.0",
+            }),
+          ],
+        }}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={findingWithScan}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // When
+    await user.click(
+      screen.getByRole("button", {
+        name: "Open MITRE-ATTACK 1.0 compliance details",
+      }),
+    );
+
+    // Then
+    expect(mockWindowOpen).toHaveBeenCalledWith(
+      "/compliance/MITRE-ATTACK?complianceId=mitre_attack_aws&version=1.0&scanId=scan-from-finding",
       "_blank",
       "noopener,noreferrer",
     );
