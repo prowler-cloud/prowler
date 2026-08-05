@@ -18,6 +18,10 @@ inputs:
     description: 'Install Python dependencies with uv'
     required: false
     default: 'true'
+  update-sdk-lock:
+    description: 'Rewrite uv.lock to pin the latest prowler SDK commit on master'
+    required: false
+    default: 'true'
 
 runs:
   using: 'composite'
@@ -40,7 +44,7 @@ runs:
         fi
 
     - name: Update uv.lock with latest Prowler commit
-      if: github.repository_owner == 'prowler-cloud' && github.repository != 'prowler-cloud/prowler'
+      if: inputs.update-sdk-lock == 'true' && github.repository_owner == 'prowler-cloud' && github.repository != 'prowler-cloud/prowler'
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       env:
@@ -60,7 +64,7 @@ runs:
         grep "prowler-cloud/prowler" uv.lock
 
     - name: Update uv.lock SDK commit (prowler repo on push)
-      if: github.event_name == 'push' && github.ref == 'refs/heads/master' && github.repository == 'prowler-cloud/prowler'
+      if: inputs.update-sdk-lock == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/master' && github.repository == 'prowler-cloud/prowler'
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       env:
