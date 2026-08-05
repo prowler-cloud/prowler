@@ -172,6 +172,10 @@ describe("PRECONFIGURED_CREDENTIAL_URLS", () => {
         value,
         `permission "${key}" should be granted at "read" level`,
       ).toBe("read");
+    }
+  });
+});
+
 describe("getProviderHelpText", () => {
   const AWS_SHORTLINK = "https://goto.prowler.com/provider-aws";
   const AWS_CREDENTIALS_STEP_DOCS =
