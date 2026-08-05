@@ -24,6 +24,7 @@ from prowler.providers.alibabacloud.config import (
     ALIBABACLOUD_DEFAULT_REGION,
     ALIBABACLOUD_REGIONS,
     ALIBABACLOUD_STS_MAX_ATTEMPTS,
+    ALIBABACLOUD_STS_RETRY_DELAY_MS,
     ROLE_SESSION_NAME,
 )
 from prowler.providers.alibabacloud.exceptions.exceptions import (
@@ -514,7 +515,10 @@ class AlibabacloudProvider(Provider):
                         RetryCondition(
                             maxAttempts=ALIBABACLOUD_STS_MAX_ATTEMPTS,
                             exception=["RetryError"],
-                            backoff={"policy": "Fixed", "period": 0},
+                            backoff={
+                                "policy": "Fixed",
+                                "period": ALIBABACLOUD_STS_RETRY_DELAY_MS,
+                            },
                         )
                     ]
                 ),

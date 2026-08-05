@@ -7,6 +7,9 @@ ROLE_SESSION_NAME = "ProwlerAssessmentSession"
 ALIBABACLOUD_SDK_READ_TIMEOUT = 60  # seconds
 ALIBABACLOUD_SDK_CONNECT_TIMEOUT = 10  # seconds
 ALIBABACLOUD_STS_MAX_ATTEMPTS = 3
+# Avoid immediate retry bursts while bounding validation latency to two seconds:
+# three total attempts introduce at most two fixed one-second waits.
+ALIBABACLOUD_STS_RETRY_DELAY_MS = 1000
 
 # Alibaba Cloud Regions - Only publicly accessible regions
 # Note: Some regions may require special approval or are not globally available

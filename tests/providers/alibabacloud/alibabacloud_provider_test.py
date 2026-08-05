@@ -1,5 +1,5 @@
 import os
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
 
 import pytest
 from alibabacloud_tea_openapi.exceptions import ClientException
@@ -59,15 +59,19 @@ def test_validate_credentials_retries_transport_failure_then_succeeds():
         b'"IdentityType":"RamUser"}'
     )
 
-    with patch.object(
-        DaraCore,
-        "do_action",
-        side_effect=[RetryError("connection reset"), response],
-    ) as do_action:
+    with (
+        patch.object(
+            DaraCore,
+            "do_action",
+            side_effect=[RetryError("connection reset"), response],
+        ) as do_action,
+        patch.object(DaraCore, "sleep") as sleep,
+    ):
         caller_identity = AlibabacloudProvider.validate_credentials(session)
 
     assert caller_identity.account_id == "1234567890"
     assert do_action.call_count == 2
+    sleep.assert_called_once_with(1000)
 
 
 def test_validate_credentials_connection_failure_is_not_invalid_credentials():
@@ -85,12 +89,16 @@ def test_validate_credentials_connection_failure_is_not_invalid_credentials():
         retry_error.__cause__ = connection_reset
         retry_errors.append(retry_error)
 
-    with patch.object(DaraCore, "do_action", side_effect=retry_errors) as do_action:
+    with (
+        patch.object(DaraCore, "do_action", side_effect=retry_errors) as do_action,
+        patch.object(DaraCore, "sleep") as sleep,
+    ):
         with pytest.raises(AlibabaCloudConnectionError) as exception:
             AlibabacloudProvider.validate_credentials(session)
 
     assert not isinstance(exception.value, AlibabaCloudInvalidCredentialsError)
     assert do_action.call_count == 3
+    assert sleep.call_args_list == [call(1000), call(1000)]
     assert isinstance(exception.value.original_exception, UnretryableException)
     assert exception.value.original_exception.inner_exception is retry_errors[-1]
     assert exception.value.__cause__ is exception.value.original_exception
