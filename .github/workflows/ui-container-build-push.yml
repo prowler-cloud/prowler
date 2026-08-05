@@ -147,6 +147,9 @@ jobs:
           build-args: |
             NEXT_PUBLIC_PROWLER_RELEASE_VERSION=${{ (github.event_name == 'release' || github.event_name == 'workflow_dispatch') && format('v{0}', env.RELEASE_TAG) || needs.setup.outputs.short-sha }}
           push: true
+          sbom: true
+          # max, not the default min: min records little beyond the build ref.
+          provenance: mode=max
           platforms: ${{ matrix.platform }}
           tags: |
             ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.setup.outputs.short-sha }}-${{ matrix.arch }}

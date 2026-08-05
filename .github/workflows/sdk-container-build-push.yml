@@ -200,6 +200,9 @@ jobs:
           context: .
           file: ${{ env.DOCKERFILE_PATH }}
           push: true
+          sbom: true
+          # max, not the default min: min records little beyond the build ref.
+          provenance: mode=max
           platforms: ${{ matrix.platform }}
           tags: |
             ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.setup.outputs.latest_tag }}-${{ matrix.arch }}
