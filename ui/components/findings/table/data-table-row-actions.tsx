@@ -313,7 +313,7 @@ export function DataTableRowActions<T extends FindingRowData>({
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger className="hover:bg-bg-neutral-tertiary flex cursor-pointer items-center gap-2 rounded-md">
                   <Sparkles
-                    className="text-text-success-primary size-4"
+                    className="text-text-lighthouse size-4"
                     aria-hidden
                   />
                   Lighthouse Skills

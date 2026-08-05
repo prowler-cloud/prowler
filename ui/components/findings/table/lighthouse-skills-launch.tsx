@@ -51,7 +51,7 @@ export function LighthouseSkillsMenuItems({
       {getAllSkills().map((skill) => (
         <ActionDropdownItem
           key={skill.id}
-          icon={<skill.icon className="text-text-success-primary" />}
+          icon={<skill.icon className="text-text-lighthouse" />}
           label={skill.name}
           description={skill.description}
           onSelect={() => onLaunch(skill)}
@@ -61,9 +61,14 @@ export function LighthouseSkillsMenuItems({
   );
 }
 
-// Hover-revealed "Skills" pill on resource sub-rows (design 1a). Relies on the
-// DataTable row's `group` class: invisible at rest, revealed on row hover,
-// keyboard focus, or while its menu is open.
+// Fixed width shared by the pill and the header spacer that keeps the
+// checkbox column aligned when the pill sits at the start of each sub-row.
+export const LIGHTHOUSE_SKILLS_PILL_WIDTH_CLASS = "w-16";
+
+// Hover-revealed "Skills" pill leading each resource sub-row (design 1a). It
+// sits before the row indent so it stays visible without horizontal scroll on
+// narrow screens. Relies on the DataTable row's `group` class: invisible at
+// rest, revealed on row hover, keyboard focus, or while its menu is open.
 export function LighthouseSkillsRowButton({
   findingItem,
 }: {
@@ -79,7 +84,8 @@ export function LighthouseSkillsRowButton({
         <button
           type="button"
           className={cn(
-            "border-border-neutral-secondary bg-bg-pass-secondary text-text-success-primary inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium",
+            "border-border-lighthouse bg-lighthouse-soft text-text-lighthouse inline-flex shrink-0 items-center justify-center gap-1 rounded-full border py-1 text-xs font-medium",
+            LIGHTHOUSE_SKILLS_PILL_WIDTH_CLASS,
             "opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100",
           )}
         >

@@ -1,7 +1,7 @@
 "use client";
 
 import { ColumnDef, Row, RowSelectionState } from "@tanstack/react-table";
-import { CornerDownRight, VolumeOff, VolumeX } from "lucide-react";
+import { CornerDownRight, Sparkles, VolumeOff, VolumeX } from "lucide-react";
 import { useContext, useState } from "react";
 
 import { JiraDispatchActionItem } from "@/components/findings/jira-dispatch-action-item";
@@ -11,6 +11,12 @@ import {
   ActionDropdown,
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
+import {
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+} from "@/components/shadcn/dropdown/dropdown";
 import { DateWithTime } from "@/components/shadcn/entities";
 import { EntityInfo } from "@/components/shadcn/entities/entity-info";
 import { InfoField } from "@/components/shadcn/info-field/info-field";
@@ -36,11 +42,29 @@ import {
 } from "./finding-triage-cells";
 import type { FindingTriageUpdateHandler } from "./finding-triage-status-control";
 import { FindingsSelectionContext } from "./findings-selection-context";
-import { LighthouseSkillsRowButton } from "./lighthouse-skills-launch";
+import {
+  LIGHTHOUSE_SKILLS_PILL_WIDTH_CLASS,
+  LighthouseSkillsMenuItems,
+  LighthouseSkillsRowButton,
+  useLighthouseSkillLaunch,
+} from "./lighthouse-skills-launch";
 import {
   type DeltaType,
   NotificationIndicator,
 } from "./notification-indicator";
+
+// One finding-context item per resource row, shared by the leading Skills
+// pill and the ⋮ submenu so both launch with identical context.
+const buildResourceFindingItem = (resource: FindingResourceRow) =>
+  buildFindingResourceContext({
+    findingId: resource.findingId,
+    checkId: resource.checkId,
+    severity: resource.severity,
+    status: resource.status,
+    providerUid: resource.providerUid,
+    resourceUid: resource.resourceUid,
+    region: resource.region,
+  });
 
 const ResourceRowActions = ({
   row,
@@ -57,6 +81,7 @@ const ResourceRowActions = ({
 }) => {
   const resource = row.original;
   const canMute = canMuteFindingResource(resource);
+  const launchSkill = useLighthouseSkillLaunch();
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
   const [resolvedIds, setResolvedIds] = useState<string[]>([]);
   const [isResolving, setIsResolving] = useState(false);
@@ -132,22 +157,9 @@ const ResourceRowActions = ({
         />
       )}
       <div
-        className="flex items-center justify-end gap-1.5"
+        className="flex items-center justify-end"
         onClick={(e) => e.stopPropagation()}
       >
-        {isCloud() && (
-          <LighthouseSkillsRowButton
-            findingItem={buildFindingResourceContext({
-              findingId: resource.findingId,
-              checkId: resource.checkId,
-              severity: resource.severity,
-              status: resource.status,
-              providerUid: resource.providerUid,
-              resourceUid: resource.resourceUid,
-              region: resource.region,
-            })}
-          />
-        )}
         <ActionDropdown ariaLabel="Resource actions">
           <FindingNoteActionItem
             triage={resource.triage}
@@ -180,6 +192,27 @@ const ResourceRowActions = ({
             })}
             payload={jiraPayload}
           />
+          {isCloud() && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger className="hover:bg-bg-neutral-tertiary flex cursor-pointer items-center gap-2 rounded-md">
+                  <Sparkles
+                    className="text-text-lighthouse size-4"
+                    aria-hidden
+                  />
+                  Lighthouse Skills
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent className="border-border-neutral-secondary bg-bg-neutral-secondary w-72 rounded-xl">
+                  <LighthouseSkillsMenuItems
+                    onLaunch={(skill) =>
+                      launchSkill(skill, buildResourceFindingItem(resource))
+                    }
+                  />
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+            </>
+          )}
         </ActionDropdown>
       </div>
     </>
@@ -222,6 +255,10 @@ export function getColumnFindingResources({
 
         return (
           <div className="flex items-center gap-2">
+            {/* Mirrors the row's leading Skills pill so checkboxes stay aligned */}
+            {isCloud() && (
+              <div className={LIGHTHOUSE_SKILLS_PILL_WIDTH_CLASS} />
+            )}
             <div className="w-2" />
             <div className="w-4" />
             <Checkbox
@@ -239,6 +276,13 @@ export function getColumnFindingResources({
       },
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
+          {/* Leading placement (not the sticky actions cell) keeps the pill
+              visible on narrow screens without horizontal scroll */}
+          {isCloud() && (
+            <LighthouseSkillsRowButton
+              findingItem={buildResourceFindingItem(row.original)}
+            />
+          )}
           <NotificationIndicator
             delta={row.original.delta as DeltaType | undefined}
             isMuted={row.original.isMuted}
