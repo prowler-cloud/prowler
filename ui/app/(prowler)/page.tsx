@@ -15,6 +15,7 @@ import { isCloud } from "@/lib/shared/env";
 import { SearchParamsProps } from "@/types";
 
 import { OverviewBanner } from "./_overview/_components/overview-banner";
+import { OverviewProviderContext } from "./_overview/_components/overview-provider-context";
 import { getLighthouseOverviewBannerHref } from "./_overview/_lib/lighthouse-banner";
 import { OVERVIEW_BANNER_VARIANT } from "./_overview/_lib/overview-banner";
 import {
@@ -60,6 +61,11 @@ export default async function Home({
   return (
     <ContentLayout title="Overview" icon="lucide:square-chart-gantt">
       <AppSidebarModeSync mode={APP_SIDEBAR_MODE.BROWSE} />
+      <OverviewProviderContext
+        searchParams={resolvedSearchParams}
+        providers={providersData?.data ?? []}
+        groups={providerGroupsData?.data ?? []}
+      />
       {/* Agents banner shows everywhere; Lighthouse is Cloud-only, so on a
           local server the agents banner is the only child and fills the row. */}
       <div className="mb-6 flex flex-col gap-6 lg:flex-row">
@@ -106,8 +112,18 @@ export default async function Home({
 
       <div className="mt-6 flex flex-col gap-6 xl:flex-row">
         {/* Watchlists: stacked on mobile, row on tablet, stacked on desktop */}
-        <div className="flex min-w-0 flex-col gap-6 overflow-hidden sm:flex-row sm:flex-wrap sm:items-stretch xl:w-[312px] xl:shrink-0 xl:flex-col">
-          <div className="min-w-0 sm:flex-1 xl:flex-auto [&>*]:h-full">
+        {/* No `flex-wrap` here: a multi-line flex container sizes its items to
+            the line's max-content rather than to its own 312px, and a card wider
+            than the column loses its right border and padding to
+            `overflow-hidden`. It never wrapped anyway. */}
+        <div className="flex min-w-0 flex-col gap-6 overflow-hidden sm:flex-row sm:items-stretch xl:w-[312px] xl:shrink-0 xl:flex-col">
+          {/* Sized to its own list, unlike the service card below: this one is
+              as long as the organization made its watchlist, so growing it to
+              fill the column puts a hole under two pinned frameworks. */}
+          {/* `h-full` only where the cards sit side by side and share a row
+              height. In the column it would hand the card the stretched
+              wrapper's height and undo the fit-to-content sizing. */}
+          <div className="min-w-0 sm:flex-1 xl:flex-none sm:[&>*]:h-full xl:[&>*]:h-auto">
             <Suspense fallback={<WatchlistCardSkeleton />}>
               <ComplianceWatchlistSSR searchParams={resolvedSearchParams} />
             </Suspense>

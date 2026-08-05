@@ -76,7 +76,8 @@
         "s3_bucket_public_write_acl",
         "dms_instance_no_public_access",
         "sagemaker_notebook_instance_without_direct_internet_access_configured",
-        "ec2_networkacl_allow_ingress_tcp_port_3389"
+        "ec2_networkacl_allow_ingress_tcp_port_3389",
+        "ec2_confidential_workload_host_unrestricted_ingress"
       ],
       "Attributes": [
         {
@@ -106,7 +107,8 @@
         "s3_bucket_public_write_acl",
         "dms_instance_no_public_access",
         "sagemaker_notebook_instance_without_direct_internet_access_configured",
-        "ec2_networkacl_allow_ingress_tcp_port_3389"
+        "ec2_networkacl_allow_ingress_tcp_port_3389",
+        "ec2_confidential_workload_host_unrestricted_ingress"
       ],
       "Attributes": [
         {
@@ -294,7 +296,9 @@
         "ec2_securitygroup_allow_ingress_from_internet_to_all_ports",
         "ec2_networkacl_allow_ingress_tcp_port_22",
         "ec2_networkacl_allow_ingress_tcp_port_3389",
-        "ec2_securitygroup_default_restrict_traffic"
+        "ec2_securitygroup_default_restrict_traffic",
+        "ec2_confidential_workload_host_public_ip",
+        "ec2_confidential_workload_host_unrestricted_ingress"
       ],
       "Attributes": [
         {
@@ -1008,7 +1012,10 @@
       "Id": "3.5",
       "Name": "Document and implement procedures to protect keys used to secure stored cardholder data against disclosure and misuse",
       "Description": "Note: This requirement applies to keys used to encrypt stored cardholder data, and also applies to key-encrypting keys used to protect data-encrypting keys—such key- encrypting keys must be at least as strong as the data-encrypting key. Cryptographic keys must be strongly protected because those who obtain access will be able to decrypt data. Key-encrypting keys, if used, must be at least as strong as the data-encrypting key in order to ensure proper protection of the key that encrypts the data as well as the data encrypted with that key. The requirement to protect keys from disclosure and misuse applies to both data-encrypting keys and key-encrypting keys. Because one key- encrypting key may grant access to many data- encrypting keys, the key-encrypting keys require strong protection measures.",
-      "Checks": [],
+      "Checks": [
+        "kms_key_enclave_attestation_not_enforced",
+        "kms_key_enclave_attestation_bypassable_path"
+      ],
       "Attributes": [
         {
           "ItemId": "3.5",
@@ -1034,7 +1041,9 @@
       "Id": "3.6",
       "Name": "Fully document and implement all key-management processes and procedures for cryptographic keys used for encryption of cardholder data",
       "Description": "Note: Numerous industry standards for key management are available from various resources including NIST, which can be found at http://csrc.nist.gov. The manner in which cryptographic keys are managed is a critical part of the continued security of the encryption solution. A good key- management process, whether it is manual or automated as part of the encryption product, is based on industry standards and addresses all key elements at 3.6.1 through 3.6.8. Providing guidance to customers on how to securely transmit, store and update cryptographic keys can help prevent keys from being mismanaged or disclosed to unauthorized entities. This requirement applies to keys used to encrypt stored cardholder data, and any respective key- encrypting keys. Note: Testing Procedure 3.6.a is an additional procedure that only applies if the entity being assessed is a service provider.",
-      "Checks": [],
+      "Checks": [
+        "kms_key_enclave_attestation_not_enforced"
+      ],
       "Attributes": [
         {
           "ItemId": "3.6",
@@ -1500,7 +1509,9 @@
         "s3_bucket_policy_public_write_access",
         "s3_bucket_public_write_acl",
         "dms_instance_no_public_access",
-        "sagemaker_notebook_instance_without_direct_internet_access_configured"
+        "sagemaker_notebook_instance_without_direct_internet_access_configured",
+        "ec2_confidential_workload_host_public_ip",
+        "kms_key_enclave_attestation_bypassable_path"
       ],
       "Attributes": [
         {
@@ -2131,7 +2142,8 @@
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_cloudwatch_logging_enabled",
-        "redshift_cluster_audit_logging"
+        "redshift_cluster_audit_logging",
+        "kms_key_enclave_debug_attestation_detected"
       ],
       "Attributes": [
         {

@@ -106,6 +106,14 @@ export const ATTACK_PATH_QUERY_IDS = {
   CUSTOM: "__custom-open-cypher__",
 } as const;
 
+export const ATTACK_PATH_QUERY_KIND = {
+  PREDEFINED: "predefined",
+  CUSTOM: "custom",
+} as const;
+
+export type AttackPathQueryKind =
+  (typeof ATTACK_PATH_QUERY_KIND)[keyof typeof ATTACK_PATH_QUERY_KIND];
+
 // Query Types
 export interface AttackPathQueryParameter {
   name: string;
@@ -256,8 +264,16 @@ export interface WizardState {
 }
 
 // Graph State Types
+export interface AttackPathQueryExecution {
+  queryId: string;
+  queryLabel: string;
+  queryKind: AttackPathQueryKind;
+  parameters: Record<string, string | number | boolean>;
+}
+
 export interface GraphState {
   data: AttackPathGraphData | null;
+  execution: AttackPathQueryExecution | null;
   selectedNodeId: string | null;
   loading: boolean;
   error: string | null;

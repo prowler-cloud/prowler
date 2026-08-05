@@ -66,11 +66,13 @@ function convertSectionScoresToTooltipData(
   if (!sectionScores) return [];
 
   return Object.entries(sectionScores).map(([name, value]) => {
+    // The aggregated endpoint serializes section scores as decimal strings.
+    const numericValue = Number(value);
     // Determine color based on the same ranges as THREAT_LEVEL_CONFIG
-    const threatLevel = getThreatLevel(value);
+    const threatLevel = getThreatLevel(numericValue);
     const color = THREAT_LEVEL_CONFIG[threatLevel].color;
 
-    return { name, value, color };
+    return { name, value: numericValue, color };
   });
 }
 
@@ -113,7 +115,7 @@ export function ThreatScore({
   return (
     <Card
       variant="base"
-      className="flex min-h-[372px] w-full flex-col justify-between lg:max-w-[312px]"
+      className="flex min-h-[372px] w-full flex-col justify-between xl:max-w-[312px]"
     >
       <CardHeader>
         <CardTitle>Prowler ThreatScore</CardTitle>

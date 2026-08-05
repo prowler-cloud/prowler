@@ -5,11 +5,13 @@
  */
 
 import { vi } from "vitest";
-import { userEvent } from "vitest/browser";
 
+import { BrowserHarness } from "@/__tests__/browser-harness";
+
+import { isProwlerFindingNode } from "./_lib";
 import type { PageFixture } from "./attack-paths-page.fixtures";
 
-export class AttackPathPageHarness {
+export class AttackPathPageHarness extends BrowserHarness<PageFixture> {
   private static readonly NODE_SEL = ".react-flow__node";
   private static readonly EDGE_SEL = ".react-flow__edge";
   private static readonly VIEWPORT_SEL = ".react-flow__viewport";
@@ -35,16 +37,6 @@ export class AttackPathPageHarness {
       el.classList.contains("react-flow__node-internet") ||
       el.getAttribute("data-nodetype") === "internet"
     );
-  }
-
-  readonly user = userEvent;
-
-  constructor(readonly fixture: PageFixture) {}
-
-  // --- Container ---
-
-  get container(): HTMLElement {
-    return document.body;
   }
 
   // --- Collections ---
@@ -166,10 +158,6 @@ export class AttackPathPageHarness {
 
   // --- Handles ---
 
-  private q(selector: string): HTMLElement | null {
-    return this.container.querySelector<HTMLElement>(selector);
-  }
-
   get toolbar() {
     const exportButton =
       this.q('button[aria-label="Export graph"]') ??
@@ -199,11 +187,6 @@ export class AttackPathPageHarness {
     return alert.textContent ?? "";
   }
 
-  /** True when the rendered page contains text matching `pattern`. */
-  containsText(pattern: RegExp): boolean {
-    return pattern.test(this.container.textContent ?? "");
-  }
-
   get minimap(): HTMLElement | null {
     return this.q(AttackPathPageHarness.MINIMAP_SEL);
   }
@@ -226,10 +209,37 @@ export class AttackPathPageHarness {
     );
   }
 
-  getInputByName(name: string): HTMLInputElement | null {
-    return this.container.querySelector<HTMLInputElement>(
-      `input[name="${name}"]`,
-    );
+  /** Whether the query-parameters panel is shown. */
+  showsQueryParameters(): boolean {
+    return this.containsText(/Query Parameters/i);
+  }
+
+  /** Whether a query-parameter field label is shown (case-insensitive). */
+  showsParameterLabel(label: string): boolean {
+    return (this.container.textContent ?? "")
+      .toLowerCase()
+      .includes(label.toLowerCase());
+  }
+
+  /** Whether a query-parameter input is rendered, addressed by its name. */
+  hasParameterInput(name: string): boolean {
+    return this.inputByName(name) !== null;
+  }
+
+  /** Whether a graph node label is rendered on the page. */
+  showsNodeLabel(label: string): boolean {
+    return this.container.textContent?.includes(label) ?? false;
+  }
+
+  /** Wait until the query-builder card is present. */
+  async waitForQueryBuilderCard(timeoutMs = 10000): Promise<HTMLElement> {
+    return this.waitFor(() => this.queryBuilderCard, timeoutMs);
+  }
+
+  async fillInput(name: string, value: string): Promise<void> {
+    const input = this.inputByName(name);
+    if (!input) throw new Error(`fillInput: input "${name}" not found`);
+    await this.user.fill(input, value);
   }
 
   /**
@@ -240,6 +250,22 @@ export class AttackPathPageHarness {
    */
   get viewportTransform(): string {
     return this.viewport?.style.transform ?? "";
+  }
+
+  /** Wait until the React Flow viewport transform changes from `previous`. */
+  async waitForViewportChange(
+    previous: string,
+    timeoutMs = 2000,
+  ): Promise<void> {
+    await this.waitFor(() => this.viewportTransform !== previous, timeoutMs);
+  }
+
+  /** Wait until exactly `count` edges are highlighted. */
+  async waitForHighlightedEdges(
+    count: number,
+    timeoutMs = 2000,
+  ): Promise<void> {
+    await this.waitFor(() => this.highlightedEdges.length === count, timeoutMs);
   }
 
   /**
@@ -321,38 +347,7 @@ export class AttackPathPageHarness {
     );
   }
 
-  /** Wait until the predicate returns truthy and return that value. */
-  async waitFor<T>(
-    fn: () => T | null | undefined | false,
-    timeoutMs = 3000,
-  ): Promise<T> {
-    return vi.waitFor(
-      () => {
-        const v = fn();
-        if (!v) throw new Error("waitFor predicate not yet truthy");
-        return v;
-      },
-      { timeout: timeoutMs, interval: 16 },
-    ) as Promise<T>;
-  }
-
-  async waitForTransition(ms = 350): Promise<void> {
-    await new Promise((r) => setTimeout(r, ms));
-  }
-
   // --- Action methods ---
-
-  private async clickElement(
-    element: HTMLElement,
-    options?: { fallbackToDomClick?: boolean },
-  ): Promise<void> {
-    try {
-      await this.user.click(element);
-    } catch (error) {
-      if (!options?.fallbackToDomClick) throw error;
-      element.click();
-    }
-  }
 
   private async clickGraphElement(element: HTMLElement): Promise<void> {
     await this.closeFindingDrawerIfOpen();
@@ -389,23 +384,49 @@ export class AttackPathPageHarness {
           'button[role="combobox"]',
         ),
       10000,
+      "the query selector trigger",
     );
-    await this.user.click(trigger);
 
     const targetId = queryId ?? this.fixture.queryId;
     const targetName = this.fixture.queries.find((q) => q.id === targetId)
       ?.attributes.name;
 
-    const option = await this.waitFor<HTMLElement>(
-      () =>
-        document.querySelector<HTMLElement>(
-          `[role="option"][data-value="${targetId}"]`,
-        ) ??
-        Array.from(
-          document.querySelectorAll<HTMLElement>('[role="option"]'),
-        ).find((el) => targetName && el.textContent?.includes(targetName)),
-      10000,
+    // Id match is exact (`QuerySelector` emits `data-value`); the name fallback
+    // is loose, since `textContent` also covers the option's description.
+    const findOption = (): HTMLElement | null =>
+      document.querySelector<HTMLElement>(
+        `[role="option"][data-value="${targetId}"]`,
+      ) ??
+      Array.from(
+        document.querySelectorAll<HTMLElement>('[role="option"]'),
+      ).find((el) => targetName && el.textContent?.includes(targetName)) ??
+      null;
+
+    await this.user.click(trigger);
+
+    // A re-render landing mid-gesture makes Radix drop the open state, leaving
+    // the trigger focused and the listbox unmounted. Re-open from the keyboard,
+    // which acts on the focused trigger — but only when no option mounted at
+    // all, so a merely slow runner does not get a second gesture.
+    let option = await this.waitForOrNull(
+      findOption,
+      2000,
+      `option ${targetId}`,
     );
+    if (!option && document.querySelector('[role="option"]') === null) {
+      await this.user.keyboard("{Enter}");
+      option = await this.waitForOrNull(findOption, 8000, `option ${targetId}`);
+    }
+
+    if (!option) {
+      throw new Error(
+        `selectQuery: no option matching id "${targetId}"` +
+          (targetName
+            ? ` or name "${targetName}"`
+            : " (id not in the fixture)"),
+      );
+    }
+
     await this.user.click(option);
     await this.waitForTransition();
   }
@@ -458,9 +479,7 @@ export class AttackPathPageHarness {
   async clickFirstResourceNodeWithoutFindings(): Promise<HTMLElement> {
     const findingIds = new Set(
       (this.fixture.queryResult?.nodes ?? [])
-        .filter((n) =>
-          n.labels.some((l) => l.toLowerCase().includes("finding")),
-        )
+        .filter((n) => isProwlerFindingNode(n.labels))
         .map((n) => n.id),
     );
     const resourceWithFindingIds = new Set<string>();
@@ -528,9 +547,7 @@ export class AttackPathPageHarness {
   async expandAllFindings(): Promise<void> {
     const findingIds = new Set(
       (this.fixture.queryResult?.nodes ?? [])
-        .filter((n) =>
-          n.labels.some((l) => l.toLowerCase().includes("finding")),
-        )
+        .filter((n) => isProwlerFindingNode(n.labels))
         .map((n) => n.id),
     );
     const resourceWithFindingIds = new Set<string>();

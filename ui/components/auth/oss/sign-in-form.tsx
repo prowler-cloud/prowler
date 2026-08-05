@@ -21,8 +21,12 @@ import {
 } from "@/components/shadcn";
 import { CustomInput } from "@/components/shadcn/custom";
 import { Form } from "@/components/shadcn/form";
-import { getSafeCallbackPath } from "@/lib/auth-callback-url";
+import {
+  appendAttributionToCallbackPath,
+  getSafeCallbackPath,
+} from "@/lib/auth-callback-url";
 import { stripPasswordManagerHighlight } from "@/lib/password-manager";
+import { extractUtmParams } from "@/lib/utm";
 import { SignInFormData, signInSchema } from "@/types";
 
 export const SignInForm = ({
@@ -40,6 +44,10 @@ export const SignInForm = ({
   const searchParams = useSearchParams();
   const { toast } = useToast();
   const callbackUrl = getSafeCallbackPath(searchParams, "callbackUrl");
+  const socialCallbackUrl = appendAttributionToCallbackPath(
+    callbackUrl,
+    extractUtmParams(searchParams),
+  );
 
   useEffect(() => {
     const samlError = searchParams.get("sso_saml_failed");
@@ -198,7 +206,7 @@ export const SignInForm = ({
           <SocialButtons
             googleAuthUrl={googleAuthUrl}
             githubAuthUrl={githubAuthUrl}
-            callbackUrl={callbackUrl}
+            callbackUrl={socialCallbackUrl}
             isGoogleOAuthEnabled={isGoogleOAuthEnabled}
             isGithubOAuthEnabled={isGithubOAuthEnabled}
           />

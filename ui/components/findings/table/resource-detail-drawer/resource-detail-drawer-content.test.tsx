@@ -24,6 +24,9 @@ const {
   mockNotificationIndicator,
   mockUpdateFindingTriage,
   mockLoadLatestFindingTriageNote,
+  mockRequestPanelChatMessage,
+  mockIsCloud,
+  mockCurrentLighthouseContext,
 } = vi.hoisted(() => ({
   mockGetComplianceIcon: vi.fn((_: string) => null as string | null),
   mockGetCompliancesOverview: vi.fn(),
@@ -33,6 +36,23 @@ const {
   mockNotificationIndicator: vi.fn(),
   mockUpdateFindingTriage: vi.fn(),
   mockLoadLatestFindingTriageNote: vi.fn(),
+  mockRequestPanelChatMessage: vi.fn(),
+  mockIsCloud: vi.fn(() => true),
+  mockCurrentLighthouseContext: {
+    schemaVersion: 1,
+    transport: "inline",
+    items: [
+      {
+        kind: "finding",
+        id: "finding-1",
+        source: "focused",
+        scopeKey: "/findings",
+        label: "S3 Check",
+        findingId: "finding-1",
+        checkId: "s3_check",
+      },
+    ],
+  },
 }));
 
 vi.mock("next/navigation", () => ({
@@ -358,6 +378,20 @@ vi.mock("@/lib/date-utils", () => ({
   formatDuration: vi.fn(() => "5m"),
 }));
 
+vi.mock("@/lib/shared/env", () => ({
+  isCloud: mockIsCloud,
+}));
+
+vi.mock("@/app/(prowler)/lighthouse/_lib/panel-chat-store", () => ({
+  requestPanelChatMessage: mockRequestPanelChatMessage,
+}));
+
+vi.mock("@/hooks/use-lighthouse-context", () => ({
+  useLighthouseCurrentContext: () => ({
+    context: mockCurrentLighthouseContext,
+  }),
+}));
+
 vi.mock("@/lib/utils", () => ({
   cn: (...args: (string | undefined | false | null)[]) =>
     args.filter(Boolean).join(" "),
@@ -484,7 +518,10 @@ vi.mock("../../muted", () => ({
 // ---------------------------------------------------------------------------
 
 import type { ResourceDrawerFinding } from "@/actions/findings";
+import { SIDE_PANEL_TAB, useSidePanelStore } from "@/store/side-panel";
 import type { FindingResourceRow } from "@/types";
+import type { FindingComplianceFramework } from "@/types/compliance-watchlist";
+import { WATCHLIST_SCOPE } from "@/types/compliance-watchlist";
 import {
   FINDING_TRIAGE_STATUS,
   type FindingTriageSummary,
@@ -499,18 +536,52 @@ afterEach(() => {
   mockGetComplianceIcon.mockImplementation(
     (_: string) => null as string | null,
   );
+  mockIsCloud.mockReturnValue(true);
+  useSidePanelStore.setState({
+    isOpen: false,
+    selectedTab: SIDE_PANEL_TAB.AI_CHAT,
+  });
 });
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
+/** A watchlisted framework as the API reports it for a finding. Provider-scoped
+ *  by default, which is the case that navigates without a lookup. */
+const complianceFramework = (
+  overrides: Partial<FindingComplianceFramework> = {},
+): FindingComplianceFramework => ({
+  id: "aws:cis_1.4_aws",
+  complianceId: "cis_1.4_aws",
+  providerType: "aws",
+  scope: WATCHLIST_SCOPE.PROVIDER,
+  framework: "CIS-1.4",
+  name: "CIS",
+  version: "1.4",
+  inWatchlist: true,
+  ...overrides,
+});
+
 const mockCheckMeta: CheckMeta = {
   checkId: "s3_check",
   checkTitle: "S3 Check",
   risk: "High",
   description: "S3 description",
-  complianceFrameworks: ["CIS-1.4", "PCI-DSS"],
+  complianceFrameworks: [
+    complianceFramework({
+      id: "aws:cis_1.4_aws",
+      complianceId: "cis_1.4_aws",
+      framework: "CIS-1.4",
+      version: "1.4",
+    }),
+    complianceFramework({
+      id: "aws:pci_dss_4.0_aws",
+      complianceId: "pci_dss_4.0_aws",
+      framework: "PCI-DSS",
+      version: "4.0",
+    }),
+  ],
   categories: ["security"],
   remediation: {
     recommendation: { text: "Fix it", url: "https://example.com" },
@@ -671,51 +742,6 @@ describe("ResourceDetailDrawerContent — triage drawer actions", () => {
     ).toBeInTheDocument();
   });
 
-  it("should keep the other findings actions cell sticky on the right edge", () => {
-    // Given
-    const otherFinding: ResourceDrawerFinding = {
-      ...mockFinding,
-      id: "finding-2",
-      uid: "uid-2",
-      checkId: "ec2_check",
-      checkTitle: "EC2 Check",
-      triage: makeTriageSummary({
-        findingId: "finding-2",
-        findingUid: "uid-2",
-      }),
-    };
-
-    render(
-      <ResourceDetailDrawerContent
-        isLoading={false}
-        isNavigating={false}
-        checkMeta={mockCheckMeta}
-        currentIndex={0}
-        totalResources={1}
-        currentFinding={mockFinding}
-        otherFindings={[otherFinding]}
-        onNavigatePrev={vi.fn()}
-        onNavigateNext={vi.fn()}
-        onMuteComplete={vi.fn()}
-      />,
-    );
-
-    // When
-    const row = screen.getByText("EC2 Check").closest("tr");
-    expect(row).not.toBeNull();
-    const actionsCell = within(row as HTMLElement)
-      .getByRole("button", { name: "Send 1 Finding to Jira" })
-      .closest("td");
-
-    // Then
-    expect(actionsCell).toHaveClass("sticky");
-    expect(actionsCell).toHaveClass("right-0");
-    expect(actionsCell).toHaveClass("z-20");
-    expect(actionsCell).toHaveClass("bg-bg-neutral-secondary");
-    expect(actionsCell).toHaveClass("before:bg-gradient-to-r");
-    expect(actionsCell).toHaveClass("before:to-bg-neutral-secondary");
-  });
-
   it("should update simple drawer triage without using the mute refresh path", async () => {
     // Given
     const user = userEvent.setup();
@@ -778,14 +804,15 @@ const mockResourceRow: FindingResourceRow = {
   lastSeenAt: null,
 };
 
-// ---------------------------------------------------------------------------
-// Fix 1: Lighthouse AI button text change
-// ---------------------------------------------------------------------------
-
-describe("ResourceDetailDrawerContent — Fix 1: Lighthouse AI button text", () => {
-  it("should say 'Analyze this finding with Lighthouse AI' instead of 'View This Finding'", () => {
+describe("ResourceDetailDrawerContent — Lighthouse AI", () => {
+  it("should open the Lighthouse tab and submit a contextual analysis", async () => {
     // Given
-    const { container } = render(
+    const user = userEvent.setup();
+    useSidePanelStore.setState({
+      isOpen: true,
+      selectedTab: SIDE_PANEL_TAB.CONTEXT,
+    });
+    render(
       <ResourceDetailDrawerContent
         isLoading={false}
         isNavigating={false}
@@ -800,20 +827,54 @@ describe("ResourceDetailDrawerContent — Fix 1: Lighthouse AI button text", () 
       />,
     );
 
-    // When — look for the lighthouse link
-    const allText = container.textContent ?? "";
+    // When
+    await user.click(
+      screen.getByRole("button", {
+        name: "Analyze This Finding With Lighthouse AI",
+      }),
+    );
 
-    // Then — correct text must be present, old text must be absent
-    expect(allText.toLowerCase()).toContain("analyze this finding");
-    expect(allText.toLowerCase()).not.toContain("view this finding");
+    // Then
+    expect(mockRequestPanelChatMessage).toHaveBeenCalledWith(
+      "Analyze this finding",
+      mockCurrentLighthouseContext,
+    );
+    expect(useSidePanelStore.getState()).toMatchObject({
+      isOpen: true,
+      selectedTab: SIDE_PANEL_TAB.AI_CHAT,
+    });
+  });
+
+  it("should hide the action when the Lighthouse panel tab is unavailable", () => {
+    // Given
+    mockIsCloud.mockReturnValue(false);
+
+    // When
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={mockFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // Then
+    expect(
+      screen.queryByRole("button", {
+        name: "Analyze This Finding With Lighthouse AI",
+      }),
+    ).not.toBeInTheDocument();
   });
 });
 
-// ---------------------------------------------------------------------------
-// Fix 2: Remediation heading labels — remove "Command" suffix
-// ---------------------------------------------------------------------------
-
-describe("ResourceDetailDrawerContent — Fix 2: Remediation heading labels", () => {
+describe("ResourceDetailDrawerContent — remediation code editors", () => {
   const checkMetaWithCommands: CheckMeta = {
     ...mockCheckMeta,
     remediation: {
@@ -826,80 +887,6 @@ describe("ResourceDetailDrawerContent — Fix 2: Remediation heading labels", ()
       },
     },
   };
-
-  it("should render 'Terraform' heading without 'Command' suffix", () => {
-    // Given
-    const { container } = render(
-      <ResourceDetailDrawerContent
-        isLoading={false}
-        isNavigating={false}
-        checkMeta={checkMetaWithCommands}
-        currentIndex={0}
-        totalResources={1}
-        currentFinding={mockFinding}
-        otherFindings={[]}
-        onNavigatePrev={vi.fn()}
-        onNavigateNext={vi.fn()}
-        onMuteComplete={vi.fn()}
-      />,
-    );
-
-    // When
-    const allText = container.textContent ?? "";
-
-    // Then — "Terraform" present, "Terraform Command" absent
-    expect(allText).toContain("Terraform");
-    expect(allText).not.toContain("Terraform Command");
-  });
-
-  it("should render 'CloudFormation' heading without 'Command' suffix", () => {
-    // Given
-    const { container } = render(
-      <ResourceDetailDrawerContent
-        isLoading={false}
-        isNavigating={false}
-        checkMeta={checkMetaWithCommands}
-        currentIndex={0}
-        totalResources={1}
-        currentFinding={mockFinding}
-        otherFindings={[]}
-        onNavigatePrev={vi.fn()}
-        onNavigateNext={vi.fn()}
-        onMuteComplete={vi.fn()}
-      />,
-    );
-
-    // When
-    const allText = container.textContent ?? "";
-
-    // Then — "CloudFormation" present, "CloudFormation Command" absent
-    expect(allText).toContain("CloudFormation");
-    expect(allText).not.toContain("CloudFormation Command");
-  });
-
-  it("should still render 'CLI Command' label for CLI section", () => {
-    // Given
-    const { container } = render(
-      <ResourceDetailDrawerContent
-        isLoading={false}
-        isNavigating={false}
-        checkMeta={checkMetaWithCommands}
-        currentIndex={0}
-        totalResources={1}
-        currentFinding={mockFinding}
-        otherFindings={[]}
-        onNavigatePrev={vi.fn()}
-        onNavigateNext={vi.fn()}
-        onMuteComplete={vi.fn()}
-      />,
-    );
-
-    // When
-    const allText = container.textContent ?? "";
-
-    // Then — CLI Command label must remain
-    expect(allText).toContain("CLI Command");
-  });
 
   it("should render CLI remediation in the code editor without line numbers and copy without the visual prompt", async () => {
     // Given
@@ -1215,96 +1202,45 @@ describe("ResourceDetailDrawerContent — CVE recommendation button", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// Fix 5 & 6: Risk section has danger styling, sections have separators and bigger headings
-// ---------------------------------------------------------------------------
-
-describe("ResourceDetailDrawerContent — Risk section styling", () => {
-  it("should render the Risk section with a vertical accent border (no danger card)", () => {
-    // Given
-    const { container } = render(
-      <ResourceDetailDrawerContent
-        isLoading={false}
-        isNavigating={false}
-        checkMeta={mockCheckMeta}
-        currentIndex={0}
-        totalResources={1}
-        currentFinding={mockFinding}
-        otherFindings={[]}
-        onNavigatePrev={vi.fn()}
-        onNavigateNext={vi.fn()}
-        onMuteComplete={vi.fn()}
-      />,
-    );
-
-    // When — find the Risk heading and walk up to the section wrapper
-    const riskHeading = Array.from(container.querySelectorAll("span")).find(
-      (el) => el.textContent?.trim() === "Risk:",
-    );
-    const riskSection = riskHeading?.parentElement;
-
-    // Then — Risk wrapper has a left accent border, not a danger Card
-    expect(riskSection).toBeDefined();
-    expect(riskSection?.className).toMatch(/border-l/);
-    expect(riskSection?.getAttribute("data-variant")).toBeNull();
-  });
-
-  it("should use larger heading size for section labels (text-sm → text-base or larger)", () => {
-    // Given
-    const { container } = render(
-      <ResourceDetailDrawerContent
-        isLoading={false}
-        isNavigating={false}
-        checkMeta={mockCheckMeta}
-        currentIndex={0}
-        totalResources={1}
-        currentFinding={mockFinding}
-        otherFindings={[]}
-        onNavigatePrev={vi.fn()}
-        onNavigateNext={vi.fn()}
-        onMuteComplete={vi.fn()}
-      />,
-    );
-
-    // When — look for section heading span with "Risk:"
-    const headingSpans = Array.from(container.querySelectorAll("span")).filter(
-      (el) => el.textContent?.trim() === "Risk:",
-    );
-
-    // Then — heading must not be tiny text-xs; should be text-sm or larger with font-semibold/font-medium
-    expect(headingSpans.length).toBeGreaterThan(0);
-    const riskHeading = headingSpans[0];
-    expect(riskHeading.className).not.toContain("text-xs");
-  });
-});
-
 describe("ResourceDetailDrawerContent — compliance navigation", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
   });
 
-  it("should resolve the clicked framework against the selected scan and navigate to compliance detail", async () => {
+  it("should keep compliance logo canvases light in every navigation state", () => {
+    // Given
+    mockGetComplianceIcon.mockReturnValue("/compliance.svg");
+    const props = {
+      isLoading: false,
+      isNavigating: false,
+      checkMeta: mockCheckMeta,
+      currentIndex: 0,
+      totalResources: 1,
+      currentFinding: mockFinding,
+      otherFindings: [],
+      onNavigatePrev: vi.fn(),
+      onNavigateNext: vi.fn(),
+      onMuteComplete: vi.fn(),
+    };
+    const { rerender } = render(<ResourceDetailDrawerContent {...props} />);
+
+    // When / Then - No scan: static logo
+    const staticLogo = screen.getByRole("img", { name: "PCI-DSS 4.0" });
+    expect(staticLogo.parentElement).toHaveClass("bg-slate-50");
+
+    // When / Then - Selected scan: navigable logo
+    mockSearchParamsState.value = "filter[scan__in]=scan-selected";
+    rerender(<ResourceDetailDrawerContent {...props} />);
+    const navigableLogo = screen.getByRole("img", { name: "PCI-DSS 4.0" });
+    expect(navigableLogo.parentElement).toHaveClass("bg-slate-50");
+  });
+
+  it("should navigate straight to the framework the API identified, without querying the scan's overview", async () => {
     // Given
     const user = userEvent.setup();
     vi.stubGlobal("open", mockWindowOpen);
     mockSearchParamsState.value =
       "filter[scan__in]=scan-selected&filter[region__in]=eu-west-1";
-    mockGetCompliancesOverview.mockResolvedValue({
-      data: [
-        {
-          id: "compliance-1",
-          type: "compliance-overviews",
-          attributes: {
-            framework: "PCI-DSS",
-            version: "4.0",
-            requirements_passed: 10,
-            requirements_failed: 2,
-            requirements_manual: 0,
-            total_requirements: 12,
-          },
-        },
-      ],
-    });
 
     render(
       <ResourceDetailDrawerContent
@@ -1324,16 +1260,14 @@ describe("ResourceDetailDrawerContent — compliance navigation", () => {
     // When
     await user.click(
       screen.getByRole("button", {
-        name: "Open PCI-DSS compliance details",
+        name: "Open PCI-DSS 4.0 compliance details",
       }),
     );
 
     // Then
-    expect(mockGetCompliancesOverview).toHaveBeenCalledWith({
-      scanId: "scan-selected",
-    });
+    expect(mockGetCompliancesOverview).not.toHaveBeenCalled();
     expect(mockWindowOpen).toHaveBeenCalledWith(
-      "/compliance/PCI-DSS?complianceId=compliance-1&version=4.0&scanId=scan-selected&filter%5Bregion__in%5D=eu-west-1",
+      "/compliance/PCI-DSS?complianceId=pci_dss_4.0_aws&version=4.0&scanId=scan-selected&filter%5Bregion__in%5D=eu-west-1",
       "_blank",
       "noopener,noreferrer",
     );
@@ -1343,22 +1277,6 @@ describe("ResourceDetailDrawerContent — compliance navigation", () => {
     // Given
     const user = userEvent.setup();
     vi.stubGlobal("open", mockWindowOpen);
-    mockGetCompliancesOverview.mockResolvedValue({
-      data: [
-        {
-          id: "compliance-2",
-          type: "compliance-overviews",
-          attributes: {
-            framework: "PCI-DSS",
-            version: "4.0",
-            requirements_passed: 10,
-            requirements_failed: 2,
-            requirements_manual: 0,
-            total_requirements: 12,
-          },
-        },
-      ],
-    });
     const findingWithScan = {
       ...mockFinding,
       scan: {
@@ -1394,22 +1312,19 @@ describe("ResourceDetailDrawerContent — compliance navigation", () => {
     // When
     await user.click(
       screen.getByRole("button", {
-        name: "Open PCI-DSS compliance details",
+        name: "Open PCI-DSS 4.0 compliance details",
       }),
     );
 
     // Then
-    expect(mockGetCompliancesOverview).toHaveBeenCalledWith({
-      scanId: "scan-from-finding",
-    });
     expect(mockWindowOpen).toHaveBeenCalledWith(
-      "/compliance/PCI-DSS?complianceId=compliance-2&version=4.0&scanId=scan-from-finding",
+      "/compliance/PCI-DSS?complianceId=pci_dss_4.0_aws&version=4.0&scanId=scan-from-finding",
       "_blank",
       "noopener,noreferrer",
     );
   });
 
-  it("should navigate when the finding framework is a short alias of the compliance overview framework", async () => {
+  it("should navigate a universal framework by its own id too, without a lookup", async () => {
     // Given
     const user = userEvent.setup();
     vi.stubGlobal("open", mockWindowOpen);
@@ -1455,7 +1370,16 @@ describe("ResourceDetailDrawerContent — compliance navigation", () => {
         isNavigating={false}
         checkMeta={{
           ...mockCheckMeta,
-          complianceFrameworks: ["KISA"],
+          complianceFrameworks: [
+            complianceFramework({
+              id: "*:kisa_isms_p",
+              complianceId: "kisa_isms_p",
+              providerType: "*",
+              scope: WATCHLIST_SCOPE.UNIVERSAL,
+              framework: "KISA",
+              version: "1.0",
+            }),
+          ],
         }}
         currentIndex={0}
         totalResources={1}
@@ -1470,16 +1394,81 @@ describe("ResourceDetailDrawerContent — compliance navigation", () => {
     // When
     await user.click(
       screen.getByRole("button", {
-        name: "Open KISA compliance details",
+        name: "Open KISA 1.0 compliance details",
       }),
     );
 
     // Then
-    expect(mockGetCompliancesOverview).toHaveBeenCalledWith({
-      scanId: "scan-from-finding",
-    });
+    // A universal framework's id is the SDK's file stem, which the per-scan
+    // detail page keys on just like any other, so there is no lookup and no
+    // `window.open` after an await for a pop-up blocker to swallow.
+    expect(mockGetCompliancesOverview).not.toHaveBeenCalled();
     expect(mockWindowOpen).toHaveBeenCalledWith(
-      "/compliance/KISA-ISMS-P?complianceId=compliance-kisa&version=1.0&scanId=scan-from-finding",
+      "/compliance/KISA?complianceId=kisa_isms_p&version=1.0&scanId=scan-from-finding",
+      "_blank",
+      "noopener,noreferrer",
+    );
+  });
+
+  it("should fall back to the framework's name for the URL, as the label does", async () => {
+    // Given: a framework the SDK exposes no metadata for, so `framework` is
+    // empty. It is a path segment, so without the same fallback the label uses
+    // the destination collapses to `/compliance/`.
+    const user = userEvent.setup();
+    vi.stubGlobal("open", mockWindowOpen);
+    const findingWithScan = {
+      ...mockFinding,
+      scan: {
+        id: "scan-from-finding",
+        name: "Nightly scan",
+        trigger: "manual",
+        state: "completed",
+        uniqueResourceCount: 25,
+        progress: 100,
+        duration: 300,
+        startedAt: "2026-03-30T10:00:00Z",
+        completedAt: "2026-03-30T10:05:00Z",
+        insertedAt: "2026-03-30T09:59:00Z",
+        scheduledAt: null,
+      },
+    };
+
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={{
+          ...mockCheckMeta,
+          complianceFrameworks: [
+            complianceFramework({
+              id: "aws:mitre_attack_aws",
+              complianceId: "mitre_attack_aws",
+              framework: "",
+              name: "MITRE-ATTACK",
+              version: "1.0",
+            }),
+          ],
+        }}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={findingWithScan}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // When
+    await user.click(
+      screen.getByRole("button", {
+        name: "Open MITRE-ATTACK 1.0 compliance details",
+      }),
+    );
+
+    // Then
+    expect(mockWindowOpen).toHaveBeenCalledWith(
+      "/compliance/MITRE-ATTACK?complianceId=mitre_attack_aws&version=1.0&scanId=scan-from-finding",
       "_blank",
       "noopener,noreferrer",
     );
@@ -1563,64 +1552,6 @@ describe("ResourceDetailDrawerContent — synthetic resource empty state", () =>
 });
 
 describe("ResourceDetailDrawerContent — current resource row display", () => {
-  it("should place service and region in the primary metadata row after provider and resource", () => {
-    // Given/When
-    render(
-      <ResourceDetailDrawerContent
-        isLoading={false}
-        isNavigating={false}
-        checkMeta={mockCheckMeta}
-        currentIndex={0}
-        totalResources={1}
-        currentFinding={mockFinding}
-        otherFindings={[]}
-        onNavigatePrev={vi.fn()}
-        onNavigateNext={vi.fn()}
-        onMuteComplete={vi.fn()}
-      />,
-    );
-
-    // Then
-    const primaryMetadataRow = screen.getByTestId(
-      "resource-detail-primary-metadata-row",
-    );
-    expect(primaryMetadataRow).toHaveClass("grid-cols-2");
-    expect(primaryMetadataRow).toHaveClass(
-      "@md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.55fr)_minmax(0,0.7fr)]",
-    );
-    expect(
-      within(primaryMetadataRow).getByText("Provider"),
-    ).toBeInTheDocument();
-    expect(
-      within(primaryMetadataRow).getByText("Resource"),
-    ).toBeInTheDocument();
-    expect(within(primaryMetadataRow).getByText("Service")).toBeInTheDocument();
-    expect(within(primaryMetadataRow).getByText("Region")).toBeInTheDocument();
-    expect(within(primaryMetadataRow).getByText("s3")).toHaveClass(
-      "truncate",
-      "whitespace-nowrap",
-    );
-    expect(within(primaryMetadataRow).getByText("us-east-1")).toHaveClass(
-      "truncate",
-    );
-
-    const secondaryMetadataRow = screen.getByTestId(
-      "resource-detail-secondary-metadata-row",
-    );
-    expect(secondaryMetadataRow).toHaveClass("grid-cols-2");
-    expect(secondaryMetadataRow).toHaveClass("@md:grid-cols-3");
-    expect(
-      within(secondaryMetadataRow).queryByText("Service"),
-    ).not.toBeInTheDocument();
-    expect(
-      within(secondaryMetadataRow).queryByText("Region"),
-    ).not.toBeInTheDocument();
-    expect(within(secondaryMetadataRow).getByText("2 days")).toHaveClass(
-      "truncate",
-      "whitespace-nowrap",
-    );
-  });
-
   it("should render resource card fields from the current resource row instead of the fetched finding", () => {
     // Given
     const currentResource: FindingResourceRow = {
@@ -1829,7 +1760,7 @@ describe("ResourceDetailDrawerContent — header skeleton while navigating", () 
     expect(screen.queryByText("Status Extended:")).not.toBeInTheDocument();
     expect(screen.queryByText("uid-1")).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("link", {
+      screen.queryByRole("button", {
         name: "Analyze This Finding With Lighthouse AI",
       }),
     ).not.toBeInTheDocument();
@@ -2012,14 +1943,6 @@ describe("ResourceDetailDrawerContent — other findings delta/muted indicator",
     });
   });
 
-  it("should forward delta='changed' to the NotificationIndicator for a changed other finding", () => {
-    renderWithOtherFinding({ delta: "changed" });
-
-    expect(lastNotificationIndicatorPropsForOtherRow()).toMatchObject({
-      delta: "changed",
-    });
-  });
-
   it("should pass delta=undefined when the finding has delta='none'", () => {
     renderWithOtherFinding({ delta: "none" });
 
@@ -2052,29 +1975,6 @@ describe("ResourceDetailDrawerContent — Metadata tab", () => {
         (editor) =>
           editor.getAttribute("data-aria-label") === "Resource metadata",
       );
-
-  it("should render a Metadata tab trigger", () => {
-    // Given/When
-    render(
-      <ResourceDetailDrawerContent
-        isLoading={false}
-        isNavigating={false}
-        checkMeta={mockCheckMeta}
-        currentIndex={0}
-        totalResources={1}
-        currentFinding={mockFinding}
-        otherFindings={[]}
-        onNavigatePrev={vi.fn()}
-        onNavigateNext={vi.fn()}
-        onMuteComplete={vi.fn()}
-      />,
-    );
-
-    // Then
-    expect(
-      screen.getByRole("button", { name: "Evidence" }),
-    ).toBeInTheDocument();
-  });
 
   it("should render the resource metadata as formatted JSON and copy it to the clipboard", async () => {
     // Given

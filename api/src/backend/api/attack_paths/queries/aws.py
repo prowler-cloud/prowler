@@ -433,6 +433,100 @@ AWS_APPRUNNER_PRIVESC_UPDATE_SERVICE = AttackPathsQueryDefinition(
     parameters=[],
 )
 
+# BATCH-001
+AWS_BATCH_PRIVESC_PASSROLE_SUBMIT_JOB = AttackPathsQueryDefinition(
+    id="aws-batch-privesc-passrole-submit-job",
+    name="AWS Batch Job Submission with Privileged Role (BATCH-001)",
+    short_description="Register and submit an AWS Batch job that runs with a privileged job-role to gain that role's permissions.",
+    description="Detect principals who can pass IAM roles, register AWS Batch job definitions, and submit jobs. This lets an actor register a job definition referencing a privileged job role and submit it, executing arbitrary commands as that role.",
+    attribution=AttackPathsQueryAttribution(
+        text="pathfinding.cloud - BATCH-001 - iam:PassRole + batch:RegisterJobDefinition + batch:SubmitJob",
+        link="https://pathfinding.cloud/paths/batch-001",
+    ),
+    provider="aws",
+    cypher=f"""
+        // Find principals with iam:PassRole permission
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(passrole_policy:AWSPolicy)-[:STATEMENT]->(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
+        MATCH (stmt_passrole)-[:HAS_ACTION]->(act:AWSPolicyStatementActionItem)
+        WHERE toLower(act.value) IN ['iam:*', 'iam:passrole']
+            OR act.value = '*'
+        WITH DISTINCT aws, principal, stmt_passrole, path_principal
+
+        // Find batch:registerjobdefinition permission
+        MATCH (principal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(:AWSPolicyStatement {{effect: 'Allow'}})-[:HAS_ACTION]->(act2:AWSPolicyStatementActionItem)
+        WHERE toLower(act2.value) IN ['batch:*', 'batch:registerjobdefinition']
+            OR act2.value = '*'
+        WITH DISTINCT aws, principal, stmt_passrole, path_principal
+
+        // Find batch:submitjob permission
+        MATCH (principal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(:AWSPolicyStatement {{effect: 'Allow'}})-[:HAS_ACTION]->(act3:AWSPolicyStatementActionItem)
+        WHERE toLower(act3.value) IN ['batch:*', 'batch:submitjob']
+            OR act3.value = '*'
+        WITH DISTINCT aws, principal, stmt_passrole, path_principal
+
+        // Pre-aggregate the PassRole statement resources (see docs: Avoiding Cartesian Products)
+        MATCH (stmt_passrole)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)
+        WITH aws, principal, path_principal, collect(DISTINCT res.value) AS res_values
+        WITH aws, principal, path_principal, res_values, ('*' IN res_values) AS res_wildcard
+
+        // Target Batch job role that trusts the ecs-tasks.amazonaws.com service and can be passed
+        MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'ecs-tasks.amazonaws.com'}})
+        WITH path_principal, path_target, res_values, res_wildcard,
+             target_role.name AS rname, target_role.arn AS rarn
+        WHERE res_wildcard
+            OR size([rv IN res_values WHERE rv CONTAINS rname OR rarn CONTAINS rv]) > 0
+
+        WITH DISTINCT path_principal, path_target
+        WITH collect(path_principal) + collect(path_target) AS paths
+        UNWIND paths AS p
+        UNWIND nodes(p) AS n
+
+        WITH paths, collect(DISTINCT n) AS unique_nodes
+        UNWIND unique_nodes AS n
+
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+
+        RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+    """,
+    parameters=[],
+)
+
+# BATCH-002
+AWS_BATCH_PRIVESC_SUBMIT_EXISTING_JOB = AttackPathsQueryDefinition(
+    id="aws-batch-privesc-submit-existing-job",
+    name="AWS Batch Existing Job Definition Submission (BATCH-002)",
+    short_description="Submit an existing AWS Batch job definition bound to a privileged job role to run commands as that role.",
+    description="Detect principals who can submit AWS Batch jobs. Using an existing job definition that references a privileged job role, an actor can submit a job and execute commands as that role without iam:PassRole. The graph does not model which job definition is bound to which role, so this lists every role trusting the ecs-tasks.amazonaws.com service; each result needs manual review to confirm an existing job definition actually uses the role.",
+    attribution=AttackPathsQueryAttribution(
+        text="pathfinding.cloud - BATCH-002 - batch:SubmitJob",
+        link="https://pathfinding.cloud/paths/batch-002",
+    ),
+    provider="aws",
+    cypher=f"""
+        // Find principals with batch:submitjob permission
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(:AWSPolicyStatement {{effect: 'Allow'}})-[:HAS_ACTION]->(act:AWSPolicyStatementActionItem)
+        WHERE toLower(act.value) IN ['batch:*', 'batch:submitjob']
+            OR act.value = '*'
+        WITH DISTINCT aws, principal, path_principal
+
+        // Target Batch job role attached to the existing job definition, trusting the ecs-tasks.amazonaws.com service
+        MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'ecs-tasks.amazonaws.com'}})
+
+        WITH DISTINCT path_principal, path_target
+        WITH collect(path_principal) + collect(path_target) AS paths
+        UNWIND paths AS p
+        UNWIND nodes(p) AS n
+
+        WITH paths, collect(DISTINCT n) AS unique_nodes
+        UNWIND unique_nodes AS n
+
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+
+        RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+    """,
+    parameters=[],
+)
+
 # BEDROCK-001
 AWS_BEDROCK_PRIVESC_PASSROLE_CODE_INTERPRETER = AttackPathsQueryDefinition(
     id="aws-bedrock-privesc-passrole-code-interpreter",
@@ -526,6 +620,58 @@ AWS_BEDROCK_PRIVESC_INVOKE_CODE_INTERPRETER = AttackPathsQueryDefinition(
 
         WITH principal_paths, collect(DISTINCT path_target) AS target_paths
         WITH principal_paths + target_paths AS paths
+        UNWIND paths AS p
+        UNWIND nodes(p) AS n
+
+        WITH paths, collect(DISTINCT n) AS unique_nodes
+        UNWIND unique_nodes AS n
+
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+
+        RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+    """,
+    parameters=[],
+)
+
+# BRAKET-001
+AWS_BRAKET_PRIVESC_PASSROLE_CREATE_JOB = AttackPathsQueryDefinition(
+    id="aws-braket-privesc-passrole-create-job",
+    name="Amazon Braket Job Creation with Privileged Role (BRAKET-001)",
+    short_description="Create an Amazon Braket hybrid job with a privileged execution role to run arbitrary code as that role.",
+    description="Detect principals who can pass IAM roles and create Amazon Braket jobs. A Braket job runs a container with an attached execution role, so an actor can execute arbitrary code and obtain that role's credentials.",
+    attribution=AttackPathsQueryAttribution(
+        text="pathfinding.cloud - BRAKET-001 - iam:PassRole + braket:CreateJob",
+        link="https://pathfinding.cloud/paths/braket-001",
+    ),
+    provider="aws",
+    cypher=f"""
+        // Find principals with iam:PassRole permission
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(passrole_policy:AWSPolicy)-[:STATEMENT]->(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
+        MATCH (stmt_passrole)-[:HAS_ACTION]->(act:AWSPolicyStatementActionItem)
+        WHERE toLower(act.value) IN ['iam:*', 'iam:passrole']
+            OR act.value = '*'
+        WITH DISTINCT aws, principal, stmt_passrole, path_principal
+
+        // Find braket:createjob permission
+        MATCH (principal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(:AWSPolicyStatement {{effect: 'Allow'}})-[:HAS_ACTION]->(act2:AWSPolicyStatementActionItem)
+        WHERE toLower(act2.value) IN ['braket:*', 'braket:createjob']
+            OR act2.value = '*'
+        WITH DISTINCT aws, principal, stmt_passrole, path_principal
+
+        // Pre-aggregate the PassRole statement resources (see docs: Avoiding Cartesian Products)
+        MATCH (stmt_passrole)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)
+        WITH aws, principal, path_principal, collect(DISTINCT res.value) AS res_values
+        WITH aws, principal, path_principal, res_values, ('*' IN res_values) AS res_wildcard
+
+        // Target role that trusts the braket.amazonaws.com service and can be passed
+        MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'braket.amazonaws.com'}})
+        WITH path_principal, path_target, res_values, res_wildcard,
+             target_role.name AS rname, target_role.arn AS rarn
+        WHERE res_wildcard
+            OR size([rv IN res_values WHERE rv CONTAINS rname OR rarn CONTAINS rv]) > 0
+
+        WITH DISTINCT path_principal, path_target
+        WITH collect(path_principal) + collect(path_target) AS paths
         UNWIND paths AS p
         UNWIND nodes(p) AS n
 
@@ -939,6 +1085,106 @@ AWS_CODEBUILD_PRIVESC_PASSROLE_CREATE_PROJECT_BATCH = AttackPathsQueryDefinition
         WHERE res.value = '*'
             OR res.value CONTAINS target_role.name
             OR target_role.arn CONTAINS res.value
+
+        WITH DISTINCT path_principal, path_target
+        WITH collect(path_principal) + collect(path_target) AS paths
+        UNWIND paths AS p
+        UNWIND nodes(p) AS n
+
+        WITH paths, collect(DISTINCT n) AS unique_nodes
+        UNWIND unique_nodes AS n
+
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+
+        RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+    """,
+    parameters=[],
+)
+
+# CODEDEPLOY-001
+AWS_CODEDEPLOY_PRIVESC_CREATE_DEPLOYMENT = AttackPathsQueryDefinition(
+    id="aws-codedeploy-privesc-create-deployment",
+    name="CodeDeploy Deployment with Existing Instance Role (CODEDEPLOY-001)",
+    short_description="Create a CodeDeploy deployment on an existing application to run lifecycle hooks with the target instances' privileged EC2 role.",
+    description="Detect principals who can create CodeDeploy deployments. Using an existing application and deployment group bound to EC2 instances with a privileged instance-profile role, an actor can deploy a revision whose lifecycle hooks run on those instances as that role. The graph does not model which deployment group targets which instances, so this lists every role trusting the ec2.amazonaws.com service; each result needs manual review to confirm an existing application/deployment group actually uses the role.",
+    attribution=AttackPathsQueryAttribution(
+        text="pathfinding.cloud - CODEDEPLOY-001 - codedeploy:CreateDeployment + codedeploy:RegisterApplicationRevision",
+        link="https://pathfinding.cloud/paths/codedeploy-001",
+    ),
+    provider="aws",
+    cypher=f"""
+        // Find principals with codedeploy:createdeployment permission
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(:AWSPolicyStatement {{effect: 'Allow'}})-[:HAS_ACTION]->(act:AWSPolicyStatementActionItem)
+        WHERE toLower(act.value) IN ['codedeploy:*', 'codedeploy:createdeployment']
+            OR act.value = '*'
+        WITH DISTINCT aws, principal, path_principal
+
+        // Find codedeploy:registerapplicationrevision permission
+        MATCH (principal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(:AWSPolicyStatement {{effect: 'Allow'}})-[:HAS_ACTION]->(act2:AWSPolicyStatementActionItem)
+        WHERE toLower(act2.value) IN ['codedeploy:*', 'codedeploy:registerapplicationrevision']
+            OR act2.value = '*'
+        WITH DISTINCT aws, principal, path_principal
+
+        // Find codedeploy:getdeploymentconfig permission
+        MATCH (principal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(:AWSPolicyStatement {{effect: 'Allow'}})-[:HAS_ACTION]->(act3:AWSPolicyStatementActionItem)
+        WHERE toLower(act3.value) IN ['codedeploy:*', 'codedeploy:getdeploymentconfig']
+            OR act3.value = '*'
+        WITH DISTINCT aws, principal, path_principal
+
+        // Target EC2 instance role whose credentials the lifecycle hooks run with, trusting the ec2.amazonaws.com service
+        MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'ec2.amazonaws.com'}})
+
+        WITH DISTINCT path_principal, path_target
+        WITH collect(path_principal) + collect(path_target) AS paths
+        UNWIND paths AS p
+        UNWIND nodes(p) AS n
+
+        WITH paths, collect(DISTINCT n) AS unique_nodes
+        UNWIND unique_nodes AS n
+
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+
+        RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+    """,
+    parameters=[],
+)
+
+# COGNITOIDENTITY-001
+AWS_COGNITO_PRIVESC_PASSROLE_SET_IDENTITY_POOL_ROLES = AttackPathsQueryDefinition(
+    id="aws-cognito-privesc-passrole-set-identity-pool-roles",
+    name="Cognito Identity Pool Role Assignment with Privileged Role (COGNITOIDENTITY-001)",
+    short_description="Attach a privileged role to a Cognito identity pool and assume it through federated identity to gain its permissions.",
+    description="Detect principals who can pass IAM roles and set Cognito identity pool roles. An actor can point an identity pool at a privileged role and then obtain credentials for it through the identity pool's federated web-identity trust.",
+    attribution=AttackPathsQueryAttribution(
+        text="pathfinding.cloud - COGNITOIDENTITY-001 - iam:PassRole + cognito-identity:SetIdentityPoolRoles",
+        link="https://pathfinding.cloud/paths/cognitoidentity-001",
+    ),
+    provider="aws",
+    cypher=f"""
+        // Find principals with iam:PassRole permission
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(passrole_policy:AWSPolicy)-[:STATEMENT]->(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
+        MATCH (stmt_passrole)-[:HAS_ACTION]->(act:AWSPolicyStatementActionItem)
+        WHERE toLower(act.value) IN ['iam:*', 'iam:passrole']
+            OR act.value = '*'
+        WITH DISTINCT aws, principal, stmt_passrole, path_principal
+
+        // Find cognito-identity:setidentitypoolroles permission
+        MATCH (principal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(:AWSPolicyStatement {{effect: 'Allow'}})-[:HAS_ACTION]->(act2:AWSPolicyStatementActionItem)
+        WHERE toLower(act2.value) IN ['cognito-identity:*', 'cognito-identity:setidentitypoolroles']
+            OR act2.value = '*'
+        WITH DISTINCT aws, principal, stmt_passrole, path_principal
+
+        // Pre-aggregate the PassRole statement resources (see docs: Avoiding Cartesian Products)
+        MATCH (stmt_passrole)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)
+        WITH aws, principal, path_principal, collect(DISTINCT res.value) AS res_values
+        WITH aws, principal, path_principal, res_values, ('*' IN res_values) AS res_wildcard
+
+        // Target role that trusts the cognito-identity.amazonaws.com service and can be passed
+        MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'cognito-identity.amazonaws.com'}})
+        WITH path_principal, path_target, res_values, res_wildcard,
+             target_role.name AS rname, target_role.arn AS rarn
+        WHERE res_wildcard
+            OR size([rv IN res_values WHERE rv CONTAINS rname OR rarn CONTAINS rv]) > 0
 
         WITH DISTINCT path_principal, path_target
         WITH collect(path_principal) + collect(path_target) AS paths
@@ -1562,6 +1808,232 @@ AWS_ECS_PRIVESC_EXECUTE_COMMAND = AttackPathsQueryDefinition(
     parameters=[],
 )
 
+# ECS-009
+AWS_ECS_PRIVESC_PASSROLE_START_EXISTING_TASK = AttackPathsQueryDefinition(
+    id="aws-ecs-privesc-passrole-start-existing-task",
+    name="ECS Existing Task Launch with Privileged Role (ECS-009)",
+    short_description="Start an existing ECS task definition that has a privileged task role to run arbitrary commands as that role.",
+    description="Detect principals who can pass IAM roles and start ECS tasks. Using an existing task definition bound to a privileged task role, an actor can start the task and gain that role's permissions without registering a new definition.",
+    attribution=AttackPathsQueryAttribution(
+        text="pathfinding.cloud - ECS-009 - iam:PassRole + ecs:StartTask",
+        link="https://pathfinding.cloud/paths/ecs-009",
+    ),
+    provider="aws",
+    cypher=f"""
+        // Find principals with iam:PassRole permission
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(passrole_policy:AWSPolicy)-[:STATEMENT]->(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
+        MATCH (stmt_passrole)-[:HAS_ACTION]->(act:AWSPolicyStatementActionItem)
+        WHERE toLower(act.value) IN ['iam:*', 'iam:passrole']
+            OR act.value = '*'
+        WITH DISTINCT aws, principal, stmt_passrole, path_principal
+
+        // Find ecs:starttask permission
+        MATCH (principal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(:AWSPolicyStatement {{effect: 'Allow'}})-[:HAS_ACTION]->(act2:AWSPolicyStatementActionItem)
+        WHERE toLower(act2.value) IN ['ecs:*', 'ecs:starttask']
+            OR act2.value = '*'
+        WITH DISTINCT aws, principal, stmt_passrole, path_principal
+
+        // Pre-aggregate the PassRole statement resources (see docs: Avoiding Cartesian Products)
+        MATCH (stmt_passrole)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)
+        WITH aws, principal, path_principal, collect(DISTINCT res.value) AS res_values
+        WITH aws, principal, path_principal, res_values, ('*' IN res_values) AS res_wildcard
+
+        // Target role that trusts the ecs-tasks.amazonaws.com service and can be passed
+        MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'ecs-tasks.amazonaws.com'}})
+        WITH path_principal, path_target, res_values, res_wildcard,
+             target_role.name AS rname, target_role.arn AS rarn
+        WHERE res_wildcard
+            OR size([rv IN res_values WHERE rv CONTAINS rname OR rarn CONTAINS rv]) > 0
+
+        WITH DISTINCT path_principal, path_target
+        WITH collect(path_principal) + collect(path_target) AS paths
+        UNWIND paths AS p
+        UNWIND nodes(p) AS n
+
+        WITH paths, collect(DISTINCT n) AS unique_nodes
+        UNWIND unique_nodes AS n
+
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+
+        RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+    """,
+    parameters=[],
+)
+
+# EMR-001
+AWS_EMR_PRIVESC_PASSROLE_RUN_JOB_FLOW = AttackPathsQueryDefinition(
+    id="aws-emr-privesc-passrole-run-job-flow",
+    name="EMR Cluster Launch with Privileged Role (EMR-001)",
+    short_description="Launch an EMR cluster with a privileged EC2 instance (JobFlow) role to execute steps that use that role's permissions.",
+    description="Detect principals who can pass IAM roles and run EMR job flows. An actor can launch a cluster with a privileged EC2 instance (JobFlow) role and run steps that act with that role's permissions.",
+    attribution=AttackPathsQueryAttribution(
+        text="pathfinding.cloud - EMR-001 - iam:PassRole + elasticmapreduce:RunJobFlow",
+        link="https://pathfinding.cloud/paths/emr-001",
+    ),
+    provider="aws",
+    cypher=f"""
+        // Find principals with iam:PassRole permission
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(passrole_policy:AWSPolicy)-[:STATEMENT]->(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
+        MATCH (stmt_passrole)-[:HAS_ACTION]->(act:AWSPolicyStatementActionItem)
+        WHERE toLower(act.value) IN ['iam:*', 'iam:passrole']
+            OR act.value = '*'
+        WITH DISTINCT aws, principal, stmt_passrole, path_principal
+
+        // Find elasticmapreduce:runjobflow permission
+        MATCH (principal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(:AWSPolicyStatement {{effect: 'Allow'}})-[:HAS_ACTION]->(act2:AWSPolicyStatementActionItem)
+        WHERE toLower(act2.value) IN ['elasticmapreduce:*', 'elasticmapreduce:runjobflow']
+            OR act2.value = '*'
+        WITH DISTINCT aws, principal, stmt_passrole, path_principal
+
+        // Pre-aggregate the PassRole statement resources (see docs: Avoiding Cartesian Products)
+        MATCH (stmt_passrole)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)
+        WITH aws, principal, path_principal, collect(DISTINCT res.value) AS res_values
+        WITH aws, principal, path_principal, res_values, ('*' IN res_values) AS res_wildcard
+
+        // Target EC2 instance (JobFlow) role that trusts the ec2.amazonaws.com service and can be passed
+        MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'ec2.amazonaws.com'}})
+        WITH path_principal, path_target, res_values, res_wildcard,
+             target_role.name AS rname, target_role.arn AS rarn
+        WHERE res_wildcard
+            OR size([rv IN res_values WHERE rv CONTAINS rname OR rarn CONTAINS rv]) > 0
+
+        WITH DISTINCT path_principal, path_target
+        WITH collect(path_principal) + collect(path_target) AS paths
+        UNWIND paths AS p
+        UNWIND nodes(p) AS n
+
+        WITH paths, collect(DISTINCT n) AS unique_nodes
+        UNWIND unique_nodes AS n
+
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+
+        RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+    """,
+    parameters=[],
+)
+
+# EMRSERVERLESS-001
+AWS_EMRSERVERLESS_PRIVESC_PASSROLE_START_JOB = AttackPathsQueryDefinition(
+    id="aws-emrserverless-privesc-passrole-start-job",
+    name="EMR Serverless Job Execution with Privileged Role (EMRSERVERLESS-001)",
+    short_description="Create an EMR Serverless application and run a job with a privileged runtime role to gain its permissions.",
+    description="Detect principals who can pass IAM roles, create EMR Serverless applications, and start job runs. An actor can run a job with a privileged runtime role and execute arbitrary code as that role.",
+    attribution=AttackPathsQueryAttribution(
+        text="pathfinding.cloud - EMRSERVERLESS-001 - iam:PassRole + emr-serverless:CreateApplication + emr-serverless:StartJobRun",
+        link="https://pathfinding.cloud/paths/emrserverless-001",
+    ),
+    provider="aws",
+    cypher=f"""
+        // Find principals with iam:PassRole permission
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(passrole_policy:AWSPolicy)-[:STATEMENT]->(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
+        MATCH (stmt_passrole)-[:HAS_ACTION]->(act:AWSPolicyStatementActionItem)
+        WHERE toLower(act.value) IN ['iam:*', 'iam:passrole']
+            OR act.value = '*'
+        WITH DISTINCT aws, principal, stmt_passrole, path_principal
+
+        // Find emr-serverless:createapplication permission
+        MATCH (principal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(:AWSPolicyStatement {{effect: 'Allow'}})-[:HAS_ACTION]->(act2:AWSPolicyStatementActionItem)
+        WHERE toLower(act2.value) IN ['emr-serverless:*', 'emr-serverless:createapplication']
+            OR act2.value = '*'
+        WITH DISTINCT aws, principal, stmt_passrole, path_principal
+
+        // Find emr-serverless:startjobrun permission
+        MATCH (principal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(:AWSPolicyStatement {{effect: 'Allow'}})-[:HAS_ACTION]->(act3:AWSPolicyStatementActionItem)
+        WHERE toLower(act3.value) IN ['emr-serverless:*', 'emr-serverless:startjobrun']
+            OR act3.value = '*'
+        WITH DISTINCT aws, principal, stmt_passrole, path_principal
+
+        // Pre-aggregate the PassRole statement resources (see docs: Avoiding Cartesian Products)
+        MATCH (stmt_passrole)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)
+        WITH aws, principal, path_principal, collect(DISTINCT res.value) AS res_values
+        WITH aws, principal, path_principal, res_values, ('*' IN res_values) AS res_wildcard
+
+        // Target role that trusts the emr-serverless.amazonaws.com service and can be passed
+        MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'emr-serverless.amazonaws.com'}})
+        WITH path_principal, path_target, res_values, res_wildcard,
+             target_role.name AS rname, target_role.arn AS rarn
+        WHERE res_wildcard
+            OR size([rv IN res_values WHERE rv CONTAINS rname OR rarn CONTAINS rv]) > 0
+
+        WITH DISTINCT path_principal, path_target
+        WITH collect(path_principal) + collect(path_target) AS paths
+        UNWIND paths AS p
+        UNWIND nodes(p) AS n
+
+        WITH paths, collect(DISTINCT n) AS unique_nodes
+        UNWIND unique_nodes AS n
+
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+
+        RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+    """,
+    parameters=[],
+)
+
+# GAMELIFT-001
+AWS_GAMELIFT_PRIVESC_PASSROLE_CREATE_FLEET = AttackPathsQueryDefinition(
+    id="aws-gamelift-privesc-passrole-create-fleet",
+    name="GameLift Fleet Creation with Privileged Role (GAMELIFT-001)",
+    short_description="Create a GameLift build and fleet with a privileged instance role to run arbitrary code as that role.",
+    description="Detect principals who can pass IAM roles, upload a GameLift build, and create a fleet. The fleet instances run the build with an attached privileged role, allowing arbitrary code execution as that role.",
+    attribution=AttackPathsQueryAttribution(
+        text="pathfinding.cloud - GAMELIFT-001 - iam:PassRole + gamelift:CreateBuild + gamelift:RequestUploadCredentials + gamelift:CreateFleet",
+        link="https://pathfinding.cloud/paths/gamelift-001",
+    ),
+    provider="aws",
+    cypher=f"""
+        // Find principals with iam:PassRole permission
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(passrole_policy:AWSPolicy)-[:STATEMENT]->(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
+        MATCH (stmt_passrole)-[:HAS_ACTION]->(act:AWSPolicyStatementActionItem)
+        WHERE toLower(act.value) IN ['iam:*', 'iam:passrole']
+            OR act.value = '*'
+        WITH DISTINCT aws, principal, stmt_passrole, path_principal
+
+        // Find gamelift:createbuild permission
+        MATCH (principal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(:AWSPolicyStatement {{effect: 'Allow'}})-[:HAS_ACTION]->(act2:AWSPolicyStatementActionItem)
+        WHERE toLower(act2.value) IN ['gamelift:*', 'gamelift:createbuild']
+            OR act2.value = '*'
+        WITH DISTINCT aws, principal, stmt_passrole, path_principal
+
+        // Find gamelift:createfleet permission
+        MATCH (principal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(:AWSPolicyStatement {{effect: 'Allow'}})-[:HAS_ACTION]->(act3:AWSPolicyStatementActionItem)
+        WHERE toLower(act3.value) IN ['gamelift:*', 'gamelift:createfleet']
+            OR act3.value = '*'
+        WITH DISTINCT aws, principal, stmt_passrole, path_principal
+
+        // Find gamelift:requestuploadcredentials permission
+        MATCH (principal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(:AWSPolicyStatement {{effect: 'Allow'}})-[:HAS_ACTION]->(act4:AWSPolicyStatementActionItem)
+        WHERE toLower(act4.value) IN ['gamelift:*', 'gamelift:requestuploadcredentials']
+            OR act4.value = '*'
+        WITH DISTINCT aws, principal, stmt_passrole, path_principal
+
+        // Pre-aggregate the PassRole statement resources (see docs: Avoiding Cartesian Products)
+        MATCH (stmt_passrole)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)
+        WITH aws, principal, path_principal, collect(DISTINCT res.value) AS res_values
+        WITH aws, principal, path_principal, res_values, ('*' IN res_values) AS res_wildcard
+
+        // Target role that trusts the gamelift.amazonaws.com service and can be passed
+        MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'gamelift.amazonaws.com'}})
+        WITH path_principal, path_target, res_values, res_wildcard,
+             target_role.name AS rname, target_role.arn AS rarn
+        WHERE res_wildcard
+            OR size([rv IN res_values WHERE rv CONTAINS rname OR rarn CONTAINS rv]) > 0
+
+        WITH DISTINCT path_principal, path_target
+        WITH collect(path_principal) + collect(path_target) AS paths
+        UNWIND paths AS p
+        UNWIND nodes(p) AS n
+
+        WITH paths, collect(DISTINCT n) AS unique_nodes
+        UNWIND unique_nodes AS n
+
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+
+        RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+    """,
+    parameters=[],
+)
+
 # GLUE-001
 AWS_GLUE_PRIVESC_PASSROLE_DEV_ENDPOINT = AttackPathsQueryDefinition(
     id="aws-glue-privesc-passrole-dev-endpoint",
@@ -1867,6 +2339,64 @@ AWS_GLUE_PRIVESC_PASSROLE_UPDATE_JOB_TRIGGER = AttackPathsQueryDefinition(
     parameters=[],
 )
 
+# GLUE-007
+AWS_GLUE_PRIVESC_PASSROLE_CREATE_SESSION = AttackPathsQueryDefinition(
+    id="aws-glue-privesc-passrole-create-session",
+    name="Glue Interactive Session with Privileged Role (GLUE-007)",
+    short_description="Create a Glue interactive session with a privileged role and run statements that execute as that role.",
+    description="Detect principals who can pass IAM roles, create Glue interactive sessions, and run statements. An actor can open a session bound to a privileged role and run arbitrary code as that role.",
+    attribution=AttackPathsQueryAttribution(
+        text="pathfinding.cloud - GLUE-007 - iam:PassRole + glue:CreateSession + glue:RunStatement",
+        link="https://pathfinding.cloud/paths/glue-007",
+    ),
+    provider="aws",
+    cypher=f"""
+        // Find principals with iam:PassRole permission
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(passrole_policy:AWSPolicy)-[:STATEMENT]->(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
+        MATCH (stmt_passrole)-[:HAS_ACTION]->(act:AWSPolicyStatementActionItem)
+        WHERE toLower(act.value) IN ['iam:*', 'iam:passrole']
+            OR act.value = '*'
+        WITH DISTINCT aws, principal, stmt_passrole, path_principal
+
+        // Find glue:createsession permission
+        MATCH (principal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(:AWSPolicyStatement {{effect: 'Allow'}})-[:HAS_ACTION]->(act2:AWSPolicyStatementActionItem)
+        WHERE toLower(act2.value) IN ['glue:*', 'glue:createsession']
+            OR act2.value = '*'
+        WITH DISTINCT aws, principal, stmt_passrole, path_principal
+
+        // Find glue:runstatement permission
+        MATCH (principal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(:AWSPolicyStatement {{effect: 'Allow'}})-[:HAS_ACTION]->(act3:AWSPolicyStatementActionItem)
+        WHERE toLower(act3.value) IN ['glue:*', 'glue:runstatement']
+            OR act3.value = '*'
+        WITH DISTINCT aws, principal, stmt_passrole, path_principal
+
+        // Pre-aggregate the PassRole statement resources (see docs: Avoiding Cartesian Products)
+        MATCH (stmt_passrole)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)
+        WITH aws, principal, path_principal, collect(DISTINCT res.value) AS res_values
+        WITH aws, principal, path_principal, res_values, ('*' IN res_values) AS res_wildcard
+
+        // Target role that trusts the glue.amazonaws.com service and can be passed
+        MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'glue.amazonaws.com'}})
+        WITH path_principal, path_target, res_values, res_wildcard,
+             target_role.name AS rname, target_role.arn AS rarn
+        WHERE res_wildcard
+            OR size([rv IN res_values WHERE rv CONTAINS rname OR rarn CONTAINS rv]) > 0
+
+        WITH DISTINCT path_principal, path_target
+        WITH collect(path_principal) + collect(path_target) AS paths
+        UNWIND paths AS p
+        UNWIND nodes(p) AS n
+
+        WITH paths, collect(DISTINCT n) AS unique_nodes
+        UNWIND unique_nodes AS n
+
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+
+        RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+    """,
+    parameters=[],
+)
+
 # IAM-001
 AWS_IAM_PRIVESC_CREATE_POLICY_VERSION = AttackPathsQueryDefinition(
     id="aws-iam-privesc-create-policy-version",
@@ -1927,12 +2457,20 @@ AWS_IAM_PRIVESC_CREATE_ACCESS_KEY = AttackPathsQueryDefinition(
             OR act.value = '*'
         WITH DISTINCT aws, principal, stmt, path_principal
 
-        // Find target users that the principal can create access keys for
-        MATCH path_target = (aws)--(target_user:AWSUser)
+        // Pre-aggregate this statement's resource values into a list so the user
+        // match below is evaluated once per user (in-memory `any`) instead of
+        // building an (all-users x all-resource-items) cartesian product.
         MATCH (stmt)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)
-        WHERE res.value = '*'
-            OR res.value CONTAINS target_user.name
-            OR target_user.arn CONTAINS res.value
+        WITH aws, path_principal, collect(DISTINCT res.value) AS res_values
+        WITH aws, path_principal, res_values, ('*' IN res_values) AS res_wildcard
+
+        // Find target users that the principal can create access keys for.
+        // Bind name/arn once so the `any` predicate reads locals.
+        MATCH path_target = (aws)--(target_user:AWSUser)
+        WITH path_principal, path_target, res_values, res_wildcard,
+             target_user.name AS uname, target_user.arn AS uarn
+        WHERE res_wildcard
+           OR size([rv IN res_values WHERE rv CONTAINS uname OR uarn CONTAINS rv]) > 0
 
         WITH DISTINCT path_principal, path_target
         WITH collect(path_principal) + collect(path_target) AS paths
@@ -1975,16 +2513,24 @@ AWS_IAM_PRIVESC_DELETE_CREATE_ACCESS_KEY = AttackPathsQueryDefinition(
            OR act2.value = '*'
         WITH DISTINCT aws, principal, stmt, stmt2, path_principal
 
-        // Find target users that the principal can rotate access keys for
-        MATCH path_target = (aws)--(target_user:AWSUser)
+        // Pre-aggregate both statements' resource values into lists so the user
+        // match below is evaluated once per user (in-memory `any`) instead of
+        // building an (all-users x res x res2) cartesian product.
         MATCH (stmt)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)
-        WHERE res.value = '*'
-           OR res.value CONTAINS target_user.name
-           OR target_user.arn CONTAINS res.value
+        WITH aws, stmt2, path_principal, collect(DISTINCT res.value) AS res_values
         MATCH (stmt2)-[:HAS_RESOURCE]->(res2:AWSPolicyStatementResourceItem)
-        WHERE res2.value = '*'
-           OR res2.value CONTAINS target_user.name
-           OR target_user.arn CONTAINS res2.value
+        WITH aws, path_principal, res_values, collect(DISTINCT res2.value) AS res2_values
+        WITH aws, path_principal, res_values, res2_values,
+             ('*' IN res_values) AS res_wildcard,
+             ('*' IN res2_values) AS res2_wildcard
+
+        // Find target users that the principal can rotate access keys for.
+        // Bind name/arn once so the `any` predicates read locals.
+        MATCH path_target = (aws)--(target_user:AWSUser)
+        WITH path_principal, path_target, res_values, res_wildcard, res2_values, res2_wildcard,
+             target_user.name AS uname, target_user.arn AS uarn
+        WHERE (res_wildcard OR size([rv IN res_values WHERE rv CONTAINS uname OR uarn CONTAINS rv]) > 0)
+          AND (res2_wildcard OR size([rv IN res2_values WHERE rv CONTAINS uname OR uarn CONTAINS rv]) > 0)
 
         WITH DISTINCT path_principal, path_target
         WITH collect(path_principal) + collect(path_target) AS paths
@@ -2019,12 +2565,20 @@ AWS_IAM_PRIVESC_CREATE_LOGIN_PROFILE = AttackPathsQueryDefinition(
             OR act.value = '*'
         WITH DISTINCT aws, principal, stmt, path_principal
 
-        // Find target users that the principal can create login profiles for
-        MATCH path_target = (aws)--(target_user:AWSUser)
+        // Pre-aggregate this statement's resource values into a list so the user
+        // match below is evaluated once per user (in-memory `any`) instead of
+        // building an (all-users x all-resource-items) cartesian product.
         MATCH (stmt)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)
-        WHERE res.value = '*'
-            OR res.value CONTAINS target_user.name
-            OR target_user.arn CONTAINS res.value
+        WITH aws, path_principal, collect(DISTINCT res.value) AS res_values
+        WITH aws, path_principal, res_values, ('*' IN res_values) AS res_wildcard
+
+        // Find target users that the principal can create login profiles for.
+        // Bind name/arn once so the `any` predicate reads locals.
+        MATCH path_target = (aws)--(target_user:AWSUser)
+        WITH path_principal, path_target, res_values, res_wildcard,
+             target_user.name AS uname, target_user.arn AS uarn
+        WHERE res_wildcard
+           OR size([rv IN res_values WHERE rv CONTAINS uname OR uarn CONTAINS rv]) > 0
 
         WITH DISTINCT path_principal, path_target
         WITH collect(path_principal) + collect(path_target) AS paths
@@ -2097,12 +2651,20 @@ AWS_IAM_PRIVESC_UPDATE_LOGIN_PROFILE = AttackPathsQueryDefinition(
             OR act.value = '*'
         WITH DISTINCT aws, principal, stmt, path_principal
 
-        // Find target users that the principal can update login profiles for
-        MATCH path_target = (aws)--(target_user:AWSUser)
+        // Pre-aggregate this statement's resource values into a list so the user
+        // match below is evaluated once per user (in-memory `any`) instead of
+        // building an (all-users x all-resource-items) cartesian product.
         MATCH (stmt)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)
-        WHERE res.value = '*'
-            OR res.value CONTAINS target_user.name
-            OR target_user.arn CONTAINS res.value
+        WITH aws, path_principal, collect(DISTINCT res.value) AS res_values
+        WITH aws, path_principal, res_values, ('*' IN res_values) AS res_wildcard
+
+        // Find target users that the principal can update login profiles for.
+        // Bind name/arn once so the `any` predicate reads locals.
+        MATCH path_target = (aws)--(target_user:AWSUser)
+        WITH path_principal, path_target, res_values, res_wildcard,
+             target_user.name AS uname, target_user.arn AS uarn
+        WHERE res_wildcard
+           OR size([rv IN res_values WHERE rv CONTAINS uname OR uarn CONTAINS rv]) > 0
 
         WITH DISTINCT path_principal, path_target
         WITH collect(path_principal) + collect(path_target) AS paths
@@ -2333,12 +2895,21 @@ AWS_IAM_PRIVESC_UPDATE_ASSUME_ROLE_POLICY = AttackPathsQueryDefinition(
         // Collapse the action-item fan-out: one row per (statement chain), not per matching action
         WITH DISTINCT aws, stmt, path_principal
 
-        // Find target roles whose trust policy this statement's resource can target
-        MATCH path_target = (aws)--(target_role:AWSRole)
+        // Pre-aggregate this statement's resource values into a list so the role
+        // match below is evaluated once per role (in-memory `any`) instead of
+        // building an (all-roles x all-resource-items) cartesian product.
         MATCH (stmt)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)
-        WHERE res.value = '*'
-           OR res.value CONTAINS target_role.name
-           OR target_role.arn CONTAINS res.value
+        WITH aws, path_principal, collect(DISTINCT res.value) AS res_values
+        WITH aws, path_principal, res_values, ('*' IN res_values) AS res_wildcard
+
+        // Find target roles whose trust policy this statement's resource can target.
+        // Bind the role's name/arn once so the `any` predicate reads them from a
+        // local variable instead of re-reading the property store per resource.
+        MATCH path_target = (aws)--(target_role:AWSRole)
+        WITH path_principal, path_target, res_values, res_wildcard,
+             target_role.name AS rname, target_role.arn AS rarn
+        WHERE res_wildcard
+           OR size([rv IN res_values WHERE rv CONTAINS rname OR rarn CONTAINS rv]) > 0
 
         WITH DISTINCT path_principal, path_target
         WITH collect(path_principal) + collect(path_target) AS paths
@@ -2373,12 +2944,20 @@ AWS_IAM_PRIVESC_ADD_USER_TO_GROUP = AttackPathsQueryDefinition(
             OR act.value = '*'
         WITH DISTINCT aws, principal, stmt, path_principal
 
-        // Find target groups the principal can add users to
-        MATCH path_target = (aws)--(target_group:AWSGroup)
+        // Pre-aggregate this statement's resource values into a list so the group
+        // match below is evaluated once per group (in-memory `any`) instead of
+        // building an (all-groups x all-resource-items) cartesian product.
         MATCH (stmt)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)
-        WHERE res.value = '*'
-            OR res.value CONTAINS target_group.name
-            OR target_group.arn CONTAINS res.value
+        WITH aws, path_principal, collect(DISTINCT res.value) AS res_values
+        WITH aws, path_principal, res_values, ('*' IN res_values) AS res_wildcard
+
+        // Find target groups the principal can add users to.
+        // Bind name/arn once so the `any` predicate reads locals.
+        MATCH path_target = (aws)--(target_group:AWSGroup)
+        WITH path_principal, path_target, res_values, res_wildcard,
+             target_group.name AS gname, target_group.arn AS garn
+        WHERE res_wildcard
+           OR size([rv IN res_values WHERE rv CONTAINS gname OR garn CONTAINS rv]) > 0
 
         WITH DISTINCT path_principal, path_target
         WITH collect(path_principal) + collect(path_target) AS paths
@@ -2462,16 +3041,24 @@ AWS_IAM_PRIVESC_ATTACH_USER_POLICY_CREATE_ACCESS_KEY = AttackPathsQueryDefinitio
            OR act2.value = '*'
         WITH DISTINCT aws, principal, stmt, stmt2, path_principal
 
-        // Find target users the principal can attach policies to and create keys for
-        MATCH path_target = (aws)--(target_user:AWSUser)
+        // Pre-aggregate both statements' resource values into lists so the user
+        // match below is evaluated once per user (in-memory `any`) instead of
+        // building an (all-users x res x res2) cartesian product.
         MATCH (stmt)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)
-        WHERE res.value = '*'
-           OR res.value CONTAINS target_user.name
-           OR target_user.arn CONTAINS res.value
+        WITH aws, stmt2, path_principal, collect(DISTINCT res.value) AS res_values
         MATCH (stmt2)-[:HAS_RESOURCE]->(res2:AWSPolicyStatementResourceItem)
-        WHERE res2.value = '*'
-           OR res2.value CONTAINS target_user.name
-           OR target_user.arn CONTAINS res2.value
+        WITH aws, path_principal, res_values, collect(DISTINCT res2.value) AS res2_values
+        WITH aws, path_principal, res_values, res2_values,
+             ('*' IN res_values) AS res_wildcard,
+             ('*' IN res2_values) AS res2_wildcard
+
+        // Find target users the principal can attach policies to and create keys for.
+        // Bind name/arn once so the `any` predicates read locals.
+        MATCH path_target = (aws)--(target_user:AWSUser)
+        WITH path_principal, path_target, res_values, res_wildcard, res2_values, res2_wildcard,
+             target_user.name AS uname, target_user.arn AS uarn
+        WHERE (res_wildcard OR size([rv IN res_values WHERE rv CONTAINS uname OR uarn CONTAINS rv]) > 0)
+          AND (res2_wildcard OR size([rv IN res2_values WHERE rv CONTAINS uname OR uarn CONTAINS rv]) > 0)
 
         WITH DISTINCT path_principal, path_target
         WITH collect(path_principal) + collect(path_target) AS paths
@@ -2596,16 +3183,24 @@ AWS_IAM_PRIVESC_PUT_USER_POLICY_CREATE_ACCESS_KEY = AttackPathsQueryDefinition(
            OR act2.value = '*'
         WITH DISTINCT aws, principal, stmt, stmt2, path_principal
 
-        // Find target users the principal can put policies on and create keys for
-        MATCH path_target = (aws)--(target_user:AWSUser)
+        // Pre-aggregate both statements' resource values into lists so the user
+        // match below is evaluated once per user (in-memory `any`) instead of
+        // building an (all-users x res x res2) cartesian product.
         MATCH (stmt)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)
-        WHERE res.value = '*'
-           OR res.value CONTAINS target_user.name
-           OR target_user.arn CONTAINS res.value
+        WITH aws, stmt2, path_principal, collect(DISTINCT res.value) AS res_values
         MATCH (stmt2)-[:HAS_RESOURCE]->(res2:AWSPolicyStatementResourceItem)
-        WHERE res2.value = '*'
-           OR res2.value CONTAINS target_user.name
-           OR target_user.arn CONTAINS res2.value
+        WITH aws, path_principal, res_values, collect(DISTINCT res2.value) AS res2_values
+        WITH aws, path_principal, res_values, res2_values,
+             ('*' IN res_values) AS res_wildcard,
+             ('*' IN res2_values) AS res2_wildcard
+
+        // Find target users the principal can put policies on and create keys for.
+        // Bind name/arn once so the `any` predicates read locals.
+        MATCH path_target = (aws)--(target_user:AWSUser)
+        WITH path_principal, path_target, res_values, res_wildcard, res2_values, res2_wildcard,
+             target_user.name AS uname, target_user.arn AS uarn
+        WHERE (res_wildcard OR size([rv IN res_values WHERE rv CONTAINS uname OR uarn CONTAINS rv]) > 0)
+          AND (res2_wildcard OR size([rv IN res2_values WHERE rv CONTAINS uname OR uarn CONTAINS rv]) > 0)
 
         WITH DISTINCT path_principal, path_target
         WITH collect(path_principal) + collect(path_target) AS paths
@@ -2647,16 +3242,24 @@ AWS_IAM_PRIVESC_ATTACH_ROLE_POLICY_UPDATE_ASSUME_ROLE = AttackPathsQueryDefiniti
            OR act2.value = '*'
         WITH DISTINCT aws, principal, stmt, stmt2, path_principal
 
-        // Find target roles the principal can attach policies to and update trust policy for
-        MATCH path_target = (aws)--(target_role:AWSRole)
+        // Pre-aggregate both statements' resource values into lists so the role
+        // match below is evaluated once per role (in-memory `any`) instead of
+        // building an (all-roles x res x res2) cartesian product.
         MATCH (stmt)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)
-        WHERE res.value = '*'
-           OR res.value CONTAINS target_role.name
-           OR target_role.arn CONTAINS res.value
+        WITH aws, stmt2, path_principal, collect(DISTINCT res.value) AS res_values
         MATCH (stmt2)-[:HAS_RESOURCE]->(res2:AWSPolicyStatementResourceItem)
-        WHERE res2.value = '*'
-           OR res2.value CONTAINS target_role.name
-           OR target_role.arn CONTAINS res2.value
+        WITH aws, path_principal, res_values, collect(DISTINCT res2.value) AS res2_values
+        WITH aws, path_principal, res_values, res2_values,
+             ('*' IN res_values) AS res_wildcard,
+             ('*' IN res2_values) AS res2_wildcard
+
+        // Find target roles the principal can attach policies to and update trust
+        // policy for. Bind name/arn once so the `any` predicates read locals.
+        MATCH path_target = (aws)--(target_role:AWSRole)
+        WITH path_principal, path_target, res_values, res_wildcard, res2_values, res2_wildcard,
+             target_role.name AS rname, target_role.arn AS rarn
+        WHERE (res_wildcard OR size([rv IN res_values WHERE rv CONTAINS rname OR rarn CONTAINS rv]) > 0)
+          AND (res2_wildcard OR size([rv IN res2_values WHERE rv CONTAINS rname OR rarn CONTAINS rv]) > 0)
 
         WITH DISTINCT path_principal, path_target
         WITH collect(path_principal) + collect(path_target) AS paths
@@ -2698,17 +3301,31 @@ AWS_IAM_PRIVESC_CREATE_POLICY_VERSION_UPDATE_ASSUME_ROLE = AttackPathsQueryDefin
            OR act2.value = '*'
         WITH DISTINCT aws, principal, stmt, stmt2, path_principal
 
-        // Find target roles with customer-managed policies the principal can modify and update trust policy for
-        MATCH path_target = (aws)--(target_role:AWSRole)
+        // Pre-aggregate both statements' resource values into lists so the role
+        // and policy matches below are evaluated with an in-memory `any` instead
+        // of building an (all-roles x res2) x (policies x res) cartesian product.
         MATCH (stmt2)-[:HAS_RESOURCE]->(res2:AWSPolicyStatementResourceItem)
-        WHERE res2.value = '*'
-           OR res2.value CONTAINS target_role.name
-           OR target_role.arn CONTAINS res2.value
-        MATCH (target_role)-[:POLICY]->(target_policy:AWSPolicy)
-        WHERE target_policy.arn CONTAINS $provider_uid
+        WITH aws, stmt, path_principal, collect(DISTINCT res2.value) AS res2_values
         MATCH (stmt)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)
-        WHERE res.value = '*'
-           OR target_policy.arn CONTAINS res.value
+        WITH aws, path_principal, res2_values, collect(DISTINCT res.value) AS res_values
+        WITH aws, path_principal, res2_values, res_values,
+             ('*' IN res2_values) AS res2_wildcard,
+             ('*' IN res_values) AS res_wildcard
+
+        // Find target roles with customer-managed policies the principal can
+        // modify and update trust policy for. Bind name/arn once so the `any`
+        // predicates read locals instead of re-reading the property store.
+        MATCH path_target = (aws)--(target_role:AWSRole)
+        WITH path_principal, path_target, target_role, res_values, res_wildcard,
+             res2_values, res2_wildcard,
+             target_role.name AS rname, target_role.arn AS rarn
+        WHERE res2_wildcard
+           OR size([rv IN res2_values WHERE rv CONTAINS rname OR rarn CONTAINS rv]) > 0
+        MATCH (target_role)-[:POLICY]->(target_policy:AWSPolicy)
+        WITH path_principal, path_target, res_values, res_wildcard,
+             target_policy.arn AS parn
+        WHERE parn CONTAINS $provider_uid
+          AND (res_wildcard OR size([rv IN res_values WHERE parn CONTAINS rv]) > 0)
 
         WITH DISTINCT path_principal, path_target
         WITH collect(path_principal) + collect(path_target) AS paths
@@ -2750,16 +3367,24 @@ AWS_IAM_PRIVESC_PUT_ROLE_POLICY_UPDATE_ASSUME_ROLE = AttackPathsQueryDefinition(
            OR act2.value = '*'
         WITH DISTINCT aws, principal, stmt, stmt2, path_principal
 
-        // Find target roles the principal can put inline policies on and update trust policy for
-        MATCH path_target = (aws)--(target_role:AWSRole)
+        // Pre-aggregate both statements' resource values into lists so the role
+        // match below is evaluated once per role (in-memory `any`) instead of
+        // building an (all-roles x res x res2) cartesian product.
         MATCH (stmt)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)
-        WHERE res.value = '*'
-           OR res.value CONTAINS target_role.name
-           OR target_role.arn CONTAINS res.value
+        WITH aws, stmt2, path_principal, collect(DISTINCT res.value) AS res_values
         MATCH (stmt2)-[:HAS_RESOURCE]->(res2:AWSPolicyStatementResourceItem)
-        WHERE res2.value = '*'
-           OR res2.value CONTAINS target_role.name
-           OR target_role.arn CONTAINS res2.value
+        WITH aws, path_principal, res_values, collect(DISTINCT res2.value) AS res2_values
+        WITH aws, path_principal, res_values, res2_values,
+             ('*' IN res_values) AS res_wildcard,
+             ('*' IN res2_values) AS res2_wildcard
+
+        // Find target roles the principal can put inline policies on and update
+        // trust policy for. Bind name/arn once so the `any` predicates read locals.
+        MATCH path_target = (aws)--(target_role:AWSRole)
+        WITH path_principal, path_target, res_values, res_wildcard, res2_values, res2_wildcard,
+             target_role.name AS rname, target_role.arn AS rarn
+        WHERE (res_wildcard OR size([rv IN res_values WHERE rv CONTAINS rname OR rarn CONTAINS rv]) > 0)
+          AND (res2_wildcard OR size([rv IN res2_values WHERE rv CONTAINS rname OR rarn CONTAINS rv]) > 0)
 
         WITH DISTINCT path_principal, path_target
         WITH collect(path_principal) + collect(path_target) AS paths
@@ -2768,6 +3393,222 @@ AWS_IAM_PRIVESC_PUT_ROLE_POLICY_UPDATE_ASSUME_ROLE = AttackPathsQueryDefinition(
 
         WITH paths, collect(DISTINCT n) AS unique_nodes
         UNWIND unique_nodes AS n
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+
+        RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+    """,
+    parameters=[],
+)
+
+# IAM-022
+AWS_IAM_PRIVESC_DELETE_USER_PERMISSIONS_BOUNDARY = AttackPathsQueryDefinition(
+    id="aws-iam-privesc-delete-user-permissions-boundary",
+    name="Permissions Boundary Removal for Self-Escalation (IAM-022)",
+    short_description="IAM users that can remove their own permissions boundary, if one is attached.",
+    description="Find IAM users whose policies allow iam:DeleteUserPermissionsBoundary on their own user ARN. The graph does not record whether a boundary is attached or whether removing it grants more access, so each result needs manual review.",
+    attribution=AttackPathsQueryAttribution(
+        text="pathfinding.cloud - IAM-022 - iam:DeleteUserPermissionsBoundary",
+        link="https://pathfinding.cloud/paths/iam-022",
+    ),
+    provider="aws",
+    cypher=f"""
+        // Find IAM users with iam:DeleteUserPermissionsBoundary permission
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSUser)-[:POLICY]->(policy:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {{effect: 'Allow'}})
+        MATCH (stmt)-[:HAS_ACTION]->(act:AWSPolicyStatementActionItem)
+        WHERE toLower(act.value) IN ['iam:*', 'iam:deleteuserpermissionsboundary']
+            OR act.value = '*'
+        WITH DISTINCT principal, stmt, path_principal
+
+        // Keep only users that can remove the boundary from their own user ARN
+        MATCH (stmt)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)
+        WHERE res.value = '*'
+            OR res.value = principal.arn
+            OR (res.value ENDS WITH '*' AND principal.arn STARTS WITH left(res.value, size(res.value) - 1))
+
+        WITH DISTINCT path_principal
+        WITH collect(path_principal) AS paths
+        UNWIND paths AS p
+        UNWIND nodes(p) AS n
+
+        WITH paths, collect(DISTINCT n) AS unique_nodes
+        UNWIND unique_nodes AS n
+
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+
+        RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+    """,
+    parameters=[],
+)
+
+# IAM-023
+AWS_IAM_PRIVESC_DELETE_ROLE_BOUNDARY_ASSUME_ROLE = AttackPathsQueryDefinition(
+    id="aws-iam-privesc-delete-role-boundary-assume-role",
+    name="Role Permissions Boundary Removal with Role Assumption (IAM-023)",
+    short_description="Delete an assumable role's permissions boundary to unlock its full permissions, then assume it.",
+    description="Detect principals who can delete a role's permissions boundary and also assume that role. Removing the boundary restores the role's broader attached permissions, which the actor then gains by assuming the role. The graph does not record whether a boundary is actually attached to the target role, so each result needs manual review.",
+    attribution=AttackPathsQueryAttribution(
+        text="pathfinding.cloud - IAM-023 - iam:DeleteRolePermissionsBoundary + sts:AssumeRole",
+        link="https://pathfinding.cloud/paths/iam-023",
+    ),
+    provider="aws",
+    cypher=f"""
+        // Find principals with iam:DeleteRolePermissionsBoundary permission
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {{effect: 'Allow'}})-[:HAS_ACTION]->(act:AWSPolicyStatementActionItem)
+        WHERE toLower(act.value) IN ['iam:*', 'iam:deleterolepermissionsboundary']
+            OR act.value = '*'
+        WITH DISTINCT aws, principal, stmt, path_principal
+
+        // Find sts:AssumeRole permission on the same principal
+        MATCH (principal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(:AWSPolicyStatement {{effect: 'Allow'}})-[:HAS_ACTION]->(act2:AWSPolicyStatementActionItem)
+        WHERE toLower(act2.value) IN ['sts:*', 'sts:assumerole']
+            OR act2.value = '*'
+        WITH DISTINCT aws, principal, stmt, path_principal
+
+        // Target role the principal can assume (bidirectional trust via Cartography)
+        MATCH path_target = (aws)--(target_role:AWSRole)<-[:STS_ASSUMEROLE_ALLOW]-(principal)
+
+        // Keep only when the boundary can be removed from that same assumable role
+        MATCH (stmt)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)
+        WHERE res.value = '*'
+            OR res.value = target_role.arn
+            OR (res.value ENDS WITH '*' AND target_role.arn STARTS WITH left(res.value, size(res.value) - 1))
+
+        WITH DISTINCT path_principal, path_target
+        WITH collect(path_principal) + collect(path_target) AS paths
+        UNWIND paths AS p
+        UNWIND nodes(p) AS n
+
+        WITH paths, collect(DISTINCT n) AS unique_nodes
+        UNWIND unique_nodes AS n
+
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+
+        RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+    """,
+    parameters=[],
+)
+
+# IMAGEBUILDER-001
+AWS_IMAGEBUILDER_PRIVESC_PASSROLE_CREATE_IMAGE = AttackPathsQueryDefinition(
+    id="aws-imagebuilder-privesc-passrole-create-image",
+    name="EC2 Image Builder Pipeline with Privileged Role (IMAGEBUILDER-001)",
+    short_description="Build an EC2 Image Builder image whose infrastructure instance profile is a privileged role to run arbitrary code as that role.",
+    description="Detect principals who can pass IAM roles and drive an EC2 Image Builder pipeline. The build runs component code on an instance using a privileged instance-profile role, allowing arbitrary code execution as that role.",
+    attribution=AttackPathsQueryAttribution(
+        text="pathfinding.cloud - IMAGEBUILDER-001 - iam:PassRole + imagebuilder:CreateComponent + imagebuilder:CreateImage",
+        link="https://pathfinding.cloud/paths/imagebuilder-001",
+    ),
+    provider="aws",
+    cypher=f"""
+        // Find principals with iam:PassRole permission
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(passrole_policy:AWSPolicy)-[:STATEMENT]->(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
+        MATCH (stmt_passrole)-[:HAS_ACTION]->(act:AWSPolicyStatementActionItem)
+        WHERE toLower(act.value) IN ['iam:*', 'iam:passrole']
+            OR act.value = '*'
+        WITH DISTINCT aws, principal, stmt_passrole, path_principal
+
+        // Find imagebuilder:createcomponent permission
+        MATCH (principal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(:AWSPolicyStatement {{effect: 'Allow'}})-[:HAS_ACTION]->(act2:AWSPolicyStatementActionItem)
+        WHERE toLower(act2.value) IN ['imagebuilder:*', 'imagebuilder:createcomponent']
+            OR act2.value = '*'
+        WITH DISTINCT aws, principal, stmt_passrole, path_principal
+
+        // Find imagebuilder:createinfrastructureconfiguration permission
+        MATCH (principal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(:AWSPolicyStatement {{effect: 'Allow'}})-[:HAS_ACTION]->(act3:AWSPolicyStatementActionItem)
+        WHERE toLower(act3.value) IN ['imagebuilder:*', 'imagebuilder:createinfrastructureconfiguration']
+            OR act3.value = '*'
+        WITH DISTINCT aws, principal, stmt_passrole, path_principal
+
+        // Find imagebuilder:createimage permission
+        MATCH (principal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(:AWSPolicyStatement {{effect: 'Allow'}})-[:HAS_ACTION]->(act4:AWSPolicyStatementActionItem)
+        WHERE toLower(act4.value) IN ['imagebuilder:*', 'imagebuilder:createimage']
+            OR act4.value = '*'
+        WITH DISTINCT aws, principal, stmt_passrole, path_principal
+
+        // Find imagebuilder:createimagerecipe permission
+        MATCH (principal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(:AWSPolicyStatement {{effect: 'Allow'}})-[:HAS_ACTION]->(act5:AWSPolicyStatementActionItem)
+        WHERE toLower(act5.value) IN ['imagebuilder:*', 'imagebuilder:createimagerecipe']
+            OR act5.value = '*'
+        WITH DISTINCT aws, principal, stmt_passrole, path_principal
+
+        // Pre-aggregate the PassRole statement resources (see docs: Avoiding Cartesian Products)
+        MATCH (stmt_passrole)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)
+        WITH aws, principal, path_principal, collect(DISTINCT res.value) AS res_values
+        WITH aws, principal, path_principal, res_values, ('*' IN res_values) AS res_wildcard
+
+        // Target role that trusts the ec2.amazonaws.com service and can be passed
+        MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'ec2.amazonaws.com'}})
+        WITH path_principal, path_target, res_values, res_wildcard,
+             target_role.name AS rname, target_role.arn AS rarn
+        WHERE res_wildcard
+            OR size([rv IN res_values WHERE rv CONTAINS rname OR rarn CONTAINS rv]) > 0
+
+        WITH DISTINCT path_principal, path_target
+        WITH collect(path_principal) + collect(path_target) AS paths
+        UNWIND paths AS p
+        UNWIND nodes(p) AS n
+
+        WITH paths, collect(DISTINCT n) AS unique_nodes
+        UNWIND unique_nodes AS n
+
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+
+        RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+    """,
+    parameters=[],
+)
+
+# KINESISANALYTICS-001
+AWS_KINESISANALYTICS_PRIVESC_PASSROLE_CREATE_APP = AttackPathsQueryDefinition(
+    id="aws-kinesisanalytics-privesc-passrole-create-application",
+    name="Kinesis Data Analytics Application with Privileged Role (KINESISANALYTICS-001)",
+    short_description="Create and start a Kinesis Data Analytics application with a privileged role to run code as that role.",
+    description="Detect principals who can pass IAM roles, create Kinesis Data Analytics applications, and start them. The application runs with an attached privileged role, allowing code execution as that role.",
+    attribution=AttackPathsQueryAttribution(
+        text="pathfinding.cloud - KINESISANALYTICS-001 - iam:PassRole + kinesisanalytics:CreateApplication + kinesisanalytics:StartApplication",
+        link="https://pathfinding.cloud/paths/kinesisanalytics-001",
+    ),
+    provider="aws",
+    cypher=f"""
+        // Find principals with iam:PassRole permission
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(passrole_policy:AWSPolicy)-[:STATEMENT]->(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
+        MATCH (stmt_passrole)-[:HAS_ACTION]->(act:AWSPolicyStatementActionItem)
+        WHERE toLower(act.value) IN ['iam:*', 'iam:passrole']
+            OR act.value = '*'
+        WITH DISTINCT aws, principal, stmt_passrole, path_principal
+
+        // Find kinesisanalytics:createapplication permission
+        MATCH (principal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(:AWSPolicyStatement {{effect: 'Allow'}})-[:HAS_ACTION]->(act2:AWSPolicyStatementActionItem)
+        WHERE toLower(act2.value) IN ['kinesisanalytics:*', 'kinesisanalytics:createapplication']
+            OR act2.value = '*'
+        WITH DISTINCT aws, principal, stmt_passrole, path_principal
+
+        // Find kinesisanalytics:startapplication permission
+        MATCH (principal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(:AWSPolicyStatement {{effect: 'Allow'}})-[:HAS_ACTION]->(act3:AWSPolicyStatementActionItem)
+        WHERE toLower(act3.value) IN ['kinesisanalytics:*', 'kinesisanalytics:startapplication']
+            OR act3.value = '*'
+        WITH DISTINCT aws, principal, stmt_passrole, path_principal
+
+        // Pre-aggregate the PassRole statement resources (see docs: Avoiding Cartesian Products)
+        MATCH (stmt_passrole)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)
+        WITH aws, principal, path_principal, collect(DISTINCT res.value) AS res_values
+        WITH aws, principal, path_principal, res_values, ('*' IN res_values) AS res_wildcard
+
+        // Target role that trusts the kinesisanalytics.amazonaws.com service and can be passed
+        MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'kinesisanalytics.amazonaws.com'}})
+        WITH path_principal, path_target, res_values, res_wildcard,
+             target_role.name AS rname, target_role.arn AS rarn
+        WHERE res_wildcard
+            OR size([rv IN res_values WHERE rv CONTAINS rname OR rarn CONTAINS rv]) > 0
+
+        WITH DISTINCT path_principal, path_target
+        WITH collect(path_principal) + collect(path_target) AS paths
+        UNWIND paths AS p
+        UNWIND nodes(p) AS n
+
+        WITH paths, collect(DISTINCT n) AS unique_nodes
+        UNWIND unique_nodes AS n
+
         OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
         RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
@@ -3083,6 +3924,70 @@ AWS_LAMBDA_PRIVESC_PASSROLE_CREATE_FUNCTION_ADD_PERMISSION = AttackPathsQueryDef
     parameters=[],
 )
 
+# OMICS-001
+AWS_OMICS_PRIVESC_PASSROLE_START_RUN = AttackPathsQueryDefinition(
+    id="aws-omics-privesc-passrole-start-run",
+    name="HealthOmics Workflow Run with Privileged Role (OMICS-001)",
+    short_description="Create and start an AWS HealthOmics workflow run with a privileged role to execute as that role.",
+    description="Detect principals who can pass IAM roles, create HealthOmics workflows, and start runs. A run executes with an attached privileged role, allowing arbitrary workflow code to act as that role.",
+    attribution=AttackPathsQueryAttribution(
+        text="pathfinding.cloud - OMICS-001 - iam:PassRole + omics:CreateWorkflow + omics:StartRun",
+        link="https://pathfinding.cloud/paths/omics-001",
+    ),
+    provider="aws",
+    cypher=f"""
+        // Find principals with iam:PassRole permission
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(passrole_policy:AWSPolicy)-[:STATEMENT]->(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
+        MATCH (stmt_passrole)-[:HAS_ACTION]->(act:AWSPolicyStatementActionItem)
+        WHERE toLower(act.value) IN ['iam:*', 'iam:passrole']
+            OR act.value = '*'
+        WITH DISTINCT aws, principal, stmt_passrole, path_principal
+
+        // Find omics:createworkflow permission
+        MATCH (principal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(:AWSPolicyStatement {{effect: 'Allow'}})-[:HAS_ACTION]->(act2:AWSPolicyStatementActionItem)
+        WHERE toLower(act2.value) IN ['omics:*', 'omics:createworkflow']
+            OR act2.value = '*'
+        WITH DISTINCT aws, principal, stmt_passrole, path_principal
+
+        // Find omics:startrun permission
+        MATCH (principal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(:AWSPolicyStatement {{effect: 'Allow'}})-[:HAS_ACTION]->(act3:AWSPolicyStatementActionItem)
+        WHERE toLower(act3.value) IN ['omics:*', 'omics:startrun']
+            OR act3.value = '*'
+        WITH DISTINCT aws, principal, stmt_passrole, path_principal
+
+        // Find s3:getobject permission (read the workflow definition object)
+        MATCH (principal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(:AWSPolicyStatement {{effect: 'Allow'}})-[:HAS_ACTION]->(act4:AWSPolicyStatementActionItem)
+        WHERE toLower(act4.value) IN ['s3:*', 's3:getobject']
+            OR act4.value = '*'
+        WITH DISTINCT aws, principal, stmt_passrole, path_principal
+
+        // Pre-aggregate the PassRole statement resources (see docs: Avoiding Cartesian Products)
+        MATCH (stmt_passrole)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)
+        WITH aws, principal, path_principal, collect(DISTINCT res.value) AS res_values
+        WITH aws, principal, path_principal, res_values, ('*' IN res_values) AS res_wildcard
+
+        // Target role that trusts the omics.amazonaws.com service and can be passed
+        MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'omics.amazonaws.com'}})
+        WITH path_principal, path_target, res_values, res_wildcard,
+             target_role.name AS rname, target_role.arn AS rarn
+        WHERE res_wildcard
+            OR size([rv IN res_values WHERE rv CONTAINS rname OR rarn CONTAINS rv]) > 0
+
+        WITH DISTINCT path_principal, path_target
+        WITH collect(path_principal) + collect(path_target) AS paths
+        UNWIND paths AS p
+        UNWIND nodes(p) AS n
+
+        WITH paths, collect(DISTINCT n) AS unique_nodes
+        UNWIND unique_nodes AS n
+
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+
+        RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+    """,
+    parameters=[],
+)
+
 # SAGEMAKER-001
 AWS_SAGEMAKER_PRIVESC_PASSROLE_CREATE_NOTEBOOK = AttackPathsQueryDefinition(
     id="aws-sagemaker-privesc-passrole-create-notebook",
@@ -3326,6 +4231,58 @@ AWS_SAGEMAKER_PRIVESC_LIFECYCLE_CONFIG_NOTEBOOK = AttackPathsQueryDefinition(
     parameters=[],
 )
 
+# SCHEDULER-001
+AWS_SCHEDULER_PRIVESC_PASSROLE_CREATE_SCHEDULE = AttackPathsQueryDefinition(
+    id="aws-scheduler-privesc-passrole-create-schedule",
+    name="EventBridge Scheduler Target with Privileged Role (SCHEDULER-001)",
+    short_description="Create an EventBridge Scheduler schedule that invokes a target using a privileged role to act as that role.",
+    description="Detect principals who can pass IAM roles and create EventBridge Scheduler schedules. A schedule invokes its target with an attached privileged role, letting an actor perform privileged API calls as that role.",
+    attribution=AttackPathsQueryAttribution(
+        text="pathfinding.cloud - SCHEDULER-001 - iam:PassRole + scheduler:CreateSchedule",
+        link="https://pathfinding.cloud/paths/scheduler-001",
+    ),
+    provider="aws",
+    cypher=f"""
+        // Find principals with iam:PassRole permission
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(passrole_policy:AWSPolicy)-[:STATEMENT]->(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
+        MATCH (stmt_passrole)-[:HAS_ACTION]->(act:AWSPolicyStatementActionItem)
+        WHERE toLower(act.value) IN ['iam:*', 'iam:passrole']
+            OR act.value = '*'
+        WITH DISTINCT aws, principal, stmt_passrole, path_principal
+
+        // Find scheduler:createschedule permission
+        MATCH (principal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(:AWSPolicyStatement {{effect: 'Allow'}})-[:HAS_ACTION]->(act2:AWSPolicyStatementActionItem)
+        WHERE toLower(act2.value) IN ['scheduler:*', 'scheduler:createschedule']
+            OR act2.value = '*'
+        WITH DISTINCT aws, principal, stmt_passrole, path_principal
+
+        // Pre-aggregate the PassRole statement resources (see docs: Avoiding Cartesian Products)
+        MATCH (stmt_passrole)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)
+        WITH aws, principal, path_principal, collect(DISTINCT res.value) AS res_values
+        WITH aws, principal, path_principal, res_values, ('*' IN res_values) AS res_wildcard
+
+        // Target role that trusts the scheduler.amazonaws.com service and can be passed
+        MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'scheduler.amazonaws.com'}})
+        WITH path_principal, path_target, res_values, res_wildcard,
+             target_role.name AS rname, target_role.arn AS rarn
+        WHERE res_wildcard
+            OR size([rv IN res_values WHERE rv CONTAINS rname OR rarn CONTAINS rv]) > 0
+
+        WITH DISTINCT path_principal, path_target
+        WITH collect(path_principal) + collect(path_target) AS paths
+        UNWIND paths AS p
+        UNWIND nodes(p) AS n
+
+        WITH paths, collect(DISTINCT n) AS unique_nodes
+        UNWIND unique_nodes AS n
+
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+
+        RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+    """,
+    parameters=[],
+)
+
 # SSM-001
 AWS_SSM_PRIVESC_START_SESSION = AttackPathsQueryDefinition(
     id="aws-ssm-privesc-start-session",
@@ -3400,6 +4357,290 @@ AWS_SSM_PRIVESC_SEND_COMMAND = AttackPathsQueryDefinition(
     parameters=[],
 )
 
+# SSM-003
+AWS_SSM_PRIVESC_PASSROLE_AUTOMATION = AttackPathsQueryDefinition(
+    id="aws-ssm-privesc-passrole-automation",
+    name="SSM Automation Document with Privileged Role (SSM-003)",
+    short_description="Create and run an SSM Automation document with a privileged automation assume-role to act as that role.",
+    description="Detect principals who can pass IAM roles, create SSM documents, and start automation executions. An automation runs with a privileged assume-role, allowing arbitrary automation steps to act as that role.",
+    attribution=AttackPathsQueryAttribution(
+        text="pathfinding.cloud - SSM-003 - iam:PassRole + ssm:CreateDocument + ssm:StartAutomationExecution",
+        link="https://pathfinding.cloud/paths/ssm-003",
+    ),
+    provider="aws",
+    cypher=f"""
+        // Find principals with iam:PassRole permission
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(passrole_policy:AWSPolicy)-[:STATEMENT]->(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
+        MATCH (stmt_passrole)-[:HAS_ACTION]->(act:AWSPolicyStatementActionItem)
+        WHERE toLower(act.value) IN ['iam:*', 'iam:passrole']
+            OR act.value = '*'
+        WITH DISTINCT aws, principal, stmt_passrole, path_principal
+
+        // Find ssm:createdocument permission
+        MATCH (principal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(:AWSPolicyStatement {{effect: 'Allow'}})-[:HAS_ACTION]->(act2:AWSPolicyStatementActionItem)
+        WHERE toLower(act2.value) IN ['ssm:*', 'ssm:createdocument']
+            OR act2.value = '*'
+        WITH DISTINCT aws, principal, stmt_passrole, path_principal
+
+        // Find ssm:startautomationexecution permission
+        MATCH (principal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(:AWSPolicyStatement {{effect: 'Allow'}})-[:HAS_ACTION]->(act3:AWSPolicyStatementActionItem)
+        WHERE toLower(act3.value) IN ['ssm:*', 'ssm:startautomationexecution']
+            OR act3.value = '*'
+        WITH DISTINCT aws, principal, stmt_passrole, path_principal
+
+        // Pre-aggregate the PassRole statement resources (see docs: Avoiding Cartesian Products)
+        MATCH (stmt_passrole)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)
+        WITH aws, principal, path_principal, collect(DISTINCT res.value) AS res_values
+        WITH aws, principal, path_principal, res_values, ('*' IN res_values) AS res_wildcard
+
+        // Target role that trusts the ssm.amazonaws.com service and can be passed
+        MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'ssm.amazonaws.com'}})
+        WITH path_principal, path_target, res_values, res_wildcard,
+             target_role.name AS rname, target_role.arn AS rarn
+        WHERE res_wildcard
+            OR size([rv IN res_values WHERE rv CONTAINS rname OR rarn CONTAINS rv]) > 0
+
+        WITH DISTINCT path_principal, path_target
+        WITH collect(path_principal) + collect(path_target) AS paths
+        UNWIND paths AS p
+        UNWIND nodes(p) AS n
+
+        WITH paths, collect(DISTINCT n) AS unique_nodes
+        UNWIND unique_nodes AS n
+
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+
+        RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+    """,
+    parameters=[],
+)
+
+# SSO-001
+AWS_SSO_PRIVESC_PERMISSION_SET_ESCALATION = AttackPathsQueryDefinition(
+    id="aws-sso-privesc-permission-set-escalation",
+    name="Identity Center Permission Set Escalation (SSO-001)",
+    short_description="Create an administrative Identity Center permission set and assign it to gain organization-wide admin access.",
+    description="Detect principals that hold sso:CreatePermissionSet, sso:AttachManagedPolicyToPermissionSet, and sso:CreateAccountAssignment together. With all three, a principal can create a new IAM Identity Center permission set, attach the AdministratorAccess managed policy to it, and assign it to their own user or group for any account in the organization, gaining administrative access across the organization through the Identity Center portal.",
+    attribution=AttackPathsQueryAttribution(
+        text="pathfinding.cloud - SSO-001 - sso:CreatePermissionSet + sso:AttachManagedPolicyToPermissionSet + sso:CreateAccountAssignment",
+        link="https://pathfinding.cloud/paths/sso-001",
+    ),
+    provider="aws",
+    cypher=f"""
+        // Find principals with sso:CreatePermissionSet permission
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(policy:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {{effect: 'Allow'}})
+        MATCH (stmt)-[:HAS_ACTION]->(act:AWSPolicyStatementActionItem)
+        WHERE toLower(act.value) IN ['sso:*', 'sso:createpermissionset']
+            OR act.value = '*'
+        MATCH (stmt)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)
+        WHERE res.value = '*'
+        WITH DISTINCT aws, principal, path_principal
+
+        // Find sso:AttachManagedPolicyToPermissionSet permission on the same principal
+        MATCH (principal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(stmt2:AWSPolicyStatement {{effect: 'Allow'}})-[:HAS_ACTION]->(act2:AWSPolicyStatementActionItem)
+        WHERE toLower(act2.value) IN ['sso:*', 'sso:attachmanagedpolicytopermissionset']
+            OR act2.value = '*'
+        MATCH (stmt2)-[:HAS_RESOURCE]->(res2:AWSPolicyStatementResourceItem)
+        WHERE res2.value = '*'
+        WITH DISTINCT principal, path_principal
+
+        // Find sso:CreateAccountAssignment permission on the same principal
+        MATCH (principal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(stmt3:AWSPolicyStatement {{effect: 'Allow'}})-[:HAS_ACTION]->(act3:AWSPolicyStatementActionItem)
+        WHERE toLower(act3.value) IN ['sso:*', 'sso:createaccountassignment']
+            OR act3.value = '*'
+        MATCH (stmt3)-[:HAS_RESOURCE]->(res3:AWSPolicyStatementResourceItem)
+        WHERE res3.value = '*'
+
+        WITH DISTINCT path_principal
+        WITH collect(path_principal) AS paths
+        UNWIND paths AS p
+        UNWIND nodes(p) AS n
+
+        WITH paths, collect(DISTINCT n) AS unique_nodes
+        UNWIND unique_nodes AS n
+
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+
+        RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+    """,
+    parameters=[],
+)
+
+# SSO-002
+AWS_SSO_PRIVESC_ATTACH_MANAGED_POLICY = AttackPathsQueryDefinition(
+    id="aws-sso-privesc-attach-managed-policy-permission-set",
+    name="Identity Center Managed Policy Attachment (SSO-002)",
+    short_description="Attach an administrative managed policy to an existing permission set assigned to the actor to gain admin access.",
+    description="Detect principals with sso:AttachManagedPolicyToPermissionSet. Attaching AdministratorAccess to a permission set already assigned to the actor's identity escalates that assignment to administrative access.",
+    attribution=AttackPathsQueryAttribution(
+        text="pathfinding.cloud - SSO-002 - sso:AttachManagedPolicyToPermissionSet",
+        link="https://pathfinding.cloud/paths/sso-002",
+    ),
+    provider="aws",
+    cypher=f"""
+        // Find principals with sso:attachmanagedpolicytopermissionset permission
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(policy:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {{effect: 'Allow'}})
+        MATCH (stmt)-[:HAS_ACTION]->(act:AWSPolicyStatementActionItem)
+        WHERE toLower(act.value) IN ['sso:*', 'sso:attachmanagedpolicytopermissionset']
+            OR act.value = '*'
+
+        // Require the action on a wildcard resource (permission sets are not graph nodes)
+        MATCH (stmt)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)
+        WHERE res.value = '*'
+
+        WITH DISTINCT path_principal
+        WITH collect(path_principal) AS paths
+        UNWIND paths AS p
+        UNWIND nodes(p) AS n
+
+        WITH paths, collect(DISTINCT n) AS unique_nodes
+        UNWIND unique_nodes AS n
+
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+
+        RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+    """,
+    parameters=[],
+)
+
+# SSO-003
+AWS_SSO_PRIVESC_PUT_INLINE_POLICY = AttackPathsQueryDefinition(
+    id="aws-sso-privesc-put-inline-policy-permission-set",
+    name="Identity Center Inline Policy Injection (SSO-003)",
+    short_description="Inject an administrative inline policy into an existing permission set assigned to the actor to gain admin access.",
+    description="Detect principals with sso:PutInlinePolicyToPermissionSet. Writing an administrative inline policy onto a permission set already assigned to the actor's identity escalates that assignment to administrative access.",
+    attribution=AttackPathsQueryAttribution(
+        text="pathfinding.cloud - SSO-003 - sso:PutInlinePolicyToPermissionSet",
+        link="https://pathfinding.cloud/paths/sso-003",
+    ),
+    provider="aws",
+    cypher=f"""
+        // Find principals with sso:putinlinepolicytopermissionset permission
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(policy:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {{effect: 'Allow'}})
+        MATCH (stmt)-[:HAS_ACTION]->(act:AWSPolicyStatementActionItem)
+        WHERE toLower(act.value) IN ['sso:*', 'sso:putinlinepolicytopermissionset']
+            OR act.value = '*'
+
+        // Require the action on a wildcard resource (permission sets are not graph nodes)
+        MATCH (stmt)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)
+        WHERE res.value = '*'
+
+        WITH DISTINCT path_principal
+        WITH collect(path_principal) AS paths
+        UNWIND paths AS p
+        UNWIND nodes(p) AS n
+
+        WITH paths, collect(DISTINCT n) AS unique_nodes
+        UNWIND unique_nodes AS n
+
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+
+        RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+    """,
+    parameters=[],
+)
+
+
+# STEPFUNCTIONS-001
+AWS_STEPFUNCTIONS_PRIVESC_PASSROLE_CREATE_STATE_MACHINE = AttackPathsQueryDefinition(
+    id="aws-stepfunctions-privesc-passrole-create-state-machine",
+    name="Step Functions State Machine with Privileged Role (STEPFUNCTIONS-001)",
+    short_description="Create and execute a Step Functions state machine with a privileged role to make API calls as that role.",
+    description="Detect principals who can pass IAM roles, create Step Functions state machines, and start executions. A state machine executes tasks with an attached privileged role, allowing privileged API calls as that role.",
+    attribution=AttackPathsQueryAttribution(
+        text="pathfinding.cloud - STEPFUNCTIONS-001 - iam:PassRole + states:CreateStateMachine + states:StartExecution",
+        link="https://pathfinding.cloud/paths/stepfunctions-001",
+    ),
+    provider="aws",
+    cypher=f"""
+        // Find principals with iam:PassRole permission
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(passrole_policy:AWSPolicy)-[:STATEMENT]->(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
+        MATCH (stmt_passrole)-[:HAS_ACTION]->(act:AWSPolicyStatementActionItem)
+        WHERE toLower(act.value) IN ['iam:*', 'iam:passrole']
+            OR act.value = '*'
+        WITH DISTINCT aws, principal, stmt_passrole, path_principal
+
+        // Find states:createstatemachine permission
+        MATCH (principal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(:AWSPolicyStatement {{effect: 'Allow'}})-[:HAS_ACTION]->(act2:AWSPolicyStatementActionItem)
+        WHERE toLower(act2.value) IN ['states:*', 'states:createstatemachine']
+            OR act2.value = '*'
+        WITH DISTINCT aws, principal, stmt_passrole, path_principal
+
+        // Find states:startexecution permission
+        MATCH (principal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(:AWSPolicyStatement {{effect: 'Allow'}})-[:HAS_ACTION]->(act3:AWSPolicyStatementActionItem)
+        WHERE toLower(act3.value) IN ['states:*', 'states:startexecution']
+            OR act3.value = '*'
+        WITH DISTINCT aws, principal, stmt_passrole, path_principal
+
+        // Pre-aggregate the PassRole statement resources (see docs: Avoiding Cartesian Products)
+        MATCH (stmt_passrole)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)
+        WITH aws, principal, path_principal, collect(DISTINCT res.value) AS res_values
+        WITH aws, principal, path_principal, res_values, ('*' IN res_values) AS res_wildcard
+
+        // Target role that trusts the states.amazonaws.com service and can be passed
+        MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'states.amazonaws.com'}})
+        WITH path_principal, path_target, res_values, res_wildcard,
+             target_role.name AS rname, target_role.arn AS rarn
+        WHERE res_wildcard
+            OR size([rv IN res_values WHERE rv CONTAINS rname OR rarn CONTAINS rv]) > 0
+
+        WITH DISTINCT path_principal, path_target
+        WITH collect(path_principal) + collect(path_target) AS paths
+        UNWIND paths AS p
+        UNWIND nodes(p) AS n
+
+        WITH paths, collect(DISTINCT n) AS unique_nodes
+        UNWIND unique_nodes AS n
+
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+
+        RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+    """,
+    parameters=[],
+)
+
+# STEPFUNCTIONS-002
+AWS_STEPFUNCTIONS_PRIVESC_UPDATE_STATE_MACHINE = AttackPathsQueryDefinition(
+    id="aws-stepfunctions-privesc-update-state-machine",
+    name="Step Functions Existing State Machine Update (STEPFUNCTIONS-002)",
+    short_description="Update an existing Step Functions state machine and execute it to make API calls as its privileged role.",
+    description="Detect principals who can update Step Functions state machines and start executions. Editing an existing state machine that already has a privileged role lets an actor run arbitrary tasks as that role without iam:PassRole. The graph does not model which state machine uses which role, so this lists every role trusting the states.amazonaws.com service; each result needs manual review to confirm an existing state machine actually uses the role.",
+    attribution=AttackPathsQueryAttribution(
+        text="pathfinding.cloud - STEPFUNCTIONS-002 - states:UpdateStateMachine + states:StartExecution",
+        link="https://pathfinding.cloud/paths/stepfunctions-002",
+    ),
+    provider="aws",
+    cypher=f"""
+        // Find principals with states:updatestatemachine permission
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(:AWSPolicyStatement {{effect: 'Allow'}})-[:HAS_ACTION]->(act:AWSPolicyStatementActionItem)
+        WHERE toLower(act.value) IN ['states:*', 'states:updatestatemachine']
+            OR act.value = '*'
+        WITH DISTINCT aws, principal, path_principal
+
+        // Find states:startexecution permission
+        MATCH (principal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(:AWSPolicyStatement {{effect: 'Allow'}})-[:HAS_ACTION]->(act2:AWSPolicyStatementActionItem)
+        WHERE toLower(act2.value) IN ['states:*', 'states:startexecution']
+            OR act2.value = '*'
+        WITH DISTINCT aws, principal, path_principal
+
+        // Target role attached to the existing resource, trusting the states.amazonaws.com service
+        MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'states.amazonaws.com'}})
+
+        WITH DISTINCT path_principal, path_target
+        WITH collect(path_principal) + collect(path_target) AS paths
+        UNWIND paths AS p
+        UNWIND nodes(p) AS n
+
+        WITH paths, collect(DISTINCT n) AS unique_nodes
+        UNWIND unique_nodes AS n
+
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+
+        RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+    """,
+    parameters=[],
+)
+
 # STS-001
 AWS_STS_PRIVESC_ASSUME_ROLE = AttackPathsQueryDefinition(
     id="aws-sts-privesc-assume-role",
@@ -3441,6 +4682,69 @@ AWS_STS_PRIVESC_ASSUME_ROLE = AttackPathsQueryDefinition(
     parameters=[],
 )
 
+# STS-002
+AWS_STS_PRIVESC_CROSS_ACCOUNT_TRUST = AttackPathsQueryDefinition(
+    id="aws-sts-privesc-cross-account-trust",
+    name="Cross-Account Role Trust for Privilege Escalation (STS-002)",
+    short_description="Roles that trust an external account's root principal can be assumed by any principal in that account, enabling confused-deputy escalation.",
+    description="Detect IAM roles whose trust policy allows an external AWS account root principal (arn:aws:iam::<account-id>:root) to assume them. Any principal in the trusted external account that holds sts:AssumeRole can assume the role and gain its permissions, which is the confused-deputy escalation surface. The ingested graph does not record trust-policy conditions, so roles protected by an sts:ExternalId condition cannot be filtered out automatically and are surfaced here for manual review.",
+    attribution=AttackPathsQueryAttribution(
+        text="pathfinding.cloud - STS-002 - sts:AssumeRole",
+        link="https://pathfinding.cloud/paths/sts-002",
+    ),
+    provider="aws",
+    cypher=f"""
+        // Find roles that trust an external account's root principal (cross-account trust)
+        MATCH path_target = (aws:AWSAccount {{id: $provider_uid}})--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(trusted:AWSRootPrincipal)
+        WHERE trusted.arn CONTAINS ':root'
+            AND NOT trusted.arn CONTAINS aws.id
+
+        WITH DISTINCT path_target
+        WITH collect(path_target) AS paths
+        UNWIND paths AS p
+        UNWIND nodes(p) AS n
+
+        WITH paths, collect(DISTINCT n) AS unique_nodes
+        UNWIND unique_nodes AS n
+
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+
+        RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+    """,
+    parameters=[],
+)
+
+# STS-003
+AWS_STS_PRIVESC_WILDCARD_TRUST = AttackPathsQueryDefinition(
+    id="aws-sts-privesc-wildcard-trust",
+    name="Potential Wildcard Role Trust (STS-003)",
+    short_description="Potential wildcard role trusts that need manual review before they are treated as assumable.",
+    description='Find IAM roles linked to a wildcard principal ("AWS": "*"). The ingested graph does not preserve trust-policy Effect or Condition fields, so a match can come from a Deny statement or a restricted Allow statement. Treat each result as a candidate for manual review, not as a confirmed assumable role.',
+    attribution=AttackPathsQueryAttribution(
+        text="pathfinding.cloud - STS-003 - sts:AssumeRole",
+        link="https://pathfinding.cloud/paths/sts-003",
+    ),
+    provider="aws",
+    cypher=f"""
+        // Find roles linked to a wildcard principal for manual review
+        MATCH path_target = (aws:AWSAccount {{id: $provider_uid}})--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(trusted:AWSPrincipal)
+        WHERE trusted.arn = '*'
+
+        WITH DISTINCT path_target
+        WITH collect(path_target) AS paths
+        UNWIND paths AS p
+        UNWIND nodes(p) AS n
+
+        WITH paths, collect(DISTINCT n) AS unique_nodes
+        UNWIND unique_nodes AS n
+
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+
+        RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+    """,
+    parameters=[],
+)
+
 # AWS Queries List
 
 AWS_QUERIES: list[AttackPathsQueryDefinition] = [
@@ -3458,8 +4762,11 @@ AWS_QUERIES: list[AttackPathsQueryDefinition] = [
     AWS_PUBLIC_IP_RESOURCE_LOOKUP,
     AWS_APPRUNNER_PRIVESC_PASSROLE_CREATE_SERVICE,
     AWS_APPRUNNER_PRIVESC_UPDATE_SERVICE,
+    AWS_BATCH_PRIVESC_PASSROLE_SUBMIT_JOB,
+    AWS_BATCH_PRIVESC_SUBMIT_EXISTING_JOB,
     AWS_BEDROCK_PRIVESC_PASSROLE_CODE_INTERPRETER,
     AWS_BEDROCK_PRIVESC_INVOKE_CODE_INTERPRETER,
+    AWS_BRAKET_PRIVESC_PASSROLE_CREATE_JOB,
     AWS_CLOUDFORMATION_PRIVESC_PASSROLE_CREATE_STACK,
     AWS_CLOUDFORMATION_PRIVESC_UPDATE_STACK,
     AWS_CLOUDFORMATION_PRIVESC_PASSROLE_CREATE_STACKSET,
@@ -3469,6 +4776,8 @@ AWS_QUERIES: list[AttackPathsQueryDefinition] = [
     AWS_CODEBUILD_PRIVESC_START_BUILD,
     AWS_CODEBUILD_PRIVESC_START_BUILD_BATCH,
     AWS_CODEBUILD_PRIVESC_PASSROLE_CREATE_PROJECT_BATCH,
+    AWS_CODEDEPLOY_PRIVESC_CREATE_DEPLOYMENT,
+    AWS_COGNITO_PRIVESC_PASSROLE_SET_IDENTITY_POOL_ROLES,
     AWS_DATAPIPELINE_PRIVESC_PASSROLE_CREATE_PIPELINE,
     AWS_EC2_PRIVESC_PASSROLE_IAM,
     AWS_EC2_PRIVESC_MODIFY_INSTANCE_ATTRIBUTE,
@@ -3481,12 +4790,17 @@ AWS_QUERIES: list[AttackPathsQueryDefinition] = [
     AWS_ECS_PRIVESC_PASSROLE_RUN_TASK_EXISTING_CLUSTER,
     AWS_ECS_PRIVESC_PASSROLE_START_TASK_EXISTING_CLUSTER,
     AWS_ECS_PRIVESC_EXECUTE_COMMAND,
+    AWS_ECS_PRIVESC_PASSROLE_START_EXISTING_TASK,
+    AWS_EMR_PRIVESC_PASSROLE_RUN_JOB_FLOW,
+    AWS_EMRSERVERLESS_PRIVESC_PASSROLE_START_JOB,
+    AWS_GAMELIFT_PRIVESC_PASSROLE_CREATE_FLEET,
     AWS_GLUE_PRIVESC_PASSROLE_DEV_ENDPOINT,
     AWS_GLUE_PRIVESC_UPDATE_DEV_ENDPOINT,
     AWS_GLUE_PRIVESC_PASSROLE_CREATE_JOB,
     AWS_GLUE_PRIVESC_PASSROLE_CREATE_JOB_TRIGGER,
     AWS_GLUE_PRIVESC_PASSROLE_UPDATE_JOB,
     AWS_GLUE_PRIVESC_PASSROLE_UPDATE_JOB_TRIGGER,
+    AWS_GLUE_PRIVESC_PASSROLE_CREATE_SESSION,
     AWS_IAM_PRIVESC_CREATE_POLICY_VERSION,
     AWS_IAM_PRIVESC_CREATE_ACCESS_KEY,
     AWS_IAM_PRIVESC_DELETE_CREATE_ACCESS_KEY,
@@ -3508,18 +4822,32 @@ AWS_QUERIES: list[AttackPathsQueryDefinition] = [
     AWS_IAM_PRIVESC_ATTACH_ROLE_POLICY_UPDATE_ASSUME_ROLE,
     AWS_IAM_PRIVESC_CREATE_POLICY_VERSION_UPDATE_ASSUME_ROLE,
     AWS_IAM_PRIVESC_PUT_ROLE_POLICY_UPDATE_ASSUME_ROLE,
+    AWS_IAM_PRIVESC_DELETE_USER_PERMISSIONS_BOUNDARY,
+    AWS_IAM_PRIVESC_DELETE_ROLE_BOUNDARY_ASSUME_ROLE,
+    AWS_IMAGEBUILDER_PRIVESC_PASSROLE_CREATE_IMAGE,
+    AWS_KINESISANALYTICS_PRIVESC_PASSROLE_CREATE_APP,
     AWS_LAMBDA_PRIVESC_PASSROLE_CREATE_FUNCTION,
     AWS_LAMBDA_PRIVESC_PASSROLE_CREATE_FUNCTION_EVENT_SOURCE,
     AWS_LAMBDA_PRIVESC_UPDATE_FUNCTION_CODE,
     AWS_LAMBDA_PRIVESC_UPDATE_FUNCTION_CODE_INVOKE,
     AWS_LAMBDA_PRIVESC_UPDATE_FUNCTION_CODE_ADD_PERMISSION,
     AWS_LAMBDA_PRIVESC_PASSROLE_CREATE_FUNCTION_ADD_PERMISSION,
+    AWS_OMICS_PRIVESC_PASSROLE_START_RUN,
     AWS_SAGEMAKER_PRIVESC_PASSROLE_CREATE_NOTEBOOK,
     AWS_SAGEMAKER_PRIVESC_PASSROLE_CREATE_TRAINING_JOB,
     AWS_SAGEMAKER_PRIVESC_PASSROLE_CREATE_PROCESSING_JOB,
     AWS_SAGEMAKER_PRIVESC_PRESIGNED_NOTEBOOK_URL,
     AWS_SAGEMAKER_PRIVESC_LIFECYCLE_CONFIG_NOTEBOOK,
+    AWS_SCHEDULER_PRIVESC_PASSROLE_CREATE_SCHEDULE,
     AWS_SSM_PRIVESC_START_SESSION,
     AWS_SSM_PRIVESC_SEND_COMMAND,
+    AWS_SSM_PRIVESC_PASSROLE_AUTOMATION,
+    AWS_SSO_PRIVESC_PERMISSION_SET_ESCALATION,
+    AWS_SSO_PRIVESC_ATTACH_MANAGED_POLICY,
+    AWS_SSO_PRIVESC_PUT_INLINE_POLICY,
+    AWS_STEPFUNCTIONS_PRIVESC_PASSROLE_CREATE_STATE_MACHINE,
+    AWS_STEPFUNCTIONS_PRIVESC_UPDATE_STATE_MACHINE,
     AWS_STS_PRIVESC_ASSUME_ROLE,
+    AWS_STS_PRIVESC_CROSS_ACCOUNT_TRUST,
+    AWS_STS_PRIVESC_WILDCARD_TRUST,
 ]
