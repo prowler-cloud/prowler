@@ -41,17 +41,20 @@ jobs:
     timeout-minutes: 5
     outputs:
       short-sha: ${{ steps.set-short-sha.outputs.short-sha }}
+      created: ${{ steps.set-short-sha.outputs.created }}
     permissions:
       contents: read
     steps:
-      - name: Harden the runner (Audit all outbound calls)
+      - name: Harden Runner
         uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
         with:
-          egress-policy: audit
+          egress-policy: block
 
       - name: Calculate short SHA
         id: set-short-sha
-        run: echo "short-sha=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+        run: |
+          echo "short-sha=${GITHUB_SHA::7}" >> "${GITHUB_OUTPUT}"
+          echo "created=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "${GITHUB_OUTPUT}"
 
   notify-release-started:
     if: github.repository == 'prowler-cloud/prowler' && (github.event_name == 'release' || github.event_name == 'workflow_dispatch')
@@ -111,15 +114,15 @@ jobs:
         with:
           egress-policy: block
           allowed-endpoints: >
-            registry-1.docker.io:443
-            production.cloudflare.docker.com:443
-            production.cloudfront.docker.com:443
             auth.docker.io:443
-            registry.npmjs.org:443
             dl-cdn.alpinelinux.org:443
             fonts.googleapis.com:443
             fonts.gstatic.com:443
             github.com:443
+            production.cloudflare.docker.com:443
+            production.cloudfront.docker.com:443
+            registry-1.docker.io:443
+            registry.npmjs.org:443
 
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -147,6 +150,14 @@ jobs:
           platforms: ${{ matrix.platform }}
           tags: |
             ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.setup.outputs.short-sha }}-${{ matrix.arch }}
+          labels: |
+            org.opencontainers.image.title=Prowler Local Server UI
+            org.opencontainers.image.description=Web UI for Prowler Local Server (Next.js)
+            org.opencontainers.image.vendor=ProwlerPro, Inc.
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.created=${{ needs.setup.outputs.created }}
+            ${{ (github.event_name == 'release' || github.event_name == 'workflow_dispatch') && format('org.opencontainers.image.version={0}', env.RELEASE_TAG) || '' }}
           cache-from: type=gha,scope=${{ matrix.arch }}
           cache-to: type=gha,mode=${{ github.event_name == 'pull_request' && 'min' || 'max' }},scope=${{ matrix.arch }}
 
@@ -164,12 +175,12 @@ jobs:
         with:
           egress-policy: block
           allowed-endpoints: >
-            github.com:443
-            release-assets.githubusercontent.com:443
-            registry-1.docker.io:443
             auth.docker.io:443
+            github.com:443
             production.cloudflare.docker.com:443
             production.cloudfront.docker.com:443
+            registry-1.docker.io:443
+            release-assets.githubusercontent.com:443
 
       - name: Login to DockerHub
         uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0

@@ -40,6 +40,7 @@ describe("ProviderCoverageCard", () => {
     expect(screen.getByTestId("coverage-row-aws")).toBeInTheDocument();
     expect(screen.queryByTestId("coverage-row-gcp")).not.toBeInTheDocument();
     expect(screen.queryByText("No completed scan")).not.toBeInTheDocument();
+    expect(screen.getByText("8/10 · 1 manual")).toBeInTheDocument();
   });
 
   it("shows an empty state when no provider has a scan", () => {

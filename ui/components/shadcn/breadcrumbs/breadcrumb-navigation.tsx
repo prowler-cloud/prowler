@@ -6,6 +6,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { ReactNode } from "react";
 
 import { LighthouseIcon } from "@/components/icons/Icons";
+import { buildPerScanComplianceHref } from "@/lib/compliance/compliance-tab-url";
 import { cn } from "@/lib/utils";
 
 export interface CustomBreadcrumbItem {
@@ -101,8 +102,10 @@ export function BreadcrumbNavigation({
 
   const buildNavigationUrl = (path: string) => {
     const paramValue = searchParams.get(paramToPreserve);
+    // A preserved scan only makes sense on Single Scan, which is no longer
+    // the landing tab: the bare route would drop it for Multiple Scans.
     if (path === "/compliance" && paramValue) {
-      return `/compliance?${paramToPreserve}=${paramValue}`;
+      return buildPerScanComplianceHref({ [paramToPreserve]: paramValue });
     }
     return path;
   };

@@ -91,8 +91,14 @@ Choose a Method:
         |----------------|---------------------------------------------------------------------------------------------------------|----------|
         | `firstName`    | The user's first name.                                                                                  | Yes      |
         | `lastName`     | The user's last name.                                                                                   | Yes      |
-        | `userType`     | Determines which Prowler role the user receives (e.g., `admin`, `auditor`). If a role with that name already exists, the user receives it automatically; if it does not exist, Prowler Cloud creates a new role with that name with read-only access (visibility over all providers, no management permissions). If `userType` is not defined, the user's existing roles are left unchanged. Role permissions can be edited in the [RBAC Management tab](/user-guide/tutorials/prowler-app-rbac). | No       |
+        | `userType`     | Determines which Prowler role the user receives (e.g., `admin`, `auditor`). If a role with that name already exists, the user receives it automatically; if it does not exist, Prowler Cloud creates a new role with that name with read-only access (visibility over all providers, no management permissions). A Prowler administrator can adjust its permissions through the [RBAC Management tab](/user-guide/tutorials/prowler-app-rbac). If `userType` is not defined, Prowler Cloud applies the fallback behavior described below. | No       |
         | `organization` | The user's company name.                                                                                | No       |
+
+        **Fallback Role Without `userType`**
+
+        <VersionBadge version="5.37.0" />
+
+        If `userType` is not defined, the user's existing roles are left unchanged. Users without an existing role in that tenant receive a least-privilege `read_only` fallback role. If `read_only` already belongs to a role with different permissions, Prowler Cloud checks suffixed names in order, starting with `read_only_0`. It reuses the first role with the fallback permissions or creates the first available name. A Prowler administrator can then assign the appropriate role through the [RBAC Management tab](/user-guide/tutorials/prowler-app-rbac).
 
         <Info>
         **IdP Attribute Mapping**
@@ -163,8 +169,13 @@ Choose a Method:
 
             * If a role with the specified name already exists in Prowler Cloud, the user automatically receives that role.
             * If the role does not exist, Prowler Cloud creates a new role with that exact name with read-only access: the user can see all providers and their findings but cannot manage anything. A Prowler administrator (a user whose role includes the "Manage Account" permission) can adjust its permissions afterward through the [RBAC Management tab](/user-guide/tutorials/prowler-app-rbac).
-            * If `userType` is not defined in the user's Okta profile, the user's existing roles in Prowler Cloud are left unchanged.
             * `userType` must contain a single value. If the IdP sends multiple values, Prowler Cloud uses only the first value and does not assign multiple roles.
+
+            **Fallback Role Without `userType`**
+
+            <VersionBadge version="5.37.0" />
+
+            If `userType` is not defined in the user's Okta profile, the user's existing roles in Prowler Cloud are left unchanged. Users without an existing role in that tenant receive a least-privilege `read_only` fallback role until a Prowler administrator assigns another role. If `read_only` already belongs to a role with different permissions, Prowler Cloud checks suffixed names in order, starting with `read_only_0`. It reuses the first role with the fallback permissions or creates the first available name.
 
             **Example:** To assign the `IT` role to a user, set the `userType` value to `IT` in Okta. If a role named `IT` already exists in Prowler Cloud, the user receives it automatically upon login. If it does not exist, Prowler Cloud creates a new role called `IT` with read-only access, and a Prowler administrator can adjust its permissions as needed.
 
@@ -194,20 +205,13 @@ To complete the Prowler Cloud configuration:
 
 #### Step 5: Save and Verify Configuration
 
-Click the "Save" button to complete the setup. The "SAML Integration" card will now display an "Active" status, indicating the configuration is complete and enabled.
+Click the "Save" button to complete the setup. The "SAML SSO Integration" card will now display an "Enabled" status, indicating the configuration is complete and enabled.
 
-![Verify Integration Status](/images/prowler-app/saml/saml-step-4.png)
-
-<Info>
-**IdP Configuration**
-
-The exact steps for configuring an IdP vary depending on the provider (Okta, Azure AD, etc.). Please refer to the IdP's documentation for instructions on creating a SAML application.
-
-</Info>
+![Verify Integration Status](/images/prowler-app/saml/saml-sso-enabled.png)
 
 ### Remove SAML Configuration
 SAML SSO can be disabled by removing the existing configuration from the integration panel.
-![Remove SAML configuration](/images/prowler-app/saml/saml-step-remove.png)
+![Remove SAML configuration](/images/prowler-app/saml/saml-sso-remove.png)
 
 ### IdP-Initiated SSO
 
@@ -225,9 +229,9 @@ Users can also initiate the login process directly from Prowler's login page:
 
 1. Navigate to the Prowler login page
 2. Click "Continue with SAML SSO"
-    ![](/images/prowler-app/saml/saml-signin-1.png)
+    ![Prowler Cloud login page with the "Continue with SAML SSO" button](/images/prowler-app/saml/saml-signin-1.png)
 3. Enter their email address from the configured domain
-    ![](/images/prowler-app/saml/saml-signin-2.png)
+    ![SAML SSO login form asking for the email address](/images/prowler-app/saml/saml-signin-2.png)
 4. The system redirects users to the IdP for authentication
 5. After successful authentication, users are returned to Prowler Cloud
 

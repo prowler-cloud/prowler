@@ -1,0 +1,68 @@
+# Findings excluded from the Grype gate, each with a reason.
+# Anything not listed here blocks the pull request at critical or high severity.
+# Pairs are explicit: a new CVE against an already-listed package still blocks.
+#
+# Every entry below has a published fix we cannot take. Findings with no fix at all are
+# not listed: the scan runs with only-fixed, so they never reach the gate.
+
+ignore:
+
+  # Modules compiled into the Trivy binary we ship.
+  # Only a Trivy rebuild by its vendor can change these; the version is pinned in our Dockerfile.
+  - vulnerability: CVE-2026-56852
+    package:
+      name: golang.org/x/text
+  - vulnerability: GHSA-hrxh-6v49-42gf
+    package:
+      name: google.golang.org/grpc
+  - vulnerability: CVE-2026-50151
+    package:
+      name: oras.land/oras-go/v2
+
+  # Shipped inside the PowerShell tarball, in its bundled MicrosoftTeams module.
+  # Not a dependency we declare, and not one we can upgrade independently.
+  - vulnerability: CVE-2026-26127
+    package:
+      name: Microsoft.Bcl.Memory
+
+  # cryptography is capped below 49 by alibabacloud-tea-openapi==0.4.5, which requires
+  # cryptography>=3.0.0,<49.0.0. The fix is in 50.0.0, so it is unreachable until that
+  # dependency raises its ceiling. Verified by attempting the upgrade: resolution fails.
+  - vulnerability: CVE-2026-69247
+    package:
+      name: cryptography
+
+  # The CPython interpreter, compiled into the official base image.
+  # TEMPORARY, unlike the entries above: moving to Python 3.13 clears seven of these, and
+  # that is a runtime upgrade pending its own evaluation. The remaining three need 3.15 and
+  # are unfixable either way -- the MCP image already runs 3.13.14 and still reports them.
+  - vulnerability: CVE-2026-11940
+    package:
+      name: python
+  - vulnerability: CVE-2026-11972
+    package:
+      name: python
+  - vulnerability: CVE-2026-15308
+    package:
+      name: python
+  - vulnerability: CVE-2026-3298
+    package:
+      name: python
+  - vulnerability: CVE-2026-3644
+    package:
+      name: python
+  - vulnerability: CVE-2026-4224
+    package:
+      name: python
+  - vulnerability: CVE-2026-4786
+    package:
+      name: python
+  - vulnerability: CVE-2026-6100
+    package:
+      name: python
+  - vulnerability: CVE-2026-7210
+    package:
+      name: python
+  - vulnerability: CVE-2026-9669
+    package:
+      name: python

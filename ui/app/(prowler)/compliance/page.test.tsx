@@ -13,4 +13,9 @@ describe("Compliance overview page", () => {
     expect(source).toContain("ComplianceOverviewGrid");
     expect(source).not.toContain("filter[search]");
   });
+
+  it("uses layout-matched skeletons for the Multiple Scans islands", () => {
+    expect(source).toContain("<CrossProviderOverviewSkeleton />");
+    expect(source).toContain("<CrossAccountOverviewSkeleton />");
+  });
 });

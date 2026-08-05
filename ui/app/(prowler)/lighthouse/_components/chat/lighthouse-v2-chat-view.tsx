@@ -21,12 +21,14 @@ import {
   type LighthouseV2SupportedModel,
   type LighthouseV2SupportedProvider,
 } from "@/app/(prowler)/lighthouse/_types";
+import { LighthouseCurrentContextBadge } from "@/components/lighthouse/context-chip";
 import { Card } from "@/components/shadcn";
 import {
   Combobox,
   type ComboboxGroup,
 } from "@/components/shadcn/combobox/combobox";
 import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
+import { useLighthouseCurrentContext } from "@/hooks/use-lighthouse-context";
 
 import { ProviderIcon } from "../config/provider-icon";
 
@@ -53,6 +55,7 @@ export function LighthouseV2ChatView({
   surface,
   emptyStateFooter,
 }: LighthouseV2ChatViewProps) {
+  const currentContext = useLighthouseCurrentContext();
   // Whole-store subscription is intentional: the view renders most of the state and selectLighthouseChatCanSend takes full state.
   const state = useLighthouseChatStore((current) => current);
   const {
@@ -62,13 +65,14 @@ export function LighthouseV2ChatView({
     input,
     feedback,
     isLoadingSession,
-    lastSubmittedText,
+    lastSubmission,
     selectedModelSelection,
     modelPreferenceSaving,
     setInput,
     dismissFeedback,
     selectModel,
     submitMessage,
+    retryLastMessage,
   } = state;
   const { modelsByProvider, supportedProviders } = config;
   const connectedConfigurations = config.configurations.filter(
@@ -109,6 +113,10 @@ export function LighthouseV2ChatView({
     : "";
 
   const canSend = selectLighthouseChatCanSend(state);
+  const supportsAutomaticContext = surface === LIGHTHOUSE_CHAT_SURFACE.PANEL;
+  const messageContext = supportsAutomaticContext
+    ? currentContext.context
+    : undefined;
 
   const handleModelValueChange = (value: string) => {
     const selection = parseLighthouseV2ModelSelectionValue(value);
@@ -118,7 +126,7 @@ export function LighthouseV2ChatView({
 
   const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
-    void submitMessage(input);
+    void submitMessage(input, messageContext);
   };
 
   const hasLiveAssistantActivity =
@@ -131,10 +139,12 @@ export function LighthouseV2ChatView({
     feedback,
     canRetry:
       streamState.status === LIGHTHOUSE_V2_STREAM_STATUS.DISCONNECTED &&
-      lastSubmittedText !== null,
-    onRetry: () =>
-      lastSubmittedText ? void submitMessage(lastSubmittedText) : undefined,
+      lastSubmission !== null,
+    onRetry: () => void retryLastMessage(),
     onDismissFeedback: dismissFeedback,
+    contextControl: supportsAutomaticContext ? (
+      <LighthouseCurrentContextBadge context={currentContext.context} />
+    ) : undefined,
     canSend,
     input,
     isStreaming: Boolean(streamState.activeTaskId),
@@ -162,7 +172,7 @@ export function LighthouseV2ChatView({
     selectedConfigurationConnected: selectedConfiguration?.connected === true,
     onInputChange: setInput,
     onSubmit: handleSubmit,
-    onSubmitText: submitMessage,
+    onSubmitText: (text: string) => submitMessage(text, messageContext),
   };
 
   const chatBody = isLoadingSession ? (
@@ -203,6 +213,9 @@ export function LighthouseV2ChatView({
       {...composerPanelProps}
       footer={emptyStateFooter}
       compact={surface === LIGHTHOUSE_CHAT_SURFACE.PANEL}
+      suggestions={
+        supportsAutomaticContext ? currentContext.page.suggestions : undefined
+      }
     />
   );
 

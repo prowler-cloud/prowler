@@ -1,0 +1,1 @@
+`securityhub_delegated_admin_enabled_all_regions` no longer reports FAIL with `delegated administrator status could not be determined` on accounts that do have a Security Hub delegated administrator; `ListOrganizationAdminAccounts` responses are now parsed with the `AccountId` and `Status` fields the API actually returns
