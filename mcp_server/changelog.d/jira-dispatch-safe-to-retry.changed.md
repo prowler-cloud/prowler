@@ -1,1 +1,1 @@
-`prowler_send_findings_to_jira` now reports `safe_to_retry` on every outcome, marking a dispatch the API rejected as retryable while a request that got no answer stays unsafe
+`prowler_send_findings_to_jira` now reports `safe_to_retry` on every outcome, marking only a dispatch the API refused as retryable while a server error or an unanswered request stays unsafe

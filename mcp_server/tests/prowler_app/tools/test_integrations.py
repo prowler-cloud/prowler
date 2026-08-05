@@ -903,10 +903,13 @@ async def test_dispatching_no_findings_is_refused_before_the_request(
     assert mock_router.requests == []
 
 
-async def test_a_dispatch_the_api_rejected_is_the_only_one_safe_to_retry(
-    mcp_root_server, mock_api_client, mock_router
+@pytest.mark.parametrize(
+    "status", [400, 403, 404], ids=["invalid", "forbidden", "not-found"]
+)
+async def test_a_dispatch_the_api_refused_is_the_only_one_safe_to_retry(
+    mcp_root_server, mock_api_client, mock_router, status
 ):
-    """An error status is an answer: Prowler saw the request and created nothing.
+    """A client error is a refusal: the API rejects the dispatch before queueing it.
 
     That makes it the one dispatch failure an agent can act on directly, so the
     response has to say so -- an omitted `safe_to_retry` reads as "do not retry"
@@ -915,9 +918,9 @@ async def test_a_dispatch_the_api_rejected_is_the_only_one_safe_to_retry(
     mock_router.add(
         "POST",
         DISPATCHES,
-        status=400,
+        status=status,
         json=jsonapi_error(
-            400, "Issue type 'Epic' requires fields Prowler cannot fill."
+            status, "Issue type 'Epic' requires fields Prowler cannot fill."
         ),
     )
 
@@ -937,14 +940,43 @@ async def test_a_dispatch_the_api_rejected_is_the_only_one_safe_to_retry(
     assert "requires fields Prowler cannot fill" in result.data["error"]
 
 
+async def test_a_dispatch_that_failed_on_the_server_is_not_safe_to_retry(
+    mcp_root_server, mock_api_client, mock_router
+):
+    """A server error is not a refusal, and this is where that distinction bites.
+
+    The API queues the background task and only then serializes its answer, so a
+    500 can come back with work items already being created. Treating every error
+    status as a clean rejection would invite a resend on top of them.
+    """
+    mock_router.add(
+        "POST", DISPATCHES, status=500, json=jsonapi_error(500, "Server error.")
+    )
+
+    async with Client(mcp_root_server) as client:
+        result = await client.call_tool(
+            "prowler_send_findings_to_jira",
+            {
+                "integration_id": "i1",
+                "project_key": "PROJ",
+                "issue_type": "Task",
+                "finding_ids": ["f1"],
+            },
+        )
+
+    assert result.data["status"] == "unknown"
+    assert result.data["safe_to_retry"] is False
+    assert "Check the Jira project" in result.data["error"]
+
+
 async def test_a_dispatch_request_that_got_no_answer_is_not_safe_to_retry(
     mcp_root_server, mock_api_client, mock_router
 ):
-    """A timeout is not a rejection: the request may have been processed anyway.
+    """A timeout is not a rejection either: the request may have been processed.
 
     Prowler could already be creating work items, so the only difference with a
-    rejected dispatch -- and the reason they cannot share a branch -- is that
-    here nobody can say what was created.
+    refused dispatch -- and the reason they cannot share a branch -- is that here
+    nobody can say what was created.
     """
 
     def timed_out(request):

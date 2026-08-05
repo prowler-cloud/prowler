@@ -770,13 +770,26 @@ class IntegrationsTools(BaseTool):
                 params=params,
                 json_data=dispatch_body,
             )
-        except (ValueError, ProwlerAPIError) as e:
-            # Refused here, or answered with an error by the API: either way the
-            # dispatch never started, so this is the one failure safe to act on
-            self.logger.error(f"Jira dispatch was rejected before it started: {e}")
-            return JiraDispatchResult(
-                status="failed", safe_to_retry=True, error=str(e)
-            ).model_dump()
+        except ValueError as e:
+            # Refused here, so the request never went out
+            self.logger.error(f"Jira dispatch was refused before the request: {e}")
+            return self._jira_dispatch_rejected(str(e))
+        except ProwlerAPIError as e:
+            # Only a client error is a refusal: the API validates the dispatch and
+            # then queues the background task before serializing its answer, so a
+            # server error may well come back with work items already being created
+            if e.status_code >= 500:
+                self.logger.error(f"Jira dispatch failed on the server: {e}")
+                return self._jira_dispatch_unknown(
+                    task_id=None,
+                    error=(
+                        f"the request that starts the dispatch failed on the server: {e} "
+                        "It may have been queued anyway."
+                    ),
+                )
+
+            self.logger.error(f"Jira dispatch was rejected by Prowler: {e}")
+            return self._jira_dispatch_rejected(str(e))
         except Exception as e:
             # No answer came back, so the request may still have been accepted
             self.logger.error(f"Jira dispatch could not be started: {e}")
@@ -1053,6 +1066,17 @@ class IntegrationsTools(BaseTool):
                 f"Do not send these findings again. Original error: {error}"
             ),
             task_id=task_id,
+        ).model_dump()
+
+    def _jira_dispatch_rejected(self, error: str) -> dict[str, Any]:
+        """Report a dispatch that was refused before any work item could be created.
+
+        This is the only outcome safe to retry, and it is reserved for the failures
+        that prove nothing was queued: a validation error raised here, or a client
+        error from the API, which rejects the dispatch before starting its task.
+        """
+        return JiraDispatchResult(
+            status="failed", safe_to_retry=True, error=error
         ).model_dump()
 
     def _jira_dispatch_unknown(self, task_id: str | None, error: str) -> dict[str, Any]:
