@@ -120,7 +120,7 @@ class Teams(M365Service):
                         "AllowTeamsConsumerInbound", True
                     ),
                     external_access_with_trial_tenants=settings.get(
-                        "ExternalAccessWithTrialTenants", "Allowed"
+                        "ExternalAccessWithTrialTenants", "Blocked"
                     ),
                 )
         except Exception as error:
@@ -163,4 +163,6 @@ class UserSettings(BaseModel):
     allow_external_access: bool = True
     allow_teams_consumer: bool = True
     allow_teams_consumer_inbound: bool = True
-    external_access_with_trial_tenants: str = "Allowed"
+    # Microsoft's service default for ExternalAccessWithTrialTenants is Blocked,
+    # so an absent property is assumed to be in the default (secure) state.
+    external_access_with_trial_tenants: str = "Blocked"

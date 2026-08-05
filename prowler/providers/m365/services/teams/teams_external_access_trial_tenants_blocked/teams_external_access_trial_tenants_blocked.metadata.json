@@ -6,7 +6,7 @@
   "ServiceName": "teams",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
+  "Severity": "high",
   "ResourceType": "NotDefined",
   "ResourceGroup": "collaboration",
   "Description": "The Teams external access configuration should **block** communication with **trial-only** tenants (tenants that don't have any purchased seats). When blocked, users from these trial-only tenants cannot search for, contact, call, or meet with the organization's users via Teams external access.",
@@ -33,5 +33,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": ""
+  "Notes": "The check evaluates the ExternalAccessWithTrialTenants property from Get-CsTenantFederationConfiguration. Microsoft's service default for this setting is Blocked, so if the property is absent from the cmdlet output the check assumes the default (secure) state and passes."
 }

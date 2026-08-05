@@ -38,8 +38,23 @@ class Test_teams_external_access_trial_tenants_blocked:
             result[0].status_extended
             == "External access with Teams trial-only tenants is blocked."
         )
+        assert result[0].resource_name == "Teams User Settings"
+        assert result[0].resource_id == "userSettings"
 
     def test_trial_tenants_allowed(self):
         result = self._run(UserSettings(external_access_with_trial_tenants="Allowed"))
         assert len(result) == 1
         assert result[0].status == "FAIL"
+        assert (
+            result[0].status_extended
+            == "External access with Teams trial-only tenants is allowed."
+        )
+        assert result[0].resource_name == "Teams User Settings"
+        assert result[0].resource_id == "userSettings"
+
+    def test_trial_tenants_default(self):
+        # ExternalAccessWithTrialTenants absent from the cmdlet output: the model
+        # falls back to Microsoft's service default (Blocked), so the check passes.
+        result = self._run(UserSettings())
+        assert len(result) == 1
+        assert result[0].status == "PASS"
