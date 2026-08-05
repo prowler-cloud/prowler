@@ -56,10 +56,7 @@ export function SkillRunProgress({
     <article className="flex min-w-0 justify-start gap-3">
       <Bot className="text-text-neutral-tertiary mt-1 size-5" />
       <div className="flex max-w-[min(760px,85%)] min-w-0 flex-1 flex-col gap-3">
-        <div
-          className="rounded-lg p-px"
-          style={{ background: "var(--gradient-lighthouse)" }}
-        >
+        <div className="bg-lighthouse rounded-lg p-px">
           <div className="bg-bg-neutral-primary flex flex-col gap-2 rounded-[7px] px-3.5 py-2.5">
             <button
               type="button"
@@ -135,11 +132,8 @@ function SkillProgressBar({
       className="bg-bg-neutral-tertiary h-1 overflow-hidden rounded-full"
     >
       <div
-        className="h-full animate-pulse rounded-full transition-[width] duration-500"
-        style={{
-          width: `${percent}%`,
-          background: "var(--gradient-lighthouse)",
-        }}
+        className="bg-lighthouse h-full animate-pulse rounded-full transition-[width] duration-500"
+        style={{ width: `${percent}%` }}
       />
     </div>
   );
@@ -162,9 +156,11 @@ function SkillStepTimeline({
     <div className="flex flex-col pt-1">
       {skill.steps.map((step, index) => {
         const stepNumber = index + 1;
-        // Tools fired before the first marker belong to the opening step.
+        // Tools fired before the first marker belong to the opening step; an
+        // out-of-range marker clamps so its tools still land on a real step.
         const stepTools = toolCallItems.filter(
-          (item) => (item.step ?? 1) === stepNumber,
+          (item) =>
+            clampStep(item.step ?? 1, skill.steps.length) === stepNumber,
         );
         return (
           <ChainOfThoughtStep
@@ -237,7 +233,9 @@ function useElapsedSeconds(startedAt?: string): number {
   return useSyncExternalStore(
     subscribeToClock,
     () => getElapsedSeconds(startedAt),
-    () => getElapsedSeconds(startedAt),
+    // Stable server/hydration snapshot: a time-derived value would differ
+    // between the server render and the hydration pass.
+    () => 0,
   );
 }
 

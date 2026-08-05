@@ -77,6 +77,29 @@ describe("SkillRunProgress", () => {
     expect(screen.getByText("Check public exposure")).toBeInTheDocument();
   });
 
+  it("should clamp out-of-range tool steps onto the last real step", () => {
+    // Given: a marker beyond the skill's five steps tags the tool with step 99
+    let state = createInitialLighthouseV2StreamState("task-1");
+    state = reduceLighthouseV2Event(state, {
+      type: "message.delta",
+      content: "[[step:99]]Wrapping up.",
+    });
+    state = reduceLighthouseV2Event(state, {
+      type: "tool_call.start",
+      toolCallId: "tool-1",
+      toolName: "get_finding",
+    });
+    render(<SkillRunProgress skill={skill} streamState={state} />);
+
+    // When
+    fireEvent.click(
+      screen.getByRole("button", { name: /Verify exploitability/ }),
+    );
+
+    // Then: the tool chip still lands under a rendered step instead of vanishing
+    expect(screen.getByText("Get finding")).toBeInTheDocument();
+  });
+
   it("should show a preparing state before the first step marker arrives", () => {
     // Given / When
     render(

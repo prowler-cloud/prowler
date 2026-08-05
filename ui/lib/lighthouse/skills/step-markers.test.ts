@@ -46,6 +46,31 @@ describe("consumeStepMarkers", () => {
     expect(second).toEqual({ text: "[0] applies", carry: "", steps: [] });
   });
 
+  it("should release a suffix whose digits exceed the marker cap as text", () => {
+    // Given: more digits than any valid marker carries — this can never
+    // complete, so holding it back would swallow real text forever.
+    const result = consumeStepMarkers("", "Result [[step:123456");
+
+    // Then
+    expect(result.text).toBe("Result [[step:123456");
+    expect(result.carry).toBe("");
+    expect(result.steps).toEqual([]);
+  });
+
+  it("should complete a marker at the digit cap split across chunks", () => {
+    // Given
+    const first = consumeStepMarkers("", "Text [[step:1234");
+    expect(first.text).toBe("Text ");
+    expect(first.carry).toBe("[[step:1234");
+
+    // When
+    const second = consumeStepMarkers(first.carry, "]]done");
+
+    // Then
+    expect(second.text).toBe("done");
+    expect(second.steps).toEqual([1234]);
+  });
+
   it("should hold a marker missing only its closing bracket", () => {
     const first = consumeStepMarkers("", "[[step:12]");
     expect(first).toEqual({ text: "", carry: "[[step:12]", steps: [] });

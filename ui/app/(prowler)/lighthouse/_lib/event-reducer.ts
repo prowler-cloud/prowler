@@ -154,22 +154,15 @@ export function reduceLighthouseV2Event(
         ),
       };
     case LIGHTHOUSE_V2_SSE_EVENT.MESSAGE_END:
-      // A held-back suffix that never completed into a marker is plain text.
       return {
-        ...state,
+        ...flushMarkerCarry(state),
         status: LIGHTHOUSE_V2_STREAM_STATUS.COMPLETED,
         activeTaskId: null,
-        assistantText: `${state.assistantText}${state.markerCarry}`,
-        activityItems: appendTextActivityItem(
-          state.activityItems,
-          state.markerCarry,
-        ),
-        markerCarry: "",
         messageId: event.messageId,
       };
     case LIGHTHOUSE_V2_SSE_EVENT.ERROR:
       return {
-        ...state,
+        ...flushMarkerCarry(state),
         status: LIGHTHOUSE_V2_STREAM_STATUS.ERROR,
         activeTaskId: null,
         error: {
@@ -181,11 +174,28 @@ export function reduceLighthouseV2Event(
       // Clear the task gate so the UI can recover: keeping activeTaskId set
       // leaves canSend false and makes the Retry button a no-op.
       return {
-        ...state,
+        ...flushMarkerCarry(state),
         status: LIGHTHOUSE_V2_STREAM_STATUS.DISCONNECTED,
         activeTaskId: null,
       };
   }
+}
+
+// A held-back suffix that never completed into a marker is plain text. Every
+// terminal path (end, error, disconnect) must restore it — a disconnected
+// stream never replays, so an unflushed carry is silently lost text.
+function flushMarkerCarry(
+  state: LighthouseV2StreamState,
+): LighthouseV2StreamState {
+  return {
+    ...state,
+    assistantText: `${state.assistantText}${state.markerCarry}`,
+    activityItems: appendTextActivityItem(
+      state.activityItems,
+      state.markerCarry,
+    ),
+    markerCarry: "",
+  };
 }
 
 function appendTextActivityItem(

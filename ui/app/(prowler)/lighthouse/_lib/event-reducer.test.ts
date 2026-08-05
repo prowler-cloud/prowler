@@ -87,6 +87,47 @@ describe("event-reducer skill steps", () => {
       text: "See the array[",
     });
   });
+
+  it("should flush a held partial marker as text on a terminal error", () => {
+    // Given
+    let state = createInitialLighthouseV2StreamState("task-1");
+    state = reduceLighthouseV2Event(state, {
+      type: "message.delta",
+      content: "Result[",
+    });
+    expect(state.assistantText).toBe("Result");
+
+    // When
+    state = reduceLighthouseV2Event(state, {
+      type: "error",
+      code: "llm_error",
+      detail: "Provider failed",
+    });
+
+    // Then: the "[" is not silently dropped
+    expect(state.assistantText).toBe("Result[");
+    expect(state.markerCarry).toBe("");
+    expect(state.activityItems.at(-1)).toMatchObject({
+      type: "text",
+      text: "Result[",
+    });
+  });
+
+  it("should flush a held partial marker as text on disconnect", () => {
+    // Given: disconnected streams never replay, so the carry cannot complete
+    let state = createInitialLighthouseV2StreamState("task-1");
+    state = reduceLighthouseV2Event(state, {
+      type: "message.delta",
+      content: "Result[",
+    });
+
+    // When
+    state = reduceLighthouseV2Event(state, { type: "disconnect" });
+
+    // Then
+    expect(state.assistantText).toBe("Result[");
+    expect(state.markerCarry).toBe("");
+  });
 });
 
 describe("event-reducer", () => {
