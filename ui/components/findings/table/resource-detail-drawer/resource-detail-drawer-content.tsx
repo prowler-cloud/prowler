@@ -316,29 +316,41 @@ export function ResourceDetailDrawerContent({
     Set<string>
   >(new Set());
 
-  // Initial load — no check metadata yet
+  // Initial load — no check metadata yet. Mirrors the loaded layout 1:1:
+  // header (badges, title, compliance chips), navigation row, and the
+  // resource card with metadata grid, tabs bar and overview blocks.
   if (!checkMeta && isLoading) {
     return (
       <div className="flex h-full min-w-0 flex-col gap-4 overflow-hidden">
-        {/* Header skeleton */}
-        <div className="flex flex-col gap-2">
+        {/* Header skeleton — status/severity badges, title, compliance chips */}
+        <div className="flex flex-col gap-2" aria-hidden="true">
           <div className="flex items-center gap-3">
             <Skeleton className="h-6 w-14 rounded-md" />
             <Skeleton className="h-6 w-16 rounded-md" />
           </div>
           <Skeleton className="h-6 w-3/4 rounded" />
+          <div className="flex flex-col gap-1.5">
+            <Skeleton className="h-4 w-28 rounded" />
+            <div className="flex flex-wrap items-center gap-2">
+              <Skeleton className="size-7 rounded-md" />
+              <Skeleton className="size-7 rounded-md" />
+              <Skeleton className="size-7 rounded-md" />
+            </div>
+          </div>
         </div>
-        {/* Navigation skeleton */}
-        <div className="flex items-center justify-between">
-          <Skeleton className="h-7 w-48 rounded" />
+        {/* Navigation skeleton — "Resource X of N" tag + carousel chevrons */}
+        <div className="flex items-center justify-between" aria-hidden="true">
+          <Skeleton className="h-7 w-32 rounded" />
           <div className="flex gap-1">
             <Skeleton className="size-8 rounded-md" />
             <Skeleton className="size-8 rounded-md" />
           </div>
         </div>
         {/* Resource card skeleton */}
-        <div className="border-border-neutral-secondary bg-bg-neutral-secondary flex min-h-0 flex-1 flex-col gap-4 rounded-lg border p-4">
+        <div className="border-border-neutral-secondary bg-bg-neutral-secondary flex min-h-0 flex-1 flex-col gap-4 overflow-hidden rounded-lg border p-4">
           <ResourceDetailSkeleton />
+          <TabsBarSkeleton />
+          <OverviewNavigationSkeleton />
         </div>
       </div>
     );
@@ -544,8 +556,9 @@ export function ResourceDetailDrawerContent({
             <div className="flex flex-col gap-1.5">
               <Skeleton className="h-4 w-28 rounded" />
               <div className="flex flex-wrap items-center gap-2">
-                <Skeleton className="h-7 w-16 rounded-md" />
-                <Skeleton className="h-7 w-20 rounded-md" />
+                <Skeleton className="size-7 rounded-md" />
+                <Skeleton className="size-7 rounded-md" />
+                <Skeleton className="size-7 rounded-md" />
               </div>
             </div>
           </div>
@@ -1051,7 +1064,7 @@ export function ResourceDetailDrawerContent({
                 </p>
               )
             ) : (
-              <OverviewNavigationSkeleton testId="remediation-navigation-skeleton" />
+              <RemediationNavigationSkeleton />
             )}
           </TabsContent>
 
@@ -1265,23 +1278,73 @@ export function ResourceDetailDrawerContent({
   );
 }
 
-function OverviewNavigationSkeleton({ testId }: { testId?: string } = {}) {
+// Mirrors the loaded Overview tab: risk callout, description and the IDs card.
+function OverviewNavigationSkeleton() {
   return (
     <div
       className="flex flex-col gap-4"
-      data-testid={testId ?? "overview-navigation-skeleton"}
+      data-testid="overview-navigation-skeleton"
+      aria-hidden="true"
     >
+      {/* Risk — left-bordered callout */}
+      <div className="border-border-neutral-primary flex flex-col gap-2 border-l-4 pl-3">
+        <Skeleton className="h-4 w-12 rounded" />
+        <Skeleton className="h-4 w-full rounded" />
+        <Skeleton className="h-4 w-5/6 rounded" />
+      </div>
+      {/* Description */}
+      <div className="flex flex-col gap-2 px-1">
+        <Skeleton className="h-4 w-24 rounded" />
+        <Skeleton className="h-4 w-full rounded" />
+        <Skeleton className="h-4 w-2/3 rounded" />
+      </div>
+      {/* Check ID / Finding ID / Finding UID card */}
       <Card variant="inner">
-        <OverviewCardSkeleton lineWidths={["w-24", "w-full", "w-5/6"]} />
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-x-6">
+          {["w-16", "w-20", "w-20"].map((labelWidth, index) => (
+            <div key={index} className="flex flex-col gap-1">
+              <Skeleton className={`h-3.5 ${labelWidth} rounded`} />
+              <Skeleton className="h-5 w-28 rounded" />
+            </div>
+          ))}
+        </div>
       </Card>
+    </div>
+  );
+}
+
+// Mirrors the loaded Remediation tab: heading row with link, text, code card.
+function RemediationNavigationSkeleton() {
+  return (
+    <div
+      className="flex flex-col gap-4"
+      data-testid="remediation-navigation-skeleton"
+      aria-hidden="true"
+    >
+      <div className="flex flex-col gap-2 px-1">
+        <div className="flex items-center justify-between gap-3">
+          <Skeleton className="h-4 w-28 rounded" />
+          <Skeleton className="h-4 w-24 rounded" />
+        </div>
+        <Skeleton className="h-4 w-full rounded" />
+        <Skeleton className="h-4 w-3/4 rounded" />
+      </div>
       <Card variant="inner">
-        <OverviewCardSkeleton
-          lineWidths={["w-28", "w-3/4", "w-full", "w-2/3"]}
-        />
+        <Skeleton className="h-24 w-full rounded" />
       </Card>
-      <Card variant="inner">
-        <OverviewCardSkeleton lineWidths={["w-20", "w-40", "w-24"]} />
-      </Card>
+    </div>
+  );
+}
+
+// Mirrors the tabs bar: six text triggers with their separators' spacing.
+function TabsBarSkeleton() {
+  return (
+    <div className="mt-2 mb-4 flex items-center gap-8" aria-hidden="true">
+      {["w-16", "w-24", "w-16", "w-24", "w-12", "w-12"].map(
+        (tabWidth, index) => (
+          <Skeleton key={index} className={`h-5 ${tabWidth} rounded`} />
+        ),
+      )}
     </div>
   );
 }
