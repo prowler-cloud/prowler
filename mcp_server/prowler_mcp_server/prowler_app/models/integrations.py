@@ -295,14 +295,20 @@ class JiraDispatchResult(MinimalSerializerMixin, BaseModel):
 
     @classmethod
     def from_task_result(
-        cls, result: dict[str, Any], task_id: str | None = None
+        cls, result: Any, task_id: str | None = None
     ) -> "JiraDispatchResult":
         """Build the dispatch result from the completed background task result.
 
         Raises:
-            ValueError: If the task result does not carry both counters. Defaulting them to
-                zero would report a dispatch as retryable when it may have created work items
+            ValueError: If the task result is not an object, or does not carry both
+                counters. Defaulting them to zero would report a dispatch as retryable
+                when it may have created work items
         """
+        if not isinstance(result, dict):
+            raise ValueError(
+                "The completed dispatch task did not report a result object."
+            )
+
         created_count = result.get("created_count")
         failed_count = result.get("failed_count")
 

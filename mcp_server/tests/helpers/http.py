@@ -7,6 +7,7 @@ JSON decoding. A test that asserts on a recorded request is therefore asserting
 on the bytes that would really have gone out.
 """
 
+import json
 from collections.abc import Callable
 from typing import Any
 
@@ -102,6 +103,15 @@ class MockRouter:
     def query_params(self, method: str, path: str) -> dict[str, str]:
         """Return the decoded query parameters of the last request for a route."""
         return dict(self.request_for(method, path).url.params)
+
+    def json_body(self, method: str, path: str) -> Any:
+        """Return the decoded JSON body of the last request for a route.
+
+        Write tools build a JSON:API document by hand, and the API silently
+        ignores an attribute it does not recognise, so the body is the only place
+        a misspelled key shows up.
+        """
+        return json.loads(self.request_for(method, path).content)
 
     def paths(self) -> list[str]:
         """Return every request made so far, as ``"METHOD /path"`` strings."""
