@@ -182,10 +182,45 @@ export const scheduleDaily = async (formData: FormData) => {
   }
 };
 
-export const launchOrganizationScans = async (
-  providerIds: string[],
-  scheduleOption: "daily" | "single",
-) => {
+export const launchOrganizationScans = async (organizationId: string) => {
+  if (!organizationId) {
+    return { error: "Organization ID is required" };
+  }
+
+  const headers = await getAuthHeaders({ contentType: true });
+  const url = new URL(`${apiBaseUrl}/scans/bulk`);
+
+  addScanOperation("create", undefined, {
+    organization_id: organizationId,
+    bulk: true,
+  });
+
+  try {
+    const response = await fetch(url.toString(), {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        data: {
+          type: "scans-bulk",
+          relationships: {
+            organization: {
+              data: {
+                type: "organizations",
+                id: organizationId,
+              },
+            },
+          },
+        },
+      }),
+    });
+
+    return handleApiResponse(response, "/scans");
+  } catch (error) {
+    return handleApiError(error);
+  }
+};
+
+export const scheduleOrganizationDailyScans = async (providerIds: string[]) => {
   const validProviderIds = providerIds.filter(Boolean);
   if (validProviderIds.length === 0) {
     return {
@@ -203,10 +238,7 @@ export const launchOrganizationScans = async (
         const formData = new FormData();
         formData.set("providerId", providerId);
 
-        const result =
-          scheduleOption === "daily"
-            ? await scheduleDaily(formData)
-            : await scanOnDemand(formData);
+        const result = await scheduleDaily(formData);
 
         return {
           providerId,

@@ -30,9 +30,56 @@ vi.mock("@/lib/sentry-breadcrumbs", () => ({
   addScanOperation: vi.fn(),
 }));
 
-import { getExportsZip, launchOrganizationScans } from "./scans";
+import {
+  getExportsZip,
+  launchOrganizationScans,
+  scheduleOrganizationDailyScans,
+} from "./scans";
 
 describe("launchOrganizationScans", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.stubGlobal("fetch", fetchMock);
+    getAuthHeadersMock.mockResolvedValue({ Authorization: "Bearer token" });
+    handleApiResponseMock.mockResolvedValue({ data: [{ id: "scan-1" }] });
+  });
+
+  it("sends one organization bulk scan request", async () => {
+    // Given
+    fetchMock.mockResolvedValue(new Response(null, { status: 202 }));
+
+    // When
+    await launchOrganizationScans("organization-1");
+
+    // Then
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.example.com/api/v1/scans/bulk",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({
+          data: {
+            type: "scans-bulk",
+            relationships: {
+              organization: {
+                data: {
+                  type: "organizations",
+                  id: "organization-1",
+                },
+              },
+            },
+          },
+        }),
+      }),
+    );
+    expect(handleApiResponseMock).toHaveBeenCalledWith(
+      expect.any(Response),
+      "/scans",
+    );
+  });
+});
+
+describe("scheduleOrganizationDailyScans", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubGlobal("fetch", fetchMock);
@@ -63,7 +110,7 @@ describe("launchOrganizationScans", () => {
     });
 
     // When
-    const result = await launchOrganizationScans(providerIds, "daily");
+    const result = await scheduleOrganizationDailyScans(providerIds);
 
     // Then
     expect(maxActiveRequests).toBeLessThanOrEqual(5);
