@@ -18,6 +18,7 @@ As in ``test_findings``, tools are driven through an in-memory MCP client so
 FastMCP resolves the pydantic ``Field`` defaults.
 """
 
+import httpx
 import pytest
 from fastmcp import Client
 
@@ -77,7 +78,9 @@ def stub_integration(
     """Serve ``GET /integrations/i1`` for every read a tool makes.
 
     A single registration is enough because the router repeats its last response,
-    and the tools read the integration both before and after a write.
+    and the tools read the integration both before and after a write. Call it
+    twice to serve a different state to each read, which is what tells the state
+    returned after a write apart from the one read before it.
     """
     relationships = (
         {"providers": jsonapi_relationship_many("providers", *provider_ids)}
@@ -435,9 +438,13 @@ async def test_updating_only_the_enabled_flag_does_not_recheck_the_connection(
     """Nothing about reachability changed, so the check would be pure latency.
 
     It is also destructive to spend: the check is a background task the tool
-    waits on for up to two minutes.
+    waits on for up to two minutes. Skipping the check must not also skip the
+    read-back, though: the PATCH response body is empty, so returning the state
+    read before the write would report the integration as still enabled.
     """
+    # The read before the PATCH, then the read after it
     stub_integration(mock_router, S3_ATTRIBUTES)
+    stub_integration(mock_router, {**S3_ATTRIBUTES, "enabled": False})
     mock_router.add("PATCH", INTEGRATION, json=jsonapi_document({}))
 
     async with Client(mcp_root_server) as client:
@@ -449,7 +456,7 @@ async def test_updating_only_the_enabled_flag_does_not_recheck_the_connection(
         "enabled": False
     }
     assert f"POST {CONNECTION}" not in mock_router.paths()
-    assert result.data["id"] == "i1"
+    assert result.data["enabled"] is False
 
 
 async def test_updating_the_configuration_merges_it_onto_the_current_one(
@@ -460,7 +467,19 @@ async def test_updating_the_configuration_merges_it_onto_the_current_one(
     The server-owned regions are stripped back out: they are refreshed by the
     connection check, and sending them back would fight the API for ownership.
     """
+    # The read before the PATCH, then the read after it
     stub_integration(mock_router, SECURITY_HUB_ATTRIBUTES, provider_ids=("p1",))
+    stub_integration(
+        mock_router,
+        {
+            **SECURITY_HUB_ATTRIBUTES,
+            "configuration": {
+                **SECURITY_HUB_ATTRIBUTES["configuration"],
+                "send_only_fails": True,
+            },
+        },
+        provider_ids=("p1",),
+    )
     mock_router.add("PATCH", INTEGRATION, json=jsonapi_document({}))
     stub_connection_check(mock_router)
 
@@ -474,6 +493,8 @@ async def test_updating_the_configuration_merges_it_onto_the_current_one(
         "configuration"
     ] == {"send_only_fails": True, "archive_previous_findings": True}
     assert result.data["connected"] == "connected"
+    # Read back after the write, so the response carries the merge the API applied
+    assert result.data["integration"]["configuration"]["send_only_fails"] is True
 
 
 async def test_a_configuration_sent_as_a_json_string_is_accepted(
@@ -878,13 +899,19 @@ async def test_dispatching_no_findings_is_refused_before_the_request(
         )
 
     assert result.data["status"] == "failed"
+    assert result.data["safe_to_retry"] is True
     assert mock_router.requests == []
 
 
-async def test_a_dispatch_that_never_started_is_the_only_one_safe_to_retry(
+async def test_a_dispatch_the_api_rejected_is_the_only_one_safe_to_retry(
     mcp_root_server, mock_api_client, mock_router
 ):
-    """A rejected POST created nothing, so the agent can safely fix and resend."""
+    """An error status is an answer: Prowler saw the request and created nothing.
+
+    That makes it the one dispatch failure an agent can act on directly, so the
+    response has to say so -- an omitted `safe_to_retry` reads as "do not retry"
+    and leaves fixing the issue type to a human.
+    """
     mock_router.add(
         "POST",
         DISPATCHES,
@@ -906,7 +933,39 @@ async def test_a_dispatch_that_never_started_is_the_only_one_safe_to_retry(
         )
 
     assert result.data["status"] == "failed"
+    assert result.data["safe_to_retry"] is True
     assert "requires fields Prowler cannot fill" in result.data["error"]
+
+
+async def test_a_dispatch_request_that_got_no_answer_is_not_safe_to_retry(
+    mcp_root_server, mock_api_client, mock_router
+):
+    """A timeout is not a rejection: the request may have been processed anyway.
+
+    Prowler could already be creating work items, so the only difference with a
+    rejected dispatch -- and the reason they cannot share a branch -- is that
+    here nobody can say what was created.
+    """
+
+    def timed_out(request):
+        raise httpx.ReadTimeout("Timed out reading the response", request=request)
+
+    mock_router.add_handler("POST", DISPATCHES, timed_out)
+
+    async with Client(mcp_root_server) as client:
+        result = await client.call_tool(
+            "prowler_send_findings_to_jira",
+            {
+                "integration_id": "i1",
+                "project_key": "PROJ",
+                "issue_type": "Task",
+                "finding_ids": ["f1"],
+            },
+        )
+
+    assert result.data["status"] == "unknown"
+    assert result.data["safe_to_retry"] is False
+    assert "Check the Jira project" in result.data["error"]
 
 
 async def test_an_accepted_dispatch_with_no_task_id_is_not_safe_to_retry(

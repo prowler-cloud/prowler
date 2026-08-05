@@ -261,20 +261,20 @@ class JiraDispatchResult(MinimalSerializerMixin, BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    status: Literal["completed", "in_progress", "unknown"] = Field(
-        description="Outcome of the dispatch: 'completed' when Prowler finished creating the work items, 'in_progress' when the background task is still running, 'unknown' when the task stopped before reporting a result and Prowler cannot tell how many work items it had already created"
+    status: Literal["completed", "in_progress", "unknown", "failed"] = Field(
+        description="Outcome of the dispatch: 'completed' when Prowler finished creating the work items, 'in_progress' when the background task is still running, 'failed' when the dispatch was rejected before it started so nothing was created, 'unknown' when the dispatch stopped before reporting a result and Prowler cannot tell how many work items it had already created"
     )
     safe_to_retry: bool = Field(
         description="True only when Prowler is certain that no Jira work item was created. When False the dispatch must NOT be sent again: some work items may already exist and retrying would duplicate them. Report the outcome to the user and let them check Jira instead"
     )
     created_count: int | None = Field(
         default=None,
-        description="Number of Jira work items successfully created, absent when the outcome is unknown",
+        description="Number of Jira work items successfully created, absent unless the dispatch completed",
         ge=0,
     )
     failed_count: int | None = Field(
         default=None,
-        description="Number of findings that could not be sent to Jira, absent when the outcome is unknown",
+        description="Number of findings that could not be sent to Jira, absent unless the dispatch completed",
         ge=0,
     )
     error: str | None = Field(

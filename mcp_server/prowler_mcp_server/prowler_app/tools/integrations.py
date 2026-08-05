@@ -19,6 +19,7 @@ from prowler_mcp_server.prowler_app.models.integrations import (
     JiraIssueTypes,
 )
 from prowler_mcp_server.prowler_app.tools.base import BaseTool
+from prowler_mcp_server.prowler_app.utils.api_client import ProwlerAPIError
 
 # The configuration is deliberately left out of the list view, it belongs to the
 # detailed view returned by prowler_get_integration
@@ -724,13 +725,16 @@ class IntegrationsTools(BaseTool):
 
         The result includes:
         - status: 'completed' when Prowler finished the dispatch, 'in_progress' when the task
-          is still running, 'unknown' when the task stopped without reporting a result
+          is still running, 'failed' when the dispatch was rejected before it started,
+          'unknown' when the task stopped without reporting a result
         - safe_to_retry: whether the dispatch can be sent again. It is only true when no work
-          item was created. NEVER call this tool again for the same findings when it is false,
-          the work items already created would be duplicated. Report the outcome to the user
-          and let them check Jira instead
-        - created_count: number of work items created in Jira, absent when status='unknown'
-        - failed_count: number of findings that could not be sent, absent when status='unknown'
+          item was created, which is the case when the dispatch was rejected before it
+          started. NEVER call this tool again for the same findings when it is false, the
+          work items already created would be duplicated. Report the outcome to the user and
+          let them check Jira instead
+        - created_count: number of work items created in Jira, absent unless status='completed'
+        - failed_count: number of findings that could not be sent, absent unless
+          status='completed'
 
         Workflow:
         1. Use prowler_search_security_findings to select the findings to escalate
@@ -766,10 +770,23 @@ class IntegrationsTools(BaseTool):
                 params=params,
                 json_data=dispatch_body,
             )
+        except (ValueError, ProwlerAPIError) as e:
+            # Refused here, or answered with an error by the API: either way the
+            # dispatch never started, so this is the one failure safe to act on
+            self.logger.error(f"Jira dispatch was rejected before it started: {e}")
+            return JiraDispatchResult(
+                status="failed", safe_to_retry=True, error=str(e)
+            ).model_dump()
         except Exception as e:
-            # Nothing was dispatched yet, so this failure is safe to act on
+            # No answer came back, so the request may still have been accepted
             self.logger.error(f"Jira dispatch could not be started: {e}")
-            return {"error": str(e), "status": "failed"}
+            return self._jira_dispatch_unknown(
+                task_id=None,
+                error=(
+                    f"the request that starts the dispatch got no answer: {e} "
+                    "It may have been accepted anyway."
+                ),
+            )
 
         task_id = task_response.get("data", {}).get("id")
         if not task_id:
