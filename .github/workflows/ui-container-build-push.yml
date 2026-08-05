@@ -147,6 +147,10 @@ jobs:
           build-args: |
             NEXT_PUBLIC_PROWLER_RELEASE_VERSION=${{ (github.event_name == 'release' || github.event_name == 'workflow_dispatch') && format('v{0}', env.RELEASE_TAG) || needs.setup.outputs.short-sha }}
           push: true
+          # Syft under the hood, the same engine Grype uses, so the document matches what the
+          # scan sees -- including components no package manifest registers.
+          sbom: true
+          provenance: mode=max
           platforms: ${{ matrix.platform }}
           tags: |
             ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.setup.outputs.short-sha }}-${{ matrix.arch }}

@@ -144,6 +144,10 @@ jobs:
         with:
           context: ${{ env.WORKING_DIRECTORY }}
           push: true
+          # Syft under the hood, the same engine Grype uses, so the document matches what the
+          # scan sees -- including components no package manifest registers.
+          sbom: true
+          provenance: mode=max
           platforms: ${{ matrix.platform }}
           tags: |
             ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.setup.outputs.short-sha }}-${{ matrix.arch }}
