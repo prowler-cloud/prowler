@@ -14,10 +14,10 @@ inputs:
     description: 'Severities to scan for (comma-separated)'
     required: false
     default: 'CRITICAL,HIGH,MEDIUM,LOW'
-  fail-on-critical:
-    description: 'Fail the build if critical vulnerabilities are found'
+  fail-on-severity:
+    description: 'Fail the build on findings at this severity or above: critical, high, or none'
     required: false
-    default: 'false'
+    default: 'high'
   upload-sarif:
     description: 'Upload results to GitHub Security tab'
     required: false
@@ -62,6 +62,7 @@ runs:
         severity: ${{ inputs.severity }}
         exit-code: '0'
         scanners: 'vuln'
+        ignore-unfixed: 'true' # A finding with no available fix is not actionable, so it must not gate
         timeout: '5m'
         version: 'v0.71.2'
       # Not trivyignores: that input drops the .yaml extension Trivy parses by.
@@ -78,6 +79,7 @@ runs:
         severity: 'CRITICAL,HIGH'
         exit-code: '0'
         scanners: 'vuln'
+        ignore-unfixed: 'true' # A finding with no available fix is not actionable, so it must not gate
         timeout: '5m'
         version: 'v0.71.2'
       # Not trivyignores: that input drops the .yaml extension Trivy parses by.
@@ -169,13 +171,28 @@ runs:
             console.log('✅ Created new Trivy scan comment');
           }
 
-    - name: Check for critical vulnerabilities
-      if: inputs.fail-on-critical == 'true' && steps.security-check.outputs.critical != '0'
+    - name: Check for blocking vulnerabilities
+      if: inputs.fail-on-severity != 'none'
       shell: bash
       run: |
-        echo "::error::Found ${STEPS_SECURITY_CHECK_OUTPUTS_CRITICAL} critical vulnerabilities"
-        echo "::warning::Please update packages or use a different base image"
-        exit 1
+        if [ "$CUTOFF" = "critical" ]; then
+          BLOCKING=$CRITICAL
+          SEVERITIES='["CRITICAL"]'
+        else
+          BLOCKING=$((CRITICAL + HIGH))
+          SEVERITIES='["CRITICAL","HIGH"]'
+        fi
 
+        if [ "$BLOCKING" -gt 0 ]; then
+          echo "::error::Found $BLOCKING vulnerabilities at severity ${CUTOFF} or above ($CRITICAL critical, $HIGH high)"
+          echo "::warning::Update the package, or add it to .trivyignore.yaml with a reason if nothing can be done"
+          jq -r --argjson severities "$SEVERITIES" \
+            '.Results[]?.Vulnerabilities[]? | select(.Severity | IN($severities[]))
+             | "  \(.Severity)\t\(.VulnerabilityID)\t\(.PkgName) \(.InstalledVersion)"' \
+            trivy-report.json | sort -u
+          exit 1
+        fi
       env:
-        STEPS_SECURITY_CHECK_OUTPUTS_CRITICAL: ${{ steps.security-check.outputs.critical }}
+        CUTOFF: ${{ inputs.fail-on-severity }}
+        CRITICAL: ${{ steps.security-check.outputs.critical }}
+        HIGH: ${{ steps.security-check.outputs.high }}
