@@ -16444,6 +16444,17 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/AttackPathsQueryParameter'
+            outcome:
+              type: object
+              nullable: true
+              properties:
+                kind:
+                  type: string
+                label:
+                  type: string
+                partial:
+                  type: boolean
+              readOnly: true
           required:
           - id
           - name

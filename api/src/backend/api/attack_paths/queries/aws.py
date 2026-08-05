@@ -1,6 +1,7 @@
 from api.attack_paths.queries.types import (
     AttackPathsQueryAttribution,
     AttackPathsQueryDefinition,
+    AttackPathsQueryOutcome,
     AttackPathsQueryParameterDefinition,
 )
 from tasks.jobs.attack_paths.config import PROWLER_FINDING_LABEL
@@ -13,6 +14,7 @@ AWS_INTERNET_EXPOSED_EC2_SENSITIVE_S3_ACCESS = AttackPathsQueryDefinition(
     short_description="Find SSH-exposed EC2 instances that can assume roles to read tagged sensitive S3 buckets.",
     description="Detect EC2 instances with SSH exposed to the internet that can assume higher-privileged roles to read tagged sensitive S3 buckets despite bucket-level public access blocks.",
     provider="aws",
+    outcome=AttackPathsQueryOutcome.PUBLIC_EXPOSURE,
     cypher=f"""
         MATCH path_s3 = (aws:AWSAccount {{id: $provider_uid}})--(s3:S3Bucket)--(t:AWSTag)
         WHERE toLower(t.key) = toLower($tag_key) AND toLower(t.value) = toLower($tag_value)
@@ -69,6 +71,7 @@ AWS_RDS_INSTANCES = AttackPathsQueryDefinition(
     short_description="List all provisioned RDS database instances in the account.",
     description="List the selected AWS account alongside the RDS instances it owns.",
     provider="aws",
+    outcome=AttackPathsQueryOutcome.RESOURCE_INVENTORY,
     cypher=f"""
         MATCH path = (aws:AWSAccount {{id: $provider_uid}})--(rds:RDSInstance)
 
@@ -91,6 +94,7 @@ AWS_RDS_UNENCRYPTED_STORAGE = AttackPathsQueryDefinition(
     short_description="Find RDS instances with storage encryption disabled.",
     description="Find RDS instances with storage encryption disabled within the selected account.",
     provider="aws",
+    outcome=AttackPathsQueryOutcome.RESOURCE_INVENTORY,
     cypher=f"""
         MATCH path = (aws:AWSAccount {{id: $provider_uid}})--(rds:RDSInstance)
         WHERE rds.storage_encrypted = false
@@ -114,6 +118,7 @@ AWS_S3_ANONYMOUS_ACCESS_BUCKETS = AttackPathsQueryDefinition(
     short_description="Find S3 buckets that allow anonymous access.",
     description="Find S3 buckets that allow anonymous access within the selected account.",
     provider="aws",
+    outcome=AttackPathsQueryOutcome.PUBLIC_EXPOSURE,
     cypher=f"""
         MATCH path = (aws:AWSAccount {{id: $provider_uid}})--(s3:S3Bucket)
         WHERE s3.anonymous_access = true
@@ -137,6 +142,7 @@ AWS_IAM_STATEMENTS_ALLOW_ALL_ACTIONS = AttackPathsQueryDefinition(
     short_description="Find IAM policy statements that allow all actions via wildcard (*).",
     description="Find IAM policy statements that allow all actions via '*' within the selected account.",
     provider="aws",
+    outcome=AttackPathsQueryOutcome.RESOURCE_INVENTORY,
     cypher=f"""
         MATCH path = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(pol:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {{effect: 'Allow'}})
         MATCH (stmt)-[:HAS_ACTION]->(act:AWSPolicyStatementActionItem)
@@ -162,6 +168,7 @@ AWS_IAM_STATEMENTS_ALLOW_DELETE_POLICY = AttackPathsQueryDefinition(
     short_description="Find IAM policy statements that allow iam:DeletePolicy.",
     description="Find IAM policy statements that allow the iam:DeletePolicy action within the selected account.",
     provider="aws",
+    outcome=AttackPathsQueryOutcome.RESOURCE_INVENTORY,
     cypher=f"""
         MATCH path = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(pol:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {{effect: 'Allow'}})
         MATCH (stmt)-[:HAS_ACTION]->(act:AWSPolicyStatementActionItem)
@@ -187,6 +194,7 @@ AWS_IAM_STATEMENTS_ALLOW_CREATE_ACTIONS = AttackPathsQueryDefinition(
     short_description="Find IAM policy statements that allow any create action.",
     description="Find IAM policy statements that allow actions containing 'create' within the selected account.",
     provider="aws",
+    outcome=AttackPathsQueryOutcome.RESOURCE_INVENTORY,
     cypher=f"""
         MATCH path = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(pol:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {{effect: 'Allow'}})
         MATCH (stmt)-[:HAS_ACTION]->(act:AWSPolicyStatementActionItem)
@@ -215,6 +223,7 @@ AWS_EC2_INSTANCES_INTERNET_EXPOSED = AttackPathsQueryDefinition(
     short_description="Find EC2 instances flagged as exposed to the internet.",
     description="Find EC2 instances flagged as exposed to the internet within the selected account.",
     provider="aws",
+    outcome=AttackPathsQueryOutcome.PUBLIC_EXPOSURE,
     cypher=f"""
         MATCH path = (aws:AWSAccount {{id: $provider_uid}})--(ec2:EC2Instance)
         WHERE ec2.exposed_internet = true
@@ -240,6 +249,7 @@ AWS_SECURITY_GROUPS_OPEN_INTERNET_FACING = AttackPathsQueryDefinition(
     short_description="Find internet-facing resources with security groups allowing inbound from 0.0.0.0/0.",
     description="Find internet-facing resources associated with security groups that allow inbound access from '0.0.0.0/0'.",
     provider="aws",
+    outcome=AttackPathsQueryOutcome.PUBLIC_EXPOSURE,
     cypher=f"""
         MATCH path = (aws:AWSAccount {{id: $provider_uid}})--(ec2:EC2Instance)--(sg:EC2SecurityGroup)--(ipi:IpPermissionInbound)--(ir:IpRange)
         WHERE ec2.exposed_internet = true
@@ -266,6 +276,7 @@ AWS_CLASSIC_ELB_INTERNET_EXPOSED = AttackPathsQueryDefinition(
     short_description="Find Classic Load Balancers exposed to the internet with their listeners.",
     description="Find Classic Load Balancers exposed to the internet along with their listeners.",
     provider="aws",
+    outcome=AttackPathsQueryOutcome.PUBLIC_EXPOSURE,
     cypher=f"""
         MATCH path = (aws:AWSAccount {{id: $provider_uid}})--(elb:LoadBalancer)--(listener:ELBListener)
         WHERE elb.exposed_internet = true
@@ -291,6 +302,7 @@ AWS_ELBV2_INTERNET_EXPOSED = AttackPathsQueryDefinition(
     short_description="Find ELBv2 (ALB/NLB) load balancers exposed to the internet with their listeners.",
     description="Find ELBv2 load balancers exposed to the internet along with their listeners.",
     provider="aws",
+    outcome=AttackPathsQueryOutcome.PUBLIC_EXPOSURE,
     cypher=f"""
         MATCH path = (aws:AWSAccount {{id: $provider_uid}})--(elbv2:LoadBalancerV2)--(listener:ELBV2Listener)
         WHERE elbv2.exposed_internet = true
@@ -316,6 +328,7 @@ AWS_PUBLIC_IP_RESOURCE_LOOKUP = AttackPathsQueryDefinition(
     short_description="Find the AWS resource associated with a given public IP address.",
     description="Given a public IP address, find the related AWS resource and its adjacent node within the selected account.",
     provider="aws",
+    outcome=AttackPathsQueryOutcome.PUBLIC_EXPOSURE,
     cypher=f"""
         MATCH path = (aws:AWSAccount {{id: $provider_uid}})-[r]-(x)-[q]-(y)
         WHERE (x:EC2PrivateIp AND x.public_ip = $ip)
@@ -359,6 +372,7 @@ AWS_APPRUNNER_PRIVESC_PASSROLE_CREATE_SERVICE = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/apprunner-001",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.CODE_EXECUTION,
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(passrole_policy:AWSPolicy)-[:STATEMENT]->(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
@@ -407,6 +421,7 @@ AWS_APPRUNNER_PRIVESC_UPDATE_SERVICE = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/apprunner-002",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.CODE_EXECUTION,
     cypher=f"""
         // Find principals with apprunner:UpdateService permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(update_policy:AWSPolicy)-[:STATEMENT]->(stmt_update:AWSPolicyStatement {{effect: 'Allow'}})
@@ -444,6 +459,7 @@ AWS_BATCH_PRIVESC_PASSROLE_SUBMIT_JOB = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/batch-001",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.CODE_EXECUTION,
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(passrole_policy:AWSPolicy)-[:STATEMENT]->(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
@@ -502,6 +518,7 @@ AWS_BATCH_PRIVESC_SUBMIT_EXISTING_JOB = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/batch-002",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.CODE_EXECUTION,
     cypher=f"""
         // Find principals with batch:submitjob permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(:AWSPolicyStatement {{effect: 'Allow'}})-[:HAS_ACTION]->(act:AWSPolicyStatementActionItem)
@@ -538,6 +555,7 @@ AWS_BEDROCK_PRIVESC_PASSROLE_CODE_INTERPRETER = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/bedrock-001",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.CODE_EXECUTION,
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(passrole_policy:AWSPolicy)-[:STATEMENT]->(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
@@ -600,6 +618,7 @@ AWS_BEDROCK_PRIVESC_INVOKE_CODE_INTERPRETER = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/bedrock-002",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.CODE_EXECUTION,
     cypher=f"""
         // Find principals with bedrock-agentcore:StartCodeInterpreterSession permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(session_policy:AWSPolicy)-[:STATEMENT]->(stmt_session:AWSPolicyStatement {{effect: 'Allow'}})
@@ -644,6 +663,7 @@ AWS_BRAKET_PRIVESC_PASSROLE_CREATE_JOB = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/braket-001",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.CODE_EXECUTION,
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(passrole_policy:AWSPolicy)-[:STATEMENT]->(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
@@ -696,6 +716,7 @@ AWS_CLOUDFORMATION_PRIVESC_PASSROLE_CREATE_STACK = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/cloudformation-001",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.PRIVILEGE_ESCALATION,
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(passrole_policy:AWSPolicy)-[:STATEMENT]->(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
@@ -744,6 +765,7 @@ AWS_CLOUDFORMATION_PRIVESC_UPDATE_STACK = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/cloudformation-002",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.PRIVILEGE_ESCALATION,
     cypher=f"""
         // Find principals with cloudformation:UpdateStack permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(update_policy:AWSPolicy)-[:STATEMENT]->(stmt_update:AWSPolicyStatement {{effect: 'Allow'}})
@@ -781,6 +803,7 @@ AWS_CLOUDFORMATION_PRIVESC_PASSROLE_CREATE_STACKSET = AttackPathsQueryDefinition
         link="https://pathfinding.cloud/paths/cloudformation-003",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.PRIVILEGE_ESCALATION,
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(passrole_policy:AWSPolicy)-[:STATEMENT]->(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
@@ -836,6 +859,7 @@ AWS_CLOUDFORMATION_PRIVESC_PASSROLE_UPDATE_STACKSET = AttackPathsQueryDefinition
         link="https://pathfinding.cloud/paths/cloudformation-004",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.PRIVILEGE_ESCALATION,
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(passrole_policy:AWSPolicy)-[:STATEMENT]->(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
@@ -884,6 +908,7 @@ AWS_CLOUDFORMATION_PRIVESC_CHANGESET = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/cloudformation-005",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.PRIVILEGE_ESCALATION,
     cypher=f"""
         // Find principals with cloudformation:CreateChangeSet permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(create_policy:AWSPolicy)-[:STATEMENT]->(stmt_create:AWSPolicyStatement {{effect: 'Allow'}})
@@ -928,6 +953,7 @@ AWS_CODEBUILD_PRIVESC_PASSROLE_CREATE_PROJECT = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/codebuild-001",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.CODE_EXECUTION,
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(passrole_policy:AWSPolicy)-[:STATEMENT]->(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
@@ -983,6 +1009,7 @@ AWS_CODEBUILD_PRIVESC_START_BUILD = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/codebuild-002",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.CODE_EXECUTION,
     cypher=f"""
         // Find principals with codebuild:StartBuild permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(build_policy:AWSPolicy)-[:STATEMENT]->(stmt_build:AWSPolicyStatement {{effect: 'Allow'}})
@@ -1020,6 +1047,7 @@ AWS_CODEBUILD_PRIVESC_START_BUILD_BATCH = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/codebuild-003",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.CODE_EXECUTION,
     cypher=f"""
         // Find principals with codebuild:StartBuildBatch permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(build_policy:AWSPolicy)-[:STATEMENT]->(stmt_build:AWSPolicyStatement {{effect: 'Allow'}})
@@ -1057,6 +1085,7 @@ AWS_CODEBUILD_PRIVESC_PASSROLE_CREATE_PROJECT_BATCH = AttackPathsQueryDefinition
         link="https://pathfinding.cloud/paths/codebuild-004",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.CODE_EXECUTION,
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(passrole_policy:AWSPolicy)-[:STATEMENT]->(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
@@ -1112,6 +1141,7 @@ AWS_CODEDEPLOY_PRIVESC_CREATE_DEPLOYMENT = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/codedeploy-001",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.CODE_EXECUTION,
     cypher=f"""
         // Find principals with codedeploy:createdeployment permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(:AWSPolicyStatement {{effect: 'Allow'}})-[:HAS_ACTION]->(act:AWSPolicyStatementActionItem)
@@ -1160,6 +1190,7 @@ AWS_COGNITO_PRIVESC_PASSROLE_SET_IDENTITY_POOL_ROLES = AttackPathsQueryDefinitio
         link="https://pathfinding.cloud/paths/cognitoidentity-001",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.PRIVILEGE_ESCALATION,
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(passrole_policy:AWSPolicy)-[:STATEMENT]->(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
@@ -1212,6 +1243,7 @@ AWS_DATAPIPELINE_PRIVESC_PASSROLE_CREATE_PIPELINE = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/datapipeline-001",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.CODE_EXECUTION,
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(passrole_policy:AWSPolicy)-[:STATEMENT]->(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
@@ -1275,6 +1307,7 @@ AWS_EC2_PRIVESC_PASSROLE_IAM = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/ec2-001",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.CODE_EXECUTION,
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(passrole_policy:AWSPolicy)-[:STATEMENT]->(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
@@ -1323,6 +1356,7 @@ AWS_EC2_PRIVESC_MODIFY_INSTANCE_ATTRIBUTE = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/ec2-002",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.CODE_EXECUTION,
     cypher=f"""
         // Find principals with ec2:ModifyInstanceAttribute permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(modify_policy:AWSPolicy)-[:STATEMENT]->(stmt_modify:AWSPolicyStatement {{effect: 'Allow'}})
@@ -1374,6 +1408,7 @@ AWS_EC2_PRIVESC_PASSROLE_SPOT_INSTANCES = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/ec2-003",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.CODE_EXECUTION,
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(passrole_policy:AWSPolicy)-[:STATEMENT]->(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
@@ -1422,6 +1457,7 @@ AWS_EC2_PRIVESC_LAUNCH_TEMPLATE = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/ec2-004",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.CODE_EXECUTION,
     cypher=f"""
         // Find principals with ec2:CreateLaunchTemplateVersion permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(create_policy:AWSPolicy)-[:STATEMENT]->(stmt_create:AWSPolicyStatement {{effect: 'Allow'}})
@@ -1466,6 +1502,7 @@ AWS_EC2INSTANCECONNECT_PRIVESC_SEND_SSH_PUBLIC_KEY = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/ec2instanceconnect-003",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.CODE_EXECUTION,
     cypher=f"""
         // Find principals with ec2-instance-connect:SendSSHPublicKey permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(connect_policy:AWSPolicy)-[:STATEMENT]->(stmt_connect:AWSPolicyStatement {{effect: 'Allow'}})
@@ -1499,6 +1536,7 @@ AWS_ECS_PRIVESC_PASSROLE_CREATE_SERVICE = AttackPathsQueryDefinition(
     short_description="Create an ECS cluster and service with a privileged Fargate task role to execute arbitrary code.",
     description="Detect principals who can pass IAM roles, create ECS clusters, register task definitions, and create services. This allows creating a Fargate task with a privileged role attached, gaining that role's permissions to execute arbitrary code via the container.",
     provider="aws",
+    outcome=AttackPathsQueryOutcome.CODE_EXECUTION,
     attribution=AttackPathsQueryAttribution(
         text="pathfinding.cloud - ECS-001 - iam:PassRole + ecs:CreateCluster + ecs:RegisterTaskDefinition + ecs:CreateService",
         link="https://pathfinding.cloud/paths/ecs-001",
@@ -1561,6 +1599,7 @@ AWS_ECS_PRIVESC_PASSROLE_RUN_TASK = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/ecs-002",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.CODE_EXECUTION,
     cypher=f"""
         // Find principals with iam:PassRole permission (this IS path_principal)
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(passrole_policy:AWSPolicy)-[:STATEMENT]->(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
@@ -1621,6 +1660,7 @@ AWS_ECS_PRIVESC_PASSROLE_CREATE_SERVICE_EXISTING_CLUSTER = AttackPathsQueryDefin
         link="https://pathfinding.cloud/paths/ecs-003",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.CODE_EXECUTION,
     cypher=f"""
         // Find principals with iam:PassRole permission (this IS path_principal)
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(passrole_policy:AWSPolicy)-[:STATEMENT]->(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
@@ -1673,6 +1713,7 @@ AWS_ECS_PRIVESC_PASSROLE_RUN_TASK_EXISTING_CLUSTER = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/ecs-004",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.CODE_EXECUTION,
     cypher=f"""
         // Find principals with iam:PassRole permission (this IS path_principal)
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(passrole_policy:AWSPolicy)-[:STATEMENT]->(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
@@ -1725,6 +1766,7 @@ AWS_ECS_PRIVESC_PASSROLE_START_TASK_EXISTING_CLUSTER = AttackPathsQueryDefinitio
         link="https://pathfinding.cloud/paths/ecs-005",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.CODE_EXECUTION,
     cypher=f"""
         // Find principals with iam:PassRole permission (this IS path_principal)
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(passrole_policy:AWSPolicy)-[:STATEMENT]->(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
@@ -1777,6 +1819,7 @@ AWS_ECS_PRIVESC_EXECUTE_COMMAND = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/ecs-006",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.CODE_EXECUTION,
     cypher=f"""
         // Find principals with ecs:ExecuteCommand permission (this IS path_principal)
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(exec_policy:AWSPolicy)-[:STATEMENT]->(stmt_exec:AWSPolicyStatement {{effect: 'Allow'}})
@@ -1819,6 +1862,7 @@ AWS_ECS_PRIVESC_PASSROLE_START_EXISTING_TASK = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/ecs-009",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.CODE_EXECUTION,
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(passrole_policy:AWSPolicy)-[:STATEMENT]->(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
@@ -1871,6 +1915,7 @@ AWS_EMR_PRIVESC_PASSROLE_RUN_JOB_FLOW = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/emr-001",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.CODE_EXECUTION,
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(passrole_policy:AWSPolicy)-[:STATEMENT]->(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
@@ -1923,6 +1968,7 @@ AWS_EMRSERVERLESS_PRIVESC_PASSROLE_START_JOB = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/emrserverless-001",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.CODE_EXECUTION,
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(passrole_policy:AWSPolicy)-[:STATEMENT]->(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
@@ -1981,6 +2027,7 @@ AWS_GAMELIFT_PRIVESC_PASSROLE_CREATE_FLEET = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/gamelift-001",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.CODE_EXECUTION,
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(passrole_policy:AWSPolicy)-[:STATEMENT]->(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
@@ -2045,6 +2092,7 @@ AWS_GLUE_PRIVESC_PASSROLE_DEV_ENDPOINT = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/glue-001",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.CODE_EXECUTION,
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(passrole_policy:AWSPolicy)-[:STATEMENT]->(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
@@ -2093,6 +2141,7 @@ AWS_GLUE_PRIVESC_UPDATE_DEV_ENDPOINT = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/glue-002",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.CODE_EXECUTION,
     cypher=f"""
         // Find principals with glue:UpdateDevEndpoint permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(policy:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {{effect: 'Allow'}})
@@ -2130,6 +2179,7 @@ AWS_GLUE_PRIVESC_PASSROLE_CREATE_JOB = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/glue-003",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.CODE_EXECUTION,
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(passrole_policy:AWSPolicy)-[:STATEMENT]->(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
@@ -2185,6 +2235,7 @@ AWS_GLUE_PRIVESC_PASSROLE_CREATE_JOB_TRIGGER = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/glue-004",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.CODE_EXECUTION,
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(passrole_policy:AWSPolicy)-[:STATEMENT]->(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
@@ -2240,6 +2291,7 @@ AWS_GLUE_PRIVESC_PASSROLE_UPDATE_JOB = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/glue-005",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.CODE_EXECUTION,
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(passrole_policy:AWSPolicy)-[:STATEMENT]->(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
@@ -2295,6 +2347,7 @@ AWS_GLUE_PRIVESC_PASSROLE_UPDATE_JOB_TRIGGER = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/glue-006",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.CODE_EXECUTION,
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(passrole_policy:AWSPolicy)-[:STATEMENT]->(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
@@ -2350,6 +2403,7 @@ AWS_GLUE_PRIVESC_PASSROLE_CREATE_SESSION = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/glue-007",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.CODE_EXECUTION,
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(passrole_policy:AWSPolicy)-[:STATEMENT]->(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
@@ -2408,6 +2462,7 @@ AWS_IAM_PRIVESC_CREATE_POLICY_VERSION = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/iam-001",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.PRIVILEGE_ESCALATION,
     cypher=f"""
         // Find principals with iam:CreatePolicyVersion permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(policy:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {{effect: 'Allow'}})
@@ -2449,6 +2504,7 @@ AWS_IAM_PRIVESC_CREATE_ACCESS_KEY = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/iam-002",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.PRIVILEGE_ESCALATION,
     cypher=f"""
         // Find principals with iam:CreateAccessKey permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(policy:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {{effect: 'Allow'}})
@@ -2498,6 +2554,7 @@ AWS_IAM_PRIVESC_DELETE_CREATE_ACCESS_KEY = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/iam-003",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.PRIVILEGE_ESCALATION,
     cypher=f"""
         // Find principals with iam:CreateAccessKey permission (this IS path_principal)
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(policy:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {{effect: 'Allow'}})
@@ -2557,6 +2614,7 @@ AWS_IAM_PRIVESC_CREATE_LOGIN_PROFILE = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/iam-004",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.PRIVILEGE_ESCALATION,
     cypher=f"""
         // Find principals with iam:CreateLoginProfile permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(policy:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {{effect: 'Allow'}})
@@ -2606,6 +2664,7 @@ AWS_IAM_PRIVESC_PUT_ROLE_POLICY = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/iam-005",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.PRIVILEGE_ESCALATION,
     cypher=f"""
         // Find roles with iam:PutRolePolicy permission scoped to themselves
         MATCH path = (aws:AWSAccount {{id: $provider_uid}})--(role:AWSRole)-[:POLICY]->(policy:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {{effect: 'Allow'}})
@@ -2643,6 +2702,7 @@ AWS_IAM_PRIVESC_UPDATE_LOGIN_PROFILE = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/iam-006",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.PRIVILEGE_ESCALATION,
     cypher=f"""
         // Find principals with iam:UpdateLoginProfile permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(policy:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {{effect: 'Allow'}})
@@ -2692,6 +2752,7 @@ AWS_IAM_PRIVESC_PUT_USER_POLICY = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/iam-007",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.PRIVILEGE_ESCALATION,
     cypher=f"""
         // Find users with iam:PutUserPolicy permission scoped to themselves
         MATCH path = (aws:AWSAccount {{id: $provider_uid}})--(user:AWSUser)-[:POLICY]->(policy:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {{effect: 'Allow'}})
@@ -2729,6 +2790,7 @@ AWS_IAM_PRIVESC_ATTACH_USER_POLICY = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/iam-008",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.PRIVILEGE_ESCALATION,
     cypher=f"""
         // Find users with iam:AttachUserPolicy permission scoped to themselves
         MATCH path = (aws:AWSAccount {{id: $provider_uid}})--(user:AWSUser)-[:POLICY]->(policy:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {{effect: 'Allow'}})
@@ -2766,6 +2828,7 @@ AWS_IAM_PRIVESC_ATTACH_ROLE_POLICY = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/iam-009",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.PRIVILEGE_ESCALATION,
     cypher=f"""
         // Find roles with iam:AttachRolePolicy permission scoped to themselves
         MATCH path = (aws:AWSAccount {{id: $provider_uid}})--(role:AWSRole)-[:POLICY]->(policy:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {{effect: 'Allow'}})
@@ -2803,6 +2866,7 @@ AWS_IAM_PRIVESC_ATTACH_GROUP_POLICY = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/iam-010",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.PRIVILEGE_ESCALATION,
     cypher=f"""
         // Find users with iam:AttachGroupPolicy permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(user:AWSUser)-[:POLICY]->(policy:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {{effect: 'Allow'}})
@@ -2844,6 +2908,7 @@ AWS_IAM_PRIVESC_PUT_GROUP_POLICY = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/iam-011",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.PRIVILEGE_ESCALATION,
     cypher=f"""
         // Find users with iam:PutGroupPolicy permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(user:AWSUser)-[:POLICY]->(policy:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {{effect: 'Allow'}})
@@ -2885,6 +2950,7 @@ AWS_IAM_PRIVESC_UPDATE_ASSUME_ROLE_POLICY = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/iam-012",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.PRIVILEGE_ESCALATION,
     cypher=f"""
         // Find principals with iam:UpdateAssumeRolePolicy permission (this IS path_principal)
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(policy:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {{effect: 'Allow'}})
@@ -2936,6 +3002,7 @@ AWS_IAM_PRIVESC_ADD_USER_TO_GROUP = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/iam-013",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.PRIVILEGE_ESCALATION,
     cypher=f"""
         // Find principals with iam:AddUserToGroup permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(policy:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {{effect: 'Allow'}})
@@ -2985,6 +3052,7 @@ AWS_IAM_PRIVESC_ATTACH_ROLE_POLICY_ASSUME_ROLE = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/iam-014",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.PRIVILEGE_ESCALATION,
     cypher=f"""
         // Find principals with iam:AttachRolePolicy permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(policy:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {{effect: 'Allow'}})
@@ -3026,6 +3094,7 @@ AWS_IAM_PRIVESC_ATTACH_USER_POLICY_CREATE_ACCESS_KEY = AttackPathsQueryDefinitio
         link="https://pathfinding.cloud/paths/iam-015",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.PRIVILEGE_ESCALATION,
     cypher=f"""
         // Find principals with iam:AttachUserPolicy permission (this IS path_principal)
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(policy:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {{effect: 'Allow'}})
@@ -3085,6 +3154,7 @@ AWS_IAM_PRIVESC_CREATE_POLICY_VERSION_ASSUME_ROLE = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/iam-016",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.PRIVILEGE_ESCALATION,
     cypher=f"""
         // Find principals with iam:CreatePolicyVersion permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(policy:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {{effect: 'Allow'}})
@@ -3127,6 +3197,7 @@ AWS_IAM_PRIVESC_PUT_ROLE_POLICY_ASSUME_ROLE = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/iam-017",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.PRIVILEGE_ESCALATION,
     cypher=f"""
         // Find principals with iam:PutRolePolicy permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(policy:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {{effect: 'Allow'}})
@@ -3168,6 +3239,7 @@ AWS_IAM_PRIVESC_PUT_USER_POLICY_CREATE_ACCESS_KEY = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/iam-018",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.PRIVILEGE_ESCALATION,
     cypher=f"""
         // Find principals with iam:PutUserPolicy permission (this IS path_principal)
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(policy:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {{effect: 'Allow'}})
@@ -3227,6 +3299,7 @@ AWS_IAM_PRIVESC_ATTACH_ROLE_POLICY_UPDATE_ASSUME_ROLE = AttackPathsQueryDefiniti
         link="https://pathfinding.cloud/paths/iam-019",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.PRIVILEGE_ESCALATION,
     cypher=f"""
         // Find principals with iam:AttachRolePolicy permission (this IS path_principal)
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(policy:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {{effect: 'Allow'}})
@@ -3286,6 +3359,7 @@ AWS_IAM_PRIVESC_CREATE_POLICY_VERSION_UPDATE_ASSUME_ROLE = AttackPathsQueryDefin
         link="https://pathfinding.cloud/paths/iam-020",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.PRIVILEGE_ESCALATION,
     cypher=f"""
         // Find principals with iam:CreatePolicyVersion permission (this IS path_principal)
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(policy:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {{effect: 'Allow'}})
@@ -3352,6 +3426,7 @@ AWS_IAM_PRIVESC_PUT_ROLE_POLICY_UPDATE_ASSUME_ROLE = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/iam-021",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.PRIVILEGE_ESCALATION,
     cypher=f"""
         // Find principals with iam:PutRolePolicy permission (this IS path_principal)
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(policy:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {{effect: 'Allow'}})
@@ -3411,6 +3486,7 @@ AWS_IAM_PRIVESC_DELETE_USER_PERMISSIONS_BOUNDARY = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/iam-022",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.PRIVILEGE_ESCALATION,
     cypher=f"""
         // Find IAM users with iam:DeleteUserPermissionsBoundary permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSUser)-[:POLICY]->(policy:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {{effect: 'Allow'}})
@@ -3451,6 +3527,7 @@ AWS_IAM_PRIVESC_DELETE_ROLE_BOUNDARY_ASSUME_ROLE = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/iam-023",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.PRIVILEGE_ESCALATION,
     cypher=f"""
         // Find principals with iam:DeleteRolePermissionsBoundary permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {{effect: 'Allow'}})-[:HAS_ACTION]->(act:AWSPolicyStatementActionItem)
@@ -3499,6 +3576,7 @@ AWS_IMAGEBUILDER_PRIVESC_PASSROLE_CREATE_IMAGE = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/imagebuilder-001",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.CODE_EXECUTION,
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(passrole_policy:AWSPolicy)-[:STATEMENT]->(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
@@ -3569,6 +3647,7 @@ AWS_KINESISANALYTICS_PRIVESC_PASSROLE_CREATE_APP = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/kinesisanalytics-001",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.CODE_EXECUTION,
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(passrole_policy:AWSPolicy)-[:STATEMENT]->(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
@@ -3627,6 +3706,7 @@ AWS_LAMBDA_PRIVESC_PASSROLE_CREATE_FUNCTION = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/lambda-001",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.CODE_EXECUTION,
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(passrole_policy:AWSPolicy)-[:STATEMENT]->(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
@@ -3682,6 +3762,7 @@ AWS_LAMBDA_PRIVESC_PASSROLE_CREATE_FUNCTION_EVENT_SOURCE = AttackPathsQueryDefin
         link="https://pathfinding.cloud/paths/lambda-002",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.CODE_EXECUTION,
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(passrole_policy:AWSPolicy)-[:STATEMENT]->(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
@@ -3737,6 +3818,7 @@ AWS_LAMBDA_PRIVESC_UPDATE_FUNCTION_CODE = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/lambda-003",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.CODE_EXECUTION,
     cypher=f"""
         // Find principals with lambda:UpdateFunctionCode permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(policy:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {{effect: 'Allow'}})
@@ -3778,6 +3860,7 @@ AWS_LAMBDA_PRIVESC_UPDATE_FUNCTION_CODE_INVOKE = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/lambda-004",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.CODE_EXECUTION,
     cypher=f"""
         // Find principals with lambda:UpdateFunctionCode permission (this IS path_principal)
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(policy:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {{effect: 'Allow'}})
@@ -3829,6 +3912,7 @@ AWS_LAMBDA_PRIVESC_UPDATE_FUNCTION_CODE_ADD_PERMISSION = AttackPathsQueryDefinit
         link="https://pathfinding.cloud/paths/lambda-005",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.CODE_EXECUTION,
     cypher=f"""
         // Find principals with lambda:UpdateFunctionCode permission (this IS path_principal)
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(policy:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {{effect: 'Allow'}})
@@ -3880,6 +3964,7 @@ AWS_LAMBDA_PRIVESC_PASSROLE_CREATE_FUNCTION_ADD_PERMISSION = AttackPathsQueryDef
         link="https://pathfinding.cloud/paths/lambda-006",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.CODE_EXECUTION,
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(passrole_policy:AWSPolicy)-[:STATEMENT]->(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
@@ -3935,6 +4020,7 @@ AWS_OMICS_PRIVESC_PASSROLE_START_RUN = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/omics-001",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.CODE_EXECUTION,
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(passrole_policy:AWSPolicy)-[:STATEMENT]->(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
@@ -3999,6 +4085,7 @@ AWS_SAGEMAKER_PRIVESC_PASSROLE_CREATE_NOTEBOOK = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/sagemaker-001",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.CODE_EXECUTION,
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(passrole_policy:AWSPolicy)-[:STATEMENT]->(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
@@ -4047,6 +4134,7 @@ AWS_SAGEMAKER_PRIVESC_PASSROLE_CREATE_TRAINING_JOB = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/sagemaker-002",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.CODE_EXECUTION,
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(passrole_policy:AWSPolicy)-[:STATEMENT]->(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
@@ -4095,6 +4183,7 @@ AWS_SAGEMAKER_PRIVESC_PASSROLE_CREATE_PROCESSING_JOB = AttackPathsQueryDefinitio
         link="https://pathfinding.cloud/paths/sagemaker-003",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.CODE_EXECUTION,
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(passrole_policy:AWSPolicy)-[:STATEMENT]->(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
@@ -4143,6 +4232,7 @@ AWS_SAGEMAKER_PRIVESC_PRESIGNED_NOTEBOOK_URL = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/sagemaker-004",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.CODE_EXECUTION,
     cypher=f"""
         // Find principals with sagemaker:CreatePresignedNotebookInstanceUrl permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(policy:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {{effect: 'Allow'}})
@@ -4184,6 +4274,7 @@ AWS_SAGEMAKER_PRIVESC_LIFECYCLE_CONFIG_NOTEBOOK = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/sagemaker-005",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.CODE_EXECUTION,
     cypher=f"""
         // Find principals with sagemaker:CreateNotebookInstanceLifecycleConfig permission (this IS path_principal)
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(policy:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {{effect: 'Allow'}})
@@ -4242,6 +4333,7 @@ AWS_SCHEDULER_PRIVESC_PASSROLE_CREATE_SCHEDULE = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/scheduler-001",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.PRIVILEGE_ESCALATION,
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(passrole_policy:AWSPolicy)-[:STATEMENT]->(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
@@ -4294,6 +4386,7 @@ AWS_SSM_PRIVESC_START_SESSION = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/ssm-001",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.CODE_EXECUTION,
     cypher=f"""
         // Find principals with ssm:StartSession permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(policy:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {{effect: 'Allow'}})
@@ -4331,6 +4424,7 @@ AWS_SSM_PRIVESC_SEND_COMMAND = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/ssm-002",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.CODE_EXECUTION,
     cypher=f"""
         // Find principals with ssm:SendCommand permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(policy:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {{effect: 'Allow'}})
@@ -4368,6 +4462,7 @@ AWS_SSM_PRIVESC_PASSROLE_AUTOMATION = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/ssm-003",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.PRIVILEGE_ESCALATION,
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(passrole_policy:AWSPolicy)-[:STATEMENT]->(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
@@ -4426,6 +4521,7 @@ AWS_SSO_PRIVESC_PERMISSION_SET_ESCALATION = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/sso-001",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.PRIVILEGE_ESCALATION,
     cypher=f"""
         // Find principals with sso:CreatePermissionSet permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(policy:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {{effect: 'Allow'}})
@@ -4477,6 +4573,7 @@ AWS_SSO_PRIVESC_ATTACH_MANAGED_POLICY = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/sso-002",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.PRIVILEGE_ESCALATION,
     cypher=f"""
         // Find principals with sso:attachmanagedpolicytopermissionset permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(policy:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {{effect: 'Allow'}})
@@ -4514,6 +4611,7 @@ AWS_SSO_PRIVESC_PUT_INLINE_POLICY = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/sso-003",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.PRIVILEGE_ESCALATION,
     cypher=f"""
         // Find principals with sso:putinlinepolicytopermissionset permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(policy:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {{effect: 'Allow'}})
@@ -4552,6 +4650,7 @@ AWS_STEPFUNCTIONS_PRIVESC_PASSROLE_CREATE_STATE_MACHINE = AttackPathsQueryDefini
         link="https://pathfinding.cloud/paths/stepfunctions-001",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.PRIVILEGE_ESCALATION,
     cypher=f"""
         // Find principals with iam:PassRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(passrole_policy:AWSPolicy)-[:STATEMENT]->(stmt_passrole:AWSPolicyStatement {{effect: 'Allow'}})
@@ -4610,6 +4709,7 @@ AWS_STEPFUNCTIONS_PRIVESC_UPDATE_STATE_MACHINE = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/stepfunctions-002",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.PRIVILEGE_ESCALATION,
     cypher=f"""
         // Find principals with states:updatestatemachine permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(:AWSPolicyStatement {{effect: 'Allow'}})-[:HAS_ACTION]->(act:AWSPolicyStatementActionItem)
@@ -4652,6 +4752,7 @@ AWS_STS_PRIVESC_ASSUME_ROLE = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/sts-001",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.PRIVILEGE_ESCALATION,
     cypher=f"""
         // Find principals with sts:AssumeRole permission
         MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(policy:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {{effect: 'Allow'}})
@@ -4693,6 +4794,7 @@ AWS_STS_PRIVESC_CROSS_ACCOUNT_TRUST = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/sts-002",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.PRIVILEGE_ESCALATION,
     cypher=f"""
         // Find roles that trust an external account's root principal (cross-account trust)
         MATCH path_target = (aws:AWSAccount {{id: $provider_uid}})--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(trusted:AWSRootPrincipal)
@@ -4725,6 +4827,7 @@ AWS_STS_PRIVESC_WILDCARD_TRUST = AttackPathsQueryDefinition(
         link="https://pathfinding.cloud/paths/sts-003",
     ),
     provider="aws",
+    outcome=AttackPathsQueryOutcome.PRIVILEGE_ESCALATION,
     cypher=f"""
         // Find roles linked to a wildcard principal for manual review
         MATCH path_target = (aws:AWSAccount {{id: $provider_uid}})--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(trusted:AWSPrincipal)

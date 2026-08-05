@@ -19,6 +19,7 @@ from allauth.account.models import EmailAddress
 from allauth.socialaccount.models import SocialAccount, SocialApp
 from api.attack_paths import (
     AttackPathsQueryDefinition,
+    AttackPathsQueryOutcome,
     AttackPathsQueryParameterDefinition,
 )
 from api.compliance import get_compliance_frameworks
@@ -5387,6 +5388,72 @@ class TestAttackPathsScanViewSet:
         assert payload[0]["id"] == "aws-rds"
         assert payload[0]["attributes"]["name"] == "RDS inventory"
         assert payload[0]["attributes"]["parameters"][0]["name"] == "ip"
+
+    def test_attack_paths_queries_expose_outcome(
+        self,
+        authenticated_client,
+        aws_provider,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        provider = aws_provider
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+        )
+
+        definitions = [
+            AttackPathsQueryDefinition(
+                id="aws-lambda-passrole",
+                name="Lambda passrole",
+                short_description="Pass a role to a new Lambda function.",
+                description="Pass a role to a new Lambda function and run code as it.",
+                provider=provider.provider,
+                cypher="MATCH (n) RETURN n",
+                outcome=AttackPathsQueryOutcome.CODE_EXECUTION,
+            ),
+            AttackPathsQueryDefinition(
+                id="aws-rds-inventory",
+                name="RDS inventory",
+                short_description="List account RDS assets.",
+                description="List account RDS assets.",
+                provider=provider.provider,
+                cypher="MATCH (n) RETURN n",
+                outcome=AttackPathsQueryOutcome.RESOURCE_INVENTORY,
+            ),
+            AttackPathsQueryDefinition(
+                id="aws-no-outcome",
+                name="No outcome",
+                short_description="A query without an outcome.",
+                description="A query without an outcome.",
+                provider=provider.provider,
+                cypher="MATCH (n) RETURN n",
+            ),
+        ]
+
+        with patch("api.v1.views.get_queries_for_provider", return_value=definitions):
+            response = authenticated_client.get(
+                reverse(
+                    "attack-paths-scans-queries", kwargs={"pk": attack_paths_scan.id}
+                )
+            )
+
+        assert response.status_code == status.HTTP_200_OK
+        outcomes = {
+            item["id"]: item["attributes"]["outcome"]
+            for item in response.json()["data"]
+        }
+        assert outcomes["aws-lambda-passrole"] == {
+            "kind": "code_execution",
+            "label": "Code execution",
+            "partial": False,
+        }
+        assert outcomes["aws-rds-inventory"] == {
+            "kind": "resource_inventory",
+            "label": "Resource inventory",
+            "partial": True,
+        }
+        assert outcomes["aws-no-outcome"] is None
 
     def test_attack_paths_queries_returns_404_when_catalog_missing(
         self,
