@@ -116,14 +116,6 @@ const buildVisualItem = (
   glow,
 });
 
-const providerRootItem = buildVisualItem(
-  "Provider",
-  "Cloud account, tenant, project, organization, or cluster entry point.",
-  buildNode(["AWSAccount"], { name: "Provider root" }),
-  GRAPH_NODE_COLORS.awsAccount,
-  GRAPH_NODE_BORDER_COLORS.awsAccount,
-);
-
 const findingRiskItems: LegendVisualItem[] = [
   buildVisualItem(
     "Critical",
@@ -481,11 +473,9 @@ export const GraphLegend = ({
     expandedResources,
     isFilteredView,
   );
-  const providerItem = legendState.visibleNodes.some(
-    (node) => resolveNodeVisual(node).category === NODE_CATEGORY.ACCOUNT,
-  )
-    ? providerRootItem
-    : null;
+  // The account/provider hub is no longer rendered (removed by the view
+  // transform), so it never appears in the legend.
+  const providerItem = null;
   const visibleNodeTypeItems = resolveNodeTypeItems(legendState.visibleNodes);
   const visibleFindingRiskItems = resolveFindingRiskItems(
     legendState.visibleNodes,
@@ -527,14 +517,6 @@ export const GraphLegend = ({
       <CardContent className="p-3">
         <TooltipProvider>
           <div className="flex w-full flex-wrap items-stretch gap-2">
-            {providerItem && (
-              <LegendSection title="Provider roots">
-                <LegendItem {...providerItem}>
-                  <BadgePreview {...providerItem} />
-                </LegendItem>
-              </LegendSection>
-            )}
-
             {visibleNodeTypeItems.length > 0 && (
               <LegendSection title="Node types">
                 {visibleNodeTypeItems.map((item) => (

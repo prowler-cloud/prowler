@@ -41,9 +41,11 @@ describe("GraphLegend", () => {
     );
 
     // Then
+    // The account/provider hub is removed by the view transform, so the legend
+    // no longer shows a "Provider roots" section.
     expect(
-      screen.getByRole("heading", { name: /provider roots/i }),
-    ).toBeInTheDocument();
+      screen.queryByRole("heading", { name: /provider roots/i }),
+    ).not.toBeInTheDocument();
     expect(
       screen.getByRole("heading", { name: /node types/i }),
     ).toBeInTheDocument();
@@ -55,7 +57,7 @@ describe("GraphLegend", () => {
     ).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /edges/i })).toBeInTheDocument();
 
-    expect(screen.getByText("Provider")).toBeInTheDocument();
+    expect(screen.queryByText("Provider")).not.toBeInTheDocument();
     expect(screen.getByText("S3 Bucket")).toBeInTheDocument();
     expect(screen.getByText("VPC")).toBeInTheDocument();
     expect(screen.queryByText("Storage")).not.toBeInTheDocument();
