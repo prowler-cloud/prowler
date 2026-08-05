@@ -31,10 +31,16 @@ class entra_device_registration_max_devices_per_user_limited(Check):
         )
         quota = policy.user_device_quota
         report.status = "FAIL"
-        report.status_extended = (
-            f"The maximum number of devices per user is {quota}, which exceeds the "
-            f"recommended limit of {MAX_DEVICES_PER_USER}."
-        )
+        if quota is None:
+            report.status_extended = (
+                "The maximum number of devices per user is not limited, exceeding "
+                f"the recommended limit of {MAX_DEVICES_PER_USER}."
+            )
+        else:
+            report.status_extended = (
+                f"The maximum number of devices per user is {quota}, which exceeds "
+                f"the recommended limit of {MAX_DEVICES_PER_USER}."
+            )
 
         if quota is not None and quota <= MAX_DEVICES_PER_USER:
             report.status = "PASS"

@@ -32,8 +32,20 @@ class Test_entra_device_registration_laps_enabled:
         result = self._run(DeviceRegistrationPolicy(local_admin_password_enabled=True))
         assert len(result) == 1
         assert result[0].status == "PASS"
+        assert (
+            result[0].status_extended
+            == "Microsoft Entra Local Administrator Password Solution (LAPS) is enabled."
+        )
+        assert result[0].resource_id == "deviceRegistrationPolicy"
+        assert result[0].resource_name == "Device Registration Policy"
 
     def test_laps_disabled(self):
         result = self._run(DeviceRegistrationPolicy(local_admin_password_enabled=False))
         assert len(result) == 1
         assert result[0].status == "FAIL"
+        assert (
+            result[0].status_extended
+            == "Microsoft Entra Local Administrator Password Solution (LAPS) is disabled."
+        )
+        assert result[0].resource_id == "deviceRegistrationPolicy"
+        assert result[0].resource_name == "Device Registration Policy"

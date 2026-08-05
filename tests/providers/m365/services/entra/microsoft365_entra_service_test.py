@@ -22,6 +22,8 @@ Conditions = entra_service.Conditions
 CredentialRestriction = entra_service.CredentialRestriction
 DefaultAppManagementPolicy = entra_service.DefaultAppManagementPolicy
 DefaultUserRolePermissions = entra_service.DefaultUserRolePermissions
+DeviceRegistrationMembershipType = entra_service.DeviceRegistrationMembershipType
+DeviceRegistrationPolicy = entra_service.DeviceRegistrationPolicy
 Entra = entra_service.Entra
 GrantControlOperator = entra_service.GrantControlOperator
 GrantControls = entra_service.GrantControls
@@ -726,6 +728,71 @@ class Test_Entra_Service:
         assert error_message is not None
         assert "AuditLog.Read.All" in error_message
         assert "user registration details" in error_message
+
+    def _mocked_device_registration_entra(self, send_primitive):
+        entra_service = Entra.__new__(Entra)
+        entra_service.client = SimpleNamespace(
+            policies=SimpleNamespace(
+                device_registration_policy=SimpleNamespace(
+                    to_get_request_information=MagicMock(return_value="request-info")
+                )
+            ),
+            request_adapter=SimpleNamespace(send_primitive_async=send_primitive),
+        )
+        return entra_service
+
+    def test__get_device_registration_policy(self):
+        payload = b"""
+        {
+            "id": "deviceRegistrationPolicy",
+            "userDeviceQuota": 50,
+            "azureADJoin": {
+                "allowedToJoin": {
+                    "@odata.type": "#microsoft.graph.allDeviceRegistrationMembership"
+                },
+                "localAdmins": {
+                    "enableGlobalAdmins": true,
+                    "registeringUsers": {
+                        "@odata.type": "#microsoft.graph.enumeratedDeviceRegistrationMembership"
+                    }
+                }
+            },
+            "localAdminPassword": {"isEnabled": false}
+        }
+        """
+        send_primitive = AsyncMock(return_value=payload)
+        entra_service = self._mocked_device_registration_entra(send_primitive)
+
+        policy = asyncio.run(entra_service._get_device_registration_policy())
+
+        assert policy == DeviceRegistrationPolicy(
+            user_device_quota=50,
+            azure_ad_join_allowed_to_join_type=DeviceRegistrationMembershipType.ALL.value,
+            azure_ad_join_global_admins_enabled=True,
+            azure_ad_join_registering_users_type=DeviceRegistrationMembershipType.ENUMERATED.value,
+            local_admin_password_enabled=False,
+        )
+        send_primitive.assert_awaited_once_with("request-info", "bytes", {})
+
+    def test__get_device_registration_policy_missing_fields(self):
+        send_primitive = AsyncMock(return_value=b'{"id": "deviceRegistrationPolicy"}')
+        entra_service = self._mocked_device_registration_entra(send_primitive)
+
+        policy = asyncio.run(entra_service._get_device_registration_policy())
+
+        assert policy == DeviceRegistrationPolicy(
+            user_device_quota=None,
+            azure_ad_join_allowed_to_join_type=None,
+            azure_ad_join_global_admins_enabled=None,
+            azure_ad_join_registering_users_type=None,
+            local_admin_password_enabled=None,
+        )
+
+    def test__get_device_registration_policy_returns_none_on_error(self):
+        send_primitive = AsyncMock(side_effect=Exception("Graph error"))
+        entra_service = self._mocked_device_registration_entra(send_primitive)
+
+        assert asyncio.run(entra_service._get_device_registration_policy()) is None
 
     def test__get_service_principals_filters_third_party_owners(self):
         """Service principals owned by another tenant must not be returned."""

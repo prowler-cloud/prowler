@@ -20,7 +20,7 @@ class entra_device_registration_join_restricted(Check):
     users.
 
     - PASS: Only selected users or no users may join devices to Entra.
-    - FAIL: All users may join devices to Entra.
+    - FAIL: The users allowed to join devices are not restricted to Selected or None.
     """
 
     def execute(self) -> List[CheckReportM365]:
@@ -37,7 +37,8 @@ class entra_device_registration_join_restricted(Check):
         )
         report.status = "FAIL"
         report.status_extended = (
-            "All users are allowed to join devices to Microsoft Entra."
+            "The users allowed to join devices to Microsoft Entra are not "
+            "restricted to selected users or none."
         )
 
         if policy.azure_ad_join_allowed_to_join_type in RESTRICTED_MEMBERSHIP_TYPES:

@@ -37,6 +37,23 @@ class Test_entra_device_registration_join_restricted:
         )
         assert len(result) == 1
         assert result[0].status == "FAIL"
+        assert (
+            result[0].status_extended
+            == "The users allowed to join devices to Microsoft Entra are not restricted to selected users or none."
+        )
+        assert result[0].resource_id == "deviceRegistrationPolicy"
+        assert result[0].resource_name == "Device Registration Policy"
+
+    def test_unknown_membership_type(self):
+        result = self._run(
+            DeviceRegistrationPolicy(azure_ad_join_allowed_to_join_type=None)
+        )
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+        assert (
+            result[0].status_extended
+            == "The users allowed to join devices to Microsoft Entra are not restricted to selected users or none."
+        )
 
     def test_selected_users(self):
         result = self._run(
@@ -46,6 +63,12 @@ class Test_entra_device_registration_join_restricted:
         )
         assert len(result) == 1
         assert result[0].status == "PASS"
+        assert (
+            result[0].status_extended
+            == "Only selected users or no users are allowed to join devices to Microsoft Entra."
+        )
+        assert result[0].resource_id == "deviceRegistrationPolicy"
+        assert result[0].resource_name == "Device Registration Policy"
 
     def test_none(self):
         result = self._run(
@@ -55,3 +78,7 @@ class Test_entra_device_registration_join_restricted:
         )
         assert len(result) == 1
         assert result[0].status == "PASS"
+        assert (
+            result[0].status_extended
+            == "Only selected users or no users are allowed to join devices to Microsoft Entra."
+        )

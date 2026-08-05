@@ -32,13 +32,38 @@ class Test_entra_device_registration_max_devices_per_user_limited:
         result = self._run(DeviceRegistrationPolicy(user_device_quota=10))
         assert len(result) == 1
         assert result[0].status == "PASS"
+        assert (
+            result[0].status_extended
+            == "The maximum number of devices per user is 10, within the recommended limit of 10."
+        )
+        assert result[0].resource_id == "deviceRegistrationPolicy"
+        assert result[0].resource_name == "Device Registration Policy"
+
+    def test_zero_quota(self):
+        result = self._run(DeviceRegistrationPolicy(user_device_quota=0))
+        assert len(result) == 1
+        assert result[0].status == "PASS"
+        assert (
+            result[0].status_extended
+            == "The maximum number of devices per user is 0, within the recommended limit of 10."
+        )
 
     def test_exceeds_limit(self):
         result = self._run(DeviceRegistrationPolicy(user_device_quota=50))
         assert len(result) == 1
         assert result[0].status == "FAIL"
+        assert (
+            result[0].status_extended
+            == "The maximum number of devices per user is 50, which exceeds the recommended limit of 10."
+        )
+        assert result[0].resource_id == "deviceRegistrationPolicy"
+        assert result[0].resource_name == "Device Registration Policy"
 
     def test_none_quota(self):
         result = self._run(DeviceRegistrationPolicy(user_device_quota=None))
         assert len(result) == 1
         assert result[0].status == "FAIL"
+        assert (
+            result[0].status_extended
+            == "The maximum number of devices per user is not limited, exceeding the recommended limit of 10."
+        )
