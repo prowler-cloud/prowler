@@ -1,7 +1,7 @@
 "use client";
 
 import { Row } from "@tanstack/react-table";
-import { VolumeOff, VolumeX } from "lucide-react";
+import { Sparkles, VolumeOff, VolumeX } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useContext, useState } from "react";
 
@@ -11,16 +11,28 @@ import {
   ActionDropdown,
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
+import {
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+} from "@/components/shadcn/dropdown/dropdown";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { isFindingGroupMuted } from "@/lib/findings-groups";
 import { buildJiraActionLabel } from "@/lib/jira-dispatch-action";
 import { createJiraDispatchPayload } from "@/lib/jira-dispatch-selection";
+import {
+  buildFindingGroupContext,
+  buildFindingResourceContext,
+} from "@/lib/lighthouse/context/contributions";
+import { isCloud } from "@/lib/shared/env";
 import { getOptionalText } from "@/lib/utils";
 import type {
   FindingTriageLoadedNote,
   FindingTriageSummary,
 } from "@/types/findings-triage";
 import { JIRA_DISPATCH_TARGET } from "@/types/integrations";
+import type { LighthouseSkillDefinition } from "@/types/lighthouse-skills";
 import type { ProviderType } from "@/types/providers";
 
 import { canMuteFindingGroup } from "./finding-group-selection";
@@ -28,6 +40,10 @@ import type { FindingTriageContext } from "./finding-note-modal";
 import { FindingNoteActionItem } from "./finding-triage-cells";
 import type { FindingTriageUpdateHandler } from "./finding-triage-status-control";
 import { FindingsSelectionContext } from "./findings-selection-context";
+import {
+  LighthouseSkillsMenuItems,
+  useLighthouseSkillLaunch,
+} from "./lighthouse-skills-launch";
 
 export interface FindingRowData {
   id: string;
@@ -37,6 +53,8 @@ export interface FindingRowData {
       checktitle?: string;
     };
   };
+  severity?: string;
+  status?: string;
   triage?: FindingTriageSummary;
   relationships?: {
     resource?: {
@@ -235,6 +253,20 @@ export function DataTableRowActions<T extends FindingRowData>({
     router.refresh();
   };
 
+  const launchSkill = useLighthouseSkillLaunch();
+  const handleLaunchSkill = (skill: LighthouseSkillDefinition) => {
+    const findingItem = isGroup
+      ? buildFindingGroupContext({
+          id: finding.id,
+          checkId: finding.checkId ?? finding.id,
+          checkTitle: findingTitle,
+          severity: finding.severity ?? "",
+          status: finding.status ?? "",
+        })
+      : buildFindingResourceContext({ findingId: finding.id });
+    launchSkill(skill, findingItem);
+  };
+
   return (
     <>
       <MuteFindingsModal
@@ -275,6 +307,23 @@ export function DataTableRowActions<T extends FindingRowData>({
             onSelect={handleMuteClick}
           />
           <JiraDispatchActionItem label={jiraLabel} payload={jiraPayload} />
+          {isCloud() && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger className="hover:bg-bg-neutral-tertiary flex cursor-pointer items-center gap-2 rounded-md">
+                  <Sparkles
+                    className="text-text-success-primary size-4"
+                    aria-hidden
+                  />
+                  Lighthouse Skills
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent className="border-border-neutral-secondary bg-bg-neutral-secondary w-72 rounded-xl">
+                  <LighthouseSkillsMenuItems onLaunch={handleLaunchSkill} />
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+            </>
+          )}
         </ActionDropdown>
       </div>
     </>

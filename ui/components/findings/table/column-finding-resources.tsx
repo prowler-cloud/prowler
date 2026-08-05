@@ -20,6 +20,8 @@ import { DataTableColumnHeader } from "@/components/shadcn/table/data-table-colu
 import { getFailingForLabel } from "@/lib/date-utils";
 import { buildJiraActionLabel } from "@/lib/jira-dispatch-action";
 import { createJiraDispatchPayload } from "@/lib/jira-dispatch-selection";
+import { buildFindingResourceContext } from "@/lib/lighthouse/context/contributions";
+import { isCloud } from "@/lib/shared/env";
 import { FindingResourceRow } from "@/types";
 import type {
   FindingTriageLoadedNote,
@@ -34,6 +36,7 @@ import {
 } from "./finding-triage-cells";
 import type { FindingTriageUpdateHandler } from "./finding-triage-status-control";
 import { FindingsSelectionContext } from "./findings-selection-context";
+import { LighthouseSkillsRowButton } from "./lighthouse-skills-launch";
 import {
   type DeltaType,
   NotificationIndicator,
@@ -129,9 +132,22 @@ const ResourceRowActions = ({
         />
       )}
       <div
-        className="flex items-center justify-end"
+        className="flex items-center justify-end gap-1.5"
         onClick={(e) => e.stopPropagation()}
       >
+        {isCloud() && (
+          <LighthouseSkillsRowButton
+            findingItem={buildFindingResourceContext({
+              findingId: resource.findingId,
+              checkId: resource.checkId,
+              severity: resource.severity,
+              status: resource.status,
+              providerUid: resource.providerUid,
+              resourceUid: resource.resourceUid,
+              region: resource.region,
+            })}
+          />
+        )}
         <ActionDropdown ariaLabel="Resource actions">
           <FindingNoteActionItem
             triage={resource.triage}
