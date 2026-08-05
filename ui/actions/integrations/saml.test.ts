@@ -1,12 +1,20 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { fetchMock, getAuthHeadersMock, handleApiResponseMock } = vi.hoisted(
-  () => ({
-    fetchMock: vi.fn(),
-    getAuthHeadersMock: vi.fn(),
-    handleApiResponseMock: vi.fn(),
-  }),
-);
+const {
+  fetchMock,
+  getAuthHeadersMock,
+  handleApiResponseMock,
+  revalidatePathMock,
+} = vi.hoisted(() => ({
+  fetchMock: vi.fn(),
+  getAuthHeadersMock: vi.fn(),
+  handleApiResponseMock: vi.fn(),
+  revalidatePathMock: vi.fn(),
+}));
+
+vi.mock("next/cache", () => ({
+  revalidatePath: revalidatePathMock,
+}));
 
 vi.mock("@/lib/helper", () => ({
   apiBaseUrl: "https://api.example.com/api/v1",
@@ -17,7 +25,7 @@ vi.mock("@/lib/server-actions-helper", () => ({
   handleApiResponse: handleApiResponseMock,
 }));
 
-import { createSamlConfig, updateSamlConfig } from "./saml";
+import { createSamlConfig, deleteSamlConfig, updateSamlConfig } from "./saml";
 
 const buildFormData = ({
   additionalEmailDomains = [],
@@ -178,5 +186,19 @@ describe("SAML configuration actions", () => {
     expect(result).toEqual({
       errors: { additional_email_domains: "Domain is already in use." },
     });
+  });
+
+  it("revalidates the profile after deleting a SAML configuration", async () => {
+    // Given
+    fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
+
+    // When
+    const result = await deleteSamlConfig("saml-1");
+
+    // Then
+    expect(result).toEqual({
+      success: "SAML configuration deleted successfully!",
+    });
+    expect(revalidatePathMock).toHaveBeenCalledWith("/profile");
   });
 });

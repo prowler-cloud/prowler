@@ -33,7 +33,10 @@ import { useRuntimeConfig } from "@/hooks/use-runtime-config";
 import { isCloud } from "@/lib/shared/env";
 import { useCloudUpgradeStore } from "@/store";
 import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
-import { samlAdditionalEmailDomainSchema } from "@/types/formSchemas";
+import {
+  samlAdditionalEmailDomainSchema,
+  samlEmailDomainSchema,
+} from "@/types/formSchemas";
 import type { SamlConfiguration } from "@/types/saml";
 
 const validateXMLContent = (
@@ -149,6 +152,8 @@ export const SamlConfigForm = ({
     string | null
   >(null);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  // Local state needed: submission must wait for the selected metadata file.
+  const [isMetadataFileReading, setIsMetadataFileReading] = useState(false);
   const [clientErrors, setClientErrors] = useState<{
     email_domain?: string | null;
     metadata_xml?: string | null;
@@ -241,6 +246,7 @@ export const SamlConfigForm = ({
     if (metadataInput instanceof HTMLInputElement) {
       metadataInput.value = "";
     }
+    setIsMetadataFileReading(false);
     setUploadedFile(null);
     validateFields(emailDomain, false);
   };
@@ -288,11 +294,13 @@ export const SamlConfigForm = ({
     invalidateActiveFileRead();
     const reader = new FileReader();
     activeFileReaderRef.current = reader;
+    setIsMetadataFileReading(true);
     reader.onload = (e) => {
       if (activeFileReaderRef.current !== reader) {
         return;
       }
       activeFileReaderRef.current = null;
+      setIsMetadataFileReading(false);
       const content = e.target?.result as string;
 
       // Comprehensive XML validation
@@ -339,10 +347,13 @@ export const SamlConfigForm = ({
   };
 
   const { apiBaseUrl } = useRuntimeConfig();
-  const trimmedEmailDomain = emailDomain.trim();
+  const normalizedEmailDomain = samlEmailDomainSchema.safeParse(emailDomain);
+  const acsEmailDomain = normalizedEmailDomain.success
+    ? normalizedEmailDomain.data
+    : "";
   const acsUrl =
-    trimmedEmailDomain && apiBaseUrl
-      ? `${apiBaseUrl}/accounts/saml/${trimmedEmailDomain}/acs/`
+    acsEmailDomain && apiBaseUrl
+      ? `${apiBaseUrl}/accounts/saml/${acsEmailDomain}/acs/`
       : "";
 
   return (
@@ -423,6 +434,11 @@ export const SamlConfigForm = ({
             <div className="flex items-center gap-2">
               <Input
                 id="additional_email_domain"
+                name={
+                  additionalDomainDraft.trim()
+                    ? "additional_email_domains"
+                    : undefined
+                }
                 aria-label="Additional Email Domain"
                 placeholder="Enter an additional domain"
                 value={additionalDomainDraft}
@@ -630,6 +646,7 @@ export const SamlConfigForm = ({
       <FormButtons
         setIsOpen={setIsOpen}
         submitText={samlConfig?.id ? "Update" : "Save"}
+        isDisabled={isPending || isMetadataFileReading}
       />
     </form>
   );

@@ -264,7 +264,7 @@ export const deleteSamlConfig = async (id: string) => {
       );
     }
 
-    revalidatePath("/integrations");
+    revalidatePath("/profile");
     return { success: "SAML configuration deleted successfully!" };
   } catch (error) {
     console.error("Error deleting SAML config:", error);

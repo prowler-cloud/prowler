@@ -149,6 +149,25 @@ describe("SamlConfigForm", () => {
     expect(screen.getByRole("button", { name: "Copy ACS URL" })).toBeVisible();
   });
 
+  it("normalizes whitespace and mixed case in the ACS URL", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(<SamlConfigForm setIsOpen={vi.fn()} />);
+
+    // When
+    await user.type(
+      screen.getByLabelText("Primary Email Domain*"),
+      " Example.COM ",
+    );
+
+    // Then
+    expect(
+      screen.getByText(
+        "https://api.example.com/api/v1/accounts/saml/example.com/acs/",
+      ),
+    ).toBeVisible();
+  });
+
   it("keeps single-domain SAML available in OSS and opens the Cloud upgrade for aliases", async () => {
     // Given
     const user = userEvent.setup();
@@ -295,6 +314,34 @@ describe("SamlConfigForm", () => {
     expect(screen.queryByText("earlier.xml")).not.toBeInTheDocument();
   });
 
+  it("prevents updates while the metadata file is being read", async () => {
+    // Given
+    const readers = capturePendingFileReads();
+    const user = userEvent.setup();
+    const { fileInput } = renderSamlUpdateForm();
+    const updateButton = screen.getByRole("button", { name: "Update" });
+    const metadataFile = new File(
+      ['<EntityDescriptor entityID="replacement" />'],
+      "replacement.xml",
+      { type: "application/xml" },
+    );
+
+    // When
+    await user.upload(fileInput, metadataFile);
+
+    // Then
+    expect(readers).toHaveLength(1);
+    expect(updateButton).toBeDisabled();
+
+    // When
+    act(() => {
+      finishFileRead(readers[0], '<EntityDescriptor entityID="replacement" />');
+    });
+
+    // Then
+    expect(updateButton).toBeEnabled();
+  });
+
   it("marks metadata XML as required when creating", () => {
     // Given
     isCloudMock.mockReturnValue(true);
@@ -341,6 +388,25 @@ describe("SamlConfigForm", () => {
     expect(
       document.querySelectorAll('input[name="additional_email_domains"]'),
     ).toHaveLength(0);
+  });
+
+  it("includes a pending additional domain in the submitted form data", async () => {
+    // Given
+    const user = userEvent.setup();
+    const { fileInput } = renderSamlUpdateForm();
+    const form = fileInput.form;
+    expect(form).not.toBeNull();
+
+    // When
+    await user.type(
+      screen.getByLabelText("Additional Email Domain"),
+      " Pending.Example.com ",
+    );
+
+    // Then
+    expect(new FormData(form!).getAll("additional_email_domains")).toEqual([
+      " Pending.Example.com ",
+    ]);
   });
 
   it("shows a contextual error when an additional domain is required", async () => {
