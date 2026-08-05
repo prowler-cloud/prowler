@@ -1,5 +1,5 @@
-name: 'Container Security Scan with Trivy'
-description: 'Scans container images for vulnerabilities using Trivy and reports results'
+name: 'Container Security Scan with Grype'
+description: 'Scans container images for vulnerabilities using Grype and reports results'
 author: 'Prowler'
 
 inputs:
@@ -10,10 +10,6 @@ inputs:
     description: 'Container image tag to scan'
     required: true
     default: ${{ github.sha }}
-  severity:
-    description: 'Severities to scan for (comma-separated)'
-    required: false
-    default: 'CRITICAL,HIGH,MEDIUM,LOW'
   fail-on-severity:
     description: 'Fail the build on findings at this severity or above: critical, high, or none'
     required: false
@@ -27,7 +23,7 @@ inputs:
     required: false
     default: 'true'
   artifact-retention-days:
-    description: 'Days to retain the Trivy report artifact'
+    description: 'Days to retain the Grype report artifact'
     required: false
     default: '2'
 
@@ -45,85 +41,73 @@ outputs:
 runs:
   using: 'composite'
   steps:
-    - name: Cache Trivy vulnerability database
-      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+    - name: Run Grype vulnerability scan (JSON)
+      uses: anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2 # v7.4.0
       with:
-        path: ~/.cache/trivy
-        key: trivy-db-${{ runner.os }}-${{ github.run_id }}
-        restore-keys: |
-          trivy-db-${{ runner.os }}-
+        image: ${{ inputs.image-name }}:${{ inputs.image-tag }}
+        output-format: 'json'
+        output-file: 'grype-report.json'
+        fail-build: 'false'
+        by-cve: 'true' # Report CVE ids rather than GHSA, so findings line up with Trivy's
+        only-fixed: 'true' # A finding with no available fix is not actionable, so it must not gate
+        cache-db: 'true'
+        grype-version: 'v0.116.1'
 
-    - name: Run Trivy vulnerability scan (JSON)
-      uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
-      with:
-        image-ref: ${{ inputs.image-name }}:${{ inputs.image-tag }}
-        format: 'json'
-        output: 'trivy-report.json'
-        severity: ${{ inputs.severity }}
-        exit-code: '0'
-        scanners: 'vuln'
-        ignore-unfixed: 'true' # A finding with no available fix is not actionable, so it must not gate
-        timeout: '5m'
-        version: 'v0.71.2'
-      # Not trivyignores: that input drops the .yaml extension Trivy parses by.
-      env:
-        TRIVY_IGNOREFILE: '.trivyignore.yaml'
-
-    - name: Run Trivy vulnerability scan (SARIF)
+    - name: Run Grype vulnerability scan (SARIF)
       if: inputs.upload-sarif == 'true' && github.event_name == 'push'
-      uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+      uses: anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2 # v7.4.0
       with:
-        image-ref: ${{ inputs.image-name }}:${{ inputs.image-tag }}
-        format: 'sarif'
-        output: 'trivy-results.sarif'
-        severity: 'CRITICAL,HIGH'
-        exit-code: '0'
-        scanners: 'vuln'
-        ignore-unfixed: 'true' # A finding with no available fix is not actionable, so it must not gate
-        timeout: '5m'
-        version: 'v0.71.2'
-      # Not trivyignores: that input drops the .yaml extension Trivy parses by.
-      env:
-        TRIVY_IGNOREFILE: '.trivyignore.yaml'
+        image: ${{ inputs.image-name }}:${{ inputs.image-tag }}
+        output-format: 'sarif'
+        output-file: 'grype-results.sarif'
+        fail-build: 'false'
+        severity-cutoff: 'high'
+        by-cve: 'true'
+        only-fixed: 'true' # A finding with no available fix is not actionable, so it must not gate
+        cache-db: 'true'
+        grype-version: 'v0.116.1'
 
-    - name: Upload Trivy results to GitHub Security tab
+    - name: Upload Grype results to GitHub Security tab
       if: inputs.upload-sarif == 'true' && github.event_name == 'push'
       uses: github/codeql-action/upload-sarif@3599b3baa15b485a2e49ef411a7a4bb2452e7f93 # v3.30.5
       with:
-        sarif_file: 'trivy-results.sarif'
-        category: 'trivy-container'
+        sarif_file: 'grype-results.sarif'
+        category: 'grype-container'
 
-    - name: Upload Trivy report artifact
+    - name: Upload Grype report artifact
       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
       if: always()
       with:
-        name: trivy-scan-report-${{ inputs.image-name }}-${{ inputs.image-tag }}
-        path: trivy-report.json
+        name: grype-scan-report-${{ inputs.image-name }}-${{ inputs.image-tag }}
+        path: grype-report.json
         retention-days: ${{ inputs.artifact-retention-days }}
 
     - name: Generate security summary
       id: security-check
       shell: bash
       run: |
-        CRITICAL=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="CRITICAL")] | length' trivy-report.json)
-        HIGH=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="HIGH")] | length' trivy-report.json)
-        TOTAL=$(jq '[.Results[]?.Vulnerabilities[]?] | length' trivy-report.json)
+        CRITICAL=$(jq '[.matches[]? | select(.vulnerability.severity=="Critical")] | length' grype-report.json)
+        HIGH=$(jq '[.matches[]? | select(.vulnerability.severity=="High")] | length' grype-report.json)
+        TOTAL=$(jq '[.matches[]?] | length' grype-report.json)
 
         echo "critical=$CRITICAL" >> $GITHUB_OUTPUT
         echo "high=$HIGH" >> $GITHUB_OUTPUT
         echo "total=$TOTAL" >> $GITHUB_OUTPUT
 
-        echo "### 🔒 Container Security Scan" >> $GITHUB_STEP_SUMMARY
+        echo "### 🔎 Container Security Scan (Grype)" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "**Image:** \`${INPUTS_IMAGE_NAME}:${INPUTS_IMAGE_TAG}\`" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "- 🔴 Critical: $CRITICAL" >> $GITHUB_STEP_SUMMARY
         echo "- 🟠 High: $HIGH" >> $GITHUB_STEP_SUMMARY
         echo "- **Total**: $TOTAL" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "Reported alongside Trivy, not instead of it. Counts differ by design." >> $GITHUB_STEP_SUMMARY
       env:
         INPUTS_IMAGE_NAME: ${{ inputs.image-name }}
         INPUTS_IMAGE_TAG: ${{ inputs.image-tag }}
 
+    # Before the gate, so the comment is there to explain a failure rather than absent because of it
     - name: Comment scan results on PR
       if: >-
         inputs.create-pr-comment == 'true'
@@ -133,16 +117,15 @@ runs:
       env:
         IMAGE_NAME: ${{ inputs.image-name }}
         GITHUB_SHA: ${{ inputs.image-tag }}
-        SEVERITY: ${{ inputs.severity }}
+        CUTOFF: ${{ inputs.fail-on-severity }}
       with:
         script: |
-          const comment = require('./.github/scripts/trivy-pr-comment.js');
+          const comment = require('./.github/scripts/grype-pr-comment.js');
 
           // Unique identifier to find our comment
-          const marker = `<!-- trivy-scan-comment:${process.env.IMAGE_NAME} -->`;
+          const marker = `<!-- grype-scan-comment:${process.env.IMAGE_NAME} -->`;
           const body = marker + '\n' + comment;
 
-          // Find existing comment
           const { data: comments } = await github.rest.issues.listComments({
             owner: context.repo.owner,
             repo: context.repo.repo,
@@ -152,23 +135,21 @@ runs:
           const existingComment = comments.find(c => c.body?.includes(marker));
 
           if (existingComment) {
-            // Update existing comment
             await github.rest.issues.updateComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               comment_id: existingComment.id,
               body: body
             });
-            console.log('✅ Updated existing Trivy scan comment');
+            console.log('✅ Updated existing Grype scan comment');
           } else {
-            // Create new comment
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
               body: body
             });
-            console.log('✅ Created new Trivy scan comment');
+            console.log('✅ Created new Grype scan comment');
           }
 
     - name: Check for blocking vulnerabilities
@@ -177,19 +158,19 @@ runs:
       run: |
         if [ "$CUTOFF" = "critical" ]; then
           BLOCKING=$CRITICAL
-          SEVERITIES='["CRITICAL"]'
+          SEVERITIES='["Critical"]'
         else
           BLOCKING=$((CRITICAL + HIGH))
-          SEVERITIES='["CRITICAL","HIGH"]'
+          SEVERITIES='["Critical","High"]'
         fi
 
         if [ "$BLOCKING" -gt 0 ]; then
           echo "::error::Found $BLOCKING vulnerabilities at severity ${CUTOFF} or above ($CRITICAL critical, $HIGH high)"
-          echo "::warning::Update the package, or add it to .trivyignore.yaml with a reason if nothing can be done"
+          echo "::warning::Update the package, or add it to .grype.yaml with a reason if nothing can be done"
           jq -r --argjson severities "$SEVERITIES" \
-            '.Results[]?.Vulnerabilities[]? | select(.Severity | IN($severities[]))
-             | "  \(.Severity)\t\(.VulnerabilityID)\t\(.PkgName) \(.InstalledVersion)"' \
-            trivy-report.json | sort -u
+            '.matches[] | select(.vulnerability.severity | IN($severities[]))
+             | "  \(.vulnerability.severity)\t\(.vulnerability.id)\t\(.artifact.name) \(.artifact.version)"' \
+            grype-report.json | sort -u
           exit 1
         fi
       env:
