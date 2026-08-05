@@ -179,6 +179,13 @@
 
   /* Lighthouse AI */
   --gradient-lighthouse: linear-gradient(96deg, #2ee59b 3.55%, #62dff0 98.85%);
+  --gradient-lighthouse-soft: linear-gradient(
+    96deg,
+    rgba(46, 229, 155, 0.12),
+    rgba(98, 223, 240, 0.12)
+  );
+  --text-lighthouse: var(--color-emerald-600);
+  --border-lighthouse: rgba(5, 150, 105, 0.45);
 
   /* Cloud feature badge */
   --gradient-feature-cloud: linear-gradient(
@@ -285,6 +292,10 @@
     rgba(98, 223, 240, 0.07) 40%,
     transparent 72%
   );
+
+  /* Lighthouse AI — the design's exact accent (#6ee7b7 on dark) */
+  --text-lighthouse: #6ee7b7;
+  --border-lighthouse: rgba(46, 229, 155, 0.45);
 }
 
 /* ===== TAILWIND THEME MAPPINGS ===== */
@@ -375,6 +386,11 @@
 
   /* Background images */
   --background-image-feature-cloud: var(--gradient-feature-cloud);
+  --background-image-lighthouse-soft: var(--gradient-lighthouse-soft);
+
+  /* Lighthouse AI accent */
+  --color-text-lighthouse: var(--text-lighthouse);
+  --color-border-lighthouse: var(--border-lighthouse);
 
   /* Breakpoints */
   --breakpoint-3xl: 1920px;
