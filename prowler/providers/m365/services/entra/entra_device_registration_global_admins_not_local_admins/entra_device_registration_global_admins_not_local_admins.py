@@ -16,6 +16,11 @@ class entra_device_registration_global_admins_not_local_admins(Check):
     """
 
     def execute(self) -> List[CheckReportM365]:
+        """Execute the Global Administrators local-admin restriction check.
+
+        Returns:
+            List[CheckReportM365]: A list containing the result of the check.
+        """
         findings = []
         policy = entra_client.device_registration_policy
         if not policy:

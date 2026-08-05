@@ -32,10 +32,14 @@ class entra_policy_default_user_cannot_read_bitlocker_keys(Check):
         report.status = "FAIL"
         report.status_extended = "Non-admin users are allowed to read BitLocker keys for their owned devices."
 
-        if getattr(auth_policy, "default_user_role_permissions", None) and not getattr(
-            auth_policy.default_user_role_permissions,
-            "allowed_to_read_bitlocker_keys_for_owned_device",
-            True,
+        if (
+            getattr(auth_policy, "default_user_role_permissions", None)
+            and getattr(
+                auth_policy.default_user_role_permissions,
+                "allowed_to_read_bitlocker_keys_for_owned_device",
+                None,
+            )
+            is False
         ):
             report.status = "PASS"
             report.status_extended = "Non-admin users are not allowed to read BitLocker keys for their owned devices."

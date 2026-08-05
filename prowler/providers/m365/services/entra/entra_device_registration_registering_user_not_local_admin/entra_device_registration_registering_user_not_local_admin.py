@@ -26,6 +26,11 @@ class entra_device_registration_registering_user_not_local_admin(Check):
     """
 
     def execute(self) -> List[CheckReportM365]:
+        """Execute the registering-user local-admin restriction check.
+
+        Returns:
+            List[CheckReportM365]: A list containing the result of the check.
+        """
         findings = []
         policy = entra_client.device_registration_policy
         if not policy:

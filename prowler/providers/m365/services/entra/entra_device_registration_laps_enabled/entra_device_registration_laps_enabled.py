@@ -15,6 +15,11 @@ class entra_device_registration_laps_enabled(Check):
     """
 
     def execute(self) -> List[CheckReportM365]:
+        """Execute the Microsoft Entra LAPS enablement check.
+
+        Returns:
+            List[CheckReportM365]: A list containing the result of the check.
+        """
         findings = []
         policy = entra_client.device_registration_policy
         if not policy:

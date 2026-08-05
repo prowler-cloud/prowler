@@ -18,6 +18,11 @@ class entra_device_registration_max_devices_per_user_limited(Check):
     """
 
     def execute(self) -> List[CheckReportM365]:
+        """Execute the per-user device quota limit check.
+
+        Returns:
+            List[CheckReportM365]: A list containing the result of the check.
+        """
         findings = []
         policy = entra_client.device_registration_policy
         if not policy:
