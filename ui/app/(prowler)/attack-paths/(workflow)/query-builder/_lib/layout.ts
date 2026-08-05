@@ -8,9 +8,12 @@ import { type Edge, type Node, Position } from "@xyflow/react";
 
 import type { GraphEdge, GraphNode } from "@/types/attack-paths";
 
+import { GROUP_NODE_LABEL, OUTCOME_NODE_LABEL } from "./group-graph";
 import {
   FINDING_NODE_DIMENSIONS,
+  GROUP_NODE_DIMENSIONS,
   INTERNET_NODE_DIMENSIONS,
+  OUTCOME_NODE_DIMENSIONS,
   RESOURCE_NODE_DIMENSIONS,
 } from "./node-dimensions";
 import { isProwlerFindingNode } from "./node-types";
@@ -31,6 +34,8 @@ const NODE_TYPE = {
   FINDING: "finding",
   INTERNET: "internet",
   RESOURCE: "resource",
+  GROUP: "group",
+  OUTCOME: "outcome",
 } as const;
 
 type NodeType = (typeof NODE_TYPE)[keyof typeof NODE_TYPE];
@@ -38,6 +43,9 @@ type NodeType = (typeof NODE_TYPE)[keyof typeof NODE_TYPE];
 const isFindingNode = isProwlerFindingNode;
 
 const getNodeType = (labels: string[]): NodeType => {
+  // Synthetic view nodes are tagged with a reserved label.
+  if (labels.includes(OUTCOME_NODE_LABEL)) return NODE_TYPE.OUTCOME;
+  if (labels.includes(GROUP_NODE_LABEL)) return NODE_TYPE.GROUP;
   if (isFindingNode(labels)) return NODE_TYPE.FINDING;
   if (labels.some((l) => l.toLowerCase() === "internet"))
     return NODE_TYPE.INTERNET;
@@ -56,6 +64,16 @@ const getNodeDimensions = (
     return {
       width: INTERNET_NODE_DIMENSIONS.DIAMETER,
       height: INTERNET_NODE_DIMENSIONS.DIAMETER,
+    };
+  if (type === NODE_TYPE.GROUP)
+    return {
+      width: GROUP_NODE_DIMENSIONS.WIDTH,
+      height: GROUP_NODE_DIMENSIONS.HEIGHT,
+    };
+  if (type === NODE_TYPE.OUTCOME)
+    return {
+      width: OUTCOME_NODE_DIMENSIONS.WIDTH,
+      height: OUTCOME_NODE_DIMENSIONS.HEIGHT,
     };
   return {
     width: RESOURCE_NODE_DIMENSIONS.WIDTH,
