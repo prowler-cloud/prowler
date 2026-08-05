@@ -2,9 +2,14 @@ import os
 from unittest.mock import MagicMock, patch
 
 import pytest
+from alibabacloud_tea_openapi.exceptions import ClientException
+from darabonba.core import DaraCore
+from darabonba.exceptions import RetryError, UnretryableException
+from Tea.response import TeaResponse
 
 from prowler.providers.alibabacloud.alibabacloud_provider import AlibabacloudProvider
 from prowler.providers.alibabacloud.exceptions.exceptions import (
+    AlibabaCloudConnectionError,
     AlibabaCloudInvalidCredentialsError,
     AlibabaCloudSetUpSessionError,
 )
@@ -12,8 +17,143 @@ from prowler.providers.alibabacloud.models import AlibabaCloudCallerIdentity
 from prowler.providers.common.models import Connection
 
 
+def test_validate_credentials_non_authentication_api_error_is_not_invalid_credentials():
+    """Test non-authentication STS API errors are not relabeled as credentials."""
+    session = MagicMock()
+    session.get_credentials.return_value = MagicMock(
+        access_key_id="LTAI1234567890",
+        access_key_secret="test-secret-key",
+        security_token=None,
+    )
+    api_error = ClientException(
+        code="Forbidden",
+        message="The caller is not authorized",
+        status_code=403,
+    )
+
+    with patch(
+        "prowler.providers.alibabacloud.alibabacloud_provider.StsClient"
+    ) as sts_client:
+        sts_client.return_value.get_caller_identity.side_effect = api_error
+
+        with pytest.raises(ClientException) as exception:
+            AlibabacloudProvider.validate_credentials(session)
+
+    assert exception.value is api_error
+
+
+def test_validate_credentials_retries_transport_failure_then_succeeds():
+    """Test STS caller identity retries a transient transport failure."""
+    session = MagicMock()
+    session.get_credentials.return_value = MagicMock(
+        access_key_id="LTAI1234567890",
+        access_key_secret="test-secret-key",
+        security_token=None,
+    )
+    response = TeaResponse()
+    response.status_code = 200
+    response.headers = {"content-type": "application/json"}
+    response.body = (
+        b'{"AccountId":"1234567890","PrincipalId":"123456",'
+        b'"Arn":"acs:ram::1234567890:user/test-user",'
+        b'"IdentityType":"RamUser"}'
+    )
+
+    with patch.object(
+        DaraCore,
+        "do_action",
+        side_effect=[RetryError("connection reset"), response],
+    ) as do_action:
+        caller_identity = AlibabacloudProvider.validate_credentials(session)
+
+    assert caller_identity.account_id == "1234567890"
+    assert do_action.call_count == 2
+
+
+def test_validate_credentials_connection_failure_is_not_invalid_credentials():
+    """Test exhausted STS transport retries raise a connection-specific error."""
+    session = MagicMock()
+    session.get_credentials.return_value = MagicMock(
+        access_key_id="LTAI1234567890",
+        access_key_secret="test-secret-key",
+        security_token=None,
+    )
+    retry_errors = []
+    for _ in range(3):
+        connection_reset = ConnectionResetError(104, "Connection reset by peer")
+        retry_error = RetryError(str(connection_reset))
+        retry_error.__cause__ = connection_reset
+        retry_errors.append(retry_error)
+
+    with patch.object(DaraCore, "do_action", side_effect=retry_errors) as do_action:
+        with pytest.raises(AlibabaCloudConnectionError) as exception:
+            AlibabacloudProvider.validate_credentials(session)
+
+    assert not isinstance(exception.value, AlibabaCloudInvalidCredentialsError)
+    assert do_action.call_count == 3
+    assert isinstance(exception.value.original_exception, UnretryableException)
+    assert exception.value.original_exception.inner_exception is retry_errors[-1]
+    assert exception.value.__cause__ is exception.value.original_exception
+
+
+def test_validate_credentials_genuine_invalid_credentials():
+    """Test an explicit STS authentication failure remains a credentials error."""
+    session = MagicMock()
+    session.get_credentials.return_value = MagicMock(
+        access_key_id="LTAI-invalid",
+        access_key_secret="invalid-secret",
+        security_token=None,
+    )
+    authentication_error = ClientException(
+        code="InvalidAccessKeyId.NotFound",
+        message="The AccessKey ID does not exist",
+        status_code=400,
+    )
+
+    with patch(
+        "prowler.providers.alibabacloud.alibabacloud_provider.StsClient"
+    ) as sts_client:
+        sts_client.return_value.get_caller_identity.side_effect = authentication_error
+
+        with pytest.raises(AlibabaCloudInvalidCredentialsError) as exception:
+            AlibabacloudProvider.validate_credentials(session)
+
+    assert exception.value.original_exception is authentication_error
+    assert exception.value.__cause__ is authentication_error
+
+
 class TestAlibabacloudProviderTestConnection:
     """Tests for the AlibabacloudProvider.test_connection method."""
+
+    def test_test_connection_connection_error_no_raise(self):
+        """Test connection failures are returned with their dedicated type."""
+        mock_session = MagicMock()
+        connection_error = AlibabaCloudConnectionError(
+            file="test_file",
+            original_exception=RetryError("connection reset"),
+        )
+
+        with (
+            patch.object(
+                AlibabacloudProvider,
+                "setup_session",
+                return_value=mock_session,
+            ),
+            patch.object(
+                AlibabacloudProvider,
+                "validate_credentials",
+                side_effect=connection_error,
+            ),
+        ):
+            result = AlibabacloudProvider.test_connection(
+                access_key_id="LTAI1234567890",
+                access_key_secret="test-secret-key",
+                raise_on_exception=False,
+            )
+
+        assert result.is_connected is False
+        assert result.error is connection_error
+        assert result.error.code == 10008
 
     def test_test_connection_with_static_credentials_success(self):
         """Test successful connection with static access key credentials."""

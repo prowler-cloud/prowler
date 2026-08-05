@@ -38,6 +38,10 @@ class AlibabaCloudBaseException(ProwlerException):
             "message": "Alibaba Cloud HTTP/API error",
             "remediation": "Check the Alibaba Cloud API request and response, and ensure the service is accessible.",
         },
+        (10008, "AlibabaCloudConnectionError"): {
+            "message": "Could not connect to Alibaba Cloud",
+            "remediation": "Check network connectivity and ensure the Alibaba Cloud service endpoint is accessible.",
+        },
     }
 
     def __init__(self, code, file=None, original_exception=None, message=None):
@@ -113,4 +117,11 @@ class AlibabaCloudHTTPError(AlibabaCloudBaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             10007, file=file, original_exception=original_exception, message=message
+        )
+
+
+class AlibabaCloudConnectionError(AlibabaCloudBaseException):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            10008, file=file, original_exception=original_exception, message=message
         )
