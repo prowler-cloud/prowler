@@ -17,15 +17,15 @@ from prowler_mcp_server.prowler_app.models.integrations import (
     IntegrationsListResponse,
     JiraDispatchResult,
     JiraIssueTypes,
-    SimplifiedIntegration,
 )
 from prowler_mcp_server.prowler_app.tools.base import BaseTool
+from prowler_mcp_server.prowler_app.utils.api_client import ProwlerAPIError
 
 # The configuration is deliberately left out of the list view, it belongs to the
 # detailed view returned by prowler_get_integration
 INTEGRATION_LIST_FIELDS = (
     "enabled,connected,connection_last_checked_at,integration_type,providers,"
-    "configuration,inserted_at,updated_at"
+    "inserted_at,updated_at"
 )
 
 CONNECTION_CHECK_TIMEOUT = 120
@@ -34,6 +34,17 @@ JIRA_DISPATCH_TIMEOUT = 300
 
 # The API replaces the whole credentials object, so a partial one destroys the rest
 JIRA_REQUIRED_CREDENTIALS = ("domain", "user_mail", "api_token")
+
+
+def _providers_relationship(provider_ids: list[str]) -> dict[str, Any]:
+    """Build the JSON:API relationship linkage attaching an integration to providers."""
+    return {
+        "providers": {
+            "data": [
+                {"type": "providers", "id": provider_id} for provider_id in provider_ids
+            ]
+        }
+    }
 
 
 class IntegrationsTools(BaseTool):
@@ -484,12 +495,22 @@ class IntegrationsTools(BaseTool):
         self.logger.info(f"Updating integration {integration_id}...")
 
         try:
-            current = await self._get_integration_raw(integration_id)
-            current_attributes = current["attributes"]
-            integration_type = current_attributes["integration_type"]
+            current = DetailedIntegration.from_api_response(
+                await self._get_integration_raw(integration_id)
+            )
+            integration_type = current.integration_type
 
             if provider_ids is not None:
-                self._validate_provider_ids(integration_type, provider_ids)
+                if integration_type == "jira":
+                    raise ValueError(
+                        "Jira integrations are tenant-wide and cannot be attached to providers."
+                    )
+                if integration_type == "aws_security_hub" and len(provider_ids) != 1:
+                    raise ValueError(
+                        "AWS Security Hub integrations must stay attached to exactly one AWS "
+                        f"provider, got {len(provider_ids)}. Pass a single provider ID, or use "
+                        "prowler_delete_integration to stop sending findings to Security Hub."
+                    )
 
             attributes: dict[str, Any] = {}
             if enabled is not None:
@@ -507,20 +528,16 @@ class IntegrationsTools(BaseTool):
                         "Update the credentials instead, or run prowler_test_integration_connection to "
                         "refresh the available projects and issue types."
                     )
-                merged = dict(current_attributes.get("configuration") or {})
+                merged = dict(current.configuration)
                 merged.update(self._as_dict(configuration, "configuration"))
                 # Server-owned, the API repopulates it from the connection check
                 merged.pop("regions", None)
                 merged.pop("enabled_regions", None)
                 attributes["configuration"] = merged
 
-            providers_changed = provider_ids is not None and sorted(
-                provider_ids
-            ) != sorted(SimplifiedIntegration._extract_provider_ids(current))
-
             if not attributes and provider_ids is None:
                 self.logger.info("No changes provided, returning the current state")
-                return DetailedIntegration.from_api_response(current).model_dump()
+                return current.model_dump()
 
             update_body: dict[str, Any] = {
                 "data": {
@@ -530,33 +547,35 @@ class IntegrationsTools(BaseTool):
                 }
             }
             if provider_ids is not None:
-                update_body["data"]["relationships"] = {
-                    "providers": {
-                        "data": [
-                            {"type": "providers", "id": provider_id}
-                            for provider_id in provider_ids
-                        ]
-                    }
-                }
+                update_body["data"]["relationships"] = _providers_relationship(
+                    provider_ids
+                )
 
             await self.api_client.patch(
                 f"/integrations/{integration_id}", json_data=update_body
             )
 
             # A different provider means different effective credentials and different
-            # discovered configuration, so the stored connection state is stale
-            if (
+            # discovered configuration, so the stored connection state is stale too
+            providers_changed = provider_ids is not None and set(provider_ids) != set(
+                current.provider_ids
+            )
+            recheck_connection = (
                 credentials is not None
                 or configuration is not None
                 or providers_changed
-            ):
-                connection_status = await self._test_connection(integration_id)
-                updated = await self._get_integration_raw(integration_id)
+            )
+            connection_status = (
+                await self._test_connection(integration_id)
+                if recheck_connection
+                else None
+            )
+
+            updated = await self._get_integration_raw(integration_id)
+            if connection_status is not None:
                 return IntegrationConnectionStatus.create(
                     updated, connection_status
                 ).model_dump()
-
-            updated = await self._get_integration_raw(integration_id)
             return DetailedIntegration.from_api_response(updated).model_dump()
         except Exception as e:
             self.logger.error(f"Integration update failed: {e}")
@@ -706,13 +725,16 @@ class IntegrationsTools(BaseTool):
 
         The result includes:
         - status: 'completed' when Prowler finished the dispatch, 'in_progress' when the task
-          is still running, 'unknown' when the task stopped without reporting a result
+          is still running, 'failed' when the dispatch was rejected before it started,
+          'unknown' when the task stopped without reporting a result
         - safe_to_retry: whether the dispatch can be sent again. It is only true when no work
-          item was created. NEVER call this tool again for the same findings when it is false,
-          the work items already created would be duplicated. Report the outcome to the user
-          and let them check Jira instead
-        - created_count: number of work items created in Jira, absent when status='unknown'
-        - failed_count: number of findings that could not be sent, absent when status='unknown'
+          item was created, which is the case when the dispatch was rejected before it
+          started. NEVER call this tool again for the same findings when it is false, the
+          work items already created would be duplicated. Report the outcome to the user and
+          let them check Jira instead
+        - created_count: number of work items created in Jira, absent unless status='completed'
+        - failed_count: number of findings that could not be sent, absent unless
+          status='completed'
 
         Workflow:
         1. Use prowler_search_security_findings to select the findings to escalate
@@ -748,10 +770,36 @@ class IntegrationsTools(BaseTool):
                 params=params,
                 json_data=dispatch_body,
             )
+        except ValueError as e:
+            # Refused here, so the request never went out
+            self.logger.error(f"Jira dispatch was refused before the request: {e}")
+            return self._jira_dispatch_rejected(str(e))
+        except ProwlerAPIError as e:
+            # Only a client error is a refusal: the API validates the dispatch and
+            # then queues the background task before serializing its answer, so a
+            # server error may well come back with work items already being created
+            if e.status_code >= 500:
+                self.logger.error(f"Jira dispatch failed on the server: {e}")
+                return self._jira_dispatch_unknown(
+                    task_id=None,
+                    error=(
+                        f"the request that starts the dispatch failed on the server: {e} "
+                        "It may have been queued anyway."
+                    ),
+                )
+
+            self.logger.error(f"Jira dispatch was rejected by Prowler: {e}")
+            return self._jira_dispatch_rejected(str(e))
         except Exception as e:
-            # Nothing was dispatched yet, so this failure is safe to act on
+            # No answer came back, so the request may still have been accepted
             self.logger.error(f"Jira dispatch could not be started: {e}")
-            return {"error": str(e), "status": "failed"}
+            return self._jira_dispatch_unknown(
+                task_id=None,
+                error=(
+                    f"the request that starts the dispatch got no answer: {e} "
+                    "It may have been accepted anyway."
+                ),
+            )
 
         task_id = task_response.get("data", {}).get("id")
         if not task_id:
@@ -769,14 +817,10 @@ class IntegrationsTools(BaseTool):
             self.logger.error(f"Jira dispatch did not complete cleanly: {e}")
             return await self._jira_dispatch_fallback(task_id, str(e))
 
-        task_result = completed_task.get("data", {}).get("attributes", {}).get("result")
-
         try:
-            if not isinstance(task_result, dict):
-                raise ValueError(
-                    "The completed dispatch task did not report a result object."
-                )
-            return JiraDispatchResult.from_task_result(task_result).model_dump()
+            return JiraDispatchResult.from_task_result(
+                completed_task.get("data", {}).get("attributes", {}).get("result")
+            ).model_dump()
         except ValueError as e:
             self.logger.error(f"Jira dispatch result could not be read: {e}")
             return self._jira_dispatch_unknown(task_id, str(e))
@@ -827,22 +871,6 @@ class IntegrationsTools(BaseTool):
                 "'acme' for the site 'https://acme.atlassian.net'."
             )
         return normalized
-
-    def _validate_provider_ids(
-        self, integration_type: str, provider_ids: list[str]
-    ) -> None:
-        """Reject provider changes an integration type cannot survive."""
-        if integration_type == "jira":
-            raise ValueError(
-                "Jira integrations are tenant-wide and cannot be attached to providers."
-            )
-
-        if integration_type == "aws_security_hub" and len(provider_ids) != 1:
-            raise ValueError(
-                "AWS Security Hub integrations must stay attached to exactly one AWS provider, "
-                f"got {len(provider_ids)}. Pass a single provider ID, or use "
-                "prowler_delete_integration to stop sending findings to Security Hub."
-            )
 
     def _validate_credentials(
         self, integration_type: str, credentials: dict[str, Any]
@@ -934,14 +962,7 @@ class IntegrationsTools(BaseTool):
             }
         }
         if provider_ids:
-            create_body["data"]["relationships"] = {
-                "providers": {
-                    "data": [
-                        {"type": "providers", "id": provider_id}
-                        for provider_id in provider_ids
-                    ]
-                }
-            }
+            create_body["data"]["relationships"] = _providers_relationship(provider_ids)
 
         api_response = await self.api_client.post(
             "/integrations", json_data=create_body
@@ -1045,6 +1066,17 @@ class IntegrationsTools(BaseTool):
                 f"Do not send these findings again. Original error: {error}"
             ),
             task_id=task_id,
+        ).model_dump()
+
+    def _jira_dispatch_rejected(self, error: str) -> dict[str, Any]:
+        """Report a dispatch that was refused before any work item could be created.
+
+        This is the only outcome safe to retry, and it is reserved for the failures
+        that prove nothing was queued: a validation error raised here, or a client
+        error from the API, which rejects the dispatch before starting its task.
+        """
+        return JiraDispatchResult(
+            status="failed", safe_to_retry=True, error=error
         ).model_dump()
 
     def _jira_dispatch_unknown(self, task_id: str | None, error: str) -> dict[str, Any]:
