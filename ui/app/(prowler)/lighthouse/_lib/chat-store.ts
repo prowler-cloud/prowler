@@ -8,6 +8,7 @@ import {
 } from "@/app/(prowler)/lighthouse/_actions";
 import {
   createInitialLighthouseV2StreamState,
+  LIGHTHOUSE_V2_STREAM_STATUS,
   type LighthouseV2StreamState,
   reduceLighthouseV2Event,
 } from "@/app/(prowler)/lighthouse/_lib/event-reducer";
@@ -31,6 +32,7 @@ import {
 } from "@/app/(prowler)/lighthouse/_types";
 import { prepareLighthouseContext } from "@/lib/lighthouse/context/compiler";
 import type { LighthouseContextEnvelope } from "@/types/lighthouse-context";
+import type { LighthouseSkillDefinition } from "@/types/lighthouse-skills";
 
 export interface LighthouseChatConfig {
   configurations: LighthouseV2Configuration[];
@@ -72,6 +74,7 @@ export interface LighthouseChatState {
   submitMessage: (
     displayText: string,
     context?: LighthouseContextEnvelope,
+    skill?: LighthouseSkillDefinition,
   ) => Promise<void>;
   retryLastMessage: () => Promise<void>;
   openSession: (sessionId: string) => Promise<void>;
@@ -83,6 +86,7 @@ export interface LighthouseChatState {
 export interface LighthouseChatSubmission {
   displayText: string;
   context?: LighthouseContextEnvelope;
+  skill?: LighthouseSkillDefinition;
 }
 
 export type LighthouseChatStore = StoreApi<LighthouseChatState>;
@@ -102,6 +106,19 @@ export function selectLighthouseChatCanSend(
     !state.blockedByConflict &&
     !state.isSubmitting
   );
+}
+
+// The skill whose run is currently visible in the stream. Derived, not stored:
+// it is the last submission's skill for as long as that run is still active.
+export function selectLighthouseChatActiveSkill(
+  state: LighthouseChatState,
+): LighthouseSkillDefinition | undefined {
+  const skill = state.lastSubmission?.skill;
+  if (!skill) return undefined;
+  const isRunActive =
+    Boolean(state.streamState.activeTaskId) ||
+    state.streamState.status === LIGHTHOUSE_V2_STREAM_STATUS.STREAMING;
+  return isRunActive ? skill : undefined;
 }
 
 export function createLighthouseChatStore(
@@ -264,6 +281,7 @@ export function createLighthouseChatStore(
     const submitMessageInternal = async (
       displayText: string,
       context?: LighthouseContextEnvelope,
+      skill?: LighthouseSkillDefinition,
     ): Promise<void> => {
       if (!displayText.trim()) return;
       const selection = get().selectedModelSelection;
@@ -288,9 +306,11 @@ export function createLighthouseChatStore(
         }
 
         const provisionalTaskId = `pending-${Date.now()}`;
-        const lastSubmission = contextSnapshot
-          ? { displayText, context: contextSnapshot }
-          : { displayText };
+        const lastSubmission = {
+          displayText,
+          ...(contextSnapshot ? { context: contextSnapshot } : {}),
+          ...(skill ? { skill } : {}),
+        };
         set((current) => ({
           feedback: null,
           blockedByConflict: false,
@@ -298,7 +318,7 @@ export function createLighthouseChatStore(
           input: "",
           messages: [
             ...current.messages,
-            buildOptimisticMessage("user", displayText, contextSnapshot),
+            buildOptimisticMessage("user", displayText, contextSnapshot, skill),
           ],
           streamState: createInitialLighthouseV2StreamState(provisionalTaskId),
         }));
@@ -312,6 +332,7 @@ export function createLighthouseChatStore(
           sessionId,
           displayText,
           ...(contextSnapshot ? { context: contextSnapshot } : {}),
+          ...(skill ? { skillId: skill.id } : {}),
           provider: selection.providerType,
           model: selection.modelId,
         });
@@ -401,13 +422,17 @@ export function createLighthouseChatStore(
         }
       },
 
-      submitMessage: (displayText, context) =>
-        submitMessageInternal(displayText, context),
+      submitMessage: (displayText, context, skill) =>
+        submitMessageInternal(displayText, context, skill),
 
       retryLastMessage: async () => {
         const submission = get().lastSubmission;
         if (!submission) return;
-        await submitMessageInternal(submission.displayText, submission.context);
+        await submitMessageInternal(
+          submission.displayText,
+          submission.context,
+          submission.skill,
+        );
       },
 
       openSession: async (sessionId) => {

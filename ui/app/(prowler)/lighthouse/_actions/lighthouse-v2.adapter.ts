@@ -14,10 +14,8 @@ import {
   type LighthouseV2SupportedProvider,
   type LighthouseV2Task,
 } from "@/app/(prowler)/lighthouse/_types";
-import {
-  buildAgentText,
-  toApiLighthouseContext,
-} from "@/lib/lighthouse/context/transport";
+import { buildLighthouseMessageContent } from "@/lib/lighthouse/message-content";
+import { getSkillById } from "@/lib/lighthouse/skills/registry";
 import type { JsonApiDocument, JsonApiResource } from "@/types/jsonapi";
 import type { LighthouseContextEnvelope } from "@/types/lighthouse-context";
 import type {
@@ -258,19 +256,18 @@ export function buildLighthouseV2SessionUpdatePayload(
 export function buildLighthouseV2MessagePayload(input: {
   displayText: string;
   context?: LighthouseContextEnvelope;
+  skillId?: string;
   provider: LighthouseV2ProviderType;
   model?: string | null;
 }) {
-  const apiContext = input.context
-    ? toApiLighthouseContext(input.context)
-    : undefined;
-  const content = apiContext
-    ? {
-        text: buildAgentText(input.displayText, apiContext),
-        display_text: input.displayText,
-        ui_context: apiContext,
-      }
-    : { text: input.displayText };
+  // An unknown id (stale client, removed skill) degrades to a plain message
+  // rather than failing the send.
+  const skill = input.skillId ? getSkillById(input.skillId) : undefined;
+  const content = buildLighthouseMessageContent(
+    input.displayText,
+    input.context,
+    skill,
+  );
 
   return {
     data: {

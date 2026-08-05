@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   createLighthouseChatStore,
+  selectLighthouseChatActiveSkill,
   selectLighthouseChatCanSend,
 } from "@/app/(prowler)/lighthouse/_lib/chat-store";
 import {
@@ -14,6 +15,7 @@ import type {
   LighthouseV2SupportedModel,
   LighthouseV2SupportedProvider,
 } from "@/app/(prowler)/lighthouse/_types";
+import { getSkillById } from "@/lib/lighthouse/skills/registry";
 import type { LighthouseContextEnvelope } from "@/types/lighthouse-context";
 
 const {
@@ -146,6 +148,54 @@ describe("createLighthouseChatStore", () => {
       displayText: "  Summarize critical findings  ",
       context,
     });
+  });
+
+  it("threads a launched skill through the optimistic message and the API call", async () => {
+    // Given
+    const store = makeStore();
+    const skill = getSkillById("verify-exploitability");
+    if (!skill) throw new Error("Expected skill definition");
+
+    // When
+    await store.getState().submitMessage(skill.name, undefined, skill);
+
+    // Then
+    expect(sendMessageMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        displayText: "Verify exploitability",
+        skillId: "verify-exploitability",
+      }),
+    );
+    expect(store.getState().messages.at(-1)?.parts[0]?.content).toMatchObject({
+      text: expect.stringContaining("[PROWLER_UI_SKILL_V1]"),
+      display_text: "Verify exploitability",
+      ui_skill: expect.objectContaining({
+        skill_id: "verify-exploitability",
+      }),
+    });
+    // The run is live, so the pill/progress surfaces see the active skill.
+    expect(selectLighthouseChatActiveSkill(store.getState())?.id).toBe(
+      "verify-exploitability",
+    );
+  });
+
+  it("retries a failed skill launch with the same skill attached", async () => {
+    // Given
+    const store = makeStore();
+    const skill = getSkillById("generate-remediation");
+    if (!skill) throw new Error("Expected skill definition");
+    sendMessageMock.mockResolvedValueOnce({ error: "Agent unavailable" });
+    await store.getState().submitMessage(skill.name, undefined, skill);
+    // The failed run is no longer active, so the skill is not "active" either.
+    expect(selectLighthouseChatActiveSkill(store.getState())).toBeUndefined();
+
+    // When
+    await store.getState().retryLastMessage();
+
+    // Then
+    expect(sendMessageMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({ skillId: "generate-remediation" }),
+    );
   });
 
   it("uses the model selected when submission starts", async () => {

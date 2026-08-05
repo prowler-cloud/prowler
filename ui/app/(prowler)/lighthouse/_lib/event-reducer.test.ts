@@ -5,6 +5,90 @@ import {
   reduceLighthouseV2Event,
 } from "./event-reducer";
 
+describe("event-reducer skill steps", () => {
+  it("should strip step markers from the text and track the current step", () => {
+    // Given
+    const state = createInitialLighthouseV2StreamState("task-1");
+
+    // When
+    const next = reduceLighthouseV2Event(state, {
+      type: "message.delta",
+      content: "[[step:1]]Gathering context.",
+    });
+
+    // Then
+    expect(next.currentStep).toBe(1);
+    expect(next.assistantText).toBe("Gathering context.");
+    expect(next.activityItems).toEqual([
+      { id: "text-0", type: "text", text: "Gathering context." },
+    ]);
+  });
+
+  it("should assemble a marker split across two deltas without leaking it", () => {
+    // Given
+    let state = createInitialLighthouseV2StreamState("task-1");
+    state = reduceLighthouseV2Event(state, {
+      type: "message.delta",
+      content: "Done.\n[[ste",
+    });
+    expect(state.assistantText).toBe("Done.\n");
+    expect(state.currentStep).toBeNull();
+
+    // When
+    state = reduceLighthouseV2Event(state, {
+      type: "message.delta",
+      content: "p:3]]Checking exposure.",
+    });
+
+    // Then
+    expect(state.currentStep).toBe(3);
+    expect(state.assistantText).toBe("Done.\nChecking exposure.");
+  });
+
+  it("should tag tool calls with the step active when they start", () => {
+    // Given
+    let state = createInitialLighthouseV2StreamState("task-1");
+    state = reduceLighthouseV2Event(state, {
+      type: "message.delta",
+      content: "[[step:2]]Enumerating identities.",
+    });
+
+    // When
+    state = reduceLighthouseV2Event(state, {
+      type: "tool_call.start",
+      toolCallId: "tool-1",
+      toolName: "list_role_attachments",
+    });
+
+    // Then
+    const toolItem = state.activityItems.at(-1);
+    expect(toolItem).toMatchObject({ id: "tool-1", step: 2 });
+  });
+
+  it("should flush a never-completed partial marker as text when the message ends", () => {
+    // Given
+    let state = createInitialLighthouseV2StreamState("task-1");
+    state = reduceLighthouseV2Event(state, {
+      type: "message.delta",
+      content: "See the array[",
+    });
+    expect(state.assistantText).toBe("See the array");
+
+    // When
+    state = reduceLighthouseV2Event(state, {
+      type: "message.end",
+      messageId: "message-1",
+    });
+
+    // Then
+    expect(state.assistantText).toBe("See the array[");
+    expect(state.activityItems.at(-1)).toMatchObject({
+      type: "text",
+      text: "See the array[",
+    });
+  });
+});
+
 describe("event-reducer", () => {
   it("should append message deltas", () => {
     // Given

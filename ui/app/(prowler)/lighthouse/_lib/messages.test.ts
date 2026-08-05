@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 
+import { getSkillById } from "@/lib/lighthouse/skills/registry";
 import type { LighthouseContextEnvelope } from "@/types/lighthouse-context";
 
 import {
   buildOptimisticMessage,
   getLighthouseContext,
+  getSkillRef,
   getTextContent,
 } from "./messages";
 
@@ -117,5 +119,60 @@ describe("buildOptimisticMessage", () => {
       display_text: "Prioritize findings",
       ui_context: expect.objectContaining({ schema_version: 1 }),
     });
+  });
+
+  it("should embed the skill instructions and the ui_skill ref when a skill launches", () => {
+    // Given
+    const skill = getSkillById("verify-exploitability");
+    if (!skill) throw new Error("Expected skill definition");
+
+    // When
+    const message = buildOptimisticMessage(
+      "user",
+      skill.name,
+      undefined,
+      skill,
+    );
+
+    // Then
+    expect(message.parts[0]?.content).toMatchObject({
+      text: expect.stringContaining("[PROWLER_UI_SKILL_V1]"),
+      display_text: "Verify exploitability",
+      ui_skill: {
+        skill_id: "verify-exploitability",
+        name: "Verify exploitability",
+        version: 1,
+      },
+    });
+  });
+});
+
+describe("getSkillRef", () => {
+  it("should normalize a persisted ui_skill ref", () => {
+    // Given / When
+    const ref = getSkillRef({
+      text: "prompt",
+      display_text: "Verify exploitability",
+      ui_skill: {
+        skill_id: "verify-exploitability",
+        name: "Verify exploitability",
+        version: 1,
+      },
+    });
+
+    // Then
+    expect(ref).toEqual({
+      skillId: "verify-exploitability",
+      name: "Verify exploitability",
+      version: 1,
+    });
+  });
+
+  it("should ignore content without a valid ui_skill", () => {
+    expect(getSkillRef({ text: "plain" })).toBeUndefined();
+    expect(
+      getSkillRef({ text: "x", ui_skill: { skill_id: 4 } }),
+    ).toBeUndefined();
+    expect(getSkillRef("string content")).toBeUndefined();
   });
 });

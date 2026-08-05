@@ -7,10 +7,14 @@ vi.mock("@/app/(prowler)/lighthouse/_actions", () => ({
   updateLighthouseV2Configuration: vi.fn(),
 }));
 
+import { getSkillById } from "@/lib/lighthouse/skills/registry";
+
 import type { LighthouseChatConfig } from "./chat-store";
 import {
+  flushPendingPanelChatMessage,
   getOrCreatePanelChatStore,
   requestPanelChatMessage,
+  requestPanelSkillLaunch,
   resetPanelChatStoreForTests,
 } from "./panel-chat-store";
 
@@ -46,9 +50,51 @@ describe("panel chat message request", () => {
     expect(submitMessage).toHaveBeenCalledWith(
       "Analyze this finding",
       undefined,
+      undefined,
     );
     expect(resetToNewChat.mock.invocationCallOrder[0]).toBeLessThan(
       submitMessage.mock.invocationCallOrder[0],
+    );
+  });
+
+  it("should submit a skill launch as a message titled after the skill", () => {
+    // Given
+    const store = getOrCreatePanelChatStore(EMPTY_CHAT_CONFIG);
+    const submitMessage = vi
+      .spyOn(store.getState(), "submitMessage")
+      .mockResolvedValue();
+    const skill = getSkillById("verify-exploitability");
+    if (!skill) throw new Error("Expected skill definition");
+
+    // When
+    requestPanelSkillLaunch(skill);
+
+    // Then
+    expect(submitMessage).toHaveBeenCalledWith(
+      "Verify exploitability",
+      undefined,
+      skill,
+    );
+  });
+
+  it("should queue a skill launch until the panel store exists, then flush it", () => {
+    // Given: no store yet — the panel has not been opened/configured
+    const skill = getSkillById("investigate-blast-radius");
+    if (!skill) throw new Error("Expected skill definition");
+    requestPanelSkillLaunch(skill);
+
+    // When: the panel store is created later and the queue flushes
+    const store = getOrCreatePanelChatStore(EMPTY_CHAT_CONFIG);
+    const submitMessage = vi
+      .spyOn(store.getState(), "submitMessage")
+      .mockResolvedValue();
+    flushPendingPanelChatMessage();
+
+    // Then
+    expect(submitMessage).toHaveBeenCalledWith(
+      "Investigate blast radius",
+      undefined,
+      skill,
     );
   });
 
@@ -68,6 +114,7 @@ describe("panel chat message request", () => {
     expect(resetToNewChat).toHaveBeenCalledOnce();
     expect(submitMessage).toHaveBeenCalledWith(
       "Analyze this finding",
+      undefined,
       undefined,
     );
   });

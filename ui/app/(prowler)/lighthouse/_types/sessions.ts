@@ -60,6 +60,10 @@ export interface LighthouseV2SendMessageInput {
   sessionId: string;
   displayText: string;
   context?: LighthouseContextEnvelope;
+  // Only the id crosses the server-action boundary (definitions hold React
+  // icon components, which are not serializable); the adapter resolves it
+  // against the UI-defined skills registry.
+  skillId?: string;
   provider: LighthouseV2ProviderType;
   model?: string | null;
 }
