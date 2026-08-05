@@ -4,26 +4,32 @@ import {
 } from "@/actions/overview/compliance-watchlist";
 import { LighthouseContextContributor } from "@/components/lighthouse/context-contributor";
 import { buildComplianceContext } from "@/lib/lighthouse/context/contributions";
+import { isCloud } from "@/lib/shared/env";
 
 import { pickFilterParams } from "../_lib/filter-params";
 import { SSRComponentProps } from "../_types";
 
 import { ComplianceWatchlist } from "./_components/compliance-watchlist";
 
-// Bounded so watchlist items stay within the shared context item budget.
 const MAX_WATCHLIST_CONTEXT_ITEMS = 2;
 
 export const ComplianceWatchlistSSR = async ({
   searchParams,
 }: SSRComponentProps) => {
   const filters = pickFilterParams(searchParams);
-  const response = await getComplianceWatchlist({ filters });
+  const isWatchlistFiltered = isCloud();
+  const response = await getComplianceWatchlist({
+    filters,
+    inWatchlist: isWatchlistFiltered,
+  });
   const enrichedData = adaptComplianceWatchlistResponse(response);
 
-  // Filter out ProwlerThreatScore and pass all items to client
-  // Client handles sorting and limiting to display count
   const items = enrichedData
-    .filter((item) => !item.complianceId.toLowerCase().includes("threatscore"))
+    .filter(
+      (item) =>
+        isWatchlistFiltered ||
+        !item.complianceId.toLowerCase().includes("threatscore"),
+    )
     .map((item) => ({
       id: item.id,
       framework: item.complianceId,
@@ -50,7 +56,7 @@ export const ComplianceWatchlistSSR = async ({
           })}
         />
       ))}
-      <ComplianceWatchlist items={items} />
+      <ComplianceWatchlist items={items} hasWatchlist={isWatchlistFiltered} />
     </>
   );
 };

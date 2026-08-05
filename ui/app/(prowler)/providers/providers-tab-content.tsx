@@ -1,5 +1,5 @@
 import { listScanConfigurations } from "@/actions/scan-configurations";
-import { ProvidersAccountsView } from "@/components/providers";
+import { ProvidersAccountsView } from "@/components/providers/providers-accounts-view";
 import { isCloud } from "@/lib/shared/env";
 import { SearchParamsProps } from "@/types";
 import {
