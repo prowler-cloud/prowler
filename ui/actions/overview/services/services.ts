@@ -3,6 +3,7 @@
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
 import { appendSanitizedProviderTypeFilters } from "@/lib/provider-filters";
 import { handleApiResponse } from "@/lib/server-actions-helper";
+import type { ApiResult } from "@/types/server-actions";
 
 import { ServicesOverviewResponse } from "./types";
 
@@ -10,7 +11,7 @@ export const getServicesOverview = async ({
   filters = {},
 }: {
   filters?: Record<string, string | string[] | undefined>;
-} = {}): Promise<ServicesOverviewResponse | undefined> => {
+} = {}): Promise<ApiResult<ServicesOverviewResponse> | undefined> => {
   const headers = await getAuthHeaders({ contentType: false });
 
   const url = new URL(`${apiBaseUrl}/overviews/services`);

@@ -67,6 +67,88 @@ describe("LighthouseCurrentContextBadge", () => {
     expect(tooltip).not.toHaveTextContent("status-summary");
   });
 
+  it("should say when only the page name is shared", async () => {
+    // Given an unregistered route contributes a bare, filterless page item
+    const user = userEvent.setup();
+    render(<LighthouseCurrentContextBadge context={barePageContext()} />);
+
+    // When
+    await user.hover(screen.getByLabelText("Manage Groups context"));
+
+    // Then
+    const tooltip = await screen.findByRole("tooltip");
+    expect(tooltip).toHaveTextContent("Manage Groups");
+    expect(tooltip).toHaveTextContent("Only the current page name is shared.");
+  });
+
+  it("should treat empty filter entries as a bare page", async () => {
+    // Given a stored envelope whose page filters only carry empty values
+    const user = userEvent.setup();
+    const bareContext = barePageContext();
+    const [pageItem] = bareContext.items;
+    if (pageItem.kind !== "page") throw new Error("expected page item");
+    render(
+      <LighthouseCurrentContextBadge
+        context={{
+          ...bareContext,
+          items: [{ ...pageItem, filters: { status: [] } }],
+        }}
+      />,
+    );
+
+    // When
+    await user.hover(screen.getByLabelText("Manage Groups context"));
+
+    // Then no filters line renders and the page-only notice does
+    const tooltip = await screen.findByRole("tooltip");
+    expect(tooltip).not.toHaveTextContent("Filters:");
+    expect(tooltip).toHaveTextContent("Only the current page name is shared.");
+  });
+
+  it("should not claim a bare page for a single non-page item", async () => {
+    // Given a historical envelope whose only item is not a page item
+    const user = userEvent.setup();
+    const context: LighthouseContextEnvelope = {
+      schemaVersion: 1,
+      transport: "inline",
+      items: [
+        {
+          kind: "scan",
+          id: "scan-1",
+          source: "selection",
+          scopeKey: "scans:/scans",
+          label: "Selected scan",
+          scanId: "scan-1",
+        },
+      ],
+    };
+    render(<LighthouseCurrentContextBadge context={context} />);
+
+    // When
+    await user.hover(screen.getByLabelText("Context context"));
+
+    // Then
+    const tooltip = await screen.findByRole("tooltip");
+    expect(tooltip).not.toHaveTextContent(
+      "Only the current page name is shared.",
+    );
+  });
+
+  it("should not claim a bare page when filters or items travel too", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(<LighthouseCurrentContextBadge context={findingsContext()} />);
+
+    // When
+    await user.hover(screen.getByLabelText("Findings context"));
+
+    // Then
+    const tooltip = await screen.findByRole("tooltip");
+    expect(tooltip).not.toHaveTextContent(
+      "Only the current page name is shared.",
+    );
+  });
+
   it.each([
     ["resource", resourceContext(), "Resource: resource-1 (bucket-1)"],
     ["scan", scanContext(), "Scan: scan-1"],
@@ -97,6 +179,23 @@ describe("LighthouseContextBadge", () => {
     ).not.toBeInTheDocument();
   });
 });
+
+function barePageContext(): LighthouseContextEnvelope {
+  return {
+    schemaVersion: 1,
+    transport: "inline",
+    items: [
+      {
+        kind: "page",
+        id: "other",
+        source: "automatic",
+        scopeKey: "other:/manage-groups",
+        label: "Manage Groups",
+        path: "/manage-groups",
+      },
+    ],
+  };
+}
 
 function overviewContext(): LighthouseContextEnvelope {
   return {

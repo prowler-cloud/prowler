@@ -106,6 +106,7 @@ export function useProviderWizardController({
     setMode,
     mode,
     providerType,
+    via,
   } = useProviderWizardStore();
   const {
     reset: resetOrgWizard,
@@ -269,7 +270,11 @@ export function useProviderWizardController({
 
   const isProviderFlow = wizardVariant === WIZARD_VARIANT.PROVIDER;
   const docsLink = isProviderFlow
-    ? getProviderHelpText(providerTypeHint ?? providerType ?? "").link
+    ? getProviderHelpText(
+        providerTypeHint ?? providerType ?? "",
+        currentStep,
+        via,
+      ).link
     : ORG_DOCS_URL[organizationType];
   const resolvedFooterConfig: WizardFooterConfig = footerConfig;
   const modalTitle = getProviderWizardModalTitle(mode);

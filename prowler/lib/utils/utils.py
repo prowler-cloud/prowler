@@ -47,6 +47,11 @@ default_secrets_batch_chunk_size = 500
 # cannot block the audit indefinitely.
 default_secrets_scan_timeout = 300
 
+# Directory of Prowler-maintained Kingfisher rules, loaded with ``--rules-path``
+# on every scan. A rule here that reuses a built-in id replaces the built-in one
+# (see kingfisher_rules/*.yaml for why each override exists).
+secrets_rules_path = os.path.join(os.path.dirname(__file__), "kingfisher_rules")
+
 
 class SecretsScanError(Exception):
     """The secret scanner could not produce a trustworthy result.
@@ -86,6 +91,9 @@ def _build_kingfisher_command(
         "--no-update-check",
         "--confidence",
         confidence,
+        # Overrides for built-in rules that produce false positives.
+        "--rules-path",
+        secrets_rules_path,
     ]
     if validate:
         # Live-validate discovered secrets against provider APIs. Use
