@@ -198,7 +198,7 @@ To complete the Prowler Cloud configuration:
 
 1.  Return to the Prowler SAML configuration page.
 
-2.  Enter the **primary email domain** for the organization (e.g., `mycompany.com`). Prowler Cloud uses this domain to identify users who should authenticate through SAML and to generate the Assertion Consumer Service (ACS) URL.
+2.  Enter the **primary email domain** for the organization (e.g., `mycompany.com`). Prowler Cloud uses this domain to generate the Assertion Consumer Service (ACS) URL. Every configured domain can identify users who authenticate through this SAML configuration.
 
 3.  Upload the **metadata XML file** downloaded from the IdP.
 
@@ -211,6 +211,10 @@ To complete the Prowler Cloud configuration:
 <SubscriptionBanner />
 
 Prowler Cloud supports one primary domain and up to 19 additional verified email domains in the same SAML configuration. Users from every configured domain authenticate through the same Identity Provider (IdP), so separate SAML applications are not required for each domain.
+
+<Note>
+A SAML configuration supports up to 20 email domains in total. One domain is required as the primary domain, leaving 19 slots for additional domains. Each subdomain counts as a separate additional domain. For example, `partners.example.com` counts separately from `example.com`.
+</Note>
 
 The ACS URL always uses the primary domain. Configure this single ACS URL in the IdP even when the SAML configuration includes additional domains.
 
