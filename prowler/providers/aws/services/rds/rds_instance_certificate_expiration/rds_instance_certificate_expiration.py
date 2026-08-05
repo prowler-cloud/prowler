@@ -23,7 +23,9 @@ class rds_instance_certificate_expiration(Check):
                 if not db_instance.ca_cert:
                     report.status = "PASS"
                     report.check_metadata.Severity = Severity.informational
-                    report.status_extended = f"RDS Instance {db_instance.id} does not use a CA certificate."
+                    report.status_extended = (
+                        f"RDS Instance {db_instance.id} does not use a CA certificate."
+                    )
                     findings.append(report)
                 continue
 
