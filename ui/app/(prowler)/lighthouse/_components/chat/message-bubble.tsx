@@ -18,6 +18,7 @@ import {
 } from "@/app/(prowler)/lighthouse/_types";
 import { LighthouseContextBadge } from "@/components/lighthouse/context-chip";
 import { Button } from "@/components/shadcn/button/button";
+import { stripStepMarkers } from "@/lib/lighthouse/skills/step-markers";
 import { cn } from "@/lib/utils";
 import type { LighthouseSkillDefinition } from "@/types/lighthouse-skills";
 
@@ -53,11 +54,13 @@ export function MessageBubble({
   const isUser = message.role === LIGHTHOUSE_V2_MESSAGE_ROLE.USER;
   const isSkillResponse = !isUser && skillRun !== undefined;
   // Text-only join feeds the copy button; tool calls are rendered separately.
+  // Assistant text is persisted raw, so skill step markers are stripped here.
   const messageText = message.parts
     .filter((part) => part.type === LIGHTHOUSE_V2_PART_TYPE.TEXT)
     .map((part) => getTextContent(part.content))
     .filter(Boolean)
     .join("\n\n");
+  const displayText = isUser ? messageText : stripStepMarkers(messageText);
   const messageContext = isUser
     ? message.parts
         .filter((part) => part.type === LIGHTHOUSE_V2_PART_TYPE.TEXT)
@@ -125,15 +128,11 @@ export function MessageBubble({
           </div>
         )}
         {isSkillResponse && (
-          <SkillActionsRow
-            skillRun={skillRun}
-            messageText={messageText}
-            onLaunchSkill={onLaunchSkill}
-          />
+          <SkillActionsRow skillRun={skillRun} onLaunchSkill={onLaunchSkill} />
         )}
         <MessageMeta
           isUser={isUser}
-          text={messageText}
+          text={displayText}
           insertedAt={message.insertedAt}
         />
       </div>
@@ -162,7 +161,7 @@ function AssistantParts({ parts }: { parts: LighthouseV2Part[] }) {
 
 function AssistantTextParts({ parts }: { parts: LighthouseV2Part[] }) {
   return parts.map((part, index) => {
-    const text = getTextContent(part.content);
+    const text = stripStepMarkers(getTextContent(part.content));
     return text ? (
       <MessageMarkdown key={part.id || `text-${index}`} text={text} />
     ) : null;

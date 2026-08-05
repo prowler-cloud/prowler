@@ -44,7 +44,7 @@ export function LighthouseSkillsBlock({
         <button
           type="button"
           onClick={onAskAnything}
-          className="text-text-neutral-secondary hover:text-text-neutral-primary self-end text-xs underline-offset-2 hover:underline"
+          className="text-text-lighthouse self-end text-xs underline-offset-2 hover:underline"
         >
           Or ask Lighthouse anything about this finding →
         </button>
@@ -69,14 +69,14 @@ function SkillCard({
       className="group border-border-neutral-secondary bg-bg-neutral-secondary hover:bg-bg-neutral-tertiary flex items-start gap-2.5 rounded-lg border p-3 text-left transition-colors"
     >
       <Icon
-        className="text-text-success-primary mt-0.5 size-4 shrink-0"
+        className="text-text-lighthouse mt-0.5 size-4 shrink-0"
         aria-hidden
       />
       <span className="flex min-w-0 flex-col gap-0.5">
         <span className="text-text-neutral-primary flex items-center gap-1.5 text-sm font-medium">
           {skill.name}
           <ArrowRight
-            className="text-text-success-primary size-3.5 opacity-0 transition-opacity group-hover:opacity-100"
+            className="text-text-lighthouse size-3.5 opacity-0 transition-opacity group-hover:opacity-100"
             aria-hidden
           />
         </span>

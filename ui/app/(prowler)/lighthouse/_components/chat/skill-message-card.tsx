@@ -31,11 +31,8 @@ export function SkillMessageCard({ skillRef, context }: SkillMessageCardProps) {
     >
       <div className="bg-bg-neutral-primary flex min-w-0 flex-col gap-1 rounded-[7px] px-3.5 py-2.5">
         <span className="flex items-center gap-2">
-          <Icon
-            className="text-text-success-primary size-4 shrink-0"
-            aria-hidden
-          />
-          <span className="text-text-success-primary text-[10px] font-semibold tracking-widest uppercase">
+          <Icon className="text-text-lighthouse size-4 shrink-0" aria-hidden />
+          <span className="text-text-lighthouse text-[10px] font-semibold tracking-widest uppercase">
             Skill
           </span>
           <span className="text-text-neutral-primary truncate text-sm font-medium">

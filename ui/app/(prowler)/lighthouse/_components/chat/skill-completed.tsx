@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Check, Copy } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useState } from "react";
 
@@ -14,6 +14,7 @@ import {
   LIGHTHOUSE_V2_PART_TYPE,
   type LighthouseV2Part,
 } from "@/app/(prowler)/lighthouse/_types";
+import { Badge } from "@/components/shadcn/badge/badge";
 import { Button } from "@/components/shadcn/button/button";
 import { getNextSkill, getSkillById } from "@/lib/lighthouse/skills/registry";
 import {
@@ -83,11 +84,9 @@ export function SkillRunReceipt({
 // finding, and the suggested follow-up skill.
 export function SkillActionsRow({
   skillRun,
-  messageText,
   onLaunchSkill,
 }: {
   skillRun: SkillRunInfo;
-  messageText: string;
   onLaunchSkill?: (skill: LighthouseSkillDefinition) => void;
 }) {
   const [isJiraOpen, setIsJiraOpen] = useState(false);
@@ -103,7 +102,6 @@ export function SkillActionsRow({
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <CopyAnswerButton text={messageText} />
       {findingId && (
         <>
           <Button
@@ -144,39 +142,19 @@ export function SkillActionsRow({
         </>
       )}
       {nextSkill && onLaunchSkill && (
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => onLaunchSkill(nextSkill)}
-        >
-          <nextSkill.icon className="text-text-success-primary size-3.5" />
-          Next: {nextSkill.name}
-          <ArrowRight className="size-3.5" />
-        </Button>
+        <Badge variant="lighthouse" asChild>
+          <button
+            type="button"
+            className="cursor-pointer"
+            onClick={() => onLaunchSkill(nextSkill)}
+          >
+            <nextSkill.icon aria-hidden />
+            Next: {nextSkill.name}
+            <ArrowRight aria-hidden />
+          </button>
+        </Badge>
       )}
     </div>
-  );
-}
-
-function CopyAnswerButton({ text }: { text: string }) {
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1500);
-    } catch {
-      // Clipboard can reject (e.g. permissions); nothing to recover.
-    }
-  };
-
-  return (
-    <Button type="button" variant="outline" size="sm" onClick={handleCopy}>
-      {copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
-      Copy
-    </Button>
   );
 }
 

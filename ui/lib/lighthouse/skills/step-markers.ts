@@ -11,6 +11,16 @@ export interface StepMarkerResult {
   steps: number[];
 }
 
+// Cleans persisted assistant text: the backend stores the model's raw output,
+// markers included, so anything rendered from a reloaded message must strip
+// them. Marker-only lines (the model sometimes emits them as list items) are
+// removed whole so no empty bullets remain; inline markers are excised.
+export function stripStepMarkers(text: string): string {
+  return text
+    .replace(/^[ \t]*(?:[-*+]\s+)?\[\[step:\d+\]\][ \t]*$\r?\n?/gm, "")
+    .replace(/\[\[step:\d+\]\][ \t]*/g, "");
+}
+
 export function consumeStepMarkers(
   carry: string,
   chunk: string,

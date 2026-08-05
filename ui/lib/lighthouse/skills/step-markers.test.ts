@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { consumeStepMarkers } from "./step-markers";
+import { consumeStepMarkers, stripStepMarkers } from "./step-markers";
 
 describe("consumeStepMarkers", () => {
   it("should pass plain text through untouched", () => {
@@ -52,5 +52,38 @@ describe("consumeStepMarkers", () => {
 
     const second = consumeStepMarkers(first.carry, "]");
     expect(second).toEqual({ text: "", carry: "", steps: [12] });
+  });
+});
+
+describe("stripStepMarkers", () => {
+  it("should remove inline markers from persisted assistant text", () => {
+    expect(
+      stripStepMarkers("[[step:1]] I'm gathering the focused finding."),
+    ).toBe("I'm gathering the focused finding.");
+  });
+
+  it("should remove marker-only lines, including bulleted ones", () => {
+    // Real-world model output: markers emitted as their own list items.
+    const text = [
+      "* [[step:1]]",
+      "* Gathering the focused finding and affected resource context.",
+      "* [[step:2]]",
+      "* Enumerating identities with access.",
+      "* [[step:3]] Mapping reachable services and resources.",
+    ].join("\n");
+
+    expect(stripStepMarkers(text)).toBe(
+      [
+        "* Gathering the focused finding and affected resource context.",
+        "* Enumerating identities with access.",
+        "* Mapping reachable services and resources.",
+      ].join("\n"),
+    );
+  });
+
+  it("should leave marker-free text untouched", () => {
+    expect(stripStepMarkers("Plain **markdown** answer.")).toBe(
+      "Plain **markdown** answer.",
+    );
   });
 });

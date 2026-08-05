@@ -76,9 +76,11 @@ function buildSkillInstructions(skill: LighthouseSkillDefinition): string {
     ...skill.steps.map((step, index) => `${index + 1}. ${step}`),
     "Protocol:",
     "- Immediately before starting a step, output its marker alone on its own line, e.g. [[step:1]] before step 1.",
+    "- Emit each step's marker exactly once, in ascending order. Never repeat a marker, never go back to an earlier step.",
+    "- Markers must be plain text on their own line — never inside a bullet or numbered list, heading, code block, or sentence.",
     "- After each marker, state in one short sentence what you are doing.",
     "- Use the available tools to gather real evidence; never fabricate data.",
-    `- The final step (step ${skill.steps.length}) must produce the complete answer in markdown.`,
+    `- The final step (step ${skill.steps.length}) must produce the complete answer in markdown, without any markers inside it.`,
     skill.guidance,
   ].join("\n");
 }

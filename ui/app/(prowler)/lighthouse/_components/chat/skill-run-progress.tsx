@@ -67,7 +67,7 @@ export function SkillRunProgress({
               className="flex w-full items-center gap-2.5 text-left"
             >
               <Icon
-                className="text-text-success-primary size-4 shrink-0"
+                className="text-text-lighthouse size-4 shrink-0"
                 aria-hidden
               />
               <span className="flex min-w-0 flex-1 flex-col">
@@ -180,7 +180,10 @@ function SkillStepTimeline({
             {stepTools.length > 0 && (
               <ChainOfThoughtSearchResults>
                 {stepTools.map((toolCall) => (
-                  <ChainOfThoughtSearchResult key={toolCall.id}>
+                  <ChainOfThoughtSearchResult
+                    key={toolCall.id}
+                    variant="lighthouse"
+                  >
                     {toolCall.status ===
                       LIGHTHOUSE_V2_TOOL_CALL_STATUS.RUNNING && (
                       <Loader2 className="size-3 animate-spin" aria-hidden />

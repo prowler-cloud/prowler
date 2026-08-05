@@ -160,7 +160,11 @@ describe("MessageBubble", () => {
         {
           id: "part-answer",
           type: LIGHTHOUSE_V2_PART_TYPE.TEXT,
-          content: { text: "The finding is exploitable in practice." },
+          // Persisted raw model output keeps the step markers; the UI must
+          // strip them when rendering the finished response.
+          content: {
+            text: "* [[step:5]]\n\n[[step:5]] The finding is exploitable in practice.",
+          },
           toolCallOutcome: null,
           insertedAt: "2026-06-25T10:00:40Z",
           updatedAt: "2026-06-25T10:00:40Z",
@@ -204,6 +208,7 @@ describe("MessageBubble", () => {
     expect(
       screen.getByText("The finding is exploitable in practice."),
     ).toBeInTheDocument();
+    expect(screen.queryByText(/\[\[step:/)).not.toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Create Jira ticket" }),
     ).toBeInTheDocument();
