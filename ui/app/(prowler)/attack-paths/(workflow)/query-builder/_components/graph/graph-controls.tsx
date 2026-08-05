@@ -1,6 +1,12 @@
 "use client";
 
-import { Download, Minimize2, ZoomIn, ZoomOut } from "lucide-react";
+import {
+  ChevronsDownUp,
+  Download,
+  Minimize2,
+  ZoomIn,
+  ZoomOut,
+} from "lucide-react";
 
 import { Button } from "@/components/shadcn";
 import {
@@ -15,6 +21,9 @@ interface GraphControlsProps {
   onZoomOut: () => void;
   onFitToScreen: () => void;
   onExport?: () => void;
+  // Collapse every expanded resource-class group. Hidden when nothing is open.
+  onCollapseAll?: () => void;
+  canCollapseAll?: boolean;
 }
 
 /**
@@ -26,11 +35,30 @@ export const GraphControls = ({
   onZoomOut,
   onFitToScreen,
   onExport,
+  onCollapseAll,
+  canCollapseAll = false,
 }: GraphControlsProps) => {
   return (
     <div className="flex items-center">
       <div className="border-border-neutral-primary bg-bg-neutral-tertiary flex gap-1 rounded-lg border p-1">
         <TooltipProvider>
+          {canCollapseAll && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onCollapseAll}
+                  className="h-8 w-8 p-0"
+                  aria-label="Collapse all groups"
+                >
+                  <ChevronsDownUp size={18} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Collapse all groups</TooltipContent>
+            </Tooltip>
+          )}
+
           <Tooltip>
             <TooltipTrigger asChild>
               <Button

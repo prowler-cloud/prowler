@@ -23,7 +23,11 @@ import {
 } from "react";
 
 import { cn } from "@/lib/utils";
-import type { AttackPathGraphData, GraphNode } from "@/types/attack-paths";
+import type {
+  AttackPathGraphData,
+  AttackPathOutcome,
+  GraphNode,
+} from "@/types/attack-paths";
 
 import {
   computeFilteredSubgraph,
@@ -34,10 +38,13 @@ import {
   isProwlerFindingNode,
   resolveHiddenFindingIds,
 } from "../../_lib";
+import { buildAttackPathView } from "../../_lib/group-graph";
 import { layoutWithDagre } from "../../_lib/layout";
 
 import { FindingNode } from "./nodes/finding-node";
+import { GroupNode } from "./nodes/group-node";
 import { InternetNode } from "./nodes/internet-node";
+import { OutcomeNode } from "./nodes/outcome-node";
 import { ResourceNode } from "./nodes/resource-node";
 
 // --- Types ---
@@ -57,7 +64,12 @@ interface AttackPathGraphProps {
   isFilteredView?: boolean;
   initialNodeId?: string;
   expandedResources?: Set<string>;
+  // Which resource-class groups are expanded to their members.
+  expandedClasses?: Set<string>;
+  // Terminal outcome for the current query; injected as the graph's end node.
+  outcome?: AttackPathOutcome | null;
   onNodeClick?: (node: GraphNode) => void;
+  onNodeDoubleClick?: (node: GraphNode) => void;
   onInitialFilter?: (filteredData: AttackPathGraphData) => void;
   ref?: Ref<GraphHandle>;
   className?: string;
@@ -71,6 +83,8 @@ const NODE_TYPES = {
   finding: FindingNode,
   internet: InternetNode,
   resource: ResourceNode,
+  group: GroupNode,
+  outcome: OutcomeNode,
 } as const;
 
 // --- CSS for animated dashed edges, selected node pulse, and edge highlight ---
@@ -205,7 +219,10 @@ const GraphCanvas = ({
   isFilteredView = false,
   initialNodeId,
   expandedResources,
+  expandedClasses,
+  outcome,
   onNodeClick,
+  onNodeDoubleClick,
   onInitialFilter,
   ref,
 }: GraphCanvasProps) => {
@@ -228,6 +245,13 @@ const GraphCanvas = ({
   // Tier 1 expansion is controlled by the parent (zustand store) so it
   // survives the data-swaps that happen on filtered-view enter/exit.
   const expanded = expandedResources ?? EMPTY_EXPANDED;
+
+  // Re-frame when a class group is expanded/collapsed so the new member set
+  // fits smoothly instead of overflowing the viewport.
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => fitView(AUTO_FIT_OPTIONS));
+    return () => cancelAnimationFrame(raf);
+  }, [expandedClasses, fitView]);
 
   // --- initialNodeId: synchronous filtered-view derivation on first render ---
   // Compute the effective data: if initialNodeId is set and valid, derive filtered subgraph
@@ -380,8 +404,17 @@ const GraphCanvas = ({
     );
   }, [expanded, fitView, getNodes]);
 
-  const nodes = effectiveData.nodes ?? [];
-  const edges = effectiveData.edges ?? [];
+  // Reshape into the attack-path view: drop the account hub, collapse each
+  // resource class into one node (expandable), and inject the outcome node.
+  // Findings pass through for expanded members; the tier-1 finding-hide logic
+  // below then reveals them per-resource, so existing behaviour is preserved.
+  const view = buildAttackPathView({
+    data: effectiveData,
+    expandedClasses: expandedClasses ?? EMPTY_EXPANDED,
+    outcome,
+  });
+  const nodes = view.nodes;
+  const edges = view.edges;
 
   // Pre-compute which resources have findings connected (O(n+e))
   const findingNodeIds = new Set<string>();
@@ -510,6 +543,11 @@ const GraphCanvas = ({
     onNodeClick?.(graphNode);
   };
 
+  const handleNodeDoubleClick = (_event: MouseEvent, node: Node) => {
+    const graphNode = (node.data as { graphNode: GraphNode }).graphNode;
+    onNodeDoubleClick?.(graphNode);
+  };
+
   // Path highlight on hover
   const handleNodeMouseEnter = (_event: MouseEvent, node: Node) => {
     setHoveredNodeId(node.id);
@@ -526,6 +564,7 @@ const GraphCanvas = ({
         edges={enrichedEdges}
         nodeTypes={NODE_TYPES}
         onNodeClick={handleNodeClick}
+        onNodeDoubleClick={handleNodeDoubleClick}
         onNodeMouseEnter={handleNodeMouseEnter}
         onNodeMouseLeave={handleNodeMouseLeave}
         fitView
@@ -577,7 +616,10 @@ export const AttackPathGraph = ({
   isFilteredView,
   initialNodeId,
   expandedResources,
+  expandedClasses,
+  outcome,
   onNodeClick,
+  onNodeDoubleClick,
   onInitialFilter,
   ref,
   className,
@@ -601,7 +643,10 @@ export const AttackPathGraph = ({
           isFilteredView={isFilteredView}
           initialNodeId={initialNodeId}
           expandedResources={expandedResources}
+          expandedClasses={expandedClasses}
+          outcome={outcome}
           onNodeClick={onNodeClick}
+          onNodeDoubleClick={onNodeDoubleClick}
           onInitialFilter={onInitialFilter}
         />
       </ReactFlowProvider>
