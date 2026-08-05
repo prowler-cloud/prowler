@@ -2,7 +2,6 @@
 
 import {
   Box,
-  CircleArrowRight,
   CircleChevronLeft,
   CircleChevronRight,
   Container,
@@ -20,11 +19,15 @@ import {
   type ResourceDrawerFinding,
   updateFindingTriage,
 } from "@/actions/findings";
-import { requestPanelChatMessage } from "@/app/(prowler)/lighthouse/_lib/panel-chat-store";
+import {
+  requestPanelChatMessage,
+  requestPanelSkillLaunch,
+} from "@/app/(prowler)/lighthouse/_lib/panel-chat-store";
 import { JiraDispatchActionItem } from "@/components/findings/jira-dispatch-action-item";
 import { MarkdownContainer } from "@/components/findings/markdown-container";
 import { MuteFindingsModal } from "@/components/findings/mute-findings-modal";
 import { getComplianceIcon } from "@/components/icons";
+import { LighthouseSkillsBlock } from "@/components/lighthouse/skills-block";
 import {
   Badge,
   Button,
@@ -83,6 +86,7 @@ import type { FindingComplianceFramework } from "@/types/compliance-watchlist";
 import type { FindingResourceRow } from "@/types/findings-table";
 import type { UpdateFindingTriageInput } from "@/types/findings-triage";
 import { JIRA_DISPATCH_TARGET } from "@/types/integrations";
+import type { LighthouseSkillDefinition } from "@/types/lighthouse-skills";
 
 import { Muted } from "../../muted";
 import { DeltaIndicator } from "../delta-indicator";
@@ -434,6 +438,11 @@ export function ResourceDetailDrawerContent({
   const handleAnalyzeFinding = () => {
     openSidePanel(SIDE_PANEL_TAB.AI_CHAT);
     requestPanelChatMessage("Analyze this finding", lighthouseContext.context);
+  };
+
+  const handleLaunchSkill = (skill: LighthouseSkillDefinition) => {
+    openSidePanel(SIDE_PANEL_TAB.AI_CHAT);
+    requestPanelSkillLaunch(skill, lighthouseContext.context);
   };
 
   /**
@@ -1245,19 +1254,12 @@ export function ResourceDetailDrawerContent({
         </Tabs>
       </div>
 
-      {/* Lighthouse AI button */}
+      {/* Lighthouse AI Skills (design 1d) — replaces the old analyze banner */}
       {isCloud() && !isNavigating && (
-        <button
-          type="button"
-          onClick={handleAnalyzeFinding}
-          className="flex items-center gap-1.5 rounded-lg px-4 py-3 text-sm font-bold text-slate-900 transition-opacity hover:opacity-90"
-          style={{
-            background: "var(--gradient-lighthouse)",
-          }}
-        >
-          <CircleArrowRight className="size-5" />
-          Analyze This Finding With Lighthouse AI
-        </button>
+        <LighthouseSkillsBlock
+          onLaunchSkill={handleLaunchSkill}
+          onAskAnything={handleAnalyzeFinding}
+        />
       )}
     </div>
   );

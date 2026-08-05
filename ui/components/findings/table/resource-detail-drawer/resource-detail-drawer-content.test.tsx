@@ -25,6 +25,7 @@ const {
   mockUpdateFindingTriage,
   mockLoadLatestFindingTriageNote,
   mockRequestPanelChatMessage,
+  mockRequestPanelSkillLaunch,
   mockIsCloud,
   mockCurrentLighthouseContext,
 } = vi.hoisted(() => ({
@@ -37,6 +38,7 @@ const {
   mockUpdateFindingTriage: vi.fn(),
   mockLoadLatestFindingTriageNote: vi.fn(),
   mockRequestPanelChatMessage: vi.fn(),
+  mockRequestPanelSkillLaunch: vi.fn(),
   mockIsCloud: vi.fn(() => true),
   mockCurrentLighthouseContext: {
     schemaVersion: 1,
@@ -288,6 +290,7 @@ vi.mock("@/actions/findings", () => ({
 
 vi.mock("@/components/icons", () => ({
   getComplianceIcon: mockGetComplianceIcon,
+  LighthouseIcon: () => null,
 }));
 
 vi.mock("@/components/icons/services/IconServices", () => ({
@@ -384,6 +387,7 @@ vi.mock("@/lib/shared/env", () => ({
 
 vi.mock("@/app/(prowler)/lighthouse/_lib/panel-chat-store", () => ({
   requestPanelChatMessage: mockRequestPanelChatMessage,
+  requestPanelSkillLaunch: mockRequestPanelSkillLaunch,
 }));
 
 vi.mock("@/hooks/use-lighthouse-context", () => ({
@@ -827,10 +831,10 @@ describe("ResourceDetailDrawerContent — Lighthouse AI", () => {
       />,
     );
 
-    // When
+    // When: the free-form fallback keeps the old "analyze" behavior
     await user.click(
       screen.getByRole("button", {
-        name: "Analyze This Finding With Lighthouse AI",
+        name: /ask Lighthouse anything about this finding/i,
       }),
     );
 
@@ -843,6 +847,15 @@ describe("ResourceDetailDrawerContent — Lighthouse AI", () => {
       isOpen: true,
       selectedTab: SIDE_PANEL_TAB.AI_CHAT,
     });
+
+    // And launching a skill goes through the skill launcher with the context
+    await user.click(
+      screen.getByRole("button", { name: /Verify exploitability/ }),
+    );
+    expect(mockRequestPanelSkillLaunch).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "verify-exploitability" }),
+      mockCurrentLighthouseContext,
+    );
   });
 
   it("should hide the action when the Lighthouse panel tab is unavailable", () => {
@@ -866,9 +879,10 @@ describe("ResourceDetailDrawerContent — Lighthouse AI", () => {
     );
 
     // Then
+    expect(screen.queryByText("Lighthouse AI Skills")).not.toBeInTheDocument();
     expect(
       screen.queryByRole("button", {
-        name: "Analyze This Finding With Lighthouse AI",
+        name: /ask Lighthouse anything about this finding/i,
       }),
     ).not.toBeInTheDocument();
   });
@@ -1759,11 +1773,7 @@ describe("ResourceDetailDrawerContent — header skeleton while navigating", () 
     expect(screen.getByText("security")).toBeInTheDocument();
     expect(screen.queryByText("Status Extended:")).not.toBeInTheDocument();
     expect(screen.queryByText("uid-1")).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", {
-        name: "Analyze This Finding With Lighthouse AI",
-      }),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText("Lighthouse AI Skills")).not.toBeInTheDocument();
   });
 
   it("should keep the overview tab shell visible with section skeletons when navigating to a different check", () => {
