@@ -643,12 +643,6 @@ export const handlersForOrganizations = (
         { status: 202 },
       ),
     ),
-    http.post(`${API}/scans`, () =>
-      HttpResponse.json(
-        { data: { id: "scan-1", type: "scans", attributes: {} } },
-        { status: 202 },
-      ),
-    ),
     http.post(`${API}/schedules`, () =>
       HttpResponse.json(
         { data: { id: "schedule-1", type: "schedules", attributes: {} } },

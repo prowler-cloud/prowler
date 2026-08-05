@@ -1,11 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
+  addScanOperationMock,
   fetchMock,
   getAuthHeadersMock,
   handleApiErrorMock,
   handleApiResponseMock,
 } = vi.hoisted(() => ({
+  addScanOperationMock: vi.fn(),
   fetchMock: vi.fn(),
   getAuthHeadersMock: vi.fn(),
   handleApiErrorMock: vi.fn(),
@@ -27,7 +29,7 @@ vi.mock("@/lib/server-actions-helper", () => ({
 }));
 
 vi.mock("@/lib/sentry-breadcrumbs", () => ({
-  addScanOperation: vi.fn(),
+  addScanOperation: addScanOperationMock,
 }));
 
 import {
@@ -46,10 +48,15 @@ describe("launchOrganizationScans", () => {
 
   it("sends one organization bulk scan request", async () => {
     // Given
+    const scans = [
+      { id: "scan-1", type: "scans" },
+      { id: "scan-2", type: "scans" },
+    ];
     fetchMock.mockResolvedValue(new Response(null, { status: 202 }));
+    handleApiResponseMock.mockResolvedValue({ data: scans });
 
     // When
-    await launchOrganizationScans("organization-1");
+    const result = await launchOrganizationScans("organization-1");
 
     // Then
     expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -76,6 +83,31 @@ describe("launchOrganizationScans", () => {
       expect.any(Response),
       "/scans",
     );
+    expect(result).toEqual({ data: scans });
+    expect(addScanOperationMock).toHaveBeenCalledTimes(1);
+    expect(addScanOperationMock).toHaveBeenCalledWith("start", undefined, {
+      organization_id: "organization-1",
+      bulk: true,
+      scan_count: 2,
+      scan_ids: "scan-1,scan-2",
+    });
+  });
+
+  it("rejects a successful response without a scan collection", async () => {
+    // Given
+    fetchMock.mockResolvedValue(new Response(null, { status: 202 }));
+    handleApiResponseMock.mockResolvedValue({
+      data: { id: "scan-1", type: "scans" },
+    });
+
+    // When
+    const result = await launchOrganizationScans("organization-1");
+
+    // Then
+    expect(result).toEqual({
+      error: "The bulk scan response did not contain a scan collection.",
+    });
+    expect(addScanOperationMock).not.toHaveBeenCalled();
   });
 });
 

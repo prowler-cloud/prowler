@@ -20,6 +20,35 @@ import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 import { SCAN_STATES } from "@/types/attack-paths";
 
 const ORGANIZATION_SCAN_CONCURRENCY_LIMIT = 5;
+
+interface OrganizationScanResource {
+  id: string;
+  type: string;
+}
+
+interface OrganizationScansSuccessResponse {
+  data: OrganizationScanResource[];
+}
+
+interface OrganizationScansErrorResponse {
+  error: unknown;
+  status?: number;
+}
+
+type OrganizationScansResponse =
+  | OrganizationScansSuccessResponse
+  | OrganizationScansErrorResponse;
+
+const isOrganizationScanResource = (
+  value: unknown,
+): value is OrganizationScanResource =>
+  typeof value === "object" &&
+  value !== null &&
+  "id" in value &&
+  typeof value.id === "string" &&
+  "type" in value &&
+  value.type === "scans";
+
 export const getScans = async ({
   page = 1,
   query = "",
@@ -182,18 +211,15 @@ export const scheduleDaily = async (formData: FormData) => {
   }
 };
 
-export const launchOrganizationScans = async (organizationId: string) => {
+export const launchOrganizationScans = async (
+  organizationId: string,
+): Promise<OrganizationScansResponse> => {
   if (!organizationId) {
     return { error: "Organization ID is required" };
   }
 
   const headers = await getAuthHeaders({ contentType: true });
   const url = new URL(`${apiBaseUrl}/scans/bulk`);
-
-  addScanOperation("create", undefined, {
-    organization_id: organizationId,
-    bulk: true,
-  });
 
   try {
     const response = await fetch(url.toString(), {
@@ -214,7 +240,26 @@ export const launchOrganizationScans = async (organizationId: string) => {
       }),
     });
 
-    return handleApiResponse(response, "/scans");
+    const result = await handleApiResponse(response, "/scans");
+    if (result?.error !== undefined) {
+      return { error: result.error, status: result.status };
+    }
+
+    const scans: unknown = result?.data;
+    if (!Array.isArray(scans) || !scans.every(isOrganizationScanResource)) {
+      return {
+        error: "The bulk scan response did not contain a scan collection.",
+      };
+    }
+
+    addScanOperation("start", undefined, {
+      organization_id: organizationId,
+      bulk: true,
+      scan_count: scans.length,
+      scan_ids: scans.map((scan) => scan.id).join(","),
+    });
+
+    return { data: scans };
   } catch (error) {
     return handleApiError(error);
   }

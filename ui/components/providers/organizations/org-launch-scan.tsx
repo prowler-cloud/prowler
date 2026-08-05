@@ -209,13 +209,11 @@ export function OrgLaunchScan({
         ? await launchOrganizationScans(organizationId)
         : { error: "Organization ID is required" };
 
-      if (hasActionError(scanResult)) {
+      if ("error" in scanResult) {
         initialScanFailureCount = updatedProviderIds.length;
         initialScanError = getActionErrorMessage(scanResult);
       } else {
-        initialScanSuccessCount = Array.isArray(scanResult?.data)
-          ? scanResult.data.length
-          : 0;
+        initialScanSuccessCount = scanResult.data.length;
       }
     }
 
@@ -265,7 +263,7 @@ export function OrgLaunchScan({
         ? await launchOrganizationScans(organizationId)
         : { error: "Organization ID is required" };
 
-      if (hasActionError(result)) {
+      if ("error" in result) {
         setIsLaunching(false);
         toast({
           variant: "destructive",
@@ -275,7 +273,7 @@ export function OrgLaunchScan({
         return;
       }
 
-      successCount = Array.isArray(result?.data) ? result.data.length : 0;
+      successCount = result.data.length;
     } else {
       const result = await scheduleOrganizationDailyScans(createdProviderIds);
       successCount = result.successCount;

@@ -434,6 +434,11 @@ describe("OrgLaunchScan", () => {
         expect(launchOrganizationScansMock).toHaveBeenCalledWith("org-1"),
       );
       expect(updateSchedulesBulkMock).not.toHaveBeenCalled();
+      expect(toastMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          description: "Single scan launched for 2 accounts.",
+        }),
+      );
       expect(
         toastMock.mock.calls[0]?.[0].action.props.children.props.href,
       ).toBe(`/scans?tab=${SCAN_JOBS_TAB.ACTIVE}`);
