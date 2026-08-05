@@ -141,15 +141,3 @@ vulnerabilities:
       - "pkg:golang/stdlib"
     expired_at: 2026-12-31
 
-  # cryptography is held below 49 by alibabacloud-tea-openapi==0.4.5, which requires
-  # cryptography>=3.0.0,<49.0.0. The fixes are in 49.0.0 and 50.0.0, so both sit above the
-  # ceiling. Verified by attempting the upgrade: resolution fails. Reachable again only when
-  # that dependency raises its bound.
-  - id: CVE-2026-69247
-    purls:
-      - "pkg:pypi/cryptography"
-    expired_at: 2026-11-30
-  - id: CVE-2026-69249
-    purls:
-      - "pkg:pypi/cryptography"
-    expired_at: 2026-11-30
