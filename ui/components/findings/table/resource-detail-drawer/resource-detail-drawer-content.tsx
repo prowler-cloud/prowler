@@ -190,13 +190,15 @@ function ComplianceFrameworkChip({
   const icon = getComplianceIcon(framework.complianceId);
   const label = complianceFrameworkLabel(framework);
   const content = icon ? (
-    <Image
-      src={icon}
-      alt={label}
-      width={20}
-      height={20}
-      className="size-5 object-contain"
-    />
+    <span className="border-border-neutral-tertiary flex size-7 shrink-0 items-center justify-center rounded-md border bg-slate-50">
+      <Image
+        src={icon}
+        alt={label}
+        width={20}
+        height={20}
+        className="size-5 object-contain"
+      />
+    </span>
   ) : (
     label
   );
@@ -207,13 +209,15 @@ function ComplianceFrameworkChip({
         {isNavigable ? (
           <Button
             type="button"
-            variant="outline"
+            variant={icon ? "bare" : "outline"}
             size={icon ? "icon-xs" : "sm"}
             aria-label={`Open ${label} compliance details`}
             onClick={() => onOpen(framework)}
           >
             {content}
           </Button>
+        ) : icon ? (
+          content
         ) : (
           <Badge variant="tag" size="sm" aria-label={label}>
             {content}
