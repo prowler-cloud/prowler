@@ -146,8 +146,7 @@ class Test_RDS_Service:
         assert db_instance.copy_tags_to_snapshot
         assert db_instance.port == 5432
 
-    # Neptune shares the RDS control plane, so its resources are returned by the RDS
-    # API. They must be skipped because they are audited by the neptune service.
+    # Neptune resources are returned by the RDS API but audited by the neptune service.
     @mock_aws
     def test_neptune_resources_are_excluded(self):
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)

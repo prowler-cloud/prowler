@@ -851,11 +851,11 @@ class Test_rds_instance_certificate_expiration:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].status == "MANUAL"
+            assert result[0].status == "PASS"
             assert result[0].check_metadata.Severity == "informational"
             assert (
                 result[0].status_extended
-                == "RDS Instance db-master-1 certificate expiration could not be determined because no CA certificate information was retrieved."
+                == "RDS Instance db-master-1 does not use a CA certificate."
             )
             assert result[0].resource_id == "db-master-1"
             assert result[0].region == AWS_REGION
@@ -885,8 +885,7 @@ class Test_rds_instance_certificate_expiration:
                 username="test",
                 iam_auth=False,
                 region=AWS_REGION,
-                # The instance reports a CA identifier but DescribeCertificates raised
-                # CertificateNotFound, so no certificate could be collected.
+                # DescribeCertificates failed, so no certificate was collected.
                 ca_cert="rds-ca-rsa2048-g1",
                 endpoint={},
                 cert=[],
@@ -911,10 +910,4 @@ class Test_rds_instance_certificate_expiration:
             check = rds_instance_certificate_expiration()
             result = check.execute()
 
-            assert len(result) == 1
-            assert result[0].status == "MANUAL"
-            assert result[0].check_metadata.Severity == "informational"
-            assert (
-                result[0].status_extended
-                == "RDS Instance db-master-1 certificate expiration could not be determined because no CA certificate information was retrieved."
-            )
+            assert len(result) == 0

@@ -8,10 +8,8 @@ from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
-# Engines that are returned by the RDS API but belong to a different AWS service.
-# DocumentDB and Neptune share the RDS control plane, so their resources show up in
-# describe_db_* calls even though RDS checks do not apply to them. Each one has its
-# own dedicated Prowler service (docdb, neptune) that audits them properly.
+# DocumentDB and Neptune share the RDS control plane, so their resources are returned
+# by describe_db_* calls. Each one has its own dedicated Prowler service.
 NON_RDS_ENGINES = ["docdb", "neptune"]
 
 
