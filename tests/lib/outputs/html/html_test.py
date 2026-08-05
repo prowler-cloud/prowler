@@ -701,6 +701,75 @@ class TestHTML:
         assert isinstance(output_data, str)
         assert output_data == fail_html_finding
 
+    def test_transform_escapes_provider_originated_fields(self):
+        xss_payload = '<img src=x onerror="window.PROWLER_TAG_XSS=1">'
+        findings = [
+            generate_finding_output(
+                region="REGION&<>'\"",
+                resource_uid="resource&<>'\"_uid",
+                resource_tags={f"key&<>'\"{xss_payload}": f"value&<>'\"{xss_payload}"},
+                status_extended=f"status&<>'\"_{xss_payload}",
+                remediation_recommendation_url="https://hub.prowler.com/check/check-id",
+            )
+        ]
+
+        output_data = HTML(findings).data[0]
+
+        assert xss_payload not in output_data
+        assert "region&amp;&lt;&gt;&#39;&#34;" in output_data
+        assert "resource&amp;&lt;&gt;&#39;&#34;<wbr />_uid" in output_data
+        assert "status&amp;&lt;&gt;&#39;&#34;<wbr />_&lt;img" in output_data
+        assert "&#x2022;key&amp;&lt;&gt;&#39;&#34;&lt;img" in output_data
+        assert "=value&amp;&lt;&gt;&#39;&#34;&lt;img" in output_data
+
+    def test_transform_escapes_metadata_fields(self):
+        finding = generate_finding_output()
+        finding.metadata.Severity = MagicMock(value='<img data-field="severity" src=x>')
+        finding.metadata.ServiceName = '<img data-field="service" src=x>'
+        finding.metadata.CheckID = '<img data-field="check_id" src=x>_suffix'
+        finding.metadata.CheckTitle = '<img data-field="check_title" src=x>'
+        finding.metadata.Risk = '**Risk** <img data-field="risk" src=x>'
+        finding.metadata.Remediation.Recommendation.Text = (
+            '**Recommendation** <img data-field="recommendation" src=x>'
+        )
+        finding.metadata.Remediation.Recommendation.Url = (
+            'https://example.com"><img data-field="url" src=x>'
+        )
+
+        output_data = HTML([finding]).data[0]
+
+        raw_payloads = (
+            '<img data-field="severity" src=x>',
+            '<img data-field="service" src=x>',
+            '<img data-field="check_id" src=x>_suffix',
+            '<img data-field="check_title" src=x>',
+            '<img data-field="risk" src=x>',
+            '<img data-field="recommendation" src=x>',
+            'href="https://example.com"><img data-field="url" src=x>"',
+        )
+        for payload in raw_payloads:
+            assert payload not in output_data
+
+        assert "&lt;img data-field=&#34;severity&#34; src=x&gt;" in output_data
+        assert "&lt;img data-field=&#34;service&#34; src=x&gt;" in output_data
+        assert (
+            "&lt;img data-field=&#34;check<wbr />_id&#34; src=x&gt;<wbr />_suffix"
+            in output_data
+        )
+        assert "&lt;img data-field=&#34;check_title&#34; src=x&gt;" in output_data
+        assert (
+            "<strong>Risk</strong> &lt;img data-field=&#34;risk&#34; src=x&gt;"
+            in output_data
+        )
+        assert (
+            "<strong>Recommendation</strong> &lt;img "
+            "data-field=&#34;recommendation&#34; src=x&gt;" in output_data
+        )
+        assert (
+            'href="https://example.com&#34;&gt;&lt;img '
+            'data-field=&#34;url&#34; src=x&gt;"' in output_data
+        )
+
     def test_transform_pass_finding(self):
         findings = [
             generate_finding_output(
@@ -1116,3 +1185,37 @@ class TestHTML:
         assert "<strong>alternate contacts</strong>" in output_data
         assert "<code>monitored aliases</code>" in output_data
         assert "<br />" in output_data  # Line breaks converted
+
+    def test_process_markdown_strips_javascript_links(self):
+        """Markdown links with javascript: scheme must not produce clickable hrefs."""
+        result = HTML.process_markdown(
+            "Click [here](javascript:alert(&#34;xss&#34;)) to continue"
+        )
+        assert 'href="javascript:' not in result
+        assert "here" in result
+
+    def test_process_markdown_keeps_https_links(self):
+        """Markdown links with https: scheme must be preserved."""
+        result = HTML.process_markdown("[docs](https://docs.prowler.com)")
+        assert 'href="https://docs.prowler.com"' in result
+        assert "<a" in result
+
+    def test_transform_recommendation_url_javascript_scheme_is_blocked(self):
+        """Recommendation.Url with javascript: scheme must render as empty href."""
+        finding = generate_finding_output(
+            remediation_recommendation_url="https://hub.prowler.com/check/check-id"
+        )
+        finding.metadata.Remediation.Recommendation.Url = "javascript:alert(1)"
+        output_data = HTML([finding]).data[0]
+        assert 'href="javascript:' not in output_data
+        assert 'href=""' in output_data
+
+    def test_transform_recommendation_url_https_is_kept(self):
+        """Recommendation.Url with https: scheme must appear unchanged in href."""
+        findings = [
+            generate_finding_output(
+                remediation_recommendation_url="https://hub.prowler.com/check/check-id"
+            )
+        ]
+        output_data = HTML(findings).data[0]
+        assert 'href="https://hub.prowler.com/check/check-id"' in output_data

@@ -39,6 +39,23 @@ class Test_entra_device_registration_registering_user_not_local_admin:
         )
         assert len(result) == 1
         assert result[0].status == "FAIL"
+        assert (
+            result[0].status_extended
+            == "Registering users are not restricted from being added as local administrators on devices during Microsoft Entra join."
+        )
+        assert result[0].resource_id == "deviceRegistrationPolicy"
+        assert result[0].resource_name == "Device Registration Policy"
+
+    def test_unknown_membership_type(self):
+        result = self._run(
+            DeviceRegistrationPolicy(azure_ad_join_registering_users_type=None)
+        )
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+        assert (
+            result[0].status_extended
+            == "Registering users are not restricted from being added as local administrators on devices during Microsoft Entra join."
+        )
 
     def test_selected_registering_users(self):
         result = self._run(
@@ -48,6 +65,12 @@ class Test_entra_device_registration_registering_user_not_local_admin:
         )
         assert len(result) == 1
         assert result[0].status == "PASS"
+        assert (
+            result[0].status_extended
+            == "Registering users are restricted from being added as local administrators on devices during Microsoft Entra join."
+        )
+        assert result[0].resource_id == "deviceRegistrationPolicy"
+        assert result[0].resource_name == "Device Registration Policy"
 
     def test_none_registering_users(self):
         result = self._run(
@@ -57,3 +80,7 @@ class Test_entra_device_registration_registering_user_not_local_admin:
         )
         assert len(result) == 1
         assert result[0].status == "PASS"
+        assert (
+            result[0].status_extended
+            == "Registering users are restricted from being added as local administrators on devices during Microsoft Entra join."
+        )

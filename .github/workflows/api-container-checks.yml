@@ -81,6 +81,10 @@ jobs:
             auth.docker.io:443
             production.cloudflare.docker.com:443
             production.cloudfront.docker.com:443
+            raw.githubusercontent.com:443
+            objects.githubusercontent.com:443
+            grype.anchore.io:443
+            get.anchore.io:443
             debian.map.fastlydns.net:80
             release-assets.githubusercontent.com:443
             objects.githubusercontent.com:443
@@ -105,7 +109,12 @@ jobs:
         id: check-changes
         uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
-          files: api/**
+          files: |
+            api/**
+            .github/actions/trivy-scan/**
+            .github/actions/grype-scan/**
+            .grype.yaml
+            .github/scripts/grype-pr-comment.js
           files_ignore: |
             api/docs/**
             api/README.md
@@ -143,5 +152,13 @@ jobs:
         with:
           image-name: ${{ env.IMAGE_NAME }}
           image-tag: ${{ github.sha }}
-          fail-on-critical: 'true'
-          severity: 'CRITICAL'
+          fail-on-severity: 'high'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Scan container with Grype
+        if: steps.check-changes.outputs.any_changed == 'true'
+        uses: ./.github/actions/grype-scan
+        with:
+          image-name: ${{ env.IMAGE_NAME }}
+          image-tag: ${{ github.sha }}
+          fail-on-severity: 'high'

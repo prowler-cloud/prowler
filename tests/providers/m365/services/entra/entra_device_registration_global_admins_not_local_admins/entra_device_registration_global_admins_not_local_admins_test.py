@@ -34,6 +34,12 @@ class Test_entra_device_registration_global_admins_not_local_admins:
         )
         assert len(result) == 1
         assert result[0].status == "FAIL"
+        assert (
+            result[0].status_extended
+            == "Global Administrators are added as local administrators on devices during Microsoft Entra join."
+        )
+        assert result[0].resource_id == "deviceRegistrationPolicy"
+        assert result[0].resource_name == "Device Registration Policy"
 
     def test_global_admins_disabled(self):
         result = self._run(
@@ -41,3 +47,9 @@ class Test_entra_device_registration_global_admins_not_local_admins:
         )
         assert len(result) == 1
         assert result[0].status == "PASS"
+        assert (
+            result[0].status_extended
+            == "Global Administrators are not added as local administrators on devices during Microsoft Entra join."
+        )
+        assert result[0].resource_id == "deviceRegistrationPolicy"
+        assert result[0].resource_name == "Device Registration Policy"

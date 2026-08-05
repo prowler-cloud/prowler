@@ -21,10 +21,16 @@ class entra_device_registration_registering_user_not_local_admin(Check):
 
     - PASS: Registering users are restricted (Selected or None) from becoming local
       administrators on Entra join.
-    - FAIL: All registering users are added as local administrators on Entra join.
+    - FAIL: The registering users added as local administrators are not restricted
+      to Selected or None.
     """
 
     def execute(self) -> List[CheckReportM365]:
+        """Execute the registering-user local-admin restriction check.
+
+        Returns:
+            List[CheckReportM365]: A list containing the result of the check.
+        """
         findings = []
         policy = entra_client.device_registration_policy
         if not policy:
@@ -38,8 +44,8 @@ class entra_device_registration_registering_user_not_local_admin(Check):
         )
         report.status = "FAIL"
         report.status_extended = (
-            "All registering users are added as local administrators on devices "
-            "during Microsoft Entra join."
+            "Registering users are not restricted from being added as local "
+            "administrators on devices during Microsoft Entra join."
         )
 
         if policy.azure_ad_join_registering_users_type in RESTRICTED_MEMBERSHIP_TYPES:

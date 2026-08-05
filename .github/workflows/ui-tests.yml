@@ -181,9 +181,9 @@ jobs:
         if: steps.check-changes.outputs.any_changed == 'true' && steps.playwright-cache.outputs.cache-hit != 'true'
         run: pnpm exec playwright install chromium
 
-      - name: Run browser tests
+      - name: Run integration tests
         if: steps.check-changes.outputs.any_changed == 'true'
-        run: pnpm run test:browser
+        run: pnpm run test:integration
 
       - name: Build application
         if: steps.check-changes.outputs.any_changed == 'true'

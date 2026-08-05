@@ -21,7 +21,11 @@ from prowler.lib.check.utils import recover_checks_from_provider
 from prowler.lib.logger import logger
 from prowler.lib.outputs.outputs import report
 from prowler.lib.utils.utils import open_file, parse_json_file, print_boxes
-from prowler.providers.common.builtin import is_builtin_provider
+from prowler.providers.common.builtin import (
+    builtin_check_module,
+    is_builtin_check,
+    is_builtin_provider,
+)
 from prowler.providers.common.models import Audit_Metadata
 
 
@@ -401,21 +405,23 @@ def _resolve_check_module(
     when a plug-in tries to override, so the user knows their plug-in
     duplicate is being ignored and can rename it.
 
-    Gates the built-in branch on `is_builtin_provider(provider_type)` —
-    calling `find_spec` on `prowler.providers.{provider_type}.services...`
-    directly would propagate `ModuleNotFoundError` for external providers
-    (their parent package `prowler.providers.{provider_type}` does not
-    exist) instead of returning None. The leaf helper encapsulates the
-    safe lookup, so external providers go straight to entry points. For
-    built-ins we still use `find_spec` to distinguish "check doesn't
-    exist" from "check exists but failed to import" (broken transitive
-    dep, etc.).
+    Both probes are gated on leaf helpers rather than a raw `find_spec`,
+    because `find_spec` imports the parent package in order to search it and
+    so propagates `ModuleNotFoundError` instead of returning None whenever
+    that parent is absent. That happens on both axes: for an external
+    provider (no `prowler.providers.{provider_type}` package) and, on a
+    built-in provider, for an external check (no
+    `prowler.providers.{provider_type}.services.{service}.{check_name}`
+    package). Either one, probed naively, aborts the lookup before the entry
+    points are ever consulted. `is_builtin_check` still distinguishes "check
+    doesn't exist" from "check exists but failed to import" (broken
+    transitive dep, etc.), which a blanket except would flatten.
     """
     # Built-in first — built-in wins on CheckID collision
-    if is_builtin_provider(provider_type):
-        builtin_path = f"prowler.providers.{provider_type}.services.{service}.{check_name}.{check_name}"
-        if importlib.util.find_spec(builtin_path) is not None:
-            return import_check(builtin_path)
+    if is_builtin_provider(provider_type) and is_builtin_check(
+        provider_type, service, check_name
+    ):
+        return import_check(builtin_check_module(provider_type, service, check_name))
 
     # Entry point lookup — only consulted when the built-in truly doesn't exist
     for ep in importlib.metadata.entry_points(group=f"prowler.checks.{provider_type}"):

@@ -10,10 +10,10 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/shadcn";
+import { buildPerScanComplianceHref } from "@/lib/compliance/compliance-tab-url";
 import { useCloudUpgradeStore } from "@/store";
 import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
-
-import { COMPLIANCE_TAB, type ComplianceTab } from "../_types";
+import { COMPLIANCE_TAB, type ComplianceTab } from "@/types/compliance";
 
 interface CompliancePageTabsProps {
   activeTab: ComplianceTab;
@@ -22,6 +22,9 @@ interface CompliancePageTabsProps {
   crossProviderEnabled: boolean;
   perScanContent: ReactNode;
   crossProviderContent: ReactNode;
+  /** Watchlist filter + editor. Sits on the tab bar rather than inside a tab
+   *  because both of them read and write the same tenant-wide list. */
+  watchlistControls?: ReactNode;
 }
 
 export const CompliancePageTabs = ({
@@ -29,6 +32,7 @@ export const CompliancePageTabs = ({
   crossProviderEnabled,
   perScanContent,
   crossProviderContent,
+  watchlistControls,
 }: CompliancePageTabsProps) => {
   const router = useRouter();
   const openCloudUpgrade = useCloudUpgradeStore(
@@ -47,42 +51,48 @@ export const CompliancePageTabs = ({
       return;
     }
 
-    // Per Scan renders without the query param so existing bookmarks and
-    // shared links keep resolving to the default view.
-    if (typedTab === COMPLIANCE_TAB.PER_SCAN) {
-      router.push("/compliance");
-    } else {
-      router.push(`/compliance?tab=${typedTab}`);
-    }
+    // Multiple Scans is the landing view, so it owns the bare route; Single
+    // Scan pins `?tab=` to stay linkable.
+    router.push(
+      typedTab === COMPLIANCE_TAB.CROSS_PROVIDER
+        ? "/compliance"
+        : buildPerScanComplianceHref(),
+    );
   };
 
   return (
-    // Same layout spacing as the scans view tabs (scans-page-shell.tsx).
-    <Tabs
-      value={activeTab}
-      onValueChange={handleTabChange}
-      className="flex flex-col gap-[18px]"
-    >
-      <TabsList className="overflow-x-auto">
-        <TabsTrigger value={COMPLIANCE_TAB.PER_SCAN}>Per Scan</TabsTrigger>
-        <TabsTrigger
-          value={COMPLIANCE_TAB.CROSS_PROVIDER}
-          adornment={
-            !crossProviderEnabled ? (
-              <Badge variant="cloud">Cloud</Badge>
-            ) : undefined
-          }
-        >
-          Cross-Provider
-        </TabsTrigger>
-      </TabsList>
+    <Tabs value={activeTab} onValueChange={handleTabChange}>
+      <div className="flex flex-col gap-[18px]">
+        {/* Wraps below the tabs on narrow viewports instead of squeezing the
+            triggers, which are the primary navigation of the page. */}
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div data-tour-id="view-compliance-tabs" className="overflow-x-auto">
+            <TabsList>
+              <TabsTrigger
+                value={COMPLIANCE_TAB.CROSS_PROVIDER}
+                adornment={
+                  !crossProviderEnabled ? (
+                    <Badge variant="cloud">Cloud</Badge>
+                  ) : undefined
+                }
+              >
+                Multiple Scans
+              </TabsTrigger>
+              <TabsTrigger value={COMPLIANCE_TAB.PER_SCAN}>
+                Single Scan
+              </TabsTrigger>
+            </TabsList>
+          </div>
+          {watchlistControls}
+        </div>
 
-      <TabsContent value={COMPLIANCE_TAB.PER_SCAN}>
-        {perScanContent}
-      </TabsContent>
-      <TabsContent value={COMPLIANCE_TAB.CROSS_PROVIDER}>
-        {crossProviderContent}
-      </TabsContent>
+        <TabsContent value={COMPLIANCE_TAB.CROSS_PROVIDER}>
+          {crossProviderContent}
+        </TabsContent>
+        <TabsContent value={COMPLIANCE_TAB.PER_SCAN}>
+          {perScanContent}
+        </TabsContent>
+      </div>
     </Tabs>
   );
 };

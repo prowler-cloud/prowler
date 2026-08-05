@@ -29,6 +29,7 @@ import {
   ActionDropdown,
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
+import { buildPerScanComplianceHref } from "@/lib/compliance/compliance-tab-url";
 import { toLocalDateString } from "@/lib/date-utils";
 import { downloadScanZip } from "@/lib/helper";
 import { getScanScheduleCapability } from "@/lib/schedules";
@@ -99,7 +100,7 @@ export function ScanJobsRowActions({
 
   const openCompliance = () => {
     if (!isCompleted) return;
-    router.push(`/compliance?scanId=${scan.id}`);
+    router.push(buildPerScanComplianceHref({ scanId: scan.id }));
   };
 
   const openErrorDetails = async () => {

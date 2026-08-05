@@ -5,6 +5,7 @@ import { AuthError } from "next-auth";
 import { signIn, signOut } from "@/auth.config";
 import { apiBaseUrl } from "@/lib";
 import { addAuthEvent } from "@/lib/sentry-breadcrumbs";
+import type { UtmParams } from "@/lib/utm";
 import type { SignInFormData, SignUpFormData } from "@/types";
 
 export async function authenticate(
@@ -47,11 +48,18 @@ export async function authenticate(
   }
 }
 
-export const createNewUser = async (formData: SignUpFormData) => {
+export const createNewUser = async (
+  formData: SignUpFormData,
+  attribution: UtmParams = {},
+) => {
   const url = new URL(`${apiBaseUrl}/users`);
 
   if (formData.invitationToken) {
     url.searchParams.append("invitation_token", formData.invitationToken);
+  }
+
+  for (const [key, value] of Object.entries(attribution)) {
+    url.searchParams.append(key, value);
   }
 
   const bodyData = {

@@ -1,5 +1,19 @@
+from errno import errorcode
+
 import sentry_sdk
 from config.env import env
+
+# How many links of the __cause__/__context__ chain are inspected when looking
+# for the OSError that actually caused the event.
+MAX_EXCEPTION_CHAIN_DEPTH = 10
+
+# LogRecord attribute describing what kind of failure the record reports, set by
+# the caller through `logger.exception(..., extra={"error_category": ...})`.
+ERROR_CATEGORY_ATTRIBUTE = "error_category"
+
+# Category of records whose events are grouped by the errno of the underlying
+# OSError. Only records that declare it opt into the errno fingerprint.
+FILESYSTEM_ERROR_CATEGORY = "filesystem"
 
 IGNORED_EXCEPTIONS = [
     # Provider is not connected due to credentials errors
@@ -80,6 +94,38 @@ IGNORED_EXCEPTIONS = [
 ]
 
 
+def errno_fingerprint(exception):
+    """
+    Return an errno-based fingerprint suffix for OSError-like exceptions.
+
+    Filesystem failures such as ENOSPC (disk full), ENOENT (missing mount point)
+    or EACCES (wrong permissions) are all OSError raised from the same call
+    site, so Sentry's default grouping merges them into a single issue even
+    when the exception is attached to the event. Appending the errno keeps the
+    default grouping and splits the issue per failure cause.
+
+    Only the part of the chain Sentry itself displays is inspected: a
+    `raise ... from None` sets __suppress_context__, so the implicit
+    __context__ is dropped from the event and must not group it either.
+
+    Returns None when no OSError with an errno is found in the exception chain.
+    """
+    seen = set()
+    for _ in range(MAX_EXCEPTION_CHAIN_DEPTH):
+        if exception is None or id(exception) in seen:
+            break
+        seen.add(id(exception))
+        if isinstance(exception, OSError) and exception.errno is not None:
+            return f"errno:{errorcode.get(exception.errno, exception.errno)}"
+        if exception.__cause__ is not None:
+            exception = exception.__cause__
+        elif exception.__suppress_context__:
+            break
+        else:
+            exception = exception.__context__
+    return None
+
+
 def before_send(event, hint):
     """
     before_send handles the Sentry events in order to send them or not
@@ -115,9 +161,27 @@ def before_send(event, hint):
 
     # Ignore exceptions with the ignored_exceptions
     if "exc_info" in hint and hint["exc_info"]:
-        exc_value = str(hint["exc_info"][1])
+        exception = hint["exc_info"][1]
+        exc_value = str(exception)
         if any(ignored in exc_value for ignored in IGNORED_EXCEPTIONS):
             return None  # Explicitly return None to drop the event
+
+    # Split filesystem issues per errno instead of grouping every failure raised
+    # from the same call site under a single issue. Only records that declare
+    # themselves as filesystem failures opt in, and a fingerprint already set by
+    # a scope or an integration always wins.
+    log_record = hint.get("log_record")
+    exc_info = hint.get("exc_info")
+    if (
+        log_record is not None
+        and exc_info
+        and getattr(log_record, ERROR_CATEGORY_ATTRIBUTE, None)
+        == FILESYSTEM_ERROR_CATEGORY
+        and "fingerprint" not in event
+    ):
+        fingerprint_suffix = errno_fingerprint(exc_info[1])
+        if fingerprint_suffix:
+            event["fingerprint"] = ["{{ default }}", fingerprint_suffix]
 
     return event
 

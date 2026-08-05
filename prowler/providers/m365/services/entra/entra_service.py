@@ -1203,11 +1203,11 @@ OAuthAppInfo
     async def _get_device_registration_policy(self):
         """Retrieve the tenant device registration policy from Microsoft Entra.
 
-        Fetches the ``policies/deviceRegistrationPolicy`` singleton from the beta
-        Graph endpoint because several fields required for auditing (the
-        ``azureADJoin.*`` local-admin and membership settings) are only exposed on
-        beta. The response is parsed from raw JSON since those fields are not
-        present on the v1.0 typed SDK model.
+        Fetches the ``policies/deviceRegistrationPolicy`` singleton from the v1.0
+        Graph endpoint. The response is parsed from raw JSON because the audited
+        settings (``azureADJoin.*`` membership objects) are polymorphic
+        ``@odata.type`` values that are simpler to read from the raw payload than
+        through the typed SDK model.
 
         Returns:
             Optional[DeviceRegistrationPolicy]: The parsed policy, or None on error.
@@ -1215,10 +1215,9 @@ OAuthAppInfo
         logger.info("Entra - Getting device registration policy...")
         device_registration_policy = None
         try:
-            builder = self.client.policies.device_registration_policy.with_url(
-                "https://graph.microsoft.com/beta/policies/deviceRegistrationPolicy"
+            request_info = (
+                self.client.policies.device_registration_policy.to_get_request_information()
             )
-            request_info = builder.to_get_request_information()
             response = await self.client.request_adapter.send_primitive_async(
                 request_info, "bytes", {}
             )

@@ -1,0 +1,1 @@
+`exchange_owa_mailbox_policy_personal_accounts_disabled` and `exchange_organization_reject_direct_send_enabled` checks for M365 provider, covering CIS Microsoft 365 Foundations Benchmark v7.0.0 controls 6.3.2 and 6.5.5

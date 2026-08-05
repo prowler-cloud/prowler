@@ -1,4 +1,8 @@
 import type { IntegrationType } from "../types/integrations";
+import {
+  PROVIDER_WIZARD_STEP,
+  type ProviderWizardStep,
+} from "../types/provider-wizard";
 
 // Documentation URLs
 export const DOCS_URLS = {
@@ -10,6 +14,8 @@ export const DOCS_URLS = {
     "https://docs.prowler.com/user-guide/tutorials/prowler-app-findings-triage",
   AWS_ORGANIZATIONS:
     "https://docs.prowler.com/user-guide/tutorials/prowler-cloud-aws-organizations",
+  GCP_ORGANIZATIONS:
+    "https://docs.prowler.com/user-guide/tutorials/prowler-cloud-gcp-organizations",
   ALERTS: "https://docs.prowler.com/user-guide/tutorials/prowler-app-alerts",
   SCAN_CONFIGURATION:
     "https://docs.prowler.com/user-guide/tutorials/prowler-app-scan-configuration",
@@ -17,6 +23,14 @@ export const DOCS_URLS = {
     "https://docs.prowler.com/user-guide/tutorials/prowler-app-attack-paths#writing-custom-opencypher-queries",
   AI_AGENTS: "https://docs.prowler.com/user-guide/ai-agents/",
 } as const;
+
+// Prowler Hub — the public catalog of Prowler artifacts (checks, compliance,
+// attack paths). Every built-in Attack Paths query has a page keyed by its
+// query id, e.g. https://hub.prowler.com/attack-paths/aws-sts-privesc-assume-role
+export const PROWLER_HUB_URL = "https://hub.prowler.com";
+
+export const getAttackPathHubUrl = (queryId: string): string =>
+  `${PROWLER_HUB_URL}/attack-paths/${encodeURIComponent(queryId)}`;
 
 // CloudFormation template URL for the ProwlerScan role.
 // Also used (URL-encoded) as the templateURL param in the quick-create links
@@ -50,94 +64,176 @@ const buildCloudFormationQuickCreateLink = (
   return `${CF_QUICKCREATE_BASE_URL}?${searchParams.toString()}`;
 };
 
-export const getProviderHelpText = (provider: string) => {
-  switch (provider) {
-    case "aws":
-      return {
-        text: "Need help connecting your AWS account?",
-        link: "https://goto.prowler.com/provider-aws",
-      };
-    case "azure":
-      return {
-        text: "Need help connecting your Azure subscription?",
-        link: "https://goto.prowler.com/provider-azure",
-      };
-    case "m365":
-      return {
-        text: "Need help connecting your Microsoft 365 account?",
-        link: "https://goto.prowler.com/provider-m365",
-      };
-    case "gcp":
-      return {
-        text: "Need help connecting your GCP project?",
-        link: "https://goto.prowler.com/provider-gcp",
-      };
-    case "kubernetes":
-      return {
-        text: "Need help connecting your Kubernetes cluster?",
-        link: "https://goto.prowler.com/provider-k8s",
-      };
-    case "github":
-      return {
-        text: "Need help connecting your GitHub account?",
-        link: "https://goto.prowler.com/provider-github",
-      };
-    case "iac":
-      return {
-        text: "Need help scanning your Infrastructure as Code repository?",
-        link: "https://goto.prowler.com/provider-iac",
-      };
-    case "image":
-      return {
-        text: "Need help scanning your container registry?",
-        link: "https://goto.prowler.com/provider-image",
-      };
-    case "oraclecloud":
-      return {
-        text: "Need help connecting your Oracle Cloud account?",
-        link: "https://goto.prowler.com/provider-oraclecloud",
-      };
-    case "mongodbatlas":
-      return {
-        text: "Need help connecting your MongoDB Atlas organization?",
-        link: "https://goto.prowler.com/provider-mongodbatlas",
-      };
-    case "alibabacloud":
-      return {
-        text: "Need help connecting your Alibaba Cloud account?",
-        link: "https://goto.prowler.com/provider-alibabacloud",
-      };
-    case "cloudflare":
-      return {
-        text: "Need help connecting your Cloudflare account?",
-        link: "https://goto.prowler.com/provider-cloudflare",
-      };
-    case "openstack":
-      return {
-        text: "Need help connecting your OpenStack cloud?",
-        link: "https://goto.prowler.com/provider-openstack",
-      };
-    case "googleworkspace":
-      return {
-        text: "Need help connecting your Google Workspace account?",
-        link: "https://goto.prowler.com/provider-googleworkspace",
-      };
-    case "vercel":
-      return {
-        text: "Need help connecting your Vercel team?",
-        link: "https://goto.prowler.com/provider-vercel",
-      };
-    case "okta":
-      return {
-        text: "Need help connecting your Okta organization?",
-        link: "https://goto.prowler.com/provider-okta",
-      };
-    default:
-      return {
-        text: "How to setup a provider?",
-        link: "https://goto.prowler.com/provider-help",
-      };
+// Shortlinks are used for all wizard steps except credentials so link
+// ownership stays with the docs/marketing team: they can retarget
+// destinations from the shortener panel without a UI PR.
+const PROVIDER_DOCS_SHORTLINK: Record<string, string> = {
+  aws: "https://goto.prowler.com/provider-aws",
+  azure: "https://goto.prowler.com/provider-azure",
+  m365: "https://goto.prowler.com/provider-m365",
+  gcp: "https://goto.prowler.com/provider-gcp",
+  kubernetes: "https://goto.prowler.com/provider-k8s",
+  github: "https://goto.prowler.com/provider-github",
+  iac: "https://goto.prowler.com/provider-iac",
+  image: "https://goto.prowler.com/provider-image",
+  oraclecloud: "https://goto.prowler.com/provider-oraclecloud",
+  mongodbatlas: "https://goto.prowler.com/provider-mongodbatlas",
+  alibabacloud: "https://goto.prowler.com/provider-alibabacloud",
+  cloudflare: "https://goto.prowler.com/provider-cloudflare",
+  openstack: "https://goto.prowler.com/provider-openstack",
+  googleworkspace: "https://goto.prowler.com/provider-googleworkspace",
+  vercel: "https://goto.prowler.com/provider-vercel",
+  okta: "https://goto.prowler.com/provider-okta",
+};
+
+// Default target for the credentials step: the section of the provider's
+// getting-started page that introduces the credentials flow. The getting-
+// started page keeps the user in the same mental model as the wizard, and
+// each section already links to `authentication.mdx` for readers who need
+// deeper detail. That indirection is intentional — we do NOT deep-link into
+// `authentication.mdx` from the wizard, otherwise the user is jumped into
+// low-level docs before they have the context to make sense of them.
+const PROVIDER_CREDENTIALS_STEP_DOCS_URL: Record<string, string> = {
+  aws: "https://docs.prowler.com/user-guide/providers/aws/getting-started-aws#step-3-set-up-aws-authentication",
+  azure:
+    "https://docs.prowler.com/user-guide/providers/azure/getting-started-azure#step-3-add-credentials-to-prowler-cloud",
+  m365: "https://docs.prowler.com/user-guide/providers/microsoft365/getting-started-m365#step-3-choose-and-provide-authentication",
+  gcp: "https://docs.prowler.com/user-guide/providers/gcp/getting-started-gcp#step-3-set-up-gcp-authentication",
+  kubernetes:
+    "https://docs.prowler.com/user-guide/providers/kubernetes/getting-started-k8s#step-2-configure-kubernetes-authentication",
+  github:
+    "https://docs.prowler.com/user-guide/providers/github/getting-started-github#step-3-choose-authentication-method",
+  iac: "https://docs.prowler.com/user-guide/providers/iac/getting-started-iac#step-2-enter-authentication-details",
+  image:
+    "https://docs.prowler.com/user-guide/providers/image/getting-started-image#step-2-enter-authentication-and-scan-filters",
+  oraclecloud:
+    "https://docs.prowler.com/user-guide/providers/oci/getting-started-oci#step-3-add-oci-api-key-credentials",
+  mongodbatlas:
+    "https://docs.prowler.com/user-guide/providers/mongodbatlas/getting-started-mongodbatlas#step-2-provide-api-credentials",
+  alibabacloud:
+    "https://docs.prowler.com/user-guide/providers/alibabacloud/getting-started-alibabacloud#step-3-choose-and-provide-authentication",
+  cloudflare:
+    "https://docs.prowler.com/user-guide/providers/cloudflare/getting-started-cloudflare#step-3-choose-and-provide-authentication",
+  openstack:
+    "https://docs.prowler.com/user-guide/providers/openstack/getting-started-openstack#step-2-provide-credentials",
+  googleworkspace:
+    "https://docs.prowler.com/user-guide/providers/googleworkspace/getting-started-googleworkspace#step-3-provide-credentials",
+  vercel:
+    "https://docs.prowler.com/user-guide/providers/vercel/getting-started-vercel#step-2-provide-credentials",
+  okta: "https://docs.prowler.com/user-guide/providers/okta/getting-started-okta#step-2-provide-credentials",
+};
+
+// When the user has picked a specific auth method inside the credentials
+// step, jump directly to that method's subsection in the getting-started
+// page. Only providers whose docs have a heading per method are listed —
+// GCP and GitHub render their methods inside a Mintlify `<Tabs>` component
+// so a per-method anchor isn't available today; they fall back to the
+// general step URL above.
+const PROVIDER_CREDENTIALS_METHOD_DOCS_URL: Record<
+  string,
+  Record<string, string>
+> = {
+  aws: {
+    role: "https://docs.prowler.com/user-guide/providers/aws/getting-started-aws#assume-role-recommended",
+    credentials:
+      "https://docs.prowler.com/user-guide/providers/aws/getting-started-aws#credentials-static-access-keys",
+  },
+  m365: {
+    app_certificate:
+      "https://docs.prowler.com/user-guide/providers/microsoft365/getting-started-m365#application-certificate-authentication-recommended",
+    app_client_secret:
+      "https://docs.prowler.com/user-guide/providers/microsoft365/getting-started-m365#application-client-secret-authentication",
+  },
+  alibabacloud: {
+    role: "https://docs.prowler.com/user-guide/providers/alibabacloud/getting-started-alibabacloud#ram-role-assumption-recommended",
+    credentials:
+      "https://docs.prowler.com/user-guide/providers/alibabacloud/getting-started-alibabacloud#credentials-static-access-keys",
+  },
+  cloudflare: {
+    api_token:
+      "https://docs.prowler.com/user-guide/providers/cloudflare/getting-started-cloudflare#user-api-token-authentication-recommended",
+    api_key:
+      "https://docs.prowler.com/user-guide/providers/cloudflare/getting-started-cloudflare#api-key-and-email-authentication-legacy",
+  },
+};
+
+const PROVIDER_HELP_FALLBACK_URL = "https://goto.prowler.com/provider-help";
+
+const getOwnRecordValue = <T>(
+  record: Readonly<Record<string, T>>,
+  key: string,
+): T | undefined => (Object.hasOwn(record, key) ? record[key] : undefined);
+
+const resolveDocsLink = (
+  provider: string,
+  step?: ProviderWizardStep,
+  credentialsMethod?: string | null,
+) => {
+  const shortlink = getOwnRecordValue(PROVIDER_DOCS_SHORTLINK, provider);
+
+  if (step === PROVIDER_WIZARD_STEP.CREDENTIALS) {
+    if (credentialsMethod) {
+      const methodDocs = getOwnRecordValue(
+        PROVIDER_CREDENTIALS_METHOD_DOCS_URL,
+        provider,
+      );
+      const methodUrl = methodDocs
+        ? getOwnRecordValue(methodDocs, credentialsMethod)
+        : undefined;
+      if (methodUrl) return methodUrl;
+    }
+
+    const stepUrl = getOwnRecordValue(
+      PROVIDER_CREDENTIALS_STEP_DOCS_URL,
+      provider,
+    );
+    if (stepUrl) return stepUrl;
   }
+
+  return shortlink;
+};
+
+const PROVIDER_HELP_TEXT: Record<string, string> = {
+  aws: "Need help connecting your AWS account?",
+  azure: "Need help connecting your Azure subscription?",
+  m365: "Need help connecting your Microsoft 365 account?",
+  gcp: "Need help connecting your GCP project?",
+  kubernetes: "Need help connecting your Kubernetes cluster?",
+  github: "Need help connecting your GitHub account?",
+  iac: "Need help scanning your Infrastructure as Code repository?",
+  image: "Need help scanning your container registry?",
+  oraclecloud: "Need help connecting your Oracle Cloud account?",
+  mongodbatlas: "Need help connecting your MongoDB Atlas organization?",
+  alibabacloud: "Need help connecting your Alibaba Cloud account?",
+  cloudflare: "Need help connecting your Cloudflare account?",
+  openstack: "Need help connecting your OpenStack cloud?",
+  googleworkspace: "Need help connecting your Google Workspace account?",
+  vercel: "Need help connecting your Vercel team?",
+  okta: "Need help connecting your Okta organization?",
+};
+
+export const getProviderHelpText = (
+  provider: string,
+  step?: ProviderWizardStep,
+  credentialsMethod?: string | null,
+) => {
+  const link = resolveDocsLink(provider, step, credentialsMethod);
+
+  if (!link) {
+    // Unknown provider: hand off to the generic help shortlink instead of
+    // deep-linking into a page that may not exist.
+    return {
+      text: "How to setup a provider?",
+      link: PROVIDER_HELP_FALLBACK_URL,
+    };
+  }
+
+  return {
+    text:
+      getOwnRecordValue(PROVIDER_HELP_TEXT, provider) ??
+      "Need help connecting your provider?",
+    link,
+  };
 };
 
 export const getAWSCredentialsTemplateLinks = (
