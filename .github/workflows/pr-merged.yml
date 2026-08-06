@@ -57,5 +57,8 @@ jobs:
               "PROWLER_PR_URL": ${{ toJson(github.event.pull_request.html_url) }},
               "PROWLER_PR_MERGED_BY": "${{ github.event.pull_request.merged_by.login }}",
               "PROWLER_PR_BASE_BRANCH": ${{ toJson(github.event.pull_request.base.ref) }},
-              "PROWLER_PR_HEAD_BRANCH": ${{ toJson(github.event.pull_request.head.ref) }}
+              "PROWLER_PR_HEAD_BRANCH": ${{ toJson(github.event.pull_request.head.ref) }},
+              "PROWLER_PR_STACK_NUMBER": "${{ github.event.pull_request.stack.number }}",
+              "PROWLER_PR_STACK_POSITION": "${{ github.event.pull_request.stack.position }}",
+              "PROWLER_PR_STACK_SIZE": "${{ github.event.pull_request.stack.size }}"
             }
