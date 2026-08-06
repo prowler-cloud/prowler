@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getCompliancesOverview } from "@/actions/compliances";
 import { getAllProviders } from "@/actions/providers";
 import { getScans } from "@/actions/scans";
+import type { ComplianceOverviewData } from "@/types/compliance";
 
 import { CrossAccountOverviewSection } from "./cross-account-overview-section";
 
@@ -63,6 +64,23 @@ const scansFor = (scans: Array<{ id: string; providerId: string }>) => ({
   ],
 });
 
+const complianceOverview = (
+  id: string,
+  framework: string,
+  version: string,
+): ComplianceOverviewData => ({
+  id,
+  type: "compliance-overviews",
+  attributes: {
+    framework,
+    version,
+    requirements_passed: 0,
+    requirements_failed: 0,
+    requirements_manual: 0,
+    total_requirements: 0,
+  },
+});
+
 const renderSection = async (
   searchParams: Record<string, string | string[] | undefined> = {},
 ) => render(await CrossAccountOverviewSection({ searchParams }));
@@ -106,20 +124,15 @@ describe("CrossAccountOverviewSection", () => {
     );
     vi.mocked(getCompliancesOverview).mockResolvedValue({
       data: [
-        {
-          id: "cis_2.0_aws",
-          attributes: { framework: "CIS", version: "2.0" },
-        },
+        complianceOverview("cis_2.0_aws", "CIS", "2.0"),
         // Universal frameworks have their own cross-provider cards above.
-        {
-          id: "csa_ccm_4.0",
-          attributes: { framework: "CSA-CCM", version: "4.0" },
-        },
+        complianceOverview("csa_ccm_4.0", "CSA-CCM", "4.0"),
         // ThreatScore is excluded, matching the per-scan grid.
-        {
-          id: "prowler_threatscore_aws",
-          attributes: { framework: "ProwlerThreatScore", version: "1.0" },
-        },
+        complianceOverview(
+          "prowler_threatscore_aws",
+          "ProwlerThreatScore",
+          "1.0",
+        ),
       ],
     });
 
@@ -191,12 +204,7 @@ describe("CrossAccountOverviewSection", () => {
       scansFor([{ id: "scan-1", providerId: "aws-1" }]),
     );
     vi.mocked(getCompliancesOverview).mockResolvedValue({
-      data: [
-        {
-          id: "cis_2.0_aws",
-          attributes: { framework: "CIS", version: "2.0" },
-        },
-      ],
+      data: [complianceOverview("cis_2.0_aws", "CIS", "2.0")],
     });
 
     // When
@@ -234,12 +242,7 @@ describe("CrossAccountOverviewSection", () => {
       return scansFor([]);
     });
     vi.mocked(getCompliancesOverview).mockResolvedValue({
-      data: [
-        {
-          id: "framework-1",
-          attributes: { framework: "Framework", version: "1.0" },
-        },
-      ],
+      data: [complianceOverview("framework-1", "Framework", "1.0")],
     });
 
     // When
