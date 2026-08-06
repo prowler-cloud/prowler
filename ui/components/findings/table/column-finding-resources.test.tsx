@@ -7,9 +7,12 @@ import type {
 } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { isGroupedJiraDispatchEnabledMock } = vi.hoisted(() => ({
-  isGroupedJiraDispatchEnabledMock: vi.fn(() => true),
-}));
+const { isCloudMock, isGroupedJiraDispatchEnabledMock, launchSkillMock } =
+  vi.hoisted(() => ({
+    isCloudMock: vi.fn(() => false),
+    isGroupedJiraDispatchEnabledMock: vi.fn(() => true),
+    launchSkillMock: vi.fn(),
+  }));
 
 // CustomLink pulls the "@/lib" barrel (and next-auth with it) into the unit env.
 vi.mock("@/components/shadcn/custom/custom-link", () => ({
@@ -66,6 +69,16 @@ vi.mock("@/components/shadcn/dropdown", () => ({
     <button disabled={disabled} onClick={onSelect} title={disabledTooltip}>
       {label}
     </button>
+  ),
+  DropdownMenuSeparator: () => <hr />,
+  DropdownMenuSub: ({ children }: { children: ReactNode }) => (
+    <div>{children}</div>
+  ),
+  DropdownMenuSubContent: ({ children }: { children: ReactNode }) => (
+    <div>{children}</div>
+  ),
+  DropdownMenuSubTrigger: ({ children }: { children: ReactNode }) => (
+    <span>{children}</span>
   ),
 }));
 
@@ -169,6 +182,19 @@ vi.mock("@/lib/deployment", () => ({
   PROWLER_CLOUD_ONLY_TOOLTIP: "Available only in Prowler Cloud",
 }));
 
+vi.mock("@/lib/shared/env", () => ({
+  isCloud: isCloudMock,
+}));
+
+vi.mock("./lighthouse-skills-launch", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("./lighthouse-skills-launch")>();
+  return {
+    ...actual,
+    useLighthouseSkillLaunch: () => launchSkillMock,
+  };
+});
+
 const notificationIndicatorMock = vi.fn((_props: unknown) => null);
 
 vi.mock("./notification-indicator", () => ({
@@ -247,10 +273,14 @@ function getColumnIds(columns: ReturnType<typeof getColumnFindingResources>) {
 
 function renderResourceActionsCell({
   resource = makeResource(),
+  onSkillLaunchOpenDrawer,
   onTriageUpdateAction,
   onTriageNoteLoadAction,
 }: {
   resource?: FindingResourceRow;
+  onSkillLaunchOpenDrawer?: Parameters<
+    typeof getColumnFindingResources
+  >[0]["onSkillLaunchOpenDrawer"];
   onTriageUpdateAction?: Parameters<
     typeof getColumnFindingResources
   >[0]["onTriageUpdateAction"];
@@ -261,6 +291,7 @@ function renderResourceActionsCell({
   const columns = getColumnFindingResources({
     rowSelection: {},
     selectableRowCount: 1,
+    onSkillLaunchOpenDrawer,
     onTriageUpdateAction,
     onTriageNoteLoadAction,
   });
@@ -272,17 +303,48 @@ function renderResourceActionsCell({
     throw new Error("actions column not found");
   }
   const CellComponent = actionsColumn.cell as (props: {
-    row: { original: FindingResourceRow };
+    row: { original: FindingResourceRow; index: number };
   }) => ReactNode;
 
-  render(<div>{CellComponent({ row: { original: resource } })}</div>);
+  render(<div>{CellComponent({ row: { original: resource, index: 0 } })}</div>);
 }
 
 describe("column-finding-resources", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    isCloudMock.mockReturnValue(false);
     isGroupedJiraDispatchEnabledMock.mockReturnValue(true);
     useJiraDispatchStore.getState().closeJiraDispatch();
+  });
+
+  it("opens the finding drawer and launches a row skill with full context", async () => {
+    // Given
+    const user = userEvent.setup();
+    const onSkillLaunchOpenDrawer = vi.fn();
+    isCloudMock.mockReturnValue(true);
+    renderResourceActionsCell({ onSkillLaunchOpenDrawer });
+
+    // When
+    await user.click(
+      screen.getByRole("button", { name: "Verify exploitability" }),
+    );
+
+    // Then
+    expect(onSkillLaunchOpenDrawer).toHaveBeenCalledWith(0);
+    expect(launchSkillMock).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "verify-exploitability" }),
+      expect.objectContaining({
+        kind: "finding",
+        findingId: "finding-1",
+        checkId: "s3_check",
+        providerUid: "123456789",
+        resourceUid: "arn:aws:s3:::my-bucket",
+        region: "us-east-1",
+      }),
+    );
+    expect(onSkillLaunchOpenDrawer.mock.invocationCallOrder[0]).toBeLessThan(
+      launchSkillMock.mock.invocationCallOrder[0],
+    );
   });
 
   it("should render actions as the last visible column after Triage without Notes", () => {

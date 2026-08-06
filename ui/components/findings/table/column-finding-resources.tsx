@@ -6,18 +6,11 @@ import { useContext, useState } from "react";
 
 import { JiraDispatchActionItem } from "@/components/findings/jira-dispatch-action-item";
 import { MuteFindingsModal } from "@/components/findings/mute-findings-modal";
-import { LighthouseIcon } from "@/components/icons";
 import { Checkbox } from "@/components/shadcn";
 import {
   ActionDropdown,
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
-import {
-  DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-} from "@/components/shadcn/dropdown/dropdown";
 import { DateWithTime } from "@/components/shadcn/entities";
 import { EntityInfo } from "@/components/shadcn/entities/entity-info";
 import { InfoField } from "@/components/shadcn/info-field/info-field";
@@ -44,9 +37,8 @@ import {
 import type { FindingTriageUpdateHandler } from "./finding-triage-status-control";
 import { FindingsSelectionContext } from "./findings-selection-context";
 import {
-  LIGHTHOUSE_SKILLS_PILL_WIDTH_CLASS,
-  LighthouseSkillsMenuItems,
   LighthouseSkillsRowButton,
+  LighthouseSkillsSubmenu,
   useLighthouseSkillLaunch,
 } from "./lighthouse-skills-launch";
 import {
@@ -196,23 +188,12 @@ const ResourceRowActions = ({
             payload={jiraPayload}
           />
           {isCloud() && (
-            <>
-              <DropdownMenuSeparator />
-              <DropdownMenuSub>
-                <DropdownMenuSubTrigger className="hover:bg-bg-neutral-tertiary flex cursor-pointer items-center gap-2 rounded-md">
-                  <LighthouseIcon size={16} aria-hidden />
-                  Lighthouse Skills
-                </DropdownMenuSubTrigger>
-                <DropdownMenuSubContent className="border-border-neutral-secondary bg-bg-neutral-secondary w-72 rounded-xl">
-                  <LighthouseSkillsMenuItems
-                    onLaunch={(skill) => {
-                      onSkillLaunchOpenDrawer?.(row.index);
-                      launchSkill(skill, buildResourceFindingItem(resource));
-                    }}
-                  />
-                </DropdownMenuSubContent>
-              </DropdownMenuSub>
-            </>
+            <LighthouseSkillsSubmenu
+              onLaunch={(skill) => {
+                onSkillLaunchOpenDrawer?.(row.index);
+                launchSkill(skill, buildResourceFindingItem(resource));
+              }}
+            />
           )}
         </ActionDropdown>
       </div>
@@ -260,10 +241,7 @@ export function getColumnFindingResources({
 
         return (
           <div className="flex items-center gap-2">
-            {/* Mirrors the row's leading Skills pill so checkboxes stay aligned */}
-            {isCloud() && (
-              <div className={LIGHTHOUSE_SKILLS_PILL_WIDTH_CLASS} />
-            )}
+            {/* Mirrors the row's indicator + arrow so checkboxes stay aligned */}
             <div className="w-2" />
             <div className="w-4" />
             <Checkbox
@@ -281,21 +259,20 @@ export function getColumnFindingResources({
       },
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
-          {/* Leading placement (not the sticky actions cell) keeps the pill
-              visible on narrow screens without horizontal scroll */}
-          {isCloud() && (
-            <LighthouseSkillsRowButton
-              findingItem={buildResourceFindingItem(row.original)}
-              onSkillLaunch={() => onSkillLaunchOpenDrawer?.(row.index)}
-            />
-          )}
           <NotificationIndicator
             delta={row.original.delta as DeltaType | undefined}
             isMuted={row.original.isMuted}
             mutedReason={row.original.mutedReason}
             showDeltaWhenMuted
           />
-          <CornerDownRight className="text-text-neutral-tertiary h-4 w-4 shrink-0" />
+          {isCloud() ? (
+            <LighthouseSkillsRowButton
+              findingItem={buildResourceFindingItem(row.original)}
+              onSkillLaunch={() => onSkillLaunchOpenDrawer?.(row.index)}
+            />
+          ) : (
+            <CornerDownRight className="text-text-neutral-tertiary h-4 w-4 shrink-0" />
+          )}
           <Checkbox
             size="sm"
             checked={!!rowSelection[row.id]}

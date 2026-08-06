@@ -7,17 +7,10 @@ import { useContext, useState } from "react";
 
 import { JiraDispatchActionItem } from "@/components/findings/jira-dispatch-action-item";
 import { MuteFindingsModal } from "@/components/findings/mute-findings-modal";
-import { LighthouseIcon } from "@/components/icons";
 import {
   ActionDropdown,
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
-import {
-  DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-} from "@/components/shadcn/dropdown/dropdown";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { isFindingGroupMuted } from "@/lib/findings-groups";
 import { buildJiraActionLabel } from "@/lib/jira-dispatch-action";
@@ -42,7 +35,7 @@ import { FindingNoteActionItem } from "./finding-triage-cells";
 import type { FindingTriageUpdateHandler } from "./finding-triage-status-control";
 import { FindingsSelectionContext } from "./findings-selection-context";
 import {
-  LighthouseSkillsMenuItems,
+  LighthouseSkillsSubmenu,
   useLighthouseSkillLaunch,
 } from "./lighthouse-skills-launch";
 
@@ -309,18 +302,7 @@ export function DataTableRowActions<T extends FindingRowData>({
           />
           <JiraDispatchActionItem label={jiraLabel} payload={jiraPayload} />
           {isCloud() && (
-            <>
-              <DropdownMenuSeparator />
-              <DropdownMenuSub>
-                <DropdownMenuSubTrigger className="hover:bg-bg-neutral-tertiary flex cursor-pointer items-center gap-2 rounded-md">
-                  <LighthouseIcon size={16} aria-hidden />
-                  Lighthouse Skills
-                </DropdownMenuSubTrigger>
-                <DropdownMenuSubContent className="border-border-neutral-secondary bg-bg-neutral-secondary w-72 rounded-xl">
-                  <LighthouseSkillsMenuItems onLaunch={handleLaunchSkill} />
-                </DropdownMenuSubContent>
-              </DropdownMenuSub>
-            </>
+            <LighthouseSkillsSubmenu onLaunch={handleLaunchSkill} />
           )}
         </ActionDropdown>
       </div>
