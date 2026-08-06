@@ -48,10 +48,12 @@ jobs:
         with:
           persist-credentials: false
 
-      # -shellcheck= because the shell-quality findings are a separate backlog; this
-      # check is here for the schema, and mixing the two would make it unactionable.
+      # SC2129 only suggests grouping consecutive redirects. Restructuring release
+      # workflows for a formatting preference is not worth the risk.
       - name: Run actionlint
+        env:
+          SHELLCHECK_OPTS: '-e SC2129'
         run: |
-          docker run --rm -v "$PWD:/repo" --workdir /repo \
+          docker run --rm -v "$PWD:/repo" --workdir /repo -e SHELLCHECK_OPTS \
             rhysd/actionlint:1.7.12@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667 \
-            -color -shellcheck=
+            -color
