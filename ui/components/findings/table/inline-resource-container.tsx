@@ -18,6 +18,7 @@ import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
 import { LoadingState } from "@/components/shadcn/spinner/loading-state";
 import { TableCell, TableRow } from "@/components/shadcn/table";
 import { useFindingGroupResourceState } from "@/hooks/use-finding-group-resource-state";
+import { useMountEffect } from "@/hooks/use-mount-effect";
 import { useScrollHint } from "@/hooks/use-scroll-hint";
 import { buildFindingResourceContext } from "@/lib/lighthouse/context/contributions";
 import { cn } from "@/lib/utils";
@@ -208,6 +209,37 @@ export function InlineResourceContainer({
     showScrollHint,
   } = useScrollHint({ refreshToken: resources.length });
 
+  // Pin geometry for the expanded panel (PostHog-style): sized to the outer
+  // card's scrollport and stuck to its left edge, so horizontal scrolling
+  // moves the group columns while this block stays in place — which also
+  // lets the sub-table's own sticky actions column anchor to a scrollport
+  // that is actually visible from the start.
+  const [scrollportPin, setScrollportPin] = useState<{
+    width: number;
+    left: number;
+  } | null>(null);
+  useMountEffect(() => {
+    const scrollParent = scrollContainerRef.current?.closest(
+      "[data-table-scroll-container]",
+    );
+    if (!(scrollParent instanceof HTMLElement)) return;
+    const measure = () => {
+      const styles = getComputedStyle(scrollParent);
+      const paddingLeft = parseFloat(styles.paddingLeft);
+      setScrollportPin({
+        width:
+          scrollParent.clientWidth -
+          paddingLeft -
+          parseFloat(styles.paddingRight),
+        left: paddingLeft,
+      });
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(scrollParent);
+    return () => observer.disconnect();
+  });
+
   // Combine scrollContainerRef (for IntersectionObserver root) with scrollHintContainerRef
   const combinedScrollRef = (node: HTMLDivElement | null) => {
     scrollContainerRef.current = node;
@@ -276,15 +308,22 @@ export function InlineResourceContainer({
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.2, ease: "easeOut" }}
-              className="overflow-hidden"
+              className="sticky overflow-hidden"
+              // Without a measured scrollport the insets stay auto, which
+              // makes the sticky inert and falls back to spanning the row.
+              style={
+                scrollportPin
+                  ? { width: scrollportPin.width, left: scrollportPin.left }
+                  : undefined
+              }
             >
               <div className="relative">
                 <div
                   ref={combinedScrollRef}
-                  // ml (not pl): padding lives inside the scroll area, so the
-                  // horizontal scrollbar track and scrolled content would start
-                  // 24px left of the rows and the left-6 overlay gradients.
-                  className="minimal-scrollbar ml-6 max-h-[440px] overflow-auto"
+                  // pl (not ml): padding sits inside the overflow clip region,
+                  // giving the hover Skills pill room to extend left over the
+                  // row indent — a margin would clip it at the content edge.
+                  className="minimal-scrollbar max-h-[440px] overflow-auto pl-6"
                 >
                   {/* Resource rows or skeleton placeholder. No w-max: auto
                       table layout compresses truncatable cells to fit, so
