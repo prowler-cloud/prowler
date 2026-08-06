@@ -740,6 +740,10 @@
     display: none; /* Chrome, Safari, Opera */
   }
 
+  body:has([data-feedback-survey-trigger]) main[data-responsive-container] {
+    @apply pb-36;
+  }
+
   /* Minimal scrollbar styles
    *
    * The descendant selectors target `.cm-scroller` so that CodeMirror

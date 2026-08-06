@@ -20,17 +20,20 @@ import { OrgLaunchScan } from "./org-launch-scan";
 const {
   launchOrganizationScansMock,
   pushMock,
+  scheduleOrganizationDailyScansMock,
   toastMock,
   updateSchedulesBulkMock,
 } = vi.hoisted(() => ({
   launchOrganizationScansMock: vi.fn(),
   pushMock: vi.fn(),
+  scheduleOrganizationDailyScansMock: vi.fn(),
   toastMock: vi.fn(),
   updateSchedulesBulkMock: vi.fn(),
 }));
 
 vi.mock("@/actions/scans/scans", () => ({
   launchOrganizationScans: launchOrganizationScansMock,
+  scheduleOrganizationDailyScans: scheduleOrganizationDailyScansMock,
 }));
 
 vi.mock("@/actions/schedules/schedules", () => ({
@@ -67,9 +70,16 @@ describe("OrgLaunchScan", () => {
     localStorage.clear();
     launchOrganizationScansMock.mockReset();
     pushMock.mockReset();
+    scheduleOrganizationDailyScansMock.mockReset();
     toastMock.mockReset();
     updateSchedulesBulkMock.mockReset();
     launchOrganizationScansMock.mockResolvedValue({
+      data: [
+        { type: "scans", id: "scan-1" },
+        { type: "scans", id: "scan-2" },
+      ],
+    });
+    scheduleOrganizationDailyScansMock.mockResolvedValue({
       successCount: 2,
       failureCount: 0,
       totalCount: 2,
@@ -128,7 +138,7 @@ describe("OrgLaunchScan", () => {
       ).toBe(`/scans?tab=${SCAN_JOBS_TAB.SCHEDULED}`);
     });
 
-    it("should launch initial scans only for updated providers", async () => {
+    it("should launch the complete organization after a partial schedule save", async () => {
       // Given
       const user = userEvent.setup();
       const onFooterChange = vi.fn();
@@ -162,10 +172,8 @@ describe("OrgLaunchScan", () => {
       await waitFor(() =>
         expect(launchOrganizationScansMock).toHaveBeenCalledTimes(1),
       );
-      expect(launchOrganizationScansMock).toHaveBeenCalledWith(
-        ["provider-2"],
-        "single",
-      );
+      expect(launchOrganizationScansMock).toHaveBeenCalledWith("org-1");
+      expect(scheduleOrganizationDailyScansMock).not.toHaveBeenCalled();
       expect(
         toastMock.mock.calls[0]?.[0].action.props.children.props.href,
       ).toBe(`/scans?tab=${SCAN_JOBS_TAB.ACTIVE}`);
@@ -348,10 +356,7 @@ describe("OrgLaunchScan", () => {
 
       // Then — every created provider is treated as saved and scanned.
       await waitFor(() =>
-        expect(launchOrganizationScansMock).toHaveBeenCalledWith(
-          PROVIDER_IDS,
-          "single",
-        ),
+        expect(launchOrganizationScansMock).toHaveBeenCalledWith("org-1"),
       );
       expect(toastMock).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -387,12 +392,12 @@ describe("OrgLaunchScan", () => {
 
       // Then
       await waitFor(() =>
-        expect(launchOrganizationScansMock).toHaveBeenCalledWith(
+        expect(scheduleOrganizationDailyScansMock).toHaveBeenCalledWith(
           PROVIDER_IDS,
-          "daily",
         ),
       );
       expect(updateSchedulesBulkMock).not.toHaveBeenCalled();
+      expect(launchOrganizationScansMock).not.toHaveBeenCalled();
       expect(
         toastMock.mock.calls[0]?.[0].action.props.children.props.href,
       ).toBe(`/scans?tab=${SCAN_JOBS_TAB.SCHEDULED}`);
@@ -426,12 +431,14 @@ describe("OrgLaunchScan", () => {
 
       // Then
       await waitFor(() =>
-        expect(launchOrganizationScansMock).toHaveBeenCalledWith(
-          PROVIDER_IDS,
-          "single",
-        ),
+        expect(launchOrganizationScansMock).toHaveBeenCalledWith("org-1"),
       );
       expect(updateSchedulesBulkMock).not.toHaveBeenCalled();
+      expect(toastMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          description: "Single scan launched for 2 accounts.",
+        }),
+      );
       expect(
         toastMock.mock.calls[0]?.[0].action.props.children.props.href,
       ).toBe(`/scans?tab=${SCAN_JOBS_TAB.ACTIVE}`);

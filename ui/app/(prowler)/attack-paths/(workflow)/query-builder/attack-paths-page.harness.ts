@@ -384,23 +384,49 @@ export class AttackPathPageHarness extends BrowserHarness<PageFixture> {
           'button[role="combobox"]',
         ),
       10000,
+      "the query selector trigger",
     );
-    await this.user.click(trigger);
 
     const targetId = queryId ?? this.fixture.queryId;
     const targetName = this.fixture.queries.find((q) => q.id === targetId)
       ?.attributes.name;
 
-    const option = await this.waitFor<HTMLElement>(
-      () =>
-        document.querySelector<HTMLElement>(
-          `[role="option"][data-value="${targetId}"]`,
-        ) ??
-        Array.from(
-          document.querySelectorAll<HTMLElement>('[role="option"]'),
-        ).find((el) => targetName && el.textContent?.includes(targetName)),
-      10000,
+    // Id match is exact (`QuerySelector` emits `data-value`); the name fallback
+    // is loose, since `textContent` also covers the option's description.
+    const findOption = (): HTMLElement | null =>
+      document.querySelector<HTMLElement>(
+        `[role="option"][data-value="${targetId}"]`,
+      ) ??
+      Array.from(
+        document.querySelectorAll<HTMLElement>('[role="option"]'),
+      ).find((el) => targetName && el.textContent?.includes(targetName)) ??
+      null;
+
+    await this.user.click(trigger);
+
+    // A re-render landing mid-gesture makes Radix drop the open state, leaving
+    // the trigger focused and the listbox unmounted. Re-open from the keyboard,
+    // which acts on the focused trigger — but only when no option mounted at
+    // all, so a merely slow runner does not get a second gesture.
+    let option = await this.waitForOrNull(
+      findOption,
+      2000,
+      `option ${targetId}`,
     );
+    if (!option && document.querySelector('[role="option"]') === null) {
+      await this.user.keyboard("{Enter}");
+      option = await this.waitForOrNull(findOption, 8000, `option ${targetId}`);
+    }
+
+    if (!option) {
+      throw new Error(
+        `selectQuery: no option matching id "${targetId}"` +
+          (targetName
+            ? ` or name "${targetName}"`
+            : " (id not in the fixture)"),
+      );
+    }
+
     await this.user.click(option);
     await this.waitForTransition();
   }

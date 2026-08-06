@@ -1315,6 +1315,28 @@ class AttackPathsQuerySerializer(BaseSerializerV1):
     attribution = AttackPathsQueryAttributionSerializer(allow_null=True, required=False)
     provider = serializers.CharField()
     parameters = AttackPathsQueryParameterSerializer(many=True)
+    # The terminal impact the query leads to (e.g. {"kind": "code_execution",
+    # "label": "Code execution"}), or null if the query has none. The UI renders
+    # this as the graph's terminal outcome node.
+    outcome = serializers.SerializerMethodField()
+
+    @extend_schema_field(
+        {
+            "type": "object",
+            "nullable": True,
+            "properties": {
+                "kind": {"type": "string"},
+                "label": {"type": "string"},
+                "partial": {"type": "boolean"},
+            },
+        }
+    )
+    def get_outcome(self, definition):
+        outcome = getattr(definition, "outcome", None)
+        if outcome is None:
+            return None
+        meta = outcome.value
+        return {"kind": meta.kind, "label": meta.label, "partial": meta.partial}
 
     class JSONAPIMeta:
         resource_name = "attack-paths-queries"

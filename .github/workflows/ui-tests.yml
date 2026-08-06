@@ -113,7 +113,7 @@ jobs:
       - name: Get pnpm store directory
         if: steps.check-changes.outputs.any_changed == 'true'
         shell: bash
-        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> "$GITHUB_ENV"
 
       - name: Setup pnpm and Next.js cache
         if: steps.check-changes.outputs.any_changed == 'true'
@@ -157,7 +157,8 @@ jobs:
           echo "${STEPS_CHANGED_SOURCE_OUTPUTS_ALL_CHANGED_FILES}"
           # Convert space-separated to vitest related format (remove ui/ prefix for relative paths)
           CHANGED_FILES=$(echo "${STEPS_CHANGED_SOURCE_OUTPUTS_ALL_CHANGED_FILES}" | tr ' ' '\n' | sed 's|^ui/||' | tr '\n' ' ')
-          pnpm exec vitest related $CHANGED_FILES --run --project unit
+          read -ra changed <<< "$CHANGED_FILES"
+          pnpm exec vitest related "${changed[@]}" --run --project unit
         env:
           STEPS_CHANGED_SOURCE_OUTPUTS_ALL_CHANGED_FILES: ${{ steps.changed-source.outputs.all_changed_files }}
 

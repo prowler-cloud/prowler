@@ -6,7 +6,10 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 
-import { launchOrganizationScans } from "@/actions/scans/scans";
+import {
+  launchOrganizationScans,
+  scheduleOrganizationDailyScans,
+} from "@/actions/scans/scans";
 import { updateSchedulesBulk } from "@/actions/schedules/schedules";
 import {
   WIZARD_FOOTER_ACTION_TYPE,
@@ -93,6 +96,7 @@ export function OrgLaunchScan({
   const router = useRouter();
   const { toast } = useToast();
   const {
+    organizationId,
     organizationExternalId,
     organizationType,
     createdProviderIds,
@@ -198,14 +202,19 @@ export function OrgLaunchScan({
 
     let initialScanFailureCount = 0;
     let initialScanSuccessCount = 0;
+    let initialScanError: string | undefined;
 
     if (values.launchInitialScan) {
-      const scanResult = await launchOrganizationScans(
-        updatedProviderIds,
-        SCAN_SCHEDULE.SINGLE,
-      );
-      initialScanFailureCount = scanResult.failureCount;
-      initialScanSuccessCount = scanResult.successCount;
+      const scanResult = organizationId
+        ? await launchOrganizationScans(organizationId)
+        : { error: "Organization ID is required" };
+
+      if ("error" in scanResult) {
+        initialScanFailureCount = updatedProviderIds.length;
+        initialScanError = getActionErrorMessage(scanResult);
+      } else {
+        initialScanSuccessCount = scanResult.data.length;
+      }
     }
 
     setIsLaunching(false);
@@ -228,7 +237,9 @@ export function OrgLaunchScan({
           : "Scan schedules saved",
       description:
         initialScanFailureCount > 0
-          ? `${description} Initial scans failed for ${formatCandidateCount(initialScanFailureCount, noun)}.`
+          ? initialScanError
+            ? `${description} The initial organization scan could not be launched: ${initialScanError}`
+            : `${description} Initial scans failed for ${formatCandidateCount(initialScanFailureCount, noun)}.`
           : description,
       action: (
         <ToastAction altText="Go to scans" asChild>
@@ -245,11 +256,28 @@ export function OrgLaunchScan({
 
     setIsLaunching(true);
 
-    const result = await launchOrganizationScans(
-      createdProviderIds,
-      effectiveScheduleOption,
-    );
-    const successCount = result.successCount;
+    let successCount = 0;
+
+    if (effectiveScheduleOption === SCAN_SCHEDULE.SINGLE) {
+      const result = organizationId
+        ? await launchOrganizationScans(organizationId)
+        : { error: "Organization ID is required" };
+
+      if ("error" in result) {
+        setIsLaunching(false);
+        toast({
+          variant: "destructive",
+          title: "Unable to launch organization scan",
+          description: getActionErrorMessage(result),
+        });
+        return;
+      }
+
+      successCount = result.data.length;
+    } else {
+      const result = await scheduleOrganizationDailyScans(createdProviderIds);
+      successCount = result.successCount;
+    }
     const targetTab =
       effectiveScheduleOption === SCAN_SCHEDULE.SINGLE
         ? SCAN_JOBS_TAB.ACTIVE

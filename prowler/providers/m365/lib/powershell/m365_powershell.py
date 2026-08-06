@@ -325,7 +325,9 @@ class M365PowerShell(PowerShellSession):
         """
         Get Teams User Settings.
 
-        Retrieves the current Microsoft Teams user settings.
+        Retrieves the current Microsoft Teams user settings. Enum-typed properties
+        (e.g. ExternalAccessWithTrialTenants) are serialized as their string names
+        rather than numeric values.
 
         Returns:
             dict: Teams user settings in JSON format.
@@ -337,7 +339,7 @@ class M365PowerShell(PowerShellSession):
             }
         """
         return self.execute(
-            "Get-CsTenantFederationConfiguration | ConvertTo-Json -Depth 10",
+            "Get-CsTenantFederationConfiguration | ConvertTo-Json -Depth 10 -EnumsAsStrings",
             json_parse=True,
         )
 

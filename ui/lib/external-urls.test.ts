@@ -6,8 +6,11 @@ import { describe, expect, it } from "vitest";
 import { PROVIDER_WIZARD_STEP } from "@/types/provider-wizard";
 
 import {
+  buildCloudflareAccountOwnedApiTokenUrl,
+  buildGitHubPersonalAccessTokenOrgUrl,
   getAWSCredentialsTemplateLinks,
   getAWSOrgDeploymentQuickLink,
+  PRECONFIGURED_CREDENTIAL_URLS,
   getProviderHelpText,
   PROWLER_CF_TEMPLATE_URL,
 } from "./external-urls";
@@ -107,6 +110,178 @@ describe("getAWSOrgDeploymentQuickLink", () => {
       organizationalUnitId,
     );
     expect(params.get("param_DeployFromDelegatedAdmin")).toBeNull();
+  });
+});
+
+describe("PRECONFIGURED_CREDENTIAL_URLS", () => {
+  it("keeps the Cloudflare User API Token URL under the profile route with the four required read scopes", () => {
+    // Snapshot check: fixes the exact URL so a stray edit to the permission
+    // scopes, token name, account/zone selectors or console origin trips a
+    // failing test instead of silently shipping a broken pre-configured
+    // token flow to users. Matches the "User API Token" link in
+    // docs/user-guide/providers/cloudflare/authentication.mdx.
+    expect(PRECONFIGURED_CREDENTIAL_URLS.CLOUDFLARE_API_TOKEN_USER).toBe(
+      "https://dash.cloudflare.com/profile/api-tokens?permissionGroupKeys=%5B%7B%22key%22%3A%22account_settings%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22zone%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22zone_settings%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22dns%22%2C%22type%22%3A%22read%22%7D%5D&accountId=%2A&zoneId=all&name=Prowler%20Security%20Scanner",
+    );
+  });
+
+  it("carries the four Prowler read scopes as decoded permissionGroupKeys on the Cloudflare User API Token URL", () => {
+    // Semantic contract: the URL must request read on account_settings, zone,
+    // zone_settings and dns and reuse the shared Prowler token name.
+    const parsed = new URL(
+      PRECONFIGURED_CREDENTIAL_URLS.CLOUDFLARE_API_TOKEN_USER,
+    );
+    const permissionGroupKeys = JSON.parse(
+      parsed.searchParams.get("permissionGroupKeys") ?? "[]",
+    );
+
+    expect(permissionGroupKeys).toEqual([
+      { key: "account_settings", type: "read" },
+      { key: "zone", type: "read" },
+      { key: "zone_settings", type: "read" },
+      { key: "dns", type: "read" },
+    ]);
+    expect(parsed.searchParams.get("name")).toBe("Prowler Security Scanner");
+  });
+
+  it("keeps the GitHub user-scope PAT URL pre-filled with the four required read permissions", () => {
+    // Snapshot check: fixes the exact URL so any accidental scope broadening
+    // (or a rename of `expires_in` / permission slugs on GitHub's side) trips
+    // a failing test. Matches the "user repositories" URL published in
+    // docs/user-guide/providers/github/authentication.mdx.
+    expect(
+      PRECONFIGURED_CREDENTIAL_URLS.GITHUB_PERSONAL_ACCESS_TOKEN_USER,
+    ).toBe(
+      "https://github.com/settings/personal-access-tokens/new?name=Prowler+Security+Scanner&description=Fine-grained+PAT+for+Prowler+security+scanning&expires_in=90&administration=read&contents=read&vulnerability_alerts=read&emails=read",
+    );
+  });
+
+  it("carries only read-level permissions on the GitHub user-scope PAT URL and no organization-only scopes", () => {
+    // Semantic contract: every permission query-param must be `read`, and the
+    // two organization-only permissions must NOT leak into the user URL
+    // (otherwise GitHub would reject the whole permission set with a
+    // Resource-Owner mismatch when the caller is a personal account).
+    const parsed = new URL(
+      PRECONFIGURED_CREDENTIAL_URLS.GITHUB_PERSONAL_ACCESS_TOKEN_USER,
+    );
+
+    expect(parsed.searchParams.get("name")).toBe("Prowler Security Scanner");
+    expect(parsed.searchParams.get("expires_in")).toBe("90");
+    expect(parsed.searchParams.get("organization_administration")).toBeNull();
+    expect(parsed.searchParams.get("members")).toBeNull();
+
+    const NON_PERMISSION_PARAMS = new Set([
+      "name",
+      "description",
+      "expires_in",
+    ]);
+    for (const [key, value] of Array.from(parsed.searchParams.entries())) {
+      if (NON_PERMISSION_PARAMS.has(key)) continue;
+      expect(
+        value,
+        `permission "${key}" should be granted at "read" level`,
+      ).toBe("read");
+    }
+  });
+});
+
+describe("buildCloudflareAccountOwnedApiTokenUrl", () => {
+  it("pins the token to the account by routing through the dashboard `to=` param with the account id substituted", () => {
+    // Cloudflare's SPA only reads the pre-fill query params
+    // (`permissionGroupKeys`, `name`) when the user arrives via the dashboard
+    // router with a `to=` value — navigating straight to
+    // `/<accountId>/api-tokens/create?params` renders the form but drops the
+    // params on the floor. Substituting the account id in place of the docs'
+    // `:account` placeholder keeps the pre-fill working and avoids ambiguity
+    // for users signed into multiple accounts.
+    const url = new URL(
+      buildCloudflareAccountOwnedApiTokenUrl(
+        "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+      ),
+    );
+
+    expect(url.origin).toBe("https://dash.cloudflare.com");
+    expect(url.pathname).toBe("/");
+    expect(url.searchParams.get("to")).toBe(
+      "/a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4/api-tokens",
+    );
+    expect(url.searchParams.get("name")).toBe("Prowler Security Scanner");
+    const permissionGroupKeys = JSON.parse(
+      url.searchParams.get("permissionGroupKeys") ?? "[]",
+    );
+    expect(permissionGroupKeys).toEqual([
+      { key: "account_settings", type: "read" },
+      { key: "zone", type: "read" },
+      { key: "zone_settings", type: "read" },
+      { key: "dns", type: "read" },
+    ]);
+  });
+
+  it("keeps the `to=` path unencoded so Cloudflare's router matches it", () => {
+    // Cloudflare's router matches on the raw string in `to`, so the slashes
+    // inside `/<accountId>/api-tokens` must NOT be percent-encoded.
+    // URLSearchParams would encode them; asserting the raw substring guards
+    // against a future refactor that swaps the manual query-string build for
+    // URLSearchParams.
+    const url = buildCloudflareAccountOwnedApiTokenUrl(
+      "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+    );
+
+    expect(url).toContain("?to=/a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4/api-tokens&");
+  });
+
+  it("URL-encodes account ids that contain characters requiring escaping", () => {
+    // Real Cloudflare account ids are hex strings today, but the wizard
+    // accepts whatever the user typed. Encoding the account id inside the
+    // `to=` path prevents a stray `/` or `#` from silently breaking the URL:
+    // an unencoded `#` would truncate the query string, and an unencoded `/`
+    // would let Cloudflare mis-parse the account id boundary.
+    const url = buildCloudflareAccountOwnedApiTokenUrl("acct/with#gaps");
+
+    expect(url).toContain("?to=/acct%2Fwith%23gaps/api-tokens&");
+  });
+});
+
+describe("buildGitHubPersonalAccessTokenOrgUrl", () => {
+  it("pins the token Resource Owner via target_name and requests the org-only permissions", () => {
+    // Without a `target_name`, GitHub silently ignores the two organization
+    // permissions (`organization_administration`, `members`) because the
+    // Resource Owner defaults to the caller's personal account. Pinning the
+    // owner is what makes the pre-checked org permissions actually surface.
+    const url = new URL(buildGitHubPersonalAccessTokenOrgUrl("prowler-cloud"));
+
+    expect(url.origin + url.pathname).toBe(
+      "https://github.com/settings/personal-access-tokens/new",
+    );
+    expect(url.searchParams.get("target_name")).toBe("prowler-cloud");
+    expect(url.searchParams.get("organization_administration")).toBe("read");
+    expect(url.searchParams.get("members")).toBe("read");
+    expect(url.searchParams.get("administration")).toBe("read");
+    expect(url.searchParams.get("contents")).toBe("read");
+    expect(url.searchParams.get("vulnerability_alerts")).toBe("read");
+    expect(url.searchParams.get("name")).toBe("Prowler Security Scanner");
+    expect(url.searchParams.get("expires_in")).toBe("90");
+  });
+
+  it("omits the account-only `emails` permission from the org URL", () => {
+    // `emails` is an account-level permission that only makes sense when the
+    // Resource Owner is a personal user account. Including it on an org URL
+    // would cause GitHub to reject the whole permission set.
+    const url = new URL(buildGitHubPersonalAccessTokenOrgUrl("prowler-cloud"));
+
+    expect(url.searchParams.get("emails")).toBeNull();
+  });
+
+  it("URL-encodes an organization slug that contains characters requiring escaping", () => {
+    // GitHub org slugs cannot contain `&` or spaces today, but callers pass
+    // whatever the wizard collected verbatim, so the helper must not blindly
+    // concatenate. URLSearchParams enforces percent-encoding.
+    const url = new URL(
+      buildGitHubPersonalAccessTokenOrgUrl("prowler & friends"),
+    );
+
+    expect(url.searchParams.get("target_name")).toBe("prowler & friends");
+    expect(url.search).toContain("target_name=prowler+%26+friends");
   });
 });
 

@@ -99,6 +99,8 @@ export default defineConfig(() => {
       // Without this, Vite optimizes them on demand at the first request and
       // reloads the page, killing the test run. Keep this list aligned with
       // imports through the page's render tree.
+      // Kept identical to the prowler-cloud overlay's list so it stops
+      // re-conflicting on sync; an entry with no importer here is deliberate.
       include: [
         // Test stack
         "vitest-browser-react",
@@ -109,6 +111,7 @@ export default defineConfig(() => {
         "react-dom/client",
 
         // Next runtime
+        "next/headers",
         "next/navigation",
         "next/link",
         "next/image",
@@ -167,7 +170,6 @@ export default defineConfig(() => {
         "@tanstack/react-table",
         "@react-aria/ssr",
         "@react-aria/visually-hidden",
-        "modern-screenshot",
         "framer-motion",
         "cmdk",
         "driver.js",
@@ -182,6 +184,7 @@ export default defineConfig(() => {
         "@uiw/react-codemirror",
         "@sentry/nextjs",
         "@extractus/feed-extractor",
+        "@stripe/stripe-js",
       ],
     },
   };

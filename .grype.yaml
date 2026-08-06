@@ -25,12 +25,6 @@ ignore:
     package:
       name: Microsoft.Bcl.Memory
 
-  # cryptography is capped below 49 by alibabacloud-tea-openapi==0.4.5, which requires
-  # cryptography>=3.0.0,<49.0.0. The fix is in 50.0.0, so it is unreachable until that
-  # dependency raises its ceiling. Verified by attempting the upgrade: resolution fails.
-  - vulnerability: CVE-2026-69247
-    package:
-      name: cryptography
 
   # The CPython interpreter, compiled into the official base image.
   # TEMPORARY, unlike the entries above: moving to Python 3.13 clears seven of these, and
