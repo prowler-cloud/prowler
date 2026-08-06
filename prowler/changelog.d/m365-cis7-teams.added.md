@@ -1,1 +1,0 @@
-`teams_external_access_trial_tenants_blocked` check for M365 provider, verifying that Teams external access with trial-only tenants is blocked, covering CIS Microsoft 365 Foundations Benchmark v7.0.0 control 8.2.4

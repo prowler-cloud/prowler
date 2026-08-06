@@ -1,1 +1,0 @@
-Attack Paths query metadata now carries an outcome (Code execution, Privilege escalation, Public exposure, or Resource inventory), exposed on the queries endpoint so the graph can show a terminal outcome node

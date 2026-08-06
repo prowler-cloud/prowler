@@ -4,6 +4,25 @@ All notable changes to the **Prowler MCP Server** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [0.10.0] (Prowler v5.38.0)
+
+### 🚀 Added
+
+- Test foundation for the MCP server with shared fixtures, JSON:API builders, mocked HTTP transports and CI coverage reporting [(#12291)](https://github.com/prowler-cloud/prowler/pull/12291)
+- Test coverage for the integrations tools and models, pinning the connection-check choreography and the Jira dispatch retry safety [(#12343)](https://github.com/prowler-cloud/prowler/pull/12343)
+- Container images now ship an SBOM and build provenance as OCI attestations [(#12352)](https://github.com/prowler-cloud/prowler/pull/12352)
+
+### 🔄 Changed
+
+- `prowler_send_findings_to_jira` now reports `safe_to_retry` on every outcome, true only when Prowler knows no Jira work item was created: a dispatch the API refused is retryable, one that failed on the server or got no answer is not [(#12343)](https://github.com/prowler-cloud/prowler/pull/12343)
+- `prowler_list_integrations` no longer requests the `configuration` it discards, now that the API tolerates a sparse fieldset without it [(#12343)](https://github.com/prowler-cloud/prowler/pull/12343)
+
+### 🔐 Security
+
+- Upgrade cryptography to 50.0.0, closing CVE-2026-69247 and CVE-2026-69249 [(#12356)](https://github.com/prowler-cloud/prowler/pull/12356)
+
+---
+
 ## [0.9.1] (Prowler v5.37.1)
 
 ### 🔐 Security
