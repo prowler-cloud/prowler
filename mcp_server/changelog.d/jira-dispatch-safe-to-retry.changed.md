@@ -1,1 +1,0 @@
-`prowler_send_findings_to_jira` now reports `safe_to_retry` on every outcome, true only when Prowler knows no Jira work item was created: a dispatch the API refused is retryable, one that failed on the server or got no answer is not

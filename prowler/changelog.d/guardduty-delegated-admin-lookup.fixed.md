@@ -1,1 +1,0 @@
-`guardduty_delegated_admin_enabled_all_regions` no longer reports `no delegated administrator configured` when the lookup was denied or failed, which asserted absence where there was only lack of visibility

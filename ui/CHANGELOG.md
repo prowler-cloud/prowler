@@ -4,6 +4,37 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [1.38.0] (Prowler v5.38.0)
+
+### 🚀 Added
+
+- Sign-in method indicators in the Prowler Cloud Users table, including linked SAML domains [(#12268)](https://github.com/prowler-cloud/prowler/pull/12268)
+- Compliance watchlist: pin frameworks from any compliance view and filter every view down to the pinned ones, including the overview card and a finding's compliance chips (Prowler Cloud only) [(#12300)](https://github.com/prowler-cloud/prowler/pull/12300)
+- Multiple verified email domains in a single SAML configuration for Prowler Cloud [(#12332)](https://github.com/prowler-cloud/prowler/pull/12332)
+- Container images now ship an SBOM and build provenance as OCI attestations [(#12352)](https://github.com/prowler-cloud/prowler/pull/12352)
+
+### 🔄 Changed
+
+- `Add Provider` wizard documentation link targeting each provider's credentials section and selected authentication method [(#12218)](https://github.com/prowler-cloud/prowler/pull/12218)
+
+### 🐞 Fixed
+
+- Imported scans now appear on the Scans page even when no provider is connected [(#12025)](https://github.com/prowler-cloud/prowler/pull/12025)
+- Feedback widget no longer obscures page and side-panel actions [(#12282)](https://github.com/prowler-cloud/prowler/pull/12282)
+- Rows-per-page selector no longer disappears when the chosen page size collapses a table to a single page [(#12299)](https://github.com/prowler-cloud/prowler/pull/12299)
+- Overview ThreatScore card no longer leaves unused horizontal space at responsive layout boundaries [(#12317)](https://github.com/prowler-cloud/prowler/pull/12317)
+- Overview metric cards stack below the desktop layout threshold and preserve readable widths when aligned [(#12323)](https://github.com/prowler-cloud/prowler/pull/12323)
+- Overview metric cards now align horizontally at medium desktop widths [(#12323)](https://github.com/prowler-cloud/prowler/pull/12323)
+- AWS and GCP organization onboarding launches all linked provider scans through one bulk operation [(#12350)](https://github.com/prowler-cloud/prowler/pull/12350)
+- `/compliance` no longer fails while compliance overview data is still being generated [(#12358)](https://github.com/prowler-cloud/prowler/pull/12358)
+- `Client Secret` and `Refresh Token` labels in the GCP organization authentication form [(#12362)](https://github.com/prowler-cloud/prowler/pull/12362)
+
+### 🔐 Security
+
+- Removed the `apk upgrade` from the UI image and moved the base digest forward instead, so the image is reproducible from its pin rather than from whatever Alpine serves at build time [(#12313)](https://github.com/prowler-cloud/prowler/pull/12313)
+
+---
+
 ## [1.37.1] (Prowler v5.37.1)
 
 ### 🐞 Fixed
