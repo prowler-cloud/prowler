@@ -4,13 +4,9 @@ on:
   push:
     branches:
       - 'master'
-    paths:
-      - '.github/**'
   pull_request:
     branches:
       - 'master'
-    paths:
-      - '.github/**'
   schedule:
     - cron: '45 06 * * *'
   workflow_dispatch:
@@ -46,11 +42,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
-          persist-credentials: false
+          # zizmor: ignore[artipacked]
+          persist-credentials: true # Required by tj-actions/changed-files to fetch PR branch
 
-      # SC2129 only suggests grouping consecutive redirects. Restructuring release
-      # workflows for a formatting preference is not worth the risk.
+      # Always runs so it always reports; the lint is skipped when nothing changed.
+      - name: Check for workflow changes
+        id: check-changes
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
+        with:
+          files: .github/**
+
+      # SC2129 is style only: it suggests grouping consecutive redirects.
       - name: Run actionlint
+        if: steps.check-changes.outputs.any_changed == 'true'
         env:
           SHELLCHECK_OPTS: '-e SC2129'
         run: |
