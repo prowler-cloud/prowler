@@ -25,7 +25,9 @@ class Test_entra_conditional_access_trusted_named_location_exists:
 
     def test_no_locations(self):
         result = self._run([])
-        assert len(result) == 0
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+        assert result[0].resource_id == "namedLocations"
 
     def test_trusted_ip_location(self):
         result = self._run(

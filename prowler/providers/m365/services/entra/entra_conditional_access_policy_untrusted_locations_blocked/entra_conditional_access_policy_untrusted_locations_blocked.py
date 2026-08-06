@@ -22,10 +22,9 @@ class entra_conditional_access_policy_untrusted_locations_blocked(Check):
         """Return True if the excluded locations are all trusted."""
         if not exclude_locations:
             return False
-        if "AllTrusted" in exclude_locations:
-            return True
         return all(
-            location_id in trusted_location_ids for location_id in exclude_locations
+            location_id == "AllTrusted" or location_id in trusted_location_ids
+            for location_id in exclude_locations
         )
 
     def execute(self) -> list[CheckReportM365]:
@@ -46,6 +45,11 @@ class entra_conditional_access_policy_untrusted_locations_blocked(Check):
             for location in entra_client.named_locations
             if location.is_trusted
         }
+        untrusted_location_ids = {
+            location.id
+            for location in entra_client.named_locations
+            if not location.is_trusted
+        }
 
         for policy in entra_client.conditional_access_policies.values():
             if policy.state == ConditionalAccessPolicyState.DISABLED:
@@ -64,7 +68,10 @@ class entra_conditional_access_policy_untrusted_locations_blocked(Check):
             if not locations:
                 continue
 
-            if "All" not in locations.include_locations:
+            if "All" not in locations.include_locations and not any(
+                location_id in untrusted_location_ids
+                for location_id in locations.include_locations
+            ):
                 continue
 
             # A trusted-location exclusion must exist so trusted networks keep access.

@@ -1360,3 +1360,130 @@ class Test_Entra_Service:
         assert named_locations[0].ip_ranges_count == 1
         assert named_locations[1].is_ip_location is False
         assert named_locations[1].is_trusted is False
+
+    def test__get_activity_based_timeout_policies_uses_default_application(self):
+        entra_service = Entra.__new__(Entra)
+        policy = SimpleNamespace(
+            id="policy-1",
+            display_name="Idle timeout",
+            definition=[
+                json.dumps(
+                    {
+                        "ActivityBasedTimeoutPolicy": {
+                            "ApplicationPolicies": [
+                                {
+                                    "ApplicationId": "default",
+                                    "WebSessionIdleTimeout": "05:00:00",
+                                },
+                                {
+                                    "ApplicationId": "00000000-0000-0000-0000-000000000001",
+                                    "WebSessionIdleTimeout": "01:00:00",
+                                },
+                            ]
+                        }
+                    }
+                )
+            ],
+        )
+        entra_service.client = SimpleNamespace(
+            policies=SimpleNamespace(
+                activity_based_timeout_policies=SimpleNamespace(
+                    get=AsyncMock(
+                        return_value=SimpleNamespace(
+                            value=[policy], odata_next_link=None
+                        )
+                    ),
+                    with_url=MagicMock(),
+                )
+            )
+        )
+
+        policies = asyncio.run(entra_service._get_activity_based_timeout_policies())
+
+        assert len(policies) == 1
+        assert policies[0].web_session_idle_timeout_seconds == 5 * 60 * 60
+
+    def test__get_activity_based_timeout_policies_without_default_is_unconfigured(self):
+        entra_service = Entra.__new__(Entra)
+        policy = SimpleNamespace(
+            id="policy-1",
+            display_name="App-specific timeout",
+            definition=[
+                json.dumps(
+                    {
+                        "ActivityBasedTimeoutPolicy": {
+                            "ApplicationPolicies": [
+                                {
+                                    "ApplicationId": "00000000-0000-0000-0000-000000000001",
+                                    "WebSessionIdleTimeout": "01:00:00",
+                                }
+                            ]
+                        }
+                    }
+                )
+            ],
+        )
+        entra_service.client = SimpleNamespace(
+            policies=SimpleNamespace(
+                activity_based_timeout_policies=SimpleNamespace(
+                    get=AsyncMock(
+                        return_value=SimpleNamespace(
+                            value=[policy], odata_next_link=None
+                        )
+                    ),
+                    with_url=MagicMock(),
+                )
+            )
+        )
+
+        policies = asyncio.run(entra_service._get_activity_based_timeout_policies())
+
+        assert len(policies) == 1
+        assert policies[0].web_session_idle_timeout_seconds is None
+
+    def test__get_activity_based_timeout_policies_paginates_through_next_links(self):
+        entra_service = Entra.__new__(Entra)
+
+        def policy(policy_id, timeout):
+            return SimpleNamespace(
+                id=policy_id,
+                display_name=policy_id,
+                definition=[
+                    json.dumps(
+                        {
+                            "ActivityBasedTimeoutPolicy": {
+                                "ApplicationPolicies": [
+                                    {
+                                        "ApplicationId": "default",
+                                        "WebSessionIdleTimeout": timeout,
+                                    }
+                                ]
+                            }
+                        }
+                    )
+                ],
+            )
+
+        page_one = SimpleNamespace(
+            value=[policy("policy-1", "01:00:00")],
+            odata_next_link="next-link",
+        )
+        page_two = SimpleNamespace(
+            value=[policy("policy-2", "02:00:00")],
+            odata_next_link=None,
+        )
+        next_page_builder = SimpleNamespace(get=AsyncMock(return_value=page_two))
+        with_url_mock = MagicMock(return_value=next_page_builder)
+        policies_builder = SimpleNamespace(
+            get=AsyncMock(return_value=page_one),
+            with_url=with_url_mock,
+        )
+        entra_service.client = SimpleNamespace(
+            policies=SimpleNamespace(activity_based_timeout_policies=policies_builder)
+        )
+
+        policies = asyncio.run(entra_service._get_activity_based_timeout_policies())
+
+        assert [policy.id for policy in policies] == ["policy-1", "policy-2"]
+        with_url_mock.assert_called_once_with("next-link")
+        next_page_builder.get.assert_awaited_once()
