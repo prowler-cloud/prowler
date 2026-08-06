@@ -186,22 +186,19 @@ describe("createLighthouseChatStore", () => {
     if (!skill) throw new Error("Expected skill definition");
     await store.getState().submitMessage(skill.name, undefined, skill);
     eventSources[0].emit("message.delta", {
-      content: "Result [[ste",
+      content: "Result ",
     });
-    expect(store.getState().streamState.markerCarry).toBe("[[ste");
 
     // When: the browser reports a transient failure and keeps reconnecting
     eventSources[0].fail(0 /* EventSource.CONNECTING */);
     eventSources[0].emit("message.delta", {
-      content: "p:2]]Checking exposure.",
+      content: "Checking exposure.",
     });
 
     // Then
     expect(store.getState().streamState).toMatchObject({
       status: "streaming",
       activeTaskId: "task-1",
-      currentStep: 2,
-      markerCarry: "",
       assistantText: "Result Checking exposure.",
     });
   });

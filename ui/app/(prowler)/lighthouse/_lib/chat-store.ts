@@ -320,10 +320,7 @@ export function createLighthouseChatStore(
             ...current.messages,
             buildOptimisticMessage("user", displayText, contextSnapshot, skill),
           ],
-          streamState: createInitialLighthouseV2StreamState(
-            provisionalTaskId,
-            skill !== undefined,
-          ),
+          streamState: createInitialLighthouseV2StreamState(provisionalTaskId),
         }));
 
         // Subscribe to the same-origin SSE proxy BEFORE sending the message:

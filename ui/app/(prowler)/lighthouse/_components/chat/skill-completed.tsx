@@ -16,7 +16,7 @@ import {
 } from "@/app/(prowler)/lighthouse/_types";
 import { Badge } from "@/components/shadcn/badge/badge";
 import { Button } from "@/components/shadcn/button/button";
-import { getNextSkill, getSkillById } from "@/lib/lighthouse/skills/registry";
+import { getNextSkill } from "@/lib/lighthouse/skills/registry";
 import {
   JIRA_DISPATCH_TARGET,
   JIRA_TARGET_SELECTION_KIND,
@@ -47,7 +47,8 @@ const MuteFindingsModal = dynamic(
 );
 
 // One-line receipt of a finished run (design 1j): the chain of thought
-// collapses to "Ran <skill> · steps · tools · time" with the trace behind it.
+// collapses to "Ran <skill> · tools · time" with the trace behind it. The
+// summary reports only observed activity — never the catalog's step plan.
 export function SkillRunReceipt({
   skillRun,
   parts,
@@ -60,9 +61,7 @@ export function SkillRunReceipt({
   const toolParts = parts.filter(
     (part) => part.type === LIGHTHOUSE_V2_PART_TYPE.TOOL_CALL,
   );
-  const definition = getSkillById(skillRun.ref.skillId);
   const summary = [
-    definition ? `${definition.steps.length} steps` : null,
     `${toolParts.length} ${toolParts.length === 1 ? "tool" : "tools"}`,
     formatRunDuration(skillRun.launchedAt, completedAt),
   ]

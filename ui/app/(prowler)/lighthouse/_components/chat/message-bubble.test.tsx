@@ -162,10 +162,8 @@ describe("MessageBubble", () => {
         {
           id: "part-answer",
           type: LIGHTHOUSE_V2_PART_TYPE.TEXT,
-          // Persisted raw model output keeps the step markers; the UI must
-          // strip them when rendering the finished response.
           content: {
-            text: "* [[step:5]]\n\n[[step:5]] The finding is exploitable in practice.",
+            text: "The finding is exploitable in practice.",
           },
           toolCallOutcome: null,
           insertedAt: "2026-06-25T10:00:40Z",
@@ -205,12 +203,11 @@ describe("MessageBubble", () => {
       />,
     );
 
-    // Then: receipt with steps, tools and duration
-    expect(screen.getByText(/5 steps · 1 tool · 42s/)).toBeInTheDocument();
+    // Then: receipt with tools and duration — no plan-derived step count
+    expect(screen.getByText(/1 tool · 42s/)).toBeInTheDocument();
     expect(
       screen.getByText("The finding is exploitable in practice."),
     ).toBeInTheDocument();
-    expect(screen.queryByText(/\[\[step:/)).not.toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Create Jira ticket" }),
     ).toBeInTheDocument();
@@ -340,21 +337,6 @@ describe("MessageBubble", () => {
 
     expect(isBefore(firstText, toolCall)).toBe(true);
     expect(isBefore(toolCall, secondText)).toBe(true);
-  });
-
-  it("should preserve step-like text in a persisted regular response", () => {
-    // Given
-    const assistantMessage = buildAssistantMessage([
-      textPart("part-1", "Use [[step:1]] as a literal example."),
-    ]);
-
-    // When
-    render(<MessageBubble message={assistantMessage} />);
-
-    // Then
-    expect(
-      screen.getByText("Use [[step:1]] as a literal example."),
-    ).toBeInTheDocument();
   });
 });
 

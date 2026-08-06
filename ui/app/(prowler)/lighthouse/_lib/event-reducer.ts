@@ -2,7 +2,6 @@ import {
   LIGHTHOUSE_V2_SSE_EVENT,
   type LighthouseV2SSEEvent,
 } from "@/app/(prowler)/lighthouse/_types";
-import { consumeStepMarkers } from "@/lib/lighthouse/skills/step-markers";
 
 export const LIGHTHOUSE_V2_STREAM_STATUS = {
   IDLE: "idle",
@@ -44,9 +43,6 @@ export interface LighthouseV2StreamTextActivityItem {
 export interface LighthouseV2StreamToolCallActivityItem
   extends LighthouseV2ToolCallState {
   type: typeof LIGHTHOUSE_V2_STREAM_ACTIVITY_ITEM_TYPE.TOOL_CALL;
-  // Skill workflow step that was active when the tool started; lets the
-  // progress timeline nest tool chips under their step.
-  step?: number;
 }
 
 export type LighthouseV2StreamActivityItem =
@@ -61,33 +57,24 @@ export interface LighthouseV2StreamError {
 export interface LighthouseV2StreamState {
   status: LighthouseV2StreamStatus;
   activeTaskId: string | null;
-  tracksSkillSteps: boolean;
   assistantText: string;
   toolCalls: LighthouseV2ToolCallState[];
   activityItems: LighthouseV2StreamActivityItem[];
-  // Skill-run step tracking: the last [[step:n]] marker seen, and the chunk
-  // suffix held back because it may still complete into a marker.
-  currentStep: number | null;
-  markerCarry: string;
   messageId?: string;
   error?: LighthouseV2StreamError;
 }
 
 export function createInitialLighthouseV2StreamState(
   taskId: string | null = null,
-  tracksSkillSteps = false,
 ): LighthouseV2StreamState {
   return {
     status: taskId
       ? LIGHTHOUSE_V2_STREAM_STATUS.STREAMING
       : LIGHTHOUSE_V2_STREAM_STATUS.IDLE,
     activeTaskId: taskId,
-    tracksSkillSteps,
     assistantText: "",
     toolCalls: [],
     activityItems: [],
-    currentStep: null,
-    markerCarry: "",
   };
 }
 
@@ -96,35 +83,16 @@ export function reduceLighthouseV2Event(
   event: LighthouseV2SSEEvent,
 ): LighthouseV2StreamState {
   switch (event.type) {
-    case LIGHTHOUSE_V2_SSE_EVENT.MESSAGE_DELTA: {
-      if (!state.tracksSkillSteps) {
-        return {
-          ...state,
-          status: LIGHTHOUSE_V2_STREAM_STATUS.STREAMING,
-          assistantText: `${state.assistantText}${event.content}`,
-          activityItems: appendTextActivityItem(
-            state.activityItems,
-            event.content,
-          ),
-        };
-      }
-
-      // Skill runs announce workflow steps with [[step:n]] markers embedded in
-      // the text stream; strip them here so they never render, and remember
-      // the highest/latest one for the progress UI.
-      const markers = consumeStepMarkers(state.markerCarry, event.content);
+    case LIGHTHOUSE_V2_SSE_EVENT.MESSAGE_DELTA:
       return {
         ...state,
         status: LIGHTHOUSE_V2_STREAM_STATUS.STREAMING,
-        assistantText: `${state.assistantText}${markers.text}`,
+        assistantText: `${state.assistantText}${event.content}`,
         activityItems: appendTextActivityItem(
           state.activityItems,
-          markers.text,
+          event.content,
         ),
-        currentStep: markers.steps.at(-1) ?? state.currentStep,
-        markerCarry: markers.carry,
       };
-    }
     case LIGHTHOUSE_V2_SSE_EVENT.TOOL_CALL_START: {
       const toolCall = {
         id: event.toolCallId,
@@ -140,7 +108,6 @@ export function reduceLighthouseV2Event(
           {
             ...toolCall,
             type: LIGHTHOUSE_V2_STREAM_ACTIVITY_ITEM_TYPE.TOOL_CALL,
-            ...(state.currentStep !== null ? { step: state.currentStep } : {}),
           },
         ],
       };
@@ -170,14 +137,14 @@ export function reduceLighthouseV2Event(
       };
     case LIGHTHOUSE_V2_SSE_EVENT.MESSAGE_END:
       return {
-        ...flushMarkerCarry(state),
+        ...state,
         status: LIGHTHOUSE_V2_STREAM_STATUS.COMPLETED,
         activeTaskId: null,
         messageId: event.messageId,
       };
     case LIGHTHOUSE_V2_SSE_EVENT.ERROR:
       return {
-        ...flushMarkerCarry(state),
+        ...state,
         status: LIGHTHOUSE_V2_STREAM_STATUS.ERROR,
         activeTaskId: null,
         error: {
@@ -189,28 +156,11 @@ export function reduceLighthouseV2Event(
       // Clear the task gate so the UI can recover: keeping activeTaskId set
       // leaves canSend false and makes the Retry button a no-op.
       return {
-        ...flushMarkerCarry(state),
+        ...state,
         status: LIGHTHOUSE_V2_STREAM_STATUS.DISCONNECTED,
         activeTaskId: null,
       };
   }
-}
-
-// A held-back suffix that never completed into a marker is plain text. Every
-// terminal path (end, error, closed connection) must restore it. Transient
-// EventSource reconnects never dispatch DISCONNECT, so their carry stays live.
-function flushMarkerCarry(
-  state: LighthouseV2StreamState,
-): LighthouseV2StreamState {
-  return {
-    ...state,
-    assistantText: `${state.assistantText}${state.markerCarry}`,
-    activityItems: appendTextActivityItem(
-      state.activityItems,
-      state.markerCarry,
-    ),
-    markerCarry: "",
-  };
 }
 
 function appendTextActivityItem(

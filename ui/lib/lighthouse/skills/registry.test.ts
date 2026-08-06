@@ -34,9 +34,8 @@ describe("skills registry", () => {
     expect(getNextSkill("triage-draft-ticket")).toBeUndefined();
   });
 
-  it("should define ordered steps for every skill", () => {
+  it("should version every skill", () => {
     for (const skill of getAllSkills()) {
-      expect(skill.steps.length).toBeGreaterThanOrEqual(3);
       expect(skill.version).toBeGreaterThanOrEqual(1);
     }
   });

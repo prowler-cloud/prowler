@@ -5,10 +5,7 @@ import { useState, useSyncExternalStore } from "react";
 
 import {
   CHAIN_OF_THOUGHT_STATUS,
-  ChainOfThoughtSearchResult,
-  ChainOfThoughtSearchResults,
   ChainOfThoughtStep,
-  type ChainOfThoughtStatus,
 } from "@/app/(prowler)/lighthouse/_components/ai-elements/chain-of-thought";
 import {
   LIGHTHOUSE_V2_STREAM_ACTIVITY_ITEM_TYPE,
@@ -17,7 +14,6 @@ import {
   type LighthouseV2StreamToolCallActivityItem,
 } from "@/app/(prowler)/lighthouse/_lib/event-reducer";
 import { formatToolName } from "@/app/(prowler)/lighthouse/_lib/tool-calls";
-import { Progress } from "@/components/shadcn/progress";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { cn } from "@/lib/utils";
 import type { LighthouseSkillDefinition } from "@/types/lighthouse-skills";
@@ -30,9 +26,11 @@ interface SkillRunProgressProps {
   startedAt?: string;
 }
 
-// Streaming view of a skill run: a compact progress card (design 1i, no Stop —
-// runs cannot be cancelled yet) that expands into the full step timeline with
-// tool chips nested under their step (design 1h). Narration streams below.
+// Streaming view of a skill run. An LLM run is not deterministic, so there is
+// no plan checklist and no percent bar — the card reports observed activity:
+// collapsed, a pulsing lighthouse-gradient label naming the tool currently
+// running (or the skill itself between tools); expanded, the append-only
+// timeline of tool calls as they actually happened. Narration streams below.
 export function SkillRunProgress({
   skill,
   streamState,
@@ -40,11 +38,14 @@ export function SkillRunProgress({
 }: SkillRunProgressProps) {
   // Local state needed: the user toggles between compact card and timeline.
   const [expanded, setExpanded] = useState(false);
-  const totalSteps = skill.steps.length;
-  const currentStep = clampStep(streamState.currentStep, totalSteps);
-  const currentStepTitle = currentStep
-    ? `Step ${currentStep} of ${totalSteps} · ${skill.steps[currentStep - 1]}`
-    : "Preparing workflow…";
+  const toolCallItems = streamState.activityItems.filter(isToolCallItem);
+  const lastToolCall = toolCallItems.at(-1);
+  // Between tools the model is generating text; naming the skill here would
+  // just repeat the card title, so the label reads "Thinking…" instead.
+  const activityLabel =
+    lastToolCall?.status === LIGHTHOUSE_V2_TOOL_CALL_STATUS.RUNNING
+      ? `Running ${formatToolName(lastToolCall.name)}…`
+      : "Thinking…";
   const streamedText = streamState.activityItems
     .filter(
       (item) => item.type === LIGHTHOUSE_V2_STREAM_ACTIVITY_ITEM_TYPE.TEXT,
@@ -74,14 +75,8 @@ export function SkillRunProgress({
                   {skill.name}
                 </span>
                 <span className="text-text-neutral-secondary truncate text-xs">
-                  {expanded ? (
-                    <>
-                      Running skill
-                      <ElapsedTime startedAt={startedAt} />
-                    </>
-                  ) : (
-                    currentStepTitle
-                  )}
+                  Running skill
+                  <ElapsedTime startedAt={startedAt} />
                 </span>
               </span>
               <ChevronDown
@@ -93,12 +88,14 @@ export function SkillRunProgress({
               />
             </button>
             {expanded ? (
-              <SkillStepTimeline skill={skill} streamState={streamState} />
+              <SkillToolTimeline toolCallItems={toolCallItems} />
             ) : (
-              <SkillProgressBar
-                currentStep={currentStep}
-                totalSteps={totalSteps}
-              />
+              <span
+                role="status"
+                className="bg-lighthouse animate-pulse truncate bg-clip-text text-xs font-medium text-transparent"
+              >
+                {activityLabel}
+              </span>
             )}
           </div>
         </div>
@@ -112,103 +109,45 @@ export function SkillRunProgress({
   );
 }
 
-function SkillProgressBar({
-  currentStep,
-  totalSteps,
+function SkillToolTimeline({
+  toolCallItems,
 }: {
-  currentStep: number | null;
-  totalSteps: number;
+  toolCallItems: LighthouseV2StreamToolCallActivityItem[];
 }) {
-  // The active step counts half done so the bar visibly moves on every marker.
-  const percent = currentStep
-    ? Math.min(100, ((currentStep - 0.5) / totalSteps) * 100)
-    : 5;
-
-  return (
-    <Progress
-      value={percent}
-      variant="lighthouse"
-      size="compact"
-      aria-valuemin={0}
-      aria-valuemax={totalSteps}
-      aria-valuenow={currentStep ?? 0}
-    />
-  );
-}
-
-function SkillStepTimeline({
-  skill,
-  streamState,
-}: {
-  skill: LighthouseSkillDefinition;
-  streamState: LighthouseV2StreamState;
-}) {
-  const currentStep = clampStep(streamState.currentStep, skill.steps.length);
-  const toolCallItems = streamState.activityItems.filter(
-    (item): item is LighthouseV2StreamToolCallActivityItem =>
-      item.type === LIGHTHOUSE_V2_STREAM_ACTIVITY_ITEM_TYPE.TOOL_CALL,
-  );
+  if (toolCallItems.length === 0) {
+    return (
+      <p className="text-text-neutral-secondary pt-1 text-xs">
+        Waiting for the first tool call…
+      </p>
+    );
+  }
 
   return (
     <div className="flex flex-col pt-1">
-      {skill.steps.map((step, index) => {
-        const stepNumber = index + 1;
-        // Tools fired before the first marker belong to the opening step; an
-        // out-of-range marker clamps so its tools still land on a real step.
-        const stepTools = toolCallItems.filter(
-          (item) =>
-            clampStep(item.step ?? 1, skill.steps.length) === stepNumber,
-        );
+      {toolCallItems.map((toolCall) => {
+        const isRunning =
+          toolCall.status === LIGHTHOUSE_V2_TOOL_CALL_STATUS.RUNNING;
         return (
           <ChainOfThoughtStep
-            key={step}
-            label={step}
-            status={getStepStatus(stepNumber, currentStep)}
-            icon={
-              getStepStatus(stepNumber, currentStep) ===
-              CHAIN_OF_THOUGHT_STATUS.ACTIVE
-                ? Spinner
-                : undefined
+            key={toolCall.id}
+            label={formatToolName(toolCall.name)}
+            status={
+              isRunning
+                ? CHAIN_OF_THOUGHT_STATUS.ACTIVE
+                : CHAIN_OF_THOUGHT_STATUS.COMPLETE
             }
-          >
-            {stepTools.length > 0 && (
-              <ChainOfThoughtSearchResults>
-                {stepTools.map((toolCall) => (
-                  <ChainOfThoughtSearchResult
-                    key={toolCall.id}
-                    variant="lighthouse"
-                  >
-                    {toolCall.status ===
-                      LIGHTHOUSE_V2_TOOL_CALL_STATUS.RUNNING && (
-                      <Spinner className="size-3" />
-                    )}
-                    {formatToolName(toolCall.name)}
-                  </ChainOfThoughtSearchResult>
-                ))}
-              </ChainOfThoughtSearchResults>
-            )}
-          </ChainOfThoughtStep>
+            icon={isRunning ? Spinner : undefined}
+          />
         );
       })}
     </div>
   );
 }
 
-function getStepStatus(
-  stepNumber: number,
-  currentStep: number | null,
-): ChainOfThoughtStatus {
-  if (currentStep === null || stepNumber > currentStep) {
-    return CHAIN_OF_THOUGHT_STATUS.PENDING;
-  }
-  return stepNumber === currentStep
-    ? CHAIN_OF_THOUGHT_STATUS.ACTIVE
-    : CHAIN_OF_THOUGHT_STATUS.COMPLETE;
-}
-
-function clampStep(step: number | null, totalSteps: number): number | null {
-  if (step === null) return null;
-  return Math.min(Math.max(step, 1), totalSteps);
+function isToolCallItem(
+  item: LighthouseV2StreamState["activityItems"][number],
+): item is LighthouseV2StreamToolCallActivityItem {
+  return item.type === LIGHTHOUSE_V2_STREAM_ACTIVITY_ITEM_TYPE.TOOL_CALL;
 }
 
 function ElapsedTime({ startedAt }: { startedAt?: string }) {

@@ -16,11 +16,6 @@ const skill: LighthouseSkillDefinition = {
   name: "Verify exploitability",
   description: "Check real-world exposure and attack preconditions",
   icon: Sparkle,
-  steps: [
-    "Gather finding & resource context",
-    "Check public exposure & trust policy",
-    "Compose exploitability verdict",
-  ],
   guidance: "Focus on real evidence gathered from tools.",
   nextSkillId: "generate-remediation",
   version: 1,
@@ -41,9 +36,10 @@ describe("buildSkillAgentText", () => {
     expect(block).toContain(
       '{"name":"Verify exploitability","skill_id":"verify-exploitability","version":1}',
     );
-    expect(block).toContain("1. Gather finding & resource context");
-    expect(block).toContain("3. Compose exploitability verdict");
-    expect(block).toContain("[[step:1]]");
+    // Progress is derived from real stream events, so the prompt carries no
+    // step plan and no self-reporting protocol.
+    expect(block).not.toContain("[[step:");
+    expect(block).not.toContain("steps");
     expect(block).toContain("Focus on real evidence gathered from tools.");
   });
 

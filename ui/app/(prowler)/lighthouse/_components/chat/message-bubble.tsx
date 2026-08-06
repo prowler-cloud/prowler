@@ -18,7 +18,6 @@ import {
 } from "@/app/(prowler)/lighthouse/_types";
 import { LighthouseContextBadge } from "@/components/lighthouse/context-chip";
 import { Button } from "@/components/shadcn/button/button";
-import { stripStepMarkers } from "@/lib/lighthouse/skills/step-markers";
 import { cn } from "@/lib/utils";
 import type { LighthouseSkillDefinition } from "@/types/lighthouse-skills";
 
@@ -54,15 +53,11 @@ export function MessageBubble({
   const isUser = message.role === LIGHTHOUSE_V2_MESSAGE_ROLE.USER;
   const isSkillResponse = !isUser && skillRun !== undefined;
   // Text-only join feeds the copy button; tool calls are rendered separately.
-  // Assistant text is persisted raw, so skill step markers are stripped here.
   const messageText = message.parts
     .filter((part) => part.type === LIGHTHOUSE_V2_PART_TYPE.TEXT)
     .map((part) => getTextContent(part.content))
     .filter(Boolean)
     .join("\n\n");
-  const displayText = isSkillResponse
-    ? stripStepMarkers(messageText)
-    : messageText;
   const messageContext = isUser
     ? message.parts
         .filter((part) => part.type === LIGHTHOUSE_V2_PART_TYPE.TEXT)
@@ -123,7 +118,6 @@ export function MessageBubble({
                 parts={message.parts.filter(
                   (part) => part.type === LIGHTHOUSE_V2_PART_TYPE.TEXT,
                 )}
-                stripSkillStepMarkers
               />
             ) : (
               <AssistantParts parts={message.parts} />
@@ -135,7 +129,7 @@ export function MessageBubble({
         )}
         <MessageMeta
           isUser={isUser}
-          text={displayText}
+          text={messageText}
           insertedAt={message.insertedAt}
         />
       </div>
@@ -155,27 +149,16 @@ function AssistantParts({ parts }: { parts: LighthouseV2Part[] }) {
         group.type === ASSISTANT_PART_GROUP_TYPE.TOOL_CALL ? (
           <ToolCalls key={group.id} parts={group.parts} />
         ) : (
-          <AssistantTextParts
-            key={group.id}
-            parts={group.parts}
-            stripSkillStepMarkers={false}
-          />
+          <AssistantTextParts key={group.id} parts={group.parts} />
         ),
       )}
     </div>
   );
 }
 
-function AssistantTextParts({
-  parts,
-  stripSkillStepMarkers,
-}: {
-  parts: LighthouseV2Part[];
-  stripSkillStepMarkers: boolean;
-}) {
+function AssistantTextParts({ parts }: { parts: LighthouseV2Part[] }) {
   return parts.map((part, index) => {
-    const rawText = getTextContent(part.content);
-    const text = stripSkillStepMarkers ? stripStepMarkers(rawText) : rawText;
+    const text = getTextContent(part.content);
     return text ? (
       <MessageMarkdown key={part.id || `text-${index}`} text={text} />
     ) : null;

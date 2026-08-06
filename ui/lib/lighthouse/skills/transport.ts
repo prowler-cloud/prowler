@@ -69,18 +69,15 @@ export function buildSkillAgentText(
   ].join("\n");
 }
 
+// No step plan: the agent decides its own flow, and the UI derives progress
+// from real stream events (tool calls, narration).
 function buildSkillInstructions(skill: LighthouseSkillDefinition): string {
   return [
     `Skill: ${skill.name} — ${skill.description}.`,
-    "Work through these steps strictly in order:",
-    ...skill.steps.map((step, index) => `${index + 1}. ${step}`),
-    "Protocol:",
-    "- Immediately before starting a step, output its marker alone on its own line, e.g. [[step:1]] before step 1.",
-    "- Emit each step's marker exactly once, in ascending order. Never repeat a marker, never go back to an earlier step.",
-    "- Markers must be plain text on their own line — never inside a bullet or numbered list, heading, code block, or sentence.",
-    "- After each marker, state in one short sentence what you are doing.",
+    "Guidelines:",
+    "- Narrate what you are doing in one short sentence as you move through the work.",
     "- Use the available tools to gather real evidence; never fabricate data.",
-    `- The final step (step ${skill.steps.length}) must produce the complete answer in markdown, without any markers inside it.`,
+    "- Finish by producing the complete answer in markdown.",
     skill.guidance,
   ].join("\n");
 }

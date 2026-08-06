@@ -24,10 +24,9 @@ export interface LighthouseSkillDefinition {
   name: string;
   description: string;
   icon: LucideIcon;
-  // Ordered workflow steps. The instructions tell the model to announce each
-  // one with a [[step:n]] marker, which drives the progress UI.
-  steps: readonly string[];
-  // Skill-specific guidance appended to the shared step protocol.
+  // Skill-specific guidance appended to the shared instructions. There is no
+  // step plan: the agent decides its own flow, and the UI reports progress
+  // from real stream events.
   guidance: string;
   // Suggested follow-up skill shown on the completed state ("Next: ... →").
   nextSkillId: LighthouseSkillId | null;
