@@ -1,7 +1,8 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
-import { LighthouseSkillsBlock } from "@/components/lighthouse/skills-block";
+import { LighthouseSkillsBlock } from "./lighthouse-skills-block";
 
 describe("LighthouseSkillsBlock", () => {
   it("should render every skill with its description", () => {
@@ -21,8 +22,9 @@ describe("LighthouseSkillsBlock", () => {
     ).toBeInTheDocument();
   });
 
-  it("should launch the clicked skill", () => {
+  it("should launch the clicked skill", async () => {
     // Given
+    const user = userEvent.setup();
     const onLaunchSkill = vi.fn();
     render(
       <LighthouseSkillsBlock
@@ -32,7 +34,7 @@ describe("LighthouseSkillsBlock", () => {
     );
 
     // When
-    fireEvent.click(
+    await user.click(
       screen.getByRole("button", { name: /Verify exploitability/ }),
     );
 
@@ -43,8 +45,9 @@ describe("LighthouseSkillsBlock", () => {
     });
   });
 
-  it("should keep the free-form fallback available", () => {
+  it("should keep the free-form fallback available", async () => {
     // Given
+    const user = userEvent.setup();
     const onAskAnything = vi.fn();
     render(
       <LighthouseSkillsBlock
@@ -54,7 +57,7 @@ describe("LighthouseSkillsBlock", () => {
     );
 
     // When
-    fireEvent.click(
+    await user.click(
       screen.getByRole("button", {
         name: /ask Lighthouse anything about this finding/i,
       }),

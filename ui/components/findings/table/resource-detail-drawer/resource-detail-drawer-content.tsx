@@ -27,7 +27,6 @@ import { JiraDispatchActionItem } from "@/components/findings/jira-dispatch-acti
 import { MarkdownContainer } from "@/components/findings/markdown-container";
 import { MuteFindingsModal } from "@/components/findings/mute-findings-modal";
 import { getComplianceIcon } from "@/components/icons";
-import { LighthouseSkillsBlock } from "@/components/lighthouse/skills-block";
 import {
   Badge,
   Button,
@@ -97,6 +96,7 @@ import {
 } from "../finding-triage-cells";
 import { DeltaValues, NotificationIndicator } from "../notification-indicator";
 
+import { LighthouseSkillsBlock } from "./lighthouse-skills-block";
 import { ResourceDetailSkeleton } from "./resource-detail-skeleton";
 import type { CheckMeta } from "./use-resource-detail-drawer";
 

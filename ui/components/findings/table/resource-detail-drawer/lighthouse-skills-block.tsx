@@ -3,6 +3,7 @@
 import { ArrowRight } from "lucide-react";
 
 import { LighthouseIcon } from "@/components/icons";
+import { Card } from "@/components/shadcn/card/card";
 import { getAllSkills } from "@/lib/lighthouse/skills/registry";
 import type { LighthouseSkillDefinition } from "@/types/lighthouse-skills";
 
@@ -11,42 +12,40 @@ interface LighthouseSkillsBlockProps {
   onAskAnything: () => void;
 }
 
-// Finding-detail CTA (design 1d): a grid of launchable agentic workflows plus
+// Finding-detail CTA: a grid of launchable agentic workflows plus
 // the free-form "ask anything" fallback that the old gradient banner offered.
 export function LighthouseSkillsBlock({
   onLaunchSkill,
   onAskAnything,
 }: LighthouseSkillsBlockProps) {
   return (
-    <div className="bg-lighthouse rounded-xl p-px">
-      <div className="bg-bg-neutral-primary flex flex-col gap-3 rounded-[11px] p-4">
-        <div className="flex items-center gap-2">
-          <LighthouseIcon size={16} />
-          <span className="text-text-neutral-primary text-sm font-semibold">
-            Lighthouse AI Skills
-          </span>
-          <span className="text-text-neutral-tertiary ml-auto text-xs">
-            Agentic workflows · run in chat
-          </span>
-        </div>
-        <div className="grid grid-cols-1 gap-2 @md:grid-cols-2">
-          {getAllSkills().map((skill) => (
-            <SkillCard
-              key={skill.id}
-              skill={skill}
-              onLaunch={() => onLaunchSkill(skill)}
-            />
-          ))}
-        </div>
-        <button
-          type="button"
-          onClick={onAskAnything}
-          className="text-text-lighthouse self-end text-xs underline-offset-2 hover:underline"
-        >
-          Or ask Lighthouse anything about this finding →
-        </button>
+    <Card variant="lighthouse" className="gap-3 p-4">
+      <div className="flex items-center gap-2">
+        <LighthouseIcon size={16} />
+        <span className="text-text-neutral-primary text-sm font-semibold">
+          Lighthouse AI Skills
+        </span>
+        <span className="text-text-neutral-tertiary ml-auto text-xs">
+          Agentic workflows · run in chat
+        </span>
       </div>
-    </div>
+      <div className="grid grid-cols-1 gap-2 @md:grid-cols-2">
+        {getAllSkills().map((skill) => (
+          <SkillCard
+            key={skill.id}
+            skill={skill}
+            onLaunch={() => onLaunchSkill(skill)}
+          />
+        ))}
+      </div>
+      <button
+        type="button"
+        onClick={onAskAnything}
+        className="text-text-lighthouse self-end text-xs underline-offset-2 hover:underline"
+      >
+        Or ask Lighthouse anything about this finding →
+      </button>
+    </Card>
   );
 }
 
