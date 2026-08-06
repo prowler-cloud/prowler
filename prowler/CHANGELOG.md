@@ -4,6 +4,46 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [5.38.0] (Prowler v5.38.0)
+
+### 🚀 Added
+
+- `admincenter_shared_bookings_disabled` check for M365 provider, covering CIS Microsoft 365 Foundations Benchmark v7.0.0 control 1.3.9 [(#12147)](https://github.com/prowler-cloud/prowler/pull/12147)
+- `defender_priority_account_protection_enabled` and `defender_strict_preset_security_policy_enabled` checks for M365 provider, covering CIS Microsoft 365 Foundations Benchmark v7.0.0 controls 2.4.1 and 2.4.2 [(#12148)](https://github.com/prowler-cloud/prowler/pull/12148)
+- `exchange_owa_mailbox_policy_personal_accounts_disabled` and `exchange_organization_reject_direct_send_enabled` checks for M365 provider, covering CIS Microsoft 365 Foundations Benchmark v7.0.0 controls 6.3.2 and 6.5.5 [(#12149)](https://github.com/prowler-cloud/prowler/pull/12149)
+- `teams_external_access_trial_tenants_blocked` check for M365 provider, verifying that Teams external access with trial-only tenants is blocked, covering CIS Microsoft 365 Foundations Benchmark v7.0.0 control 8.2.4 [(#12151)](https://github.com/prowler-cloud/prowler/pull/12151)
+- `entra_device_registration_join_restricted`, `entra_device_registration_max_devices_per_user_limited`, `entra_device_registration_global_admins_not_local_admins`, `entra_device_registration_registering_user_not_local_admin`, `entra_device_registration_laps_enabled` and `entra_policy_default_user_cannot_read_bitlocker_keys` checks for M365 provider, covering CIS Microsoft 365 Foundations Benchmark v7.0.0 device registration controls (5.1.4.x) [(#12152)](https://github.com/prowler-cloud/prowler/pull/12152)
+- The IAM privilege-escalation check now detects 22 additional pathfinding.cloud escalation paths across AWS Batch, Braket, CodeDeploy, Cognito Identity, ECS, EMR, EMR Serverless, GameLift, Glue, EC2 Image Builder, Kinesis Analytics, HealthOmics, EventBridge Scheduler, SSM Automation, Step Functions, IAM permissions boundaries, and IAM Identity Center (SSO) [(#12237)](https://github.com/prowler-cloud/prowler/pull/12237)
+- Container images now ship an SBOM and build provenance as OCI attestations [(#12352)](https://github.com/prowler-cloud/prowler/pull/12352)
+
+### 🔄 Changed
+
+- Highlighted key security terms in the Risk description of 8 existing M365 checks [(#12156)](https://github.com/prowler-cloud/prowler/pull/12156)
+- Moved the Trivy suppressions from the classic `.trivyignore` to `.trivyignore.yaml`, so each entry is scoped to the package it names instead of suppressing its CVE across the whole image [(#12314)](https://github.com/prowler-cloud/prowler/pull/12314)
+- The `securityhub_delegated_admin_enabled_all_regions`, `guardduty_delegated_admin_enabled_all_regions` and `config_delegated_admin_and_org_aggregator_all_regions` checks now report MANUAL instead of FAIL when the delegated administrator status cannot be read and no independent misconfiguration is detected, which happens on member accounts that are not registered as delegated administrators because the API is restricted to the organization management account and to delegated administrator accounts [(#12319)](https://github.com/prowler-cloud/prowler/pull/12319)
+- Pin the container vulnerability scanner to Trivy v0.72.0, matching prowler-registry and partner-portal [(#12346)](https://github.com/prowler-cloud/prowler/pull/12346)
+- Quote the unquoted shell expansions in the release and build workflows [(#12365)](https://github.com/prowler-cloud/prowler/pull/12365)
+- Fix the remaining shellcheck findings in workflows and enable the check [(#12367)](https://github.com/prowler-cloud/prowler/pull/12367)
+
+### 🐞 Fixed
+
+- Spurious error log output from `Get-ApplicationAccessPolicy` on M365 tenants without application access policies [(#12149)](https://github.com/prowler-cloud/prowler/pull/12149)
+- Secret checks no longer report credential-free JDBC connection strings as embedded credentials [(#12288)](https://github.com/prowler-cloud/prowler/pull/12288)
+- A failed `ListOrganizationAdminAccounts` lookup in one region no longer marks the Security Hub delegated administrator status as undetermined in every other region [(#12319)](https://github.com/prowler-cloud/prowler/pull/12319)
+- `securityhub_delegated_admin_enabled_all_regions` no longer reports FAIL with `delegated administrator status could not be determined` on accounts that do have a Security Hub delegated administrator; `ListOrganizationAdminAccounts` responses are now parsed with the `AccountId` and `Status` fields the API actually returns [(#12319)](https://github.com/prowler-cloud/prowler/pull/12319)
+- `guardduty_delegated_admin_enabled_all_regions` no longer reports `no delegated administrator configured` when the lookup was denied or failed, which asserted absence where there was only lack of visibility [(#12319)](https://github.com/prowler-cloud/prowler/pull/12319)
+- OCI Identity service no longer drops the whole dynamic groups, groups, policies or users listing when the OCI API returns null optional fields such as `matching_rule` [(#12327)](https://github.com/prowler-cloud/prowler/pull/12327)
+- Alibaba Cloud STS credential validation retries transient connection failures and reports exhausted attempts as connection errors instead of invalid credentials [(#12353)](https://github.com/prowler-cloud/prowler/pull/12353)
+
+### 🔐 Security
+
+- Bumped the Compose DozerDB image from 5.26.3.0 to 5.26.27.0, which moves it off Debian 11 and onto Debian 13 [(#12320)](https://github.com/prowler-cloud/prowler/pull/12320)
+- The SDK container image now verifies the checksum of every third-party binary it downloads (PowerShell, Trivy, zizmor) before installing it [(#12334)](https://github.com/prowler-cloud/prowler/pull/12334)
+- Upgrade aiohttp to 3.14.3 to pick up the fix for CVE-2026-69244 [(#12340)](https://github.com/prowler-cloud/prowler/pull/12340)
+- Upgrade cryptography to 50.0.0, closing CVE-2026-69247 and CVE-2026-69249 [(#12356)](https://github.com/prowler-cloud/prowler/pull/12356)
+
+---
+
 ## [5.37.1] (Prowler v5.37.1)
 
 ### 🔄 Changed
