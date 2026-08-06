@@ -78,8 +78,9 @@ from conftest import (
     today_after_n_days,
 )
 from django.conf import settings
-from django.db import close_old_connections, connection
+from django.db import close_old_connections, connection, connections
 from django.db.models import Count
+from django.db.models.signals import pre_delete
 from django.http import JsonResponse
 from django.test import RequestFactory
 from django.test.utils import CaptureQueriesContext
@@ -517,6 +518,50 @@ class TestUserViewSet:
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert error_field in response.json()["errors"][0]["source"]["pointer"]
+
+
+@pytest.mark.requires_test_admin_alias
+@pytest.mark.django_db(transaction=True, databases=["default", "admin"])
+class TestTenantDeletionTransactions:
+    @patch("api.v1.views.delete_tenant_task.apply_async")
+    def test_delete_rolls_back_memberships_when_user_cleanup_fails(
+        self,
+        delete_tenant_mock,
+        authenticated_client,
+        tenants_fixture,
+    ):
+        assert connections["default"] is not connections["admin"]
+
+        _, tenant, _ = tenants_fixture
+        exclusive_user = User.objects.create_user(
+            name="exclusive user",
+            password=TEST_PASSWORD,
+            email="exclusive-user@example.com",
+        )
+        membership = Membership.objects.create(
+            user=exclusive_user,
+            tenant=tenant,
+            role=Membership.RoleChoices.MEMBER,
+        )
+
+        def fail_user_cleanup(*, instance, **kwargs):
+            if instance.pk == exclusive_user.pk:
+                raise RuntimeError("Simulated user cleanup failure.")
+
+        pre_delete.connect(fail_user_cleanup, sender=User)
+        try:
+            with (
+                patch.object(MainRouter, "admin_db", "admin"),
+                pytest.raises(RuntimeError, match=r"Simulated user cleanup failure\."),
+            ):
+                authenticated_client.delete(
+                    reverse("tenant-detail", kwargs={"pk": tenant.id})
+                )
+        finally:
+            pre_delete.disconnect(fail_user_cleanup, sender=User)
+
+        assert Membership.objects.using("admin").filter(pk=membership.pk).exists()
+        delete_tenant_mock.assert_not_called()
 
 
 @pytest.mark.django_db
