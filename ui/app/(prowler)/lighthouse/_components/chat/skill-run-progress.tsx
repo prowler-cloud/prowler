@@ -17,6 +17,7 @@ import {
   type LighthouseV2StreamToolCallActivityItem,
 } from "@/app/(prowler)/lighthouse/_lib/event-reducer";
 import { formatToolName } from "@/app/(prowler)/lighthouse/_lib/tool-calls";
+import { Progress } from "@/components/shadcn/progress";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { cn } from "@/lib/utils";
 import type { LighthouseSkillDefinition } from "@/types/lighthouse-skills";
@@ -124,18 +125,14 @@ function SkillProgressBar({
     : 5;
 
   return (
-    <div
-      role="progressbar"
+    <Progress
+      value={percent}
+      variant="lighthouse"
+      size="compact"
       aria-valuemin={0}
       aria-valuemax={totalSteps}
       aria-valuenow={currentStep ?? 0}
-      className="bg-bg-neutral-tertiary h-1 overflow-hidden rounded-full"
-    >
-      <div
-        className="bg-lighthouse h-full animate-pulse rounded-full transition-[width] duration-500"
-        style={{ width: `${percent}%` }}
-      />
-    </div>
+    />
   );
 }
 

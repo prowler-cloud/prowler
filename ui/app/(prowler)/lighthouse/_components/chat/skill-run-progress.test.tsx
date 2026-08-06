@@ -1,4 +1,5 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -10,7 +11,7 @@ import { getSkillById } from "@/lib/lighthouse/skills/registry";
 import { SkillRunProgress } from "./skill-run-progress";
 
 function buildStreamState() {
-  let state = createInitialLighthouseV2StreamState("task-1");
+  let state = createInitialLighthouseV2StreamState("task-1", true);
   state = reduceLighthouseV2Event(state, {
     type: "message.delta",
     content: "[[step:1]]Gathering context.",
@@ -57,14 +58,19 @@ describe("SkillRunProgress", () => {
     expect(
       screen.queryByText("Query attack paths for lateral movement"),
     ).not.toBeInTheDocument();
+    expect(screen.getByRole("progressbar")).toHaveAttribute(
+      "data-slot",
+      "progress",
+    );
   });
 
-  it("should expand into the step timeline with tool chips nested under steps", () => {
+  it("should expand into the step timeline with tool chips nested under steps", async () => {
     // Given
+    const user = userEvent.setup();
     render(<SkillRunProgress skill={skill} streamState={buildStreamState()} />);
 
     // When
-    fireEvent.click(
+    await user.click(
       screen.getByRole("button", { name: /Verify exploitability/ }),
     );
 
@@ -77,9 +83,10 @@ describe("SkillRunProgress", () => {
     expect(screen.getByText("Check public exposure")).toBeInTheDocument();
   });
 
-  it("should clamp out-of-range tool steps onto the last real step", () => {
+  it("should clamp out-of-range tool steps onto the last real step", async () => {
     // Given: a marker beyond the skill's five steps tags the tool with step 99
-    let state = createInitialLighthouseV2StreamState("task-1");
+    const user = userEvent.setup();
+    let state = createInitialLighthouseV2StreamState("task-1", true);
     state = reduceLighthouseV2Event(state, {
       type: "message.delta",
       content: "[[step:99]]Wrapping up.",
@@ -92,7 +99,7 @@ describe("SkillRunProgress", () => {
     render(<SkillRunProgress skill={skill} streamState={state} />);
 
     // When
-    fireEvent.click(
+    await user.click(
       screen.getByRole("button", { name: /Verify exploitability/ }),
     );
 
