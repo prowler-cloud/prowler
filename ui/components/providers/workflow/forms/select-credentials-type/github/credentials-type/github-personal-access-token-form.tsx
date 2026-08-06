@@ -4,14 +4,28 @@ import { Control } from "react-hook-form";
 
 import { WizardInputField } from "@/components/providers/workflow/forms/fields";
 import { Button } from "@/components/shadcn";
-import { PRECONFIGURED_CREDENTIAL_URLS } from "@/lib/external-urls";
+import {
+  buildGitHubPersonalAccessTokenOrgUrl,
+  PRECONFIGURED_CREDENTIAL_URLS,
+} from "@/lib/external-urls";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
+
+interface GitHubPersonalAccessTokenFormProps {
+  control: Control<any>;
+  // GitHub identifier entered in the previous wizard step. When it names an
+  // organization, it flows into the org-scoped token URL as `target_name` so
+  // GitHub pre-selects the right Resource Owner and surfaces the org-only
+  // permissions (`organization_administration`, `members`). When absent, only
+  // the personal-repositories link is shown.
+  providerUid?: string;
+}
 
 export const GitHubPersonalAccessTokenForm = ({
   control,
-}: {
-  control: Control<any>;
-}) => {
+  providerUid,
+}: GitHubPersonalAccessTokenFormProps) => {
+  const trimmedProviderUid = providerUid?.trim();
+
   return (
     <>
       <div className="flex flex-col">
@@ -32,20 +46,30 @@ export const GitHubPersonalAccessTokenForm = ({
         variant="bordered"
         isRequired
       />
-      <Button
-        aria-label="Create a pre-configured Personal Access Token on GitHub"
-        variant="link"
-        className="h-auto w-fit min-w-0 p-0"
-        asChild
-      >
-        <a
-          href={PRECONFIGURED_CREDENTIAL_URLS.GITHUB_PERSONAL_ACCESS_TOKEN}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Create a pre-configured Personal Access Token on GitHub
-        </a>
-      </Button>
+      <div className="flex flex-col items-start gap-1">
+        <Button variant="link" size="link-sm" asChild>
+          <a
+            href={
+              PRECONFIGURED_CREDENTIAL_URLS.GITHUB_PERSONAL_ACCESS_TOKEN_USER
+            }
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Create a pre-configured token for personal repositories
+          </a>
+        </Button>
+        {trimmedProviderUid && (
+          <Button variant="link" size="link-sm" asChild>
+            <a
+              href={buildGitHubPersonalAccessTokenOrgUrl(trimmedProviderUid)}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {`Create a pre-configured token for organization ${trimmedProviderUid}`}
+            </a>
+          </Button>
+        )}
+      </div>
     </>
   );
 };

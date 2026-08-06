@@ -48,30 +48,78 @@ const CF_QUICKCREATE_BASE_URL =
 
 // Deep links that open each provider's cloud console with the credential
 // creation form pre-filled with the exact permissions, scopes and name
-// Prowler needs. Users click, review and submit — no manual permission
-// picking. Only providers whose console admits query-parameter pre-fill are
-// listed: Azure Portal, GCP Console, OCI, MongoDB Atlas, Alibaba RAM,
-// Vercel and Okta don't support this by design (see PROWLER-2187 audit).
+// Prowler needs. The full 16-provider audit (which providers support this and
+// which do not) lives in the PROWLER-2187 PR description; keep both in sync
+// when adding or removing entries here.
 // AWS has its own CloudFormation quick-create link built in
 // `getAWSCredentialsTemplateLinks` below.
 export const PRECONFIGURED_CREDENTIAL_URLS = {
-  // Opens the Cloudflare "Create Custom Token" form pre-filled with the four
-  // read-only scopes (`Account Settings`, `Zone`, `Zone Settings`, `DNS`)
-  // and the token name. Kept in sync with the URL published in
+  // Opens the Cloudflare "Create Custom Token" form under the user profile
+  // pre-filled with the four read-only scopes Prowler needs
+  // (`Account Settings`, `Zone`, `Zone Settings`, `DNS`) and the token name.
+  // Kept in sync with the "User API Token" URL published in
   // docs/user-guide/providers/cloudflare/authentication.mdx.
-  CLOUDFLARE_API_TOKEN:
+  CLOUDFLARE_API_TOKEN_USER:
     "https://dash.cloudflare.com/profile/api-tokens?permissionGroupKeys=%5B%7B%22key%22%3A%22account_settings%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22zone%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22zone_settings%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22dns%22%2C%22type%22%3A%22read%22%7D%5D&accountId=%2A&zoneId=all&name=Prowler%20Security%20Scanner",
-  // Opens the GitHub fine-grained PAT creation form pre-filled with the
-  // read-only permissions Prowler needs. The URL is the superset of the
-  // personal and organization scopes: it includes `organization_administration`
-  // and `members`, which GitHub only surfaces when the token's Resource Owner
-  // is an organization (silently ignored for personal accounts). This lets one
-  // link serve both scenarios without asking the user to pick upfront.
-  // Kept in sync with the URL published in
+  // Opens the GitHub fine-grained PAT creation form pre-filled with the four
+  // read-only permissions Prowler needs to scan a user's own repositories.
+  // Kept in sync with the "user repositories" URL published in
   // docs/user-guide/providers/github/authentication.mdx.
-  GITHUB_PERSONAL_ACCESS_TOKEN:
-    "https://github.com/settings/personal-access-tokens/new?name=Prowler+Security+Scanner&description=Fine-grained+PAT+for+Prowler+security+scanning&expires_in=90&administration=read&contents=read&vulnerability_alerts=read&emails=read&organization_administration=read&members=read",
+  GITHUB_PERSONAL_ACCESS_TOKEN_USER:
+    "https://github.com/settings/personal-access-tokens/new?name=Prowler+Security+Scanner&description=Fine-grained+PAT+for+Prowler+security+scanning&expires_in=90&administration=read&contents=read&vulnerability_alerts=read&emails=read",
 } as const;
+
+// Builds the account-owned Cloudflare API Token URL for the given account.
+// Uses the dashboard router pattern (`?to=/<accountId>/api-tokens&...`)
+// published in docs/user-guide/providers/cloudflare/authentication.mdx, with
+// the account id substituted in place of the docs' `:account` placeholder to
+// avoid ambiguity when the user is signed into multiple accounts. Navigating
+// directly to `/<accountId>/api-tokens/create` does NOT pre-fill the form —
+// Cloudflare only reads the pre-fill params when they arrive via the router.
+// Same four read-only scopes as the user token URL.
+export const buildCloudflareAccountOwnedApiTokenUrl = (
+  accountId: string,
+): string => {
+  // Cloudflare's router expects the `to=` value with unencoded slashes; using
+  // URLSearchParams would percent-encode them and break the redirect, so we
+  // assemble the query string manually and only encode the pieces that need
+  // it.
+  const encodedAccountId = encodeURIComponent(accountId);
+  const permissionGroupKeys = encodeURIComponent(
+    JSON.stringify([
+      { key: "account_settings", type: "read" },
+      { key: "zone", type: "read" },
+      { key: "zone_settings", type: "read" },
+      { key: "dns", type: "read" },
+    ]),
+  );
+  const name = encodeURIComponent("Prowler Security Scanner");
+  return `https://dash.cloudflare.com/?to=/${encodedAccountId}/api-tokens&permissionGroupKeys=${permissionGroupKeys}&name=${name}`;
+};
+
+// Builds the organization-scoped GitHub fine-grained PAT URL. GitHub validates
+// permissions against the token's Resource Owner and only surfaces
+// `organization_administration` and `members` when it is an organization, so
+// we pin the owner via `target_name` and skip account-only permissions
+// (`emails`) that the docs' org template does not request. Kept in sync with
+// the "organization scanning" URL published in
+// docs/user-guide/providers/github/authentication.mdx.
+export const buildGitHubPersonalAccessTokenOrgUrl = (
+  targetName: string,
+): string => {
+  const params = new URLSearchParams({
+    name: "Prowler Security Scanner",
+    description: "Fine-grained PAT for Prowler organization security scanning",
+    expires_in: "90",
+    target_name: targetName,
+    administration: "read",
+    contents: "read",
+    vulnerability_alerts: "read",
+    organization_administration: "read",
+    members: "read",
+  });
+  return `https://github.com/settings/personal-access-tokens/new?${params.toString()}`;
+};
 
 export interface AWSOrgDeploymentQuickLinkParams {
   externalId: string;

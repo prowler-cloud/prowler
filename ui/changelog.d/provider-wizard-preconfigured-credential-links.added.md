@@ -1,1 +1,1 @@
-Surface pre-configured credential creation links in the Cloudflare API Token and GitHub Personal Access Token forms, pre-filling the exact read-only scopes Prowler needs for personal and organization scans
+Surface pre-configured credential creation links in the add-provider wizard. Cloudflare exposes the User API Token template and an Account-Owned template pinned to the Cloudflare Account ID entered in the wizard, GitHub exposes the personal-repositories template and an organization-scanning template pinned to the identifier entered in the wizard
