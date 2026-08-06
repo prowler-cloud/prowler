@@ -554,13 +554,13 @@ class AlibabacloudProvider(Provider):
 
         except Exception as sts_error:
             logger.error(f"Could not get caller identity from STS: {sts_error}. ")
-            if _is_connection_error(sts_error):
-                raise AlibabaCloudConnectionError(
+            if _is_authentication_error(sts_error):
+                raise AlibabaCloudInvalidCredentialsError(
                     file=pathlib.Path(__file__).name,
                     original_exception=sts_error,
                 ) from sts_error
-            if _is_authentication_error(sts_error):
-                raise AlibabaCloudInvalidCredentialsError(
+            if _is_connection_error(sts_error):
+                raise AlibabaCloudConnectionError(
                     file=pathlib.Path(__file__).name,
                     original_exception=sts_error,
                 ) from sts_error
@@ -893,6 +893,14 @@ class AlibabacloudProvider(Provider):
             if raise_on_exception:
                 raise auth_error
             return Connection(error=auth_error)
+
+        except AlibabaCloudConnectionError as connection_error:
+            logger.error(
+                f"{connection_error.__class__.__name__}[{connection_error.__traceback__.tb_lineno}]: {connection_error}"
+            )
+            if raise_on_exception:
+                raise connection_error
+            return Connection(error=connection_error)
 
         except Exception as error:
             logger.critical(

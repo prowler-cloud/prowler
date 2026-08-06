@@ -5,6 +5,7 @@ import pytest
 from alibabacloud_tea_openapi.exceptions import ClientException
 from darabonba.core import DaraCore
 from darabonba.exceptions import RetryError, UnretryableException
+from Tea.exceptions import UnretryableException as TeaUnretryableException
 from Tea.response import TeaResponse
 
 from prowler.providers.alibabacloud.alibabacloud_provider import AlibabacloudProvider
@@ -30,16 +31,19 @@ def test_validate_credentials_non_authentication_api_error_is_not_invalid_creden
         message="The caller is not authorized",
         status_code=403,
     )
+    wrapped_api_error = TeaUnretryableException(request=None, ex=api_error)
 
-    with patch(
-        "prowler.providers.alibabacloud.alibabacloud_provider.StsClient"
-    ) as sts_client:
-        sts_client.return_value.get_caller_identity.side_effect = api_error
-
-        with pytest.raises(ClientException) as exception:
+    with (
+        patch.object(DaraCore, "do_action", side_effect=wrapped_api_error),
+        patch.object(DaraCore, "sleep") as sleep,
+    ):
+        with pytest.raises(UnretryableException) as exception:
             AlibabacloudProvider.validate_credentials(session)
 
-    assert exception.value is api_error
+    assert not isinstance(exception.value, AlibabaCloudInvalidCredentialsError)
+    assert exception.value.inner_exception is wrapped_api_error
+    assert exception.value.inner_exception.inner_exception is api_error
+    sleep.assert_not_called()
 
 
 def test_validate_credentials_retries_transport_failure_then_succeeds():
@@ -117,17 +121,60 @@ def test_validate_credentials_genuine_invalid_credentials():
         message="The AccessKey ID does not exist",
         status_code=400,
     )
+    wrapped_authentication_error = TeaUnretryableException(
+        request=None, ex=authentication_error
+    )
 
-    with patch(
-        "prowler.providers.alibabacloud.alibabacloud_provider.StsClient"
-    ) as sts_client:
-        sts_client.return_value.get_caller_identity.side_effect = authentication_error
-
+    with (
+        patch.object(DaraCore, "do_action", side_effect=wrapped_authentication_error),
+        patch.object(DaraCore, "sleep") as sleep,
+    ):
         with pytest.raises(AlibabaCloudInvalidCredentialsError) as exception:
             AlibabacloudProvider.validate_credentials(session)
 
-    assert exception.value.original_exception is authentication_error
-    assert exception.value.__cause__ is authentication_error
+    assert isinstance(exception.value.original_exception, UnretryableException)
+    assert (
+        exception.value.original_exception.inner_exception
+        is wrapped_authentication_error
+    )
+    assert (
+        exception.value.original_exception.inner_exception.inner_exception
+        is authentication_error
+    )
+    assert exception.value.__cause__ is exception.value.original_exception
+    sleep.assert_not_called()
+
+
+def test_validate_credentials_authentication_error_wins_over_transport_error():
+    """Test a definitive nested authentication error takes precedence over transport."""
+    session = MagicMock()
+    session.get_credentials.return_value = MagicMock(
+        access_key_id="LTAI-invalid",
+        access_key_secret="invalid-secret",
+        security_token=None,
+    )
+    authentication_error = ClientException(
+        code="InvalidAccessKeyId.NotFound",
+        message="The AccessKey ID does not exist",
+        status_code=400,
+    )
+    retry_errors = []
+    for _ in range(3):
+        retry_error = RetryError("connection reset")
+        retry_error.__cause__ = authentication_error
+        retry_errors.append(retry_error)
+
+    with (
+        patch.object(DaraCore, "do_action", side_effect=retry_errors),
+        patch.object(DaraCore, "sleep") as sleep,
+    ):
+        with pytest.raises(AlibabaCloudInvalidCredentialsError) as exception:
+            AlibabacloudProvider.validate_credentials(session)
+
+    assert isinstance(exception.value.original_exception, UnretryableException)
+    assert exception.value.original_exception.inner_exception is retry_errors[-1]
+    assert exception.value.__cause__ is exception.value.original_exception
+    assert sleep.call_args_list == [call(1000), call(1000)]
 
 
 class TestAlibabacloudProviderTestConnection:
@@ -152,6 +199,12 @@ class TestAlibabacloudProviderTestConnection:
                 "validate_credentials",
                 side_effect=connection_error,
             ),
+            patch(
+                "prowler.providers.alibabacloud.alibabacloud_provider.logger.error"
+            ) as logger_error,
+            patch(
+                "prowler.providers.alibabacloud.alibabacloud_provider.logger.critical"
+            ) as logger_critical,
         ):
             result = AlibabacloudProvider.test_connection(
                 access_key_id="LTAI1234567890",
@@ -162,6 +215,45 @@ class TestAlibabacloudProviderTestConnection:
         assert result.is_connected is False
         assert result.error is connection_error
         assert result.error.code == 10008
+        logger_error.assert_called_once()
+        logger_critical.assert_not_called()
+
+    def test_test_connection_connection_error_raises(self):
+        """Test connection failures retain raise-on-exception behavior."""
+        mock_session = MagicMock()
+        connection_error = AlibabaCloudConnectionError(
+            file="test_file",
+            original_exception=RetryError("connection reset"),
+        )
+
+        with (
+            patch.object(
+                AlibabacloudProvider,
+                "setup_session",
+                return_value=mock_session,
+            ),
+            patch.object(
+                AlibabacloudProvider,
+                "validate_credentials",
+                side_effect=connection_error,
+            ),
+            patch(
+                "prowler.providers.alibabacloud.alibabacloud_provider.logger.error"
+            ) as logger_error,
+            patch(
+                "prowler.providers.alibabacloud.alibabacloud_provider.logger.critical"
+            ) as logger_critical,
+        ):
+            with pytest.raises(AlibabaCloudConnectionError) as exception:
+                AlibabacloudProvider.test_connection(
+                    access_key_id="LTAI1234567890",
+                    access_key_secret="test-secret-key",
+                    raise_on_exception=True,
+                )
+
+        assert exception.value is connection_error
+        logger_error.assert_called_once()
+        logger_critical.assert_not_called()
 
     def test_test_connection_with_static_credentials_success(self):
         """Test successful connection with static access key credentials."""

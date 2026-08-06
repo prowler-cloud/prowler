@@ -121,6 +121,8 @@ class AlibabaCloudHTTPError(AlibabaCloudBaseException):
 
 
 class AlibabaCloudConnectionError(AlibabaCloudBaseException):
+    """Raised when Alibaba Cloud cannot be reached after retry attempts."""
+
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             10008, file=file, original_exception=original_exception, message=message
