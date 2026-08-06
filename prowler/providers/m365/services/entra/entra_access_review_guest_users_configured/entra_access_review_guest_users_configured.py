@@ -50,7 +50,7 @@ class entra_access_review_guest_users_configured(Check):
 
         report = CheckReportM365(
             metadata=self.metadata(),
-            resource=definitions if definitions else {},
+            resource={},
             resource_name="Access Review Definitions",
             resource_id="accessReviewDefinitions",
         )

@@ -73,7 +73,7 @@ class entra_access_review_privileged_roles_configured(Check):
 
         report = CheckReportM365(
             metadata=self.metadata(),
-            resource=definitions if definitions else {},
+            resource={},
             resource_name="Access Review Definitions",
             resource_id="accessReviewDefinitions",
         )
