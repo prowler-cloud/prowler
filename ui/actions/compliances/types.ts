@@ -1,6 +1,9 @@
 import { StaticImageData } from "next/image";
 
-import { ComplianceOverviewData } from "@/types/compliance";
+import type {
+  ComplianceOverviewData,
+  RequirementsData,
+} from "@/types/compliance";
 import type { TaskAttributes } from "@/types/tasks";
 
 export const COMPLIANCE_OVERVIEW_RESOURCE_TYPE = {
@@ -33,6 +36,10 @@ export interface ComplianceOverviewTaskResponse {
 
 export type ComplianceOverviewApiResponse =
   | ComplianceOverviewsResponse
+  | ComplianceOverviewTaskResponse;
+
+export type ComplianceRequirementsApiResponse =
+  | RequirementsData
   | ComplianceOverviewTaskResponse;
 
 /**

@@ -4,7 +4,10 @@ import { apiBaseUrl, getAuthHeaders } from "@/lib";
 import { handleApiResponse } from "@/lib/server-actions-helper";
 import type { ApiResult } from "@/types/server-actions";
 
-import type { ComplianceOverviewApiResponse } from "./types";
+import type {
+  ComplianceOverviewApiResponse,
+  ComplianceRequirementsApiResponse,
+} from "./types";
 
 export const getCompliancesOverview = async ({
   scanId,
@@ -118,7 +121,7 @@ export const getComplianceRequirements = async ({
   complianceId: string;
   scanId: string;
   region?: string | string[];
-}) => {
+}): Promise<ApiResult<ComplianceRequirementsApiResponse> | undefined> => {
   const headers = await getAuthHeaders({ contentType: false });
 
   try {

@@ -6,5 +6,6 @@ export type {
   ComplianceOverviewTaskResource,
   ComplianceOverviewTaskResponse,
   ComplianceOverviewsResponse,
+  ComplianceRequirementsApiResponse,
   EnrichedComplianceOverview,
 } from "./types";
