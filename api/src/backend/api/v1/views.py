@@ -1442,7 +1442,7 @@ class TenantViewSet(BaseTenantViewset):
         if not membership or membership.role != Membership.RoleChoices.OWNER:
             raise PermissionDenied("Only owners can delete a tenant.")
 
-        with transaction.atomic():
+        with transaction.atomic(using=MainRouter.admin_db):
             # Collect user IDs from this tenant's memberships before deleting them
             tenant_user_ids = set(
                 Membership.objects.using(MainRouter.admin_db)
