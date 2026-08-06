@@ -54,3 +54,15 @@ class Test_entra_idle_session_timeout_configured:
         )
         assert len(result) == 1
         assert result[0].status == "FAIL"
+
+    def test_app_specific_timeout_without_default_fails(self):
+        result = self._run(
+            [
+                ActivityBasedTimeoutPolicy(
+                    id="p1",
+                    web_session_idle_timeout_seconds=None,
+                )
+            ]
+        )
+        assert len(result) == 1
+        assert result[0].status == "FAIL"

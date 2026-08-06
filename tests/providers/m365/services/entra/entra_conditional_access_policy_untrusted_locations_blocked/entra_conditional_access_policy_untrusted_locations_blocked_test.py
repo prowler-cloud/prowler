@@ -9,6 +9,7 @@ from prowler.providers.m365.services.entra.entra_service import (
     GrantControlOperator,
     GrantControls,
     LocationsCondition,
+    NamedLocation,
     PersistentBrowser,
     SessionControls,
     SignInFrequency,
@@ -74,7 +75,7 @@ def _make_policy(
 
 
 class Test_entra_conditional_access_policy_untrusted_locations_blocked:
-    def _run(self, policies):
+    def _run(self, policies, named_locations=None):
         entra_client = mock.MagicMock
         with (
             mock.patch(
@@ -88,7 +89,7 @@ class Test_entra_conditional_access_policy_untrusted_locations_blocked:
             )
 
             entra_client.conditional_access_policies = policies
-            entra_client.named_locations = []
+            entra_client.named_locations = named_locations or []
             entra_client.tenant_domain = DOMAIN
             return (
                 entra_conditional_access_policy_untrusted_locations_blocked().execute()
@@ -101,6 +102,43 @@ class Test_entra_conditional_access_policy_untrusted_locations_blocked:
         policy = _make_policy()
         result = self._run({policy.id: policy})
         assert result[0].status == "PASS"
+
+    def test_blocks_explicit_untrusted_named_location(self):
+        location_id = "00000000-0000-0000-0000-000000000001"
+        policy = _make_policy(include_locations=[location_id])
+        result = self._run(
+            {policy.id: policy},
+            [NamedLocation(id=location_id, is_trusted=False)],
+        )
+        assert result[0].status == "PASS"
+
+    def test_does_not_accept_explicit_trusted_named_location(self):
+        location_id = "00000000-0000-0000-0000-000000000001"
+        policy = _make_policy(include_locations=[location_id])
+        result = self._run(
+            {policy.id: policy},
+            [NamedLocation(id=location_id, is_trusted=True)],
+        )
+        assert result[0].status == "FAIL"
+
+    def test_does_not_accept_unknown_named_location(self):
+        policy = _make_policy(
+            include_locations=["00000000-0000-0000-0000-000000000001"]
+        )
+        result = self._run({policy.id: policy})
+        assert result[0].status == "FAIL"
+
+    def test_does_not_accept_explicit_untrusted_location_when_excluded(self):
+        location_id = "00000000-0000-0000-0000-000000000001"
+        policy = _make_policy(
+            include_locations=[location_id],
+            exclude_locations=["AllTrusted", location_id],
+        )
+        result = self._run(
+            {policy.id: policy},
+            [NamedLocation(id=location_id, is_trusted=False)],
+        )
+        assert result[0].status == "FAIL"
 
     def test_no_trusted_exclusion(self):
         policy = _make_policy(exclude_locations=[])

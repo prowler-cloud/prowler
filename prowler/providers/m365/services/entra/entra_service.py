@@ -1439,36 +1439,42 @@ OAuthAppInfo
         logger.info("Entra - Getting activity based timeout policies...")
         policies = []
         try:
-            response = await self.client.policies.activity_based_timeout_policies.get()
-            for policy in getattr(response, "value", []) or []:
-                idle_timeout_seconds = None
-                for definition in getattr(policy, "definition", []) or []:
-                    try:
-                        parsed = json.loads(definition)
-                    except (TypeError, ValueError):
-                        continue
-                    app_policies = (
-                        parsed.get("ActivityBasedTimeoutPolicy", {}).get(
-                            "ApplicationPolicies", []
+            policies_builder = self.client.policies.activity_based_timeout_policies
+            response = await policies_builder.get()
+            while response:
+                for policy in getattr(response, "value", []) or []:
+                    idle_timeout_seconds = None
+                    for definition in getattr(policy, "definition", []) or []:
+                        try:
+                            parsed = json.loads(definition)
+                        except (TypeError, ValueError):
+                            continue
+                        app_policies = (
+                            parsed.get("ActivityBasedTimeoutPolicy", {}).get(
+                                "ApplicationPolicies", []
+                            )
+                            or []
                         )
-                        or []
-                    )
-                    for app_policy in app_policies:
-                        seconds = self._parse_timespan_to_seconds(
-                            app_policy.get("WebSessionIdleTimeout")
+                        for app_policy in app_policies:
+                            if app_policy.get("ApplicationId") != "default":
+                                continue
+                            seconds = self._parse_timespan_to_seconds(
+                                app_policy.get("WebSessionIdleTimeout")
+                            )
+                            if seconds is not None:
+                                idle_timeout_seconds = seconds
+                                break
+                    policies.append(
+                        ActivityBasedTimeoutPolicy(
+                            id=getattr(policy, "id", ""),
+                            display_name=getattr(policy, "display_name", None),
+                            web_session_idle_timeout_seconds=idle_timeout_seconds,
                         )
-                        if seconds is not None and (
-                            idle_timeout_seconds is None
-                            or seconds < idle_timeout_seconds
-                        ):
-                            idle_timeout_seconds = seconds
-                policies.append(
-                    ActivityBasedTimeoutPolicy(
-                        id=getattr(policy, "id", ""),
-                        display_name=getattr(policy, "display_name", None),
-                        web_session_idle_timeout_seconds=idle_timeout_seconds,
                     )
-                )
+                next_link = getattr(response, "odata_next_link", None)
+                if not next_link:
+                    break
+                response = await policies_builder.with_url(next_link).get()
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
