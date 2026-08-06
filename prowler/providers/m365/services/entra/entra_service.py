@@ -1645,13 +1645,13 @@ OAuthAppInfo
         return policies
 
     async def _get_authentication_methods_policy_settings(self):
-        """Retrieve advanced settings from the beta authentication methods policy.
+        """Retrieve Microsoft Authenticator settings from the authentication methods policy.
 
-        Fetches ``policies/authenticationMethodsPolicy`` from the beta Graph endpoint
-        to extract settings not exposed on the v1.0 typed model: the
-        ``systemCredentialPreferences`` block and the Microsoft Authenticator
-        ``featureSettings`` (app-information / location-information / companion-app
-        states). Parsed from raw JSON because these fields are beta-only.
+        Fetches ``policies/authenticationMethodsPolicy`` from the v1.0 Graph endpoint
+        and extracts the Microsoft Authenticator state and its ``featureSettings``
+        (app-information / location-information states). Parsed from raw JSON because
+        ``featureSettings`` lives on the derived Microsoft Authenticator configuration
+        type rather than the base configuration model.
 
         Returns:
             Optional[AuthenticationMethodsPolicySettings]: Parsed settings, or None.
@@ -1660,7 +1660,7 @@ OAuthAppInfo
         settings = None
         try:
             builder = self.client.policies.authentication_methods_policy.with_url(
-                "https://graph.microsoft.com/beta/policies/authenticationMethodsPolicy"
+                "https://graph.microsoft.com/v1.0/policies/authenticationMethodsPolicy"
             )
             request_info = builder.to_get_request_information()
             response = await self.client.request_adapter.send_primitive_async(
@@ -1668,12 +1668,6 @@ OAuthAppInfo
             )
             if response:
                 data = json.loads(response)
-                system_prefs = data.get("systemCredentialPreferences", {}) or {}
-                include_targets = [
-                    target.get("id")
-                    for target in (system_prefs.get("includeTargets", []) or [])
-                    if target.get("id")
-                ]
                 authenticator = {}
                 for config in data.get("authenticationMethodConfigurations", []) or []:
                     if config.get("id") == "MicrosoftAuthenticator":
@@ -1681,8 +1675,6 @@ OAuthAppInfo
                         break
                 feature_settings = authenticator.get("featureSettings", {}) or {}
                 settings = AuthenticationMethodsPolicySettings(
-                    system_preferred_mfa_state=system_prefs.get("state"),
-                    system_preferred_mfa_include_targets=include_targets,
                     authenticator_state=authenticator.get("state"),
                     authenticator_display_app_information_state=(
                         feature_settings.get("displayAppInformationRequiredState", {})
@@ -1693,9 +1685,6 @@ OAuthAppInfo
                             "displayLocationInformationRequiredState", {}
                         )
                         or {}
-                    ).get("state"),
-                    authenticator_companion_app_state=(
-                        feature_settings.get("companionAppAllowedState", {}) or {}
                     ).get("state"),
                 )
         except Exception as error:
@@ -2554,14 +2543,11 @@ class B2BCollaborationPolicy(BaseModel):
 
 
 class AuthenticationMethodsPolicySettings(BaseModel):
-    """Advanced settings from the beta authentication methods policy."""
+    """Microsoft Authenticator settings from the authentication methods policy."""
 
-    system_preferred_mfa_state: Optional[str] = None
-    system_preferred_mfa_include_targets: List[str] = []
     authenticator_state: Optional[str] = None
     authenticator_display_app_information_state: Optional[str] = None
     authenticator_display_location_information_state: Optional[str] = None
-    authenticator_companion_app_state: Optional[str] = None
 
 
 class Organization(BaseModel):
