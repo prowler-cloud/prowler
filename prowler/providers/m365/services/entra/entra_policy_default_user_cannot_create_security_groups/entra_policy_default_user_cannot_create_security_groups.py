@@ -38,13 +38,8 @@ class entra_policy_default_user_cannot_create_security_groups(Check):
             "Non-admin users are allowed to create security groups."
         )
 
-        if getattr(
-            entra_client.authorization_policy, "default_user_role_permissions", None
-        ) and not getattr(
-            entra_client.authorization_policy.default_user_role_permissions,
-            "allowed_to_create_security_groups",
-            True,
-        ):
+        permissions = getattr(auth_policy, "default_user_role_permissions", None)
+        if permissions and permissions.allowed_to_create_security_groups is False:
             report.status = "PASS"
             report.status_extended = (
                 "Non-admin users are not allowed to create security groups."

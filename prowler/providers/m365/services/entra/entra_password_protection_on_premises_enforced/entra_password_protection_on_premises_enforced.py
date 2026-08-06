@@ -15,6 +15,8 @@ class entra_password_protection_on_premises_enforced(Check):
     mode set to Enforced, so banned-password rules apply to hybrid on-premises
     password changes.
 
+    This check applies only to hybrid tenants with on-premises synchronization.
+
     - PASS: On-premises password protection is enabled and set to Enforced.
     - FAIL: On-premises password protection is disabled or set to Audit only.
     """
@@ -24,13 +26,21 @@ class entra_password_protection_on_premises_enforced(Check):
 
         Evaluate whether the Password Rule Settings directory setting enables and
         enforces banned-password protection for on-premises Active Directory. When the
-        settings object is absent, no finding is produced.
+        settings object is absent or the tenant is confirmed cloud-only, no finding is
+        produced.
 
         Returns:
             List[CheckReportM365]: A list with a single report when the Password Rule
-            Settings exist, or an empty list when they are absent.
+            Settings exist for a hybrid or unknown tenant, or an empty list when they
+            are absent or the tenant is confirmed cloud-only.
         """
         findings = []
+        organizations = entra_client.organizations or []
+        if organizations and not any(
+            organization.on_premises_sync_enabled for organization in organizations
+        ):
+            return findings
+
         settings = entra_client.directory_settings.get(
             PASSWORD_RULE_SETTINGS_TEMPLATE_ID
         )

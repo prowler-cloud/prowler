@@ -22,6 +22,12 @@ class entra_password_protection_lockout_duration_configured(Check):
     """
 
     def execute(self) -> List[CheckReportM365]:
+        """Execute the smart lockout duration check.
+
+        Returns:
+            List[CheckReportM365]: Reports for the Password Rule Settings, or an
+            empty list when the settings are absent.
+        """
         findings = []
         settings = entra_client.directory_settings.get(
             PASSWORD_RULE_SETTINGS_TEMPLATE_ID

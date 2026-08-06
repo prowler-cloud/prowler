@@ -36,6 +36,10 @@ class Test_entra_policy_guest_invitations_restricted_to_allowed_domains:
             )
         )
         assert result[0].status == "PASS"
+        assert (
+            result[0].status_extended
+            == "Guest invitations are restricted to an allow-list of 1 domain(s)."
+        )
 
     def test_not_restricted(self):
         result = self._run(
@@ -53,4 +57,8 @@ class Test_entra_policy_guest_invitations_restricted_to_allowed_domains:
                 allowed_domains=[],
             )
         )
-        assert result[0].status == "FAIL"
+        assert result[0].status == "PASS"
+        assert (
+            result[0].status_extended
+            == "Guest invitations are blocked for all external domains."
+        )

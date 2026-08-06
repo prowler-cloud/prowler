@@ -1,1 +1,1 @@
-7 M365 entra checks covering CIS Microsoft 365 Foundations Benchmark v7.0.0 password protection and default user permission controls
+7 M365 Entra checks covering CIS Microsoft 365 Foundations Benchmark v7.0.0 password protection, default user permissions, and guest invitation domain restrictions

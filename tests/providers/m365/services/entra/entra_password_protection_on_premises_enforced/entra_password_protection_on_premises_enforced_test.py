@@ -2,6 +2,7 @@ from unittest import mock
 
 from prowler.providers.m365.services.entra.entra_service import (
     PASSWORD_RULE_SETTINGS_TEMPLATE_ID,
+    Organization,
 )
 from tests.providers.m365.m365_fixtures import set_mocked_m365_provider
 
@@ -9,7 +10,7 @@ CHECK_MODULE_PATH = "prowler.providers.m365.services.entra.entra_password_protec
 
 
 class Test_entra_password_protection_on_premises_enforced:
-    def _run(self, directory_settings):
+    def _run(self, directory_settings, organizations=None):
         entra_client = mock.MagicMock
         with (
             mock.patch(
@@ -23,6 +24,7 @@ class Test_entra_password_protection_on_premises_enforced:
             )
 
             entra_client.directory_settings = directory_settings
+            entra_client.organizations = organizations or []
             return entra_password_protection_on_premises_enforced().execute()
 
     def test_no_resources(self):
@@ -36,8 +38,28 @@ class Test_entra_password_protection_on_premises_enforced:
                     "EnableBannedPasswordCheckOnPremises": "True",
                     "BannedPasswordCheckOnPremisesMode": "Enforced",
                 }
-            }
+            },
+            [
+                Organization(
+                    id="org-001",
+                    name="Hybrid Org",
+                    on_premises_sync_enabled=True,
+                )
+            ],
         )
+        assert result[0].status == "PASS"
+
+    def test_unknown_organizations_still_evaluates_settings(self):
+        result = self._run(
+            {
+                PASSWORD_RULE_SETTINGS_TEMPLATE_ID: {
+                    "EnableBannedPasswordCheckOnPremises": "True",
+                    "BannedPasswordCheckOnPremisesMode": "Enforced",
+                }
+            },
+            [],
+        )
+
         assert result[0].status == "PASS"
 
     def test_audit_mode(self):
@@ -47,6 +69,32 @@ class Test_entra_password_protection_on_premises_enforced:
                     "EnableBannedPasswordCheckOnPremises": "True",
                     "BannedPasswordCheckOnPremisesMode": "Audit",
                 }
-            }
+            },
+            [
+                Organization(
+                    id="org-001",
+                    name="Hybrid Org",
+                    on_premises_sync_enabled=True,
+                )
+            ],
         )
         assert result[0].status == "FAIL"
+
+    def test_cloud_only_tenant_has_no_finding(self):
+        result = self._run(
+            {
+                PASSWORD_RULE_SETTINGS_TEMPLATE_ID: {
+                    "EnableBannedPasswordCheckOnPremises": "False",
+                    "BannedPasswordCheckOnPremisesMode": "Audit",
+                }
+            },
+            [
+                Organization(
+                    id="org-001",
+                    name="Cloud Only Org",
+                    on_premises_sync_enabled=False,
+                )
+            ],
+        )
+
+        assert result == []
