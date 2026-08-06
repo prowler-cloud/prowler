@@ -98,9 +98,9 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
     return this.countRequests("POST", "/schedules/bulk");
   }
 
-  /** How many scans were launched (one per provider whose schedule saved). */
-  get scanLaunchCount(): number {
-    return this.countRequests("POST", "/scans");
+  /** How many organization bulk scan operations were launched. */
+  get organizationBulkScanCallCount(): number {
+    return this.countRequests("POST", "/scans/bulk");
   }
 
   // --- Mount + environment ------------------------------------------------
