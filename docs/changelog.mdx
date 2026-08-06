@@ -4,7 +4,7 @@ description: "New features and improvements in each Prowler release"
 rss: true
 ---
 
-<Update label="v5.38.0" description="August 7, 2026">
+<Update label="v5.38.0" description="August 6, 2026">
   ### 📌 Compliance Watchlist
 
   <Note>
@@ -17,7 +17,7 @@ rss: true
 
   ![Compliance Watchlist editor](/images/compliance/prowler-app-compliance-watchlist-editor.png)
 
-  Read more in the [Compliance Watchlist documentation](/user-guide/compliance/tutorials/compliance#tracking-frameworks-with-the-compliance-watchlist).
+  Read more in the [Compliance Watchlist documentation](https://docs.prowler.com/user-guide/compliance/tutorials/compliance#tracking-frameworks-with-the-compliance-watchlist).
 
   ### 🔐 SAML SSO - Multiple Email Domains
 
@@ -29,11 +29,19 @@ rss: true
 
   Domain ownership remains tenant-bound throughout the authentication flow. During service provider-initiated sign-in, the discovery domain and the domain asserted by the Identity Provider must resolve to the same tenant before provisioning continues.
 
-  The Users table also shows each account's sign-in methods, including password, Google, GitHub, Partner SSO, and linked SAML domains.
-
   ![SAML configuration with multiple email domains](/images/prowler-app/saml/saml-multiple-domains.png)
 
-  Read more in the [SAML SSO documentation](/user-guide/tutorials/prowler-app-sso#add-multiple-saml-domains).
+  Read more in the [SAML SSO documentation](https://docs.prowler.com/user-guide/tutorials/prowler-app-sso#add-multiple-saml-domains).
+
+  ### 👥 User Sign-In Methods
+
+  <Note>
+  This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
+  </Note>
+
+  The Users table now shows each account's sign-in methods as tags, including email/password, Google, GitHub, SAML with linked domains, and Partner SSO. Accounts without a reported method display a placeholder.
+
+  ![Users table showing sign-in method tags](/images/changelog/v5.38.0-user-sign-in-methods.png)
 
   ### 🕸️ Attack Paths - Expanded AWS Privilege-Escalation Coverage
 
@@ -43,7 +51,9 @@ rss: true
 
   The query catalog now exposes each AWS query's outcome category, distinguishing code execution, privilege escalation, public exposure, and resource inventory.
 
-  Read more in the [Attack Paths documentation](/user-guide/tutorials/prowler-app-attack-paths).
+  Explore the full Attack Paths query catalog at [Prowler Hub](https://hub.prowler.com/attack-paths).
+
+  Read more in the [Attack Paths documentation](https://docs.prowler.com/user-guide/tutorials/prowler-app-attack-paths).
 
   ### 🔍 Checks
 
@@ -58,13 +68,6 @@ rss: true
   - **Microsoft Teams:** External access from trial-only tenants is blocked.
 
   Explore all Microsoft 365 checks at [Prowler Hub](https://hub.prowler.com/check?provider=m365).
-
-  ### 🐞 Fixed
-
-  - AWS and GCP organization onboarding now launches scans for every linked provider through one bulk operation.
-  - AWS delegated-administrator checks no longer report false failures when organization APIs cannot determine the administrator, and Security Hub responses now use the fields returned by the AWS API.
-  - Imported scans now appear on the Scans page even when no provider is connected.
-  - Secret-scanning checks no longer report credential-free JDBC connection strings as embedded credentials.
 
   ### 🔐 Security
 
