@@ -51,6 +51,7 @@ describe("organizations actions", () => {
   it("rejects invalid organization secret identifiers", async () => {
     // When
     const result = await updateOrganizationSecret("../secret-id", {
+      orgType: ORGANIZATION_TYPE.AWS,
       secretType: ORG_SECRET_TYPE.ROLE,
       secret: {
         role_arn: "arn:aws:iam::123456789012:role/ProwlerOrgRole",
