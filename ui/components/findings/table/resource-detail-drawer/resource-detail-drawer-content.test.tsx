@@ -1174,6 +1174,7 @@ describe("ResourceDetailDrawerContent — CVE recommendation button", () => {
 describe("ResourceDetailDrawerContent — compliance navigation", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
+    vi.restoreAllMocks();
   });
 
   it("should resolve the clicked framework against the selected scan and navigate to compliance detail", async () => {
@@ -1376,6 +1377,49 @@ describe("ResourceDetailDrawerContent — compliance navigation", () => {
       "_blank",
       "noopener,noreferrer",
     );
+  });
+
+  it("should not navigate while compliance data is being generated", async () => {
+    // Given
+    const user = userEvent.setup();
+    const consoleErrorSpy = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    vi.stubGlobal("open", mockWindowOpen);
+    mockSearchParamsState.value = "filter[scan__in]=scan-selected";
+    mockGetCompliancesOverview.mockResolvedValue({
+      data: {
+        id: "task-1",
+        type: "tasks",
+        attributes: { state: "executing" },
+      },
+    });
+
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={mockFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // When
+    await user.click(
+      screen.getByRole("button", {
+        name: "Open PCI-DSS compliance details",
+      }),
+    );
+
+    // Then
+    expect(mockWindowOpen).not.toHaveBeenCalled();
+    expect(consoleErrorSpy).not.toHaveBeenCalled();
   });
 });
 

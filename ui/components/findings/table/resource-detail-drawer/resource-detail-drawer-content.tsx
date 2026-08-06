@@ -510,10 +510,10 @@ export function ResourceDetailDrawerContent({
       const compliancesOverview = await getCompliancesOverview({
         scanId: complianceScanId,
       });
-      const complianceMatch = resolveComplianceMatch(
-        compliancesOverview?.data,
-        framework,
-      );
+      const complianceData = Array.isArray(compliancesOverview?.data)
+        ? compliancesOverview.data
+        : undefined;
+      const complianceMatch = resolveComplianceMatch(complianceData, framework);
 
       if (!complianceMatch) {
         return;
