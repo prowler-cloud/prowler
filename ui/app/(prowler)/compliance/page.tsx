@@ -2,6 +2,7 @@ import { Info } from "lucide-react";
 import { Suspense } from "react";
 
 import {
+  COMPLIANCE_OVERVIEW_RESOURCE_TYPE,
   getComplianceOverviewMetadataInfo,
   getCompliancesOverview,
 } from "@/actions/compliances";
@@ -317,21 +318,37 @@ const SSRComplianceGrid = async ({
         })
       : { data: [], errors: [] };
 
-  const type = compliancesData?.data?.type;
-  const frameworks = compliancesData?.data
-    ?.filter((compliance: ComplianceOverviewData) => {
-      return compliance.attributes.framework !== "ProwlerThreatScore";
-    })
-    .sort((a: ComplianceOverviewData, b: ComplianceOverviewData) =>
-      a.attributes.framework.localeCompare(b.attributes.framework),
-    );
+  const complianceData = compliancesData?.data;
 
   if (
-    !compliancesData ||
-    !compliancesData.data ||
-    compliancesData.data.length === 0 ||
-    type === "tasks"
+    compliancesData &&
+    "errors" in compliancesData &&
+    compliancesData.errors &&
+    compliancesData.errors.length > 0
   ) {
+    return (
+      <Alert variant="info">
+        <Info className="size-4" />
+        <AlertDescription>Provide a valid scan ID.</AlertDescription>
+      </Alert>
+    );
+  }
+
+  if (
+    !Array.isArray(complianceData) &&
+    complianceData?.type === COMPLIANCE_OVERVIEW_RESOURCE_TYPE.TASK
+  ) {
+    return (
+      <Alert variant="info">
+        <Info className="size-4" />
+        <AlertDescription>
+          Compliance data is still being generated. Please try again shortly.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  if (!Array.isArray(complianceData) || complianceData.length === 0) {
     return (
       <Alert variant="info">
         <Info className="size-4" />
@@ -343,20 +360,17 @@ const SSRComplianceGrid = async ({
     );
   }
 
-  if (compliancesData?.errors?.length > 0) {
-    return (
-      <Alert variant="info">
-        <Info className="size-4" />
-        <AlertDescription>Provide a valid scan ID.</AlertDescription>
-      </Alert>
+  const frameworks = complianceData
+    .filter((compliance: ComplianceOverviewData) => {
+      return compliance.attributes.framework !== "ProwlerThreatScore";
+    })
+    .sort((a: ComplianceOverviewData, b: ComplianceOverviewData) =>
+      a.attributes.framework.localeCompare(b.attributes.framework),
     );
-  }
 
   // Backend only generates CIS PDFs for the latest version per provider.
   const latestCisIds = pickLatestCisPerProvider(
-    compliancesData.data.map(
-      (compliance: ComplianceOverviewData) => compliance.id,
-    ),
+    complianceData.map((compliance: ComplianceOverviewData) => compliance.id),
   );
 
   // The watchlist is keyed by `(compliance_id, provider_type)`, and on this
