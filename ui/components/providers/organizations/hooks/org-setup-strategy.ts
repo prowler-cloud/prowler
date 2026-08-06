@@ -43,18 +43,37 @@ export interface GcpOrgSetupData extends BaseOrgSetupData {
   refreshToken?: string;
 }
 
+export interface AzureOrgSetupData extends BaseOrgSetupData {
+  orgType: typeof ORGANIZATION_TYPE.AZURE;
+  /** Microsoft Entra tenant ID (UUID) — the external id matched on. */
+  tenantId: string;
+  /**
+   * Canonical resource ID of the Management Group the organization is scoped to,
+   * sent as `root_external_id`. Defaults to the tenant root group
+   * (`/providers/Microsoft.Management/managementGroups/{tenantId}`).
+   */
+  managementGroupId: string;
+  clientId: string;
+  clientSecret: string;
+}
+
 /**
  * Values collected by an organization setup form, tagged with the organization
  * type that produced them: each form fills its own arm, and the strategy is
  * picked from the tag, so the fields and the credentials built from them cannot
  * belong to different types.
  */
-export type OrgSetupSubmissionData = AwsOrgSetupData | GcpOrgSetupData;
+export type OrgSetupSubmissionData =
+  | AwsOrgSetupData
+  | AzureOrgSetupData
+  | GcpOrgSetupData;
 
 export type OrgSetupErrorField =
   | "organizationName"
   | "awsOrgId"
   | "gcpOrgId"
+  | "tenantId"
+  | "managementGroupId"
   | "serviceAccountKey"
   | "clientId"
   | "clientSecret"
@@ -72,6 +91,12 @@ interface OrgSetupStrategy<D extends OrgSetupSubmissionData> {
   externalIdField: OrgSetupErrorField;
   /** External id used to match/create the organization. */
   getExternalId: (data: D) => string;
+  /**
+   * Root container the organization is scoped to, when the type picks it up front
+   * (`root_external_id` on the create request). AWS and GCP leave it to
+   * discovery, so they return undefined.
+   */
+  getRootExternalId: (data: D) => string | undefined;
   /** Display name to store (falls back to the external id). */
   getResolvedName: (data: D) => string;
   /**
@@ -141,6 +166,8 @@ export interface BoundOrgSetupStrategy {
   externalIdField: OrgSetupErrorField;
   /** External id used to match/create the organization. */
   externalId: string;
+  /** `root_external_id` for the create request; undefined when discovery sets it. */
+  rootExternalId: string | undefined;
   resolvedName: string;
   buildSecretPayload: (stackSetExternalId: string) => OrgSecretPayload;
   mapSecretErrorField: (fieldNames: string) => OrgSetupErrorField | null;
@@ -160,8 +187,12 @@ const awsOrgSetupStrategy: OrgSetupStrategy<AwsOrgSetupData> = {
   orgType: ORGANIZATION_TYPE.AWS,
   externalIdField: "awsOrgId",
   getExternalId: (data) => data.awsOrgId,
+  // Discovery reports the organization root; the StackSet target only scopes the
+  // default selection.
+  getRootExternalId: () => undefined,
   getResolvedName: (data) => data.organizationName?.trim() || data.awsOrgId,
   buildSecretPayload: (data, stackSetExternalId) => ({
+    orgType: ORGANIZATION_TYPE.AWS,
     secretType: ORG_SECRET_TYPE.ROLE,
     secret: {
       role_arn: data.roleArn,
@@ -198,11 +229,14 @@ const gcpOrgSetupStrategy: OrgSetupStrategy<GcpOrgSetupData> = {
   orgType: ORGANIZATION_TYPE.GCP,
   externalIdField: "gcpOrgId",
   getExternalId: (data) => data.gcpOrgId.trim(),
+  // Discovery reports the organization resource name as the root.
+  getRootExternalId: () => undefined,
   getResolvedName: (data) =>
     data.organizationName?.trim() || data.gcpOrgId.trim(),
   buildSecretPayload: (data) => {
     if (data.credentialMethod === ORG_SECRET_TYPE.STATIC) {
       return {
+        orgType: ORGANIZATION_TYPE.GCP,
         secretType: ORG_SECRET_TYPE.STATIC,
         secret: {
           client_id: data.clientId?.trim() ?? "",
@@ -213,6 +247,7 @@ const gcpOrgSetupStrategy: OrgSetupStrategy<GcpOrgSetupData> = {
     }
     // The form validates this JSON before submit, so the parse cannot throw here.
     return {
+      orgType: ORGANIZATION_TYPE.GCP,
       secretType: ORG_SECRET_TYPE.SERVICE_ACCOUNT,
       secret: {
         service_account_key: JSON.parse(data.serviceAccountKey ?? "{}"),
@@ -248,6 +283,7 @@ function bind<D extends OrgSetupSubmissionData>(
     orgType: strategy.orgType,
     externalIdField: strategy.externalIdField,
     externalId: strategy.getExternalId(data),
+    rootExternalId: strategy.getRootExternalId(data),
     resolvedName: strategy.getResolvedName(data),
     buildSecretPayload: (stackSetExternalId) =>
       strategy.buildSecretPayload(data, stackSetExternalId),
