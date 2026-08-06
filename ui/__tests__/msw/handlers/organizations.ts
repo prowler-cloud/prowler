@@ -624,9 +624,22 @@ export const handlersForOrganizations = (
     }),
 
     // --- launch (scans + schedules) --------------------------------------
-    http.post(`${API}/scans`, () =>
+    http.post(`${API}/scans/bulk`, () =>
       HttpResponse.json(
-        { data: { id: "scan-1", type: "scans", attributes: {} } },
+        {
+          data: fx.apply.createdProviderIds.map((providerId, index) => ({
+            id: `scan-${index + 1}`,
+            type: "scans",
+            relationships: {
+              provider: {
+                data: { id: providerId, type: "providers" },
+              },
+              task: {
+                data: { id: `scan-task-${index + 1}`, type: "tasks" },
+              },
+            },
+          })),
+        },
         { status: 202 },
       ),
     ),

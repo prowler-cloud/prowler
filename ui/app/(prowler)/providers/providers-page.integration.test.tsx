@@ -14,9 +14,6 @@ const AWS_ROLE_ARN = "arn:aws:iam::111111111111:role/ProwlerScan";
 /** The organization id seeded by `awsHierarchyFixture`. */
 const AWS_HIERARCHY_ORG_ID = "org-aws-1";
 const AWS_ORG_NAME = "My AWS Organization";
-/** Providers `awsOnboardingFixture`'s apply creates (one per ready account). */
-const CREATED_PROVIDER_COUNT = 2;
-
 /** A world where one of the two ready accounts fails its connection test. */
 const partialConnectionFixture = (): OrgFixture =>
   awsOnboardingFixture({
@@ -57,7 +54,7 @@ describe("AWS Organizations onboarding (baseline)", () => {
     await harness.waitForLaunchComplete();
 
     expect(harness.scheduleBulkCallCount).toBe(1);
-    expect(harness.scanLaunchCount).toBe(CREATED_PROVIDER_COUNT);
+    expect(harness.organizationBulkScanCallCount).toBe(1);
   }, 60000);
 
   it("disables blocked accounts and excludes them from the selectable count", async () => {

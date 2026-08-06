@@ -206,7 +206,7 @@ describe("GCP Organizations onboarding (Phase 2)", () => {
 
   // These three cases pin how `/schedules/bulk`'s per-provider lists are read: a
   // client looking one level too deep sees no lists and cannot tell them apart.
-  it("launches initial scans only for the projects whose schedule was saved", async () => {
+  it("launches the organization after a partial schedule save", async () => {
     const harness = new ProvidersPageHarness(
       gcpOnboardingFixture({
         scheduleBulk: {
@@ -226,7 +226,7 @@ describe("GCP Organizations onboarding (Phase 2)", () => {
 
     // The reason the API gave must reach the user — a count alone is unactionable.
     expect(harness.hasScheduleFailureReason("Denied")).toBe(true);
-    expect(harness.scanLaunchCount).toBe(1);
+    expect(harness.organizationBulkScanCallCount).toBe(1);
   }, 40000);
 
   it("keeps the user on the launch step when no schedule could be saved", async () => {
@@ -252,7 +252,7 @@ describe("GCP Organizations onboarding (Phase 2)", () => {
 
     expect(harness.hasScheduleFailureReason("Denied")).toBe(true);
     expect(harness.isStillOnLaunchStep()).toBe(true);
-    expect(harness.scanLaunchCount).toBe(0);
+    expect(harness.organizationBulkScanCallCount).toBe(0);
   }, 40000);
 
   it("proceeds when the schedule response carries no result lists", async () => {
@@ -271,7 +271,7 @@ describe("GCP Organizations onboarding (Phase 2)", () => {
     await harness.saveScheduleAndLaunch();
     await harness.waitForLaunchComplete();
 
-    expect(harness.scanLaunchCount).toBe(GCP_CREATED_PROVIDER_IDS.length);
+    expect(harness.organizationBulkScanCallCount).toBe(1);
   }, 40000);
 
   it("sends a projects-only apply payload (no accounts, no organizational units)", async () => {
