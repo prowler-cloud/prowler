@@ -1,10 +1,8 @@
 import { describe, expect } from "vitest";
 
-// One integration file per real page: everything the providers page does —
-// per-provider onboarding, per-provider post-onboarding management and the
-// cross-provider hierarchy display — lives here.
-// The extended `it` carries the auto `seedRuntimeConfig` fixture — grouping is
-// cloud-only, so the runtime-config island must exist before mounting.
+// One integration file per real page: the whole providers page lives here.
+// `it` comes from the fixtures module for its auto `seedRuntimeConfig` — grouping
+// is cloud-only, so the runtime-config island must exist before mounting.
 import { it } from "@/__tests__/fixtures";
 import { HIERARCHY_READ_FAILURE } from "@/__tests__/msw/handlers/organizations";
 import {
@@ -34,7 +32,6 @@ const AWS_ROLE_ARN = "arn:aws:iam::111111111111:role/ProwlerScan";
 /** The organization id seeded by `awsHierarchyFixture`. */
 const AWS_HIERARCHY_ORG_ID = "org-aws-1";
 const AWS_ORG_NAME = "My AWS Organization";
-/** A world where one of the two ready accounts fails its connection test. */
 const partialConnectionFixture = (): OrgFixture =>
   awsOnboardingFixture({
     connectionByUid: {
@@ -64,7 +61,6 @@ const VALID_SA_KEY = JSON.stringify({
   client_email: "prowler@prowler-scan.iam.gserviceaccount.com",
 });
 
-/** The GCP docs tutorial the wizard links to during the org flow. */
 const GCP_ORG_DOCS = "prowler-cloud-gcp-organizations";
 
 /** The GCP organization seeded by `mixedHierarchyFixture`. */
@@ -105,7 +101,7 @@ interface ApplyRequestBody {
   };
 }
 
-describe("AWS Organizations onboarding (baseline)", () => {
+describe("AWS Organizations onboarding", () => {
   it("completes the happy path: setup → discovery → selection → apply → connect → launch", async () => {
     const harness = new ProvidersPageHarness(awsOnboardingFixture());
     await onboardToSelection(harness);
@@ -115,8 +111,6 @@ describe("AWS Organizations onboarding (baseline)", () => {
 
     expect(harness.applyCallCount).toBe(1);
 
-    // Drive the final action: save the schedules for both created providers and
-    // launch an initial scan for each.
     await harness.enableInitialScan();
     await harness.saveScheduleAndLaunch();
     await harness.waitForLaunchComplete();
@@ -150,7 +144,6 @@ describe("AWS Organizations onboarding (baseline)", () => {
   }, 60000);
 
   it("settles each account the moment its own test finishes", async () => {
-    // Given — one account connects on the first read, the other stays running.
     const harness = new ProvidersPageHarness(
       awsOnboardingFixture({
         connectionByUid: {
@@ -161,11 +154,9 @@ describe("AWS Organizations onboarding (baseline)", () => {
     );
     await onboardToSelection(harness);
 
-    // When
     await harness.testConnections();
     await harness.waitForCandidateConnectionState(/111111111111/, "success");
 
-    // Then — the finished account reports while the slow one is still testing.
     expect(harness.candidateConnectionState(/222222222222/)).toBe("testing");
 
     await harness.waitForAccountsConnected();
@@ -197,10 +188,9 @@ describe("AWS Organizations onboarding (baseline)", () => {
   }, 60000);
 });
 
-// The GCP Organization flow end to end: method fork, setup, selection tree, apply,
-// and the shared safety UX. Discovery timeout/keep-waiting/resume live in the
-// submission unit tests instead, since they need fake timers.
-describe("GCP Organizations onboarding (Phase 2)", () => {
+// Discovery timeout/keep-waiting/resume stay in the submission unit tests: they
+// need fake timers.
+describe("GCP Organizations onboarding", () => {
   it("completes the happy path: setup → discovery → selection → apply → connect → launch step", async () => {
     const harness = new ProvidersPageHarness(gcpOnboardingFixture());
     await onboardGcpToSelection(harness);
@@ -277,15 +267,13 @@ describe("GCP Organizations onboarding (Phase 2)", () => {
     const harness = new ProvidersPageHarness(gcpOnboardingFixture());
     await onboardGcpToSelection(harness);
 
-    // Project-less folders do reach the tree, and clicking them selects nothing —
-    // which the row has to say, in GCP's own nouns.
+    // A project-less folder still reaches the tree, and has to say so in GCP nouns.
     expect(harness.isContainerInert(GCP_EMPTY_FOLDER_NAME)).toBe(true);
     expect(harness.inertContainerNote(GCP_EMPTY_FOLDER_NAME)).toBe(
       "No projects available to select in this folder.",
     );
     expect(harness.isContainerInert(GCP_BLOCKED_FOLDER_NAME)).toBe(true);
 
-    // A folder holding a ready project stays selectable.
     expect(harness.isContainerInert("Engineering")).toBe(false);
     expect(harness.inertContainerNote("Engineering")).toBeNull();
     expect(harness.usesAccountWording()).toBe(false);
@@ -327,8 +315,7 @@ describe("GCP Organizations onboarding (Phase 2)", () => {
     );
     await onboardGcpToSelection(harness);
 
-    // Real layout, not class names: a leaf row that cannot shrink pushes the id
-    // over its neighbour instead of ellipsizing.
+    // Real layout boxes, not class names: an unshrinkable row pushes the id out.
     expect(harness.candidateRowOverflows(GCP_LONG_PROJECT_ID)).toBe(false);
   }, 40000);
 
@@ -421,7 +408,6 @@ describe("GCP Organizations onboarding (Phase 2)", () => {
     // GCP derives folder ancestors server-side, so no accounts/OUs are ever sent.
     expect(attributes?.accounts).toBeUndefined();
     expect(attributes?.organizational_units).toBeUndefined();
-    // No alias was typed, so none is included.
     expect(attributes?.projects?.every((p) => p.alias === undefined)).toBe(
       true,
     );
@@ -452,7 +438,6 @@ describe("GCP Organizations onboarding (Phase 2)", () => {
 
     expect(await harness.isCandidateBlocked(/legacy-sandbox/)).toBe(true);
 
-    // Two ready projects, the third (blocked) excluded from the count.
     expect(harness.hasSelectedProjectCount(2, 2)).toBe(true);
     expect(harness.hasSelectedProjectCount(3, 3)).toBe(false);
   }, 40000);
@@ -461,10 +446,8 @@ describe("GCP Organizations onboarding (Phase 2)", () => {
     const harness = new ProvidersPageHarness(gcpOnboardingFixture());
     await onboardGcpToSelection(harness);
 
-    // Both ready projects start selected → the Engineering folder is fully checked.
     expect(harness.candidateCheckboxState(/Engineering/)).toBe("true");
 
-    // Deselect one descendant project; its ancestor folder goes indeterminate.
     await harness.toggleCandidate(/prod-platform/);
     await harness.waitForSelectedProjectCount(1, 2);
     expect(harness.candidateCheckboxState(/Engineering/)).toBe("mixed");
@@ -488,14 +471,11 @@ describe("GCP Organizations onboarding (Phase 2)", () => {
     const harness = new ProvidersPageHarness(fixture);
     await authenticateGcpOrg(harness);
 
-    // The credential is replaced only after the user confirms, and the warning
-    // states how many onboarded providers that re-authenticates.
     await harness.waitForCredentialReplaceWarning();
     expect(harness.hasCredentialReplaceProviderCount(2)).toBe(true);
 
     await harness.confirmCredentialReplace();
 
-    // Confirming updates the secret (PATCH) and continues into selection.
     await harness.waitForSelectionTree();
     await harness.waitForProjectSelection();
     await harness.waitForSecretReplace();
@@ -517,7 +497,6 @@ describe("GCP Organizations onboarding (Phase 2)", () => {
 
     await harness.testConnections();
 
-    // Pre-apply warning names the project whose credentials will be overwritten.
     await harness.waitForCredentialReplaceWarning();
     expect(harness.hasApplyOverwriteWarning(1, ["Prod Analytics"])).toBe(true);
     expect(harness.applyCallCount).toBe(0);
@@ -548,7 +527,7 @@ describe("GCP Organizations onboarding (Phase 2)", () => {
   }, 40000);
 });
 
-describe("GCP Organizations connect step (Phase 2)", () => {
+describe("GCP Organizations connect step", () => {
   it("gates the GCP Organization method behind the cloud upgrade in OSS builds", async ({
     seedRuntimeConfig,
   }) => {
@@ -559,36 +538,30 @@ describe("GCP Organizations connect step (Phase 2)", () => {
     await harness.selectProviderType(/Google Cloud Platform/);
     await harness.waitForMethodStep();
 
-    // Choosing the org method must NOT start the flow in OSS.
     await harness.chooseMethod(/Add Multiple Projects With GCP Organization/);
     await harness.waitForMethodStep();
     expect(harness.hasOrganizationSetupStep()).toBe(false);
   }, 30000);
 });
 
-describe("AWS Organizations providers page (baseline)", () => {
+describe("AWS Organizations providers page", () => {
   it("groups providers under their organization and OUs with kind-driven labels", async () => {
     const harness = new ProvidersPageHarness(awsHierarchyFixture());
     await harness.mount({ openWizard: false });
 
-    // Organization group row + its OU sub-groups (expanded by default in cloud).
     await harness.waitForOrganizationRow(AWS_ORG_NAME);
     await harness.waitForNodeGroup("Production");
     await harness.waitForNodeGroup("Sandbox");
 
-    // Node group rows are labelled by kind, not by ID prefix.
     expect(harness.hasNodeKindLabel("Organizational Unit")).toBe(true);
-    // Organization row surfaces its total provider count.
     expect(harness.hasProviderCount(3)).toBe(true);
 
-    // Providers render nested under their OU, addressed by alias.
     expect(harness.hasProviderRow("prod-web")).toBe(true);
     expect(harness.hasProviderRow("prod-api")).toBe(true);
     expect(harness.hasProviderRow("sandbox-1")).toBe(true);
 
-    // Tripwire: the rows above came from real requests, so a loader that stops
-    // fetching the hierarchy (either route) fails here instead of staying green
-    // on harness-supplied data.
+    // Tripwire: a loader that stops fetching the hierarchy (either route) fails
+    // here instead of staying green on harness-supplied data.
     expect(harness.organizationFetchCount).toBeGreaterThan(0);
     expect(harness.hierarchyFetchCount).toBeGreaterThan(0);
   }, 30000);
@@ -615,7 +588,6 @@ describe("AWS Organizations providers page (baseline)", () => {
 
     await harness.openUpdateCredentialsFor(AWS_ORG_NAME);
 
-    // Opens the org wizard directly on the AWS authentication (access) phase.
     await harness.waitForAuthenticationStep();
     expect(harness.hasAuthenticateButton()).toBe(true);
     // Edit-credentials re-entry skips the details step, so Back is hidden.
@@ -629,7 +601,6 @@ describe("AWS Organizations providers page (baseline)", () => {
 
     await harness.openDeleteFor(AWS_ORG_NAME);
 
-    // Cascade confirmation dialog, stating the affected provider count.
     await harness.waitForDeleteConfirmation();
     expect(harness.hasDeleteWarning()).toBe(true);
     expect(harness.hasCascadeWarning(3)).toBe(true);
@@ -648,7 +619,6 @@ describe("AWS Organizations providers page (baseline)", () => {
     const harness = new ProvidersPageHarness(awsHierarchyFixture());
     await harness.mount({ openWizard: false });
 
-    // Providers still render, but ungrouped: no organization row, no OU labels.
     await harness.waitForProviderRow("prod-web");
     expect(harness.hasProviderRow("prod-api")).toBe(true);
     expect(harness.hasProviderRow("sandbox-1")).toBe(true);
@@ -659,7 +629,7 @@ describe("AWS Organizations providers page (baseline)", () => {
   }, 30000);
 });
 
-describe("GCP Organizations providers page (Phase 2)", () => {
+describe("GCP Organizations providers page", () => {
   it("deletes a GCP folder with kind-aware copy and deletion-task polling", async () => {
     const harness = new ProvidersPageHarness(mixedHierarchyFixture());
     await harness.mount({ openWizard: false });
@@ -695,42 +665,30 @@ describe("GCP Organizations providers page (Phase 2)", () => {
 
     await harness.confirmDelete();
 
-    // A failed task is reported as not completed, and the hierarchy refetched so
-    // the restored subtree reappears.
     await harness.waitForDeletionFailure();
   }, 30000);
 });
-
-// Phase 1 new-behavior coverage (the Phase 0 AWS baseline suite stays untouched):
-// the providers page now consumes the canonical organization-nodes contract for
-// BOTH organization types, deriving container labels from node `kind`, and
-// surfaces an explicit notice when the hierarchy fetch degrades.
 
 describe("Providers page — mixed AWS + GCP hierarchy display", () => {
   it("groups both organizations, labelling nodes by kind (Organizational Unit vs Folder)", async () => {
     const harness = new ProvidersPageHarness(mixedHierarchyFixture());
     await harness.mount({ openWizard: false });
 
-    // Both organizations render as top-level groups.
     await harness.waitForOrganizationRow("My AWS Organization");
     await harness.waitForOrganizationRow("My GCP Organization");
 
-    // AWS organizational units and GCP folders both render as node groups.
     await harness.waitForNodeGroup("Production");
     await harness.waitForNodeGroup("Sandbox");
     await harness.waitForNodeGroup("Engineering");
     await harness.waitForNodeGroup("Platform");
 
-    // Container labels are kind-driven, never ID-prefix-driven: AWS nodes read
-    // "Organizational Unit", GCP nodes read "Folder".
+    // Labels are kind-driven, never ID-prefix-driven.
     expect(harness.hasNodeKindLabel("Organizational Unit")).toBe(true);
     expect(harness.hasNodeKindLabel("Folder")).toBe(true);
 
-    // Per-organization provider counts.
     expect(harness.hasProviderCount(3)).toBe(true);
     expect(harness.hasProviderCount(2)).toBe(true);
 
-    // Providers of both types render nested under their nodes, by alias.
     expect(harness.hasProviderRow("prod-web")).toBe(true);
     expect(harness.hasProviderRow("sandbox-1")).toBe(true);
     expect(harness.hasProviderRow("Prod Analytics")).toBe(true);
@@ -746,13 +704,11 @@ describe("Providers page — mixed AWS + GCP hierarchy display", () => {
 
     await harness.waitForOrganizationRow("My GCP Organization");
 
-    // GCP now owns a setup form, so "Update Credentials" re-enters the wizard on
-    // it. Renaming is a plain PATCH either way.
+    // Every type with a setup form offers "Update Credentials".
     const actions = await harness.actionLabelsFor("My GCP Organization");
     expect(actions).toContain("Edit Organization Name");
     expect(actions).toContain("Update Credentials");
 
-    // The AWS organization in the same table keeps it.
     const awsActions = await harness.actionLabelsFor("My AWS Organization");
     expect(awsActions).toContain("Update Credentials");
   }, 30000);
@@ -767,11 +723,9 @@ describe("Providers page — organization type without an onboarding flow", () =
     await harness.waitForOrganizationRow("Contoso Tenant");
     expect(harness.hasProviderRow("contoso-prod")).toBe(true);
 
-    // It never inherits AWS wording.
     expect(harness.hasNodeKindLabel("Organizational Unit")).toBe(false);
 
-    // Credential updates re-enter the organization wizard, which only exists for
-    // onboardable types; renaming is a plain PATCH and stays available.
+    // The wizard only exists for onboardable types; renaming is a plain PATCH.
     const actions = await harness.actionLabelsFor("Contoso Tenant");
     expect(actions).toContain("Edit Organization Name");
     expect(actions).not.toContain("Update Credentials");
@@ -789,8 +743,6 @@ describe("Providers page — degraded hierarchy view", () => {
     await harness.waitForDegradedHierarchyNotice();
     expect(harness.hasUngroupedProvidersNotice()).toBe(true);
 
-    // Providers are still present despite grouping being unavailable, and no
-    // organization group row survives the failed hierarchy fetch.
     expect(harness.hasProviderRow("prod-web")).toBe(true);
     expect(harness.hasOrganizationRow("My AWS Organization")).toBe(false);
   }, 30000);
