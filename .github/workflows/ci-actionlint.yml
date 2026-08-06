@@ -1,0 +1,57 @@
+name: 'CI: Actionlint'
+
+on:
+  push:
+    branches:
+      - 'master'
+    paths:
+      - '.github/**'
+  pull_request:
+    branches:
+      - 'master'
+    paths:
+      - '.github/**'
+  schedule:
+    - cron: '45 06 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  actionlint:
+    if: github.repository == 'prowler-cloud/prowler'
+    name: GitHub Actions Schema Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            github.com:443
+            api.github.com:443
+            auth.docker.io:443
+            registry-1.docker.io:443
+            production.cloudflare.docker.com:443
+            production.cloudfront.docker.com:443
+
+      - name: Checkout repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+
+      # -shellcheck= because the shell-quality findings are a separate backlog; this
+      # check is here for the schema, and mixing the two would make it unactionable.
+      - name: Run actionlint
+        run: |
+          docker run --rm -v "$PWD:/repo" --workdir /repo \
+            rhysd/actionlint:1.7.12@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667 \
+            -color -shellcheck=
