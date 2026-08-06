@@ -61,6 +61,7 @@ export interface LighthouseV2StreamError {
 export interface LighthouseV2StreamState {
   status: LighthouseV2StreamStatus;
   activeTaskId: string | null;
+  tracksSkillSteps: boolean;
   assistantText: string;
   toolCalls: LighthouseV2ToolCallState[];
   activityItems: LighthouseV2StreamActivityItem[];
@@ -74,12 +75,14 @@ export interface LighthouseV2StreamState {
 
 export function createInitialLighthouseV2StreamState(
   taskId: string | null = null,
+  tracksSkillSteps = false,
 ): LighthouseV2StreamState {
   return {
     status: taskId
       ? LIGHTHOUSE_V2_STREAM_STATUS.STREAMING
       : LIGHTHOUSE_V2_STREAM_STATUS.IDLE,
     activeTaskId: taskId,
+    tracksSkillSteps,
     assistantText: "",
     toolCalls: [],
     activityItems: [],
@@ -94,6 +97,18 @@ export function reduceLighthouseV2Event(
 ): LighthouseV2StreamState {
   switch (event.type) {
     case LIGHTHOUSE_V2_SSE_EVENT.MESSAGE_DELTA: {
+      if (!state.tracksSkillSteps) {
+        return {
+          ...state,
+          status: LIGHTHOUSE_V2_STREAM_STATUS.STREAMING,
+          assistantText: `${state.assistantText}${event.content}`,
+          activityItems: appendTextActivityItem(
+            state.activityItems,
+            event.content,
+          ),
+        };
+      }
+
       // Skill runs announce workflow steps with [[step:n]] markers embedded in
       // the text stream; strip them here so they never render, and remember
       // the highest/latest one for the progress UI.
@@ -182,8 +197,8 @@ export function reduceLighthouseV2Event(
 }
 
 // A held-back suffix that never completed into a marker is plain text. Every
-// terminal path (end, error, disconnect) must restore it — a disconnected
-// stream never replays, so an unflushed carry is silently lost text.
+// terminal path (end, error, closed connection) must restore it. Transient
+// EventSource reconnects never dispatch DISCONNECT, so their carry stays live.
 function flushMarkerCarry(
   state: LighthouseV2StreamState,
 ): LighthouseV2StreamState {

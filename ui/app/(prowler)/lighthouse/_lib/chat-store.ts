@@ -242,10 +242,10 @@ export function createLighthouseChatStore(
       // treat everything else as a reconnect.
       source.onerror = () => {
         if (eventSource !== source) return;
-        if (source.readyState === EventSource.CLOSED) {
-          closeStream();
-          set({ feedback: "Unable to connect to the response stream." });
-        }
+        if (source.readyState !== EventSource.CLOSED) return;
+
+        closeStream();
+        set({ feedback: "Unable to connect to the response stream." });
         set((current) => ({
           streamState: reduceLighthouseV2Event(current.streamState, {
             type: "disconnect",
@@ -320,7 +320,10 @@ export function createLighthouseChatStore(
             ...current.messages,
             buildOptimisticMessage("user", displayText, contextSnapshot, skill),
           ],
-          streamState: createInitialLighthouseV2StreamState(provisionalTaskId),
+          streamState: createInitialLighthouseV2StreamState(
+            provisionalTaskId,
+            skill !== undefined,
+          ),
         }));
 
         // Subscribe to the same-origin SSE proxy BEFORE sending the message:

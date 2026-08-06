@@ -10,9 +10,7 @@ const COMPLETE_MARKER = new RegExp(
   `\\[\\[step:(\\d{1,${MAX_STEP_DIGITS}})\\]\\]`,
   "g",
 );
-const PARTIAL_MARKER = new RegExp(
-  `^\\[\\[step:\\d{0,${MAX_STEP_DIGITS}}\\]?$`,
-);
+const PARTIAL_MARKER = new RegExp(`^\\[\\[step:\\d{0,${MAX_STEP_DIGITS}}\\]?$`);
 const MARKER_PREFIX = "[[step:";
 // Longest suffix that can still grow into a marker: prefix + digits + one "]".
 const MARKER_HOLD_WINDOW = MARKER_PREFIX.length + MAX_STEP_DIGITS + 1;

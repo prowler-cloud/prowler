@@ -60,7 +60,9 @@ export function MessageBubble({
     .map((part) => getTextContent(part.content))
     .filter(Boolean)
     .join("\n\n");
-  const displayText = isUser ? messageText : stripStepMarkers(messageText);
+  const displayText = isSkillResponse
+    ? stripStepMarkers(messageText)
+    : messageText;
   const messageContext = isUser
     ? message.parts
         .filter((part) => part.type === LIGHTHOUSE_V2_PART_TYPE.TEXT)
@@ -121,6 +123,7 @@ export function MessageBubble({
                 parts={message.parts.filter(
                   (part) => part.type === LIGHTHOUSE_V2_PART_TYPE.TEXT,
                 )}
+                stripSkillStepMarkers
               />
             ) : (
               <AssistantParts parts={message.parts} />
@@ -152,16 +155,27 @@ function AssistantParts({ parts }: { parts: LighthouseV2Part[] }) {
         group.type === ASSISTANT_PART_GROUP_TYPE.TOOL_CALL ? (
           <ToolCalls key={group.id} parts={group.parts} />
         ) : (
-          <AssistantTextParts key={group.id} parts={group.parts} />
+          <AssistantTextParts
+            key={group.id}
+            parts={group.parts}
+            stripSkillStepMarkers={false}
+          />
         ),
       )}
     </div>
   );
 }
 
-function AssistantTextParts({ parts }: { parts: LighthouseV2Part[] }) {
+function AssistantTextParts({
+  parts,
+  stripSkillStepMarkers,
+}: {
+  parts: LighthouseV2Part[];
+  stripSkillStepMarkers: boolean;
+}) {
   return parts.map((part, index) => {
-    const text = stripStepMarkers(getTextContent(part.content));
+    const rawText = getTextContent(part.content);
+    const text = stripSkillStepMarkers ? stripStepMarkers(rawText) : rawText;
     return text ? (
       <MessageMarkdown key={part.id || `text-${index}`} text={text} />
     ) : null;

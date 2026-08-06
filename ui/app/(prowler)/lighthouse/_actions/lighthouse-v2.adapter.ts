@@ -9,6 +9,7 @@ import {
   type LighthouseV2Part,
   type LighthouseV2PartType,
   type LighthouseV2ProviderType,
+  type LighthouseV2SendMessageInput,
   type LighthouseV2Session,
   type LighthouseV2SupportedModel,
   type LighthouseV2SupportedProvider,
@@ -17,7 +18,6 @@ import {
 import { buildLighthouseMessageContent } from "@/lib/lighthouse/message-content";
 import { getSkillById } from "@/lib/lighthouse/skills/registry";
 import type { JsonApiDocument, JsonApiResource } from "@/types/jsonapi";
-import type { LighthouseContextEnvelope } from "@/types/lighthouse-context";
 import type {
   TaskAttributes as ApiTaskAttributes,
   TaskState,
@@ -253,16 +253,13 @@ export function buildLighthouseV2SessionUpdatePayload(
   };
 }
 
-export function buildLighthouseV2MessagePayload(input: {
-  displayText: string;
-  context?: LighthouseContextEnvelope;
-  skillId?: string;
-  provider: LighthouseV2ProviderType;
-  model?: string | null;
-}) {
-  // An unknown id (stale client, removed skill) degrades to a plain message
-  // rather than failing the send.
+export function buildLighthouseV2MessagePayload(
+  input: Omit<LighthouseV2SendMessageInput, "sessionId">,
+) {
   const skill = input.skillId ? getSkillById(input.skillId) : undefined;
+  if (input.skillId && !skill) {
+    throw new Error(`Unknown Lighthouse skill: ${input.skillId}.`);
+  }
   const content = buildLighthouseMessageContent(
     input.displayText,
     input.context,

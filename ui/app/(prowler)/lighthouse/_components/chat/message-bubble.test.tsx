@@ -1,4 +1,5 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { type ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
@@ -135,8 +136,9 @@ describe("MessageBubble", () => {
     expect(screen.queryByText(/PROWLER_UI_SKILL_V1/)).not.toBeInTheDocument();
   });
 
-  it("should render a skill response with receipt and follow-up actions", () => {
+  it("should render a skill response with receipt and follow-up actions", async () => {
     // Given
+    const user = userEvent.setup();
     const assistantMessage: LighthouseV2Message = {
       id: "message-assistant-skill",
       role: LIGHTHOUSE_V2_MESSAGE_ROLE.ASSISTANT,
@@ -217,7 +219,7 @@ describe("MessageBubble", () => {
     ).toBeInTheDocument();
 
     // And the suggested next skill launches through the callback
-    fireEvent.click(
+    await user.click(
       screen.getByRole("button", { name: /Next: Generate remediation/ }),
     );
     expect(onLaunchSkill).toHaveBeenCalledOnce();
@@ -226,8 +228,9 @@ describe("MessageBubble", () => {
     });
   });
 
-  it("should expand the receipt into flat tool rows without a nested disclosure", () => {
+  it("should expand the receipt into flat tool rows without a nested disclosure", async () => {
     // Given: a finished skill run with one tool call
+    const user = userEvent.setup();
     const assistantMessage = buildAssistantMessage([
       toolCallPart("part-tool-1", "get_finding"),
       textPart("part-answer", "Done."),
@@ -248,7 +251,7 @@ describe("MessageBubble", () => {
     );
 
     // When: the receipt line is expanded
-    fireEvent.click(screen.getByRole("button", { name: /Ran/ }));
+    await user.click(screen.getByRole("button", { name: /Ran/ }));
 
     // Then: the tool row shows directly — no second "Used N tools" chevron
     expect(
@@ -337,6 +340,21 @@ describe("MessageBubble", () => {
 
     expect(isBefore(firstText, toolCall)).toBe(true);
     expect(isBefore(toolCall, secondText)).toBe(true);
+  });
+
+  it("should preserve step-like text in a persisted regular response", () => {
+    // Given
+    const assistantMessage = buildAssistantMessage([
+      textPart("part-1", "Use [[step:1]] as a literal example."),
+    ]);
+
+    // When
+    render(<MessageBubble message={assistantMessage} />);
+
+    // Then
+    expect(
+      screen.getByText("Use [[step:1]] as a literal example."),
+    ).toBeInTheDocument();
   });
 });
 

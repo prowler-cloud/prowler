@@ -14,6 +14,7 @@ import type {
   LighthouseV2SupportedProvider,
 } from "@/app/(prowler)/lighthouse/_types";
 import { apiBaseUrl, getAuthHeaders } from "@/lib/helper";
+import { getSkillById } from "@/lib/lighthouse/skills/registry";
 import { LIGHTHOUSE_ROUTE } from "@/lib/lighthouse-routes";
 import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 import type { JsonApiDocument } from "@/types/jsonapi";
@@ -221,6 +222,13 @@ export async function getLighthouseV2Messages(
 export async function sendLighthouseV2Message(
   input: LighthouseV2SendMessageInput,
 ): Promise<LighthouseV2ActionResult<LighthouseV2SendMessageResult>> {
+  if (input.skillId && !getSkillById(input.skillId)) {
+    return {
+      error: `Unknown Lighthouse skill: ${input.skillId}.`,
+      status: 400,
+    };
+  }
+
   try {
     const response = await fetch(
       buildApiUrl(

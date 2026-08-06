@@ -2,7 +2,7 @@ import type { LighthouseSkillDefinition } from "@/types/lighthouse-skills";
 
 import { LIGHTHOUSE_SKILLS } from "./definitions";
 
-export function getAllSkills(): LighthouseSkillDefinition[] {
+export function getAllSkills(): readonly LighthouseSkillDefinition[] {
   return LIGHTHOUSE_SKILLS;
 }
 

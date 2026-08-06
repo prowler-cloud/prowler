@@ -8,7 +8,7 @@ import {
 describe("event-reducer skill steps", () => {
   it("should strip step markers from the text and track the current step", () => {
     // Given
-    const state = createInitialLighthouseV2StreamState("task-1");
+    const state = createInitialLighthouseV2StreamState("task-1", true);
 
     // When
     const next = reduceLighthouseV2Event(state, {
@@ -26,7 +26,7 @@ describe("event-reducer skill steps", () => {
 
   it("should assemble a marker split across two deltas without leaking it", () => {
     // Given
-    let state = createInitialLighthouseV2StreamState("task-1");
+    let state = createInitialLighthouseV2StreamState("task-1", true);
     state = reduceLighthouseV2Event(state, {
       type: "message.delta",
       content: "Done.\n[[ste",
@@ -47,7 +47,7 @@ describe("event-reducer skill steps", () => {
 
   it("should tag tool calls with the step active when they start", () => {
     // Given
-    let state = createInitialLighthouseV2StreamState("task-1");
+    let state = createInitialLighthouseV2StreamState("task-1", true);
     state = reduceLighthouseV2Event(state, {
       type: "message.delta",
       content: "[[step:2]]Enumerating identities.",
@@ -67,7 +67,7 @@ describe("event-reducer skill steps", () => {
 
   it("should flush a never-completed partial marker as text when the message ends", () => {
     // Given
-    let state = createInitialLighthouseV2StreamState("task-1");
+    let state = createInitialLighthouseV2StreamState("task-1", true);
     state = reduceLighthouseV2Event(state, {
       type: "message.delta",
       content: "See the array[",
@@ -90,7 +90,7 @@ describe("event-reducer skill steps", () => {
 
   it("should flush a held partial marker as text on a terminal error", () => {
     // Given
-    let state = createInitialLighthouseV2StreamState("task-1");
+    let state = createInitialLighthouseV2StreamState("task-1", true);
     state = reduceLighthouseV2Event(state, {
       type: "message.delta",
       content: "Result[",
@@ -115,7 +115,7 @@ describe("event-reducer skill steps", () => {
 
   it("should flush a held partial marker as text on disconnect", () => {
     // Given: disconnected streams never replay, so the carry cannot complete
-    let state = createInitialLighthouseV2StreamState("task-1");
+    let state = createInitialLighthouseV2StreamState("task-1", true);
     state = reduceLighthouseV2Event(state, {
       type: "message.delta",
       content: "Result[",
@@ -131,6 +131,21 @@ describe("event-reducer skill steps", () => {
 });
 
 describe("event-reducer", () => {
+  it("should preserve step-like text in a regular chat response", () => {
+    // Given
+    const state = createInitialLighthouseV2StreamState("task-1");
+
+    // When
+    const next = reduceLighthouseV2Event(state, {
+      type: "message.delta",
+      content: "Use [[step:1]] as a literal example.",
+    });
+
+    // Then
+    expect(next.assistantText).toBe("Use [[step:1]] as a literal example.");
+    expect(next.currentStep).toBeNull();
+  });
+
   it("should append message deltas", () => {
     // Given
     const state = createInitialLighthouseV2StreamState("task-1");

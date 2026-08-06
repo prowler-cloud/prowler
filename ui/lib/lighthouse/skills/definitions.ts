@@ -1,12 +1,15 @@
 import { ClipboardCheck, ShieldAlert, Waypoints, Wrench } from "lucide-react";
 
-import type { LighthouseSkillDefinition } from "@/types/lighthouse-skills";
+import {
+  LIGHTHOUSE_SKILL_ID,
+  type LighthouseSkillDefinition,
+} from "@/types/lighthouse-skills";
 
 // Skill catalog is UI-defined by design: prompts iterate with a UI deploy, no
 // API involved. All findings currently get every skill (no applicability rules).
-export const LIGHTHOUSE_SKILLS: LighthouseSkillDefinition[] = [
+export const LIGHTHOUSE_SKILLS = [
   {
-    id: "investigate-blast-radius",
+    id: LIGHTHOUSE_SKILL_ID.INVESTIGATE_BLAST_RADIUS,
     name: "Investigate blast radius",
     description:
       "Map identities and resources reachable from the affected resource",
@@ -20,11 +23,11 @@ export const LIGHTHOUSE_SKILLS: LighthouseSkillDefinition[] = [
     ],
     guidance:
       "Quantify the blast radius: counts of identities and resources, the most privileged reachable identity, and the shortest path to sensitive data. Prefer graph/attack-path tools when available.",
-    nextSkillId: "verify-exploitability",
+    nextSkillId: LIGHTHOUSE_SKILL_ID.VERIFY_EXPLOITABILITY,
     version: 1,
   },
   {
-    id: "verify-exploitability",
+    id: LIGHTHOUSE_SKILL_ID.VERIFY_EXPLOITABILITY,
     name: "Verify exploitability",
     description: "Check real-world exposure and attack preconditions",
     icon: ShieldAlert,
@@ -37,11 +40,11 @@ export const LIGHTHOUSE_SKILLS: LighthouseSkillDefinition[] = [
     ],
     guidance:
       "Conclude with an explicit verdict (exploitable / not exploitable / needs manual validation), the evidence for it, and the preconditions an attacker needs.",
-    nextSkillId: "generate-remediation",
+    nextSkillId: LIGHTHOUSE_SKILL_ID.GENERATE_REMEDIATION,
     version: 1,
   },
   {
-    id: "generate-remediation",
+    id: LIGHTHOUSE_SKILL_ID.GENERATE_REMEDIATION,
     name: "Generate remediation",
     description: "Produce a least-privilege configuration and IaC fix",
     icon: Wrench,
@@ -54,11 +57,11 @@ export const LIGHTHOUSE_SKILLS: LighthouseSkillDefinition[] = [
     ],
     guidance:
       "Provide the concrete replacement configuration (policy JSON, settings) plus an infrastructure-as-code patch matching the provider (Terraform preferred), and call out anything that could break when applying it.",
-    nextSkillId: "triage-draft-ticket",
+    nextSkillId: LIGHTHOUSE_SKILL_ID.TRIAGE_DRAFT_TICKET,
     version: 1,
   },
   {
-    id: "triage-draft-ticket",
+    id: LIGHTHOUSE_SKILL_ID.TRIAGE_DRAFT_TICKET,
     name: "Triage & draft ticket",
     description: "Assess impact and draft a Jira ticket",
     icon: ClipboardCheck,
@@ -73,4 +76,4 @@ export const LIGHTHOUSE_SKILLS: LighthouseSkillDefinition[] = [
     nextSkillId: null,
     version: 1,
   },
-];
+] as const satisfies readonly LighthouseSkillDefinition[];
