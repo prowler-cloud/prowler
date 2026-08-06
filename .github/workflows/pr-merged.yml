@@ -36,7 +36,7 @@ jobs:
         id: vars
         run: |
           SHORT_SHA="${GITHUB_EVENT_PULL_REQUEST_MERGE_COMMIT_SHA}"
-          echo "short_sha=${SHORT_SHA::7}" >> $GITHUB_OUTPUT
+          echo "short_sha=${SHORT_SHA::7}" >> "$GITHUB_OUTPUT"
         env:
           GITHUB_EVENT_PULL_REQUEST_MERGE_COMMIT_SHA: ${{ github.event.pull_request.merge_commit_sha }}
 
