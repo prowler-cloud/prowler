@@ -1,12 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
+import { MAX_SAML_ADDITIONAL_EMAIL_DOMAINS } from "@/types/saml";
 
 import {
   addCredentialsFormSchema,
   addCredentialsRoleFormSchema,
   addProviderFormSchema,
   KUBECONFIG_UNSUPPORTED_COMMAND_AUTHENTICATION_ERROR,
+  samlConfigFormSchema,
 } from "./formSchemas";
 
 const BASE_AWS_ROLE_VALUES = {
@@ -286,5 +288,138 @@ describe("addCredentialsFormSchema - oraclecloud", () => {
     const result = schema.safeParse(BASE_OCI_VALUES);
 
     expect(result.success).toBe(true);
+  });
+});
+
+describe("samlConfigFormSchema", () => {
+  it("normalizes the primary and additional email domains", () => {
+    // Given
+    const values = {
+      email_domain: " Primary.Example.com ",
+      additional_email_domains: [
+        " Subsidiary.Example.com ",
+        "Division.Example.com",
+      ],
+      metadata_xml: " <EntityDescriptor /> ",
+    };
+
+    // When
+    const result = samlConfigFormSchema.safeParse(values);
+
+    // Then
+    expect(result.success).toBe(true);
+    expect(result.success && result.data).toEqual({
+      email_domain: "primary.example.com",
+      additional_email_domains: [
+        "subsidiary.example.com",
+        "division.example.com",
+      ],
+      metadata_xml: "<EntityDescriptor />",
+    });
+  });
+
+  it("defaults additional domains to an empty list for OSS submissions", () => {
+    // Given / When
+    const result = samlConfigFormSchema.safeParse({
+      email_domain: "primary.example.com",
+      metadata_xml: "<EntityDescriptor />",
+    });
+
+    // Then
+    expect(result.success && result.data.additional_email_domains).toEqual([]);
+  });
+
+  it("uses contextual required messages for SAML domains", () => {
+    // Given / When
+    const result = samlConfigFormSchema.safeParse({
+      email_domain: "",
+      additional_email_domains: [""],
+      metadata_xml: "<EntityDescriptor />",
+    });
+
+    // Then
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    expect(result.error.flatten().fieldErrors).toMatchObject({
+      email_domain: ["Email domain is required"],
+      additional_email_domains: ["Additional email domain is required"],
+    });
+  });
+
+  it("rejects duplicate additional domains after normalization", () => {
+    // Given / When
+    const result = samlConfigFormSchema.safeParse({
+      email_domain: "primary.example.com",
+      additional_email_domains: ["alias.example.com", " ALIAS.EXAMPLE.COM "],
+      metadata_xml: "<EntityDescriptor />",
+    });
+
+    // Then
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    expect(result.error.flatten().fieldErrors.additional_email_domains).toEqual(
+      ["Additional email domains must be unique."],
+    );
+  });
+
+  it("rejects the primary domain when it is also added as an alias", () => {
+    // Given / When
+    const result = samlConfigFormSchema.safeParse({
+      email_domain: "primary.example.com",
+      additional_email_domains: [" PRIMARY.EXAMPLE.COM "],
+      metadata_xml: "<EntityDescriptor />",
+    });
+
+    // Then
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    expect(result.error.flatten().fieldErrors.additional_email_domains).toEqual(
+      ["Additional email domains must differ from the primary email domain."],
+    );
+  });
+
+  it("accepts exactly nineteen aliases in addition to the primary domain", () => {
+    // Given
+    const aliases = Array.from(
+      { length: MAX_SAML_ADDITIONAL_EMAIL_DOMAINS },
+      (_, index) => `alias-${index}.example.com`,
+    );
+
+    // When
+    const result = samlConfigFormSchema.safeParse({
+      email_domain: "primary.example.com",
+      additional_email_domains: aliases,
+      metadata_xml: "<EntityDescriptor />",
+    });
+
+    // Then
+    expect(result.success).toBe(true);
+    expect(result.success && result.data.additional_email_domains).toEqual(
+      aliases,
+    );
+  });
+
+  it("rejects more than nineteen aliases in addition to the primary domain", () => {
+    // Given
+    const aliases = Array.from(
+      { length: MAX_SAML_ADDITIONAL_EMAIL_DOMAINS + 1 },
+      (_, index) => `alias-${index}.example.com`,
+    );
+
+    // When
+    const result = samlConfigFormSchema.safeParse({
+      email_domain: "primary.example.com",
+      additional_email_domains: aliases,
+      metadata_xml: "<EntityDescriptor />",
+    });
+
+    // Then
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    expect(result.error.flatten().fieldErrors.additional_email_domains).toEqual(
+      [
+        `A SAML configuration supports up to ${MAX_SAML_ADDITIONAL_EMAIL_DOMAINS} additional email domains.`,
+      ],
+    );
   });
 });

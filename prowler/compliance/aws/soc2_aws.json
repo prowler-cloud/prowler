@@ -225,7 +225,8 @@
         }
       ],
       "Checks": [
-        "s3_bucket_public_access"
+        "s3_bucket_public_access",
+        "kms_key_enclave_attestation_not_enforced"
       ]
     },
     {
@@ -262,7 +263,9 @@
         "bedrock_full_access_policy_attached",
         "iam_aws_attached_policy_no_administrative_privileges",
         "iam_customer_attached_policy_no_administrative_privileges",
-        "iam_inline_policy_no_administrative_privileges"
+        "iam_inline_policy_no_administrative_privileges",
+        "kms_key_enclave_attestation_bypassable_path",
+        "kms_key_enclave_attestation_no_deployment_binding"
       ]
     },
     {
@@ -322,7 +325,10 @@
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_sql_server_1433_1434",
-        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_telnet_23"
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_telnet_23",
+        "ec2_confidential_workload_host_public_ip",
+        "ec2_confidential_workload_host_unrestricted_ingress",
+        "ec2_confidential_workload_host_vsock_proxy_exposed"
       ]
     },
     {
@@ -396,7 +402,8 @@
         "guardduty_is_enabled",
         "securityhub_enabled",
         "ec2_instance_managed_by_ssm",
-        "ssm_managed_compliant_patching"
+        "ssm_managed_compliant_patching",
+        "kms_key_enclave_attestation_pcr_mismatch"
       ],
       "ConfigRequirements": [
         {
@@ -446,7 +453,10 @@
         "ec2_instance_imdsv2_enabled",
         "guardduty_is_enabled",
         "apigateway_restapi_logging_enabled",
-        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22"
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
+        "ec2_confidential_workload_host_imdsv2_not_enforced",
+        "kms_key_enclave_debug_attestation_detected",
+        "kms_key_enclave_attestation_unknown_image"
       ],
       "ConfigRequirements": [
         {
@@ -645,7 +655,8 @@
         "stepfunctions_statemachine_logging_enabled",
         "waf_global_webacl_logging_enabled",
         "wafv2_webacl_logging_enabled",
-        "wafv2_webacl_rule_logging_enabled"
+        "wafv2_webacl_rule_logging_enabled",
+        "ec2_confidential_workload_host_not_running"
       ]
     },
     {

@@ -30,8 +30,10 @@ export const QuerySelector = ({
         <SelectValue placeholder="Choose a query" />
       </SelectTrigger>
       <SelectContent>
+        {/* Radix drops `value` from the DOM; `data-value` is what tests
+            select an option by. */}
         {queries.map((query) => (
-          <SelectItem key={query.id} value={query.id}>
+          <SelectItem key={query.id} value={query.id} data-value={query.id}>
             <div className="flex flex-col gap-1">
               <span className="font-medium">{query.attributes.name}</span>
               <span className="text-xs text-gray-500">

@@ -470,7 +470,7 @@ export function GcpOrgSetupForm({
                   name="clientSecret"
                   label="Client Secret"
                   labelPlacement="outside"
-                  password
+                  type="password"
                   isRequired
                 />
                 <WizardInputField
@@ -478,7 +478,7 @@ export function GcpOrgSetupForm({
                   name="refreshToken"
                   label="Refresh Token"
                   labelPlacement="outside"
-                  password
+                  type="password"
                   isRequired
                 />
               </div>

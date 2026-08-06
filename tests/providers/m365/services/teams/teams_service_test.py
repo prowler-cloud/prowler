@@ -48,6 +48,7 @@ def mock_get_user_settings(_):
         allow_external_access=False,
         allow_teams_consumer=False,
         allow_teams_consumer_inbound=False,
+        external_access_with_trial_tenants="Blocked",
     )
 
 
@@ -113,8 +114,32 @@ class Test_Teams_Service:
                 allow_external_access=False,
                 allow_teams_consumer=False,
                 allow_teams_consumer_inbound=False,
+                external_access_with_trial_tenants="Blocked",
             )
             teams_client.powershell.close()
+
+    def test_get_user_settings_parses_external_access_with_trial_tenants(self):
+        service = Teams.__new__(Teams)
+        service.powershell = mock.MagicMock()
+        service.powershell.get_user_settings.return_value = {
+            "AllowFederatedUsers": True,
+            "AllowTeamsConsumer": True,
+            "AllowTeamsConsumerInbound": True,
+            "ExternalAccessWithTrialTenants": "Allowed",
+        }
+        user_settings = Teams._get_user_settings(service)
+        assert user_settings.external_access_with_trial_tenants == "Allowed"
+
+    def test_get_user_settings_trial_tenants_defaults_to_blocked_when_absent(self):
+        # Older MicrosoftTeams module versions do not return the property; the
+        # parser assumes Microsoft's service default (Blocked).
+        service = Teams.__new__(Teams)
+        service.powershell = mock.MagicMock()
+        service.powershell.get_user_settings.return_value = {
+            "AllowFederatedUsers": True,
+        }
+        user_settings = Teams._get_user_settings(service)
+        assert user_settings.external_access_with_trial_tenants == "Blocked"
 
     @patch(
         "prowler.providers.m365.services.teams.teams_service.Teams._get_global_meeting_policy",

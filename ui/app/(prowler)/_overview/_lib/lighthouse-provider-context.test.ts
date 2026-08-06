@@ -52,6 +52,18 @@ describe("buildOverviewProviderContextItems", () => {
     ]);
   });
 
+  it("dedupes repeated provider ids before filling the bounded slots", () => {
+    const items = buildOverviewProviderContextItems({
+      searchParams: {
+        "filter[provider_id__in]": "prov-1,prov-1,prov-1,prov-2,prov-3",
+      },
+      providers,
+      groups,
+    });
+
+    expect(items.map((item) => item.id)).toEqual(["prov-1", "prov-2"]);
+  });
+
   it("resolves URL-filtered group ids to labeled group items", () => {
     const items = buildOverviewProviderContextItems({
       searchParams: { "filter[provider_groups__in]": "group-1,unknown" },

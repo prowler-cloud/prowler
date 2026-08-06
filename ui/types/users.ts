@@ -1,3 +1,29 @@
+export const USER_SIGN_IN_METHOD = {
+  EMAIL_PASSWORD: "email_password",
+  GOOGLE: "google",
+  GITHUB: "github",
+  SAML: "saml",
+  PARTNER_SSO: "partner_sso",
+} as const;
+
+export type UserSignInMethodType =
+  (typeof USER_SIGN_IN_METHOD)[keyof typeof USER_SIGN_IN_METHOD];
+
+type NonSamlUserSignInMethodType = Exclude<
+  UserSignInMethodType,
+  typeof USER_SIGN_IN_METHOD.SAML
+>;
+
+export type UserSignInMethod =
+  | {
+      method: typeof USER_SIGN_IN_METHOD.SAML;
+      domain?: string;
+    }
+  | {
+      method: NonSamlUserSignInMethodType;
+      domain?: never;
+    };
+
 export interface UserAttributes {
   name: string;
   email: string;
