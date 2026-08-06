@@ -76,7 +76,7 @@ export function LighthouseSkillsSubmenu({
     <>
       <DropdownMenuSeparator />
       <DropdownMenuSub>
-        <DropdownMenuSubTrigger className="hover:bg-bg-neutral-tertiary flex cursor-pointer items-center gap-2 rounded-md">
+        <DropdownMenuSubTrigger className="hover:bg-border-neutral-secondary flex cursor-pointer items-center gap-2 rounded-lg">
           <LighthouseIcon size={16} aria-hidden />
           Lighthouse Skills
         </DropdownMenuSubTrigger>

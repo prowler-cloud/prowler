@@ -132,7 +132,7 @@ export function ActionDropdownItem({
   const item = (
     <DropdownMenuItem
       className={cn(
-        "hover:bg-bg-neutral-tertiary flex cursor-pointer items-start gap-2 rounded-md transition-colors",
+        "hover:bg-border-neutral-secondary flex cursor-pointer items-start gap-2 rounded-lg transition-colors",
         destructive &&
           "text-text-error-primary focus:text-text-error-primary hover:bg-destructive/10",
         className,
