@@ -2131,9 +2131,7 @@
     {
       "Id": "5.2.3.6",
       "Description": "System-preferred multifactor authentication (MFA) prompts users to sign in by using the most secure method they registered. The user is prompted to sign-in with the most secure method according to the below order. The order of authentication methods is dynamic. It's updated by Microsoft as the security landscape changes, and as better authentication methods emerge. 1. Temporary Access Pass 2. Passkey (FIDO2) 3. Microsoft Authenticator notifications 4. External authentication methods 5. Time-based one-time password (TOTP) 6. Telephony 7. Certificate-based authentication The recommended state is Enabled.",
-      "Checks": [
-        "entra_authentication_method_system_preferred_mfa_enabled"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",
@@ -2223,9 +2221,7 @@
     {
       "Id": "5.2.3.10",
       "Description": "Microsoft Entra ID includes a feature called Authenticator Lite, which embeds a subset of Microsoft Authenticator functionality into companion applications such as Outlook mobile. When enabled, users can satisfy MFA requirements using push notifications or time-based one-time passcodes (TOTP) directly from the companion application without installing the standalone Microsoft Authenticator app. The recommended state is Microsoft Authenticator on companion applications set to Disabled.",
-      "Checks": [
-        "entra_authentication_method_authenticator_companion_app_disabled"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",
