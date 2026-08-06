@@ -108,14 +108,14 @@ jobs:
 
       - name: Show test scope
         run: |
-          echo "## E2E Test Scope" >> $GITHUB_STEP_SUMMARY
+          echo "## E2E Test Scope" >> "$GITHUB_STEP_SUMMARY"
           if [[ "${RUN_ALL_TESTS}" == "true" ]]; then
-            echo "Running **ALL** E2E tests (critical path changed)" >> $GITHUB_STEP_SUMMARY
+            echo "Running **ALL** E2E tests (critical path changed)" >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "Running tests matching: \`${E2E_TEST_PATHS}\`" >> $GITHUB_STEP_SUMMARY
+            echo "Running tests matching: \`${E2E_TEST_PATHS}\`" >> "$GITHUB_STEP_SUMMARY"
           fi
           echo ""
-          echo "Affected modules: \`${NEEDS_IMPACT_ANALYSIS_OUTPUTS_MODULES}\`" >> $GITHUB_STEP_SUMMARY
+          echo "Affected modules: \`${NEEDS_IMPACT_ANALYSIS_OUTPUTS_MODULES}\`" >> "$GITHUB_STEP_SUMMARY"
         env:
           NEEDS_IMPACT_ANALYSIS_OUTPUTS_MODULES: ${{ needs.impact-analysis.outputs.modules }}
 
@@ -301,7 +301,7 @@ jobs:
           run_install: false
 
       - name: Get pnpm store directory
-        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> "$GITHUB_ENV"
 
       - name: Setup pnpm and Next.js cache
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
@@ -444,12 +444,12 @@ jobs:
 
       - name: No E2E tests needed
         run: |
-          echo "## E2E Tests Skipped" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "No UI E2E tests needed for this change." >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Affected modules: \`${NEEDS_IMPACT_ANALYSIS_OUTPUTS_MODULES}\`" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "To run all tests, modify a file in a critical path (e.g., \`ui/lib/**\`)." >> $GITHUB_STEP_SUMMARY
+          echo "## E2E Tests Skipped" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "No UI E2E tests needed for this change." >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Affected modules: \`${NEEDS_IMPACT_ANALYSIS_OUTPUTS_MODULES}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "To run all tests, modify a file in a critical path (e.g., \`ui/lib/**\`)." >> "$GITHUB_STEP_SUMMARY"
         env:
           NEEDS_IMPACT_ANALYSIS_OUTPUTS_MODULES: ${{ needs.impact-analysis.outputs.modules }}

@@ -113,7 +113,7 @@ jobs:
       - name: Get pnpm store directory
         if: steps.check-changes.outputs.any_changed == 'true'
         shell: bash
-        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> "$GITHUB_ENV"
 
       - name: Setup pnpm and Next.js cache
         if: steps.check-changes.outputs.any_changed == 'true'
