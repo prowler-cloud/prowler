@@ -13,6 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  type DropdownContentVariant,
 } from "./dropdown";
 
 const ACTION_TRIGGER_STYLES = {
@@ -31,6 +32,8 @@ interface ActionDropdownProps {
   align?: "start" | "center" | "end";
   /** Additional className for the content */
   className?: string;
+  /** Content style variant, e.g. the Lighthouse gradient border */
+  menuVariant?: DropdownContentVariant;
   /** Accessible label for the trigger */
   ariaLabel?: string;
   children: ReactNode;
@@ -41,6 +44,7 @@ export function ActionDropdown({
   variant = "table",
   align = "end",
   className,
+  menuVariant,
   ariaLabel = "Open actions menu",
   children,
 }: ActionDropdownProps) {
@@ -85,6 +89,7 @@ export function ActionDropdown({
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align={align}
+        variant={menuVariant}
         className={cn(
           "border-border-neutral-secondary bg-bg-neutral-secondary w-56 rounded-xl",
           className,
