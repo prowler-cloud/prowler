@@ -11,6 +11,7 @@ CHECK_MODULE_PATH = "prowler.providers.m365.services.entra.entra_access_review_g
 def _definition(
     status="InProgress",
     scope_query="/users?$filter=(userType eq 'Guest')",
+    principal_scope_queries=None,
     default_decision="Deny",
     auto_apply_enabled=True,
     mail_notifications_enabled=True,
@@ -21,6 +22,7 @@ def _definition(
         display_name="Guest Review",
         status=status,
         scope_query=scope_query,
+        principal_scope_queries=principal_scope_queries or [],
         default_decision=default_decision,
         auto_apply_enabled=auto_apply_enabled,
         mail_notifications_enabled=mail_notifications_enabled,
@@ -71,3 +73,16 @@ class Test_entra_access_review_guest_users_configured:
     def test_not_guest_scope(self):
         result = self._run([_definition(scope_query="/roleManagement/directory")])
         assert result[0].status == "FAIL"
+
+    def test_guest_filter_in_principal_scopes(self):
+        # Portal-created reviews keep the guest filter in principalScopes and
+        # leave the top-level scope query empty.
+        result = self._run(
+            [
+                _definition(
+                    scope_query="",
+                    principal_scope_queries=["/users?$filter=(userType eq 'Guest')"],
+                )
+            ]
+        )
+        assert result[0].status == "PASS"

@@ -18,6 +18,22 @@ class entra_access_review_guest_users_configured(Check):
     - FAIL: No such access review exists (missing, inactive, or not fail-closed).
     """
 
+    def _targets_guest_users(self, definition) -> bool:
+        """Determine whether an access review targets guest users.
+
+        Portal-created reviews use a principal-resource-memberships scope where the
+        guest filter (``userType eq 'Guest'``) lives in the principal scopes and the
+        top-level scope query is empty, so both are inspected.
+
+        Args:
+            definition: The access review definition to evaluate.
+
+        Returns:
+            bool: True if any of the review's scope queries reference guest users.
+        """
+        queries = [definition.scope_query] + definition.principal_scope_queries
+        return any("guest" in query.lower() for query in queries)
+
     def _is_fail_closed(self, definition) -> bool:
         """Determine whether an access review definition is fail-closed.
 
@@ -62,7 +78,7 @@ class entra_access_review_guest_users_configured(Check):
         for definition in definitions:
             if (
                 definition.status in ACTIVE_STATUSES
-                and "guest" in definition.scope_query.lower()
+                and self._targets_guest_users(definition)
                 and self._is_fail_closed(definition)
             ):
                 report = CheckReportM365(
