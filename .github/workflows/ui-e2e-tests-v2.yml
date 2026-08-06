@@ -233,7 +233,7 @@ jobs:
           yq -i '.services.worker.networks = ["kind","default"]' docker-compose.yml
 
       - name: Fix API data directory permissions
-        run: docker run --rm -v $(pwd)/_data/api:/data alpine chown -R 1000:1000 /data
+        run: docker run --rm -v "$(pwd)/_data/api:/data" alpine chown -R 1000:1000 /data
 
       - name: Add AWS credentials for testing
         run: |
@@ -267,7 +267,7 @@ jobs:
           timeout=150
           elapsed=0
           while [ $elapsed -lt $timeout ]; do
-            if curl -s ${UI_API_BASE_URL}/docs >/dev/null 2>&1; then
+            if curl -s "${UI_API_BASE_URL}/docs" >/dev/null 2>&1; then
               echo "Prowler API is ready!"
               exit 0
             fi
@@ -387,7 +387,8 @@ jobs:
             fi
             TEST_PATHS=$(echo "$VALID_PATHS" | tr '\n' ' ')
             echo "Resolved test paths: $TEST_PATHS"
-            pnpm exec playwright test $TEST_PATHS
+            read -ra test_paths <<< "$TEST_PATHS"
+            pnpm exec playwright test "${test_paths[@]}"
           fi
 
       - name: Upload test reports

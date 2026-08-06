@@ -84,7 +84,8 @@ jobs:
           echo "Changed files:"
           echo "${STEPS_CHANGED_FILES_OUTPUTS_ALL_CHANGED_FILES}" | tr ' ' '\n'
           echo ""
-          python .github/scripts/test-impact.py ${STEPS_CHANGED_FILES_OUTPUTS_ALL_CHANGED_FILES}
+          read -ra changed <<< "${STEPS_CHANGED_FILES_OUTPUTS_ALL_CHANGED_FILES}"
+          python .github/scripts/test-impact.py "${changed[@]}"
         env:
           STEPS_CHANGED_FILES_OUTPUTS_ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
 
