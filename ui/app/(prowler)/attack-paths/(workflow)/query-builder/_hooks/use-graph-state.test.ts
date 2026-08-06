@@ -43,4 +43,50 @@ describe("useGraphStore", () => {
     // Then
     expect(useGraphStore.getState().selectedNodeId).toBeNull();
   });
+
+  it("expands multiple resource classes at once", () => {
+    // When
+    useGraphStore.getState().toggleExpandedClass("0::AWSRole");
+    useGraphStore.getState().toggleExpandedClass("1::AWSPolicy");
+
+    // Then
+    expect(Array.from(useGraphStore.getState().expandedClasses)).toEqual([
+      "0::AWSRole",
+      "1::AWSPolicy",
+    ]);
+  });
+
+  it("closes an expanded class when toggled again", () => {
+    // Given
+    useGraphStore.getState().toggleExpandedClass("0::AWSRole");
+
+    // When
+    useGraphStore.getState().toggleExpandedClass("0::AWSRole");
+
+    // Then
+    expect(useGraphStore.getState().expandedClasses.size).toBe(0);
+  });
+
+  it("collapses every expanded class", () => {
+    // Given
+    useGraphStore.getState().toggleExpandedClass("0::AWSRole");
+    useGraphStore.getState().toggleExpandedClass("1::AWSPolicy");
+
+    // When
+    useGraphStore.getState().collapseAllClasses();
+
+    // Then
+    expect(useGraphStore.getState().expandedClasses.size).toBe(0);
+  });
+
+  it("clears expanded classes when fresh graph data loads", () => {
+    // Given
+    useGraphStore.getState().toggleExpandedClass("0::AWSRole");
+
+    // When
+    useGraphStore.getState().setGraphData({ nodes: [], edges: [] }, null);
+
+    // Then
+    expect(useGraphStore.getState().expandedClasses.size).toBe(0);
+  });
 });

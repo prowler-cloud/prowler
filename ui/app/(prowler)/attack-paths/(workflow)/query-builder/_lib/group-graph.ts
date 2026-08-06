@@ -257,10 +257,9 @@ export const buildAttackPathView = ({
               },
         );
       }
-      // Hidden overflow members still collapse back to the group on click.
-      for (const member of members.slice(shown.length)) {
-        viewIdOf.set(member.id, `group:${key}`);
-      }
+      // Members beyond the cap are hidden (truncated === true). Leave them out
+      // of viewIdOf so their edges are dropped rather than pointing at a
+      // `group:${key}` node that this expanded branch never renders.
     } else {
       const groupId = `group:${key}`;
       const className = resolveNodeVisual(members[0]).description;

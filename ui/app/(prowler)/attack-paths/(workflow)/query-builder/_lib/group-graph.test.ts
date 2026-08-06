@@ -219,6 +219,14 @@ describe("buildAttackPathView", () => {
     const rendered = view.nodes.filter((n) => n.id.startsWith("m-")).length;
     expect(rendered).toBe(30);
     expect(view.truncated).toBe(true);
+
+    // Hidden overflow members must not leave edges pointing at a `group:` node
+    // that the expanded branch never renders: every endpoint resolves.
+    const nodeIds = new Set(view.nodes.map((n) => n.id));
+    for (const edge of view.edges) {
+      expect(nodeIds.has(edge.source)).toBe(true);
+      expect(nodeIds.has(edge.target)).toBe(true);
+    }
   });
 
   it("returns an empty view when nothing survives hub removal", () => {

@@ -279,6 +279,11 @@ export default function AttackPathsPage() {
         queryBuilder.selectedQueryData?.attributes.name ?? queryId;
       const parameters = { ...queryBuilder.getQueryParameters() };
       const isCustomQuery = queryId === ATTACK_PATH_QUERY_IDS.CUSTOM;
+      // Snapshot before awaiting: the selected query can change while the
+      // request is in flight. Custom queries have no catalog outcome → null.
+      const queryOutcome = isCustomQuery
+        ? null
+        : (queryBuilder.selectedQueryData?.attributes.outcome ?? null);
       const result = isCustomQuery
         ? await executeCustomQuery(scanId, String(parameters?.query ?? ""))
         : await executeQuery(scanId, queryId, parameters);
@@ -315,10 +320,7 @@ export default function AttackPathsPage() {
             : ATTACK_PATH_QUERY_KIND.PREDEFINED,
           parameters,
         });
-        // Custom queries have no catalog outcome → null → no outcome node.
-        setExecutedOutcome(
-          queryBuilder.selectedQueryData?.attributes.outcome ?? null,
-        );
+        setExecutedOutcome(queryOutcome);
         toast({
           title: "Success",
           description: "Query executed successfully",

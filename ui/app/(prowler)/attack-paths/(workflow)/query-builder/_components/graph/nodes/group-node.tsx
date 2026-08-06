@@ -2,6 +2,11 @@
 
 import { type NodeProps, Position } from "@xyflow/react";
 
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/shadcn/tooltip";
 import type { GraphNode } from "@/types/attack-paths";
 
 import { resolveNodeColors, resolveNodeVisual } from "../../../_lib";
@@ -63,10 +68,113 @@ export const GroupNode = ({ data, selected }: NodeProps) => {
     hasFindings,
   });
 
-  const name = getNodeLabelDisplay(
-    className || visual.description,
-    NAME_MAX_CHARS,
-    NAME_MAX_LINES,
+  const fullName = className || visual.description;
+  const name = getNodeLabelDisplay(fullName, NAME_MAX_CHARS, NAME_MAX_LINES);
+
+  const nodeSvg = (
+    <svg
+      width={NODE_WIDTH}
+      height={NODE_HEIGHT}
+      className="cursor-pointer overflow-visible"
+      tabIndex={name.isTruncated ? 0 : undefined}
+      data-testid="attack-path-group-node"
+    >
+      {hasFindings && (
+        <circle
+          cx={BADGE_CENTER_X}
+          cy={BADGE_CENTER_Y}
+          r={BADGE_RADIUS + 5}
+          fill={borderColor}
+          fillOpacity={0.26}
+          pointerEvents="none"
+        />
+      )}
+      <circle
+        cx={BADGE_CENTER_X}
+        cy={BADGE_CENTER_Y}
+        r={BADGE_RADIUS}
+        fill={fillColor}
+        fillOpacity={0.92}
+        stroke={borderColor}
+        strokeWidth={selected ? 4 : hasFindings ? 3 : 1.5}
+      />
+      <g
+        aria-label={`${visual.description} icon`}
+        role="img"
+        transform={`translate(${ICON_X}, ${ICON_Y})`}
+      >
+        <Icon
+          aria-hidden="true"
+          focusable="false"
+          height={ICON_SIZE}
+          role="presentation"
+          size={ICON_SIZE}
+          width={ICON_SIZE}
+        />
+      </g>
+      {/* count badge */}
+      <circle
+        cx={COUNT_CX}
+        cy={COUNT_CY}
+        r={COUNT_R}
+        fill={borderColor}
+        stroke="#0b1120"
+        strokeWidth={2}
+      />
+      <text
+        x={COUNT_CX}
+        y={COUNT_CY + 1}
+        textAnchor="middle"
+        dominantBaseline="middle"
+        fontSize="11px"
+        fontWeight="700"
+        fill="#ffffff"
+        pointerEvents="none"
+      >
+        {count}
+      </text>
+      <text
+        x={TEXT_X}
+        y={NAME_Y}
+        textAnchor="middle"
+        dominantBaseline="middle"
+        fill="#ffffff"
+        style={{ textShadow: "0 1px 2px rgba(0,0,0,0.5)" }}
+        pointerEvents="none"
+      >
+        {name.lines.map((line, index) => (
+          <tspan
+            key={`${line}-${index}`}
+            x={TEXT_X}
+            y={NAME_Y + index * NAME_LINE_HEIGHT}
+            fontSize="11px"
+            fontWeight="600"
+          >
+            {line}
+          </tspan>
+        ))}
+      </text>
+      <text
+        x={TEXT_X}
+        y={COUNT_LABEL_Y}
+        textAnchor="middle"
+        fontSize="9px"
+        fill="rgba(255,255,255,0.8)"
+        pointerEvents="none"
+      >
+        {count} {count === 1 ? "resource" : "resources"}
+      </text>
+      <text
+        x={TEXT_X}
+        y={HINT_Y}
+        textAnchor="middle"
+        fontSize="8px"
+        fill="rgba(255,255,255,0.55)"
+        pointerEvents="none"
+      >
+        click to expand
+      </text>
+    </svg>
   );
 
   return (
@@ -77,108 +185,14 @@ export const GroupNode = ({ data, selected }: NodeProps) => {
         targetPosition={Position.Left}
         targetStyle={{ left: BADGE_LEFT_X, top: BADGE_CENTER_Y }}
       />
-      <svg
-        width={NODE_WIDTH}
-        height={NODE_HEIGHT}
-        className="cursor-pointer overflow-visible"
-        data-testid="attack-path-group-node"
-      >
-        {hasFindings && (
-          <circle
-            cx={BADGE_CENTER_X}
-            cy={BADGE_CENTER_Y}
-            r={BADGE_RADIUS + 5}
-            fill={borderColor}
-            fillOpacity={0.26}
-            pointerEvents="none"
-          />
-        )}
-        <circle
-          cx={BADGE_CENTER_X}
-          cy={BADGE_CENTER_Y}
-          r={BADGE_RADIUS}
-          fill={fillColor}
-          fillOpacity={0.92}
-          stroke={borderColor}
-          strokeWidth={selected ? 4 : hasFindings ? 3 : 1.5}
-        />
-        <g
-          aria-label={`${visual.description} icon`}
-          role="img"
-          transform={`translate(${ICON_X}, ${ICON_Y})`}
-        >
-          <Icon
-            aria-hidden="true"
-            focusable="false"
-            height={ICON_SIZE}
-            role="presentation"
-            size={ICON_SIZE}
-            width={ICON_SIZE}
-          />
-        </g>
-        {/* count badge */}
-        <circle
-          cx={COUNT_CX}
-          cy={COUNT_CY}
-          r={COUNT_R}
-          fill={borderColor}
-          stroke="#0b1120"
-          strokeWidth={2}
-        />
-        <text
-          x={COUNT_CX}
-          y={COUNT_CY + 1}
-          textAnchor="middle"
-          dominantBaseline="middle"
-          fontSize="11px"
-          fontWeight="700"
-          fill="#ffffff"
-          pointerEvents="none"
-        >
-          {count}
-        </text>
-        <text
-          x={TEXT_X}
-          y={NAME_Y}
-          textAnchor="middle"
-          dominantBaseline="middle"
-          fill="#ffffff"
-          style={{ textShadow: "0 1px 2px rgba(0,0,0,0.5)" }}
-          pointerEvents="none"
-        >
-          {name.lines.map((line, index) => (
-            <tspan
-              key={`${line}-${index}`}
-              x={TEXT_X}
-              y={NAME_Y + index * NAME_LINE_HEIGHT}
-              fontSize="11px"
-              fontWeight="600"
-            >
-              {line}
-            </tspan>
-          ))}
-        </text>
-        <text
-          x={TEXT_X}
-          y={COUNT_LABEL_Y}
-          textAnchor="middle"
-          fontSize="9px"
-          fill="rgba(255,255,255,0.8)"
-          pointerEvents="none"
-        >
-          {count} {count === 1 ? "resource" : "resources"}
-        </text>
-        <text
-          x={TEXT_X}
-          y={HINT_Y}
-          textAnchor="middle"
-          fontSize="8px"
-          fill="rgba(255,255,255,0.55)"
-          pointerEvents="none"
-        >
-          click to expand
-        </text>
-      </svg>
+      {name.isTruncated ? (
+        <Tooltip>
+          <TooltipTrigger asChild>{nodeSvg}</TooltipTrigger>
+          <TooltipContent>{fullName}</TooltipContent>
+        </Tooltip>
+      ) : (
+        nodeSvg
+      )}
     </>
   );
 };
