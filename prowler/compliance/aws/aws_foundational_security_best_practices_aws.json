@@ -1782,7 +1782,7 @@
       "Name": "EKS cluster endpoints should not be publicly accessible",
       "Description": "This control checks whether an Amazon EKS cluster endpoint is publicly accessible. The control fails if an EKS cluster has an endpoint that is publicly accessible.",
       "Checks": [
-        "eks_endpoints_not_publicly_accessible"
+        "eks_cluster_not_publicly_accessible"
       ],
       "Attributes": [
         {
