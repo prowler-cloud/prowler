@@ -12,7 +12,7 @@ from prowler.providers.aws.services.batch.batch_client import batch_client
 class batch_job_definition_no_secrets(Check):
     """Detect secrets in AWS Batch job definition environment variables and commands."""
 
-    def execute(self):
+    def execute(self) -> list[Check_Report_AWS]:
         """Scan job definitions for hardcoded secrets in env vars and commands."""
         findings = []
 
