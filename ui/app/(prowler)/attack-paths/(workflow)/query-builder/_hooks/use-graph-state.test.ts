@@ -32,4 +32,15 @@ describe("useGraphStore", () => {
     // Then
     expect(useGraphStore.getState().expandedResources.size).toBe(0);
   });
+
+  it("clears the selected node when fresh graph data loads", () => {
+    // Given - a node is selected in the current graph
+    useGraphStore.getState().setSelectedNodeId("resource-a");
+
+    // When - a new query loads
+    useGraphStore.getState().setGraphData({ nodes: [], edges: [] }, null);
+
+    // Then
+    expect(useGraphStore.getState().selectedNodeId).toBeNull();
+  });
 });

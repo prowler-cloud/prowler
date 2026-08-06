@@ -22,6 +22,7 @@ import {
   useState,
 } from "react";
 
+import { isCloud } from "@/lib/shared/env";
 import { cn } from "@/lib/utils";
 import type {
   AttackPathGraphData,
@@ -39,7 +40,7 @@ import {
   resolveHiddenFindingIds,
 } from "../../_lib";
 import { buildAttackPathView } from "../../_lib/group-graph";
-import { layoutWithDagre } from "../../_lib/layout";
+import { layoutWithDagre, NODE_TYPE } from "../../_lib/layout";
 
 import { FindingNode } from "./nodes/finding-node";
 import { GroupNode } from "./nodes/group-node";
@@ -80,11 +81,11 @@ const EMPTY_EXPANDED: ReadonlySet<string> = new Set();
 // --- Node type registry (stable reference) ---
 
 const NODE_TYPES = {
-  finding: FindingNode,
-  internet: InternetNode,
-  resource: ResourceNode,
-  group: GroupNode,
-  outcome: OutcomeNode,
+  [NODE_TYPE.FINDING]: FindingNode,
+  [NODE_TYPE.INTERNET]: InternetNode,
+  [NODE_TYPE.RESOURCE]: ResourceNode,
+  [NODE_TYPE.GROUP]: GroupNode,
+  [NODE_TYPE.OUTCOME]: OutcomeNode,
 } as const;
 
 // --- CSS for animated dashed edges, selected node pulse, and edge highlight ---
@@ -404,15 +405,18 @@ const GraphCanvas = ({
     );
   }, [expanded, fitView, getNodes]);
 
-  // Reshape into the attack-path view: drop the account hub, collapse each
-  // resource class into one node (expandable), and inject the outcome node.
-  // Findings pass through for expanded members; the tier-1 finding-hide logic
-  // below then reveals them per-resource, so existing behaviour is preserved.
-  const view = buildAttackPathView({
-    data: effectiveData,
-    expandedClasses: expandedClasses ?? EMPTY_EXPANDED,
-    outcome,
-  });
+  // Cloud reshapes into the attack-path view: drop the account hub, collapse
+  // each resource class into one expandable node, and inject the outcome node.
+  // OSS keeps the original flat graph, so the grouped/outcome view is Cloud-only.
+  // Findings pass through either way; the finding-hide logic below reveals them
+  // per-resource, preserving existing behaviour.
+  const view = isCloud()
+    ? buildAttackPathView({
+        data: effectiveData,
+        expandedClasses: expandedClasses ?? EMPTY_EXPANDED,
+        outcome,
+      })
+    : { nodes: effectiveData.nodes ?? [], edges: effectiveData.edges ?? [] };
   const nodes = view.nodes;
   const edges = view.edges;
 

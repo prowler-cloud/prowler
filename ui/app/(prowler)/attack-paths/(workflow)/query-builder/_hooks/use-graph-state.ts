@@ -68,7 +68,8 @@ export const useGraphStore = create<GraphStore>((set) => ({
       error: null,
       isFilteredView: false,
       filteredNodeId: null,
-      // Fresh data → drop any stale expansion from the previous graph.
+      // Fresh data → drop any stale selection/expansion from the previous graph.
+      selectedNodeId: null,
       expandedResources: new Set(),
       expandedClasses: new Set(),
     }),

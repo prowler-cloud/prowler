@@ -30,11 +30,15 @@ interface NodeData extends Record<string, unknown> {
   graphNode: GraphNode;
 }
 
-const NODE_TYPE = {
+// Shared with the `NODE_TYPES` component registry in attack-path-graph so the
+// type strings can't drift apart.
+export const NODE_TYPE = {
   FINDING: "finding",
   INTERNET: "internet",
   RESOURCE: "resource",
-  GROUP: "group",
+  // React Flow reserves "group" for its built-in container node (styled via
+  // .react-flow__node-group), so use a distinct type for our custom node.
+  GROUP: "classGroup",
   OUTCOME: "outcome",
 } as const;
 

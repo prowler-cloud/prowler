@@ -10,6 +10,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
+import { isCloud } from "@/lib/shared/env";
 import type { AttackPathGraphData, GraphNode } from "@/types/attack-paths";
 
 import {
@@ -115,6 +116,16 @@ const buildVisualItem = (
   borderColor,
   glow,
 });
+
+// Only shown in OSS, whose flat graph still renders the account/provider hub
+// (Cloud's view transform removes it). See `providerItem` below.
+const providerRootItem = buildVisualItem(
+  "Provider",
+  "Cloud account, tenant, project, organization, or cluster entry point.",
+  buildNode(["AWSAccount"], { name: "Provider root" }),
+  GRAPH_NODE_COLORS.awsAccount,
+  GRAPH_NODE_BORDER_COLORS.awsAccount,
+);
 
 const findingRiskItems: LegendVisualItem[] = [
   buildVisualItem(
@@ -473,9 +484,15 @@ export const GraphLegend = ({
     expandedResources,
     isFilteredView,
   );
-  // The account/provider hub is no longer rendered (removed by the view
-  // transform), so it never appears in the legend.
-  const providerItem = null;
+  // OSS only: the hub node is present in the flat graph but stripped by Cloud's
+  // view transform, so the legend entry follows the same split.
+  const providerItem =
+    !isCloud() &&
+    legendState.visibleNodes.some(
+      (node) => resolveNodeVisual(node).category === NODE_CATEGORY.ACCOUNT,
+    )
+      ? providerRootItem
+      : null;
   const visibleNodeTypeItems = resolveNodeTypeItems(legendState.visibleNodes);
   const visibleFindingRiskItems = resolveFindingRiskItems(
     legendState.visibleNodes,
@@ -517,6 +534,14 @@ export const GraphLegend = ({
       <CardContent className="p-3">
         <TooltipProvider>
           <div className="flex w-full flex-wrap items-stretch gap-2">
+            {providerItem && (
+              <LegendSection title="Provider roots">
+                <LegendItem {...providerItem}>
+                  <BadgePreview {...providerItem} />
+                </LegendItem>
+              </LegendSection>
+            )}
+
             {visibleNodeTypeItems.length > 0 && (
               <LegendSection title="Node types">
                 {visibleNodeTypeItems.map((item) => (

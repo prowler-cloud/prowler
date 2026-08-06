@@ -388,7 +388,10 @@ export default function AttackPathsPage() {
     });
 
     if (hasFindings) {
+      // Highlight the resource whose findings are on screen; clear on collapse.
+      const willExpand = !graphState.expandedResources.has(node.id);
       graphState.toggleExpandedResource(node.id);
+      graphState.selectNode(willExpand ? node.id : null);
     }
   };
 
