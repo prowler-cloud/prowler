@@ -7,7 +7,14 @@ from prowler.lib.utils.utils import (
 from prowler.providers.aws.services.elasticbeanstalk import elasticbeanstalk_client
 
 class elasticbeanstalk_environment_no_secrets_in_configuration(Check):
-    def execute(self) :
+    """Check that Elastic Beanstalk environment configurations contain no hardcoded secrets."""
+
+    def execute(self) -> list[Check_Report_AWS]:
+        """Scan environment configuration option settings for secrets.
+
+        Returns: 
+            A report for each Elastic Beanstalk environment.
+        """
         findings = []
         secrets_ignore_patterns = elasticbeanstalk_client.audit_config.get(
             "secrets_ignore_patterns", []
