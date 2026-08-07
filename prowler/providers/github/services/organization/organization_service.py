@@ -270,7 +270,7 @@ class Organization(GithubService):
             )
             if isinstance(response, dict):
                 permissions = response.get("default_workflow_permissions")
-                if isinstance(permissions, str):
+                if permissions in ("read", "write"):
                     default_workflow_permissions = permissions
                 can_approve = response.get("can_approve_pull_request_reviews")
                 if isinstance(can_approve, bool):

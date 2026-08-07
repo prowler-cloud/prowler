@@ -559,6 +559,26 @@ class Test_Organization_Default_Workflow_Permissions:
             None,
         ), "An unexpected response payload should not be reported as a permissions value"
 
+    def test_default_workflow_permissions_unsupported_value(self):
+        """Test that a value outside read/write is treated as unknown rather than a failure
+
+        The endpoint documents only "read" and "write". Accepting any string meant a
+        value such as "READ" or "none" reached the check and produced a FAIL finding,
+        reporting a write-capable default the organization may not actually have.
+        """
+        organization_service = self._get_service()
+        mock_org = MagicMock()
+        mock_org.login = "test-org"
+        mock_org._requester.requestJsonAndCheck.return_value = (
+            {},
+            {"default_workflow_permissions": "none"},
+        )
+
+        assert organization_service._get_actions_workflow_permissions(mock_org) == (
+            None,
+            None,
+        ), "An unsupported permissions value should be left unknown instead of reported as write"
+
     def test_default_workflow_permissions_not_available(self):
         """Test that accounts without Actions permissions settings yield no value"""
         organization_service = self._get_service()
