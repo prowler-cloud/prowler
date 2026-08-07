@@ -13,12 +13,12 @@ describe("LighthouseSkillsBlock", () => {
 
     // Then
     expect(screen.getByText("Lighthouse AI Skills")).toBeInTheDocument();
-    expect(screen.getByText("Investigate blast radius")).toBeInTheDocument();
-    expect(screen.getByText("Verify exploitability")).toBeInTheDocument();
-    expect(screen.getByText("Generate remediation")).toBeInTheDocument();
-    expect(screen.getByText("Triage & draft ticket")).toBeInTheDocument();
+    expect(screen.getByText("Contextual Fix")).toBeInTheDocument();
+    expect(screen.getByText("Triage Decision")).toBeInTheDocument();
+    expect(screen.getByText("Systemic Scope")).toBeInTheDocument();
+    expect(screen.getByText("Compliance Impact")).toBeInTheDocument();
     expect(
-      screen.getByText("Check real-world exposure and attack preconditions"),
+      screen.getByText("Is this real, and if not, close it out"),
     ).toBeInTheDocument();
   });
 
@@ -34,15 +34,36 @@ describe("LighthouseSkillsBlock", () => {
     );
 
     // When
-    await user.click(
-      screen.getByRole("button", { name: /Verify exploitability/ }),
-    );
+    await user.click(screen.getByRole("button", { name: /Triage Decision/ }));
 
     // Then
     expect(onLaunchSkill).toHaveBeenCalledOnce();
     expect(onLaunchSkill.mock.calls[0][0]).toMatchObject({
-      id: "verify-exploitability",
+      id: "triage-decision",
     });
+  });
+
+  it("should render disabled skills as coming soon and not launch them", async () => {
+    // Given
+    const user = userEvent.setup();
+    const onLaunchSkill = vi.fn();
+    render(
+      <LighthouseSkillsBlock
+        onLaunchSkill={onLaunchSkill}
+        onAskAnything={vi.fn()}
+      />,
+    );
+
+    // Then
+    const card = screen.getByRole("button", { name: /Compliance Impact/ });
+    expect(card).toBeDisabled();
+    expect(screen.getByText("Coming soon")).toBeInTheDocument();
+
+    // When
+    await user.click(card);
+
+    // Then
+    expect(onLaunchSkill).not.toHaveBeenCalled();
   });
 
   it("should keep the free-form fallback available", async () => {

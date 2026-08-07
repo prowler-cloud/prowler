@@ -92,11 +92,11 @@ describe("MessageBubble", () => {
           id: "part-user-skill",
           type: LIGHTHOUSE_V2_PART_TYPE.TEXT,
           content: {
-            text: "[PROWLER_UI_SKILL_V1]\ninstructions\n[/PROWLER_UI_SKILL_V1]\n\nVerify exploitability",
-            display_text: "Verify exploitability",
+            text: "[PROWLER_UI_SKILL_V1]\ninstructions\n[/PROWLER_UI_SKILL_V1]\n\nTriage Decision",
+            display_text: "Triage Decision",
             ui_skill: {
-              skill_id: "verify-exploitability",
-              name: "Verify exploitability",
+              skill_id: "triage-decision",
+              name: "Triage Decision",
               version: 1,
             },
             ui_context: {
@@ -127,7 +127,7 @@ describe("MessageBubble", () => {
 
     // Then
     expect(screen.getByText("Skill")).toBeInTheDocument();
-    expect(screen.getByText("Verify exploitability")).toBeInTheDocument();
+    expect(screen.getByText("Triage Decision")).toBeInTheDocument();
     expect(
       screen.getByText(
         "Inline IAM policy does not allow '*:*' administrative privileges",
@@ -179,8 +179,8 @@ describe("MessageBubble", () => {
         message={assistantMessage}
         skillRun={{
           ref: {
-            skillId: "verify-exploitability",
-            name: "Verify exploitability",
+            skillId: "triage-decision",
+            name: "Triage Decision",
             version: 1,
           },
           launchedAt: "2026-06-25T10:00:00Z",
@@ -217,11 +217,11 @@ describe("MessageBubble", () => {
 
     // And the suggested next skill launches through the callback
     await user.click(
-      screen.getByRole("button", { name: /Next: Generate remediation/ }),
+      screen.getByRole("button", { name: /Next: Contextual Fix/ }),
     );
     expect(onLaunchSkill).toHaveBeenCalledOnce();
     expect(onLaunchSkill.mock.calls[0][0]).toMatchObject({
-      id: "generate-remediation",
+      id: "contextual-fix",
     });
   });
 
@@ -238,8 +238,8 @@ describe("MessageBubble", () => {
         message={assistantMessage}
         skillRun={{
           ref: {
-            skillId: "verify-exploitability",
-            name: "Verify exploitability",
+            skillId: "triage-decision",
+            name: "Triage Decision",
             version: 1,
           },
           launchedAt: "2026-06-25T10:00:00Z",

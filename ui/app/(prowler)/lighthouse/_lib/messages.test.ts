@@ -123,7 +123,7 @@ describe("buildOptimisticMessage", () => {
 
   it("should embed the skill instructions and the ui_skill ref when a skill launches", () => {
     // Given
-    const skill = getSkillById("verify-exploitability");
+    const skill = getSkillById("triage-decision");
     if (!skill) throw new Error("Expected skill definition");
 
     // When
@@ -137,10 +137,10 @@ describe("buildOptimisticMessage", () => {
     // Then
     expect(message.parts[0]?.content).toMatchObject({
       text: expect.stringContaining("[PROWLER_UI_SKILL_V1]"),
-      display_text: "Verify exploitability",
+      display_text: "Triage Decision",
       ui_skill: {
-        skill_id: "verify-exploitability",
-        name: "Verify exploitability",
+        skill_id: "triage-decision",
+        name: "Triage Decision",
         version: 1,
       },
     });
@@ -152,18 +152,18 @@ describe("getSkillRef", () => {
     // Given / When
     const ref = getSkillRef({
       text: "prompt",
-      display_text: "Verify exploitability",
+      display_text: "Triage Decision",
       ui_skill: {
-        skill_id: "verify-exploitability",
-        name: "Verify exploitability",
+        skill_id: "triage-decision",
+        name: "Triage Decision",
         version: 1,
       },
     });
 
     // Then
     expect(ref).toEqual({
-      skillId: "verify-exploitability",
-      name: "Verify exploitability",
+      skillId: "triage-decision",
+      name: "Triage Decision",
       version: 1,
     });
   });

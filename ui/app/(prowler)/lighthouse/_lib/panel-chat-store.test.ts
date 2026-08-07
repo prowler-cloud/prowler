@@ -63,7 +63,7 @@ describe("panel chat message request", () => {
     const submitMessage = vi
       .spyOn(store.getState(), "submitMessage")
       .mockResolvedValue();
-    const skill = getSkillById("verify-exploitability");
+    const skill = getSkillById("triage-decision");
     if (!skill) throw new Error("Expected skill definition");
 
     // When
@@ -71,7 +71,7 @@ describe("panel chat message request", () => {
 
     // Then
     expect(submitMessage).toHaveBeenCalledWith(
-      "Verify exploitability",
+      "Triage Decision",
       undefined,
       skill,
     );
@@ -79,7 +79,7 @@ describe("panel chat message request", () => {
 
   it("should queue a skill launch until the panel store exists, then flush it", () => {
     // Given: no store yet — the panel has not been opened/configured
-    const skill = getSkillById("investigate-blast-radius");
+    const skill = getSkillById("systemic-scope");
     if (!skill) throw new Error("Expected skill definition");
     requestPanelSkillLaunch(skill);
 
@@ -92,7 +92,7 @@ describe("panel chat message request", () => {
 
     // Then
     expect(submitMessage).toHaveBeenCalledWith(
-      "Investigate blast radius",
+      "Systemic Scope",
       undefined,
       skill,
     );

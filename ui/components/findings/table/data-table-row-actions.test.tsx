@@ -174,13 +174,11 @@ describe("DataTableRowActions", () => {
     render(<DataTableRowActions row={makeFindingRow()} />);
 
     // When
-    await user.click(
-      screen.getByRole("button", { name: "Verify exploitability" }),
-    );
+    await user.click(screen.getByRole("button", { name: "Triage Decision" }));
 
     // Then
     expect(launchSkillMock).toHaveBeenCalledWith(
-      expect.objectContaining({ id: "verify-exploitability" }),
+      expect.objectContaining({ id: "triage-decision" }),
       expect.objectContaining({
         kind: "finding",
         findingId: "finding-1",

@@ -69,16 +69,15 @@ export function buildSkillAgentText(
   ].join("\n");
 }
 
-// No step plan: the agent decides its own flow, and the UI derives progress
-// from real stream events (tool calls, narration).
+// The prompt is authored self-contained (tool loading, step order, report
+// shape), so the wrapper adds only the narration guideline the progress UI
+// relies on. No step plan: progress derives from real stream events.
 function buildSkillInstructions(skill: LighthouseSkillDefinition): string {
   return [
     `Skill: ${skill.name} — ${skill.description}.`,
-    "Guidelines:",
-    "- Narrate what you are doing in one short sentence as you move through the work.",
-    "- Use the available tools to gather real evidence; never fabricate data.",
-    "- Finish by producing the complete answer in markdown.",
-    skill.guidance,
+    "Narrate what you are doing in one short sentence as you move through the work.",
+    "",
+    skill.prompt,
   ].join("\n");
 }
 

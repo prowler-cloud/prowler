@@ -849,11 +849,9 @@ describe("ResourceDetailDrawerContent — Lighthouse AI", () => {
     });
 
     // And launching a skill goes through the skill launcher with the context
-    await user.click(
-      screen.getByRole("button", { name: /Verify exploitability/ }),
-    );
+    await user.click(screen.getByRole("button", { name: /Triage Decision/ }));
     expect(mockRequestPanelSkillLaunch).toHaveBeenCalledWith(
-      expect.objectContaining({ id: "verify-exploitability" }),
+      expect.objectContaining({ id: "triage-decision" }),
       mockCurrentLighthouseContext,
     );
   });

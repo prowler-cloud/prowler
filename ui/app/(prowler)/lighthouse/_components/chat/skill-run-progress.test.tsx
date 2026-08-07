@@ -35,7 +35,7 @@ function buildStreamState() {
 }
 
 const skill = (() => {
-  const definition = getSkillById("verify-exploitability");
+  const definition = getSkillById("triage-decision");
   if (!definition) throw new Error("Expected skill definition");
   return definition;
 })();
@@ -46,7 +46,7 @@ describe("SkillRunProgress", () => {
     render(<SkillRunProgress skill={skill} streamState={buildStreamState()} />);
 
     // Then
-    expect(screen.getByText("Verify exploitability")).toBeInTheDocument();
+    expect(screen.getByText("Triage Decision")).toBeInTheDocument();
     expect(screen.getByRole("status")).toHaveTextContent(
       "Running Check public exposure…",
     );
@@ -74,9 +74,7 @@ describe("SkillRunProgress", () => {
     render(<SkillRunProgress skill={skill} streamState={buildStreamState()} />);
 
     // When
-    await user.click(
-      screen.getByRole("button", { name: /Verify exploitability/ }),
-    );
+    await user.click(screen.getByRole("button", { name: /Triage Decision/ }));
 
     // Then: real tool calls in order, humanized
     expect(screen.getByText("Get finding")).toBeInTheDocument();

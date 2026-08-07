@@ -66,14 +66,12 @@ describe("Lighthouse skills launch controls", () => {
     render(<LighthouseSkillsSubmenu onLaunch={onLaunch} />);
 
     // When
-    await user.click(
-      screen.getByRole("button", { name: "Verify exploitability" }),
-    );
+    await user.click(screen.getByRole("button", { name: "Triage Decision" }));
 
     // Then
     expect(screen.getByText("Lighthouse Skills")).toBeInTheDocument();
     expect(onLaunch).toHaveBeenCalledWith(
-      expect.objectContaining({ id: "verify-exploitability" }),
+      expect.objectContaining({ id: "triage-decision" }),
     );
   });
 
@@ -96,9 +94,7 @@ describe("Lighthouse skills launch controls", () => {
     );
 
     // When
-    await user.click(
-      screen.getByRole("button", { name: "Verify exploitability" }),
-    );
+    await user.click(screen.getByRole("button", { name: "Triage Decision" }));
 
     // Then
     expect(onSkillLaunch).toHaveBeenCalledOnce();
@@ -108,7 +104,7 @@ describe("Lighthouse skills launch controls", () => {
     });
     await vi.waitFor(() =>
       expect(requestPanelSkillLaunchMock).toHaveBeenCalledWith(
-        expect.objectContaining({ id: "verify-exploitability" }),
+        expect.objectContaining({ id: "triage-decision" }),
         {
           schemaVersion: 1,
           transport: "inline",

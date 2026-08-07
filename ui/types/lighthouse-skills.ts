@@ -1,10 +1,10 @@
 import type { LucideIcon } from "lucide-react";
 
 export const LIGHTHOUSE_SKILL_ID = {
-  INVESTIGATE_BLAST_RADIUS: "investigate-blast-radius",
-  VERIFY_EXPLOITABILITY: "verify-exploitability",
-  GENERATE_REMEDIATION: "generate-remediation",
-  TRIAGE_DRAFT_TICKET: "triage-draft-ticket",
+  CONTEXTUAL_FIX: "contextual-fix",
+  TRIAGE_DECISION: "triage-decision",
+  SYSTEMIC_SCOPE: "systemic-scope",
+  COMPLIANCE_IMPACT: "compliance-impact",
 } as const;
 
 export type LighthouseSkillId =
@@ -24,11 +24,14 @@ export interface LighthouseSkillDefinition {
   name: string;
   description: string;
   icon: LucideIcon;
-  // Skill-specific guidance appended to the shared instructions. There is no
-  // step plan: the agent decides its own flow, and the UI reports progress
-  // from real stream events.
-  guidance: string;
+  // Full self-contained prompt authored by the DyR team: tool loading, step
+  // order and report shape. There is no step plan protocol: the agent decides
+  // its own flow, and the UI reports progress from real stream events.
+  prompt: string;
   // Suggested follow-up skill shown on the completed state ("Next: ... →").
   nextSkillId: LighthouseSkillId | null;
+  // Disabled skills render as "coming soon" and cannot be launched (e.g.
+  // Compliance Impact, whose prompt is blocked on a missing MCP tool).
+  enabled: boolean;
   version: number;
 }

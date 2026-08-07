@@ -222,11 +222,20 @@ export async function getLighthouseV2Messages(
 export async function sendLighthouseV2Message(
   input: LighthouseV2SendMessageInput,
 ): Promise<LighthouseV2ActionResult<LighthouseV2SendMessageResult>> {
-  if (input.skillId && !getSkillById(input.skillId)) {
-    return {
-      error: `Unknown Lighthouse skill: ${input.skillId}.`,
-      status: 400,
-    };
+  if (input.skillId) {
+    const skill = getSkillById(input.skillId);
+    if (!skill) {
+      return {
+        error: `Unknown Lighthouse skill: ${input.skillId}.`,
+        status: 400,
+      };
+    }
+    if (!skill.enabled) {
+      return {
+        error: `Lighthouse skill not available yet: ${input.skillId}.`,
+        status: 400,
+      };
+    }
   }
 
   try {

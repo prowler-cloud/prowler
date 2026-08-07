@@ -153,7 +153,7 @@ describe("createLighthouseChatStore", () => {
   it("threads a launched skill through the optimistic message and the API call", async () => {
     // Given
     const store = makeStore();
-    const skill = getSkillById("verify-exploitability");
+    const skill = getSkillById("triage-decision");
     if (!skill) throw new Error("Expected skill definition");
 
     // When
@@ -162,27 +162,27 @@ describe("createLighthouseChatStore", () => {
     // Then
     expect(sendMessageMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        displayText: "Verify exploitability",
-        skillId: "verify-exploitability",
+        displayText: "Triage Decision",
+        skillId: "triage-decision",
       }),
     );
     expect(store.getState().messages.at(-1)?.parts[0]?.content).toMatchObject({
       text: expect.stringContaining("[PROWLER_UI_SKILL_V1]"),
-      display_text: "Verify exploitability",
+      display_text: "Triage Decision",
       ui_skill: expect.objectContaining({
-        skill_id: "verify-exploitability",
+        skill_id: "triage-decision",
       }),
     });
     // The run is live, so the pill/progress surfaces see the active skill.
     expect(selectLighthouseChatActiveSkill(store.getState())?.id).toBe(
-      "verify-exploitability",
+      "triage-decision",
     );
   });
 
   it("preserves an active skill stream while EventSource reconnects", async () => {
     // Given
     const store = makeStore();
-    const skill = getSkillById("verify-exploitability");
+    const skill = getSkillById("triage-decision");
     if (!skill) throw new Error("Expected skill definition");
     await store.getState().submitMessage(skill.name, undefined, skill);
     eventSources[0].emit("message.delta", {
@@ -206,7 +206,7 @@ describe("createLighthouseChatStore", () => {
   it("retries a failed skill launch with the same skill attached", async () => {
     // Given
     const store = makeStore();
-    const skill = getSkillById("generate-remediation");
+    const skill = getSkillById("contextual-fix");
     if (!skill) throw new Error("Expected skill definition");
     sendMessageMock.mockResolvedValueOnce({ error: "Agent unavailable" });
     await store.getState().submitMessage(skill.name, undefined, skill);
@@ -218,7 +218,7 @@ describe("createLighthouseChatStore", () => {
 
     // Then
     expect(sendMessageMock).toHaveBeenLastCalledWith(
-      expect.objectContaining({ skillId: "generate-remediation" }),
+      expect.objectContaining({ skillId: "contextual-fix" }),
     );
   });
 

@@ -59,6 +59,8 @@ function LighthouseSkillsMenuItems({
           icon={<skill.icon className="text-text-lighthouse" />}
           label={skill.name}
           description={skill.description}
+          disabled={!skill.enabled}
+          disabledTooltip="Coming soon"
           onSelect={() => onLaunch(skill)}
         />
       ))}
