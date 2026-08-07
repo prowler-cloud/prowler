@@ -114,12 +114,37 @@ interface OrgSetupStrategy<D extends OrgSetupSubmissionData> {
   ) => { hierarchy: OrgHierarchy; defaultSelection: string[] };
   /** Copy shown when discovery reports/looks like an auth failure. */
   authFailureMessage: (detail?: string) => string;
+  /**
+   * Copy for the discovery codes more than one organization type reports, in this
+   * type's own hierarchy vocabulary.
+   */
+  sharedErrorCopy: SharedDiscoveryErrorCopy;
+}
+
+/**
+ * Discovery codes the API reports for more than one organization type and whose
+ * copy has to name the hierarchy the user actually has — an Azure tenant has no
+ * folders. Their wording lives on each strategy (`sharedErrorCopy`) instead of in
+ * the table below, so a new organization type cannot inherit another's
+ * vocabulary. Codes that read correctly for everyone (`organization_discovery_failed`)
+ * stay shared.
+ */
+const SHARED_DISCOVERY_ERROR_CODES = ["hierarchy_depth_exceeded"] as const;
+
+type SharedDiscoveryErrorCode = (typeof SHARED_DISCOVERY_ERROR_CODES)[number];
+
+type SharedDiscoveryErrorCopy = Record<SharedDiscoveryErrorCode, string>;
+
+function toSharedErrorCode(code: string): SharedDiscoveryErrorCode | undefined {
+  return SHARED_DISCOVERY_ERROR_CODES.find((shared) => shared === code);
 }
 
 /**
  * Human copy for the machine codes a failed discovery reports in
  * `attributes.error`. The code decides the framing too: only some of them are
- * credential problems, so "Authentication failed…" is wrong for the rest.
+ * credential problems, so "Authentication failed…" is wrong for the rest. Codes
+ * whose wording differs per organization type are not here — see
+ * `SHARED_DISCOVERY_ERROR_CODES`.
  */
 const DISCOVERY_ERROR_COPY: Record<string, string> = {
   azure_invalid_credentials:
@@ -142,9 +167,17 @@ const DISCOVERY_ERROR_COPY: Record<string, string> = {
     "The service account cannot list this organization's folders and projects. Grant it the Folder Viewer and Project Viewer roles at the organization level, then try again.",
   gcp_service_unavailable:
     "Google Cloud did not respond while reading the organization. Nothing is wrong with your credentials — try again in a few minutes.",
-  hierarchy_depth_exceeded:
-    "This organization's folder hierarchy is deeper than Prowler can read. Contact support so we can help you onboard it.",
 };
+
+/** Curated copy for a code: from the strategy when shared, else from the table. */
+function curatedDiscoveryCopy(
+  code: string,
+  sharedCopy: SharedDiscoveryErrorCopy,
+): string | undefined {
+  const sharedCode = toSharedErrorCode(code);
+
+  return sharedCode ? sharedCopy[sharedCode] : DISCOVERY_ERROR_COPY[code];
+}
 
 /**
  * Copy for a failed discovery, most actionable first: our curated wording for a
@@ -155,11 +188,12 @@ const DISCOVERY_ERROR_COPY: Record<string, string> = {
 function describeDiscoveryFailure(
   code: string | undefined,
   authFailure: string,
+  sharedCopy: SharedDiscoveryErrorCopy,
   serverMessage?: string | null,
 ): string {
   const trimmedCode = code?.trim();
   const curatedCopy = trimmedCode
-    ? DISCOVERY_ERROR_COPY[trimmedCode]
+    ? curatedDiscoveryCopy(trimmedCode, sharedCopy)
     : undefined;
 
   // `||`, not `??`: a blank server message is as good as absent.
@@ -230,6 +264,10 @@ const awsOrgSetupStrategy: OrgSetupStrategy<AwsOrgSetupData> = {
   },
   authFailureMessage: (detail) =>
     detail ? `${AWS_AUTH_FAILURE} ${detail}` : AWS_AUTH_FAILURE,
+  sharedErrorCopy: {
+    hierarchy_depth_exceeded:
+      "This organization's organizational unit hierarchy is deeper than Prowler can read. Contact support so we can help you onboard it.",
+  },
 };
 
 const AZURE_AUTH_FAILURE =
@@ -269,6 +307,10 @@ const azureOrgSetupStrategy: OrgSetupStrategy<AzureOrgSetupData> = {
   },
   authFailureMessage: (detail) =>
     detail ? `${AZURE_AUTH_FAILURE} ${detail}` : AZURE_AUTH_FAILURE,
+  sharedErrorCopy: {
+    hierarchy_depth_exceeded:
+      "This tenant's Management Group hierarchy is deeper than Prowler can read. Contact support so we can help you onboard it.",
+  },
 };
 
 const GCP_AUTH_FAILURE =
@@ -320,6 +362,10 @@ const gcpOrgSetupStrategy: OrgSetupStrategy<GcpOrgSetupData> = {
   },
   authFailureMessage: (detail) =>
     detail ? `${GCP_AUTH_FAILURE} ${detail}` : GCP_AUTH_FAILURE,
+  sharedErrorCopy: {
+    hierarchy_depth_exceeded:
+      "This organization's folder hierarchy is deeper than Prowler can read. Contact support so we can help you onboard it.",
+  },
 };
 
 function bind<D extends OrgSetupSubmissionData>(
@@ -340,6 +386,7 @@ function bind<D extends OrgSetupSubmissionData>(
       describeDiscoveryFailure(
         code,
         strategy.authFailureMessage(),
+        strategy.sharedErrorCopy,
         serverMessage,
       ),
   };
