@@ -1,0 +1,36 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "sfs_file_system_encryption",
+  "CheckTitle": "SFS Turbo file systems have encryption enabled",
+  "CheckType": [],
+  "ServiceName": "sfs",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "HUAWEICLOUD::SFS::Share",
+  "ResourceGroup": "storage",
+  "Description": "Ensure that SFS Turbo file systems have encryption enabled using KMS keys.",
+  "Risk": "Unencrypted SFS Turbo file systems expose data at rest to unauthorized access, potentially leading to data breaches.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.huaweicloud.com/intl/en-us/usermanual-sfsturbo/sfsturbo_01_0034.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log on to the Huawei Cloud console.\n2. Navigate to SFS Turbo.\n3. Select the file system.\n4. Enable encryption and select a KMS key.\n5. Verify that the file system is encrypted.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable encryption on SFS Turbo file systems using KMS keys.",
+      "Url": "https://hub.prowler.com/check/sfs_file_system_encryption"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Checks if SFS Turbo file systems have a KMS key ID (crypt_key_id) set."
+}
