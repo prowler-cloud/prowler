@@ -339,6 +339,14 @@ describe("Organization onboarding wizard", () => {
           GCP_BLOCKED_FOLDER,
         ]);
 
+        // A folder ref is short and distinct, so the id column shows it whole.
+        expect(harness.containerRowIdText().sort()).toEqual([
+          "folders/1000000001",
+          "folders/1000000002",
+          GCP_EMPTY_FOLDER,
+          GCP_BLOCKED_FOLDER,
+        ]);
+
         expect(
           harness.isCandidateNestedUnder("prod-analytics", "Engineering"),
         ).toBe(true);
@@ -750,6 +758,16 @@ describe("Organization onboarding wizard", () => {
           AZURE_GROUP_ENGINEERING,
           AZURE_EMPTY_GROUP,
           AZURE_GROUP_PLATFORM,
+        ]);
+
+        // Every group's canonical id repeats the same ARM prefix, which is all a
+        // 176px column can show, so the id column reads the trailing Management
+        // Group name instead: four rows, four labels a user can tell apart.
+        expect(harness.containerRowIdText().sort()).toEqual([
+          "archived",
+          "engineering",
+          "holding",
+          "platform",
         ]);
 
         expect(
