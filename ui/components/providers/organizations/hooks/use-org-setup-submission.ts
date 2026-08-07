@@ -201,9 +201,13 @@ export function useOrgSetupSubmission({
       }
 
       if (status === DISCOVERY_STATUS.FAILED) {
-        // `attributes.error` is a machine code, not user copy.
+        // `attributes.error` is a machine code, not user copy; `error_message`
+        // is the server's own human wording for it.
         setApiError(
-          strategy.discoveryFailureMessage(result.data.attributes.error),
+          strategy.discoveryFailureMessage(
+            result.data.attributes.error,
+            result.data.attributes.error_message,
+          ),
         );
         return { kind: "failed" };
       }

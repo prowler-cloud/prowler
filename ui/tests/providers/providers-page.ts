@@ -710,6 +710,15 @@ export class ProvidersPage extends BasePage {
     await singleAccountOption.click();
   }
 
+  async selectAzureSingleSubscriptionMethod(): Promise<void> {
+    const singleSubscriptionOption = this.page.getByRole("radio", {
+      name: "Add A Single Azure Subscription",
+      exact: true,
+    });
+    await expect(singleSubscriptionOption).toBeVisible({ timeout: 10000 });
+    await singleSubscriptionOption.click();
+  }
+
   async selectAWSOrganizationsMethod(): Promise<void> {
     await this.page
       .getByRole("radio", {
@@ -806,6 +815,10 @@ export class ProvidersPage extends BasePage {
   async fillAZUREProviderDetails(data: AZUREProviderData): Promise<void> {
     // Fill the AWS provider details
 
+    // Azure now offers the Management Group method, so the single-subscription
+    // path goes through the method selector first (as AWS does).
+    await this.selectAzureSingleSubscriptionMethod();
+    await expect(this.azureSubscriptionIdInput).toBeVisible({ timeout: 10000 });
     await this.azureSubscriptionIdInput.fill(data.subscriptionId);
 
     if (data.alias) {

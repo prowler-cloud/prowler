@@ -8,6 +8,7 @@ import {
   ORG_SETUP_PHASE,
   ORG_WIZARD_STEP,
   ORGANIZATION_TYPE,
+  type OrganizationType,
 } from "@/types/organizations";
 import {
   PROVIDERS_GROUP_KIND,
@@ -918,10 +919,13 @@ describe("DataTableRowActions", () => {
 
   it("hides Update Credentials for an organization type without an onboarding flow", async () => {
     // Given: an organization type the wizard cannot onboard (display-only).
+    // Every `ORGANIZATION_TYPE` is onboardable now, so the case comes from a
+    // value outside the enum — which is where it really comes from, the enum
+    // mirroring a server-side one.
     const user = userEvent.setup();
     const row = createOrgRow();
     (row.original as ProvidersOrganizationRow).orgType =
-      ORGANIZATION_TYPE.AZURE;
+      "oraclecloud" as OrganizationType;
 
     render(
       <DataTableRowActions

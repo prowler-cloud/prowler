@@ -22,6 +22,9 @@ describe("getNodeLabel", () => {
     expect(getNodeLabel(ORGANIZATION_TYPE.GCP, NODE_KIND.FOLDER)).toBe(
       "Folder",
     );
+    expect(
+      getNodeLabel(ORGANIZATION_TYPE.AZURE, NODE_KIND.MANAGEMENT_GROUP),
+    ).toBe("Management Group");
   });
 
   it("falls back to the organization type's container label when kind is absent", () => {
@@ -29,11 +32,6 @@ describe("getNodeLabel", () => {
     // rows that have no kind at all.
     expect(getNodeLabel(ORGANIZATION_TYPE.AWS)).toBe("Organizational Unit");
     expect(getNodeLabel(ORGANIZATION_TYPE.GCP)).toBe("Folder");
-  });
-
-  it("uses the organization type's own vocabulary for types without an onboarding flow", () => {
-    // Display covers every organization type the API can report; an Azure
-    // organization must never inherit AWS wording.
     expect(getNodeLabel(ORGANIZATION_TYPE.AZURE)).toBe("Management Group");
   });
 
@@ -50,13 +48,17 @@ describe("getNodeLabel", () => {
     // `kind` is typed but unvalidated: node rows pass the wire attribute
     // straight through, so a backend-added kind must resolve to the
     // organization's own container label. Returning `undefined` would crash
-    // callers that lowercase the result (the deletion dialog).
-    const unknownKind = "management-group" as NodeKind;
+    // callers that lowercase the result (the deletion dialog). Every kind this
+    // build knows now has a label, so the case needs a kind it does not.
+    const unknownKind = "compartment" as NodeKind;
 
     expect(getNodeLabel(ORGANIZATION_TYPE.AWS, unknownKind)).toBe(
       "Organizational Unit",
     );
     expect(getNodeLabel(ORGANIZATION_TYPE.GCP, unknownKind)).toBe("Folder");
+    expect(getNodeLabel(ORGANIZATION_TYPE.AZURE, unknownKind)).toBe(
+      "Management Group",
+    );
     expect(getNodeLabel("oci" as OrganizationType, unknownKind)).toBe("Group");
   });
 
@@ -108,6 +110,10 @@ describe("getCandidateNoun", () => {
       singular: "project",
       plural: "projects",
     });
+    expect(getCandidateNoun(ORGANIZATION_TYPE.AZURE)).toEqual({
+      singular: "subscription",
+      plural: "subscriptions",
+    });
   });
 });
 
@@ -117,11 +123,14 @@ describe("toNodeKind", () => {
       NODE_KIND.ORGANIZATIONAL_UNIT,
     );
     expect(toNodeKind("folder")).toBe(NODE_KIND.FOLDER);
+    expect(toNodeKind("management-group")).toBe(NODE_KIND.MANAGEMENT_GROUP);
   });
 
   it("returns undefined for absent or unknown kinds", () => {
     expect(toNodeKind(undefined)).toBeUndefined();
     expect(toNodeKind("")).toBeUndefined();
     expect(toNodeKind("organizational_unit")).toBeUndefined();
+    // Azure's kind is kebab-case like the others: the underscore spelling is not it.
+    expect(toNodeKind("management_group")).toBeUndefined();
   });
 });

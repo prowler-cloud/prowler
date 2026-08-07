@@ -45,6 +45,7 @@ export type ProviderSecretState =
 export const NODE_KIND = {
   ORGANIZATIONAL_UNIT: "organizational-unit",
   FOLDER: "folder",
+  MANAGEMENT_GROUP: "management-group",
 } as const;
 
 export type NodeKind = (typeof NODE_KIND)[keyof typeof NODE_KIND];
@@ -114,6 +115,7 @@ export type OrganizationType =
  */
 export const ORG_FLOW_TYPES = [
   ORGANIZATION_TYPE.AWS,
+  ORGANIZATION_TYPE.AZURE,
   ORGANIZATION_TYPE.GCP,
 ] as const;
 
@@ -128,8 +130,8 @@ export function isOrgFlowType(
 /**
  * Narrows an untrusted value (form data, wire payload) to an onboarding-capable
  * type — `isOrgFlowType` narrows inside the type domain, this guards the
- * boundary, the role `toNodeKind` plays for node kinds. `azure` is a real
- * `OrganizationType` but has no onboarding flow, so it does not pass either.
+ * boundary, the role `toNodeKind` plays for node kinds. Every current
+ * `OrganizationType` has a flow; a display-only type added later stops here.
  */
 export function toOrgFlowType(orgType: unknown): OrgFlowType | undefined {
   return ORG_FLOW_TYPES.find((flowType) => flowType === orgType);
@@ -217,8 +219,54 @@ export interface GcpDiscoveryResult {
   projects: GcpDiscoveredProject[];
 }
 
+// ─── Azure Discovery Result (wire) ─────────────────────────────────────────────
+
+/**
+ * Identity here is the canonical Management Group resource ID
+ * (`/providers/Microsoft.Management/managementGroups/{name}`), which is what
+ * `id`/`parent_id` carry; `name` is the short segment and `display_name` the
+ * human label. `root_management_group` is the Management Group the organization
+ * is scoped to — always the tenant root group, which the API derives from the
+ * tenant ID.
+ */
+export interface AzureDiscoveredRoot {
+  id: string;
+  name: string;
+  display_name: string;
+  tenant_id: string;
+}
+
+export interface AzureDiscoveredManagementGroup {
+  id: string;
+  name: string;
+  display_name: string;
+  parent_id: string;
+}
+
+/**
+ * Subscriptions are identified by their UUID, not a resource ID, and parent
+ * through the Management Group's resource ID. `not_applicable` node relations
+ * mark the ones hanging directly off the root.
+ */
+export interface AzureDiscoveredSubscription {
+  subscription_id: string;
+  display_name: string;
+  state?: string;
+  parent_id: string;
+  registration?: CandidateRegistration;
+}
+
+export interface AzureDiscoveryResult {
+  root_management_group: AzureDiscoveredRoot;
+  management_groups: AzureDiscoveredManagementGroup[];
+  subscriptions: AzureDiscoveredSubscription[];
+}
+
 /** Raw discovery `result` blob — per-provider, carries no discriminant on the wire. */
-export type DiscoveryResult = AwsDiscoveryResult | GcpDiscoveryResult;
+export type DiscoveryResult =
+  | AwsDiscoveryResult
+  | AzureDiscoveryResult
+  | GcpDiscoveryResult;
 
 // ─── Normalized Hierarchy Model (store currency) ───────────────────────────────
 
@@ -251,11 +299,18 @@ export interface AwsOrgHierarchy extends BaseOrgHierarchy {
   orgType: typeof ORGANIZATION_TYPE.AWS;
 }
 
+export interface AzureOrgHierarchy extends BaseOrgHierarchy {
+  orgType: typeof ORGANIZATION_TYPE.AZURE;
+}
+
 export interface GcpOrgHierarchy extends BaseOrgHierarchy {
   orgType: typeof ORGANIZATION_TYPE.GCP;
 }
 
-export type OrgHierarchy = AwsOrgHierarchy | GcpOrgHierarchy;
+export type OrgHierarchy =
+  | AwsOrgHierarchy
+  | AzureOrgHierarchy
+  | GcpOrgHierarchy;
 
 // ─── Secret + Apply Payloads (per-type) ────────────────────────────────────────
 
@@ -274,23 +329,44 @@ export interface GcpStaticSecret {
   refresh_token: string;
 }
 
+/** Service principal. The tenant comes from the organization, never the secret. */
+export interface AzureStaticSecret {
+  client_id: string;
+  client_secret: string;
+}
+
 export interface AwsRoleSecretPayload {
+  orgType: typeof ORGANIZATION_TYPE.AWS;
   secretType: typeof ORG_SECRET_TYPE.ROLE;
   secret: AwsRoleSecret;
 }
 
 export interface GcpServiceAccountSecretPayload {
+  orgType: typeof ORGANIZATION_TYPE.GCP;
   secretType: typeof ORG_SECRET_TYPE.SERVICE_ACCOUNT;
   secret: GcpServiceAccountSecret;
 }
 
 export interface GcpStaticSecretPayload {
+  orgType: typeof ORGANIZATION_TYPE.GCP;
   secretType: typeof ORG_SECRET_TYPE.STATIC;
   secret: GcpStaticSecret;
 }
 
+export interface AzureStaticSecretPayload {
+  orgType: typeof ORGANIZATION_TYPE.AZURE;
+  secretType: typeof ORG_SECRET_TYPE.STATIC;
+  secret: AzureStaticSecret;
+}
+
+/**
+ * Discriminated on `orgType` **and** `secretType`: `static` is not one shape —
+ * GCP's carries a refresh token, Azure's does not — so the wire `secret_type`
+ * alone cannot tell the payloads apart.
+ */
 export type OrgSecretPayload =
   | AwsRoleSecretPayload
+  | AzureStaticSecretPayload
   | GcpServiceAccountSecretPayload
   | GcpStaticSecretPayload;
 
@@ -311,6 +387,16 @@ export interface ApplyProjectSelection {
   alias?: string;
 }
 
+/**
+ * Azure sends subscriptions only; Management Group ancestors are derived
+ * server-side. `subscription_id` is the Azure subscription UUID — never a
+ * Prowler provider id, which the endpoint rejects.
+ */
+export interface ApplySubscriptionSelection {
+  subscription_id: string;
+  alias?: string;
+}
+
 export interface AwsApplyDiscoveryPayload {
   orgType: typeof ORGANIZATION_TYPE.AWS;
   accounts: ApplyAccountSelection[];
@@ -322,8 +408,14 @@ export interface GcpApplyDiscoveryPayload {
   projects: ApplyProjectSelection[];
 }
 
+export interface AzureApplyDiscoveryPayload {
+  orgType: typeof ORGANIZATION_TYPE.AZURE;
+  subscriptions: ApplySubscriptionSelection[];
+}
+
 export type ApplyDiscoveryPayload =
   | AwsApplyDiscoveryPayload
+  | AzureApplyDiscoveryPayload
   | GcpApplyDiscoveryPayload;
 
 // ─── JSON:API Resource Interfaces ─────────────────────────────────────────────
@@ -443,7 +535,14 @@ export interface CollectionFetch<T> {
 export interface DiscoveryAttributes {
   status: DiscoveryStatus;
   result: DiscoveryResult | Record<string, never>;
+  /** Machine code, not user copy — the UI maps it to its own wording. */
   error: string | null;
+  /**
+   * Server-side human message for `error`, already sanitized for display. Used
+   * only when the code has no curated copy, so a code the API adds later still
+   * says something useful instead of falling back to generic auth wording.
+   */
+  error_message?: string | null;
   inserted_at: string;
   updated_at: string;
 }

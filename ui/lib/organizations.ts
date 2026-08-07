@@ -50,6 +50,7 @@ const ORGANIZATION_TERMINOLOGY = {
 const NODE_KIND_LABEL = {
   [NODE_KIND.ORGANIZATIONAL_UNIT]: "Organizational Unit",
   [NODE_KIND.FOLDER]: "Folder",
+  [NODE_KIND.MANAGEMENT_GROUP]: "Management Group",
 } as const satisfies Record<NodeKind, string>;
 
 const NODE_KINDS: readonly string[] = Object.values(NODE_KIND);
@@ -90,6 +91,24 @@ export function getNodeLabel(
   return knownKind
     ? NODE_KIND_LABEL[knownKind]
     : terminologyFor(orgType).containerLabel;
+}
+
+/**
+ * Azure management-group ids are canonical ARM resource ids, so every group in a
+ * tenant repeats the same 48-character prefix and only the trailing name tells
+ * them apart. Case-insensitive, as ARM ids are.
+ */
+const MANAGEMENT_GROUP_ID =
+  /^\/providers\/Microsoft\.Management\/managementGroups\/(.+)$/i;
+
+/**
+ * The part of a node id worth reading where space is tight, or undefined when the
+ * whole id already is (AWS OU ids, GCP folder refs). Presentation only — the
+ * canonical id remains the node's identity, so a caller that shortens must keep
+ * the full value reachable.
+ */
+export function shortenNodeId(id: string): string | undefined {
+  return MANAGEMENT_GROUP_ID.exec(id)?.[1];
 }
 
 /** Provider-side source of the organization name (edit-name helper copy). */

@@ -7,16 +7,12 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { updateOrganizationName } from "@/actions/organizations/organizations";
-import { GCPProviderBadge } from "@/components/icons/providers-badge";
-import { RadioCard } from "@/components/providers/radio-card";
+import { AzureProviderBadge } from "@/components/icons/providers-badge";
 import type { WizardFooterConfig } from "@/components/providers/wizard/steps/footer-controls";
 import { WIZARD_FOOTER_ACTION_TYPE } from "@/components/providers/wizard/steps/footer-controls";
 import type { OrgWizardIntent } from "@/components/providers/wizard/types";
 import { ORG_WIZARD_INTENT } from "@/components/providers/wizard/types";
-import {
-  WizardInputField,
-  WizardTextareaField,
-} from "@/components/providers/workflow/forms/fields";
+import { WizardInputField } from "@/components/providers/workflow/forms/fields";
 import { useToast } from "@/components/shadcn";
 import { Alert, AlertDescription } from "@/components/shadcn/alert";
 import { Button } from "@/components/shadcn/button/button";
@@ -24,95 +20,51 @@ import { Form } from "@/components/shadcn/form";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { useOrgSetupStore } from "@/store/organizations/store";
 import type { OrgSetupPhase } from "@/types/organizations";
-import {
-  ORG_SECRET_TYPE,
-  ORG_SETUP_PHASE,
-  ORGANIZATION_TYPE,
-} from "@/types/organizations";
+import { ORG_SETUP_PHASE, ORGANIZATION_TYPE } from "@/types/organizations";
 
 import { DiscoveryTimeoutNotice } from "./discovery-timeout-notice";
 import { useOrgSetupSubmission } from "./hooks/use-org-setup-submission";
 import { SecretReplaceWarningModal } from "./secret-replace-warning-modal";
 
-const GCP_ORG_ID_PATTERN = /^[0-9]+$/;
+const TENANT_ID_INVALID =
+  "Must be a valid Microsoft Entra tenant ID (e.g., 11111111-1111-4111-8111-111111111111)";
 
-function isJsonObject(value: string): boolean {
-  try {
-    const parsed = JSON.parse(value);
-    return (
-      typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)
-    );
-  } catch {
-    return false;
-  }
-}
+const azureOrgSetupSchema = z.object({
+  organizationName: z.string().trim().optional(),
+  // Onboarding always covers the tenant root Management Group, which the API
+  // derives from the tenant ID — so the tenant is the only identifier collected.
+  tenantId: z
+    .string()
+    .trim()
+    .min(1, "Tenant ID is required")
+    .pipe(z.uuid(TENANT_ID_INVALID)),
+  clientId: z
+    .string()
+    .trim()
+    .min(1, "Client ID is required")
+    .pipe(z.uuid("Must be a valid service principal client ID (UUID)")),
+  clientSecret: z.string().trim().min(1, "Client Secret is required"),
+});
 
-const gcpOrgSetupSchema = z
-  .object({
-    organizationName: z.string().trim().optional(),
-    gcpOrgId: z
-      .string()
-      .trim()
-      .min(1, "Organization ID is required")
-      .regex(
-        GCP_ORG_ID_PATTERN,
-        "Must be a numeric Google Cloud organization ID (e.g., 123456789012)",
-      ),
-    credentialMethod: z.enum([
-      ORG_SECRET_TYPE.SERVICE_ACCOUNT,
-      ORG_SECRET_TYPE.STATIC,
-    ]),
-    serviceAccountKey: z.string().optional(),
-    clientId: z.string().optional(),
-    clientSecret: z.string().optional(),
-    refreshToken: z.string().optional(),
-  })
-  .superRefine((data, ctx) => {
-    if (data.credentialMethod === ORG_SECRET_TYPE.SERVICE_ACCOUNT) {
-      if (!data.serviceAccountKey || !isJsonObject(data.serviceAccountKey)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Invalid JSON format. Please provide a valid JSON object.",
-          path: ["serviceAccountKey"],
-        });
-      }
-      return;
-    }
+type AzureOrgSetupFormData = z.infer<typeof azureOrgSetupSchema>;
 
-    for (const [field, label] of [
-      ["clientId", "Client ID"],
-      ["clientSecret", "Client Secret"],
-      ["refreshToken", "Refresh Token"],
-    ] as const) {
-      if (!data[field]?.trim()) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: `${label} is required`,
-          path: [field],
-        });
-      }
-    }
-  });
-
-type GcpOrgSetupFormData = z.infer<typeof gcpOrgSetupSchema>;
-
-interface GcpOrgSetupFormInitialValues {
+interface AzureOrgSetupFormInitialValues {
   organizationName: string;
-  gcpOrgId: string;
+  tenantId: string;
 }
 
-interface GcpOrgSetupFormProps {
+interface AzureOrgSetupFormProps {
   onBack: () => void;
   onClose?: () => void;
   onNext: () => void;
   onFooterChange: (config: WizardFooterConfig) => void;
   onPhaseChange: (phase: OrgSetupPhase) => void;
   initialPhase?: OrgSetupPhase;
-  initialValues?: GcpOrgSetupFormInitialValues;
+  initialValues?: AzureOrgSetupFormInitialValues;
   intent?: OrgWizardIntent;
 }
 
-export function GcpOrgSetupForm({
+export function AzureOrgSetupForm({
   onBack,
   onClose,
   onNext,
@@ -121,28 +73,25 @@ export function GcpOrgSetupForm({
   initialPhase = ORG_SETUP_PHASE.DETAILS,
   initialValues,
   intent = ORG_WIZARD_INTENT.FULL,
-}: GcpOrgSetupFormProps) {
+}: AzureOrgSetupFormProps) {
   const { organizationId } = useOrgSetupStore();
   const { toast } = useToast();
   const [setupPhase, setSetupPhase] = useState<OrgSetupPhase>(initialPhase);
   const [isSaving, setIsSaving] = useState(false);
-  const formId = "gcp-org-wizard-setup-form";
+  const formId = "azure-org-wizard-setup-form";
   const formRef = useRef<HTMLFormElement>(null);
 
-  const isReadOnlyOrgId = Boolean(initialValues?.gcpOrgId);
+  const isReadOnlyTenantId = Boolean(initialValues?.tenantId);
 
-  const form = useForm<GcpOrgSetupFormData>({
-    resolver: zodResolver(gcpOrgSetupSchema),
+  const form = useForm<AzureOrgSetupFormData>({
+    resolver: zodResolver(azureOrgSetupSchema),
     mode: "onChange",
     reValidateMode: "onChange",
     defaultValues: {
       organizationName: initialValues?.organizationName ?? "",
-      gcpOrgId: initialValues?.gcpOrgId ?? "",
-      credentialMethod: ORG_SECRET_TYPE.SERVICE_ACCOUNT,
-      serviceAccountKey: "",
+      tenantId: initialValues?.tenantId ?? "",
       clientId: "",
       clientSecret: "",
-      refreshToken: "",
     },
   });
   const {
@@ -150,13 +99,11 @@ export function GcpOrgSetupForm({
     handleSubmit,
     formState: { isSubmitting, isValid },
     setError,
-    setValue,
     watch,
   } = form;
 
-  const gcpOrgId = watch("gcpOrgId") || "";
-  const isOrgIdValid = GCP_ORG_ID_PATTERN.test(gcpOrgId.trim());
-  const credentialMethod = watch("credentialMethod");
+  const tenantId = watch("tenantId") || "";
+  const isTenantIdValid = z.uuid().safeParse(tenantId.trim()).success;
 
   const {
     apiError,
@@ -171,7 +118,7 @@ export function GcpOrgSetupForm({
     keepWaitingForDiscovery,
     retryDiscovery,
   } = useOrgSetupSubmission({
-    // Unlike an AWS role secret, a GCP secret echoes no external id.
+    // Unlike an AWS role secret, a service principal secret echoes no external id.
     stackSetExternalId: "",
     onNext,
     // Only the fields this form renders: a `setError` on an unregistered field
@@ -179,11 +126,9 @@ export function GcpOrgSetupForm({
     setFieldError: (field, message) => {
       switch (field) {
         case "organizationName":
-        case "gcpOrgId":
-        case "serviceAccountKey":
+        case "tenantId":
         case "clientId":
         case "clientSecret":
-        case "refreshToken":
           setError(field, { message });
           return true;
         default:
@@ -209,7 +154,7 @@ export function GcpOrgSetupForm({
         onBack,
         showAction: true,
         actionLabel: isEditName ? "Save" : "Next",
-        actionDisabled: isEditName ? isSaving : !isOrgIdValid,
+        actionDisabled: isEditName ? isSaving : !isTenantIdValid,
         actionType: WIZARD_FOOTER_ACTION_TYPE.SUBMIT,
         actionFormId: formId,
       });
@@ -232,8 +177,8 @@ export function GcpOrgSetupForm({
     formId,
     intent,
     isBusy,
-    isOrgIdValid,
     isSaving,
+    isTenantIdValid,
     isValid,
     onBack,
     onFooterChange,
@@ -243,11 +188,9 @@ export function GcpOrgSetupForm({
   const handleContinueToAccess = () => {
     setApiError(null);
 
-    if (!isOrgIdValid) {
-      setError("gcpOrgId", {
-        message: gcpOrgId.trim()
-          ? "Must be a numeric Google Cloud organization ID (e.g., 123456789012)"
-          : "Organization ID is required",
+    if (!isTenantIdValid) {
+      setError("tenantId", {
+        message: tenantId.trim() ? TENANT_ID_INVALID : "Tenant ID is required",
       });
       return;
     }
@@ -296,7 +239,7 @@ export function GcpOrgSetupForm({
     }
 
     void handleSubmit((data) =>
-      submitOrganizationSetup({ ...data, orgType: ORGANIZATION_TYPE.GCP }),
+      submitOrganizationSetup({ ...data, orgType: ORGANIZATION_TYPE.AZURE }),
     )(event);
   };
 
@@ -321,14 +264,14 @@ export function GcpOrgSetupForm({
         {setupPhase === ORG_SETUP_PHASE.DETAILS && (
           <div className="flex flex-col gap-6">
             <div className="flex items-center gap-4">
-              <GCPProviderBadge size={32} />
+              <AzureProviderBadge size={32} />
               <h3 className="text-base font-semibold">
-                Google Cloud (GCP) / Organization Details
+                Microsoft Azure / Organization Details
               </h3>
             </div>
 
             <p className="text-muted-foreground text-sm">
-              Enter the Google Cloud organization ID for the projects you want
+              Enter the Microsoft Entra tenant ID for the subscriptions you want
               to add to Prowler.
             </p>
           </div>
@@ -336,9 +279,9 @@ export function GcpOrgSetupForm({
 
         {setupPhase === ORG_SETUP_PHASE.ACCESS && (
           <div className="flex items-center gap-4">
-            <GCPProviderBadge size={32} />
+            <AzureProviderBadge size={32} />
             <h3 className="text-base font-semibold">
-              Google Cloud (GCP) / Authentication Details
+              Microsoft Azure / Authentication Details
             </h3>
           </div>
         )}
@@ -347,7 +290,9 @@ export function GcpOrgSetupForm({
           <div className="flex min-h-[220px] items-center justify-center">
             <div className="flex items-center gap-3 py-2">
               <Spinner className="size-6" />
-              <p className="text-sm font-medium">Gathering GCP Projects...</p>
+              <p className="text-sm font-medium">
+                Gathering Azure Subscriptions...
+              </p>
             </div>
           </div>
         )}
@@ -387,13 +332,13 @@ export function GcpOrgSetupForm({
           <div className="flex flex-col gap-4">
             <WizardInputField
               control={control}
-              name="gcpOrgId"
-              label="Organization ID"
+              name="tenantId"
+              label="Tenant ID"
               labelPlacement="outside"
-              placeholder="e.g. 123456789012"
+              placeholder="e.g. 11111111-1111-4111-8111-111111111111"
               isRequired
-              isReadOnly={isReadOnlyOrgId}
-              isDisabled={isReadOnlyOrgId}
+              isReadOnly={isReadOnlyTenantId}
+              isDisabled={isReadOnlyTenantId}
             />
 
             <WizardInputField
@@ -407,7 +352,7 @@ export function GcpOrgSetupForm({
 
             <p className="text-muted-foreground text-sm">
               If left blank, Prowler will use the organization name stored in
-              Google Cloud.
+              Azure.
             </p>
           </div>
         )}
@@ -415,74 +360,27 @@ export function GcpOrgSetupForm({
         {setupPhase === ORG_SETUP_PHASE.ACCESS && !isBusy && (
           <div className="flex flex-col gap-6">
             <p className="text-text-neutral-primary text-sm leading-7 font-normal">
-              Choose how Prowler authenticates to your Google Cloud
-              organization.
+              Enter the service principal Prowler authenticates with. It needs
+              the Reader role on the tenant root Management Group.
             </p>
 
-            <div className="flex flex-col gap-3">
-              <RadioCard
-                title="Service Account Key"
-                icon={GCPProviderBadge}
-                selected={credentialMethod === ORG_SECRET_TYPE.SERVICE_ACCOUNT}
-                onClick={() =>
-                  setValue(
-                    "credentialMethod",
-                    ORG_SECRET_TYPE.SERVICE_ACCOUNT,
-                    {
-                      shouldValidate: true,
-                    },
-                  )
-                }
-              />
-              <RadioCard
-                title="Client ID, Client Secret and Refresh Token"
-                icon={GCPProviderBadge}
-                selected={credentialMethod === ORG_SECRET_TYPE.STATIC}
-                onClick={() =>
-                  setValue("credentialMethod", ORG_SECRET_TYPE.STATIC, {
-                    shouldValidate: true,
-                  })
-                }
-              />
-            </div>
-
-            {credentialMethod === ORG_SECRET_TYPE.SERVICE_ACCOUNT ? (
-              <WizardTextareaField
+            <div className="flex flex-col gap-4">
+              <WizardInputField
                 control={control}
-                name="serviceAccountKey"
-                label="Service Account Key"
+                name="clientId"
+                label="Client ID"
                 labelPlacement="outside"
-                placeholder="Paste your Service Account Key JSON content here"
-                minRows={10}
                 isRequired
               />
-            ) : (
-              <div className="flex flex-col gap-4">
-                <WizardInputField
-                  control={control}
-                  name="clientId"
-                  label="Client ID"
-                  labelPlacement="outside"
-                  isRequired
-                />
-                <WizardInputField
-                  control={control}
-                  name="clientSecret"
-                  label="Client Secret"
-                  labelPlacement="outside"
-                  type="password"
-                  isRequired
-                />
-                <WizardInputField
-                  control={control}
-                  name="refreshToken"
-                  label="Refresh Token"
-                  labelPlacement="outside"
-                  type="password"
-                  isRequired
-                />
-              </div>
-            )}
+              <WizardInputField
+                control={control}
+                name="clientSecret"
+                label="Client Secret"
+                labelPlacement="outside"
+                type="password"
+                isRequired
+              />
+            </div>
           </div>
         )}
       </form>

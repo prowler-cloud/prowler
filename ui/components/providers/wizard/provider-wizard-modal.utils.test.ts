@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { getProviderHelpText } from "@/lib/external-urls";
+import { DOCS_URLS, getProviderHelpText } from "@/lib/external-urls";
 import { ORG_SETUP_PHASE, ORG_WIZARD_STEP } from "@/types/organizations";
 import {
   PROVIDER_WIZARD_MODE,
@@ -169,6 +169,18 @@ describe("getProviderWizardDocsDestination", () => {
     );
 
     expect(destination).toBe("Microsoft 365");
+  });
+
+  it("labels the Azure organizations tutorial after the wizard flow, not its page name", () => {
+    // The Azure tutorial page is named after Management Groups while the wizard
+    // flow is "Azure Organizations", so the label cannot be derived from the
+    // slug — without the map entry the header would read "Azure Management
+    // Groups Documentation".
+    const destination = getProviderWizardDocsDestination(
+      DOCS_URLS.AZURE_ORGANIZATIONS,
+    );
+
+    expect(destination).toBe("Azure Organizations");
   });
 
   it("returns a compact destination label for long docs links", () => {
