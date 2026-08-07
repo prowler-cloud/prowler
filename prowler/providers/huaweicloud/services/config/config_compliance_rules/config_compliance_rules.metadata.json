@@ -1,0 +1,36 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "config_compliance_rules",
+  "CheckTitle": "Config (RMS) compliance rules are configured and enabled",
+  "CheckType": [],
+  "ServiceName": "config",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "HUAWEICLOUD::Config::PolicyAssignment",
+  "ResourceGroup": "governance",
+  "Description": "Ensure that Config (RMS) compliance rules (policy assignments) are configured and enabled to monitor resource configuration compliance.",
+  "Risk": "Without compliance rules configured, the Config service cannot evaluate resources against desired configurations. Security misconfigurations such as unencrypted storage, public access, or missing MFA may go undetected.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.huaweicloud.com/intl/en-us/usermanual-rms/rms_01_0002.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log on to the Huawei Cloud console.\n2. Navigate to Resource Management Service (RMS).\n3. Go to Compliance > Resource compliance.\n4. Click Create Assignment.\n5. Select built-in policy definitions or create custom rules.\n6. Configure the rule parameters and enable the assignment.\n7. Click OK.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure and enable compliance rules in Config (RMS) to monitor resource configuration compliance.",
+      "Url": "https://hub.prowler.com/check/config_compliance_rules"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
