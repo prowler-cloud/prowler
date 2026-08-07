@@ -10,13 +10,29 @@ from prowler.providers.aws.services.ecs.ecs_client import ecs_client
 
 
 class ecs_task_definitions_no_environment_secrets(Check):
-    def execute(self):
+    """Verify ECS task definitions do not store secrets in environment variables.
+
+    Task definitions whose describe call failed are skipped so an
+    unexamined resource is never reported as compliant.
+    """
+
+    def execute(self) -> list[Check_Report_AWS]:
+        """Execute the check.
+
+        Returns:
+            A list of check reports, one per ECS task definition.
+        """
         findings = []
         secrets_ignore_patterns = ecs_client.audit_config.get(
             "secrets_ignore_patterns", []
         )
         validate = ecs_client.audit_config.get("secrets_validate", False)
         task_definitions = list(ecs_client.task_definitions.values())
+        task_definitions = [
+            task_definition
+            for task_definition in task_definitions
+            if task_definition.container_definitions is not None
+        ]
 
         # Scan every (task definition, container) environment in batched
         # Kingfisher invocations instead of one subprocess per container.
