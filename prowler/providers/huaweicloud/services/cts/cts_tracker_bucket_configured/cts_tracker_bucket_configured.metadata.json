@@ -1,0 +1,36 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "cts_tracker_bucket_configured",
+  "CheckTitle": "CTS tracker has an OBS bucket configured for trace file delivery",
+  "CheckType": [],
+  "ServiceName": "cts",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "HUAWEICLOUD::CTS::Tracker",
+  "ResourceGroup": "monitoring",
+  "Description": "Ensure that CTS trackers have an OBS bucket configured to persistently store trace files. Without a bucket, traces may only be kept transiently and could be lost.",
+  "Risk": "Without an OBS bucket configured, trace files are not persistently stored. This means audit records of API calls and operations could be lost, making it difficult to investigate security incidents or comply with regulatory requirements.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.huaweicloud.com/intl/en-us/usermanual-cts/cts_03_0002.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "hcloud CTS UpdateTracker --tracker_name <tracker_name> --bucket_name <bucket_name>",
+      "NativeIaC": "",
+      "Other": "1. Log on to the Huawei Cloud console.\n2. Navigate to Cloud Trace Service.\n3. Click the Trace Management tab.\n4. Select the tracker.\n5. Configure an OBS bucket for trace file storage.\n6. Click OK.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure an OBS bucket for each CTS tracker to ensure persistent storage of trace files.",
+      "Url": "https://hub.prowler.com/check/cts_tracker_bucket_configured"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
