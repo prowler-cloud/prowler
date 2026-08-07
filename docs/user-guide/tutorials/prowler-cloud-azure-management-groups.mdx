@@ -188,16 +188,18 @@ Once discovery completes, the wizard renders the tenant as a hierarchical tree:
 - **Selecting a Management Group** selects every selectable subscription beneath it. A Management Group whose subscriptions are only partly selected renders in an indeterminate state.
 - **Individual overrides**: deselect single subscriptions even when the parent Management Group is selected.
 - The header tracks the selection as **"X of Y subscriptions selected"**.
-- Management Group hierarchies are read up to a bounded depth. Deeper tenants report an error at discovery — see [Troubleshooting](#troubleshooting).
+- Management Group hierarchies are read up to **six levels** below the tenant root Management Group, which is Azure's own platform limit. Deeper tenants report an error at discovery — see [Troubleshooting](#troubleshooting).
 
 ### Blocked Subscriptions
 
-A subscription is shown grayed out and cannot be selected when onboarding it would conflict with something Prowler already stores. Hover the subscription to see the reason:
+A subscription is shown grayed out and cannot be selected when Azure reports it as inactive, or when onboarding it would conflict with something Prowler already stores. Hover the subscription to see the reason:
 
 | Reason | What it means |
 |--------|---------------|
-| `provider_linked_to_other_organization` | The subscription is already connected under a **different** Prowler organization. |
-| `provider_linked_to_other_organization_node` | The subscription is already grouped under a different Management Group in Prowler — for example, it moved in Azure after it was onboarded. |
+| `subscription_not_enabled` | The subscription is not in the **Enabled** state in Azure — it is disabled, expired, or otherwise inactive. Nothing in Prowler conflicts with it: resolve whatever Azure reports against the subscription, billing included, then run discovery again. |
+| `organization_conflict` | The subscription is already connected under a **different** Prowler organization. |
+| `organization_node_conflict` | The subscription is already grouped under a different Management Group in Prowler — for example, it moved in Azure after it was onboarded. |
+| `provider_type_conflict` | A provider with the same identifier exists in Prowler for another cloud provider. |
 
 <Frame>
   <img src="/images/organizations/azure/azure-blocked-subscription.png" alt="Blocked subscription row with the reason shown in a tooltip" />
@@ -364,11 +366,19 @@ az role assignment list \
   --query "[].{role:roleDefinitionName, scope:scope}" -o table
 ```
 
-### No Management Group With That ID Was Found
+### Azure Returned an Incomplete Management Group Hierarchy
 
-*"No Management Group with that ID was found in this tenant. Check the ID, and that the service principal has been granted access to it."*
+*"Azure returned an incomplete Management Group hierarchy. This usually clears on a retry; if it does not, check that the service principal can read every Management Group in the tenant."*
 
-The tenant root Management Group could not be read. Either the tenant ID is wrong, or the service principal cannot see the root. Confirm the tenant ID and list what the credential can reach:
+Azure answered, but the hierarchy it returned was missing Management Groups that Prowler expected to find. This is usually a transient inconsistency in Azure Resource Manager, so click **Retry discovery** first.
+
+If it repeats, treat it as a permissions problem. Unlike the error above, Azure did not refuse the read — a partial grant can surface as missing data rather than as an outright denial. Confirm that the **Reader** assignment sits on the tenant root Management Group and not on individual Management Groups beneath it, using the command in [The Service Principal Cannot Read the Complete Management Group Hierarchy](#the-service-principal-cannot-read-the-complete-management-group-hierarchy).
+
+### The Tenant Root Management Group Could Not Be Found
+
+*"The tenant root Management Group could not be found. Check the tenant ID, and that the service principal has been granted access at the tenant root."*
+
+Prowler derives the tenant root Management Group from the tenant ID you entered, and could not read it. Either the tenant ID is wrong, or the service principal cannot see the root. Confirm the tenant ID and list what the credential can reach:
 
 ```bash
 az account management-group list --query "[].{name:name, displayName:displayName}" -o table
@@ -386,6 +396,12 @@ The service principal is registered in another tenant. Register the application 
 
 A transient Azure Resource Manager error. Click **Retry discovery**.
 
+### Azure Rate Limited the Hierarchy Read
+
+*"Azure rate limited the hierarchy read. Nothing is wrong with your credentials — try again in a few minutes."*
+
+Azure Resource Manager throttled Prowler's requests while it walked the hierarchy. Large tenants, and discoveries started back to back, are the common causes. Wait a few minutes, then click **Retry discovery**.
+
 ### The Hierarchy Is Too Deep
 
 *"This tenant's Management Group hierarchy is deeper than Prowler can read. Contact support so we can help you onboard it."*
@@ -397,6 +413,12 @@ The tenant nests Management Groups deeper than Prowler reads in one pass. Contac
 *"Authentication failed. Please verify the service principal permissions or credentials, then try again."*
 
 The generic authentication failure, shown when Azure reports no more specific reason. Confirm that the service principal still exists, that its client secret has not expired, and that the Reader role assignment at the tenant root Management Group is still in place.
+
+### Azure Rejected the Hierarchy Read
+
+*"Azure rejected the hierarchy read. Try again, and contact support if it keeps failing."*
+
+Azure refused the request for a reason Prowler could not narrow down to credentials, permissions, or throttling. Click **Retry discovery**, and contact [Prowler Support](mailto:support@prowler.com) if the failure repeats. This message names Azure as the source of the failure; the one below is shown when the failure cannot be attributed to Azure at all.
 
 ### Discovery Could Not Be Completed
 
