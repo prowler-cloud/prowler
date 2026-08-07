@@ -1,0 +1,1 @@
+Attack Paths graph groups resources by class into expandable nodes and marks the query outcome as the terminal node, with the clicked resource highlighted while its findings are expanded (Prowler Cloud only)
