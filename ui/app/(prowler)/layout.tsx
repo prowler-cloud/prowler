@@ -6,6 +6,7 @@ import { ReactNode, Suspense } from "react";
 
 import { getProviders } from "@/actions/providers";
 import { getScansByState } from "@/actions/scans/scans";
+import { AuthenticatedNoticeSlot } from "@/components/layout/authenticated-notice";
 import MainLayout from "@/components/layout/main-layout/main-layout";
 import {
   OnboardingCheckpointWatcher,
@@ -108,7 +109,9 @@ export default async function RootLayout({
               <OnboardingSequenceBanner hasCompletedScan={hasCompletedScan} />
             </>
           )}
-          <MainLayout>{children}</MainLayout>
+          <MainLayout authenticatedNoticeSlot={<AuthenticatedNoticeSlot />}>
+            {children}
+          </MainLayout>
           {cloudEnabled && <FeedbackSurvey />}
           {/* Always mounted: it hosts the detail (finding/resource) views in
               every deployment; the AI tab inside is cloud-gated on its own. */}
