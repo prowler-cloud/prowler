@@ -218,6 +218,9 @@ export function ProviderWizardModal({
                     />
                   )}
 
+                {/* SETUP is per-organization-type: each form owns its own
+                    fields, so the branch is a three-way switch on the type and
+                    every arm keys `initialValues` to its own external id. */}
                 {!isProviderFlow &&
                   orgCurrentStep === ORG_WIZARD_STEP.SETUP &&
                   organizationType === ORGANIZATION_TYPE.AWS && (

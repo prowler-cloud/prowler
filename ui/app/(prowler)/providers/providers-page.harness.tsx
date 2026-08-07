@@ -494,8 +494,8 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
     /^(?:folders\/\d+|ou-[\w-]+|\/providers\/Microsoft\.Management\/managementGroups\/[\w.()-]+)$/;
 
   /**
-   * The canonical uid an id column carries: its accessible name when the visible
-   * text is shortened (Azure Management Groups), otherwise the text itself.
+   * The canonical uid an id column carries, which `TruncatedId` puts in its
+   * accessible name; the text fallback covers spans it did not render.
    */
   private static columnUid(column: HTMLElement): string {
     const uid = column.getAttribute("aria-label") ?? column.textContent ?? "";
@@ -543,15 +543,13 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
     );
   }
 
-  /**
-   * What the id column actually reads on each container row, which is not always
-   * the uid: an Azure Management Group id is all shared prefix, so the column
-   * shows the trailing name and keeps the canonical id for the tooltip.
-   */
-  containerRowIdText(): string[] {
-    return this.containerRows.flatMap(
-      (item) => ProvidersPageHarness.idColumn(item)?.textContent?.trim() ?? [],
-    );
+  /** Visible text of the id column whose accessible name is `uid`. */
+  containerIdLabel(uid: string): string | null {
+    const column = Array.from(
+      this.container.querySelectorAll<HTMLElement>("[aria-label]"),
+    ).find((el) => el.getAttribute("aria-label") === uid);
+
+    return column?.textContent?.trim() ?? null;
   }
 
   /** Whether a candidate row is rendered inside the subtree of a container. */

@@ -402,8 +402,8 @@ function bind<D extends OrgSetupSubmissionData>(
 }
 
 /**
- * Binds the submission data to the strategy its own tag names. The switch has no
- * default, so a new organization type is a compile error until it brings one.
+ * Binds the submission data to the strategy its own tag names. The `default` arm
+ * names the offending type when a new organization type arrives without one.
  */
 export function bindOrgSetupStrategy(
   data: OrgSetupSubmissionData,
@@ -415,5 +415,9 @@ export function bindOrgSetupStrategy(
       return bind(azureOrgSetupStrategy, data);
     case ORGANIZATION_TYPE.GCP:
       return bind(gcpOrgSetupStrategy, data);
+    default: {
+      const exhaustiveData: never = data;
+      return exhaustiveData;
+    }
   }
 }

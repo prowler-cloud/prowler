@@ -75,9 +75,9 @@ function InertContainerNote({
  *
  * `shortened` replaces the visible text when ellipsizing would hide everything
  * that distinguishes the value: Azure management-group ids are all prefix, so
- * every group in a tenant reads `/providers/Microsoft....`. The full value then
- * becomes the accessible name too — the tooltip needs a hover, and a screen
- * reader should still get the canonical id.
+ * every group in a tenant reads `/providers/Microsoft....`. The accessible name
+ * is always the canonical value: the tooltip needs a hover, and a screen reader
+ * should still get the full id.
  */
 function TruncatedId({
   value,
@@ -91,10 +91,7 @@ function TruncatedId({
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <span
-          className={cn("truncate text-sm", className)}
-          aria-label={shortened ? value : undefined}
-        >
+        <span className={cn("truncate text-sm", className)} aria-label={value}>
           {shortened ?? value}
         </span>
       </TooltipTrigger>

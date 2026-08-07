@@ -490,7 +490,9 @@ export const getDiscovery = async (
 };
 
 /**
- * JSON:API attributes for an apply request.
+ * JSON:API attributes for an apply request. The `default` arm makes a new
+ * organization type a compile error; omitting it would not, since
+ * `noImplicitReturns` is off and the return type would widen to `undefined`.
  */
 function buildApplyAttributes(payload: ApplyDiscoveryPayload) {
   switch (payload.orgType) {
@@ -503,6 +505,10 @@ function buildApplyAttributes(payload: ApplyDiscoveryPayload) {
       return { subscriptions: payload.subscriptions };
     case ORGANIZATION_TYPE.GCP:
       return { projects: payload.projects };
+    default: {
+      const exhaustivePayload: never = payload;
+      return exhaustivePayload;
+    }
   }
 }
 
