@@ -25,6 +25,11 @@ LAMBDA_UNFETCHED_LAYER_ARN = (
     f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:layer:"
     f"{LAMBDA_UNFETCHED_LAYER_NAME}:2"
 )
+LAMBDA_CORRUPT_LAYER_NAME = "corrupt-layer"
+LAMBDA_CORRUPT_LAYER_ARN = (
+    f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:layer:"
+    f"{LAMBDA_CORRUPT_LAYER_NAME}:3"
+)
 LAMBDA_LAYER_CONTENT_WITH_SECRETS = """
 db_password = "Tr0ub4dor3xKq9vLmZ"
 """
@@ -102,6 +107,22 @@ def mock_get_layers_code_with_unreadable_file():
 
 def mock_get_layers_code_empty_code():
     yield create_lambda_layer(), None
+
+
+def get_lambda_layer_code_with_corrupt_archive() -> LambdaCode:
+    code_zip = mock.MagicMock()
+    code_zip.extractall.side_effect = zipfile.BadZipFile("truncated archive")
+    return LambdaCode(location="", code_zip=code_zip)
+
+
+def mock_get_layers_code_one_corrupt_one_clean():
+    yield (
+        Layer(arn=LAMBDA_CORRUPT_LAYER_ARN),
+        get_lambda_layer_code_with_corrupt_archive(),
+    )
+    yield create_lambda_layer(), get_lambda_layer_code(
+        LAMBDA_LAYER_CONTENT_WITHOUT_SECRETS
+    )
 
 
 def mock_get_layers_code_partial_fetch_failure():
@@ -288,6 +309,42 @@ class Test_awslambda_layer_no_secrets_in_content:
             assert len(result) == 1
             assert result[0].resource_arn == LAMBDA_LAYER_ARN
             assert result[0].status == "PASS"
+
+    def test_corrupt_layer_archive_reports_manual_and_scan_continues(self):
+        lambda_client = mock.MagicMock
+        lambda_client.layers = {
+            LAMBDA_CORRUPT_LAYER_ARN: Layer(arn=LAMBDA_CORRUPT_LAYER_ARN),
+            LAMBDA_LAYER_ARN: create_lambda_layer(),
+        }
+        lambda_client._get_layers_code = mock_get_layers_code_one_corrupt_one_clean
+        lambda_client.audit_config = {"secrets_ignore_patterns": []}
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.awslambda.awslambda_layer_no_secrets_in_content.awslambda_layer_no_secrets_in_content.awslambda_client",
+                new=lambda_client,
+            ),
+        ):
+            from prowler.providers.aws.services.awslambda.awslambda_layer_no_secrets_in_content.awslambda_layer_no_secrets_in_content import (
+                awslambda_layer_no_secrets_in_content,
+            )
+
+            check = awslambda_layer_no_secrets_in_content()
+            result = check.execute()
+
+            # The corrupt archive must not abort the scan of the clean layer.
+            assert len(result) == 2
+            by_arn = {r.resource_arn: r for r in result}
+
+            assert by_arn[LAMBDA_LAYER_ARN].status == "PASS"
+
+            corrupt = by_arn[LAMBDA_CORRUPT_LAYER_ARN]
+            assert corrupt.status == "MANUAL"
+            assert "manual review is required" in corrupt.status_extended
 
     def test_layer_with_empty_code_reports_manual(self):
         lambda_client = mock.MagicMock

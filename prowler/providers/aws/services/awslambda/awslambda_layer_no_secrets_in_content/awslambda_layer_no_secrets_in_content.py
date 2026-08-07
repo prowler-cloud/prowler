@@ -13,7 +13,23 @@ from prowler.providers.aws.services.awslambda.awslambda_client import awslambda_
 
 
 class awslambda_layer_no_secrets_in_content(Check):
-    def execute(self):
+    """Check if Lambda layer content contains hardcoded secrets.
+
+    Scans every file inside each Lambda layer version's package with the
+    secret scanner.
+
+    - PASS: No secrets are detected in the layer content.
+    - FAIL: At least one potential secret is detected in the layer content.
+    - MANUAL: The layer content could not be fetched or scanned.
+    """
+
+    def execute(self) -> list[Check_Report_AWS]:
+        """Execute the Lambda layer secrets scan.
+
+        Returns:
+            list[Check_Report_AWS]: One report per Lambda layer version used by
+            the audited functions, or an empty list when there are no layers.
+        """
         findings = []
         if not awslambda_client.layers:
             return findings
@@ -41,10 +57,16 @@ class awslambda_layer_no_secrets_in_content(Check):
             for layer, layer_code in awslambda_client._get_layers_code():
                 if not layer_code:
                     continue
-                index = len(layers_with_code)
-                layers_with_code.append(layer)
                 with tempfile.TemporaryDirectory() as tmp_dir_name:
-                    layer_code.code_zip.extractall(tmp_dir_name)
+                    try:
+                        layer_code.code_zip.extractall(tmp_dir_name)
+                    except Exception:
+                        # A corrupt or truncated package must not abort the
+                        # scan of the remaining layers: keep this layer out of
+                        # layers_with_code so it is reported as MANUAL below.
+                        continue
+                    index = len(layers_with_code)
+                    layers_with_code.append(layer)
                     for root, _, files in os.walk(tmp_dir_name):
                         for file_name in files:
                             file_path = os.path.join(root, file_name)
