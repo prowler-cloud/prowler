@@ -25,7 +25,9 @@ const {
   mockUpdateFindingTriage,
   mockLoadLatestFindingTriageNote,
   mockRequestPanelChatMessage,
+  mockRequestPanelSkillLaunch,
   mockIsCloud,
+  mockUseSkillLauncherVariant,
   mockCurrentLighthouseContext,
 } = vi.hoisted(() => ({
   mockGetComplianceIcon: vi.fn((_: string) => null as string | null),
@@ -37,7 +39,9 @@ const {
   mockUpdateFindingTriage: vi.fn(),
   mockLoadLatestFindingTriageNote: vi.fn(),
   mockRequestPanelChatMessage: vi.fn(),
+  mockRequestPanelSkillLaunch: vi.fn(),
   mockIsCloud: vi.fn(() => true),
+  mockUseSkillLauncherVariant: vi.fn(() => "card"),
   mockCurrentLighthouseContext: {
     schemaVersion: 1,
     transport: "inline",
@@ -160,17 +164,29 @@ vi.mock("@/components/shadcn/card/card", async (importOriginal) => ({
 }));
 
 vi.mock("@/components/shadcn/dropdown", () => ({
+  // Always-open stand-in: renders the trigger (for presence assertions) and
+  // the menu children inline. Real menu behavior is covered by the rail's and
+  // the primitive's own tests.
   ActionDropdown: ({
     children,
+    trigger,
     ariaLabel,
   }: {
     children: ReactNode;
+    trigger?: ReactNode;
     ariaLabel?: string;
   }) => (
-    <div role="menu" aria-label={ariaLabel}>
-      {children}
+    <div>
+      {trigger}
+      <div role="menu" aria-label={ariaLabel}>
+        {children}
+      </div>
     </div>
   ),
+  DropdownMenuLabel: ({ children }: { children: ReactNode }) => (
+    <div>{children}</div>
+  ),
+  DropdownMenuSeparator: () => null,
   ActionDropdownItem: ({
     label,
     disabled,
@@ -288,6 +304,11 @@ vi.mock("@/actions/findings", () => ({
 
 vi.mock("@/components/icons", () => ({
   getComplianceIcon: mockGetComplianceIcon,
+  LighthouseIcon: () => null,
+}));
+
+vi.mock("./use-skill-launcher-variant", () => ({
+  useSkillLauncherVariant: mockUseSkillLauncherVariant,
 }));
 
 vi.mock("@/components/icons/services/IconServices", () => ({
@@ -384,6 +405,7 @@ vi.mock("@/lib/shared/env", () => ({
 
 vi.mock("@/app/(prowler)/lighthouse/_lib/panel-chat-store", () => ({
   requestPanelChatMessage: mockRequestPanelChatMessage,
+  requestPanelSkillLaunch: mockRequestPanelSkillLaunch,
 }));
 
 vi.mock("@/hooks/use-lighthouse-context", () => ({
@@ -537,6 +559,7 @@ afterEach(() => {
     (_: string) => null as string | null,
   );
   mockIsCloud.mockReturnValue(true);
+  mockUseSkillLauncherVariant.mockReturnValue("card");
   useSidePanelStore.setState({
     isOpen: false,
     selectedTab: SIDE_PANEL_TAB.AI_CHAT,
@@ -805,7 +828,7 @@ const mockResourceRow: FindingResourceRow = {
 };
 
 describe("ResourceDetailDrawerContent — Lighthouse AI", () => {
-  it("should open the Lighthouse tab and submit a contextual analysis", async () => {
+  it("should open the Lighthouse tab without starting a conversation", async () => {
     // Given
     const user = userEvent.setup();
     useSidePanelStore.setState({
@@ -827,22 +850,26 @@ describe("ResourceDetailDrawerContent — Lighthouse AI", () => {
       />,
     );
 
-    // When
+    // When: the free-form fallback only navigates to the chat tab
     await user.click(
       screen.getByRole("button", {
-        name: "Analyze This Finding With Lighthouse AI",
+        name: /ask Lighthouse anything about this finding/i,
       }),
     );
 
-    // Then
-    expect(mockRequestPanelChatMessage).toHaveBeenCalledWith(
-      "Analyze this finding",
-      mockCurrentLighthouseContext,
-    );
+    // Then — no conversation is started on the user's behalf
+    expect(mockRequestPanelChatMessage).not.toHaveBeenCalled();
     expect(useSidePanelStore.getState()).toMatchObject({
       isOpen: true,
       selectedTab: SIDE_PANEL_TAB.AI_CHAT,
     });
+
+    // And launching a skill goes through the skill launcher with the context
+    await user.click(screen.getByRole("button", { name: /Triage Decision/ }));
+    expect(mockRequestPanelSkillLaunch).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "triage-decision" }),
+      mockCurrentLighthouseContext,
+    );
   });
 
   it("should hide the action when the Lighthouse panel tab is unavailable", () => {
@@ -866,10 +893,125 @@ describe("ResourceDetailDrawerContent — Lighthouse AI", () => {
     );
 
     // Then
+    expect(screen.queryByText("Lighthouse AI Skills")).not.toBeInTheDocument();
     expect(
       screen.queryByRole("button", {
-        name: "Analyze This Finding With Lighthouse AI",
+        name: /ask Lighthouse anything about this finding/i,
       }),
+    ).not.toBeInTheDocument();
+  });
+});
+
+describe("ResourceDetailDrawerContent — skill launcher experiment", () => {
+  const renderDrawer = (overrides: { isNavigating?: boolean } = {}) =>
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={overrides.isNavigating ?? false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={mockFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+  it("should swap the footer card for the header chip rail on the dropdown variant", async () => {
+    // Given
+    const user = userEvent.setup();
+    mockUseSkillLauncherVariant.mockReturnValue("dropdown");
+    renderDrawer();
+
+    // Then — control card gone, rail chips present. The always-open dropdown
+    // mock repeats every skill as a menu button, hence getAllByRole.
+    expect(screen.queryByText("Lighthouse AI Skills")).not.toBeInTheDocument();
+    expect(
+      screen.getAllByRole("button", { name: "Contextual Fix" }).length,
+    ).toBeGreaterThan(0);
+
+    // When — first match is the rail chip (rendered before the menu).
+    await user.click(
+      screen.getAllByRole("button", { name: "Triage Decision" })[0],
+    );
+
+    // Then
+    expect(mockRequestPanelSkillLaunch).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "triage-decision" }),
+      mockCurrentLighthouseContext,
+    );
+    expect(useSidePanelStore.getState()).toMatchObject({
+      isOpen: true,
+      selectedTab: SIDE_PANEL_TAB.AI_CHAT,
+    });
+  });
+
+  it("should start a fresh conversation from the rail prompt", async () => {
+    // Given
+    const user = userEvent.setup();
+    mockUseSkillLauncherVariant.mockReturnValue("dropdown");
+    renderDrawer();
+
+    // When
+    await user.click(
+      screen.getByRole("button", { name: "More Lighthouse skills" }),
+    );
+    await user.type(
+      screen.getByRole("textbox", { name: "Ask Lighthouse anything" }),
+      "Is this exposed?{Enter}",
+    );
+
+    // Then
+    expect(mockRequestPanelChatMessage).toHaveBeenCalledWith(
+      "Is this exposed?",
+      mockCurrentLighthouseContext,
+    );
+    expect(useSidePanelStore.getState()).toMatchObject({
+      isOpen: true,
+      selectedTab: SIDE_PANEL_TAB.AI_CHAT,
+    });
+  });
+
+  it("should hide the rail outside cloud and while navigating", () => {
+    // Given
+    mockUseSkillLauncherVariant.mockReturnValue("dropdown");
+    mockIsCloud.mockReturnValue(false);
+
+    // When
+    const { unmount } = renderDrawer();
+
+    // Then
+    expect(
+      screen.queryByRole("button", { name: "Contextual Fix" }),
+    ).not.toBeInTheDocument();
+
+    // Given
+    unmount();
+    mockIsCloud.mockReturnValue(true);
+
+    // When
+    renderDrawer({ isNavigating: true });
+
+    // Then
+    expect(
+      screen.queryByRole("button", { name: "Contextual Fix" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("should keep the card control for unresolved or unknown variants", () => {
+    // Given — the hook already collapses those to "card"; the drawer treats
+    // anything that is not exactly "dropdown" as control.
+    mockUseSkillLauncherVariant.mockReturnValue("card");
+
+    // When
+    renderDrawer();
+
+    // Then
+    expect(screen.getByText("Lighthouse AI Skills")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "More Lighthouse skills" }),
     ).not.toBeInTheDocument();
   });
 });
@@ -1759,11 +1901,7 @@ describe("ResourceDetailDrawerContent — header skeleton while navigating", () 
     expect(screen.getByText("security")).toBeInTheDocument();
     expect(screen.queryByText("Status Extended:")).not.toBeInTheDocument();
     expect(screen.queryByText("uid-1")).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", {
-        name: "Analyze This Finding With Lighthouse AI",
-      }),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText("Lighthouse AI Skills")).not.toBeInTheDocument();
   });
 
   it("should keep the overview tab shell visible with section skeletons when navigating to a different check", () => {
