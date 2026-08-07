@@ -1,0 +1,36 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "ces_alarm_rules_configured",
+  "CheckTitle": "CES alarm rules are configured and enabled",
+  "CheckType": [],
+  "ServiceName": "ces",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "HUAWEICLOUD::CES::Alarm",
+  "ResourceGroup": "monitoring",
+  "Description": "Ensure that Cloud Eye (CES) alarm rules are configured and enabled for monitoring critical services.",
+  "Risk": "Without configured and enabled alarm rules, no alerts will be received for availability or security incidents, delaying incident response and increasing the risk of undetected issues.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.huaweicloud.com/intl/en-us/usermanual-ces/ces_01_0030.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log on to the Huawei Cloud console.\n2. Navigate to Cloud Eye (CES).\n3. Create alarm rules for CPU, disk, network, and security events.\n4. Ensure all alarm rules are enabled.\n5. Verify that notifications are configured for alarm actions.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure and enable CES alarm rules for critical metrics and security events.",
+      "Url": "https://hub.prowler.com/check/ces_alarm_rules_configured"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Checks if CES alarm rules exist and are enabled (alarm_enabled is True)."
+}
