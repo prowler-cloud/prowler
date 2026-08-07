@@ -1,0 +1,1 @@
+﻿`update_audit_metadata` no longer raises `ZeroDivisionError` and return `None` for providers that run no checks (`iac`, `llm`, `image`, `alibabacloud` and `huaweicloud`), which build their audit metadata with an empty `expected_checks` list
