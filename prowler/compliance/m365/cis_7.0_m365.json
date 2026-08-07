@@ -1011,7 +1011,9 @@
     {
       "Id": "4.2",
       "Description": "Device enrollment restrictions let you restrict devices from enrolling in Intune based on certain device attributes such as device limit, device platform, OS Version, manufacturer or device ownership (Personally owned devices). The recommended state is to Block personally owned devices from enrollment.",
-      "Checks": [],
+      "Checks": [
+        "intune_device_enrollment_personal_device_restricted"
+      ],
       "Attributes": [
         {
           "Section": "4 Microsoft Intune admin center",
