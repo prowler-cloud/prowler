@@ -19,11 +19,9 @@ class batch_job_definition_no_secrets(Check):
         secrets_ignore_patterns = batch_client.audit_config.get(
             "secrets_ignore_patterns", []
         )
-        validate = batch_client.audit_config.get(
-            "secrets_validate", False
-        )
+        validate = batch_client.audit_config.get("secrets_validate", False)
 
-        job_definitions = batch_client.job_definitions
+        job_definitions = list(batch_client.job_definitions.values())
 
         def scan_payloads():
             """Yield index-keyed payloads for each env var and the command."""
@@ -58,9 +56,7 @@ class batch_job_definition_no_secrets(Check):
                 resource=job_definition,
             )
 
-            report.resource_id = (
-                f"{job_definition.name}:{job_definition.revision}"
-            )
+            report.resource_id = f"{job_definition.name}:{job_definition.revision}"
             report.status = "PASS"
 
             extended_status_parts = []
@@ -92,9 +88,7 @@ class batch_job_definition_no_secrets(Check):
                     )
 
             if container.command:
-                command_secrets = batch_results.get(
-                    (jd_index, "command")
-                )
+                command_secrets = batch_results.get((jd_index, "command"))
                 if command_secrets:
                     all_secrets.extend(command_secrets)
                     secrets_string = ", ".join(

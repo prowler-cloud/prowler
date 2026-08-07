@@ -488,23 +488,22 @@ class Test_batch_job_definition_no_secrets:
         from prowler.lib.utils.utils import SecretsScanError
 
         batch_client = mock.MagicMock()
-        batch_client.job_definitions = [
-            BatchJobDefinition(
+        job_definition_arn = f"arn:aws:batch:{AWS_REGION_US_EAST_1}:123456789012:job-definition/{JOB_NAME}:1"
+        batch_client.job_definitions = {
+            job_definition_arn: BatchJobDefinition(
                 name=JOB_NAME,
-                arn=f"arn:aws:batch:{AWS_REGION_US_EAST_1}:123456789012:job-definition/{JOB_NAME}:1",
+                arn=job_definition_arn,
                 revision=JOB_REVISION,
                 region=AWS_REGION_US_EAST_1,
                 container_properties=BatchContainerProperties(
                     image="test-image:latest",
                     command=[],
                     environment=[
-                        ContainerEnvVariable(
-                            name="DB_PASSWORD", value="pass-12343"
-                        )
+                        ContainerEnvVariable(name="DB_PASSWORD", value="pass-12343")
                     ],
                 ),
             )
-        ]
+        }
         batch_client.audit_config = {
             "secrets_ignore_patterns": [],
             "secrets_validate": False,

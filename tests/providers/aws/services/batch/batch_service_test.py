@@ -86,13 +86,12 @@ class Test_Batch_Service:
         batch = Batch(aws_provider)
 
         assert len(batch.job_definitions) == 1
-        assert batch.job_definitions[0].name == "test-batch-job"
-        assert (
-            batch.job_definitions[0].arn
-            == "arn:aws:batch:eu-west-1:123456789012:job-definition/test-batch-job:1"
-        )
-        assert batch.job_definitions[0].revision == 1
-        assert batch.job_definitions[0].region == AWS_REGION_EU_WEST_1
+        jd_arn = "arn:aws:batch:eu-west-1:123456789012:job-definition/test-batch-job:1"
+        jd = batch.job_definitions[jd_arn]
+        assert jd.name == "test-batch-job"
+        assert jd.arn == jd_arn
+        assert jd.revision == 1
+        assert jd.region == AWS_REGION_EU_WEST_1
 
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     def test_describe_job_definitions(self):
@@ -100,7 +99,7 @@ class Test_Batch_Service:
         batch = Batch(aws_provider)
 
         assert len(batch.job_definitions) == 1
-        jd = batch.job_definitions[0]
+        jd = list(batch.job_definitions.values())[0]
         assert jd.name == "test-batch-job"
         assert jd.container_properties.image == "test-image:latest"
         assert jd.container_properties.command == ["python", "app.py"]
@@ -153,8 +152,9 @@ class Test_Batch_Service:
             aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
             batch = Batch(aws_provider)
 
-            assert [jd.revision for jd in batch.job_definitions] == [3, 2, 1]
+            assert [jd.revision for jd in batch.job_definitions.values()] == [3, 2, 1]
             assert len(describe_calls) == 1
+            assert describe_calls[0].get("status") == "ACTIVE"
 
     def test_job_definition_limit_exposes_only_selected_resources(self):
         describe_calls = []
@@ -187,5 +187,37 @@ class Test_Batch_Service:
             )
             batch = Batch(aws_provider)
 
-            assert [jd.revision for jd in batch.job_definitions] == [3, 2]
+            assert [jd.revision for jd in batch.job_definitions.values()] == [3, 2]
             assert len(describe_calls) == 1
+
+    def test_audit_resources_filters_job_definitions(self):
+        def counting_make_api_call(self, operation_name, kwarg):
+            if operation_name == "DescribeJobDefinitions":
+                return {
+                    "jobDefinitions": [
+                        {
+                            "jobDefinitionName": f"job-{i}",
+                            "jobDefinitionArn": f"arn:aws:batch:eu-west-1:123456789012:job-definition/job-{i}:{i}",
+                            "revision": i,
+                            "containerProperties": {
+                                "image": "test-image:latest",
+                                "environment": [],
+                            },
+                        }
+                        for i in (1, 2)
+                    ]
+                }
+            return make_api_call(self, operation_name, kwarg)
+
+        with patch(
+            "botocore.client.BaseClient._make_api_call", new=counting_make_api_call
+        ):
+            aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+            aws_provider._audit_resources = [
+                "arn:aws:batch:eu-west-1:123456789012:job-definition/job-2:2"
+            ]
+            batch = Batch(aws_provider)
+
+            assert list(batch.job_definitions.keys()) == [
+                "arn:aws:batch:eu-west-1:123456789012:job-definition/job-2:2"
+            ]
