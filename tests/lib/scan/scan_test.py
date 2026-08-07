@@ -261,6 +261,34 @@ class TestScan:
             assert scan.get_completed_checks() == set()
 
     @patch("prowler.lib.scan.scan.load_checks_to_execute")
+    def test_progress_with_no_checks_to_execute(
+        self, mock_load_checks_to_execute, mock_provider
+    ):
+        """`progress` must not divide by zero when no check matched the filters.
+
+        `Scan.__init__` deliberately tolerates an empty scope: it only raises
+        `ScanInvalidCheckError` when exclusions emptied a *non-empty* scope, and
+        the comment there notes that a severity or category filter may
+        legitimately match nothing. Severity validation only checks the value is
+        a valid `Severity` member, not that any check declares it, so a valid but
+        unmatched severity yields zero checks.
+        """
+        mock_load_checks_to_execute.return_value = set()
+
+        with mock.patch(
+            "prowler.lib.check.models.CheckMetadata.get_bulk"
+        ) as mock_get_bulk:
+            mock_metadata = MagicMock()
+            mock_metadata.Categories = []
+            mock_get_bulk.return_value = {"accessanalyzer_enabled": mock_metadata}
+
+            scan = Scan(mock_provider, severities=["critical"])
+
+            assert scan.checks_to_execute == []
+            # Must report 0% rather than raising ZeroDivisionError.
+            assert scan.progress == 0
+
+    @patch("prowler.lib.scan.scan.load_checks_to_execute")
     @patch("prowler.lib.scan.scan.update_checks_metadata_with_compliance")
     @patch("prowler.lib.scan.scan.Compliance.get_bulk")
     @patch("prowler.lib.scan.scan.CheckMetadata.get_bulk")
