@@ -198,7 +198,7 @@ describe("buildAttackPathView", () => {
     ).toBe(true);
   });
 
-  it("caps expanded members and flags truncation", () => {
+  it("renders every member of an expanded class without dropping any", () => {
     const many: AttackPathGraphData = {
       nodes: [
         node("src", "AWSRole"),
@@ -214,19 +214,46 @@ describe("buildAttackPathView", () => {
     const view = buildAttackPathView({
       data: many,
       expandedClasses: new Set([groupKey(1, "AWSPolicy")]),
-      memberCap: 30,
     });
     const rendered = view.nodes.filter((n) => n.id.startsWith("m-")).length;
-    expect(rendered).toBe(30);
-    expect(view.truncated).toBe(true);
+    // Expanding shows the complete set, so the path is never presented as
+    // complete while silently omitting members.
+    expect(rendered).toBe(40);
 
-    // Hidden overflow members must not leave edges pointing at a `group:` node
-    // that the expanded branch never renders: every endpoint resolves.
+    // Every edge endpoint must resolve to a rendered node.
     const nodeIds = new Set(view.nodes.map((n) => n.id));
     for (const edge of view.edges) {
       expect(nodeIds.has(edge.source)).toBe(true);
       expect(nodeIds.has(edge.target)).toBe(true);
     }
+  });
+
+  it("keeps the outcome terminal across reversed container relationships", () => {
+    // `instance-1 RUNS_IN vpc-1` is reversed by the layout, which renders
+    // `vpc-1 -> instance-1` (container -> child). That makes instance-1 the
+    // laid-out sink. Using the raw edge direction would instead treat vpc-1 as
+    // the sink and hang the outcome off it as a mid-path sibling; the transform
+    // must orient the edge the same way the layout does.
+    const containerGraph: AttackPathGraphData = {
+      nodes: [node("instance-1", "EC2Instance"), node("vpc-1", "VPC")],
+      edges: [
+        { id: "c1", source: "instance-1", target: "vpc-1", type: "RUNS_IN" },
+      ],
+    };
+    const view = buildAttackPathView({
+      data: containerGraph,
+      expandedClasses: new Set(),
+      outcome,
+    });
+    const outcomeNode = view.nodes.find((n) =>
+      n.labels.includes(OUTCOME_NODE_LABEL),
+    );
+    expect(outcomeNode).toBeDefined();
+    const intoOutcome = view.edges.filter(
+      (e) => e.target === outcomeNode?.id && e.type === "OUTCOME",
+    );
+    // The outcome attaches to the laid-out sink (the child), not the container.
+    expect(intoOutcome.map((e) => e.source)).toEqual(["instance-1"]);
   });
 
   it("returns an empty view when nothing survives hub removal", () => {

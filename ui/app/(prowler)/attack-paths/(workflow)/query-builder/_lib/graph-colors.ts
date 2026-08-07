@@ -62,6 +62,12 @@ export const GRAPH_SELECTION_COLOR = "#ffffff";
 export const GRAPH_BORDER_COLOR = "#374151";
 export const GRAPH_ALERT_BORDER_COLOR = "#ef4444"; // Red 500 - for resources with findings
 
+// Terminal outcome node: distinct orange, independent of the resource palette.
+export const GRAPH_OUTCOME_FILL_COLOR = "#c2410c"; // Orange 700
+export const GRAPH_OUTCOME_BORDER_COLOR = "#f97316"; // Orange 500
+// Outline behind a group node's count badge, for contrast on any fill.
+export const GRAPH_COUNT_BADGE_STROKE_COLOR = "#0b1120"; // Slate 950
+
 /**
  * Get node fill color based on labels and properties
  */

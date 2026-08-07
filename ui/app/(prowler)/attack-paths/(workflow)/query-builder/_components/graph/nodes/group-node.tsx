@@ -1,20 +1,19 @@
 "use client";
 
-import { type NodeProps, Position } from "@xyflow/react";
+import { type NodeProps } from "@xyflow/react";
 
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/shadcn/tooltip";
 import type { GraphNode } from "@/types/attack-paths";
 
-import { resolveNodeColors, resolveNodeVisual } from "../../../_lib";
+import {
+  GRAPH_COUNT_BADGE_STROKE_COLOR,
+  resolveNodeColors,
+  resolveNodeVisual,
+} from "../../../_lib";
 import { GROUP_PROPS } from "../../../_lib/group-graph";
 import { GROUP_NODE_DIMENSIONS } from "../../../_lib/node-dimensions";
 import { getNodeLabelDisplay } from "../../../_lib/node-label-lines";
 
-import { HiddenHandles } from "./hidden-handles";
+import { GraphNodeShell } from "./graph-node-shell";
 
 interface GroupNodeData {
   graphNode: GraphNode;
@@ -29,8 +28,6 @@ const BADGE_SIZE = 44;
 const BADGE_RADIUS = BADGE_SIZE / 2;
 const BADGE_CENTER_X = NODE_WIDTH / 2;
 const BADGE_CENTER_Y = 26;
-const BADGE_LEFT_X = BADGE_CENTER_X - BADGE_RADIUS;
-const BADGE_RIGHT_X = BADGE_CENTER_X + BADGE_RADIUS;
 const ICON_SIZE = 28;
 const ICON_X = BADGE_CENTER_X - ICON_SIZE / 2;
 const ICON_Y = BADGE_CENTER_Y - ICON_SIZE / 2;
@@ -71,13 +68,16 @@ export const GroupNode = ({ data, selected }: NodeProps) => {
   const fullName = className || visual.description;
   const name = getNodeLabelDisplay(fullName, NAME_MAX_CHARS, NAME_MAX_LINES);
 
-  const nodeSvg = (
-    <svg
+  return (
+    <GraphNodeShell
       width={NODE_WIDTH}
       height={NODE_HEIGHT}
-      className="cursor-pointer overflow-visible"
-      tabIndex={name.isTruncated ? 0 : undefined}
-      data-testid="attack-path-group-node"
+      badgeCenterX={BADGE_CENTER_X}
+      badgeCenterY={BADGE_CENTER_Y}
+      badgeRadius={BADGE_RADIUS}
+      testId="attack-path-group-node"
+      svgClassName="cursor-pointer"
+      tooltip={name.isTruncated ? fullName : undefined}
     >
       {hasFindings && (
         <circle
@@ -118,7 +118,7 @@ export const GroupNode = ({ data, selected }: NodeProps) => {
         cy={COUNT_CY}
         r={COUNT_R}
         fill={borderColor}
-        stroke="#0b1120"
+        stroke={GRAPH_COUNT_BADGE_STROKE_COLOR}
         strokeWidth={2}
       />
       <text
@@ -174,25 +174,6 @@ export const GroupNode = ({ data, selected }: NodeProps) => {
       >
         click to expand
       </text>
-    </svg>
-  );
-
-  return (
-    <>
-      <HiddenHandles
-        sourcePosition={Position.Right}
-        sourceStyle={{ left: BADGE_RIGHT_X, top: BADGE_CENTER_Y }}
-        targetPosition={Position.Left}
-        targetStyle={{ left: BADGE_LEFT_X, top: BADGE_CENTER_Y }}
-      />
-      {name.isTruncated ? (
-        <Tooltip>
-          <TooltipTrigger asChild>{nodeSvg}</TooltipTrigger>
-          <TooltipContent>{fullName}</TooltipContent>
-        </Tooltip>
-      ) : (
-        nodeSvg
-      )}
-    </>
+    </GraphNodeShell>
   );
 };

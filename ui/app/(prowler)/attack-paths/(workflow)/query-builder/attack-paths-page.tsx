@@ -75,6 +75,7 @@ import {
   isScanInFlight,
 } from "./_lib/get-attack-paths-view-state";
 import {
+  buildAttackPathView,
   GROUP_NODE_LABEL,
   GROUP_PROPS,
   OUTCOME_NODE_LABEL,
@@ -355,11 +356,35 @@ export default function AttackPathsPage() {
     }
   };
 
+  // Shared attack-path view: the same grouped/outcome transform the graph
+  // renders, computed here so the PNG export and collapse-state pruning use the
+  // exact view the user sees. Cloud-only (OSS keeps the flat graph).
+  const attackPathView =
+    isCloud() && graphState.data
+      ? buildAttackPathView({
+          data: graphState.data,
+          expandedClasses: graphState.expandedClasses,
+          outcome: executedOutcome,
+        })
+      : null;
+
+  const membersOfClass = (classKey: string): string[] =>
+    attackPathView?.groupMembers.get(classKey) ?? [];
+
+  // Collapse every open class, pruning findings-expansion/selection that pointed
+  // at any member the collapse hides.
+  const handleCollapseAll = () => {
+    const memberIds = Array.from(graphState.expandedClasses).flatMap(
+      membersOfClass,
+    );
+    graphState.collapseAllClasses(memberIds);
+  };
+
   const handleNodeClick = (node: GraphNode) => {
     // A collapsed class group expands to its members; the outcome node is inert.
     if (node.labels.includes(GROUP_NODE_LABEL)) {
       const key = String(node.properties[GROUP_PROPS.KEY] ?? "");
-      if (key) graphState.toggleExpandedClass(key);
+      if (key) graphState.toggleExpandedClass(key, membersOfClass(key));
       return;
     }
     if (node.labels.includes(OUTCOME_NODE_LABEL)) {
@@ -401,7 +426,8 @@ export default function AttackPathsPage() {
   const handleNodeDoubleClick = (node: GraphNode) => {
     const memberKey = node.properties[GROUP_PROPS.MEMBER_KEY];
     if (memberKey) {
-      graphState.toggleExpandedClass(String(memberKey));
+      const key = String(memberKey);
+      graphState.toggleExpandedClass(key, membersOfClass(key));
     }
   };
 
@@ -424,12 +450,18 @@ export default function AttackPathsPage() {
     const handle = ref.current;
     if (!handle) return;
 
+    // Export the same grouped/outcome view the canvas renders (Cloud); OSS
+    // exports the raw flat graph.
+    const exportData = attackPathView
+      ? { nodes: attackPathView.nodes, edges: attackPathView.edges }
+      : graphState.data;
+
     try {
       await exportGraphAsPNG(
         handle.getContainerElement(),
         handle.getNodesBounds(),
         "attack-path-graph.png",
-        graphState.data,
+        exportData,
         {
           expandedResources: graphState.expandedResources,
           isFilteredView: graphState.isFilteredView,
@@ -660,8 +692,10 @@ export default function AttackPathsPage() {
                         onZoomOut={() => graphRef.current?.zoomOut()}
                         onFitToScreen={() => graphRef.current?.resetZoom()}
                         onExport={() => handleGraphExport("main")}
-                        onCollapseAll={graphState.collapseAllClasses}
-                        canCollapseAll={graphState.expandedClasses.size > 0}
+                        collapseAll={{
+                          can: graphState.expandedClasses.size > 0,
+                          onCollapse: handleCollapseAll,
+                        }}
                       />
 
                       <div className="border-border-neutral-primary bg-bg-neutral-tertiary flex gap-1 rounded-lg border p-1">
@@ -699,10 +733,10 @@ export default function AttackPathsPage() {
                                   fullscreenGraphRef.current?.resetZoom()
                                 }
                                 onExport={() => handleGraphExport("fullscreen")}
-                                onCollapseAll={graphState.collapseAllClasses}
-                                canCollapseAll={
-                                  graphState.expandedClasses.size > 0
-                                }
+                                collapseAll={{
+                                  can: graphState.expandedClasses.size > 0,
+                                  onCollapse: handleCollapseAll,
+                                }}
                               />
                             </div>
                             <div className="flex flex-1 flex-col gap-4 overflow-hidden px-4 pb-4 sm:px-6 sm:pb-6 lg:flex-row">
@@ -719,6 +753,7 @@ export default function AttackPathsPage() {
                                   }
                                   expandedClasses={graphState.expandedClasses}
                                   outcome={executedOutcome}
+                                  view={attackPathView}
                                 />
                               </div>
                             </div>
@@ -742,6 +777,7 @@ export default function AttackPathsPage() {
                       expandedResources={graphState.expandedResources}
                       expandedClasses={graphState.expandedClasses}
                       outcome={executedOutcome}
+                      view={attackPathView}
                     />
                   </div>
 

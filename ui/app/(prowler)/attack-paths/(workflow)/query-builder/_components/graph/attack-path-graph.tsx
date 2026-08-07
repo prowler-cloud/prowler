@@ -39,7 +39,10 @@ import {
   isProwlerFindingNode,
   resolveHiddenFindingIds,
 } from "../../_lib";
-import { buildAttackPathView } from "../../_lib/group-graph";
+import {
+  type AttackPathView,
+  buildAttackPathView,
+} from "../../_lib/group-graph";
 import { layoutWithDagre, NODE_TYPE } from "../../_lib/layout";
 
 import { FindingNode } from "./nodes/finding-node";
@@ -69,6 +72,9 @@ interface AttackPathGraphProps {
   expandedClasses?: Set<string>;
   // Terminal outcome for the current query; injected as the graph's end node.
   outcome?: AttackPathOutcome | null;
+  // Pre-built attack-path view shared with the PNG export so both render the
+  // same grouped/outcome graph. Falls back to an internal build when omitted.
+  view?: AttackPathView | null;
   onNodeClick?: (node: GraphNode) => void;
   onNodeDoubleClick?: (node: GraphNode) => void;
   onInitialFilter?: (filteredData: AttackPathGraphData) => void;
@@ -222,6 +228,7 @@ const GraphCanvas = ({
   expandedResources,
   expandedClasses,
   outcome,
+  view,
   onNodeClick,
   onNodeDoubleClick,
   onInitialFilter,
@@ -248,11 +255,21 @@ const GraphCanvas = ({
   const expanded = expandedResources ?? EMPTY_EXPANDED;
 
   // Re-frame when a class group is expanded/collapsed so the new member set
-  // fits smoothly instead of overflowing the viewport.
+  // fits smoothly instead of overflowing the viewport. Newly revealed members
+  // are measured asynchronously, so poll until they have real dimensions rather
+  // than fitting on a single frame where measured.width can still be 0.
   useEffect(() => {
-    const raf = requestAnimationFrame(() => fitView(AUTO_FIT_OPTIONS));
-    return () => cancelAnimationFrame(raf);
-  }, [expandedClasses, fitView]);
+    return scheduleMeasuredFit(
+      () => {
+        const visibleNodes = getNodes().filter((n) => !n.hidden);
+        return (
+          visibleNodes.length > 0 &&
+          visibleNodes.every((n) => (n.measured?.width ?? 0) > 0)
+        );
+      },
+      () => fitView(AUTO_FIT_OPTIONS),
+    );
+  }, [expandedClasses, fitView, getNodes]);
 
   // --- initialNodeId: synchronous filtered-view derivation on first render ---
   // Compute the effective data: if initialNodeId is set and valid, derive filtered subgraph
@@ -410,15 +427,20 @@ const GraphCanvas = ({
   // OSS keeps the original flat graph, so the grouped/outcome view is Cloud-only.
   // Findings pass through either way; the finding-hide logic below reveals them
   // per-resource, preserving existing behaviour.
-  const view = isCloud()
-    ? buildAttackPathView({
-        data: effectiveData,
-        expandedClasses: expandedClasses ?? EMPTY_EXPANDED,
-        outcome,
-      })
-    : { nodes: effectiveData.nodes ?? [], edges: effectiveData.edges ?? [] };
-  const nodes = view.nodes;
-  const edges = view.edges;
+  //
+  // The parent builds and shares this view with the PNG export so both stay in
+  // sync; only fall back to an internal build when it is not provided.
+  const resolvedView =
+    view ??
+    (isCloud()
+      ? buildAttackPathView({
+          data: effectiveData,
+          expandedClasses: expandedClasses ?? EMPTY_EXPANDED,
+          outcome,
+        })
+      : { nodes: effectiveData.nodes ?? [], edges: effectiveData.edges ?? [] });
+  const nodes = resolvedView.nodes;
+  const edges = resolvedView.edges;
 
   // Pre-compute which resources have findings connected (O(n+e))
   const findingNodeIds = new Set<string>();
@@ -622,6 +644,7 @@ export const AttackPathGraph = ({
   expandedResources,
   expandedClasses,
   outcome,
+  view,
   onNodeClick,
   onNodeDoubleClick,
   onInitialFilter,
@@ -649,6 +672,7 @@ export const AttackPathGraph = ({
           expandedResources={expandedResources}
           expandedClasses={expandedClasses}
           outcome={outcome}
+          view={view}
           onNodeClick={onNodeClick}
           onNodeDoubleClick={onNodeDoubleClick}
           onInitialFilter={onInitialFilter}

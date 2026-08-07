@@ -40,10 +40,30 @@ interface GraphStore extends GraphState, FilteredViewState {
     fullData: AttackPathGraphData | null,
   ) => void;
   toggleExpandedResource: (resourceId: string) => void;
-  toggleExpandedClass: (classKey: string) => void;
-  collapseAllClasses: () => void;
+  toggleExpandedClass: (classKey: string, memberIds?: string[]) => void;
+  collapseAllClasses: (memberIds?: string[]) => void;
   reset: () => void;
 }
+
+// Collapsing a class hides its members. Any of those members might still be the
+// findings-expanded resource or the selected (green) node; drop that state so it
+// does not silently reappear when the class is expanded again.
+const pruneHiddenMembers = (
+  state: FilteredViewState & GraphState,
+  memberIds: string[],
+): Partial<FilteredViewState & GraphState> => {
+  if (memberIds.length === 0) return {};
+  const hidden = new Set(memberIds);
+  return {
+    expandedResources: new Set(
+      Array.from(state.expandedResources).filter((id) => !hidden.has(id)),
+    ),
+    selectedNodeId:
+      state.selectedNodeId && hidden.has(state.selectedNodeId)
+        ? null
+        : state.selectedNodeId,
+  };
+};
 
 const initialState: GraphState & FilteredViewState = {
   data: null,
@@ -91,14 +111,25 @@ export const useGraphStore = create<GraphStore>((set) => ({
         : new Set([resourceId]);
       return { expandedResources: next };
     }),
-  toggleExpandedClass: (classKey) =>
+  toggleExpandedClass: (classKey, memberIds = []) =>
     set((state) => {
       const next = new Set(state.expandedClasses);
-      if (next.has(classKey)) next.delete(classKey);
-      else next.add(classKey);
+      if (next.has(classKey)) {
+        // Closing a class: prune state that pointed at a now-hidden member.
+        next.delete(classKey);
+        return {
+          expandedClasses: next,
+          ...pruneHiddenMembers(state, memberIds),
+        };
+      }
+      next.add(classKey);
       return { expandedClasses: next };
     }),
-  collapseAllClasses: () => set({ expandedClasses: new Set() }),
+  collapseAllClasses: (memberIds = []) =>
+    set((state) => ({
+      expandedClasses: new Set(),
+      ...pruneHiddenMembers(state, memberIds),
+    })),
   reset: () => set(initialState),
 }));
 

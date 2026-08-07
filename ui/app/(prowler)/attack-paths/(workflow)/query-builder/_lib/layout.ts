@@ -8,6 +8,7 @@ import { type Edge, type Node, Position } from "@xyflow/react";
 
 import type { GraphEdge, GraphNode } from "@/types/attack-paths";
 
+import { orientEdgeForLayout } from "./edge-orientation";
 import { GROUP_NODE_LABEL, OUTCOME_NODE_LABEL } from "./group-graph";
 import {
   FINDING_NODE_DIMENSIONS,
@@ -17,14 +18,6 @@ import {
   RESOURCE_NODE_DIMENSIONS,
 } from "./node-dimensions";
 import { isProwlerFindingNode } from "./node-types";
-
-// Container relationships that get reversed for proper hierarchy
-const CONTAINER_RELATIONS = new Set([
-  "RUNS_IN",
-  "BELONGS_TO",
-  "LOCATED_IN",
-  "PART_OF",
-]);
 
 interface NodeData extends Record<string, unknown> {
   graphNode: GraphNode;
@@ -112,12 +105,11 @@ export const layoutWithDagre = (
 
   // Add edges, reversing container relationships for proper hierarchy
   edges.forEach((edge) => {
-    let sourceId = edge.source;
-    let targetId = edge.target;
-
-    if (CONTAINER_RELATIONS.has(edge.type)) {
-      [sourceId, targetId] = [targetId, sourceId];
-    }
+    const [sourceId, targetId] = orientEdgeForLayout(
+      edge.source,
+      edge.target,
+      edge.type,
+    );
 
     if (sourceId && targetId) {
       g.setEdge(

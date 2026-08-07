@@ -6,12 +6,15 @@
  *   2. group each hop by resource class into a single collapsible node
  *      (collapsed by default; expanding shows the individual members)
  *   3. inject a terminal outcome node from the query's outcome metadata
- *   4. cap runaway expansions
  *
  * Finding nodes are deliberately KEPT: they pass through for members whose class
  * is expanded, and the canvas hides/reveals them per the existing per-resource
  * behaviour (expandedResources). Findings of a collapsed class are omitted, so a
  * collapsed group never drags its members' findings onto the canvas.
+ *
+ * Ranking and outcome-sink detection use the same edge orientation as the Dagre
+ * layout (see edge-orientation), so the injected outcome node stays terminal
+ * even when the path runs through reversed container relationships.
  *
  * Kept pure and separate from the store so expand/collapse is a view recompute
  * over stable raw data, never a data mutation.
@@ -25,6 +28,7 @@ import type {
   GraphRelationship,
 } from "@/types/attack-paths";
 
+import { orientEdgeForLayout } from "./edge-orientation";
 import { isProwlerFindingNode } from "./node-types";
 import { NODE_CATEGORY, resolveNodeVisual } from "./node-visuals";
 
@@ -39,7 +43,6 @@ export const GROUP_PROPS = {
   CLASS_NAME: "__groupClassName",
   COUNT: "__groupCount",
   KEY: "__groupKey",
-  SHOWN: "__groupShown",
   HAS_FINDINGS: "__groupHasFindings",
   // Set on an expanded member so a double-click can collapse its owning class.
   MEMBER_KEY: "__memberGroupKey",
@@ -53,28 +56,23 @@ export const OUTCOME_PROPS = {
 
 const HAS_FINDING = "HAS_FINDING";
 
-// Bounds. A collapsed group is always one node; these cap expanded members and
-// total rendered nodes so inventory-style graphs stay manageable.
-export const DEFAULT_MEMBER_CAP = 30;
-export const DEFAULT_NODE_CAP = 200;
-
-export interface AttackPathViewInput {
+interface AttackPathViewInput {
   data: AttackPathGraphData;
   /** Group keys (see groupKey()) that are currently expanded to their members. */
   expandedClasses: ReadonlySet<string>;
   /** From the selected query's metadata; absent for custom queries. */
   outcome?: AttackPathOutcome | null;
-  memberCap?: number;
-  nodeCap?: number;
 }
 
 export interface AttackPathView {
   nodes: GraphNode[];
   edges: GraphEdge[];
-  /** groupKey -> ids of the member nodes it represents (for the side panel). */
+  /**
+   * groupKey -> ids of the member nodes it represents. Consumed when a class is
+   * collapsed so the store can prune expansion/selection state that pointed at a
+   * member the collapse just hid.
+   */
   groupMembers: Map<string, string[]>;
-  /** True when a cap hid members/nodes, so the UI can surface a banner. */
-  truncated: boolean;
 }
 
 const isAccountHub = (node: GraphNode): boolean =>
@@ -154,7 +152,6 @@ const makeGroupNode = (
   classLabel: string,
   className: string,
   total: number,
-  shown: number,
   hasFindings: boolean,
 ): GraphNode => ({
   id: `group:${key}`,
@@ -163,7 +160,6 @@ const makeGroupNode = (
     [GROUP_PROPS.CLASS]: classLabel,
     [GROUP_PROPS.CLASS_NAME]: className,
     [GROUP_PROPS.COUNT]: total,
-    [GROUP_PROPS.SHOWN]: shown,
     [GROUP_PROPS.KEY]: key,
     [GROUP_PROPS.HAS_FINDINGS]: hasFindings,
   },
@@ -183,8 +179,6 @@ export const buildAttackPathView = ({
   data,
   expandedClasses,
   outcome,
-  memberCap = DEFAULT_MEMBER_CAP,
-  nodeCap = DEFAULT_NODE_CAP,
 }: AttackPathViewInput): AttackPathView => {
   const rawNodes = data?.nodes ?? [];
   const allEdges = edgesOf(data);
@@ -206,6 +200,13 @@ export const buildAttackPathView = ({
       resourceIds.has(e.target),
   );
 
+  // Rank/sink reasoning must follow the same direction the layout renders, so
+  // orient container relationships up front (see edge-orientation).
+  const orientedResourceEdges = resourceEdges.map((e) => {
+    const [source, target] = orientEdgeForLayout(e.source, e.target, e.type);
+    return { ...e, source, target };
+  });
+
   // Which resources carry findings (for the group "has findings" indicator).
   const resourceHasFinding = new Set<string>();
   for (const edge of allEdges) {
@@ -218,7 +219,7 @@ export const buildAttackPathView = ({
   }
 
   // Group members by (rank, class).
-  const ranks = computeRanks(resourceNodes, resourceEdges);
+  const ranks = computeRanks(resourceNodes, orientedResourceEdges);
   const groups = new Map<string, GraphNode[]>();
   for (const node of resourceNodes) {
     const key = groupKey(ranks.get(node.id) ?? 0, classLabelOf(node));
@@ -228,7 +229,6 @@ export const buildAttackPathView = ({
   const groupMembers = new Map<string, string[]>();
   const viewIdOf = new Map<string, string>();
   const outNodes: GraphNode[] = [];
-  let truncated = false;
 
   for (const [key, members] of Array.from(groups.entries())) {
     groupMembers.set(
@@ -239,9 +239,9 @@ export const buildAttackPathView = ({
     const isExpanded = expandedClasses.has(key);
 
     if (isSingleton || isExpanded) {
-      const shown = isExpanded ? members.slice(0, memberCap) : members;
-      if (shown.length < members.length) truncated = true;
-      for (const member of shown) {
+      // Expanding a class renders every member — never a subset — so the graph
+      // can't present an incomplete attack path as complete.
+      for (const member of members) {
         viewIdOf.set(member.id, member.id);
         // Tag expanded members (not lone singletons) so a double-click can
         // collapse the whole class. Clone so raw data stays untouched.
@@ -257,9 +257,6 @@ export const buildAttackPathView = ({
               },
         );
       }
-      // Members beyond the cap are hidden (truncated === true). Leave them out
-      // of viewIdOf so their edges are dropped rather than pointing at a
-      // `group:${key}` node that this expanded branch never renders.
     } else {
       const groupId = `group:${key}`;
       const className = resolveNodeVisual(members[0]).description;
@@ -269,7 +266,6 @@ export const buildAttackPathView = ({
           key,
           classLabelOf(members[0]),
           className,
-          members.length,
           members.length,
           hasFindings,
         ),
@@ -341,7 +337,15 @@ export const buildAttackPathView = ({
   // Inject the outcome node at the resource-level sinks (no outgoing resource
   // edge). Findings/outcome edges do not count toward "has an outgoing edge".
   if (outcome) {
-    const hasOutgoing = new Set(resourceViewEdges.map((e) => e.source));
+    // A sink has no outgoing edge in the *laid-out* direction, so resolve
+    // "outgoing" from the oriented edges — otherwise a reversed container edge
+    // makes a terminal node look like it still points onward.
+    const hasOutgoing = new Set<string>();
+    for (const edge of orientedResourceEdges) {
+      const source = viewIdOf.get(edge.source);
+      const target = viewIdOf.get(edge.target);
+      if (source && target && source !== target) hasOutgoing.add(source);
+    }
     const attachable = outNodes.filter(
       (n) =>
         !isInternet(n) &&
@@ -365,8 +369,5 @@ export const buildAttackPathView = ({
     }
   }
 
-  // Global node-cap backstop.
-  if (outNodes.length > nodeCap) truncated = true;
-
-  return { nodes: outNodes, edges: outEdges, groupMembers, truncated };
+  return { nodes: outNodes, edges: outEdges, groupMembers };
 };
