@@ -153,6 +153,12 @@ class AWSProviderConfig(ProviderConfigBase):
         le=1_000_000,
         description="Resource scan limit for ECS task definitions. Use 0 or -1 to disable.",
     )
+    max_batch_job_definitions: ResourceScanLimit = Field(
+        default=None,
+        ge=-1,
+        le=1_000_000,
+        description="Resource scan limit for Batch job definitions. Use 0 or -1 to disable.",
+    )
     max_codeartifact_packages: ResourceScanLimit = Field(
         default=None,
         ge=-1,
