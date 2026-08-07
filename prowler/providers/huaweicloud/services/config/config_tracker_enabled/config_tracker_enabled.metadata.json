@@ -1,0 +1,36 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "config_tracker_enabled",
+  "CheckTitle": "Config (RMS) tracker is enabled for compliance monitoring",
+  "CheckType": [],
+  "ServiceName": "config",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "HUAWEICLOUD::Config::Tracker",
+  "ResourceGroup": "governance",
+  "Description": "Ensure that the Config (Resource Management Service) tracker is enabled to monitor resource configuration compliance across the cloud account.",
+  "Risk": "Without the Config tracker enabled, there is no automated compliance monitoring of resource configurations. Security misconfigurations may go undetected, increasing the risk of non-compliant resources persisting in the environment.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.huaweicloud.com/intl/en-us/productdesc-rms/rms_01_0001.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log on to the Huawei Cloud console.\n2. Navigate to Resource Management Service (RMS).\n3. Go to Compliance.\n4. Enable the tracker configuration.\n5. Configure an agency for RMS to access resources.\n6. Click OK.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable the Config (RMS) tracker to start monitoring resource configuration compliance.",
+      "Url": "https://hub.prowler.com/check/config_tracker_enabled"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
