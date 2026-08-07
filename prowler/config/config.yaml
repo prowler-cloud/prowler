@@ -27,6 +27,8 @@ aws:
   max_lambda_functions: null
   # aws.max_ecs_task_definitions --> ecs_task_definitions_* checks
   max_ecs_task_definitions: null
+  # aws.max_batch_job_definitions --> batch_job_definition_* checks
+  max_batch_job_definitions: null
   # aws.max_codeartifact_packages --> codeartifact_packages_* checks
   max_codeartifact_packages: null
   # aws.disallowed_regions --> List of AWS regions to exclude from the scan.
