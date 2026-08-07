@@ -1,0 +1,37 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "rds_instance_ssl_enabled",
+  "CheckTitle": "RDS instances have SSL enabled",
+  "CheckType": [],
+  "ServiceName": "rds",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "HUAWEICLOUD::RDS::Instance",
+  "ResourceGroup": "database",
+  "Description": "Ensure that RDS instances have SSL enabled to encrypt data in transit.",
+  "Risk": "Without SSL, data transmitted between the application and the database is sent in plaintext, making it vulnerable to interception and man-in-the-middle attacks.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.huaweicloud.com/intl/en-us/usermanual-rds-mysql/rds_08_0032.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log on to the Huawei Cloud console.\n2. Navigate to Relational Database Service.\n3. Select the instance.\n4. Click the Parameters tab.\n5. Set require_ssl to ON.\n6. Click Save.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable SSL for all RDS instances to encrypt data in transit.",
+      "Url": "https://hub.prowler.com/check/rds_instance_ssl_enabled"
+    }
+  },
+  "Categories": [
+    "encryption",
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
