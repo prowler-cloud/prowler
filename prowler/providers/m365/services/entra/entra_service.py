@@ -105,6 +105,8 @@ class Entra(M365Service):
                 self._get_device_registration_policy(),
                 self._get_directory_settings(),
                 self._get_b2b_collaboration_policy(),
+                self._get_activity_based_timeout_policies(),
+                self._get_named_locations(),
             )
         )
 
@@ -130,6 +132,10 @@ class Entra(M365Service):
         )
         self.directory_settings: Dict[str, Dict[str, str]] = attributes[14]
         self.b2b_collaboration_policy: Optional[B2BCollaborationPolicy] = attributes[15]
+        self.activity_based_timeout_policies: List[ActivityBasedTimeoutPolicy] = (
+            attributes[16]
+        )
+        self.named_locations: List[NamedLocation] = attributes[17]
         self.user_accounts_status = {}
 
         # Resolve directory-object identifiers referenced by Conditional Access
@@ -394,6 +400,24 @@ class Entra(M365Service):
                         authentication_flows=self._parse_authentication_flows(
                             raw_auth_flows_map.get(policy.id)
                         ),
+                        locations=LocationsCondition(
+                            include_locations=list(
+                                getattr(
+                                    getattr(policy.conditions, "locations", None),
+                                    "include_locations",
+                                    [],
+                                )
+                                or []
+                            ),
+                            exclude_locations=list(
+                                getattr(
+                                    getattr(policy.conditions, "locations", None),
+                                    "exclude_locations",
+                                    [],
+                                )
+                                or []
+                            ),
+                        ),
                         device_conditions=DeviceConditions(
                             device_filter_mode=(
                                 DeviceFilterMode(
@@ -523,6 +547,19 @@ class Entra(M365Service):
                                 and policy.session_controls.application_enforced_restrictions
                                 else False
                             ),
+                        ),
+                        secure_sign_in_session_enabled=bool(
+                            getattr(
+                                getattr(
+                                    policy.session_controls,
+                                    "secure_sign_in_session",
+                                    None,
+                                ),
+                                "is_enabled",
+                                False,
+                            )
+                            if policy.session_controls
+                            else False
                         ),
                     ),
                     state=ConditionalAccessPolicyState(
@@ -1308,6 +1345,151 @@ OAuthAppInfo
             )
         return b2b_policy
 
+    async def _get_named_locations(self):
+        """Retrieve Conditional Access named locations from Microsoft Entra.
+
+        Fetches ``identity/conditionalAccess/namedLocations`` as raw JSON to handle
+        the polymorphic ipNamedLocation / countryNamedLocation types and extract
+        their trust and IP-range attributes.
+
+        Returns:
+            List[NamedLocation]: The parsed named locations.
+        """
+        logger.info("Entra - Getting named locations...")
+        named_locations = []
+        try:
+            request_info = (
+                self.client.identity.conditional_access.named_locations.to_get_request_information()
+            )
+            raw_locations = []
+            while True:
+                response = await self.client.request_adapter.send_primitive_async(
+                    request_info, "bytes", {}
+                )
+                if not response:
+                    break
+                data = json.loads(response)
+                page = data.get("value", []) or []
+                if not page:
+                    break
+                raw_locations.extend(page)
+                next_link = data.get("@odata.nextLink") or data.get("nextLink")
+                if not next_link:
+                    break
+                request_info = (
+                    self.client.identity.conditional_access.named_locations.with_url(
+                        next_link
+                    ).to_get_request_information()
+                )
+            for location in raw_locations:
+                odata_type = location.get("@odata.type", "")
+                ip_ranges = location.get("ipRanges", []) or []
+                named_locations.append(
+                    NamedLocation(
+                        id=location.get("id", ""),
+                        display_name=location.get("displayName"),
+                        is_trusted=bool(location.get("isTrusted", False)),
+                        is_ip_location="ipNamedLocation" in odata_type,
+                        ip_ranges_count=len(ip_ranges),
+                    )
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return named_locations
+
+    @staticmethod
+    def _parse_timespan_to_seconds(value) -> "Optional[int]":
+        """Parse a .NET TimeSpan string (``[d.]hh:mm:ss[.fffffff]``) to seconds.
+
+        Args:
+            value: The TimeSpan string (e.g. "03:00:00" or "1.00:00:00").
+
+        Returns:
+            The total number of seconds, or None if the value cannot be parsed.
+        """
+        if not value or not isinstance(value, str):
+            return None
+        try:
+            days = 0
+            remainder = value.strip()
+            if remainder.startswith("-"):
+                return None
+            head = remainder.split(":", 1)[0]
+            # A dot in the hours component denotes the days separator (d.hh).
+            if "." in head:
+                day_part, remainder = remainder.split(".", 1)
+                days = int(day_part)
+            hours, minutes, seconds = remainder.split(":")
+            # Seconds may carry fractional digits (ss.fffffff); truncate them.
+            seconds = seconds.split(".")[0]
+            hours = int(hours)
+            minutes = int(minutes)
+            seconds = int(seconds)
+            if days < 0 or not 0 <= hours <= 23:
+                return None
+            if not 0 <= minutes <= 59 or not 0 <= seconds <= 59:
+                return None
+            return days * 86400 + hours * 3600 + minutes * 60 + seconds
+        except (ValueError, AttributeError):
+            return None
+
+    async def _get_activity_based_timeout_policies(self):
+        """Retrieve activity-based (idle session) timeout policies from Entra.
+
+        Fetches ``policies/activityBasedTimeoutPolicies`` and parses each policy's
+        ``definition`` JSON to extract the ``WebSessionIdleTimeout`` for the idle
+        session timeout check.
+
+        Returns:
+            List[ActivityBasedTimeoutPolicy]: The parsed timeout policies.
+        """
+        logger.info("Entra - Getting activity based timeout policies...")
+        policies = []
+        try:
+            policies_builder = self.client.policies.activity_based_timeout_policies
+            response = await policies_builder.get()
+            while response:
+                for policy in getattr(response, "value", []) or []:
+                    idle_timeout_seconds = None
+                    for definition in getattr(policy, "definition", []) or []:
+                        try:
+                            parsed = json.loads(definition)
+                        except (TypeError, ValueError):
+                            continue
+                        app_policies = (
+                            parsed.get("ActivityBasedTimeoutPolicy", {}).get(
+                                "ApplicationPolicies", []
+                            )
+                            or []
+                        )
+                        for app_policy in app_policies:
+                            if app_policy.get("ApplicationId") != "default":
+                                continue
+                            seconds = self._parse_timespan_to_seconds(
+                                app_policy.get("WebSessionIdleTimeout")
+                            )
+                            if seconds is not None:
+                                idle_timeout_seconds = seconds
+                                break
+                    policies.append(
+                        ActivityBasedTimeoutPolicy(
+                            id=getattr(policy, "id", ""),
+                            display_name=getattr(policy, "display_name", None),
+                            web_session_idle_timeout_seconds=idle_timeout_seconds,
+                        )
+                    )
+                next_link = getattr(response, "odata_next_link", None)
+                if not next_link:
+                    break
+                response = await policies_builder.with_url(next_link).get()
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return policies
+
     async def _get_directory_settings(self):
         """Retrieve tenant directory (group) settings from Microsoft Entra.
 
@@ -1967,6 +2149,13 @@ class AuthenticationFlows(BaseModel):
     transfer_methods: List[TransferMethod] = []
 
 
+class LocationsCondition(BaseModel):
+    """Model representing location conditions for Conditional Access policies."""
+
+    include_locations: List[str] = []
+    exclude_locations: List[str] = []
+
+
 class Conditions(BaseModel):
     """Model representing conditions for Conditional Access policies."""
 
@@ -1979,6 +2168,7 @@ class Conditions(BaseModel):
     platform_conditions: Optional[PlatformConditions] = None
     authentication_flows: Optional[AuthenticationFlows] = None
     device_conditions: Optional[DeviceConditions] = None
+    locations: Optional[LocationsCondition] = None
 
 
 class PersistentBrowser(BaseModel):
@@ -2015,6 +2205,7 @@ class SessionControls(BaseModel):
     persistent_browser: PersistentBrowser
     sign_in_frequency: SignInFrequency
     application_enforced_restrictions: Optional[ApplicationEnforcedRestrictions] = None
+    secure_sign_in_session_enabled: bool = False
 
 
 class ConditionalAccessGrantControl(Enum):
@@ -2093,6 +2284,24 @@ class DeviceRegistrationPolicy(BaseModel):
     azure_ad_join_global_admins_enabled: Optional[bool] = None
     azure_ad_join_registering_users_type: Optional[str] = None
     local_admin_password_enabled: Optional[bool] = None
+
+
+class ActivityBasedTimeoutPolicy(BaseModel):
+    """Activity-based (idle session) timeout policy."""
+
+    id: str
+    display_name: Optional[str] = None
+    web_session_idle_timeout_seconds: Optional[int] = None
+
+
+class NamedLocation(BaseModel):
+    """Conditional Access named location."""
+
+    id: str
+    display_name: Optional[str] = None
+    is_trusted: bool = False
+    is_ip_location: bool = False
+    ip_ranges_count: int = 0
 
 
 class B2BCollaborationPolicy(BaseModel):
