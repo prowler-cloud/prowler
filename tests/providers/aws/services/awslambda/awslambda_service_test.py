@@ -755,7 +755,22 @@ class Test_Lambda_Service:
             assert awslambda.layers[layer_arn].name == "shared-layer"
             assert awslambda.layers[layer_arn].version == "1"
 
-            layers_fetched = list(awslambda._get_layers_code())
+            # moto's get_layer_version_by_arn omits Content.Location, so
+            # delegate to get_layer_version, which moto implements fully.
+            regional_client = awslambda.regional_clients[AWS_REGION_US_EAST_1]
+
+            def get_layer_version_by_arn(Arn):
+                assert Arn == layer_arn
+                return regional_client.get_layer_version(
+                    LayerName="shared-layer", VersionNumber=1
+                )
+
+            with mock.patch.object(
+                regional_client,
+                "get_layer_version_by_arn",
+                side_effect=get_layer_version_by_arn,
+            ):
+                layers_fetched = list(awslambda._get_layers_code())
             assert len(layers_fetched) == 1
             fetched_layer, fetched_code = layers_fetched[0]
             assert fetched_layer.arn == layer_arn
@@ -769,9 +784,9 @@ class Test_Lambda_Service:
         layer_arn = f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:layer:missing-layer:1"
         awslambda.layers = {layer_arn: Layer(arn=layer_arn)}
 
-        # The layer version does not exist, so get_layer_version raises inside
-        # _fetch_layer_code; _get_layers_code must log it and yield nothing
-        # rather than propagating the error to the check.
+        # The layer version does not exist, so get_layer_version_by_arn raises
+        # inside _fetch_layer_code; _get_layers_code must log it and yield
+        # nothing rather than propagating the error to the check.
         assert list(awslambda._get_layers_code()) == []
 
     @mock_aws
@@ -782,8 +797,28 @@ class Test_Lambda_Service:
         awslambda.regional_clients[AWS_REGION_US_EAST_1] = mock.MagicMock()
         awslambda.regional_clients[
             AWS_REGION_US_EAST_1
-        ].get_layer_version.return_value = {"Content": {}}
+        ].get_layer_version_by_arn.return_value = {"Content": {}}
 
-        assert (
-            awslambda._fetch_layer_code("my-layer", "1", AWS_REGION_US_EAST_1) is None
+        layer_arn = f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:layer:my-layer:1"
+        assert awslambda._fetch_layer_code(layer_arn, AWS_REGION_US_EAST_1) is None
+
+    @mock_aws
+    def test_fetch_layer_code_uses_full_layer_version_arn(self):
+        awslambda = Lambda(
+            set_mocked_aws_provider(audited_regions=[AWS_REGION_US_EAST_1])
+        )
+        regional_client = mock.MagicMock()
+        regional_client.get_layer_version_by_arn.return_value = {"Content": {}}
+        awslambda.regional_clients[AWS_REGION_US_EAST_1] = regional_client
+
+        # A layer owned by another account must be fetched by its full
+        # layer-version ARN, never by the bare layer name.
+        foreign_layer_arn = (
+            f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:999999999999:"
+            "layer:vendor-extension:5"
+        )
+        awslambda._fetch_layer_code(foreign_layer_arn, AWS_REGION_US_EAST_1)
+
+        regional_client.get_layer_version_by_arn.assert_called_once_with(
+            Arn=foreign_layer_arn
         )

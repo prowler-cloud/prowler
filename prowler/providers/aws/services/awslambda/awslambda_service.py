@@ -234,7 +234,7 @@ class Lambda(AWSService):
         # _fetch_layer_code tasks, up to max_workers tasks concurrently.
         layers_to_fetch = {
             self.thread_pool.submit(
-                self._fetch_layer_code, layer.name, layer.version, layer.region
+                self._fetch_layer_code, layer.arn, layer.region
             ): layer
             for layer in self.layers.values()
         }
@@ -250,14 +250,17 @@ class Lambda(AWSService):
                     f"{layer.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
-    def _fetch_layer_code(self, layer_name, layer_version_number, layer_region):
+    def _fetch_layer_code(self, layer_arn, layer_region):
         try:
             regional_client = self.regional_clients[layer_region]
-            layer_version = regional_client.get_layer_version(
-                LayerName=layer_name, VersionNumber=int(layer_version_number)
-            )
+            # Fetch by the full layer-version ARN: layers attached to a
+            # function may be owned by another account (e.g. vendor or
+            # AWS-provided layers), where a bare layer name would resolve
+            # against the audited account instead.
+            layer_version = regional_client.get_layer_version_by_arn(Arn=layer_arn)
             if "Location" in layer_version.get("Content", {}):
                 return self._download_code(layer_version["Content"]["Location"])
+            return None
         except Exception as error:
             logger.error(
                 f"{layer_region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
