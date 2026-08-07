@@ -318,7 +318,7 @@ The DynamoDB Table must have the following String keys:
 
 The Mutelist Table must have the following columns:
 
-  - Accounts (String): This field can contain either an Account ID or an `*` (which applies to all the accounts that use this table as an mutelist).
+  - Accounts (String): This field can contain either an Account ID or an `*` (which applies to all the accounts that use this table as a mutelist).
 
   - Checks (String): This field can contain either a Prowler Check Name or an `*` (which applies to all the scanned checks).
 
@@ -358,7 +358,7 @@ Make sure that the credentials that Prowler uses can invoke the Lambda Function:
         Resource: arn:aws:lambda:REGION:ACCOUNT_ID:function:FUNCTION_NAME
 ```
 
-The Lambda Function can then generate an Mutelist dynamically. Here is the code an example Python Lambda Function that generates an Mutelist:
+The Lambda Function can then generate a Mutelist dynamically. Here is the code of an example Python Lambda Function that generates a Mutelist:
 
 ```
 def handler(event, context):

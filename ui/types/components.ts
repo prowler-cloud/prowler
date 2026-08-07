@@ -4,6 +4,7 @@ import { SVGProps } from "react";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 
 import type { FindingTriageSummary } from "./findings-triage";
+import type { UserSignInMethod } from "./users";
 
 export type IconSvgProps = SVGProps<SVGSVGElement> & {
   size?: number;
@@ -541,6 +542,7 @@ export interface UserProps {
     role: {
       name: string;
     };
+    sign_in_methods?: UserSignInMethod[];
   };
   relationships: {
     memberships: {

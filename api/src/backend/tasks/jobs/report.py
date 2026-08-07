@@ -13,6 +13,7 @@ from api.db_utils import rls_transaction
 from api.models import Provider, Scan, ScanSummary, StateChoices, ThreatScoreSnapshot
 from celery.utils.log import get_task_logger
 from config.django.base import DJANGO_TMP_OUTPUT_DIRECTORY
+from config.settings.sentry import ERROR_CATEGORY_ATTRIBUTE, FILESYSTEM_ERROR_CATEGORY
 from prowler.lib.check.compliance_models import (
     Compliance,
     get_bulk_compliance_frameworks_universal,
@@ -960,7 +961,15 @@ def generate_compliance_reports(
             first_output_path = next(iter(output_paths.values()))
             out_dir = str(Path(first_output_path).parent.parent)
     except Exception as e:
-        logger.error("Error generating output directory: %s", e)
+        # logger.exception attaches the exception (and its traceback) to the
+        # Sentry event and the filesystem category opts that event into the
+        # errno fingerprint, so ENOSPC, ENOENT and EACCES raised from this same
+        # call site land on separate issues.
+        logger.exception(
+            "Error generating output directory: %s",
+            e,
+            extra={ERROR_CATEGORY_ATTRIBUTE: FILESYSTEM_ERROR_CATEGORY},
+        )
         error_dict = {"error": str(e), "upload": False, "path": ""}
         if generate_threatscore:
             results["threatscore"] = error_dict.copy()

@@ -58,4 +58,16 @@ describe("ServiceWatchlistSSR", () => {
 
     expect(screen.queryByTestId("service-context")).not.toBeInTheDocument();
   });
+
+  it("publishes no service context on a 4xx response", async () => {
+    // handleApiResponse resolves truthy {error, status} objects for 4xx.
+    vi.mocked(getServicesOverview).mockResolvedValueOnce({
+      error: "Invalid filter",
+      status: 400,
+    } as unknown as Awaited<ReturnType<typeof getServicesOverview>>);
+
+    render(await ServiceWatchlistSSR({ searchParams: {} }));
+
+    expect(screen.queryByTestId("service-context")).not.toBeInTheDocument();
+  });
 });

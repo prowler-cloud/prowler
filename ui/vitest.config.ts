@@ -8,7 +8,6 @@ export default defineConfig(() => {
   const apiBaseUrl = process.env.UI_API_BASE_URL ?? "http://localhost/api/v1";
 
   return {
-    plugins: [react()],
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./"),
@@ -28,16 +27,21 @@ export default defineConfig(() => {
           ".next",
           "tests/**/*",
           "**/*.test.{ts,tsx}",
-          "**/*.browser.test.{ts,tsx}",
+          "**/*.integration.test.{ts,tsx}",
           "vitest.config.ts",
           "vitest.setup.ts",
-          "vitest.browser.setup.ts",
+          "vitest.integration.setup.ts",
           "__tests__/**/*",
         ],
       },
       projects: [
         {
           extends: true,
+          // Unit (jsdom) suite runs without the React Compiler: enabling it
+          // breaks async Server Components (`useMemoCache` on a null
+          // dispatcher) and some form-validation renders. Only the browser
+          // suite below needs it.
+          plugins: [react()],
           test: {
             name: "unit",
             environment: "jsdom",
@@ -47,16 +51,23 @@ export default defineConfig(() => {
               "node_modules",
               ".next",
               "tests/**/*",
-              "**/*.browser.test.{ts,tsx}",
+              "**/*.integration.test.{ts,tsx}",
             ],
           },
         },
         {
           extends: true,
+          plugins: [
+            react({
+              babel: {
+                plugins: [["babel-plugin-react-compiler", { target: "19" }]],
+              },
+            }),
+          ],
           test: {
-            name: "browser",
-            setupFiles: ["./vitest.browser.setup.ts"],
-            include: ["**/*.browser.test.{ts,tsx}"],
+            name: "integration",
+            setupFiles: ["./vitest.integration.setup.ts"],
+            include: ["**/*.integration.test.{ts,tsx}"],
             exclude: ["node_modules", ".next", "tests/**/*"],
             browser: {
               enabled: true,
@@ -88,12 +99,19 @@ export default defineConfig(() => {
       // Without this, Vite optimizes them on demand at the first request and
       // reloads the page, killing the test run. Keep this list aligned with
       // imports through the page's render tree.
+      // Kept identical to the prowler-cloud overlay's list so it stops
+      // re-conflicting on sync; an entry with no importer here is deliberate.
       include: [
         // Test stack
         "vitest-browser-react",
         "msw/browser",
 
+        // React runtime (pre-bundle so a cold run doesn't re-optimize and
+        // reload mid-test — see the on-demand-reload note above).
+        "react-dom/client",
+
         // Next runtime
+        "next/headers",
         "next/navigation",
         "next/link",
         "next/image",
@@ -117,6 +135,7 @@ export default defineConfig(() => {
         "@radix-ui/react-icons",
         "@radix-ui/react-label",
         "@radix-ui/react-popover",
+        "@radix-ui/react-progress",
         "@radix-ui/react-radio-group",
         "@radix-ui/react-scroll-area",
         "@radix-ui/react-select",
@@ -126,6 +145,7 @@ export default defineConfig(() => {
         "@radix-ui/react-toast",
         "@radix-ui/react-tooltip",
         "@radix-ui/react-slot",
+        "@radix-ui/react-use-controllable-state",
 
         // Graph
         "@xyflow/react",
@@ -137,6 +157,7 @@ export default defineConfig(() => {
         "zod",
         "zustand",
         "zustand/middleware",
+        "zustand/vanilla",
 
         // Styling helpers
         "lucide-react",
@@ -148,10 +169,11 @@ export default defineConfig(() => {
         "@tanstack/react-table",
         "@react-aria/ssr",
         "@react-aria/visually-hidden",
-        "modern-screenshot",
         "framer-motion",
         "cmdk",
+        "driver.js",
         "react-markdown",
+        "streamdown",
         "jwt-decode",
         "date-fns",
         "js-yaml",
@@ -161,6 +183,7 @@ export default defineConfig(() => {
         "@uiw/react-codemirror",
         "@sentry/nextjs",
         "@extractus/feed-extractor",
+        "@stripe/stripe-js",
       ],
     },
   };

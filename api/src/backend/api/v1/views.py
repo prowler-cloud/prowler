@@ -238,6 +238,7 @@ from api.v1.serializers import (
     TokenSocialLoginSerializer,
     TokenSwitchTenantSerializer,
     UserCreateSerializer,
+    UserMeSerializer,
     UserRoleRelationshipSerializer,
     UserSerializer,
     UserUpdateSerializer,
@@ -1113,6 +1114,8 @@ class UserViewSet(BaseUserViewset):
             return UserCreateSerializer
         elif self.action == "partial_update":
             return UserUpdateSerializer
+        elif self.action == "me":
+            return UserMeSerializer
         else:
             return UserSerializer
 
@@ -1130,7 +1133,7 @@ class UserViewSet(BaseUserViewset):
     @action(detail=False, methods=["get"], url_name="me")
     def me(self, request):
         user = self.request.user
-        serializer = UserSerializer(user, context=self.get_serializer_context())
+        serializer = self.get_serializer(user)
         return Response(
             data=serializer.data,
             status=status.HTTP_200_OK,
@@ -1442,7 +1445,7 @@ class TenantViewSet(BaseTenantViewset):
         if not membership or membership.role != Membership.RoleChoices.OWNER:
             raise PermissionDenied("Only owners can delete a tenant.")
 
-        with transaction.atomic():
+        with transaction.atomic(using=MainRouter.admin_db):
             # Collect user IDs from this tenant's memberships before deleting them
             tenant_user_ids = set(
                 Membership.objects.using(MainRouter.admin_db)

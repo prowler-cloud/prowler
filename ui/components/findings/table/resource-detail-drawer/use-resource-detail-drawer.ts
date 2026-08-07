@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   adaptFindingsByResourceResponse,
   getFindingById,
+  getFindingComplianceFrameworks,
   getLatestFindingsByResourceUid,
   type ResourceDrawerFinding,
 } from "@/actions/findings";
@@ -13,7 +14,12 @@ import {
   getOptimisticTriageMutedReason,
   shouldMarkFindingMutedForTriageUpdate,
 } from "@/lib/finding-triage";
+import { isCloud } from "@/lib/shared/env";
 import { FindingResourceRow } from "@/types";
+import {
+  type FindingComplianceFramework,
+  WATCHLIST_SCOPE,
+} from "@/types/compliance-watchlist";
 import {
   FINDING_TRIAGE_STATUS,
   RAW_FINDING_STATUS,
@@ -33,19 +39,48 @@ export interface CheckMeta {
   checkTitle: string;
   risk: string;
   description: string;
-  complianceFrameworks: string[];
+  /**
+   * Only the frameworks the organization pinned, resolved by the API rather
+   * than derived from the check's metadata: the watchlist is keyed by
+   * `compliance_id`, and the display names the metadata carries cannot be
+   * matched against it without guessing.
+   */
+  complianceFrameworks: FindingComplianceFramework[];
   categories: string[];
   remediation: ResourceDrawerFinding["remediation"];
   additionalUrls: string[];
 }
 
-function extractCheckMeta(finding: ResourceDrawerFinding): CheckMeta {
+/**
+ * A framework name the check's own metadata carries, dressed as an API entry.
+ *
+ * Only for deployments without the watchlist endpoint. There is no
+ * `compliance_id` behind these names, so `complianceId` holds the display name:
+ * enough for the logo, which resolves by substring, and for the by-name lookup
+ * the universal branch already does. `inWatchlist` is false because on such a
+ * deployment there is no watchlist to be in.
+ */
+const fallbackFramework = (framework: string): FindingComplianceFramework => ({
+  id: `fallback:${framework}`,
+  complianceId: framework,
+  providerType: "",
+  scope: WATCHLIST_SCOPE.PROVIDER,
+  framework,
+  name: framework,
+  version: "",
+  inWatchlist: false,
+});
+
+function extractCheckMeta(
+  finding: ResourceDrawerFinding,
+  complianceFrameworks: FindingComplianceFramework[],
+): CheckMeta {
   return {
     checkId: finding.checkId,
     checkTitle: finding.checkTitle,
     risk: finding.risk,
     description: finding.description,
-    complianceFrameworks: finding.complianceFrameworks,
+    complianceFrameworks,
     categories: finding.categories,
     remediation: finding.remediation,
     additionalUrls: finding.additionalUrls,
@@ -108,10 +143,16 @@ export function useResourceDetailDrawer({
   const currentFindingCacheRef = useRef<
     Map<string, ResourceDrawerFinding | null>
   >(new Map());
+  const complianceFrameworksCacheRef = useRef<
+    Map<string, FindingComplianceFramework[]>
+  >(new Map());
   const otherFindingsCacheRef = useRef<Map<string, ResourceDrawerFinding[]>>(
     new Map(),
   );
-  const checkMetaRef = useRef<CheckMeta | null>(null);
+  // State, not a ref: the compliance frameworks land after the panel has
+  // already painted, so the strip has to re-render on its own rather than
+  // depend on some other setState happening to fire in the same tick.
+  const [checkMeta, setCheckMeta] = useState<CheckMeta | null>(null);
   const fetchControllerRef = useRef<AbortController | null>(null);
   const navigationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
@@ -225,6 +266,34 @@ export function useResourceDetailDrawer({
       return adapted;
     };
 
+    const fetchComplianceFrameworks = async (
+      finding: ResourceDrawerFinding | null,
+    ) => {
+      const cached = complianceFrameworksCacheRef.current.get(findingId);
+      if (cached) {
+        return cached;
+      }
+
+      // The whole strip is a Cloud feature; off Cloud there is nothing to ask
+      // for, and the server action would still cost a round trip on the single
+      // queue every other action in this drawer waits behind.
+      const { frameworks, unavailable } = isCloud()
+        ? await getFindingComplianceFrameworks(findingId, { inWatchlist: true })
+        : { frameworks: [], unavailable: true };
+
+      // The watchlist endpoint is Cloud-only. Where it does not exist, keep
+      // showing what the check's own metadata already carries rather than
+      // silently dropping the strip for every finding.
+      const resolved =
+        unavailable && finding
+          ? finding.complianceFrameworks.map(fallbackFramework)
+          : frameworks;
+
+      complianceFrameworksCacheRef.current.set(findingId, resolved);
+
+      return resolved;
+    };
+
     setIsLoading(true);
     try {
       const [nextCurrentFinding, nextOtherFindings] = await Promise.all([
@@ -235,9 +304,16 @@ export function useResourceDetailDrawer({
       // Discard stale response if a newer request was started
       if (controller.signal.aborted) return;
 
-      checkMetaRef.current = nextCurrentFinding
-        ? extractCheckMeta(nextCurrentFinding)
-        : null;
+      setCheckMeta(
+        nextCurrentFinding
+          ? extractCheckMeta(
+              nextCurrentFinding,
+              // Already resolved when navigating back to a visited finding, so
+              // the strip does not blink empty on the way.
+              complianceFrameworksCacheRef.current.get(findingId) ?? [],
+            )
+          : null,
+      );
 
       setCurrentFinding(nextCurrentFinding);
       // The API already filters to status=FAIL (see getLatestFindingsByResourceUid).
@@ -247,7 +323,7 @@ export function useResourceDetailDrawer({
       );
     } catch (_error) {
       if (!controller.signal.aborted) {
-        checkMetaRef.current = null;
+        setCheckMeta(null);
         setCurrentFinding(null);
         setOtherFindings([]);
       }
@@ -255,6 +331,25 @@ export function useResourceDetailDrawer({
       if (!controller.signal.aborted) {
         finishNavigation();
       }
+    }
+
+    // Deliberately after the panel has its data, and deliberately not inside
+    // the `Promise.all` above. Server actions dispatched from a client
+    // component share one queue and run strictly one at a time, so bundling
+    // this one added a whole round-trip to opening any finding. It is
+    // supporting detail: it must never delay the panel, and its failure must
+    // never empty it — hence its own `catch`, outside the block that nulls
+    // everything.
+    try {
+      const frameworks = await fetchComplianceFrameworks(
+        currentFindingCacheRef.current.get(findingId) ?? null,
+      );
+      if (controller.signal.aborted) return;
+      setCheckMeta((current) =>
+        current ? { ...current, complianceFrameworks: frameworks } : current,
+      );
+    } catch (_error) {
+      // Leaves the strip empty; the panel stays as it is.
     }
   };
 
@@ -293,6 +388,7 @@ export function useResourceDetailDrawer({
     const resource = resources[currentIndex];
     if (!resource) return;
     currentFindingCacheRef.current.delete(resource.findingId);
+    complianceFrameworksCacheRef.current.delete(resource.findingId);
     otherFindingsCacheRef.current.delete(resource.resourceUid);
     startNavigation();
     resetCurrentResourceState();
@@ -396,7 +492,7 @@ export function useResourceDetailDrawer({
     isOpen,
     isLoading,
     isNavigating,
-    checkMeta: checkMetaRef.current,
+    checkMeta,
     currentIndex,
     totalResources: totalResourceCount ?? resources.length,
     currentResource: currentResource ?? null,

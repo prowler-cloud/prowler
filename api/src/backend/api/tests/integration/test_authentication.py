@@ -1590,8 +1590,8 @@ class TestAPIKeyMultiTenantWorkflows:
         tenant1 = tenants_fixture[0]
         tenant2 = tenants_fixture[1]
 
-        Membership.objects.create(user=user, tenant=tenant1)
-        Membership.objects.create(user=user, tenant=tenant2)
+        membership1 = Membership.objects.create(user=user, tenant=tenant1)
+        membership2 = Membership.objects.create(user=user, tenant=tenant2)
 
         role1 = Role.objects.create(
             tenant_id=tenant1.id,
@@ -1645,6 +1645,27 @@ class TestAPIKeyMultiTenantWorkflows:
 
         assert me_response1.json()["data"]["id"] == str(user.id)
         assert me_response2.json()["data"]["id"] == str(user.id)
+
+        memberships1 = {
+            item["id"]: item["meta"]["active"]
+            for item in me_response1.json()["data"]["relationships"]["memberships"][
+                "data"
+            ]
+        }
+        memberships2 = {
+            item["id"]: item["meta"]["active"]
+            for item in me_response2.json()["data"]["relationships"]["memberships"][
+                "data"
+            ]
+        }
+        assert memberships1 == {
+            str(membership1.id): True,
+            str(membership2.id): False,
+        }
+        assert memberships2 == {
+            str(membership1.id): False,
+            str(membership2.id): True,
+        }
 
     def test_api_key_cannot_access_different_tenant_resources(
         self, tenants_fixture, aws_provider

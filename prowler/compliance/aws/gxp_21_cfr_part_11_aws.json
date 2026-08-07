@@ -109,7 +109,9 @@
         "ec2_securitygroup_default_restrict_traffic",
         "ec2_networkacl_allow_ingress_any_port",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
-        "ec2_networkacl_allow_ingress_any_port"
+        "ec2_networkacl_allow_ingress_any_port",
+        "ec2_confidential_workload_host_imdsv2_not_enforced",
+        "ec2_confidential_workload_host_public_ip"
       ]
     },
     {
@@ -195,7 +197,9 @@
         "ec2_securitygroup_default_restrict_traffic",
         "ec2_networkacl_allow_ingress_any_port",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
-        "ec2_networkacl_allow_ingress_any_port"
+        "ec2_networkacl_allow_ingress_any_port",
+        "ec2_confidential_workload_host_imdsv2_not_enforced",
+        "ec2_confidential_workload_host_public_ip"
       ]
     },
     {
