@@ -490,8 +490,7 @@ export const getDiscovery = async (
 };
 
 /**
- * JSON:API attributes for an apply request. The switch has no default, so a new
- * payload arm is a compile error here instead of a silently dropped selection.
+ * JSON:API attributes for an apply request.
  */
 function buildApplyAttributes(payload: ApplyDiscoveryPayload) {
   switch (payload.orgType) {
