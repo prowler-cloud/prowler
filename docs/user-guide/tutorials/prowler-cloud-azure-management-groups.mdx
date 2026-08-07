@@ -1,11 +1,444 @@
 ---
 title: 'Azure Management Groups'
 description: 'Onboard all Azure subscriptions in your management groups through a single guided wizard'
-tag: "Coming Soon"
 ---
 
-Onboarding Azure management groups through a single guided wizard is coming soon to Prowler Cloud.
+import { VersionBadge } from "/snippets/version-badge.mdx"
+import { SubscriptionBanner } from "/snippets/subscription-banner.mdx"
 
-Today, Azure subscriptions are onboarded individually. See [Getting Started with Azure](/user-guide/providers/azure/getting-started-azure) and [Bulk Provider Provisioning](/user-guide/tutorials/bulk-provider-provisioning) to automate onboarding multiple subscriptions.
+{/* TODO: set this to the release that ships Azure Management Group onboarding. */}
+<VersionBadge version="TODO" />
 
-Keep an eye on the [changelog](https://github.com/prowler-cloud/prowler/releases) for updates.
+Prowler Cloud onboards every Azure subscription in your Microsoft Entra tenant through a single guided wizard. Instead of connecting subscriptions one by one, you can discover every Management Group and subscription under the tenant root Management Group, select the ones you want to monitor, test connectivity, and launch scans — all from the Prowler Cloud UI.
+
+<SubscriptionBanner>
+For Command-Line Interface (CLI) scanning of several subscriptions, see [Configuring Specific Subscription Scans in Prowler](/user-guide/providers/azure/subscriptions).
+</SubscriptionBanner>
+
+To follow this guide you need an active [Prowler Cloud](https://cloud.prowler.com) account and an Azure service principal with read access granted **at the tenant root Management Group**.
+
+## Overview
+
+### Individual Subscriptions vs Azure Management Groups
+
+| Approach | Best for | How it works |
+|----------|----------|--------------|
+| **Individual subscriptions** | A few Azure subscriptions | Connect each subscription one by one with its own service principal credential. |
+| **Azure Management Groups** | 10+ subscriptions, or any tenant organized into Management Groups | Connect once with a tenant-wide credential, discover every Management Group and subscription automatically, and scan them in bulk. |
+
+### How It Works
+
+Onboarding runs in four stages:
+
+1. **Grant read access** to one service principal at the tenant root Management Group.
+2. **Discover** — Prowler walks the Management Group hierarchy and returns every Management Group and subscription under the tenant root.
+3. **Select and connect** — choose the subscriptions to monitor. Prowler creates one provider per subscription and tests every connection.
+4. **Launch scans** — apply a scan schedule across the connected subscriptions.
+
+<Note>
+**Nothing is deployed into your tenant.** Unlike AWS Organizations onboarding, Azure onboarding creates no resources in Azure. Prowler reuses the service principal credential you provide as the credential of every subscription it onboards, so a single grant covers discovery and scanning.
+</Note>
+
+<Note>
+**Onboarding always covers the whole tenant.** Prowler scopes the organization to the tenant root Management Group, which it derives from the Microsoft Entra tenant ID. The wizard therefore asks for the tenant, never for a Management Group — there is no partial onboarding from a Management Group further down the hierarchy.
+</Note>
+
+## Before You Start
+
+### Create a Service Principal
+
+Prowler Cloud authenticates against Azure with a service principal application. To create one, follow [Creating a Prowler Service Principal Application](/user-guide/providers/azure/create-prowler-service-principal). Keep the **client ID** and the **client secret** — the wizard asks for both.
+
+### Grant Read Access at the Tenant Root Management Group
+
+Discovery reads the Management Group hierarchy and the subscriptions inside it. Assign the built-in **Reader** role to the service principal **on the tenant root Management Group**, so the grant covers every Management Group and subscription beneath it:
+
+```bash
+TENANT_ID=<microsoft-entra-tenant-id>
+SP_OBJECT_ID=$(az ad sp list --display-name "prowler" --query "[0].id" -o tsv)
+
+az role assignment create \
+  --role "Reader" \
+  --assignee-object-id "$SP_OBJECT_ID" \
+  --assignee-principal-type ServicePrincipal \
+  --scope "/providers/Microsoft.Management/managementGroups/$TENANT_ID"
+```
+
+<Note>
+The tenant root Management Group is named after the tenant ID, so its resource identifier is always `/providers/Microsoft.Management/managementGroups/<tenant-id>`. Creating a role assignment there requires **Owner** or **User Access Administrator** at that scope; a Global Administrator who holds neither can grant themselves access through the elevated-access toggle in Microsoft Entra ID.
+</Note>
+
+### Grant the Scanning Permissions
+
+Scanning each subscription additionally needs the permissions described in [Azure Authentication in Prowler](/user-guide/providers/azure/authentication#required-permissions):
+
+| Permission | Scope | Used for |
+|------------|-------|----------|
+| **Reader** | Subscription, or inherited from the Management Group | Reading Azure resources during a scan. |
+| **ProwlerRole** | Subscription, or inherited from the Management Group | The read-only actions the Reader role does not cover. |
+| `AuditLog.Read.All`, `Directory.Read.All`, `Policy.Read.All` | Microsoft Entra ID (Microsoft Graph) | The Microsoft Entra ID checks. |
+
+Role assignments made at the tenant root Management Group are inherited by every subscription beneath it, so assigning **Reader** and **ProwlerRole** there means every subscription you onboard is scannable without a per-subscription grant. To create the custom role, see [Assigning "ProwlerRole" Permissions at the Subscription Level](/user-guide/providers/azure/authentication#assigning-prowlerrole-permissions-at-the-subscription-level) — and set its `assignableScopes` to the Management Group, `/providers/Microsoft.Management/managementGroups/<tenant-id>`, rather than to a single subscription, so it can be assigned once for the whole tenant.
+
+### Find Your Microsoft Entra Tenant ID
+
+Prowler identifies the organization by the Microsoft Entra tenant ID, a Universally Unique Identifier (UUID):
+
+```bash
+az account show --query tenantId -o tsv
+```
+
+In the Azure portal, the same value sits under **Microsoft Entra ID** > **Overview** as **Tenant ID**.
+
+{/* TODO: capture the Microsoft Entra ID Overview blade with the Tenant ID highlighted and add it here as /images/organizations/azure/azure-portal-tenant-id.png. */}
+
+## Step 1: Start the Organization Wizard
+
+### Open the Wizard
+
+1. Navigate to **Providers** and click **Add Provider**.
+
+<Frame>
+  <img src="/images/organizations/cloud-providers-add.png" alt="Providers page showing the Add Provider button" />
+</Frame>
+
+2. Select **Microsoft Azure** as the provider.
+
+<Frame>
+  <img src="/images/organizations/azure/select-azure-provider.png" alt="Provider selection modal with Microsoft Azure highlighted" />
+</Frame>
+
+3. Choose **Add Multiple Subscriptions With Azure Management Group**.
+
+<Frame>
+  <img src="/images/organizations/azure/select-azure-management-groups-method.png" alt="Method selector showing the Add Multiple Subscriptions With Azure Management Group option highlighted" />
+</Frame>
+
+<Note>
+In Prowler Local Server the Management Group option is marked **Cloud** and opens an upgrade panel instead of the wizard. Management Group onboarding is a Prowler Cloud feature; the single-subscription method remains available.
+</Note>
+
+### Enter Organization Details
+
+- **Tenant ID**: the Microsoft Entra tenant ID (for example, `8b3c9a41-5f27-4d6e-9c18-7ae204f5b6d2`). Values that are not valid UUIDs are rejected before submission.
+- **Name** (optional): a display name for the organization in Prowler. If left blank, Prowler uses the name stored in Azure.
+
+<Frame>
+  <img src="/images/organizations/azure/azure-organization-details-form.png" alt="Organization Details form with the Microsoft Entra tenant ID and Name fields" />
+</Frame>
+
+Click **Next** to proceed to the authentication phase. Prowler matches the organization by tenant ID, so submitting a tenant that is already onboarded reuses it instead of creating a duplicate.
+
+## Step 2: Authenticate With Azure
+
+The **Authentication Details** step collects the service principal Prowler uses to read the Management Group hierarchy and, later, to scan each subscription:
+
+- **Client ID**: the application (client) ID of the service principal, a UUID.
+- **Client Secret**: a client secret of that service principal.
+
+<Frame>
+  <img src="/images/organizations/azure/azure-authentication-details.png" alt="Authentication Details step showing the Client ID and Client Secret fields" />
+</Frame>
+
+The tenant is not repeated here: Prowler takes it from the organization created in the previous step.
+
+<Warning>
+Every subscription you onboard inherits this credential. Revoking it, rotating the client secret, or deleting the service principal stops the scans of every subscription in the organization.
+</Warning>
+
+### Authenticate and Discover
+
+Click **Authenticate**. Prowler then:
+
+- Creates the organization and stores the credential securely.
+- Triggers an asynchronous discovery that walks the Management Group hierarchy.
+- Shows a **"Gathering Azure Subscriptions..."** spinner while it waits.
+
+<Frame>
+  <img src="/images/organizations/azure/azure-gathering-subscriptions.png" alt="Gathering Azure Subscriptions spinner shown while discovery runs" />
+</Frame>
+
+Discovery usually takes seconds to a couple of minutes, depending on how many Management Groups and subscriptions the tenant holds.
+
+#### When Discovery Takes Too Long
+
+Prowler waits up to **3 minutes** for a result. Past that, the wizard stops waiting — but the discovery keeps running in Azure — and offers two actions:
+
+- **Keep waiting** — resume the same discovery. Nothing is re-read from Azure.
+- **Retry** — start a fresh discovery, which reads the hierarchy again.
+
+<Frame>
+  <img src="/images/organizations/azure/azure-discovery-timeout.png" alt="Discovery timeout notice offering Keep waiting and Retry" />
+</Frame>
+
+If discovery fails outright, the wizard explains why and offers **Retry discovery**. See [Troubleshooting](#troubleshooting) for each message.
+
+## Step 3: Select Subscriptions to Scan
+
+### Understanding the Tree View
+
+Once discovery completes, the wizard renders the tenant as a hierarchical tree:
+
+<Frame>
+  <img src="/images/organizations/azure/azure-tree-view-subscriptions.png" alt="Hierarchical tree view showing Management Groups and subscriptions with selection checkboxes" />
+</Frame>
+
+- **Management Groups** nest under the tenant root; subscriptions that sit directly under the tenant root appear at the top level. The tenant root itself is not shown as a row — the whole tree is its content.
+- Each Management Group row shows its Management Group name, with the Azure display name beside it. Hover the name to read the full Azure Resource Manager (ARM) resource identifier.
+- **Selecting a Management Group** selects every selectable subscription beneath it. A Management Group whose subscriptions are only partly selected renders in an indeterminate state.
+- **Individual overrides**: deselect single subscriptions even when the parent Management Group is selected.
+- The header tracks the selection as **"X of Y subscriptions selected"**.
+- Management Group hierarchies are read up to a bounded depth. Deeper tenants report an error at discovery — see [Troubleshooting](#troubleshooting).
+
+### Blocked Subscriptions
+
+A subscription is shown grayed out and cannot be selected when onboarding it would conflict with something Prowler already stores. Hover the subscription to see the reason:
+
+| Reason | What it means |
+|--------|---------------|
+| `provider_linked_to_other_organization` | The subscription is already connected under a **different** Prowler organization. |
+| `provider_linked_to_other_organization_node` | The subscription is already grouped under a different Management Group in Prowler — for example, it moved in Azure after it was onboarded. |
+
+<Frame>
+  <img src="/images/organizations/azure/azure-blocked-subscription.png" alt="Blocked subscription row with the reason shown in a tooltip" />
+</Frame>
+
+### Management Groups With Nothing to Select
+
+A Management Group that holds no subscriptions, or whose subscriptions are all blocked, is shown disabled with the note *"No subscriptions available to select in this management group."* The Management Group still expands, so you can see the blocked subscriptions it holds and why they are blocked.
+
+<Frame>
+  <img src="/images/organizations/azure/azure-inert-group.png" alt="Disabled Management Group row noting that no subscriptions are available to select" />
+</Frame>
+
+### Custom Aliases
+
+Each subscription row carries an editable name, prefilled with the subscription's display name. The alias is used only inside Prowler — it does not rename anything in Azure. Management Group names are read-only: Prowler stores the display name from Azure.
+
+### Subscriptions That Already Have Credentials
+
+Applying your selection stores the organization credential on every selected subscription. When a selected subscription is already connected to Prowler with its own credential, that credential is **overwritten** — so the wizard asks first, naming the affected subscriptions:
+
+<Frame>
+  <img src="/images/organizations/azure/azure-replace-credentials-apply.png" alt="Replace existing credentials modal listing the subscriptions whose credentials will be replaced" />
+</Frame>
+
+Click **Replace and continue** to proceed, or **Cancel** to adjust your selection.
+
+<Note>
+**Your existing data is safe.** A subscription already connected as an individual provider is **linked** to the organization, never duplicated: its historical scans and findings are preserved, and it does not count twice toward your subscription.
+</Note>
+
+## Step 4: Test Connections
+
+Click **Test Connections** to verify that Prowler can authenticate against each selected subscription. Prowler creates one provider per subscription — identified by its Azure subscription ID — and then tests every connection.
+
+<Frame>
+  <img src="/images/organizations/azure/azure-test-connections.png" alt="Connection testing in progress with status icons on each subscription" />
+</Frame>
+
+Each subscription shows a real-time status indicator:
+
+- **Spinner** — test in progress
+- **Green checkmark (✓)** — connection successful
+- **Red icon (✗)** — connection failed (hover to see the error)
+
+If every subscription connects successfully, you advance to the next step automatically.
+
+### When Some Tests Fail
+
+An error banner appears: **"There was a problem connecting to some subscriptions. Hover each subscription to check the error."** You have two options:
+
+**a) Fix and retry:**
+
+1. Confirm the service principal holds **Reader** and **ProwlerRole** on the failing subscriptions, or on a Management Group above them.
+2. Confirm the Microsoft Graph permissions have been granted admin consent, as described in [Azure Authentication in Prowler](/user-guide/providers/azure/authentication#assigning-required-api-permissions).
+3. Click **Test Connections** again — only the **failed subscriptions are re-tested**. Subscriptions that already passed are not tested again.
+
+**b) Skip and continue:**
+
+Click **Skip Connection Validation** to proceed with the subscriptions that connected successfully. Failed subscriptions stay onboarded and visible on the Providers page, but they are not scanned. This option appears only when at least one subscription connected.
+
+If **no subscription** connects, the banner instead reads *"No subscriptions connected successfully. Fix the connection errors and retry before launching scans."* and you cannot proceed. Fix the underlying problem — see [Troubleshooting](#troubleshooting) — and retry.
+
+## Step 5: Launch Scans
+
+The Organizations wizard uses the same schedule controls described in [Scan Scheduling](/user-guide/tutorials/prowler-scan-scheduling#schedule-options).
+
+Click **Save**, **Save and launch scan**, or **Launch scan**, depending on the selected schedule option. A toast notification confirms whether the schedule was saved, scans were launched, or both, and links to the **Scans** page. Prowler then redirects to the **Providers** page. Scans launch only for subscriptions that passed connection testing.
+
+<Frame>
+  <img src="/images/organizations/azure/azure-launch-scan.png" alt="Launch Scan step showing the Subscriptions Connected confirmation and the scan schedule selector" />
+</Frame>
+
+After launching:
+
+- Scans appear on the **Scans** page as they start and complete.
+- Results populate the **Overview** and **Findings** pages.
+- On the **Providers** page, your subscriptions are grouped under the organization and, when they live in a Management Group, under that Management Group.
+
+<Frame>
+  <img src="/images/organizations/azure/azure-providers-grouping.png" alt="Providers page showing subscriptions grouped under Azure Management Groups and the organization" />
+</Frame>
+
+## Manage Your Organization After Onboarding
+
+Open the row actions menu on the organization row on the **Providers** page.
+
+<Frame>
+  <img src="/images/organizations/azure/azure-organization-row-actions.png" alt="Row actions menu on an Azure organization row" />
+</Frame>
+
+| Action | What it does |
+|--------|--------------|
+| **Edit Organization Name** | Renames the organization in Prowler. Leave it blank to fall back to the name stored in Azure. |
+| **Update Credentials** | Reopens the Authentication Details step to store a new service principal credential. |
+| **Edit Scan Schedule** | Applies one schedule to every connected subscription in the organization. |
+| **Test Connections (N)** | Re-tests every subscription in the organization. |
+| **Delete Organization** | Deletes the organization and cascades to its providers. |
+
+### Onboard Subscriptions Created Later
+
+Subscriptions added to the tenant after onboarding are not picked up automatically. Run the wizard again with the same tenant ID: discovery returns the current hierarchy, already-connected subscriptions come back preselected, and the new ones are ready to select.
+
+### Update Organization Credentials
+
+Choosing **Update Credentials** re-enters the Authentication Details step. Because the organization already holds a credential, Prowler warns before overwriting it and names how many providers re-authenticate with the new one:
+
+<Frame>
+  <img src="/images/organizations/azure/azure-replace-credentials-setup.png" alt="Replace existing credentials modal showing how many providers re-authenticate" />
+</Frame>
+
+Storing a new credential runs a fresh discovery, so any discovery already in progress is discarded — discovery authenticates with the credential it started from.
+
+### Delete an Organization or Management Group
+
+Deleting an organization or a Management Group **cascades to every provider grouped under it**, along with their scans and findings. Both dialogs state how many providers are affected before you confirm.
+
+<Frame>
+  <img src="/images/organizations/azure/azure-delete-organization.png" alt="Delete organization dialog showing how many providers are deleted with it" />
+</Frame>
+
+Deletion runs in the background. Prowler confirms with a **"Deletion started"** notification; if any part of it fails, the affected rows reappear on a later refresh.
+
+<Danger>
+Deleting an organization **permanently deletes every subscription provider grouped under it**, including their historical scans and findings. This action cannot be undone.
+</Danger>
+
+### When Grouping Is Unavailable
+
+If Prowler cannot read the hierarchy while loading the Providers page, a notice reads *"Organization grouping is incomplete. Some providers may appear ungrouped."* Your providers are still listed, just flat. Reload the page to try again.
+
+## Billing Impact
+
+Each Azure subscription you connect through the Organizations wizard counts as one **provider** in your Prowler Cloud subscription.
+
+- **Already-connected subscriptions**: linking an existing provider to the organization does **not** add billing. The existing provider is reused.
+- **Large tenants**: connecting a 500-subscription tenant results in up to 500 providers on your subscription. Review your plan limits before proceeding.
+- **Deleted providers**: a subscription you later remove no longer counts toward your subscription.
+
+For pricing details, see [Prowler Cloud Pricing](https://prowler.com/pricing).
+
+## Troubleshooting
+
+### Those Service Principal Credentials Were Rejected
+
+*"Those service principal credentials were rejected. Check the client ID and client secret, then try again."*
+
+Azure refused the sign-in. Confirm the client ID belongs to the service principal you granted access to, and that the client secret is current — secrets expire, and a rotated one invalidates the old value immediately.
+
+```bash
+az ad app credential list --id <client-id> --query "[].{name:displayName, expires:endDateTime}" -o table
+```
+
+### The Service Principal Cannot Read the Complete Management Group Hierarchy
+
+*"The service principal cannot read the complete Management Group hierarchy. Grant it the Reader role at the Management Group level, then try again."*
+
+The credential authenticated but lacks read access to part of the hierarchy. Grant **Reader** at the tenant root Management Group, as described in [Grant Read Access at the Tenant Root Management Group](#grant-read-access-at-the-tenant-root-management-group), and confirm the assignment landed on the Management Group and not on a single subscription:
+
+```bash
+az role assignment list \
+  --assignee <client-id> \
+  --scope "/providers/Microsoft.Management/managementGroups/<tenant-id>" \
+  --query "[].{role:roleDefinitionName, scope:scope}" -o table
+```
+
+### No Management Group With That ID Was Found
+
+*"No Management Group with that ID was found in this tenant. Check the ID, and that the service principal has been granted access to it."*
+
+The tenant root Management Group could not be read. Either the tenant ID is wrong, or the service principal cannot see the root. Confirm the tenant ID and list what the credential can reach:
+
+```bash
+az account management-group list --query "[].{name:name, displayName:displayName}" -o table
+```
+
+### Those Credentials Belong to a Different Microsoft Entra Tenant
+
+*"Those credentials belong to a different Microsoft Entra tenant. Use a service principal from the tenant you entered."*
+
+The service principal is registered in another tenant. Register the application in the tenant being onboarded, or correct the tenant ID in the first step of the wizard.
+
+### Azure Did Not Respond
+
+*"Azure did not respond while reading the Management Group hierarchy. Nothing is wrong with your credentials — try again in a few minutes."*
+
+A transient Azure Resource Manager error. Click **Retry discovery**.
+
+### The Hierarchy Is Too Deep
+
+*"This tenant's Management Group hierarchy is deeper than Prowler can read. Contact support so we can help you onboard it."*
+
+The tenant nests Management Groups deeper than Prowler reads in one pass. Contact [Prowler Support](mailto:support@prowler.com).
+
+### Authentication Failed
+
+*"Authentication failed. Please verify the service principal permissions or credentials, then try again."*
+
+The generic authentication failure, shown when Azure reports no more specific reason. Confirm that the service principal still exists, that its client secret has not expired, and that the Reader role assignment at the tenant root Management Group is still in place.
+
+### Discovery Could Not Be Completed
+
+*"Discovery could not be completed. Try again, and contact support if it keeps failing."*
+
+Discovery failed for a reason Prowler cannot attribute to the credential or to Azure. Click **Retry discovery**, and contact [Prowler Support](mailto:support@prowler.com) if the failure repeats.
+
+### Discovery Never Finishes
+
+The wizard stops waiting after 3 minutes, but the discovery keeps running in Azure. Click **Keep waiting** to resume the same discovery rather than **Retry**, which starts over and re-reads the whole hierarchy.
+
+## Key Concepts
+
+### How Subscriptions Map to Prowler Providers
+
+Each selected subscription becomes one Prowler provider:
+
+| Prowler field | Comes from |
+|---------------|------------|
+| Provider identifier | The Azure subscription ID (for example, `22222222-2222-4222-8222-222222222222`). |
+| Alias | The name you typed in the tree, or the subscription's display name. |
+| Credential | A copy of the organization credential. |
+
+Management Groups that hold selected subscriptions become grouping rows on the Providers page. You select subscriptions only — Prowler derives the Management Group ancestors itself.
+
+### Organization Credential vs Subscription Credential
+
+One credential, stored twice: on the organization, where discovery reads it, and on each subscription provider, where scans read it. That is why replacing the organization credential re-authenticates every subscription under it, and why the wizard asks before overwriting a subscription's own credential.
+
+## What's Next
+
+<Columns cols={2}>
+  <Card title="Prowler Cloud" icon="cloud" href="/user-guide/tutorials/prowler-app">
+    Full guide to using Prowler Cloud features.
+  </Card>
+  <Card title="Azure Subscriptions (CLI)" icon="terminal" href="/user-guide/providers/azure/subscriptions">
+    CLI-based scanning of specific Azure subscriptions.
+  </Card>
+  <Card title="Azure Authentication" icon="key" href="/user-guide/providers/azure/authentication">
+    Credential types and the permissions Prowler needs in Azure.
+  </Card>
+  <Card title="Bulk Provider Provisioning" icon="upload" href="/user-guide/tutorials/bulk-provider-provisioning">
+    Script-based bulk provisioning for advanced automation.
+  </Card>
+</Columns>
