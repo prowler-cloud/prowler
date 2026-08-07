@@ -271,3 +271,6 @@ def update_checks_to_execute_with_aliases(
         logger.error(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
         )
+        # Alias expansion is best effort; fall back to the requested checks so
+        # callers always receive a set.
+        return checks_to_execute
