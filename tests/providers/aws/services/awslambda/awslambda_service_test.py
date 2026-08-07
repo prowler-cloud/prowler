@@ -760,3 +760,30 @@ class Test_Lambda_Service:
             fetched_layer, fetched_code = layers_fetched[0]
             assert fetched_layer.arn == layer_arn
             assert fetched_code
+
+    @mock_aws
+    def test_get_layers_code_skips_layer_that_cannot_be_fetched(self):
+        awslambda = Lambda(
+            set_mocked_aws_provider(audited_regions=[AWS_REGION_US_EAST_1])
+        )
+        layer_arn = f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:layer:missing-layer:1"
+        awslambda.layers = {layer_arn: Layer(arn=layer_arn)}
+
+        # The layer version does not exist, so get_layer_version raises inside
+        # _fetch_layer_code; _get_layers_code must log it and yield nothing
+        # rather than propagating the error to the check.
+        assert list(awslambda._get_layers_code()) == []
+
+    @mock_aws
+    def test_fetch_layer_code_returns_none_without_location(self):
+        awslambda = Lambda(
+            set_mocked_aws_provider(audited_regions=[AWS_REGION_US_EAST_1])
+        )
+        awslambda.regional_clients[AWS_REGION_US_EAST_1] = mock.MagicMock()
+        awslambda.regional_clients[
+            AWS_REGION_US_EAST_1
+        ].get_layer_version.return_value = {"Content": {}}
+
+        assert (
+            awslambda._fetch_layer_code("my-layer", "1", AWS_REGION_US_EAST_1) is None
+        )

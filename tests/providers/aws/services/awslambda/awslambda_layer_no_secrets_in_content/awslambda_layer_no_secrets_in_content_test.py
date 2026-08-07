@@ -82,6 +82,28 @@ def mock_get_layers_code_without_secrets():
     )
 
 
+def get_lambda_layer_code_with_unreadable_file() -> LambdaCode:
+    # A dangling symlink is walked as a file but cannot be opened, which is
+    # how an unreadable member of the layer package behaves for the check.
+    code_zip = mock.MagicMock()
+
+    def _extractall(path):
+        with open(f"{path}/readable.py", "w") as fd:
+            fd.write(LAMBDA_LAYER_CONTENT_WITHOUT_SECRETS)
+        os.symlink(f"{path}/does-not-exist", f"{path}/dangling.py")
+
+    code_zip.extractall.side_effect = _extractall
+    return LambdaCode(location="", code_zip=code_zip)
+
+
+def mock_get_layers_code_with_unreadable_file():
+    yield create_lambda_layer(), get_lambda_layer_code_with_unreadable_file()
+
+
+def mock_get_layers_code_empty_code():
+    yield create_lambda_layer(), None
+
+
 def mock_get_layers_code_partial_fetch_failure():
     # Only the fetchable layer is yielded; the client's failing fetch for
     # the other layer already logged and skipped it (see _get_layers_code).
@@ -237,6 +259,62 @@ class Test_awslambda_layer_no_secrets_in_content:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
+
+    def test_layer_content_unreadable_file_is_skipped(self):
+        lambda_client = mock.MagicMock
+        lambda_client.layers = {LAMBDA_LAYER_ARN: create_lambda_layer()}
+        lambda_client._get_layers_code = mock_get_layers_code_with_unreadable_file
+        lambda_client.audit_config = {"secrets_ignore_patterns": []}
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.awslambda.awslambda_layer_no_secrets_in_content.awslambda_layer_no_secrets_in_content.awslambda_client",
+                new=lambda_client,
+            ),
+        ):
+            from prowler.providers.aws.services.awslambda.awslambda_layer_no_secrets_in_content.awslambda_layer_no_secrets_in_content import (
+                awslambda_layer_no_secrets_in_content,
+            )
+
+            check = awslambda_layer_no_secrets_in_content()
+            result = check.execute()
+
+            # The unreadable file is skipped, the rest of the package is still
+            # scanned, so the layer is reported instead of being dropped.
+            assert len(result) == 1
+            assert result[0].resource_arn == LAMBDA_LAYER_ARN
+            assert result[0].status == "PASS"
+
+    def test_layer_with_empty_code_reports_manual(self):
+        lambda_client = mock.MagicMock
+        lambda_client.layers = {LAMBDA_LAYER_ARN: create_lambda_layer()}
+        lambda_client._get_layers_code = mock_get_layers_code_empty_code
+        lambda_client.audit_config = {"secrets_ignore_patterns": []}
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.awslambda.awslambda_layer_no_secrets_in_content.awslambda_layer_no_secrets_in_content.awslambda_client",
+                new=lambda_client,
+            ),
+        ):
+            from prowler.providers.aws.services.awslambda.awslambda_layer_no_secrets_in_content.awslambda_layer_no_secrets_in_content import (
+                awslambda_layer_no_secrets_in_content,
+            )
+
+            check = awslambda_layer_no_secrets_in_content()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert "Could not retrieve content" in result[0].status_extended
 
     def test_partial_fetch_failure_reports_manual_for_unfetched_layer(self):
         lambda_client = mock.MagicMock
