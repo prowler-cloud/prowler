@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { MetaDataProps } from "@/types";
+import { NODE_KIND, ORGANIZATION_TYPE } from "@/types/organizations";
 import {
   PROVIDERS_GROUP_KIND,
   PROVIDERS_ROW_TYPE,
@@ -126,6 +127,7 @@ const organizationRow: ProvidersTableRow = {
   id: "org-1",
   rowType: PROVIDERS_ROW_TYPE.ORGANIZATION,
   groupKind: PROVIDERS_GROUP_KIND.ORGANIZATION,
+  orgType: ORGANIZATION_TYPE.AWS,
   name: "My AWS Organization",
   externalId: "o-abc123def4",
   parentExternalId: null,
@@ -139,6 +141,8 @@ const organizationalUnitRow: ProvidersTableRow = {
   id: "ou-1",
   rowType: PROVIDERS_ROW_TYPE.ORGANIZATION,
   groupKind: PROVIDERS_GROUP_KIND.ORGANIZATION_UNIT,
+  orgType: ORGANIZATION_TYPE.AWS,
+  kind: NODE_KIND.ORGANIZATIONAL_UNIT,
   name: "Production OU",
   externalId: "ou-abc123",
   parentExternalId: "o-abc123def4",

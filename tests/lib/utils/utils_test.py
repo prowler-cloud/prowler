@@ -5,6 +5,7 @@ from datetime import datetime
 from time import mktime
 
 import pytest
+import yaml
 from mock import patch
 
 from prowler.lib.utils.utils import (
@@ -17,6 +18,7 @@ from prowler.lib.utils.utils import (
     open_file,
     outputs_unix_timestamp,
     parse_json_file,
+    secrets_rules_path,
     strip_ansi_codes,
     validate_ip_address,
 )
@@ -227,6 +229,23 @@ class Test_detect_secrets_scan_batch:
         )
         assert results == {}
 
+    @pytest.mark.parametrize("separator", ["\x1c", "\x1d", "\x1e"])
+    def test_batch_excluded_secrets_uses_lf_line_numbers(self, separator):
+        payload = (
+            f'const characterTable = "prefix{separator}suffix";\n'
+            'DB_ALLOW_EMPTY_PASSWORD = "Tr0ub4dor3xKq9vLmZ"'
+        )
+        with patch(
+            "prowler.lib.utils.utils.subprocess.run",
+            side_effect=_fake_kingfisher_run_with_findings([(0, 2)]),
+        ):
+            results = detect_secrets_scan_batch(
+                {"a": payload},
+                excluded_secrets=[".*ALLOW_EMPTY_PASSWORD.*"],
+            )
+
+        assert results == {}
+
     def test_batch_chunking_maps_all_keys(self):
         payloads = {f"k{i}": f'password = "S3cr3tV4lu3xy{i}z"' for i in range(5)}
         results = detect_secrets_scan_batch(payloads, chunk_size=2)
@@ -240,6 +259,139 @@ class Test_detect_secrets_scan_batch:
             iter([("x", 'password = "Tr0ub4dor3xKq9vLmZ"')])
         )
         assert "x" in results
+
+
+JDBC_RULE = "JDBC connection string with embedded credentials"
+
+
+class Test_detect_secrets_scan_batch_jdbc:
+    """The bundled override of Kingfisher's built-in ``kingfisher.jdbc.1``.
+
+    The built-in rule matches a bare ``jdbc:<scheme>:`` prefix followed by any 10
+    non-space characters, so every JDBC connection string was reported as an
+    embedded credential. The override in
+    ``prowler/lib/utils/kingfisher_rules/kingfisher_jdbc_1.yaml`` requires an
+    actual credential; these tests pin both halves of that behavior.
+    """
+
+    def _jdbc_findings(self, connection_string):
+        results = detect_secrets_scan_batch({"a": connection_string})
+        return [f for f in results.get("a", []) if f["type"] == JDBC_RULE]
+
+    def test_override_keeps_every_non_pattern_field_of_the_builtin(self):
+        """Replacing the built-in rule drops any field the override omits.
+
+        Losing ``validation`` would silently stop ``--scan-secrets-validate``
+        from confirming a JDBC credential is live, and losing
+        ``pattern_requirements`` would stop placeholder values being discarded —
+        neither of which any behavioral test would catch. Only ``pattern`` and
+        ``examples`` are meant to diverge.
+        """
+        with open(
+            os.path.join(secrets_rules_path, "kingfisher_jdbc_1.yaml"),
+            encoding="utf-8",
+        ) as f:
+            rule = yaml.safe_load(f)["rules"][0]
+
+        # Verbatim from crates/kingfisher-rules/data/rules/jdbc.yml upstream.
+        assert rule["id"] == "kingfisher.jdbc.1"
+        assert rule["name"] == JDBC_RULE
+        assert rule["confidence"] == "medium"
+        assert rule["min_entropy"] == 3.3
+        assert rule["validation"] == {"type": "Jdbc"}
+        assert rule["tls_mode"] == "lax"
+        assert rule["pattern_requirements"] == {
+            "min_special_chars": 2,
+            "special_chars": ";=/?@&",
+            "ignore_if_contains": ["****", "xxxx", "example"],
+        }
+        assert rule["references"]
+
+    def test_rules_path_is_passed_to_kingfisher(self):
+        """The override is only in effect if the directory is actually shipped
+        and handed to Kingfisher."""
+        assert os.path.isdir(secrets_rules_path)
+        assert os.path.isfile(
+            os.path.join(secrets_rules_path, "kingfisher_jdbc_1.yaml")
+        )
+
+        with patch(
+            "prowler.lib.utils.utils.subprocess.run",
+            side_effect=_fake_kingfisher_run(output_content="{}"),
+        ) as mocked_run:
+            detect_secrets_scan_batch({"a": "data"})
+
+        command = mocked_run.call_args[0][0]
+        assert "--rules-path" in command
+        assert command[command.index("--rules-path") + 1] == secrets_rules_path
+
+    @pytest.mark.parametrize(
+        "connection_string",
+        [
+            "jdbc:postgresql://mydb.cluster-abc123.eu-west-1.rds.amazonaws.com:5432/appdb",  # trufflehog:ignore
+            "jdbc:oracle:thin:@ora.corp.internal:1521/ORCLPDB1",  # trufflehog:ignore
+            "jdbc:oracle:thin:@//ora.corp.internal:1521/SVC",  # trufflehog:ignore
+            "jdbc:mysql://prod.internal:3306/inventory?useSSL=true",  # trufflehog:ignore
+            "jdbc:sqlserver://sql.corp.internal:1433;databaseName=inv;integratedSecurity=true",  # trufflehog:ignore
+            "jdbc:redshift://cluster.abc.us-east-1.redshift.amazonaws.com:5439/dev",  # trufflehog:ignore
+            # A username alone is not a credential.
+            "jdbc:mysql://prod.internal:3306/inventory?user=admin",  # trufflehog:ignore
+            # An empty password is not a credential.
+            "jdbc:postgresql://pg.corp.internal/app?password=",  # trufflehog:ignore
+            "jdbc:mysql://(host=db.internal,user=alice,password=)/app",  # trufflehog:ignore
+            "jdbc:mysql://address=(host=db.internal)(user=alice)(password=)/app",  # trufflehog:ignore
+            # Connector/J host-list credentials require a non-empty username.
+            "jdbc:mysql://(host=db.internal,user=,password=Zq81ncPl42)/app",  # trufflehog:ignore
+            "jdbc:mysql://address=(host=db.internal)(user=)(password=Zq81ncPl42)/app",  # trufflehog:ignore
+            # Connector/J host-list syntax must not apply to other drivers.
+            "jdbc:postgresql://(host=db.internal,user=alice,password=Zq81ncPl42)/app",  # trufflehog:ignore
+            # An `@` in the query string must not turn the host and port into
+            # `user:password`: without the userinfo alternative being anchored
+            # to `//`, `db.internal:3306?user=alice` reads as a credential.
+            "jdbc:mysql://db.internal:3306?user=alice@corp.internal",  # trufflehog:ignore
+            # The same backtrack against the `user/password@` alternative.
+            "jdbc:mysql://db.internal:3306?owner=team/ops@corp.internal",  # trufflehog:ignore
+            "jdbc:mysql://db.internal:3306?path=a:b/c@corp.internal",  # trufflehog:ignore
+            # And against a `;`-delimited property list.
+            "jdbc:sqlserver://sql.corp.internal:1433;user=sa@corp.internal",  # trufflehog:ignore
+            # `user/password@` is Oracle TNS syntax and a credential only after
+            # an Oracle prefix. Every other subprotocol reads `a/b@c` as part of
+            # a path or a host, so the alternative must not apply to them.
+            "jdbc:derby:team/ops@corp.internal",  # trufflehog:ignore
+            "jdbc:sqlite:team/ops@corp.internal",  # trufflehog:ignore
+            "jdbc:h2:file:team/ops@corp.internal",  # trufflehog:ignore
+            # The exact payload shape of a CloudFormation Output
+            # ("OutputKey:OutputValue"), which is how this was reported.
+            "DatabaseUrl:jdbc:postgresql://mydb.eu-west-1.rds.amazonaws.com:5432/appdb",  # trufflehog:ignore
+        ],
+    )
+    def test_credential_free_connection_string_is_not_reported(self, connection_string):
+        assert self._jdbc_findings(connection_string) == []
+
+    @pytest.mark.parametrize(
+        "connection_string",
+        [
+            # URL userinfo.
+            "jdbc:mysql://admin:s3cr3t@prod.internal:3306/inventory",  # trufflehog:ignore
+            # MySQL Connector/J host-list credentials.
+            "jdbc:mysql://(host=db.internal,user=alice,password=Zq81ncPl42)/app",  # trufflehog:ignore
+            "jdbc:mysql://address=(host=db.internal)(user=alice)(password=Zq81ncPl42)/app",  # trufflehog:ignore
+            # Password as a query parameter.
+            "jdbc:postgresql://pg.corp.internal:5432/app?user=admin&password=Tr0ub4dor3",  # trufflehog:ignore
+            "jdbc:postgresql://pg.corp.internal/app?password=Xk29fjWa02",  # trufflehog:ignore
+            "jdbc:mysql://prod.internal/db?user=a&pwd=Zq81ncPl42",  # trufflehog:ignore
+            # Password as a semicolon-delimited property.
+            "jdbc:sqlserver://sql.corp.internal:1433;databaseName=inv;user=sa;password=S3cr3t99",  # trufflehog:ignore
+            "jdbc:sqlserver://sql.corp.internal:1433;Password=Vb73msQr18;user=sa",  # trufflehog:ignore
+            # Oracle TNS userinfo, for each driver type.
+            "jdbc:oracle:thin:scott/tiger99@ora.corp.internal:1521:ORCL",  # trufflehog:ignore
+            "jdbc:oracle:oci:scott/tiger99@ora.corp.internal:1521:ORCL",  # trufflehog:ignore
+            # Two-character scheme, which the built-in pattern could not match.
+            "jdbc:h2:file:./data/store;CIPHER=AES;PASSWORD=Nf62kdTp07",  # trufflehog:ignore
+        ],
+    )
+    def test_embedded_credential_is_still_reported(self, connection_string):
+        assert self._jdbc_findings(connection_string) != []
 
 
 class Test_detect_secrets_scan_batch_failures:

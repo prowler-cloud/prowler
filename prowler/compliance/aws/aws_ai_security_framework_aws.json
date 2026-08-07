@@ -187,10 +187,15 @@
           "Section": "Infrastructure Security",
           "SubSection": "Compute Isolation",
           "Service": "ec2",
-          "Type": "Manual"
+          "Type": "Automated"
         }
       ],
-      "Checks": []
+      "Checks": [
+        "kms_key_enclave_attestation_not_enforced",
+        "kms_key_enclave_attestation_bypassable_path",
+        "kms_key_enclave_attestation_no_deployment_binding",
+        "kms_key_enclave_attestation_pcr_mismatch"
+      ]
     },
     {
       "Id": "AISF-IAM-01",
@@ -899,7 +904,9 @@
       "Checks": [
         "cloudtrail_threat_detection_llm_jacking",
         "cloudtrail_threat_detection_privilege_escalation",
-        "cloudtrail_threat_detection_enumeration"
+        "cloudtrail_threat_detection_enumeration",
+        "kms_key_enclave_debug_attestation_detected",
+        "kms_key_enclave_attestation_unknown_image"
       ]
     },
     {

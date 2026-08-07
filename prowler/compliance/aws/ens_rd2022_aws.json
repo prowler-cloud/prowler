@@ -2289,7 +2289,8 @@
         }
       ],
       "Checks": [
-        "ec2_securitygroup_allow_ingress_from_internet_to_all_ports"
+        "ec2_securitygroup_allow_ingress_from_internet_to_all_ports",
+        "ec2_confidential_workload_host_unrestricted_ingress"
       ]
     },
     {
@@ -4327,7 +4328,9 @@
           "Dependencias": []
         }
       ],
-      "Checks": []
+      "Checks": [
+        "kms_key_enclave_attestation_not_enforced"
+      ]
     },
     {
       "Id": "op.exp.10.aws.cmk.7",
@@ -4351,7 +4354,9 @@
           "Dependencias": []
         }
       ],
-      "Checks": []
+      "Checks": [
+        "kms_key_enclave_attestation_bypassable_path"
+      ]
     },
     {
       "Id": "op.exp.10.aws.cmk.8",
@@ -4375,7 +4380,9 @@
           "Dependencias": []
         }
       ],
-      "Checks": []
+      "Checks": [
+        "kms_key_enclave_attestation_pcr_mismatch"
+      ]
     },
     {
       "Id": "op.cont.2.aws.az.1",

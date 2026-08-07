@@ -2,6 +2,7 @@ import {
   CLOUD_UPGRADE_FEATURE,
   type CloudUpgradeFeature,
 } from "@/types/cloud-upgrade";
+import { MAX_SAML_ADDITIONAL_EMAIL_DOMAINS } from "@/types/saml";
 
 interface CloudUpgradeContent {
   title: string;
@@ -26,10 +27,12 @@ const CLOUD_UPGRADE_UTM_CONTENT = {
   [CLOUD_UPGRADE_FEATURE.CROSS_PROVIDER_COMPLIANCE]:
     "cross-provider-compliance",
   [CLOUD_UPGRADE_FEATURE.FINDING_TRIAGE]: "findings",
+  [CLOUD_UPGRADE_FEATURE.GCP_ORGANIZATIONS]: "gcp-organization",
   [CLOUD_UPGRADE_FEATURE.JIRA_DISPATCH]: "jira-dispatch",
   [CLOUD_UPGRADE_FEATURE.LIGHTHOUSE_AI]: "lighthouse-ai",
   [CLOUD_UPGRADE_FEATURE.GENERAL]: "general",
   [CLOUD_UPGRADE_FEATURE.SCAN_CONFIGURATION]: "scan-configuration",
+  [CLOUD_UPGRADE_FEATURE.SAML_DOMAINS]: "saml-domains",
 } as const satisfies Record<CloudUpgradeFeature, string>;
 
 export const CLOUD_UPGRADE_CONTENT = {
@@ -65,6 +68,17 @@ export const CLOUD_UPGRADE_CONTENT = {
       "Apply schedules across the selected accounts",
     ],
     primaryCta: "Set Up AWS Organizations in Prowler Cloud",
+  },
+  [CLOUD_UPGRADE_FEATURE.GCP_ORGANIZATIONS]: {
+    title: "Add Your Entire GCP Organization",
+    description:
+      "Discover folders and projects, then manage them from one place.",
+    benefits: [
+      "Discover folders and projects automatically",
+      "Choose exactly which projects to onboard",
+      "Apply schedules across the selected projects",
+    ],
+    primaryCta: "Set Up GCP Organizations in Prowler Cloud",
   },
   [CLOUD_UPGRADE_FEATURE.CLI_IMPORT]: {
     title: "Bring CLI Findings into One Cloud View",
@@ -144,6 +158,17 @@ export const CLOUD_UPGRADE_CONTENT = {
       "Manage scan behavior from one place",
     ],
     primaryCta: "Configure Scans in Prowler Cloud",
+  },
+  [CLOUD_UPGRADE_FEATURE.SAML_DOMAINS]: {
+    title: "Use One SAML Configuration Across Domains",
+    description:
+      "Let users from multiple verified email domains share one SAML identity provider configuration.",
+    benefits: [
+      "Keep one primary domain and canonical ACS URL",
+      `Authorize up to ${MAX_SAML_ADDITIONAL_EMAIL_DOMAINS} additional email domains`,
+      "Manage every domain from the same SAML configuration",
+    ],
+    primaryCta: "Manage SAML Domains in Prowler Cloud",
   },
 } as const satisfies Record<CloudUpgradeFeature, CloudUpgradeContent>;
 

@@ -1,9 +1,6 @@
 import { getCompliancesOverview } from "@/actions/compliances";
 import { getAllProviders } from "@/actions/providers";
 import { getScans } from "@/actions/scans";
-import { ProviderTypeIcon } from "@/components/icons/providers-badge/provider-type-icon";
-import type { AccordionItemProps } from "@/components/shadcn/accordion/Accordion";
-import { Accordion } from "@/components/shadcn/accordion/Accordion";
 import {
   Section,
   SectionContent,
@@ -11,36 +8,23 @@ import {
   SectionHeader,
   SectionTitle,
 } from "@/components/shadcn/section/section";
+import {
+  buildWatchlistIndex,
+  resolveCatalogEntry,
+} from "@/lib/compliance/watchlist";
 import type { SearchParamsProps } from "@/types";
 import type { ComplianceOverviewData } from "@/types/compliance";
-import {
-  isKnownProviderType,
-  type KnownProviderType,
-  PROVIDER_DISPLAY_NAMES,
-} from "@/types/providers";
+import { isKnownProviderType, type KnownProviderType } from "@/types/providers";
 
 import { CROSS_PROVIDER_FRAMEWORKS } from "../_lib/cross-provider-frameworks";
+import { loadComplianceWatchlistContext } from "../_lib/watchlist-context";
 import type { CrossAccountFrameworkEntry } from "../_types";
 
-import { CrossAccountFrameworkCard } from "./cross-account-framework-card";
+import type { CrossAccountGroup } from "./cross-account-framework-list";
+import { CrossAccountFrameworkList } from "./cross-account-framework-list";
 
-/** Only provider types with at least this many accounts get cross-account
- *  cards — with a single account the view is identical to the per-scan one. */
 const MIN_ACCOUNTS = 2;
 
-/**
- * Server island for the "across accounts" section of the Cross-Provider tab:
- * for every provider type with 2+ accounts, lists the regular (per-provider)
- * frameworks that can be viewed aggregated across that type's accounts.
- *
- * The framework list per type comes from a completed scan of any account of
- * that type (frameworks are a property of the provider type, not of the
- * account). Universal frameworks are excluded — they already have
- * their own cross-provider cards above. Renders nothing when no provider
- * type qualifies, keeping the tab unchanged for single-account tenants.
- * Best-effort by design: a type whose scan or framework list fails to load
- * is dropped from the section rather than failing the tab.
- */
 export const CrossAccountOverviewSection = async ({
   searchParams,
 }: {
@@ -142,40 +126,25 @@ export const CrossAccountOverviewSection = async ({
     .sort((a, b) => a[0].providerType.localeCompare(b[0].providerType));
   if (groups.length === 0) return null;
 
-  // One collapsed group per provider type instead of a flat grid: with
-  // several multi-account types connected, the flat grid piles up dozens of
-  // cards (each type ships 20-40 frameworks) and buries the universal
-  // section's hierarchy. Collapsed-by-default keeps the catalog scannable —
-  // the header carries the counts, expanding reveals that type's cards.
-  const accordionItems: AccordionItemProps[] = groups.map((entries) => {
-    const { providerType, accountCount } = entries[0];
-    return {
-      key: providerType,
-      title: (
-        <span className="flex min-w-0 items-center gap-3">
-          <span className="flex shrink-0 items-center gap-2 text-sm font-medium">
-            <ProviderTypeIcon type={providerType} size={18} />
-            {PROVIDER_DISPLAY_NAMES[providerType]}
-          </span>
-          <span className="text-text-neutral-tertiary truncate text-xs">
-            {entries.length} {entries.length === 1 ? "framework" : "frameworks"}{" "}
-            · {accountCount} providers
-          </span>
-        </span>
-      ),
-      content: (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
-          {entries.map((entry) => (
-            <CrossAccountFrameworkCard
-              key={`${entry.providerType}-${entry.complianceId}`}
-              {...entry}
-            />
-          ))}
-        </div>
-      ),
-      items: [],
-    };
-  });
+  const watchlist = await loadComplianceWatchlistContext();
+  const catalogIndex = buildWatchlistIndex(watchlist.entries);
+
+  const listGroups: CrossAccountGroup[] = groups.map((entries) => ({
+    providerType: entries[0].providerType,
+    accountCount: entries[0].accountCount,
+    entries: entries.map((entry) => {
+      const catalogEntry = resolveCatalogEntry(catalogIndex, {
+        complianceId: entry.complianceId,
+        providerType: entry.providerType,
+      });
+
+      return {
+        ...entry,
+        pinned: catalogEntry?.inWatchlist === true,
+        watchlistEntryId: catalogEntry?.watchlistEntryId ?? null,
+      };
+    }),
+  }));
 
   return (
     <Section>
@@ -188,7 +157,11 @@ export const CrossAccountOverviewSection = async ({
         </SectionDescription>
       </SectionHeader>
       <SectionContent>
-        <Accordion items={accordionItems} selectionMode="multiple" />
+        <CrossAccountFrameworkList
+          groups={listGroups}
+          canManageWatchlist={watchlist.canManage}
+          watchlistEnabled={watchlist.entries.length > 0}
+        />
       </SectionContent>
     </Section>
   );
