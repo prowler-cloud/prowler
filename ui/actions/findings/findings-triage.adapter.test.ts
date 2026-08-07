@@ -431,6 +431,67 @@ describe("adaptFindingTriageSummariesResponse", () => {
 });
 
 describe("adaptFindingTriageDetailResponse", () => {
+  it("should map expired Manual Pass metadata for provenance presentation", () => {
+    // Given
+    const input = {
+      data: {
+        id: "triage-expired-1",
+        type: "finding-triages",
+        attributes: {
+          finding_id: "finding-expired-1",
+          finding_uid: "prowler-finding-expired-uid-1",
+          status: FINDING_TRIAGE_STATUS.OPEN,
+          raw_finding_status: "MANUAL",
+          manual_pass_active: false,
+          manual_pass_evidence: "The control owner verified the requirement.",
+          manual_pass_created_by_name: "Alex Security",
+          manual_pass_created_at: "2026-06-03T10:00:00Z",
+          manual_pass_expires_at: "2026-06-17T10:00:00Z",
+          manual_pass_deactivated_at: null,
+        },
+      },
+    };
+
+    // When
+    const detail = adaptFindingTriageDetailResponse(input);
+
+    // Then
+    expect(detail).toEqual(
+      expect.objectContaining({
+        status: FINDING_TRIAGE_STATUS.OPEN,
+        manualPassActive: false,
+        manualPassEvidence: "The control owner verified the requirement.",
+        manualPassCreatedByName: "Alex Security",
+        manualPassCreatedAt: "2026-06-03T10:00:00Z",
+        manualPassExpiresAt: "2026-06-17T10:00:00Z",
+        manualPassDeactivatedAt: null,
+      }),
+    );
+  });
+
+  it("should normalize missing Manual Pass evidence without inventing content", () => {
+    // Given
+    const input = {
+      data: {
+        id: "triage-without-evidence",
+        type: "finding-triages",
+        attributes: {
+          status: FINDING_TRIAGE_STATUS.OPEN,
+          manual_pass_active: false,
+          manual_pass_created_at: "2026-06-03T10:00:00Z",
+          manual_pass_expires_at: "2026-06-17T10:00:00Z",
+        },
+      },
+    };
+
+    // When
+    const detail = adaptFindingTriageDetailResponse(input);
+
+    // Then
+    expect(detail.manualPassEvidence).toBeNull();
+    expect(detail.manualPassDeactivatedAt).toBeNull();
+  });
+
   it("should normalize provisional detail payloads into modal DTOs", () => {
     // Given
     const input = findingTriageDetailResponse;

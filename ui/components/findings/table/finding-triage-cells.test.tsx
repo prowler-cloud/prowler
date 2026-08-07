@@ -118,6 +118,9 @@ function makeTriageDetail(
     manualPassCreatedByName: null,
     manualPassCreatedAt: null,
     manualPassExpiresAt: null,
+    manualPassActive: null,
+    manualPassEvidence: null,
+    manualPassDeactivatedAt: null,
     ...overrides,
   };
 }
@@ -516,7 +519,7 @@ describe("finding triage cells", () => {
     );
   });
 
-  it("should show accessible loading state and prevent duplicate manual pass requests", async () => {
+  it("should keep Manual Pass provenance stable while preventing duplicate detail requests", async () => {
     // Given
     const user = userEvent.setup();
     let resolveDetail: (detail: FindingTriageDetail) => void = () => {};
@@ -529,30 +532,36 @@ describe("finding triage cells", () => {
     render(
       <FindingTriageStatusCell
         triage={makeTriageSummary({
+          status: FINDING_TRIAGE_STATUS.RESOLVED,
+          label: "Resolved",
+          manualPassProvenance: "Manually verified",
           rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
         })}
         onTriageUpdateAction={vi.fn()}
         onTriageDetailLoadAction={onTriageDetailLoadAction}
       />,
     );
-    await user.click(screen.getByRole("combobox", { name: "Triage status" }));
+    const provenanceControl = screen.getByRole("button", {
+      name: "View Manual Pass details",
+    });
 
     // When
-    await user.click(screen.getByRole("option", { name: "Resolved" }));
+    await user.click(provenanceControl);
+    await user.click(provenanceControl);
 
     // Then
-    expect(screen.getByRole("status")).toHaveTextContent(
-      "Loading current triage details...",
-    );
-    expect(screen.getByRole("status")).toBeVisible();
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
     expect(
-      screen.getByRole("combobox", { name: "Triage status" }),
-    ).toBeDisabled();
+      screen.queryByText("Loading current triage details..."),
+    ).not.toBeInTheDocument();
+    expect(provenanceControl).toBeVisible();
+    expect(provenanceControl).toBeDisabled();
+    expect(provenanceControl.parentElement).toHaveClass("w-32");
     expect(onTriageDetailLoadAction).toHaveBeenCalledOnce();
 
     resolveDetail(makeTriageDetail());
     expect(
-      await screen.findByRole("dialog", { name: "Add Triage Note" }),
+      await screen.findByRole("dialog", { name: "Manual Pass Details" }),
     ).toBeVisible();
   });
 
@@ -633,6 +642,186 @@ describe("finding triage cells", () => {
     expect(
       screen.getByRole("combobox", { name: "Triage status" }),
     ).not.toHaveTextContent("Manually verified");
+  });
+
+  it("should left-align the clickable Manual Pass provenance with the status picker", () => {
+    // Given / When
+    render(
+      <FindingTriageStatusCell
+        triage={makeTriageSummary({
+          status: FINDING_TRIAGE_STATUS.RESOLVED,
+          label: "Resolved",
+          manualPassProvenance: "Manually verified",
+          rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+        })}
+        onTriageUpdateAction={vi.fn()}
+        onTriageDetailLoadAction={vi.fn()}
+      />,
+    );
+
+    const statusControl = screen.getByRole("combobox", {
+      name: "Triage status",
+    });
+    const provenanceControl = screen.getByRole("button", {
+      name: "View Manual Pass details",
+    });
+    const alignmentContainer = provenanceControl.parentElement;
+
+    // Then
+    expect(alignmentContainer).toContainElement(statusControl.parentElement);
+    expect(alignmentContainer).toHaveClass("w-32", "items-start");
+  });
+
+  it("should load authoritative Manual Pass evidence from the provenance action", async () => {
+    // Given
+    const user = userEvent.setup();
+    const onTriageUpdateAction = vi.fn();
+    const onRowClick = vi.fn();
+    const triage = makeTriageSummary({
+      status: FINDING_TRIAGE_STATUS.RESOLVED,
+      label: "Resolved",
+      manualPassProvenance: "Manually verified",
+      rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+    });
+    const detail = makeTriageDetail({
+      status: FINDING_TRIAGE_STATUS.RESOLVED,
+      label: "Resolved",
+      manualPassActive: true,
+      manualPassEvidence: "The control owner verified the production evidence.",
+      manualPassCreatedByName: "Alex Security",
+      manualPassCreatedAt: "2026-06-03T10:00:00Z",
+      manualPassExpiresAt: "2026-06-17T10:00:00Z",
+    });
+    const onTriageDetailLoadAction = vi.fn().mockResolvedValue(detail);
+    render(
+      <div onClick={onRowClick}>
+        <FindingTriageStatusCell
+          triage={triage}
+          findingContext={{ title: "S3 bucket allows public reads" }}
+          onTriageUpdateAction={onTriageUpdateAction}
+          onTriageDetailLoadAction={onTriageDetailLoadAction}
+        />
+      </div>,
+    );
+
+    // When
+    await user.click(
+      screen.getByRole("button", { name: "View Manual Pass details" }),
+    );
+
+    // Then
+    expect(onTriageDetailLoadAction).toHaveBeenCalledWith(triage);
+    expect(onRowClick).not.toHaveBeenCalled();
+    const dialog = await screen.findByRole("dialog", {
+      name: "Manual Pass Details",
+    });
+    expect(
+      within(dialog).getByText(
+        "The control owner verified the production evidence.",
+      ),
+    ).toBeVisible();
+    expect(
+      within(dialog).getByText(/Manually verified by Alex Security/i),
+    ).toBeVisible();
+    expect(within(dialog).getByText("Active")).toBeVisible();
+    expect(within(dialog).getByText("Jun 03, 2026")).toBeVisible();
+    expect(within(dialog).getByText("Jun 17, 2026")).toBeVisible();
+    expect(
+      within(dialog).getByRole("combobox", { name: "Triage status" }),
+    ).toBeDisabled();
+    expect(
+      within(dialog).queryByLabelText("Note text"),
+    ).not.toBeInTheDocument();
+    expect(
+      within(dialog).queryByLabelText("Manual pass evidence"),
+    ).not.toBeInTheDocument();
+    expect(
+      within(dialog).queryByRole("button", { name: "Save" }),
+    ).not.toBeInTheDocument();
+    expect(onTriageUpdateAction).not.toHaveBeenCalled();
+  });
+
+  it("should keep Manual Pass provenance inert without a detail loader", () => {
+    // Given / When
+    render(
+      <FindingTriageStatusCell
+        triage={makeTriageSummary({
+          status: FINDING_TRIAGE_STATUS.RESOLVED,
+          label: "Resolved",
+          manualPassProvenance: "Manually verified",
+          rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+        })}
+        onTriageUpdateAction={vi.fn()}
+      />,
+    );
+
+    // Then
+    expect(screen.getByText("Manually verified")).toBeVisible();
+    expect(
+      screen.queryByRole("button", { name: "View Manual Pass details" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("should report a failed Manual Pass provenance detail load", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(
+      <FindingTriageStatusCell
+        triage={makeTriageSummary({
+          status: FINDING_TRIAGE_STATUS.RESOLVED,
+          label: "Resolved",
+          manualPassProvenance: "Manually verified",
+          rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+        })}
+        onTriageUpdateAction={vi.fn()}
+        onTriageDetailLoadAction={vi
+          .fn()
+          .mockRejectedValue(new Error("load failed"))}
+      />,
+    );
+
+    // When
+    await user.click(
+      screen.getByRole("button", { name: "View Manual Pass details" }),
+    );
+
+    // Then
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Could not load current triage details.",
+    );
+    expect(
+      screen.queryByRole("dialog", { name: "Manual Pass Details" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("should handle missing Manual Pass detail without opening an empty modal", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(
+      <FindingTriageStatusCell
+        triage={makeTriageSummary({
+          status: FINDING_TRIAGE_STATUS.RESOLVED,
+          label: "Resolved",
+          manualPassProvenance: "Manually verified",
+          rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+        })}
+        onTriageUpdateAction={vi.fn()}
+        onTriageDetailLoadAction={vi.fn().mockResolvedValue(undefined)}
+      />,
+    );
+
+    // When
+    await user.click(
+      screen.getByRole("button", { name: "View Manual Pass details" }),
+    );
+
+    // Then
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Could not load current triage details.",
+    );
+    expect(
+      screen.queryByRole("dialog", { name: "Manual Pass Details" }),
+    ).not.toBeInTheDocument();
   });
 
   it("renders a read-only triage status badge with the status color", () => {

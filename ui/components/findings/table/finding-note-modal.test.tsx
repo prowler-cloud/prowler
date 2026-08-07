@@ -70,6 +70,7 @@ import {
 } from "@/types/findings-triage";
 
 import {
+  FINDING_NOTE_MODAL_MODE,
   FindingNoteModal,
   type FindingTriageContext,
 } from "./finding-note-modal";
@@ -92,9 +93,12 @@ function makeTriageDetail(
     noteBody: "Existing investigation note",
     maxNoteLength: 500,
     rawFindingStatus: RAW_FINDING_STATUS.FAIL,
+    manualPassActive: null,
+    manualPassEvidence: null,
     manualPassCreatedByName: null,
     manualPassCreatedAt: null,
     manualPassExpiresAt: null,
+    manualPassDeactivatedAt: null,
     ...overrides,
   };
 }
@@ -114,11 +118,13 @@ function renderNoteModal({
     resource: "production-bucket",
     provider: "production-account",
   },
+  mode,
 }: {
   triage?: FindingTriageDetail;
   onTriageUpdateAction?: (input: UpdateFindingTriageInput) => void;
   onOpenChange?: (open: boolean) => void;
   findingContext?: FindingTriageContext;
+  mode?: (typeof FINDING_NOTE_MODAL_MODE)[keyof typeof FINDING_NOTE_MODAL_MODE];
 } = {}) {
   render(
     <FindingNoteModal
@@ -126,6 +132,7 @@ function renderNoteModal({
       onOpenChange={onOpenChange}
       triage={triage}
       findingContext={findingContext}
+      mode={mode}
       onTriageUpdateAction={onTriageUpdateAction}
     />,
   );
@@ -490,6 +497,7 @@ describe("FindingNoteModal", () => {
     // Then
     expect(screen.queryByText(/valid for \d+ days/i)).toBeNull();
     expect(screen.getByLabelText("Manual pass evidence")).toHaveValue("");
+    expect(screen.getByLabelText("Manual pass evidence")).toBeRequired();
     expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
   });
 
@@ -638,6 +646,8 @@ describe("FindingNoteModal", () => {
         status: FINDING_TRIAGE_STATUS.RESOLVED,
         label: "Resolved",
         rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+        manualPassActive: true,
+        manualPassEvidence: "The active control evidence was reviewed.",
         manualPassCreatedByName: "Alex Security",
         manualPassCreatedAt: "2026-06-03T10:00:00Z",
         manualPassExpiresAt: "2026-06-17T10:00:00Z",
@@ -654,9 +664,139 @@ describe("FindingNoteModal", () => {
     expect(attestedRow?.nextElementSibling).toBe(validUntilRow);
     expect(screen.getByText("Jun 03, 2026")).toBeVisible();
     expect(screen.getByText("Jun 17, 2026")).toBeVisible();
+    expect(
+      screen.getByText("The active control evidence was reviewed."),
+    ).toBeVisible();
+    expect(screen.queryByText("Expired")).not.toBeInTheDocument();
     expect(screen.getByLabelText("Note text")).toHaveValue(
       "Existing investigation note",
     );
     expect(screen.queryByLabelText("Manual pass evidence")).toBeNull();
+  });
+
+  it("should show expired Manual Pass provenance separately from required renewal evidence", async () => {
+    // Given
+    const user = userEvent.setup();
+    renderNoteModal({
+      triage: makeTriageDetail({
+        status: FINDING_TRIAGE_STATUS.OPEN,
+        label: "Open",
+        rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+        manualPassActive: false,
+        manualPassEvidence: "The control owner verified the requirement.",
+        manualPassCreatedByName: "Alex Security",
+        manualPassCreatedAt: "2026-06-03T10:00:00Z",
+        manualPassExpiresAt: "2026-06-17T10:00:00Z",
+        manualPassDeactivatedAt: null,
+      }),
+    });
+
+    // Then
+    expect(
+      screen.getByText(/Previous Manual Pass by Alex Security/i),
+    ).toBeVisible();
+    expect(screen.getByText("Expired")).toBeVisible();
+    expect(
+      screen.getByText("The control owner verified the requirement."),
+    ).toBeVisible();
+    expect(
+      screen.queryByDisplayValue("The control owner verified the requirement."),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText("Jun 03, 2026")).toBeVisible();
+    expect(screen.getByText("Jun 17, 2026")).toBeVisible();
+
+    // When
+    await user.click(screen.getByRole("combobox", { name: "Triage status" }));
+    await user.click(screen.getByRole("option", { name: "Resolved" }));
+
+    // Then
+    expect(screen.getByLabelText("Manual pass evidence")).toHaveValue("");
+    expect(screen.getByLabelText("Manual pass evidence")).toBeRequired();
+    expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
+    expect(
+      screen.getByText("The control owner verified the requirement."),
+    ).toBeVisible();
+  });
+
+  it("should show expired provenance safely when prior evidence is missing", () => {
+    // Given / When
+    renderNoteModal({
+      triage: makeTriageDetail({
+        status: FINDING_TRIAGE_STATUS.OPEN,
+        label: "Open",
+        rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+        manualPassActive: false,
+        manualPassEvidence: null,
+        manualPassCreatedAt: "2026-06-03T10:00:00Z",
+        manualPassExpiresAt: "2026-06-17T10:00:00Z",
+      }),
+    });
+
+    // Then
+    expect(screen.getByText(/Previous Manual Pass/i)).toBeVisible();
+    expect(screen.getByText("Expired")).toBeVisible();
+    expect(screen.queryByText("Evidence")).not.toBeInTheDocument();
+  });
+
+  it("should render only the Manual Pass evidence value with primary text", () => {
+    // Given / When
+    renderNoteModal({
+      mode: FINDING_NOTE_MODAL_MODE.MANUAL_PASS_DETAILS,
+      triage: makeTriageDetail({
+        status: FINDING_TRIAGE_STATUS.RESOLVED,
+        label: "Resolved",
+        rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+        manualPassActive: true,
+        manualPassEvidence: "Tested.",
+        manualPassCreatedAt: "2026-06-03T10:00:00Z",
+        manualPassExpiresAt: "2026-06-17T10:00:00Z",
+      }),
+    });
+
+    // Then
+    expect(screen.getByText("Tested.")).toHaveClass(
+      "text-text-neutral-primary",
+    );
+    expect(screen.getByText("Evidence")).not.toHaveClass(
+      "text-text-neutral-primary",
+    );
+  });
+
+  it("should show inactive Manual Pass details without edit or submit controls", () => {
+    // Given / When
+    renderNoteModal({
+      mode: FINDING_NOTE_MODAL_MODE.MANUAL_PASS_DETAILS,
+      triage: makeTriageDetail({
+        status: FINDING_TRIAGE_STATUS.RESOLVED,
+        label: "Resolved",
+        rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+        manualPassActive: false,
+        manualPassEvidence: null,
+        manualPassCreatedByName: "Alex Security",
+        manualPassCreatedAt: "2026-06-03T10:00:00Z",
+        manualPassExpiresAt: "2026-06-17T10:00:00Z",
+        manualPassDeactivatedAt: "2026-06-10T10:00:00Z",
+      }),
+    });
+
+    // Then
+    const dialog = screen.getByRole("dialog", { name: "Manual Pass Details" });
+    expect(within(dialog).getByText("Inactive")).toBeVisible();
+    expect(within(dialog).getByText("Inactive on")).toBeVisible();
+    expect(within(dialog).getByText("Jun 10, 2026")).toBeVisible();
+    expect(within(dialog).queryByText("Evidence")).not.toBeInTheDocument();
+    expect(
+      within(dialog).getByRole("combobox", { name: "Triage status" }),
+    ).toBeDisabled();
+    expect(
+      within(dialog).queryByLabelText("Note text"),
+    ).not.toBeInTheDocument();
+    expect(
+      within(dialog).queryByLabelText("Manual pass evidence"),
+    ).not.toBeInTheDocument();
+    expect(
+      within(dialog).queryByRole("button", { name: "Save" }),
+    ).not.toBeInTheDocument();
+    expect(within(dialog).getByRole("button", { name: "Close" })).toBeVisible();
   });
 });

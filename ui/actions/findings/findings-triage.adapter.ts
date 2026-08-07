@@ -41,9 +41,12 @@ interface FindingTriageAttributes {
   note_id?: string;
   raw_finding_status?: unknown;
   raw_status?: unknown;
+  manual_pass_active?: unknown;
+  manual_pass_evidence?: unknown;
   manual_pass_created_by_name?: unknown;
   manual_pass_created_at?: unknown;
   manual_pass_expires_at?: unknown;
+  manual_pass_deactivated_at?: unknown;
 }
 
 interface JsonApiResource {
@@ -250,6 +253,14 @@ export function adaptFindingTriageDetailResponse(
     rawFindingStatus: isRawFindingStatus(attributes.raw_finding_status)
       ? attributes.raw_finding_status
       : null,
+    manualPassActive:
+      typeof attributes.manual_pass_active === "boolean"
+        ? attributes.manual_pass_active
+        : null,
+    manualPassEvidence:
+      typeof attributes.manual_pass_evidence === "string"
+        ? attributes.manual_pass_evidence
+        : null,
     manualPassCreatedByName:
       typeof attributes.manual_pass_created_by_name === "string"
         ? attributes.manual_pass_created_by_name
@@ -261,6 +272,10 @@ export function adaptFindingTriageDetailResponse(
     manualPassExpiresAt:
       typeof attributes.manual_pass_expires_at === "string"
         ? attributes.manual_pass_expires_at
+        : null,
+    manualPassDeactivatedAt:
+      typeof attributes.manual_pass_deactivated_at === "string"
+        ? attributes.manual_pass_deactivated_at
         : null,
   };
 }

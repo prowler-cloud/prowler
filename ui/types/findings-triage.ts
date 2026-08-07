@@ -123,9 +123,12 @@ export interface FindingTriageDetail extends FindingTriageSummary {
   noteBody: string;
   maxNoteLength: typeof FINDING_TRIAGE_NOTE_MAX_LENGTH;
   rawFindingStatus: RawFindingStatus | null;
+  manualPassActive: boolean | null;
+  manualPassEvidence: string | null;
   manualPassCreatedByName: string | null;
   manualPassCreatedAt: string | null;
   manualPassExpiresAt: string | null;
+  manualPassDeactivatedAt: string | null;
 }
 
 export interface FindingTriageUpdateResult {

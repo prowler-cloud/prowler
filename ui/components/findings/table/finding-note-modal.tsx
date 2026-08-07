@@ -57,9 +57,18 @@ interface FindingNoteModalProps {
   onOpenChange: (open: boolean) => void;
   triage: FindingTriageDetail;
   findingContext: FindingTriageContext;
+  mode?: FindingNoteModalMode;
   initialStatus?: FindingTriageModalStatus;
   onTriageUpdateAction?: FindingTriageUpdateHandler;
 }
+
+export const FINDING_NOTE_MODAL_MODE = {
+  EDIT: "edit",
+  MANUAL_PASS_DETAILS: "manual-pass-details",
+} as const;
+
+export type FindingNoteModalMode =
+  (typeof FINDING_NOTE_MODAL_MODE)[keyof typeof FINDING_NOTE_MODAL_MODE];
 
 const REMEDIATING_INFO_COPY =
   "Once this finding is remediated, if in the following scan its status changes to Pass, it will be automatically changed to Resolved";
@@ -69,6 +78,7 @@ export function FindingNoteModal({
   onOpenChange,
   triage,
   findingContext,
+  mode = FINDING_NOTE_MODAL_MODE.EDIT,
   initialStatus,
   onTriageUpdateAction,
 }: FindingNoteModalProps) {
@@ -90,8 +100,13 @@ export function FindingNoteModal({
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const noteTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const isManualPassDetails =
+    mode === FINDING_NOTE_MODAL_MODE.MANUAL_PASS_DETAILS;
   const canEdit =
-    triage.canEdit && Boolean(onTriageUpdateAction) && !isSubmitting;
+    !isManualPassDetails &&
+    triage.canEdit &&
+    Boolean(onTriageUpdateAction) &&
+    !isSubmitting;
   const isManualPassSelected =
     selectedStatus === FINDING_TRIAGE_STATUS.RESOLVED &&
     triage.rawFindingStatus === RAW_FINDING_STATUS.MANUAL &&
@@ -109,9 +124,17 @@ export function FindingNoteModal({
     selectedStatus === FINDING_TRIAGE_STATUS.REMEDIATING;
   const isStatusLocked = isTriageStatusLocked(triage.status);
   const shouldShowManualPassProvenance =
-    triage.status === FINDING_TRIAGE_STATUS.RESOLVED &&
-    triage.manualPassCreatedAt !== null &&
-    triage.manualPassExpiresAt !== null;
+    triage.manualPassCreatedAt !== null && triage.manualPassExpiresAt !== null;
+  const isPreviousManualPass = triage.manualPassActive === false;
+  const manualPassState =
+    triage.manualPassActive === true
+      ? "Active"
+      : isPreviousManualPass
+        ? triage.manualPassDeactivatedAt
+          ? "Inactive"
+          : "Expired"
+        : null;
+  const hasManualPassEvidence = Boolean(triage.manualPassEvidence?.trim());
   // Opened from a dropdown item: move focus into the dialog on mount so Radix's
   // aria-hidden is not applied to the still-focused dropdown that opened it.
   const handleOpenAutoFocus = (event: Event) => {
@@ -186,27 +209,39 @@ export function FindingNoteModal({
       open={open}
       onOpenChange={handleOpenChange}
       onOpenAutoFocus={handleOpenAutoFocus}
-      title="Add Triage Note"
+      title={isManualPassDetails ? "Manual Pass Details" : "Add Triage Note"}
+      description={
+        isManualPassDetails
+          ? "Authoritative Manual Pass evidence and provenance."
+          : undefined
+      }
       size="lg"
     >
       {/* min-w-0: the form is a grid item of DialogContent; without it, long
           unbreakable content (e.g. resource UIDs) widens the grid track past
           the modal instead of truncating. */}
       <form className="flex min-w-0 flex-col gap-5" onSubmit={handleSubmit}>
-        <div className="text-text-neutral-secondary flex flex-wrap items-center gap-2 text-sm">
-          <Info className="size-4 shrink-0" />
-          <span>Learn how triage states work in the</span>
-          <Button variant="link" size="link-sm" className="h-auto p-0" asChild>
-            <a
-              href={DOCS_URLS.FINDINGS_TRIAGE}
-              target="_blank"
-              rel="noopener noreferrer"
+        {!isManualPassDetails && (
+          <div className="text-text-neutral-secondary flex flex-wrap items-center gap-2 text-sm">
+            <Info className="size-4 shrink-0" />
+            <span>Learn how triage states work in the</span>
+            <Button
+              variant="link"
+              size="link-sm"
+              className="h-auto p-0"
+              asChild
             >
-              <ExternalLink className="size-3.5 shrink-0" />
-              <span>Triage documentation</span>
-            </a>
-          </Button>
-        </div>
+              <a
+                href={DOCS_URLS.FINDINGS_TRIAGE}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <ExternalLink className="size-3.5 shrink-0" />
+                <span>Triage documentation</span>
+              </a>
+            </Button>
+          </div>
+        )}
 
         <div className="border-border-input-primary flex items-center gap-4 rounded-lg border p-3">
           <div className="bg-bg-neutral-tertiary flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-lg">
@@ -244,7 +279,11 @@ export function FindingNoteModal({
           <div className="w-1/2 min-w-44">
             <FindingTriageStatusControl
               origin={FINDING_TRIAGE_ORIGIN.MODAL}
-              triage={isSubmitting ? { ...triage, canEdit: false } : triage}
+              triage={
+                isSubmitting || isManualPassDetails
+                  ? { ...triage, canEdit: false }
+                  : triage
+              }
               value={selectedStatus}
               includeManualPass={
                 triage.rawFindingStatus === RAW_FINDING_STATUS.MANUAL
@@ -266,13 +305,34 @@ export function FindingNoteModal({
           <Alert variant="info">
             <AlertDescription>
               <div className="flex flex-col gap-2">
-                <span>
-                  {MANUAL_PASS_PROVENANCE}
-                  {triage.manualPassCreatedByName
-                    ? ` by ${triage.manualPassCreatedByName}`
-                    : ""}
-                  .
-                </span>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span>
+                    {isPreviousManualPass
+                      ? "Previous Manual Pass"
+                      : MANUAL_PASS_PROVENANCE}
+                    {triage.manualPassCreatedByName
+                      ? ` by ${triage.manualPassCreatedByName}`
+                      : ""}
+                    .
+                  </span>
+                  {manualPassState && (
+                    <Badge
+                      variant={
+                        manualPassState === "Active" ? "success" : "warning"
+                      }
+                    >
+                      {manualPassState}
+                    </Badge>
+                  )}
+                </div>
+                {hasManualPassEvidence && (
+                  <div className="flex flex-col gap-1">
+                    <span className="font-medium">Evidence</span>
+                    <p className="text-text-neutral-primary">
+                      {triage.manualPassEvidence}
+                    </p>
+                  </div>
+                )}
                 <div className="flex flex-col gap-1">
                   <div className="flex items-center gap-2">
                     <span>Attested</span>
@@ -282,12 +342,27 @@ export function FindingNoteModal({
                     />
                   </div>
                   <div className="flex items-center gap-2">
-                    <span>Valid until</span>
+                    <span>
+                      {triage.manualPassDeactivatedAt
+                        ? "Was valid until"
+                        : isPreviousManualPass
+                          ? "Expired on"
+                          : "Valid until"}
+                    </span>
                     <DateWithTime
                       inline
                       dateTime={triage.manualPassExpiresAt}
                     />
                   </div>
+                  {triage.manualPassDeactivatedAt && (
+                    <div className="flex items-center gap-2">
+                      <span>Inactive on</span>
+                      <DateWithTime
+                        inline
+                        dateTime={triage.manualPassDeactivatedAt}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             </AlertDescription>
@@ -314,76 +389,99 @@ export function FindingNoteModal({
           </Alert>
         )}
 
-        <div className="space-y-2">
-          {isManualPassSelected ? (
-            <Textarea
-              id="finding-manual-pass-evidence"
-              aria-label="Manual pass evidence"
-              value={manualPassEvidence}
-              maxLength={triage.maxNoteLength}
-              disabled={!canEdit}
-              textareaSize="lg"
-              onChange={(event) => setManualPassEvidence(event.target.value)}
-            />
-          ) : (
-            <Textarea
-              ref={noteTextareaRef}
-              id="finding-triage-note"
-              aria-label="Note text"
-              value={note}
-              maxLength={triage.maxNoteLength}
-              disabled={!canEdit}
-              textareaSize="lg"
-              onChange={(event) => setNote(event.target.value)}
-            />
-          )}
-          <div className="flex items-center justify-end">
-            <p className="text-text-neutral-tertiary shrink-0 text-xs">
-              {isManualPassSelected ? manualPassEvidence.length : note.length}/
-              {triage.maxNoteLength}
-            </p>
-          </div>
-        </div>
-
-        {/* mt-3 lifts the gap-5 form spacing to 32px so the distance to the
-            footer matches the launch scan and alert modals. */}
-        <div className="mt-3 flex w-full justify-between gap-4">
-          <Button
-            type="button"
-            variant="outline"
-            size="lg"
-            disabled={isSubmitting}
-            onClick={() => handleOpenChange(false)}
-          >
-            Cancel
-          </Button>
-          <span className="relative inline-flex">
-            {isCloudOnly && (
-              <span className="pointer-events-none absolute top-0 right-0 z-10 translate-x-1/3 -translate-y-1/2">
-                <Badge variant="cloud">Cloud</Badge>
-              </span>
-            )}
+        {isManualPassDetails ? (
+          <div className="flex w-full justify-end">
             <Button
-              type={canSubmit ? "submit" : "button"}
+              type="button"
+              variant="ghost"
               size="lg"
-              aria-label={
-                isCloudOnly ? "Save - available in Prowler Cloud" : undefined
-              }
-              disabled={!canSubmit && !isCloudOnly}
-              onClick={
-                isCloudOnly
-                  ? () => openCloudUpgrade(CLOUD_UPGRADE_FEATURE.FINDING_TRIAGE)
-                  : undefined
-              }
+              onClick={() => handleOpenChange(false)}
             >
-              {isSubmitting
-                ? "Saving..."
-                : canEdit || isCloudOnly
-                  ? "Save"
-                  : "Unavailable"}
+              Close
             </Button>
-          </span>
-        </div>
+          </div>
+        ) : (
+          <>
+            <div className="space-y-2">
+              {isManualPassSelected ? (
+                <Textarea
+                  id="finding-manual-pass-evidence"
+                  aria-label="Manual pass evidence"
+                  required
+                  value={manualPassEvidence}
+                  maxLength={triage.maxNoteLength}
+                  disabled={!canEdit}
+                  textareaSize="lg"
+                  onChange={(event) =>
+                    setManualPassEvidence(event.target.value)
+                  }
+                />
+              ) : (
+                <Textarea
+                  ref={noteTextareaRef}
+                  id="finding-triage-note"
+                  aria-label="Note text"
+                  value={note}
+                  maxLength={triage.maxNoteLength}
+                  disabled={!canEdit}
+                  textareaSize="lg"
+                  onChange={(event) => setNote(event.target.value)}
+                />
+              )}
+              <div className="flex items-center justify-end">
+                <p className="text-text-neutral-tertiary shrink-0 text-xs">
+                  {isManualPassSelected
+                    ? manualPassEvidence.length
+                    : note.length}
+                  /{triage.maxNoteLength}
+                </p>
+              </div>
+            </div>
+
+            {/* mt-3 lifts the gap-5 form spacing to 32px so the distance to the
+                footer matches the launch scan and alert modals. */}
+            <div className="mt-3 flex w-full justify-between gap-4">
+              <Button
+                type="button"
+                variant="outline"
+                size="lg"
+                disabled={isSubmitting}
+                onClick={() => handleOpenChange(false)}
+              >
+                Cancel
+              </Button>
+              <span className="relative inline-flex">
+                {isCloudOnly && (
+                  <span className="pointer-events-none absolute top-0 right-0 z-10 translate-x-1/3 -translate-y-1/2">
+                    <Badge variant="cloud">Cloud</Badge>
+                  </span>
+                )}
+                <Button
+                  type={canSubmit ? "submit" : "button"}
+                  size="lg"
+                  aria-label={
+                    isCloudOnly
+                      ? "Save - available in Prowler Cloud"
+                      : undefined
+                  }
+                  disabled={!canSubmit && !isCloudOnly}
+                  onClick={
+                    isCloudOnly
+                      ? () =>
+                          openCloudUpgrade(CLOUD_UPGRADE_FEATURE.FINDING_TRIAGE)
+                      : undefined
+                  }
+                >
+                  {isSubmitting
+                    ? "Saving..."
+                    : canEdit || isCloudOnly
+                      ? "Save"
+                      : "Unavailable"}
+                </Button>
+              </span>
+            </div>
+          </>
+        )}
       </form>
     </Modal>
   );

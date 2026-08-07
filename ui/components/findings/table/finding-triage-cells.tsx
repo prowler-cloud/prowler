@@ -30,8 +30,10 @@ import {
 } from "@/types/findings-triage";
 
 import {
+  FINDING_NOTE_MODAL_MODE,
   FindingNoteModal,
   type FindingTriageContext,
+  type FindingNoteModalMode,
 } from "./finding-note-modal";
 import {
   FindingTriageStatusControl,
@@ -83,6 +85,9 @@ const getTriageDetailFromSummary = (
   manualPassCreatedByName: null,
   manualPassCreatedAt: null,
   manualPassExpiresAt: null,
+  manualPassActive: null,
+  manualPassEvidence: null,
+  manualPassDeactivatedAt: null,
 });
 
 export function FindingTriageStatusCell({
@@ -105,6 +110,8 @@ export function FindingTriageStatusCell({
   } | null>(null);
   const [manualPassDetail, setManualPassDetail] =
     useState<FindingTriageDetail>();
+  const [manualPassModalMode, setManualPassModalMode] =
+    useState<FindingNoteModalMode>(FINDING_NOTE_MODAL_MODE.EDIT);
   const [isManualPassModalOpen, setIsManualPassModalOpen] = useState(false);
   const [isManualPassLoading, setIsManualPassLoading] = useState(false);
   const [manualPassLoadError, setManualPassLoadError] = useState<string | null>(
@@ -162,7 +169,9 @@ export function FindingTriageStatusCell({
     }
   };
 
-  const handleManualPassRequest = async () => {
+  const handleManualPassRequest = async (
+    mode: FindingNoteModalMode = FINDING_NOTE_MODAL_MODE.EDIT,
+  ) => {
     if (!onTriageDetailLoadAction) {
       return;
     }
@@ -172,7 +181,13 @@ export function FindingTriageStatusCell({
 
     try {
       const detail = await onTriageDetailLoadAction(triage);
+
+      if (!detail) {
+        throw new Error("Missing triage detail");
+      }
+
       setManualPassDetail(detail);
+      setManualPassModalMode(mode);
       setIsManualPassModalOpen(true);
     } catch {
       setManualPassLoadError("Could not load current triage details.");
@@ -183,7 +198,7 @@ export function FindingTriageStatusCell({
 
   const control = (
     <div
-      className="flex flex-col gap-1"
+      className="flex w-32 flex-col items-start gap-1"
       onClick={(event) => event.stopPropagation()}
       onPointerDown={(event) => event.stopPropagation()}
     >
@@ -201,9 +216,28 @@ export function FindingTriageStatusCell({
         }
       />
       {displayedTriage.manualPassProvenance && (
-        <span className="text-text-neutral-tertiary text-xs">
-          {displayedTriage.manualPassProvenance}
-        </span>
+        <>
+          {onTriageDetailLoadAction ? (
+            <Button
+              type="button"
+              variant="link"
+              size="link-xs"
+              aria-label="View Manual Pass details"
+              disabled={isManualPassLoading}
+              onClick={() =>
+                void handleManualPassRequest(
+                  FINDING_NOTE_MODAL_MODE.MANUAL_PASS_DETAILS,
+                )
+              }
+            >
+              {displayedTriage.manualPassProvenance}
+            </Button>
+          ) : (
+            <span className="text-text-neutral-tertiary text-xs">
+              {displayedTriage.manualPassProvenance}
+            </span>
+          )}
+        </>
       )}
     </div>
   );
@@ -220,6 +254,7 @@ export function FindingTriageStatusCell({
         onOpenChange={setIsManualPassModalOpen}
         triage={manualPassDetail}
         findingContext={findingContext}
+        mode={manualPassModalMode}
         initialStatus={
           manualPassDetail.rawFindingStatus === RAW_FINDING_STATUS.MANUAL
             ? FINDING_TRIAGE_STATUS.RESOLVED
@@ -227,17 +262,16 @@ export function FindingTriageStatusCell({
               ? manualPassDetail.status
               : FINDING_TRIAGE_STATUS.OPEN
         }
-        onTriageUpdateAction={handleTriageUpdate}
+        onTriageUpdateAction={
+          manualPassModalMode === FINDING_NOTE_MODAL_MODE.EDIT
+            ? handleTriageUpdate
+            : undefined
+        }
       />
     ) : null;
   const statusContent = (
     <>
       {control}
-      {isManualPassLoading && (
-        <span className="text-text-neutral-tertiary text-xs" role="status">
-          Loading current triage details...
-        </span>
-      )}
       {manualPassLoadError && (
         <span className="text-text-error-primary text-xs" role="alert">
           {manualPassLoadError}

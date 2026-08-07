@@ -30,6 +30,9 @@ function makeTriageDetail(
     manualPassCreatedByName: null,
     manualPassCreatedAt: null,
     manualPassExpiresAt: null,
+    manualPassActive: null,
+    manualPassEvidence: null,
+    manualPassDeactivatedAt: null,
     ...overrides,
   };
 }
