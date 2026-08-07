@@ -9,6 +9,7 @@ import { z } from "zod";
 
 import { addProvider } from "@/actions/providers/providers";
 import { AwsMethodSelector } from "@/components/providers/organizations/aws-method-selector";
+import { AzureMethodSelector } from "@/components/providers/organizations/azure-method-selector";
 import { GcpMethodSelector } from "@/components/providers/organizations/gcp-method-selector";
 import { WizardInputField } from "@/components/providers/workflow/forms/fields";
 import { ProviderTitleDocs } from "@/components/providers/workflow/provider-title-docs";
@@ -20,7 +21,11 @@ import {
   KnownProviderType,
   ProviderType,
 } from "@/types";
-import { ORGANIZATION_TYPE, OrgFlowType } from "@/types/organizations";
+import {
+  ORGANIZATION_TYPE,
+  OrgFlowType,
+  toOrgFlowType,
+} from "@/types/organizations";
 
 import { RadioGroupProvider } from "../../radio-group-provider";
 
@@ -33,14 +38,15 @@ export interface ConnectAccountSuccessData {
   alias: string | null;
 }
 
-/** Provider types that offer an organization-onboarding method choice. */
+/**
+ * Provider types that offer an organization-onboarding method choice — exactly
+ * the ones with an onboarding flow, so a new flow type cannot be left with the
+ * single-provider form as its only path.
+ */
 function providerHasOrgMethod(
   providerType: ProviderType | undefined,
 ): providerType is OrgFlowType {
-  return (
-    providerType === ORGANIZATION_TYPE.AWS ||
-    providerType === ORGANIZATION_TYPE.GCP
-  );
+  return toOrgFlowType(providerType) !== undefined;
 }
 
 interface ConnectAccountFormProps {
@@ -389,6 +395,18 @@ export const ConnectAccountForm = ({
             />
           </>
         )}
+        {/* Step 2: Azure method selector (before choosing a method) */}
+        {prevStep === 2 && providerType === "azure" && method === null && (
+          <>
+            <ProviderTitleDocs providerType={providerType} />
+            <AzureMethodSelector
+              onSelectSingle={() => setMethod("single")}
+              onSelectOrganizations={() =>
+                onSelectOrganizations?.(ORGANIZATION_TYPE.AZURE)
+              }
+            />
+          </>
+        )}
         {/* Step 2: GCP method selector (before choosing a method) */}
         {prevStep === 2 && providerType === "gcp" && method === null && (
           <>
@@ -402,7 +420,7 @@ export const ConnectAccountForm = ({
           </>
         )}
         {/* Step 2: UID, alias form (providers without a method choice, or the
-            AWS/GCP single account/project method) */}
+            single account/subscription/project method) */}
         {prevStep === 2 && showUidForm && (
           <>
             <ProviderTitleDocs providerType={providerType} />

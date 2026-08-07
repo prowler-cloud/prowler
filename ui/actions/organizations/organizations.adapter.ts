@@ -5,6 +5,8 @@ import {
   ApplyDiscoveryPayload,
   AwsDiscoveryResult,
   AwsOrgHierarchy,
+  AzureDiscoveryResult,
+  AzureOrgHierarchy,
   GcpDiscoveryResult,
   GcpOrgHierarchy,
   NODE_KIND,
@@ -80,6 +82,41 @@ export function mapGcpDiscovery(result: GcpDiscoveryResult): GcpOrgHierarchy {
       label: project.display_name || project.project_id,
       parentId: project.parent,
       registration: project.registration,
+    })),
+  };
+}
+
+/**
+ * Ingestion mapper: Azure discovery wire result → normalized hierarchy model.
+ *
+ * A management group's identity is its canonical resource ID
+ * (`/providers/Microsoft.Management/managementGroups/{name}`), which is exactly
+ * what its children carry as `parent_id`, so nesting matches on that ref. The
+ * selected root group is collapsed away — it is absent from the node set, so
+ * groups and subscriptions parented by it rebuild as top-level.
+ */
+export function mapAzureDiscovery(
+  result: AzureDiscoveryResult,
+): AzureOrgHierarchy {
+  return {
+    orgType: ORGANIZATION_TYPE.AZURE,
+    organization: {
+      // Tenant id: what the user typed and what the organization stores as
+      // `external_id`.
+      uid: result.root.tenant_id,
+      name: result.root.display_name || result.root.name,
+    },
+    nodes: result.management_groups.map((group) => ({
+      id: group.id,
+      kind: NODE_KIND.MANAGEMENT_GROUP,
+      name: group.display_name || group.name,
+      parentId: group.parent_id,
+    })),
+    candidates: result.subscriptions.map((subscription) => ({
+      uid: subscription.subscription_id,
+      label: subscription.display_name || subscription.subscription_id,
+      parentId: subscription.parent_id,
+      registration: subscription.registration,
     })),
   };
 }
@@ -337,6 +374,14 @@ export function buildApplyPayload(
           hierarchy,
           selectedCandidateIds,
         ).map((id) => ({ id })),
+      };
+    case ORGANIZATION_TYPE.AZURE:
+      return {
+        orgType: ORGANIZATION_TYPE.AZURE,
+        subscriptions: selectedCandidateIds.map((id) => ({
+          subscription_id: id,
+          ...aliasOf(id),
+        })),
       };
     case ORGANIZATION_TYPE.GCP:
       return {

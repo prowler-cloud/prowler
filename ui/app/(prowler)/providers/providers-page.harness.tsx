@@ -38,6 +38,17 @@ interface MountOptions {
   hierarchyFailure?: HierarchyReadFailure;
 }
 
+/**
+ * Attributes a `POST /organizations` carries. `root_external_id` is deliberately
+ * absent: the API derives every type's root, so a test asserting the client does
+ * not send one reads it off the parsed body, not off this shape.
+ */
+export interface OrganizationCreateAttributes {
+  name?: string;
+  org_type?: string;
+  external_id?: string;
+}
+
 export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
   get applyCallCount(): number {
     return this.countRequests("POST", "/apply");
@@ -79,6 +90,27 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
   /** How many times the page fetched the organization list over HTTP. */
   get organizationFetchCount(): number {
     return this.countRequests("GET", "/organizations");
+  }
+
+  /**
+   * Attributes the organization was created with. Matched on the collection path
+   * itself rather than a substring: the nested `discover` and `apply` POSTs also
+   * live under `/organizations` and carry no body to read.
+   */
+  async createdOrganizationAttributes(): Promise<OrganizationCreateAttributes | null> {
+    const entry = [...this.requestLog]
+      .reverse()
+      .find(
+        (r) =>
+          r.method === "POST" &&
+          new URL(r.url).pathname.endsWith("/organizations"),
+      );
+    if (!entry) return null;
+
+    const body = (await entry.request.clone().json()) as {
+      data?: { attributes?: OrganizationCreateAttributes };
+    };
+    return body?.data?.attributes ?? null;
   }
 
   /**
@@ -157,7 +189,7 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
     await this.user.click(option);
   }
 
-  /** Click a method card in the AWS/GCP method selector by its title. */
+  /** Click a method card in a provider's method selector by its title. */
   async chooseMethod(name: RegExp): Promise<void> {
     const card = await this.waitFor(() => this.byRoleName("radio", name));
     await this.user.click(card);
@@ -179,6 +211,20 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
   /** Enter the GCP Organization onboarding flow from a fresh wizard. */
   async chooseGcpOrganizations(): Promise<void> {
     await this.chooseGcpOrganizationsMethod();
+    await this.waitForText(/Organization Details/);
+  }
+
+  /** Select Azure and open the Management Group method card (no advance wait). */
+  async chooseAzureOrganizationsMethod(): Promise<void> {
+    await this.selectProviderType(/Microsoft Azure/);
+    await this.chooseMethod(
+      /Add Multiple Subscriptions With Azure Management Group/,
+    );
+  }
+
+  /** Enter the Azure Management Group onboarding flow from a fresh wizard. */
+  async chooseAzureOrganizations(): Promise<void> {
+    await this.chooseAzureOrganizationsMethod();
     await this.waitForText(/Organization Details/);
   }
 
@@ -217,6 +263,37 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
         ) as HTMLTextAreaElement | null,
     );
     await this.user.fill(textarea, json);
+  }
+
+  // --- Wizard: Azure setup step ------------------------------------------
+
+  /**
+   * Fill the Azure organization-details phase. The tenant is the only identifier
+   * collected: onboarding is always scoped to the tenant root Management Group,
+   * which the API derives from it.
+   */
+  async fillAzureOrgDetails(tenantId: string, name?: string): Promise<void> {
+    const tenantInput = await this.waitFor(() => this.inputByName("tenantId"));
+    await this.user.fill(tenantInput, tenantId);
+    if (name !== undefined) {
+      const nameInput = this.inputByName("organizationName");
+      if (nameInput) await this.user.fill(nameInput, name);
+    }
+  }
+
+  /** Fill the Azure service-principal credentials on the authentication step. */
+  async fillAzureCredentials(
+    clientId: string,
+    clientSecret: string,
+  ): Promise<void> {
+    const clientIdInput = await this.waitFor(() =>
+      this.inputByName("clientId"),
+    );
+    await this.user.fill(clientIdInput, clientId);
+    const secretInput = await this.waitFor(() =>
+      this.inputByName("clientSecret"),
+    );
+    await this.user.fill(secretInput, clientSecret);
   }
 
   // --- Wizard: AWS setup step --------------------------------------------
@@ -292,18 +369,39 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
 
   /**
    * Whether the pre-apply warning states how many already-onboarded candidates the
-   * apply would overwrite, and names them.
+   * apply would overwrite, and names them. Noun-bound per organization type: the
+   * warning saying the wrong noun is the failure this pins.
    */
+  private hasOverwriteWarningFor(
+    count: number,
+    names: string[],
+    noun: string,
+  ): boolean {
+    const states = this.containsText(
+      new RegExp(
+        `overwrite the credentials of ${count} already-onboarded ${noun}`,
+      ),
+    );
+    return states && names.every((name) => this.containsText(new RegExp(name)));
+  }
+
   hasApplyOverwriteWarning(
     projectCount: number,
     names: string[] = [],
   ): boolean {
-    const states = this.containsText(
-      new RegExp(
-        `overwrite the credentials of ${projectCount} already-onboarded project`,
-      ),
+    return this.hasOverwriteWarningFor(projectCount, names, "project");
+  }
+
+  /** The GCP counterpart above, in Azure's noun. */
+  hasApplySubscriptionOverwriteWarning(
+    subscriptionCount: number,
+    names: string[] = [],
+  ): boolean {
+    return this.hasOverwriteWarningFor(
+      subscriptionCount,
+      names,
+      "subscription",
     );
-    return states && names.every((name) => this.containsText(new RegExp(name)));
   }
 
   /** Confirm the pre-apply credential overwrite and continue into apply. */
@@ -314,6 +412,25 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
   /** Wait until a failed discovery surfaces its authentication error. */
   async waitForDiscoveryFailure(timeoutMs = 15000): Promise<void> {
     await this.waitForText(/Authentication failed/, timeoutMs);
+  }
+
+  /**
+   * Wait until a failed discovery surfaces the actionable copy for its machine
+   * code, rather than the type's generic authentication-failure fallback.
+   */
+  async waitForDiscoveryFailureReason(
+    reason: RegExp,
+    timeoutMs = 15000,
+  ): Promise<void> {
+    await this.waitForText(reason, timeoutMs);
+  }
+
+  /**
+   * Whether that reason is showing — the negative half, for asserting which of
+   * the competing failure strings the user was actually given.
+   */
+  hasDiscoveryFailureReason(reason: RegExp): boolean {
+    return this.containsText(reason);
   }
 
   /** Retry a failed/timed-out discovery with a fresh one. */
@@ -342,11 +459,12 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
     return this.treeItems.find((el) => text.test(el.textContent ?? "")) ?? null;
   }
 
-  // Noun-agnostic on purpose: the copy says "accounts" for AWS, "projects" for GCP.
+  // Noun-agnostic on purpose: the copy says "accounts" for AWS, "projects" for
+  // GCP, "subscriptions" for Azure.
   private selectedCountText(): string {
     return (
       this.container.textContent?.match(
-        /\d+ of \d+ (?:accounts|projects) selected/,
+        /\d+ of \d+ (?:accounts|projects|subscriptions) selected/,
       )?.[0] ?? ""
     );
   }
@@ -365,12 +483,41 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
     return this.waitFor(() => this.tree);
   }
 
-  /** A container row identifies itself by its uid: a GCP folder ref or an AWS OU id. */
-  private static readonly CONTAINER_UID = /folders\/\d+|ou-[\w-]+/;
+  /**
+   * A container row identifies itself by its uid: a GCP folder ref, an AWS OU id,
+   * or an Azure Management Group resource id. Anchored, because it is matched
+   * against a single text node — see `textChunks`.
+   */
+  private static readonly CONTAINER_UID =
+    /^(?:folders\/\d+|ou-[\w-]+|\/providers\/Microsoft\.Management\/managementGroups\/[\w.()-]+)$/;
+
+  /**
+   * A row's text, one entry per text node. The uid column and the name column
+   * are adjacent, so `textContent` runs them together
+   * ("…/managementGroups/archived" + "Archived") and a uid pattern reading the
+   * whole row would swallow the display name.
+   */
+  private static textChunks(row: HTMLElement): string[] {
+    const walker = document.createTreeWalker(row, NodeFilter.SHOW_TEXT);
+    const chunks: string[] = [];
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+      const text = node.textContent?.trim();
+      if (text) chunks.push(text);
+    }
+    return chunks;
+  }
+
+  private static containerUid(row: HTMLElement): string | null {
+    return (
+      ProvidersPageHarness.textChunks(row).find((chunk) =>
+        ProvidersPageHarness.CONTAINER_UID.test(chunk),
+      ) ?? null
+    );
+  }
 
   private get containerRows(): HTMLElement[] {
-    return this.treeItems.filter((item) =>
-      ProvidersPageHarness.CONTAINER_UID.test(item.textContent ?? ""),
+    return this.treeItems.filter(
+      (item) => ProvidersPageHarness.containerUid(item) !== null,
     );
   }
 
@@ -387,8 +534,7 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
   /** Uids rendered by container rows — a row with an unresolved id has none. */
   containerRowUids(): string[] {
     return this.containerRows.flatMap(
-      (item) =>
-        item.textContent?.match(ProvidersPageHarness.CONTAINER_UID) ?? [],
+      (item) => ProvidersPageHarness.containerUid(item) ?? [],
     );
   }
 
@@ -526,6 +672,28 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
     return this.hasSelectionSummary(selected, total, "projects");
   }
 
+  /** Wait until subscription discovery finishes and the selection summary renders. */
+  async waitForSubscriptionSelection(timeoutMs = 15000): Promise<void> {
+    await this.waitForText(/of \d+ subscriptions selected/, timeoutMs);
+  }
+
+  /** Wait until the summary reads "<selected> of <total> subscriptions selected". */
+  async waitForSelectedSubscriptionCount(
+    selected: number,
+    total: number,
+    timeoutMs = 15000,
+  ): Promise<void> {
+    await this.waitForText(
+      new RegExp(`${selected} of ${total} subscriptions selected`),
+      timeoutMs,
+    );
+  }
+
+  /** Whether the summary reads "<selected> of <total> subscriptions selected". */
+  hasSelectedSubscriptionCount(selected: number, total: number): boolean {
+    return this.hasSelectionSummary(selected, total, "subscriptions");
+  }
+
   /**
    * Whether any visible copy uses the AWS candidate noun, which a GCP flow must
    * never say — the negative half of the terminology assertions.
@@ -626,6 +794,11 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
   /** Wait until every selected project has connected successfully. */
   async waitForProjectsConnected(timeoutMs = 20000): Promise<void> {
     await this.waitForText(/Projects Connected!/, timeoutMs);
+  }
+
+  /** Wait until every selected subscription has connected successfully. */
+  async waitForSubscriptionsConnected(timeoutMs = 20000): Promise<void> {
+    await this.waitForText(/Subscriptions Connected!/, timeoutMs);
   }
 
   /** Wait until the flow reaches the connected / ready-to-scan state. */
@@ -833,6 +1006,12 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
   async openDeleteFolderFor(name: string): Promise<void> {
     await this.openActionsFor(name);
     await this.clickMenuItem(/Delete Folder/);
+  }
+
+  /** Open the delete flow for an Azure Management Group node. */
+  async openDeleteManagementGroupFor(name: string): Promise<void> {
+    await this.openActionsFor(name);
+    await this.clickMenuItem(/Delete Management Group/);
   }
 
   /** Wait until the wizard re-opens on the AWS authentication step. */

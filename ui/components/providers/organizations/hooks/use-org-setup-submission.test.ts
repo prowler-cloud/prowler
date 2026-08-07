@@ -672,4 +672,38 @@ describe("useOrgSetupSubmission", () => {
     expect(result.current.apiError).toContain("Authentication failed");
     expect(result.current.apiError).not.toContain("gcp_some_future_code");
   });
+
+  it("prefers the server message over the auth-failure copy for an unrecognized failure code", async () => {
+    // Given — the same unknown code, but the server sent its own wording: it is
+    // display-safe and more specific than "check your credentials".
+    mockFreshSetupChain();
+    organizationsActionsMock.getDiscovery.mockResolvedValue({
+      data: {
+        attributes: {
+          status: DISCOVERY_STATUS.FAILED,
+          error: "gcp_some_future_code",
+          error_message: "The organization is being migrated. Try again later.",
+          result: {},
+        },
+      },
+    });
+
+    const { result } = renderHook(() =>
+      useOrgSetupSubmission({
+        stackSetExternalId: "",
+        onNext: vi.fn(),
+        setFieldError: vi.fn(() => true),
+      }),
+    );
+
+    // When
+    await act(async () => {
+      await result.current.submitOrganizationSetup(GCP_STATIC_SUBMIT_DATA);
+    });
+
+    // Then
+    expect(result.current.apiError).toBe(
+      "The organization is being migrated. Try again later.",
+    );
+  });
 });

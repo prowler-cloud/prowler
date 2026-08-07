@@ -2,6 +2,7 @@
 
 import { ExternalLink, Info } from "lucide-react";
 
+import { AzureOrgSetupForm } from "@/components/providers/organizations/azure-org-setup-form";
 import { GcpOrgSetupForm } from "@/components/providers/organizations/gcp-org-setup-form";
 import { OrgAccountSelection } from "@/components/providers/organizations/org-account-selection";
 import { OrgLaunchScan } from "@/components/providers/organizations/org-launch-scan";
@@ -217,6 +218,61 @@ export function ProviderWizardModal({
                     />
                   )}
 
+                {/* SETUP is per-organization-type: each form owns its own
+                    fields, so the branch is a three-way switch on the type and
+                    every arm keys `initialValues` to its own external id. */}
+                {!isProviderFlow &&
+                  orgCurrentStep === ORG_WIZARD_STEP.SETUP &&
+                  organizationType === ORGANIZATION_TYPE.AWS && (
+                    <OrgSetupForm
+                      onBack={
+                        isOrgDirectEntry ? handleClose : backToProviderFlow
+                      }
+                      onClose={handleClose}
+                      onNext={() => {
+                        setOrgCurrentStep(ORG_WIZARD_STEP.VALIDATE);
+                      }}
+                      onFooterChange={setFooterConfig}
+                      onPhaseChange={setOrgSetupPhase}
+                      initialPhase={orgSetupPhase}
+                      initialValues={
+                        orgInitialData
+                          ? {
+                              organizationName: orgInitialData.organizationName,
+                              awsOrgId: orgInitialData.externalId,
+                            }
+                          : undefined
+                      }
+                      intent={orgInitialData?.intent}
+                    />
+                  )}
+
+                {!isProviderFlow &&
+                  orgCurrentStep === ORG_WIZARD_STEP.SETUP &&
+                  organizationType === ORGANIZATION_TYPE.AZURE && (
+                    <AzureOrgSetupForm
+                      onBack={
+                        isOrgDirectEntry ? handleClose : backToProviderFlow
+                      }
+                      onClose={handleClose}
+                      onNext={() => {
+                        setOrgCurrentStep(ORG_WIZARD_STEP.VALIDATE);
+                      }}
+                      onFooterChange={setFooterConfig}
+                      onPhaseChange={setOrgSetupPhase}
+                      initialPhase={orgSetupPhase}
+                      initialValues={
+                        orgInitialData
+                          ? {
+                              organizationName: orgInitialData.organizationName,
+                              tenantId: orgInitialData.externalId,
+                            }
+                          : undefined
+                      }
+                      intent={orgInitialData?.intent}
+                    />
+                  )}
+
                 {!isProviderFlow &&
                   orgCurrentStep === ORG_WIZARD_STEP.SETUP &&
                   organizationType === ORGANIZATION_TYPE.GCP && (
@@ -236,32 +292,6 @@ export function ProviderWizardModal({
                           ? {
                               organizationName: orgInitialData.organizationName,
                               gcpOrgId: orgInitialData.externalId,
-                            }
-                          : undefined
-                      }
-                      intent={orgInitialData?.intent}
-                    />
-                  )}
-
-                {!isProviderFlow &&
-                  orgCurrentStep === ORG_WIZARD_STEP.SETUP &&
-                  organizationType !== ORGANIZATION_TYPE.GCP && (
-                    <OrgSetupForm
-                      onBack={
-                        isOrgDirectEntry ? handleClose : backToProviderFlow
-                      }
-                      onClose={handleClose}
-                      onNext={() => {
-                        setOrgCurrentStep(ORG_WIZARD_STEP.VALIDATE);
-                      }}
-                      onFooterChange={setFooterConfig}
-                      onPhaseChange={setOrgSetupPhase}
-                      initialPhase={orgSetupPhase}
-                      initialValues={
-                        orgInitialData
-                          ? {
-                              organizationName: orgInitialData.organizationName,
-                              awsOrgId: orgInitialData.externalId,
                             }
                           : undefined
                       }

@@ -328,9 +328,8 @@ export interface GcpStaticSecret {
   refresh_token: string;
 }
 
-/** Service principal; `tenant_id` must equal the organization `external_id`. */
+/** Service principal. The tenant comes from the organization, never the secret. */
 export interface AzureStaticSecret {
-  tenant_id: string;
   client_id: string;
   client_secret: string;
 }
@@ -361,8 +360,8 @@ export interface AzureStaticSecretPayload {
 
 /**
  * Discriminated on `orgType` **and** `secretType`: `static` is not one shape —
- * GCP's carries a refresh token, Azure's a tenant id — so the wire
- * `secret_type` alone cannot tell the payloads apart.
+ * GCP's carries a refresh token, Azure's does not — so the wire `secret_type`
+ * alone cannot tell the payloads apart.
  */
 export type OrgSecretPayload =
   | AwsRoleSecretPayload
@@ -535,7 +534,14 @@ export interface CollectionFetch<T> {
 export interface DiscoveryAttributes {
   status: DiscoveryStatus;
   result: DiscoveryResult | Record<string, never>;
+  /** Machine code, not user copy — the UI maps it to its own wording. */
   error: string | null;
+  /**
+   * Server-side human message for `error`, already sanitized for display. Used
+   * only when the code has no curated copy, so a code the API adds later still
+   * says something useful instead of falling back to generic auth wording.
+   */
+  error_message?: string | null;
   inserted_at: string;
   updated_at: string;
 }

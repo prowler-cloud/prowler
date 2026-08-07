@@ -15,6 +15,8 @@
 
 import { ORGANIZATION_TYPE } from "@/types/organizations";
 import type {
+  AzureDiscoveredSubscription,
+  AzureDiscoveryResult,
   GcpDiscoveredProject,
   GcpDiscoveryResult,
 } from "@/types/organizations";
@@ -29,10 +31,14 @@ export const DISCOVERY_STATUS_VALUE = {
 export type DiscoveryStatusValue =
   (typeof DISCOVERY_STATUS_VALUE)[keyof typeof DISCOVERY_STATUS_VALUE];
 
-/** Canonical node kinds (AWS organizational unit, GCP folder). */
+/**
+ * Canonical node kinds (AWS organizational unit, GCP folder, Azure management
+ * group). All kebab-case: `toNodeKind` rejects any other spelling.
+ */
 export const NODE_KIND = {
   ORGANIZATIONAL_UNIT: "organizational-unit",
   FOLDER: "folder",
+  MANAGEMENT_GROUP: "management-group",
 } as const;
 export type NodeKind = (typeof NODE_KIND)[keyof typeof NODE_KIND];
 
@@ -133,9 +139,15 @@ export interface FixtureApplyOutcome {
 export interface FixtureDiscovery {
   id: string;
   status: DiscoveryStatusValue;
-  /** Raw AWS or GCP discovery result served on the discovery poll. */
+  /** Raw AWS, Azure or GCP discovery result served on the discovery poll. */
   result: unknown;
+  /** Machine error code — never user copy. */
   error: string | null;
+  /**
+   * Sanitized human message the server sends alongside the code. Optional: it
+   * only exists for codes the API decided to explain itself.
+   */
+  errorMessage?: string | null;
 }
 
 export interface FixtureScheduleBulkOutcome {
@@ -156,7 +168,10 @@ export interface OrgFixture {
   providers: FixtureProvider[];
   discovery: FixtureDiscovery | null;
   apply: FixtureApplyOutcome;
-  /** Connection outcomes keyed by provider uid (AWS account id / GCP project). */
+  /**
+   * Connection outcomes keyed by provider uid (AWS account id, GCP project id,
+   * Azure subscription id).
+   */
   connectionByUid: Record<string, FixtureConnectionOutcome>;
   /** POST /organization-secrets returns 409 (duplicate). */
   duplicateSecret: boolean;
@@ -426,6 +441,172 @@ export const buildGcpDiscoveryResult = ({
   };
 };
 
+// --- Azure discovery result ------------------------------------------------
+
+/** Canonical Management Group resource ID, the only identity Azure parents on. */
+const azureGroupId = (name: string) =>
+  `/providers/Microsoft.Management/managementGroups/${name}`;
+
+export const AZURE_TENANT_ID = "11111111-1111-4111-8111-111111111111";
+/** Tenant root group — the target the setup form defaults to. */
+export const AZURE_ROOT_GROUP = azureGroupId(AZURE_TENANT_ID);
+export const AZURE_GROUP_ENGINEERING = azureGroupId("engineering");
+export const AZURE_GROUP_PLATFORM = azureGroupId("platform");
+/**
+ * The two kinds of Management Group with nothing selectable in them: no
+ * subscriptions at all, and only blocked ones. Neither changes the selectable
+ * count, and both must still expand.
+ */
+export const AZURE_EMPTY_GROUP = azureGroupId("holding");
+export const AZURE_EMPTY_GROUP_NAME = "Holding";
+export const AZURE_BLOCKED_GROUP = azureGroupId("archived");
+export const AZURE_BLOCKED_GROUP_NAME = "Archived";
+
+export const AZURE_SUBSCRIPTION_PROD_EU =
+  "22222222-2222-4222-8222-222222222222";
+export const AZURE_SUBSCRIPTION_PROD_US =
+  "33333333-3333-4333-8333-333333333333";
+/** Blocked, and hanging directly off the root group (`not_applicable` node relation). */
+export const AZURE_SUBSCRIPTION_LEGACY = "55555555-5555-4555-8555-555555555555";
+export const AZURE_BLOCKED_GROUP_SUBSCRIPTION =
+  "44444444-4444-4444-8444-444444444444";
+
+/**
+ * Blocked reasons Azure discovery reports (contract §4) — its own names, not
+ * GCP's `*_conflict` set.
+ */
+export const AZURE_BLOCKED_REASON = {
+  ORGANIZATION: "provider_linked_to_other_organization",
+  ORGANIZATION_NODE: "provider_linked_to_other_organization_node",
+} as const;
+
+interface AzureResultOverrides {
+  /** Subscription ids whose registration reports `will_replace`. */
+  replaceSubscriptionIds?: string[];
+}
+
+/** Pinned to the app's wire interfaces, for the reason `GcpFixtureDiscoveryResult` is. */
+type AzureFixtureDiscoveryResult = Omit<
+  AzureDiscoveryResult,
+  "subscriptions"
+> & {
+  subscriptions: (Omit<AzureDiscoveredSubscription, "registration"> & {
+    registration: FixtureRegistration;
+  })[];
+};
+
+/**
+ * The Azure discovery result as the API shapes it: management groups carry
+ * canonical resource IDs in `id`/`parent_id`, subscriptions are identified by
+ * their UUID and parent through their group's resource ID, and `display_name` is
+ * the only human label. Subscription UUIDs are long by nature, so the id-column
+ * overflow case needs no special candidate here.
+ */
+export const buildAzureDiscoveryResult = ({
+  replaceSubscriptionIds = [],
+}: AzureResultOverrides = {}): AzureFixtureDiscoveryResult => {
+  const subscription = (
+    subscriptionId: string,
+    displayName: string,
+    parentId: string,
+    registration: FixtureRegistration,
+  ) => ({
+    subscription_id: subscriptionId,
+    display_name: displayName,
+    state: "Enabled",
+    parent_id: parentId,
+    registration,
+  });
+
+  const readyRegFor = (subscriptionId: string): FixtureRegistration =>
+    replaceSubscriptionIds.includes(subscriptionId)
+      ? readyRegistration({
+          provider_exists: true,
+          provider_id: `provider-existing-${subscriptionId}`,
+          provider_secret_state: PROVIDER_SECRET_STATE.WILL_REPLACE,
+        })
+      : readyRegistration();
+
+  return {
+    root: {
+      id: AZURE_ROOT_GROUP,
+      name: AZURE_TENANT_ID,
+      display_name: "Tenant Root Group",
+      tenant_id: AZURE_TENANT_ID,
+    },
+    management_groups: [
+      {
+        id: AZURE_GROUP_ENGINEERING,
+        name: "engineering",
+        display_name: "Engineering",
+        parent_id: AZURE_ROOT_GROUP,
+      },
+      {
+        id: AZURE_GROUP_PLATFORM,
+        name: "platform",
+        display_name: "Platform",
+        parent_id: AZURE_GROUP_ENGINEERING,
+      },
+      {
+        id: AZURE_EMPTY_GROUP,
+        name: "holding",
+        display_name: AZURE_EMPTY_GROUP_NAME,
+        parent_id: AZURE_ROOT_GROUP,
+      },
+      {
+        id: AZURE_BLOCKED_GROUP,
+        name: "archived",
+        display_name: AZURE_BLOCKED_GROUP_NAME,
+        parent_id: AZURE_ROOT_GROUP,
+      },
+    ],
+    subscriptions: [
+      subscription(
+        AZURE_SUBSCRIPTION_PROD_EU,
+        "Production EU",
+        AZURE_GROUP_ENGINEERING,
+        readyRegFor(AZURE_SUBSCRIPTION_PROD_EU),
+      ),
+      subscription(
+        AZURE_SUBSCRIPTION_PROD_US,
+        "Production US",
+        AZURE_GROUP_PLATFORM,
+        readyRegFor(AZURE_SUBSCRIPTION_PROD_US),
+      ),
+      subscription(
+        AZURE_SUBSCRIPTION_LEGACY,
+        "Legacy Sandbox",
+        AZURE_ROOT_GROUP,
+        blockedRegistration([AZURE_BLOCKED_REASON.ORGANIZATION], {
+          provider_exists: true,
+          provider_id: `provider-existing-${AZURE_SUBSCRIPTION_LEGACY}`,
+          organization_relation: "linked_to_other_organization",
+          organization_node_relation: "not_applicable",
+          provider_secret_state: PROVIDER_SECRET_STATE.WILL_REPLACE,
+        }),
+      ),
+      subscription(
+        AZURE_BLOCKED_GROUP_SUBSCRIPTION,
+        "Archived Legacy",
+        AZURE_BLOCKED_GROUP,
+        blockedRegistration(
+          [
+            AZURE_BLOCKED_REASON.ORGANIZATION,
+            AZURE_BLOCKED_REASON.ORGANIZATION_NODE,
+          ],
+          {
+            provider_exists: true,
+            provider_id: `provider-existing-${AZURE_BLOCKED_GROUP_SUBSCRIPTION}`,
+            organization_relation: "linked_to_other_organization",
+            organization_node_relation: "linked_to_other_node",
+            provider_secret_state: PROVIDER_SECRET_STATE.WILL_REPLACE,
+          },
+        ),
+      ),
+    ],
+  };
+};
+
 // --- Fixture builders ------------------------------------------------------
 
 /**
@@ -440,6 +621,10 @@ const AWS_CREATED_PROVIDER_IDS = [
 export const GCP_CREATED_PROVIDER_IDS = [
   "bbbbbbb1-1111-4111-8111-111111111111",
   "bbbbbbb2-2222-4222-8222-222222222222",
+];
+export const AZURE_CREATED_PROVIDER_IDS = [
+  "ccccccc1-1111-4111-8111-111111111111",
+  "ccccccc2-2222-4222-8222-222222222222",
 ];
 
 const emptyApply = (): FixtureApplyOutcome => ({
@@ -536,6 +721,47 @@ export const gcpOnboardingFixture = (
 };
 
 /**
+ * A fresh Azure organization onboarding world (management groups +
+ * subscriptions). Selection defaults to the two ready subscriptions; the other
+ * two are blocked, one of them inside an otherwise empty Management Group.
+ */
+export const azureOnboardingFixture = (
+  overrides: Partial<OrgFixture> = {},
+): OrgFixture => {
+  const createdProviderIds = AZURE_CREATED_PROVIDER_IDS;
+  return {
+    ...baseFixture(),
+    discovery: {
+      id: "disc-azure-1",
+      status: DISCOVERY_STATUS_VALUE.SUCCEEDED,
+      result: buildAzureDiscoveryResult(),
+      error: null,
+    },
+    apply: {
+      ...emptyApply(),
+      createdProviderIds,
+      providersCreatedCount: 2,
+      nodesCreatedCount: 2,
+      candidateProviderIds: [
+        {
+          candidateId: AZURE_SUBSCRIPTION_PROD_EU,
+          providerId: createdProviderIds[0],
+        },
+        {
+          candidateId: AZURE_SUBSCRIPTION_PROD_US,
+          providerId: createdProviderIds[1],
+        },
+      ],
+    },
+    connectionByUid: {
+      [AZURE_SUBSCRIPTION_PROD_EU]: { connected: true },
+      [AZURE_SUBSCRIPTION_PROD_US]: { connected: true },
+    },
+    ...overrides,
+  };
+};
+
+/**
  * A providers-page hierarchy world with a fully onboarded AWS organization
  * (two OUs, three providers). Used for the providers-table grouping tests.
  */
@@ -606,11 +832,61 @@ export const awsHierarchyFixture = (
   };
 };
 
-/** AWS + GCP organizations side by side (mixed-hierarchy display test). */
+/**
+ * Management Groups of an already-onboarded Azure organization. Named apart from
+ * the discovery fixture's groups (and from the AWS/GCP containers) so a row
+ * lookup by label can only resolve to one hierarchy.
+ */
+const AZURE_HIERARCHY_GROUP = azureGroupId("landing-zones");
+export const AZURE_HIERARCHY_GROUP_NAME = "Landing Zones";
+const AZURE_HIERARCHY_CHILD_GROUP = azureGroupId("decommissioned");
+export const AZURE_HIERARCHY_CHILD_GROUP_NAME = "Decommissioned";
+
+/** AWS + Azure + GCP organizations side by side (mixed-hierarchy display test). */
 export const mixedHierarchyFixture = (
   overrides: Partial<OrgFixture> = {},
 ): OrgFixture => {
   const aws = awsHierarchyFixture();
+  const azureOrgId = "org-azure-1";
+  const azureProviders: FixtureProvider[] = [
+    {
+      id: "azp-1",
+      provider: "azure",
+      uid: AZURE_SUBSCRIPTION_PROD_EU,
+      alias: "Contoso EU",
+      connected: true,
+    },
+    {
+      id: "azp-2",
+      provider: "azure",
+      uid: AZURE_SUBSCRIPTION_PROD_US,
+      alias: "Contoso US",
+      connected: true,
+    },
+  ];
+  const azureNodes: FixtureNode[] = [
+    {
+      id: "node-azure-lz",
+      kind: NODE_KIND.MANAGEMENT_GROUP,
+      name: AZURE_HIERARCHY_GROUP_NAME,
+      externalId: AZURE_HIERARCHY_GROUP,
+      // The tenant-root Management Group is never persisted as a node — nodes
+      // exist only for selected descendant groups and their ancestors — so it
+      // appears here as a parent id that resolves to no node row.
+      parentExternalId: AZURE_ROOT_GROUP,
+      organizationId: azureOrgId,
+      providerIds: ["azp-1"],
+    },
+    {
+      id: "node-azure-decommissioned",
+      kind: NODE_KIND.MANAGEMENT_GROUP,
+      name: AZURE_HIERARCHY_CHILD_GROUP_NAME,
+      externalId: AZURE_HIERARCHY_CHILD_GROUP,
+      parentExternalId: AZURE_HIERARCHY_GROUP,
+      organizationId: azureOrgId,
+      providerIds: ["azp-2"],
+    },
+  ];
   const gcpOrgId = "org-gcp-1";
   const gcpProviders: FixtureProvider[] = [
     {
@@ -653,6 +929,18 @@ export const mixedHierarchyFixture = (
     organizations: [
       ...aws.organizations,
       {
+        id: azureOrgId,
+        orgType: ORGANIZATION_TYPE.AZURE,
+        name: "My Azure Organization",
+        externalId: AZURE_TENANT_ID,
+        // Azure is the one type that writes its own root: the Management Group
+        // the organization is scoped to.
+        rootExternalId: AZURE_ROOT_GROUP,
+        providerIds: [],
+        nodeIds: azureNodes.map((n) => n.id),
+        secretId: "secret-azure-1",
+      },
+      {
         id: gcpOrgId,
         orgType: ORGANIZATION_TYPE.GCP,
         name: "My GCP Organization",
@@ -665,11 +953,23 @@ export const mixedHierarchyFixture = (
         secretId: "secret-gcp-1",
       },
     ],
-    nodes: [...aws.nodes, ...gcpNodes],
-    providers: [...aws.providers, ...gcpProviders],
+    nodes: [...aws.nodes, ...azureNodes, ...gcpNodes],
+    providers: [...aws.providers, ...azureProviders, ...gcpProviders],
     ...overrides,
   };
 };
+
+/**
+ * An `org_type` this build has no onboarding flow for. Every value of
+ * `ORGANIZATION_TYPE` is onboardable now that Azure has a flow, so the
+ * display-only behaviour has to be exercised through a type the enum itself does
+ * not carry — which is also the real case: the enum mirrors a server-side one.
+ * `oraclecloud` is a real provider type, so the provider rows underneath it still
+ * render coherently.
+ */
+export const DISPLAY_ONLY_ORG_TYPE = "oraclecloud";
+export const DISPLAY_ONLY_ORG_NAME = "My Oracle Cloud Tenancy";
+export const DISPLAY_ONLY_PROVIDER_ALIAS = "oci-prod";
 
 /**
  * An organization of a type the wizard cannot onboard (display-only): it is still
@@ -678,17 +978,17 @@ export const mixedHierarchyFixture = (
 export const displayOnlyOrgHierarchyFixture = (
   overrides: Partial<OrgFixture> = {},
 ): OrgFixture => {
-  const orgId = "org-azure-1";
+  const orgId = "org-display-only-1";
   return {
     ...baseFixture(),
     organizations: [
       {
         id: orgId,
-        orgType: ORGANIZATION_TYPE.AZURE,
-        name: "Contoso Tenant",
-        externalId: "11111111-2222-3333-4444-555555555555",
+        orgType: DISPLAY_ONLY_ORG_TYPE,
+        name: DISPLAY_ONLY_ORG_NAME,
+        externalId: "ocid1.tenancy.oc1..aaaa1111",
         rootExternalId: null,
-        providerIds: ["ap-1"],
+        providerIds: ["op-1"],
         nodeIds: [],
         secretId: null,
       },
@@ -696,10 +996,10 @@ export const displayOnlyOrgHierarchyFixture = (
     nodes: [],
     providers: [
       {
-        id: "ap-1",
-        provider: "azure",
-        uid: "99999999-8888-7777-6666-555555555555",
-        alias: "contoso-prod",
+        id: "op-1",
+        provider: DISPLAY_ONLY_ORG_TYPE,
+        uid: "ocid1.compartment.oc1..bbbb2222",
+        alias: DISPLAY_ONLY_PROVIDER_ALIAS,
         connected: true,
       },
     ],
@@ -709,6 +1009,7 @@ export const displayOnlyOrgHierarchyFixture = (
 
 export const fixtures = {
   awsOnboarding: awsOnboardingFixture,
+  azureOnboarding: azureOnboardingFixture,
   gcpOnboarding: gcpOnboardingFixture,
   awsHierarchy: awsHierarchyFixture,
   mixedHierarchy: mixedHierarchyFixture,
