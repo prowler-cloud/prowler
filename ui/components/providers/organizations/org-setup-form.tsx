@@ -113,6 +113,7 @@ export function OrgSetupForm({
   const [setupPhase, setSetupPhase] = useState<OrgSetupPhase>(initialPhase);
   const [isSaving, setIsSaving] = useState(false);
   const formId = "org-wizard-setup-form";
+  const formRef = useRef<HTMLFormElement>(null);
 
   const isReadOnlyOrgId = Boolean(initialValues?.awsOrgId);
 
@@ -299,10 +300,8 @@ export function OrgSetupForm({
 
   useEffect(() => {
     if (!apiError) return;
-    document
-      .getElementById(formId)
-      ?.scrollIntoView({ block: "start", behavior: "smooth" });
-  }, [apiError, formId]);
+    formRef.current?.scrollIntoView({ block: "start", behavior: "smooth" });
+  }, [apiError]);
 
   return (
     <Form {...form}>
@@ -313,6 +312,7 @@ export function OrgSetupForm({
       />
       <form
         id={formId}
+        ref={formRef}
         onSubmit={handleFormSubmit}
         className="flex flex-col gap-5"
       >

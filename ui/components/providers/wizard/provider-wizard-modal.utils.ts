@@ -31,6 +31,8 @@ export function getProviderWizardModalTitle(mode: ProviderWizardMode) {
 export function getProviderWizardDocsDestination(docsLink: string) {
   const destinationLabelMap: Record<string, string> = {
     "aws-organizations": "AWS Organizations",
+    // Keyed by the docs slug after `prowler-cloud-` is stripped, like its
+    // AWS/GCP siblings — the Azure tutorial page is `…-azure-management-groups`.
     "azure-management-groups": "Azure Organizations",
     "gcp-organizations": "GCP Organizations",
     aws: "AWS",

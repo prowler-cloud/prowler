@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { FormEvent } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -79,6 +79,7 @@ export function AzureOrgSetupForm({
   const [setupPhase, setSetupPhase] = useState<OrgSetupPhase>(initialPhase);
   const [isSaving, setIsSaving] = useState(false);
   const formId = "azure-org-wizard-setup-form";
+  const formRef = useRef<HTMLFormElement>(null);
 
   const isReadOnlyTenantId = Boolean(initialValues?.tenantId);
 
@@ -244,10 +245,8 @@ export function AzureOrgSetupForm({
 
   useEffect(() => {
     if (!apiError) return;
-    document
-      .getElementById(formId)
-      ?.scrollIntoView({ block: "start", behavior: "smooth" });
-  }, [apiError, formId]);
+    formRef.current?.scrollIntoView({ block: "start", behavior: "smooth" });
+  }, [apiError]);
 
   return (
     <Form {...form}>
@@ -258,6 +257,7 @@ export function AzureOrgSetupForm({
       />
       <form
         id={formId}
+        ref={formRef}
         onSubmit={handleFormSubmit}
         className="flex flex-col gap-5"
       >
