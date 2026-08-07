@@ -1,0 +1,36 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "rds_instance_high_availability",
+  "CheckTitle": "RDS instances have high availability configured",
+  "CheckType": [],
+  "ServiceName": "rds",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "HUAWEICLOUD::RDS::Instance",
+  "ResourceGroup": "database",
+  "Description": "Ensure that RDS instances have high availability (HA) configured with a standby instance.",
+  "Risk": "RDS instances without high availability do not have a standby instance, leading to downtime during maintenance windows or instance failures.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.huaweicloud.com/intl/en-us/usermanual-rds-mysql/rds_02_0025.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log on to the Huawei Cloud console.\n2. Navigate to Relational Database Service.\n3. Select the instance.\n4. Click More > Create Standby Instance.\n5. Configure the standby instance and click Save.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable high availability for RDS instances by creating a standby instance.",
+      "Url": "https://hub.prowler.com/check/rds_instance_high_availability"
+    }
+  },
+  "Categories": [
+    "resilience"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
