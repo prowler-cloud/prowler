@@ -103,6 +103,8 @@ class Entra(M365Service):
                 self._get_app_registrations(),
                 self._get_exchange_mailbox_permission_service_principals(),
                 self._get_device_registration_policy(),
+                self._get_directory_settings(),
+                self._get_b2b_collaboration_policy(),
             )
         )
 
@@ -126,6 +128,8 @@ class Entra(M365Service):
         self.device_registration_policy: Optional[DeviceRegistrationPolicy] = (
             attributes[13]
         )
+        self.directory_settings: Dict[str, Dict[str, str]] = attributes[14]
+        self.b2b_collaboration_policy: Optional[B2BCollaborationPolicy] = attributes[15]
         self.user_accounts_status = {}
 
         # Resolve directory-object identifiers referenced by Conditional Access
@@ -1243,6 +1247,98 @@ OAuthAppInfo
             )
         return device_registration_policy
 
+    async def _get_b2b_collaboration_policy(self):
+        """Retrieve the legacy B2B collaboration (invitation domains) policy.
+
+        Fetches the legacy ``B2BManagementPolicy`` to determine whether invitations
+        are restricted to an allow-list of domains.
+
+        Returns:
+            Optional[B2BCollaborationPolicy]: The parsed policy, or None on error.
+        """
+        logger.info("Entra - Getting B2B collaboration policy...")
+        b2b_policy = None
+        try:
+            url = "https://graph.microsoft.com/beta/legacy/policies"
+            builder = self.client.policies.with_url(url)
+            request_info = builder.to_get_request_information()
+            response = await self.client.request_adapter.send_primitive_async(
+                request_info, "bytes", {}
+            )
+            if response:
+                data = json.loads(response)
+                # The legacy policy object has no string ``type`` discriminator, so
+                # match on the ``B2BManagementPolicy`` block inside the definition JSON.
+                for policy in data.get("value", []) or []:
+                    matched = False
+                    allowed_domains = []
+                    invitations_restricted = False
+                    for definition in policy.get("definition", []) or []:
+                        try:
+                            parsed = json.loads(definition)
+                        except (TypeError, ValueError):
+                            continue
+                        b2b_block = parsed.get("B2BManagementPolicy")
+                        if not b2b_block:
+                            continue
+                        matched = True
+                        invitation_policy = (
+                            b2b_block.get(
+                                "InvitationsAllowedAndBlockedDomainsPolicy", {}
+                            )
+                            or {}
+                        )
+                        # Allow-list mode is active whenever the AllowedDomains key is
+                        # present, even when empty (empty = block all external invites,
+                        # the most restrictive and CIS-compliant state).
+                        if "AllowedDomains" in invitation_policy:
+                            invitations_restricted = True
+                            allowed_domains = (
+                                invitation_policy.get("AllowedDomains") or []
+                            )
+                    if matched:
+                        b2b_policy = B2BCollaborationPolicy(
+                            invitations_restricted_to_allowed_domains=invitations_restricted,
+                            allowed_domains=allowed_domains,
+                        )
+                        break
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return b2b_policy
+
+    async def _get_directory_settings(self):
+        """Retrieve tenant directory (group) settings from Microsoft Entra.
+
+        Fetches the ``/groupSettings`` collection and returns a mapping of each
+        setting's ``templateId`` to a dict of its ``name``/``value`` pairs. This
+        exposes the Group.Unified and Password Rule Settings templates used by the
+        group-creation and password-protection checks.
+
+        Returns:
+            Dict[str, Dict[str, str]]: Mapping of template ID to its name/value pairs.
+        """
+        logger.info("Entra - Getting directory (group) settings...")
+        directory_settings: Dict[str, Dict[str, str]] = {}
+        try:
+            response = await self.client.group_settings.get()
+            for setting in getattr(response, "value", []) or []:
+                template_id = getattr(setting, "template_id", None)
+                if not template_id:
+                    continue
+                values = {}
+                for value in getattr(setting, "values", []) or []:
+                    name = getattr(value, "name", None)
+                    if name is not None:
+                        values[name] = getattr(value, "value", None)
+                directory_settings[template_id] = values
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return directory_settings
+
     async def _get_service_principals(self):
         """Retrieve service principals owned by the audited tenant.
 
@@ -1976,6 +2072,11 @@ class AuthorizationPolicy(BaseModel):
     guest_user_role_id: Optional[UUID]
 
 
+# Well-known directory setting template IDs (from /groupSettings).
+GROUP_UNIFIED_SETTINGS_TEMPLATE_ID = "62375ab9-6b52-47ed-826b-58e47e0e304b"
+PASSWORD_RULE_SETTINGS_TEMPLATE_ID = "5cf42378-d67d-4f36-ba46-e8b86229381d"
+
+
 class DeviceRegistrationMembershipType(str, Enum):
     """OData types for Entra device registration membership settings."""
 
@@ -1992,6 +2093,13 @@ class DeviceRegistrationPolicy(BaseModel):
     azure_ad_join_global_admins_enabled: Optional[bool] = None
     azure_ad_join_registering_users_type: Optional[str] = None
     local_admin_password_enabled: Optional[bool] = None
+
+
+class B2BCollaborationPolicy(BaseModel):
+    """Legacy B2B collaboration (invitation domains) policy."""
+
+    invitations_restricted_to_allowed_domains: bool = False
+    allowed_domains: List[str] = []
 
 
 class Organization(BaseModel):

@@ -1166,7 +1166,9 @@
     {
       "Id": "5.1.3.1",
       "Description": "This setting allows users in the organization to create new security groups and add members to these groups in the Azure portal, API, or PowerShell. These new groups also show up in the Access Panel for all other users. If the policy setting on the group allows it, other users can create requests to join these groups. The recommended state is Users can create security groups in Azure portals, API or PowerShell set to No.",
-      "Checks": [],
+      "Checks": [
+        "entra_policy_default_user_cannot_create_security_groups"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",
@@ -1229,7 +1231,9 @@
     {
       "Id": "5.1.3.4",
       "Description": "All users within a Microsoft Entra organization are permitted to create new Microsoft 365 groups and add members to those groups through the Azure portal, API, or PowerShell. Newly created groups also appear in the Access Panel for all other users. When the applicable group policy settings allow it, users can submit requests to join these groups. The recommended state is No.",
-      "Checks": [],
+      "Checks": [
+        "entra_policy_default_user_cannot_create_m365_groups"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",
@@ -1526,7 +1530,9 @@
     {
       "Id": "5.1.6.1",
       "Description": "B2B collaboration is a feature within Microsoft Entra External ID that allows for guest invitations to an organization. Ensure users can only send invitations to specified domains. Note: This list works independently from OneDrive for Business and SharePoint Online allow/block lists. To restrict individual file sharing in SharePoint Online, set up an allow or blocklist for OneDrive for Business and SharePoint Online. For instance, in SharePoint or OneDrive users can still share with external users from prohibited domains by using Anyone links if they haven't been disabled.",
-      "Checks": [],
+      "Checks": [
+        "entra_policy_guest_invitations_restricted_to_allowed_domains"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",
@@ -2016,7 +2022,9 @@
     {
       "Id": "5.2.3.2",
       "Description": "With Entra Password Protection, default global banned password lists are automatically applied to all users in an Entra ID tenant. To support business and security needs, custom banned password lists can be defined. When users change or reset their passwords, these banned password lists are checked to enforce the use of strong passwords. A custom banned password list should include some of the following examples: - Brand names - Product names - Locations, such as company headquarters - Company-specific internal terms - Abbreviations that have specific company meaning",
-      "Checks": [],
+      "Checks": [
+        "entra_password_protection_custom_banned_list_enforced"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",
@@ -2037,7 +2045,9 @@
     {
       "Id": "5.2.3.3",
       "Description": "Microsoft Entra Password Protection provides a global and custom banned password list. A password change request fails if there's a match in these banned password list. To protect on-premises Active Directory Domain Services (AD DS) environment, install and configure Entra Password Protection. Note: This recommendation applies to Hybrid deployments only and will have no impact unless working with on-premises Active Directory.",
-      "Checks": [],
+      "Checks": [
+        "entra_password_protection_on_premises_enforced"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",
@@ -2146,7 +2156,9 @@
     {
       "Id": "5.2.3.8",
       "Description": "The account lockout threshold determines how many failed login attempts are permitted prior to placing the account in a locked-out state and initiating a variable lockout duration. The recommended Lockout threshold is 10 or less.",
-      "Checks": [],
+      "Checks": [
+        "entra_password_protection_lockout_threshold_limited"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",
@@ -2167,7 +2179,9 @@
     {
       "Id": "5.2.3.9",
       "Description": "The account lockout duration value determines how long an account retains the status of lockout, and therefore how long before a user can continue to attempt to login after passing the lockout threshold. The recommended state is Lockout duration in seconds is at least 60.",
-      "Checks": [],
+      "Checks": [
+        "entra_password_protection_lockout_duration_configured"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",

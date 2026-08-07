@@ -1,5 +1,6 @@
 import asyncio
 import importlib
+import json
 from datetime import datetime, timezone
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -199,6 +200,43 @@ async def mock_entra_get_default_app_management_policy(_):
 
 
 class Test_Entra_Service:
+    @staticmethod
+    def _load_b2b_policy(invitation_policy):
+        service = object.__new__(Entra)
+        service.client = MagicMock()
+        service.client.request_adapter.send_primitive_async = AsyncMock(
+            return_value=json.dumps(
+                {
+                    "value": [
+                        {
+                            "definition": [
+                                json.dumps(
+                                    {
+                                        "B2BManagementPolicy": {
+                                            "InvitationsAllowedAndBlockedDomainsPolicy": invitation_policy
+                                        }
+                                    }
+                                )
+                            ]
+                        }
+                    ]
+                }
+            ).encode()
+        )
+        return asyncio.run(service._get_b2b_collaboration_policy())
+
+    def test_get_b2b_policy_empty_allowed_domains_is_restricted(self):
+        policy = self._load_b2b_policy({"AllowedDomains": []})
+
+        assert policy.invitations_restricted_to_allowed_domains is True
+        assert policy.allowed_domains == []
+
+    def test_get_b2b_policy_without_allowed_domains_is_unrestricted(self):
+        policy = self._load_b2b_policy({})
+
+        assert policy.invitations_restricted_to_allowed_domains is False
+        assert policy.allowed_domains == []
+
     def test_get_client(self):
         with patch("prowler.providers.m365.lib.service.service.M365PowerShell"):
             admincenter_client = Entra(
