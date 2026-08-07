@@ -199,7 +199,7 @@ You MUST structure your response using this EXACT format. Do NOT include anythin
 
 ### For Check Logic Bug
 
-```
+```markdown
 ### AI Assessment [Experimental]: Check Logic Bug
 
 **Component**: {component from issue template}
@@ -297,7 +297,7 @@ Write tests FIRST (TDD). The skills contain all testing conventions and patterns
 
 ### For Bug (non-check)
 
-```
+```markdown
 ### AI Assessment [Experimental]: Bug
 
 **Component**: {CLI/SDK | API | UI | Dashboard | MCP Server | Other}
@@ -378,7 +378,7 @@ Write tests FIRST (TDD). The skills contain all testing conventions and patterns
 
 ### For Already Fixed
 
-```
+```markdown
 ### AI Assessment [Experimental]: Already Fixed
 
 **Component**: {component}
@@ -401,7 +401,7 @@ Upgrade to the latest version. Close the issue as resolved.
 
 ### For Feature Request
 
-```
+```markdown
 ### AI Assessment [Experimental]: Feature Request
 
 **Component**: {component}
@@ -419,7 +419,7 @@ Upgrade to the latest version. Close the issue as resolved.
 
 ### For Not a Bug
 
-```
+```markdown
 ### AI Assessment [Experimental]: Not a Bug
 
 **Component**: {component}
@@ -440,7 +440,7 @@ Upgrade to the latest version. Close the issue as resolved.
 
 ### For Needs More Information
 
-```
+```markdown
 ### AI Assessment [Experimental]: Needs More Information
 
 **Component**: {component or "Unknown"}
