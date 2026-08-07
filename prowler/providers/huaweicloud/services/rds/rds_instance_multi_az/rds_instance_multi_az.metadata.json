@@ -1,0 +1,36 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "rds_instance_multi_az",
+  "CheckTitle": "RDS instances are deployed across multiple availability zones",
+  "CheckType": [],
+  "ServiceName": "rds",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "HUAWEICLOUD::RDS::Instance",
+  "ResourceGroup": "database",
+  "Description": "Ensure that RDS instances are deployed across multiple availability zones for high availability.",
+  "Risk": "RDS instances deployed in a single availability zone are vulnerable to availability zone failures, which can cause database downtime.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.huaweicloud.com/intl/en-us/usermanual-rds-mysql/rds_02_0025.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log on to the Huawei Cloud console.\n2. Navigate to Relational Database Service.\n3. Select the instance.\n4. Click More > Create Standby Instance to enable cross-AZ deployment.\n5. Select a different availability zone for the standby.\n6. Click Save.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Deploy RDS instances across multiple availability zones to ensure high availability.",
+      "Url": "https://hub.prowler.com/check/rds_instance_multi_az"
+    }
+  },
+  "Categories": [
+    "resilience"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
