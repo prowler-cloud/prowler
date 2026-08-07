@@ -39,6 +39,7 @@ import { FindingsSelectionContext } from "./findings-selection-context";
 import {
   LighthouseSkillsRowButton,
   LighthouseSkillsSubmenu,
+  useLighthousePromptLaunch,
   useLighthouseSkillLaunch,
 } from "./lighthouse-skills-launch";
 import {
@@ -77,6 +78,7 @@ const ResourceRowActions = ({
   const resource = row.original;
   const canMute = canMuteFindingResource(resource);
   const launchSkill = useLighthouseSkillLaunch();
+  const launchPrompt = useLighthousePromptLaunch();
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
   const [resolvedIds, setResolvedIds] = useState<string[]>([]);
   const [isResolving, setIsResolving] = useState(false);
@@ -193,6 +195,10 @@ const ResourceRowActions = ({
                 onSkillLaunchOpenDrawer?.(row.index);
                 launchSkill(skill, buildResourceFindingItem(resource));
               }}
+              onSubmitPrompt={(text) => {
+                onSkillLaunchOpenDrawer?.(row.index);
+                launchPrompt(text, buildResourceFindingItem(resource));
+              }}
             />
           )}
         </ActionDropdown>
@@ -258,7 +264,9 @@ export function getColumnFindingResources({
         );
       },
       cell: ({ row }) => (
-        <div className="flex items-center gap-2">
+        // relative: paints above the cell's hover-extension pseudo-element,
+        // which would otherwise cover the in-flow checkbox and indicator.
+        <div className="relative flex items-center gap-2">
           <NotificationIndicator
             delta={row.original.delta as DeltaType | undefined}
             isMuted={row.original.isMuted}

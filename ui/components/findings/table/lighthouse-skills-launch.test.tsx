@@ -10,12 +10,16 @@ import {
   LighthouseSkillsSubmenu,
 } from "./lighthouse-skills-launch";
 
-const { requestPanelSkillLaunchMock } = vi.hoisted(() => ({
-  requestPanelSkillLaunchMock: vi.fn(),
-}));
+const { requestPanelSkillLaunchMock, requestPanelChatMessageMock } = vi.hoisted(
+  () => ({
+    requestPanelSkillLaunchMock: vi.fn(),
+    requestPanelChatMessageMock: vi.fn(),
+  }),
+);
 
 vi.mock("@/app/(prowler)/lighthouse/_lib/panel-chat-store", () => ({
   requestPanelSkillLaunch: requestPanelSkillLaunchMock,
+  requestPanelChatMessage: requestPanelChatMessageMock,
 }));
 
 vi.mock("@/components/shadcn/dropdown", () => ({
@@ -38,6 +42,9 @@ vi.mock("@/components/shadcn/dropdown", () => ({
     label: string;
     onSelect: () => void;
   }) => <button onClick={onSelect}>{label}</button>,
+  DropdownMenuLabel: ({ children }: { children?: ReactNode }) => (
+    <div>{children}</div>
+  ),
   DropdownMenuSeparator: () => <hr />,
   DropdownMenuSub: ({ children }: { children: ReactNode }) => (
     <div>{children}</div>
@@ -117,5 +124,65 @@ describe("Lighthouse skills launch controls", () => {
         },
       ),
     );
+  });
+
+  it("should start a fresh conversation from the row prompt with its finding context", async () => {
+    // Given
+    const user = userEvent.setup();
+    const onSkillLaunch = vi.fn();
+    render(
+      <LighthouseSkillsRowButton
+        findingItem={{
+          kind: "finding",
+          id: "finding-1",
+          source: "focused",
+          scopeKey: "findings:/findings",
+          label: "Finding finding-1",
+          findingId: "finding-1",
+        }}
+        onSkillLaunch={onSkillLaunch}
+      />,
+    );
+
+    // When
+    await user.type(
+      screen.getByRole("textbox", { name: "Ask Lighthouse anything" }),
+      "Is this exposed?{Enter}",
+    );
+
+    // Then
+    expect(onSkillLaunch).toHaveBeenCalledOnce();
+    expect(useSidePanelStore.getState()).toMatchObject({
+      isOpen: true,
+      selectedTab: SIDE_PANEL_TAB.AI_CHAT,
+    });
+    await vi.waitFor(() =>
+      expect(requestPanelChatMessageMock).toHaveBeenCalledWith(
+        "Is this exposed?",
+        {
+          schemaVersion: 1,
+          transport: "inline",
+          items: [
+            expect.objectContaining({
+              kind: "finding",
+              findingId: "finding-1",
+            }),
+          ],
+        },
+      ),
+    );
+  });
+
+  it("should render the recommended lead and the prompt row in the submenu", () => {
+    // Given / When
+    render(
+      <LighthouseSkillsSubmenu onLaunch={vi.fn()} onSubmitPrompt={vi.fn()} />,
+    );
+
+    // Then — same shared menu body everywhere: Recommended group + footer.
+    expect(screen.getByText("Recommended")).toBeInTheDocument();
+    expect(
+      screen.getByRole("textbox", { name: "Ask Lighthouse anything" }),
+    ).toBeInTheDocument();
   });
 });

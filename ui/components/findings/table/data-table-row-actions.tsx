@@ -36,6 +36,7 @@ import type { FindingTriageUpdateHandler } from "./finding-triage-status-control
 import { FindingsSelectionContext } from "./findings-selection-context";
 import {
   LighthouseSkillsSubmenu,
+  useLighthousePromptLaunch,
   useLighthouseSkillLaunch,
 } from "./lighthouse-skills-launch";
 
@@ -248,8 +249,9 @@ export function DataTableRowActions<T extends FindingRowData>({
   };
 
   const launchSkill = useLighthouseSkillLaunch();
-  const handleLaunchSkill = (skill: LighthouseSkillDefinition) => {
-    const findingItem = isGroup
+  const launchPrompt = useLighthousePromptLaunch();
+  const buildSkillFindingItem = () =>
+    isGroup
       ? buildFindingGroupContext({
           id: finding.id,
           checkId: finding.checkId ?? finding.id,
@@ -258,7 +260,11 @@ export function DataTableRowActions<T extends FindingRowData>({
           status: finding.status ?? "",
         })
       : buildFindingResourceContext({ findingId: finding.id });
-    launchSkill(skill, findingItem);
+  const handleLaunchSkill = (skill: LighthouseSkillDefinition) => {
+    launchSkill(skill, buildSkillFindingItem());
+  };
+  const handleSubmitPrompt = (text: string) => {
+    launchPrompt(text, buildSkillFindingItem());
   };
 
   return (
@@ -302,7 +308,10 @@ export function DataTableRowActions<T extends FindingRowData>({
           />
           <JiraDispatchActionItem label={jiraLabel} payload={jiraPayload} />
           {isCloud() && (
-            <LighthouseSkillsSubmenu onLaunch={handleLaunchSkill} />
+            <LighthouseSkillsSubmenu
+              onLaunch={handleLaunchSkill}
+              onSubmitPrompt={handleSubmitPrompt}
+            />
           )}
         </ActionDropdown>
       </div>

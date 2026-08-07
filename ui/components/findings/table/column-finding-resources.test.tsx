@@ -70,6 +70,9 @@ vi.mock("@/components/shadcn/dropdown", () => ({
       {label}
     </button>
   ),
+  DropdownMenuLabel: ({ children }: { children?: ReactNode }) => (
+    <div>{children}</div>
+  ),
   DropdownMenuSeparator: () => <hr />,
   DropdownMenuSub: ({ children }: { children: ReactNode }) => (
     <div>{children}</div>
