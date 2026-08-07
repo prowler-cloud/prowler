@@ -1,5 +1,7 @@
 from unittest import mock
 
+import pytest
+
 from prowler.providers.m365.services.entra.entra_service import (
     ApplicationsConditions,
     ClientAppType,
@@ -23,6 +25,7 @@ def _make_policy(
     state=ConditionalAccessPolicyState.ENABLED,
     included_users=None,
     included_applications=None,
+    excluded_applications=None,
     include_platforms=None,
     client_app_types=None,
     secure_sign_in_session_enabled=True,
@@ -37,7 +40,7 @@ def _make_policy(
                     if included_applications is not None
                     else ["All"]
                 ),
-                excluded_applications=[],
+                excluded_applications=excluded_applications or [],
                 included_user_actions=[],
             ),
             user_conditions=UsersConditions(
@@ -134,6 +137,24 @@ class Test_entra_conditional_access_policy_token_protection_enforced:
                 "cc15fd57-2c6c-4117-a88c-83b1d56b4bbe",
             ]
         )
+        result = self._run({policy.id: policy})
+        assert result[0].status == "PASS"
+
+    @pytest.mark.parametrize(
+        "excluded_application",
+        [
+            "00000002-0000-0ff1-ce00-000000000000",
+            "00000003-0000-0ff1-ce00-000000000000",
+            "cc15fd57-2c6c-4117-a88c-83b1d56b4bbe",
+        ],
+    )
+    def test_all_apps_excluding_required_app_fails(self, excluded_application):
+        policy = _make_policy(excluded_applications=[excluded_application])
+        result = self._run({policy.id: policy})
+        assert result[0].status == "FAIL"
+
+    def test_all_apps_excluding_unrelated_app_passes(self):
+        policy = _make_policy(excluded_applications=["unrelated-app"])
         result = self._run({policy.id: policy})
         assert result[0].status == "PASS"
 

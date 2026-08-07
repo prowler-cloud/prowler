@@ -26,6 +26,7 @@ def _make_policy(
     state=ConditionalAccessPolicyState.ENABLED,
     included_users=None,
     included_applications=None,
+    excluded_applications=None,
     is_enabled=True,
     frequency=1,
     freq_type=SignInFrequencyType.DAYS,
@@ -37,7 +38,7 @@ def _make_policy(
         conditions=Conditions(
             application_conditions=ApplicationsConditions(
                 included_applications=included_applications or ["All"],
-                excluded_applications=[],
+                excluded_applications=excluded_applications or [],
                 included_user_actions=[],
             ),
             user_conditions=UsersConditions(
@@ -104,6 +105,11 @@ class Test_entra_conditional_access_policy_sign_in_frequency_all_users:
         result = self._run({policy.id: policy})
         assert len(result) == 1
         assert result[0].status == "PASS"
+
+    def test_policy_excluding_application_does_not_cover_all_applications(self):
+        policy = _make_policy(excluded_applications=["excluded-app"])
+        result = self._run({policy.id: policy})
+        assert result[0].status == "FAIL"
 
     def test_policy_too_long(self):
         policy = _make_policy(frequency=30, freq_type=SignInFrequencyType.DAYS)

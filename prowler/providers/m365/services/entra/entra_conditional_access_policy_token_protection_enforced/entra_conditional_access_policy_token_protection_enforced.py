@@ -28,18 +28,47 @@ class entra_conditional_access_policy_token_protection_enforced(Check):
       scope.
     """
 
-    def _applications_covered(self, included_applications) -> bool:
+    def _applications_covered(
+        self, included_applications, excluded_applications
+    ) -> bool:
+        """Check whether the policy covers every required application.
+
+        Args:
+            included_applications: Application IDs included by the policy.
+            excluded_applications: Application IDs excluded by the policy.
+
+        Returns:
+            True if all required applications are included and none are excluded.
+        """
+        if REQUIRED_APP_IDS.intersection(excluded_applications):
+            return False
         if "All" in included_applications:
             return True
         return REQUIRED_APP_IDS.issubset(set(included_applications))
 
     def _windows_targeted(self, conditions) -> bool:
+        """Check whether the policy targets Windows devices.
+
+        Args:
+            conditions: Conditional Access policy conditions.
+
+        Returns:
+            True if Windows is included in the targeted platforms.
+        """
         platform_conditions = conditions.platform_conditions
         if not platform_conditions:
             return False
         return "windows" in platform_conditions.include_platforms
 
     def _desktop_clients_targeted(self, conditions) -> bool:
+        """Check whether the policy targets desktop-capable client apps.
+
+        Args:
+            conditions: Conditional Access policy conditions.
+
+        Returns:
+            True if all clients or mobile apps and desktop clients are targeted.
+        """
         client_app_types = conditions.client_app_types or []
         return (
             ClientAppType.ALL in client_app_types
@@ -47,6 +76,11 @@ class entra_conditional_access_policy_token_protection_enforced(Check):
         )
 
     def execute(self) -> list[CheckReportM365]:
+        """Execute the Token Protection Conditional Access policy check.
+
+        Returns:
+            A list containing the Token Protection policy evaluation report.
+        """
         findings = []
         report = CheckReportM365(
             metadata=self.metadata(),
@@ -71,7 +105,8 @@ class entra_conditional_access_policy_token_protection_enforced(Check):
                 continue
 
             if not self._applications_covered(
-                policy.conditions.application_conditions.included_applications
+                policy.conditions.application_conditions.included_applications,
+                policy.conditions.application_conditions.excluded_applications,
             ):
                 continue
 

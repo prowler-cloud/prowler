@@ -21,6 +21,11 @@ class entra_idle_session_timeout_configured(Check):
     """
 
     def execute(self) -> List[CheckReportM365]:
+        """Execute the idle session timeout policy check.
+
+        Returns:
+            A list of reports for the collected activity-based timeout policies.
+        """
         findings = []
         policies = entra_client.activity_based_timeout_policies
 
@@ -51,7 +56,8 @@ class entra_idle_session_timeout_configured(Check):
                 report.status = "PASS"
                 report.status_extended = (
                     f"Activity-based timeout policy '{policy.display_name or policy.id}' "
-                    f"enforces an idle session timeout of {timeout // 60} minutes."
+                    f"enforces an idle session timeout of {timeout // 60} minutes and "
+                    f"{timeout % 60} seconds."
                 )
             else:
                 report.status = "FAIL"

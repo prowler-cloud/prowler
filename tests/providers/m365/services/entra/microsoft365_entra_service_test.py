@@ -5,6 +5,8 @@ from datetime import datetime, timezone
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
+
 from prowler.providers.m365.models import M365IdentityInfo
 from prowler.providers.m365.services.entra import entra_service
 from tests.providers.m365.m365_fixtures import DOMAIN, set_mocked_m365_provider
@@ -274,6 +276,25 @@ class Test_Entra_Service:
             entra_client.authorization_policy.guest_user_role_id
             == AuthPolicyRoles.GUEST_USER_ACCESS_RESTRICTED.value
         )
+
+    @pytest.mark.parametrize(
+        "value",
+        ["-00:00:01", "-1.00:00:00", "24:00:00", "00:60:00", "00:00:60"],
+    )
+    def test_parse_timespan_rejects_invalid_component_ranges(self, value):
+        assert Entra._parse_timespan_to_seconds(value) is None
+
+    @pytest.mark.parametrize(
+        ("value", "expected"),
+        [
+            ("00:00:00", 0),
+            ("23:59:59", 86399),
+            ("1.00:00:00", 86400),
+            ("00:00:01.9999999", 1),
+        ],
+    )
+    def test_parse_timespan_accepts_valid_component_boundaries(self, value, expected):
+        assert Entra._parse_timespan_to_seconds(value) == expected
 
     @patch(
         "prowler.providers.m365.services.entra.entra_service.Entra._get_conditional_access_policies",

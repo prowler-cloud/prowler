@@ -26,6 +26,7 @@ def _make_policy(
     state=ConditionalAccessPolicyState.ENABLED,
     included_users=None,
     included_applications=None,
+    excluded_applications=None,
     transfer_methods=None,
     built_in_controls=None,
 ):
@@ -35,7 +36,7 @@ def _make_policy(
         conditions=Conditions(
             application_conditions=ApplicationsConditions(
                 included_applications=included_applications or ["All"],
-                excluded_applications=[],
+                excluded_applications=excluded_applications or [],
                 included_user_actions=[],
             ),
             user_conditions=UsersConditions(
@@ -109,6 +110,11 @@ class Test_entra_conditional_access_policy_authentication_transfer_blocked:
             result[0].status_extended
             == "Conditional Access Policy 'Block Authentication Transfer' blocks authentication transfer."
         )
+
+    def test_policy_excluding_application_does_not_cover_all_applications(self):
+        policy = _make_policy(excluded_applications=["excluded-app"])
+        result = self._run({policy.id: policy})
+        assert result[0].status == "FAIL"
 
     def test_policy_report_only(self):
         policy = _make_policy(state=ConditionalAccessPolicyState.ENABLED_FOR_REPORTING)

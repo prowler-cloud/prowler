@@ -16,6 +16,11 @@ class entra_conditional_access_trusted_named_location_exists(Check):
     """
 
     def execute(self) -> List[CheckReportM365]:
+        """Execute the trusted named location check.
+
+        Returns:
+            A list containing the trusted named location evaluation report.
+        """
         findings = []
         named_locations = entra_client.named_locations
 
