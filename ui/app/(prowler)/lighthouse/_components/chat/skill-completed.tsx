@@ -115,7 +115,7 @@ export function SkillActionsRow({
           <Button
             type="button"
             variant="outline"
-            size="sm"
+            size="xs"
             onClick={() => setIsJiraOpen(true)}
           >
             Create Jira ticket
@@ -123,7 +123,7 @@ export function SkillActionsRow({
           <Button
             type="button"
             variant="outline"
-            size="sm"
+            size="xs"
             onClick={() => setIsMuteOpen(true)}
           >
             Mute finding
