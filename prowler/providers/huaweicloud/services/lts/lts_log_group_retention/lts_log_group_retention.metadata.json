@@ -1,0 +1,36 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "lts_log_group_retention",
+  "CheckTitle": "LTS log groups have adequate retention period",
+  "CheckType": [],
+  "ServiceName": "lts",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "HUAWEICLOUD::LTS::LogGroup",
+  "ResourceGroup": "monitoring",
+  "Description": "Ensure that LTS log groups have a retention period of at least 30 days for incident investigation.",
+  "Risk": "Short retention periods may result in loss of critical log data needed for security incident investigation and compliance audits.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.huaweicloud.com/intl/en-us/usermanual-lts/lts_04_0116.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log on to the Huawei Cloud console.\n2. Navigate to Log Tank Service (LTS).\n3. Select the log group.\n4. Update the retention period to at least 30 days.\n5. Click Save to apply the changes.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Set LTS log group retention period to at least 30 days for adequate incident investigation coverage.",
+      "Url": "https://hub.prowler.com/check/lts_log_group_retention"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Checks if LTS log groups have ttl_in_days >= 30. Groups with no retention or less than 30 days fail."
+}
