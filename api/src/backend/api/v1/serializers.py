@@ -329,6 +329,15 @@ class TokenSwitchTenantSerializer(BaseSerializerV1):
 # Users
 
 
+class ActiveMembershipRelatedField(SerializerMethodResourceRelatedField):
+    def to_representation(self, value):
+        representation = super().to_representation(value)
+        representation["meta"] = {
+            "active": str(value.tenant_id) == str(self.context["request"].tenant_id),
+        }
+        return representation
+
+
 class UserSerializer(BaseModelSerializerV1):
     """
     Serializer for the User model.
@@ -388,6 +397,12 @@ class UserSerializer(BaseModelSerializerV1):
             if self._can_view_relationships(instance)
             else Membership.objects.none()
         )
+
+
+class UserMeSerializer(UserSerializer):
+    memberships = ActiveMembershipRelatedField(
+        many=True, read_only=True, source="memberships", method_name="get_memberships"
+    )
 
 
 class UserIncludeSerializer(UserSerializer):
