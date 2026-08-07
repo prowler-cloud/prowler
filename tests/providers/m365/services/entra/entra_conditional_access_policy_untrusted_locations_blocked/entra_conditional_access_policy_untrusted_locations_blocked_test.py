@@ -25,6 +25,7 @@ def _make_policy(
     include_locations=None,
     exclude_locations=None,
     built_in_controls=None,
+    excluded_applications=None,
 ):
     return ConditionalAccessPolicy(
         id="policy-1",
@@ -32,7 +33,7 @@ def _make_policy(
         conditions=Conditions(
             application_conditions=ApplicationsConditions(
                 included_applications=["All"],
-                excluded_applications=[],
+                excluded_applications=excluded_applications or [],
                 included_user_actions=[],
             ),
             user_conditions=UsersConditions(
@@ -102,6 +103,11 @@ class Test_entra_conditional_access_policy_untrusted_locations_blocked:
         policy = _make_policy()
         result = self._run({policy.id: policy})
         assert result[0].status == "PASS"
+
+    def test_policy_excluding_application_does_not_cover_all_applications(self):
+        policy = _make_policy(excluded_applications=["excluded-app"])
+        result = self._run({policy.id: policy})
+        assert result[0].status == "FAIL"
 
     def test_blocks_explicit_untrusted_named_location(self):
         location_id = "00000000-0000-0000-0000-000000000001"

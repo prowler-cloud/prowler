@@ -69,6 +69,7 @@ class entra_conditional_access_policy_sign_in_frequency_all_users(Check):
             if (
                 "All"
                 not in policy.conditions.application_conditions.included_applications
+                or policy.conditions.application_conditions.excluded_applications
             ):
                 continue
 

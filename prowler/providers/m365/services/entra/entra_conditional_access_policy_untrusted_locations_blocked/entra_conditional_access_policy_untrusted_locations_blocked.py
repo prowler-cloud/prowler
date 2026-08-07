@@ -19,7 +19,15 @@ class entra_conditional_access_policy_untrusted_locations_blocked(Check):
     """
 
     def _excludes_only_trusted(self, exclude_locations, trusted_location_ids) -> bool:
-        """Return True if the excluded locations are all trusted."""
+        """Check whether every excluded location is trusted.
+
+        Args:
+            exclude_locations: Location IDs excluded by the policy.
+            trusted_location_ids: IDs of collected trusted named locations.
+
+        Returns:
+            True if at least one location is excluded and all exclusions are trusted.
+        """
         if not exclude_locations:
             return False
         return all(
@@ -28,6 +36,11 @@ class entra_conditional_access_policy_untrusted_locations_blocked(Check):
         )
 
     def execute(self) -> list[CheckReportM365]:
+        """Execute the untrusted-locations Conditional Access policy check.
+
+        Returns:
+            A list containing the untrusted-locations policy evaluation report.
+        """
         findings = []
         report = CheckReportM365(
             metadata=self.metadata(),
@@ -61,6 +74,7 @@ class entra_conditional_access_policy_untrusted_locations_blocked(Check):
             if (
                 "All"
                 not in policy.conditions.application_conditions.included_applications
+                or policy.conditions.application_conditions.excluded_applications
             ):
                 continue
 

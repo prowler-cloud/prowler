@@ -1414,6 +1414,8 @@ OAuthAppInfo
         try:
             days = 0
             remainder = value.strip()
+            if remainder.startswith("-"):
+                return None
             head = remainder.split(":", 1)[0]
             # A dot in the hours component denotes the days separator (d.hh).
             if "." in head:
@@ -1422,7 +1424,14 @@ OAuthAppInfo
             hours, minutes, seconds = remainder.split(":")
             # Seconds may carry fractional digits (ss.fffffff); truncate them.
             seconds = seconds.split(".")[0]
-            return days * 86400 + int(hours) * 3600 + int(minutes) * 60 + int(seconds)
+            hours = int(hours)
+            minutes = int(minutes)
+            seconds = int(seconds)
+            if days < 0 or not 0 <= hours <= 23:
+                return None
+            if not 0 <= minutes <= 59 or not 0 <= seconds <= 59:
+                return None
+            return days * 86400 + hours * 3600 + minutes * 60 + seconds
         except (ValueError, AttributeError):
             return None
 

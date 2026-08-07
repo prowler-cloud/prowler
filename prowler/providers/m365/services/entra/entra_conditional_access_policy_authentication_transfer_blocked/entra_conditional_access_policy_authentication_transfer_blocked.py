@@ -47,6 +47,7 @@ class entra_conditional_access_policy_authentication_transfer_blocked(Check):
             if (
                 "All"
                 not in policy.conditions.application_conditions.included_applications
+                or policy.conditions.application_conditions.excluded_applications
             ):
                 continue
 

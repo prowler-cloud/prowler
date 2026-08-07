@@ -43,6 +43,21 @@ class Test_entra_idle_session_timeout_configured:
         assert len(result) == 1
         assert result[0].status == "PASS"
 
+    def test_within_limit_preserves_seconds_in_status_text(self):
+        result = self._run(
+            [
+                ActivityBasedTimeoutPolicy(
+                    id="p1",
+                    display_name="Exact Timeout",
+                    web_session_idle_timeout_seconds=2 * 60 * 60 + 30 * 60 + 45,
+                )
+            ]
+        )
+        assert result[0].status_extended == (
+            "Activity-based timeout policy 'Exact Timeout' enforces an idle session "
+            "timeout of 150 minutes and 45 seconds."
+        )
+
     def test_exceeds_limit(self):
         result = self._run(
             [
