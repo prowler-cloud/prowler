@@ -41,6 +41,71 @@ describe("ActionDropdownItem", () => {
     expect(onSelect).not.toHaveBeenCalled();
   });
 
+  it("should support controlled open state", async () => {
+    // Given
+    const user = userEvent.setup();
+    const onOpenChange = vi.fn();
+    const { rerender } = render(
+      <ActionDropdown
+        open={false}
+        onOpenChange={onOpenChange}
+        trigger={<button type="button">Actions</button>}
+      >
+        <ActionDropdownItem label="Item" />
+      </ActionDropdown>,
+    );
+
+    // Then — closed until the controller says otherwise.
+    expect(screen.queryByRole("menuitem")).not.toBeInTheDocument();
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Actions" }));
+
+    // Then — the component only notifies; the owner flips the prop.
+    expect(onOpenChange).toHaveBeenCalledWith(true);
+    expect(screen.queryByRole("menuitem")).not.toBeInTheDocument();
+
+    // When
+    rerender(
+      <ActionDropdown
+        open
+        onOpenChange={onOpenChange}
+        trigger={<button type="button">Actions</button>}
+      >
+        <ActionDropdownItem label="Item" />
+      </ActionDropdown>,
+    );
+
+    // Then
+    expect(screen.getByRole("menuitem", { name: "Item" })).toBeInTheDocument();
+  });
+
+  it("should stay open when the scroll happens inside the menu content", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(
+      <ActionDropdown trigger={<button type="button">Actions</button>}>
+        <ActionDropdownItem label="Item" />
+      </ActionDropdown>,
+    );
+    await user.click(screen.getByRole("button", { name: "Actions" }));
+    const item = screen.getByRole("menuitem", { name: "Item" });
+
+    // When — a scroll event bubbling from inside the menu's own content.
+    item.dispatchEvent(new Event("scroll", { bubbles: true }));
+
+    // Then
+    expect(screen.getByRole("menuitem", { name: "Item" })).toBeInTheDocument();
+
+    // When — a scroll anywhere else (ancestor/page) still closes it.
+    document.body.dispatchEvent(new Event("scroll", { bubbles: true }));
+
+    // Then
+    await vi.waitFor(() =>
+      expect(screen.queryByRole("menuitem")).not.toBeInTheDocument(),
+    );
+  });
+
   it("should not dim an enabled item and fire its onSelect", async () => {
     // Given
     const user = userEvent.setup();

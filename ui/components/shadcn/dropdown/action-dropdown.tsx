@@ -36,6 +36,10 @@ interface ActionDropdownProps {
   menuVariant?: DropdownContentVariant;
   /** Accessible label for the trigger */
   ariaLabel?: string;
+  /** Controlled open state. Omit for the default uncontrolled behavior. */
+  open?: boolean;
+  /** Open-state change notifications; pairs with `open` for controlled use. */
+  onOpenChange?: (open: boolean) => void;
   children: ReactNode;
 }
 
@@ -46,28 +50,40 @@ export function ActionDropdown({
   className,
   menuVariant,
   ariaLabel = "Open actions menu",
+  open: openProp,
+  onOpenChange,
   children,
 }: ActionDropdownProps) {
-  const [open, setOpen] = useState(false);
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+  const open = openProp ?? uncontrolledOpen;
 
-  // Close dropdown when any ancestor scrolls (capture phase catches all scroll events),
-  // but ignore scrolls originating inside a nested dialog (e.g. pasting into a modal
-  // textarea) so they don't unmount a modal rendered within this menu.
+  const setOpen = (next: boolean) => {
+    if (openProp === undefined) setUncontrolledOpen(next);
+    onOpenChange?.(next);
+  };
+
+  // Close dropdown when any ancestor scrolls (capture phase catches all scroll
+  // events), but ignore scrolls originating inside a nested dialog (e.g.
+  // pasting into a modal textarea) or inside the menu's own content, so they
+  // don't unmount what the user is interacting with.
   useEffect(() => {
     if (!open) return;
     const handleScroll = (event: Event) => {
       const target = event.target;
       if (
         target instanceof Element &&
-        target.closest('[data-slot="dialog-content"]')
+        target.closest(
+          '[data-slot="dialog-content"], [data-slot="dropdown-menu-content"]',
+        )
       ) {
         return;
       }
-      setOpen(false);
+      if (openProp === undefined) setUncontrolledOpen(false);
+      onOpenChange?.(false);
     };
     window.addEventListener("scroll", handleScroll, true);
     return () => window.removeEventListener("scroll", handleScroll, true);
-  }, [open]);
+  }, [open, openProp, onOpenChange]);
 
   return (
     <DropdownMenu modal={false} open={open} onOpenChange={setOpen}>
