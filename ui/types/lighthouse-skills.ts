@@ -1,5 +1,17 @@
 import type { LucideIcon } from "lucide-react";
 
+// PostHog multivariate flag deciding which skill launcher the finding detail
+// drawer renders. Anything other than "dropdown" falls back to the card control.
+export const SKILL_LAUNCHER_FLAG = "finding-detail-skill-launcher";
+
+export const SKILL_LAUNCHER_VARIANT = {
+  CARD: "card",
+  DROPDOWN: "dropdown",
+} as const;
+
+export type SkillLauncherVariant =
+  (typeof SKILL_LAUNCHER_VARIANT)[keyof typeof SKILL_LAUNCHER_VARIANT];
+
 export const LIGHTHOUSE_SKILL_ID = {
   CONTEXTUAL_FIX: "contextual-fix",
   TRIAGE_DECISION: "triage-decision",

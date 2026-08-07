@@ -26,7 +26,7 @@ export function LighthouseSkillsBlock({
           Lighthouse AI Skills
         </span>
         <span className="text-text-neutral-tertiary ml-auto text-xs">
-          Agentic workflows · run in chat
+          Run in chat
         </span>
       </div>
       <div className="grid grid-cols-1 gap-2 @md:grid-cols-2">

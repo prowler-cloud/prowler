@@ -85,7 +85,10 @@ import type { FindingComplianceFramework } from "@/types/compliance-watchlist";
 import type { FindingResourceRow } from "@/types/findings-table";
 import type { UpdateFindingTriageInput } from "@/types/findings-triage";
 import { JIRA_DISPATCH_TARGET } from "@/types/integrations";
-import type { LighthouseSkillDefinition } from "@/types/lighthouse-skills";
+import {
+  SKILL_LAUNCHER_VARIANT,
+  type LighthouseSkillDefinition,
+} from "@/types/lighthouse-skills";
 
 import { Muted } from "../../muted";
 import { DeltaIndicator } from "../delta-indicator";
@@ -97,8 +100,10 @@ import {
 import { DeltaValues, NotificationIndicator } from "../notification-indicator";
 
 import { LighthouseSkillsBlock } from "./lighthouse-skills-block";
+import { LighthouseSkillsRail } from "./lighthouse-skills-rail";
 import { ResourceDetailSkeleton } from "./resource-detail-skeleton";
 import type { CheckMeta } from "./use-resource-detail-drawer";
+import { useSkillLauncherVariant } from "./use-skill-launcher-variant";
 
 const OTHER_FINDINGS_ACTION_CELL_CLASS =
   "sticky right-0 z-20 min-w-12 last:rounded-r-none! overflow-visible bg-bg-neutral-secondary before:pointer-events-none before:absolute before:inset-y-0 before:-left-8 before:w-8 before:bg-gradient-to-r before:from-transparent before:to-bg-neutral-secondary before:content-[''] group-hover:bg-bg-neutral-tertiary group-hover:before:to-bg-neutral-tertiary";
@@ -311,6 +316,10 @@ export function ResourceDetailDrawerContent({
   const searchParams = useSearchParams();
   const openSidePanel = useSidePanelStore((state) => state.openPanel);
   const lighthouseContext = useLighthouseCurrentContext();
+  // A/B experiment: PostHog decides between the footer card (control) and
+  // the header chip rail. Falls back to the card until the flag resolves.
+  const isDropdownLauncher =
+    useSkillLauncherVariant() === SKILL_LAUNCHER_VARIANT.DROPDOWN;
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
   const [optimisticallyMutedIds, setOptimisticallyMutedIds] = useState<
     Set<string>
@@ -447,14 +456,22 @@ export function ResourceDetailDrawerContent({
     onTriageUpdate?.(input);
   };
 
-  const handleAnalyzeFinding = () => {
+  // Navigation only: the panel picks up the focused finding as context on its
+  // own, so no conversation is started on the user's behalf.
+  const handleOpenLighthouseChat = () => {
     openSidePanel(SIDE_PANEL_TAB.AI_CHAT);
-    requestPanelChatMessage("Analyze this finding", lighthouseContext.context);
   };
 
   const handleLaunchSkill = (skill: LighthouseSkillDefinition) => {
     openSidePanel(SIDE_PANEL_TAB.AI_CHAT);
     requestPanelSkillLaunch(skill, lighthouseContext.context);
+  };
+
+  // TODO(experiment): capture launch origin + skill id via cloud's
+  // trackEvent/ANALYTICS_EVENTS once the flag readout event lands.
+  const handleSubmitPrompt = (text: string) => {
+    openSidePanel(SIDE_PANEL_TAB.AI_CHAT);
+    requestPanelChatMessage(text, lighthouseContext.context);
   };
 
   /**
@@ -562,6 +579,15 @@ export function ResourceDetailDrawerContent({
               </div>
             </div>
           </div>
+        )}
+
+        {/* Skill launcher experiment, "dropdown" variant: chip rail under the
+            title instead of the footer card. */}
+        {isCloud() && !isNavigating && isDropdownLauncher && (
+          <LighthouseSkillsRail
+            onLaunchSkill={handleLaunchSkill}
+            onSubmitPrompt={handleSubmitPrompt}
+          />
         )}
       </div>
 
@@ -1267,11 +1293,11 @@ export function ResourceDetailDrawerContent({
         </Tabs>
       </div>
 
-      {/* Lighthouse AI Skills (design 1d) — replaces the old analyze banner */}
-      {isCloud() && !isNavigating && (
+      {/* Lighthouse AI Skills (design 1d) — the experiment's card control */}
+      {isCloud() && !isNavigating && !isDropdownLauncher && (
         <LighthouseSkillsBlock
           onLaunchSkill={handleLaunchSkill}
-          onAskAnything={handleAnalyzeFinding}
+          onAskAnything={handleOpenLighthouseChat}
         />
       )}
     </div>
