@@ -14684,6 +14684,7 @@ class TestSAMLACSView:
         )
 
         assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+        assert response.headers["Allow"] == "POST"
         assert "saml-acs-session" not in response.cookies
 
     def test_post_is_forwarded_to_allauth(self, client, saml_setup):
