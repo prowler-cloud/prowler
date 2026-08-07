@@ -1,0 +1,1 @@
+Kubernetes `apiserver`, `controllermanager`, `etcd`, `scheduler` and `kubelet` checks no longer raise `TypeError: 'NoneType' object is not iterable` when the underlying resource collection fails, since those gathers now return an empty list instead of `None` and keep any resources already collected
