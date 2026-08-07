@@ -490,10 +490,29 @@ export const getDiscovery = async (
 };
 
 /**
+ * JSON:API attributes for an apply request. The switch has no default, so a new
+ * payload arm is a compile error here instead of a silently dropped selection.
+ */
+function buildApplyAttributes(payload: ApplyDiscoveryPayload) {
+  switch (payload.orgType) {
+    case ORGANIZATION_TYPE.AWS:
+      return {
+        accounts: payload.accounts,
+        organizational_units: payload.organizationalUnits,
+      };
+    case ORGANIZATION_TYPE.AZURE:
+      return { subscriptions: payload.subscriptions };
+    case ORGANIZATION_TYPE.GCP:
+      return { projects: payload.projects };
+  }
+}
+
+/**
  * Applies discovery results — creates providers, links to org/nodes,
  * auto-generates secrets. The payload is discriminated by organization type:
  * AWS sends `accounts` + client-side-derived `organizational_units`; GCP sends
- * `projects` only (folder ancestors are derived server-side).
+ * `projects` and Azure `subscriptions` only (folder / Management Group ancestors
+ * are derived server-side).
  * POST /api/v1/organizations/{orgId}/discoveries/{discoveryId}/apply
  */
 export const applyDiscovery = async (
@@ -525,13 +544,7 @@ export const applyDiscovery = async (
   // whole request. The created providers' uids are read afterwards instead, with
   // `getProviderUidsByIds`.
 
-  const attributes =
-    payload.orgType === ORGANIZATION_TYPE.AWS
-      ? {
-          accounts: payload.accounts,
-          organizational_units: payload.organizationalUnits,
-        }
-      : { projects: payload.projects };
+  const attributes = buildApplyAttributes(payload);
 
   try {
     const response = await fetch(url.toString(), {

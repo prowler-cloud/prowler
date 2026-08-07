@@ -50,6 +50,7 @@ const ORGANIZATION_TERMINOLOGY = {
 const NODE_KIND_LABEL = {
   [NODE_KIND.ORGANIZATIONAL_UNIT]: "Organizational Unit",
   [NODE_KIND.FOLDER]: "Folder",
+  [NODE_KIND.MANAGEMENT_GROUP]: "Management Group",
 } as const satisfies Record<NodeKind, string>;
 
 const NODE_KINDS: readonly string[] = Object.values(NODE_KIND);

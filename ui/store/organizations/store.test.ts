@@ -51,7 +51,10 @@ describe("useOrgSetupStore", () => {
   });
 
   it.each([
-    ["an organization type with no onboarding flow", ORGANIZATION_TYPE.AZURE],
+    // Every `ORGANIZATION_TYPE` can be onboarded now, so the "no onboarding
+    // flow" case has to come from outside the enum — which is where it really
+    // comes from: this slot is rehydrated from untrusted sessionStorage.
+    ["an organization type with no onboarding flow", "oraclecloud"],
     ["a prototype key", "__proto__"],
     ["a non-string", 42],
   ])("discards %s rehydrated as the organization type", (_label, stored) => {
@@ -77,6 +80,30 @@ describe("useOrgSetupStore", () => {
     expect(useOrgSetupStore.getState().organizationId).toBe("org-9");
     expect(useOrgSetupStore.getState().organizationType).toBe(
       ORGANIZATION_TYPE.AWS,
+    );
+  });
+
+  it("keeps an onboardable organization type through rehydration", () => {
+    // Given — the guard above must reject only what has no flow, not everything
+    // that isn't AWS: a resumed Azure wizard has to come back as Azure.
+    sessionStorage.setItem(
+      "org-setup-store",
+      JSON.stringify({
+        state: {
+          organizationType: ORGANIZATION_TYPE.AZURE,
+          organizationId: "org-9",
+          selectedCandidateIds: [],
+        },
+        version: useOrgSetupStore.persist.getOptions().version,
+      }),
+    );
+
+    // When
+    useOrgSetupStore.persist.rehydrate();
+
+    // Then
+    expect(useOrgSetupStore.getState().organizationType).toBe(
+      ORGANIZATION_TYPE.AZURE,
     );
   });
 });

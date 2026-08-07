@@ -8,7 +8,26 @@ import { HIERARCHY_READ_FAILURE } from "@/__tests__/msw/handlers/organizations";
 import {
   awsHierarchyFixture,
   awsOnboardingFixture,
+  AZURE_BLOCKED_GROUP,
+  AZURE_BLOCKED_GROUP_NAME,
+  AZURE_BLOCKED_GROUP_SUBSCRIPTION,
+  AZURE_CREATED_PROVIDER_IDS,
+  AZURE_EMPTY_GROUP,
+  AZURE_EMPTY_GROUP_NAME,
+  AZURE_GROUP_ENGINEERING,
+  AZURE_GROUP_PLATFORM,
+  AZURE_HIERARCHY_CHILD_GROUP_NAME,
+  AZURE_HIERARCHY_GROUP_NAME,
+  AZURE_ROOT_GROUP,
+  AZURE_SUBSCRIPTION_LEGACY,
+  AZURE_SUBSCRIPTION_PROD_EU,
+  AZURE_SUBSCRIPTION_PROD_US,
+  AZURE_TENANT_ID,
+  azureOnboardingFixture,
+  buildAzureDiscoveryResult,
   buildGcpDiscoveryResult,
+  DISPLAY_ONLY_ORG_NAME,
+  DISPLAY_ONLY_PROVIDER_ALIAS,
   displayOnlyOrgHierarchyFixture,
   DISCOVERY_STATUS_VALUE,
   GCP_BLOCKED_FOLDER,
@@ -97,8 +116,14 @@ interface ApplyProjectRequest {
   alias?: string;
 }
 
+interface ApplySubscriptionRequest {
+  subscription_id: string;
+  alias?: string;
+}
+
 interface ApplyRequestAttributes {
   projects?: ApplyProjectRequest[];
+  subscriptions?: ApplySubscriptionRequest[];
   accounts?: unknown;
   organizational_units?: unknown;
 }
@@ -109,6 +134,49 @@ interface ApplyRequestData {
 
 interface ApplyRequestBody {
   data: ApplyRequestData;
+}
+
+interface OrganizationSecretRequestBody {
+  data: {
+    attributes: {
+      secret_type?: string;
+      secret?: Record<string, unknown>;
+    };
+  };
+}
+
+const AZURE_CLIENT_ID = "99999999-9999-4999-8999-999999999999";
+const AZURE_CLIENT_SECRET = "azure-client-secret";
+const AZURE_ORG_DOCS = "prowler-cloud-azure-management-groups";
+
+/** The Azure organization and Management Group node seeded by `mixedHierarchyFixture`. */
+const AZURE_ORG_NAME = "My Azure Organization";
+const AZURE_GROUP_NODE_ID = "node-azure-lz";
+
+/**
+ * Drive a fresh Azure org onboarding up to the authentication submit. The tenant
+ * is the only identifier collected: onboarding is always scoped to the tenant
+ * root Management Group, which the API derives from it.
+ */
+async function authenticateAzureOrg(
+  harness: ProvidersPageHarness,
+  { name }: { name?: string } = {},
+): Promise<void> {
+  await harness.mount();
+  await harness.chooseAzureOrganizations();
+  await harness.fillAzureOrgDetails(AZURE_TENANT_ID, name);
+  await harness.submitOrganizationDetails();
+  await harness.fillAzureCredentials(AZURE_CLIENT_ID, AZURE_CLIENT_SECRET);
+  await harness.authenticate();
+}
+
+/** Drive a fresh Azure org onboarding up to the populated selection tree. */
+async function onboardAzureToSelection(
+  harness: ProvidersPageHarness,
+): Promise<void> {
+  await authenticateAzureOrg(harness, { name: "My Azure Org" });
+  await harness.waitForSelectionTree();
+  await harness.waitForSubscriptionSelection();
 }
 
 describe("Organization onboarding wizard", () => {
@@ -589,6 +657,457 @@ describe("Organization onboarding wizard", () => {
       }, 40000);
     });
   });
+
+  describe("Azure Organizations", () => {
+    describe("Full onboarding run", () => {
+      it("completes the happy path: setup → discovery → selection → apply → connect → launch", async () => {
+        const harness = new ProvidersPageHarness(azureOnboardingFixture());
+        await onboardAzureToSelection(harness);
+
+        // Terminology: the selection step counts "subscriptions", never "accounts".
+        expect(harness.hasSelectedSubscriptionCount(2, 2)).toBe(true);
+        expect(harness.usesAccountWording()).toBe(false);
+
+        // The tenant is the whole identity on the wire: onboarding is only ever
+        // scoped to the tenant root Management Group, and the API derives that root
+        // itself — a client that sends one is claiming a choice it does not have.
+        const created = await harness.createdOrganizationAttributes();
+        expect(created?.org_type).toBe(ORGANIZATION_TYPE.AZURE);
+        expect(created?.external_id).toBe(AZURE_TENANT_ID);
+        expect(created).not.toHaveProperty("root_external_id");
+
+        await harness.testConnections();
+        await harness.waitForSubscriptionsConnected();
+
+        expect(harness.usesAccountWording()).toBe(false);
+        expect(harness.applyCallCount).toBe(1);
+
+        await harness.enableInitialScan();
+        await harness.saveScheduleAndLaunch();
+        await harness.waitForLaunchComplete();
+
+        expect(harness.scheduleBulkCallCount).toBe(1);
+        expect(harness.organizationBulkScanCallCount).toBe(1);
+      }, 60000);
+
+      it("sends only the service-principal credentials as the organization secret", async () => {
+        const harness = new ProvidersPageHarness(azureOnboardingFixture());
+        await onboardAzureToSelection(harness);
+
+        const secret =
+          await harness.lastRequestBody<OrganizationSecretRequestBody>(
+            "POST",
+            "/organization-secrets",
+          );
+        // The tenant lives on the organization, so repeating it inside the secret
+        // would be a second, silently divergent source of truth.
+        expect(secret?.data.attributes.secret).toEqual({
+          client_id: AZURE_CLIENT_ID,
+          client_secret: AZURE_CLIENT_SECRET,
+        });
+        expect(secret?.data.attributes.secret).not.toHaveProperty("tenant_id");
+      }, 40000);
+    });
+
+    describe("Wizard entry", () => {
+      it("links the wizard docs to the Azure Management Groups tutorial", async () => {
+        const harness = new ProvidersPageHarness(azureOnboardingFixture());
+        await harness.mount();
+        await harness.chooseAzureOrganizations();
+
+        expect(harness.hasDocsLinkTo(AZURE_ORG_DOCS)).toBe(true);
+      }, 30000);
+
+      it("gates the Azure Management Group method behind the cloud upgrade in OSS builds", async ({
+        seedRuntimeConfig,
+      }) => {
+        seedRuntimeConfig({ cloudEnabled: false });
+        const harness = new ProvidersPageHarness(azureOnboardingFixture());
+        await harness.mount();
+
+        await harness.selectProviderType(/Microsoft Azure/);
+        await harness.waitForMethodStep();
+
+        await harness.chooseMethod(
+          /Add Multiple Subscriptions With Azure Management Group/,
+        );
+        await harness.waitForMethodStep();
+        expect(harness.hasOrganizationSetupStep()).toBe(false);
+      }, 30000);
+    });
+
+    describe("Subscription selection", () => {
+      it("nests each subscription under its management group and renders every group once", async () => {
+        const harness = new ProvidersPageHarness(azureOnboardingFixture());
+        await onboardAzureToSelection(harness);
+
+        // Management Group identity is the canonical resource id, which is what
+        // children carry as `parent_id`; reading the bare name flattens the tree.
+        expect(harness.countContainerRows("Engineering")).toBe(1);
+        expect(harness.countContainerRows("Platform")).toBe(1);
+        expect(harness.containerRowUids().sort()).toEqual([
+          AZURE_BLOCKED_GROUP,
+          AZURE_GROUP_ENGINEERING,
+          AZURE_EMPTY_GROUP,
+          AZURE_GROUP_PLATFORM,
+        ]);
+
+        expect(
+          harness.isCandidateNestedUnder(
+            AZURE_SUBSCRIPTION_PROD_EU,
+            "Engineering",
+          ),
+        ).toBe(true);
+        expect(
+          harness.isCandidateNestedUnder(
+            AZURE_SUBSCRIPTION_PROD_US,
+            "Platform",
+          ),
+        ).toBe(true);
+      }, 40000);
+
+      it("prefills a subscription alias with its display name, never its subscription id", async () => {
+        const harness = new ProvidersPageHarness(azureOnboardingFixture());
+        await onboardAzureToSelection(harness);
+
+        const alias = harness.candidateAliasValue(
+          new RegExp(AZURE_SUBSCRIPTION_PROD_EU),
+        );
+        expect(alias).toBe("Production EU");
+        expect(alias).not.toBe(AZURE_SUBSCRIPTION_PROD_EU);
+      }, 40000);
+
+      it("marks a management group with nothing selectable as inert, in subscription wording", async () => {
+        const harness = new ProvidersPageHarness(azureOnboardingFixture());
+        await onboardAzureToSelection(harness);
+
+        // A subscription-less group still reaches the tree, and has to say so in
+        // Azure's nouns.
+        expect(harness.isContainerInert(AZURE_EMPTY_GROUP_NAME)).toBe(true);
+        expect(harness.inertContainerNote(AZURE_EMPTY_GROUP_NAME)).toBe(
+          "No subscriptions available to select in this management group.",
+        );
+        expect(harness.isContainerInert(AZURE_BLOCKED_GROUP_NAME)).toBe(true);
+
+        expect(harness.isContainerInert("Engineering")).toBe(false);
+        expect(harness.inertContainerNote("Engineering")).toBeNull();
+        expect(harness.usesAccountWording()).toBe(false);
+      }, 40000);
+
+      it("still opens an inert management group so its blocked subscriptions are visible", async () => {
+        const harness = new ProvidersPageHarness(azureOnboardingFixture());
+        await onboardAzureToSelection(harness);
+
+        expect(
+          harness.isCandidateNestedUnder(
+            AZURE_BLOCKED_GROUP_SUBSCRIPTION,
+            AZURE_BLOCKED_GROUP_NAME,
+          ),
+        ).toBe(true);
+
+        // The row collapses and re-expands rather than selecting: an inert group that
+        // could not be opened would never explain itself.
+        await harness.clickContainerRow(AZURE_BLOCKED_GROUP_NAME);
+        await harness.waitForTransition();
+        expect(
+          harness.isCandidateVisible(AZURE_BLOCKED_GROUP_SUBSCRIPTION),
+        ).toBe(false);
+
+        await harness.clickContainerRow(AZURE_BLOCKED_GROUP_NAME);
+        await harness.waitForTransition();
+        expect(
+          harness.isCandidateVisible(AZURE_BLOCKED_GROUP_SUBSCRIPTION),
+        ).toBe(true);
+        expect(harness.hasSelectedSubscriptionCount(2, 2)).toBe(true);
+      }, 40000);
+
+      it("keeps a long subscription id inside its column instead of over the alias input", async () => {
+        const harness = new ProvidersPageHarness(azureOnboardingFixture());
+        await onboardAzureToSelection(harness);
+
+        // Subscription ids are UUIDs, so every row is the long-id case — no opt-in
+        // candidate needed. Real layout boxes, not class names.
+        expect(harness.candidateRowOverflows(AZURE_SUBSCRIPTION_PROD_EU)).toBe(
+          false,
+        );
+      }, 40000);
+
+      it("disables blocked subscriptions and excludes them from the selectable count", async () => {
+        const harness = new ProvidersPageHarness(azureOnboardingFixture());
+        await onboardAzureToSelection(harness);
+
+        expect(
+          await harness.isCandidateBlocked(
+            new RegExp(AZURE_SUBSCRIPTION_LEGACY),
+          ),
+        ).toBe(true);
+
+        expect(harness.hasSelectedSubscriptionCount(2, 2)).toBe(true);
+        expect(harness.hasSelectedSubscriptionCount(4, 4)).toBe(false);
+      }, 40000);
+
+      it("renders a management group as indeterminate when only some descendant subscriptions are selected", async () => {
+        const harness = new ProvidersPageHarness(azureOnboardingFixture());
+        await onboardAzureToSelection(harness);
+
+        expect(harness.candidateCheckboxState(/Engineering/)).toBe("true");
+
+        await harness.toggleCandidate(new RegExp(AZURE_SUBSCRIPTION_PROD_US));
+        await harness.waitForSelectedSubscriptionCount(1, 2);
+        expect(harness.candidateCheckboxState(/Engineering/)).toBe("mixed");
+      }, 40000);
+    });
+
+    describe("Apply payload", () => {
+      it("sends a subscriptions-only apply payload (no accounts, no projects)", async () => {
+        const harness = new ProvidersPageHarness(azureOnboardingFixture());
+        await onboardAzureToSelection(harness);
+
+        await harness.testConnections();
+        await harness.waitForSubscriptionsConnected();
+
+        const body = await harness.lastRequestBody<ApplyRequestBody>(
+          "POST",
+          "/apply",
+        );
+        const attributes = body?.data.attributes;
+        expect(
+          attributes?.subscriptions?.map((s) => s.subscription_id).sort(),
+        ).toEqual([AZURE_SUBSCRIPTION_PROD_EU, AZURE_SUBSCRIPTION_PROD_US]);
+        // Azure derives Management Group ancestors server-side, so nothing else is
+        // sent — and never another provider's noun.
+        expect(attributes?.accounts).toBeUndefined();
+        expect(attributes?.organizational_units).toBeUndefined();
+        expect(attributes?.projects).toBeUndefined();
+        expect(
+          attributes?.subscriptions?.every((s) => s.alias === undefined),
+        ).toBe(true);
+      }, 40000);
+
+      it("includes an alias only for subscriptions the user renamed", async () => {
+        const harness = new ProvidersPageHarness(azureOnboardingFixture());
+        await onboardAzureToSelection(harness);
+
+        await harness.setCandidateAlias(
+          new RegExp(AZURE_SUBSCRIPTION_PROD_EU),
+          "Contoso EU",
+        );
+        await harness.testConnections();
+        await harness.waitForSubscriptionsConnected();
+
+        const body = await harness.lastRequestBody<ApplyRequestBody>(
+          "POST",
+          "/apply",
+        );
+        const subscriptions = body?.data.attributes.subscriptions ?? [];
+        const renamed = subscriptions.find(
+          (s) => s.subscription_id === AZURE_SUBSCRIPTION_PROD_EU,
+        );
+        const untouched = subscriptions.find(
+          (s) => s.subscription_id === AZURE_SUBSCRIPTION_PROD_US,
+        );
+        expect(renamed?.alias).toBe("Contoso EU");
+        expect(untouched?.alias).toBeUndefined();
+      }, 40000);
+
+      it("resolves the created providers' uids with one filtered list, and no include", async () => {
+        const harness = new ProvidersPageHarness(azureOnboardingFixture());
+        await onboardAzureToSelection(harness);
+
+        await harness.testConnections();
+        await harness.waitForSubscriptionsConnected();
+
+        expect(harness.applySentIncludeParam()).toBe(false);
+        expect(harness.providerUidLookupCount).toBe(1);
+        expect(harness.singleProviderFetchCount).toBe(0);
+      }, 40000);
+    });
+
+    describe("Credential conflicts", () => {
+      it("warns before replacing an existing organization credential, then proceeds on confirm", async () => {
+        const fixture: OrgFixture = azureOnboardingFixture({
+          organizations: [
+            {
+              id: "org-azure-existing",
+              orgType: ORGANIZATION_TYPE.AZURE,
+              name: "Existing Azure Org",
+              externalId: AZURE_TENANT_ID,
+              rootExternalId: AZURE_ROOT_GROUP,
+              providerIds: ["azp-existing-1", "azp-existing-2"],
+              nodeIds: [],
+              secretId: "secret-azure-existing",
+            },
+          ],
+        });
+        const harness = new ProvidersPageHarness(fixture);
+        await authenticateAzureOrg(harness);
+
+        await harness.waitForCredentialReplaceWarning();
+        expect(harness.hasCredentialReplaceProviderCount(2)).toBe(true);
+
+        await harness.confirmCredentialReplace();
+
+        await harness.waitForSelectionTree();
+        await harness.waitForSubscriptionSelection();
+        await harness.waitForSecretReplace();
+      }, 40000);
+
+      it("warns before an apply that overwrites already-onboarded subscription credentials", async () => {
+        const fixture = azureOnboardingFixture({
+          discovery: {
+            id: "disc-azure-1",
+            status: DISCOVERY_STATUS_VALUE.SUCCEEDED,
+            result: buildAzureDiscoveryResult({
+              replaceSubscriptionIds: [AZURE_SUBSCRIPTION_PROD_EU],
+            }),
+            error: null,
+          },
+        });
+        const harness = new ProvidersPageHarness(fixture);
+        await onboardAzureToSelection(harness);
+
+        await harness.testConnections();
+
+        await harness.waitForCredentialReplaceWarning();
+        expect(
+          harness.hasApplySubscriptionOverwriteWarning(1, ["Production EU"]),
+        ).toBe(true);
+        expect(harness.applyCallCount).toBe(0);
+
+        await harness.confirmApplyOverwrite();
+        await harness.waitForSubscriptionsConnected();
+        expect(harness.applyCallCount).toBe(1);
+      }, 40000);
+    });
+
+    describe("Discovery failures", () => {
+      it("surfaces a failed discovery and retries with a fresh discovery", async () => {
+        const fixture = azureOnboardingFixture({
+          discovery: {
+            id: "disc-azure-1",
+            status: DISCOVERY_STATUS_VALUE.FAILED,
+            result: {},
+            error: "azure_insufficient_permissions",
+            errorMessage:
+              "The Azure credential cannot read the complete hierarchy.",
+          },
+        });
+        const harness = new ProvidersPageHarness(fixture);
+        await authenticateAzureOrg(harness);
+
+        // A code we curate copy for outranks the server's own message: ours names the
+        // fix, and the framing is right — the credentials are fine here.
+        await harness.waitForDiscoveryFailureReason(
+          /Grant it the Reader role at the Management Group level/,
+        );
+        expect(
+          harness.hasDiscoveryFailureReason(
+            /cannot read the complete hierarchy\./,
+          ),
+        ).toBe(false);
+        await harness.waitForDiscoveryCount(1);
+
+        // Retry triggers a brand-new discovery, not a resumed poll.
+        await harness.retryDiscovery();
+        await harness.waitForDiscoveryCount(2);
+      }, 40000);
+
+      it("falls back to the server's message for a failure code it has no copy for", async () => {
+        const fixture = azureOnboardingFixture({
+          discovery: {
+            id: "disc-azure-1",
+            status: DISCOVERY_STATUS_VALUE.FAILED,
+            result: {},
+            error: "azure_quota_exceeded",
+            errorMessage:
+              "Azure throttled the Management Group read for this tenant.",
+          },
+        });
+        const harness = new ProvidersPageHarness(fixture);
+        await authenticateAzureOrg(harness);
+
+        // Codes outrun the copy table, so an unmapped one must still say something
+        // specific — the sanitized server message, never the raw code, and never
+        // "authentication failed" for a problem that is not the credentials.
+        await harness.waitForDiscoveryFailureReason(
+          /Azure throttled the Management Group read for this tenant\./,
+        );
+        expect(harness.hasDiscoveryFailureReason(/azure_quota_exceeded/)).toBe(
+          false,
+        );
+        expect(harness.hasDiscoveryFailureReason(/Authentication failed/)).toBe(
+          false,
+        );
+      }, 40000);
+    });
+
+    describe("Launch and scheduling", () => {
+      it("launches the organization after a partial schedule save", async () => {
+        const harness = new ProvidersPageHarness(
+          azureOnboardingFixture({
+            scheduleBulk: {
+              updated: [AZURE_CREATED_PROVIDER_IDS[0]],
+              failed: [{ id: AZURE_CREATED_PROVIDER_IDS[1], error: "Denied" }],
+              shape: "flat",
+            },
+          }),
+        );
+        await onboardAzureToSelection(harness);
+        await harness.testConnections();
+        await harness.waitForSubscriptionsConnected();
+
+        await harness.enableInitialScan();
+        await harness.saveScheduleAndLaunch();
+        await harness.waitForPartialScheduleSave(1, 1);
+
+        expect(harness.hasScheduleFailureReason("Denied")).toBe(true);
+        expect(harness.organizationBulkScanCallCount).toBe(1);
+      }, 40000);
+
+      it("keeps the user on the launch step when no schedule could be saved", async () => {
+        const harness = new ProvidersPageHarness(
+          azureOnboardingFixture({
+            scheduleBulk: {
+              updated: [],
+              failed: AZURE_CREATED_PROVIDER_IDS.map((id) => ({
+                id,
+                error: "Denied",
+              })),
+              shape: "flat",
+            },
+          }),
+        );
+        await onboardAzureToSelection(harness);
+        await harness.testConnections();
+        await harness.waitForSubscriptionsConnected();
+
+        await harness.enableInitialScan();
+        await harness.saveScheduleAndLaunch();
+        await harness.waitForScheduleSaveFailure();
+
+        expect(harness.hasScheduleFailureReason("Denied")).toBe(true);
+        expect(harness.isStillOnLaunchStep()).toBe(true);
+        expect(harness.organizationBulkScanCallCount).toBe(0);
+      }, 40000);
+
+      it("proceeds when the schedule response carries no result lists", async () => {
+        const harness = new ProvidersPageHarness(
+          azureOnboardingFixture({
+            scheduleBulk: { updated: null, failed: [], shape: "bare" },
+          }),
+        );
+        await onboardAzureToSelection(harness);
+        await harness.testConnections();
+        await harness.waitForSubscriptionsConnected();
+
+        await harness.enableInitialScan();
+        await harness.saveScheduleAndLaunch();
+        await harness.waitForLaunchComplete();
+
+        expect(harness.organizationBulkScanCallCount).toBe(1);
+      }, 40000);
+    });
+  });
 });
 
 describe("Providers page", () => {
@@ -616,21 +1135,27 @@ describe("Providers page", () => {
       }, 30000);
     });
 
-    describe("Mixed AWS + GCP", () => {
-      it("groups both organizations, labelling nodes by kind (Organizational Unit vs Folder)", async () => {
+    describe("Mixed AWS + Azure + GCP", () => {
+      it("groups every organization, labelling nodes by kind (Organizational Unit vs Management Group vs Folder)", async () => {
         const harness = new ProvidersPageHarness(mixedHierarchyFixture());
         await harness.mount({ openWizard: false });
 
         await harness.waitForOrganizationRow("My AWS Organization");
+        await harness.waitForOrganizationRow(AZURE_ORG_NAME);
         await harness.waitForOrganizationRow("My GCP Organization");
 
         await harness.waitForNodeGroup("Production");
         await harness.waitForNodeGroup("Sandbox");
+        await harness.waitForNodeGroup(AZURE_HIERARCHY_GROUP_NAME);
+        // Nested Management Groups keep their own row rather than collapsing into
+        // their parent.
+        await harness.waitForNodeGroup(AZURE_HIERARCHY_CHILD_GROUP_NAME);
         await harness.waitForNodeGroup("Engineering");
         await harness.waitForNodeGroup("Platform");
 
         // Labels are kind-driven, never ID-prefix-driven.
         expect(harness.hasNodeKindLabel("Organizational Unit")).toBe(true);
+        expect(harness.hasNodeKindLabel("Management Group")).toBe(true);
         expect(harness.hasNodeKindLabel("Folder")).toBe(true);
 
         expect(harness.hasProviderCount(3)).toBe(true);
@@ -638,6 +1163,8 @@ describe("Providers page", () => {
 
         expect(harness.hasProviderRow("prod-web")).toBe(true);
         expect(harness.hasProviderRow("sandbox-1")).toBe(true);
+        expect(harness.hasProviderRow("Contoso EU")).toBe(true);
+        expect(harness.hasProviderRow("Contoso US")).toBe(true);
         expect(harness.hasProviderRow("Prod Analytics")).toBe(true);
         expect(harness.hasProviderRow("Prod Platform")).toBe(true);
 
@@ -654,13 +1181,16 @@ describe("Providers page", () => {
         await harness.mount({ openWizard: false });
 
         // Grouping is display-driven, so the organization still renders as a group.
-        await harness.waitForOrganizationRow("Contoso Tenant");
-        expect(harness.hasProviderRow("contoso-prod")).toBe(true);
+        await harness.waitForOrganizationRow(DISPLAY_ONLY_ORG_NAME);
+        expect(harness.hasProviderRow(DISPLAY_ONLY_PROVIDER_ALIAS)).toBe(true);
 
+        // Neither another provider's container wording nor a crash: the type has no
+        // vocabulary of its own in this build.
         expect(harness.hasNodeKindLabel("Organizational Unit")).toBe(false);
+        expect(harness.hasNodeKindLabel("Management Group")).toBe(false);
 
         // The wizard only exists for onboardable types; renaming is a plain PATCH.
-        const actions = await harness.actionLabelsFor("Contoso Tenant");
+        const actions = await harness.actionLabelsFor(DISPLAY_ONLY_ORG_NAME);
         expect(actions).toContain("Edit Organization Name");
         expect(actions).not.toContain("Update Credentials");
       }, 30000);
@@ -815,6 +1345,46 @@ describe("Providers page", () => {
       }, 30000);
     });
 
+    describe("Azure Organizations", () => {
+      it("deletes a management group with kind-aware copy and deletion-task polling", async () => {
+        const harness = new ProvidersPageHarness(mixedHierarchyFixture());
+        await harness.mount({ openWizard: false });
+        await harness.waitForNodeGroup(AZURE_HIERARCHY_GROUP_NAME);
+
+        // Azure container nodes are "management groups", not OUs or folders.
+        await harness.openDeleteManagementGroupFor(AZURE_HIERARCHY_GROUP_NAME);
+
+        await harness.waitForDeleteConfirmation();
+        expect(harness.hasDeleteWarningFor("management group")).toBe(true);
+
+        await harness.confirmDelete();
+
+        await harness.waitForNodeDelete(AZURE_GROUP_NODE_ID);
+        // The polled task completes when the per-provider deletions are dispatched, so
+        // the copy may report acceptance and never that the group is gone.
+        await harness.waitForTaskPoll("del-task-");
+        await harness.waitForDeletionAccepted();
+        expect(harness.claimsDeletionFinished()).toBe(false);
+      }, 30000);
+
+      it("reports a failed deletion task instead of a false success", async () => {
+        const harness = new ProvidersPageHarness(
+          mixedHierarchyFixture({ deletionTaskState: "failed" }),
+        );
+        await harness.mount({ openWizard: false });
+        await harness.waitForOrganizationRow(AZURE_ORG_NAME);
+
+        await harness.openDeleteFor(AZURE_ORG_NAME);
+
+        await harness.waitForDeleteConfirmation();
+        expect(harness.hasCascadeWarning(2)).toBe(true);
+
+        await harness.confirmDelete();
+
+        await harness.waitForDeletionFailure();
+      }, 30000);
+    });
+
     describe("Across organization types", () => {
       it("offers wizard re-entry to every organization type with a setup form", async () => {
         const harness = new ProvidersPageHarness(mixedHierarchyFixture());
@@ -826,6 +1396,9 @@ describe("Providers page", () => {
         const actions = await harness.actionLabelsFor("My GCP Organization");
         expect(actions).toContain("Edit Organization Name");
         expect(actions).toContain("Update Credentials");
+
+        const azureActions = await harness.actionLabelsFor(AZURE_ORG_NAME);
+        expect(azureActions).toContain("Update Credentials");
 
         const awsActions = await harness.actionLabelsFor("My AWS Organization");
         expect(awsActions).toContain("Update Credentials");

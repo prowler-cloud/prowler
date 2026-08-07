@@ -2,10 +2,12 @@ import {
   getSelectableCandidateIds,
   getSelectableCandidateIdsForTarget,
   mapAwsDiscovery,
+  mapAzureDiscovery,
   mapGcpDiscovery,
 } from "@/actions/organizations/organizations.adapter";
 import {
   AwsDiscoveryResult,
+  AzureDiscoveryResult,
   GcpDiscoveryResult,
   OrgFlowType,
   OrgHierarchy,
@@ -45,14 +47,12 @@ export interface GcpOrgSetupData extends BaseOrgSetupData {
 
 export interface AzureOrgSetupData extends BaseOrgSetupData {
   orgType: typeof ORGANIZATION_TYPE.AZURE;
-  /** Microsoft Entra tenant ID (UUID) — the external id matched on. */
-  tenantId: string;
   /**
-   * Canonical resource ID of the Management Group the organization is scoped to,
-   * sent as `root_external_id`. Defaults to the tenant root group
-   * (`/providers/Microsoft.Management/managementGroups/{tenantId}`).
+   * Microsoft Entra tenant ID (UUID) — the external id matched on. Onboarding is
+   * always scoped to the tenant root Management Group, which the API derives
+   * from this, so there is no container to collect.
    */
-  managementGroupId: string;
+  tenantId: string;
   clientId: string;
   clientSecret: string;
 }
@@ -73,7 +73,6 @@ export type OrgSetupErrorField =
   | "awsOrgId"
   | "gcpOrgId"
   | "tenantId"
-  | "managementGroupId"
   | "serviceAccountKey"
   | "clientId"
   | "clientSecret"
@@ -91,12 +90,6 @@ interface OrgSetupStrategy<D extends OrgSetupSubmissionData> {
   externalIdField: OrgSetupErrorField;
   /** External id used to match/create the organization. */
   getExternalId: (data: D) => string;
-  /**
-   * Root container the organization is scoped to, when the type picks it up front
-   * (`root_external_id` on the create request). AWS and GCP leave it to
-   * discovery, so they return undefined.
-   */
-  getRootExternalId: (data: D) => string | undefined;
   /** Display name to store (falls back to the external id). */
   getResolvedName: (data: D) => string;
   /**
@@ -129,6 +122,18 @@ interface OrgSetupStrategy<D extends OrgSetupSubmissionData> {
  * credential problems, so "Authentication failed…" is wrong for the rest.
  */
 const DISCOVERY_ERROR_COPY: Record<string, string> = {
+  azure_invalid_credentials:
+    "Those service principal credentials were rejected. Check the client ID and client secret, then try again.",
+  azure_insufficient_permissions:
+    "The service principal cannot read the complete Management Group hierarchy. Grant it the Reader role at the Management Group level, then try again.",
+  azure_management_group_not_found:
+    "No Management Group with that ID was found in this tenant. Check the ID, and that the service principal has been granted access to it.",
+  azure_tenant_mismatch:
+    "Those credentials belong to a different Microsoft Entra tenant. Use a service principal from the tenant you entered.",
+  azure_service_unavailable:
+    "Azure did not respond while reading the Management Group hierarchy. Nothing is wrong with your credentials — try again in a few minutes.",
+  organization_discovery_failed:
+    "Discovery could not be completed. Try again, and contact support if it keeps failing.",
   gcp_invalid_organization_id:
     "That organization ID is not valid. Copy the numeric ID from the Google Cloud console and try again.",
   gcp_organization_not_found:
@@ -142,19 +147,23 @@ const DISCOVERY_ERROR_COPY: Record<string, string> = {
 };
 
 /**
- * Copy for a failed discovery. An unknown code falls back to the type's
- * auth-failure copy without the raw token, which is a support detail.
+ * Copy for a failed discovery, most actionable first: our curated wording for a
+ * known code, then the server's own message (already display-safe) so a code
+ * added after this build still says something, then the type's auth-failure copy
+ * — never the raw machine code, which is a support detail.
  */
 function describeDiscoveryFailure(
   code: string | undefined,
   authFailure: string,
+  serverMessage?: string | null,
 ): string {
   const trimmedCode = code?.trim();
-  if (!trimmedCode) {
-    return authFailure;
-  }
+  const curatedCopy = trimmedCode
+    ? DISCOVERY_ERROR_COPY[trimmedCode]
+    : undefined;
 
-  return DISCOVERY_ERROR_COPY[trimmedCode] ?? authFailure;
+  // `||`, not `??`: a blank server message is as good as absent.
+  return curatedCopy ?? (serverMessage?.trim() || authFailure);
 }
 
 /**
@@ -166,8 +175,6 @@ export interface BoundOrgSetupStrategy {
   externalIdField: OrgSetupErrorField;
   /** External id used to match/create the organization. */
   externalId: string;
-  /** `root_external_id` for the create request; undefined when discovery sets it. */
-  rootExternalId: string | undefined;
   resolvedName: string;
   buildSecretPayload: (stackSetExternalId: string) => OrgSecretPayload;
   mapSecretErrorField: (fieldNames: string) => OrgSetupErrorField | null;
@@ -176,8 +183,14 @@ export interface BoundOrgSetupStrategy {
     defaultSelection: string[];
   };
   authFailureMessage: (detail?: string) => string;
-  /** Copy for a discovery that failed with a machine error code. */
-  discoveryFailureMessage: (code?: string) => string;
+  /**
+   * Copy for a discovery that failed, from its machine error code and the
+   * server's human message.
+   */
+  discoveryFailureMessage: (
+    code?: string,
+    serverMessage?: string | null,
+  ) => string;
 }
 
 const AWS_AUTH_FAILURE =
@@ -187,9 +200,6 @@ const awsOrgSetupStrategy: OrgSetupStrategy<AwsOrgSetupData> = {
   orgType: ORGANIZATION_TYPE.AWS,
   externalIdField: "awsOrgId",
   getExternalId: (data) => data.awsOrgId,
-  // Discovery reports the organization root; the StackSet target only scopes the
-  // default selection.
-  getRootExternalId: () => undefined,
   getResolvedName: (data) => data.organizationName?.trim() || data.awsOrgId,
   buildSecretPayload: (data, stackSetExternalId) => ({
     orgType: ORGANIZATION_TYPE.AWS,
@@ -222,6 +232,45 @@ const awsOrgSetupStrategy: OrgSetupStrategy<AwsOrgSetupData> = {
     detail ? `${AWS_AUTH_FAILURE} ${detail}` : AWS_AUTH_FAILURE,
 };
 
+const AZURE_AUTH_FAILURE =
+  "Authentication failed. Please verify the service principal permissions or credentials, then try again.";
+
+const azureOrgSetupStrategy: OrgSetupStrategy<AzureOrgSetupData> = {
+  orgType: ORGANIZATION_TYPE.AZURE,
+  externalIdField: "tenantId",
+  getExternalId: (data) => data.tenantId.trim(),
+  getResolvedName: (data) =>
+    data.organizationName?.trim() || data.tenantId.trim(),
+  // The tenant comes from the organization, so the secret carries the service
+  // principal only.
+  buildSecretPayload: (data) => ({
+    orgType: ORGANIZATION_TYPE.AZURE,
+    secretType: ORG_SECRET_TYPE.STATIC,
+    secret: {
+      client_id: data.clientId.trim(),
+      client_secret: data.clientSecret.trim(),
+    },
+  }),
+  mapSecretErrorField: (fieldNames) => {
+    if (fieldNames.includes("client_id")) return "clientId";
+    if (fieldNames.includes("client_secret")) return "clientSecret";
+    return null;
+  },
+  ingestDiscovery: (rawResult) => {
+    const hierarchy = mapAzureDiscovery(rawResult as AzureDiscoveryResult);
+
+    // Like GCP, there is no StackSet-style target scoping, so the default is
+    // every ready subscription; Management Group ancestors are derived
+    // server-side.
+    return {
+      hierarchy,
+      defaultSelection: getSelectableCandidateIds(hierarchy),
+    };
+  },
+  authFailureMessage: (detail) =>
+    detail ? `${AZURE_AUTH_FAILURE} ${detail}` : AZURE_AUTH_FAILURE,
+};
+
 const GCP_AUTH_FAILURE =
   "Authentication failed. Please verify the service account permissions or credentials, then try again.";
 
@@ -229,8 +278,6 @@ const gcpOrgSetupStrategy: OrgSetupStrategy<GcpOrgSetupData> = {
   orgType: ORGANIZATION_TYPE.GCP,
   externalIdField: "gcpOrgId",
   getExternalId: (data) => data.gcpOrgId.trim(),
-  // Discovery reports the organization resource name as the root.
-  getRootExternalId: () => undefined,
   getResolvedName: (data) =>
     data.organizationName?.trim() || data.gcpOrgId.trim(),
   buildSecretPayload: (data) => {
@@ -283,15 +330,18 @@ function bind<D extends OrgSetupSubmissionData>(
     orgType: strategy.orgType,
     externalIdField: strategy.externalIdField,
     externalId: strategy.getExternalId(data),
-    rootExternalId: strategy.getRootExternalId(data),
     resolvedName: strategy.getResolvedName(data),
     buildSecretPayload: (stackSetExternalId) =>
       strategy.buildSecretPayload(data, stackSetExternalId),
     mapSecretErrorField: strategy.mapSecretErrorField,
     ingestDiscovery: (rawResult) => strategy.ingestDiscovery(rawResult, data),
     authFailureMessage: strategy.authFailureMessage,
-    discoveryFailureMessage: (code) =>
-      describeDiscoveryFailure(code, strategy.authFailureMessage()),
+    discoveryFailureMessage: (code, serverMessage) =>
+      describeDiscoveryFailure(
+        code,
+        strategy.authFailureMessage(),
+        serverMessage,
+      ),
   };
 }
 
@@ -305,6 +355,8 @@ export function bindOrgSetupStrategy(
   switch (data.orgType) {
     case ORGANIZATION_TYPE.AWS:
       return bind(awsOrgSetupStrategy, data);
+    case ORGANIZATION_TYPE.AZURE:
+      return bind(azureOrgSetupStrategy, data);
     case ORGANIZATION_TYPE.GCP:
       return bind(gcpOrgSetupStrategy, data);
   }
