@@ -31,6 +31,8 @@
         "ec2:GetInstanceMetadataDefaults",
         "ecr:Describe*",
         "ecr:GetRegistryScanningConfiguration",
+        "ecr:BatchGetImage",
+        "ecr:GetDownloadUrlForLayer",
         "elasticfilesystem:DescribeBackupPolicy",
         "glue:GetConnections",
         "glue:GetSecurityConfiguration*",

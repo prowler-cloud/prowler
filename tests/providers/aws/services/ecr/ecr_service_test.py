@@ -1,11 +1,20 @@
+import json
 from datetime import datetime
 from unittest.mock import patch
 
 import botocore
+import pytest
 from boto3 import client
 from moto import mock_aws
 
-from prowler.providers.aws.services.ecr.ecr_service import ECR, ScanningRule
+from prowler.providers.aws.services.ecr.ecr_service import (
+    ECR,
+    ScanningRule,
+)
+from tests.providers.aws.services.ecr.image_scan_fixtures import (
+    MANIFESTS_BY_DIGEST,
+    reset_image_fixtures,
+)
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
@@ -18,8 +27,20 @@ repo_name = "test-repo"
 # Mocking Access Analyzer Calls
 make_api_call = botocore.client.BaseClient._make_api_call
 
+# BatchGetImage / GetDownloadUrlForLayer fixtures (which moto does not
+# implement) live in image_scan_fixtures and are served by mock_make_api_call.
+
+
+@pytest.fixture(autouse=True)
+def _reset_image_fixtures():
+    """Isolate the BatchGetImage/GetDownloadUrlForLayer fixtures per test."""
+    reset_image_fixtures()
+    yield
+    reset_image_fixtures()
+
 
 def mock_make_api_call(self, operation_name, kwarg):
+    """Fake botocore responses for the ECR operations this suite exercises."""
     if operation_name == "DescribeImages":
         return {
             "imageDetails": [
@@ -150,10 +171,37 @@ def mock_make_api_call(self, operation_name, kwarg):
             },
         }
 
+    if operation_name == "BatchGetImage":
+        digest = kwarg["imageIds"][0]["imageDigest"]
+        manifest = MANIFESTS_BY_DIGEST.get(digest)
+        if manifest is None:
+            return {
+                "images": [],
+                "failures": [
+                    {
+                        "imageId": {"imageDigest": digest},
+                        "failureCode": "ImageNotFound",
+                    }
+                ],
+            }
+        return {
+            "images": [
+                {
+                    "imageManifest": json.dumps(manifest),
+                    "imageManifestMediaType": manifest.get("mediaType", ""),
+                }
+            ]
+        }
+
+    if operation_name == "GetDownloadUrlForLayer":
+        digest = kwarg["layerDigest"]
+        return {"downloadUrl": f"https://layers.example.com/{digest}"}
+
     return make_api_call(self, operation_name, kwarg)
 
 
 def mock_generate_regional_clients(provider, service):
+    """Return a single regional client for every requested region."""
     regional_client = provider._session.current_session.client(
         service, region_name=AWS_REGION_EU_WEST_1
     )
@@ -169,13 +217,17 @@ def mock_generate_regional_clients(provider, service):
 )
 class Test_ECR_Service:
     # Test ECR Service
+    """Tests for the ECR service."""
+
     def test_service(self):
+        """The service name is set correctly."""
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         ecr = ECR(aws_provider)
         assert ecr.service == "ecr"
 
     # Test ECR client
     def test_client(self):
+        """Each regional client is an ECR client."""
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         ecr = ECR(aws_provider)
         for regional_client in ecr.regional_clients.values():
@@ -183,6 +235,7 @@ class Test_ECR_Service:
 
     # Test ECR session
     def test_get_session(self):
+        """The session is set correctly."""
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         ecr = ECR(aws_provider)
         assert ecr.session.__class__.__name__ == "Session"
@@ -190,6 +243,7 @@ class Test_ECR_Service:
     # Test describe ECR repositories
     @mock_aws
     def test_describe_registries_and_repositories(self):
+        """Registries and repositories are discovered."""
         ecr_client = client("ecr", region_name=AWS_REGION_EU_WEST_1)
         ecr_client.create_repository(
             repositoryName=repo_name,
@@ -220,6 +274,7 @@ class Test_ECR_Service:
     # Test describe ECR repository policies
     @mock_aws
     def test_describe_repository_policies(self):
+        """Repository policies are fetched and parsed."""
         ecr_client = client("ecr", region_name=AWS_REGION_EU_WEST_1)
         ecr_client.create_repository(
             repositoryName=repo_name,
@@ -249,6 +304,7 @@ class Test_ECR_Service:
     # Test describe ECR repository lifecycle policies
     @mock_aws
     def test_get_lifecycle_policies(self):
+        """Repository lifecycle policies are fetched."""
         ecr_client = client("ecr", region_name=AWS_REGION_EU_WEST_1)
         ecr_client.create_repository(
             repositoryName=repo_name,
@@ -268,6 +324,7 @@ class Test_ECR_Service:
     # Test get image details
     @mock_aws
     def test_get_image_details(self):
+        """Scannable, tagged images are collected and sorted by push date."""
         ecr_client = client("ecr", region_name=AWS_REGION_EU_WEST_1)
         ecr_client.create_repository(
             repositoryName=repo_name,
@@ -366,6 +423,7 @@ class Test_ECR_Service:
     # Test get ECR Registries Scanning Configuration
     @mock_aws
     def test_get_registry_scanning_configuration(self):
+        """The registry's scanning configuration is fetched."""
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         ecr = ECR(aws_provider)
         assert len(ecr.registries) == 1
@@ -379,39 +437,104 @@ class Test_ECR_Service:
         ]
 
     def test_is_artifact_scannable_docker(self):
+        """A Docker image config is scannable."""
         assert ECR._is_artifact_scannable(
             "application/vnd.docker.container.image.v1+json"
         )
 
     def test_is_artifact_scannable_layer_tar(self):
+        """An uncompressed Docker layer is scannable."""
         assert ECR._is_artifact_scannable(
             "application/vnd.docker.image.rootfs.diff.tar"
         )
 
     def test_is_artifact_scannable_layer_gzip(self):
+        """A gzip-compressed Docker layer is scannable."""
         assert ECR._is_artifact_scannable(
             "application/vnd.docker.image.rootfs.diff.tar.gzip"
         )
 
     def test_is_artifact_scannable_oci(self):
+        """An OCI image config is scannable."""
         assert ECR._is_artifact_scannable("application/vnd.oci.image.config.v1+json")
 
     def test_is_artifact_scannable_oci_tar(self):
+        """An uncompressed OCI layer is scannable."""
         assert ECR._is_artifact_scannable("application/vnd.oci.image.layer.v1.tar")
 
     def test_is_artifact_scannable_oci_compressed(self):
+        """A gzip-compressed OCI layer is scannable."""
         assert ECR._is_artifact_scannable("application/vnd.oci.image.layer.v1.tar+gzip")
 
     def test_is_artifact_scannable_none(self):
+        """A missing media type is not scannable."""
         assert not ECR._is_artifact_scannable(None)
 
     def test_is_artifact_scannable_empty(self):
+        """An empty media type is not scannable."""
         assert not ECR._is_artifact_scannable("")
 
     def test_is_artifact_scannable_non_scannable_tags(self):
+        """A signature-tagged artifact is not scannable."""
         assert not ECR._is_artifact_scannable("", ["sha256-abcdefg123456.sig"])
 
     def test_is_artifact_scannable_scannable_tags(self):
+        """A normally-tagged artifact is scannable."""
         assert ECR._is_artifact_scannable(
             "application/vnd.docker.container.image.v1+json", ["abcdefg123456"]
         )
+
+    @mock_aws
+    def test_get_image_scan_data_selects_only_latest_image_per_repository(self):
+        """Only the latest image per repository is selected for scanning."""
+        ecr_client_boto = client("ecr", region_name=AWS_REGION_EU_WEST_1)
+        ecr_client_boto.create_repository(
+            repositoryName=repo_name,
+            imageScanningConfiguration={"scanOnPush": True},
+        )
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        ecr = ECR(aws_provider)
+
+        repository = ecr.registries[AWS_REGION_EU_WEST_1].repositories[0]
+        # Sanity check: this repository has several scannable tagged images.
+        assert len(repository.images_details) == 4
+
+        results = list(ecr._get_image_scan_data())
+
+        # Only the most recently pushed image is selected, not all four.
+        assert len(results) == 1
+        fetched_repository, fetched_image, _ = results[0]
+        assert fetched_repository.name == repo_name
+        assert fetched_image.latest_tag == "test-tag4"
+        assert (
+            fetched_image.latest_digest
+            == "sha256:43251ac64627fc331584f6c498b3aba5badc01574e2c70b2499af3af16630eed"
+        )
+
+    @mock_aws
+    def test_get_image_scan_data_covers_scan_on_push_disabled_repository(self):
+        """A scan-on-push-disabled repo (empty images_details) is still scanned."""
+        ecr_client_boto = client("ecr", region_name=AWS_REGION_EU_WEST_1)
+        ecr_client_boto.create_repository(
+            repositoryName=repo_name,
+            imageScanningConfiguration={"scanOnPush": False},
+        )
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        ecr = ECR(aws_provider)
+
+        repository = ecr.registries[AWS_REGION_EU_WEST_1].repositories[0]
+        # Scan-on-push disabled: the metadata pass leaves images_details empty...
+        assert repository.scan_on_push is False
+        assert repository.images_details == []
+
+        # ...yet the secret-scan path resolves the latest image via a dedicated
+        # describe_images lookup, so the repository is not silently skipped.
+        results = list(ecr._get_image_scan_data())
+
+        assert len(results) == 1
+        fetched_repository, fetched_image, _ = results[0]
+        assert fetched_repository.name == repo_name
+        assert fetched_image.latest_tag == "test-tag4"
+        # The dedicated lookup must NOT mutate the shared images_details, or
+        # other checks would treat this repo as having a scanned image.
+        assert repository.images_details == []

@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from json import loads
 from typing import Optional
@@ -8,10 +9,21 @@ from pydantic.v1 import BaseModel
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
+from prowler.providers.aws.services.ecr.image_inspection import ImageInspector
+
+# Concurrency for the image-scan pipeline (_get_image_scan_data). Kept smaller
+# than the shared MAX_WORKERS metadata pool because each task can retain up to
+# MAX_LAYER_DOWNLOAD_BYTES compressed plus MAX_TOTAL_BYTES_PER_IMAGE decompressed
+# content (see image_inspection), so a high worker count would multiply peak
+# memory into several GB.
+IMAGE_SCAN_MAX_WORKERS = 4
 
 
 class ECR(AWSService):
+    """AWS Elastic Container Registry service."""
+
     def __init__(self, provider):
+        """Discover registries, repositories, policies, and image metadata."""
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.registry_id = self.audited_account
@@ -24,6 +36,7 @@ class ECR(AWSService):
         self.__threading_call__(self._list_tags_for_resource)
 
     def _describe_registries_and_repositories(self, regional_client):
+        """Populate the registry and its repositories for one region."""
         logger.info("ECR - Describing registries and repositories...")
         regional_registry_repositories = []
         try:
@@ -68,6 +81,7 @@ class ECR(AWSService):
             )
 
     def _describe_repository_policies(self, regional_client):
+        """Fetch and attach each repository's resource policy, if any."""
         logger.info("ECR - Describing repository policies...")
         try:
             if regional_client.region in self.registries:
@@ -96,6 +110,7 @@ class ECR(AWSService):
                 )
 
     def _get_repository_lifecycle_policy(self, regional_client):
+        """Fetch and attach each repository's lifecycle policy, if any."""
         logger.info("ECR - Getting repository lifecycle policy...")
         try:
             if regional_client.region in self.registries:
@@ -124,6 +139,7 @@ class ECR(AWSService):
             )
 
     def _get_image_details(self, regional_client):
+        """Populate each scan-on-push repository's scannable, tagged images."""
         logger.info("ECR - Getting images details...")
         try:
             if regional_client.region in self.registries:
@@ -158,12 +174,7 @@ class ECR(AWSService):
                                         image_scan_findings_field_name = (
                                             "imageScanFindingsSummary"
                                         )
-                                        if "docker" in artifact_media_type:
-                                            type = "Docker"
-                                        elif "oci" in artifact_media_type:
-                                            type = "OCI"
-                                        else:
-                                            type = ""
+                                        type = ECR._artifact_type(artifact_media_type)
 
                                         # If imageScanStatus is not present or imageScanFindingsSummary is missing,
                                         # we need to call DescribeImageScanFindings because AWS' new version of
@@ -252,6 +263,7 @@ class ECR(AWSService):
             )
 
     def _list_tags_for_resource(self, regional_client):
+        """Fetch and attach each repository's resource tags."""
         logger.info("ECR - List Tags...")
         try:
             if regional_client.region in self.registries:
@@ -280,6 +292,7 @@ class ECR(AWSService):
             )
 
     def _get_registry_scanning_configuration(self, regional_client):
+        """Fetch and attach the registry's image-scanning configuration."""
         logger.info("ECR - Getting Registry Scanning Configuration...")
         try:
             if regional_client.region in self.registries:
@@ -314,6 +327,134 @@ class ECR(AWSService):
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
+    def _get_image_scan_data(self):
+        """Lazily fetch manifest, config, and layer file contents for the latest image.
+
+        Only the most recently pushed scannable image in each repository is
+        scanned (resolved via _get_scan_target_image, which also covers
+        scan-on-push-disabled repositories) to bound cost on repositories
+        with many tags.
+
+        Not called from __init__: this is only invoked by the
+        ecr_repository_image_no_secrets check, since it downloads and
+        decompresses image layers and is significantly more expensive than
+        the metadata gathered above. A dedicated, smaller thread pool bounds
+        the concurrency (and therefore the peak memory) of this heavy
+        pipeline independently of the shared metadata pool.
+
+        Yields:
+            Tuple of (Repository, ImageDetails, Optional[ImageScanData]). The
+            scan data is None when the image manifest could not be resolved
+            or retrieved, so the caller can report it rather than drop it.
+        """
+        logger.info("ECR - Fetching image manifests, configs, and layers...")
+        inspector = ImageInspector()
+        with ThreadPoolExecutor(max_workers=IMAGE_SCAN_MAX_WORKERS) as executor:
+            images_to_fetch = {}
+            for registry in self.registries.values():
+                for repository in registry.repositories:
+                    image = self._get_scan_target_image(repository)
+                    if image is None:
+                        continue
+                    client = self.regional_clients[repository.region]
+                    registry_id = self.registries[repository.region].id
+                    future = executor.submit(
+                        inspector.fetch_image_scan_data,
+                        client,
+                        registry_id,
+                        repository.name,
+                        image.latest_digest,
+                    )
+                    images_to_fetch[future] = (repository, image)
+
+            for future in as_completed(images_to_fetch):
+                repository, image = images_to_fetch[future]
+                scan_data = None
+                try:
+                    scan_data = future.result()
+                except Exception as error:
+                    logger.error(
+                        f"{repository.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+                yield repository, image, scan_data
+
+    @staticmethod
+    def _artifact_type(artifact_media_type: Optional[str]) -> str:
+        """Map an image's artifact media type to a short image type label.
+
+        Returns:
+            "Docker", "OCI", or "" for an unrecognized/absent media type.
+        """
+        if artifact_media_type:
+            if "docker" in artifact_media_type:
+                return "Docker"
+            if "oci" in artifact_media_type:
+                return "OCI"
+        return ""
+
+    def _get_scan_target_image(self, repository) -> Optional["ImageDetails"]:
+        """Resolve the latest scannable image to scan for secrets.
+
+        Secret scanning is independent of ECR's vulnerability scanning
+        configuration, but `_get_image_details` only populates
+        `images_details` for scan-on-push-enabled repositories. For a
+        repository with scan-on-push disabled (empty `images_details`), this
+        performs a dedicated `describe_images` lookup to find the most
+        recently pushed scannable image, so those repositories are not
+        silently skipped.
+
+        The synthesized ImageDetails is deliberately NOT appended to
+        `repository.images_details`: other checks (e.g.
+        ecr_repositories_scan_vulnerabilities_in_latest_image) treat any
+        entry there as a scanned image and would FAIL scan-on-push-disabled
+        repositories that currently produce no finding.
+
+        Returns:
+            The latest scannable ImageDetails, or None if the repository has
+            no scannable image or the lookup failed.
+        """
+        if repository.images_details:
+            return repository.images_details[-1]
+        try:
+            client = self.regional_clients[repository.region]
+            describe_images_paginator = client.get_paginator("describe_images")
+            latest = None
+            for page in describe_images_paginator.paginate(
+                registryId=self.registries[repository.region].id,
+                repositoryName=repository.name,
+                PaginationConfig={"PageSize": 1000},
+            ):
+                for image in page["imageDetails"]:
+                    if image is None:
+                        continue
+                    artifact_media_type = image.get("artifactMediaType", None)
+                    tags = image.get("imageTags", [])
+                    if not ECR._is_artifact_scannable(artifact_media_type, tags):
+                        continue
+                    image_pushed_at = image.get("imagePushedAt")
+                    if image_pushed_at is None:
+                        continue
+                    # Match _get_image_details' "sort ascending, take last"
+                    # selection: on equal push dates the later-listed image
+                    # wins, so `<` (not `<=`) is used to replace on ties.
+                    if latest is not None and image_pushed_at < latest.image_pushed_at:
+                        continue
+                    latest = ImageDetails(
+                        latest_tag=image.get("imageTags", ["None"])[0],
+                        image_pushed_at=image_pushed_at,
+                        latest_digest=image.get("imageDigest"),
+                        scan_findings_status=None,
+                        scan_findings_severity_count=None,
+                        artifact_media_type=artifact_media_type,
+                        type=ECR._artifact_type(artifact_media_type),
+                    )
+            return latest
+        except Exception as error:
+            logger.error(
+                f"{repository.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return None
 
     @staticmethod
     def _is_artifact_scannable(artifact_media_type: str, tags: list[str] = []) -> bool:
@@ -355,12 +496,16 @@ class ECR(AWSService):
 
 
 class FindingSeverityCounts(BaseModel):
+    """Count of an image's vulnerability scan findings by severity."""
+
     critical: int
     high: int
     medium: int
 
 
 class ImageDetails(BaseModel):
+    """A single scannable, tagged image within an ECR repository."""
+
     latest_tag: str
     latest_digest: str
     image_pushed_at: datetime
@@ -371,6 +516,8 @@ class ImageDetails(BaseModel):
 
 
 class Repository(BaseModel):
+    """An ECR repository and its policies, images, and tags."""
+
     name: str
     arn: str
     region: str
@@ -384,11 +531,15 @@ class Repository(BaseModel):
 
 
 class ScanningRule(BaseModel):
+    """A registry-level image-scanning rule and its repository filters."""
+
     scan_frequency: str
     scan_filters: list[dict]
 
 
 class Registry(BaseModel):
+    """An ECR registry: its repositories and scanning configuration."""
+
     id: str
     arn: str
     region: str
