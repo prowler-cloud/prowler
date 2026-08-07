@@ -16,6 +16,25 @@ vi.mock("@/components/findings/jira-dispatch-modal-host", () => ({
 }));
 
 describe("MainLayout", () => {
+  it("renders an authenticated notice before page content", () => {
+    // Given / When
+    render(
+      <MainLayout
+        authenticatedNoticeSlot={<div role="status">Account notice</div>}
+      >
+        <div>Page content</div>
+      </MainLayout>,
+    );
+
+    // Then
+    const notice = screen.getByRole("status");
+    const content = screen.getByText("Page content");
+    expect(
+      notice.compareDocumentPosition(content) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
   it("mounts the shared Cloud upgrade modal with page content", () => {
     render(
       <MainLayout>

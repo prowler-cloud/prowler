@@ -16,7 +16,15 @@ import {
 import { cn } from "@/lib/utils";
 import { useSidePanelStore } from "@/store/side-panel";
 
-export default function MainLayout({ children }: { children: ReactNode }) {
+interface MainLayoutProps {
+  authenticatedNoticeSlot?: ReactNode;
+  children: ReactNode;
+}
+
+export default function MainLayout({
+  authenticatedNoticeSlot,
+  children,
+}: MainLayoutProps) {
   const pathname = usePathname();
   // Push (not overlay): the open side panel shrinks the page by exactly its
   // (user-resizable) width so everything stays reachable. Below `sm` the
@@ -57,6 +65,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
         )}
         style={{ marginRight: pushWidth }}
       >
+        {authenticatedNoticeSlot}
         <Suspense fallback={null}>{children}</Suspense>
       </main>
     </div>
