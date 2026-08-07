@@ -1,0 +1,480 @@
+{
+  "Framework": "MITRE-D3FEND",
+  "Name": "MITRE D3FEND compliance framework",
+  "Version": "",
+  "Provider": "Azure",
+  "Description": "MITRE D3FEND is a knowledge graph of cybersecurity countermeasure techniques. It provides a structured taxonomy of defensive measures that can be used to counter offensive techniques cataloged in MITRE ATT&CK. This Azure mapping aligns Prowler checks with D3FEND defensive techniques across Harden, Detect, Isolate, Model, Evict, and Restore tactics.",
+  "Requirements": [
+    {
+      "Id": "D3-MFA",
+      "Name": "Multi-factor Authentication",
+      "Description": "Requiring proof of two or more pieces of evidence in order to authenticate a user.",
+      "Attributes": [
+        {
+          "Section": "Harden",
+          "SubSection": "Credential Hardening",
+          "SubGroup": "Multi-factor Authentication",
+          "Service": "Microsoft Entra ID",
+          "Type": "Automated",
+          "Comment": "These checks verify MFA enrollment for privileged and non-privileged users, conditional access MFA policies, and security defaults, directly supporting the D3-MFA defensive technique."
+        }
+      ],
+      "Checks": [
+        "entra_privileged_user_has_mfa",
+        "entra_non_privileged_user_has_mfa",
+        "entra_user_with_vm_access_has_mfa",
+        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_conditional_access_policy_require_mfa_for_admin_portals",
+        "entra_security_defaults_enabled"
+      ]
+    },
+    {
+      "Id": "D3-CRO",
+      "Name": "Credential Rotation",
+      "Description": "Rotating credentials includes both generating a new credential and revoking the previously used credential.",
+      "Attributes": [
+        {
+          "Section": "Harden",
+          "SubSection": "Credential Hardening",
+          "SubGroup": "Credential Rotation",
+          "Service": "Azure Key Vault / Azure Storage",
+          "Type": "Automated",
+          "Comment": "These checks validate key and secret rotation policies and expiration settings, ensuring credentials are periodically replaced to limit exposure from compromised material."
+        }
+      ],
+      "Checks": [
+        "keyvault_key_rotation_enabled",
+        "storage_key_rotation_90_days",
+        "keyvault_key_expiration_set_in_non_rbac",
+        "keyvault_rbac_key_expiration_set",
+        "keyvault_non_rbac_secret_expiration_set",
+        "keyvault_rbac_secret_expiration_set"
+      ]
+    },
+    {
+      "Id": "D3-DENCR",
+      "Name": "Disk Encryption",
+      "Description": "Encrypting a hard disk partition to prevent cleartext access to a file system.",
+      "Attributes": [
+        {
+          "Section": "Harden",
+          "SubSection": "Platform Hardening",
+          "SubGroup": "Disk Encryption",
+          "Service": "Azure Virtual Machines",
+          "Type": "Automated",
+          "Comment": "These checks verify that VM attached and unattached disks are encrypted with customer-managed keys, protecting data at rest from unauthorized physical or logical access."
+        }
+      ],
+      "Checks": [
+        "vm_ensure_attached_disks_encrypted_with_cmk",
+        "vm_ensure_unattached_disks_encrypted_with_cmk"
+      ]
+    },
+    {
+      "Id": "D3-FE",
+      "Name": "File Encryption",
+      "Description": "Encrypting a file using a cryptographic key.",
+      "Attributes": [
+        {
+          "Section": "Harden",
+          "SubSection": "Platform Hardening",
+          "SubGroup": "File Encryption",
+          "Service": "Azure Storage / Azure SQL / Azure Databricks",
+          "Type": "Automated",
+          "Comment": "These checks verify that storage accounts, databases, and analytics workspaces use encryption with customer-managed keys or infrastructure-level encryption, protecting data at rest."
+        }
+      ],
+      "Checks": [
+        "storage_ensure_encryption_with_customer_managed_keys",
+        "storage_infrastructure_encryption_is_enabled",
+        "storage_smb_channel_encryption_with_secure_algorithm",
+        "sqlserver_tde_encryption_enabled",
+        "sqlserver_tde_encrypted_with_cmk",
+        "databricks_workspace_cmk_encryption_enabled",
+        "monitor_storage_account_with_activity_logs_cmk_encrypted"
+      ]
+    },
+    {
+      "Id": "D3-MENCR",
+      "Name": "Message Encryption",
+      "Description": "Encrypting a message body using a cryptographic key.",
+      "Attributes": [
+        {
+          "Section": "Harden",
+          "SubSection": "Message Hardening",
+          "SubGroup": "Message Encryption",
+          "Service": "Azure App Service / Azure Storage / Azure SQL / Azure Database",
+          "Type": "Automated",
+          "Comment": "These checks enforce TLS 1.2 minimum, HTTPS redirection, and SSL requirements across services, protecting data in transit from interception or tampering."
+        }
+      ],
+      "Checks": [
+        "storage_ensure_minimum_tls_version_12",
+        "storage_secure_transfer_required_is_enabled",
+        "storage_smb_protocol_version_is_latest",
+        "app_minimum_tls_version_12",
+        "app_ensure_http_is_redirected_to_https",
+        "mysql_flexible_server_minimum_tls_version_12",
+        "mysql_flexible_server_ssl_connection_enabled",
+        "postgresql_flexible_server_enforce_ssl_enabled",
+        "sqlserver_recommended_minimal_tls_version"
+      ]
+    },
+    {
+      "Id": "D3-SU",
+      "Name": "Software Update",
+      "Description": "Replacing old software on a computer system component.",
+      "Attributes": [
+        {
+          "Section": "Harden",
+          "SubSection": "Platform Hardening",
+          "SubGroup": "Software Update",
+          "Service": "Azure App Service / Azure Defender",
+          "Type": "Automated",
+          "Comment": "These checks verify that system updates are applied, runtime versions are current, and application frameworks use latest versions, reducing the attack surface from known vulnerabilities."
+        }
+      ],
+      "Checks": [
+        "defender_ensure_system_updates_are_applied",
+        "app_ensure_java_version_is_latest",
+        "app_ensure_php_version_is_latest",
+        "app_ensure_python_version_is_latest",
+        "app_function_latest_runtime_version"
+      ]
+    },
+    {
+      "Id": "D3-ACH",
+      "Name": "Application Configuration Hardening",
+      "Description": "Modifying an application's configuration to reduce its attack surface.",
+      "Attributes": [
+        {
+          "Section": "Harden",
+          "SubSection": "Application Hardening",
+          "SubGroup": "Application Configuration Hardening",
+          "Service": "Azure App Service / Azure Container Registry / Azure Storage",
+          "Type": "Automated",
+          "Comment": "These checks verify that applications require authentication, use managed identities, disable insecure protocols like FTP, and enforce Entra-based authorization, hardening application configuration against unauthorized access."
+        }
+      ],
+      "Checks": [
+        "app_ensure_auth_is_set_up",
+        "app_client_certificates_on",
+        "app_register_with_identity",
+        "app_ftp_deployment_disabled",
+        "app_function_ftps_deployment_disabled",
+        "app_function_identity_is_configured",
+        "app_function_access_keys_configured",
+        "containerregistry_admin_user_disabled",
+        "storage_default_to_entra_authorization_enabled",
+        "storage_account_key_access_disabled",
+        "vm_trusted_launch_enabled",
+        "vm_ensure_using_managed_disks",
+        "vm_linux_enforce_ssh_authentication",
+        "storage_cross_tenant_replication_disabled",
+        "postgresql_flexible_server_connection_throttling_on",
+        "storage_ensure_azure_services_are_trusted_to_access_is_enabled",
+        "app_ensure_using_http20",
+        "policy_ensure_asc_enforcement_enabled"
+      ]
+    },
+    {
+      "Id": "D3-PM",
+      "Name": "Platform Monitoring",
+      "Description": "Monitoring platform components such as operating systems software, hardware devices, or firmware.",
+      "Attributes": [
+        {
+          "Section": "Detect",
+          "SubSection": "Platform Monitoring",
+          "SubGroup": "Platform Monitoring",
+          "Service": "Microsoft Defender for Cloud",
+          "Type": "Automated",
+          "Comment": "These checks ensure Defender plans are enabled across Azure services and that security alerts are properly configured, providing continuous platform-level threat monitoring and detection."
+        }
+      ],
+      "Checks": [
+        "defender_ensure_defender_for_server_is_on",
+        "defender_ensure_defender_for_app_services_is_on",
+        "defender_ensure_defender_for_azure_sql_databases_is_on",
+        "defender_ensure_defender_for_storage_is_on",
+        "defender_ensure_defender_for_keyvault_is_on",
+        "defender_ensure_defender_for_arm_is_on",
+        "defender_ensure_defender_for_dns_is_on",
+        "defender_ensure_defender_for_containers_is_on",
+        "defender_ensure_defender_for_cosmosdb_is_on",
+        "defender_ensure_defender_for_databases_is_on",
+        "defender_ensure_defender_for_os_relational_databases_is_on",
+        "defender_ensure_defender_for_sql_servers_is_on",
+        "defender_ensure_iot_hub_defender_is_on",
+        "defender_ensure_mcas_is_enabled",
+        "defender_ensure_wdatp_is_enabled",
+        "defender_auto_provisioning_log_analytics_agent_vms_on",
+        "defender_ensure_notify_alerts_severity_is_high",
+        "defender_ensure_notify_emails_to_owners",
+        "defender_additional_email_configured_with_a_security_contact",
+        "defender_attack_path_notifications_properly_configured",
+        "monitor_alert_create_policy_assignment",
+        "monitor_alert_create_update_nsg",
+        "monitor_alert_create_update_public_ip_address_rule",
+        "monitor_alert_create_update_security_solution",
+        "monitor_alert_create_update_sqlserver_fr",
+        "monitor_alert_delete_nsg",
+        "monitor_alert_delete_policy_assignment",
+        "monitor_alert_delete_public_ip_address_rule",
+        "monitor_alert_delete_security_solution",
+        "monitor_alert_delete_sqlserver_fr",
+        "monitor_alert_service_health_exists",
+        "apim_threat_detection_llm_jacking"
+      ]
+    },
+    {
+      "Id": "D3-NTA",
+      "Name": "Network Traffic Analysis",
+      "Description": "Inspecting network traffic to detect anomalous activity.",
+      "Attributes": [
+        {
+          "Section": "Detect",
+          "SubSection": "Network Traffic Analysis",
+          "SubGroup": "Network Traffic Analysis",
+          "Service": "Azure Network Watcher",
+          "Type": "Automated",
+          "Comment": "These checks verify that NSG flow logs are captured, retained, and sent to analytics workspaces, enabling network traffic analysis for threat detection and forensic investigation."
+        }
+      ],
+      "Checks": [
+        "network_flow_log_captured_sent",
+        "network_flow_log_more_than_90_days",
+        "network_watcher_enabled"
+      ]
+    },
+    {
+      "Id": "D3-OSM",
+      "Name": "Operating System Monitoring",
+      "Description": "Monitoring the operating system kernel, process management functions, hardware drivers, system daemons, and their configurations for unauthorized activity.",
+      "Attributes": [
+        {
+          "Section": "Detect",
+          "SubSection": "Platform Monitoring",
+          "SubGroup": "Operating System Monitoring",
+          "Service": "Azure Monitor / Azure SQL / Azure Database / Azure Key Vault",
+          "Type": "Automated",
+          "Comment": "These checks verify that diagnostic settings, audit logs, and application logging are enabled across services, providing the telemetry needed for security monitoring and incident investigation."
+        }
+      ],
+      "Checks": [
+        "monitor_diagnostic_settings_exists",
+        "monitor_diagnostic_setting_with_appropriate_categories",
+        "keyvault_logging_enabled",
+        "sqlserver_auditing_enabled",
+        "sqlserver_auditing_retention_90_days",
+        "mysql_flexible_server_audit_log_enabled",
+        "mysql_flexible_server_audit_log_connection_activated",
+        "postgresql_flexible_server_log_checkpoints_on",
+        "postgresql_flexible_server_log_connections_on",
+        "postgresql_flexible_server_log_disconnections_on",
+        "postgresql_flexible_server_log_retention_days_greater_3",
+        "app_http_logs_enabled",
+        "app_function_application_insights_enabled",
+        "appinsights_ensure_is_configured"
+      ]
+    },
+    {
+      "Id": "D3-UBA",
+      "Name": "User Behavior Analysis",
+      "Description": "Analysis of user behavior and activity patterns including geolocation logon patterns, credential compromise scope, and account monitoring to identify anomalous or unauthorized actions.",
+      "Attributes": [
+        {
+          "Section": "Detect",
+          "SubSection": "User Behavior Analysis",
+          "SubGroup": "User Behavior Analysis",
+          "Service": "Microsoft Entra ID",
+          "Type": "Automated",
+          "Comment": "Named location policies are a prerequisite for location-aware conditional access evaluation. While not performing behavior analysis directly, they enable policies that can flag sign-ins from unusual geographic locations, supporting the D3-UBA defensive posture."
+        }
+      ],
+      "Checks": [
+        "entra_trusted_named_locations_exists"
+      ]
+    },
+    {
+      "Id": "D3-ITF",
+      "Name": "Inbound Traffic Filtering",
+      "Description": "Restricting network traffic originating from untrusted networks destined towards a private host or enclave.",
+      "Attributes": [
+        {
+          "Section": "Isolate",
+          "SubSection": "Network Isolation",
+          "SubGroup": "Inbound Traffic Filtering",
+          "Service": "Azure Network Security / Azure Firewall / Azure Services",
+          "Type": "Automated",
+          "Comment": "These checks restrict public reachability by blocking inbound protocols from the internet, disabling public access to services, and enforcing firewall rules, directly implementing the D3-ITF countermeasure."
+        }
+      ],
+      "Checks": [
+        "network_ssh_internet_access_restricted",
+        "network_rdp_internet_access_restricted",
+        "network_http_internet_access_restricted",
+        "network_udp_internet_access_restricted",
+        "aks_clusters_public_access_disabled",
+        "containerregistry_not_publicly_accessible",
+        "storage_blob_public_access_level_is_disabled",
+        "storage_default_network_access_rule_is_denied",
+        "sqlserver_unrestricted_inbound_access",
+        "app_function_not_publicly_accessible",
+        "aisearch_service_not_publicly_accessible",
+        "cosmosdb_account_firewall_use_selected_networks",
+        "postgresql_flexible_server_allow_access_services_disabled",
+        "vm_jit_access_enabled"
+      ]
+    },
+    {
+      "Id": "D3-NI",
+      "Name": "Network Isolation",
+      "Description": "Configuring network devices or parties in order to isolate information flows between zones.",
+      "Attributes": [
+        {
+          "Section": "Isolate",
+          "SubSection": "Network Isolation",
+          "SubGroup": "Network Isolation",
+          "Service": "Azure Private Link / Azure VNet",
+          "Type": "Automated",
+          "Comment": "These checks verify that services use private endpoints and VNet integration, isolating traffic from the public internet and enforcing network segmentation between zones."
+        }
+      ],
+      "Checks": [
+        "storage_ensure_private_endpoints_in_storage_accounts",
+        "keyvault_access_only_through_private_endpoints",
+        "keyvault_private_endpoints",
+        "cosmosdb_account_use_private_endpoints",
+        "aks_clusters_created_with_private_nodes",
+        "containerregistry_uses_private_link",
+        "app_function_vnet_integration_enabled",
+        "databricks_workspace_vnet_injection_enabled",
+        "network_bastion_host_exists",
+        "aks_network_policy_enabled",
+        "monitor_storage_account_with_activity_logs_is_private"
+      ]
+    },
+    {
+      "Id": "D3-UAP",
+      "Name": "User Account Permissions",
+      "Description": "Restricting a user account's access to resources.",
+      "Attributes": [
+        {
+          "Section": "Isolate",
+          "SubSection": "Access Mediation",
+          "SubGroup": "User Account Permissions",
+          "Service": "Microsoft Entra ID / Azure IAM / Azure RBAC",
+          "Type": "Automated",
+          "Comment": "These checks enforce least-privilege access by limiting global admin count, restricting default user permissions, enforcing RBAC, and controlling consent policies, reducing the blast radius of compromised accounts."
+        }
+      ],
+      "Checks": [
+        "entra_global_admin_in_less_than_five_users",
+        "entra_policy_default_users_cannot_create_security_groups",
+        "entra_policy_ensure_default_user_cannot_create_apps",
+        "entra_policy_ensure_default_user_cannot_create_tenants",
+        "entra_policy_restricts_user_consent_for_apps",
+        "entra_policy_user_consent_for_verified_apps",
+        "entra_users_cannot_create_microsoft_365_groups",
+        "iam_custom_role_has_permissions_to_administer_resource_locks",
+        "iam_subscription_roles_owner_custom_not_created",
+        "iam_role_user_access_admin_restricted",
+        "keyvault_rbac_enabled",
+        "aks_cluster_rbac_enabled",
+        "cosmosdb_account_use_aad_and_rbac",
+        "app_function_identity_without_admin_privileges",
+        "sqlserver_azuread_administrator_enabled",
+        "postgresql_flexible_server_entra_id_authentication_enabled",
+        "entra_policy_guest_users_access_restrictions",
+        "entra_policy_guest_invite_only_for_admin_roles"
+      ]
+    },
+    {
+      "Id": "D3-EAL",
+      "Name": "Executable Allowlisting",
+      "Description": "Using a digital signature to authenticate a file before opening.",
+      "Attributes": [
+        {
+          "Section": "Isolate",
+          "SubSection": "Execution Isolation",
+          "SubGroup": "Executable Allowlisting",
+          "Service": "Azure Virtual Machines / Azure Policy",
+          "Type": "Automated",
+          "Comment": "These checks verify that only approved VM images are deployed and that ASC enforcement policies are active, restricting execution to authorized and validated software."
+        }
+      ],
+      "Checks": [
+        "vm_ensure_using_approved_images"
+      ]
+    },
+    {
+      "Id": "D3-AVE",
+      "Name": "Asset Vulnerability Enumeration",
+      "Description": "Enriching asset inventory items with knowledge of their vulnerabilities.",
+      "Attributes": [
+        {
+          "Section": "Model",
+          "SubSection": "Asset Inventory",
+          "SubGroup": "Asset Vulnerability Enumeration",
+          "Service": "Microsoft Defender for Cloud / Azure SQL",
+          "Type": "Automated",
+          "Comment": "These checks verify that vulnerability assessments are enabled across VMs, containers, and databases, with scan results configured for reporting and notification, supporting continuous vulnerability enumeration."
+        }
+      ],
+      "Checks": [
+        "defender_auto_provisioning_vulnerabilty_assessments_machines_on",
+        "defender_container_images_resolved_vulnerabilities",
+        "defender_container_images_scan_enabled",
+        "defender_assessments_vm_endpoint_protection_installed",
+        "sqlserver_vulnerability_assessment_enabled",
+        "sqlserver_va_periodic_recurring_scans_enabled",
+        "sqlserver_va_scan_reports_configured",
+        "sqlserver_va_emails_notifications_admins_enabled",
+        "sqlserver_microsoft_defender_enabled",
+        "network_public_ip_shodan"
+      ]
+    },
+    {
+      "Id": "D3-RO",
+      "Name": "Restore Object",
+      "Description": "Restoring an object, including files, information, or other resources, from a backup or other preserved copy.",
+      "Attributes": [
+        {
+          "Section": "Restore",
+          "SubSection": "Restore Object",
+          "SubGroup": "Restore Object",
+          "Service": "Azure Storage / Azure Key Vault / Azure Backup",
+          "Type": "Automated",
+          "Comment": "These checks verify that soft delete, versioning, geo-redundancy, and backup policies are enabled, ensuring objects can be restored after accidental deletion or ransomware attacks."
+        }
+      ],
+      "Checks": [
+        "storage_ensure_soft_delete_is_enabled",
+        "storage_ensure_file_shares_soft_delete_is_enabled",
+        "storage_blob_versioning_is_enabled",
+        "storage_geo_redundant_enabled",
+        "keyvault_recoverable",
+        "vm_backup_enabled",
+        "vm_sufficient_daily_backup_retention_period"
+      ]
+    },
+    {
+      "Id": "D3-ET",
+      "Name": "Encrypted Tunnels",
+      "Description": "Encrypted encapsulation of routable network traffic.",
+      "Attributes": [
+        {
+          "Section": "Isolate",
+          "SubSection": "Network Isolation",
+          "SubGroup": "Encrypted Tunnels",
+          "Service": "Azure Bastion",
+          "Type": "Automated",
+          "Comment": "Azure Bastion provides encrypted RDP/SSH tunnels to VMs without exposing management ports to the public internet, implementing encrypted tunnel access to compute resources."
+        }
+      ],
+      "Checks": [
+        "network_bastion_host_exists"
+      ]
+    }
+  ]
+}
