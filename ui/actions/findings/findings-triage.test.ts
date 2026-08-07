@@ -38,6 +38,50 @@ describe("findings triage actions", () => {
     fetchMock.mockResolvedValue(new Response(null, { status: 200 }));
   });
 
+  it("should load authoritative manual pass context through the finding UID route", async () => {
+    // Given
+    const { loadFindingTriageDetail } = await importActions();
+    handleApiResponseMock.mockResolvedValue({
+      data: {
+        id: "triage-1",
+        type: "finding-triages",
+        attributes: {
+          finding_uid: "finding/stable/uid",
+          status: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
+          raw_finding_status: "MANUAL",
+          notes_count: 0,
+        },
+      },
+    });
+
+    // When
+    const result = await loadFindingTriageDetail({
+      findingId: "finding-snapshot-id",
+      findingUid: "finding/stable/uid",
+      triageId: "triage-1",
+      notesCount: 0,
+      status: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
+      label: "Under Review",
+      hasVisibleNote: false,
+      isMuted: false,
+      canEdit: true,
+      billingHref: "https://prowler.com/pricing",
+    });
+
+    // Then
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.test/api/v1/findings/finding%2Fstable%2Fuid/triage",
+      expect.any(Object),
+    );
+    expect(result).toEqual(
+      expect.objectContaining({
+        findingId: "finding-snapshot-id",
+        findingUid: "finding/stable/uid",
+        rawFindingStatus: "MANUAL",
+      }),
+    );
+  });
+
   it("should load notes through the persisted triage route when triageId exists", async () => {
     // Given
     const { loadLatestFindingTriageNote } = await importActions();
@@ -185,6 +229,79 @@ describe("findings triage actions", () => {
         }),
       }),
     );
+  });
+
+  it("should send manual pass status and fresh evidence in one triage request", async () => {
+    // Given
+    const { updateFindingTriage } = await importActions();
+    handleApiResponseMock.mockResolvedValue({
+      data: {
+        id: "triage-1",
+        attributes: {
+          manual_pass_expires_at: "2026-10-28T12:00:00Z",
+        },
+      },
+    });
+
+    // When
+    const result = await updateFindingTriage({
+      findingId: "finding-snapshot-id",
+      findingUid: "finding/stable/uid",
+      triageId: "triage-1",
+      notesCount: 1,
+      noteId: "note-1",
+      status: FINDING_TRIAGE_STATUS.RESOLVED,
+      previousStatus: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
+      manualPassEvidence: "Fresh control-owner evidence.",
+    });
+
+    // Then
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(result).toEqual({
+      manualPassExpiresAt: "2026-10-28T12:00:00Z",
+    });
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.test/api/v1/finding-triages/triage-1",
+      expect.objectContaining({
+        method: "PATCH",
+        body: JSON.stringify({
+          data: {
+            type: "finding-triages",
+            attributes: {
+              status: FINDING_TRIAGE_STATUS.RESOLVED,
+              note: "Fresh control-owner evidence.",
+            },
+          },
+        }),
+      }),
+    );
+  });
+
+  it("should surface JSON:API validation details when the manual pass patch fails", async () => {
+    // Given
+    const { updateFindingTriage } = await importActions();
+    handleApiResponseMock.mockResolvedValue({
+      errors: [
+        {
+          detail: "Manual pass evidence must describe the verification.",
+          source: { pointer: "/data/attributes/note" },
+        },
+      ],
+    });
+
+    // When / Then
+    await expect(
+      updateFindingTriage({
+        findingId: "finding-snapshot-id",
+        findingUid: "finding/stable/uid",
+        triageId: "triage-1",
+        notesCount: 1,
+        noteId: "note-1",
+        status: FINDING_TRIAGE_STATUS.RESOLVED,
+        previousStatus: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
+        manualPassEvidence: "Fresh control-owner evidence.",
+      }),
+    ).rejects.toThrow("Manual pass evidence must describe the verification.");
   });
 
   it("should update an existing note through its note id", async () => {

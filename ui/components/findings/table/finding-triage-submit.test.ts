@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   FINDING_TRIAGE_NOTE_MAX_LENGTH,
   FINDING_TRIAGE_STATUS,
+  RAW_FINDING_STATUS,
   type FindingTriageDetail,
 } from "@/types/findings-triage";
 
@@ -25,6 +26,13 @@ function makeTriageDetail(
     noteId: "note-1",
     noteBody: "Existing investigation note",
     maxNoteLength: FINDING_TRIAGE_NOTE_MAX_LENGTH,
+    rawFindingStatus: RAW_FINDING_STATUS.FAIL,
+    manualPassCreatedByName: null,
+    manualPassCreatedAt: null,
+    manualPassExpiresAt: null,
+    manualPassActive: null,
+    manualPassEvidence: null,
+    manualPassDeactivatedAt: null,
     ...overrides,
   };
 }
@@ -144,5 +152,51 @@ describe("buildFindingTriageUpdateInput", () => {
       isMuted: false,
       note: "",
     });
+  });
+
+  it("should build a manual pass from fresh evidence without reusing the editable note", () => {
+    // Given
+    const triage = makeTriageDetail({
+      rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+    });
+
+    // When
+    const result = buildFindingTriageUpdateInput({
+      triage,
+      selectedStatus: FINDING_TRIAGE_STATUS.RESOLVED,
+      noteBody: "Edited conversation note",
+      manualPassEvidence: " Fresh evidence from the control owner. ",
+    });
+
+    // Then
+    expect(result).toEqual({
+      findingId: "finding-1",
+      findingUid: "prowler-finding-uid-1",
+      triageId: "triage-1",
+      notesCount: 1,
+      noteId: "note-1",
+      isMuted: false,
+      status: FINDING_TRIAGE_STATUS.RESOLVED,
+      previousStatus: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
+      manualPassEvidence: "Fresh evidence from the control owner.",
+    });
+  });
+
+  it("should reject a manual pass without fresh nonblank evidence", () => {
+    // Given
+    const triage = makeTriageDetail({
+      rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+    });
+
+    // When
+    const result = buildFindingTriageUpdateInput({
+      triage,
+      selectedStatus: FINDING_TRIAGE_STATUS.RESOLVED,
+      noteBody: "Existing investigation note",
+      manualPassEvidence: "   ",
+    });
+
+    // Then
+    expect(result).toBeNull();
   });
 });

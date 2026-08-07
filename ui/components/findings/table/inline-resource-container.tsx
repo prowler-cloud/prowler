@@ -10,6 +10,7 @@ import { ChevronsDown } from "lucide-react";
 import { useImperativeHandle, useRef } from "react";
 
 import {
+  loadFindingTriageDetail,
   loadLatestFindingTriageNote,
   updateFindingTriage,
 } from "@/actions/findings";
@@ -222,6 +223,7 @@ export function InlineResourceContainer({
     onTriageUpdateAction: (input) =>
       updateTriageOptimistically(input, updateFindingTriage),
     onTriageNoteLoadAction: loadLatestFindingTriageNote,
+    onTriageDetailLoadAction: loadFindingTriageDetail,
   });
 
   const table = useReactTable({

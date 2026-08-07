@@ -1,5 +1,8 @@
 import {
   FINDING_TRIAGE_STATUS_LABELS,
+  FINDING_TRIAGE_STATUS,
+  MANUAL_PASS_PROVENANCE,
+  RAW_FINDING_STATUS,
   type FindingTriageSummary,
   isMutelistShortcutStatus,
   type UpdateFindingTriageInput,
@@ -8,6 +11,7 @@ import {
 interface FindingTriageRowAttributes {
   muted?: boolean;
   muted_reason?: string;
+  status?: string;
 }
 
 export interface FindingTriageRow {
@@ -37,13 +41,15 @@ export const applyOptimisticTriageSummaryUpdate = (
   const noteHasContent =
     typeof input.note === "string" && input.note.length > 0;
   const shouldMarkMuted = shouldMarkFindingMutedForTriageUpdate(input);
-
   return {
     ...triage,
     ...(input.status
       ? {
           status: input.status,
           label: FINDING_TRIAGE_STATUS_LABELS[input.status],
+          manualPassProvenance: input.manualPassEvidence
+            ? MANUAL_PASS_PROVENANCE
+            : triage.manualPassProvenance,
           isMuted: shouldMarkMuted ? true : triage.isMuted,
         }
       : {}),
@@ -67,12 +73,18 @@ export const applyOptimisticFindingTriageRowUpdate = <
   }
 
   const shouldMarkMuted = shouldMarkFindingMutedForTriageUpdate(input);
+  const isManualPass =
+    input.status === FINDING_TRIAGE_STATUS.RESOLVED &&
+    Boolean(input.manualPassEvidence);
 
   return {
     ...finding,
     triage: applyOptimisticTriageSummaryUpdate(finding.triage, input),
     attributes: {
       ...finding.attributes,
+      status: isManualPass
+        ? RAW_FINDING_STATUS.PASS
+        : finding.attributes.status,
       muted: shouldMarkMuted ? true : finding.attributes.muted,
       muted_reason:
         shouldMarkMuted && input.isMuted !== true && input.status

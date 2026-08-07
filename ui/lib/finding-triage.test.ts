@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import {
   FINDING_TRIAGE_STATUS,
+  MANUAL_PASS_PROVENANCE,
+  RAW_FINDING_STATUS,
   type FindingTriageSummary,
 } from "@/types/findings-triage";
 
@@ -54,6 +56,37 @@ function makeFindingRow(overrides?: Partial<TestFindingRow>): TestFindingRow {
 }
 
 describe("finding triage optimistic row updates", () => {
+  it("should preserve the Resolved triage label during a manual attestation update", () => {
+    // Given
+    const finding = makeFindingRow({
+      triage: makeTriageSummary({
+        rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+      }),
+    });
+
+    // When
+    const result = applyOptimisticFindingTriageRowUpdate(finding, {
+      findingId: "finding-1",
+      findingUid: "uid-1",
+      triageId: "triage-1",
+      notesCount: 0,
+      status: FINDING_TRIAGE_STATUS.RESOLVED,
+      previousStatus: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
+      manualPassEvidence: "Verified by the control owner.",
+    });
+
+    // Then
+    expect(result.triage).toEqual(
+      expect.objectContaining({
+        status: FINDING_TRIAGE_STATUS.RESOLVED,
+        label: "Resolved",
+        rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+        manualPassProvenance: MANUAL_PASS_PROVENANCE,
+      }),
+    );
+    expect(result.attributes.status).toBe(RAW_FINDING_STATUS.PASS);
+  });
+
   it("should patch matching finding row triage and muted attributes", () => {
     // Given
     const finding = makeFindingRow();

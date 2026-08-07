@@ -24,6 +24,7 @@ const {
   mockNotificationIndicator,
   mockUpdateFindingTriage,
   mockLoadLatestFindingTriageNote,
+  mockLoadFindingTriageDetail,
   mockRequestPanelChatMessage,
   mockIsCloud,
   mockCurrentLighthouseContext,
@@ -36,6 +37,7 @@ const {
   mockNotificationIndicator: vi.fn(),
   mockUpdateFindingTriage: vi.fn(),
   mockLoadLatestFindingTriageNote: vi.fn(),
+  mockLoadFindingTriageDetail: vi.fn(),
   mockRequestPanelChatMessage: vi.fn(),
   mockIsCloud: vi.fn(() => true),
   mockCurrentLighthouseContext: {
@@ -284,6 +286,7 @@ vi.mock("@/actions/compliances", () => ({
 vi.mock("@/actions/findings", () => ({
   updateFindingTriage: mockUpdateFindingTriage,
   loadLatestFindingTriageNote: mockLoadLatestFindingTriageNote,
+  loadFindingTriageDetail: mockLoadFindingTriageDetail,
 }));
 
 vi.mock("@/components/icons", () => ({

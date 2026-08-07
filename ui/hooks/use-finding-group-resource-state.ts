@@ -13,7 +13,10 @@ import {
   shouldMarkFindingMutedForTriageUpdate,
 } from "@/lib/finding-triage";
 import { FindingGroupRow, FindingResourceRow } from "@/types";
-import type { UpdateFindingTriageInput } from "@/types/findings-triage";
+import type {
+  FindingTriageUpdateResult,
+  UpdateFindingTriageInput,
+} from "@/types/findings-triage";
 
 interface UseFindingGroupResourceStateOptions {
   group: FindingGroupRow;
@@ -45,8 +48,10 @@ interface UseFindingGroupResourceStateReturn {
   resolveSelectedFindingIds: (ids: string[]) => Promise<string[]>;
   updateTriageOptimistically: (
     input: UpdateFindingTriageInput,
-    updateAction: (input: UpdateFindingTriageInput) => Promise<void>,
-  ) => Promise<void>;
+    updateAction: (
+      input: UpdateFindingTriageInput,
+    ) => Promise<FindingTriageUpdateResult | void>,
+  ) => Promise<FindingTriageUpdateResult | void>;
 }
 
 function getSelectedResources(
@@ -270,13 +275,16 @@ export function useFindingGroupResourceState({
 
   const updateTriageOptimistically = async (
     input: UpdateFindingTriageInput,
-    updateAction: (input: UpdateFindingTriageInput) => Promise<void>,
+    updateAction: (
+      input: UpdateFindingTriageInput,
+    ) => Promise<FindingTriageUpdateResult | void>,
   ) => {
     const optimisticToken = applyOptimisticTriageUpdate(input);
     try {
-      await updateAction(input);
+      const result = await updateAction(input);
       settleOptimisticTriageUpdate(input.findingId, optimisticToken);
       refresh();
+      return result;
     } catch (error) {
       clearOptimisticTriageUpdate(input.findingId, optimisticToken);
       refresh();

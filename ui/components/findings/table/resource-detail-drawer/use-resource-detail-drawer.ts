@@ -20,7 +20,11 @@ import {
   type FindingComplianceFramework,
   WATCHLIST_SCOPE,
 } from "@/types/compliance-watchlist";
-import type { UpdateFindingTriageInput } from "@/types/findings-triage";
+import {
+  FINDING_TRIAGE_STATUS,
+  RAW_FINDING_STATUS,
+  type UpdateFindingTriageInput,
+} from "@/types/findings-triage";
 
 // Keep fast carousel navigations in a loading state for one short beat so
 // React doesn't batch away the skeleton frame when switching resources.
@@ -400,9 +404,13 @@ export function useResourceDetailDrawer({
     }
 
     const shouldMarkMuted = shouldMarkFindingMutedForTriageUpdate(input);
+    const isManualPass =
+      input.status === FINDING_TRIAGE_STATUS.RESOLVED &&
+      Boolean(input.manualPassEvidence);
 
     return {
       ...finding,
+      status: isManualPass ? RAW_FINDING_STATUS.PASS : finding.status,
       isMuted: shouldMarkMuted ? true : finding.isMuted,
       mutedReason:
         shouldMarkMuted && input.isMuted !== true && input.status

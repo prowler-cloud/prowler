@@ -5,6 +5,7 @@ import { Container, CornerDownRight, Link } from "lucide-react";
 import { useState } from "react";
 
 import {
+  loadFindingTriageDetail,
   loadLatestFindingTriageNote,
   updateFindingTriage,
 } from "@/actions/findings";
@@ -149,14 +150,15 @@ export const ResourceDetailContent = ({
   };
 
   const handleTriageUpdate = async (input: UpdateFindingTriageInput) => {
-    await updateFindingTriage(input);
+    const result = await updateFindingTriage(input);
 
     if (shouldRefreshAfterTriageUpdate(input)) {
       setFindingsReloadNonce((value) => value + 1);
-      return;
+      return result;
     }
 
     patchTriageUpdate(input);
+    return result;
   };
 
   const failedFindings = findingsData;
@@ -182,6 +184,7 @@ export const ResourceDetailContent = ({
     handleMuteComplete,
     handleTriageUpdate,
     loadLatestFindingTriageNote,
+    loadFindingTriageDetail,
   );
 
   const findingTitle =

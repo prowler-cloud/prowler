@@ -21,6 +21,8 @@ export const FINDING_TRIAGE_STATUS_LABELS = {
   [FINDING_TRIAGE_STATUS.REOPENED]: "Reopened",
 } as const satisfies Record<FindingTriageStatus, string>;
 
+export const MANUAL_PASS_PROVENANCE = "Manually verified" as const;
+
 export const FINDING_TRIAGE_MANUAL_STATUS_VALUES = [
   FINDING_TRIAGE_STATUS.OPEN,
   FINDING_TRIAGE_STATUS.UNDER_REVIEW,
@@ -31,6 +33,23 @@ export const FINDING_TRIAGE_MANUAL_STATUS_VALUES = [
 
 export type FindingTriageManualStatus =
   (typeof FINDING_TRIAGE_MANUAL_STATUS_VALUES)[number];
+
+export const FINDING_TRIAGE_MODAL_STATUS_VALUES = [
+  ...FINDING_TRIAGE_MANUAL_STATUS_VALUES,
+  FINDING_TRIAGE_STATUS.RESOLVED,
+] as const;
+
+export type FindingTriageModalStatus =
+  (typeof FINDING_TRIAGE_MODAL_STATUS_VALUES)[number];
+
+export const RAW_FINDING_STATUS = {
+  FAIL: "FAIL",
+  PASS: "PASS",
+  MANUAL: "MANUAL",
+} as const;
+
+export type RawFindingStatus =
+  (typeof RAW_FINDING_STATUS)[keyof typeof RAW_FINDING_STATUS];
 
 export const FINDING_TRIAGE_AUTOMATION_STATUS_VALUES = [
   FINDING_TRIAGE_STATUS.RESOLVED,
@@ -92,6 +111,8 @@ export interface FindingTriageSummary {
   label: string;
   hasVisibleNote: boolean;
   isMuted: boolean;
+  rawFindingStatus?: RawFindingStatus | null;
+  manualPassProvenance?: typeof MANUAL_PASS_PROVENANCE | null;
   canEdit: boolean;
   disabledReason?: FindingTriageDisabledReason;
   billingHref: string;
@@ -101,19 +122,45 @@ export interface FindingTriageDetail extends FindingTriageSummary {
   noteId: string | null;
   noteBody: string;
   maxNoteLength: typeof FINDING_TRIAGE_NOTE_MAX_LENGTH;
+  rawFindingStatus: RawFindingStatus | null;
+  manualPassActive: boolean | null;
+  manualPassEvidence: string | null;
+  manualPassCreatedByName: string | null;
+  manualPassCreatedAt: string | null;
+  manualPassExpiresAt: string | null;
+  manualPassDeactivatedAt: string | null;
 }
 
-export interface UpdateFindingTriageInput {
+export interface FindingTriageUpdateResult {
+  manualPassExpiresAt: string | null;
+}
+
+interface FindingTriageUpdateBase {
   findingId: string;
   findingUid: string;
   triageId: string | null;
   notesCount: number;
   noteId?: string | null;
-  status?: FindingTriageManualStatus;
   previousStatus?: FindingTriageStatus;
   isMuted?: boolean;
-  note?: string;
 }
+
+interface StandardFindingTriageUpdate extends FindingTriageUpdateBase {
+  status?: FindingTriageManualStatus;
+  note?: string;
+  manualPassEvidence?: never;
+}
+
+interface ManualPassFindingTriageUpdate extends FindingTriageUpdateBase {
+  status: typeof FINDING_TRIAGE_STATUS.RESOLVED;
+  previousStatus: FindingTriageManualStatus;
+  manualPassEvidence: string;
+  note?: never;
+}
+
+export type UpdateFindingTriageInput =
+  | StandardFindingTriageUpdate
+  | ManualPassFindingTriageUpdate;
 
 export interface FindingTriageLoadedNote {
   noteId: string;
