@@ -615,6 +615,7 @@
       "Checks": [
         "apigateway_restapi_client_certificate_enabled",
         "elbv2_insecure_ssl_ciphers",
+        "elbv2_listener_pqc_tls_enabled",
         "cloudfront_distributions_pqc_tls_enabled",
         "apigateway_domain_name_pqc_tls_enabled",
         "transfer_server_pqc_ssh_kex_enabled",
@@ -878,7 +879,8 @@
         "ec2_securitygroup_default_restrict_traffic",
         "ec2_networkacl_allow_ingress_any_port",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
-        "ec2_networkacl_allow_ingress_any_port"
+        "ec2_networkacl_allow_ingress_any_port",
+        "ec2_confidential_workload_host_vsock_proxy_exposed"
       ]
     },
     {

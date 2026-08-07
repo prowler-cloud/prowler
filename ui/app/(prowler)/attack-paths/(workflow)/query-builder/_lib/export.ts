@@ -22,6 +22,7 @@ import {
   RESOURCE_NODE_DIMENSIONS,
 } from "./node-dimensions";
 import { getNodeLabelDisplay } from "./node-label-lines";
+import { isProwlerFindingNode } from "./node-types";
 import { resolveNodeVisual } from "./node-visuals";
 
 interface ExportGraphOptions {
@@ -67,8 +68,7 @@ const downloadDataUrl = (dataUrl: string, filename: string) => {
   document.body.removeChild(link);
 };
 
-const isFindingNode = (labels: string[]) =>
-  labels.some((label) => label.toLowerCase().includes("finding"));
+const isFindingNode = isProwlerFindingNode;
 
 const getGraphEdges = (graphData: AttackPathGraphData): GraphEdge[] => {
   if (graphData.edges?.length) return graphData.edges;

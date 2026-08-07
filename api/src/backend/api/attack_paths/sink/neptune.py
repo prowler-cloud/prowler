@@ -25,7 +25,7 @@ from urllib.parse import urlsplit
 
 import neo4j
 import neo4j.exceptions
-from api.attack_paths.retryable_session import RetryableSession
+from api.attack_paths.retryable_session import RetryableSession, RetryExhaustedError
 from api.attack_paths.sink.base import SinkDatabase
 from api.attack_paths.sink.drop import (
     NODE_DELETE_QUERY_TEMPLATE,
@@ -59,19 +59,33 @@ CONNECTION_TIMEOUT = env.int("NEPTUNE_CONNECTION_TIMEOUT", default=10)
 # Roll connections hourly so SigV4 rotations and cert refreshes don't strand long-lived pool entries
 MAX_CONNECTION_LIFETIME = env.int("NEPTUNE_MAX_CONNECTION_LIFETIME", default=3600)
 MAX_CONNECTION_POOL_SIZE = env.int("NEPTUNE_MAX_CONNECTION_POOL_SIZE", default=50)
+NEPTUNE_WRITE_RETRY_DELAY_SECONDS = 2
 
 READ_EXCEPTION_CODES = [
     "Neo.ClientError.Statement.AccessMode",
     "Neo.ClientError.Procedure.ProcedureNotFound",
 ]
 CLIENT_STATEMENT_EXCEPTION_PREFIX = "Neo.ClientError.Statement."
+RETRYABLE_WRITE_ERROR_FRAGMENTS = (
+    "Operation failed due to conflicting concurrent operations",
+    "Operation terminated (deadline exceeded)",
+)
 
 # Refresh 60s before the 5-minute SigV4 window closes
 SIGV4_TOKEN_LIFETIME_MINUTES = 4
 
 
+def _is_retryable_write_error(exc: Exception) -> bool:
+    if not isinstance(exc, neo4j.exceptions.Neo4jError):
+        return False
+    message = exc.message or ""
+    return any(fragment in message for fragment in RETRYABLE_WRITE_ERROR_FRAGMENTS)
+
+
 class NeptuneSink(SinkDatabase):
     """Neptune-backed sink. Single database; isolation is label-based."""
+
+    sync_batch_size = env.int("ATTACK_PATHS_NEPTUNE_SYNC_BATCH_SIZE", default=500)
 
     def __init__(self) -> None:
         self._writer: neo4j.Driver | None = None
@@ -194,6 +208,7 @@ class NeptuneSink(SinkDatabase):
         from api.attack_paths.database import (
             ClientStatementException,
             GraphDatabaseQueryException,
+            NeptuneWriteRetryExhaustedException,
             WriteQueryNotAllowedException,
         )
 
@@ -205,13 +220,26 @@ class NeptuneSink(SinkDatabase):
 
         session_wrapper: RetryableSession | None = None
         try:
+            is_write_session = default_access_mode != neo4j.READ_ACCESS
             session_wrapper = RetryableSession(
                 session_factory=lambda: driver.session(
                     default_access_mode=default_access_mode
                 ),
                 max_retries=SERVICE_UNAVAILABLE_MAX_RETRIES,
+                retry_if=_is_retryable_write_error if is_write_session else None,
+                initial_retry_delay_seconds=(
+                    NEPTUNE_WRITE_RETRY_DELAY_SECONDS if is_write_session else 0
+                ),
+                retry_context="Neptune write" if is_write_session else None,
             )
             yield session_wrapper
+
+        except RetryExhaustedError as exc:
+            last_error = exc.last_error
+            raise NeptuneWriteRetryExhaustedException(
+                message=str(exc),
+                code=getattr(last_error, "code", None),
+            ) from last_error
 
         except neo4j.exceptions.Neo4jError as exc:
             if (
@@ -274,7 +302,7 @@ class NeptuneSink(SinkDatabase):
         graph's branching factor.
         """
         from tasks.jobs.attack_paths.config import (
-            BATCH_SIZE,
+            GRAPH_MUTATION_BATCH_SIZE,
             PROVIDER_RESOURCE_LABEL,
             get_provider_label,
         )
@@ -313,7 +341,7 @@ class NeptuneSink(SinkDatabase):
                     total_key="rels",
                     deleted_key="deleted_rels",
                     initial_total=deleted_relationships,
-                    batch_size=BATCH_SIZE,
+                    batch_size=GRAPH_MUTATION_BATCH_SIZE,
                     drop_t0=drop_t0,
                 )
                 relationship_batches += phase_batches
@@ -332,7 +360,7 @@ class NeptuneSink(SinkDatabase):
                 total_key="nodes",
                 deleted_key="deleted_nodes",
                 initial_total=0,
-                batch_size=BATCH_SIZE,
+                batch_size=GRAPH_MUTATION_BATCH_SIZE,
                 drop_t0=drop_t0,
             )
 
@@ -405,7 +433,7 @@ class NeptuneSink(SinkDatabase):
             SET n.`{PROVIDER_ELEMENT_ID_PROPERTY}` = row.provider_element_id
         """
         with self.get_session() as session:
-            session.run(query, {"rows": rows}).consume()
+            session.execute_write(lambda tx: tx.run(query, {"rows": rows}).consume())
 
     def write_relationships(
         self,
@@ -429,7 +457,7 @@ class NeptuneSink(SinkDatabase):
             SET r += row.props
         """
         with self.get_session() as session:
-            session.run(query, {"rows": rows}).consume()
+            session.execute_write(lambda tx: tx.run(query, {"rows": rows}).consume())
 
     # Test helpers
 

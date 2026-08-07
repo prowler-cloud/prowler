@@ -12,13 +12,13 @@ import {
   NotificationIndicator,
 } from "@/components/findings/table/notification-indicator";
 import { Checkbox } from "@/components/shadcn";
-import { DateWithTime } from "@/components/ui/entities";
+import { DateWithTime } from "@/components/shadcn/entities";
 import {
   DataTableColumnHeader,
   Severity,
   SeverityBadge,
   StatusFindingBadge,
-} from "@/components/ui/table";
+} from "@/components/shadcn/table";
 import type {
   FindingTriageLoadedNote,
   FindingTriageSummary,

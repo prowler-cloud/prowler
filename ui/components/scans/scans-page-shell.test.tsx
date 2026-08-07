@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { useScansStore } from "@/store";
+import { ProviderProps } from "@/types";
 
 import { ScansPageShell } from "./scans-page-shell";
 
@@ -14,6 +15,10 @@ const { pushMock, replaceMock, searchParamsValue } = vi.hoisted(() => ({
 
 const { scansFilterBarSpy } = vi.hoisted(() => ({
   scansFilterBarSpy: vi.fn(),
+}));
+
+const { onboardingTriggerSpy } = vi.hoisted(() => ({
+  onboardingTriggerSpy: vi.fn(),
 }));
 
 const localStorageMock = (() => {
@@ -102,12 +107,21 @@ vi.mock("@/components/providers/muted-findings-config-button", () => ({
   MutedFindingsConfigButton: () => <a href="/mutelist">Configure Mutelist</a>,
 }));
 
-const providers = [
+vi.mock("@/components/onboarding", () => ({
+  OnboardingTrigger: (props: unknown) => {
+    onboardingTriggerSpy(props);
+    return <div data-testid="onboarding-trigger" />;
+  },
+  PageReady: () => <div data-testid="page-ready" />,
+}));
+
+const providers: ProviderProps[] = [
   {
     id: "provider-1",
     type: "providers" as const,
     attributes: {
       provider: "aws" as const,
+      is_dynamic: false,
       uid: "123456789012",
       alias: "Production",
       status: "completed" as const,
@@ -142,6 +156,19 @@ const providers = [
   },
 ];
 
+const disconnectedProviders: ProviderProps[] = [
+  {
+    ...providers[0],
+    attributes: {
+      ...providers[0].attributes,
+      connection: {
+        ...providers[0].attributes.connection,
+        connected: false,
+      },
+    },
+  },
+];
+
 describe("ScansPageShell", () => {
   afterEach(() => {
     vi.unstubAllEnvs();
@@ -152,7 +179,7 @@ describe("ScansPageShell", () => {
   });
 
   it("does not render an imported findings tab", () => {
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
 
     render(
       <ScansPageShell providers={providers} hasManageScansPermission>
@@ -170,7 +197,7 @@ describe("ScansPageShell", () => {
   });
 
   it("uses the shared scan filter bar for scan filters", () => {
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
 
     render(
       <ScansPageShell providers={providers} hasManageScansPermission>
@@ -188,7 +215,7 @@ describe("ScansPageShell", () => {
   });
 
   it("clears the active sort when switching tabs", async () => {
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
     searchParamsValue.current = "tab=active&sort=trigger";
     const user = userEvent.setup();
 
@@ -207,7 +234,7 @@ describe("ScansPageShell", () => {
   });
 
   it("uses a generic type filter label in Cloud", () => {
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
 
     render(
       <ScansPageShell providers={providers} hasManageScansPermission>
@@ -219,7 +246,7 @@ describe("ScansPageShell", () => {
   });
 
   it("shows the CLI import banner in Cloud", () => {
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
 
     render(
       <ScansPageShell providers={providers} hasManageScansPermission>
@@ -237,7 +264,7 @@ describe("ScansPageShell", () => {
   });
 
   it("hides the CLI import banner outside Cloud", () => {
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
 
     render(
       <ScansPageShell providers={providers} hasManageScansPermission>
@@ -249,7 +276,7 @@ describe("ScansPageShell", () => {
   });
 
   it("keeps launch scan with filters and mutelist with tabs", () => {
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
 
     render(
       <ScansPageShell providers={providers} hasManageScansPermission>
@@ -271,7 +298,7 @@ describe("ScansPageShell", () => {
   });
 
   it("shows the active scans count in the in progress tab", () => {
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
 
     render(
       <ScansPageShell
@@ -290,7 +317,7 @@ describe("ScansPageShell", () => {
   });
 
   it("opens the launch scan modal from the URL", () => {
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
     searchParamsValue.current = "launchScan=true";
 
     render(
@@ -302,8 +329,53 @@ describe("ScansPageShell", () => {
     expect(screen.getByRole("dialog")).toHaveTextContent(/launch scan/i);
   });
 
+  it("does not open the launch scan modal from the URL when no provider is connected", () => {
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+    searchParamsValue.current = "launchScan=true";
+
+    render(
+      <ScansPageShell
+        providers={disconnectedProviders}
+        hasManageScansPermission
+      >
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("does not open the launch scan modal from client state when no provider is connected", () => {
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+    useScansStore.getState().openLaunchScanModal();
+
+    render(
+      <ScansPageShell
+        providers={disconnectedProviders}
+        hasManageScansPermission
+      >
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("does not open the launch scan modal from the URL without manage scans permission", () => {
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+    searchParamsValue.current = "launchScan=true";
+
+    render(
+      <ScansPageShell providers={providers} hasManageScansPermission={false}>
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
   it("strips the launchScan URL param via the History API when closing the URL-opened modal", async () => {
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
     searchParamsValue.current = "tab=completed&launchScan=true";
     const replaceStateSpy = vi.spyOn(window.history, "replaceState");
     const user = userEvent.setup();
@@ -331,7 +403,7 @@ describe("ScansPageShell", () => {
   });
 
   it("opens and closes the launch scan modal from client state without navigation", async () => {
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
     const user = userEvent.setup();
     useScansStore.getState().openLaunchScanModal();
 
@@ -350,7 +422,7 @@ describe("ScansPageShell", () => {
   });
 
   it("shows the status filter only on the completed tab", () => {
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
     searchParamsValue.current = "tab=completed";
 
     render(
@@ -365,7 +437,7 @@ describe("ScansPageShell", () => {
   });
 
   it("hides the status filter outside of the completed tab", () => {
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
     searchParamsValue.current = "tab=active";
 
     render(
@@ -380,7 +452,7 @@ describe("ScansPageShell", () => {
   });
 
   it("clears status filter when switching scan tabs", async () => {
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
     searchParamsValue.current = "tab=completed&filter%5Bstate__in%5D=failed";
     const user = userEvent.setup();
 
@@ -398,7 +470,7 @@ describe("ScansPageShell", () => {
   });
 
   it("clears type filter when switching to scheduled scans", async () => {
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
     searchParamsValue.current = "tab=completed&filter%5Btrigger%5D=manual";
     const user = userEvent.setup();
 
@@ -413,5 +485,120 @@ describe("ScansPageShell", () => {
     const calledUrl = pushMock.mock.calls.at(-1)?.[0] as string;
     expect(calledUrl).toContain("tab=scheduled");
     expect(calledUrl).not.toContain("filter%5Btrigger%5D");
+  });
+
+  it("shows a non-blocking hint when no provider is connected, while still rendering the table", () => {
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+
+    render(
+      <ScansPageShell
+        providers={disconnectedProviders}
+        hasManageScansPermission
+      >
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    expect(screen.getByText("No Connected Providers")).toBeInTheDocument();
+    // The table (and therefore imported scans) must still render below the hint.
+    expect(screen.getByText("Scans table")).toBeInTheDocument();
+  });
+
+  it("shows the no-providers hint when there are no providers, while still rendering the table", () => {
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+
+    render(
+      <ScansPageShell providers={[]} hasManageScansPermission>
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    expect(screen.getByText("No Providers Configured")).toBeInTheDocument();
+    expect(screen.getByText("Scans table")).toBeInTheDocument();
+  });
+
+  it("does not show the providers hint when a provider is connected", () => {
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+
+    render(
+      <ScansPageShell providers={providers} hasManageScansPermission>
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    expect(
+      screen.queryByText("No Connected Providers"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("No Providers Configured"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("starts the view-first-scan tour when a provider is connected", () => {
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+
+    render(
+      <ScansPageShell providers={providers} hasManageScansPermission>
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    expect(screen.getByTestId("onboarding-trigger")).toBeInTheDocument();
+  });
+
+  it("suppresses the view-first-scan tour when no provider is connected, since Launch Scan is disabled", () => {
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+
+    render(
+      <ScansPageShell
+        providers={disconnectedProviders}
+        hasManageScansPermission
+      >
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    expect(screen.queryByTestId("onboarding-trigger")).not.toBeInTheDocument();
+    // The table (and therefore imported scans) must still render even with the tour suppressed.
+    expect(screen.getByText("Scans table")).toBeInTheDocument();
+  });
+
+  it("suppresses the view-first-scan tour when there are no providers", () => {
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+
+    render(
+      <ScansPageShell providers={[]} hasManageScansPermission>
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    expect(screen.queryByTestId("onboarding-trigger")).not.toBeInTheDocument();
+  });
+
+  it("suppresses the view-first-scan tour when a provider is connected but manage scans is missing", () => {
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+
+    render(
+      <ScansPageShell providers={providers} hasManageScansPermission={false}>
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    // Launch Scan is disabled without manage_scans, so the tour must not anchor to it.
+    expect(screen.queryByTestId("onboarding-trigger")).not.toBeInTheDocument();
+    // The table (and therefore imported scans) must still render.
+    expect(screen.getByText("Scans table")).toBeInTheDocument();
+  });
+
+  it("still signals page-ready without a connected provider so the navbar replay fallback works", () => {
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+
+    render(
+      <ScansPageShell providers={[]} hasManageScansPermission>
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    expect(screen.getByTestId("page-ready")).toBeInTheDocument();
   });
 });

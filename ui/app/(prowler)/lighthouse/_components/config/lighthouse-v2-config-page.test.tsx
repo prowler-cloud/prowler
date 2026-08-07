@@ -29,7 +29,8 @@ vi.mock("next/navigation", () => ({
 
 // Action feedback is delivered through toasts (rendered by the layout Toaster),
 // so we assert the dispatched toast rather than in-page banner text.
-vi.mock("@/components/ui", () => ({
+vi.mock("@/components/shadcn", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   useToast: () => ({ toast: toastMock, dismiss: vi.fn() }),
 }));
 

@@ -13,16 +13,16 @@ export const AlibabaCloudRoleCredentialsForm = ({
   return (
     <>
       <div className="flex flex-col">
-        <div className="text-md text-default-foreground leading-9 font-bold">
+        <div className="text-md text-text-neutral-primary leading-9 font-bold">
           Connect assuming RAM Role
         </div>
-        <div className="text-default-500 text-sm">
+        <div className="text-text-neutral-tertiary text-sm">
           Provide the RAM Role ARN to assume, along with the Access Keys of a
           RAM user that has permission to assume the role.
         </div>
       </div>
 
-      <span className="text-default-500 text-xs font-bold">
+      <span className="text-text-neutral-tertiary text-xs font-bold">
         RAM Role to Assume
       </span>
 
@@ -39,7 +39,7 @@ export const AlibabaCloudRoleCredentialsForm = ({
 
       <Separator />
 
-      <span className="text-default-500 text-xs font-bold">
+      <span className="text-text-neutral-tertiary text-xs font-bold">
         Credentials for Role Assumption
       </span>
 
@@ -64,7 +64,9 @@ export const AlibabaCloudRoleCredentialsForm = ({
         isRequired
       />
 
-      <span className="text-default-500 text-xs">Optional fields</span>
+      <span className="text-text-neutral-tertiary text-xs">
+        Optional fields
+      </span>
 
       <WizardInputField
         control={control}
@@ -77,7 +79,7 @@ export const AlibabaCloudRoleCredentialsForm = ({
         isRequired={false}
       />
 
-      <div className="text-default-400 text-xs">
+      <div className="text-text-neutral-tertiary text-xs">
         Keys never leave your browser unencrypted and are stored as secrets in
         the backend. The role will be assumed using STS to obtain temporary
         credentials.

@@ -1,4 +1,4 @@
-"""Security Findings tools for Prowler App MCP Server.
+"""Security Findings tools for Prowler MCP Server.
 
 This module provides tools for searching, viewing, and analyzing security findings
 across all cloud providers.
@@ -92,7 +92,7 @@ class FindingsTools(BaseTool):
         """Search and filter security findings across all cloud providers with rich filtering capabilities.
 
         IMPORTANT: This tool returns LIGHTWEIGHT findings. Use this for fast searching and filtering across many findings.
-        For complete details use prowler_app_get_finding_details on specific findings.
+        For complete details use prowler_get_finding_details on specific findings.
 
         Default behavior:
         - Returns latest findings from most recent scans (no date parameters needed)
@@ -111,7 +111,7 @@ class FindingsTools(BaseTool):
 
         Workflow:
         1. Use this tool to search and filter findings by severity, status, provider, service, region, etc.
-        2. Use prowler_app_get_finding_details with the finding 'id' to get complete information about the finding
+        2. Use prowler_get_finding_details with the finding 'id' to get complete information about the finding
         """
         # Validate page_size parameter
         self.api_client.validate_page_size(page_size)
@@ -187,9 +187,9 @@ class FindingsTools(BaseTool):
         """Retrieve comprehensive details about a specific security finding by its ID.
 
         IMPORTANT: This tool returns COMPLETE finding details.
-        Use this after finding a specific finding via prowler_app_search_security_findings
+        Use this after finding a specific finding via prowler_search_security_findings
 
-        This tool provides ALL information that prowler_app_search_security_findings returns PLUS:
+        This tool provides ALL information that prowler_search_security_findings returns PLUS:
 
         1. Check Metadata (information about the check script that generated the finding):
            - title: Human-readable phrase used to summarize the check
@@ -217,7 +217,7 @@ class FindingsTools(BaseTool):
            - resource_ids: List of UUIDs for cloud resources associated with this finding
 
         Workflow:
-        1. Use prowler_app_search_security_findings to browse and filter findings
+        1. Use prowler_search_security_findings to browse and filter findings
         2. Use this tool with the finding 'id' to get remediation guidance and complete context
         """
         params = {

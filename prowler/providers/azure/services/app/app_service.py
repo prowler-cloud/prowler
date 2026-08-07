@@ -158,7 +158,7 @@ class App(AzureService):
                                     location=function.location,
                                     kind=function.kind,
                                     function_keys=function_keys,
-                                    enviroment_variables=getattr(
+                                    environment_variables=getattr(
                                         application_settings, "properties", None
                                     ),
                                     identity=getattr(function, "identity", None),
@@ -178,6 +178,7 @@ class App(AzureService):
                                     ftps_state=getattr(
                                         function_config, "ftps_state", None
                                     ),
+                                    https_only=getattr(function, "https_only", False),
                                 )
                             }
                         )
@@ -225,7 +226,7 @@ class App(AzureService):
                 name=name,
             )
         except Exception as error:
-            logger.error(
+            logger.warning(
                 f"Error getting host keys for {name} in {resource_group}: {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             return None
@@ -249,7 +250,7 @@ class App(AzureService):
                 name=name,
             )
         except Exception as error:
-            logger.error(
+            logger.warning(
                 f"Error getting application settings for {name} in {resource_group}: {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             return None
@@ -296,8 +297,9 @@ class FunctionApp:
     location: str
     kind: str
     function_keys: Optional[Dict[str, str]]
-    enviroment_variables: Optional[Dict[str, str]]
+    environment_variables: Optional[Dict[str, str]]
     identity: ManagedServiceIdentity
     public_access: bool
     vnet_subnet_id: str
     ftps_state: Optional[str]
+    https_only: bool = False

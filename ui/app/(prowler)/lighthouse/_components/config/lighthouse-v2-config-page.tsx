@@ -11,8 +11,8 @@ import {
   type LighthouseV2ProviderType,
   type LighthouseV2SupportedProvider,
 } from "@/app/(prowler)/lighthouse/_types";
+import { useToast } from "@/components/shadcn";
 import { Card } from "@/components/shadcn/card/card";
-import { useToast } from "@/components/ui";
 import { useMountEffect } from "@/hooks/use-mount-effect";
 
 import { LighthouseV2BusinessContextForm } from "./business-context-form";

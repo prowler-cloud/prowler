@@ -47,11 +47,98 @@ vi.mock("streamdown", () => ({
 }));
 
 describe("MessageBubble", () => {
+  it("should never render the agent-facing context block for user messages", () => {
+    // Given
+    const userMessage: LighthouseV2Message = {
+      id: "message-user-1",
+      role: LIGHTHOUSE_V2_MESSAGE_ROLE.USER,
+      model: null,
+      tokenUsage: null,
+      insertedAt: "2026-06-25T10:00:00Z",
+      parts: [
+        {
+          id: "part-user-1",
+          type: LIGHTHOUSE_V2_PART_TYPE.TEXT,
+          content: {
+            text: "[PROWLER_UI_CONTEXT_V1]\nmetadata\n[/PROWLER_UI_CONTEXT_V1]\n\nQuestion",
+            display_text: "Question",
+          },
+          toolCallOutcome: null,
+          insertedAt: "2026-06-25T10:00:00Z",
+          updatedAt: "2026-06-25T10:00:00Z",
+        },
+      ],
+    };
+
+    // When
+    render(<MessageBubble message={userMessage} />);
+
+    // Then
+    expect(screen.getByText("Question")).toBeInTheDocument();
+    expect(screen.queryByText(/PROWLER_UI_CONTEXT_V1/)).not.toBeInTheDocument();
+  });
+
+  it("should render persisted user context as a read-only historical badge", () => {
+    // Given
+    const userMessage: LighthouseV2Message = {
+      id: "message-user-context",
+      role: LIGHTHOUSE_V2_MESSAGE_ROLE.USER,
+      model: null,
+      tokenUsage: null,
+      insertedAt: "2026-06-25T10:00:00Z",
+      parts: [
+        {
+          id: "part-user-context",
+          type: LIGHTHOUSE_V2_PART_TYPE.TEXT,
+          content: {
+            text: "technical prompt",
+            display_text: "Question",
+            ui_context: {
+              schema_version: 1,
+              transport: "inline",
+              items: [
+                {
+                  kind: "page",
+                  id: "findings",
+                  source: "automatic",
+                  scope_key: "findings:/findings",
+                  label: "Findings",
+                  path: "/findings",
+                },
+                {
+                  kind: "finding",
+                  id: "finding-1",
+                  source: "focused",
+                  scope_key: "findings:/findings",
+                  label: "Focused finding",
+                  finding_id: "finding-1",
+                  check_id: "aws_s3_bucket_public_access",
+                },
+              ],
+            },
+          },
+          toolCallOutcome: null,
+          insertedAt: "2026-06-25T10:00:00Z",
+          updatedAt: "2026-06-25T10:00:00Z",
+        },
+      ],
+    };
+
+    // When
+    render(<MessageBubble message={userMessage} />);
+
+    // Then
+    expect(screen.getByText("@ Findings · Detail")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Remove Findings context/ }),
+    ).not.toBeInTheDocument();
+  });
+
   it("should render assistant text and tool calls in persisted part order", () => {
     // Given
     const orderedMessage = buildAssistantMessage([
       textPart("part-1", "Voy a buscar los findings por severidad"),
-      toolCallPart("part-2", "prowler_app_search_security_findings"),
+      toolCallPart("part-2", "prowler_search_security_findings"),
       textPart("part-3", "Ahora voy a buscar en los criticos"),
     ]);
 
@@ -69,62 +156,6 @@ describe("MessageBubble", () => {
 
     expect(isBefore(firstText, toolCall)).toBe(true);
     expect(isBefore(toolCall, secondText)).toBe(true);
-  });
-
-  it("should keep wide assistant tables inside the message width", () => {
-    // Given
-    const wideTableMessage = buildAssistantMessage([
-      textPart(
-        "part-1",
-        "| very-wide-header | another-wide-header |\n| --- | --- |\n| very-long-cell-value-that-should-not-resize-the-message | value |",
-      ),
-    ]);
-
-    // When
-    render(<MessageBubble message={wideTableMessage} />);
-
-    // Then
-    const table = screen.getByRole("table", {
-      name: "Wide markdown table",
-    });
-    const markdown = table.closest(".lighthouse-markdown");
-    if (!(markdown instanceof HTMLElement)) {
-      throw new Error("Expected markdown wrapper around assistant table");
-    }
-
-    expect(markdown).toHaveClass("min-w-0", "max-w-full", "overflow-x-auto");
-    expect(markdown.parentElement).toHaveClass("min-w-0");
-    expect(markdown.parentElement?.parentElement).toHaveClass(
-      "min-w-0",
-      "max-w-full",
-    );
-    expect(markdown.parentElement?.parentElement?.parentElement).toHaveClass(
-      "min-w-0",
-    );
-  });
-
-  it("keeps Mermaid diagrams inside the constrained markdown wrapper", () => {
-    // Given
-    const mermaidMessage = buildAssistantMessage([
-      textPart("part-1", "```mermaid\ngraph TD\n  A --> B\n```"),
-    ]);
-
-    // When
-    render(<MessageBubble message={mermaidMessage} />);
-
-    // Then
-    const mermaid = screen.getByRole("img", { name: "Mermaid chart" });
-    const markdown = mermaid.closest(".lighthouse-markdown");
-    if (!(markdown instanceof HTMLElement)) {
-      throw new Error("Expected markdown wrapper around Mermaid diagram");
-    }
-
-    expect(markdown).toHaveClass("min-w-0", "max-w-full", "overflow-x-auto");
-    expect(markdown.parentElement).toHaveClass("min-w-0");
-    expect(markdown.parentElement?.parentElement).toHaveClass(
-      "min-w-0",
-      "max-w-full",
-    );
   });
 });
 

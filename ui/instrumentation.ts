@@ -22,7 +22,7 @@ import * as Sentry from "@sentry/nextjs";
 import { readGatedEnv } from "@/lib/integrations";
 
 const sentryDsn = readGatedEnv(
-  "UI_SENTRY_ENABLE",
+  "UI_SENTRY_ENABLED",
   "UI_SENTRY_DSN",
   "NEXT_PUBLIC_SENTRY_DSN",
 );

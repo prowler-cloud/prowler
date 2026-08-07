@@ -81,12 +81,13 @@ class ECS(AWSService):
 
         Resources already fetched are memoized in ``self.task_definitions`` and
         reused across checks (checks run sequentially, so no locking is needed).
-        The configured resource limit bounds ``describe_task_definition`` calls.
+        Task definitions are described before applying the configured resource
+        limit because AWS exposes ``registeredAt`` only through
+        ``describe_task_definition``. The limit bounds the task definitions
+        exposed to checks for analysis.
         """
         task_definitions = []
-        for arn, region in limit_resources(
-            self._list_task_definition_arns(), self.task_definition_limit
-        ):
+        for arn, region in self._list_task_definition_arns():
             task_definition = self.task_definitions.get(arn)
             if task_definition is None:
                 task_definition = TaskDefinition(
@@ -102,11 +103,41 @@ class ECS(AWSService):
 
         self.__threading_call__(self._describe_task_definition, task_definitions)
 
-        for arn, _ in limit_resources(
-            self._list_task_definition_arns(), self.task_definition_limit
-        ):
-            task_definition = self.task_definitions[arn]
+        selected_task_definitions = list(
+            limit_resources(
+                self._sort_task_definitions_by_registration_date(
+                    self.task_definitions.values()
+                ),
+                self.task_definition_limit,
+            )
+        )
+        self.task_definitions = {
+            task_definition.arn: task_definition
+            for task_definition in selected_task_definitions
+        }
+        for task_definition in selected_task_definitions:
             yield task_definition
+
+    @staticmethod
+    def _sort_task_definitions_by_registration_date(task_definitions):
+        task_definitions = list(task_definitions)
+        if not any(
+            task_definition.registered_at for task_definition in task_definitions
+        ):
+            return task_definitions
+
+        return sorted(
+            task_definitions,
+            key=lambda task_definition: (
+                task_definition.registered_at is None,
+                (
+                    -task_definition.registered_at.timestamp()
+                    if task_definition.registered_at
+                    else 0
+                ),
+                task_definition.arn,
+            ),
+        )
 
     def _describe_task_definition(self, task_definition):
         logger.info("ECS - Describing Task Definition...")

@@ -3,6 +3,7 @@
 import { Badge } from "@/components/shadcn/badge/badge";
 import { Button } from "@/components/shadcn/button/button";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
+import { StatusFindingBadge } from "@/components/shadcn/table";
 
 interface Finding {
   id: string;
@@ -40,12 +41,6 @@ export const NodeRemediation = ({
     }
   };
 
-  const getStatusVariant = (status: string) => {
-    if (status === "PASS") return "default";
-    if (status === "FAIL") return "destructive";
-    return "secondary";
-  };
-
   return (
     <div className="flex flex-col gap-3">
       {findings.map((finding) => (
@@ -55,7 +50,7 @@ export const NodeRemediation = ({
         >
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1">
-              <h5 className="dark:text-prowler-theme-pale/90 text-sm font-medium">
+              <h5 className="dark:text-text-neutral-primary/90 text-sm font-medium">
                 {finding.title}
               </h5>
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
@@ -66,9 +61,7 @@ export const NodeRemediation = ({
               <Badge variant={getSeverityVariant(finding.severity)}>
                 {finding.severity}
               </Badge>
-              <Badge variant={getStatusVariant(finding.status)}>
-                {finding.status}
-              </Badge>
+              <StatusFindingBadge status={finding.status} />
             </div>
           </div>
           <div className="mt-2">

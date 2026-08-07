@@ -1647,7 +1647,9 @@
         "vpc_peering_routing_tables_with_least_privilege",
         "vpc_subnet_no_public_ip_by_default",
         "vpc_subnet_separate_private_public",
-        "workspaces_vpc_2private_1public_subnets_nat"
+        "workspaces_vpc_2private_1public_subnets_nat",
+        "ec2_confidential_workload_host_public_ip",
+        "ec2_confidential_workload_host_unrestricted_ingress"
       ],
       "Attributes": [
         {
@@ -1745,7 +1747,9 @@
         "sagemaker_notebook_instance_root_access_disabled",
         "ses_identity_not_publicly_accessible",
         "ssm_documents_set_as_public",
-        "vpc_endpoint_connections_trust_boundaries"
+        "vpc_endpoint_connections_trust_boundaries",
+        "ec2_confidential_workload_host_imdsv2_not_enforced",
+        "ec2_confidential_workload_host_unrestricted_ingress"
       ],
       "Attributes": [
         {
@@ -2064,6 +2068,7 @@
         "elb_ssl_listeners",
         "elb_ssl_listeners_use_acm_certificate",
         "elbv2_insecure_ssl_ciphers",
+        "elbv2_listener_pqc_tls_enabled",
         "cloudfront_distributions_pqc_tls_enabled",
         "apigateway_domain_name_pqc_tls_enabled",
         "transfer_server_pqc_ssh_kex_enabled",
@@ -2175,7 +2180,8 @@
         "secretsmanager_secret_rotated_periodically",
         "secretsmanager_secret_unused",
         "sns_topics_kms_encryption_at_rest_enabled",
-        "storagegateway_fileshare_encryption_enabled"
+        "storagegateway_fileshare_encryption_enabled",
+        "kms_key_enclave_attestation_not_enforced"
       ],
       "Attributes": [
         {
@@ -3142,6 +3148,7 @@
         "elb_ssl_listeners_use_acm_certificate",
         "elbv2_desync_mitigation_mode",
         "elbv2_insecure_ssl_ciphers",
+        "elbv2_listener_pqc_tls_enabled",
         "cloudfront_distributions_pqc_tls_enabled",
         "apigateway_domain_name_pqc_tls_enabled",
         "transfer_server_pqc_ssh_kex_enabled",
@@ -3366,7 +3373,10 @@
         "wafv2_webacl_with_rules",
         "wellarchitected_workload_no_high_or_medium_risks",
         "workspaces_volume_encryption_enabled",
-        "workspaces_vpc_2private_1public_subnets_nat"
+        "workspaces_vpc_2private_1public_subnets_nat",
+        "ec2_confidential_workload_host_imdsv2_not_enforced",
+        "ec2_confidential_workload_host_public_ip",
+        "ec2_confidential_workload_host_unrestricted_ingress"
       ],
       "ConfigRequirements": [
         {

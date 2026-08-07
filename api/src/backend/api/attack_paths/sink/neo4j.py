@@ -54,6 +54,8 @@ DATABASE_NOT_FOUND_CODE = "Neo.ClientError.Database.DatabaseNotFound"
 class Neo4jSink(SinkDatabase):
     """Neo4j-backed sink. Multi-database cluster; tenant isolation is physical."""
 
+    sync_batch_size = env.int("ATTACK_PATHS_NEO4J_SYNC_BATCH_SIZE", default=1000)
+
     def __init__(self) -> None:
         self._driver: neo4j.Driver | None = None
         self._lock = threading.Lock()
@@ -203,7 +205,7 @@ class Neo4jSink(SinkDatabase):
         """
         from api.attack_paths.database import GraphDatabaseQueryException
         from tasks.jobs.attack_paths.config import (
-            BATCH_SIZE,
+            GRAPH_MUTATION_BATCH_SIZE,
             PROVIDER_RESOURCE_LABEL,
             get_provider_label,
         )
@@ -251,7 +253,7 @@ class Neo4jSink(SinkDatabase):
                         total_key="rels",
                         deleted_key="deleted_rels",
                         initial_total=deleted_relationships,
-                        batch_size=BATCH_SIZE,
+                        batch_size=GRAPH_MUTATION_BATCH_SIZE,
                         drop_t0=drop_t0,
                     )
                     relationship_batches += phase_batches
@@ -270,7 +272,7 @@ class Neo4jSink(SinkDatabase):
                     total_key="nodes",
                     deleted_key="deleted_nodes",
                     initial_total=0,
-                    batch_size=BATCH_SIZE,
+                    batch_size=GRAPH_MUTATION_BATCH_SIZE,
                     drop_t0=drop_t0,
                 )
 
@@ -355,7 +357,7 @@ class Neo4jSink(SinkDatabase):
             f"ON (n.`{PROVIDER_ELEMENT_ID_PROPERTY}`)"
         )
         with self.get_session(database) as session:
-            session.run(query).consume()
+            session.execute_write(lambda tx: tx.run(query).consume())
 
     def write_nodes(
         self,
@@ -377,7 +379,7 @@ class Neo4jSink(SinkDatabase):
             SET n += row.props
         """
         with self.get_session(database) as session:
-            session.run(query, {"rows": rows}).consume()
+            session.execute_write(lambda tx: tx.run(query, {"rows": rows}).consume())
 
     def write_relationships(
         self,
@@ -403,7 +405,7 @@ class Neo4jSink(SinkDatabase):
             SET r += row.props
         """
         with self.get_session(database) as session:
-            session.run(query, {"rows": rows}).consume()
+            session.execute_write(lambda tx: tx.run(query, {"rows": rows}).consume())
 
     # For compatibility with test harnesses that patch the concrete driver
     def get_driver(self) -> neo4j.Driver:

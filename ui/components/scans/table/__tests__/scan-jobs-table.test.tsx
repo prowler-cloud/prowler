@@ -7,7 +7,7 @@ import { ScanJobsTable } from "../scan-jobs-table";
 
 // Mock DataTable to a minimal table that applies getRowAttributes per row, so we can
 // assert the view-first-scan "in-progress" anchor lands on the right row/tab.
-vi.mock("@/components/ui/table", () => ({
+vi.mock("@/components/shadcn/table", () => ({
   DataTable: ({
     data,
     getRowAttributes,

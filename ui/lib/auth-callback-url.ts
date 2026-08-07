@@ -1,3 +1,5 @@
+import { extractUtmParams, type UtmParams } from "@/lib/utm";
+
 const DEFAULT_CALLBACK_PATH = "/";
 const INVITATION_TOKEN_PARAM = "invitation_token";
 // Origin used only to resolve relative paths; never part of the returned value.
@@ -61,5 +63,40 @@ export const getInvitationTokenFromCallbackPath = (callbackPath: string) => {
     return url.searchParams.get(INVITATION_TOKEN_PARAM);
   } catch (_error) {
     return null;
+  }
+};
+
+export const appendAttributionToCallbackPath = (
+  callbackPath: string,
+  attribution: UtmParams,
+): string => {
+  const safeCallbackPath = getSafeCallbackPathFromValue(callbackPath);
+  if (Object.keys(attribution).length === 0) {
+    return safeCallbackPath;
+  }
+
+  try {
+    const url = new URL(safeCallbackPath, INTERNAL_ORIGIN);
+    for (const [key, value] of Object.entries(attribution)) {
+      if (!url.searchParams.has(key)) {
+        url.searchParams.set(key, value);
+      }
+    }
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch (_error) {
+    return safeCallbackPath;
+  }
+};
+
+export const getAttributionParamsFromCallbackPath = (
+  callbackPath: string,
+): UtmParams => {
+  const safeCallbackPath = getSafeCallbackPathFromValue(callbackPath);
+
+  try {
+    const url = new URL(safeCallbackPath, INTERNAL_ORIGIN);
+    return extractUtmParams(url.searchParams);
+  } catch (_error) {
+    return {};
   }
 };

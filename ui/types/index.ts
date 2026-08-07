@@ -1,4 +1,5 @@
 export * from "./authFormSchema";
+export * from "./cloud-upgrade";
 export * from "./components";
 export * from "./filters";
 export * from "./findings-table";
@@ -12,5 +13,6 @@ export * from "./providers-table";
 export * from "./resources";
 export * from "./scans";
 export * from "./schedules";
+export * from "./saml";
 export * from "./tasks";
 export * from "./tree";

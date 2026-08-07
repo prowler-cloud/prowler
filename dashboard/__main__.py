@@ -20,7 +20,7 @@ print_banner()
 print(
     f"{Fore.GREEN}Loading all CSV files from the folder {folder_path_overview} ...\n{Style.RESET_ALL}"
 )
-cli.show_server_banner = lambda *x: click.echo(
+cli.show_server_banner = lambda *_: click.echo(
     f"{Fore.YELLOW}NOTE:{Style.RESET_ALL} If you are using {Fore.GREEN}{Style.BRIGHT}Prowler Cloud{Style.RESET_ALL} with the S3 integration or that integration \nfrom {Fore.CYAN}{Style.BRIGHT}Prowler CLI{Style.RESET_ALL} and you want to use your data from your S3 bucket,\nrun: `{orange_color}aws s3 cp s3://<your-bucket>/output/csv ./output --recursive{Style.RESET_ALL}`\nand then run `prowler dashboard` again to load the new files."
 )
 
@@ -33,148 +33,187 @@ dashboard = dash.Dash(
     title="Prowler Dashboard",
 )
 
-# Logo
-prowler_logo = html.Img(
-    src="https://cdn.prod.website-files.com/68c4ec3f9fb7b154fbcb6e36/68ffb46d40ed7faa37a592a5_prowler-logo.png",
-    alt="Prowler Logo",
+# ``use_pages`` above already imported dashboard/pages/cloud.py and registered
+# every /cloud/* route. Import its metadata now (after app instantiation) so
+# the sidebar and the gated pages share a single source of truth.
+from dashboard.pages.cloud import CLOUD_FEATURES_BY_SLUG  # noqa: E402
+
+ICON_DIR = "/assets/images/icons/cloud"
+
+# Official marketing "PROWLER / LOCAL DASHBOARD" lockup (white wordmark + teal
+# gradient sublabel) shown in the expanded sidebar. Vector SVG so it stays crisp
+# at any DPI. The sublabel is right-anchored (text-anchor="end"), so a font
+# fallback widens it leftward rather than clipping at the edge.
+prowler_lockup = html.Img(
+    src=f"{ICON_DIR}/prowler-lockup.svg",
+    alt="Prowler Local Dashboard",
+    className="pc-brand-lockup",
 )
 
-menu_icons = {
-    "overview": "/assets/images/icons/overview.svg",
-    "compliance": "/assets/images/icons/compliance.svg",
-}
+# Compact brand mark shown only when the sidebar collapses to its icon rail.
+prowler_mark = html.Img(
+    src=f"{ICON_DIR}/prowler-mark.svg",
+    alt="Prowler",
+    className="pc-brand-mark",
+)
+
+# Locally functional destinations (Overview + Compliance).
+DASHBOARD_ITEMS = [
+    {"label": "Overview", "route": "/", "icon": f"{ICON_DIR}/overview.svg"},
+    {
+        "label": "Compliance",
+        "route": "/compliance",
+        "icon": f"{ICON_DIR}/compliance.svg",
+    },
+]
+
+# Gated navigation groups reference the shared feature metadata by slug so the
+# sidebar and the informational pages never drift apart.
+GATED_GROUPS = [
+    ("Upgrade to Prowler Cloud", ["lighthouse-ai", "attack-paths", "findings"]),
+    ("Configuration", ["alerts", "mutelist", "integrations"]),
+    ("Workspace", ["organization"]),
+]
+
+HELP_LINKS = [
+    {
+        "title": "Help",
+        "url": "https://github.com/prowler-cloud/prowler/issues",
+        "icon": f"{ICON_DIR}/help.svg",
+    },
+    {
+        "title": "Docs",
+        "url": "https://docs.prowler.com",
+        "icon": f"{ICON_DIR}/docs.svg",
+    },
+]
 
 
-# Function to generate navigation links
-def generate_nav_links(current_path):
-    nav_links = []
-    for page in dash.page_registry.values():
-        # Gets the icon URL based on the page name
-        icon_url = menu_icons.get(page["name"].lower())
-        is_active = (
-            " bg-prowler-stone-950 border-r-4 border-solid border-prowler-lime"
-            if current_path == page["relative_path"]
-            else ""
-        )
-        link_class = f"block hover:bg-prowler-stone-950 hover:border-r-4 hover:border-solid hover:border-prowler-lime{is_active}"
+def _mask_style(icon_url):
+    """Inline style rendering a recolorable mask icon from a local asset."""
+    return {
+        "WebkitMaskImage": f"url({icon_url})",
+        "maskImage": f"url({icon_url})",
+    }
 
-        link_content = html.Span(
+
+def _nav_icon(icon_url):
+    return html.Span(className="pc-ico", style=_mask_style(icon_url))
+
+
+def _nav_item(label, route, icon_url, current_path, gated=False):
+    is_active = current_path == route
+    class_name = "pc-nav-item pc-active" if is_active else "pc-nav-item"
+
+    content = [
+        _nav_icon(icon_url),
+        html.Span(label, className="pc-nav-label"),
+    ]
+    if gated:
+        content.append(html.Span("Prowler Cloud", className="pc-pill"))
+
+    return dcc.Link(content, href=route, className=class_name)
+
+
+def _section_label(title):
+    return html.Div(title, className="pc-section")
+
+
+def generate_sidebar(current_path):
+    children = [
+        # Brand lockup: full wordmark when expanded, compact mark when collapsed.
+        html.Div(
+            [prowler_lockup, prowler_mark],
+            className="pc-brand",
+        ),
+        # Dashboards section — the only locally functional destinations.
+        _section_label("Dashboards"),
+        html.Nav(
             [
-                html.Img(src=icon_url, className="w-5"),
-                html.Span(
-                    page["name"], className="font-medium text-base leading-6 text-white"
-                ),
+                _nav_item(item["label"], item["route"], item["icon"], current_path)
+                for item in DASHBOARD_ITEMS
             ],
-            className="flex justify-center lg:justify-normal items-center gap-x-3 py-2 px-3",
-        )
-
-        nav_link = html.Li(
-            dcc.Link(link_content, href=page["relative_path"], className=link_class)
-        )
-        nav_links.append(nav_link)
-    return nav_links
-
-
-def generate_help_menu():
-    help_links = [
-        {
-            "title": "Help",
-            "url": "https://github.com/prowler-cloud/prowler/issues",
-            "icon": "/assets/images/icons/help.png",
-        },
-        {
-            "title": "Docs",
-            "url": "https://docs.prowler.com",
-            "icon": "/assets/images/icons/docs.png",
-        },
+            className="pc-nav",
+        ),
     ]
 
-    link_class = "block hover:bg-prowler-stone-950 hover:border-r-4 hover:border-solid hover:border-prowler-lime"
-
-    menu_items = []
-    for link in help_links:
-        menu_item = html.Li(
-            html.A(
-                html.Span(
-                    [
-                        html.Img(src=link["icon"], className="w-5"),
-                        html.Span(
-                            link["title"],
-                            className="font-medium text-base leading-6 text-white",
-                        ),
-                    ],
-                    className="flex items-center gap-x-3 py-2 px-3",
-                ),
-                href=link["url"],
-                target="_blank",
-                className=link_class,
+    # Gated groups (Prowler Cloud only).
+    for section_title, slugs in GATED_GROUPS:
+        children.append(_section_label(section_title))
+        children.append(
+            html.Nav(
+                [
+                    _nav_item(
+                        CLOUD_FEATURES_BY_SLUG[slug]["nav_label"],
+                        CLOUD_FEATURES_BY_SLUG[slug]["route"],
+                        CLOUD_FEATURES_BY_SLUG[slug]["icon"],
+                        current_path,
+                        gated=True,
+                    )
+                    for slug in slugs
+                ],
+                className="pc-nav",
             )
         )
-        menu_items.append(menu_item)
 
-    return menu_items
+    # Help and Docs pinned to the bottom, separated by a neutral top border.
+    children.append(
+        html.Nav(
+            [
+                html.A(
+                    [
+                        _nav_icon(link["icon"]),
+                        html.Span(link["title"], className="pc-nav-label"),
+                    ],
+                    href=link["url"],
+                    target="_blank",
+                    rel="noopener noreferrer",
+                    className="pc-nav-item",
+                )
+                for link in HELP_LINKS
+            ],
+            className="pc-nav pc-footer",
+        )
+    )
+
+    return html.Div(children, className="pc-sidebar pc-font")
 
 
 # Layout
 dashboard.layout = html.Div(
     [
-        dcc.Location(id="url", refresh=False),
         html.Link(rel="icon", href="assets/favicon.ico"),
-        # Placeholder for dynamic navigation bar
         html.Div(
             [
+                # Dynamic sidebar (rebuilt on navigation for active state).
+                html.Div(id="navigation-bar"),
+                # Main pane hosting the routed page content.
                 html.Div(
-                    id="navigation-bar", className="bg-prowler-stone-900 min-w-36 z-10"
-                ),
-                html.Div(
-                    [
+                    html.Div(
                         dash.page_container,
-                    ],
+                        className="pc-main-inner",
+                    ),
                     id="content_select",
-                    className="bg-prowler-white w-full col-span-11 h-screen mx-auto overflow-y-scroll no-scrollbar px-10 py-7",
+                    className="pc-main pc-font no-scrollbar",
                 ),
             ],
-            className="grid custom-grid 2xl:custom-grid-large h-screen",
+            className="pc-shell",
         ),
     ],
     className="h-screen mx-auto",
 )
 
 
-# Callback to update navigation bar
-@dashboard.callback(Output("navigation-bar", "children"), [Input("url", "pathname")])
+# Callback to update navigation bar.
+#
+# Triggered off Dash Pages' own location (``_pages_location``) rather than a
+# separate ``dcc.Location``. A standalone ``dcc.Location(id="url")`` stops
+# emitting ``pathname`` when navigating between two pages that render an
+# identical component tree — every ``/cloud/*`` gated page shares the same
+# ``build_cloud_layout`` structure — which left the active highlight stuck on
+# the first gated page visited. ``_pages_location`` fires on every route change.
+@dashboard.callback(
+    Output("navigation-bar", "children"), [Input("_pages_location", "pathname")]
+)
 def update_nav_bar(pathname):
-    return html.Div(
-        [
-            html.Div([prowler_logo], className="mb-8 px-3"),
-            html.H6(
-                "Dashboards",
-                className="px-3 text-prowler-stone-500 text-sm opacity-90 font-regular mb-2",
-            ),
-            html.Nav(
-                [html.Ul(generate_nav_links(pathname), className="")],
-                className="flex flex-col gap-y-6",
-            ),
-            html.Nav(
-                [
-                    html.A(
-                        [
-                            html.Span(
-                                [
-                                    html.Img(src="assets/favicon.ico", className="w-5"),
-                                    "Subscribe to Prowler Cloud",
-                                ],
-                                className="flex items-center gap-x-3 text-white",
-                            ),
-                        ],
-                        href="https://prowler.com/",
-                        target="_blank",
-                        className="block p-3 uppercase text-xs hover:bg-prowler-stone-950 hover:border-r-4 hover:border-solid hover:border-prowler-lime",
-                    ),
-                    html.Ul(generate_help_menu(), className=""),
-                ],
-                className="flex flex-col gap-y-6 mt-auto",
-            ),
-        ],
-        className="flex flex-col bg-prowler-stone-900 py-7 h-full",
-    )
+    return generate_sidebar(pathname)

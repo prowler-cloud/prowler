@@ -207,6 +207,41 @@ class Cloudtrail(AWSService):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _lookup_events_page(self, region, event_name, minutes):
+        """Return ``(events, truncated, error)`` for a single lookup_events page.
+
+        ``LookupEvents`` is a **per-region** API: even for a multi-region trail,
+        events recorded in region X are only retrievable by calling
+        ``LookupEvents`` against region X. This helper is therefore
+        region-scoped; callers iterate over the audited regions themselves.
+
+        - ``events``: list of raw event dicts (empty on no match or on error).
+        - ``truncated``: True when the API returned a ``NextToken`` (coverage
+          in this page is bounded; more events exist in the window).
+        - ``error``: ``None`` on success; a short string when the call raised
+          so callers can report incomplete visibility instead of interpreting
+          an empty response as "no matches" (matches the fail-closed pattern).
+        """
+        logger.info("CloudTrail - Lookup Events (single-page)...")
+        try:
+            regional_client = self.regional_clients[region]
+        except KeyError as error:
+            logger.error(f"CloudTrail - unknown region '{region}': {error}")
+            return [], False, f"unknown region '{region}'"
+        try:
+            response = regional_client.lookup_events(
+                LookupAttributes=[
+                    {"AttributeKey": "EventName", "AttributeValue": event_name}
+                ],
+                StartTime=datetime.now() - timedelta(minutes=minutes),
+            )
+            return response.get("Events") or [], bool(response.get("NextToken")), None
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return [], False, error.__class__.__name__
+
     def _list_tags_for_resource(self):
         logger.info("CloudTrail - List Tags...")
         try:

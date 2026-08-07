@@ -1,7 +1,10 @@
+import re
 import sys
 from io import TextIOWrapper
+from urllib.parse import urlparse
 
 import markdown
+from markupsafe import escape
 
 from prowler.config.config import (
     html_logo_url,
@@ -14,6 +17,33 @@ from prowler.lib.logger import logger
 from prowler.lib.outputs.output import Finding, Output
 from prowler.lib.outputs.utils import parse_html_string, unroll_dict
 from prowler.providers.common.provider import Provider
+
+_SAFE_URL_SCHEMES = {"http", "https"}
+
+
+def _safe_url(url: str) -> str:
+    """Return url if its scheme is http/https, otherwise return empty string."""
+    if not url:
+        return ""
+    scheme = urlparse(url).scheme.lower()
+    return url if scheme in _SAFE_URL_SCHEMES else ""
+
+
+def _strip_unsafe_links(html_content: str) -> str:
+    """Replace <a href> tags whose href is not http/https with their link text."""
+
+    def _replace(match: re.Match) -> str:
+        href = match.group("href")
+        body = match.group("body")
+        safe = _safe_url(href)
+        return f'<a href="{safe}">{body}</a>' if safe else body
+
+    return re.sub(
+        r'<a\s[^>]*href="(?P<href>[^"]*)"[^>]*>(?P<body>.*?)</a>',
+        _replace,
+        html_content,
+        flags=re.IGNORECASE | re.DOTALL,
+    )
 
 
 class HTML(Output):
@@ -51,7 +81,7 @@ class HTML(Output):
             html_content = html_content.replace("<p>", "")
             html_content = html_content.replace("</p>", "")
 
-        return html_content
+        return _strip_unsafe_links(html_content)
 
     def transform(self, findings: list[Finding]) -> None:
         """Transforms the findings into the HTML format.
@@ -76,16 +106,16 @@ class HTML(Output):
                 self._data.append(f"""
                         <tr class="{row_class}">
                             <td>{finding_status}</td>
-                            <td>{finding.metadata.Severity.value}</td>
-                            <td>{finding.metadata.ServiceName}</td>
-                            <td>{finding.region.lower()}</td>
-                            <td>{finding.metadata.CheckID.replace("_", "<wbr />_")}</td>
-                            <td>{finding.metadata.CheckTitle}</td>
-                            <td>{finding.resource_uid.replace("<", "&lt;").replace(">", "&gt;").replace("_", "<wbr />_")}</td>
-                            <td>{parse_html_string(unroll_dict(finding.resource_tags))}</td>
-                            <td>{finding.status_extended.replace("<", "&lt;").replace(">", "&gt;").replace("_", "<wbr />_")}</td>
-                            <td><p class="show-read-more">{HTML.process_markdown(finding.metadata.Risk)}</p></td>
-                            <td><p class="show-read-more">{HTML.process_markdown(finding.metadata.Remediation.Recommendation.Text)}</p> <a class="read-more" href="{finding.metadata.Remediation.Recommendation.Url}"><i class="fas fa-external-link-alt"></i></a></td>
+                            <td>{str(escape(finding.metadata.Severity.value))}</td>
+                            <td>{str(escape(finding.metadata.ServiceName))}</td>
+                            <td>{str(escape(finding.region.lower()))}</td>
+                            <td>{str(escape(finding.metadata.CheckID)).replace("_", "<wbr />_")}</td>
+                            <td>{str(escape(finding.metadata.CheckTitle))}</td>
+                            <td>{str(escape(finding.resource_uid)).replace("_", "<wbr />_")}</td>
+                            <td>{parse_html_string(str(escape(unroll_dict(finding.resource_tags))))}</td>
+                            <td>{str(escape(finding.status_extended)).replace("_", "<wbr />_")}</td>
+                            <td><p class="show-read-more">{HTML.process_markdown(str(escape(finding.metadata.Risk)))}</p></td>
+                            <td><p class="show-read-more">{HTML.process_markdown(str(escape(finding.metadata.Remediation.Recommendation.Text)))}</p> <a class="read-more" href="{str(escape(_safe_url(finding.metadata.Remediation.Recommendation.Url)))}"><i class="fas fa-external-link-alt"></i></a></td>
                             <td><p class="show-read-more">{parse_html_string(unroll_dict(finding.compliance, separator=": "))}</p></td>
                         </tr>
                         """)
@@ -1397,6 +1427,46 @@ class HTML(Output):
             return ""
 
     @staticmethod
+    def get_e2enetworks_assessment_summary(provider: Provider) -> str:
+        """Get the HTML assessment summary for the E2E Networks provider."""
+        try:
+            locations = escape(", ".join(provider.identity.locations))
+            project_id = escape(str(provider.identity.project_id))
+            return f"""
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            E2E Networks Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>Project ID:</b> {project_id}
+                            </li>
+                            <li class="list-group-item">
+                                <b>Locations:</b> {locations}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            E2E Networks Credentials
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>Authentication:</b> API Key + Bearer Token
+                            </li>
+                        </ul>
+                    </div>
+                </div>"""
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
+
+    @staticmethod
     def get_vercel_assessment_summary(provider: Provider) -> str:
         """
         get_vercel_assessment_summary gets the HTML assessment summary for the Vercel provider
@@ -1632,6 +1702,78 @@ class HTML(Output):
                         <ul class="list-group list-group-flush">{credentials_items}
                         </ul>
                     </div>
+                </div>"""
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
+
+    @staticmethod
+    def get_huaweicloud_assessment_summary(provider: Provider) -> str:
+        """
+        get_huaweicloud_assessment_summary gets the HTML assessment summary for the Huawei Cloud provider
+
+        Args:
+            provider (Provider): the Huawei Cloud provider object
+
+        Returns:
+            str: HTML assessment summary for the Huawei Cloud provider
+        """
+        try:
+            profile = (
+                provider.identity.profile
+                if provider.identity.profile is not None
+                else "default"
+            )
+            if isinstance(provider.identity.regions, set):
+                audited_regions = ", ".join(sorted(provider.identity.regions))
+            elif not provider.identity.regions:
+                audited_regions = "All Regions"
+            else:
+                audited_regions = ", ".join(provider.identity.regions)
+            return f"""
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            Huawei Cloud Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>Account ID:</b> {provider.identity.account_id}
+                            </li>
+                            <li class="list-group-item">
+                                <b>Account Name:</b> {provider.identity.account_name}
+                            </li>
+                            <li class="list-group-item">
+                                <b>Profile:</b> {profile}
+                            </li>
+                            <li class="list-group-item">
+                                <b>Audited Regions:</b> {audited_regions}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        Huawei Cloud Credentials
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <b>Domain ID:</b> {provider.identity.domain_id}
+                        </li>
+                        <li class="list-group-item">
+                            <b>User ID:</b> {provider.identity.user_id}
+                        </li>
+                        <li class="list-group-item">
+                            <b>User Name:</b> {provider.identity.user_name}
+                        </li>
+                        <li class="list-group-item">
+                            <b>Identity Type:</b> {provider.identity.identity_type}
+                        </li>
+                    </ul>
+                </div>
                 </div>"""
         except Exception as error:
             logger.error(

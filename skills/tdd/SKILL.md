@@ -164,9 +164,9 @@ class Test_ec2_ami_public:
 ```python
 @pytest.mark.django_db
 class TestResourceModel:
-    def test_create_resource_with_tags(self, providers_fixture):
+    def test_create_resource_with_tags(self, aws_provider):
         # Given
-        provider, *_ = providers_fixture
+        provider = aws_provider
         tenant_id = provider.tenant_id
 
         # When

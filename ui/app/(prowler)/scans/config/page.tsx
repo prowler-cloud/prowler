@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 
 import { getProviders } from "@/actions/providers";
 import { listScanConfigurations } from "@/actions/scan-configurations";
-import { ContentLayout } from "@/components/ui";
+import { ContentLayout } from "@/components/shadcn/content-layout";
 import { isCloud } from "@/lib/shared/env";
 
 import { ScanConfigurationsManager } from "./_components/scan-configurations-manager";

@@ -40,8 +40,8 @@ export class HomePage extends BasePage {
     this.dashboardCards = page.locator('[data-testid="dashboard-card"]');
     this.overviewSection = page.locator('[data-testid="overview-section"]');
 
-    // UI elements
-    this.logo = page.locator('svg[width="300"]');
+    // UI elements - the sidebar logo is the home link's accessible content.
+    this.logo = page.getByRole("link", { name: "Prowler home" });
   }
 
   // Navigation methods

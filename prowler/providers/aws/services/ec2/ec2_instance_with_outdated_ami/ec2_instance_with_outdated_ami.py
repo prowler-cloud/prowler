@@ -26,11 +26,12 @@ class ec2_instance_with_outdated_ami(Check):
             List[Check_Report_AWS]: A list containing the results of the check for each instance.
         """
         findings = []
+        images_by_id = getattr(ec2_client, "images_by_id", None)
+        if images_by_id is None:
+            images_by_id = {image.id: image for image in ec2_client.images}
+
         for instance in ec2_client.instances:
-            ami = next(
-                (image for image in ec2_client.images if image.id == instance.image_id),
-                None,
-            )
+            ami = images_by_id.get(instance.image_id)
             if ami and ami.owner == "amazon":
                 report = Check_Report_AWS(metadata=self.metadata(), resource=instance)
                 report.status = "PASS"

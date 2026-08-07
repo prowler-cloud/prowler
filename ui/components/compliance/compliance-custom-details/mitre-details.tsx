@@ -1,4 +1,4 @@
-import { CustomLink } from "@/components/ui/custom/custom-link";
+import { CustomLink } from "@/components/shadcn/custom/custom-link";
 import { Requirement } from "@/types/compliance";
 
 import {

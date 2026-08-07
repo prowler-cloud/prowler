@@ -22,7 +22,7 @@ describe("getActionErrorMessage", () => {
     expect(message).toBe(ACTION_ERROR_MESSAGES[ACTION_ERROR_STATUS.FORBIDDEN]);
   });
 
-  it("should use the default subscription error for payment-required responses", () => {
+  it("should use the default usage-limit error for payment-required responses", () => {
     // Given
     const result = {
       error: "Payment required.",

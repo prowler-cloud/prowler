@@ -2,6 +2,10 @@ import * as Sentry from "@sentry/nextjs";
 import { revalidatePath } from "next/cache";
 
 import { SentryErrorSource, SentryErrorType } from "@/sentry";
+import {
+  isErrorAlreadyReported,
+  isErrorCapturedBySentry,
+} from "@/sentry/event-policy";
 
 import {
   GENERIC_SERVER_ERROR_MESSAGE,
@@ -9,6 +13,14 @@ import {
   parseStringify,
   sanitizeErrorMessage,
 } from "./helper";
+
+const EXPECTED_HTTP_CLIENT_STATUS_CODES = new Set([401, 403, 404]);
+const CONTROLLED_CLIENT_STATUS_CODES = new Set([400, 409, 422]);
+const KNOWN_NON_ACTIONABLE_CLIENT_ERROR_MESSAGES = [
+  "already exists",
+  "duplicate",
+] as const;
+const UNKNOWN_URL_PATH_FINGERPRINT = "unknown-url-path";
 
 /**
  * Helper function to handle API responses consistently
@@ -78,37 +90,17 @@ export const handleApiResponse = async (
         fingerprint: [
           "api-server-error",
           response.status.toString(),
-          response.url,
+          getSentryFingerprintUrlPath(response.url),
         ],
       });
 
       throw serverError;
     }
 
-    // Client errors (4xx) - Only capture unexpected ones
-    if (![401, 403, 404].includes(response.status)) {
-      const clientError = new Error(
-        errorDetail ||
-          `Request failed (${response.status}): ${response.statusText}`,
-      );
-
-      Sentry.captureException(clientError, {
-        tags: {
-          api_error: true,
-          status_code: response.status.toString(),
-          error_type: SentryErrorType.CLIENT_ERROR,
-          error_source: SentryErrorSource.HANDLE_API_RESPONSE,
-        },
-        level: "warning",
-        contexts: {
-          api_response: errorContext,
-        },
-        fingerprint: [
-          "api-client-error",
-          response.status.toString(),
-          response.url,
-        ],
-      });
+    if (
+      !shouldSuppressApiClientFailure(response.status, errorDetail, errorsArray)
+    ) {
+      captureUnexpectedApiClientFailure(response, errorDetail, errorContext);
     }
 
     return errorsArray
@@ -159,33 +151,26 @@ export const handleApiError = (error: unknown): { error: string } => {
 
   // Check if this error was already captured by handleApiResponse
   const isAlreadyCaptured =
-    error instanceof Error &&
-    (error.message.includes("Server error") ||
-      error.message.includes("Request failed"));
+    isErrorAlreadyReported(error) || isErrorCapturedBySentry(error);
 
-  // Only capture if not already captured by handleApiResponse
+  // Only capture if not already captured by handleApiResponse.
+  // HTTP status-based suppression belongs in the structured Sentry event policy,
+  // not in string-only Error message matching.
   if (!isAlreadyCaptured) {
     if (error instanceof Error) {
-      // Don't capture expected errors
-      if (
-        !error.message.includes("401") &&
-        !error.message.includes("403") &&
-        !error.message.includes("404")
-      ) {
-        Sentry.captureException(error, {
-          tags: {
-            error_source: SentryErrorSource.HANDLE_API_ERROR,
-            error_type: SentryErrorType.UNEXPECTED_ERROR,
+      Sentry.captureException(error, {
+        tags: {
+          error_source: SentryErrorSource.HANDLE_API_ERROR,
+          error_type: SentryErrorType.UNEXPECTED_ERROR,
+        },
+        level: "error",
+        contexts: {
+          error_details: {
+            message: error.message,
+            stack: error.stack,
           },
-          level: "error",
-          contexts: {
-            error_details: {
-              message: error.message,
-              stack: error.stack,
-            },
-          },
-        });
-      }
+        },
+      });
     } else {
       // Capture non-Error objects
       Sentry.captureMessage(
@@ -208,3 +193,90 @@ export const handleApiError = (error: unknown): { error: string } => {
     error: getErrorMessage(error),
   };
 };
+
+function shouldSuppressApiClientFailure(
+  status: number,
+  errorDetail: unknown,
+  errorsArray: unknown[] | undefined,
+) {
+  if (status < 400 || status >= 500) {
+    return true;
+  }
+
+  if (EXPECTED_HTTP_CLIENT_STATUS_CODES.has(status)) {
+    return true;
+  }
+
+  return (
+    CONTROLLED_CLIENT_STATUS_CODES.has(status) &&
+    (hasStructuredApiErrors(errorsArray) ||
+      hasKnownNonActionableClientErrorMessage(errorDetail))
+  );
+}
+
+function captureUnexpectedApiClientFailure(
+  response: Response,
+  errorDetail: unknown,
+  errorContext: Record<string, unknown>,
+) {
+  const clientError = new Error(
+    typeof errorDetail === "string"
+      ? errorDetail
+      : `Unexpected API client failure (${response.status})`,
+  );
+
+  Sentry.captureException(clientError, {
+    tags: {
+      api_error: true,
+      status_code: response.status.toString(),
+      error_type: SentryErrorType.CLIENT_ERROR,
+      error_source: SentryErrorSource.HANDLE_API_RESPONSE,
+    },
+    level: "error",
+    contexts: {
+      api_response: errorContext,
+    },
+    fingerprint: [
+      "api-client-contract-error",
+      response.status.toString(),
+      getSentryFingerprintUrlPath(response.url),
+    ],
+  });
+}
+
+function getSentryFingerprintUrlPath(url: string) {
+  if (url.trim() === "") {
+    return UNKNOWN_URL_PATH_FINGERPRINT;
+  }
+
+  try {
+    const pathname = new URL(url).pathname;
+
+    return (
+      pathname
+        .replace(
+          /\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(?=\/|$)/gi,
+          "/:id",
+        )
+        .replace(/\/\d+(?=\/|$)/g, "/:id") || UNKNOWN_URL_PATH_FINGERPRINT
+    );
+  } catch {
+    return UNKNOWN_URL_PATH_FINGERPRINT;
+  }
+}
+
+function hasStructuredApiErrors(errorsArray: unknown[] | undefined) {
+  return Array.isArray(errorsArray) && errorsArray.length > 0;
+}
+
+function hasKnownNonActionableClientErrorMessage(errorDetail: unknown) {
+  if (typeof errorDetail !== "string") {
+    return false;
+  }
+
+  const normalizedErrorDetail = errorDetail.toLowerCase();
+
+  return KNOWN_NON_ACTIONABLE_CLIENT_ERROR_MESSAGES.some((message) =>
+    normalizedErrorDetail.includes(message),
+  );
+}

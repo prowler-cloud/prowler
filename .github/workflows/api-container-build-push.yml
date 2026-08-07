@@ -42,17 +42,20 @@ jobs:
     timeout-minutes: 5
     outputs:
       short-sha: ${{ steps.set-short-sha.outputs.short-sha }}
+      created: ${{ steps.set-short-sha.outputs.created }}
     permissions:
       contents: read
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
         with:
           egress-policy: block
 
       - name: Calculate short SHA
         id: set-short-sha
-        run: echo "short-sha=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+        run: |
+          echo "short-sha=${GITHUB_SHA::7}" >> "${GITHUB_OUTPUT}"
+          echo "created=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "${GITHUB_OUTPUT}"
 
   notify-release-started:
     if: github.repository == 'prowler-cloud/prowler' && (github.event_name == 'release' || github.event_name == 'workflow_dispatch')
@@ -65,7 +68,7 @@ jobs:
       contents: read
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
         with:
           egress-policy: audit
 
@@ -108,7 +111,7 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
         with:
           egress-policy: block
           allowed-endpoints: >
@@ -159,9 +162,20 @@ jobs:
         with:
           context: ${{ env.WORKING_DIRECTORY }}
           push: true
+          sbom: true
+          # max, not the default min: min records little beyond the build ref.
+          provenance: mode=max
           platforms: ${{ matrix.platform }}
           tags: |
             ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.setup.outputs.short-sha }}-${{ matrix.arch }}
+          labels: |
+            org.opencontainers.image.title=Prowler Local Server API
+            org.opencontainers.image.description=API for Prowler Local Server (Django/DRF)
+            org.opencontainers.image.vendor=ProwlerPro, Inc.
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.created=${{ needs.setup.outputs.created }}
+            ${{ (github.event_name == 'release' || github.event_name == 'workflow_dispatch') && format('org.opencontainers.image.version={0}', env.RELEASE_TAG) || '' }}
           cache-from: type=gha,scope=${{ matrix.arch }}
           cache-to: type=gha,mode=${{ github.event_name == 'pull_request' && 'min' || 'max' }},scope=${{ matrix.arch }}
 
@@ -175,16 +189,16 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
         with:
           egress-policy: block
           allowed-endpoints: >
-            github.com:443
-            release-assets.githubusercontent.com:443
-            registry-1.docker.io:443
             auth.docker.io:443
+            github.com:443
             production.cloudflare.docker.com:443
             production.cloudfront.docker.com:443
+            registry-1.docker.io:443
+            release-assets.githubusercontent.com:443
       - name: Login to DockerHub
         uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
         with:
@@ -196,9 +210,9 @@ jobs:
         run: |
           docker buildx imagetools create \
             -t ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ env.LATEST_TAG }} \
-            -t ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${NEEDS_SETUP_OUTPUTS_SHORT_SHA} \
-            ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${NEEDS_SETUP_OUTPUTS_SHORT_SHA}-amd64 \
-            ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${NEEDS_SETUP_OUTPUTS_SHORT_SHA}-arm64
+            -t "${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${NEEDS_SETUP_OUTPUTS_SHORT_SHA}" \
+            "${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${NEEDS_SETUP_OUTPUTS_SHORT_SHA}-amd64" \
+            "${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${NEEDS_SETUP_OUTPUTS_SHORT_SHA}-arm64"
         env:
           NEEDS_SETUP_OUTPUTS_SHORT_SHA: ${{ needs.setup.outputs.short-sha }}
 
@@ -206,10 +220,10 @@ jobs:
         if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
         run: |
           docker buildx imagetools create \
-            -t ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${RELEASE_TAG} \
+            -t "${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${RELEASE_TAG}" \
             -t ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ env.STABLE_TAG }} \
-            ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${NEEDS_SETUP_OUTPUTS_SHORT_SHA}-amd64 \
-            ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${NEEDS_SETUP_OUTPUTS_SHORT_SHA}-arm64
+            "${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${NEEDS_SETUP_OUTPUTS_SHORT_SHA}-amd64" \
+            "${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${NEEDS_SETUP_OUTPUTS_SHORT_SHA}-arm64"
         env:
           NEEDS_SETUP_OUTPUTS_SHORT_SHA: ${{ needs.setup.outputs.short-sha }}
 
@@ -236,7 +250,7 @@ jobs:
       contents: read
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
         with:
           egress-policy: audit
 
@@ -249,9 +263,9 @@ jobs:
         id: outcome
         run: |
           if [[ "${NEEDS_CONTAINER_BUILD_PUSH_RESULT}" == "success" && "${NEEDS_CREATE_MANIFEST_RESULT}" == "success" ]]; then
-            echo "outcome=success" >> $GITHUB_OUTPUT
+            echo "outcome=success" >> "$GITHUB_OUTPUT"
           else
-            echo "outcome=failure" >> $GITHUB_OUTPUT
+            echo "outcome=failure" >> "$GITHUB_OUTPUT"
           fi
         env:
           NEEDS_CONTAINER_BUILD_PUSH_RESULT: ${{ needs.container-build-push.result }}

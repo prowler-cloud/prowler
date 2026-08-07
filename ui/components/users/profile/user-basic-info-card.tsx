@@ -1,12 +1,10 @@
 "use client";
 
-import { Divider } from "@heroui/divider";
-
 import { ProwlerShort } from "@/components/icons";
-import { Card, CardContent } from "@/components/shadcn";
+import { Card, CardContent, Separator } from "@/components/shadcn";
+import { CodeSnippet } from "@/components/shadcn/code-snippet/code-snippet";
+import { DateWithTime } from "@/components/shadcn/entities";
 import { InfoField } from "@/components/shadcn/info-field/info-field";
-import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
-import { DateWithTime } from "@/components/ui/entities";
 import { UserDataWithRoles } from "@/types/users";
 
 const TenantIdCopy = ({ id }: { id: string }) => {
@@ -27,7 +25,7 @@ export const UserBasicInfoCard = ({
   const { name, email, company_name, date_joined } = user.attributes;
 
   return (
-    <Card variant="base" padding="none" className="p-4">
+    <Card variant="inner" padding="none" className="p-4 md:p-5">
       <CardContent>
         <div className="flex items-center gap-4">
           <div className="flex h-10 w-10 items-center justify-center rounded-full border-3 border-black p-1 dark:border-white">
@@ -41,7 +39,7 @@ export const UserBasicInfoCard = ({
             </span>
           </div>
         </div>
-        <Divider className="my-4" />
+        <Separator className="my-4" />
         <div className="flex flex-row gap-4 md:items-start md:justify-start md:gap-8">
           <div className="flex gap-2 whitespace-nowrap md:flex-col md:items-start md:justify-start">
             <div className="flex items-center gap-2">

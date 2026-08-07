@@ -262,3 +262,15 @@ class Test_OpenStack_Schema:
 
     def test_zero_threshold_dropped(self):
         assert _validate("openstack", {"image_sharing_threshold": 0}) == {}
+
+
+class Test_E2ENetworks_Schema:
+    def test_valid_values_round_trip(self):
+        raw = {"require_bitninja_on_load_balancers": True}
+        assert _validate("e2enetworks", raw) == raw
+
+    def test_non_bool_value_dropped(self):
+        assert (
+            _validate("e2enetworks", {"require_bitninja_on_load_balancers": "maybe"})
+            == {}
+        )

@@ -2,7 +2,11 @@
 title: 'Entra ID Configuration'
 ---
 
-This page provides instructions for creating and configuring a Microsoft Entra ID (formerly Azure AD) application to use SAML SSO with Prowler App.
+import { AppliesTo } from "/snippets/applies-to.mdx"
+
+<AppliesTo />
+
+This page provides instructions for creating and configuring a Microsoft Entra ID (formerly Azure AD) application to use SAML SSO with Prowler Cloud.
 
 You can find a walkthrough video [here](https://www.youtube.com/watch?v=zegqm55oJVk).
 
@@ -28,7 +32,7 @@ You can find a walkthrough video [here](https://www.youtube.com/watch?v=zegqm55o
 
     ![Edit](/images/prowler-app/saml/saml-sso-azure-5.png)
 
-6. Enter the "Identifier (Entity ID)" and "Reply URL (Assertion Consumer Service URL)". These values can be obtained from the SAML SSO integration setup in Prowler App. For detailed instructions, refer to the [SAML SSO Configuration](/user-guide/tutorials/prowler-app-sso) page.
+6. Enter the "Identifier (Entity ID)" and "Reply URL (Assertion Consumer Service URL)". These values can be obtained from the SAML SSO integration setup in Prowler Cloud. For detailed instructions, refer to the [SAML SSO Configuration](/user-guide/tutorials/prowler-app-sso) page.
 
     ![Enter data](/images/prowler-app/saml/saml-sso-azure-6.png)
 
@@ -44,4 +48,4 @@ You can find a walkthrough video [here](https://www.youtube.com/watch?v=zegqm55o
 
     ![Metadata XML](/images/prowler-app/saml/saml-sso-azure-9.png)
 
-10. Save the downloaded Metadata XML to a file. To complete the setup, upload this file during the Prowler App integration. (See the [SAML SSO Configuration](/user-guide/tutorials/prowler-app-sso) page for details).
+10. Save the downloaded Metadata XML to a file. To complete the setup, upload this file during the SAML SSO integration setup in Prowler Cloud. (See the [SAML SSO Configuration](/user-guide/tutorials/prowler-app-sso) page for details).

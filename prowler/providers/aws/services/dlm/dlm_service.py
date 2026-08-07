@@ -9,7 +9,13 @@ class DLM(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.lifecycle_policies = {}
+        self.regions_with_snapshots = {}
         self.__threading_call__(self._get_lifecycle_policies)
+        ec2_regional_clients = provider.generate_regional_clients("ec2") or {}
+        self.__threading_call__(
+            self._get_regions_with_snapshots,
+            iterator=ec2_regional_clients.values(),
+        )
 
     def _get_lifecycle_policy_arn_template(self, region):
         return (
@@ -30,6 +36,34 @@ class DLM(AWSService):
                     type=policy.get("PolicyType"),
                 )
             self.lifecycle_policies[regional_client.region] = policies
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _get_regions_with_snapshots(self, regional_client):
+        logger.info("DLM - Checking regions with self-owned EBS snapshots...")
+        try:
+            self.regions_with_snapshots[regional_client.region] = False
+            next_token = None
+            while True:
+                describe_snapshots_args = {
+                    "OwnerIds": ["self"],
+                    "MaxResults": 5,
+                }
+                if next_token:
+                    describe_snapshots_args["NextToken"] = next_token
+
+                snapshots = regional_client.describe_snapshots(
+                    **describe_snapshots_args
+                )
+                if snapshots.get("Snapshots"):
+                    self.regions_with_snapshots[regional_client.region] = True
+                    break
+
+                next_token = snapshots.get("NextToken")
+                if not next_token:
+                    break
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

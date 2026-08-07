@@ -1,13 +1,34 @@
+import json
 import time
 from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 import pytest
+from api.db_router import MainRouter
 from api.models import Membership, Role, TenantAPIKey, User, UserRoleRelationship
+from api.signals import revoke_membership_api_keys, revoke_user_api_keys
 from conftest import TEST_PASSWORD, get_api_tokens, get_authorization_header
+from django.db.utils import ConnectionDoesNotExist
 from django.urls import reverse
 from drf_simple_apikey.crypto import get_crypto
 from rest_framework.test import APIClient
+from rest_framework_simplejwt.token_blacklist.models import (
+    BlacklistedToken,
+    OutstandingToken,
+)
+
+PASSWORD_CHANGE_PASSWORD = "InitialSecret123@"
+
+
+@pytest.fixture
+def password_change_user(tenants_fixture):
+    user = User.objects.create_user(
+        name="password_change_user",
+        email=f"password-change-{uuid4()}@prowler.com",
+        password=PASSWORD_CHANGE_PASSWORD,
+    )
+    Membership.objects.create(user=user, tenant=tenants_fixture[0])
+    return user
 
 
 @pytest.mark.django_db
@@ -104,6 +125,120 @@ def test_refresh_token(create_test_user, tenants_fixture):
 
 
 @pytest.mark.django_db
+def test_password_change_invalidates_existing_tokens(password_change_user):
+    client = APIClient()
+    new_password = "ChangedSecret123@"
+
+    access_token, refresh_token = get_api_tokens(
+        client, password_change_user.email, PASSWORD_CHANGE_PASSWORD
+    )
+    auth_headers = get_authorization_header(access_token)
+    outstanding_token_ids = list(
+        OutstandingToken.objects.filter(user=password_change_user).values_list(
+            "id", flat=True
+        )
+    )
+    assert outstanding_token_ids
+    assert not BlacklistedToken.objects.filter(
+        token_id__in=outstanding_token_ids
+    ).exists()
+
+    password_change_payload = {
+        "data": {
+            "type": "users",
+            "id": str(password_change_user.id),
+            "attributes": {"password": new_password},
+        }
+    }
+    password_change_response = client.patch(
+        reverse("user-detail", kwargs={"pk": password_change_user.id}),
+        data=json.dumps(password_change_payload),
+        headers=auth_headers,
+        content_type="application/vnd.api+json",
+    )
+    assert password_change_response.status_code == 200, password_change_response.json()
+    assert BlacklistedToken.objects.filter(
+        token_id__in=outstanding_token_ids
+    ).count() == len(outstanding_token_ids)
+
+    old_access_response = client.get(reverse("user-me"), headers=auth_headers)
+    assert old_access_response.status_code == 401
+
+    old_refresh_response = client.post(
+        reverse("token-refresh"),
+        data={
+            "data": {
+                "type": "tokens-refresh",
+                "attributes": {"refresh": refresh_token},
+            }
+        },
+        format="vnd.api+json",
+    )
+    assert old_refresh_response.status_code == 400
+
+    new_access_token, _ = get_api_tokens(
+        client, password_change_user.email, new_password
+    )
+    new_access_response = client.get(
+        reverse("user-me"), headers=get_authorization_header(new_access_token)
+    )
+    assert new_access_response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_password_change_invalidates_rotated_refresh_token(
+    password_change_user,
+):
+    client = APIClient()
+    new_password = "ChangedSecret123@"
+
+    access_token, refresh_token = get_api_tokens(
+        client, password_change_user.email, PASSWORD_CHANGE_PASSWORD
+    )
+    rotated_refresh_response = client.post(
+        reverse("token-refresh"),
+        data={
+            "data": {
+                "type": "tokens-refresh",
+                "attributes": {"refresh": refresh_token},
+            }
+        },
+        format="vnd.api+json",
+    )
+    assert rotated_refresh_response.status_code == 200
+    rotated_refresh_token = rotated_refresh_response.json()["data"]["attributes"][
+        "refresh"
+    ]
+
+    password_change_payload = {
+        "data": {
+            "type": "users",
+            "id": str(password_change_user.id),
+            "attributes": {"password": new_password},
+        }
+    }
+    password_change_response = client.patch(
+        reverse("user-detail", kwargs={"pk": password_change_user.id}),
+        data=json.dumps(password_change_payload),
+        headers=get_authorization_header(access_token),
+        content_type="application/vnd.api+json",
+    )
+    assert password_change_response.status_code == 200, password_change_response.json()
+
+    old_rotated_refresh_response = client.post(
+        reverse("token-refresh"),
+        data={
+            "data": {
+                "type": "tokens-refresh",
+                "attributes": {"refresh": rotated_refresh_token},
+            }
+        },
+        format="vnd.api+json",
+    )
+    assert old_rotated_refresh_response.status_code == 400
+
+
+@pytest.mark.django_db
 def test_user_me_when_inviting_users(create_test_user, tenants_fixture, roles_fixture):
     client = APIClient()
 
@@ -187,8 +322,9 @@ def test_user_me_when_inviting_users(create_test_user, tenants_fixture, roles_fi
 
 @pytest.mark.django_db
 class TestTokenSwitchTenant:
-    def test_switch_tenant_with_valid_token(self, tenants_fixture, providers_fixture):
+    def test_switch_tenant_with_valid_token(self, tenants_fixture, aws_provider):
         client = APIClient()
+        assert aws_provider
 
         test_user = "test_email@prowler.com"
         test_password = "Test_password1@"
@@ -492,6 +628,34 @@ class TestAPIKeyErrors:
         assert response.status_code == 401
         assert "API Key has been revoked." in response.json()["errors"][0]["detail"]
 
+    def test_orphaned_api_key_rejected(
+        self, create_test_user, tenants_fixture, api_keys_fixture
+    ):
+        """Key whose owning user was deleted returns 401 instead of 500."""
+        client = APIClient()
+
+        api_key = api_keys_fixture[0]
+        # `on_delete=SET_NULL` leaves the key behind with no entity when the owner goes
+        TenantAPIKey.objects.filter(id=api_key.id).update(entity=None)
+
+        api_key_headers = get_api_key_header(api_key._raw_key)
+        response = client.get(reverse("provider-list"), headers=api_key_headers)
+
+        assert response.status_code == 401
+        assert (
+            "No entity matching this api key." in response.json()["errors"][0]["detail"]
+        )
+
+        # The orphaned key is revoked on use; retries fail the regular revoked check
+        api_key.refresh_from_db()
+        assert api_key.revoked is True
+
+        retry_response = client.get(reverse("provider-list"), headers=api_key_headers)
+        assert retry_response.status_code == 401
+        assert (
+            "API Key has been revoked." in retry_response.json()["errors"][0]["detail"]
+        )
+
     def test_non_existent_api_key(self, create_test_user, tenants_fixture):
         """Key UUID doesn't exist in database."""
         client = APIClient()
@@ -683,6 +847,93 @@ class TestAPIKeyTenantIsolation:
         assert "errors" in response_json
         error_detail = response_json["errors"][0]["detail"]
         assert "revoked" in error_detail.lower()
+
+    def test_deleting_user_revokes_api_keys_in_every_tenant(self, tenants_fixture):
+        """Deleting a user revokes their keys in all their tenants, not just one."""
+        first_tenant, second_tenant = tenants_fixture[0], tenants_fixture[1]
+
+        test_user = User.objects.create_user(
+            name="multi_tenant_user",
+            email="multi_tenant_user@prowler.com",
+            password=TEST_PASSWORD,
+        )
+        for tenant in (first_tenant, second_tenant):
+            Membership.objects.create(
+                user=test_user, tenant=tenant, role=Membership.RoleChoices.OWNER
+            )
+
+        first_key, _ = TenantAPIKey.objects.create_api_key(
+            name="Key in first tenant", tenant_id=first_tenant.id, entity=test_user
+        )
+        second_key, _ = TenantAPIKey.objects.create_api_key(
+            name="Key in second tenant", tenant_id=second_tenant.id, entity=test_user
+        )
+
+        test_user.delete()
+
+        first_key.refresh_from_db()
+        second_key.refresh_from_db()
+        assert first_key.revoked is True
+        assert second_key.revoked is True
+        # `on_delete=SET_NULL` orphans the keys, so revoking them is what keeps them
+        # from authenticating
+        assert first_key.entity_id is None
+        assert second_key.entity_id is None
+
+    def test_revoke_user_api_keys_uses_the_admin_connection(
+        self, monkeypatch, tenants_fixture
+    ):
+        """The revocation must not go through the default connection.
+
+        `api_keys` is RLS protected and its policy denies every row when `api.tenant_id`
+        is unset, which is the case while a user is deleted through the admin
+        connection: the update would silently revoke nothing and leave usable orphaned
+        keys behind.
+
+        Pointing `admin_db` at a missing alias is the only way to assert the connection
+        here, because the test suite runs on a single superuser database with
+        `MainRouter.admin_db` patched to "default" (see `conftest.py`), so RLS never
+        applies and both connections are otherwise indistinguishable.
+        """
+        test_user = User.objects.create_user(
+            name="admin_connection_user",
+            email="admin_connection_user@prowler.com",
+            password=TEST_PASSWORD,
+        )
+        Membership.objects.create(user=test_user, tenant=tenants_fixture[0])
+        TenantAPIKey.objects.create_api_key(
+            name="Key for admin connection check",
+            tenant_id=tenants_fixture[0].id,
+            entity=test_user,
+        )
+
+        monkeypatch.setattr(MainRouter, "admin_db", "missing_admin_alias")
+
+        with pytest.raises(ConnectionDoesNotExist):
+            revoke_user_api_keys(sender=User, instance=test_user)
+
+    def test_revoke_membership_api_keys_uses_the_admin_connection(
+        self, monkeypatch, tenants_fixture
+    ):
+        """Same as the user deletion case: this receiver also runs as its cascade."""
+        test_user = User.objects.create_user(
+            name="admin_connection_membership_user",
+            email="admin_connection_membership_user@prowler.com",
+            password=TEST_PASSWORD,
+        )
+        membership = Membership.objects.create(
+            user=test_user, tenant=tenants_fixture[0]
+        )
+        TenantAPIKey.objects.create_api_key(
+            name="Key for membership admin connection check",
+            tenant_id=tenants_fixture[0].id,
+            entity=test_user,
+        )
+
+        monkeypatch.setattr(MainRouter, "admin_db", "missing_admin_alias")
+
+        with pytest.raises(ConnectionDoesNotExist):
+            revoke_membership_api_keys(sender=Membership, instance=membership)
 
 
 @pytest.mark.django_db
@@ -1339,8 +1590,8 @@ class TestAPIKeyMultiTenantWorkflows:
         tenant1 = tenants_fixture[0]
         tenant2 = tenants_fixture[1]
 
-        Membership.objects.create(user=user, tenant=tenant1)
-        Membership.objects.create(user=user, tenant=tenant2)
+        membership1 = Membership.objects.create(user=user, tenant=tenant1)
+        membership2 = Membership.objects.create(user=user, tenant=tenant2)
 
         role1 = Role.objects.create(
             tenant_id=tenant1.id,
@@ -1395,14 +1646,36 @@ class TestAPIKeyMultiTenantWorkflows:
         assert me_response1.json()["data"]["id"] == str(user.id)
         assert me_response2.json()["data"]["id"] == str(user.id)
 
+        memberships1 = {
+            item["id"]: item["meta"]["active"]
+            for item in me_response1.json()["data"]["relationships"]["memberships"][
+                "data"
+            ]
+        }
+        memberships2 = {
+            item["id"]: item["meta"]["active"]
+            for item in me_response2.json()["data"]["relationships"]["memberships"][
+                "data"
+            ]
+        }
+        assert memberships1 == {
+            str(membership1.id): True,
+            str(membership2.id): False,
+        }
+        assert memberships2 == {
+            str(membership1.id): False,
+            str(membership2.id): True,
+        }
+
     def test_api_key_cannot_access_different_tenant_resources(
-        self, tenants_fixture, providers_fixture
+        self, tenants_fixture, aws_provider
     ):
         """API key from one tenant cannot access resources from another tenant.
 
         Verifies RLS enforcement after authentication ensures tenant isolation.
         """
         client = APIClient()
+        assert aws_provider
 
         user1 = User.objects.create_user(
             name="tenant1_user",
