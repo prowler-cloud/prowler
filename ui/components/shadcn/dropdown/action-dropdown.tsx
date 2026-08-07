@@ -135,6 +135,11 @@ export function ActionDropdownItem({
         "hover:bg-border-neutral-secondary flex cursor-pointer items-start gap-2 rounded-lg transition-colors",
         destructive &&
           "text-text-error-primary focus:text-text-error-primary hover:bg-destructive/10",
+        // A disabled item with a tooltip stays interactive so hover can fire,
+        // which means Radix never stamps data-disabled — mirror its disabled
+        // styling manually.
+        disabled &&
+          "cursor-not-allowed opacity-50 hover:bg-transparent focus:bg-transparent",
         className,
       )}
       aria-disabled={disabled || undefined}
