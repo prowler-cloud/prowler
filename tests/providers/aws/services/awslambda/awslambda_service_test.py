@@ -783,10 +783,16 @@ class Test_Lambda_Service:
         )
         layer_arn = f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:layer:missing-layer:1"
         awslambda.layers = {layer_arn: Layer(arn=layer_arn)}
+        # moto answers GetLayerVersionByArn with an empty stub instead of
+        # raising for an unknown layer, so the failure is forced here.
+        regional_client = mock.MagicMock()
+        regional_client.get_layer_version_by_arn.side_effect = Exception(
+            "ResourceNotFoundException"
+        )
+        awslambda.regional_clients[AWS_REGION_US_EAST_1] = regional_client
 
-        # The layer version does not exist, so get_layer_version_by_arn raises
-        # inside _fetch_layer_code; _get_layers_code must log it and yield
-        # nothing rather than propagating the error to the check.
+        # The lookup raises inside _fetch_layer_code; _get_layers_code must
+        # log it and yield nothing rather than propagating to the check.
         assert list(awslambda._get_layers_code()) == []
 
     @mock_aws
@@ -800,6 +806,14 @@ class Test_Lambda_Service:
         ].get_layer_version_by_arn.return_value = {"Content": {}}
 
         layer_arn = f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:layer:my-layer:1"
+        assert awslambda._fetch_layer_code(layer_arn, AWS_REGION_US_EAST_1) is None
+
+        # An absent Content must be handled like an empty one rather than
+        # raising on the membership test.
+        awslambda.regional_clients[
+            AWS_REGION_US_EAST_1
+        ].get_layer_version_by_arn.return_value = {"Content": None}
+
         assert awslambda._fetch_layer_code(layer_arn, AWS_REGION_US_EAST_1) is None
 
     @mock_aws

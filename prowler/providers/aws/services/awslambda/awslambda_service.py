@@ -258,7 +258,7 @@ class Lambda(AWSService):
             # AWS-provided layers), where a bare layer name would resolve
             # against the audited account instead.
             layer_version = regional_client.get_layer_version_by_arn(Arn=layer_arn)
-            if "Location" in layer_version.get("Content", {}):
+            if "Location" in (layer_version.get("Content") or {}):
                 return self._download_code(layer_version["Content"]["Location"])
             return None
         except Exception as error:

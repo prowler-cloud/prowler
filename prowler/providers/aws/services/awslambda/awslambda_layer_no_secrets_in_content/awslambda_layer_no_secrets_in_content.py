@@ -4,6 +4,7 @@ import tempfile
 from collections import defaultdict
 
 from prowler.lib.check.models import Check, Check_Report_AWS
+from prowler.lib.logger import logger
 from prowler.lib.utils.utils import (
     SecretsScanError,
     annotate_verified_secrets,
@@ -60,10 +61,13 @@ class awslambda_layer_no_secrets_in_content(Check):
                 with tempfile.TemporaryDirectory() as tmp_dir_name:
                     try:
                         layer_code.code_zip.extractall(tmp_dir_name)
-                    except Exception:
+                    except Exception as error:
                         # A corrupt or truncated package must not abort the
                         # scan of the remaining layers: keep this layer out of
                         # layers_with_code so it is reported as MANUAL below.
+                        logger.error(
+                            f"{layer.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
                         continue
                     index = len(layers_with_code)
                     layers_with_code.append(layer)
