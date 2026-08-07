@@ -127,6 +127,27 @@ describe("NavbarClient", () => {
     expect(icon).toHaveClass("animate-pulse");
   });
 
+  it("keeps the onboarding info icon legible in dark mode", () => {
+    // Given / When
+    render(
+      <NavbarClient
+        title="Findings"
+        onboardingAction={{ flowId: "explore-findings" }}
+      />,
+    );
+
+    // Then
+    const icon = screen
+      .getByRole("button", {
+        name: /start product tour: explore your findings/i,
+      })
+      .querySelector("svg");
+    expect(icon).toHaveClass(
+      "text-bg-data-info",
+      "dark:text-text-neutral-primary",
+    );
+  });
+
   it("keeps the onboarding button but stops pulsing once the tour is closed", () => {
     const flow = getFlowById("explore-findings");
     localStorageAdapter.set(flow!.tour, {

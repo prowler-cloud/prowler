@@ -114,7 +114,7 @@ export function NavbarClient({
                       >
                         <Info
                           className={cn(
-                            "text-bg-data-info size-4",
+                            "text-bg-data-info dark:text-text-neutral-primary size-4",
                             !seen && "animate-pulse",
                           )}
                           aria-hidden="true"
