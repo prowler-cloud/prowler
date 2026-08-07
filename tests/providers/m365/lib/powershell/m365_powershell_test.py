@@ -434,13 +434,16 @@ class Testm365PowerShell:
             assert result is True
             # Verify that execute was called for each module
             assert (
-                mock_execute_obj.call_count == 3 * 3
+                mock_execute_obj.call_count == 4 * 3
             )  # number of modules * 3 commands each
             # Verify success messages were logged
             mock_info.assert_any_call(
                 "Successfully installed module ExchangeOnlineManagement"
             )
             mock_info.assert_any_call("Successfully installed module MicrosoftTeams")
+            mock_info.assert_any_call(
+                "Successfully installed module Microsoft.Online.SharePoint.PowerShell"
+            )
 
     @patch("subprocess.Popen")
     def test_initialize_m365_powershell_modules_failure(self, mock_popen):
@@ -503,12 +506,15 @@ class Testm365PowerShell:
             main()
 
             # Verify all info messages were logged in the correct order
-            assert mock_info.call_count == 4
+            assert mock_info.call_count == 5
             mock_info.assert_has_calls(
                 [
                     call("Successfully installed module ExchangeOnlineManagement"),
                     call("Successfully installed module MicrosoftTeams"),
                     call("Successfully installed module MSAL.PS"),
+                    call(
+                        "Successfully installed module Microsoft.Online.SharePoint.PowerShell"
+                    ),
                     call("M365 PowerShell modules initialized successfully"),
                 ]
             )
@@ -1264,4 +1270,202 @@ class Testm365PowerShell:
         assert any('$tenantID = "test_tenant_id"' in cmd for cmd in executed_commands)
         assert any('$tenantDomain = "contoso.com"' in cmd for cmd in executed_commands)
 
+        session.close()
+
+    @patch("subprocess.Popen")
+    def test_connect_sharepoint_online_certificate_auth(self, mock_popen):
+        """Test connect_sharepoint_online method with certificate authentication"""
+        mock_process = MagicMock()
+        mock_popen.return_value = mock_process
+
+        credentials = M365Credentials()
+        identity = M365IdentityInfo()
+        session = M365PowerShell(credentials, identity)
+
+        execute_calls = []
+
+        def mock_execute_side_effect(command):
+            execute_calls.append(command)
+            if "Write-Output $certificate" in command:
+                return "certificate_content"
+            return ""
+
+        session.execute = MagicMock(side_effect=mock_execute_side_effect)
+        session.test_sharepoint_certificate_connection = MagicMock(return_value=True)
+
+        result = session.connect_sharepoint_online()
+        assert result is True
+        session.test_sharepoint_certificate_connection.assert_called_once()
+        session.close()
+
+    @patch("subprocess.Popen")
+    def test_connect_sharepoint_online_app_auth(self, mock_popen):
+        """Test connect_sharepoint_online method with application authentication"""
+        mock_process = MagicMock()
+        mock_popen.return_value = mock_process
+
+        credentials = M365Credentials()
+        identity = M365IdentityInfo()
+        session = M365PowerShell(credentials, identity)
+
+        execute_calls = []
+
+        def mock_execute_side_effect(command):
+            execute_calls.append(command)
+            if "Write-Output $certificate" in command:
+                return ""
+            return ""
+
+        session.execute = MagicMock(side_effect=mock_execute_side_effect)
+        session.test_sharepoint_connection = MagicMock(return_value=True)
+
+        result = session.connect_sharepoint_online()
+        assert result is True
+        session.test_sharepoint_connection.assert_called_once()
+        session.close()
+
+    @patch("subprocess.Popen")
+    def test_sharepoint_connection(self, mock_popen):
+        """Test test_sharepoint_connection method"""
+        mock_process = MagicMock()
+        mock_popen.return_value = mock_process
+
+        credentials = M365Credentials()
+        identity = M365IdentityInfo(tenant_domain="example.com")
+        session = M365PowerShell(credentials, identity)
+
+        session.execute = MagicMock()
+        session.execute_connect = MagicMock(return_value="Connected")
+
+        result = session.test_sharepoint_connection()
+        assert result is True
+        session.execute.assert_called_once_with(
+            '$spoAdminUrl = "https://" + $tenantDomain.Split(".")[0] + "-admin.sharepoint.com"'
+        )
+        session.execute_connect.assert_called_once_with(
+            "Connect-SPOService -Url $spoAdminUrl; if ($?) { Write-Output 'Connected' }"
+        )
+        session.close()
+
+    @patch("subprocess.Popen")
+    def test_sharepoint_certificate_connection(self, mock_popen):
+        """Test test_sharepoint_certificate_connection method"""
+        mock_process = MagicMock()
+        mock_popen.return_value = mock_process
+
+        credentials = M365Credentials()
+        identity = M365IdentityInfo(tenant_domain="example.com")
+        session = M365PowerShell(credentials, identity)
+
+        session.execute = MagicMock()
+        session.execute_connect = MagicMock(return_value="Connected")
+
+        result = session.test_sharepoint_certificate_connection()
+        assert result is True
+        session.execute.assert_called_once_with(
+            '$spoAdminUrl = "https://" + $tenantDomain.Split(".")[0] + "-admin.sharepoint.com"'
+        )
+        session.execute_connect.assert_called_once_with(
+            "Connect-SPOService -Url $spoAdminUrl -Certificate $certificate -ClientId $clientID -TenantId $tenantID; if ($?) { Write-Output 'Connected' }"
+        )
+        session.close()
+
+    @patch("subprocess.Popen")
+    def test_sharepoint_connection_failure(self, mock_popen):
+        """Test test_sharepoint_connection method failure"""
+        mock_process = MagicMock()
+        mock_popen.return_value = mock_process
+
+        credentials = M365Credentials()
+        identity = M365IdentityInfo(tenant_domain="example.com")
+        session = M365PowerShell(credentials, identity)
+
+        session.execute = MagicMock()
+        session.execute_connect = MagicMock(
+            return_value="'execute_connect' command timeout reached"
+        )
+
+        result = session.test_sharepoint_connection()
+        assert result is False
+        session.close()
+
+    @patch("subprocess.Popen")
+    def test_sharepoint_certificate_connection_failure(self, mock_popen):
+        """Test test_sharepoint_certificate_connection method failure"""
+        mock_process = MagicMock()
+        mock_popen.return_value = mock_process
+
+        credentials = M365Credentials()
+        identity = M365IdentityInfo(tenant_domain="example.com")
+        session = M365PowerShell(credentials, identity)
+
+        session.execute = MagicMock()
+        session.execute_connect = MagicMock(
+            return_value="error connecting to SharePoint"
+        )
+
+        result = session.test_sharepoint_certificate_connection()
+        assert result is False
+        session.close()
+
+    @patch("subprocess.Popen")
+    def test_sharepoint_connection_exception(self, mock_popen):
+        """Test test_sharepoint_connection method exception"""
+        mock_process = MagicMock()
+        mock_popen.return_value = mock_process
+
+        credentials = M365Credentials()
+        identity = M365IdentityInfo(tenant_domain="example.com")
+        session = M365PowerShell(credentials, identity)
+
+        session.execute = MagicMock(side_effect=Exception("SharePoint API error"))
+
+        with patch("prowler.lib.logger.logger.error") as mock_error:
+            result = session.test_sharepoint_connection()
+
+        assert result is False
+        mock_error.assert_called_once_with(
+            "SharePoint Online connection failed: SharePoint API error. Please check your permissions and try again."
+        )
+        session.close()
+
+    @patch("subprocess.Popen")
+    def test_sharepoint_certificate_connection_exception(self, mock_popen):
+        """Test test_sharepoint_certificate_connection method exception"""
+        mock_process = MagicMock()
+        mock_popen.return_value = mock_process
+
+        credentials = M365Credentials()
+        identity = M365IdentityInfo(tenant_domain="example.com")
+        session = M365PowerShell(credentials, identity)
+
+        session.execute = MagicMock(side_effect=Exception("SharePoint API error"))
+
+        with patch("prowler.lib.logger.logger.error") as mock_error:
+            result = session.test_sharepoint_certificate_connection()
+
+        assert result is False
+        mock_error.assert_called_once_with(
+            "SharePoint Online Certificate connection failed: SharePoint API error"
+        )
+        session.close()
+
+    @patch("subprocess.Popen")
+    def test_get_sharepoint_tenant_config(self, mock_popen):
+        """Test get_sharepoint_tenant_config method"""
+        mock_process = MagicMock()
+        mock_popen.return_value = mock_process
+
+        credentials = M365Credentials()
+        identity = M365IdentityInfo()
+        session = M365PowerShell(credentials, identity)
+
+        expected_result = {"DefaultLinkPermission": "View"}
+        session.execute = MagicMock(return_value=expected_result)
+
+        result = session.get_sharepoint_tenant_config()
+        assert result == expected_result
+        session.execute.assert_called_once_with(
+            "Get-SPOTenant | ConvertTo-Json -Depth 10", json_parse=True
+        )
         session.close()
