@@ -124,7 +124,9 @@ Prowler outputs findings to the console and writes reports to the `output/` dire
 
 | Service | StackIT API | Description | Example Checks |
 |---------|-------------|-------------|----------------|
-| **IaaS** | `iaas` | Virtual machines, network interfaces, security groups | `iaas_security_group_ssh_unrestricted`, `iaas_security_group_rdp_unrestricted`, `iaas_security_group_database_unrestricted`, `iaas_security_group_all_traffic_unrestricted` |
+| **IaaS** | `iaas` | Virtual machines, network interfaces, security groups | `iaas_security_group_ssh_unrestricted`, `iaas_security_group_rdp_unrestricted`, `iaas_security_group_database_unrestricted`, `iaas_security_group_all_traffic_unrestricted`, `iaas_server_public_ip_attached` |
+| **Object Storage** | `objectstorage` | Buckets, object lock, retention policies, access keys | `objectstorage_bucket_object_lock_enabled`, `objectstorage_bucket_retention_policy`, `objectstorage_access_key_expiration` |
+| **Kubernetes Engine** | `ske` | Managed Kubernetes clusters | `ske_cluster_no_public_endpoint` |
 
 Additional services will be added in future releases. Track progress in the [Prowler release notes](https://github.com/prowler-cloud/prowler/releases).
 

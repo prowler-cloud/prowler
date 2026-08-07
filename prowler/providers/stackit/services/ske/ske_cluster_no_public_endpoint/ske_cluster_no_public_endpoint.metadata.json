@@ -1,0 +1,38 @@
+{
+  "Provider": "stackit",
+  "CheckID": "ske_cluster_no_public_endpoint",
+  "CheckTitle": "SKE clusters do not expose their Kubernetes API endpoint to the internet",
+  "CheckType": [],
+  "ServiceName": "ske",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "container",
+  "Description": "The Kubernetes API server of an SKE cluster should not be reachable from the entire internet. Enable the ACL extension to restrict access to a known set of source CIDRs, or run the control plane inside a STACKIT Network Area (SNA) so that it is not published on the internet at all.",
+  "Risk": "**Exposed Kubernetes control plane.** A publicly reachable API server lets anyone on the internet attempt authentication, exploit unpatched control plane vulnerabilities, or brute-force credentials. Combined with leaked or weak credentials this can lead to full cluster takeover, workload tampering, and data exfiltration.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.stackit.cloud/products/runtime/kubernetes-engine/how-tos/enhance-the-security-of-your-cluster/",
+    "https://docs.stackit.cloud/products/runtime/kubernetes-engine/how-tos/enable-private-clusters/",
+    "https://docs.stackit.cloud/products/runtime/kubernetes-engine/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. In the STACKIT Portal open Kubernetes Engine (SKE) and select the affected cluster. 2. Open the cluster configuration and enable the ACL extension. 3. Add only the source CIDRs that must reach the Kubernetes API (for example your office or VPN egress ranges) and make sure 0.0.0.0/0 and ::/0 are not present. 4. Save the cluster configuration and re-run Prowler to confirm the finding is resolved.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "**Restrict access to the Kubernetes API.** Enable the SKE ACL extension and allowlist only the source CIDRs that legitimately need to reach the API server, never 0.0.0.0/0 or ::/0. Where available, place the control plane in a STACKIT Network Area so the endpoint is not exposed to the internet.",
+      "Url": "https://hub.prowler.com/check/ske_cluster_no_public_endpoint"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "A cluster passes when its control plane access scope is SNA, or when the ACL extension is enabled and its allowed CIDR list contains no unrestricted range. A cluster with the ACL extension disabled is reported as FAIL because the Kubernetes API accepts connections from any source address. The SNA private control plane is not generally available yet, so most clusters are expected to rely on the ACL extension."
+}
