@@ -73,9 +73,18 @@ const COMPACT_LABELED_COLUMN_IDS = new Set([
 const STICKY_RESOURCE_ACTION_CELL_CLASS =
   "sticky right-0 z-20 min-w-12 last:rounded-r-none! overflow-visible bg-bg-neutral-secondary before:pointer-events-none before:absolute before:inset-y-0 before:-left-8 before:w-8 before:bg-gradient-to-r before:from-transparent before:to-bg-neutral-secondary before:content-[''] group-hover:bg-bg-neutral-tertiary group-hover:before:to-bg-neutral-tertiary group-data-[state=selected]:bg-bg-neutral-tertiary group-data-[state=selected]:before:to-bg-neutral-tertiary";
 
+// The hover Skills pill overhangs the first cell into the scrollport's pl-6
+// indent, which the row background never paints (and the row's rounded-l-full
+// cap starts at the cell edge). This pseudo-element repaints the highlight
+// from 24px left of the cell, so the hovered/selected row visually contains
+// the pill instead of leaving a dark notch around it.
+const SELECT_CELL_HOVER_EXTENSION_CLASS =
+  "relative before:pointer-events-none before:absolute before:inset-y-0 before:-left-6 before:right-0 before:rounded-l-full before:content-[''] before:bg-transparent before:transition-colors group-hover:before:bg-bg-neutral-tertiary group-data-[state=selected]:before:bg-bg-neutral-tertiary";
+
 const getResourceCellClassName = (columnId: string) =>
   cn(
     COMPACT_LABELED_COLUMN_IDS.has(columnId) && "align-top",
+    columnId === "select" && SELECT_CELL_HOVER_EXTENSION_CLASS,
     columnId === ACTIONS_COLUMN_ID && STICKY_RESOURCE_ACTION_CELL_CLASS,
   );
 
