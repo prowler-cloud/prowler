@@ -486,33 +486,38 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
   /**
    * A container row identifies itself by its uid: a GCP folder ref, an AWS OU id,
    * or an Azure Management Group resource id. Anchored, because it is matched
-   * against a single text node — see `textChunks`.
+   * against one element's own value — never the whole row, whose uid and name
+   * columns are adjacent and would run together as
+   * "…/managementGroups/archived" + "Archived".
    */
   private static readonly CONTAINER_UID =
     /^(?:folders\/\d+|ou-[\w-]+|\/providers\/Microsoft\.Management\/managementGroups\/[\w.()-]+)$/;
 
   /**
-   * A row's text, one entry per text node. The uid column and the name column
-   * are adjacent, so `textContent` runs them together
-   * ("…/managementGroups/archived" + "Archived") and a uid pattern reading the
-   * whole row would swallow the display name.
+   * The canonical uid an id column carries: its accessible name when the visible
+   * text is shortened (Azure Management Groups), otherwise the text itself.
    */
-  private static textChunks(row: HTMLElement): string[] {
-    const walker = document.createTreeWalker(row, NodeFilter.SHOW_TEXT);
-    const chunks: string[] = [];
-    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
-      const text = node.textContent?.trim();
-      if (text) chunks.push(text);
-    }
-    return chunks;
+  private static columnUid(column: HTMLElement): string {
+    const uid = column.getAttribute("aria-label") ?? column.textContent ?? "";
+
+    return uid.trim();
+  }
+
+  /** A row's id column, found by the uid it resolves to. */
+  private static idColumn(row: HTMLElement): HTMLElement | null {
+    return (
+      Array.from(row.querySelectorAll<HTMLElement>("span")).find((span) =>
+        ProvidersPageHarness.CONTAINER_UID.test(
+          ProvidersPageHarness.columnUid(span),
+        ),
+      ) ?? null
+    );
   }
 
   private static containerUid(row: HTMLElement): string | null {
-    return (
-      ProvidersPageHarness.textChunks(row).find((chunk) =>
-        ProvidersPageHarness.CONTAINER_UID.test(chunk),
-      ) ?? null
-    );
+    const column = ProvidersPageHarness.idColumn(row);
+
+    return column ? ProvidersPageHarness.columnUid(column) : null;
   }
 
   private get containerRows(): HTMLElement[] {
@@ -535,6 +540,17 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
   containerRowUids(): string[] {
     return this.containerRows.flatMap(
       (item) => ProvidersPageHarness.containerUid(item) ?? [],
+    );
+  }
+
+  /**
+   * What the id column actually reads on each container row, which is not always
+   * the uid: an Azure Management Group id is all shared prefix, so the column
+   * shows the trailing name and keeps the canonical id for the tooltip.
+   */
+  containerRowIdText(): string[] {
+    return this.containerRows.flatMap(
+      (item) => ProvidersPageHarness.idColumn(item)?.textContent?.trim() ?? [],
     );
   }
 
