@@ -19,6 +19,7 @@ import {
   AZURE_HIERARCHY_CHILD_GROUP_NAME,
   AZURE_HIERARCHY_GROUP_NAME,
   AZURE_ROOT_GROUP,
+  AZURE_SUBSCRIPTION_DISABLED,
   AZURE_SUBSCRIPTION_LEGACY,
   AZURE_SUBSCRIPTION_PROD_EU,
   AZURE_SUBSCRIPTION_PROD_US,
@@ -857,6 +858,14 @@ describe("Organization onboarding wizard", () => {
         expect(
           await harness.isCandidateBlocked(
             new RegExp(AZURE_SUBSCRIPTION_LEGACY),
+          ),
+        ).toBe(true);
+
+        // Blocked on `state != "Enabled"` alone — no provider and no linkage
+        // conflict, the one blocked class the conflict cases cannot reach.
+        expect(
+          await harness.isCandidateBlocked(
+            new RegExp(AZURE_SUBSCRIPTION_DISABLED),
           ),
         ).toBe(true);
 

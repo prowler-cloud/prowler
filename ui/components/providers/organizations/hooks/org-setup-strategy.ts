@@ -151,12 +151,18 @@ const DISCOVERY_ERROR_COPY: Record<string, string> = {
     "Those service principal credentials were rejected. Check the client ID and client secret, then try again.",
   azure_insufficient_permissions:
     "The service principal cannot read the complete Management Group hierarchy. Grant it the Reader role at the Management Group level, then try again.",
-  azure_management_group_not_found:
-    "No Management Group with that ID was found in this tenant. Check the ID, and that the service principal has been granted access to it.",
+  azure_root_management_group_not_found:
+    "The tenant root Management Group could not be found. Check the tenant ID, and that the service principal has been granted access at the tenant root.",
   azure_tenant_mismatch:
     "Those credentials belong to a different Microsoft Entra tenant. Use a service principal from the tenant you entered.",
   azure_service_unavailable:
     "Azure did not respond while reading the Management Group hierarchy. Nothing is wrong with your credentials — try again in a few minutes.",
+  azure_incomplete_hierarchy:
+    "Azure returned an incomplete Management Group hierarchy. This usually clears on a retry; if it does not, check that the service principal can read every Management Group in the tenant.",
+  azure_rate_limited:
+    "Azure rate limited the hierarchy read. Nothing is wrong with your credentials — try again in a few minutes.",
+  azure_discovery_failed:
+    "Azure rejected the hierarchy read. Try again, and contact support if it keeps failing.",
   organization_discovery_failed:
     "Discovery could not be completed. Try again, and contact support if it keeps failing.",
   gcp_invalid_organization_id:
@@ -276,7 +282,10 @@ const AZURE_AUTH_FAILURE =
 const azureOrgSetupStrategy: OrgSetupStrategy<AzureOrgSetupData> = {
   orgType: ORGANIZATION_TYPE.AZURE,
   externalIdField: "tenantId",
-  getExternalId: (data) => data.tenantId.trim(),
+  // The API stores the tenant as `str(UUID(...))` — canonical lowercase — and
+  // `filter[external_id]` is an exact match, so an uppercase-typed UUID would
+  // miss its own organization on a second run and then collide on the POST.
+  getExternalId: (data) => data.tenantId.trim().toLowerCase(),
   getResolvedName: (data) =>
     data.organizationName?.trim() || data.tenantId.trim(),
   // The tenant comes from the organization, so the secret carries the service

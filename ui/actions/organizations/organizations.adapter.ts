@@ -103,8 +103,10 @@ export function mapAzureDiscovery(
     organization: {
       // Tenant id: what the user typed and what the organization stores as
       // `external_id`.
-      uid: result.root.tenant_id,
-      name: result.root.display_name || result.root.name,
+      uid: result.root_management_group.tenant_id,
+      name:
+        result.root_management_group.display_name ||
+        result.root_management_group.name,
     },
     nodes: result.management_groups.map((group) => ({
       id: group.id,

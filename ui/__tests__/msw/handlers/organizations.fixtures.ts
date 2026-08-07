@@ -470,14 +470,24 @@ export const AZURE_SUBSCRIPTION_PROD_US =
 export const AZURE_SUBSCRIPTION_LEGACY = "55555555-5555-4555-8555-555555555555";
 export const AZURE_BLOCKED_GROUP_SUBSCRIPTION =
   "44444444-4444-4444-8444-444444444444";
+/**
+ * Blocked purely because it is not enabled — no provider exists and no linkage
+ * conflict applies, the one blocked class Azure can raise on its own.
+ */
+export const AZURE_SUBSCRIPTION_DISABLED =
+  "66666666-6666-4666-8666-666666666666";
 
 /**
- * Blocked reasons Azure discovery reports (contract §4) — its own names, not
- * GCP's `*_conflict` set.
+ * Blocked reasons Azure discovery reports. It reuses GCP's `*_conflict`
+ * vocabulary for the three linkage/type conflicts and adds one of its own:
+ * `subscription_not_enabled`, raised whenever `state != "Enabled"`, which is the
+ * only reason that can block a subscription with no provider involved at all.
  */
 export const AZURE_BLOCKED_REASON = {
-  ORGANIZATION: "provider_linked_to_other_organization",
-  ORGANIZATION_NODE: "provider_linked_to_other_organization_node",
+  ORGANIZATION: "organization_conflict",
+  ORGANIZATION_NODE: "organization_node_conflict",
+  PROVIDER_TYPE: "provider_type_conflict",
+  NOT_ENABLED: "subscription_not_enabled",
 } as const;
 
 interface AzureResultOverrides {
@@ -510,10 +520,11 @@ export const buildAzureDiscoveryResult = ({
     displayName: string,
     parentId: string,
     registration: FixtureRegistration,
+    state = "Enabled",
   ) => ({
     subscription_id: subscriptionId,
     display_name: displayName,
-    state: "Enabled",
+    state,
     parent_id: parentId,
     registration,
   });
@@ -528,7 +539,7 @@ export const buildAzureDiscoveryResult = ({
       : readyRegistration();
 
   return {
-    root: {
+    root_management_group: {
       id: AZURE_ROOT_GROUP,
       name: AZURE_TENANT_ID,
       display_name: "Tenant Root Group",
@@ -584,6 +595,17 @@ export const buildAzureDiscoveryResult = ({
           organization_node_relation: "not_applicable",
           provider_secret_state: PROVIDER_SECRET_STATE.WILL_REPLACE,
         }),
+      ),
+      // Blocked with no provider and no conflict: the state check alone is
+      // enough, which is the class the linkage-conflict cases cannot cover.
+      subscription(
+        AZURE_SUBSCRIPTION_DISABLED,
+        "Dormant Sandbox",
+        AZURE_ROOT_GROUP,
+        blockedRegistration([AZURE_BLOCKED_REASON.NOT_ENABLED], {
+          organization_node_relation: "not_applicable",
+        }),
+        "Disabled",
       ),
       subscription(
         AZURE_BLOCKED_GROUP_SUBSCRIPTION,

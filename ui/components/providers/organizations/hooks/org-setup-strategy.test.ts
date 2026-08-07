@@ -85,4 +85,17 @@ describe("bindOrgSetupStrategy", () => {
       expect(message).toContain(HIERARCHY_WORDING[orgType]);
     },
   );
+
+  // The API stores an Azure tenant as `str(UUID(...))` — canonical lowercase —
+  // and `filter[external_id]` is an exact lookup, so a tenant typed in uppercase
+  // has to reach find-or-create already folded. Unfolded, the second wizard run
+  // misses its own organization and then collides on the POST.
+  it("folds an uppercase Azure tenant ID to the API's canonical form", () => {
+    const bound = bindOrgSetupStrategy({
+      ...SETUP_DATA[ORGANIZATION_TYPE.AZURE],
+      tenantId: "  AAAAAAAA-1111-4111-8111-BBBBBBBBBBBB  ",
+    });
+
+    expect(bound.externalId).toBe("aaaaaaaa-1111-4111-8111-bbbbbbbbbbbb");
+  });
 });
