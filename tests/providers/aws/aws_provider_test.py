@@ -1075,6 +1075,31 @@ aws:
         assert response == {}
 
     @mock_aws
+    def test_generate_regional_clients_returns_empty_dict_on_error(self):
+        """A failed region lookup must not yield a non-mapping ``None``.
+
+        ``AWSService.__init__`` assigns the result straight to
+        ``self.regional_clients``, and ``__threading_call__`` calls
+        ``self.regional_clients.values()``, so returning ``None`` turns a
+        transient error into ``AttributeError: 'NoneType' object has no
+        attribute 'values'`` for every AWS service.
+        """
+        aws_provider = AwsProvider()
+
+        with patch.object(
+            AwsProvider,
+            "get_available_aws_service_regions",
+            side_effect=Exception("service region lookup failed"),
+        ):
+            response = aws_provider.generate_regional_clients("ec2")
+
+        assert response is not None, (
+            "generate_regional_clients returned None, so AWSService.regional_clients "
+            "becomes None and every AWS service raises AttributeError on .values()"
+        )
+        assert response == {}
+
+    @mock_aws
     def test_get_default_region(self):
         region = [AWS_REGION_EU_WEST_1]
         aws_provider = AwsProvider(
