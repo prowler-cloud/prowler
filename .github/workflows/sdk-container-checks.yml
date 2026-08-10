@@ -10,6 +10,7 @@ on:
       - 'Dockerfile*'
       - 'pyproject.toml'
       - 'uv.lock'
+      - '.trivyignore.yaml'
       - '.github/workflows/sdk-container-checks.yml'
   pull_request:
     branches:
@@ -116,6 +117,7 @@ jobs:
             Dockerfile*
             pyproject.toml
             uv.lock
+            .trivyignore.yaml
             .github/workflows/sdk-container-checks.yml
             .github/actions/trivy-scan/**
             .github/actions/grype-scan/**
