@@ -1,10 +1,8 @@
 interface ScanDateSource {
   id: string;
   attributes?: {
-    // Findings are inserted progressively while the scan runs and their UUIDv7
-    // `id` is stamped on insert, so they spread over every UTC day the scan
-    // spans. The range is derived from `started_at`/`completed_at` — not from
-    // the scan's `inserted_at`, which is when the scan row was created.
+    // Findings are written throughout the run, so the range spans both
+    // timestamps, not the scan's `inserted_at` (when the row was created).
     started_at?: string;
     completed_at?: string;
   };

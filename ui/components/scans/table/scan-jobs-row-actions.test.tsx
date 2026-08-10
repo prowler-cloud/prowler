@@ -329,14 +329,14 @@ describe("ScanJobsRowActions", () => {
     );
     await user.click(screen.getByRole("menuitem", { name: /view findings/i }));
 
-    // Then - the date is derived server-side in UTC, never in the URL.
+    // Then
     expect(pushMock).toHaveBeenCalledWith(
       "/findings?filter[scan__in]=scan-1&filter[status__in]=FAIL",
     );
   });
 
   it("disables View Findings when the completed scan has no completion timestamp", async () => {
-    // Given - without `completed_at` there is no date the server can derive.
+    // Given
     const user = userEvent.setup();
     render(
       <ScanJobsRowActions
