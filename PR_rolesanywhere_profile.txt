@@ -1,0 +1,50 @@
+=== CONTEXT / WHAT WE DID ===
+
+Motivation: DEF CON 34 Cloud Village talk by Jie Wu, "Key Rotation Won't Save You: Hunting Workload Identity Backdoors in AWS and GCP" (schedule: https://www.cloud-village.org/dc34). The talk shows how AWS IAM Roles Anywhere and GCP Workload Identity Federation give durable, keyless privileged access that survives the credential rotation standard incident response relies on. We turned two of its findings into Prowler checks, one per provider. They are independent and can ship as two separate PRs.
+
+--------------------------------------------------------------------------------
+=== PR 1 - AWS (Roles Anywhere) ===
+
+Changes:
+- Extended the rolesanywhere service to parse profiles via list_profiles, adding a new Profile pydantic model (role_arns, session_policy, managed_policy_arns, duration_seconds, accept_role_session_name, tags). Pagination and error handling mirror the existing _list_trust_anchors.
+- New check rolesanywhere_profile_restricts_session_permissions (severity medium; categories identity-access, trust-boundaries). FAIL when an enabled profile has neither an inline sessionPolicy nor managedPolicyArns, so vended session credentials inherit the full permissions of the referenced role (durable privileged access). PASS when the session is scoped, or when the profile is disabled.
+- Added rolesanywhere:ListProfiles to the least-privilege permission artifacts (prowler-additions-policy.json and the CloudFormation scan-role template) so the check is not silently neutered on least-privilege deployments.
+- Tests: 6 check test cases plus a service test for list_profiles. 18 passed, ruff clean, metadata validation passing.
+
+Reviewed by the prowler-check-reviewer agent. Known, disclosed design choices: the scoped check tests presence not content (a wildcard session policy still PASSes, documented in Notes, since a session policy can only restrict the role, never expand it); severity kept at medium for the same reason.
+
+Files changed:
+- prowler/providers/aws/services/rolesanywhere/rolesanywhere_service.py
+- prowler/providers/aws/services/rolesanywhere/rolesanywhere_profile_restricts_session_permissions/ (new check + metadata)
+- tests/providers/aws/services/rolesanywhere/rolesanywhere_profile_restricts_session_permissions/ (new test)
+- tests/providers/aws/services/rolesanywhere/rolesanywhere_service_test.py
+- permissions/prowler-additions-policy.json
+- permissions/templates/cloudformation/prowler-scan-role.yml
+
+Commit message:
+feat(rolesanywhere): flag profiles with unscoped sessions
+
+PR description:
+Adds a new AWS check, rolesanywhere_profile_restricts_session_permissions, that flags IAM Roles Anywhere profiles which define neither an inline sessionPolicy nor managedPolicyArns. Such profiles vend temporary credentials carrying the full permissions of the referenced role, so any certificate accepted by the trust anchor obtains durable privileged access that rotating IAM keys does not revoke (motivated by the DEF CON 34 Cloud Village "Key Rotation Won't Save You" research). The rolesanywhere service is extended to list profiles (new Profile model), rolesanywhere:ListProfiles is added to the least-privilege permission artifacts, and the check ships with full test coverage. A profile is treated as scoped when it defines a session policy or managed policies; disabled profiles pass. Severity: medium.
+
+--------------------------------------------------------------------------------
+=== PR 2 - GCP (Workload Identity Federation) ===
+
+Changes:
+- Extended the GCP iam service to list Workload Identity Federation pools and their providers (projects.locations.workloadIdentityPools[.providers]), adding a new WorkloadIdentityPoolProvider pydantic model (state, disabled, attribute_condition, attribute_mapping, provider_type, pool_id, project_id).
+- New check iam_workload_identity_pool_provider_attribute_condition (severity high; categories identity-access, trust-boundaries). FAIL when an active provider has no attributeCondition, so any external identity from the configured issuer / AWS account / SAML IdP can impersonate the federated principals. PASS when an attribute condition is set, or when the provider is disabled or not ACTIVE.
+- Tests: 5 check test cases plus a service test for the pool/provider parsing. All passing, ruff clean, GCP metadata validation passing.
+
+Design choice (disclosed in Notes): the check verifies that an attribute condition is present, not that its CEL expression is sufficiently restrictive.
+
+Files changed:
+- prowler/providers/gcp/services/iam/iam_service.py
+- prowler/providers/gcp/services/iam/iam_workload_identity_pool_provider_attribute_condition/ (new check + metadata)
+- tests/providers/gcp/services/iam/iam_workload_identity_pool_provider_attribute_condition/ (new test)
+- tests/providers/gcp/services/iam/iam_workloadidentity_service_test.py
+
+Commit message:
+feat(iam): require attribute condition on WIF providers
+
+PR description:
+Adds a new GCP check, iam_workload_identity_pool_provider_attribute_condition, that flags Workload Identity Federation providers without an attributeCondition. Such a provider trusts every external identity issued by its OIDC issuer, AWS account, or SAML IdP, so an attacker who can add or edit a provider can trust an identity they control and mint fresh short-lived Google Cloud credentials indefinitely - a keyless backdoor that survives credential rotation (motivated by the DEF CON 34 Cloud Village "Key Rotation Won't Save You" research). The GCP iam service is extended to enumerate workload identity pools and providers (new WorkloadIdentityPoolProvider model), and the check ships with full test coverage. A provider passes when it defines an attribute condition; disabled or non-active providers pass. Severity: high.
