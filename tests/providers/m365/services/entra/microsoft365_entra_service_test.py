@@ -1382,6 +1382,47 @@ class Test_Entra_Service:
         assert named_locations[1].is_ip_location is False
         assert named_locations[1].is_trusted is False
 
+    def test__get_named_locations_continues_after_empty_page(self):
+        entra_service = Entra.__new__(Entra)
+        page_one = json.dumps({"value": [], "@odata.nextLink": "next-link"})
+        page_two = json.dumps(
+            {
+                "value": [
+                    {
+                        "@odata.type": "#microsoft.graph.ipNamedLocation",
+                        "id": "loc-2",
+                        "displayName": "Trusted IPs",
+                        "isTrusted": True,
+                        "ipRanges": [{"cidrAddress": "10.0.0.0/8"}],
+                    }
+                ]
+            }
+        )
+        send_mock = AsyncMock(side_effect=[page_one, page_two])
+        next_link_builder = SimpleNamespace(
+            to_get_request_information=MagicMock(return_value="req-info-page-two")
+        )
+        with_url_mock = MagicMock(return_value=next_link_builder)
+        entra_service.client = SimpleNamespace(
+            identity=SimpleNamespace(
+                conditional_access=SimpleNamespace(
+                    named_locations=SimpleNamespace(
+                        to_get_request_information=MagicMock(
+                            return_value="req-info-page-one"
+                        ),
+                        with_url=with_url_mock,
+                    )
+                )
+            ),
+            request_adapter=SimpleNamespace(send_primitive_async=send_mock),
+        )
+
+        named_locations = asyncio.run(entra_service._get_named_locations())
+
+        assert send_mock.await_count == 2
+        with_url_mock.assert_called_once_with("next-link")
+        assert [location.id for location in named_locations] == ["loc-2"]
+
     def test__get_activity_based_timeout_policies_uses_default_application(self):
         entra_service = Entra.__new__(Entra)
         policy = SimpleNamespace(
@@ -1461,6 +1502,51 @@ class Test_Entra_Service:
 
         assert len(policies) == 1
         assert policies[0].web_session_idle_timeout_seconds is None
+
+    def test__get_activity_based_timeout_policies_uses_first_valid_default(self):
+        entra_service = Entra.__new__(Entra)
+
+        def definition(timeout):
+            return json.dumps(
+                {
+                    "ActivityBasedTimeoutPolicy": {
+                        "ApplicationPolicies": [
+                            {
+                                "ApplicationId": "default",
+                                "WebSessionIdleTimeout": timeout,
+                            }
+                        ]
+                    }
+                }
+            )
+
+        policy = SimpleNamespace(
+            id="policy-1",
+            display_name="Idle timeout",
+            definition=[
+                "invalid-json",
+                definition("invalid-timeout"),
+                definition("01:00:00"),
+                definition("02:00:00"),
+            ],
+        )
+        entra_service.client = SimpleNamespace(
+            policies=SimpleNamespace(
+                activity_based_timeout_policies=SimpleNamespace(
+                    get=AsyncMock(
+                        return_value=SimpleNamespace(
+                            value=[policy], odata_next_link=None
+                        )
+                    ),
+                    with_url=MagicMock(),
+                )
+            )
+        )
+
+        policies = asyncio.run(entra_service._get_activity_based_timeout_policies())
+
+        assert len(policies) == 1
+        assert policies[0].web_session_idle_timeout_seconds == 60 * 60
 
     def test__get_activity_based_timeout_policies_paginates_through_next_links(self):
         entra_service = Entra.__new__(Entra)

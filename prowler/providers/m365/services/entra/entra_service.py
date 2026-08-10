@@ -1370,8 +1370,6 @@ OAuthAppInfo
                     break
                 data = json.loads(response)
                 page = data.get("value", []) or []
-                if not page:
-                    break
                 raw_locations.extend(page)
                 next_link = data.get("@odata.nextLink") or data.get("nextLink")
                 if not next_link:
@@ -1473,6 +1471,8 @@ OAuthAppInfo
                             if seconds is not None:
                                 idle_timeout_seconds = seconds
                                 break
+                        if idle_timeout_seconds is not None:
+                            break
                     policies.append(
                         ActivityBasedTimeoutPolicy(
                             id=getattr(policy, "id", ""),

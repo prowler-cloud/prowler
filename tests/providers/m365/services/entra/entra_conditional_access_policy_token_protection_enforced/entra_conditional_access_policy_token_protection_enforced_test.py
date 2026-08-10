@@ -22,6 +22,8 @@ CHECK_MODULE_PATH = "prowler.providers.m365.services.entra.entra_conditional_acc
 
 
 def _make_policy(
+    policy_id="policy-1",
+    display_name="Token Protection",
     state=ConditionalAccessPolicyState.ENABLED,
     included_users=None,
     included_applications=None,
@@ -31,8 +33,8 @@ def _make_policy(
     secure_sign_in_session_enabled=True,
 ):
     return ConditionalAccessPolicy(
-        id="policy-1",
-        display_name="Token Protection",
+        id=policy_id,
+        display_name=display_name,
         conditions=Conditions(
             application_conditions=ApplicationsConditions(
                 included_applications=(
@@ -99,13 +101,35 @@ class Test_entra_conditional_access_policy_token_protection_enforced:
             entra_client.tenant_domain = DOMAIN
             return entra_conditional_access_policy_token_protection_enforced().execute()
 
-    def test_no_policies(self):
-        assert self._run({})[0].status == "FAIL"
+    def test_no_resources(self):
+        assert len(self._run({})) == 0
 
     def test_token_protection_enforced(self):
         policy = _make_policy()
         result = self._run({policy.id: policy})
         assert result[0].status == "PASS"
+
+    def test_multiple_policies_each_produce_a_report(self):
+        enforced_policy = _make_policy(policy_id="policy-enforced")
+        disabled_policy = _make_policy(
+            policy_id="policy-disabled",
+            display_name="Token Protection Disabled",
+            secure_sign_in_session_enabled=False,
+        )
+
+        result = self._run(
+            {
+                enforced_policy.id: enforced_policy,
+                disabled_policy.id: disabled_policy,
+            }
+        )
+
+        assert len(result) == 2
+        assert [report.resource_id for report in result] == [
+            "policy-enforced",
+            "policy-disabled",
+        ]
+        assert [report.status for report in result] == ["PASS", "FAIL"]
 
     def test_token_protection_disabled(self):
         policy = _make_policy(secure_sign_in_session_enabled=False)

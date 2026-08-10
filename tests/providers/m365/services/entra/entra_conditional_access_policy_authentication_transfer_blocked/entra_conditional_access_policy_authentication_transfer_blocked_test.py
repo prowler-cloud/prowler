@@ -95,11 +95,9 @@ class Test_entra_conditional_access_policy_authentication_transfer_blocked:
                 entra_conditional_access_policy_authentication_transfer_blocked().execute()
             )
 
-    def test_no_policies(self):
+    def test_no_resources(self):
         result = self._run({})
-        assert len(result) == 1
-        assert result[0].status == "FAIL"
-        assert result[0].resource == {}
+        assert len(result) == 0
 
     def test_policy_blocks_authentication_transfer(self):
         policy = _make_policy()
@@ -110,6 +108,28 @@ class Test_entra_conditional_access_policy_authentication_transfer_blocked:
             result[0].status_extended
             == "Conditional Access Policy 'Block Authentication Transfer' blocks authentication transfer."
         )
+
+    def test_multiple_policies_each_produce_a_report(self):
+        blocking_policy = _make_policy(policy_id="policy-blocking")
+        non_blocking_policy = _make_policy(
+            policy_id="policy-non-blocking",
+            display_name="Allow Authentication Transfer",
+            built_in_controls=[ConditionalAccessGrantControl.MFA],
+        )
+
+        result = self._run(
+            {
+                blocking_policy.id: blocking_policy,
+                non_blocking_policy.id: non_blocking_policy,
+            }
+        )
+
+        assert len(result) == 2
+        assert [report.resource_id for report in result] == [
+            "policy-blocking",
+            "policy-non-blocking",
+        ]
+        assert [report.status for report in result] == ["PASS", "FAIL"]
 
     def test_policy_excluding_application_does_not_cover_all_applications(self):
         policy = _make_policy(excluded_applications=["excluded-app"])

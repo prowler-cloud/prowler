@@ -2,17 +2,26 @@ from unittest import mock
 
 from prowler.providers.m365.services.entra.entra_service import (
     ApplicationsConditions,
+    AuthenticationFlows,
+    ClientAppType,
     ConditionalAccessPolicy,
     ConditionalAccessPolicyState,
     Conditions,
+    DeviceConditions,
+    DeviceFilterMode,
     GrantControlOperator,
     GrantControls,
+    InsiderRiskLevel,
+    LocationsCondition,
     PersistentBrowser,
+    PlatformConditions,
     RiskLevel,
     SessionControls,
     SignInFrequency,
     SignInFrequencyInterval,
     SignInFrequencyType,
+    TransferMethod,
+    UserAction,
     UsersConditions,
 )
 from tests.providers.m365.m365_fixtures import DOMAIN, set_mocked_m365_provider
@@ -89,10 +98,9 @@ class Test_entra_conditional_access_policy_sign_in_frequency_all_users:
                 entra_conditional_access_policy_sign_in_frequency_all_users().execute()
             )
 
-    def test_no_policies(self):
+    def test_no_resources(self):
         result = self._run({})
-        assert len(result) == 1
-        assert result[0].status == "FAIL"
+        assert len(result) == 0
 
     def test_policy_7_days(self):
         policy = _make_policy(frequency=7, freq_type=SignInFrequencyType.DAYS)
@@ -140,3 +148,116 @@ class Test_entra_conditional_access_policy_sign_in_frequency_all_users:
         result = self._run({policy.id: policy})
         assert len(result) == 1
         assert result[0].status == "FAIL"
+
+    def test_policy_platform_restricted_ignored(self):
+        policy = _make_policy(frequency=1, freq_type=SignInFrequencyType.DAYS)
+        policy.conditions.platform_conditions = PlatformConditions(
+            include_platforms=["windows"], exclude_platforms=[]
+        )
+
+        result = self._run({policy.id: policy})
+
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+
+    def test_multiple_policies_each_produce_a_report(self):
+        compliant_policy = _make_policy(policy_id="policy-compliant")
+        noncompliant_policy = _make_policy(
+            policy_id="policy-noncompliant",
+            display_name="Long Sign-in Frequency",
+            frequency=30,
+        )
+
+        result = self._run(
+            {
+                compliant_policy.id: compliant_policy,
+                noncompliant_policy.id: noncompliant_policy,
+            }
+        )
+
+        assert len(result) == 2
+        assert [report.resource_id for report in result] == [
+            "policy-compliant",
+            "policy-noncompliant",
+        ]
+        assert [report.status for report in result] == ["PASS", "FAIL"]
+
+    def test_policy_client_app_type_restricted_ignored(self):
+        policy = _make_policy()
+        policy.conditions.client_app_types = [ClientAppType.BROWSER]
+
+        result = self._run({policy.id: policy})
+
+        assert result[0].status == "FAIL"
+
+    def test_policy_location_restricted_ignored(self):
+        policy = _make_policy()
+        policy.conditions.locations = LocationsCondition(
+            include_locations=["location-1"], exclude_locations=[]
+        )
+
+        result = self._run({policy.id: policy})
+
+        assert result[0].status == "FAIL"
+
+    def test_policy_device_restricted_ignored(self):
+        policy = _make_policy()
+        policy.conditions.device_conditions = DeviceConditions(
+            device_filter_mode=DeviceFilterMode.INCLUDE,
+            device_filter_rule="device.isCompliant -eq true",
+        )
+
+        result = self._run({policy.id: policy})
+
+        assert result[0].status == "FAIL"
+
+    def test_policy_authentication_flow_restricted_ignored(self):
+        policy = _make_policy()
+        policy.conditions.authentication_flows = AuthenticationFlows(
+            transfer_methods=[TransferMethod.DEVICE_CODE_FLOW]
+        )
+
+        result = self._run({policy.id: policy})
+
+        assert result[0].status == "FAIL"
+
+    def test_policy_insider_risk_restricted_ignored(self):
+        policy = _make_policy()
+        policy.conditions.insider_risk_levels = InsiderRiskLevel.ELEVATED
+
+        result = self._run({policy.id: policy})
+
+        assert result[0].status == "FAIL"
+
+    def test_policy_user_exclusion_restricted_ignored(self):
+        policy = _make_policy()
+        policy.conditions.user_conditions.excluded_users = ["excluded-user"]
+
+        result = self._run({policy.id: policy})
+
+        assert result[0].status == "FAIL"
+
+    def test_policy_user_action_restricted_ignored(self):
+        policy = _make_policy()
+        policy.conditions.application_conditions.included_user_actions = [
+            UserAction.REGISTER_DEVICE
+        ]
+
+        result = self._run({policy.id: policy})
+
+        assert result[0].status == "FAIL"
+
+    def test_explicit_unrestricted_conditions_pass(self):
+        policy = _make_policy()
+        policy.conditions.client_app_types = [ClientAppType.ALL]
+        policy.conditions.platform_conditions = PlatformConditions(
+            include_platforms=["all"], exclude_platforms=[]
+        )
+        policy.conditions.locations = LocationsCondition(
+            include_locations=["All"], exclude_locations=[]
+        )
+        policy.conditions.device_conditions = DeviceConditions()
+
+        result = self._run({policy.id: policy})
+
+        assert result[0].status == "PASS"

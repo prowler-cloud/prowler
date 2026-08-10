@@ -151,6 +151,30 @@ class Test_entra_conditional_access_policy_untrusted_locations_blocked:
         result = self._run({policy.id: policy})
         assert result[0].status == "FAIL"
 
+    def test_policy_report_only(self):
+        policy = _make_policy(state=ConditionalAccessPolicyState.ENABLED_FOR_REPORTING)
+
+        result = self._run({policy.id: policy})
+
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+        assert result[0].status_extended == (
+            "Conditional Access Policy 'Block Untrusted Locations' blocks untrusted "
+            "locations but is in report-only mode."
+        )
+
+    def test_policy_disabled_is_skipped(self):
+        policy = _make_policy(state=ConditionalAccessPolicyState.DISABLED)
+
+        result = self._run({policy.id: policy})
+
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+        assert result[0].resource_id == "conditionalAccessPolicies"
+        assert result[0].status_extended == (
+            "No Conditional Access Policy blocks access from untrusted locations."
+        )
+
     def test_not_block(self):
         policy = _make_policy(built_in_controls=[ConditionalAccessGrantControl.MFA])
         result = self._run({policy.id: policy})

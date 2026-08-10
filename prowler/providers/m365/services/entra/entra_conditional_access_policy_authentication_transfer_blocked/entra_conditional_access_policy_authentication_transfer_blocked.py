@@ -26,57 +26,37 @@ class entra_conditional_access_policy_authentication_transfer_blocked(Check):
             A list of reports containing the result of the check.
         """
         findings = []
-        report = CheckReportM365(
-            metadata=self.metadata(),
-            resource={},
-            resource_name="Conditional Access Policies",
-            resource_id="conditionalAccessPolicies",
-        )
-        report.status = "FAIL"
-        report.status_extended = (
-            "No Conditional Access Policy blocks authentication transfer."
-        )
 
         for policy in entra_client.conditional_access_policies.values():
-            if policy.state == ConditionalAccessPolicyState.DISABLED:
-                continue
+            report = CheckReportM365(
+                metadata=self.metadata(),
+                resource=policy,
+                resource_name=policy.display_name,
+                resource_id=policy.id,
+            )
+            report.status = "FAIL"
+            report.status_extended = f"Conditional Access Policy '{policy.display_name}' does not block authentication transfer."
 
-            if "All" not in policy.conditions.user_conditions.included_users:
-                continue
-
-            if (
-                "All"
-                not in policy.conditions.application_conditions.included_applications
-                or policy.conditions.application_conditions.excluded_applications
-            ):
-                continue
-
-            if not policy.conditions.authentication_flows:
-                continue
-
-            if (
-                TransferMethod.AUTHENTICATION_TRANSFER
-                not in policy.conditions.authentication_flows.transfer_methods
-            ):
-                continue
-
-            if (
-                ConditionalAccessGrantControl.BLOCK
+            authentication_flows = policy.conditions.authentication_flows
+            blocks_authentication_transfer = (
+                policy.state != ConditionalAccessPolicyState.DISABLED
+                and "All" in policy.conditions.user_conditions.included_users
+                and "All"
+                in policy.conditions.application_conditions.included_applications
+                and not policy.conditions.application_conditions.excluded_applications
+                and authentication_flows
+                and TransferMethod.AUTHENTICATION_TRANSFER
+                in authentication_flows.transfer_methods
+                and ConditionalAccessGrantControl.BLOCK
                 in policy.grant_controls.built_in_controls
-            ):
-                report = CheckReportM365(
-                    metadata=self.metadata(),
-                    resource=policy,
-                    resource_name=policy.display_name,
-                    resource_id=policy.id,
-                )
+            )
+            if blocks_authentication_transfer:
                 if policy.state == ConditionalAccessPolicyState.ENABLED_FOR_REPORTING:
                     report.status = "FAIL"
                     report.status_extended = f"Conditional Access Policy '{policy.display_name}' reports authentication transfer but does not block it."
                 else:
                     report.status = "PASS"
                     report.status_extended = f"Conditional Access Policy '{policy.display_name}' blocks authentication transfer."
-                    break
 
-        findings.append(report)
+            findings.append(report)
         return findings

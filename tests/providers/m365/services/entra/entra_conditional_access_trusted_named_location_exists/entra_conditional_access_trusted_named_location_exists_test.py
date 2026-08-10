@@ -23,11 +23,9 @@ class Test_entra_conditional_access_trusted_named_location_exists:
             entra_client.named_locations = named_locations
             return entra_conditional_access_trusted_named_location_exists().execute()
 
-    def test_no_locations(self):
+    def test_no_resources(self):
         result = self._run([])
-        assert len(result) == 1
-        assert result[0].status == "FAIL"
-        assert result[0].resource_id == "namedLocations"
+        assert len(result) == 0
 
     def test_trusted_ip_location(self):
         result = self._run(
@@ -43,6 +41,33 @@ class Test_entra_conditional_access_trusted_named_location_exists:
         )
         assert len(result) == 1
         assert result[0].status == "PASS"
+
+    def test_multiple_locations_each_produce_a_report(self):
+        result = self._run(
+            [
+                NamedLocation(
+                    id="trusted-location",
+                    display_name="Trusted Location",
+                    is_trusted=True,
+                    is_ip_location=True,
+                    ip_ranges_count=1,
+                ),
+                NamedLocation(
+                    id="untrusted-location",
+                    display_name="Untrusted Location",
+                    is_trusted=False,
+                    is_ip_location=True,
+                    ip_ranges_count=1,
+                ),
+            ]
+        )
+
+        assert len(result) == 2
+        assert [report.resource_id for report in result] == [
+            "trusted-location",
+            "untrusted-location",
+        ]
+        assert [report.status for report in result] == ["PASS", "FAIL"]
 
     def test_untrusted_ip_location(self):
         result = self._run(
