@@ -5,6 +5,8 @@ from datetime import datetime, timezone
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
+
 from prowler.providers.m365.models import M365IdentityInfo
 from prowler.providers.m365.services.entra import entra_service
 from tests.providers.m365.m365_fixtures import DOMAIN, set_mocked_m365_provider
@@ -274,6 +276,25 @@ class Test_Entra_Service:
             entra_client.authorization_policy.guest_user_role_id
             == AuthPolicyRoles.GUEST_USER_ACCESS_RESTRICTED.value
         )
+
+    @pytest.mark.parametrize(
+        "value",
+        ["-00:00:01", "-1.00:00:00", "24:00:00", "00:60:00", "00:00:60"],
+    )
+    def test_parse_timespan_rejects_invalid_component_ranges(self, value):
+        assert Entra._parse_timespan_to_seconds(value) is None
+
+    @pytest.mark.parametrize(
+        ("value", "expected"),
+        [
+            ("00:00:00", 0),
+            ("23:59:59", 86399),
+            ("1.00:00:00", 86400),
+            ("00:00:01.9999999", 1),
+        ],
+    )
+    def test_parse_timespan_accepts_valid_component_boundaries(self, value, expected):
+        assert Entra._parse_timespan_to_seconds(value) == expected
 
     @patch(
         "prowler.providers.m365.services.entra.entra_service.Entra._get_conditional_access_policies",
@@ -1301,3 +1322,275 @@ class Test_Entra_Service:
         queried_users = {call.args[0] for call in by_user_id.call_args_list}
         assert queried_users == {deleted_user, live_user}
         assert user_builders[deleted_user].get.await_count == 1
+
+    def test__get_named_locations_paginates_through_next_links(self):
+        entra_service = Entra.__new__(Entra)
+
+        page_one = json.dumps(
+            {
+                "value": [
+                    {
+                        "@odata.type": "#microsoft.graph.ipNamedLocation",
+                        "id": "loc-1",
+                        "displayName": "Trusted IPs",
+                        "isTrusted": True,
+                        "ipRanges": [{"cidrAddress": "10.0.0.0/8"}],
+                    }
+                ],
+                "@odata.nextLink": "next-link",
+            }
+        )
+        page_two = json.dumps(
+            {
+                "value": [
+                    {
+                        "@odata.type": "#microsoft.graph.countryNamedLocation",
+                        "id": "loc-2",
+                        "displayName": "Countries",
+                        "isTrusted": False,
+                    }
+                ]
+            }
+        )
+
+        send_mock = AsyncMock(side_effect=[page_one, page_two])
+        next_link_builder = SimpleNamespace(
+            to_get_request_information=MagicMock(return_value="req-info-page-two")
+        )
+        with_url_mock = MagicMock(return_value=next_link_builder)
+        named_locations_builder = SimpleNamespace(
+            to_get_request_information=MagicMock(return_value="req-info-page-one"),
+            with_url=with_url_mock,
+        )
+        entra_service.client = SimpleNamespace(
+            identity=SimpleNamespace(
+                conditional_access=SimpleNamespace(
+                    named_locations=named_locations_builder
+                )
+            ),
+            request_adapter=SimpleNamespace(send_primitive_async=send_mock),
+        )
+
+        named_locations = asyncio.run(entra_service._get_named_locations())
+
+        # Both pages are requested and every entry is accumulated before parsing.
+        assert send_mock.await_count == 2
+        with_url_mock.assert_called_once_with("next-link")
+        assert [loc.id for loc in named_locations] == ["loc-1", "loc-2"]
+        assert named_locations[0].is_ip_location is True
+        assert named_locations[0].ip_ranges_count == 1
+        assert named_locations[1].is_ip_location is False
+        assert named_locations[1].is_trusted is False
+
+    def test__get_named_locations_continues_after_empty_page(self):
+        entra_service = Entra.__new__(Entra)
+        page_one = json.dumps({"value": [], "@odata.nextLink": "next-link"})
+        page_two = json.dumps(
+            {
+                "value": [
+                    {
+                        "@odata.type": "#microsoft.graph.ipNamedLocation",
+                        "id": "loc-2",
+                        "displayName": "Trusted IPs",
+                        "isTrusted": True,
+                        "ipRanges": [{"cidrAddress": "10.0.0.0/8"}],
+                    }
+                ]
+            }
+        )
+        send_mock = AsyncMock(side_effect=[page_one, page_two])
+        next_link_builder = SimpleNamespace(
+            to_get_request_information=MagicMock(return_value="req-info-page-two")
+        )
+        with_url_mock = MagicMock(return_value=next_link_builder)
+        entra_service.client = SimpleNamespace(
+            identity=SimpleNamespace(
+                conditional_access=SimpleNamespace(
+                    named_locations=SimpleNamespace(
+                        to_get_request_information=MagicMock(
+                            return_value="req-info-page-one"
+                        ),
+                        with_url=with_url_mock,
+                    )
+                )
+            ),
+            request_adapter=SimpleNamespace(send_primitive_async=send_mock),
+        )
+
+        named_locations = asyncio.run(entra_service._get_named_locations())
+
+        assert send_mock.await_count == 2
+        with_url_mock.assert_called_once_with("next-link")
+        assert [location.id for location in named_locations] == ["loc-2"]
+
+    def test__get_activity_based_timeout_policies_uses_default_application(self):
+        entra_service = Entra.__new__(Entra)
+        policy = SimpleNamespace(
+            id="policy-1",
+            display_name="Idle timeout",
+            definition=[
+                json.dumps(
+                    {
+                        "ActivityBasedTimeoutPolicy": {
+                            "ApplicationPolicies": [
+                                {
+                                    "ApplicationId": "default",
+                                    "WebSessionIdleTimeout": "05:00:00",
+                                },
+                                {
+                                    "ApplicationId": "00000000-0000-0000-0000-000000000001",
+                                    "WebSessionIdleTimeout": "01:00:00",
+                                },
+                            ]
+                        }
+                    }
+                )
+            ],
+        )
+        entra_service.client = SimpleNamespace(
+            policies=SimpleNamespace(
+                activity_based_timeout_policies=SimpleNamespace(
+                    get=AsyncMock(
+                        return_value=SimpleNamespace(
+                            value=[policy], odata_next_link=None
+                        )
+                    ),
+                    with_url=MagicMock(),
+                )
+            )
+        )
+
+        policies = asyncio.run(entra_service._get_activity_based_timeout_policies())
+
+        assert len(policies) == 1
+        assert policies[0].web_session_idle_timeout_seconds == 5 * 60 * 60
+
+    def test__get_activity_based_timeout_policies_without_default_is_unconfigured(self):
+        entra_service = Entra.__new__(Entra)
+        policy = SimpleNamespace(
+            id="policy-1",
+            display_name="App-specific timeout",
+            definition=[
+                json.dumps(
+                    {
+                        "ActivityBasedTimeoutPolicy": {
+                            "ApplicationPolicies": [
+                                {
+                                    "ApplicationId": "00000000-0000-0000-0000-000000000001",
+                                    "WebSessionIdleTimeout": "01:00:00",
+                                }
+                            ]
+                        }
+                    }
+                )
+            ],
+        )
+        entra_service.client = SimpleNamespace(
+            policies=SimpleNamespace(
+                activity_based_timeout_policies=SimpleNamespace(
+                    get=AsyncMock(
+                        return_value=SimpleNamespace(
+                            value=[policy], odata_next_link=None
+                        )
+                    ),
+                    with_url=MagicMock(),
+                )
+            )
+        )
+
+        policies = asyncio.run(entra_service._get_activity_based_timeout_policies())
+
+        assert len(policies) == 1
+        assert policies[0].web_session_idle_timeout_seconds is None
+
+    def test__get_activity_based_timeout_policies_uses_first_valid_default(self):
+        entra_service = Entra.__new__(Entra)
+
+        def definition(timeout):
+            return json.dumps(
+                {
+                    "ActivityBasedTimeoutPolicy": {
+                        "ApplicationPolicies": [
+                            {
+                                "ApplicationId": "default",
+                                "WebSessionIdleTimeout": timeout,
+                            }
+                        ]
+                    }
+                }
+            )
+
+        policy = SimpleNamespace(
+            id="policy-1",
+            display_name="Idle timeout",
+            definition=[
+                "invalid-json",
+                definition("invalid-timeout"),
+                definition("01:00:00"),
+                definition("02:00:00"),
+            ],
+        )
+        entra_service.client = SimpleNamespace(
+            policies=SimpleNamespace(
+                activity_based_timeout_policies=SimpleNamespace(
+                    get=AsyncMock(
+                        return_value=SimpleNamespace(
+                            value=[policy], odata_next_link=None
+                        )
+                    ),
+                    with_url=MagicMock(),
+                )
+            )
+        )
+
+        policies = asyncio.run(entra_service._get_activity_based_timeout_policies())
+
+        assert len(policies) == 1
+        assert policies[0].web_session_idle_timeout_seconds == 60 * 60
+
+    def test__get_activity_based_timeout_policies_paginates_through_next_links(self):
+        entra_service = Entra.__new__(Entra)
+
+        def policy(policy_id, timeout):
+            return SimpleNamespace(
+                id=policy_id,
+                display_name=policy_id,
+                definition=[
+                    json.dumps(
+                        {
+                            "ActivityBasedTimeoutPolicy": {
+                                "ApplicationPolicies": [
+                                    {
+                                        "ApplicationId": "default",
+                                        "WebSessionIdleTimeout": timeout,
+                                    }
+                                ]
+                            }
+                        }
+                    )
+                ],
+            )
+
+        page_one = SimpleNamespace(
+            value=[policy("policy-1", "01:00:00")],
+            odata_next_link="next-link",
+        )
+        page_two = SimpleNamespace(
+            value=[policy("policy-2", "02:00:00")],
+            odata_next_link=None,
+        )
+        next_page_builder = SimpleNamespace(get=AsyncMock(return_value=page_two))
+        with_url_mock = MagicMock(return_value=next_page_builder)
+        policies_builder = SimpleNamespace(
+            get=AsyncMock(return_value=page_one),
+            with_url=with_url_mock,
+        )
+        entra_service.client = SimpleNamespace(
+            policies=SimpleNamespace(activity_based_timeout_policies=policies_builder)
+        )
+
+        policies = asyncio.run(entra_service._get_activity_based_timeout_policies())
+
+        assert [policy.id for policy in policies] == ["policy-1", "policy-2"]
+        with_url_mock.assert_called_once_with("next-link")
+        next_page_builder.get.assert_awaited_once()
