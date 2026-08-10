@@ -1,9 +1,15 @@
+"""S3 bucket ghost ACL detection.
+
+Buckets with BucketOwnerEnforced ignore ACLs at evaluation time, but
+legacy object ACLs still exist and become active if ownership is
+downgraded. This check surfaces that drift risk.
+"""
+
 from typing import List
 
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.s3.s3_client import s3_client
 
-# Same URIs that make an object effectively public
 PUBLIC_ACL_URIS = {
     "http://acs.amazonaws.com/groups/global/AllUsers",
     "http://acs.amazonaws.com/groups/global/AuthenticatedUsers",
@@ -11,9 +17,20 @@ PUBLIC_ACL_URIS = {
 
 
 class s3_bucket_object_acl_ghost(Check):
-    """Check for ghost public object ACLs when bucket enforces BucketOwnerEnforced."""
+    """Check for ghost public ACLs on objects under BucketOwnerEnforced.
+
+    When a bucket enforces BucketOwnerEnforced, object ACLs are ignored.
+    Drift remains if objects still carry public grants to AllUsers or
+    AuthenticatedUsers. Those grants would reactivate if the bucket is
+    downgraded to BucketOwnerPreferred.
+    """
 
     def execute(self) -> List[Check_Report_AWS]:
+        """Execute the ghost ACL check for all S3 buckets.
+
+        Returns:
+            List of Check_Report_AWS with PASS, FAIL, or MANUAL status.
+        """
         findings = []
 
         for bucket in s3_client.buckets.values():
