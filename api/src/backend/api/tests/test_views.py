@@ -14674,6 +14674,37 @@ class TestSAMLConfigurationViewSet:
 
 
 @pytest.mark.django_db
+class TestSAMLACSView:
+    def test_get_is_not_allowed(self, client, saml_setup):
+        response = client.get(
+            reverse(
+                "saml_acs",
+                kwargs={"organization_slug": saml_setup["domain"]},
+            )
+        )
+
+        assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+        assert response.headers["Allow"] == "POST"
+        assert "saml-acs-session" not in response.cookies
+
+    def test_post_is_forwarded_to_allauth(self, client, saml_setup):
+        response = client.post(
+            reverse(
+                "saml_acs",
+                kwargs={"organization_slug": saml_setup["domain"]},
+            ),
+            data={"SAMLResponse": "test-saml-response"},
+        )
+
+        assert response.status_code == status.HTTP_302_FOUND
+        assert response.url == reverse(
+            "saml_finish_acs",
+            kwargs={"organization_slug": saml_setup["domain"]},
+        )
+        assert "saml-acs-session" in response.cookies
+
+
+@pytest.mark.django_db
 class TestTenantFinishACSView:
     def test_dispatch_skips_if_user_not_authenticated(self, monkeypatch):
         monkeypatch.setenv("AUTH_URL", "http://localhost")

@@ -103,6 +103,7 @@ jobs:
         with:
           files: |
             mcp_server/**
+            .trivyignore.yaml
             .github/actions/trivy-scan/**
             .github/actions/grype-scan/**
             .grype.yaml

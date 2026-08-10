@@ -37,6 +37,7 @@
         "glue:SearchTables",
         "glue:GetMLTransforms",
         "lambda:GetFunction*",
+        "lambda:GetLayerVersion",
         "logs:FilterLogEvents",
         "lightsail:GetRelationalDatabases",
         "macie2:GetMacieSession",
