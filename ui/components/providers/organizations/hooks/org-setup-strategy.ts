@@ -403,7 +403,8 @@ function bind<D extends OrgSetupSubmissionData>(
 
 /**
  * Binds the submission data to the strategy its own tag names. The `default` arm
- * names the offending type when a new organization type arrives without one.
+ * assigns the remaining data to `never`, so a new organization type without a
+ * strategy fails to compile here.
  */
 export function bindOrgSetupStrategy(
   data: OrgSetupSubmissionData,
