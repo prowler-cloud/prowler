@@ -1,0 +1,45 @@
+{
+  "Provider": "aws",
+  "CheckID": "iam_role_chained_privilege_escalation",
+  "CheckTitle": "IAM role allows chained privilege escalation via AssumeRole",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "TTPs/Privilege Escalation"
+  ],
+  "ServiceName": "iam",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "critical",
+  "ResourceType": "AwsIamRole",
+  "ResourceGroup": "IAM",
+  "Description": "Detects IAM role chains where a role can assume another role that has privilege escalation capabilities. Unlike single-policy checks, this evaluates STS AssumeRole trust and action graphs across roles to identify transitive escalation paths.",
+  "Risk": "An attacker compromising a low-privileged role can chain sts:AssumeRole into a privileged role that can escalate to admin via iam:CreatePolicyVersion, iam:AttachRolePolicy, lambda:UpdateFunctionCode, and similar actions. This breaks isolation between trust boundaries and allows persistent admin takeover through role hopping.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_permissions-to-switch.html",
+    "https://bishopfox.com/blog/privilege-escalation-in-aws",
+    "https://github.com/RhinoSecurityLabs/Security-Research/blob/master/tools/aws-pentest-tools/aws_escalate.py"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws iam update-assume-role-policy --role-name <role-name> --policy-document file://trust-policy.json",
+      "NativeIaC": "Resources:\n  MyRole:\n    Type: AWS::IAM::Role\n    Properties:\n      AssumeRolePolicyDocument:\n        Version: '2012-10-17'\n        Statement:\n          - Effect: Allow\n            Principal:\n              AWS: arn:aws:iam::ACCOUNT_ID:role/TrustedRole\n            Action: sts:AssumeRole\n",
+      "Other": "1. In IAM console, edit the role Trust relationships. 2. Remove overly permissive Principal star or AWS account root. 3. Restrict to specific role ARNs and add Condition with ExternalId or OrgID. 4. Review attached policies of the assumable role and remove privilege escalation actions.",
+      "Terraform": "resource \"aws_iam_role\" \"example\" {\n  name = \"example\"\n  assume_role_policy = jsonencode({\n    Version = \"2012-10-17\"\n    Statement = [{\n      Effect    = \"Allow\"\n      Principal = { AWS = \"arn:aws:iam::ACCOUNT_ID:role/TrustedRole\" }\n      Action    = \"sts:AssumeRole\"\n    }]\n  })\n}\n"
+    },
+    "Recommendation": {
+      "Text": "Enforce transitive least privilege. Remove sts:AssumeRole to privileged roles from low-trust roles, tighten trust policies to explicit ARNs with ExternalId and OrgID conditions, and eliminate privilege escalation actions in privileged roles. Review with IAM Access Analyzer.",
+      "Url": "https://hub.prowler.com/check/iam_role_chained_privilege_escalation"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "privilege-escalation"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "iam_policy_allows_privilege_escalation",
+    "iam_inline_policy_allows_privilege_escalation"
+  ],
+  "Notes": ""
+}
