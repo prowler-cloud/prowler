@@ -185,11 +185,9 @@ class Test_iam_role_chained_privilege_escalation:
             source_result = result_by_id[source_role_name]
             assert source_result.resource_arn == source_arn
             assert source_result.status == "FAIL"
-            # Should mention privileged role name and escalation / assume
-            assert (
-                privileged_role_name in source_result.status_extended
-                or "privileged" in source_result.status_extended.lower()
-            )
+            # Must name the privileged target role and the escalation actions
+            assert privileged_role_name in source_result.status_extended
+            assert "iam:CreatePolicyVersion" in source_result.status_extended or "CreatePolicyVersion" in source_result.status_extended
 
             # Privileged role itself: benign trust (root), not assumable by any role ARN -> should PASS in this setup
             privileged_result = result_by_id[privileged_role_name]
