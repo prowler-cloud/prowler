@@ -574,8 +574,11 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
     const row = this.containerRows.find((item) =>
       (item.textContent ?? "").includes(containerLabel),
     );
+    // The note is the icon-only `role="img"`; the id column carries the role too,
+    // so that it can name itself with the canonical id, and comes first in the row.
     return (
-      row?.querySelector('[role="img"]')?.getAttribute("aria-label") ?? null
+      row?.querySelector('[role="img"]:has(svg)')?.getAttribute("aria-label") ??
+      null
     );
   }
 

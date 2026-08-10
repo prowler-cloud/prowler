@@ -78,6 +78,11 @@ function InertContainerNote({
  * every group in a tenant reads `/providers/Microsoft....`. The accessible name
  * is always the canonical value: the tooltip needs a hover, and a screen reader
  * should still get the full id.
+ *
+ * `role="img"` is what makes that accessible name count — ARIA prohibits naming
+ * a bare `span` (an implicit `generic`), so assistive tech is free to drop the
+ * `aria-label` and read only the shortened text. Same reason `InertContainerNote`
+ * above carries the role.
  */
 function TruncatedId({
   value,
@@ -91,7 +96,11 @@ function TruncatedId({
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <span className={cn("truncate text-sm", className)} aria-label={value}>
+        <span
+          role="img"
+          className={cn("truncate text-sm", className)}
+          aria-label={value}
+        >
           {shortened ?? value}
         </span>
       </TooltipTrigger>
