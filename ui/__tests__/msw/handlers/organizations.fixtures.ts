@@ -863,6 +863,9 @@ const AZURE_HIERARCHY_GROUP = azureGroupId("landing-zones");
 export const AZURE_HIERARCHY_GROUP_NAME = "Landing Zones";
 const AZURE_HIERARCHY_CHILD_GROUP = azureGroupId("decommissioned");
 export const AZURE_HIERARCHY_CHILD_GROUP_NAME = "Decommissioned";
+/** The Azure organization of `mixedHierarchyFixture`, and its Management Group node. */
+export const AZURE_ORG_NAME = "My Azure Organization";
+export const AZURE_GROUP_NODE_ID = "node-azure-lz";
 
 /** AWS + Azure + GCP organizations side by side (mixed-hierarchy display test). */
 export const mixedHierarchyFixture = (
@@ -888,7 +891,7 @@ export const mixedHierarchyFixture = (
   ];
   const azureNodes: FixtureNode[] = [
     {
-      id: "node-azure-lz",
+      id: AZURE_GROUP_NODE_ID,
       kind: NODE_KIND.MANAGEMENT_GROUP,
       name: AZURE_HIERARCHY_GROUP_NAME,
       externalId: AZURE_HIERARCHY_GROUP,
@@ -953,7 +956,7 @@ export const mixedHierarchyFixture = (
       {
         id: azureOrgId,
         orgType: ORGANIZATION_TYPE.AZURE,
-        name: "My Azure Organization",
+        name: AZURE_ORG_NAME,
         externalId: AZURE_TENANT_ID,
         // Azure is the one type that writes its own root: the Management Group
         // the organization is scoped to.

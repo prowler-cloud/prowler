@@ -15,9 +15,11 @@ import {
   AZURE_EMPTY_GROUP,
   AZURE_EMPTY_GROUP_NAME,
   AZURE_GROUP_ENGINEERING,
+  AZURE_GROUP_NODE_ID,
   AZURE_GROUP_PLATFORM,
   AZURE_HIERARCHY_CHILD_GROUP_NAME,
   AZURE_HIERARCHY_GROUP_NAME,
+  AZURE_ORG_NAME,
   AZURE_ROOT_GROUP,
   AZURE_SUBSCRIPTION_DISABLED,
   AZURE_SUBSCRIPTION_LEGACY,
@@ -149,10 +151,6 @@ interface OrganizationSecretRequestBody {
 const AZURE_CLIENT_ID = "99999999-9999-4999-8999-999999999999";
 const AZURE_CLIENT_SECRET = "azure-client-secret";
 const AZURE_ORG_DOCS = "prowler-cloud-azure-management-groups";
-
-/** The Azure organization and Management Group node seeded by `mixedHierarchyFixture`. */
-const AZURE_ORG_NAME = "My Azure Organization";
-const AZURE_GROUP_NODE_ID = "node-azure-lz";
 
 /**
  * Drive a fresh Azure org onboarding up to the authentication submit. The tenant
