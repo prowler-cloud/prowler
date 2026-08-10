@@ -21,10 +21,8 @@ class s3_bucket_object_acl_ghost(Check):
             report.resource_id = bucket.name
             report.resource_arn = bucket.arn
 
-            # Default: bucket has ACLs disabled via ownership
             is_enforced = bucket.ownership and "BucketOwnerEnforced" in bucket.ownership
 
-            # If bucket NOT enforcing owner, this check is not about ghost drift - PASS with info
             if not is_enforced:
                 report.status = "PASS"
                 report.status_extended = (
@@ -34,14 +32,12 @@ class s3_bucket_object_acl_ghost(Check):
                 findings.append(report)
                 continue
 
-            # BucketOwnerEnforced is enabled - ACLs are supposed to be disabled
-            # But object_sampling may still contain public ACL entries (ghost) that would re-activate if ownership downgraded
             sampling = bucket.object_sampling
             if sampling is None or not sampling.performed:
-                report.status = "PASS"
+                report.status = "MANUAL"
                 report.status_extended = (
-                    f"S3 Bucket {bucket.name} has BucketOwnerEnforced enabled and no object ACL sampling available, "
-                    f"no ghost ACL drift detected."
+                    f"S3 Bucket {bucket.name} has BucketOwnerEnforced enabled but object ACL sampling was not performed, "
+                    f"so ghost ACLs could not be evaluated. Enable s3_bucket_object_public_enabled in the audit configuration."
                 )
                 findings.append(report)
                 continue
