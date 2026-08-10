@@ -16,6 +16,7 @@ import { Alert, AlertDescription } from "@/components/shadcn/alert";
 import { Button } from "@/components/shadcn/button/button";
 import { Form } from "@/components/shadcn/form";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
+import { organizationNameFallbackHint } from "@/lib/organizations";
 import type { OrgSetupPhase } from "@/types/organizations";
 import { ORG_SETUP_PHASE, ORGANIZATION_TYPE } from "@/types/organizations";
 
@@ -312,8 +313,7 @@ export function AzureOrgSetupForm({
             />
 
             <p className="text-muted-foreground text-sm">
-              If left blank, Prowler will use the organization name stored in
-              Azure.
+              {organizationNameFallbackHint(ORGANIZATION_TYPE.AZURE)}
             </p>
           </div>
         )}

@@ -22,6 +22,7 @@ import { Checkbox } from "@/components/shadcn/checkbox/checkbox";
 import { Form } from "@/components/shadcn/form";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { getAWSOrgDeploymentQuickLink } from "@/lib";
+import { organizationNameFallbackHint } from "@/lib/organizations";
 import { useOrgSetupStore } from "@/store/organizations/store";
 import type { OrgSetupPhase } from "@/types/organizations";
 import { ORG_SETUP_PHASE, ORGANIZATION_TYPE } from "@/types/organizations";
@@ -410,8 +411,7 @@ export function OrgSetupForm({
             />
 
             <p className="text-muted-foreground text-sm">
-              If left blank, Prowler will use the Organization name stored in
-              AWS.
+              {organizationNameFallbackHint(ORGANIZATION_TYPE.AWS)}
             </p>
           </div>
         )}

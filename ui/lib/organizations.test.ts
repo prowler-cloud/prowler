@@ -9,7 +9,7 @@ import {
 
 import {
   getCandidateNoun,
-  getNameSourceLabel,
+  organizationNameFallbackHint,
   getNodeLabel,
   toNodeKind,
 } from "./organizations";
@@ -39,8 +39,8 @@ describe("getNodeLabel", () => {
     // The enum mirrors a server-side one: an unknown value must render neutrally
     // instead of crashing the cell or claiming AWS.
     expect(getNodeLabel("oci" as OrganizationType)).toBe("Group");
-    expect(getNameSourceLabel("oci" as OrganizationType)).toBe(
-      "the cloud provider",
+    expect(organizationNameFallbackHint("oci" as OrganizationType)).toBe(
+      "If left blank, Prowler will use the organization identifier.",
     );
   });
 
@@ -81,8 +81,8 @@ describe("getNodeLabel", () => {
         "Folder",
       );
       expect(getNodeLabel(key as OrganizationType)).toBe("Group");
-      expect(getNameSourceLabel(key as OrganizationType)).toBe(
-        "the cloud provider",
+      expect(organizationNameFallbackHint(key as OrganizationType)).toBe(
+        "If left blank, Prowler will use the organization identifier.",
       );
       expect(getCandidateNoun(key as OrganizationType)).toEqual({
         singular: "account",
@@ -92,11 +92,19 @@ describe("getNodeLabel", () => {
   });
 });
 
-describe("getNameSourceLabel", () => {
-  it("names the provider-side source of the organization name", () => {
-    expect(getNameSourceLabel(ORGANIZATION_TYPE.AWS)).toBe("AWS");
-    expect(getNameSourceLabel(ORGANIZATION_TYPE.GCP)).toBe("Google Cloud");
-    expect(getNameSourceLabel(ORGANIZATION_TYPE.AZURE)).toBe("Azure");
+describe("organizationNameFallbackHint", () => {
+  it("names the identifier the organization falls back to, per type", () => {
+    // Never a provider-side name: the organization is created before discovery
+    // runs, so no name held by AWS/Azure/Google Cloud is known yet.
+    expect(organizationNameFallbackHint(ORGANIZATION_TYPE.AWS)).toBe(
+      "If left blank, Prowler will use the AWS organization ID.",
+    );
+    expect(organizationNameFallbackHint(ORGANIZATION_TYPE.GCP)).toBe(
+      "If left blank, Prowler will use the organization ID.",
+    );
+    expect(organizationNameFallbackHint(ORGANIZATION_TYPE.AZURE)).toBe(
+      "If left blank, Prowler will use the tenant ID.",
+    );
   });
 });
 

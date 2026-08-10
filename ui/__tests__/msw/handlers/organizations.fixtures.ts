@@ -787,6 +787,9 @@ export const azureOnboardingFixture = (
  * A providers-page hierarchy world with a fully onboarded AWS organization
  * (two OUs, three providers). Used for the providers-table grouping tests.
  */
+/** The AWS organization identifier of `awsHierarchyFixture`. */
+export const AWS_HIERARCHY_ORG_EXTERNAL_ID = "o-aws0abcdef";
+
 export const awsHierarchyFixture = (
   overrides: Partial<OrgFixture> = {},
 ): OrgFixture => {
@@ -841,7 +844,7 @@ export const awsHierarchyFixture = (
         id: orgId,
         orgType: ORGANIZATION_TYPE.AWS,
         name: "My AWS Organization",
-        externalId: "o-aws0abcdef",
+        externalId: AWS_HIERARCHY_ORG_EXTERNAL_ID,
         rootExternalId: AWS_ROOT_ID,
         providerIds: [],
         nodeIds: nodes.map((n) => n.id),

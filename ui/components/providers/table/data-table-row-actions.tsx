@@ -38,7 +38,10 @@ import {
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
 import { Modal } from "@/components/shadcn/modal";
-import { getNameSourceLabel, getNodeLabel } from "@/lib/organizations";
+import {
+  getNodeLabel,
+  organizationNameFallbackHint,
+} from "@/lib/organizations";
 import { testProviderConnection } from "@/lib/provider-helpers";
 import { getScanScheduleCapability } from "@/lib/schedules";
 import { isCloud } from "@/lib/shared/env";
@@ -179,7 +182,9 @@ function OrgGroupDropdownActions({
   const testCount = testIds.length;
   const nodeLabel = getNodeLabel(rowData.orgType, rowData.kind);
   const entityLabel = isOrgKind ? "organization" : nodeLabel.toLowerCase();
-  const nameSourceLabel = getNameSourceLabel(rowData.orgType);
+  // Blank falls back to the identifier, matching what creation does. A row with
+  // no external id has nothing to fall back to, so there the name stays required.
+  const nameFallback = rowData.externalId ?? "";
   // Credential updates re-enter the organization wizard, so this needs an
   // organization type with an onboarding flow.
   const orgFlowType: OrgFlowType | null = isOrgFlowType(rowData.orgType)
@@ -215,9 +220,20 @@ function OrgGroupDropdownActions({
             currentValue={rowData.name}
             label="Name"
             successMessage="The organization name was updated successfully."
-            helperText={`If left blank, Prowler will use the name stored in ${nameSourceLabel}.`}
+            helperText={
+              nameFallback
+                ? organizationNameFallbackHint(rowData.orgType)
+                : undefined
+            }
+            validate={
+              nameFallback
+                ? undefined
+                : (value) => (value ? null : "Name is required.")
+            }
             setIsOpen={setIsEditNameOpen}
-            onSave={(name) => updateOrganizationName(rowData.id, name)}
+            onSave={(name) =>
+              updateOrganizationName(rowData.id, name || nameFallback)
+            }
           />
         </Modal>
       )}

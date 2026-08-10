@@ -6,6 +6,7 @@ import { describe, expect } from "vitest";
 import { it } from "@/__tests__/fixtures";
 import { HIERARCHY_READ_FAILURE } from "@/__tests__/msw/handlers/organizations";
 import {
+  AWS_HIERARCHY_ORG_EXTERNAL_ID,
   awsHierarchyFixture,
   awsOnboardingFixture,
   AZURE_BLOCKED_GROUP,
@@ -137,6 +138,18 @@ interface ApplyRequestData {
 
 interface ApplyRequestBody {
   data: ApplyRequestData;
+}
+
+interface RenameRequestAttributes {
+  name?: string;
+}
+
+interface RenameRequestData {
+  attributes: RenameRequestAttributes;
+}
+
+interface RenameRequestBody {
+  data: RenameRequestData;
 }
 
 interface OrganizationSecretRequestBody {
@@ -1296,6 +1309,26 @@ describe("Providers page", () => {
         await harness.saveName();
 
         await harness.waitForOrganizationRename(AWS_HIERARCHY_ORG_ID);
+      }, 30000);
+
+      it("names the organization after its identifier when the rename is blank", async () => {
+        const harness = new ProvidersPageHarness(awsHierarchyFixture());
+        await harness.mount({ openWizard: false });
+        await harness.waitForOrganizationRow(AWS_ORG_NAME);
+
+        await harness.openEditNameFor(AWS_ORG_NAME);
+        await harness.waitForEditNameModal();
+        await harness.fillEditName("");
+        await harness.saveName();
+
+        await harness.waitForOrganizationRename(AWS_HIERARCHY_ORG_ID);
+        const body = await harness.lastRequestBody<RenameRequestBody>(
+          "PATCH",
+          `/organizations/${AWS_HIERARCHY_ORG_ID}`,
+        );
+        // Blank falls back to the identifier, the same rule creation applies —
+        // the action rejects an empty name outright.
+        expect(body?.data.attributes.name).toBe(AWS_HIERARCHY_ORG_EXTERNAL_ID);
       }, 30000);
 
       it("re-enters the wizard at the authentication step to update credentials", async () => {

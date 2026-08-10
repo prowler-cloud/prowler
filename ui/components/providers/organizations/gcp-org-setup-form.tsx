@@ -22,6 +22,7 @@ import { Alert, AlertDescription } from "@/components/shadcn/alert";
 import { Button } from "@/components/shadcn/button/button";
 import { Form } from "@/components/shadcn/form";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
+import { organizationNameFallbackHint } from "@/lib/organizations";
 import { useOrgSetupStore } from "@/store/organizations/store";
 import type { OrgSetupPhase } from "@/types/organizations";
 import {
@@ -406,8 +407,7 @@ export function GcpOrgSetupForm({
             />
 
             <p className="text-muted-foreground text-sm">
-              If left blank, Prowler will use the organization name stored in
-              Google Cloud.
+              {organizationNameFallbackHint(ORGANIZATION_TYPE.GCP)}
             </p>
           </div>
         )}

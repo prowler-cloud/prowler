@@ -23,8 +23,8 @@ interface CandidateNoun {
 interface OrgTypeTerminology {
   /** Hierarchy container label, used when a node carries no `kind`. */
   containerLabel: string;
-  /** Where the provider-side organization/node name comes from. */
-  nameSourceLabel: string;
+  /** The identifier an organization is named after when no name is given. */
+  identifierLabel: string;
   /** What a discovered candidate is called in the onboarding flow. */
   candidateNoun: CandidateNoun;
 }
@@ -32,17 +32,17 @@ interface OrgTypeTerminology {
 const ORGANIZATION_TERMINOLOGY = {
   [ORGANIZATION_TYPE.AWS]: {
     containerLabel: "Organizational Unit",
-    nameSourceLabel: "AWS",
+    identifierLabel: "AWS organization ID",
     candidateNoun: { singular: "account", plural: "accounts" },
   },
   [ORGANIZATION_TYPE.AZURE]: {
     containerLabel: "Management Group",
-    nameSourceLabel: "Azure",
+    identifierLabel: "tenant ID",
     candidateNoun: { singular: "subscription", plural: "subscriptions" },
   },
   [ORGANIZATION_TYPE.GCP]: {
     containerLabel: "Folder",
-    nameSourceLabel: "Google Cloud",
+    identifierLabel: "organization ID",
     candidateNoun: { singular: "project", plural: "projects" },
   },
 } as const satisfies Record<OrganizationType, OrgTypeTerminology>;
@@ -62,7 +62,7 @@ const NODE_KINDS: readonly string[] = Object.values(NODE_KIND);
  */
 const NEUTRAL_TERMINOLOGY: OrgTypeTerminology = {
   containerLabel: "Group",
-  nameSourceLabel: "the cloud provider",
+  identifierLabel: "organization identifier",
   candidateNoun: { singular: "account", plural: "accounts" },
 };
 
@@ -111,9 +111,16 @@ export function shortenNodeId(id: string): string | undefined {
   return MANAGEMENT_GROUP_ID.exec(id)?.[1];
 }
 
-/** Provider-side source of the organization name (edit-name helper copy). */
-export function getNameSourceLabel(orgType: OrganizationType): string {
-  return terminologyFor(orgType).nameSourceLabel;
+/**
+ * Helper copy for the optional organization-name field. The fallback is the
+ * organization's own identifier, never a name held by the provider: the
+ * organization is created before discovery runs, so no provider-side name is
+ * known yet. Kept here so the three setup forms cannot word it differently.
+ */
+export function organizationNameFallbackHint(
+  orgType: OrganizationType,
+): string {
+  return `If left blank, Prowler will use the ${terminologyFor(orgType).identifierLabel}.`;
 }
 
 /**
