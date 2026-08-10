@@ -14,8 +14,8 @@ class entra_pim_global_administrator_approval_required(Check):
     Global Administrator role, with at least one approver configured.
 
     - PASS: Approval is required to activate Global Administrator and approvers exist.
-    - FAIL: Approval is not required, no approvers are configured, or PIM settings are
-      unavailable.
+    - FAIL: Approval is not required or no approvers are configured.
+    - No findings: PIM settings are unavailable.
     """
 
     def execute(self) -> List[CheckReportM365]:

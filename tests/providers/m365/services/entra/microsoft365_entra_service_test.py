@@ -42,6 +42,84 @@ UserAction = entra_service.UserAction
 UsersConditions = entra_service.UsersConditions
 
 
+def _get_access_review_definitions(definition):
+    service = Entra.__new__(Entra)
+    request_information = MagicMock()
+    service.client = SimpleNamespace(
+        identity_governance=SimpleNamespace(
+            with_url=MagicMock(
+                return_value=SimpleNamespace(
+                    to_get_request_information=MagicMock(
+                        return_value=request_information
+                    )
+                )
+            )
+        ),
+        request_adapter=SimpleNamespace(
+            send_primitive_async=AsyncMock(
+                return_value=json.dumps({"value": [definition]}).encode()
+            )
+        ),
+    )
+    return asyncio.run(service._get_access_review_definitions())
+
+
+class TestAccessReviewDefinitions:
+    def test_parses_recurrence_and_top_level_reviewers(self):
+        definitions = _get_access_review_definitions(
+            {
+                "id": "review-1",
+                "reviewers": [{"query": "/users/reviewer-1"}],
+                "settings": {
+                    "recurrence": {
+                        "pattern": {"type": "weekly"},
+                        "range": {"type": "noEnd"},
+                    }
+                },
+            }
+        )
+
+        assert definitions[0].recurrence_pattern_type == "weekly"
+        assert definitions[0].recurrence_range_type == "noEnd"
+        assert definitions[0].has_primary_reviewers is True
+
+    def test_uses_reviewers_from_every_configured_stage(self):
+        definitions = _get_access_review_definitions(
+            {
+                "id": "review-1",
+                "reviewers": [],
+                "stageSettings": [
+                    {"reviewers": [{"query": "/users/reviewer-1"}]},
+                    {"reviewers": [{"query": "/users/reviewer-2"}]},
+                ],
+            }
+        )
+
+        assert definitions[0].has_primary_reviewers is True
+
+    @pytest.mark.parametrize(
+        "reviewer_configuration",
+        [
+            {"fallbackReviewers": [{"query": "/users/fallback-1"}]},
+            {
+                "reviewers": [{"query": "/users/top-level-reviewer"}],
+                "stageSettings": [
+                    {"reviewers": [{"query": "/users/stage-reviewer"}]},
+                    {"reviewers": []},
+                ],
+            },
+        ],
+    )
+    def test_fallback_or_incomplete_stage_reviewers_do_not_count(
+        self, reviewer_configuration
+    ):
+        definitions = _get_access_review_definitions(
+            {"id": "review-1", **reviewer_configuration}
+        )
+
+        assert definitions[0].has_primary_reviewers is False
+
+
 async def mock_entra_get_authorization_policy(_):
     return AuthorizationPolicy(
         id="id-1",

@@ -1,5 +1,7 @@
 from unittest import mock
 
+import pytest
+
 from prowler.providers.m365.services.entra.entra_service import (
     AccessReviewDefinition,
 )
@@ -16,6 +18,9 @@ def _definition(
     auto_apply_enabled=True,
     mail_notifications_enabled=True,
     reminders_enabled=True,
+    recurrence_pattern_type="weekly",
+    recurrence_range_type="noEnd",
+    has_primary_reviewers=True,
 ):
     return AccessReviewDefinition(
         id="ar1",
@@ -27,6 +32,9 @@ def _definition(
         auto_apply_enabled=auto_apply_enabled,
         mail_notifications_enabled=mail_notifications_enabled,
         reminders_enabled=reminders_enabled,
+        recurrence_pattern_type=recurrence_pattern_type,
+        recurrence_range_type=recurrence_range_type,
+        has_primary_reviewers=has_primary_reviewers,
     )
 
 
@@ -56,7 +64,8 @@ class Test_entra_access_review_guest_users_configured:
         assert result[0].status == "PASS"
         assert (
             result[0].status_extended
-            == "Access review 'Guest Review' for guest users is active and fail-closed."
+            == "Access review 'Guest Review' for guest users is active, recurring, "
+            "reviewer-assigned, and fail-closed."
         )
 
     def test_not_active(self):
@@ -86,3 +95,42 @@ class Test_entra_access_review_guest_users_configured:
             ]
         )
         assert result[0].status == "PASS"
+
+    def test_url_encoded_guest_filter(self):
+        result = self._run(
+            [_definition(scope_query="/users?$filter=userType%20eq%20%27Guest%27")]
+        )
+        assert result[0].status == "PASS"
+
+    def test_mixed_case_guest_filter(self):
+        result = self._run(
+            [_definition(scope_query="/users?$filter=(USERTYPE EQ 'guest')")]
+        )
+        assert result[0].status == "PASS"
+
+    @pytest.mark.parametrize(
+        "scope_query",
+        [
+            "/users?$filter=not(userType eq 'Guest')",
+            "/users?$filter=(userType ne 'Guest')",
+            "/users?$filter=displayName eq 'Guest account'",
+            "/groups/guest-review-members",
+        ],
+    )
+    def test_incidental_guest_text_does_not_target_guests(self, scope_query):
+        result = self._run([_definition(scope_query=scope_query)])
+        assert result[0].status == "FAIL"
+
+    @pytest.mark.parametrize(
+        "definition_overrides",
+        [
+            {"recurrence_pattern_type": None},
+            {"recurrence_pattern_type": "daily"},
+            {"recurrence_range_type": None},
+            {"recurrence_range_type": "endDate"},
+            {"has_primary_reviewers": False},
+        ],
+    )
+    def test_invalid_recurrence_or_missing_reviewers(self, definition_overrides):
+        result = self._run([_definition(**definition_overrides)])
+        assert result[0].status == "FAIL"

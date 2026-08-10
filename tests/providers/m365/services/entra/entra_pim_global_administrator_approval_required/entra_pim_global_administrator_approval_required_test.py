@@ -52,3 +52,18 @@ class Test_entra_pim_global_administrator_approval_required:
             }
         )
         assert result[0].status == "FAIL"
+
+    def test_approval_not_required_with_approvers(self):
+        result = self._run(
+            {
+                GLOBAL_ADMINISTRATOR_ROLE_TEMPLATE_ID: PimRoleApprovalSetting(
+                    role_definition_id=GLOBAL_ADMINISTRATOR_ROLE_TEMPLATE_ID,
+                    is_approval_required=False,
+                    has_approvers=True,
+                )
+            }
+        )
+        assert result[0].status == "FAIL"
+        assert result[0].status_extended == (
+            "PIM does not require approval to activate the Global Administrator role."
+        )

@@ -1401,6 +1401,17 @@ OAuthAppInfo
             for definition in raw_definitions:
                 scope = definition.get("scope", {}) or {}
                 settings = definition.get("settings", {}) or {}
+                recurrence = settings.get("recurrence", {}) or {}
+                recurrence_pattern = recurrence.get("pattern", {}) or {}
+                recurrence_range = recurrence.get("range", {}) or {}
+                stage_settings = definition.get("stageSettings")
+                if stage_settings is not None:
+                    has_primary_reviewers = bool(stage_settings) and all(
+                        bool(stage.get("reviewers", []) or [])
+                        for stage in stage_settings
+                    )
+                else:
+                    has_primary_reviewers = bool(definition.get("reviewers", []) or [])
                 definitions.append(
                     AccessReviewDefinition(
                         id=definition.get("id", ""),
@@ -1430,6 +1441,9 @@ OAuthAppInfo
                             settings.get("reminderNotificationsEnabled", False)
                         ),
                         duration_in_days=settings.get("instanceDurationInDays"),
+                        recurrence_pattern_type=recurrence_pattern.get("type"),
+                        recurrence_range_type=recurrence_range.get("type"),
+                        has_primary_reviewers=has_primary_reviewers,
                     )
                 )
         except Exception as error:
@@ -2533,6 +2547,9 @@ class AccessReviewDefinition(BaseModel):
     mail_notifications_enabled: bool = False
     reminders_enabled: bool = False
     duration_in_days: Optional[int] = None
+    recurrence_pattern_type: Optional[str] = None
+    recurrence_range_type: Optional[str] = None
+    has_primary_reviewers: bool = False
 
 
 class B2BCollaborationPolicy(BaseModel):

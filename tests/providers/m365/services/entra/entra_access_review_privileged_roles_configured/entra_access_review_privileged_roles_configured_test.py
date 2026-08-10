@@ -1,5 +1,7 @@
 from unittest import mock
 
+import pytest
+
 from prowler.providers.m365.services.entra.entra_service import (
     AccessReviewDefinition,
 )
@@ -12,10 +14,13 @@ def _definition(
     status="InProgress",
     scope_query="",
     resource_scope_queries=None,
-    default_decision="Deny",
+    default_decision="None",
     auto_apply_enabled=True,
     mail_notifications_enabled=True,
     reminders_enabled=True,
+    recurrence_pattern_type="absoluteMonthly",
+    recurrence_range_type="noEnd",
+    has_primary_reviewers=True,
 ):
     return AccessReviewDefinition(
         id="ar1",
@@ -31,6 +36,9 @@ def _definition(
         auto_apply_enabled=auto_apply_enabled,
         mail_notifications_enabled=mail_notifications_enabled,
         reminders_enabled=reminders_enabled,
+        recurrence_pattern_type=recurrence_pattern_type,
+        recurrence_range_type=recurrence_range_type,
+        has_primary_reviewers=has_primary_reviewers,
     )
 
 
@@ -59,10 +67,8 @@ class Test_entra_access_review_privileged_roles_configured:
         result = self._run([_definition()])
         assert result[0].status == "PASS"
 
-    def test_not_fail_closed(self):
-        result = self._run(
-            [_definition(default_decision="None", auto_apply_enabled=False)]
-        )
+    def test_deny_default_decision(self):
+        result = self._run([_definition(default_decision="Deny")])
         assert result[0].status == "FAIL"
 
     def test_guest_review_ignored(self):
@@ -74,4 +80,18 @@ class Test_entra_access_review_privileged_roles_configured:
                 )
             ]
         )
+        assert result[0].status == "FAIL"
+
+    @pytest.mark.parametrize(
+        "definition_overrides",
+        [
+            {"recurrence_pattern_type": None},
+            {"recurrence_pattern_type": "daily"},
+            {"recurrence_range_type": None},
+            {"recurrence_range_type": "numbered"},
+            {"has_primary_reviewers": False},
+        ],
+    )
+    def test_invalid_recurrence_or_missing_reviewers(self, definition_overrides):
+        result = self._run([_definition(**definition_overrides)])
         assert result[0].status == "FAIL"
