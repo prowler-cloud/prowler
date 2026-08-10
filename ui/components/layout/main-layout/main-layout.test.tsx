@@ -1,7 +1,13 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import MainLayout from "./main-layout";
+
+const navigationMocks = vi.hoisted(() => ({ pathname: "/findings" }));
+
+vi.mock("next/navigation", () => ({
+  usePathname: () => navigationMocks.pathname,
+}));
 
 vi.mock("@/components/layout/app-sidebar", () => ({
   AppSidebar: () => <aside data-testid="sidebar" />,
@@ -16,6 +22,43 @@ vi.mock("@/components/findings/jira-dispatch-modal-host", () => ({
 }));
 
 describe("MainLayout", () => {
+  beforeEach(() => {
+    navigationMocks.pathname = "/findings";
+  });
+
+  it("renders the usage-limit banner before page content", () => {
+    // Given / When
+    render(
+      <MainLayout usageLimitBanner={<div role="alert">Usage limit</div>}>
+        <div>Page content</div>
+      </MainLayout>,
+    );
+
+    // Then
+    const banner = screen.getByRole("alert");
+    const content = screen.getByText("Page content");
+    expect(
+      banner.compareDocumentPosition(content) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("omits the usage-limit banner from billing routes", () => {
+    // Given
+    navigationMocks.pathname = "/billing/invoices";
+
+    // When
+    render(
+      <MainLayout usageLimitBanner={<div role="alert">Usage limit</div>}>
+        <div>Billing content</div>
+      </MainLayout>,
+    );
+
+    // Then
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.getByText("Billing content")).toBeVisible();
+  });
+
   it("mounts the shared Cloud upgrade modal with page content", () => {
     render(
       <MainLayout>

@@ -16,8 +16,18 @@ import {
 import { cn } from "@/lib/utils";
 import { useSidePanelStore } from "@/store/side-panel";
 
-export default function MainLayout({ children }: { children: ReactNode }) {
+interface MainLayoutProps {
+  usageLimitBanner?: ReactNode;
+  children: ReactNode;
+}
+
+export default function MainLayout({
+  usageLimitBanner,
+  children,
+}: MainLayoutProps) {
   const pathname = usePathname();
+  const isBillingRoute =
+    pathname === "/billing" || pathname.startsWith("/billing/");
   // Push (not overlay): the open side panel shrinks the page by exactly its
   // (user-resizable) width so everything stays reachable. Below `sm` the
   // panel overlays full-width instead, where pushing would leave no page. The
@@ -57,6 +67,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
         )}
         style={{ marginRight: pushWidth }}
       >
+        {!isBillingRoute && usageLimitBanner}
         <Suspense fallback={null}>{children}</Suspense>
       </main>
     </div>

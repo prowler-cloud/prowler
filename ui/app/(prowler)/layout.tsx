@@ -12,6 +12,7 @@ import {
   OnboardingGate,
   OnboardingSequenceBanner,
 } from "@/components/onboarding";
+import { UsageLimitBannerSSR } from "@/components/providers/usage-limit-banner.server";
 import { RuntimePublicConfig } from "@/components/runtime-config/runtime-public-config";
 import { NavigationProgress } from "@/components/shadcn/navigation-progress";
 import { Toaster } from "@/components/shadcn/toast";
@@ -108,7 +109,15 @@ export default async function RootLayout({
               <OnboardingSequenceBanner hasCompletedScan={hasCompletedScan} />
             </>
           )}
-          <MainLayout>{children}</MainLayout>
+          <MainLayout
+            usageLimitBanner={
+              <Suspense fallback={null}>
+                <UsageLimitBannerSSR allowHide className="m-4 mr-6" />
+              </Suspense>
+            }
+          >
+            {children}
+          </MainLayout>
           {cloudEnabled && <FeedbackSurvey />}
           {/* Always mounted: it hosts the detail (finding/resource) views in
               every deployment; the AI tab inside is cloud-gated on its own. */}
