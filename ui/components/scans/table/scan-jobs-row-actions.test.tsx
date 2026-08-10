@@ -44,11 +44,6 @@ vi.mock("@/lib/helper", () => ({
   downloadScanZip: downloadScanZipMock,
 }));
 
-vi.mock("@/lib/date-utils", () => ({
-  toLocalDateString: (value: string | null | undefined) =>
-    value ? "2026-01-01" : undefined,
-}));
-
 vi.mock("@/components/scans/edit-alias-modal", () => ({
   EditAliasModal: ({
     open,
@@ -314,14 +309,14 @@ describe("ScanJobsRowActions", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("links completed scans to filtered findings", async () => {
+  it("delegates scan date resolution when opening findings", async () => {
     // Given
     const user = userEvent.setup();
     render(
       <ScanJobsRowActions
         scan={makeScan({
           state: "completed",
-          completed_at: "2026-01-01T10:05:00Z",
+          completed_at: "2026-08-01T14:30:00Z",
         })}
         tab="completed"
       />,
@@ -335,7 +330,7 @@ describe("ScanJobsRowActions", () => {
 
     // Then
     expect(pushMock).toHaveBeenCalledWith(
-      "/findings?filter[scan__in]=scan-1&filter[inserted_at]=2026-01-01&filter[status__in]=FAIL",
+      "/findings?filter[scan__in]=scan-1&filter[status__in]=FAIL",
     );
   });
 
