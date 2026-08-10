@@ -157,6 +157,16 @@ export interface UseFilterBatchOptions {
    * applied together.
    */
   exclusiveFilterGroups?: string[][];
+  /**
+   * Non-filter URL params whose provenance becomes invalid when specific
+   * URL-backed filters change.
+   */
+  urlParamInvalidationRules?: UrlParamInvalidationRule[];
+}
+
+export interface UrlParamInvalidationRule {
+  param: string;
+  filterKeys: readonly string[];
 }
 
 function normalizeFilterKey(key: string): string {
@@ -233,9 +243,26 @@ export const useFilterBatch = (
   };
 
   /** Private helper — builds URLSearchParams from a pending state and pushes. */
-  const buildAndPush = (nextPending: PendingFilters) => {
+  const buildAndPush = (
+    nextPending: PendingFilters,
+    clearInvalidatedParams = false,
+  ) => {
     setAppliedFilters(nextPending);
     const params = new URLSearchParams(searchParams.toString());
+
+    options?.urlParamInvalidationRules?.forEach(({ param, filterKeys }) => {
+      const isInvalidated =
+        clearInvalidatedParams ||
+        filterKeys.some((filterKey) => {
+          const currentValue = searchParams.get(filterKey) || "";
+          const nextValue = (nextPending[filterKey] ?? [])
+            .filter(Boolean)
+            .join(",");
+          return currentValue !== nextValue;
+        });
+
+      if (isInvalidated) params.delete(param);
+    });
 
     // Remove all batch-managed filter params
     Array.from(params.keys()).forEach((key) => {
@@ -290,7 +317,7 @@ export const useFilterBatch = (
    */
   const clearAndApply = () => {
     setPendingFilters({});
-    buildAndPush({});
+    buildAndPush({}, true);
   };
 
   const removeAppliedAndApply = (key: string, value?: string) => {

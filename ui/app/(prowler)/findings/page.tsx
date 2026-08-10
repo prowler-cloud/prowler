@@ -25,7 +25,11 @@ import {
   hasDateOrScanFilter,
 } from "@/lib";
 import { getFindingGroupFilterOptions } from "@/lib/finding-group-filter-options";
-import { resolveFindingScanDateFilters } from "@/lib/findings-scan-filters";
+import {
+  FINDING_SCAN_DATE_SOURCE_PARAM,
+  parseFindingScanDateSource,
+  resolveFindingScanDateFilters,
+} from "@/lib/findings-scan-filters";
 import { isCloud } from "@/lib/shared/env";
 import { ScanEntity, ScanProps } from "@/types";
 import { SearchParamsProps } from "@/types/components";
@@ -52,6 +56,9 @@ export default async function Findings({
       const response = await getScan(scanId);
       return response?.data;
     },
+    dateSource: parseFindingScanDateSource(
+      resolvedSearchParams[FINDING_SCAN_DATE_SOURCE_PARAM],
+    ),
   });
   const resolvedFilters = applyDefaultMutedFilter(filtersWithScanDates);
   const hasHistoricalData = hasDateOrScanFilter(filtersWithScanDates);

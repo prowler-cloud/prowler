@@ -1,6 +1,12 @@
 import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import {
+  buildFindingScanDateSource,
+  FINDING_SCAN_DATE_PROVENANCE_FILTER_KEYS,
+  FINDING_SCAN_DATE_SOURCE_PARAM,
+} from "@/lib/findings-scan-filters";
+
 // --- Mock next/navigation ---
 const mockPush = vi.fn();
 let mockSearchParamsValue = new URLSearchParams();
@@ -432,6 +438,84 @@ describe("useFilterBatch", () => {
       expect(calledUrl).toContain("filter%5Bsearch%5D=my-search");
       expect(calledUrl).toContain("filter%5Bmuted%5D=false");
     });
+
+    it("should clear scan-date provenance when the displayed date changes", () => {
+      // Given
+      setSearchParams({
+        "filter[scan__in]": "scan-1",
+        "filter[inserted_at]": "2026-04-06",
+        [FINDING_SCAN_DATE_SOURCE_PARAM]:
+          buildFindingScanDateSource("2026-04-06"),
+        expandedCheckId: "check-1",
+      });
+      const { result } = renderHook(() =>
+        useFilterBatch({
+          urlParamInvalidationRules: [
+            {
+              param: FINDING_SCAN_DATE_SOURCE_PARAM,
+              filterKeys: FINDING_SCAN_DATE_PROVENANCE_FILTER_KEYS,
+            },
+          ],
+        }),
+      );
+
+      act(() => {
+        result.current.setPending("filter[inserted_at]", ["2026-04-05"]);
+      });
+
+      // When
+      act(() => {
+        result.current.applyAll();
+      });
+
+      // Then
+      const calledUrl = new URL(
+        mockPush.mock.calls[0][0],
+        "https://example.com",
+      );
+      expect(calledUrl.searchParams.has(FINDING_SCAN_DATE_SOURCE_PARAM)).toBe(
+        false,
+      );
+      expect(calledUrl.searchParams.get("expandedCheckId")).toBe("check-1");
+    });
+
+    it("should preserve scan-date provenance for unrelated filter changes", () => {
+      // Given
+      const dateSource = buildFindingScanDateSource("2026-04-06");
+      setSearchParams({
+        "filter[scan__in]": "scan-1",
+        "filter[inserted_at]": "2026-04-06",
+        [FINDING_SCAN_DATE_SOURCE_PARAM]: dateSource,
+      });
+      const { result } = renderHook(() =>
+        useFilterBatch({
+          urlParamInvalidationRules: [
+            {
+              param: FINDING_SCAN_DATE_SOURCE_PARAM,
+              filterKeys: FINDING_SCAN_DATE_PROVENANCE_FILTER_KEYS,
+            },
+          ],
+        }),
+      );
+
+      act(() => {
+        result.current.setPending("filter[severity__in]", ["critical"]);
+      });
+
+      // When
+      act(() => {
+        result.current.applyAll();
+      });
+
+      // Then
+      const calledUrl = new URL(
+        mockPush.mock.calls[0][0],
+        "https://example.com",
+      );
+      expect(calledUrl.searchParams.get(FINDING_SCAN_DATE_SOURCE_PARAM)).toBe(
+        dateSource,
+      );
+    });
   });
 
   // ── discardAll ─────────────────────────────────────────────────────────────
@@ -634,6 +718,42 @@ describe("useFilterBatch", () => {
       expect(mockPush).toHaveBeenCalledTimes(1);
       const calledUrl: string = mockPush.mock.calls[0][0];
       expect(calledUrl).toContain("page=1");
+    });
+
+    it("should clear scan-date provenance without deleting unrelated URL params", () => {
+      // Given
+      setSearchParams({
+        "filter[scan__in]": "scan-1",
+        "filter[inserted_at]": "2026-04-06",
+        [FINDING_SCAN_DATE_SOURCE_PARAM]:
+          buildFindingScanDateSource("2026-04-06"),
+        expandedCheckId: "check-1",
+      });
+      const { result } = renderHook(() =>
+        useFilterBatch({
+          urlParamInvalidationRules: [
+            {
+              param: FINDING_SCAN_DATE_SOURCE_PARAM,
+              filterKeys: FINDING_SCAN_DATE_PROVENANCE_FILTER_KEYS,
+            },
+          ],
+        }),
+      );
+
+      // When
+      act(() => {
+        result.current.clearAndApply();
+      });
+
+      // Then
+      const calledUrl = new URL(
+        mockPush.mock.calls[0][0],
+        "https://example.com",
+      );
+      expect(calledUrl.searchParams.has(FINDING_SCAN_DATE_SOURCE_PARAM)).toBe(
+        false,
+      );
+      expect(calledUrl.searchParams.get("expandedCheckId")).toBe("check-1");
     });
   });
 });

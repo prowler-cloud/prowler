@@ -109,4 +109,56 @@ describe("resolveFindingScanDateFilters", () => {
       "filter[inserted_at__gte]": "2026-04-01",
     });
   });
+
+  it("replaces a scan-action local date with the scan UTC completion date", async () => {
+    const result = await resolveFindingScanDateFilters({
+      filters: {
+        "filter[muted]": "false",
+        "filter[scan__in]": "scan-1",
+        "filter[inserted_at]": "2026-04-06",
+        "filter[status__in]": "FAIL",
+      },
+      scans: [
+        {
+          id: "scan-1",
+          attributes: {
+            completed_at: "2026-04-07T00:30:00Z",
+          },
+        },
+      ],
+      loadScan: vi.fn(),
+      dateSource: "scan-action:2026-04-06",
+    });
+
+    expect(result).toEqual({
+      "filter[muted]": "false",
+      "filter[scan__in]": "scan-1",
+      "filter[inserted_at]": "2026-04-07",
+      "filter[status__in]": "FAIL",
+    });
+  });
+
+  it("preserves a manually changed date when the scan-action marker is stale", async () => {
+    const result = await resolveFindingScanDateFilters({
+      filters: {
+        "filter[scan__in]": "scan-1",
+        "filter[inserted_at]": "2026-04-05",
+      },
+      scans: [
+        {
+          id: "scan-1",
+          attributes: {
+            completed_at: "2026-04-07T00:30:00Z",
+          },
+        },
+      ],
+      loadScan: vi.fn(),
+      dateSource: "scan-action:2026-04-06",
+    });
+
+    expect(result).toEqual({
+      "filter[scan__in]": "scan-1",
+      "filter[inserted_at]": "2026-04-05",
+    });
+  });
 });

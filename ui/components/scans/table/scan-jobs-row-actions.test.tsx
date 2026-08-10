@@ -314,7 +314,7 @@ describe("ScanJobsRowActions", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("links completed scans to filtered findings", async () => {
+  it("links completed scans to findings with a local display date", async () => {
     // Given
     const user = userEvent.setup();
     render(
@@ -334,9 +334,11 @@ describe("ScanJobsRowActions", () => {
     await user.click(screen.getByRole("menuitem", { name: /view findings/i }));
 
     // Then
-    expect(pushMock).toHaveBeenCalledWith(
-      "/findings?filter[scan__in]=scan-1&filter[inserted_at]=2026-01-01&filter[status__in]=FAIL",
-    );
+    const findingsHref = pushMock.mock.calls[0]?.[0] as string;
+    expect(findingsHref).toContain("filter[scan__in]=scan-1");
+    expect(findingsHref).toContain("filter[inserted_at]=2026-01-01");
+    expect(findingsHref).toContain("filter[status__in]=FAIL");
+    expect(findingsHref).toContain("scanDateSource=scan-action:2026-01-01");
   });
 
   it("triggers downloadScanZip with the scan id when downloading reports", async () => {

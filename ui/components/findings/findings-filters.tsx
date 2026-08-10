@@ -20,6 +20,10 @@ import { ExpandableSection } from "@/components/shadcn/expandable-section";
 import { DataTableFilterCustom } from "@/components/shadcn/table/data-table-filter-custom";
 import { useFilterBatch } from "@/hooks/use-filter-batch";
 import { getCategoryLabel, getGroupLabel } from "@/lib/categories";
+import {
+  FINDING_SCAN_DATE_PROVENANCE_FILTER_KEYS,
+  FINDING_SCAN_DATE_SOURCE_PARAM,
+} from "@/lib/findings-scan-filters";
 import { FILTER_FIELD, ScanEntity } from "@/types";
 import { ProviderGroup } from "@/types/components";
 import { DATA_TABLE_FILTER_MODE } from "@/types/filters";
@@ -369,6 +373,12 @@ export const FindingsFilters = (props: FindingsFiltersProps) => {
   } = useFilterBatch({
     defaultParams: { "filter[muted]": "false" },
     exclusiveFilterGroups: [FINDING_GROUP_FILTER_KEYS],
+    urlParamInvalidationRules: [
+      {
+        param: FINDING_SCAN_DATE_SOURCE_PARAM,
+        filterKeys: FINDING_SCAN_DATE_PROVENANCE_FILTER_KEYS,
+      },
+    ],
   });
 
   return (

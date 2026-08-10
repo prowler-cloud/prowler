@@ -31,6 +31,10 @@ import {
 } from "@/components/shadcn/dropdown";
 import { buildPerScanComplianceHref } from "@/lib/compliance/compliance-tab-url";
 import { toLocalDateString } from "@/lib/date-utils";
+import {
+  buildFindingScanDateSource,
+  FINDING_SCAN_DATE_SOURCE_PARAM,
+} from "@/lib/findings-scan-filters";
 import { downloadScanZip } from "@/lib/helper";
 import { getScanScheduleCapability } from "@/lib/schedules";
 import { isCloud } from "@/lib/shared/env";
@@ -93,8 +97,9 @@ export function ScanJobsRowActions({
 
   const openFindings = () => {
     if (!isCompleted || !scanDate) return;
+
     router.push(
-      `/findings?filter[scan__in]=${scan.id}&filter[inserted_at]=${scanDate}&filter[status__in]=FAIL`,
+      `/findings?filter[scan__in]=${scan.id}&filter[inserted_at]=${scanDate}&filter[status__in]=FAIL&${FINDING_SCAN_DATE_SOURCE_PARAM}=${buildFindingScanDateSource(scanDate)}`,
     );
   };
 
