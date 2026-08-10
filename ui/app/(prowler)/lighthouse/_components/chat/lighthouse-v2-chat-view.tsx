@@ -78,6 +78,7 @@ export function LighthouseV2ChatView({
     dismissFeedback,
     selectModel,
     submitMessage,
+    resetToNewChat,
     retryLastMessage,
   } = state;
   const { modelsByProvider, supportedProviders } = config;
@@ -208,11 +209,13 @@ export function LighthouseV2ChatView({
                   key={message.id}
                   message={message}
                   skillRun={skillRun}
-                  onLaunchSkill={(skill) =>
-                    // Follow-up skills continue the same session, reusing the
-                    // original launch context (it carries the finding).
-                    void submitMessage(skill.name, skillRun?.context, skill)
-                  }
+                  onLaunchSkill={(skill) => {
+                    // The DyR prompts hand follow-up skills off to a separate
+                    // session; only the original launch context (it carries
+                    // the finding) travels along.
+                    resetToNewChat();
+                    void submitMessage(skill.name, skillRun?.context, skill);
+                  }}
                 />
               );
             })}
