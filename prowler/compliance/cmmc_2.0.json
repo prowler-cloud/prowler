@@ -209,35 +209,12 @@
       },
       "checks": {
         "aws": [
-          "awslambda_function_not_publicly_accessible",
-          "awslambda_function_url_public",
-          "ec2_ebs_public_snapshot",
-          "ec2_instance_profile_attached",
-          "ec2_instance_public_ip",
-          "ec2_networkacl_allow_ingress_any_port",
-          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
-          "ec2_securitygroup_default_restrict_traffic",
-          "eks_cluster_not_publicly_accessible",
-          "emr_cluster_master_nodes_no_public_ip",
           "iam_aws_attached_policy_no_administrative_privileges",
           "iam_customer_attached_policy_no_administrative_privileges",
           "iam_inline_policy_no_administrative_privileges",
-          "iam_no_root_access_key",
           "iam_role_access_not_stale_to_bedrock",
-          "iam_root_hardware_mfa_enabled",
-          "iam_root_mfa_enabled",
           "iam_user_access_not_stale_to_bedrock",
-          "iam_user_access_not_stale_to_sagemaker",
-          "iam_user_accesskey_unused",
-          "iam_user_console_access_unused",
-          "iam_user_mfa_enabled_console_access",
-          "rds_instance_no_public_access",
-          "rds_snapshots_public_access",
-          "redshift_cluster_public_access",
-          "s3_account_level_public_access_blocks",
-          "s3_bucket_policy_public_write_access",
-          "s3_bucket_public_access",
-          "sagemaker_notebook_instance_without_direct_internet_access_configured"
+          "iam_user_access_not_stale_to_sagemaker"
         ],
         "azure": [
           "aks_cluster_rbac_enabled",
@@ -868,17 +845,11 @@
       },
       "checks": {
         "aws": [
-          "guardduty_ec2_malware_protection_enabled",
-          "guardduty_s3_protection_enabled"
+          "guardduty_ec2_malware_protection_enabled"
         ],
-        "azure": [
-          "defender_assessments_vm_endpoint_protection_installed"
-        ],
+        "azure": [],
         "gcp": [],
-        "alibabacloud": [
-          "ecs_instance_endpoint_protection_installed",
-          "securitycenter_vulnerability_scan_enabled"
-        ],
+        "alibabacloud": [],
         "oraclecloud": [],
         "m365": [
           "defender_atp_safe_attachments_and_docs_configured",
@@ -1037,35 +1008,12 @@
       },
       "checks": {
         "aws": [
-          "awslambda_function_not_publicly_accessible",
-          "awslambda_function_url_public",
-          "ec2_ebs_public_snapshot",
-          "ec2_instance_profile_attached",
-          "ec2_instance_public_ip",
-          "ec2_networkacl_allow_ingress_any_port",
-          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
-          "ec2_securitygroup_default_restrict_traffic",
-          "eks_cluster_not_publicly_accessible",
-          "emr_cluster_master_nodes_no_public_ip",
           "iam_aws_attached_policy_no_administrative_privileges",
           "iam_customer_attached_policy_no_administrative_privileges",
           "iam_inline_policy_no_administrative_privileges",
-          "iam_no_root_access_key",
           "iam_role_access_not_stale_to_bedrock",
-          "iam_root_hardware_mfa_enabled",
-          "iam_root_mfa_enabled",
           "iam_user_access_not_stale_to_bedrock",
-          "iam_user_access_not_stale_to_sagemaker",
-          "iam_user_accesskey_unused",
-          "iam_user_console_access_unused",
-          "iam_user_mfa_enabled_console_access",
-          "rds_instance_no_public_access",
-          "rds_snapshots_public_access",
-          "redshift_cluster_public_access",
-          "s3_account_level_public_access_blocks",
-          "s3_bucket_policy_public_write_access",
-          "s3_bucket_public_access",
-          "sagemaker_notebook_instance_without_direct_internet_access_configured"
+          "iam_user_access_not_stale_to_sagemaker"
         ],
         "azure": [
           "aks_cluster_rbac_enabled",
@@ -2054,11 +2002,7 @@
         "SourceRequirement": "NIST SP 800-171 Rev 2 3.3.4"
       },
       "checks": {
-        "aws": [
-          "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled",
-          "guardduty_is_enabled",
-          "securityhub_enabled"
-        ],
+        "aws": [],
         "azure": [],
         "gcp": [],
         "alibabacloud": [],
@@ -4081,19 +4025,7 @@
         "SourceRequirement": "NIST SP 800-171 Rev 2 3.13.11"
       },
       "checks": {
-        "aws": [
-          "cloudtrail_kms_encryption_enabled",
-          "cloudwatch_log_group_kms_encryption_enabled",
-          "dynamodb_tables_kms_cmk_encryption_enabled",
-          "ec2_ebs_volume_encryption",
-          "efs_encryption_at_rest_enabled",
-          "opensearch_service_domains_encryption_at_rest_enabled",
-          "rds_instance_storage_encrypted",
-          "s3_bucket_default_encryption",
-          "s3_bucket_secure_transport_policy",
-          "sagemaker_notebook_instance_encryption_enabled",
-          "sns_topics_kms_encryption_at_rest_enabled"
-        ],
+        "aws": [],
         "azure": [],
         "gcp": [],
         "alibabacloud": [],
@@ -4454,17 +4386,11 @@
       },
       "checks": {
         "aws": [
-          "guardduty_ec2_malware_protection_enabled",
-          "guardduty_s3_protection_enabled"
+          "guardduty_ec2_malware_protection_enabled"
         ],
-        "azure": [
-          "defender_assessments_vm_endpoint_protection_installed"
-        ],
+        "azure": [],
         "gcp": [],
-        "alibabacloud": [
-          "ecs_instance_endpoint_protection_installed",
-          "securitycenter_vulnerability_scan_enabled"
-        ],
+        "alibabacloud": [],
         "oraclecloud": [],
         "m365": [
           "defender_atp_safe_attachments_and_docs_configured",
@@ -4972,10 +4898,16 @@
       },
       "checks": {
         "aws": [],
-        "azure": [],
-        "gcp": [],
+        "azure": [
+          "vm_trusted_launch_enabled"
+        ],
+        "gcp": [
+          "compute_instance_shielded_vm_enabled"
+        ],
         "alibabacloud": [],
-        "oraclecloud": [],
+        "oraclecloud": [
+          "compute_instance_secure_boot_enabled"
+        ],
         "m365": []
       }
     },
