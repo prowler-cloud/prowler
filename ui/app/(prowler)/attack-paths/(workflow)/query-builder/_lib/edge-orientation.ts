@@ -11,7 +11,7 @@
  */
 
 // Container relationships that get reversed for proper hierarchy.
-export const CONTAINER_RELATIONS = new Set([
+const CONTAINER_RELATIONS = new Set([
   "RUNS_IN",
   "BELONGS_TO",
   "LOCATED_IN",

@@ -40,4 +40,28 @@ describe("GraphControls", () => {
 
     expect(onExport).toHaveBeenCalledTimes(1);
   });
+
+  it("uses the design-system icon size for every toolbar action", () => {
+    render(
+      <GraphControls
+        {...baseProps}
+        onExport={vi.fn()}
+        collapseAll={{ can: true, onCollapse: vi.fn() }}
+      />,
+    );
+
+    for (const name of [
+      "Collapse all groups",
+      "Zoom in",
+      "Zoom out",
+      "Fit graph to view",
+      "Export graph",
+    ]) {
+      const button = screen.getByRole("button", { name });
+      expect(button).toHaveClass("size-8");
+      expect(button).not.toHaveClass("h-8");
+      expect(button).not.toHaveClass("w-8");
+      expect(button).not.toHaveClass("p-0");
+    }
+  });
 });

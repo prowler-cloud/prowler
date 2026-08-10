@@ -1,3 +1,8 @@
+import {
+  GROUP_NODE_LABEL,
+  GROUP_PROPS,
+  OUTCOME_NODE_LABEL,
+} from "./group-graph";
 import { isProwlerFindingNode } from "./node-types";
 
 /**
@@ -75,6 +80,15 @@ export const getNodeColor = (
   labels: string[],
   properties?: Record<string, unknown>,
 ): string => {
+  if (labels.includes(OUTCOME_NODE_LABEL)) {
+    return GRAPH_OUTCOME_FILL_COLOR;
+  }
+
+  if (labels.includes(GROUP_NODE_LABEL)) {
+    const classLabel = String(properties?.[GROUP_PROPS.CLASS] ?? "");
+    return getNodeColor([classLabel]);
+  }
+
   const isFinding = isProwlerFindingNode(labels);
   if (isFinding && properties?.severity) {
     const severity = String(properties.severity).toLowerCase();
@@ -108,6 +122,19 @@ export const getNodeBorderColor = (
   labels: string[],
   properties?: Record<string, unknown>,
 ): string => {
+  if (labels.includes(OUTCOME_NODE_LABEL)) {
+    return GRAPH_OUTCOME_BORDER_COLOR;
+  }
+
+  if (labels.includes(GROUP_NODE_LABEL)) {
+    if (properties?.[GROUP_PROPS.HAS_FINDINGS]) {
+      return GRAPH_ALERT_BORDER_COLOR;
+    }
+
+    const classLabel = String(properties?.[GROUP_PROPS.CLASS] ?? "");
+    return getNodeBorderColor([classLabel]);
+  }
+
   const isFinding = isProwlerFindingNode(labels);
   if (isFinding && properties?.severity) {
     const severity = String(properties.severity).toLowerCase();
