@@ -19,8 +19,8 @@ class entra_access_review_guest_users_configured(Check):
     An access review scoped to guest users should exist, be active, recurring,
     and have primary reviewers assigned. It should also be fail-closed: if
     reviewers do not respond, access is removed
-    (``defaultDecision`` = Deny with ``autoApplyDecisionsEnabled``), with mail
-    notifications and reminders enabled.
+    (``defaultDecisionEnabled`` with ``defaultDecision`` = Deny and
+    ``autoApplyDecisionsEnabled``), with mail notifications and reminders enabled.
 
     - PASS: A compliant recurring access review scoped to guest users exists.
     - FAIL: No compliant recurring access review scoped to guest users exists.
@@ -67,11 +67,12 @@ class entra_access_review_guest_users_configured(Check):
             definition: The access review definition to evaluate.
 
         Returns:
-            bool: True if the review denies access by default, auto-applies
-            decisions, and has mail notifications and reminders enabled.
+            bool: True if the review enables and denies access by default,
+            auto-applies decisions, and has mail notifications and reminders enabled.
         """
         return (
             definition.default_decision == "Deny"
+            and definition.default_decision_enabled
             and definition.auto_apply_enabled
             and definition.mail_notifications_enabled
             and definition.reminders_enabled

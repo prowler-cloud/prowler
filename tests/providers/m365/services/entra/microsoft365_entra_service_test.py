@@ -65,6 +65,21 @@ def _get_access_review_definitions(definition):
 
 
 class TestAccessReviewDefinitions:
+    @pytest.mark.parametrize(
+        ("settings", "expected"),
+        [
+            ({"defaultDecisionEnabled": True}, True),
+            ({"defaultDecisionEnabled": False}, False),
+            ({}, False),
+        ],
+    )
+    def test_parses_default_decision_enabled(self, settings, expected):
+        definitions = _get_access_review_definitions(
+            {"id": "review-1", "settings": settings}
+        )
+
+        assert definitions[0].default_decision_enabled is expected
+
     def test_parses_recurrence_and_top_level_reviewers(self):
         definitions = _get_access_review_definitions(
             {

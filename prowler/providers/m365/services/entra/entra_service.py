@@ -1431,6 +1431,9 @@ OAuthAppInfo
                             )
                         ],
                         default_decision=settings.get("defaultDecision"),
+                        default_decision_enabled=bool(
+                            settings.get("defaultDecisionEnabled", False)
+                        ),
                         auto_apply_enabled=bool(
                             settings.get("autoApplyDecisionsEnabled", False)
                         ),
@@ -2543,6 +2546,7 @@ class AccessReviewDefinition(BaseModel):
     resource_scope_queries: List[str] = []
     principal_scope_queries: List[str] = []
     default_decision: Optional[str] = None
+    default_decision_enabled: bool = False
     auto_apply_enabled: bool = False
     mail_notifications_enabled: bool = False
     reminders_enabled: bool = False

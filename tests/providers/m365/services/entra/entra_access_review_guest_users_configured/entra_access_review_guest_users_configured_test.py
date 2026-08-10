@@ -15,6 +15,7 @@ def _definition(
     scope_query="/users?$filter=(userType eq 'Guest')",
     principal_scope_queries=None,
     default_decision="Deny",
+    default_decision_enabled=True,
     auto_apply_enabled=True,
     mail_notifications_enabled=True,
     reminders_enabled=True,
@@ -22,20 +23,23 @@ def _definition(
     recurrence_range_type="noEnd",
     has_primary_reviewers=True,
 ):
-    return AccessReviewDefinition(
-        id="ar1",
-        display_name="Guest Review",
-        status=status,
-        scope_query=scope_query,
-        principal_scope_queries=principal_scope_queries or [],
-        default_decision=default_decision,
-        auto_apply_enabled=auto_apply_enabled,
-        mail_notifications_enabled=mail_notifications_enabled,
-        reminders_enabled=reminders_enabled,
-        recurrence_pattern_type=recurrence_pattern_type,
-        recurrence_range_type=recurrence_range_type,
-        has_primary_reviewers=has_primary_reviewers,
-    )
+    definition = {
+        "id": "ar1",
+        "display_name": "Guest Review",
+        "status": status,
+        "scope_query": scope_query,
+        "principal_scope_queries": principal_scope_queries or [],
+        "default_decision": default_decision,
+        "auto_apply_enabled": auto_apply_enabled,
+        "mail_notifications_enabled": mail_notifications_enabled,
+        "reminders_enabled": reminders_enabled,
+        "recurrence_pattern_type": recurrence_pattern_type,
+        "recurrence_range_type": recurrence_range_type,
+        "has_primary_reviewers": has_primary_reviewers,
+    }
+    if default_decision_enabled is not None:
+        definition["default_decision_enabled"] = default_decision_enabled
+    return AccessReviewDefinition(**definition)
 
 
 class Test_entra_access_review_guest_users_configured:
@@ -76,6 +80,13 @@ class Test_entra_access_review_guest_users_configured:
         # Active guest review but does nothing on non-response -> FAIL.
         result = self._run(
             [_definition(default_decision="None", auto_apply_enabled=False)]
+        )
+        assert result[0].status == "FAIL"
+
+    @pytest.mark.parametrize("default_decision_enabled", [False, None])
+    def test_default_decision_not_enabled(self, default_decision_enabled):
+        result = self._run(
+            [_definition(default_decision_enabled=default_decision_enabled)]
         )
         assert result[0].status == "FAIL"
 
