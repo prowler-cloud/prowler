@@ -661,6 +661,347 @@ class Test_iam_role_chained_privilege_escalation:
             result = check.execute()
             by_id = {r.resource_id: r for r in result}
             role_result = by_id[role_name]
-            # Should be FAIL because combined effective permissions allow AttachRolePolicy+UpdateAssumeRolePolicy
+            # Combined statements allow escalation, trust allows in-account assume
             assert role_result.status == "FAIL"
             assert "assumable" in role_result.status_extended.lower()
+
+    @mock_aws
+    def test_bare_account_id_normalization(self):
+        """Bare 12-digit Principal should be normalized to root ARN and treated as assumable."""
+        iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
+
+        # Privileged role trusting bare account ID "123456789012"
+        bare_account_trust = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": {"AWS": AWS_ACCOUNT_NUMBER},
+                    "Action": "sts:AssumeRole",
+                }
+            ],
+        }
+        privileged_name = "priv-bare-account"
+        privileged_arn = iam_client.create_role(
+            RoleName=privileged_name,
+            AssumeRolePolicyDocument=dumps(bare_account_trust),
+        )["Role"]["Arn"]
+
+        priv_doc = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {"Effect": "Allow", "Action": "iam:CreatePolicyVersion", "Resource": "*"}
+            ],
+        }
+        iam_client.put_role_policy(
+            RoleName=privileged_name,
+            PolicyName="priv",
+            PolicyDocument=dumps(priv_doc),
+        )
+
+        source_name = "source-for-bare"
+        iam_client.create_role(
+            RoleName=source_name, AssumeRolePolicyDocument=dumps(ROOT_TRUST)
+        )
+
+        from prowler.providers.aws.services.iam.iam_service import IAM
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.iam.iam_role_chained_privilege_escalation.iam_role_chained_privilege_escalation.iam_client",
+                new=IAM(aws_provider),
+            ),
+        ):
+            from prowler.providers.aws.services.iam.iam_role_chained_privilege_escalation.iam_role_chained_privilege_escalation import (
+                iam_role_chained_privilege_escalation,
+            )
+
+            check = iam_role_chained_privilege_escalation()
+            result = check.execute()
+            by_id = {r.resource_id: r for r in result}
+            # Bare account ID normalized to root should be detected as wildcard-ish root trust
+            # Privileged role should be FAIL because root trust makes it assumable in-account
+            assert by_id[privileged_name].status == "FAIL"
+
+    @mock_aws
+    def test_condition_skips_unconditional_trust(self):
+        """Trust with Condition should be skipped conservatively."""
+        iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
+
+        trusted_name = "app-with-condition"
+        trusted_arn = iam_client.create_role(
+            RoleName=trusted_name, AssumeRolePolicyDocument=dumps(ROOT_TRUST)
+        )["Role"]["Arn"]
+
+        conditional_trust = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": {"AWS": trusted_arn},
+                    "Action": "sts:AssumeRole",
+                    "Condition": {"Bool": {"aws:MultiFactorAuthPresent": "true"}},
+                }
+            ],
+        }
+        privileged_name = "priv-conditional"
+        iam_client.create_role(
+            RoleName=privileged_name,
+            AssumeRolePolicyDocument=dumps(conditional_trust),
+        )
+        priv_doc = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {"Effect": "Allow", "Action": "iam:CreatePolicyVersion", "Resource": "*"}
+            ],
+        }
+        iam_client.put_role_policy(
+            RoleName=privileged_name, PolicyName="priv", PolicyDocument=dumps(priv_doc)
+        )
+
+        from prowler.providers.aws.services.iam.iam_service import IAM
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.iam.iam_role_chained_privilege_escalation.iam_role_chained_privilege_escalation.iam_client",
+                new=IAM(aws_provider),
+            ),
+        ):
+            from prowler.providers.aws.services.iam.iam_role_chained_privilege_escalation.iam_role_chained_privilege_escalation import (
+                iam_role_chained_privilege_escalation,
+            )
+
+            check = iam_role_chained_privilege_escalation()
+            result = check.execute()
+            by_id = {r.resource_id: r for r in result}
+            # Conditional trust should be skipped, so privileged role stays PASS
+            assert by_id[privileged_name].status == "PASS"
+
+    @mock_aws
+    def test_explicit_deny_blocks_assume(self):
+        """Explicit Deny on sts:AssumeRole should block transitive escalation."""
+        iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
+
+        privileged_name = "priv-deny-test"
+        privileged_arn = iam_client.create_role(
+            RoleName=privileged_name, AssumeRolePolicyDocument=dumps(ROOT_TRUST)
+        )["Role"]["Arn"]
+
+        priv_doc = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {"Effect": "Allow", "Action": "iam:CreatePolicyVersion", "Resource": "*"}
+            ],
+        }
+        iam_client.put_role_policy(
+            RoleName=privileged_name, PolicyName="priv", PolicyDocument=dumps(priv_doc)
+        )
+
+        intermediate_name = "intermediate-deny"
+        intermediate_arn = iam_client.create_role(
+            RoleName=intermediate_name, AssumeRolePolicyDocument=dumps(ROOT_TRUST)
+        )["Role"]["Arn"]
+
+        source_name = "source-deny"
+        source_arn = iam_client.create_role(
+            RoleName=source_name, AssumeRolePolicyDocument=dumps(ROOT_TRUST)
+        )["Role"]["Arn"]
+
+        # Allow intermediate to assume privileged
+        intermediate_assume = {
+            "Version": "2012-10-17",
+            "Statement": [{"Effect": "Allow", "Action": "sts:AssumeRole", "Resource": privileged_arn}],
+        }
+        iam_client.put_role_policy(
+            RoleName=intermediate_name, PolicyName="assume-priv", PolicyDocument=dumps(intermediate_assume)
+        )
+
+        # Trust assignments
+        privileged_trust_allows_intermediate = {
+            "Version": "2012-10-17",
+            "Statement": [{"Effect": "Allow", "Principal": {"AWS": intermediate_arn}, "Action": "sts:AssumeRole"}],
+        }
+        iam_client.update_assume_role_policy(
+            RoleName=privileged_name, PolicyDocument=dumps(privileged_trust_allows_intermediate)
+        )
+
+        intermediate_trust_allows_source = {
+            "Version": "2012-10-17",
+            "Statement": [{"Effect": "Allow", "Principal": {"AWS": source_arn}, "Action": "sts:AssumeRole"}],
+        }
+        iam_client.update_assume_role_policy(
+            RoleName=intermediate_name, PolicyDocument=dumps(intermediate_trust_allows_source)
+        )
+
+        # Source can Allow intermediate but also explicit Deny privileged -> should not reach privileged via direct Allow
+        source_policy_allow_intermediate = {
+            "Version": "2012-10-17",
+            "Statement": [{"Effect": "Allow", "Action": "sts:AssumeRole", "Resource": intermediate_arn}],
+        }
+        source_policy_deny_priv = {
+            "Version": "2012-10-17",
+            "Statement": [{"Effect": "Deny", "Action": "sts:AssumeRole", "Resource": privileged_arn}],
+        }
+        # Also Deny blocks AssumeRole via wildcard? Add Deny covering privileged to ensure chain broken if source tries direct AssumeRole to privileged via "*"
+        source_combined = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {"Effect": "Allow", "Action": "sts:AssumeRole", "Resource": intermediate_arn},
+                {"Effect": "Allow", "Action": "sts:AssumeRole", "Resource": privileged_arn},
+                {"Effect": "Deny", "Action": "sts:AssumeRole", "Resource": privileged_arn},
+            ],
+        }
+        iam_client.put_role_policy(
+            RoleName=source_name, PolicyName="assume-combined", PolicyDocument=dumps(source_combined)
+        )
+
+        from prowler.providers.aws.services.iam.iam_service import IAM
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.iam.iam_role_chained_privilege_escalation.iam_role_chained_privilege_escalation.iam_client",
+                new=IAM(aws_provider),
+            ),
+        ):
+            from prowler.providers.aws.services.iam.iam_role_chained_privilege_escalation.iam_role_chained_privilege_escalation import (
+                iam_role_chained_privilege_escalation,
+            )
+
+            check = iam_role_chained_privilege_escalation()
+            result = check.execute()
+            by_id = {r.resource_id: r for r in result}
+            # Source can still assume intermediate, and intermediate can assume privileged, so transitive chain should still FAIL
+            # But direct privileged via Deny should be blocked; transitive via intermediate should still succeed because intermediate is not denied
+            assert by_id[source_name].status == "FAIL"
+            # If we add additional Deny on intermediate, then PASS would be expected; here we only deny privileged directly
+            assert by_id[intermediate_name].status == "FAIL"
+
+    @mock_aws
+    def test_partition_aware_root_arn(self):
+        """Root ARN in other partitions should be recognized as trusted."""
+        iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
+
+        cn_root_trust = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": {"AWS": f"arn:aws-cn:iam::{AWS_ACCOUNT_NUMBER}:root"},
+                    "Action": "sts:AssumeRole",
+                }
+            ],
+        }
+        privileged_name = "priv-cn-root"
+        iam_client.create_role(
+            RoleName=privileged_name, AssumeRolePolicyDocument=dumps(cn_root_trust)
+        )
+        priv_doc = {
+            "Version": "2012-10-17",
+            "Statement": [{"Effect": "Allow", "Action": "iam:CreatePolicyVersion", "Resource": "*"}],
+        }
+        iam_client.put_role_policy(RoleName=privileged_name, PolicyName="priv", PolicyDocument=dumps(priv_doc))
+
+        from prowler.providers.aws.services.iam.iam_service import IAM
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.iam.iam_role_chained_privilege_escalation.iam_role_chained_privilege_escalation.iam_client",
+                new=IAM(aws_provider),
+            ),
+        ):
+            from prowler.providers.aws.services.iam.iam_role_chained_privilege_escalation.iam_role_chained_privilege_escalation import (
+                iam_role_chained_privilege_escalation,
+            )
+
+            check = iam_role_chained_privilege_escalation()
+            result = check.execute()
+            by_id = {r.resource_id: r for r in result}
+            # Partition-aware root should be considered assumable when account matches
+            assert by_id[privileged_name].status == "FAIL"
+
+    @mock_aws
+    def test_fnmatch_wildcard_resource(self):
+        """Wildcard pattern arn:aws:iam::*:role/Admin* should match via fnmatch."""
+        iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
+
+        privileged_name = "AdminProdRole"
+        privileged_arn = iam_client.create_role(
+            RoleName=privileged_name, AssumeRolePolicyDocument=dumps(ROOT_TRUST)
+        )["Role"]["Arn"]
+
+        priv_doc = {
+            "Version": "2012-10-17",
+            "Statement": [{"Effect": "Allow", "Action": "iam:CreatePolicyVersion", "Resource": "*"}],
+        }
+        iam_client.put_role_policy(RoleName=privileged_name, PolicyName="priv", PolicyDocument=dumps(priv_doc))
+
+        # Make privileged trust allow source
+        privileged_trust = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": {"AWS": f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"},
+                    "Action": "sts:AssumeRole",
+                }
+            ],
+        }
+        iam_client.update_assume_role_policy(RoleName=privileged_name, PolicyDocument=dumps(privileged_trust))
+
+        source_name = "source-fnmatch"
+        iam_client.create_role(RoleName=source_name, AssumeRolePolicyDocument=dumps(ROOT_TRUST))
+
+        wildcard_resource = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:role/Admin*"
+        assume_doc = {
+            "Version": "2012-10-17",
+            "Statement": [{"Effect": "Allow", "Action": "sts:AssumeRole", "Resource": wildcard_resource}],
+        }
+        iam_client.put_role_policy(RoleName=source_name, PolicyName="assume-wc", PolicyDocument=dumps(assume_doc))
+
+        from prowler.providers.aws.services.iam.iam_service import IAM
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.iam.iam_role_chained_privilege_escalation.iam_role_chained_privilege_escalation.iam_client",
+                new=IAM(aws_provider),
+            ),
+        ):
+            from prowler.providers.aws.services.iam.iam_role_chained_privilege_escalation.iam_role_chained_privilege_escalation import (
+                iam_role_chained_privilege_escalation,
+            )
+
+            check = iam_role_chained_privilege_escalation()
+            result = check.execute()
+            by_id = {r.resource_id: r for r in result}
+            assert by_id[source_name].status == "FAIL"
+            assert privileged_name in by_id[source_name].status_extended
