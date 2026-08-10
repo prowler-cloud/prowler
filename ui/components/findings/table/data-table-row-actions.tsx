@@ -15,10 +15,7 @@ import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { isFindingGroupMuted } from "@/lib/findings-groups";
 import { buildJiraActionLabel } from "@/lib/jira-dispatch-action";
 import { createJiraDispatchPayload } from "@/lib/jira-dispatch-selection";
-import {
-  buildFindingGroupContext,
-  buildFindingResourceContext,
-} from "@/lib/lighthouse/context/contributions";
+import { buildFindingResourceContext } from "@/lib/lighthouse/context/contributions";
 import { isCloud } from "@/lib/shared/env";
 import { getOptionalText } from "@/lib/utils";
 import type {
@@ -250,16 +247,10 @@ export function DataTableRowActions<T extends FindingRowData>({
 
   const launchSkill = useLighthouseSkillLaunch();
   const launchPrompt = useLighthousePromptLaunch();
+  // Skills are finding-level only: group rows carry check ids, not finding
+  // UUIDs, so their menu never offers the Lighthouse entries (see below).
   const buildSkillFindingItem = () =>
-    isGroup
-      ? buildFindingGroupContext({
-          id: finding.id,
-          checkId: finding.checkId ?? finding.id,
-          checkTitle: findingTitle,
-          severity: finding.severity ?? "",
-          status: finding.status ?? "",
-        })
-      : buildFindingResourceContext({ findingId: finding.id });
+    buildFindingResourceContext({ findingId: finding.id });
   const handleLaunchSkill = (skill: LighthouseSkillDefinition) => {
     launchSkill(skill, buildSkillFindingItem());
   };
@@ -307,7 +298,7 @@ export function DataTableRowActions<T extends FindingRowData>({
             onSelect={handleMuteClick}
           />
           <JiraDispatchActionItem label={jiraLabel} payload={jiraPayload} />
-          {isCloud() && (
+          {isCloud() && !isGroup && (
             <LighthouseSkillsSubmenu
               onLaunch={handleLaunchSkill}
               onSubmitPrompt={handleSubmitPrompt}

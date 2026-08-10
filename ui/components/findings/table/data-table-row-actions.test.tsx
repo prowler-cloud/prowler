@@ -189,6 +189,34 @@ describe("DataTableRowActions", () => {
     );
   });
 
+  it("hides the Lighthouse skills submenu on finding group rows", () => {
+    // Group rows carry check ids, not finding UUIDs, so the finding-level
+    // skills (and their Jira/mute follow-up actions) must not launch there.
+    isCloudMock.mockReturnValue(true);
+    render(
+      <DataTableRowActions
+        row={
+          {
+            original: {
+              id: "group-row-1",
+              rowType: "group",
+              checkId: "ecs_task_definitions_no_environment_secrets",
+              checkTitle: "ECS task definitions no environment secrets",
+              mutedCount: 0,
+              resourcesFail: 475,
+              resourcesTotal: 475,
+            },
+          } as never
+        }
+      />,
+    );
+
+    expect(screen.queryByText("Lighthouse Skills")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Triage Decision" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("opens the mute modal immediately in preparing state for finding groups", async () => {
     // Given
     const deferred = deferredPromise<string[]>();
