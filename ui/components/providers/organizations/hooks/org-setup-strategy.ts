@@ -48,9 +48,8 @@ export interface GcpOrgSetupData extends BaseOrgSetupData {
 export interface AzureOrgSetupData extends BaseOrgSetupData {
   orgType: typeof ORGANIZATION_TYPE.AZURE;
   /**
-   * Microsoft Entra tenant ID (UUID) — the external id matched on. Onboarding is
-   * always scoped to the tenant root Management Group, which the API derives
-   * from this, so there is no container to collect.
+   * Microsoft Entra tenant ID (UUID) — the external id matched on. The API derives
+   * the root Management Group from it, so there is no container to collect.
    */
   tenantId: string;
   clientId: string;
@@ -122,12 +121,10 @@ interface OrgSetupStrategy<D extends OrgSetupSubmissionData> {
 }
 
 /**
- * Discovery codes the API reports for more than one organization type and whose
- * copy has to name the hierarchy the user actually has — an Azure tenant has no
- * folders. Their wording lives on each strategy (`sharedErrorCopy`) instead of in
- * the table below, so a new organization type cannot inherit another's
- * vocabulary. Codes that read correctly for everyone (`organization_discovery_failed`)
- * stay shared.
+ * Codes reported by more than one organization type whose copy has to name the
+ * hierarchy the user actually has — an Azure tenant has no folders. Their wording
+ * lives on each strategy (`sharedErrorCopy`), never in the table below, so a new
+ * type cannot inherit another's vocabulary.
  */
 const SHARED_DISCOVERY_ERROR_CODES = ["hierarchy_depth_exceeded"] as const;
 
@@ -142,9 +139,8 @@ function toSharedErrorCode(code: string): SharedDiscoveryErrorCode | undefined {
 /**
  * Human copy for the machine codes a failed discovery reports in
  * `attributes.error`. The code decides the framing too: only some of them are
- * credential problems, so "Authentication failed…" is wrong for the rest. Codes
- * whose wording differs per organization type are not here — see
- * `SHARED_DISCOVERY_ERROR_CODES`.
+ * credential problems, so "Authentication failed…" is wrong for the rest.
+ * Per-type wording lives on the strategies — see `SHARED_DISCOVERY_ERROR_CODES`.
  */
 const DISCOVERY_ERROR_COPY: Record<string, string> = {
   azure_invalid_credentials:
@@ -186,10 +182,10 @@ function curatedDiscoveryCopy(
 }
 
 /**
- * Copy for a failed discovery, most actionable first: our curated wording for a
- * known code, then the server's own message (already display-safe) so a code
- * added after this build still says something, then the type's auth-failure copy
- * — never the raw machine code, which is a support detail.
+ * Copy for a failed discovery, most actionable first: curated wording for a known
+ * code, then the server's own message (already display-safe) so a code added after
+ * this build still says something, then the type's auth-failure copy. Never the
+ * raw machine code.
  */
 function describeDiscoveryFailure(
   code: string | undefined,
@@ -282,9 +278,9 @@ const AZURE_AUTH_FAILURE =
 const azureOrgSetupStrategy: OrgSetupStrategy<AzureOrgSetupData> = {
   orgType: ORGANIZATION_TYPE.AZURE,
   externalIdField: "tenantId",
-  // The API stores the tenant as `str(UUID(...))` — canonical lowercase — and
-  // `filter[external_id]` is an exact match, so an uppercase-typed UUID would
-  // miss its own organization on a second run and then collide on the POST.
+  // The API stores the tenant lowercased and `filter[external_id]` is an exact
+  // match, so an uppercase-typed UUID would miss its own organization on a second
+  // run and then collide on the POST.
   getExternalId: (data) => data.tenantId.trim().toLowerCase(),
   getResolvedName: (data) =>
     data.organizationName?.trim() || data.tenantId.trim(),
@@ -306,9 +302,8 @@ const azureOrgSetupStrategy: OrgSetupStrategy<AzureOrgSetupData> = {
   ingestDiscovery: (rawResult) => {
     const hierarchy = mapAzureDiscovery(rawResult as AzureDiscoveryResult);
 
-    // Like GCP, there is no StackSet-style target scoping, so the default is
-    // every ready subscription; Management Group ancestors are derived
-    // server-side.
+    // No StackSet-style target scoping, so the default is every ready
+    // subscription; Management Group ancestors are derived server-side.
     return {
       hierarchy,
       defaultSelection: getSelectableCandidateIds(hierarchy),

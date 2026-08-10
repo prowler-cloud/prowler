@@ -225,9 +225,7 @@ export interface GcpDiscoveryResult {
  * Identity here is the canonical Management Group resource ID
  * (`/providers/Microsoft.Management/managementGroups/{name}`), which is what
  * `id`/`parent_id` carry; `name` is the short segment and `display_name` the
- * human label. `root_management_group` is the Management Group the organization
- * is scoped to — always the tenant root group, which the API derives from the
- * tenant ID.
+ * human label. The root group is always the tenant root, derived by the API.
  */
 export interface AzureDiscoveredRoot {
   id: string;

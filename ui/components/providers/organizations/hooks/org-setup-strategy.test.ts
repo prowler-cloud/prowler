@@ -39,11 +39,7 @@ const SETUP_DATA = {
   },
 } as const satisfies Record<OrgFlowType, OrgSetupSubmissionData>;
 
-/**
- * The structure each flow's hierarchy is made of. A tenant has no folders and an
- * organization has no Management Groups, so copy for a code every provider
- * reports has to pick the right one.
- */
+/** The structure each flow's hierarchy is made of — a tenant has no folders. */
 const HIERARCHY_WORDING = {
   [ORGANIZATION_TYPE.AWS]: "organizational unit hierarchy",
   [ORGANIZATION_TYPE.AZURE]: "Management Group hierarchy",
@@ -51,10 +47,9 @@ const HIERARCHY_WORDING = {
 } as const satisfies Record<OrgFlowType, string>;
 
 describe("bindOrgSetupStrategy", () => {
-  // `hierarchy_depth_exceeded` is one API code for every provider. The
-  // precedence chain (curated → server message → auth failure) is covered by the
-  // submission hook's suite; what only an exhaustive per-flow check can catch is
-  // one flow being told about another cloud's structure.
+  // `hierarchy_depth_exceeded` is one API code for every provider. The precedence
+  // chain is covered by the submission hook's suite; only an exhaustive per-flow
+  // check catches one flow being told about another cloud's structure.
   it.each(ORG_FLOW_TYPES)(
     "describes %s's own hierarchy for the shared hierarchy_depth_exceeded code",
     (orgType) => {
@@ -86,10 +81,8 @@ describe("bindOrgSetupStrategy", () => {
     },
   );
 
-  // The API stores an Azure tenant as `str(UUID(...))` — canonical lowercase —
-  // and `filter[external_id]` is an exact lookup, so a tenant typed in uppercase
-  // has to reach find-or-create already folded. Unfolded, the second wizard run
-  // misses its own organization and then collides on the POST.
+  // `filter[external_id]` is an exact lookup, so an uppercase-typed tenant would
+  // miss its own organization on a second run and then collide on the POST.
   it("folds an uppercase Azure tenant ID to the API's canonical form", () => {
     const bound = bindOrgSetupStrategy({
       ...SETUP_DATA[ORGANIZATION_TYPE.AZURE],

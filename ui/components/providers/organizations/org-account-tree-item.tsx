@@ -74,15 +74,13 @@ function InertContainerNote({
  * value moves to a tooltip.
  *
  * `shortened` replaces the visible text when ellipsizing would hide everything
- * that distinguishes the value: Azure management-group ids are all prefix, so
- * every group in a tenant reads `/providers/Microsoft....`. The accessible name
- * is always the canonical value: the tooltip needs a hover, and a screen reader
- * should still get the full id.
+ * that distinguishes the value: every Azure management-group id in a tenant reads
+ * `/providers/Microsoft....`. The accessible name stays the canonical value — the
+ * tooltip needs a hover, a screen reader should not.
  *
- * `role="img"` is what makes that accessible name count — ARIA prohibits naming
- * a bare `span` (an implicit `generic`), so assistive tech is free to drop the
- * `aria-label` and read only the shortened text. Same reason `InertContainerNote`
- * above carries the role.
+ * `role="img"` is what makes that accessible name count: ARIA prohibits naming a
+ * bare `span`, so assistive tech may drop the `aria-label` and read only the
+ * shortened text. Same reason `InertContainerNote` above carries the role.
  */
 function TruncatedId({
   value,

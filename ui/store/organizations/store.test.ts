@@ -52,8 +52,7 @@ describe("useOrgSetupStore", () => {
 
   it.each([
     // Every `ORGANIZATION_TYPE` can be onboarded now, so the "no onboarding
-    // flow" case has to come from outside the enum — which is where it really
-    // comes from: this slot is rehydrated from untrusted sessionStorage.
+    // flow" case has to come from outside the enum.
     ["an organization type with no onboarding flow", "oraclecloud"],
     ["a prototype key", "__proto__"],
     ["a non-string", 42],

@@ -507,8 +507,7 @@ export const handlersForOrganizations = (
               result:
                 fx.discovery.status === "succeeded" ? fx.discovery.result : {},
               error: fx.discovery.error,
-              // Machine code and human message are separate fields; the message
-              // is only sent for the codes the API explains itself.
+              // Machine code and human message are separate fields on the wire.
               error_message: fx.discovery.errorMessage ?? null,
               inserted_at: TS,
               updated_at: TS,

@@ -143,10 +143,7 @@ export interface FixtureDiscovery {
   result: unknown;
   /** Machine error code — never user copy. */
   error: string | null;
-  /**
-   * Sanitized human message the server sends alongside the code. Optional: it
-   * only exists for codes the API decided to explain itself.
-   */
+  /** Sanitized human message the server sends alongside the code, when it has one. */
   errorMessage?: string | null;
 }
 
@@ -478,10 +475,9 @@ export const AZURE_SUBSCRIPTION_DISABLED =
   "66666666-6666-4666-8666-666666666666";
 
 /**
- * Blocked reasons Azure discovery reports. It reuses GCP's `*_conflict`
- * vocabulary for the three linkage/type conflicts and adds one of its own:
- * `subscription_not_enabled`, raised whenever `state != "Enabled"`, which is the
- * only reason that can block a subscription with no provider involved at all.
+ * Blocked reasons Azure discovery reports: GCP's `*_conflict` vocabulary for the
+ * three linkage/type conflicts, plus its own `subscription_not_enabled`, raised
+ * whenever `state != "Enabled"`.
  */
 export const AZURE_BLOCKED_REASON = {
   ORGANIZATION: "organization_conflict",
@@ -495,7 +491,7 @@ interface AzureResultOverrides {
   replaceSubscriptionIds?: string[];
 }
 
-/** Pinned to the app's wire interfaces, for the reason `GcpFixtureDiscoveryResult` is. */
+/** Pinned to the app's wire interfaces, for the same reason `GcpFixtureDiscoveryResult` is. */
 type AzureFixtureDiscoveryResult = Omit<
   AzureDiscoveryResult,
   "subscriptions"
@@ -506,11 +502,9 @@ type AzureFixtureDiscoveryResult = Omit<
 };
 
 /**
- * The Azure discovery result as the API shapes it: management groups carry
- * canonical resource IDs in `id`/`parent_id`, subscriptions are identified by
- * their UUID and parent through their group's resource ID, and `display_name` is
- * the only human label. Subscription UUIDs are long by nature, so the id-column
- * overflow case needs no special candidate here.
+ * The Azure discovery result as the API shapes it: groups carry canonical resource
+ * IDs in `id`/`parent_id`, subscriptions are identified by their UUID. Those UUIDs
+ * are long by nature, so the id-column overflow case needs no special candidate.
  */
 export const buildAzureDiscoveryResult = ({
   replaceSubscriptionIds = [],
@@ -596,8 +590,6 @@ export const buildAzureDiscoveryResult = ({
           provider_secret_state: PROVIDER_SECRET_STATE.WILL_REPLACE,
         }),
       ),
-      // Blocked with no provider and no conflict: the state check alone is
-      // enough, which is the class the linkage-conflict cases cannot cover.
       subscription(
         AZURE_SUBSCRIPTION_DISABLED,
         "Dormant Sandbox",
@@ -783,13 +775,13 @@ export const azureOnboardingFixture = (
   };
 };
 
+/** The AWS organization identifier of `awsHierarchyFixture`. */
+export const AWS_HIERARCHY_ORG_EXTERNAL_ID = "o-aws0abcdef";
+
 /**
  * A providers-page hierarchy world with a fully onboarded AWS organization
  * (two OUs, three providers). Used for the providers-table grouping tests.
  */
-/** The AWS organization identifier of `awsHierarchyFixture`. */
-export const AWS_HIERARCHY_ORG_EXTERNAL_ID = "o-aws0abcdef";
-
 export const awsHierarchyFixture = (
   overrides: Partial<OrgFixture> = {},
 ): OrgFixture => {
@@ -898,9 +890,8 @@ export const mixedHierarchyFixture = (
       kind: NODE_KIND.MANAGEMENT_GROUP,
       name: AZURE_HIERARCHY_GROUP_NAME,
       externalId: AZURE_HIERARCHY_GROUP,
-      // The tenant-root Management Group is never persisted as a node — nodes
-      // exist only for selected descendant groups and their ancestors — so it
-      // appears here as a parent id that resolves to no node row.
+      // The tenant-root Management Group is never persisted as a node, so this
+      // parent id deliberately resolves to no node row.
       parentExternalId: AZURE_ROOT_GROUP,
       organizationId: azureOrgId,
       providerIds: ["azp-1"],
@@ -988,12 +979,10 @@ export const mixedHierarchyFixture = (
 };
 
 /**
- * An `org_type` this build has no onboarding flow for. Every value of
- * `ORGANIZATION_TYPE` is onboardable now that Azure has a flow, so the
- * display-only behaviour has to be exercised through a type the enum itself does
- * not carry — which is also the real case: the enum mirrors a server-side one.
- * `oraclecloud` is a real provider type, so the provider rows underneath it still
- * render coherently.
+ * An `org_type` this build has no onboarding flow for. Every `ORGANIZATION_TYPE`
+ * value is onboardable now, so this has to come from outside the enum — which
+ * mirrors the real case, the enum tracking a server-side one. `oraclecloud` is a
+ * real provider type, so its provider rows still render coherently.
  */
 export const DISPLAY_ONLY_ORG_TYPE = "oraclecloud";
 export const DISPLAY_ONLY_ORG_NAME = "My Oracle Cloud Tenancy";

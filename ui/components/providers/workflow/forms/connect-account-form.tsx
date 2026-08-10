@@ -39,9 +39,8 @@ export interface ConnectAccountSuccessData {
 }
 
 /**
- * Provider types that offer an organization-onboarding method choice — exactly
- * the ones with an onboarding flow, so a new flow type cannot be left with the
- * single-provider form as its only path.
+ * Provider types that offer an organization-onboarding method choice: exactly the
+ * ones with an onboarding flow, so a new flow type cannot miss the fork.
  */
 function providerHasOrgMethod(
   providerType: ProviderType | undefined,

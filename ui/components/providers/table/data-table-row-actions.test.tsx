@@ -919,9 +919,8 @@ describe("DataTableRowActions", () => {
 
   it("hides Update Credentials for an organization type without an onboarding flow", async () => {
     // Given: an organization type the wizard cannot onboard (display-only).
-    // Every `ORGANIZATION_TYPE` is onboardable now, so the case comes from a
-    // value outside the enum — which is where it really comes from, the enum
-    // mirroring a server-side one.
+    // Every `ORGANIZATION_TYPE` is onboardable now, so the value comes from
+    // outside the enum.
     const user = userEvent.setup();
     const row = createOrgRow();
     (row.original as ProvidersOrganizationRow).orgType =

@@ -86,10 +86,9 @@ describe("organizations actions", () => {
   });
 
   it("rejects an organization type with no onboarding flow instead of coercing it", async () => {
-    // Given a form asking for a type this build cannot onboard. `oraclecloud` is
-    // a real provider the API can report an organization for — display supports
-    // it, onboarding does not — so it is the exact boundary a blind cast would
-    // let through.
+    // Given a type this build cannot onboard. `oraclecloud` is real — display
+    // supports it, onboarding does not — the exact boundary a blind cast lets
+    // through.
     const formData = new FormData();
     formData.set("name", "Tenancy");
     formData.set("externalId", "ocid1.tenancy.oc1..aaaa1111");

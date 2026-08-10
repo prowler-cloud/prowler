@@ -94,8 +94,7 @@ describe("getNodeLabel", () => {
 
 describe("organizationNameFallbackHint", () => {
   it("names the identifier the organization falls back to, per type", () => {
-    // Never a provider-side name: the organization is created before discovery
-    // runs, so no name held by AWS/Azure/Google Cloud is known yet.
+    // Never a provider-side name: the organization exists before discovery runs.
     expect(organizationNameFallbackHint(ORGANIZATION_TYPE.AWS)).toBe(
       "If left blank, Prowler will use the AWS organization ID.",
     );
@@ -138,7 +137,6 @@ describe("toNodeKind", () => {
     expect(toNodeKind(undefined)).toBeUndefined();
     expect(toNodeKind("")).toBeUndefined();
     expect(toNodeKind("organizational_unit")).toBeUndefined();
-    // Azure's kind is kebab-case like the others: the underscore spelling is not it.
     expect(toNodeKind("management_group")).toBeUndefined();
   });
 });

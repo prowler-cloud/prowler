@@ -172,10 +172,9 @@ describe("getProviderWizardDocsDestination", () => {
   });
 
   it("labels the Azure organizations tutorial after the wizard flow, not its page name", () => {
-    // The Azure tutorial page is named after Management Groups while the wizard
-    // flow is "Azure Organizations", so the label cannot be derived from the
-    // slug — without the map entry the header would read "Azure Management
-    // Groups Documentation".
+    // The tutorial page is named after Management Groups while the wizard flow is
+    // "Azure Organizations", so the label cannot come from the slug — the header
+    // would read "Azure Management Groups Documentation".
     const destination = getProviderWizardDocsDestination(
       DOCS_URLS.AZURE_ORGANIZATIONS,
     );

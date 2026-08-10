@@ -40,8 +40,8 @@ interface MountOptions {
 
 /**
  * Attributes a `POST /organizations` carries. `root_external_id` is deliberately
- * absent: the API derives every type's root, so a test asserting the client does
- * not send one reads it off the parsed body, not off this shape.
+ * absent: a test asserting the client sends none reads the parsed body, not this
+ * shape.
  */
 export interface OrganizationCreateAttributes {
   name?: string;
@@ -267,11 +267,7 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
 
   // --- Wizard: Azure setup step ------------------------------------------
 
-  /**
-   * Fill the Azure organization-details phase. The tenant is the only identifier
-   * collected: onboarding is always scoped to the tenant root Management Group,
-   * which the API derives from it.
-   */
+  /** Fill the Azure organization-details phase (the tenant is the only id asked for). */
   async fillAzureOrgDetails(tenantId: string, name?: string): Promise<void> {
     const tenantInput = await this.waitFor(() => this.inputByName("tenantId"));
     await this.user.fill(tenantInput, tenantId);
@@ -369,8 +365,7 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
 
   /**
    * Whether the pre-apply warning states how many already-onboarded candidates the
-   * apply would overwrite, and names them. Noun-bound per organization type: the
-   * warning saying the wrong noun is the failure this pins.
+   * apply would overwrite, and names them — in the noun this organization type uses.
    */
   private hasOverwriteWarningFor(
     count: number,
@@ -392,7 +387,7 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
     return this.hasOverwriteWarningFor(projectCount, names, "project");
   }
 
-  /** The GCP counterpart above, in Azure's noun. */
+  /** The same warning, in Azure's noun. */
   hasApplySubscriptionOverwriteWarning(
     subscriptionCount: number,
     names: string[] = [],
@@ -425,10 +420,7 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
     await this.waitForText(reason, timeoutMs);
   }
 
-  /**
-   * Whether that reason is showing — the negative half, for asserting which of
-   * the competing failure strings the user was actually given.
-   */
+  /** Whether that reason is showing — the negative half of the assertion. */
   hasDiscoveryFailureReason(reason: RegExp): boolean {
     return this.containsText(reason);
   }
@@ -484,11 +476,9 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
   }
 
   /**
-   * A container row identifies itself by its uid: a GCP folder ref, an AWS OU id,
-   * or an Azure Management Group resource id. Anchored, because it is matched
-   * against one element's own value — never the whole row, whose uid and name
-   * columns are adjacent and would run together as
-   * "…/managementGroups/archived" + "Archived".
+   * A container row's uid: a GCP folder ref, an AWS OU id, or an Azure Management
+   * Group resource id. Anchored because it is matched against one element's own
+   * value — the adjacent uid and name columns would otherwise run together.
    */
   private static readonly CONTAINER_UID =
     /^(?:folders\/\d+|ou-[\w-]+|\/providers\/Microsoft\.Management\/managementGroups\/[\w.()-]+)$/;
@@ -574,8 +564,8 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
     const row = this.containerRows.find((item) =>
       (item.textContent ?? "").includes(containerLabel),
     );
-    // The note is the icon-only `role="img"`; the id column carries the role too,
-    // so that it can name itself with the canonical id, and comes first in the row.
+    // The id column carries `role="img"` too, and comes first in the row, so the
+    // note is the one matched by its svg.
     return (
       row?.querySelector('[role="img"]:has(svg)')?.getAttribute("aria-label") ??
       null

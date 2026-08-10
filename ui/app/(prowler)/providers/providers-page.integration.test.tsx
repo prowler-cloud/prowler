@@ -165,11 +165,7 @@ const AZURE_CLIENT_ID = "99999999-9999-4999-8999-999999999999";
 const AZURE_CLIENT_SECRET = "azure-client-secret";
 const AZURE_ORG_DOCS = "prowler-cloud-azure-management-groups";
 
-/**
- * Drive a fresh Azure org onboarding up to the authentication submit. The tenant
- * is the only identifier collected: onboarding is always scoped to the tenant
- * root Management Group, which the API derives from it.
- */
+/** Drive a fresh Azure org onboarding up to the authentication submit. */
 async function authenticateAzureOrg(
   harness: ProvidersPageHarness,
   { name }: { name?: string } = {},
@@ -688,9 +684,8 @@ describe("Organization onboarding wizard", () => {
         expect(harness.hasSelectedSubscriptionCount(2, 2)).toBe(true);
         expect(harness.usesAccountWording()).toBe(false);
 
-        // The tenant is the whole identity on the wire: onboarding is only ever
-        // scoped to the tenant root Management Group, and the API derives that root
-        // itself — a client that sends one is claiming a choice it does not have.
+        // The tenant is the whole identity on the wire: the API derives the root
+        // Management Group itself, so the client must not send one.
         const created = await harness.createdOrganizationAttributes();
         expect(created?.org_type).toBe(ORGANIZATION_TYPE.AZURE);
         expect(created?.external_id).toBe(AZURE_TENANT_ID);
@@ -719,8 +714,8 @@ describe("Organization onboarding wizard", () => {
             "POST",
             "/organization-secrets",
           );
-        // The tenant lives on the organization, so repeating it inside the secret
-        // would be a second, silently divergent source of truth.
+        // The tenant lives on the organization; repeating it inside the secret
+        // would be a second source of truth.
         expect(secret?.data.attributes.secret).toEqual({
           client_id: AZURE_CLIENT_ID,
           client_secret: AZURE_CLIENT_SECRET,
@@ -772,9 +767,8 @@ describe("Organization onboarding wizard", () => {
           AZURE_GROUP_PLATFORM,
         ]);
 
-        // Every group's canonical id repeats the same ARM prefix, which is all a
-        // 176px column can show, so the id column reads the trailing Management
-        // Group name instead, keeping the canonical id as the accessible name.
+        // Every group's canonical id repeats the same ARM prefix, so the id column
+        // shows the trailing name and keeps the canonical id as its accessible name.
         expect(harness.containerIdLabel(AZURE_GROUP_ENGINEERING)).toBe(
           "engineering",
         );
@@ -811,8 +805,6 @@ describe("Organization onboarding wizard", () => {
         const harness = new ProvidersPageHarness(azureOnboardingFixture());
         await onboardAzureToSelection(harness);
 
-        // A subscription-less group still reaches the tree, and has to say so in
-        // Azure's nouns.
         expect(harness.isContainerInert(AZURE_EMPTY_GROUP_NAME)).toBe(true);
         expect(harness.inertContainerNote(AZURE_EMPTY_GROUP_NAME)).toBe(
           "No subscriptions available to select in this management group.",
@@ -835,8 +827,7 @@ describe("Organization onboarding wizard", () => {
           ),
         ).toBe(true);
 
-        // The row collapses and re-expands rather than selecting: an inert group that
-        // could not be opened would never explain itself.
+        // The row collapses and re-expands rather than selecting.
         await harness.clickContainerRow(AZURE_BLOCKED_GROUP_NAME);
         await harness.waitForTransition();
         expect(
@@ -1033,8 +1024,8 @@ describe("Organization onboarding wizard", () => {
         const harness = new ProvidersPageHarness(fixture);
         await authenticateAzureOrg(harness);
 
-        // A code we curate copy for outranks the server's own message: ours names the
-        // fix, and the framing is right — the credentials are fine here.
+        // Curated copy for a known code outranks the server's own message: ours
+        // names the fix, and the credentials are not the problem here.
         await harness.waitForDiscoveryFailureReason(
           /Grant it the Reader role at the Management Group level/,
         );
@@ -1045,7 +1036,6 @@ describe("Organization onboarding wizard", () => {
         ).toBe(false);
         await harness.waitForDiscoveryCount(1);
 
-        // Retry triggers a brand-new discovery, not a resumed poll.
         await harness.retryDiscovery();
         await harness.waitForDiscoveryCount(2);
       }, 40000);
@@ -1064,9 +1054,8 @@ describe("Organization onboarding wizard", () => {
         const harness = new ProvidersPageHarness(fixture);
         await authenticateAzureOrg(harness);
 
-        // Codes outrun the copy table, so an unmapped one must still say something
-        // specific — the sanitized server message, never the raw code, and never
-        // "authentication failed" for a problem that is not the credentials.
+        // An unmapped code must still be specific: the sanitized server message,
+        // never the raw code and never "authentication failed".
         await harness.waitForDiscoveryFailureReason(
           /Azure throttled the Management Group read for this tenant\./,
         );
@@ -1326,8 +1315,8 @@ describe("Providers page", () => {
           "PATCH",
           `/organizations/${AWS_HIERARCHY_ORG_ID}`,
         );
-        // Blank falls back to the identifier, the same rule creation applies —
-        // the action rejects an empty name outright.
+        // Same rule as creation: the action rejects an empty name, so the client
+        // substitutes the identifier.
         expect(body?.data.attributes.name).toBe(AWS_HIERARCHY_ORG_EXTERNAL_ID);
       }, 30000);
 

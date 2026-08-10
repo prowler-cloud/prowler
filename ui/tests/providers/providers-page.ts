@@ -813,8 +813,6 @@ export class ProvidersPage extends BasePage {
   }
 
   async fillAZUREProviderDetails(data: AZUREProviderData): Promise<void> {
-    // Fill the AWS provider details
-
     // Azure now offers the Management Group method, so the single-subscription
     // path goes through the method selector first (as AWS does).
     await this.selectAzureSingleSubscriptionMethod();

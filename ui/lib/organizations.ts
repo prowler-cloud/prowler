@@ -94,28 +94,25 @@ export function getNodeLabel(
 }
 
 /**
- * Azure management-group ids are canonical ARM resource ids, so every group in a
- * tenant repeats the same 48-character prefix and only the trailing name tells
- * them apart. Case-insensitive, as ARM ids are.
+ * Every management group in a tenant repeats the same ARM prefix, so only the
+ * trailing name tells them apart. Case-insensitive, as ARM ids are.
  */
 const MANAGEMENT_GROUP_ID =
   /^\/providers\/Microsoft\.Management\/managementGroups\/(.+)$/i;
 
 /**
- * The part of a node id worth reading where space is tight, or undefined when the
- * whole id already is (AWS OU ids, GCP folder refs). Presentation only — the
- * canonical id remains the node's identity, so a caller that shortens must keep
- * the full value reachable.
+ * The readable tail of a node id, or undefined when the whole id already is (AWS
+ * OU ids, GCP folder refs). Presentation only: the canonical id stays the node's
+ * identity, so a caller that shortens must keep it reachable.
  */
 export function shortenNodeId(id: string): string | undefined {
   return MANAGEMENT_GROUP_ID.exec(id)?.[1];
 }
 
 /**
- * Helper copy for the optional organization-name field. The fallback is the
- * organization's own identifier, never a name held by the provider: the
- * organization is created before discovery runs, so no provider-side name is
- * known yet. Kept here so the three setup forms cannot word it differently.
+ * Shared helper copy for the optional organization-name field. The fallback is the
+ * organization's own identifier, never a provider-side name: the organization
+ * exists before discovery runs.
  */
 export function organizationNameFallbackHint(
   orgType: OrganizationType,
