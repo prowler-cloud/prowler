@@ -16,7 +16,22 @@ import {
   MultiSelectValue,
 } from "@/components/shadcn/select/multiselect";
 import { useUrlFilters } from "@/hooks/use-url-filters";
-import { type ProviderProps, ProviderType } from "@/types/providers";
+import {
+  humanizeProviderId,
+  isKnownProviderType,
+  type ProviderProps,
+  ProviderType,
+} from "@/types/providers";
+
+/**
+ * Label for a provider type: the rich configured label for known types, a
+ * humanized id for anything the API returns outside the known set (dynamic
+ * plug-ins). Icons fall back to the generic glyph via `ProviderTypeIcon`.
+ */
+const providerTypeLabel = (type: ProviderType): string =>
+  isKnownProviderType(type)
+    ? PROVIDER_TYPE_DATA[type].label
+    : humanizeProviderId(type);
 
 /** Common props shared by both batch and instant modes. */
 interface ProviderTypeSelectorBaseProps {
@@ -88,16 +103,8 @@ export const ProviderTypeSelector = ({
   };
 
   const availableTypes = Array.from(
-    new Set(
-      providers
-        // .filter((p) => p.attributes.connection?.connected)
-        .map((p) => p.attributes.provider),
-    ),
-  )
-    .filter((type): type is ProviderType => type in PROVIDER_TYPE_DATA)
-    .sort((a, b) =>
-      PROVIDER_TYPE_DATA[a].label.localeCompare(PROVIDER_TYPE_DATA[b].label),
-    );
+    new Set(providers.map((p) => p.attributes.provider)),
+  ).sort((a, b) => providerTypeLabel(a).localeCompare(providerTypeLabel(b)));
 
   const selectedLabel = () => {
     if (selectedTypes.length === 0) return null;
@@ -108,9 +115,7 @@ export const ProviderTypeSelector = ({
           <span aria-hidden="true">
             <ProviderTypeIcon type={providerType} />
           </span>
-          <span className="truncate">
-            {PROVIDER_TYPE_DATA[providerType].label}
-          </span>
+          <span className="truncate">{providerTypeLabel(providerType)}</span>
         </span>
       );
     }
@@ -120,7 +125,7 @@ export const ProviderTypeSelector = ({
           items={(selectedTypes as ProviderType[]).map((type) => ({
             key: type,
             type,
-            tooltip: PROVIDER_TYPE_DATA[type].label,
+            tooltip: providerTypeLabel(type),
           }))}
         />
         <span className="min-w-0 truncate">
@@ -176,23 +181,24 @@ export const ProviderTypeSelector = ({
               >
                 {selectedTypes.length === 0 ? "All selected" : "Select All"}
               </div>
-              {availableTypes.map((providerType) => (
-                <MultiSelectItem
-                  key={providerType}
-                  value={providerType}
-                  badgeLabel={PROVIDER_TYPE_DATA[providerType].label}
-                  keywords={[
-                    providerType,
-                    PROVIDER_TYPE_DATA[providerType].label,
-                  ]}
-                  aria-label={`${PROVIDER_TYPE_DATA[providerType].label} Provider Type`}
-                >
-                  <span aria-hidden="true">
-                    <ProviderTypeIcon type={providerType} size={24} />
-                  </span>
-                  <span>{PROVIDER_TYPE_DATA[providerType].label}</span>
-                </MultiSelectItem>
-              ))}
+              {availableTypes.map((providerType) => {
+                const label = providerTypeLabel(providerType);
+
+                return (
+                  <MultiSelectItem
+                    key={providerType}
+                    value={providerType}
+                    badgeLabel={label}
+                    keywords={[providerType, label]}
+                    aria-label={`${label} Provider Type`}
+                  >
+                    <span aria-hidden="true">
+                      <ProviderTypeIcon type={providerType} size={24} />
+                    </span>
+                    <span>{label}</span>
+                  </MultiSelectItem>
+                );
+              })}
             </>
           ) : (
             <div className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">

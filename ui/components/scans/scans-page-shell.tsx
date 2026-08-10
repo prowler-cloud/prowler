@@ -17,6 +17,7 @@ import {
   LAUNCH_SCAN_SEARCH_PARAM,
   LAUNCH_SCAN_SEARCH_VALUE,
 } from "@/lib/scans-navigation";
+import { isCloud } from "@/lib/shared/env";
 import { buildViewFirstScanTour } from "@/lib/tours/view-first-scan.tour";
 import { useScansStore } from "@/store";
 import { SCAN_JOBS_TAB, SCAN_TAB_LABELS, type ScanJobsTab } from "@/types";
@@ -29,6 +30,7 @@ const viewFirstScanFlow = getFlowById("view-first-scan")!;
 import { CliImportBanner } from "./cli-import-banner";
 import { LaunchScanModal } from "./launch-scan-modal";
 import { ScansFilterBar } from "./scans-filter-bar";
+import { ScansProvidersEmptyState } from "./scans-providers-empty-state";
 import { useScansFilters } from "./use-scans-filters";
 
 interface ScansPageShellProps {
@@ -67,9 +69,14 @@ export function ScansPageShell({
   const hasConnectedProviders = providers.some(
     (provider) => provider.attributes.connection.connected === true,
   );
-  const isCloudEnvironment = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
+  const thereAreNoProviders = providers.length === 0;
+  // Non-blocking onboarding hint: shown when scans can't be launched (no provider, or
+  // none connected). The table still renders below, so imported scans stay visible.
+  const showProvidersHint = thereAreNoProviders || !hasConnectedProviders;
+  const isCloudEnvironment = isCloud();
   const launchDisabled = !hasManageScansPermission || !hasConnectedProviders;
-  const launchOpen = isLaunchScanModalOpen || urlLaunchOpen;
+  const launchOpen =
+    !launchDisabled && (isLaunchScanModalOpen || urlLaunchOpen);
   // When a scan is already running, the tour highlights its row (anchored in
   // ScanJobsTable); otherwise it falls back to the Launch Scan button + tabs.
   const hasInProgressScan = activeScanCount > 0;
@@ -101,17 +108,27 @@ export function ScansPageShell({
 
   return (
     <div className="flex flex-col gap-[18px]">
+      {/* Gate on the full launch condition: the tour anchors on Launch Scan, which is
+          disabled without a connected provider AND manage_scans — starting it would
+          point at an unusable button. Every start path (?onboarding= URL, active
+          sequence, navbar replay) funnels through this trigger, so gating here covers
+          them all. */}
       {/* Suspense required: OnboardingTrigger reads useSearchParams */}
-      <Suspense fallback={null}>
-        <OnboardingTrigger
-          flow={{
-            ...viewFirstScanFlow,
-            tour: buildViewFirstScanTour(hasInProgressScan),
-          }}
-        />
-      </Suspense>
+      {!launchDisabled && (
+        <Suspense fallback={null}>
+          <OnboardingTrigger
+            flow={{
+              ...viewFirstScanFlow,
+              tour: buildViewFirstScanTour(hasInProgressScan),
+            }}
+          />
+        </Suspense>
+      )}
       {/* Signals the navbar that this route's data has loaded (enables the replay icon). */}
       <PageReady />
+      {showProvidersHint && (
+        <ScansProvidersEmptyState thereIsNoProviders={thereAreNoProviders} />
+      )}
       <div
         role="group"
         aria-label="Scan filters and actions"

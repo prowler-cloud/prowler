@@ -6,7 +6,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 // CustomLink pulls the "@/lib" barrel (and next-auth with it) into the unit env.
-vi.mock("@/components/ui/custom/custom-link", () => ({
+vi.mock("@/components/shadcn/custom/custom-link", () => ({
   CustomLink: ({ href, children }: { href: string; children: ReactNode }) => (
     <a href={href}>{children}</a>
   ),
@@ -47,14 +47,14 @@ vi.mock("@/components/shadcn/spinner/spinner", () => ({
   Spinner: () => null,
 }));
 
-vi.mock("@/components/ui/entities", () => ({
+vi.mock("@/components/shadcn/entities", () => ({
   DateWithTime: ({ dateTime }: { dateTime: string | null }) => (
     <time>{dateTime ?? "-"}</time>
   ),
   EntityInfo: () => null,
 }));
 
-vi.mock("@/components/ui/table", () => ({
+vi.mock("@/components/shadcn/table", () => ({
   DataTableColumnHeader: ({ title }: { title: string }) => <span>{title}</span>,
   SeverityBadge: ({ severity }: { severity: string }) => (
     <span>{severity}</span>

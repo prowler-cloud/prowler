@@ -62,7 +62,7 @@ describe("event-reducer", () => {
     state = reduceLighthouseV2Event(state, {
       type: "tool_call.start",
       toolCallId: "tool-1",
-      toolName: "prowler_app_search_security_findings",
+      toolName: "prowler_search_security_findings",
     });
     state = reduceLighthouseV2Event(state, {
       type: "tool_call.end",
@@ -84,7 +84,7 @@ describe("event-reducer", () => {
       {
         id: "tool-1",
         type: "tool_call",
-        name: "prowler_app_search_security_findings",
+        name: "prowler_search_security_findings",
         status: "completed",
         outcome: "success",
       },

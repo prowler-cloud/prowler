@@ -1,7 +1,7 @@
 import { ClientAccordionContent } from "@/components/compliance/compliance-accordion/client-accordion-content";
 import { ComplianceAccordionRequirementTitle } from "@/components/compliance/compliance-accordion/compliance-accordion-requeriment-title";
-import { AccordionItemProps } from "@/components/ui/accordion/Accordion";
-import { FindingStatus } from "@/components/ui/table/status-finding-badge";
+import { AccordionItemProps } from "@/components/shadcn/accordion/Accordion";
+import { FindingStatus } from "@/components/shadcn/table/status-finding-badge";
 import {
   AttributesData,
   CategoryData,

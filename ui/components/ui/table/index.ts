@@ -1,9 +1,3 @@
-export * from "./data-table";
-export * from "./data-table-column-header";
-export * from "./data-table-filter-custom";
-export * from "./data-table-pagination";
-export * from "./data-table-search";
-export * from "./severity-badge";
-export * from "./status-badge";
-export * from "./status-finding-badge";
-export * from "./table";
+// Temporary re-export shim for prowler-cloud overlay imports.
+// Remove after the cloud repo migrates to @/components/shadcn paths.
+export * from "@/components/shadcn/table";

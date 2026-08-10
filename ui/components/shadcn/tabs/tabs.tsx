@@ -11,7 +11,7 @@ import {
 import { cn } from "@/lib/utils";
 
 const TRIGGER_STYLES = {
-  base: "relative inline-flex min-w-0 items-center justify-center gap-2 py-3 text-sm font-medium transition-colors disabled:pointer-events-none disabled:opacity-50 [&:not(:first-child)]:pl-4 [&:not(:last-child)]:pr-4",
+  base: "relative inline-flex min-w-0 items-center justify-center gap-2 py-3 text-sm font-medium transition-colors disabled:pointer-events-none [&:not(:first-child)]:pl-4 [&:not(:last-child)]:pr-4",
   border: "border-r border-[#E9E9F0] last:border-r-0 dark:border-[#171D30]",
   text: "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white",
   active:
@@ -73,22 +73,30 @@ interface TabsTriggerProps
   extends ComponentProps<typeof TabsPrimitive.Trigger> {
   /** Tooltip shown below the trigger — useful when the label is truncated. */
   tooltip?: ReactNode;
+  /** Content displayed next to the label without inheriting disabled opacity. */
+  adornment?: ReactNode;
 }
 
 function TabsTrigger({
   className,
   tooltip,
+  adornment,
   children,
+  disabled,
   ...props
 }: TabsTriggerProps) {
   const trigger = (
     <TabsPrimitive.Trigger
       data-slot="tabs-trigger"
       className={cn(buildTriggerClassName(), className)}
+      disabled={disabled}
       {...props}
     >
       {/* block + min-w-0 needed for truncate to render ellipsis */}
-      <span className="block min-w-0 truncate">{children}</span>
+      <span className={cn("block min-w-0 truncate", disabled && "opacity-50")}>
+        {children}
+      </span>
+      {adornment}
     </TabsPrimitive.Trigger>
   );
   if (!tooltip) return trigger;

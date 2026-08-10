@@ -1,3 +1,4 @@
+import copy
 import csv
 import io
 import json
@@ -6,7 +7,7 @@ import re
 import time
 import uuid
 from collections import defaultdict
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from datetime import UTC, datetime
 from typing import Any
 
@@ -49,6 +50,7 @@ from celery.utils.log import get_task_logger
 from config.django.base import DJANGO_FINDINGS_BATCH_SIZE
 from config.env import env
 from config.settings.celery import CELERY_DEADLOCK_ATTEMPTS
+from django.core.exceptions import ImproperlyConfigured
 from django.db import DatabaseError, IntegrityError, OperationalError, transaction
 from django.db.models import (
     Case,
@@ -99,6 +101,16 @@ COMPLIANCE_REQUIREMENT_COPY_COLUMNS = (
 FINDINGS_MICRO_BATCH_SIZE = env.int("DJANGO_FINDINGS_MICRO_BATCH_SIZE", default=3000)
 # Controls how many rows each ORM bulk_create/bulk_update call sends to Postgres.
 SCAN_DB_BATCH_SIZE = env.int("DJANGO_SCAN_DB_BATCH_SIZE", default=1000)
+# Rows per COPY statement when ingesting compliance requirement overviews. All
+# batches of a scan share one transaction/commit; the batch size only bounds the
+# client-side CSV buffer and how long each individual COPY statement runs on the
+# writer (memory footprint, lock time and slow-statement logging under load).
+COMPLIANCE_COPY_BATCH_SIZE = env.int("DJANGO_COMPLIANCE_COPY_BATCH_SIZE", default=2000)
+if COMPLIANCE_COPY_BATCH_SIZE < 1:
+    raise ImproperlyConfigured(
+        "DJANGO_COMPLIANCE_COPY_BATCH_SIZE must be a positive integer, got "
+        f"{COMPLIANCE_COPY_BATCH_SIZE}"
+    )
 # Throttle scan progress persistence: minimum progress delta (fraction 0-1)
 # between two persisted progress updates.
 PROGRESS_THROTTLE_DELTA = env.float("DJANGO_SCAN_PROGRESS_THROTTLE_DELTA", default=0.01)
@@ -356,30 +368,36 @@ def _bulk_update_resource_failed_findings_counts(
                 raise
 
 
-def _copy_compliance_requirement_rows(
-    tenant_id: str, rows: list[dict[str, Any]]
-) -> None:
-    """Stream compliance requirement rows into Postgres using COPY.
+class ComplianceRowScopeError(ValueError):
+    """A compliance requirement row does not belong to the scan being ingested."""
 
-    We leverage the admin connection (when available) to bypass the COPY + RLS
-    restriction, writing only the fields required by
-    ``ComplianceRequirementOverview``.
 
-    Args:
-        tenant_id: Target tenant UUID.
-        rows: List of row dictionaries prepared by
-            :func:`create_compliance_requirements`.
+def _compliance_requirement_rows_to_csv(
+    rows: list[dict[str, Any]], tenant_id: str, scan_id: str
+) -> io.StringIO:
+    """Serialize compliance requirement rows into a CSV buffer for COPY.
+
+    COPY runs on the admin connection, which bypasses RLS, so every row is
+    checked against the expected tenant/scan before it is written: a mismatched
+    row would otherwise be inserted verbatim into another tenant's data.
     """
-
     csv_buffer = io.StringIO()
     writer = csv.writer(csv_buffer)
 
     datetime_now = datetime.now(tz=UTC)
     for row in rows:
+        row_tenant_id = str(row.get("tenant_id"))
+        row_scan_id = str(row.get("scan_id"))
+        if row_tenant_id != tenant_id or row_scan_id != scan_id:
+            raise ComplianceRowScopeError(
+                "Compliance requirement row does not belong to the scan being "
+                f"ingested (expected tenant {tenant_id} / scan {scan_id}, got "
+                f"tenant {row_tenant_id} / scan {row_scan_id})"
+            )
         writer.writerow(
             [
                 str(row.get("id")),
-                str(row.get("tenant_id")),
+                row_tenant_id,
                 (row.get("inserted_at") or datetime_now).isoformat(),
                 row.get("compliance_id") or "",
                 row.get("framework") or "",
@@ -393,65 +411,100 @@ def _copy_compliance_requirement_rows(
                 row.get("total_checks", 0),
                 row.get("passed_findings", 0),
                 row.get("total_findings", 0),
-                str(row.get("scan_id")),
+                row_scan_id,
             ]
         )
 
     csv_buffer.seek(0)
+    return csv_buffer
+
+
+def _copy_compliance_requirement_rows(
+    tenant_id: str, scan_id: str, rows: Iterable[dict[str, Any]], batch_size: int
+) -> int:
+    """Replace a scan's compliance requirement rows using batched COPY.
+
+    We leverage the admin connection (when available) to bypass the COPY + RLS
+    restriction. The scan's DELETE and every COPY batch run on one connection
+    inside a single transaction with a single commit, so the writer takes one
+    fsync per scan instead of one per batch, and a failed ingest rolls back
+    without committing a partial delete/insert (which a retry would otherwise
+    delete again, feeding dead rows to autovacuum).
+
+    Args:
+        tenant_id: Target tenant UUID.
+        scan_id: Scan whose previous rows are replaced.
+        rows: Iterable of row dictionaries, consumed lazily batch by batch.
+        batch_size: Number of rows per COPY statement.
+
+    Returns:
+        int: total number of rows staged and committed.
+
+    Raises:
+        ComplianceRowScopeError: A row belongs to another tenant or scan.
+    """
+    # Normalized once so the per-row scope check compares like with like even if
+    # the caller passes UUID instances instead of strings.
+    tenant_id = str(tenant_id)
+    scan_id = str(scan_id)
+    total_rows = 0
+    batch_num = 0
     copy_sql = (
         "COPY compliance_requirements_overviews ("
         + ", ".join(COMPLIANCE_REQUIREMENT_COPY_COLUMNS)
         + ") FROM STDIN WITH (FORMAT CSV, DELIMITER ',', QUOTE '\"', ESCAPE '\"', NULL '\\N')"
     )
 
-    try:
-        with psycopg_connection(MainRouter.admin_db) as connection:
-            connection.autocommit = False
-            try:
-                with connection.cursor() as cursor:
-                    cursor.execute(SET_CONFIG_QUERY, [POSTGRES_TENANT_VAR, tenant_id])
-                    cursor.copy_expert(copy_sql, csv_buffer)
-                connection.commit()
-            except Exception:
-                connection.rollback()
-                raise
-    finally:
-        csv_buffer.close()
+    with psycopg_connection(MainRouter.admin_db) as connection:
+        connection.autocommit = False
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(SET_CONFIG_QUERY, [POSTGRES_TENANT_VAR, tenant_id])
+                # Idempotent re-run: clearing this scan's rows inside the same
+                # transaction keeps delete + reinsert atomic.
+                cursor.execute(
+                    "DELETE FROM compliance_requirements_overviews "
+                    "WHERE tenant_id = %s AND scan_id = %s",
+                    [tenant_id, scan_id],
+                )
+                for batch, _is_last in batched(rows, batch_size):
+                    if not batch:
+                        continue
+                    batch_num += 1
+                    csv_buffer = _compliance_requirement_rows_to_csv(
+                        batch, tenant_id, scan_id
+                    )
+                    try:
+                        cursor.copy_expert(copy_sql, csv_buffer)
+                    finally:
+                        csv_buffer.close()
+                    total_rows += len(batch)
+                    logger.info(
+                        f"Compliance COPY batch {batch_num}: staged {len(batch)} rows "
+                        f"({total_rows} total)"
+                    )
+            connection.commit()
+        except Exception:
+            connection.rollback()
+            raise
+
+    return total_rows
 
 
-def _persist_compliance_requirement_rows(
-    tenant_id: str, rows: Iterable[dict[str, Any]], batch_size: int = 10000
+def _bulk_create_compliance_requirement_rows(
+    tenant_id: str, scan_id: str, rows: Iterable[dict[str, Any]], batch_size: int
 ) -> int:
-    """Persist compliance requirement rows using batched COPY with ORM fallback.
+    """Replace a scan's compliance requirement rows via the ORM.
 
-    ``rows`` is consumed lazily in batches, so peak memory stays at ~``batch_size``
-    rows instead of the full set. A batch that fails COPY falls back to an ORM
-    ``bulk_create`` of just that batch.
-
-    Args:
-        tenant_id: Target tenant UUID.
-        rows: Iterable of row dictionaries reflecting the compliance overview
-            state for a scan.
-        batch_size: Number of rows per COPY batch (default: 10000).
-
-    Returns:
-        int: total number of rows persisted.
+    Fallback for when COPY is unavailable; the delete and every ``bulk_create``
+    share one RLS transaction so the replacement stays atomic.
     """
     total_rows = 0
-    batch_num = 0
-
-    for batch, _is_last in batched(rows, batch_size):
-        if not batch:
-            continue
-        batch_num += 1
-        try:
-            _copy_compliance_requirement_rows(tenant_id, batch)
-        except Exception as error:
-            logger.exception(
-                f"COPY bulk insert for compliance requirements batch {batch_num} "
-                "failed; falling back to ORM bulk_create for this batch",
-                exc_info=error,
-            )
+    with rls_transaction(tenant_id):
+        ComplianceRequirementOverview.objects.filter(scan_id=scan_id).delete()
+        for batch, _is_last in batched(rows, batch_size):
+            if not batch:
+                continue
             fallback_objects = [
                 ComplianceRequirementOverview(
                     id=row["id"],
@@ -473,18 +526,56 @@ def _persist_compliance_requirement_rows(
                 )
                 for row in batch
             ]
-            with rls_transaction(tenant_id):
-                ComplianceRequirementOverview.objects.bulk_create(
-                    fallback_objects, batch_size=500
-                )
-
-        total_rows += len(batch)
-        logger.info(
-            f"Compliance COPY batch {batch_num}: inserted {len(batch)} rows "
-            f"({total_rows} total)"
-        )
-
+            ComplianceRequirementOverview.objects.bulk_create(
+                fallback_objects, batch_size=500
+            )
+            total_rows += len(batch)
     return total_rows
+
+
+def _persist_compliance_requirement_rows(
+    tenant_id: str,
+    scan_id: str,
+    rows_factory: Callable[[], Iterable[dict[str, Any]]],
+    batch_size: int | None = None,
+) -> int:
+    """Persist a scan's compliance requirement rows, replacing any previous ones.
+
+    ``rows_factory`` must return a fresh row iterator on every call: the COPY
+    path consumes it lazily in batches (peak memory ~``batch_size`` rows), and
+    if COPY fails the whole ingest falls back to a single ORM transaction that
+    re-iterates the rows.
+
+    Args:
+        tenant_id: Target tenant UUID.
+        scan_id: Scan whose compliance overview rows are being replaced.
+        rows_factory: Callable returning an iterable of row dictionaries.
+        batch_size: Rows per COPY/bulk_create batch (default:
+            ``COMPLIANCE_COPY_BATCH_SIZE``).
+
+    Returns:
+        int: total number of rows persisted.
+    """
+    if batch_size is None:
+        batch_size = COMPLIANCE_COPY_BATCH_SIZE
+
+    try:
+        return _copy_compliance_requirement_rows(
+            tenant_id, scan_id, rows_factory(), batch_size
+        )
+    except ComplianceRowScopeError:
+        # Cross-tenant/scan rows are a bug in the caller, not a COPY failure:
+        # retrying through the ORM would persist the very rows we rejected.
+        raise
+    except Exception as error:
+        logger.exception(
+            "COPY bulk insert for compliance requirements failed; "
+            "falling back to ORM bulk_create",
+            exc_info=error,
+        )
+        return _bulk_create_compliance_requirement_rows(
+            tenant_id, scan_id, rows_factory(), batch_size
+        )
 
 
 def _create_compliance_summaries(
@@ -605,6 +696,45 @@ def _process_finding_micro_batch(
         scan_resource_groups_cache: Dict tracking resource group counts {(resource_group, severity): {"total", "failed", "new_failed"}}.
         group_resources_cache: Dict tracking unique resources per group {resource_group: set(resource_uids)}.
     """
+
+    def build_resource_defaults_from_finding(finding: ProwlerFinding) -> dict[str, Any]:
+        check_metadata = finding.get_metadata()
+        group = check_metadata.get("resourcegroup") or None
+        return {
+            "tenant_id": tenant_id,
+            "provider": provider_instance,
+            "uid": finding.resource_uid,
+            "region": finding.region,
+            "service": finding.service_name,
+            "type": finding.resource_type,
+            "name": finding.resource_name,
+            "groups": [group] if group else None,
+        }
+
+    def recover_resource_after_cache_miss(finding: ProwlerFinding) -> Resource:
+        resource_uid = finding.resource_uid
+        resource_instance = Resource.objects.filter(
+            tenant_id=tenant_id,
+            provider_id=provider_instance.id,
+            uid=resource_uid,
+        ).first()
+        if resource_instance is None:
+            try:
+                with transaction.atomic():
+                    resource_instance = Resource.objects.create(
+                        **build_resource_defaults_from_finding(finding)
+                    )
+            except IntegrityError:
+                resource_instance = Resource.objects.filter(
+                    tenant_id=tenant_id,
+                    provider_id=provider_instance.id,
+                    uid=resource_uid,
+                ).first()
+                if resource_instance is None:
+                    raise
+
+        return cache_resource(resource_uid, resource_instance)
+
     # Accumulate objects for bulk operations
     findings_to_create = []
     dirty_resources = {}
@@ -643,7 +773,103 @@ def _process_finding_micro_batch(
 
     # All DB writes for this micro-batch run inside ONE rls_transaction,
     # with deadlock-retry at micro-batch granularity instead of per-finding.
+    missing_cache_value = object()
     for attempt in range(CELERY_DEADLOCK_ATTEMPTS):
+        resource_cache_originals: dict[str, Resource | object] = {}
+        failed_count_originals: dict[str, int | None] = {}
+        resource_field_originals: dict[str, dict[str, Any]] = {}
+        tag_cache_original = dict(tag_cache)
+        scan_resource_cache_original = set(scan_resource_cache)
+        scan_categories_cache_original = {
+            key: value.copy() for key, value in scan_categories_cache.items()
+        }
+        scan_resource_groups_cache_original = {
+            key: value.copy() for key, value in scan_resource_groups_cache.items()
+        }
+        group_resources_cache_original = {
+            key: set(value) for key, value in group_resources_cache.items()
+        }
+
+        def cache_resource(resource_uid: str, resource_instance: Resource) -> Resource:
+            if resource_uid not in resource_cache_originals:
+                resource_cache_originals[resource_uid] = resource_cache.get(
+                    resource_uid, missing_cache_value
+                )
+            resource_cache[resource_uid] = resource_instance
+            if resource_uid not in resource_failed_findings_cache:
+                failed_count_originals[resource_uid] = None
+                resource_failed_findings_cache[resource_uid] = 0
+            return resource_instance
+
+        def snapshot_failed_count(resource_uid: str) -> None:
+            if resource_uid not in failed_count_originals:
+                failed_count_originals[resource_uid] = (
+                    resource_failed_findings_cache.get(resource_uid)
+                )
+
+        def snapshot_resource_fields(
+            resource_uid: str, resource_instance: Resource
+        ) -> None:
+            if resource_uid in resource_field_originals:
+                return
+            resource_field_originals[resource_uid] = {
+                field: copy.deepcopy(getattr(resource_instance, field))
+                for field in (
+                    "name",
+                    "metadata",
+                    "details",
+                    "partition",
+                    "region",
+                    "service",
+                    "type",
+                    "groups",
+                    "updated_at",
+                )
+            }
+
+        def restore_attempt_caches() -> None:
+            for resource_uid, original_fields in resource_field_originals.items():
+                resource_instance = resource_cache.get(resource_uid)
+                if resource_instance is None:
+                    continue
+                for field, value in original_fields.items():
+                    setattr(resource_instance, field, value)
+            for resource_uid, original_resource in resource_cache_originals.items():
+                if original_resource is missing_cache_value:
+                    resource_cache.pop(resource_uid, None)
+                else:
+                    resource_cache[resource_uid] = original_resource
+            for resource_uid, original_count in failed_count_originals.items():
+                if original_count is None:
+                    resource_failed_findings_cache.pop(resource_uid, None)
+                else:
+                    resource_failed_findings_cache[resource_uid] = original_count
+            tag_cache.clear()
+            tag_cache.update(tag_cache_original)
+            scan_resource_cache.clear()
+            scan_resource_cache.update(scan_resource_cache_original)
+            scan_categories_cache.clear()
+            scan_categories_cache.update(
+                {
+                    key: value.copy()
+                    for key, value in scan_categories_cache_original.items()
+                }
+            )
+            scan_resource_groups_cache.clear()
+            scan_resource_groups_cache.update(
+                {
+                    key: value.copy()
+                    for key, value in scan_resource_groups_cache_original.items()
+                }
+            )
+            group_resources_cache.clear()
+            group_resources_cache.update(
+                {
+                    key: set(value)
+                    for key, value in group_resources_cache_original.items()
+                }
+            )
+
         try:
             with rls_transaction(tenant_id):
                 # 1) Pre-resolve Resources in bulk
@@ -678,19 +904,8 @@ def _process_finding_micro_batch(
                         resources_to_create = []
                         for uid in missing_uids:
                             f = first_finding_per_uid[uid]
-                            check_metadata = f.get_metadata()
-                            group = check_metadata.get("resourcegroup") or None
                             resources_to_create.append(
-                                Resource(
-                                    tenant_id=tenant_id,
-                                    provider=provider_instance,
-                                    uid=uid,
-                                    region=f.region,
-                                    service=f.service_name,
-                                    type=f.resource_type,
-                                    name=f.resource_name,
-                                    groups=[group] if group else None,
-                                )
+                                Resource(**build_resource_defaults_from_finding(f))
                             )
                         Resource.objects.bulk_create(
                             resources_to_create,
@@ -711,8 +926,7 @@ def _process_finding_micro_batch(
                             }
                         )
                     for uid, r in existing_resources.items():
-                        resource_cache[uid] = r
-                        resource_failed_findings_cache.setdefault(uid, 0)
+                        cache_resource(uid, r)
 
                 # 2) Pre-resolve ResourceTags in bulk
                 batch_tag_kv: set[tuple[str, str]] = set()
@@ -758,47 +972,50 @@ def _process_finding_micro_batch(
                     resource_uid = finding.resource_uid
                     resource_instance = resource_cache.get(resource_uid)
                     if resource_instance is None:
-                        # Should be unreachable after the pre-resolve step. Defensive log.
-                        logger.error(
-                            f"Resource {resource_uid} missing from cache after pre-resolve "
-                            f"on scan {scan_instance.id}; skipping finding."
-                        )
-                        continue
+                        resource_instance = recover_resource_after_cache_miss(finding)
 
                     # Detect resource field changes (defer save until end-of-batch bulk_update).
                     check_metadata = finding.get_metadata()
                     group = check_metadata.get("resourcegroup") or None
                     updated = False
                     if finding.region and resource_instance.region != finding.region:
+                        snapshot_resource_fields(resource_uid, resource_instance)
                         resource_instance.region = finding.region
                         updated = True
                     if (
                         finding.resource_name
                         and resource_instance.name != finding.resource_name
                     ):
+                        snapshot_resource_fields(resource_uid, resource_instance)
                         resource_instance.name = finding.resource_name
                         updated = True
                     if resource_instance.service != finding.service_name:
+                        snapshot_resource_fields(resource_uid, resource_instance)
                         resource_instance.service = finding.service_name
                         updated = True
                     if resource_instance.type != finding.resource_type:
+                        snapshot_resource_fields(resource_uid, resource_instance)
                         resource_instance.type = finding.resource_type
                         updated = True
                     if resource_instance.metadata != finding.resource_metadata:
+                        snapshot_resource_fields(resource_uid, resource_instance)
                         resource_instance.metadata = json.dumps(
                             finding.resource_metadata, cls=CustomEncoder
                         )
                         updated = True
                     if resource_instance.details != finding.resource_details:
+                        snapshot_resource_fields(resource_uid, resource_instance)
                         resource_instance.details = finding.resource_details
                         updated = True
                     if resource_instance.partition != finding.partition:
+                        snapshot_resource_fields(resource_uid, resource_instance)
                         resource_instance.partition = finding.partition
                         updated = True
                     if group and (
                         not resource_instance.groups
                         or group not in resource_instance.groups
                     ):
+                        snapshot_resource_fields(resource_uid, resource_instance)
                         resource_instance.groups = (resource_instance.groups or []) + [
                             group
                         ]
@@ -860,6 +1077,7 @@ def _process_finding_micro_batch(
                         muted_reason = mute_rules_cache[finding_uid]
 
                     if status == FindingStatus.FAIL and not is_muted:
+                        snapshot_failed_count(resource_uid)
                         resource_failed_findings_cache[resource_uid] += 1
 
                     check_metadata["compliance"] = finding.compliance
@@ -885,15 +1103,19 @@ def _process_finding_micro_batch(
                         # Denormalized resource arrays populated directly on insert
                         # (was previously a separate bulk_update; saves a CASE WHEN
                         # over thousands of rows per micro-batch).
-                        resource_regions=[resource_instance.region]
-                        if resource_instance.region
-                        else [],
-                        resource_services=[resource_instance.service]
-                        if resource_instance.service
-                        else [],
-                        resource_types=[resource_instance.type]
-                        if resource_instance.type
-                        else [],
+                        resource_regions=(
+                            [resource_instance.region]
+                            if resource_instance.region
+                            else []
+                        ),
+                        resource_services=(
+                            [resource_instance.service]
+                            if resource_instance.service
+                            else []
+                        ),
+                        resource_types=(
+                            [resource_instance.type] if resource_instance.type else []
+                        ),
                     )
                     findings_to_create.append(finding_instance)
                     resource_denormalized_data.append(
@@ -1013,6 +1235,7 @@ def _process_finding_micro_batch(
                         if r is None:
                             continue
                         # Manually bump updated_at since bulk_update bypasses auto_now.
+                        snapshot_resource_fields(uid, r)
                         r.updated_at = now_utc
                         resources_to_bulk_update.append(r)
                     if resources_to_bulk_update:
@@ -1034,6 +1257,7 @@ def _process_finding_micro_batch(
             # Successful execution: leave deadlock retry loop.
             break
         except (OperationalError, IntegrityError) as db_err:
+            restore_attempt_caches()
             if attempt < CELERY_DEADLOCK_ATTEMPTS - 1:
                 logger.warning(
                     f"{'Deadlock error' if isinstance(db_err, OperationalError) else 'Integrity error'} "
@@ -1464,7 +1688,7 @@ def aggregate_findings(tenant_id: str, scan_id: str):
         )
 
     with rls_transaction(tenant_id):
-        scan_aggregations = {
+        scan_aggregations = [
             ScanSummary(
                 tenant_id=tenant_id,
                 scan_id=scan_id,
@@ -1489,9 +1713,18 @@ def aggregate_findings(tenant_id: str, scan_id: str):
             for agg in aggregation
             if agg["resources__service"] is not None
             and agg["resources__region"] is not None
-        }
-        # Upsert so re-runs (post-mute reaggregation) don't trip
-        # `unique_scan_summary`; race-safe under concurrent writers.
+        ]
+        # Needed sort so concurrent upserts acquire locks consistently
+        scan_aggregations.sort(
+            key=lambda summary: (
+                summary.tenant_id,
+                summary.scan_id,
+                summary.check_id,
+                summary.service,
+                summary.severity,
+                summary.region,
+            )
+        )
         ScanSummary.objects.bulk_create(
             scan_aggregations,
             batch_size=3000,
@@ -1699,8 +1932,10 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
                 )
 
             # Yield rows lazily (consumed batch-by-batch by COPY) so peak memory
-            # stays bounded; tally requirement_statuses in the same pass.
+            # stays bounded; tally requirement_statuses in the same pass. The
+            # ORM fallback re-iterates from scratch, so the tally resets first.
             def _iter_compliance_requirement_rows():
+                requirement_statuses.clear()
                 for region in regions:
                     region_stats = region_requirement_stats.get(region, {})
                     region_findings = findings_count_by_compliance.get(region, {})
@@ -1764,12 +1999,10 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
                                 "total_findings": total_findings,
                             }
 
-            # Idempotent re-run: clear this scan's rows before re-inserting.
-            with rls_transaction(tenant_id):
-                ComplianceRequirementOverview.objects.filter(scan_id=scan_id).delete()
-
+            # The delete of the scan's previous rows happens inside the same
+            # transaction as the inserts (see _copy_compliance_requirement_rows).
             requirements_created = _persist_compliance_requirement_rows(
-                tenant_id, _iter_compliance_requirement_rows()
+                tenant_id_str, scan_id_str, _iter_compliance_requirement_rows
             )
 
         # Create pre-aggregated summaries for fast compliance overview lookups

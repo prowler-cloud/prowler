@@ -1,10 +1,13 @@
 # Keep in sync with ui/.nvmrc.
-FROM node:24.13.0-alpine@sha256:cd6fb7efa6490f039f3471a189214d5f548c11df1ff9e5b181aa49e22c14383e AS base
+FROM node:24.18.1-alpine@sha256:f70403e87646dc51b45295f4b8b70cdad0b63d2297c4c9899119b03f7af7a6b3 AS base
 
 LABEL maintainer="https://github.com/prowler-cloud"
 
-# Patch Alpine OpenSSL runtime packages before all stages inherit the base image.
-RUN apk upgrade --no-cache libcrypto3 libssl3 && corepack enable
+# The build uses pnpm via corepack, so npm is unused — remove it (and npx) to drop
+# the bundled-npm CVE surface from every stage, incl. prod.
+# No apk upgrade: it resolves against Alpine's live repo, so the digest pin above
+# would not make the image reproducible. Move the digest forward instead.
+RUN corepack enable && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 
 # Install dependencies only when needed
 FROM base AS deps
@@ -79,12 +82,13 @@ ENV HOSTNAME="0.0.0.0"
 # Helm/K8s):
 #   - required: UI_API_BASE_URL, AUTH_URL, AUTH_SECRET (missing ⇒ fail fast at boot)
 #   - optional: UI_API_DOCS_URL
-#   - gated integrations (load only when *_ENABLE="true"; the value is then
-#     required or boot fails). Legacy names (NEXT_PUBLIC_*, POSTHOG_KEY/HOST)
-#     still activate without the flag:
-#       UI_SENTRY_ENABLE + UI_SENTRY_DSN (+ optional UI_SENTRY_ENVIRONMENT)
-#       UI_GOOGLE_TAG_MANAGER_ENABLE + UI_GOOGLE_TAG_MANAGER_ID
-#       UI_POSTHOG_ENABLE + UI_POSTHOG_KEY + UI_POSTHOG_HOST (no consumer yet)
+#   - optional: UI_CLOUD_ENABLED ("true" only in Prowler Cloud deployments)
+#   - gated integrations (load only when *_ENABLED="true"; the value is then
+#     required or boot fails). Their legacy names (NEXT_PUBLIC_SENTRY_*,
+#     NEXT_PUBLIC_GOOGLE_TAG_MANAGER_ID, POSTHOG_KEY/HOST) still work:
+#       UI_SENTRY_ENABLED + UI_SENTRY_DSN (+ optional UI_SENTRY_ENVIRONMENT)
+#       UI_GOOGLE_TAG_MANAGER_ENABLED + UI_GOOGLE_TAG_MANAGER_ID
+#       UI_POSTHOG_ENABLED + UI_POSTHOG_KEY + UI_POSTHOG_HOST (feedback survey)
 #   - reserved: REO_DEV_CLIENT_ID (no consumer yet)
 # server.js is created by next build from the standalone output
 # https://nextjs.org/docs/pages/api-reference/next-config-js/output

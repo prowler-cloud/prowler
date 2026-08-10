@@ -15,6 +15,8 @@ class SinkDatabase(Protocol):
     has a single graph, and isolation is label-based).
     """
 
+    sync_batch_size: int
+
     def init(self) -> None: ...
 
     def close(self) -> None: ...

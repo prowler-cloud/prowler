@@ -224,7 +224,6 @@ export interface OCIProviderCredential {
   userId?: string;
   fingerprint?: string;
   keyContent?: string;
-  region?: string;
 }
 
 // AlibabaCloud credential options
@@ -366,7 +365,6 @@ export class ProvidersPage extends BasePage {
   readonly ociUserIdInput: Locator;
   readonly ociFingerprintInput: Locator;
   readonly ociKeyContentInput: Locator;
-  readonly ociRegionInput: Locator;
 
   // AlibabaCloud provider form elements
   readonly alibabacloudAccountIdInput: Locator;
@@ -510,7 +508,6 @@ export class ProvidersPage extends BasePage {
     this.ociKeyContentInput = page.getByRole("textbox", {
       name: /Private Key Content/i,
     });
-    this.ociRegionInput = page.getByRole("textbox", { name: /Region/i });
 
     // AlibabaCloud provider form inputs
     this.alibabacloudAccountIdInput = page.getByRole("textbox", {
@@ -1300,9 +1297,6 @@ export class ProvidersPage extends BasePage {
     if (credentials.keyContent) {
       await this.ociKeyContentInput.fill(credentials.keyContent);
     }
-    if (credentials.region) {
-      await this.ociRegionInput.fill(credentials.region);
-    }
   }
 
   async verifyOCICredentialsPageLoaded(): Promise<void> {
@@ -1313,7 +1307,6 @@ export class ProvidersPage extends BasePage {
     await expect(this.ociUserIdInput).toBeVisible();
     await expect(this.ociFingerprintInput).toBeVisible();
     await expect(this.ociKeyContentInput).toBeVisible();
-    await expect(this.ociRegionInput).toBeVisible();
   }
 
   async verifyOCIUpdateCredentialsPageLoaded(): Promise<void> {
@@ -1324,7 +1317,6 @@ export class ProvidersPage extends BasePage {
     await expect(this.ociUserIdInput).toBeVisible();
     await expect(this.ociFingerprintInput).toBeVisible();
     await expect(this.ociKeyContentInput).toBeVisible();
-    await expect(this.ociRegionInput).toBeVisible();
   }
 
   async selectAlibabaCloudProvider(): Promise<void> {

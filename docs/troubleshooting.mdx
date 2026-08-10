@@ -4,7 +4,9 @@ title: 'Troubleshooting'
 
 import { VersionBadge } from "/snippets/version-badge.mdx"
 
-## Running `prowler` I get `[File: utils.py:15] [Module: utils] CRITICAL: path/redacted: OSError[13]`
+## Prowler CLI
+
+### Running `prowler` I get `[File: utils.py:15] [Module: utils] CRITICAL: path/redacted: OSError[13]`
 
 That is an error related to file descriptors or opened files allowed by your operating system.
 
@@ -16,13 +18,15 @@ This error is also related with a lack of system requirements. To improve perfor
 
 See section [Logging](/user-guide/cli/tutorials/logging) for further information or [contact us](/contact).
 
-## Common Issues with Docker Compose Installation
+## Prowler Local Server
+
+Common issues with the Docker Compose installation of Prowler Local Server.
 
 ### Problem adding AWS Provider using "Connect assuming IAM Role" in Docker
 
 See [GitHub Issue #7745](https://github.com/prowler-cloud/prowler/issues/7745) for more details.
 
-When running Prowler App via Docker, you may encounter errors such as `Provider not set`, `AWS assume role error - Unable to locate credentials`, or `Provider has no secret` when trying to add an AWS Provider using the "Connect assuming IAM Role" option. This typically happens because the container does not have access to the necessary AWS credentials or profiles.
+When running Prowler Local Server via Docker, you may encounter errors such as `Provider not set`, `AWS assume role error - Unable to locate credentials`, or `Provider has no secret` when trying to add an AWS Provider using the "Connect assuming IAM Role" option. This typically happens because the container does not have access to the necessary AWS credentials or profiles.
 
 **Workaround:**
 
@@ -53,7 +57,7 @@ AWS_PROFILE=prowler-profile
 
 ### Scans Complete but Reports Are Missing or Compliance Data Is Empty (`Too many open files` Error)
 
-When running Prowler App via Docker Compose, scans may complete successfully but reports are not available for download, compliance data shows as empty, or 404 errors appear when trying to access scan reports. Checking the `worker` container logs may reveal errors like `[Errno 24] Too many open files`.
+When running Prowler Local Server via Docker Compose, scans may complete successfully but reports are not available for download, compliance data shows as empty, or 404 errors appear when trying to access scan reports. Checking the `worker` container logs may reveal errors like `[Errno 24] Too many open files`.
 
 This issue occurs because the default file descriptor limits in Docker containers are too low for Prowler's operations. The default `docker-compose.yml` already includes `ulimits` configuration with `nofile` set to `65536` for the `worker` and `worker-beat` services to prevent this issue.
 
@@ -87,7 +91,7 @@ docker compose up -d
 
 <VersionBadge version="5.31.0" />
 
-When Prowler App runs self-hosted on a machine or Kubernetes node with many CPUs,
+When Prowler Local Server runs on a machine or Kubernetes node with many CPUs,
 the Celery worker may create one prefork process per detected CPU if concurrency
 is not configured explicitly. Each process loads the SDK runtime and cloud
 provider clients, so idle memory can be high and worker containers can be
@@ -196,7 +200,7 @@ A fix addressing this permission issue is being evaluated in [PR #9953](https://
 
 ### Scan Stuck in Executing State After Worker Crash
 
-When running Prowler App via Docker Compose, a scan may remain indefinitely in the `executing` state if the worker process crashes (for example, due to an Out of Memory condition) before it can update the scan status. Since it is not currently possible to cancel a scan in `executing` state through the UI, the workaround is to manually update the scan record in the database.
+When running Prowler Local Server via Docker Compose, a scan may remain indefinitely in the `executing` state if the worker process crashes (for example, due to an Out of Memory condition) before it can update the scan status. Since it is not currently possible to cancel a scan in `executing` state through the UI, the workaround is to manually update the scan record in the database.
 
 **Root Cause:**
 

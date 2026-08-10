@@ -12,11 +12,21 @@ import { AuthDivider } from "@/components/auth/oss/auth-divider";
 import { AuthFooterLink } from "@/components/auth/oss/auth-footer-link";
 import { AuthLayout } from "@/components/auth/oss/auth-layout";
 import { SocialButtons } from "@/components/auth/oss/social-buttons";
-import { Button } from "@/components/shadcn";
-import { useToast } from "@/components/ui";
-import { CustomInput } from "@/components/ui/custom";
-import { Form } from "@/components/ui/form";
-import { getSafeCallbackPath } from "@/lib/auth-callback-url";
+import {
+  Button,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+  useToast,
+} from "@/components/shadcn";
+import { CustomInput } from "@/components/shadcn/custom";
+import { Form } from "@/components/shadcn/form";
+import {
+  appendAttributionToCallbackPath,
+  getSafeCallbackPath,
+} from "@/lib/auth-callback-url";
+import { stripPasswordManagerHighlight } from "@/lib/password-manager";
+import { extractUtmParams } from "@/lib/utm";
 import { SignInFormData, signInSchema } from "@/types";
 
 export const SignInForm = ({
@@ -34,6 +44,10 @@ export const SignInForm = ({
   const searchParams = useSearchParams();
   const { toast } = useToast();
   const callbackUrl = getSafeCallbackPath(searchParams, "callbackUrl");
+  const socialCallbackUrl = appendAttributionToCallbackPath(
+    callbackUrl,
+    extractUtmParams(searchParams),
+  );
 
   useEffect(() => {
     const samlError = searchParams.get("sso_saml_failed");
@@ -141,12 +155,22 @@ export const SignInForm = ({
     }
   };
 
-  const title = isSamlMode ? "Sign in with SAML SSO" : "Sign in";
+  const title = isSamlMode ? "Sign in with SAML SSO" : "Welcome back";
 
   return (
-    <AuthLayout title={title}>
+    <AuthLayout
+      title={title}
+      footer={
+        <AuthFooterLink
+          text="Need to create an account?"
+          linkText="Sign up"
+          href="/sign-up"
+        />
+      }
+    >
       <Form {...form}>
         <form
+          ref={stripPasswordManagerHighlight}
           noValidate
           method="post"
           className="flex flex-col gap-4"
@@ -177,39 +201,48 @@ export const SignInForm = ({
 
       <AuthDivider />
 
-      <div className="flex flex-col gap-2">
+      <div className="flex gap-2">
         {!isSamlMode && (
           <SocialButtons
             googleAuthUrl={googleAuthUrl}
             githubAuthUrl={githubAuthUrl}
-            callbackUrl={callbackUrl}
+            callbackUrl={socialCallbackUrl}
             isGoogleOAuthEnabled={isGoogleOAuthEnabled}
             isGithubOAuthEnabled={isGithubOAuthEnabled}
           />
         )}
-        <Button
-          variant="outline"
-          className="w-full gap-2"
-          onClick={() => {
-            form.setValue("isSamlMode", !isSamlMode);
-          }}
-        >
-          {!isSamlMode && (
-            <Icon
-              className="text-default-500"
-              icon="mdi:shield-key"
-              width={24}
-            />
-          )}
-          {isSamlMode ? "Back" : "Continue with SAML SSO"}
-        </Button>
+        {isSamlMode ? (
+          <Button
+            variant="outline"
+            className="flex-1"
+            onClick={() => {
+              form.setValue("isSamlMode", false);
+            }}
+          >
+            Back
+          </Button>
+        ) : (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                aria-label="Continue with SAML SSO"
+                className="flex-1"
+                onClick={() => {
+                  form.setValue("isSamlMode", true);
+                }}
+              >
+                <Icon
+                  className="text-text-neutral-tertiary"
+                  icon="mdi:shield-key"
+                  width={24}
+                />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top">Continue with SAML SSO</TooltipContent>
+          </Tooltip>
+        )}
       </div>
-
-      <AuthFooterLink
-        text="Need to create an account?"
-        linkText="Sign up"
-        href="/sign-up"
-      />
     </AuthLayout>
   );
 };

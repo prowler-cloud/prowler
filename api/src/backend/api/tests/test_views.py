@@ -3,9 +3,11 @@ import io
 import json
 import os
 import tempfile
+from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
+from threading import Event, Lock
 from types import SimpleNamespace
 from unittest.mock import ANY, MagicMock, Mock, patch
 from urllib.parse import parse_qs, urlparse
@@ -17,10 +19,12 @@ from allauth.account.models import EmailAddress
 from allauth.socialaccount.models import SocialAccount, SocialApp
 from api.attack_paths import (
     AttackPathsQueryDefinition,
+    AttackPathsQueryOutcome,
     AttackPathsQueryParameterDefinition,
 )
 from api.compliance import get_compliance_frameworks
 from api.db_router import MainRouter
+from api.db_utils import rls_transaction
 from api.models import (
     AttackSurfaceOverview,
     ComplianceOverviewSummary,
@@ -65,6 +69,7 @@ from api.v1.views import (
 )
 from botocore.exceptions import ClientError, NoCredentialsError
 from celery import states
+from celery.utils.saferepr import saferepr
 from conftest import (
     API_JSON_CONTENT_TYPE,
     TEST_PASSWORD,
@@ -73,8 +78,9 @@ from conftest import (
     today_after_n_days,
 )
 from django.conf import settings
-from django.db import connection
+from django.db import close_old_connections, connection, connections
 from django.db.models import Count
+from django.db.models.signals import pre_delete
 from django.http import JsonResponse
 from django.test import RequestFactory
 from django.test.utils import CaptureQueriesContext
@@ -512,6 +518,50 @@ class TestUserViewSet:
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert error_field in response.json()["errors"][0]["source"]["pointer"]
+
+
+@pytest.mark.requires_test_admin_alias
+@pytest.mark.django_db(transaction=True, databases=["default", "admin"])
+class TestTenantDeletionTransactions:
+    @patch("api.v1.views.delete_tenant_task.apply_async")
+    def test_delete_rolls_back_memberships_when_user_cleanup_fails(
+        self,
+        delete_tenant_mock,
+        authenticated_client,
+        tenants_fixture,
+    ):
+        assert connections["default"] is not connections["admin"]
+
+        _, tenant, _ = tenants_fixture
+        exclusive_user = User.objects.create_user(
+            name="exclusive user",
+            password=TEST_PASSWORD,
+            email="exclusive-user@example.com",
+        )
+        membership = Membership.objects.create(
+            user=exclusive_user,
+            tenant=tenant,
+            role=Membership.RoleChoices.MEMBER,
+        )
+
+        def fail_user_cleanup(*, instance, **kwargs):
+            if instance.pk == exclusive_user.pk:
+                raise RuntimeError("Simulated user cleanup failure.")
+
+        pre_delete.connect(fail_user_cleanup, sender=User)
+        try:
+            with (
+                patch.object(MainRouter, "admin_db", "admin"),
+                pytest.raises(RuntimeError, match=r"Simulated user cleanup failure\."),
+            ):
+                authenticated_client.delete(
+                    reverse("tenant-detail", kwargs={"pk": tenant.id})
+                )
+        finally:
+            pre_delete.disconnect(fail_user_cleanup, sender=User)
+
+        assert Membership.objects.using("admin").filter(pk=membership.pk).exists()
+        delete_tenant_mock.assert_not_called()
 
 
 @pytest.mark.django_db
@@ -2917,6 +2967,48 @@ class TestProviderGroupViewSet:
 
 @pytest.mark.django_db
 class TestProviderSecretViewSet:
+    @staticmethod
+    def _oraclecloud_secret(**overrides):
+        secret = {
+            "user": "ocid1.user.oc1..aaaaaaaakldibrbov4ubh25aqdeiroklxjngwka7u6w7no3glmdq3n5sxtkq",
+            "fingerprint": "aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99",
+            "key_content": "test-key-content",
+            "tenancy": "ocid1.tenancy.oc1..aaaaaaaa3dwoazoox4q7wrvriywpokp5grlhgnkwtyt6dmwyou7no6mdmzda",
+        }
+        secret.update(overrides)
+        return secret
+
+    def _create_oraclecloud_secret(
+        self,
+        authenticated_client,
+        oraclecloud_provider,
+        secret,
+        name="OCI Secret",
+    ):
+        data = {
+            "data": {
+                "type": "provider-secrets",
+                "attributes": {
+                    "name": name,
+                    "secret_type": ProviderSecret.TypeChoices.STATIC,
+                    "secret": secret,
+                },
+                "relationships": {
+                    "provider": {
+                        "data": {
+                            "type": "providers",
+                            "id": str(oraclecloud_provider.id),
+                        }
+                    }
+                },
+            }
+        }
+        return authenticated_client.post(
+            reverse("providersecret-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+
     def test_provider_secrets_list(self, authenticated_client, provider_secret_fixture):
         response = authenticated_client.get(reverse("providersecret-list"))
         assert response.status_code == status.HTTP_200_OK
@@ -3076,7 +3168,6 @@ current-context: test-context
                     "fingerprint": "aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99",
                     "key_content": "-----BEGIN RSA PRIVATE KEY-----\ntest-key-content\n-----END RSA PRIVATE KEY-----",
                     "tenancy": "ocid1.tenancy.oc1..aaaaaaaa3dwoazoox4q7wrvriywpokp5grlhgnkwtyt6dmwyou7no6mdmzda",
-                    "region": "us-ashburn-1",
                 },
             ),
             # OCI with API key credentials (with key_file)
@@ -3088,7 +3179,6 @@ current-context: test-context
                     "fingerprint": "aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99",
                     "key_file": "/path/to/oci_api_key.pem",
                     "tenancy": "ocid1.tenancy.oc1..aaaaaaaa3dwoazoox4q7wrvriywpokp5grlhgnkwtyt6dmwyou7no6mdmzda",
-                    "region": "us-ashburn-1",
                 },
             ),
             # OCI with API key credentials (with passphrase)
@@ -3100,7 +3190,6 @@ current-context: test-context
                     "fingerprint": "aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99",
                     "key_content": "-----BEGIN RSA PRIVATE KEY-----\ntest-encrypted-key\n-----END RSA PRIVATE KEY-----",
                     "tenancy": "ocid1.tenancy.oc1..aaaaaaaa3dwoazoox4q7wrvriywpokp5grlhgnkwtyt6dmwyou7no6mdmzda",
-                    "region": "us-ashburn-1",
                     "pass_phrase": "my-secure-passphrase",
                 },
             ),
@@ -3257,6 +3346,103 @@ current-context: test-context
             str(provider_secret.provider.id)
             == data["data"]["relationships"]["provider"]["data"]["id"]
         )
+
+    def test_provider_secrets_create_oraclecloud_without_region_stores_no_region(
+        self,
+        authenticated_client,
+        oraclecloud_provider,
+    ):
+        response = self._create_oraclecloud_secret(
+            authenticated_client,
+            oraclecloud_provider,
+            self._oraclecloud_secret(),
+        )
+
+        assert response.status_code == status.HTTP_201_CREATED
+        provider_secret = ProviderSecret.objects.get()
+        assert "region" not in provider_secret.secret
+
+    def test_provider_secrets_create_oraclecloud_accepts_and_ignores_region(
+        self,
+        authenticated_client,
+        oraclecloud_provider,
+    ):
+        response = self._create_oraclecloud_secret(
+            authenticated_client,
+            oraclecloud_provider,
+            self._oraclecloud_secret(
+                key_content="  test-key-content  ", region=" us-ashburn-1 "
+            ),
+        )
+
+        assert response.status_code == status.HTTP_201_CREATED
+        provider_secret = ProviderSecret.objects.get()
+        assert provider_secret.secret["key_content"] == "test-key-content"
+        assert "region" not in provider_secret.secret
+
+    def test_provider_secrets_update_oraclecloud_without_region_stores_no_region(
+        self,
+        authenticated_client,
+        oraclecloud_provider,
+    ):
+        create_response = self._create_oraclecloud_secret(
+            authenticated_client,
+            oraclecloud_provider,
+            self._oraclecloud_secret(),
+        )
+        provider_secret = ProviderSecret.objects.get(
+            id=create_response.json()["data"]["id"]
+        )
+        data = {
+            "data": {
+                "type": "provider-secrets",
+                "id": str(provider_secret.id),
+                "attributes": {"secret": self._oraclecloud_secret()},
+            }
+        }
+
+        response = authenticated_client.patch(
+            reverse("providersecret-detail", kwargs={"pk": provider_secret.id}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        provider_secret.refresh_from_db()
+        assert "region" not in provider_secret.secret
+
+    def test_provider_secrets_update_oraclecloud_accepts_and_ignores_region(
+        self,
+        authenticated_client,
+        oraclecloud_provider,
+    ):
+        create_response = self._create_oraclecloud_secret(
+            authenticated_client,
+            oraclecloud_provider,
+            self._oraclecloud_secret(),
+        )
+        provider_secret = ProviderSecret.objects.get(
+            id=create_response.json()["data"]["id"]
+        )
+        data = {
+            "data": {
+                "type": "provider-secrets",
+                "id": str(provider_secret.id),
+                "attributes": {
+                    "secret": self._oraclecloud_secret(region=" us-ashburn-1 ")
+                },
+            }
+        }
+
+        response = authenticated_client.patch(
+            reverse("providersecret-detail", kwargs={"pk": provider_secret.id}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        provider_secret.refresh_from_db()
+        assert "region" not in provider_secret.secret
 
     @pytest.mark.parametrize(
         "attributes, error_code, error_pointer",
@@ -4907,10 +5093,59 @@ class TestTaskViewSet:
             reverse("task-detail", kwargs={"pk": task1.id}),
         )
         assert response.status_code == status.HTTP_200_OK
+        assert response.json()["data"]["attributes"]["task_args"] == {
+            "kwarg1": "value1"
+        }
         assert (
             response.json()["data"]["attributes"]["name"]
             == task1.task_runner_task.task_name
         )
+
+    def test_tasks_retrieve_hides_tenant_id(
+        self, authenticated_client, tasks_fixture, tenants_fixture
+    ):
+        task, *_ = tasks_fixture
+        task.task_runner_task.task_kwargs = json.dumps(
+            repr(
+                {
+                    "tenant_id": str(tenants_fixture[0].id),
+                    "enabled": True,
+                    "scan_id": None,
+                    "label": "True North",
+                }
+            )
+        )
+        task.task_runner_task.save(update_fields=["task_kwargs"])
+
+        response = authenticated_client.get(
+            reverse("task-detail", kwargs={"pk": task.id}),
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["data"]["attributes"]["task_args"] == {
+            "enabled": True,
+            "scan_id": None,
+            "label": "True North",
+        }
+
+    def test_tasks_retrieve_with_truncated_kwargs_returns_empty_task_args(
+        self, authenticated_client, tasks_fixture
+    ):
+        task, *_ = tasks_fixture
+        kwargs_repr = saferepr(
+            {"finding_ids": [str(uuid4()) for _ in range(30)]}, maxlen=1024
+        )
+        assert "..." in kwargs_repr
+        task.task_runner_task.task_kwargs = json.dumps(kwargs_repr)
+        task.task_runner_task.save(update_fields=["task_kwargs"])
+
+        response = authenticated_client.get(
+            reverse("task-detail", kwargs={"pk": task.id}),
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.headers["Content-Type"] == API_JSON_CONTENT_TYPE
+        assert response.json()["data"]["attributes"]["task_args"] == {}
 
     def test_tasks_invalid_retrieve(self, authenticated_client):
         response = authenticated_client.get(
@@ -5198,6 +5433,72 @@ class TestAttackPathsScanViewSet:
         assert payload[0]["id"] == "aws-rds"
         assert payload[0]["attributes"]["name"] == "RDS inventory"
         assert payload[0]["attributes"]["parameters"][0]["name"] == "ip"
+
+    def test_attack_paths_queries_expose_outcome(
+        self,
+        authenticated_client,
+        aws_provider,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        provider = aws_provider
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+        )
+
+        definitions = [
+            AttackPathsQueryDefinition(
+                id="aws-lambda-passrole",
+                name="Lambda passrole",
+                short_description="Pass a role to a new Lambda function.",
+                description="Pass a role to a new Lambda function and run code as it.",
+                provider=provider.provider,
+                cypher="MATCH (n) RETURN n",
+                outcome=AttackPathsQueryOutcome.CODE_EXECUTION,
+            ),
+            AttackPathsQueryDefinition(
+                id="aws-rds-inventory",
+                name="RDS inventory",
+                short_description="List account RDS assets.",
+                description="List account RDS assets.",
+                provider=provider.provider,
+                cypher="MATCH (n) RETURN n",
+                outcome=AttackPathsQueryOutcome.RESOURCE_INVENTORY,
+            ),
+            AttackPathsQueryDefinition(
+                id="aws-no-outcome",
+                name="No outcome",
+                short_description="A query without an outcome.",
+                description="A query without an outcome.",
+                provider=provider.provider,
+                cypher="MATCH (n) RETURN n",
+            ),
+        ]
+
+        with patch("api.v1.views.get_queries_for_provider", return_value=definitions):
+            response = authenticated_client.get(
+                reverse(
+                    "attack-paths-scans-queries", kwargs={"pk": attack_paths_scan.id}
+                )
+            )
+
+        assert response.status_code == status.HTTP_200_OK
+        outcomes = {
+            item["id"]: item["attributes"]["outcome"]
+            for item in response.json()["data"]
+        }
+        assert outcomes["aws-lambda-passrole"] == {
+            "kind": "code_execution",
+            "label": "Code execution",
+            "partial": False,
+        }
+        assert outcomes["aws-rds-inventory"] == {
+            "kind": "resource_inventory",
+            "label": "Resource inventory",
+            "partial": True,
+        }
+        assert outcomes["aws-no-outcome"] is None
 
     def test_attack_paths_queries_returns_404_when_catalog_missing(
         self,
@@ -9435,20 +9736,22 @@ class TestUserRoleRelationshipViewSet:
         assert added_role_ids.issubset(relationship_role_ids)
 
     def test_create_relationship_already_exists(
-        self, authenticated_client, roles_fixture, create_test_user
+        self, authenticated_client, roles_fixture, create_test_user_rbac_no_roles
     ):
-        # Only add Role One (which has manage_account=True) to ensure
-        # the second request has permission to add roles
         data = {
             "data": [
-                {"type": "roles", "id": str(roles_fixture[0].id)},
+                {"type": "roles", "id": str(role.id)} for role in roles_fixture[:2]
             ]
         }
-        authenticated_client.post(
-            reverse("user-roles-relationship", kwargs={"pk": create_test_user.id}),
+        setup_response = authenticated_client.post(
+            reverse(
+                "user-roles-relationship",
+                kwargs={"pk": create_test_user_rbac_no_roles.id},
+            ),
             data=data,
             content_type="application/vnd.api+json",
         )
+        assert setup_response.status_code == status.HTTP_204_NO_CONTENT
 
         data = {
             "data": [
@@ -9456,7 +9759,10 @@ class TestUserRoleRelationshipViewSet:
             ]
         }
         response = authenticated_client.post(
-            reverse("user-roles-relationship", kwargs={"pk": create_test_user.id}),
+            reverse(
+                "user-roles-relationship",
+                kwargs={"pk": create_test_user_rbac_no_roles.id},
+            ),
             data=data,
             content_type="application/vnd.api+json",
         )
@@ -9478,9 +9784,15 @@ class TestUserRoleRelationshipViewSet:
             content_type="application/vnd.api+json",
         )
         assert response.status_code == status.HTTP_204_NO_CONTENT
-        relationships = UserRoleRelationship.objects.filter(user=create_test_user.id)
+        tenant = roles_fixture[2].tenant
+        relationships = UserRoleRelationship.objects.filter(
+            user=create_test_user.id, tenant=tenant
+        )
         assert relationships.count() == 1
         assert {rel.role.id for rel in relationships} == {roles_fixture[2].id}
+        assert (
+            UserRoleRelationship.objects.filter(user=create_test_user.id).count() == 2
+        )
 
         data = {
             "data": [
@@ -9494,12 +9806,66 @@ class TestUserRoleRelationshipViewSet:
             content_type="application/vnd.api+json",
         )
         assert response.status_code == status.HTTP_204_NO_CONTENT
-        relationships = UserRoleRelationship.objects.filter(user=create_test_user.id)
+        relationships = UserRoleRelationship.objects.filter(
+            user=create_test_user.id, tenant=tenant
+        )
         assert relationships.count() == 2
         assert {rel.role.id for rel in relationships} == {
             roles_fixture[1].id,
             roles_fixture[2].id,
         }
+        assert (
+            UserRoleRelationship.objects.filter(user=create_test_user.id).count() == 3
+        )
+
+    def test_partial_update_relationship_preserves_foreign_tenant_roles(
+        self, authenticated_client, roles_fixture, tenants_fixture
+    ):
+        tenant_a, tenant_b, _ = tenants_fixture
+        tenant_a_role = roles_fixture[1]
+        replacement_role = roles_fixture[2]
+        foreign_role = Role.objects.create(
+            name=f"foreign-role-{uuid4()}",
+            tenant=tenant_b,
+            manage_users=False,
+            manage_account=False,
+            manage_billing=False,
+            manage_providers=False,
+            manage_integrations=False,
+            manage_scans=False,
+            unlimited_visibility=False,
+        )
+        shared_user = User.objects.create_user(
+            name="shared_user",
+            email=f"shared-user-{uuid4()}@prowler.com",
+            password="TmpPass123@",
+        )
+        Membership.objects.create(user=shared_user, tenant=tenant_a)
+        Membership.objects.create(user=shared_user, tenant=tenant_b)
+        UserRoleRelationship.objects.create(
+            user=shared_user, role=tenant_a_role, tenant=tenant_a
+        )
+        UserRoleRelationship.objects.create(
+            user=shared_user, role=foreign_role, tenant=tenant_b
+        )
+
+        data = {"data": [{"type": "roles", "id": str(replacement_role.id)}]}
+        response = authenticated_client.patch(
+            reverse("user-roles-relationship", kwargs={"pk": shared_user.id}),
+            data=data,
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        tenant_a_relationships = UserRoleRelationship.objects.filter(
+            user=shared_user, tenant=tenant_a
+        )
+        assert tenant_a_relationships.count() == 1
+        assert {rel.role_id for rel in tenant_a_relationships} == {replacement_role.id}
+        assert UserRoleRelationship.objects.filter(
+            user=shared_user, tenant=tenant_b, role=foreign_role
+        ).exists()
+        assert UserRoleRelationship.objects.filter(user=shared_user).count() == 2
 
     def test_destroy_relationship_other_user(
         self, authenticated_client, roles_fixture, create_test_user, tenants_fixture
@@ -13245,6 +13611,73 @@ class TestIntegrationViewSet:
                 f"Expected type '{expected_type}' not found in included data"
             )
 
+    # Serializing a Jira integration reads `configuration` to add the domain from the
+    # credentials, and a sparse fieldset can leave that field out of the representation
+
+    def test_integrations_list_sparse_fields_without_configuration(
+        self, authenticated_client, jira_integration_fixture
+    ):
+        response = authenticated_client.get(
+            reverse("integration-list"),
+            {"fields[integrations]": "enabled,integration_type"},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        attributes = response.json()["data"][0]["attributes"]
+        assert sorted(attributes.keys()) == ["enabled", "integration_type"]
+
+    def test_integrations_retrieve_sparse_fields_without_configuration(
+        self, authenticated_client, jira_integration_fixture
+    ):
+        response = authenticated_client.get(
+            reverse("integration-detail", kwargs={"pk": jira_integration_fixture.id}),
+            {"fields[integrations]": "enabled,integration_type"},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert "configuration" not in response.json()["data"]["attributes"]
+
+    def test_integrations_partial_update_sparse_fields_without_configuration(
+        self, authenticated_client, jira_integration_fixture
+    ):
+        data = {
+            "data": {
+                "type": "integrations",
+                "id": str(jira_integration_fixture.id),
+                "attributes": {"enabled": False},
+            }
+        }
+
+        url = reverse("integration-detail", kwargs={"pk": jira_integration_fixture.id})
+        response = authenticated_client.patch(
+            f"{url}?fields[integrations]=enabled,integration_type",
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert "configuration" not in response.json()["data"]["attributes"]
+        with rls_transaction(str(jira_integration_fixture.tenant_id)):
+            jira_integration_fixture.refresh_from_db()
+        assert jira_integration_fixture.enabled is False
+        # Omitting `configuration` from the fieldset must not rewrite it, and the
+        # serialized `domain` must not leak into the stored value
+        assert jira_integration_fixture.configuration == {
+            "projects": {"TEST": "Test project"}
+        }
+
+    def test_integrations_retrieve_jira_keeps_domain_in_configuration(
+        self, authenticated_client, jira_integration_fixture
+    ):
+        response = authenticated_client.get(
+            reverse("integration-detail", kwargs={"pk": jira_integration_fixture.id})
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        configuration = response.json()["data"]["attributes"]["configuration"]
+        assert configuration["domain"] == "test"
+        assert configuration["projects"] == {"TEST": "Test project"}
+
     @pytest.mark.parametrize(
         "integration_type, configuration, credentials",
         [
@@ -13357,6 +13790,45 @@ class TestIntegrationViewSet:
             == data["data"]["attributes"]["integration_type"]
         )
         assert "credentials" not in response.json()["data"]["attributes"]
+
+    @pytest.mark.parametrize(
+        "domain",
+        (
+            "169.254.169.254#",
+            "internal/service",
+            "internal?target",
+            "internal\\target",
+            "internal:8000",
+            "user@internal",
+        ),
+    )
+    def test_integrations_create_jira_rejects_invalid_domain(
+        self, authenticated_client, domain
+    ):
+        data = {
+            "data": {
+                "type": "integrations",
+                "attributes": {
+                    "integration_type": Integration.IntegrationChoices.JIRA,
+                    "configuration": {},
+                    "credentials": {
+                        "domain": domain,
+                        "api_token": "fake-api-token",
+                        "user_mail": "testing@prowler.com",
+                    },
+                    "enabled": True,
+                },
+            }
+        }
+
+        response = authenticated_client.post(
+            reverse("integration-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert Integration.objects.count() == 0
 
     def test_integrations_create_valid_relationships(
         self,
@@ -13898,6 +14370,55 @@ class TestIntegrationViewSet:
         assert "projects" in configuration
         assert "issue_types" in configuration
 
+    def test_integrations_update_jira_rejects_invalid_domain(
+        self, authenticated_client
+    ):
+        create_data = {
+            "data": {
+                "type": "integrations",
+                "attributes": {
+                    "integration_type": Integration.IntegrationChoices.JIRA,
+                    "configuration": {},
+                    "credentials": {
+                        "user_mail": "test@example.com",
+                        "api_token": "fake-api-token",
+                        "domain": "original-domain",
+                    },
+                    "enabled": True,
+                },
+            }
+        }
+        create_response = authenticated_client.post(
+            reverse("integration-list"),
+            data=json.dumps(create_data),
+            content_type="application/vnd.api+json",
+        )
+        assert create_response.status_code == status.HTTP_201_CREATED
+        integration_id = create_response.json()["data"]["id"]
+
+        update_data = {
+            "data": {
+                "type": "integrations",
+                "id": integration_id,
+                "attributes": {
+                    "credentials": {
+                        "user_mail": "test@example.com",
+                        "api_token": "fake-api-token",
+                        "domain": "169.254.169.254#",
+                    }
+                },
+            }
+        }
+        response = authenticated_client.patch(
+            reverse("integration-detail", kwargs={"pk": integration_id}),
+            data=json.dumps(update_data),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        integration = Integration.objects.get(id=integration_id)
+        assert integration.credentials["domain"] == "original-domain"
+
 
 @pytest.mark.django_db
 class TestSAMLTokenValidation:
@@ -14150,6 +14671,37 @@ class TestSAMLConfigurationViewSet:
         )
         assert response.status_code == status.HTTP_204_NO_CONTENT
         assert not SAMLConfiguration.objects.filter(id=config.id).exists()
+
+
+@pytest.mark.django_db
+class TestSAMLACSView:
+    def test_get_is_not_allowed(self, client, saml_setup):
+        response = client.get(
+            reverse(
+                "saml_acs",
+                kwargs={"organization_slug": saml_setup["domain"]},
+            )
+        )
+
+        assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+        assert response.headers["Allow"] == "POST"
+        assert "saml-acs-session" not in response.cookies
+
+    def test_post_is_forwarded_to_allauth(self, client, saml_setup):
+        response = client.post(
+            reverse(
+                "saml_acs",
+                kwargs={"organization_slug": saml_setup["domain"]},
+            ),
+            data={"SAMLResponse": "test-saml-response"},
+        )
+
+        assert response.status_code == status.HTTP_302_FOUND
+        assert response.url == reverse(
+            "saml_finish_acs",
+            kwargs={"organization_slug": saml_setup["domain"]},
+        )
+        assert "saml-acs-session" in response.cookies
 
 
 @pytest.mark.django_db
@@ -14504,19 +15056,94 @@ class TestTenantFinishACSView:
         # Verify no new role was created
         assert Role.objects.using(MainRouter.admin_db).count() == roles_before
 
-    def test_dispatch_assigns_no_role_to_new_user_when_usertype_missing(
+    @pytest.mark.parametrize(
+        (
+            "existing_role_attributes",
+            "existing_suffixes",
+            "expected_role_name",
+            "expected_role_created",
+        ),
+        [
+            (None, (), "read_only", True),
+            ({"unlimited_visibility": True}, (), "read_only", False),
+            (
+                {"manage_users": True, "unlimited_visibility": True},
+                (
+                    ("read_only_0", {"unlimited_visibility": True}),
+                    ("read_only_1", {"unlimited_visibility": True}),
+                ),
+                "read_only_0",
+                False,
+            ),
+            (
+                {"manage_users": True, "unlimited_visibility": True},
+                (
+                    (
+                        "read_only_0",
+                        {"manage_users": True, "unlimited_visibility": True},
+                    ),
+                    ("read_only_1", {"unlimited_visibility": True}),
+                ),
+                "read_only_1",
+                False,
+            ),
+            ({"unlimited_visibility": False}, (), "read_only_0", True),
+        ],
+        ids=[
+            "creates-role",
+            "reuses-safe-role",
+            "reuses-first-safe-suffixed-role",
+            "skips-unsafe-suffixed-role",
+            "avoids-restricted-visibility",
+        ],
+    )
+    def test_dispatch_assigns_read_only_role_when_usertype_missing(
         self,
         create_test_user,
         tenants_fixture,
         saml_setup,
         settings,
         monkeypatch,
+        existing_role_attributes,
+        existing_suffixes,
+        expected_role_name,
+        expected_role_created,
     ):
-        """Test that a user without roles gets none assigned when userType is missing"""
+        """Test safe fallback role assignment when userType is missing"""
         monkeypatch.setenv("SAML_SSO_CALLBACK_URL", "http://localhost/sso-complete")
         user = create_test_user
         tenant = tenants_fixture[0]
-        roles_before = Role.objects.using(MainRouter.admin_db).count()
+        other_tenant = tenants_fixture[1]
+
+        other_tenant_role = Role.objects.using(MainRouter.admin_db).create(
+            name="read_only",
+            tenant=other_tenant,
+            unlimited_visibility=True,
+        )
+        other_tenant_relationship = UserRoleRelationship.objects.using(
+            MainRouter.admin_db
+        ).create(
+            user=user,
+            role=other_tenant_role,
+            tenant=other_tenant,
+        )
+
+        existing_role = None
+        if existing_role_attributes is not None:
+            existing_role = Role.objects.using(MainRouter.admin_db).create(
+                name="read_only",
+                tenant=tenant,
+                **existing_role_attributes,
+            )
+        for role_name, role_attributes in existing_suffixes:
+            Role.objects.using(MainRouter.admin_db).create(
+                name=role_name,
+                tenant=tenant,
+                **role_attributes,
+            )
+        roles_before = (
+            Role.objects.using(MainRouter.admin_db).filter(tenant=tenant).count()
+        )
 
         social_account = SocialAccount(
             user=user,
@@ -14569,12 +15196,44 @@ class TestTenantFinishACSView:
 
         assert response.status_code == 302
 
-        # Verify no role was created or assigned
-        assert Role.objects.using(MainRouter.admin_db).count() == roles_before
-        assert not (
+        # Verify the fallback role was created or reused with read-only access
+        expected_role_count = roles_before + expected_role_created
+        assert (
+            Role.objects.using(MainRouter.admin_db).filter(tenant=tenant).count()
+            == expected_role_count
+        )
+        role = Role.objects.using(MainRouter.admin_db).get(
+            name=expected_role_name, tenant=tenant
+        )
+        if existing_role is not None and expected_role_name == "read_only":
+            assert role == existing_role
+        assert not role.manage_users
+        assert not role.manage_account
+        assert not role.manage_billing
+        assert not role.manage_providers
+        assert not role.manage_integrations
+        assert not role.manage_scans
+        assert role.unlimited_visibility
+        assert (
+            UserRoleRelationship.objects.using(MainRouter.admin_db)
+            .filter(user=user, role=role, tenant_id=tenant.id)
+            .exists()
+        )
+        assert (
+            UserRoleRelationship.objects.using(MainRouter.admin_db)
+            .filter(
+                id=other_tenant_relationship.id,
+                user=user,
+                role=other_tenant_role,
+                tenant_id=other_tenant.id,
+            )
+            .exists()
+        )
+        assert (
             UserRoleRelationship.objects.using(MainRouter.admin_db)
             .filter(user=user, tenant_id=tenant.id)
-            .exists()
+            .count()
+            == 1
         )
 
         # Membership is still created so the user belongs to the tenant
@@ -14582,6 +15241,131 @@ class TestTenantFinishACSView:
             Membership.objects.using(MainRouter.admin_db)
             .filter(user=user, tenant=tenant)
             .exists()
+        )
+
+    @pytest.mark.django_db(transaction=True)
+    def test_dispatch_serializes_concurrent_fallback_role_assignment(
+        self,
+        create_test_user,
+        tenants_fixture,
+        saml_setup,
+        monkeypatch,
+    ):
+        """Test concurrent callbacks assign only one fallback role"""
+        monkeypatch.setenv("SAML_SSO_CALLBACK_URL", "http://localhost/sso-complete")
+        user = create_test_user
+        tenant = tenants_fixture[0]
+
+        Role.objects.using(MainRouter.admin_db).create(
+            name="read_only",
+            tenant=tenant,
+            manage_users=True,
+            unlimited_visibility=True,
+        )
+
+        social_account = SocialAccount(
+            user=user,
+            provider="saml",
+            extra_data={
+                "firstName": ["John"],
+                "lastName": ["Doe"],
+                "organization": ["testing_company"],
+            },
+        )
+        # Without the user lock, both callbacks reach this query before either
+        # creates a fallback. With the lock, the first callback times out here
+        # while the second waits for the transaction to finish.
+        second_role_check_reached = Event()
+        concurrent_role_checks_detected = Event()
+        role_check_count_lock = Lock()
+        role_check_count = 0
+        original_role_check = TenantFinishACSView._user_has_tenant_role
+
+        def synchronize_role_checks(user_id, tenant_id):
+            nonlocal role_check_count
+            with role_check_count_lock:
+                role_check_count += 1
+                is_first_role_check = role_check_count == 1
+                if role_check_count == 2:
+                    second_role_check_reached.set()
+            if is_first_role_check and second_role_check_reached.wait(timeout=1):
+                concurrent_role_checks_detected.set()
+            return original_role_check(user_id, tenant_id)
+
+        def dispatch_callback():
+            close_old_connections()
+            try:
+                thread_user = User.objects.using(MainRouter.admin_db).get(pk=user.pk)
+                request = RequestFactory().get(
+                    reverse(
+                        "saml_finish_acs",
+                        kwargs={"organization_slug": saml_setup["domain"]},
+                    )
+                )
+                request.user = thread_user
+                request.session = {}
+                response = TenantFinishACSView.as_view()(
+                    request, organization_slug=saml_setup["domain"]
+                )
+                return response
+            finally:
+                close_old_connections()
+
+        with (
+            patch(
+                "allauth.socialaccount.providers.saml.views.get_app_or_404"
+            ) as mock_get_app_or_404,
+            patch(
+                "allauth.socialaccount.models.SocialApp.objects.get"
+            ) as mock_socialapp_get,
+            patch(
+                "allauth.socialaccount.models.SocialAccount.objects.get"
+            ) as mock_sa_get,
+            patch("api.models.SAMLDomainIndex.objects.get") as mock_saml_domain_get,
+            patch("api.models.SAMLConfiguration.objects.get") as mock_saml_config_get,
+            patch("api.models.User.objects.get") as mock_user_get,
+            patch.object(
+                TenantFinishACSView,
+                "_user_has_tenant_role",
+                side_effect=synchronize_role_checks,
+            ),
+        ):
+            mock_get_app_or_404.return_value = MagicMock(
+                provider="saml",
+                client_id=saml_setup["domain"],
+                name="Test App",
+                settings={},
+            )
+            mock_sa_get.return_value = social_account
+            mock_socialapp_get.return_value = MagicMock(provider_id="saml")
+            mock_saml_domain_get.return_value = SimpleNamespace(tenant_id=tenant.id)
+            mock_saml_config_get.return_value = SimpleNamespace(
+                email_domain=saml_setup["domain"], tenant=tenant
+            )
+            mock_user_get.side_effect = lambda *_args, **_kwargs: User.objects.using(
+                MainRouter.admin_db
+            ).get(pk=user.pk)
+
+            with ThreadPoolExecutor(max_workers=2) as executor:
+                responses = list(executor.map(lambda _: dispatch_callback(), range(2)))
+
+        assert role_check_count == 2
+        assert not concurrent_role_checks_detected.is_set()
+        for response in responses:
+            assert response.status_code == status.HTTP_302_FOUND
+            parsed_redirect = urlparse(response.url)
+            assert parsed_redirect.path == "/sso-complete"
+            assert set(parse_qs(parsed_redirect.query)) == {"id"}
+        relationships = UserRoleRelationship.objects.using(MainRouter.admin_db).filter(
+            user=user, tenant_id=tenant.id
+        )
+        assert relationships.count() == 1
+        assert relationships.get().role.name == "read_only_0"
+        assert (
+            Role.objects.using(MainRouter.admin_db)
+            .filter(tenant=tenant, name__startswith="read_only_")
+            .count()
+            == 1
         )
 
     def test_dispatch_skips_role_mapping_when_last_manage_account_user_maps_to_new_role(
@@ -15458,6 +16242,23 @@ class TestTenantApiKeyViewSet:
         assert response.status_code == status.HTTP_200_OK
         data = response.json()["data"]
         assert len(data) == len(api_keys_fixture)
+
+    def test_api_keys_list_with_orphaned_key(
+        self, authenticated_client, api_keys_fixture
+    ):
+        """Test listing keys whose owner was deleted: `entity` is serialized as null."""
+        orphaned_key = api_keys_fixture[0]
+        TenantAPIKey.objects.filter(id=orphaned_key.id).update(entity=None)
+
+        response = authenticated_client.get(reverse("api-key-list"))
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == len(api_keys_fixture)
+        serialized_key = next(
+            item for item in data if item["id"] == str(orphaned_key.id)
+        )
+        assert serialized_key["relationships"]["entity"]["data"] is None
 
     def test_api_keys_list_empty(self, authenticated_client, tenants_fixture):
         """Test listing API keys when none exist returns empty list."""
@@ -17247,6 +18048,76 @@ class TestLighthouseProviderConfigViewSet:
         assert resp.status_code == status.HTTP_400_BAD_REQUEST
         error_detail = str(resp.json()).lower()
         assert "base_url" in error_detail
+
+    @pytest.mark.parametrize(
+        "base_url",
+        [
+            "https://127.0.0.1/v1",
+            "https://169.254.169.254/latest/meta-data",
+        ],
+    )
+    def test_openai_compatible_rejects_internal_base_url_on_create(
+        self, authenticated_client, base_url
+    ):
+        payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "attributes": {
+                    "provider_type": "openai_compatible",
+                    "base_url": base_url,
+                    "credentials": {"api_key": "compat-key"},
+                },
+            }
+        }
+
+        resp = authenticated_client.post(
+            reverse("lighthouse-providers-list"),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert "base_url" in str(resp.json()).lower()
+
+    def test_openai_compatible_rejects_internal_base_url_on_update(
+        self, authenticated_client
+    ):
+        create_payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "attributes": {
+                    "provider_type": "openai_compatible",
+                    "base_url": "https://openrouter.ai/api/v1",
+                    "credentials": {"api_key": "compat-key-123"},
+                },
+            }
+        }
+        create_resp = authenticated_client.post(
+            reverse("lighthouse-providers-list"),
+            data=create_payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert create_resp.status_code == status.HTTP_201_CREATED
+        provider_id = create_resp.json()["data"]["id"]
+
+        patch_payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "id": provider_id,
+                "attributes": {
+                    "base_url": "https://169.254.169.254/latest/meta-data",
+                },
+            }
+        }
+
+        patch_resp = authenticated_client.patch(
+            reverse("lighthouse-providers-detail", kwargs={"pk": provider_id}),
+            data=patch_payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+
+        assert patch_resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert "base_url" in str(patch_resp.json()).lower()
 
     def test_openai_compatible_invalid_credentials(self, authenticated_client):
         payload = {

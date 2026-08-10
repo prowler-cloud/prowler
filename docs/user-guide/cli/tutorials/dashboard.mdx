@@ -3,7 +3,7 @@ title: "Run the Prowler local dashboard from CSV outputs"
 description: "Launch the built-in Prowler dashboard to visualize CSV scan output locally or in Docker, exposing an interactive UI on port 11666 for review."
 ---
 
-Prowler allows you to run your own local dashboards using the csv outputs provided by Prowler
+Prowler Local Dashboard is a local web dashboard built from the CSV outputs produced by Prowler CLI. Launch it with:
 
 ```sh
 prowler dashboard
@@ -13,7 +13,7 @@ prowler dashboard
 You can expose the `dashboard` server in another address using the `HOST` environment variable.
 
 </Note>
-To run Prowler local dashboard with Docker, use:
+To run Prowler Local Dashboard with Docker, use:
 
 ```sh
 docker run -v /your/local/dir/prowler-output:/home/prowler/output --env HOST=0.0.0.0 --publish 127.0.0.1:11666:11666 toniblyx/prowler:latest dashboard
@@ -37,7 +37,7 @@ This page allows for multiple functions:
 
 - Apply filters:
 
-  - Assesment Date
+  - Assessment Date
   - Account
   - Region
   - Severity
@@ -46,7 +46,7 @@ This page allows for multiple functions:
   - Status
   - Category
 
-- See which files has been scanned to generate the dashboard by placing your mouse on the `?` icon:
+- See which files have been scanned to generate the dashboard by placing your mouse on the `?` icon:
 
   {" "}
   <img src="/images/cli/dashboard/dashboard-files-scanned.png" />
@@ -68,7 +68,7 @@ This page shows all the info related to the compliance selected. Multiple filter
 
 To add your own compliance to compliance page, add a file with the compliance name (using `_` instead of `.`) to the path `/dashboard/compliance`.
 
-In this file use the format present in the others compliance files to create the table. Example for CIS 2.0:
+In this file use the format present in the other compliance files to create the table. Example for CIS 2.0:
 
 ```python
 import warnings

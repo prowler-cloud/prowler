@@ -18,7 +18,8 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(),
 }));
 
-vi.mock("@/components/shadcn", () => ({
+vi.mock("@/components/shadcn", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   Button: ({ children, ...props }: { children: ReactNode }) => (
     <button {...props}>{children}</button>
   ),
@@ -43,7 +44,7 @@ vi.mock("@/components/shadcn", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/table", () => ({
+vi.mock("@/components/shadcn/table", () => ({
   DataTableColumnHeader: ({
     title,
   }: {
@@ -408,7 +409,9 @@ describe("column-finding-groups — accessibility of check title cell", () => {
     expect(
       screen.queryByRole("button", { name: "Fallback IaC Check" }),
     ).not.toBeInTheDocument();
-    expect(screen.getByText("Fallback IaC Check")).toBeInTheDocument();
+    // The title renders as plain (non-clickable) text and the inline-mocked
+    // tooltip duplicates it, so exactly both copies must exist.
+    expect(screen.getAllByText("Fallback IaC Check")).toHaveLength(2);
     expect(onDrillDown).not.toHaveBeenCalled();
   });
 });

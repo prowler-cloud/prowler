@@ -20,7 +20,7 @@ describe("sentry.edge.config", () => {
 
   it("should initialize with the resolved environment and reduced edge sampling", async () => {
     // Given
-    vi.stubEnv("UI_SENTRY_ENABLE", "true");
+    vi.stubEnv("UI_SENTRY_ENABLED", "true");
     vi.stubEnv("UI_SENTRY_DSN", "https://key@o0.ingest.sentry.io/1");
     vi.stubEnv("UI_SENTRY_ENVIRONMENT", "pro");
 
@@ -46,7 +46,7 @@ describe("sentry.edge.config", () => {
     expect(initMock).not.toHaveBeenCalled();
   });
 
-  it("should not initialize when UI_SENTRY_ENABLE is unset even if a DSN is set", async () => {
+  it("should not initialize when UI_SENTRY_ENABLED is unset even if a DSN is set", async () => {
     // Given - DSN configured but the enable flag is not "true"
     vi.stubEnv("UI_SENTRY_DSN", "https://key@o0.ingest.sentry.io/1");
 
@@ -59,7 +59,7 @@ describe("sentry.edge.config", () => {
 
   it("should default to a non-dev environment so an unset UI_SENTRY_ENVIRONMENT does not enable dev sampling", async () => {
     // Given - enabled with a DSN but environment unset
-    vi.stubEnv("UI_SENTRY_ENABLE", "true");
+    vi.stubEnv("UI_SENTRY_ENABLED", "true");
     vi.stubEnv("UI_SENTRY_DSN", "https://key@o0.ingest.sentry.io/1");
 
     // When

@@ -42,6 +42,10 @@ def delete_batches(
     batch_size: int,
     drop_t0: float,
 ) -> tuple[int, int]:
+    def delete_batch(tx: Any) -> int:
+        record = tx.run(query, {"batch_size": batch_size}).single()
+        return (record[count_key] if record else 0) or 0
+
     deleted_total = initial_total
     batches = 0
     while True:
@@ -56,8 +60,7 @@ def delete_batches(
             deleted_total,
             time.perf_counter() - drop_t0,
         )
-        record = session.run(query, {"batch_size": batch_size}).single()
-        deleted = (record[count_key] if record else 0) or 0
+        deleted = session.execute_write(delete_batch)
         if deleted == 0:
             return deleted_total, batches
 

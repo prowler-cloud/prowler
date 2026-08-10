@@ -5,8 +5,8 @@ import { useEffect } from "react";
 import { Control, UseFormSetValue } from "react-hook-form";
 
 import { Button } from "@/components/shadcn";
+import { Form } from "@/components/shadcn/form";
 import { Separator } from "@/components/shadcn/separator/separator";
-import { Form } from "@/components/ui/form";
 import { useCredentialsForm } from "@/hooks/use-credentials-form";
 import { getAWSCredentialsTemplateLinks } from "@/lib";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
@@ -37,6 +37,7 @@ import {
 } from "@/types";
 
 import { ProviderTitleDocs } from "../provider-title-docs";
+
 import {
   AlibabaCloudRoleCredentialsForm,
   AlibabaCloudStaticCredentialsForm,
@@ -212,6 +213,7 @@ export const BaseCredentialsForm = ({
           <GitHubCredentialsForm
             control={form.control}
             credentialsType={effectiveVia || undefined}
+            providerUid={providerUid}
           />
         )}
         {providerType === "iac" && (
@@ -255,6 +257,7 @@ export const BaseCredentialsForm = ({
             control={
               form.control as unknown as Control<CloudflareTokenCredentials>
             }
+            providerUid={providerUid}
           />
         )}
         {providerType === "cloudflare" && effectiveVia === "api_key" && (

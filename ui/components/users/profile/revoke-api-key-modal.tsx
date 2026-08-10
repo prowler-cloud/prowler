@@ -1,16 +1,12 @@
 "use client";
 
-import { Trash2Icon } from "lucide-react";
+import { AlertTriangle, Trash2Icon } from "lucide-react";
 
 import { revokeApiKey } from "@/actions/api-keys/api-keys";
+import { Alert, AlertDescription, AlertTitle } from "@/components/shadcn/alert";
+import { CodeSnippet } from "@/components/shadcn/code-snippet/code-snippet";
+import { ModalButtons } from "@/components/shadcn/custom/custom-modal-buttons";
 import { Modal } from "@/components/shadcn/modal";
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from "@/components/ui/alert/Alert";
-import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
-import { ModalButtons } from "@/components/ui/custom/custom-modal-buttons";
 
 import { FALLBACK_VALUES } from "./api-keys/constants";
 import { EnrichedApiKey } from "./api-keys/types";
@@ -56,8 +52,9 @@ export const RevokeApiKeyModal = ({
       size="lg"
     >
       <div className="flex flex-col gap-4">
-        <Alert variant="destructive">
-          <AlertTitle>⚠️ Warning</AlertTitle>
+        <Alert variant="error">
+          <AlertTriangle />
+          <AlertTitle>Warning</AlertTitle>
           <AlertDescription>
             This action cannot be undone. This API key will be revoked and will
             no longer work.
@@ -76,7 +73,8 @@ export const RevokeApiKeyModal = ({
         </div>
 
         {error && (
-          <Alert variant="destructive">
+          <Alert variant="error">
+            <AlertTriangle />
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}

@@ -6,7 +6,7 @@ import { getAllProviders } from "@/actions/providers";
 import { getRoles } from "@/actions/roles";
 import { AddGroupForm, EditGroupForm } from "@/components/manage-groups/forms";
 import { ColumnGroups } from "@/components/manage-groups/table";
-import { DataTable } from "@/components/ui/table";
+import { DataTable } from "@/components/shadcn/table";
 import { ProviderProps, Role, SearchParamsProps } from "@/types";
 
 export const ProviderGroupsContent = async ({

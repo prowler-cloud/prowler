@@ -312,3 +312,68 @@ def test_compile_workflow_requires_removed_fragments_in_major_releases():
     assert "effective_major" in workflow
     assert "effective_minor" in workflow
     assert "effective_patch" in workflow
+
+
+def test_compile_workflow_prs_skip_cloud_sync():
+    workflow = read_workflow("compile-changelogs.yml")
+    labels_blocks = re.findall(r"labels: \|\n((?:\s+[a-z-]+\n)+)", workflow)
+
+    assert len(labels_blocks) == 2
+    for block in labels_blocks:
+        assert "no-changelog" in block.split()
+        assert "skip-sync" in block.split()
+
+
+def test_compile_workflow_auto_derives_versions_by_mirroring_prowler_version():
+    workflow = read_workflow("compile-changelogs.yml")
+
+    assert 'prowler) effective="$PROWLER_VERSION" ;;' in workflow
+    assert 'ui) effective="1.${prowler_minor}.${prowler_patch}" ;;' in workflow
+    assert 'api) effective="1.$((prowler_minor + 1)).${prowler_patch}" ;;' in workflow
+    assert (
+        "auto-derived version '${effective}' is not greater than the latest released version"
+        in workflow
+    )
+
+
+def test_compile_workflow_auto_derives_mcp_patch_bumps_on_patch_releases():
+    workflow = read_workflow("compile-changelogs.yml")
+
+    assert "'added'/'deprecated' fragments are shipping in a Prowler patch" in workflow
+    assert (
+        "elif echo \"$fragments\" | grep -qE '\\.(added|changed|deprecated)(\\.[0-9]+)?\\.md$'; then"
+        in workflow
+    )
+
+
+def test_forward_sync_pads_release_blocks_with_blank_lines():
+    workflow = read_workflow("compile-changelogs.yml")
+
+    assert "block-normalized.md" in workflow
+    assert 'total_lines=$(wc -l < "$changelog")' in workflow
+    assert '[ -n "$(sed -n "$((insertion_line - 1))p" "$changelog")" ]' in workflow
+    assert 'if [ "$insertion_line" -le "$total_lines" ]; then' in workflow
+
+
+def test_component_changelogs_separate_release_blocks_with_blank_lines():
+    for component in COMPONENTS:
+        lines = (REPO_ROOT / component / "CHANGELOG.md").read_text().splitlines()
+        marker_line = lines.index("<!-- changelog: release notes start -->")
+
+        assert (
+            lines[marker_line + 1] == ""
+        ), f"{component}/CHANGELOG.md: expected a blank line after the marker"
+        assert (
+            lines[marker_line + 2] != ""
+        ), f"{component}/CHANGELOG.md: expected a single blank line after the marker"
+        for index, line in enumerate(lines):
+            if line == "---" and index + 1 < len(lines):
+                assert lines[index + 1] == "", (
+                    f"{component}/CHANGELOG.md line {index + 2}: "
+                    "expected a blank line after '---'"
+                )
+            if line.startswith("## ["):
+                assert lines[index - 1] == "", (
+                    f"{component}/CHANGELOG.md line {index}: "
+                    "expected a blank line before a release heading"
+                )

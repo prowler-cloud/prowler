@@ -8,7 +8,7 @@ import {
   loadLatestFindingTriageNote,
   updateFindingTriage,
 } from "@/actions/findings";
-import { FloatingMuteButton } from "@/components/findings/floating-mute-button";
+import { FloatingSelectionActions } from "@/components/findings/floating-selection-actions";
 import { FindingDetailDrawer } from "@/components/findings/table";
 import {
   Tabs,
@@ -18,19 +18,20 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
+  BreadcrumbNavigation,
+  CustomBreadcrumbItem,
 } from "@/components/shadcn";
+import { DateWithTime } from "@/components/shadcn/entities/date-with-time";
+import { EntityInfo } from "@/components/shadcn/entities/entity-info";
 import {
   InfoField,
   InfoTooltip,
 } from "@/components/shadcn/info-field/info-field";
 import { LoadingState } from "@/components/shadcn/spinner/loading-state";
+import { DataTable } from "@/components/shadcn/table";
 import { EventsTimeline } from "@/components/shared/events-timeline/events-timeline";
 import { ExternalResourceLink } from "@/components/shared/external-resource-link";
 import { ResourceMetadataPanel } from "@/components/shared/resource-metadata-panel";
-import { BreadcrumbNavigation, CustomBreadcrumbItem } from "@/components/ui";
-import { DateWithTime } from "@/components/ui/entities/date-with-time";
-import { EntityInfo } from "@/components/ui/entities/entity-info";
-import { DataTable } from "@/components/ui/table";
 import { getGroupLabel } from "@/lib/categories";
 import { shouldRefreshAfterTriageUpdate } from "@/lib/finding-triage";
 import { getRegionFlag } from "@/lib/region-flags";
@@ -405,9 +406,12 @@ export const ResourceDetailContent = ({
                     isLoading={findingsLoading}
                   />
                   {selectedFindingIds.length > 0 && (
-                    <FloatingMuteButton
+                    <FloatingSelectionActions
                       selectedCount={selectedFindingIds.length}
                       selectedFindingIds={selectedFindingIds}
+                      muteLabel={`Mute ${selectedFindingIds.length} ${
+                        selectedFindingIds.length === 1 ? "Finding" : "Findings"
+                      }`}
                       onComplete={handleMuteComplete}
                     />
                   )}

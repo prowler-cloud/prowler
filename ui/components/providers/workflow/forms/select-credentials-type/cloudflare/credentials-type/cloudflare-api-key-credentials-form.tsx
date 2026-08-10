@@ -14,10 +14,10 @@ export const CloudflareApiKeyCredentialsForm = ({
   return (
     <>
       <div className="flex flex-col">
-        <div className="text-md text-default-foreground leading-9 font-bold">
+        <div className="text-md text-text-neutral-primary leading-9 font-bold">
           Connect via API Key + Email
         </div>
-        <div className="text-default-500 text-sm">
+        <div className="text-text-neutral-tertiary text-sm">
           Provide your Cloudflare Global API Key and the email address
           associated with your Cloudflare account.
         </div>
@@ -42,7 +42,7 @@ export const CloudflareApiKeyCredentialsForm = ({
         variant="bordered"
         isRequired
       />
-      <div className="text-default-400 text-xs">
+      <div className="text-text-neutral-tertiary text-xs">
         Credentials never leave your browser unencrypted and are stored as
         secrets in the backend. You can regenerate your API Key from the
         Cloudflare dashboard anytime if needed.

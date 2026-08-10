@@ -26,7 +26,7 @@ jobs:
       contents: read
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
         with:
           egress-policy: block
           allowed-endpoints: >
@@ -36,7 +36,7 @@ jobs:
         id: vars
         run: |
           SHORT_SHA="${GITHUB_EVENT_PULL_REQUEST_MERGE_COMMIT_SHA}"
-          echo "short_sha=${SHORT_SHA::7}" >> $GITHUB_OUTPUT
+          echo "short_sha=${SHORT_SHA::7}" >> "$GITHUB_OUTPUT"
         env:
           GITHUB_EVENT_PULL_REQUEST_MERGE_COMMIT_SHA: ${{ github.event.pull_request.merge_commit_sha }}
 
@@ -46,6 +46,7 @@ jobs:
           token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
           repository: ${{ secrets.CLOUD_DISPATCH }}
           event-type: prowler-pull-request-merged
+          # repository_dispatch caps client_payload at 10 properties; this is exactly at the cap.
           client-payload: |
             {
               "PROWLER_COMMIT_SHA": "${{ github.event.pull_request.merge_commit_sha }}",
@@ -54,8 +55,8 @@ jobs:
               "PROWLER_PR_TITLE": ${{ toJson(github.event.pull_request.title) }},
               "PROWLER_PR_LABELS": ${{ toJson(github.event.pull_request.labels.*.name) }},
               "PROWLER_PR_BODY": ${{ toJson(github.event.pull_request.body) }},
-              "PROWLER_PR_URL": ${{ toJson(github.event.pull_request.html_url) }},
               "PROWLER_PR_MERGED_BY": "${{ github.event.pull_request.merged_by.login }}",
-              "PROWLER_PR_BASE_BRANCH": ${{ toJson(github.event.pull_request.base.ref) }},
-              "PROWLER_PR_HEAD_BRANCH": ${{ toJson(github.event.pull_request.head.ref) }}
+              "PROWLER_PR_STACK_NUMBER": "${{ github.event.pull_request.stack.number }}",
+              "PROWLER_PR_STACK_POSITION": "${{ github.event.pull_request.stack.position }}",
+              "PROWLER_PR_STACK_SIZE": "${{ github.event.pull_request.stack.size }}"
             }

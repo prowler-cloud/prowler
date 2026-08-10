@@ -5,7 +5,7 @@ import type { ComponentProps } from "react";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[8px] text-sm font-medium transition-all disabled:pointer-events-none disabled:bg-button-disabled disabled:text-text-neutral-tertiary outline-none focus-visible:ring-2 focus-visible:ring-offset-2 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium transition-all disabled:pointer-events-none disabled:bg-button-disabled disabled:text-text-neutral-tertiary outline-none focus-visible:ring-2 focus-visible:ring-offset-2 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
@@ -25,12 +25,6 @@ const buttonVariants = cva(
         // Chrome-free: no border/background, only the icon shows. Hover/active shift
         // the icon color instead of painting a box. Pair with an `icon*` size.
         bare: "border-0 bg-transparent p-0 text-text-neutral-secondary hover:text-text-neutral-primary active:text-text-neutral-primary focus-visible:ring-border-neutral-secondary/50 disabled:bg-transparent",
-        // Menu variant like secondary but more padding and the back is almost transparent
-        menu: "backdrop-blur-xl bg-white/60 dark:bg-white/5 border border-white/80 dark:border-white/10 text-text-neutral-primary dark:text-white shadow-lg hover:bg-white/70 dark:hover:bg-white/10 hover:border-white/90 dark:hover:border-white/30 active:bg-white/80 dark:active:bg-white/15 active:scale-[0.98] focus-visible:ring-button-primary/50 transition-all duration-200",
-        "menu-active":
-          "backdrop-blur-xl bg-white/50 dark:bg-white/5 border border-black/[0.08] dark:border-white/10 text-text-neutral-primary dark:text-white shadow-sm hover:bg-white/60 dark:hover:bg-white/10 hover:border-black/[0.12] dark:hover:border-white/30 active:bg-white/70 dark:active:bg-white/15 active:scale-[0.98] focus-visible:ring-button-primary/50 transition-all duration-200",
-        "menu-inactive":
-          "text-text-neutral-primary border border-transparent hover:backdrop-blur-xl hover:bg-white/40 dark:hover:bg-white/5 hover:border-black/[0.08] dark:hover:border-white/10 hover:shadow-sm active:bg-white/50 dark:active:bg-white/15 active:scale-[0.98] focus-visible:ring-border-neutral-secondary/50 transition-all duration-200",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",
@@ -44,10 +38,15 @@ const buttonVariants = cva(
         "link-xs": "text-xs",
         "link-sm": "text-sm",
       },
+      shape: {
+        default: "rounded-[8px]",
+        circle: "rounded-full",
+      },
     },
     defaultVariants: {
       variant: "default",
       size: "default",
+      shape: "default",
     },
   },
 );
@@ -56,6 +55,7 @@ function Button({
   className,
   variant,
   size,
+  shape,
   asChild = false,
   ...props
 }: ComponentProps<"button"> &
@@ -67,7 +67,7 @@ function Button({
   return (
     <Comp
       data-slot="button"
-      className={cn(buttonVariants({ variant, size, className }))}
+      className={cn(buttonVariants({ variant, size, shape, className }))}
       {...props}
     />
   );

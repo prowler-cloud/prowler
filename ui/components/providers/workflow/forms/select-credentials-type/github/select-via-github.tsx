@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 
-import { Form } from "@/components/ui/form";
+import { Form } from "@/components/shadcn/form";
 
 import { RadioGroupGitHubViaCredentialsTypeForm } from "./radio-group-github-via-credentials-type-form";
 

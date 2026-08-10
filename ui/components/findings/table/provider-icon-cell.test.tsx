@@ -33,13 +33,15 @@ describe("ProviderIconCell", () => {
     expect(await screen.findByText("AWS")).toBeInTheDocument();
   });
 
-  it("renders a '?' placeholder for a provider type missing from the map", () => {
-    render(
+  it("renders the neutral generic glyph for a provider missing from the map", () => {
+    // Dynamic/unknown providers render the shared generic glyph, not a "?".
+    const { container } = render(
       <ProviderIconCell
         provider={"future-provider" as unknown as ProviderType}
       />,
     );
 
-    expect(screen.getByText("?")).toBeInTheDocument();
+    expect(screen.queryByText("?")).not.toBeInTheDocument();
+    expect(container.querySelector("svg")).toBeInTheDocument();
   });
 });

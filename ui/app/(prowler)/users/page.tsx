@@ -4,11 +4,9 @@ import { Suspense } from "react";
 import { getRoles } from "@/actions/roles/roles";
 import { getCurrentUserTenantRole, getUsers } from "@/actions/users/users";
 import { auth } from "@/auth.config";
-import { FilterControls } from "@/components/filters";
-import { AddIcon } from "@/components/icons";
 import { Button } from "@/components/shadcn";
-import { ContentLayout } from "@/components/ui";
-import { DataTable } from "@/components/ui/table";
+import { ContentLayout } from "@/components/shadcn/content-layout";
+import { DataTable } from "@/components/shadcn/table";
 import { ColumnsUser, SkeletonTableUser } from "@/components/users/table";
 import { Role, SearchParamsProps, UserProps } from "@/types";
 import { TENANT_MEMBERSHIP_ROLE } from "@/types/users";
@@ -23,15 +21,10 @@ export default async function Users({
 
   return (
     <ContentLayout title="Users" icon="lucide:user">
-      <FilterControls search />
-
       <div className="flex flex-col gap-6">
         <div className="flex flex-row items-end justify-end">
           <Button asChild>
-            <Link href="/invitations/new">
-              Invite User
-              <AddIcon size={20} />
-            </Link>
+            <Link href="/invitations/new">Invite User</Link>
           </Button>
         </div>
 
@@ -121,6 +114,7 @@ const SSRDataTable = async ({
       columns={ColumnsUser}
       data={expandedUsers || []}
       metadata={usersData?.meta}
+      showSearch
     />
   );
 };

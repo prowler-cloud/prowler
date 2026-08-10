@@ -77,7 +77,7 @@ class MCPClientManager {
   }
 
   /**
-   * Injects auth headers for Prowler App tools
+   * Injects auth headers for the core Prowler tools
    */
   private handleBeforeToolCall = ({
     name,
@@ -87,9 +87,15 @@ class MCPClientManager {
     name: string;
     args?: unknown;
   }) => {
-    // Only inject auth for Prowler App tools (user-specific data)
-    // Prowler Hub and Prowler Docs tools don't require authentication
-    if (!name.startsWith("prowler_app_")) {
+    // Only inject auth for the core Prowler tools (user-specific data), served
+    // under the bare `prowler_` prefix. Prowler Hub (`prowler_hub_`) and Prowler
+    // Docs (`prowler_docs_`) tools are public and need no authentication. The
+    // legacy `prowler_app_` prefix also starts with `prowler_`, so it is covered.
+    const needsAuth =
+      name.startsWith("prowler_") &&
+      !name.startsWith("prowler_hub_") &&
+      !name.startsWith("prowler_docs_");
+    if (!needsAuth) {
       return { args };
     }
 

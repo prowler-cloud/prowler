@@ -50,7 +50,7 @@ vi.mock("@/actions/schedules", () => ({
   updateSchedule: updateScheduleMock,
 }));
 
-vi.mock("@/components/ui/toast", () => ({
+vi.mock("@/components/shadcn/toast", () => ({
   ToastAction: ({ children, ...props }: ComponentProps<"button">) => (
     <button {...props}>{children}</button>
   ),
@@ -74,7 +74,7 @@ vi.mock("@/components/shadcn/modal", () => ({
     ) : null,
 }));
 
-vi.mock("@/components/ui/entities", () => ({
+vi.mock("@/components/shadcn/entities", () => ({
   EntityInfo: ({
     entityAlias,
     entityId,
@@ -130,15 +130,17 @@ import {
   ACTION_ERROR_MESSAGES,
   ACTION_ERROR_STATUS,
 } from "@/lib/action-errors";
+import { ProviderProps } from "@/types";
 import { SCAN_SCHEDULE_CAPABILITY } from "@/types/schedules";
 
 import { LaunchScanModal } from "./launch-scan-modal";
 
-const provider = {
+const provider: ProviderProps = {
   id: "provider-1",
   type: "providers" as const,
   attributes: {
     provider: "aws" as const,
+    is_dynamic: false,
     uid: "123456789012",
     alias: "Production",
     status: "completed" as const,
@@ -546,15 +548,26 @@ describe("LaunchScanModal", () => {
       expect(getScheduleMock).not.toHaveBeenCalled();
     });
 
-    it("locks schedule mode outside ADVANCED (OSS default)", () => {
+    it("preserves legacy daily scheduling outside Cloud", async () => {
+      const user = userEvent.setup();
+      scheduleDailyMock.mockResolvedValue({ data: { id: provider.id } });
       render(
         <LaunchScanModal open onOpenChange={vi.fn()} providers={[provider]} />,
       );
 
       expect(
         screen.getByRole("radio", { name: "On a schedule" }),
-      ).toBeDisabled();
+      ).toBeEnabled();
+
+      await user.selectOptions(screen.getByLabelText("Providers"), provider.id);
+      await user.click(screen.getByRole("radio", { name: "On a schedule" }));
+      expect(screen.getByRole("combobox", { name: "Repeats" })).toBeDisabled();
+
+      await user.click(screen.getByRole("button", { name: /save schedule/i }));
+
+      await waitFor(() => expect(scheduleDailyMock).toHaveBeenCalledTimes(1));
       expect(getScheduleMock).not.toHaveBeenCalled();
+      expect(updateScheduleMock).not.toHaveBeenCalled();
     });
 
     it("hides schedule mode but allows manual scans in MANUAL_ONLY", async () => {

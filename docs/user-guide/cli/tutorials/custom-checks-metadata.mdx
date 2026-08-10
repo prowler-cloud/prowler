@@ -5,13 +5,13 @@ description: "Use --custom-checks-metadata-file in Prowler CLI to override defau
 
 In certain organizations, the severity of specific checks might differ from the default values defined in the check's metadata. For instance, while `s3_bucket_level_public_access_block` could be deemed `critical` for some organizations, others might assign a different severity level to it.
 
-The custom metadata option offers a means to override default metadata set by Prowler
+The custom metadata option offers a means to override default metadata set by Prowler.
 
 You can utilize `--custom-checks-metadata-file` followed by the path to your custom checks metadata YAML file.
 
 ## Available Fields
 
-The list of supported check's metadata fields that can be override are listed as follows:
+The list of supported check's metadata fields that can be overridden are listed as follows:
 
 - Severity
 - CheckTitle

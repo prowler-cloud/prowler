@@ -6,16 +6,19 @@ import { ReactNode, Suspense } from "react";
 
 import { getProviders } from "@/actions/providers";
 import { getScansByState } from "@/actions/scans/scans";
+import MainLayout from "@/components/layout/main-layout/main-layout";
 import {
   OnboardingCheckpointWatcher,
   OnboardingGate,
   OnboardingSequenceBanner,
 } from "@/components/onboarding";
 import { RuntimePublicConfig } from "@/components/runtime-config/runtime-public-config";
-import MainLayout from "@/components/ui/main-layout/main-layout";
-import { NavigationProgress } from "@/components/ui/navigation-progress";
-import { Toaster } from "@/components/ui/toast";
-import { fontSans } from "@/config/fonts";
+import { NavigationProgress } from "@/components/shadcn/navigation-progress";
+import { Toaster } from "@/components/shadcn/toast";
+import { TaskPollingWatcher } from "@/components/shared/task-polling-watcher";
+import { GlobalSidePanel } from "@/components/side-panel";
+import { FeedbackSurvey } from "@/components/survey/feedback-survey";
+import { fontMono, fontSans } from "@/config/fonts";
 import { siteConfig } from "@/config/site";
 import { isCloud } from "@/lib/shared/env";
 import { cn } from "@/lib/utils";
@@ -50,8 +53,8 @@ export default async function RootLayout({
 }: {
   children: ReactNode;
 }) {
-  // Onboarding is Cloud-only; skip its fetches and orchestrators in OSS.
-  const onboardingEnabled = isCloud();
+  // Skip Cloud-only onboarding fetches and orchestrators in OSS.
+  const cloudEnabled = isCloud();
 
   // Fail-open: unknown scan state is treated as "has data" so the banner never blocks
   // progression on a fetch error.
@@ -59,7 +62,7 @@ export default async function RootLayout({
   // Tri-state: true = has providers, false = zero providers, undefined = fetch failed (gate fails open).
   let hasProviders: boolean | undefined = false;
 
-  if (onboardingEnabled) {
+  if (cloudEnabled) {
     const [providersData, scansByState] = await Promise.all([
       getProviders({ page: 1, pageSize: 1 }),
       getScansByState(),
@@ -83,8 +86,9 @@ export default async function RootLayout({
       <body
         suppressHydrationWarning
         className={cn(
-          "bg-background min-h-screen font-sans antialiased",
+          "bg-bg-neutral-primary min-h-screen font-sans antialiased",
           fontSans.variable,
+          fontMono.variable,
         )}
       >
         <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>
@@ -95,7 +99,7 @@ export default async function RootLayout({
           </Suspense>
           {/* Store uses boolean; gate receives tri-state to fail open on fetch errors. */}
           <StoreInitializer values={{ hasProviders: hasProviders ?? false }} />
-          {onboardingEnabled && (
+          {cloudEnabled && (
             <>
               <OnboardingGate hasProviders={hasProviders} />
               {/* Single mount point so the watcher survives post-connect navigation. */}
@@ -105,6 +109,13 @@ export default async function RootLayout({
             </>
           )}
           <MainLayout>{children}</MainLayout>
+          {cloudEnabled && <FeedbackSurvey />}
+          {/* Always mounted: it hosts the detail (finding/resource) views in
+              every deployment; the AI tab inside is cloud-gated on its own. */}
+          <GlobalSidePanel />
+          {/* Resumes persisted background-task polling (e.g. cross-provider
+              PDF generation) so completion toasts survive hard reloads. */}
+          <TaskPollingWatcher />
           <Toaster />
         </Providers>
       </body>

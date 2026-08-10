@@ -7,11 +7,16 @@ Complete reference guide for all tools available in the Prowler MCP Server. Tool
 
 ## Tool Categories Summary
 
-| Category | Tool Count | Authentication Required |
-|----------|------------|------------------------|
-| Prowler Hub | 10 tools | No |
-| Prowler Documentation | 2 tools | No |
-| Prowler Cloud/App | 32 tools | Yes |
+| Category | Tool Count | Authentication Required | Availability |
+|----------|------------|------------------------|--------------|
+| Prowler Hub | 10 tools | No | Cloud and Local MCP Server |
+| Prowler Documentation | 2 tools | No | Cloud and Local MCP Server |
+| Prowler Cloud, Private Cloud & Local Server | 49 tools | Yes | Cloud and Local MCP Server |
+| Prowler Cloud management | 32 tools | Yes | Cloud MCP Server only |
+
+<Note>
+48 of the 49 Prowler tools are available on both servers. `prowler_schedule_daily_scan` is the exception: it is Local-only, because the Cloud MCP Server supersedes it with the `prowler_cloud_*` [Scan Scheduling](#scan-scheduling) tools.
+</Note>
 
 ## Tool Naming Convention
 
@@ -19,11 +24,16 @@ All tools follow a consistent naming pattern with prefixes:
 
 - `prowler_hub_*` - Prowler Hub catalog and compliance tools
 - `prowler_docs_*` - Prowler documentation search and retrieval
-- `prowler_app_*` - Prowler Cloud and App (Self-Managed) management tools
+- `prowler_*` - Prowler Cloud, Prowler Private Cloud & Prowler Local Server management tools
+- `prowler_cloud_*` - Prowler Cloud-only management tools
 
-## Prowler Cloud/App Tools
+<Note>
+`prowler_cloud_*` tools are exposed only by the [Cloud MCP Server](/getting-started/products/prowler-mcp#cloud-vs-local-mcp-server) at `https://mcp.prowler.com/mcp`, because they manage features that exist only in Prowler Cloud. Every other tool is available on both the Cloud and Local MCP Server.
+</Note>
 
-Manage Prowler Cloud or Prowler App (Self-Managed) features. **Requires authentication.**
+## Prowler Tools
+
+Manage your Prowler deployment — Prowler Cloud, Prowler Private Cloud, or Prowler Local Server. **Requires authentication.**
 
 <Note>
 These tools require a valid API key. See the [Configuration Guide](/getting-started/basic-usage/prowler-mcp) for authentication setup.
@@ -33,44 +43,48 @@ These tools require a valid API key. See the [Configuration Guide](/getting-star
 
 Tools for searching, viewing, and analyzing security findings across all cloud providers.
 
-- **`prowler_app_search_security_findings`** - Search and filter security findings with advanced filtering options (severity, status, provider, region, service, check ID, date range, muted status)
-- **`prowler_app_get_finding_details`** - Get comprehensive details about a specific finding including remediation guidance, check metadata, and resource relationships
-- **`prowler_app_get_findings_overview`** - Get aggregate statistics and trends about security findings as a markdown report
+- **`prowler_search_security_findings`** - Search and filter security findings with advanced filtering options (severity, status, provider, region, service, check ID, date range, muted status)
+- **`prowler_get_finding_details`** - Get comprehensive details about a specific finding including remediation guidance, check metadata, and resource relationships
+- **`prowler_get_findings_overview`** - Get aggregate statistics and trends about security findings as a markdown report
 
 ### Finding Groups Management
 
 Tools for listing finding groups aggregated by check ID, viewing complete group counters, and drilling down into affected resources.
 
-- **`prowler_app_list_finding_groups`** - List latest or historical finding groups with filters for provider, region, service, resource, category, check, severity, status, muted state, delta, date range, and sorting
-- **`prowler_app_get_finding_group_details`** - Get complete details for a specific finding group including counters, description, timestamps, and impacted providers
-- **`prowler_app_list_finding_group_resources`** - List actionable unmuted resources affected by a finding group by default, including nested resource and provider data plus the `finding_id` for remediation details. Set `include_muted` to include suppressed resources
+- **`prowler_list_finding_groups`** - List latest or historical finding groups with filters for provider, region, service, resource, category, check, severity, status, muted state, delta, date range, and sorting
+- **`prowler_get_finding_group_details`** - Get complete details for a specific finding group including counters, description, timestamps, and impacted providers
+- **`prowler_list_finding_group_resources`** - List actionable unmuted resources affected by a finding group by default, including nested resource and provider data plus the `finding_id` for remediation details. Set `include_muted` to include suppressed resources
 
 ### Provider Management
 
 Tools for managing cloud provider connections in Prowler.
 
-- **`prowler_app_search_providers`** - Search and view configured providers with their connection status
-- **`prowler_app_connect_provider`** - Register and connect a provider with credentials for security scanning
-- **`prowler_app_delete_provider`** - Permanently remove a provider from Prowler
+- **`prowler_search_providers`** - Search and view configured providers with their connection status
+- **`prowler_connect_provider`** - Register and connect a provider with credentials for security scanning
+- **`prowler_delete_provider`** - Permanently remove a provider from Prowler
 
 ### Scan Management
 
 Tools for managing and monitoring security scans.
 
-- **`prowler_app_list_scans`** - List and filter security scans across all providers
-- **`prowler_app_get_scan`** - Get comprehensive details about a specific scan (progress, duration, resource counts)
-- **`prowler_app_trigger_scan`** - Trigger a manual security scan for a provider
-- **`prowler_app_schedule_daily_scan`** - Schedule automated daily scans for continuous monitoring
-- **`prowler_app_update_scan`** - Update scan name for better organization
+- **`prowler_list_scans`** - List and filter security scans across all providers
+- **`prowler_get_scan`** - Get comprehensive details about a specific scan (progress, duration, resource counts)
+- **`prowler_trigger_scan`** - Trigger a manual security scan for a provider
+- **`prowler_schedule_daily_scan`** - Schedule automated daily scans for continuous monitoring (**Local MCP Server only**)
+- **`prowler_update_scan`** - Update scan name for better organization
+
+<Note>
+`prowler_schedule_daily_scan` is the scheduling tool for a self-hosted deployment, and it only does one thing: a daily scan. The Cloud MCP Server does not expose it — Prowler Cloud replaces it with the richer [Scan Scheduling](#scan-scheduling) tools, which add interval, weekly, and monthly frequencies, per-provider schedule retrieval, and bulk apply across providers.
+</Note>
 
 ### Resources Management
 
 Tools for searching, viewing, and analyzing cloud resources discovered by Prowler.
 
-- **`prowler_app_list_resources`** - List and filter cloud resources with advanced filtering options (provider, region, service, resource type, tags)
-- **`prowler_app_get_resource`** - Get comprehensive details about a specific resource including configuration, metadata, and finding relationships
-- **`prowler_app_get_resource_events`** - Get the timeline of cloud API actions performed on a resource (AWS CloudTrail). Shows who did what and when, with full request/response payloads
-- **`prowler_app_get_resources_overview`** - Get aggregate statistics about cloud resources as a markdown report
+- **`prowler_list_resources`** - List and filter cloud resources with advanced filtering options (provider, region, service, resource type, tags)
+- **`prowler_get_resource`** - Get comprehensive details about a specific resource including configuration, metadata, and finding relationships
+- **`prowler_get_resource_events`** - Get the timeline of cloud API actions performed on a resource (AWS CloudTrail). Shows who did what and when, with full request/response payloads
+- **`prowler_get_resources_overview`** - Get aggregate statistics about cloud resources as a markdown report
 
 ### Muting Management
 
@@ -78,33 +92,145 @@ Tools for managing finding muting, including pattern-based bulk muting (mutelist
 
 #### Mutelist (Pattern-Based Muting)
 
-- **`prowler_app_get_mutelist`** - Retrieve the current mutelist configuration for the tenant
-- **`prowler_app_set_mutelist`** - Create or update the mutelist configuration for pattern-based bulk muting
-- **`prowler_app_delete_mutelist`** - Remove the mutelist configuration from the tenant
+- **`prowler_get_mutelist`** - Retrieve the current mutelist configuration for the tenant
+- **`prowler_set_mutelist`** - Create or update the mutelist configuration for pattern-based bulk muting
+- **`prowler_delete_mutelist`** - Remove the mutelist configuration from the tenant
 
 #### Mute Rules (Finding-Specific Muting)
 
-- **`prowler_app_list_mute_rules`** - Search and filter mute rules with pagination support
-- **`prowler_app_get_mute_rule`** - Retrieve comprehensive details about a specific mute rule
-- **`prowler_app_create_mute_rule`** - Create a new mute rule to mute specific findings with documentation and audit trail
-- **`prowler_app_update_mute_rule`** - Update a mute rule's name, reason, or enabled status
-- **`prowler_app_delete_mute_rule`** - Delete a mute rule from the system
+- **`prowler_list_mute_rules`** - Search and filter mute rules with pagination support
+- **`prowler_get_mute_rule`** - Retrieve comprehensive details about a specific mute rule
+- **`prowler_create_mute_rule`** - Create a new mute rule to mute specific findings with documentation and audit trail
+- **`prowler_update_mute_rule`** - Update a mute rule's name, reason, or enabled status
+- **`prowler_delete_mute_rule`** - Delete a mute rule from the system
+
+### Integrations Management
+
+Tools for managing where Prowler sends its results: Amazon S3 buckets, AWS Security Hub, and Jira. Requires the **Manage Integrations** permission.
+
+#### Integration Lifecycle
+
+- **`prowler_list_integrations`** - List the configured integrations with their enabled and connection state, optionally filtered by integration type
+- **`prowler_get_integration`** - Get an integration with its complete, type-specific configuration (bucket and output directory, Security Hub settings and enabled regions, or Jira projects and issue types)
+- **`prowler_update_integration`** - Update credentials, configuration, attached providers, or enabled state. Configuration changes are merged with the current one, and the connection is re-checked automatically whenever credentials, configuration, or attached providers change
+- **`prowler_delete_integration`** - Permanently remove an integration and its stored credentials
+- **`prowler_test_integration_connection`** - Check an integration connection and refresh the configuration Prowler discovers from the remote system (Jira projects, Security Hub regions)
+
+#### Integration Setup
+
+- **`prowler_create_amazon_s3_integration`** - Export scan outputs (CSV, HTML, OCSF JSON, compliance reports) to an S3 bucket, using an IAM role or static credentials
+- **`prowler_create_aws_security_hub_integration`** - Send findings to AWS Security Hub in ASFF format for a single AWS provider, reusing the provider credentials or dedicated ones
+- **`prowler_create_jira_integration`** - Connect an Atlassian Jira site so findings can be turned into work items. Tenant-wide, not attached to any provider
+
+#### Jira Operations
+
+- **`prowler_get_jira_issue_types`** - List the issue types available in a Jira project, fetched live from Jira
+- **`prowler_send_findings_to_jira`** - Create one Jira work item per finding, with its severity, resource, risk, and remediation steps
 
 ### Attack Paths Analysis
 
 Tools for analyzing privilege escalation chains and security misconfigurations using graph-based analysis. Attack Paths maps relationships between cloud resources, permissions, and security findings to detect how privileges can be escalated and how misconfigurations can be exploited.
 
-- **`prowler_app_list_attack_paths_scans`** - List Attack Paths scans with filtering by provider, provider type, and scan state (available, scheduled, executing, completed, failed, cancelled)
-- **`prowler_app_list_attack_paths_queries`** - Discover available Attack Paths queries for a completed scan, including query names, descriptions, and required parameters
-- **`prowler_app_run_attack_paths_query`** - Execute an Attack Paths query against a completed scan and retrieve graph results with nodes (cloud resources, findings, virtual nodes) and relationships (access paths, role assumptions, security group memberships)
-- **`prowler_app_get_attack_paths_cartography_schema`** - Retrieve the Cartography graph schema (node labels, relationships, properties) for writing accurate custom openCypher queries
+- **`prowler_list_attack_paths_scans`** - List Attack Paths scans with filtering by provider, provider type, and scan state (available, scheduled, executing, completed, failed, cancelled)
+- **`prowler_list_attack_paths_queries`** - Discover available Attack Paths queries for a completed scan, including query names, descriptions, and required parameters
+- **`prowler_run_attack_paths_query`** - Execute an Attack Paths query against a completed scan and retrieve graph results with nodes (cloud resources, findings, virtual nodes) and relationships (access paths, role assumptions, security group memberships)
+- **`prowler_get_attack_paths_cartography_schema`** - Retrieve the Cartography graph schema (node labels, relationships, properties) for writing accurate custom openCypher queries
 
 ### Compliance Management
 
 Tools for viewing compliance status and framework details across all cloud providers.
 
-- **`prowler_app_get_compliance_overview`** - Get high-level compliance status across all frameworks for a specific scan or provider, including pass/fail statistics per framework
-- **`prowler_app_get_compliance_framework_state_details`** - Get detailed requirement-level breakdown for a specific compliance framework, including failed requirements and associated finding IDs
+- **`prowler_get_compliance_overview`** - Get high-level compliance status across all frameworks for a specific scan or provider, including pass/fail statistics per framework
+- **`prowler_get_compliance_framework_state_details`** - Get detailed requirement-level breakdown for a specific compliance framework, including failed requirements and associated finding IDs
+
+### User Management
+
+Tools for viewing the users in your tenant and identifying the authenticated user.
+
+- **`prowler_list_users`** - List the users in the tenant with their names and emails
+- **`prowler_get_user`** - Get detailed information about a specific user by ID, including join date and role/membership IDs
+- **`prowler_get_current_user`** - Identify which user the current credentials authenticate as
+
+### Role Management
+
+Tools for browsing RBAC roles and managing the role assigned to a user. A user holds exactly one role, so setting a role replaces the one they held before.
+
+- **`prowler_list_roles`** - List the roles defined in the tenant with their permission scope
+- **`prowler_get_role`** - Get detailed information about a specific role by ID, including granted capabilities, visibility scope, assigned users, and provider groups
+- **`prowler_get_user_roles`** - List the roles assigned to a specific user, with the capabilities each role grants
+- **`prowler_set_user_role`** - Set the role a user holds, replacing the role they had before (idempotent)
+
+## Prowler Cloud Tools
+
+Manage Prowler Cloud-only features and configuration. **Requires authentication.**
+
+<Note>
+These tools are available **only on the Cloud MCP Server** (`https://mcp.prowler.com/mcp`). A Local MCP Server does not expose them, because the features they manage exist only in Prowler Cloud.
+</Note>
+
+### Scan Configurations
+
+Tools for managing reusable scan configurations — per-provider check and compliance selections — and attaching them to providers. Providers without a configuration attached use the default.
+
+- **`prowler_cloud_list_scan_configurations`** - List and filter the scan configurations defined in the tenant
+- **`prowler_cloud_get_scan_configuration`** - Retrieve a scan configuration including its full configuration body
+- **`prowler_cloud_get_scan_configuration_schema`** - Fetch the JSON Schema describing the keys a valid configuration body may set, optionally filtered to a single provider type
+- **`prowler_cloud_create_scan_configuration`** - Create a scan configuration and optionally attach it to providers
+- **`prowler_cloud_update_scan_configuration`** - Update a configuration's name, body, and/or attached providers
+- **`prowler_cloud_delete_scan_configuration`** - Delete a scan configuration; attached providers revert to the default
+
+### Findings Triage
+
+Tools for recording a review decision on a finding and documenting the reasoning. Triage is keyed on the stable finding UID returned by `prowler_search_security_findings` and `prowler_get_finding_details`.
+
+<Note>
+Triage is distinct from [muting](#muting-management). Use mute rules and the mutelist to **suppress** findings; use triage to **record a decision** and its rationale while the finding stays visible. See the [Findings Triage tutorial](/user-guide/tutorials/prowler-app-findings-triage).
+</Note>
+
+- **`prowler_cloud_list_finding_triages`** - List and filter persisted triage records by status, provider, check, and more
+- **`prowler_cloud_get_finding_triage`** - Retrieve a single finding's triage state by finding UID
+- **`prowler_cloud_set_finding_triage_status`** - Set a finding's triage status (`open`, `under_review`, `remediating`, `risk_accepted`, `false_positive`), optionally attaching a note. The `resolved` and `reopened` statuses are system-managed and cannot be set directly
+- **`prowler_cloud_list_finding_triage_notes`** - List the notes attached to a finding's triage, newest first
+- **`prowler_cloud_create_finding_triage_note`** - Add a new note to a finding's triage
+- **`prowler_cloud_update_finding_triage_note`** - Update the body of an existing note
+- **`prowler_cloud_delete_finding_triage_note`** - Delete a note from a finding's triage
+
+### Scan Scheduling
+
+Tools for configuring recurring scans. One schedule exists per provider, with daily, interval, weekly, or monthly frequency. These replace the Local-only `prowler_schedule_daily_scan`, which can only set up a daily scan. See the [Scan Scheduling tutorial](/user-guide/tutorials/prowler-scan-scheduling).
+
+- **`prowler_cloud_list_scan_schedules`** - List scan schedules, one per visible provider
+- **`prowler_cloud_get_scan_schedule`** - Retrieve a provider's schedule including all per-frequency fields
+- **`prowler_cloud_set_scan_schedule`** - Configure or update a single provider's recurring scan schedule
+- **`prowler_cloud_bulk_set_scan_schedules`** - Apply one schedule to many providers at once
+- **`prowler_cloud_delete_scan_schedule`** - Delete a provider's scan schedule
+
+### Alerts
+
+Tools for notifying recipients when scan results match a rule condition. See the [Alerts tutorial](/user-guide/tutorials/prowler-alerts).
+
+#### Alert Rules
+
+- **`prowler_cloud_list_alert_rules`** - List and filter the custom alert rules defined in the tenant
+- **`prowler_cloud_get_alert_rule`** - Retrieve an alert rule including its condition DSL and recipient emails
+- **`prowler_cloud_create_alert_rule`** - Create a tenant-scoped alert rule
+- **`prowler_cloud_update_alert_rule`** - Update an alert rule; only the fields provided change
+- **`prowler_cloud_delete_alert_rule`** - Delete an alert rule
+- **`prowler_cloud_list_alert_rule_events`** - List the fired-alert history for a single rule, newest first
+- **`prowler_cloud_build_alert_rule_condition`** - Build a condition from a findings filter and dry-run it in one call to preview what would match. Nothing is persisted
+
+#### Alert Recipients
+
+- **`prowler_cloud_list_alert_recipients`** - List alert recipients with their confirmation status
+- **`prowler_cloud_get_alert_recipient`** - Retrieve a single recipient with its confirmation status
+- **`prowler_cloud_create_alert_recipient`** - Register a new recipient email
+- **`prowler_cloud_resend_alert_recipient_confirmation`** - Re-send the confirmation email to a pending or unsubscribed recipient
+- **`prowler_cloud_delete_alert_recipient`** - Delete an alert recipient
+
+#### Alert Events
+
+- **`prowler_cloud_list_alert_events`** - List the fired alert events for the tenant
+- **`prowler_cloud_get_alert_event`** - Retrieve a single alert event including its matched rule and scan
 
 ## Prowler Hub Tools
 
@@ -146,7 +272,8 @@ Search and access official Prowler documentation. **No authentication required.*
 - Use natural language to interact with the tools through your AI assistant
 - Tools can be combined for complex workflows
 - Filter options are available on most list tools
-- Authentication is only required for Prowler Cloud/App tools
+- Authentication is only required for the `prowler_*` and `prowler_cloud_*` tools; Prowler Hub and Prowler Documentation tools work without a key
+- If a `prowler_cloud_*` tool is missing from your client, you are connected to a Local MCP Server — point it at `https://mcp.prowler.com/mcp` instead
 
 ## Additional Resources
 

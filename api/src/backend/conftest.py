@@ -70,6 +70,8 @@ API_JSON_CONTENT_TYPE = "application/vnd.api+json"
 NO_TENANT_HTTP_STATUS = status.HTTP_401_UNAUTHORIZED
 TEST_USER = "dev@prowler.com"
 TEST_PASSWORD = "testing_psswd"
+TEST_ADMIN_ALIAS = "admin"
+TEST_REPLICA_ALIAS = "test_replica"
 
 
 def _install_compliance_catalog_test_cache() -> None:
@@ -231,14 +233,15 @@ def create_test_user(_session_test_user, django_db_blocker):
     """Re-create the session-scoped test user when a TransactionTestCase
     has truncated the users table."""
     with django_db_blocker.unblock():
-        if not User.objects.filter(pk=_session_test_user.pk).exists():
-            User.objects.create_user(
+        user = User.objects.filter(pk=_session_test_user.pk).first()
+        if user is None:
+            user = User.objects.create_user(
                 id=_session_test_user.pk,
                 name="testing",
                 email=TEST_USER,
                 password=TEST_PASSWORD,
             )
-    return _session_test_user
+    return user
 
 
 @pytest.fixture(scope="function")
@@ -1448,6 +1451,26 @@ def integrations_fixture(aws_provider_pair):
 
 
 @pytest.fixture
+def jira_integration_fixture(tenants_fixture):
+    # Jira is a tenant-wide integration: it is not attached to any provider, and its
+    # `domain` is read from the credentials when the integration is serialized
+    tenant_id = tenants_fixture[0].id
+    with rls_transaction(str(tenant_id)):
+        return Integration.objects.create(
+            tenant_id=tenant_id,
+            enabled=True,
+            connected=True,
+            integration_type=Integration.IntegrationChoices.JIRA,
+            configuration={"projects": {"TEST": "Test project"}},
+            credentials={
+                "domain": "test",
+                "user_mail": "a@b.com",
+                "api_token": "token",
+            },
+        )
+
+
+@pytest.fixture
 def backfill_scan_metadata_fixture(scans_fixture, findings_fixture):
     for scan_instance in scans_fixture:
         tenant_id = scan_instance.tenant_id
@@ -2537,12 +2560,41 @@ def finding_groups_title_variants_fixture(
     return findings
 
 
+def _ensure_mirrored_test_alias(alias: str) -> None:
+    default_database = settings.DATABASES["default"]
+    if alias not in settings.DATABASES:
+        settings.DATABASES[alias] = {
+            **default_database,
+            "TEST": {
+                **default_database.get("TEST", {}),
+                "MIRROR": "default",
+            },
+        }
+    django_connections.databases[alias] = settings.DATABASES[alias]
+
+
 def pytest_collection_modifyitems(items):
     """Ensure test_rbac.py is executed first."""
     items.sort(key=lambda item: 0 if "test_rbac.py" in item.nodeid else 1)
 
+    if any(item.get_closest_marker("requires_test_admin_alias") for item in items):
+        _ensure_mirrored_test_alias(TEST_ADMIN_ALIAS)
+
+    if any(item.get_closest_marker("requires_test_replica_alias") for item in items):
+        _ensure_mirrored_test_alias(TEST_REPLICA_ALIAS)
+
 
 def pytest_configure(config):
+    config.addinivalue_line(
+        "markers",
+        "requires_test_admin_alias: creates a test-only admin alias mirrored "
+        "to default",
+    )
+    config.addinivalue_line(
+        "markers",
+        "requires_test_replica_alias: creates a test-only replica alias mirrored "
+        "to default",
+    )
     # Apply the mock before the test session starts. This is necessary to avoid admin error when running the
     # 0004_rbac_missing_admin_roles migration
     patch("api.db_router.MainRouter.admin_db", new="default").start()

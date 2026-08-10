@@ -3,12 +3,15 @@ title: 'Prowler compliance frameworks and reports'
 description: 'Run Prowler compliance scans against CIS, NIST, ISO 27001, PCI-DSS, SOC 2, and more, then download CSV or PDF reports from Prowler Cloud, App, or CLI.'
 ---
 
-Prowler maps every security check to one or more industry-standard compliance frameworks, so a single scan produces both technical findings and framework-aligned evidence. The same evaluation runs identically whether scans are launched from Prowler Cloud, Prowler App, or Prowler CLI.
+import { SubscriptionBanner } from "/snippets/subscription-banner.mdx"
+import { VersionBadge } from "/snippets/version-badge.mdx"
+
+Prowler maps every security check to one or more industry-standard compliance frameworks, so a single scan produces both technical findings and framework-aligned evidence. The same evaluation runs identically whether scans are launched from Prowler Cloud, Prowler Local Server, or Prowler CLI.
 
 Out of the box, Prowler covers frameworks such as CIS Benchmarks, NIST 800-53, NIST CSF, NIS2, ENS RD2022, ISO 27001, PCI-DSS, SOC 2, GDPR, HIPAA, AWS Well-Architected, BSI C5, CSA CCM, MITRE ATT&CK, KISA ISMS-P, FedRAMP, and Prowler ThreatScore. The full catalog is available at [Prowler Hub](https://hub.prowler.com/compliance).
 
 <Note>
-For the unified compliance score methodology used across frameworks, see [Prowler ThreatScore Documentation](/user-guide/compliance/tutorials/threatscore).
+For the unified compliance score methodology used across frameworks, see [Prowler ThreatScore](/user-guide/compliance/tutorials/threatscore).
 </Note>
 
 <CardGroup cols={2}>
@@ -20,23 +23,28 @@ For the unified compliance score methodology used across frameworks, see [Prowle
   </Card>
 </CardGroup>
 
-## Prowler Cloud
+## Prowler Cloud and Prowler Local Server
 
-The Compliance section in Prowler Cloud and Prowler App centralizes compliance posture across every connected provider. It aggregates scan results, surfaces Prowler ThreatScore, and exposes detailed requirement-level evidence for each supported framework.
+The Compliance section in Prowler Cloud and Prowler Local Server centralizes compliance posture across every connected provider. It aggregates scan results, surfaces Prowler ThreatScore, and exposes detailed requirement-level evidence for each supported framework.
 
 ### Accessing the Compliance Section
 
 To open the compliance overview, follow these steps:
 
-1. Sign in to Prowler Cloud at [cloud.prowler.com](https://cloud.prowler.com/sign-in) or to a self-hosted Prowler App instance.
+1. Sign in to Prowler Cloud at [cloud.prowler.com](https://cloud.prowler.com/sign-in) or to a Prowler Local Server instance.
 2. Select **Compliance** from the left navigation.
 
-The page lists every framework evaluated by the most recent completed scan of the selected provider.
+The Compliance page is organized into two tabs:
 
-<img src="/images/compliance/prowler-app-compliance-overview.png" alt="Compliance overview page in Prowler Cloud and App showing filters, the Prowler ThreatScore card, and the framework grid" width="900" />
+* **Single Scan:** Lists every framework evaluated by one completed scan of one provider. This is the experience described in the rest of this guide, and the default view in Prowler Local Server.
+* **Multiple Scans:** Aggregates one framework across several scans at once, either across provider types ([Cross-Provider Type Compliance](/user-guide/compliance/tutorials/cross-provider-type-compliance)) or across every provider of the same type ([Cross-Provider Compliance](/user-guide/compliance/tutorials/cross-provider-compliance)).
+
+<SubscriptionBanner label="Multiple Scans tab" />
+
+<img src="/images/compliance/prowler-app-compliance-overview.png" alt="Compliance overview page in Prowler Cloud and Prowler Local Server showing filters, the Prowler ThreatScore card, and the framework grid" width="900" />
 
 <Note>
-Compliance results require at least one completed scan. If no scan has finished yet, Prowler Cloud and App display a notice prompting to launch or wait for a scan to complete.
+Compliance results require at least one completed scan. If no scan has finished yet, Prowler Cloud and Prowler Local Server display a notice prompting to launch or wait for a scan to complete.
 </Note>
 
 ### Filtering Compliance Results
@@ -49,7 +57,7 @@ The scan selector lists completed scans across all connected providers. Each ent
 
 #### Region Filter
 
-The region multi-select narrows results to one or more regions detected in the selected scan. Use it to evaluate compliance posture for a specific geography or account boundary. The filter applies to:
+The region multi-select narrows results to one or more regions detected in the selected scan. Use it to evaluate compliance posture for a specific geography or regulatory boundary. The filter applies to:
 
 * The framework grid scores and pass/fail counts.
 * The detailed requirement view inside each framework.
@@ -74,7 +82,7 @@ When the selected scan includes Prowler ThreatScore data, a dedicated card appea
 
 Selecting the card opens the ThreatScore framework detail page, covered in [Working With the Framework Detail Page](#working-with-the-framework-detail-page).
 
-For a complete explanation of the methodology, formula, and weighting, see [Prowler ThreatScore Documentation](/user-guide/compliance/tutorials/threatscore).
+For a complete explanation of the methodology, formula, and weighting, see [Prowler ThreatScore](/user-guide/compliance/tutorials/threatscore).
 
 ### Exploring the Framework Grid
 
@@ -92,6 +100,49 @@ Select any card to open the framework detail page.
 
 <Note>
 Score color coding follows three thresholds: red for severely low compliance, amber for partial compliance, and green for healthy posture. Hover over the score for the exact percentage.
+</Note>
+
+### Tracking Frameworks With the Compliance Watchlist
+
+<VersionBadge version="5.38.0" />
+
+<SubscriptionBanner label="Compliance Watchlist" />
+
+The compliance catalog lists dozens of frameworks, while an organization usually tracks a handful. In Prowler Cloud, Compliance Watchlist keeps that handful in front: pin the frameworks that matter and narrow every compliance surface down to them. The watchlist is shared by the whole organization: one list per tenant, not a per-user bookmark, so every member sees the same pinned frameworks.
+
+#### Pinning a Framework
+
+Every framework card carries a pin button in its top-right corner. Select the pin to add the framework to the watchlist, and select it again to remove it. Pinning is available on the three compliance surfaces:
+
+* **Single Scan:** The framework grid of the selected scan.
+* **Across provider types:** The universal framework cards in the **Multiple Scans** tab.
+* **Across providers:** The framework cards inside each provider type group in the **Multiple Scans** tab.
+
+<img src="/images/compliance/prowler-app-compliance-single-scan-pins.png" alt="Single Scan framework grid where every card carries a pin button, with the pinned frameworks showing a filled pin" width="900" />
+
+<Note>
+Universal frameworks (CSA CCM, CIS Controls, DORA) are a single watchlist entry. Pinning one of them from any surface shows it as pinned on the others.
+</Note>
+
+#### Filtering With the Watchlist
+
+Two controls sit above the tabs, because both tabs read the same watchlist:
+
+* **Show only watchlist:** A toggle that hides every framework not in the watchlist, on both tabs at once. When the filter leaves a section with nothing to show, the section explains that no pinned framework matches and offers to clear the filter.
+* **Watchlist selector:** A searchable multi-select over the full framework catalog, grouped by provider. Use it to pin or unpin several frameworks in one place instead of visiting each card.
+
+<img src="/images/compliance/prowler-app-compliance-watchlist-editor.png" alt="Watchlist selector open above the compliance tabs, showing the searchable framework catalog grouped by provider with the pinned frameworks selected" width="900" />
+
+In Prowler Cloud, the compliance framework chips in the finding details panel follow the watchlist as well, so triage points to the same frameworks the organization tracks.
+
+#### Reviewing the Watchlist on the Overview Page
+
+The **Compliance Watchlist** card on the Overview page lists exactly the pinned frameworks with their current score, computed from the latest completed scan per provider. Selecting an entry opens the framework detail page. Until a framework is pinned, the card is empty and prompts to start pinning from the Compliance section.
+
+<img src="/images/compliance/prowler-app-overview-compliance-watchlist.png" alt="Compliance Watchlist card on the Overview page listing the six pinned frameworks with their scores" width="312" />
+
+<Note>
+In Prowler Local Server, where the watchlist is not available, the card keeps its previous behavior and ranks every framework with scan data.
 </Note>
 
 ### Working With the Framework Detail Page
@@ -144,7 +195,7 @@ Frameworks without a custom layout fall back to the generic details panel, which
 
 ### Downloading Compliance Reports
 
-Prowler Cloud and App expose two formats:
+Prowler Cloud and Prowler Local Server expose two formats:
 
 * **CSV report:** Every requirement, every check, and every finding for the selected scan and filters. Available for all supported frameworks.
 * **PDF report:** Curated executive-style report. Currently supported for Prowler ThreatScore, ENS RD2022, NIS2, and CSA CCM. Additional PDF reports are added in subsequent Prowler releases.
@@ -169,7 +220,7 @@ Region filters disable the per-card download dropdown to avoid generating partia
 
 #### Downloading the Full Scan Output
 
-To export every framework, finding, and resource at once, use the **Scan Jobs** section instead. The ZIP archive contains the CSV, JSON-OCSF, and HTML reports plus a `compliance/` subfolder with one CSV per framework. See [Prowler App — Getting Started](/user-guide/tutorials/prowler-app) for details.
+To export every framework, finding, and resource at once, use the **Scan Jobs** section instead. The ZIP archive contains the CSV, JSON-OCSF, and HTML reports plus a `compliance/` subfolder with one CSV per framework. See [Prowler Cloud — Getting Started](/user-guide/tutorials/prowler-app) for details.
 
 ### API Access
 
@@ -182,7 +233,7 @@ Use the API to integrate compliance evidence into ticketing systems, executive d
 
 ## Prowler CLI
 
-Prowler CLI evaluates the same compliance frameworks as Prowler Cloud and App, and produces detailed CSV outputs alongside the standard scan results. By default, it runs every supported framework and prints a status summary at the end of the scan:
+Prowler CLI evaluates the same compliance frameworks as Prowler Cloud and Prowler Local Server, and produces detailed CSV outputs alongside the standard scan results. By default, it runs every supported framework and prints a status summary at the end of the scan:
 
 <img src="/images/cli/compliance/compliance.png" />
 
@@ -262,6 +313,8 @@ To request a new framework or contribute one, see [Creating a New Security Compl
 
 ## Related Documentation
 
-* [Prowler ThreatScore Documentation](/user-guide/compliance/tutorials/threatscore)
+* [Cross-Provider Type Compliance](/user-guide/compliance/tutorials/cross-provider-type-compliance)
+* [Cross-Provider Compliance](/user-guide/compliance/tutorials/cross-provider-compliance)
+* [Prowler ThreatScore](/user-guide/compliance/tutorials/threatscore)
 * [Creating a New Security Compliance Framework in Prowler](/developer-guide/security-compliance-framework)
-* [Prowler App — Getting Started](/user-guide/tutorials/prowler-app)
+* [Prowler Cloud — Getting Started](/user-guide/tutorials/prowler-app)
