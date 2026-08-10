@@ -54,7 +54,11 @@ Discovery reads the Management Group hierarchy and the subscriptions inside it. 
 
 ```bash
 TENANT_ID=<microsoft-entra-tenant-id>
-SP_OBJECT_ID=$(az ad sp list --display-name "prowler" --query "[0].id" -o tsv)
+CLIENT_ID=<prowler-service-principal-client-id>
+
+# Resolve the exact service principal from its client ID. A display-name search
+# is a prefix match, so it can return a different principal than intended.
+SP_OBJECT_ID=$(az ad sp show --id "$CLIENT_ID" --query id -o tsv)
 
 az role assignment create \
   --role "Reader" \
