@@ -51,7 +51,7 @@ def mock_make_api_call(self, operation_name, kwarg):
                     "roleArns": [ROLE_ARN],
                     "sessionPolicy": '{"Version":"2012-10-17","Statement":[]}',
                     "durationSeconds": 3600,
-                    "acceptRoleSessionName": False,
+                    "acceptRoleSessionName": True,
                 }
             ]
         }
@@ -112,6 +112,7 @@ class Test_RolesAnywhere_Service:
         assert profile.session_policy == '{"Version":"2012-10-17","Statement":[]}'
         assert profile.managed_policy_arns == []
         assert profile.duration_seconds == 3600
+        assert profile.accept_role_session_name is True
         assert profile.region == AWS_REGION_US_EAST_1
         assert profile.tags == [{"key": "Environment", "value": "test"}]
 

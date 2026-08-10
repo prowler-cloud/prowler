@@ -14,6 +14,13 @@ class iam_workload_identity_pool_provider_attribute_condition(Check):
     """
 
     def execute(self) -> list[Check_Report_GCP]:
+        """Evaluate the attribute condition of each Workload Identity provider.
+
+        Returns:
+            list[Check_Report_GCP]: One report per workload identity pool
+            provider. FAIL for active providers without an attribute condition;
+            PASS for providers that enforce one or that are disabled/inactive.
+        """
         findings = []
         for provider in iam_client.workload_identity_pool_providers:
             report = Check_Report_GCP(
@@ -21,7 +28,7 @@ class iam_workload_identity_pool_provider_attribute_condition(Check):
                 resource=provider,
                 resource_id=provider.name,
                 resource_name=provider.display_name or provider.id,
-                location=iam_client.region,
+                location="global",
             )
             if provider.disabled or provider.state != "ACTIVE":
                 report.status = "PASS"

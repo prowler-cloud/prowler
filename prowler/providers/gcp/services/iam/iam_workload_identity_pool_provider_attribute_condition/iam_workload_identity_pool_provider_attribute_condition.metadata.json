@@ -18,10 +18,10 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "gcloud iam workload-identity-pools providers update-oidc <PROVIDER_ID> --location=global --workload-identity-pool=<POOL_ID> --attribute-condition=\"assertion.sub == '<expected_subject>'\"",
+      "CLI": "gcloud iam workload-identity-pools providers update-<oidc|aws|saml|x509> <PROVIDER_ID> --location=global --workload-identity-pool=<POOL_ID> --attribute-condition=\"<CEL_condition>\"   # use the update subcommand matching the provider type",
       "NativeIaC": "",
-      "Other": "1. In the Google Cloud console, go to IAM & Admin > Workload Identity Federation\n2. Open the affected pool and provider\n3. Set an attribute condition (CEL) restricting the allowed external identities (for example a specific repository, AWS account, or subject)\n4. For OIDC providers, also restrict allowedAudiences to your own audience\n5. Review providers regularly for entries you did not create",
-      "Terraform": "```hcl\nresource \"google_iam_workload_identity_pool_provider\" \"<example_resource_name>\" {\n  workload_identity_pool_id          = <pool_id>\n  workload_identity_pool_provider_id = <provider_id>\n  attribute_condition                = \"assertion.sub == '<expected_subject>'\" # FIX: restrict trusted identities\n  oidc {\n    issuer_uri        = <issuer_uri>\n    allowed_audiences = [<your_audience>]\n  }\n}\n```"
+      "Other": "1. In the Google Cloud console, go to IAM & Admin > Workload Identity Federation\n2. Open the affected pool and provider\n3. Set an attribute condition (CEL) restricting the allowed external identities, using an assertion that fits the provider type: OIDC/SAML by subject or claim (assertion.sub), AWS by account/role (assertion.account), X.509 by certificate subject\n4. For OIDC providers, also restrict allowedAudiences to your own audience\n5. Review providers regularly for entries you did not create",
+      "Terraform": "```hcl\nresource \"google_iam_workload_identity_pool_provider\" \"<example_resource_name>\" {\n  workload_identity_pool_id          = <pool_id>\n  workload_identity_pool_provider_id = <provider_id>\n  attribute_condition                = \"<CEL_condition>\" # FIX: restrict trusted identities\n\n  # Declare exactly one of oidc {}, aws {}, saml {}, or x509 {} to match the provider type, e.g.:\n  oidc {\n    issuer_uri        = <issuer_uri>\n    allowed_audiences = [<your_audience>]\n  }\n}\n```"
     },
     "Recommendation": {
       "Text": "Set an attribute condition on every active Workload Identity Federation provider so only the intended external identities can impersonate Google Cloud principals, and pair OIDC providers with a restricted audience. Audit pools and providers regularly for unexpected entries.",

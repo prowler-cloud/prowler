@@ -60,6 +60,7 @@ class Test_iam_workload_identity_pool_provider_attribute_condition:
         assert len(result) == 1
         assert result[0].status == "FAIL"
         assert result[0].resource_id.endswith("my-provider")
+        assert result[0].location == "global"
         assert "attribute condition" in result[0].status_extended
 
     def test_provider_with_attribute_condition_passes(self):

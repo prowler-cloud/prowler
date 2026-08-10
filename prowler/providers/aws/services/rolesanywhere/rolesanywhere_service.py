@@ -55,6 +55,11 @@ class RolesAnywhere(AWSService):
             )
 
     def _list_profiles(self, regional_client):
+        """List and cache IAM Roles Anywhere profiles for one AWS Region.
+
+        Args:
+            regional_client: Roles Anywhere client for the audited Region.
+        """
         logger.info("RolesAnywhere - Listing Profiles...")
         try:
             paginator = regional_client.get_paginator("list_profiles")
@@ -109,6 +114,8 @@ class TrustAnchor(BaseModel):
 
 
 class Profile(BaseModel):
+    """Represent an IAM Roles Anywhere profile."""
+
     arn: str
     id: str
     name: str

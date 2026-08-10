@@ -187,6 +187,8 @@ class ServiceAccount(BaseModel):
 
 
 class WorkloadIdentityPoolProvider(BaseModel):
+    """Represent a GCP Workload Identity Federation pool provider."""
+
     name: str
     id: str
     pool_id: str

@@ -16,6 +16,13 @@ class rolesanywhere_profile_restricts_session_permissions(Check):
     """
 
     def execute(self) -> list[Check_Report_AWS]:
+        """Evaluate session-permission scoping for Roles Anywhere profiles.
+
+        Returns:
+            list[Check_Report_AWS]: One report per Roles Anywhere profile. FAIL
+            for enabled profiles that define neither a session policy nor managed
+            policies; PASS for scoped or disabled profiles.
+        """
         findings = []
         for profile in rolesanywhere_client.profiles.values():
             report = Check_Report_AWS(metadata=self.metadata(), resource=profile)
