@@ -91,9 +91,7 @@ Prowler identifies the organization by the Microsoft Entra tenant ID, a Universa
 az account show --query tenantId -o tsv
 ```
 
-In the Azure portal, the same value sits under **Microsoft Entra ID** > **Overview** as **Tenant ID**.
-
-{/* TODO: capture the Microsoft Entra ID Overview blade with the Tenant ID highlighted and add it here as /images/organizations/azure/azure-portal-tenant-id.png. */}
+In the Azure portal, the same value sits on your service principal's **App registrations** > **Overview** blade as **Directory (tenant) ID**, next to the **Application (client) ID** the wizard also asks for. [Adding Azure credentials to Prowler Cloud](/user-guide/providers/azure/getting-started-azure#step-3-add-credentials-to-prowler-cloud) shows both on the annotated blade.
 
 ## Step 1: Start the Organization Wizard
 
