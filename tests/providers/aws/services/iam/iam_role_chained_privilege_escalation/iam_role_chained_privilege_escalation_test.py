@@ -24,8 +24,11 @@ ROOT_TRUST = {
 
 
 class Test_iam_role_chained_privilege_escalation:
+    """Tests for IAM role chained privilege escalation."""
+
     @mock_aws
     def test_no_roles(self):
+        """Pass when account has no IAM roles."""
         from prowler.providers.aws.services.iam.iam_service import IAM
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
@@ -50,6 +53,7 @@ class Test_iam_role_chained_privilege_escalation:
 
     @mock_aws
     def test_single_role_no_escalation(self):
+        """Pass when single role has no escalation path."""
         iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
 
         role_name = "safe-role"
@@ -371,13 +375,8 @@ class Test_iam_role_chained_privilege_escalation:
         """Three role chain: source -> intermediate -> privileged should flag source via transitive closure."""
         iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
 
-        # Privileged role with escalation, trusts intermediate
+        # source -> intermediate -> privileged topology
         intermediate_role_name = "intermediate-role"
-        # Create intermediate first to get ARN for trust? We need privileged trust intermediate,
-        # so create intermediate role initially with ROOT_TRUST, then create privileged trusting intermediate,
-        # then update intermediate trust to allow source later – order matters.
-
-        # Create privileged role trust placeholder root initially
         privileged_role_name = "privileged-final"
         privileged_arn = iam_client.create_role(
             RoleName=privileged_role_name,
@@ -579,25 +578,24 @@ class Test_iam_role_chained_privilege_escalation:
             result = check.execute()
             by_id = {r.resource_id: r for r in result}
             priv_result = by_id[privileged_role_name]
+            benign_result = by_id[benign_role_name]
             # Should be FAIL because wildcard trust makes it assumable by in-account roles
             assert priv_result.status == "FAIL"
-            assert "wildcard" in priv_result.status_extended.lower() or "assumable" in priv_result.status_extended.lower()
+            assert "wildcard" in priv_result.status_extended.lower()
+            assert benign_result.status == "PASS"
 
     @mock_aws
     def test_combined_statements_escalation(self):
         """Escalation split across two policies should be detected via combined statements."""
         iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
 
-        # Role with two incomplete policies that together form escalation
+        # split of iam:AttachRolePolicy and iam:UpdateAssumeRolePolicy
         role_name = "split-escalation-role"
         iam_client.create_role(
             RoleName=role_name,
             AssumeRolePolicyDocument=dumps(ROOT_TRUST),
         )
 
-        # First policy allows iam:CreatePolicyVersion but not enough alone? Actually single action is enough per combo table,
-        # so split test uses combo requiring two actions: PassRole+CreateLambda+AddPermission needs 3 actions split
-        # Use iam:AttachRolePolicy + iam:UpdateAssumeRolePolicy combo split across policies
         policy_one = {
             "Version": "2012-10-17",
             "Statement": [
