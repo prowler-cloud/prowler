@@ -294,7 +294,6 @@ describe("Organization onboarding wizard", () => {
         const harness = new ProvidersPageHarness(gcpOnboardingFixture());
         await onboardGcpToSelection(harness);
 
-        // A project-less folder still reaches the tree, and has to say so in GCP nouns.
         expect(harness.isContainerInert(GCP_EMPTY_FOLDER_NAME)).toBe(true);
         expect(harness.inertContainerNote(GCP_EMPTY_FOLDER_NAME)).toBe(
           "No projects available to select in this folder.",
@@ -317,8 +316,7 @@ describe("Organization onboarding wizard", () => {
           ),
         ).toBe(true);
 
-        // The row collapses and re-expands rather than selecting: an inert folder that
-        // could not be opened would never explain itself.
+        // The row collapses and re-expands rather than selecting.
         await harness.clickContainerRow(GCP_BLOCKED_FOLDER_NAME);
         await harness.waitForTransition();
         expect(harness.isCandidateVisible(GCP_BLOCKED_FOLDER_PROJECT)).toBe(
@@ -506,7 +504,6 @@ describe("Organization onboarding wizard", () => {
         await harness.waitForDiscoveryFailure();
         await harness.waitForDiscoveryCount(1);
 
-        // Retry triggers a brand-new discovery, not a resumed poll.
         await harness.retryDiscovery();
         await harness.waitForDiscoveryCount(2);
       }, 40000);
@@ -729,7 +726,6 @@ describe("Providers page", () => {
 
         await harness.openEditNameFor(AWS_ORG_NAME);
 
-        // The edit-name affordance is an inline modal (not the wizard) today.
         await harness.waitForEditNameModal();
         await harness.fillEditName("Renamed AWS Org");
         await harness.saveName();
