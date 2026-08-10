@@ -35,4 +35,29 @@ describe("GraphControls", () => {
 
     expect(onExport).toHaveBeenCalledTimes(1);
   });
+
+  it("shows collapse all only when available and invokes its handler", async () => {
+    // Given
+    const user = userEvent.setup();
+    const onCollapse = vi.fn();
+    const { rerender } = render(
+      <GraphControls {...baseProps} collapseAll={{ can: false, onCollapse }} />,
+    );
+
+    // Then
+    expect(
+      screen.queryByRole("button", { name: /collapse all groups/i }),
+    ).not.toBeInTheDocument();
+
+    // When
+    rerender(
+      <GraphControls {...baseProps} collapseAll={{ can: true, onCollapse }} />,
+    );
+    await user.click(
+      screen.getByRole("button", { name: /collapse all groups/i }),
+    );
+
+    // Then
+    expect(onCollapse).toHaveBeenCalledTimes(1);
+  });
 });
