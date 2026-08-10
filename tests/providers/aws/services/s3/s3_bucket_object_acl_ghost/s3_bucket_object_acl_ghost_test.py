@@ -264,7 +264,7 @@ class Test_s3_bucket_object_acl_ghost:
                 assert result[0].status == "FAIL"
                 assert result[0].resource_id == bucket_name
                 assert ghost_key in result[0].status_extended
-                assert "ghost public ACL" in result[0].status_extended.lower()
+                assert "ghost public acl" in result[0].status_extended.lower()
 
     @mock_aws
     def test_bucket_enforced_ghost_authenticated_users_fail(self):
