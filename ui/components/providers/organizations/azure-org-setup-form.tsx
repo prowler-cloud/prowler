@@ -6,19 +6,16 @@ import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { updateOrganizationName } from "@/actions/organizations/organizations";
 import { AzureProviderBadge } from "@/components/icons/providers-badge";
 import type { WizardFooterConfig } from "@/components/providers/wizard/steps/footer-controls";
 import { WIZARD_FOOTER_ACTION_TYPE } from "@/components/providers/wizard/steps/footer-controls";
 import type { OrgWizardIntent } from "@/components/providers/wizard/types";
 import { ORG_WIZARD_INTENT } from "@/components/providers/wizard/types";
 import { WizardInputField } from "@/components/providers/workflow/forms/fields";
-import { useToast } from "@/components/shadcn";
 import { Alert, AlertDescription } from "@/components/shadcn/alert";
 import { Button } from "@/components/shadcn/button/button";
 import { Form } from "@/components/shadcn/form";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
-import { useOrgSetupStore } from "@/store/organizations/store";
 import type { OrgSetupPhase } from "@/types/organizations";
 import { ORG_SETUP_PHASE, ORGANIZATION_TYPE } from "@/types/organizations";
 
@@ -58,7 +55,6 @@ interface AzureOrgSetupFormInitialValues {
 
 interface AzureOrgSetupFormProps {
   onBack: () => void;
-  onClose?: () => void;
   onNext: () => void;
   onFooterChange: (config: WizardFooterConfig) => void;
   onPhaseChange: (phase: OrgSetupPhase) => void;
@@ -69,7 +65,6 @@ interface AzureOrgSetupFormProps {
 
 export function AzureOrgSetupForm({
   onBack,
-  onClose,
   onNext,
   onFooterChange,
   onPhaseChange,
@@ -77,10 +72,7 @@ export function AzureOrgSetupForm({
   initialValues,
   intent = ORG_WIZARD_INTENT.FULL,
 }: AzureOrgSetupFormProps) {
-  const { organizationId } = useOrgSetupStore();
-  const { toast } = useToast();
   const [setupPhase, setSetupPhase] = useState<OrgSetupPhase>(initialPhase);
-  const [isSaving, setIsSaving] = useState(false);
   const formId = "azure-org-wizard-setup-form";
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -151,14 +143,13 @@ export function AzureOrgSetupForm({
 
   useEffect(() => {
     if (setupPhase === ORG_SETUP_PHASE.DETAILS) {
-      const isEditName = intent === ORG_WIZARD_INTENT.EDIT_NAME;
       onFooterChange({
         showBack: true,
         backLabel: "Back",
         onBack,
         showAction: true,
-        actionLabel: isEditName ? "Save" : "Next",
-        actionDisabled: isEditName ? isSaving : !isTenantIdValid,
+        actionLabel: "Next",
+        actionDisabled: !isTenantIdValid,
         actionType: WIZARD_FOOTER_ACTION_TYPE.SUBMIT,
         actionFormId: formId,
       });
@@ -181,7 +172,6 @@ export function AzureOrgSetupForm({
     formId,
     intent,
     isBusy,
-    isSaving,
     isTenantIdValid,
     isValid,
     onBack,
@@ -202,42 +192,9 @@ export function AzureOrgSetupForm({
     setSetupPhase(ORG_SETUP_PHASE.ACCESS);
   };
 
-  const handleSaveNameOnly = async () => {
-    if (!organizationId) return;
-    setIsSaving(true);
-    const name = form.getValues("organizationName")?.trim() || "";
-
-    const result = await updateOrganizationName(organizationId, name);
-
-    setIsSaving(false);
-
-    if (result?.error || result?.errors) {
-      const errorMsg =
-        result.errors?.[0]?.detail ?? result.error ?? "Failed to update name";
-      toast({
-        variant: "destructive",
-        title: "Oops! Something went wrong",
-        description: errorMsg,
-      });
-      return;
-    }
-
-    toast({
-      title: "Success!",
-      description: "Organization name updated successfully.",
-    });
-    onClose?.();
-  };
-
   const handleFormSubmit = (event: FormEvent<HTMLFormElement>) => {
     if (setupPhase === ORG_SETUP_PHASE.DETAILS) {
       event.preventDefault();
-
-      if (intent === ORG_WIZARD_INTENT.EDIT_NAME) {
-        void handleSaveNameOnly();
-        return;
-      }
-
       handleContinueToAccess();
       return;
     }

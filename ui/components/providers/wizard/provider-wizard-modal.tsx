@@ -251,7 +251,6 @@ export function ProviderWizardModal({
                       onBack={
                         isOrgDirectEntry ? handleClose : backToProviderFlow
                       }
-                      onClose={handleClose}
                       onNext={() => {
                         setOrgCurrentStep(ORG_WIZARD_STEP.VALIDATE);
                       }}
