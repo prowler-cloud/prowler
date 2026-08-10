@@ -36,7 +36,7 @@ Onboarding runs in four stages:
 4. **Launch scans** — apply a scan schedule across the connected subscriptions.
 
 <Note>
-**Nothing is deployed into your tenant.** Unlike AWS Organizations onboarding, Azure onboarding creates no resources in Azure. Prowler reuses the service principal credential you provide as the credential of every subscription it onboards, so a single grant covers discovery and scanning.
+**Nothing is deployed into your tenant.** Unlike AWS Organizations onboarding, Azure onboarding creates no resources in Azure. Prowler reuses the service principal credential you provide as the credential of every subscription it onboards, so one credential covers discovery and scanning once all the required permissions are granted.
 </Note>
 
 <Note>
