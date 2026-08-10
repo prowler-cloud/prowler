@@ -124,7 +124,7 @@ In Prowler Local Server the Management Group option is marked **Cloud** and open
 ### Enter Organization Details
 
 - **Tenant ID**: the Microsoft Entra tenant ID (for example, `8b3c9a41-5f27-4d6e-9c18-7ae204f5b6d2`). Values that are not valid UUIDs are rejected before submission.
-- **Name** (optional): a display name for the organization in Prowler. If left blank, Prowler uses the name stored in Azure.
+- **Name** (optional): a display name for the organization in Prowler. If left blank, Prowler uses the tenant ID.
 
 <Frame>
   <img src="/images/organizations/azure/azure-organization-details-form.png" alt="Organization Details form with the Microsoft Entra tenant ID and Name fields" />
@@ -296,7 +296,7 @@ Open the row actions menu on the organization row on the **Providers** page.
 
 | Action | What it does |
 |--------|--------------|
-| **Edit Organization Name** | Renames the organization in Prowler. Leave it blank to fall back to the name stored in Azure. |
+| **Edit Organization Name** | Renames the organization in Prowler. Leave it blank to fall back to the tenant ID. |
 | **Update Credentials** | Reopens the Authentication Details step to store a new service principal credential. |
 | **Edit Scan Schedule** | Applies one schedule to every connected subscription in the organization. |
 | **Test Connections (N)** | Re-tests every subscription in the organization. |
