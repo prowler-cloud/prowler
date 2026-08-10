@@ -61,6 +61,12 @@ vi.mock("@/lib", () => ({
       description: "Allows creating and managing custom alerts",
     },
     {
+      field: "manage_lighthouse_ai_configuration",
+      label: "Manage Lighthouse AI",
+      description:
+        "Allows configuring Lighthouse AI, including its provider credentials, default model and business context",
+    },
+    {
       field: "manage_billing",
       label: "Manage Billing",
       description: "Provides access to billing settings and invoices",

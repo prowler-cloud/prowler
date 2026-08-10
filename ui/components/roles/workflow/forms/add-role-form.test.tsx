@@ -61,6 +61,12 @@ vi.mock("@/lib", () => ({
       description: "Allows creating and managing custom alerts",
     },
     {
+      field: "manage_lighthouse_ai_configuration",
+      label: "Manage Lighthouse AI",
+      description:
+        "Allows configuring Lighthouse AI, including its provider credentials, default model and business context",
+    },
+    {
       field: "manage_billing",
       label: "Manage Billing",
       description: "Provides access to billing settings and invoices",
@@ -103,6 +109,7 @@ describe("AddRoleForm", () => {
 
     // Then
     expect(screen.getByText("Manage Alerts")).toBeInTheDocument();
+    expect(screen.getByText("Manage Lighthouse AI")).toBeInTheDocument();
     expect(screen.getByText("Manage Billing")).toBeInTheDocument();
   });
 
@@ -115,6 +122,7 @@ describe("AddRoleForm", () => {
 
     // Then
     expect(screen.queryByText("Manage Alerts")).not.toBeInTheDocument();
+    expect(screen.queryByText("Manage Lighthouse AI")).not.toBeInTheDocument();
     expect(screen.queryByText("Manage Billing")).not.toBeInTheDocument();
   });
 

@@ -90,6 +90,7 @@ export type PermissionKey =
   | "manage_integrations"
   | "manage_billing"
   | "manage_alerts"
+  | "manage_lighthouse_ai_configuration"
   | "unlimited_visibility";
 
 export type RolePermissionAttributes = Pick<
@@ -117,6 +118,7 @@ export interface RoleDetail {
     manage_integrations: boolean;
     manage_billing?: boolean;
     manage_alerts?: boolean;
+    manage_lighthouse_ai_configuration?: boolean;
     unlimited_visibility: boolean;
     permission_state?: string;
     inserted_at?: string;

@@ -419,6 +419,7 @@ export interface InvitationProps {
         manage_integrations?: boolean;
         manage_scans?: boolean;
         manage_alerts?: boolean;
+        manage_lighthouse_ai_configuration?: boolean;
         permission_state?: PermissionState;
       };
     };
@@ -444,6 +445,7 @@ export interface Role {
     manage_integrations: boolean;
     manage_scans: boolean;
     manage_alerts?: boolean;
+    manage_lighthouse_ai_configuration?: boolean;
     unlimited_visibility: boolean;
     permission_state: PermissionState;
     inserted_at: string;
