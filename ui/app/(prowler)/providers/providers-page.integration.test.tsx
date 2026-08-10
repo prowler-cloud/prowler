@@ -91,14 +91,23 @@ async function onboardGcpToSelection(
   await harness.waitForProjectSelection();
 }
 
+interface ApplyProjectRequest {
+  project_id: string;
+  alias?: string;
+}
+
+interface ApplyRequestAttributes {
+  projects?: ApplyProjectRequest[];
+  accounts?: unknown;
+  organizational_units?: unknown;
+}
+
+interface ApplyRequestData {
+  attributes: ApplyRequestAttributes;
+}
+
 interface ApplyRequestBody {
-  data: {
-    attributes: {
-      projects?: Array<{ project_id: string; alias?: string }>;
-      accounts?: unknown;
-      organizational_units?: unknown;
-    };
-  };
+  data: ApplyRequestData;
 }
 
 describe("Organization onboarding wizard", () => {
