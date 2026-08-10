@@ -12,11 +12,37 @@ from api.models import (
     UserRoleRelationship,
 )
 from api.utils import accept_invitation_for_user
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.http import HttpResponseForbidden
 
 
 class ProwlerSocialAccountAdapter(DefaultSocialAccountAdapter):
+    @staticmethod
+    def _get_social_account_name(extra_data: dict, email: str) -> str:
+        name_field = User._meta.get_field("name")
+        for value in (
+            extra_data.get("name"),
+            extra_data.get("login"),
+            extra_data.get("username"),
+            email,
+        ):
+            if not isinstance(value, str):
+                continue
+
+            candidate = value.strip()[: name_field.max_length]
+            if not candidate:
+                continue
+
+            try:
+                name_field.run_validators(candidate)
+            except ValidationError:
+                continue
+
+            return candidate
+
+        raise ValueError("Social account does not provide a valid user identity.")
+
     @staticmethod
     def get_user_by_email(email: str):
         try:
@@ -117,10 +143,8 @@ class ProwlerSocialAccountAdapter(DefaultSocialAccountAdapter):
             if provider != "saml":
                 # Handle other providers (e.g., GitHub, Google)
                 user.save(using=MainRouter.admin_db)
-                social_account_name = extra.get("name")
-                if social_account_name:
-                    user.name = social_account_name
-                    user.save(using=MainRouter.admin_db)
+                user.name = self._get_social_account_name(extra, user.email)
+                user.save(using=MainRouter.admin_db)
 
                 invitation_token = self._get_invitation_token(request)
                 if invitation_token:
