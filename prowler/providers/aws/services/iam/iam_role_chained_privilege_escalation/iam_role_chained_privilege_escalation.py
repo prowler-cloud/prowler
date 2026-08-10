@@ -1,3 +1,9 @@
+"""IAM role chained privilege escalation check.
+
+Detects transitive escalation where a low-privileged role can sts:AssumeRole
+into a privileged role that itself can escalate to admin.
+"""
+
 from typing import Dict, List, Set
 
 from prowler.lib.check.models import Check, Check_Report_AWS
@@ -8,7 +14,15 @@ from prowler.providers.aws.services.iam.lib.privilege_escalation import (
 
 
 def _parse_assume_role_principals(trust_policy: dict) -> Set[str]:
-    """Extract role ARNs allowed to assume this role from trust policy."""
+    """Extract AWS role ARNs allowed to assume this role.
+
+    Args:
+        trust_policy: IAM trust policy document from AssumeRolePolicyDocument.
+
+    Returns:
+        Set of ARN strings for principals that can assume the role,
+        including account root ARNs.
+    """
     principals = set()
     if not trust_policy:
         return principals
@@ -40,7 +54,14 @@ def _parse_assume_role_principals(trust_policy: dict) -> Set[str]:
 
 
 def _get_role_effective_document(role_name: str) -> List[dict]:
-    """Collect all effective policy documents for a role."""
+    """Collect attached policy documents for a role.
+
+    Args:
+        role_name: IAM role name to lookup.
+
+    Returns:
+        List of policy documents attached to the role.
+    """
     docs = []
     for policy_obj in iam_client.policies.values():
         if policy_obj.entity == role_name and policy_obj.attached:
@@ -50,10 +71,22 @@ def _get_role_effective_document(role_name: str) -> List[dict]:
 
 
 class iam_role_chained_privilege_escalation(Check):
-    """Detect chained escalation where a role can assume a privileged role."""
+    """Check for IAM role chains allowing privilege escalation.
+
+    Evaluates two detection directions:
+    1. Source role can assume a privileged target role.
+    2. Privileged role is assumable by in-account roles.
+
+    This fills the gap noted in the privilege escalation library where
+    transitive paths were not evaluated.
+    """
 
     def execute(self) -> List[Check_Report_AWS]:
-        """Detect two directions: source assumes privileged target, and privileged assumable by in-account role."""
+        """Execute the IAM chained escalation detection.
+
+        Returns:
+            List of Check_Report_AWS with PASS or FAIL findings per role.
+        """
         findings = []
 
         if not iam_client.roles:
