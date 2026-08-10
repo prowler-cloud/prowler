@@ -23,10 +23,23 @@ class s3_bucket_object_acl_ghost(Check):
     Drift remains if objects still carry public grants to AllUsers or
     AuthenticatedUsers. Those grants would reactivate if the bucket is
     downgraded to BucketOwnerPreferred.
+
+    Attributes:
+        None required beyond Check base class metadata.
+
     """
 
     def execute(self) -> List[Check_Report_AWS]:
         """Execute the ghost ACL check for all S3 buckets.
+
+        Evaluates each bucket for ghost public ACL risk:
+        - MANUAL if ownership lookup failed (ownership is None)
+        - PASS if ownership is known and not BucketOwnerEnforced (not applicable)
+        - MANUAL if object sampling was not performed
+        - PASS if bucket empty
+        - MANUAL if sampling error occurred
+        - FAIL if ghost public grants found in sample (drift risk)
+        - PASS if sample clean
 
         Returns:
             List of Check_Report_AWS with PASS, FAIL, or MANUAL status.
@@ -38,7 +51,18 @@ class s3_bucket_object_acl_ghost(Check):
             report.resource_id = bucket.name
             report.resource_arn = bucket.arn
 
-            is_enforced = bucket.ownership and "BucketOwnerEnforced" in bucket.ownership
+            # Ownership lookup failure: Bucket.ownership is Optional[str].
+            # When None, we cannot confirm enforcement, so do not report PASS.
+            if bucket.ownership is None:
+                report.status = "MANUAL"
+                report.status_extended = (
+                    f"S3 Bucket {bucket.name} ownership could not be determined, "
+                    f"cannot evaluate ghost ACL risk. Check GetBucketOwnershipControls permission."
+                )
+                findings.append(report)
+                continue
+
+            is_enforced = "BucketOwnerEnforced" in bucket.ownership
 
             if not is_enforced:
                 report.status = "PASS"

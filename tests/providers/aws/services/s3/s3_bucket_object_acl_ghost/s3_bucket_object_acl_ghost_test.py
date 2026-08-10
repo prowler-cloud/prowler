@@ -1,7 +1,6 @@
 from unittest import mock
 
 from boto3 import client
-from botocore.exceptions import ClientError
 from moto import mock_aws
 
 from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
@@ -43,6 +42,39 @@ class Test_s3_bucket_object_acl_ghost:
                 assert len(result) == 0
 
     @mock_aws
+    def test_bucket_ownership_none_manual(self):
+        """Ownership None is lookup failure, must be MANUAL, not PASS."""
+        s3_client_us_east_1 = client("s3", region_name=AWS_REGION_US_EAST_1)
+        bucket_name = "bucket-ownership-none"
+        s3_client_us_east_1.create_bucket(Bucket=bucket_name)
+
+        from prowler.providers.aws.services.s3.s3_service import S3
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
+            s3_service = S3(aws_provider)
+            for b in s3_service.buckets.values():
+                if b.name == bucket_name:
+                    b.ownership = None
+
+            with mock.patch(f"{CHECK_MODULE}.s3_client", new=s3_service):
+                from prowler.providers.aws.services.s3.s3_bucket_object_acl_ghost.s3_bucket_object_acl_ghost import (
+                    s3_bucket_object_acl_ghost,
+                )
+
+                check = s3_bucket_object_acl_ghost()
+                result = check.execute()
+
+                assert len(result) == 1
+                assert result[0].status == "MANUAL"
+                assert result[0].resource_id == bucket_name
+                assert result[0].status_extended == f"S3 Bucket {bucket_name} ownership could not be determined, cannot evaluate ghost ACL risk. Check GetBucketOwnershipControls permission."
+
+    @mock_aws
     def test_bucket_without_enforced_pass_not_applicable(self):
         s3_client_us_east_1 = client("s3", region_name=AWS_REGION_US_EAST_1)
         bucket_name = "bucket-not-enforced"
@@ -57,6 +89,10 @@ class Test_s3_bucket_object_acl_ghost:
             return_value=aws_provider,
         ):
             s3_service = S3(aws_provider)
+            for b in s3_service.buckets.values():
+                if b.name == bucket_name:
+                    b.ownership = "BucketOwnerPreferred"
+
             with mock.patch(f"{CHECK_MODULE}.s3_client", new=s3_service):
                 from prowler.providers.aws.services.s3.s3_bucket_object_acl_ghost.s3_bucket_object_acl_ghost import (
                     s3_bucket_object_acl_ghost,
@@ -69,12 +105,11 @@ class Test_s3_bucket_object_acl_ghost:
                 assert result[0].status == "PASS"
                 assert result[0].resource_id == bucket_name
                 assert result[0].region == AWS_REGION_US_EAST_1
-                assert "does not have BucketOwnerEnforced" in result[0].status_extended
-                assert "ghost ACL check not applicable" in result[0].status_extended
+                assert result[0].status_extended == f"S3 Bucket {bucket_name} does not have BucketOwnerEnforced, ghost ACL check not applicable. Use s3_bucket_acl_prohibited and s3_bucket_object_public."
 
     @mock_aws
     def test_bucket_enforced_no_sampling_manual(self):
-        """When sampling not performed, should be MANUAL per reviewer feedback."""
+        """When sampling None, should be MANUAL with exact message."""
         s3_client_us_east_1 = client("s3", region_name=AWS_REGION_US_EAST_1)
         bucket_name = "bucket-enforced-no-sampling"
         s3_client_us_east_1.create_bucket(
@@ -105,8 +140,44 @@ class Test_s3_bucket_object_acl_ghost:
                 assert len(result) == 1
                 assert result[0].status == "MANUAL"
                 assert result[0].resource_id == bucket_name
-                assert "was not performed" in result[0].status_extended
-                assert "could not be evaluated" in result[0].status_extended
+                assert result[0].status_extended == f"S3 Bucket {bucket_name} has BucketOwnerEnforced enabled but object ACL sampling was not performed, so ghost ACLs could not be evaluated. Enable s3_bucket_object_public_enabled in the audit configuration."
+
+    @mock_aws
+    def test_bucket_enforced_sampling_not_performed_flag_manual(self):
+        """Sampling performed=False also MANUAL, exact message."""
+        s3_client_us_east_1 = client("s3", region_name=AWS_REGION_US_EAST_1)
+        bucket_name = "bucket-enforced-not-performed"
+        s3_client_us_east_1.create_bucket(
+            Bucket=bucket_name, ObjectOwnership="BucketOwnerEnforced"
+        )
+
+        from prowler.providers.aws.services.s3.s3_service import S3
+        from prowler.providers.aws.services.s3.s3_service import BucketObjectSampling
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
+            s3_service = S3(aws_provider)
+            for b in s3_service.buckets.values():
+                if b.name == bucket_name:
+                    b.ownership = "BucketOwnerEnforced"
+                    b.object_sampling = BucketObjectSampling(
+                        performed=False, is_empty=False, objects=[]
+                    )
+
+            with mock.patch(f"{CHECK_MODULE}.s3_client", new=s3_service):
+                from prowler.providers.aws.services.s3.s3_bucket_object_acl_ghost.s3_bucket_object_acl_ghost import (
+                    s3_bucket_object_acl_ghost,
+                )
+
+                check = s3_bucket_object_acl_ghost()
+                result = check.execute()
+
+                assert len(result) == 1
+                assert result[0].status == "MANUAL"
+                assert result[0].status_extended == f"S3 Bucket {bucket_name} has BucketOwnerEnforced enabled but object ACL sampling was not performed, so ghost ACLs could not be evaluated. Enable s3_bucket_object_public_enabled in the audit configuration."
 
     @mock_aws
     def test_bucket_enforced_empty_pass(self):
@@ -263,8 +334,11 @@ class Test_s3_bucket_object_acl_ghost:
                 assert len(result) == 1
                 assert result[0].status == "FAIL"
                 assert result[0].resource_id == bucket_name
+                assert result[0].status_extended.startswith(
+                    f"S3 Bucket {bucket_name} has BucketOwnerEnforced but sample of 1 objects still contains ghost public ACL grants"
+                )
                 assert ghost_key in result[0].status_extended
-                assert "ghost public acl" in result[0].status_extended.lower()
+                assert "drift risk" in result[0].status_extended
 
     @mock_aws
     def test_bucket_enforced_ghost_authenticated_users_fail(self):
@@ -315,7 +389,11 @@ class Test_s3_bucket_object_acl_ghost:
 
                 assert len(result) == 1
                 assert result[0].status == "FAIL"
+                assert result[0].resource_id == bucket_name
                 assert ghost_key in result[0].status_extended
+                assert result[0].status_extended.startswith(
+                    f"S3 Bucket {bucket_name} has BucketOwnerEnforced but sample of 1 objects"
+                )
 
     @mock_aws
     def test_access_denied_manual_via_error_code(self):
@@ -360,6 +438,7 @@ class Test_s3_bucket_object_acl_ghost:
                 assert len(result) == 1
                 assert result[0].status == "MANUAL"
                 assert result[0].resource_id == bucket_name
+                assert result[0].status_extended == f"Could not evaluate ghost ACLs for bucket {bucket_name}: Access Denied when spot-checking objects in bucket."
 
     @mock_aws
     def test_other_error_manual(self):
@@ -403,4 +482,4 @@ class Test_s3_bucket_object_acl_ghost:
 
                 assert len(result) == 1
                 assert result[0].status == "MANUAL"
-                assert bucket_name in result[0].status_extended
+                assert result[0].status_extended == f"Could not evaluate ghost ACLs for bucket {bucket_name}: InternalError when listing objects."

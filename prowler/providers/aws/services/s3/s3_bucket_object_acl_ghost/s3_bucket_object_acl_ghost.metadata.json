@@ -21,13 +21,13 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "aws s3api put-object-acl --bucket <bucket_name> --key <object_key> --acl private",
+      "CLI": "aws s3api list-objects-v2 --bucket <bucket_name>  # Inventory objects with ghost ACLs from finding\n# To purge ghost grants, rewrite each affected object without ACL headers:\naws s3 cp s3://<bucket_name>/<object_key> s3://<bucket_name>/<object_key> --metadata-directive COPY --expected-bucket-owner <account_id>",
       "NativeIaC": "Resources:\n  S3Bucket:\n    Type: AWS::S3::Bucket\n    Properties:\n      OwnershipControls:\n        Rules:\n          - ObjectOwnership: BucketOwnerEnforced\n",
-      "Other": "1. Keep BucketOwnerEnforced enabled. 2. List sampled public objects from finding and run put-object-acl --acl private to strip ghost grants. 3. Use S3 Batch Operations to put-object-acl private on all legacy objects. 4. Enforce Ownership via SCP and monitor with AWS Config rule s3-bucket-ownership-controls-enabled.",
+      "Other": "1. Keep BucketOwnerEnforced enabled. Ghost ACLs remain inert while enforced. 2. Inventory the sampled public objects listed in the finding. 3. To permanently strip ghost grants, rewrite each object with S3 Copy or S3 Batch Operations Copy job without ACL headers, or recreate objects if versioning is enabled. 4. Enforce Ownership via SCP that denies s3:PutBucketOwnershipControls unless ObjectOwnership is BucketOwnerEnforced. Monitor with AWS Config rule s3-bucket-ownership-controls-enabled.",
       "Terraform": "resource \"aws_s3_bucket_ownership_controls\" \"example\" {\n  bucket = aws_s3_bucket.example.id\n  rule {\n    object_ownership = \"BucketOwnerEnforced\"\n  }\n}\n"
     },
     "Recommendation": {
-      "Text": "Retain BucketOwnerEnforced. Strip legacy public grants with batch put-object-acl private and enforce ownership controls at org level to prevent downgrades that resurrect ghost ACLs.",
+      "Text": "Retain BucketOwnerEnforced. Ghost ACLs are inert while enforced but become active on downgrade. Inventory affected objects and rewrite them without ACLs to purge ghost grants, and block downgrade via SCP and Config to prevent resurrection.",
       "Url": "https://hub.prowler.com/check/s3_bucket_object_acl_ghost"
     }
   },
