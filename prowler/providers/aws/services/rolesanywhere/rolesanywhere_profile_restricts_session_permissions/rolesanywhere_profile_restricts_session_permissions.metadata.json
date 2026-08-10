@@ -1,0 +1,41 @@
+{
+  "Provider": "aws",
+  "CheckID": "rolesanywhere_profile_restricts_session_permissions",
+  "CheckTitle": "IAM Roles Anywhere profiles scope down the vended session permissions",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "rolesanywhere",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "AwsRolesAnywhereProfile",
+  "ResourceGroup": "security",
+  "Description": "**IAM Roles Anywhere profiles** are assessed for **session scoping**. A profile that defines neither an inline `sessionPolicy` nor `managedPolicyArns` vends temporary credentials with the full permissions of every role it references, so any certificate accepted by the trust anchor obtains those permissions in full.",
+  "Risk": "Roles Anywhere profiles bind X.509 certificates to IAM roles. Without a session policy or managed policies scoping the session down, vended credentials carry the full permissions of the referenced role(s). An attacker presenting a valid certificate - or planting a rogue trust anchor and profile - gains durable privileged access that rotating IAM keys does not revoke.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/rolesanywhere/latest/userguide/introduction.html",
+    "https://docs.aws.amazon.com/rolesanywhere/latest/APIReference/API_CreateProfile.html",
+    "https://docs.aws.amazon.com/rolesanywhere/latest/userguide/security-best-practices.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws rolesanywhere update-profile --profile-id <profile_id> --session-policy '{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":[\"<least_privilege_actions>\"],\"Resource\":[\"<scoped_resources>\"]}]}'",
+      "NativeIaC": "```yaml\nResources:\n  <example_resource_name>:\n    Type: AWS::RolesAnywhere::Profile\n    Properties:\n      Name: scoped-profile\n      Enabled: true\n      RoleArns:\n        - <role_arn>\n      SessionPolicy: '{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":[\"<least_privilege_actions>\"],\"Resource\":[\"<scoped_resources>\"]}]}'  # FIX: scope down the vended session\n```",
+      "Other": "1. Identify the least-privilege actions the workload actually needs\n2. Attach a sessionPolicy or managedPolicyArns to the Roles Anywhere profile that grants only those actions\n3. Prefer purpose-built roles per workload over broad roles referenced by many profiles\n4. Review trust anchors and profiles regularly for entries you did not create",
+      "Terraform": "```hcl\nresource \"aws_rolesanywhere_profile\" \"<example_resource_name>\" {\n  name      = \"scoped-profile\"\n  enabled   = true\n  role_arns = [<role_arn>]\n  session_policy = jsonencode({\n    Version = \"2012-10-17\"\n    Statement = [{\n      Effect   = \"Allow\"\n      Action   = [<least_privilege_actions>]\n      Resource = [<scoped_resources>]\n    }]\n  }) # FIX: scope down the vended session\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Attach a session policy or managed policies to every enabled IAM Roles Anywhere profile so the vended credentials are scoped below the referenced role's permissions. Pair each profile with a purpose-built least-privilege role and audit trust anchors and profiles regularly for unexpected entries.",
+      "Url": "https://hub.prowler.com/check/rolesanywhere_profile_restricts_session_permissions"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Disabled profiles cannot vend session credentials and are reported as PASS. A profile is considered scoped when it defines an inline sessionPolicy or references managed policies; this check does not evaluate whether the referenced role itself is least-privilege."
+}

@@ -4,6 +4,7 @@ import botocore
 from moto import mock_aws
 
 from prowler.providers.aws.services.rolesanywhere.rolesanywhere_service import (
+    Profile,
     RolesAnywhere,
     TrustAnchor,
 )
@@ -16,6 +17,9 @@ from tests.providers.aws.utils import (
 TA_ID = "11111111-2222-3333-4444-555555555555"
 TA_ARN = f"arn:aws:rolesanywhere:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:trust-anchor/{TA_ID}"
 PCA_ARN = f"arn:aws:acm-pca:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:certificate-authority/abc"
+PROFILE_ID = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+PROFILE_ARN = f"arn:aws:rolesanywhere:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:profile/{PROFILE_ID}"
+ROLE_ARN = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:role/workload-role"
 
 make_api_call = botocore.client.BaseClient._make_api_call
 
@@ -33,6 +37,21 @@ def mock_make_api_call(self, operation_name, kwarg):
                         "sourceType": "AWS_ACM_PCA",
                         "sourceData": {"acmPcaArn": PCA_ARN},
                     },
+                }
+            ]
+        }
+    if operation_name == "ListProfiles":
+        return {
+            "profiles": [
+                {
+                    "profileArn": PROFILE_ARN,
+                    "profileId": PROFILE_ID,
+                    "name": "workload-profile",
+                    "enabled": True,
+                    "roleArns": [ROLE_ARN],
+                    "sessionPolicy": '{"Version":"2012-10-17","Statement":[]}',
+                    "durationSeconds": 3600,
+                    "acceptRoleSessionName": False,
                 }
             ]
         }
@@ -77,6 +96,24 @@ class Test_RolesAnywhere_Service:
         assert ta.acm_pca_arn == PCA_ARN
         assert ta.region == AWS_REGION_US_EAST_1
         assert ta.tags == [{"key": "Environment", "value": "test"}]
+
+    @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
+    @mock_aws
+    def test_list_profiles(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        rolesanywhere = RolesAnywhere(aws_provider)
+        assert len(rolesanywhere.profiles) == 1
+        profile = rolesanywhere.profiles[PROFILE_ARN]
+        assert isinstance(profile, Profile)
+        assert profile.id == PROFILE_ID
+        assert profile.name == "workload-profile"
+        assert profile.enabled is True
+        assert profile.role_arns == [ROLE_ARN]
+        assert profile.session_policy == '{"Version":"2012-10-17","Statement":[]}'
+        assert profile.managed_policy_arns == []
+        assert profile.duration_seconds == 3600
+        assert profile.region == AWS_REGION_US_EAST_1
+        assert profile.tags == [{"key": "Environment", "value": "test"}]
 
     @patch(
         "botocore.client.BaseClient._make_api_call", new=mock_make_api_call_tags_failure
