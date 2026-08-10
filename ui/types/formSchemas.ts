@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 import { validateMutelistYaml, validateYaml } from "@/lib/yaml";
+import { MAX_SAML_ADDITIONAL_EMAIL_DOMAINS } from "@/types/saml";
 
 import { PROVIDER_TYPES, ProviderType } from "./providers";
 
@@ -722,16 +723,101 @@ export const editUserFormSchema = () =>
     role: z.string().optional(),
   });
 
-export const samlConfigFormSchema = z.object({
-  email_domain: z
+const createSamlEmailDomainSchema = (requiredMessage: string) =>
+  z
     .string()
     .trim()
-    .min(1, { message: "Email domain is required" }),
-  metadata_xml: z
-    .string()
-    .trim()
-    .min(1, { message: "Metadata XML is required" }),
+    .min(1, { error: requiredMessage })
+    .transform((domain) => domain.toLowerCase());
+
+export const samlEmailDomainSchema = createSamlEmailDomainSchema(
+  "Email domain is required",
+);
+
+export const samlAdditionalEmailDomainSchema = createSamlEmailDomainSchema(
+  "Additional email domain is required",
+);
+
+const samlConfigDomainSchema = z.object({
+  email_domain: samlEmailDomainSchema,
+  additional_email_domains: z
+    .array(samlAdditionalEmailDomainSchema)
+    .max(MAX_SAML_ADDITIONAL_EMAIL_DOMAINS, {
+      error: `A SAML configuration supports up to ${MAX_SAML_ADDITIONAL_EMAIL_DOMAINS} additional email domains.`,
+    })
+    .default([]),
 });
+
+const samlMetadataXmlSchema = z
+  .string()
+  .trim()
+  .min(1, { error: "Metadata XML is required" });
+
+const samlOptionalMetadataXmlSchema = z.string().trim();
+
+const validateSamlDomains = (
+  data: z.output<typeof samlConfigDomainSchema>,
+  ctx: z.RefinementCtx,
+) => {
+  const populatedAdditionalDomains = data.additional_email_domains.filter(
+    (domain) => domain.length > 0,
+  );
+
+  if (
+    new Set(populatedAdditionalDomains).size !==
+    populatedAdditionalDomains.length
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Additional email domains must be unique.",
+      path: ["additional_email_domains"],
+    });
+  }
+
+  if (
+    data.email_domain.length > 0 &&
+    populatedAdditionalDomains.includes(data.email_domain)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      message:
+        "Additional email domains must differ from the primary email domain.",
+      path: ["additional_email_domains"],
+    });
+  }
+};
+
+export const getSamlConfigFormSchema = (isUpdate: boolean) =>
+  samlConfigDomainSchema
+    .extend({
+      metadata_xml: isUpdate
+        ? samlOptionalMetadataXmlSchema
+        : samlMetadataXmlSchema,
+    })
+    .superRefine(validateSamlDomains);
+
+export type SamlConfigFormInput = z.input<
+  ReturnType<typeof getSamlConfigFormSchema>
+>;
+export type SamlConfigFormValues = z.output<
+  ReturnType<typeof getSamlConfigFormSchema>
+>;
+
+export const samlConfigFormSchema = getSamlConfigFormSchema(false);
+
+export const samlConfigUpdateFormSchema = samlConfigDomainSchema
+  .extend({
+    metadata_xml: z.preprocess(
+      (value) =>
+        value === null ||
+        value === undefined ||
+        (typeof value === "string" && value.trim() === "")
+          ? undefined
+          : value,
+      samlMetadataXmlSchema.optional(),
+    ),
+  })
+  .superRefine(validateSamlDomains);
 
 export const mutedFindingsConfigFormSchema = z.object({
   configuration: z

@@ -111,7 +111,7 @@ jobs:
             done
 
             if [ -n "$found_in" ]; then
-              found_in=$(echo "$found_in" | sed 's/, $//')
+              found_in="${found_in%, }"
               MAPPED="${MAPPED}- \`${check_id}\` (\`${provider}\`): ${found_in}"$'\n'
             else
               UNMAPPED="${UNMAPPED}- \`${check_id}\` (\`${provider}\`)"$'\n'

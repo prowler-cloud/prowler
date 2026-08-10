@@ -323,7 +323,9 @@
     {
       "Id": "1.3.9",
       "Description": "Shared Bookings allows you to invite your team members and create booking pages and let your customers book time with you and your team. It contains various settings to define services, manage staff members, configure schedules and availability, business hours and customize how appointments are scheduled. These pages can be customized to fit the diverse needs of your organization. It is an extension of Person Bookings. The recommended state is to restrict the OwaMailboxPolicy-Default policy or disable at the organization level.",
-      "Checks": [],
+      "Checks": [
+        "admincenter_shared_bookings_disabled"
+      ],
       "Attributes": [
         {
           "Section": "1 Microsoft 365 admin center",
@@ -768,7 +770,9 @@
     {
       "Id": "2.4.1",
       "Description": "Identify priority accounts to utilize Microsoft 365's advanced custom security features. This is an essential tool to bolster protection for users who are frequently targeted due to their critical positions, such as executives, leaders, managers, or others who have access to sensitive, confidential, financial, or high-priority information. Once these accounts are identified, several services and features can be enabled, including threat policies, enhanced sign-in protection through conditional access policies, and alert policies, enabling faster response times for incident response teams.",
-      "Checks": [],
+      "Checks": [
+        "defender_priority_account_protection_enabled"
+      ],
       "Attributes": [
         {
           "Section": "2 Microsoft Defender",
@@ -789,7 +793,9 @@
     {
       "Id": "2.4.2",
       "Description": "Preset security policies have been established by Microsoft, utilizing observations and experiences within datacenters to strike a balance between the exclusion of malicious content from users and limiting unwarranted disruptions. These policies can apply to all, or select users and encompass recommendations for addressing spam, malware, and phishing threats. The policy parameters are pre-determined and non-adjustable. Strict protection has the most aggressive protection of the 3 presets. - EOP: Anti-spam, Anti-malware and Anti-phishing - Defender: Spoof protection, Impersonation protection and Advanced phishing - Defender: Safe Links and Safe Attachments NOTE: The preset security polices cannot target Priority account TAGS currently, groups should be used instead.",
-      "Checks": [],
+      "Checks": [
+        "defender_strict_preset_security_policy_enabled"
+      ],
       "Attributes": [
         {
           "Section": "2 Microsoft Defender",
@@ -1160,7 +1166,9 @@
     {
       "Id": "5.1.3.1",
       "Description": "This setting allows users in the organization to create new security groups and add members to these groups in the Azure portal, API, or PowerShell. These new groups also show up in the Access Panel for all other users. If the policy setting on the group allows it, other users can create requests to join these groups. The recommended state is Users can create security groups in Azure portals, API or PowerShell set to No.",
-      "Checks": [],
+      "Checks": [
+        "entra_policy_default_user_cannot_create_security_groups"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",
@@ -1223,7 +1231,9 @@
     {
       "Id": "5.1.3.4",
       "Description": "All users within a Microsoft Entra organization are permitted to create new Microsoft 365 groups and add members to those groups through the Azure portal, API, or PowerShell. Newly created groups also appear in the Access Panel for all other users. When the applicable group policy settings allow it, users can submit requests to join these groups. The recommended state is No.",
-      "Checks": [],
+      "Checks": [
+        "entra_policy_default_user_cannot_create_m365_groups"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",
@@ -1244,7 +1254,9 @@
     {
       "Id": "5.1.4.1",
       "Description": "This setting enables you to select the users who can register their devices as Microsoft Entra joined devices. The recommended state is Selected or None. Note: This setting is applicable only to Microsoft Entra join on Windows 10 or newer. This setting doesn't apply to Microsoft Entra hybrid joined devices, Microsoft Entra joined VMs in Azure, or Microsoft Entra joined devices that use Windows Autopilot self- deployment mode because these methods work in a userless context.",
-      "Checks": [],
+      "Checks": [
+        "entra_device_registration_join_restricted"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",
@@ -1265,7 +1277,9 @@
     {
       "Id": "5.1.4.2",
       "Description": "This setting defines the maximum number of Microsoft Entra joined or registered devices that a user can have in Microsoft Entra ID. Once this limit is reached, no additional devices can be added until existing ones are removed. Values above 100 are automatically capped at 100. The recommended state is 10 or less.",
-      "Checks": [],
+      "Checks": [
+        "entra_device_registration_max_devices_per_user_limited"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",
@@ -1286,7 +1300,9 @@
     {
       "Id": "5.1.4.3",
       "Description": "This setting controls whether the Global Administrator role is automatically added to the local administrators group on a device during the Microsoft Entra join process. The recommended state is No.",
-      "Checks": [],
+      "Checks": [
+        "entra_device_registration_global_admins_not_local_admins"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",
@@ -1307,7 +1323,9 @@
     {
       "Id": "5.1.4.4",
       "Description": "This setting determines if the Microsoft Entra user registering their device as Microsoft Entra join will be added to the local administrators group. This setting applies only once during the actual registration of the device as Microsoft Entra join. The recommended state is Selected or None.",
-      "Checks": [],
+      "Checks": [
+        "entra_device_registration_registering_user_not_local_admin"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",
@@ -1328,7 +1346,9 @@
     {
       "Id": "5.1.4.5",
       "Description": "Local Administrator Password Solution (LAPS) is the management of local account passwords on Windows devices. LAPS provides a solution to securely manage and retrieve the built-in local admin password. With cloud version of LAPS, customers can enable storing and rotation of local admin passwords for both Microsoft Entra and Microsoft Entra hybrid join devices The recommended state is Yes.",
-      "Checks": [],
+      "Checks": [
+        "entra_device_registration_laps_enabled"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",
@@ -1349,7 +1369,9 @@
     {
       "Id": "5.1.4.6",
       "Description": "This setting determines if users can self-service recover their BitLocker key(s). 'Yes' restricts non-admin users from being able to see the BitLocker key(s) for their owned devices if there are any. 'No' allows all users to recover their BitLocker key(s). The recommended state is Yes.",
-      "Checks": [],
+      "Checks": [
+        "entra_policy_default_user_cannot_read_bitlocker_keys"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",
@@ -1508,7 +1530,9 @@
     {
       "Id": "5.1.6.1",
       "Description": "B2B collaboration is a feature within Microsoft Entra External ID that allows for guest invitations to an organization. Ensure users can only send invitations to specified domains. Note: This list works independently from OneDrive for Business and SharePoint Online allow/block lists. To restrict individual file sharing in SharePoint Online, set up an allow or blocklist for OneDrive for Business and SharePoint Online. For instance, in SharePoint or OneDrive users can still share with external users from prohibited domains by using Anyone links if they haven't been disabled.",
-      "Checks": [],
+      "Checks": [
+        "entra_policy_guest_invitations_restricted_to_allowed_domains"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",
@@ -1998,7 +2022,9 @@
     {
       "Id": "5.2.3.2",
       "Description": "With Entra Password Protection, default global banned password lists are automatically applied to all users in an Entra ID tenant. To support business and security needs, custom banned password lists can be defined. When users change or reset their passwords, these banned password lists are checked to enforce the use of strong passwords. A custom banned password list should include some of the following examples: - Brand names - Product names - Locations, such as company headquarters - Company-specific internal terms - Abbreviations that have specific company meaning",
-      "Checks": [],
+      "Checks": [
+        "entra_password_protection_custom_banned_list_enforced"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",
@@ -2019,7 +2045,9 @@
     {
       "Id": "5.2.3.3",
       "Description": "Microsoft Entra Password Protection provides a global and custom banned password list. A password change request fails if there's a match in these banned password list. To protect on-premises Active Directory Domain Services (AD DS) environment, install and configure Entra Password Protection. Note: This recommendation applies to Hybrid deployments only and will have no impact unless working with on-premises Active Directory.",
-      "Checks": [],
+      "Checks": [
+        "entra_password_protection_on_premises_enforced"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",
@@ -2128,7 +2156,9 @@
     {
       "Id": "5.2.3.8",
       "Description": "The account lockout threshold determines how many failed login attempts are permitted prior to placing the account in a locked-out state and initiating a variable lockout duration. The recommended Lockout threshold is 10 or less.",
-      "Checks": [],
+      "Checks": [
+        "entra_password_protection_lockout_threshold_limited"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",
@@ -2149,7 +2179,9 @@
     {
       "Id": "5.2.3.9",
       "Description": "The account lockout duration value determines how long an account retains the status of lockout, and therefore how long before a user can continue to attempt to login after passing the lockout threshold. The recommended state is Lockout duration in seconds is at least 60.",
-      "Checks": [],
+      "Checks": [
+        "entra_password_protection_lockout_duration_configured"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",
@@ -2571,7 +2603,9 @@
     {
       "Id": "6.3.2",
       "Description": "Outlook on the web (OWA) mailbox policies include two settings that control personal account integration in Outlook. PersonalAccountsEnabled controls whether users can add personal email accounts (e.g., Outlook.com, Gmail, Yahoo) in the new Outlook for Windows. PersonalAccountCalendarsEnabled controls whether users can connect personal Outlook.com or Google calendars in Outlook on the web. Neither setting applies to classic Outlook for Windows, Outlook for Mac, or Outlook mobile apps. The recommended state for the default OWA Mailbox Policy is: - PersonalAccountsEnabled is set to False - PersonalAccountCalendarsEnabled is set to False",
-      "Checks": [],
+      "Checks": [
+        "exchange_owa_mailbox_policy_personal_accounts_disabled"
+      ],
       "Attributes": [
         {
           "Section": "6 Exchange admin center",
@@ -2692,7 +2726,9 @@
     {
       "Id": "6.5.5",
       "Description": "Direct Send is a method used to send emails directly to an Exchange Online customer's hosted mailboxes from on-premises devices, applications, or third-party cloud services using the customer's own accepted domain. This method does not require any form of authentication because, by its nature, it mimics incoming anonymous emails from the internet, apart from the sender domain. The recommended state is to configure RejectDirectSend to True.",
-      "Checks": [],
+      "Checks": [
+        "exchange_organization_reject_direct_send_enabled"
+      ],
       "Attributes": [
         {
           "Section": "6 Exchange admin center",
@@ -3088,7 +3124,9 @@
     {
       "Id": "8.2.4",
       "Description": "This setting controls the organization's external access with Teams \"trial-only\" tenants. These are tenants that don't have any purchased seats. When set to Blocked, users from these trial-only tenants aren't able to search and contact your users via chats, Teams calls, and meetings (using the users' authenticated identities) and your users aren't able to reach users in these trial-only tenants. Users from the trial-only tenant are also removed from existing chats. The recommended state for People in my organization can communicate with accounts in trial Teams tenant is Off.",
-      "Checks": [],
+      "Checks": [
+        "teams_external_access_trial_tenants_blocked"
+      ],
       "Attributes": [
         {
           "Section": "8 Microsoft Teams admin center",

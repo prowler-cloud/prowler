@@ -45,6 +45,29 @@ describe("Button", () => {
     );
   });
 
+  it("supports circular icon buttons without changing the default shape", () => {
+    // Given / When
+    const { rerender } = render(
+      <Button shape="circle" size="icon-lg" aria-label="Give feedback">
+        <svg aria-hidden="true" />
+      </Button>,
+    );
+
+    // Then
+    expect(screen.getByRole("button", { name: "Give feedback" })).toHaveClass(
+      "rounded-full",
+      "size-10",
+    );
+
+    // When
+    rerender(<Button>Default shape</Button>);
+
+    // Then
+    expect(screen.getByRole("button", { name: "Default shape" })).toHaveClass(
+      "rounded-[8px]",
+    );
+  });
+
   it("renders the bare variant chrome-free (no background or border)", () => {
     render(
       <Button variant="bare" size="icon-sm" aria-label="Toggle sidebar">

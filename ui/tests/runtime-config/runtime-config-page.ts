@@ -16,6 +16,7 @@ export const RUNTIME_CONFIG_KEYS = [
   "googleTagManagerId",
   "apiBaseUrl",
   "apiDocsUrl",
+  "posthogEnabled",
   "posthogKey",
   "posthogHost",
   "reoDevClientId",
