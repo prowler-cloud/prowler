@@ -29,6 +29,9 @@ import { SecretReplaceWarningModal } from "./secret-replace-warning-modal";
 const TENANT_ID_INVALID =
   "Must be a valid Microsoft Entra tenant ID (e.g., 11111111-1111-4111-8111-111111111111)";
 
+// `z.guid()`, not `z.uuid()`: Azure issues GUIDs, and `z.uuid()` enforces the
+// RFC-9562 version and variant nibbles — it rejects real Microsoft identifiers
+// such as `00000003-0000-0000-c000-000000000000` while accepting the nil UUID.
 const azureOrgSetupSchema = z.object({
   organizationName: z.string().trim().optional(),
   // Onboarding always covers the tenant root Management Group, which the API
@@ -37,12 +40,12 @@ const azureOrgSetupSchema = z.object({
     .string()
     .trim()
     .min(1, "Tenant ID is required")
-    .pipe(z.uuid(TENANT_ID_INVALID)),
+    .pipe(z.guid(TENANT_ID_INVALID)),
   clientId: z
     .string()
     .trim()
     .min(1, "Client ID is required")
-    .pipe(z.uuid("Must be a valid service principal client ID (UUID)")),
+    .pipe(z.guid("Must be a valid service principal client ID (GUID)")),
   clientSecret: z.string().trim().min(1, "Client Secret is required"),
 });
 
@@ -103,7 +106,8 @@ export function AzureOrgSetupForm({
   } = form;
 
   const tenantId = watch("tenantId") || "";
-  const isTenantIdValid = z.uuid().safeParse(tenantId.trim()).success;
+  // Must stay the same check the schema runs, or the footer disagrees with submit.
+  const isTenantIdValid = z.guid().safeParse(tenantId.trim()).success;
 
   const {
     apiError,
