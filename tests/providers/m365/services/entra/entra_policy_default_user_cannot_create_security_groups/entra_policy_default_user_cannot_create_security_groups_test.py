@@ -71,7 +71,7 @@ class Test_entra_policy_default_user_cannot_create_security_groups:
             assert result[0].status == "FAIL"
             assert result[0].resource_id == "authorizationPolicy"
 
-    def test_users_cannot_create_security_groups(self):
+    def test_security_group_creation_disabled(self):
         entra_client = mock.MagicMock
 
         with (
