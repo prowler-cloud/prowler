@@ -1,0 +1,44 @@
+{
+  "Provider": "aws",
+  "CheckID": "s3_bucket_object_acl_ghost",
+  "CheckTitle": "S3 bucket has ghost public object ACLs despite BucketOwnerEnforced",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Effects/Data Exposure"
+  ],
+  "ServiceName": "s3",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:s3:::resource",
+  "Severity": "high",
+  "ResourceType": "AwsS3Bucket",
+  "ResourceGroup": "storage",
+  "Description": "Checks if S3 buckets with BucketOwnerEnforced (ACLs disabled) still contain sampled objects whose stored ACLs grant AllUsers or AuthenticatedUsers. These ghost ACLs are ignored today but will re-activate if Object Ownership is downgraded, creating drift and latent public exposure.",
+  "Risk": "Buckets appear secure with BucketOwnerEnforced but retain legacy public object ACLs in the data store. If an admin later disables BucketOwnerEnforced for app compatibility or migration, those ghost ACLs become effective immediately and expose objects publicly without warning. This is a common S3 drift path after the April 2023 AWS default change.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/AmazonS3/latest/userguide/about-object-ownership.html",
+    "https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-ownership.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws s3api put-object-acl --bucket <bucket_name> --key <object_key> --acl private",
+      "NativeIaC": "Resources:\n  S3Bucket:\n    Type: AWS::S3::Bucket\n    Properties:\n      OwnershipControls:\n        Rules:\n          - ObjectOwnership: BucketOwnerEnforced\n",
+      "Other": "1. Keep BucketOwnerEnforced enabled. 2. List sampled public objects from finding and run put-object-acl --acl private to strip ghost grants. 3. Use S3 Batch Operations to put-object-acl private on all legacy objects. 4. Enforce Ownership via SCP and monitor with AWS Config rule s3-bucket-ownership-controls-enabled.",
+      "Terraform": "resource \"aws_s3_bucket_ownership_controls\" \"example\" {\n  bucket = aws_s3_bucket.example.id\n  rule {\n    object_ownership = \"BucketOwnerEnforced\"\n  }\n}\n"
+    },
+    "Recommendation": {
+      "Text": "Retain BucketOwnerEnforced. Strip legacy public grants with batch put-object-acl private and enforce ownership controls at org level to prevent downgrades that resurrect ghost ACLs.",
+      "Url": "https://hub.prowler.com/check/s3_bucket_object_acl_ghost"
+    }
+  },
+  "Categories": [
+    "internet-exposed",
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "s3_bucket_acl_prohibited",
+    "s3_bucket_object_public"
+  ],
+  "Notes": "Requires object sampling which is populated when s3_bucket_object_public_enabled is true or when S3 service fetches public objects. Sampling-based, not exhaustive."
+}
