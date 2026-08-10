@@ -3,7 +3,7 @@ import importlib
 import json
 from datetime import datetime, timezone
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, call, patch
 
 import pytest
 
@@ -133,6 +133,270 @@ class TestAccessReviewDefinitions:
         )
 
         assert definitions[0].has_primary_reviewers is False
+
+    @pytest.mark.parametrize(
+        "terminal_response",
+        [b"", json.dumps({"value": []}).encode()],
+    )
+    def test_preserves_definitions_when_terminal_page_is_empty(self, terminal_response):
+        service = Entra.__new__(Entra)
+        first_page = json.dumps(
+            {
+                "value": [{"id": "review-1", "displayName": "Guest Review"}],
+                "@odata.nextLink": "next-link",
+            }
+        ).encode()
+        send_mock = AsyncMock(side_effect=[first_page, terminal_response])
+        with_url_mock = MagicMock(
+            side_effect=[
+                SimpleNamespace(
+                    to_get_request_information=MagicMock(return_value="request-1")
+                ),
+                SimpleNamespace(
+                    to_get_request_information=MagicMock(return_value="request-2")
+                ),
+            ]
+        )
+        service.client = SimpleNamespace(
+            identity_governance=SimpleNamespace(with_url=with_url_mock),
+            request_adapter=SimpleNamespace(send_primitive_async=send_mock),
+        )
+
+        definitions = asyncio.run(service._get_access_review_definitions())
+
+        assert [definition.id for definition in definitions] == ["review-1"]
+        assert send_mock.await_count == 2
+        assert with_url_mock.call_args_list[-1] == call("next-link")
+
+    def test_error_returns_no_access_review_definitions(self):
+        service = Entra.__new__(Entra)
+        service.client = SimpleNamespace(
+            identity_governance=SimpleNamespace(
+                with_url=MagicMock(
+                    return_value=SimpleNamespace(
+                        to_get_request_information=MagicMock(return_value="request-1")
+                    )
+                )
+            ),
+            request_adapter=SimpleNamespace(
+                send_primitive_async=AsyncMock(side_effect=RuntimeError("Graph error"))
+            ),
+        )
+
+        assert asyncio.run(service._get_access_review_definitions()) == []
+
+
+class TestPimRoleApprovalSettings:
+    def test_paginates_and_parses_role_approval_settings(self):
+        service = Entra.__new__(Entra)
+        first_page = json.dumps(
+            {
+                "value": [
+                    {"policy": {"rules": []}},
+                    {
+                        "roleDefinitionId": "role-unrelated",
+                        "policy": {"rules": [{"id": "Unrelated_Rule"}]},
+                    },
+                    {
+                        "roleDefinitionId": "role-approval-required",
+                        "policy": {
+                            "rules": [
+                                {
+                                    "id": "Approval_EndUser_Assignment",
+                                    "setting": {
+                                        "isApprovalRequired": True,
+                                        "approvalStages": [
+                                            {"primaryApprovers": []},
+                                            {
+                                                "primaryApprovers": [
+                                                    {"id": "approver-1"}
+                                                ]
+                                            },
+                                        ],
+                                    },
+                                }
+                            ]
+                        },
+                    },
+                ],
+                "@odata.nextLink": "next-link",
+            }
+        ).encode()
+        final_page = json.dumps(
+            {
+                "value": [
+                    {
+                        "roleDefinitionId": "role-approval-disabled",
+                        "policy": {
+                            "rules": [
+                                {
+                                    "id": "Approval_EndUser_Assignment",
+                                    "setting": {
+                                        "isApprovalRequired": False,
+                                        "approvalStages": [{"primaryApprovers": []}],
+                                    },
+                                }
+                            ]
+                        },
+                    }
+                ]
+            }
+        ).encode()
+        send_mock = AsyncMock(side_effect=[first_page, final_page])
+        with_url_mock = MagicMock(
+            side_effect=[
+                SimpleNamespace(
+                    to_get_request_information=MagicMock(return_value="request-1")
+                ),
+                SimpleNamespace(
+                    to_get_request_information=MagicMock(return_value="request-2")
+                ),
+            ]
+        )
+        service.client = SimpleNamespace(
+            policies=SimpleNamespace(with_url=with_url_mock),
+            request_adapter=SimpleNamespace(send_primitive_async=send_mock),
+        )
+
+        settings = asyncio.run(service._get_pim_role_approval_settings())
+
+        assert set(settings) == {
+            "role-unrelated",
+            "role-approval-required",
+            "role-approval-disabled",
+        }
+        assert settings["role-unrelated"].is_approval_required is False
+        assert settings["role-unrelated"].has_approvers is False
+        assert settings["role-approval-required"].is_approval_required is True
+        assert settings["role-approval-required"].has_approvers is True
+        assert settings["role-approval-disabled"].is_approval_required is False
+        assert settings["role-approval-disabled"].has_approvers is False
+        assert send_mock.await_count == 2
+        assert with_url_mock.call_args_list[-1] == call("next-link")
+
+    @pytest.mark.parametrize(
+        "response",
+        [b"", json.dumps({"value": []}).encode()],
+    )
+    def test_stops_on_falsy_or_empty_response(self, response):
+        service = Entra.__new__(Entra)
+        service.client = SimpleNamespace(
+            policies=SimpleNamespace(
+                with_url=MagicMock(
+                    return_value=SimpleNamespace(
+                        to_get_request_information=MagicMock(return_value="request-1")
+                    )
+                )
+            ),
+            request_adapter=SimpleNamespace(
+                send_primitive_async=AsyncMock(return_value=response)
+            ),
+        )
+
+        assert asyncio.run(service._get_pim_role_approval_settings()) == {}
+
+    def test_error_returns_no_role_approval_settings(self):
+        service = Entra.__new__(Entra)
+        service.client = SimpleNamespace(
+            policies=SimpleNamespace(
+                with_url=MagicMock(
+                    return_value=SimpleNamespace(
+                        to_get_request_information=MagicMock(return_value="request-1")
+                    )
+                )
+            ),
+            request_adapter=SimpleNamespace(
+                send_primitive_async=AsyncMock(side_effect=RuntimeError("Graph error"))
+            ),
+        )
+
+        assert asyncio.run(service._get_pim_role_approval_settings()) == {}
+
+
+class TestAuthenticationMethodsPolicySettings:
+    @staticmethod
+    def _service(response=None, error=None):
+        send_mock = AsyncMock(return_value=response, side_effect=error)
+        service = Entra.__new__(Entra)
+        service.client = SimpleNamespace(
+            policies=SimpleNamespace(
+                authentication_methods_policy=SimpleNamespace(
+                    with_url=MagicMock(
+                        return_value=SimpleNamespace(
+                            to_get_request_information=MagicMock(
+                                return_value="request-1"
+                            )
+                        )
+                    )
+                )
+            ),
+            request_adapter=SimpleNamespace(send_primitive_async=send_mock),
+        )
+        return service
+
+    def test_parses_microsoft_authenticator_after_unrelated_configuration(self):
+        response = json.dumps(
+            {
+                "authenticationMethodConfigurations": [
+                    {"id": "Fido2", "state": "enabled"},
+                    {
+                        "id": "MicrosoftAuthenticator",
+                        "state": "enabled",
+                        "featureSettings": {
+                            "displayAppInformationRequiredState": {"state": "enabled"},
+                            "displayLocationInformationRequiredState": {
+                                "state": "disabled"
+                            },
+                        },
+                    },
+                ]
+            }
+        ).encode()
+
+        settings = asyncio.run(
+            self._service(
+                response=response
+            )._get_authentication_methods_policy_settings()
+        )
+
+        assert settings.authenticator_state == "enabled"
+        assert settings.authenticator_display_app_information_state == "enabled"
+        assert settings.authenticator_display_location_information_state == "disabled"
+
+    def test_missing_microsoft_authenticator_returns_unconfigured_model(self):
+        response = json.dumps(
+            {"authenticationMethodConfigurations": [{"id": "Fido2"}]}
+        ).encode()
+
+        settings = asyncio.run(
+            self._service(
+                response=response
+            )._get_authentication_methods_policy_settings()
+        )
+
+        assert settings.authenticator_state is None
+        assert settings.authenticator_display_app_information_state is None
+        assert settings.authenticator_display_location_information_state is None
+
+    def test_falsy_response_returns_none(self):
+        assert (
+            asyncio.run(
+                self._service(
+                    response=b""
+                )._get_authentication_methods_policy_settings()
+            )
+            is None
+        )
+
+    def test_error_returns_none(self):
+        assert (
+            asyncio.run(
+                self._service(
+                    error=RuntimeError("Graph error")
+                )._get_authentication_methods_policy_settings()
+            )
+            is None
+        )
 
 
 async def mock_entra_get_authorization_policy(_):
