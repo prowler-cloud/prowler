@@ -1,6 +1,6 @@
 from typing import Dict
 
-from pydantic.v1 import BaseModel
+from pydantic.v1 import BaseModel, Field
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
@@ -120,4 +120,4 @@ class BareMetalServer(BaseModel):
     region: str
     status: str
     public_ip: str = ""
-    security_groups: Dict[str, str] = {}
+    security_groups: Dict[str, str] = Field(default_factory=dict)
