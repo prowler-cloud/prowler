@@ -1,4 +1,3 @@
-export * from "./azure-credentials-form";
 export * from "./github-credentials-form";
 export * from "./iac-credentials-form";
 export * from "./image-credentials-form";

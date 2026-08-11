@@ -211,12 +211,19 @@ export const addCredentialsFormSchema = (
           }
         : providerType === "azure"
           ? {
+              // Client secret vs. certificate is a per-form choice driven by
+              // `via`; the field-level presence check runs inside the
+              // credential-type form (see azure-*-credentials-form.tsx). The
+              // schema keeps both optional so switching methods without a
+              // page reload does not trigger a stale "required" error on the
+              // field that is not shown.
               [ProviderCredentialFields.CLIENT_ID]: z
                 .string()
                 .min(1, "Client ID is required"),
-              [ProviderCredentialFields.CLIENT_SECRET]: z
+              [ProviderCredentialFields.CLIENT_SECRET]: z.string().optional(),
+              [ProviderCredentialFields.CERTIFICATE_CONTENT]: z
                 .string()
-                .min(1, "Client Secret is required"),
+                .optional(),
               [ProviderCredentialFields.TENANT_ID]: z
                 .string()
                 .min(1, "Tenant ID is required"),
@@ -442,6 +449,36 @@ export const addCredentialsFormSchema = (
                                       : {}),
     })
     .superRefine((data: Record<string, string | undefined>, ctx) => {
+      if (providerType === "azure") {
+        // Azure schema keeps both `client_secret` and `certificate_content`
+        // optional at field level (the credential-type selector picks which
+        // form is shown). The visible field for the chosen `via` is what
+        // the user must fill — enforce it here so the client catches empty
+        // submissions before hitting the API, mirroring M365. Error copy is
+        // aligned with the visible field labels ("Certificate Private Key"
+        // vs. the technical `certificate_content` field name).
+        if (via === "app_client_secret") {
+          const clientSecret = data[ProviderCredentialFields.CLIENT_SECRET];
+          if (!clientSecret || clientSecret.trim() === "") {
+            ctx.addIssue({
+              code: "custom",
+              message: "Client Secret is required",
+              path: [ProviderCredentialFields.CLIENT_SECRET],
+            });
+          }
+        } else if (via === "app_certificate") {
+          const certificateContent =
+            data[ProviderCredentialFields.CERTIFICATE_CONTENT];
+          if (!certificateContent || certificateContent.trim() === "") {
+            ctx.addIssue({
+              code: "custom",
+              message: "Certificate Private Key is required",
+              path: [ProviderCredentialFields.CERTIFICATE_CONTENT],
+            });
+          }
+        }
+      }
+
       if (providerType === "m365") {
         // Validate based on the via parameter
         if (via === "app_client_secret") {

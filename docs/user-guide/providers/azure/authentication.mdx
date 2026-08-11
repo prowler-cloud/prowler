@@ -6,11 +6,13 @@ Prowler for Azure supports multiple authentication types. Authentication methods
 
 **Prowler Cloud:**
 
-- [**Service Principal Application**](#service-principal-application-authentication-recommended)
+- [**Certificate Authentication**](#certificate-authentication) (**Recommended** — one-click setup via the [Deploy to Azure](#deploy-to-azure-quick-start) quick-start)
+- [**Service Principal Application**](#service-principal-application-authentication-recommended) with a client secret
 
 **Prowler CLI:**
 
-- [**Service Principal Application**](#service-principal-application-authentication-recommended) (**Recommended**)
+- [**Certificate Authentication**](#certificate-authentication) (**Recommended**)
+- [**Service Principal Application**](#service-principal-application-authentication-recommended) with a client secret
 - [**AZ CLI credentials**](#az-cli-authentication)
 - [**Interactive browser authentication**](#browser-authentication)
 - [**Managed Identity Authentication**](#managed-identity-authentication)
@@ -215,6 +217,84 @@ The following security checks require the `ProwlerRole` permissions for executio
 - `app_function_latest_runtime_version`
 
 ---
+
+## Deploy to Azure (Quick-Start)
+
+Prowler ships a public [Bicep template](https://github.com/prowler-cloud/prowler/blob/master/permissions/templates/azure/bicep/prowler-scan.bicep) that provisions the App Registration, Service Principal, built-in `Reader` role assignment, and the custom `ProwlerRole` — all bound to an X.509 certificate credential — in a single deployment. This is the Azure analogue of the AWS CloudFormation quick-create flow.
+
+Use it from the Prowler Cloud **add-provider wizard**:
+
+1. Pick **Azure**, then choose **Certificate Authentication (Recommended)** in the credential-type selector.
+2. Click **Deploy to Azure**. The button opens the Azure Portal deployment blade pre-loaded with the template.
+3. Generate a certificate (see [Certificate Authentication](#certificate-authentication) below) and paste the base64-encoded public certificate and its SHA-1 thumbprint into the Bicep parameters.
+4. Deploy and, when the stack finishes, copy the `tenantId`, `applicationId`, and `certificateThumbprint` outputs plus the private key back into Prowler.
+
+<Note>
+The Deploy to Azure button is not available for sovereign clouds (Azure Government, Azure China, Azure Germany) or personal Microsoft accounts. Follow the manual [Certificate Authentication](#certificate-authentication) or [Service Principal](#service-principal-application-authentication-recommended) instructions instead.
+</Note>
+
+## Certificate Authentication
+
+Certificate authentication is the recommended way to run Prowler against Azure because Entra ID keeps only the public certificate (no shared secrets to rotate), and Bicep can bind the certificate to the App Registration natively via `keyCredentials`.
+
+### Generating the certificate
+
+Prowler never sees the private key during deployment — the user generates the keypair locally.
+
+**macOS / Linux (OpenSSL):**
+
+```console
+openssl req -x509 -newkey rsa:4096 -keyout prowler.key -out prowler.crt \
+    -days 365 -nodes -subj "/CN=Prowler"
+
+# Base64 of the public certificate — feeds `certificateBase64` in the Bicep template
+openssl x509 -in prowler.crt -outform DER | base64 | tr -d '\n'
+
+# SHA-1 thumbprint — feeds `certificateThumbprint` in the Bicep template
+openssl x509 -in prowler.crt -noout -fingerprint -sha1 \
+    | cut -d= -f2 | tr -d ':' | tr '[:lower:]' '[:upper:]'
+
+# Base64 of the private key — paste into Prowler as "Certificate Content"
+base64 -i prowler.key | tr -d '\n'
+```
+
+**Windows (PowerShell):**
+
+```powershell
+$cert = New-SelfSignedCertificate -Subject "CN=Prowler" `
+    -CertStoreLocation "Cert:\CurrentUser\My" `
+    -KeyExportPolicy Exportable -KeySpec Signature `
+    -KeyLength 4096 -HashAlgorithm SHA256
+
+[Convert]::ToBase64String($cert.RawData)  # certificateBase64
+$cert.Thumbprint                          # certificateThumbprint
+```
+
+### Prowler Cloud
+
+Paste the following into the Certificate Authentication form of the Azure add-provider wizard:
+
+- **Tenant ID** — copy from the deployment outputs.
+- **Client ID** — copy from the deployment outputs (`applicationId`).
+- **Certificate Content** — the base64-encoded **private key** (never the public certificate).
+
+### Prowler CLI
+
+Set the following environment variables and invoke Prowler with `--certificate-auth`:
+
+```console
+export AZURE_CLIENT_ID="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+export AZURE_TENANT_ID="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+export AZURE_CERTIFICATE_CONTENT="<base64-encoded private key>"
+
+prowler azure --certificate-auth
+```
+
+Alternatively, point Prowler at a certificate file on disk:
+
+```console
+prowler azure --certificate-auth --certificate-path /path/to/prowler.key
+```
 
 ## Service Principal Application Authentication (Recommended)
 

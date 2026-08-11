@@ -40,6 +40,19 @@ export const getAttackPathHubUrl = (queryId: string): string =>
 export const PROWLER_CF_TEMPLATE_URL =
   "https://prowler-cloud-public.s3.eu-west-1.amazonaws.com/permissions/templates/aws/cloudformation/prowler-scan-role.yml";
 
+// ARM JSON template URL for the Prowler quick-start Azure deployment (App
+// Registration + Service Principal + Reader + custom ProwlerRole + certificate
+// credential). The template is authored in Bicep at
+// `permissions/templates/azure/bicep/prowler-scan.bicep` and compiled to ARM
+// JSON at `prowler-scan.json` — the Azure Portal `#create/Microsoft.Template`
+// deep link only accepts ARM JSON, not raw Bicep source. Regenerate with
+// `make -C permissions/templates/azure/bicep build` after editing the .bicep.
+// URL-encoded and appended to the Portal deep link built by
+// `getAzureDeploymentQuickLink` below. Points at the same public S3 bucket
+// that hosts the AWS templates.
+export const PROWLER_AZURE_BICEP_TEMPLATE_URL =
+  "https://prowler-cloud-public.s3.eu-west-1.amazonaws.com/permissions/templates/azure/bicep/prowler-scan.json";
+
 // Prowler Cloud billing/subscription management page.
 export const BILLING_URL = "https://cloud.prowler.com/billing";
 
@@ -214,6 +227,14 @@ const PROVIDER_CREDENTIALS_METHOD_DOCS_URL: Record<
     role: "https://docs.prowler.com/user-guide/providers/aws/getting-started-aws#assume-role-recommended",
     credentials:
       "https://docs.prowler.com/user-guide/providers/aws/getting-started-aws#credentials-static-access-keys",
+  },
+  azure: {
+    // The Deploy-to-Azure certificate flow is the recommended path;
+    // client-secret authentication remains the manual fallback.
+    app_certificate:
+      "https://docs.prowler.com/user-guide/providers/azure/getting-started-azure#certificate-authentication-recommended",
+    app_client_secret:
+      "https://docs.prowler.com/user-guide/providers/azure/getting-started-azure#service-principal-with-client-secret",
   },
   m365: {
     app_certificate:
@@ -393,3 +414,20 @@ export const getAWSOrgDeploymentQuickLink = ({
 
   return buildCloudFormationQuickCreateLink(parameters);
 };
+
+// Builds the Azure Portal deep link that opens the "Custom deployment" wizard
+// pre-loaded with the Prowler Bicep template. The Portal expects
+// `#create/Microsoft.Template/uri/<double-encoded-template-url>` — the URL
+// fragment is re-parsed by the Portal SPA which URL-decodes the segment once
+// more, so the template URL must be percent-encoded exactly once via
+// `encodeURIComponent`. This is the Azure analogue of the AWS CloudFormation
+// quick-create link built by `getAWSOrgDeploymentQuickLink` above.
+//
+// The resulting URL is safe to open in a new tab; the user is expected to be
+// signed into the Azure Portal already. If they are not, the Portal will
+// bounce them through the standard sign-in flow before landing on the
+// deployment form with the template still pre-loaded.
+export const getAzureDeploymentQuickLink = (
+  templateUrl: string = PROWLER_AZURE_BICEP_TEMPLATE_URL,
+): string =>
+  `https://portal.azure.com/#create/Microsoft.Template/uri/${encodeURIComponent(templateUrl)}`;

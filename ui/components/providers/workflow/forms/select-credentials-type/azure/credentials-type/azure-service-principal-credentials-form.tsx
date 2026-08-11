@@ -1,23 +1,37 @@
+"use client";
+
 import { Control } from "react-hook-form";
 
 import { WizardInputField } from "@/components/providers/workflow/forms/fields";
-import { AzureCredentials } from "@/types";
+import { AzureClientSecretCredentials } from "@/types";
 
-export const AzureCredentialsForm = ({
+export const AzureServicePrincipalCredentialsForm = ({
   control,
 }: {
-  control: Control<AzureCredentials>;
+  control: Control<AzureClientSecretCredentials>;
 }) => {
   return (
     <>
       <div className="flex flex-col">
         <div className="text-md text-text-neutral-primary leading-9 font-bold">
-          Connect via Credentials
+          Service Principal with Client Secret
         </div>
         <div className="text-text-neutral-tertiary text-sm">
-          Please provide the information for your Azure credentials.
+          Please provide the Azure Service Principal credentials issued from
+          your App Registration&apos;s <em>Certificates &amp; secrets</em>{" "}
+          blade.
         </div>
       </div>
+      <WizardInputField
+        control={control}
+        name="tenant_id"
+        type="text"
+        label="Tenant ID"
+        labelPlacement="inside"
+        placeholder="Enter the Tenant ID"
+        variant="bordered"
+        isRequired
+      />
       <WizardInputField
         control={control}
         name="client_id"
@@ -35,16 +49,6 @@ export const AzureCredentialsForm = ({
         label="Client Secret"
         labelPlacement="inside"
         placeholder="Enter the Client Secret"
-        variant="bordered"
-        isRequired
-      />
-      <WizardInputField
-        control={control}
-        name="tenant_id"
-        type="text"
-        label="Tenant ID"
-        labelPlacement="inside"
-        placeholder="Enter the Tenant ID"
         variant="bordered"
         isRequired
       />

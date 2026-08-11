@@ -1,0 +1,98 @@
+"use client";
+
+import Link from "next/link";
+import { Control } from "react-hook-form";
+
+import {
+  WizardInputField,
+  WizardTextareaField,
+} from "@/components/providers/workflow/forms/fields";
+import { Button } from "@/components/shadcn";
+import { getAzureDeploymentQuickLink } from "@/lib/external-urls";
+import { AzureCertificateCredentials } from "@/types";
+
+export const AzureCertificateCredentialsForm = ({
+  control,
+}: {
+  control: Control<AzureCertificateCredentials>;
+}) => {
+  // The Deploy-to-Azure link is a plain constant today: unlike the AWS
+  // organisation link, it does not need any wizard-collected value in the
+  // URL (subscription selection happens inside the Portal deployment blade).
+  // If Prowler ever needs to pin the deployment to a specific subscription
+  // or region, thread that value through `getAzureDeploymentQuickLink` here.
+  const deployToAzureUrl = getAzureDeploymentQuickLink();
+
+  return (
+    <>
+      <div className="flex flex-col">
+        <div className="text-md text-text-neutral-primary leading-9 font-bold">
+          Certificate Authentication (Recommended)
+        </div>
+        <div className="text-text-neutral-tertiary text-sm">
+          Deploy the Prowler Bicep template to provision the App Registration,
+          Service Principal, and read-only roles in one click, then paste the
+          resulting credentials below.
+        </div>
+      </div>
+      <div className="flex flex-col items-start gap-1">
+        <Button variant="link" size="link-sm" asChild>
+          <a href={deployToAzureUrl} target="_blank" rel="noopener noreferrer">
+            Deploy to Azure
+          </a>
+        </Button>
+        <p className="text-text-neutral-tertiary text-xs">
+          After deployment, copy <strong>Tenant ID</strong> and{" "}
+          <strong>Application (Client) ID</strong> from the deployment outputs —
+          the certificate private key you generated locally goes in the
+          &ldquo;Certificate Private Key&rdquo; field below.
+        </p>
+      </div>
+      <WizardInputField
+        control={control}
+        name="tenant_id"
+        type="text"
+        label="Tenant ID"
+        labelPlacement="inside"
+        placeholder="Enter the Tenant ID"
+        variant="bordered"
+        isRequired
+      />
+      <WizardInputField
+        control={control}
+        name="client_id"
+        type="text"
+        label="Client ID"
+        labelPlacement="inside"
+        placeholder="Enter the Client ID"
+        variant="bordered"
+        isRequired
+      />
+      <WizardTextareaField
+        control={control}
+        name="certificate_content"
+        label="Certificate Private Key (Base64)"
+        labelPlacement="inside"
+        placeholder="Paste the base64-encoded private key that pairs with the certificate deployed to Entra ID"
+        variant="bordered"
+        isRequired
+        minRows={4}
+      />
+      <p className="text-text-neutral-tertiary text-sm">
+        This is the <strong>base64-encoded private key</strong> that matches the
+        certificate uploaded to Entra ID by the Bicep template (not the public
+        certificate, and not the thumbprint). Generation instructions (openssl /
+        PowerShell) are in the{" "}
+        <Link
+          href="https://docs.prowler.com/user-guide/providers/azure/authentication#certificate-authentication"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-button-tertiary p-0 text-sm"
+        >
+          certificate generation guide
+        </Link>
+        .
+      </p>
+    </>
+  );
+};

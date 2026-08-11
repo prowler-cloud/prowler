@@ -1,0 +1,175 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+  "languageVersion": "2.0",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.46.1.21595",
+      "templateHash": "6180354331557312661"
+    }
+  },
+  "parameters": {
+    "applicationName": {
+      "type": "string",
+      "defaultValue": "ProwlerApp",
+      "metadata": {
+        "description": "Display name of the Entra ID App Registration that Prowler will authenticate as."
+      }
+    },
+    "certificateBase64": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Base64-encoded DER of the X.509 public certificate that Entra ID will pin to the App Registration as a keyCredential. Generate with `openssl x509 -outform DER | base64` (see README). The matching private key stays with the user — Prowler never receives it during deployment."
+      }
+    },
+    "certificateDisplayName": {
+      "type": "string",
+      "defaultValue": "Prowler Certificate",
+      "metadata": {
+        "description": "Optional friendly display name for the certificate credential."
+      }
+    },
+    "certificateStartDateTime": {
+      "type": "string",
+      "defaultValue": "[utcNow()]",
+      "metadata": {
+        "description": "Start date (ISO 8601) for the certificate credential validity window. Defaults to the deployment time."
+      }
+    },
+    "certificateEndDateTime": {
+      "type": "string",
+      "defaultValue": "[dateTimeAdd(utcNow(), 'P1Y')]",
+      "metadata": {
+        "description": "End date (ISO 8601) for the certificate credential validity window. Defaults to one year after the deployment."
+      }
+    },
+    "customRoleName": {
+      "type": "string",
+      "defaultValue": "ProwlerRole",
+      "metadata": {
+        "description": "Name of the custom role Prowler creates for its extra read actions."
+      }
+    }
+  },
+  "variables": {
+    "customRoleDefinitionName": "[guid(subscription().id, parameters('customRoleName'))]",
+    "readerRoleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'acdd72a7-3385-48ef-bd42-f606fba81ae7')]"
+  },
+  "imports": {
+    "microsoftGraphV1": {
+      "provider": "MicrosoftGraph",
+      "version": "0.1.8-preview"
+    }
+  },
+  "resources": {
+    "application": {
+      "import": "microsoftGraphV1",
+      "type": "Microsoft.Graph/applications@v1.0",
+      "properties": {
+        "uniqueName": "[format('{0}-{1}', parameters('applicationName'), subscription().subscriptionId)]",
+        "displayName": "[parameters('applicationName')]",
+        "description": "Deployed by Prowler quick-start Bicep template for read-only security scanning.",
+        "signInAudience": "AzureADMyOrg",
+        "keyCredentials": [
+          {
+            "displayName": "[parameters('certificateDisplayName')]",
+            "type": "AsymmetricX509Cert",
+            "usage": "Verify",
+            "key": "[parameters('certificateBase64')]",
+            "startDateTime": "[parameters('certificateStartDateTime')]",
+            "endDateTime": "[parameters('certificateEndDateTime')]"
+          }
+        ]
+      }
+    },
+    "servicePrincipal": {
+      "import": "microsoftGraphV1",
+      "type": "Microsoft.Graph/servicePrincipals@v1.0",
+      "properties": {
+        "appId": "[reference('application').appId]",
+        "displayName": "[parameters('applicationName')]"
+      },
+      "dependsOn": [
+        "application"
+      ]
+    },
+    "prowlerRole": {
+      "type": "Microsoft.Authorization/roleDefinitions",
+      "apiVersion": "2022-05-01-preview",
+      "name": "[variables('customRoleDefinitionName')]",
+      "properties": {
+        "roleName": "[parameters('customRoleName')]",
+        "description": "Role used by Prowler for checks that require read-only access to Azure resources beyond the built-in Reader role.",
+        "type": "CustomRole",
+        "assignableScopes": [
+          "[subscription().id]"
+        ],
+        "permissions": [
+          {
+            "actions": [
+              "Microsoft.Web/sites/host/listkeys/action",
+              "Microsoft.Web/sites/config/list/Action"
+            ],
+            "notActions": [],
+            "dataActions": [],
+            "notDataActions": []
+          }
+        ]
+      }
+    },
+    "readerAssignment": {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[guid(subscription().id, parameters('applicationName'), 'Reader')]",
+      "properties": {
+        "principalId": "[reference('servicePrincipal').id]",
+        "principalType": "ServicePrincipal",
+        "roleDefinitionId": "[variables('readerRoleDefinitionId')]"
+      },
+      "dependsOn": [
+        "servicePrincipal"
+      ]
+    },
+    "prowlerRoleAssignment": {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[guid(subscription().id, parameters('applicationName'), parameters('customRoleName'))]",
+      "properties": {
+        "principalId": "[reference('servicePrincipal').id]",
+        "principalType": "ServicePrincipal",
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('customRoleDefinitionName'))]"
+      },
+      "dependsOn": [
+        "prowlerRole",
+        "servicePrincipal"
+      ]
+    }
+  },
+  "outputs": {
+    "tenantId": {
+      "type": "string",
+      "value": "[subscription().tenantId]"
+    },
+    "subscriptionId": {
+      "type": "string",
+      "value": "[subscription().subscriptionId]"
+    },
+    "applicationId": {
+      "type": "string",
+      "value": "[reference('application').appId]"
+    },
+    "servicePrincipalObjectId": {
+      "type": "string",
+      "value": "[reference('servicePrincipal').id]"
+    },
+    "certificateThumbprint": {
+      "type": "string",
+      "value": "[reference('application').keyCredentials[0].customKeyIdentifier]"
+    },
+    "prowlerRoleDefinitionId": {
+      "type": "string",
+      "value": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('customRoleDefinitionName'))]"
+    }
+  }
+}

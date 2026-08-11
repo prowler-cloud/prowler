@@ -1,16 +1,18 @@
 import asyncio
+import base64
 import logging
 import os
 import re
 from argparse import ArgumentTypeError
 from itertools import chain
 from os import getenv
-from typing import Union
+from typing import Optional, Union
 from uuid import UUID
 
 import requests
 from azure.core.exceptions import ClientAuthenticationError, HttpResponseError
 from azure.identity import (
+    CertificateCredential,
     ClientSecretCredential,
     CredentialUnavailableError,
     DefaultAzureCredential,
@@ -19,6 +21,10 @@ from azure.identity import (
 from azure.mgmt.resource import ResourceManagementClient
 from azure.mgmt.subscription import SubscriptionClient
 from colorama import Fore, Style
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.serialization import pkcs12
 from msgraph import GraphServiceClient
 
 from prowler.config.config import (
@@ -44,6 +50,8 @@ from prowler.providers.azure.exceptions.exceptions import (
     AzureNoAuthenticationMethodError,
     AzureNoSubscriptionsError,
     AzureNotTenantIdButClientIdAndClienSecretError,
+    AzureNotValidCertificateContentError,
+    AzureNotValidCertificatePathError,
     AzureNotValidClientIdError,
     AzureNotValidClientSecretError,
     AzureNotValidTenantIdError,
@@ -60,6 +68,36 @@ from prowler.providers.azure.lib.regions.regions import get_regions_config
 from prowler.providers.azure.models import AzureIdentityInfo, AzureRegionConfig
 from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
+
+# Attribute we stash on `CertificateCredential` instances so `setup_identity`
+# can surface the certificate SHA-1 thumbprint without reaching into
+# azure-identity's private `_client_credential` dict (which can — and does —
+# change shape across azure-identity versions).
+_PROWLER_CERT_THUMBPRINT_ATTR = "_prowler_certificate_thumbprint"
+
+
+def _compute_certificate_thumbprint(cert_data: bytes) -> Optional[str]:
+    """Compute the SHA-1 thumbprint of an X.509 certificate.
+
+    Accepts the same certificate_data formats `azure.identity.CertificateCredential`
+    accepts (PEM, DER, or PKCS#12/PFX with the private key) and returns the
+    thumbprint as an uppercase hex string, matching how Entra ID displays it
+    in the App Registration blade. Returns None if none of the parsers can
+    read the bytes so the caller can fall back to a placeholder.
+    """
+    for loader in (
+        lambda data: pkcs12.load_key_and_certificates(data, None, default_backend())[1],
+        lambda data: x509.load_pem_x509_certificate(data, default_backend()),
+        lambda data: x509.load_der_x509_certificate(data, default_backend()),
+    ):
+        try:
+            cert = loader(cert_data)
+        except Exception:
+            continue
+        if cert is None:
+            continue
+        return cert.fingerprint(hashes.SHA1()).hex().upper()
+    return None
 
 
 class AzureProvider(Provider):
@@ -125,6 +163,9 @@ class AzureProvider(Provider):
         mutelist_content: dict = None,
         client_id: str = None,
         client_secret: str = None,
+        certificate_auth: bool = False,
+        certificate_content: str = None,
+        certificate_path: str = None,
         resource_groups: list = [],
     ):
         """
@@ -145,6 +186,9 @@ class AzureProvider(Provider):
             mutelist_content (dict): The mutelist content.
             client_id (str): The Azure client ID.
             client_secret (str): The Azure client secret.
+            certificate_auth (bool): Flag indicating whether to use certificate authentication with environment variables (AZURE_TENANT_ID, AZURE_CLIENT_ID, AZURE_CERTIFICATE_CONTENT).
+            certificate_content (str): Base64-encoded certificate content bound to the app registration's `keyCredentials`.
+            certificate_path (str): Path to a certificate file bound to the app registration's `keyCredentials`.
             resource_groups (list): List of resource group names.
 
         Returns:
@@ -239,9 +283,12 @@ class AzureProvider(Provider):
             sp_env_auth,
             browser_auth,
             managed_identity_auth,
+            certificate_auth,
             tenant_id,
             client_id,
             client_secret,
+            certificate_content,
+            certificate_path,
         )
 
         logger.info("Checking if region is different than default one")
@@ -249,11 +296,17 @@ class AzureProvider(Provider):
 
         # Get the dict from the static credentials
         azure_credentials = None
-        if tenant_id and client_id and client_secret:
+        if (
+            tenant_id
+            and client_id
+            and (client_secret or certificate_content or certificate_path)
+        ):
             azure_credentials = self.validate_static_credentials(
                 tenant_id=tenant_id,
                 client_id=client_id,
                 client_secret=client_secret,
+                certificate_content=certificate_content,
+                certificate_path=certificate_path,
                 region_config=self._region_config,
             )
 
@@ -263,6 +316,8 @@ class AzureProvider(Provider):
             sp_env_auth,
             browser_auth,
             managed_identity_auth,
+            certificate_auth,
+            certificate_path,
             tenant_id,
             azure_credentials,
             self._region_config,
@@ -274,6 +329,7 @@ class AzureProvider(Provider):
             sp_env_auth,
             browser_auth,
             managed_identity_auth,
+            certificate_auth,
             subscription_ids,
             client_id,
         )
@@ -361,9 +417,12 @@ class AzureProvider(Provider):
         sp_env_auth: bool,
         browser_auth: bool,
         managed_identity_auth: bool,
+        certificate_auth: bool,
         tenant_id: str,
         client_id: str,
         client_secret: str,
+        certificate_content: str,
+        certificate_path: str,
     ):
         """
         Validates the authentication arguments for the Azure provider.
@@ -373,15 +432,23 @@ class AzureProvider(Provider):
             sp_env_auth (bool): Flag indicating whether Service Principal environment authentication is enabled.
             browser_auth (bool): Flag indicating whether browser authentication is enabled.
             managed_identity_auth (bool): Flag indicating whether managed identity authentication is enabled.
+            certificate_auth (bool): Flag indicating whether certificate authentication is enabled.
             tenant_id (str): The Azure Tenant ID.
             client_id (str): The Azure Client ID.
             client_secret (str): The Azure Client Secret.
+            certificate_content (str): The base64-encoded Azure certificate content.
+            certificate_path (str): The path to the Azure certificate file.
 
         Raises:
             AzureBrowserAuthNoTenantIDError: If browser authentication is enabled but the tenant ID is not found.
         """
 
-        if not client_id and not client_secret:
+        if (
+            not client_id
+            and not client_secret
+            and not certificate_content
+            and not certificate_path
+        ):
             if not browser_auth and tenant_id:
                 raise AzureTenantIDNoBrowserAuthError(
                     file=os.path.basename(__file__),
@@ -392,10 +459,11 @@ class AzureProvider(Provider):
                 and not sp_env_auth
                 and not browser_auth
                 and not managed_identity_auth
+                and not certificate_auth
             ):
                 raise AzureNoAuthenticationMethodError(
                     file=os.path.basename(__file__),
-                    message="Azure provider requires at least one authentication method set: [--az-cli-auth | --sp-env-auth | --browser-auth | --managed-identity-auth]",
+                    message="Azure provider requires at least one authentication method set: [--az-cli-auth | --sp-env-auth | --browser-auth | --managed-identity-auth | --certificate-auth]",
                 )
             elif browser_auth and not tenant_id:
                 raise AzureBrowserAuthNoTenantIDError(
@@ -408,6 +476,25 @@ class AzureProvider(Provider):
                     file=os.path.basename(__file__),
                     message="Tenant Id is required for Azure static credentials. Make sure you are using the correct credentials.",
                 )
+            if not client_secret and not certificate_content and not certificate_path:
+                raise AzureConfigCredentialsError(
+                    file=os.path.basename(__file__),
+                    message="You must provide a client secret, certificate content or certificate path for Azure static credentials.",
+                )
+            # Client secret and certificate are mutually exclusive: `setup_session`
+            # short-circuits on the certificate branch and silently drops the
+            # secret, which is confusing. Fail fast at argument-validation time.
+            if client_secret and (certificate_content or certificate_path):
+                raise AzureConfigCredentialsError(
+                    file=os.path.basename(__file__),
+                    message="Provide either a client secret or a certificate (content/path) for Azure static credentials, not both.",
+                )
+        # Certificate content and path are also mutually exclusive.
+        if certificate_content and certificate_path:
+            raise AzureConfigCredentialsError(
+                file=os.path.basename(__file__),
+                message="Provide either certificate content or a certificate path, not both.",
+            )
 
     @staticmethod
     def setup_region_config(region):
@@ -474,6 +561,10 @@ class AzureProvider(Provider):
             f"Azure Resource Groups: {Fore.YELLOW}{sorted({rg for rgs in self._resource_groups.values() for rg in rgs}) if any(self._resource_groups.values()) else ('NONE (no matching resource groups found)' if self._resource_groups else 'ALL')}{Style.RESET_ALL}",
             f"Azure Identity Type: {Fore.YELLOW}{self._identity.identity_type}{Style.RESET_ALL} Azure Identity ID: {Fore.YELLOW}{self._identity.identity_id}{Style.RESET_ALL}",
         ]
+        if self._identity.certificate_thumbprint:
+            report_lines.append(
+                f"Azure Certificate Thumbprint: {Fore.YELLOW}{self._identity.certificate_thumbprint}{Style.RESET_ALL}"
+            )
         report_title = (
             f"{Style.BRIGHT}Using the Azure credentials below:{Style.RESET_ALL}"
         )
@@ -487,6 +578,8 @@ class AzureProvider(Provider):
         sp_env_auth: bool,
         browser_auth: bool,
         managed_identity_auth: bool,
+        certificate_auth: bool,
+        certificate_path: str,
         tenant_id: str,
         azure_credentials: dict,
         region_config: AzureRegionConfig,
@@ -500,11 +593,15 @@ class AzureProvider(Provider):
             sp_env_auth (bool): Flag indicating whether to use Service Principal authentication with environment variables.
             browser_auth (bool): Flag indicating whether to use interactive browser authentication.
             managed_identity_auth (bool): Flag indicating whether to use managed identity authentication.
+            certificate_auth (bool): Flag indicating whether to use certificate authentication with environment variables.
+            certificate_path (str): Path to a certificate file used when certificate_auth is enabled and certificate content is not supplied via env var.
             tenant_id (str): The Azure Active Directory tenant ID.
             azure_credentials (dict): The Azure configuration object. It contains the following keys:
                 - tenant_id: The Azure Active Directory tenant ID.
                 - client_id: The Azure client ID.
-                - client_secret: The Azure client secret
+                - client_secret: The Azure client secret.
+                - certificate_content: The base64-encoded Azure certificate content.
+                - certificate_path: The path to the Azure certificate file.
             region_config (AzureRegionConfig): The region configuration object.
 
         Returns:
@@ -524,15 +621,57 @@ class AzureProvider(Provider):
                         f"{environment_credentials_error.__class__.__name__}[{environment_credentials_error.__traceback__.tb_lineno}] -- {environment_credentials_error}"
                     )
                     raise environment_credentials_error
+            elif certificate_auth:
+                try:
+                    AzureProvider.check_certificate_creds_env_vars(
+                        check_certificate_content=not certificate_path
+                    )
+                except AzureEnvironmentVariableError as environment_variable_error:
+                    logger.critical(
+                        f"{environment_variable_error.__class__.__name__}[{environment_variable_error.__traceback__.tb_lineno}] -- {environment_variable_error}"
+                    )
+                    raise environment_variable_error
             try:
                 if azure_credentials:
                     try:
-                        credentials = ClientSecretCredential(
-                            tenant_id=azure_credentials["tenant_id"],
-                            client_id=azure_credentials["client_id"],
-                            client_secret=azure_credentials["client_secret"],
-                            authority=region_config.authority,
-                        )
+                        if azure_credentials.get("certificate_content"):
+                            certificate_data = base64.b64decode(
+                                azure_credentials["certificate_content"]
+                            )
+                            credentials = CertificateCredential(
+                                tenant_id=azure_credentials["tenant_id"],
+                                client_id=azure_credentials["client_id"],
+                                certificate_data=certificate_data,
+                                authority=region_config.authority,
+                            )
+                            setattr(
+                                credentials,
+                                _PROWLER_CERT_THUMBPRINT_ATTR,
+                                _compute_certificate_thumbprint(certificate_data),
+                            )
+                        elif azure_credentials.get("certificate_path"):
+                            with open(
+                                azure_credentials["certificate_path"], "rb"
+                            ) as cert_file:
+                                certificate_data = cert_file.read()
+                            credentials = CertificateCredential(
+                                tenant_id=azure_credentials["tenant_id"],
+                                client_id=azure_credentials["client_id"],
+                                certificate_data=certificate_data,
+                                authority=region_config.authority,
+                            )
+                            setattr(
+                                credentials,
+                                _PROWLER_CERT_THUMBPRINT_ATTR,
+                                _compute_certificate_thumbprint(certificate_data),
+                            )
+                        else:
+                            credentials = ClientSecretCredential(
+                                tenant_id=azure_credentials["tenant_id"],
+                                client_id=azure_credentials["client_id"],
+                                client_secret=azure_credentials["client_secret"],
+                                authority=region_config.authority,
+                            )
                         return credentials
                     except ClientAuthenticationError as error:
                         logger.error(
@@ -553,6 +692,34 @@ class AzureProvider(Provider):
                             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
                         )
                         raise AzureConfigCredentialsError(
+                            file=os.path.basename(__file__), original_exception=error
+                        )
+                elif certificate_auth:
+                    try:
+                        if certificate_path:
+                            with open(certificate_path, "rb") as cert_file:
+                                certificate_data = cert_file.read()
+                        else:
+                            certificate_data = base64.b64decode(
+                                getenv("AZURE_CERTIFICATE_CONTENT")
+                            )
+                        credentials = CertificateCredential(
+                            tenant_id=getenv("AZURE_TENANT_ID"),
+                            client_id=getenv("AZURE_CLIENT_ID"),
+                            certificate_data=certificate_data,
+                            authority=region_config.authority,
+                        )
+                        setattr(
+                            credentials,
+                            _PROWLER_CERT_THUMBPRINT_ATTR,
+                            _compute_certificate_thumbprint(certificate_data),
+                        )
+                        return credentials
+                    except ClientAuthenticationError as error:
+                        logger.error(
+                            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+                        )
+                        raise AzureClientAuthenticationError(
                             file=os.path.basename(__file__), original_exception=error
                         )
                 else:
@@ -632,6 +799,13 @@ class AzureProvider(Provider):
         raise_on_exception=True,
         client_id=None,
         client_secret=None,
+        # Certificate-based auth is keyword-only so callers cannot
+        # accidentally bind `provider_id` (which used to sit right after
+        # `client_secret`) to any of these when calling positionally.
+        *,
+        certificate_auth: bool = False,
+        certificate_content: str = None,
+        certificate_path: str = None,
         provider_id=None,
     ) -> Connection:
         """Test connection to Azure subscription.
@@ -677,19 +851,28 @@ class AzureProvider(Provider):
                 sp_env_auth,
                 browser_auth,
                 managed_identity_auth,
+                certificate_auth,
                 tenant_id,
                 client_id,
                 client_secret,
+                certificate_content,
+                certificate_path,
             )
             region_config = AzureProvider.setup_region_config(region)
 
             # Get the dict from the static credentials
             azure_credentials = None
-            if tenant_id and client_id and client_secret:
+            if (
+                tenant_id
+                and client_id
+                and (client_secret or certificate_content or certificate_path)
+            ):
                 azure_credentials = AzureProvider.validate_static_credentials(
                     tenant_id=tenant_id,
                     client_id=client_id,
                     client_secret=client_secret,
+                    certificate_content=certificate_content,
+                    certificate_path=certificate_path,
                     region_config=region_config,
                 )
 
@@ -699,6 +882,8 @@ class AzureProvider(Provider):
                 sp_env_auth,
                 browser_auth,
                 managed_identity_auth,
+                certificate_auth,
+                certificate_path,
                 tenant_id,
                 azure_credentials,
                 region_config,
@@ -890,12 +1075,43 @@ class AzureProvider(Provider):
                     message=f"Missing environment variable {env_var} required to authenticate.",
                 )
 
+    @staticmethod
+    def check_certificate_creds_env_vars(check_certificate_content: bool):
+        """
+        Checks the presence of required environment variables for certificate-based
+        service principal authentication against Azure.
+
+        This method checks for the presence of the following environment variables:
+        - AZURE_CLIENT_ID: Azure client ID
+        - AZURE_TENANT_ID: Azure tenant ID
+        - AZURE_CERTIFICATE_CONTENT: base64-encoded certificate content (only
+          required when a certificate file path is not provided)
+
+        Raises:
+            AzureEnvironmentVariableError: If any required environment variable
+                is missing.
+        """
+        logger.info("Azure provider: checking certificate environment variables ...")
+        env_vars = ["AZURE_CLIENT_ID", "AZURE_TENANT_ID"]
+        if check_certificate_content:
+            env_vars.append("AZURE_CERTIFICATE_CONTENT")
+        for env_var in env_vars:
+            if not getenv(env_var):
+                logger.critical(
+                    f"Azure provider: Missing environment variable {env_var} needed to authenticate against Azure"
+                )
+                raise AzureEnvironmentVariableError(
+                    file=os.path.basename(__file__),
+                    message=f"Missing environment variable {env_var} required to authenticate.",
+                )
+
     def setup_identity(
         self,
         az_cli_auth,
         sp_env_auth,
         browser_auth,
         managed_identity_auth,
+        certificate_auth,
         subscription_ids,
         client_id,
     ):
@@ -920,7 +1136,7 @@ class AzureProvider(Provider):
         # the identity can access AAD and retrieve the tenant domain name.
         # With cli also should be possible but right now it does not work, azure python package issue is coming
         # At the time of writting this with az cli creds is not working, despite that is included
-        if sp_env_auth or browser_auth or az_cli_auth or client_id:
+        if sp_env_auth or browser_auth or az_cli_auth or certificate_auth or client_id:
 
             async def get_azure_identity():
                 # Trying to recover tenant domain info
@@ -957,7 +1173,23 @@ class AzureProvider(Provider):
                         f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
                     )
                 # since that exception is not considered as critical, we keep filling another identity fields
-                if sp_env_auth or client_id:
+                if isinstance(credentials, CertificateCredential):
+                    identity.identity_id = getenv(
+                        "AZURE_CLIENT_ID", default=client_id
+                    ) or getattr(credentials, "_client_id", "")
+                    identity.identity_type = "Service Principal with Certificate"
+                    # The SHA-1 thumbprint is computed from the certificate
+                    # bytes by `_compute_certificate_thumbprint` at
+                    # `setup_session` time and stashed on the credential via
+                    # `_PROWLER_CERT_THUMBPRINT_ATTR`. This avoids the older
+                    # pattern of reaching into `credentials._client_credential`,
+                    # which is azure-identity private state and drifts across
+                    # library versions.
+                    identity.certificate_thumbprint = (
+                        getattr(credentials, _PROWLER_CERT_THUMBPRINT_ATTR, None)
+                        or "Unknown certificate thumbprint"
+                    )
+                elif sp_env_auth or client_id:
                     # The id of the sp can be retrieved from environment variables
                     identity.identity_id = getenv("AZURE_CLIENT_ID", default=client_id)
                     identity.identity_type = "Service Principal"
@@ -1186,6 +1418,8 @@ class AzureProvider(Provider):
         tenant_id: str = None,
         client_id: str = None,
         client_secret: str = None,
+        certificate_content: str = None,
+        certificate_path: str = None,
         region_config: AzureRegionConfig = None,
     ) -> dict:
         """
@@ -1195,6 +1429,8 @@ class AzureProvider(Provider):
             tenant_id (str): The Azure Active Directory tenant ID.
             client_id (str): The Azure client ID.
             client_secret (str): The Azure client secret.
+            certificate_content (str): The base64-encoded Azure certificate content.
+            certificate_path (str): The path to the Azure certificate file.
             region_config (AzureRegionConfig): The region configuration used to
                 build the per-cloud login endpoint and Graph scope. Defaults to
                 the public-cloud configuration when not provided.
@@ -1203,6 +1439,8 @@ class AzureProvider(Provider):
             AzureNotValidTenantIdError: If the provided Azure Tenant ID is not valid.
             AzureNotValidClientIdError: If the provided Azure Client ID is not valid.
             AzureNotValidClientSecretError: If the provided Azure Client Secret is not valid.
+            AzureNotValidCertificateContentError: If the provided base64 certificate content is not valid.
+            AzureNotValidCertificatePathError: If the provided certificate path cannot be read.
             AzureClientIdAndClientSecretNotBelongingToTenantIdError: If the provided Azure Client ID and Client Secret do not belong to the specified Tenant ID.
             AzureTenantIdAndClientSecretNotBelongingToClientIdError: If the provided Azure Tenant ID and Client Secret do not belong to the specified Client ID.
             AzureTenantIdAndClientIdNotBelongingToClientSecretError: If the provided Azure Tenant ID and Client ID do not belong to the specified Client Secret.
@@ -1227,24 +1465,63 @@ class AzureProvider(Provider):
                 file=os.path.basename(__file__),
                 message="The provided Azure Client ID is not valid.",
             )
-        # Validate the Client Secret
-        if not re.match("^[a-zA-Z0-9._~-]+$", client_secret):
+
+        if not client_secret and not certificate_content and not certificate_path:
+            raise AzureNotValidClientSecretError(
+                file=os.path.basename(__file__),
+                message="You must provide a client secret, certificate content or certificate path. Please check your credentials and try again.",
+            )
+
+        # Validate the Client Secret only when using the client-secret path.
+        # For certificate auth this check must be skipped so the None value
+        # does not trip the regex.
+        if client_secret and not re.match("^[a-zA-Z0-9._~-]+$", client_secret):
             raise AzureNotValidClientSecretError(
                 file=os.path.basename(__file__),
                 message="The provided Azure Client Secret is not valid.",
             )
+
+        if certificate_content:
+            try:
+                # Confirm the payload is valid base64 before handing it off to
+                # azure-identity: `CertificateCredential` raises an opaque
+                # exception several call frames deeper if this fails, which
+                # makes for a bad UX in the API/UI.
+                base64.b64decode(certificate_content, validate=True)
+            except Exception as e:
+                raise AzureNotValidCertificateContentError(
+                    file=os.path.basename(__file__),
+                    message=f"The provided certificate content is not valid base64 encoded data: {str(e)}",
+                )
+
+        if certificate_path:
+            try:
+                with open(certificate_path, "rb") as cert_file:
+                    cert_file.read()
+            except Exception as e:
+                raise AzureNotValidCertificatePathError(
+                    file=os.path.basename(__file__),
+                    message=f"The provided certificate path is not valid: {str(e)}",
+                )
 
         if region_config is None:
             region_config = AzureProvider.setup_region_config("AzureCloud")
 
         try:
             AzureProvider.verify_client(
-                tenant_id, client_id, client_secret, region_config
+                tenant_id,
+                client_id,
+                client_secret,
+                region_config,
+                certificate_content=certificate_content,
+                certificate_path=certificate_path,
             )
             return {
                 "tenant_id": tenant_id,
                 "client_id": client_id,
                 "client_secret": client_secret,
+                "certificate_content": certificate_content,
+                "certificate_path": certificate_path,
             }
         except AzureNotValidTenantIdError as tenant_id_error:
             logger.error(
@@ -1273,10 +1550,16 @@ class AzureProvider(Provider):
 
     @staticmethod
     def verify_client(
-        tenant_id, client_id, client_secret, region_config: AzureRegionConfig = None
+        tenant_id,
+        client_id,
+        client_secret,
+        region_config: AzureRegionConfig = None,
+        certificate_content: str = None,
+        certificate_path: str = None,
     ) -> None:
         """
-        Verifies the Azure client credentials using the specified tenant ID, client ID, and client secret.
+        Verifies the Azure client credentials using the specified tenant ID, client ID, and either
+        a client secret or a certificate.
 
         Args:
             tenant_id (str): The Azure Active Directory tenant ID.
@@ -1285,49 +1568,100 @@ class AzureProvider(Provider):
             region_config (AzureRegionConfig): The region configuration used to
                 build the per-cloud login endpoint and Graph scope. Defaults to
                 the public-cloud configuration when not provided.
+            certificate_content (str): The base64-encoded Azure certificate content.
+            certificate_path (str): The path to the Azure certificate file.
 
         Raises:
             AzureNotValidTenantIdError: If the provided Azure Tenant ID is not valid.
             AzureNotValidClientIdError: If the provided Azure Client ID is not valid.
             AzureNotValidClientSecretError: If the provided Azure Client Secret is not valid.
+            AzureNotValidCertificateContentError: If the provided certificate content cannot obtain a token.
+            AzureNotValidCertificatePathError: If the provided certificate file cannot obtain a token.
 
         Returns:
             None
         """
         if region_config is None:
             region_config = AzureProvider.setup_region_config("AzureCloud")
-        # `authority` is None for the public cloud and a bare host (e.g.
-        # `login.chinacloudapi.cn`) for sovereign clouds, mirroring the
-        # `AzureAuthorityHosts` constants used by azure-identity.
-        login_endpoint = region_config.authority or "login.microsoftonline.com"
-        url = f"https://{login_endpoint}/{tenant_id}/oauth2/v2.0/token"
-        headers = {
-            "Content-Type": "application/x-www-form-urlencoded",
-            "Accept": "application/json",
-        }
-        data = {
-            "grant_type": "client_credentials",
-            "client_id": client_id,
-            "client_secret": client_secret,
-            "scope": region_config.graph_scope,
-        }
-        response = requests.post(url, headers=headers, data=data).json()
-        if "access_token" not in response.keys() and "error_codes" in response.keys():
-            if f"Tenant '{tenant_id}'" in response["error_description"]:
-                raise AzureNotValidTenantIdError(
-                    file=os.path.basename(__file__),
-                    message="The provided Azure Tenant ID is not valid for the specified Client ID and Client Secret.",
-                )
+
+        if client_secret:
+            # `authority` is None for the public cloud and a bare host (e.g.
+            # `login.chinacloudapi.cn`) for sovereign clouds, mirroring the
+            # `AzureAuthorityHosts` constants used by azure-identity.
+            login_endpoint = region_config.authority or "login.microsoftonline.com"
+            url = f"https://{login_endpoint}/{tenant_id}/oauth2/v2.0/token"
+            headers = {
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Accept": "application/json",
+            }
+            data = {
+                "grant_type": "client_credentials",
+                "client_id": client_id,
+                "client_secret": client_secret,
+                "scope": region_config.graph_scope,
+            }
+            response = requests.post(url, headers=headers, data=data).json()
             if (
-                f"Application with identifier '{client_id}'"
-                in response["error_description"]
+                "access_token" not in response.keys()
+                and "error_codes" in response.keys()
             ):
-                raise AzureNotValidClientIdError(
+                if f"Tenant '{tenant_id}'" in response["error_description"]:
+                    raise AzureNotValidTenantIdError(
+                        file=os.path.basename(__file__),
+                        message="The provided Azure Tenant ID is not valid for the specified Client ID and Client Secret.",
+                    )
+                if (
+                    f"Application with identifier '{client_id}'"
+                    in response["error_description"]
+                ):
+                    raise AzureNotValidClientIdError(
+                        file=os.path.basename(__file__),
+                        message="The provided Azure Client ID is not valid for the specified Tenant ID and Client Secret.",
+                    )
+                if "Invalid client secret provided" in response["error_description"]:
+                    raise AzureNotValidClientSecretError(
+                        file=os.path.basename(__file__),
+                        message="The provided Azure Client Secret is not valid for the specified Tenant ID and Client ID.",
+                    )
+            return
+
+        # Certificate-based flows: instantiate a `CertificateCredential` and
+        # attempt a Graph call. If the credential itself is invalid, msal
+        # raises inside the constructor. If it is valid but the app has no
+        # Graph permissions, `get_token` still returns a token — the point
+        # here is to prove the private key matches an active `keyCredentials`
+        # entry on the app registration.
+        try:
+            if certificate_content:
+                certificate_data = base64.b64decode(certificate_content)
+            elif certificate_path:
+                with open(certificate_path, "rb") as cert_file:
+                    certificate_data = cert_file.read()
+            else:
+                return
+
+            credential = CertificateCredential(
+                client_id=client_id,
+                tenant_id=tenant_id,
+                certificate_data=certificate_data,
+                authority=region_config.authority,
+            )
+            # Acquire a token to force msal to validate the certificate
+            # against Entra ID. A failure raises `ClientAuthenticationError`,
+            # which we translate into the specific certificate error below.
+            credential.get_token(region_config.graph_scope)
+        except ClientAuthenticationError as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            if certificate_content:
+                raise AzureNotValidCertificateContentError(
                     file=os.path.basename(__file__),
-                    message="The provided Azure Client ID is not valid for the specified Tenant ID and Client Secret.",
+                    original_exception=error,
+                    message="The provided certificate content is not valid for the specified Tenant ID and Client ID.",
                 )
-            if "Invalid client secret provided" in response["error_description"]:
-                raise AzureNotValidClientSecretError(
-                    file=os.path.basename(__file__),
-                    message="The provided Azure Client Secret is not valid for the specified Tenant ID and Client ID.",
-                )
+            raise AzureNotValidCertificatePathError(
+                file=os.path.basename(__file__),
+                original_exception=error,
+                message="The provided certificate is not valid for the specified Tenant ID and Client ID.",
+            )

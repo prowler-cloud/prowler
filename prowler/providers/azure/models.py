@@ -11,8 +11,16 @@ class AzureIdentityInfo(BaseModel):
     identity_type: str = ""
     tenant_ids: list[str] = []
     tenant_domain: str = "Unknown tenant domain (missing AAD permissions)"
+    certificate_thumbprint: str = ""
     subscriptions: dict = {}
     locations: dict = {}
+
+
+class AzureCredentials(BaseModel):
+    client_id: str = ""
+    client_secret: Optional[str] = None
+    tenant_id: str = ""
+    certificate_content: Optional[str] = None
 
 
 class AzureRegionConfig(BaseModel):

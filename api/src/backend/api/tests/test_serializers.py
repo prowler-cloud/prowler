@@ -5,6 +5,7 @@ from api.v1.serializer_utils.integrations import (
 )
 from api.v1.serializer_utils.providers import ProviderSecretField
 from api.v1.serializers import (
+    AzureProviderSecret,
     ImageProviderSecret,
     IntegrationSerializer,
     IntegrationUpdateSerializer,
@@ -196,6 +197,79 @@ class TestImageProviderSecret:
         serializer = ImageProviderSecret(data={"registry_password": "pass"})
         assert not serializer.is_valid()
         assert "non_field_errors" in serializer.errors
+
+
+class TestAzureProviderSecret:
+    """Coverage for the Azure provider secret serializer, including the
+    certificate authentication path added for the Deploy-to-Azure quick-start
+    (PROWLER-2378)."""
+
+    BASE = {
+        "client_id": "87654321-4321-4321-4321-210987654321",
+        "tenant_id": "12345678-1234-1234-1234-123456789012",
+    }
+    # Valid base64 of a tiny DER-shaped payload; the serializer only checks
+    # that the string decodes as base64, not that it parses as a real cert.
+    CERT_CONTENT_B64 = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA"
+
+    def test_accepts_client_secret_only(self):
+        # Backwards-compatibility guard: rows saved by the previous serializer
+        # only carry `client_secret` and must keep round-tripping cleanly.
+        serializer = AzureProviderSecret(
+            data={**self.BASE, "client_secret": "fake-client-secret"}
+        )
+        assert serializer.is_valid(), serializer.errors
+        assert serializer.validated_data["client_secret"] == "fake-client-secret"
+        assert "certificate_content" not in serializer.validated_data
+
+    def test_accepts_certificate_content_only(self):
+        serializer = AzureProviderSecret(
+            data={**self.BASE, "certificate_content": self.CERT_CONTENT_B64}
+        )
+        assert serializer.is_valid(), serializer.errors
+        assert serializer.validated_data["certificate_content"] == self.CERT_CONTENT_B64
+        assert "client_secret" not in serializer.validated_data
+
+    def test_rejects_both_client_secret_and_certificate_content(self):
+        # Mutually exclusive: the backend must reject a payload carrying both
+        # so the ambiguity never reaches the SDK where `certificate_content`
+        # silently wins.
+        serializer = AzureProviderSecret(
+            data={
+                **self.BASE,
+                "client_secret": "fake-client-secret",
+                "certificate_content": self.CERT_CONTENT_B64,
+            }
+        )
+        assert not serializer.is_valid()
+        assert "non_field_errors" in serializer.errors
+
+    def test_rejects_missing_secret_and_certificate(self):
+        # At least one credential material must be provided.
+        serializer = AzureProviderSecret(data=self.BASE)
+        assert not serializer.is_valid()
+        assert "non_field_errors" in serializer.errors
+
+    def test_rejects_non_base64_certificate_content(self):
+        # `validate_certificate_content` short-circuits obvious garbage before
+        # it reaches the SDK, which would otherwise fail deep in azure-identity.
+        serializer = AzureProviderSecret(
+            data={**self.BASE, "certificate_content": "not!valid@base64$$"}
+        )
+        assert not serializer.is_valid()
+        assert "certificate_content" in serializer.errors
+
+    def test_rejects_empty_strings_for_both(self):
+        # DRF's CharField rejects "" at field-level before `validate()` runs.
+        # The errors surface per-field rather than as non_field_errors, but
+        # the important thing is that empty strings NEVER get persisted as
+        # credentials.
+        serializer = AzureProviderSecret(
+            data={**self.BASE, "client_secret": "", "certificate_content": ""}
+        )
+        assert not serializer.is_valid()
+        assert "client_secret" in serializer.errors
+        assert "certificate_content" in serializer.errors
 
 
 class TestOracleCloudProviderSecret:
