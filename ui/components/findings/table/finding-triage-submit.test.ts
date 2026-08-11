@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
+import { FINDING_STATUS } from "@/types/components";
 import {
   FINDING_TRIAGE_NOTE_MAX_LENGTH,
   FINDING_TRIAGE_STATUS,
-  RAW_FINDING_STATUS,
   type FindingTriageDetail,
 } from "@/types/findings-triage";
 
@@ -26,7 +26,7 @@ function makeTriageDetail(
     noteId: "note-1",
     noteBody: "Existing investigation note",
     maxNoteLength: FINDING_TRIAGE_NOTE_MAX_LENGTH,
-    rawFindingStatus: RAW_FINDING_STATUS.FAIL,
+    rawFindingStatus: FINDING_STATUS.FAIL,
     manualPassCreatedByName: null,
     manualPassCreatedAt: null,
     manualPassExpiresAt: null,
@@ -157,7 +157,7 @@ describe("buildFindingTriageUpdateInput", () => {
   it("should build a manual pass from fresh evidence without reusing the editable note", () => {
     // Given
     const triage = makeTriageDetail({
-      rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+      rawFindingStatus: FINDING_STATUS.MANUAL,
     });
 
     // When
@@ -185,7 +185,7 @@ describe("buildFindingTriageUpdateInput", () => {
   it("should reject a manual pass without fresh nonblank evidence", () => {
     // Given
     const triage = makeTriageDetail({
-      rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+      rawFindingStatus: FINDING_STATUS.MANUAL,
     });
 
     // When
@@ -203,7 +203,7 @@ describe("buildFindingTriageUpdateInput", () => {
   it("should reject a manual pass when the raw status is not MANUAL", () => {
     // Given
     const triage = makeTriageDetail({
-      rawFindingStatus: RAW_FINDING_STATUS.FAIL,
+      rawFindingStatus: FINDING_STATUS.FAIL,
     });
 
     // When

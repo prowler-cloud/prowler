@@ -42,15 +42,6 @@ export const FINDING_TRIAGE_MODAL_STATUS_VALUES = [
 export type FindingTriageModalStatus =
   (typeof FINDING_TRIAGE_MODAL_STATUS_VALUES)[number];
 
-export const RAW_FINDING_STATUS = {
-  FAIL: "FAIL",
-  PASS: "PASS",
-  MANUAL: "MANUAL",
-} as const;
-
-export type RawFindingStatus =
-  (typeof RAW_FINDING_STATUS)[keyof typeof RAW_FINDING_STATUS];
-
 export const FINDING_TRIAGE_AUTOMATION_STATUS_VALUES = [
   FINDING_TRIAGE_STATUS.RESOLVED,
   FINDING_TRIAGE_STATUS.REOPENED,
@@ -111,7 +102,7 @@ export interface FindingTriageSummary {
   label: string;
   hasVisibleNote: boolean;
   isMuted: boolean;
-  rawFindingStatus?: RawFindingStatus | null;
+  rawFindingStatus?: FindingStatus | null;
   manualPassProvenance?: typeof MANUAL_PASS_PROVENANCE | null;
   canEdit: boolean;
   disabledReason?: FindingTriageDisabledReason;
@@ -122,7 +113,7 @@ export interface FindingTriageDetail extends FindingTriageSummary {
   noteId: string | null;
   noteBody: string;
   maxNoteLength: typeof FINDING_TRIAGE_NOTE_MAX_LENGTH;
-  rawFindingStatus: RawFindingStatus | null;
+  rawFindingStatus: FindingStatus | null;
   manualPassActive: boolean | null;
   manualPassEvidence: string | null;
   manualPassCreatedByName: string | null;
@@ -166,3 +157,4 @@ export interface FindingTriageLoadedNote {
   noteId: string;
   noteBody: string;
 }
+import type { FindingStatus } from "./components";

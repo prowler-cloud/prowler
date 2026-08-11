@@ -14,13 +14,13 @@ import { applyOptimisticTriageSummaryUpdate } from "@/lib/finding-triage";
 import { cn } from "@/lib/utils";
 import { useCloudUpgradeStore } from "@/store";
 import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
+import { FINDING_STATUS } from "@/types/components";
 import {
   FINDING_TRIAGE_DISABLED_REASON,
   FINDING_TRIAGE_NOTE_MAX_LENGTH,
   FINDING_TRIAGE_ORIGIN,
   FINDING_TRIAGE_RESOLVED_LOCKED_COPY,
   FINDING_TRIAGE_STATUS,
-  RAW_FINDING_STATUS,
   type FindingTriageDetail,
   type FindingTriageLoadedNote,
   type FindingTriageSummary,
@@ -257,7 +257,7 @@ export function FindingTriageStatusCell({
         mode={manualPassModalMode}
         initialStatus={
           manualPassModalMode === FINDING_NOTE_MODAL_MODE.EDIT &&
-          manualPassDetail.rawFindingStatus === RAW_FINDING_STATUS.MANUAL
+          manualPassDetail.rawFindingStatus === FINDING_STATUS.MANUAL
             ? FINDING_TRIAGE_STATUS.RESOLVED
             : isManualStatus(manualPassDetail.status)
               ? manualPassDetail.status

@@ -74,10 +74,10 @@ beforeAll(() => {
 
 import { useCloudUpgradeStore } from "@/store";
 import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
+import { FINDING_STATUS } from "@/types/components";
 import {
   FINDING_TRIAGE_DISABLED_REASON,
   FINDING_TRIAGE_STATUS,
-  RAW_FINDING_STATUS,
   type FindingTriageDetail,
   type FindingTriageSummary,
 } from "@/types/findings-triage";
@@ -110,11 +110,11 @@ function makeTriageDetail(
   overrides?: Partial<FindingTriageDetail>,
 ): FindingTriageDetail {
   return {
-    ...makeTriageSummary({ rawFindingStatus: RAW_FINDING_STATUS.MANUAL }),
+    ...makeTriageSummary({ rawFindingStatus: FINDING_STATUS.MANUAL }),
     noteId: null,
     noteBody: "",
     maxNoteLength: 500,
-    rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+    rawFindingStatus: FINDING_STATUS.MANUAL,
     manualPassCreatedByName: null,
     manualPassCreatedAt: null,
     manualPassExpiresAt: null,
@@ -285,7 +285,7 @@ describe("finding triage cells", () => {
     render(
       <FindingTriageStatusCell
         triage={makeTriageSummary({
-          rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+          rawFindingStatus: FINDING_STATUS.MANUAL,
         })}
         onTriageUpdateAction={vi.fn()}
         onTriageDetailLoadAction={vi.fn()}
@@ -305,7 +305,7 @@ describe("finding triage cells", () => {
     expect(screen.queryByRole("option", { name: "Pass" })).toBeNull();
   });
 
-  it.each([RAW_FINDING_STATUS.FAIL, RAW_FINDING_STATUS.PASS] as const)(
+  it.each([FINDING_STATUS.FAIL, FINDING_STATUS.PASS] as const)(
     "should not show the extra Resolved workflow for a %s raw finding",
     async (rawFindingStatus) => {
       // Given
@@ -332,7 +332,7 @@ describe("finding triage cells", () => {
     render(
       <FindingTriageStatusCell
         triage={makeTriageSummary({
-          rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+          rawFindingStatus: FINDING_STATUS.MANUAL,
         })}
         onTriageUpdateAction={vi.fn()}
         onTriageDetailLoadAction={vi.fn()}
@@ -351,7 +351,7 @@ describe("finding triage cells", () => {
     // Given
     const user = userEvent.setup();
     const triage = makeTriageSummary({
-      rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+      rawFindingStatus: FINDING_STATUS.MANUAL,
     });
     const detail = makeTriageDetail();
     const onTriageUpdateAction = vi.fn();
@@ -388,11 +388,11 @@ describe("finding triage cells", () => {
     // Given
     const user = userEvent.setup();
     const staleTriage = makeTriageSummary({
-      rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+      rawFindingStatus: FINDING_STATUS.MANUAL,
     });
     const freshDetail = makeTriageDetail({
       status: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
-      rawFindingStatus: RAW_FINDING_STATUS.FAIL,
+      rawFindingStatus: FINDING_STATUS.FAIL,
     });
     render(
       <FindingTriageStatusCell
@@ -423,7 +423,7 @@ describe("finding triage cells", () => {
     render(
       <FindingTriageStatusCell
         triage={makeTriageSummary({
-          rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+          rawFindingStatus: FINDING_STATUS.MANUAL,
         })}
         onTriageUpdateAction={onTriageUpdateAction}
         onTriageDetailLoadAction={vi.fn().mockResolvedValue(makeTriageDetail())}
@@ -453,7 +453,7 @@ describe("finding triage cells", () => {
     render(
       <FindingTriageStatusCell
         triage={makeTriageSummary({
-          rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+          rawFindingStatus: FINDING_STATUS.MANUAL,
         })}
         onTriageUpdateAction={vi.fn()}
         onTriageDetailLoadAction={vi.fn().mockResolvedValue(makeTriageDetail())}
@@ -493,7 +493,7 @@ describe("finding triage cells", () => {
           status: FINDING_TRIAGE_STATUS.RESOLVED,
           label: "Resolved",
           manualPassProvenance: "Manually verified",
-          rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+          rawFindingStatus: FINDING_STATUS.MANUAL,
         })}
         onTriageUpdateAction={vi.fn()}
         onTriageDetailLoadAction={onTriageDetailLoadAction}
@@ -527,7 +527,7 @@ describe("finding triage cells", () => {
     // Given
     const user = userEvent.setup();
     const triage = makeTriageSummary({
-      rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+      rawFindingStatus: FINDING_STATUS.MANUAL,
     });
     const onTriageUpdateAction = vi.fn();
     const onTriageDetailLoadAction = vi
@@ -563,7 +563,7 @@ describe("finding triage cells", () => {
           status: FINDING_TRIAGE_STATUS.RESOLVED,
           label: "Resolved",
           manualPassProvenance: "Manually verified",
-          rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+          rawFindingStatus: FINDING_STATUS.MANUAL,
         })}
         onTriageUpdateAction={vi.fn()}
       />,
@@ -587,7 +587,7 @@ describe("finding triage cells", () => {
         triage={makeTriageSummary({
           status: FINDING_TRIAGE_STATUS.RESOLVED,
           label: "Resolved",
-          rawFindingStatus: RAW_FINDING_STATUS.PASS,
+          rawFindingStatus: FINDING_STATUS.PASS,
         })}
         onTriageUpdateAction={vi.fn()}
       />,
@@ -608,7 +608,7 @@ describe("finding triage cells", () => {
           status: FINDING_TRIAGE_STATUS.RESOLVED,
           label: "Resolved",
           manualPassProvenance: "Manually verified",
-          rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+          rawFindingStatus: FINDING_STATUS.MANUAL,
         })}
         onTriageUpdateAction={vi.fn()}
         onTriageDetailLoadAction={vi.fn()}
@@ -637,7 +637,7 @@ describe("finding triage cells", () => {
       status: FINDING_TRIAGE_STATUS.RESOLVED,
       label: "Resolved",
       manualPassProvenance: "Manually verified",
-      rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+      rawFindingStatus: FINDING_STATUS.MANUAL,
     });
     const detail = makeTriageDetail({
       status: FINDING_TRIAGE_STATUS.RESOLVED,
@@ -704,7 +704,7 @@ describe("finding triage cells", () => {
       status: FINDING_TRIAGE_STATUS.OPEN,
       label: "Open",
       manualPassProvenance: "Manually verified",
-      rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+      rawFindingStatus: FINDING_STATUS.MANUAL,
     });
     const onTriageDetailLoadAction = vi.fn().mockResolvedValue(
       makeTriageDetail({
@@ -746,7 +746,7 @@ describe("finding triage cells", () => {
           status: FINDING_TRIAGE_STATUS.RESOLVED,
           label: "Resolved",
           manualPassProvenance: "Manually verified",
-          rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+          rawFindingStatus: FINDING_STATUS.MANUAL,
         })}
         onTriageUpdateAction={vi.fn()}
       />,
@@ -768,7 +768,7 @@ describe("finding triage cells", () => {
           status: FINDING_TRIAGE_STATUS.RESOLVED,
           label: "Resolved",
           manualPassProvenance: "Manually verified",
-          rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+          rawFindingStatus: FINDING_STATUS.MANUAL,
         })}
         onTriageUpdateAction={vi.fn()}
         onTriageDetailLoadAction={vi
@@ -800,7 +800,7 @@ describe("finding triage cells", () => {
           status: FINDING_TRIAGE_STATUS.RESOLVED,
           label: "Resolved",
           manualPassProvenance: "Manually verified",
-          rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+          rawFindingStatus: FINDING_STATUS.MANUAL,
         })}
         onTriageUpdateAction={vi.fn()}
         onTriageDetailLoadAction={vi.fn().mockResolvedValue(undefined)}
@@ -1060,7 +1060,7 @@ describe("finding triage cells", () => {
     render(
       <FindingTriageStatusCell
         triage={makeTriageSummary({
-          rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+          rawFindingStatus: FINDING_STATUS.MANUAL,
         })}
         onTriageUpdateAction={vi.fn()}
         onTriageDetailLoadAction={vi

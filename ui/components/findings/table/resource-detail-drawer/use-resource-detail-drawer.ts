@@ -20,9 +20,9 @@ import {
   type FindingComplianceFramework,
   WATCHLIST_SCOPE,
 } from "@/types/compliance-watchlist";
+import { FINDING_STATUS } from "@/types/components";
 import {
   FINDING_TRIAGE_STATUS,
-  RAW_FINDING_STATUS,
   type UpdateFindingTriageInput,
 } from "@/types/findings-triage";
 
@@ -410,7 +410,7 @@ export function useResourceDetailDrawer({
 
     return {
       ...finding,
-      status: isManualPass ? RAW_FINDING_STATUS.PASS : finding.status,
+      status: isManualPass ? FINDING_STATUS.PASS : finding.status,
       isMuted: shouldMarkMuted ? true : finding.isMuted,
       mutedReason:
         shouldMarkMuted && input.isMuted !== true && input.status

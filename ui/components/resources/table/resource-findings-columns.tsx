@@ -20,6 +20,7 @@ import {
   SeverityBadge,
   StatusFindingBadge,
 } from "@/components/shadcn/table";
+import type { FindingStatus } from "@/types/components";
 import type {
   FindingTriageLoadedNote,
   FindingTriageSummary,
@@ -30,7 +31,7 @@ export interface ResourceFinding {
   id: string;
   triage?: FindingTriageSummary;
   attributes: {
-    status: "PASS" | "FAIL" | "MANUAL";
+    status: FindingStatus;
     severity: Severity;
     muted?: boolean;
     muted_reason?: string;

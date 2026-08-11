@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
+import { FINDING_STATUS } from "@/types/components";
 import {
   FINDING_TRIAGE_STATUS,
   MANUAL_PASS_PROVENANCE,
-  RAW_FINDING_STATUS,
   type FindingTriageSummary,
 } from "@/types/findings-triage";
 
@@ -81,7 +81,7 @@ describe("finding triage optimistic row updates", () => {
     // Given
     const finding = makeFindingRow({
       triage: makeTriageSummary({
-        rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+        rawFindingStatus: FINDING_STATUS.MANUAL,
       }),
     });
 
@@ -101,11 +101,11 @@ describe("finding triage optimistic row updates", () => {
       expect.objectContaining({
         status: FINDING_TRIAGE_STATUS.RESOLVED,
         label: "Resolved",
-        rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+        rawFindingStatus: FINDING_STATUS.MANUAL,
         manualPassProvenance: MANUAL_PASS_PROVENANCE,
       }),
     );
-    expect(result.attributes.status).toBe(RAW_FINDING_STATUS.PASS);
+    expect(result.attributes.status).toBe(FINDING_STATUS.PASS);
   });
 
   it("should patch matching finding row triage and muted attributes", () => {

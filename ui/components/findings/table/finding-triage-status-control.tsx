@@ -11,13 +11,13 @@ import {
   SelectTrigger,
 } from "@/components/shadcn/select/select";
 import { cn } from "@/lib/utils";
+import { FINDING_STATUS } from "@/types/components";
 import {
   FINDING_TRIAGE_MANUAL_STATUS_VALUES,
   FINDING_TRIAGE_MODAL_STATUS_VALUES,
   FINDING_TRIAGE_ORIGIN,
   FINDING_TRIAGE_STATUS,
   FINDING_TRIAGE_STATUS_LABELS,
-  RAW_FINDING_STATUS,
   type FindingTriageManualStatus,
   type FindingTriageModalStatus,
   type FindingTriageStatus,
@@ -169,7 +169,7 @@ export function FindingTriageStatusControl(
     !isTableUpdating &&
     !isTriageStatusLocked(triage.status);
   const isAuthoritativeManual =
-    triage.rawFindingStatus === RAW_FINDING_STATUS.MANUAL;
+    triage.rawFindingStatus === FINDING_STATUS.MANUAL;
   const includeManualPass =
     isAuthoritativeManual && Boolean(props.onManualPassRequest);
 

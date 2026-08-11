@@ -24,6 +24,7 @@ import { formatLocalDate } from "@/lib/date-utils";
 import { DOCS_URLS } from "@/lib/external-urls";
 import { useCloudUpgradeStore } from "@/store";
 import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
+import { FINDING_STATUS } from "@/types/components";
 import {
   FINDING_TRIAGE_DISABLED_REASON,
   FINDING_TRIAGE_ORIGIN,
@@ -32,7 +33,6 @@ import {
   MANUAL_PASS_PROVENANCE,
   type FindingTriageDetail,
   type FindingTriageModalStatus,
-  RAW_FINDING_STATUS,
   getFindingTriageMuteInfoCopy,
   isManualStatus,
   isMutelistShortcutStatus,
@@ -111,7 +111,7 @@ export function FindingNoteModal({
     !isSubmitting;
   const isManualPassSelected =
     selectedStatus === FINDING_TRIAGE_STATUS.RESOLVED &&
-    triage.rawFindingStatus === RAW_FINDING_STATUS.MANUAL &&
+    triage.rawFindingStatus === FINDING_STATUS.MANUAL &&
     triage.status !== FINDING_TRIAGE_STATUS.RESOLVED;
   const canSubmit =
     canEdit && (!isManualPassSelected || manualPassEvidence.trim().length > 0);
@@ -290,7 +290,7 @@ export function FindingNoteModal({
               }
               value={selectedStatus}
               includeManualPass={
-                triage.rawFindingStatus === RAW_FINDING_STATUS.MANUAL
+                triage.rawFindingStatus === FINDING_STATUS.MANUAL
               }
               onValueChange={setSelectedStatus}
             />

@@ -85,10 +85,10 @@ afterAll(() => {
 import { DOCS_URLS } from "@/lib/external-urls";
 import { useCloudUpgradeStore } from "@/store";
 import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
+import { FINDING_STATUS } from "@/types/components";
 import {
   FINDING_TRIAGE_DISABLED_REASON,
   FINDING_TRIAGE_STATUS,
-  RAW_FINDING_STATUS,
   type FindingTriageDetail,
   type FindingTriageModalStatus,
 } from "@/types/findings-triage";
@@ -118,7 +118,7 @@ function makeTriageDetail(
     noteId: "note-1",
     noteBody: "Existing investigation note",
     maxNoteLength: 500,
-    rawFindingStatus: RAW_FINDING_STATUS.FAIL,
+    rawFindingStatus: FINDING_STATUS.FAIL,
     manualPassActive: null,
     manualPassEvidence: null,
     manualPassCreatedByName: null,
@@ -346,7 +346,7 @@ describe("FindingNoteModal", () => {
     );
     renderNoteModal({
       triage: makeTriageDetail({
-        rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+        rawFindingStatus: FINDING_STATUS.MANUAL,
       }),
       onTriageUpdateAction,
     });
@@ -509,7 +509,7 @@ describe("FindingNoteModal", () => {
     const user = userEvent.setup();
     renderNoteModal({
       triage: makeTriageDetail({
-        rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+        rawFindingStatus: FINDING_STATUS.MANUAL,
       }),
     });
 
@@ -532,7 +532,7 @@ describe("FindingNoteModal", () => {
     // Given / When
     renderNoteModal({
       triage: makeTriageDetail({
-        rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+        rawFindingStatus: FINDING_STATUS.MANUAL,
       }),
       initialStatus: FINDING_TRIAGE_STATUS.RESOLVED,
     });
@@ -552,7 +552,7 @@ describe("FindingNoteModal", () => {
     const user = userEvent.setup();
     renderNoteModal({
       triage: makeTriageDetail({
-        rawFindingStatus: RAW_FINDING_STATUS.FAIL,
+        rawFindingStatus: FINDING_STATUS.FAIL,
       }),
     });
 
@@ -569,7 +569,7 @@ describe("FindingNoteModal", () => {
     const onTriageUpdateAction = vi.fn();
     renderNoteModal({
       triage: makeTriageDetail({
-        rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+        rawFindingStatus: FINDING_STATUS.MANUAL,
       }),
       onTriageUpdateAction,
     });
@@ -601,7 +601,7 @@ describe("FindingNoteModal", () => {
     // Given
     const user = userEvent.setup();
     const triage = makeTriageDetail({
-      rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+      rawFindingStatus: FINDING_STATUS.MANUAL,
     });
     const onOpenChange = vi.fn();
     const { rerender } = render(
@@ -643,7 +643,7 @@ describe("FindingNoteModal", () => {
     // Given
     const user = userEvent.setup();
     const triage = makeTriageDetail({
-      rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+      rawFindingStatus: FINDING_STATUS.MANUAL,
     });
     const onOpenChange = vi.fn();
     const { rerender } = render(
@@ -688,7 +688,7 @@ describe("FindingNoteModal", () => {
     // Given
     const user = userEvent.setup();
     const triage = makeTriageDetail({
-      rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+      rawFindingStatus: FINDING_STATUS.MANUAL,
     });
     const onTriageUpdateAction = vi.fn().mockResolvedValue({
       manualPassExpiresAt: "2026-10-28T12:00:00Z",
@@ -720,7 +720,7 @@ describe("FindingNoteModal", () => {
     });
     renderNoteModal({
       triage: makeTriageDetail({
-        rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+        rawFindingStatus: FINDING_STATUS.MANUAL,
       }),
       onTriageUpdateAction,
     });
@@ -766,7 +766,7 @@ describe("FindingNoteModal", () => {
       triage: makeTriageDetail({
         status: FINDING_TRIAGE_STATUS.RESOLVED,
         label: "Resolved",
-        rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+        rawFindingStatus: FINDING_STATUS.MANUAL,
         manualPassActive: true,
         manualPassEvidence: "The active control evidence was reviewed.",
         manualPassCreatedByName: "Alex Security",
@@ -802,7 +802,7 @@ describe("FindingNoteModal", () => {
       triage: makeTriageDetail({
         status: FINDING_TRIAGE_STATUS.OPEN,
         label: "Open",
-        rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+        rawFindingStatus: FINDING_STATUS.MANUAL,
         manualPassActive: false,
         manualPassEvidence: "The control owner verified the requirement.",
         manualPassCreatedByName: "Alex Security",
@@ -845,7 +845,7 @@ describe("FindingNoteModal", () => {
       triage: makeTriageDetail({
         status: FINDING_TRIAGE_STATUS.OPEN,
         label: "Open",
-        rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+        rawFindingStatus: FINDING_STATUS.MANUAL,
         manualPassActive: false,
         manualPassEvidence: null,
         manualPassCreatedAt: "2026-06-03T10:00:00Z",
@@ -866,7 +866,7 @@ describe("FindingNoteModal", () => {
       triage: makeTriageDetail({
         status: FINDING_TRIAGE_STATUS.RESOLVED,
         label: "Resolved",
-        rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+        rawFindingStatus: FINDING_STATUS.MANUAL,
         manualPassActive: true,
         manualPassEvidence: "Tested.",
         manualPassCreatedAt: "2026-06-03T10:00:00Z",
@@ -890,7 +890,7 @@ describe("FindingNoteModal", () => {
       triage: makeTriageDetail({
         status: FINDING_TRIAGE_STATUS.RESOLVED,
         label: "Resolved",
-        rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+        rawFindingStatus: FINDING_STATUS.MANUAL,
         manualPassActive: false,
         manualPassEvidence: null,
         manualPassCreatedByName: "Alex Security",

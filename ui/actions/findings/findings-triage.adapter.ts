@@ -1,17 +1,16 @@
+import { FINDING_STATUS, type FindingStatus } from "@/types/components";
 import {
   FINDING_TRIAGE_BILLING_HREF,
   FINDING_TRIAGE_NOTE_MAX_LENGTH,
   FINDING_TRIAGE_STATUS,
   FINDING_TRIAGE_STATUS_LABELS,
   MANUAL_PASS_PROVENANCE,
-  RAW_FINDING_STATUS,
   type FindingTriageDetail,
   type FindingTriageDisabledReason,
   type FindingTriageLoadedNote,
   type FindingTriageStatus,
   type FindingTriageSummary,
   type FindingTriageUpdateResult,
-  type RawFindingStatus,
 } from "@/types/findings-triage";
 
 // API/backend triage implementation is external to this UI slice. Keep final
@@ -72,14 +71,14 @@ const isFindingTriageStatus = (value: unknown): value is FindingTriageStatus =>
   typeof value === "string" &&
   Object.values(FINDING_TRIAGE_STATUS).includes(value as FindingTriageStatus);
 
-const isRawFindingStatus = (value: unknown): value is RawFindingStatus =>
+const isRawFindingStatus = (value: unknown): value is FindingStatus =>
   typeof value === "string" &&
-  Object.values(RAW_FINDING_STATUS).includes(value as RawFindingStatus);
+  Object.values(FINDING_STATUS).includes(value as FindingStatus);
 
 const fallbackStatusFromFindingStatus = (
   findingStatus: unknown,
 ): FindingTriageStatus =>
-  findingStatus === RAW_FINDING_STATUS.PASS
+  findingStatus === FINDING_STATUS.PASS
     ? FINDING_TRIAGE_STATUS.RESOLVED
     : FINDING_TRIAGE_STATUS.OPEN;
 
@@ -131,8 +130,8 @@ const createSummary = (
         : attributes.status === "MUTED",
     rawFindingStatus,
     manualPassProvenance:
-      attributes.status === RAW_FINDING_STATUS.PASS &&
-      rawFindingStatus === RAW_FINDING_STATUS.MANUAL &&
+      attributes.status === FINDING_STATUS.PASS &&
+      rawFindingStatus === FINDING_STATUS.MANUAL &&
       triageFields.status === FINDING_TRIAGE_STATUS.RESOLVED
         ? MANUAL_PASS_PROVENANCE
         : null,

@@ -1,8 +1,8 @@
+import { FINDING_STATUS } from "@/types/components";
 import {
   FINDING_TRIAGE_STATUS_LABELS,
   FINDING_TRIAGE_STATUS,
   MANUAL_PASS_PROVENANCE,
-  RAW_FINDING_STATUS,
   type FindingTriageSummary,
   isMutelistShortcutStatus,
   type UpdateFindingTriageInput,
@@ -86,9 +86,7 @@ export const applyOptimisticFindingTriageRowUpdate = <
     triage: applyOptimisticTriageSummaryUpdate(finding.triage, input),
     attributes: {
       ...finding.attributes,
-      status: isManualPass
-        ? RAW_FINDING_STATUS.PASS
-        : finding.attributes.status,
+      status: isManualPass ? FINDING_STATUS.PASS : finding.attributes.status,
       muted: shouldMarkMuted ? true : finding.attributes.muted,
       muted_reason:
         shouldMarkMuted && input.isMuted !== true && input.status

@@ -1,6 +1,6 @@
+import { FINDING_STATUS } from "@/types/components";
 import {
   FINDING_TRIAGE_STATUS,
-  RAW_FINDING_STATUS,
   type FindingTriageDetail,
   type FindingTriageManualStatus,
   type FindingTriageModalStatus,
@@ -30,7 +30,7 @@ export function buildFindingTriageUpdateInput({
     selectedStatus !== triage.status
   ) {
     if (
-      triage.rawFindingStatus !== RAW_FINDING_STATUS.MANUAL ||
+      triage.rawFindingStatus !== FINDING_STATUS.MANUAL ||
       !isManualStatus(triage.status) ||
       trimmedManualPassEvidence.length === 0
     ) {
