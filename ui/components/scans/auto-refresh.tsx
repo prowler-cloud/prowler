@@ -3,7 +3,12 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 
-export const SCAN_DATA_REFRESHED_EVENT = "prowler:scan-data-refreshed";
+/**
+ * Signals that a poll cycle ran, not that fresh data landed: the default branch
+ * calls the fire-and-forget `router.refresh()`, which reports neither.
+ * Listeners must read authoritative state themselves.
+ */
+export const SCAN_POLL_TICK_EVENT = "prowler:scan-poll-tick";
 
 interface AutoRefreshProps {
   hasExecutingScan: boolean;
@@ -32,11 +37,12 @@ export function AutoRefresh({ hasExecutingScan, onRefresh }: AutoRefreshProps) {
             // Default: trigger server-side refresh
             router.refresh();
           }
-        } catch {
+        } catch (error) {
+          console.error("Scan auto-refresh failed:", error);
           return;
         }
 
-        window.dispatchEvent(new Event(SCAN_DATA_REFRESHED_EVENT));
+        window.dispatchEvent(new Event(SCAN_POLL_TICK_EVENT));
       };
 
       void refresh();

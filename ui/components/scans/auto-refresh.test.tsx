@@ -11,7 +11,7 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => navigationState.searchParams,
 }));
 
-import { AutoRefresh, SCAN_DATA_REFRESHED_EVENT } from "./auto-refresh";
+import { AutoRefresh, SCAN_POLL_TICK_EVENT } from "./auto-refresh";
 
 describe("AutoRefresh", () => {
   beforeEach(() => {
@@ -24,7 +24,7 @@ describe("AutoRefresh", () => {
     vi.useRealTimers();
   });
 
-  it("dispatches scan data refreshed after a successful callback refresh", async () => {
+  it("dispatches a poll tick after a successful callback refresh", async () => {
     // Given
     let resolveRefresh!: () => void;
     const refreshPromise = new Promise<void>((resolve) => {
@@ -32,7 +32,7 @@ describe("AutoRefresh", () => {
     });
     const onRefresh = vi.fn().mockReturnValue(refreshPromise);
     const eventListener = vi.fn();
-    window.addEventListener(SCAN_DATA_REFRESHED_EVENT, eventListener);
+    window.addEventListener(SCAN_POLL_TICK_EVENT, eventListener);
     render(<AutoRefresh hasExecutingScan onRefresh={onRefresh} />);
 
     // When
@@ -49,13 +49,13 @@ describe("AutoRefresh", () => {
 
     // Then
     expect(eventListener).toHaveBeenCalledOnce();
-    window.removeEventListener(SCAN_DATA_REFRESHED_EVENT, eventListener);
+    window.removeEventListener(SCAN_POLL_TICK_EVENT, eventListener);
   });
 
-  it("dispatches scan data refreshed after the default router refresh", async () => {
+  it("dispatches a poll tick after the default router refresh", async () => {
     // Given
     const eventListener = vi.fn();
-    window.addEventListener(SCAN_DATA_REFRESHED_EVENT, eventListener);
+    window.addEventListener(SCAN_POLL_TICK_EVENT, eventListener);
     render(<AutoRefresh hasExecutingScan />);
 
     // When
@@ -64,14 +64,14 @@ describe("AutoRefresh", () => {
     // Then
     expect(routerRefreshMock).toHaveBeenCalledOnce();
     expect(eventListener).toHaveBeenCalledOnce();
-    window.removeEventListener(SCAN_DATA_REFRESHED_EVENT, eventListener);
+    window.removeEventListener(SCAN_POLL_TICK_EVENT, eventListener);
   });
 
-  it("does not dispatch scan data refreshed when an async callback rejects", async () => {
+  it("does not dispatch a poll tick when an async callback rejects", async () => {
     // Given
     const onRefresh = vi.fn().mockRejectedValue(new Error("refresh failed"));
     const eventListener = vi.fn();
-    window.addEventListener(SCAN_DATA_REFRESHED_EVENT, eventListener);
+    window.addEventListener(SCAN_POLL_TICK_EVENT, eventListener);
     render(<AutoRefresh hasExecutingScan onRefresh={onRefresh} />);
 
     // When
@@ -80,7 +80,7 @@ describe("AutoRefresh", () => {
     // Then
     expect(onRefresh).toHaveBeenCalledOnce();
     expect(eventListener).not.toHaveBeenCalled();
-    window.removeEventListener(SCAN_DATA_REFRESHED_EVENT, eventListener);
+    window.removeEventListener(SCAN_POLL_TICK_EVENT, eventListener);
   });
 
   it.each([
@@ -101,7 +101,7 @@ describe("AutoRefresh", () => {
       const onRefresh = vi.fn();
       const eventListener = vi.fn();
       navigationState.searchParams = new URLSearchParams(searchParams);
-      window.addEventListener(SCAN_DATA_REFRESHED_EVENT, eventListener);
+      window.addEventListener(SCAN_POLL_TICK_EVENT, eventListener);
       render(
         <AutoRefresh
           hasExecutingScan={hasExecutingScan}
@@ -115,7 +115,7 @@ describe("AutoRefresh", () => {
       // Then
       expect(onRefresh).not.toHaveBeenCalled();
       expect(eventListener).not.toHaveBeenCalled();
-      window.removeEventListener(SCAN_DATA_REFRESHED_EVENT, eventListener);
+      window.removeEventListener(SCAN_POLL_TICK_EVENT, eventListener);
     },
   );
 });
