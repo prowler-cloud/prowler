@@ -38,13 +38,19 @@ class BMS(HuaweiCloudService):
             security_groups={"sg-default": "default"},
         )
         self.servers["bms-mock-002"] = BareMetalServer(
-            id="bms-mock-002", name="bms-private-server", region=region,
-            status="ACTIVE", public_ip="",
+            id="bms-mock-002",
+            name="bms-private-server",
+            region=region,
+            status="ACTIVE",
+            public_ip="",
             security_groups={"sg-custom": "custom-sg"},
         )
         self.servers["bms-mock-003"] = BareMetalServer(
-            id="bms-mock-003", name="bms-secure-server", region=region,
-            status="ACTIVE", public_ip="",
+            id="bms-mock-003",
+            name="bms-secure-server",
+            region=region,
+            status="ACTIVE",
+            public_ip="",
             security_groups={"sg-secure": "web-sg"},
         )
 
