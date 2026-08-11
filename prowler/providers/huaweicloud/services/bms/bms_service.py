@@ -77,7 +77,10 @@ class BMS(HuaweiCloudService):
                         )
 
                         security_groups = {}
-                        if hasattr(server_data, "security_groups") and server_data.security_groups:
+                        if (
+                            hasattr(server_data, "security_groups")
+                            and server_data.security_groups
+                        ):
                             for sg in server_data.security_groups:
                                 sg_name = getattr(sg, "name", "")
                                 sg_id = getattr(sg, "id", sg_name)
