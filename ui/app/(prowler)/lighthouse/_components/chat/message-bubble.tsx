@@ -106,19 +106,13 @@ export function MessageBubble({
             )}
           >
             {/* User text stays plain to preserve HTML-like tags; assistant
-                renders parts in order so tool calls sit between text blocks.
-                A skill response keeps only the answer text inline — its tool
-                trace lives behind the receipt above. */}
+                renders parts in order so tool calls sit between the narration
+                text that announced them — skill responses included, with the
+                receipt above as the run summary. */}
             {isUser ? (
               <p className="wrap-break-word whitespace-pre-wrap">
                 {messageText}
               </p>
-            ) : isSkillResponse ? (
-              <AssistantTextParts
-                parts={message.parts.filter(
-                  (part) => part.type === LIGHTHOUSE_V2_PART_TYPE.TEXT,
-                )}
-              />
             ) : (
               <AssistantParts parts={message.parts} />
             )}

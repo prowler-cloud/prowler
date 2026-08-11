@@ -65,7 +65,9 @@ export function StreamingAssistantMessage({
   );
 }
 
-function StreamingActivityGroups({
+// Ordered live view of the stream: narration blocks with tool groups between
+// them. Shared with the skill progress card so both surfaces read identically.
+export function StreamingActivityGroups({
   streamState,
 }: {
   streamState: LighthouseV2StreamState;

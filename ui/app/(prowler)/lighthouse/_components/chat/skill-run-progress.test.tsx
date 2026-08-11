@@ -81,11 +81,13 @@ describe("SkillRunProgress", () => {
     expect(screen.getByText("Check public exposure")).toBeInTheDocument();
   });
 
-  it("should stream the narration below the card", () => {
+  it("should stream narration and tool activity in order below the card", () => {
     // Given / When
     render(<SkillRunProgress skill={skill} streamState={buildStreamState()} />);
 
-    // Then
+    // Then: the narration block is followed by the tool group it announced,
+    // matching how the persisted message renders after the run.
     expect(screen.getByText("Gathering context.")).toBeInTheDocument();
+    expect(screen.getByText("Using tools")).toBeInTheDocument();
   });
 });

@@ -18,7 +18,7 @@ import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { cn } from "@/lib/utils";
 import type { LighthouseSkillDefinition } from "@/types/lighthouse-skills";
 
-import { MessageMarkdown } from "./message-markdown";
+import { StreamingActivityGroups } from "./streaming-message";
 
 interface SkillRunProgressProps {
   skill: LighthouseSkillDefinition;
@@ -30,7 +30,8 @@ interface SkillRunProgressProps {
 // no plan checklist and no percent bar — the card reports observed activity:
 // collapsed, a pulsing lighthouse-gradient label naming the tool currently
 // running (or the skill itself between tools); expanded, the append-only
-// timeline of tool calls as they actually happened. Narration streams below.
+// timeline of tool calls as they actually happened. Below, narration and tool
+// activity stream interleaved in order, matching the persisted rendering.
 export function SkillRunProgress({
   skill,
   streamState,
@@ -46,12 +47,12 @@ export function SkillRunProgress({
     lastToolCall?.status === LIGHTHOUSE_V2_TOOL_CALL_STATUS.RUNNING
       ? `Running ${formatToolName(lastToolCall.name)}…`
       : "Thinking…";
-  const streamedText = streamState.activityItems
-    .filter(
-      (item) => item.type === LIGHTHOUSE_V2_STREAM_ACTIVITY_ITEM_TYPE.TEXT,
-    )
-    .map((item) => item.text)
-    .join("");
+  // Gate the body on narration: before the first text delta the card's own
+  // status label already reports the tool activity, so an items-only body
+  // would just duplicate it.
+  const hasNarration = streamState.activityItems.some(
+    (item) => item.type === LIGHTHOUSE_V2_STREAM_ACTIVITY_ITEM_TYPE.TEXT,
+  );
   const Icon = skill.icon;
 
   return (
@@ -99,9 +100,9 @@ export function SkillRunProgress({
             )}
           </div>
         </div>
-        {streamedText && (
+        {hasNarration && (
           <div className="bg-bg-neutral-tertiary text-text-neutral-primary max-w-full min-w-0 rounded-[8px] px-4 py-3 text-sm">
-            <MessageMarkdown text={streamedText} isStreaming />
+            <StreamingActivityGroups streamState={streamState} />
           </div>
         )}
       </div>

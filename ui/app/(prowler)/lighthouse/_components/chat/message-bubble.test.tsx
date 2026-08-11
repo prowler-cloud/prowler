@@ -225,10 +225,10 @@ describe("MessageBubble", () => {
     });
   });
 
-  it("should expand the receipt into flat tool rows without a nested disclosure", async () => {
-    // Given: a finished skill run with one tool call
-    const user = userEvent.setup();
+  it("should render the receipt as a static line with the tool trace inline", () => {
+    // Given: a finished skill run whose narration interleaves with a tool call
     const assistantMessage = buildAssistantMessage([
+      textPart("part-narration", "Checking the failed policy."),
       toolCallPart("part-tool-1", "get_finding"),
       textPart("part-answer", "Done."),
     ]);
@@ -247,16 +247,19 @@ describe("MessageBubble", () => {
       />,
     );
 
-    // When: the receipt line is expanded
-    await user.click(screen.getByRole("button", { name: /Ran/ }));
-
-    // Then: the tool row shows directly — no second "Used N tools" chevron
+    // Then: the receipt is informational only — it owns no disclosure…
+    expect(screen.getByText(/1 tool/)).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /Get finding/ }),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: /Used 1 tool/ }),
+      screen.queryByRole("button", { name: /Ran/ }),
     ).not.toBeInTheDocument();
+
+    // …and the tool call renders in message order between the narration and
+    // the answer, behind the body's own group.
+    expect(screen.getByText("Checking the failed policy.")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Used Get finding/ }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Done.")).toBeInTheDocument();
   });
 
   it("should render persisted user context as a read-only historical badge", () => {

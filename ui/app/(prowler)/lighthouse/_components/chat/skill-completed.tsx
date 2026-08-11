@@ -1,14 +1,9 @@
 "use client";
 
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, BrainIcon } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useState } from "react";
 
-import {
-  ChainOfThought,
-  ChainOfThoughtContent,
-  ChainOfThoughtHeader,
-} from "@/app/(prowler)/lighthouse/_components/ai-elements/chain-of-thought";
 import type { SkillRunInfo } from "@/app/(prowler)/lighthouse/_lib/messages";
 import {
   LIGHTHOUSE_V2_PART_TYPE,
@@ -23,8 +18,6 @@ import {
 } from "@/types/integrations";
 import { LIGHTHOUSE_CONTEXT_KIND } from "@/types/lighthouse-context";
 import type { LighthouseSkillDefinition } from "@/types/lighthouse-skills";
-
-import { ToolCallList } from "./tool-call-part";
 
 // Lazy-loaded: the Jira/Mute machinery (and its server-action imports) only
 // loads when the user actually opens one of these from a finished skill run.
@@ -46,8 +39,9 @@ const MuteFindingsModal = dynamic(
   { loading: () => null },
 );
 
-// One-line receipt of a finished run (design 1j): the chain of thought
-// collapses to "Ran <skill> · tools · time" with the trace behind it. The
+// One-line receipt of a finished run (design 1j): "Ran <skill> · tools ·
+// time". Static on purpose — the full trace (narration and tool calls, in
+// order) lives in the message body, so the receipt never duplicates it. The
 // summary reports only observed activity — never the catalog's step plan.
 export function SkillRunReceipt({
   skillRun,
@@ -69,22 +63,16 @@ export function SkillRunReceipt({
     .join(" · ");
 
   return (
-    <ChainOfThought className="space-y-0">
-      <ChainOfThoughtHeader className="text-text-neutral-secondary text-xs">
+    <div className="text-text-neutral-secondary flex items-center gap-2 text-xs">
+      <BrainIcon className="size-4" />
+      <span>
         Ran{" "}
         <span className="text-text-neutral-primary font-medium">
           {skillRun.ref.name}
         </span>
         {summary && ` · ${summary}`}
-      </ChainOfThoughtHeader>
-      {/* Flat rows: the receipt header is the single disclosure — nesting the
-          "Used N tools" collapsible here would stack two chevrons. */}
-      {toolParts.length > 0 && (
-        <ChainOfThoughtContent className="space-y-1.5">
-          <ToolCallList parts={toolParts} />
-        </ChainOfThoughtContent>
-      )}
-    </ChainOfThought>
+      </span>
+    </div>
   );
 }
 
