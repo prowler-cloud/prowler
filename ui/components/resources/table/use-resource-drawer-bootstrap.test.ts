@@ -14,8 +14,8 @@ import {
   FINDING_TRIAGE_STATUS,
   type FindingTriageSummary,
 } from "@/types/findings-triage";
+import type { ResourceFinding } from "@/types/resources";
 
-import type { ResourceFinding } from "./resource-findings-columns";
 import { useResourceDrawerBootstrap } from "./use-resource-drawer-bootstrap";
 
 function makeTriageSummary(

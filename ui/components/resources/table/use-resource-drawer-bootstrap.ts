@@ -7,8 +7,7 @@ import { applyOptimisticTriageSummaryUpdate } from "@/lib/finding-triage";
 import { MetaDataProps } from "@/types";
 import type { UpdateFindingTriageInput } from "@/types/findings-triage";
 import { OrganizationResource } from "@/types/organizations";
-
-import { ResourceFinding } from "./resource-findings-columns";
+import type { ResourceFinding } from "@/types/resources";
 
 interface UseResourceDrawerBootstrapOptions {
   resourceId: string;

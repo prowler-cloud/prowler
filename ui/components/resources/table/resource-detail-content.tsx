@@ -38,11 +38,9 @@ import { shouldRefreshAfterTriageUpdate } from "@/lib/finding-triage";
 import { getRegionFlag } from "@/lib/region-flags";
 import { ProviderType, ResourceProps } from "@/types";
 import type { UpdateFindingTriageInput } from "@/types/findings-triage";
+import type { ResourceFinding } from "@/types/resources";
 
-import {
-  getResourceFindingsColumns,
-  ResourceFinding,
-} from "./resource-findings-columns";
+import { getResourceFindingsColumns } from "./resource-findings-columns";
 import { useFindingDetails } from "./use-finding-details";
 import { useResourceDrawerBootstrap } from "./use-resource-drawer-bootstrap";
 

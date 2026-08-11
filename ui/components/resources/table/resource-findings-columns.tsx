@@ -6,42 +6,20 @@ import {
   DataTableRowActions,
   FindingTriageStatusCell,
 } from "@/components/findings/table";
-import {
-  DeltaType,
-  NotificationIndicator,
-} from "@/components/findings/table/notification-indicator";
+import { NotificationIndicator } from "@/components/findings/table/notification-indicator";
 import { Checkbox } from "@/components/shadcn";
 import { DateWithTime } from "@/components/shadcn/entities";
 import {
   DataTableColumnHeader,
-  Severity,
   SeverityBadge,
   StatusFindingBadge,
 } from "@/components/shadcn/table";
-import type { FindingStatus } from "@/types/components";
 import type {
   FindingTriageDetailLoadHandler,
   FindingTriageNoteLoadHandler,
-  FindingTriageSummary,
   FindingTriageUpdateHandler,
 } from "@/types/findings-triage";
-
-export interface ResourceFinding {
-  type: "findings";
-  id: string;
-  triage?: FindingTriageSummary;
-  attributes: {
-    status: FindingStatus;
-    severity: Severity;
-    muted?: boolean;
-    muted_reason?: string;
-    delta?: DeltaType;
-    updated_at?: string;
-    check_metadata?: {
-      checktitle?: string;
-    };
-  };
-}
+import type { ResourceFinding } from "@/types/resources";
 
 export const getResourceFindingsColumns = (
   rowSelection: RowSelectionState,

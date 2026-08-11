@@ -79,7 +79,11 @@ beforeAll(() => {
 });
 
 afterAll(() => {
-  process.env.TZ = originalTimezone;
+  if (originalTimezone === undefined) {
+    delete process.env.TZ;
+  } else {
+    process.env.TZ = originalTimezone;
+  }
 });
 
 import { DOCS_URLS } from "@/lib/external-urls";
