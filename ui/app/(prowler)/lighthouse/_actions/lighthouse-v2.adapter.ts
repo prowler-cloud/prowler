@@ -12,17 +12,15 @@ import {
   type LighthouseV2ProviderType,
   type LighthouseV2RunFeedbackInput,
   type LighthouseV2RunStatus,
+  type LighthouseV2SendMessageInput,
   type LighthouseV2Session,
   type LighthouseV2SupportedModel,
   type LighthouseV2SupportedProvider,
   type LighthouseV2Task,
 } from "@/app/(prowler)/lighthouse/_types";
-import {
-  buildAgentText,
-  toApiLighthouseContext,
-} from "@/lib/lighthouse/context/transport";
+import { buildLighthouseMessageContent } from "@/lib/lighthouse/message-content";
+import { getSkillById } from "@/lib/lighthouse/skills/registry";
 import type { JsonApiDocument, JsonApiResource } from "@/types/jsonapi";
-import type { LighthouseContextEnvelope } from "@/types/lighthouse-context";
 import type {
   TaskAttributes as ApiTaskAttributes,
   TaskState,
@@ -290,22 +288,18 @@ export function buildLighthouseV2RunFeedbackPayload(
   };
 }
 
-export function buildLighthouseV2MessagePayload(input: {
-  displayText: string;
-  context?: LighthouseContextEnvelope;
-  provider: LighthouseV2ProviderType;
-  model?: string | null;
-}) {
-  const apiContext = input.context
-    ? toApiLighthouseContext(input.context)
-    : undefined;
-  const content = apiContext
-    ? {
-        text: buildAgentText(input.displayText, apiContext),
-        display_text: input.displayText,
-        ui_context: apiContext,
-      }
-    : { text: input.displayText };
+export function buildLighthouseV2MessagePayload(
+  input: Omit<LighthouseV2SendMessageInput, "sessionId">,
+) {
+  const skill = input.skillId ? getSkillById(input.skillId) : undefined;
+  if (input.skillId && !skill) {
+    throw new Error(`Unknown Lighthouse skill: ${input.skillId}.`);
+  }
+  const content = buildLighthouseMessageContent(
+    input.displayText,
+    input.context,
+    skill,
+  );
 
   return {
     data: {

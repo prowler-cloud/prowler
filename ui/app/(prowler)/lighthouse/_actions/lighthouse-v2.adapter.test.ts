@@ -317,6 +317,20 @@ describe("lighthouse-v2.adapter", () => {
       });
     });
 
+    it("should reject an unknown skill id instead of downgrading it", () => {
+      // Given
+      const invalidInput = {
+        displayText: "Removed skill",
+        skillId: "removed-skill",
+        provider: "openai",
+      } as unknown as Parameters<typeof buildLighthouseV2MessagePayload>[0];
+
+      // When / Then
+      expect(() => buildLighthouseV2MessagePayload(invalidInput)).toThrow(
+        "Unknown Lighthouse skill: removed-skill.",
+      );
+    });
+
     it("should build per-provider update payloads with default_model and business_context", () => {
       // When
       const payload = buildLighthouseV2ConfigurationUpdatePayload("config-1", {

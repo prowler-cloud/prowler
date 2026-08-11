@@ -178,7 +178,20 @@
   );
 
   /* Lighthouse AI */
-  --gradient-lighthouse: linear-gradient(96deg, #2ee59b 3.55%, #62dff0 98.85%);
+  --gradient-lighthouse-from: #2ee59b;
+  --gradient-lighthouse-to: #62dff0;
+  --gradient-lighthouse: linear-gradient(
+    96deg,
+    var(--gradient-lighthouse-from) 3.55%,
+    var(--gradient-lighthouse-to) 98.85%
+  );
+  --gradient-lighthouse-soft: linear-gradient(
+    96deg,
+    rgba(46, 229, 155, 0.12),
+    rgba(98, 223, 240, 0.12)
+  );
+  --text-lighthouse: var(--color-emerald-600);
+  --border-lighthouse: rgba(5, 150, 105, 0.45);
 
   /* Cloud feature badge */
   --gradient-feature-cloud: linear-gradient(
@@ -285,6 +298,10 @@
     rgba(98, 223, 240, 0.07) 40%,
     transparent 72%
   );
+
+  /* Lighthouse AI — the design's exact accent (#6ee7b7 on dark) */
+  --text-lighthouse: #6ee7b7;
+  --border-lighthouse: rgba(46, 229, 155, 0.45);
 }
 
 /* ===== TAILWIND THEME MAPPINGS ===== */
@@ -375,6 +392,12 @@
 
   /* Background images */
   --background-image-feature-cloud: var(--gradient-feature-cloud);
+  --background-image-lighthouse: var(--gradient-lighthouse);
+  --background-image-lighthouse-soft: var(--gradient-lighthouse-soft);
+
+  /* Lighthouse AI accent */
+  --color-text-lighthouse: var(--text-lighthouse);
+  --color-border-lighthouse: var(--border-lighthouse);
 
   /* Breakpoints */
   --breakpoint-3xl: 1920px;
@@ -432,6 +455,67 @@
 @utility container {
   margin-inline: auto;
   padding-inline: 2rem;
+}
+
+/* ===== LIGHTHOUSE GRADIENT BORDER =====
+ * 1px blue-green ring on a single element (cards, dropdowns): an opaque fill
+ * clipped to the padding box stacks over the lighthouse gradient clipped to
+ * the border box, so the gradient only shows through the transparent border.
+ * Single-element version of the `bg-lighthouse p-px` wrapper trick — portaled
+ * surfaces like dropdown content cannot use a wrapper.
+ *
+ * The ring is a conic gradient whose start angle is a registered custom
+ * property animated in a loop, so the colors circulate around the border.
+ * Without `@property` the angle is not interpolable and the ring simply
+ * renders static. */
+@property --gradient-border-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes gradient-border-spin {
+  to {
+    --gradient-border-angle: 360deg;
+  }
+}
+
+@utility gradient-border-lighthouse {
+  position: relative;
+}
+
+/* The spinning ring lives on a pseudo-element with its own `animation`:
+ * putting it on the host collides longhand-by-longhand with tw-animate's
+ * enter/exit utilities (animation-name from `animate-in` + iteration-count
+ * from the ring = the entrance animation looping forever). The ring shape
+ * comes from masking everything but the 1px padding of the overlay. */
+.gradient-border-lighthouse::before {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  /* inset: 0, not -1px: hosts pair this with border-0, so the padding box
+   * IS the visual edge — and a pseudo that pokes past it registers as
+   * scrollable overflow inside overflow-auto content (phantom scrollbar). */
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: conic-gradient(
+    from var(--gradient-border-angle),
+    var(--gradient-lighthouse-from),
+    var(--gradient-lighthouse-to),
+    var(--gradient-lighthouse-from)
+  );
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  animation: gradient-border-spin 3s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gradient-border-lighthouse::before {
+    animation: none;
+  }
 }
 
 /* ===== COMPONENT LAYER ===== */

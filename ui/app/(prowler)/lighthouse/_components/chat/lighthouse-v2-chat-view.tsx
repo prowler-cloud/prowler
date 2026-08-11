@@ -7,8 +7,12 @@ import {
   ConversationContent,
   ConversationScrollButton,
 } from "@/app/(prowler)/lighthouse/_components/ai-elements/conversation";
-import { selectLighthouseChatCanSend } from "@/app/(prowler)/lighthouse/_lib/chat-store";
+import {
+  selectLighthouseChatActiveSkill,
+  selectLighthouseChatCanSend,
+} from "@/app/(prowler)/lighthouse/_lib/chat-store";
 import { LIGHTHOUSE_V2_STREAM_STATUS } from "@/app/(prowler)/lighthouse/_lib/event-reducer";
+import { getSkillRunFromLaunch } from "@/app/(prowler)/lighthouse/_lib/messages";
 import {
   buildLighthouseV2ModelSelectionValue,
   type LighthouseV2ModelSelection,
@@ -36,6 +40,8 @@ import { ChatComposerPanel } from "./composer";
 import { ChatEmptyState } from "./empty-state";
 import { useLighthouseChatStore } from "./lighthouse-chat-store-provider";
 import { MessageBubble } from "./message-bubble";
+import { SkillComposerPill } from "./skill-composer-pill";
+import { SkillRunProgress } from "./skill-run-progress";
 import { StreamingAssistantMessage } from "./streaming-message";
 
 export const LIGHTHOUSE_CHAT_SURFACE = {
@@ -73,6 +79,7 @@ export function LighthouseV2ChatView({
     dismissFeedback,
     selectModel,
     submitMessage,
+    resetToNewChat,
     retryLastMessage,
   } = state;
   const { modelsByProvider, supportedProviders } = config;
@@ -114,6 +121,7 @@ export function LighthouseV2ChatView({
     : "";
 
   const canSend = selectLighthouseChatCanSend(state);
+  const activeSkill = selectLighthouseChatActiveSkill(state);
   const supportsAutomaticContext = surface === LIGHTHOUSE_CHAT_SURFACE.PANEL;
   const messageContext = supportsAutomaticContext
     ? currentContext.context
@@ -143,9 +151,15 @@ export function LighthouseV2ChatView({
       lastSubmission !== null,
     onRetry: () => void retryLastMessage(),
     onDismissFeedback: dismissFeedback,
-    contextControl: supportsAutomaticContext ? (
-      <LighthouseCurrentContextBadge context={currentContext.context} />
-    ) : undefined,
+    contextControl:
+      supportsAutomaticContext || activeSkill ? (
+        <>
+          {activeSkill && <SkillComposerPill skill={activeSkill} />}
+          {supportsAutomaticContext && (
+            <LighthouseCurrentContextBadge context={currentContext.context} />
+          )}
+        </>
+      ) : undefined,
     canSend,
     input,
     isStreaming: Boolean(streamState.activeTaskId),
@@ -186,16 +200,37 @@ export function LighthouseV2ChatView({
             className="mx-auto w-full max-w-4xl gap-5 px-4 pt-8 pb-20 md:px-8"
             scrollClassName="minimal-scrollbar overflow-x-hidden overflow-y-auto"
           >
-            {messages.map((message) => (
-              <MessageBubble
-                key={message.id}
-                message={message}
-                sessionId={activeSessionId ?? undefined}
-              />
-            ))}
-            {hasLiveAssistantActivity && (
-              <StreamingAssistantMessage streamState={streamState} />
-            )}
+            {messages.map((message, index) => {
+              const skillRun = getSkillRunFromLaunch(
+                message,
+                messages[index - 1],
+              );
+              return (
+                <MessageBubble
+                  key={message.id}
+                  message={message}
+                  sessionId={activeSessionId ?? undefined}
+                  skillRun={skillRun}
+                  onLaunchSkill={(skill) => {
+                    // The DyR prompts hand follow-up skills off to a separate
+                    // session; only the original launch context (it carries
+                    // the finding) travels along.
+                    resetToNewChat();
+                    void submitMessage(skill.name, skillRun?.context, skill);
+                  }}
+                />
+              );
+            })}
+            {hasLiveAssistantActivity &&
+              (activeSkill ? (
+                <SkillRunProgress
+                  skill={activeSkill}
+                  streamState={streamState}
+                  startedAt={messages.at(-1)?.insertedAt}
+                />
+              ) : (
+                <StreamingAssistantMessage streamState={streamState} />
+              ))}
           </ConversationContent>
           <ConversationScrollButton className="z-20" />
         </Conversation>

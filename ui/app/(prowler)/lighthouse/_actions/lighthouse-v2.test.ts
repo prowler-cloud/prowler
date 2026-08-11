@@ -27,6 +27,7 @@ vi.mock("@/lib/helper", () => ({
 import {
   createLighthouseV2Session,
   getLighthouseV2SupportedModels,
+  sendLighthouseV2Message,
   submitLighthouseV2RunFeedback,
   updateLighthouseV2Configuration,
   updateLighthouseV2Session,
@@ -197,5 +198,29 @@ describe("Lighthouse v2 session write actions", () => {
         }),
       }),
     );
+  });
+
+  it("rejects an unknown skill id before sending the message", async () => {
+    // Given
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    const invalidInput = {
+      sessionId: "session-1",
+      displayText: "Removed skill",
+      skillId: "removed-skill",
+      provider: "openai",
+      model: "gpt-5.1",
+    } as unknown as Parameters<typeof sendLighthouseV2Message>[0];
+
+    // When
+    const result = await sendLighthouseV2Message(invalidInput);
+
+    // Then
+    expect(result).toEqual({
+      error: "Unknown Lighthouse skill: removed-skill.",
+      status: 400,
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });
