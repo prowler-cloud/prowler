@@ -583,6 +583,7 @@ export interface FindingProps {
     uid: string;
     delta: FindingDelta;
     status: FindingStatus;
+    raw_status?: FindingStatus;
     status_extended: string;
     severity: Severity;
     check_id: string;
