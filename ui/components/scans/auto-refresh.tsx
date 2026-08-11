@@ -3,6 +3,8 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 
+export const SCAN_DATA_REFRESHED_EVENT = "prowler:scan-data-refreshed";
+
 interface AutoRefreshProps {
   hasExecutingScan: boolean;
   /** Optional callback for client-side refresh (used when data is managed in local state) */
@@ -21,13 +23,23 @@ export function AutoRefresh({ hasExecutingScan, onRefresh }: AutoRefreshProps) {
     if (scanId) return;
 
     const interval = setInterval(() => {
-      if (onRefresh) {
-        // Use custom refresh callback for client-side state management
-        onRefresh();
-      } else {
-        // Default: trigger server-side refresh
-        router.refresh();
-      }
+      const refresh = async () => {
+        try {
+          if (onRefresh) {
+            // Use custom refresh callback for client-side state management
+            await onRefresh();
+          } else {
+            // Default: trigger server-side refresh
+            router.refresh();
+          }
+        } catch {
+          return;
+        }
+
+        window.dispatchEvent(new Event(SCAN_DATA_REFRESHED_EVENT));
+      };
+
+      void refresh();
     }, 5000);
 
     return () => clearInterval(interval);
