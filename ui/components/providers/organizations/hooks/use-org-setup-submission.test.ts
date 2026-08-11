@@ -176,6 +176,65 @@ describe("useOrgSetupSubmission", () => {
     vi.useRealTimers();
   });
 
+  // The MSW handler answers every trigger with the same static discovery, so
+  // integration can only count POSTs — not the retry clearing the failure.
+  it("retry triggers a fresh discovery after a failed one", async () => {
+    // Given — a discovery that completes as failed.
+    const onNext = vi.fn();
+    const setFieldError = vi.fn(() => true);
+    mockFreshSetupChain();
+    organizationsActionsMock.getDiscovery.mockResolvedValueOnce({
+      data: {
+        attributes: {
+          status: DISCOVERY_STATUS.FAILED,
+          error: "boom",
+          result: {},
+        },
+      },
+    });
+
+    const { result } = renderHook(() =>
+      useOrgSetupSubmission({
+        stackSetExternalId: "tenant-external-id",
+        onNext,
+        setFieldError,
+      }),
+    );
+
+    await act(async () => {
+      await result.current.submitOrganizationSetup({
+        orgType: ORGANIZATION_TYPE.AWS,
+        awsOrgId: "o-abc123def4",
+        roleArn: "arn:aws:iam::123456789012:role/ProwlerOrgRole",
+      });
+    });
+
+    // Then — failure state with a retry affordance.
+    expect(result.current.discoveryFailed).toBe(true);
+    expect(onNext).not.toHaveBeenCalled();
+
+    // When — retry, and this time discovery succeeds.
+    organizationsActionsMock.triggerDiscovery.mockResolvedValue({
+      data: { id: "discovery-2" },
+    });
+    organizationsActionsMock.getDiscovery.mockResolvedValue({
+      data: {
+        attributes: {
+          status: DISCOVERY_STATUS.SUCCEEDED,
+          result: AWS_DISCOVERY_RESULT,
+        },
+      },
+    });
+    await act(async () => {
+      await result.current.retryDiscovery();
+    });
+
+    // Then — a NEW discovery was triggered (2 total) and the flow advanced.
+    expect(organizationsActionsMock.triggerDiscovery).toHaveBeenCalledTimes(2);
+    expect(onNext).toHaveBeenCalledTimes(1);
+    expect(result.current.discoveryFailed).toBe(false);
+  });
+
   it("keeps the retry affordance when the retry itself cannot be triggered", async () => {
     // Given — a failed discovery, so the retry button is showing.
     const onNext = vi.fn();
