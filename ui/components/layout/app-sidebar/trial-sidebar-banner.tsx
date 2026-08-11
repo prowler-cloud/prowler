@@ -115,12 +115,15 @@ const getTrialUrgency = (props: TrialSidebarBannerProps): TrialUrgency => {
   return TRIAL_URGENCY.HEALTHY;
 };
 
-const formatRemaining = (remaining: number, unit: TrialSidebarBannerUnit) =>
-  `${remaining} ${unit}${remaining === 1 ? "" : "s"} left`;
+const formatRemaining = (remaining: number, unit: TrialSidebarBannerUnit) => {
+  // The API sends a cap and a usage counter, so callers subtract and can go negative.
+  const left = Math.max(0, remaining);
+
+  return `${left} ${unit}${left === 1 ? "" : "s"} left`;
+};
 
 const TILT_SPRING = { stiffness: 260, damping: 26, mass: 0.6 } as const;
 const TILT_RESTING_POINTER = 0.5;
-/** Degrees of tilt at the card edges, and the hover lift in pixels. */
 const TILT_RANGE_X = 1.5;
 const TILT_RANGE_Y = 2;
 const TILT_LIFT = -2;
@@ -129,6 +132,8 @@ export const TrialSidebarBanner = (props: TrialSidebarBannerProps) => {
   const isExpired = props.variant === TRIAL_SIDEBAR_BANNER_VARIANT.EXPIRED;
   const isScanBased =
     props.variant === TRIAL_SIDEBAR_BANNER_VARIANT.ACTIVE_SCANS;
+  // The backend keeps a scan-capped trial `active` once its quota is spent.
+  const isExhausted = isScanBased && props.remaining <= 0;
   const urgency = getTrialUrgency(props);
   const urgencyStyles = TRIAL_URGENCY_STYLES[urgency];
   const remainingCopy = isExpired
@@ -144,8 +149,7 @@ export const TrialSidebarBanner = (props: TrialSidebarBannerProps) => {
 
   const prefersReducedMotion = useReducedMotion();
 
-  // Normalised pointer position (0..1) over the card; drives both the tilt and
-  // the glow so no layout values are written to the DOM by hand.
+  // Normalised pointer position (0..1) over the card.
   const pointerX = useMotionValue(TILT_RESTING_POINTER);
   const pointerY = useMotionValue(TILT_RESTING_POINTER);
   const hover = useMotionValue(0);
@@ -238,7 +242,7 @@ export const TrialSidebarBanner = (props: TrialSidebarBannerProps) => {
             </span>
             <div className="flex min-w-0 flex-1 flex-col gap-1.5">
               <Badge
-                variant={isExpired ? "error" : "success"}
+                variant={isExpired || isExhausted ? "error" : "success"}
                 size="sm"
                 className="w-fit"
               >

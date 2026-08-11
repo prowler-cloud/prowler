@@ -102,6 +102,30 @@ describe("TrialSidebarBanner", () => {
     },
   );
 
+  it.each([
+    { remaining: 0, copy: "0 scans left" },
+    { remaining: -4, copy: "0 scans left" },
+  ])(
+    "marks a scan trial with $remaining remaining as spent",
+    ({ remaining, copy }) => {
+      // Given / When
+      render(
+        <TrialSidebarBanner
+          variant={TRIAL_SIDEBAR_BANNER_VARIANT.ACTIVE_SCANS}
+          remaining={remaining}
+        />,
+      );
+
+      // Then
+      const banner = screen.getByRole("status", { name: "Active trial" });
+      expect(banner).toHaveTextContent(copy);
+      expect(banner).toHaveAttribute("data-urgency", "critical");
+      expect(screen.getByText("Free trial")).toHaveClass(
+        "bg-bg-fail-secondary",
+      );
+    },
+  );
+
   it("renders exhausted scan trials with the existing expired presentation", () => {
     // Given / When
     render(
@@ -150,12 +174,8 @@ describe("TrialSidebarBanner", () => {
     expect(onSelect).toHaveBeenCalledOnce();
   });
 
-  // The tilt is driven by Framer Motion values applied on animation frames, so
-  // the rendered transform is not observable in jsdom, and `useReducedMotion`
-  // caches its media-query state module-globally so it cannot be stubbed per
-  // test. Reduced-motion and the tilt itself belong in Browser Mode, via
-  // `emulateMedia({ reducedMotion: "reduce" })`. What is asserted here is that
-  // the decorative layer exists and that pointer input leaves the card usable.
+  // The tilt runs on animation frames and `useReducedMotion` caches its media
+  // query module-globally, so both belong in Browser Mode, not jsdom.
   it("renders the decorative glow layer", () => {
     // Given / When
     const { container } = render(
