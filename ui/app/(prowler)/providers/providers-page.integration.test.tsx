@@ -24,6 +24,7 @@ import {
   type OrgFixture,
 } from "@/__tests__/msw/handlers/organizations.fixtures";
 import { ORGANIZATION_TYPE } from "@/types/organizations";
+import { SCAN_JOBS_TAB } from "@/types/scans";
 
 import { ProvidersPageHarness } from "./providers-page.harness";
 
@@ -408,6 +409,11 @@ describe("Organization onboarding wizard", () => {
           "/apply",
         );
         const projects = body?.data.attributes.projects ?? [];
+        // A payload that dropped `prod-platform` would pass the optional lookups.
+        expect(projects.map((p) => p.project_id).sort()).toEqual([
+          "prod-analytics",
+          "prod-platform",
+        ]);
         const analytics = projects.find(
           (p) => p.project_id === "prod-analytics",
         );
@@ -531,6 +537,10 @@ describe("Organization onboarding wizard", () => {
         // The reason the API gave must reach the user — a count alone is unactionable.
         expect(harness.hasScheduleFailureReason("Denied")).toBe(true);
         expect(harness.organizationBulkScanCallCount).toBe(1);
+        // Derived independently of the legacy path's tab, so nothing else covers it.
+        expect(harness.scansToastHref()).toBe(
+          `/scans?tab=${SCAN_JOBS_TAB.ACTIVE}`,
+        );
       }, 40000);
 
       it("keeps the user on the launch step when no schedule could be saved", async () => {

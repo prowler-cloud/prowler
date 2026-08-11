@@ -698,6 +698,15 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
     return this.containsText(new RegExp(reason));
   }
 
+  /** The href behind the success toast's "Go to scans" action. */
+  scansToastHref(): string | null {
+    return (
+      Array.from(this.container.querySelectorAll<HTMLAnchorElement>("a"))
+        .find((anchor) => /Go to scans/.test(anchor.textContent ?? ""))
+        ?.getAttribute("href") ?? null
+    );
+  }
+
   /** Whether the wizard is still showing the launch step (it did not navigate). */
   isStillOnLaunchStep(): boolean {
     return this.containsText(/Scan Schedule/);
