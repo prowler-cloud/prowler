@@ -20,6 +20,8 @@ import { DataTableColumnHeader } from "@/components/shadcn/table/data-table-colu
 import { getFailingForLabel } from "@/lib/date-utils";
 import { buildJiraActionLabel } from "@/lib/jira-dispatch-action";
 import { createJiraDispatchPayload } from "@/lib/jira-dispatch-selection";
+import { buildFindingResourceContext } from "@/lib/lighthouse/context/contributions";
+import { isCloud } from "@/lib/shared/env";
 import { FindingResourceRow } from "@/types";
 import type {
   FindingTriageContext,
@@ -36,6 +38,12 @@ import {
 } from "./finding-triage-cells";
 import { FindingsSelectionContext } from "./findings-selection-context";
 import {
+  LighthouseSkillsRowButton,
+  LighthouseSkillsSubmenu,
+  useLighthousePromptLaunch,
+  useLighthouseSkillLaunch,
+} from "./lighthouse-skills-launch";
+import {
   type DeltaType,
   NotificationIndicator,
 } from "./notification-indicator";
@@ -50,21 +58,38 @@ const buildFindingResourceTriageContext = (
   providerType: resource.providerType,
 });
 
+// One finding-context item per resource row, shared by the leading Skills
+// pill and the ⋮ submenu so both launch with identical context.
+const buildResourceFindingItem = (resource: FindingResourceRow) =>
+  buildFindingResourceContext({
+    findingId: resource.findingId,
+    checkId: resource.checkId,
+    severity: resource.severity,
+    status: resource.status,
+    providerUid: resource.providerUid,
+    resourceUid: resource.resourceUid,
+    region: resource.region,
+  });
+
 const ResourceRowActions = ({
   row,
   findingTitle,
+  onSkillLaunchOpenDrawer,
   onTriageUpdateAction,
   onTriageNoteLoadAction,
   onTriageDetailLoadAction,
 }: {
   row: Row<FindingResourceRow>;
   findingTitle?: string;
+  onSkillLaunchOpenDrawer?: (rowIndex: number) => void;
   onTriageUpdateAction?: FindingTriageUpdateHandler;
   onTriageNoteLoadAction?: FindingTriageNoteLoadHandler;
   onTriageDetailLoadAction?: FindingTriageDetailLoadHandler;
 }) => {
   const resource = row.original;
   const canMute = canMuteFindingResource(resource);
+  const launchSkill = useLighthouseSkillLaunch();
+  const launchPrompt = useLighthousePromptLaunch();
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
   const [resolvedIds, setResolvedIds] = useState<string[]>([]);
   const [isResolving, setIsResolving] = useState(false);
@@ -174,6 +199,18 @@ const ResourceRowActions = ({
             })}
             payload={jiraPayload}
           />
+          {isCloud() && (
+            <LighthouseSkillsSubmenu
+              onLaunch={(skill) => {
+                onSkillLaunchOpenDrawer?.(row.index);
+                launchSkill(skill, buildResourceFindingItem(resource));
+              }}
+              onSubmitPrompt={(text) => {
+                onSkillLaunchOpenDrawer?.(row.index);
+                launchPrompt(text, buildResourceFindingItem(resource));
+              }}
+            />
+          )}
         </ActionDropdown>
       </div>
     </>
@@ -184,6 +221,9 @@ interface GetColumnFindingResourcesOptions {
   rowSelection: RowSelectionState;
   selectableRowCount: number;
   findingTitle?: string;
+  // Skill launch (pill or ⋮ submenu) opens this row's finding drawer behind
+  // the chat tab, so the run and the finding share the side panel.
+  onSkillLaunchOpenDrawer?: (rowIndex: number) => void;
   onTriageUpdateAction?: FindingTriageUpdateHandler;
   onTriageNoteLoadAction?: FindingTriageNoteLoadHandler;
   onTriageDetailLoadAction?: FindingTriageDetailLoadHandler;
@@ -193,6 +233,7 @@ export function getColumnFindingResources({
   rowSelection,
   selectableRowCount,
   findingTitle,
+  onSkillLaunchOpenDrawer,
   onTriageUpdateAction,
   onTriageNoteLoadAction,
   onTriageDetailLoadAction,
@@ -216,6 +257,7 @@ export function getColumnFindingResources({
 
         return (
           <div className="flex items-center gap-2">
+            {/* Mirrors the row's indicator + arrow so checkboxes stay aligned */}
             <div className="w-2" />
             <div className="w-4" />
             <Checkbox
@@ -232,14 +274,23 @@ export function getColumnFindingResources({
         );
       },
       cell: ({ row }) => (
-        <div className="flex items-center gap-2">
+        // relative: paints above the cell's hover-extension pseudo-element,
+        // which would otherwise cover the in-flow checkbox and indicator.
+        <div className="relative flex items-center gap-2">
           <NotificationIndicator
             delta={row.original.delta as DeltaType | undefined}
             isMuted={row.original.isMuted}
             mutedReason={row.original.mutedReason}
             showDeltaWhenMuted
           />
-          <CornerDownRight className="text-text-neutral-tertiary h-4 w-4 shrink-0" />
+          {isCloud() ? (
+            <LighthouseSkillsRowButton
+              findingItem={buildResourceFindingItem(row.original)}
+              onSkillLaunch={() => onSkillLaunchOpenDrawer?.(row.index)}
+            />
+          ) : (
+            <CornerDownRight className="text-text-neutral-tertiary h-4 w-4 shrink-0" />
+          )}
           <Checkbox
             size="sm"
             checked={!!rowSelection[row.id]}
@@ -385,6 +436,7 @@ export function getColumnFindingResources({
         <ResourceRowActions
           row={row}
           findingTitle={findingTitle}
+          onSkillLaunchOpenDrawer={onSkillLaunchOpenDrawer}
           onTriageUpdateAction={onTriageUpdateAction}
           onTriageNoteLoadAction={onTriageNoteLoadAction}
           onTriageDetailLoadAction={onTriageDetailLoadAction}
