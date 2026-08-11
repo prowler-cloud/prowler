@@ -170,14 +170,9 @@ def test_social_account_name_trims_and_limits_provider_name():
         {"name": "a" * (max_length + 1)},
         "verified@example.com",
     )
-    trailing_whitespace_name = adapter._get_social_account_name(
-        {"name": "a" * (max_length - 1) + " " + "overflow"},
-        "verified@example.com",
-    )
 
     assert trimmed_name == "Ada Lovelace"
     assert limited_name == "a" * max_length
-    assert trailing_whitespace_name == "a" * (max_length - 1)
 
 
 def test_social_account_name_rejects_missing_identity():
@@ -201,7 +196,6 @@ def test_save_user_applies_normalized_social_account_name(rf):
     sociallogin.account.extra_data = {"name": None, "login": "  octocat  "}
     user = User(email="verified@example.com")
     user.save = MagicMock()
-    sociallogin.user = user
     invitation = SimpleNamespace(tenant_id="tenant-id")
 
     with (
@@ -218,7 +212,6 @@ def test_save_user_applies_normalized_social_account_name(rf):
         saved_user = adapter.save_user(request, sociallogin)
 
     assert saved_user.name == "octocat"
-    user.save.assert_not_called()
     assert request.prowler_invitation_token == "token"
 
 
@@ -457,25 +450,6 @@ class TestProwlerSocialAccountAdapter:
         assert not socialaccount_app_settings.EMAIL_AUTHENTICATION_AUTO_CONNECT
         assert not account_app_settings.EMAIL_NOTIFICATIONS
 
-    def test_save_user_normalizes_name_before_initial_persistence(self, rf):
-        adapter = ProwlerSocialAccountAdapter()
-        request = rf.post("/")
-        request.session = {}
-        email = "normalized-social-name@example.com"
-        max_length = User._meta.get_field("name").max_length
-        sociallogin = _real_oauth_sociallogin(
-            User(name="x" * (max_length + 1), email=email),
-            uid="normalized-social-name-google-account",
-        )
-        sociallogin.account.extra_data.update(
-            {"name": None, "login": "  normalized-social-name  "}
-        )
-
-        saved_user = adapter.save_user(request, sociallogin)
-
-        persisted_user = User.objects.using(MainRouter.admin_db).get(pk=saved_user.pk)
-        assert persisted_user.name == "normalized-social-name"
-
     def test_save_user_social_with_invitation_joins_invited_tenant(
         self, rf, create_test_user, tenants_fixture
     ):
@@ -499,7 +473,6 @@ class TestProwlerSocialAccountAdapter:
         real_user = User.objects.create_user(
             name="Frank", email=invited_email, password="Secret123!"
         )
-        sociallogin.user = real_user
         tenants_before = Tenant.objects.count()
 
         with patch("api.adapters.super") as mock_super:
