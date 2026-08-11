@@ -1194,9 +1194,7 @@ class AzureProvider(Provider):
                     # `client_id`). Reaching into `credentials._client_id`
                     # would be the same class of azure-identity private state
                     # we deliberately avoided for the thumbprint.
-                    identity.identity_id = getenv(
-                        "AZURE_CLIENT_ID", default=client_id
-                    )
+                    identity.identity_id = getenv("AZURE_CLIENT_ID", default=client_id)
                     identity.identity_type = "Service Principal with Certificate"
                     # The SHA-1 thumbprint is computed from the certificate
                     # bytes by `_compute_certificate_thumbprint` at
@@ -1624,9 +1622,7 @@ class AzureProvider(Provider):
             # calling worker (this runs on request threads and Celery tasks
             # in the API path). 30s covers the p99 of the token endpoint
             # comfortably.
-            response = requests.post(
-                url, headers=headers, data=data, timeout=30
-            ).json()
+            response = requests.post(url, headers=headers, data=data, timeout=30).json()
             if (
                 "access_token" not in response.keys()
                 and "error_codes" in response.keys()

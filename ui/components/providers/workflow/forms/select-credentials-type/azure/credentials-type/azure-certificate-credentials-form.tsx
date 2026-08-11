@@ -75,8 +75,8 @@ export const AzureCertificateCredentialsForm = ({
           Certificate Authentication (Recommended)
         </div>
         <div className="text-text-neutral-tertiary text-sm">
-          Deploy the Prowler Bicep template to provision the App Registration,
-          Service Principal, and read-only roles in one click, then paste the
+          Deploy the Prowler Bicep template to provision the App Registration
+          / Service Principal and read-only roles in one click, then paste the
           resulting credentials below.
         </div>
       </div>
@@ -88,8 +88,8 @@ export const AzureCertificateCredentialsForm = ({
         </Button>
         <p className="text-text-neutral-tertiary text-xs">
           After deployment, copy <strong>Tenant ID</strong> and{" "}
-          <strong>Application (Client) ID</strong> from the deployment outputs —
-          the certificate private key you generated locally goes in the
+          <strong>Application ID</strong> from the deployment outputs. The
+          certificate private key you generated locally goes in the
           &ldquo;Certificate Private Key&rdquo; field below.
         </p>
       </div>
