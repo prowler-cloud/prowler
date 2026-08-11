@@ -331,7 +331,6 @@ describe("column-finding-groups — accessibility of check title cell", () => {
 
     // Then
     expect(columnIds).not.toContain("triage");
-    expect(screen.queryByRole("option", { name: "Resolved" })).toBeNull();
   });
 
   it("should render the first provider icon with its provider name", () => {

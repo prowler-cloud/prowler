@@ -10,11 +10,6 @@ import {
   SelectItem,
   SelectTrigger,
 } from "@/components/shadcn/select/select";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/shadcn/tooltip";
 import { cn } from "@/lib/utils";
 import {
   FINDING_TRIAGE_MANUAL_STATUS_VALUES,
@@ -98,25 +93,26 @@ function TriageStatusPicker({
         {statusValues.map((status) => {
           const shouldExplainManualPass =
             showManualPassTooltip && status === FINDING_TRIAGE_STATUS.RESOLVED;
-          const item = (
-            <SelectItem key={status} value={status}>
+          return (
+            <SelectItem
+              key={status}
+              value={status}
+              aria-label={FINDING_TRIAGE_STATUS_LABELS[status]}
+            >
               <span
                 className={cn("truncate", TRIAGE_STATUS_TEXT_CLASS[status])}
               >
                 {FINDING_TRIAGE_STATUS_LABELS[status]}
               </span>
+              {shouldExplainManualPass && (
+                <span
+                  className="text-text-neutral-secondary text-xs font-normal normal-case"
+                  aria-hidden="true"
+                >
+                  {MANUAL_PASS_NOTE_REQUIRED_COPY}
+                </span>
+              )}
             </SelectItem>
-          );
-
-          return shouldExplainManualPass ? (
-            <Tooltip key={status}>
-              <TooltipTrigger asChild>{item}</TooltipTrigger>
-              <TooltipContent side="right" maxWidth="md">
-                {MANUAL_PASS_NOTE_REQUIRED_COPY}
-              </TooltipContent>
-            </Tooltip>
-          ) : (
-            item
           );
         })}
       </SelectContent>

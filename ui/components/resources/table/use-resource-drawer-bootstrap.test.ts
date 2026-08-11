@@ -9,6 +9,7 @@ vi.mock("@/actions/resources", () => ({
   getResourceDrawerData: getResourceDrawerDataMock,
 }));
 
+import { FINDING_STATUS } from "@/types/components";
 import {
   FINDING_TRIAGE_STATUS,
   type FindingTriageSummary,
@@ -41,7 +42,7 @@ function makeFinding(overrides?: Partial<ResourceFinding>): ResourceFinding {
     id: "finding-1",
     triage: makeTriageSummary(),
     attributes: {
-      status: "FAIL",
+      status: FINDING_STATUS.MANUAL,
       severity: "critical",
       muted: false,
       muted_reason: undefined,
@@ -109,7 +110,7 @@ describe("useResourceDrawerBootstrap", () => {
         manualPassProvenance: "Manually verified",
       }),
     );
-    expect(result.current.findingsData[0]?.attributes.status).toBe("PASS");
+    expect(result.current.findingsData[0]?.attributes.status).toBe("MANUAL");
     expect(getResourceDrawerDataMock).toHaveBeenCalledTimes(loadCount);
   });
 });

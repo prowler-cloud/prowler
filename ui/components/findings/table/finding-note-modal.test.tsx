@@ -1,7 +1,15 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { ReactNode } from "react";
-import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { type ReactNode, useEffect } from "react";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 
 const { toastMock } = vi.hoisted(() => ({
   toastMock: vi.fn(),
@@ -30,20 +38,32 @@ vi.mock("@/components/shadcn/modal", () => ({
     children,
     open,
     title,
+    onOpenAutoFocus,
   }: {
     children: ReactNode;
     open: boolean;
     title?: string;
-  }) =>
-    open ? (
+    onOpenAutoFocus?: (event: Event) => void;
+  }) => {
+    useEffect(() => {
+      if (open) {
+        onOpenAutoFocus?.(new Event("openAutoFocus"));
+      }
+    }, [onOpenAutoFocus, open]);
+
+    return open ? (
       <div role="dialog" aria-label={title}>
         <h2>{title}</h2>
         {children}
       </div>
-    ) : null,
+    ) : null;
+  },
 }));
 
+const originalTimezone = process.env.TZ;
+
 beforeAll(() => {
+  process.env.TZ = "UTC";
   Object.defineProperty(HTMLElement.prototype, "hasPointerCapture", {
     configurable: true,
     value: vi.fn(() => false),
@@ -58,6 +78,10 @@ beforeAll(() => {
   });
 });
 
+afterAll(() => {
+  process.env.TZ = originalTimezone;
+});
+
 import { DOCS_URLS } from "@/lib/external-urls";
 import { useCloudUpgradeStore } from "@/store";
 import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
@@ -66,14 +90,16 @@ import {
   FINDING_TRIAGE_STATUS,
   RAW_FINDING_STATUS,
   type FindingTriageDetail,
-  type UpdateFindingTriageInput,
+  type FindingTriageModalStatus,
 } from "@/types/findings-triage";
 
 import {
   FINDING_NOTE_MODAL_MODE,
   FindingNoteModal,
+  type FindingNoteModalMode,
   type FindingTriageContext,
 } from "./finding-note-modal";
+import type { FindingTriageUpdateHandler } from "./finding-triage-status-control";
 
 function makeTriageDetail(
   overrides?: Partial<FindingTriageDetail>,
@@ -119,12 +145,14 @@ function renderNoteModal({
     provider: "production-account",
   },
   mode,
+  initialStatus,
 }: {
   triage?: FindingTriageDetail;
-  onTriageUpdateAction?: (input: UpdateFindingTriageInput) => void;
+  onTriageUpdateAction?: FindingTriageUpdateHandler;
   onOpenChange?: (open: boolean) => void;
   findingContext?: FindingTriageContext;
-  mode?: (typeof FINDING_NOTE_MODAL_MODE)[keyof typeof FINDING_NOTE_MODAL_MODE];
+  mode?: FindingNoteModalMode;
+  initialStatus?: FindingTriageModalStatus;
 } = {}) {
   render(
     <FindingNoteModal
@@ -133,6 +161,7 @@ function renderNoteModal({
       triage={triage}
       findingContext={findingContext}
       mode={mode}
+      initialStatus={initialStatus}
       onTriageUpdateAction={onTriageUpdateAction}
     />,
   );
@@ -489,16 +518,33 @@ describe("FindingNoteModal", () => {
 
     // Then
     expect(screen.getByRole("option", { name: "Resolved" })).toBeVisible();
-    expect(screen.queryByRole("option", { name: "Pass" })).toBeNull();
 
     // When
     await user.click(screen.getByRole("option", { name: "Resolved" }));
 
     // Then
-    expect(screen.queryByText(/valid for \d+ days/i)).toBeNull();
     expect(screen.getByLabelText("Manual pass evidence")).toHaveValue("");
     expect(screen.getByLabelText("Manual pass evidence")).toBeRequired();
     expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
+  });
+
+  it("should label, explain, and focus required manual pass evidence", () => {
+    // Given / When
+    renderNoteModal({
+      triage: makeTriageDetail({
+        rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+      }),
+      initialStatus: FINDING_TRIAGE_STATUS.RESOLVED,
+    });
+
+    // Then
+    const evidence = screen.getByRole("textbox", {
+      name: "Manual pass evidence",
+    });
+    expect(evidence).toHaveFocus();
+    expect(evidence).toHaveAccessibleDescription(
+      "Add a Triage Note explaining why this finding passes.",
+    );
   });
 
   it("should not offer Resolved when the authoritative raw finding status is not MANUAL", async () => {
@@ -593,6 +639,51 @@ describe("FindingNoteModal", () => {
     expect(screen.queryByLabelText("Manual pass evidence")).toBeNull();
   });
 
+  it("should reset manual pass evidence when an unchanged update closes", async () => {
+    // Given
+    const user = userEvent.setup();
+    const triage = makeTriageDetail({
+      rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+    });
+    const onOpenChange = vi.fn();
+    const { rerender } = render(
+      <FindingNoteModal
+        open
+        onOpenChange={onOpenChange}
+        triage={triage}
+        findingContext={{ title: "S3 bucket allows public reads" }}
+        onTriageUpdateAction={vi.fn()}
+      />,
+    );
+    await user.click(screen.getByRole("combobox", { name: "Triage status" }));
+    await user.click(screen.getByRole("option", { name: "Resolved" }));
+    await user.type(
+      screen.getByRole("textbox", { name: "Manual pass evidence" }),
+      "Evidence that must not leak.",
+    );
+    await user.click(screen.getByRole("combobox", { name: "Triage status" }));
+    await user.click(screen.getByRole("option", { name: "Under Review" }));
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    rerender(
+      <FindingNoteModal
+        open
+        onOpenChange={onOpenChange}
+        triage={triage}
+        findingContext={{ title: "S3 bucket allows public reads" }}
+        onTriageUpdateAction={vi.fn()}
+      />,
+    );
+    await user.click(screen.getByRole("combobox", { name: "Triage status" }));
+    await user.click(screen.getByRole("option", { name: "Resolved" }));
+
+    // Then
+    expect(
+      screen.getByRole("textbox", { name: "Manual pass evidence" }),
+    ).toHaveValue("");
+  });
+
   it("should show one manual pass success toast with the authoritative mutation expiry", async () => {
     // Given
     const user = userEvent.setup();
@@ -618,6 +709,36 @@ describe("FindingNoteModal", () => {
     expect(toastMock).toHaveBeenCalledWith({
       title: "Finding manually verified as Pass",
       description: "Triage: Resolved · Valid until Oct 28, 2026",
+    });
+  });
+
+  it("should omit an invalid manual pass expiry from the success toast", async () => {
+    // Given
+    const user = userEvent.setup();
+    const onTriageUpdateAction = vi.fn().mockResolvedValue({
+      manualPassExpiresAt: "invalid-expiry",
+    });
+    renderNoteModal({
+      triage: makeTriageDetail({
+        rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+      }),
+      onTriageUpdateAction,
+    });
+    await user.click(screen.getByRole("combobox", { name: "Triage status" }));
+    await user.click(screen.getByRole("option", { name: "Resolved" }));
+    await user.type(
+      screen.getByLabelText("Manual pass evidence"),
+      "The control owner verified this requirement.",
+    );
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    // Then
+    await waitFor(() => expect(toastMock).toHaveBeenCalledTimes(1));
+    expect(toastMock).toHaveBeenCalledWith({
+      title: "Finding manually verified as Pass",
+      description: "Triage: Resolved",
     });
   });
 

@@ -29,7 +29,10 @@ import {
   type FindingResourceRow,
   FINDINGS_ROW_TYPE,
 } from "@/types";
-import { FINDING_TRIAGE_STATUS } from "@/types/findings-triage";
+import {
+  FINDING_TRIAGE_STATUS,
+  type FindingTriageUpdateResult,
+} from "@/types/findings-triage";
 
 import { useFindingGroupResourceState } from "./use-finding-group-resource-state";
 
@@ -288,7 +291,7 @@ describe("useFindingGroupResourceState", () => {
     });
 
     // When
-    let updateResult;
+    let updateResult: FindingTriageUpdateResult | void = undefined;
     await act(async () => {
       updateResult = await result.current.updateTriageOptimistically(
         {
@@ -316,5 +319,63 @@ describe("useFindingGroupResourceState", () => {
     expect(updateResult).toEqual({
       manualPassExpiresAt: "2026-10-28T12:00:00Z",
     });
+  });
+
+  it("shows effective Pass while a grouped manual pass update is pending", async () => {
+    // Given
+    const manualResource = {
+      ...findingResource("MANUAL"),
+      triage: {
+        findingId: "finding-1",
+        findingUid: "finding-uid-1",
+        triageId: "triage-1",
+        notesCount: 0,
+        status: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
+        label: "Under Review",
+        hasVisibleNote: false,
+        isMuted: false,
+        canEdit: true,
+        billingHref: "https://prowler.com/pricing",
+      },
+    };
+    const { result } = renderHook(() =>
+      useFindingGroupResourceState({
+        group,
+        filters: {},
+        hasHistoricalData: false,
+      }),
+    );
+    const onSetResources = useFindingGroupResourcesMock.mock.calls[0][0]
+      .onSetResources as (
+      resources: FindingResourceRow[],
+      hasMore: boolean,
+    ) => void;
+    await act(async () => onSetResources([manualResource], false));
+    let resolveUpdate: () => void = () => {};
+
+    // When
+    let updatePromise:
+      | ReturnType<typeof result.current.updateTriageOptimistically>
+      | undefined;
+    act(() => {
+      updatePromise = result.current.updateTriageOptimistically(
+        {
+          findingId: "finding-1",
+          findingUid: "finding-uid-1",
+          triageId: "triage-1",
+          notesCount: 0,
+          status: FINDING_TRIAGE_STATUS.RESOLVED,
+          previousStatus: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
+          manualPassEvidence: "Verified by the control owner.",
+        },
+        () => new Promise<void>((resolve) => (resolveUpdate = resolve)),
+      );
+    });
+
+    // Then
+    expect(result.current.resources[0]?.status).toBe("PASS");
+
+    resolveUpdate();
+    await act(async () => updatePromise);
   });
 });

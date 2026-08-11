@@ -326,7 +326,7 @@ describe("finding triage cells", () => {
     },
   );
 
-  it("should explain the gated manual pass action on hover", async () => {
+  it("should explain the gated manual pass action inline", async () => {
     // Given
     const user = userEvent.setup();
     render(
@@ -339,54 +339,12 @@ describe("finding triage cells", () => {
       />,
     );
     await user.click(screen.getByRole("combobox", { name: "Triage status" }));
-    const resolvedOption = screen.getByRole("option", {
-      name: "Resolved",
-    });
-
-    // When
-    await user.hover(resolvedOption);
-
     // Then
-    const hoverCopy = (
-      await screen.findAllByText(
+    expect(
+      within(screen.getByRole("option", { name: "Resolved" })).getByText(
         "Add a Triage Note explaining why this finding passes.",
-      )
-    ).find(
-      (element) => element.getAttribute("data-slot") === "tooltip-content",
-    );
-    expect(hoverCopy).toBeVisible();
-  });
-
-  it("should explain the gated manual pass action on keyboard focus", async () => {
-    // Given
-    const user = userEvent.setup();
-    render(
-      <FindingTriageStatusCell
-        triage={makeTriageSummary({
-          rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
-        })}
-        onTriageUpdateAction={vi.fn()}
-        onTriageDetailLoadAction={vi.fn()}
-      />,
-    );
-    await user.click(screen.getByRole("combobox", { name: "Triage status" }));
-
-    // When
-    await user.keyboard("{End}");
-
-    // Then
-    const resolvedOption = screen.getByRole("option", {
-      name: "Resolved",
-    });
-    expect(resolvedOption).toHaveFocus();
-    const focusCopy = (
-      await screen.findAllByText(
-        "Add a Triage Note explaining why this finding passes.",
-      )
-    ).find(
-      (element) => element.getAttribute("data-slot") === "tooltip-content",
-    );
-    expect(focusCopy).toBeVisible();
+      ),
+    ).toBeVisible();
   });
 
   it("should open Triage Note with Resolved preselected without a direct update", async () => {
@@ -639,9 +597,7 @@ describe("finding triage cells", () => {
     expect(
       screen.getByRole("combobox", { name: "Triage status" }),
     ).toHaveTextContent("Resolved");
-    expect(
-      screen.getByRole("combobox", { name: "Triage status" }),
-    ).not.toHaveTextContent("Manually verified");
+    expect(screen.queryByText("Manually verified")).not.toBeInTheDocument();
   });
 
   it("should left-align the clickable Manual Pass provenance with the status picker", () => {
@@ -739,6 +695,47 @@ describe("finding triage cells", () => {
       within(dialog).queryByRole("button", { name: "Save" }),
     ).not.toBeInTheDocument();
     expect(onTriageUpdateAction).not.toHaveBeenCalled();
+  });
+
+  it("should preserve Open in inactive Manual Pass details", async () => {
+    // Given
+    const user = userEvent.setup();
+    const triage = makeTriageSummary({
+      status: FINDING_TRIAGE_STATUS.OPEN,
+      label: "Open",
+      manualPassProvenance: "Manually verified",
+      rawFindingStatus: RAW_FINDING_STATUS.MANUAL,
+    });
+    const onTriageDetailLoadAction = vi.fn().mockResolvedValue(
+      makeTriageDetail({
+        status: FINDING_TRIAGE_STATUS.OPEN,
+        label: "Open",
+        manualPassActive: false,
+        manualPassEvidence: "Previously verified.",
+        manualPassCreatedAt: "2026-06-03T10:00:00Z",
+        manualPassExpiresAt: "2026-06-17T10:00:00Z",
+        manualPassDeactivatedAt: "2026-06-10T10:00:00Z",
+      }),
+    );
+    render(
+      <FindingTriageStatusCell
+        triage={triage}
+        onTriageUpdateAction={vi.fn()}
+        onTriageDetailLoadAction={onTriageDetailLoadAction}
+      />,
+    );
+
+    // When
+    await user.click(
+      screen.getByRole("button", { name: "View Manual Pass details" }),
+    );
+
+    // Then
+    expect(
+      within(
+        await screen.findByRole("dialog", { name: "Manual Pass Details" }),
+      ).getByRole("combobox", { name: "Triage status" }),
+    ).toHaveTextContent("Open");
   });
 
   it("should keep Manual Pass provenance inert without a detail loader", () => {

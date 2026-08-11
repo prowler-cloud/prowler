@@ -256,6 +256,7 @@ export function FindingTriageStatusCell({
         findingContext={findingContext}
         mode={manualPassModalMode}
         initialStatus={
+          manualPassModalMode === FINDING_NOTE_MODAL_MODE.EDIT &&
           manualPassDetail.rawFindingStatus === RAW_FINDING_STATUS.MANUAL
             ? FINDING_TRIAGE_STATUS.RESOLVED
             : isManualStatus(manualPassDetail.status)

@@ -277,6 +277,52 @@ describe("findings triage actions", () => {
     );
   });
 
+  it("should accept manual pass evidence at the maximum length", async () => {
+    // Given
+    const { updateFindingTriage } = await importActions();
+    const manualPassEvidence = "a".repeat(500);
+    handleApiResponseMock.mockResolvedValue({ data: { id: "triage-1" } });
+
+    // When
+    await updateFindingTriage({
+      findingId: "finding-snapshot-id",
+      findingUid: "finding/stable/uid",
+      triageId: "triage-1",
+      notesCount: 0,
+      status: FINDING_TRIAGE_STATUS.RESOLVED,
+      previousStatus: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
+      manualPassEvidence,
+    });
+
+    // Then
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.test/api/v1/finding-triages/triage-1",
+      expect.objectContaining({
+        method: "PATCH",
+        body: expect.stringContaining(manualPassEvidence),
+      }),
+    );
+  });
+
+  it("should reject manual pass evidence over the maximum length", async () => {
+    // Given
+    const { updateFindingTriage } = await importActions();
+
+    // When / Then
+    await expect(
+      updateFindingTriage({
+        findingId: "finding-snapshot-id",
+        findingUid: "finding/stable/uid",
+        triageId: "triage-1",
+        notesCount: 0,
+        status: FINDING_TRIAGE_STATUS.RESOLVED,
+        previousStatus: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
+        manualPassEvidence: "a".repeat(501),
+      }),
+    ).rejects.toThrow("Manual pass evidence cannot exceed 500 characters.");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("should surface JSON:API validation details when the manual pass patch fails", async () => {
     // Given
     const { updateFindingTriage } = await importActions();

@@ -13,6 +13,7 @@ import {
   useToast,
 } from "@/components/shadcn";
 import { DateWithTime } from "@/components/shadcn/entities";
+import { Field, FieldLabel } from "@/components/shadcn/field/field";
 import { Modal } from "@/components/shadcn/modal";
 import {
   Tooltip,
@@ -41,6 +42,7 @@ import type { ProviderType } from "@/types/providers";
 
 import {
   FindingTriageStatusControl,
+  MANUAL_PASS_NOTE_REQUIRED_COPY,
   type FindingTriageUpdateHandler,
 } from "./finding-triage-status-control";
 import { buildFindingTriageUpdateInput } from "./finding-triage-submit";
@@ -175,7 +177,7 @@ export function FindingNoteModal({
       });
 
       if (!updateInput) {
-        onOpenChange(false);
+        handleOpenChange(false);
         return;
       }
 
@@ -188,7 +190,9 @@ export function FindingNoteModal({
 
         toast({
           title: "Finding manually verified as Pass",
-          description: `Triage: Resolved · Valid until ${formattedExpiry}`,
+          description: formattedExpiry
+            ? `Triage: Resolved · Valid until ${formattedExpiry}`
+            : "Triage: Resolved",
         });
       }
 
@@ -404,18 +408,30 @@ export function FindingNoteModal({
           <>
             <div className="space-y-2">
               {isManualPassSelected ? (
-                <Textarea
-                  id="finding-manual-pass-evidence"
-                  aria-label="Manual pass evidence"
-                  required
-                  value={manualPassEvidence}
-                  maxLength={triage.maxNoteLength}
-                  disabled={!canEdit}
-                  textareaSize="lg"
-                  onChange={(event) =>
-                    setManualPassEvidence(event.target.value)
-                  }
-                />
+                <Field>
+                  <FieldLabel htmlFor="finding-manual-pass-evidence">
+                    Manual pass evidence
+                  </FieldLabel>
+                  <p
+                    id="finding-manual-pass-evidence-guidance"
+                    className="text-text-neutral-secondary text-sm"
+                  >
+                    {MANUAL_PASS_NOTE_REQUIRED_COPY}
+                  </p>
+                  <Textarea
+                    ref={noteTextareaRef}
+                    id="finding-manual-pass-evidence"
+                    aria-describedby="finding-manual-pass-evidence-guidance"
+                    required
+                    value={manualPassEvidence}
+                    maxLength={triage.maxNoteLength}
+                    disabled={!canEdit}
+                    textareaSize="lg"
+                    onChange={(event) =>
+                      setManualPassEvidence(event.target.value)
+                    }
+                  />
+                </Field>
               ) : (
                 <Textarea
                   ref={noteTextareaRef}

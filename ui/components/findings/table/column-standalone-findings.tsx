@@ -64,6 +64,15 @@ const getProviderData = (
   return row.original.relationships?.provider?.attributes?.[field] || "-";
 };
 
+const buildFindingContext = (row: { original: FindingProps }) => ({
+  title: row.original.attributes.check_metadata.checktitle,
+  resource: getOptionalText(getResourceData(row, "name")),
+  provider: getOptionalText(getProviderData(row, "alias")),
+  providerType: getOptionalText(getProviderData(row, "provider")) as
+    | ProviderType
+    | undefined,
+});
+
 function FindingTitleCell({
   finding,
   defaultOpen = false,
@@ -297,55 +306,29 @@ export function getStandaloneFindingColumns({
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Triage" />
       ),
-      cell: ({ row }) => {
-        const resourceName = getResourceData(row, "name");
-        const providerAlias = getProviderData(row, "alias");
-        const providerType = getProviderData(row, "provider");
-
-        return (
-          <FindingTriageStatusCell
-            triage={row.original.triage}
-            findingContext={{
-              title: row.original.attributes.check_metadata.checktitle,
-              resource: getOptionalText(resourceName),
-              provider: getOptionalText(providerAlias),
-              providerType: getOptionalText(providerType) as
-                | ProviderType
-                | undefined,
-            }}
-            onTriageUpdateAction={onTriageUpdateAction}
-            onTriageDetailLoadAction={onTriageDetailLoadAction}
-          />
-        );
-      },
+      cell: ({ row }) => (
+        <FindingTriageStatusCell
+          triage={row.original.triage}
+          findingContext={buildFindingContext(row)}
+          onTriageUpdateAction={onTriageUpdateAction}
+          onTriageDetailLoadAction={onTriageDetailLoadAction}
+        />
+      ),
       enableSorting: false,
     },
     {
       id: "actions",
       size: 56,
       header: () => <div className="w-10" />,
-      cell: ({ row }) => {
-        const resourceName = getResourceData(row, "name");
-        const providerAlias = getProviderData(row, "alias");
-        const providerType = getProviderData(row, "provider");
-
-        return (
-          <DataTableRowActions
-            row={row}
-            findingContext={{
-              title: row.original.attributes.check_metadata.checktitle,
-              resource: getOptionalText(resourceName),
-              provider: getOptionalText(providerAlias),
-              providerType: getOptionalText(providerType) as
-                | ProviderType
-                | undefined,
-            }}
-            onTriageUpdateAction={onTriageUpdateAction}
-            onTriageNoteLoadAction={onTriageNoteLoadAction}
-            onTriageDetailLoadAction={onTriageDetailLoadAction}
-          />
-        );
-      },
+      cell: ({ row }) => (
+        <DataTableRowActions
+          row={row}
+          findingContext={buildFindingContext(row)}
+          onTriageUpdateAction={onTriageUpdateAction}
+          onTriageNoteLoadAction={onTriageNoteLoadAction}
+          onTriageDetailLoadAction={onTriageDetailLoadAction}
+        />
+      ),
       enableSorting: false,
     },
   );

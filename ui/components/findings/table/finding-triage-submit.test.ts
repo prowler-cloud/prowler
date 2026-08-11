@@ -199,4 +199,22 @@ describe("buildFindingTriageUpdateInput", () => {
     // Then
     expect(result).toBeNull();
   });
+
+  it("should reject a manual pass when the raw status is not MANUAL", () => {
+    // Given
+    const triage = makeTriageDetail({
+      rawFindingStatus: RAW_FINDING_STATUS.FAIL,
+    });
+
+    // When
+    const result = buildFindingTriageUpdateInput({
+      triage,
+      selectedStatus: FINDING_TRIAGE_STATUS.RESOLVED,
+      noteBody: "Existing investigation note",
+      manualPassEvidence: "The control owner verified this requirement.",
+    });
+
+    // Then
+    expect(result).toBeNull();
+  });
 });

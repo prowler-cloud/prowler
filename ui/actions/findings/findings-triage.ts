@@ -10,6 +10,7 @@ import { apiBaseUrl, getAuthHeaders } from "@/lib";
 import { handleApiResponse } from "@/lib/server-actions-helper";
 import {
   FINDING_TRIAGE_STATUS_LABELS,
+  FINDING_TRIAGE_NOTE_MAX_LENGTH,
   FINDING_TRIAGE_STATUS,
   type FindingTriageDetail,
   type FindingTriageLoadedNote,
@@ -280,6 +281,11 @@ export async function updateFindingTriage(input: UpdateFindingTriageInput) {
     const evidence = input.manualPassEvidence?.trim();
     if (!evidence) {
       throw new Error("Fresh evidence is required to pass a MANUAL finding.");
+    }
+    if (evidence.length > FINDING_TRIAGE_NOTE_MAX_LENGTH) {
+      throw new Error(
+        `Manual pass evidence cannot exceed ${FINDING_TRIAGE_NOTE_MAX_LENGTH} characters.`,
+      );
     }
 
     const result = await patchJsonApi(

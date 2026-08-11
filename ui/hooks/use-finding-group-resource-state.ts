@@ -13,10 +13,12 @@ import {
   shouldMarkFindingMutedForTriageUpdate,
 } from "@/lib/finding-triage";
 import { FindingGroupRow, FindingResourceRow } from "@/types";
+import { FINDING_STATUS } from "@/types/components";
 import type {
   FindingTriageUpdateResult,
   UpdateFindingTriageInput,
 } from "@/types/findings-triage";
+import { FINDING_TRIAGE_STATUS } from "@/types/findings-triage";
 
 interface UseFindingGroupResourceStateOptions {
   group: FindingGroupRow;
@@ -99,9 +101,13 @@ export function useFindingGroupResourceState({
       const shouldMarkMuted = shouldMarkFindingMutedForTriageUpdate(optimistic);
       const shouldSetTriageMuteReason =
         shouldMarkMuted && optimistic.isMuted !== true;
+      const isManualPass =
+        optimistic.status === FINDING_TRIAGE_STATUS.RESOLVED &&
+        Boolean(optimistic.manualPassEvidence);
 
       return {
         ...resource,
+        status: isManualPass ? FINDING_STATUS.PASS : resource.status,
         isMuted: shouldMarkMuted ? true : resource.isMuted,
         mutedReason: shouldSetTriageMuteReason
           ? getOptimisticTriageMutedReason(optimistic.status!)
