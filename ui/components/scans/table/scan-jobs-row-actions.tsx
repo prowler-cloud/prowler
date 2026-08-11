@@ -79,7 +79,8 @@ export function ScanJobsRowActions({
   const isCompleted = scanState === "completed";
   const isFailed = scanState === "failed";
   const taskId = scan.relationships.task.data?.id;
-  // Without a completion timestamp the findings page has no date to derive.
+  // The findings page bounds the UTC day range with completed_at; without it the
+  // range collapses to the start day and can miss later findings.
   const hasCompletedAt = Boolean(scan.attributes.completed_at);
   const providerId = scan.relationships.provider.data?.id;
   const scheduleProvider: ScanScheduleProvider | undefined = providerId
