@@ -1,8 +1,15 @@
 "use client";
 
+import {
+  motion,
+  useMotionValue,
+  useReducedMotion,
+  useSpring,
+  useTransform,
+} from "framer-motion";
 import { ArrowRight, Sparkles } from "lucide-react";
 import Link from "next/link";
-import { type CSSProperties, type PointerEvent, useRef } from "react";
+import { type PointerEvent } from "react";
 
 import { Badge } from "@/components/shadcn/badge/badge";
 import { Card } from "@/components/shadcn/card/card";
@@ -111,8 +118,14 @@ const getTrialUrgency = (props: TrialSidebarBannerProps): TrialUrgency => {
 const formatRemaining = (remaining: number, unit: TrialSidebarBannerUnit) =>
   `${remaining} ${unit}${remaining === 1 ? "" : "s"} left`;
 
+const TILT_SPRING = { stiffness: 260, damping: 26, mass: 0.6 } as const;
+const TILT_RESTING_POINTER = 0.5;
+/** Degrees of tilt at the card edges, and the hover lift in pixels. */
+const TILT_RANGE_X = 1.5;
+const TILT_RANGE_Y = 2;
+const TILT_LIFT = -2;
+
 export const TrialSidebarBanner = (props: TrialSidebarBannerProps) => {
-  const cardRef = useRef<HTMLAnchorElement>(null);
   const isExpired = props.variant === TRIAL_SIDEBAR_BANNER_VARIANT.EXPIRED;
   const isScanBased =
     props.variant === TRIAL_SIDEBAR_BANNER_VARIANT.ACTIVE_SCANS;
@@ -129,54 +142,48 @@ export const TrialSidebarBanner = (props: TrialSidebarBannerProps) => {
             : TRIAL_SIDEBAR_BANNER_UNIT.DAY,
         );
 
-  const resetMotion = () => {
-    const card = cardRef.current;
-    if (!card) return;
+  const prefersReducedMotion = useReducedMotion();
 
-    card.style.setProperty("--trial-rotate-x", "0deg");
-    card.style.setProperty("--trial-rotate-y", "0deg");
-    card.style.setProperty("--trial-lift", "0px");
-    card.style.setProperty("--trial-pointer-x", "50%");
-    card.style.setProperty("--trial-pointer-y", "50%");
+  // Normalised pointer position (0..1) over the card; drives both the tilt and
+  // the glow so no layout values are written to the DOM by hand.
+  const pointerX = useMotionValue(TILT_RESTING_POINTER);
+  const pointerY = useMotionValue(TILT_RESTING_POINTER);
+  const hover = useMotionValue(0);
+
+  const rotateX = useSpring(
+    useTransform(pointerY, [0, 1], [TILT_RANGE_X, -TILT_RANGE_X]),
+    TILT_SPRING,
+  );
+  const rotateY = useSpring(
+    useTransform(pointerX, [0, 1], [-TILT_RANGE_Y, TILT_RANGE_Y]),
+    TILT_SPRING,
+  );
+  const lift = useSpring(
+    useTransform(hover, [0, 1], [0, TILT_LIFT]),
+    TILT_SPRING,
+  );
+  const glowLeft = useTransform(pointerX, (value) => `${value * 100}%`);
+  const glowTop = useTransform(pointerY, (value) => `${value * 100}%`);
+
+  const resetMotion = () => {
+    pointerX.set(TILT_RESTING_POINTER);
+    pointerY.set(TILT_RESTING_POINTER);
+    hover.set(0);
   };
 
   const followPointer = (event: PointerEvent<HTMLAnchorElement>) => {
-    if (
-      event.pointerType === "touch" ||
-      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
-    ) {
-      return;
-    }
+    if (prefersReducedMotion || event.pointerType === "touch") return;
 
-    const card = cardRef.current;
-    if (!card) return;
+    const bounds = event.currentTarget.getBoundingClientRect();
+    if (!bounds.width || !bounds.height) return;
 
-    const bounds = card.getBoundingClientRect();
-    const pointerX = event.clientX - bounds.left;
-    const pointerY = event.clientY - bounds.top;
-    const normalizedX = pointerX / bounds.width - 0.5;
-    const normalizedY = pointerY / bounds.height - 0.5;
-
-    card.style.setProperty("--trial-rotate-x", `${normalizedY * -3}deg`);
-    card.style.setProperty("--trial-rotate-y", `${normalizedX * 4}deg`);
-    card.style.setProperty("--trial-lift", "-2px");
-    card.style.setProperty("--trial-pointer-x", `${pointerX}px`);
-    card.style.setProperty("--trial-pointer-y", `${pointerY}px`);
+    pointerX.set((event.clientX - bounds.left) / bounds.width);
+    pointerY.set((event.clientY - bounds.top) / bounds.height);
+    hover.set(1);
   };
-
-  const motionStyles = {
-    "--trial-rotate-x": "0deg",
-    "--trial-rotate-y": "0deg",
-    "--trial-lift": "0px",
-    "--trial-pointer-x": "50%",
-    "--trial-pointer-y": "50%",
-    transform:
-      "perspective(700px) rotateX(var(--trial-rotate-x)) rotateY(var(--trial-rotate-y)) translateY(var(--trial-lift))",
-  } as CSSProperties;
 
   return (
     <Link
-      ref={cardRef}
       href="/billing"
       aria-label={
         isExpired
@@ -188,79 +195,80 @@ export const TrialSidebarBanner = (props: TrialSidebarBannerProps) => {
       onClick={props.onSelect}
       onPointerMove={followPointer}
       onPointerLeave={resetMotion}
+      onPointerCancel={resetMotion}
       onBlur={resetMotion}
-      style={motionStyles}
-      className="focus-visible:ring-button-primary/50 group mx-3 mb-4 block rounded-xl transition-transform duration-200 ease-out focus-visible:ring-2 focus-visible:outline-none motion-reduce:transform-none motion-reduce:transition-none"
+      className="focus-visible:ring-button-primary/50 group mx-3 mb-4 block rounded-xl focus-visible:ring-2 focus-visible:outline-none"
     >
-      <Card
-        variant="inner"
-        padding="sm"
-        data-slot="sidebar-trial"
-        data-urgency={urgency}
-        role="status"
-        aria-label={isExpired ? "Expired trial" : "Active trial"}
-        aria-live="polite"
-        className={cn(
-          "relative gap-3 overflow-hidden transition-colors duration-200",
-          urgencyStyles.sidebarBorder,
-          urgencyStyles.sidebarTint,
-        )}
+      <motion.div
+        className="rounded-xl"
+        style={{ transformPerspective: 700, rotateX, rotateY, y: lift }}
       >
-        <span
-          data-slot="trial-glow"
-          aria-hidden="true"
+        <Card
+          variant="inner"
+          padding="sm"
+          data-slot="sidebar-trial"
+          data-urgency={urgency}
+          role="status"
+          aria-label={isExpired ? "Expired trial" : "Active trial"}
+          aria-live="polite"
           className={cn(
-            "pointer-events-none absolute size-32 rounded-full opacity-0 blur-3xl transition-opacity duration-300 group-hover:opacity-100 motion-reduce:hidden",
-            urgencyStyles.sidebarGlow,
+            "relative gap-3 overflow-hidden transition-colors duration-200",
+            urgencyStyles.sidebarBorder,
+            urgencyStyles.sidebarTint,
           )}
-          style={{
-            left: "var(--trial-pointer-x)",
-            top: "var(--trial-pointer-y)",
-            transform: "translate(-50%, -50%)",
-          }}
-        />
-        <div className="relative z-10 flex min-w-0 items-start gap-2.5">
-          <span className="border-border-neutral-tertiary bg-bg-neutral-secondary flex size-9 shrink-0 items-center justify-center rounded-md border">
-            <Sparkles
-              className={cn(
-                "size-4",
-                isExpired ? "text-text-error-primary" : "text-button-primary",
-              )}
+        >
+          <motion.span
+            data-slot="trial-glow"
+            aria-hidden="true"
+            className={cn(
+              "pointer-events-none absolute size-32 rounded-full opacity-0 blur-3xl transition-opacity duration-300 group-hover:opacity-100 motion-reduce:hidden",
+              urgencyStyles.sidebarGlow,
+            )}
+            style={{ left: glowLeft, top: glowTop, x: "-50%", y: "-50%" }}
+          />
+          <div className="relative z-10 flex min-w-0 items-start gap-2.5">
+            <span className="border-border-neutral-tertiary bg-bg-neutral-secondary flex size-9 shrink-0 items-center justify-center rounded-md border">
+              <Sparkles
+                className={cn(
+                  "size-4",
+                  isExpired ? "text-text-error-primary" : "text-button-primary",
+                )}
+                aria-hidden="true"
+              />
+            </span>
+            <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+              <Badge
+                variant={isExpired ? "error" : "success"}
+                size="sm"
+                className="w-fit"
+              >
+                {isExpired
+                  ? "Trial expired"
+                  : isScanBased
+                    ? "Free trial"
+                    : "Unlimited trial"}
+              </Badge>
+              <strong className="text-text-neutral-primary text-lg leading-none">
+                {isExpired ? "Subscription required" : remainingCopy}
+              </strong>
+            </div>
+          </div>
+          <p className="text-text-neutral-secondary relative z-10 text-xs leading-4">
+            {isExpired
+              ? "Subscribe to continue scanning and running scheduled scans."
+              : isScanBased
+                ? "Choose a plan to keep running scans after your trial ends."
+                : "Unlimited accounts, scans, and daily schedules. Subscribe to keep everything running."}
+          </p>
+          <span className="text-button-primary relative z-10 flex items-center justify-between text-xs font-semibold">
+            Explore plans
+            <ArrowRight
+              className="size-4 transition-transform duration-200 group-hover:translate-x-0.5 motion-reduce:transform-none"
               aria-hidden="true"
             />
           </span>
-          <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-            <Badge
-              variant={isExpired ? "error" : "success"}
-              size="sm"
-              className="w-fit"
-            >
-              {isExpired
-                ? "Trial expired"
-                : isScanBased
-                  ? "Free trial"
-                  : "Unlimited trial"}
-            </Badge>
-            <strong className="text-text-neutral-primary text-lg leading-none">
-              {isExpired ? "Subscription required" : remainingCopy}
-            </strong>
-          </div>
-        </div>
-        <p className="text-text-neutral-secondary relative z-10 text-xs leading-4">
-          {isExpired
-            ? "Subscribe to continue scanning and running scheduled scans."
-            : isScanBased
-              ? "Choose a plan to keep running scans after your trial ends."
-              : "Unlimited accounts, scans, and daily schedules. Subscribe to keep everything running."}
-        </p>
-        <span className="text-button-primary relative z-10 flex items-center justify-between text-xs font-semibold">
-          Explore plans
-          <ArrowRight
-            className="size-4 transition-transform duration-200 group-hover:translate-x-0.5 motion-reduce:transform-none"
-            aria-hidden="true"
-          />
-        </span>
-      </Card>
+        </Card>
+      </motion.div>
     </Link>
   );
 };

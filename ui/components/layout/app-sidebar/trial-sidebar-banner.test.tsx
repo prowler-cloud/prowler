@@ -150,61 +150,31 @@ describe("TrialSidebarBanner", () => {
     expect(onSelect).toHaveBeenCalledOnce();
   });
 
-  it("tilts toward the pointer and restores its resting position", () => {
-    // Given
-    render(
+  // The tilt is driven by Framer Motion values applied on animation frames, so
+  // the rendered transform is not observable in jsdom, and `useReducedMotion`
+  // caches its media-query state module-globally so it cannot be stubbed per
+  // test. Reduced-motion and the tilt itself belong in Browser Mode, via
+  // `emulateMedia({ reducedMotion: "reduce" })`. What is asserted here is that
+  // the decorative layer exists and that pointer input leaves the card usable.
+  it("renders the decorative glow layer", () => {
+    // Given / When
+    const { container } = render(
       <TrialSidebarBanner
         variant={TRIAL_SIDEBAR_BANNER_VARIANT.ACTIVE_DAYS}
         remaining={7}
       />,
     );
-    const card = screen.getByRole("link", {
-      name: "Explore plans for your unlimited trial",
-    });
-    vi.spyOn(card, "getBoundingClientRect").mockReturnValue({
-      width: 300,
-      height: 150,
-      left: 10,
-      top: 20,
-      right: 310,
-      bottom: 170,
-      x: 10,
-      y: 20,
-      toJSON: vi.fn(),
-    });
-
-    // When
-    fireEvent.pointerMove(card, {
-      clientX: 250,
-      clientY: 60,
-      pointerType: "mouse",
-    });
 
     // Then
-    expect(card.style.getPropertyValue("--trial-rotate-x")).not.toBe("0deg");
-    expect(card.style.getPropertyValue("--trial-rotate-y")).not.toBe("0deg");
-    expect(card.style.getPropertyValue("--trial-lift")).toBe("-2px");
-
-    // When
-    fireEvent.pointerLeave(card);
-
-    // Then
-    expect(card.style.getPropertyValue("--trial-rotate-x")).toBe("0deg");
-    expect(card.style.getPropertyValue("--trial-rotate-y")).toBe("0deg");
-    expect(card.style.getPropertyValue("--trial-lift")).toBe("0px");
+    const glow = container.querySelector('[data-slot="trial-glow"]');
+    expect(glow).toBeInTheDocument();
+    expect(glow).toHaveClass("motion-reduce:hidden");
   });
 
-  it.each([
-    { pointerType: "touch", reducedMotion: false },
-    { pointerType: "mouse", reducedMotion: true },
-  ])(
-    "keeps the card still for $pointerType input with reduced motion $reducedMotion",
-    ({ pointerType, reducedMotion }) => {
+  it.each([{ pointerType: "touch" }, { pointerType: "mouse" }])(
+    "keeps the card usable under $pointerType input",
+    ({ pointerType }) => {
       // Given
-      vi.stubGlobal(
-        "matchMedia",
-        vi.fn().mockReturnValue({ matches: reducedMotion }),
-      );
       render(
         <TrialSidebarBanner
           variant={TRIAL_SIDEBAR_BANNER_VARIANT.ACTIVE_DAYS}
@@ -216,16 +186,12 @@ describe("TrialSidebarBanner", () => {
       });
 
       // When
-      fireEvent.pointerMove(card, {
-        clientX: 250,
-        clientY: 60,
-        pointerType,
-      });
+      fireEvent.pointerMove(card, { clientX: 250, clientY: 60, pointerType });
+      fireEvent.pointerLeave(card);
 
       // Then
-      expect(card.style.getPropertyValue("--trial-rotate-x")).toBe("0deg");
-      expect(card.style.getPropertyValue("--trial-rotate-y")).toBe("0deg");
-      expect(card.style.getPropertyValue("--trial-lift")).toBe("0px");
+      expect(card).toBeInTheDocument();
+      expect(card).toHaveTextContent("7 days left");
     },
   );
 });
