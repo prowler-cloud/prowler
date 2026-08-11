@@ -27,6 +27,7 @@ vi.mock("@/lib/helper", () => ({
 import {
   createLighthouseV2Session,
   getLighthouseV2SupportedModels,
+  submitLighthouseV2RunFeedback,
   updateLighthouseV2Configuration,
   updateLighthouseV2Session,
 } from "./lighthouse-v2";
@@ -153,6 +154,47 @@ describe("Lighthouse v2 session write actions", () => {
       "https://api.example.com/api/v1/lighthouse/supported-providers/openai_compatible/models",
       expect.objectContaining({
         method: "GET",
+      }),
+    );
+  });
+
+  it("submits only the allowlisted run feedback fields", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      Response.json(
+        {
+          data: {
+            id: "feedback-1",
+            type: "lighthouse-agent-run-feedbacks",
+            attributes: { rating: "down", revision: 1 },
+          },
+        },
+        { status: 201 },
+      ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await submitLighthouseV2RunFeedback({
+      sessionId: "session-1",
+      runId: "run-1",
+      rating: "down",
+      idempotencyKey: "8b18c413-8596-4b50-92ee-ab6d712279aa",
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      new URL(
+        "https://api.example.com/api/v1/lighthouse/sessions/session-1/runs/run-1/feedback",
+      ),
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({
+          data: {
+            type: "lighthouse-agent-run-feedbacks",
+            attributes: {
+              rating: "down",
+              idempotency_key: "8b18c413-8596-4b50-92ee-ab6d712279aa",
+            },
+          },
+        }),
       }),
     );
   });

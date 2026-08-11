@@ -1,16 +1,27 @@
 "use client";
 
-import { Bot, Check, Copy, UserRound } from "lucide-react";
+import {
+  Bot,
+  Check,
+  Copy,
+  ThumbsDown,
+  ThumbsUp,
+  UserRound,
+} from "lucide-react";
 import { useState } from "react";
 
+import { submitLighthouseV2RunFeedback } from "@/app/(prowler)/lighthouse/_actions";
 import { formatMessageTimestamp } from "@/app/(prowler)/lighthouse/_lib/format";
 import {
   getLighthouseContext,
   getTextContent,
 } from "@/app/(prowler)/lighthouse/_lib/messages";
 import {
+  LIGHTHOUSE_V2_FEEDBACK_RATING,
   LIGHTHOUSE_V2_MESSAGE_ROLE,
   LIGHTHOUSE_V2_PART_TYPE,
+  LIGHTHOUSE_V2_RUN_STATUS,
+  type LighthouseV2FeedbackRating,
   type LighthouseV2Message,
   type LighthouseV2Part,
 } from "@/app/(prowler)/lighthouse/_types";
@@ -35,7 +46,12 @@ interface AssistantPartGroup {
   parts: LighthouseV2Part[];
 }
 
-export function MessageBubble({ message }: { message: LighthouseV2Message }) {
+interface MessageBubbleProps {
+  message: LighthouseV2Message;
+  sessionId?: string;
+}
+
+export function MessageBubble({ message, sessionId }: MessageBubbleProps) {
   const isUser = message.role === LIGHTHOUSE_V2_MESSAGE_ROLE.USER;
   // Text-only join feeds the copy button; tool calls are rendered separately.
   const messageText = message.parts
@@ -85,6 +101,8 @@ export function MessageBubble({ message }: { message: LighthouseV2Message }) {
           isUser={isUser}
           text={messageText}
           insertedAt={message.insertedAt}
+          message={message}
+          sessionId={sessionId}
         />
       </div>
       {isUser && (
@@ -164,10 +182,14 @@ function MessageMeta({
   isUser,
   text,
   insertedAt,
+  message,
+  sessionId,
 }: {
   isUser: boolean;
   text: string;
   insertedAt: string;
+  message: LighthouseV2Message;
+  sessionId?: string;
 }) {
   // Copy is always shown; the timestamp only reveals on hover over the message.
   // Agent footer reads left-to-right ([copy] [time]); user footer mirrors it.
@@ -179,12 +201,96 @@ function MessageMeta({
       )}
     >
       <CopyMessageButton text={text} />
+      <RunFeedbackControls
+        message={message}
+        isUser={isUser}
+        sessionId={sessionId}
+      />
       <time
         dateTime={insertedAt}
         className="text-text-neutral-tertiary text-xs opacity-0 transition-opacity group-hover:opacity-100"
       >
         {formatMessageTimestamp(insertedAt)}
       </time>
+    </div>
+  );
+}
+
+function RunFeedbackControls({
+  message,
+  isUser,
+  sessionId,
+}: {
+  message: LighthouseV2Message;
+  isUser: boolean;
+  sessionId?: string;
+}) {
+  const run = message.run;
+  const [rating, setRating] = useState<LighthouseV2FeedbackRating | null>(
+    run?.feedbackRating ?? null,
+  );
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const feedbackEligible =
+    run?.status === LIGHTHOUSE_V2_RUN_STATUS.COMPLETED ||
+    run?.status === LIGHTHOUSE_V2_RUN_STATUS.BLOCKED ||
+    run?.status === LIGHTHOUSE_V2_RUN_STATUS.FAILED;
+  const belongsOnMessage = isUser
+    ? run?.hasAssistantMessage === false
+    : run?.hasAssistantMessage === true;
+
+  if (!run || !sessionId || !feedbackEligible || !belongsOnMessage) return null;
+
+  const submitRating = async (nextRating: LighthouseV2FeedbackRating) => {
+    if (isSubmitting || rating === nextRating) return;
+    const previousRating = rating;
+    setRating(nextRating);
+    setIsSubmitting(true);
+    const result = await submitLighthouseV2RunFeedback({
+      sessionId,
+      runId: run.id,
+      rating: nextRating,
+      idempotencyKey: crypto.randomUUID(),
+    });
+    if ("error" in result) {
+      setRating(previousRating);
+    }
+    setIsSubmitting(false);
+  };
+
+  return (
+    <div className="flex items-center gap-0.5">
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon-sm"
+        aria-label="Mark outcome as helpful"
+        aria-pressed={rating === LIGHTHOUSE_V2_FEEDBACK_RATING.UP}
+        disabled={isSubmitting}
+        onClick={() => void submitRating(LIGHTHOUSE_V2_FEEDBACK_RATING.UP)}
+        className={cn(
+          "text-text-neutral-tertiary hover:text-text-neutral-primary size-6",
+          rating === LIGHTHOUSE_V2_FEEDBACK_RATING.UP &&
+            "bg-button-primary hover:bg-button-primary-hover active:bg-button-primary-press focus-visible:ring-button-primary/50 text-black hover:text-black",
+        )}
+      >
+        <ThumbsUp className="size-3.5" />
+      </Button>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon-sm"
+        aria-label="Mark outcome as not helpful"
+        aria-pressed={rating === LIGHTHOUSE_V2_FEEDBACK_RATING.DOWN}
+        disabled={isSubmitting}
+        onClick={() => void submitRating(LIGHTHOUSE_V2_FEEDBACK_RATING.DOWN)}
+        className={cn(
+          "text-text-neutral-tertiary hover:text-text-neutral-primary size-6",
+          rating === LIGHTHOUSE_V2_FEEDBACK_RATING.DOWN &&
+            "bg-button-primary hover:bg-button-primary-hover active:bg-button-primary-press focus-visible:ring-button-primary/50 text-black hover:text-black",
+        )}
+      >
+        <ThumbsDown className="size-3.5" />
+      </Button>
     </div>
   );
 }

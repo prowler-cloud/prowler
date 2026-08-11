@@ -122,6 +122,35 @@ describe("lighthouse-v2.adapter", () => {
       });
     });
 
+    it("should map the durable run outcome attached to a message", () => {
+      const resource: Parameters<typeof mapLighthouseV2Message>[0] = {
+        id: "message-1",
+        type: "lighthouse-messages",
+        attributes: {
+          role: "assistant",
+          model: "gpt-5.5",
+          token_usage: null,
+          inserted_at: "2026-06-24T10:01:00Z",
+          parts: [],
+          run: {
+            id: "run-1",
+            status: "completed",
+            terminal_code: null,
+            has_assistant_message: true,
+            feedback_rating: "up",
+          },
+        },
+      };
+
+      expect(mapLighthouseV2Message(resource).run).toEqual({
+        id: "run-1",
+        status: "completed",
+        terminalCode: null,
+        hasAssistantMessage: true,
+        feedbackRating: "up",
+      });
+    });
+
     it("should give id-less parts stable fallback keys instead of empty strings", () => {
       // Given
       const resource: Parameters<typeof mapLighthouseV2Message>[0] = {

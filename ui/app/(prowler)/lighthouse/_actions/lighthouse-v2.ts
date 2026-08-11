@@ -7,6 +7,7 @@ import type {
   LighthouseV2ConfigurationUpdateInput,
   LighthouseV2Message,
   LighthouseV2ProviderType,
+  LighthouseV2RunFeedbackInput,
   LighthouseV2SendMessageInput,
   LighthouseV2SendMessageResult,
   LighthouseV2Session,
@@ -23,6 +24,7 @@ import {
   buildLighthouseV2ConfigurationPayload,
   buildLighthouseV2ConfigurationUpdatePayload,
   buildLighthouseV2MessagePayload,
+  buildLighthouseV2RunFeedbackPayload,
   buildLighthouseV2SessionCreatePayload,
   buildLighthouseV2SessionUpdatePayload,
   getJsonApiArray,
@@ -249,6 +251,20 @@ export async function sendLighthouseV2Message(
   } catch (error) {
     return handleApiError(error);
   }
+}
+
+export async function submitLighthouseV2RunFeedback(
+  input: LighthouseV2RunFeedbackInput,
+): Promise<LighthouseV2ActionResult<true>> {
+  return mutateSingle(
+    `${SESSIONS_ENDPOINT}/${encodeURIComponent(input.sessionId)}/runs/${encodeURIComponent(input.runId)}/feedback`,
+    {
+      method: "POST",
+      body: JSON.stringify(buildLighthouseV2RunFeedbackPayload(input)),
+    },
+    () => true,
+    "",
+  );
 }
 
 async function getCollection<TResource, TOutput>(

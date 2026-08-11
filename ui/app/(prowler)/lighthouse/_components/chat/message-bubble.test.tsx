@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { type ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
@@ -9,6 +9,14 @@ import {
 } from "@/app/(prowler)/lighthouse/_types";
 
 import { MessageBubble } from "./message-bubble";
+
+const { submitFeedbackMock } = vi.hoisted(() => ({
+  submitFeedbackMock: vi.fn(),
+}));
+
+vi.mock("@/app/(prowler)/lighthouse/_actions", () => ({
+  submitLighthouseV2RunFeedback: submitFeedbackMock,
+}));
 
 vi.mock("streamdown", () => ({
   Streamdown: ({ children }: { children: ReactNode }) => {
@@ -156,6 +164,62 @@ describe("MessageBubble", () => {
 
     expect(isBefore(firstText, toolCall)).toBe(true);
     expect(isBefore(toolCall, secondText)).toBe(true);
+  });
+
+  it("should submit passive feedback for a completed assistant outcome", async () => {
+    submitFeedbackMock.mockResolvedValue({ data: true });
+    const message = {
+      ...buildAssistantMessage([textPart("part-1", "Done")]),
+      run: {
+        id: "run-1",
+        status: "completed" as const,
+        terminalCode: null,
+        hasAssistantMessage: true,
+        feedbackRating: null,
+      },
+    };
+
+    render(<MessageBubble message={message} sessionId="session-1" />);
+    fireEvent.click(
+      screen.getByRole("button", { name: "Mark outcome as not helpful" }),
+    );
+
+    await waitFor(() => expect(submitFeedbackMock).toHaveBeenCalledOnce());
+    expect(submitFeedbackMock).toHaveBeenCalledWith({
+      sessionId: "session-1",
+      runId: "run-1",
+      rating: "down",
+      idempotencyKey: expect.any(String),
+    });
+    const selectedButton = screen.getByRole("button", {
+      name: "Mark outcome as not helpful",
+    });
+    expect(selectedButton).toHaveAttribute("aria-pressed", "true");
+    expect(selectedButton).toHaveClass("bg-button-primary", "text-black");
+  });
+
+  it("should expose feedback for failed outcomes without an assistant message", () => {
+    const message: LighthouseV2Message = {
+      id: "message-user-failed",
+      role: LIGHTHOUSE_V2_MESSAGE_ROLE.USER,
+      model: null,
+      tokenUsage: null,
+      insertedAt: "2026-06-25T10:00:00Z",
+      parts: [textPart("part-user", "Run this check")],
+      run: {
+        id: "run-failed",
+        status: "failed",
+        terminalCode: "llm_error",
+        hasAssistantMessage: false,
+        feedbackRating: null,
+      },
+    };
+
+    render(<MessageBubble message={message} sessionId="session-1" />);
+
+    expect(
+      screen.getByRole("button", { name: "Mark outcome as helpful" }),
+    ).toBeInTheDocument();
   });
 });
 

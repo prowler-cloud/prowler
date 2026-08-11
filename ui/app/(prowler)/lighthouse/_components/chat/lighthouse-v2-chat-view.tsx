@@ -60,6 +60,7 @@ export function LighthouseV2ChatView({
   const state = useLighthouseChatStore((current) => current);
   const {
     config,
+    activeSessionId,
     messages,
     streamState,
     input,
@@ -186,7 +187,11 @@ export function LighthouseV2ChatView({
             scrollClassName="minimal-scrollbar overflow-x-hidden overflow-y-auto"
           >
             {messages.map((message) => (
-              <MessageBubble key={message.id} message={message} />
+              <MessageBubble
+                key={message.id}
+                message={message}
+                sessionId={activeSessionId ?? undefined}
+              />
             ))}
             {hasLiveAssistantActivity && (
               <StreamingAssistantMessage streamState={streamState} />
