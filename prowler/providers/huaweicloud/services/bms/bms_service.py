@@ -30,8 +30,11 @@ class BMS(HuaweiCloudService):
         """Load mock data for testing."""
         region = "la-south-2"
         self.servers["bms-mock-001"] = BareMetalServer(
-            id="bms-mock-001", name="bms-public-server", region=region,
-            status="ACTIVE", public_ip="123.45.67.89",
+            id="bms-mock-001",
+            name="bms-public-server",
+            region=region,
+            status="ACTIVE",
+            public_ip="123.45.67.89",
             security_groups={"sg-default": "default"},
         )
         self.servers["bms-mock-002"] = BareMetalServer(
