@@ -73,6 +73,58 @@ const TRIAL_SIDEBAR_BANNER_UNIT = {
 type TrialSidebarBannerUnit =
   (typeof TRIAL_SIDEBAR_BANNER_UNIT)[keyof typeof TRIAL_SIDEBAR_BANNER_UNIT];
 
+type TrialSidebarBannerVariant =
+  (typeof TRIAL_SIDEBAR_BANNER_VARIANT)[keyof typeof TRIAL_SIDEBAR_BANNER_VARIANT];
+
+type MeteredTrialVariant = Extract<
+  TrialSidebarBannerProps,
+  { remaining: number }
+>["variant"];
+
+interface TrialSidebarBannerCopy {
+  badge: string;
+  body: string;
+  linkLabel: string;
+  cardLabel: string;
+}
+
+const UNLIMITED_COPY = {
+  badge: "Unlimited trial",
+  body: "Unlimited accounts, scans, and daily schedules. Subscribe to keep everything running.",
+  linkLabel: "Explore plans for your unlimited trial",
+  cardLabel: "Active trial",
+} as const satisfies TrialSidebarBannerCopy;
+
+// Keyed maps rather than ternaries: a new variant fails to compile until every
+// string and unit is supplied for it.
+const TRIAL_SIDEBAR_BANNER_COPY: Record<
+  TrialSidebarBannerVariant,
+  TrialSidebarBannerCopy
+> = {
+  [TRIAL_SIDEBAR_BANNER_VARIANT.ACTIVE_DAYS]: UNLIMITED_COPY,
+  [TRIAL_SIDEBAR_BANNER_VARIANT.ACTIVE_UNLIMITED]: UNLIMITED_COPY,
+  [TRIAL_SIDEBAR_BANNER_VARIANT.ACTIVE_SCANS]: {
+    badge: "Free trial",
+    body: "Choose a plan to keep running scans after your trial ends.",
+    linkLabel: "Explore plans for your free trial",
+    cardLabel: "Active trial",
+  },
+  [TRIAL_SIDEBAR_BANNER_VARIANT.EXPIRED]: {
+    badge: "Trial expired",
+    body: "Subscribe to continue scanning and running scheduled scans.",
+    linkLabel: "Explore plans after your trial expired",
+    cardLabel: "Expired trial",
+  },
+};
+
+const TRIAL_SIDEBAR_BANNER_METER: Record<
+  MeteredTrialVariant,
+  TrialSidebarBannerUnit
+> = {
+  [TRIAL_SIDEBAR_BANNER_VARIANT.ACTIVE_DAYS]: TRIAL_SIDEBAR_BANNER_UNIT.DAY,
+  [TRIAL_SIDEBAR_BANNER_VARIANT.ACTIVE_SCANS]: TRIAL_SIDEBAR_BANNER_UNIT.SCAN,
+};
+
 interface TrialUrgencyStyles {
   sidebarBorder: string;
   sidebarTint: string;
@@ -136,15 +188,14 @@ export const TrialSidebarBanner = (props: TrialSidebarBannerProps) => {
   const isExhausted = isScanBased && props.remaining <= 0;
   const urgency = getTrialUrgency(props);
   const urgencyStyles = TRIAL_URGENCY_STYLES[urgency];
-  const remainingCopy = isExpired
-    ? null
+  const copy = TRIAL_SIDEBAR_BANNER_COPY[props.variant];
+  const heading = isExpired
+    ? "Subscription required"
     : props.variant === TRIAL_SIDEBAR_BANNER_VARIANT.ACTIVE_UNLIMITED
       ? "Trial active"
       : formatRemaining(
           props.remaining,
-          isScanBased
-            ? TRIAL_SIDEBAR_BANNER_UNIT.SCAN
-            : TRIAL_SIDEBAR_BANNER_UNIT.DAY,
+          TRIAL_SIDEBAR_BANNER_METER[props.variant],
         );
 
   const prefersReducedMotion = useReducedMotion();
@@ -189,13 +240,7 @@ export const TrialSidebarBanner = (props: TrialSidebarBannerProps) => {
   return (
     <Link
       href="/billing"
-      aria-label={
-        isExpired
-          ? "Explore plans after your trial expired"
-          : isScanBased
-            ? "Explore plans for your free trial"
-            : "Explore plans for your unlimited trial"
-      }
+      aria-label={copy.linkLabel}
       onClick={props.onSelect}
       onPointerMove={followPointer}
       onPointerLeave={resetMotion}
@@ -213,7 +258,7 @@ export const TrialSidebarBanner = (props: TrialSidebarBannerProps) => {
           data-slot="sidebar-trial"
           data-urgency={urgency}
           role="status"
-          aria-label={isExpired ? "Expired trial" : "Active trial"}
+          aria-label={copy.cardLabel}
           aria-live="polite"
           className={cn(
             "relative gap-3 overflow-hidden transition-colors duration-200",
@@ -246,23 +291,15 @@ export const TrialSidebarBanner = (props: TrialSidebarBannerProps) => {
                 size="sm"
                 className="w-fit"
               >
-                {isExpired
-                  ? "Trial expired"
-                  : isScanBased
-                    ? "Free trial"
-                    : "Unlimited trial"}
+                {copy.badge}
               </Badge>
               <strong className="text-text-neutral-primary text-lg leading-none">
-                {isExpired ? "Subscription required" : remainingCopy}
+                {heading}
               </strong>
             </div>
           </div>
           <p className="text-text-neutral-secondary relative z-10 text-xs leading-4">
-            {isExpired
-              ? "Subscribe to continue scanning and running scheduled scans."
-              : isScanBased
-                ? "Choose a plan to keep running scans after your trial ends."
-                : "Unlimited accounts, scans, and daily schedules. Subscribe to keep everything running."}
+            {copy.body}
           </p>
           <span className="text-button-primary relative z-10 flex items-center justify-between text-xs font-semibold">
             Explore plans
