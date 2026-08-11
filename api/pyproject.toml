@@ -71,7 +71,7 @@ name = "prowler-api"
 package-mode = false
 # Needed for the SDK compatibility
 requires-python = ">=3.11,<3.13"
-version = "1.39.0"
+version = "1.40.0"
 
 # Shared ruff baseline (kept in sync with mcp_server/pyproject.toml).
 # target-version tracks this project's lowest supported Python.
@@ -212,7 +212,7 @@ constraint-dependencies = [
   "coverage==7.5.4",
   "cron-descriptor==1.4.5",
   "crowdstrike-falconpy==1.6.0",
-  "cryptography==48.0.1",
+  "cryptography==50.0.0",
   "cycler==0.12.1",
   "darabonba-core==1.0.8",
   "dash==3.1.1",
@@ -485,6 +485,8 @@ constraint-dependencies = [
 # that request pyjwt[crypto] and leave cryptography (needed for RS256) only transitive.
 override-dependencies = [
   "okta==3.4.2",
+  # alibabacloud-tea-openapi 0.4.5 caps cryptography below 49 and is the latest release.
+  "cryptography==50.0.0",
   "azure-mgmt-containerservice==34.1.0",
   "microsoft-kiota-abstractions==1.9.10",
   "microsoft-kiota-authentication-azure==1.9.10",

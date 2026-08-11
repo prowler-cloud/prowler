@@ -5,8 +5,10 @@ Reference for later branches: drive the client through ``mock_api_client`` +
 query encoding and header assembly stay covered.
 """
 
+import httpx
 import pytest
 
+from prowler_mcp_server.prowler_app.utils.api_client import ProwlerAPIError
 from tests.helpers.jsonapi import jsonapi_collection, jsonapi_error, jsonapi_resource
 from tests.helpers.tokens import FAKE_API_KEY
 
@@ -56,8 +58,31 @@ async def test_error_response_surfaces_the_jsonapi_detail(mock_api_client, mock_
         json=jsonapi_error(404, "Not found."),
     )
 
-    with pytest.raises(Exception, match=r"API request failed: 404 - Not found\."):
+    with pytest.raises(
+        ProwlerAPIError, match=r"API request failed: 404 - Not found\."
+    ) as raised:
         await mock_api_client.get("/findings/nope")
+
+    assert raised.value.status_code == 404
+
+
+async def test_a_request_that_got_no_answer_is_not_an_api_error(
+    mock_api_client, mock_router
+):
+    """`ProwlerAPIError` means the API answered, and callers act on that.
+
+    A write tool tells a rejected request -- which changed nothing -- from one
+    that may have been processed by the type of the failure, so a timeout must
+    not be dressed up as a rejection.
+    """
+
+    def timed_out(request):
+        raise httpx.ReadTimeout("Timed out reading the response", request=request)
+
+    mock_router.add_handler("GET", "/api/v1/findings", timed_out)
+
+    with pytest.raises(httpx.ReadTimeout):
+        await mock_api_client.get("/findings")
 
 
 def test_build_filter_params_normalises_types_for_the_api(mock_api_client):

@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
 
 import {
+  COMPLIANCE_OVERVIEW_RESOURCE_TYPE,
   getComplianceAttributes,
   getComplianceOverviewMetadataInfo,
   getComplianceRequirements,
@@ -397,9 +398,14 @@ const SSRComplianceContent = async ({
     scanId,
     region,
   });
-  const type = requirementsData?.data?.[0]?.type;
+  const requirements = requirementsData?.data;
+  const type = Array.isArray(requirements) ? undefined : requirements?.type;
 
-  if (!scanId || type === "tasks") {
+  if (
+    !scanId ||
+    type === COMPLIANCE_OVERVIEW_RESOURCE_TYPE.TASK ||
+    !Array.isArray(requirements)
+  ) {
     return (
       <div className="flex flex-col gap-8">
         <div className="grid grid-cols-1 gap-6 md:grid-cols-[minmax(280px,400px)_1fr]">
@@ -416,7 +422,7 @@ const SSRComplianceContent = async ({
   const mapper = getComplianceMapper(framework);
   const data = mapper.mapComplianceData(
     attributesData,
-    requirementsData,
+    { data: requirements },
     filter,
   );
   // const categoryHeatmapData = mapper.calculateCategoryHeatmapData(data);

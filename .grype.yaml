@@ -9,6 +9,14 @@ ignore:
 
   # Modules compiled into the Trivy binary we ship.
   # Only a Trivy rebuild by its vendor can change these; the version is pinned in our Dockerfile.
+  # CVE-2026-71556 is the same temporary exception documented in .trivyignore.yaml:
+  # Trivy 0.73.0 still embeds go-git 5.19.1, while the 5.19.2 fix is merged only on
+  # Trivy main. Remove this entry with the Trivy exception by 2026-09-15.
+  # https://github.com/aquasecurity/trivy/blob/v0.73.0/go.mod#L46
+  # https://github.com/aquasecurity/trivy/commit/a2edba9a03987ba0d2ebc8212c1a9a1e6979497b
+  - vulnerability: CVE-2026-71556
+    package:
+      name: github.com/go-git/go-git/v5
   - vulnerability: CVE-2026-56852
     package:
       name: golang.org/x/text
@@ -25,12 +33,6 @@ ignore:
     package:
       name: Microsoft.Bcl.Memory
 
-  # cryptography is capped below 49 by alibabacloud-tea-openapi==0.4.5, which requires
-  # cryptography>=3.0.0,<49.0.0. The fix is in 50.0.0, so it is unreachable until that
-  # dependency raises its ceiling. Verified by attempting the upgrade: resolution fails.
-  - vulnerability: CVE-2026-69247
-    package:
-      name: cryptography
 
   # The CPython interpreter, compiled into the official base image.
   # TEMPORARY, unlike the entries above: moving to Python 3.13 clears seven of these, and

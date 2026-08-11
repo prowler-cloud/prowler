@@ -120,6 +120,20 @@ vulnerabilities:
 
   # Modules compiled into the Trivy binary the images ship. The binary is pinned by version
   # and verified by checksum in the Dockerfile; only a rebuild by its vendor moves these.
+  # CVE-2026-71556 affects go-git worktree operations that can follow symlinks outside a
+  # cloned repository. Trivy 0.72.0 contains go-git 5.19.1, and even the latest published
+  # Trivy release, 0.73.0, still pins that vulnerable version:
+  # https://github.com/aquasecurity/trivy/blob/v0.73.0/go.mod#L46
+  # Trivy main already contains the 5.19.2 fix, but no published release includes it yet:
+  # https://github.com/aquasecurity/trivy/commit/a2edba9a03987ba0d2ebc8212c1a9a1e6979497b
+  # Prowler invokes Trivy only with `fs` on an existing local path or with `image`; it does
+  # not ask Trivy to clone or mutate a Git worktree, so the affected path is not reachable.
+  # Remove this temporary suppression as soon as a fixed Trivy release is available.
+  - id: CVE-2026-71556
+    purls:
+      - "pkg:golang/github.com/go-git/go-git/v5"
+    expired_at: 2026-09-15
+
   - id: CVE-2026-56852
     purls:
       - "pkg:golang/golang.org/x/text"
@@ -140,16 +154,3 @@ vulnerabilities:
     purls:
       - "pkg:golang/stdlib"
     expired_at: 2026-12-31
-
-  # cryptography is held below 49 by alibabacloud-tea-openapi==0.4.5, which requires
-  # cryptography>=3.0.0,<49.0.0. The fixes are in 49.0.0 and 50.0.0, so both sit above the
-  # ceiling. Verified by attempting the upgrade: resolution fails. Reachable again only when
-  # that dependency raises its bound.
-  - id: CVE-2026-69247
-    purls:
-      - "pkg:pypi/cryptography"
-    expired_at: 2026-11-30
-  - id: CVE-2026-69249
-    purls:
-      - "pkg:pypi/cryptography"
-    expired_at: 2026-11-30

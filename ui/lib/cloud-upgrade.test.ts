@@ -29,6 +29,7 @@ describe("cloud upgrade content", () => {
       "Use The Agent Cloud Defender",
       "Scale Prowler Without Operating It",
       "Configure Every Scan Once",
+      "Use One SAML Configuration Across Domains",
     ]);
   });
 
@@ -78,6 +79,7 @@ describe("cloud upgrade URLs", () => {
     [CLOUD_UPGRADE_FEATURE.LIGHTHOUSE_AI, "lighthouse-ai"],
     [CLOUD_UPGRADE_FEATURE.GENERAL, "general"],
     [CLOUD_UPGRADE_FEATURE.SCAN_CONFIGURATION, "scan-configuration"],
+    [CLOUD_UPGRADE_FEATURE.SAML_DOMAINS, "saml-domains"],
   ])("should use the canonical content slug for %s", (feature, contentSlug) => {
     // Given / When
     const url = new URL(getCloudUpgradePrimaryUrl(feature));

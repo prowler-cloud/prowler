@@ -19,6 +19,7 @@ from allauth.account.models import EmailAddress
 from allauth.socialaccount.models import SocialAccount, SocialApp
 from api.attack_paths import (
     AttackPathsQueryDefinition,
+    AttackPathsQueryOutcome,
     AttackPathsQueryParameterDefinition,
 )
 from api.compliance import get_compliance_frameworks
@@ -77,8 +78,9 @@ from conftest import (
     today_after_n_days,
 )
 from django.conf import settings
-from django.db import close_old_connections, connection
+from django.db import close_old_connections, connection, connections
 from django.db.models import Count
+from django.db.models.signals import pre_delete
 from django.http import JsonResponse
 from django.test import RequestFactory
 from django.test.utils import CaptureQueriesContext
@@ -516,6 +518,50 @@ class TestUserViewSet:
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert error_field in response.json()["errors"][0]["source"]["pointer"]
+
+
+@pytest.mark.requires_test_admin_alias
+@pytest.mark.django_db(transaction=True, databases=["default", "admin"])
+class TestTenantDeletionTransactions:
+    @patch("api.v1.views.delete_tenant_task.apply_async")
+    def test_delete_rolls_back_memberships_when_user_cleanup_fails(
+        self,
+        delete_tenant_mock,
+        authenticated_client,
+        tenants_fixture,
+    ):
+        assert connections["default"] is not connections["admin"]
+
+        _, tenant, _ = tenants_fixture
+        exclusive_user = User.objects.create_user(
+            name="exclusive user",
+            password=TEST_PASSWORD,
+            email="exclusive-user@example.com",
+        )
+        membership = Membership.objects.create(
+            user=exclusive_user,
+            tenant=tenant,
+            role=Membership.RoleChoices.MEMBER,
+        )
+
+        def fail_user_cleanup(*, instance, **kwargs):
+            if instance.pk == exclusive_user.pk:
+                raise RuntimeError("Simulated user cleanup failure.")
+
+        pre_delete.connect(fail_user_cleanup, sender=User)
+        try:
+            with (
+                patch.object(MainRouter, "admin_db", "admin"),
+                pytest.raises(RuntimeError, match=r"Simulated user cleanup failure\."),
+            ):
+                authenticated_client.delete(
+                    reverse("tenant-detail", kwargs={"pk": tenant.id})
+                )
+        finally:
+            pre_delete.disconnect(fail_user_cleanup, sender=User)
+
+        assert Membership.objects.using("admin").filter(pk=membership.pk).exists()
+        delete_tenant_mock.assert_not_called()
 
 
 @pytest.mark.django_db
@@ -5387,6 +5433,72 @@ class TestAttackPathsScanViewSet:
         assert payload[0]["id"] == "aws-rds"
         assert payload[0]["attributes"]["name"] == "RDS inventory"
         assert payload[0]["attributes"]["parameters"][0]["name"] == "ip"
+
+    def test_attack_paths_queries_expose_outcome(
+        self,
+        authenticated_client,
+        aws_provider,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        provider = aws_provider
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+        )
+
+        definitions = [
+            AttackPathsQueryDefinition(
+                id="aws-lambda-passrole",
+                name="Lambda passrole",
+                short_description="Pass a role to a new Lambda function.",
+                description="Pass a role to a new Lambda function and run code as it.",
+                provider=provider.provider,
+                cypher="MATCH (n) RETURN n",
+                outcome=AttackPathsQueryOutcome.CODE_EXECUTION,
+            ),
+            AttackPathsQueryDefinition(
+                id="aws-rds-inventory",
+                name="RDS inventory",
+                short_description="List account RDS assets.",
+                description="List account RDS assets.",
+                provider=provider.provider,
+                cypher="MATCH (n) RETURN n",
+                outcome=AttackPathsQueryOutcome.RESOURCE_INVENTORY,
+            ),
+            AttackPathsQueryDefinition(
+                id="aws-no-outcome",
+                name="No outcome",
+                short_description="A query without an outcome.",
+                description="A query without an outcome.",
+                provider=provider.provider,
+                cypher="MATCH (n) RETURN n",
+            ),
+        ]
+
+        with patch("api.v1.views.get_queries_for_provider", return_value=definitions):
+            response = authenticated_client.get(
+                reverse(
+                    "attack-paths-scans-queries", kwargs={"pk": attack_paths_scan.id}
+                )
+            )
+
+        assert response.status_code == status.HTTP_200_OK
+        outcomes = {
+            item["id"]: item["attributes"]["outcome"]
+            for item in response.json()["data"]
+        }
+        assert outcomes["aws-lambda-passrole"] == {
+            "kind": "code_execution",
+            "label": "Code execution",
+            "partial": False,
+        }
+        assert outcomes["aws-rds-inventory"] == {
+            "kind": "resource_inventory",
+            "label": "Resource inventory",
+            "partial": True,
+        }
+        assert outcomes["aws-no-outcome"] is None
 
     def test_attack_paths_queries_returns_404_when_catalog_missing(
         self,
@@ -14559,6 +14671,37 @@ class TestSAMLConfigurationViewSet:
         )
         assert response.status_code == status.HTTP_204_NO_CONTENT
         assert not SAMLConfiguration.objects.filter(id=config.id).exists()
+
+
+@pytest.mark.django_db
+class TestSAMLACSView:
+    def test_get_is_not_allowed(self, client, saml_setup):
+        response = client.get(
+            reverse(
+                "saml_acs",
+                kwargs={"organization_slug": saml_setup["domain"]},
+            )
+        )
+
+        assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+        assert response.headers["Allow"] == "POST"
+        assert "saml-acs-session" not in response.cookies
+
+    def test_post_is_forwarded_to_allauth(self, client, saml_setup):
+        response = client.post(
+            reverse(
+                "saml_acs",
+                kwargs={"organization_slug": saml_setup["domain"]},
+            ),
+            data={"SAMLResponse": "test-saml-response"},
+        )
+
+        assert response.status_code == status.HTTP_302_FOUND
+        assert response.url == reverse(
+            "saml_finish_acs",
+            kwargs={"organization_slug": saml_setup["domain"]},
+        )
+        assert "saml-acs-session" in response.cookies
 
 
 @pytest.mark.django_db

@@ -104,6 +104,7 @@ jobs:
         with:
           files: |
             ui/**
+            .trivyignore.yaml
             .github/actions/trivy-scan/**
             .github/actions/grype-scan/**
             .grype.yaml
