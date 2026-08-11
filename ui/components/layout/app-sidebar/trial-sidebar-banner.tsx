@@ -259,7 +259,9 @@ export const TrialSidebarBanner = (props: TrialSidebarBannerProps) => {
           data-urgency={urgency}
           role="status"
           aria-label={copy.cardLabel}
-          aria-live="polite"
+          // role="status" is implicitly atomic, which re-reads the whole card
+          // on every counter change.
+          aria-atomic="false"
           className={cn(
             "relative gap-3 overflow-hidden transition-colors duration-200",
             urgencyStyles.sidebarBorder,
