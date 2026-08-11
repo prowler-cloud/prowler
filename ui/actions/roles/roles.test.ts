@@ -146,4 +146,17 @@ describe("role actions", () => {
       lastRequestBody().data.attributes.manage_lighthouse_ai_configuration,
     ).toBe(true);
   });
+
+  it("omits manage_lighthouse_ai_configuration when updating a role outside Prowler Cloud", async () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+
+    // When
+    await updateRole(makeRoleFormData(), "role-1");
+
+    // Then
+    expect(lastRequestBody().data.attributes).not.toHaveProperty(
+      "manage_lighthouse_ai_configuration",
+    );
+  });
 });
