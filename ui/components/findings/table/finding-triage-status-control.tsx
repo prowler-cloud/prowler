@@ -22,19 +22,11 @@ import {
   type FindingTriageModalStatus,
   type FindingTriageStatus,
   type FindingTriageSummary,
-  type FindingTriageUpdateResult,
+  type FindingTriageUpdateHandler,
   getFindingTriageMuteInfoCopy,
   isMutelistShortcutStatus,
   isTriageStatusLocked,
-  type UpdateFindingTriageInput,
 } from "@/types/findings-triage";
-
-export type FindingTriageUpdateHandler = (
-  input: UpdateFindingTriageInput,
-) =>
-  | FindingTriageUpdateResult
-  | void
-  | Promise<FindingTriageUpdateResult | void>;
 
 type TriageStatusPickerSize = NonNullable<
   ComponentProps<typeof SelectTrigger>["size"]

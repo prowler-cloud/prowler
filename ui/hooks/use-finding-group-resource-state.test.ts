@@ -354,9 +354,7 @@ describe("useFindingGroupResourceState", () => {
     let resolveUpdate: () => void = () => {};
 
     // When
-    let updatePromise:
-      | ReturnType<typeof result.current.updateTriageOptimistically>
-      | undefined;
+    let updatePromise: Promise<FindingTriageUpdateResult | void> | undefined;
     act(() => {
       updatePromise = result.current.updateTriageOptimistically(
         {

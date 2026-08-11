@@ -9,9 +9,9 @@ import {
   updateFindingTriage,
 } from "@/actions/findings";
 import { getStandaloneFindingColumns } from "@/components/findings/table/column-standalone-findings";
-import type { FindingTriageUpdateHandler } from "@/components/findings/table/finding-triage-status-control";
 import { DataTable } from "@/components/shadcn/table";
 import type { FindingProps } from "@/types";
+import type { FindingTriageUpdateHandler } from "@/types/findings-triage";
 
 interface LatestFindingsTableProps {
   data: FindingProps[];

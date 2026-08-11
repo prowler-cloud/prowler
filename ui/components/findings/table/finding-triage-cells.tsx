@@ -21,9 +21,13 @@ import {
   FINDING_TRIAGE_ORIGIN,
   FINDING_TRIAGE_RESOLVED_LOCKED_COPY,
   FINDING_TRIAGE_STATUS,
+  type FindingTriageContext,
   type FindingTriageDetail,
+  type FindingTriageDetailLoadHandler,
   type FindingTriageLoadedNote,
+  type FindingTriageNoteLoadHandler,
   type FindingTriageSummary,
+  type FindingTriageUpdateHandler,
   isManualStatus,
   isTriageStatusLocked,
   type UpdateFindingTriageInput,
@@ -32,21 +36,15 @@ import {
 import {
   FINDING_NOTE_MODAL_MODE,
   FindingNoteModal,
-  type FindingTriageContext,
   type FindingNoteModalMode,
 } from "./finding-note-modal";
 import {
   FindingTriageStatusControl,
-  type FindingTriageUpdateHandler,
   TRIAGE_STATUS_TEXT_CLASS,
 } from "./finding-triage-status-control";
 
 export const CLOUD_ONLY_TOOLTIP_COPY = "Available in Prowler Cloud";
 export const EDITING_UNAVAILABLE_COPY = "Editing is currently unavailable.";
-
-export type FindingTriageDetailLoadHandler = (
-  triage: FindingTriageSummary,
-) => Promise<FindingTriageDetail>;
 
 const getDisabledCopy = ({
   triage,
@@ -354,9 +352,7 @@ export function FindingNoteActionItem({
   triage?: FindingTriageSummary;
   findingContext?: FindingTriageContext;
   onTriageUpdateAction?: FindingTriageUpdateHandler;
-  onTriageNoteLoadAction?: (
-    triage: FindingTriageSummary,
-  ) => Promise<FindingTriageLoadedNote>;
+  onTriageNoteLoadAction?: FindingTriageNoteLoadHandler;
   onTriageDetailLoadAction?: FindingTriageDetailLoadHandler;
 }) {
   if (!triage) {
@@ -387,9 +383,7 @@ function FindingNoteActionItemContent({
   triage: FindingTriageSummary;
   findingContext: FindingTriageContext;
   onTriageUpdateAction?: FindingTriageUpdateHandler;
-  onTriageNoteLoadAction?: (
-    triage: FindingTriageSummary,
-  ) => Promise<FindingTriageLoadedNote>;
+  onTriageNoteLoadAction?: FindingTriageNoteLoadHandler;
   onTriageDetailLoadAction?: FindingTriageDetailLoadHandler;
 }) {
   const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);

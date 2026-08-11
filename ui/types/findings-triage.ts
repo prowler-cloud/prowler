@@ -1,3 +1,6 @@
+import type { FindingStatus } from "./components";
+import type { ProviderType } from "./providers";
+
 export const FINDING_TRIAGE_STATUS = {
   OPEN: "open",
   UNDER_REVIEW: "under_review",
@@ -126,6 +129,13 @@ export interface FindingTriageUpdateResult {
   manualPassExpiresAt: string | null;
 }
 
+export interface FindingTriageContext {
+  title: string;
+  resource?: string;
+  provider?: string;
+  providerType?: ProviderType;
+}
+
 interface FindingTriageUpdateBase {
   findingId: string;
   findingUid: string;
@@ -157,4 +167,17 @@ export interface FindingTriageLoadedNote {
   noteId: string;
   noteBody: string;
 }
-import type { FindingStatus } from "./components";
+export type FindingTriageUpdateHandler = (
+  input: UpdateFindingTriageInput,
+) =>
+  | FindingTriageUpdateResult
+  | void
+  | Promise<FindingTriageUpdateResult | void>;
+
+export type FindingTriageDetailLoadHandler = (
+  triage: FindingTriageSummary,
+) => Promise<FindingTriageDetail>;
+
+export type FindingTriageNoteLoadHandler = (
+  triage: FindingTriageSummary,
+) => Promise<FindingTriageLoadedNote>;

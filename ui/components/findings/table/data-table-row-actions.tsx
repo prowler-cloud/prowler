@@ -17,19 +17,17 @@ import { buildJiraActionLabel } from "@/lib/jira-dispatch-action";
 import { createJiraDispatchPayload } from "@/lib/jira-dispatch-selection";
 import { getOptionalText } from "@/lib/utils";
 import type {
-  FindingTriageLoadedNote,
+  FindingTriageContext,
+  FindingTriageDetailLoadHandler,
+  FindingTriageNoteLoadHandler,
   FindingTriageSummary,
+  FindingTriageUpdateHandler,
 } from "@/types/findings-triage";
 import { JIRA_DISPATCH_TARGET } from "@/types/integrations";
 import type { ProviderType } from "@/types/providers";
 
 import { canMuteFindingGroup } from "./finding-group-selection";
-import type { FindingTriageContext } from "./finding-note-modal";
-import {
-  FindingNoteActionItem,
-  type FindingTriageDetailLoadHandler,
-} from "./finding-triage-cells";
-import type { FindingTriageUpdateHandler } from "./finding-triage-status-control";
+import { FindingNoteActionItem } from "./finding-triage-cells";
 import { FindingsSelectionContext } from "./findings-selection-context";
 
 export interface FindingRowData {
@@ -100,9 +98,7 @@ interface DataTableRowActionsProps<T extends FindingRowData> {
   onMuteComplete?: (findingIds: string[]) => void;
   findingContext?: FindingTriageContext;
   onTriageUpdateAction?: FindingTriageUpdateHandler;
-  onTriageNoteLoadAction?: (
-    triage: FindingTriageSummary,
-  ) => Promise<FindingTriageLoadedNote>;
+  onTriageNoteLoadAction?: FindingTriageNoteLoadHandler;
   onTriageDetailLoadAction?: FindingTriageDetailLoadHandler;
 }
 

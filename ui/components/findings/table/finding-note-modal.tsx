@@ -31,28 +31,21 @@ import {
   FINDING_TRIAGE_RESOLVED_LOCKED_COPY,
   FINDING_TRIAGE_STATUS,
   MANUAL_PASS_PROVENANCE,
+  type FindingTriageContext,
   type FindingTriageDetail,
   type FindingTriageModalStatus,
+  type FindingTriageUpdateHandler,
   getFindingTriageMuteInfoCopy,
   isManualStatus,
   isMutelistShortcutStatus,
   isTriageStatusLocked,
 } from "@/types/findings-triage";
-import type { ProviderType } from "@/types/providers";
 
 import {
   FindingTriageStatusControl,
   MANUAL_PASS_NOTE_REQUIRED_COPY,
-  type FindingTriageUpdateHandler,
 } from "./finding-triage-status-control";
 import { buildFindingTriageUpdateInput } from "./finding-triage-submit";
-
-export interface FindingTriageContext {
-  title: string;
-  resource?: string;
-  provider?: string;
-  providerType?: ProviderType;
-}
 
 interface FindingNoteModalProps {
   open: boolean;

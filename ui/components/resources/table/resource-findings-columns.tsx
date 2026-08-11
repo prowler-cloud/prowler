@@ -4,10 +4,8 @@ import { ColumnDef, RowSelectionState } from "@tanstack/react-table";
 
 import {
   DataTableRowActions,
-  type FindingTriageDetailLoadHandler,
   FindingTriageStatusCell,
 } from "@/components/findings/table";
-import type { FindingTriageUpdateHandler } from "@/components/findings/table/finding-triage-status-control";
 import {
   DeltaType,
   NotificationIndicator,
@@ -22,8 +20,10 @@ import {
 } from "@/components/shadcn/table";
 import type { FindingStatus } from "@/types/components";
 import type {
-  FindingTriageLoadedNote,
+  FindingTriageDetailLoadHandler,
+  FindingTriageNoteLoadHandler,
   FindingTriageSummary,
+  FindingTriageUpdateHandler,
 } from "@/types/findings-triage";
 
 export interface ResourceFinding {
@@ -49,9 +49,7 @@ export const getResourceFindingsColumns = (
   onNavigate: (id: string) => void,
   onMuteComplete?: (findingIds: string[]) => void,
   onTriageUpdateAction?: FindingTriageUpdateHandler,
-  onTriageNoteLoadAction?: (
-    triage: FindingTriageSummary,
-  ) => Promise<FindingTriageLoadedNote>,
+  onTriageNoteLoadAction?: FindingTriageNoteLoadHandler,
   onTriageDetailLoadAction?: FindingTriageDetailLoadHandler,
 ): ColumnDef<ResourceFinding>[] => {
   const selectedCount = Object.values(rowSelection).filter(Boolean).length;

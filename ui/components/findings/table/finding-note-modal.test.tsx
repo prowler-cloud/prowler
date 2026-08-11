@@ -90,16 +90,16 @@ import {
   FINDING_TRIAGE_DISABLED_REASON,
   FINDING_TRIAGE_STATUS,
   type FindingTriageDetail,
+  type FindingTriageContext,
   type FindingTriageModalStatus,
+  type FindingTriageUpdateHandler,
 } from "@/types/findings-triage";
 
 import {
   FINDING_NOTE_MODAL_MODE,
   FindingNoteModal,
   type FindingNoteModalMode,
-  type FindingTriageContext,
 } from "./finding-note-modal";
-import type { FindingTriageUpdateHandler } from "./finding-triage-status-control";
 
 function makeTriageDetail(
   overrides?: Partial<FindingTriageDetail>,
@@ -727,7 +727,7 @@ describe("FindingNoteModal", () => {
     await user.click(screen.getByRole("combobox", { name: "Triage status" }));
     await user.click(screen.getByRole("option", { name: "Resolved" }));
     await user.type(
-      screen.getByLabelText("Manual pass evidence"),
+      screen.getByRole("textbox", { name: "Manual pass evidence" }),
       "The control owner verified this requirement.",
     );
 

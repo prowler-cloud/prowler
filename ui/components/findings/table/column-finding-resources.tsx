@@ -22,18 +22,17 @@ import { buildJiraActionLabel } from "@/lib/jira-dispatch-action";
 import { createJiraDispatchPayload } from "@/lib/jira-dispatch-selection";
 import { FindingResourceRow } from "@/types";
 import type {
-  FindingTriageLoadedNote,
-  FindingTriageSummary,
+  FindingTriageDetailLoadHandler,
+  FindingTriageNoteLoadHandler,
+  FindingTriageUpdateHandler,
 } from "@/types/findings-triage";
 import { JIRA_DISPATCH_TARGET } from "@/types/integrations";
 
 import { canMuteFindingResource } from "./finding-resource-selection";
 import {
   FindingNoteActionItem,
-  type FindingTriageDetailLoadHandler,
   FindingTriageStatusCell,
 } from "./finding-triage-cells";
-import type { FindingTriageUpdateHandler } from "./finding-triage-status-control";
 import { FindingsSelectionContext } from "./findings-selection-context";
 import {
   type DeltaType,
@@ -50,9 +49,7 @@ const ResourceRowActions = ({
   row: Row<FindingResourceRow>;
   findingTitle?: string;
   onTriageUpdateAction?: FindingTriageUpdateHandler;
-  onTriageNoteLoadAction?: (
-    triage: FindingTriageSummary,
-  ) => Promise<FindingTriageLoadedNote>;
+  onTriageNoteLoadAction?: FindingTriageNoteLoadHandler;
   onTriageDetailLoadAction?: FindingTriageDetailLoadHandler;
 }) => {
   const resource = row.original;
@@ -179,9 +176,7 @@ interface GetColumnFindingResourcesOptions {
   selectableRowCount: number;
   findingTitle?: string;
   onTriageUpdateAction?: FindingTriageUpdateHandler;
-  onTriageNoteLoadAction?: (
-    triage: FindingTriageSummary,
-  ) => Promise<FindingTriageLoadedNote>;
+  onTriageNoteLoadAction?: FindingTriageNoteLoadHandler;
   onTriageDetailLoadAction?: FindingTriageDetailLoadHandler;
 }
 

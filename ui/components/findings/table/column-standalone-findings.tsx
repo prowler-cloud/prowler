@@ -18,17 +18,14 @@ import { getRegionFlag } from "@/lib/region-flags";
 import { getOptionalText } from "@/lib/utils";
 import { FindingProps, ProviderType } from "@/types";
 import type {
-  FindingTriageLoadedNote,
-  FindingTriageSummary,
+  FindingTriageDetailLoadHandler,
+  FindingTriageNoteLoadHandler,
+  FindingTriageUpdateHandler,
 } from "@/types/findings-triage";
 
 import { DataTableRowActions } from "./data-table-row-actions";
 import { FindingDetailDrawer } from "./finding-detail-drawer";
-import {
-  type FindingTriageDetailLoadHandler,
-  FindingTriageStatusCell,
-} from "./finding-triage-cells";
-import type { FindingTriageUpdateHandler } from "./finding-triage-status-control";
+import { FindingTriageStatusCell } from "./finding-triage-cells";
 import { DeltaValues, NotificationIndicator } from "./notification-indicator";
 import { ProviderIconCell } from "./provider-icon-cell";
 
@@ -36,9 +33,7 @@ interface GetStandaloneFindingColumnsOptions {
   includeUpdatedAt?: boolean;
   openFindingId?: string | null;
   onTriageUpdateAction?: FindingTriageUpdateHandler;
-  onTriageNoteLoadAction?: (
-    triage: FindingTriageSummary,
-  ) => Promise<FindingTriageLoadedNote>;
+  onTriageNoteLoadAction?: FindingTriageNoteLoadHandler;
   onTriageDetailLoadAction?: FindingTriageDetailLoadHandler;
 }
 
