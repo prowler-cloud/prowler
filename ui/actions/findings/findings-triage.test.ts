@@ -7,11 +7,17 @@ const {
   fetchMock,
   getAuthHeadersMock,
   handleApiResponseMock,
+  revalidatePathMock,
 } = vi.hoisted(() => ({
   createMuteRuleMock: vi.fn(),
   fetchMock: vi.fn(),
   getAuthHeadersMock: vi.fn(),
   handleApiResponseMock: vi.fn(),
+  revalidatePathMock: vi.fn(),
+}));
+
+vi.mock("next/cache", () => ({
+  revalidatePath: revalidatePathMock,
 }));
 
 vi.mock("@/actions/mute-rules", () => ({
@@ -254,6 +260,7 @@ describe("findings triage actions", () => {
         }),
       }),
     );
+    expect(revalidatePathMock).not.toHaveBeenCalled();
   });
 
   it("should send manual pass status and fresh evidence in one triage request", async () => {
@@ -300,6 +307,7 @@ describe("findings triage actions", () => {
         }),
       }),
     );
+    expect(revalidatePathMock).toHaveBeenCalledWith("/findings");
   });
 
   it("should accept manual pass evidence at the maximum length", async () => {

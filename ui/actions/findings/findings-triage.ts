@@ -1,5 +1,7 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
+
 import {
   adaptFindingTriageUpdateResponse,
   adaptFindingTriageDetailResponse,
@@ -297,6 +299,7 @@ export async function updateFindingTriage(input: UpdateFindingTriageInput) {
       }),
     );
 
+    revalidatePath("/findings");
     return adaptFindingTriageUpdateResponse(result);
   }
 
