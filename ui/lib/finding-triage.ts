@@ -37,9 +37,13 @@ export const applyOptimisticTriageSummaryUpdate = (
   triage: FindingTriageSummary,
   input: UpdateFindingTriageInput,
 ): FindingTriageSummary => {
-  const noteWasUpdated = Object.prototype.hasOwnProperty.call(input, "note");
+  const manualPassHasEvidence = Boolean(input.manualPassEvidence?.trim());
+  const noteWasUpdated =
+    Object.prototype.hasOwnProperty.call(input, "note") ||
+    manualPassHasEvidence;
   const noteHasContent =
-    typeof input.note === "string" && input.note.length > 0;
+    (typeof input.note === "string" && input.note.length > 0) ||
+    manualPassHasEvidence;
   const shouldMarkMuted = shouldMarkFindingMutedForTriageUpdate(input);
   return {
     ...triage,
