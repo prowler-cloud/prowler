@@ -406,6 +406,10 @@ test.describe("Add Provider", () => {
         await providersPage.fillAZUREProviderDetails(azureProviderData);
         await providersPage.clickNext();
 
+        // Azure now shows a credential-type selector (PROWLER-2378) — pick
+        // the client-secret path before landing on the credentials form.
+        await providersPage.selectAzureCredentialsType(azureCredentials.type);
+
         // Fill static credentials details
         await providersPage.fillAZURECredentials(azureCredentials);
         await providersPage.clickNext();

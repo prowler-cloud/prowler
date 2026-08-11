@@ -26,23 +26,23 @@
 
 targetScope = 'subscription'
 
-@description('Display name of the Entra ID App Registration that Prowler will authenticate as.')
+@description('Name for the App Registration Prowler will use. Keep the default unless you need a custom name.')
 param applicationName string = 'ProwlerApp'
 
-@description('Base64-encoded DER of the X.509 public certificate that Entra ID will pin to the App Registration as a keyCredential. Generate with `openssl x509 -outform DER | base64` (see README). The matching private key stays with the user — Prowler never receives it during deployment.')
+@description('Paste the PUBLIC certificate from the Prowler wizard (prowler-cert-base64.txt) or your own openssl output. Prowler never receives the matching private key.')
 @secure()
 param certificateBase64 string
 
-@description('Optional friendly display name for the certificate credential.')
+@description('Label for the certificate inside the App Registration. Cosmetic — keep the default if unsure.')
 param certificateDisplayName string = 'Prowler Certificate'
 
-@description('Start date (ISO 8601) for the certificate credential validity window. Defaults to the deployment time.')
+@description('When the certificate becomes valid. Defaults to now.')
 param certificateStartDateTime string = utcNow()
 
-@description('End date (ISO 8601) for the certificate credential validity window. Defaults to one year after the deployment.')
+@description('When the certificate expires. Defaults to 1 year from now. Rotate before this date.')
 param certificateEndDateTime string = dateTimeAdd(utcNow(), 'P1Y')
 
-@description('Name of the custom role Prowler creates for its extra read actions.')
+@description('Name of the extra role Prowler creates. Keep the default unless your org already uses this name.')
 param customRoleName string = 'ProwlerRole'
 
 // Deterministic GUIDs derived from `subscription().id` and the params so

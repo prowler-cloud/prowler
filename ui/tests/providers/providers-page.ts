@@ -123,9 +123,12 @@ export interface AWSProviderCredential {
   secretAccessKey?: string;
 }
 
-// AZURE credential options
+// AZURE credential options — mirror the M365 selector added for the
+// Deploy-to-Azure quick-start (PROWLER-2378). "credentials" keeps the
+// legacy name for the client-secret path so existing specs keep working.
 export const AZURE_CREDENTIAL_OPTIONS = {
   AZURE_CREDENTIALS: "credentials",
+  AZURE_CERTIFICATE_CREDENTIALS: "certificate",
 } as const;
 
 // AZURE credential type
@@ -315,6 +318,10 @@ export class ProvidersPage extends BasePage {
   // AWS credentials type selection
   readonly roleCredentialsRadio: Locator;
   readonly staticCredentialsRadio: Locator;
+
+  // Azure credentials type selection
+  readonly azureServicePrincipalRadio: Locator;
+  readonly azureCertificateCredentialsRadio: Locator;
 
   // M365 credentials type selection
   readonly m365StaticCredentialsRadio: Locator;
@@ -593,6 +600,16 @@ export class ProvidersPage extends BasePage {
     });
     this.staticCredentialsRadio = page.getByRole("radio", {
       name: /Connect via Credentials/i,
+    });
+
+    // Radios for selecting Azure credentials method (PROWLER-2378 added the
+    // certificate flow; the client-secret radio stayed but is now inside a
+    // selector step instead of being the default form).
+    this.azureServicePrincipalRadio = page.getByRole("radio", {
+      name: /Service Principal with Client Secret/i,
+    });
+    this.azureCertificateCredentialsRadio = page.getByRole("radio", {
+      name: /Certificate Authentication/i,
     });
 
     // Radios for selecting M365 credentials method
@@ -1073,6 +1090,22 @@ export class ProvidersPage extends BasePage {
       await this.staticCredentialsRadio.click({ force: true });
     } else {
       throw new Error(`Invalid AWS credential type: ${type}`);
+    }
+  }
+
+  async selectAzureCredentialsType(type: AZURECredentialType): Promise<void> {
+    // PROWLER-2378 introduced a credential-type selector for Azure, mirroring
+    // AWS/GCP/M365. The credentials form is now behind a radio choice, so
+    // any spec that reaches Azure credentials must pick the type first.
+    await this.verifyWizardModalOpen();
+    await expect(this.azureServicePrincipalRadio).toBeVisible();
+
+    if (type === AZURE_CREDENTIAL_OPTIONS.AZURE_CREDENTIALS) {
+      await this.azureServicePrincipalRadio.click({ force: true });
+    } else if (type === AZURE_CREDENTIAL_OPTIONS.AZURE_CERTIFICATE_CREDENTIALS) {
+      await this.azureCertificateCredentialsRadio.click({ force: true });
+    } else {
+      throw new Error(`Invalid Azure credential type: ${type}`);
     }
   }
 
