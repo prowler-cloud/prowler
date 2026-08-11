@@ -12,6 +12,7 @@ import {
 import {
   applyOptimisticTriageSummaryUpdate,
   getOptimisticTriageMutedReason,
+  isManualPassTriageUpdate,
   shouldMarkFindingMutedForTriageUpdate,
 } from "@/lib/finding-triage";
 import { isCloud } from "@/lib/shared/env";
@@ -21,10 +22,7 @@ import {
   WATCHLIST_SCOPE,
 } from "@/types/compliance-watchlist";
 import { FINDING_STATUS } from "@/types/components";
-import {
-  FINDING_TRIAGE_STATUS,
-  type UpdateFindingTriageInput,
-} from "@/types/findings-triage";
+import type { UpdateFindingTriageInput } from "@/types/findings-triage";
 
 // Keep fast carousel navigations in a loading state for one short beat so
 // React doesn't batch away the skeleton frame when switching resources.
@@ -404,9 +402,7 @@ export function useResourceDetailDrawer({
     }
 
     const shouldMarkMuted = shouldMarkFindingMutedForTriageUpdate(input);
-    const isManualPass =
-      input.status === FINDING_TRIAGE_STATUS.RESOLVED &&
-      Boolean(input.manualPassEvidence);
+    const isManualPass = isManualPassTriageUpdate(input);
 
     return {
       ...finding,

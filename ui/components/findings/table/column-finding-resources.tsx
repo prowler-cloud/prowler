@@ -22,6 +22,7 @@ import { buildJiraActionLabel } from "@/lib/jira-dispatch-action";
 import { createJiraDispatchPayload } from "@/lib/jira-dispatch-selection";
 import { FindingResourceRow } from "@/types";
 import type {
+  FindingTriageContext,
   FindingTriageDetailLoadHandler,
   FindingTriageNoteLoadHandler,
   FindingTriageUpdateHandler,
@@ -38,6 +39,16 @@ import {
   type DeltaType,
   NotificationIndicator,
 } from "./notification-indicator";
+
+const buildFindingResourceTriageContext = (
+  resource: FindingResourceRow,
+  findingTitle?: string,
+): FindingTriageContext => ({
+  title: findingTitle || resource.checkId,
+  resource: resource.resourceName,
+  provider: resource.providerAlias,
+  providerType: resource.providerType,
+});
 
 const ResourceRowActions = ({
   row,
@@ -135,12 +146,10 @@ const ResourceRowActions = ({
         <ActionDropdown ariaLabel="Resource actions">
           <FindingNoteActionItem
             triage={resource.triage}
-            findingContext={{
-              title: findingTitle || resource.checkId,
-              resource: resource.resourceName,
-              provider: resource.providerAlias,
-              providerType: resource.providerType,
-            }}
+            findingContext={buildFindingResourceTriageContext(
+              resource,
+              findingTitle,
+            )}
             onTriageUpdateAction={onTriageUpdateAction}
             onTriageNoteLoadAction={onTriageNoteLoadAction}
             onTriageDetailLoadAction={onTriageDetailLoadAction}
@@ -356,12 +365,10 @@ export function getColumnFindingResources({
         <InfoField label="Triage" variant="compact">
           <FindingTriageStatusCell
             triage={row.original.triage}
-            findingContext={{
-              title: findingTitle || row.original.checkId,
-              resource: row.original.resourceName,
-              provider: row.original.providerAlias,
-              providerType: row.original.providerType,
-            }}
+            findingContext={buildFindingResourceTriageContext(
+              row.original,
+              findingTitle,
+            )}
             onTriageUpdateAction={onTriageUpdateAction}
             onTriageDetailLoadAction={onTriageDetailLoadAction}
           />

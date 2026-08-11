@@ -33,6 +33,12 @@ export const getOptimisticTriageMutedReason = (
 ): string =>
   `Finding triage status changed to ${FINDING_TRIAGE_STATUS_LABELS[status]}.`;
 
+export const isManualPassTriageUpdate = (
+  input: UpdateFindingTriageInput,
+): boolean =>
+  input.status === FINDING_TRIAGE_STATUS.RESOLVED &&
+  Boolean(input.manualPassEvidence);
+
 export const applyOptimisticTriageSummaryUpdate = (
   triage: FindingTriageSummary,
   input: UpdateFindingTriageInput,
@@ -77,9 +83,7 @@ export const applyOptimisticFindingTriageRowUpdate = <
   }
 
   const shouldMarkMuted = shouldMarkFindingMutedForTriageUpdate(input);
-  const isManualPass =
-    input.status === FINDING_TRIAGE_STATUS.RESOLVED &&
-    Boolean(input.manualPassEvidence);
+  const isManualPass = isManualPassTriageUpdate(input);
 
   return {
     ...finding,
