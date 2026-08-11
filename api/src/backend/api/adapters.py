@@ -133,19 +133,20 @@ class ProwlerSocialAccountAdapter(DefaultSocialAccountAdapter):
         and is about to be saved to the DB for the first time.
         """
         with transaction.atomic(using=MainRouter.admin_db):
-            # Allauth saves the user without an explicit alias. Route that save
-            # through admin so every signup record shares this transaction.
-            with write_db_alias(MainRouter.admin_db):
-                user = super().save_user(request, sociallogin, form)
             provider = sociallogin.provider.id
             extra = sociallogin.account.extra_data
 
             if provider != "saml":
-                # Handle other providers (e.g., GitHub, Google)
-                user.save(using=MainRouter.admin_db)
+                user = sociallogin.user
                 user.name = self._get_social_account_name(extra, user.email)
-                user.save(using=MainRouter.admin_db)
 
+            # Allauth saves the user without an explicit alias. Route that save
+            # through admin so every signup record shares this transaction.
+            with write_db_alias(MainRouter.admin_db):
+                user = super().save_user(request, sociallogin, form)
+
+            if provider != "saml":
+                # Handle other providers (e.g., GitHub, Google)
                 invitation_token = self._get_invitation_token(request)
                 if invitation_token:
                     invitation, _ = accept_invitation_for_user(
