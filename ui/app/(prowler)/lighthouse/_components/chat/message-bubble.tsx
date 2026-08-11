@@ -241,6 +241,7 @@ function MessageMeta({
     >
       <CopyMessageButton text={text} />
       <RunFeedbackControls
+        key={`${message.run?.id ?? ""}:${message.run?.feedbackRating ?? ""}`}
         message={message}
         isUser={isUser}
         sessionId={sessionId}
@@ -265,10 +266,11 @@ function RunFeedbackControls({
   sessionId?: string;
 }) {
   const run = message.run;
-  const [rating, setRating] = useState<LighthouseV2FeedbackRating | null>(
-    run?.feedbackRating ?? null,
-  );
+  // Pending state keeps the optimistic selection until canonical feedback catches up.
+  const [pendingRating, setPendingRating] =
+    useState<LighthouseV2FeedbackRating | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const rating = pendingRating ?? run?.feedbackRating ?? null;
   const feedbackEligible =
     run?.status === LIGHTHOUSE_V2_RUN_STATUS.COMPLETED ||
     run?.status === LIGHTHOUSE_V2_RUN_STATUS.BLOCKED ||
@@ -281,19 +283,23 @@ function RunFeedbackControls({
 
   const submitRating = async (nextRating: LighthouseV2FeedbackRating) => {
     if (isSubmitting || rating === nextRating) return;
-    const previousRating = rating;
-    setRating(nextRating);
+    setPendingRating(nextRating);
     setIsSubmitting(true);
-    const result = await submitLighthouseV2RunFeedback({
-      sessionId,
-      runId: run.id,
-      rating: nextRating,
-      idempotencyKey: crypto.randomUUID(),
-    });
-    if ("error" in result) {
-      setRating(previousRating);
+    try {
+      const result = await submitLighthouseV2RunFeedback({
+        sessionId,
+        runId: run.id,
+        rating: nextRating,
+        idempotencyKey: crypto.randomUUID(),
+      });
+      if ("error" in result) {
+        setPendingRating(null);
+      }
+    } catch {
+      setPendingRating(null);
+    } finally {
+      setIsSubmitting(false);
     }
-    setIsSubmitting(false);
   };
 
   return (

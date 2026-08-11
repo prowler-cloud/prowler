@@ -383,6 +383,80 @@ describe("MessageBubble", () => {
     expect(selectedButton).toHaveClass("bg-button-primary", "text-black");
   });
 
+  it("should restore canonical feedback and controls when submission rejects", async () => {
+    // Given
+    const user = userEvent.setup();
+    submitFeedbackMock.mockRejectedValue(new Error("Network unavailable"));
+    const message = {
+      ...buildAssistantMessage([textPart("part-1", "Done")]),
+      run: {
+        id: "run-1",
+        status: "completed" as const,
+        terminalCode: null,
+        hasAssistantMessage: true,
+        feedbackRating: "up" as const,
+      },
+    };
+
+    render(<MessageBubble message={message} sessionId="session-1" />);
+
+    // When
+    await user.click(
+      screen.getByRole("button", { name: "Mark outcome as not helpful" }),
+    );
+
+    // Then
+    const helpfulButton = screen.getByRole("button", {
+      name: "Mark outcome as helpful",
+    });
+    const notHelpfulButton = screen.getByRole("button", {
+      name: "Mark outcome as not helpful",
+    });
+    await waitFor(() => expect(helpfulButton).toBeEnabled());
+    expect(notHelpfulButton).toBeEnabled();
+    expect(helpfulButton).toHaveAttribute("aria-pressed", "true");
+    expect(notHelpfulButton).toHaveAttribute("aria-pressed", "false");
+  });
+
+  it("should reflect a changed canonical feedback rating for the same run", () => {
+    // Given
+    const message = {
+      ...buildAssistantMessage([textPart("part-1", "Done")]),
+      run: {
+        id: "run-1",
+        status: "completed" as const,
+        terminalCode: null,
+        hasAssistantMessage: true,
+        feedbackRating: "up" as const,
+      },
+    };
+    const { rerender } = render(
+      <MessageBubble message={message} sessionId="session-1" />,
+    );
+    expect(
+      screen.getByRole("button", { name: "Mark outcome as helpful" }),
+    ).toHaveAttribute("aria-pressed", "true");
+
+    // When
+    rerender(
+      <MessageBubble
+        message={{
+          ...message,
+          run: { ...message.run, feedbackRating: "down" },
+        }}
+        sessionId="session-1"
+      />,
+    );
+
+    // Then
+    expect(
+      screen.getByRole("button", { name: "Mark outcome as helpful" }),
+    ).toHaveAttribute("aria-pressed", "false");
+    expect(
+      screen.getByRole("button", { name: "Mark outcome as not helpful" }),
+    ).toHaveAttribute("aria-pressed", "true");
+  });
+
   it("should expose feedback for failed outcomes without an assistant message", () => {
     const message: LighthouseV2Message = {
       id: "message-user-failed",
