@@ -252,6 +252,7 @@ export async function loadFindingTriageDetail(
   const apiResponse = await getJsonApi(
     `/findings/${encodePathSegment(findingUid)}/triage`,
   );
+  throwIfApiError(apiResponse);
   const detail = adaptFindingTriageDetailResponse(apiResponse, {
     canEdit: triage.canEdit,
     disabledReason: triage.disabledReason,

@@ -82,6 +82,31 @@ describe("findings triage actions", () => {
     );
   });
 
+  it("should reject API errors when loading triage detail", async () => {
+    // Given
+    const { loadFindingTriageDetail } = await importActions();
+    handleApiResponseMock.mockResolvedValue({
+      status: 403,
+      errors: [{ detail: "Finding triage access denied." }],
+    });
+
+    // When / Then
+    await expect(
+      loadFindingTriageDetail({
+        findingId: "finding-snapshot-id",
+        findingUid: "finding/stable/uid",
+        triageId: "triage-1",
+        notesCount: 0,
+        status: FINDING_TRIAGE_STATUS.OPEN,
+        label: "Open",
+        hasVisibleNote: false,
+        isMuted: false,
+        canEdit: true,
+        billingHref: "https://prowler.com/pricing",
+      }),
+    ).rejects.toThrow("Finding triage access denied.");
+  });
+
   it("should load notes through the persisted triage route when triageId exists", async () => {
     // Given
     const { loadLatestFindingTriageNote } = await importActions();
