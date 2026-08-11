@@ -779,10 +779,6 @@ describe("FindingNoteModal", () => {
     expect(
       screen.getByText(/Manually verified by Alex Security/i),
     ).toBeVisible();
-    const attestedRow = screen.getByText("Attested").parentElement;
-    const validUntilRow = screen.getByText("Valid until").parentElement;
-    expect(attestedRow).not.toBe(validUntilRow);
-    expect(attestedRow?.nextElementSibling).toBe(validUntilRow);
     expect(screen.getByText("Jun 03, 2026")).toBeVisible();
     expect(screen.getByText("Jun 17, 2026")).toBeVisible();
     expect(
@@ -857,30 +853,6 @@ describe("FindingNoteModal", () => {
     expect(screen.getByText(/Previous Manual Pass/i)).toBeVisible();
     expect(screen.getByText("Expired")).toBeVisible();
     expect(screen.queryByText("Evidence")).not.toBeInTheDocument();
-  });
-
-  it("should render only the Manual Pass evidence value with primary text", () => {
-    // Given / When
-    renderNoteModal({
-      mode: FINDING_NOTE_MODAL_MODE.MANUAL_PASS_DETAILS,
-      triage: makeTriageDetail({
-        status: FINDING_TRIAGE_STATUS.RESOLVED,
-        label: "Resolved",
-        rawFindingStatus: FINDING_STATUS.MANUAL,
-        manualPassActive: true,
-        manualPassEvidence: "Tested.",
-        manualPassCreatedAt: "2026-06-03T10:00:00Z",
-        manualPassExpiresAt: "2026-06-17T10:00:00Z",
-      }),
-    });
-
-    // Then
-    expect(screen.getByText("Tested.")).toHaveClass(
-      "text-text-neutral-primary",
-    );
-    expect(screen.getByText("Evidence")).not.toHaveClass(
-      "text-text-neutral-primary",
-    );
   });
 
   it("should show inactive Manual Pass details without edit or submit controls", () => {

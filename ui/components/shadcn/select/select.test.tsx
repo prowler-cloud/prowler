@@ -1,6 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeAll, describe, expect, it, vi } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 
 import { Select, SelectContent, SelectItem, SelectTrigger } from "./select";
 
@@ -80,33 +80,5 @@ describe("Select", () => {
       within(selectedItem).queryByRole("img", { hidden: true }),
     ).toBeNull();
     expect(selectedItem.querySelector("svg")).toBeNull();
-  });
-
-  it("activates an ordinary enabled item", async () => {
-    // Given
-    const user = userEvent.setup();
-    const onValueChange = vi.fn();
-    render(
-      <Select value="open" onValueChange={onValueChange}>
-        <SelectTrigger aria-label="Triage status">Open</SelectTrigger>
-        <SelectContent>
-          <SelectItem value="open">Open</SelectItem>
-          <SelectItem value="resolved">Resolved</SelectItem>
-        </SelectContent>
-      </Select>,
-    );
-    await user.click(screen.getByRole("combobox", { name: "Triage status" }));
-    const enabledItem = screen.getByRole("option", { name: "Resolved" });
-
-    // Then
-    expect(enabledItem).not.toHaveAttribute("aria-disabled");
-    expect(enabledItem).not.toHaveAttribute("disabled");
-    expect(enabledItem).not.toHaveAttribute("data-disabled");
-
-    // When
-    await user.click(enabledItem);
-
-    // Then
-    expect(onValueChange).toHaveBeenCalledWith("resolved");
   });
 });

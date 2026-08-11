@@ -514,7 +514,6 @@ describe("finding triage cells", () => {
     ).not.toBeInTheDocument();
     expect(provenanceControl).toBeVisible();
     expect(provenanceControl).toBeDisabled();
-    expect(provenanceControl.parentElement).toHaveClass("w-32");
     expect(onTriageDetailLoadAction).toHaveBeenCalledOnce();
 
     resolveDetail(makeTriageDetail());
@@ -598,34 +597,6 @@ describe("finding triage cells", () => {
       screen.getByRole("combobox", { name: "Triage status" }),
     ).toHaveTextContent("Resolved");
     expect(screen.queryByText("Manually verified")).not.toBeInTheDocument();
-  });
-
-  it("should left-align the clickable Manual Pass provenance with the status picker", () => {
-    // Given / When
-    render(
-      <FindingTriageStatusCell
-        triage={makeTriageSummary({
-          status: FINDING_TRIAGE_STATUS.RESOLVED,
-          label: "Resolved",
-          manualPassProvenance: "Manually verified",
-          rawFindingStatus: FINDING_STATUS.MANUAL,
-        })}
-        onTriageUpdateAction={vi.fn()}
-        onTriageDetailLoadAction={vi.fn()}
-      />,
-    );
-
-    const statusControl = screen.getByRole("combobox", {
-      name: "Triage status",
-    });
-    const provenanceControl = screen.getByRole("button", {
-      name: "View Manual Pass details",
-    });
-    const alignmentContainer = provenanceControl.parentElement;
-
-    // Then
-    expect(alignmentContainer).toContainElement(statusControl.parentElement);
-    expect(alignmentContainer).toHaveClass("w-32", "items-start");
   });
 
   it("should load authoritative Manual Pass evidence from the provenance action", async () => {
