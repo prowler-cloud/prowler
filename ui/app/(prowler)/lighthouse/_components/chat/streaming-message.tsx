@@ -1,6 +1,6 @@
 "use client";
 
-import { Bot, Loader2 } from "lucide-react";
+import { Bot } from "lucide-react";
 
 import {
   ChainOfThought,
@@ -17,6 +17,7 @@ import {
   type LighthouseV2StreamToolCallActivityItem,
 } from "@/app/(prowler)/lighthouse/_lib/event-reducer";
 import { formatToolName } from "@/app/(prowler)/lighthouse/_lib/tool-calls";
+import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { cn } from "@/lib/utils";
 
 import { MessageMarkdown } from "./message-markdown";
@@ -64,7 +65,9 @@ export function StreamingAssistantMessage({
   );
 }
 
-function StreamingActivityGroups({
+// Ordered live view of the stream: narration blocks with tool groups between
+// them. Shared with the skill progress card so both surfaces read identically.
+export function StreamingActivityGroups({
   streamState,
 }: {
   streamState: LighthouseV2StreamState;
@@ -135,7 +138,7 @@ function StreamingToolCallGroup({
             }
             icon={
               toolCall.status === LIGHTHOUSE_V2_TOOL_CALL_STATUS.RUNNING
-                ? Loader2
+                ? Spinner
                 : undefined
             }
             label={getToolCallLabel(toolCall)}

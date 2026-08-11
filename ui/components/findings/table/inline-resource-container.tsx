@@ -7,7 +7,7 @@ import {
 } from "@tanstack/react-table";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronsDown } from "lucide-react";
-import { useImperativeHandle, useRef } from "react";
+import { useImperativeHandle, useRef, useState } from "react";
 
 import {
   loadLatestFindingTriageNote,
@@ -18,9 +18,11 @@ import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
 import { LoadingState } from "@/components/shadcn/spinner/loading-state";
 import { TableCell, TableRow } from "@/components/shadcn/table";
 import { useFindingGroupResourceState } from "@/hooks/use-finding-group-resource-state";
+import { useMountEffect } from "@/hooks/use-mount-effect";
 import { useScrollHint } from "@/hooks/use-scroll-hint";
 import { buildFindingResourceContext } from "@/lib/lighthouse/context/contributions";
 import { cn } from "@/lib/utils";
+import { SIDE_PANEL_TAB, useSidePanelStore } from "@/store/side-panel";
 import { FindingGroupRow } from "@/types";
 
 import { getColumnFindingResources } from "./column-finding-resources";
@@ -71,9 +73,18 @@ const COMPACT_LABELED_COLUMN_IDS = new Set([
 const STICKY_RESOURCE_ACTION_CELL_CLASS =
   "sticky right-0 z-20 min-w-12 last:rounded-r-none! overflow-visible bg-bg-neutral-secondary before:pointer-events-none before:absolute before:inset-y-0 before:-left-8 before:w-8 before:bg-gradient-to-r before:from-transparent before:to-bg-neutral-secondary before:content-[''] group-hover:bg-bg-neutral-tertiary group-hover:before:to-bg-neutral-tertiary group-data-[state=selected]:bg-bg-neutral-tertiary group-data-[state=selected]:before:to-bg-neutral-tertiary";
 
+// The hover Skills pill overhangs the first cell into the scrollport's pl-6
+// indent, which the row background never paints (and the row's rounded-l-full
+// cap starts at the cell edge). This pseudo-element repaints the highlight
+// from 24px left of the cell, so the hovered/selected row visually contains
+// the pill instead of leaving a dark notch around it.
+const SELECT_CELL_HOVER_EXTENSION_CLASS =
+  "relative before:pointer-events-none before:absolute before:inset-y-0 before:-left-6 before:right-0 before:rounded-l-full before:content-[''] before:bg-transparent before:transition-colors group-hover:before:bg-bg-neutral-tertiary group-data-[state=selected]:before:bg-bg-neutral-tertiary";
+
 const getResourceCellClassName = (columnId: string) =>
   cn(
     COMPACT_LABELED_COLUMN_IDS.has(columnId) && "align-top",
+    columnId === "select" && SELECT_CELL_HOVER_EXTENSION_CLASS,
     columnId === ACTIONS_COLUMN_ID && STICKY_RESOURCE_ACTION_CELL_CLASS,
   );
 
@@ -207,6 +218,37 @@ export function InlineResourceContainer({
     showScrollHint,
   } = useScrollHint({ refreshToken: resources.length });
 
+  // Pin geometry for the expanded panel (PostHog-style): sized to the outer
+  // card's scrollport and stuck to its left edge, so horizontal scrolling
+  // moves the group columns while this block stays in place — which also
+  // lets the sub-table's own sticky actions column anchor to a scrollport
+  // that is actually visible from the start.
+  const [scrollportPin, setScrollportPin] = useState<{
+    width: number;
+    left: number;
+  } | null>(null);
+  useMountEffect(() => {
+    const scrollParent = scrollContainerRef.current?.closest(
+      "[data-table-scroll-container]",
+    );
+    if (!(scrollParent instanceof HTMLElement)) return;
+    const measure = () => {
+      const styles = getComputedStyle(scrollParent);
+      const paddingLeft = parseFloat(styles.paddingLeft);
+      setScrollportPin({
+        width:
+          scrollParent.clientWidth -
+          paddingLeft -
+          parseFloat(styles.paddingRight),
+        left: paddingLeft,
+      });
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(scrollParent);
+    return () => observer.disconnect();
+  });
+
   // Combine scrollContainerRef (for IntersectionObserver root) with scrollHintContainerRef
   const combinedScrollRef = (node: HTMLDivElement | null) => {
     scrollContainerRef.current = node;
@@ -215,10 +257,18 @@ export function InlineResourceContainer({
 
   useImperativeHandle(ref, () => ({ refresh, clearSelection }));
 
+  // A skill launch opens the drawer behind the chat: the Details tab must
+  // register without stealing the AI tab the launch just selected.
+  const [isSkillLaunchDrawer, setIsSkillLaunchDrawer] = useState(false);
+
   const columns = getColumnFindingResources({
     rowSelection,
     selectableRowCount,
     findingTitle: group.checkTitle,
+    onSkillLaunchOpenDrawer: (rowIndex) => {
+      setIsSkillLaunchDrawer(true);
+      drawer.openDrawer(rowIndex);
+    },
     onTriageUpdateAction: (input) =>
       updateTriageOptimistically(input, updateFindingTriage),
     onTriageNoteLoadAction: loadLatestFindingTriageNote,
@@ -267,15 +317,28 @@ export function InlineResourceContainer({
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.2, ease: "easeOut" }}
-              className="overflow-hidden"
+              className="sticky overflow-hidden"
+              // Without a measured scrollport the insets stay auto, which
+              // makes the sticky inert and falls back to spanning the row.
+              style={
+                scrollportPin
+                  ? { width: scrollportPin.width, left: scrollportPin.left }
+                  : undefined
+              }
             >
               <div className="relative">
                 <div
                   ref={combinedScrollRef}
+                  // pl (not ml): padding sits inside the overflow clip region,
+                  // giving the hover Skills pill room to extend left over the
+                  // row indent — a margin would clip it at the content edge.
                   className="minimal-scrollbar max-h-[440px] overflow-auto pl-6"
                 >
-                  {/* Resource rows or skeleton placeholder */}
-                  <table className="-mt-2.5 w-max min-w-full border-separate border-spacing-y-4">
+                  {/* Resource rows or skeleton placeholder. No w-max: auto
+                      table layout compresses truncatable cells to fit, so
+                      horizontal scroll (and its extra trackpad gestures) only
+                      appears when columns genuinely can't fit. */}
+                  <table className="-mt-2.5 min-w-full border-separate border-spacing-y-4">
                     <tbody>
                       {isLoading && rows.length === 0 ? (
                         Array.from({ length: skeletonRowCount }).map((_, i) => (
@@ -300,7 +363,14 @@ export function InlineResourceContainer({
                                 )
                               )
                                 return;
+                              setIsSkillLaunchDrawer(false);
                               drawer.openDrawer(row.index);
+                              // The drawer may already be mounted (e.g. after
+                              // a skill launch left the AI tab in front):
+                              // a row click always fronts the Details tab.
+                              useSidePanelStore
+                                .getState()
+                                .openPanel(SIDE_PANEL_TAB.CONTEXT);
                             }}
                           >
                             {row.getVisibleCells().map((cell) => (
@@ -371,8 +441,12 @@ export function InlineResourceContainer({
       <ResourceDetailDrawer
         open={drawer.isOpen}
         onOpenChange={(open) => {
-          if (!open) drawer.closeDrawer();
+          if (!open) {
+            drawer.closeDrawer();
+            setIsSkillLaunchDrawer(false);
+          }
         }}
+        selectTabOnOpen={!isSkillLaunchDrawer}
         isLoading={drawer.isLoading}
         isNavigating={drawer.isNavigating}
         checkMeta={drawer.checkMeta}

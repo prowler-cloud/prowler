@@ -15,12 +15,15 @@ import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { isFindingGroupMuted } from "@/lib/findings-groups";
 import { buildJiraActionLabel } from "@/lib/jira-dispatch-action";
 import { createJiraDispatchPayload } from "@/lib/jira-dispatch-selection";
+import { buildFindingResourceContext } from "@/lib/lighthouse/context/contributions";
+import { isCloud } from "@/lib/shared/env";
 import { getOptionalText } from "@/lib/utils";
 import type {
   FindingTriageLoadedNote,
   FindingTriageSummary,
 } from "@/types/findings-triage";
 import { JIRA_DISPATCH_TARGET } from "@/types/integrations";
+import type { LighthouseSkillDefinition } from "@/types/lighthouse-skills";
 import type { ProviderType } from "@/types/providers";
 
 import { canMuteFindingGroup } from "./finding-group-selection";
@@ -28,6 +31,11 @@ import type { FindingTriageContext } from "./finding-note-modal";
 import { FindingNoteActionItem } from "./finding-triage-cells";
 import type { FindingTriageUpdateHandler } from "./finding-triage-status-control";
 import { FindingsSelectionContext } from "./findings-selection-context";
+import {
+  LighthouseSkillsSubmenu,
+  useLighthousePromptLaunch,
+  useLighthouseSkillLaunch,
+} from "./lighthouse-skills-launch";
 
 export interface FindingRowData {
   id: string;
@@ -37,6 +45,8 @@ export interface FindingRowData {
       checktitle?: string;
     };
   };
+  severity?: string;
+  status?: string;
   triage?: FindingTriageSummary;
   relationships?: {
     resource?: {
@@ -235,6 +245,19 @@ export function DataTableRowActions<T extends FindingRowData>({
     router.refresh();
   };
 
+  const launchSkill = useLighthouseSkillLaunch();
+  const launchPrompt = useLighthousePromptLaunch();
+  // Skills are finding-level only: group rows carry check ids, not finding
+  // UUIDs, so their menu never offers the Lighthouse entries (see below).
+  const buildSkillFindingItem = () =>
+    buildFindingResourceContext({ findingId: finding.id });
+  const handleLaunchSkill = (skill: LighthouseSkillDefinition) => {
+    launchSkill(skill, buildSkillFindingItem());
+  };
+  const handleSubmitPrompt = (text: string) => {
+    launchPrompt(text, buildSkillFindingItem());
+  };
+
   return (
     <>
       <MuteFindingsModal
@@ -275,6 +298,12 @@ export function DataTableRowActions<T extends FindingRowData>({
             onSelect={handleMuteClick}
           />
           <JiraDispatchActionItem label={jiraLabel} payload={jiraPayload} />
+          {isCloud() && !isGroup && (
+            <LighthouseSkillsSubmenu
+              onLaunch={handleLaunchSkill}
+              onSubmitPrompt={handleSubmitPrompt}
+            />
+          )}
         </ActionDropdown>
       </div>
     </>
