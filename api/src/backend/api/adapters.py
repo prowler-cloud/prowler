@@ -30,7 +30,7 @@ class ProwlerSocialAccountAdapter(DefaultSocialAccountAdapter):
             if not isinstance(value, str):
                 continue
 
-            candidate = value.strip()[: name_field.max_length]
+            candidate = value.strip()[: name_field.max_length].rstrip()
             if not candidate:
                 continue
 
