@@ -110,7 +110,7 @@ describe("useResourceDrawerBootstrap", () => {
         manualPassProvenance: "Manually verified",
       }),
     );
-    expect(result.current.findingsData[0]?.attributes.status).toBe("MANUAL");
+    expect(result.current.findingsData[0]?.attributes.status).toBe("PASS");
     expect(getResourceDrawerDataMock).toHaveBeenCalledTimes(loadCount);
   });
 });

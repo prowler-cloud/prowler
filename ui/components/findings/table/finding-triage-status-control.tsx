@@ -10,6 +10,7 @@ import {
   SelectItem,
   SelectTrigger,
 } from "@/components/shadcn/select/select";
+import { useToast } from "@/components/shadcn/toast/use-toast";
 import { cn } from "@/lib/utils";
 import { FINDING_STATUS } from "@/types/components";
 import {
@@ -134,7 +135,7 @@ type FindingTriageStatusControlProps =
 export function FindingTriageStatusControl(
   props: FindingTriageStatusControlProps,
 ) {
-  const [tableUpdateError, setTableUpdateError] = useState<string | null>(null);
+  const { toast } = useToast();
   const [isTableUpdating, setIsTableUpdating] = useState(false);
   const [pendingShortcutStatus, setPendingShortcutStatus] =
     useState<FindingTriageManualStatus | null>(null);
@@ -170,7 +171,6 @@ export function FindingTriageStatusControl(
       return;
     }
 
-    setTableUpdateError(null);
     setIsTableUpdating(true);
 
     try {
@@ -184,7 +184,11 @@ export function FindingTriageStatusControl(
         isMuted: triage.isMuted,
       });
     } catch {
-      setTableUpdateError("Could not update triage status.");
+      toast({
+        variant: "destructive",
+        title: "Could not update triage status.",
+        description: "Please try again.",
+      });
     } finally {
       setIsTableUpdating(false);
     }
@@ -229,11 +233,6 @@ export function FindingTriageStatusControl(
           onValueChange={handleTableValueChange}
         />
       </div>
-      {tableUpdateError && (
-        <span className="sr-only" role="alert">
-          {tableUpdateError}
-        </span>
-      )}
       <Modal
         open={pendingShortcutStatus !== null}
         onOpenChange={(open) => {

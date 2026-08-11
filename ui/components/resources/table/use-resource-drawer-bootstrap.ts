@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { getResourceDrawerData } from "@/actions/resources";
-import { applyOptimisticTriageSummaryUpdate } from "@/lib/finding-triage";
+import { applyOptimisticFindingTriageRowsUpdate } from "@/lib/finding-triage";
 import { MetaDataProps } from "@/types";
 import type { UpdateFindingTriageInput } from "@/types/findings-triage";
 import { OrganizationResource } from "@/types/organizations";
@@ -52,14 +52,7 @@ export function useResourceDrawerBootstrap({
 
   const patchTriageUpdate = (input: UpdateFindingTriageInput) => {
     setFindingsData((findings) =>
-      findings.map((finding) =>
-        finding.triage?.findingId === input.findingId
-          ? {
-              ...finding,
-              triage: applyOptimisticTriageSummaryUpdate(finding.triage, input),
-            }
-          : finding,
-      ),
+      applyOptimisticFindingTriageRowsUpdate(findings, input),
     );
   };
 

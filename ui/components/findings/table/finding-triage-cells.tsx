@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import { Button } from "@/components/shadcn/button/button";
 import { ActionDropdownItem } from "@/components/shadcn/dropdown";
+import { useToast } from "@/components/shadcn/toast/use-toast";
 import {
   Tooltip,
   TooltipContent,
@@ -87,6 +88,29 @@ const getTriageDetailFromSummary = (
   manualPassEvidence: null,
   manualPassDeactivatedAt: null,
 });
+
+const getManualPassModalInitialStatus = (
+  mode: FindingNoteModalMode,
+  detail: FindingTriageDetail,
+) => {
+  if (
+    mode === FINDING_NOTE_MODAL_MODE.MANUAL_PASS_DETAILS &&
+    detail.status === FINDING_TRIAGE_STATUS.RESOLVED
+  ) {
+    return FINDING_TRIAGE_STATUS.RESOLVED;
+  }
+
+  if (
+    mode === FINDING_NOTE_MODAL_MODE.EDIT &&
+    detail.rawFindingStatus === FINDING_STATUS.MANUAL
+  ) {
+    return FINDING_TRIAGE_STATUS.RESOLVED;
+  }
+
+  return isManualStatus(detail.status)
+    ? detail.status
+    : FINDING_TRIAGE_STATUS.OPEN;
+};
 
 export function FindingTriageStatusCell({
   triage,
@@ -253,14 +277,10 @@ export function FindingTriageStatusCell({
         triage={manualPassDetail}
         findingContext={findingContext}
         mode={manualPassModalMode}
-        initialStatus={
-          manualPassModalMode === FINDING_NOTE_MODAL_MODE.EDIT &&
-          manualPassDetail.rawFindingStatus === FINDING_STATUS.MANUAL
-            ? FINDING_TRIAGE_STATUS.RESOLVED
-            : isManualStatus(manualPassDetail.status)
-              ? manualPassDetail.status
-              : FINDING_TRIAGE_STATUS.OPEN
-        }
+        initialStatus={getManualPassModalInitialStatus(
+          manualPassModalMode,
+          manualPassDetail,
+        )}
         onTriageUpdateAction={
           manualPassModalMode === FINDING_NOTE_MODAL_MODE.EDIT
             ? handleTriageUpdate
@@ -386,11 +406,11 @@ function FindingNoteActionItemContent({
   onTriageNoteLoadAction?: FindingTriageNoteLoadHandler;
   onTriageDetailLoadAction?: FindingTriageDetailLoadHandler;
 }) {
+  const { toast } = useToast();
   const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
   const [loadedNote, setLoadedNote] = useState<FindingTriageLoadedNote>();
   const [loadedDetail, setLoadedDetail] = useState<FindingTriageDetail>();
   const [isLoadingNote, setIsLoadingNote] = useState(false);
-  const [loadError, setLoadError] = useState<string | null>(null);
 
   const hasUpdateHandler = Boolean(onTriageUpdateAction);
   const isCloudOnly =
@@ -424,7 +444,6 @@ function FindingNoteActionItemContent({
       return;
     }
 
-    setLoadError(null);
     setIsLoadingNote(true);
 
     try {
@@ -442,11 +461,13 @@ function FindingNoteActionItemContent({
       }
       setIsNoteModalOpen(true);
     } catch {
-      setLoadError(
-        triage.hasVisibleNote
+      toast({
+        variant: "destructive",
+        title: triage.hasVisibleNote
           ? "Could not load the existing note."
           : "Could not load current triage details.",
-      );
+        description: "Please try again.",
+      });
     } finally {
       setIsLoadingNote(false);
     }
@@ -486,11 +507,6 @@ function FindingNoteActionItemContent({
           void handleNoteSelect();
         }}
       />
-      {loadError && (
-        <span className="sr-only" role="alert">
-          {loadError}
-        </span>
-      )}
       {noteModal}
     </>
   );

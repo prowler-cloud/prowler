@@ -3,8 +3,16 @@ import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
+const { toastMock } = vi.hoisted(() => ({
+  toastMock: vi.fn(),
+}));
+
 vi.mock("@/actions/findings/findings-triage", () => ({
   loadFindingTriageDetail: vi.fn(),
+}));
+
+vi.mock("@/components/shadcn/toast/use-toast", () => ({
+  useToast: () => ({ toast: toastMock }),
 }));
 
 vi.mock("@/components/shadcn/modal", () => ({
@@ -126,6 +134,7 @@ function makeTriageDetail(
 }
 
 afterEach(() => {
+  toastMock.mockReset();
   useCloudUpgradeStore.getState().closeCloudUpgrade();
 });
 
@@ -653,9 +662,11 @@ describe("finding triage cells", () => {
     expect(within(dialog).getByText("Active")).toBeVisible();
     expect(within(dialog).getByText("Jun 03, 2026")).toBeVisible();
     expect(within(dialog).getByText("Jun 17, 2026")).toBeVisible();
-    expect(
-      within(dialog).getByRole("combobox", { name: "Triage status" }),
-    ).toBeDisabled();
+    const statusControl = within(dialog).getByRole("combobox", {
+      name: "Triage status",
+    });
+    expect(statusControl).toHaveTextContent("Resolved");
+    expect(statusControl).toBeDisabled();
     expect(
       within(dialog).queryByLabelText("Note text"),
     ).not.toBeInTheDocument();
@@ -998,7 +1009,7 @@ describe("finding triage cells", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("should expose a screen-reader error when an existing note cannot load", async () => {
+  it("should show a visible error when an existing note cannot load", async () => {
     // Given
     const user = userEvent.setup();
     const onTriageNoteLoadAction = vi
@@ -1017,8 +1028,43 @@ describe("finding triage cells", () => {
     await user.click(screen.getByRole("button", { name: "Open note" }));
 
     // Then
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Could not load the existing note.",
+    await waitFor(() =>
+      expect(toastMock).toHaveBeenCalledWith({
+        variant: "destructive",
+        title: "Could not load the existing note.",
+        description: "Please try again.",
+      }),
+    );
+    expect(
+      screen.queryByRole("dialog", { name: "Add Triage Note" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("should show a visible error when current triage details cannot load for a new note", async () => {
+    // Given
+    const user = userEvent.setup();
+    const onTriageDetailLoadAction = vi
+      .fn()
+      .mockRejectedValue(new Error("load failed"));
+    render(
+      <FindingNoteActionItem
+        triage={makeTriageSummary()}
+        findingContext={{ title: "S3 bucket allows public reads" }}
+        onTriageUpdateAction={vi.fn()}
+        onTriageDetailLoadAction={onTriageDetailLoadAction}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Add Triage Note" }));
+
+    // Then
+    await waitFor(() =>
+      expect(toastMock).toHaveBeenCalledWith({
+        variant: "destructive",
+        title: "Could not load current triage details.",
+        description: "Please try again.",
+      }),
     );
     expect(
       screen.queryByRole("dialog", { name: "Add Triage Note" }),
@@ -1218,7 +1264,7 @@ describe("finding triage cells", () => {
     expect(onTriageUpdateAction).not.toHaveBeenCalled();
   });
 
-  it("should rollback table status and expose an error when update fails", async () => {
+  it("should rollback table status and show an error when update fails", async () => {
     // Given
     const user = userEvent.setup();
     const onTriageUpdateAction = vi.fn().mockRejectedValue(new Error("fail"));
@@ -1241,8 +1287,12 @@ describe("finding triage cells", () => {
     await user.click(screen.getByRole("option", { name: "Remediating" }));
 
     // Then
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Could not update triage status.",
+    await waitFor(() =>
+      expect(toastMock).toHaveBeenCalledWith({
+        variant: "destructive",
+        title: "Could not update triage status.",
+        description: "Please try again.",
+      }),
     );
     expect(statusControl).toHaveTextContent("Open");
   });
