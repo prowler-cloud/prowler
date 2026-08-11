@@ -1,4 +1,5 @@
 import { webcrypto } from "node:crypto";
+
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
 import {
@@ -12,7 +13,6 @@ import {
 // module-level `cryptoProvider.set(...)` inside the SUT resolves it.
 beforeAll(() => {
   if (!globalThis.crypto || !globalThis.crypto.subtle) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Object.defineProperty(globalThis, "crypto", {
       value: webcrypto,
       configurable: true,

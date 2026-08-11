@@ -61,8 +61,8 @@ The one-click flow: click **Deploy to Azure** in the wizard and let the Bicep te
 
 1. In the Azure wizard, select **Certificate Authentication (Recommended)**.
 2. Click the **Deploy to Azure** button. This opens the Azure Portal deployment blade pre-loaded with the [Prowler Bicep template](https://github.com/prowler-cloud/prowler/blob/master/permissions/templates/azure/bicep/prowler-scan.bicep).
-3. Generate a certificate locally and fill the Bicep parameters (`certificateBase64` and `certificateThumbprint`). See [Certificate Authentication → Generating the certificate](/user-guide/providers/azure/authentication#generating-the-certificate) for the exact commands.
-4. When the deployment finishes, copy the `tenantId` and `applicationId` outputs back to Prowler along with the base64-encoded **private key** you generated earlier, and pastes them into the Certificate Content field.
+3. Generate a certificate locally and paste the base64-encoded public certificate into the Bicep `certificateBase64` parameter. See [Certificate Authentication → Generating the certificate](/user-guide/providers/azure/authentication#generating-the-certificate) for the exact commands.
+4. When the deployment finishes, copy the `tenantId` and `applicationId` outputs into Prowler along with the base64-encoded **PEM bundle** (certificate + private key) you generated earlier, and paste it into the Certificate Content field.
 5. Click **Next**, then **Launch Scan**.
 
 #### Service Principal with Client Secret

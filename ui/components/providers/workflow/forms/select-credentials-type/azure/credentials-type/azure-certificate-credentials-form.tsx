@@ -99,10 +99,11 @@ export const AzureCertificateCredentialsForm = ({
         </div>
         <p className="text-text-neutral-tertiary text-xs">
           Generate a self-signed X.509 certificate right in your browser. The
-          <strong> private key never leaves your device</strong> — it goes
-          straight into the field below. The public certificate downloads as a
-          text file for you to paste into the Bicep{" "}
-          <code>Certificate Base64</code> parameter in the Portal.
+          <strong> private key is generated locally</strong> and goes straight
+          into the field below (it is then submitted with the rest of the
+          form). The public certificate downloads as a text file for you to
+          paste into the Bicep <code>Certificate Base64</code> parameter in
+          the Portal.
         </p>
         <Button
           type="button"

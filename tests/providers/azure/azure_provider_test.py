@@ -1401,6 +1401,80 @@ class TestAzureProviderCertificateAuth:
             assert kwargs["tenant_id"] == self._TENANT_ID
             assert kwargs["client_id"] == self._CLIENT_ID
 
+    def test_setup_session_attaches_computed_thumbprint(self):
+        # Regression guard for the thumbprint handoff added in PROWLER-2378.
+        # The earlier `test_setup_session_static_credentials_cert_content_...`
+        # test patches `CertificateCredential` with a `MagicMock` which
+        # silently accepts any `setattr`, so even a missing hand-off would
+        # look green. This test uses a REAL certificate so
+        # `_compute_certificate_thumbprint` returns a real value and asserts
+        # the credential object actually carries it under
+        # `_PROWLER_CERT_THUMBPRINT_ATTR` — the sole reason that attribute
+        # exists is `setup_identity`'s cert-branch reading it.
+        import base64
+        from datetime import datetime, timedelta, timezone
+
+        from cryptography import x509
+        from cryptography.hazmat.backends import default_backend
+        from cryptography.hazmat.primitives import hashes, serialization
+        from cryptography.hazmat.primitives.asymmetric import rsa
+        from cryptography.hazmat.primitives.serialization import pkcs12
+        from cryptography.x509.oid import NameOID
+
+        from prowler.providers.azure.azure_provider import (
+            _PROWLER_CERT_THUMBPRINT_ATTR,
+        )
+
+        key = rsa.generate_private_key(
+            public_exponent=65537, key_size=2048, backend=default_backend()
+        )
+        subject = issuer = x509.Name(
+            [x509.NameAttribute(NameOID.COMMON_NAME, "prowler-test")]
+        )
+        cert = (
+            x509.CertificateBuilder()
+            .subject_name(subject)
+            .issuer_name(issuer)
+            .public_key(key.public_key())
+            .serial_number(x509.random_serial_number())
+            .not_valid_before(datetime.now(timezone.utc))
+            .not_valid_after(datetime.now(timezone.utc) + timedelta(days=1))
+            .sign(key, hashes.SHA256(), default_backend())
+        )
+        expected_thumbprint = cert.fingerprint(hashes.SHA1()).hex().upper()
+        # azure-identity accepts PKCS#12; encode it so the dict looks like
+        # what the API layer stores after the serializer runs.
+        pfx = pkcs12.serialize_key_and_certificates(
+            name=b"prowler",
+            key=key,
+            cert=cert,
+            cas=None,
+            encryption_algorithm=serialization.NoEncryption(),
+        )
+        cert_content_b64 = base64.b64encode(pfx).decode("ascii")
+
+        credentials = AzureProvider.setup_session(
+            az_cli_auth=False,
+            sp_env_auth=False,
+            browser_auth=False,
+            managed_identity_auth=False,
+            certificate_auth=False,
+            certificate_path=None,
+            tenant_id=self._TENANT_ID,
+            azure_credentials={
+                "tenant_id": self._TENANT_ID,
+                "client_id": self._CLIENT_ID,
+                "client_secret": None,
+                "certificate_content": cert_content_b64,
+                "certificate_path": None,
+            },
+            region_config=self._region_config(),
+        )
+        assert (
+            getattr(credentials, _PROWLER_CERT_THUMBPRINT_ATTR, None)
+            == expected_thumbprint
+        )
+
     def test_setup_session_static_credentials_client_secret_still_works(self):
         # Regression guard: adding cert branches to setup_session must not
         # break the pre-existing client-secret static credentials flow.

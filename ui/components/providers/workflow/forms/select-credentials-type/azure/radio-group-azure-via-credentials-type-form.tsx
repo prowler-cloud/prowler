@@ -6,8 +6,16 @@ import { WizardRadioCard } from "@/components/providers/workflow/forms/fields";
 import { FormMessage } from "@/components/shadcn/form";
 import { RadioGroup } from "@/components/shadcn/radio-group/radio-group";
 
+// Local form shape for this selector: only the radio value lives here, the
+// actual credential fields belong to the downstream credentials form. Kept
+// exported so `SelectViaAzure` and the tests bind the same type instead of
+// falling back to `any`.
+export type AzureCredentialsTypeFormValues = {
+  azureCredentialsType: "app_certificate" | "app_client_secret" | "";
+};
+
 type RadioGroupAzureViaCredentialsFormProps = {
-  control: Control<any>;
+  control: Control<AzureCredentialsTypeFormValues>;
   isInvalid: boolean;
   errorMessage?: string;
   onChange?: (value: string) => void;

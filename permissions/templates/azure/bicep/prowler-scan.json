@@ -6,7 +6,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.46.1.21595",
-      "templateHash": "17365420263047938168"
+      "templateHash": "10591927438861815055"
     }
   },
   "parameters": {
@@ -39,9 +39,9 @@
     },
     "certificateEndDateTime": {
       "type": "string",
-      "defaultValue": "[dateTimeAdd(utcNow(), 'P1Y')]",
+      "defaultValue": "[dateTimeAdd(parameters('certificateStartDateTime'), 'P1Y')]",
       "metadata": {
-        "description": "When the certificate expires. Defaults to 1 year from now. Rotate before this date."
+        "description": "When the certificate expires. Defaults to 1 year after certificateStartDateTime. Rotate before this date."
       }
     },
     "customRoleName": {
@@ -59,7 +59,7 @@
   "imports": {
     "microsoftGraphV1": {
       "provider": "MicrosoftGraph",
-      "version": "0.1.8-preview"
+      "version": "1.0.0"
     }
   },
   "resources": {

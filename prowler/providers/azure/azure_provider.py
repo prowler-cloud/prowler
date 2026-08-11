@@ -76,6 +76,36 @@ from prowler.providers.common.provider import Provider
 _PROWLER_CERT_THUMBPRINT_ATTR = "_prowler_certificate_thumbprint"
 
 
+def _build_certificate_credential(
+    tenant_id: str,
+    client_id: str,
+    certificate_data: bytes,
+    authority: Optional[str],
+) -> "CertificateCredential":
+    """Build a `CertificateCredential` and stash the SHA-1 thumbprint on it.
+
+    Centralises the three-step ritual (construct credential, compute
+    thumbprint, `setattr` it under `_PROWLER_CERT_THUMBPRINT_ATTR`) that
+    `setup_session` and friends would otherwise repeat identically for every
+    cert entry point (static content, static path, env-var cert-auth). Missing
+    the `setattr` in any one call site silently degrades the identity report
+    to "Unknown certificate thumbprint", so keeping it in one place is a real
+    correctness win.
+    """
+    credentials = CertificateCredential(
+        tenant_id=tenant_id,
+        client_id=client_id,
+        certificate_data=certificate_data,
+        authority=authority,
+    )
+    setattr(
+        credentials,
+        _PROWLER_CERT_THUMBPRINT_ATTR,
+        _compute_certificate_thumbprint(certificate_data),
+    )
+    return credentials
+
+
 def _compute_certificate_thumbprint(cert_data: bytes) -> Optional[str]:
     """Compute the SHA-1 thumbprint of an X.509 certificate.
 
@@ -635,35 +665,24 @@ class AzureProvider(Provider):
                 if azure_credentials:
                     try:
                         if azure_credentials.get("certificate_content"):
-                            certificate_data = base64.b64decode(
-                                azure_credentials["certificate_content"]
-                            )
-                            credentials = CertificateCredential(
+                            credentials = _build_certificate_credential(
                                 tenant_id=azure_credentials["tenant_id"],
                                 client_id=azure_credentials["client_id"],
-                                certificate_data=certificate_data,
+                                certificate_data=base64.b64decode(
+                                    azure_credentials["certificate_content"]
+                                ),
                                 authority=region_config.authority,
-                            )
-                            setattr(
-                                credentials,
-                                _PROWLER_CERT_THUMBPRINT_ATTR,
-                                _compute_certificate_thumbprint(certificate_data),
                             )
                         elif azure_credentials.get("certificate_path"):
                             with open(
                                 azure_credentials["certificate_path"], "rb"
                             ) as cert_file:
                                 certificate_data = cert_file.read()
-                            credentials = CertificateCredential(
+                            credentials = _build_certificate_credential(
                                 tenant_id=azure_credentials["tenant_id"],
                                 client_id=azure_credentials["client_id"],
                                 certificate_data=certificate_data,
                                 authority=region_config.authority,
-                            )
-                            setattr(
-                                credentials,
-                                _PROWLER_CERT_THUMBPRINT_ATTR,
-                                _compute_certificate_thumbprint(certificate_data),
                             )
                         else:
                             credentials = ClientSecretCredential(
@@ -703,16 +722,11 @@ class AzureProvider(Provider):
                             certificate_data = base64.b64decode(
                                 getenv("AZURE_CERTIFICATE_CONTENT")
                             )
-                        credentials = CertificateCredential(
+                        credentials = _build_certificate_credential(
                             tenant_id=getenv("AZURE_TENANT_ID"),
                             client_id=getenv("AZURE_CLIENT_ID"),
                             certificate_data=certificate_data,
                             authority=region_config.authority,
-                        )
-                        setattr(
-                            credentials,
-                            _PROWLER_CERT_THUMBPRINT_ATTR,
-                            _compute_certificate_thumbprint(certificate_data),
                         )
                         return credentials
                     except ClientAuthenticationError as error:
@@ -1174,9 +1188,15 @@ class AzureProvider(Provider):
                     )
                 # since that exception is not considered as critical, we keep filling another identity fields
                 if isinstance(credentials, CertificateCredential):
+                    # `getenv("AZURE_CLIENT_ID", default=client_id)` already
+                    # covers both the env-var cert-auth path (env is set) and
+                    # the static-credentials path (constructor param supplied
+                    # `client_id`). Reaching into `credentials._client_id`
+                    # would be the same class of azure-identity private state
+                    # we deliberately avoided for the thumbprint.
                     identity.identity_id = getenv(
                         "AZURE_CLIENT_ID", default=client_id
-                    ) or getattr(credentials, "_client_id", "")
+                    )
                     identity.identity_type = "Service Principal with Certificate"
                     # The SHA-1 thumbprint is computed from the certificate
                     # bytes by `_compute_certificate_thumbprint` at
@@ -1600,7 +1620,13 @@ class AzureProvider(Provider):
                 "client_secret": client_secret,
                 "scope": region_config.graph_scope,
             }
-            response = requests.post(url, headers=headers, data=data).json()
+            # Hard timeout so a hung Entra ID endpoint cannot stall the
+            # calling worker (this runs on request threads and Celery tasks
+            # in the API path). 30s covers the p99 of the token endpoint
+            # comfortably.
+            response = requests.post(
+                url, headers=headers, data=data, timeout=30
+            ).json()
             if (
                 "access_token" not in response.keys()
                 and "error_codes" in response.keys()

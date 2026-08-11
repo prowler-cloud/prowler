@@ -16,13 +16,6 @@ class AzureIdentityInfo(BaseModel):
     locations: dict = {}
 
 
-class AzureCredentials(BaseModel):
-    client_id: str = ""
-    client_secret: Optional[str] = None
-    tenant_id: str = ""
-    certificate_content: Optional[str] = None
-
-
 class AzureRegionConfig(BaseModel):
     name: str = ""
     authority: Optional[str] = None

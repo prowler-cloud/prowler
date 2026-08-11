@@ -226,8 +226,8 @@ Use it from the Prowler Cloud **add-provider wizard**:
 
 1. Pick **Azure**, then choose **Certificate Authentication (Recommended)** in the credential-type selector.
 2. Click **Deploy to Azure**. The button opens the Azure Portal deployment blade pre-loaded with the template.
-3. Generate a certificate (see [Certificate Authentication](#certificate-authentication) below) and paste the base64-encoded public certificate and its SHA-1 thumbprint into the Bicep parameters.
-4. Deploy and, when the stack finishes, copy the `tenantId`, `applicationId`, and `certificateThumbprint` outputs plus the private key back into Prowler.
+3. Generate a certificate (see [Certificate Authentication](#certificate-authentication) below) and paste the base64-encoded public certificate into the Bicep `certificateBase64` parameter.
+4. Deploy and, when the stack finishes, copy the `tenantId` and `applicationId` outputs into Prowler along with the base64-encoded PEM bundle (certificate + private key) you generated locally. The `certificateThumbprint` output is informational — use it to reconcile that the deployed keyCredential matches your local certificate.
 
 <Note>
 The Deploy to Azure button is not available for sovereign clouds (Azure Government, Azure China, Azure Germany) or personal Microsoft accounts. Follow the manual [Certificate Authentication](#certificate-authentication) or [Service Principal](#service-principal-application-authentication-recommended) instructions instead.
@@ -250,12 +250,10 @@ openssl req -x509 -newkey rsa:4096 -keyout prowler.key -out prowler.crt \
 # Base64 of the public certificate — feeds `certificateBase64` in the Bicep template
 openssl x509 -in prowler.crt -outform DER | base64 | tr -d '\n'
 
-# SHA-1 thumbprint — feeds `certificateThumbprint` in the Bicep template
-openssl x509 -in prowler.crt -noout -fingerprint -sha1 \
-    | cut -d= -f2 | tr -d ':' | tr '[:lower:]' '[:upper:]'
-
-# Base64 of the private key — paste into Prowler as "Certificate Content"
-base64 -i prowler.key | tr -d '\n'
+# Base64 of a PEM bundle containing the certificate AND the private key —
+# paste into Prowler as "Certificate Content". A key-only file fails.
+cat prowler.crt prowler.key > prowler-bundle.pem
+base64 < prowler-bundle.pem | tr -d '\n'
 ```
 
 **Windows (PowerShell):**
@@ -276,7 +274,7 @@ Paste the following into the Certificate Authentication form of the Azure add-pr
 
 - **Tenant ID** — copy from the deployment outputs.
 - **Client ID** — copy from the deployment outputs (`applicationId`).
-- **Certificate Content** — the base64-encoded **private key** (never the public certificate).
+- **Certificate Content** — the base64-encoded **PEM bundle** (certificate + private key) or PKCS#12 export. The Bicep template only received the public certificate; Prowler needs both parts here to sign the token request.
 
 ### Prowler CLI
 

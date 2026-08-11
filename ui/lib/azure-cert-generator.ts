@@ -25,13 +25,6 @@ import {
   X509CertificateGenerator,
 } from "@peculiar/x509";
 
-// Bind @peculiar/x509 to the browser's native SubtleCrypto. Without this the
-// library falls back to a Node-only crypto provider that vitest+jsdom does
-// not expose, and the helper would throw in tests.
-if (typeof globalThis !== "undefined" && globalThis.crypto?.subtle) {
-  cryptoProvider.set(globalThis.crypto);
-}
-
 export interface GeneratedProwlerCertificate {
   /**
    * Base64 of the DER-encoded X.509 public certificate. Feed this into the
@@ -104,6 +97,12 @@ export async function generateProwlerCertificate(
       "Web Crypto API is not available in this browser. Use the openssl or PowerShell instructions from the certificate generation guide instead.",
     );
   }
+  // Bind @peculiar/x509 to the browser's native SubtleCrypto here rather
+  // than at module load time: doing it inside the function keeps the check
+  // above authoritative (the crypto object could have been swapped by a
+  // test harness between import and call) and avoids side-effects when
+  // consumers only import the types.
+  cryptoProvider.set(globalThis.crypto);
 
   const keyPair = (await subtle.generateKey(
     {

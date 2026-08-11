@@ -417,9 +417,9 @@ export const getAWSOrgDeploymentQuickLink = ({
 
 // Builds the Azure Portal deep link that opens the "Custom deployment" wizard
 // pre-loaded with the Prowler Bicep template. The Portal expects
-// `#create/Microsoft.Template/uri/<double-encoded-template-url>` — the URL
-// fragment is re-parsed by the Portal SPA which URL-decodes the segment once
-// more, so the template URL must be percent-encoded exactly once via
+// `#create/Microsoft.Template/uri/<url-encoded-template-url>` — the URL
+// fragment is re-parsed by the Portal SPA which URL-decodes the segment
+// once, so the template URL must be percent-encoded exactly once via
 // `encodeURIComponent`. This is the Azure analogue of the AWS CloudFormation
 // quick-create link built by `getAWSOrgDeploymentQuickLink` above.
 //

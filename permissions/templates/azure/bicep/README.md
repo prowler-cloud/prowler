@@ -51,9 +51,13 @@ After editing `prowler-scan.bicep`, run:
 make build
 ```
 
-Requires the Bicep CLI (`>= 0.30`, for the Microsoft.Graph extension).
-Install with `az bicep install` or grab the standalone binary from
-<https://github.com/Azure/bicep/releases>.
+Requires the Bicep CLI **>= 0.36.1** (needed by the GA release of the
+Microsoft Graph Bicep extension, `v1.0.0`). Install with `az bicep install`
+or grab the standalone binary from
+<https://github.com/Azure/bicep/releases>. Note: the `apiVersion: v1.0` on
+`Microsoft.Graph/applications` in the .bicep source refers to the Graph API
+version, not the extension release channel — the extension version is pinned
+in `bicepconfig.json`.
 
 ## Generating the certificate
 
@@ -74,13 +78,15 @@ openssl req -x509 -newkey rsa:4096 -keyout prowler.key -out prowler.crt \
 #    file through base64 double-encodes it and the deployment will fail.
 CERT_BASE64=$(openssl x509 -in prowler.crt -outform DER | base64 | tr -d '\n')
 
-# 3. Base64-encode the private key so you can paste it into Prowler as the
-#    Certificate Private Key field. Keep this value secret. Using `< file`
-#    (not `-i`) works identically on macOS (BSD) and Linux (GNU).
-CERT_KEY_BASE64=$(base64 < prowler.key | tr -d '\n')
+# 3. Concatenate the certificate AND the private key into a single PEM
+#    bundle, then base64-encode the whole thing. `azure.identity.CertificateCredential`
+#    needs BOTH parts — a key-only file fails with "No certificate found".
+#    Keep this value secret. Using `< file` (not `-i`) works on macOS and Linux.
+cat prowler.crt prowler.key > prowler-bundle.pem
+CERT_BUNDLE_BASE64=$(base64 < prowler-bundle.pem | tr -d '\n')
 
-echo "certificateBase64 (paste into the Bicep parameter):     $CERT_BASE64"
-echo "private key (paste into Prowler UI, keep secret):       $CERT_KEY_BASE64"
+echo "certificateBase64 (paste into the Bicep parameter):      $CERT_BASE64"
+echo "certificate bundle (paste into Prowler UI, keep secret): $CERT_BUNDLE_BASE64"
 ```
 
 ### Windows (PowerShell)
@@ -129,9 +135,10 @@ Paste the following into the Prowler wizard's Certificate Authentication form:
 
 - **Tenant ID** — `tenantId` output.
 - **Client ID** — `applicationId` output.
-- **Certificate Content** — the base64-encoded **private key** you generated
-  above. This is *not* the certificate you fed into the Bicep template — the
-  public cert is already stored inside Entra ID.
+- **Certificate Content** — the base64-encoded **PEM bundle** (certificate +
+  private key) or PKCS#12 export you generated above. The Bicep template
+  received only the public certificate; Prowler needs the certificate paired
+  with the private key to sign token requests.
 
 The `certificateThumbprint` output is informational; use it to verify the
 deployed keyCredential matches the certificate you generated locally.

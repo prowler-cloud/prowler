@@ -39,8 +39,11 @@ param certificateDisplayName string = 'Prowler Certificate'
 @description('When the certificate becomes valid. Defaults to now.')
 param certificateStartDateTime string = utcNow()
 
-@description('When the certificate expires. Defaults to 1 year from now. Rotate before this date.')
-param certificateEndDateTime string = dateTimeAdd(utcNow(), 'P1Y')
+// Derived from `certificateStartDateTime` (not a fresh `utcNow()`) so the
+// pair is always exactly 1 year apart — Microsoft Graph rejects certificates
+// whose `endDateTime - startDateTime` exceeds the 1-year cap.
+@description('When the certificate expires. Defaults to 1 year after certificateStartDateTime. Rotate before this date.')
+param certificateEndDateTime string = dateTimeAdd(certificateStartDateTime, 'P1Y')
 
 @description('Name of the extra role Prowler creates. Keep the default unless your org already uses this name.')
 param customRoleName string = 'ProwlerRole'

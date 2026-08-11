@@ -5,7 +5,10 @@ import { useForm } from "react-hook-form";
 
 import { Form } from "@/components/shadcn/form";
 
-import { RadioGroupAzureViaCredentialsTypeForm } from "./radio-group-azure-via-credentials-type-form";
+import {
+  AzureCredentialsTypeFormValues,
+  RadioGroupAzureViaCredentialsTypeForm,
+} from "./radio-group-azure-via-credentials-type-form";
 
 interface SelectViaAzureProps {
   initialVia?: string;
@@ -17,9 +20,12 @@ export const SelectViaAzure = ({
   onViaChange,
 }: SelectViaAzureProps) => {
   const router = useRouter();
-  const form = useForm({
+  const form = useForm<AzureCredentialsTypeFormValues>({
     defaultValues: {
-      azureCredentialsType: initialVia || "",
+      azureCredentialsType:
+        initialVia === "app_certificate" || initialVia === "app_client_secret"
+          ? initialVia
+          : "",
     },
   });
 

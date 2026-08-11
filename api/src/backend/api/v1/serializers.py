@@ -1808,12 +1808,13 @@ class AzureProviderSecret(serializers.Serializer):
             try:
                 base64.b64decode(certificate_content, validate=True)
             except Exception as e:
-                raise ValidationError(
-                    {
-                        "certificate_content": [
-                            f"The provided certificate content is not valid base64 encoded data: {str(e)}"
-                        ]
-                    },
+                # Field validators are invoked per-field; DRF already knows
+                # this error belongs to `certificate_content` and will nest
+                # the message under that key. Raising a dict here would
+                # double-nest the JSON:API pointer as
+                # `/certificate_content/certificate_content`.
+                raise serializers.ValidationError(
+                    f"The provided certificate content is not valid base64 encoded data: {str(e)}",
                     code="azure-certificate-content",
                 )
         return certificate_content
@@ -1847,12 +1848,10 @@ class M365ProviderSecret(serializers.Serializer):
             try:
                 base64.b64decode(certificate_content, validate=True)
             except Exception as e:
-                raise ValidationError(
-                    {
-                        "certificate_content": [
-                            f"The provided certificate content is not valid base64 encoded data: {str(e)}"
-                        ]
-                    },
+                # DRF field validators are already keyed to `certificate_content`,
+                # so raising a dict here would double-nest the JSON:API pointer.
+                raise serializers.ValidationError(
+                    f"The provided certificate content is not valid base64 encoded data: {str(e)}",
                     code="m365-certificate-content",
                 )
         return certificate_content
