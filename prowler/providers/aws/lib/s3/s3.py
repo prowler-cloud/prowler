@@ -46,7 +46,12 @@ from prowler.providers.aws.lib.session.aws_set_up_session import (
     AwsSetUpSession,
     parse_iam_credentials_arn,
 )
-from prowler.providers.aws.models import AWSAssumeRoleInfo, AWSIdentityInfo, AWSSession
+from prowler.providers.aws.models import (
+    AWSAssumeRoleInfo,
+    AWSIdentityInfo,
+    AWSRoleChainStep,
+    AWSSession,
+)
 from prowler.providers.common.models import Connection
 
 
@@ -264,6 +269,7 @@ class S3:
         profile: str = None,
         aws_region: str = AWS_STS_GLOBAL_ENDPOINT_REGION,
         role_arn: str = None,
+        role_chain: list = None,
         role_session_name: str = ROLE_SESSION_NAME,
         session_duration: int = 3600,
         external_id: str = None,
@@ -287,7 +293,6 @@ class S3:
         Raises:
         - Exception: An exception indicating that the connection test failed.
         """
-        # TODO: Refactor this method, the AWSProvider.test_connection() and the SecurityHubProvider.test_connection() are similar.
         try:
             session = AwsProvider.setup_session(
                 mfa=mfa_enabled,
@@ -297,7 +302,27 @@ class S3:
                 aws_session_token=aws_session_token,
             )
 
-            if role_arn:
+            if role_chain and role_arn:
+                raise AWSArgumentTypeValidationError(
+                    message="role_chain and role_arn are mutually exclusive.",
+                    file=os.path.basename(__file__),
+                )
+
+            if role_chain:
+                chain_steps = []
+                for step in role_chain:
+                    chain_steps.append(
+                        AWSRoleChainStep(
+                            role_arn=parse_iam_credentials_arn(step["role_arn"]),
+                            external_id=step.get("external_id"),
+                            session_duration=step.get("session_duration", 3600),
+                            role_session_name=step.get(
+                                "role_session_name", ROLE_SESSION_NAME
+                            ),
+                        )
+                    )
+                session, _ = AwsProvider.assume_role_chain(session, chain_steps)
+            elif role_arn:
                 session_duration = validate_session_duration(session_duration)
                 role_session_name = validate_role_session_name(role_session_name)
                 role_arn = parse_iam_credentials_arn(role_arn)

@@ -2,7 +2,7 @@ from argparse import ArgumentTypeError, Namespace
 from re import fullmatch, search
 
 from prowler.providers.aws.aws_provider import AwsProvider
-from prowler.providers.aws.config import ROLE_SESSION_NAME
+from prowler.providers.aws.config import MAX_ROLE_CHAIN_STEPS, ROLE_SESSION_NAME
 from prowler.providers.aws.lib.arn.arn import arn_type
 
 
@@ -25,8 +25,15 @@ def init_parser(self):
         "-R",
         nargs="?",
         default=None,
-        help="ARN of the role to be assumed",
+        help="ARN of the role to be assumed. Mutually exclusive with --role-chain.",
         # TODO: Pending ARN validation
+    )
+    aws_auth_subparser.add_argument(
+        "--role-chain",
+        nargs="?",
+        default=None,
+        help="Path to a JSON file defining an ordered role assumption chain. Mutually exclusive with --role.",
+        type=validate_role_chain_file,
     )
     aws_auth_subparser.add_argument(
         "--role-session-name",
@@ -214,6 +221,50 @@ def validate_role_session_name(session_name) -> str:
         )
 
 
+def validate_role_chain_file(chain_path: str) -> list[dict]:
+    """Load and validate a role chain JSON file.
+
+    The file must contain a JSON array of objects, each with at least a
+    ``role_arn`` key.  Optional keys per step: ``external_id``,
+    ``session_duration``, ``role_session_name``, ``sts_region``.
+
+    Returns the parsed list of dicts ready to be passed as ``role_chain``
+    to :class:`AwsProvider`.
+    """
+    import json
+
+    try:
+        with open(chain_path) as f:
+            chain_data = json.load(f)
+    except (json.JSONDecodeError, OSError) as e:
+        raise ArgumentTypeError(f"Invalid role chain file: {e}")
+
+    if not isinstance(chain_data, list):
+        raise ArgumentTypeError("Role chain must be a JSON array")
+    if len(chain_data) == 0:
+        raise ArgumentTypeError("Role chain must contain at least one step")
+    if len(chain_data) > MAX_ROLE_CHAIN_STEPS:
+        raise ArgumentTypeError(
+            f"Role chain exceeds maximum of {MAX_ROLE_CHAIN_STEPS} steps"
+        )
+
+    for i, step in enumerate(chain_data):
+        if "role_arn" not in step:
+            raise ArgumentTypeError(
+                f"Role chain step {i + 1} is missing required 'role_arn'"
+            )
+        if "session_duration" in step:
+            step["session_duration"] = validate_session_duration(
+                step["session_duration"]
+            )
+        if "role_session_name" in step:
+            step["role_session_name"] = validate_role_session_name(
+                step["role_session_name"]
+            )
+
+    return chain_data
+
+
 def validate_arguments(arguments: Namespace) -> tuple[bool, str]:
     """validate_arguments returns {True, "} if the provider arguments passed are valid and can be used together. It performs an extra validation, specific for the AWS provider, apart from the argparse lib."""
 
@@ -228,6 +279,13 @@ def validate_arguments(arguments: Namespace) -> tuple[bool, str]:
                 False,
                 "To use -I/--external-id, -T/--session-duration or --role-session-name options -R/--role option is needed",
             )
+
+    # --role and --role-chain are mutually exclusive
+    if getattr(arguments, "role_chain", None) and arguments.role:
+        return (
+            False,
+            "--role and --role-chain are mutually exclusive",
+        )
 
     return (True, "")
 
