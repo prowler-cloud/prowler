@@ -1,0 +1,1 @@
+HTML report header now HTML-escapes every provider identity field across all 23 providers, closing a stored XSS in the header block (Secur0, CWE-79) that was left unaddressed by the earlier finding-row fix in #12221
