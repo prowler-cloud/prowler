@@ -49,9 +49,7 @@ class CFW(HuaweiCloudService):
                 from huaweicloudsdkcfw.v1 import ListFirewallListRequest
 
                 request = ListFirewallListRequest()
-                response = self._call_with_retries(
-                    client.list_firewall_list, request
-                )
+                response = self._call_with_retries(client.list_firewall_list, request)
 
                 if response and response.data and response.data.records:
                     for fw in response.data.records:

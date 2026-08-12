@@ -15,9 +15,7 @@ class cfw_firewall_enabled(Check):
             )
             report.region = cfw_client.region
             report.resource_id = "Cloud Firewall"
-            report.resource_arn = (
-                f"huaweicloud:cfw:{cfw_client.region}:{cfw_client.audited_account}:firewall"
-            )
+            report.resource_arn = f"huaweicloud:cfw:{cfw_client.region}:{cfw_client.audited_account}:firewall"
             report.status = "FAIL"
             report.status_extended = (
                 "No Cloud Firewall deployed. Network traffic is not being inspected."
@@ -36,9 +34,7 @@ class cfw_firewall_enabled(Check):
 
             if firewall.status == "1":
                 report.status = "PASS"
-                report.status_extended = (
-                    f"Cloud Firewall '{firewall.name}' ({firewall.fw_instance_id}) is active."
-                )
+                report.status_extended = f"Cloud Firewall '{firewall.name}' ({firewall.fw_instance_id}) is active."
             else:
                 report.status = "FAIL"
                 report.status_extended = (
