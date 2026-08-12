@@ -72,9 +72,7 @@ class NAT(HuaweiCloudService):
                         self.dnat_rules.append(
                             DnatRule(
                                 id=getattr(rule_data, "id", ""),
-                                nat_gateway_id=getattr(
-                                    rule_data, "nat_gateway_id", ""
-                                ),
+                                nat_gateway_id=getattr(rule_data, "nat_gateway_id", ""),
                                 floating_ip_address=getattr(
                                     rule_data, "floating_ip_address", ""
                                 ),
