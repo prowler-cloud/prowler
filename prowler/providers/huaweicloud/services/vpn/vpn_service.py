@@ -1,4 +1,3 @@
-from typing import List, Optional
 
 from pydantic.v1 import BaseModel
 
