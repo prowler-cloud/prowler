@@ -752,6 +752,53 @@ export const JiraIcon: React.FC<IconSvgProps> = ({
   </svg>
 );
 
+export const SlackIcon: React.FC<IconSvgProps> = ({
+  size = 32,
+  width,
+  height,
+  className = "rounded-md",
+  ...props
+}) => (
+  <svg
+    aria-hidden="false"
+    aria-label="Slack logo"
+    fill="none"
+    focusable="false"
+    height={size || height}
+    role="presentation"
+    viewBox="0 0 48 48"
+    width={size || width}
+    className={className}
+    {...props}
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M0 12C0 5.37258 5.37258 0 12 0H36C42.6274 0 48 5.37258 48 12V36C48 42.6274 42.6274 48 36 48H12C5.37258 48 0 42.6274 0 36V12Z"
+      fill="#FFFFFF"
+    />
+    {/* Slack mark, authored on its native 122.8 grid and scaled into the 30px
+        safe area of the 48px tile (30 / 122.8 = 0.2443). */}
+    <g transform="translate(9 9) scale(0.2443)">
+      <path
+        d="M25.8 77.6c0 7.1-5.8 12.9-12.9 12.9S0 84.7 0 77.6s5.8-12.9 12.9-12.9h12.9v12.9zm6.5 0c0-7.1 5.8-12.9 12.9-12.9s12.9 5.8 12.9 12.9v32.3c0 7.1-5.8 12.9-12.9 12.9s-12.9-5.8-12.9-12.9V77.6z"
+        fill="#E01E5A"
+      />
+      <path
+        d="M45.2 25.8c-7.1 0-12.9-5.8-12.9-12.9S38.1 0 45.2 0s12.9 5.8 12.9 12.9v12.9H45.2zm0 6.5c7.1 0 12.9 5.8 12.9 12.9s-5.8 12.9-12.9 12.9H12.9C5.8 58.1 0 52.3 0 45.2s5.8-12.9 12.9-12.9h32.3z"
+        fill="#36C5F0"
+      />
+      <path
+        d="M97 45.2c0-7.1 5.8-12.9 12.9-12.9s12.9 5.8 12.9 12.9-5.8 12.9-12.9 12.9H97V45.2zm-6.5 0c0 7.1-5.8 12.9-12.9 12.9s-12.9-5.8-12.9-12.9V12.9C64.7 5.8 70.5 0 77.6 0s12.9 5.8 12.9 12.9v32.3z"
+        fill="#2EB67D"
+      />
+      <path
+        d="M77.6 97c7.1 0 12.9 5.8 12.9 12.9s-5.8 12.9-12.9 12.9-12.9-5.8-12.9-12.9V97h12.9zm0-6.5c-7.1 0-12.9-5.8-12.9-12.9s5.8-12.9 12.9-12.9h32.3c7.1 0 12.9 5.8 12.9 12.9s-5.8 12.9-12.9 12.9H77.6z"
+        fill="#ECB22E"
+      />
+    </g>
+  </svg>
+);
+
 export const AWSSecurityHubIcon: React.FC<IconSvgProps> = ({
   size = 32,
   width,

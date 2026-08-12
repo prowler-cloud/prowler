@@ -2,7 +2,11 @@ import { z } from "zod";
 
 import type { TaskState } from "@/types/tasks";
 
-export type IntegrationType = "amazon_s3" | "aws_security_hub" | "jira";
+export type IntegrationType =
+  | "amazon_s3"
+  | "aws_security_hub"
+  | "jira"
+  | "slack";
 
 export const JIRA_DISPATCH_MODE = {
   INDIVIDUAL: "individual",
@@ -87,6 +91,13 @@ export interface IntegrationProps {
       domain?: string;
       projects?: { [key: string]: string };
       issue_types?: { [key: string]: string[] };
+      // Slack specific configuration. The workspace is fixed at install time;
+      // the channel is the integration's default destination and is null until
+      // one is chosen.
+      team_id?: string;
+      team_name?: string;
+      channel_id?: string | null;
+      channel_name?: string | null;
       [key: string]: unknown;
     };
     url?: string;
