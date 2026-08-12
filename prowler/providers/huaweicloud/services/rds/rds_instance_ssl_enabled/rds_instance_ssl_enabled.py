@@ -9,20 +9,15 @@ class rds_instance_ssl_enabled(Check):
         findings = []
 
         for instance in rds_client.instances:
-            report = CheckReportHuaweiCloud(
-                metadata=self.metadata(), resource=instance
-            )
+            report = CheckReportHuaweiCloud(metadata=self.metadata(), resource=instance)
             report.region = instance.region
             report.resource_id = instance.id
-            report.resource_arn = (
-                f"huaweicloud:rds:{instance.region}:{rds_client.audited_account}:instance/{instance.id}"
-            )
+            report.resource_arn = f"huaweicloud:rds:{instance.region}:{rds_client.audited_account}:instance/{instance.id}"
 
             if instance.enable_ssl:
                 report.status = "PASS"
                 report.status_extended = (
-                    f"RDS instance {instance.name} ({instance.id}) "
-                    f"has SSL enabled."
+                    f"RDS instance {instance.name} ({instance.id}) " f"has SSL enabled."
                 )
             else:
                 report.status = "FAIL"
