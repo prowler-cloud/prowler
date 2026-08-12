@@ -118,6 +118,20 @@ vulnerabilities:
       - "pkg:npm/ip-address"
     expired_at: 2027-01-31
 
+  # .NET 9 runtime that ships with PowerShell 7.x (which the images bundle so
+  # the M365 provider can drive Exchange/Teams/Skype cmdlets). Trivy flags it
+  # via the SBOM PowerShell embeds under Modules/*/_manifest. The vulnerable
+  # code paths are not reachable from Prowler: the runtime is executed only
+  # inside `pwsh` subprocesses that Prowler spawns for M365 cmdlets, none of
+  # which handles the untrusted input the CVE requires. There is no published
+  # fix in a Prowler-compatible PowerShell release yet. Short expiry to force
+  # a re-look once Microsoft ships a patched .NET 9.0.x or PowerShell drops
+  # the vulnerable runtime.
+  - id: CVE-2026-62901
+    purls:
+      - "pkg:nuget/Microsoft.NETCore.App.Runtime.linux-x64"
+    expired_at: 2026-11-30
+
   # Modules compiled into the Trivy binary the images ship. The binary is pinned by version
   # and verified by checksum in the Dockerfile; only a rebuild by its vendor moves these.
   # CVE-2026-71556 affects go-git worktree operations that can follow symlinks outside a
