@@ -4,6 +4,117 @@ description: "New features and improvements in each Prowler release"
 rss: true
 ---
 
+<Update label="v5.39.0" description="August 12, 2026">
+  ### 🤖 Lighthouse AI — Finding Skills
+
+  <Note>
+  This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
+  </Note>
+
+  Lighthouse AI now embeds a Skills menu on every finding, answering the questions an analyst actually asks. **Contextual Fix** produces the fix for the finding, **Triage Decision** judges whether it is real and closes it out when it is not and **Systemic Scope** determines whether the problem is a one-off or everywhere. A free-form "Ask Lighthouse anything" prompt sits in the same menu, and each run shows its progress and offers follow-up actions such as creating a Jira issue or muting the finding.
+
+  ![Lighthouse AI Skills menu on a finding resource](/images/changelog/v5.39.0-lighthouse-finding-skills.png)
+
+  Read more in the [Lighthouse AI documentation](https://docs.prowler.com/getting-started/products/prowler-cloud-lighthouse).
+
+  ### ☁️ Azure Management Group Onboarding
+
+  <Note>
+  This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
+  </Note>
+
+  Azure subscriptions no longer onboard one at a time. Choose "Add Multiple Subscriptions With Azure Management Group" in the add-provider wizard, enter the Microsoft Entra tenant ID, and authenticate once with a single tenant-wide service principal: Prowler discovers the entire management-group hierarchy under the tenant root, lets you select the subscriptions to onboard, and creates their providers with the management-group structure preserved. Azure now matches the one-step onboarding that AWS Organizations and GCP organizations already have.
+
+  ![Azure onboarding method selector with the Management Group option](/images/changelog/v5.39.0-azure-mg-selector.png)
+
+  Read more in the [Azure Management Groups documentation](https://docs.prowler.com/user-guide/tutorials/prowler-cloud-azure-management-groups).
+
+  ### ✅ Findings Triage — Verify MANUAL Findings as PASS
+
+  <Note>
+  This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
+  </Note>
+
+  Checks that require human judgment report `MANUAL` findings. For these findings, and only for them, the triage status selector now offers **Resolved**: choosing it asks for the required written evidence and verifies the finding as passing. The finding then reports an effective `PASS` while preserving the raw `MANUAL` scan result, across findings, finding groups, compliance reports, and scans, with the attestation's author, evidence, and validity always visible. Attestations expire automatically after 90 days, or as soon as a new scan reports a real failure, returning the finding to the review queue.
+
+  ![Triage status selector offering Resolved on a MANUAL finding](/images/changelog/v5.39.0-manual-pass-selector.png)
+
+  ![Manual Pass details showing evidence, author, and validity](/images/changelog/v5.39.0-manual-pass-details.png)
+
+  Read more in the [Findings Triage documentation](https://docs.prowler.com/user-guide/tutorials/prowler-app-findings-triage#verify-a-manual-finding-as-pass).
+
+  ### ☁️ Prowler Cloud MCP — Organizations Management and Grouped Jira Dispatch
+
+  <Note>
+  This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
+  </Note>
+
+  The hosted Prowler Cloud MCP server adds eight organization tools, so an agent can onboard and manage entire cloud organizations end to end: create the organization, discover its accounts, subscriptions, and projects, apply the selection, and manage the resulting providers. The tools cover AWS Organizations, GCP organizations, and Azure tenant root management groups, and they are available to Lighthouse AI.
+
+  `prowler_send_findings_to_jira` also gains Cloud-only dispatch capabilities: select failed findings by check IDs against the latest completed scan, and send them in grouped mode, one Jira work item per check listing up to 50 affected resources, with per-group error reporting.
+
+  Read more in the [Prowler MCP tools documentation](https://docs.prowler.com/getting-started/basic-usage/prowler-mcp-tools).
+
+  ### 🕸️ Attack Paths — Grouped Graph with Outcome Destinations
+
+  <Note>
+  This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
+  </Note>
+
+  The Attack Paths graph now reads from source to destination. Resources of the same class collapse into a single expandable node with a count, clicking reveals its members, and every path terminates in an explicit outcome node naming the destination impact: code execution, privilege escalation, public exposure, or resource inventory. The per-account hub node is gone, and the clicked resource stays highlighted while its findings are expanded.
+
+  ![Attack Paths grouped graph ending in a code execution outcome node](/images/changelog/v5.39.0-attack-paths-grouped-graph.png)
+
+  Explore the full Attack Paths query catalog at [Prowler Hub](https://hub.prowler.com/attack-paths).
+
+  Read more in the [Attack Paths documentation](https://docs.prowler.com/user-guide/tutorials/prowler-app-attack-paths).
+
+  ### 📚 New Compliance Framework — CMMC 2.0
+
+  The Cybersecurity Maturity Model Certification (CMMC) is the certification the US Department of Defense requires from contractors and suppliers that handle federal contract data. Prowler now includes CMMC 2.0 as a universal framework with all 149 requirements defined by the CMMC Program rule (32 CFR Part 170), organized in its three levels:
+
+  - **Level 1 (Foundational):** 15 requirements for the basic safeguarding of Federal Contract Information, from FAR 52.204-21.
+  - **Level 2 (Advanced):** 110 requirements from NIST SP 800-171 Rev 2, protecting Controlled Unclassified Information.
+  - **Level 3 (Expert):** 24 enhanced requirements from NIST SP 800-172 for the most sensitive programs.
+
+  Requirements map to Prowler checks across AWS, Azure, GCP, Alibaba Cloud, Oracle Cloud, and Microsoft 365, so one framework reports the compliance posture of the whole estate.
+
+  Read more in the [Compliance documentation](https://docs.prowler.com/user-guide/compliance/tutorials/compliance).
+
+  ### 🔍 Checks
+
+  #### Microsoft 365
+
+  Twenty new Entra ID checks expand the coverage of CIS Microsoft 365 Foundations Benchmark v7.0.0:
+
+  - **Password protection:** custom banned password list, on-premises enforcement, and lockout threshold and duration.
+  - **Default user permissions:** security group and Microsoft 365 group creation restricted, and guest invitations limited to allowed domains.
+  - **Conditional Access:** high and medium sign-in risk blocked, authentication transfer blocked, untrusted locations blocked, trusted named locations defined, sign-in frequency enforced, and token protection enforced.
+  - **Sessions and authentication methods:** idle session timeout configured, email one-time passcodes disabled, and Microsoft Authenticator context shown.
+  - **PIM and access reviews:** approval required to activate the Global Administrator and Privileged Role Administrator roles, and access reviews configured for guest users and privileged roles.
+
+  Explore all Microsoft 365 checks at [Prowler Hub](https://hub.prowler.com/check?provider=m365).
+
+  #### AWS
+
+  Two new checks detect hardcoded secrets:
+
+  - `batch_job_definition_no_secrets` scans Batch job definition environment variables and command parameters. Thanks to @praneetrajv!
+  - `awslambda_layer_no_secrets_in_content` scans Lambda layer package content. Thanks to @ganiganesh25!
+
+  Explore all AWS checks at [Prowler Hub](https://hub.prowler.com/check?provider=aws).
+
+  ### 🙌 External Contributors
+
+  Thank you to our community contributors for this release!
+
+  - @praneetrajv: AWS `batch_job_definition_no_secrets` check ([#12117](https://github.com/prowler-cloud/prowler/pull/12117))
+  - @ganiganesh25: AWS `awslambda_layer_no_secrets_in_content` check ([#12233](https://github.com/prowler-cloud/prowler/pull/12233))
+  - @andoniaf: GitHub `organization_repository_creation_limited` now reports low severity when repository creation is limited to private or internal visibility ([#12164](https://github.com/prowler-cloud/prowler/pull/12164))
+
+  See the [full release notes on GitHub](https://github.com/prowler-cloud/prowler/releases/tag/5.39.0) for the complete list of changes.
+</Update>
+
 <Update label="v5.38.0" description="August 6, 2026">
   ### 📌 Compliance Watchlist
 
