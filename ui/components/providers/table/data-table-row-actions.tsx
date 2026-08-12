@@ -228,11 +228,11 @@ function OrgGroupDropdownActions({
             validate={
               nameFallback
                 ? undefined
-                : (value) => (value ? null : "Name is required.")
+                : (value) => (value.trim() ? null : "Name is required.")
             }
             setIsOpen={setIsEditNameOpen}
             onSave={(name) =>
-              updateOrganizationName(rowData.id, name || nameFallback)
+              updateOrganizationName(rowData.id, name.trim() || nameFallback)
             }
           />
         </Modal>

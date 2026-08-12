@@ -736,8 +736,9 @@ export const gcpOnboardingFixture = (
 
 /**
  * A fresh Azure organization onboarding world (management groups +
- * subscriptions). Selection defaults to the two ready subscriptions; the other
- * two are blocked, one of them inside an otherwise empty Management Group.
+ * subscriptions). Selection defaults to the two ready subscriptions; the
+ * remaining three are blocked, one of them inside an otherwise empty Management
+ * Group.
  */
 export const azureOnboardingFixture = (
   overrides: Partial<OrgFixture> = {},

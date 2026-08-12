@@ -152,13 +152,17 @@ interface RenameRequestBody {
   data: RenameRequestData;
 }
 
+interface OrganizationSecretAttributes {
+  secret_type?: string;
+  secret?: Record<string, unknown>;
+}
+
+interface OrganizationSecretRequestData {
+  attributes: OrganizationSecretAttributes;
+}
+
 interface OrganizationSecretRequestBody {
-  data: {
-    attributes: {
-      secret_type?: string;
-      secret?: Record<string, unknown>;
-    };
-  };
+  data: OrganizationSecretRequestData;
 }
 
 const AZURE_CLIENT_ID = "99999999-9999-4999-8999-999999999999";
