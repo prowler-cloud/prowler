@@ -1,1 +1,1 @@
-Add the `rolesanywhere_profile_restricts_session_permissions` check to flag AWS IAM Roles Anywhere profiles that do not scope down the vended session with a session policy or managed policies
+Add the `rolesanywhere_profile_restricts_session_permissions` check to flag AWS IAM Roles Anywhere profiles that reference an administrative role without scoping down the vended session with a session policy or managed policies

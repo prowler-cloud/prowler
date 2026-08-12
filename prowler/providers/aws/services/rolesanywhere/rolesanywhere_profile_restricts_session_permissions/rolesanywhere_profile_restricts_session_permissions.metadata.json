@@ -11,8 +11,8 @@
   "Severity": "medium",
   "ResourceType": "AwsRolesAnywhereProfile",
   "ResourceGroup": "security",
-  "Description": "**IAM Roles Anywhere profiles** are assessed for **session scoping**. A profile that defines neither an inline `sessionPolicy` nor `managedPolicyArns` vends temporary credentials with the full permissions of every role it references, so any certificate accepted by the trust anchor obtains those permissions in full.",
-  "Risk": "Roles Anywhere profiles bind X.509 certificates to IAM roles. Without a session policy or managed policies scoping the session down, vended credentials carry the full permissions of the referenced role(s). An attacker presenting a valid certificate - or planting a rogue trust anchor and profile - gains durable privileged access that rotating IAM keys does not revoke.",
+  "Description": "**IAM Roles Anywhere profiles** that reference an administrative role are assessed for **session scoping**. A profile defining neither an inline `sessionPolicy` nor `managedPolicyArns` vends credentials with the full permissions of its roles. It is flagged only when a referenced role is administrative, since an unscoped session on a least-privilege role is already constrained.",
+  "Risk": "Roles Anywhere profiles bind X.509 certificates to IAM roles. When a profile references an administrative role and does not scope the session, vended credentials carry full administrative permissions. An attacker presenting a valid certificate - or planting a rogue trust anchor and profile - gains durable privileged access that rotating IAM keys does not revoke.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/rolesanywhere/latest/userguide/introduction.html",
@@ -37,5 +37,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "Disabled profiles cannot vend session credentials and are reported as PASS. A profile is considered scoped when it defines an inline sessionPolicy or references managed policies; this check does not evaluate whether the referenced role itself is least-privilege."
+  "Notes": "A profile is failed only when it is enabled, its session is unscoped (no sessionPolicy, or one granting *:*, and no managedPolicyArns other than AdministratorAccess), and a referenced role grants administrative (*:*) access - detected via the AWS-managed AdministratorAccess policy ARN or an attached managed/inline policy document resolving to full access. Disabled profiles, scoped profiles, and profiles with no role identified as administrative are reported as PASS. Referenced roles absent from the IAM inventory (for example cross-account roles or denied ListRoles) and permissions boundaries are not evaluated, so such profiles PASS to avoid false positives."
 }

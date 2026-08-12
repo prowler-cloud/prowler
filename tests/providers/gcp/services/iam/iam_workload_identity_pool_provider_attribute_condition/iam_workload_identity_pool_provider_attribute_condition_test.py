@@ -40,7 +40,11 @@ def _run(provider_kwargs):
                     state=kwargs.get("state", "ACTIVE"),
                     disabled=kwargs.get("disabled", False),
                     attribute_condition=kwargs.get("attribute_condition", ""),
-                    provider_type="oidc",
+                    provider_type=kwargs.get("provider_type", "oidc"),
+                    issuer_uri=kwargs.get(
+                        "issuer_uri",
+                        "https://token.actions.githubusercontent.com",
+                    ),
                     display_name="My Provider",
                 )
             )
@@ -55,18 +59,73 @@ class Test_iam_workload_identity_pool_provider_attribute_condition:
     def test_no_providers(self):
         assert len(_run([])) == 0
 
-    def test_provider_without_attribute_condition_fails(self):
-        result = _run([{"attribute_condition": ""}])
+    def test_multi_tenant_issuer_without_attribute_condition_fails(self):
+        result = _run(
+            [
+                {
+                    "attribute_condition": "",
+                    "issuer_uri": "https://token.actions.githubusercontent.com",
+                }
+            ]
+        )
         assert len(result) == 1
         assert result[0].status == "FAIL"
         assert result[0].resource_id.endswith("my-provider")
         assert result[0].location == "global"
-        assert "attribute condition" in result[0].status_extended
+        assert "multi-tenant issuer" in result[0].status_extended
 
-    def test_provider_with_attribute_condition_passes(self):
-        result = _run([{"attribute_condition": "assertion.sub == 'repo:acme'"}])
+    def test_dedicated_issuer_without_attribute_condition_passes(self):
+        result = _run(
+            [
+                {
+                    "attribute_condition": "",
+                    "issuer_uri": "https://oidc.eks.eu-west-1.amazonaws.com/id/ABC123",
+                }
+            ]
+        )
         assert len(result) == 1
         assert result[0].status == "PASS"
+        assert "dedicated issuer" in result[0].status_extended
+
+    def test_non_oidc_provider_without_attribute_condition_passes(self):
+        result = _run(
+            [{"attribute_condition": "", "provider_type": "aws", "issuer_uri": ""}]
+        )
+        assert len(result) == 1
+        assert result[0].status == "PASS"
+        assert "not an OIDC provider" in result[0].status_extended
+
+    def test_multi_tenant_issuer_with_port_and_uppercase_fails(self):
+        result = _run(
+            [{"attribute_condition": "", "issuer_uri": "https://GitLab.com:443"}]
+        )
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+
+    def test_multi_tenant_issuer_bare_host_fails(self):
+        result = _run(
+            [
+                {
+                    "attribute_condition": "",
+                    "issuer_uri": "token.actions.githubusercontent.com",
+                }
+            ]
+        )
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+
+    def test_multi_tenant_issuer_with_attribute_condition_passes(self):
+        result = _run(
+            [
+                {
+                    "attribute_condition": "assertion.repository_owner == 'acme'",
+                    "issuer_uri": "https://token.actions.githubusercontent.com",
+                }
+            ]
+        )
+        assert len(result) == 1
+        assert result[0].status == "PASS"
+        assert "enforces an attribute condition" in result[0].status_extended
 
     def test_disabled_provider_passes(self):
         result = _run([{"disabled": True}])

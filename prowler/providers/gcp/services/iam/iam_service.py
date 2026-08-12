@@ -152,6 +152,9 @@ class IAM(GCPService):
                             attribute_mapping=provider.get("attributeMapping", {})
                             or {},
                             provider_type=provider_type,
+                            issuer_uri=(provider.get("oidc", {}) or {}).get(
+                                "issuerUri", ""
+                            ),
                             display_name=provider.get("displayName", ""),
                         )
                     )
@@ -198,6 +201,7 @@ class WorkloadIdentityPoolProvider(BaseModel):
     attribute_condition: str = ""
     attribute_mapping: dict = {}
     provider_type: str = ""
+    issuer_uri: str = ""
     display_name: str = ""
 
 
