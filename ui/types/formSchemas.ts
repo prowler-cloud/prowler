@@ -585,6 +585,7 @@ export const addCredentialsRoleFormSchema = (providerType: string) =>
           [ProviderCredentialFields.SESSION_DURATION]: z.string().optional(),
           [ProviderCredentialFields.ROLE_SESSION_NAME]: z.string().optional(),
           [ProviderCredentialFields.CREDENTIALS_TYPE]: z.string().optional(),
+          [ProviderCredentialFields.ROLE_CHAIN_JSON]: z.string().optional(),
         })
         .superRefine((data, ctx) => {
           if (
@@ -615,6 +616,38 @@ export const addCredentialsRoleFormSchema = (providerType: string) =>
               message: "AWS Secret Access Key is required.",
               path: [ProviderCredentialFields.AWS_SECRET_ACCESS_KEY],
             });
+          }
+
+          // Validate role_chain_json if present
+          const chainJson =
+            data[ProviderCredentialFields.ROLE_CHAIN_JSON];
+          if (chainJson && chainJson.trim().length > 0) {
+            try {
+              const parsed = JSON.parse(chainJson);
+              if (!Array.isArray(parsed)) {
+                ctx.addIssue({
+                  code: z.ZodIssueCode.custom,
+                  message: "Role chain must be a JSON array.",
+                  path: [ProviderCredentialFields.ROLE_CHAIN_JSON],
+                });
+              } else {
+                for (let i = 0; i < parsed.length; i++) {
+                  if (!parsed[i].role_arn) {
+                    ctx.addIssue({
+                      code: z.ZodIssueCode.custom,
+                      message: `Chain step ${i + 1} is missing a Role ARN.`,
+                      path: [ProviderCredentialFields.ROLE_CHAIN_JSON],
+                    });
+                  }
+                }
+              }
+            } catch {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "Role chain contains invalid JSON.",
+                path: [ProviderCredentialFields.ROLE_CHAIN_JSON],
+              });
+            }
           }
         })
     : providerType === "alibabacloud"
