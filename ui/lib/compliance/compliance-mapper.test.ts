@@ -43,6 +43,10 @@ vi.mock(
   () => ({ CSACustomDetails: stubFactory("CSAStub") }),
 );
 vi.mock(
+  "@/components/compliance/compliance-custom-details/cyber-essentials-details",
+  () => ({ CyberEssentialsCustomDetails: stubFactory("CyberEssentialsStub") }),
+);
+vi.mock(
   "@/components/compliance/compliance-custom-details/ens-details",
   () => ({ ENSCustomDetails: stubFactory("ENSStub") }),
 );
@@ -149,6 +153,7 @@ describe("getComplianceMapper", () => {
       { framework: "CCC", expected: "CCCStub" },
       { framework: "CSA-CCM", expected: "CSAStub" },
       { framework: "Okta-IDaaS-STIG", expected: "OktaIDaaSStigStub" },
+      { framework: "Cyber-Essentials", expected: "CyberEssentialsStub" },
     ];
 
     for (const { framework, expected } of wiring) {
@@ -194,6 +199,7 @@ describe("getComplianceMapper", () => {
       "CCC",
       "CSA-CCM",
       "Okta-IDaaS-STIG",
+      "Cyber-Essentials",
     ]) {
       const mapper = getComplianceMapper(framework);
       expect(Object.keys(mapper).sort(), framework).toEqual(expectedKeys);
