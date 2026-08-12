@@ -46,9 +46,7 @@ class TMS(HuaweiCloudService):
             from huaweicloudsdktms.v1 import ListPredefineTagsRequest
 
             request = ListPredefineTagsRequest()
-            response = self._call_with_retries(
-                client.list_predefine_tags, request
-            )
+            response = self._call_with_retries(client.list_predefine_tags, request)
 
             if response and response.tags:
                 for tag_data in response.tags:
