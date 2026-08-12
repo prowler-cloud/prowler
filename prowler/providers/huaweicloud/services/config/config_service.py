@@ -61,9 +61,7 @@ class Config(HuaweiCloudService):
             from huaweicloudsdkrms.v1 import ShowTrackerConfigRequest
 
             request = ShowTrackerConfigRequest()
-            response = self._call_with_retries(
-                client.show_tracker_config, request
-            )
+            response = self._call_with_retries(client.show_tracker_config, request)
 
             if response:
                 self.tracker_config = TrackerConfig(
@@ -88,9 +86,7 @@ class Config(HuaweiCloudService):
             from huaweicloudsdkrms.v1 import ListPolicyAssignmentsRequest
 
             request = ListPolicyAssignmentsRequest()
-            response = self._call_with_retries(
-                client.list_policy_assignments, request
-            )
+            response = self._call_with_retries(client.list_policy_assignments, request)
 
             if response and response.value:
                 for assignment_data in response.value:
