@@ -120,7 +120,7 @@ In Prowler Local Server the organization option is marked **Cloud** and opens an
 ### Enter Organization Details
 
 - **Organization ID**: the numeric ID of your Google Cloud organization (for example, `123456789012`). Non-numeric values are rejected before submission.
-- **Name** (optional): a display name for the organization in Prowler. If left blank, Prowler uses the name stored in Google Cloud.
+- **Name** (optional): a display name for the organization in Prowler. If left blank, Prowler uses the organization ID.
 
 <Frame>
   <img src="/images/organizations/gcp/gcp-organization-details-form.png" alt="Organization Details form with the Google Cloud organization ID and Name fields" />
@@ -307,7 +307,7 @@ Open the row actions menu on the organization row on the **Providers** page.
 
 | Action | What it does |
 |--------|--------------|
-| **Edit Organization Name** | Renames the organization in Prowler. Leave it blank to fall back to the name stored in Google Cloud. |
+| **Edit Organization Name** | Renames the organization in Prowler. Leave it blank to fall back to the organization ID. |
 | **Update Credentials** | Reopens the Authentication Details step to store a new credential. |
 | **Edit Scan Schedule** | Applies one schedule to every connected project in the organization. |
 | **Test Connections (N)** | Re-tests every project in the organization. |
