@@ -9,14 +9,10 @@ class obs_bucket_encryption(Check):
         findings = []
 
         for bucket in obs_client.buckets:
-            report = CheckReportHuaweiCloud(
-                metadata=self.metadata(), resource=bucket
-            )
+            report = CheckReportHuaweiCloud(metadata=self.metadata(), resource=bucket)
             report.region = bucket.region
             report.resource_id = bucket.name
-            report.resource_arn = (
-                f"huaweicloud:obs:{bucket.region}:{obs_client.audited_account}:bucket/{bucket.name}"
-            )
+            report.resource_arn = f"huaweicloud:obs:{bucket.region}:{obs_client.audited_account}:bucket/{bucket.name}"
 
             if bucket.is_encrypted:
                 report.status = "PASS"
@@ -25,9 +21,7 @@ class obs_bucket_encryption(Check):
                 )
             else:
                 report.status = "FAIL"
-                report.status_extended = (
-                    f"OBS bucket {bucket.name} does not have server-side encryption enabled."
-                )
+                report.status_extended = f"OBS bucket {bucket.name} does not have server-side encryption enabled."
 
             findings.append(report)
 
