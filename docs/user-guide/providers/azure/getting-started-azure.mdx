@@ -57,13 +57,29 @@ Azure supports two authentication methods in the add-provider wizard. Prowler Cl
 
 #### Certificate Authentication (Recommended)
 
-The quick-start flow: click **Deploy to Azure** in the wizard to start a deployment in the Azure Portal with the Prowler Bicep template pre-loaded. The template creates the App Registration / Service Principal, the `Reader` role assignment, and the custom `ProwlerRole` bound to a certificate credential. You still fill the certificate parameter and confirm the deployment inside the Portal.
+Certificate authentication uses an Entra ID App Registration with an X.509 keyCredential. The Prowler wizard splits the setup in two steps: the manual pieces that only the Azure Portal UI supports (creating the App Registration and uploading the certificate), and the RBAC pieces the Prowler Bicep template deploys with one click on Azure Portal (`Reader` + custom `ProwlerRole`).
+
+<Note>
+**Why the split?** Microsoft Graph resources in Bicep (`Microsoft.Graph/applications`, `Microsoft.Graph/servicePrincipals`) are [not supported by Portal `Deploy to Azure` URL deployments](https://github.com/microsoftgraph/msgraph-bicep-types/issues/294). A template that contains them fails at deploy time with `Authorization_RequestDenied` regardless of the deploying user's Entra ID role — even a Global Administrator hits the wall. The wizard therefore creates the App Registration through the Portal UI (which works normally) and reserves the Bicep template for the RBAC assignments (which Portal deployments handle cleanly).
+</Note>
+
+<Note>
+**Required permissions in the Azure account you run the setup with**
+
+Two separate permission systems apply:
+
+- **Microsoft Entra ID**: `Application Administrator`, `Cloud Application Administrator`, or `Global Administrator` — needed for the manual App Registration + certificate upload in steps 1-2 below. Not required if your tenant already allows all users to register applications (Entra ID → Users → User settings).
+- **Azure RBAC**: `Owner` on the target subscription — needed by the Deploy to Azure click in step 3 to assign `Reader` and the custom `ProwlerRole`.
+
+If you do not have both, ask your Azure administrator to grant them or to complete the missing step on your behalf.
+</Note>
 
 1. In the Azure wizard, select **Certificate Authentication (Recommended)**.
-2. Click the **Deploy to Azure** button. This opens the Azure Portal deployment blade pre-loaded with the [Prowler Bicep template](https://github.com/prowler-cloud/prowler/blob/master/permissions/templates/azure/bicep/prowler-scan.bicep).
-3. Generate a certificate locally and paste the base64-encoded public certificate into the Bicep `certificateBase64` parameter. See [Certificate Authentication → Generating the certificate](/user-guide/providers/azure/authentication#generating-the-certificate) for the exact commands.
-4. When the deployment finishes, copy the `tenantId` and `applicationId` outputs into Prowler along with the base64-encoded **PEM bundle** (certificate + private key) you generated earlier, and paste it into the Certificate Content field.
-5. Click **Next**, then **Launch Scan**.
+2. **Create the App Registration** — click *Open Azure Portal → New App Registration* in the wizard, sign in to the tenant you want Prowler to scan, and register an application. Any name works (e.g. `Prowler`); keep the default single-tenant audience and no redirect URI.
+3. **Upload the certificate** — in the wizard, click *Generate certificate for me* to produce a keypair in your browser (the private key auto-fills the form; the public certificate downloads as a base64 text file). Decode it with `base64 -D -i prowler-cert-base64.txt -o prowler.cer`, then in the Portal open your new App Registration → *Certificates & secrets → Certificates → Upload certificate* and upload `prowler.cer`. Prefer the CLI? Follow the openssl / PowerShell steps in [Certificate Authentication → Generating the certificate](/user-guide/providers/azure/authentication#generating-the-certificate).
+4. **Copy the Service Principal Object ID** — Portal → Entra ID → *Enterprise applications* → search for the app you just created → *Overview → Object ID*. Beware this is a different Object ID than the one on the *App registrations* blade (Enterprise applications and App registrations are two separate objects with separate Object IDs but the same Application (client) ID).
+5. **Grant Prowler read access** — click **Deploy to Azure** in the wizard. The Azure Portal opens with the Prowler Bicep template pre-loaded. Pick your target subscription, paste the Service Principal Object ID from step 4 into the `servicePrincipalObjectId` field, and confirm the deployment.
+6. **Fill the wizard** — back in Prowler, paste the `Tenant ID` from Entra ID → Overview, the `Application (client) ID` from your App Registration's Overview page, and confirm the `Certificate Private Key` field is populated from step 3. Click **Next**, then **Launch Scan**.
 
 #### Service Principal with Client Secret
 

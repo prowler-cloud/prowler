@@ -40,16 +40,22 @@ export const getAttackPathHubUrl = (queryId: string): string =>
 export const PROWLER_CF_TEMPLATE_URL =
   "https://prowler-cloud-public.s3.eu-west-1.amazonaws.com/permissions/templates/aws/cloudformation/prowler-scan-role.yml";
 
-// ARM JSON template URL for the Prowler quick-start Azure deployment (App
-// Registration + Service Principal + Reader + custom ProwlerRole + certificate
-// credential). The template is authored in Bicep at
-// `permissions/templates/azure/bicep/prowler-scan.bicep` and compiled to ARM
-// JSON at `prowler-scan.json` — the Azure Portal `#create/Microsoft.Template`
-// deep link only accepts ARM JSON, not raw Bicep source. Regenerate with
-// `make -C permissions/templates/azure/bicep build` after editing the .bicep.
-// URL-encoded and appended to the Portal deep link built by
-// `getAzureDeploymentQuickLink` below. Points at the same public S3 bucket
-// that hosts the AWS templates.
+// ARM JSON template URL for the Prowler quick-start Azure deployment. The
+// template only grants a pre-existing App Registration the read-only
+// subscription roles Prowler needs (built-in `Reader` + custom
+// `ProwlerRole`); the App Registration itself and its certificate credential
+// are created through the Portal UI in earlier wizard steps, because
+// `Microsoft.Graph/*` Bicep resources are not deployable via the Portal
+// `Deploy to Azure` URL flow (`msgraph-bicep-types` issue #294, closed as a
+// documented Microsoft limitation).
+//
+// Authored in Bicep at `permissions/templates/azure/bicep/prowler-scan.bicep`
+// and compiled to ARM JSON at `prowler-scan.json` — the Azure Portal
+// `#create/Microsoft.Template` deep link only accepts ARM JSON, not raw
+// Bicep source. Regenerate with `make -C permissions/templates/azure/bicep
+// build` after editing the .bicep. URL-encoded and appended to the Portal
+// deep link built by `getAzureDeploymentQuickLink` below. Points at the same
+// public S3 bucket that hosts the AWS templates.
 export const PROWLER_AZURE_BICEP_TEMPLATE_URL =
   "https://prowler-cloud-public.s3.eu-west-1.amazonaws.com/permissions/templates/azure/bicep/prowler-scan.json";
 
