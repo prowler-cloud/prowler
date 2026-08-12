@@ -22,8 +22,7 @@ class config_tracker_enabled(Check):
         if config_client.tracker_config.tracker_enabled:
             report.status = "PASS"
             report.status_extended = (
-                "Config (RMS) tracker is enabled. "
-                "Compliance monitoring is active."
+                "Config (RMS) tracker is enabled. " "Compliance monitoring is active."
             )
         else:
             report.status = "FAIL"
