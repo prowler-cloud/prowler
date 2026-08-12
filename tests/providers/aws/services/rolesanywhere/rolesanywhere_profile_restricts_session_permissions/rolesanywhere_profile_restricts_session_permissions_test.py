@@ -355,6 +355,65 @@ class Test_rolesanywhere_profile_restricts_session_permissions:
             assert len(result) == 1
             assert result[0].status == "FAIL"
 
+    def test_restrictive_inline_with_admin_managed_policy_fails(self):
+        # The session-policy set is evaluated as a union: AdministratorAccess as
+        # a managed session policy makes the boundary unrestricted even though
+        # the inline session policy is restrictive.
+        with _enter(
+            _patched(
+                _build_client(
+                    {
+                        PROFILE_ARN: _profile(
+                            session_policy=SESSION_POLICY,
+                            managed_policy_arns=[AWS_ADMIN_POLICY_ARN],
+                            role_arns=[ADMIN_ROLE_ARN],
+                        )
+                    }
+                )
+            )
+        ):
+            result = _run()
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+
+    def test_full_access_inline_with_restrictive_managed_policy_fails(self):
+        # Conversely, a *:* inline session policy leaves the union unrestricted
+        # regardless of a restrictive managed session policy.
+        with _enter(
+            _patched(
+                _build_client(
+                    {
+                        PROFILE_ARN: _profile(
+                            session_policy=FULL_ACCESS_SESSION_POLICY,
+                            managed_policy_arns=[MANAGED_POLICY_ARN],
+                            role_arns=[ADMIN_ROLE_ARN],
+                        )
+                    }
+                )
+            )
+        ):
+            result = _run()
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+
+    def test_restrictive_inline_and_restrictive_managed_policy_passes(self):
+        with _enter(
+            _patched(
+                _build_client(
+                    {
+                        PROFILE_ARN: _profile(
+                            session_policy=SESSION_POLICY,
+                            managed_policy_arns=[MANAGED_POLICY_ARN],
+                            role_arns=[ADMIN_ROLE_ARN],
+                        )
+                    }
+                )
+            )
+        ):
+            result = _run()
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+
     def test_disabled_profile_passes(self):
         with _enter(
             _patched(

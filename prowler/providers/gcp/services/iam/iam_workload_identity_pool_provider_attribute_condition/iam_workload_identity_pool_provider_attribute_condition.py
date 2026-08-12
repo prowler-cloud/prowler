@@ -37,7 +37,8 @@ class iam_workload_identity_pool_provider_attribute_condition(Check):
     that platform can then authenticate through the provider and exchange tokens
     for federated credentials, surviving credential rotation. Providers that
     enforce an attribute condition, that trust a dedicated single-tenant issuer,
-    that are not OIDC-based, or that are disabled/inactive are reported as PASS.
+    that are not OIDC-based, that are disabled/inactive, or whose parent pool is
+    disabled are reported as PASS.
     """
 
     def execute(self) -> list[Check_Report_GCP]:
@@ -59,7 +60,14 @@ class iam_workload_identity_pool_provider_attribute_condition(Check):
                 resource_name=provider.display_name or provider.id,
                 location="global",
             )
-            if provider.disabled or provider.state != "ACTIVE":
+            if provider.pool_disabled:
+                report.status = "PASS"
+                report.status_extended = (
+                    f"Workload Identity Federation provider {provider.id} belongs "
+                    f"to the disabled pool {provider.pool_id}, which cannot vend "
+                    "credentials."
+                )
+            elif provider.disabled or provider.state != "ACTIVE":
                 report.status = "PASS"
                 report.status_extended = (
                     f"Workload Identity Federation provider {provider.id} in pool "

@@ -122,6 +122,12 @@ class IAM(GCPService):
         try:
             pool_name = pool.get("name", "")
             pool_id = pool_name.split("/")[-1]
+            # A provider can remain ACTIVE while its parent pool is disabled or
+            # soft-deleted; a disabled pool cannot vend credentials, so the
+            # pool's effective availability must travel with the provider.
+            pool_disabled = (
+                pool.get("disabled", False) or pool.get("state", "ACTIVE") != "ACTIVE"
+            )
             request = (
                 self.client.projects()
                 .locations()
@@ -145,6 +151,7 @@ class IAM(GCPService):
                             name=provider.get("name", ""),
                             id=provider.get("name", "").split("/")[-1],
                             pool_id=pool_id,
+                            pool_disabled=pool_disabled,
                             project_id=project_id,
                             state=provider.get("state", ""),
                             disabled=provider.get("disabled", False),
@@ -195,6 +202,9 @@ class WorkloadIdentityPoolProvider(BaseModel):
     name: str
     id: str
     pool_id: str
+    # True when the parent pool is disabled or not ACTIVE; such a pool cannot
+    # vend credentials regardless of the provider's own state.
+    pool_disabled: bool = False
     project_id: str
     state: str = ""
     disabled: bool = False

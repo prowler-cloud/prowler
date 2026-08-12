@@ -36,6 +36,7 @@ def _run(provider_kwargs):
                     ),
                     id=provider_id,
                     pool_id="my-pool",
+                    pool_disabled=kwargs.get("pool_disabled", False),
                     project_id=GCP_PROJECT_ID,
                     state=kwargs.get("state", "ACTIVE"),
                     disabled=kwargs.get("disabled", False),
@@ -137,3 +138,11 @@ class Test_iam_workload_identity_pool_provider_attribute_condition:
         result = _run([{"state": "DELETED"}])
         assert len(result) == 1
         assert result[0].status == "PASS"
+
+    def test_active_provider_in_disabled_pool_passes(self):
+        # The provider itself is ACTIVE and unconditioned on a multi-tenant
+        # issuer, but its parent pool is disabled and cannot vend credentials.
+        result = _run([{"pool_disabled": True}])
+        assert len(result) == 1
+        assert result[0].status == "PASS"
+        assert "disabled pool" in result[0].status_extended

@@ -55,6 +55,31 @@ def _wif_client(_GCPService, _service, _api_version, _credentials):
     return client
 
 
+def _disabled_pool_client(_GCPService, _service, _api_version, _credentials):
+    """Discovery client stub: a disabled pool containing an ACTIVE provider."""
+    client = MagicMock()
+
+    pool_name = _pool_name(GCP_PROJECT_ID)
+    pools = (
+        client.projects.return_value.locations.return_value.workloadIdentityPools.return_value
+    )
+    pools.list.return_value.execute.return_value = {
+        "workloadIdentityPools": [
+            {"name": pool_name, "state": "ACTIVE", "disabled": True}
+        ]
+    }
+    pools.list_next.return_value = None
+
+    providers = pools.providers.return_value
+    providers.list.return_value.execute.return_value = {
+        "workloadIdentityPoolProviders": [_provider_payload(pool_name)]
+    }
+    providers.list_next.return_value = None
+
+    _empty_service_accounts(client)
+    return client
+
+
 def _pool_list_failure_client(_GCPService, _service, _api_version, _credentials):
     """Pool listing fails for PROJECT_A but succeeds for PROJECT_B."""
     client = MagicMock()
@@ -158,9 +183,21 @@ class TestIAMWorkloadIdentityService:
         assert provider.project_id == GCP_PROJECT_ID
         assert provider.state == "ACTIVE"
         assert provider.disabled is False
+        assert provider.pool_disabled is False
         assert provider.attribute_condition == ""
         assert provider.provider_type == "oidc"
         assert provider.issuer_uri == "https://token.actions.githubusercontent.com"
+
+    def test_disabled_pool_state_propagates_to_provider(self):
+        iam = _run_service(_disabled_pool_client, [GCP_PROJECT_ID])
+
+        # The provider is ACTIVE, but its parent pool is disabled: the pool's
+        # effective state must travel with the provider record.
+        assert len(iam.workload_identity_pool_providers) == 1
+        provider = iam.workload_identity_pool_providers[0]
+        assert provider.state == "ACTIVE"
+        assert provider.disabled is False
+        assert provider.pool_disabled is True
 
     def test_pool_list_failure_does_not_block_other_projects(self):
         iam = _run_service(_pool_list_failure_client, [PROJECT_A, PROJECT_B])

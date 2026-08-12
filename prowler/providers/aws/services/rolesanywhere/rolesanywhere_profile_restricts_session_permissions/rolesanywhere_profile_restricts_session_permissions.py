@@ -56,27 +56,33 @@ def _role_is_privileged(role, policies) -> bool:
 
 
 def _session_is_scoped(profile) -> bool:
-    """Return True when the profile's session configuration restricts permissions.
+    """Return True when the profile's session-policy set restricts permissions.
 
-    A session policy scopes the session unless it itself grants ``*:*``.
-    Managed session policies scope the session unless one of them is the
-    AWS-managed AdministratorAccess policy (the union would be unrestricted).
+    AWS evaluates the inline ``sessionPolicy`` and every ``managedPolicyArns``
+    entry together as a single session-policy category: an action allowed by any
+    member is allowed by the session boundary. The session is therefore scoped
+    only when at least one session policy exists and no member of the set grants
+    ``*:*`` — a single administrative member (inline or managed) makes the whole
+    boundary unrestricted regardless of how restrictive the others are.
 
     Args:
         profile: A ``rolesanywhere_service.Profile``.
     """
+    if not profile.session_policy and not profile.managed_policy_arns:
+        return False
     if profile.session_policy:
         try:
             document = json.loads(profile.session_policy)
         except (ValueError, TypeError):
             document = None
-        if not _grants_full_access(document):
-            return True
-    if profile.managed_policy_arns and not any(
-        arn.endswith(ADMIN_POLICY_ARN_SUFFIX) for arn in profile.managed_policy_arns
+        if _grants_full_access(document):
+            return False
+    if any(
+        arn.endswith(ADMIN_POLICY_ARN_SUFFIX)
+        for arn in profile.managed_policy_arns or []
     ):
-        return True
-    return False
+        return False
+    return True
 
 
 class rolesanywhere_profile_restricts_session_permissions(Check):
