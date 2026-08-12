@@ -30,18 +30,27 @@ class BMS(HuaweiCloudService):
         """Load mock data for testing."""
         region = "la-south-2"
         self.servers["bms-mock-001"] = BareMetalServer(
-            id="bms-mock-001", name="bms-public-server", region=region,
-            status="ACTIVE", public_ip="123.45.67.89",
+            id="bms-mock-001",
+            name="bms-public-server",
+            region=region,
+            status="ACTIVE",
+            public_ip="123.45.67.89",
             security_groups={"sg-default": "default"},
         )
         self.servers["bms-mock-002"] = BareMetalServer(
-            id="bms-mock-002", name="bms-private-server", region=region,
-            status="ACTIVE", public_ip="",
+            id="bms-mock-002",
+            name="bms-private-server",
+            region=region,
+            status="ACTIVE",
+            public_ip="",
             security_groups={"sg-custom": "custom-sg"},
         )
         self.servers["bms-mock-003"] = BareMetalServer(
-            id="bms-mock-003", name="bms-secure-server", region=region,
-            status="ACTIVE", public_ip="",
+            id="bms-mock-003",
+            name="bms-secure-server",
+            region=region,
+            status="ACTIVE",
+            public_ip="",
             security_groups={"sg-secure": "web-sg"},
         )
 
@@ -68,7 +77,10 @@ class BMS(HuaweiCloudService):
                         )
 
                         security_groups = {}
-                        if hasattr(server_data, "security_groups") and server_data.security_groups:
+                        if (
+                            hasattr(server_data, "security_groups")
+                            and server_data.security_groups
+                        ):
                             for sg in server_data.security_groups:
                                 sg_name = getattr(sg, "name", "")
                                 sg_id = getattr(sg, "id", sg_name)
