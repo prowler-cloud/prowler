@@ -12,6 +12,7 @@ import {
 import {
   applyOptimisticTriageSummaryUpdate,
   getOptimisticTriageMutedReason,
+  isManualPassTriageUpdate,
   shouldMarkFindingMutedForTriageUpdate,
 } from "@/lib/finding-triage";
 import { isCloud } from "@/lib/shared/env";
@@ -20,6 +21,7 @@ import {
   type FindingComplianceFramework,
   WATCHLIST_SCOPE,
 } from "@/types/compliance-watchlist";
+import { FINDING_STATUS } from "@/types/components";
 import type { UpdateFindingTriageInput } from "@/types/findings-triage";
 
 // Keep fast carousel navigations in a loading state for one short beat so
@@ -400,9 +402,11 @@ export function useResourceDetailDrawer({
     }
 
     const shouldMarkMuted = shouldMarkFindingMutedForTriageUpdate(input);
+    const isManualPass = isManualPassTriageUpdate(input);
 
     return {
       ...finding,
+      status: isManualPass ? FINDING_STATUS.PASS : finding.status,
       isMuted: shouldMarkMuted ? true : finding.isMuted,
       mutedReason:
         shouldMarkMuted && input.isMuted !== true && input.status

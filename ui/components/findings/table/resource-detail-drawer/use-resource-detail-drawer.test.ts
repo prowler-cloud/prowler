@@ -910,22 +910,22 @@ describe("useResourceDetailDrawer — other findings filtering", () => {
         findingUid: "uid-2",
         triageId: "triage-2",
         notesCount: 0,
-        status: FINDING_TRIAGE_STATUS.REMEDIATING,
+        status: FINDING_TRIAGE_STATUS.RESOLVED,
         previousStatus: FINDING_TRIAGE_STATUS.OPEN,
         isMuted: false,
-        note: "Investigating",
+        manualPassEvidence: "Verified by the control owner.",
       });
     });
 
     // Then
     expect(result.current.otherFindings[0]?.triage).toEqual(
       expect.objectContaining({
-        status: FINDING_TRIAGE_STATUS.REMEDIATING,
-        label: "Remediating",
-        hasVisibleNote: true,
-        notesCount: 1,
+        status: FINDING_TRIAGE_STATUS.RESOLVED,
+        label: "Resolved",
+        manualPassProvenance: "Manually verified",
       }),
     );
+    expect(result.current.otherFindings[0]?.status).toBe("PASS");
     expect(result.current.currentFinding?.triage?.status).toBe(
       FINDING_TRIAGE_STATUS.UNDER_REVIEW,
     );

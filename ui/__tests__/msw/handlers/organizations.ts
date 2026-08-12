@@ -347,7 +347,11 @@ export const handlersForOrganizations = (
         orgType: String(attrs.org_type ?? "aws"),
         name: String(attrs.name ?? ""),
         externalId: String(attrs.external_id ?? ""),
-        rootExternalId: null,
+        // Writable on POST for Azure (the target Management Group); AWS and GCP
+        // leave it to discovery and send nothing.
+        rootExternalId: attrs.root_external_id
+          ? String(attrs.root_external_id)
+          : null,
         providerIds: [],
         nodeIds: [],
         secretId: null,
@@ -503,6 +507,8 @@ export const handlersForOrganizations = (
               result:
                 fx.discovery.status === "succeeded" ? fx.discovery.result : {},
               error: fx.discovery.error,
+              // Machine code and human message are separate fields on the wire.
+              error_message: fx.discovery.errorMessage ?? null,
               inserted_at: TS,
               updated_at: TS,
             },
@@ -624,9 +630,22 @@ export const handlersForOrganizations = (
     }),
 
     // --- launch (scans + schedules) --------------------------------------
-    http.post(`${API}/scans`, () =>
+    http.post(`${API}/scans/bulk`, () =>
       HttpResponse.json(
-        { data: { id: "scan-1", type: "scans", attributes: {} } },
+        {
+          data: fx.apply.createdProviderIds.map((providerId, index) => ({
+            id: `scan-${index + 1}`,
+            type: "scans",
+            relationships: {
+              provider: {
+                data: { id: providerId, type: "providers" },
+              },
+              task: {
+                data: { id: `scan-task-${index + 1}`, type: "tasks" },
+              },
+            },
+          })),
+        },
         { status: 202 },
       ),
     ),

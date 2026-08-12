@@ -4,6 +4,31 @@ All notable changes to the **Prowler API** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [1.39.0] (Prowler v5.38.0)
+
+### 🚀 Added
+
+- Attack Paths adds 20 AWS privilege-escalation detection queries from pathfinding.cloud, covering service PassRole escalations (Batch, Braket, Cognito Identity, ECS, EMR, EMR Serverless, GameLift, Glue, EC2 Image Builder, Kinesis Analytics, HealthOmics, EventBridge Scheduler, SSM, Step Functions), CodeDeploy and Step Functions existing-resource abuse, role permissions-boundary removal with role assumption, and IAM Identity Center permission-set policy injection [(#12237)](https://github.com/prowler-cloud/prowler/pull/12237)
+- Attack Paths query metadata now carries an outcome (Code execution, Privilege escalation, Public exposure, or Resource inventory), exposed on the queries endpoint so the graph can show a terminal outcome node [(#12344)](https://github.com/prowler-cloud/prowler/pull/12344)
+- Container images now ship an SBOM and build provenance as OCI attestations [(#12352)](https://github.com/prowler-cloud/prowler/pull/12352)
+
+### 🔄 Changed
+
+- Pin the container vulnerability scanner to Trivy v0.72.0, matching prowler-registry and partner-portal [(#12346)](https://github.com/prowler-cloud/prowler/pull/12346)
+
+### 🐞 Fixed
+
+- Compliance report output directory failures are now logged with the exception attached and fingerprinted by `errno` in Sentry, so `ENOSPC`, `ENOENT` and `EACCES` no longer share a single issue [(#12142)](https://github.com/prowler-cloud/prowler/pull/12142)
+- Restored the SDK dependency to `@master` now that the dependency bumps have landed there, and regenerated the lock. The API image no longer builds against a temporary integration branch [(#12309)](https://github.com/prowler-cloud/prowler/pull/12309)
+
+### 🔐 Security
+
+- The API container image now verifies the checksum of every third-party binary it downloads (PowerShell, Trivy, zizmor) before installing it [(#12334)](https://github.com/prowler-cloud/prowler/pull/12334)
+- Upgrade aiohttp to 3.14.3 to pick up the fix for CVE-2026-69244 [(#12340)](https://github.com/prowler-cloud/prowler/pull/12340)
+- Upgrade cryptography to 50.0.0, closing CVE-2026-69247 and CVE-2026-69249 [(#12356)](https://github.com/prowler-cloud/prowler/pull/12356)
+
+---
+
 ## [1.38.1] (Prowler v5.37.1)
 
 ### 🐞 Fixed

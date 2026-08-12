@@ -23,6 +23,7 @@ const CLOUD_UPGRADE_UTM_CONTENT = {
   [CLOUD_UPGRADE_FEATURE.ADVANCED_SCHEDULING]: "advanced-scheduling",
   [CLOUD_UPGRADE_FEATURE.ALERTS]: "alerts",
   [CLOUD_UPGRADE_FEATURE.AWS_ORGANIZATIONS]: "organization",
+  [CLOUD_UPGRADE_FEATURE.AZURE_ORGANIZATIONS]: "azure-organization",
   [CLOUD_UPGRADE_FEATURE.CLI_IMPORT]: "cli-import",
   [CLOUD_UPGRADE_FEATURE.CROSS_PROVIDER_COMPLIANCE]:
     "cross-provider-compliance",
@@ -68,6 +69,17 @@ export const CLOUD_UPGRADE_CONTENT = {
       "Apply schedules across the selected accounts",
     ],
     primaryCta: "Set Up AWS Organizations in Prowler Cloud",
+  },
+  [CLOUD_UPGRADE_FEATURE.AZURE_ORGANIZATIONS]: {
+    title: "Add Your Entire Azure Management Group",
+    description:
+      "Discover management groups and subscriptions, then manage them from one place.",
+    benefits: [
+      "Discover management groups and subscriptions automatically",
+      "Choose exactly which subscriptions to onboard",
+      "Apply schedules across the selected subscriptions",
+    ],
+    primaryCta: "Set Up Azure Management Groups in Prowler Cloud",
   },
   [CLOUD_UPGRADE_FEATURE.GCP_ORGANIZATIONS]: {
     title: "Add Your Entire GCP Organization",
