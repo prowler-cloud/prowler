@@ -130,9 +130,13 @@ export const toAccordionItems = (
       ),
       content: "",
       // Domain → requirements (flat, no intermediate "control" level).
+      // Keys are derived from the requirement name (which starts with the
+      // unique CMMC id, e.g. "AC.L1-b.1.i") instead of the array index, so
+      // expanded state stays attached to the right requirement even if the
+      // list is reordered or filtered.
       items: category.controls.flatMap((control) =>
-        control.requirements.map((requirement, reqIndex) => ({
-          key: `${framework.name}-${category.name}-req-${reqIndex}`,
+        control.requirements.map((requirement) => ({
+          key: `${framework.name}-${category.name}-${requirement.name}`,
           title: (
             <ComplianceAccordionRequirementTitle
               type=""
@@ -143,7 +147,7 @@ export const toAccordionItems = (
           ),
           content: (
             <ClientAccordionContent
-              key={`content-${framework.name}-${category.name}-req-${reqIndex}`}
+              key={`content-${framework.name}-${category.name}-${requirement.name}`}
               requirement={requirement}
               scanId={safeId}
               framework={framework.name}

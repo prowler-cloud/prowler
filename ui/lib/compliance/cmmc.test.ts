@@ -172,13 +172,20 @@ describe("mapComplianceData (CMMC 2.0)", () => {
   });
 
   it("derives counters from RequirementStatus", () => {
+    const STATUS_COUNTER = {
+      PASS: "pass",
+      FAIL: "fail",
+      MANUAL: "manual",
+    } as const;
+    type StatusCounter = (typeof STATUS_COUNTER)[keyof typeof STATUS_COUNTER];
+
     const cases: Array<{
       status: RequirementStatus;
-      expected: "pass" | "fail" | "manual";
+      expected: StatusCounter;
     }> = [
-      { status: REQUIREMENT_STATUS.PASS, expected: "pass" },
-      { status: REQUIREMENT_STATUS.FAIL, expected: "fail" },
-      { status: REQUIREMENT_STATUS.MANUAL, expected: "manual" },
+      { status: REQUIREMENT_STATUS.PASS, expected: STATUS_COUNTER.PASS },
+      { status: REQUIREMENT_STATUS.FAIL, expected: STATUS_COUNTER.FAIL },
+      { status: REQUIREMENT_STATUS.MANUAL, expected: STATUS_COUNTER.MANUAL },
     ];
 
     for (const { status, expected } of cases) {
@@ -220,6 +227,11 @@ describe("toAccordionItems (CMMC 2.0)", () => {
     expect(items[0].key).toBe(`${FRAMEWORK}-Access Control`);
     expect(isValidElement(items[0].title)).toBe(true);
     expect(items[0].items).toHaveLength(1);
+    // Requirement keys are stable (derived from the requirement id), not
+    // positional indexes — reordering must not remap expanded state.
+    expect(items[0].items?.[0]?.key).toBe(
+      `${FRAMEWORK}-Access Control-AC.L1-b.1.i`,
+    );
   });
 
   it("returns an empty list when given no frameworks", () => {
