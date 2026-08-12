@@ -20,12 +20,33 @@ NAME_COLLISION_ROLE_ARN = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:role/name-collisio
 UNRESOLVED_POLICY_ROLE_ARN = (
     f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:role/unresolved-policy-role"
 )
+DENY_OVERRIDE_ROLE_ARN = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:role/deny-override-role"
+CONDITIONAL_ADMIN_ROLE_ARN = (
+    f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:role/conditional-admin-role"
+)
+BOUNDED_ADMIN_ROLE_ARN = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:role/bounded-admin-role"
+UNRESOLVED_BOUNDARY_ROLE_ARN = (
+    f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:role/unresolved-boundary-role"
+)
+ADMIN_BOUNDED_ROLE_ARN = (
+    f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:role/admin-bounded-admin-role"
+)
 AWS_ADMIN_POLICY_ARN = "arn:aws:iam::aws:policy/AdministratorAccess"
 CUSTOMER_ADMIN_NAMED_POLICY_ARN = (
     f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:policy/AdministratorAccess"
 )
 CUSTOM_ADMIN_POLICY_ARN = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:policy/custom-admin"
 MANAGED_POLICY_ARN = "arn:aws:iam::aws:policy/ReadOnlyAccess"
+CUSTOMER_FULL_ACCESS_POLICY_ARN = (
+    f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:policy/full-access-session"
+)
+BOUNDARY_POLICY_ARN = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:policy/scoped-boundary"
+UNRESOLVED_BOUNDARY_POLICY_ARN = (
+    f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:policy/unresolved-boundary"
+)
+UNRESOLVED_SESSION_POLICY_ARN = (
+    "arn:aws:iam::aws:policy/job-function/SupportUser"  # not in iam_client.policies
+)
 
 SESSION_POLICY = (
     '{"Version":"2012-10-17","Statement":[{"Effect":"Allow",'
@@ -43,6 +64,21 @@ FULL_ACCESS_DOCUMENT = {
 READONLY_DOCUMENT = {
     "Version": "2012-10-17",
     "Statement": [{"Effect": "Allow", "Action": "s3:Get*", "Resource": "*"}],
+}
+DENY_ALL_DOCUMENT = {
+    "Version": "2012-10-17",
+    "Statement": [{"Effect": "Deny", "Action": "*", "Resource": "*"}],
+}
+CONDITIONAL_ADMIN_DOCUMENT = {
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "*",
+            "Condition": {"Bool": {"aws:MultiFactorAuthPresent": "true"}},
+        }
+    ],
 }
 
 
@@ -65,11 +101,12 @@ def _profile(
     )
 
 
-def _role(arn, attached_policies=None, inline_policies=None):
+def _role(arn, attached_policies=None, inline_policies=None, permissions_boundary=None):
     return SimpleNamespace(
         arn=arn,
         attached_policies=attached_policies or [],
         inline_policies=inline_policies or [],
+        permissions_boundary=permissions_boundary,
     )
 
 
@@ -115,6 +152,60 @@ def _iam_client():
                 }
             ],
         ),
+        # Allow *:* in the attached policy negated by an unconditional Deny *:*
+        # in an inline policy: not effectively administrative.
+        _role(
+            DENY_OVERRIDE_ROLE_ARN,
+            attached_policies=[
+                {"PolicyName": "custom-admin", "PolicyArn": CUSTOM_ADMIN_POLICY_ARN}
+            ],
+            inline_policies=["deny-all"],
+        ),
+        # Allow *:* guarded by a Condition: not statically provable as admin.
+        _role(
+            CONDITIONAL_ADMIN_ROLE_ARN,
+            attached_policies=[
+                {
+                    "PolicyName": "conditional-admin",
+                    "PolicyArn": f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:policy/conditional-admin",
+                }
+            ],
+        ),
+        # Administrative identity policies constrained by a restrictive
+        # permissions boundary: not effectively administrative.
+        _role(
+            BOUNDED_ADMIN_ROLE_ARN,
+            attached_policies=[
+                {"PolicyName": "AdministratorAccess", "PolicyArn": AWS_ADMIN_POLICY_ARN}
+            ],
+            permissions_boundary={
+                "PermissionsBoundaryType": "Policy",
+                "PermissionsBoundaryArn": BOUNDARY_POLICY_ARN,
+            },
+        ),
+        # Boundary present but its document is not in the IAM inventory:
+        # restrictions cannot be evaluated, so the role is not classified admin.
+        _role(
+            UNRESOLVED_BOUNDARY_ROLE_ARN,
+            attached_policies=[
+                {"PolicyName": "AdministratorAccess", "PolicyArn": AWS_ADMIN_POLICY_ARN}
+            ],
+            permissions_boundary={
+                "PermissionsBoundaryType": "Policy",
+                "PermissionsBoundaryArn": UNRESOLVED_BOUNDARY_POLICY_ARN,
+            },
+        ),
+        # AdministratorAccess as the boundary does not restrict anything.
+        _role(
+            ADMIN_BOUNDED_ROLE_ARN,
+            attached_policies=[
+                {"PolicyName": "AdministratorAccess", "PolicyArn": AWS_ADMIN_POLICY_ARN}
+            ],
+            permissions_boundary={
+                "PermissionsBoundaryType": "Policy",
+                "PermissionsBoundaryArn": AWS_ADMIN_POLICY_ARN,
+            },
+        ),
     ]
     policies = {
         AWS_ADMIN_POLICY_ARN: SimpleNamespace(document=FULL_ACCESS_DOCUMENT),
@@ -125,6 +216,15 @@ def _iam_client():
         f"{INLINE_ADMIN_ROLE_ARN}:policy/inline-admin": SimpleNamespace(
             document=FULL_ACCESS_DOCUMENT
         ),
+        f"{DENY_OVERRIDE_ROLE_ARN}:policy/deny-all": SimpleNamespace(
+            document=DENY_ALL_DOCUMENT
+        ),
+        f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:policy/conditional-admin": SimpleNamespace(
+            document=CONDITIONAL_ADMIN_DOCUMENT
+        ),
+        BOUNDARY_POLICY_ARN: SimpleNamespace(document=READONLY_DOCUMENT),
+        # Customer-managed session policy whose document grants *:*.
+        CUSTOMER_FULL_ACCESS_POLICY_ARN: SimpleNamespace(document=FULL_ACCESS_DOCUMENT),
     }
     iam = mock.MagicMock()
     iam.roles = roles
@@ -413,6 +513,113 @@ class Test_rolesanywhere_profile_restricts_session_permissions:
             result = _run()
             assert len(result) == 1
             assert result[0].status == "PASS"
+
+    def test_customer_managed_full_access_session_policy_fails(self):
+        # A customer-managed session policy whose document grants *:* must be
+        # resolved through iam_client.policies and treated as unscoped.
+        with _enter(
+            _patched(
+                _build_client(
+                    {
+                        PROFILE_ARN: _profile(
+                            managed_policy_arns=[CUSTOMER_FULL_ACCESS_POLICY_ARN],
+                            role_arns=[ADMIN_ROLE_ARN],
+                        )
+                    }
+                )
+            )
+        ):
+            result = _run()
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+
+    def test_unresolved_managed_session_policy_passes(self):
+        # A managed session policy whose document was not collected cannot be
+        # proven administrative and is treated as restrictive.
+        with _enter(
+            _patched(
+                _build_client(
+                    {
+                        PROFILE_ARN: _profile(
+                            managed_policy_arns=[UNRESOLVED_SESSION_POLICY_ARN],
+                            role_arns=[ADMIN_ROLE_ARN],
+                        )
+                    }
+                )
+            )
+        ):
+            result = _run()
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+
+    def test_allow_all_with_cross_policy_deny_all_passes(self):
+        # Allow *:* in an attached policy plus an unconditional Deny *:* in an
+        # inline policy: the merged evaluation must not classify the role admin.
+        with _enter(
+            _patched(
+                _build_client(
+                    {PROFILE_ARN: _profile(role_arns=[DENY_OVERRIDE_ROLE_ARN])}
+                )
+            )
+        ):
+            result = _run()
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+
+    def test_conditional_admin_allow_passes(self):
+        # An Allow *:* guarded by a Condition is not statically provable admin.
+        with _enter(
+            _patched(
+                _build_client(
+                    {PROFILE_ARN: _profile(role_arns=[CONDITIONAL_ADMIN_ROLE_ARN])}
+                )
+            )
+        ):
+            result = _run()
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+
+    def test_admin_role_with_restrictive_boundary_passes(self):
+        # Admin identity policies intersected with a read-only permissions
+        # boundary are not effectively administrative.
+        with _enter(
+            _patched(
+                _build_client(
+                    {PROFILE_ARN: _profile(role_arns=[BOUNDED_ADMIN_ROLE_ARN])}
+                )
+            )
+        ):
+            result = _run()
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+
+    def test_admin_role_with_unresolved_boundary_passes(self):
+        # When the boundary document cannot be resolved the restrictions are
+        # unknown: the role must not be classified administrative.
+        with _enter(
+            _patched(
+                _build_client(
+                    {PROFILE_ARN: _profile(role_arns=[UNRESOLVED_BOUNDARY_ROLE_ARN])}
+                )
+            )
+        ):
+            result = _run()
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+
+    def test_admin_role_with_admin_boundary_fails(self):
+        # An AdministratorAccess boundary restricts nothing: still admin.
+        with _enter(
+            _patched(
+                _build_client(
+                    {PROFILE_ARN: _profile(role_arns=[ADMIN_BOUNDED_ROLE_ARN])}
+                )
+            )
+        ):
+            result = _run()
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert ADMIN_BOUNDED_ROLE_ARN in result[0].status_extended
 
     def test_disabled_profile_passes(self):
         with _enter(
