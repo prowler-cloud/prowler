@@ -294,9 +294,9 @@ Alternatively, point Prowler at a certificate file on disk:
 prowler azure --certificate-auth --certificate-path /path/to/prowler.key
 ```
 
-## Service Principal Application Authentication (Recommended)
+## Service Principal Application Authentication
 
-This method is required for Prowler Cloud and recommended for Prowler CLI.
+This client-secret flow is the supported fallback when [Certificate Authentication](#certificate-authentication) is not an option — for example on sovereign clouds where the Deploy to Azure quick-start is unavailable, or when an organisation policy forbids certificate-based service principals. New Prowler Cloud onboardings should prefer certificate authentication.
 
 ### Creating the Service Principal
 For more information, see [Creating Prowler Service Principal](/user-guide/providers/azure/create-prowler-service-principal).

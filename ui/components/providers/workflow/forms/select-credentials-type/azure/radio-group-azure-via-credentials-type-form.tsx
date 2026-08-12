@@ -6,12 +6,26 @@ import { WizardRadioCard } from "@/components/providers/workflow/forms/fields";
 import { FormMessage } from "@/components/shadcn/form";
 import { RadioGroup } from "@/components/shadcn/radio-group/radio-group";
 
+// The `via` values shared with the M365 flow (they both authenticate against
+// an Entra ID App Registration and reuse the same wizard state machine).
+// Exposed as a const object so consumers can reference the values by name
+// instead of duplicating string literals — matches the AWS/M365 patterns
+// (`AWS_CREDENTIAL_OPTIONS`, `M365_CREDENTIAL_OPTIONS`).
+export const AZURE_CREDENTIALS_TYPES = {
+  CERTIFICATE: "app_certificate",
+  CLIENT_SECRET: "app_client_secret",
+  EMPTY: "",
+} as const;
+
+type AzureCredentialsType =
+  (typeof AZURE_CREDENTIALS_TYPES)[keyof typeof AZURE_CREDENTIALS_TYPES];
+
 // Local form shape for this selector: only the radio value lives here, the
 // actual credential fields belong to the downstream credentials form. Kept
 // exported so `SelectViaAzure` and the tests bind the same type instead of
 // falling back to `any`.
 export type AzureCredentialsTypeFormValues = {
-  azureCredentialsType: "app_certificate" | "app_client_secret" | "";
+  azureCredentialsType: AzureCredentialsType;
 };
 
 type RadioGroupAzureViaCredentialsFormProps = {

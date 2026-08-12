@@ -148,11 +148,11 @@ export async function generateProwlerCertificate(
   // private key second. The full bundle is then base64-encoded so it can
   // live inside a single form field / JSON payload.
   const bundlePem = `${certPem.trim()}\n${privateKeyPem.trim()}\n`;
-  const privateKeyBundleBase64Pem = toBase64(new TextEncoder().encode(bundlePem));
-
-  const thumbprintBytes = new Uint8Array(
-    await subtle.digest("SHA-1", certDer),
+  const privateKeyBundleBase64Pem = toBase64(
+    new TextEncoder().encode(bundlePem),
   );
+
+  const thumbprintBytes = new Uint8Array(await subtle.digest("SHA-1", certDer));
   const thumbprintHex = bytesToHexUpper(thumbprintBytes);
 
   return {

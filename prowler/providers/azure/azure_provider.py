@@ -1188,13 +1188,15 @@ class AzureProvider(Provider):
                     )
                 # since that exception is not considered as critical, we keep filling another identity fields
                 if isinstance(credentials, CertificateCredential):
-                    # `getenv("AZURE_CLIENT_ID", default=client_id)` already
-                    # covers both the env-var cert-auth path (env is set) and
-                    # the static-credentials path (constructor param supplied
-                    # `client_id`). Reaching into `credentials._client_id`
-                    # would be the same class of azure-identity private state
-                    # we deliberately avoided for the thumbprint.
-                    identity.identity_id = getenv("AZURE_CLIENT_ID", default=client_id)
+                    # Prefer the explicit constructor param over the ambient
+                    # env var: with static credentials the caller has
+                    # unambiguously said "this is the client id" and using
+                    # the env var could silently substitute another
+                    # principal's id if the shell happens to have
+                    # `AZURE_CLIENT_ID` set. Fall back to the env var only
+                    # for the env-only cert-auth path where `client_id` is
+                    # `None`.
+                    identity.identity_id = client_id or getenv("AZURE_CLIENT_ID")
                     identity.identity_type = "Service Principal with Certificate"
                     # The SHA-1 thumbprint is computed from the certificate
                     # bytes by `_compute_certificate_thumbprint` at

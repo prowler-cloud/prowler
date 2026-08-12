@@ -57,7 +57,7 @@ Azure supports two authentication methods in the add-provider wizard. Prowler Cl
 
 #### Certificate Authentication (Recommended)
 
-The one-click flow: click **Deploy to Azure** in the wizard and let the Bicep template create the App Registration / Service Principal, the `Reader` role assignment, and the custom `ProwlerRole` with a certificate credential in a single deployment.
+The quick-start flow: click **Deploy to Azure** in the wizard to start a deployment in the Azure Portal with the Prowler Bicep template pre-loaded. The template creates the App Registration / Service Principal, the `Reader` role assignment, and the custom `ProwlerRole` bound to a certificate credential. You still fill the certificate parameter and confirm the deployment inside the Portal.
 
 1. In the Azure wizard, select **Certificate Authentication (Recommended)**.
 2. Click the **Deploy to Azure** button. This opens the Azure Portal deployment blade pre-loaded with the [Prowler Bicep template](https://github.com/prowler-cloud/prowler/blob/master/permissions/templates/azure/bicep/prowler-scan.bicep).

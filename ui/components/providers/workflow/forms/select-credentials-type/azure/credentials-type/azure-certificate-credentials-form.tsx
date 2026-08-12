@@ -75,9 +75,10 @@ export const AzureCertificateCredentialsForm = ({
           Certificate Authentication (Recommended)
         </div>
         <div className="text-text-neutral-tertiary text-sm">
-          Deploy the Prowler Bicep template to provision the App Registration
-          / Service Principal and read-only roles in one click, then paste the
-          resulting credentials below.
+          The Deploy to Azure quick-start opens the Azure Portal with the
+          Prowler Bicep template pre-loaded to provision the App Registration /
+          Service Principal and read-only roles. Paste the resulting credentials
+          below when the deployment finishes.
         </div>
       </div>
       <div className="flex flex-col items-start gap-1">
@@ -98,12 +99,15 @@ export const AzureCertificateCredentialsForm = ({
           Don&apos;t have a certificate yet?
         </div>
         <p className="text-text-neutral-tertiary text-xs">
-          Generate a self-signed X.509 certificate right in your browser. The
-          <strong> private key is generated locally</strong> and goes straight
-          into the field below (it is then submitted with the rest of the
-          form). The public certificate downloads as a text file for you to
-          paste into the Bicep <code>Certificate Base64</code> parameter in
-          the Portal.
+          Generate a self-signed X.509 certificate right in your browser.
+          <strong>
+            {" "}
+            The certificate and private key are generated locally
+          </strong>
+          . The base64-encoded certificate/private-key bundle goes into the
+          field below and is submitted with the rest of the form. The public
+          certificate downloads as a text file for you to paste into the Bicep{" "}
+          <code>Certificate Base64</code> parameter in the Portal.
         </p>
         <Button
           type="button"
@@ -112,19 +116,18 @@ export const AzureCertificateCredentialsForm = ({
           onClick={handleGenerateCertificate}
           disabled={isGeneratingCert}
         >
-          {isGeneratingCert
-            ? "Generating…"
-            : "Generate certificate for me"}
+          {isGeneratingCert ? "Generating…" : "Generate certificate for me"}
         </Button>
         {generatorError && (
           <p className="text-text-error-primary text-xs">{generatorError}</p>
         )}
         {generatedThumbprint && (
           <p className="text-text-success-primary text-xs">
-            Done. Certificate SHA-1 thumbprint: <code>{generatedThumbprint}</code>
-            . Downloaded <code>prowler-cert-base64.txt</code> — paste its
-            contents into the Bicep <code>Certificate Base64</code> parameter,
-            then keep filling the fields below.
+            Done. Certificate SHA-1 thumbprint:{" "}
+            <code>{generatedThumbprint}</code>. Downloaded{" "}
+            <code>prowler-cert-base64.txt</code> — paste its contents into the
+            Bicep <code>Certificate Base64</code> parameter, then keep filling
+            the fields below.
           </p>
         )}
       </div>

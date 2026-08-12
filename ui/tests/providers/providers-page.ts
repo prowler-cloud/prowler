@@ -1102,7 +1102,9 @@ export class ProvidersPage extends BasePage {
 
     if (type === AZURE_CREDENTIAL_OPTIONS.AZURE_CREDENTIALS) {
       await this.azureServicePrincipalRadio.click({ force: true });
-    } else if (type === AZURE_CREDENTIAL_OPTIONS.AZURE_CERTIFICATE_CREDENTIALS) {
+    } else if (
+      type === AZURE_CREDENTIAL_OPTIONS.AZURE_CERTIFICATE_CREDENTIALS
+    ) {
       await this.azureCertificateCredentialsRadio.click({ force: true });
     } else {
       throw new Error(`Invalid Azure credential type: ${type}`);
