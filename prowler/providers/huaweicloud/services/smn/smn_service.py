@@ -84,9 +84,10 @@ class SMN(HuaweiCloudService):
                                     client.list_subscriptions_by_topic, sub_request
                                 )
                                 if sub_response:
-                                    subscription_count = getattr(
-                                        sub_response, "subscription_count", 0
-                                    ) or 0
+                                    subscription_count = (
+                                        getattr(sub_response, "subscription_count", 0)
+                                        or 0
+                                    )
                             except Exception as sub_error:
                                 logger.error(
                                     f"{region} -- {sub_error.__class__.__name__}: {sub_error}"
