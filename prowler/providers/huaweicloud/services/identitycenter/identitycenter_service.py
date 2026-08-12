@@ -27,7 +27,10 @@ class IdentityCenter(HuaweiCloudService):
             self.session.error = str(error)
 
     def _list_instances(self):
-        from huaweicloudsdkidentitycenter.v1 import ListInstancesRequest, ListPermissionSetsRequest
+        from huaweicloudsdkidentitycenter.v1 import (
+            ListInstancesRequest,
+            ListPermissionSetsRequest,
+        )
 
         client = self.session.client("identitycenter", self.region)
 
