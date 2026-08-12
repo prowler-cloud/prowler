@@ -19,9 +19,7 @@ class nat_dnat_sensitive_ports(Check):
         findings = []
 
         for rule in nat_client.dnat_rules:
-            report = CheckReportHuaweiCloud(
-                metadata=self.metadata(), resource=rule
-            )
+            report = CheckReportHuaweiCloud(metadata=self.metadata(), resource=rule)
             report.region = rule.region
             report.resource_id = rule.id
             report.resource_arn = f"huaweicloud:nat:{rule.region}:{nat_client.audited_account}:dnat_rule/{rule.id}"
