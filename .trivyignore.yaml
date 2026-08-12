@@ -118,6 +118,20 @@ vulnerabilities:
       - "pkg:npm/ip-address"
     expired_at: 2027-01-31
 
+  # CVE-2026-62901 is a DoS in System.Net.WebSockets (unchecked input for loop condition,
+  # CWE-606), fixed in .NET 9.0.19 / 10.0.11 (published 2026-08-11). The vulnerable runtime
+  # ships inside the PowerShell tarball the Dockerfile pins: 7.5.9 is the latest 7.5.x and
+  # bundles .NET 9.0.18; 7.6.4 bundles .NET 10.0.x < 10.0.11, so no published PowerShell
+  # release contains the fix yet. Prowler only invokes pwsh locally to run M365 module
+  # cmdlets; the image does not accept inbound WebSocket connections, so the DoS path is
+  # not reachable from the network. Remove this temporary suppression as soon as a
+  # PowerShell release shipping .NET 9.0.19+ is available.
+  - id: CVE-2026-62901
+    purls:
+      - "pkg:nuget/Microsoft.NETCore.App.Runtime.linux-x64"
+      - "pkg:nuget/Microsoft.NETCore.App.Runtime.linux-arm64"
+    expired_at: 2026-09-15
+
   # Modules compiled into the Trivy binary the images ship. The binary is pinned by version
   # and verified by checksum in the Dockerfile; only a rebuild by its vendor moves these.
   # CVE-2026-71556 affects go-git worktree operations that can follow symlinks outside a

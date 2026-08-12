@@ -22,6 +22,7 @@ import { Checkbox } from "@/components/shadcn/checkbox/checkbox";
 import { Form } from "@/components/shadcn/form";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { getAWSOrgDeploymentQuickLink } from "@/lib";
+import { organizationNameFallbackHint } from "@/lib/organizations";
 import { useOrgSetupStore } from "@/store/organizations/store";
 import type { OrgSetupPhase } from "@/types/organizations";
 import { ORG_SETUP_PHASE, ORGANIZATION_TYPE } from "@/types/organizations";
@@ -113,6 +114,7 @@ export function OrgSetupForm({
   const [setupPhase, setSetupPhase] = useState<OrgSetupPhase>(initialPhase);
   const [isSaving, setIsSaving] = useState(false);
   const formId = "org-wizard-setup-form";
+  const formRef = useRef<HTMLFormElement>(null);
 
   const isReadOnlyOrgId = Boolean(initialValues?.awsOrgId);
 
@@ -299,10 +301,8 @@ export function OrgSetupForm({
 
   useEffect(() => {
     if (!apiError) return;
-    document
-      .getElementById(formId)
-      ?.scrollIntoView({ block: "start", behavior: "smooth" });
-  }, [apiError, formId]);
+    formRef.current?.scrollIntoView({ block: "start", behavior: "smooth" });
+  }, [apiError]);
 
   return (
     <Form {...form}>
@@ -313,6 +313,7 @@ export function OrgSetupForm({
       />
       <form
         id={formId}
+        ref={formRef}
         onSubmit={handleFormSubmit}
         className="flex flex-col gap-5"
       >
@@ -410,8 +411,7 @@ export function OrgSetupForm({
             />
 
             <p className="text-muted-foreground text-sm">
-              If left blank, Prowler will use the Organization name stored in
-              AWS.
+              {organizationNameFallbackHint(ORGANIZATION_TYPE.AWS)}
             </p>
           </div>
         )}
