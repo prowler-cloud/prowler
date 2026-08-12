@@ -72,6 +72,9 @@ class BaseTool(ABC):
         async methods (not starting with '_') as tools. Subclasses do not need
         to override this method.
 
+        Failures need no handling here: `ProwlerMCP.tool` wraps whatever it is
+        given, so every tool reports them the same way.
+
         Args:
             mcp: The FastMCP instance to register tools with
         """

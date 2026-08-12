@@ -1,10 +1,10 @@
-from fastmcp import FastMCP
 from starlette.responses import JSONResponse
 
 from prowler_mcp_server import __version__
 from prowler_mcp_server.lib.logger import logger
+from prowler_mcp_server.lib.server import ProwlerMCP
 
-prowler_mcp_server = FastMCP("prowler-mcp-server")
+prowler_mcp_server = ProwlerMCP("prowler-mcp-server", mask_error_details=True)
 
 
 def setup_main_server():
