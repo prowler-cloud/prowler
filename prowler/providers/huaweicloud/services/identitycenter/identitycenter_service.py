@@ -3,7 +3,6 @@ from typing import List
 from pydantic.v1 import BaseModel
 
 from prowler.providers.huaweicloud.lib.service.service import HuaweiCloudService
-from prowler.providers.huaweicloud.models import HuaweiCloudSession
 
 
 class IdentityCenterInstance(BaseModel):
