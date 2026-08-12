@@ -57,16 +57,16 @@ class EIP(HuaweiCloudService):
                 from huaweicloudsdkeip.v2 import ListPublicipsRequest
 
                 request = ListPublicipsRequest()
-                response = self._call_with_retries(
-                    client.list_publicips, request
-                )
+                response = self._call_with_retries(client.list_publicips, request)
 
                 if response and response.publicips:
                     for eip_data in response.publicips:
                         self.public_ips.append(
                             PublicIP(
                                 id=getattr(eip_data, "id", ""),
-                                public_ip_address=getattr(eip_data, "public_ip_address", ""),
+                                public_ip_address=getattr(
+                                    eip_data, "public_ip_address", ""
+                                ),
                                 status=getattr(eip_data, "status", ""),
                                 port_id=getattr(eip_data, "port_id", None),
                                 region=region,
