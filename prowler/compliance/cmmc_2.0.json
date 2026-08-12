@@ -265,20 +265,6 @@
           "Operator": "lte",
           "Value": 90,
           "Provider": "aws"
-        },
-        {
-          "Check": "iam_user_accesskey_unused",
-          "ConfigKey": "max_unused_access_keys_days",
-          "Operator": "lte",
-          "Value": 45,
-          "Provider": "aws"
-        },
-        {
-          "Check": "iam_user_console_access_unused",
-          "ConfigKey": "max_console_access_days",
-          "Operator": "lte",
-          "Value": 45,
-          "Provider": "aws"
         }
       ]
     },
@@ -1063,20 +1049,6 @@
           "ConfigKey": "max_unused_sagemaker_access_days",
           "Operator": "lte",
           "Value": 90,
-          "Provider": "aws"
-        },
-        {
-          "Check": "iam_user_accesskey_unused",
-          "ConfigKey": "max_unused_access_keys_days",
-          "Operator": "lte",
-          "Value": 45,
-          "Provider": "aws"
-        },
-        {
-          "Check": "iam_user_console_access_unused",
-          "ConfigKey": "max_console_access_days",
-          "Operator": "lte",
-          "Value": 45,
           "Provider": "aws"
         }
       ]
@@ -2008,23 +1980,7 @@
         "alibabacloud": [],
         "oraclecloud": [],
         "m365": []
-      },
-      "config_requirements": [
-        {
-          "Check": "guardduty_is_enabled",
-          "ConfigKey": "mute_non_default_regions",
-          "Operator": "eq",
-          "Value": false,
-          "Provider": "aws"
-        },
-        {
-          "Check": "securityhub_enabled",
-          "ConfigKey": "mute_non_default_regions",
-          "Operator": "eq",
-          "Value": false,
-          "Provider": "aws"
-        }
-      ]
+      }
     },
     {
       "id": "AU.L2-3.3.5",
