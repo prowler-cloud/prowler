@@ -1,5 +1,7 @@
 from prowler.lib.check.models import Check, CheckReportHuaweiCloud
-from prowler.providers.huaweicloud.services.identitycenter.identitycenter_client import identitycenter_client
+from prowler.providers.huaweicloud.services.identitycenter.identitycenter_client import (
+    identitycenter_client,
+)
 
 
 class identitycenter_permission_sets(Check):
@@ -16,7 +18,9 @@ class identitycenter_permission_sets(Check):
             report.resource_name = "Identity Center"
             report.resource_arn = ""
             report.status = "FAIL"
-            report.status_extended = "Identity Center is not enabled, permission sets cannot be verified."
+            report.status_extended = (
+                "Identity Center is not enabled, permission sets cannot be verified."
+            )
             findings.append(report)
         else:
             for instance in identitycenter_client.instances:
