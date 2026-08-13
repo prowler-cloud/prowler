@@ -45,6 +45,11 @@ export async function SlackIntegrationContent() {
         authorize && "authorizeUrl" in authorize ? authorize.authorizeUrl : null
       }
       unavailable={Boolean(authorize && "unavailable" in authorize)}
+      // Slack being busy is not the same as this deployment having no Slack
+      // app: the install is still on offer, it just cannot be started yet.
+      rateLimitMessage={
+        authorize && "rateLimited" in authorize ? authorize.message : null
+      }
       loadError={
         loadError ??
         (authorize && "error" in authorize ? authorize.error : null)

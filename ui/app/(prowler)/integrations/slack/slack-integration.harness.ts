@@ -175,6 +175,22 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     await this.waitForText(/Slack is not available in this environment yet/);
   }
 
+  /** Whether the page claims this deployment has no Slack app. */
+  saysUnavailable(): boolean {
+    return this.containsText(/Slack is not available in this environment yet/);
+  }
+
+  /** What the page says about Slack rate limiting Prowler, once it says it. */
+  async rateLimitNotice(): Promise<string> {
+    await this.waitForText(/Slack is busy right now/, 10000);
+    const description = await this.waitFor(
+      () => this.q('[data-slot="alert-description"]'),
+      5000,
+      "the rate limit notice",
+    );
+    return (description.textContent ?? "").trim();
+  }
+
   // --- Connected state ----------------------------------------------------
 
   /**

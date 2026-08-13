@@ -85,11 +85,15 @@ export const SlackCallback = () => {
         return;
       }
 
-      setFailure(
-        "unavailable" in result
-          ? "Slack is not available in this environment yet."
-          : result.error,
-      );
+      if ("unavailable" in result) {
+        setFailure("Slack is not available in this environment yet.");
+      } else if ("rateLimited" in result) {
+        // Nothing is wrong with the install — Slack is just busy — so the user
+        // is told when to come back, not that the environment lacks Slack.
+        setFailure(result.message);
+      } else {
+        setFailure(result.error);
+      }
       setStatus(STATUS.FAILED);
     };
 

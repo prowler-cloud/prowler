@@ -11,9 +11,15 @@
 export interface SlackWorkspaceFixture {
   teamId: string;
   teamName: string;
-  /** The integration's default destination, null until one is chosen. */
-  channelId: string | null;
-  channelName: string | null;
+  /** The bot the install created, which the API keeps on the configuration. */
+  botUserId: string;
+  /**
+   * The integration's default destination. Both keys are *absent* from the
+   * serialized configuration until a channel is chosen — the API omits them
+   * rather than sending nulls — so they are optional here for the same reason.
+   */
+  channelId?: string;
+  channelName?: string;
 }
 
 export interface SlackInstallFixture {
@@ -31,9 +37,12 @@ export const SLACK_EXCHANGE_OUTCOME = {
   REINSTALLED: "reinstalled",
   /** The API could not match the `state` it minted, so it refuses. */
   REFUSED_STATE: "refused-state",
-  /** Slack itself rejected the code; its reason travels in `detail`. */
+  /** Slack itself rejected the code, so the API refuses the completion. */
   SLACK_REFUSED: "slack-refused",
-  /** A different workspace is already connected — one per tenant. */
+  /**
+   * A different workspace is already connected — one per tenant. A `409`,
+   * named by its `code`, not a plain refusal.
+   */
   DIFFERENT_WORKSPACE: "different-workspace",
 } as const;
 
@@ -58,6 +67,12 @@ export interface SlackFixture {
   exchangeOutcome: SlackExchangeOutcome;
   /** What a connection check reports. */
   connection: SlackConnectionFixture;
+  /**
+   * Slack is rate limiting Prowler: the Slack OAuth calls answer `429` with a
+   * `Retry-After`, whatever else the fixture says. Handlers added for other
+   * Slack-backed endpoints answer the same way.
+   */
+  rateLimited: boolean;
 }
 
 export const SLACK_INTEGRATION_ID = "slack-integration-1";
@@ -85,20 +100,49 @@ export const SLACK_AUTHORIZE_URL =
   `&state=${SLACK_OAUTH_STATE}` +
   `&redirect_uri=${encodeURIComponent(SLACK_REDIRECT_URI)}`;
 
+/**
+ * The `detail` strings the implementation actually sends. They are human copy,
+ * not the machine-readable reason: that travels in `code`, which is what the UI
+ * maps. Keeping the real wording here is what makes a test that reads `detail`
+ * (an unmapped refusal) honest.
+ */
 export const SLACK_UNCONFIGURED_DETAIL =
-  "Slack is not configured for this deployment.";
+  "Slack integration is not configured or temporarily unavailable.";
 export const SLACK_REFUSED_STATE_DETAIL =
-  "This install could not be matched to the session that started it.";
-export const SLACK_INVALID_CODE_DETAIL =
-  "Slack rejected the install: invalid_code.";
+  "OAuth state is invalid, expired, or already consumed.";
+export const SLACK_INVALID_CODE_DETAIL = "The Slack OAuth code is invalid.";
 export const SLACK_DIFFERENT_WORKSPACE_DETAIL =
-  "Another Slack workspace is already connected. Disconnect it first.";
+  "This tenant is already connected to a different Slack workspace.";
+export const SLACK_UPSTREAM_DETAIL = "Slack is temporarily unavailable.";
+/**
+ * Raised as a service-level `ValidationError({"channel_id": ...})`, which still
+ * points at `/data` rather than at the attribute.
+ */
+export const SLACK_NO_CHANNEL_DETAIL =
+  "This Slack integration has no channel configured.";
+export const SLACK_RATE_LIMITED_DETAIL =
+  "Slack is rate limiting requests from Prowler.";
+
+/**
+ * The `code` a different-workspace refusal is named by. A wire value, spelled
+ * out rather than imported from the UI's own mapping: a rename on our side must
+ * fail these tests, not quietly agree with itself.
+ */
+export const SLACK_WORKSPACE_CONFLICT_CODE = "slack_workspace_conflict";
+
+/** What `Retry-After` carries on a rate-limited answer. */
+export const SLACK_RETRY_AFTER_SECONDS = 30;
+
+/** The channel a finished install posts to. */
+export const SLACK_DEFAULT_CHANNEL = {
+  id: "C0123AB",
+  name: "security",
+} as const;
 
 const PROWLER_HQ: SlackWorkspaceFixture = {
   teamId: "T01PROWLER",
   teamName: "Prowler HQ",
-  channelId: null,
-  channelName: null,
+  botUserId: "U01PROWLERBOT",
 };
 
 export const slackFixture = (
@@ -109,10 +153,14 @@ export const slackFixture = (
   exchangeWorkspace: { ...PROWLER_HQ },
   exchangeOutcome: SLACK_EXCHANGE_OUTCOME.CREATED,
   connection: { connected: true, error: null },
+  rateLimited: false,
   ...overrides,
 });
 
-/** A tenant that already approved Prowler in its workspace. */
+/**
+ * A tenant that already approved Prowler in its workspace, and has chosen no
+ * destination channel yet — the state the OAuth exchange leaves behind.
+ */
 export const connectedSlackFixture = (
   overrides: Partial<SlackFixture> = {},
 ): SlackFixture =>
@@ -124,5 +172,28 @@ export const connectedSlackFixture = (
       workspace: { ...PROWLER_HQ },
     },
     exchangeOutcome: SLACK_EXCHANGE_OUTCOME.REINSTALLED,
+    ...overrides,
+  });
+
+/**
+ * The same tenant with its setup finished: a workspace connected *and* a
+ * destination channel on record. Anything the API refuses until a channel
+ * exists — the connection check among them — needs this fixture, not the bare
+ * connected one.
+ */
+export const configuredSlackFixture = (
+  overrides: Partial<SlackFixture> = {},
+): SlackFixture =>
+  connectedSlackFixture({
+    install: {
+      id: SLACK_INTEGRATION_ID,
+      connected: true,
+      connectionLastCheckedAt: "2026-08-10T09:30:00Z",
+      workspace: {
+        ...PROWLER_HQ,
+        channelId: SLACK_DEFAULT_CHANNEL.id,
+        channelName: SLACK_DEFAULT_CHANNEL.name,
+      },
+    },
     ...overrides,
   });

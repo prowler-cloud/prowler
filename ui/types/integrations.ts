@@ -91,13 +91,16 @@ export interface IntegrationProps {
       domain?: string;
       projects?: { [key: string]: string };
       issue_types?: { [key: string]: string[] };
-      // Slack specific configuration. The workspace is fixed at install time;
-      // the channel is the integration's default destination and is null until
-      // one is chosen.
+      // Slack specific configuration, all of it server-owned: the workspace and
+      // the bot are fixed at install time, and the channel is the integration's
+      // default destination. The channel keys are *absent* until one is chosen
+      // rather than present and null, so read them with `?? null` and never
+      // treat a missing key as a different state from an unchosen channel.
       team_id?: string;
       team_name?: string;
-      channel_id?: string | null;
-      channel_name?: string | null;
+      bot_user_id?: string;
+      channel_id?: string;
+      channel_name?: string;
       [key: string]: unknown;
     };
     url?: string;

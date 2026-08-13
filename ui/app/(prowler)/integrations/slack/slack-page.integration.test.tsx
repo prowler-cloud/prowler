@@ -13,6 +13,7 @@ import { describe, expect } from "vitest";
 
 import { it } from "@/__tests__/fixtures";
 import {
+  configuredSlackFixture,
   connectedSlackFixture,
   SLACK_EXCHANGE_OUTCOME,
   SLACK_OAUTH_CODE,
@@ -74,6 +75,23 @@ describe("starting the install", () => {
     await harness.waitForUnavailable();
     expect(harness.offersInstall()).toBe(false);
   }, 30000);
+
+  it("says Slack is busy, not that the deployment has no Slack app, when it is rate limiting", async () => {
+    // Given — the app is configured and working; Slack is just rate limiting
+    // the call that mints the consent URL.
+    const harness = new SlackIntegrationHarness(
+      slackFixture({ rateLimited: true }),
+    );
+
+    // When
+    await harness.mount();
+
+    // Then — the wait is named, and the page does not claim Slack is missing
+    // from this environment: that answer would send the user to their admin
+    // over something that fixes itself in half a minute.
+    expect(await harness.rateLimitNotice()).toMatch(/about 30 seconds/);
+    expect(harness.saysUnavailable()).toBe(false);
+  }, 30000);
 });
 
 describe("returning from Slack", () => {
@@ -113,7 +131,7 @@ describe("returning from Slack", () => {
   }, 30000);
 
   it("surfaces the reason when Slack refuses to complete the install", async () => {
-    // Given — Slack rejects the code, and its reason travels in the refusal.
+    // Given — Slack rejects the code, and the API's own wording explains it.
     const harness = new SlackIntegrationHarness(
       slackFixture({ exchangeOutcome: SLACK_EXCHANGE_OUTCOME.SLACK_REFUSED }),
     );
@@ -124,8 +142,11 @@ describe("returning from Slack", () => {
       state: SLACK_OAUTH_STATE,
     });
 
-    // Then — the user reads what Slack said, not a generic failure.
-    expect(await harness.installFailureReason()).toMatch(/invalid_code/);
+    // Then — a refusal Prowler has nothing better to say about falls back to
+    // the API's `detail`, rather than to a generic failure.
+    expect(await harness.installFailureReason()).toMatch(
+      /OAuth code is invalid/,
+    );
     expect(harness.offersRetry()).toBe(true);
   }, 30000);
 
@@ -143,12 +164,58 @@ describe("returning from Slack", () => {
 
     // Then — the page reports no workspace connected, with the API's reason.
     expect(await harness.installFailureReason()).toMatch(
-      /could not be matched to the session/,
+      /state is invalid, expired, or already consumed/,
     );
     expect(await harness.completedInstall()).toBe(false);
     expect(harness.offersRetry()).toBe(true);
     // Refused once, not retried into a second burnt code.
     expect(harness.exchangeCallCount).toBe(1);
+  }, 30000);
+
+  it("says how to resolve a workspace conflict, in Prowler's own words", async () => {
+    // Given — this tenant already has a different workspace connected, which
+    // the API refuses as a 409 naming the conflict in `code`.
+    const harness = new SlackIntegrationHarness(
+      slackFixture({
+        exchangeOutcome: SLACK_EXCHANGE_OUTCOME.DIFFERENT_WORKSPACE,
+      }),
+    );
+
+    // When
+    await harness.mountCallback({
+      code: SLACK_OAUTH_CODE,
+      state: SLACK_OAUTH_STATE,
+    });
+
+    // Then — the copy comes from the code, so it says what to do next; the
+    // API's own `detail` states the conflict but not the way out of it.
+    const reason = await harness.installFailureReason();
+    expect(reason).toMatch(/already connected to a different Slack workspace/);
+    expect(reason).toMatch(/Disconnect it before connecting another/);
+    expect(reason).not.toMatch(/tenant/);
+    expect(await harness.completedInstall()).toBe(false);
+    expect(harness.offersRetry()).toBe(true);
+  }, 30000);
+
+  it("tells the user when to come back if Slack is rate limiting the install", async () => {
+    // Given — Slack answers 429 with a Retry-After.
+    const harness = new SlackIntegrationHarness(
+      slackFixture({ rateLimited: true }),
+    );
+
+    // When
+    await harness.mountCallback({
+      code: SLACK_OAUTH_CODE,
+      state: SLACK_OAUTH_STATE,
+    });
+
+    // Then — the wait Slack asked for, not a generic failure, and not "Slack
+    // isn't available in this environment": the app is there and working.
+    const reason = await harness.installFailureReason();
+    expect(reason).toMatch(/rate limiting/);
+    expect(reason).toMatch(/about 30 seconds/);
+    expect(reason).not.toMatch(/not available in this environment/);
+    expect(harness.offersRetry()).toBe(true);
   }, 30000);
 
   it("does not attempt an exchange when the completion carries no state", async () => {
@@ -166,8 +233,10 @@ describe("returning from Slack", () => {
 
 describe("a connected workspace", () => {
   it("identifies the workspace and reports the connection as healthy", async () => {
-    // Given — a tenant that already approved Prowler.
-    const harness = new SlackIntegrationHarness(connectedSlackFixture());
+    // Given — a tenant whose setup is finished: workspace approved and a
+    // destination channel recorded, which is what the API needs before it will
+    // check a connection at all.
+    const harness = new SlackIntegrationHarness(configuredSlackFixture());
     await harness.mount();
 
     // Then
@@ -178,5 +247,19 @@ describe("a connected workspace", () => {
     // never use it.
     expect(harness.offersInstall()).toBe(false);
     expect(harness.authorizeUrlCallCount).toBe(0);
+  }, 30000);
+
+  it("still identifies the workspace before a destination channel is chosen", async () => {
+    // Given — the state the OAuth exchange leaves behind.
+    const harness = new SlackIntegrationHarness(connectedSlackFixture());
+
+    // When
+    await harness.mount();
+
+    // Then — the configuration carries no channel keys at all, and the page
+    // reads that as an install with nothing chosen yet rather than as a broken
+    // one.
+    expect(await harness.connectedWorkspaceName()).toBe(WORKSPACE_NAME);
+    expect(harness.offersInstall()).toBe(false);
   }, 30000);
 });

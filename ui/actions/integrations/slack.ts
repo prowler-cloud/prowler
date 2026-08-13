@@ -3,6 +3,11 @@
 import { revalidatePath } from "next/cache";
 
 import { apiBaseUrl, getAuthHeaders, parseStringify } from "@/lib";
+import {
+  readSlackFailure,
+  slackErrorMessage,
+  slackRateLimitMessage,
+} from "@/lib/integrations/slack-errors";
 import { handleApiError } from "@/lib/server-actions-helper";
 import type { IntegrationProps } from "@/types/integrations";
 
@@ -18,12 +23,29 @@ import type { IntegrationProps } from "@/types/integrations";
  * isn't available in this environment yet", which is why they get their own
  * result shape rather than an error string.
  *
+ * Rate limiting is a third answer again — Slack is there, the deployment is
+ * configured, and the only thing to do is wait — so it gets its own outcome
+ * rather than being folded into either of the other two.
+ *
  * The OAuth `state` is minted and consumed by the API, bound to the tenant and
  * the user — the UI never inspects it, it only forwards what Slack sent back.
  */
 
 interface SlackUnavailable {
   unavailable: true;
+}
+
+/**
+ * Slack is rate limiting Prowler (`429`). Distinct from `SlackUnavailable`: the
+ * Slack app exists and works, so the page keeps offering what it offers and
+ * only says when to come back.
+ */
+interface SlackRateLimited {
+  rateLimited: true;
+  /** What `Retry-After` asked for, when the response carried one. */
+  retryAfterSeconds: number | null;
+  /** The wait, as copy — so every caller says the same thing about it. */
+  message: string;
 }
 
 interface SlackActionError {
@@ -37,6 +59,7 @@ interface SlackAuthorizeUrl {
 export type SlackAuthorizeUrlResult =
   | SlackAuthorizeUrl
   | SlackUnavailable
+  | SlackRateLimited
   | SlackActionError;
 
 interface SlackExchangeInput {
@@ -51,18 +74,45 @@ interface SlackExchangeSuccess {
 export type SlackExchangeResult =
   | SlackExchangeSuccess
   | SlackUnavailable
+  | SlackRateLimited
   | SlackActionError;
 
-/** Whether the deployment answered "no Slack app here". */
+/**
+ * Whether the deployment answered "no Slack app here". Deliberately narrow:
+ * widening it to a status that only means "not right now" (a `429`, an upstream
+ * `502`) would tell the user Slack is unavailable in their environment when it
+ * is Prowler's call that needs retrying.
+ */
 const isUnavailableStatus = (status: number): boolean =>
   status === 503 || status === 404;
 
-const detailFrom = async (
+const RATE_LIMITED_STATUS = 429;
+
+/**
+ * Classify a refusal into the outcome the UI acts on.
+ *
+ * The reason travels in the JSON:API error's `code`, which
+ * `slackErrorMessage` maps to copy Prowler owns; `detail` is the API's own
+ * human wording and is used only when the code is one this UI has nothing
+ * better to say about. `fallback` covers a refusal that carries neither.
+ */
+const failureFrom = async (
   response: Response,
   fallback: string,
-): Promise<string> => {
-  const body = await response.json().catch(() => ({}));
-  return body?.errors?.[0]?.detail || fallback;
+): Promise<SlackUnavailable | SlackRateLimited | SlackActionError> => {
+  if (isUnavailableStatus(response.status)) return { unavailable: true };
+
+  const failure = await readSlackFailure(response);
+
+  if (failure.status === RATE_LIMITED_STATUS) {
+    return {
+      rateLimited: true,
+      retryAfterSeconds: failure.retryAfterSeconds,
+      message: slackRateLimitMessage(failure.retryAfterSeconds),
+    };
+  }
+
+  return { error: slackErrorMessage(failure, fallback) };
 };
 
 /**
@@ -77,17 +127,11 @@ export const getSlackAuthorizeUrl =
     try {
       const response = await fetch(url.toString(), { method: "POST", headers });
 
-      if (isUnavailableStatus(response.status)) {
-        return { unavailable: true };
-      }
-
       if (!response.ok) {
-        return {
-          error: await detailFrom(
-            response,
-            `Unable to start the Slack install: ${response.statusText}`,
-          ),
-        };
+        return failureFrom(
+          response,
+          `Unable to start the Slack install: ${response.statusText}`,
+        );
       }
 
       // The URL travels in JSON:API `meta` — the call creates no resource.
@@ -128,20 +172,15 @@ export const exchangeSlackOAuthCode = async ({
       }),
     });
 
-    if (isUnavailableStatus(response.status)) {
-      return { unavailable: true };
-    }
-
     if (!response.ok) {
-      // A refused state, a code Slack rejected and "a different workspace is
-      // already connected" all arrive as a 400 whose detail is the reason to
-      // show — the UI does not need to tell them apart.
-      return {
-        error: await detailFrom(
-          response,
-          `Unable to connect the Slack workspace: ${response.statusText}`,
-        ),
-      };
+      // A refused state and a code Slack rejected arrive as a `400` whose
+      // `detail` is the reason to show. "A different workspace is already
+      // connected" is a `409` named by its `code`, which is what turns it into
+      // copy that says how to get out of it.
+      return failureFrom(
+        response,
+        `Unable to connect the Slack workspace: ${response.statusText}`,
+      );
     }
 
     const body = await response.json();

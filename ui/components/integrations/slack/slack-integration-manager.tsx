@@ -26,6 +26,8 @@ interface SlackIntegrationManagerProps {
   authorizeUrl: string | null;
   /** This deployment has no Prowler Slack app, so no install can be started. */
   unavailable: boolean;
+  /** Slack is rate limiting Prowler: what to tell the user about the wait. */
+  rateLimitMessage: string | null;
   /** The install could not be read; the page still renders what it can. */
   loadError: string | null;
 }
@@ -34,6 +36,7 @@ export const SlackIntegrationManager = ({
   integration,
   authorizeUrl,
   unavailable,
+  rateLimitMessage,
   loadError,
 }: SlackIntegrationManagerProps) => {
   const [isTesting, setIsTesting] = useState(false);
@@ -86,6 +89,13 @@ export const SlackIntegrationManager = ({
 
   return (
     <div className="flex flex-col gap-6">
+      {rateLimitMessage && (
+        <Alert variant="warning">
+          <AlertTitle>Slack is busy right now</AlertTitle>
+          <AlertDescription>{rateLimitMessage}</AlertDescription>
+        </Alert>
+      )}
+
       {loadError && (
         <Alert variant="error">
           <AlertTitle>Could not load your Slack integration</AlertTitle>
