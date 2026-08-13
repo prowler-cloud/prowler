@@ -6,22 +6,6 @@ const { withSentryConfig } = require("@sentry/nextjs");
 /** @type {import('next').NextConfig} */
 
 // HTTP Security Headers
-// 'unsafe-eval' is configured under `script-src` because it is required by NextJS for development mode.
-//
-// CSP is static; the JSON config island is inert (no nonce needed). A runtime
-// Sentry DSN must be in `connect-src` below — `*.sentry.io` covers Sentry Cloud,
-// but a self-hosted/region host is blocked until per-request CSP (middleware) lands.
-const cspHeader = `
-  default-src 'self';
-  script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://www.googletagmanager.com https://browser.sentry-cdn.com;
-  connect-src 'self' https://api.iconify.design https://api.simplesvg.com https://api.unisvg.com https://js.stripe.com https://www.googletagmanager.com https://*.sentry.io https://*.ingest.sentry.io;
-  img-src 'self' https://www.google-analytics.com https://www.googletagmanager.com;
-  font-src 'self';
-  style-src 'self' 'unsafe-inline';
-  frame-src 'self' https://js.stripe.com https://www.googletagmanager.com;
-  frame-ancestors 'none';
-`;
-
 const nextConfig = {
   poweredByHeader: false,
   // Use standalone only in production deployments, not for CI/testing
@@ -29,6 +13,10 @@ const nextConfig = {
     !process.env.CI && {
       output: "standalone",
       outputFileTracingRoot: __dirname,
+      // sharp 0.35 loads its native binary dynamically, so tracing misses it.
+      outputFileTracingIncludes: {
+        "**": ["./node_modules/.pnpm/@img+sharp-libvips-linuxmusl-*/**/*"],
+      },
     }),
   // React Compiler is now stable in Next.js 16
   reactCompiler: true,
@@ -37,10 +25,6 @@ const nextConfig = {
   },
   async headers() {
     const headers = [
-      {
-        key: "Content-Security-Policy",
-        value: cspHeader.replace(/\n/g, ""),
-      },
       {
         key: "X-Content-Type-Options",
         value: "nosniff",

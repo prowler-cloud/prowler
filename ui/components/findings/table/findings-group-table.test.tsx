@@ -4,6 +4,10 @@ import { Fragment, type ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { resolveFindingIdsByVisibleGroupResources } from "@/actions/findings/findings-by-resource";
+import {
+  FINDINGS_ROW_TYPE,
+  type FindingGroupRow,
+} from "@/types/findings-table";
 import type { JiraDispatchModalPayload } from "@/types/jira-dispatch";
 
 import { FindingsGroupTable } from "./findings-group-table";
@@ -98,6 +102,20 @@ vi.mock("@/components/shadcn/table", () => ({
   ),
 }));
 
+vi.mock("@/components/lighthouse/context-contributor", () => ({
+  LighthouseContextContributor: ({
+    contributorId,
+    item,
+  }: {
+    contributorId: string;
+    item: unknown;
+  }) => (
+    <output data-testid={`context-${contributorId}`}>
+      {JSON.stringify(item)}
+    </output>
+  ),
+}));
+
 vi.mock("@/components/onboarding", () => ({
   OnboardingTrigger: () => <div data-testid="onboarding-trigger" />,
   PageReady: () => <div data-testid="page-ready" />,
@@ -158,14 +176,27 @@ vi.mock("../floating-selection-actions", () => ({
   FloatingSelectionActions: FloatingSelectionActionsMock,
 }));
 
-function makeGroup(checkId: string, resourcesFail = 2) {
+function makeGroup(
+  checkId: string,
+  resourcesFail = 2,
+  overrides: Partial<FindingGroupRow> = {},
+): FindingGroupRow {
   return {
+    id: `group-${checkId}`,
+    rowType: FINDINGS_ROW_TYPE.GROUP,
     checkId,
     checkTitle: `Title ${checkId}`,
+    severity: "high",
+    status: "FAIL",
     resourcesFail,
     resourcesTotal: Math.max(resourcesFail, 1),
+    newCount: 0,
+    changedCount: 0,
     mutedCount: 0,
-  } as unknown as Parameters<typeof FindingsGroupTable>[0]["data"][number];
+    providers: [],
+    updatedAt: "2026-07-27T00:00:00Z",
+    ...overrides,
+  };
 }
 
 function getLastFloatingActionsProps(): {
@@ -183,6 +214,41 @@ function getLastFloatingActionsProps(): {
 describe("FindingsGroupTable", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it("publishes the loaded total and selected finding groups as context", async () => {
+    // Given
+    const user = userEvent.setup();
+    const data = [
+      makeGroup("check-a", 1, {
+        id: "group-1",
+        checkTitle: "Public bucket",
+        severity: "critical",
+      }),
+    ];
+
+    render(
+      <FindingsGroupTable
+        data={data}
+        metadata={{
+          pagination: { page: 1, pages: 1, count: 12 },
+          version: "v1",
+        }}
+        resolvedFilters={{}}
+        hasHistoricalData={false}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Select check-a" }));
+
+    // Then
+    expect(screen.getByTestId("context-findings-summary")).toHaveTextContent(
+      '"total":12',
+    );
+    expect(
+      await screen.findByTestId("context-finding-group-group-1"),
+    ).toHaveTextContent('"checkId":"check-a"');
   });
 
   it("renders the muted findings filter in the table toolbar", () => {

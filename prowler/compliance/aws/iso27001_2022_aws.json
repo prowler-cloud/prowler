@@ -1190,7 +1190,8 @@
       ],
       "Checks": [
         "guardduty_is_enabled",
-        "guardduty_no_high_severity_findings"
+        "guardduty_no_high_severity_findings",
+        "kms_key_enclave_attestation_pcr_mismatch"
       ],
       "ConfigRequirements": [
         {
@@ -1491,7 +1492,9 @@
         "cloudwatch_log_metric_filter_root_usage",
         "cloudwatch_log_metric_filter_security_group_changes",
         "cloudwatch_log_metric_filter_sign_in_without_mfa",
-        "cloudwatch_log_metric_filter_unauthorized_api_calls"
+        "cloudwatch_log_metric_filter_unauthorized_api_calls",
+        "kms_key_enclave_debug_attestation_detected",
+        "kms_key_enclave_attestation_unknown_image"
       ]
     },
     {
@@ -1628,7 +1631,11 @@
         "ec2_securitygroup_from_launch_wizard",
         "ec2_securitygroup_not_used",
         "ec2_securitygroup_with_many_ingress_egress_rules",
-        "ec2_transitgateway_auto_accept_vpc_attachments"
+        "ec2_transitgateway_auto_accept_vpc_attachments",
+        "ec2_confidential_workload_host_imdsv2_not_enforced",
+        "ec2_confidential_workload_host_public_ip",
+        "ec2_confidential_workload_host_unrestricted_ingress",
+        "ec2_confidential_workload_host_vsock_proxy_exposed"
       ]
     },
     {
@@ -1723,7 +1730,10 @@
         "ec2_securitygroup_from_launch_wizard",
         "ec2_securitygroup_not_used",
         "ec2_securitygroup_with_many_ingress_egress_rules",
-        "ec2_transitgateway_auto_accept_vpc_attachments"
+        "ec2_transitgateway_auto_accept_vpc_attachments",
+        "ec2_confidential_workload_host_imdsv2_not_enforced",
+        "ec2_confidential_workload_host_public_ip",
+        "ec2_confidential_workload_host_unrestricted_ingress"
       ]
     },
     {
@@ -1818,7 +1828,10 @@
         "ec2_securitygroup_from_launch_wizard",
         "ec2_securitygroup_not_used",
         "ec2_securitygroup_with_many_ingress_egress_rules",
-        "ec2_transitgateway_auto_accept_vpc_attachments"
+        "ec2_transitgateway_auto_accept_vpc_attachments",
+        "ec2_confidential_workload_host_imdsv2_not_enforced",
+        "ec2_confidential_workload_host_public_ip",
+        "ec2_confidential_workload_host_unrestricted_ingress"
       ]
     },
     {
@@ -1924,7 +1937,10 @@
         "kms_cmk_are_used",
         "kms_cmk_not_deleted_unintentionally",
         "kms_cmk_not_multi_region",
-        "kms_cmk_rotation_enabled"
+        "kms_cmk_rotation_enabled",
+        "kms_key_enclave_attestation_not_enforced",
+        "kms_key_enclave_attestation_bypassable_path",
+        "kms_key_enclave_attestation_no_deployment_binding"
       ]
     },
     {

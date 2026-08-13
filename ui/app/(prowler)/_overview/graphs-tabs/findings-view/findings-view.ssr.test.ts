@@ -9,8 +9,8 @@ describe("findings view overview SSR", () => {
   const filePath = path.join(currentDir, "findings-view.ssr.tsx");
   const source = readFileSync(filePath, "utf8");
 
-  it("uses the non-legacy latest findings columns", () => {
-    expect(source).toContain("ColumnLatestFindings");
+  it("uses the triage-aware latest findings table", () => {
+    expect(source).toContain("LatestFindingsTable");
     expect(source).not.toContain("ColumnNewFindingsToDate");
   });
 });
