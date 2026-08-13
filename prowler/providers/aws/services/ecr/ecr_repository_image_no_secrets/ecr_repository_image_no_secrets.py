@@ -1,3 +1,5 @@
+import re
+
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.lib.utils.utils import (
     SecretsScanError,
@@ -5,6 +7,8 @@ from prowler.lib.utils.utils import (
     detect_secrets_scan_batch,
 )
 from prowler.providers.aws.services.ecr.ecr_client import ecr_client
+
+_SAFE_ENVIRONMENT_VARIABLE_NAME = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
 
 
 class ecr_repository_image_no_secrets(Check):
@@ -136,7 +140,9 @@ class ecr_repository_image_no_secrets(Check):
                         # to report; an entry with no "=" may itself be the
                         # secret, so it is never echoed back.
                         if "=" in entry:
-                            variable = entry.split("=", 1)[0]
+                            candidate = entry.split("=", 1)[0]
+                            if _SAFE_ENVIRONMENT_VARIABLE_NAME.fullmatch(candidate):
+                                variable = candidate
                     if variable is not None:
                         secrets_found.append(
                             f"{secret['type']} in environment variable {variable}"

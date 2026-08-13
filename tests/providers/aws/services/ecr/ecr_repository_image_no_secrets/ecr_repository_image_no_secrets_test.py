@@ -275,6 +275,48 @@ class Test_ecr_repository_image_no_secrets:
             assert "in image environment variables" in result[0].status_extended
             assert SECRET_VALUE not in result[0].status_extended
 
+    def test_secret_in_unsafe_environment_name_is_redacted(self):
+        """An unsafe name before '=' is never included in report text."""
+        repository = create_repository()
+        image = create_image()
+        scan_data = ImageScanData(
+            env=[f"{SECRET_VALUE}=safe-value"],
+            history=[],
+            files=[],
+            truncated=False,
+        )
+
+        ecr_client = mock.MagicMock()
+        ecr_client.registries = {}
+        ecr_client.audit_config = {
+            "secrets_ignore_patterns": [],
+            "secrets_validate": False,
+        }
+        ecr_client._get_image_scan_data = mock_image_scan_data(
+            [(repository, image, scan_data)]
+        )
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ecr.ecr_repository_image_no_secrets.ecr_repository_image_no_secrets.ecr_client",
+                new=ecr_client,
+            ),
+        ):
+            from prowler.providers.aws.services.ecr.ecr_repository_image_no_secrets.ecr_repository_image_no_secrets import (
+                ecr_repository_image_no_secrets,
+            )
+
+            result = ecr_repository_image_no_secrets().execute()
+
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+        assert "in image environment variables" in result[0].status_extended
+        assert SECRET_VALUE not in str(vars(result[0]))
+
     def test_scanned_file_content_is_freed_after_execute(self):
         """File contents are released after scanning so memory stays flat."""
         repository = create_repository()
