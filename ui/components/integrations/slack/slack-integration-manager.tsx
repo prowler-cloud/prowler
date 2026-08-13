@@ -25,6 +25,11 @@ import {
   useToast,
 } from "@/components/shadcn";
 import { Modal } from "@/components/shadcn/modal";
+import {
+  isSlackTokenErrorCode,
+  slackErrorMessage,
+} from "@/lib/integrations/slack-errors";
+import type { SlackTokenErrorCode } from "@/lib/integrations/slack-errors";
 import type {
   IntegrationProps,
   SlackChannelOption,
@@ -67,22 +72,6 @@ const channelRefEquals = (
   b: SlackChannelRef | null,
 ) => a?.id === b?.id && a?.name === b?.name;
 
-/**
- * Slack answers that prove the stored token itself is unusable, rather than the
- * channel unreachable (contract, Cross-cutting). They are what separates "this
- * needs a new install" from "this needs a different channel", so they get their
- * own state instead of a generic failure.
- */
-const CREDENTIAL_REVOKED_SIGNALS = [
-  "token_revoked",
-  "invalid_auth",
-  "account_inactive",
-] as const;
-
-const isCredentialRevoked = (reason: string | undefined): boolean =>
-  reason !== undefined &&
-  CREDENTIAL_REVOKED_SIGNALS.some((signal) => reason.includes(signal));
-
 interface SlackIntegrationManagerProps {
   /** At most one exists per tenant (one workspace). */
   integration: IntegrationProps | null;
@@ -107,14 +96,16 @@ export const SlackIntegrationManager = ({
   // and this page is what the user is looking at. The server component's own
   // revalidation refreshes the same thing on the next navigation.
   const [disconnected, setDisconnected] = useState(false);
-  /** Slack's reason when a disconnect removed the row but could not revoke. */
-  const [revocationFailure, setRevocationFailure] = useState<string | null>(
-    null,
-  );
-  /** Slack's reason when it stopped accepting the stored token. */
-  const [credentialFailure, setCredentialFailure] = useState<string | null>(
-    null,
-  );
+  /** A disconnect that removed the row without Slack confirming the revocation. */
+  const [revocationUnconfirmed, setRevocationUnconfirmed] = useState(false);
+  /**
+   * The `code` of the last refusal any Slack-backed call on this page ran into,
+   * or `null` when the last answer was not a refusal. Every call records it
+   * here — the contract says a dead grant can surface from any of them
+   * (Cross-cutting), so none of them gets to decide on its own what that looks
+   * like.
+   */
+  const [lastRefusalCode, setLastRefusalCode] = useState<string | null>(null);
   // A connected workspace arrives with no consent URL — there is no install left
   // to start (design D10) — so one is minted only if the page turns out to need
   // it: after a disconnect, or once the credential is known to be dead.
@@ -164,6 +155,46 @@ export const SlackIntegrationManager = ({
     }
   }
 
+  /**
+   * Whether that last refusal proves the Slack grant itself is dead, rather
+   * than a channel unreachable or Slack busy.
+   *
+   * Derived, not stored, and recognised through the shared vocabulary — this
+   * page keeps no list of codes of its own. Derived also means self-clearing: a
+   * later call that Slack answered at all (even to refuse a channel) is proof
+   * the credential works again, and the notice goes with it.
+   */
+  const credentialFailure: SlackTokenErrorCode | null = isSlackTokenErrorCode(
+    lastRefusalCode,
+  )
+    ? lastRefusalCode
+    : null;
+
+  // The consent URL, minted when the page turns out to need one: after a
+  // disconnect, or once the credential is known to be dead. Both answers are a
+  // reconnect, and it should be a click away by the time the user has read why.
+  const needsInstallUrl = disconnected || credentialFailure !== null;
+
+  useEffect(() => {
+    if (!needsInstallUrl) return;
+
+    let cancelled = false;
+
+    getSlackAuthorizeUrl()
+      .then((result) => {
+        if (cancelled || !("authorizeUrl" in result)) return;
+        setMintedInstallUrl(result.authorizeUrl);
+      })
+      .catch(() => {
+        // Nothing to say: the page still offers everything it did before, minus
+        // a shortcut. The catalogue's own install path is unaffected.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [needsInstallUrl]);
+
   useEffect(() => {
     if (!integrationId) return;
 
@@ -182,6 +213,9 @@ export const SlackIntegrationManager = ({
                 notice: result.incomplete ?? null,
               },
         );
+        // The listing is the call a dead credential shows up on first: it
+        // runs on arrival, before the user has touched anything.
+        setLastRefusalCode("error" in result ? (result.code ?? null) : null);
       })
       .catch(() => {
         if (cancelled) return;
@@ -215,6 +249,9 @@ export const SlackIntegrationManager = ({
       );
 
       if ("error" in result) {
+        // The API validates the channel against Slack, so the save is one of
+        // the calls that can discover the credential is gone.
+        setLastRefusalCode(result.code ?? null);
         toast({
           variant: "destructive",
           title: "Could not save the destination channel",
@@ -253,34 +290,35 @@ export const SlackIntegrationManager = ({
     if (saved) await handleTestConnection(integrationId);
   };
 
-  const mintInstallUrl = async () => {
-    const result = await getSlackAuthorizeUrl();
-    if ("authorizeUrl" in result) setMintedInstallUrl(result.authorizeUrl);
-  };
-
   const handleTestConnection = async (id: string) => {
     setIsTesting(true);
     try {
       const result = await testIntegrationConnection(id);
 
       if (result.success) {
-        setCredentialFailure(null);
+        setLastRefusalCode(null);
         toast({
           title: "Connection test successful!",
           description:
             result.message || "Prowler can reach your Slack workspace.",
         });
       } else {
-        // A dead token is not a failure the user can fix by checking again, so
-        // it gets its own state and an offer to approve Prowler again.
-        if (isCredentialRevoked(result.error)) {
-          setCredentialFailure(result.error ?? null);
-          void mintInstallUrl();
-        }
+        // The check reports Slack's own stable reason, which is a protocol
+        // token and not something to show anyone: it is mapped to Prowler's
+        // wording, and only falls back to what arrived when it names a reason
+        // this UI has nothing better to say about. A dead credential named here
+        // is not a failure checking again can fix, which is what recording the
+        // reason — rather than only reporting it — is for.
+        const reason = result.error?.trim() || null;
+
+        setLastRefusalCode(reason);
+
         toast({
           variant: "destructive",
           title: "Connection test failed",
-          description: result.error || "Failed to reach your Slack workspace.",
+          description: reason
+            ? slackErrorMessage({ code: reason, detail: reason })
+            : "Failed to reach your Slack workspace.",
         });
       }
     } catch (_error) {
@@ -311,20 +349,18 @@ export const SlackIntegrationManager = ({
         return;
       }
 
-      const { revoked, error } = result.revocation;
+      const { revoked } = result.revocation;
 
       // The integration is gone whatever Slack answered, so the page goes back
-      // to its unconnected state either way — with a consent URL ready, so
-      // connecting again is a click rather than a reload.
+      // to its unconnected state either way — which is what puts a consent URL
+      // on the way, so connecting again is a click rather than a reload. A dead
+      // credential is moot once the row it belonged to is gone.
       setDisconnected(true);
-      setCredentialFailure(null);
+      setLastRefusalCode(null);
       // Only an explicit "not revoked" sends the user to finish the job in
       // Slack. An unreported outcome is neither a failed revocation nor a
       // confirmed one, so it claims neither.
-      setRevocationFailure(
-        revoked === false ? (error ?? "Slack gave no reason") : null,
-      );
-      void mintInstallUrl();
+      setRevocationUnconfirmed(revoked === false);
 
       if (revoked !== false) {
         toast({
@@ -405,7 +441,7 @@ export const SlackIntegrationManager = ({
         </Alert>
       )}
 
-      {revocationFailure && (
+      {revocationUnconfirmed && (
         <Alert variant="warning">
           <AlertTitle>
             Slack disconnected — remove Prowler&apos;s access in Slack
@@ -413,9 +449,9 @@ export const SlackIntegrationManager = ({
           <AlertDescription>
             The integration and the token Prowler had stored are gone from
             Prowler, so there is nothing to retry here. Slack did not confirm
-            the revocation ({revocationFailure}), so the Prowler app may still
-            be installed in {workspaceName ?? "the workspace"} — remove it from
-            that workspace&apos;s Slack app settings.
+            the revocation, so the Prowler app may still be installed in{" "}
+            {workspaceName ?? "the workspace"} — remove it from that
+            workspace&apos;s Slack app settings.
           </AlertDescription>
         </Alert>
       )}
@@ -423,13 +459,18 @@ export const SlackIntegrationManager = ({
       {credentialFailure && (
         <Alert variant="error">
           <AlertTitle>
-            Prowler&apos;s access to {workspaceName ?? "this workspace"} has
-            been revoked
+            Slack no longer accepts Prowler&apos;s access to{" "}
+            {workspaceName ?? "this workspace"}
           </AlertTitle>
+          {/*
+            The wording is the code's own, from the shared mapping: the four
+            ways a grant dies are four different sentences, and each already
+            ends in the one thing that fixes it. Slack's raw reason is a
+            protocol token and stays out of the copy.
+          */}
           <AlertDescription>
-            Slack no longer accepts the token Prowler stored (
-            {credentialFailure}), so Prowler cannot post to this workspace.
-            Approve Prowler in Slack again to restore access.
+            {slackErrorMessage({ code: credentialFailure })} Until then, nothing
+            Prowler sends will reach the workspace.
           </AlertDescription>
           {installUrl && (
             <div className="col-start-2 mt-3">

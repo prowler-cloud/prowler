@@ -759,14 +759,14 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
 
   // --- A credential Slack no longer accepts --------------------------------
 
-  /** What the user is told when Slack has stopped accepting the token. */
+  /** What the user is told when Slack has stopped accepting the credential. */
   async revokedCredentialNotice(): Promise<string> {
     const notice = await this.waitFor(
-      () => this.alertMatching(/has been revoked/),
+      () => this.alertMatching(/no longer accepts Prowler's access/),
       10000,
       "the revoked-credential notice",
     );
-    return (notice.textContent ?? "").trim();
+    return (notice.textContent ?? "").replace(/\s+/g, " ").trim();
   }
 
   private reconnectLink(): HTMLAnchorElement | null {

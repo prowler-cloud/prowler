@@ -356,15 +356,12 @@ export const handlersForSlack = (fx: SlackFixture) => {
     // way and the outcome is reported in `meta`, so the UI can tell the user
     // when access still has to be removed by hand in the workspace.
     //
-    // The contract fixes where the outcome travels but not the key names, so
-    // `revoked` / `revocation_error` are this lane's reading of it — confirm at
-    // the S3 coordination checkpoint and change it here first if it differs.
+    // `revoked` is the entire outcome. The API sends no reason for a revocation
+    // that failed, and a handler that invented one would let the page grow copy
+    // around a field the deployment never sends.
     http.delete(`${API}/integrations/:id`, () => {
       install = null;
-      const { revoked, error } = fx.revocation;
-      return HttpResponse.json({
-        meta: { revoked, ...(error ? { revocation_error: error } : {}) },
-      });
+      return HttpResponse.json({ meta: { revoked: fx.revocation.revoked } });
     }),
   ];
 };

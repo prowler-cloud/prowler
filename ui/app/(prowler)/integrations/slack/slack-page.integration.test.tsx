@@ -23,9 +23,10 @@ import {
   SLACK_PRIVATE_CHANNEL,
   SLACK_PUBLIC_CHANNEL,
   SLACK_RATE_LIMITED_REFUSAL,
-  SLACK_REVOKE_FAILURE_REASON,
   SLACK_SECOND_PUBLIC_CHANNEL,
-  SLACK_TOKEN_REVOKED_REASON,
+  SLACK_TOKEN_EXPIRED_CODE,
+  SLACK_TOKEN_EXPIRED_REFUSAL,
+  SLACK_TOKEN_REVOKED_CODE,
   SLACK_UNKNOWN_CHANNEL_DETAIL,
   SLACK_UPSTREAM_REFUSAL,
   slackFixture,
@@ -619,7 +620,8 @@ describe("disconnecting a workspace", () => {
 
   it("still removes the integration when the revocation fails, and says access may need removing by hand", async () => {
     // Given — Slack will not accept the revocation. Revocation is best-effort:
-    // the row goes either way and the outcome travels in `meta`.
+    // the row goes either way and the outcome travels in `meta` as the single
+    // boolean the API sends — there is no reason alongside it.
     const harness = new SlackIntegrationHarness(revokeFailureSlackFixture());
     await harness.mount();
 
@@ -627,12 +629,16 @@ describe("disconnecting a workspace", () => {
     expect(await harness.disconnect()).toBe(REVOCATION_OUTCOME.NOT_REVOKED);
 
     // Then — the user reads what is true of both sides: nothing is left in
-    // Prowler to retry, and the app may still be installed at Slack.
+    // Prowler to retry, and the app may still be installed at Slack. Saying
+    // "there is nothing to retry here" is the point — the one thing a user
+    // reaches for after a failure is the thing that cannot help.
     const notice = await harness.revocationNotice();
     expect(notice).toMatch(/gone from Prowler/);
     expect(notice).toMatch(/nothing to retry here/);
-    expect(notice).toMatch(/may still be installed/);
-    expect(notice).toMatch(new RegExp(SLACK_REVOKE_FAILURE_REASON));
+    expect(notice).toMatch(/may still be installed in Prowler HQ/);
+    expect(notice).toMatch(
+      /remove it from that workspace's Slack app settings/,
+    );
     // The row is removed regardless, so the page does not keep offering a
     // workspace that no longer exists here.
     expect(await harness.returnedToUnconnectedState()).toBe(true);
@@ -640,7 +646,7 @@ describe("disconnecting a workspace", () => {
 });
 
 describe("a credential Slack no longer accepts", () => {
-  it("reports the revoked token and offers to connect the workspace again", async () => {
+  it("says the connection check found a dead credential, and offers to connect the workspace again", async () => {
     // Given — the token was revoked at Slack, so the row still reads connected
     // until a check runs (contract, Cross-cutting).
     const harness = new SlackIntegrationHarness(revokedTokenSlackFixture());
@@ -649,16 +655,47 @@ describe("a credential Slack no longer accepts", () => {
     // When
     expect(await harness.testConnection()).toBe(CONNECTION_OUTCOME.FAILURE);
 
-    // Then — the reason Slack gave, and a way forward rather than only an
-    // error: a revoked token is fixed by approving Prowler again, not by
+    // Then — what died, in Prowler's words, and a way forward rather than only
+    // an error: a revoked token is fixed by approving Prowler again, not by
     // checking a second time.
-    expect(await harness.revokedCredentialNotice()).toMatch(
-      new RegExp(SLACK_TOKEN_REVOKED_REASON),
-    );
+    const notice = await harness.revokedCredentialNotice();
+    expect(notice).toMatch(/no longer accepts Prowler's access to Prowler HQ/);
+    expect(notice).toMatch(/Prowler's access to Slack was revoked/);
+    expect(notice).toMatch(/Connect the workspace again to restore access/);
+    // Slack's reason is a protocol token: it is what the UI switched on, never
+    // what it showed.
+    expect(notice).not.toMatch(new RegExp(SLACK_TOKEN_REVOKED_CODE));
+
     const consentScreen = new URL(await harness.reconnectUrl());
     expect(`${consentScreen.origin}${consentScreen.pathname}`).toBe(
       "https://slack.com/oauth/v2/authorize",
     );
     expect(harness.offersReconnect()).toBe(true);
+  }, 30000);
+
+  it("offers the same recovery when the channel listing is what finds the credential dead", async () => {
+    // Given — a finished setup whose credential expired. The listing runs on
+    // arrival, so it, not the connection check, is what meets Slack first —
+    // and the contract says any call can be the one that surfaces this.
+    const harness = new SlackIntegrationHarness(
+      configuredSlackFixture({ channelsRefusal: SLACK_TOKEN_EXPIRED_REFUSAL }),
+    );
+
+    // When — nothing but opening the page.
+    await harness.mount();
+
+    // Then — the same answer as the connection check gives, worded for the way
+    // this credential died, and not left as a channel problem the user would
+    // go looking for a channel fix for.
+    const notice = await harness.revokedCredentialNotice();
+    expect(notice).toMatch(/Prowler's Slack credential has expired/);
+    expect(notice).toMatch(/Connect the workspace again to restore access/);
+    expect(harness.offersReconnect()).toBe(true);
+
+    // And the picker says the same thing, in the same words: the API's own
+    // `detail` names the raw reason, and it is `code` the UI answered from.
+    const message = await harness.channelPickerMessage();
+    expect(message).toMatch(/Prowler's Slack credential has expired/);
+    expect(message).not.toMatch(new RegExp(SLACK_TOKEN_EXPIRED_CODE));
   }, 30000);
 });
