@@ -4,14 +4,14 @@ description: "New features and improvements in each Prowler release"
 rss: true
 ---
 
-<Update label="v5.39.0" description="August 12, 2026">
+<Update label="v5.39.0" description="August 13, 2026">
   ### 🤖 Lighthouse AI — Finding Skills
 
   <Note>
   This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
   </Note>
 
-  Lighthouse AI now embeds a Skills menu on every finding, answering the questions an analyst actually asks. **Contextual Fix** produces the fix for the finding, **Triage Decision** judges whether it is real and closes it out when it is not and **Systemic Scope** determines whether the problem is a one-off or everywhere. A free-form "Ask Lighthouse anything" prompt sits in the same menu, and each run shows its progress and offers follow-up actions such as creating a Jira issue or muting the finding.
+  Lighthouse AI now embeds a Skills menu on every finding, answering the questions an analyst actually asks. **Contextual Fix** produces the fix for the finding, **Triage Decision** judges whether it is real and closes it out when it is not, and **Systemic Scope** determines whether the problem is a one-off or everywhere. A free-form "Ask Lighthouse anything" prompt sits in the same menu, and each run shows its progress and offers follow-up actions such as creating a Jira issue or muting the finding.
 
   ![Lighthouse AI Skills menu on a finding resource](/images/changelog/v5.39.0-lighthouse-finding-skills.png)
 
@@ -53,7 +53,7 @@ rss: true
 
   `prowler_send_findings_to_jira` also gains Cloud-only dispatch capabilities: select failed findings by check IDs against the latest completed scan, and send them in grouped mode, one Jira work item per check listing up to 50 affected resources, with per-group error reporting.
 
-  Read more in the [Prowler MCP tools documentation](https://docs.prowler.com/getting-started/basic-usage/prowler-mcp-tools).
+  Read more in the [Prowler MCP tools documentation](https://docs.prowler.com/getting-started/basic-usage/prowler-mcp-tools) and its [Jira operations reference](https://docs.prowler.com/getting-started/basic-usage/prowler-mcp-tools#jira-operations).
 
   ### 🕸️ Attack Paths — Grouped Graph with Outcome Destinations
 
@@ -63,7 +63,7 @@ rss: true
 
   The Attack Paths graph now reads from source to destination. Resources of the same class collapse into a single expandable node with a count, clicking reveals its members, and every path terminates in an explicit outcome node naming the destination impact: code execution, privilege escalation, public exposure, or resource inventory. The per-account hub node is gone, and the clicked resource stays highlighted while its findings are expanded.
 
-  ![Attack Paths grouped graph ending in a code execution outcome node](/images/changelog/v5.39.0-attack-paths-grouped-graph.png)
+  ![Attack Paths graph from the Internet to a public exposure outcome node](/images/changelog/v5.39.0-attack-paths-graph.png)
 
   Explore the full Attack Paths query catalog at [Prowler Hub](https://hub.prowler.com/attack-paths).
 
