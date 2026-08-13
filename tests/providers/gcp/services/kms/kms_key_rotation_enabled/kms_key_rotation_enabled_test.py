@@ -1,8 +1,14 @@
 from unittest import mock
 
+from freezegun import freeze_time
+
 from tests.providers.gcp.gcp_fixtures import GCP_PROJECT_ID, GCP_US_CENTER1_LOCATION
 
 
+# The check compares the keys' next_rotation_time against the current date and
+# the test fixtures use hardcoded dates, so the tests are frozen to a date that
+# keeps those fixtures meaningful.
+@freeze_time("2024-08-01")
 class Test_kms_key_rotation_enabled:
     def test_kms_no_key(self):
         kms_client = mock.MagicMock
