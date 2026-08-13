@@ -1,6 +1,7 @@
 import json
+from concurrent.futures import Future
 from datetime import datetime
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import botocore
 import pytest
@@ -538,3 +539,41 @@ class Test_ECR_Service:
         # The dedicated lookup must NOT mutate the shared images_details, or
         # other checks would treat this repo as having a scanned image.
         assert repository.images_details == []
+
+    @mock_aws
+    def test_get_image_scan_data_bounds_submitted_futures(self):
+        """Image fetches are submitted only as earlier results are consumed."""
+        ecr_client_boto = client("ecr", region_name=AWS_REGION_EU_WEST_1)
+        for index in range(10):
+            ecr_client_boto.create_repository(
+                repositoryName=f"{repo_name}-{index}",
+                imageScanningConfiguration={"scanOnPush": True},
+            )
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        ecr = ECR(aws_provider)
+        repositories = ecr.registries[AWS_REGION_EU_WEST_1].repositories
+
+        executor = MagicMock()
+        executor.__enter__.return_value = executor
+        futures = []
+
+        def submit(*_args):
+            future = Future()
+            futures.append(future)
+            if len(futures) == 1:
+                future.set_result(None)
+            return future
+
+        executor.submit.side_effect = submit
+        with patch(
+            "prowler.providers.aws.services.ecr.ecr_service.ThreadPoolExecutor",
+            return_value=executor,
+        ):
+            results = ecr._get_image_scan_data()
+            first_result = next(results)
+
+        assert first_result[:2] == (
+            repositories[0],
+            repositories[0].images_details[-1],
+        )
+        assert executor.submit.call_count == 4

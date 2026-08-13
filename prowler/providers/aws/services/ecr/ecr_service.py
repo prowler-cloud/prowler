@@ -1,4 +1,4 @@
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 from datetime import datetime
 from json import loads
 from typing import Optional
@@ -350,34 +350,52 @@ class ECR(AWSService):
         """
         logger.info("ECR - Fetching image manifests, configs, and layers...")
         inspector = ImageInspector()
-        with ThreadPoolExecutor(max_workers=IMAGE_SCAN_MAX_WORKERS) as executor:
-            images_to_fetch = {}
+
+        def images_to_fetch():
             for registry in self.registries.values():
                 for repository in registry.repositories:
                     image = self._get_scan_target_image(repository)
-                    if image is None:
-                        continue
-                    client = self.regional_clients[repository.region]
-                    registry_id = self.registries[repository.region].id
-                    future = executor.submit(
-                        inspector.fetch_image_scan_data,
-                        client,
-                        registry_id,
-                        repository.name,
-                        image.latest_digest,
-                    )
-                    images_to_fetch[future] = (repository, image)
+                    if image is not None:
+                        yield repository, image
 
-            for future in as_completed(images_to_fetch):
-                repository, image = images_to_fetch[future]
-                scan_data = None
+        with ThreadPoolExecutor(max_workers=IMAGE_SCAN_MAX_WORKERS) as executor:
+            pending = {}
+            targets = iter(images_to_fetch())
+
+            def submit_next():
                 try:
-                    scan_data = future.result()
-                except Exception as error:
-                    logger.error(
-                        f"{repository.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                    )
-                yield repository, image, scan_data
+                    repository, image = next(targets)
+                except StopIteration:
+                    return False
+                client = self.regional_clients[repository.region]
+                registry_id = self.registries[repository.region].id
+                future = executor.submit(
+                    inspector.fetch_image_scan_data,
+                    client,
+                    registry_id,
+                    repository.name,
+                    image.latest_digest,
+                )
+                pending[future] = (repository, image)
+                return True
+
+            for _ in range(IMAGE_SCAN_MAX_WORKERS):
+                if not submit_next():
+                    break
+
+            while pending:
+                completed, _ = wait(pending, return_when=FIRST_COMPLETED)
+                for future in completed:
+                    repository, image = pending.pop(future)
+                    scan_data = None
+                    try:
+                        scan_data = future.result()
+                    except Exception as error:
+                        logger.error(
+                            f"{repository.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+                    yield repository, image, scan_data
+                    submit_next()
 
     @staticmethod
     def _artifact_type(artifact_media_type: Optional[str]) -> str:
