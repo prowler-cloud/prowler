@@ -182,7 +182,8 @@
                 "pages": [
                   "user-guide/tutorials/prowler-app-s3-integration",
                   "user-guide/tutorials/prowler-app-security-hub-integration",
-                  "user-guide/tutorials/prowler-app-jira-integration"
+                  "user-guide/tutorials/prowler-app-jira-integration",
+                  "user-guide/tutorials/prowler-app-slack-integration"
                 ]
               },
               {
