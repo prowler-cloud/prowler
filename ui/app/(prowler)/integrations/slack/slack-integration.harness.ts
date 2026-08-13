@@ -20,6 +20,25 @@ import { IntegrationsContent } from "../integrations-content";
 
 import { SlackIntegrationContent } from "./slack-integration-content";
 
+export const CONNECTION_OUTCOME = {
+  SUCCESS: "success",
+  FAILURE: "failure",
+} as const;
+
+export type ConnectionOutcome =
+  (typeof CONNECTION_OUTCOME)[keyof typeof CONNECTION_OUTCOME];
+
+export const TEST_MESSAGE_OUTCOME = {
+  SENT: "sent",
+  FAILED: "failed",
+} as const;
+
+export type TestMessageOutcome =
+  (typeof TEST_MESSAGE_OUTCOME)[keyof typeof TEST_MESSAGE_OUTCOME];
+
+/** Sentinel: the page settled on "no channel recorded", rather than not yet. */
+const NO_DEFAULT_CHANNEL = "<no channel recorded>";
+
 interface CallbackParams {
   code?: string;
   state?: string;
@@ -55,7 +74,26 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     window.history.replaceState(null, "", "/integrations/slack");
     this.wireHandlers();
 
-    render(await SlackIntegrationContent());
+    const readsBefore = this.channelListCallCount;
+    this.mounted = render(await SlackIntegrationContent());
+    if (this.fixture.install) await this.waitForChannelsRead(readsBefore);
+  }
+
+  private mounted: ReturnType<typeof render> | null = null;
+
+  /**
+   * Open the management page again, the way a later visit does — the handlers
+   * already in place keep serving whatever the previous visit left behind, so
+   * this reads the API's state rather than a re-seeded fixture. The previous
+   * render is unmounted first: two live copies of the page would make every
+   * assertion ambiguous.
+   */
+  async revisit(): Promise<void> {
+    (await this.mounted)?.unmount();
+    const readsBefore = this.channelListCallCount;
+    this.mounted = render(await SlackIntegrationContent());
+    await this.mounted;
+    if (this.fixture.install) await this.waitForChannelsRead(readsBefore);
   }
 
   async mountCallback({ code, state, error }: CallbackParams): Promise<void> {
@@ -219,10 +257,13 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     return (badge.textContent ?? "").trim();
   }
 
-  /** Absent, or there but disabled: both read as "not offered". */
-  offersConnectionTest(): boolean {
-    const button = this.buttonByText(/Test connection/);
-    return button !== null && !button.disabled;
+  async offersConnectionTest(): Promise<boolean> {
+    const button = await this.waitFor(
+      () => this.buttonByText(/Test connection/),
+      5000,
+      "the Test connection button",
+    );
+    return !button.disabled;
   }
 
   saysChannelIsNextStep(): boolean {
@@ -238,6 +279,24 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
       this.container.querySelectorAll<HTMLElement>("p"),
     ).find((p) => /^Last checked:/.test((p.textContent ?? "").trim()));
     return line ? (line.textContent ?? "").trim() : null;
+  }
+
+  async testConnection(): Promise<ConnectionOutcome> {
+    await this.clickButton(/Test connection/);
+
+    return this.waitFor(
+      () => {
+        if (this.containsText(/Connection test successful/)) {
+          return CONNECTION_OUTCOME.SUCCESS;
+        }
+        if (this.containsText(/Connection test failed/)) {
+          return CONNECTION_OUTCOME.FAILURE;
+        }
+        return null;
+      },
+      15000,
+      "the connection test outcome",
+    );
   }
 
   // --- Returning from Slack -----------------------------------------------
@@ -287,5 +346,249 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
 
   offersRetry(): boolean {
     return this.backLink() !== null || this.offersInstall();
+  }
+
+  // --- Choosing a destination channel --------------------------------------
+
+  /** Channel reads issued — one per cursor page the UI followed. */
+  get channelListCallCount(): number {
+    return this.countRequests("GET", "/slack/channels");
+  }
+
+  /**
+   * Wait for the read of the workspace's channels a connected page starts on
+   * arrival, counting from the reads already issued.
+   *
+   * Every mount of a connected page starts one, and a test that asserts
+   * something else settles long before the read does — a read still in flight
+   * when the test ends lands in the middle of the next one, against a harness
+   * that never asked for it. Waiting here keeps each test's reads its own.
+   */
+  private async waitForChannelsRead(readsBefore: number): Promise<void> {
+    await this.waitFor(
+      () => {
+        const refresh = this.buttonByText(/Refresh channels/);
+        return this.channelListCallCount > readsBefore &&
+          refresh !== null &&
+          !refresh.disabled
+          ? true
+          : null;
+      },
+      15000,
+      "the workspace's channels to be read",
+    );
+  }
+
+  /**
+   * Open the picker and hand back its options.
+   *
+   * Radix mounts the listbox in a portal, and a re-render landing mid-gesture
+   * makes it drop the open state — so re-open from the keyboard when nothing
+   * mounted at all, the same recovery the attack-paths harness needs.
+   */
+  private async openChannelPicker(): Promise<HTMLElement[]> {
+    const mounted = (): HTMLElement[] | null => {
+      const options = Array.from(
+        document.querySelectorAll<HTMLElement>('[role="option"]'),
+      );
+      return options.length > 0 ? options : null;
+    };
+
+    const alreadyOpen = mounted();
+    if (alreadyOpen) return alreadyOpen;
+
+    const trigger = await this.waitFor<HTMLElement>(
+      () => this.q("#slack-channel"),
+      10000,
+      "the channel picker",
+    );
+
+    await this.clickElement(trigger, { fallbackToDomClick: true });
+
+    let options = await this.waitForOrNull(
+      mounted,
+      2000,
+      "the channel options",
+    );
+    if (!options) {
+      await this.user.keyboard("{Enter}");
+      options = await this.waitForOrNull(mounted, 8000, "the channel options");
+    }
+
+    if (!options) {
+      throw new Error("openChannelPicker: the channel picker offered nothing");
+    }
+    return options;
+  }
+
+  private async closeChannelPicker(): Promise<void> {
+    await this.user.keyboard("{Escape}");
+    await this.waitForTransition();
+  }
+
+  /**
+   * Re-read the workspace's channels, the way a user does after inviting
+   * `@Prowler` to a channel in Slack: the picker only learns about it on a
+   * fresh read, so this waits for the read to have happened and settled rather
+   * than for the click alone.
+   */
+  async refreshChannels(): Promise<void> {
+    const readsBefore = this.channelListCallCount;
+    await this.clickButton(/Refresh channels/);
+
+    await this.waitFor(
+      () => {
+        const button = this.buttonByText(/Refresh channels/);
+        return (
+          this.channelListCallCount > readsBefore &&
+          button !== null &&
+          !button.disabled
+        );
+      },
+      15000,
+      "the workspace's channels to be read again",
+    );
+  }
+
+  /** The channels the workspace offers, in the order the picker lists them. */
+  async channelOptions(): Promise<string[]> {
+    const options = await this.openChannelPicker();
+    const names = options.map(
+      (option) => option.getAttribute("data-channel") ?? "",
+    );
+
+    await this.closeChannelPicker();
+
+    return names;
+  }
+
+  /**
+   * Whether the channel offered under `name` is presented as private — read
+   * from the marker the user sees, not from how the option is wired up.
+   */
+  async isChannelShownAsPrivate(name: string): Promise<boolean> {
+    const options = await this.openChannelPicker();
+    const option = options.find(
+      (element) => element.getAttribute("data-channel") === name,
+    );
+
+    await this.closeChannelPicker();
+
+    return /Private/.test(option?.textContent ?? "");
+  }
+
+  /** Pick a channel by name and save it as the integration's destination. */
+  async chooseChannel(name: string): Promise<void> {
+    const options = await this.openChannelPicker();
+    const option = options.find(
+      (element) => element.getAttribute("data-channel") === name,
+    );
+
+    if (!option) {
+      throw new Error(`chooseChannel: no channel named "${name}" is offered`);
+    }
+
+    await this.user.click(option);
+    await this.waitForTransition();
+    await this.clickButton(/Save channel/);
+    await this.waitFor(
+      () => this.defaultChannelName() === name,
+      15000,
+      `#${name} to be recorded as the destination`,
+    );
+  }
+
+  private defaultChannelName(): string | null {
+    return (
+      /Prowler posts to #(\S+?)\./.exec(
+        this.container.textContent ?? "",
+      )?.[1] ?? null
+    );
+  }
+
+  /** The channel recorded as the integration's destination, if any. */
+  async defaultChannel(): Promise<string | null> {
+    const settled = await this.waitFor(
+      () =>
+        this.defaultChannelName() ??
+        (this.containsText(/No destination channel recorded yet/)
+          ? NO_DEFAULT_CHANNEL
+          : null),
+      10000,
+      "the recorded destination channel",
+    );
+    return settled === NO_DEFAULT_CHANNEL ? null : settled;
+  }
+
+  /** What the user is told when the workspace exposes no channel at all. */
+  async channelPickerMessage(): Promise<string> {
+    const alert = await this.waitFor(
+      () =>
+        Array.from(
+          this.container.querySelectorAll<HTMLElement>('[data-slot="alert"]'),
+        ).find((element) =>
+          /No channels available yet|Could not read the workspace/.test(
+            element.textContent ?? "",
+          ),
+        ),
+      10000,
+      "the channel picker's message",
+    );
+    return (alert.textContent ?? "").replace(/\s+/g, " ").trim();
+  }
+
+  /** The invite copy that says how to make a private channel appear. */
+  channelInviteHint(): string | null {
+    const hint = Array.from(
+      this.container.querySelectorAll<HTMLElement>("p"),
+    ).find((element) => /invites? @Prowler/.test(element.textContent ?? ""));
+    return hint ? (hint.textContent ?? "").trim() : null;
+  }
+
+  // --- The test message ----------------------------------------------------
+
+  /** Whether sending a test message is offered at all. */
+  offersTestMessage(): boolean {
+    return this.buttonByText(/Send test message/) !== null;
+  }
+
+  private testMessageAlert(): HTMLElement | null {
+    return (
+      Array.from(
+        this.container.querySelectorAll<HTMLElement>('[data-slot="alert"]'),
+      ).find((element) =>
+        /Test message (sent|failed)/.test(element.textContent ?? ""),
+      ) ?? null
+    );
+  }
+
+  /** Send the test message and report how it went. */
+  async sendTestMessage(): Promise<TestMessageOutcome> {
+    await this.clickButton(/Send test message/);
+
+    return this.waitFor(
+      () => {
+        const alert = this.testMessageAlert();
+        if (!alert) return null;
+        return /Test message sent/.test(alert.textContent ?? "")
+          ? TEST_MESSAGE_OUTCOME.SENT
+          : TEST_MESSAGE_OUTCOME.FAILED;
+      },
+      15000,
+      "the test message outcome",
+    );
+  }
+
+  /** What the user was told about the last test message. */
+  async lastTestMessageOutcome(): Promise<string> {
+    const alert = await this.waitFor(
+      () => this.testMessageAlert(),
+      10000,
+      "the test message outcome",
+    );
+    const description = alert.querySelector<HTMLElement>(
+      '[data-slot="alert-description"]',
+    );
+    return (description?.textContent ?? "").trim();
   }
 }

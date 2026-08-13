@@ -12,11 +12,26 @@ import {
   configuredSlackFixture,
   connectedSlackFixture,
   INTEGRATIONS_SERVER_ERROR_DETAIL,
+  SLACK_CHANNELS_REFUSED_DETAIL,
+  SLACK_PRIVATE_CHANNEL,
+  SLACK_PUBLIC_CHANNEL,
+  SLACK_SECOND_PUBLIC_CHANNEL,
+  SLACK_TEST_MESSAGE_REFUSED_DETAIL,
   slackFixture,
+  slackFixtureWithDefaultChannel,
   unreadableCheckTimeSlackFixture,
 } from "@/__tests__/msw/handlers/slack.fixtures";
 
-import { SlackIntegrationHarness } from "./slack-integration.harness";
+import {
+  CONNECTION_OUTCOME,
+  SlackIntegrationHarness,
+  TEST_MESSAGE_OUTCOME,
+} from "./slack-integration.harness";
+
+/** The shape the channel save is asserted against — only the id travels. */
+interface PatchIntegrationBody {
+  data: { attributes: { configuration: { channel_id: string } } };
+}
 
 /** The workspace the fixtures connect. */
 const WORKSPACE_NAME = "Prowler HQ";
@@ -156,6 +171,8 @@ describe("a connected workspace", () => {
 
     expect(await harness.connectedWorkspaceName()).toBe(WORKSPACE_NAME);
     expect(await harness.connectionBadge()).toBe("Connected");
+    expect(await harness.offersConnectionTest()).toBe(true);
+    expect(await harness.testConnection()).toBe(CONNECTION_OUTCOME.SUCCESS);
     // One workspace per tenant (design D10): no second install on offer, and no
     // consent URL minted for a page that would never use it.
     expect(harness.offersInstall()).toBe(false);
@@ -210,8 +227,193 @@ describe("a connected workspace", () => {
     await harness.mount();
 
     // The check posts to the destination channel, so with none recorded the API
-    // answers 400. Nothing here records one, so it is not offered at all.
-    expect(harness.offersConnectionTest()).toBe(false);
+    // answers 400 rather than `connected: false`.
+    expect(await harness.offersConnectionTest()).toBe(false);
     expect(harness.saysChannelIsNextStep()).toBe(true);
   }, 30000);
+});
+
+describe("choosing a destination channel", () => {
+  it("offers the workspace's channels and remembers the one chosen", async () => {
+    // Given — a connected tenant, whose workspace exposes more channels than
+    // fit on one cursor page.
+    const harness = new SlackIntegrationHarness(connectedSlackFixture());
+    await harness.mount();
+
+    // Then — every channel is offered, so the picker followed `links.next`
+    // rather than stopping at the first page (design D6, Slack's listing is
+    // paginated and rate-limited).
+    expect(await harness.channelOptions()).toEqual([
+      SLACK_PUBLIC_CHANNEL.name,
+      SLACK_SECOND_PUBLIC_CHANNEL.name,
+      SLACK_PRIVATE_CHANNEL.name,
+    ]);
+    expect(harness.channelListCallCount).toBe(2);
+
+    // When
+    await harness.chooseChannel(SLACK_PUBLIC_CHANNEL.name);
+
+    // Then — only the id is submitted: the API validates it against Slack and
+    // derives the name, so a name sent from here could only ever drift.
+    const saved = await harness.lastRequestBody<PatchIntegrationBody>(
+      "PATCH",
+      "/integrations/",
+    );
+    expect(saved?.data.attributes.configuration).toEqual({
+      channel_id: SLACK_PUBLIC_CHANNEL.id,
+    });
+
+    // And — a later visit shows it as the destination, under the name the API
+    // derived from the id rather than one the UI remembered locally.
+    await harness.revisit();
+    expect(await harness.defaultChannel()).toBe(SLACK_PUBLIC_CHANNEL.name);
+  }, 60000);
+
+  it("offers a private channel the app was invited to, marked as private, and saves it", async () => {
+    // Given — `@Prowler` has been invited to one private channel, which is
+    // what makes it visible at all (`groups:read` is membership-gated, D2).
+    const harness = new SlackIntegrationHarness(connectedSlackFixture());
+    await harness.mount();
+
+    // Then — it is offered, and the user can tell it apart from a public one.
+    expect(await harness.channelOptions()).toContain(
+      SLACK_PRIVATE_CHANNEL.name,
+    );
+    expect(
+      await harness.isChannelShownAsPrivate(SLACK_PRIVATE_CHANNEL.name),
+    ).toBe(true);
+    expect(
+      await harness.isChannelShownAsPrivate(SLACK_PUBLIC_CHANNEL.name),
+    ).toBe(false);
+
+    // When
+    await harness.chooseChannel(SLACK_PRIVATE_CHANNEL.name);
+
+    // Then
+    expect(await harness.defaultChannel()).toBe(SLACK_PRIVATE_CHANNEL.name);
+  }, 60000);
+
+  it("offers a private channel once @Prowler is invited to it and the list is refreshed", async () => {
+    // Given — a workspace whose only channels are public. `groups:read` is
+    // membership-gated (design D2), so a private channel the app has not been
+    // invited to does not exist as far as Prowler is concerned.
+    const harness = new SlackIntegrationHarness(
+      connectedSlackFixture({
+        channels: [
+          { ...SLACK_PUBLIC_CHANNEL },
+          { ...SLACK_SECOND_PUBLIC_CHANNEL },
+        ],
+      }),
+    );
+    await harness.mount();
+    expect(await harness.channelOptions()).not.toContain(
+      SLACK_PRIVATE_CHANNEL.name,
+    );
+
+    // When — someone invites `@Prowler` to a private channel in Slack, and the
+    // user refreshes instead of reconnecting the workspace.
+    harness.fixture.channels.push({ ...SLACK_PRIVATE_CHANNEL });
+    await harness.refreshChannels();
+
+    // Then — it joins the list, still marked as private.
+    expect(await harness.channelOptions()).toContain(
+      SLACK_PRIVATE_CHANNEL.name,
+    );
+    expect(
+      await harness.isChannelShownAsPrivate(SLACK_PRIVATE_CHANNEL.name),
+    ).toBe(true);
+  }, 60000);
+
+  it("says what to do when the workspace exposes no channel Prowler can post to", async () => {
+    // Given — a freshly connected workspace the app has not been invited to
+    // anywhere, with no public channel either.
+    const harness = new SlackIntegrationHarness(
+      connectedSlackFixture({ channels: [] }),
+    );
+
+    // When
+    await harness.mount();
+
+    // Then — the user is told what to do, not merely that the list is empty,
+    // and nothing is recorded.
+    const message = await harness.channelPickerMessage();
+    expect(message).toMatch(/No channels available yet/);
+    expect(message).toMatch(/invite @Prowler/);
+    expect(await harness.defaultChannel()).toBeNull();
+    expect(harness.offersTestMessage()).toBe(false);
+  }, 30000);
+
+  it("surfaces Slack's reason when it refuses the channel listing, leaving the recorded channel alone", async () => {
+    // Given — a tenant that already recorded a destination.
+    const harness = new SlackIntegrationHarness(
+      slackFixtureWithDefaultChannel(SLACK_PUBLIC_CHANNEL, {
+        channelsError: SLACK_CHANNELS_REFUSED_DETAIL,
+      }),
+    );
+
+    // When
+    await harness.mount();
+
+    // Then — the reason Slack reported, and the invite copy stays next to the
+    // picker so the fix is still one sentence away.
+    expect(await harness.channelPickerMessage()).toMatch(/ratelimited/);
+    expect(harness.channelInviteHint()).toMatch(/invites @Prowler/);
+
+    // And — a listing Prowler could not read says nothing about the channel
+    // already on the integration: it stays recorded, and still postable to.
+    expect(await harness.defaultChannel()).toBe(SLACK_PUBLIC_CHANNEL.name);
+    expect(harness.offersTestMessage()).toBe(true);
+  }, 30000);
+});
+
+describe("sending a test message", () => {
+  it("is not offered until a destination channel is recorded", async () => {
+    // Given — connected, but no channel chosen yet.
+    const harness = new SlackIntegrationHarness(connectedSlackFixture());
+
+    // When
+    await harness.mount();
+
+    // Then
+    expect(await harness.defaultChannel()).toBeNull();
+    expect(harness.offersTestMessage()).toBe(false);
+  }, 30000);
+
+  it("sends a test message to the recorded channel and reports it delivered", async () => {
+    // Given — a tenant that has recorded where Prowler should post.
+    const harness = new SlackIntegrationHarness(connectedSlackFixture());
+    await harness.mount();
+    await harness.chooseChannel(SLACK_PUBLIC_CHANNEL.name);
+
+    // When
+    const outcome = await harness.sendTestMessage();
+
+    // Then — sent, and the user reads which channel it went to.
+    expect(outcome).toBe(TEST_MESSAGE_OUTCOME.SENT);
+    expect(await harness.lastTestMessageOutcome()).toMatch(
+      new RegExp(`#${SLACK_PUBLIC_CHANNEL.name}`),
+    );
+  }, 60000);
+
+  it("surfaces the reason when Slack refuses the test message", async () => {
+    // Given — the post itself fails, which the API reports on the task it
+    // handed back (design D9), not on the request that started it.
+    const harness = new SlackIntegrationHarness(
+      connectedSlackFixture({
+        testMessage: {
+          accepted: false,
+          error: SLACK_TEST_MESSAGE_REFUSED_DETAIL,
+        },
+      }),
+    );
+    await harness.mount();
+    await harness.chooseChannel(SLACK_PUBLIC_CHANNEL.name);
+
+    // When
+    const outcome = await harness.sendTestMessage();
+
+    // Then — Slack's own reason, not a generic failure.
+    expect(outcome).toBe(TEST_MESSAGE_OUTCOME.FAILED);
+    expect(await harness.lastTestMessageOutcome()).toMatch(/channel_not_found/);
+  }, 60000);
 });

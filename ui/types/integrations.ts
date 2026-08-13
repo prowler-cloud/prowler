@@ -113,6 +113,17 @@ export interface IntegrationProps {
   links: { self: string };
 }
 
+/**
+ * A channel Prowler can post to in the connected Slack workspace: every active
+ * public channel, plus the private ones the Prowler app has been invited to.
+ * `is_private` keeps the API's own naming so the picker never has to translate.
+ */
+export interface SlackChannelOption {
+  id: string;
+  name: string;
+  is_private: boolean;
+}
+
 // Jira dispatch types
 export interface JiraDispatchRequest {
   data: {

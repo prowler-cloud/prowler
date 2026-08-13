@@ -1,9 +1,20 @@
 "use client";
 
 import { format, isValid, parseISO } from "date-fns";
+import { Send, TestTube } from "lucide-react";
+import { useEffect, useState } from "react";
 
+import {
+  testIntegrationConnection,
+  updateIntegration,
+} from "@/actions/integrations/integrations";
+import {
+  getSlackChannels,
+  sendSlackTestMessage,
+} from "@/actions/integrations/slack";
 import { SlackIcon } from "@/components/icons/services/IconServices";
 import { IntegrationCardHeader } from "@/components/integrations/shared";
+import { SlackChannelSelector } from "@/components/integrations/slack/slack-channel-selector";
 import {
   Alert,
   AlertDescription,
@@ -12,8 +23,18 @@ import {
   Card,
   CardContent,
   CardHeader,
+  useToast,
 } from "@/components/shadcn";
-import type { IntegrationProps } from "@/types/integrations";
+import type {
+  IntegrationProps,
+  SlackChannelOption,
+} from "@/types/integrations";
+
+/** What the user was told about the last test message they sent. */
+interface TestMessageOutcome {
+  sent: boolean;
+  detail: string;
+}
 
 interface SlackIntegrationManagerProps {
   /** At most one exists per tenant (one workspace). */
@@ -32,6 +53,177 @@ export const SlackIntegrationManager = ({
   rateLimitMessage,
   loadError,
 }: SlackIntegrationManagerProps) => {
+  const [isTesting, setIsTesting] = useState(false);
+  const { toast } = useToast();
+
+  const integrationId = integration?.id ?? null;
+  const recordedChannelId =
+    integration?.attributes.configuration.channel_id ?? null;
+  const recordedChannelName =
+    integration?.attributes.configuration.channel_name ?? null;
+
+  const [channels, setChannels] = useState<SlackChannelOption[]>([]);
+  const [channelsError, setChannelsError] = useState<string | null>(null);
+  const [isLoadingChannels, setIsLoadingChannels] = useState(false);
+  // Bumped by the refresh affordance: a channel invited to in Slack after the
+  // page loaded only shows up on a re-read.
+  const [channelReloads, setChannelReloads] = useState(0);
+  // Local state needed: the pick is buffered until the user saves it.
+  const [selectedChannelId, setSelectedChannelId] = useState<string | null>(
+    recordedChannelId,
+  );
+  // What the API has on record. Kept in state rather than read from the
+  // integration prop because saving does not re-render this page's server
+  // component, and the test message is only offered once a channel is recorded.
+  const [defaultChannelId, setDefaultChannelId] = useState<string | null>(
+    recordedChannelId,
+  );
+  const [defaultChannelName, setDefaultChannelName] = useState<string | null>(
+    recordedChannelName,
+  );
+  const [isSavingChannel, setIsSavingChannel] = useState(false);
+  const [isSendingTestMessage, setIsSendingTestMessage] = useState(false);
+  const [testMessageOutcome, setTestMessageOutcome] =
+    useState<TestMessageOutcome | null>(null);
+
+  useEffect(() => {
+    if (!integrationId) return;
+
+    let cancelled = false;
+    setIsLoadingChannels(true);
+
+    getSlackChannels(integrationId)
+      .then((result) => {
+        if (cancelled) return;
+
+        if ("error" in result) {
+          setChannels([]);
+          setChannelsError(result.error);
+        } else {
+          setChannels(result.channels);
+          setChannelsError(null);
+        }
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setChannels([]);
+        setChannelsError("Could not reach Slack to read the channel list.");
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoadingChannels(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [integrationId, channelReloads]);
+
+  const handleSaveChannel = async () => {
+    if (!integrationId || !selectedChannelId) return;
+
+    setIsSavingChannel(true);
+    try {
+      const formData = new FormData();
+      formData.append("integration_type", "slack");
+      // Only the id travels: the API validates it against Slack and derives the
+      // channel's name itself (design D6), so a name sent from here could only
+      // ever drift from the id it belongs to.
+      formData.append(
+        "configuration",
+        JSON.stringify({ channel_id: selectedChannelId }),
+      );
+
+      const result = await updateIntegration(integrationId, formData);
+
+      if ("error" in result) {
+        toast({
+          variant: "destructive",
+          title: "Could not save the destination channel",
+          description: result.error,
+        });
+        return;
+      }
+
+      const saved = channels.find(
+        (channel) => channel.id === selectedChannelId,
+      );
+      setDefaultChannelId(selectedChannelId);
+      setDefaultChannelName(saved?.name ?? null);
+      setTestMessageOutcome(null);
+      toast({
+        title: "Destination channel saved",
+        description: saved
+          ? `Prowler will post to #${saved.name}.`
+          : "Prowler will post to the channel you chose.",
+      });
+    } catch (_error) {
+      toast({
+        variant: "destructive",
+        title: "Could not save the destination channel",
+        description: "Something went wrong. Please try again.",
+      });
+    } finally {
+      setIsSavingChannel(false);
+    }
+  };
+
+  const handleSendTestMessage = async () => {
+    if (!integrationId) return;
+
+    setIsSendingTestMessage(true);
+    setTestMessageOutcome(null);
+    try {
+      const result = await sendSlackTestMessage(integrationId);
+
+      setTestMessageOutcome(
+        "sent" in result
+          ? {
+              sent: true,
+              detail: defaultChannelName
+                ? `Prowler posted a test message to #${defaultChannelName}.`
+                : "Prowler posted a test message to your default channel.",
+            }
+          : { sent: false, detail: result.error },
+      );
+    } catch (_error) {
+      setTestMessageOutcome({
+        sent: false,
+        detail: "Something went wrong. Please try again.",
+      });
+    } finally {
+      setIsSendingTestMessage(false);
+    }
+  };
+
+  const handleTestConnection = async (id: string) => {
+    setIsTesting(true);
+    try {
+      const result = await testIntegrationConnection(id);
+
+      if (result.success) {
+        toast({
+          title: "Connection test successful!",
+          description:
+            result.message || "Prowler can reach your Slack workspace.",
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Connection test failed",
+          description: result.error || "Failed to reach your Slack workspace.",
+        });
+      }
+    } catch (_error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to test connection. Please try again.",
+      });
+    } finally {
+      setIsTesting(false);
+    }
+  };
+
   const configuration = integration?.attributes.configuration;
   const workspaceName = configuration?.team_name;
   // Absent until a channel is chosen, never present-and-null.
@@ -88,20 +280,91 @@ export const SlackIntegrationManager = ({
           </CardHeader>
 
           <CardContent className="pt-0">
-            {/* No check here: it needs a destination channel, and nothing on
-                this page records one yet. */}
-            <div className="text-xs text-gray-500 dark:text-gray-300">
-              {lastCheckedOn && (
-                <p>
-                  <span className="font-medium">Last checked:</span>{" "}
-                  {lastCheckedOn}
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="text-xs text-gray-500 dark:text-gray-300">
+                {lastCheckedOn && (
+                  <p>
+                    <span className="font-medium">Last checked:</span>{" "}
+                    {lastCheckedOn}
+                  </p>
+                )}
+                {!channelId && (
+                  <p>
+                    Choosing a destination channel is the next step — the
+                    connection is checked against it.
+                  </p>
+                )}
+              </div>
+              {/* The check posts to the destination channel: the API answers
+                  400 when none is recorded yet. */}
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={isTesting || !channelId}
+                onClick={() => handleTestConnection(integration.id)}
+              >
+                <TestTube size={14} />
+                {isTesting ? "Testing..." : "Test connection"}
+              </Button>
+            </div>
+
+            <div className="border-border-neutral-secondary mt-6 flex flex-col gap-4 border-t pt-6">
+              <SlackChannelSelector
+                options={channels}
+                value={selectedChannelId}
+                onChange={setSelectedChannelId}
+                isLoading={isLoadingChannels}
+                error={channelsError}
+                onRefresh={() => setChannelReloads((reloads) => reloads + 1)}
+                disabled={isSavingChannel}
+              />
+
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-text-neutral-secondary text-xs">
+                  {defaultChannelName
+                    ? `Prowler posts to #${defaultChannelName}.`
+                    : "No destination channel recorded yet."}
                 </p>
-              )}
-              {!channelId && (
-                <p>
-                  Choosing a destination channel is the next step — the
-                  connection is checked against it.
-                </p>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    disabled={
+                      !selectedChannelId ||
+                      selectedChannelId === defaultChannelId ||
+                      isSavingChannel
+                    }
+                    onClick={handleSaveChannel}
+                  >
+                    {isSavingChannel ? "Saving..." : "Save channel"}
+                  </Button>
+                  {/* Nothing to prove delivery to until a channel is recorded. */}
+                  {defaultChannelId && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={isSendingTestMessage}
+                      onClick={handleSendTestMessage}
+                    >
+                      <Send size={14} />
+                      {isSendingTestMessage
+                        ? "Sending..."
+                        : "Send test message"}
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              {testMessageOutcome && (
+                <Alert variant={testMessageOutcome.sent ? "success" : "error"}>
+                  <AlertTitle>
+                    {testMessageOutcome.sent
+                      ? "Test message sent"
+                      : "Test message failed"}
+                  </AlertTitle>
+                  <AlertDescription>
+                    {testMessageOutcome.detail}
+                  </AlertDescription>
+                </Alert>
               )}
             </div>
           </CardContent>

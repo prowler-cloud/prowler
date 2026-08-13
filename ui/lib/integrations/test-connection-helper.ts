@@ -22,6 +22,11 @@ const INTEGRATION_CONFIG: Record<string, IntegrationMessages> = {
     successMessage: "Successfully connected to AWS Security Hub.",
     errorMessage: "Failed to connect to AWS Security Hub.",
   },
+  slack: {
+    testingMessage: "Testing connection to your Slack workspace...",
+    successMessage: "Successfully connected to your Slack workspace.",
+    errorMessage: "Failed to reach your Slack workspace.",
+  },
   // Legacy mappings for backward compatibility
   s3: {
     testingMessage: "Testing connection to Amazon S3 bucket...",

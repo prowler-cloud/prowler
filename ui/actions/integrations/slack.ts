@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
+import { pollTaskUntilSettled } from "@/actions/task/poll";
 import { apiBaseUrl, getAuthHeaders, parseStringify } from "@/lib";
 import {
   readSlackFailure,
@@ -12,7 +13,11 @@ import {
   slackRateLimitMessage,
 } from "@/lib/integrations/slack-errors";
 import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
-import { INTEGRATION_TYPE, type IntegrationProps } from "@/types/integrations";
+import {
+  INTEGRATION_TYPE,
+  type IntegrationProps,
+  type SlackChannelOption,
+} from "@/types/integrations";
 
 interface SlackUnavailable {
   unavailable: true;
@@ -156,6 +161,17 @@ const failureFrom = async (
   return { error: slackErrorMessage(failure, fallback) };
 };
 
+/**
+ * The same classification flattened to one line of copy, for the calls whose
+ * only outcome is "it did not work": the code's own wording when Prowler has
+ * one, the API's `detail` when it does not, and `fallback` when neither.
+ */
+const errorMessageFrom = async (
+  response: Response,
+  fallback: string,
+): Promise<string> =>
+  slackErrorMessage(await readSlackFailure(response), fallback);
+
 /** Mint an OAuth state and get the consent URL. Creates no integration. */
 export const getSlackAuthorizeUrl =
   async (): Promise<SlackAuthorizeUrlResult> => {
@@ -243,6 +259,152 @@ export const exchangeSlackOAuthCode = async (
     }
 
     return { integration: parseStringify(body.data) as IntegrationProps };
+  } catch (error) {
+    return handleApiError(error);
+  }
+};
+
+interface SlackChannelsSuccess {
+  channels: SlackChannelOption[];
+}
+
+export type SlackChannelsResult = SlackChannelsSuccess | SlackActionError;
+
+/**
+ * Cursor pages followed before giving up. `conversations.list` is a tier-2,
+ * rate-limited Slack call (design.md, Risks), so the aggregation is bounded
+ * rather than open-ended: a workspace larger than this shows the channels of
+ * the pages that were read, which is a far better failure than hammering Slack
+ * behind a picker the user is waiting on.
+ */
+const MAX_CHANNEL_PAGES = 20;
+
+/**
+ * Every channel Prowler can post to in the connected workspace — the picker's
+ * options.
+ *
+ * This is the durable primitive, not the channel stored on the integration
+ * (design D6): a consumer that needs a different channel per alert rule reads
+ * the same endpoint. The list is cursor-paginated, and `links.next` is followed
+ * opaquely — the contract deliberately does not pin the parameter naming, so
+ * the UI never constructs a cursor of its own.
+ */
+export const getSlackChannels = async (
+  integrationId: string,
+): Promise<SlackChannelsResult> => {
+  const headers = await getAuthHeaders({ contentType: false });
+  const channels: SlackChannelOption[] = [];
+
+  let next: string | null = new URL(
+    `${apiBaseUrl}/integrations/${integrationId}/slack/channels`,
+  ).toString();
+
+  try {
+    for (let page = 0; next && page < MAX_CHANNEL_PAGES; page += 1) {
+      const response: Response = await fetch(next, { method: "GET", headers });
+
+      if (!response.ok) {
+        return {
+          error: await errorMessageFrom(
+            response,
+            `Unable to read the workspace's channels: ${response.statusText}`,
+          ),
+        };
+      }
+
+      const body = await response.json();
+
+      for (const resource of body?.data ?? []) {
+        channels.push({
+          id: resource?.id,
+          name: resource?.attributes?.name ?? "",
+          is_private: Boolean(resource?.attributes?.is_private),
+        });
+      }
+
+      const rawNext = body?.links?.next;
+      // Resolved against the API base so a relative `next` works too — the
+      // link is opaque, not necessarily absolute.
+      next =
+        typeof rawNext === "string" && rawNext.length > 0
+          ? new URL(rawNext, `${apiBaseUrl}/`).toString()
+          : null;
+    }
+
+    return { channels };
+  } catch (error) {
+    return handleApiError(error);
+  }
+};
+
+interface SlackTestMessageSuccess {
+  sent: true;
+}
+
+export type SlackTestMessageResult = SlackTestMessageSuccess | SlackActionError;
+
+/** What the test-message task carries once it settles. */
+interface SlackTestMessageTaskResult {
+  error?: string | null;
+}
+
+const TEST_MESSAGE_POLL = { maxAttempts: 20, delayMs: 3000 } as const;
+
+/**
+ * Post the test message to the integration's default channel.
+ *
+ * Async on the API's side — `202` plus a Task (design D9) — so this polls the
+ * same task machinery the connection test uses instead of introducing a
+ * synchronous path. A `400` means no default channel is recorded, which the UI
+ * prevents by only offering the action once one is.
+ */
+export const sendSlackTestMessage = async (
+  integrationId: string,
+): Promise<SlackTestMessageResult> => {
+  const headers = await getAuthHeaders({ contentType: true });
+  const url = new URL(
+    `${apiBaseUrl}/integrations/${integrationId}/slack/test-message`,
+  );
+
+  try {
+    const response = await fetch(url.toString(), { method: "POST", headers });
+
+    if (!response.ok) {
+      return {
+        error: await errorMessageFrom(
+          response,
+          `Unable to send the test message: ${response.statusText}`,
+        ),
+      };
+    }
+
+    const body = await response.json();
+    const taskId = body?.data?.id;
+
+    if (!taskId) {
+      return { error: "Slack did not start the test message." };
+    }
+
+    const settled = await pollTaskUntilSettled<SlackTestMessageTaskResult>(
+      taskId,
+      TEST_MESSAGE_POLL,
+    );
+
+    if (!settled.ok) {
+      return { error: settled.error };
+    }
+
+    // Slack's refusal travels in the task result; a task that did not complete
+    // is a failure even when it carries no reason of its own.
+    const reason = settled.result?.error;
+    if (reason) {
+      return { error: reason };
+    }
+    if (settled.state !== "completed") {
+      return { error: "Slack did not accept the test message." };
+    }
+
+    return { sent: true };
   } catch (error) {
     return handleApiError(error);
   }

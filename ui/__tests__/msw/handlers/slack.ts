@@ -18,10 +18,12 @@ import {
   SLACK_INTEGRATION_ID,
   SLACK_INVALID_CODE_DETAIL,
   SLACK_NO_CHANNEL_DETAIL,
+  SLACK_NO_DEFAULT_CHANNEL_DETAIL,
   SLACK_RATE_LIMITED_DETAIL,
   SLACK_REFUSED_STATE_DETAIL,
   SLACK_RETRY_AFTER_SECONDS,
   SLACK_UNCONFIGURED_DETAIL,
+  SLACK_UNKNOWN_CHANNEL_DETAIL,
   SLACK_UPSTREAM_DETAIL,
   SLACK_UPSTREAM_ERROR_CODE,
   SLACK_WORKSPACE_CONFLICT_CODE,
@@ -36,6 +38,10 @@ const API = process.env.UI_API_BASE_URL;
 const TS = "2026-08-10T09:00:00Z";
 
 const CONNECTION_TASK_PREFIX = "slack-conn-task-";
+const TEST_MESSAGE_TASK_PREFIX = "slack-test-message-task-";
+
+/** Opaque to the UI, which only ever follows `links.next` (design D6). */
+const CHANNEL_CURSOR_PARAM = "page[cursor]";
 
 /**
  * `status` is a string, per the JSON:API spec. `source.pointer` is `/data` even
@@ -241,6 +247,17 @@ export const handlersForSlack = (fx: SlackFixture) => {
     ),
 
     http.get<{ taskId: string }>(`${API}/tasks/:taskId`, ({ params }) => {
+      // The test message settles as its own task (design D9), reporting only
+      // whether Slack accepted the post.
+      if (params.taskId.startsWith(TEST_MESSAGE_TASK_PREFIX)) {
+        const { accepted, error } = fx.testMessage;
+        return HttpResponse.json(
+          taskResource(params.taskId, accepted ? "completed" : "failed", {
+            error,
+          }),
+        );
+      }
+
       const { connected, error } = fx.connection;
       if (install && params.taskId.startsWith(CONNECTION_TASK_PREFIX)) {
         install.connected = connected;
@@ -250,5 +267,87 @@ export const handlersForSlack = (fx: SlackFixture) => {
         taskResource(params.taskId, "completed", { connected, error }),
       );
     }),
+
+    // --- Channels ----------------------------------------------------------
+    http.get<{ id: string }>(
+      `${API}/integrations/:id/slack/channels`,
+      ({ params, request }) => {
+        if (fx.channelsError) {
+          return HttpResponse.json(errorBody(fx.channelsError, 400), {
+            status: 400,
+          });
+        }
+
+        // Cursor pagination: the UI follows `links.next` opaquely, so the
+        // cursor's shape is this fixture's business alone.
+        const cursor = Number(
+          new URL(request.url).searchParams.get(CHANNEL_CURSOR_PARAM) ?? "0",
+        );
+        const nextCursor = cursor + fx.channelsPageSize;
+        const page = fx.channels.slice(cursor, nextCursor);
+        const hasMore = nextCursor < fx.channels.length;
+
+        return HttpResponse.json({
+          data: page.map((channel) => ({
+            type: "slack-channels",
+            id: channel.id,
+            attributes: { name: channel.name, is_private: channel.isPrivate },
+          })),
+          links: {
+            next: hasMore
+              ? `${API}/integrations/${params.id}/slack/channels` +
+                `?${CHANNEL_CURSOR_PARAM}=${nextCursor}`
+              : null,
+          },
+        });
+      },
+    ),
+
+    /**
+     * The generic PATCH, recording the default channel. The UI submits only
+     * `channel_id`; the name here is derived from the channel the id resolves
+     * to, exactly as the API derives it from Slack (design D6).
+     */
+    http.patch(`${API}/integrations/:id`, async ({ request }) => {
+      const body = (await request.json().catch(() => null)) as {
+        data?: { attributes?: { configuration?: { channel_id?: string } } };
+      } | null;
+      const channelId = body?.data?.attributes?.configuration?.channel_id;
+      const channel = fx.channels.find((c) => c.id === channelId);
+
+      if (!install) {
+        return HttpResponse.json(errorBody("Not found.", 404), { status: 404 });
+      }
+      if (!channel) {
+        return HttpResponse.json(errorBody(SLACK_UNKNOWN_CHANNEL_DETAIL, 400), {
+          status: 400,
+        });
+      }
+
+      install.workspace.channelId = channel.id;
+      install.workspace.channelName = channel.name;
+      return HttpResponse.json({ data: integrationResource(install) });
+    }),
+
+    // --- Test message ------------------------------------------------------
+    http.post<{ id: string }>(
+      `${API}/integrations/:id/slack/test-message`,
+      ({ params }) => {
+        if (!install?.workspace.channelId) {
+          return HttpResponse.json(
+            errorBody(SLACK_NO_DEFAULT_CHANNEL_DETAIL, 400),
+            { status: 400 },
+          );
+        }
+        return HttpResponse.json(
+          taskResource(
+            `${TEST_MESSAGE_TASK_PREFIX}${params.id}`,
+            "available",
+            null,
+          ),
+          { status: 202 },
+        );
+      },
+    ),
   ];
 };

@@ -214,6 +214,8 @@ export const updateIntegration = async (
         revalidatePath("/integrations/aws-security-hub");
       } else if (integration_type === "jira") {
         revalidatePath("/integrations/jira");
+      } else if (integration_type === "slack") {
+        revalidatePath("/integrations/slack");
       }
 
       return {
@@ -388,6 +390,7 @@ export const pollConnectionTestStatus = async (
     revalidatePath("/integrations/amazon-s3");
     revalidatePath("/integrations/aws-security-hub");
     revalidatePath("/integrations/jira");
+    revalidatePath("/integrations/slack");
 
     if ("error" in pollResult) {
       return { success: false, error: pollResult.error };
