@@ -8,6 +8,7 @@ from prowler.config.config import (
     change_config_var,
     check_current_version,
     get_available_compliance_frameworks,
+    get_available_update,
     load_and_validate_config_file,
 )
 from prowler.providers.aws.aws_provider import get_aws_available_regions
@@ -133,6 +134,44 @@ class Test_Config:
             check_current_version()
             == f"Prowler {MOCK_OLD_PROWLER_VERSION} (latest is {MOCK_PROWLER_VERSION}, upgrade for the latest features)"
         )
+
+    @mock.patch(
+        "prowler.config.config.requests.get", new=mock_prowler_get_latest_release
+    )
+    @mock.patch("prowler.config.config.prowler_version", new=MOCK_OLD_PROWLER_VERSION)
+    def test_get_available_update_with_old_version(self):
+        assert get_available_update() == MOCK_PROWLER_VERSION
+
+    @mock.patch(
+        "prowler.config.config.requests.get", new=mock_prowler_get_latest_release
+    )
+    @mock.patch("prowler.config.config.prowler_version", new=MOCK_PROWLER_VERSION)
+    def test_get_available_update_with_latest_version(self):
+        assert get_available_update() is None
+
+    @mock.patch(
+        "prowler.config.config.requests.get", new=mock_prowler_get_latest_release
+    )
+    @mock.patch("prowler.config.config.prowler_version", new=MOCK_OLD_PROWLER_VERSION)
+    @mock.patch.dict(os.environ, {"PROWLER_NO_VERSION_CHECK": "1"})
+    def test_get_available_update_opt_out_env_var(self):
+        assert get_available_update() is None
+
+    @mock.patch(
+        "prowler.config.config.requests.get", new=mock_prowler_get_latest_release
+    )
+    @mock.patch("prowler.config.config.prowler_version", new=MOCK_OLD_PROWLER_VERSION)
+    @mock.patch.dict(os.environ, {"DO_NOT_TRACK": "1"})
+    def test_get_available_update_do_not_track(self):
+        assert get_available_update() is None
+
+    @mock.patch(
+        "prowler.config.config.requests.get",
+        new=mock.MagicMock(side_effect=Exception("network error")),
+    )
+    @mock.patch("prowler.config.config.prowler_version", new=MOCK_OLD_PROWLER_VERSION)
+    def test_get_available_update_network_failure(self):
+        assert get_available_update() is None
 
     def test_change_config_var_aws(self):
         audit_info = AWS_Audit_Info(
