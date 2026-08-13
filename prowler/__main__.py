@@ -3,10 +3,16 @@
 
 import os
 import sys
+import threading
 
 from colorama import Fore, Style
 
-from prowler.lib.banner import print_banner
+from prowler.config.config import get_available_update
+from prowler.lib.banner import (
+    print_banner,
+    print_prowler_cloud_banner,
+    print_update_notice,
+)
 from prowler.lib.check.check import (
     bulk_load_checks_metadata,
     bulk_load_compliance_frameworks,
@@ -72,6 +78,18 @@ def prowler():
     severities = args.severity
     compliance_framework = args.compliance
     custom_checks_metadata_file = args.custom_checks_metadata_file
+
+    # Check in the background whether a newer Prowler release is available;
+    # the result is printed at the end of the scan so the check never adds
+    # latency. Skipped with --no-banner/--only-logs and via
+    # PROWLER_NO_VERSION_CHECK/DO_NOT_TRACK (handled in get_available_update).
+    available_update = {}
+    update_check_thread = threading.Thread(
+        target=lambda: available_update.update(latest=get_available_update()),
+        daemon=True,
+    )
+    if not args.no_banner and not args.only_logs:
+        update_check_thread.start()
 
     if not args.no_banner:
         print_banner(args)
@@ -324,6 +342,15 @@ def prowler():
                     audit_output_options.output_filename,
                     audit_output_options.output_directory,
                 )
+
+    # Promote Prowler Cloud as the last thing the user sees after the results,
+    # preceded by an update notice when a newer release is available
+    if not args.no_banner and not args.only_logs:
+        if update_check_thread.is_alive():
+            update_check_thread.join(timeout=2)
+        if available_update.get("latest"):
+            print_update_notice(available_update["latest"])
+        print_prowler_cloud_banner()
 
     # If custom checks were passed, remove the modules
     if checks_folder:

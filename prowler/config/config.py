@@ -64,23 +64,50 @@ default_config_file_path = (
 encoding_format_utf_8 = "utf-8"
 
 
-def check_current_version():
+def get_latest_release_version():
+    """Return the latest Prowler release tag name from GitHub, or None if it cannot be retrieved."""
     try:
-        prowler_version_string = f"Prowler {prowler_version}"
         release_response = requests.get(
             "https://api.github.com/repos/prowler-cloud/prowler/tags", timeout=1
         )
-        latest_version = release_response.json()[0]["name"]
-        if latest_version != prowler_version:
-            return f"{prowler_version_string} (latest is {latest_version}, upgrade for the latest features)"
-        else:
-            return (
-                f"{prowler_version_string} (You are running the latest version, yay!)"
-            )
-    except requests.RequestException:
-        return f"{prowler_version_string}"
+        return release_response.json()[0]["name"]
     except Exception:
-        return f"{prowler_version_string}"
+        return None
+
+
+def _version_tuple(version_string):
+    """Return a comparable tuple from a dotted version string."""
+    return tuple(int(part) for part in version_string.split("."))
+
+
+def get_available_update():
+    """Return the latest Prowler version if it is newer than the running one, None otherwise.
+
+    Honors the PROWLER_NO_VERSION_CHECK and DO_NOT_TRACK environment variables:
+    when either is set, no network call is made and None is returned.
+    """
+    if os.environ.get("PROWLER_NO_VERSION_CHECK") or os.environ.get("DO_NOT_TRACK"):
+        return None
+    latest_version = get_latest_release_version()
+    try:
+        if latest_version and _version_tuple(latest_version) > _version_tuple(
+            prowler_version
+        ):
+            return latest_version
+    except Exception:
+        return None
+    return None
+
+
+def check_current_version():
+    prowler_version_string = f"Prowler {prowler_version}"
+    latest_version = get_latest_release_version()
+    if not latest_version:
+        return prowler_version_string
+    if latest_version != prowler_version:
+        return f"{prowler_version_string} (latest is {latest_version}, upgrade for the latest features)"
+    else:
+        return f"{prowler_version_string} (You are running the latest version, yay!)"
 
 
 def change_config_var(variable: str, value: str, audit_info):
