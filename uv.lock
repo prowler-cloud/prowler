@@ -3755,7 +3755,7 @@ wheels = [
 
 [[package]]
 name = "prowler"
-version = "5.39.0"
+version = "5.39.1"
 source = { editable = "." }
 dependencies = [
     { name = "alibabacloud-actiontrail20200706" },
