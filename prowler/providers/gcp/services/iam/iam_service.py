@@ -17,6 +17,8 @@ class IAM(GCPService):
         self.service_accounts = []
         self._get_service_accounts()
         self._get_service_accounts_keys()
+        self.workload_identity_pool_providers = []
+        self._get_workload_identity_pool_providers()
 
     def _get_service_accounts(self):
         for project_id in self.project_ids:
@@ -87,6 +89,94 @@ class IAM(GCPService):
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _get_workload_identity_pool_providers(self):
+        for project_id in self.project_ids:
+            try:
+                pools_request = (
+                    self.client.projects()
+                    .locations()
+                    .workloadIdentityPools()
+                    .list(parent=f"projects/{project_id}/locations/global")
+                )
+                while pools_request is not None:
+                    pools_response = pools_request.execute(
+                        num_retries=DEFAULT_RETRY_ATTEMPTS
+                    )
+                    for pool in pools_response.get("workloadIdentityPools", []):
+                        self._get_providers_for_pool(project_id, pool)
+                    pools_request = (
+                        self.client.projects()
+                        .locations()
+                        .workloadIdentityPools()
+                        .list_next(
+                            previous_request=pools_request,
+                            previous_response=pools_response,
+                        )
+                    )
+            except Exception as error:
+                logger.error(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
+    def _get_providers_for_pool(self, project_id, pool):
+        try:
+            pool_name = pool.get("name", "")
+            pool_id = pool_name.split("/")[-1]
+            # A provider can remain ACTIVE while its parent pool is disabled or
+            # soft-deleted; a disabled pool cannot vend credentials, so the
+            # pool's effective availability must travel with the provider.
+            pool_disabled = (
+                pool.get("disabled", False) or pool.get("state", "ACTIVE") != "ACTIVE"
+            )
+            request = (
+                self.client.projects()
+                .locations()
+                .workloadIdentityPools()
+                .providers()
+                .list(parent=pool_name)
+            )
+            while request is not None:
+                response = request.execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
+                for provider in response.get("workloadIdentityPoolProviders", []):
+                    provider_type = next(
+                        (
+                            key
+                            for key in ("oidc", "aws", "saml", "x509")
+                            if key in provider
+                        ),
+                        "",
+                    )
+                    self.workload_identity_pool_providers.append(
+                        WorkloadIdentityPoolProvider(
+                            name=provider.get("name", ""),
+                            id=provider.get("name", "").split("/")[-1],
+                            pool_id=pool_id,
+                            pool_disabled=pool_disabled,
+                            project_id=project_id,
+                            state=provider.get("state", ""),
+                            disabled=provider.get("disabled", False),
+                            attribute_condition=provider.get("attributeCondition", ""),
+                            attribute_mapping=provider.get("attributeMapping", {})
+                            or {},
+                            provider_type=provider_type,
+                            issuer_uri=(provider.get("oidc", {}) or {}).get(
+                                "issuerUri", ""
+                            ),
+                            display_name=provider.get("displayName", ""),
+                        )
+                    )
+                request = (
+                    self.client.projects()
+                    .locations()
+                    .workloadIdentityPools()
+                    .providers()
+                    .list_next(previous_request=request, previous_response=response)
+                )
+        except Exception as error:
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class Key(BaseModel):
     name: str
@@ -104,6 +194,25 @@ class ServiceAccount(BaseModel):
     project_id: str
     uniqueId: str
     disabled: bool = False
+
+
+class WorkloadIdentityPoolProvider(BaseModel):
+    """Represent a GCP Workload Identity Federation pool provider."""
+
+    name: str
+    id: str
+    pool_id: str
+    # True when the parent pool is disabled or not ACTIVE; such a pool cannot
+    # vend credentials regardless of the provider's own state.
+    pool_disabled: bool = False
+    project_id: str
+    state: str = ""
+    disabled: bool = False
+    attribute_condition: str = ""
+    attribute_mapping: dict = {}
+    provider_type: str = ""
+    issuer_uri: str = ""
+    display_name: str = ""
 
 
 class AccessApproval(GCPService):
