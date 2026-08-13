@@ -473,3 +473,78 @@ export const setSlackDefaultChannel = async (
     return handleApiError(error);
   }
 };
+
+/** What the API reports about revoking Prowler's token at Slack. */
+export interface SlackRevocation {
+  /**
+   * Whether Slack confirmed the token no longer grants Prowler anything, or
+   * `null` when the response carried no outcome at all. The contract says the
+   * outcome is always reported, so `null` means the response is wrong rather
+   * than the revocation — and neither answer is claimed on the user's behalf.
+   */
+  revoked: boolean | null;
+  /** Slack's reason when it did not, when it gave one. */
+  error: string | null;
+}
+
+interface SlackDisconnectSuccess {
+  /** The integration is gone from Prowler, whatever Slack answered. */
+  disconnected: true;
+  revocation: SlackRevocation;
+}
+
+export type SlackDisconnectResult = SlackDisconnectSuccess | SlackActionError;
+
+/**
+ * Disconnect the workspace: `DELETE /integrations/{id}`.
+ *
+ * The generic `deleteIntegration` cannot serve this: it discards the response
+ * body, and the whole point here is what the body carries. Revocation at Slack
+ * is best-effort — the row is removed either way and the outcome travels in
+ * JSON:API `meta` — so a caller has to be able to distinguish "gone and revoked"
+ * from "gone, but still installed in Slack".
+ *
+ * `revoked` is reported only as the API states it: a body without the field (an
+ * empty `204`, say) yields `null`, not `false`. An unreported outcome is not a
+ * failed revocation — it must not send the user off to clean up Slack — and it
+ * is not a confirmed one either, so it must not be reported as access having
+ * been revoked. The row is gone in all three cases, and that much is said.
+ */
+export const disconnectSlackIntegration = async (
+  id: string,
+): Promise<SlackDisconnectResult> => {
+  const headers = await getAuthHeaders({ contentType: true });
+  const url = new URL(`${apiBaseUrl}/integrations/${id}`);
+
+  try {
+    const response = await fetch(url.toString(), { method: "DELETE", headers });
+
+    if (!response.ok) {
+      return {
+        error: await errorMessageFrom(
+          response,
+          `Unable to disconnect the Slack workspace: ${response.statusText}`,
+        ),
+      };
+    }
+
+    const body = await response.json().catch(() => ({}));
+    const meta = body?.meta ?? {};
+
+    revalidatePath("/integrations");
+    revalidatePath("/integrations/slack");
+
+    return {
+      disconnected: true,
+      revocation: {
+        revoked: typeof meta.revoked === "boolean" ? meta.revoked : null,
+        error:
+          typeof meta.revocation_error === "string"
+            ? meta.revocation_error
+            : null,
+      },
+    };
+  } catch (error) {
+    return handleApiError(error);
+  }
+};

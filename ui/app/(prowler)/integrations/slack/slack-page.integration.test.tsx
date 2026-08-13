@@ -13,6 +13,8 @@ import {
   connectedSlackFixture,
   INTEGRATIONS_SERVER_ERROR_DETAIL,
   partiallyReadSlackFixture,
+  revokedTokenSlackFixture,
+  revokeFailureSlackFixture,
   SLACK_CHANNEL_NOT_FOUND_REFUSAL,
   SLACK_MISSING_SCOPE_CODE,
   SLACK_MISSING_SCOPE_REFUSAL,
@@ -21,7 +23,9 @@ import {
   SLACK_PRIVATE_CHANNEL,
   SLACK_PUBLIC_CHANNEL,
   SLACK_RATE_LIMITED_REFUSAL,
+  SLACK_REVOKE_FAILURE_REASON,
   SLACK_SECOND_PUBLIC_CHANNEL,
+  SLACK_TOKEN_REVOKED_REASON,
   SLACK_UNKNOWN_CHANNEL_DETAIL,
   SLACK_UPSTREAM_REFUSAL,
   slackFixture,
@@ -31,6 +35,7 @@ import {
 
 import {
   CONNECTION_OUTCOME,
+  REVOCATION_OUTCOME,
   SlackIntegrationHarness,
 } from "./slack-integration.harness";
 
@@ -594,4 +599,66 @@ describe("choosing a destination channel", () => {
     expect(refusal).not.toMatch(SLACK_UNKNOWN_CHANNEL_DETAIL);
     expect(await harness.defaultChannel()).toBeNull();
   }, 60000);
+});
+
+describe("disconnecting a workspace", () => {
+  it("removes the integration and returns the card to its unconnected state", async () => {
+    // Given — a tenant with a workspace connected.
+    const harness = new SlackIntegrationHarness(connectedSlackFixture());
+    await harness.mount();
+
+    // When — the user disconnects and confirms.
+    // Then — Slack confirmed the revocation, so the user is told the access is
+    // gone and nothing warns them to finish the job by hand.
+    expect(await harness.disconnect()).toBe(REVOCATION_OUTCOME.REVOKED);
+
+    // And the integration is gone, with the page offering a fresh install.
+    expect(harness.disconnectCallCount).toBe(1);
+    expect(await harness.returnedToUnconnectedState()).toBe(true);
+  }, 30000);
+
+  it("still removes the integration when the revocation fails, and says access may need removing by hand", async () => {
+    // Given — Slack will not accept the revocation. Revocation is best-effort:
+    // the row goes either way and the outcome travels in `meta`.
+    const harness = new SlackIntegrationHarness(revokeFailureSlackFixture());
+    await harness.mount();
+
+    // When
+    expect(await harness.disconnect()).toBe(REVOCATION_OUTCOME.NOT_REVOKED);
+
+    // Then — the user reads what is true of both sides: nothing is left in
+    // Prowler to retry, and the app may still be installed at Slack.
+    const notice = await harness.revocationNotice();
+    expect(notice).toMatch(/gone from Prowler/);
+    expect(notice).toMatch(/nothing to retry here/);
+    expect(notice).toMatch(/may still be installed/);
+    expect(notice).toMatch(new RegExp(SLACK_REVOKE_FAILURE_REASON));
+    // The row is removed regardless, so the page does not keep offering a
+    // workspace that no longer exists here.
+    expect(await harness.returnedToUnconnectedState()).toBe(true);
+  }, 30000);
+});
+
+describe("a credential Slack no longer accepts", () => {
+  it("reports the revoked token and offers to connect the workspace again", async () => {
+    // Given — the token was revoked at Slack, so the row still reads connected
+    // until a check runs (contract, Cross-cutting).
+    const harness = new SlackIntegrationHarness(revokedTokenSlackFixture());
+    await harness.mount();
+
+    // When
+    expect(await harness.testConnection()).toBe(CONNECTION_OUTCOME.FAILURE);
+
+    // Then — the reason Slack gave, and a way forward rather than only an
+    // error: a revoked token is fixed by approving Prowler again, not by
+    // checking a second time.
+    expect(await harness.revokedCredentialNotice()).toMatch(
+      new RegExp(SLACK_TOKEN_REVOKED_REASON),
+    );
+    const consentScreen = new URL(await harness.reconnectUrl());
+    expect(`${consentScreen.origin}${consentScreen.pathname}`).toBe(
+      "https://slack.com/oauth/v2/authorize",
+    );
+    expect(harness.offersReconnect()).toBe(true);
+  }, 30000);
 });

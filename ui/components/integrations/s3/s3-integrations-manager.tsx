@@ -316,7 +316,7 @@ export const S3IntegrationsManager = ({
                       "/"
                     }`}
                     connectionStatus={{
-                      connected: integration.attributes.connected,
+                      connected: integration.attributes.connected === true,
                     }}
                     navigationUrl={`https://console.aws.amazon.com/s3/buckets/${integration.attributes.configuration.bucket_name}`}
                   />

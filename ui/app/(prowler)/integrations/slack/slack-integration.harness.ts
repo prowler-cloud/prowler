@@ -32,6 +32,15 @@ export type ConnectionOutcome =
 /** Sentinel: the page settled on "no channel recorded", rather than not yet. */
 const NO_DEFAULT_CHANNEL = "<no channel recorded>";
 
+/** Whether disconnecting also revoked Prowler's token at Slack. */
+export const REVOCATION_OUTCOME = {
+  REVOKED: "revoked",
+  NOT_REVOKED: "not-revoked",
+} as const;
+
+export type RevocationOutcome =
+  (typeof REVOCATION_OUTCOME)[keyof typeof REVOCATION_OUTCOME];
+
 interface CallbackParams {
   code?: string;
   state?: string;
@@ -685,5 +694,110 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
       this.container.querySelectorAll<HTMLElement>("p"),
     ).find((element) => /invites? @Prowler/.test(element.textContent ?? ""));
     return hint ? (hint.textContent ?? "").trim() : null;
+  }
+
+  // --- Disconnecting ------------------------------------------------------
+
+  get disconnectCallCount(): number {
+    return this.countRequests("DELETE", "/integrations/");
+  }
+
+  /**
+   * Disconnects the workspace, confirming the way a user has to, and reports
+   * what the page says about the revocation — the two outcomes are mutually
+   * exclusive, so asking for one is also a check that the other is absent.
+   */
+  async disconnect(): Promise<RevocationOutcome> {
+    // The card's action opens the confirmation; the dialog's own button carries
+    // the noun too, so the two never resolve to each other.
+    await this.clickButton(/^\s*Disconnect\s*$/);
+    await this.clickButton(/Disconnect workspace/);
+
+    return this.waitFor(
+      () => {
+        if (this.alertMatching(/revocation/i)) {
+          return REVOCATION_OUTCOME.NOT_REVOKED;
+        }
+        if (this.containsText(/Slack workspace disconnected/)) {
+          return REVOCATION_OUTCOME.REVOKED;
+        }
+        return null;
+      },
+      15000,
+      "the disconnect outcome",
+    );
+  }
+
+  /**
+   * Whether the page is back to offering an install with no workspace
+   * connected. The consent URL is minted after the disconnect, so the install
+   * affordance appears a beat after the copy does.
+   */
+  async returnedToUnconnectedState(): Promise<boolean> {
+    await this.waitForText(/No workspace connected/, 10000);
+    return (
+      (await this.waitForOrNull(
+        () => this.offersInstall(),
+        5000,
+        "the install to be offered again",
+      )) ?? false
+    );
+  }
+
+  /**
+   * What the user is told when the row was removed but Slack never confirmed
+   * the revocation.
+   */
+  async revocationNotice(): Promise<string> {
+    const notice = await this.waitFor(
+      () => this.alertMatching(/revocation/i),
+      10000,
+      "the revocation notice",
+    );
+    return (notice.textContent ?? "").trim();
+  }
+
+  // --- A credential Slack no longer accepts --------------------------------
+
+  /** What the user is told when Slack has stopped accepting the token. */
+  async revokedCredentialNotice(): Promise<string> {
+    const notice = await this.waitFor(
+      () => this.alertMatching(/has been revoked/),
+      10000,
+      "the revoked-credential notice",
+    );
+    return (notice.textContent ?? "").trim();
+  }
+
+  private reconnectLink(): HTMLAnchorElement | null {
+    return (
+      Array.from(this.container.querySelectorAll("a")).find((anchor) =>
+        /Reconnect to Slack/.test(anchor.textContent ?? ""),
+      ) ?? null
+    );
+  }
+
+  /** Whether the page offers to approve Prowler in the workspace again. */
+  offersReconnect(): boolean {
+    return this.reconnectLink() !== null;
+  }
+
+  /** The consent URL the reconnect affordance points at, once it is offered. */
+  async reconnectUrl(): Promise<string> {
+    const link = await this.waitFor(
+      () => this.reconnectLink(),
+      10000,
+      "the reconnect link",
+    );
+    return link.href;
+  }
+
+  /** The alert whose text matches, of however many the page is showing. */
+  private alertMatching(pattern: RegExp): HTMLElement | null {
+    return (
+      Array.from(
+        this.container.querySelectorAll<HTMLElement>('[data-slot="alert"]'),
+      ).find((alert) => pattern.test(alert.textContent ?? "")) ?? null
+    );
   }
 }
