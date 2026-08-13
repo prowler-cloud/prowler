@@ -1,4 +1,5 @@
 import json
+import re
 from datetime import datetime, timezone
 from io import StringIO
 from typing import Optional
@@ -28,11 +29,6 @@ from py_ocsf_models.objects.resource_details import ResourceDetails
 from pydantic.v1 import BaseModel as V1BaseModel
 
 from prowler.config.config import prowler_version
-from prowler.lib.check.compliance_models import (
-    Compliance,
-    Mitre_Requirement,
-    Mitre_Requirement_Attribute_AWS,
-)
 from prowler.lib.outputs.ocsf.ocsf import OCSF
 from tests.lib.outputs.fixtures.fixtures import generate_finding_output
 from tests.providers.aws.utils import AWS_REGION_EU_WEST_1
@@ -148,88 +144,206 @@ class TestOCSF:
             1619600000, tz=timezone.utc
         )
 
-    def test_transform_mitre_attacks_populated(self):
+    def test_transform_mitre_attacks_from_multiple_finding_compliance_ids(self):
         finding = generate_finding_output(
             provider="aws",
-            compliance={"MITRE-ATTACK": ["T4242"]},
+            compliance={"MITRE-ATTACK": ["T1078", "T1098"]},
             check_id="iam_user_mfa_enabled_console_access",
             check_title="IAM users with console access have MFA enabled",
             service_name="iam",
         )
-        finding.metadata.Compliance = [
-            Compliance(
-                Framework="MITRE-ATTACK",
-                Name="MITRE ATT&CK compliance framework",
-                Provider="AWS",
-                Version="",
-                Description="MITRE ATT&CK test framework",
-                Requirements=[
-                    Mitre_Requirement(
-                        Name="Synthetic Valid Accounts",
-                        Id="T4242",
-                        Tactics=["Persistence", "Privilege Escalation"],
-                        SubTechniques=[],
-                        Description="Synthetic MITRE technique for OCSF tests.",
-                        Platforms=["IaaS"],
-                        TechniqueURL="https://attack.mitre.org/techniques/T4242/",
-                        Attributes=[
-                            Mitre_Requirement_Attribute_AWS(
-                                AWSService="AWS IAM",
-                                Category="Protect",
-                                Value="Significant",
-                                Comment="Test mapping",
-                            )
-                        ],
-                        Checks=["iam_user_mfa_enabled_console_access"],
-                    )
-                ],
-            )
-        ]
 
-        ocsf = OCSF([finding])
+        technique_map = {
+            "T1078": {
+                "Name": "Valid Accounts",
+                "TechniqueURL": "https://attack.mitre.org/techniques/T1078/",
+                "Tactics": [
+                    "Defense Evasion",
+                    "Persistence",
+                    "Privilege Escalation",
+                    "Initial Access",
+                ],
+            },
+            "T1098": {
+                "Name": "Account Manipulation",
+                "TechniqueURL": "https://attack.mitre.org/techniques/T1098/",
+                "Tactics": ["Persistence"],
+            },
+        }
+
+        with patch(
+            "prowler.lib.outputs.ocsf.ocsf._load_mitre_technique_map",
+            return_value=technique_map,
+        ):
+            ocsf = OCSF([finding])
         output_data = ocsf.data[0]
 
         assert output_data.finding_info.attacks is not None
-        assert len(output_data.finding_info.attacks) == 2
+        assert len(output_data.finding_info.attacks) == 5
         attack = output_data.finding_info.attacks[0]
         assert isinstance(attack, MITREAttack)
-        assert attack.technique.uid == "T4242"
-        assert attack.technique.name == "Synthetic Valid Accounts"
-        assert attack.technique.src_url == "https://attack.mitre.org/techniques/T4242/"
+        assert attack.technique.uid == "T1078"
+        assert attack.technique.name == "Valid Accounts"
+        assert attack.technique.src_url == "https://attack.mitre.org/techniques/T1078/"
         assert attack.tactic is not None
         assert [attack.tactic.name for attack in output_data.finding_info.attacks] == [
+            "Defense Evasion",
             "Persistence",
             "Privilege Escalation",
+            "Initial Access",
+            "Persistence",
+        ]
+        assert [
+            attack.technique.uid for attack in output_data.finding_info.attacks
+        ] == [
+            "T1078",
+            "T1078",
+            "T1078",
+            "T1078",
+            "T1098",
         ]
 
-    def test_transform_mitre_attacks_unknown_technique(self):
+    def test_transform_mitre_attacks_ignores_unknown_technique(self):
         finding = generate_finding_output(
             provider="aws",
-            compliance={"MITRE-ATTACK": ["T9999"]},
+            compliance={"MITRE-ATTACK": ["T9999", "T1098"]},
         )
-        finding.metadata.Compliance = [
-            Compliance(
-                Framework="MITRE-ATTACK",
-                Name="MITRE ATT&CK compliance framework",
-                Provider="AWS",
-                Version="",
-                Description="MITRE ATT&CK test framework",
-                Requirements=[],
-            )
-        ]
 
-        ocsf = OCSF([finding])
-        assert ocsf.data[0].finding_info.attacks is None
+        with patch(
+            "prowler.lib.outputs.ocsf.ocsf._load_mitre_technique_map",
+            return_value={
+                "T1098": {
+                    "Name": "Account Manipulation",
+                    "Tactics": ["Persistence"],
+                }
+            },
+        ):
+            ocsf = OCSF([finding])
+        attacks = ocsf.data[0].finding_info.attacks
 
-    def test_transform_mitre_attacks_without_mitre_metadata(self):
+        assert attacks is not None
+        assert len(attacks) == 1
+        assert attacks[0].technique.uid == "T1098"
+
+    def test_transform_mitre_attacks_provider_without_catalog(self):
         finding = generate_finding_output(
             provider="kubernetes",
             compliance={"MITRE-ATTACK": ["T1078"]},
             check_type=[],
         )
 
-        ocsf = OCSF([finding])
+        with patch(
+            "prowler.lib.outputs.ocsf.ocsf._load_mitre_technique_map",
+            return_value={},
+        ):
+            ocsf = OCSF([finding])
         assert ocsf.data[0].finding_info.attacks is None
+
+    def test_transform_without_mitre_ids_does_not_load_catalog(self):
+        finding = generate_finding_output(provider="kubernetes")
+
+        with patch(
+            "prowler.lib.outputs.ocsf.ocsf._load_mitre_technique_map"
+        ) as mock_load_catalog:
+            ocsf = OCSF([finding])
+
+        assert ocsf.data[0].finding_info.attacks is None
+        mock_load_catalog.assert_not_called()
+
+    def test_load_mitre_technique_map_missing_catalog_is_expected(self):
+        from prowler.lib.outputs.ocsf.ocsf import _load_mitre_technique_map
+
+        _load_mitre_technique_map.cache_clear()
+        try:
+            with (
+                patch("prowler.lib.outputs.ocsf.ocsf.logger.debug") as mock_debug,
+                patch("prowler.lib.outputs.ocsf.ocsf.logger.error") as mock_error,
+            ):
+                assert _load_mitre_technique_map("unsupported") == {}
+
+            mock_debug.assert_called_once_with(
+                "MITRE ATT&CK catalog is not available for provider unsupported"
+            )
+            mock_error.assert_not_called()
+        finally:
+            _load_mitre_technique_map.cache_clear()
+
+    def test_load_mitre_technique_map_existing_catalog(self):
+        from prowler.lib.outputs.ocsf.ocsf import _load_mitre_technique_map
+
+        _load_mitre_technique_map.cache_clear()
+        try:
+            technique_map = _load_mitre_technique_map("aws")
+
+            assert technique_map
+            assert all(
+                technique_id == requirement["Id"]
+                for technique_id, requirement in technique_map.items()
+            )
+        finally:
+            _load_mitre_technique_map.cache_clear()
+
+    def test_load_mitre_technique_map_logs_failure(self):
+        from prowler.lib.outputs.ocsf.ocsf import _load_mitre_technique_map
+
+        mitre_file = MagicMock()
+        mitre_file.is_file.return_value = True
+        mitre_file.open.side_effect = OSError("catalog unavailable")
+        provider_directory = MagicMock()
+        provider_directory.joinpath.return_value = mitre_file
+        compliance_package = MagicMock()
+        compliance_package.joinpath.return_value = provider_directory
+
+        _load_mitre_technique_map.cache_clear()
+        try:
+            with (
+                patch(
+                    "prowler.lib.outputs.ocsf.ocsf.resources.files",
+                    return_value=compliance_package,
+                ),
+                patch("prowler.lib.outputs.ocsf.ocsf.logger.error") as mock_error,
+            ):
+                assert _load_mitre_technique_map("aws") == {}
+
+            message = mock_error.call_args.args[0]
+            assert re.fullmatch(r"OSError\[\d+\]: catalog unavailable", message)
+            compliance_package.joinpath.assert_called_once_with("aws")
+            provider_directory.joinpath.assert_called_once_with("mitre_attack_aws.json")
+        finally:
+            _load_mitre_technique_map.cache_clear()
+
+    def test_transform_mitre_attacks_skips_technique_without_name(self):
+        findings = [
+            generate_finding_output(
+                provider="aws",
+                compliance={"MITRE-ATTACK": ["T1078", "T1098"]},
+            ),
+            generate_finding_output(provider="aws"),
+        ]
+        technique_map = {
+            "T1078": {"Tactics": ["Initial Access"]},
+            "T1098": {
+                "Name": "Account Manipulation",
+                "Tactics": ["Persistence"],
+            },
+        }
+
+        with (
+            patch(
+                "prowler.lib.outputs.ocsf.ocsf._load_mitre_technique_map",
+                return_value=technique_map,
+            ),
+            patch("prowler.lib.outputs.ocsf.ocsf.logger.warning") as mock_warning,
+        ):
+            ocsf = OCSF(findings)
+
+        assert len(ocsf.data) == 2
+        attacks = ocsf.data[0].finding_info.attacks
+        assert attacks is not None
+        assert [attack.technique.uid for attack in attacks] == ["T1098"]
+        mock_warning.assert_called_once_with(
+            "Skipping MITRE ATT&CK technique T1078 for provider aws: missing Name"
+        )
 
     def test_scan_id_is_unique_per_provider_and_account(self):
         findings = [

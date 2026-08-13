@@ -10,6 +10,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
+import { isCloud } from "@/lib/shared/env";
 import type { AttackPathGraphData, GraphNode } from "@/types/attack-paths";
 
 import {
@@ -116,6 +117,8 @@ const buildVisualItem = (
   glow,
 });
 
+// Only shown in OSS, whose flat graph still renders the account/provider hub
+// (Cloud's view transform removes it). See `providerItem` below.
 const providerRootItem = buildVisualItem(
   "Provider",
   "Cloud account, tenant, project, organization, or cluster entry point.",
@@ -481,11 +484,15 @@ export const GraphLegend = ({
     expandedResources,
     isFilteredView,
   );
-  const providerItem = legendState.visibleNodes.some(
-    (node) => resolveNodeVisual(node).category === NODE_CATEGORY.ACCOUNT,
-  )
-    ? providerRootItem
-    : null;
+  // OSS only: the hub node is present in the flat graph but stripped by Cloud's
+  // view transform, so the legend entry follows the same split.
+  const providerItem =
+    !isCloud() &&
+    legendState.visibleNodes.some(
+      (node) => resolveNodeVisual(node).category === NODE_CATEGORY.ACCOUNT,
+    )
+      ? providerRootItem
+      : null;
   const visibleNodeTypeItems = resolveNodeTypeItems(legendState.visibleNodes);
   const visibleFindingRiskItems = resolveFindingRiskItems(
     legendState.visibleNodes,

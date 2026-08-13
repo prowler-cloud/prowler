@@ -51,7 +51,8 @@ STDERR="$(mktemp)"
 trap 'rm -f "${STDERR}"' EXIT
 
 set +e
-OUTPUT="$(osv-scanner scan source "${SCAN_ARGS[@]}" --format=json "$@" 2>"${STDERR}")"
+# ${a[@]+...} guard: an empty array trips `set -u` on bash before 4.4.
+OUTPUT="$(osv-scanner scan source ${SCAN_ARGS[@]+"${SCAN_ARGS[@]}"} --format=json "$@" 2>"${STDERR}")"
 RC=$?
 set -e
 
@@ -100,6 +101,8 @@ FINDINGS="$(printf '%s' "${OUTPUT}" | jq --argjson sevs "${SEVERITY_JSON}" '
   ]
 ')"
 
+# jq exits 0 with no output on empty stdin, but non-zero on malformed JSON.
+# Let the failure abort under set -e rather than reporting zero findings.
 COUNT="$(printf '%s' "${FINDINGS}" | jq 'length')"
 
 # Write the findings JSON to OSV_REPORT_FILE so callers (e.g. the composite
@@ -108,7 +111,7 @@ if [ -n "${OSV_REPORT_FILE:-}" ]; then
   printf '%s' "${FINDINGS}" > "${OSV_REPORT_FILE}"
 fi
 
-if [ "${COUNT}" -gt 0 ]; then
+if [ "${COUNT:-0}" -gt 0 ]; then
   echo "osv-scanner: ${COUNT} finding(s) at severity ${SEVERITY_LEVELS}"
   printf '%s' "${FINDINGS}" | jq -r '
     .[] | "  [\(.severity)\(if .score then " \(.score)" else "" end)] \(.id) \(.ecosystem)/\(.package)@\(.version) — \(.summary // "(no summary)")"
