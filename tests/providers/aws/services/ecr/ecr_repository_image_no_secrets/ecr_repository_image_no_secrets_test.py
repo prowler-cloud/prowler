@@ -447,6 +447,84 @@ class Test_ecr_repository_image_no_secrets:
             assert "image history step 2" in result[0].status_extended
             assert SECRET_VALUE not in result[0].status_extended
 
+    def test_multiline_environment_secret_keeps_entry_attribution(self):
+        """Embedded newlines do not shift an env finding to another entry."""
+        repository = create_repository()
+        image = create_image()
+        scan_data = ImageScanData(
+            env=[f"MULTILINE=prefix\r\n{SECRET_VALUE}", "WRONG=value"],
+            history=[],
+            files=[],
+            truncated=False,
+        )
+        ecr_client = mock.MagicMock()
+        ecr_client.registries = {}
+        ecr_client.audit_config = {
+            "secrets_ignore_patterns": [],
+            "secrets_validate": False,
+        }
+        ecr_client._get_image_scan_data = mock_image_scan_data(
+            [(repository, image, scan_data)]
+        )
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ecr.ecr_repository_image_no_secrets.ecr_repository_image_no_secrets.ecr_client",
+                new=ecr_client,
+            ),
+        ):
+            from prowler.providers.aws.services.ecr.ecr_repository_image_no_secrets.ecr_repository_image_no_secrets import (
+                ecr_repository_image_no_secrets,
+            )
+
+            result = ecr_repository_image_no_secrets().execute()
+
+        assert "environment variable MULTILINE" in result[0].status_extended
+        assert "environment variable WRONG" not in result[0].status_extended
+
+    def test_multiline_history_secret_keeps_step_attribution(self):
+        """Embedded newlines do not shift a history finding to another step."""
+        repository = create_repository()
+        image = create_image()
+        scan_data = ImageScanData(
+            env=[],
+            history=[f"RUN first\nexport TOKEN={SECRET_VALUE}", "RUN second"],
+            files=[],
+            truncated=False,
+        )
+        ecr_client = mock.MagicMock()
+        ecr_client.registries = {}
+        ecr_client.audit_config = {
+            "secrets_ignore_patterns": [],
+            "secrets_validate": False,
+        }
+        ecr_client._get_image_scan_data = mock_image_scan_data(
+            [(repository, image, scan_data)]
+        )
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ecr.ecr_repository_image_no_secrets.ecr_repository_image_no_secrets.ecr_client",
+                new=ecr_client,
+            ),
+        ):
+            from prowler.providers.aws.services.ecr.ecr_repository_image_no_secrets.ecr_repository_image_no_secrets import (
+                ecr_repository_image_no_secrets,
+            )
+
+            result = ecr_repository_image_no_secrets().execute()
+
+        assert "image history step 1" in result[0].status_extended
+        assert "image history step 2" not in result[0].status_extended
+
     def test_secret_in_layer_file(self):
         """A secret in a layer file fails, naming the file and layer."""
         repository = create_repository()
@@ -641,10 +719,10 @@ class Test_ecr_repository_image_no_secrets:
             """Drain the payload generator like the real scanner, then return canned findings."""
             list(payloads)
             return {
-                (0, "environment"): [
+                (0, "environment:0"): [
                     {
                         "type": "JSON Web Token (base64url-encoded)",
-                        "line_number": 2,
+                        "line_number": 1,
                         "is_verified": True,
                     }
                 ]

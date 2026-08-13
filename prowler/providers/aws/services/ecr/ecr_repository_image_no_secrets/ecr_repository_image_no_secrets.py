@@ -54,10 +54,10 @@ class ecr_repository_image_no_secrets(Check):
                 scanned.append((repository, image, scan_data))
                 if scan_data is None:
                     continue
-                if scan_data.env:
-                    yield (index, "environment"), "\n".join(scan_data.env)
-                if scan_data.history:
-                    yield (index, "history"), "\n".join(scan_data.history)
+                for env_index, entry in enumerate(scan_data.env):
+                    yield (index, f"environment:{env_index}"), entry
+                for history_index, entry in enumerate(scan_data.history):
+                    yield (index, f"history:{history_index}"), entry
                 for file_index, scanned_file in enumerate(scan_data.files):
                     yield (index, f"file:{file_index}"), scanned_file.content
                     # Free the file's contents once handed to the scanner. The
@@ -119,23 +119,34 @@ class ecr_repository_image_no_secrets(Check):
                 findings.append(report)
                 continue
 
-            env_findings = batch_results.get((index, "environment"), [])
-            history_findings = batch_results.get((index, "history"), [])
+            env_findings_by_index = {
+                int(key[1].split(":", 1)[1]): entry_secrets
+                for key, entry_secrets in batch_results.items()
+                if key[0] == index and key[1].startswith("environment:")
+            }
+            history_findings_by_index = {
+                int(key[1].split(":", 1)[1]): entry_secrets
+                for key, entry_secrets in batch_results.items()
+                if key[0] == index and key[1].startswith("history:")
+            }
             file_findings_by_index = {
                 int(key[1].split(":", 1)[1]): file_secrets
                 for key, file_secrets in batch_results.items()
                 if key[0] == index and key[1].startswith("file:")
             }
 
-            if env_findings or history_findings or file_findings_by_index:
+            if (
+                env_findings_by_index
+                or history_findings_by_index
+                or file_findings_by_index
+            ):
                 secrets_found = []
-                all_secrets = list(env_findings) + list(history_findings)
+                all_secrets = []
 
-                for secret in env_findings:
-                    line_index = secret["line_number"] - 1
+                for env_index, env_findings in env_findings_by_index.items():
                     variable = None
-                    if 0 <= line_index < len(scan_data.env):
-                        entry = scan_data.env[line_index]
+                    if 0 <= env_index < len(scan_data.env):
+                        entry = scan_data.env[env_index]
                         # Only a well-formed "NAME=value" entry has a name safe
                         # to report; an entry with no "=" may itself be the
                         # secret, so it is never echoed back.
@@ -143,18 +154,25 @@ class ecr_repository_image_no_secrets(Check):
                             candidate = entry.split("=", 1)[0]
                             if _SAFE_ENVIRONMENT_VARIABLE_NAME.fullmatch(candidate):
                                 variable = candidate
-                    if variable is not None:
+                    all_secrets.extend(env_findings)
+                    for secret in env_findings:
+                        if variable is not None:
+                            secrets_found.append(
+                                f"{secret['type']} in environment variable {variable}"
+                            )
+                        else:
+                            secrets_found.append(
+                                f"{secret['type']} in image environment variables"
+                            )
+                for (
+                    history_index,
+                    history_findings,
+                ) in history_findings_by_index.items():
+                    all_secrets.extend(history_findings)
+                    for secret in history_findings:
                         secrets_found.append(
-                            f"{secret['type']} in environment variable {variable}"
+                            f"{secret['type']} in image history step {history_index + 1}"
                         )
-                    else:
-                        secrets_found.append(
-                            f"{secret['type']} in image environment variables"
-                        )
-                for secret in history_findings:
-                    secrets_found.append(
-                        f"{secret['type']} in image history step {secret['line_number']}"
-                    )
                 for file_index, file_secrets in file_findings_by_index.items():
                     scanned_file = scan_data.files[file_index]
                     all_secrets.extend(file_secrets)
