@@ -80,13 +80,15 @@ export interface ProviderProps {
   attributes: {
     provider: ProviderType;
     is_dynamic: boolean;
+    /** Import Findings provenance returned only by the Prowler Cloud API. */
+    is_imported?: boolean;
     uid: string;
     alias: string;
     status: "completed" | "pending" | "cancelled";
     resources: number;
     connection: {
-      connected: boolean;
-      last_checked_at: string;
+      connected: boolean | null;
+      last_checked_at: string | null;
     };
     scanner_args: {
       only_logs: boolean;
