@@ -20,7 +20,14 @@ NAME_COLLISION_ROLE_ARN = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:role/name-collisio
 UNRESOLVED_POLICY_ROLE_ARN = (
     f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:role/unresolved-policy-role"
 )
+ADMIN_UNRESOLVED_POLICY_ROLE_ARN = (
+    f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:role/admin-unresolved-policy-role"
+)
+INVALID_POLICY_ROLE_ARN = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:role/invalid-policy-role"
 DENY_OVERRIDE_ROLE_ARN = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:role/deny-override-role"
+CONDITIONAL_DENY_ROLE_ARN = (
+    f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:role/conditional-deny-role"
+)
 CONDITIONAL_ADMIN_ROLE_ARN = (
     f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:role/conditional-admin-role"
 )
@@ -77,6 +84,17 @@ CONDITIONAL_ADMIN_DOCUMENT = {
             "Action": "*",
             "Resource": "*",
             "Condition": {"Bool": {"aws:MultiFactorAuthPresent": "true"}},
+        }
+    ],
+}
+CONDITIONAL_DENY_DOCUMENT = {
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Deny",
+            "Action": "*",
+            "Resource": "*",
+            "Condition": {"StringNotEquals": {"aws:PrincipalTag/team": "security"}},
         }
     ],
 }
@@ -152,6 +170,31 @@ def _iam_client():
                 }
             ],
         ),
+        # Proven admin attached policy combined with an unresolved one: the
+        # unresolved document could contain a deny, so the outcome is unknown.
+        _role(
+            ADMIN_UNRESOLVED_POLICY_ROLE_ARN,
+            attached_policies=[
+                {
+                    "PolicyName": "AdministratorAccess",
+                    "PolicyArn": AWS_ADMIN_POLICY_ARN,
+                },
+                {
+                    "PolicyName": "unresolved",
+                    "PolicyArn": f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:policy/unresolved",
+                },
+            ],
+        ),
+        # Attached policy resolves to a malformed (non-dict) document.
+        _role(
+            INVALID_POLICY_ROLE_ARN,
+            attached_policies=[
+                {
+                    "PolicyName": "invalid",
+                    "PolicyArn": f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:policy/invalid",
+                }
+            ],
+        ),
         # Allow *:* in the attached policy negated by an unconditional Deny *:*
         # in an inline policy: not effectively administrative.
         _role(
@@ -160,6 +203,15 @@ def _iam_client():
                 {"PolicyName": "custom-admin", "PolicyArn": CUSTOM_ADMIN_POLICY_ARN}
             ],
             inline_policies=["deny-all"],
+        ),
+        # Allow *:* in the attached policy plus a Condition-guarded Deny: the
+        # deny may or may not apply, so the outcome is unknown.
+        _role(
+            CONDITIONAL_DENY_ROLE_ARN,
+            attached_policies=[
+                {"PolicyName": "custom-admin", "PolicyArn": CUSTOM_ADMIN_POLICY_ARN}
+            ],
+            inline_policies=["conditional-deny"],
         ),
         # Allow *:* guarded by a Condition: not statically provable as admin.
         _role(
@@ -218,6 +270,12 @@ def _iam_client():
         ),
         f"{DENY_OVERRIDE_ROLE_ARN}:policy/deny-all": SimpleNamespace(
             document=DENY_ALL_DOCUMENT
+        ),
+        f"{CONDITIONAL_DENY_ROLE_ARN}:policy/conditional-deny": SimpleNamespace(
+            document=CONDITIONAL_DENY_DOCUMENT
+        ),
+        f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:policy/invalid": SimpleNamespace(
+            document="invalid"
         ),
         f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:policy/conditional-admin": SimpleNamespace(
             document=CONDITIONAL_ADMIN_DOCUMENT
@@ -344,8 +402,9 @@ class Test_rolesanywhere_profile_restricts_session_permissions:
             assert len(result) == 1
             assert result[0].status == "PASS"
 
-    def test_unresolved_attached_policy_passes(self):
-        # Attached policy ARN missing from iam_client.policies (document None path).
+    def test_unresolved_attached_policy_is_manual(self):
+        # Attached policy ARN missing from iam_client.policies: a missing
+        # document is unknown, not proof that the role is unprivileged.
         with _enter(
             _patched(
                 _build_client(
@@ -355,7 +414,39 @@ class Test_rolesanywhere_profile_restricts_session_permissions:
         ):
             result = _run()
             assert len(result) == 1
-            assert result[0].status == "PASS"
+            assert result[0].status == "MANUAL"
+            assert "could not be evaluated" in result[0].status_extended
+
+    def test_invalid_policy_document_is_manual(self):
+        # A malformed policy document cannot prove anything about the role.
+        with _enter(
+            _patched(
+                _build_client(
+                    {PROFILE_ARN: _profile(role_arns=[INVALID_POLICY_ROLE_ARN])}
+                )
+            )
+        ):
+            result = _run()
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+
+    def test_allow_all_with_unresolved_policy_is_manual(self):
+        # Proven admin policy plus an unresolved one: the unresolved document
+        # could contain a deny, so the classification is unknown.
+        with _enter(
+            _patched(
+                _build_client(
+                    {
+                        PROFILE_ARN: _profile(
+                            role_arns=[ADMIN_UNRESOLVED_POLICY_ROLE_ARN]
+                        )
+                    }
+                )
+            )
+        ):
+            result = _run()
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
 
     def test_unscoped_profile_with_least_privilege_role_passes(self):
         with _enter(
@@ -368,7 +459,9 @@ class Test_rolesanywhere_profile_restricts_session_permissions:
             assert result[0].status == "PASS"
             assert "defense-in-depth" in result[0].status_extended
 
-    def test_unscoped_profile_with_unknown_role_passes(self):
+    def test_unscoped_profile_with_unknown_role_is_manual(self):
+        # A referenced role missing from the IAM inventory is unknown, not
+        # proof that no administrative role exists.
         with _enter(
             _patched(
                 _build_client({PROFILE_ARN: _profile(role_arns=[UNKNOWN_ROLE_ARN])})
@@ -376,8 +469,8 @@ class Test_rolesanywhere_profile_restricts_session_permissions:
         ):
             result = _run()
             assert len(result) == 1
-            assert result[0].status == "PASS"
-            assert "no referenced role was identified" in result[0].status_extended
+            assert result[0].status == "MANUAL"
+            assert "could not be evaluated" in result[0].status_extended
 
     def test_unscoped_profile_without_roles_passes(self):
         with _enter(_patched(_build_client({PROFILE_ARN: _profile(role_arns=[])}))):
@@ -533,9 +626,9 @@ class Test_rolesanywhere_profile_restricts_session_permissions:
             assert len(result) == 1
             assert result[0].status == "FAIL"
 
-    def test_unresolved_managed_session_policy_passes(self):
-        # A managed session policy whose document was not collected cannot be
-        # proven administrative and is treated as restrictive.
+    def test_unresolved_managed_session_policy_is_manual(self):
+        # A managed session policy whose document was not collected does not
+        # prove that the session is restricted: the outcome is unknown.
         with _enter(
             _patched(
                 _build_client(
@@ -550,7 +643,26 @@ class Test_rolesanywhere_profile_restricts_session_permissions:
         ):
             result = _run()
             assert len(result) == 1
-            assert result[0].status == "PASS"
+            assert result[0].status == "MANUAL"
+            assert "session scoping could not be evaluated" in result[0].status_extended
+
+    def test_invalid_inline_session_policy_is_manual(self):
+        # An inline session policy that fails to parse does not prove that the
+        # session is restricted: the outcome is unknown.
+        with _enter(
+            _patched(
+                _build_client(
+                    {
+                        PROFILE_ARN: _profile(
+                            session_policy="not-json", role_arns=[ADMIN_ROLE_ARN]
+                        )
+                    }
+                )
+            )
+        ):
+            result = _run()
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
 
     def test_allow_all_with_cross_policy_deny_all_passes(self):
         # Allow *:* in an attached policy plus an unconditional Deny *:* in an
@@ -566,8 +678,9 @@ class Test_rolesanywhere_profile_restricts_session_permissions:
             assert len(result) == 1
             assert result[0].status == "PASS"
 
-    def test_conditional_admin_allow_passes(self):
-        # An Allow *:* guarded by a Condition is not statically provable admin.
+    def test_conditional_admin_allow_is_manual(self):
+        # An Allow *:* guarded by a Condition is not statically provable in
+        # either direction: the classification is unknown.
         with _enter(
             _patched(
                 _build_client(
@@ -577,7 +690,21 @@ class Test_rolesanywhere_profile_restricts_session_permissions:
         ):
             result = _run()
             assert len(result) == 1
-            assert result[0].status == "PASS"
+            assert result[0].status == "MANUAL"
+
+    def test_allow_all_with_conditional_deny_is_manual(self):
+        # Unconditional Allow *:* plus a Condition-guarded Deny: the deny may
+        # or may not negate the grant, so the classification is unknown.
+        with _enter(
+            _patched(
+                _build_client(
+                    {PROFILE_ARN: _profile(role_arns=[CONDITIONAL_DENY_ROLE_ARN])}
+                )
+            )
+        ):
+            result = _run()
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
 
     def test_admin_role_with_restrictive_boundary_passes(self):
         # Admin identity policies intersected with a read-only permissions
@@ -593,9 +720,9 @@ class Test_rolesanywhere_profile_restricts_session_permissions:
             assert len(result) == 1
             assert result[0].status == "PASS"
 
-    def test_admin_role_with_unresolved_boundary_passes(self):
+    def test_admin_role_with_unresolved_boundary_is_manual(self):
         # When the boundary document cannot be resolved the restrictions are
-        # unknown: the role must not be classified administrative.
+        # unknown: neither administrative nor safe can be proven.
         with _enter(
             _patched(
                 _build_client(
@@ -605,7 +732,7 @@ class Test_rolesanywhere_profile_restricts_session_permissions:
         ):
             result = _run()
             assert len(result) == 1
-            assert result[0].status == "PASS"
+            assert result[0].status == "MANUAL"
 
     def test_admin_role_with_admin_boundary_fails(self):
         # An AdministratorAccess boundary restricts nothing: still admin.
