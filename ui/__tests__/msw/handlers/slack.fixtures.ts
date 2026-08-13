@@ -59,8 +59,30 @@ export interface SlackChannelFixture {
 export interface SlackTestMessageFixture {
   /** Slack accepted the post. */
   accepted: boolean;
-  /** Slack's own reason when it did not, as the task result carries it. */
+  /**
+   * The reason the settled task carries when it did not. The contract asks the
+   * task to report the same stable reason the synchronous endpoints put in
+   * `code`, but leaves the result's shape to the cloud lane — so this models
+   * both what it should carry (a reason token) and what it might (prose).
+   */
   error: string | null;
+}
+
+/**
+ * A refusal as the API sends one: the machine-readable reason in `code`, human
+ * copy in `detail`, and — for a `429` — the wait in `Retry-After`.
+ *
+ * All three travel together because that is what makes a test honest: a client
+ * that switched on `detail` would pass against a fixture carrying only `code`,
+ * and one that ignored `Retry-After` would pass against a `429` without it.
+ */
+export interface SlackRefusalFixture {
+  status: number;
+  /** Slack's stable reason. `null` for the failures classified by status. */
+  code: string | null;
+  detail: string;
+  /** Seconds `Retry-After` asked for; only a `429` carries one. */
+  retryAfterSeconds: number | null;
 }
 
 export interface SlackFixture {
@@ -95,8 +117,14 @@ export interface SlackFixture {
    * would visibly lose channels.
    */
   channelsPageSize: number;
-  /** Slack refused the listing outright; its reason travels in `detail`. */
-  channelsError: string | null;
+  /** Slack refused the listing outright, with the reason named in `code`. */
+  channelsRefusal: SlackRefusalFixture | null;
+  /**
+   * Slack refused the channel the user chose, when the `PATCH` validated it.
+   * Distinct from a listing refusal: the workspace answered the picker fine and
+   * it is the destination itself that cannot be used.
+   */
+  channelSaveRefusal: SlackRefusalFixture | null;
   /** What the test-message task settles as. */
   testMessage: SlackTestMessageFixture;
 }
@@ -155,14 +183,20 @@ export const SLACK_RATE_LIMITED_DETAIL =
  * is for the user to act on, so the UI answers a server error in its own words.
  */
 export const INTEGRATIONS_SERVER_ERROR_DETAIL = "A server error occurred.";
-export const SLACK_CHANNELS_REFUSED_DETAIL =
-  "Slack refused the channel list: ratelimited.";
+export const SLACK_MISSING_SCOPE_DETAIL =
+  "Slack refused the request: missing_scope.";
+/**
+ * Sent for a channel that cannot be used, whichever way it cannot: the same
+ * sentence for "it is gone" and for "the app was removed from it". Only `code`
+ * separates them, which is the whole reason a client must read `code`.
+ */
 export const SLACK_UNKNOWN_CHANNEL_DETAIL =
   "That channel is not one Prowler can post to.";
 export const SLACK_NO_DEFAULT_CHANNEL_DETAIL =
   "No default channel is recorded on this integration.";
+/** A task result that reports the refusal as prose instead of as a reason. */
 export const SLACK_TEST_MESSAGE_REFUSED_DETAIL =
-  "Slack rejected the message: channel_not_found.";
+  "Slack rejected the message: the channel is archived.";
 
 /**
  * A `200` challenge page from a proxy or WAF that took the call instead of the
@@ -176,12 +210,63 @@ export const PROXY_CHALLENGE_PAGE = [
 ].join("\n");
 
 /**
- * A wire value, spelled out rather than imported from the UI's own mapping, so
- * a rename on our side fails these tests instead of agreeing with itself.
+ * The `code` values the refusals below are named by. Wire values, spelled out
+ * rather than imported from the UI's own mapping: a rename on our side must
+ * fail these tests, not quietly agree with itself.
  */
 export const SLACK_WORKSPACE_CONFLICT_CODE = "slack_workspace_conflict";
+export const SLACK_MISSING_SCOPE_CODE = "missing_scope";
+export const SLACK_CHANNEL_NOT_FOUND_CODE = "channel_not_found";
+export const SLACK_NOT_IN_CHANNEL_CODE = "not_in_channel";
 
 export const SLACK_RETRY_AFTER_SECONDS = 30;
+
+/** The install never granted a scope the call needs: actionable, so a `400`. */
+export const SLACK_MISSING_SCOPE_REFUSAL: SlackRefusalFixture = {
+  status: 400,
+  code: SLACK_MISSING_SCOPE_CODE,
+  detail: SLACK_MISSING_SCOPE_DETAIL,
+  retryAfterSeconds: null,
+};
+
+/**
+ * Slack rate limiting Prowler. The endpoint this actually happens on is the
+ * channel listing: `conversations.list` is tier 2 and paginated.
+ */
+export const SLACK_RATE_LIMITED_REFUSAL: SlackRefusalFixture = {
+  status: 429,
+  code: null,
+  detail: SLACK_RATE_LIMITED_DETAIL,
+  retryAfterSeconds: SLACK_RETRY_AFTER_SECONDS,
+};
+
+/** Slack-side or transport failure — a `502` naming no reason at all. */
+export const SLACK_UPSTREAM_REFUSAL: SlackRefusalFixture = {
+  status: 502,
+  code: null,
+  detail: SLACK_UPSTREAM_DETAIL,
+  retryAfterSeconds: null,
+};
+
+/** The chosen channel is archived, deleted, or was never in the workspace. */
+export const SLACK_CHANNEL_NOT_FOUND_REFUSAL: SlackRefusalFixture = {
+  status: 400,
+  code: SLACK_CHANNEL_NOT_FOUND_CODE,
+  detail: SLACK_UNKNOWN_CHANNEL_DETAIL,
+  retryAfterSeconds: null,
+};
+
+/**
+ * The chosen channel is fine — the Prowler app is simply not in it, which
+ * someone in Slack fixes with `/invite @Prowler`. Identical `detail` to the
+ * refusal above, deliberately.
+ */
+export const SLACK_NOT_IN_CHANNEL_REFUSAL: SlackRefusalFixture = {
+  status: 400,
+  code: SLACK_NOT_IN_CHANNEL_CODE,
+  detail: SLACK_UNKNOWN_CHANNEL_DETAIL,
+  retryAfterSeconds: null,
+};
 
 /**
  * The workspace's channels: two public, and one private the Prowler app has
@@ -241,7 +326,8 @@ export const slackFixture = (
   oauthUpstreamError: false,
   channels: SLACK_CHANNELS.map((channel) => ({ ...channel })),
   channelsPageSize: SLACK_CHANNELS_PAGE_SIZE,
-  channelsError: null,
+  channelsRefusal: null,
+  channelSaveRefusal: null,
   testMessage: { accepted: true, error: null },
   ...overrides,
 });

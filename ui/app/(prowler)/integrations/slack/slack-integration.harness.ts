@@ -477,25 +477,65 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     return /Private/.test(option?.textContent ?? "");
   }
 
-  /** Pick a channel by name and save it as the integration's destination. */
-  async chooseChannel(name: string): Promise<void> {
+  /** Pick a channel out of the picker and ask for it to be saved. */
+  private async pickAndSave(name: string): Promise<void> {
     const options = await this.openChannelPicker();
     const option = options.find(
       (element) => element.getAttribute("data-channel") === name,
     );
 
     if (!option) {
-      throw new Error(`chooseChannel: no channel named "${name}" is offered`);
+      throw new Error(`pickAndSave: no channel named "${name}" is offered`);
     }
 
     await this.user.click(option);
     await this.waitForTransition();
     await this.clickButton(/Save channel/);
+  }
+
+  /** Pick a channel by name and save it as the integration's destination. */
+  async chooseChannel(name: string): Promise<void> {
+    await this.pickAndSave(name);
     await this.waitFor(
       () => this.defaultChannelName() === name,
       15000,
       `#${name} to be recorded as the destination`,
     );
+  }
+
+  /**
+   * Try to save a channel the API refuses, and hand back what the user is told
+   * about it. A save that succeeds fails the test rather than timing out.
+   */
+  async refusedChannelSave(name: string): Promise<string> {
+    await this.pickAndSave(name);
+
+    return this.waitFor(
+      () => {
+        if (this.defaultChannelName() === name) {
+          throw new Error(
+            `refusedChannelSave: #${name} was recorded, not refused`,
+          );
+        }
+        return this.toastText(/Could not save the destination channel/);
+      },
+      15000,
+      "the refused channel save",
+    );
+  }
+
+  /**
+   * The text of the toast matching `pattern` — title and message together.
+   *
+   * Radix portals each toast into its viewport as an `<li>`, so the toasts are
+   * the list items outside the page's own markup; matching on the text picks
+   * the one being asked about.
+   */
+  private toastText(pattern: RegExp): string | null {
+    const toast = Array.from(
+      document.querySelectorAll<HTMLElement>("ol li"),
+    ).find((element) => pattern.test(element.textContent ?? ""));
+    return toast ? (toast.textContent ?? "").replace(/\s+/g, " ").trim() : null;
   }
 
   private defaultChannelName(): string | null {

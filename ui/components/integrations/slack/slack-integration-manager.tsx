@@ -4,13 +4,11 @@ import { format, isValid, parseISO } from "date-fns";
 import { Send, TestTube } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import {
-  testIntegrationConnection,
-  updateIntegration,
-} from "@/actions/integrations/integrations";
+import { testIntegrationConnection } from "@/actions/integrations/integrations";
 import {
   getSlackChannels,
   sendSlackTestMessage,
+  setSlackDefaultChannel,
 } from "@/actions/integrations/slack";
 import { SlackIcon } from "@/components/icons/services/IconServices";
 import { IntegrationCardHeader } from "@/components/integrations/shared";
@@ -123,17 +121,13 @@ export const SlackIntegrationManager = ({
 
     setIsSavingChannel(true);
     try {
-      const formData = new FormData();
-      formData.append("integration_type", "slack");
       // Only the id travels: the API validates it against Slack and derives the
       // channel's name itself (design D6), so a name sent from here could only
       // ever drift from the id it belongs to.
-      formData.append(
-        "configuration",
-        JSON.stringify({ channel_id: selectedChannelId }),
+      const result = await setSlackDefaultChannel(
+        integrationId,
+        selectedChannelId,
       );
-
-      const result = await updateIntegration(integrationId, formData);
 
       if ("error" in result) {
         toast({
@@ -144,16 +138,21 @@ export const SlackIntegrationManager = ({
         return;
       }
 
-      const saved = channels.find(
-        (channel) => channel.id === selectedChannelId,
-      );
+      // The name the API derived from the id, not the one this page happened to
+      // have in its list: a channel renamed in Slack since the list was read
+      // would otherwise be shown under its old name.
+      const savedName =
+        result.integration.attributes.configuration.channel_name ??
+        channels.find((channel) => channel.id === selectedChannelId)?.name ??
+        null;
+
       setDefaultChannelId(selectedChannelId);
-      setDefaultChannelName(saved?.name ?? null);
+      setDefaultChannelName(savedName);
       setTestMessageOutcome(null);
       toast({
         title: "Destination channel saved",
-        description: saved
-          ? `Prowler will post to #${saved.name}.`
+        description: savedName
+          ? `Prowler will post to #${savedName}.`
           : "Prowler will post to the channel you chose.",
       });
     } catch (_error) {

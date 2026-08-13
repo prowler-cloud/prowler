@@ -165,12 +165,22 @@ const failureFrom = async (
  * The same classification flattened to one line of copy, for the calls whose
  * only outcome is "it did not work": the code's own wording when Prowler has
  * one, the API's `detail` when it does not, and `fallback` when neither.
+ *
+ * Rate limiting is part of that line rather than folded into the generic
+ * wording. `conversations.list` is Slack tier 2, so the channel listing is
+ * where a `429` actually shows up (contract, Errors), and answering it without
+ * the wait turns "come back in half a minute" into a dead end.
  */
 const errorMessageFrom = async (
   response: Response,
   fallback: string,
-): Promise<string> =>
-  slackErrorMessage(await readSlackFailure(response), fallback);
+): Promise<string> => {
+  const failure = await readSlackFailure(response);
+
+  return failure.status === RATE_LIMITED_STATUS
+    ? slackRateLimitMessage(failure.retryAfterSeconds)
+    : slackErrorMessage(failure, fallback);
+};
 
 /** Mint an OAuth state and get the consent URL. Creates no integration. */
 export const getSlackAuthorizeUrl =
@@ -337,6 +347,71 @@ export const getSlackChannels = async (
   }
 };
 
+interface SlackDefaultChannelSuccess {
+  integration: IntegrationProps;
+}
+
+export type SlackDefaultChannelResult =
+  | SlackDefaultChannelSuccess
+  | SlackActionError;
+
+/**
+ * Record the channel Prowler posts to, on the generic integration endpoint.
+ *
+ * A Slack action despite the generic `PATCH`, because the refusal is a Slack
+ * one: the API validates the channel against Slack, and answers `400` with
+ * `code` = `channel_not_found` when the channel is gone or `not_in_channel`
+ * when the Prowler app was removed from a private one. Both carry the same
+ * `detail`, so only `code` tells them apart — and only one of them the user can
+ * fix themselves, by inviting `@Prowler`. The generic action reads `detail`
+ * alone and would collapse the two into one sentence that says neither.
+ *
+ * Only `channel_id` travels: the API validates it and derives `channel_name`
+ * server-side (design D6), which is also the name the caller should show.
+ */
+export const setSlackDefaultChannel = async (
+  integrationId: string,
+  channelId: string,
+): Promise<SlackDefaultChannelResult> => {
+  const headers = await getAuthHeaders({ contentType: true });
+  const url = new URL(`${apiBaseUrl}/integrations/${integrationId}`);
+
+  try {
+    const response = await fetch(url.toString(), {
+      method: "PATCH",
+      headers,
+      body: JSON.stringify({
+        data: {
+          type: "integrations",
+          id: integrationId,
+          attributes: {
+            integration_type: "slack",
+            configuration: { channel_id: channelId },
+          },
+        },
+      }),
+    });
+
+    if (!response.ok) {
+      return {
+        error: await errorMessageFrom(
+          response,
+          `Unable to save the destination channel: ${response.statusText}`,
+        ),
+      };
+    }
+
+    const body = await response.json();
+
+    revalidatePath("/integrations");
+    revalidatePath("/integrations/slack");
+
+    return { integration: parseStringify(body.data) as IntegrationProps };
+  } catch (error) {
+    return handleApiError(error);
+  }
+};
+
 interface SlackTestMessageSuccess {
   sent: true;
 }
@@ -394,11 +469,19 @@ export const sendSlackTestMessage = async (
       return { error: settled.error };
     }
 
-    // Slack's refusal travels in the task result; a task that did not complete
-    // is a failure even when it carries no reason of its own.
-    const reason = settled.result?.error;
+    // Slack's refusal travels in the task's own result, not in an HTTP error:
+    // the post happens after the `202`, so nothing about it is knowable when
+    // the request returns.
+    //
+    // The contract leaves that result's exact shape to the cloud lane, agreeing
+    // only that it reports the same stable reason the synchronous endpoints put
+    // in `code` (contract, test-message). So a reason that *is* one of those
+    // codes gets Prowler's own wording, and anything else — prose, or a reason
+    // this UI has nothing better to say about — is shown as it arrived. A task
+    // that did not complete is a failure even when it names no reason at all.
+    const reason = settled.result?.error?.trim();
     if (reason) {
-      return { error: reason };
+      return { error: slackErrorMessage({ code: reason, detail: reason }) };
     }
     if (settled.state !== "completed") {
       return { error: "Slack did not accept the test message." };
