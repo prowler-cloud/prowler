@@ -86,23 +86,50 @@ def get_default_mute_file_path(provider: str):
     return mutelist_path
 
 
-def check_current_version():
+def get_latest_release_version():
+    """Return the latest Prowler release tag name from GitHub, or None if it cannot be retrieved."""
     try:
-        prowler_version_string = f"Prowler {prowler_version}"
         release_response = requests.get(
             "https://api.github.com/repos/prowler-cloud/prowler/tags", timeout=1
         )
-        latest_version = release_response.json()[0]["name"]
+        return release_response.json()[0]["name"]
+    except Exception:
+        return None
+
+
+def get_available_update():
+    """Return the latest Prowler version if it is newer than the running one, None otherwise.
+
+    Honors the PROWLER_NO_VERSION_CHECK and DO_NOT_TRACK environment variables:
+    when either is set, no network call is made and None is returned.
+    """
+    if os.environ.get("PROWLER_NO_VERSION_CHECK") or os.environ.get("DO_NOT_TRACK"):
+        return None
+    latest_version = get_latest_release_version()
+    try:
+        if latest_version and version.parse(latest_version) > version.parse(
+            prowler_version
+        ):
+            return latest_version
+    except Exception:
+        return None
+    return None
+
+
+def check_current_version():
+    prowler_version_string = f"Prowler {prowler_version}"
+    latest_version = get_latest_release_version()
+    if not latest_version:
+        return prowler_version_string
+    try:
         if version.parse(latest_version) > version.parse(prowler_version):
             return f"{prowler_version_string} (latest is {latest_version}, upgrade for the latest features)"
         else:
             return (
                 f"{prowler_version_string} (You are running the latest version, yay!)"
             )
-    except requests.RequestException:
-        return f"{prowler_version_string}"
     except Exception:
-        return f"{prowler_version_string}"
+        return prowler_version_string
 
 
 def load_and_validate_config_file(provider: str, config_file_path: str) -> dict:
