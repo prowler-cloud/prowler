@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from importlib import import_module
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -100,14 +101,17 @@ def test_partial_parse_leaves_task_definition_undescribed():
                 ],
                 "pidMode": "host",
                 "networkMode": "host",
+                "registeredAt": datetime(2026, 8, 13, tzinfo=timezone.utc),
             },
-            "tags": [],
+            "tags": [{"key": "Environment", "value": "production"}],
         }
     )
 
     assert task_definition.container_definitions is None
     assert task_definition.pid_mode is None
     assert task_definition.network_mode is None
+    assert task_definition.registered_at is None
+    assert task_definition.tags == []
 
 
 @pytest.mark.parametrize(
