@@ -1,22 +1,30 @@
-FROM python:3.12.13-slim-bookworm@sha256:8a7e7cc04fd3e2bd787f7f24e22d5d119aa590d429b50c95dfe12b3abe52f48b AS build
+FROM python:3.12.13-slim-trixie@sha256:57cd7c3a7a273101a6485ba99423ee568157882804b1124b4dd04266317710de AS build
 
 LABEL maintainer="https://github.com/prowler-cloud/prowler"
 LABEL org.opencontainers.image.source="https://github.com/prowler-cloud/prowler"
 
-ARG POWERSHELL_VERSION=7.5.0
+ARG POWERSHELL_VERSION=7.4.6
 ENV POWERSHELL_VERSION=${POWERSHELL_VERSION}
 # Opt out of PowerShell telemetry (Application Insights -> dc.services.visualstudio.com)
 ENV POWERSHELL_TELEMETRY_OPTOUT=1
 
-ARG TRIVY_VERSION=0.71.2
+ARG TRIVY_VERSION=0.73.0
 ENV TRIVY_VERSION=${TRIVY_VERSION}
 
 ARG ZIZMOR_VERSION=1.24.1
 ENV ZIZMOR_VERSION=${ZIZMOR_VERSION}
 
+# Pinned here, not fetched with the artefact: a compromised release ships its own checksum.
+ARG TRIVY_SHA256_AMD64=2edd39da482bb4e9831962487b68f68e3928ec3137794757f54d00383d79547b
+ARG TRIVY_SHA256_ARM64=13833d97e8a1a5367471c372a173180157f593bece570e20d5d925fef552f5dd
+ARG POWERSHELL_SHA256_AMD64=b9610d8220270e29aa98c1a9a69f29a8fb33a1bf1fa78098ba2e4b6a9ba92aa0
+ARG POWERSHELL_SHA256_ARM64=c00966fce025f38e77e5f3f6a8bd9b42bedffc51b11f3f169a32f1d7fae1c8c1
+ARG ZIZMOR_SHA256_AMD64=a8000f3c683319a523d3b20df0e75457ba591f049cfcbfa98966631b56733c03
+ARG ZIZMOR_SHA256_ARM64=d66e37ef8a375fb07939c630ebf9709a6e0f20242bdc3faf672a7ed97e0b768d
+
 # hadolint ignore=DL3008
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    wget libicu72 libunwind8 libssl3 libcurl4 ca-certificates apt-transport-https gnupg \
+    wget libicu76 libunwind8 libssl3 libcurl4 ca-certificates apt-transport-https gnupg \
     build-essential pkg-config libzstd-dev zlib1g-dev \
     && rm -rf /var/lib/apt/lists/*
 
@@ -29,6 +37,9 @@ RUN ARCH=$(uname -m) && \
     else \
         echo "Unsupported architecture: $ARCH" && exit 1 ; \
     fi && \
+    if [ "$ARCH" = "x86_64" ]; then EXPECT="$POWERSHELL_SHA256_AMD64" ; else EXPECT="$POWERSHELL_SHA256_ARM64" ; fi && \
+    echo "$EXPECT  /tmp/powershell.tar.gz" > /tmp/powershell.sha256 && \
+    sha256sum -c /tmp/powershell.sha256 && rm /tmp/powershell.sha256 && \
     mkdir -p /opt/microsoft/powershell/7 && \
     tar zxf /tmp/powershell.tar.gz -C /opt/microsoft/powershell/7 && \
     chmod +x /opt/microsoft/powershell/7/pwsh && \
@@ -45,6 +56,9 @@ RUN ARCH=$(uname -m) && \
         echo "Unsupported architecture for Trivy: $ARCH" && exit 1 ; \
     fi && \
     wget --progress=dot:giga "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_${TRIVY_ARCH}.tar.gz" -O /tmp/trivy.tar.gz && \
+    if [ "$ARCH" = "x86_64" ]; then EXPECT="$TRIVY_SHA256_AMD64" ; else EXPECT="$TRIVY_SHA256_ARM64" ; fi && \
+    echo "$EXPECT  /tmp/trivy.tar.gz" > /tmp/trivy.sha256 && \
+    sha256sum -c /tmp/trivy.sha256 && rm /tmp/trivy.sha256 && \
     tar zxf /tmp/trivy.tar.gz -C /tmp && \
     mv /tmp/trivy /usr/local/bin/trivy && \
     chmod +x /usr/local/bin/trivy && \
@@ -63,6 +77,9 @@ RUN ARCH=$(uname -m) && \
         echo "Unsupported architecture for zizmor: $ARCH" && exit 1 ; \
     fi && \
     wget --progress=dot:giga "https://github.com/zizmorcore/zizmor/releases/download/v${ZIZMOR_VERSION}/zizmor-${ZIZMOR_ARCH}.tar.gz" -O /tmp/zizmor.tar.gz && \
+    if [ "$ARCH" = "x86_64" ]; then EXPECT="$ZIZMOR_SHA256_AMD64" ; else EXPECT="$ZIZMOR_SHA256_ARM64" ; fi && \
+    echo "$EXPECT  /tmp/zizmor.tar.gz" > /tmp/zizmor.sha256 && \
+    sha256sum -c /tmp/zizmor.sha256 && rm /tmp/zizmor.sha256 && \
     mkdir -p /tmp/zizmor-extract && \
     tar zxf /tmp/zizmor.tar.gz -C /tmp/zizmor-extract && \
     mv /tmp/zizmor-extract/zizmor /usr/local/bin/zizmor && \
@@ -89,7 +106,7 @@ ENV HOME='/home/prowler'
 ENV PATH="${HOME}/.local/bin:${PATH}"
 #hadolint ignore=DL3013
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir uv==0.11.14
+    pip install --no-cache-dir uv==0.12.0
 
 RUN uv sync --locked --compile-bytecode && \
     rm -rf ~/.cache/uv
@@ -105,6 +122,9 @@ RUN apt-get purge -y --auto-remove \
     pkg-config \
     libzstd-dev \
     zlib1g-dev \
+    wget \
+    gnupg \
+    apt-transport-https \
     && rm -rf /var/lib/apt/lists/*
 
 USER prowler
@@ -112,6 +132,16 @@ USER prowler
 # Remove deprecated dash dependencies
 RUN pip uninstall dash-html-components -y && \
     pip uninstall dash-core-components -y
+
+USER root
+
+# pip is build-only; the entrypoint runs the venv directly.
+RUN rm -rf /usr/local/lib/python3.12/site-packages/pip \
+    /usr/local/lib/python3.12/site-packages/pip-*.dist-info \
+    /home/prowler/.local/lib/python3.12/site-packages/pip \
+    /home/prowler/.local/lib/python3.12/site-packages/pip-*.dist-info \
+    /usr/local/bin/pip /usr/local/bin/pip3 /usr/local/bin/pip3.12 \
+    /home/prowler/.local/bin/pip /home/prowler/.local/bin/pip3 /home/prowler/.local/bin/pip3.12
 
 USER prowler
 ENTRYPOINT ["/home/prowler/.venv/bin/prowler"]
