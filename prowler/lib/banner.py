@@ -52,7 +52,8 @@ def print_prowler_cloud_banner():
     """
     check = f"{Fore.GREEN}✓{Style.RESET_ALL}"
     bar = f"{banner_color}│{Style.RESET_ALL}"
-    print(f"""
+    print(
+        f"""
 {bar} {Style.BRIGHT}You're getting a snapshot 📸. Prowler Cloud gives you the full picture:{Style.RESET_ALL}
 {bar}
 {bar} {check} {Style.BRIGHT}Send your findings{Style.RESET_ALL} - directly from the Prowler CLI to Prowler Cloud.
@@ -67,7 +68,8 @@ def print_prowler_cloud_banner():
 {bar} {check} {Style.BRIGHT}Integrations{Style.RESET_ALL} - Anything with our MCP + Jira, Slack, AWS Security Hub, Amazon S3, SSO and RBAC.
 {bar}
 {bar} {banner_color}Start free at 👉 {_hyperlink(CLOUD_BANNER_URL, CLOUD_DISPLAY_TEXT)}{Style.RESET_ALL}
-""")
+"""
+    )
 
 
 def print_banner(args):
