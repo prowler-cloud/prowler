@@ -4,6 +4,24 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [1.39.0] (Prowler v5.39.0)
+
+### 🚀 Added
+
+- Manual verification workflow for `MANUAL` findings with evidence, effective `PASS` status, and expiration details [(#12253)](https://github.com/prowler-cloud/prowler/pull/12253)
+- Surface pre-configured credential creation links in the add-provider wizard. Cloudflare exposes the User API Token template and an Account-Owned template pinned to the Cloudflare Account ID entered in the wizard, GitHub exposes the personal-repositories template and an organization-scanning template pinned to the identifier entered in the wizard [(#12349)](https://github.com/prowler-cloud/prowler/pull/12349)
+- Attack Paths graph groups resources by class into expandable nodes and marks the query outcome as the terminal node, with the clicked resource highlighted while its findings are expanded (Prowler Cloud only) [(#12381)](https://github.com/prowler-cloud/prowler/pull/12381)
+- Azure Management Group onboarding: add every subscription in a tenant at once (Prowler Cloud only) [(#12386)](https://github.com/prowler-cloud/prowler/pull/12386)
+- Manage Lighthouse AI role permission in the role forms and role details, so permission to change the Lighthouse AI configuration can be granted or restricted independently of other permissions (Prowler Cloud only) [(#12412)](https://github.com/prowler-cloud/prowler/pull/12412)
+- CMMC 2.0 universal compliance framework rendering: dedicated icon, Domain/Level requirement mapper and cross-provider catalog tile [(#12414)](https://github.com/prowler-cloud/prowler/pull/12414)
+
+### 🐞 Fixed
+
+- Organization discovery describes a too-deep hierarchy in each provider's own vocabulary: AWS organizational units, Azure Management Groups, Google Cloud folders [(#12386)](https://github.com/prowler-cloud/prowler/pull/12386)
+- `View Findings` on the Scans page no longer opens an empty list for users outside the UTC timezone [(#12411)](https://github.com/prowler-cloud/prowler/pull/12411)
+
+---
+
 ## [1.38.0] (Prowler v5.38.0)
 
 ### 🚀 Added

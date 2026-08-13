@@ -42,12 +42,12 @@ The status selector includes manual statuses. Prowler also sets automatic status
 | **Remediating** | Manual | Work is in progress to fix the finding. |
 | **Risk Accepted** | Manual | The team accepts the risk and wants to mute the finding. |
 | **False Positive** | Manual | The finding does not apply and should be muted. |
-| **Resolved** | Automatic | A finding changed from `FAIL` to `PASS` in a later scan. A passed finding with no saved triage state also appears as **Resolved**. |
+| **Resolved** | Automatic / Manual | A finding changed from `FAIL` to `PASS` in a later scan. A passed finding with no saved triage state also appears as **Resolved**. On `MANUAL` findings, select it to verify the finding as passing (see [Verify a MANUAL Finding as Pass](#verify-a-manual-finding-as-pass)). |
 | **Reopened** | Automatic | A finding changed from `PASS` to `FAIL` in a later scan. |
 
 ![Findings Triage Status Selector](/images/prowler-app/findings-triage/findings-triage-status-dropdown.png)
 
-Resolved and Reopened are not manual selector options.
+**Reopened** is never a manual selector option. **Resolved** appears in the selector only on `MANUAL` findings, where it starts the [Manual Pass verification](#verify-a-manual-finding-as-pass).
 
 These automatic states keep triage tied to the finding UID across scans, even when each scan creates a new finding snapshot.
 
@@ -93,6 +93,39 @@ Triage notes are visible only to the team in the current organization. Each note
 
 To remove an existing note, clear the note text and save the change.
 
+## Verify a MANUAL Finding as Pass
+
+<VersionBadge version="5.39.0" />
+
+Checks that Prowler cannot judge automatically report `MANUAL` findings. When a team verifies such a control outside Prowler, the triage selector on that finding offers **Resolved**: choosing it records a Manual Pass attestation, and the finding reports an effective `PASS` while keeping the raw `MANUAL` scan result.
+
+![Triage selector offering Resolved on a MANUAL finding](/images/prowler-app/findings-triage/findings-triage-manual-pass-selector.png)
+
+<Steps>
+  <Step title="Filter MANUAL findings">
+    Go to **Findings** and filter by status **Manual**.
+  </Step>
+  <Step title="Open the triage selector">
+    Expand a Finding Group and click the current status in the **Triage** column of an individual finding.
+  </Step>
+  <Step title="Choose Resolved">
+    Select **Resolved**. Prowler opens the triage note modal with a required **Manual pass evidence** field.
+  </Step>
+  <Step title="Record the evidence">
+    Describe how the control was verified, then click **Save**. The evidence supports up to 500 characters.
+  </Step>
+</Steps>
+
+![Manual Pass attestation with required evidence](/images/prowler-app/findings-triage/findings-triage-manual-pass-note.png)
+
+After saving, the finding reports `PASS` in finding tables, finding groups, compliance reports, and scans. While the attestation is active, the triage status is managed automatically and cannot be changed. **View Manual Pass details** shows who verified the finding, the evidence, the attestation time, and its expiration.
+
+![Manual Pass details showing evidence, author, and validity](/images/prowler-app/findings-triage/findings-triage-manual-pass-details.png)
+
+### Attestation Expiration
+
+A Manual Pass attestation is valid for 90 days. It also ends early when a later scan reports a real failure for the finding. In both cases the finding returns to its raw `MANUAL` status for a new review.
+
 ## Mutelist Behavior
 
 Findings Triage uses Mutelist when a status means the finding should be muted:
@@ -118,7 +151,7 @@ Confirm that the user role has **Manage Scans** permission. Prowler Local Server
 
 ### Resolved or Reopened is missing from the selector
 
-This is expected. Prowler sets **Resolved** and **Reopened** automatically from scan result changes.
+**Reopened** is always automatic. **Resolved** is set automatically from scan result changes and appears as a selector option only on `MANUAL` findings, where it records a [Manual Pass](#verify-a-manual-finding-as-pass). On findings with any other status, this is expected.
 
 ### Risk Accepted or False Positive muted a finding
 

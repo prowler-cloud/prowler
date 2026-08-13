@@ -4,6 +4,20 @@ All notable changes to the **Prowler API** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [1.40.0] (Prowler v5.39.0)
+
+### 🔄 Changed
+
+- `GET /api/v1/users/me` membership relationships identify the active tenant with `meta.active` for JWT and API key authentication [(#12388)](https://github.com/prowler-cloud/prowler/pull/12388)
+
+### 🐞 Fixed
+
+- Tenant deletion no longer leaves memberships partially removed when exclusive-user cleanup fails [(#12379)](https://github.com/prowler-cloud/prowler/pull/12379)
+- `/api/v1/accounts/saml/{organization_slug}/acs/` rejects non-POST requests before SAML response processing [(#12393)](https://github.com/prowler-cloud/prowler/pull/12393)
+- Social login derives a valid user name when identity providers omit the profile name [(#12413)](https://github.com/prowler-cloud/prowler/pull/12413)
+
+---
+
 ## [1.39.0] (Prowler v5.38.0)
 
 ### 🚀 Added
