@@ -37,18 +37,6 @@ export interface LighthouseV2Part {
   updatedAt: string | null;
 }
 
-export const LIGHTHOUSE_V2_RUN_STATUS = {
-  QUEUED: "queued",
-  RUNNING: "running",
-  COMPLETED: "completed",
-  BLOCKED: "blocked",
-  FAILED: "failed",
-  CANCELLED: "cancelled",
-} as const;
-
-export type LighthouseV2RunStatus =
-  (typeof LIGHTHOUSE_V2_RUN_STATUS)[keyof typeof LIGHTHOUSE_V2_RUN_STATUS];
-
 export const LIGHTHOUSE_V2_FEEDBACK_RATING = {
   UP: "up",
   DOWN: "down",
@@ -56,14 +44,6 @@ export const LIGHTHOUSE_V2_FEEDBACK_RATING = {
 
 export type LighthouseV2FeedbackRating =
   (typeof LIGHTHOUSE_V2_FEEDBACK_RATING)[keyof typeof LIGHTHOUSE_V2_FEEDBACK_RATING];
-
-export interface LighthouseV2Run {
-  id: string;
-  status: LighthouseV2RunStatus;
-  terminalCode: string | null;
-  hasAssistantMessage: boolean;
-  feedbackRating: LighthouseV2FeedbackRating | null;
-}
 
 // Normalized shape of a TOOL_CALL part's `content`. The backend persists this
 // blob in snake_case (tool_call_id, tool_name, ...); `getToolCallContent`
@@ -83,14 +63,13 @@ export interface LighthouseV2Message {
   tokenUsage: unknown;
   insertedAt: string;
   parts: LighthouseV2Part[];
-  run?: LighthouseV2Run | null;
+  feedback?: LighthouseV2FeedbackRating | null;
 }
 
-export interface LighthouseV2RunFeedbackInput {
+export interface LighthouseV2MessageFeedbackInput {
   sessionId: string;
-  runId: string;
-  rating: LighthouseV2FeedbackRating;
-  idempotencyKey: string;
+  messageId: string;
+  feedback: LighthouseV2FeedbackRating;
 }
 
 export interface LighthouseV2SendMessageInput {

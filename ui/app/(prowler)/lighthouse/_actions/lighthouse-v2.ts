@@ -6,8 +6,8 @@ import type {
   LighthouseV2ConfigurationInput,
   LighthouseV2ConfigurationUpdateInput,
   LighthouseV2Message,
+  LighthouseV2MessageFeedbackInput,
   LighthouseV2ProviderType,
-  LighthouseV2RunFeedbackInput,
   LighthouseV2SendMessageInput,
   LighthouseV2SendMessageResult,
   LighthouseV2Session,
@@ -24,8 +24,8 @@ import type { ServerActionResult } from "@/types/server-actions";
 import {
   buildLighthouseV2ConfigurationPayload,
   buildLighthouseV2ConfigurationUpdatePayload,
+  buildLighthouseV2MessageFeedbackPayload,
   buildLighthouseV2MessagePayload,
-  buildLighthouseV2RunFeedbackPayload,
   buildLighthouseV2SessionCreatePayload,
   buildLighthouseV2SessionUpdatePayload,
   getJsonApiArray,
@@ -270,16 +270,16 @@ export async function sendLighthouseV2Message(
   }
 }
 
-export async function submitLighthouseV2RunFeedback(
-  input: LighthouseV2RunFeedbackInput,
-): Promise<LighthouseV2ActionResult<true>> {
+export async function updateLighthouseV2MessageFeedback(
+  input: LighthouseV2MessageFeedbackInput,
+): Promise<LighthouseV2ActionResult<LighthouseV2Message>> {
   return mutateSingle(
-    `${SESSIONS_ENDPOINT}/${encodeURIComponent(input.sessionId)}/runs/${encodeURIComponent(input.runId)}/feedback`,
+    `${SESSIONS_ENDPOINT}/${encodeURIComponent(input.sessionId)}/messages/${encodeURIComponent(input.messageId)}`,
     {
-      method: "POST",
-      body: JSON.stringify(buildLighthouseV2RunFeedbackPayload(input)),
+      method: "PATCH",
+      body: JSON.stringify(buildLighthouseV2MessageFeedbackPayload(input)),
     },
-    () => true,
+    mapLighthouseV2Message,
     "",
   );
 }

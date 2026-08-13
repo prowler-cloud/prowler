@@ -351,6 +351,35 @@ describe("createLighthouseChatStore", () => {
     expect(store.getState().streamState.activeTaskId).toBeNull();
   });
 
+  it("keeps the persisted user message ratable after a terminal error", async () => {
+    // Given
+    const store = makeStore();
+    await store.getState().submitMessage("Run this check");
+    getMessagesMock.mockResolvedValue({
+      data: [
+        {
+          ...message("task-1", "user", "Run this check"),
+          feedback: null,
+        },
+      ],
+    });
+
+    // When
+    eventSources[0].emit("error", { detail: "Agent run failed." });
+
+    // Then
+    await vi.waitFor(() =>
+      expect(store.getState().messages).toEqual([
+        expect.objectContaining({
+          id: "task-1",
+          role: "user",
+          feedback: null,
+        }),
+      ]),
+    );
+    expect(store.getState().feedback).toBe("Agent run failed.");
+  });
+
   it("blocks sending and refreshes messages on a 409 conflict", async () => {
     // Given
     const store = makeStore();

@@ -28,7 +28,7 @@ import {
   createLighthouseV2Session,
   getLighthouseV2SupportedModels,
   sendLighthouseV2Message,
-  submitLighthouseV2RunFeedback,
+  updateLighthouseV2MessageFeedback,
   updateLighthouseV2Configuration,
   updateLighthouseV2Session,
 } from "./lighthouse-v2";
@@ -76,6 +76,26 @@ function configurationResponse(id = "config-1") {
 
 function modelsResponse() {
   return Response.json({ data: [] }, { status: 200 });
+}
+
+function messageResponse(id = "message-1", feedback = "down") {
+  return Response.json(
+    {
+      data: {
+        id,
+        type: "lighthouse-messages",
+        attributes: {
+          role: "user",
+          model: null,
+          token_usage: null,
+          inserted_at: "2026-06-25T10:00:00Z",
+          parts: [],
+          feedback,
+        },
+      },
+    },
+    { status: 200 },
+  );
 }
 
 describe("Lighthouse v2 session write actions", () => {
@@ -159,45 +179,63 @@ describe("Lighthouse v2 session write actions", () => {
     );
   });
 
-  it("submits only the allowlisted run feedback fields", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(
-      Response.json(
-        {
-          data: {
-            id: "feedback-1",
-            type: "lighthouse-agent-run-feedbacks",
-            attributes: { rating: "down", revision: 1 },
-          },
-        },
-        { status: 201 },
-      ),
-    );
+  it("updates Message feedback through the exact nested PATCH contract", async () => {
+    // Given
+    const fetchMock = vi.fn().mockResolvedValue(messageResponse());
     vi.stubGlobal("fetch", fetchMock);
 
-    await submitLighthouseV2RunFeedback({
+    // When
+    const result = await updateLighthouseV2MessageFeedback({
       sessionId: "session-1",
-      runId: "run-1",
-      rating: "down",
-      idempotencyKey: "8b18c413-8596-4b50-92ee-ab6d712279aa",
+      messageId: "message-1",
+      feedback: "down",
     });
 
+    // Then
+    expect("data" in result && result.data.feedback).toBe("down");
     expect(fetchMock).toHaveBeenCalledWith(
       new URL(
-        "https://api.example.com/api/v1/lighthouse/sessions/session-1/runs/run-1/feedback",
+        "https://api.example.com/api/v1/lighthouse/sessions/session-1/messages/message-1",
       ),
       expect.objectContaining({
-        method: "POST",
+        method: "PATCH",
         body: JSON.stringify({
           data: {
-            type: "lighthouse-agent-run-feedbacks",
-            attributes: {
-              rating: "down",
-              idempotency_key: "8b18c413-8596-4b50-92ee-ab6d712279aa",
-            },
+            type: "lighthouse-messages",
+            id: "message-1",
+            attributes: { feedback: "down" },
           },
         }),
       }),
     );
+  });
+
+  it("sanitizes Message feedback server failures", async () => {
+    // Given
+    const consoleErrorMock = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response("<html>private upstream error</html>", {
+          status: 500,
+          headers: { "content-type": "text/html" },
+        }),
+      ),
+    );
+
+    // When
+    const result = await updateLighthouseV2MessageFeedback({
+      sessionId: "session-1",
+      messageId: "message-1",
+      feedback: "up",
+    });
+
+    // Then
+    expect(result).toEqual({ error: "Error: Server error" });
+    expect(JSON.stringify(result)).not.toContain("private upstream error");
+    consoleErrorMock.mockRestore();
   });
 
   it("rejects an unknown skill id before sending the message", async () => {

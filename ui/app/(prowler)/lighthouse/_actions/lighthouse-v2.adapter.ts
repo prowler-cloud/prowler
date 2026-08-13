@@ -6,12 +6,11 @@ import {
   type LighthouseV2Credentials,
   type LighthouseV2FeedbackRating,
   type LighthouseV2Message,
+  type LighthouseV2MessageFeedbackInput,
   type LighthouseV2MessageRole,
   type LighthouseV2Part,
   type LighthouseV2PartType,
   type LighthouseV2ProviderType,
-  type LighthouseV2RunFeedbackInput,
-  type LighthouseV2RunStatus,
   type LighthouseV2SendMessageInput,
   type LighthouseV2Session,
   type LighthouseV2SupportedModel,
@@ -64,15 +63,7 @@ interface MessageAttributes {
   token_usage: unknown;
   inserted_at: string;
   parts?: UnknownPartResource[];
-  run?: RunAttributes | null;
-}
-
-interface RunAttributes {
-  id: string;
-  status: LighthouseV2RunStatus;
-  terminal_code: string | null;
-  has_assistant_message: boolean;
-  feedback_rating: LighthouseV2FeedbackRating | null;
+  feedback?: LighthouseV2FeedbackRating | null;
 }
 
 interface PartAttributes {
@@ -190,15 +181,7 @@ export function mapLighthouseV2Message(
     parts: (resource.attributes.parts ?? []).map((part, index) =>
       mapLighthouseV2Part(part, index),
     ),
-    run: resource.attributes.run
-      ? {
-          id: resource.attributes.run.id,
-          status: resource.attributes.run.status,
-          terminalCode: resource.attributes.run.terminal_code,
-          hasAssistantMessage: resource.attributes.run.has_assistant_message,
-          feedbackRating: resource.attributes.run.feedback_rating,
-        }
-      : null,
+    feedback: resource.attributes.feedback,
   };
 }
 
@@ -274,16 +257,14 @@ export function buildLighthouseV2SessionUpdatePayload(
   };
 }
 
-export function buildLighthouseV2RunFeedbackPayload(
-  input: LighthouseV2RunFeedbackInput,
+export function buildLighthouseV2MessageFeedbackPayload(
+  input: LighthouseV2MessageFeedbackInput,
 ) {
   return {
     data: {
-      type: "lighthouse-agent-run-feedbacks",
-      attributes: {
-        rating: input.rating,
-        idempotency_key: input.idempotencyKey,
-      },
+      type: "lighthouse-messages",
+      id: input.messageId,
+      attributes: { feedback: input.feedback },
     },
   };
 }

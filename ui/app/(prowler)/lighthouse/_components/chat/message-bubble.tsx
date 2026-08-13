@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 
-import { submitLighthouseV2RunFeedback } from "@/app/(prowler)/lighthouse/_actions";
+import { updateLighthouseV2MessageFeedback } from "@/app/(prowler)/lighthouse/_actions";
 import { formatMessageTimestamp } from "@/app/(prowler)/lighthouse/_lib/format";
 import {
   getLighthouseContext,
@@ -22,7 +22,6 @@ import {
   LIGHTHOUSE_V2_FEEDBACK_RATING,
   LIGHTHOUSE_V2_MESSAGE_ROLE,
   LIGHTHOUSE_V2_PART_TYPE,
-  LIGHTHOUSE_V2_RUN_STATUS,
   type LighthouseV2FeedbackRating,
   type LighthouseV2Message,
   type LighthouseV2Part,
@@ -240,10 +239,9 @@ function MessageMeta({
       )}
     >
       <CopyMessageButton text={text} />
-      <RunFeedbackControls
-        key={`${message.run?.id ?? ""}:${message.run?.feedbackRating ?? ""}`}
+      <MessageFeedbackControls
+        key={`${message.id}:${message.feedback ?? ""}`}
         message={message}
-        isUser={isUser}
         sessionId={sessionId}
       />
       <time
@@ -256,49 +254,46 @@ function MessageMeta({
   );
 }
 
-function RunFeedbackControls({
+function MessageFeedbackControls({
   message,
-  isUser,
   sessionId,
 }: {
   message: LighthouseV2Message;
-  isUser: boolean;
   sessionId?: string;
 }) {
-  const run = message.run;
-  // Pending state keeps the optimistic selection until canonical feedback catches up.
-  const [pendingRating, setPendingRating] =
-    useState<LighthouseV2FeedbackRating | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const rating = pendingRating ?? run?.feedbackRating ?? null;
-  const feedbackEligible =
-    run?.status === LIGHTHOUSE_V2_RUN_STATUS.COMPLETED ||
-    run?.status === LIGHTHOUSE_V2_RUN_STATUS.BLOCKED ||
-    run?.status === LIGHTHOUSE_V2_RUN_STATUS.FAILED;
-  const belongsOnMessage = isUser
-    ? run?.hasAssistantMessage === false
-    : run?.hasAssistantMessage === true;
+  const [feedbackOverride, setFeedbackOverride] = useState<{
+    rating: LighthouseV2FeedbackRating | null;
+    isPending: boolean;
+  } | null>(null);
+  const rating = feedbackOverride
+    ? feedbackOverride.rating
+    : (message.feedback ?? null);
+  const isSubmitting = feedbackOverride?.isPending ?? false;
+  const isPersistedUserMessage =
+    message.role === LIGHTHOUSE_V2_MESSAGE_ROLE.USER &&
+    message.feedback !== undefined;
 
-  if (!run || !sessionId || !feedbackEligible || !belongsOnMessage) return null;
+  if (!sessionId || !isPersistedUserMessage) return null;
 
   const submitRating = async (nextRating: LighthouseV2FeedbackRating) => {
     if (isSubmitting || rating === nextRating) return;
-    setPendingRating(nextRating);
-    setIsSubmitting(true);
+    setFeedbackOverride({ rating: nextRating, isPending: true });
     try {
-      const result = await submitLighthouseV2RunFeedback({
+      const result = await updateLighthouseV2MessageFeedback({
         sessionId,
-        runId: run.id,
-        rating: nextRating,
-        idempotencyKey: crypto.randomUUID(),
+        messageId: message.id,
+        feedback: nextRating,
       });
       if ("error" in result) {
-        setPendingRating(null);
+        setFeedbackOverride(null);
+      } else {
+        setFeedbackOverride({
+          rating: result.data.feedback ?? null,
+          isPending: false,
+        });
       }
     } catch {
-      setPendingRating(null);
-    } finally {
-      setIsSubmitting(false);
+      setFeedbackOverride(null);
     }
   };
 

@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { type ReactNode } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   LIGHTHOUSE_V2_MESSAGE_ROLE,
@@ -16,7 +16,7 @@ const { submitFeedbackMock } = vi.hoisted(() => ({
 }));
 
 vi.mock("@/app/(prowler)/lighthouse/_actions", () => ({
-  submitLighthouseV2RunFeedback: submitFeedbackMock,
+  updateLighthouseV2MessageFeedback: submitFeedbackMock,
 }));
 
 vi.mock("streamdown", () => ({
@@ -56,6 +56,11 @@ vi.mock("streamdown", () => ({
 }));
 
 describe("MessageBubble", () => {
+  beforeEach(() => {
+    submitFeedbackMock.mockReset();
+    submitFeedbackMock.mockResolvedValue({ data: buildUserMessage("down") });
+  });
+
   it("should never render the agent-facing context block for user messages", () => {
     // Given
     const userMessage: LighthouseV2Message = {
@@ -350,135 +355,292 @@ describe("MessageBubble", () => {
     expect(isBefore(toolCall, secondText)).toBe(true);
   });
 
-  it("should submit passive feedback for a completed assistant outcome", async () => {
-    const user = userEvent.setup();
-    submitFeedbackMock.mockResolvedValue({ data: true });
-    const message = {
-      ...buildAssistantMessage([textPart("part-1", "Done")]),
-      run: {
-        id: "run-1",
-        status: "completed" as const,
-        terminalCode: null,
-        hasAssistantMessage: true,
-        feedbackRating: null,
-      },
-    };
+  describe("when rendering feedback controls", () => {
+    it("should show controls for a persisted user message", () => {
+      // Given / When
+      render(
+        <MessageBubble
+          message={buildUserMessage(null)}
+          sessionId="session-1"
+        />,
+      );
 
-    render(<MessageBubble message={message} sessionId="session-1" />);
-    await user.click(
-      screen.getByRole("button", { name: "Mark outcome as not helpful" }),
-    );
+      // Then
+      expect(
+        screen.getByRole("button", { name: "Mark outcome as helpful" }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Mark outcome as not helpful" }),
+      ).toBeInTheDocument();
+    });
 
-    await waitFor(() => expect(submitFeedbackMock).toHaveBeenCalledOnce());
-    expect(submitFeedbackMock).toHaveBeenCalledWith({
-      sessionId: "session-1",
-      runId: "run-1",
-      rating: "down",
-      idempotencyKey: expect.any(String),
+    it("should not show controls for an assistant message", () => {
+      // Given
+      const message = {
+        ...buildAssistantMessage([textPart("part-1", "Done")]),
+        feedback: null,
+      };
+
+      // When
+      render(<MessageBubble message={message} sessionId="session-1" />);
+
+      // Then
+      expect(
+        screen.queryByRole("button", { name: "Mark outcome as helpful" }),
+      ).not.toBeInTheDocument();
     });
-    const selectedButton = screen.getByRole("button", {
-      name: "Mark outcome as not helpful",
+
+    it("should not show controls for an optimistic user message", () => {
+      // Given
+      const message = buildUserMessage();
+
+      // When
+      render(<MessageBubble message={message} sessionId="session-1" />);
+
+      // Then
+      expect(
+        screen.queryByRole("button", { name: "Mark outcome as helpful" }),
+      ).not.toBeInTheDocument();
     });
-    expect(selectedButton).toHaveAttribute("aria-pressed", "true");
-    expect(selectedButton).toHaveClass("bg-button-primary", "text-black");
   });
 
-  it("should restore canonical feedback and controls when submission rejects", async () => {
-    // Given
-    const user = userEvent.setup();
-    submitFeedbackMock.mockRejectedValue(new Error("Network unavailable"));
-    const message = {
-      ...buildAssistantMessage([textPart("part-1", "Done")]),
-      run: {
-        id: "run-1",
-        status: "completed" as const,
-        terminalCode: null,
-        hasAssistantMessage: true,
-        feedbackRating: "up" as const,
+  describe("when rating a persisted user message", () => {
+    it.each([
+      ["Mark outcome as helpful", "up"],
+      ["Mark outcome as not helpful", "down"],
+    ] as const)(
+      "should submit %s against the Message id and press it optimistically",
+      async (buttonName, feedback) => {
+        // Given
+        const user = userEvent.setup();
+        let resolveFeedback: (result: { data: LighthouseV2Message }) => void;
+        submitFeedbackMock.mockImplementation(
+          () =>
+            new Promise((resolve) => {
+              resolveFeedback = resolve;
+            }),
+        );
+        render(
+          <MessageBubble
+            message={buildUserMessage(null)}
+            sessionId="session-1"
+          />,
+        );
+        const button = screen.getByRole("button", { name: buttonName });
+
+        // When
+        await user.click(button);
+
+        // Then
+        expect(submitFeedbackMock).toHaveBeenCalledWith({
+          sessionId: "session-1",
+          messageId: "message-user-1",
+          feedback,
+        });
+        expect(button).toBeDisabled();
+        expect(button).toHaveAttribute("aria-pressed", "true");
+        expect(button).toHaveClass("bg-button-primary", "text-black");
+
+        resolveFeedback!({ data: buildUserMessage(feedback) });
+        await waitFor(() => expect(button).toBeEnabled());
+        expect(button).toHaveAttribute("aria-pressed", "true");
       },
-    };
-
-    render(<MessageBubble message={message} sessionId="session-1" />);
-
-    // When
-    await user.click(
-      screen.getByRole("button", { name: "Mark outcome as not helpful" }),
     );
 
-    // Then
-    const helpfulButton = screen.getByRole("button", {
-      name: "Mark outcome as helpful",
+    it("should adopt canonical feedback when it differs from the optimistic rating", async () => {
+      // Given
+      const user = userEvent.setup();
+      submitFeedbackMock.mockResolvedValue({ data: buildUserMessage("up") });
+      render(
+        <MessageBubble
+          message={buildUserMessage(null)}
+          sessionId="session-1"
+        />,
+      );
+
+      // When
+      await user.click(
+        screen.getByRole("button", { name: "Mark outcome as not helpful" }),
+      );
+
+      // Then
+      await waitFor(() =>
+        expect(
+          screen.getByRole("button", { name: "Mark outcome as helpful" }),
+        ).toHaveAttribute("aria-pressed", "true"),
+      );
+      expect(
+        screen.getByRole("button", { name: "Mark outcome as not helpful" }),
+      ).toHaveAttribute("aria-pressed", "false");
     });
-    const notHelpfulButton = screen.getByRole("button", {
-      name: "Mark outcome as not helpful",
+
+    it("should overwrite up with down", async () => {
+      // Given
+      const user = userEvent.setup();
+      render(
+        <MessageBubble
+          message={buildUserMessage("up")}
+          sessionId="session-1"
+        />,
+      );
+
+      // When
+      await user.click(
+        screen.getByRole("button", { name: "Mark outcome as not helpful" }),
+      );
+
+      // Then
+      expect(submitFeedbackMock).toHaveBeenCalledWith({
+        sessionId: "session-1",
+        messageId: "message-user-1",
+        feedback: "down",
+      });
+      expect(
+        screen.getByRole("button", { name: "Mark outcome as helpful" }),
+      ).toHaveAttribute("aria-pressed", "false");
+      expect(
+        screen.getByRole("button", { name: "Mark outcome as not helpful" }),
+      ).toHaveAttribute("aria-pressed", "true");
     });
-    await waitFor(() => expect(helpfulButton).toBeEnabled());
-    expect(notHelpfulButton).toBeEnabled();
-    expect(helpfulButton).toHaveAttribute("aria-pressed", "true");
-    expect(notHelpfulButton).toHaveAttribute("aria-pressed", "false");
-  });
 
-  it("should reflect a changed canonical feedback rating for the same run", () => {
-    // Given
-    const message = {
-      ...buildAssistantMessage([textPart("part-1", "Done")]),
-      run: {
-        id: "run-1",
-        status: "completed" as const,
-        terminalCode: null,
-        hasAssistantMessage: true,
-        feedbackRating: "up" as const,
-      },
-    };
-    const { rerender } = render(
-      <MessageBubble message={message} sessionId="session-1" />,
-    );
-    expect(
-      screen.getByRole("button", { name: "Mark outcome as helpful" }),
-    ).toHaveAttribute("aria-pressed", "true");
+    it("should suppress a duplicate optimistic rating", async () => {
+      // Given
+      const user = userEvent.setup();
+      submitFeedbackMock.mockResolvedValue({ data: buildUserMessage("up") });
+      render(
+        <MessageBubble
+          message={buildUserMessage(null)}
+          sessionId="session-1"
+        />,
+      );
+      const helpfulButton = screen.getByRole("button", {
+        name: "Mark outcome as helpful",
+      });
 
-    // When
-    rerender(
-      <MessageBubble
-        message={{
-          ...message,
-          run: { ...message.run, feedbackRating: "down" },
-        }}
-        sessionId="session-1"
-      />,
-    );
+      // When
+      await user.click(helpfulButton);
+      await user.click(helpfulButton);
 
-    // Then
-    expect(
-      screen.getByRole("button", { name: "Mark outcome as helpful" }),
-    ).toHaveAttribute("aria-pressed", "false");
-    expect(
-      screen.getByRole("button", { name: "Mark outcome as not helpful" }),
-    ).toHaveAttribute("aria-pressed", "true");
-  });
+      // Then
+      expect(submitFeedbackMock).toHaveBeenCalledOnce();
+    });
 
-  it("should expose feedback for failed outcomes without an assistant message", () => {
-    const message: LighthouseV2Message = {
-      id: "message-user-failed",
-      role: LIGHTHOUSE_V2_MESSAGE_ROLE.USER,
-      model: null,
-      tokenUsage: null,
-      insertedAt: "2026-06-25T10:00:00Z",
-      parts: [textPart("part-user", "Run this check")],
-      run: {
-        id: "run-failed",
-        status: "failed",
-        terminalCode: "llm_error",
-        hasAssistantMessage: false,
-        feedbackRating: null,
-      },
-    };
+    it("should roll back and re-enable controls when the action returns an error", async () => {
+      // Given
+      const user = userEvent.setup();
+      submitFeedbackMock.mockResolvedValue({ error: "Update failed" });
+      render(
+        <MessageBubble
+          message={buildUserMessage("up")}
+          sessionId="session-1"
+        />,
+      );
 
-    render(<MessageBubble message={message} sessionId="session-1" />);
+      // When
+      await user.click(
+        screen.getByRole("button", { name: "Mark outcome as not helpful" }),
+      );
 
-    expect(
-      screen.getByRole("button", { name: "Mark outcome as helpful" }),
-    ).toBeInTheDocument();
+      // Then
+      const helpfulButton = screen.getByRole("button", {
+        name: "Mark outcome as helpful",
+      });
+      const notHelpfulButton = screen.getByRole("button", {
+        name: "Mark outcome as not helpful",
+      });
+      await waitFor(() => expect(helpfulButton).toBeEnabled());
+      expect(notHelpfulButton).toBeEnabled();
+      expect(helpfulButton).toHaveAttribute("aria-pressed", "true");
+      expect(notHelpfulButton).toHaveAttribute("aria-pressed", "false");
+    });
+
+    it("should roll back and re-enable controls when the action throws", async () => {
+      // Given
+      const user = userEvent.setup();
+      submitFeedbackMock.mockRejectedValue(new Error("Network unavailable"));
+      render(
+        <MessageBubble
+          message={buildUserMessage("up")}
+          sessionId="session-1"
+        />,
+      );
+
+      // When
+      await user.click(
+        screen.getByRole("button", { name: "Mark outcome as not helpful" }),
+      );
+
+      // Then
+      const helpfulButton = screen.getByRole("button", {
+        name: "Mark outcome as helpful",
+      });
+      const notHelpfulButton = screen.getByRole("button", {
+        name: "Mark outcome as not helpful",
+      });
+      await waitFor(() => expect(helpfulButton).toBeEnabled());
+      expect(notHelpfulButton).toBeEnabled();
+      expect(helpfulButton).toHaveAttribute("aria-pressed", "true");
+      expect(notHelpfulButton).toHaveAttribute("aria-pressed", "false");
+    });
+
+    it("should reset optimistic state when canonical feedback changes", async () => {
+      // Given
+      const user = userEvent.setup();
+      const message = buildUserMessage(null);
+      const { rerender } = render(
+        <MessageBubble message={message} sessionId="session-1" />,
+      );
+      await user.click(
+        screen.getByRole("button", { name: "Mark outcome as not helpful" }),
+      );
+      expect(
+        screen.getByRole("button", { name: "Mark outcome as not helpful" }),
+      ).toHaveAttribute("aria-pressed", "true");
+
+      // When
+      rerender(
+        <MessageBubble
+          message={{ ...message, feedback: "up" }}
+          sessionId="session-1"
+        />,
+      );
+
+      // Then
+      expect(
+        screen.getByRole("button", { name: "Mark outcome as helpful" }),
+      ).toHaveAttribute("aria-pressed", "true");
+      expect(
+        screen.getByRole("button", { name: "Mark outcome as not helpful" }),
+      ).toHaveAttribute("aria-pressed", "false");
+    });
+
+    it("should reset optimistic state when the canonical message changes", async () => {
+      // Given
+      const user = userEvent.setup();
+      const message = buildUserMessage(null);
+      const { rerender } = render(
+        <MessageBubble message={message} sessionId="session-1" />,
+      );
+      await user.click(
+        screen.getByRole("button", { name: "Mark outcome as not helpful" }),
+      );
+
+      // When
+      rerender(
+        <MessageBubble
+          message={{ ...message, id: "message-user-2" }}
+          sessionId="session-1"
+        />,
+      );
+
+      // Then
+      expect(
+        screen.getByRole("button", { name: "Mark outcome as helpful" }),
+      ).toHaveAttribute("aria-pressed", "false");
+      expect(
+        screen.getByRole("button", { name: "Mark outcome as not helpful" }),
+      ).toHaveAttribute("aria-pressed", "false");
+    });
   });
 });
 
@@ -498,6 +660,20 @@ function buildAssistantMessage(
     tokenUsage: null,
     insertedAt: "2026-06-25T10:00:00Z",
     parts,
+  };
+}
+
+function buildUserMessage(
+  feedback?: LighthouseV2Message["feedback"],
+): LighthouseV2Message {
+  return {
+    id: "message-user-1",
+    role: LIGHTHOUSE_V2_MESSAGE_ROLE.USER,
+    model: null,
+    tokenUsage: null,
+    insertedAt: "2026-06-25T10:00:00Z",
+    parts: [textPart("part-user-1", "Run this check")],
+    ...(feedback !== undefined ? { feedback } : {}),
   };
 }
 

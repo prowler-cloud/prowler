@@ -5,6 +5,7 @@ import type { LighthouseContextEnvelope } from "@/types/lighthouse-context";
 import {
   buildLighthouseV2ConfigurationPayload,
   buildLighthouseV2ConfigurationUpdatePayload,
+  buildLighthouseV2MessageFeedbackPayload,
   buildLighthouseV2MessagePayload,
   mapLighthouseV2Configuration,
   mapLighthouseV2Message,
@@ -122,33 +123,26 @@ describe("lighthouse-v2.adapter", () => {
       });
     });
 
-    it("should map the durable run outcome attached to a message", () => {
+    it("should map the current feedback attached to a message", () => {
+      // Given
       const resource: Parameters<typeof mapLighthouseV2Message>[0] = {
         id: "message-1",
         type: "lighthouse-messages",
         attributes: {
-          role: "assistant",
-          model: "gpt-5.5",
+          role: "user",
+          model: null,
           token_usage: null,
           inserted_at: "2026-06-24T10:01:00Z",
           parts: [],
-          run: {
-            id: "run-1",
-            status: "completed",
-            terminal_code: null,
-            has_assistant_message: true,
-            feedback_rating: "up",
-          },
+          feedback: "up",
         },
       };
 
-      expect(mapLighthouseV2Message(resource).run).toEqual({
-        id: "run-1",
-        status: "completed",
-        terminalCode: null,
-        hasAssistantMessage: true,
-        feedbackRating: "up",
-      });
+      // When
+      const message = mapLighthouseV2Message(resource);
+
+      // Then
+      expect(message.feedback).toBe("up");
     });
 
     it("should give id-less parts stable fallback keys instead of empty strings", () => {
@@ -191,6 +185,24 @@ describe("lighthouse-v2.adapter", () => {
   });
 
   describe("when building Cloud payloads", () => {
+    it("should build the exact Message feedback PATCH resource", () => {
+      // Given / When
+      const payload = buildLighthouseV2MessageFeedbackPayload({
+        sessionId: "session-1",
+        messageId: "message-1",
+        feedback: "down",
+      });
+
+      // Then
+      expect(payload).toEqual({
+        data: {
+          type: "lighthouse-messages",
+          id: "message-1",
+          attributes: { feedback: "down" },
+        },
+      });
+    });
+
     it("should include agent text, display text, and UI context for contextual messages", () => {
       // Given
       const context: LighthouseContextEnvelope = {
