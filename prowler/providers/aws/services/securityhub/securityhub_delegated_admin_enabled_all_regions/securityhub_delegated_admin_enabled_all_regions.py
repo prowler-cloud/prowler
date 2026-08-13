@@ -27,13 +27,21 @@ class securityhub_delegated_admin_enabled_all_regions(Check):
             for admin in securityhub_client.organization_admin_accounts
             if admin.admin_status == "ENABLED"
         }
-        admin_lookup_failed = securityhub_client.organization_admin_lookup_failed
 
         for securityhub in securityhub_client.securityhubs:
             report = Check_Report_AWS(metadata=self.metadata(), resource=securityhub)
 
             # Check if this region has a delegated admin
             has_delegated_admin = securityhub.region in regions_with_admin
+
+            # The lookup is tracked per region so that a failure in one region does
+            # not mask the result of the others. A partial failure is only relevant
+            # when no delegated admin was found: if one was, the status is known.
+            admin_lookup_failed = (
+                not has_delegated_admin
+                and securityhub.region
+                in securityhub_client.organization_admin_lookup_failed_regions
+            )
 
             # Check if hub is active
             hub_active = securityhub.status == "ACTIVE"
@@ -43,9 +51,7 @@ class securityhub_delegated_admin_enabled_all_regions(Check):
 
             # Determine overall status
             issues = []
-            if admin_lookup_failed:
-                issues.append("delegated administrator status could not be determined")
-            elif not has_delegated_admin:
+            if not admin_lookup_failed and not has_delegated_admin:
                 issues.append("no delegated administrator configured")
             if not hub_active:
                 issues.append("Security Hub not enabled")
@@ -63,6 +69,22 @@ class securityhub_delegated_admin_enabled_all_regions(Check):
                 report.status_extended = (
                     f"Security Hub in region {securityhub.region} has issues: "
                     f"{', '.join(issues)}."
+                )
+                if admin_lookup_failed:
+                    report.status_extended = (
+                        f"{report.status_extended[:-1]}; the delegated administrator "
+                        f"status could not be determined."
+                    )
+            elif admin_lookup_failed:
+                # Not being able to read the delegated administrator is a lack of
+                # visibility, not a misconfiguration: the API is only available to
+                # the management or delegated administrator account.
+                report.status = "MANUAL"
+                report.status_extended = (
+                    f"Security Hub delegated administrator status in region "
+                    f"{securityhub.region} could not be determined; run this check "
+                    f"from the organization management or delegated administrator "
+                    f"account."
                 )
             else:
                 report.status = "PASS"

@@ -49,10 +49,109 @@ describe("LighthouseCurrentContextBadge", () => {
     expect(tooltip).toHaveTextContent("Finding: finding-1");
   });
 
+  it("should keep ambient automatic summaries out of the tooltip", async () => {
+    // Given the Overview publishes a bit of everything automatically
+    const user = userEvent.setup();
+    render(<LighthouseCurrentContextBadge context={overviewContext()} />);
+
+    // When
+    await user.hover(screen.getByLabelText("Overview context"));
+
+    // Then the tooltip names the page without enumerating page snapshots
+    const tooltip = await screen.findByRole("tooltip");
+    expect(tooltip).toHaveTextContent("Overview");
+    expect(tooltip).not.toHaveTextContent("Prowler ThreatScore");
+    expect(tooltip).not.toHaveTextContent("80 failed / 320 passed findings");
+    expect(tooltip).not.toHaveTextContent("Failing findings by severity");
+    expect(tooltip).not.toHaveTextContent("Service: cloudwatch");
+    expect(tooltip).not.toHaveTextContent("status-summary");
+  });
+
+  it("should say when only the page name is shared", async () => {
+    // Given an unregistered route contributes a bare, filterless page item
+    const user = userEvent.setup();
+    render(<LighthouseCurrentContextBadge context={barePageContext()} />);
+
+    // When
+    await user.hover(screen.getByLabelText("Manage Groups context"));
+
+    // Then
+    const tooltip = await screen.findByRole("tooltip");
+    expect(tooltip).toHaveTextContent("Manage Groups");
+    expect(tooltip).toHaveTextContent("Only the current page name is shared.");
+  });
+
+  it("should treat empty filter entries as a bare page", async () => {
+    // Given a stored envelope whose page filters only carry empty values
+    const user = userEvent.setup();
+    const bareContext = barePageContext();
+    const [pageItem] = bareContext.items;
+    if (pageItem.kind !== "page") throw new Error("expected page item");
+    render(
+      <LighthouseCurrentContextBadge
+        context={{
+          ...bareContext,
+          items: [{ ...pageItem, filters: { status: [] } }],
+        }}
+      />,
+    );
+
+    // When
+    await user.hover(screen.getByLabelText("Manage Groups context"));
+
+    // Then no filters line renders and the page-only notice does
+    const tooltip = await screen.findByRole("tooltip");
+    expect(tooltip).not.toHaveTextContent("Filters:");
+    expect(tooltip).toHaveTextContent("Only the current page name is shared.");
+  });
+
+  it("should not claim a bare page for a single non-page item", async () => {
+    // Given a historical envelope whose only item is not a page item
+    const user = userEvent.setup();
+    const context: LighthouseContextEnvelope = {
+      schemaVersion: 1,
+      transport: "inline",
+      items: [
+        {
+          kind: "scan",
+          id: "scan-1",
+          source: "selection",
+          scopeKey: "scans:/scans",
+          label: "Selected scan",
+          scanId: "scan-1",
+        },
+      ],
+    };
+    render(<LighthouseCurrentContextBadge context={context} />);
+
+    // When
+    await user.hover(screen.getByLabelText("Context context"));
+
+    // Then
+    const tooltip = await screen.findByRole("tooltip");
+    expect(tooltip).not.toHaveTextContent(
+      "Only the current page name is shared.",
+    );
+  });
+
+  it("should not claim a bare page when filters or items travel too", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(<LighthouseCurrentContextBadge context={findingsContext()} />);
+
+    // When
+    await user.hover(screen.getByLabelText("Findings context"));
+
+    // Then
+    const tooltip = await screen.findByRole("tooltip");
+    expect(tooltip).not.toHaveTextContent(
+      "Only the current page name is shared.",
+    );
+  });
+
   it.each([
     ["resource", resourceContext(), "Resource: resource-1 (bucket-1)"],
     ["scan", scanContext(), "Scan: scan-1"],
-    ["Attack Path", attackPathContext(), "Attack Path: query-1 (scan scan-1)"],
   ])("should identify included %s context", async (_, context, expected) => {
     // Given
     const user = userEvent.setup();
@@ -80,6 +179,78 @@ describe("LighthouseContextBadge", () => {
     ).not.toBeInTheDocument();
   });
 });
+
+function barePageContext(): LighthouseContextEnvelope {
+  return {
+    schemaVersion: 1,
+    transport: "inline",
+    items: [
+      {
+        kind: "page",
+        id: "other",
+        source: "automatic",
+        scopeKey: "other:/manage-groups",
+        label: "Manage Groups",
+        path: "/manage-groups",
+      },
+    ],
+  };
+}
+
+function overviewContext(): LighthouseContextEnvelope {
+  return {
+    schemaVersion: 1,
+    transport: "inline",
+    items: [
+      {
+        kind: "page",
+        id: "overview",
+        source: "automatic",
+        scopeKey: "overview:/",
+        label: "Overview",
+        path: "/",
+      },
+      {
+        kind: "compliance",
+        id: "prowler-threat-score",
+        source: "automatic",
+        scopeKey: "overview:/",
+        label: "Prowler ThreatScore",
+        framework: "Prowler ThreatScore",
+        score: 62.4,
+      },
+      {
+        kind: "finding",
+        id: "status-summary",
+        source: "automatic",
+        scopeKey: "overview:/",
+        label: "80 failed / 320 passed findings",
+        findingId: "status-summary",
+        passed: 320,
+        failed: 80,
+      },
+      {
+        kind: "finding",
+        id: "severity-summary",
+        source: "automatic",
+        scopeKey: "overview:/",
+        label: "Failing findings by severity",
+        findingId: "severity-summary",
+        severityCounts: { critical: 4 },
+      },
+      {
+        kind: "resource",
+        id: "service-cloudwatch",
+        source: "automatic",
+        scopeKey: "overview:/",
+        label: "Service: cloudwatch",
+        resourceId: "service-cloudwatch",
+        service: "cloudwatch",
+        failedFindingsCount: 34,
+      },
+    ],
+  };
+}
 
 function findingsContext(): LighthouseContextEnvelope {
   return {

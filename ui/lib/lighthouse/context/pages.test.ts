@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import type { LighthousePageSuggestions } from "@/types/lighthouse-context";
+
 import { LIGHTHOUSE_CONTEXT_LIMIT } from "./constants";
 import {
   buildLighthousePageContext,
@@ -17,23 +19,53 @@ describe("resolveLighthousePage", () => {
     ["/attack-paths/query-builder", "attack-paths"],
     ["/scans", "scans"],
     ["/providers", "providers"],
+    ["/alerts", "alerts"],
+    ["/services", "services"],
+    ["/workloads", "workloads"],
+    ["/mutelist", "mutelist"],
+    ["/roles", "roles"],
+    ["/roles/new", "roles"],
+    ["/users", "users"],
+    ["/invitations", "invitations"],
+    ["/invitations/new", "invitations"],
+    ["/integrations", "integrations"],
+    ["/integrations/jira", "integrations"],
   ])("should resolve %s as %s", (pathname, expectedPageId) => {
     // Given / When
     const page = resolveLighthousePage(pathname);
 
     // Then
     expect(page.id).toBe(expectedPageId);
-    expect(page.suggestions).toHaveLength(4);
+    expectValidSuggestions(page.suggestions);
   });
 
   it("should create a labeled fallback for other application pages", () => {
     // Given / When
-    const page = resolveLighthousePage("/alerts/");
+    const page = resolveLighthousePage("/profile");
 
     // Then
     expect(page.id).toBe("other");
-    expect(page.label).toBe("Alerts");
-    expect(page.suggestions).toHaveLength(4);
+    expect(page.label).toBe("Profile");
+    expectValidSuggestions(page.suggestions);
+  });
+
+  it("should not match routes that only share a page's prefix", () => {
+    for (const pathname of [
+      "/roles-preview",
+      "/users-report",
+      "/invitations-archive",
+      "/integrations-beta",
+    ]) {
+      expect(resolveLighthousePage(pathname).id).toBe("other");
+    }
+  });
+
+  it("should title-case multi-segment fallback routes", () => {
+    const page = resolveLighthousePage("/manage-groups");
+
+    expect(page.id).toBe("other");
+    expect(page.label).toBe("Manage Groups");
+    expect(page.allowedSearchParams).toEqual([]);
   });
 
   it("should resolve encoded and decoded dynamic paths to the same scope", () => {
@@ -56,6 +88,24 @@ describe("resolveLighthousePage", () => {
     );
   });
 });
+
+function expectValidSuggestions(suggestions: LighthousePageSuggestions) {
+  expect(suggestions).toHaveLength(4);
+  expect(new Set(suggestions.map(({ prompt }) => prompt)).size).toBe(
+    suggestions.length,
+  );
+
+  for (const suggestion of suggestions) {
+    expect(suggestion).toEqual(
+      expect.objectContaining({
+        label: expect.any(String),
+        prompt: expect.any(String),
+      }),
+    );
+    expect(suggestion.label.trim()).not.toBe("");
+    expect(suggestion.prompt.trim()).not.toBe("");
+  }
+}
 
 describe("buildLighthousePageContext", () => {
   it("should include only declared search parameters with semantic filter keys", () => {
@@ -117,6 +167,66 @@ describe("buildLighthousePageContext", () => {
       scanId: ["scan-1"],
       tab: ["completed"],
     });
+  });
+
+  it("should preserve the filter names emitted by the alerts page", () => {
+    const context = buildLighthousePageContext(
+      "/alerts",
+      new URLSearchParams({
+        "filter[enabled]": "true",
+        "filter[trigger]": "new_failing_findings",
+        "filter[search]": "s3",
+        edit: "alert-1",
+      }),
+    );
+
+    expect(context.filters).toEqual({
+      enabled: ["true"],
+      search: ["s3"],
+      trigger: ["new_failing_findings"],
+    });
+  });
+
+  it("should preserve the filter names emitted by tenant admin pages", () => {
+    const roles = buildLighthousePageContext(
+      "/roles",
+      new URLSearchParams({
+        "filter[search]": "admin",
+        sort: "name",
+        "filter[permission_state]": "unlimited",
+      }),
+    );
+    const users = buildLighthousePageContext(
+      "/users",
+      new URLSearchParams({ "filter[search]": "alice" }),
+    );
+    const invitations = buildLighthousePageContext(
+      "/invitations",
+      new URLSearchParams({ "filter[state]": "expired" }),
+    );
+
+    expect(roles.filters).toEqual({
+      permission_state: ["unlimited"],
+      search: ["admin"],
+      sort: ["name"],
+    });
+    expect(users.filters).toEqual({ search: ["alice"] });
+    expect(invitations.filters).toEqual({ state: ["expired"] });
+  });
+
+  it("should capture only sort on integrations pages", () => {
+    // The integration sub-pages pin filter[integration_type] server-side; the
+    // open integration reaches Lighthouse through the page item's path.
+    const context = buildLighthousePageContext(
+      "/integrations/jira",
+      new URLSearchParams({
+        sort: "-inserted_at",
+        "filter[integration_type]": "jira",
+      }),
+    );
+
+    expect(context.path).toBe("/integrations/jira");
+    expect(context.filters).toEqual({ sort: ["-inserted_at"] });
   });
 
   it("should preserve the filter names emitted by list-page controls", () => {

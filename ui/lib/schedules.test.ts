@@ -5,6 +5,7 @@ import {
   buildScheduleAttributesFromProvider,
   buildSchedulesByProviderId,
   buildScheduleUpdatePayload,
+  describeSchedulesBulkFailures,
   formatDayOfMonth,
   formatScheduleHour,
   getBrowserTimezone,
@@ -13,6 +14,7 @@ import {
   getScheduleFormDefaults,
   getScheduleFormValues,
   isScheduleConfigured,
+  parseSchedulesBulkResult,
 } from "@/lib/schedules";
 import {
   SCAN_SCHEDULE_CAPABILITY,
@@ -566,5 +568,95 @@ describe("buildProviderScheduleSummary", () => {
 
     expect(summary.nextScanAt).toBe("2026-06-15T07:00:00Z");
     expect(summary.lastScanAt).toBe("2026-06-08T07:00:00Z");
+  });
+});
+
+describe("parseSchedulesBulkResult", () => {
+  it("reads the lists the API actually returns, directly under `data`", () => {
+    // Given — the real body: a plain dict the JSON:API renderer wraps in `data`,
+    // with no `attributes` level.
+    const result = {
+      data: {
+        updated: ["provider-1", "provider-2"],
+        failed: [{ id: "provider-3", error: "Denied" }],
+      },
+    };
+
+    // When
+    const outcome = parseSchedulesBulkResult(result);
+
+    // Then
+    expect(outcome.updatedProviderIds).toEqual(["provider-1", "provider-2"]);
+    expect(outcome.failures).toEqual([{ id: "provider-3", error: "Denied" }]);
+    expect(outcome.isIndeterminate).toBe(false);
+  });
+
+  it("still reads the lists if the endpoint is ever rendered through its serializer", () => {
+    // Given — the documented (but not implemented) JSON:API resource shape.
+    const result = {
+      data: {
+        type: "schedules-bulk" as const,
+        attributes: { updated: ["provider-1"], failed: [] },
+      },
+    };
+
+    // When / Then — tolerated, so a server-side normalization cannot read as
+    // "nothing was updated".
+    expect(parseSchedulesBulkResult(result).updatedProviderIds).toEqual([
+      "provider-1",
+    ]);
+    expect(parseSchedulesBulkResult(result).isIndeterminate).toBe(false);
+  });
+
+  it("reports a body carrying neither list as indeterminate, not as failure", () => {
+    // Given — an empty/204 body, which `handleApiResponse` turns into this.
+    // When / Then — the POST commits before answering, so this is not "nothing
+    // was saved".
+    expect(parseSchedulesBulkResult({ success: true }).isIndeterminate).toBe(
+      true,
+    );
+    expect(parseSchedulesBulkResult({ data: {} }).isIndeterminate).toBe(true);
+  });
+
+  it("drops entries that cannot be used", () => {
+    // Given — ids that are not strings and failures without a usable id.
+    const result = {
+      data: {
+        updated: ["provider-1", 42, null] as unknown as string[],
+        failed: [
+          { id: "provider-2", error: "Denied" },
+          { error: "no id" },
+        ] as unknown as Array<{ id: string; error: string }>,
+      },
+    };
+
+    // When
+    const outcome = parseSchedulesBulkResult(result);
+
+    // Then
+    expect(outcome.updatedProviderIds).toEqual(["provider-1"]);
+    expect(outcome.failures).toEqual([{ id: "provider-2", error: "Denied" }]);
+    expect(outcome.isIndeterminate).toBe(false);
+  });
+});
+
+describe("describeSchedulesBulkFailures", () => {
+  it("deduplicates repeated reasons and caps how many it names", () => {
+    const summary = describeSchedulesBulkFailures(
+      [
+        { id: "p1", error: "Denied" },
+        { id: "p2", error: "Denied" },
+        { id: "p3", error: "Payment required" },
+        { id: "p4", error: "Not connected" },
+      ],
+      2,
+    );
+
+    expect(summary).toBe("Denied; Payment required");
+  });
+
+  it("returns an empty string when there is nothing to explain", () => {
+    expect(describeSchedulesBulkFailures([])).toBe("");
+    expect(describeSchedulesBulkFailures([{ id: "p1", error: "  " }])).toBe("");
   });
 });

@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 
 import { signIn } from "@/auth.config";
 import {
+  getAttributionParamsFromCallbackPath,
   getInvitationTokenFromCallbackPath,
   getSafeCallbackPath,
 } from "@/lib/auth-callback-url";
@@ -15,11 +16,15 @@ export async function GET(req: Request) {
   const code = searchParams.get("code");
   const callbackPath = getSafeCallbackPath(searchParams);
   const invitationToken = getInvitationTokenFromCallbackPath(callbackPath);
+  const attribution = getAttributionParamsFromCallbackPath(callbackPath);
 
   const params = new URLSearchParams();
   params.append("code", code || "");
   if (invitationToken) {
     params.append("invitation_token", invitationToken);
+  }
+  for (const [key, value] of Object.entries(attribution)) {
+    params.append(key, value);
   }
 
   if (!code) {

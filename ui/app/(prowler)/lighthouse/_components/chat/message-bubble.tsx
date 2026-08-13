@@ -6,7 +6,9 @@ import { useState } from "react";
 import { formatMessageTimestamp } from "@/app/(prowler)/lighthouse/_lib/format";
 import {
   getLighthouseContext,
+  getSkillRef,
   getTextContent,
+  type SkillRunInfo,
 } from "@/app/(prowler)/lighthouse/_lib/messages";
 import {
   LIGHTHOUSE_V2_MESSAGE_ROLE,
@@ -17,8 +19,11 @@ import {
 import { LighthouseContextBadge } from "@/components/lighthouse/context-chip";
 import { Button } from "@/components/shadcn/button/button";
 import { cn } from "@/lib/utils";
+import type { LighthouseSkillDefinition } from "@/types/lighthouse-skills";
 
 import { MessageMarkdown } from "./message-markdown";
+import { SkillActionsRow, SkillRunReceipt } from "./skill-completed";
+import { SkillMessageCard } from "./skill-message-card";
 import { ToolCalls } from "./tool-call-part";
 
 const ASSISTANT_PART_GROUP_TYPE = {
@@ -35,8 +40,18 @@ interface AssistantPartGroup {
   parts: LighthouseV2Part[];
 }
 
-export function MessageBubble({ message }: { message: LighthouseV2Message }) {
+export function MessageBubble({
+  message,
+  skillRun,
+  onLaunchSkill,
+}: {
+  message: LighthouseV2Message;
+  // Present when this assistant message answered a skill launch (design 1j).
+  skillRun?: SkillRunInfo;
+  onLaunchSkill?: (skill: LighthouseSkillDefinition) => void;
+}) {
   const isUser = message.role === LIGHTHOUSE_V2_MESSAGE_ROLE.USER;
+  const isSkillResponse = !isUser && skillRun !== undefined;
   // Text-only join feeds the copy button; tool calls are rendered separately.
   const messageText = message.parts
     .filter((part) => part.type === LIGHTHOUSE_V2_PART_TYPE.TEXT)
@@ -48,6 +63,13 @@ export function MessageBubble({ message }: { message: LighthouseV2Message }) {
         .filter((part) => part.type === LIGHTHOUSE_V2_PART_TYPE.TEXT)
         .map((part) => getLighthouseContext(part.content))
         .find((context) => context !== undefined)
+    : undefined;
+  // A user turn that launched a skill renders as a card, not as prompt text.
+  const messageSkill = isUser
+    ? message.parts
+        .filter((part) => part.type === LIGHTHOUSE_V2_PART_TYPE.TEXT)
+        .map((part) => getSkillRef(part.content))
+        .find((skillRef) => skillRef !== undefined)
     : undefined;
 
   return (
@@ -65,22 +87,40 @@ export function MessageBubble({ message }: { message: LighthouseV2Message }) {
         )}
       >
         {messageContext && <LighthouseContextBadge context={messageContext} />}
-        <div
-          className={cn(
-            "max-w-full min-w-0 rounded-[8px] px-4 py-3 text-sm",
-            isUser
-              ? "bg-button-primary text-slate-950"
-              : "bg-bg-neutral-tertiary text-text-neutral-primary",
-          )}
-        >
-          {/* User text stays plain to preserve HTML-like tags; assistant
-              renders parts in order so tool calls sit between text blocks. */}
-          {isUser ? (
-            <p className="whitespace-pre-wrap">{messageText}</p>
-          ) : (
-            <AssistantParts parts={message.parts} />
-          )}
-        </div>
+        {isSkillResponse && (
+          <SkillRunReceipt
+            skillRun={skillRun}
+            parts={message.parts}
+            completedAt={message.insertedAt}
+          />
+        )}
+        {messageSkill ? (
+          <SkillMessageCard skillRef={messageSkill} context={messageContext} />
+        ) : (
+          <div
+            className={cn(
+              "max-w-full min-w-0 rounded-[8px] px-4 py-3 text-sm",
+              isUser
+                ? "bg-button-primary text-slate-950"
+                : "bg-bg-neutral-tertiary text-text-neutral-primary",
+            )}
+          >
+            {/* User text stays plain to preserve HTML-like tags; assistant
+                renders parts in order so tool calls sit between the narration
+                text that announced them — skill responses included, with the
+                receipt above as the run summary. */}
+            {isUser ? (
+              <p className="wrap-break-word whitespace-pre-wrap">
+                {messageText}
+              </p>
+            ) : (
+              <AssistantParts parts={message.parts} />
+            )}
+          </div>
+        )}
+        {isSkillResponse && (
+          <SkillActionsRow skillRun={skillRun} onLaunchSkill={onLaunchSkill} />
+        )}
         <MessageMeta
           isUser={isUser}
           text={messageText}

@@ -42,6 +42,16 @@ export const lighthouseAttackPathTypeCountsSchema = z
     },
   );
 
+export const lighthouseFindingSeverityCountsSchema = z
+  .record(boundedStringSchema, boundedCountSchema)
+  .refine(
+    (counts) =>
+      Object.keys(counts).length <= LIGHTHOUSE_CONTEXT_LIMIT.SEVERITY_COUNTS,
+    {
+      error: `Severity counts may contain at most ${LIGHTHOUSE_CONTEXT_LIMIT.SEVERITY_COUNTS} entries.`,
+    },
+  );
+
 export const lighthouseContextItemBaseSchema = z.object({
   id: boundedStringSchema,
   source: lighthouseContextSourceSchema,
@@ -67,6 +77,11 @@ export const lighthouseFindingContextItemSchema =
     resourceUid: boundedStringSchema.optional(),
     region: boundedStringSchema.optional(),
     total: boundedCountSchema.optional(),
+    passed: boundedCountSchema.optional(),
+    failed: boundedCountSchema.optional(),
+    newPassed: boundedCountSchema.optional(),
+    newFailed: boundedCountSchema.optional(),
+    severityCounts: lighthouseFindingSeverityCountsSchema.optional(),
   });
 
 export const lighthouseResourceContextItemSchema =
@@ -99,6 +114,10 @@ export const lighthouseComplianceContextItemSchema =
     section: boundedStringSchema.optional(),
     region: boundedStringSchema.optional(),
     score: z.number().min(0).max(100).optional(),
+    scoreDelta: z.number().min(-100).max(100).optional(),
+    criticalRequirementsCount: boundedCountSchema.optional(),
+    worstSection: boundedStringSchema.optional(),
+    worstSectionScore: z.number().min(0).max(100).optional(),
     totals: lighthouseComplianceTotalsSchema.optional(),
   });
 
@@ -151,6 +170,16 @@ export const lighthouseProviderContextItemSchema =
     total: boundedCountSchema.optional(),
   });
 
+export const lighthouseAlertContextItemSchema =
+  lighthouseContextItemBaseSchema.extend({
+    kind: z.literal(LIGHTHOUSE_CONTEXT_KIND.ALERT),
+    alertId: boundedStringSchema.optional(),
+    trigger: boundedStringSchema.optional(),
+    enabled: z.boolean().optional(),
+    total: boundedCountSchema.optional(),
+    enabledCount: boundedCountSchema.optional(),
+  });
+
 export const lighthouseContextItemSchema = z.discriminatedUnion("kind", [
   lighthousePageContextItemSchema,
   lighthouseFindingContextItemSchema,
@@ -159,6 +188,7 @@ export const lighthouseContextItemSchema = z.discriminatedUnion("kind", [
   lighthouseAttackPathContextItemSchema,
   lighthouseScanContextItemSchema,
   lighthouseProviderContextItemSchema,
+  lighthouseAlertContextItemSchema,
 ]);
 
 export const lighthouseContextEnvelopeSchema = z.object({

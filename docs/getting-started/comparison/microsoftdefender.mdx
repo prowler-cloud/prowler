@@ -6,7 +6,7 @@ title: 'Microsoft Defender for Cloud'
 
 ---
 
-## **Overview**
+## Overview
 
 If you're using Microsoft Defender for Cloud to monitor your Azure infrastructure, Prowler can complement it with fully transparent, customizable scans across Azure, AWS, GCP, and Kubernetes. Prowler helps you validate policies, automate compliance, and gain deeper visibility—all from the CLI, API or our Prowler UI.
 
@@ -19,7 +19,7 @@ You can run Prowler alongside Defender for Cloud to:
 
 ---
 
-## **Why use Prowler with Defender for Cloud**
+## Why Use Prowler with Defender for Cloud
 
 Microsoft Defender for Cloud offers centralized dashboards, alerting, and some cross-cloud coverage. Prowler provides full transparency and control over what’s being checked and how those checks work—no vendor lock-in, no surprises.
 
@@ -32,11 +32,11 @@ Use them together to get:
 
 ---
 
-## **Quickstart**
+## Quickstart
 
 Here’s how to install Prowler and run a scan in your Azure account.
 
-### **1\. Install Prowler**
+### 1\. Install Prowler
 
 ```
 git clone https://github.com/prowler-cloud/prowler
@@ -44,7 +44,7 @@ cd prowler
 ./install.sh
 ```
 
-### **2\. Authenticate with Azure**
+### 2\. Authenticate with Azure
 
 Make sure you're signed in and select your subscription:
 
@@ -53,7 +53,7 @@ az login
 export AZURE_SUBSCRIPTION_ID=$(az account show --query id -o tsv)
 ```
 
-### **3\. Run a scan**
+### 3\. Run a Scan
 
 ```
 ./prowler -p Azure -f az-aks -f az-general
@@ -61,7 +61,7 @@ export AZURE_SUBSCRIPTION_ID=$(az account show --query id -o tsv)
 
 This will run checks focused on Azure Kubernetes Service (AKS) and general Azure best practices.
 
-### **4\. Review results**
+### 4\. Review Results
 
 ```
 cat output/prowler-output-*.json
@@ -72,7 +72,7 @@ You can export findings in JSON, CSV, JUnit, HTML, or AWS Security Hub–compati
 
 ---
 
-## **Compare capabilities**
+## Compare Capabilities
 
 | Feature | Microsoft Defender for Cloud | Prowler |
 | ----- | ----- | ----- |
@@ -86,7 +86,7 @@ You can export findings in JSON, CSV, JUnit, HTML, or AWS Security Hub–compati
 
 ---
 
-## **Common use cases**
+## Common Use Cases
 
 **✅ Validate policies**
  Run Prowler to confirm your Azure policies are configured as expected and compliant with frameworks like CIS or NIST.

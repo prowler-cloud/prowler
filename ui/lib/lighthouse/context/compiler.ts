@@ -13,18 +13,34 @@ import {
 } from "./schema";
 import { getApiLighthouseContextByteLength } from "./transport";
 
-const LIGHTHOUSE_CONTEXT_MAX_BYTES = 2 * 1024;
+const LIGHTHOUSE_CONTEXT_MAX_BYTES = 4 * 1024;
 
 export function prepareLighthouseContext(
   value: unknown,
 ): LighthouseContextEnvelope | undefined {
-  const result = lighthouseContextEnvelopeSchema.safeParse(value);
-  if (!result.success) return undefined;
+  // Only the wrapper is checked here; compileLighthouseContext validates each
+  // item so a single malformed one drops alone instead of voiding the send.
+  if (
+    typeof value !== "object" ||
+    value === null ||
+    !("items" in value) ||
+    !Array.isArray(value.items)
+  ) {
+    return undefined;
+  }
 
-  const scopeKey = result.data.items[0]?.scopeKey;
-  return scopeKey
-    ? compileLighthouseContext(result.data.items, scopeKey)
-    : undefined;
+  const scopeKey = findCandidateScopeKey(value.items);
+  return scopeKey ? compileLighthouseContext(value.items, scopeKey) : undefined;
+}
+
+function findCandidateScopeKey(candidates: unknown[]): string | undefined {
+  // Scope comes from the first item that survives validation — a malformed
+  // item carrying a foreign scopeKey must not decide the compiled scope.
+  for (const candidate of candidates) {
+    const result = lighthouseContextItemSchema.safeParse(candidate);
+    if (result.success) return result.data.scopeKey;
+  }
+  return undefined;
 }
 
 export function compileLighthouseContext(
@@ -36,7 +52,9 @@ export function compileLighthouseContext(
   for (const candidate of candidates) {
     if (hasDifferentScope(candidate, scopeKey)) continue;
     const result = lighthouseContextItemSchema.safeParse(candidate);
-    if (!result.success) return undefined;
+    // A malformed candidate (a null in an optional field, or a kind this
+    // build doesn't know) drops alone instead of voiding the whole envelope.
+    if (!result.success) continue;
     parsedItems.push(result.data);
   }
 
@@ -63,10 +81,24 @@ function hasDifferentScope(candidate: unknown, scopeKey: string): boolean {
   );
 }
 
+// Eviction drops items from the end, so automatic items rank by how much
+// posture signal they carry: scores and summaries outlive provider labels.
+const AUTOMATIC_KIND_ORDER: Record<LighthouseContextItem["kind"], number> = {
+  [LIGHTHOUSE_CONTEXT_KIND.PAGE]: 0,
+  [LIGHTHOUSE_CONTEXT_KIND.COMPLIANCE]: 1,
+  [LIGHTHOUSE_CONTEXT_KIND.FINDING]: 2,
+  [LIGHTHOUSE_CONTEXT_KIND.ATTACK_PATH]: 3,
+  [LIGHTHOUSE_CONTEXT_KIND.RESOURCE]: 4,
+  [LIGHTHOUSE_CONTEXT_KIND.SCAN]: 5,
+  [LIGHTHOUSE_CONTEXT_KIND.ALERT]: 6,
+  [LIGHTHOUSE_CONTEXT_KIND.PROVIDER]: 7,
+};
+
 function getItemOrder(item: LighthouseContextItem): number {
   if (item.kind === LIGHTHOUSE_CONTEXT_KIND.PAGE) return 0;
   if (item.source === LIGHTHOUSE_CONTEXT_SOURCE.FOCUSED) return 1;
-  return item.source === LIGHTHOUSE_CONTEXT_SOURCE.AUTOMATIC ? 3 : 2;
+  if (item.source !== LIGHTHOUSE_CONTEXT_SOURCE.AUTOMATIC) return 2;
+  return 3 + AUTOMATIC_KIND_ORDER[item.kind];
 }
 
 function buildEnvelopeWithinLimits(
