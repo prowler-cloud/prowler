@@ -176,15 +176,16 @@ class ECS(AWSService):
                         .get("mode", ""),
                     )
                 )
+            pid_mode = response["taskDefinition"].get("pidMode", "")
+            registered_at = response["taskDefinition"].get("registeredAt")
+            tags = response.get("tags")
+            network_mode = response["taskDefinition"].get("networkMode", "bridge")
+
             task_definition.container_definitions = container_definitions
-            task_definition.pid_mode = response["taskDefinition"].get("pidMode", "")
-            task_definition.registered_at = response["taskDefinition"].get(
-                "registeredAt"
-            )
-            task_definition.tags = response.get("tags")
-            task_definition.network_mode = response["taskDefinition"].get(
-                "networkMode", "bridge"
-            )
+            task_definition.pid_mode = pid_mode
+            task_definition.registered_at = registered_at
+            task_definition.tags = tags
+            task_definition.network_mode = network_mode
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

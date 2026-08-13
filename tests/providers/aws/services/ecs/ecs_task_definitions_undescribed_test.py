@@ -2,9 +2,10 @@ from importlib import import_module
 from types import SimpleNamespace
 from unittest.mock import patch
 
+import botocore
 import pytest
 
-from prowler.providers.aws.services.ecs.ecs_service import TaskDefinition
+from prowler.providers.aws.services.ecs.ecs_service import ECS, TaskDefinition
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
@@ -17,6 +18,31 @@ TASK_ARN = (
     f"arn:aws:ecs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:"
     f"task-definition/{TASK_NAME}:{TASK_REVISION}"
 )
+make_api_call = botocore.client.BaseClient._make_api_call
+
+
+def _mock_ecs_api(describe_result):
+    def mock_make_api_call(self, operation_name, kwargs):
+        if operation_name == "ListTaskDefinitions":
+            return {"taskDefinitionArns": [TASK_ARN]}
+        if operation_name == "DescribeTaskDefinition":
+            if isinstance(describe_result, Exception):
+                raise describe_result
+            return describe_result
+        if operation_name == "ListClusters":
+            return {"clusterArns": []}
+        return make_api_call(self, operation_name, kwargs)
+
+    return mock_make_api_call
+
+
+def _collect_task_definition(describe_result):
+    aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+    with patch(
+        "botocore.client.BaseClient._make_api_call",
+        new=_mock_ecs_api(describe_result),
+    ):
+        return ECS(aws_provider).task_definitions[TASK_ARN]
 
 
 def _undescribed_ecs_client():
@@ -32,6 +58,56 @@ def _undescribed_ecs_client():
         audit_config={},
         task_definitions={TASK_ARN: task_definition},
     )
+
+
+def test_failed_describe_leaves_task_definition_undescribed():
+    error = botocore.exceptions.ClientError(
+        {"Error": {"Code": "ThrottlingException", "Message": "rate exceeded"}},
+        "DescribeTaskDefinition",
+    )
+
+    task_definition = _collect_task_definition(error)
+
+    assert task_definition.container_definitions is None
+    assert task_definition.pid_mode is None
+    assert task_definition.network_mode is None
+
+
+def test_successful_describe_preserves_empty_container_definitions():
+    task_definition = _collect_task_definition(
+        {
+            "taskDefinition": {
+                "containerDefinitions": [],
+                "pidMode": "task",
+                "networkMode": "awsvpc",
+            },
+            "tags": [],
+        }
+    )
+
+    assert task_definition.container_definitions == []
+    assert task_definition.pid_mode == "task"
+    assert task_definition.network_mode == "awsvpc"
+
+
+def test_partial_parse_leaves_task_definition_undescribed():
+    task_definition = _collect_task_definition(
+        {
+            "taskDefinition": {
+                "containerDefinitions": [
+                    {"name": "valid-container"},
+                    {"privileged": False},
+                ],
+                "pidMode": "host",
+                "networkMode": "host",
+            },
+            "tags": [],
+        }
+    )
+
+    assert task_definition.container_definitions is None
+    assert task_definition.pid_mode is None
+    assert task_definition.network_mode is None
 
 
 @pytest.mark.parametrize(
