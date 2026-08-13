@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import sys
+import threading
 from os import environ
 
 from colorama import Fore, Style
@@ -10,11 +11,16 @@ from colorama import init as colorama_init
 from prowler.config.config import (
     csv_file_suffix,
     get_available_compliance_frameworks,
+    get_available_update,
     html_file_suffix,
     json_asff_file_suffix,
     json_ocsf_file_suffix,
 )
-from prowler.lib.banner import print_banner
+from prowler.lib.banner import (
+    print_banner,
+    print_prowler_cloud_banner,
+    print_update_notice,
+)
 from prowler.lib.check.check import (
     exclude_checks_to_run,
     exclude_services_to_run,
@@ -117,6 +123,18 @@ def prowler():
 
     if args.no_color:
         colorama_init(strip=True)
+
+    # Check in the background whether a newer Prowler release is available;
+    # the result is printed at the end of the scan so the check never adds
+    # latency. Skipped with --no-banner/--only-logs and via
+    # PROWLER_NO_VERSION_CHECK/DO_NOT_TRACK (handled in get_available_update).
+    available_update = {}
+    update_check_thread = threading.Thread(
+        target=lambda: available_update.update(latest=get_available_update()),
+        daemon=True,
+    )
+    if not args.no_banner and not args.only_logs:
+        update_check_thread.start()
 
     if not args.no_banner:
         legend = args.verbose or getattr(args, "fixer", None)
@@ -718,6 +736,15 @@ def prowler():
                 print(
                     f"\nDetailed compliance results are in {Fore.YELLOW}{output_options.output_directory}/compliance/{Style.RESET_ALL}\n"
                 )
+
+    # Promote Prowler Cloud as the last thing the user sees after the results,
+    # preceded by an update notice when a newer release is available
+    if not args.no_banner and not args.only_logs:
+        if update_check_thread.is_alive():
+            update_check_thread.join(timeout=2)
+        if available_update.get("latest"):
+            print_update_notice(available_update["latest"])
+        print_prowler_cloud_banner()
 
     # If custom checks were passed, remove the modules
     if checks_folder:
