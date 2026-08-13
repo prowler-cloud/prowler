@@ -149,9 +149,8 @@ class ECS(AWSService):
                     "TAGS",
                 ],
             )
-            container_definitions = response["taskDefinition"]["containerDefinitions"]
-            task_definition.container_definitions = []
-            for container in container_definitions:
+            container_definitions = []
+            for container in response["taskDefinition"]["containerDefinitions"]:
                 environment = []
                 if "environment" in container:
                     for env_var in container["environment"]:
@@ -160,7 +159,7 @@ class ECS(AWSService):
                                 name=env_var["name"], value=env_var["value"]
                             )
                         )
-                task_definition.container_definitions.append(
+                container_definitions.append(
                     ContainerDefinition(
                         name=container["name"],
                         privileged=container.get("privileged", False),
@@ -177,6 +176,7 @@ class ECS(AWSService):
                         .get("mode", ""),
                     )
                 )
+            task_definition.container_definitions = container_definitions
             task_definition.pid_mode = response["taskDefinition"].get("pidMode", "")
             task_definition.registered_at = response["taskDefinition"].get(
                 "registeredAt"
