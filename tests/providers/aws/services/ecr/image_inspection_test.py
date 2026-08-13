@@ -1,5 +1,8 @@
+import gzip
 import json
 import random
+import tarfile
+from io import BytesIO
 from unittest.mock import patch
 
 import botocore
@@ -193,11 +196,10 @@ class Test_ImageInspector:
 
     @mock_aws
     def test_fetch_image_scan_data_member_over_remaining_budget_is_truncated(self):
-        """A file exceeding the remaining per-image budget is not read.
+        """A layer exceeding the remaining stream budget is truncated.
 
-        The decompressed total must never overshoot MAX_TOTAL_BYTES_PER_IMAGE,
-        so a member larger than the remaining allowance stops the layer instead
-        of being read.
+        Tar headers and padding consume the authoritative decompressed-byte
+        budget before member payloads are exposed for scanning.
         """
         MANIFESTS_BY_DIGEST[IMAGE_DIGEST] = SIMPLE_MANIFEST
         BLOBS_BY_DIGEST[CONFIG_DIGEST] = json.dumps(CONFIG_JSON).encode()
@@ -218,11 +220,8 @@ class Test_ImageInspector:
             )
 
         assert scan_data is not None
-        # first.txt (100 bytes) fits; second.txt (5000) exceeds the remaining
-        # budget and is not read.
-        assert [f.path for f in scan_data.files] == ["app/first.txt"]
+        assert scan_data.files == []
         assert scan_data.truncated is True
-        assert sum(len(f.content) for f in scan_data.files) <= 1000
 
     @mock_aws
     def test_fetch_image_scan_data_oversized_members_count_toward_budget(self):
@@ -261,6 +260,39 @@ class Test_ImageInspector:
         # The oversized members exhaust the 1000-byte budget after ~3 of them,
         # so the loop stops before ever reaching app/reachable.txt. If skipped
         # members were not counted, reachable.txt would be scanned.
+        assert scan_data.files == []
+        assert scan_data.truncated is True
+
+    @mock_aws
+    def test_fetch_image_scan_data_tar_over_stream_budget_is_truncated(self):
+        """Tar headers, padding, and non-files consume the image byte budget."""
+        MANIFESTS_BY_DIGEST[IMAGE_DIGEST] = SIMPLE_MANIFEST
+        BLOBS_BY_DIGEST[CONFIG_DIGEST] = json.dumps(CONFIG_JSON).encode()
+        layer = BytesIO()
+        with tarfile.open(fileobj=layer, mode="w") as archive:
+            for index in range(20):
+                directory = tarfile.TarInfo(f"metadata-{index}/")
+                directory.type = tarfile.DIRTYPE
+                archive.addfile(directory)
+            content = b"x"
+            member = tarfile.TarInfo("app/reachable.txt")
+            member.size = len(content)
+            archive.addfile(member, BytesIO(content))
+        BLOBS_BY_DIGEST[LAYER_DIGEST] = gzip.compress(layer.getvalue())
+
+        ecr_client = client("ecr", region_name=AWS_REGION_EU_WEST_1)
+        with (
+            patch(_REQUESTS_GET, new=mock_requests_get),
+            patch(
+                "prowler.providers.aws.services.ecr.image_inspection.MAX_TOTAL_BYTES_PER_IMAGE",
+                10 * 1024 - 1,
+            ),
+        ):
+            scan_data = ImageInspector().fetch_image_scan_data(
+                ecr_client, AWS_ACCOUNT_NUMBER, REPO_NAME, IMAGE_DIGEST
+            )
+
+        assert scan_data is not None
         assert scan_data.files == []
         assert scan_data.truncated is True
 

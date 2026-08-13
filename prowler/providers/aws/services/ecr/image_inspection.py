@@ -1,3 +1,4 @@
+import gzip
 import tarfile
 from contextlib import contextmanager
 from json import loads
@@ -32,6 +33,10 @@ class _LayerTooLargeError(Exception):
     """Raised when a streamed layer exceeds MAX_LAYER_DOWNLOAD_BYTES."""
 
 
+class _ImageTooLargeError(Exception):
+    """Raised when decompressed image streams exceed their shared budget."""
+
+
 class _CappedLayerReader:
     """A minimal read-only file object that caps the bytes it will yield.
 
@@ -62,6 +67,36 @@ class _CappedLayerReader:
         self._remaining -= len(chunk)
         if self._remaining < 0:
             raise _LayerTooLargeError()
+        return chunk
+
+
+class _DecompressedByteBudget:
+    """Track every decompressed byte consumed across an image's tar streams."""
+
+    def __init__(self, max_bytes: int):
+        """Set the shared decompressed-byte allowance."""
+        self.remaining = max_bytes
+
+    def wrap(self, raw):
+        """Return a reader that charges bytes consumed from ``raw``."""
+        return _BudgetedReader(raw, self)
+
+
+class _BudgetedReader:
+    """Charge all stream reads against a shared decompressed-byte budget."""
+
+    def __init__(self, raw, budget: _DecompressedByteBudget):
+        self._raw = raw
+        self._budget = budget
+
+    def read(self, size: int = -1) -> bytes:
+        """Read without allowing the shared budget to be exceeded."""
+        if size is None or size < 0:
+            size = self._budget.remaining + 1
+        chunk = self._raw.read(min(size, self._budget.remaining + 1))
+        self._budget.remaining -= len(chunk)
+        if self._budget.remaining < 0:
+            raise _ImageTooLargeError()
         return chunk
 
 
@@ -154,12 +189,9 @@ class ImageInspector:
                     truncated = True
 
         files = []
-        total_bytes = 0
+        decompressed_budget = _DecompressedByteBudget(MAX_TOTAL_BYTES_PER_IMAGE)
         for layer in manifest.get("layers", []):
-            if (
-                len(files) >= MAX_FILES_PER_IMAGE
-                or total_bytes >= MAX_TOTAL_BYTES_PER_IMAGE
-            ):
+            if len(files) >= MAX_FILES_PER_IMAGE or decompressed_budget.remaining <= 0:
                 truncated = True
                 break
 
@@ -176,6 +208,7 @@ class ImageInspector:
                     repository_name,
                     layer_digest,
                     layer.get("mediaType", ""),
+                    decompressed_budget,
                 ) as tar_stream:
                     if tar_stream is None:
                         truncated = True
@@ -186,15 +219,6 @@ class ImageInspector:
                             break
                         if not member.isfile():
                             continue
-                        # A streaming tar reader must decompress each member's
-                        # bytes just to advance past it, so every regular member
-                        # counts against the per-image budget whether or not we
-                        # keep it. Stop before the decompressed total would
-                        # exceed the cap, so it is a true upper bound.
-                        if total_bytes + member.size > MAX_TOTAL_BYTES_PER_IMAGE:
-                            truncated = True
-                            break
-                        total_bytes += member.size
                         base_name = member.name.rsplit("/", 1)[-1]
                         if base_name.startswith(".wh."):
                             # Whiteout marker: a deletion recorded by the union
@@ -226,6 +250,9 @@ class ImageInspector:
                 # the partial coverage rather than buffer unbounded data.
                 truncated = True
                 continue
+            except _ImageTooLargeError:
+                truncated = True
+                break
 
         return ImageScanData(env=env, history=history, files=files, truncated=truncated)
 
@@ -390,6 +417,7 @@ class ImageInspector:
         repository_name,
         layer_digest,
         media_type: str,
+        decompressed_budget: _DecompressedByteBudget,
     ):
         """Yield an open TarFile for one layer, streamed from the download.
 
@@ -409,14 +437,11 @@ class ImageInspector:
             streamed layer's compressed bytes exceed `MAX_LAYER_DOWNLOAD_BYTES`.
         """
         if media_type.endswith("gzip"):
-            mode = "r|gz"
-            decompress_zstd = False
+            decompress = "gzip"
         elif media_type.endswith("zstd"):
-            mode = "r|"
-            decompress_zstd = True
+            decompress = "zstd"
         elif media_type.endswith("tar"):
-            mode = "r|"
-            decompress_zstd = False
+            decompress = None
         else:
             yield None
             return
@@ -445,9 +470,15 @@ class ImageInspector:
                 # decompress that capped stream incrementally so the decompressed
                 # data is never materialized in full.
                 source = _CappedLayerReader(http_response.raw, MAX_LAYER_DOWNLOAD_BYTES)
-                if decompress_zstd:
+                if decompress == "gzip":
+                    source = gzip.GzipFile(fileobj=source)
+                elif decompress == "zstd":
                     source = zstandard.ZstdDecompressor().stream_reader(source)
-                tar_stream = tarfile.open(fileobj=source, mode=mode)
+                source = decompressed_budget.wrap(source)
+                tar_stream = tarfile.open(fileobj=source, mode="r|")
+            except (_LayerTooLargeError, _ImageTooLargeError):
+                http_response.close()
+                raise
             except Exception:
                 http_response.close()
                 raise
