@@ -572,8 +572,52 @@ class Test_ECR_Service:
             results = ecr._get_image_scan_data()
             first_result = next(results)
 
-        assert first_result[:2] == (
-            repositories[0],
-            repositories[0].images_details[-1],
+        assert first_result[0] == repositories[0]
+        assert (
+            first_result[1].latest_digest
+            == repositories[0].images_details[-1].latest_digest
         )
         assert executor.submit.call_count == 4
+
+    @mock_aws
+    def test_get_scan_target_image_ignores_stale_scanned_image(self):
+        """Secret scanning selects a newer image absent from scan findings."""
+        ecr_client_boto = client("ecr", region_name=AWS_REGION_EU_WEST_1)
+        ecr_client_boto.create_repository(
+            repositoryName=repo_name,
+            imageScanningConfiguration={"scanOnPush": True},
+        )
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        ecr = ECR(aws_provider)
+        repository = ecr.registries[AWS_REGION_EU_WEST_1].repositories[0]
+        older_scanned_image = repository.images_details[0]
+        repository.images_details = [older_scanned_image]
+
+        target = ecr._get_scan_target_image(repository)
+
+        assert target.latest_tag == "test-tag4"
+        assert target.image_pushed_at > older_scanned_image.image_pushed_at
+
+    @mock_aws
+    def test_get_scan_target_image_lookup_failure_rejects_stale_image(self):
+        """A failed authoritative lookup does not select cached scan metadata."""
+        ecr_client_boto = client("ecr", region_name=AWS_REGION_EU_WEST_1)
+        ecr_client_boto.create_repository(
+            repositoryName=repo_name,
+            imageScanningConfiguration={"scanOnPush": True},
+        )
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        ecr = ECR(aws_provider)
+        repository = ecr.registries[AWS_REGION_EU_WEST_1].repositories[0]
+        repository.images_details = [repository.images_details[0]]
+
+        with patch.object(
+            ecr.regional_clients[AWS_REGION_EU_WEST_1],
+            "get_paginator",
+            side_effect=RuntimeError("authoritative lookup failed"),
+        ):
+            target = ecr._get_scan_target_image(repository)
+            scan_results = list(ecr._get_image_scan_data())
+
+        assert target is None
+        assert scan_results == []

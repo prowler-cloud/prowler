@@ -432,12 +432,10 @@ class ECR(AWSService):
             The latest scannable ImageDetails, or None if the repository has
             no scannable image or the lookup failed.
         """
-        if repository.images_details:
-            return repository.images_details[-1]
+        latest = repository.images_details[-1] if repository.images_details else None
         try:
             client = self.regional_clients[repository.region]
             describe_images_paginator = client.get_paginator("describe_images")
-            latest = None
             for page in describe_images_paginator.paginate(
                 registryId=self.registries[repository.region].id,
                 repositoryName=repository.name,
