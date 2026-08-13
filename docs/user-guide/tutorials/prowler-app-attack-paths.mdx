@@ -16,8 +16,7 @@ Attack Paths analyzes relationships between cloud resources, permissions, and se
 By mapping these relationships as a graph, Attack Paths reveals risks that individual security checks cannot detect on their own, such as an IAM role that can escalate its own permissions, or a chain of policies that grants unintended access to sensitive resources.
 
 <Note>
-  Attack Paths is currently available for **AWS** providers. Support for
-  additional providers is planned.
+  Attack Paths is currently available for **AWS** providers. Support for additional providers is planned.
 </Note>
 
 ## Prerequisites
@@ -29,13 +28,12 @@ The following prerequisites are required for Attack Paths:
 
 ## How Attack Paths Scans Work
 
-Attack Paths scans are generated automatically when a security scan runs on an AWS provider. Each completed scan produces graph data that maps relationships between IAM principals, policies, trust configurations, and other resources.
+Attack Paths scans are generated automatically when a security scan runs on an AWS provider. When a scan produces graph data, it maps relationships between IAM principals, policies, trust configurations, and other resources. A scan can complete without producing graph data.
 
-Once the scan finishes and graph data is ready, the scan appears in the Attack Paths scan table with a **Completed** status and a check in the **Graph** column. Scans without graph data remain visible but cannot be selected. If a new scan cycle starts after graph data is available, the previous cycle remains available while the new scan runs.
+When graph data is ready, the scan appears in the Attack Paths scan table with a check in the **Graph** column and can be selected regardless of its current status. Scans without graph data remain visible but cannot be selected. If a new scan cycle starts after graph data is available, the previous cycle remains available while the new scan runs.
 
 <Note>
-  Prowler Cloud and Prowler Private Cloud scan configured providers every **24
-  hours** by default, so Attack Paths data stays up to date automatically.
+  Prowler Cloud and Prowler Private Cloud scan configured providers every **24 hours** by default, so Attack Paths data stays up to date automatically.
 </Note>
 
 ## Accessing Attack Paths
@@ -75,8 +73,7 @@ To select a scan for analysis, click any row with a check in the **Graph** colum
 />
 
 <Note>
-  Only scans with graph data can be selected. Disabled rows include a tooltip
-  that explains why the graph is not available yet.
+  Only scans with graph data can be selected. Disabled rows include a tooltip that explains why the graph is not available yet.
 </Note>
 
 ## Choosing a Query
@@ -97,9 +94,7 @@ To choose a query, click the dropdown and select from the available options. Eac
 Once selected, a description panel appears below the dropdown with more context about the query.
 
 <Note>
-  In Prowler Cloud and Prowler Private Cloud, the query selector hides queries
-  confirmed empty for the selected scan, so only queries that return data remain
-  visible. See [Active Queries](/user-guide/tutorials/prowler-app-attack-paths-active-queries).
+  In Prowler Cloud and Prowler Private Cloud, the query selector hides queries confirmed empty for the selected scan, so only queries that return data remain visible. See [Active Queries](/user-guide/tutorials/prowler-app-attack-paths-active-queries).
 </Note>
 
 ## Configuring Query Parameters
@@ -192,11 +187,7 @@ Custom queries traverse the same Cartography graph the built-in queries use. Nod
 For the complete reference, including the graph model, list-typed and JSON-encoded properties, performance guidance, and openCypher compatibility rules, see [Attack Paths Queries](/developer-guide/attack-paths-queries) in the Developer Guide.
 
 <Note>
-  AI assistants connected through Prowler MCP Server can fetch the exact
-  Cartography schema for the active scan via the
-  `prowler_get_attack_paths_cartography_schema` tool. This guarantees that
-  generated queries match the schema version pinned by the running Prowler
-  release.
+  AI assistants connected through Prowler MCP Server can fetch the exact Cartography schema for the active scan via the `prowler_get_attack_paths_cartography_schema` tool. This guarantees that generated queries match the schema version pinned by the running Prowler release.
 </Note>
 
 ## Executing a Query
@@ -309,8 +300,7 @@ The toolbar in the top-right corner of the graph provides:
 - **Fullscreen:** Open the graph in a full-size modal
 
 <Note>
-  Use **Ctrl + Scroll** (or **Cmd + Scroll** on macOS) to zoom directly within
-  the graph area.
+  Use **Ctrl + Scroll** (or **Cmd + Scroll** on macOS) to zoom directly within the graph area.
 </Note>
 
 ## Viewing Finding Details
