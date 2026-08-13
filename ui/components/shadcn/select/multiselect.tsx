@@ -416,7 +416,7 @@ export function MultiSelectItem({
       keywords={keywords}
       data-slot="multiselect-item"
       className={cn(
-        "focus:bg-accent focus:text-accent-foreground [&_svg:not([class*='text-'])]:text-bg-button-secondary text-bg-button-secondary data-[state=checked]:bg-button-tertiary/10 data-[state=checked]:text-text-neutral-primary data-[state=checked]:hover:bg-button-tertiary/15 data-[state=checked]:focus:bg-button-tertiary/15 data-[selected=true]:data-[state=checked]:bg-button-tertiary/15 my-1 flex w-full cursor-pointer items-center gap-3 overflow-hidden rounded-lg px-4 py-3 text-sm outline-hidden select-none first:mt-0 last:mb-0 hover:bg-slate-200 data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 dark:hover:bg-slate-700/50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-5",
+        "focus:bg-border-neutral-secondary focus:text-text-neutral-primary [&_svg:not([class*='text-'])]:text-bg-button-secondary text-bg-button-secondary data-[state=checked]:bg-button-tertiary/10 data-[state=checked]:text-text-neutral-primary data-[state=checked]:hover:bg-button-tertiary/15 data-[state=checked]:focus:bg-button-tertiary/15 data-[selected=true]:data-[state=checked]:bg-button-tertiary/15 hover:bg-border-neutral-secondary my-1 flex w-full cursor-pointer items-center gap-3 overflow-hidden rounded-lg px-4 py-3 text-sm outline-hidden select-none first:mt-0 last:mb-0 data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-5",
         disabled && "cursor-not-allowed opacity-50 hover:bg-transparent",
         className,
       )}
@@ -489,7 +489,7 @@ export function MultiSelectSelectAll({
         type="button"
         data-slot="multiselect-select-all"
         className={cn(
-          "focus:bg-accent focus:text-accent-foreground [&_svg:not([class*='text-'])]:text-bg-button-secondary text-bg-button-secondary flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg px-4 py-3 text-sm outline-hidden select-none hover:bg-slate-200 dark:hover:bg-slate-700/50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-5",
+          "focus:bg-border-neutral-secondary focus:text-text-neutral-primary [&_svg:not([class*='text-'])]:text-bg-button-secondary text-bg-button-secondary hover:bg-border-neutral-secondary flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg px-4 py-3 text-sm outline-hidden select-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-5",
           hasSelections && "text-destructive hover:text-destructive",
           !hasSelections && "cursor-not-allowed opacity-50",
           "font-semibold",
@@ -518,7 +518,7 @@ export function MultiSelectSelectAll({
       type="button"
       data-slot="multiselect-select-all"
       className={cn(
-        "focus:bg-accent focus:text-accent-foreground [&_svg:not([class*='text-'])]:text-bg-button-secondary text-bg-button-secondary flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg px-4 py-3 text-sm outline-hidden select-none hover:bg-slate-200 dark:hover:bg-slate-700/50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-5",
+        "focus:bg-border-neutral-secondary focus:text-text-neutral-primary [&_svg:not([class*='text-'])]:text-bg-button-secondary text-bg-button-secondary hover:bg-border-neutral-secondary flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg px-4 py-3 text-sm outline-hidden select-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-5",
         allSelected && "cursor-not-allowed opacity-50",
         "font-semibold",
         className,

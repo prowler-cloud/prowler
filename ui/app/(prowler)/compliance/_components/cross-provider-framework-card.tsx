@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 
+import { WatchlistToggle } from "@/components/compliance/watchlist/watchlist-toggle";
 import { ProviderTypeIcon } from "@/components/icons/providers-badge/provider-type-icon";
 import { Progress } from "@/components/shadcn/progress";
 import {
@@ -9,14 +10,25 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
+import { formatComplianceFrameworkTitle } from "@/lib/compliance/framework-title";
 import type { ScoreColorVariant } from "@/lib/compliance/score-utils";
 import { cn } from "@/lib/utils";
 import { PROVIDER_DISPLAY_NAMES } from "@/types/providers";
 
 import { buildCrossProviderDetailHref } from "../_lib/cross-provider-frameworks";
+import type { UniversalWatchlistState } from "../_lib/universal-watchlist";
 import type { CrossProviderFrameworkSummary } from "../_types";
 
 import { AggregatedFrameworkCard } from "./aggregated-framework-card";
+
+interface CrossProviderFrameworkCardProps
+  extends CrossProviderFrameworkSummary {
+  /** Resolved watchlist state of this universal framework's single card
+   *  (see `resolveUniversalWatchlistState`). */
+  watchlist?: UniversalWatchlistState;
+  /** MANAGE_SCANS. Without it the toggle is not rendered. */
+  canManageWatchlist?: boolean;
+}
 
 export const CrossProviderFrameworkCard = ({
   complianceId,
@@ -28,11 +40,13 @@ export const CrossProviderFrameworkCard = ({
   requirementsManual,
   totalRequirements,
   providerBreakdown,
-}: CrossProviderFrameworkSummary) => {
+  watchlist,
+  canManageWatchlist = false,
+}: CrossProviderFrameworkCardProps) => {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const formattedTitle = `${title.split("-").join(" ")}${version ? ` - ${version}` : ""}`;
+  const formattedTitle = formatComplianceFrameworkTitle(title, version);
 
   const ratingPercentage =
     totalRequirements > 0
@@ -62,6 +76,15 @@ export const CrossProviderFrameworkCard = ({
       ariaLabel={formattedTitle}
       onActivate={navigateToDetail}
       tooltip={description}
+      actions={
+        watchlist?.target && canManageWatchlist ? (
+          <WatchlistToggle
+            target={watchlist.target}
+            state={watchlist.state}
+            entryId={watchlist.entryId}
+          />
+        ) : undefined
+      }
       subtitle={
         <small className="truncate">
           <span className="mr-1 text-xs font-semibold">

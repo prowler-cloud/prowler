@@ -10,10 +10,12 @@ from allauth.socialaccount import app_settings as socialaccount_app_settings
 from allauth.socialaccount.internal.flows.login import complete_login
 from allauth.socialaccount.models import SocialAccount, SocialLogin
 from api.adapters import ProwlerSocialAccountAdapter
-from api.db_router import MainRouter
+from api.db_router import MainRouter, get_write_db_alias
 from api.models import Invitation, Membership, SAMLConfiguration, Tenant
 from django.contrib.auth import get_user_model
 from django.core import mail
+from django.db import connections
+from django.db import router as django_router
 
 User = get_user_model()
 
@@ -107,6 +109,110 @@ def _verify_local_email(user):
         verified=True,
         primary=True,
     )
+
+
+def test_social_account_name_falls_back_to_login_for_blank_name():
+    adapter = ProwlerSocialAccountAdapter()
+
+    name = adapter._get_social_account_name(
+        {"name": "   ", "login": "octocat"},
+        "verified@example.com",
+    )
+
+    assert name == "octocat"
+
+
+@pytest.mark.parametrize("provider_name", [None, "", "   ", 123, ["name"]])
+def test_social_account_name_ignores_unusable_provider_names(provider_name):
+    adapter = ProwlerSocialAccountAdapter()
+
+    name = adapter._get_social_account_name(
+        {"name": provider_name, "login": "octocat"},
+        "verified@example.com",
+    )
+
+    assert name == "octocat"
+
+
+def test_social_account_name_uses_login_when_name_is_missing():
+    adapter = ProwlerSocialAccountAdapter()
+
+    name = adapter._get_social_account_name(
+        {"login": "octocat"},
+        "verified@example.com",
+    )
+
+    assert name == "octocat"
+
+
+def test_social_account_name_falls_back_to_username_then_email():
+    adapter = ProwlerSocialAccountAdapter()
+
+    username_name = adapter._get_social_account_name(
+        {"name": "ab", "login": None, "username": "  monalisa  "},
+        "verified@example.com",
+    )
+    email_name = adapter._get_social_account_name({}, "  verified@example.com  ")
+
+    assert username_name == "monalisa"
+    assert email_name == "verified@example.com"
+
+
+def test_social_account_name_trims_and_limits_provider_name():
+    adapter = ProwlerSocialAccountAdapter()
+    max_length = User._meta.get_field("name").max_length
+
+    trimmed_name = adapter._get_social_account_name(
+        {"name": "  Ada Lovelace  "},
+        "verified@example.com",
+    )
+    limited_name = adapter._get_social_account_name(
+        {"name": "a" * (max_length + 1)},
+        "verified@example.com",
+    )
+
+    assert trimmed_name == "Ada Lovelace"
+    assert limited_name == "a" * max_length
+
+
+def test_social_account_name_rejects_missing_identity():
+    adapter = ProwlerSocialAccountAdapter()
+
+    with pytest.raises(
+        ValueError,
+        match="Social account does not provide a valid user identity",
+    ):
+        adapter._get_social_account_name({}, "")
+
+
+def test_save_user_applies_normalized_social_account_name(rf):
+    adapter = ProwlerSocialAccountAdapter()
+    request = rf.post("/")
+    request.session = {}
+    sociallogin = MagicMock(spec=SocialLogin)
+    sociallogin.provider = MagicMock()
+    sociallogin.provider.id = "github"
+    sociallogin.account = MagicMock()
+    sociallogin.account.extra_data = {"name": None, "login": "  octocat  "}
+    user = User(email="verified@example.com")
+    user.save = MagicMock()
+    invitation = SimpleNamespace(tenant_id="tenant-id")
+
+    with (
+        patch("api.adapters.super") as mock_super,
+        patch("api.adapters.transaction.atomic"),
+        patch("api.adapters.write_db_alias"),
+        patch.object(adapter, "_get_invitation_token", return_value="token"),
+        patch(
+            "api.adapters.accept_invitation_for_user",
+            return_value=(invitation, True),
+        ),
+    ):
+        mock_super.return_value.save_user.return_value = user
+        saved_user = adapter.save_user(request, sociallogin)
+
+    assert saved_user.name == "octocat"
+    assert request.prowler_invitation_token == "token"
 
 
 @pytest.mark.django_db
@@ -382,6 +488,65 @@ class TestProwlerSocialAccountAdapter:
             role=Membership.RoleChoices.MEMBER,
         ).exists()
 
+    def test_save_user_routes_initial_allauth_write_to_admin_and_resets_on_error(
+        self, rf
+    ):
+        adapter = ProwlerSocialAccountAdapter()
+        request = rf.get("/")
+        request.session = {}
+        sociallogin = _oauth_sociallogin(
+            User(name="Frank", email="frank-routing@example.com")
+        )
+
+        def fail_after_checking_write_route(*_args, **_kwargs):
+            assert (
+                MainRouter().db_for_write(User, instance=sociallogin.user)
+                == MainRouter.admin_db
+            )
+            raise RuntimeError("Stop after checking the write route.")
+
+        with (
+            patch("api.adapters.super") as mock_super,
+            patch("api.adapters.transaction.atomic"),
+            patch.object(MainRouter, "admin_db", "admin"),
+            pytest.raises(RuntimeError, match="Stop after checking the write route"),
+        ):
+            mock_super.return_value.save_user.side_effect = (
+                fail_after_checking_write_route
+            )
+            adapter.save_user(request, sociallogin)
+
+        assert get_write_db_alias() is None
+
+    def test_save_user_rolls_back_all_signup_records_on_downstream_error(self, rf):
+        adapter = ProwlerSocialAccountAdapter()
+        request = rf.post("/")
+        request.session = {}
+        email = "frank-rollback@example.com"
+        sociallogin = _real_oauth_sociallogin(
+            User(name="Frank", email=email),
+            uid="frank-rollback-google-account",
+        )
+        tenants_before = Tenant.objects.count()
+
+        with (
+            patch(
+                "api.adapters.rls_transaction",
+                side_effect=RuntimeError("Simulated downstream failure."),
+            ),
+            pytest.raises(RuntimeError, match="Simulated downstream failure"),
+        ):
+            adapter.save_user(request, sociallogin)
+
+        assert not User.objects.filter(email=email).exists()
+        assert not SocialAccount.objects.filter(
+            provider="google",
+            uid="frank-rollback-google-account",
+        ).exists()
+        assert not EmailAddress.objects.filter(email=email).exists()
+        assert Tenant.objects.count() == tenants_before
+        assert get_write_db_alias() is None
+
     def test_save_user_saml_sets_session_flag(self, rf):
         adapter = ProwlerSocialAccountAdapter()
         request = rf.get("/")
@@ -402,3 +567,104 @@ class TestProwlerSocialAccountAdapter:
                     mock_super.return_value.save_user.return_value = mock_user
                     adapter.save_user(request, sociallogin)
                     assert request.session["saml_user_created"] == "123"
+
+
+@pytest.mark.requires_test_admin_alias
+@pytest.mark.django_db(transaction=True, databases=["default", "admin"])
+class TestProwlerSocialAccountAdapterMultiDatabase:
+    @staticmethod
+    def _production_router():
+        return patch.object(django_router, "routers", [MainRouter()])
+
+    def test_save_user_rolls_back_across_production_database_aliases(self, rf):
+        adapter = ProwlerSocialAccountAdapter()
+        request = rf.post("/")
+        request.session = {}
+        email = "frank-multidb-rollback@example.com"
+        sociallogin = _real_oauth_sociallogin(
+            User(name="Frank", email=email),
+            uid="frank-multidb-rollback-google-account",
+        )
+        tenants_before = Tenant.objects.using("admin").count()
+
+        assert connections["default"] is not connections["admin"]
+        assert (
+            connections["default"].settings_dict["NAME"]
+            == connections["admin"].settings_dict["NAME"]
+        )
+
+        def fail_after_allauth_save(*_args, **_kwargs):
+            assert sociallogin.user._state.db == MainRouter.admin_db
+            assert connections["default"].get_autocommit()
+            assert not connections["admin"].get_autocommit()
+            raise RuntimeError("Simulated downstream failure.")
+
+        with (
+            patch.object(MainRouter, "admin_db", "admin"),
+            self._production_router(),
+            patch("api.adapters.rls_transaction", side_effect=fail_after_allauth_save),
+            pytest.raises(RuntimeError, match="Simulated downstream failure"),
+        ):
+            adapter.save_user(request, sociallogin)
+
+        assert connections["default"].get_autocommit()
+        assert connections["admin"].get_autocommit()
+        assert not User.objects.using("default").filter(email=email).exists()
+        assert not User.objects.using("admin").filter(email=email).exists()
+        assert (
+            not SocialAccount.objects.using("admin")
+            .filter(
+                provider="google",
+                uid="frank-multidb-rollback-google-account",
+            )
+            .exists()
+        )
+        assert not EmailAddress.objects.using("admin").filter(email=email).exists()
+        assert Tenant.objects.using("admin").count() == tenants_before
+        assert get_write_db_alias() is None
+
+    def test_save_user_commits_complete_signup_across_production_aliases(self, rf):
+        adapter = ProwlerSocialAccountAdapter()
+        request = rf.post("/")
+        request.session = {}
+        email = "frank-multidb-success@example.com"
+        sociallogin = _real_oauth_sociallogin(
+            User(name="Frank", email=email),
+            uid="frank-multidb-success-google-account",
+        )
+
+        with (
+            patch.object(MainRouter, "admin_db", "admin"),
+            self._production_router(),
+        ):
+            user = adapter.save_user(request, sociallogin)
+
+        user = User.objects.using("admin").get(id=user.id)
+        assert user.email == email
+        assert (
+            SocialAccount.objects.using("admin")
+            .filter(
+                user_id=user.id,
+                provider="google",
+                uid="frank-multidb-success-google-account",
+            )
+            .exists()
+        )
+        assert (
+            EmailAddress.objects.using("admin")
+            .filter(
+                user_id=user.id,
+                email=email,
+                verified=True,
+            )
+            .exists()
+        )
+        assert (
+            Membership.objects.using("admin")
+            .filter(
+                user_id=user.id,
+                role=Membership.RoleChoices.OWNER,
+            )
+            .exists()
+        )
+        assert get_write_db_alias() is None

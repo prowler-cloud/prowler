@@ -10,6 +10,24 @@ const { getScanJobsColumnsMock } = vi.hoisted(() => ({
   getScanJobsColumnsMock: vi.fn((_options: unknown) => []),
 }));
 
+vi.mock("next/navigation", () => ({
+  useSearchParams: () => new URLSearchParams("scanId=scan-completed"),
+}));
+
+vi.mock("@/components/lighthouse/context-contributor", () => ({
+  LighthouseContextContributor: ({
+    contributorId,
+    item,
+  }: {
+    contributorId: string;
+    item: unknown;
+  }) => (
+    <output data-testid={`context-${contributorId}`}>
+      {JSON.stringify(item)}
+    </output>
+  ),
+}));
+
 vi.mock("@/components/shadcn/table", () => ({
   DataTable: ({ data }: { data: ScanProps[] }) => (
     <div data-testid="scan-jobs-data-table">{data.length}</div>
@@ -56,6 +74,35 @@ const makeScan = (state: ScanProps["attributes"]["state"]): ScanProps => ({
 });
 
 describe("ScanJobsTable", () => {
+  it("publishes the loaded total and selected scan as context", () => {
+    const selectedScan = {
+      ...makeScan("completed"),
+      providerInfo: {
+        provider: "aws",
+        uid: "123456789012",
+        alias: "Production",
+      },
+    } as ScanProps;
+
+    render(
+      <ScanJobsTable
+        data={[selectedScan]}
+        meta={{
+          pagination: { page: 1, pages: 1, count: 9 },
+          version: "v1",
+        }}
+        tab={SCAN_JOBS_TAB.COMPLETED}
+      />,
+    );
+
+    expect(screen.getByTestId("context-scans-summary")).toHaveTextContent(
+      '"total":9',
+    );
+    expect(screen.getByTestId("context-scan-scan-completed")).toHaveTextContent(
+      '"providerUid":"123456789012"',
+    );
+  });
+
   it("enables auto refresh while queued or executing scans are visible", () => {
     render(
       <ScanJobsTable

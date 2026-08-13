@@ -5,35 +5,42 @@ import { useState } from "react";
 
 import { Button } from "@/components/shadcn/button/button";
 import { ActionDropdownItem } from "@/components/shadcn/dropdown";
+import { useToast } from "@/components/shadcn/toast/use-toast";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
+import { applyOptimisticTriageSummaryUpdate } from "@/lib/finding-triage";
 import { cn } from "@/lib/utils";
 import { useCloudUpgradeStore } from "@/store";
 import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
+import { FINDING_STATUS } from "@/types/components";
 import {
   FINDING_TRIAGE_DISABLED_REASON,
   FINDING_TRIAGE_NOTE_MAX_LENGTH,
   FINDING_TRIAGE_ORIGIN,
   FINDING_TRIAGE_RESOLVED_LOCKED_COPY,
-  FINDING_TRIAGE_STATUS_LABELS,
+  FINDING_TRIAGE_STATUS,
+  type FindingTriageContext,
   type FindingTriageDetail,
+  type FindingTriageDetailLoadHandler,
   type FindingTriageLoadedNote,
-  type FindingTriageStatus,
+  type FindingTriageNoteLoadHandler,
   type FindingTriageSummary,
+  type FindingTriageUpdateHandler,
+  isManualStatus,
   isTriageStatusLocked,
   type UpdateFindingTriageInput,
 } from "@/types/findings-triage";
 
 import {
+  FINDING_NOTE_MODAL_MODE,
   FindingNoteModal,
-  type FindingTriageContext,
+  type FindingNoteModalMode,
 } from "./finding-note-modal";
 import {
   FindingTriageStatusControl,
-  type FindingTriageUpdateHandler,
   TRIAGE_STATUS_TEXT_CLASS,
 } from "./finding-triage-status-control";
 
@@ -73,43 +80,84 @@ const getTriageDetailFromSummary = (
   noteId: loadedNote?.noteId ?? null,
   noteBody: loadedNote?.noteBody ?? "",
   maxNoteLength: FINDING_TRIAGE_NOTE_MAX_LENGTH,
+  rawFindingStatus: triage.rawFindingStatus ?? null,
+  manualPassCreatedByName: null,
+  manualPassCreatedAt: null,
+  manualPassExpiresAt: null,
+  manualPassActive: null,
+  manualPassEvidence: null,
+  manualPassDeactivatedAt: null,
 });
+
+const getManualPassModalInitialStatus = (
+  mode: FindingNoteModalMode,
+  detail: FindingTriageDetail,
+) => {
+  if (
+    mode === FINDING_NOTE_MODAL_MODE.MANUAL_PASS_DETAILS &&
+    detail.status === FINDING_TRIAGE_STATUS.RESOLVED
+  ) {
+    return FINDING_TRIAGE_STATUS.RESOLVED;
+  }
+
+  if (
+    mode === FINDING_NOTE_MODAL_MODE.EDIT &&
+    detail.rawFindingStatus === FINDING_STATUS.MANUAL
+  ) {
+    return FINDING_TRIAGE_STATUS.RESOLVED;
+  }
+
+  return isManualStatus(detail.status)
+    ? detail.status
+    : FINDING_TRIAGE_STATUS.OPEN;
+};
 
 export function FindingTriageStatusCell({
   triage,
+  findingContext = { title: "Finding" },
   onTriageUpdateAction,
+  onTriageDetailLoadAction,
 }: {
   triage?: FindingTriageSummary;
+  findingContext?: FindingTriageContext;
   onTriageUpdateAction?: FindingTriageUpdateHandler;
+  onTriageDetailLoadAction?: FindingTriageDetailLoadHandler;
 }) {
   const openCloudUpgrade = useCloudUpgradeStore(
     (state) => state.openCloudUpgrade,
   );
   const [optimisticStatus, setOptimisticStatus] = useState<{
     token: string;
-    findingId: string;
-    triageId: string | null;
-    previousStatus: FindingTriageStatus;
-    status: FindingTriageStatus;
+    input: UpdateFindingTriageInput;
   } | null>(null);
+  const [manualPassDetail, setManualPassDetail] =
+    useState<FindingTriageDetail>();
+  const [manualPassModalMode, setManualPassModalMode] =
+    useState<FindingNoteModalMode>(FINDING_NOTE_MODAL_MODE.EDIT);
+  const [isManualPassModalOpen, setIsManualPassModalOpen] = useState(false);
+  const [isManualPassLoading, setIsManualPassLoading] = useState(false);
+  const [manualPassLoadError, setManualPassLoadError] = useState<string | null>(
+    null,
+  );
 
   // Retire the optimistic status once the server converges or the row changes, so a stale value can't resurface.
   if (
     optimisticStatus &&
     (!triage ||
-      optimisticStatus.findingId !== triage.findingId ||
-      optimisticStatus.triageId !== triage.triageId ||
-      triage.status === optimisticStatus.status)
+      optimisticStatus.input.findingId !== triage.findingId ||
+      optimisticStatus.input.triageId !== triage.triageId ||
+      triage.status === optimisticStatus.input.status)
   ) {
     setOptimisticStatus(null);
   }
 
   const optimisticMatchesCurrentTriage =
     Boolean(triage) &&
-    optimisticStatus?.findingId === triage?.findingId &&
-    optimisticStatus?.triageId === triage?.triageId &&
-    optimisticStatus?.previousStatus === triage?.status &&
-    optimisticStatus?.status !== triage?.status;
+    optimisticStatus?.input.findingId === triage?.findingId &&
+    optimisticStatus?.input.triageId === triage?.triageId &&
+    (optimisticStatus?.input.previousStatus ?? triage?.status) ===
+      triage?.status &&
+    optimisticStatus?.input.status !== triage?.status;
 
   if (!triage) {
     return <span className="text-text-neutral-tertiary text-sm">-</span>;
@@ -117,12 +165,11 @@ export function FindingTriageStatusCell({
 
   const displayedTriage =
     optimisticMatchesCurrentTriage && optimisticStatus
-      ? {
-          ...triage,
-          status: optimisticStatus.status,
-          label: FINDING_TRIAGE_STATUS_LABELS[optimisticStatus.status],
-        }
+      ? applyOptimisticTriageSummaryUpdate(triage, optimisticStatus.input)
       : triage;
+  const interactiveTriage = isManualPassLoading
+    ? { ...displayedTriage, canEdit: false }
+    : displayedTriage;
 
   const handleTriageUpdate = async (input: UpdateFindingTriageInput) => {
     const optimisticToken = input.status ? crypto.randomUUID() : null;
@@ -130,15 +177,12 @@ export function FindingTriageStatusCell({
     if (input.status && optimisticToken) {
       setOptimisticStatus({
         token: optimisticToken,
-        findingId: input.findingId,
-        triageId: input.triageId,
-        previousStatus: input.previousStatus ?? triage.status,
-        status: input.status,
+        input,
       });
     }
 
     try {
-      await onTriageUpdateAction?.(input);
+      return await onTriageUpdateAction?.(input);
     } catch (error) {
       setOptimisticStatus((current) =>
         current?.token === optimisticToken ? null : current,
@@ -147,19 +191,76 @@ export function FindingTriageStatusCell({
     }
   };
 
+  const handleManualPassRequest = async (
+    mode: FindingNoteModalMode = FINDING_NOTE_MODAL_MODE.EDIT,
+  ) => {
+    if (!onTriageDetailLoadAction) {
+      return;
+    }
+
+    setManualPassLoadError(null);
+    setIsManualPassLoading(true);
+
+    try {
+      const detail = await onTriageDetailLoadAction(triage);
+
+      if (!detail) {
+        throw new Error("Missing triage detail");
+      }
+
+      setManualPassDetail(detail);
+      setManualPassModalMode(mode);
+      setIsManualPassModalOpen(true);
+    } catch {
+      setManualPassLoadError("Could not load current triage details.");
+    } finally {
+      setIsManualPassLoading(false);
+    }
+  };
+
   const control = (
     <div
+      className="flex w-32 flex-col items-start gap-1"
       onClick={(event) => event.stopPropagation()}
       onPointerDown={(event) => event.stopPropagation()}
     >
       <FindingTriageStatusControl
         key={displayedTriage.findingId}
         origin={FINDING_TRIAGE_ORIGIN.TABLE}
-        triage={displayedTriage}
+        triage={interactiveTriage}
         onTriageUpdateAction={
           onTriageUpdateAction ? handleTriageUpdate : undefined
         }
+        onManualPassRequest={
+          onTriageDetailLoadAction
+            ? () => void handleManualPassRequest()
+            : undefined
+        }
       />
+      {displayedTriage.manualPassProvenance && (
+        <>
+          {onTriageDetailLoadAction ? (
+            <Button
+              type="button"
+              variant="link"
+              size="link-xs"
+              aria-label="View Manual Pass details"
+              disabled={isManualPassLoading}
+              onClick={() =>
+                void handleManualPassRequest(
+                  FINDING_NOTE_MODAL_MODE.MANUAL_PASS_DETAILS,
+                )
+              }
+            >
+              {displayedTriage.manualPassProvenance}
+            </Button>
+          ) : (
+            <span className="text-text-neutral-tertiary text-xs">
+              {displayedTriage.manualPassProvenance}
+            </span>
+          )}
+        </>
+      )}
     </div>
   );
 
@@ -168,8 +269,39 @@ export function FindingTriageStatusCell({
     hasUpdateHandler: Boolean(onTriageUpdateAction),
     lockResolved: true,
   });
+  const manualPassModal =
+    manualPassDetail && isManualPassModalOpen ? (
+      <FindingNoteModal
+        open={isManualPassModalOpen}
+        onOpenChange={setIsManualPassModalOpen}
+        triage={manualPassDetail}
+        findingContext={findingContext}
+        mode={manualPassModalMode}
+        initialStatus={getManualPassModalInitialStatus(
+          manualPassModalMode,
+          manualPassDetail,
+        )}
+        onTriageUpdateAction={
+          manualPassModalMode === FINDING_NOTE_MODAL_MODE.EDIT
+            ? handleTriageUpdate
+            : undefined
+        }
+      />
+    ) : null;
+  const statusContent = (
+    <>
+      {control}
+      {manualPassLoadError && (
+        <span className="text-text-error-primary text-xs" role="alert">
+          {manualPassLoadError}
+        </span>
+      )}
+      {manualPassModal}
+    </>
+  );
+
   if (!disabledCopy) {
-    return control;
+    return statusContent;
   }
 
   if (triage.disabledReason === FINDING_TRIAGE_DISABLED_REASON.CLOUD_ONLY) {
@@ -177,7 +309,7 @@ export function FindingTriageStatusCell({
       <Tooltip>
         <TooltipTrigger asChild>
           <span className="relative flex">
-            {control}
+            {statusContent}
             <Button
               type="button"
               variant="bare"
@@ -201,7 +333,7 @@ export function FindingTriageStatusCell({
     <Tooltip>
       <TooltipTrigger asChild>
         {/* Block-level wrapper keeps the picker aligned with the sibling columns. */}
-        <span className="flex">{control}</span>
+        <span className="flex">{statusContent}</span>
       </TooltipTrigger>
       <TooltipContent>{disabledCopy}</TooltipContent>
     </Tooltip>
@@ -235,13 +367,13 @@ export function FindingNoteActionItem({
   findingContext = { title: "Finding" },
   onTriageUpdateAction,
   onTriageNoteLoadAction,
+  onTriageDetailLoadAction,
 }: {
   triage?: FindingTriageSummary;
   findingContext?: FindingTriageContext;
   onTriageUpdateAction?: FindingTriageUpdateHandler;
-  onTriageNoteLoadAction?: (
-    triage: FindingTriageSummary,
-  ) => Promise<FindingTriageLoadedNote>;
+  onTriageNoteLoadAction?: FindingTriageNoteLoadHandler;
+  onTriageDetailLoadAction?: FindingTriageDetailLoadHandler;
 }) {
   if (!triage) {
     return <span className="text-text-neutral-tertiary text-sm">-</span>;
@@ -256,6 +388,7 @@ export function FindingNoteActionItem({
       findingContext={findingContext}
       onTriageUpdateAction={onTriageUpdateAction}
       onTriageNoteLoadAction={onTriageNoteLoadAction}
+      onTriageDetailLoadAction={onTriageDetailLoadAction}
     />
   );
 }
@@ -265,18 +398,19 @@ function FindingNoteActionItemContent({
   findingContext,
   onTriageUpdateAction,
   onTriageNoteLoadAction,
+  onTriageDetailLoadAction,
 }: {
   triage: FindingTriageSummary;
   findingContext: FindingTriageContext;
   onTriageUpdateAction?: FindingTriageUpdateHandler;
-  onTriageNoteLoadAction?: (
-    triage: FindingTriageSummary,
-  ) => Promise<FindingTriageLoadedNote>;
+  onTriageNoteLoadAction?: FindingTriageNoteLoadHandler;
+  onTriageDetailLoadAction?: FindingTriageDetailLoadHandler;
 }) {
+  const { toast } = useToast();
   const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
   const [loadedNote, setLoadedNote] = useState<FindingTriageLoadedNote>();
+  const [loadedDetail, setLoadedDetail] = useState<FindingTriageDetail>();
   const [isLoadingNote, setIsLoadingNote] = useState(false);
-  const [loadError, setLoadError] = useState<string | null>(null);
 
   const hasUpdateHandler = Boolean(onTriageUpdateAction);
   const isCloudOnly =
@@ -305,24 +439,35 @@ function FindingNoteActionItemContent({
       return;
     }
 
-    if (!triage.hasVisibleNote) {
+    if (isCloudOnly || (!onTriageDetailLoadAction && !triage.hasVisibleNote)) {
       setIsNoteModalOpen(true);
       return;
     }
 
-    if (!onTriageNoteLoadAction) {
-      return;
-    }
-
-    setLoadError(null);
     setIsLoadingNote(true);
 
     try {
-      const note = await onTriageNoteLoadAction(triage);
-      setLoadedNote(note);
+      const [detail, note] = await Promise.all([
+        onTriageDetailLoadAction
+          ? onTriageDetailLoadAction(triage)
+          : Promise.resolve(getTriageDetailFromSummary(triage)),
+        triage.hasVisibleNote && onTriageNoteLoadAction
+          ? onTriageNoteLoadAction(triage)
+          : Promise.resolve(undefined),
+      ]);
+      setLoadedDetail(detail);
+      if (note) {
+        setLoadedNote(note);
+      }
       setIsNoteModalOpen(true);
     } catch {
-      setLoadError("Could not load the existing note.");
+      toast({
+        variant: "destructive",
+        title: triage.hasVisibleNote
+          ? "Could not load the existing note."
+          : "Could not load current triage details.",
+        description: "Please try again.",
+      });
     } finally {
       setIsLoadingNote(false);
     }
@@ -332,7 +477,15 @@ function FindingNoteActionItemContent({
     <FindingNoteModal
       open={isNoteModalOpen}
       onOpenChange={setIsNoteModalOpen}
-      triage={getTriageDetailFromSummary(triage, loadedNote)}
+      triage={
+        loadedDetail
+          ? {
+              ...loadedDetail,
+              noteId: loadedNote?.noteId ?? loadedDetail.noteId,
+              noteBody: loadedNote?.noteBody ?? loadedDetail.noteBody,
+            }
+          : getTriageDetailFromSummary(triage, loadedNote)
+      }
       findingContext={findingContext}
       onTriageUpdateAction={onTriageUpdateAction}
     />
@@ -354,11 +507,6 @@ function FindingNoteActionItemContent({
           void handleNoteSelect();
         }}
       />
-      {loadError && (
-        <span className="sr-only" role="alert">
-          {loadError}
-        </span>
-      )}
       {noteModal}
     </>
   );

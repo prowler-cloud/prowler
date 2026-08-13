@@ -23,9 +23,53 @@ from prowler.lib.outputs.jira.exceptions.exceptions import (
     JiraSendFindingsResponseError,
     JiraTestConnectionError,
 )
-from prowler.lib.outputs.jira.jira import Jira
+from prowler.lib.outputs.jira.jira import Jira, MarkdownToADFConverter
 
 TEST_DATETIME = "2023-01-01T12:01:01+00:00"
+
+
+class TestMarkdownToADFConverter:
+    def setup_method(self):
+        self.converter = MarkdownToADFConverter()
+
+    def test_inline_code_nested_in_strong_has_only_code_mark(self):
+        result = self.converter.convert("**before `code` after**")
+
+        assert result[0]["content"] == [
+            {"type": "text", "text": "before ", "marks": [{"type": "strong"}]},
+            {"type": "text", "text": "code", "marks": [{"type": "code"}]},
+            {"type": "text", "text": " after", "marks": [{"type": "strong"}]},
+        ]
+
+    def test_inline_code_nested_in_emphasis_has_only_code_mark(self):
+        result = self.converter.convert("*before `code` after*")
+
+        assert result[0]["content"] == [
+            {"type": "text", "text": "before ", "marks": [{"type": "em"}]},
+            {"type": "text", "text": "code", "marks": [{"type": "code"}]},
+            {"type": "text", "text": " after", "marks": [{"type": "em"}]},
+        ]
+
+    def test_inline_code_in_link_preserves_link_and_code_marks(self):
+        result = self.converter.convert("[`code`](https://example.com)")
+
+        assert result[0]["content"][0]["marks"] == [
+            {"type": "link", "attrs": {"href": "https://example.com"}},
+            {"type": "code"},
+        ]
+
+    def test_inline_code_in_emphasized_link_preserves_link_and_code_marks(self):
+        result = self.converter.convert("*[`code`](https://example.com)*")
+
+        assert result[0]["content"][0]["marks"] == [
+            {"type": "link", "attrs": {"href": "https://example.com"}},
+            {"type": "code"},
+        ]
+
+    def test_standalone_inline_code_has_code_mark(self):
+        result = self.converter.convert("`code`")
+
+        assert result[0]["content"][0]["marks"] == [{"type": "code"}]
 
 
 class TestJiraIntegration:
