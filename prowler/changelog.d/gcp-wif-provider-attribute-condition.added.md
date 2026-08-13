@@ -1,0 +1,1 @@
+Add the `iam_workload_identity_pool_provider_attribute_condition` check to flag GCP Workload Identity Federation providers that trust a multi-tenant issuer without an attribute condition restricting which external identities can impersonate federated principals

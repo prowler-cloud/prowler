@@ -15,9 +15,13 @@ import {
 } from "./data-table-row-actions";
 import { FindingsSelectionContext } from "./findings-selection-context";
 
-const { MuteFindingsModalMock } = vi.hoisted(() => ({
-  MuteFindingsModalMock: vi.fn((_props: unknown) => null),
-}));
+const { isCloudMock, launchSkillMock, MuteFindingsModalMock } = vi.hoisted(
+  () => ({
+    isCloudMock: vi.fn(() => false),
+    launchSkillMock: vi.fn(),
+    MuteFindingsModalMock: vi.fn((_props: unknown) => null),
+  }),
+);
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: vi.fn() }),
@@ -36,6 +40,19 @@ vi.mock("@/lib/deployment", () => ({
   PROWLER_CLOUD_ONLY_TOOLTIP: "Available only in Prowler Cloud",
 }));
 
+vi.mock("@/lib/shared/env", () => ({
+  isCloud: isCloudMock,
+}));
+
+vi.mock("./lighthouse-skills-launch", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("./lighthouse-skills-launch")>();
+  return {
+    ...actual,
+    useLighthouseSkillLaunch: () => launchSkillMock,
+  };
+});
+
 vi.mock("@/components/shadcn/dropdown", () => ({
   ActionDropdown: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
@@ -52,6 +69,19 @@ vi.mock("@/components/shadcn/dropdown", () => ({
     <button onClick={onSelect} disabled={disabled}>
       {label}
     </button>
+  ),
+  DropdownMenuLabel: ({ children }: { children?: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  DropdownMenuSeparator: () => <hr />,
+  DropdownMenuSub: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  DropdownMenuSubContent: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  DropdownMenuSubTrigger: ({ children }: { children: React.ReactNode }) => (
+    <span>{children}</span>
   ),
 }));
 
@@ -136,7 +166,55 @@ function makeFindingRow(overrides?: Partial<FindingRowData>) {
 describe("DataTableRowActions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    isCloudMock.mockReturnValue(false);
     useJiraDispatchStore.getState().closeJiraDispatch();
+  });
+
+  it("launches a Lighthouse skill from the row submenu with finding context", async () => {
+    // Given
+    const user = userEvent.setup();
+    isCloudMock.mockReturnValue(true);
+    render(<DataTableRowActions row={makeFindingRow()} />);
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Triage Decision" }));
+
+    // Then
+    expect(launchSkillMock).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "triage-decision" }),
+      expect.objectContaining({
+        kind: "finding",
+        findingId: "finding-1",
+      }),
+    );
+  });
+
+  it("hides the Lighthouse skills submenu on finding group rows", () => {
+    // Group rows carry check ids, not finding UUIDs, so the finding-level
+    // skills (and their Jira/mute follow-up actions) must not launch there.
+    isCloudMock.mockReturnValue(true);
+    render(
+      <DataTableRowActions
+        row={
+          {
+            original: {
+              id: "group-row-1",
+              rowType: "group",
+              checkId: "ecs_task_definitions_no_environment_secrets",
+              checkTitle: "ECS task definitions no environment secrets",
+              mutedCount: 0,
+              resourcesFail: 475,
+              resourcesTotal: 475,
+            },
+          } as never
+        }
+      />,
+    );
+
+    expect(screen.queryByText("Lighthouse Skills")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Triage Decision" }),
+    ).not.toBeInTheDocument();
   });
 
   it("opens the mute modal immediately in preparing state for finding groups", async () => {

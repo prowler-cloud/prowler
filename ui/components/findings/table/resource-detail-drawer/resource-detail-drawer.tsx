@@ -1,7 +1,10 @@
 "use client";
 
+import { usePathname } from "next/navigation";
+
 import type { ResourceDrawerFinding } from "@/actions/findings";
 import { DetailSidePanel } from "@/components/side-panel/detail-side-panel";
+import { buildFocusedFindingContext } from "@/lib/lighthouse/context/contributions";
 import type { FindingResourceRow } from "@/types";
 import type { UpdateFindingTriageInput } from "@/types/findings-triage";
 
@@ -20,6 +23,9 @@ interface ResourceDetailDrawerProps {
   currentFinding: ResourceDrawerFinding | null;
   otherFindings: ResourceDrawerFinding[];
   showSyntheticResourceHint?: boolean;
+  // Forwarded to DetailSidePanel: false opens the Details tab without
+  // selecting it (skill launches keep the AI chat tab in front).
+  selectTabOnOpen?: boolean;
   onNavigatePrev: () => void;
   onNavigateNext: () => void;
   onMuteComplete: () => void;
@@ -38,17 +44,35 @@ export function ResourceDetailDrawer({
   currentFinding,
   otherFindings,
   showSyntheticResourceHint = false,
+  selectTabOnOpen,
   onNavigatePrev,
   onNavigateNext,
   onMuteComplete,
   onTriageUpdate,
 }: ResourceDetailDrawerProps) {
+  const pathname = usePathname();
+  const focusedFinding = isNavigating ? null : currentFinding;
+  const context = currentResource
+    ? buildFocusedFindingContext({
+        pathname,
+        findingId: focusedFinding?.id ?? currentResource.findingId,
+        checkId: focusedFinding?.checkId ?? currentResource.checkId,
+        severity: focusedFinding?.severity ?? currentResource.severity,
+        status: focusedFinding?.status ?? currentResource.status,
+        providerUid: focusedFinding?.providerUid ?? currentResource.providerUid,
+        resourceUid: focusedFinding?.resourceUid ?? currentResource.resourceUid,
+        region: focusedFinding?.resourceRegion ?? currentResource.region,
+      })
+    : undefined;
+
   return (
     <DetailSidePanel
       open={open}
       onOpenChange={onOpenChange}
       title="Resource Finding Details"
       description="View finding details for the selected resource"
+      context={context}
+      selectTabOnOpen={selectTabOnOpen}
     >
       <ResourceDetailDrawerContent
         isLoading={isLoading}
