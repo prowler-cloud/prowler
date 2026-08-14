@@ -612,6 +612,11 @@ class Test_ecr_repository_image_no_secrets:
             AWS_REGION_EU_WEST_1: mock_regional_client
         }
 
+        def _mock_scan(payloads, **kwargs):
+            seen = list(payloads)
+            assert any("small.bin" in key[1] for key, _ in seen)
+            return {}
+
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -624,7 +629,7 @@ class Test_ecr_repository_image_no_secrets:
             mock.patch("urllib.request.urlopen") as mock_urlopen,
             mock.patch(
                 "prowler.providers.aws.services.ecr.ecr_repository_image_no_secrets.ecr_repository_image_no_secrets.detect_secrets_scan_batch",
-                side_effect=lambda payloads, **kwargs: {},
+                side_effect=_mock_scan,
             ),
         ):
             from prowler.providers.aws.services.ecr.ecr_repository_image_no_secrets.ecr_repository_image_no_secrets import (
