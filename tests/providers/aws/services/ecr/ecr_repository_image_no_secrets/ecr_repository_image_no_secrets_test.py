@@ -168,3 +168,164 @@ class Test_ecr_repository_image_no_secrets:
             assert result[0].resource_id == repository_name
             assert result[0].resource_arn == repository_arn
             assert result[0].region == AWS_REGION_EU_WEST_1
+
+    def test_image_collection_returns_no_data_reports_manual(self):
+        """When image collection fails the check should report MANUAL, not PASS."""
+        ecr_client = mock.MagicMock
+        ecr_client.registries = {}
+        ecr_client.registries[AWS_REGION_EU_WEST_1] = Registry(
+            id=AWS_ACCOUNT_NUMBER,
+            arn=f"arn:aws:ecr:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:registry/{AWS_ACCOUNT_NUMBER}",
+            region=AWS_REGION_EU_WEST_1,
+            scan_type="BASIC",
+            repositories=[
+                Repository(
+                    name=repository_name,
+                    arn=repository_arn,
+                    region=AWS_REGION_EU_WEST_1,
+                    scan_on_push=True,
+                    images_details=[
+                        ImageDetails(
+                            latest_tag=latest_tag,
+                            latest_digest=latest_digest,
+                            image_pushed_at=datetime(2023, 1, 1),
+                            scan_findings_status="COMPLETE",
+                            scan_findings_severity_count=FindingSeverityCounts(
+                                critical=0, high=0, medium=0
+                            ),
+                            artifact_media_type=docker_container_image_artifact_media_type,
+                            type="Docker",
+                        )
+                    ],
+                )
+            ],
+            rules=[],
+        )
+
+        mock_regional_client = mock.MagicMock()
+        # batch_get_image returns no images -> image collection fails
+        mock_regional_client.batch_get_image.return_value = {"images": []}
+        ecr_client.regional_clients = {
+            AWS_REGION_EU_WEST_1: mock_regional_client
+        }
+        ecr_client.audit_config = {}
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ecr.ecr_repository_image_no_secrets.ecr_repository_image_no_secrets.ecr_client",
+                ecr_client,
+            ),
+        ):
+            from prowler.providers.aws.services.ecr.ecr_repository_image_no_secrets.ecr_repository_image_no_secrets import (
+                ecr_repository_image_no_secrets,
+            )
+
+            check = ecr_repository_image_no_secrets()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert (
+                "Could not collect image data" in result[0].status_extended
+                and repository_name in result[0].status_extended
+            )
+            assert result[0].resource_id == repository_name
+
+    def test_image_with_secrets(self):
+        """When secrets are found the check should report FAIL with image digest."""
+        ecr_client = mock.MagicMock
+        ecr_client.registries = {}
+        ecr_client.registries[AWS_REGION_EU_WEST_1] = Registry(
+            id=AWS_ACCOUNT_NUMBER,
+            arn=f"arn:aws:ecr:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:registry/{AWS_ACCOUNT_NUMBER}",
+            region=AWS_REGION_EU_WEST_1,
+            scan_type="BASIC",
+            repositories=[
+                Repository(
+                    name=repository_name,
+                    arn=repository_arn,
+                    region=AWS_REGION_EU_WEST_1,
+                    scan_on_push=True,
+                    images_details=[
+                        ImageDetails(
+                            latest_tag=latest_tag,
+                            latest_digest=latest_digest,
+                            image_pushed_at=datetime(2023, 1, 1),
+                            scan_findings_status="COMPLETE",
+                            scan_findings_severity_count=FindingSeverityCounts(
+                                critical=0, high=0, medium=0
+                            ),
+                            artifact_media_type=docker_container_image_artifact_media_type,
+                            type="Docker",
+                        )
+                    ],
+                )
+            ],
+            rules=[],
+        )
+
+        mock_regional_client = mock.MagicMock()
+        mock_regional_client.batch_get_image.return_value = {
+            "images": [
+                {
+                    "imageManifest": '{"config": {"digest": "sha256:config123"}, "layers": [{"digest": "sha256:layer123"}]}'
+                }
+            ]
+        }
+        mock_regional_client.get_download_url_for_layer.return_value = {
+            "downloadUrl": "https://example.com/layer"
+        }
+        ecr_client.regional_clients = {
+            AWS_REGION_EU_WEST_1: mock_regional_client
+        }
+        ecr_client.audit_config = {}
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ecr.ecr_repository_image_no_secrets.ecr_repository_image_no_secrets.ecr_client",
+                ecr_client,
+            ),
+            mock.patch("urllib.request.urlopen") as mock_urlopen,
+        ):
+            mock_response = mock.MagicMock()
+            mock_response.read.return_value = b"some safe content without secrets"
+            mock_response.__enter__ = mock.MagicMock(return_value=mock_response)
+            mock_response.__exit__ = mock.MagicMock(return_value=False)
+            mock_urlopen.return_value = mock_response
+
+            from prowler.providers.aws.services.ecr.ecr_repository_image_no_secrets.ecr_repository_image_no_secrets import (
+                ecr_repository_image_no_secrets,
+            )
+
+            def _mock_scan(payloads, **kwargs):
+                # Consume the generator so the check tracks which repos
+                # had image data collected, then return simulated findings.
+                list(payloads)
+                return {
+                    (0, "config-sha256:config123"): [
+                        {"type": "AWS Access Key", "line_number": 1},
+                    ]
+                }
+
+            with mock.patch(
+                "prowler.providers.aws.services.ecr.ecr_repository_image_no_secrets.ecr_repository_image_no_secrets.detect_secrets_scan_batch",
+                side_effect=_mock_scan,
+            ):
+                check = ecr_repository_image_no_secrets()
+                result = check.execute()
+                assert len(result) == 1
+                assert result[0].status == "FAIL"
+                assert (
+                    repository_name in result[0].status_extended
+                    and latest_digest in result[0].status_extended
+                )
+                assert result[0].resource_id == repository_name
+                assert result[0].resource_arn == repository_arn
+                assert result[0].region == AWS_REGION_EU_WEST_1

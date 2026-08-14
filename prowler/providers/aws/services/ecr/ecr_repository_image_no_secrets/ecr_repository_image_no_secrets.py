@@ -1,6 +1,7 @@
 import json
 import tarfile
 import tempfile
+import urllib.request
 from collections import defaultdict
 
 from prowler.lib.check.models import Check, Check_Report_AWS
@@ -11,6 +12,13 @@ from prowler.lib.utils.utils import (
 )
 from prowler.providers.aws.services.ecr.ecr_client import ecr_client
 
+# Maximum size (in bytes) for a single layer download. Layers larger than this
+# are skipped to prevent excessive memory usage and long scan times.
+MAX_LAYER_DOWNLOAD_SIZE = 52428800  # 50 MB
+# Timeout (seconds) for layer download requests to avoid hanging on slow
+# or unresponsive connections.
+LAYER_DOWNLOAD_TIMEOUT = 30
+
 
 class ecr_repository_image_no_secrets(Check):
     """Check for secrets in ECR container images.
@@ -20,7 +28,16 @@ class ecr_repository_image_no_secrets(Check):
     strings by downloading the image layers and running a secrets scan.
     """
 
-    def execute(self):
+    def execute(self) -> list[Check_Report_AWS]:
+        """Execute the ECR image secrets check.
+
+        Scans the latest tagged image of each ECR repository for hardcoded
+        secrets. Images that cannot be retrieved or scanned are reported as
+        MANUAL for operator review.
+
+        Returns:
+            List of Check_Report_AWS findings.
+        """
         findings = []
         if not ecr_client.registries:
             return findings
@@ -37,6 +54,7 @@ class ecr_repository_image_no_secrets(Check):
         # Each payload is keyed by (repository_index, layer_index) so findings
         # can be grouped back per repository.
         repositories_with_images = []
+        repos_with_data = set()
 
         def image_payloads():
             for repo_index, repository in enumerate(repositories_with_images):
@@ -84,12 +102,13 @@ class ecr_repository_image_no_secrets(Check):
                         )
                         layer_url = layer_response.get("downloadUrl")
                         if layer_url:
-                            import urllib.request
-
-                            with urllib.request.urlopen(layer_url) as resp:
+                            with urllib.request.urlopen(
+                                layer_url, timeout=LAYER_DOWNLOAD_TIMEOUT
+                            ) as resp:
                                 config_content = resp.read().decode(
                                     "latin-1", errors="replace"
                                 )
+                            repos_with_data.add(repo_index)
                             yield (repo_index, f"config-{config_digest}"), config_content
                     except Exception:
                         pass
@@ -108,10 +127,13 @@ class ecr_repository_image_no_secrets(Check):
                         )
                         layer_url = layer_response.get("downloadUrl")
                         if layer_url:
-                            import urllib.request
-
-                            with urllib.request.urlopen(layer_url) as resp:
-                                layer_data = resp.read()
+                            with urllib.request.urlopen(
+                                layer_url, timeout=LAYER_DOWNLOAD_TIMEOUT
+                            ) as resp:
+                                # Bound the download size to avoid excessive
+                                # memory usage on very large layers.
+                                layer_data = resp.read(MAX_LAYER_DOWNLOAD_SIZE)
+                            repos_with_data.add(repo_index)
                             # Try to extract tar content for text scanning
                             try:
                                 with tempfile.NamedTemporaryFile() as tmp:
@@ -184,9 +206,23 @@ class ecr_repository_image_no_secrets(Check):
 
         for repo_index, repository in enumerate(repositories_with_images):
             report = Check_Report_AWS(metadata=self.metadata(), resource=repository)
+
+            # If no image data was collected for this repository, report
+            # MANUAL instead of PASS so the operator can investigate.
+            if repo_index not in repos_with_data:
+                report.status = "MANUAL"
+                report.status_extended = (
+                    f"Could not collect image data for ECR repository "
+                    f"{repository.name}; manual review is required."
+                )
+                findings.append(report)
+                continue
+
+            image_digest = repository.images_details[-1].latest_digest
             report.status = "PASS"
             report.status_extended = (
-                f"No secrets found in ECR repository {repository.name} image."
+                f"No secrets found in ECR repository {repository.name} "
+                f"image {image_digest}."
             )
 
             files_with_secrets = findings_by_repo.get(repo_index)
@@ -205,7 +241,7 @@ class ecr_repository_image_no_secrets(Check):
                 report.status = "FAIL"
                 report.status_extended = (
                     f"Potential {'secrets' if len(secrets_findings) > 1 else 'secret'} "
-                    f"found in ECR repository {repository.name} image -> "
+                    f"found in ECR repository {repository.name} image {image_digest} -> "
                     f"{final_output_string}."
                 )
                 annotate_verified_secrets(report, all_secrets)
