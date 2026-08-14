@@ -5,6 +5,7 @@ import urllib.request
 from collections import defaultdict
 
 from prowler.lib.check.models import Check, Check_Report_AWS
+from prowler.lib.logger import logger
 from prowler.lib.utils.utils import (
     SecretsScanError,
     annotate_verified_secrets,
@@ -18,6 +19,9 @@ MAX_LAYER_DOWNLOAD_SIZE = 52428800  # 50 MB
 # Timeout (seconds) for layer download requests to avoid hanging on slow
 # or unresponsive connections.
 LAYER_DOWNLOAD_TIMEOUT = 30
+# Maximum size (in bytes) for a single file extracted from a tar layer.
+# Files larger than this are skipped during text scanning.
+MAX_TAR_MEMBER_SIZE = 1048576  # 1 MB
 
 
 class ecr_repository_image_no_secrets(Check):
@@ -36,7 +40,7 @@ class ecr_repository_image_no_secrets(Check):
         MANUAL for operator review.
 
         Returns:
-            List of Check_Report_AWS findings.
+            list of Check_Report_AWS: findings for each ECR repository.
         """
         findings = []
         if not ecr_client.registries:
@@ -55,6 +59,9 @@ class ecr_repository_image_no_secrets(Check):
         # can be grouped back per repository.
         repositories_with_images = []
         repos_with_data = set()
+        # Track repositories where data collection failed so they emit MANUAL
+        # rather than PASS.
+        repos_with_incomplete_data = set()
 
         def image_payloads():
             for repo_index, repository in enumerate(repositories_with_images):
@@ -79,17 +86,30 @@ class ecr_repository_image_no_secrets(Check):
                             }
                         ],
                     )
-                except Exception:
+                except Exception as error:
+                    logger.warning(
+                        f"{ecr_repository_image_no_secrets.__name__}: "
+                        f"ECR batch_get_image failed for repository "
+                        f"{repository.name}: {error}"
+                    )
+                    repos_with_incomplete_data.add(repo_index)
                     continue
 
                 if not response.get("images"):
+                    repos_with_incomplete_data.add(repo_index)
                     continue
 
                 try:
                     image_manifest = json.loads(
                         response["images"][0]["imageManifest"]
                     )
-                except (KeyError, json.JSONDecodeError):
+                except (KeyError, json.JSONDecodeError) as error:
+                    logger.warning(
+                        f"{ecr_repository_image_no_secrets.__name__}: "
+                        f"Could not parse image manifest for repository "
+                        f"{repository.name}: {error}"
+                    )
+                    repos_with_incomplete_data.add(repo_index)
                     continue
 
                 # Scan the image configuration for embedded secrets
@@ -105,13 +125,35 @@ class ecr_repository_image_no_secrets(Check):
                             with urllib.request.urlopen(
                                 layer_url, timeout=LAYER_DOWNLOAD_TIMEOUT
                             ) as resp:
-                                config_content = resp.read().decode(
-                                    "latin-1", errors="replace"
+                                # Read at most MAX_LAYER_DOWNLOAD_SIZE + 1 bytes
+                                # to detect oversized configs.
+                                config_content = resp.read(
+                                    MAX_LAYER_DOWNLOAD_SIZE + 1
                                 )
-                            repos_with_data.add(repo_index)
-                            yield (repo_index, f"config-{config_digest}"), config_content
-                    except Exception:
-                        pass
+                                if len(config_content) > MAX_LAYER_DOWNLOAD_SIZE:
+                                    logger.warning(
+                                        f"{ecr_repository_image_no_secrets.__name__}: "
+                                        f"Config layer for repository "
+                                        f"{repository.name} exceeds download limit, "
+                                        f"skipping config scan."
+                                    )
+                                    repos_with_incomplete_data.add(repo_index)
+                                else:
+                                    config_text = config_content.decode(
+                                        "latin-1", errors="replace"
+                                    )
+                                    repos_with_data.add(repo_index)
+                                    yield (
+                                        repo_index,
+                                        f"config-{config_digest}",
+                                    ), config_text
+                    except Exception as error:
+                        logger.warning(
+                            f"{ecr_repository_image_no_secrets.__name__}: "
+                            f"Could not download config layer for repository "
+                            f"{repository.name}: {error}"
+                        )
+                        repos_with_incomplete_data.add(repo_index)
 
                 # Scan each layer for embedded secrets
                 for layer_index, layer in enumerate(
@@ -132,7 +174,18 @@ class ecr_repository_image_no_secrets(Check):
                             ) as resp:
                                 # Bound the download size to avoid excessive
                                 # memory usage on very large layers.
-                                layer_data = resp.read(MAX_LAYER_DOWNLOAD_SIZE)
+                                layer_data = resp.read(
+                                    MAX_LAYER_DOWNLOAD_SIZE + 1
+                                )
+                                if len(layer_data) > MAX_LAYER_DOWNLOAD_SIZE:
+                                    logger.warning(
+                                        f"{ecr_repository_image_no_secrets.__name__}: "
+                                        f"Layer {layer_digest} for repository "
+                                        f"{repository.name} exceeds download limit, "
+                                        f"skipping layer scan."
+                                    )
+                                    repos_with_incomplete_data.add(repo_index)
+                                    continue
                             repos_with_data.add(repo_index)
                             # Try to extract tar content for text scanning
                             try:
@@ -141,11 +194,24 @@ class ecr_repository_image_no_secrets(Check):
                                     tmp.flush()
                                     with tarfile.open(tmp.name, "r:*") as tar:
                                         for member in tar.getmembers():
-                                            if member.isfile() and member.size < 1048576:
+                                            if (
+                                                member.isfile()
+                                                and member.size
+                                                < MAX_TAR_MEMBER_SIZE
+                                            ):
                                                 f = tar.extractfile(member)
                                                 if f:
-                                                    content = f.read().decode(
-                                                        "latin-1", errors="replace"
+                                                    # Read per-member content
+                                                    # with a limit to avoid
+                                                    # unbounded memory use.
+                                                    member_content = f.read(
+                                                        MAX_TAR_MEMBER_SIZE
+                                                    )
+                                                    content = (
+                                                        member_content.decode(
+                                                            "latin-1",
+                                                            errors="replace",
+                                                        )
                                                     )
                                                     yield (
                                                         repo_index,
@@ -163,8 +229,13 @@ class ecr_repository_image_no_secrets(Check):
                                     ), content
                                 except Exception:
                                     pass
-                    except Exception:
-                        pass
+                    except Exception as error:
+                        logger.warning(
+                            f"{ecr_repository_image_no_secrets.__name__}: "
+                            f"Could not download layer {layer_digest} for "
+                            f"repository {repository.name}: {error}"
+                        )
+                        repos_with_incomplete_data.add(repo_index)
 
         # Build list of repositories with images
         for registry in ecr_client.registries.values():
@@ -207,9 +278,13 @@ class ecr_repository_image_no_secrets(Check):
         for repo_index, repository in enumerate(repositories_with_images):
             report = Check_Report_AWS(metadata=self.metadata(), resource=repository)
 
-            # If no image data was collected for this repository, report
-            # MANUAL instead of PASS so the operator can investigate.
-            if repo_index not in repos_with_data:
+            # If no image data was collected for this repository, or data
+            # collection was incomplete, report MANUAL so the operator can
+            # investigate.
+            if (
+                repo_index not in repos_with_data
+                or repo_index in repos_with_incomplete_data
+            ):
                 report.status = "MANUAL"
                 report.status_extended = (
                     f"Could not collect image data for ECR repository "
