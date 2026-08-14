@@ -10,6 +10,25 @@ from prowler.lib.utils.utils import (
 from prowler.providers.aws.services.appsync.appsync_client import appsync_client
 
 
+def _strip_reference_fields(config):
+    """Recursively remove reference-only fields from a data source configuration.
+
+    Fields such as ``awsSecretStoreArn`` point to a secret stored in AWS Secrets
+    Manager rather than embedding the secret material inline. Those references
+    are not hardcoded secrets and must not be reported, so they are stripped
+    before the configuration is serialized for scanning.
+    """
+    if isinstance(config, dict):
+        return {
+            key: _strip_reference_fields(value)
+            for key, value in config.items()
+            if key != "awsSecretStoreArn"
+        }
+    if isinstance(config, list):
+        return [_strip_reference_fields(item) for item in config]
+    return config
+
+
 class appsync_graphqlapi_no_secrets_in_resolvers(Check):
     """Check for secrets in AppSync resolvers and data sources.
 
@@ -76,24 +95,41 @@ class appsync_graphqlapi_no_secrets_in_resolvers(Check):
                         )
                     if data_source.lambda_config:
                         config_parts.append(
-                            json.dumps(data_source.lambda_config, sort_keys=True)
+                            json.dumps(
+                                _strip_reference_fields(data_source.lambda_config),
+                                sort_keys=True,
+                            )
                         )
                     if data_source.dynamodb_config:
                         config_parts.append(
-                            json.dumps(data_source.dynamodb_config, sort_keys=True)
+                            json.dumps(
+                                _strip_reference_fields(data_source.dynamodb_config),
+                                sort_keys=True,
+                            )
                         )
                     if data_source.elasticsearch_config:
                         config_parts.append(
-                            json.dumps(data_source.elasticsearch_config, sort_keys=True)
+                            json.dumps(
+                                _strip_reference_fields(
+                                    data_source.elasticsearch_config
+                                ),
+                                sort_keys=True,
+                            )
                         )
                     if data_source.http_config:
                         config_parts.append(
-                            json.dumps(data_source.http_config, sort_keys=True)
+                            json.dumps(
+                                _strip_reference_fields(data_source.http_config),
+                                sort_keys=True,
+                            )
                         )
                     if data_source.relational_database_config:
                         config_parts.append(
                             json.dumps(
-                                data_source.relational_database_config, sort_keys=True
+                                _strip_reference_fields(
+                                    data_source.relational_database_config
+                                ),
+                                sort_keys=True,
                             )
                         )
                     if config_parts:
@@ -130,6 +166,28 @@ class appsync_graphqlapi_no_secrets_in_resolvers(Check):
                 f"No secrets found in AppSync GraphQL API {api.name} "
                 f"resolver mapping templates or data sources."
             )
+
+            # If scan failed or any resolver/data source mapping templates are
+            # missing (e.g. a detail-fetch error) but the API still carries
+            # resolvers or data sources, report MANUAL rather than PASS so
+            # unscanned data is not silently treated as secret-free.
+            unresolved = any(
+                getattr(resolver, "templates_retrieved", True) is False
+                for resolver in api.resolvers
+            ) or any(
+                getattr(data_source, "templates_retrieved", True) is False
+                for data_source in api.data_sources
+            )
+
+            if unresolved:
+                report.status = "MANUAL"
+                report.status_extended = (
+                    f"Could not retrieve all AppSync GraphQL API {api.name} "
+                    f"resolver mapping templates or data source configurations; "
+                    f"manual review is required."
+                )
+                findings.append(report)
+                continue
 
             if scan_error:
                 # If there are resolvers or data sources and scan failed,

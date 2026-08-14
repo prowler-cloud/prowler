@@ -40,13 +40,8 @@ RESPONSE_MAPPING_TEMPLATE_WITHOUT_SECRET = """
 #end
 """
 
-# Data source config without secrets
-DATA_SOURCE_CONFIG_NO_SECRET = """
-{
-    "description": "Test data source for DynamoDB",
-    "tableName": "test-table"
-}
-"""
+# Inline secret material hardcoded in a data source configuration
+INLINE_DATA_SOURCE_SECRET = "Tr0ub4dor3xKq9vLmZ"
 
 
 def create_graphql_api_no_resources():
@@ -127,8 +122,26 @@ def create_graphql_api_without_secrets():
                     "useCallerCredentials": True,
                 },
                 elasticsearch_config={},
-                http_config={},
-                relational_database_config={},
+                http_config={
+                    "authorizationConfig": {
+                        "authorizationType": "AWS_IAM",
+                        "awsIamConfig": {
+                            "signingRegion": AWS_REGION_US_EAST_1,
+                            "signingServiceName": "appsync",
+                        },
+                    }
+                },
+                relational_database_config={
+                    "rdsHttpEndpointConfig": {
+                        "awsRegion": AWS_REGION_US_EAST_1,
+                        "dbClusterIdentifier": "my-cluster",
+                        "database": "mydb",
+                        "schema": "public",
+                        # Reference to a secret in Secrets Manager, not an
+                        # inline secret, so it must not be reported.
+                        "awsSecretStoreArn": f"arn:aws:secretsmanager:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:secret:my-secret-AbCdEfGh",
+                    }
+                },
                 region=AWS_REGION_US_EAST_1,
             )
         ],
@@ -152,29 +165,18 @@ def create_graphql_api_with_data_source_secret():
                 arn=f"arn:aws:appsync:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:apis/{APPSYNC_API_ID}/datasources/TestHttpDataSource",
                 name="TestHttpDataSource",
                 type="HTTP",
-                description="HTTP data source",
+                description="HTTP data source with a hardcoded API key",
                 lambda_config={},
                 dynamodb_config={},
                 elasticsearch_config={},
                 http_config={
                     "endpoint": "https://api.example.com/",
                     "authorizationConfig": {
-                        "authorizationType": "AWS_IAM",
-                        "awsIamConfig": {
-                            "signingRegion": AWS_REGION_US_EAST_1,
-                            "signingServiceName": "appsync",
-                        },
+                        "authorizationType": "API_KEY",
+                        "apiKey": INLINE_DATA_SOURCE_SECRET,
                     },
                 },
-                relational_database_config={
-                    "rdsHttpEndpointConfig": {
-                        "awsRegion": AWS_REGION_US_EAST_1,
-                        "dbClusterIdentifier": "my-cluster",
-                        "database": "mydb",
-                        "schema": "public",
-                        "awsSecretStoreArn": "arn:aws:secretsmanager:us-east-1:123456789012:secret:my-secret-AbCdEfGh",
-                    }
-                },
+                relational_database_config={},
                 region=AWS_REGION_US_EAST_1,
             )
         ],
@@ -209,17 +211,21 @@ class Test_appsync_graphqlapi_no_secrets_in_resolvers:
 
             assert len(result) == 0
 
+    @mock_aws
     def test_api_no_resources(self):
-        appsync_client = mock.MagicMock()
+        client("appsync", region_name=AWS_REGION_US_EAST_1)
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        appsync_client = AppSync(aws_provider)
         appsync_client.graphql_apis = {
             APPSYNC_API_ARN: create_graphql_api_no_resources()
         }
-        appsync_client.audit_config = {"secrets_ignore_patterns": []}
 
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider(),
+                return_value=aws_provider,
             ),
             mock.patch(
                 "prowler.providers.aws.services.appsync.appsync_graphqlapi_no_secrets_in_resolvers.appsync_graphqlapi_no_secrets_in_resolvers.appsync_client",
@@ -244,17 +250,21 @@ class Test_appsync_graphqlapi_no_secrets_in_resolvers:
             )
             assert result[0].resource_tags == [{}]
 
+    @mock_aws
     def test_api_resolver_with_secret(self):
-        appsync_client = mock.MagicMock()
+        client("appsync", region_name=AWS_REGION_US_EAST_1)
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        appsync_client = AppSync(aws_provider)
         appsync_client.graphql_apis = {
             APPSYNC_API_ARN: create_graphql_api_with_resolver_secret()
         }
-        appsync_client.audit_config = {"secrets_ignore_patterns": []}
 
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider(),
+                return_value=aws_provider,
             ),
             mock.patch(
                 "prowler.providers.aws.services.appsync.appsync_graphqlapi_no_secrets_in_resolvers.appsync_graphqlapi_no_secrets_in_resolvers.appsync_client",
@@ -276,17 +286,21 @@ class Test_appsync_graphqlapi_no_secrets_in_resolvers:
             assert "resolver" in result[0].status_extended
             assert "Query.getUser.requestMappingTemplate" in result[0].status_extended
 
+    @mock_aws
     def test_api_without_secrets(self):
-        appsync_client = mock.MagicMock()
+        client("appsync", region_name=AWS_REGION_US_EAST_1)
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        appsync_client = AppSync(aws_provider)
         appsync_client.graphql_apis = {
             APPSYNC_API_ARN: create_graphql_api_without_secrets()
         }
-        appsync_client.audit_config = {"secrets_ignore_patterns": []}
 
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider(),
+                return_value=aws_provider,
             ),
             mock.patch(
                 "prowler.providers.aws.services.appsync.appsync_graphqlapi_no_secrets_in_resolvers.appsync_graphqlapi_no_secrets_in_resolvers.appsync_client",
@@ -310,19 +324,23 @@ class Test_appsync_graphqlapi_no_secrets_in_resolvers:
                 == f"No secrets found in AppSync GraphQL API {APPSYNC_API_NAME} resolver mapping templates or data sources."
             )
 
+    @mock_aws
     def test_scan_failure_reports_manual(self):
         from prowler.lib.utils.utils import SecretsScanError
 
-        appsync_client = mock.MagicMock()
+        client("appsync", region_name=AWS_REGION_US_EAST_1)
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        appsync_client = AppSync(aws_provider)
         appsync_client.graphql_apis = {
             APPSYNC_API_ARN: create_graphql_api_with_resolver_secret()
         }
-        appsync_client.audit_config = {"secrets_ignore_patterns": []}
 
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider(),
+                return_value=aws_provider,
             ),
             mock.patch(
                 "prowler.providers.aws.services.appsync.appsync_graphqlapi_no_secrets_in_resolvers.appsync_graphqlapi_no_secrets_in_resolvers.appsync_client",
@@ -344,17 +362,21 @@ class Test_appsync_graphqlapi_no_secrets_in_resolvers:
             assert result[0].status == "MANUAL"
             assert "Could not scan" in result[0].status_extended
 
+    @mock_aws
     def test_api_data_source_with_secret(self):
-        appsync_client = mock.MagicMock()
+        client("appsync", region_name=AWS_REGION_US_EAST_1)
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        appsync_client = AppSync(aws_provider)
         appsync_client.graphql_apis = {
             APPSYNC_API_ARN: create_graphql_api_with_data_source_secret()
         }
-        appsync_client.audit_config = {"secrets_ignore_patterns": []}
 
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_aws_provider(),
+                return_value=aws_provider,
             ),
             mock.patch(
                 "prowler.providers.aws.services.appsync.appsync_graphqlapi_no_secrets_in_resolvers.appsync_graphqlapi_no_secrets_in_resolvers.appsync_client",

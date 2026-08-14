@@ -94,11 +94,34 @@ class AppSync(AWSService):
                                         )
                                         .get("functions", []),
                                         region=regional_client.region,
+                                        templates_retrieved=True,
                                     )
                                 )
                             except Exception as error:
                                 logger.error(
                                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                                )
+                                # Fallback resolver record so the check can
+                                # report MANUAL instead of silently PASSing
+                                # unscanned mapping templates.
+                                api.resolvers.append(
+                                    Resolver(
+                                        arn=resolver_arn,
+                                        type_name=resolver.get("typeName", ""),
+                                        field_name=resolver.get("fieldName", ""),
+                                        data_source_name=resolver.get(
+                                            "dataSourceName", ""
+                                        ),
+                                        kind=resolver.get("kind", "UNIT"),
+                                        request_mapping_template="",
+                                        response_mapping_template="",
+                                        pipeline_functions=resolver.get(
+                                            "pipelineConfig", {}
+                                        )
+                                        .get("functions", []),
+                                        region=regional_client.region,
+                                        templates_retrieved=False,
+                                    )
                                 )
                 except Exception as error:
                     logger.error(
@@ -149,11 +172,30 @@ class AppSync(AWSService):
                                             "relationalDatabaseConfig", {}
                                         ),
                                         region=regional_client.region,
+                                        templates_retrieved=True,
                                     )
                                 )
                             except Exception as error:
                                 logger.error(
                                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                                )
+                                # Fallback data source record so the check can
+                                # report MANUAL instead of silently PASSing a
+                                # configuration that was not retrieved.
+                                api.data_sources.append(
+                                    DataSource(
+                                        arn=data_source_arn,
+                                        name=data_source.get("name", ""),
+                                        type=data_source.get("type", ""),
+                                        description="",
+                                        lambda_config={},
+                                        dynamodb_config={},
+                                        elasticsearch_config={},
+                                        http_config={},
+                                        relational_database_config={},
+                                        region=regional_client.region,
+                                        templates_retrieved=False,
+                                    )
                                 )
                 except Exception as error:
                     logger.error(
@@ -175,6 +217,7 @@ class Resolver(BaseModel):
     response_mapping_template: str
     pipeline_functions: list
     region: str
+    templates_retrieved: bool = True
 
 
 class DataSource(BaseModel):
@@ -188,6 +231,7 @@ class DataSource(BaseModel):
     http_config: dict
     relational_database_config: dict
     region: str
+    templates_retrieved: bool = True
 
 
 class GraphqlApi(BaseModel):
