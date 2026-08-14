@@ -1,6 +1,7 @@
 import re
 
 from prowler.lib.check.models import Check, CheckReportM365
+from prowler.lib.logger import logger
 from prowler.providers.m365.services.defender.defender_client import defender_client
 
 # DNS exceptions indicating that no answer could be obtained: a genuine
@@ -152,6 +153,9 @@ class defender_domain_dmarc_records_published(Check):
             return None, None
         except Exception as e:
             # Unknown DNS error: treat as resolver failure for safety.
+            logger.error(
+                f"{type(e).__name__}[{e.__traceback__.tb_lineno}]: {e}"
+            )
             return [], f"DNS resolver error ({type(e).__name__})"
 
     def _is_valid_dmarc_record(self, content: str) -> bool:
@@ -176,14 +180,14 @@ class defender_domain_dmarc_records_published(Check):
         if "=" not in first_tag:
             return False
         tag_name, tag_value = first_tag.split("=", 1)
-        if tag_name.strip().upper() != "V" or tag_value.strip().upper() != "DMARC1":
+        if tag_name.strip().lower() != "v" or tag_value.strip() != "DMARC1":
             return False
         # Must contain an exact p tag
         for tag in tags[1:]:
             if "=" not in tag:
                 continue
             name, _ = tag.split("=", 1)
-            if name.strip() == "p":
+            if name.strip().lower() == "p":
                 return True
         return False
 
