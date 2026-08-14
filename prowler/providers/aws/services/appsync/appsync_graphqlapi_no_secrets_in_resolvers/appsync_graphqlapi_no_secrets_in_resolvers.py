@@ -11,9 +11,32 @@ from prowler.providers.aws.services.appsync.appsync_client import appsync_client
 
 
 class appsync_graphqlapi_no_secrets_in_resolvers(Check):
-    """Check for secrets in AppSync resolvers and data sources"""
+    """Check for secrets in AppSync resolvers and data sources.
 
-    def execute(self):
+    Scans request/response mapping templates of every resolver and the
+    serialized configuration of every data source attached to each AppSync
+    GraphQL API. Hardcoded API keys, database credentials, tokens and other
+    embedded secrets are detected using Prowler's batched Kingfisher secret
+    scanner.
+
+    - PASS: No secrets are found in any resolver mapping template or data
+      source configuration for this GraphQL API.
+    - FAIL: At least one secret is found in a resolver mapping template or
+      data source configuration for this GraphQL API.
+    - MANUAL: The secret scanner failed (e.g. Kingfisher error) but the API
+      has resolvers or data sources - manual review is required.
+    """
+
+    def execute(self) -> list[Check_Report_AWS]:
+        """Execute the AppSync secrets-in-resolvers check.
+
+        Builds one scan payload per resolver mapping template and per data
+        source configuration, batches them into a single Kingfisher invocation,
+        then maps the results back to per-API findings keyed by API ARN.
+
+        Returns:
+            list[Check_Report_AWS]: One report per AppSync GraphQL API.
+        """
         findings = []
         if not appsync_client.graphql_apis:
             return findings
@@ -23,21 +46,22 @@ class appsync_graphqlapi_no_secrets_in_resolvers(Check):
         )
         validate = appsync_client.audit_config.get("secrets_validate", False)
 
-        # Build payloads to scan. Each payload is keyed by (api_index, resource_kind,
-        # resource_name) so findings can be grouped back per GraphQL API.
+        # Build payloads to scan. Each payload is keyed by (api_arn,
+        # resource_kind, resource_name) so findings can be grouped back per
+        # GraphQL API using the ARN (stable across ordering changes).
         def payloads():
-            for api_index, api in enumerate(appsync_client.graphql_apis.values()):
+            for api in appsync_client.graphql_apis.values():
                 # Scan resolvers
                 for resolver in api.resolvers:
                     if resolver.request_mapping_template:
                         yield (
-                            api_index,
+                            api.arn,
                             "resolver",
                             f"{resolver.type_name}.{resolver.field_name}.requestMappingTemplate",
                         ), resolver.request_mapping_template
                     if resolver.response_mapping_template:
                         yield (
-                            api_index,
+                            api.arn,
                             "resolver",
                             f"{resolver.type_name}.{resolver.field_name}.responseMappingTemplate",
                         ), resolver.response_mapping_template
@@ -73,7 +97,7 @@ class appsync_graphqlapi_no_secrets_in_resolvers(Check):
                             )
                         )
                     if config_parts:
-                        yield (api_index, "data_source", data_source.name), "\n".join(
+                        yield (api.arn, "data_source", data_source.name), "\n".join(
                             config_parts
                         )
 
@@ -88,7 +112,14 @@ class appsync_graphqlapi_no_secrets_in_resolvers(Check):
             batch_results = {}
             scan_error = error
 
-        for api_index, api in enumerate(appsync_client.graphql_apis.values()):
+        # Group findings by API ARN once, then look up per API in O(1).
+        findings_by_arn = defaultdict(list)
+        for (api_arn, resource_kind, resource_name), secrets_list in batch_results.items():
+            findings_by_arn[api_arn].append(
+                (resource_kind, resource_name, secrets_list)
+            )
+
+        for api in appsync_client.graphql_apis.values():
             report = Check_Report_AWS(metadata=self.metadata(), resource=api)
             report.resource_id = api.name
             report.resource_arn = api.arn
@@ -99,15 +130,6 @@ class appsync_graphqlapi_no_secrets_in_resolvers(Check):
                 f"No secrets found in AppSync GraphQL API {api.name} "
                 f"resolver mapping templates or data sources."
             )
-
-            findings_for_api = defaultdict(list)
-            for (
-                found_api_index,
-                resource_kind,
-                resource_name,
-            ), secrets_list in batch_results.items():
-                if found_api_index == api_index:
-                    findings_for_api[(resource_kind, resource_name)] = secrets_list
 
             if scan_error:
                 # If there are resolvers or data sources and scan failed,
@@ -122,13 +144,15 @@ class appsync_graphqlapi_no_secrets_in_resolvers(Check):
                 findings.append(report)
                 continue
 
-            if findings_for_api:
+            api_findings = findings_by_arn.get(api.arn, [])
+            if api_findings:
                 all_secrets = []
                 secrets_findings = []
                 for (
                     resource_kind,
                     resource_name,
-                ), secrets_list in findings_for_api.items():
+                    secrets_list,
+                ) in api_findings:
                     all_secrets.extend(secrets_list)
                     secrets_string = ", ".join(
                         f"{secret['type']} on line {secret['line_number']}"
@@ -141,7 +165,7 @@ class appsync_graphqlapi_no_secrets_in_resolvers(Check):
                 final_output_string = "; ".join(secrets_findings)
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"Potential {'secrets' if len(secrets_findings) > 1 else 'secret'} "
+                    f"Potential {'secrets' if len(all_secrets) > 1 else 'secret'} "
                     f"found in AppSync GraphQL API {api.name} -> {final_output_string}."
                 )
                 annotate_verified_secrets(report, all_secrets)

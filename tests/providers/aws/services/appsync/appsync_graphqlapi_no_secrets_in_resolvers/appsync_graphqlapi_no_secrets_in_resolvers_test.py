@@ -1,6 +1,5 @@
 from unittest import mock
 
-import botocore
 from boto3 import client
 from moto import mock_aws
 
@@ -10,14 +9,11 @@ from prowler.providers.aws.services.appsync.appsync_service import (
     GraphqlApi,
     Resolver,
 )
-from prowler.providers.aws.services.awslambda.awslambda_service import Function
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
     set_mocked_aws_provider,
 )
-
-orig = botocore.client.BaseClient._make_api_call
 
 APPSYNC_API_NAME = "test-api"
 APPSYNC_API_ID = "testapi123456"
@@ -141,6 +137,52 @@ def create_graphql_api_without_secrets():
     return api
 
 
+def create_graphql_api_with_data_source_secret():
+    api = GraphqlApi(
+        id=APPSYNC_API_ID,
+        name=APPSYNC_API_NAME,
+        arn=APPSYNC_API_ARN,
+        region=AWS_REGION_US_EAST_1,
+        type="GRAPHQL",
+        field_log_level="ALL",
+        authentication_type="AWS_IAM",
+        resolvers=[],
+        data_sources=[
+            DataSource(
+                arn=f"arn:aws:appsync:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:apis/{APPSYNC_API_ID}/datasources/TestHttpDataSource",
+                name="TestHttpDataSource",
+                type="HTTP",
+                description="HTTP data source",
+                lambda_config={},
+                dynamodb_config={},
+                elasticsearch_config={},
+                http_config={
+                    "endpoint": "https://api.example.com/",
+                    "authorizationConfig": {
+                        "authorizationType": "AWS_IAM",
+                        "awsIamConfig": {
+                            "signingRegion": AWS_REGION_US_EAST_1,
+                            "signingServiceName": "appsync",
+                        },
+                    },
+                },
+                relational_database_config={
+                    "rdsHttpEndpointConfig": {
+                        "awsRegion": AWS_REGION_US_EAST_1,
+                        "dbClusterIdentifier": "my-cluster",
+                        "database": "mydb",
+                        "schema": "public",
+                        "awsSecretStoreArn": "arn:aws:secretsmanager:us-east-1:123456789012:secret:my-secret-AbCdEfGh",
+                    }
+                },
+                region=AWS_REGION_US_EAST_1,
+            )
+        ],
+        tags=[{}],
+    )
+    return api
+
+
 class Test_appsync_graphqlapi_no_secrets_in_resolvers:
     @mock_aws
     def test_no_apis(self):
@@ -168,7 +210,7 @@ class Test_appsync_graphqlapi_no_secrets_in_resolvers:
             assert len(result) == 0
 
     def test_api_no_resources(self):
-        appsync_client = mock.MagicMock
+        appsync_client = mock.MagicMock()
         appsync_client.graphql_apis = {
             APPSYNC_API_ARN: create_graphql_api_no_resources()
         }
@@ -203,7 +245,7 @@ class Test_appsync_graphqlapi_no_secrets_in_resolvers:
             assert result[0].resource_tags == [{}]
 
     def test_api_resolver_with_secret(self):
-        appsync_client = mock.MagicMock
+        appsync_client = mock.MagicMock()
         appsync_client.graphql_apis = {
             APPSYNC_API_ARN: create_graphql_api_with_resolver_secret()
         }
@@ -235,7 +277,7 @@ class Test_appsync_graphqlapi_no_secrets_in_resolvers:
             assert "Query.getUser.requestMappingTemplate" in result[0].status_extended
 
     def test_api_without_secrets(self):
-        appsync_client = mock.MagicMock
+        appsync_client = mock.MagicMock()
         appsync_client.graphql_apis = {
             APPSYNC_API_ARN: create_graphql_api_without_secrets()
         }
@@ -271,7 +313,7 @@ class Test_appsync_graphqlapi_no_secrets_in_resolvers:
     def test_scan_failure_reports_manual(self):
         from prowler.lib.utils.utils import SecretsScanError
 
-        appsync_client = mock.MagicMock
+        appsync_client = mock.MagicMock()
         appsync_client.graphql_apis = {
             APPSYNC_API_ARN: create_graphql_api_with_resolver_secret()
         }
@@ -301,3 +343,35 @@ class Test_appsync_graphqlapi_no_secrets_in_resolvers:
             assert len(result) == 1
             assert result[0].status == "MANUAL"
             assert "Could not scan" in result[0].status_extended
+
+    def test_api_data_source_with_secret(self):
+        appsync_client = mock.MagicMock()
+        appsync_client.graphql_apis = {
+            APPSYNC_API_ARN: create_graphql_api_with_data_source_secret()
+        }
+        appsync_client.audit_config = {"secrets_ignore_patterns": []}
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.appsync.appsync_graphqlapi_no_secrets_in_resolvers.appsync_graphqlapi_no_secrets_in_resolvers.appsync_client",
+                new=appsync_client,
+            ),
+        ):
+            from prowler.providers.aws.services.appsync.appsync_graphqlapi_no_secrets_in_resolvers.appsync_graphqlapi_no_secrets_in_resolvers import (
+                appsync_graphqlapi_no_secrets_in_resolvers,
+            )
+
+            check = appsync_graphqlapi_no_secrets_in_resolvers()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].region == AWS_REGION_US_EAST_1
+            assert result[0].resource_id == APPSYNC_API_NAME
+            assert result[0].resource_arn == APPSYNC_API_ARN
+            assert result[0].status == "FAIL"
+            assert "data_source" in result[0].status_extended
+            assert "TestHttpDataSource" in result[0].status_extended

@@ -100,21 +100,6 @@ class AppSync(AWSService):
                                 logger.error(
                                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                                 )
-                                api.resolvers.append(
-                                    Resolver(
-                                        arn=resolver_arn,
-                                        type_name=resolver.get("typeName", ""),
-                                        field_name=resolver.get("fieldName", ""),
-                                        data_source_name=resolver.get(
-                                            "dataSourceName", ""
-                                        ),
-                                        kind=resolver.get("kind", "UNIT"),
-                                        request_mapping_template="",
-                                        response_mapping_template="",
-                                        pipeline_functions=[],
-                                        region=regional_client.region,
-                                    )
-                                )
                 except Exception as error:
                     logger.error(
                         f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -169,20 +154,6 @@ class AppSync(AWSService):
                             except Exception as error:
                                 logger.error(
                                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                                )
-                                api.data_sources.append(
-                                    DataSource(
-                                        arn=data_source_arn,
-                                        name=data_source.get("name", ""),
-                                        type=data_source.get("type", ""),
-                                        description="",
-                                        lambda_config={},
-                                        dynamodb_config={},
-                                        elasticsearch_config={},
-                                        http_config={},
-                                        relational_database_config={},
-                                        region=regional_client.region,
-                                    )
                                 )
                 except Exception as error:
                     logger.error(
