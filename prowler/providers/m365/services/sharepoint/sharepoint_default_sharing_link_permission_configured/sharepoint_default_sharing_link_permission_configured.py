@@ -36,9 +36,7 @@ class sharepoint_default_sharing_link_permission_configured(Check):
                 resource_id="sharepointSettings",
             )
             report.status = "FAIL"
-            report.status_extended = (
-                "The default sharing link permission is set to Edit instead of View."
-            )
+            report.status_extended = f"The default sharing link permission is set to {settings.defaultLinkPermission} instead of View."
 
             if settings.defaultLinkPermission == "View":
                 report.status = "PASS"
