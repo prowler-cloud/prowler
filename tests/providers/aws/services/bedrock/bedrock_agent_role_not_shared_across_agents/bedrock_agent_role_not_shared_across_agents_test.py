@@ -270,3 +270,78 @@ class Test_bedrock_agent_role_not_shared_across_agents:
         assert by_id[AGENT_B_ID].status == "MANUAL"
         # Only one readable agent uses the role, so it is not provably shared.
         assert by_id[AGENT_A_ID].status == "PASS"
+
+    def test_every_inventory_shape_resolves_correctly(self):
+        """Exhaust the decision space instead of sampling it.
+
+        Bedrock Agents cannot be created in every account (the service refuses new
+        agents for accounts without prior usage), so this check's behaviour is
+        pinned by enumerating every inventory of up to three agents over the cross
+        product of {role r1, role r2, no role} x {readable, unreadable} and
+        asserting the verdict for each agent in each one. A role is shared only
+        when two or more READABLE agents hold it.
+        """
+        from itertools import product
+
+        from prowler.providers.aws.services.bedrock.bedrock_service import Agent
+
+        role_1 = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:role/r1"
+        role_2 = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:role/r2"
+        states = [(role_1, True), (role_2, True), (None, True), (role_1, False)]
+
+        class _Client:
+            audited_account = AWS_ACCOUNT_NUMBER
+            audited_partition = "aws"
+            region = AWS_REGION_US_EAST_1
+
+            def __init__(self, agents):
+                self.agents = agents
+
+        checked = 0
+        for size in (1, 2, 3):
+            for combo in product(states, repeat=size):
+                agents = {}
+                for index, (role, retrieved) in enumerate(combo):
+                    arn = f"arn:aws:bedrock:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:agent/A{index}"
+                    agent = Agent(
+                        id=f"A{index}",
+                        name=f"agent{index}",
+                        arn=arn,
+                        region=AWS_REGION_US_EAST_1,
+                    )
+                    agent.role_arn = role
+                    agent.detail_retrieved = retrieved
+                    agents[arn] = agent
+
+                readable_per_role = {}
+                for role, retrieved in combo:
+                    if retrieved and role:
+                        readable_per_role[role] = readable_per_role.get(role, 0) + 1
+                expected = sorted(
+                    (
+                        "MANUAL"
+                        if not retrieved or not role
+                        else ("FAIL" if readable_per_role[role] >= 2 else "PASS")
+                    )
+                    for role, retrieved in combo
+                )
+
+                with mock.patch(
+                    "prowler.providers.aws.services.bedrock.bedrock_agent_role_not_shared_across_agents.bedrock_agent_role_not_shared_across_agents.bedrock_agent_client",
+                    new=_Client(agents),
+                ):
+                    from prowler.providers.aws.services.bedrock.bedrock_agent_role_not_shared_across_agents.bedrock_agent_role_not_shared_across_agents import (
+                        bedrock_agent_role_not_shared_across_agents,
+                    )
+
+                    result = bedrock_agent_role_not_shared_across_agents().execute()
+
+                assert len(result) == size, combo
+                assert sorted(report.status for report in result) == expected, combo
+                assert all(
+                    report.status_extended.endswith(".") for report in result
+                ), combo
+                checked += 1
+
+        # 4 + 16 + 64 inventories.
+        assert checked == 84

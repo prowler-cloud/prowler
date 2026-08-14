@@ -239,3 +239,65 @@ class Test_bedrock_custom_model_encrypted_with_cmk:
         """
         result = self._run()
         assert result == []
+
+    def test_every_model_state_resolves_correctly(self):
+        """Exhaust the decision space instead of sampling it.
+
+        A Bedrock custom model cannot be created without a model customization
+        job, so this check's behaviour is pinned by enumerating every combination
+        of retrieval outcome, key value (absent, empty, set) and regional listing
+        outcome, and asserting the per-model verdict plus the presence of the
+        region-level report for each one.
+        """
+        from itertools import product
+
+        from prowler.providers.aws.services.bedrock.bedrock_service import CustomModel
+
+        class _Client:
+            audited_account = AWS_ACCOUNT_NUMBER
+            audited_partition = "aws"
+            region = AWS_REGION_US_EAST_1
+
+            def __init__(self, models, scan_errors):
+                self.custom_models = models
+                self.custom_models_scan_errors = scan_errors
+
+        checked = 0
+        for retrieved, key, scan_errors in product(
+            [False, True],
+            [None, "", KMS_KEY_ARN],
+            [{}, {AWS_REGION_US_EAST_1: "AccessDeniedException"}],
+        ):
+            model = CustomModel(
+                name=MODEL_NAME, arn=MODEL_ARN, region=AWS_REGION_US_EAST_1
+            )
+            model.kms_key_arn = key
+            model.detail_retrieved = retrieved
+            case = (retrieved, key, bool(scan_errors))
+
+            with mock.patch(
+                "prowler.providers.aws.services.bedrock.bedrock_custom_model_encrypted_with_cmk.bedrock_custom_model_encrypted_with_cmk.bedrock_client",
+                new=_Client({MODEL_ARN: model}, scan_errors),
+            ):
+                from prowler.providers.aws.services.bedrock.bedrock_custom_model_encrypted_with_cmk.bedrock_custom_model_encrypted_with_cmk import (
+                    bedrock_custom_model_encrypted_with_cmk,
+                )
+
+                result = bedrock_custom_model_encrypted_with_cmk().execute()
+
+            per_model = [
+                r for r in result if "custom-model/unknown" not in r.resource_arn
+            ]
+            region_level = [
+                r for r in result if "custom-model/unknown" in r.resource_arn
+            ]
+            expected = "MANUAL" if not retrieved else ("PASS" if key else "FAIL")
+
+            assert len(per_model) == 1, case
+            assert per_model[0].status == expected, case
+            assert len(region_level) == (1 if scan_errors else 0), case
+            assert all(r.status_extended.endswith(".") for r in result), case
+            checked += 1
+
+        # 2 retrieval states x 3 key values x 2 listing outcomes.
+        assert checked == 12
