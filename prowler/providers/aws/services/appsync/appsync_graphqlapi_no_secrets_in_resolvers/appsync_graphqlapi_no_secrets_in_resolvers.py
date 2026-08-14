@@ -167,17 +167,20 @@ class appsync_graphqlapi_no_secrets_in_resolvers(Check):
                 f"resolver mapping templates or data sources."
             )
 
-            # If scan failed or any resolver/data source mapping templates are
-            # missing (e.g. a detail-fetch error) but the API still carries
-            # resolvers or data sources, report MANUAL rather than PASS so
-            # unscanned data is not silently treated as secret-free.
+            # If scan failed, a resolver/data source mapping template or
+            # configuration is missing (e.g. a detail-fetch error), or the
+            # resolvers/data sources could not be listed at all (e.g. a
+            # paginator failure), report MANUAL rather than PASS so unscanned
+            # data is not silently treated as secret-free.
             unresolved = any(
                 getattr(resolver, "templates_retrieved", True) is False
                 for resolver in api.resolvers
             ) or any(
                 getattr(data_source, "templates_retrieved", True) is False
                 for data_source in api.data_sources
-            )
+            ) or getattr(api, "resolvers_retrieved", True) is False or getattr(
+                api, "data_sources_retrieved", True
+            ) is False
 
             if unresolved:
                 report.status = "MANUAL"

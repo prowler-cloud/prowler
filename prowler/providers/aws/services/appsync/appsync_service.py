@@ -127,6 +127,10 @@ class AppSync(AWSService):
                     logger.error(
                         f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
+                    # Listing resolvers for this API failed, so we cannot be
+                    # sure its mapping templates were scanned. Flag it so the
+                    # check reports MANUAL instead of silently PASSing.
+                    api.resolvers_retrieved = False
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -201,6 +205,10 @@ class AppSync(AWSService):
                     logger.error(
                         f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
+                    # Listing data sources for this API failed, so we cannot be
+                    # sure its configurations were scanned. Flag it so the
+                    # check reports MANUAL instead of silently PASSing.
+                    api.data_sources_retrieved = False
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -244,4 +252,6 @@ class GraphqlApi(BaseModel):
     authentication_type: str
     resolvers: list[Resolver] = []
     data_sources: list[DataSource] = []
+    resolvers_retrieved: bool = True
+    data_sources_retrieved: bool = True
     tags: Optional[list] = []

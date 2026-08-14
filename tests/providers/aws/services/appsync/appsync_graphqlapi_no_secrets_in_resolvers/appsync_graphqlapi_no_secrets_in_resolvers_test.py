@@ -397,3 +397,75 @@ class Test_appsync_graphqlapi_no_secrets_in_resolvers:
             assert result[0].status == "FAIL"
             assert "data_source" in result[0].status_extended
             assert "TestHttpDataSource" in result[0].status_extended
+
+    @mock_aws
+    def test_resolver_list_failure_reports_manual(self):
+        client("appsync", region_name=AWS_REGION_US_EAST_1)
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        # If listing resolvers for an API fails, no resolver record is added.
+        # The API-level flag must still make the check report MANUAL.
+        api = create_graphql_api_no_resources()
+        api.resolvers_retrieved = False
+        api.data_sources_retrieved = True
+
+        appsync_client = AppSync(aws_provider)
+        appsync_client.graphql_apis = {APPSYNC_API_ARN: api}
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.appsync.appsync_graphqlapi_no_secrets_in_resolvers.appsync_graphqlapi_no_secrets_in_resolvers.appsync_client",
+                new=appsync_client,
+            ),
+        ):
+            from prowler.providers.aws.services.appsync.appsync_graphqlapi_no_secrets_in_resolvers.appsync_graphqlapi_no_secrets_in_resolvers import (
+                appsync_graphqlapi_no_secrets_in_resolvers,
+            )
+
+            check = appsync_graphqlapi_no_secrets_in_resolvers()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert "manual review is required" in result[0].status_extended
+
+    @mock_aws
+    def test_data_source_list_failure_reports_manual(self):
+        client("appsync", region_name=AWS_REGION_US_EAST_1)
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        # If listing data sources for an API fails, no data source record is
+        # added. The API-level flag must still make the check report MANUAL.
+        api = create_graphql_api_no_resources()
+        api.resolvers_retrieved = True
+        api.data_sources_retrieved = False
+
+        appsync_client = AppSync(aws_provider)
+        appsync_client.graphql_apis = {APPSYNC_API_ARN: api}
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.appsync.appsync_graphqlapi_no_secrets_in_resolvers.appsync_graphqlapi_no_secrets_in_resolvers.appsync_client",
+                new=appsync_client,
+            ),
+        ):
+            from prowler.providers.aws.services.appsync.appsync_graphqlapi_no_secrets_in_resolvers.appsync_graphqlapi_no_secrets_in_resolvers import (
+                appsync_graphqlapi_no_secrets_in_resolvers,
+            )
+
+            check = appsync_graphqlapi_no_secrets_in_resolvers()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert "manual review is required" in result[0].status_extended
