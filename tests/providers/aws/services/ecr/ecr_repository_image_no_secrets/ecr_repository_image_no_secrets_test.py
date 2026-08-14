@@ -624,7 +624,7 @@ class Test_ecr_repository_image_no_secrets:
             mock.patch("urllib.request.urlopen") as mock_urlopen,
             mock.patch(
                 "prowler.providers.aws.services.ecr.ecr_repository_image_no_secrets.ecr_repository_image_no_secrets.detect_secrets_scan_batch",
-                return_value={},
+                side_effect=lambda payloads, **kwargs: {},
             ),
         ):
             from prowler.providers.aws.services.ecr.ecr_repository_image_no_secrets.ecr_repository_image_no_secrets import (
