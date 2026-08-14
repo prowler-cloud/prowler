@@ -1,15 +1,7 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.bedrock.bedrock_client import bedrock_client
 
-# Both filter types must be present: GROUNDING scores whether the response is
-# supported by the retrieved source, RELEVANCE scores whether it answers the
-# question asked. One without the other leaves half of the hallucination
-# surface unmeasured.
 REQUIRED_FILTER_TYPES = frozenset({"GROUNDING", "RELEVANCE"})
-
-# BLOCK replaces the response with the guardrail's blocked messaging. NONE only
-# returns detection information in the trace, so the ungrounded answer still
-# reaches the caller -- scored, reported, and delivered.
 BLOCKING_ACTION = "BLOCK"
 
 
@@ -97,13 +89,6 @@ class bedrock_guardrail_contextual_grounding_filter_enabled(Check):
                         f"the {filter_type} filter has a threshold of {filter.get('threshold')}, which no response can ever trip"
                     )
                 elif action is None or filter.get("enabled") is None:
-                    # Both action and enabled are optional members of
-                    # GuardrailContextualGroundingFilter with no documented default
-                    # (only type and threshold are required), so an omitted value
-                    # cannot be read as either blocking or not. Report the same way
-                    # for both rather than treating an absent action as a definite
-                    # misconfiguration -- printing the literal None into
-                    # status_extended would also read as an AWS enum value.
                     unknown_types.append(filter_type)
 
             if reasons:
@@ -111,7 +96,7 @@ class bedrock_guardrail_contextual_grounding_filter_enabled(Check):
                 report.status_extended = f"Bedrock Guardrail {guardrail.name} does not block ungrounded responses in region {guardrail.region}: {'; '.join(reasons)}."
             elif unknown_types:
                 report.status = "MANUAL"
-                report.status_extended = f"Bedrock Guardrail {guardrail.name} blocks ungrounded responses above a non-zero threshold in region {guardrail.region}, but the {', '.join(unknown_types)} filter does not report whether it is enabled and blocking; verify manually that the evaluation runs and blocks."
+                report.status_extended = f"Bedrock Guardrail {guardrail.name} has both required contextual grounding filters with a non-zero threshold in region {guardrail.region}, but the {', '.join(unknown_types)} filter does not report whether it is enabled and set to BLOCK, so whether it blocks is unknown; verify manually that the evaluation runs and blocks."
             else:
                 report.status = "PASS"
                 report.status_extended = f"Bedrock Guardrail {guardrail.name} blocks ungrounded and irrelevant responses with GROUNDING and RELEVANCE filters in region {guardrail.region}."

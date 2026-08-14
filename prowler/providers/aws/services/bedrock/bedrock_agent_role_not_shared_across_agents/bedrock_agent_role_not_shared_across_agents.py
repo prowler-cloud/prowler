@@ -3,8 +3,6 @@ from prowler.providers.aws.services.bedrock.bedrock_agent_client import (
     bedrock_agent_client,
 )
 
-# A role used by exactly one agent is dedicated. Two or more sharing it is the
-# failing condition, so the count is compared against this threshold.
 SHARED_ROLE_AGENT_COUNT = 2
 
 
@@ -17,12 +15,19 @@ class bedrock_agent_role_not_shared_across_agents(Check):
     attribution: CloudTrail records the role session, so an action taken with
     that role cannot be tied back to a single agent.
 
-    - PASS: The agent's execution role is used by no other agent in the
-      account inventory.
+    Sharing is judged against the whole account inventory, so the verdict is only
+    as complete as that inventory. A role that looks dedicated cannot be confirmed
+    as such while any Region's agent listing is missing, but a role already seen on
+    two agents is shared whatever else is missing.
+
+    - PASS: The agent's execution role is used by no other agent, and every
+      Region's agent inventory was listed successfully.
     - FAIL: Two or more agents share the role; the other agents sharing it are
       named in the message.
     - MANUAL: The execution role ARN could not be retrieved from GetAgent, so
-      sharing can be neither confirmed nor ruled out.
+      sharing can be neither confirmed nor ruled out; or the role looks dedicated
+      but ListAgents failed for a Region, leaving the inventory incomplete; or
+      ListAgents failed for a Region that therefore contributed no agents at all.
     """
 
     def execute(self) -> list[Check_Report_AWS]:
@@ -33,9 +38,19 @@ class bedrock_agent_role_not_shared_across_agents(Check):
         """
         findings = []
 
-        # Build the account-wide role -> agents index once, from every agent
-        # whose role could actually be read. Keyed on the agent ARN rather than
-        # the name so two agents that happen to share a name still count twice.
+        incomplete_regions = sorted(bedrock_agent_client.agents_scan_errors)
+        for region, error in sorted(bedrock_agent_client.agents_scan_errors.items()):
+            report = Check_Report_AWS(
+                metadata=self.metadata(), resource={"region": region}
+            )
+            report.region = region
+            report.resource_id = "agent/unknown"
+            report.resource_arn = f"arn:{bedrock_agent_client.audited_partition}:bedrock:{region}:{bedrock_agent_client.audited_account}:agent/unknown"
+            report.status = "MANUAL"
+            report.status_extended = f"Bedrock Agents could not be listed in region {region} ({error}); verify manually that no execution role is shared between agents."
+            findings.append(report)
+
+        # Keyed on agent ARN, not name, so two same-named agents still count twice.
         agents_by_role = {}
         for agent in bedrock_agent_client.agents.values():
             if agent.detail_retrieved and agent.role_arn:
@@ -48,8 +63,6 @@ class bedrock_agent_role_not_shared_across_agents(Check):
             name = agent.name or agent.id
 
             if not agent.detail_retrieved or not agent.role_arn:
-                # GetAgent failed or returned no role. Do not assert
-                # compliance from an absent answer.
                 report.status = "MANUAL"
                 report.status_extended = f"Bedrock Agent {name} execution role could not be retrieved in region {agent.region}; verify manually that no other agent shares it."
                 findings.append(report)
@@ -65,6 +78,11 @@ class bedrock_agent_role_not_shared_across_agents(Check):
                 )
                 report.status = "FAIL"
                 report.status_extended = f"Bedrock Agent {name} shares execution role {agent.role_arn} with {', '.join(others)} in region {agent.region}, so each agent inherits the union of their permissions and CloudTrail cannot attribute an action to one of them."
+            elif incomplete_regions:
+                # The role looks dedicated, but an unlisted Region could hold
+                # another agent using it, so dedication cannot be asserted.
+                report.status = "MANUAL"
+                report.status_extended = f"Bedrock Agent {name} execution role is used by no other agent found in region {agent.region}, but agents could not be listed in {', '.join(incomplete_regions)}; verify manually that no agent there shares it."
             else:
                 report.status = "PASS"
                 report.status_extended = f"Bedrock Agent {name} has a dedicated execution role in region {agent.region}."

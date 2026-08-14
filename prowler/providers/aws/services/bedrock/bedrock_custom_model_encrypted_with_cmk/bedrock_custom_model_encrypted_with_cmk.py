@@ -26,9 +26,6 @@ class bedrock_custom_model_encrypted_with_cmk(Check):
         """
         findings = []
 
-        # A region whose ListCustomModels call failed contributes no models to
-        # the inventory, so there is no resource to hang a finding on. Reporting
-        # nothing would be indistinguishable from "this region has no models".
         for region, error in sorted(bedrock_client.custom_models_scan_errors.items()):
             report = Check_Report_AWS(
                 metadata=self.metadata(), resource={"region": region}
@@ -44,8 +41,6 @@ class bedrock_custom_model_encrypted_with_cmk(Check):
             report = Check_Report_AWS(metadata=self.metadata(), resource=model)
 
             if not model.detail_retrieved:
-                # GetCustomModel failed (permissions, throttling, transient
-                # error). Do not assert compliance from an absent answer.
                 report.status = "MANUAL"
                 report.status_extended = f"Bedrock custom model {model.name} encryption configuration could not be retrieved in region {model.region}; verify manually that it uses a customer-managed KMS key."
             elif model.kms_key_arn:

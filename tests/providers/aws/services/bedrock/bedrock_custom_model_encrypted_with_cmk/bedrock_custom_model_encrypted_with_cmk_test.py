@@ -247,43 +247,25 @@ class Test_bedrock_custom_model_encrypted_with_cmk:
         job, so this check's behaviour is pinned by enumerating every combination
         of retrieval outcome, key value (absent, empty, set) and regional listing
         outcome, and asserting the per-model verdict plus the presence of the
-        region-level report for each one.
+        region-level report.
+
+        Each case is driven through the real Bedrock service so a renamed service
+        attribute breaks the test rather than passing silently.
         """
         from itertools import product
 
-        from prowler.providers.aws.services.bedrock.bedrock_service import CustomModel
-
-        class _Client:
-            audited_account = AWS_ACCOUNT_NUMBER
-            audited_partition = "aws"
-            region = AWS_REGION_US_EAST_1
-
-            def __init__(self, models, scan_errors):
-                self.custom_models = models
-                self.custom_models_scan_errors = scan_errors
-
-        checked = 0
-        for retrieved, key, scan_errors in product(
-            [False, True],
-            [None, "", KMS_KEY_ARN],
-            [{}, {AWS_REGION_US_EAST_1: "AccessDeniedException"}],
+        for key, fail_get, list_denied in product(
+            [None, "", KMS_KEY_ARN], [False, True], [False, True]
         ):
-            model = CustomModel(
-                name=MODEL_NAME, arn=MODEL_ARN, region=AWS_REGION_US_EAST_1
+            case = (key, fail_get, list_denied)
+            stub = (
+                _mock_list_denied
+                if list_denied
+                else _custom_model_mock(key, fail_get=fail_get)
             )
-            model.kms_key_arn = key
-            model.detail_retrieved = retrieved
-            case = (retrieved, key, bool(scan_errors))
-
-            with mock.patch(
-                "prowler.providers.aws.services.bedrock.bedrock_custom_model_encrypted_with_cmk.bedrock_custom_model_encrypted_with_cmk.bedrock_client",
-                new=_Client({MODEL_ARN: model}, scan_errors),
-            ):
-                from prowler.providers.aws.services.bedrock.bedrock_custom_model_encrypted_with_cmk.bedrock_custom_model_encrypted_with_cmk import (
-                    bedrock_custom_model_encrypted_with_cmk,
-                )
-
-                result = bedrock_custom_model_encrypted_with_cmk().execute()
+            with mock.patch("botocore.client.BaseClient._make_api_call", new=stub):
+                with mock_aws():
+                    result = self._run()
 
             per_model = [
                 r for r in result if "custom-model/unknown" not in r.resource_arn
@@ -291,13 +273,15 @@ class Test_bedrock_custom_model_encrypted_with_cmk:
             region_level = [
                 r for r in result if "custom-model/unknown" in r.resource_arn
             ]
-            expected = "MANUAL" if not retrieved else ("PASS" if key else "FAIL")
 
-            assert len(per_model) == 1, case
-            assert per_model[0].status == expected, case
-            assert len(region_level) == (1 if scan_errors else 0), case
+            if list_denied:
+                # No model reaches the inventory; only the region-level report.
+                assert per_model == [], case
+                assert len(region_level) == 1, case
+                assert region_level[0].status == "MANUAL", case
+            else:
+                assert len(per_model) == 1, case
+                expected = "MANUAL" if fail_get else ("PASS" if key else "FAIL")
+                assert per_model[0].status == expected, case
+                assert region_level == [], case
             assert all(r.status_extended.endswith(".") for r in result), case
-            checked += 1
-
-        # 2 retrieval states x 3 key values x 2 listing outcomes.
-        assert checked == 12

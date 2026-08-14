@@ -283,9 +283,28 @@ class Test_bedrock_knowledge_base_encrypted_with_cmk:
 
     @mock.patch("botocore.client.BaseClient._make_api_call", new=_mock_no_data_sources)
     @mock_aws
-    def test_listed_but_empty_is_not_manual(self):
-        """A knowledge base with zero data sources is silent, not MANUAL.
+    def test_listed_but_empty_marks_the_knowledge_base_as_listed(self):
+        """A successful but empty ListDataSources is "none", not "unknown".
 
-        Guards the over-correction: only an unreadable list is unknown.
+        Distinct from test_knowledge_base_without_data_sources, which only asserts
+        the empty result: this asserts the service state that produces it, so the
+        over-correction of reporting MANUAL for a genuinely empty knowledge base
+        cannot regress silently.
         """
+        from prowler.providers.aws.services.bedrock.bedrock_service import BedrockAgent
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
+            service = BedrockAgent(aws_provider)
+
+        assert service.knowledge_bases, "the knowledge base must be discovered"
+        assert all(
+            knowledge_base.data_sources_listed
+            for knowledge_base in service.knowledge_bases.values()
+        )
+        assert service.data_sources == {}
+        assert service.knowledge_bases_scan_errors == {}
         assert self._run() == []

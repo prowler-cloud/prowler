@@ -34,8 +34,6 @@ class bedrock_knowledge_base_encrypted_with_cmk(Check):
         """
         findings = []
 
-        # A region whose ListKnowledgeBases call failed has no knowledge bases
-        # in the inventory at all, so there is no resource to hang a finding on.
         for region, error in sorted(
             bedrock_agent_client.knowledge_bases_scan_errors.items()
         ):
@@ -52,8 +50,6 @@ class bedrock_knowledge_base_encrypted_with_cmk(Check):
         for knowledge_base in bedrock_agent_client.knowledge_bases.values():
             if knowledge_base.data_sources_listed:
                 continue
-            # ListDataSources failed for this knowledge base, so its data sources
-            # are unknown rather than absent.
             report = Check_Report_AWS(metadata=self.metadata(), resource=knowledge_base)
             report.status = "MANUAL"
             report.status_extended = f"Bedrock knowledge base {knowledge_base.name} data sources could not be listed in region {knowledge_base.region}; verify manually that each one uses a customer-managed KMS key."
@@ -66,8 +62,6 @@ class bedrock_knowledge_base_encrypted_with_cmk(Check):
             )
 
             if not data_source.detail_retrieved:
-                # GetDataSource failed (permissions, throttling, transient
-                # error). Do not assert compliance from an absent answer.
                 report.status = "MANUAL"
                 report.status_extended = f"Bedrock knowledge base {knowledge_base} data source {data_source.name} encryption configuration could not be retrieved in region {data_source.region}; verify manually that it uses a customer-managed KMS key."
             elif data_source.kms_key_arn:

@@ -104,9 +104,7 @@ class Bedrock(AWSService):
                     guardrail.prompt_attack_filter_strength = filter.get(
                         "inputStrength", "NONE"
                     )
-            # contextualGroundingPolicy is absent from the response when no
-            # grounding policy is configured, so an empty list means "none
-            # configured" only once detail_retrieved is True.
+            # Absent from the response when no grounding policy is configured.
             guardrail.contextual_grounding_filters = [
                 {
                     "type": filter.get("type"),
@@ -162,10 +160,8 @@ class Bedrock(AWSService):
                         )
         except ClientError as error:
             code = error.response["Error"].get("Code", error.__class__.__name__)
-            # ValidationException here means Bedrock is not available in the
-            # region, which is a definite "no custom models", not an unknown.
-            # Recording it would emit a MANUAL finding for every region the
-            # service does not serve.
+            # ValidationException means Bedrock is unavailable in the region:
+            # a definite "no models", so it must not become a MANUAL finding.
             if code != "ValidationException":
                 self.custom_models_scan_errors[regional_client.region] = code
             logger.error(
@@ -212,11 +208,9 @@ class Guardrail(BaseModel):
     tags: Optional[list] = []
     sensitive_information_filter: bool = False
     prompt_attack_filter_strength: Optional[str] = None
-    # One dict per contextualGroundingPolicy filter: type, threshold, action,
-    # enabled. Empty when no grounding policy is configured.
+    # type, threshold, action, enabled per filter.
     contextual_grounding_filters: list = []
-    # False when GetGuardrail failed, so an absent policy means "unknown"
-    # rather than "not configured".
+    # False when GetGuardrail failed: absent policy is unknown, not unset.
     detail_retrieved: bool = False
 
 
@@ -227,8 +221,7 @@ class CustomModel(BaseModel):
     arn: str
     region: str
     kms_key_arn: Optional[str] = None
-    # False when GetCustomModel failed, so an absent key ARN means "unknown"
-    # rather than "AWS-owned key".
+    # False when GetCustomModel failed: absent key is unknown, not unset.
     detail_retrieved: bool = False
 
 
@@ -244,6 +237,7 @@ class BedrockAgent(AWSService):
         self.knowledge_bases = {}
         self.data_sources = {}
         self.knowledge_bases_scan_errors = {}
+        self.agents_scan_errors = {}
         self.prompt_scanned_regions: set = set()
         self.__threading_call__(self._list_agents)
         self.__threading_call__(self._get_agent, self.agents.values())
@@ -273,7 +267,17 @@ class BedrockAgent(AWSService):
                             ),
                             region=regional_client.region,
                         )
+        except ClientError as error:
+            code = error.response["Error"].get("Code", error.__class__.__name__)
+            # ValidationException means Bedrock Agent is unavailable in the
+            # region: a definite "no agents", so it must not become MANUAL.
+            if code != "ValidationException":
+                self.agents_scan_errors[regional_client.region] = code
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
         except Exception as error:
+            self.agents_scan_errors[regional_client.region] = error.__class__.__name__
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
@@ -355,10 +359,8 @@ class BedrockAgent(AWSService):
                         )
         except ClientError as error:
             code = error.response["Error"].get("Code", error.__class__.__name__)
-            # ValidationException here means Bedrock Agent is not available in
-            # the region, which is a definite "no knowledge bases", not an
-            # unknown. Recording it would emit a MANUAL finding for every region
-            # the service does not serve.
+            # ValidationException means Bedrock Agent is unavailable in the
+            # region: a definite "none", so it must not become a MANUAL finding.
             if code != "ValidationException":
                 self.knowledge_bases_scan_errors[regional_client.region] = code
             logger.error(
@@ -375,10 +377,8 @@ class BedrockAgent(AWSService):
     def _list_data_sources(self, knowledge_base):
         """List the data sources attached to one knowledge base.
 
-        A failure here is recorded on the knowledge base itself rather than
-        swallowed: the check reports one finding per data source, so a knowledge
-        base whose data sources could not be listed would otherwise vanish from
-        the report entirely and read as "nothing to flag".
+        A failure is recorded on the knowledge base itself: findings are per data
+        source, so an unlisted knowledge base would otherwise vanish from the report.
         """
         logger.info("Bedrock Agent - Listing Data Sources...")
         try:
@@ -459,8 +459,7 @@ class Agent(BaseModel):
     role_arn: Optional[str] = None
     region: str
     tags: Optional[list] = []
-    # False when GetAgent failed, so an absent role ARN means "unknown" rather
-    # than "no execution role".
+    # False when GetAgent failed: absent role is unknown, not unset.
     detail_retrieved: bool = False
 
 
@@ -481,8 +480,7 @@ class KnowledgeBase(BaseModel):
     name: str
     arn: str
     region: str
-    # False when ListDataSources failed, so an empty data source set means
-    # "unknown" rather than "this knowledge base has none".
+    # False when ListDataSources failed: empty set is unknown, not none.
     data_sources_listed: bool = False
 
 
@@ -496,6 +494,5 @@ class KnowledgeBaseDataSource(BaseModel):
     knowledge_base_id: str
     knowledge_base_name: Optional[str] = None
     kms_key_arn: Optional[str] = None
-    # False when GetDataSource failed, so an absent key ARN means "unknown"
-    # rather than "AWS-owned key".
+    # False when GetDataSource failed: absent key is unknown, not unset.
     detail_retrieved: bool = False

@@ -7,6 +7,7 @@ from moto import mock_aws
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
+    AWS_REGION_US_WEST_2,
     set_mocked_aws_provider,
 )
 
@@ -146,6 +147,66 @@ def _mock_unsupported_region(self, operation_name, kwarg):
     return make_api_call(self, operation_name, kwarg)
 
 
+def _inventory_mock(agents):
+    """Build a stub for one exhaustive-matrix inventory.
+
+    Args:
+        agents: list of (name, roleArn, retrieved) tuples. retrieved=False makes
+            GetAgent raise for that agent.
+    """
+    rows = [(name, name, role) for name, role, _ in agents]
+    fail = tuple(name for name, _, retrieved in agents if not retrieved)
+    return _agent_mock(rows, fail_get_for=fail)
+
+
+def _mock_list_agents_denied(self, operation_name, kwarg):
+    """ListAgents is denied, so the region's agents are unknown."""
+    if operation_name in _UNUSED_OPERATIONS:
+        return {}
+    if operation_name == "ListAgents":
+        raise ClientError(
+            {"Error": {"Code": "AccessDeniedException", "Message": "denied"}},
+            operation_name,
+        )
+    return make_api_call(self, operation_name, kwarg)
+
+
+def _mock_dedicated_role_with_partial_inventory(self, operation_name, kwarg):
+    """us-east-1 lists one agent; us-west-2's ListAgents is denied.
+
+    The listed agent's role is used by no other KNOWN agent, but an unlisted
+    Region could hold one sharing it, so PASS must not be asserted.
+    """
+    if operation_name in _UNUSED_OPERATIONS:
+        return {}
+    region = self.meta.region_name
+    if operation_name == "ListAgents":
+        if region == AWS_REGION_US_EAST_1:
+            return {
+                "agentSummaries": [
+                    {
+                        "agentId": AGENT_A_ID,
+                        "agentName": AGENT_A_NAME,
+                        "agentStatus": "PREPARED",
+                    }
+                ]
+            }
+        raise ClientError(
+            {"Error": {"Code": "AccessDeniedException", "Message": "denied"}},
+            operation_name,
+        )
+    if operation_name == "GetAgent":
+        return {
+            "agent": {
+                "agentId": AGENT_A_ID,
+                "agentName": AGENT_A_NAME,
+                "agentStatus": "PREPARED",
+                "agentResourceRoleArn": ROLE_A_ARN,
+            }
+        }
+    return make_api_call(self, operation_name, kwarg)
+
+
 class Test_bedrock_agent_role_not_shared_across_agents:
     """Unit tests for the bedrock_agent_role_not_shared_across_agents check."""
 
@@ -154,6 +215,29 @@ class Test_bedrock_agent_role_not_shared_across_agents:
         from prowler.providers.aws.services.bedrock.bedrock_service import BedrockAgent
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.bedrock.bedrock_agent_role_not_shared_across_agents.bedrock_agent_role_not_shared_across_agents.bedrock_agent_client",
+                new=BedrockAgent(aws_provider),
+            ),
+        ):
+            from prowler.providers.aws.services.bedrock.bedrock_agent_role_not_shared_across_agents.bedrock_agent_role_not_shared_across_agents import (
+                bedrock_agent_role_not_shared_across_agents,
+            )
+
+            return bedrock_agent_role_not_shared_across_agents().execute()
+
+    def _run_multi_region(self):
+        """Same as _run but with two Regions in scope."""
+        from prowler.providers.aws.services.bedrock.bedrock_service import BedrockAgent
+
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_US_EAST_1, AWS_REGION_US_WEST_2]
+        )
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -277,44 +361,32 @@ class Test_bedrock_agent_role_not_shared_across_agents:
         Bedrock Agents cannot be created in every account (the service refuses new
         agents for accounts without prior usage), so this check's behaviour is
         pinned by enumerating every inventory of up to three agents over the cross
-        product of {role r1, role r2, no role} x {readable, unreadable} and
-        asserting the verdict for each agent in each one. A role is shared only
-        when two or more READABLE agents hold it.
+        product of {role A, role B, no role} x {readable, unreadable}, and
+        asserting the verdict for each agent. A role counts as shared only when two
+        or more READABLE agents hold it.
+
+        Each case is driven through the real BedrockAgent service so a renamed
+        service attribute breaks the test rather than passing silently.
         """
         from itertools import product
 
-        from prowler.providers.aws.services.bedrock.bedrock_service import Agent
-
-        role_1 = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:role/r1"
-        role_2 = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:role/r2"
-        states = [(role_1, True), (role_2, True), (None, True), (role_1, False)]
-
-        class _Client:
-            audited_account = AWS_ACCOUNT_NUMBER
-            audited_partition = "aws"
-            region = AWS_REGION_US_EAST_1
-
-            def __init__(self, agents):
-                self.agents = agents
+        states = [
+            (ROLE_A_ARN, True),
+            (ROLE_B_ARN, True),
+            (None, True),
+            (ROLE_A_ARN, False),
+        ]
 
         checked = 0
         for size in (1, 2, 3):
             for combo in product(states, repeat=size):
-                agents = {}
-                for index, (role, retrieved) in enumerate(combo):
-                    arn = f"arn:aws:bedrock:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:agent/A{index}"
-                    agent = Agent(
-                        id=f"A{index}",
-                        name=f"agent{index}",
-                        arn=arn,
-                        region=AWS_REGION_US_EAST_1,
-                    )
-                    agent.role_arn = role
-                    agent.detail_retrieved = retrieved
-                    agents[arn] = agent
+                agents = [
+                    (f"agent-{index}", role, retrieved)
+                    for index, (role, retrieved) in enumerate(combo)
+                ]
 
                 readable_per_role = {}
-                for role, retrieved in combo:
+                for _, role, retrieved in agents:
                     if retrieved and role:
                         readable_per_role[role] = readable_per_role.get(role, 0) + 1
                 expected = sorted(
@@ -323,18 +395,15 @@ class Test_bedrock_agent_role_not_shared_across_agents:
                         if not retrieved or not role
                         else ("FAIL" if readable_per_role[role] >= 2 else "PASS")
                     )
-                    for role, retrieved in combo
+                    for _, role, retrieved in agents
                 )
 
                 with mock.patch(
-                    "prowler.providers.aws.services.bedrock.bedrock_agent_role_not_shared_across_agents.bedrock_agent_role_not_shared_across_agents.bedrock_agent_client",
-                    new=_Client(agents),
+                    "botocore.client.BaseClient._make_api_call",
+                    new=_inventory_mock(agents),
                 ):
-                    from prowler.providers.aws.services.bedrock.bedrock_agent_role_not_shared_across_agents.bedrock_agent_role_not_shared_across_agents import (
-                        bedrock_agent_role_not_shared_across_agents,
-                    )
-
-                    result = bedrock_agent_role_not_shared_across_agents().execute()
+                    with mock_aws():
+                        result = self._run()
 
                 assert len(result) == size, combo
                 assert sorted(report.status for report in result) == expected, combo
@@ -345,3 +414,43 @@ class Test_bedrock_agent_role_not_shared_across_agents:
 
         # 4 + 16 + 64 inventories.
         assert checked == 84
+
+    @mock.patch(
+        "botocore.client.BaseClient._make_api_call", new=_mock_list_agents_denied
+    )
+    @mock_aws
+    def test_list_agents_denied_is_manual_not_silence(self):
+        """A denied ListAgents must report MANUAL for the region, not vanish."""
+        result = self._run()
+        assert len(result) == 1
+        assert result[0].status == "MANUAL"
+        assert result[0].region == AWS_REGION_US_EAST_1
+        assert result[0].resource_id == "agent/unknown"
+        assert "could not be listed" in result[0].status_extended
+        assert "AccessDeniedException" in result[0].status_extended
+        assert result[0].status_extended.endswith(".")
+
+    @mock.patch(
+        "botocore.client.BaseClient._make_api_call",
+        new=_mock_dedicated_role_with_partial_inventory,
+    )
+    @mock_aws
+    def test_dedicated_role_is_manual_when_inventory_incomplete(self):
+        """A seemingly dedicated role cannot be asserted from a partial inventory.
+
+        One Region lists an agent whose role no other known agent uses, while
+        another Region's ListAgents fails. An unlisted Region could hold an agent
+        sharing that role, so the verdict is MANUAL rather than PASS.
+        """
+        result = self._run_multi_region()
+        by_status = {}
+        for report in result:
+            by_status.setdefault(report.status, []).append(report)
+        assert "PASS" not in by_status, [r.status_extended for r in result]
+        assert len(by_status["MANUAL"]) == 2
+        agent_report = [
+            r for r in by_status["MANUAL"] if r.resource_id != "agent/unknown"
+        ]
+        assert len(agent_report) == 1
+        assert "agents could not be listed" in agent_report[0].status_extended
+        assert all(r.status_extended.endswith(".") for r in result)
