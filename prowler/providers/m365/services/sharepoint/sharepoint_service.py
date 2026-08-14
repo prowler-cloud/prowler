@@ -63,6 +63,11 @@ class SharePoint(M365Service):
                 legacyAuth=global_settings.is_legacy_auth_protocols_enabled,
                 resharingEnabled=global_settings.is_resharing_by_external_users_enabled,
                 allowedDomainGuidsForSyncApp=global_settings.allowed_domain_guids_for_sync_app,
+                defaultLinkPermission=(
+                    str(global_settings.default_link_permission).split(".")[-1]
+                    if global_settings.default_link_permission
+                    else None
+                ),
             )
 
         except ODataError as error:
@@ -86,3 +91,4 @@ class SharePointSettings(BaseModel):
     resharingEnabled: bool
     legacyAuth: bool
     allowedDomainGuidsForSyncApp: List[uuid.UUID]
+    defaultLinkPermission: Optional[str] = None

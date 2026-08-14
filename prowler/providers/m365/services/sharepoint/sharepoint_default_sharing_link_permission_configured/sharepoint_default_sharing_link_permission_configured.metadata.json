@@ -1,0 +1,38 @@
+{
+  "Provider": "m365",
+  "CheckID": "sharepoint_default_sharing_link_permission_configured",
+  "CheckTitle": "Ensure the default SharePoint sharing link permission is set to View",
+  "CheckType": [],
+  "ServiceName": "sharepoint",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "**Microsoft 365 SharePoint** default sharing link permission is evaluated to ensure it is set to **View** rather than **Edit**. This enforces the principle of least privilege by ensuring new sharing links grant read-only access by default, reducing the blast radius of accidental oversharing with edit permissions.",
+  "Risk": "When the default sharing link permission is set to Edit, users who share files or folders may unintentionally grant write access to recipients, increasing the risk of unauthorized modifications, data integrity loss, and accidental data exposure.\n- Integrity: unintended collaborators can modify or delete content\n- Confidentiality: broader edit access increases exposure surface\n- Availability: unauthorized changes can disrupt access to shared resources",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/sharepoint/turn-external-sharing-on-or-off",
+    "https://learn.microsoft.com/en-us/powershell/module/sharepoint-online/set-spotenant?view=sharepoint-ps"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "Set-SPOTenant -DefaultLinkPermission View",
+      "NativeIaC": "",
+      "Other": "1. Go to the SharePoint admin center: https://admin.microsoft.com/sharepoint\n2. Navigate to Policies > Sharing\n3. Scroll to File and folder links\n4. Under Choose the permission that's selected by default for sharing links, select View\n5. Click Save",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Set the default sharing link permission to View to enforce least privilege. Users can still explicitly choose Edit on a per-link basis when needed, but the default behavior minimizes accidental oversharing of edit access.",
+      "Url": "https://hub.prowler.com/check/sharepoint_default_sharing_link_permission_configured"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

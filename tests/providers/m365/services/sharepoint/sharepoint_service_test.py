@@ -20,6 +20,7 @@ async def mock_sharepoint_get_settings(_):
         resharingEnabled=False,
         legacyAuth=True,
         allowedDomainGuidsForSyncApp=[uuid_value],
+        defaultLinkPermission="View",
     )
 
 
@@ -49,3 +50,4 @@ class Test_SharePoint_Service:
         assert settings.legacyAuth is True
         assert settings.allowedDomainGuidsForSyncApp == [uuid_value]
         assert len(settings.allowedDomainGuidsForSyncApp) == 1
+        assert settings.defaultLinkPermission == "View"
