@@ -74,6 +74,7 @@ class Test_elasticbeanstalk_environment_no_secrets_in_configuration:
 
         assert len(result) == 1
         assert result[0].status == "FAIL"
+        assert result[0].check_metadata.Severity == Severity.high
         assert (
             "option setting 'aws:elasticbeanstalk:application:environment:db_pass'"
             in result[0].status_extended
@@ -85,12 +86,13 @@ class Test_elasticbeanstalk_environment_no_secrets_in_configuration:
         )
 
     def test_environment_with_verified_secrets_annotates_critical(self):
+        secret_value = "verified-secret-fixture"
         environment = _build_environment(
             option_settings=[
                 {
                     "Namespace": "aws:elasticbeanstalk:application:environment",
                     "OptionName": "db_pass",
-                    "Value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U",
+                    "Value": secret_value,
                 },
             ]
         )
@@ -103,13 +105,15 @@ class Test_elasticbeanstalk_environment_no_secrets_in_configuration:
 
         result = _execute_check_with_mocked_scan(
             elasticbeanstalk_client,
-            return_value=[
-                {
-                    "type": "JSON Web Token",
-                    "line_number": 1,
-                    "is_verified": True,
-                }
-            ],
+            return_value={
+                0: [
+                    {
+                        "type": "JSON Web Token",
+                        "line_number": 1,
+                        "is_verified": True,
+                    }
+                ]
+            },
         )
 
         assert len(result) == 1
@@ -120,6 +124,7 @@ class Test_elasticbeanstalk_environment_no_secrets_in_configuration:
             in result[0].status_extended
         )
         assert "One or more of these secrets were confirmed to be live." in result[0].status_extended
+        assert secret_value not in result[0].status_extended
 
     def test_environment_scan_error_marks_manual(self):
         environment = _build_environment(
