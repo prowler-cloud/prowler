@@ -1,3 +1,4 @@
+import fnmatch
 import json
 import tarfile
 import tempfile
@@ -194,29 +195,48 @@ class ecr_repository_image_no_secrets(Check):
                                     tmp.flush()
                                     with tarfile.open(tmp.name, "r:*") as tar:
                                         for member in tar.getmembers():
-                                            if (
-                                                member.isfile()
-                                                and member.size
-                                                < MAX_TAR_MEMBER_SIZE
+                                            if not member.isfile():
+                                                continue
+                                            # Apply configured file-exclusion
+                                            # glob patterns to layer members.
+                                            if any(
+                                                fnmatch.fnmatch(
+                                                    member.name.lstrip("/"),
+                                                    pattern,
+                                                )
+                                                for pattern in secrets_ignore_files
                                             ):
-                                                f = tar.extractfile(member)
-                                                if f:
-                                                    # Read per-member content
-                                                    # with a limit to avoid
-                                                    # unbounded memory use.
-                                                    member_content = f.read(
-                                                        MAX_TAR_MEMBER_SIZE
+                                                continue
+                                            # Members at or above the limit are
+                                            # not fully scanned; record the
+                                            # repository as incomplete so the
+                                            # final report is MANUAL, not PASS.
+                                            if (
+                                                member.size
+                                                >= MAX_TAR_MEMBER_SIZE
+                                            ):
+                                                repos_with_incomplete_data.add(
+                                                    repo_index
+                                                )
+                                                continue
+                                            f = tar.extractfile(member)
+                                            if f:
+                                                # Read per-member content
+                                                # with a limit to avoid
+                                                # unbounded memory use.
+                                                member_content = f.read(
+                                                    MAX_TAR_MEMBER_SIZE
+                                                )
+                                                content = (
+                                                    member_content.decode(
+                                                        "latin-1",
+                                                        errors="replace",
                                                     )
-                                                    content = (
-                                                        member_content.decode(
-                                                            "latin-1",
-                                                            errors="replace",
-                                                        )
-                                                    )
-                                                    yield (
-                                                        repo_index,
-                                                        f"layer{layer_index}-{member.name}",
-                                                    ), content
+                                                )
+                                                yield (
+                                                    repo_index,
+                                                    f"layer{layer_index}-{member.name}",
+                                                ), content
                             except Exception:
                                 # If not a valid tar, scan raw content as text
                                 try:
