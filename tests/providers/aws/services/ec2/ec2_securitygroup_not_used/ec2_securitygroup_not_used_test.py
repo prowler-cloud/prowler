@@ -486,7 +486,7 @@ class Test_ec2_securitygroup_not_used:
             == f"Security group {sg_name} ({sg_id}) it is being used."
         )
 
-    def test_ec2_sg_not_reported_when_batch_lookup_failed(self):
+    def test_ec2_sg_not_failed_when_batch_lookup_failed(self):
         from prowler.providers.aws.services.ec2.ec2_service import SecurityGroup
 
         sg_id = "sg-unknown"
@@ -540,7 +540,14 @@ class Test_ec2_securitygroup_not_used:
             result = ec2_securitygroup_not_used().execute()
 
         # Unknown associations must not be reported as unused
-        assert result == []
+        assert len(result) == 1
+        assert result[0].status == "PASS"
+        assert result[0].region == AWS_REGION_US_EAST_1
+        assert result[0].resource_id == sg_id
+        assert (
+            result[0].status_extended
+            == f"Security group {sg_name} ({sg_id}) usage could not be verified because AWS Batch compute environments could not be listed in region {AWS_REGION_US_EAST_1}."
+        )
 
     def test_ec2_sg_still_reported_used_when_batch_lookup_failed(self):
         from prowler.providers.aws.services.ec2.ec2_service import SecurityGroup

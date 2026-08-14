@@ -34,15 +34,16 @@ class ec2_securitygroup_not_used(Check):
                 ):
                     # Compute environments failing to list leaves their security
                     # group associations unknown, not absent, so reporting the
-                    # group as unused would be a guess. Skip the region until
-                    # discovery succeeds instead of emitting a false positive.
+                    # group as unused would be a guess. Keep the default PASS
+                    # until discovery succeeds and say why it was not asserted.
                     if (
                         security_group.region
                         in batch_client.compute_environment_lookup_failed_regions
                     ):
-                        continue
-                    report.status = "FAIL"
-                    report.status_extended = f"Security group {security_group.name} ({security_group.id}) it is not being used."
+                        report.status_extended = f"Security group {security_group.name} ({security_group.id}) usage could not be verified because AWS Batch compute environments could not be listed in region {security_group.region}."
+                    else:
+                        report.status = "FAIL"
+                        report.status_extended = f"Security group {security_group.name} ({security_group.id}) it is not being used."
 
                 findings.append(report)
 
