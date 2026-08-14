@@ -33,6 +33,11 @@ def mock_make_api_call(self, operation_name, kwarg):
                             "OptionName": "StreamLogs",
                             "Value": "true",
                         },
+                        {
+                            "Namespace": "aws:elasticbeanstalk:application:environment",
+                            "OptionName": "DB_HOST",
+                            "Value": "localhost",
+                        },
                     ],
                 }
             ]
@@ -153,6 +158,43 @@ class Test_ElasticBeanstalk_Service:
                 environment["EnvironmentArn"]
             ].cloudwatch_stream_logs
             == "true"
+        )
+
+    # Test _describe_configuration_settings stores all option_settings
+    @mock_aws
+    def test_describe_configuration_settings_stores_all_option_settings(self):
+        # Create ElasticBeanstalk app and env
+        elasticbeanstalk_client = client(
+            "elasticbeanstalk", region_name=AWS_REGION_EU_WEST_1
+        )
+        elasticbeanstalk_client.create_application(ApplicationName="test-app")
+        environment = elasticbeanstalk_client.create_environment(
+            ApplicationName="test-app",
+            EnvironmentName="test-env",
+        )
+        # ElasticBeanstalk Class
+        elasticbeanstalk = ElasticBeanstalk(
+            set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        )
+        assert (
+            len(
+                elasticbeanstalk.environments[
+                    environment["EnvironmentArn"]
+                ].option_settings
+            )
+            == 4
+        )
+        assert (
+            elasticbeanstalk.environments[
+                environment["EnvironmentArn"]
+            ].option_settings[0]["OptionName"]
+            == "SystemType"
+        )
+        assert (
+            elasticbeanstalk.environments[
+                environment["EnvironmentArn"]
+            ].option_settings[3]["OptionName"]
+            == "DB_HOST"
         )
 
     @mock_aws
