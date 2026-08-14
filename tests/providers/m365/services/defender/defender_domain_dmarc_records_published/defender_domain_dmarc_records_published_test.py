@@ -192,7 +192,7 @@ class Test_defender_domain_dmarc_records_published:
             assert result[0].location == "global"
             assert "No DMARC record found" in result[0].status_extended
 
-    def test_dns_resolver_failure_marks_manual(self):
+    def test_dns_resolver_failure_marks_fail(self):
         defender_client = mock.MagicMock()
         defender_client.audited_tenant = "audited_tenant"
         defender_client.audited_domain = DOMAIN
@@ -231,7 +231,7 @@ class Test_defender_domain_dmarc_records_published:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].status == "MANUAL"
+            assert result[0].status == "FAIL"
             assert result[0].resource_name == "example.com"
             assert result[0].resource_id == "example.com"
             assert result[0].location == "global"

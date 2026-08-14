@@ -29,7 +29,7 @@ class defender_domain_dmarc_records_published(Check):
     or p=reject) for every accepted Exchange Online domain.
     """
 
-    def execute(self):
+    def execute(self) -> list[CheckReportM365]:
         """
         Execute the check to verify if DMARC records are published for all domains.
 
@@ -37,7 +37,7 @@ class defender_domain_dmarc_records_published(Check):
         Online domain and validates that it contains an enforcing policy.
 
         Returns:
-            List[CheckReportM365]: A list of reports containing the result of the check.
+            list[CheckReportM365]: A list of reports containing the result of the check.
         """
         findings = []
         for config in defender_client.dkim_configurations:
@@ -49,7 +49,7 @@ class defender_domain_dmarc_records_published(Check):
                 resource_id=domain,
             )
 
-            records = self._lookup_dmarc_record(domain)
+            records, dns_error = self._lookup_dmarc_record(domain)
 
             if records is None:
                 # No TXT records at _dmarc.<domain> at all.
@@ -58,22 +58,29 @@ class defender_domain_dmarc_records_published(Check):
                     f"No DMARC record found for domain {domain}."
                 )
             elif not records:
-                # DNS resolver failure (Timeout, NoNameservers) -> not an absence.
-                report.status = "MANUAL"
-                report.status_extended = (
-                    f"Could not resolve DMARC record for domain {domain} due to a "
-                    f"DNS resolver error; manual review is required."
-                )
+                # DNS resolver failure -> treat as FAIL.
+                report.status = "FAIL"
+                if dns_error:
+                    report.status_extended = (
+                        f"Could not resolve DMARC record for domain {domain} due to a "
+                        f"{dns_error}; manual review is required."
+                    )
+                else:
+                    report.status_extended = (
+                        f"Could not resolve DMARC record for domain {domain} due to a "
+                        f"DNS resolver error; manual review is required."
+                    )
             else:
-                # Validate cardinality: exactly one DMARC record is expected.
+                # Validate by parsing semicolon-delimited tags.
+                # Each record must have v=DMARC1 as the first tag.
                 dmarc_records = [
-                    r for r in records if r.upper().startswith("V=DMARC1")
+                    r for r in records if self._is_valid_dmarc_record(r)
                 ]
                 if len(dmarc_records) == 0:
                     report.status = "FAIL"
                     report.status_extended = (
                         f"TXT record found at _dmarc.{domain} but it is not a valid "
-                        f"DMARC record: missing V=DMARC1 version tag."
+                        f"DMARC record: malformed or missing V=DMARC1 version tag."
                     )
                 elif len(dmarc_records) > 1:
                     report.status = "FAIL"
@@ -101,7 +108,7 @@ class defender_domain_dmarc_records_published(Check):
                         report.status = "FAIL"
                         report.status_extended = (
                             f"DMARC record found for domain {domain} but has a "
-                            f"missing or unrecognized policy."
+                            f"malformed or unrecognized policy."
                         )
 
             findings.append(report)
@@ -118,30 +125,67 @@ class defender_domain_dmarc_records_published(Check):
             domain: The domain to look up the DMARC record for.
 
         Returns:
-            list: All TXT record strings found, if any.
-            None: If the DNS lookup completed but no TXT records exist
-                (NXDOMAIN, NoAnswer).
-            An empty list: If the DNS resolver failed (Timeout, NoNameservers)
-                and the lookup must be retried manually.
+            tuple: (records, error_message) where:
+            - records is a list of TXT record strings, or None if no records exist
+              (NXDOMAIN, NoAnswer), or an empty list if the DNS resolver failed.
+            - error_message is a string describing the DNS error, or None.
         """
         import dns.resolver
 
         try:
             answers = dns.resolver.resolve(f"_dmarc.{domain}", "TXT")
-            return [
-                b"".join(rdata.strings).decode("utf-8") for rdata in answers
-            ] or None
-        except _DNS_FAILURE_EXCEPTIONS:
+            records = []
+            for rdata in answers:
+                try:
+                    records.append(b"".join(rdata.strings).decode("utf-8"))
+                except (UnicodeDecodeError, ValueError):
+                    # Decode failure: treat as transient resolver failure.
+                    return [], "DNS record decode failure"
+            return records or None, None
+        except _DNS_FAILURE_EXCEPTIONS as e:
             # Transient resolver failure. An empty list is the sentinel for the
-            # caller to report MANUAL instead of FAIL.
-            return []
+            # caller to report FAIL.
+            error_type = type(e).__name__
+            return [], f"DNS resolver error ({error_type})"
         except _DNS_ABSENT_EXCEPTIONS:
             # No TXT records at all (domain absent or no answer).
-            return None
-        except Exception:
-            # Unknown DNS error: treat as resolver failure for safety so the
-            # finding is flagged for manual review rather than silently passing.
-            return []
+            return None, None
+        except Exception as e:
+            # Unknown DNS error: treat as resolver failure for safety.
+            return [], f"DNS resolver error ({type(e).__name__})"
+
+    def _is_valid_dmarc_record(self, content: str) -> bool:
+        """
+        Check whether a TXT record is a valid DMARC record.
+
+        Parses the record as semicolon-delimited tags and requires:
+        - The first tag must be exactly ``v=DMARC1`` (case-insensitive).
+        - The record must contain an exact ``p`` tag.
+
+        Args:
+            content: The TXT record string.
+
+        Returns:
+            bool: True if the record is a valid DMARC record, False otherwise.
+        """
+        tags = [t.strip() for t in content.split(";") if t.strip()]
+        if not tags:
+            return False
+        # First tag must be v=DMARC1
+        first_tag = tags[0]
+        if "=" not in first_tag:
+            return False
+        tag_name, tag_value = first_tag.split("=", 1)
+        if tag_name.strip().upper() != "V" or tag_value.strip().upper() != "DMARC1":
+            return False
+        # Must contain an exact p tag
+        for tag in tags[1:]:
+            if "=" not in tag:
+                continue
+            name, _ = tag.split("=", 1)
+            if name.strip() == "p":
+                return True
+        return False
 
     def _get_policy_value(self, content):
         """
