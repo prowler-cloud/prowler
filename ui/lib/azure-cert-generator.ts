@@ -165,19 +165,25 @@ export async function generateProwlerCertificate(
 }
 
 /**
- * Trigger a browser download of the given base64-DER public certificate as a
- * plain-text file, so the user has a single file to open next to the Portal
- * deployment blade and copy into the `Certificate Base64` parameter.
+ * Trigger a browser download of the public certificate as a `.cer` file (raw
+ * DER bytes) so the user can upload it directly on the App Registration's
+ * *Certificates* blade in the Azure Portal — no terminal step or manual
+ * base64 decoding required.
+ *
+ * The Portal upload accepts `.cer`, `.pem` and `.crt`; we emit `.cer` because
+ * it matches the raw DER bytes we already have and is the extension the
+ * Portal upload dialog shows first.
  *
  * Split from `generateProwlerCertificate` so the pure generator can be unit
  * tested without stubbing `document.createElement`.
  */
 export function downloadPublicCertificateFile(
   publicCertificateBase64Der: string,
-  filename = "prowler-cert-base64.txt",
+  filename = "prowler-cert.cer",
 ): void {
-  const blob = new Blob([publicCertificateBase64Der], {
-    type: "text/plain;charset=utf-8",
+  const derBytes = base64ToBytes(publicCertificateBase64Der);
+  const blob = new Blob([derBytes as BlobPart], {
+    type: "application/x-x509-ca-cert",
   });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
@@ -206,6 +212,20 @@ function toBase64(bytes: Uint8Array): string {
     binary += String.fromCharCode(byte);
   }
   return btoa(binary);
+}
+
+/**
+ * Inverse of `toBase64` — decode a base64 string back to raw bytes. Only used
+ * by `downloadPublicCertificateFile` to reconstitute the DER blob for the
+ * `.cer` download; the generator itself works in raw bytes end-to-end.
+ */
+function base64ToBytes(base64: string): Uint8Array {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes;
 }
 
 function randomHex(chars: number): string {

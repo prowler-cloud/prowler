@@ -126,14 +126,19 @@ describe("downloadPublicCertificateFile", () => {
       return originalCreateElement(tag);
     }) as typeof document.createElement;
 
-    // When
-    downloadPublicCertificateFile("MIIBase64Contents", "prowler-cert.txt");
+    // When — pass a valid base64 payload (the helper now decodes it back to
+    // raw DER bytes so the download is a `.cer` file the Portal accepts).
+    // `MII=` is short but valid base64 that decodes to bytes [0x30, 0x82],
+    // matching the ASN.1 SEQUENCE tag prefix that real X.509 DER starts
+    // with — good enough to prove the decode path without pulling in a
+    // real cert.
+    downloadPublicCertificateFile("MII=", "prowler-cert.cer");
 
     // Then
     expect(URL.createObjectURL).toHaveBeenCalledTimes(1);
     expect(clickSpy).toHaveBeenCalledTimes(1);
     expect(realAnchor.href).toContain(objectUrl);
-    expect(realAnchor.download).toBe("prowler-cert.txt");
+    expect(realAnchor.download).toBe("prowler-cert.cer");
     // Revoked to avoid leaking the blob URL for the tab's lifetime.
     expect(revokeSpy).toHaveBeenCalledWith(objectUrl);
   });
@@ -149,10 +154,14 @@ describe("downloadPublicCertificateFile", () => {
       return originalCreateElement(tag);
     }) as typeof document.createElement;
 
-    // When
-    downloadPublicCertificateFile("payload");
+    // When — pass a real base64 payload; the helper now decodes it back to
+    // raw DER bytes so the download is a valid `.cer` file the Portal accepts
+    // without any manual decoding step. `AA==` decodes to a single 0x00 byte,
+    // which is enough to exercise the base64→bytes path without pulling a
+    // real certificate into the test.
+    downloadPublicCertificateFile("AA==");
 
     // Then
-    expect(realAnchor.download).toBe("prowler-cert-base64.txt");
+    expect(realAnchor.download).toBe("prowler-cert.cer");
   });
 });

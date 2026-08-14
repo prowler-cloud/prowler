@@ -51,7 +51,7 @@ describe("AzureCertificateCredentialsForm", () => {
 
     // When
     const docsLink = screen.getByRole("link", {
-      name: /certificate generation guide/i,
+      name: /full guide/i,
     });
 
     // Then
