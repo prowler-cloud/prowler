@@ -103,3 +103,13 @@ class Test_CodePipeline_Service:
         # Test tags
         assert pipeline.tags[0]["key"] == "Environment"
         assert pipeline.tags[0]["value"] == "Test"
+
+        # Test definition
+        assert isinstance(pipeline.definition, list)
+        assert len(pipeline.definition) == 1
+        assert pipeline.definition[0]["name"] == "Source"
+        assert pipeline.definition[0]["actions"][0]["name"] == "Source"
+        assert (
+            pipeline.definition[0]["actions"][0]["configuration"]["FullRepositoryId"]
+            == repository_id
+        )

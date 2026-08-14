@@ -77,7 +77,8 @@ class CodePipeline(AWSService):
     def _get_pipeline_state(self, pipeline):
         """Retrieves the current state of a pipeline.
 
-        Gets detailed information about a pipeline including its source configuration.
+        Gets detailed information about a pipeline including its source configuration
+        and full definition (stages and actions).
 
         Args:
             pipeline: Pipeline object to retrieve state for.
@@ -96,6 +97,7 @@ class CodePipeline(AWSService):
                 repository_id=repository_id,
                 configuration=source_info["configuration"],
             )
+            pipeline.definition = pipeline_info["pipeline"].get("stages", [])
         except ClientError as error:
             logger.error(
                 f"{pipeline.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -154,6 +156,7 @@ class Pipeline(BaseModel):
         arn: The ARN (Amazon Resource Name) of the pipeline.
         region: The AWS region where the pipeline exists.
         source: Optional Source object containing source configuration.
+        definition: Optional pipeline definition containing stages and actions.
         tags: Optional list of pipeline tags.
     """
 
@@ -161,4 +164,5 @@ class Pipeline(BaseModel):
     arn: str
     region: str
     source: Optional[Source] = None
+    definition: Optional[list] = []
     tags: Optional[list] = []
