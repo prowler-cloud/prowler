@@ -34,18 +34,34 @@ class BatchJobDefinition(BaseModel):
     container_properties: BatchContainerProperties
 
 
+class BatchComputeEnvironment(BaseModel):
+    """An AWS Batch compute environment with its networking configuration."""
+
+    name: str
+    arn: str
+    region: str
+    security_groups: list[str] = []
+    subnets: list[str] = []
+
+
 class Batch(AWSService):
-    """AWS Batch service client for listing job definitions."""
+    """AWS Batch service client for listing job definitions and compute environments."""
 
     def __init__(self, provider):
         super().__init__(__class__.__name__, provider)
         self.job_definitions = {}
         self._job_definitions_by_region = {}
+        self.compute_environments = {}
+        # Security groups referenced by compute environments. A compute
+        # environment holds them in its configuration even while it is scaled
+        # down to zero instances, so no ENI exists to reveal the association.
+        self.security_groups_in_use = set()
         self.job_definition_limit = get_resource_scan_limit(
             self.audit_config, "max_batch_job_definitions"
         )
         self.__threading_call__(self._list_job_definitions)
         self._select_job_definitions_for_analysis()
+        self.__threading_call__(self._describe_compute_environments)
 
     def _list_job_definitions(self, regional_client):
         """List ACTIVE job definitions for a regional client."""
@@ -87,6 +103,33 @@ class Batch(AWSService):
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _describe_compute_environments(self, regional_client):
+        """Describe the compute environments for a regional client."""
+        logger.info("Batch - Describing Compute Environments...")
+        try:
+            paginator = regional_client.get_paginator("describe_compute_environments")
+            for page in paginator.paginate():
+                for compute_environment in page.get("computeEnvironments", []):
+                    arn = compute_environment["computeEnvironmentArn"]
+                    if self.audit_resources and not is_resource_filtered(
+                        arn, self.audit_resources
+                    ):
+                        continue
+                    compute_resources = compute_environment.get("computeResources", {})
+                    security_groups = compute_resources.get("securityGroupIds", [])
+                    self.security_groups_in_use.update(security_groups)
+                    self.compute_environments[arn] = BatchComputeEnvironment(
+                        name=compute_environment["computeEnvironmentName"],
+                        arn=arn,
+                        region=regional_client.region,
+                        security_groups=security_groups,
+                        subnets=compute_resources.get("subnets", []),
+                    )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def _select_job_definitions_for_analysis(self):

@@ -36,6 +36,9 @@ class Test_ec2_securitygroup_not_used:
         awslambda_client = mock.MagicMock()
         awslambda_client.functions = {}
         awslambda_client.security_groups_in_use = {sg_id}
+        batch_client = mock.MagicMock()
+        batch_client.compute_environments = {}
+        batch_client.security_groups_in_use = set()
         aws_provider = set_mocked_aws_provider()
 
         with (
@@ -50,6 +53,10 @@ class Test_ec2_securitygroup_not_used:
             mock.patch(
                 "prowler.providers.aws.services.ec2.ec2_securitygroup_not_used.ec2_securitygroup_not_used.awslambda_client",
                 new=awslambda_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_securitygroup_not_used.ec2_securitygroup_not_used.batch_client",
+                new=batch_client,
             ),
         ):
             from prowler.providers.aws.services.ec2.ec2_securitygroup_not_used.ec2_securitygroup_not_used import (
@@ -72,6 +79,7 @@ class Test_ec2_securitygroup_not_used:
         ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
 
         from prowler.providers.aws.services.awslambda.awslambda_service import Lambda
+        from prowler.providers.aws.services.batch.batch_service import Batch
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         aws_provider = set_mocked_aws_provider(
@@ -90,6 +98,10 @@ class Test_ec2_securitygroup_not_used:
             mock.patch(
                 "prowler.providers.aws.services.ec2.ec2_securitygroup_not_used.ec2_securitygroup_not_used.awslambda_client",
                 new=Lambda(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_securitygroup_not_used.ec2_securitygroup_not_used.batch_client",
+                new=Batch(aws_provider),
             ),
         ):
             # Test Check
@@ -115,6 +127,7 @@ class Test_ec2_securitygroup_not_used:
         )
 
         from prowler.providers.aws.services.awslambda.awslambda_service import Lambda
+        from prowler.providers.aws.services.batch.batch_service import Batch
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         aws_provider = set_mocked_aws_provider(
@@ -133,6 +146,10 @@ class Test_ec2_securitygroup_not_used:
             mock.patch(
                 "prowler.providers.aws.services.ec2.ec2_securitygroup_not_used.ec2_securitygroup_not_used.awslambda_client",
                 new=Lambda(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_securitygroup_not_used.ec2_securitygroup_not_used.batch_client",
+                new=Batch(aws_provider),
             ),
         ):
             # Test Check
@@ -173,6 +190,7 @@ class Test_ec2_securitygroup_not_used:
         subnet.create_network_interface(Groups=[sg.id])
 
         from prowler.providers.aws.services.awslambda.awslambda_service import Lambda
+        from prowler.providers.aws.services.batch.batch_service import Batch
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         aws_provider = set_mocked_aws_provider(
@@ -191,6 +209,10 @@ class Test_ec2_securitygroup_not_used:
             mock.patch(
                 "prowler.providers.aws.services.ec2.ec2_securitygroup_not_used.ec2_securitygroup_not_used.awslambda_client",
                 new=Lambda(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_securitygroup_not_used.ec2_securitygroup_not_used.batch_client",
+                new=Batch(aws_provider),
             ),
         ):
             # Test Check
@@ -259,6 +281,7 @@ class Test_ec2_securitygroup_not_used:
         )
 
         from prowler.providers.aws.services.awslambda.awslambda_service import Lambda
+        from prowler.providers.aws.services.batch.batch_service import Batch
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         aws_provider = set_mocked_aws_provider(
@@ -277,6 +300,10 @@ class Test_ec2_securitygroup_not_used:
             mock.patch(
                 "prowler.providers.aws.services.ec2.ec2_securitygroup_not_used.ec2_securitygroup_not_used.awslambda_client",
                 new=Lambda(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_securitygroup_not_used.ec2_securitygroup_not_used.batch_client",
+                new=Batch(aws_provider),
             ),
         ):
             # Test Check
@@ -338,6 +365,7 @@ class Test_ec2_securitygroup_not_used:
         )
 
         from prowler.providers.aws.services.awslambda.awslambda_service import Lambda
+        from prowler.providers.aws.services.batch.batch_service import Batch
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
         aws_provider = set_mocked_aws_provider(
@@ -356,6 +384,10 @@ class Test_ec2_securitygroup_not_used:
             mock.patch(
                 "prowler.providers.aws.services.ec2.ec2_securitygroup_not_used.ec2_securitygroup_not_used.awslambda_client",
                 new=Lambda(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_securitygroup_not_used.ec2_securitygroup_not_used.batch_client",
+                new=Batch(aws_provider),
             ),
         ):
             # Test Check
@@ -394,3 +426,147 @@ class Test_ec2_securitygroup_not_used:
             assert result[1].resource_id == sg1.id
             assert result[1].resource_details == sg_name1
             assert result[1].resource_tags == []
+
+    def test_ec2_sg_used_by_batch_compute_environment_without_enis(self):
+        from prowler.providers.aws.services.ec2.ec2_service import SecurityGroup
+
+        sg_id = "sg-batch"
+        sg_name = "batch-sg"
+        security_group = SecurityGroup(
+            name=sg_name,
+            region=AWS_REGION_US_EAST_1,
+            arn=f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:security-group/{sg_id}",
+            id=sg_id,
+            vpc_id="vpc-test",
+            associated_sgs=[],
+            network_interfaces=[],
+            ingress_rules=[],
+            egress_rules=[],
+            tags=[],
+        )
+        ec2_client = mock.MagicMock()
+        ec2_client.security_groups = {security_group.arn: security_group}
+        awslambda_client = mock.MagicMock()
+        awslambda_client.functions = {}
+        awslambda_client.security_groups_in_use = set()
+        batch_client = mock.MagicMock()
+        batch_client.security_groups_in_use = {sg_id}
+        aws_provider = set_mocked_aws_provider()
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_securitygroup_not_used.ec2_securitygroup_not_used.ec2_client",
+                new=ec2_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_securitygroup_not_used.ec2_securitygroup_not_used.awslambda_client",
+                new=awslambda_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_securitygroup_not_used.ec2_securitygroup_not_used.batch_client",
+                new=batch_client,
+            ),
+        ):
+            from prowler.providers.aws.services.ec2.ec2_securitygroup_not_used.ec2_securitygroup_not_used import (
+                ec2_securitygroup_not_used,
+            )
+
+            result = ec2_securitygroup_not_used().execute()
+
+        assert len(result) == 1
+        assert result[0].status == "PASS"
+        assert (
+            result[0].status_extended
+            == f"Security group {sg_name} ({sg_id}) it is being used."
+        )
+
+    @mock_aws
+    def test_ec2_sg_used_by_batch_compute_environment(self):
+        # Create EC2 Mocked Resources
+        ec2 = resource("ec2", AWS_REGION_US_EAST_1)
+        ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
+        vpc_id = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]["VpcId"]
+        sg_name = "test-sg"
+        sg = ec2.create_security_group(
+            GroupName=sg_name, Description="test", VpcId=vpc_id
+        )
+        subnet = ec2.create_subnet(VpcId=vpc_id, CidrBlock="10.0.0.0/18")
+        iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
+        service_role = iam_client.create_role(
+            RoleName="batch-service-role",
+            AssumeRolePolicyDocument="some policy",
+            Path="/my-path/",
+        )["Role"]["Arn"]
+        instance_profile = iam_client.create_instance_profile(
+            InstanceProfileName="batch-instance-profile"
+        )["InstanceProfile"]["Arn"]
+        batch = client("batch", region_name=AWS_REGION_US_EAST_1)
+        batch.create_compute_environment(
+            computeEnvironmentName="test-compute-environment",
+            type="MANAGED",
+            state="ENABLED",
+            computeResources={
+                "type": "EC2",
+                "minvCpus": 0,
+                "maxvCpus": 4,
+                "instanceTypes": ["optimal"],
+                "subnets": [subnet.id],
+                "securityGroupIds": [sg.id],
+                "instanceRole": instance_profile,
+            },
+            serviceRole=service_role,
+        )
+
+        from prowler.providers.aws.services.awslambda.awslambda_service import Lambda
+        from prowler.providers.aws.services.batch.batch_service import Batch
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
+
+        aws_provider = set_mocked_aws_provider(
+            audited_regions=["us-east-1", "eu-west-1"]
+        )
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_securitygroup_not_used.ec2_securitygroup_not_used.ec2_client",
+                new=EC2(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_securitygroup_not_used.ec2_securitygroup_not_used.awslambda_client",
+                new=Lambda(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_securitygroup_not_used.ec2_securitygroup_not_used.batch_client",
+                new=Batch(aws_provider),
+            ),
+        ):
+            # Test Check
+            from prowler.providers.aws.services.ec2.ec2_securitygroup_not_used.ec2_securitygroup_not_used import (
+                ec2_securitygroup_not_used,
+            )
+
+            check = ec2_securitygroup_not_used()
+            result = check.execute()
+
+            # One custom sg, attached to a Batch compute environment with no ENIs
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert result[0].region == AWS_REGION_US_EAST_1
+            assert (
+                result[0].status_extended
+                == f"Security group {sg_name} ({sg.id}) it is being used."
+            )
+            assert (
+                result[0].resource_arn
+                == f"arn:{aws_provider.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{aws_provider.identity.account}:security-group/{sg.id}"
+            )
+            assert result[0].resource_id == sg.id
+            assert result[0].resource_details == sg_name
+            assert result[0].resource_tags == []
