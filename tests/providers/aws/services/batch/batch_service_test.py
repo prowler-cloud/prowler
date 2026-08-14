@@ -1,6 +1,7 @@
 from unittest.mock import patch
 
 import botocore
+from botocore.exceptions import ClientError
 
 from prowler.providers.aws.services.batch.batch_service import Batch
 from tests.providers.aws.utils import (
@@ -240,6 +241,36 @@ class Test_Batch_Service:
 
         assert len(batch.compute_environments) == 0
         assert batch.security_groups_in_use == set()
+        assert batch.compute_environment_lookup_failed_regions == set()
+
+    def test_compute_environments_access_denied(self):
+        def access_denied_api_call(self, operation_name, kwarg):
+            if operation_name == "DescribeComputeEnvironments":
+                raise ClientError(
+                    {
+                        "Error": {
+                            "Code": "AccessDeniedException",
+                            "Message": "User is not authorized to perform: batch:DescribeComputeEnvironments",
+                        }
+                    },
+                    operation_name,
+                )
+            return mock_make_api_call(self, operation_name, kwarg)
+
+        with patch(
+            "botocore.client.BaseClient._make_api_call", new=access_denied_api_call
+        ):
+            aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+            batch = Batch(aws_provider)
+
+            # The associations are unknown, not absent
+            assert batch.compute_environments == {}
+            assert batch.security_groups_in_use == set()
+            assert batch.compute_environment_lookup_failed_regions == {
+                AWS_REGION_EU_WEST_1
+            }
+            # Unrelated discovery is unaffected
+            assert len(batch.job_definitions) == 1
 
     def test_compute_environment_without_compute_resources(self):
         def unmanaged_api_call(self, operation_name, kwarg):

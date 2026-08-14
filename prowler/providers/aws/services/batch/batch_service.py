@@ -1,6 +1,7 @@
 from itertools import zip_longest
 from typing import Optional
 
+from botocore.exceptions import ClientError
 from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
@@ -56,6 +57,10 @@ class Batch(AWSService):
         # environment holds them in its configuration even while it is scaled
         # down to zero instances, so no ENI exists to reveal the association.
         self.security_groups_in_use = set()
+        # Regions whose compute environments could not be listed. Their
+        # security group associations are unknown rather than absent, so
+        # consumers must not read an empty result as "nothing is attached".
+        self.compute_environment_lookup_failed_regions = set()
         self.job_definition_limit = get_resource_scan_limit(
             self.audit_config, "max_batch_job_definitions"
         )
@@ -127,7 +132,21 @@ class Batch(AWSService):
                         security_groups=security_groups,
                         subnets=compute_resources.get("subnets", []),
                     )
+        except ClientError as error:
+            self.compute_environment_lookup_failed_regions.add(regional_client.region)
+            if error.response["Error"]["Code"] in (
+                "AccessDeniedException",
+                "UnrecognizedClientException",
+            ):
+                logger.warning(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
         except Exception as error:
+            self.compute_environment_lookup_failed_regions.add(regional_client.region)
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
