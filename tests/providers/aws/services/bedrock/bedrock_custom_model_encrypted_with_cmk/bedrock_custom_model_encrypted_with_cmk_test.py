@@ -15,6 +15,8 @@ make_api_call = botocore.client.BaseClient._make_api_call
 MODEL_NAME = "test-custom-model"
 MODEL_ARN = f"arn:aws:bedrock:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:custom-model/example.base-v1/{MODEL_NAME}"
 KMS_KEY_ARN = f"arn:aws:kms:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:key/test-key-id"
+FOREIGN_ACCOUNT = "999999999999"
+FOREIGN_MODEL_ARN = f"arn:aws:bedrock:{AWS_REGION_US_EAST_1}:{FOREIGN_ACCOUNT}:custom-model/example.base-v1/foreign-model"
 
 # Operations the Bedrock constructor calls that these tests do not exercise.
 _UNUSED_OPERATIONS = (
@@ -81,6 +83,43 @@ def _mock_unsupported_region(self, operation_name, kwarg):
             },
             operation_name,
         )
+    return make_api_call(self, operation_name, kwarg)
+
+
+def _mock_list_denied(self, operation_name, kwarg):
+    """ListCustomModels is denied, so the region's models are unknown."""
+    if operation_name in _UNUSED_OPERATIONS:
+        return {}
+    if operation_name == "ListCustomModels":
+        raise ClientError(
+            {"Error": {"Code": "AccessDeniedException", "Message": "denied"}},
+            operation_name,
+        )
+    return make_api_call(self, operation_name, kwarg)
+
+
+def _mock_shared_in_model(self, operation_name, kwarg):
+    """Assert isOwned=True is sent, and return a model only when it is.
+
+    A caller that omits isOwned would also receive models shared into this
+    account through RAM, whose KMS key this account cannot set.
+    """
+    if operation_name in _UNUSED_OPERATIONS:
+        return {}
+    if operation_name == "ListCustomModels":
+        if kwarg.get("isOwned") is not True:
+            # What the API would return without the filter: a foreign-owned
+            # model this account cannot remediate.
+            return {
+                "modelSummaries": [
+                    {
+                        "modelArn": FOREIGN_MODEL_ARN,
+                        "modelName": "foreign-model",
+                        "ownerAccountId": FOREIGN_ACCOUNT,
+                    }
+                ]
+            }
+        return {"modelSummaries": []}
     return make_api_call(self, operation_name, kwarg)
 
 
@@ -167,3 +206,36 @@ class Test_bedrock_custom_model_encrypted_with_cmk:
         assert len(result) == 1
         assert result[0].status == "MANUAL"
         assert "could not be retrieved" in result[0].status_extended
+
+    @mock.patch("botocore.client.BaseClient._make_api_call", new=_mock_list_denied)
+    @mock_aws
+    def test_list_denied_is_manual_not_silence(self):
+        """A denied ListCustomModels must report MANUAL, not vanish.
+
+        Without a region-level report the region is indistinguishable from one
+        that genuinely holds no custom models.
+        """
+        result = self._run()
+        assert len(result) == 1
+        assert result[0].status == "MANUAL"
+        assert result[0].region == AWS_REGION_US_EAST_1
+        assert result[0].resource_id == "custom-model/unknown"
+        assert (
+            result[0].resource_arn
+            == f"arn:aws:bedrock:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:custom-model/unknown"
+        )
+        assert "could not be listed" in result[0].status_extended
+        assert "AccessDeniedException" in result[0].status_extended
+        assert result[0].status_extended.endswith(".")
+
+    @mock.patch("botocore.client.BaseClient._make_api_call", new=_mock_shared_in_model)
+    @mock_aws
+    def test_shared_in_models_are_not_audited(self):
+        """ListCustomModels must be called with isOwned=True.
+
+        The mock returns a foreign-owned model only when the filter is absent, so
+        a regression that drops isOwned produces a FAIL naming another account's
+        model — a finding this account cannot remediate.
+        """
+        result = self._run()
+        assert result == []

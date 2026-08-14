@@ -12,7 +12,7 @@
   "Severity": "critical",
   "ResourceType": "Other",
   "ResourceGroup": "ai_ml",
-  "Description": "**Bedrock custom models** produced by model customization can be encrypted at rest with a customer-managed KMS key, reported as `modelKmsKeyArn` by `GetCustomModel`. This check lists custom models and verifies each one has that key set rather than resting under an AWS-owned key.",
+  "Description": "**Bedrock custom models** produced by model customization can be encrypted at rest with a customer-managed KMS key rather than resting under an AWS-owned key the organization cannot audit, rotate, or revoke.",
   "Risk": "A fine-tuned model is derived from the training data used to build it and can leak that data through inference. Under an AWS-owned key the organization has no key policy to restrict who may decrypt the artifacts, no rotation it controls, no CloudTrail record of key usage, and no way to revoke access to the model by disabling a key.",
   "RelatedUrl": "",
   "AdditionalURLs": [
@@ -21,7 +21,7 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "aws bedrock create-model-customization-job --job-name example-job --custom-model-name example-model --role-arn arn:aws:iam::123456789012:role/example-role --base-model-identifier example-base-model --custom-model-kms-key-id arn:aws:kms:us-east-1:123456789012:key/example-key-id --training-data-config '{\"s3Uri\":\"s3://example-bucket/train.jsonl\"}' --output-data-config '{\"s3Uri\":\"s3://example-bucket/output/\"}'",
+      "CLI": "",
       "NativeIaC": "",
       "Other": "1. Open the AWS Console and go to Amazon Bedrock\n2. Select **Custom models**, then create a new customization job\n3. Under encryption, choose a customer-managed KMS key instead of the default\n4. Grant the customization service role kms:Decrypt, kms:GenerateDataKey and kms:DescribeKey on that key\n5. Re-run customization, because the key of an existing custom model cannot be changed in place",
       "Terraform": "```hcl\nresource \"aws_bedrock_custom_model\" \"example_resource\" {\n  custom_model_name     = \"example-custom-model\"\n  job_name              = \"example-customization-job\"\n  base_model_identifier = \"arn:aws:bedrock:us-east-1::foundation-model/amazon.titan-text-express-v1\"\n  role_arn              = \"arn:aws:iam::123456789012:role/example-bedrock-customization-role\"\n  custom_model_kms_key_id = \"arn:aws:kms:us-east-1:123456789012:key/example-key-id\" # Critical: without this the model is encrypted with an AWS owned key\n\n  hyperparameters = {\n    epochCount = \"1\"\n  }\n\n  output_data_config {\n    s3_uri = \"s3://example-bucket/output/\"\n  }\n\n  training_data_config {\n    s3_uri = \"s3://example-bucket/training/\"\n  }\n}\n```"

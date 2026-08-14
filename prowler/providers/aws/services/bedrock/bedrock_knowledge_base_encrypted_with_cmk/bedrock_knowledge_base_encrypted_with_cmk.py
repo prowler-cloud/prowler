@@ -16,7 +16,14 @@ class bedrock_knowledge_base_encrypted_with_cmk(Check):
     - FAIL: No `kmsKeyArn` is set, so the ingested documents rest under an
       AWS-owned key the organization cannot audit, rotate, or revoke.
     - MANUAL: GetDataSource failed, so the key could not be retrieved and an
-      absent value cannot be read as "no key".
+      absent value cannot be read as "no key"; or ListDataSources failed for the
+      knowledge base, so its data sources are unknown; or ListKnowledgeBases
+      failed for a region, so the region's knowledge bases are unknown.
+
+    A knowledge base whose data sources could not be listed is reported against
+    the knowledge base itself. Reporting nothing would drop it from the output
+    entirely, which reads as "no data sources to flag" and is indistinguishable
+    from a clean result.
     """
 
     def execute(self) -> list[Check_Report_AWS]:
@@ -26,6 +33,32 @@ class bedrock_knowledge_base_encrypted_with_cmk(Check):
             A list of reports containing the result of the check.
         """
         findings = []
+
+        # A region whose ListKnowledgeBases call failed has no knowledge bases
+        # in the inventory at all, so there is no resource to hang a finding on.
+        for region, error in sorted(
+            bedrock_agent_client.knowledge_bases_scan_errors.items()
+        ):
+            report = Check_Report_AWS(
+                metadata=self.metadata(), resource={"region": region}
+            )
+            report.region = region
+            report.resource_id = "knowledge-base/unknown"
+            report.resource_arn = f"arn:{bedrock_agent_client.audited_partition}:bedrock:{region}:{bedrock_agent_client.audited_account}:knowledge-base/unknown"
+            report.status = "MANUAL"
+            report.status_extended = f"Bedrock knowledge bases could not be listed in region {region} ({error}); verify manually that every knowledge base data source uses a customer-managed KMS key."
+            findings.append(report)
+
+        for knowledge_base in bedrock_agent_client.knowledge_bases.values():
+            if knowledge_base.data_sources_listed:
+                continue
+            # ListDataSources failed for this knowledge base, so its data sources
+            # are unknown rather than absent.
+            report = Check_Report_AWS(metadata=self.metadata(), resource=knowledge_base)
+            report.status = "MANUAL"
+            report.status_extended = f"Bedrock knowledge base {knowledge_base.name} data sources could not be listed in region {knowledge_base.region}; verify manually that each one uses a customer-managed KMS key."
+            findings.append(report)
+
         for data_source in bedrock_agent_client.data_sources.values():
             report = Check_Report_AWS(metadata=self.metadata(), resource=data_source)
             knowledge_base = (

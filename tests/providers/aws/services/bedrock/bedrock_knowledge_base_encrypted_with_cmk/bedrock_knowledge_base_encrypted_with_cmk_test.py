@@ -127,6 +127,36 @@ def _mock_unsupported_region(self, operation_name, kwarg):
     return make_api_call(self, operation_name, kwarg)
 
 
+def _mock_list_kb_denied(self, operation_name, kwarg):
+    """ListKnowledgeBases is denied, so the region's knowledge bases are unknown."""
+    if operation_name in _UNUSED_OPERATIONS:
+        return {}
+    if operation_name == "ListKnowledgeBases":
+        raise ClientError(
+            {"Error": {"Code": "AccessDeniedException", "Message": "denied"}},
+            operation_name,
+        )
+    return make_api_call(self, operation_name, kwarg)
+
+
+def _mock_list_ds_denied(self, operation_name, kwarg):
+    """The knowledge base is visible but its data sources cannot be listed."""
+    if operation_name in _UNUSED_OPERATIONS:
+        return {}
+    if operation_name == "ListKnowledgeBases":
+        return {
+            "knowledgeBaseSummaries": [
+                {"knowledgeBaseId": KB_ID, "name": KB_NAME, "status": "ACTIVE"}
+            ]
+        }
+    if operation_name == "ListDataSources":
+        raise ClientError(
+            {"Error": {"Code": "AccessDeniedException", "Message": "denied"}},
+            operation_name,
+        )
+    return make_api_call(self, operation_name, kwarg)
+
+
 class Test_bedrock_knowledge_base_encrypted_with_cmk:
     """Unit tests for the bedrock_knowledge_base_encrypted_with_cmk check."""
 
@@ -217,3 +247,45 @@ class Test_bedrock_knowledge_base_encrypted_with_cmk:
         assert len(result) == 1
         assert result[0].status == "MANUAL"
         assert "could not be retrieved" in result[0].status_extended
+
+    @mock.patch("botocore.client.BaseClient._make_api_call", new=_mock_list_kb_denied)
+    @mock_aws
+    def test_list_knowledge_bases_denied_is_manual_not_silence(self):
+        """A denied ListKnowledgeBases must report MANUAL for the region."""
+        result = self._run()
+        assert len(result) == 1
+        assert result[0].status == "MANUAL"
+        assert result[0].region == AWS_REGION_US_EAST_1
+        assert result[0].resource_id == "knowledge-base/unknown"
+        assert (
+            result[0].resource_arn
+            == f"arn:aws:bedrock:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:knowledge-base/unknown"
+        )
+        assert "could not be listed" in result[0].status_extended
+        assert "AccessDeniedException" in result[0].status_extended
+        assert result[0].status_extended.endswith(".")
+
+    @mock.patch("botocore.client.BaseClient._make_api_call", new=_mock_list_ds_denied)
+    @mock_aws
+    def test_list_data_sources_denied_is_manual_not_silence(self):
+        """A knowledge base whose data sources cannot be listed must still report.
+
+        Reporting nothing would drop the knowledge base from the output, which is
+        indistinguishable from one that genuinely has no data sources.
+        """
+        result = self._run()
+        assert len(result) == 1
+        assert result[0].status == "MANUAL"
+        assert result[0].resource_arn == KB_ARN
+        assert KB_NAME in result[0].status_extended
+        assert "data sources could not be listed" in result[0].status_extended
+        assert result[0].status_extended.endswith(".")
+
+    @mock.patch("botocore.client.BaseClient._make_api_call", new=_mock_no_data_sources)
+    @mock_aws
+    def test_listed_but_empty_is_not_manual(self):
+        """A knowledge base with zero data sources is silent, not MANUAL.
+
+        Guards the over-correction: only an unreadable list is unknown.
+        """
+        assert self._run() == []

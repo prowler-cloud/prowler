@@ -10,7 +10,12 @@ class bedrock_custom_model_encrypted_with_cmk(Check):
     - FAIL: No `modelKmsKeyArn` is set, so the model is encrypted with an
       AWS-owned key that the organization cannot audit, rotate, or revoke.
     - MANUAL: GetCustomModel failed, so the key could not be retrieved and an
-      absent value cannot be read as "no key".
+      absent value cannot be read as "no key"; or ListCustomModels failed for a
+      region, so that region's custom models are unknown rather than absent.
+
+    Only models this account owns are audited (`ListCustomModels` is called with
+    `isOwned=True`): the KMS key of a model shared in through Resource Access
+    Manager belongs to the owning account and cannot be changed here.
     """
 
     def execute(self) -> list[Check_Report_AWS]:
@@ -20,6 +25,21 @@ class bedrock_custom_model_encrypted_with_cmk(Check):
             A list of reports containing the result of the check.
         """
         findings = []
+
+        # A region whose ListCustomModels call failed contributes no models to
+        # the inventory, so there is no resource to hang a finding on. Reporting
+        # nothing would be indistinguishable from "this region has no models".
+        for region, error in sorted(bedrock_client.custom_models_scan_errors.items()):
+            report = Check_Report_AWS(
+                metadata=self.metadata(), resource={"region": region}
+            )
+            report.region = region
+            report.resource_id = "custom-model/unknown"
+            report.resource_arn = f"arn:{bedrock_client.audited_partition}:bedrock:{region}:{bedrock_client.audited_account}:custom-model/unknown"
+            report.status = "MANUAL"
+            report.status_extended = f"Bedrock custom models could not be listed in region {region} ({error}); verify manually that every custom model uses a customer-managed KMS key."
+            findings.append(report)
+
         for model in bedrock_client.custom_models.values():
             report = Check_Report_AWS(metadata=self.metadata(), resource=model)
 

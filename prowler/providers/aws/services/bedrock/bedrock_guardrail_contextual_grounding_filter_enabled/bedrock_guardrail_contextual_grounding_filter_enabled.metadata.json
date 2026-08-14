@@ -11,7 +11,7 @@
   "Severity": "high",
   "ResourceType": "Other",
   "ResourceGroup": "ai_ml",
-  "Description": "**Bedrock guardrails** can attach a `contextualGroundingPolicy` whose filters score each response for `GROUNDING` (supported by the retrieved source) and `RELEVANCE` (answers the question asked). This check verifies both filter types exist, each with `enabled` not set to `false`, `action` set to `BLOCK` and a `threshold` above 0.",
+  "Description": "**Bedrock guardrails** can attach a `contextualGroundingPolicy` whose filters score each response for `GROUNDING` (supported by the retrieved source) and `RELEVANCE` (answers the question asked). Both filter types must be enabled, set to `action: BLOCK`, and carry a `threshold` above 0.",
   "Risk": "Without both filters the model can return confident, unsupported answers that a RAG application presents as sourced fact. Three settings make a configured filter inert: `enabled: false` runs no evaluation, so a `BLOCK` action and tuned threshold sit unused; `action: NONE` scores the response and reports it in the trace while still delivering it; a `threshold` of 0 can never be tripped.",
   "RelatedUrl": "",
   "AdditionalURLs": [

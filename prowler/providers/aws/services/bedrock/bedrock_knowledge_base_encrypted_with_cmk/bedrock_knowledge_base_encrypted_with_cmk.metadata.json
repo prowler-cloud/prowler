@@ -12,7 +12,7 @@
   "Severity": "high",
   "ResourceType": "Other",
   "ResourceGroup": "ai_ml",
-  "Description": "Each data source of a **Bedrock knowledge base** can set `serverSideEncryptionConfiguration.kmsKeyArn`, which encrypts the transient storage used while documents are chunked and embedded. This check reports one finding per data source and verifies that key is set rather than relying on an AWS-owned key.",
+  "Description": "Each data source of a **Bedrock knowledge base** can set `serverSideEncryptionConfiguration.kmsKeyArn`, which encrypts the transient storage used while documents are chunked and embedded, rather than relying on an AWS-owned key.",
   "Risk": "Knowledge base data sources carry the private corpus a RAG application answers from, often the most sensitive content in the workload. Under an AWS-owned key there is no key policy restricting who may decrypt the ingestion storage, no rotation the account controls, no CloudTrail record of key usage, and no way to cut access by disabling a key.",
   "RelatedUrl": "",
   "AdditionalURLs": [

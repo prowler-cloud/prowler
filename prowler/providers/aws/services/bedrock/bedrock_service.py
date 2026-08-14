@@ -17,6 +17,7 @@ class Bedrock(AWSService):
         self.guardrails_scanned_regions = set()
         self.guardrails_scan_errors = {}
         self.custom_models = {}
+        self.custom_models_scan_errors = {}
         self.__threading_call__(self._get_model_invocation_logging_configuration)
         self.__threading_call__(self._list_guardrails)
         self.__threading_call__(self._get_guardrail, self.guardrails.values())
@@ -137,11 +138,17 @@ class Bedrock(AWSService):
             )
 
     def _list_custom_models(self, regional_client):
-        """List the customized models owned by the audited account."""
+        """List the customized models owned by the audited account.
+
+        isOwned=True is required: without it the response also carries models
+        shared into this account through Resource Access Manager, whose KMS key
+        the audited account does not own and cannot set, so auditing them
+        produces a finding nobody here can remediate.
+        """
         logger.info("Bedrock - Listing Custom Models...")
         try:
             paginator = regional_client.get_paginator("list_custom_models")
-            for page in paginator.paginate():
+            for page in paginator.paginate(isOwned=True):
                 for model in page.get("modelSummaries", []):
                     model_arn = model.get("modelArn", "")
                     if model_arn and (
@@ -153,7 +160,21 @@ class Bedrock(AWSService):
                             arn=model_arn,
                             region=regional_client.region,
                         )
+        except ClientError as error:
+            code = error.response["Error"].get("Code", error.__class__.__name__)
+            # ValidationException here means Bedrock is not available in the
+            # region, which is a definite "no custom models", not an unknown.
+            # Recording it would emit a MANUAL finding for every region the
+            # service does not serve.
+            if code != "ValidationException":
+                self.custom_models_scan_errors[regional_client.region] = code
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
         except Exception as error:
+            self.custom_models_scan_errors[regional_client.region] = (
+                error.__class__.__name__
+            )
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
@@ -222,6 +243,7 @@ class BedrockAgent(AWSService):
         self.prompts = {}
         self.knowledge_bases = {}
         self.data_sources = {}
+        self.knowledge_bases_scan_errors = {}
         self.prompt_scanned_regions: set = set()
         self.__threading_call__(self._list_agents)
         self.__threading_call__(self._get_agent, self.agents.values())
@@ -289,7 +311,6 @@ class BedrockAgent(AWSService):
                             name=prompt.get("name", ""),
                             arn=prompt_arn,
                             region=regional_client.region,
-                            version=prompt.get("version"),
                         )
             self.prompt_scanned_regions.add(regional_client.region)
         except Exception as error:
@@ -307,9 +328,6 @@ class BedrockAgent(AWSService):
             prompt.customer_encryption_key_arn = prompt_info.get(
                 "customerEncryptionKeyArn"
             )
-            # ListPrompts already returns version as a required member, so it
-            # wins; GetPrompt only fills the gap when the summary omitted it.
-            prompt.version = prompt.version or prompt_info.get("version")
         except Exception as error:
             logger.error(
                 f"{prompt.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -335,13 +353,33 @@ class BedrockAgent(AWSService):
                             arn=knowledge_base_arn,
                             region=regional_client.region,
                         )
+        except ClientError as error:
+            code = error.response["Error"].get("Code", error.__class__.__name__)
+            # ValidationException here means Bedrock Agent is not available in
+            # the region, which is a definite "no knowledge bases", not an
+            # unknown. Recording it would emit a MANUAL finding for every region
+            # the service does not serve.
+            if code != "ValidationException":
+                self.knowledge_bases_scan_errors[regional_client.region] = code
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
         except Exception as error:
+            self.knowledge_bases_scan_errors[regional_client.region] = (
+                error.__class__.__name__
+            )
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def _list_data_sources(self, knowledge_base):
-        """List the data sources attached to one knowledge base."""
+        """List the data sources attached to one knowledge base.
+
+        A failure here is recorded on the knowledge base itself rather than
+        swallowed: the check reports one finding per data source, so a knowledge
+        base whose data sources could not be listed would otherwise vanish from
+        the report entirely and read as "nothing to flag".
+        """
         logger.info("Bedrock Agent - Listing Data Sources...")
         try:
             paginator = self.regional_clients[knowledge_base.region].get_paginator(
@@ -366,6 +404,7 @@ class BedrockAgent(AWSService):
                             knowledge_base_id=knowledge_base.id,
                             knowledge_base_name=knowledge_base.name,
                         )
+            knowledge_base.data_sources_listed = True
         except Exception as error:
             logger.error(
                 f"{knowledge_base.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -433,9 +472,6 @@ class Prompt(BaseModel):
     arn: str
     region: str
     customer_encryption_key_arn: Optional[str] = None
-    # "DRAFT" is the mutable working copy; anything else is an immutable
-    # numbered version.
-    version: Optional[str] = None
 
 
 class KnowledgeBase(BaseModel):
@@ -445,6 +481,9 @@ class KnowledgeBase(BaseModel):
     name: str
     arn: str
     region: str
+    # False when ListDataSources failed, so an empty data source set means
+    # "unknown" rather than "this knowledge base has none".
+    data_sources_listed: bool = False
 
 
 class KnowledgeBaseDataSource(BaseModel):
