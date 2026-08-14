@@ -74,6 +74,11 @@ class Test_elasticbeanstalk_environment_no_secrets_in_configuration:
             "option setting 'aws:elasticbeanstalk:application:environment:db_pass'"
             in result[0].status_extended
         )
+        # Security: the actual secret value must never appear in the report output.
+        assert (
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
+            not in result[0].status_extended
+        )
 
     def test_environment_scan_error_marks_manual(self):
         environment = _build_environment(
