@@ -15,7 +15,18 @@ class codepipeline_pipeline_no_secrets_in_definition(Check):
     """Check that AWS CodePipeline pipeline definitions contain no hardcoded secrets."""
 
     def execute(self) -> list[Check_Report_AWS]:
-        """Execute the CodePipeline definition secret scan."""
+        """Execute the CodePipeline definition secret scan.
+
+        Scans the action configurations of every CodePipeline pipeline definition
+        for hardcoded secrets (keys, tokens, passwords, credentials) using the
+        batched Kingfisher secret scanner.
+
+        Returns:
+            list[Check_Report_AWS]: One report per CodePipeline pipeline, with
+                status PASS when no secrets are found, FAIL when potential
+                secrets are detected, or MANUAL when the scanner cannot produce
+                a trustworthy result.
+        """
         findings = []
         secrets_ignore_patterns = codepipeline_client.audit_config.get(
             "secrets_ignore_patterns", []
