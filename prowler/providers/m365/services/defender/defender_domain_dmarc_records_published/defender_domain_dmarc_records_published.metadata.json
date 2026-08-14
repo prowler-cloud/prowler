@@ -21,7 +21,7 @@
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "1. Sign in to Microsoft 365 Defender: https://security.microsoft.com\n2. Go to Email & collaboration > Policies & rules > Threat policies > Email authentication settings > DMIM\n3. Review the DMARC status for each domain\n4. Publish a DMARC TXT record at _dmarc.<domain> with v=DMARC1; p=quarantine (or p=reject) at your DNS provider\n5. After DMARC is in place, monitor reports and move from p=none to p=quarantine to p=reject",
+      "Other": "1. Sign in to Microsoft 365 Defender: https://security.microsoft.com\n2. Go to Email & collaboration > Policies & rules > Threat policies > Email authentication settings > DMARC\n3. Review the DMARC status for each domain\n4. Publish a DMARC TXT record at _dmarc.<domain> with v=DMARC1; p=quarantine (or p=reject) at your DNS provider\n5. After DMARC is in place, monitor reports and move from p=none to p=quarantine to p=reject",
       "Terraform": ""
     },
     "Recommendation": {

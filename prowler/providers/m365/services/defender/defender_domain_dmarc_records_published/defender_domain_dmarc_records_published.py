@@ -3,6 +3,21 @@ import re
 from prowler.lib.check.models import Check, CheckReportM365
 from prowler.providers.m365.services.defender.defender_client import defender_client
 
+# DNS exceptions indicating that no answer could be obtained: a genuine
+# absence (NXDOMAIN, NoAnswer) versus a transient resolver failure (Timeout,
+# NoNameservers). Absent signals "no record found"; failure signals that the
+# lookup must be retried manually.
+import dns.resolver as _dns_resolver
+
+_DNS_ABSENT_EXCEPTIONS = (
+    _dns_resolver.NoAnswer,
+    _dns_resolver.NXDOMAIN,
+)
+_DNS_FAILURE_EXCEPTIONS = (
+    _dns_resolver.NoNameservers,
+    _dns_resolver.Timeout,
+)
+
 
 class defender_domain_dmarc_records_published(Check):
     """
@@ -34,22 +49,40 @@ class defender_domain_dmarc_records_published(Check):
                 resource_id=domain,
             )
 
-            dmarc_record = self._lookup_dmarc_record(domain)
+            records = self._lookup_dmarc_record(domain)
 
-            if not dmarc_record:
+            if records is None:
+                # No TXT records at _dmarc.<domain> at all.
                 report.status = "FAIL"
                 report.status_extended = (
                     f"No DMARC record found for domain {domain}."
                 )
+            elif not records:
+                # DNS resolver failure (Timeout, NoNameservers) -> not an absence.
+                report.status = "MANUAL"
+                report.status_extended = (
+                    f"Could not resolve DMARC record for domain {domain} due to a "
+                    f"DNS resolver error; manual review is required."
+                )
             else:
-                # Validate the DMARC record has the correct version tag
-                if not dmarc_record.upper().startswith("V=DMARC1"):
+                # Validate cardinality: exactly one DMARC record is expected.
+                dmarc_records = [
+                    r for r in records if r.upper().startswith("V=DMARC1")
+                ]
+                if len(dmarc_records) == 0:
                     report.status = "FAIL"
                     report.status_extended = (
-                        f"DMARC record found for domain {domain} but is malformed: "
-                        f"missing or invalid V=DMARC1 version tag."
+                        f"TXT record found at _dmarc.{domain} but it is not a valid "
+                        f"DMARC record: missing V=DMARC1 version tag."
+                    )
+                elif len(dmarc_records) > 1:
+                    report.status = "FAIL"
+                    report.status_extended = (
+                        f"Multiple DMARC records found for domain {domain}: "
+                        f"exactly one V=DMARC1 record is expected."
                     )
                 else:
+                    dmarc_record = dmarc_records[0]
                     policy = self._get_policy_value(dmarc_record)
 
                     if policy in ("reject", "quarantine"):
@@ -67,7 +100,7 @@ class defender_domain_dmarc_records_published(Check):
                     else:
                         report.status = "FAIL"
                         report.status_extended = (
-                            f"DMARC record found for domain {domain} but has an "
+                            f"DMARC record found for domain {domain} but has a "
                             f"missing or unrecognized policy."
                         )
 
@@ -77,7 +110,7 @@ class defender_domain_dmarc_records_published(Check):
 
     def _lookup_dmarc_record(self, domain):
         """
-        Look up the DMARC TXT record for a given domain.
+        Look up the TXT records at _dmarc.<domain>.
 
         DMARC records are published as TXT records at _dmarc.<domain>.
 
@@ -85,32 +118,38 @@ class defender_domain_dmarc_records_published(Check):
             domain: The domain to look up the DMARC record for.
 
         Returns:
-            str or None: The DMARC record content if found, None otherwise.
+            list: All TXT record strings found, if any.
+            None: If the DNS lookup completed but no TXT records exist
+                (NXDOMAIN, NoAnswer).
+            An empty list: If the DNS resolver failed (Timeout, NoNameservers)
+                and the lookup must be retried manually.
         """
         import dns.resolver
 
         try:
             answers = dns.resolver.resolve(f"_dmarc.{domain}", "TXT")
-            for rdata in answers:
-                record = b"".join(rdata.strings).decode("utf-8")
-                if "V=DMARC1" in record.upper():
-                    return record
-        except (
-            dns.resolver.NoAnswer,
-            dns.resolver.NXDOMAIN,
-            dns.resolver.NoNameservers,
-            dns.resolver.Timeout,
-            dns.resolver.Timeout,
-        ):
-            pass
+            return [
+                b"".join(rdata.strings).decode("utf-8") for rdata in answers
+            ] or None
+        except _DNS_FAILURE_EXCEPTIONS:
+            # Transient resolver failure. An empty list is the sentinel for the
+            # caller to report MANUAL instead of FAIL.
+            return []
+        except _DNS_ABSENT_EXCEPTIONS:
+            # No TXT records at all (domain absent or no answer).
+            return None
         except Exception:
-            pass
-
-        return None
+            # Unknown DNS error: treat as resolver failure for safety so the
+            # finding is flagged for manual review rather than silently passing.
+            return []
 
     def _get_policy_value(self, content):
         """
         Extract the DMARC policy value (reject, quarantine, or none) from a DMARC record.
+
+        Validates exact tag boundaries so that tags like ``sp``, ``adkim``,
+        or ``rua`` are not mistaken for the ``p`` (policy) tag, and enforces
+        that the ``p`` tag appears exactly once.
 
         Args:
             content: The DMARC record string.
@@ -118,7 +157,17 @@ class defender_domain_dmarc_records_published(Check):
         Returns:
             str: The policy value ("reject", "quarantine", "none") or empty string if not found.
         """
-        match = re.search(r"p\s*=\s*(\w+)", content, re.IGNORECASE)
-        if match:
-            return match.group(1).lower()
+        # Match the 'p' tag with exact tag boundaries: preceded by ';' or
+        # start-of-string, and the value terminated by ';' or end-of-string.
+        # [a-zA-Z]+ captures only the tag value (no semicolons or separators).
+        matches = re.findall(
+            r"(?:^|;)\s*p\s*=\s*([a-zA-Z]+)\s*(?:;|$)",
+            content,
+            re.IGNORECASE,
+        )
+        if len(matches) == 1:
+            return matches[0].lower()
+        elif len(matches) > 1:
+            # Cardinality violation: 'p' tag appears more than once.
+            return ""
         return ""
