@@ -125,4 +125,4 @@ class Environment(BaseModel):
     managed_platform_updates: Optional[str]
     cloudwatch_stream_logs: Optional[str]
     tags: Optional[list] = []
-    option_settings: list
+    option_settings: Optional[list] = None

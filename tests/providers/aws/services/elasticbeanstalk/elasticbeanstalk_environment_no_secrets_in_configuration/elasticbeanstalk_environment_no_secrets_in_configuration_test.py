@@ -1,9 +1,9 @@
 from unittest import mock
 
+from prowler.lib.utils.utils import SecretsScanError
 from prowler.providers.aws.services.elasticbeanstalk.elasticbeanstalk_service import (
     Environment,
 )
-from prowler.lib.utils.utils import SecretsScanError
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
@@ -27,16 +27,46 @@ class Test_elasticbeanstalk_environment_no_secrets_in_configuration:
                 {
                     "Namespace": "aws:elasticbeanstalk:application:environment",
                     "OptionName": "JSON_WEB_TOKEN",
-                    "Value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U",
+                    "Value": "test-token",
                 },
                 {
                     "Namespace": "aws:elasticbeanstalk:application:environment",
                     "OptionName": "MONGODB_URI",
-                    "Value": "mongodb+srv://admin_prod:Passw0rd99!@cluster-prod-xyz.1a2b3.mongodb.net/enterprise_db?retryWrites=true&w=majority",
+                    "Value": "test-mongodb-uri",
                 },
             ],
         )
         elasticbeanstalk_client.environments = {eb_env_arn: environment}
+
+        mocked_scan_results = {
+            (
+                eb_env_arn,
+                "aws:elasticbeanstalk:application:environment",
+                "JSON_WEB_TOKEN",
+            ): [
+                {
+                    "filename": "payload",
+                    "line_number": 1,
+                    "type": "SecretKeyword",
+                    "hashed_secret": "mocked-hash",
+                    "is_verified": False,
+                }
+            ],
+            (
+                eb_env_arn,
+                "aws:elasticbeanstalk:application:environment",
+                "MONGODB_URI",
+            ): [
+                {
+                    "filename": "payload",
+                    "line_number": 1,
+                    "type": "SecretKeyword",
+                    "hashed_secret": "mocked-hash-2",
+                    "is_verified": False,
+                }
+            ],
+        }
+
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -45,6 +75,10 @@ class Test_elasticbeanstalk_environment_no_secrets_in_configuration:
             mock.patch(
                 "prowler.providers.aws.services.elasticbeanstalk.elasticbeanstalk_environment_no_secrets_in_configuration.elasticbeanstalk_environment_no_secrets_in_configuration.elasticbeanstalk_client",
                 new=elasticbeanstalk_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.elasticbeanstalk.elasticbeanstalk_environment_no_secrets_in_configuration.elasticbeanstalk_environment_no_secrets_in_configuration.detect_secrets_scan_batch",
+                return_value=mocked_scan_results,
             ),
         ):
             from prowler.providers.aws.services.elasticbeanstalk.elasticbeanstalk_environment_no_secrets_in_configuration.elasticbeanstalk_environment_no_secrets_in_configuration import (
@@ -106,7 +140,7 @@ class Test_elasticbeanstalk_environment_no_secrets_in_configuration:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"No secrets found in Elastic BeanStalk environment configuration for {environment.name} environment."
+                == f"No secrets found in Elastic Beanstalk environment configuration for {environment.name} environment."
             )
 
     def test_environment_configuration_scan_error(self):
@@ -158,7 +192,7 @@ class Test_elasticbeanstalk_environment_no_secrets_in_configuration:
             assert len(result) == 1
             assert result[0].status == "MANUAL"
             assert (
-                f"Could not scan Elastic BeanStalk environment configuration for {environment.name} environment"
+                f"Could not scan Elastic Beanstalk environment configuration for {environment.name} environment"
                 in result[0].status_extended
             )
 
