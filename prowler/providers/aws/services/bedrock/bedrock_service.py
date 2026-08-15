@@ -60,14 +60,7 @@ class Bedrock(AWSService):
             )
 
     def _list_guardrails(self, regional_client):
-        """List the guardrails in a region.
-
-        Unlike the other collections, guardrails_scan_errors stores every error
-        code, including the ValidationException that means Bedrock is unavailable
-        in the Region. A consumer must therefore skip that code itself, as
-        bedrock_guardrail_contextual_grounding_filter_enabled does, or it will
-        report findings for Regions the service does not serve.
-        """
+        """List the guardrails in a region."""
         logger.info("Bedrock - Listing Guardrails...")
         try:
             paginator = regional_client.get_paginator("list_guardrails")
@@ -84,9 +77,11 @@ class Bedrock(AWSService):
                         )
             self.guardrails_scanned_regions.add(regional_client.region)
         except ClientError as error:
-            self.guardrails_scan_errors[regional_client.region] = error.response[
-                "Error"
-            ].get("Code", error.__class__.__name__)
+            code = error.response["Error"].get("Code", error.__class__.__name__)
+            # ValidationException means Bedrock is unavailable in the region:
+            # a definite "no guardrails", so it must not become a MANUAL finding.
+            if code != "ValidationException":
+                self.guardrails_scan_errors[regional_client.region] = code
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )

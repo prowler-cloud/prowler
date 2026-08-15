@@ -44,11 +44,6 @@ class bedrock_guardrail_contextual_grounding_filter_enabled(Check):
         findings = []
 
         for region, error in sorted(bedrock_client.guardrails_scan_errors.items()):
-            # ValidationException means Bedrock is unavailable in the Region: a
-            # definite "no guardrails", not an unknown. The service records every
-            # error code, so the distinction is drawn here.
-            if error == "ValidationException":
-                continue
             report = Check_Report_AWS(
                 metadata=self.metadata(), resource={"region": region}
             )
