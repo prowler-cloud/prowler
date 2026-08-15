@@ -19,7 +19,8 @@ class bedrock_guardrail_contextual_grounding_filter_enabled(Check):
     - MANUAL: GetGuardrail failed, so the policy could not be retrieved and
       compliance cannot be asserted from an absent field; or a filter is
       otherwise compliant but omits enabled or action, leaving it unknown
-      whether the evaluation runs or whether it blocks.
+      whether the evaluation runs or whether it blocks; or ListGuardrails failed
+      for a Region, so that Region's guardrails are unknown rather than absent.
 
     enabled and action are both optional members of
     GuardrailContextualGroundingFilter (only type and threshold are required)
@@ -41,6 +42,23 @@ class bedrock_guardrail_contextual_grounding_filter_enabled(Check):
             A list of reports containing the result of the check.
         """
         findings = []
+
+        for region, error in sorted(bedrock_client.guardrails_scan_errors.items()):
+            # ValidationException means Bedrock is unavailable in the Region: a
+            # definite "no guardrails", not an unknown. The service records every
+            # error code, so the distinction is drawn here.
+            if error == "ValidationException":
+                continue
+            report = Check_Report_AWS(
+                metadata=self.metadata(), resource={"region": region}
+            )
+            report.region = region
+            report.resource_id = "guardrail/unknown"
+            report.resource_arn = f"arn:{bedrock_client.audited_partition}:bedrock:{region}:{bedrock_client.audited_account}:guardrail/unknown"
+            report.status = "MANUAL"
+            report.status_extended = f"Bedrock guardrails could not be listed in region {region} ({error}); verify manually that each one blocks ungrounded and irrelevant responses."
+            findings.append(report)
+
         for guardrail in bedrock_client.guardrails.values():
             report = Check_Report_AWS(metadata=self.metadata(), resource=guardrail)
 

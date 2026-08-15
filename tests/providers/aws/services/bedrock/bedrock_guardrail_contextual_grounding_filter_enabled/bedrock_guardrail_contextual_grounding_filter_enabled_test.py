@@ -159,6 +159,18 @@ def _mock_empty(self, operation_name, kwarg):
     return make_api_call(self, operation_name, kwarg)
 
 
+def _mock_list_guardrails_denied(self, operation_name, kwarg):
+    """ListGuardrails is denied, so the region's guardrails are unknown."""
+    if operation_name in _UNUSED_OPERATIONS:
+        return {}
+    if operation_name == "ListGuardrails":
+        raise ClientError(
+            {"Error": {"Code": "AccessDeniedException", "Message": "denied"}},
+            operation_name,
+        )
+    return make_api_call(self, operation_name, kwarg)
+
+
 def _mock_unsupported_region(self, operation_name, kwarg):
     """The API is not available in the audited region."""
     if operation_name in _UNUSED_OPERATIONS:
@@ -399,3 +411,27 @@ class Test_bedrock_guardrail_contextual_grounding_filter_enabled:
         assert len(result) == 1
         assert result[0].status == "MANUAL"
         assert "could not be retrieved" in result[0].status_extended
+
+    @mock.patch(
+        "botocore.client.BaseClient._make_api_call", new=_mock_list_guardrails_denied
+    )
+    @mock_aws
+    def test_list_guardrails_denied_is_manual_not_silence(self):
+        """A denied ListGuardrails must report MANUAL for the region, not vanish.
+
+        Without this the Region is indistinguishable from one holding no
+        guardrails, which is the same silent-inventory gap the sibling checks
+        report against custom-model/unknown and knowledge-base/unknown.
+        """
+        result = self._run()
+        assert len(result) == 1
+        assert result[0].status == "MANUAL"
+        assert result[0].region == AWS_REGION_US_EAST_1
+        assert result[0].resource_id == "guardrail/unknown"
+        assert (
+            result[0].resource_arn
+            == f"arn:aws:bedrock:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:guardrail/unknown"
+        )
+        assert "could not be listed" in result[0].status_extended
+        assert "AccessDeniedException" in result[0].status_extended
+        assert result[0].status_extended.endswith(".")
