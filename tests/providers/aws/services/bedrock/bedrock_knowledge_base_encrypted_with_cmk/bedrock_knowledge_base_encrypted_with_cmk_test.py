@@ -308,3 +308,29 @@ class Test_bedrock_knowledge_base_encrypted_with_cmk:
         assert service.data_sources == {}
         assert service.knowledge_bases_scan_errors == {}
         assert self._run() == []
+
+    @mock.patch("botocore.client.BaseClient._make_api_call", new=_mock_without_cmk)
+    @mock_aws
+    def test_scoping_by_knowledge_base_arn_keeps_its_data_sources(self):
+        """A scan scoped to the knowledge base ARN must still see its data sources.
+
+        AWS exposes no ARN for a Bedrock data source, so the one built here is
+        synthetic and can never equal a user-supplied --resource-arn. Filtering on
+        it would keep the knowledge base, silently drop every data source, and
+        leave the check reporting nothing for an in-scope knowledge base.
+        """
+        from prowler.providers.aws.services.bedrock.bedrock_service import BedrockAgent
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider._audit_resources = [KB_ARN]
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
+            service = BedrockAgent(aws_provider)
+
+        assert service.knowledge_bases, "the scoped knowledge base must be kept"
+        assert service.data_sources, "its data sources must not be filtered out"
+        assert all(
+            ds.knowledge_base_id == KB_ID for ds in service.data_sources.values()
+        )

@@ -60,6 +60,14 @@ class Bedrock(AWSService):
             )
 
     def _list_guardrails(self, regional_client):
+        """List the guardrails in a region.
+
+        Unlike the other collections, guardrails_scan_errors stores every error
+        code, including the ValidationException that means Bedrock is unavailable
+        in the Region. A consumer must therefore skip that code itself, as
+        bedrock_guardrail_contextual_grounding_filter_enabled does, or it will
+        report findings for Regions the service does not serve.
+        """
         logger.info("Bedrock - Listing Guardrails...")
         try:
             paginator = regional_client.get_paginator("list_guardrails")
@@ -393,17 +401,19 @@ class BedrockAgent(AWSService):
                     data_source_arn = (
                         f"{knowledge_base.arn}/data-source/{data_source_id}"
                     )
-                    if not self.audit_resources or is_resource_filtered(
-                        data_source_arn, self.audit_resources
-                    ):
-                        self.data_sources[data_source_arn] = KnowledgeBaseDataSource(
-                            id=data_source_id,
-                            name=data_source.get("name", ""),
-                            arn=data_source_arn,
-                            region=knowledge_base.region,
-                            knowledge_base_id=knowledge_base.id,
-                            knowledge_base_name=knowledge_base.name,
-                        )
+                    # No filter here: the parent knowledge base was already
+                    # filtered on its own ARN, and this ARN is synthetic because
+                    # AWS exposes none for a data source, so it could never match
+                    # a user-supplied --resource-arn and would silently drop every
+                    # data source of an in-scope knowledge base.
+                    self.data_sources[data_source_arn] = KnowledgeBaseDataSource(
+                        id=data_source_id,
+                        name=data_source.get("name", ""),
+                        arn=data_source_arn,
+                        region=knowledge_base.region,
+                        knowledge_base_id=knowledge_base.id,
+                        knowledge_base_name=knowledge_base.name,
+                    )
             knowledge_base.data_sources_listed = True
         except Exception as error:
             logger.error(
