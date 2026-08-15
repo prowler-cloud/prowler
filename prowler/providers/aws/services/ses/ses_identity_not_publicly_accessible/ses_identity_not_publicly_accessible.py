@@ -3,23 +3,46 @@ from prowler.providers.aws.services.iam.lib.policy import is_policy_public
 from prowler.providers.aws.services.ses.ses_client import ses_client
 
 
+def _normalize_policy_statements(policy: dict) -> dict:
+    statements = policy.get("Statement", [])
+    if isinstance(statements, dict):
+        return {**policy, "Statement": [statements]}
+    return policy
+
+
+def _has_explicit_deny(policy: dict) -> bool:
+    return any(
+        isinstance(statement, dict) and statement.get("Effect") == "Deny"
+        for statement in _normalize_policy_statements(policy).get("Statement", [])
+    )
+
+
 class ses_identity_not_publicly_accessible(Check):
     def execute(self):
         findings = []
         for identity in ses_client.email_identities.values():
-            if identity.policy is None:
+            if not identity.policies:
                 continue
             report = Check_Report_AWS(metadata=self.metadata(), resource=identity)
             report.status = "PASS"
             report.status_extended = (
                 f"SES identity {identity.name} is not publicly accessible."
             )
-            if is_policy_public(
-                identity.policy,
-                ses_client.audited_account,
-            ):
-                report.status = "FAIL"
-                report.status_extended = f"SES identity {identity.name} is publicly accessible due to its resource policy."
+            has_public_allow = any(
+                is_policy_public(
+                    _normalize_policy_statements(policy), ses_client.audited_account
+                )
+                for policy in identity.policies.values()
+            )
+            if has_public_allow:
+                if any(
+                    _has_explicit_deny(policy) for policy in identity.policies.values()
+                ):
+                    report.status = "MANUAL"
+                    report.status_extended = f"SES identity {identity.name} has public Allow and explicit Deny statements in its resource policies. Effective public access requires manual review."
+                else:
+                    report.status = "FAIL"
+                    report.status_extended = f"SES identity {identity.name} is publicly accessible due to its resource policy."
 
             findings.append(report)
 
