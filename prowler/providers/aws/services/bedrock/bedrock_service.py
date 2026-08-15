@@ -256,6 +256,7 @@ class BedrockAgent(AWSService):
         self.prompt_scanned_regions: set = set()
         self.__threading_call__(self._list_agents)
         self.__threading_call__(self._get_agent, self.agents.values())
+        self.__threading_call__(self._get_agent_version_roles, self.agents.values())
         self.__threading_call__(self._list_prompts)
         self.__threading_call__(self._get_prompt, self.prompts.values())
         self.__threading_call__(self._list_tags_for_resource, self.agents.values())
@@ -310,6 +311,52 @@ class BedrockAgent(AWSService):
             agent.role_arn = agent_info.get("agent", {}).get("agentResourceRoleArn")
             agent.detail_retrieved = True
         except Exception as error:
+            logger.error(
+                f"{agent.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _get_agent_version_roles(self, agent):
+        """Fetch the execution role of every agent version an alias routes to.
+
+        GetAgent returns only the working draft. An agent version is an
+        immutable snapshot that keeps the role it was cut with, and an alias
+        routes invocations at a specific version, so a deployed version can
+        still hold a role the draft no longer has. Only routed versions are
+        fetched: a version no alias points at cannot be invoked, so reporting on
+        it would be noise.
+        """
+        logger.info("Bedrock Agent - Getting Agent Version Roles...")
+        try:
+            client = self.regional_clients[agent.region]
+            paginator = client.get_paginator("list_agent_aliases")
+            routed_versions = set()
+            for page in paginator.paginate(agentId=agent.id):
+                for alias in page.get("agentAliasSummaries", []):
+                    for route in alias.get("routingConfiguration", []):
+                        version = route.get("agentVersion")
+                        # agentVersion is an optional member of the routing
+                        # configuration, and DRAFT routes at the working draft
+                        # whose role GetAgent already captured.
+                        if version and version != "DRAFT":
+                            routed_versions.add(version)
+
+            for version in sorted(routed_versions):
+                version_info = client.get_agent_version(
+                    agentId=agent.id, agentVersion=version
+                )
+                agent.version_role_arns[version] = version_info.get(
+                    "agentVersion", {}
+                ).get("agentResourceRoleArn")
+            agent.versions_listed = True
+        except ClientError as error:
+            agent.versions_error = error.response["Error"].get(
+                "Code", error.__class__.__name__
+            )
+            logger.error(
+                f"{agent.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        except Exception as error:
+            agent.versions_error = error.__class__.__name__
             logger.error(
                 f"{agent.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
@@ -486,6 +533,15 @@ class Agent(BaseModel):
     tags: Optional[list] = []
     # False when GetAgent failed: absent role is unknown, not unset.
     detail_retrieved: bool = False
+    # Execution role of each numbered version an alias routes to, keyed by
+    # version. A version is an immutable snapshot, so it keeps the role it was
+    # cut with even after the working draft's role changes.
+    version_role_arns: dict = {}
+    # True once the alias and version inventory was read in full, so an agent
+    # with no deployed versions genuinely has none rather than that they could
+    # not be listed.
+    versions_listed: bool = False
+    versions_error: Optional[str] = None
 
 
 class Prompt(BaseModel):

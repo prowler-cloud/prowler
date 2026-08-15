@@ -15,20 +15,31 @@ class bedrock_agent_role_not_shared_across_agents(Check):
     attribution: CloudTrail records the role session, so an action taken with
     that role cannot be tied back to a single agent.
 
+    Every role an agent can run under counts, not only the working draft's.
+    GetAgent returns the draft, but an agent version is an immutable snapshot
+    that keeps the role it was cut with, and an alias routes invocations at a
+    specific version — so a deployed version can still hold a role the draft no
+    longer has, and sharing it is the same exposure. Only versions an alias
+    routes to are considered, since a version no alias points at cannot be
+    invoked. An alias routing at DRAFT resolves to the draft role already read.
+
     Sharing is judged against the whole account inventory, so the verdict is only
     as complete as that inventory. Dedication cannot be asserted while any part of
-    the picture is missing — an unlisted Region, or an agent whose own role could
-    not be read, may hold the same role. A role already seen on two agents is
-    shared whatever else is missing, so FAIL survives an incomplete inventory.
+    the picture is missing — an unlisted Region, an agent whose own role could
+    not be read, or an agent whose deployed versions could not be listed may hold
+    the same role. A role already seen on two agents is shared whatever else is
+    missing, so FAIL survives an incomplete inventory.
 
-    - PASS: The agent's execution role is used by no other agent, every Region's
-      agent inventory was listed, and every discovered agent's role was readable.
-    - FAIL: Two or more agents share the role; the other agents sharing it are
-      named in the message.
+    - PASS: No role this agent holds is used by any other agent, every Region's
+      agent inventory was listed, every discovered agent's role was readable, and
+      every agent's deployed versions were listed.
+    - FAIL: Two or more agents hold the same role, on the draft or on a deployed
+      version; the other agents holding it are named in the message, and the
+      version is named when the sharing is through one.
     - MANUAL: This agent's own execution role could not be retrieved from
-      GetAgent; or its role looks dedicated but another agent's role is unknown or
-      a Region could not be listed; or ListAgents failed for a Region, which
-      therefore contributed no agents at all.
+      GetAgent; or its roles look dedicated but another agent's role or deployed
+      versions are unknown, or a Region could not be listed; or ListAgents failed
+      for a Region, which therefore contributed no agents at all.
     """
 
     def execute(self) -> list[Check_Report_AWS]:
@@ -51,19 +62,31 @@ class bedrock_agent_role_not_shared_across_agents(Check):
             report.status_extended = f"Bedrock Agents could not be listed in region {region} ({error}); verify manually that no execution role is shared between agents."
             findings.append(report)
 
-        # Keyed on agent ARN, not name, so two same-named agents still count twice.
+        # Keyed on agent ARN, not name, so two same-named agents still count
+        # twice. An agent is indexed under every role it holds, because a
+        # deployed version keeps the role it was cut with: sharing through a
+        # version is the same exposure as sharing through the draft.
         agents_by_role = {}
         unresolved_agents = []
         for agent in bedrock_agent_client.agents.values():
-            if agent.detail_retrieved and agent.role_arn:
-                agents_by_role.setdefault(agent.role_arn, []).append(
-                    (agent.arn, agent.name or agent.id)
-                )
-            else:
+            entry = (agent.arn, agent.name or agent.id)
+            for role_arn in self._roles_held_by(agent):
+                if entry not in agents_by_role.setdefault(role_arn, []):
+                    agents_by_role[role_arn].append(entry)
+            # Both gaps are recorded, not just the first: an agent can have an
+            # unreadable draft role and an unlistable version inventory at once,
+            # and each independently keeps another agent from being called
+            # dedicated.
+            if not agent.detail_retrieved or not agent.role_arn:
                 unresolved_agents.append(agent.name or agent.id)
+            if not agent.versions_listed:
+                unresolved_agents.append(
+                    f"deployed versions of {agent.name or agent.id}"
+                )
 
         # Dedication can only be asserted from a complete picture: an unlisted
-        # Region or an agent whose role could not be read may hold the same role.
+        # Region, an agent whose role could not be read, or an agent whose
+        # deployed versions could not be listed may hold the same role.
         incomplete = sorted(unresolved_agents) + [
             f"agents in region {region}" for region in incomplete_regions
         ]
@@ -78,16 +101,28 @@ class bedrock_agent_role_not_shared_across_agents(Check):
                 findings.append(report)
                 continue
 
-            sharing_agents = agents_by_role[agent.role_arn]
-            if len(sharing_agents) >= SHARED_ROLE_AGENT_COUNT:
-                # Sorted for deterministic output across scans.
+            # Any role this agent holds, on the draft or on a deployed version,
+            # is a finding when another agent holds it too. Reported on the
+            # lowest-sorted shared role for determinism across scans.
+            shared_roles = sorted(
+                role_arn
+                for role_arn in self._roles_held_by(agent)
+                if len(agents_by_role.get(role_arn, [])) >= SHARED_ROLE_AGENT_COUNT
+            )
+            if shared_roles:
+                role_arn = shared_roles[0]
                 others = sorted(
                     other_name
-                    for other_arn, other_name in sharing_agents
+                    for other_arn, other_name in agents_by_role[role_arn]
                     if other_arn != agent.arn
                 )
+                through = (
+                    ""
+                    if role_arn == agent.role_arn
+                    else f" through deployed version {sorted(version for version, version_role in agent.version_role_arns.items() if version_role == role_arn)[0]}"
+                )
                 report.status = "FAIL"
-                report.status_extended = f"Bedrock Agent {name} shares execution role {agent.role_arn} with {', '.join(others)} in region {agent.region}, so each agent inherits the union of their permissions and CloudTrail cannot attribute an action to one of them."
+                report.status_extended = f"Bedrock Agent {name} shares execution role {role_arn}{through} with {', '.join(others)} in region {agent.region}, so each agent inherits the union of their permissions and CloudTrail cannot attribute an action to one of them."
             elif incomplete:
                 report.status = "MANUAL"
                 report.status_extended = f"Bedrock Agent {name} execution role is used by no other agent whose role could be read in region {agent.region}, but the role of {', '.join(incomplete)} is unknown; verify manually that none of them shares it."
@@ -97,3 +132,21 @@ class bedrock_agent_role_not_shared_across_agents(Check):
             findings.append(report)
 
         return findings
+
+    def _roles_held_by(self, agent) -> set:
+        """Collect every execution role an agent can run under.
+
+        Args:
+            agent: The Bedrock Agent to inspect.
+
+        Returns:
+            The working draft's role plus the role of each deployed version an
+            alias routes to, skipping any that could not be read.
+        """
+        roles = set()
+        if agent.detail_retrieved and agent.role_arn:
+            roles.add(agent.role_arn)
+        roles.update(
+            role_arn for role_arn in agent.version_role_arns.values() if role_arn
+        )
+        return roles

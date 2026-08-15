@@ -40,6 +40,13 @@ _UNUSED_OPERATIONS = (
     "GetDataSource",
 )
 
+# These scenarios describe agents with no alias, so no version is deployed and
+# the draft role is the only one in play. ListAgentAliases is stubbed empty
+# rather than left to moto, which does not implement it: an unstubbed call would
+# leave the version inventory unread and correctly downgrade every PASS to
+# MANUAL, masking what these tests are actually asserting.
+_NO_ALIASES = {"agentAliasSummaries": []}
+
 
 def _agent_mock(agents, fail_get_for=()):
     """Build a _make_api_call replacement returning the given agents.
@@ -52,6 +59,8 @@ def _agent_mock(agents, fail_get_for=()):
     def _mock(self, operation_name, kwarg):
         if operation_name in _UNUSED_OPERATIONS:
             return {}
+        if operation_name == "ListAgentAliases":
+            return _NO_ALIASES
         if operation_name == "ListAgents":
             return {
                 "agentSummaries": [
@@ -125,6 +134,8 @@ def _mock_empty(self, operation_name, kwarg):
     """No agents at all."""
     if operation_name in _UNUSED_OPERATIONS:
         return {}
+    if operation_name == "ListAgentAliases":
+        return _NO_ALIASES
     if operation_name == "ListAgents":
         return {"agentSummaries": []}
     return make_api_call(self, operation_name, kwarg)
@@ -134,6 +145,8 @@ def _mock_unsupported_region(self, operation_name, kwarg):
     """The API is not available in the audited region."""
     if operation_name in _UNUSED_OPERATIONS:
         return {}
+    if operation_name == "ListAgentAliases":
+        return _NO_ALIASES
     if operation_name == "ListAgents":
         raise ClientError(
             {
@@ -163,6 +176,8 @@ def _mock_list_agents_denied(self, operation_name, kwarg):
     """ListAgents is denied, so the region's agents are unknown."""
     if operation_name in _UNUSED_OPERATIONS:
         return {}
+    if operation_name == "ListAgentAliases":
+        return _NO_ALIASES
     if operation_name == "ListAgents":
         raise ClientError(
             {"Error": {"Code": "AccessDeniedException", "Message": "denied"}},
@@ -179,6 +194,8 @@ def _mock_dedicated_role_with_partial_inventory(self, operation_name, kwarg):
     """
     if operation_name in _UNUSED_OPERATIONS:
         return {}
+    if operation_name == "ListAgentAliases":
+        return _NO_ALIASES
     region = self.meta.region_name
     if operation_name == "ListAgents":
         if region == AWS_REGION_US_EAST_1:
