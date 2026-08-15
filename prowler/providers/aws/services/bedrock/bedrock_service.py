@@ -203,6 +203,19 @@ class LoggingConfiguration(BaseModel):
     s3_bucket: Optional[str] = None
 
 
+class ContextualGroundingFilter(BaseModel):
+    """One filter of a guardrail's contextualGroundingPolicy.
+
+    type and threshold are required by the API; enabled and action are optional
+    and have no documented default, so an absent value means unknown.
+    """
+
+    type: Optional[str] = None
+    threshold: Optional[float] = None
+    action: Optional[str] = None
+    enabled: Optional[bool] = None
+
+
 class Guardrail(BaseModel):
     id: str
     name: str
@@ -212,7 +225,7 @@ class Guardrail(BaseModel):
     sensitive_information_filter: bool = False
     prompt_attack_filter_strength: Optional[str] = None
     # type, threshold, action, enabled per filter.
-    contextual_grounding_filters: list = []
+    contextual_grounding_filters: list[ContextualGroundingFilter] = []
     # False when GetGuardrail failed: absent policy is unknown, not unset.
     detail_retrieved: bool = False
 
@@ -410,7 +423,15 @@ class BedrockAgent(AWSService):
                         knowledge_base_name=knowledge_base.name,
                     )
             knowledge_base.data_sources_listed = True
+        except ClientError as error:
+            knowledge_base.data_sources_error = error.response["Error"].get(
+                "Code", error.__class__.__name__
+            )
+            logger.error(
+                f"{knowledge_base.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
         except Exception as error:
+            knowledge_base.data_sources_error = error.__class__.__name__
             logger.error(
                 f"{knowledge_base.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
@@ -487,6 +508,8 @@ class KnowledgeBase(BaseModel):
     region: str
     # False when ListDataSources failed: empty set is unknown, not none.
     data_sources_listed: bool = False
+    # The error code from a failed ListDataSources, for the finding message.
+    data_sources_error: Optional[str] = None
 
 
 class KnowledgeBaseDataSource(BaseModel):

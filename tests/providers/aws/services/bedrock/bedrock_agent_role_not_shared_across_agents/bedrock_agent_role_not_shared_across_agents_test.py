@@ -347,13 +347,20 @@ class Test_bedrock_agent_role_not_shared_across_agents:
     )
     @mock_aws
     def test_unreadable_agent_does_not_inflate_share_count(self):
-        """An agent excluded from the index cannot make another agent's role look shared."""
+        """An excluded agent must neither manufacture a FAIL nor allow a PASS.
+
+        The unreadable agent is kept out of the share index, so the readable agent
+        is not reported as sharing. But its role is unknown and could be the same
+        one, so the readable agent cannot be asserted dedicated either: both are
+        MANUAL, and neither is FAIL.
+        """
         result = self._run()
         assert len(result) == 2
         by_id = {report.resource_id: report for report in result}
         assert by_id[AGENT_B_ID].status == "MANUAL"
-        # Only one readable agent uses the role, so it is not provably shared.
-        assert by_id[AGENT_A_ID].status == "PASS"
+        assert by_id[AGENT_A_ID].status == "MANUAL"
+        assert "is unknown" in by_id[AGENT_A_ID].status_extended
+        assert {report.status for report in result} == {"MANUAL"}
 
     def test_every_inventory_shape_resolves_correctly(self):
         """Exhaust the decision space instead of sampling it.
@@ -389,11 +396,21 @@ class Test_bedrock_agent_role_not_shared_across_agents:
                 for _, role, retrieved in agents:
                     if retrieved and role:
                         readable_per_role[role] = readable_per_role.get(role, 0) + 1
+                # Any agent whose own role could not be read leaves the picture
+                # incomplete, so no other agent can be asserted dedicated. A role
+                # already seen twice is shared regardless.
+                any_unresolved = any(
+                    not retrieved or not role for _, role, retrieved in agents
+                )
                 expected = sorted(
                     (
                         "MANUAL"
                         if not retrieved or not role
-                        else ("FAIL" if readable_per_role[role] >= 2 else "PASS")
+                        else (
+                            "FAIL"
+                            if readable_per_role[role] >= 2
+                            else ("MANUAL" if any_unresolved else "PASS")
+                        )
                     )
                     for _, role, retrieved in agents
                 )
@@ -452,5 +469,31 @@ class Test_bedrock_agent_role_not_shared_across_agents:
             r for r in by_status["MANUAL"] if r.resource_id != "agent/unknown"
         ]
         assert len(agent_report) == 1
-        assert "agents could not be listed" in agent_report[0].status_extended
+        assert "agents in region" in agent_report[0].status_extended
         assert all(r.status_extended.endswith(".") for r in result)
+
+    @mock.patch(
+        "botocore.client.BaseClient._make_api_call",
+        new=_agent_mock(
+            [
+                (AGENT_A_ID, AGENT_A_NAME, ROLE_A_ARN),
+                (AGENT_B_ID, AGENT_B_NAME, ROLE_B_ARN),
+            ],
+            fail_get_for=(AGENT_B_ID,),
+        ),
+    )
+    @mock_aws
+    def test_unresolved_role_blocks_pass_for_a_distinct_role(self):
+        """One agent's unreadable role prevents asserting another's dedication.
+
+        Agent A holds a role no other *readable* agent uses, so the old logic
+        returned PASS. Agent B's role could not be retrieved and may be the same
+        one, so PASS would be an assertion the data does not support.
+        """
+        result = self._run()
+        assert len(result) == 2
+        by_id = {report.resource_id: report for report in result}
+        assert by_id[AGENT_B_ID].status == "MANUAL"
+        assert by_id[AGENT_A_ID].status == "MANUAL"
+        assert AGENT_B_NAME in by_id[AGENT_A_ID].status_extended
+        assert "PASS" not in {report.status for report in result}

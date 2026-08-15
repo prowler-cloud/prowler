@@ -52,7 +52,12 @@ class bedrock_knowledge_base_encrypted_with_cmk(Check):
                 continue
             report = Check_Report_AWS(metadata=self.metadata(), resource=knowledge_base)
             report.status = "MANUAL"
-            report.status_extended = f"Bedrock knowledge base {knowledge_base.name} data sources could not be listed in region {knowledge_base.region}; verify manually that each one uses a customer-managed KMS key."
+            reason = (
+                f" ({knowledge_base.data_sources_error})"
+                if knowledge_base.data_sources_error
+                else ""
+            )
+            report.status_extended = f"Bedrock knowledge base {knowledge_base.name} data sources could not be listed in region {knowledge_base.region}{reason}; verify manually that each one uses a customer-managed KMS key."
             findings.append(report)
 
         for data_source in bedrock_agent_client.data_sources.values():

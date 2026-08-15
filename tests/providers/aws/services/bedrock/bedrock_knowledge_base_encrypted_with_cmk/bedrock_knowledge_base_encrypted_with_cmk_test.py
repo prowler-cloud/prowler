@@ -279,6 +279,8 @@ class Test_bedrock_knowledge_base_encrypted_with_cmk:
         assert result[0].resource_arn == KB_ARN
         assert KB_NAME in result[0].status_extended
         assert "data sources could not be listed" in result[0].status_extended
+        # The message names why, like the region-level and detail-level ones do.
+        assert "AccessDeniedException" in result[0].status_extended
         assert result[0].status_extended.endswith(".")
 
     @mock.patch("botocore.client.BaseClient._make_api_call", new=_mock_no_data_sources)
