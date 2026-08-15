@@ -376,7 +376,12 @@ class Test_bedrock_agent_role_not_shared_across_agents:
         by_id = {report.resource_id: report for report in result}
         assert by_id[AGENT_B_ID].status == "MANUAL"
         assert by_id[AGENT_A_ID].status == "MANUAL"
-        assert "is unknown" in by_id[AGENT_A_ID].status_extended
+        assert "could not be read" in by_id[AGENT_A_ID].status_extended
+        # The entry names what could not be read, so the sentence stays
+        # grammatical for a role, a version set, or a Region alike.
+        assert (
+            f"the execution role of {AGENT_B_NAME}" in by_id[AGENT_A_ID].status_extended
+        )
         assert {report.status for report in result} == {"MANUAL"}
 
     def test_every_inventory_shape_resolves_correctly(self):

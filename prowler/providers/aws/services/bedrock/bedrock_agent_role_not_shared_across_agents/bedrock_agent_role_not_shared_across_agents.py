@@ -78,7 +78,9 @@ class bedrock_agent_role_not_shared_across_agents(Check):
             # and each independently keeps another agent from being called
             # dedicated.
             if not agent.detail_retrieved or not agent.role_arn:
-                unresolved_agents.append(agent.name or agent.id)
+                unresolved_agents.append(
+                    f"the execution role of {agent.name or agent.id}"
+                )
             if not agent.versions_listed:
                 unresolved_agents.append(
                     f"deployed versions of {agent.name or agent.id}"
@@ -125,7 +127,11 @@ class bedrock_agent_role_not_shared_across_agents(Check):
                 report.status_extended = f"Bedrock Agent {name} shares execution role {role_arn}{through} with {', '.join(others)} in region {agent.region}, so each agent inherits the union of their permissions and CloudTrail cannot attribute an action to one of them."
             elif incomplete:
                 report.status = "MANUAL"
-                report.status_extended = f"Bedrock Agent {name} execution role is used by no other agent whose role could be read in region {agent.region}, but the role of {', '.join(incomplete)} is unknown; verify manually that none of them shares it."
+                # Each entry already reads as its own subject, because they are
+                # not all roles: an entry is an agent whose role is unknown, the
+                # deployed versions of an agent, or the agents of a Region that
+                # could not be listed.
+                report.status_extended = f"Bedrock Agent {name} execution role is used by no other agent whose role could be read in region {agent.region}, but {', '.join(incomplete)} could not be read; verify manually that none of them shares it."
             else:
                 report.status = "PASS"
                 report.status_extended = f"Bedrock Agent {name} has a dedicated execution role in region {agent.region}."
