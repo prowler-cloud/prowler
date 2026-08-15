@@ -5,6 +5,7 @@ from unittest import mock
 import pytest
 from mock import MagicMock, patch
 
+from prowler.exceptions.exceptions import ScanAbortError
 from prowler.lib.scan.exceptions.exceptions import (
     ScanInvalidCategoryError,
     ScanInvalidCheckError,
@@ -327,6 +328,45 @@ class TestScan:
             "accessanalyzer": {"accessanalyzer_enabled"},
         }
         mock_logger.error.assert_not_called()
+
+    @pytest.mark.parametrize("failure_boundary", ["check_import", "check_execute"])
+    def test_scan_propagates_scan_abort_error(self, failure_boundary):
+        error = ScanAbortError("Repository discovery did not complete")
+
+        provider = MagicMock()
+        provider.type = "aws"
+
+        scan = Scan.__new__(Scan)
+        scan._provider = provider
+        scan._checks_to_execute = ["test_check"]
+        scan._service_checks_to_execute = {"test": {"test_check"}}
+        scan._service_checks_completed = {}
+        scan._number_of_checks_to_execute = 1
+        scan._number_of_checks_completed = 0
+        scan._duration = 0
+        scan._status = None
+        scan._bulk_checks_metadata = {}
+        scan._bulk_compliance_frameworks = {}
+
+        check_module = MagicMock()
+        check_module.test_check.return_value = MagicMock()
+
+        with (
+            patch(
+                "prowler.lib.scan.scan._resolve_check_module",
+                return_value=check_module,
+            ) as mock_resolve_check_module,
+            patch("prowler.lib.scan.scan.execute", return_value=[]) as mock_execute,
+        ):
+            if failure_boundary == "check_import":
+                mock_resolve_check_module.side_effect = error
+            else:
+                mock_execute.side_effect = error
+
+            with pytest.raises(ScanAbortError) as exc_info:
+                list(scan.scan())
+
+        assert exc_info.value is error
 
     def test_init_invalid_severity(
         mock_provider,

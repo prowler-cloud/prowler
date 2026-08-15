@@ -3,6 +3,7 @@ from datetime import timezone
 from types import SimpleNamespace
 from typing import Generator
 
+from prowler.exceptions.exceptions import ScanAbortError
 from prowler.lib.check.check import (
     _resolve_check_module,
     execute,
@@ -518,6 +519,8 @@ class Scan:
                                     output_options=output_options,
                                 )
                             )
+                        except ScanAbortError:
+                            raise
                         except Exception:
                             continue
 
@@ -527,12 +530,16 @@ class Scan:
                     logger.error(
                         f"Check '{check_name}' was not found for the {self._provider.type.upper()} provider"
                     )
+                except ScanAbortError:
+                    raise
                 except Exception as error:
                     logger.error(
                         f"{check_name} - {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
             # Update the scan duration when all checks are completed
             self._duration = int((datetime.datetime.now() - start_time).total_seconds())
+        except ScanAbortError:
+            raise
         except Exception as error:
             check_name = check_name or "Scan error"
             logger.error(

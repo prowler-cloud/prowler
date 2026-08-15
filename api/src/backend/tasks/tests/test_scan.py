@@ -26,6 +26,7 @@ from api.models import (
     StatusChoices,
 )
 from django.db import IntegrityError, OperationalError, transaction
+from prowler.exceptions.exceptions import ScanAbortError
 from prowler.lib.check.models import Severity
 from prowler.lib.outputs.finding import Status
 from tasks.jobs.scan import (
@@ -300,6 +301,46 @@ class TestPerformScan:
         provider.refresh_from_db()
         assert provider.connected is False
         assert isinstance(provider.connection_last_checked_at, datetime)
+
+    def test_perform_prowler_scan_scan_abort_marks_scan_failed(
+        self,
+        tenants_fixture,
+        scans_fixture,
+        aws_provider,
+    ):
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        provider = aws_provider
+
+        error = ScanAbortError("Repository discovery did not complete")
+
+        with (
+            patch(
+                "tasks.jobs.scan.initialize_prowler_provider",
+                return_value=MagicMock(),
+            ),
+            patch("tasks.jobs.scan.ProwlerScan") as mock_prowler_scan_class,
+        ):
+            mock_prowler_scan_instance = MagicMock()
+            mock_prowler_scan_instance.scan.side_effect = error
+            mock_prowler_scan_class.return_value = mock_prowler_scan_instance
+
+            with pytest.raises(ScanAbortError) as exc_info:
+                perform_prowler_scan(
+                    str(tenant.id),
+                    str(scan.id),
+                    str(provider.id),
+                    ["check1", "check2"],
+                )
+
+        assert exc_info.value is error
+
+        scan.refresh_from_db()
+        assert scan.state == StateChoices.FAILED
+        assert scan.progress != 100
+
+        provider.refresh_from_db()
+        assert provider.connected is True
 
     def test_perform_prowler_scan_provider_deleted_during_progress_update(
         self,

@@ -1,4 +1,4 @@
-from prowler.exceptions.exceptions import ProwlerException
+from prowler.exceptions.exceptions import ProwlerException, ScanAbortError
 
 
 # Exceptions codes from 5000 to 5999 are reserved for Github exceptions
@@ -41,6 +41,10 @@ class GithubBaseException(ProwlerException):
         (5008, "GithubRepoListFileReadError"): {
             "message": "Error reading the repo list file",
             "remediation": "Check the file permissions and format.",
+        },
+        (5009, "GithubRepositoryDiscoveryError"): {
+            "message": "GitHub repository discovery failed",
+            "remediation": "Check GitHub API connectivity, rate limits, and token permissions, then try again.",
         },
     }
 
@@ -129,4 +133,13 @@ class GithubRepoListFileReadError(GithubBaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             5008, file=file, original_exception=original_exception, message=message
+        )
+
+
+class GithubRepositoryDiscoveryError(GithubBaseException, ScanAbortError):
+    """Exception raised when accessible repositories cannot be fully discovered."""
+
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            5009, file=file, original_exception=original_exception, message=message
         )

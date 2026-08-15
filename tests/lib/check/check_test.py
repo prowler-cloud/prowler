@@ -6,10 +6,12 @@ from logging import ERROR
 from pkgutil import ModuleInfo
 from unittest import mock
 
+import pytest
 from boto3 import client
 from mock import Mock, patch
 from moto import mock_aws
 
+from prowler.exceptions.exceptions import ScanAbortError
 from prowler.lib.check.check import (
     exclude_checks_to_run,
     exclude_services_to_run,
@@ -880,6 +882,69 @@ class TestCheck:
                 output_options=None,
             )
             assert len(findings) == 1
+
+    def test_execute_propagates_scan_abort_error(self):
+        error = ScanAbortError("Repository discovery did not complete")
+        check = Mock()
+        check.CheckID = "test_check"
+        check.execute = Mock(side_effect=error)
+
+        with pytest.raises(ScanAbortError) as exc_info:
+            execute(
+                check=check,
+                global_provider=mock.MagicMock(),
+                custom_checks_metadata=None,
+                output_options=None,
+            )
+
+        assert exc_info.value is error
+
+    @pytest.mark.parametrize("only_logs", [True, False])
+    @pytest.mark.parametrize("failure_boundary", ["check_import", "check_execute"])
+    def test_execute_checks_propagates_scan_abort_error(
+        self, only_logs, failure_boundary
+    ):
+        error = ScanAbortError("Repository discovery did not complete")
+        check = Mock()
+        check.CheckID = "test_check"
+        check.ServiceName = "test"
+        check.Severity.value = "medium"
+
+        check_module = Mock()
+        check_module.test_check.return_value = check
+
+        provider = mock.MagicMock()
+        provider.type = "aws"
+        provider.mutelist.mutelist_file_path = None
+        provider.scan_unused_services = False
+
+        output_options = mock.MagicMock()
+        output_options.only_logs = only_logs
+        output_options.verbose = False
+
+        with (
+            patch(
+                "prowler.lib.check.check._resolve_check_module",
+                return_value=check_module,
+            ) as mock_resolve_check_module,
+            patch("prowler.lib.check.check.execute", return_value=[]) as mock_execute,
+            patch("prowler.lib.check.check.alive_bar"),
+        ):
+            if failure_boundary == "check_import":
+                mock_resolve_check_module.side_effect = error
+            else:
+                mock_execute.side_effect = error
+
+            with pytest.raises(ScanAbortError) as exc_info:
+                execute_checks(
+                    checks_to_execute=["test_check"],
+                    global_provider=provider,
+                    custom_checks_metadata=None,
+                    config_file=None,
+                    output_options=output_options,
+                )
+
+        assert exc_info.value is error
 
     def test_execute_with_filtering_status(self):
         accessanalyzer_client = mock.MagicMock

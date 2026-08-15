@@ -15,6 +15,7 @@ from colorama import Fore, Style
 
 import prowler
 from prowler.config.config import orange_color
+from prowler.exceptions.exceptions import ScanAbortError
 from prowler.lib.check.custom_checks_metadata import update_check_metadata
 from prowler.lib.check.models import Check, load_check_metadata
 from prowler.lib.check.utils import recover_checks_from_provider
@@ -610,6 +611,8 @@ def execute_checks(
                 logger.error(
                     f"Check '{check_name}' was not found for the {global_provider.type.upper()} provider"
                 )
+            except ScanAbortError:
+                raise
             except Exception as error:
                 logger.error(
                     f"{check_name} - {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -694,6 +697,8 @@ def execute_checks(
                     logger.error(
                         f"Check '{check_name}' was not found for the {global_provider.type.upper()} provider"
                     )
+                except ScanAbortError:
+                    raise
                 except Exception as error:
                     # TODO: add more loggin here, we need the original exception -- traceback.print_last()
                     logger.error(
@@ -742,6 +747,8 @@ def execute(
         logger.debug(f"Executing check: {check.CheckID}")
         try:
             check_findings = check.execute()
+        except ScanAbortError:
+            raise
         except Exception as error:
             if not only_logs:
                 print(
@@ -830,6 +837,8 @@ def execute(
                     **is_finding_muted_args
                 )
 
+    except ScanAbortError:
+        raise
     except ModuleNotFoundError:
         logger.error(
             f"Check '{check.CheckID}' was not found for the {global_provider.type.upper()} provider"
