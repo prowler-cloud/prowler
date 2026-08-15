@@ -2,7 +2,9 @@ FROM python:3.12.13-slim-trixie@sha256:57cd7c3a7a273101a6485ba99423ee56815788280
 
 LABEL maintainer="https://github.com/prowler-cloud/api"
 
+
 ARG POWERSHELL_VERSION=7.5.9
+
 ENV POWERSHELL_VERSION=${POWERSHELL_VERSION}
 # Opt out of PowerShell telemetry (Application Insights -> dc.services.visualstudio.com)
 ENV POWERSHELL_TELEMETRY_OPTOUT=1
