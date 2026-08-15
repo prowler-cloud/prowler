@@ -102,14 +102,28 @@ class bedrock_guardrail_contextual_grounding_filter_enabled(Check):
                         f"the {filter_type} filter has a threshold of {filter.threshold}, which no response can ever trip"
                     )
                 elif action is None or filter.enabled is None:
-                    unknown_types.append(filter_type)
+                    # Name only the attributes actually omitted: one of the two
+                    # may be present, and claiming both are missing describes a
+                    # response the guardrail did not return.
+                    missing = [
+                        attribute
+                        for attribute, value in (
+                            ("enabled", filter.enabled),
+                            ("action", action),
+                        )
+                        if value is None
+                    ]
+                    unknown_types.append(
+                        f"{filter_type} filter omits {' and '.join(missing)}"
+                    )
 
             if reasons:
                 report.status = "FAIL"
                 report.status_extended = f"Bedrock Guardrail {guardrail.name} does not block ungrounded responses in region {guardrail.region}: {'; '.join(reasons)}."
             elif unknown_types:
                 report.status = "MANUAL"
-                report.status_extended = f"Bedrock Guardrail {guardrail.name} has both required contextual grounding filters with a non-zero threshold in region {guardrail.region}, but the {', '.join(unknown_types)} filter does not report whether it is enabled and set to BLOCK, so whether it blocks is unknown; verify manually that the evaluation runs and blocks."
+                subject = "it blocks" if len(unknown_types) == 1 else "they block"
+                report.status_extended = f"Bedrock Guardrail {guardrail.name} has both required contextual grounding filters with a non-zero threshold in region {guardrail.region}, but the {', '.join(unknown_types)}, so whether {subject} is unknown; verify manually that the evaluation runs and blocks."
             else:
                 report.status = "PASS"
                 report.status_extended = f"Bedrock Guardrail {guardrail.name} blocks ungrounded and irrelevant responses with GROUNDING and RELEVANCE filters in region {guardrail.region}."

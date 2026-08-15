@@ -337,9 +337,11 @@ class Test_bedrock_guardrail_contextual_grounding_filter_enabled:
         assert len(result) == 1
         assert result[0].status == "MANUAL"
         assert (
-            "GROUNDING, RELEVANCE filter does not report whether it is enabled"
+            "GROUNDING filter omits enabled, RELEVANCE filter omits enabled"
             in result[0].status_extended
         )
+        # Two unknown filters take the plural subject.
+        assert "so whether they block is unknown" in result[0].status_extended
 
     @mock.patch(
         "botocore.client.BaseClient._make_api_call", new=_mock_enabled_absent_one_filter
@@ -350,8 +352,11 @@ class Test_bedrock_guardrail_contextual_grounding_filter_enabled:
         result = self._run()
         assert len(result) == 1
         assert result[0].status == "MANUAL"
-        assert "GROUNDING filter does not report" in result[0].status_extended
+        assert "GROUNDING filter omits enabled" in result[0].status_extended
+        # action was present, so it must not be reported as missing.
+        assert "omits action" not in result[0].status_extended
         assert "RELEVANCE" not in result[0].status_extended
+        assert "so whether it blocks is unknown" in result[0].status_extended
 
     @mock.patch("botocore.client.BaseClient._make_api_call", new=_mock_action_absent)
     @mock_aws
@@ -376,8 +381,11 @@ class Test_bedrock_guardrail_contextual_grounding_filter_enabled:
         result = self._run()
         assert len(result) == 1
         assert result[0].status == "MANUAL"
-        assert "GROUNDING filter does not report" in result[0].status_extended
+        assert "GROUNDING filter omits action" in result[0].status_extended
+        # enabled was present, so it must not be reported as missing.
+        assert "omits enabled" not in result[0].status_extended
         assert "RELEVANCE" not in result[0].status_extended
+        assert "so whether it blocks is unknown" in result[0].status_extended
 
     @mock.patch(
         "botocore.client.BaseClient._make_api_call",
