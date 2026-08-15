@@ -66,9 +66,9 @@ class bedrock_guardrail_contextual_grounding_filter_enabled(Check):
                 continue
 
             filters_by_type = {
-                filter.get("type"): filter
+                filter.type: filter
                 for filter in guardrail.contextual_grounding_filters
-                if filter.get("type")
+                if filter.type
             }
 
             if not filters_by_type:
@@ -88,8 +88,8 @@ class bedrock_guardrail_contextual_grounding_filter_enabled(Check):
             unknown_types = []
             for filter_type in sorted(REQUIRED_FILTER_TYPES):
                 filter = filters_by_type[filter_type]
-                action = filter.get("action")
-                if filter.get("enabled") is False:
+                action = filter.action
+                if filter.enabled is False:
                     reasons.append(
                         f"the {filter_type} filter is disabled, so its evaluation never runs regardless of its action or threshold"
                     )
@@ -97,11 +97,11 @@ class bedrock_guardrail_contextual_grounding_filter_enabled(Check):
                     reasons.append(
                         f"the {filter_type} filter uses action {action} instead of BLOCK, so it scores and reports without blocking"
                     )
-                elif not (filter.get("threshold") or 0) > 0:
+                elif not (filter.threshold or 0) > 0:
                     reasons.append(
-                        f"the {filter_type} filter has a threshold of {filter.get('threshold')}, which no response can ever trip"
+                        f"the {filter_type} filter has a threshold of {filter.threshold}, which no response can ever trip"
                     )
-                elif action is None or filter.get("enabled") is None:
+                elif action is None or filter.enabled is None:
                     unknown_types.append(filter_type)
 
             if reasons:

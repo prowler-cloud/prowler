@@ -109,12 +109,12 @@ class Bedrock(AWSService):
                     )
             # Absent from the response when no grounding policy is configured.
             guardrail.contextual_grounding_filters = [
-                {
-                    "type": filter.get("type"),
-                    "threshold": filter.get("threshold"),
-                    "action": filter.get("action"),
-                    "enabled": filter.get("enabled"),
-                }
+                ContextualGroundingFilter(
+                    type=filter.get("type"),
+                    threshold=filter.get("threshold"),
+                    action=filter.get("action"),
+                    enabled=filter.get("enabled"),
+                )
                 for filter in guardrail_info.get("contextualGroundingPolicy", {}).get(
                     "filters", []
                 )
@@ -224,7 +224,6 @@ class Guardrail(BaseModel):
     tags: Optional[list] = []
     sensitive_information_filter: bool = False
     prompt_attack_filter_strength: Optional[str] = None
-    # type, threshold, action, enabled per filter.
     contextual_grounding_filters: list[ContextualGroundingFilter] = []
     # False when GetGuardrail failed: absent policy is unknown, not unset.
     detail_retrieved: bool = False
