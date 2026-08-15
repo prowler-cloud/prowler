@@ -22,7 +22,7 @@
     "Code": {
       "CLI": "",
       "NativeIaC": "```yaml\nResources:\n  ExampleResource:\n    Type: AWS::Bedrock::Agent\n    Properties:\n      AgentName: example_resource\n      AgentResourceRoleArn: arn:aws:iam::123456789012:role/AmazonBedrockExecutionRoleForAgents_example_resource  # Critical: one role per agent, never shared\n```",
-      "Other": "1. Open the AWS Console and go to Amazon Bedrock\n2. Select **Agents**, then an agent sharing a role\n3. Create a new IAM role trusted by bedrock.amazonaws.com holding only that agent's permissions\n4. Scope its trust policy with aws:SourceArn set to the agent ARN\n5. Edit the agent to use the new role, then prepare the agent\n6. Repeat until each agent has its own role, then remove the unused permissions from the old role",
+      "Other": "1. Open the AWS Console and go to Amazon Bedrock\n2. Select **Agents**, then an agent sharing a role\n3. Create a new IAM role trusted by bedrock.amazonaws.com holding only that agent's permissions\n4. Scope its trust policy with aws:SourceArn set to the agent ARN\n5. Edit the agent to use the new role, keeping its other settings, then prepare the agent to cut a version\n6. Open **Aliases** and point every alias at the new version, since an alias left on the old version keeps invoking the shared role\n7. Repeat until each agent has its own role, then remove the unused permissions from the old role",
       "Terraform": "```hcl\nresource \"aws_bedrockagent_agent\" \"example_resource\" {\n  agent_name                  = \"example_resource\"\n  agent_resource_role_arn     = aws_iam_role.example_resource_agent.arn # Critical: one role per agent, never shared\n  foundation_model            = \"example-model-id\"\n}\n```"
     },
     "Recommendation": {
