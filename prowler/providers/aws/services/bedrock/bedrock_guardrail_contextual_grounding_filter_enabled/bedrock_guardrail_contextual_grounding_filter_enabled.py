@@ -80,7 +80,11 @@ class bedrock_guardrail_contextual_grounding_filter_enabled(Check):
             missing_types = sorted(REQUIRED_FILTER_TYPES - set(filters_by_type))
             if missing_types:
                 report.status = "FAIL"
-                report.status_extended = f"Bedrock Guardrail {guardrail.name} contextual grounding policy is missing the {', '.join(missing_types)} filter in region {guardrail.region}, leaving that class of ungrounded response unchecked."
+                # Both required types can be missing at once, so the nouns follow
+                # the count rather than assuming a single filter.
+                noun = "filter" if len(missing_types) == 1 else "filters"
+                classes = "that class" if len(missing_types) == 1 else "those classes"
+                report.status_extended = f"Bedrock Guardrail {guardrail.name} contextual grounding policy is missing the {', '.join(missing_types)} {noun} in region {guardrail.region}, leaving {classes} of ungrounded response unchecked."
                 findings.append(report)
                 continue
 

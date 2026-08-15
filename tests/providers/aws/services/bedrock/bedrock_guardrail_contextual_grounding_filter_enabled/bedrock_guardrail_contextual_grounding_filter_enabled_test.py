@@ -103,6 +103,9 @@ _mock_no_policy = _guardrail_mock(None)
 _mock_empty_filters = _guardrail_mock({"filters": []})
 _mock_missing_relevance = _guardrail_mock({"filters": [_filter("GROUNDING")]})
 _mock_missing_grounding = _guardrail_mock({"filters": [_filter("RELEVANCE")]})
+# A policy carrying only an unrecognised filter type: the policy exists, so it is
+# not the "no policy" case, yet both required types are absent at once.
+_mock_missing_both = _guardrail_mock({"filters": [_filter("UNKNOWN_TYPE")]})
 _mock_action_none = _guardrail_mock(
     {"filters": [_filter("GROUNDING", action="NONE"), _filter("RELEVANCE")]}
 )
@@ -277,6 +280,24 @@ class Test_bedrock_guardrail_contextual_grounding_filter_enabled:
         assert len(result) == 1
         assert result[0].status == "FAIL"
         assert "missing the GROUNDING filter" in result[0].status_extended
+
+    @mock.patch("botocore.client.BaseClient._make_api_call", new=_mock_missing_both)
+    @mock_aws
+    def test_missing_both_filters_fails_with_plural_wording(self):
+        """Both required types can be absent at once, so the nouns must agree.
+
+        The message lists the missing types, so hard-coding "filter" and "that
+        class" would read "missing the GROUNDING, RELEVANCE filter ... leaving
+        that class of ungrounded response unchecked".
+        """
+        result = self._run()
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+        assert "missing the GROUNDING, RELEVANCE filters" in result[0].status_extended
+        assert "leaving those classes of ungrounded response" in (
+            result[0].status_extended
+        )
+        assert result[0].status_extended.endswith(".")
 
     @mock.patch("botocore.client.BaseClient._make_api_call", new=_mock_action_none)
     @mock_aws
