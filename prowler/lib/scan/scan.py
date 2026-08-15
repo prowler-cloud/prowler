@@ -296,6 +296,7 @@ class Scan:
 
         Raises:
             ModuleNotFoundError: If the check does not exist in the provider or is from another provider.
+            ScanAbortError: If a failure makes the scan incomplete and execution must stop.
             Exception: If any other error occurs during the execution of a check.
         """
         try:

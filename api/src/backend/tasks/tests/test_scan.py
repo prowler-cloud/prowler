@@ -337,7 +337,7 @@ class TestPerformScan:
 
         scan.refresh_from_db()
         assert scan.state == StateChoices.FAILED
-        assert scan.progress != 100
+        assert scan.progress == 0
 
         provider.refresh_from_db()
         assert provider.connected is True
