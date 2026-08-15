@@ -219,3 +219,42 @@ class Test_elasticbeanstalk_environment_no_secrets_in_configuration:
             result = check.execute()
 
             assert len(result) == 0
+
+    def test_environment_option_settings_is_none(self):
+        elasticbeanstalk_client = mock.MagicMock()
+        elasticbeanstalk_client.audit_config = {"secrets_ignore_patterns": []}
+        eb_env_arn = f"arn:partition:elasticbeanstalk:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:environment/dev"
+
+        environment = Environment(
+            id="e-c4f7hda2nb",
+            name="dev",
+            arn=eb_env_arn,
+            region=AWS_REGION_US_EAST_1,
+            application_name="test-app",
+            option_settings=None,
+        )
+        elasticbeanstalk_client.environments = {eb_env_arn: environment}
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.elasticbeanstalk.elasticbeanstalk_environment_no_secrets_in_configuration.elasticbeanstalk_environment_no_secrets_in_configuration.elasticbeanstalk_client",
+                new=elasticbeanstalk_client,
+            ),
+        ):
+            from prowler.providers.aws.services.elasticbeanstalk.elasticbeanstalk_environment_no_secrets_in_configuration.elasticbeanstalk_environment_no_secrets_in_configuration import (
+                elasticbeanstalk_environment_no_secrets_in_configuration,
+            )
+
+            check = elasticbeanstalk_environment_no_secrets_in_configuration()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert (
+                result[0].status_extended
+                == f"No option settings found for Elastic Beanstalk {environment.name} environment; manual review is required."
+            )

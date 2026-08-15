@@ -30,8 +30,8 @@ class elasticbeanstalk_environment_no_secrets_in_configuration(Check):
                 )
                 report.status = "MANUAL"
                 report.status_extended = (
-                    f"Could not retrieve Elastic Beanstalk environment configuration "
-                    f"for {environment.name} environment; manual review is required."
+                    f"No option settings found for Elastic Beanstalk "
+                    f"{environment.name} environment; manual review is required."
                 )
                 findings.append(report)
                 continue
@@ -74,8 +74,7 @@ class elasticbeanstalk_environment_no_secrets_in_configuration(Check):
                 report.status = "MANUAL"
                 report.status_extended = (
                     f"Could not scan Elastic Beanstalk environment configuration for "
-                    f"{environment.name} environment for secrets: {scan_error}; "
-                    f"manual review is required."
+                    f"{environment.name} environment for secrets; manual review is required."
                 )
                 findings.append(report)
             return findings
