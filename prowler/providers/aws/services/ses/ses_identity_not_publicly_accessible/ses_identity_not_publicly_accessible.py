@@ -18,7 +18,14 @@ def _has_explicit_deny(policy: dict) -> bool:
 
 
 class ses_identity_not_publicly_accessible(Check):
-    def execute(self):
+    """Ensure SES identities are not publicly accessible through authorization policies."""
+
+    def execute(self) -> list[Check_Report_AWS]:
+        """Evaluate every authorization policy attached to each SES identity.
+
+        Returns:
+            A list of reports containing the public-access result for each identity.
+        """
         findings = []
         for identity in ses_client.email_identities.values():
             if not identity.policies:
