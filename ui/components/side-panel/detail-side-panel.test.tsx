@@ -28,7 +28,13 @@ vi.mock(
 );
 
 // Mimics a table host: local open state, detail content as children.
-function Host({ initialOpen = true }: { initialOpen?: boolean }) {
+function Host({
+  initialOpen = true,
+  selectTabOnOpen,
+}: {
+  initialOpen?: boolean;
+  selectTabOnOpen?: boolean;
+}) {
   const [open, setOpen] = useState(initialOpen);
   return (
     <>
@@ -39,6 +45,7 @@ function Host({ initialOpen = true }: { initialOpen?: boolean }) {
       <DetailSidePanel
         open={open}
         onOpenChange={setOpen}
+        selectTabOnOpen={selectTabOnOpen}
         title="Resource Details"
         description="View the resource details"
         context={{
@@ -164,6 +171,26 @@ describe("DetailSidePanel", () => {
       "true",
     );
     expect(useSidePanelStore.getState().isOpen).toBe(true);
+  });
+
+  it("keeps the AI tab in front when opened with selectTabOnOpen: false", async () => {
+    // Given: a skill launch selected the AI tab before the drawer mounted
+    useSidePanelStore.getState().openPanel(SIDE_PANEL_TAB.AI_CHAT);
+
+    // When: the detail registers without stealing the selection
+    render(<Host selectTabOnOpen={false} />);
+    await screen.findByTestId("detail-content");
+
+    // Then: chat stays selected, Details is available in the background
+    expect(screen.getByRole("tab", { name: "Lighthouse AI" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(screen.getByRole("tab", { name: "Details" })).toHaveAttribute(
+      "aria-selected",
+      "false",
+    );
+    expect(screen.getByTestId("detail-content")).not.toBeVisible();
   });
 
   it("clears the host selection when the panel is dismissed", async () => {

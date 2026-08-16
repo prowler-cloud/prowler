@@ -10,6 +10,7 @@ import {
 } from "@/lib/integrations";
 import { readEnv } from "@/lib/runtime-env";
 import { isCloud } from "@/lib/shared/env";
+import { copyAttributionParams } from "@/lib/utm";
 
 const publicRoutes = [
   "/sign-in",
@@ -63,12 +64,14 @@ export default auth((req: NextAuthRequest) => {
     const signInUrl = new URL("/sign-in", req.url);
     signInUrl.searchParams.set("error", sessionError);
     signInUrl.searchParams.set("callbackUrl", pathname + req.nextUrl.search);
+    copyAttributionParams(req.nextUrl.searchParams, signInUrl.searchParams);
     return redirect(signInUrl);
   }
 
   if (!user && !isPublicRoute(pathname)) {
     const signInUrl = new URL("/sign-in", req.url);
     signInUrl.searchParams.set("callbackUrl", pathname + req.nextUrl.search);
+    copyAttributionParams(req.nextUrl.searchParams, signInUrl.searchParams);
     return redirect(signInUrl);
   }
 

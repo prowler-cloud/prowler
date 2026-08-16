@@ -1,0 +1,41 @@
+{
+  "Provider": "aws",
+  "CheckID": "rolesanywhere_profile_restricts_session_permissions",
+  "CheckTitle": "IAM Roles Anywhere profiles scope down the vended session permissions",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "rolesanywhere",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "AwsRolesAnywhereProfile",
+  "ResourceGroup": "security",
+  "Description": "**IAM Roles Anywhere profiles** that reference an administrative role are assessed for **session scoping**. A profile defining neither an inline `sessionPolicy` nor `managedPolicyArns` vends credentials with the full permissions of its roles. It is flagged only when a referenced role is administrative, since an unscoped session on a least-privilege role is already constrained.",
+  "Risk": "Roles Anywhere profiles bind X.509 certificates to IAM roles. When a profile references an administrative role and does not scope the session, vended credentials carry full administrative permissions. An attacker presenting a valid certificate - or planting a rogue trust anchor and profile - gains durable privileged access that rotating IAM keys does not revoke.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/rolesanywhere/latest/userguide/introduction.html",
+    "https://docs.aws.amazon.com/rolesanywhere/latest/APIReference/API_CreateProfile.html",
+    "https://docs.aws.amazon.com/rolesanywhere/latest/userguide/security-best-practices.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws rolesanywhere update-profile --profile-id <profile_id> --session-policy '{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":[\"<least_privilege_actions>\"],\"Resource\":[\"<scoped_resources>\"]}]}'",
+      "NativeIaC": "```yaml\nResources:\n  <example_resource_name>:\n    Type: AWS::RolesAnywhere::Profile\n    Properties:\n      Name: scoped-profile\n      Enabled: true\n      RoleArns:\n        - <role_arn>\n      SessionPolicy: '{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":[\"<least_privilege_actions>\"],\"Resource\":[\"<scoped_resources>\"]}]}'  # FIX: scope down the vended session\n```",
+      "Other": "1. Identify the least-privilege actions the workload actually needs\n2. Attach a sessionPolicy or managedPolicyArns to the Roles Anywhere profile that grants only those actions\n3. Prefer purpose-built roles per workload over broad roles referenced by many profiles\n4. Review trust anchors and profiles regularly for entries you did not create",
+      "Terraform": "```hcl\nresource \"aws_rolesanywhere_profile\" \"<example_resource_name>\" {\n  name      = \"scoped-profile\"\n  enabled   = true\n  role_arns = [<role_arn>]\n  session_policy = jsonencode({\n    Version = \"2012-10-17\"\n    Statement = [{\n      Effect   = \"Allow\"\n      Action   = [<least_privilege_actions>]\n      Resource = [<scoped_resources>]\n    }]\n  }) # FIX: scope down the vended session\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Attach a session policy or managed policies to every enabled IAM Roles Anywhere profile so the vended credentials are scoped below the referenced role's permissions. Pair each profile with a purpose-built least-privilege role and audit trust anchors and profiles regularly for unexpected entries.",
+      "Url": "https://hub.prowler.com/check/rolesanywhere_profile_restricts_session_permissions"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "A profile is failed only when it is enabled, its session is unscoped, and a referenced role effectively grants administrative (*:*) access. The session-policy set (inline sessionPolicy plus every managedPolicyArns entry, resolved to its policy document) is evaluated as a union: any member granting *:* leaves the session unrestricted. Role classification merges all attached and inline identity-policy documents so explicit denies negate allows across policies, excludes condition-guarded statements (not statically provable), and intersects the result with the role's permissions boundary: a role whose boundary does not grant *:* - or whose boundary document cannot be resolved - is not classified as administrative. Disabled profiles, scoped profiles, and profiles with no role identified as administrative are reported as PASS. Referenced roles absent from the IAM inventory (for example cross-account roles or denied ListRoles) and policy documents that could not be collected are treated as non-administrative to avoid false positives."
+}

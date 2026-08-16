@@ -1,10 +1,11 @@
 ---
 title: 'Compliance'
 sidebarTitle: 'Overview'
-description: 'Run security checks against compliance frameworks, review posture across providers, and download CSV or PDF reports from Prowler Cloud and Prowler Local Server, or CSV reports from Prowler CLI.'
+description: 'Run security checks against compliance frameworks, review posture across providers, use Compliance Watchlist to pin frameworks, and download CSV or PDF reports from Prowler Cloud and Prowler Local Server, or CSV reports from Prowler CLI.'
 ---
 
 import { SubscriptionBanner } from "/snippets/subscription-banner.mdx"
+import { VersionBadge } from "/snippets/version-badge.mdx"
 
 Prowler maps every security check to one or more industry-standard compliance frameworks, so a single scan produces both technical findings and framework-aligned evidence. The same evaluation runs identically whether scans are launched from Prowler Cloud, Prowler Local Server, or Prowler CLI.
 
@@ -100,6 +101,49 @@ Select any card to open the framework detail page.
 
 <Note>
 Score color coding follows three thresholds: red for severely low compliance, amber for partial compliance, and green for healthy posture. Hover over the score for the exact percentage.
+</Note>
+
+### Tracking Frameworks With the Compliance Watchlist
+
+<VersionBadge version="5.38.0" />
+
+<SubscriptionBanner label="Compliance Watchlist" />
+
+The compliance catalog lists dozens of frameworks, while an organization usually tracks a handful. In Prowler Cloud, Compliance Watchlist keeps that handful in front: pin the frameworks that matter and narrow every compliance surface down to them. The watchlist is shared by the whole organization: one list per tenant, not a per-user bookmark, so every member sees the same pinned frameworks.
+
+#### Pinning a Framework
+
+Every framework card carries a pin button in its top-right corner. Select the pin to add the framework to the watchlist, and select it again to remove it. Pinning is available on the three compliance surfaces:
+
+* **Single Scan:** The framework grid of the selected scan.
+* **Across provider types:** The universal framework cards in the **Multiple Scans** tab.
+* **Across providers:** The framework cards inside each provider type group in the **Multiple Scans** tab.
+
+<img src="/images/compliance/prowler-app-compliance-single-scan-pins.png" alt="Single Scan framework grid where every card carries a pin button, with the pinned frameworks showing a filled pin" width="900" />
+
+<Note>
+Universal frameworks (CSA CCM, CIS Controls, DORA) are a single watchlist entry. Pinning one of them from any surface shows it as pinned on the others.
+</Note>
+
+#### Filtering With the Watchlist
+
+Two controls sit above the tabs, because both tabs read the same watchlist:
+
+* **Show only watchlist:** A toggle that hides every framework not in the watchlist, on both tabs at once. When the filter leaves a section with nothing to show, the section explains that no pinned framework matches and offers to clear the filter.
+* **Watchlist selector:** A searchable multi-select over the full framework catalog, grouped by provider. Use it to pin or unpin several frameworks in one place instead of visiting each card.
+
+<img src="/images/compliance/prowler-app-compliance-watchlist-editor.png" alt="Watchlist selector open above the compliance tabs, showing the searchable framework catalog grouped by provider with the pinned frameworks selected" width="900" />
+
+In Prowler Cloud, the compliance framework chips in the finding details panel follow the watchlist as well, so triage points to the same frameworks the organization tracks.
+
+#### Reviewing the Watchlist on the Overview Page
+
+The **Compliance Watchlist** card on the Overview page lists exactly the pinned frameworks with their current score, computed from the latest completed scan per provider. Selecting an entry opens the framework detail page. Until a framework is pinned, the card is empty and prompts to start pinning from the Compliance section.
+
+<img src="/images/compliance/prowler-app-overview-compliance-watchlist.png" alt="Compliance Watchlist card on the Overview page listing the six pinned frameworks with their scores" width="312" />
+
+<Note>
+In Prowler Local Server, where the watchlist is not available, the card keeps its previous behavior and ranks every framework with scan data.
 </Note>
 
 ### Working With the Framework Detail Page

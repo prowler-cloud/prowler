@@ -2439,7 +2439,8 @@
         "ssm_documents_set_as_public",
         "vpc_subnet_no_public_ip_by_default",
         "vpc_subnet_separate_private_public",
-        "workspaces_vpc_2private_1public_subnets_nat"
+        "workspaces_vpc_2private_1public_subnets_nat",
+        "ec2_confidential_workload_host_public_ip"
       ]
     },
     {
@@ -6729,7 +6730,8 @@
         "kms_cmk_not_deleted_unintentionally",
         "kms_cmk_not_multi_region",
         "kms_key_not_publicly_accessible",
-        "ec2_ebs_volume_encryption"
+        "ec2_ebs_volume_encryption",
+        "kms_key_enclave_attestation_not_enforced"
       ],
       "ConfigRequirements": [
         {
@@ -6840,7 +6842,8 @@
         "kms_cmk_rotation_enabled",
         "kms_key_not_publicly_accessible",
         "s3_bucket_kms_encryption",
-        "sns_topics_kms_encryption_at_rest_enabled"
+        "sns_topics_kms_encryption_at_rest_enabled",
+        "kms_key_enclave_attestation_not_enforced"
       ]
     },
     {
@@ -7785,7 +7788,8 @@
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_sql_server_1433_1434",
-        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_telnet_23"
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_telnet_23",
+        "ec2_confidential_workload_host_unrestricted_ingress"
       ]
     },
     {

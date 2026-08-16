@@ -202,6 +202,33 @@ describe("LighthousePanelChat", () => {
     ).toBeInTheDocument();
   });
 
+  it("shows the full contextual prompt on hover and prefills it without sending", async () => {
+    // Given
+    const user = userEvent.setup();
+    const prompt =
+      "Give me the actual remediation for the top failing check here: the commands and IaC changes (if possible, with Terraform preferred), the blast radius of applying them, and what to verify afterward.";
+    render(<LighthousePanelChat />);
+    const suggestion = await screen.findByRole("button", {
+      name: "Generate concrete remediation",
+    });
+
+    // When
+    await user.hover(suggestion);
+
+    // Then
+    expect(await screen.findByRole("tooltip")).toHaveTextContent(prompt);
+
+    // When
+    await user.click(suggestion);
+
+    // Then
+    expect(screen.getByRole("textbox", { name: "Message" })).toHaveValue(
+      prompt,
+    );
+    expect(createSessionMock).not.toHaveBeenCalled();
+    expect(sendMessageMock).not.toHaveBeenCalled();
+  });
+
   it("submits a queued contextual analysis when the panel chat becomes ready", async () => {
     // Given
     const context = {

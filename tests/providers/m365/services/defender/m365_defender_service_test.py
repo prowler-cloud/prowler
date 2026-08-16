@@ -554,3 +554,100 @@ class Test_Defender_Service:
             assert report_submission_policy.report_not_junk_addresses == []
             assert report_submission_policy.report_phish_addresses == []
             assert report_submission_policy.report_chat_message_enabled is True
+
+    @patch(
+        "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.get_eop_protection_policy_rule",
+        return_value=[
+            {
+                "Name": "Standard Preset Security Policy",
+                "State": "Disabled",
+                "SentTo": None,
+                "SentToMemberOf": None,
+                "RecipientDomainIs": "contoso.com",
+            },
+            {
+                "Name": "Strict Preset Security Policy",
+                "State": "Enabled",
+                "SentTo": ["user@contoso.com"],
+                "SentToMemberOf": None,
+                "RecipientDomainIs": None,
+            },
+        ],
+    )
+    def test__get_eop_protection_policy_rules(self, _mock_get_eop_rules):
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online",
+                return_value=True,
+            ),
+        ):
+            defender_client = Defender(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+            eop_rules = defender_client.eop_protection_policy_rules
+            assert len(eop_rules) == 2
+            assert eop_rules[0].name == "Standard Preset Security Policy"
+            assert eop_rules[0].state == "Disabled"
+            assert eop_rules[0].sent_to == []
+            assert eop_rules[0].recipient_domain_is == ["contoso.com"]
+            assert eop_rules[1].name == "Strict Preset Security Policy"
+            assert eop_rules[1].state == "Enabled"
+            assert eop_rules[1].sent_to == ["user@contoso.com"]
+            assert eop_rules[1].recipient_domain_is == []
+            defender_client.powershell.close()
+
+    @patch(
+        "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.get_atp_protection_policy_rule",
+        return_value={
+            "Name": "Strict Preset Security Policy",
+            "State": "Enabled",
+            "SentTo": None,
+            "SentToMemberOf": None,
+            "RecipientDomainIs": None,
+        },
+    )
+    def test__get_atp_protection_policy_rules_single_dict(self, _mock_get_atp_rules):
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online",
+                return_value=True,
+            ),
+        ):
+            defender_client = Defender(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+            atp_rules = defender_client.atp_protection_policy_rules
+            assert len(atp_rules) == 1
+            assert atp_rules[0].name == "Strict Preset Security Policy"
+            assert atp_rules[0].state == "Enabled"
+            assert atp_rules[0].sent_to == []
+            assert atp_rules[0].sent_to_member_of == []
+            assert atp_rules[0].recipient_domain_is == []
+            defender_client.powershell.close()
+
+    @patch(
+        "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.get_email_tenant_settings",
+        return_value={
+            "Identity": "Default",
+            "EnablePriorityAccountProtection": True,
+        },
+    )
+    def test__get_email_tenant_settings(self, _mock_get_email_tenant_settings):
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online",
+                return_value=True,
+            ),
+        ):
+            defender_client = Defender(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+            email_tenant_settings = defender_client.email_tenant_settings
+            assert email_tenant_settings.priority_account_protection_enabled is True
+            defender_client.powershell.close()

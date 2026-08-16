@@ -108,14 +108,14 @@ jobs:
 
       - name: Show test scope
         run: |
-          echo "## E2E Test Scope" >> $GITHUB_STEP_SUMMARY
+          echo "## E2E Test Scope" >> "$GITHUB_STEP_SUMMARY"
           if [[ "${RUN_ALL_TESTS}" == "true" ]]; then
-            echo "Running **ALL** E2E tests (critical path changed)" >> $GITHUB_STEP_SUMMARY
+            echo "Running **ALL** E2E tests (critical path changed)" >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "Running tests matching: \`${E2E_TEST_PATHS}\`" >> $GITHUB_STEP_SUMMARY
+            echo "Running tests matching: \`${E2E_TEST_PATHS}\`" >> "$GITHUB_STEP_SUMMARY"
           fi
           echo ""
-          echo "Affected modules: \`${NEEDS_IMPACT_ANALYSIS_OUTPUTS_MODULES}\`" >> $GITHUB_STEP_SUMMARY
+          echo "Affected modules: \`${NEEDS_IMPACT_ANALYSIS_OUTPUTS_MODULES}\`" >> "$GITHUB_STEP_SUMMARY"
         env:
           NEEDS_IMPACT_ANALYSIS_OUTPUTS_MODULES: ${{ needs.impact-analysis.outputs.modules }}
 
@@ -233,7 +233,7 @@ jobs:
           yq -i '.services.worker.networks = ["kind","default"]' docker-compose.yml
 
       - name: Fix API data directory permissions
-        run: docker run --rm -v $(pwd)/_data/api:/data alpine chown -R 1000:1000 /data
+        run: docker run --rm -v "$(pwd)/_data/api:/data" alpine chown -R 1000:1000 /data
 
       - name: Add AWS credentials for testing
         run: |
@@ -267,7 +267,7 @@ jobs:
           timeout=150
           elapsed=0
           while [ $elapsed -lt $timeout ]; do
-            if curl -s ${UI_API_BASE_URL}/docs >/dev/null 2>&1; then
+            if curl -s "${UI_API_BASE_URL}/docs" >/dev/null 2>&1; then
               echo "Prowler API is ready!"
               exit 0
             fi
@@ -301,7 +301,7 @@ jobs:
           run_install: false
 
       - name: Get pnpm store directory
-        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> "$GITHUB_ENV"
 
       - name: Setup pnpm and Next.js cache
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
@@ -387,7 +387,8 @@ jobs:
             fi
             TEST_PATHS=$(echo "$VALID_PATHS" | tr '\n' ' ')
             echo "Resolved test paths: $TEST_PATHS"
-            pnpm exec playwright test $TEST_PATHS
+            read -ra test_paths <<< "$TEST_PATHS"
+            pnpm exec playwright test "${test_paths[@]}"
           fi
 
       - name: Upload test reports
@@ -415,6 +416,11 @@ jobs:
     permissions:
       contents: read
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: audit
+
       - name: Report unavailable E2E tests
         run: |
           echo "## E2E Tests Skipped" >> "$GITHUB_STEP_SUMMARY"
@@ -439,12 +445,12 @@ jobs:
 
       - name: No E2E tests needed
         run: |
-          echo "## E2E Tests Skipped" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "No UI E2E tests needed for this change." >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Affected modules: \`${NEEDS_IMPACT_ANALYSIS_OUTPUTS_MODULES}\`" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "To run all tests, modify a file in a critical path (e.g., \`ui/lib/**\`)." >> $GITHUB_STEP_SUMMARY
+          echo "## E2E Tests Skipped" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "No UI E2E tests needed for this change." >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Affected modules: \`${NEEDS_IMPACT_ANALYSIS_OUTPUTS_MODULES}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "To run all tests, modify a file in a critical path (e.g., \`ui/lib/**\`)." >> "$GITHUB_STEP_SUMMARY"
         env:
           NEEDS_IMPACT_ANALYSIS_OUTPUTS_MODULES: ${{ needs.impact-analysis.outputs.modules }}

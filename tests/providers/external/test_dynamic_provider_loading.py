@@ -1333,15 +1333,17 @@ class TestCheckDiscovery:
 class TestCheckExecution:
     """Tests 15-17: _resolve_check_module."""
 
-    @patch("prowler.lib.check.check.importlib.util.find_spec")
+    @patch("prowler.lib.check.check.is_builtin_check")
     @patch("prowler.lib.check.check.import_check")
-    def test_resolve_check_module_builtin_first(self, mock_import, mock_find_spec):
+    def test_resolve_check_module_builtin_first(
+        self, mock_import, mock_is_builtin_check
+    ):
         """Test 15: _resolve_check_module resolves built-in checks first."""
         from prowler.lib.check.check import _resolve_check_module
 
         mock_module = MagicMock()
         mock_import.return_value = mock_module
-        mock_find_spec.return_value = MagicMock()  # built-in package exists
+        mock_is_builtin_check.return_value = True  # built-in check exists
 
         result = _resolve_check_module("aws", "ec2", "my_check")
 
@@ -1350,15 +1352,15 @@ class TestCheckExecution:
             "prowler.providers.aws.services.ec2.my_check.my_check"
         )
 
-    @patch("prowler.lib.check.check.importlib.util.find_spec")
+    @patch("prowler.lib.check.check.is_builtin_check")
     @patch("prowler.lib.check.check.import_check")
     def test_resolve_check_module_fallback_to_entry_point(
-        self, mock_import_check, mock_find_spec
+        self, mock_import_check, mock_is_builtin_check
     ):
         """Test 16: _resolve_check_module falls back to entry point when built-in is absent."""
         from prowler.lib.check.check import _resolve_check_module
 
-        mock_find_spec.return_value = None  # built-in does not exist
+        mock_is_builtin_check.return_value = False  # built-in does not exist
 
         mock_ext_module = MagicMock()
         ep = _make_entry_point(
@@ -1375,10 +1377,10 @@ class TestCheckExecution:
         mock_imp.assert_called_with("ext_pkg.checks.my_check")
         mock_import_check.assert_not_called()
 
-    @patch("prowler.lib.check.check.importlib.util.find_spec")
+    @patch("prowler.lib.check.check.is_builtin_check")
     @patch("prowler.lib.check.check.import_check")
     def test_resolve_check_module_builtin_wins_over_entry_point(
-        self, mock_import_check, mock_find_spec
+        self, mock_import_check, mock_is_builtin_check
     ):
         """Regression guard: when both a built-in and an entry-point check
         exist with the same CheckID, the BUILT-IN wins. Plug-ins extend
@@ -1389,7 +1391,7 @@ class TestCheckExecution:
         review (HugoPBrito)."""
         from prowler.lib.check.check import _resolve_check_module
 
-        mock_find_spec.return_value = MagicMock()  # built-in exists
+        mock_is_builtin_check.return_value = True  # built-in exists
         builtin_module = MagicMock()
         mock_import_check.return_value = builtin_module
 
@@ -1414,21 +1416,23 @@ class TestCheckExecution:
         mock_imp.assert_not_called()
 
     @patch("prowler.lib.check.check.importlib.metadata.entry_points")
-    @patch("prowler.lib.check.check.importlib.util.find_spec")
-    def test_resolve_check_module_raises_when_not_found(self, mock_find_spec, mock_ep):
+    @patch("prowler.lib.check.check.is_builtin_check")
+    def test_resolve_check_module_raises_when_not_found(
+        self, mock_is_builtin_check, mock_ep
+    ):
         """Test 17: _resolve_check_module raises ModuleNotFoundError when both fail."""
         from prowler.lib.check.check import _resolve_check_module
 
-        mock_find_spec.return_value = None
+        mock_is_builtin_check.return_value = False
         mock_ep.return_value = []
 
         with pytest.raises(ModuleNotFoundError, match="not found"):
             _resolve_check_module("fake", "svc", "nonexistent_check")
 
-    @patch("prowler.lib.check.check.importlib.util.find_spec")
+    @patch("prowler.lib.check.check.is_builtin_check")
     @patch("prowler.lib.check.check.import_check")
     def test_resolve_check_module_surfaces_error_when_builtin_import_fails(
-        self, mock_import_check, mock_find_spec
+        self, mock_import_check, mock_is_builtin_check
     ):
         """Regression guard: when no plug-in entry-point overrides the
         check, a built-in whose module exists but fails to import (e.g.
@@ -1437,13 +1441,47 @@ class TestCheckExecution:
         (HugoPBrito)."""
         from prowler.lib.check.check import _resolve_check_module
 
-        mock_find_spec.return_value = MagicMock()  # built-in module exists
+        mock_is_builtin_check.return_value = True  # built-in module exists
         mock_import_check.side_effect = ImportError("missing transitive dep: foo")
 
         # No plug-in override — the built-in's import failure must propagate
         with patch("importlib.metadata.entry_points", return_value=[]):
             with pytest.raises(ImportError, match="missing transitive dep"):
                 _resolve_check_module("aws", "ec2", "ec2_instance_public_ip")
+
+    def test_resolve_check_module_entry_point_check_on_builtin_provider(self):
+        """Regression guard: a plug-in check attached to a BUILT-IN provider.
+
+        Deliberately does not mock the built-in probe. The bug this guards
+        against was invisible to every other test here precisely because they
+        mock `find_spec` and hand it `None`, while the real call raises: it
+        imports `prowler.providers.aws.services.ec2.<check>` as the parent it
+        must search, and that package only exists inside the plug-in. The raw
+        exception escaped `_resolve_check_module` before the entry points were
+        ever consulted, so no external check could run against aws, azure, gcp
+        or any other built-in provider.
+        """
+        from prowler.lib.check.check import _resolve_check_module
+
+        mock_module = MagicMock()
+        ep = _make_entry_point(
+            "ec2_acme_instance_has_owner_tag",
+            "acme_checks.services.ec2.ec2_acme_instance_has_owner_tag.ec2_acme_instance_has_owner_tag",
+            "prowler.checks.aws",
+        )
+
+        with (
+            patch("importlib.metadata.entry_points", return_value=[ep]),
+            patch("importlib.import_module", return_value=mock_module) as mock_imp,
+        ):
+            result = _resolve_check_module(
+                "aws", "ec2", "ec2_acme_instance_has_owner_tag"
+            )
+
+        assert result is mock_module
+        mock_imp.assert_called_with(
+            "acme_checks.services.ec2.ec2_acme_instance_has_owner_tag.ec2_acme_instance_has_owner_tag"
+        )
 
 
 # ===========================================================================

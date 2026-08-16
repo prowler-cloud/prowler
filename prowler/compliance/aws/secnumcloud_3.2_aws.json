@@ -428,7 +428,8 @@
         "s3_account_level_public_access_blocks",
         "s3_bucket_level_public_access_block",
         "rds_instance_no_public_access",
-        "ec2_instance_public_ip"
+        "ec2_instance_public_ip",
+        "ec2_confidential_workload_host_public_ip"
       ]
     },
     {
@@ -562,7 +563,8 @@
         "ecs_task_definitions_no_environment_secrets",
         "codebuild_project_no_secrets_in_variables",
         "ssm_document_secrets",
-        "cloudwatch_log_group_no_secrets_in_logs"
+        "cloudwatch_log_group_no_secrets_in_logs",
+        "kms_key_enclave_attestation_not_enforced"
       ]
     },
     {
@@ -1108,7 +1110,8 @@
         "vpc_endpoint_connections_trust_boundaries",
         "vpc_endpoint_services_allowed_principals_trust_boundaries",
         "elbv2_waf_acl_attached",
-        "wafv2_webacl_with_rules"
+        "wafv2_webacl_with_rules",
+        "ec2_confidential_workload_host_unrestricted_ingress"
       ]
     },
     {

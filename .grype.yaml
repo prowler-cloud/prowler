@@ -1,0 +1,83 @@
+# Findings excluded from the Grype gate, each with a reason.
+# Anything not listed here blocks the pull request at critical or high severity.
+# Pairs are explicit: a new CVE against an already-listed package still blocks.
+#
+# Every entry below has a published fix we cannot take. Findings with no fix at all are
+# not listed: the scan runs with only-fixed, so they never reach the gate.
+
+ignore:
+
+  # Modules compiled into the Trivy binary we ship.
+  # Only a Trivy rebuild by its vendor can change these; the version is pinned in our Dockerfile.
+  # CVE-2026-71556 is the same temporary exception documented in .trivyignore.yaml:
+  # Trivy 0.73.0 still embeds go-git 5.19.1, while the 5.19.2 fix is merged only on
+  # Trivy main. Remove this entry with the Trivy exception by 2026-09-15.
+  # https://github.com/aquasecurity/trivy/blob/v0.73.0/go.mod#L46
+  # https://github.com/aquasecurity/trivy/commit/a2edba9a03987ba0d2ebc8212c1a9a1e6979497b
+  - vulnerability: CVE-2026-71556
+    package:
+      name: github.com/go-git/go-git/v5
+  - vulnerability: CVE-2026-56852
+    package:
+      name: golang.org/x/text
+  - vulnerability: GHSA-hrxh-6v49-42gf
+    package:
+      name: google.golang.org/grpc
+  - vulnerability: CVE-2026-50151
+    package:
+      name: oras.land/oras-go/v2
+
+  # Shipped inside the PowerShell tarball, in its bundled MicrosoftTeams module.
+  # Not a dependency we declare, and not one we can upgrade independently.
+  - vulnerability: CVE-2026-26127
+    package:
+      name: Microsoft.Bcl.Memory
+
+  # The .NET runtime bundled inside the PowerShell tarball the Dockerfile pins.
+  # CVE-2026-62901 is the same temporary exception documented in .trivyignore.yaml:
+  # fixed in .NET 9.0.19 / 10.0.11 (2026-08-11), but no published PowerShell release
+  # ships a patched runtime yet (7.5.9 bundles 9.0.18; 7.6.4 bundles 10.0.x < 10.0.11).
+  # pwsh runs only local M365 module cmdlets; nothing listens for inbound WebSocket
+  # connections. Remove with the Trivy exception by 2026-09-15.
+  - vulnerability: CVE-2026-62901
+    package:
+      name: Microsoft.NETCore.App.Runtime.linux-x64
+  - vulnerability: CVE-2026-62901
+    package:
+      name: Microsoft.NETCore.App.Runtime.linux-arm64
+
+
+  # The CPython interpreter, compiled into the official base image.
+  # TEMPORARY, unlike the entries above: moving to Python 3.13 clears seven of these, and
+  # that is a runtime upgrade pending its own evaluation. The remaining three need 3.15 and
+  # are unfixable either way -- the MCP image already runs 3.13.14 and still reports them.
+  - vulnerability: CVE-2026-11940
+    package:
+      name: python
+  - vulnerability: CVE-2026-11972
+    package:
+      name: python
+  - vulnerability: CVE-2026-15308
+    package:
+      name: python
+  - vulnerability: CVE-2026-3298
+    package:
+      name: python
+  - vulnerability: CVE-2026-3644
+    package:
+      name: python
+  - vulnerability: CVE-2026-4224
+    package:
+      name: python
+  - vulnerability: CVE-2026-4786
+    package:
+      name: python
+  - vulnerability: CVE-2026-6100
+    package:
+      name: python
+  - vulnerability: CVE-2026-7210
+    package:
+      name: python
+  - vulnerability: CVE-2026-9669
+    package:
+      name: python

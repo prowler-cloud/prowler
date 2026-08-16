@@ -1,0 +1,38 @@
+{
+  "Provider": "aws",
+  "CheckID": "ec2_confidential_workload_host_unrestricted_ingress",
+  "CheckTitle": "Confidential-workload host does not expose non-standard ports to the internet",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "ec2",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "AwsEc2Instance",
+  "ResourceGroup": "compute",
+  "Description": "Hosts of **Nitro Enclave** workloads are evaluated for unrestricted ingress (`0.0.0.0/0` or `::/0`) on TCP/UDP ports outside a configurable allow-list (`enclave_sg_allow_ports`, default `[22, 80, 443]`). Aggregates ingress across every security group attached to the host. Assesses the host environment only.",
+  "Risk": "Overly permissive security groups expose the host to **lateral movement** and to attackers probing high-port services. The host's I/O path is the enclave's I/O path over vsock, so exposed proxy ports on the host translate to exposed enclave communication channels.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/vpc/latest/userguide/security-group-rules.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws ec2 revoke-security-group-ingress --group-id <sg-id> --protocol tcp --port <port> --cidr 0.0.0.0/0",
+      "NativeIaC": "```yaml\nResources:\n  example_resource:\n    Type: AWS::EC2::SecurityGroup\n    Properties:\n      GroupDescription: confidential-workload host ingress\n      SecurityGroupIngress:\n        - IpProtocol: tcp\n          FromPort: 443\n          ToPort: 443\n          CidrIp: 0.0.0.0/0  # critical: keep public ingress to the allow-listed ports only\n```",
+      "Other": "1. Enumerate the security groups attached to each confidential-workload host.\n2. For each rule that allows 0.0.0.0/0 or ::/0 ingress on a port outside {22, 80, 443}, restrict the source to a private CIDR or a peer security group.\n3. Prefer SG-to-SG references over CIDR-based ingress for internal services.",
+      "Terraform": "```hcl\nresource \"aws_security_group_rule\" \"example_resource\" {\n  type = \"ingress\"\n  from_port = 443\n  to_port = 443\n  protocol = \"tcp\"\n  cidr_blocks = [\"0.0.0.0/0\"]  # critical: only for allow-listed ports\n  security_group_id = var.host_sg_id\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Apply **least-exposure** to confidential-workload hosts: restrict internet-facing ingress to the minimum set of standard ports the workload actually needs, and prefer security-group-to-security-group references for internal services.",
+      "Url": "https://hub.prowler.com/check/ec2_confidential_workload_host_unrestricted_ingress"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
