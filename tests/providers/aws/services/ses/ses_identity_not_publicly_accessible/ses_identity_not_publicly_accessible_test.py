@@ -234,7 +234,7 @@ class Test_ses_identities_not_publicly_accessible:
         assert result[0].status == "FAIL"
         assert (
             result[0].status_extended
-            == "SES identity test-email-identity-multiple-policies is publicly accessible due to its resource policy."
+            == "SES identity test-email-identity-multiple-policies is publicly accessible due to its resource policies."
         )
 
     @mock_aws
@@ -322,7 +322,7 @@ class Test_ses_identities_not_publicly_accessible:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "SES identity test-email-identity-public is publicly accessible due to its resource policy."
+                == "SES identity test-email-identity-public is publicly accessible due to its resource policies."
             )
             assert result[0].resource_id == "test-email-identity-public"
             assert (

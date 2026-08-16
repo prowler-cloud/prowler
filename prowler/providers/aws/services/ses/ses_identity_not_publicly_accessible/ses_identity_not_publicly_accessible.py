@@ -49,7 +49,7 @@ class ses_identity_not_publicly_accessible(Check):
                     report.status_extended = f"SES identity {identity.name} has public Allow and explicit Deny statements in its resource policies. Effective public access requires manual review."
                 else:
                     report.status = "FAIL"
-                    report.status_extended = f"SES identity {identity.name} is publicly accessible due to its resource policy."
+                    report.status_extended = f"SES identity {identity.name} is publicly accessible due to its resource policies."
 
             findings.append(report)
 
