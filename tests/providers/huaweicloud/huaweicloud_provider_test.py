@@ -517,7 +517,7 @@ class TestHuaweiCloudExceptions:
         for cls in classes:
             error = cls(file="huaweicloud_provider.py")
             assert isinstance(error, HuaweiCloudBaseException)
-            assert 19000 <= error.code <= 19099
+            assert 20000 <= error.code <= 20999
             assert error.message
             assert error.remediation
             codes.add(error.code)
@@ -526,4 +526,4 @@ class TestHuaweiCloudExceptions:
     def test_custom_message_override(self):
         error = HuaweiCloudServiceError(message="custom service failure")
         assert error.message == "custom service failure"
-        assert error.code == 19006
+        assert error.code == 20006

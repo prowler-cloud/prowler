@@ -4,16 +4,16 @@ import {
   LIGHTHOUSE_CONTEXT_SOURCE,
   LIGHTHOUSE_PAGE_ID,
   type LighthouseContextFilters,
+  type LighthousePageDefinitionInput,
   type LighthousePageContextItem,
   type LighthousePageId,
+  type LighthousePageSuggestions,
 } from "@/types/lighthouse-context";
 
-export type LighthousePageSuggestions = readonly [
-  string,
-  string,
-  string,
-  string,
-];
+import {
+  LIGHTHOUSE_GLOBAL_SUGGESTIONS,
+  LIGHTHOUSE_PAGE_DEFINITION_INPUTS,
+} from "./pages.constants";
 
 export interface LighthousePageDefinition {
   id: LighthousePageId;
@@ -27,255 +27,8 @@ export interface LighthousePageDefinition {
   ) => LighthousePageContextItem;
 }
 
-interface LighthousePageDefinitionInput {
-  id: LighthousePageId;
-  label: string;
-  match: (pathname: string) => boolean;
-  allowedSearchParams: readonly string[];
-  suggestions: LighthousePageSuggestions;
-}
-
-const PROVIDER_SCOPE_PARAMS = [
-  "filter[provider__in]",
-  "filter[provider_id__in]",
-  "filter[provider_uid]",
-  "filter[provider_uid__in]",
-  "filter[provider_type__in]",
-  "filter[provider]",
-  "filter[provider_type]",
-  "filter[provider_groups__in]",
-] as const;
-
-const COMMON_LIST_PARAMS = [
-  "query",
-  "search",
-  "filter[search]",
-  "sort",
-] as const;
-
-const GLOBAL_SUGGESTIONS = [
-  "Summarize my most critical open findings and what to fix first.",
-  "What are my highest-impact compliance gaps right now?",
-  "Find risky attack paths and explain the exposure.",
-  "How can I improve my cloud security posture today?",
-] as const satisfies LighthousePageSuggestions;
-
-const PAGE_DEFINITIONS: readonly LighthousePageDefinition[] = [
-  createPageDefinition({
-    id: LIGHTHOUSE_PAGE_ID.OVERVIEW,
-    label: "Overview",
-    match: (pathname) => pathname === "/",
-    allowedSearchParams: PROVIDER_SCOPE_PARAMS,
-    suggestions: [
-      "What should I prioritize from this overview?",
-      "Explain my threat score, its trend, and weakest section.",
-      "Which providers, services, or frameworks carry the most risk?",
-      "Build a practical security plan for today.",
-    ],
-  }),
-  createPageDefinition({
-    id: LIGHTHOUSE_PAGE_ID.FINDINGS,
-    label: "Findings",
-    match: (pathname) => pathname === "/findings",
-    allowedSearchParams: [
-      ...PROVIDER_SCOPE_PARAMS,
-      ...COMMON_LIST_PARAMS,
-      "filter[region__in]",
-      "filter[service__in]",
-      "filter[severity__in]",
-      "filter[status__in]",
-      "filter[delta]",
-      "filter[delta__in]",
-      "filter[resource_type__in]",
-      "filter[category__in]",
-      "filter[resource_groups__in]",
-      "filter[scan]",
-      "filter[scan__in]",
-      "filter[scan_id]",
-      "filter[scan_id__in]",
-      "filter[inserted_at]",
-      "filter[muted]",
-    ],
-    suggestions: [
-      "Which visible critical findings need attention first?",
-      "Prioritize remediation for the current findings.",
-      "Identify likely root causes across these findings.",
-      "Create a remediation plan for this findings view.",
-    ],
-  }),
-  createPageDefinition({
-    id: LIGHTHOUSE_PAGE_ID.RESOURCES,
-    label: "Resources",
-    match: (pathname) => pathname === "/resources",
-    allowedSearchParams: [
-      ...PROVIDER_SCOPE_PARAMS,
-      ...COMMON_LIST_PARAMS,
-      "filter[region__in]",
-      "filter[service__in]",
-      "filter[type__in]",
-      "filter[groups__in]",
-    ],
-    suggestions: [
-      "Which visible resources carry the most risk?",
-      "Find likely exposures among these resources.",
-      "Identify security patterns across the current resources.",
-      "Recommend a hardening plan for this resource scope.",
-    ],
-  }),
-  createPageDefinition({
-    id: LIGHTHOUSE_PAGE_ID.COMPLIANCE_DETAIL,
-    label: "Compliance detail",
-    match: (pathname) => pathname.startsWith("/compliance/"),
-    allowedSearchParams: [
-      ...PROVIDER_SCOPE_PARAMS,
-      "scanId",
-      "scan_id",
-      "complianceId",
-      "section",
-      "mode",
-      "version",
-      "filter[cis_profile_level]",
-      "filter[region__in]",
-      "filter[status__in]",
-    ],
-    suggestions: [
-      "Which failed requirements need attention first?",
-      "Prioritize remediation for this compliance framework.",
-      "Which sections are weakest and why?",
-      "Create a plan to improve this framework score.",
-    ],
-  }),
-  createPageDefinition({
-    id: LIGHTHOUSE_PAGE_ID.COMPLIANCE,
-    label: "Compliance",
-    match: (pathname) => pathname === "/compliance",
-    allowedSearchParams: [
-      ...PROVIDER_SCOPE_PARAMS,
-      "tab",
-      "scanId",
-      "scan_id",
-      "framework",
-      "version",
-      "mode",
-      "section",
-      "filter[compliance_id]",
-      "filter[region__in]",
-    ],
-    suggestions: [
-      "Summarize the most important compliance gaps.",
-      "Which frameworks should I prioritize?",
-      "Explain the visible compliance score.",
-      "Which controls need remediation first?",
-    ],
-  }),
-  createPageDefinition({
-    id: LIGHTHOUSE_PAGE_ID.ATTACK_PATHS,
-    label: "Attack Paths",
-    match: (pathname) => pathname.startsWith("/attack-paths"),
-    allowedSearchParams: ["scanId", "queryId"],
-    suggestions: [
-      "Explain the current attack path.",
-      "Which nodes are most critical in this graph?",
-      "Where should I break this attack path first?",
-      "Recommend remediations for the current attack path.",
-    ],
-  }),
-  createPageDefinition({
-    id: LIGHTHOUSE_PAGE_ID.SCANS,
-    label: "Scans",
-    match: (pathname) => pathname.startsWith("/scans"),
-    allowedSearchParams: [
-      ...PROVIDER_SCOPE_PARAMS,
-      ...COMMON_LIST_PARAMS,
-      "tab",
-      "scanId",
-      "filter[state]",
-      "filter[state__in]",
-      "filter[trigger]",
-    ],
-    suggestions: [
-      "Summarize recent scan activity.",
-      "Which visible scans look problematic?",
-      "Explain the most important scan failures.",
-      "What should I investigate next from this scans view?",
-    ],
-  }),
-  createPageDefinition({
-    id: LIGHTHOUSE_PAGE_ID.PROVIDERS,
-    label: "Providers",
-    match: (pathname) => pathname === "/providers",
-    allowedSearchParams: [
-      ...PROVIDER_SCOPE_PARAMS,
-      ...COMMON_LIST_PARAMS,
-      "tab",
-      "filter[status]",
-      "filter[connected]",
-    ],
-    suggestions: [
-      "Which visible providers need attention?",
-      "Assess security coverage across these providers.",
-      "Which providers may have stale scans?",
-      "What should I improve in provider onboarding?",
-    ],
-  }),
-  createPageDefinition({
-    id: LIGHTHOUSE_PAGE_ID.ALERTS,
-    label: "Alerts",
-    match: (pathname) => pathname === "/alerts",
-    allowedSearchParams: [
-      "filter[search]",
-      "sort",
-      "filter[enabled]",
-      "filter[trigger]",
-    ],
-    suggestions: [
-      "Which alert rules should I enable or tune?",
-      "Summarize my alerting coverage and its gaps.",
-      "Could any alert rule be too noisy or too broad?",
-      "Design an alerting strategy for critical findings.",
-    ],
-  }),
-  createPageDefinition({
-    id: LIGHTHOUSE_PAGE_ID.SERVICES,
-    label: "Services",
-    match: (pathname) => pathname === "/services",
-    allowedSearchParams: [...PROVIDER_SCOPE_PARAMS, ...COMMON_LIST_PARAMS],
-    suggestions: [
-      "Which services carry the most failing findings?",
-      "Compare risk across my cloud services.",
-      "Which services should I harden first?",
-      "Summarize service coverage across providers.",
-    ],
-  }),
-  createPageDefinition({
-    id: LIGHTHOUSE_PAGE_ID.WORKLOADS,
-    label: "Workloads",
-    match: (pathname) => pathname === "/workloads",
-    allowedSearchParams: [...PROVIDER_SCOPE_PARAMS],
-    suggestions: [
-      "Which workloads look most exposed?",
-      "How should I group workloads for triage?",
-      "Which workloads need attention first?",
-      "Build a workload hardening plan.",
-    ],
-  }),
-  createPageDefinition({
-    id: LIGHTHOUSE_PAGE_ID.MUTELIST,
-    label: "Mute list",
-    match: (pathname) => pathname === "/mutelist",
-    allowedSearchParams: [...COMMON_LIST_PARAMS, "tab"],
-    suggestions: [
-      "Which mute rules are active and why?",
-      "Could a mute rule be hiding important findings?",
-      "Review my mute rules for risky exclusions.",
-      "How should I structure mute rules safely?",
-    ],
-  }),
-];
-
-const KNOWN_ROUTE_LABELS = {
-  integrations: "Integrations",
-} as const;
+const PAGE_DEFINITIONS: readonly LighthousePageDefinition[] =
+  LIGHTHOUSE_PAGE_DEFINITION_INPUTS.map(createPageDefinition);
 
 function normalizeLighthousePath(pathname: string): string {
   const normalized = `/${pathname
@@ -349,15 +102,13 @@ function buildLighthouseScopeKey(
 
 function createFallbackDefinition(pathname: string): LighthousePageDefinition {
   const segment = pathname.split("/").filter(Boolean)[0] ?? "overview";
-  const label =
-    KNOWN_ROUTE_LABELS[segment as keyof typeof KNOWN_ROUTE_LABELS] ??
-    toTitleCase(segment);
+  const label = toTitleCase(segment);
   return createPageDefinition({
     id: LIGHTHOUSE_PAGE_ID.OTHER,
     label,
     match: () => true,
     allowedSearchParams: [],
-    suggestions: GLOBAL_SUGGESTIONS,
+    suggestions: LIGHTHOUSE_GLOBAL_SUGGESTIONS,
   });
 }
 

@@ -11,7 +11,9 @@ export const CheckFindingsSSR = async ({ searchParams }: SSRComponentProps) => {
 
   const findingsByStatus = await getFindingsByStatus({ filters });
 
-  if (!findingsByStatus) {
+  // handleApiResponse resolves truthy on 4xx ({error, status}) and empty
+  // bodies ({success, status}), so only a payload with attributes is data.
+  if (!findingsByStatus?.data?.attributes) {
     return (
       <div className="flex h-[400px] w-full max-w-md items-center justify-center rounded-xl border border-zinc-900 bg-stone-950">
         <p className="text-zinc-400">Failed to load findings data</p>
@@ -19,9 +21,12 @@ export const CheckFindingsSSR = async ({ searchParams }: SSRComponentProps) => {
     );
   }
 
-  const attributes = findingsByStatus?.data?.attributes || {};
-
-  const { fail = 0, pass = 0, fail_new = 0, pass_new = 0 } = attributes;
+  const {
+    fail = 0,
+    pass = 0,
+    fail_new = 0,
+    pass_new = 0,
+  } = findingsByStatus.data.attributes;
 
   return (
     <>

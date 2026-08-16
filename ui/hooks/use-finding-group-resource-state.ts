@@ -10,10 +10,15 @@ import { applyDefaultMutedFilter } from "@/lib";
 import {
   applyOptimisticTriageSummaryUpdate,
   getOptimisticTriageMutedReason,
+  isManualPassTriageUpdate,
   shouldMarkFindingMutedForTriageUpdate,
 } from "@/lib/finding-triage";
 import { FindingGroupRow, FindingResourceRow } from "@/types";
-import type { UpdateFindingTriageInput } from "@/types/findings-triage";
+import { FINDING_STATUS } from "@/types/components";
+import type {
+  FindingTriageUpdateResult,
+  UpdateFindingTriageInput,
+} from "@/types/findings-triage";
 
 interface UseFindingGroupResourceStateOptions {
   group: FindingGroupRow;
@@ -45,8 +50,10 @@ interface UseFindingGroupResourceStateReturn {
   resolveSelectedFindingIds: (ids: string[]) => Promise<string[]>;
   updateTriageOptimistically: (
     input: UpdateFindingTriageInput,
-    updateAction: (input: UpdateFindingTriageInput) => Promise<void>,
-  ) => Promise<void>;
+    updateAction: (
+      input: UpdateFindingTriageInput,
+    ) => Promise<FindingTriageUpdateResult | void>,
+  ) => Promise<FindingTriageUpdateResult | void>;
 }
 
 function getSelectedResources(
@@ -94,9 +101,11 @@ export function useFindingGroupResourceState({
       const shouldMarkMuted = shouldMarkFindingMutedForTriageUpdate(optimistic);
       const shouldSetTriageMuteReason =
         shouldMarkMuted && optimistic.isMuted !== true;
+      const isManualPass = isManualPassTriageUpdate(optimistic);
 
       return {
         ...resource,
+        status: isManualPass ? FINDING_STATUS.PASS : resource.status,
         isMuted: shouldMarkMuted ? true : resource.isMuted,
         mutedReason: shouldSetTriageMuteReason
           ? getOptimisticTriageMutedReason(optimistic.status!)
@@ -270,13 +279,16 @@ export function useFindingGroupResourceState({
 
   const updateTriageOptimistically = async (
     input: UpdateFindingTriageInput,
-    updateAction: (input: UpdateFindingTriageInput) => Promise<void>,
+    updateAction: (
+      input: UpdateFindingTriageInput,
+    ) => Promise<FindingTriageUpdateResult | void>,
   ) => {
     const optimisticToken = applyOptimisticTriageUpdate(input);
     try {
-      await updateAction(input);
+      const result = await updateAction(input);
       settleOptimisticTriageUpdate(input.findingId, optimisticToken);
       refresh();
+      return result;
     } catch (error) {
       clearOptimisticTriageUpdate(input.findingId, optimisticToken);
       refresh();

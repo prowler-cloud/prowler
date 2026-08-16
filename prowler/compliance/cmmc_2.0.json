@@ -1,0 +1,4905 @@
+{
+  "framework": "CMMC",
+  "name": "Cybersecurity Maturity Model Certification (CMMC) 2.0",
+  "version": "2.0",
+  "description": "The Cybersecurity Maturity Model Certification (CMMC) 2.0 program, codified in 32 CFR Part 170, is the U.S. Department of Defense mechanism to verify that defense contractors protect Federal Contract Information (FCI) and Controlled Unclassified Information (CUI). It defines three levels: Level 1 (15 basic safeguarding requirements from 48 CFR 52.204-21), Level 2 (the 110 security requirements of NIST SP 800-171 Rev 2) and Level 3 (24 enhanced requirements selected from NIST SP 800-172).",
+  "icon": "cmmc",
+  "attributes_metadata": [
+    {
+      "key": "Domain",
+      "label": "Domain",
+      "type": "str",
+      "required": true,
+      "enum": [
+        "Access Control",
+        "Audit and Accountability",
+        "Awareness and Training",
+        "Configuration Management",
+        "Identification and Authentication",
+        "Incident Response",
+        "Maintenance",
+        "Media Protection",
+        "Personnel Security",
+        "Physical Protection",
+        "Risk Assessment",
+        "Security Assessment",
+        "System and Communications Protection",
+        "System and Information Integrity"
+      ]
+    },
+    {
+      "key": "Level",
+      "label": "CMMC Level",
+      "type": "str",
+      "required": true,
+      "enum": [
+        "Level 1",
+        "Level 2",
+        "Level 3"
+      ]
+    },
+    {
+      "key": "SourceRequirement",
+      "label": "Source Requirement",
+      "type": "str",
+      "required": true
+    }
+  ],
+  "outputs": {
+    "table_config": {
+      "group_by": "Domain",
+      "split_by": {
+        "field": "Level",
+        "values": [
+          "Level 1",
+          "Level 2",
+          "Level 3"
+        ]
+      }
+    }
+  },
+  "requirements": [
+    {
+      "id": "AC.L1-b.1.i",
+      "description": "Limit information system access to authorized users, processes acting on behalf of authorized users, or devices (including other information systems).",
+      "attributes": {
+        "Domain": "Access Control",
+        "Level": "Level 1",
+        "SourceRequirement": "48 CFR 52.204-21(b)(1)(i)"
+      },
+      "checks": {
+        "aws": [
+          "awslambda_function_not_publicly_accessible",
+          "awslambda_function_url_public",
+          "ec2_ebs_public_snapshot",
+          "ec2_instance_profile_attached",
+          "ec2_instance_public_ip",
+          "ec2_networkacl_allow_ingress_any_port",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
+          "ec2_securitygroup_default_restrict_traffic",
+          "eks_cluster_not_publicly_accessible",
+          "emr_cluster_master_nodes_no_public_ip",
+          "iam_aws_attached_policy_no_administrative_privileges",
+          "iam_customer_attached_policy_no_administrative_privileges",
+          "iam_inline_policy_no_administrative_privileges",
+          "iam_no_root_access_key",
+          "iam_role_access_not_stale_to_bedrock",
+          "iam_root_hardware_mfa_enabled",
+          "iam_root_mfa_enabled",
+          "iam_user_access_not_stale_to_bedrock",
+          "iam_user_access_not_stale_to_sagemaker",
+          "iam_user_accesskey_unused",
+          "iam_user_console_access_unused",
+          "iam_user_mfa_enabled_console_access",
+          "rds_instance_no_public_access",
+          "rds_snapshots_public_access",
+          "redshift_cluster_public_access",
+          "s3_account_level_public_access_blocks",
+          "s3_bucket_policy_public_write_access",
+          "s3_bucket_public_access",
+          "sagemaker_notebook_instance_without_direct_internet_access_configured"
+        ],
+        "azure": [
+          "aisearch_service_not_publicly_accessible",
+          "aks_clusters_public_access_disabled",
+          "app_function_not_publicly_accessible",
+          "containerregistry_not_publicly_accessible",
+          "cosmosdb_account_public_network_access_disabled",
+          "databricks_workspace_public_network_access_disabled",
+          "entra_non_privileged_user_has_mfa",
+          "entra_privileged_user_has_mfa",
+          "keyvault_access_only_through_private_endpoints",
+          "network_http_internet_access_restricted",
+          "network_rdp_internet_access_restricted",
+          "network_ssh_internet_access_restricted",
+          "network_udp_internet_access_restricted",
+          "postgresql_flexible_server_allow_access_services_disabled",
+          "sqlserver_unrestricted_inbound_access",
+          "storage_account_public_network_access_disabled",
+          "storage_blob_public_access_level_is_disabled",
+          "storage_default_network_access_rule_is_denied"
+        ],
+        "gcp": [
+          "bigquery_dataset_public_access",
+          "cloudfunction_function_not_publicly_accessible",
+          "cloudsql_instance_public_ip",
+          "cloudstorage_bucket_public_access",
+          "compute_firewall_rdp_access_from_the_internet_allowed",
+          "compute_firewall_ssh_access_from_the_internet_allowed",
+          "compute_image_not_publicly_shared",
+          "compute_instance_block_project_wide_ssh_keys_disabled",
+          "compute_instance_public_ip",
+          "compute_project_os_login_enabled",
+          "kms_key_not_publicly_accessible",
+          "secretmanager_secret_not_publicly_accessible"
+        ],
+        "alibabacloud": [
+          "cs_kubernetes_private_cluster_enabled",
+          "ecs_securitygroup_restrict_rdp_internet",
+          "ecs_securitygroup_restrict_ssh_internet",
+          "oss_bucket_not_publicly_accessible",
+          "ram_no_root_access_key",
+          "ram_user_mfa_enabled_console_access",
+          "rds_instance_no_public_access_whitelist"
+        ],
+        "oraclecloud": [
+          "analytics_instance_access_restricted",
+          "database_autonomous_database_access_restricted",
+          "identity_tenancy_admin_users_no_api_keys",
+          "identity_user_mfa_enabled_console_access",
+          "integration_instance_access_restricted",
+          "network_default_security_list_restricts_traffic",
+          "network_security_group_ingress_from_internet_to_rdp_port",
+          "network_security_group_ingress_from_internet_to_ssh_port",
+          "network_security_list_ingress_from_internet_to_rdp_port",
+          "network_security_list_ingress_from_internet_to_ssh_port",
+          "objectstorage_bucket_not_publicly_accessible"
+        ],
+        "m365": [
+          "entra_legacy_authentication_blocked",
+          "entra_managed_device_required_for_authentication",
+          "exchange_shared_mailbox_sign_in_disabled"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "iam_role_access_not_stale_to_bedrock",
+          "ConfigKey": "max_unused_bedrock_access_days",
+          "Operator": "lte",
+          "Value": 60,
+          "Provider": "aws"
+        },
+        {
+          "Check": "iam_user_access_not_stale_to_bedrock",
+          "ConfigKey": "max_unused_bedrock_access_days",
+          "Operator": "lte",
+          "Value": 60,
+          "Provider": "aws"
+        },
+        {
+          "Check": "iam_user_access_not_stale_to_sagemaker",
+          "ConfigKey": "max_unused_sagemaker_access_days",
+          "Operator": "lte",
+          "Value": 90,
+          "Provider": "aws"
+        },
+        {
+          "Check": "iam_user_accesskey_unused",
+          "ConfigKey": "max_unused_access_keys_days",
+          "Operator": "lte",
+          "Value": 45,
+          "Provider": "aws"
+        },
+        {
+          "Check": "iam_user_console_access_unused",
+          "ConfigKey": "max_console_access_days",
+          "Operator": "lte",
+          "Value": 45,
+          "Provider": "aws"
+        }
+      ]
+    },
+    {
+      "id": "AC.L1-b.1.ii",
+      "description": "Limit information system access to the types of transactions and functions that authorized users are permitted to execute.",
+      "attributes": {
+        "Domain": "Access Control",
+        "Level": "Level 1",
+        "SourceRequirement": "48 CFR 52.204-21(b)(1)(ii)"
+      },
+      "checks": {
+        "aws": [
+          "iam_aws_attached_policy_no_administrative_privileges",
+          "iam_customer_attached_policy_no_administrative_privileges",
+          "iam_inline_policy_no_administrative_privileges",
+          "iam_role_access_not_stale_to_bedrock",
+          "iam_user_access_not_stale_to_bedrock",
+          "iam_user_access_not_stale_to_sagemaker"
+        ],
+        "azure": [
+          "aks_cluster_rbac_enabled",
+          "entra_policy_default_users_cannot_create_security_groups",
+          "entra_policy_ensure_default_user_cannot_create_apps",
+          "entra_policy_ensure_default_user_cannot_create_tenants",
+          "entra_users_cannot_create_microsoft_365_groups",
+          "iam_role_user_access_admin_restricted",
+          "keyvault_rbac_enabled"
+        ],
+        "gcp": [
+          "iam_no_service_roles_at_project_level"
+        ],
+        "alibabacloud": [
+          "cs_kubernetes_rbac_enabled",
+          "ram_policy_attached_only_to_group_or_roles",
+          "ram_policy_no_administrative_privileges"
+        ],
+        "oraclecloud": [
+          "identity_service_level_admins_exist",
+          "identity_storage_service_level_admins_scoped",
+          "identity_tenancy_admin_permissions_limited"
+        ],
+        "m365": [
+          "entra_policy_ensure_default_user_cannot_create_tenants",
+          "entra_policy_restricts_user_consent_for_apps",
+          "entra_thirdparty_integrated_apps_not_allowed"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "iam_role_access_not_stale_to_bedrock",
+          "ConfigKey": "max_unused_bedrock_access_days",
+          "Operator": "lte",
+          "Value": 60,
+          "Provider": "aws"
+        },
+        {
+          "Check": "iam_user_access_not_stale_to_bedrock",
+          "ConfigKey": "max_unused_bedrock_access_days",
+          "Operator": "lte",
+          "Value": 60,
+          "Provider": "aws"
+        },
+        {
+          "Check": "iam_user_access_not_stale_to_sagemaker",
+          "ConfigKey": "max_unused_sagemaker_access_days",
+          "Operator": "lte",
+          "Value": 90,
+          "Provider": "aws"
+        }
+      ]
+    },
+    {
+      "id": "AC.L1-b.1.iii",
+      "description": "Verify and control/limit connections to and use of external information systems.",
+      "attributes": {
+        "Domain": "Access Control",
+        "Level": "Level 1",
+        "SourceRequirement": "48 CFR 52.204-21(b)(1)(iii)"
+      },
+      "checks": {
+        "aws": [
+          "ec2_networkacl_allow_ingress_any_port",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
+          "ec2_securitygroup_default_restrict_traffic",
+          "s3_account_level_public_access_blocks"
+        ],
+        "azure": [
+          "cosmosdb_account_firewall_use_selected_networks",
+          "network_http_internet_access_restricted",
+          "network_rdp_internet_access_restricted",
+          "network_ssh_internet_access_restricted",
+          "network_udp_internet_access_restricted",
+          "sqlserver_unrestricted_inbound_access",
+          "storage_default_network_access_rule_is_denied"
+        ],
+        "gcp": [
+          "bigquery_dataset_public_access",
+          "cloudsql_instance_public_access",
+          "cloudstorage_bucket_public_access",
+          "compute_firewall_rdp_access_from_the_internet_allowed",
+          "compute_firewall_ssh_access_from_the_internet_allowed",
+          "iam_account_access_approval_enabled"
+        ],
+        "alibabacloud": [
+          "ecs_securitygroup_restrict_rdp_internet",
+          "ecs_securitygroup_restrict_ssh_internet",
+          "oss_bucket_not_publicly_accessible",
+          "rds_instance_no_public_access_whitelist"
+        ],
+        "oraclecloud": [
+          "analytics_instance_access_restricted",
+          "database_autonomous_database_access_restricted",
+          "integration_instance_access_restricted",
+          "network_security_group_ingress_from_internet_to_rdp_port",
+          "network_security_group_ingress_from_internet_to_ssh_port",
+          "network_security_list_ingress_from_internet_to_rdp_port",
+          "network_security_list_ingress_from_internet_to_ssh_port",
+          "objectstorage_bucket_not_publicly_accessible"
+        ],
+        "m365": [
+          "entra_conditional_access_policy_mfa_enforced_for_guest_users",
+          "entra_policy_guest_invite_only_for_admin_roles",
+          "entra_policy_guest_users_access_restrictions",
+          "sharepoint_external_sharing_restricted",
+          "sharepoint_guest_sharing_restricted",
+          "teams_external_access_trial_tenants_blocked",
+          "teams_external_domains_restricted",
+          "teams_external_users_cannot_start_conversations",
+          "teams_unmanaged_communication_disabled"
+        ]
+      }
+    },
+    {
+      "id": "AC.L1-b.1.iv",
+      "description": "Control information posted or processed on publicly accessible information systems.",
+      "attributes": {
+        "Domain": "Access Control",
+        "Level": "Level 1",
+        "SourceRequirement": "48 CFR 52.204-21(b)(1)(iv)"
+      },
+      "checks": {
+        "aws": [
+          "awslambda_function_not_publicly_accessible",
+          "awslambda_function_url_public",
+          "ec2_ebs_public_snapshot",
+          "ec2_instance_public_ip",
+          "eks_cluster_not_publicly_accessible",
+          "emr_cluster_master_nodes_no_public_ip",
+          "rds_instance_no_public_access",
+          "rds_snapshots_public_access",
+          "redshift_cluster_public_access",
+          "s3_account_level_public_access_blocks",
+          "s3_bucket_policy_public_write_access",
+          "s3_bucket_public_access",
+          "sagemaker_notebook_instance_without_direct_internet_access_configured"
+        ],
+        "azure": [
+          "aisearch_service_not_publicly_accessible",
+          "aks_clusters_public_access_disabled",
+          "app_function_not_publicly_accessible",
+          "containerregistry_not_publicly_accessible",
+          "cosmosdb_account_public_network_access_disabled",
+          "databricks_workspace_public_network_access_disabled",
+          "postgresql_flexible_server_allow_access_services_disabled",
+          "sqlserver_unrestricted_inbound_access",
+          "storage_account_public_network_access_disabled",
+          "storage_blob_public_access_level_is_disabled"
+        ],
+        "gcp": [
+          "bigquery_dataset_public_access",
+          "cloudfunction_function_not_publicly_accessible",
+          "cloudsql_instance_public_ip",
+          "cloudstorage_bucket_public_access",
+          "compute_image_not_publicly_shared",
+          "compute_instance_public_ip",
+          "kms_key_not_publicly_accessible",
+          "secretmanager_secret_not_publicly_accessible"
+        ],
+        "alibabacloud": [
+          "cs_kubernetes_private_cluster_enabled",
+          "oss_bucket_not_publicly_accessible",
+          "rds_instance_no_public_access_whitelist"
+        ],
+        "oraclecloud": [
+          "analytics_instance_access_restricted",
+          "database_autonomous_database_access_restricted",
+          "integration_instance_access_restricted",
+          "objectstorage_bucket_not_publicly_accessible"
+        ],
+        "m365": [
+          "admincenter_groups_not_public_visibility",
+          "sharepoint_external_sharing_restricted",
+          "teams_meeting_anonymous_user_join_disabled",
+          "teams_meeting_anonymous_user_start_disabled",
+          "teams_meeting_chat_anonymous_users_disabled",
+          "teams_meeting_external_lobby_bypass_disabled"
+        ]
+      }
+    },
+    {
+      "id": "IA.L1-b.1.v",
+      "description": "Identify information system users, processes acting on behalf of users, or devices.",
+      "attributes": {
+        "Domain": "Identification and Authentication",
+        "Level": "Level 1",
+        "SourceRequirement": "48 CFR 52.204-21(b)(1)(v)"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "IA.L1-b.1.vi",
+      "description": "Authenticate (or verify) the identities of those users, processes, or devices, as a prerequisite to allowing access to organizational information systems.",
+      "attributes": {
+        "Domain": "Identification and Authentication",
+        "Level": "Level 1",
+        "SourceRequirement": "48 CFR 52.204-21(b)(1)(vi)"
+      },
+      "checks": {
+        "aws": [
+          "iam_root_mfa_enabled",
+          "iam_user_mfa_enabled_console_access"
+        ],
+        "azure": [
+          "entra_non_privileged_user_has_mfa",
+          "entra_privileged_user_has_mfa",
+          "entra_security_defaults_enabled"
+        ],
+        "gcp": [
+          "compute_project_os_login_enabled"
+        ],
+        "alibabacloud": [
+          "ram_user_mfa_enabled_console_access"
+        ],
+        "oraclecloud": [
+          "identity_instance_principal_used",
+          "identity_user_mfa_enabled_console_access"
+        ],
+        "m365": [
+          "entra_admin_users_mfa_enabled",
+          "entra_users_mfa_enabled"
+        ]
+      }
+    },
+    {
+      "id": "MP.L1-b.1.vii",
+      "description": "Sanitize or destroy information system media containing Federal Contract Information before disposal or release for reuse.",
+      "attributes": {
+        "Domain": "Media Protection",
+        "Level": "Level 1",
+        "SourceRequirement": "48 CFR 52.204-21(b)(1)(vii)"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "PE.L1-b.1.viii",
+      "description": "Limit physical access to organizational information systems, equipment, and the respective operating environments to authorized individuals.",
+      "attributes": {
+        "Domain": "Physical Protection",
+        "Level": "Level 1",
+        "SourceRequirement": "48 CFR 52.204-21(b)(1)(viii)"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "PE.L1-b.1.ix",
+      "description": "Escort visitors and monitor visitor activity; maintain audit logs of physical access; and control and manage physical access devices.",
+      "attributes": {
+        "Domain": "Physical Protection",
+        "Level": "Level 1",
+        "SourceRequirement": "48 CFR 52.204-21(b)(1)(ix)"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "SC.L1-b.1.x",
+      "description": "Monitor, control, and protect organizational communications (i.e., information transmitted or received by organizational information systems) at the external boundaries and key internal boundaries of the information systems.",
+      "attributes": {
+        "Domain": "System and Communications Protection",
+        "Level": "Level 1",
+        "SourceRequirement": "48 CFR 52.204-21(b)(1)(x)"
+      },
+      "checks": {
+        "aws": [
+          "acm_certificates_expiration_check",
+          "apigateway_restapi_logging_enabled",
+          "awslambda_function_not_publicly_accessible",
+          "cloudtrail_log_file_validation_enabled",
+          "cloudtrail_multi_region_enabled",
+          "cloudtrail_s3_dataevents_read_enabled",
+          "cloudtrail_s3_dataevents_write_enabled",
+          "ec2_networkacl_allow_ingress_any_port",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
+          "elb_logging_enabled",
+          "elb_ssl_listeners",
+          "elbv2_logging_enabled",
+          "elbv2_waf_acl_attached",
+          "guardduty_is_enabled",
+          "rds_instance_integration_cloudwatch_logs",
+          "rds_instance_no_public_access",
+          "redshift_cluster_public_access",
+          "s3_bucket_secure_transport_policy",
+          "s3_bucket_server_access_logging_enabled",
+          "securityhub_enabled",
+          "vpc_flow_logs_enabled"
+        ],
+        "azure": [
+          "network_flow_log_captured_sent",
+          "network_flow_log_more_than_90_days",
+          "network_http_internet_access_restricted",
+          "network_rdp_internet_access_restricted",
+          "network_ssh_internet_access_restricted",
+          "network_subnet_nsg_associated",
+          "network_udp_internet_access_restricted"
+        ],
+        "gcp": [
+          "cloudstorage_uses_vpc_service_controls",
+          "compute_firewall_rdp_access_from_the_internet_allowed",
+          "compute_firewall_ssh_access_from_the_internet_allowed",
+          "compute_loadbalancer_logging_enabled",
+          "compute_network_dns_logging_enabled",
+          "compute_subnet_flow_logs_enabled"
+        ],
+        "alibabacloud": [
+          "ecs_securitygroup_restrict_rdp_internet",
+          "ecs_securitygroup_restrict_ssh_internet",
+          "oss_bucket_secure_transport_enabled",
+          "rds_instance_no_public_access_whitelist",
+          "rds_instance_ssl_enabled",
+          "sls_security_group_changes_alert_enabled",
+          "vpc_flow_logs_enabled"
+        ],
+        "oraclecloud": [
+          "network_default_security_list_restricts_traffic",
+          "network_security_group_ingress_from_internet_to_rdp_port",
+          "network_security_group_ingress_from_internet_to_ssh_port",
+          "network_security_list_ingress_from_internet_to_rdp_port",
+          "network_security_list_ingress_from_internet_to_ssh_port",
+          "network_vcn_subnet_flow_logs_enabled"
+        ],
+        "m365": [
+          "defender_antispam_connection_filter_policy_empty_ip_allowlist",
+          "defender_antispam_connection_filter_policy_safe_list_off",
+          "exchange_application_access_policy_restricts_mailbox_apps",
+          "sharepoint_external_sharing_managed",
+          "sharepoint_external_sharing_restricted",
+          "teams_external_domains_restricted",
+          "teams_external_users_cannot_start_conversations",
+          "teams_unmanaged_communication_disabled"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false,
+          "Provider": "aws"
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false,
+          "Provider": "aws"
+        },
+        {
+          "Check": "acm_certificates_expiration_check",
+          "ConfigKey": "days_to_expire_threshold",
+          "Operator": "gte",
+          "Value": 7,
+          "Provider": "aws"
+        }
+      ]
+    },
+    {
+      "id": "SC.L1-b.1.xi",
+      "description": "Implement subnetworks for publicly accessible system components that are physically or logically separated from internal networks.",
+      "attributes": {
+        "Domain": "System and Communications Protection",
+        "Level": "Level 1",
+        "SourceRequirement": "48 CFR 52.204-21(b)(1)(xi)"
+      },
+      "checks": {
+        "aws": [
+          "awslambda_function_not_publicly_accessible",
+          "awslambda_function_url_public",
+          "ec2_confidential_workload_host_public_ip",
+          "ec2_ebs_public_snapshot",
+          "ec2_instance_public_ip",
+          "ec2_networkacl_allow_ingress_any_port",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
+          "ec2_securitygroup_default_restrict_traffic",
+          "elb_ssl_listeners",
+          "elbv2_waf_acl_attached",
+          "emr_cluster_master_nodes_no_public_ip",
+          "opensearch_service_domains_node_to_node_encryption_enabled",
+          "rds_instance_no_public_access",
+          "rds_snapshots_public_access",
+          "redshift_cluster_public_access",
+          "s3_account_level_public_access_blocks",
+          "s3_bucket_policy_public_write_access",
+          "s3_bucket_public_access",
+          "s3_bucket_secure_transport_policy",
+          "sagemaker_notebook_instance_without_direct_internet_access_configured"
+        ],
+        "azure": [
+          "aisearch_service_not_publicly_accessible",
+          "aks_clusters_created_with_private_nodes",
+          "aks_clusters_public_access_disabled",
+          "app_function_not_publicly_accessible",
+          "containerregistry_not_publicly_accessible",
+          "containerregistry_uses_private_link",
+          "cosmosdb_account_public_network_access_disabled",
+          "cosmosdb_account_use_private_endpoints",
+          "databricks_workspace_no_public_ip_enabled",
+          "databricks_workspace_public_network_access_disabled",
+          "databricks_workspace_vnet_injection_enabled",
+          "keyvault_access_only_through_private_endpoints",
+          "keyvault_private_endpoints",
+          "network_subnet_nsg_associated",
+          "postgresql_flexible_server_allow_access_services_disabled",
+          "storage_account_public_network_access_disabled",
+          "storage_ensure_private_endpoints_in_storage_accounts"
+        ],
+        "gcp": [
+          "cloudfunction_function_inside_vpc",
+          "cloudsql_instance_private_ip_assignment",
+          "cloudsql_instance_public_access",
+          "cloudsql_instance_public_ip",
+          "compute_firewall_ssh_access_from_the_internet_allowed",
+          "compute_instance_public_ip",
+          "compute_network_default_in_use",
+          "compute_network_not_legacy"
+        ],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "SI.L1-b.1.xii",
+      "description": "Identify, report, and correct information and information system flaws in a timely manner.",
+      "attributes": {
+        "Domain": "System and Information Integrity",
+        "Level": "Level 1",
+        "SourceRequirement": "48 CFR 52.204-21(b)(1)(xii)"
+      },
+      "checks": {
+        "aws": [
+          "guardduty_is_enabled",
+          "securityhub_enabled"
+        ],
+        "azure": [
+          "defender_auto_provisioning_vulnerabilty_assessments_machines_on",
+          "defender_container_images_resolved_vulnerabilities",
+          "defender_ensure_system_updates_are_applied"
+        ],
+        "gcp": [
+          "artifacts_container_analysis_enabled",
+          "gcr_container_scanning_enabled"
+        ],
+        "alibabacloud": [
+          "ecs_instance_latest_os_patches_applied",
+          "securitycenter_vulnerability_scan_enabled"
+        ],
+        "oraclecloud": [],
+        "m365": []
+      },
+      "config_requirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false,
+          "Provider": "aws"
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false,
+          "Provider": "aws"
+        }
+      ]
+    },
+    {
+      "id": "SI.L1-b.1.xiii",
+      "description": "Provide protection from malicious code at appropriate locations within organizational information systems.",
+      "attributes": {
+        "Domain": "System and Information Integrity",
+        "Level": "Level 1",
+        "SourceRequirement": "48 CFR 52.204-21(b)(1)(xiii)"
+      },
+      "checks": {
+        "aws": [
+          "guardduty_ec2_malware_protection_enabled",
+          "guardduty_s3_protection_enabled"
+        ],
+        "azure": [
+          "defender_assessments_vm_endpoint_protection_installed"
+        ],
+        "gcp": [],
+        "alibabacloud": [
+          "ecs_instance_endpoint_protection_installed"
+        ],
+        "oraclecloud": [],
+        "m365": [
+          "defender_atp_safe_attachments_and_docs_configured",
+          "defender_malware_policy_common_attachments_filter_enabled",
+          "defender_malware_policy_comprehensive_attachments_filter_applied",
+          "defender_safe_attachments_policy_enabled",
+          "defender_strict_preset_security_policy_enabled",
+          "defender_zap_for_teams_enabled"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "defender_malware_policy_comprehensive_attachments_filter_applied",
+          "ConfigKey": "recommended_blocked_file_types",
+          "Operator": "superset",
+          "Value": [
+            "ace",
+            "ani",
+            "apk",
+            "app",
+            "appx",
+            "arj",
+            "bat",
+            "cab",
+            "cmd",
+            "com",
+            "deb",
+            "dex",
+            "dll",
+            "docm",
+            "elf",
+            "exe",
+            "hta",
+            "img",
+            "iso",
+            "jar",
+            "jnlp",
+            "kext",
+            "lha",
+            "lib",
+            "library",
+            "lnk",
+            "lzh",
+            "macho",
+            "msc",
+            "msi",
+            "msix",
+            "msp",
+            "mst",
+            "pif",
+            "ppa",
+            "ppam",
+            "reg",
+            "rev",
+            "scf",
+            "scr",
+            "sct",
+            "sys",
+            "uif",
+            "vb",
+            "vbe",
+            "vbs",
+            "vxd",
+            "wsc",
+            "wsf",
+            "wsh",
+            "xll",
+            "xz",
+            "z"
+          ],
+          "Provider": "m365"
+        }
+      ]
+    },
+    {
+      "id": "SI.L1-b.1.xiv",
+      "description": "Update malicious code protection mechanisms when new releases are available.",
+      "attributes": {
+        "Domain": "System and Information Integrity",
+        "Level": "Level 1",
+        "SourceRequirement": "48 CFR 52.204-21(b)(1)(xiv)"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "SI.L1-b.1.xv",
+      "description": "Perform periodic scans of the information system and real-time scans of files from external sources as files are downloaded, opened, or executed.",
+      "attributes": {
+        "Domain": "System and Information Integrity",
+        "Level": "Level 1",
+        "SourceRequirement": "48 CFR 52.204-21(b)(1)(xv)"
+      },
+      "checks": {
+        "aws": [
+          "guardduty_ec2_malware_protection_enabled"
+        ],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": [
+          "defender_atp_safe_attachments_and_docs_configured",
+          "defender_safe_attachments_policy_enabled",
+          "defender_zap_for_teams_enabled"
+        ]
+      }
+    },
+    {
+      "id": "AC.L2-3.1.1",
+      "description": "Limit system access to authorized users, processes acting on behalf of authorized users, and devices (including other systems).",
+      "attributes": {
+        "Domain": "Access Control",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.1.1"
+      },
+      "checks": {
+        "aws": [
+          "awslambda_function_not_publicly_accessible",
+          "awslambda_function_url_public",
+          "ec2_ebs_public_snapshot",
+          "ec2_instance_profile_attached",
+          "ec2_instance_public_ip",
+          "ec2_networkacl_allow_ingress_any_port",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
+          "ec2_securitygroup_default_restrict_traffic",
+          "eks_cluster_not_publicly_accessible",
+          "emr_cluster_master_nodes_no_public_ip",
+          "iam_aws_attached_policy_no_administrative_privileges",
+          "iam_customer_attached_policy_no_administrative_privileges",
+          "iam_inline_policy_no_administrative_privileges",
+          "iam_no_root_access_key",
+          "iam_role_access_not_stale_to_bedrock",
+          "iam_root_hardware_mfa_enabled",
+          "iam_root_mfa_enabled",
+          "iam_user_access_not_stale_to_bedrock",
+          "iam_user_access_not_stale_to_sagemaker",
+          "iam_user_accesskey_unused",
+          "iam_user_console_access_unused",
+          "iam_user_mfa_enabled_console_access",
+          "rds_instance_no_public_access",
+          "rds_snapshots_public_access",
+          "redshift_cluster_public_access",
+          "s3_account_level_public_access_blocks",
+          "s3_bucket_policy_public_write_access",
+          "s3_bucket_public_access",
+          "sagemaker_notebook_instance_without_direct_internet_access_configured"
+        ],
+        "azure": [
+          "aisearch_service_not_publicly_accessible",
+          "aks_clusters_public_access_disabled",
+          "app_function_not_publicly_accessible",
+          "containerregistry_not_publicly_accessible",
+          "cosmosdb_account_public_network_access_disabled",
+          "databricks_workspace_public_network_access_disabled",
+          "entra_non_privileged_user_has_mfa",
+          "entra_privileged_user_has_mfa",
+          "keyvault_access_only_through_private_endpoints",
+          "network_http_internet_access_restricted",
+          "network_rdp_internet_access_restricted",
+          "network_ssh_internet_access_restricted",
+          "network_udp_internet_access_restricted",
+          "postgresql_flexible_server_allow_access_services_disabled",
+          "sqlserver_unrestricted_inbound_access",
+          "storage_account_public_network_access_disabled",
+          "storage_blob_public_access_level_is_disabled",
+          "storage_default_network_access_rule_is_denied"
+        ],
+        "gcp": [
+          "bigquery_dataset_public_access",
+          "cloudfunction_function_not_publicly_accessible",
+          "cloudsql_instance_public_ip",
+          "cloudstorage_bucket_public_access",
+          "compute_firewall_rdp_access_from_the_internet_allowed",
+          "compute_firewall_ssh_access_from_the_internet_allowed",
+          "compute_image_not_publicly_shared",
+          "compute_instance_block_project_wide_ssh_keys_disabled",
+          "compute_instance_public_ip",
+          "compute_project_os_login_enabled",
+          "kms_key_not_publicly_accessible",
+          "secretmanager_secret_not_publicly_accessible"
+        ],
+        "alibabacloud": [
+          "cs_kubernetes_private_cluster_enabled",
+          "ecs_securitygroup_restrict_rdp_internet",
+          "ecs_securitygroup_restrict_ssh_internet",
+          "oss_bucket_not_publicly_accessible",
+          "ram_no_root_access_key",
+          "ram_user_mfa_enabled_console_access",
+          "rds_instance_no_public_access_whitelist"
+        ],
+        "oraclecloud": [
+          "analytics_instance_access_restricted",
+          "database_autonomous_database_access_restricted",
+          "identity_tenancy_admin_users_no_api_keys",
+          "identity_user_mfa_enabled_console_access",
+          "integration_instance_access_restricted",
+          "network_default_security_list_restricts_traffic",
+          "network_security_group_ingress_from_internet_to_rdp_port",
+          "network_security_group_ingress_from_internet_to_ssh_port",
+          "network_security_list_ingress_from_internet_to_rdp_port",
+          "network_security_list_ingress_from_internet_to_ssh_port",
+          "objectstorage_bucket_not_publicly_accessible"
+        ],
+        "m365": [
+          "entra_legacy_authentication_blocked",
+          "entra_managed_device_required_for_authentication",
+          "exchange_shared_mailbox_sign_in_disabled"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "iam_role_access_not_stale_to_bedrock",
+          "ConfigKey": "max_unused_bedrock_access_days",
+          "Operator": "lte",
+          "Value": 60,
+          "Provider": "aws"
+        },
+        {
+          "Check": "iam_user_access_not_stale_to_bedrock",
+          "ConfigKey": "max_unused_bedrock_access_days",
+          "Operator": "lte",
+          "Value": 60,
+          "Provider": "aws"
+        },
+        {
+          "Check": "iam_user_access_not_stale_to_sagemaker",
+          "ConfigKey": "max_unused_sagemaker_access_days",
+          "Operator": "lte",
+          "Value": 90,
+          "Provider": "aws"
+        },
+        {
+          "Check": "iam_user_accesskey_unused",
+          "ConfigKey": "max_unused_access_keys_days",
+          "Operator": "lte",
+          "Value": 45,
+          "Provider": "aws"
+        },
+        {
+          "Check": "iam_user_console_access_unused",
+          "ConfigKey": "max_console_access_days",
+          "Operator": "lte",
+          "Value": 45,
+          "Provider": "aws"
+        }
+      ]
+    },
+    {
+      "id": "AC.L2-3.1.2",
+      "description": "Limit system access to the types of transactions and functions that authorized users are permitted to execute.",
+      "attributes": {
+        "Domain": "Access Control",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.1.2"
+      },
+      "checks": {
+        "aws": [
+          "iam_aws_attached_policy_no_administrative_privileges",
+          "iam_customer_attached_policy_no_administrative_privileges",
+          "iam_inline_policy_no_administrative_privileges",
+          "iam_role_access_not_stale_to_bedrock",
+          "iam_user_access_not_stale_to_bedrock",
+          "iam_user_access_not_stale_to_sagemaker"
+        ],
+        "azure": [
+          "aks_cluster_rbac_enabled",
+          "entra_policy_default_users_cannot_create_security_groups",
+          "entra_policy_ensure_default_user_cannot_create_apps",
+          "entra_policy_ensure_default_user_cannot_create_tenants",
+          "entra_users_cannot_create_microsoft_365_groups",
+          "iam_role_user_access_admin_restricted",
+          "keyvault_rbac_enabled"
+        ],
+        "gcp": [
+          "iam_no_service_roles_at_project_level"
+        ],
+        "alibabacloud": [
+          "cs_kubernetes_rbac_enabled",
+          "ram_policy_attached_only_to_group_or_roles",
+          "ram_policy_no_administrative_privileges"
+        ],
+        "oraclecloud": [
+          "identity_service_level_admins_exist",
+          "identity_storage_service_level_admins_scoped",
+          "identity_tenancy_admin_permissions_limited"
+        ],
+        "m365": [
+          "entra_policy_ensure_default_user_cannot_create_tenants",
+          "entra_policy_restricts_user_consent_for_apps",
+          "entra_thirdparty_integrated_apps_not_allowed"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "iam_role_access_not_stale_to_bedrock",
+          "ConfigKey": "max_unused_bedrock_access_days",
+          "Operator": "lte",
+          "Value": 60,
+          "Provider": "aws"
+        },
+        {
+          "Check": "iam_user_access_not_stale_to_bedrock",
+          "ConfigKey": "max_unused_bedrock_access_days",
+          "Operator": "lte",
+          "Value": 60,
+          "Provider": "aws"
+        },
+        {
+          "Check": "iam_user_access_not_stale_to_sagemaker",
+          "ConfigKey": "max_unused_sagemaker_access_days",
+          "Operator": "lte",
+          "Value": 90,
+          "Provider": "aws"
+        }
+      ]
+    },
+    {
+      "id": "AC.L2-3.1.3",
+      "description": "Control the flow of CUI in accordance with approved authorizations.",
+      "attributes": {
+        "Domain": "Access Control",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.1.3"
+      },
+      "checks": {
+        "aws": [
+          "awslambda_function_not_publicly_accessible",
+          "awslambda_function_url_public",
+          "ec2_ebs_public_snapshot",
+          "ec2_instance_public_ip",
+          "ec2_networkacl_allow_ingress_any_port",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
+          "ec2_securitygroup_default_restrict_traffic",
+          "eks_cluster_not_publicly_accessible",
+          "emr_cluster_master_nodes_no_public_ip",
+          "rds_instance_no_public_access",
+          "rds_snapshots_public_access",
+          "redshift_cluster_public_access",
+          "s3_account_level_public_access_blocks",
+          "s3_bucket_policy_public_write_access",
+          "s3_bucket_public_access",
+          "sagemaker_notebook_instance_without_direct_internet_access_configured"
+        ],
+        "azure": [
+          "cosmosdb_account_firewall_use_selected_networks",
+          "postgresql_flexible_server_allow_access_services_disabled",
+          "sqlserver_unrestricted_inbound_access",
+          "storage_default_network_access_rule_is_denied"
+        ],
+        "gcp": [
+          "cloudsql_instance_public_access",
+          "cloudstorage_uses_vpc_service_controls"
+        ],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": [
+          "exchange_transport_rules_mail_forwarding_disabled",
+          "exchange_transport_rules_whitelist_disabled",
+          "sharepoint_external_sharing_managed",
+          "teams_external_file_sharing_restricted"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "teams_external_file_sharing_restricted",
+          "ConfigKey": "allowed_cloud_storage_services",
+          "Operator": "subset",
+          "Value": [],
+          "Provider": "m365"
+        }
+      ]
+    },
+    {
+      "id": "AC.L2-3.1.4",
+      "description": "Separate the duties of individuals to reduce the risk of malevolent activity without collusion.",
+      "attributes": {
+        "Domain": "Access Control",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.1.4"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [
+          "iam_role_kms_enforce_separation_of_duties",
+          "iam_role_sa_enforce_separation_of_duties"
+        ],
+        "alibabacloud": [],
+        "oraclecloud": [
+          "identity_iam_admins_cannot_update_tenancy_admins"
+        ],
+        "m365": []
+      }
+    },
+    {
+      "id": "AC.L2-3.1.5",
+      "description": "Employ the principle of least privilege, including for specific security functions and privileged accounts.",
+      "attributes": {
+        "Domain": "Access Control",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.1.5"
+      },
+      "checks": {
+        "aws": [
+          "iam_aws_attached_policy_no_administrative_privileges",
+          "iam_customer_attached_policy_no_administrative_privileges",
+          "iam_inline_policy_no_administrative_privileges",
+          "iam_inline_policy_no_wildcard_marketplace_subscribe",
+          "iam_no_root_access_key",
+          "iam_policy_no_wildcard_marketplace_subscribe",
+          "iam_role_access_not_stale_to_bedrock",
+          "iam_user_access_not_stale_to_bedrock",
+          "iam_user_access_not_stale_to_sagemaker",
+          "iam_user_accesskey_unused",
+          "iam_user_console_access_unused"
+        ],
+        "azure": [
+          "entra_global_admin_in_less_than_five_users",
+          "iam_role_user_access_admin_restricted",
+          "iam_subscription_roles_owner_custom_not_created",
+          "vm_jit_access_enabled"
+        ],
+        "gcp": [
+          "compute_instance_default_service_account_in_use_with_full_api_access",
+          "gke_cluster_no_default_service_account",
+          "iam_sa_no_administrative_privileges"
+        ],
+        "alibabacloud": [
+          "ram_no_root_access_key",
+          "ram_policy_no_administrative_privileges",
+          "ram_user_console_access_unused"
+        ],
+        "oraclecloud": [
+          "identity_service_level_admins_exist",
+          "identity_tenancy_admin_permissions_limited"
+        ],
+        "m365": [
+          "entra_conditional_access_policy_groups_management_restricted",
+          "entra_service_principal_privileged_role_no_owners"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "iam_role_access_not_stale_to_bedrock",
+          "ConfigKey": "max_unused_bedrock_access_days",
+          "Operator": "lte",
+          "Value": 60,
+          "Provider": "aws"
+        },
+        {
+          "Check": "iam_user_access_not_stale_to_bedrock",
+          "ConfigKey": "max_unused_bedrock_access_days",
+          "Operator": "lte",
+          "Value": 60,
+          "Provider": "aws"
+        },
+        {
+          "Check": "iam_user_access_not_stale_to_sagemaker",
+          "ConfigKey": "max_unused_sagemaker_access_days",
+          "Operator": "lte",
+          "Value": 90,
+          "Provider": "aws"
+        },
+        {
+          "Check": "iam_user_accesskey_unused",
+          "ConfigKey": "max_unused_access_keys_days",
+          "Operator": "lte",
+          "Value": 45,
+          "Provider": "aws"
+        },
+        {
+          "Check": "iam_user_console_access_unused",
+          "ConfigKey": "max_console_access_days",
+          "Operator": "lte",
+          "Value": 45,
+          "Provider": "aws"
+        },
+        {
+          "Check": "ram_user_console_access_unused",
+          "ConfigKey": "max_console_access_days",
+          "Operator": "lte",
+          "Value": 90,
+          "Provider": "alibabacloud"
+        }
+      ]
+    },
+    {
+      "id": "AC.L2-3.1.6",
+      "description": "Use non-privileged accounts or roles when accessing nonsecurity functions",
+      "attributes": {
+        "Domain": "Access Control",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.1.6"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "AC.L2-3.1.7",
+      "description": "Prevent non-privileged users from executing privileged functions and capture the execution of such functions in audit logs.",
+      "attributes": {
+        "Domain": "Access Control",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.1.7"
+      },
+      "checks": {
+        "aws": [
+          "iam_aws_attached_policy_no_administrative_privileges",
+          "iam_customer_attached_policy_no_administrative_privileges",
+          "iam_inline_policy_no_administrative_privileges",
+          "iam_no_root_access_key"
+        ],
+        "azure": [
+          "monitor_diagnostic_setting_with_appropriate_categories"
+        ],
+        "gcp": [
+          "iam_audit_logs_enabled",
+          "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled"
+        ],
+        "alibabacloud": [
+          "actiontrail_multi_region_enabled",
+          "ram_policy_no_administrative_privileges",
+          "sls_root_account_usage_alert_enabled"
+        ],
+        "oraclecloud": [
+          "identity_service_level_admins_exist",
+          "identity_tenancy_admin_permissions_limited"
+        ],
+        "m365": [
+          "entra_admin_portals_access_restriction",
+          "purview_audit_log_search_enabled"
+        ]
+      }
+    },
+    {
+      "id": "AC.L2-3.1.8",
+      "description": "Limit unsuccessful logon attempts.",
+      "attributes": {
+        "Domain": "Access Control",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.1.8"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [
+          "ram_password_policy_max_login_attempts"
+        ],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "AC.L2-3.1.9",
+      "description": "Provide privacy and security notices consistent with applicable CUI rules.",
+      "attributes": {
+        "Domain": "Access Control",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.1.9"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "AC.L2-3.1.10",
+      "description": "Use session lock with pattern-hiding displays to prevent access and viewing of data after a period of inactivity",
+      "attributes": {
+        "Domain": "Access Control",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.1.10"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "AC.L2-3.1.11",
+      "description": "Terminate (automatically) a user session after a defined condition.",
+      "attributes": {
+        "Domain": "Access Control",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.1.11"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": [
+          "entra_admin_users_sign_in_frequency_enabled"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "entra_admin_users_sign_in_frequency_enabled",
+          "ConfigKey": "sign_in_frequency",
+          "Operator": "lte",
+          "Value": 4,
+          "Provider": "m365"
+        }
+      ]
+    },
+    {
+      "id": "AC.L2-3.1.12",
+      "description": "Monitor and control remote access sessions.",
+      "attributes": {
+        "Domain": "Access Control",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.1.12"
+      },
+      "checks": {
+        "aws": [
+          "apigateway_restapi_logging_enabled",
+          "cloudtrail_multi_region_enabled",
+          "elb_logging_enabled",
+          "elbv2_logging_enabled",
+          "guardduty_is_enabled",
+          "rds_instance_integration_cloudwatch_logs",
+          "s3_bucket_server_access_logging_enabled",
+          "securityhub_enabled"
+        ],
+        "azure": [
+          "monitor_diagnostic_settings_exists",
+          "network_bastion_host_exists",
+          "network_flow_log_captured_sent",
+          "vm_jit_access_enabled"
+        ],
+        "gcp": [
+          "compute_subnet_flow_logs_enabled"
+        ],
+        "alibabacloud": [
+          "actiontrail_multi_region_enabled",
+          "rds_instance_postgresql_log_connections_enabled",
+          "rds_instance_postgresql_log_disconnections_enabled",
+          "rds_instance_sql_audit_enabled",
+          "rds_instance_sql_audit_retention",
+          "sls_management_console_authentication_failures_alert_enabled",
+          "sls_management_console_signin_without_mfa_alert_enabled",
+          "vpc_flow_logs_enabled"
+        ],
+        "oraclecloud": [],
+        "m365": [
+          "entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false,
+          "Provider": "aws"
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false,
+          "Provider": "aws"
+        },
+        {
+          "Check": "rds_instance_sql_audit_retention",
+          "ConfigKey": "min_rds_audit_retention_days",
+          "Operator": "gte",
+          "Value": 180,
+          "Provider": "alibabacloud"
+        }
+      ]
+    },
+    {
+      "id": "AC.L2-3.1.13",
+      "description": "Employ cryptographic mechanisms to protect the confidentiality of remote access sessions.",
+      "attributes": {
+        "Domain": "Access Control",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.1.13"
+      },
+      "checks": {
+        "aws": [
+          "elb_ssl_listeners"
+        ],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [
+          "oss_bucket_secure_transport_enabled",
+          "rds_instance_ssl_enabled"
+        ],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "AC.L2-3.1.14",
+      "description": "Route remote access via managed access control points.",
+      "attributes": {
+        "Domain": "Access Control",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.1.14"
+      },
+      "checks": {
+        "aws": [
+          "awslambda_function_not_publicly_accessible",
+          "awslambda_function_url_public",
+          "ec2_ebs_public_snapshot",
+          "ec2_instance_public_ip",
+          "ec2_networkacl_allow_ingress_any_port",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
+          "ec2_securitygroup_default_restrict_traffic",
+          "iam_user_mfa_enabled_console_access",
+          "rds_instance_no_public_access",
+          "rds_snapshots_public_access",
+          "redshift_cluster_public_access",
+          "s3_account_level_public_access_blocks",
+          "sagemaker_notebook_instance_without_direct_internet_access_configured"
+        ],
+        "azure": [
+          "network_bastion_host_exists",
+          "network_subnet_nsg_associated"
+        ],
+        "gcp": [
+          "compute_firewall_rdp_access_from_the_internet_allowed",
+          "compute_firewall_ssh_access_from_the_internet_allowed",
+          "compute_project_os_login_enabled"
+        ],
+        "alibabacloud": [
+          "ecs_securitygroup_restrict_rdp_internet",
+          "ecs_securitygroup_restrict_ssh_internet"
+        ],
+        "oraclecloud": [
+          "network_default_security_list_restricts_traffic",
+          "network_security_group_ingress_from_internet_to_rdp_port",
+          "network_security_group_ingress_from_internet_to_ssh_port",
+          "network_security_list_ingress_from_internet_to_rdp_port",
+          "network_security_list_ingress_from_internet_to_ssh_port"
+        ],
+        "m365": []
+      }
+    },
+    {
+      "id": "AC.L2-3.1.15",
+      "description": "Authorize remote execution of privileged commands and remote access to security-relevant information.",
+      "attributes": {
+        "Domain": "Access Control",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.1.15"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [
+          "vm_jit_access_enabled"
+        ],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "AC.L2-3.1.16",
+      "description": "Authorize wireless access prior to allowing such connections",
+      "attributes": {
+        "Domain": "Access Control",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.1.16"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "AC.L2-3.1.17",
+      "description": "Protect wireless access using authentication and encryption",
+      "attributes": {
+        "Domain": "Access Control",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.1.17"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "AC.L2-3.1.18",
+      "description": "Control connection of mobile devices.",
+      "attributes": {
+        "Domain": "Access Control",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.1.18"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": [
+          "entra_conditional_access_policy_approved_client_app_required_for_mobile",
+          "entra_conditional_access_policy_mdm_compliant_device_required",
+          "intune_device_compliance_policy_unassigned_devices_not_compliant_by_default"
+        ]
+      }
+    },
+    {
+      "id": "AC.L2-3.1.19",
+      "description": "Encrypt CUI on mobile devices and mobile computing platforms.[23]",
+      "attributes": {
+        "Domain": "Access Control",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.1.19"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "AC.L2-3.1.20",
+      "description": "Verify and control/limit connections to and use of external systems.",
+      "attributes": {
+        "Domain": "Access Control",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.1.20"
+      },
+      "checks": {
+        "aws": [
+          "ec2_networkacl_allow_ingress_any_port",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
+          "ec2_securitygroup_default_restrict_traffic",
+          "s3_account_level_public_access_blocks"
+        ],
+        "azure": [
+          "cosmosdb_account_firewall_use_selected_networks",
+          "network_http_internet_access_restricted",
+          "network_rdp_internet_access_restricted",
+          "network_ssh_internet_access_restricted",
+          "network_udp_internet_access_restricted",
+          "sqlserver_unrestricted_inbound_access",
+          "storage_default_network_access_rule_is_denied"
+        ],
+        "gcp": [
+          "bigquery_dataset_public_access",
+          "cloudsql_instance_public_access",
+          "cloudstorage_bucket_public_access",
+          "compute_firewall_rdp_access_from_the_internet_allowed",
+          "compute_firewall_ssh_access_from_the_internet_allowed",
+          "iam_account_access_approval_enabled"
+        ],
+        "alibabacloud": [
+          "ecs_securitygroup_restrict_rdp_internet",
+          "ecs_securitygroup_restrict_ssh_internet",
+          "oss_bucket_not_publicly_accessible",
+          "rds_instance_no_public_access_whitelist"
+        ],
+        "oraclecloud": [
+          "analytics_instance_access_restricted",
+          "database_autonomous_database_access_restricted",
+          "integration_instance_access_restricted",
+          "network_security_group_ingress_from_internet_to_rdp_port",
+          "network_security_group_ingress_from_internet_to_ssh_port",
+          "network_security_list_ingress_from_internet_to_rdp_port",
+          "network_security_list_ingress_from_internet_to_ssh_port",
+          "objectstorage_bucket_not_publicly_accessible"
+        ],
+        "m365": [
+          "entra_conditional_access_policy_mfa_enforced_for_guest_users",
+          "entra_policy_guest_invite_only_for_admin_roles",
+          "entra_policy_guest_users_access_restrictions",
+          "sharepoint_external_sharing_restricted",
+          "sharepoint_guest_sharing_restricted",
+          "teams_external_access_trial_tenants_blocked",
+          "teams_external_domains_restricted",
+          "teams_external_users_cannot_start_conversations",
+          "teams_unmanaged_communication_disabled"
+        ]
+      }
+    },
+    {
+      "id": "AC.L2-3.1.21",
+      "description": "Limit use of portable storage devices on external systems.",
+      "attributes": {
+        "Domain": "Access Control",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.1.21"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "AC.L2-3.1.22",
+      "description": "Control CUI posted or processed on publicly accessible systems.",
+      "attributes": {
+        "Domain": "Access Control",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.1.22"
+      },
+      "checks": {
+        "aws": [
+          "awslambda_function_not_publicly_accessible",
+          "awslambda_function_url_public",
+          "ec2_ebs_public_snapshot",
+          "ec2_instance_public_ip",
+          "eks_cluster_not_publicly_accessible",
+          "emr_cluster_master_nodes_no_public_ip",
+          "rds_instance_no_public_access",
+          "rds_snapshots_public_access",
+          "redshift_cluster_public_access",
+          "s3_account_level_public_access_blocks",
+          "s3_bucket_policy_public_write_access",
+          "s3_bucket_public_access",
+          "sagemaker_notebook_instance_without_direct_internet_access_configured"
+        ],
+        "azure": [
+          "aisearch_service_not_publicly_accessible",
+          "aks_clusters_public_access_disabled",
+          "app_function_not_publicly_accessible",
+          "containerregistry_not_publicly_accessible",
+          "cosmosdb_account_public_network_access_disabled",
+          "databricks_workspace_public_network_access_disabled",
+          "postgresql_flexible_server_allow_access_services_disabled",
+          "sqlserver_unrestricted_inbound_access",
+          "storage_account_public_network_access_disabled",
+          "storage_blob_public_access_level_is_disabled"
+        ],
+        "gcp": [
+          "bigquery_dataset_public_access",
+          "cloudfunction_function_not_publicly_accessible",
+          "cloudsql_instance_public_ip",
+          "cloudstorage_bucket_public_access",
+          "compute_image_not_publicly_shared",
+          "compute_instance_public_ip",
+          "kms_key_not_publicly_accessible",
+          "secretmanager_secret_not_publicly_accessible"
+        ],
+        "alibabacloud": [
+          "cs_kubernetes_private_cluster_enabled",
+          "oss_bucket_not_publicly_accessible",
+          "rds_instance_no_public_access_whitelist"
+        ],
+        "oraclecloud": [
+          "analytics_instance_access_restricted",
+          "database_autonomous_database_access_restricted",
+          "integration_instance_access_restricted",
+          "objectstorage_bucket_not_publicly_accessible"
+        ],
+        "m365": [
+          "admincenter_groups_not_public_visibility",
+          "sharepoint_external_sharing_restricted",
+          "teams_meeting_anonymous_user_join_disabled",
+          "teams_meeting_anonymous_user_start_disabled",
+          "teams_meeting_chat_anonymous_users_disabled",
+          "teams_meeting_external_lobby_bypass_disabled"
+        ]
+      }
+    },
+    {
+      "id": "AT.L2-3.2.1",
+      "description": "Ensure that managers, systems administrators, and users of organizational systems are made aware of the security risks associated with their activities and of the applicable policies, standards, and procedures related to the security of those systems.",
+      "attributes": {
+        "Domain": "Awareness and Training",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.2.1"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "AT.L2-3.2.2",
+      "description": "Ensure that personnel are trained to carry out their assigned information security-related duties and responsibilities.",
+      "attributes": {
+        "Domain": "Awareness and Training",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.2.2"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "AT.L2-3.2.3",
+      "description": "Provide security awareness training on recognizing and reporting potential indicators of insider threat.",
+      "attributes": {
+        "Domain": "Awareness and Training",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.2.3"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "AU.L2-3.3.1",
+      "description": "Create and retain system audit logs and records to the extent needed to enable the monitoring, analysis, investigation, and reporting of unlawful or unauthorized system activity",
+      "attributes": {
+        "Domain": "Audit and Accountability",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.3.1"
+      },
+      "checks": {
+        "aws": [
+          "apigateway_restapi_logging_enabled",
+          "cloudtrail_cloudwatch_logging_enabled",
+          "cloudtrail_multi_region_enabled",
+          "cloudtrail_s3_dataevents_read_enabled",
+          "cloudtrail_s3_dataevents_write_enabled",
+          "cloudwatch_log_group_retention_policy_specific_days_enabled",
+          "elb_logging_enabled",
+          "elbv2_logging_enabled",
+          "guardduty_is_enabled",
+          "rds_instance_integration_cloudwatch_logs",
+          "s3_bucket_server_access_logging_enabled",
+          "securityhub_enabled",
+          "vpc_flow_logs_enabled"
+        ],
+        "azure": [
+          "app_http_logs_enabled",
+          "keyvault_logging_enabled",
+          "monitor_diagnostic_setting_with_appropriate_categories",
+          "monitor_diagnostic_settings_exists",
+          "network_flow_log_captured_sent",
+          "network_flow_log_more_than_90_days",
+          "sqlserver_auditing_enabled",
+          "sqlserver_auditing_retention_90_days"
+        ],
+        "gcp": [
+          "cloudsql_instance_postgres_enable_pgaudit_flag",
+          "cloudstorage_audit_logs_enabled",
+          "cloudstorage_bucket_logging_enabled",
+          "compute_loadbalancer_logging_enabled",
+          "compute_subnet_flow_logs_enabled",
+          "iam_audit_logs_enabled",
+          "logging_sink_created"
+        ],
+        "alibabacloud": [
+          "actiontrail_multi_region_enabled",
+          "oss_bucket_logging_enabled",
+          "rds_instance_sql_audit_enabled",
+          "rds_instance_sql_audit_retention",
+          "sls_logstore_retention_period",
+          "vpc_flow_logs_enabled"
+        ],
+        "oraclecloud": [
+          "audit_log_retention_period_365_days",
+          "network_vcn_subnet_flow_logs_enabled",
+          "objectstorage_bucket_logging_enabled"
+        ],
+        "m365": [
+          "exchange_mailbox_audit_bypass_disabled",
+          "exchange_organization_mailbox_auditing_enabled",
+          "exchange_user_mailbox_auditing_enabled",
+          "purview_audit_log_search_enabled"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false,
+          "Provider": "aws"
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false,
+          "Provider": "aws"
+        },
+        {
+          "Check": "cloudwatch_log_group_retention_policy_specific_days_enabled",
+          "ConfigKey": "log_group_retention_days",
+          "Operator": "gte",
+          "Value": 365,
+          "Provider": "aws"
+        },
+        {
+          "Check": "rds_instance_sql_audit_retention",
+          "ConfigKey": "min_rds_audit_retention_days",
+          "Operator": "gte",
+          "Value": 180,
+          "Provider": "alibabacloud"
+        },
+        {
+          "Check": "sls_logstore_retention_period",
+          "ConfigKey": "min_log_retention_days",
+          "Operator": "gte",
+          "Value": 365,
+          "Provider": "alibabacloud"
+        },
+        {
+          "Check": "exchange_user_mailbox_auditing_enabled",
+          "ConfigKey": "audit_log_age",
+          "Operator": "gte",
+          "Value": 90,
+          "Provider": "m365"
+        }
+      ]
+    },
+    {
+      "id": "AU.L2-3.3.2",
+      "description": "Ensure that the actions of individual system users can be uniquely traced to those users, so they can be held accountable for their actions.",
+      "attributes": {
+        "Domain": "Audit and Accountability",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.3.2"
+      },
+      "checks": {
+        "aws": [
+          "apigateway_restapi_logging_enabled",
+          "cloudtrail_cloudwatch_logging_enabled",
+          "cloudtrail_multi_region_enabled",
+          "cloudtrail_s3_dataevents_read_enabled",
+          "cloudtrail_s3_dataevents_write_enabled",
+          "guardduty_is_enabled",
+          "rds_instance_integration_cloudwatch_logs",
+          "s3_bucket_server_access_logging_enabled"
+        ],
+        "azure": [
+          "keyvault_logging_enabled",
+          "monitor_diagnostic_setting_with_appropriate_categories",
+          "sqlserver_auditing_enabled"
+        ],
+        "gcp": [
+          "cloudsql_instance_postgres_log_connections_flag",
+          "cloudsql_instance_postgres_log_disconnections_flag",
+          "cloudstorage_audit_logs_enabled",
+          "iam_audit_logs_enabled"
+        ],
+        "alibabacloud": [
+          "actiontrail_multi_region_enabled",
+          "oss_bucket_logging_enabled",
+          "rds_instance_postgresql_log_connections_enabled",
+          "rds_instance_postgresql_log_disconnections_enabled"
+        ],
+        "oraclecloud": [],
+        "m365": [
+          "exchange_user_mailbox_auditing_enabled",
+          "purview_audit_log_search_enabled"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false,
+          "Provider": "aws"
+        },
+        {
+          "Check": "exchange_user_mailbox_auditing_enabled",
+          "ConfigKey": "audit_log_age",
+          "Operator": "gte",
+          "Value": 90,
+          "Provider": "m365"
+        }
+      ]
+    },
+    {
+      "id": "AU.L2-3.3.3",
+      "description": "Review and update logged events.",
+      "attributes": {
+        "Domain": "Audit and Accountability",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.3.3"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "AU.L2-3.3.4",
+      "description": "Alert in the event of an audit logging process failure.",
+      "attributes": {
+        "Domain": "Audit and Accountability",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.3.4"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "AU.L2-3.3.5",
+      "description": "Correlate audit record review, analysis, and reporting processes for investigation and response to indications of unlawful, unauthorized, suspicious, or unusual activity.",
+      "attributes": {
+        "Domain": "Audit and Accountability",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.3.5"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "AU.L2-3.3.6",
+      "description": "Provide audit record reduction and report generation to support on-demand analysis and reporting.",
+      "attributes": {
+        "Domain": "Audit and Accountability",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.3.6"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "AU.L2-3.3.7",
+      "description": "Provide a system capability that compares and synchronizes internal system clocks with an authoritative source to generate time stamps for audit records",
+      "attributes": {
+        "Domain": "Audit and Accountability",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.3.7"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "AU.L2-3.3.8",
+      "description": "Protect audit information and audit logging tools from unauthorized access, modification, and deletion.",
+      "attributes": {
+        "Domain": "Audit and Accountability",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.3.8"
+      },
+      "checks": {
+        "aws": [
+          "cloudtrail_kms_encryption_enabled",
+          "cloudtrail_log_file_validation_enabled",
+          "cloudwatch_log_group_kms_encryption_enabled",
+          "s3_account_level_public_access_blocks",
+          "s3_bucket_default_encryption",
+          "s3_bucket_object_versioning",
+          "s3_bucket_policy_public_write_access",
+          "s3_bucket_public_access"
+        ],
+        "azure": [
+          "monitor_storage_account_with_activity_logs_cmk_encrypted",
+          "monitor_storage_account_with_activity_logs_is_private"
+        ],
+        "gcp": [
+          "cloudstorage_bucket_log_retention_policy_lock",
+          "cloudstorage_bucket_public_access",
+          "cloudstorage_bucket_versioning_enabled"
+        ],
+        "alibabacloud": [
+          "actiontrail_oss_bucket_not_publicly_accessible"
+        ],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "AU.L2-3.3.9",
+      "description": "Limit management of audit logging functionality to a subset of privileged users.",
+      "attributes": {
+        "Domain": "Audit and Accountability",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.3.9"
+      },
+      "checks": {
+        "aws": [
+          "iam_inline_policy_no_full_access_to_cloudtrail",
+          "iam_policy_no_full_access_to_cloudtrail"
+        ],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CM.L2-3.4.1",
+      "description": "Establish and maintain baseline configurations and inventories of organizational systems (including hardware, software, firmware, and documentation) throughout the respective system development life cycles.",
+      "attributes": {
+        "Domain": "Configuration Management",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.4.1"
+      },
+      "checks": {
+        "aws": [
+          "ec2_instance_managed_by_ssm",
+          "ssm_managed_compliant_patching"
+        ],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CM.L2-3.4.2",
+      "description": "Establish and enforce security configuration settings for information technology products employed in organizational systems.",
+      "attributes": {
+        "Domain": "Configuration Management",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.4.2"
+      },
+      "checks": {
+        "aws": [
+          "ec2_instance_managed_by_ssm",
+          "ec2_instance_older_than_specific_days",
+          "ssm_managed_compliant_patching"
+        ],
+        "azure": [
+          "defender_ensure_system_updates_are_applied",
+          "policy_ensure_asc_enforcement_enabled"
+        ],
+        "gcp": [],
+        "alibabacloud": [
+          "ecs_instance_latest_os_patches_applied"
+        ],
+        "oraclecloud": [
+          "compute_instance_legacy_metadata_endpoint_disabled",
+          "compute_instance_secure_boot_enabled",
+          "network_default_security_list_restricts_traffic"
+        ],
+        "m365": []
+      },
+      "config_requirements": [
+        {
+          "Check": "ec2_instance_older_than_specific_days",
+          "ConfigKey": "max_ec2_instance_age_in_days",
+          "Operator": "lte",
+          "Value": 180,
+          "Provider": "aws"
+        }
+      ]
+    },
+    {
+      "id": "CM.L2-3.4.3",
+      "description": "Track, review, approve or disapprove, and log changes to organizational systems.",
+      "attributes": {
+        "Domain": "Configuration Management",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.4.3"
+      },
+      "checks": {
+        "aws": [
+          "cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled",
+          "config_recorder_all_regions_enabled"
+        ],
+        "azure": [
+          "monitor_diagnostic_setting_with_appropriate_categories"
+        ],
+        "gcp": [
+          "logging_log_metric_filter_and_alert_for_compute_configuration_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled"
+        ],
+        "alibabacloud": [
+          "sls_cloud_firewall_changes_alert_enabled",
+          "sls_customer_created_cmk_changes_alert_enabled",
+          "sls_logstore_retention_period",
+          "sls_oss_bucket_policy_changes_alert_enabled",
+          "sls_oss_permission_changes_alert_enabled",
+          "sls_ram_role_changes_alert_enabled",
+          "sls_rds_instance_configuration_changes_alert_enabled",
+          "sls_security_group_changes_alert_enabled",
+          "sls_vpc_changes_alert_enabled",
+          "sls_vpc_network_route_changes_alert_enabled"
+        ],
+        "oraclecloud": [
+          "events_rule_network_gateway_changes",
+          "events_rule_network_security_group_changes",
+          "events_rule_route_table_changes",
+          "events_rule_security_list_changes",
+          "events_rule_vcn_changes"
+        ],
+        "m365": []
+      },
+      "config_requirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false,
+          "Provider": "aws"
+        },
+        {
+          "Check": "sls_logstore_retention_period",
+          "ConfigKey": "min_log_retention_days",
+          "Operator": "gte",
+          "Value": 365,
+          "Provider": "alibabacloud"
+        }
+      ]
+    },
+    {
+      "id": "CM.L2-3.4.4",
+      "description": "Analyze the security impact of changes prior to implementation.",
+      "attributes": {
+        "Domain": "Configuration Management",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.4.4"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CM.L2-3.4.5",
+      "description": "Define, document, approve, and enforce physical and logical access restrictions associated with changes to organizational systems.",
+      "attributes": {
+        "Domain": "Configuration Management",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.4.5"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CM.L2-3.4.6",
+      "description": "Employ the principle of least functionality by configuring organizational systems to provide only essential capabilities.",
+      "attributes": {
+        "Domain": "Configuration Management",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.4.6"
+      },
+      "checks": {
+        "aws": [
+          "awslambda_function_url_public",
+          "ec2_confidential_workload_host_vsock_proxy_exposed",
+          "ec2_ebs_public_snapshot",
+          "ec2_instance_managed_by_ssm",
+          "ec2_securitygroup_default_restrict_traffic",
+          "rds_snapshots_public_access",
+          "redshift_cluster_public_access",
+          "s3_account_level_public_access_blocks",
+          "s3_bucket_policy_public_write_access",
+          "s3_bucket_public_access",
+          "ssm_managed_compliant_patching"
+        ],
+        "azure": [],
+        "gcp": [
+          "compute_instance_serial_ports_in_use"
+        ],
+        "alibabacloud": [],
+        "oraclecloud": [
+          "compute_instance_legacy_metadata_endpoint_disabled"
+        ],
+        "m365": [
+          "admincenter_shared_bookings_disabled",
+          "exchange_roles_assignment_policy_addins_disabled"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "ec2_confidential_workload_host_vsock_proxy_exposed",
+          "ConfigKey": "enclave_vsock_ports",
+          "Operator": "superset",
+          "Value": [
+            5000,
+            8000,
+            8001,
+            8002,
+            8003,
+            8004,
+            8005,
+            8006,
+            8007,
+            8008,
+            8009,
+            8010,
+            8011,
+            8012,
+            8013,
+            8014,
+            8015,
+            8016,
+            8017,
+            8018,
+            8019,
+            8020,
+            8021,
+            8022,
+            8023,
+            8024,
+            8025,
+            8026,
+            8027,
+            8028,
+            8029,
+            8030,
+            8031,
+            8032,
+            8033,
+            8034,
+            8035,
+            8036,
+            8037,
+            8038,
+            8039,
+            8040,
+            8041,
+            8042,
+            8043,
+            8044,
+            8045,
+            8046,
+            8047,
+            8048,
+            8049,
+            8050,
+            8051,
+            8052,
+            8053,
+            8054,
+            8055,
+            8056,
+            8057,
+            8058,
+            8059,
+            8060,
+            8061,
+            8062,
+            8063,
+            8064,
+            8065,
+            8066,
+            8067,
+            8068,
+            8069,
+            8070,
+            8071,
+            8072,
+            8073,
+            8074,
+            8075,
+            8076,
+            8077,
+            8078,
+            8079,
+            8080,
+            8081,
+            8082,
+            8083,
+            8084,
+            8085,
+            8086,
+            8087,
+            8088,
+            8089,
+            8090,
+            9000
+          ],
+          "Provider": "aws"
+        }
+      ]
+    },
+    {
+      "id": "CM.L2-3.4.7",
+      "description": "Restrict, disable, or prevent the use of nonessential programs, functions, ports, protocols, and services.",
+      "attributes": {
+        "Domain": "Configuration Management",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.4.7"
+      },
+      "checks": {
+        "aws": [
+          "ec2_confidential_workload_host_vsock_proxy_exposed",
+          "ec2_networkacl_allow_ingress_any_port",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
+          "ec2_securitygroup_default_restrict_traffic"
+        ],
+        "azure": [
+          "app_ftp_deployment_disabled",
+          "app_function_ftps_deployment_disabled",
+          "containerregistry_admin_user_disabled",
+          "network_http_internet_access_restricted",
+          "network_rdp_internet_access_restricted",
+          "network_ssh_internet_access_restricted",
+          "network_udp_internet_access_restricted"
+        ],
+        "gcp": [
+          "compute_firewall_rdp_access_from_the_internet_allowed",
+          "compute_firewall_ssh_access_from_the_internet_allowed"
+        ],
+        "alibabacloud": [
+          "cs_kubernetes_dashboard_disabled",
+          "ecs_securitygroup_restrict_rdp_internet",
+          "ecs_securitygroup_restrict_ssh_internet"
+        ],
+        "oraclecloud": [
+          "compute_instance_legacy_metadata_endpoint_disabled",
+          "network_security_group_ingress_from_internet_to_rdp_port",
+          "network_security_group_ingress_from_internet_to_ssh_port",
+          "network_security_list_ingress_from_internet_to_rdp_port",
+          "network_security_list_ingress_from_internet_to_ssh_port"
+        ],
+        "m365": [
+          "entra_legacy_authentication_blocked",
+          "exchange_organization_modern_authentication_enabled",
+          "exchange_transport_config_smtp_auth_disabled",
+          "sharepoint_modern_authentication_required"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "ec2_confidential_workload_host_vsock_proxy_exposed",
+          "ConfigKey": "enclave_vsock_ports",
+          "Operator": "superset",
+          "Value": [
+            5000,
+            8000,
+            8001,
+            8002,
+            8003,
+            8004,
+            8005,
+            8006,
+            8007,
+            8008,
+            8009,
+            8010,
+            8011,
+            8012,
+            8013,
+            8014,
+            8015,
+            8016,
+            8017,
+            8018,
+            8019,
+            8020,
+            8021,
+            8022,
+            8023,
+            8024,
+            8025,
+            8026,
+            8027,
+            8028,
+            8029,
+            8030,
+            8031,
+            8032,
+            8033,
+            8034,
+            8035,
+            8036,
+            8037,
+            8038,
+            8039,
+            8040,
+            8041,
+            8042,
+            8043,
+            8044,
+            8045,
+            8046,
+            8047,
+            8048,
+            8049,
+            8050,
+            8051,
+            8052,
+            8053,
+            8054,
+            8055,
+            8056,
+            8057,
+            8058,
+            8059,
+            8060,
+            8061,
+            8062,
+            8063,
+            8064,
+            8065,
+            8066,
+            8067,
+            8068,
+            8069,
+            8070,
+            8071,
+            8072,
+            8073,
+            8074,
+            8075,
+            8076,
+            8077,
+            8078,
+            8079,
+            8080,
+            8081,
+            8082,
+            8083,
+            8084,
+            8085,
+            8086,
+            8087,
+            8088,
+            8089,
+            8090,
+            9000
+          ],
+          "Provider": "aws"
+        }
+      ]
+    },
+    {
+      "id": "CM.L2-3.4.8",
+      "description": "Apply deny-by-exception (blacklisting) policy to prevent the use of unauthorized software or deny-all, permit-by-exception (whitelisting) policy to allow the execution of authorized software.",
+      "attributes": {
+        "Domain": "Configuration Management",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.4.8"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CM.L2-3.4.9",
+      "description": "Control and monitor user-installed software.",
+      "attributes": {
+        "Domain": "Configuration Management",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.4.9"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": [
+          "entra_admin_consent_workflow_enabled",
+          "entra_policy_restricts_user_consent_for_apps",
+          "entra_thirdparty_integrated_apps_not_allowed"
+        ]
+      }
+    },
+    {
+      "id": "IA.L2-3.5.1",
+      "description": "Identify system users, processes acting on behalf of users, and devices.",
+      "attributes": {
+        "Domain": "Identification and Authentication",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.5.1"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "IA.L2-3.5.2",
+      "description": "Authenticate (or verify) the identities of users, processes, or devices, as a prerequisite to allowing access to organizational systems.",
+      "attributes": {
+        "Domain": "Identification and Authentication",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.5.2"
+      },
+      "checks": {
+        "aws": [
+          "iam_root_mfa_enabled",
+          "iam_user_mfa_enabled_console_access"
+        ],
+        "azure": [
+          "entra_non_privileged_user_has_mfa",
+          "entra_privileged_user_has_mfa",
+          "entra_security_defaults_enabled"
+        ],
+        "gcp": [
+          "compute_project_os_login_enabled"
+        ],
+        "alibabacloud": [
+          "ram_user_mfa_enabled_console_access"
+        ],
+        "oraclecloud": [
+          "identity_instance_principal_used",
+          "identity_user_mfa_enabled_console_access"
+        ],
+        "m365": [
+          "entra_admin_users_mfa_enabled",
+          "entra_users_mfa_enabled"
+        ]
+      }
+    },
+    {
+      "id": "IA.L2-3.5.3",
+      "description": "Use multifactor authentication for local and network access to privileged accounts and for network access to non-privileged accounts.[24] [25].",
+      "attributes": {
+        "Domain": "Identification and Authentication",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.5.3"
+      },
+      "checks": {
+        "aws": [
+          "iam_root_hardware_mfa_enabled",
+          "iam_root_mfa_enabled",
+          "iam_user_mfa_enabled_console_access"
+        ],
+        "azure": [
+          "entra_conditional_access_policy_require_mfa_for_admin_portals",
+          "entra_conditional_access_policy_require_mfa_for_management_api",
+          "entra_non_privileged_user_has_mfa",
+          "entra_privileged_user_has_mfa",
+          "entra_security_defaults_enabled",
+          "entra_user_with_vm_access_has_mfa"
+        ],
+        "gcp": [
+          "compute_project_os_login_2fa_enabled"
+        ],
+        "alibabacloud": [
+          "ram_user_mfa_enabled_console_access"
+        ],
+        "oraclecloud": [
+          "identity_user_mfa_enabled_console_access"
+        ],
+        "m365": [
+          "entra_admin_users_mfa_enabled",
+          "entra_conditional_access_policy_mfa_enforced_for_guest_users",
+          "entra_conditional_access_policy_require_mfa_for_management_api",
+          "entra_users_mfa_enabled"
+        ]
+      }
+    },
+    {
+      "id": "IA.L2-3.5.4",
+      "description": "Employ replay-resistant authentication mechanisms for network access to privileged and non-privileged accounts.",
+      "attributes": {
+        "Domain": "Identification and Authentication",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.5.4"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [
+          "entra_authentication_methods_policy_strong_auth_enforced"
+        ],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": [
+          "entra_admin_users_phishing_resistant_mfa_enabled",
+          "entra_authentication_method_sms_voice_disabled"
+        ]
+      }
+    },
+    {
+      "id": "IA.L2-3.5.5",
+      "description": "Prevent reuse of identifiers for a defined period.",
+      "attributes": {
+        "Domain": "Identification and Authentication",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.5.5"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "IA.L2-3.5.6",
+      "description": "Disable identifiers after a defined period of inactivity.",
+      "attributes": {
+        "Domain": "Identification and Authentication",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.5.6"
+      },
+      "checks": {
+        "aws": [
+          "iam_password_policy_expires_passwords_within_90_days_or_less",
+          "iam_password_policy_reuse_24",
+          "iam_role_access_not_stale_to_bedrock",
+          "iam_user_access_not_stale_to_bedrock",
+          "iam_user_access_not_stale_to_sagemaker",
+          "iam_user_accesskey_unused",
+          "iam_user_console_access_unused"
+        ],
+        "azure": [
+          "entra_user_with_recent_sign_in"
+        ],
+        "gcp": [
+          "iam_service_account_unused"
+        ],
+        "alibabacloud": [
+          "ram_user_console_access_unused"
+        ],
+        "oraclecloud": [],
+        "m365": []
+      },
+      "config_requirements": [
+        {
+          "Check": "iam_role_access_not_stale_to_bedrock",
+          "ConfigKey": "max_unused_bedrock_access_days",
+          "Operator": "lte",
+          "Value": 60,
+          "Provider": "aws"
+        },
+        {
+          "Check": "iam_user_access_not_stale_to_bedrock",
+          "ConfigKey": "max_unused_bedrock_access_days",
+          "Operator": "lte",
+          "Value": 60,
+          "Provider": "aws"
+        },
+        {
+          "Check": "iam_user_access_not_stale_to_sagemaker",
+          "ConfigKey": "max_unused_sagemaker_access_days",
+          "Operator": "lte",
+          "Value": 90,
+          "Provider": "aws"
+        },
+        {
+          "Check": "iam_user_accesskey_unused",
+          "ConfigKey": "max_unused_access_keys_days",
+          "Operator": "lte",
+          "Value": 45,
+          "Provider": "aws"
+        },
+        {
+          "Check": "iam_user_console_access_unused",
+          "ConfigKey": "max_console_access_days",
+          "Operator": "lte",
+          "Value": 45,
+          "Provider": "aws"
+        },
+        {
+          "Check": "iam_service_account_unused",
+          "ConfigKey": "max_unused_account_days",
+          "Operator": "lte",
+          "Value": 180,
+          "Provider": "gcp"
+        },
+        {
+          "Check": "ram_user_console_access_unused",
+          "ConfigKey": "max_console_access_days",
+          "Operator": "lte",
+          "Value": 90,
+          "Provider": "alibabacloud"
+        }
+      ]
+    },
+    {
+      "id": "IA.L2-3.5.7",
+      "description": "Enforce a minimum password complexity and change of characters when new passwords are created.",
+      "attributes": {
+        "Domain": "Identification and Authentication",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.5.7"
+      },
+      "checks": {
+        "aws": [
+          "iam_password_policy_expires_passwords_within_90_days_or_less",
+          "iam_password_policy_lowercase",
+          "iam_password_policy_minimum_length_14",
+          "iam_password_policy_number",
+          "iam_password_policy_reuse_24",
+          "iam_password_policy_symbol",
+          "iam_password_policy_uppercase"
+        ],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [
+          "ram_password_policy_lowercase",
+          "ram_password_policy_minimum_length",
+          "ram_password_policy_number",
+          "ram_password_policy_symbol",
+          "ram_password_policy_uppercase"
+        ],
+        "oraclecloud": [
+          "identity_password_policy_minimum_length_14"
+        ],
+        "m365": []
+      }
+    },
+    {
+      "id": "IA.L2-3.5.8",
+      "description": "Prohibit password reuse for a specified number of generations.",
+      "attributes": {
+        "Domain": "Identification and Authentication",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.5.8"
+      },
+      "checks": {
+        "aws": [
+          "iam_password_policy_reuse_24"
+        ],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [
+          "ram_password_policy_password_reuse_prevention"
+        ],
+        "oraclecloud": [
+          "identity_password_policy_prevents_reuse"
+        ],
+        "m365": []
+      }
+    },
+    {
+      "id": "IA.L2-3.5.9",
+      "description": "Allow temporary password use for system logons with an immediate change to a permanent password.",
+      "attributes": {
+        "Domain": "Identification and Authentication",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.5.9"
+      },
+      "checks": {
+        "aws": [
+          "cognito_user_pool_temporary_password_expiration"
+        ],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "IA.L2-3.5.10",
+      "description": "Store and transmit only cryptographically-protected passwords.",
+      "attributes": {
+        "Domain": "Identification and Authentication",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.5.10"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "IA.L2-3.5.11",
+      "description": "Obscure feedback of authentication information",
+      "attributes": {
+        "Domain": "Identification and Authentication",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.5.11"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "IR.L2-3.6.1",
+      "description": "Establish an operational incident-handling capability for organizational systems that includes preparation, detection, analysis, containment, recovery, and user response activities.",
+      "attributes": {
+        "Domain": "Incident Response",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.6.1"
+      },
+      "checks": {
+        "aws": [
+          "cloudwatch_changes_to_network_acls_alarm_configured",
+          "cloudwatch_changes_to_network_gateways_alarm_configured",
+          "cloudwatch_changes_to_network_route_tables_alarm_configured",
+          "cloudwatch_changes_to_vpcs_alarm_configured",
+          "guardduty_is_enabled",
+          "guardduty_no_high_severity_findings",
+          "securityhub_enabled"
+        ],
+        "azure": [
+          "defender_ensure_notify_alerts_severity_is_high",
+          "monitor_alert_create_policy_assignment",
+          "monitor_alert_create_update_nsg",
+          "monitor_alert_create_update_public_ip_address_rule",
+          "monitor_alert_create_update_security_solution",
+          "monitor_alert_create_update_sqlserver_fr",
+          "monitor_alert_delete_nsg",
+          "monitor_alert_delete_policy_assignment",
+          "monitor_alert_delete_public_ip_address_rule",
+          "monitor_alert_delete_security_solution",
+          "monitor_alert_delete_sqlserver_fr",
+          "monitor_diagnostic_settings_exists"
+        ],
+        "gcp": [
+          "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_compute_configuration_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled",
+          "logging_sink_created"
+        ],
+        "alibabacloud": [
+          "actiontrail_multi_region_enabled",
+          "sls_cloud_firewall_changes_alert_enabled",
+          "sls_customer_created_cmk_changes_alert_enabled",
+          "sls_management_console_authentication_failures_alert_enabled",
+          "sls_management_console_signin_without_mfa_alert_enabled",
+          "sls_oss_bucket_policy_changes_alert_enabled",
+          "sls_oss_permission_changes_alert_enabled",
+          "sls_ram_role_changes_alert_enabled",
+          "sls_rds_instance_configuration_changes_alert_enabled",
+          "sls_root_account_usage_alert_enabled",
+          "sls_security_group_changes_alert_enabled",
+          "sls_unauthorized_api_calls_alert_enabled",
+          "sls_vpc_changes_alert_enabled",
+          "sls_vpc_network_route_changes_alert_enabled"
+        ],
+        "oraclecloud": [
+          "audit_log_retention_period_365_days",
+          "cloudguard_enabled",
+          "events_rule_cloudguard_problems",
+          "events_rule_iam_group_changes",
+          "events_rule_iam_policy_changes",
+          "events_rule_identity_provider_changes",
+          "events_rule_idp_group_mapping_changes",
+          "events_rule_network_gateway_changes",
+          "events_rule_network_security_group_changes",
+          "events_rule_route_table_changes",
+          "events_rule_security_list_changes",
+          "events_rule_user_changes",
+          "events_rule_vcn_changes",
+          "network_vcn_subnet_flow_logs_enabled",
+          "objectstorage_bucket_logging_enabled"
+        ],
+        "m365": [
+          "defenderidentity_health_issues_no_open",
+          "teams_security_reporting_enabled"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false,
+          "Provider": "aws"
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false,
+          "Provider": "aws"
+        }
+      ]
+    },
+    {
+      "id": "IR.L2-3.6.2",
+      "description": "Track, document, and report incidents to designated officials and/or authorities both internal and external to the organization.",
+      "attributes": {
+        "Domain": "Incident Response",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.6.2"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [
+          "defender_additional_email_configured_with_a_security_contact",
+          "defender_ensure_notify_alerts_severity_is_high",
+          "defender_ensure_notify_emails_to_owners"
+        ],
+        "gcp": [
+          "iam_organization_essential_contacts_configured"
+        ],
+        "alibabacloud": [
+          "securitycenter_notification_enabled_high_risk"
+        ],
+        "oraclecloud": [],
+        "m365": [
+          "defender_chat_report_policy_configured"
+        ]
+      }
+    },
+    {
+      "id": "IR.L2-3.6.3",
+      "description": "Test the organizational incident response capability.",
+      "attributes": {
+        "Domain": "Incident Response",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.6.3"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "MA.L2-3.7.1",
+      "description": "Perform maintenance on organizational systems.[26].",
+      "attributes": {
+        "Domain": "Maintenance",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.7.1"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "MA.L2-3.7.2",
+      "description": "Provide controls on the tools, techniques, mechanisms, and personnel used to conduct system maintenance.",
+      "attributes": {
+        "Domain": "Maintenance",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.7.2"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "MA.L2-3.7.3",
+      "description": "Ensure equipment removed for off-site maintenance is sanitized of any CUI.",
+      "attributes": {
+        "Domain": "Maintenance",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.7.3"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "MA.L2-3.7.4",
+      "description": "Check media containing diagnostic and test programs for malicious code before the media are used in organizational systems.",
+      "attributes": {
+        "Domain": "Maintenance",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.7.4"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "MA.L2-3.7.5",
+      "description": "Require multifactor authentication to establish nonlocal maintenance sessions via external network connections and terminate such connections when nonlocal maintenance is complete.",
+      "attributes": {
+        "Domain": "Maintenance",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.7.5"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "MA.L2-3.7.6",
+      "description": "Supervise the maintenance activities of maintenance personnel without required access authorization.",
+      "attributes": {
+        "Domain": "Maintenance",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.7.6"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "MP.L2-3.8.1",
+      "description": "Protect (i.e., physically control and securely store) system media containing CUI, both paper and digital.",
+      "attributes": {
+        "Domain": "Media Protection",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.8.1"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "MP.L2-3.8.2",
+      "description": "Limit access to CUI on system media to authorized users",
+      "attributes": {
+        "Domain": "Media Protection",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.8.2"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "MP.L2-3.8.3",
+      "description": "Sanitize or destroy system media containing CUI before disposal or release for reuse.",
+      "attributes": {
+        "Domain": "Media Protection",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.8.3"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "MP.L2-3.8.4",
+      "description": "Mark media with necessary CUI markings and distribution limitations.[27]",
+      "attributes": {
+        "Domain": "Media Protection",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.8.4"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "MP.L2-3.8.5",
+      "description": "Control access to media containing CUI and maintain accountability for media during transport outside of controlled areas.",
+      "attributes": {
+        "Domain": "Media Protection",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.8.5"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "MP.L2-3.8.6",
+      "description": "Implement cryptographic mechanisms to protect the confidentiality of CUI stored on digital media during transport unless otherwise protected by alternative physical safeguards.",
+      "attributes": {
+        "Domain": "Media Protection",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.8.6"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "MP.L2-3.8.7",
+      "description": "Control the use of removable media on system components.",
+      "attributes": {
+        "Domain": "Media Protection",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.8.7"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "MP.L2-3.8.8",
+      "description": "Prohibit the use of portable storage devices when such devices have no identifiable owner.",
+      "attributes": {
+        "Domain": "Media Protection",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.8.8"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "MP.L2-3.8.9",
+      "description": "Protect the confidentiality of backup CUI at storage locations.",
+      "attributes": {
+        "Domain": "Media Protection",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.8.9"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "PS.L2-3.9.1",
+      "description": "Screen individuals prior to authorizing access to organizational systems containing CUI.",
+      "attributes": {
+        "Domain": "Personnel Security",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.9.1"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "PS.L2-3.9.2",
+      "description": "Ensure that organizational systems containing CUI are protected during and after personnel actions such as terminations and transfers",
+      "attributes": {
+        "Domain": "Personnel Security",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.9.2"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "PE.L2-3.10.1",
+      "description": "Limit physical access to organizational systems, equipment, and the respective operating environments to authorized individuals.",
+      "attributes": {
+        "Domain": "Physical Protection",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.10.1"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "PE.L2-3.10.2",
+      "description": "Protect and monitor the physical facility and support infrastructure for organizational systems.",
+      "attributes": {
+        "Domain": "Physical Protection",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.10.2"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "PE.L2-3.10.3",
+      "description": "Escort visitors and monitor visitor activity.",
+      "attributes": {
+        "Domain": "Physical Protection",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.10.3"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "PE.L2-3.10.4",
+      "description": "Maintain audit logs of physical access.",
+      "attributes": {
+        "Domain": "Physical Protection",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.10.4"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "PE.L2-3.10.5",
+      "description": "Control and manage physical access devices.",
+      "attributes": {
+        "Domain": "Physical Protection",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.10.5"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "PE.L2-3.10.6",
+      "description": "Enforce safeguarding measures for CUI at alternate work sites.",
+      "attributes": {
+        "Domain": "Physical Protection",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.10.6"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "RA.L2-3.11.1",
+      "description": "Periodically assess the risk to organizational operations (including mission, functions, image, or reputation), organizational assets, and individuals, resulting from the operation of organizational systems and the associated processing, storage, or transmission of CUI",
+      "attributes": {
+        "Domain": "Risk Assessment",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.11.1"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "RA.L2-3.11.2",
+      "description": "Scan for vulnerabilities in organizational systems and applications periodically and when new vulnerabilities affecting those systems and applications are identified.",
+      "attributes": {
+        "Domain": "Risk Assessment",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.11.2"
+      },
+      "checks": {
+        "aws": [
+          "inspector2_is_enabled"
+        ],
+        "azure": [
+          "defender_auto_provisioning_vulnerabilty_assessments_machines_on",
+          "defender_container_images_scan_enabled",
+          "sqlserver_va_periodic_recurring_scans_enabled",
+          "sqlserver_vulnerability_assessment_enabled"
+        ],
+        "gcp": [
+          "artifacts_container_analysis_enabled",
+          "gcr_container_scanning_enabled"
+        ],
+        "alibabacloud": [
+          "securitycenter_vulnerability_scan_enabled"
+        ],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "RA.L2-3.11.3",
+      "description": "Remediate vulnerabilities in accordance with risk assessments.",
+      "attributes": {
+        "Domain": "Risk Assessment",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.11.3"
+      },
+      "checks": {
+        "aws": [
+          "inspector2_active_findings_exist"
+        ],
+        "azure": [
+          "defender_container_images_resolved_vulnerabilities",
+          "defender_ensure_system_updates_are_applied"
+        ],
+        "gcp": [],
+        "alibabacloud": [
+          "ecs_instance_latest_os_patches_applied"
+        ],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CA.L2-3.12.1",
+      "description": "Periodically assess the security controls in organizational systems to determine if the controls are effective in their application.",
+      "attributes": {
+        "Domain": "Security Assessment",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.12.1"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CA.L2-3.12.2",
+      "description": "Develop and implement plans of action designed to correct deficiencies and reduce or eliminate vulnerabilities in organizational systems.",
+      "attributes": {
+        "Domain": "Security Assessment",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.12.2"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CA.L2-3.12.3",
+      "description": "Monitor security controls on an ongoing basis to ensure the continued effectiveness of the controls.",
+      "attributes": {
+        "Domain": "Security Assessment",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.12.3"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CA.L2-3.12.4",
+      "description": "Develop, document, and periodically update system security plans that describe system boundaries, system environments of operation, how security requirements are implemented, and the relationships with or connections to other systems.[28]",
+      "attributes": {
+        "Domain": "Security Assessment",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.12.4"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "SC.L2-3.13.1",
+      "description": "Monitor, control, and protect communications (i.e., information transmitted or received by organizational systems) at the external boundaries and key internal boundaries of organizational systems.",
+      "attributes": {
+        "Domain": "System and Communications Protection",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.13.1"
+      },
+      "checks": {
+        "aws": [
+          "acm_certificates_expiration_check",
+          "apigateway_restapi_logging_enabled",
+          "awslambda_function_not_publicly_accessible",
+          "cloudtrail_log_file_validation_enabled",
+          "cloudtrail_multi_region_enabled",
+          "cloudtrail_s3_dataevents_read_enabled",
+          "cloudtrail_s3_dataevents_write_enabled",
+          "ec2_networkacl_allow_ingress_any_port",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
+          "elb_logging_enabled",
+          "elb_ssl_listeners",
+          "elbv2_logging_enabled",
+          "elbv2_waf_acl_attached",
+          "guardduty_is_enabled",
+          "rds_instance_integration_cloudwatch_logs",
+          "rds_instance_no_public_access",
+          "redshift_cluster_public_access",
+          "s3_bucket_secure_transport_policy",
+          "s3_bucket_server_access_logging_enabled",
+          "securityhub_enabled",
+          "vpc_flow_logs_enabled"
+        ],
+        "azure": [
+          "network_flow_log_captured_sent",
+          "network_flow_log_more_than_90_days",
+          "network_http_internet_access_restricted",
+          "network_rdp_internet_access_restricted",
+          "network_ssh_internet_access_restricted",
+          "network_subnet_nsg_associated",
+          "network_udp_internet_access_restricted"
+        ],
+        "gcp": [
+          "cloudstorage_uses_vpc_service_controls",
+          "compute_firewall_rdp_access_from_the_internet_allowed",
+          "compute_firewall_ssh_access_from_the_internet_allowed",
+          "compute_loadbalancer_logging_enabled",
+          "compute_network_dns_logging_enabled",
+          "compute_subnet_flow_logs_enabled"
+        ],
+        "alibabacloud": [
+          "ecs_securitygroup_restrict_rdp_internet",
+          "ecs_securitygroup_restrict_ssh_internet",
+          "oss_bucket_secure_transport_enabled",
+          "rds_instance_no_public_access_whitelist",
+          "rds_instance_ssl_enabled",
+          "sls_security_group_changes_alert_enabled",
+          "vpc_flow_logs_enabled"
+        ],
+        "oraclecloud": [
+          "network_default_security_list_restricts_traffic",
+          "network_security_group_ingress_from_internet_to_rdp_port",
+          "network_security_group_ingress_from_internet_to_ssh_port",
+          "network_security_list_ingress_from_internet_to_rdp_port",
+          "network_security_list_ingress_from_internet_to_ssh_port",
+          "network_vcn_subnet_flow_logs_enabled"
+        ],
+        "m365": [
+          "defender_antispam_connection_filter_policy_empty_ip_allowlist",
+          "defender_antispam_connection_filter_policy_safe_list_off",
+          "exchange_application_access_policy_restricts_mailbox_apps",
+          "sharepoint_external_sharing_managed",
+          "sharepoint_external_sharing_restricted",
+          "teams_external_domains_restricted",
+          "teams_external_users_cannot_start_conversations",
+          "teams_unmanaged_communication_disabled"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false,
+          "Provider": "aws"
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false,
+          "Provider": "aws"
+        },
+        {
+          "Check": "acm_certificates_expiration_check",
+          "ConfigKey": "days_to_expire_threshold",
+          "Operator": "gte",
+          "Value": 7,
+          "Provider": "aws"
+        }
+      ]
+    },
+    {
+      "id": "SC.L2-3.13.2",
+      "description": "Employ architectural designs, software development techniques, and systems engineering principles that promote effective information security within organizational systems.",
+      "attributes": {
+        "Domain": "System and Communications Protection",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.13.2"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "SC.L2-3.13.3",
+      "description": "Separate user functionality from system management functionality.",
+      "attributes": {
+        "Domain": "System and Communications Protection",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.13.3"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "SC.L2-3.13.4",
+      "description": "Prevent unauthorized and unintended information transfer via shared system resources.",
+      "attributes": {
+        "Domain": "System and Communications Protection",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.13.4"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "SC.L2-3.13.5",
+      "description": "Implement subnetworks for publicly accessible system components that are physically or logically separated from internal networks.",
+      "attributes": {
+        "Domain": "System and Communications Protection",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.13.5"
+      },
+      "checks": {
+        "aws": [
+          "awslambda_function_not_publicly_accessible",
+          "awslambda_function_url_public",
+          "ec2_confidential_workload_host_public_ip",
+          "ec2_ebs_public_snapshot",
+          "ec2_instance_public_ip",
+          "ec2_networkacl_allow_ingress_any_port",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
+          "ec2_securitygroup_default_restrict_traffic",
+          "elb_ssl_listeners",
+          "elbv2_waf_acl_attached",
+          "emr_cluster_master_nodes_no_public_ip",
+          "opensearch_service_domains_node_to_node_encryption_enabled",
+          "rds_instance_no_public_access",
+          "rds_snapshots_public_access",
+          "redshift_cluster_public_access",
+          "s3_account_level_public_access_blocks",
+          "s3_bucket_policy_public_write_access",
+          "s3_bucket_public_access",
+          "s3_bucket_secure_transport_policy",
+          "sagemaker_notebook_instance_without_direct_internet_access_configured"
+        ],
+        "azure": [
+          "aisearch_service_not_publicly_accessible",
+          "aks_clusters_created_with_private_nodes",
+          "aks_clusters_public_access_disabled",
+          "app_function_not_publicly_accessible",
+          "containerregistry_not_publicly_accessible",
+          "containerregistry_uses_private_link",
+          "cosmosdb_account_public_network_access_disabled",
+          "cosmosdb_account_use_private_endpoints",
+          "databricks_workspace_no_public_ip_enabled",
+          "databricks_workspace_public_network_access_disabled",
+          "databricks_workspace_vnet_injection_enabled",
+          "keyvault_access_only_through_private_endpoints",
+          "keyvault_private_endpoints",
+          "network_subnet_nsg_associated",
+          "postgresql_flexible_server_allow_access_services_disabled",
+          "storage_account_public_network_access_disabled",
+          "storage_ensure_private_endpoints_in_storage_accounts"
+        ],
+        "gcp": [
+          "cloudfunction_function_inside_vpc",
+          "cloudsql_instance_private_ip_assignment",
+          "cloudsql_instance_public_access",
+          "cloudsql_instance_public_ip",
+          "compute_firewall_ssh_access_from_the_internet_allowed",
+          "compute_instance_public_ip",
+          "compute_network_default_in_use",
+          "compute_network_not_legacy"
+        ],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "SC.L2-3.13.6",
+      "description": "Deny network communications traffic by default and allow network communications traffic by exception (i.e., deny all, permit by exception).",
+      "attributes": {
+        "Domain": "System and Communications Protection",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.13.6"
+      },
+      "checks": {
+        "aws": [
+          "ec2_networkacl_allow_ingress_any_port",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
+          "ec2_securitygroup_default_restrict_traffic"
+        ],
+        "azure": [
+          "cosmosdb_account_firewall_use_selected_networks",
+          "network_http_internet_access_restricted",
+          "network_rdp_internet_access_restricted",
+          "network_ssh_internet_access_restricted",
+          "network_udp_internet_access_restricted",
+          "sqlserver_unrestricted_inbound_access",
+          "storage_default_network_access_rule_is_denied"
+        ],
+        "gcp": [
+          "cloudsql_instance_public_access",
+          "compute_firewall_rdp_access_from_the_internet_allowed",
+          "compute_firewall_ssh_access_from_the_internet_allowed",
+          "compute_network_default_in_use"
+        ],
+        "alibabacloud": [
+          "ecs_securitygroup_restrict_rdp_internet",
+          "ecs_securitygroup_restrict_ssh_internet"
+        ],
+        "oraclecloud": [
+          "network_default_security_list_restricts_traffic",
+          "network_security_group_ingress_from_internet_to_rdp_port",
+          "network_security_group_ingress_from_internet_to_ssh_port",
+          "network_security_list_ingress_from_internet_to_rdp_port",
+          "network_security_list_ingress_from_internet_to_ssh_port"
+        ],
+        "m365": []
+      }
+    },
+    {
+      "id": "SC.L2-3.13.7",
+      "description": "Prevent remote devices from simultaneously establishing non-remote connections with organizational systems and communicating via some other connection to resources in external networks (i.e., split tunneling).",
+      "attributes": {
+        "Domain": "System and Communications Protection",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.13.7"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "SC.L2-3.13.8",
+      "description": "Implement cryptographic mechanisms to prevent unauthorized disclosure of CUI during transmission unless otherwise protected by alternative physical safeguards.",
+      "attributes": {
+        "Domain": "System and Communications Protection",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.13.8"
+      },
+      "checks": {
+        "aws": [
+          "acm_certificates_expiration_check",
+          "elb_ssl_listeners",
+          "opensearch_service_domains_node_to_node_encryption_enabled",
+          "s3_bucket_secure_transport_policy"
+        ],
+        "azure": [
+          "app_ensure_http_is_redirected_to_https",
+          "app_function_ensure_http_is_redirected_to_https",
+          "app_minimum_tls_version_12",
+          "cosmosdb_account_minimum_tls_version",
+          "mysql_flexible_server_minimum_tls_version_12",
+          "mysql_flexible_server_ssl_connection_enabled",
+          "postgresql_flexible_server_enforce_ssl_enabled",
+          "sqlserver_recommended_minimal_tls_version",
+          "storage_ensure_minimum_tls_version_12",
+          "storage_secure_transfer_required_is_enabled",
+          "storage_smb_channel_encryption_with_secure_algorithm",
+          "storage_smb_protocol_version_is_latest"
+        ],
+        "gcp": [
+          "cloudsql_instance_ssl_connections"
+        ],
+        "alibabacloud": [
+          "oss_bucket_secure_transport_enabled",
+          "rds_instance_ssl_enabled"
+        ],
+        "oraclecloud": [],
+        "m365": []
+      },
+      "config_requirements": [
+        {
+          "Check": "sqlserver_recommended_minimal_tls_version",
+          "ConfigKey": "recommended_minimal_tls_versions",
+          "Operator": "subset",
+          "Value": [
+            "1.2",
+            "1.3"
+          ],
+          "Provider": "azure"
+        },
+        {
+          "Check": "storage_smb_channel_encryption_with_secure_algorithm",
+          "ConfigKey": "recommended_smb_channel_encryption_algorithms",
+          "Operator": "subset",
+          "Value": [
+            "AES-256-GCM"
+          ],
+          "Provider": "azure"
+        },
+        {
+          "Check": "acm_certificates_expiration_check",
+          "ConfigKey": "days_to_expire_threshold",
+          "Operator": "gte",
+          "Value": 7,
+          "Provider": "aws"
+        }
+      ]
+    },
+    {
+      "id": "SC.L2-3.13.9",
+      "description": "Terminate network connections associated with communications sessions at the end of the sessions or after a defined period of inactivity.",
+      "attributes": {
+        "Domain": "System and Communications Protection",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.13.9"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": [
+          "entra_admin_users_sign_in_frequency_enabled",
+          "entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "entra_admin_users_sign_in_frequency_enabled",
+          "ConfigKey": "sign_in_frequency",
+          "Operator": "lte",
+          "Value": 4,
+          "Provider": "m365"
+        }
+      ]
+    },
+    {
+      "id": "SC.L2-3.13.10",
+      "description": "Establish and manage cryptographic keys for cryptography employed in organizational systems.",
+      "attributes": {
+        "Domain": "System and Communications Protection",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.13.10"
+      },
+      "checks": {
+        "aws": [
+          "kms_cmk_not_deleted_unintentionally",
+          "kms_cmk_rotation_enabled",
+          "kms_key_not_publicly_accessible"
+        ],
+        "azure": [
+          "keyvault_key_expiration_set_in_non_rbac",
+          "keyvault_key_rotation_enabled",
+          "keyvault_rbac_enabled",
+          "keyvault_rbac_key_expiration_set",
+          "keyvault_recoverable"
+        ],
+        "gcp": [
+          "iam_role_kms_enforce_separation_of_duties",
+          "kms_key_not_publicly_accessible",
+          "kms_key_rotation_enabled",
+          "kms_key_rotation_max_90_days"
+        ],
+        "alibabacloud": [
+          "rds_instance_tde_key_custom"
+        ],
+        "oraclecloud": [
+          "kms_key_rotation_enabled"
+        ],
+        "m365": []
+      }
+    },
+    {
+      "id": "SC.L2-3.13.11",
+      "description": "Employ FIPS-validated cryptography when used to protect the confidentiality of CUI.",
+      "attributes": {
+        "Domain": "System and Communications Protection",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.13.11"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "SC.L2-3.13.12",
+      "description": "Prohibit remote activation of collaborative computing devices and provide indication of devices in use to users present at the device.[29].",
+      "attributes": {
+        "Domain": "System and Communications Protection",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.13.12"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": [
+          "teams_meeting_external_control_disabled"
+        ]
+      }
+    },
+    {
+      "id": "SC.L2-3.13.13",
+      "description": "Control and monitor the use of mobile code.",
+      "attributes": {
+        "Domain": "System and Communications Protection",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.13.13"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "SC.L2-3.13.14",
+      "description": "Control and monitor the use of Voice over Internet Protocol (VoIP) technologies.",
+      "attributes": {
+        "Domain": "System and Communications Protection",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.13.14"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "SC.L2-3.13.15",
+      "description": "Protect the authenticity of communications sessions.",
+      "attributes": {
+        "Domain": "System and Communications Protection",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.13.15"
+      },
+      "checks": {
+        "aws": [
+          "elb_ssl_listeners"
+        ],
+        "azure": [
+          "app_client_certificates_on"
+        ],
+        "gcp": [
+          "cloudsql_instance_ssl_connections"
+        ],
+        "alibabacloud": [
+          "oss_bucket_secure_transport_enabled",
+          "rds_instance_ssl_enabled"
+        ],
+        "oraclecloud": [],
+        "m365": [
+          "defender_antiphishing_policy_configured",
+          "defender_domain_dkim_enabled",
+          "exchange_organization_reject_direct_send_enabled"
+        ]
+      }
+    },
+    {
+      "id": "SC.L2-3.13.16",
+      "description": "Protect the confidentiality of CUI at rest.",
+      "attributes": {
+        "Domain": "System and Communications Protection",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.13.16"
+      },
+      "checks": {
+        "aws": [
+          "cloudtrail_kms_encryption_enabled",
+          "cloudwatch_log_group_kms_encryption_enabled",
+          "dynamodb_tables_kms_cmk_encryption_enabled",
+          "ec2_ebs_volume_encryption",
+          "efs_encryption_at_rest_enabled",
+          "opensearch_service_domains_encryption_at_rest_enabled",
+          "rds_instance_storage_encrypted",
+          "s3_bucket_default_encryption",
+          "sagemaker_notebook_instance_encryption_enabled",
+          "sns_topics_kms_encryption_at_rest_enabled"
+        ],
+        "azure": [
+          "databricks_workspace_cmk_encryption_enabled",
+          "monitor_storage_account_with_activity_logs_cmk_encrypted",
+          "sqlserver_tde_encrypted_with_cmk",
+          "sqlserver_tde_encryption_enabled",
+          "storage_ensure_encryption_with_customer_managed_keys",
+          "storage_infrastructure_encryption_is_enabled",
+          "vm_ensure_attached_disks_encrypted_with_cmk",
+          "vm_ensure_unattached_disks_encrypted_with_cmk"
+        ],
+        "gcp": [
+          "bigquery_dataset_cmk_encryption",
+          "bigquery_table_cmk_encryption",
+          "cloudsql_instance_cmek_encryption_enabled",
+          "compute_instance_encryption_with_csek_enabled",
+          "dataproc_encrypted_with_cmks_disabled"
+        ],
+        "alibabacloud": [
+          "ecs_attached_disk_encrypted",
+          "ecs_unattached_disk_encrypted",
+          "rds_instance_tde_enabled",
+          "rds_instance_tde_key_custom"
+        ],
+        "oraclecloud": [
+          "blockstorage_block_volume_encrypted_with_cmk",
+          "blockstorage_boot_volume_encrypted_with_cmk",
+          "filestorage_file_system_encrypted_with_cmk",
+          "objectstorage_bucket_encrypted_with_cmk"
+        ],
+        "m365": []
+      }
+    },
+    {
+      "id": "SI.L2-3.14.1",
+      "description": "Identify, report, and correct system flaws in a timely manner.",
+      "attributes": {
+        "Domain": "System and Information Integrity",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.14.1"
+      },
+      "checks": {
+        "aws": [
+          "guardduty_is_enabled",
+          "securityhub_enabled"
+        ],
+        "azure": [
+          "defender_auto_provisioning_vulnerabilty_assessments_machines_on",
+          "defender_container_images_resolved_vulnerabilities",
+          "defender_ensure_system_updates_are_applied"
+        ],
+        "gcp": [
+          "artifacts_container_analysis_enabled",
+          "gcr_container_scanning_enabled"
+        ],
+        "alibabacloud": [
+          "ecs_instance_latest_os_patches_applied",
+          "securitycenter_vulnerability_scan_enabled"
+        ],
+        "oraclecloud": [],
+        "m365": []
+      },
+      "config_requirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false,
+          "Provider": "aws"
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false,
+          "Provider": "aws"
+        }
+      ]
+    },
+    {
+      "id": "SI.L2-3.14.2",
+      "description": "Provide protection from malicious code at designated locations within organizational systems.",
+      "attributes": {
+        "Domain": "System and Information Integrity",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.14.2"
+      },
+      "checks": {
+        "aws": [
+          "guardduty_ec2_malware_protection_enabled",
+          "guardduty_s3_protection_enabled"
+        ],
+        "azure": [
+          "defender_assessments_vm_endpoint_protection_installed"
+        ],
+        "gcp": [],
+        "alibabacloud": [
+          "ecs_instance_endpoint_protection_installed"
+        ],
+        "oraclecloud": [],
+        "m365": [
+          "defender_atp_safe_attachments_and_docs_configured",
+          "defender_malware_policy_common_attachments_filter_enabled",
+          "defender_malware_policy_comprehensive_attachments_filter_applied",
+          "defender_safe_attachments_policy_enabled",
+          "defender_strict_preset_security_policy_enabled",
+          "defender_zap_for_teams_enabled"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "defender_malware_policy_comprehensive_attachments_filter_applied",
+          "ConfigKey": "recommended_blocked_file_types",
+          "Operator": "superset",
+          "Value": [
+            "ace",
+            "ani",
+            "apk",
+            "app",
+            "appx",
+            "arj",
+            "bat",
+            "cab",
+            "cmd",
+            "com",
+            "deb",
+            "dex",
+            "dll",
+            "docm",
+            "elf",
+            "exe",
+            "hta",
+            "img",
+            "iso",
+            "jar",
+            "jnlp",
+            "kext",
+            "lha",
+            "lib",
+            "library",
+            "lnk",
+            "lzh",
+            "macho",
+            "msc",
+            "msi",
+            "msix",
+            "msp",
+            "mst",
+            "pif",
+            "ppa",
+            "ppam",
+            "reg",
+            "rev",
+            "scf",
+            "scr",
+            "sct",
+            "sys",
+            "uif",
+            "vb",
+            "vbe",
+            "vbs",
+            "vxd",
+            "wsc",
+            "wsf",
+            "wsh",
+            "xll",
+            "xz",
+            "z"
+          ],
+          "Provider": "m365"
+        }
+      ]
+    },
+    {
+      "id": "SI.L2-3.14.3",
+      "description": "Monitor system security alerts and advisories and take action in response.",
+      "attributes": {
+        "Domain": "System and Information Integrity",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.14.3"
+      },
+      "checks": {
+        "aws": [
+          "guardduty_is_enabled",
+          "securityhub_enabled",
+          "ssm_managed_compliant_patching"
+        ],
+        "azure": [
+          "defender_additional_email_configured_with_a_security_contact",
+          "defender_ensure_notify_alerts_severity_is_high",
+          "defender_ensure_notify_emails_to_owners"
+        ],
+        "gcp": [
+          "iam_organization_essential_contacts_configured"
+        ],
+        "alibabacloud": [
+          "ecs_instance_latest_os_patches_applied",
+          "securitycenter_notification_enabled_high_risk"
+        ],
+        "oraclecloud": [
+          "events_rule_cloudguard_problems"
+        ],
+        "m365": [
+          "defender_malware_policy_notifications_internal_users_malware_enabled"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false,
+          "Provider": "aws"
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false,
+          "Provider": "aws"
+        }
+      ]
+    },
+    {
+      "id": "SI.L2-3.14.4",
+      "description": "Update malicious code protection mechanisms when new releases are available.",
+      "attributes": {
+        "Domain": "System and Information Integrity",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.14.4"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "SI.L2-3.14.5",
+      "description": "Perform periodic scans of organizational systems and real-time scans of files from external sources as files are downloaded, opened, or executed.",
+      "attributes": {
+        "Domain": "System and Information Integrity",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.14.5"
+      },
+      "checks": {
+        "aws": [
+          "guardduty_ec2_malware_protection_enabled"
+        ],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": [
+          "defender_atp_safe_attachments_and_docs_configured",
+          "defender_safe_attachments_policy_enabled",
+          "defender_zap_for_teams_enabled"
+        ]
+      }
+    },
+    {
+      "id": "SI.L2-3.14.6",
+      "description": "Monitor organizational systems, including inbound and outbound communications traffic, to detect attacks and indicators of potential attacks.",
+      "attributes": {
+        "Domain": "System and Information Integrity",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.14.6"
+      },
+      "checks": {
+        "aws": [
+          "apigateway_restapi_logging_enabled",
+          "cloudtrail_multi_region_enabled",
+          "cloudtrail_s3_dataevents_read_enabled",
+          "cloudtrail_s3_dataevents_write_enabled",
+          "elb_logging_enabled",
+          "elbv2_logging_enabled",
+          "guardduty_is_enabled",
+          "rds_instance_integration_cloudwatch_logs",
+          "s3_bucket_server_access_logging_enabled",
+          "securityhub_enabled",
+          "vpc_flow_logs_enabled"
+        ],
+        "azure": [
+          "network_flow_log_captured_sent"
+        ],
+        "gcp": [
+          "compute_loadbalancer_logging_enabled",
+          "compute_network_dns_logging_enabled",
+          "compute_subnet_flow_logs_enabled"
+        ],
+        "alibabacloud": [
+          "securitycenter_advanced_or_enterprise_edition",
+          "vpc_flow_logs_enabled"
+        ],
+        "oraclecloud": [
+          "network_vcn_subnet_flow_logs_enabled"
+        ],
+        "m365": []
+      },
+      "config_requirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false,
+          "Provider": "aws"
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false,
+          "Provider": "aws"
+        }
+      ]
+    },
+    {
+      "id": "SI.L2-3.14.7",
+      "description": "Identify unauthorized use of organizational systems.",
+      "attributes": {
+        "Domain": "System and Information Integrity",
+        "Level": "Level 2",
+        "SourceRequirement": "NIST SP 800-171 Rev 2 3.14.7"
+      },
+      "checks": {
+        "aws": [
+          "apigateway_restapi_logging_enabled",
+          "cloudtrail_multi_region_enabled",
+          "cloudtrail_s3_dataevents_read_enabled",
+          "cloudtrail_s3_dataevents_write_enabled",
+          "elb_logging_enabled",
+          "elbv2_logging_enabled",
+          "guardduty_is_enabled",
+          "rds_instance_integration_cloudwatch_logs",
+          "s3_bucket_server_access_logging_enabled",
+          "securityhub_enabled",
+          "vpc_flow_logs_enabled"
+        ],
+        "azure": [
+          "defender_ensure_wdatp_is_enabled",
+          "keyvault_logging_enabled",
+          "monitor_diagnostic_setting_with_appropriate_categories",
+          "sqlserver_auditing_enabled"
+        ],
+        "gcp": [
+          "cloudstorage_audit_logs_enabled",
+          "iam_audit_logs_enabled",
+          "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_compute_configuration_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled"
+        ],
+        "alibabacloud": [
+          "actiontrail_multi_region_enabled",
+          "sls_management_console_authentication_failures_alert_enabled",
+          "sls_management_console_signin_without_mfa_alert_enabled",
+          "sls_root_account_usage_alert_enabled",
+          "sls_unauthorized_api_calls_alert_enabled"
+        ],
+        "oraclecloud": [
+          "events_rule_local_user_authentication",
+          "events_rule_user_changes"
+        ],
+        "m365": [
+          "defender_antispam_outbound_policy_configured",
+          "entra_identity_protection_sign_in_risk_enabled",
+          "entra_identity_protection_user_risk_enabled",
+          "purview_audit_log_search_enabled"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false,
+          "Provider": "aws"
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false,
+          "Provider": "aws"
+        }
+      ]
+    },
+    {
+      "id": "AC.L3-3.1.2e",
+      "description": "Restrict access to systems and system components to only those information resources that are owned, provisioned, or issued by the organization.",
+      "attributes": {
+        "Domain": "Access Control",
+        "Level": "Level 3",
+        "SourceRequirement": "NIST SP 800-172 Feb2021 3.1.2e"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "AC.L3-3.1.3e",
+      "description": "Employ secure information transfer solutions to control information flows between security domains on connected systems.",
+      "attributes": {
+        "Domain": "Access Control",
+        "Level": "Level 3",
+        "SourceRequirement": "NIST SP 800-172 Feb2021 3.1.3e"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "AT.L3-3.2.1e",
+      "description": "Provide awareness training upon initial hire, following a significant cyber event, and at least annually, focused on recognizing and responding to threats from social engineering, advanced persistent threat actors, breaches, and suspicious behaviors; update the training at least annually or when there are significant changes to the threat.",
+      "attributes": {
+        "Domain": "Awareness and Training",
+        "Level": "Level 3",
+        "SourceRequirement": "NIST SP 800-172 Feb2021 3.2.1e"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "AT.L3-3.2.2e",
+      "description": "Include practical exercises in awareness training for all users, tailored by roles, to include general users, users with specialized roles, and privileged users, that are aligned with current threat scenarios and provide feedback to individuals involved in the training and their supervisors.",
+      "attributes": {
+        "Domain": "Awareness and Training",
+        "Level": "Level 3",
+        "SourceRequirement": "NIST SP 800-172 Feb2021 3.2.2e"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CM.L3-3.4.1e",
+      "description": "Establish and maintain an authoritative source and repository to provide a trusted source and accountability for approved and implemented system components.",
+      "attributes": {
+        "Domain": "Configuration Management",
+        "Level": "Level 3",
+        "SourceRequirement": "NIST SP 800-172 Feb2021 3.4.1e"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CM.L3-3.4.2e",
+      "description": "Employ automated mechanisms to detect misconfigured or unauthorized system components; after detection, remove the components or place the components in a quarantine or remediation network to facilitate patching, re-configuration, or other mitigations.",
+      "attributes": {
+        "Domain": "Configuration Management",
+        "Level": "Level 3",
+        "SourceRequirement": "NIST SP 800-172 Feb2021 3.4.2e"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CM.L3-3.4.3e",
+      "description": "Employ automated discovery and management tools to maintain an up-to-date, complete, accurate, and readily available inventory of system components.",
+      "attributes": {
+        "Domain": "Configuration Management",
+        "Level": "Level 3",
+        "SourceRequirement": "NIST SP 800-172 Feb2021 3.4.3e"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "IA.L3-3.5.1e",
+      "description": "Identify and authenticate systems and system components, where possible, before establishing a network connection using bidirectional authentication that is cryptographically based and replay resistant.",
+      "attributes": {
+        "Domain": "Identification and Authentication",
+        "Level": "Level 3",
+        "SourceRequirement": "NIST SP 800-172 Feb2021 3.5.1e"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "IA.L3-3.5.3e",
+      "description": "Employ automated or manual/procedural mechanisms to prohibit system components from connecting to organizational systems unless the components are known, authenticated, in a properly configured state, or in a trust profile.",
+      "attributes": {
+        "Domain": "Identification and Authentication",
+        "Level": "Level 3",
+        "SourceRequirement": "NIST SP 800-172 Feb2021 3.5.3e"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "IR.L3-3.6.1e",
+      "description": "Establish and maintain a security operations center capability that operates 24/7, with allowance for remote/on-call staff.",
+      "attributes": {
+        "Domain": "Incident Response",
+        "Level": "Level 3",
+        "SourceRequirement": "NIST SP 800-172 Feb2021 3.6.1e"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "IR.L3-3.6.2e",
+      "description": "Establish and maintain a cyber-incident response team that can be deployed by the organization within 24 hours.",
+      "attributes": {
+        "Domain": "Incident Response",
+        "Level": "Level 3",
+        "SourceRequirement": "NIST SP 800-172 Feb2021 3.6.2e"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "PS.L3-3.9.2e",
+      "description": "Ensure that organizational systems are protected if adverse information develops or is obtained about individuals with access to CUI.",
+      "attributes": {
+        "Domain": "Personnel Security",
+        "Level": "Level 3",
+        "SourceRequirement": "NIST SP 800-172 Feb2021 3.9.2e"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "RA.L3-3.11.1e",
+      "description": "Employ threat intelligence, at a minimum from open or commercial sources, and any DoD-provided sources, as part of a risk assessment to guide and inform the development of organizational systems, security architectures, selection of security solutions, monitoring, threat hunting, and response and recovery activities.",
+      "attributes": {
+        "Domain": "Risk Assessment",
+        "Level": "Level 3",
+        "SourceRequirement": "NIST SP 800-172 Feb2021 3.11.1e"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "RA.L3-3.11.2e",
+      "description": "Conduct cyber threat hunting activities on an on-going aperiodic basis or when indications warrant, to search for indicators of compromise in organizational systems and detect, track, and disrupt threats that evade existing controls.",
+      "attributes": {
+        "Domain": "Risk Assessment",
+        "Level": "Level 3",
+        "SourceRequirement": "NIST SP 800-172 Feb2021 3.11.2e"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "RA.L3-3.11.3e",
+      "description": "Employ advanced automation and analytics capabilities in support of analysts to predict and identify risks to organizations, systems, and system components.",
+      "attributes": {
+        "Domain": "Risk Assessment",
+        "Level": "Level 3",
+        "SourceRequirement": "NIST SP 800-172 Feb2021 3.11.3e"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "RA.L3-3.11.4e",
+      "description": "Document or reference in the system security plan the security solution selected, the rationale for the security solution, and the risk determination.",
+      "attributes": {
+        "Domain": "Risk Assessment",
+        "Level": "Level 3",
+        "SourceRequirement": "NIST SP 800-172 Feb2021 3.11.4e"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "RA.L3-3.11.5e",
+      "description": "Assess the effectiveness of security solutions at least annually or upon receipt of relevant cyber threat information, or in response to a relevant cyber incident, to address anticipated risk to organizational systems and the organization based on current and accumulated threat intelligence.",
+      "attributes": {
+        "Domain": "Risk Assessment",
+        "Level": "Level 3",
+        "SourceRequirement": "NIST SP 800-172 Feb2021 3.11.5e"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "RA.L3-3.11.6e",
+      "description": "Assess, respond to, and monitor supply chain risks associated with organizational systems and system components.",
+      "attributes": {
+        "Domain": "Risk Assessment",
+        "Level": "Level 3",
+        "SourceRequirement": "NIST SP 800-172 Feb2021 3.11.6e"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "RA.L3-3.11.7e",
+      "description": "Develop a plan for managing supply chain risks associated with organizational systems and system components; update the plan at least annually, and upon receipt of relevant cyber threat information, or in response to a relevant cyber incident.",
+      "attributes": {
+        "Domain": "Risk Assessment",
+        "Level": "Level 3",
+        "SourceRequirement": "NIST SP 800-172 Feb2021 3.11.7e"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "CA.L3-3.12.1e",
+      "description": "Conduct penetration testing at least annually or when significant security changes are made to the system, leveraging automated scanning tools and ad hoc tests using subject matter experts.",
+      "attributes": {
+        "Domain": "Security Assessment",
+        "Level": "Level 3",
+        "SourceRequirement": "NIST SP 800-172 Feb2021 3.12.1e"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "SC.L3-3.13.4e",
+      "description": "Employ physical isolation techniques or logical isolation techniques or both in organizational systems and system components.",
+      "attributes": {
+        "Domain": "System and Communications Protection",
+        "Level": "Level 3",
+        "SourceRequirement": "NIST SP 800-172 Feb2021 3.13.4e"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "SI.L3-3.14.1e",
+      "description": "Verify the integrity of security critical and essential software using root of trust mechanisms or cryptographic signatures.",
+      "attributes": {
+        "Domain": "System and Information Integrity",
+        "Level": "Level 3",
+        "SourceRequirement": "NIST SP 800-172 Feb2021 3.14.1e"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [
+          "vm_trusted_launch_enabled"
+        ],
+        "gcp": [
+          "compute_instance_shielded_vm_enabled"
+        ],
+        "alibabacloud": [],
+        "oraclecloud": [
+          "compute_instance_secure_boot_enabled"
+        ],
+        "m365": []
+      }
+    },
+    {
+      "id": "SI.L3-3.14.3e",
+      "description": "Ensure that specialized assets including IoT, IIoT, OT, GFE, Restricted Information Systems, and test equipment are included in the scope of the specified enhanced security requirements or are segregated in purpose-specific networks.",
+      "attributes": {
+        "Domain": "System and Information Integrity",
+        "Level": "Level 3",
+        "SourceRequirement": "NIST SP 800-172 Feb2021 3.14.3e"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "SI.L3-3.14.6e",
+      "description": "Use threat indicator information and effective mitigations obtained from, at a minimum, open or commercial sources, and any DoD-provided sources, to guide and inform intrusion detection and threat hunting.",
+      "attributes": {
+        "Domain": "System and Information Integrity",
+        "Level": "Level 3",
+        "SourceRequirement": "NIST SP 800-172 Feb2021 3.14.6e"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "alibabacloud": [],
+        "oraclecloud": [],
+        "m365": []
+      }
+    }
+  ]
+}

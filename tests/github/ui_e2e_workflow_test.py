@@ -3,7 +3,7 @@ from pathlib import Path
 REPOSITORY_ROOT = Path(__file__).parents[2]
 WORKFLOW_PATH = REPOSITORY_ROOT / ".github/workflows/ui-e2e-tests-v2.yml"
 NODE_IMAGE_DIGEST = (
-    "sha256:d1b3b4da11eefd5941e7f0b9cf17783fc99d9c6fc34884a665f40a06dbdfc94f"
+    "sha256:f70403e87646dc51b45295f4b8b70cdad0b63d2297c4c9899119b03f7af7a6b3"
 )
 
 

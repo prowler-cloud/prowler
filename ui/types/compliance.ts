@@ -427,6 +427,23 @@ export interface CISControlsRequirement extends Requirement {
   implementation_groups?: string[];
 }
 
+// CMMC 2.0 (Cybersecurity Maturity Model Certification, 32 CFR Part 170).
+// Universal framework — flat attributes dict with Domain/Level/SourceRequirement.
+// `Domain` is the grouping key; `Level` (1/2/3) and `SourceRequirement` are
+// surfaced in the requirement detail drawer.
+export const CMMC_LEVEL = {
+  LEVEL_1: "Level 1",
+  LEVEL_2: "Level 2",
+  LEVEL_3: "Level 3",
+} as const;
+export type CMMCLevel = (typeof CMMC_LEVEL)[keyof typeof CMMC_LEVEL];
+
+export interface CMMCAttributesMetadata {
+  Domain: string;
+  Level: CMMCLevel;
+  SourceRequirement: string;
+}
+
 export interface AttributesItemData {
   type: "compliance-requirements-attributes";
   id: string;
@@ -452,6 +469,7 @@ export interface AttributesItemData {
         | OktaIDaaSStigAttributesMetadata[]
         | DORAAttributesMetadata[]
         | CISControlsAttributesMetadata[]
+        | CMMCAttributesMetadata[]
         | GenericAttributesMetadata[];
       check_ids: string[];
       // MITRE structure
