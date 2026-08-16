@@ -1,11 +1,26 @@
 "use client";
 
-import { Cloud, FileCheck2, Network, ShieldAlert } from "lucide-react";
+import {
+  Cloud,
+  FileCheck2,
+  type LucideIcon,
+  Network,
+  ShieldAlert,
+} from "lucide-react";
 import { type ReactNode, type SubmitEvent } from "react";
 
 import { LighthouseIconWithAura } from "@/components/icons";
 import { Button } from "@/components/shadcn/button/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/shadcn/tooltip";
 import { cn } from "@/lib/utils";
+import type {
+  LighthousePageSuggestion,
+  LighthousePageSuggestions,
+} from "@/types/lighthouse-context";
 
 import { ChatComposerPanel } from "./composer";
 import { DecryptedText } from "./decrypted-text";
@@ -47,7 +62,7 @@ interface ChatEmptyStateProps {
   onInputChange: (value: string) => void;
   onSubmit: (event: SubmitEvent<HTMLFormElement>) => void;
   onSubmitText: (text: string) => Promise<void>;
-  suggestions?: readonly string[];
+  suggestions?: LighthousePageSuggestions;
   footer?: ReactNode;
   // Side-panel variant: smaller logo and static (non-animated) copy — the
   // decrypt animation reflows multi-line text in narrow widths.
@@ -61,6 +76,9 @@ export function ChatEmptyState({
   compact = false,
   ...composerPanelProps
 }: ChatEmptyStateProps) {
+  const displayedSuggestions: readonly ChatSuggestion[] =
+    suggestions ?? LIGHTHOUSE_V2_SUGGESTIONS;
+
   return (
     <div className="flex min-h-0 flex-1 items-center justify-center px-4 py-10 md:px-8">
       <div className="mx-auto flex w-full max-w-5xl flex-col items-center gap-5">
@@ -113,36 +131,46 @@ export function ChatEmptyState({
           <span className="text-text-neutral-secondary basis-full text-center text-sm font-medium">
             Try Lighthouse AI for...
           </span>
-          {suggestions
-            ? suggestions.map((suggestion) => (
-                <Button
-                  key={suggestion}
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onInputChange(suggestion)}
-                >
-                  {suggestion}
-                </Button>
-              ))
-            : LIGHTHOUSE_V2_SUGGESTIONS.map((suggestion) => {
-                const Icon = suggestion.icon;
-                return (
-                  <Button
-                    key={suggestion.label}
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onInputChange(suggestion.prompt)}
-                  >
-                    <Icon className="size-4" />
-                    {suggestion.label}
-                  </Button>
-                );
-              })}
+          {displayedSuggestions.map((suggestion) => (
+            <SuggestionButton
+              key={suggestion.prompt}
+              suggestion={suggestion}
+              onSelect={onInputChange}
+            />
+          ))}
         </div>
         {footer ? <div className="w-full max-w-4xl">{footer}</div> : null}
       </div>
     </div>
+  );
+}
+
+interface ChatSuggestion extends LighthousePageSuggestion {
+  icon?: LucideIcon;
+}
+
+interface SuggestionButtonProps {
+  suggestion: ChatSuggestion;
+  onSelect: (prompt: string) => void;
+}
+
+function SuggestionButton({ suggestion, onSelect }: SuggestionButtonProps) {
+  const Icon = suggestion.icon;
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => onSelect(suggestion.prompt)}
+        >
+          {Icon ? <Icon className="size-4" /> : null}
+          {suggestion.label}
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent maxWidth="md">{suggestion.prompt}</TooltipContent>
+    </Tooltip>
   );
 }

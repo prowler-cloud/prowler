@@ -16,7 +16,9 @@ export const RiskSeverityChartSSR = async ({
 
   const findingsBySeverity = await getFindingsBySeverity({ filters });
 
-  if (!findingsBySeverity) {
+  // handleApiResponse resolves truthy on 4xx ({error, status}) and empty
+  // bodies ({success, status}), so only a payload with attributes is data.
+  if (!findingsBySeverity?.data?.attributes) {
     return (
       <div className="flex h-[400px] w-full items-center justify-center rounded-xl border border-zinc-900 bg-stone-950">
         <p className="text-zinc-400">Failed to load severity data</p>
@@ -30,7 +32,7 @@ export const RiskSeverityChartSSR = async ({
     medium = 0,
     low = 0,
     informational = 0,
-  } = findingsBySeverity?.data?.attributes || {};
+  } = findingsBySeverity.data.attributes;
 
   return (
     <>
