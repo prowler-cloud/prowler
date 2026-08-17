@@ -120,6 +120,13 @@ export interface SlackFixture {
   /** Slack refused the listing outright, with the reason named in `code`. */
   channelsRefusal: SlackRefusalFixture | null;
   /**
+   * The cursor `channelsRefusal` starts being answered from. Absent means from
+   * the first page, so the whole read fails; a page size means the first page
+   * is served and the refusal lands on the second — the partial read, where the
+   * picker has something to show and a reason why it is short.
+   */
+  channelsRefusalFromCursor?: number;
+  /**
    * Slack refused the channel the user chose, when the `PATCH` validated it.
    * Distinct from a listing refusal: the workspace answered the picker fine and
    * it is the destination itself that cannot be used.
@@ -390,6 +397,22 @@ export const unreadableCheckTimeSlackFixture = (): SlackFixture =>
       ...configuredInstall(),
       connectionLastCheckedAt: "0000-00-00T00:00:00Z",
     },
+  });
+
+/**
+ * The listing refused partway through: the first cursor page is served and
+ * Slack rate limits the second. What a workspace larger than one page looks
+ * like when `conversations.list` runs out of tier-2 budget mid-read — the
+ * channels already read are still usable, and the refusal is only the reason
+ * the list stops where it does.
+ */
+export const partiallyReadSlackFixture = (
+  overrides: Partial<SlackFixture> = {},
+): SlackFixture =>
+  slackFixtureWithDefaultChannel(SLACK_PUBLIC_CHANNEL, {
+    channelsRefusal: SLACK_RATE_LIMITED_REFUSAL,
+    channelsRefusalFromCursor: SLACK_CHANNELS_PAGE_SIZE,
+    ...overrides,
   });
 
 /**

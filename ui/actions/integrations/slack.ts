@@ -8,6 +8,7 @@ import { apiBaseUrl, getAuthHeaders, parseStringify } from "@/lib";
 import {
   readSlackFailure,
   SLACK_GENERIC_ERROR_MESSAGE,
+  SLACK_PARTIAL_CHANNEL_LIST_MESSAGE,
   SLACK_UNREADABLE_RESULT_MESSAGE,
   slackErrorMessage,
   slackRateLimitMessage,
@@ -295,6 +296,13 @@ export const exchangeSlackOAuthCode = async (
 
 interface SlackChannelsSuccess {
   channels: SlackChannelOption[];
+  /**
+   * Present when these channels are only part of the workspace's, carrying the
+   * sentence that says why. A read that stopped early with something to show is
+   * a success — the caller renders the picker *and* the reason, rather than
+   * choosing between them.
+   */
+  incomplete?: string;
 }
 
 export type SlackChannelsResult = SlackChannelsSuccess | SlackActionError;
@@ -317,6 +325,12 @@ const MAX_CHANNEL_PAGES = 20;
  * the same endpoint. The list is cursor-paginated, and `links.next` is followed
  * opaquely — the contract deliberately does not pin the parameter naming, so
  * the UI never constructs a cursor of its own.
+ *
+ * Every way the pagination can stop early reports through `incomplete` rather
+ * than through a failure, as long as something was read: a workspace whose
+ * listing is refused halfway is exactly the large one whose channels the picker
+ * most needs, and answering it with an error alone throws away thousands of
+ * usable options — permanently, since the next read hits the same limit.
  */
 export const getSlackChannels = async (
   integrationId: string,
@@ -329,6 +343,7 @@ export const getSlackChannels = async (
 
   const listing = new URL(`${apiBaseUrl}/integrations/${id}/slack/channels`);
   let next: string | null = listing.toString();
+  let incomplete: string | null = null;
 
   try {
     for (let page = 0; next && page < MAX_CHANNEL_PAGES; page += 1) {
@@ -339,12 +354,17 @@ export const getSlackChannels = async (
       });
 
       if (!response.ok) {
-        return {
-          error: await errorMessageFrom(
-            response,
-            `Unable to read the workspace's channels: ${response.statusText}`,
-          ),
-        };
+        const message = await errorMessageFrom(
+          response,
+          `Unable to read the workspace's channels: ${response.statusText}`,
+        );
+
+        // The refusal explains a short list instead of replacing it, once there
+        // is a list: Slack's own reason — the wait a `429` names, above all — is
+        // the best thing anyone can say about why it stops there.
+        return channels.length > 0
+          ? { channels, incomplete: message }
+          : { error: message };
       }
 
       // A page that is not JSON reads as no channels, rather than throwing a
@@ -368,14 +388,26 @@ export const getSlackChannels = async (
       // cursor keeps this listing's path. Followed only while it stays on the
       // origin the listing was read from: every page is fetched with the
       // tenant's token, and `fetch` can only strip that from a redirect, never
-      // from a hop made here. An off-origin link ends the pagination.
-      next =
-        candidate !== null && candidate.origin === listing.origin
-          ? candidate.toString()
-          : null;
+      // from a hop made here. An off-origin link ends the pagination — which is
+      // the same short list to the user as running out of pages, so it is said
+      // the same way.
+      if (candidate === null) {
+        next = null;
+      } else if (candidate.origin === listing.origin) {
+        next = candidate.toString();
+      } else {
+        next = null;
+        incomplete = SLACK_PARTIAL_CHANNEL_LIST_MESSAGE;
+      }
     }
 
-    return { channels };
+    // A link still waiting when the budget ran out. Checked rather than assumed
+    // from the page count: a workspace of exactly `MAX_CHANNEL_PAGES` pages was
+    // read to the end, and claiming otherwise would send its user looking for
+    // channels that are already on the list.
+    if (next) incomplete = SLACK_PARTIAL_CHANNEL_LIST_MESSAGE;
+
+    return incomplete === null ? { channels } : { channels, incomplete };
   } catch (error) {
     return handleApiError(error);
   }

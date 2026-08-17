@@ -62,6 +62,10 @@ export const SlackIntegrationManager = ({
 
   const [channels, setChannels] = useState<SlackChannelOption[]>([]);
   const [channelsError, setChannelsError] = useState<string | null>(null);
+  // Why the list is short of the workspace, when it is. Held beside the
+  // channels rather than folded into `channelsError`: the two are different
+  // claims — one replaces the picker, the other qualifies it.
+  const [channelsNotice, setChannelsNotice] = useState<string | null>(null);
   const [isLoadingChannels, setIsLoadingChannels] = useState(false);
   // Bumped by the refresh affordance: a channel invited to in Slack after the
   // page loaded only shows up on a re-read.
@@ -119,18 +123,23 @@ export const SlackIntegrationManager = ({
       .then((result) => {
         if (cancelled) return;
 
+        // Set on every path, including the ones that leave it empty: a notice
+        // left behind by an earlier read would qualify a list it is not about.
         if ("error" in result) {
           setChannels([]);
           setChannelsError(result.error);
+          setChannelsNotice(null);
         } else {
           setChannels(result.channels);
           setChannelsError(null);
+          setChannelsNotice(result.incomplete ?? null);
         }
       })
       .catch(() => {
         if (cancelled) return;
         setChannels([]);
         setChannelsError("Could not reach Slack to read the channel list.");
+        setChannelsNotice(null);
       })
       .finally(() => {
         if (!cancelled) setIsLoadingChannels(false);
@@ -336,6 +345,7 @@ export const SlackIntegrationManager = ({
                 onChange={setSelectedChannelId}
                 isLoading={isLoadingChannels}
                 error={channelsError}
+                incompleteNotice={channelsNotice}
                 onRefresh={() => setChannelReloads((reloads) => reloads + 1)}
                 disabled={isSavingChannel}
               />

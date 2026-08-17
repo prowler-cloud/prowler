@@ -12,6 +12,7 @@ import {
   configuredSlackFixture,
   connectedSlackFixture,
   INTEGRATIONS_SERVER_ERROR_DETAIL,
+  partiallyReadSlackFixture,
   SLACK_CHANNEL_NOT_FOUND_REFUSAL,
   SLACK_MISSING_SCOPE_CODE,
   SLACK_MISSING_SCOPE_REFUSAL,
@@ -447,6 +448,48 @@ describe("choosing a destination channel", () => {
     // recorded destination is untouched.
     expect(message).not.toMatch(/permission/);
     expect(await harness.defaultChannel()).toBe(SLACK_PUBLIC_CHANNEL.name);
+  }, 30000);
+
+  it("keeps the channels it did read on offer when Slack refuses a later page", async () => {
+    // Given — a workspace larger than one cursor page whose second page is rate
+    // limited: `conversations.list` is tier 2 (contract, Errors), so a read of a
+    // real workspace runs out of budget partway through rather than at page one.
+    const harness = new SlackIntegrationHarness(partiallyReadSlackFixture());
+
+    // When
+    await harness.mount();
+
+    // Then — the picker offers what was read instead of being replaced by the
+    // refusal: on a workspace this size the alternative is a dead end, since
+    // every reload re-runs the same reads into the same limit.
+    expect(await harness.channelOptions()).toEqual([
+      SLACK_PUBLIC_CHANNEL.name,
+      SLACK_SECOND_PUBLIC_CHANNEL.name,
+    ]);
+    expect(harness.saysChannelsUnreadable()).toBe(false);
+
+    // And — the wait Slack asked for is still said, as the explanation for the
+    // short list rather than as the reason there is no list.
+    const notice = harness.partialListNotice();
+    expect(notice).toMatch(/rate limiting/);
+    expect(notice).toMatch(/about 30 seconds/);
+
+    // And — a partial read says nothing about the destination already recorded.
+    expect(await harness.defaultChannel()).toBe(SLACK_PUBLIC_CHANNEL.name);
+    expect(harness.offersTestMessage()).toBe(true);
+  }, 60000);
+
+  it("says nothing about a short list when the whole workspace was read", async () => {
+    // Given — the default workspace, which spans two cursor pages and is read to
+    // the end. The notice is a claim about the workspace, so making it when
+    // nothing was missed would send a user hunting for channels that are there.
+    const harness = new SlackIntegrationHarness(connectedSlackFixture());
+
+    // When
+    await harness.mount();
+
+    // Then
+    expect(harness.partialListNotice()).toBeNull();
   }, 30000);
 
   it("falls back to the API's wording when the listing fails upstream", async () => {

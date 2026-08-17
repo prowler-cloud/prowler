@@ -284,16 +284,26 @@ export const handlersForSlack = (fx: SlackFixture) => {
     http.get<{ id: string }>(
       `${API}/integrations/:id/slack/channels`,
       ({ params, request }) => {
-        // A refusal named for this endpoint wins over the fixture's blanket
-        // rate limiting, which is the coarser switch of the two.
-        if (fx.channelsRefusal) return refuse(fx.channelsRefusal);
-        if (fx.rateLimited) return rateLimited();
-
         // Cursor pagination: the UI follows `links.next` opaquely, so the
-        // cursor's shape is this fixture's business alone.
+        // cursor's shape is this fixture's business alone. Read before the
+        // refusals: which page is being asked for decides whether this one is
+        // refused at all.
         const cursor = Number(
           new URL(request.url).searchParams.get(CHANNEL_CURSOR_PARAM) ?? "0",
         );
+
+        // A refusal named for this endpoint wins over the fixture's blanket
+        // rate limiting, which is the coarser switch of the two. It applies
+        // from the cursor the fixture names, so a read that fails partway
+        // through is expressible and not only one that fails outright.
+        if (
+          fx.channelsRefusal &&
+          cursor >= (fx.channelsRefusalFromCursor ?? 0)
+        ) {
+          return refuse(fx.channelsRefusal);
+        }
+        if (fx.rateLimited) return rateLimited();
+
         const nextCursor = cursor + fx.channelsPageSize;
         const page = fx.channels.slice(cursor, nextCursor);
         const hasMore = nextCursor < fx.channels.length;

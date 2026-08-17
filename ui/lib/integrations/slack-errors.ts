@@ -40,6 +40,17 @@ export const SLACK_RATE_LIMITED_MESSAGE =
   "Slack is rate limiting Prowler right now. Try again in a few moments.";
 
 /**
+ * For a channel list that stopped short of the workspace — the page budget ran
+ * out, or `links.next` left the API's origin. Not phrased as a failure: the
+ * channels that were read are usable, and the only thing lost is the certainty
+ * that they are all of them. Says so explicitly, because the picker's other
+ * explanation for a missing channel — inviting `@Prowler` to it — is the wrong
+ * one here and is on screen either way.
+ */
+export const SLACK_PARTIAL_CHANNEL_LIST_MESSAGE =
+  "This workspace has more channels than Prowler reads in one go, so this list is not all of them. A channel missing from it is not necessarily one @Prowler has to be invited to.";
+
+/**
  * For a `2xx` the UI could not read. Not phrased as a failure: the install
  * happened, only the workspace cannot be named.
  */

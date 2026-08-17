@@ -10,6 +10,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   SLACK_GENERIC_ERROR_MESSAGE,
+  SLACK_PARTIAL_CHANNEL_LIST_MESSAGE,
   SLACK_UNREADABLE_RESULT_MESSAGE,
 } from "@/lib/integrations/slack-errors";
 import { SentryErrorSource, SentryErrorType } from "@/sentry";
@@ -336,6 +337,19 @@ const channelOption = (channel: { id: string; name: string }) => ({
 const requestedUrls = (): string[] =>
   fetchMock.mock.calls.map(([url]) => String(url));
 
+/**
+ * `MAX_CHANNEL_PAGES` in the action, which a `"use server"` module cannot
+ * export: only async functions may leave one.
+ */
+const MAX_CHANNEL_PAGES = 20;
+
+const channelOptions = (count: number) =>
+  Array.from({ length: count }, () => channelOption(FIRST_CHANNEL));
+
+/** What a `429` carrying `Retry-After: 30` is turned into. */
+const RATE_LIMITED_MESSAGE =
+  "Slack is rate limiting Prowler right now. Try again in about 30 seconds.";
+
 describe("getSlackChannels", () => {
   it("follows a cursor-only `next` on the listing's own URL, not on the API root", async () => {
     // The link is opaque (design D6), so the API may answer with nothing but
@@ -375,8 +389,12 @@ describe("getSlackChannels", () => {
 
       expect(requestedUrls()).toEqual([CHANNELS_URL]);
       // Pagination ends, it does not fail: the channels already read are still
-      // the picker's options.
-      expect(result).toEqual({ channels: [channelOption(FIRST_CHANNEL)] });
+      // the picker's options — and the list is marked short of the workspace,
+      // because a link was left unfollowed.
+      expect(result).toEqual({
+        channels: [channelOption(FIRST_CHANNEL)],
+        incomplete: SLACK_PARTIAL_CHANNEL_LIST_MESSAGE,
+      });
     },
   );
 
@@ -387,6 +405,75 @@ describe("getSlackChannels", () => {
 
     expect(result).toEqual({ channels: [] });
     expectNoParserProse(result);
+  });
+
+  it("says the list is short of the workspace when the page budget runs out", async () => {
+    // Every page names another `next`, so only the budget ends the read — the
+    // bound exists because `conversations.list` is tier 2 and a workspace can be
+    // larger than any of it (design.md, Risks). A fresh `Response` per call: one
+    // instance reused is already consumed on its second read.
+    fetchMock.mockImplementation(() =>
+      Promise.resolve(channelPage(FIRST_CHANNEL, "?page[cursor]=next")),
+    );
+
+    const result = await getSlackChannels(SLACK_INTEGRATION_ID);
+
+    // Bounded, and honest about it: a truncated list handed over as a complete
+    // one sends the user looking for a channel that was never read, and the
+    // invite hint beside the picker reads as the explanation.
+    expect(fetchMock).toHaveBeenCalledTimes(MAX_CHANNEL_PAGES);
+    expect(result).toEqual({
+      channels: channelOptions(MAX_CHANNEL_PAGES),
+      incomplete: SLACK_PARTIAL_CHANNEL_LIST_MESSAGE,
+    });
+  });
+
+  it("says nothing about a short list for a workspace that just fits the budget", async () => {
+    // The last page inside the budget names no `next`: the read is complete, and
+    // a workspace of exactly this size must not be described as cut off.
+    let page = 0;
+    fetchMock.mockImplementation(() => {
+      page += 1;
+      return Promise.resolve(
+        channelPage(
+          FIRST_CHANNEL,
+          page < MAX_CHANNEL_PAGES ? `?page[cursor]=${page}` : null,
+        ),
+      );
+    });
+
+    const result = await getSlackChannels(SLACK_INTEGRATION_ID);
+
+    expect(fetchMock).toHaveBeenCalledTimes(MAX_CHANNEL_PAGES);
+    expect(result).toEqual({ channels: channelOptions(MAX_CHANNEL_PAGES) });
+    expect(result).not.toHaveProperty("incomplete");
+  });
+
+  it("keeps the pages it read when a later one is refused, saying why the list stops", async () => {
+    fetchMock
+      .mockResolvedValueOnce(channelPage(FIRST_CHANNEL, "?page[cursor]=2"))
+      .mockResolvedValueOnce(rateLimitedResponse());
+
+    const result = await getSlackChannels(SLACK_INTEGRATION_ID);
+
+    // The refusal explains the list instead of replacing it: the workspaces that
+    // page are the ones a tier-2 limit is hit on, and discarding what was read
+    // leaves the picker empty on every reload — each of which re-runs the same
+    // reads into the same limit.
+    expect(result).toEqual({
+      channels: [channelOption(FIRST_CHANNEL)],
+      incomplete: RATE_LIMITED_MESSAGE,
+    });
+  });
+
+  it("answers a refusal on the first page as a failure, having nothing to show", async () => {
+    fetchMock.mockResolvedValueOnce(rateLimitedResponse());
+
+    const result = await getSlackChannels(SLACK_INTEGRATION_ID);
+
+    // Nothing was read, so there is no picker to explain: the refusal is the
+    // whole answer.
+    expect(result).toEqual({ error: RATE_LIMITED_MESSAGE });
   });
 });
 

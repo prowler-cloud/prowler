@@ -624,6 +624,23 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     return (alert.textContent ?? "").replace(/\s+/g, " ").trim();
   }
 
+  /**
+   * What the user is told about a list that is short of the workspace — shown
+   * beside a picker that still works, unlike `channelPickerMessage()`, which is
+   * what replaces the picker when there is nothing to show.
+   */
+  partialListNotice(): string | null {
+    const notice = this.q("[data-channels-notice]");
+    return notice
+      ? (notice.textContent ?? "").replace(/\s+/g, " ").trim()
+      : null;
+  }
+
+  /** Whether the picker was replaced by the "could not read them" alert. */
+  saysChannelsUnreadable(): boolean {
+    return this.containsText(/Could not read the workspace/);
+  }
+
   /** The invite copy that says how to make a private channel appear. */
   channelInviteHint(): string | null {
     const hint = Array.from(
