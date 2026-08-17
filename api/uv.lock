@@ -4835,8 +4835,13 @@ wheels = [
 
 [[package]]
 name = "prowler"
+<<<<<<< HEAD
 version = "5.39.0"
 source = { git = "https://github.com/prowler-cloud/prowler.git?rev=v5.39#5f109bc00e97490e36a030d9cdd1702fe4d2fad5" }
+=======
+version = "5.40.0"
+source = { git = "https://github.com/prowler-cloud/prowler.git?rev=master#b6e9967da6bebd6c7b8b237317a2a95e2e0c65bc" }
+>>>>>>> 450e6ba55 (chore(api): drop temporary SDK pin overrides after cryptography cap bump (#12473))
 dependencies = [
     { name = "alibabacloud-actiontrail20200706" },
     { name = "alibabacloud-credentials" },
