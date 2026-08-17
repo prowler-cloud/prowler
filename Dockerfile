@@ -26,8 +26,7 @@ ARG ZIZMOR_SHA256_ARM64=d66e37ef8a375fb07939c630ebf9709a6e0f20242bdc3faf672a7ed9
 RUN apt-get update && apt-get install -y --no-install-recommends \
     wget libicu76 libunwind8 libssl3 libcurl4 ca-certificates apt-transport-https gnupg \
     build-essential pkg-config libzstd-dev zlib1g-dev \
-    && apt-get install -y --no-install-recommends --only-upgrade \
-    bsdutils libblkid1 liblastlog2-2 libmount1 libsmartcols1 libuuid1 login mount util-linux \
+    && apt-get install -y --no-install-recommends --only-upgrade util-linux \
     && rm -rf /var/lib/apt/lists/*
 
 # Install PowerShell
@@ -92,7 +91,7 @@ RUN ARCH=$(uname -m) && \
 RUN addgroup --gid 1000 prowler && \
     adduser --uid 1000 --gid 1000 --disabled-password --gecos "" prowler
 
-USER 1000
+USER prowler
 
 WORKDIR /home/prowler
 
@@ -116,7 +115,7 @@ RUN uv sync --locked --compile-bytecode && \
 # Install PowerShell modules
 RUN .venv/bin/python prowler/providers/m365/lib/powershell/m365_powershell.py
 
-USER 0
+USER root
 
 # Remove build-only packages from the final image after Python dependencies are installed.
 RUN apt-get purge -y --auto-remove \
@@ -129,13 +128,13 @@ RUN apt-get purge -y --auto-remove \
     apt-transport-https \
     && rm -rf /var/lib/apt/lists/*
 
-USER 1000
+USER prowler
 
 # Remove deprecated dash dependencies
 RUN pip uninstall dash-html-components -y && \
     pip uninstall dash-core-components -y
 
-USER 0
+USER root
 
 # pip is build-only; the entrypoint runs the venv directly.
 RUN rm -rf /usr/local/lib/python3.12/site-packages/pip \
@@ -145,5 +144,5 @@ RUN rm -rf /usr/local/lib/python3.12/site-packages/pip \
     /usr/local/bin/pip /usr/local/bin/pip3 /usr/local/bin/pip3.12 \
     /home/prowler/.local/bin/pip /home/prowler/.local/bin/pip3 /home/prowler/.local/bin/pip3.12
 
-USER 1000
+USER prowler
 ENTRYPOINT ["/home/prowler/.venv/bin/prowler"]
