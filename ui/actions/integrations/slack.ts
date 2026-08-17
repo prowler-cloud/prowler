@@ -62,6 +62,17 @@ const slackExchangeInputSchema = z.object({
   state: z.string().min(1),
 });
 
+/**
+ * SSRF guard: the integration id is interpolated into the request URL, so only
+ * the shape the API's ids have reaches it.
+ */
+const integrationIdSchema = z.uuid();
+
+const parseIntegrationId = (integrationId: string): string | null => {
+  const parsed = integrationIdSchema.safeParse(integrationId);
+  return parsed.success ? parsed.data : null;
+};
+
 interface SlackExchangeSuccess {
   integration: IntegrationProps;
 }
@@ -302,12 +313,13 @@ const MAX_CHANNEL_PAGES = 20;
 export const getSlackChannels = async (
   integrationId: string,
 ): Promise<SlackChannelsResult> => {
+  const id = parseIntegrationId(integrationId);
+  if (!id) return { error: SLACK_GENERIC_ERROR_MESSAGE };
+
   const headers = await getAuthHeaders({ contentType: false });
   const channels: SlackChannelOption[] = [];
 
-  const listing = new URL(
-    `${apiBaseUrl}/integrations/${integrationId}/slack/channels`,
-  );
+  const listing = new URL(`${apiBaseUrl}/integrations/${id}/slack/channels`);
   let next: string | null = listing.toString();
 
   try {
@@ -385,8 +397,11 @@ export const setSlackDefaultChannel = async (
   integrationId: string,
   channelId: string,
 ): Promise<SlackDefaultChannelResult> => {
+  const id = parseIntegrationId(integrationId);
+  if (!id) return { error: SLACK_GENERIC_ERROR_MESSAGE };
+
   const headers = await getAuthHeaders({ contentType: true });
-  const url = new URL(`${apiBaseUrl}/integrations/${integrationId}`);
+  const url = new URL(`${apiBaseUrl}/integrations/${id}`);
 
   try {
     const response = await fetch(url.toString(), {
@@ -395,7 +410,7 @@ export const setSlackDefaultChannel = async (
       body: JSON.stringify({
         data: {
           type: "integrations",
-          id: integrationId,
+          id,
           attributes: {
             integration_type: "slack",
             configuration: { channel_id: channelId },
@@ -448,10 +463,11 @@ const TEST_MESSAGE_POLL = { maxAttempts: 20, delayMs: 3000 } as const;
 export const sendSlackTestMessage = async (
   integrationId: string,
 ): Promise<SlackTestMessageResult> => {
+  const id = parseIntegrationId(integrationId);
+  if (!id) return { error: SLACK_GENERIC_ERROR_MESSAGE };
+
   const headers = await getAuthHeaders({ contentType: true });
-  const url = new URL(
-    `${apiBaseUrl}/integrations/${integrationId}/slack/test-message`,
-  );
+  const url = new URL(`${apiBaseUrl}/integrations/${id}/slack/test-message`);
 
   try {
     const response = await fetch(url.toString(), { method: "POST", headers });

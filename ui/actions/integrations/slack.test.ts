@@ -7,7 +7,10 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { SLACK_UNREADABLE_RESULT_MESSAGE } from "@/lib/integrations/slack-errors";
+import {
+  SLACK_GENERIC_ERROR_MESSAGE,
+  SLACK_UNREADABLE_RESULT_MESSAGE,
+} from "@/lib/integrations/slack-errors";
 import { SentryErrorSource, SentryErrorType } from "@/sentry";
 
 const { captureExceptionMock, captureMessageMock, fetchMock } = vi.hoisted(
@@ -56,6 +59,8 @@ import {
   exchangeSlackOAuthCode,
   getSlackAuthorizeUrl,
   getSlackChannels,
+  sendSlackTestMessage,
+  setSlackDefaultChannel,
 } from "./slack";
 
 /** The status the contract reserves for an upstream Slack failure. */
@@ -291,7 +296,8 @@ describe("exchangeSlackOAuthCode result shape", () => {
   });
 });
 
-const SLACK_INTEGRATION_ID = "slack-integration-1";
+/** The shape the API's integration ids have, which is the only shape accepted. */
+const SLACK_INTEGRATION_ID = "b2c7fd0a-3e51-4d8f-9a6c-1f0e2d3c4b5a";
 
 /** The listing every cursor page of the channel read hangs off. */
 const CHANNELS_URL =
@@ -370,6 +376,38 @@ describe("getSlackChannels", () => {
       // Pagination ends, it does not fail: the channels already read are still
       // the picker's options.
       expect(result).toEqual({ channels: [channelOption(FIRST_CHANNEL)] });
+    },
+  );
+});
+
+/**
+ * The integration id is interpolated into every one of these URLs, so an id
+ * that is not one has to be refused before the request is built rather than
+ * sent as a path of its own.
+ */
+describe.each([
+  {
+    name: "getSlackChannels",
+    call: (id: string) => getSlackChannels(id),
+  },
+  {
+    name: "setSlackDefaultChannel",
+    call: (id: string) => setSlackDefaultChannel(id, FIRST_CHANNEL.id),
+  },
+  {
+    name: "sendSlackTestMessage",
+    call: (id: string) => sendSlackTestMessage(id),
+  },
+])("$name", ({ call }) => {
+  it.each(["../../users", "not-a-uuid", ""])(
+    "asks the API nothing when the integration id is %o",
+    async (id) => {
+      const result = await call(id);
+
+      expect(fetchMock).not.toHaveBeenCalled();
+      // The same answer a malformed exchange argument gets: nothing about a
+      // refused id is the user's to act on.
+      expect(result).toEqual({ error: SLACK_GENERIC_ERROR_MESSAGE });
     },
   );
 });

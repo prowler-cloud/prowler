@@ -129,7 +129,11 @@ export interface SlackFixture {
   testMessage: SlackTestMessageFixture;
 }
 
-export const SLACK_INTEGRATION_ID = "slack-integration-1";
+/**
+ * A UUID, as the API's integration ids are: the id travels in the URL of every
+ * Slack call the management page makes, and the actions accept no other shape.
+ */
+export const SLACK_INTEGRATION_ID = "7c9e6a1b-2d3f-4e5a-8b6c-9d0e1f2a3b4c";
 
 /** The scopes the channel picker and the posting need (design D2). */
 export const SLACK_BOT_SCOPES = [
