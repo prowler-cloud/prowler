@@ -5,49 +5,28 @@ import { GENERIC_SERVER_ERROR_MESSAGE } from "@/lib/helper";
 import type { IntegrationProps } from "@/types/integrations";
 
 /**
- * Read the tenant's Slack row, reporting a server failure the same way the API's
- * own refusals arrive — as `{ error }` — so both take the page's one error path.
- *
- * `getIntegrations` returns its `handleApiResponse(...)` promise without
- * awaiting it, so its own `catch` covers only a transport failure: a `>= 500`
- * answer is *thrown*, past that catch, at whoever awaited the action. Left
- * uncaught it escapes this page and trips the route's error boundary, replacing
- * a page that could still offer the install with a full-page error. Awaiting
- * inside the shared action would fix this rejection in the wrong place: the
- * Jira / S3 / Security Hub pages read the same result with nowhere to route an
- * error into, so they would silently render an empty list instead.
- *
- * `handleApiResponse` already reported the throw to Sentry, so this only
- * classifies it.
+ * `getIntegrations` throws a `>= 500` answer past its own catch, which covers
+ * only transport. Uncaught it trips the route's error boundary and replaces a
+ * page that could still offer the install, so report it as `{ error }` and take
+ * the page's one error path.
  */
 const readSlackIntegrations = async (searchParams: URLSearchParams) => {
   try {
     return await getIntegrations(searchParams);
   } catch {
-    // The thrown message can carry the server's own wording; a server error is
-    // answered in Prowler's, as the rest of the UI answers one.
+    // The thrown message can carry the server's own wording; `handleApiResponse`
+    // already reported it to Sentry.
     return { error: GENERIC_SERVER_ERROR_MESSAGE };
   }
 };
 
 /**
- * Loads the tenant's Slack install and, when there is none, the consent URL to
- * start one — split out of `page.tsx` so it can be rendered without the
- * surrounding `ContentLayout` in the browser-mode tests.
- *
- * The authorize URL is requested here rather than behind the Connect click:
- * minting a short-lived, single-use OAuth state costs nothing, it keeps the
- * install one click (a plain link to Slack's consent screen, no interstitial),
- * and it is what surfaces "Slack isn't available in this environment yet" on
- * arrival instead of after a click that goes nowhere. It is skipped entirely
- * once a workspace is connected — there is no install left to start.
+ * Split out of `page.tsx` so the browser-mode tests can render it without the
+ * surrounding `ContentLayout`.
  */
 export async function SlackIntegrationContent() {
-  // The React Compiler (enabled for the browser-mode project) otherwise
-  // instruments this as a client component and injects `useMemoCache`, which
-  // needs a React dispatcher. An async server component renders once per
-  // request, so there is nothing to memoize — and the injected hook makes it
-  // uncallable outside a render, which is exactly how the tests mount it.
+  // Without this the React Compiler (on for the browser-mode project) injects
+  // `useMemoCache`, which makes this async component uncallable outside a render.
   "use no memo";
 
   const searchParams = new URLSearchParams();
@@ -72,8 +51,8 @@ export async function SlackIntegrationContent() {
         authorize && "authorizeUrl" in authorize ? authorize.authorizeUrl : null
       }
       unavailable={Boolean(authorize && "unavailable" in authorize)}
-      // Slack being busy is not the same as this deployment having no Slack
-      // app: the install is still on offer, it just cannot be started yet.
+      // Rate limited is not unavailable: the install is still on offer, it just
+      // cannot be started yet.
       rateLimitMessage={
         authorize && "rateLimited" in authorize ? authorize.message : null
       }

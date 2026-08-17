@@ -1,17 +1,8 @@
 /**
  * Page-level test harness for the Slack integration (Vitest Browser Mode).
  *
- * Owns mounting and MSW wiring for the real pages the flow touches — the
- * integrations catalogue Slack is listed on, the management page and the OAuth
- * callback — and exposes Slack vocabulary ("connect", "the connected
- * workspace", "test the connection") so the tests never reach for a selector.
- * The DOM and wait primitives stay `protected` in `BrowserHarness`.
- *
- * Every mount renders production's own components: the async server component
- * that loads the install, and the client components the callback and the
- * catalogue pages render. A client renderer cannot render an async component,
- * so it is called and its returned element is what gets rendered — the same
- * trick the providers harness uses.
+ * A client renderer cannot render an async server component, so the component is
+ * called and the element it returns is what gets rendered.
  */
 
 import { revalidatePath } from "next/cache";
@@ -37,16 +28,14 @@ export const CONNECTION_OUTCOME = {
 export type ConnectionOutcome =
   (typeof CONNECTION_OUTCOME)[keyof typeof CONNECTION_OUTCOME];
 
-/** What Slack put on the callback URL when it sent the user back. */
 interface CallbackParams {
   code?: string;
   state?: string;
-  /** Slack's own refusal, e.g. `access_denied` when the user declined. */
+  /** Slack's own refusal code, e.g. `access_denied`. */
   error?: string;
 }
 
 export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
-  /** Exchanges issued — the callback's once-guard is what keeps this at 1. */
   get exchangeCallCount(): number {
     return this.countRequests("POST", "/slack/oauth/exchange");
   }
@@ -55,14 +44,7 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     return this.countRequests("POST", "/slack/oauth/authorize-url");
   }
 
-  /**
-   * The pages the actions asked Next to refresh since this harness mounted.
-   *
-   * `next/cache` is stubbed for the browser lane — there is no request scope to
-   * hold a cache — so the calls are observable, which is what makes "the pages
-   * that list the install are refreshed even when the answer was unreadable"
-   * something a test can assert rather than assume.
-   */
+  /** Paths the actions asked Next to refresh (`next/cache` is stubbed in this lane). */
   get revalidatedPaths(): string[] {
     return vi.mocked(revalidatePath).mock.calls.map(([path]) => path);
   }
@@ -70,15 +52,13 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
   // --- Mounting -----------------------------------------------------------
 
   private wireHandlers(): void {
-    // The stub is module-level and shared, so its call log would otherwise
-    // carry whatever earlier tests in the file revalidated. Clearing it at
-    // mount makes `revalidatedPaths` mean "since this mount".
+    // The stub is module-level and shared, so clearing it here is what makes
+    // `revalidatedPaths` mean "since this mount".
     vi.mocked(revalidatePath).mockClear();
     worker.use(...handlersForSlack(this.fixture));
     this.trackRequests(worker);
   }
 
-  /** Mount the Slack management page at `/integrations/slack`. */
   async mount(): Promise<void> {
     window.history.replaceState(null, "", "/integrations/slack");
     this.wireHandlers();
@@ -86,7 +66,6 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     render(await SlackIntegrationContent());
   }
 
-  /** Mount the OAuth callback with the query string Slack redirected to. */
   async mountCallback({ code, state, error }: CallbackParams): Promise<void> {
     const params = new URLSearchParams();
     if (code) params.set("code", code);
@@ -102,10 +81,7 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     render(createElement(SlackCallback));
   }
 
-  /**
-   * Mount the integrations catalogue at `/integrations` — the page Slack is
-   * listed on. No handlers are wired: every card there is static.
-   */
+  /** Mount the integrations catalogue. No handlers: every card there is static. */
   mountCatalogue(): void {
     window.history.replaceState(null, "", "/integrations");
 
@@ -114,7 +90,6 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
 
   // --- The integrations catalogue ------------------------------------------
 
-  /** The integrations the catalogue offers, by the name shown on each card. */
   async listedIntegrations(): Promise<string[]> {
     const headings = await this.waitFor(
       () => {
@@ -129,7 +104,6 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     return headings.map((heading) => (heading.textContent ?? "").trim());
   }
 
-  /** Whether the catalogue offers a way into the Slack management page. */
   offersSlackManagement(): boolean {
     return this.q('a[href="/integrations/slack"]') !== null;
   }
@@ -144,7 +118,6 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     );
   }
 
-  /** The consent URL the install affordance points at, once it is offered. */
   async authorizeUrl(): Promise<string> {
     const link = await this.waitFor(
       () => this.connectLink(),
@@ -155,12 +128,8 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
   }
 
   /**
-   * Start the install the way a user does, and report where Slack's consent
-   * screen would have been reached at.
-   *
-   * The click is real — it goes through user-event, so a disabled or
-   * unclickable affordance still fails the test — but its default action is
-   * cancelled: following the link would navigate the test frame off the app.
+   * Clicks the install affordance and reports where it points. The default
+   * action is cancelled: following the link navigates the test frame off the app.
    */
   async connect(): Promise<string> {
     const link = await this.waitFor(
@@ -184,7 +153,6 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     return destination;
   }
 
-  /** Whether the install is offered at all (it is not without a Slack app). */
   offersInstall(): boolean {
     return this.connectLink() !== null;
   }
@@ -193,17 +161,14 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     await this.waitForText(/Slack is not available in this environment yet/);
   }
 
-  /** Whether the page claims this deployment has no Slack app. */
   saysUnavailable(): boolean {
     return this.containsText(/Slack is not available in this environment yet/);
   }
 
-  /** Whether the page reports the tenant's install as unreadable. */
   saysLoadFailed(): boolean {
     return this.containsText(/Could not load your Slack integration/);
   }
 
-  /** What the page says about Slack rate limiting Prowler, once it says it. */
   async rateLimitNotice(): Promise<string> {
     await this.waitForText(/Slack is busy right now/, 10000);
     const description = await this.waitFor(
@@ -214,12 +179,6 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     return (description.textContent ?? "").trim();
   }
 
-  /**
-   * What the page says when the tenant's Slack install could not be read.
-   *
-   * Reaching this at all is part of the assertion: the read fails by throwing,
-   * so a page that does not catch it never renders — the mount itself fails.
-   */
   async loadErrorNotice(): Promise<string> {
     await this.waitForText(/Could not load your Slack integration/, 10000);
     const description = await this.waitFor(
@@ -233,13 +192,8 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
   // --- Connected state ----------------------------------------------------
 
   /**
-   * The workspace the page reports as connected — on the management page and
-   * on the callback alike.
-   *
-   * Read from the element that carries the heading, not from the page's text:
-   * "Connected to <workspace>" runs straight into the copy that follows it in
-   * `textContent`, so matching the whole page would report that copy as part of
-   * the workspace's name.
+   * Read from the heading element, not the page text: in `textContent`
+   * "Connected to <workspace>" runs straight into the copy that follows it.
    */
   async connectedWorkspaceName(): Promise<string> {
     const heading = await this.waitFor(
@@ -250,10 +204,7 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     return (heading.textContent ?? "").trim().replace(/^Connected to /, "");
   }
 
-  /**
-   * The most specific element whose own text matches: the last one in document
-   * order, since every ancestor of a match matches too.
-   */
+  /** Last match in document order: every ancestor of a match matches too. */
   private deepestElementMatching(pattern: RegExp): HTMLElement | null {
     return (
       Array.from(this.container.querySelectorAll<HTMLElement>("*"))
@@ -264,11 +215,8 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
   }
 
   /**
-   * How the page reports the connection, in the badge's own words.
-   *
-   * Read off the badge's own state attribute rather than by matching copy: the
-   * heading right beside it starts "Connected to …", so a text search would
-   * happily report the heading as the badge.
+   * Keyed on the badge's state attribute, not its copy: the heading beside it
+   * also starts "Connected to …".
    */
   async connectionBadge(): Promise<string> {
     const badge = await this.waitFor(
@@ -279,7 +227,6 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     return (badge.textContent ?? "").trim();
   }
 
-  /** Whether the page offers a connection check the user can actually run. */
   async offersConnectionTest(): Promise<boolean> {
     const button = await this.waitFor(
       () => this.buttonByText(/Test connection/),
@@ -289,7 +236,6 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     return !button.disabled;
   }
 
-  /** Whether the page names choosing a channel as what comes next. */
   saysChannelIsNextStep(): boolean {
     return this.containsText(/Choosing a destination channel is the next step/);
   }
@@ -315,14 +261,8 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
   // --- Returning from Slack -----------------------------------------------
 
   /**
-   * The way out the callback renders on every outcome that is not a connected
-   * workspace — the one element every one of them has in common.
-   *
-   * The anchor for "the callback settled on something other than success", in
-   * place of the failure alert's own title: two of those outcomes cannot claim
-   * the workspace is not connected (the API consumes the code before it
-   * answers), so they carry a different title, and a harness keyed on copy would
-   * wait for a headline that never arrives.
+   * The one element every non-success outcome renders. Keyed on it rather than
+   * the alert title, which is not the same claim on every outcome.
    */
   private backLink(): HTMLAnchorElement | null {
     return (
@@ -334,7 +274,6 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     );
   }
 
-  /** Whether the callback settled on a connected workspace. */
   async completedInstall(): Promise<boolean> {
     const outcome = await this.waitFor(
       () => this.containsText(/Connected to /) || this.backLink() !== null,
@@ -344,7 +283,6 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     return outcome && this.containsText(/Connected to /);
   }
 
-  /** What the user is told when the install did not complete. */
   async installFailureReason(): Promise<string> {
     await this.waitFor(() => this.backLink(), 10000, "the failed callback");
     const description = await this.waitFor(
@@ -355,11 +293,6 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     return (description.textContent ?? "").trim();
   }
 
-  /**
-   * The headline the callback puts on an install that did not complete — which
-   * is not the same claim for every outcome: an answer the UI could not read is
-   * an unknown state, not a workspace it can say was left unconnected.
-   */
   async installFailureTitle(): Promise<string> {
     await this.waitFor(() => this.backLink(), 10000, "the failed callback");
     const title = await this.waitFor(
@@ -370,7 +303,6 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     return (title.textContent ?? "").trim();
   }
 
-  /** Whether the page offers a way back to try the install again. */
   offersRetry(): boolean {
     return this.backLink() !== null || this.offersInstall();
   }

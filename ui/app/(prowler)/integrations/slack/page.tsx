@@ -6,8 +6,8 @@ import { isCloud } from "@/lib/shared/env";
 import { SlackIntegrationContent } from "./slack-integration-content";
 
 export default async function SlackIntegrationPage() {
-  // The Slack API is served by the cloud deployment only, so outside Prowler
-  // Cloud there is nothing behind this page. Mirrors `/alerts`.
+  // The Slack API is cloud-only, so self-hosted has nothing behind this page.
+  // Mirrors `/alerts`.
   if (!isCloud()) {
     redirect("/");
   }

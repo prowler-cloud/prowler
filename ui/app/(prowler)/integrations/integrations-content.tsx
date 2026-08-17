@@ -7,9 +7,8 @@ import { SsoLinkCard } from "@/components/integrations/sso/sso-link-card";
 import { isCloud } from "@/lib/shared/env";
 
 /**
- * The integrations catalogue, split out of `page.tsx` so it can be rendered
- * without the surrounding `ContentLayout` (whose navbar streams async server
- * children a client renderer can't resolve) in the browser-mode tests.
+ * Split out of `page.tsx` for the browser-mode tests: `ContentLayout`'s navbar
+ * streams async server children a client renderer can't resolve.
  */
 export function IntegrationsContent() {
   return (
@@ -31,8 +30,7 @@ export function IntegrationsContent() {
         {/* Jira Integration */}
         <JiraIntegrationCard />
 
-        {/* Slack Integration — its API lives in the cloud deployment only, so
-            a self-hosted Prowler has nothing to manage. */}
+        {/* Slack Integration - cloud-only API, nothing to manage self-hosted */}
         {isCloud() && <SlackIntegrationCard />}
 
         {/* SSO Configuration - redirects to Profile */}

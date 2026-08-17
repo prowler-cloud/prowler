@@ -12,8 +12,7 @@ export default async function SlackCallbackPage() {
 
   return (
     <ContentLayout title="Slack">
-      {/* `SlackCallback` reads the query string Slack redirected to, so it
-          needs a boundary to render inside. */}
+      {/* `SlackCallback` reads the query string, so it needs a boundary. */}
       <Suspense fallback={null}>
         <SlackCallback />
       </Suspense>
