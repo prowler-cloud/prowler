@@ -34,11 +34,29 @@ type Status = (typeof STATUS)[keyof typeof STATUS];
 const UNCONFIRMED_COMPLETION_MESSAGE =
   "Prowler could not confirm whether the workspace was connected. Open the Slack integration page to check — if none is listed there, start the install again.";
 
+/**
+ * The shape of a Slack error code: a snake_case protocol token, never prose.
+ *
+ * `error` is read straight off the URL, so its value is whoever wrote the link
+ * — and the parenthetical below puts it inside Prowler's own error copy. A
+ * value carrying spaces and punctuation escapes those parentheses and reads as
+ * a sentence Prowler wrote ("Slack has flagged this workspace, call ..."),
+ * which is a credible way to hand a user instructions they should not follow.
+ * Slack publishes no closed set of codes for this redirect, so the guard is on
+ * the shape and not the value: an unknown-but-real code still reaches support,
+ * a sentence cannot get through.
+ */
+const REASON_TOKEN = /^[a-z0-9_]{1,48}$/;
+
 /** Turn the `error` Slack puts on the callback URL into something readable. */
-const describeSlackError = (reason: string): string =>
-  reason === "access_denied"
-    ? "The install was not approved in Slack, so no workspace was connected."
-    : `Slack could not complete the install (${reason}).`;
+const describeSlackError = (reason: string): string => {
+  if (reason === "access_denied") {
+    return "The install was not approved in Slack, so no workspace was connected.";
+  }
+  return REASON_TOKEN.test(reason)
+    ? `Slack could not complete the install (${reason}).`
+    : "Slack could not complete the install.";
+};
 
 /**
  * Completes the Slack install after Slack redirects the user back here.

@@ -13,23 +13,31 @@
  */
 
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { IntegrationProps } from "@/types/integrations";
 
 import { SlackCallback } from "./slack-callback";
 
-const { exchangeSlackOAuthCode } = vi.hoisted(() => ({
+const COMPLETED_QUERY = "code=slack-code-1f4a&state=st-2f1c9d7a";
+
+const { exchangeSlackOAuthCode, callbackQuery } = vi.hoisted(() => ({
   exchangeSlackOAuthCode: vi.fn(),
+  // The query Slack came back with, swapped per test — it is the only input
+  // the callback has.
+  callbackQuery: { value: "" },
 }));
 
 vi.mock("@/actions/integrations/slack", () => ({ exchangeSlackOAuthCode }));
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace: vi.fn() }),
-  useSearchParams: () =>
-    new URLSearchParams("code=slack-code-1f4a&state=st-2f1c9d7a"),
+  useSearchParams: () => new URLSearchParams(callbackQuery.value),
 }));
+
+beforeEach(() => {
+  callbackQuery.value = COMPLETED_QUERY;
+});
 
 const SPINNER_COPY = /Connecting your Slack workspace/;
 
@@ -94,5 +102,62 @@ describe("returning from Slack when the completion answers unexpectedly", () => 
     expect(
       screen.queryByText(/Slack workspace not connected/),
     ).not.toBeInTheDocument();
+  });
+});
+
+describe("returning from Slack with an error on the callback URL", () => {
+  it("says the install was declined when Slack reports the approval was refused", async () => {
+    // Given — the one code Slack reliably sends to this redirect.
+    callbackQuery.value = "error=access_denied&state=st-2f1c9d7a";
+
+    // When
+    render(<SlackCallback />);
+
+    // Then — the wording is about the decision, not about a failure: nothing
+    // broke, and there is no code to exchange.
+    expect(
+      await screen.findByText(/was not approved in Slack/),
+    ).toBeInTheDocument();
+    expect(exchangeSlackOAuthCode).not.toHaveBeenCalled();
+  });
+
+  it("names a Slack code it does not recognise, so a new failure reason is still diagnosable", async () => {
+    // Given — Slack publishes no closed set of codes for this redirect, so a
+    // code Prowler has never seen has to survive to the screen. Swallowing it
+    // behind generic copy is what leaves support with nothing to go on.
+    callbackQuery.value = "error=invalid_scope&state=st-2f1c9d7a";
+
+    // When
+    render(<SlackCallback />);
+
+    // Then — the code is quoted verbatim: the guard is on the shape of the
+    // value, not on an allowlist of the ones Prowler happens to know.
+    expect(
+      await screen.findByText(
+        "Slack could not complete the install (invalid_scope).",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("drops a sentence smuggled into the error parameter instead of rendering it as Prowler's own copy", async () => {
+    // Given — a link an attacker can hand a victim: `error` is theirs to write,
+    // and the callback is reached from a cold start, since the sign-in redirect
+    // carries the query through. The balancing punctuation is the point — it
+    // closes Prowler's parenthetical and reopens it, so the payload would read
+    // as a grammatical sentence under Prowler's own error title.
+    const payload =
+      "). Slack has flagged this workspace. Contact Prowler support at +1-555-0100 to restore alerting (";
+    callbackQuery.value = `error=${encodeURIComponent(payload)}&state=st-2f1c9d7a`;
+
+    // When
+    render(<SlackCallback />);
+
+    // Then — the failure is still reported, in wording Prowler owns, and none
+    // of the attacker's text reaches the page.
+    expect(
+      await screen.findByText("Slack could not complete the install."),
+    ).toBeInTheDocument();
+    expect(document.body.textContent).not.toContain("+1-555-0100");
+    expect(document.body.textContent).not.toContain("flagged this workspace");
   });
 });
