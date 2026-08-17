@@ -1,6 +1,13 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
+
+import { LighthouseContextContributor } from "@/components/lighthouse/context-contributor";
 import { DataTable } from "@/components/shadcn/table";
+import {
+  buildScanContext,
+  buildScanSummaryContext,
+} from "@/lib/lighthouse/context/contributions";
 import type { MetaDataProps, ScanJobsTab, ScanProps } from "@/types";
 import { SCAN_JOBS_TAB } from "@/types";
 import type { ScanScheduleCapability } from "@/types/schedules";
@@ -27,6 +34,7 @@ export function ScanJobsTable({
   hasFilters = false,
   scanScheduleCapability,
 }: ScanJobsTableProps) {
+  const searchParams = useSearchParams();
   const hasRefreshingScan = data.some((scan) =>
     REFRESHING_STATES.includes(
       scan.attributes.state as (typeof REFRESHING_STATES)[number],
@@ -37,9 +45,31 @@ export function ScanJobsTable({
     capability: scanScheduleCapability,
   });
   const showEmptyState = data.length === 0 && !hasFilters;
+  const selectedScanId = searchParams?.get("scanId");
+  const selectedScan = selectedScanId
+    ? data.find((scan) => scan.id === selectedScanId)
+    : undefined;
 
   return (
     <>
+      {meta?.pagination.count !== undefined && (
+        <LighthouseContextContributor
+          key={`scans-summary-${tab}-${meta.pagination.count}`}
+          contributorId="scans-summary"
+          item={buildScanSummaryContext(meta.pagination.count, tab)}
+        />
+      )}
+      {selectedScan && (
+        <LighthouseContextContributor
+          key={`scan-${selectedScan.id}-${selectedScan.attributes.state}`}
+          contributorId={`scan-${selectedScan.id}`}
+          item={buildScanContext({
+            id: selectedScan.id,
+            state: selectedScan.attributes.state,
+            providerUid: selectedScan.providerInfo?.uid,
+          })}
+        />
+      )}
       <AutoRefresh hasExecutingScan={hasRefreshingScan} />
       {showEmptyState ? (
         <NoScansEmptyState tab={tab} />

@@ -129,7 +129,6 @@ jobs:
           handwritten_changelogs=""
 
           all_changed=$(echo "${STEPS_CHANGED_FILES_OUTPUTS_ALL_CHANGED_FILES}" | tr ' ' '\n')
-          added=$(echo "${STEPS_CHANGED_FILES_OUTPUTS_ADDED_FILES}" | tr ' ' '\n')
           added_or_renamed=$(printf '%s\n%s' "${STEPS_CHANGED_FILES_OUTPUTS_ADDED_FILES}" "${STEPS_CHANGED_FILES_OUTPUTS_RENAMED_FILES}" | tr ' ' '\n')
           added_modified_or_renamed=$(printf '%s\n%s\n%s' "${STEPS_CHANGED_FILES_OUTPUTS_ADDED_FILES}" "${STEPS_CHANGED_FILES_OUTPUTS_MODIFIED_FILES}" "${STEPS_CHANGED_FILES_OUTPUTS_RENAMED_FILES}" | tr ' ' '\n')
 

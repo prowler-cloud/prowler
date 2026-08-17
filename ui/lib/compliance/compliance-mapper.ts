@@ -6,6 +6,7 @@ import { C5CustomDetails } from "@/components/compliance/compliance-custom-detai
 import { CCCCustomDetails } from "@/components/compliance/compliance-custom-details/ccc-details";
 import { CISControlsCustomDetails } from "@/components/compliance/compliance-custom-details/cis-controls-details";
 import { CISCustomDetails } from "@/components/compliance/compliance-custom-details/cis-details";
+import { CMMCCustomDetails } from "@/components/compliance/compliance-custom-details/cmmc-details";
 import { CSACustomDetails } from "@/components/compliance/compliance-custom-details/csa-details";
 import { DORACustomDetails } from "@/components/compliance/compliance-custom-details/dora-details";
 import { ENSCustomDetails } from "@/components/compliance/compliance-custom-details/ens-details";
@@ -49,6 +50,10 @@ import {
   mapComplianceData as mapCISControlsComplianceData,
   toAccordionItems as toCISControlsAccordionItems,
 } from "./cis-controls";
+import {
+  mapComplianceData as mapCMMCComplianceData,
+  toAccordionItems as toCMMCAccordionItems,
+} from "./cmmc";
 import { calculateCategoryHeatmapData, getTopFailedSections } from "./commons";
 import {
   mapComplianceData as mapCSAComplianceData,
@@ -258,6 +263,19 @@ const getComplianceMappers = (): Record<string, ComplianceMapper> => ({
       calculateCategoryHeatmapData(data),
     getDetailsComponent: (requirement: Requirement) =>
       createElement(DORACustomDetails, { requirement }),
+  },
+  // CMMC 2.0 — universal framework keyed by the `framework` field of
+  // `prowler/compliance/cmmc_2.0.json` ("CMMC"). Groups by Domain (14 NIST
+  // 800-171 families) and surfaces Domain / Level / Source Requirement in the
+  // requirement detail drawer.
+  CMMC: {
+    mapComplianceData: mapCMMCComplianceData,
+    toAccordionItems: toCMMCAccordionItems,
+    getTopFailedSections,
+    calculateCategoryHeatmapData: (data: Framework[]) =>
+      calculateCategoryHeatmapData(data),
+    getDetailsComponent: (requirement: Requirement) =>
+      createElement(CMMCCustomDetails, { requirement }),
   },
 });
 

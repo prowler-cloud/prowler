@@ -58,7 +58,8 @@
         "cloudwatch_log_metric_filter_root_usage",
         "cloudwatch_log_metric_filter_security_group_changes",
         "cloudwatch_log_metric_filter_unauthorized_api_calls",
-        "vpc_flow_logs_enabled"
+        "vpc_flow_logs_enabled",
+        "kms_key_enclave_attestation_not_enforced"
       ],
       "ConfigRequirements": [
         {
@@ -139,7 +140,8 @@
         "s3_bucket_default_encryption",
         "s3_bucket_secure_transport_policy",
         "sagemaker_notebook_instance_encryption_enabled",
-        "sns_topics_kms_encryption_at_rest_enabled"
+        "sns_topics_kms_encryption_at_rest_enabled",
+        "kms_key_enclave_attestation_not_enforced"
       ]
     }
   ]

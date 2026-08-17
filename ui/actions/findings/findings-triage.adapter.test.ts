@@ -160,6 +160,57 @@ describe("adaptLatestFindingTriageNote", () => {
 });
 
 describe("adaptFindingTriageSummariesResponse", () => {
+  it("should keep Resolved as triage while exposing effective Pass and manual provenance", () => {
+    // Given
+    const input = {
+      data: [
+        {
+          id: "finding-manual-1",
+          type: "findings",
+          attributes: {
+            uid: "prowler-finding-manual-uid-1",
+            status: "PASS",
+            raw_status: "MANUAL",
+            triage_status: FINDING_TRIAGE_STATUS.RESOLVED,
+            manual_pass_created_at: "2026-06-03T10:00:00Z",
+            manual_pass_expires_at: "2026-09-01T10:00:00Z",
+          },
+        },
+      ],
+    };
+
+    // When
+    const [summary] = adaptFindingTriageSummariesResponse(input);
+
+    // Then
+    expect(summary.rawFindingStatus).toBe("MANUAL");
+    expect(input.data[0].attributes.status).toBe("PASS");
+    expect(summary.label).toBe("Resolved");
+    expect(summary.manualPassProvenance).toBe("Manually verified");
+  });
+
+  it("should keep natural Pass free of manual provenance", () => {
+    const input = {
+      data: [
+        {
+          id: "finding-natural-pass",
+          type: "findings",
+          attributes: {
+            uid: "natural-pass-uid",
+            status: "PASS",
+            raw_status: "PASS",
+            triage_status: FINDING_TRIAGE_STATUS.RESOLVED,
+          },
+        },
+      ],
+    };
+
+    const [summary] = adaptFindingTriageSummariesResponse(input);
+
+    expect(summary.rawFindingStatus).toBe("PASS");
+    expect(summary.manualPassProvenance).toBeNull();
+  });
+
   it("should return [] when the provisional API response is malformed", () => {
     // Given
     const input = { meta: { count: 0 } };
@@ -380,6 +431,67 @@ describe("adaptFindingTriageSummariesResponse", () => {
 });
 
 describe("adaptFindingTriageDetailResponse", () => {
+  it("should map expired Manual Pass metadata for provenance presentation", () => {
+    // Given
+    const input = {
+      data: {
+        id: "triage-expired-1",
+        type: "finding-triages",
+        attributes: {
+          finding_id: "finding-expired-1",
+          finding_uid: "prowler-finding-expired-uid-1",
+          status: FINDING_TRIAGE_STATUS.OPEN,
+          raw_finding_status: "MANUAL",
+          manual_pass_active: false,
+          manual_pass_evidence: "The control owner verified the requirement.",
+          manual_pass_created_by_name: "Alex Security",
+          manual_pass_created_at: "2026-06-03T10:00:00Z",
+          manual_pass_expires_at: "2026-06-17T10:00:00Z",
+          manual_pass_deactivated_at: null,
+        },
+      },
+    };
+
+    // When
+    const detail = adaptFindingTriageDetailResponse(input);
+
+    // Then
+    expect(detail).toEqual(
+      expect.objectContaining({
+        status: FINDING_TRIAGE_STATUS.OPEN,
+        manualPassActive: false,
+        manualPassEvidence: "The control owner verified the requirement.",
+        manualPassCreatedByName: "Alex Security",
+        manualPassCreatedAt: "2026-06-03T10:00:00Z",
+        manualPassExpiresAt: "2026-06-17T10:00:00Z",
+        manualPassDeactivatedAt: null,
+      }),
+    );
+  });
+
+  it("should normalize missing Manual Pass evidence without inventing content", () => {
+    // Given
+    const input = {
+      data: {
+        id: "triage-without-evidence",
+        type: "finding-triages",
+        attributes: {
+          status: FINDING_TRIAGE_STATUS.OPEN,
+          manual_pass_active: false,
+          manual_pass_created_at: "2026-06-03T10:00:00Z",
+          manual_pass_expires_at: "2026-06-17T10:00:00Z",
+        },
+      },
+    };
+
+    // When
+    const detail = adaptFindingTriageDetailResponse(input);
+
+    // Then
+    expect(detail.manualPassEvidence).toBeNull();
+    expect(detail.manualPassDeactivatedAt).toBeNull();
+  });
+
   it("should normalize provisional detail payloads into modal DTOs", () => {
     // Given
     const input = findingTriageDetailResponse;
@@ -395,6 +507,10 @@ describe("adaptFindingTriageDetailResponse", () => {
         findingId: "finding-1",
         findingUid: "prowler-finding-uid-1",
         status: FINDING_TRIAGE_STATUS.RISK_ACCEPTED,
+        rawFindingStatus: "MANUAL",
+        manualPassCreatedByName: "Alex Security",
+        manualPassCreatedAt: "2026-06-03T10:00:00Z",
+        manualPassExpiresAt: "2026-06-17T10:00:00Z",
         label: "Risk Accepted",
         hasVisibleNote: true,
         canEdit: true,

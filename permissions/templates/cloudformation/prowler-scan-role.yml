@@ -215,6 +215,7 @@ Resources:
                   - "lightsail:GetRelationalDatabases"
                   - "macie2:GetMacieSession"
                   - "macie2:GetAutomatedDiscoveryConfiguration"
+                  - "rolesanywhere:ListProfiles"
                   - "rolesanywhere:ListTagsForResource"
                   - "rolesanywhere:ListTrustAnchors"
                   - "s3:GetAccountPublicAccessBlock"

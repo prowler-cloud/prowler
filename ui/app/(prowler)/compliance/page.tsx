@@ -2,6 +2,7 @@ import { Info } from "lucide-react";
 import { Suspense } from "react";
 
 import {
+  COMPLIANCE_OVERVIEW_RESOURCE_TYPE,
   getComplianceOverviewMetadataInfo,
   getCompliancesOverview,
 } from "@/actions/compliances";
@@ -14,6 +15,7 @@ import {
 } from "@/components/compliance";
 import { ComplianceFilters } from "@/components/compliance/compliance-header/compliance-filters";
 import { ComplianceOverviewGrid } from "@/components/compliance/compliance-overview-grid";
+import { WatchlistControls } from "@/components/compliance/watchlist/watchlist-controls";
 import { Alert, AlertDescription } from "@/components/shadcn/alert";
 import { Card, CardContent } from "@/components/shadcn/card/card";
 import { ContentLayout } from "@/components/shadcn/content-layout";
@@ -35,6 +37,8 @@ import {
   CrossAccountOverviewSkeleton,
   CrossProviderOverviewSkeleton,
 } from "./_components/multiple-scans-skeleton";
+import type { ComplianceWatchlistContext } from "./_lib/watchlist-context";
+import { loadComplianceWatchlistContext } from "./_lib/watchlist-context";
 
 export default async function Compliance({
   searchParams,
@@ -52,6 +56,13 @@ export default async function Compliance({
   const activeTab = crossProviderEnabled
     ? getComplianceTab(resolvedSearchParams.tab, resolvedSearchParams.scanId)
     : COMPLIANCE_TAB.PER_SCAN;
+
+  const watchlistPromise = loadComplianceWatchlistContext();
+  const watchlistControls = (
+    <Suspense fallback={null}>
+      <ComplianceWatchlistControls watchlistPromise={watchlistPromise} />
+    </Suspense>
+  );
 
   // Only the active tab's payload is built: switching tabs is a real
   // navigation, so pre-building the inactive tab buys nothing.
@@ -82,6 +93,7 @@ export default async function Compliance({
         <CompliancePageTabs
           activeTab={activeTab}
           crossProviderEnabled={crossProviderEnabled}
+          watchlistControls={watchlistControls}
           perScanContent={null}
           crossProviderContent={
             // gap-6 = the app-wide 24px below a filter row (Findings and the
@@ -137,6 +149,7 @@ export default async function Compliance({
         <CompliancePageTabs
           activeTab={activeTab}
           crossProviderEnabled={crossProviderEnabled}
+          watchlistControls={watchlistControls}
           perScanContent={<NoScansAvailable />}
           crossProviderContent={null}
         />
@@ -259,6 +272,7 @@ export default async function Compliance({
           searchParams={resolvedSearchParams}
           scanId={selectedScanId}
           selectedScan={selectedScanData}
+          watchlistPromise={watchlistPromise}
         />
       </Suspense>
     </>
@@ -275,6 +289,7 @@ export default async function Compliance({
       <CompliancePageTabs
         activeTab={activeTab}
         crossProviderEnabled={crossProviderEnabled}
+        watchlistControls={watchlistControls}
         perScanContent={perScanContent}
         crossProviderContent={null}
       />
@@ -286,10 +301,12 @@ const SSRComplianceGrid = async ({
   searchParams,
   scanId,
   selectedScan,
+  watchlistPromise,
 }: {
   searchParams: SearchParamsProps;
   scanId: string | null;
   selectedScan?: ScanEntity;
+  watchlistPromise: Promise<ComplianceWatchlistContext>;
 }) => {
   const regionFilter = searchParams["filter[region__in]"]?.toString() || "";
 
@@ -301,21 +318,37 @@ const SSRComplianceGrid = async ({
         })
       : { data: [], errors: [] };
 
-  const type = compliancesData?.data?.type;
-  const frameworks = compliancesData?.data
-    ?.filter((compliance: ComplianceOverviewData) => {
-      return compliance.attributes.framework !== "ProwlerThreatScore";
-    })
-    .sort((a: ComplianceOverviewData, b: ComplianceOverviewData) =>
-      a.attributes.framework.localeCompare(b.attributes.framework),
-    );
+  const complianceData = compliancesData?.data;
 
   if (
-    !compliancesData ||
-    !compliancesData.data ||
-    compliancesData.data.length === 0 ||
-    type === "tasks"
+    compliancesData &&
+    "errors" in compliancesData &&
+    compliancesData.errors &&
+    compliancesData.errors.length > 0
   ) {
+    return (
+      <Alert variant="info">
+        <Info className="size-4" />
+        <AlertDescription>Provide a valid scan ID.</AlertDescription>
+      </Alert>
+    );
+  }
+
+  if (
+    !Array.isArray(complianceData) &&
+    complianceData?.type === COMPLIANCE_OVERVIEW_RESOURCE_TYPE.TASK
+  ) {
+    return (
+      <Alert variant="info">
+        <Info className="size-4" />
+        <AlertDescription>
+          Compliance data is still being generated. Please try again shortly.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  if (!Array.isArray(complianceData) || complianceData.length === 0) {
     return (
       <Alert variant="info">
         <Info className="size-4" />
@@ -327,21 +360,23 @@ const SSRComplianceGrid = async ({
     );
   }
 
-  if (compliancesData?.errors?.length > 0) {
-    return (
-      <Alert variant="info">
-        <Info className="size-4" />
-        <AlertDescription>Provide a valid scan ID.</AlertDescription>
-      </Alert>
+  const frameworks = complianceData
+    .filter((compliance: ComplianceOverviewData) => {
+      return compliance.attributes.framework !== "ProwlerThreatScore";
+    })
+    .sort((a: ComplianceOverviewData, b: ComplianceOverviewData) =>
+      a.attributes.framework.localeCompare(b.attributes.framework),
     );
-  }
 
   // Backend only generates CIS PDFs for the latest version per provider.
   const latestCisIds = pickLatestCisPerProvider(
-    compliancesData.data.map(
-      (compliance: ComplianceOverviewData) => compliance.id,
-    ),
+    complianceData.map((compliance: ComplianceOverviewData) => compliance.id),
   );
+
+  // The watchlist is keyed by `(compliance_id, provider_type)`, and on this
+  // surface the provider type is fixed by the selected scan.
+  const providerType = selectedScan?.providerInfo.provider;
+  const watchlist = await watchlistPromise;
 
   return (
     <ComplianceOverviewPanel>
@@ -350,8 +385,26 @@ const SSRComplianceGrid = async ({
         scanId={scanId ?? ""}
         selectedScan={selectedScan}
         latestCisIds={latestCisIds}
+        catalogEntries={watchlist.entries}
+        providerType={providerType}
+        canManageWatchlist={watchlist.canManage}
       />
     </ComplianceOverviewPanel>
+  );
+};
+
+const ComplianceWatchlistControls = async ({
+  watchlistPromise,
+}: {
+  watchlistPromise: Promise<ComplianceWatchlistContext>;
+}) => {
+  const watchlist = await watchlistPromise;
+
+  return (
+    <WatchlistControls
+      entries={watchlist.entries}
+      canManageWatchlist={watchlist.canManage}
+    />
   );
 };
 

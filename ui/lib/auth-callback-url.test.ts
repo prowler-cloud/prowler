@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  appendAttributionToCallbackPath,
   appendCallbackState,
+  getAttributionParamsFromCallbackPath,
   getInvitationTokenFromCallbackPath,
   getSafeCallbackPath,
 } from "@/lib/auth-callback-url";
@@ -103,6 +105,48 @@ describe("auth callback URL helpers", () => {
       const result = getInvitationTokenFromCallbackPath(callbackPath);
 
       expect(result).toBe("test-token");
+    });
+  });
+
+  describe("when carrying campaign attribution", () => {
+    it("should append attribution params to the callback path", () => {
+      const result = appendAttributionToCallbackPath("/", {
+        promo_code: "black-hat-2026",
+        utm_source: "blackhat",
+      });
+
+      expect(result).toBe("/?promo_code=black-hat-2026&utm_source=blackhat");
+    });
+
+    it("should not override params already present in the path", () => {
+      const result = appendAttributionToCallbackPath("/?promo_code=original", {
+        promo_code: "other",
+      });
+
+      expect(result).toBe("/?promo_code=original");
+    });
+
+    it("should return the path untouched without attribution", () => {
+      expect(appendAttributionToCallbackPath("/scans", {})).toBe("/scans");
+    });
+
+    it("should read attribution params back from a callback path", () => {
+      const result = getAttributionParamsFromCallbackPath(
+        "/?promo_code=black-hat-2026&utm_source=blackhat&foo=bar",
+      );
+
+      expect(result).toEqual({
+        promo_code: "black-hat-2026",
+        utm_source: "blackhat",
+      });
+    });
+
+    it("should return no attribution for unsafe callback paths", () => {
+      expect(
+        getAttributionParamsFromCallbackPath(
+          "https://attacker.example/?promo_code=x",
+        ),
+      ).toEqual({});
     });
   });
 });
