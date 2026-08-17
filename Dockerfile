@@ -26,6 +26,8 @@ ARG ZIZMOR_SHA256_ARM64=d66e37ef8a375fb07939c630ebf9709a6e0f20242bdc3faf672a7ed9
 RUN apt-get update && apt-get install -y --no-install-recommends \
     wget libicu76 libunwind8 libssl3 libcurl4 ca-certificates apt-transport-https gnupg \
     build-essential pkg-config libzstd-dev zlib1g-dev \
+    && apt-get install -y --only-upgrade \
+    bsdutils libblkid1 liblastlog2-2 libmount1 libsmartcols1 libuuid1 login mount util-linux \
     && rm -rf /var/lib/apt/lists/*
 
 # Install PowerShell

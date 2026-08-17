@@ -36,6 +36,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libtool \
     libxslt1-dev \
     python3-dev \
+    && apt-get install -y --only-upgrade \
+    bsdutils libblkid1 liblastlog2-2 libmount1 libsmartcols1 libuuid1 login mount util-linux \
     && rm -rf /var/lib/apt/lists/*
 
 # Install PowerShell
