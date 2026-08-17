@@ -763,10 +763,10 @@ export const SlackIcon: React.FC<IconSvgProps> = ({
     aria-hidden="true"
     fill="none"
     focusable="false"
-    height={size || height}
+    height={height ?? size}
     role="presentation"
     viewBox="0 0 48 48"
-    width={size || width}
+    width={width ?? size}
     className={className}
     {...props}
     xmlns="http://www.w3.org/2000/svg"

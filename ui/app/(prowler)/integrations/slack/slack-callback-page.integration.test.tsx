@@ -41,6 +41,10 @@ describe("returning from Slack", () => {
     // The code is single-use and the exchange runs from a render (design D4):
     // without the once-guard, a second call burns it and reports a failure.
     expect(harness.exchangeCallCount).toBe(1);
+    // A completed install invalidates the cached "none connected".
+    expect(harness.revalidatedPaths).toEqual(
+      expect.arrayContaining(["/integrations", "/integrations/slack"]),
+    );
   }, 30000);
 
   it("does not report an install the API completed as failed when it answers no content", async () => {

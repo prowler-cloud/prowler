@@ -2,11 +2,15 @@ import { z } from "zod";
 
 import type { TaskState } from "@/types/tasks";
 
+export const INTEGRATION_TYPE = {
+  AMAZON_S3: "amazon_s3",
+  AWS_SECURITY_HUB: "aws_security_hub",
+  JIRA: "jira",
+  SLACK: "slack",
+} as const;
+
 export type IntegrationType =
-  | "amazon_s3"
-  | "aws_security_hub"
-  | "jira"
-  | "slack";
+  (typeof INTEGRATION_TYPE)[keyof typeof INTEGRATION_TYPE];
 
 export const JIRA_DISPATCH_MODE = {
   INDIVIDUAL: "individual",

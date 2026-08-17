@@ -1,10 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 
 import { apiBaseUrl, getAuthHeaders, parseStringify } from "@/lib";
 import {
   readSlackFailure,
+  SLACK_GENERIC_ERROR_MESSAGE,
   SLACK_UNREADABLE_RESULT_MESSAGE,
   slackErrorMessage,
   slackRateLimitMessage,
@@ -49,6 +51,11 @@ interface SlackExchangeInput {
   code: string;
   state: string;
 }
+
+const slackExchangeInputSchema = z.object({
+  code: z.string().min(1),
+  state: z.string().min(1),
+});
 
 interface SlackExchangeSuccess {
   integration: IntegrationProps;
@@ -134,10 +141,13 @@ export const getSlackAuthorizeUrl =
  * consumes the `state`, exchanges the single-use `code`, and upserts the
  * tenant's Slack integration.
  */
-export const exchangeSlackOAuthCode = async ({
-  code,
-  state,
-}: SlackExchangeInput): Promise<SlackExchangeResult> => {
+export const exchangeSlackOAuthCode = async (
+  input: SlackExchangeInput,
+): Promise<SlackExchangeResult> => {
+  const parsed = slackExchangeInputSchema.safeParse(input);
+  if (!parsed.success) return { error: SLACK_GENERIC_ERROR_MESSAGE };
+
+  const { code, state } = parsed.data;
   const headers = await getAuthHeaders({ contentType: true });
   const url = new URL(`${apiBaseUrl}/integrations/slack/oauth/exchange`);
 

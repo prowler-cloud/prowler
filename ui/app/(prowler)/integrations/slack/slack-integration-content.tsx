@@ -2,7 +2,7 @@ import { getIntegrations } from "@/actions/integrations/integrations";
 import { getSlackAuthorizeUrl } from "@/actions/integrations/slack";
 import { SlackIntegrationManager } from "@/components/integrations/slack/slack-integration-manager";
 import { GENERIC_SERVER_ERROR_MESSAGE } from "@/lib/helper";
-import type { IntegrationProps } from "@/types/integrations";
+import { INTEGRATION_TYPE, type IntegrationProps } from "@/types/integrations";
 
 /**
  * `getIntegrations` throws a `>= 500` answer past its own catch, which covers
@@ -26,7 +26,7 @@ const readSlackIntegrations = async (searchParams: URLSearchParams) => {
  */
 export async function SlackIntegrationContent() {
   const searchParams = new URLSearchParams();
-  searchParams.set("filter[integration_type]", "slack");
+  searchParams.set("filter[integration_type]", INTEGRATION_TYPE.SLACK);
   // One workspace per tenant, so one row is the whole result set.
   searchParams.set("page[size]", "1");
 
