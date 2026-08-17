@@ -63,13 +63,13 @@ export interface LighthouseV2Message {
   tokenUsage: unknown;
   insertedAt: string;
   parts: LighthouseV2Part[];
-  feedback?: LighthouseV2FeedbackRating | null;
 }
 
 export interface LighthouseV2MessageFeedbackInput {
   sessionId: string;
   messageId: string;
-  feedback: LighthouseV2FeedbackRating;
+  rating: LighthouseV2FeedbackRating;
+  details?: string;
 }
 
 export interface LighthouseV2SendMessageInput {

@@ -28,7 +28,7 @@ import {
   createLighthouseV2Session,
   getLighthouseV2SupportedModels,
   sendLighthouseV2Message,
-  updateLighthouseV2MessageFeedback,
+  submitLighthouseV2MessageFeedback,
   updateLighthouseV2Configuration,
   updateLighthouseV2Session,
 } from "./lighthouse-v2";
@@ -76,26 +76,6 @@ function configurationResponse(id = "config-1") {
 
 function modelsResponse() {
   return Response.json({ data: [] }, { status: 200 });
-}
-
-function messageResponse(id = "message-1", feedback = "down") {
-  return Response.json(
-    {
-      data: {
-        id,
-        type: "lighthouse-messages",
-        attributes: {
-          role: "user",
-          model: null,
-          token_usage: null,
-          inserted_at: "2026-06-25T10:00:00Z",
-          parts: [],
-          feedback,
-        },
-      },
-    },
-    { status: 200 },
-  );
 }
 
 describe("Lighthouse v2 session write actions", () => {
@@ -179,31 +159,33 @@ describe("Lighthouse v2 session write actions", () => {
     );
   });
 
-  it("updates Message feedback through the exact nested PATCH contract", async () => {
+  it("submits stateless Message feedback through the exact nested POST contract", async () => {
     // Given
-    const fetchMock = vi.fn().mockResolvedValue(messageResponse());
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(new Response(null, { status: 204 }));
     vi.stubGlobal("fetch", fetchMock);
 
     // When
-    const result = await updateLighthouseV2MessageFeedback({
+    const result = await submitLighthouseV2MessageFeedback({
       sessionId: "session-1",
       messageId: "message-1",
-      feedback: "down",
+      rating: "down",
+      details: "Missing evidence",
     });
 
     // Then
-    expect("data" in result && result.data.feedback).toBe("down");
+    expect(result).toEqual({ data: true, status: 204 });
     expect(fetchMock).toHaveBeenCalledWith(
       new URL(
-        "https://api.example.com/api/v1/lighthouse/sessions/session-1/messages/message-1",
+        "https://api.example.com/api/v1/lighthouse/sessions/session-1/messages/message-1/feedback",
       ),
       expect.objectContaining({
-        method: "PATCH",
+        method: "POST",
         body: JSON.stringify({
           data: {
-            type: "lighthouse-messages",
-            id: "message-1",
-            attributes: { feedback: "down" },
+            type: "lighthouse-message-feedback",
+            attributes: { rating: "down", details: "Missing evidence" },
           },
         }),
       }),
@@ -226,10 +208,10 @@ describe("Lighthouse v2 session write actions", () => {
     );
 
     // When
-    const result = await updateLighthouseV2MessageFeedback({
+    const result = await submitLighthouseV2MessageFeedback({
       sessionId: "session-1",
       messageId: "message-1",
-      feedback: "up",
+      rating: "up",
     });
 
     // Then

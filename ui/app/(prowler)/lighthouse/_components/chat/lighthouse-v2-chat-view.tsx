@@ -19,6 +19,7 @@ import {
   parseLighthouseV2ModelSelectionValue,
 } from "@/app/(prowler)/lighthouse/_lib/model-selection";
 import {
+  LIGHTHOUSE_V2_MESSAGE_ROLE,
   LIGHTHOUSE_V2_PROVIDER_TYPE,
   type LighthouseV2Configuration,
   type LighthouseV2ProviderType,
@@ -201,15 +202,22 @@ export function LighthouseV2ChatView({
             scrollClassName="minimal-scrollbar overflow-x-hidden overflow-y-auto"
           >
             {messages.map((message, index) => {
-              const skillRun = getSkillRunFromLaunch(
-                message,
-                messages[index - 1],
-              );
+              const previousMessage = messages[index - 1];
+              const skillRun = getSkillRunFromLaunch(message, previousMessage);
+              // The assistant owns the controls visually; its adjacent persisted
+              // user turn remains the API task/trace feedback target.
+              const feedbackTarget =
+                message.role === LIGHTHOUSE_V2_MESSAGE_ROLE.ASSISTANT &&
+                previousMessage?.role === LIGHTHOUSE_V2_MESSAGE_ROLE.USER &&
+                !previousMessage.id.startsWith("optimistic-")
+                  ? previousMessage
+                  : undefined;
               return (
                 <MessageBubble
                   key={message.id}
                   message={message}
                   sessionId={activeSessionId ?? undefined}
+                  feedbackTarget={feedbackTarget}
                   skillRun={skillRun}
                   onLaunchSkill={(skill) => {
                     // The DyR prompts hand follow-up skills off to a separate

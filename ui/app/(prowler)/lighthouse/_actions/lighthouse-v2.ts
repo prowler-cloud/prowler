@@ -270,17 +270,17 @@ export async function sendLighthouseV2Message(
   }
 }
 
-export async function updateLighthouseV2MessageFeedback(
+export async function submitLighthouseV2MessageFeedback(
   input: LighthouseV2MessageFeedbackInput,
-): Promise<LighthouseV2ActionResult<LighthouseV2Message>> {
-  return mutateSingle(
-    `${SESSIONS_ENDPOINT}/${encodeURIComponent(input.sessionId)}/messages/${encodeURIComponent(input.messageId)}`,
+): Promise<LighthouseV2ActionResult<true>> {
+  return mutateEmpty(
+    `${SESSIONS_ENDPOINT}/${encodeURIComponent(input.sessionId)}/messages/${encodeURIComponent(input.messageId)}/feedback`,
     {
-      method: "PATCH",
+      method: "POST",
       body: JSON.stringify(buildLighthouseV2MessageFeedbackPayload(input)),
     },
-    mapLighthouseV2Message,
     "",
+    true,
   );
 }
 
@@ -361,11 +361,12 @@ async function mutateEmpty(
   path: string,
   init: RequestInit,
   pathToRevalidate: string,
+  includeContentType = false,
 ): Promise<LighthouseV2ActionResult<true>> {
   try {
     const response = await fetch(buildApiUrl(path), {
       ...init,
-      headers: await getAuthHeaders({ contentType: false }),
+      headers: await getAuthHeaders({ contentType: includeContentType }),
     });
     const document = await handleApiResponse(response, pathToRevalidate);
     if (isErrorDocument(document)) {

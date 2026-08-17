@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 
-import { updateLighthouseV2MessageFeedback } from "@/app/(prowler)/lighthouse/_actions";
+import { submitLighthouseV2MessageFeedback } from "@/app/(prowler)/lighthouse/_actions";
 import { formatMessageTimestamp } from "@/app/(prowler)/lighthouse/_lib/format";
 import {
   getLighthouseContext,
@@ -28,6 +28,12 @@ import {
 } from "@/app/(prowler)/lighthouse/_types";
 import { LighthouseContextBadge } from "@/components/lighthouse/context-chip";
 import { Button } from "@/components/shadcn/button/button";
+import {
+  Popover,
+  PopoverAnchor,
+  PopoverContent,
+} from "@/components/shadcn/popover";
+import { FeedbackForm } from "@/components/survey/feedback-form";
 import { cn } from "@/lib/utils";
 import type { LighthouseSkillDefinition } from "@/types/lighthouse-skills";
 
@@ -53,6 +59,7 @@ interface AssistantPartGroup {
 interface MessageBubbleProps {
   message: LighthouseV2Message;
   sessionId?: string;
+  feedbackTarget?: LighthouseV2Message;
   // Present when this assistant message answered a skill launch (design 1j).
   skillRun?: SkillRunInfo;
   onLaunchSkill?: (skill: LighthouseSkillDefinition) => void;
@@ -61,6 +68,7 @@ interface MessageBubbleProps {
 export function MessageBubble({
   message,
   sessionId,
+  feedbackTarget,
   skillRun,
   onLaunchSkill,
 }: MessageBubbleProps) {
@@ -139,7 +147,7 @@ export function MessageBubble({
           isUser={isUser}
           text={messageText}
           insertedAt={message.insertedAt}
-          message={message}
+          feedbackTarget={feedbackTarget}
           sessionId={sessionId}
         />
       </div>
@@ -220,13 +228,13 @@ function MessageMeta({
   isUser,
   text,
   insertedAt,
-  message,
+  feedbackTarget,
   sessionId,
 }: {
   isUser: boolean;
   text: string;
   insertedAt: string;
-  message: LighthouseV2Message;
+  feedbackTarget?: LighthouseV2Message;
   sessionId?: string;
 }) {
   // Copy is always shown; the timestamp only reveals on hover over the message.
@@ -239,11 +247,13 @@ function MessageMeta({
       )}
     >
       <CopyMessageButton text={text} />
-      <MessageFeedbackControls
-        key={`${message.id}:${message.feedback ?? ""}`}
-        message={message}
-        sessionId={sessionId}
-      />
+      {feedbackTarget && (
+        <MessageFeedbackControls
+          key={feedbackTarget.id}
+          message={feedbackTarget}
+          sessionId={sessionId}
+        />
+      )}
       <time
         dateTime={insertedAt}
         className="text-text-neutral-tertiary text-xs opacity-0 transition-opacity group-hover:opacity-100"
@@ -261,77 +271,125 @@ function MessageFeedbackControls({
   message: LighthouseV2Message;
   sessionId?: string;
 }) {
-  const [feedbackOverride, setFeedbackOverride] = useState<{
-    rating: LighthouseV2FeedbackRating | null;
-    isPending: boolean;
-  } | null>(null);
-  const rating = feedbackOverride
-    ? feedbackOverride.rating
-    : (message.feedback ?? null);
-  const isSubmitting = feedbackOverride?.isPending ?? false;
+  const [open, setOpen] = useState(false);
+  const [rating, setRating] = useState<LighthouseV2FeedbackRating | null>(null);
+  const [details, setDetails] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const isPersistedUserMessage =
     message.role === LIGHTHOUSE_V2_MESSAGE_ROLE.USER &&
-    message.feedback !== undefined;
+    !message.id.startsWith("optimistic-");
 
   if (!sessionId || !isPersistedUserMessage) return null;
 
-  const submitRating = async (nextRating: LighthouseV2FeedbackRating) => {
-    if (isSubmitting || rating === nextRating) return;
-    setFeedbackOverride({ rating: nextRating, isPending: true });
+  const selectRating = (nextRating: LighthouseV2FeedbackRating) => {
+    setRating(nextRating);
+    setError(null);
+    setOpen(true);
+  };
+
+  const cancel = () => {
+    setOpen(false);
+    setRating(null);
+    setDetails("");
+    setError(null);
+  };
+
+  const submit = async () => {
+    if (!rating || isSubmitting) return;
+    setIsSubmitting(true);
+    setError(null);
     try {
-      const result = await updateLighthouseV2MessageFeedback({
+      const trimmedDetails = details.trim();
+      const result = await submitLighthouseV2MessageFeedback({
         sessionId,
         messageId: message.id,
-        feedback: nextRating,
+        rating,
+        ...(trimmedDetails ? { details: trimmedDetails } : {}),
       });
       if ("error" in result) {
-        setFeedbackOverride(null);
-      } else {
-        setFeedbackOverride({
-          rating: result.data.feedback ?? null,
-          isPending: false,
-        });
+        setError(result.error);
+        return;
       }
+      setOpen(false);
+      setDetails("");
     } catch {
-      setFeedbackOverride(null);
+      setError("Feedback is temporarily unavailable. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="flex items-center gap-0.5">
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon-sm"
-        aria-label="Mark outcome as helpful"
-        aria-pressed={rating === LIGHTHOUSE_V2_FEEDBACK_RATING.UP}
-        disabled={isSubmitting}
-        onClick={() => void submitRating(LIGHTHOUSE_V2_FEEDBACK_RATING.UP)}
-        className={cn(
-          "text-text-neutral-tertiary hover:text-text-neutral-primary size-6",
-          rating === LIGHTHOUSE_V2_FEEDBACK_RATING.UP &&
-            "bg-button-primary hover:bg-button-primary-hover active:bg-button-primary-press focus-visible:ring-button-primary/50 text-black hover:text-black",
-        )}
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverAnchor asChild>
+        <div className="flex items-center gap-0.5">
+          <FeedbackRatingButton
+            rating={LIGHTHOUSE_V2_FEEDBACK_RATING.UP}
+            selectedRating={rating}
+            onSelect={selectRating}
+          />
+          <FeedbackRatingButton
+            rating={LIGHTHOUSE_V2_FEEDBACK_RATING.DOWN}
+            selectedRating={rating}
+            onSelect={selectRating}
+          />
+        </div>
+      </PopoverAnchor>
+      <PopoverContent
+        align="start"
+        side="top"
+        className="w-[min(92vw,26rem)] p-5"
       >
-        <ThumbsUp className="size-3.5" />
-      </Button>
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon-sm"
-        aria-label="Mark outcome as not helpful"
-        aria-pressed={rating === LIGHTHOUSE_V2_FEEDBACK_RATING.DOWN}
-        disabled={isSubmitting}
-        onClick={() => void submitRating(LIGHTHOUSE_V2_FEEDBACK_RATING.DOWN)}
-        className={cn(
-          "text-text-neutral-tertiary hover:text-text-neutral-primary size-6",
-          rating === LIGHTHOUSE_V2_FEEDBACK_RATING.DOWN &&
-            "bg-button-primary hover:bg-button-primary-hover active:bg-button-primary-press focus-visible:ring-button-primary/50 text-black hover:text-black",
-        )}
-      >
-        <ThumbsDown className="size-3.5" />
-      </Button>
-    </div>
+        <FeedbackForm
+          title="Share feedback"
+          description="Tell us more about this answer."
+          detailsLabel="Additional feedback (optional)"
+          placeholder="Type your answer here"
+          details={details}
+          detailsMaxLength={2000}
+          isSubmitting={isSubmitting}
+          error={error}
+          onDetailsChange={setDetails}
+          onSubmit={() => void submit()}
+          onCancel={cancel}
+        />
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function FeedbackRatingButton({
+  rating,
+  selectedRating,
+  onSelect,
+}: {
+  rating: LighthouseV2FeedbackRating;
+  selectedRating: LighthouseV2FeedbackRating | null;
+  onSelect: (rating: LighthouseV2FeedbackRating) => void;
+}) {
+  const isUp = rating === LIGHTHOUSE_V2_FEEDBACK_RATING.UP;
+  const selected = selectedRating === rating;
+  const Icon = isUp ? ThumbsUp : ThumbsDown;
+
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon-sm"
+      aria-label={
+        isUp ? "Mark outcome as helpful" : "Mark outcome as not helpful"
+      }
+      aria-pressed={selected}
+      onClick={() => onSelect(rating)}
+      className={cn(
+        "text-text-neutral-tertiary hover:text-text-neutral-primary size-6",
+        selected &&
+          "bg-button-primary hover:bg-button-primary-hover active:bg-button-primary-press focus-visible:ring-button-primary/50 text-black hover:text-black",
+      )}
+    >
+      <Icon className="size-3.5" />
+    </Button>
   );
 }
 

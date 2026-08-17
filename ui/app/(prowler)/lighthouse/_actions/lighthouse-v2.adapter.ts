@@ -4,7 +4,6 @@ import {
   type LighthouseV2ConfigurationInput,
   type LighthouseV2ConfigurationUpdateInput,
   type LighthouseV2Credentials,
-  type LighthouseV2FeedbackRating,
   type LighthouseV2Message,
   type LighthouseV2MessageFeedbackInput,
   type LighthouseV2MessageRole,
@@ -63,7 +62,6 @@ interface MessageAttributes {
   token_usage: unknown;
   inserted_at: string;
   parts?: UnknownPartResource[];
-  feedback?: LighthouseV2FeedbackRating | null;
 }
 
 interface PartAttributes {
@@ -181,7 +179,6 @@ export function mapLighthouseV2Message(
     parts: (resource.attributes.parts ?? []).map((part, index) =>
       mapLighthouseV2Part(part, index),
     ),
-    feedback: resource.attributes.feedback,
   };
 }
 
@@ -260,11 +257,14 @@ export function buildLighthouseV2SessionUpdatePayload(
 export function buildLighthouseV2MessageFeedbackPayload(
   input: LighthouseV2MessageFeedbackInput,
 ) {
+  const details = input.details?.trim();
   return {
     data: {
-      type: "lighthouse-messages",
-      id: input.messageId,
-      attributes: { feedback: input.feedback },
+      type: "lighthouse-message-feedback",
+      attributes: filterUndefinedAttributes({
+        rating: input.rating,
+        details: details || undefined,
+      }),
     },
   };
 }

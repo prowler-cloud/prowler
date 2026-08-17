@@ -1,1 +1,1 @@
-Persistent thumbs-up and thumbs-down ratings on Lighthouse user messages
+Thumbs-up and thumbs-down feedback form for Lighthouse assistant answers with optional details

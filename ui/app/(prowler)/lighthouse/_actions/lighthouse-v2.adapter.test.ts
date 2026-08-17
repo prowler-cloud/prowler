@@ -123,7 +123,7 @@ describe("lighthouse-v2.adapter", () => {
       });
     });
 
-    it("should map the current feedback attached to a message", () => {
+    it("should not expose removed feedback state on mapped messages", () => {
       // Given
       const resource: Parameters<typeof mapLighthouseV2Message>[0] = {
         id: "message-1",
@@ -134,7 +134,6 @@ describe("lighthouse-v2.adapter", () => {
           token_usage: null,
           inserted_at: "2026-06-24T10:01:00Z",
           parts: [],
-          feedback: "up",
         },
       };
 
@@ -142,7 +141,7 @@ describe("lighthouse-v2.adapter", () => {
       const message = mapLighthouseV2Message(resource);
 
       // Then
-      expect(message.feedback).toBe("up");
+      expect(message).not.toHaveProperty("feedback");
     });
 
     it("should give id-less parts stable fallback keys instead of empty strings", () => {
@@ -185,22 +184,35 @@ describe("lighthouse-v2.adapter", () => {
   });
 
   describe("when building Cloud payloads", () => {
-    it("should build the exact Message feedback PATCH resource", () => {
+    it("should build the exact stateless Message feedback resource", () => {
       // Given / When
       const payload = buildLighthouseV2MessageFeedbackPayload({
         sessionId: "session-1",
         messageId: "message-1",
-        feedback: "down",
+        rating: "down",
+        details: "  Missing evidence  ",
       });
 
       // Then
       expect(payload).toEqual({
         data: {
-          type: "lighthouse-messages",
-          id: "message-1",
-          attributes: { feedback: "down" },
+          type: "lighthouse-message-feedback",
+          attributes: { rating: "down", details: "Missing evidence" },
         },
       });
+    });
+
+    it("should omit blank optional Message feedback details", () => {
+      // Given / When
+      const payload = buildLighthouseV2MessageFeedbackPayload({
+        sessionId: "session-1",
+        messageId: "message-1",
+        rating: "up",
+        details: "   ",
+      });
+
+      // Then
+      expect(payload.data.attributes).toEqual({ rating: "up" });
     });
 
     it("should include agent text, display text, and UI context for contextual messages", () => {
