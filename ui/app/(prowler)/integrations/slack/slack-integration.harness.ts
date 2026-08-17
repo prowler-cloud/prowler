@@ -14,6 +14,7 @@ import { handlersForSlack } from "@/__tests__/msw/handlers/slack";
 import type { SlackFixture } from "@/__tests__/msw/handlers/slack.fixtures";
 import { worker } from "@/__tests__/msw/worker";
 import { render } from "@/__tests__/render-browser";
+import { setSlackDefaultChannel } from "@/actions/integrations/slack";
 import { SlackCallback } from "@/components/integrations/slack/slack-callback";
 
 import { IntegrationsContent } from "../integrations-content";
@@ -94,6 +95,21 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     this.mounted = render(await SlackIntegrationContent());
     await this.mounted;
     if (this.fixture.install) await this.waitForChannelsRead(readsBefore);
+  }
+
+  /**
+   * Refresh the page's server data under the open card, the way
+   * `revalidatePath` does after an action: the card is handed new props but is
+   * never unmounted, so whatever it holds in React state survives. That is what
+   * separates it from `revisit()`, which unmounts first and so re-seeds
+   * everything from scratch.
+   */
+  async refreshPageData(): Promise<void> {
+    const rendered = await this.mounted;
+    if (!rendered) {
+      throw new Error("refreshPageData: the page is not mounted");
+    }
+    await rendered.rerender(await SlackIntegrationContent());
   }
 
   async mountCallback({ code, state, error }: CallbackParams): Promise<void> {
@@ -501,6 +517,37 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
       15000,
       `#${name} to be recorded as the destination`,
     );
+  }
+
+  /**
+   * Record a different destination away from this page — a second tab, or
+   * someone else in the tenant. Goes through the same call the page makes, so
+   * the API is left in the state a real one would be, and nothing about this
+   * page's own copy of it is touched.
+   */
+  async channelRecordedElsewhere(name: string): Promise<void> {
+    const channel = this.fixture.channels.find((c) => c.name === name);
+    if (!channel) {
+      throw new Error(
+        `channelRecordedElsewhere: no channel named "${name}" is offered`,
+      );
+    }
+
+    const integrationId = this.fixture.install?.id;
+    if (!integrationId) {
+      throw new Error("channelRecordedElsewhere: no workspace is connected");
+    }
+
+    const result = await setSlackDefaultChannel(integrationId, channel.id);
+    if ("error" in result) {
+      throw new Error(`channelRecordedElsewhere: ${result.error}`);
+    }
+  }
+
+  /** Whether the picked channel can be saved — false when there is nothing new to save. */
+  offersChannelSave(): boolean {
+    const button = this.buttonByText(/Save channel/);
+    return button !== null && !button.disabled;
   }
 
   /**

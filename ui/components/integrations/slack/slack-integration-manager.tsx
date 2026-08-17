@@ -70,19 +70,44 @@ export const SlackIntegrationManager = ({
   const [selectedChannelId, setSelectedChannelId] = useState<string | null>(
     recordedChannelId,
   );
-  // What the API has on record. Kept in state rather than read from the
-  // integration prop because saving does not re-render this page's server
-  // component, and the test message is only offered once a channel is recorded.
+  // What the API has on record. Mirrored in state rather than read from the
+  // integration prop so that every affordance gated on a destination — the
+  // connection check, the test message, the copy naming the channel — moves the
+  // moment the save is acknowledged, instead of waiting on the revalidation
+  // that refreshes this page's server component afterwards.
   const [defaultChannelId, setDefaultChannelId] = useState<string | null>(
     recordedChannelId,
   );
   const [defaultChannelName, setDefaultChannelName] = useState<string | null>(
     recordedChannelName,
   );
+  // The prop the mirror was last taken from. A refresh of this page's data —
+  // the revalidation above, or a change made in another tab — moves the record
+  // under a card that never unmounts, and a mirror seeded only at mount would
+  // go on naming a channel Prowler no longer posts to.
+  const [syncedChannelId, setSyncedChannelId] = useState(recordedChannelId);
+  const [syncedChannelName, setSyncedChannelName] =
+    useState(recordedChannelName);
   const [isSavingChannel, setIsSavingChannel] = useState(false);
   const [isSendingTestMessage, setIsSendingTestMessage] = useState(false);
   const [testMessageOutcome, setTestMessageOutcome] =
     useState<TestMessageOutcome | null>(null);
+
+  if (
+    recordedChannelId !== syncedChannelId ||
+    recordedChannelName !== syncedChannelName
+  ) {
+    setSyncedChannelId(recordedChannelId);
+    setSyncedChannelName(recordedChannelName);
+    setDefaultChannelId(recordedChannelId);
+    setDefaultChannelName(recordedChannelName);
+    // The buffered pick follows only while it still shows the destination that
+    // was on record: a pick the user has made and not yet saved is theirs, and
+    // overwriting it would take the choice away mid-edit.
+    if (selectedChannelId === syncedChannelId) {
+      setSelectedChannelId(recordedChannelId);
+    }
+  }
 
   useEffect(() => {
     if (!integrationId) return;
@@ -223,10 +248,7 @@ export const SlackIntegrationManager = ({
     }
   };
 
-  const configuration = integration?.attributes.configuration;
-  const workspaceName = configuration?.team_name;
-  // Absent until a channel is chosen, never present-and-null.
-  const channelId = configuration?.channel_id ?? null;
+  const workspaceName = integration?.attributes.configuration.team_name;
 
   const checkedAt = integration?.attributes.connection_last_checked_at;
   const checkedOn = checkedAt ? parseISO(checkedAt) : null;
@@ -287,7 +309,7 @@ export const SlackIntegrationManager = ({
                     {lastCheckedOn}
                   </p>
                 )}
-                {!channelId && (
+                {!defaultChannelId && (
                   <p>
                     Choosing a destination channel is the next step — the
                     connection is checked against it.
@@ -299,7 +321,7 @@ export const SlackIntegrationManager = ({
               <Button
                 size="sm"
                 variant="outline"
-                disabled={isTesting || !channelId}
+                disabled={isTesting || !defaultChannelId}
                 onClick={() => handleTestConnection(integration.id)}
               >
                 <TestTube size={14} />

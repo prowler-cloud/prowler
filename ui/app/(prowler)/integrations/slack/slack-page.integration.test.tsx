@@ -350,6 +350,49 @@ describe("choosing a destination channel", () => {
     expect(harness.offersTestMessage()).toBe(false);
   }, 30000);
 
+  it("offers the connection check as soon as the destination is saved, without a revisit", async () => {
+    // Given — connected with nothing recorded: the check posts to the
+    // destination, so it is refused, not offered, and the page says so.
+    const harness = new SlackIntegrationHarness(connectedSlackFixture());
+    await harness.mount();
+    expect(await harness.offersConnectionTest()).toBe(false);
+    expect(harness.saysChannelIsNextStep()).toBe(true);
+
+    // When
+    await harness.chooseChannel(SLACK_PUBLIC_CHANNEL.name);
+
+    // Then — the save is the answer to "what is the next step", so everything
+    // that was waiting on a destination moves with it, in the same paint: the
+    // user does not have to reload the page to find the check on offer.
+    expect(await harness.offersConnectionTest()).toBe(true);
+    expect(harness.saysChannelIsNextStep()).toBe(false);
+    // And — the API agrees the destination exists, so the check really runs.
+    expect(await harness.testConnection()).toBe(CONNECTION_OUTCOME.SUCCESS);
+  }, 60000);
+
+  it("follows the destination recorded elsewhere when the page's data refreshes under it", async () => {
+    // Given — a finished setup, open on screen.
+    const harness = new SlackIntegrationHarness(configuredSlackFixture());
+    await harness.mount();
+    expect(await harness.defaultChannel()).toBe(SLACK_PUBLIC_CHANNEL.name);
+
+    // When — the destination is changed somewhere else (a second tab, or
+    // another user in the tenant) and this page's server data is refreshed
+    // under the open card, as `revalidatePath` does after an action.
+    await harness.channelRecordedElsewhere(SLACK_SECOND_PUBLIC_CHANNEL.name);
+    await harness.refreshPageData();
+
+    // Then — the card reports what is on record, not the copy it took at mount:
+    // a stale name here is a claim about where Prowler posts.
+    expect(await harness.defaultChannel()).toBe(
+      SLACK_SECOND_PUBLIC_CHANNEL.name,
+    );
+    expect(harness.offersTestMessage()).toBe(true);
+    // And — the picker followed too, so the superseded destination is not left
+    // sitting in it, one click from being saved back.
+    expect(harness.offersChannelSave()).toBe(false);
+  }, 60000);
+
   it("says which permission is missing when Slack refuses the channel listing, leaving the recorded channel alone", async () => {
     // Given — a tenant that already recorded a destination, whose install never
     // granted a scope the listing needs. The API names it in `code` (contract,
