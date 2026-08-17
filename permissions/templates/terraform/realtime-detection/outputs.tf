@@ -18,6 +18,11 @@ output "prowler_realtime_dlq_arn" {
   value       = aws_sqs_queue.prowler_realtime_dlq.arn
 }
 
+output "prowler_realtime_hello_status" {
+  description = "Result of the hello event emitted on apply: Sent, or Failed with the error"
+  value       = try(jsondecode(aws_lambda_invocation.prowler_realtime_hello.result), null)
+}
+
 output "prowler_realtime_invoke_role_arn" {
   description = "ARN of the IAM role assumed by EventBridge to invoke the API destination"
   value       = aws_iam_role.prowler_realtime_invoke.arn

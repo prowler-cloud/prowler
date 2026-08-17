@@ -40,3 +40,8 @@ output "prowler_realtime_dlq_url" {
   description = "URL of the dead-letter queue holding the events EventBridge could not deliver (null if real-time detection is disabled)"
   value       = try(module.realtime_detection[0].prowler_realtime_dlq_url, null)
 }
+
+output "prowler_realtime_hello_status" {
+  description = "Result of the hello event emitted on apply (null if real-time detection is disabled)"
+  value       = try(module.realtime_detection[0].prowler_realtime_hello_status, null)
+}

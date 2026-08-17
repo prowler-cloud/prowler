@@ -55,7 +55,9 @@ terraform apply \
 
 `prowler_webhook_url` already defaults to the Prowler Cloud ingest endpoint, so only the API key is needed. Override it for a self-hosted deployment or for testing.
 
-To verify the connection without touching any real resource, emit the hello event yourself. It travels the same connection, API destination, API key and endpoint as a real event, and Prowler Cloud marks the provider as connected without running a scan:
+The apply verifies the connection by emitting a hello event, without touching any real resource. It travels the same connection, API destination, API key and endpoint as a real event, and Prowler Cloud marks the provider as connected without running a scan. The `prowler_realtime_hello_status` output reports the result, and the event is emitted again whenever `prowler_webhook_url` changes.
+
+To re-check the connection at any point, emit it yourself:
 
 ```bash
 aws events put-events --entries '[{
@@ -64,8 +66,6 @@ aws events put-events --entries '[{
   "Detail": "{}"
 }]'
 ```
-
-The CloudFormation template emits this event by itself on deploy; here it is a manual step, because a Terraform apply already runs from a shell with credentials and adding a Lambda to the account just to send one event is a worse trade.
 
 Failed deliveries are not lost: EventBridge retries for up to 24 hours and then writes the event to the `ProwlerRealtimeDetectionDLQ` queue created in your account, together with the error code and the number of attempts. Responses that are never retried (any 4xx other than 401, 407, 409 and 429) land there on the first attempt. The queue is yours: Prowler has no permission to read it.
 
@@ -93,5 +93,6 @@ After successful deployment, you'll get:
 - `prowler_realtime_rule_arn`: ARN of the EventBridge rule (null if real-time detection is disabled)
 - `prowler_realtime_api_destination_arn`: ARN of the EventBridge API destination (null if real-time detection is disabled)
 - `prowler_realtime_dlq_url`: URL of the dead-letter queue (null if real-time detection is disabled)
+- `prowler_realtime_hello_status`: result of the hello event emitted on apply, `Sent` or `Failed` with the error
 
 > **Note:** Terraform will use the AWS credentials of your default profile or AWS_PROFILE environment variable.

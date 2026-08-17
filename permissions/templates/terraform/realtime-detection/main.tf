@@ -208,3 +208,87 @@ resource "aws_cloudwatch_event_target" "prowler_realtime_hello" {
     arn = aws_sqs_queue.prowler_realtime_dlq.arn
   }
 }
+
+# Hello event emitter, the same function the CloudFormation template runs, so both
+# onboarding paths leave the same footprint in the account
+###################################
+data "archive_file" "prowler_realtime_hello" {
+  type        = "zip"
+  source_file = "${path.module}/hello.py"
+  output_path = "${path.module}/hello.zip"
+}
+
+# Declared explicitly so the function does not leave a log group with unlimited retention behind
+resource "aws_cloudwatch_log_group" "prowler_realtime_hello" {
+  name              = "/aws/lambda/ProwlerRealtimeHello"
+  retention_in_days = 30
+}
+
+data "aws_iam_policy_document" "prowler_realtime_hello_assume_role" {
+  statement {
+    actions = ["sts:AssumeRole"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["lambda.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_role" "prowler_realtime_hello" {
+  name               = "ProwlerRealtimeHello"
+  assume_role_policy = data.aws_iam_policy_document.prowler_realtime_hello_assume_role.json
+}
+
+resource "aws_iam_role_policy" "prowler_realtime_hello" {
+  name = "PutHelloEvent"
+  role = aws_iam_role.prowler_realtime_hello.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = "events:PutEvents"
+        Resource = "arn:${data.aws_partition.current.partition}:events:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:event-bus/default"
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["logs:CreateLogStream", "logs:PutLogEvents"]
+        Resource = "${aws_cloudwatch_log_group.prowler_realtime_hello.arn}:*"
+      },
+    ]
+  })
+}
+
+resource "aws_lambda_function" "prowler_realtime_hello" {
+  function_name    = "ProwlerRealtimeHello"
+  description      = "Emits the Prowler real-time detection hello event"
+  role             = aws_iam_role.prowler_realtime_hello.arn
+  runtime          = "python3.13"
+  handler          = "hello.handler"
+  timeout          = 30
+  filename         = data.archive_file.prowler_realtime_hello.output_path
+  source_code_hash = data.archive_file.prowler_realtime_hello.output_base64sha256
+
+  depends_on = [aws_cloudwatch_log_group.prowler_realtime_hello]
+}
+
+# Emitting the event is the last step: the rule, the target and every policy it
+# depends on must already exist, and none of them is referenced here
+resource "aws_lambda_invocation" "prowler_realtime_hello" {
+  function_name = aws_lambda_function.prowler_realtime_hello.function_name
+  input         = "{}"
+
+  # Re-emits the event when the endpoint changes, like the CloudFormation custom resource
+  triggers = {
+    webhook_url = var.prowler_webhook_url
+  }
+
+  depends_on = [
+    aws_cloudwatch_event_target.prowler_realtime_hello,
+    aws_iam_role_policy.prowler_realtime_hello,
+    aws_iam_role_policy.prowler_realtime_invoke,
+    aws_sqs_queue_policy.prowler_realtime_dlq,
+  ]
+}
