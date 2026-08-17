@@ -458,7 +458,7 @@ constraint-dependencies = [
   "zipp==3.23.0",
   "zope-event==6.1",
   "zope-interface==8.2",
-  "zstd==1.5.7.3"
+  "zstd==1.5.7.2"
 ]
 # prowler@master needs okta==3.4.2, but cartography 0.138.1 requires okta<1.0.0.
 # Attack Paths does not ingest Okta today, so override the Cartography

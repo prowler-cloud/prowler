@@ -68,7 +68,14 @@ dependencies = [
   "boto3==1.40.61",
   "botocore==1.40.61",
   "colorama==0.4.6",
-  "cryptography==50.0.0",
+  # alibabacloud-tea-openapi==0.4.5 (latest) declares cryptography<49 and pyopenssl==26.2.0
+  # declares cryptography<49. A uv override cannot lift those caps for consumers of the
+  # published wheel: 5.38.0 shipped cryptography==50.0.0 and was uninstallable with pip.
+  # Upstream fix: https://github.com/aliyun/darabonba-openapi/pull/287 (raises the cap to
+  # <51, releases 0.4.6). Once it ships, bump alibabacloud-tea-openapi, pyopenssl and
+  # cryptography together. CVE-2026-69247 / CVE-2026-69249 are excluded in
+  # .trivyignore.yaml and .grype.yaml until then.
+  "cryptography==48.0.1",
   "dash==3.1.1",
   "dash-bootstrap-components==2.0.3",
   "defusedxml==0.7.1",
@@ -387,13 +394,9 @@ constraint-dependencies = [
   "xmltodict==1.0.4",
   "yarl==1.23.0",
   "zipp==3.23.1",
-  "zstd==1.5.7.3"
+  "zstd==1.5.7.2"
 ]
-override-dependencies = [
-  "okta==3.4.2",
-  # alibabacloud-tea-openapi 0.4.5 caps cryptography below 49 and is the latest release.
-  "cryptography==50.0.0"
-]
+override-dependencies = ["okta==3.4.2"]
 
 [tool.vulture]
 # Suppress known false positives. The CI command only passes --exclude and
