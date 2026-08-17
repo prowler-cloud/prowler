@@ -1,8 +1,8 @@
 /**
  * What the Slack actions do off the DOM, which
- * `slack-page.integration.test.tsx` therefore cannot cover: the Sentry
- * reporting of the OAuth calls, and the URLs the channel listing's cursor
- * pagination follows.
+ * `slack-page.integration.test.tsx` therefore cannot cover: which failures they
+ * report to Sentry, and the URLs the channel listing's cursor pagination
+ * follows.
  */
 
 import { revalidatePath } from "next/cache";
@@ -521,12 +521,8 @@ describe("sendSlackTestMessage", () => {
   });
 });
 
-/**
- * The integration id is interpolated into every one of these URLs, so an id
- * that is not one has to be refused before the request is built rather than
- * sent as a path of its own.
- */
-describe.each([
+/** The calls whose only failure path is one line of copy. */
+const COPY_ONLY_ACTIONS = [
   {
     name: "getSlackChannels",
     call: (id: string) => getSlackChannels(id),
@@ -539,7 +535,90 @@ describe.each([
     name: "sendSlackTestMessage",
     call: (id: string) => sendSlackTestMessage(id),
   },
-])("$name", ({ call }) => {
+];
+
+const rateLimitedResponse = () =>
+  new Response(
+    JSON.stringify({
+      errors: [{ status: "429", detail: "Slack is rate limiting." }],
+    }),
+    {
+      status: 429,
+      headers: {
+        "content-type": "application/vnd.api+json",
+        "Retry-After": "30",
+      },
+    },
+  );
+
+/**
+ * Answering in copy is not a reason to stay silent: a `5xx` on these calls is
+ * the same fault the OAuth ones report, so it reaches Sentry the same way —
+ * without changing a word of what the user is told.
+ */
+describe.each(COPY_ONLY_ACTIONS)("$name", ({ call }) => {
+  it("reports an upstream Slack failure and still answers in the same words", async () => {
+    fetchMock.mockResolvedValue(
+      errorResponse(UPSTREAM_STATUS, UPSTREAM_DETAIL),
+    );
+
+    const result = await call(SLACK_INTEGRATION_ID);
+
+    // Once, not twice: `handleApiResponse` reports and throws, and the action's
+    // catch sees the mark.
+    expect(captureExceptionMock).toHaveBeenCalledTimes(1);
+    expect(captureExceptionMock.mock.calls[0]?.[1]).toMatchObject({
+      tags: {
+        api_error: true,
+        error_source: SentryErrorSource.HANDLE_API_RESPONSE,
+        error_type: SentryErrorType.SERVER_ERROR,
+        status_code: String(UPSTREAM_STATUS),
+      },
+    });
+    expect(captureMessageMock).not.toHaveBeenCalled();
+
+    // The API's own `detail`, which is what this 502 already said before it was
+    // reported: the throw is caught by the action and carries the same string.
+    expect(result).toEqual({ error: UPSTREAM_DETAIL });
+  });
+
+  it.each([
+    {
+      status: 503,
+      why: "Slack being unavailable, not a fault",
+      response: () => errorResponse(503, "Slack is unavailable."),
+      expected: "Slack is unavailable.",
+    },
+    {
+      status: 429,
+      why: "a wait, not a fault",
+      response: rateLimitedResponse,
+      expected:
+        "Slack is rate limiting Prowler right now. Try again in about 30 seconds.",
+    },
+    {
+      status: 400,
+      why: "a refusal the API meant to give",
+      response: () => errorResponse(400, "No default channel is set."),
+      expected: "No default channel is set.",
+    },
+  ])("reports nothing for a $status: that is $why", async (refusal) => {
+    fetchMock.mockResolvedValue(refusal.response());
+
+    const result = await call(SLACK_INTEGRATION_ID);
+
+    expect(captureExceptionMock).not.toHaveBeenCalled();
+    expect(captureMessageMock).not.toHaveBeenCalled();
+    expect(result).toEqual({ error: refusal.expected });
+  });
+});
+
+/**
+ * The integration id is interpolated into every one of these URLs, so an id
+ * that is not one has to be refused before the request is built rather than
+ * sent as a path of its own.
+ */
+describe.each(COPY_ONLY_ACTIONS)("$name", ({ call }) => {
   it.each(["../../users", "not-a-uuid", ""])(
     "asks the API nothing when the integration id is %o",
     async (id) => {

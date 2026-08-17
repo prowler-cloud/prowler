@@ -186,6 +186,14 @@ const errorMessageFrom = async (
   response: Response,
   fallback: string,
 ): Promise<string> => {
+  // Same 5xx handling as `failureFrom`, for the same reason and with the same
+  // exception: a `503` is Slack being unavailable here, which `failureFrom`
+  // also leaves unreported through its early return. Must run before
+  // `readSlackFailure`: a body can only be read once.
+  if (response.status >= 500 && response.status !== 503) {
+    await handleApiResponse(response);
+  }
+
   const failure = await readSlackFailure(response);
 
   return failure.status === RATE_LIMITED_STATUS
