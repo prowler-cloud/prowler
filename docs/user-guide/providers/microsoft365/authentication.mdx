@@ -40,10 +40,12 @@ When using service principal authentication, add these **Application Permissions
 
 **Microsoft Graph API Permissions:**
 
+- `AccessReview.Read.All`: Required for `entra_access_review_guest_users_configured` and `entra_access_review_privileged_roles_configured` checks. A Microsoft Entra ID P2 or Microsoft Entra ID Governance license is also required.
 - `AuditLog.Read.All`: Required for Entra service.
 - `Directory.Read.All`: Required for all services.
 - `OnPremDirectorySynchronization.Read.All`: Required for `entra_seamless_sso_disabled` check (hybrid deployments).
 - `Policy.Read.All`: Required for all services.
+- `RoleManagementPolicy.Read.Directory`: Required for `entra_pim_global_administrator_approval_required` and `entra_pim_privileged_role_administrator_approval_required` checks. A Microsoft Entra ID P2 or Microsoft Entra ID Governance license is also required.
 - `SecurityIdentitiesHealth.Read.All`: Required for `defenderidentity_health_issues_no_open` check.
 - `SecurityIdentitiesSensors.Read.All`: Required for `defenderidentity_health_issues_no_open` check.
 - `SharePointTenantSettings.Read.All`: Required for SharePoint service.
@@ -111,10 +113,12 @@ Browser and Azure CLI authentication methods limit scanning capabilities to chec
 
 3. Search and select the required permissions:
 
+   - `AccessReview.Read.All`: Required for `entra_access_review_guest_users_configured` and `entra_access_review_privileged_roles_configured` checks. A Microsoft Entra ID P2 or Microsoft Entra ID Governance license is also required
    - `AuditLog.Read.All`: Required for Entra service
    - `Directory.Read.All`: Required for all services
    - `OnPremDirectorySynchronization.Read.All`: Required for `entra_seamless_sso_disabled` check (hybrid deployments)
    - `Policy.Read.All`: Required for all services
+   - `RoleManagementPolicy.Read.Directory`: Required for `entra_pim_global_administrator_approval_required` and `entra_pim_privileged_role_administrator_approval_required` checks. A Microsoft Entra ID P2 or Microsoft Entra ID Governance license is also required
    - `SecurityIdentitiesHealth.Read.All`: Required for `defenderidentity_health_issues_no_open` check
    - `SecurityIdentitiesSensors.Read.All`: Required for `defenderidentity_health_issues_no_open` check
    - `SharePointTenantSettings.Read.All`: Required for SharePoint service

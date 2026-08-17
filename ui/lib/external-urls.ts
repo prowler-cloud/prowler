@@ -14,6 +14,8 @@ export const DOCS_URLS = {
     "https://docs.prowler.com/user-guide/tutorials/prowler-app-findings-triage",
   AWS_ORGANIZATIONS:
     "https://docs.prowler.com/user-guide/tutorials/prowler-cloud-aws-organizations",
+  AZURE_ORGANIZATIONS:
+    "https://docs.prowler.com/user-guide/tutorials/prowler-cloud-azure-management-groups",
   GCP_ORGANIZATIONS:
     "https://docs.prowler.com/user-guide/tutorials/prowler-cloud-gcp-organizations",
   ALERTS: "https://docs.prowler.com/user-guide/tutorials/prowler-app-alerts",

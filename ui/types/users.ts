@@ -82,15 +82,20 @@ export interface RoleData {
   id: string;
 }
 
+export const PERMISSION_KEY = {
+  MANAGE_USERS: "manage_users",
+  MANAGE_ACCOUNT: "manage_account",
+  MANAGE_PROVIDERS: "manage_providers",
+  MANAGE_SCANS: "manage_scans",
+  MANAGE_INTEGRATIONS: "manage_integrations",
+  MANAGE_BILLING: "manage_billing",
+  MANAGE_ALERTS: "manage_alerts",
+  MANAGE_LIGHTHOUSE_AI_CONFIGURATION: "manage_lighthouse_ai_configuration",
+  UNLIMITED_VISIBILITY: "unlimited_visibility",
+} as const;
+
 export type PermissionKey =
-  | "manage_users"
-  | "manage_account"
-  | "manage_providers"
-  | "manage_scans"
-  | "manage_integrations"
-  | "manage_billing"
-  | "manage_alerts"
-  | "unlimited_visibility";
+  (typeof PERMISSION_KEY)[keyof typeof PERMISSION_KEY];
 
 export type RolePermissionAttributes = Pick<
   RoleDetail["attributes"],
@@ -117,6 +122,7 @@ export interface RoleDetail {
     manage_integrations: boolean;
     manage_billing?: boolean;
     manage_alerts?: boolean;
+    manage_lighthouse_ai_configuration?: boolean;
     unlimited_visibility: boolean;
     permission_state?: string;
     inserted_at?: string;

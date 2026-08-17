@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   createLighthouseChatStore,
+  selectLighthouseChatActiveSkill,
   selectLighthouseChatCanSend,
 } from "@/app/(prowler)/lighthouse/_lib/chat-store";
 import {
@@ -14,6 +15,7 @@ import type {
   LighthouseV2SupportedModel,
   LighthouseV2SupportedProvider,
 } from "@/app/(prowler)/lighthouse/_types";
+import { getSkillById } from "@/lib/lighthouse/skills/registry";
 import type { LighthouseContextEnvelope } from "@/types/lighthouse-context";
 
 const {
@@ -146,6 +148,78 @@ describe("createLighthouseChatStore", () => {
       displayText: "  Summarize critical findings  ",
       context,
     });
+  });
+
+  it("threads a launched skill through the optimistic message and the API call", async () => {
+    // Given
+    const store = makeStore();
+    const skill = getSkillById("triage-decision");
+    if (!skill) throw new Error("Expected skill definition");
+
+    // When
+    await store.getState().submitMessage(skill.name, undefined, skill);
+
+    // Then
+    expect(sendMessageMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        displayText: "Triage Decision",
+        skillId: "triage-decision",
+      }),
+    );
+    expect(store.getState().messages.at(-1)?.parts[0]?.content).toMatchObject({
+      text: expect.stringContaining("[PROWLER_UI_SKILL_V1]"),
+      display_text: "Triage Decision",
+      ui_skill: expect.objectContaining({
+        skill_id: "triage-decision",
+      }),
+    });
+    // The run is live, so the pill/progress surfaces see the active skill.
+    expect(selectLighthouseChatActiveSkill(store.getState())?.id).toBe(
+      "triage-decision",
+    );
+  });
+
+  it("preserves an active skill stream while EventSource reconnects", async () => {
+    // Given
+    const store = makeStore();
+    const skill = getSkillById("triage-decision");
+    if (!skill) throw new Error("Expected skill definition");
+    await store.getState().submitMessage(skill.name, undefined, skill);
+    eventSources[0].emit("message.delta", {
+      content: "Result ",
+    });
+
+    // When: the browser reports a transient failure and keeps reconnecting
+    eventSources[0].fail(0 /* EventSource.CONNECTING */);
+    eventSources[0].emit("message.delta", {
+      content: "Checking exposure.",
+    });
+
+    // Then
+    expect(store.getState().streamState).toMatchObject({
+      status: "streaming",
+      activeTaskId: "task-1",
+      assistantText: "Result Checking exposure.",
+    });
+  });
+
+  it("retries a failed skill launch with the same skill attached", async () => {
+    // Given
+    const store = makeStore();
+    const skill = getSkillById("contextual-fix");
+    if (!skill) throw new Error("Expected skill definition");
+    sendMessageMock.mockResolvedValueOnce({ error: "Agent unavailable" });
+    await store.getState().submitMessage(skill.name, undefined, skill);
+    // The failed run is no longer active, so the skill is not "active" either.
+    expect(selectLighthouseChatActiveSkill(store.getState())).toBeUndefined();
+
+    // When
+    await store.getState().retryLastMessage();
+
+    // Then
+    expect(sendMessageMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({ skillId: "contextual-fix" }),
+    );
   });
 
   it("uses the model selected when submission starts", async () => {

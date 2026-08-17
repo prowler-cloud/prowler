@@ -1,6 +1,6 @@
 [build-system]
 build-backend = "hatchling.build"
-requires = ["hatchling"]
+requires = ["hatchling==1.32.0"]
 
 [dependency-groups]
 dev = [
@@ -136,7 +136,7 @@ maintainers = [{name = "Prowler Engineering", email = "engineering@prowler.com"}
 name = "prowler"
 readme = "README.md"
 requires-python = ">=3.10,<3.14"
-version = "5.39.0"
+version = "5.40.0"
 
 [project.scripts]
 prowler = "prowler.__main__:prowler"
@@ -392,7 +392,7 @@ constraint-dependencies = [
 override-dependencies = [
   "okta==3.4.2",
   # alibabacloud-tea-openapi 0.4.5 caps cryptography below 49 and is the latest release.
-  "cryptography==50.0.0",
+  "cryptography==50.0.0"
 ]
 
 [tool.vulture]

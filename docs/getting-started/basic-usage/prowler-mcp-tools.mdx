@@ -12,10 +12,10 @@ Complete reference guide for all tools available in the Prowler MCP Server. Tool
 | Prowler Hub | 10 tools | No | Cloud and Local MCP Server |
 | Prowler Documentation | 2 tools | No | Cloud and Local MCP Server |
 | Prowler Cloud, Private Cloud & Local Server | 49 tools | Yes | Cloud and Local MCP Server |
-| Prowler Cloud management | 32 tools | Yes | Cloud MCP Server only |
+| Prowler Cloud management | 40 tools | Yes | Cloud MCP Server only |
 
 <Note>
-48 of the 49 Prowler tools are available on both servers. `prowler_schedule_daily_scan` is the exception: it is Local-only, because the Cloud MCP Server supersedes it with the `prowler_cloud_*` [Scan Scheduling](#scan-scheduling) tools.
+48 of the 49 Prowler tools are available on both servers. `prowler_schedule_daily_scan` is the exception: it is Local-only, because the Cloud MCP Server supersedes it with the `prowler_cloud_*` [Scan Scheduling](#scan-scheduling) tools. `prowler_send_findings_to_jira` is exposed by both servers but accepts two [extra parameters](#jira-operations) on the Cloud MCP Server.
 </Note>
 
 ## Tool Naming Convention
@@ -125,7 +125,20 @@ Tools for managing where Prowler sends its results: Amazon S3 buckets, AWS Secur
 #### Jira Operations
 
 - **`prowler_get_jira_issue_types`** - List the issue types available in a Jira project, fetched live from Jira
-- **`prowler_send_findings_to_jira`** - Create one Jira work item per finding, with its severity, resource, risk, and remediation steps
+- **`prowler_send_findings_to_jira`** - Create Jira work items from findings, each carrying the check title, severity, status, provider, region, resource, risk, and remediation steps. Select the findings either by ID with `finding_ids`, or — on Prowler Cloud only — by check with `check_ids`, and choose between one work item per finding or one per check with `dispatch_mode`
+
+<Note>
+`check_ids` and `dispatch_mode` are **Prowler Cloud only**:
+
+- **`check_ids`** - Send the failing findings of a check (for example `s3_bucket_public_access`) without listing their IDs. Prowler resolves them server-side, taking only the failed findings of the latest completed scan of every provider. Get the check IDs from `prowler_list_finding_groups`. Exactly one of `finding_ids` or `check_ids` is required — Prowler combines both filters, so sending both would only dispatch their intersection. A Local MCP Server rejects `check_ids` with a client error.
+- **`dispatch_mode`** - `individual` (the default) creates one work item per finding. `grouped` creates one work item per check instead, listing up to 50 affected resources and linking back to the finding group in Prowler Cloud, which keeps a noisy check to a single ticket. Grouped dispatch only covers failed, unmuted findings of the latest completed scan of every provider. A Local MCP Server ignores `dispatch_mode` instead of rejecting it, and creates one work item per finding.
+
+In `grouped` mode the response counters change meaning: `created_count` counts work items (one per check) rather than findings, `failed_count` counts the entries of the new `failed_groups` field, and `failed_groups` details each failure with its reason and the `check_id` whose work item could not be created.
+</Note>
+
+<Warning>
+`prowler_send_findings_to_jira` creates real work items that Prowler cannot delete or update afterwards. Only retry the same dispatch when the previous response returned `safe_to_retry: true`, otherwise the work items already created are duplicated. Combining `check_ids` with the default `individual` mode opens one work item per failing resource, which can be hundreds of them — use `dispatch_mode="grouped"` to keep it to one per check.
+</Warning>
 
 ### Attack Paths Analysis
 
@@ -167,6 +180,23 @@ Manage Prowler Cloud-only features and configuration. **Requires authentication.
 <Note>
 These tools are available **only on the Cloud MCP Server** (`https://mcp.prowler.com/mcp`). A Local MCP Server does not expose them, because the features they manage exist only in Prowler Cloud.
 </Note>
+
+### Organizations
+
+Tools for onboarding a cloud provider organization as a whole — an AWS Organization, an Azure tenant with its management groups, or a GCP organization with its folders. An organization holds org-level credentials, discovers the real account, subscription, or project structure in the cloud, and turns a selection from that discovery into Prowler providers linked into a hierarchy of nodes. Every tool that changes something — creating, updating, deleting, discovering, applying a discovery, or adjusting provider membership — requires the **Manage Providers** permission; listing and reading do not.
+
+<Note>
+Use these tools for the whole organization. To register providers one by one, use the [Provider Management](#provider-management) tools instead; to build arbitrary RBAC buckets of providers, use provider groups.
+</Note>
+
+- **`prowler_cloud_list_organizations`** - Browse the registered organizations with lightweight data (name, type, external id, provider and node counts), filtered by type or cloud-side external id
+- **`prowler_cloud_get_organization`** - Get one organization in full: attributes, linked providers, credentials status, latest discovery, and the OU / management group / folder hierarchy. Set `include_hierarchy` to `false` to skip the tree on large organizations
+- **`prowler_cloud_create_organization`** - Register an organization, optionally storing its org-level credentials in the same call. Idempotent: an organization with the same type and external id is reused and its credentials rotated, reported as `created: false`
+- **`prowler_cloud_update_organization`** - Rename an organization, replace its metadata, and/or create or rotate its org-level credentials. `org_type` and `external_id` are immutable after creation
+- **`prowler_cloud_delete_organization`** - Delete an organization, its entire hierarchy, and every linked provider
+- **`prowler_cloud_discover_organization`** - Enumerate the real cloud structure: AWS accounts and OUs, Azure subscriptions and management groups, or GCP projects and folders. Each item comes back with its registration state so you can choose what to onboard
+- **`prowler_cloud_apply_organization_discovery`** - Turn a discovery selection into Prowler providers and hierarchy nodes
+- **`prowler_cloud_manage_organization_providers`** - Manually `add`, `replace`, or `remove` the providers linked to an organization or to one of its hierarchy nodes. Providers are detached, never deleted
 
 ### Scan Configurations
 

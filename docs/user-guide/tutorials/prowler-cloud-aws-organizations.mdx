@@ -66,7 +66,7 @@ The Prowler wizard walks you through the entire flow: deploying both roles from 
 <Frame>
   <img src="/images/organizations/aws-console-org-id.png" alt="AWS Organizations Console showing the Organization ID in the left sidebar" />
 </Frame>
-- **Name** (optional): A display name for the organization. If left blank, Prowler uses the name stored in AWS.
+- **Name** (optional): A display name for the organization. If left blank, Prowler uses the AWS organization ID.
 
 <Frame>
   <img src="/images/organizations/organization-details-form.png" alt="Organization Details form with Organization ID and Name fields" />
@@ -280,7 +280,7 @@ Open the row actions menu on the organization row on the **Providers** page.
 
 | Action | What it does |
 |--------|--------------|
-| **Edit Organization Name** | Renames the organization in Prowler. Leave it blank to fall back to the name stored in AWS. |
+| **Edit Organization Name** | Renames the organization in Prowler. Leave it blank to fall back to the AWS organization ID. |
 | **Update Credentials** | Reopens the Authentication Details step to store a new Role ARN. |
 | **Edit Scan Schedule** | Applies one schedule to every connected account in the organization. |
 | **Test Connections (N)** | Re-tests every account in the organization. |
