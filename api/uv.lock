@@ -376,7 +376,6 @@ constraints = [
     { name = "zstd", specifier = "==1.5.7.2" },
 ]
 overrides = [
-    { name = "alibabacloud-tea-openapi", specifier = "==0.4.6" },
     { name = "azure-mgmt-containerservice", specifier = "==34.1.0" },
     { name = "cryptography", specifier = "==50.0.0" },
     { name = "dulwich", specifier = "==1.2.5" },
@@ -387,7 +386,6 @@ overrides = [
     { name = "microsoft-kiota-serialization-json", specifier = "==1.9.10" },
     { name = "microsoft-kiota-serialization-multipart", specifier = "==1.9.10" },
     { name = "microsoft-kiota-serialization-text", specifier = "==1.9.10" },
-    { name = "oci", specifier = "==2.184.1" },
     { name = "okta", specifier = "==3.4.2" },
     { name = "pyjwt", extras = ["crypto"], specifier = "==2.13.0" },
 ]
@@ -4837,8 +4835,8 @@ wheels = [
 
 [[package]]
 name = "prowler"
-version = "5.38.0"
-source = { git = "https://github.com/prowler-cloud/prowler.git?rev=master#b3d174d0c1eb202ed7cb9a9daf0500683f4443be" }
+version = "5.40.0"
+source = { git = "https://github.com/prowler-cloud/prowler.git?rev=master#b6e9967da6bebd6c7b8b237317a2a95e2e0c65bc" }
 dependencies = [
     { name = "alibabacloud-actiontrail20200706" },
     { name = "alibabacloud-credentials" },

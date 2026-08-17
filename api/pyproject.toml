@@ -491,12 +491,6 @@ override-dependencies = [
   # deployed from this lock with `uv sync --locked`, so the override applies to what runs.
   # Remove when azure-cli-core pins msal>=1.37.0 and workos is on 10.x.
   "cryptography==50.0.0",
-  # prowler@master hard-pins alibabacloud-tea-openapi and oci in [project.dependencies];
-  # the SDK bumped both to lift their cryptography caps. A constraint cannot satisfy the
-  # new pins against the older master rev locked here, so override until the SDK bump
-  # propagates to the pinned master rev, then drop these two.
-  "alibabacloud-tea-openapi==0.4.6",
-  "oci==2.184.1",
   "azure-mgmt-containerservice==34.1.0",
   "microsoft-kiota-abstractions==1.9.10",
   "microsoft-kiota-authentication-azure==1.9.10",
