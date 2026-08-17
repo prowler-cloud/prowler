@@ -14,7 +14,9 @@
  * trick the providers harness uses.
  */
 
+import { revalidatePath } from "next/cache";
 import { createElement } from "react";
+import { vi } from "vitest";
 
 import { BrowserHarness } from "@/__tests__/browser-harness";
 import { handlersForSlack } from "@/__tests__/msw/handlers/slack";
@@ -53,9 +55,25 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     return this.countRequests("POST", "/slack/oauth/authorize-url");
   }
 
+  /**
+   * The pages the actions asked Next to refresh since this harness mounted.
+   *
+   * `next/cache` is stubbed for the browser lane — there is no request scope to
+   * hold a cache — so the calls are observable, which is what makes "the pages
+   * that list the install are refreshed even when the answer was unreadable"
+   * something a test can assert rather than assume.
+   */
+  get revalidatedPaths(): string[] {
+    return vi.mocked(revalidatePath).mock.calls.map(([path]) => path);
+  }
+
   // --- Mounting -----------------------------------------------------------
 
   private wireHandlers(): void {
+    // The stub is module-level and shared, so its call log would otherwise
+    // carry whatever earlier tests in the file revalidated. Clearing it at
+    // mount makes `revalidatedPaths` mean "since this mount".
+    vi.mocked(revalidatePath).mockClear();
     worker.use(...handlersForSlack(this.fixture));
     this.trackRequests(worker);
   }

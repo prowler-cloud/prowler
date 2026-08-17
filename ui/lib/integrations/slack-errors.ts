@@ -58,6 +58,19 @@ export const SLACK_GENERIC_ERROR_MESSAGE =
 export const SLACK_RATE_LIMITED_MESSAGE =
   "Slack is rate limiting Prowler right now. Try again in a few moments.";
 
+/**
+ * Shown when the API accepted the call and the UI could not read the answer: a
+ * `2xx` with no body, a proxy's HTML page in place of one, a payload naming no
+ * resource.
+ *
+ * Deliberately not phrased as a failure. The work already happened on the API
+ * — it is what the `2xx` says — so telling the user their install did not go
+ * through would send them to redo one that did. What Prowler cannot do is name
+ * the workspace, and the integration page is where that is listed.
+ */
+export const SLACK_UNREADABLE_RESULT_MESSAGE =
+  "Prowler could not read the result of the install. Open the Slack integration page to see the workspace — if none is listed there, start the install again.";
+
 const RECONNECT = "Connect the workspace again to restore access.";
 
 export const SLACK_ERROR_MESSAGES = {

@@ -113,6 +113,26 @@ describe("starting the install", () => {
     expect(notice).not.toMatch(INTEGRATIONS_SERVER_ERROR_DETAIL);
     expect(harness.offersInstall()).toBe(true);
   }, 30000);
+
+  it("names the missing consent URL when a proxy answers that call with an HTML page", async () => {
+    // Given — a 200 that is a challenge page rather than the API's JSON.
+    // Nothing refused the call, so the action reaches its success path and
+    // finds no URL where one was promised.
+    const harness = new SlackIntegrationHarness(
+      slackFixture({ authorizeUrlUnreadable: true }),
+    );
+
+    // When
+    await harness.mount();
+
+    // Then — the page says what is missing in Prowler's words. The parser's
+    // message for this body is truncated to `"<!DOCTYPE "`, before the word
+    // `html`, so nothing downstream could have filtered it out.
+    const notice = await harness.loadErrorNotice();
+    expect(notice).toMatch(/did not return an authorization URL/);
+    expect(notice).not.toMatch(/DOCTYPE/i);
+    expect(notice).not.toMatch(/not valid JSON/i);
+  }, 30000);
 });
 
 describe("returning from Slack", () => {
@@ -133,6 +153,83 @@ describe("returning from Slack", () => {
     // (design D4): a second call would burn the code and report a failure for
     // an install that actually succeeded. The once-guard is what prevents it.
     expect(harness.exchangeCallCount).toBe(1);
+  }, 30000);
+
+  it("does not report an install the API completed as failed when it answers no content", async () => {
+    // Given — the exchange ran to the end: the API validated the state,
+    // consumed the code and upserted the integration, then answered `204`.
+    // `response.ok` is true, so this is not a refusal — there is simply no body
+    // describing what was created.
+    const harness = new SlackIntegrationHarness(
+      slackFixture({
+        exchangeOutcome: SLACK_EXCHANGE_OUTCOME.UNREADABLE_NO_CONTENT,
+      }),
+    );
+
+    // When
+    await harness.mountCallback({
+      code: SLACK_OAUTH_CODE,
+      state: SLACK_OAUTH_STATE,
+    });
+
+    // Then — Prowler's own words, pointing at the page that can show the
+    // workspace, instead of the parser's "Unexpected end of JSON input".
+    const reason = await harness.installFailureReason();
+    expect(reason).toMatch(/could not read the result of the install/);
+    expect(reason).toMatch(/Slack integration page/);
+    expect(reason).not.toMatch(/JSON/i);
+    expect(harness.offersRetry()).toBe(true);
+    // And the install that *does* exist is not hidden behind a cached "none
+    // connected": this outcome keeps the user on the callback, whose only way
+    // out is the link to the Slack integration page.
+    expect(harness.revalidatedPaths).toEqual(
+      expect.arrayContaining(["/integrations", "/integrations/slack"]),
+    );
+  }, 30000);
+
+  it("shows Prowler's own wording when a proxy answers the completion with an HTML page", async () => {
+    // Given — a WAF or gateway answering `200` with a challenge page in place
+    // of the API's JSON.
+    const harness = new SlackIntegrationHarness(
+      slackFixture({ exchangeOutcome: SLACK_EXCHANGE_OUTCOME.UNREADABLE_HTML }),
+    );
+
+    // When
+    await harness.mountCallback({
+      code: SLACK_OAUTH_CODE,
+      state: SLACK_OAUTH_STATE,
+    });
+
+    // Then — nothing of the parser's message reaches the user. This is the one
+    // shape no downstream filter can rescue: V8 truncates its message to
+    // `Unexpected token '<', "<!DOCTYPE "...`, cutting it off before the word
+    // `html`, so the UI's own HTML-shaped-error detection never matches it.
+    const reason = await harness.installFailureReason();
+    expect(reason).toMatch(/could not read the result of the install/);
+    expect(reason).not.toMatch(/DOCTYPE/i);
+    expect(reason).not.toMatch(/not valid JSON/i);
+  }, 30000);
+
+  it("says the result is unreadable, not that the workspace is unknown, when the answer names no resource", async () => {
+    // Given — a `200` carrying well-formed JSON:API with no `data` member.
+    const harness = new SlackIntegrationHarness(
+      slackFixture({
+        exchangeOutcome: SLACK_EXCHANGE_OUTCOME.UNREADABLE_NO_DATA,
+      }),
+    );
+
+    // When
+    await harness.mountCallback({
+      code: SLACK_OAUTH_CODE,
+      state: SLACK_OAUTH_STATE,
+    });
+
+    // Then — the page cannot name the workspace, so it does not claim one, and
+    // it does not hand the user `"undefined" is not valid JSON` either.
+    const reason = await harness.installFailureReason();
+    expect(reason).toMatch(/could not read the result of the install/);
+    expect(reason).not.toMatch(/undefined/i);
+    expect(await harness.completedInstall()).toBe(false);
   }, 30000);
 
   it("connects nothing when the user declines in Slack, and offers to retry", async () => {

@@ -44,6 +44,19 @@ export const SLACK_EXCHANGE_OUTCOME = {
    * named by its `code`, not a plain refusal.
    */
   DIFFERENT_WORKSPACE: "different-workspace",
+  /**
+   * The three answers below are all the same event: the API validated the
+   * state, consumed the code and upserted the integration — so the workspace
+   * *is* connected — and then answered `2xx` with something the UI cannot read.
+   * They are not refusals: `response.ok` is true for every one of them, so
+   * nothing on the failure path ever sees them.
+   */
+  /** `204`: accepted, with no body at all to describe what was created. */
+  UNREADABLE_NO_CONTENT: "unreadable-no-content",
+  /** `200` whose body is a proxy's challenge page rather than the API's JSON. */
+  UNREADABLE_HTML: "unreadable-html",
+  /** `200` carrying well-formed JSON:API that names no resource. */
+  UNREADABLE_NO_DATA: "unreadable-no-data",
 } as const;
 
 export type SlackExchangeOutcome =
@@ -80,6 +93,12 @@ export interface SlackFixture {
    * than into a result.
    */
   listServerError: boolean;
+  /**
+   * The call that mints the consent URL answers `200` with a proxy's HTML page
+   * instead of JSON. The `2xx` equivalent of `listServerError`: nothing refused
+   * anything, so the UI reaches its success path and finds no answer there.
+   */
+  authorizeUrlUnreadable: boolean;
 }
 
 export const SLACK_INTEGRATION_ID = "slack-integration-1";
@@ -137,6 +156,22 @@ export const SLACK_RATE_LIMITED_DETAIL =
 export const INTEGRATIONS_SERVER_ERROR_DETAIL = "A server error occurred.";
 
 /**
+ * What a proxy or WAF answers with when it takes the call instead of the API:
+ * a `200` carrying a challenge page.
+ *
+ * The `<!DOCTYPE html>` opening is the point of it. V8 truncates the parser
+ * message for this body to `Unexpected token '<', "<!DOCTYPE "... is not valid
+ * JSON` — cut off *before* the word `html` — so the UI's own HTML detection
+ * (`HTML_ERROR_PATTERN`) cannot recognise the message either, and a leaked
+ * parser error reaches the user with nothing left to intercept it.
+ */
+export const PROXY_CHALLENGE_PAGE = [
+  "<!DOCTYPE html>",
+  "<html><head><title>Attention Required</title></head>",
+  "<body><h1>Checking your browser before you proceed.</h1></body></html>",
+].join("\n");
+
+/**
  * The `code` a different-workspace refusal is named by. A wire value, spelled
  * out rather than imported from the UI's own mapping: a rename on our side must
  * fail these tests, not quietly agree with itself.
@@ -168,6 +203,7 @@ export const slackFixture = (
   connection: { connected: true, error: null },
   rateLimited: false,
   listServerError: false,
+  authorizeUrlUnreadable: false,
   ...overrides,
 });
 

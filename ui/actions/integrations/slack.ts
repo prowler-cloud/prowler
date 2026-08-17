@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { apiBaseUrl, getAuthHeaders, parseStringify } from "@/lib";
 import {
   readSlackFailure,
+  SLACK_UNREADABLE_RESULT_MESSAGE,
   slackErrorMessage,
   slackRateLimitMessage,
 } from "@/lib/integrations/slack-errors";
@@ -134,8 +135,11 @@ export const getSlackAuthorizeUrl =
         );
       }
 
-      // The URL travels in JSON:API `meta` — the call creates no resource.
-      const body = await response.json();
+      // The URL travels in JSON:API `meta` — the call creates no resource. A
+      // `2xx` that is not JSON at all (a proxy's HTML page, an empty body) is
+      // read as "no URL here" rather than left to throw a parser message the
+      // user would be shown verbatim.
+      const body = await response.json().catch(() => null);
       const authorizeUrl = body?.meta?.authorize_url;
 
       if (typeof authorizeUrl !== "string" || authorizeUrl.length === 0) {
@@ -183,10 +187,22 @@ export const exchangeSlackOAuthCode = async ({
       );
     }
 
-    const body = await response.json();
+    // A `2xx` the UI cannot read is still a completed exchange: a `204`, an
+    // empty body, a proxy's HTML page. Parsing it as it arrives would throw a
+    // V8 parser message that travels the catch below straight to the user.
+    const body = await response.json().catch(() => null);
 
+    // Revalidated before the guard, and on both paths. The API consumed the
+    // code and upserted the integration before answering, so the workspace is
+    // connected whatever came back: serving the pages that list it from a cache
+    // filled when there was none would report a connected workspace as missing.
     revalidatePath("/integrations");
     revalidatePath("/integrations/slack");
+
+    // Reported as its own outcome rather than as a connected workspace with no
+    // name: the callback reads `attributes.configuration` off this, and a
+    // fabricated resource would fail there instead, further from the cause.
+    if (!body?.data) return { error: SLACK_UNREADABLE_RESULT_MESSAGE };
 
     return { integration: parseStringify(body.data) as IntegrationProps };
   } catch (error) {

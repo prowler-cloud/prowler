@@ -18,6 +18,7 @@ import { http, HttpResponse } from "msw";
 
 import {
   INTEGRATIONS_SERVER_ERROR_DETAIL,
+  PROXY_CHALLENGE_PAGE,
   SLACK_AUTHORIZE_URL,
   SLACK_DIFFERENT_WORKSPACE_DETAIL,
   SLACK_EXCHANGE_OUTCOME,
@@ -30,7 +31,11 @@ import {
   SLACK_UNCONFIGURED_DETAIL,
   SLACK_WORKSPACE_CONFLICT_CODE,
 } from "./slack.fixtures";
-import type { SlackFixture, SlackInstallFixture } from "./slack.fixtures";
+import type {
+  SlackExchangeOutcome,
+  SlackFixture,
+  SlackInstallFixture,
+} from "./slack.fixtures";
 
 const API = process.env.UI_API_BASE_URL;
 const TS = "2026-08-10T09:00:00Z";
@@ -100,6 +105,24 @@ const taskResource = (id: string, state: string, result: unknown) => ({
   data: { id, type: "tasks", attributes: { state, result } },
 });
 
+/**
+ * A completion the API accepted and the UI cannot read back.
+ *
+ * All three are `2xx`, so `response.ok` is true and none of them travels the
+ * refusal path: the first two make `response.json()` throw, the third parses
+ * into a body that names no resource.
+ */
+const unreadableExchange = (outcome: SlackExchangeOutcome): Response => {
+  switch (outcome) {
+    case SLACK_EXCHANGE_OUTCOME.UNREADABLE_NO_CONTENT:
+      return new HttpResponse(null, { status: 204 });
+    case SLACK_EXCHANGE_OUTCOME.UNREADABLE_HTML:
+      return HttpResponse.html(PROXY_CHALLENGE_PAGE);
+    default:
+      return HttpResponse.json({ meta: { version: "v1" } });
+  }
+};
+
 export const handlersForSlack = (fx: SlackFixture) => {
   // Mutable working copy: the exchange creates or updates the install the
   // integration reads see afterwards.
@@ -128,6 +151,11 @@ export const handlersForSlack = (fx: SlackFixture) => {
     http.post(`${API}/integrations/slack/oauth/authorize-url`, () => {
       if (!fx.appConfigured) return unconfigured();
       if (fx.rateLimited) return rateLimited();
+      // A proxy answering in place of the API: a `200` the UI reads as success
+      // and then finds nothing in.
+      if (fx.authorizeUrlUnreadable) {
+        return HttpResponse.html(PROXY_CHALLENGE_PAGE);
+      }
       // The URL travels in `meta`; the call creates nothing.
       return HttpResponse.json({
         meta: { authorize_url: SLACK_AUTHORIZE_URL },
@@ -158,6 +186,19 @@ export const handlersForSlack = (fx: SlackFixture) => {
             ),
             { status: 409 },
           );
+        case SLACK_EXCHANGE_OUTCOME.UNREADABLE_NO_CONTENT:
+        case SLACK_EXCHANGE_OUTCOME.UNREADABLE_HTML:
+        case SLACK_EXCHANGE_OUTCOME.UNREADABLE_NO_DATA:
+          // The install still happened: the API upserts the integration before
+          // it answers, so a subsequent read finds the workspace connected even
+          // though the answer that announced it was unreadable.
+          install = {
+            id: SLACK_INTEGRATION_ID,
+            connected: null,
+            connectionLastCheckedAt: null,
+            workspace: { ...fx.exchangeWorkspace },
+          };
+          return unreadableExchange(fx.exchangeOutcome);
         case SLACK_EXCHANGE_OUTCOME.REINSTALLED:
           // Same workspace: the credential is replaced on the row that exists,
           // so the tenant still holds exactly one Slack integration.
