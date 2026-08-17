@@ -72,8 +72,36 @@ describe("starting the install", () => {
     // When
     await harness.mount();
 
-    // Then — nothing to do and nothing to click, rather than an error.
+    // Then — nothing to do and nothing to click, rather than an error. The read
+    // itself succeeded (an empty collection is what a deployment with no Slack
+    // app has), so nothing claims it failed either.
     await harness.waitForUnavailable();
+    expect(harness.offersInstall()).toBe(false);
+    expect(harness.saysLoadFailed()).toBe(false);
+  }, 30000);
+
+  it("still says the read failed when the deployment also has no Slack app", async () => {
+    // Given — the UI ships ahead of the endpoints and stays inert until they
+    // are served, and a rollback removes the env vars while leaving the rows in
+    // the database (design.md, Migration Plan §2-3 and §5). So "no Slack app
+    // here" is a standing state for whole deployment phases, not a rare event:
+    // only the read failing underneath it has to coincide.
+    const harness = new SlackIntegrationHarness(
+      slackFixture({ appConfigured: false, listServerError: true }),
+    );
+
+    // When
+    await harness.mount();
+
+    // Then — both notices, because they disagree about what to do next and the
+    // read's is the actionable half: "Nothing to do on your side" alone would
+    // send a tenant whose workspace is still connected away from a page a retry
+    // would have shown it to them on.
+    const notice = await harness.loadErrorNotice();
+    expect(notice).toMatch(/temporarily unavailable/);
+    expect(notice).not.toMatch(INTEGRATIONS_SERVER_ERROR_DETAIL);
+    expect(harness.saysUnavailable()).toBe(true);
+    // The install is still not on offer: there is no Slack app to install into.
     expect(harness.offersInstall()).toBe(false);
   }, 30000);
 

@@ -71,19 +71,6 @@ export const SlackIntegrationManager = ({
     }
   };
 
-  if (unavailable) {
-    return (
-      <Alert variant="info">
-        <AlertTitle>Slack is not available in this environment yet</AlertTitle>
-        <AlertDescription>
-          The Prowler Slack app is not configured here, so no workspace can be
-          connected. Nothing to do on your side — this page starts working as
-          soon as it is.
-        </AlertDescription>
-      </Alert>
-    );
-  }
-
   const configuration = integration?.attributes.configuration;
   const workspaceName = configuration?.team_name;
   // Absent until a channel is chosen, never present-and-null (see the
@@ -106,7 +93,22 @@ export const SlackIntegrationManager = ({
         </Alert>
       )}
 
-      {integration ? (
+      {/* Replaces the cards rather than the whole page: `unavailable` is a
+          standing state for a whole deployment phase, so returning early here
+          would swallow a read that failed underneath it — and the suppressed
+          notice is the actionable one ("try again in a few minutes"). */}
+      {unavailable ? (
+        <Alert variant="info">
+          <AlertTitle>
+            Slack is not available in this environment yet
+          </AlertTitle>
+          <AlertDescription>
+            The Prowler Slack app is not configured here, so no workspace can be
+            connected. Nothing to do on your side — this page starts working as
+            soon as it is.
+          </AlertDescription>
+        </Alert>
+      ) : integration ? (
         <Card variant="base">
           <CardHeader>
             <IntegrationCardHeader

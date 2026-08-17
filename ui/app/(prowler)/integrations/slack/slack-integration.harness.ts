@@ -198,6 +198,11 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     return this.containsText(/Slack is not available in this environment yet/);
   }
 
+  /** Whether the page reports the tenant's install as unreadable. */
+  saysLoadFailed(): boolean {
+    return this.containsText(/Could not load your Slack integration/);
+  }
+
   /** What the page says about Slack rate limiting Prowler, once it says it. */
   async rateLimitNotice(): Promise<string> {
     await this.waitForText(/Slack is busy right now/, 10000);
