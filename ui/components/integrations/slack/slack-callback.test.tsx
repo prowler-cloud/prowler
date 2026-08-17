@@ -41,6 +41,19 @@ beforeEach(() => {
 
 const SPINNER_COPY = /Connecting your Slack workspace/;
 
+/**
+ * The two headlines the failure alert can carry, spelled out rather than
+ * imported: a rename on the component's side has to fail these tests, not
+ * quietly agree with itself.
+ *
+ * Which one is shown is the assertion. `FAILURE_TITLE` states a fact — nothing
+ * was connected — that only some of the outcomes establish; the rest happen
+ * *after* the API consumed the code, so the workspace may well be connected and
+ * the honest headline is that the result is unknown.
+ */
+const FAILURE_TITLE = "Slack workspace not connected";
+const UNCONFIRMED_TITLE = "Slack install not confirmed";
+
 describe("returning from Slack when the completion answers unexpectedly", () => {
   it("reports an unconfirmed result instead of spinning forever when the exchange call never comes back", async () => {
     // Given — the call to the Server Action rejects rather than resolving: the
@@ -64,6 +77,13 @@ describe("returning from Slack when the completion answers unexpectedly", () => 
       screen.getByRole("link", { name: /Back to Slack integration/ }),
     ).toHaveAttribute("href", "/integrations/slack");
     expect(screen.queryByText(SPINNER_COPY)).not.toBeInTheDocument();
+
+    // And the headline says the same thing the description does. "Slack
+    // workspace not connected" above a line that says Prowler cannot tell, and
+    // that sends the user to look the workspace up, asserts the one fact this
+    // outcome does not have.
+    expect(screen.getByText(UNCONFIRMED_TITLE)).toBeInTheDocument();
+    expect(screen.queryByText(FAILURE_TITLE)).not.toBeInTheDocument();
   });
 
   it("still reports the workspace as connected when the created integration carries no configuration", async () => {
@@ -99,8 +119,11 @@ describe("returning from Slack when the completion answers unexpectedly", () => 
       await screen.findByText(/Connected to your Slack workspace/),
     ).toBeInTheDocument();
     expect(screen.queryByText(SPINNER_COPY)).not.toBeInTheDocument();
+    // No failure alert at all — keyed on the escape link the failure branch is
+    // the only one to render, so this stays true whichever headline that branch
+    // would have carried.
     expect(
-      screen.queryByText(/Slack workspace not connected/),
+      screen.queryByRole("link", { name: /Back to Slack integration/ }),
     ).not.toBeInTheDocument();
   });
 });
@@ -119,6 +142,13 @@ describe("returning from Slack with an error on the callback URL", () => {
       await screen.findByText(/was not approved in Slack/),
     ).toBeInTheDocument();
     expect(exchangeSlackOAuthCode).not.toHaveBeenCalled();
+
+    // And the headline still states the fact, because here there is one: Slack
+    // refused before issuing a code, so nothing was ever exchanged. The
+    // unknowable-state wording belongs to the outcomes that happen after the
+    // API consumed one, and must not spread to this one.
+    expect(screen.getByText(FAILURE_TITLE)).toBeInTheDocument();
+    expect(screen.queryByText(UNCONFIRMED_TITLE)).not.toBeInTheDocument();
   });
 
   it("names a Slack code it does not recognise, so a new failure reason is still diagnosable", async () => {

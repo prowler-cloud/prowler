@@ -35,6 +35,27 @@ const UNCONFIRMED_COMPLETION_MESSAGE =
   "Prowler could not confirm whether the workspace was connected. Open the Slack integration page to check — if none is listed there, start the install again.";
 
 /**
+ * The headline for a failure that really is one: Slack refused, the callback
+ * came back incomplete, the API refused the completion, or this deployment has
+ * no Slack app. Nothing was connected in any of them.
+ */
+const FAILURE_TITLE = "Slack workspace not connected";
+
+/**
+ * The headline for the two outcomes where the state is *unknown*.
+ *
+ * Both of them leave the workspace possibly — for the unreadable `2xx`,
+ * certainly — connected: the API consumes the code and upserts the integration
+ * before it answers. Titling those "not connected" contradicts the description
+ * right below it and the integration page the escape link goes to, which lists
+ * the workspace this very answer created.
+ *
+ * Kept short deliberately: `AlertTitle` clamps to one line, so a longer
+ * headline is silently truncated.
+ */
+const UNCONFIRMED_TITLE = "Slack install not confirmed";
+
+/**
  * The shape of a Slack error code: a snake_case protocol token, never prose.
  *
  * `error` is read straight off the URL, so its value is whoever wrote the link
@@ -82,6 +103,7 @@ export const SlackCallback = () => {
   const [status, setStatus] = useState<Status>(STATUS.CONNECTING);
   const [workspaceName, setWorkspaceName] = useState<string | null>(null);
   const [failure, setFailure] = useState<string>("");
+  const [failureTitle, setFailureTitle] = useState<string>(FAILURE_TITLE);
   const hasStarted = useRef(false);
 
   useEffect(() => {
@@ -126,6 +148,12 @@ export const SlackCallback = () => {
         // Nothing is wrong with the install — Slack is just busy — so the user
         // is told when to come back, not that the environment lacks Slack.
         setFailure(result.message);
+      } else if ("unconfirmed" in result) {
+        // The API answered `2xx`, so the workspace *is* connected — only the
+        // answer describing it was unreadable. The title has to stop short of
+        // claiming otherwise, or it contradicts the page the link goes to.
+        setFailure(result.message);
+        setFailureTitle(UNCONFIRMED_TITLE);
       } else {
         setFailure(result.error);
       }
@@ -142,6 +170,7 @@ export const SlackCallback = () => {
     // catch it (a rejection awaited inside an effect is invisible to React's).
     void complete().catch(() => {
       setFailure(UNCONFIRMED_COMPLETION_MESSAGE);
+      setFailureTitle(UNCONFIRMED_TITLE);
       setStatus(STATUS.FAILED);
     });
   }, [router, searchParams]);
@@ -174,7 +203,7 @@ export const SlackCallback = () => {
     <div className="flex flex-col items-start gap-4">
       <Alert variant="error">
         <AlertCircle />
-        <AlertTitle>Slack workspace not connected</AlertTitle>
+        <AlertTitle>{failureTitle}</AlertTitle>
         <AlertDescription>{failure}</AlertDescription>
       </Alert>
       <Button asChild variant="outline">

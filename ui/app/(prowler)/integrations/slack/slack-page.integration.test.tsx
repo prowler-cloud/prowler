@@ -31,6 +31,19 @@ import {
 const WORKSPACE_NAME = "Prowler HQ";
 
 /**
+ * The two headlines the callback puts on an install that did not finish, spelled
+ * out rather than imported so a rename has to fail these tests.
+ *
+ * `FAILURE_TITLE` states that nothing was connected — true of a refusal, of a
+ * declined consent, of a deployment with no Slack app. `UNCONFIRMED_TITLE` is
+ * for the answers that arrive *after* the API consumed the code and upserted the
+ * integration, where the workspace is connected and only the answer describing
+ * it was unreadable.
+ */
+const FAILURE_TITLE = "Slack workspace not connected";
+const UNCONFIRMED_TITLE = "Slack install not confirmed";
+
+/**
  * The access Prowler asks a workspace for, and nothing else (design D2): post
  * messages, post to a public channel without being invited, and read the
  * channel list — public, plus the private channels the app was invited to.
@@ -226,6 +239,11 @@ describe("returning from Slack", () => {
     expect(reason).toMatch(/Slack integration page/);
     expect(reason).not.toMatch(/JSON/i);
     expect(harness.offersRetry()).toBe(true);
+    // And the headline does not deny it either: the `204` says the workspace is
+    // connected, and the link below sends the user to the page that lists it as
+    // connected — so "Slack workspace not connected" would contradict both the
+    // line under it and the page it points at.
+    expect(await harness.installFailureTitle()).toBe(UNCONFIRMED_TITLE);
     // And the install that *does* exist is not hidden behind a cached "none
     // connected": this outcome keeps the user on the callback, whose only way
     // out is the link to the Slack integration page.
@@ -331,6 +349,10 @@ describe("returning from Slack", () => {
     expect(await harness.installFailureReason()).toMatch(
       /state is invalid, expired, or already consumed/,
     );
+    // The headline states the fact here, and has to keep doing so: the API
+    // refused before consuming anything, so nothing was created and hedging it
+    // would send the user looking for a workspace that does not exist.
+    expect(await harness.installFailureTitle()).toBe(FAILURE_TITLE);
     expect(await harness.completedInstall()).toBe(false);
     expect(harness.offersRetry()).toBe(true);
     // Refused once, not retried into a second burnt code.
@@ -380,6 +402,10 @@ describe("returning from Slack", () => {
     expect(reason).toMatch(/rate limiting/);
     expect(reason).toMatch(/about 30 seconds/);
     expect(reason).not.toMatch(/not available in this environment/);
+    // Rate limiting refuses the exchange outright, so nothing was connected:
+    // this outcome keeps the plain headline, unlike the unreadable `2xx` that
+    // arrives after the API already did the work.
+    expect(await harness.installFailureTitle()).toBe(FAILURE_TITLE);
     expect(harness.offersRetry()).toBe(true);
   }, 30000);
 

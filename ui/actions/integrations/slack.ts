@@ -49,6 +49,21 @@ interface SlackRateLimited {
   message: string;
 }
 
+/**
+ * The API accepted the completion and the UI could not read the answer back.
+ *
+ * Its own outcome rather than an error, for the same reason `unavailable` and
+ * `rateLimited` are: `response.ok` was true, so the code was consumed and the
+ * integration upserted — what Prowler cannot name is the workspace, not whether
+ * one was connected. Callers that report an error would be reporting the one
+ * thing this answer rules out.
+ */
+interface SlackUnconfirmed {
+  unconfirmed: true;
+  /** The unread result, as copy — so every caller says the same thing about it. */
+  message: string;
+}
+
 interface SlackActionError {
   error: string;
 }
@@ -76,6 +91,7 @@ export type SlackExchangeResult =
   | SlackExchangeSuccess
   | SlackUnavailable
   | SlackRateLimited
+  | SlackUnconfirmed
   | SlackActionError;
 
 /**
@@ -214,7 +230,11 @@ export const exchangeSlackOAuthCode = async ({
     // Reported as its own outcome rather than as a connected workspace with no
     // name: the callback reads `attributes.configuration` off this, and a
     // fabricated resource would fail there instead, further from the cause.
-    if (!body?.data) return { error: SLACK_UNREADABLE_RESULT_MESSAGE };
+    // Not an `{ error }` either — the `2xx` says the install happened, so a
+    // caller reading this as a failure would deny the one fact it establishes.
+    if (!body?.data) {
+      return { unconfirmed: true, message: SLACK_UNREADABLE_RESULT_MESSAGE };
+    }
 
     return { integration: parseStringify(body.data) as IntegrationProps };
   } catch (error) {

@@ -314,12 +314,30 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
 
   // --- Returning from Slack -----------------------------------------------
 
+  /**
+   * The way out the callback renders on every outcome that is not a connected
+   * workspace — the one element every one of them has in common.
+   *
+   * The anchor for "the callback settled on something other than success", in
+   * place of the failure alert's own title: two of those outcomes cannot claim
+   * the workspace is not connected (the API consumes the code before it
+   * answers), so they carry a different title, and a harness keyed on copy would
+   * wait for a headline that never arrives.
+   */
+  private backLink(): HTMLAnchorElement | null {
+    return (
+      Array.from(this.container.querySelectorAll("a")).find(
+        (anchor) =>
+          anchor.getAttribute("href") === "/integrations/slack" &&
+          /Back to Slack integration/.test(anchor.textContent ?? ""),
+      ) ?? null
+    );
+  }
+
   /** Whether the callback settled on a connected workspace. */
   async completedInstall(): Promise<boolean> {
     const outcome = await this.waitFor(
-      () =>
-        this.containsText(/Connected to /) ||
-        this.containsText(/Slack workspace not connected/),
+      () => this.containsText(/Connected to /) || this.backLink() !== null,
       10000,
       "the callback outcome",
     );
@@ -328,7 +346,7 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
 
   /** What the user is told when the install did not complete. */
   async installFailureReason(): Promise<string> {
-    await this.waitForText(/Slack workspace not connected/, 10000);
+    await this.waitFor(() => this.backLink(), 10000, "the failed callback");
     const description = await this.waitFor(
       () => this.q('[data-slot="alert-description"]'),
       5000,
@@ -337,14 +355,23 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     return (description.textContent ?? "").trim();
   }
 
+  /**
+   * The headline the callback puts on an install that did not complete — which
+   * is not the same claim for every outcome: an answer the UI could not read is
+   * an unknown state, not a workspace it can say was left unconnected.
+   */
+  async installFailureTitle(): Promise<string> {
+    await this.waitFor(() => this.backLink(), 10000, "the failed callback");
+    const title = await this.waitFor(
+      () => this.q('[data-slot="alert-title"]'),
+      5000,
+      "the failure title",
+    );
+    return (title.textContent ?? "").trim();
+  }
+
   /** Whether the page offers a way back to try the install again. */
   offersRetry(): boolean {
-    return (
-      Array.from(this.container.querySelectorAll("a")).some(
-        (anchor) =>
-          anchor.getAttribute("href") === "/integrations/slack" &&
-          /Back to Slack integration/.test(anchor.textContent ?? ""),
-      ) || this.offersInstall()
-    );
+    return this.backLink() !== null || this.offersInstall();
   }
 }
