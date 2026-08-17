@@ -231,6 +231,17 @@ LOGGING = {
             "level": LEVEL,
             "propagate": False,
         },
+        # Celery loggers — must be declared explicitly because disable_existing_loggers=True
+        # silences any logger that exists at dictConfig time but is not named here.
+        # Without these, fatal worker errors (e.g. celery.worker CRITICAL) produce no output.
+        "celery": {"handlers": ["tasks_console"], "level": LEVEL, "propagate": False},
+        "celery.worker": {"handlers": ["tasks_console"], "level": LEVEL, "propagate": False},
+        "celery.worker.consumer": {"handlers": ["tasks_console"], "level": LEVEL, "propagate": False},
+        "celery.worker.consumer.consumer": {"handlers": ["tasks_console"], "level": LEVEL, "propagate": False},
+        "kombu": {"handlers": ["tasks_console"], "level": LEVEL, "propagate": False},
+        "kombu.transport.redis": {"handlers": ["tasks_console"], "level": LEVEL, "propagate": False},
+        "billiard": {"handlers": ["tasks_console"], "level": LEVEL, "propagate": False},
+        "amqp": {"handlers": ["tasks_console"], "level": LEVEL, "propagate": False},
     },
     # Gunicorn required configuration
     "root": {
