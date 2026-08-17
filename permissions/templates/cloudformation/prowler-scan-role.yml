@@ -680,6 +680,45 @@ Resources:
         - Key: "Name"
           Value: "ProwlerRealtimeInvoke"
 
+  # Captures the events EventBridge could not deliver, so a delivery failure is auditable
+  ProwlerRealtimeDlq:
+    Type: AWS::SQS::Queue
+    Condition: RealtimeDetectionEnabled
+    Properties:
+      QueueName: ProwlerRealtimeDetectionDLQ
+      MessageRetentionPeriod: 1209600
+      SqsManagedSseEnabled: true
+      Tags:
+        - Key: "Service"
+          Value: "https://prowler.com"
+        - Key: "Support"
+          Value: "support@prowler.com"
+        - Key: "CloudFormation"
+          Value: "true"
+        - Key: "Name"
+          Value: "ProwlerRealtimeDetectionDLQ"
+
+  # EventBridge writes to the DLQ as a service, not through the invoke role, so it needs a queue policy
+  ProwlerRealtimeDlqPolicy:
+    Type: AWS::SQS::QueuePolicy
+    Condition: RealtimeDetectionEnabled
+    Properties:
+      Queues:
+        - !Ref ProwlerRealtimeDlq
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: AllowEventBridgeDeadLetterDelivery
+            Effect: Allow
+            Principal:
+              Service: events.amazonaws.com
+            Action: "sqs:SendMessage"
+            Resource: !GetAtt ProwlerRealtimeDlq.Arn
+            Condition:
+              ArnEquals:
+                # Built from the rule name to avoid a circular dependency with the rule
+                "aws:SourceArn": !Sub "arn:${AWS::Partition}:events:${AWS::Region}:${AWS::AccountId}:rule/ProwlerRealtimeDetection"
+
   ProwlerRealtimeRule:
     Type: AWS::Events::Rule
     Condition: RealtimeDetectionEnabled
@@ -735,6 +774,12 @@ Resources:
         - Id: ProwlerCloud
           Arn: !GetAtt ProwlerRealtimeApiDestination.Arn
           RoleArn: !GetAtt ProwlerRealtimeInvokeRole.Arn
+          # Retries cover an endpoint outage; whatever outlives the window is dead-lettered
+          RetryPolicy:
+            MaximumEventAgeInSeconds: 86400
+            MaximumRetryAttempts: 185
+          DeadLetterConfig:
+            Arn: !GetAtt ProwlerRealtimeDlq.Arn
       Tags:
         - Key: "Service"
           Value: "https://prowler.com"
@@ -806,3 +851,10 @@ Outputs:
     Value: !GetAtt ProwlerRealtimeApiDestination.Arn
     Export:
       Name: !Sub "${AWS::StackName}-ProwlerRealtimeApiDestinationArn"
+
+  ProwlerRealtimeDlqUrl:
+    Condition: RealtimeDetectionEnabled
+    Description: "URL of the dead-letter queue holding the events EventBridge could not deliver"
+    Value: !Ref ProwlerRealtimeDlq
+    Export:
+      Name: !Sub "${AWS::StackName}-ProwlerRealtimeDlqUrl"

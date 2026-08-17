@@ -35,3 +35,8 @@ output "prowler_realtime_api_destination_arn" {
   description = "ARN of the EventBridge API destination targeting Prowler Cloud (null if real-time detection is disabled)"
   value       = try(module.realtime_detection[0].prowler_realtime_api_destination_arn, null)
 }
+
+output "prowler_realtime_dlq_url" {
+  description = "URL of the dead-letter queue holding the events EventBridge could not deliver (null if real-time detection is disabled)"
+  value       = try(module.realtime_detection[0].prowler_realtime_dlq_url, null)
+}

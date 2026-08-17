@@ -68,6 +68,40 @@ resource "aws_iam_role_policy" "prowler_realtime_invoke" {
   })
 }
 
+# Dead-letter queue for the events EventBridge could not deliver
+###################################
+resource "aws_sqs_queue" "prowler_realtime_dlq" {
+  name                      = "ProwlerRealtimeDetectionDLQ"
+  message_retention_seconds = 1209600
+  sqs_managed_sse_enabled   = true
+}
+
+# EventBridge writes to the DLQ as a service, not through the invoke role, so it needs a queue policy
+data "aws_iam_policy_document" "prowler_realtime_dlq" {
+  statement {
+    sid       = "AllowEventBridgeDeadLetterDelivery"
+    effect    = "Allow"
+    actions   = ["sqs:SendMessage"]
+    resources = [aws_sqs_queue.prowler_realtime_dlq.arn]
+
+    principals {
+      type        = "Service"
+      identifiers = ["events.amazonaws.com"]
+    }
+
+    condition {
+      test     = "ArnEquals"
+      variable = "aws:SourceArn"
+      values   = [aws_cloudwatch_event_rule.prowler_realtime.arn]
+    }
+  }
+}
+
+resource "aws_sqs_queue_policy" "prowler_realtime_dlq" {
+  queue_url = aws_sqs_queue.prowler_realtime_dlq.id
+  policy    = data.aws_iam_policy_document.prowler_realtime_dlq.json
+}
+
 # Rule matching the CloudTrail management events tracked by Prowler real-time detection
 ###################################
 resource "aws_cloudwatch_event_rule" "prowler_realtime" {
@@ -129,4 +163,14 @@ resource "aws_cloudwatch_event_target" "prowler_realtime" {
   target_id = "ProwlerCloud"
   arn       = aws_cloudwatch_event_api_destination.prowler_realtime.arn
   role_arn  = aws_iam_role.prowler_realtime_invoke.arn
+
+  # Retries cover an endpoint outage; whatever outlives the window is dead-lettered
+  retry_policy {
+    maximum_event_age_in_seconds = 86400
+    maximum_retry_attempts       = 185
+  }
+
+  dead_letter_config {
+    arn = aws_sqs_queue.prowler_realtime_dlq.arn
+  }
 }
