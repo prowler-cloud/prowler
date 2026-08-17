@@ -1,1 +1,0 @@
-Pin cryptography back to 48.0.1 so `pip install prowler` resolves again; 5.38.0 shipped cryptography 50.0.0, which alibabacloud-tea-openapi and pyopenssl cap below 49, so pip could not install it and silently fell back to 5.37.1

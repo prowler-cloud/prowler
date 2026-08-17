@@ -164,21 +164,3 @@ vulnerabilities:
     purls:
       - "pkg:golang/oras.land/oras-go/v2"
     expired_at: 2026-12-31
-  - id: CVE-2026-39822
-    purls:
-      - "pkg:golang/stdlib"
-    expired_at: 2026-12-31
-
-  # cryptography is capped below 49 by alibabacloud-tea-openapi==0.4.5 (latest release) and
-  # pyopenssl==26.2.0. The fixes are in 49.0.0 and 50.0.0. A uv override reaches them inside
-  # this repo but not in the published wheel: 5.38.0 shipped cryptography==50.0.0 and pip
-  # could not install it. Held at 48.0.1 until both upstream caps move; the alibabacloud
-  # side is https://github.com/aliyun/darabonba-openapi/pull/287.
-  - id: CVE-2026-69247
-    purls:
-      - "pkg:pypi/cryptography"
-    expired_at: 2026-11-30
-  - id: CVE-2026-69249
-    purls:
-      - "pkg:pypi/cryptography"
-    expired_at: 2026-11-30
