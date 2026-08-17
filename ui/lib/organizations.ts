@@ -23,8 +23,8 @@ interface CandidateNoun {
 interface OrgTypeTerminology {
   /** Hierarchy container label, used when a node carries no `kind`. */
   containerLabel: string;
-  /** Where the provider-side organization/node name comes from. */
-  nameSourceLabel: string;
+  /** The identifier an organization is named after when no name is given. */
+  identifierLabel: string;
   /** What a discovered candidate is called in the onboarding flow. */
   candidateNoun: CandidateNoun;
 }
@@ -32,17 +32,17 @@ interface OrgTypeTerminology {
 const ORGANIZATION_TERMINOLOGY = {
   [ORGANIZATION_TYPE.AWS]: {
     containerLabel: "Organizational Unit",
-    nameSourceLabel: "AWS",
+    identifierLabel: "AWS organization ID",
     candidateNoun: { singular: "account", plural: "accounts" },
   },
   [ORGANIZATION_TYPE.AZURE]: {
     containerLabel: "Management Group",
-    nameSourceLabel: "Azure",
+    identifierLabel: "tenant ID",
     candidateNoun: { singular: "subscription", plural: "subscriptions" },
   },
   [ORGANIZATION_TYPE.GCP]: {
     containerLabel: "Folder",
-    nameSourceLabel: "Google Cloud",
+    identifierLabel: "organization ID",
     candidateNoun: { singular: "project", plural: "projects" },
   },
 } as const satisfies Record<OrganizationType, OrgTypeTerminology>;
@@ -50,6 +50,7 @@ const ORGANIZATION_TERMINOLOGY = {
 const NODE_KIND_LABEL = {
   [NODE_KIND.ORGANIZATIONAL_UNIT]: "Organizational Unit",
   [NODE_KIND.FOLDER]: "Folder",
+  [NODE_KIND.MANAGEMENT_GROUP]: "Management Group",
 } as const satisfies Record<NodeKind, string>;
 
 const NODE_KINDS: readonly string[] = Object.values(NODE_KIND);
@@ -61,7 +62,7 @@ const NODE_KINDS: readonly string[] = Object.values(NODE_KIND);
  */
 const NEUTRAL_TERMINOLOGY: OrgTypeTerminology = {
   containerLabel: "Group",
-  nameSourceLabel: "the cloud provider",
+  identifierLabel: "organization identifier",
   candidateNoun: { singular: "account", plural: "accounts" },
 };
 
@@ -92,9 +93,31 @@ export function getNodeLabel(
     : terminologyFor(orgType).containerLabel;
 }
 
-/** Provider-side source of the organization name (edit-name helper copy). */
-export function getNameSourceLabel(orgType: OrganizationType): string {
-  return terminologyFor(orgType).nameSourceLabel;
+/**
+ * Every management group in a tenant repeats the same ARM prefix, so only the
+ * trailing name tells them apart. Case-insensitive, as ARM ids are.
+ */
+const MANAGEMENT_GROUP_ID =
+  /^\/providers\/Microsoft\.Management\/managementGroups\/(.+)$/i;
+
+/**
+ * The readable tail of a node id, or undefined when the whole id already is (AWS
+ * OU ids, GCP folder refs). Presentation only: the canonical id stays the node's
+ * identity, so a caller that shortens must keep it reachable.
+ */
+export function shortenNodeId(id: string): string | undefined {
+  return MANAGEMENT_GROUP_ID.exec(id)?.[1];
+}
+
+/**
+ * Shared helper copy for the optional organization-name field. The fallback is the
+ * organization's own identifier, never a provider-side name: the organization
+ * exists before discovery runs.
+ */
+export function organizationNameFallbackHint(
+  orgType: OrganizationType,
+): string {
+  return `If left blank, Prowler will use the ${terminologyFor(orgType).identifierLabel}.`;
 }
 
 /**

@@ -2,6 +2,7 @@ import type { FC } from "react";
 
 import {
   AWSProviderBadge,
+  AzureProviderBadge,
   GCPProviderBadge,
 } from "@/components/icons/providers-badge";
 import { getCandidateNoun } from "@/lib/organizations";
@@ -20,7 +21,10 @@ export interface OrgCandidateNoun {
   Plural: string;
 }
 
-/** User-facing candidate noun: "project(s)" for GCP, "account(s)" for AWS. */
+/**
+ * User-facing candidate noun: "project(s)" for GCP, "account(s)" for AWS,
+ * "subscription(s)" for Azure.
+ */
 export function getOrgCandidateNoun(orgType: OrgFlowType): OrgCandidateNoun {
   const { singular, plural } = getCandidateNoun(orgType);
 
@@ -35,6 +39,7 @@ export function getOrgCandidateNoun(orgType: OrgFlowType): OrgCandidateNoun {
 // until it brings its own badge, instead of silently rendering the AWS one.
 const ORG_PROVIDER_BADGE = {
   [ORGANIZATION_TYPE.AWS]: AWSProviderBadge,
+  [ORGANIZATION_TYPE.AZURE]: AzureProviderBadge,
   [ORGANIZATION_TYPE.GCP]: GCPProviderBadge,
 } as const satisfies Record<OrgFlowType, FC<IconSvgProps>>;
 

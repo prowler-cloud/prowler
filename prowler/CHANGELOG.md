@@ -4,6 +4,27 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [5.39.0] (Prowler v5.39.0)
+
+### 🚀 Added
+
+- `batch_job_definition_no_secrets` check for AWS provider, scanning Batch job definition environment variables and command parameters for hardcoded secrets [(#12117)](https://github.com/prowler-cloud/prowler/pull/12117)
+- 7 M365 Entra checks covering CIS Microsoft 365 Foundations Benchmark v7.0.0 password protection, default user permissions, and guest invitation domain restrictions [(#12153)](https://github.com/prowler-cloud/prowler/pull/12153)
+- 7 M365 entra checks covering CIS Microsoft 365 Foundations Benchmark v7.0.0 Conditional Access (5.2.2.x) and idle session timeout controls [(#12154)](https://github.com/prowler-cloud/prowler/pull/12154)
+- `entra_authentication_method_email_otp_disabled`, `entra_authentication_method_authenticator_show_context`, `entra_pim_global_administrator_approval_required`, `entra_pim_privileged_role_administrator_approval_required`, `entra_access_review_guest_users_configured` and `entra_access_review_privileged_roles_configured` checks for M365 provider covering CIS Microsoft 365 Foundations Benchmark v7.0.0 authentication method, PIM approval and access review controls [(#12155)](https://github.com/prowler-cloud/prowler/pull/12155)
+- `awslambda_layer_no_secrets_in_content` check for AWS provider, scanning Lambda layer package content for hardcoded secrets [(#12233)](https://github.com/prowler-cloud/prowler/pull/12233)
+- CMMC 2.0 universal compliance framework (`cmmc_2.0`) with the 149 official requirements from 32 CFR Part 170 — Level 1 (15, 48 CFR 52.204-21), Level 2 (110, NIST SP 800-171 Rev 2) and Level 3 (24, NIST SP 800-172) — with AWS, Azure, GCP, Alibaba Cloud, Oracle Cloud and M365 check mappings and config guardrails [(#12401)](https://github.com/prowler-cloud/prowler/pull/12401)
+
+### 🔄 Changed
+
+- GitHub `organization_repository_creation_limited` check now reports low severity for FAIL findings when repository creation is provably limited to private/internal visibility, instead of always reporting high [(#12164)](https://github.com/prowler-cloud/prowler/pull/12164)
+
+### 🔐 Security
+
+- HTML report header now HTML-escapes every provider identity field across all 23 providers, closing a stored XSS in the header block (Secur0, CWE-79) that was left unaddressed by the earlier finding-row fix in #12221 [(#12424)](https://github.com/prowler-cloud/prowler/pull/12424)
+
+---
+
 ## [5.38.0] (Prowler v5.38.0)
 
 ### 🚀 Added

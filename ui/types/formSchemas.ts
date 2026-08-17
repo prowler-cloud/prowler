@@ -55,6 +55,7 @@ export const roleFormSchema = z.object({
   manage_integrations: z.boolean().default(false),
   manage_scans: z.boolean().default(false),
   manage_alerts: z.boolean().default(false),
+  manage_lighthouse_ai_configuration: z.boolean().default(false),
   unlimited_visibility: z.boolean().default(false),
   groups: z.array(z.string()).optional(),
 });

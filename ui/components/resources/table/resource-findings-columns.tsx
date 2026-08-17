@@ -6,40 +6,20 @@ import {
   DataTableRowActions,
   FindingTriageStatusCell,
 } from "@/components/findings/table";
-import type { FindingTriageUpdateHandler } from "@/components/findings/table/finding-triage-status-control";
-import {
-  DeltaType,
-  NotificationIndicator,
-} from "@/components/findings/table/notification-indicator";
+import { NotificationIndicator } from "@/components/findings/table/notification-indicator";
 import { Checkbox } from "@/components/shadcn";
 import { DateWithTime } from "@/components/shadcn/entities";
 import {
   DataTableColumnHeader,
-  Severity,
   SeverityBadge,
   StatusFindingBadge,
 } from "@/components/shadcn/table";
 import type {
-  FindingTriageLoadedNote,
-  FindingTriageSummary,
+  FindingTriageDetailLoadHandler,
+  FindingTriageNoteLoadHandler,
+  FindingTriageUpdateHandler,
 } from "@/types/findings-triage";
-
-export interface ResourceFinding {
-  type: "findings";
-  id: string;
-  triage?: FindingTriageSummary;
-  attributes: {
-    status: "PASS" | "FAIL" | "MANUAL";
-    severity: Severity;
-    muted?: boolean;
-    muted_reason?: string;
-    delta?: DeltaType;
-    updated_at?: string;
-    check_metadata?: {
-      checktitle?: string;
-    };
-  };
-}
+import type { ResourceFinding } from "@/types/resources";
 
 export const getResourceFindingsColumns = (
   rowSelection: RowSelectionState,
@@ -47,9 +27,8 @@ export const getResourceFindingsColumns = (
   onNavigate: (id: string) => void,
   onMuteComplete?: (findingIds: string[]) => void,
   onTriageUpdateAction?: FindingTriageUpdateHandler,
-  onTriageNoteLoadAction?: (
-    triage: FindingTriageSummary,
-  ) => Promise<FindingTriageLoadedNote>,
+  onTriageNoteLoadAction?: FindingTriageNoteLoadHandler,
+  onTriageDetailLoadAction?: FindingTriageDetailLoadHandler,
 ): ColumnDef<ResourceFinding>[] => {
   const selectedCount = Object.values(rowSelection).filter(Boolean).length;
   const isAllSelected =
@@ -157,7 +136,12 @@ export const getResourceFindingsColumns = (
       cell: ({ row }) => (
         <FindingTriageStatusCell
           triage={row.original.triage}
+          findingContext={{
+            title:
+              row.original.attributes.check_metadata?.checktitle || "Finding",
+          }}
           onTriageUpdateAction={onTriageUpdateAction}
+          onTriageDetailLoadAction={onTriageDetailLoadAction}
         />
       ),
       enableSorting: false,
@@ -171,6 +155,7 @@ export const getResourceFindingsColumns = (
           onMuteComplete={onMuteComplete}
           onTriageUpdateAction={onTriageUpdateAction}
           onTriageNoteLoadAction={onTriageNoteLoadAction}
+          onTriageDetailLoadAction={onTriageDetailLoadAction}
         />
       ),
       enableSorting: false,

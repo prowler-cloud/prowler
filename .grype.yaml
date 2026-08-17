@@ -33,6 +33,19 @@ ignore:
     package:
       name: Microsoft.Bcl.Memory
 
+  # The .NET runtime bundled inside the PowerShell tarball the Dockerfile pins.
+  # CVE-2026-62901 is the same temporary exception documented in .trivyignore.yaml:
+  # fixed in .NET 9.0.19 / 10.0.11 (2026-08-11), but no published PowerShell release
+  # ships a patched runtime yet (7.5.9 bundles 9.0.18; 7.6.4 bundles 10.0.x < 10.0.11).
+  # pwsh runs only local M365 module cmdlets; nothing listens for inbound WebSocket
+  # connections. Remove with the Trivy exception by 2026-09-15.
+  - vulnerability: CVE-2026-62901
+    package:
+      name: Microsoft.NETCore.App.Runtime.linux-x64
+  - vulnerability: CVE-2026-62901
+    package:
+      name: Microsoft.NETCore.App.Runtime.linux-arm64
+
 
   # The CPython interpreter, compiled into the official base image.
   # TEMPORARY, unlike the entries above: moving to Python 3.13 clears seven of these, and
