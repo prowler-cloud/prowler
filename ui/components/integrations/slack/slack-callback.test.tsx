@@ -15,20 +15,27 @@ import { SlackCallback } from "./slack-callback";
 
 const COMPLETED_QUERY = "code=slack-code-1f4a&state=st-2f1c9d7a";
 
-const { exchangeSlackOAuthCode, callbackQuery } = vi.hoisted(() => ({
-  exchangeSlackOAuthCode: vi.fn(),
-  callbackQuery: { value: "" },
-}));
+const { exchangeSlackOAuthCode, callbackQuery, routerReplace } = vi.hoisted(
+  () => ({
+    exchangeSlackOAuthCode: vi.fn(),
+    callbackQuery: { value: "" },
+    routerReplace: vi.fn(),
+  }),
+);
 
 vi.mock("@/actions/integrations/slack", () => ({ exchangeSlackOAuthCode }));
 
+// One router across renders, so the redirect off the spent code is assertable.
+const router = { replace: routerReplace };
+
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ replace: vi.fn() }),
+  useRouter: () => router,
   useSearchParams: () => new URLSearchParams(callbackQuery.value),
 }));
 
 beforeEach(() => {
   callbackQuery.value = COMPLETED_QUERY;
+  routerReplace.mockClear();
 });
 
 const SPINNER_COPY = /Connecting your Slack workspace/;
@@ -94,6 +101,8 @@ describe("returning from Slack when the completion answers unexpectedly", () => 
     expect(
       screen.queryByRole("link", { name: /Back to Slack integration/ }),
     ).not.toBeInTheDocument();
+    // `replace`, not `push`: a back navigation must not remount onto the code.
+    expect(routerReplace).toHaveBeenCalledWith("/integrations/slack");
   });
 });
 

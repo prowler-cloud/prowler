@@ -760,8 +760,7 @@ export const SlackIcon: React.FC<IconSvgProps> = ({
   ...props
 }) => (
   <svg
-    aria-hidden="false"
-    aria-label="Slack logo"
+    aria-hidden="true"
     fill="none"
     focusable="false"
     height={size || height}

@@ -341,6 +341,7 @@ export const testIntegrationConnection = async (
         revalidatePath("/integrations/amazon-s3");
         revalidatePath("/integrations/aws-security-hub");
         revalidatePath("/integrations/jira");
+        revalidatePath("/integrations/slack");
 
         if ("error" in pollResult) {
           return { success: false, error: pollResult.error };

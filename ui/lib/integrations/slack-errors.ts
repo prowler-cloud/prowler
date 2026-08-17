@@ -77,7 +77,8 @@ export interface SlackApiFailure extends SlackErrorSource {
 }
 
 const isKnownCode = (code: string | null | undefined): code is SlackErrorCode =>
-  typeof code === "string" && code in SLACK_ERROR_MESSAGES;
+  typeof code === "string" &&
+  Object.prototype.hasOwnProperty.call(SLACK_ERROR_MESSAGES, code);
 
 /**
  * Copy for a refusal: Prowler's wording for a known `code`, else the API's
