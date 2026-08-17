@@ -1,8 +1,6 @@
 /**
- * The Slack code → copy mapping, unit-tested because most of the codes it
- * covers belong to flows this layer does not have yet: the channel picker, the
- * test message and the disconnect all lean on the same mapping, and each of
- * their conditions is a code that has to already resolve to the right words.
+ * Unit-tested because most of the codes in the mapping belong to flows this
+ * layer does not have yet: the channel picker, the test message, the disconnect.
  */
 
 import { describe, expect, it } from "vitest";
@@ -21,15 +19,13 @@ import {
 
 describe("slackErrorMessage", () => {
   it("prefers the code's own copy over the API's wording", () => {
-    // Given — the machine-readable reason and human copy disagree, which they
-    // always do: `detail` states the condition, the code's copy resolves it.
+    // `detail` states the condition; the code's copy states the fix.
     const failure = {
       code: SLACK_ERROR_CODE.WORKSPACE_CONFLICT,
       detail:
         "This tenant is already connected to a different Slack workspace.",
     };
 
-    // Then
     expect(slackErrorMessage(failure)).toBe(
       SLACK_ERROR_MESSAGES[SLACK_ERROR_CODE.WORKSPACE_CONFLICT],
     );
@@ -37,8 +33,7 @@ describe("slackErrorMessage", () => {
   });
 
   it("tells the user how to grant a scope Prowler is missing", () => {
-    // A missing scope is fixable by the person reading it, so the copy has to
-    // name the fix rather than report that something went wrong.
+    // A missing scope is fixable by the reader, so the copy names the fix.
     const message = slackErrorMessage({
       code: SLACK_ERROR_CODE.MISSING_SCOPE,
       detail: "missing_scope",
@@ -62,8 +57,7 @@ describe("slackErrorMessage", () => {
 
   it("points every dead-credential code at reconnecting, not at retrying", () => {
     for (const code of SLACK_TOKEN_ERROR_CODES) {
-      // Given a token the Slack grant no longer honours — revoked, invalid,
-      // inactive or expired — no retry helps, so all four say the same thing.
+      // Revoked, invalid, inactive or expired: no retry helps for any of them.
       expect(slackErrorMessage({ code })).toMatch(
         /Connect the workspace again to restore access/,
       );
@@ -78,8 +72,6 @@ describe("slackErrorMessage", () => {
   });
 
   it("falls back to the API's detail for a code it does not know", () => {
-    // A code this UI has nothing better to say about is not a reason to hide
-    // what the API said.
     expect(
       slackErrorMessage({
         code: "some_future_slack_reason",
@@ -114,8 +106,6 @@ describe("slackRateLimitMessage", () => {
 
 describe("readSlackFailure", () => {
   it("reads the code, the detail and the wait off a JSON:API refusal", async () => {
-    // Given — the shape the API answers with: a string status, the reason in
-    // `code`, and a pointer at the document rather than at an attribute.
     const response = new Response(
       JSON.stringify({
         errors: [
@@ -129,10 +119,8 @@ describe("readSlackFailure", () => {
       { status: 429, headers: { "Retry-After": "30" } },
     );
 
-    // When
     const failure = await readSlackFailure(response);
 
-    // Then
     expect(failure).toEqual({
       status: 429,
       code: null,
@@ -142,7 +130,6 @@ describe("readSlackFailure", () => {
   });
 
   it("survives a body that is not JSON:API at all", async () => {
-    // A 502 from a proxy carries HTML, and the status is still the answer.
     const failure = await readSlackFailure(
       new Response("<html>Bad gateway</html>", { status: 502 }),
     );
