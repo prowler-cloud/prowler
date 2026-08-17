@@ -1,0 +1,1 @@
+Bump alibabacloud-tea-openapi to 0.4.6, oci to 2.184.1 and pyopenssl to 26.4.0 so the published wheel installs with cryptography 50.0.0; 5.38.0 declared cryptography 50.0.0 while those packages capped it below 50, so pip could not install it and `pip install prowler` silently fell back to 5.37.1
