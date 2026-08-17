@@ -38,6 +38,7 @@ class OSS(AlibabaCloudService):
         self.__threading_call__(self._get_bucket_acl, self.buckets.values())
         self.__threading_call__(self._get_bucket_policy, self.buckets.values())
         self.__threading_call__(self._get_bucket_logging, self.buckets.values())
+        self.__threading_call__(self._get_bucket_encryption, self.buckets.values())
 
     def _list_buckets(self, regional_client=None):
         region = "unknown"
@@ -285,6 +286,76 @@ class OSS(AlibabaCloudService):
                 f"{bucket.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+
+    def _get_bucket_encryption(self, bucket):
+        """Get bucket default server-side encryption configuration using OSS SDK."""
+        logger.info(f"OSS - Getting encryption configuration for bucket {bucket.name}...")
+        try:
+            oss_client = self.session.client("oss", bucket.region)
+
+            response = oss_client.get_bucket_encryption(bucket.name)
+
+            if response and response.body:
+                rule = getattr(response.body, "rule", None) or getattr(
+                    response.body, "server_side_encryption_rule", None
+                )
+                source = rule if rule is not None else response.body
+
+                sse_algorithm = None
+                for attr_name in [
+                    "sse_algorithm",
+                    "SSEAlgorithm",
+                    "sseAlgorithm",
+                    "algorithm",
+                ]:
+                    value = getattr(source, attr_name, None)
+                    if value:
+                        sse_algorithm = str(value)
+                        break
+                    # nested ApplyServerSideEncryptionByDefault style objects
+                    default = getattr(source, "apply_server_side_encryption_by_default", None)
+                    if default is not None:
+                        value = getattr(default, attr_name, None)
+                        if value:
+                            sse_algorithm = str(value)
+                            break
+
+                kms_key_id = None
+                for attr_name in [
+                    "kms_master_key_id",
+                    "KMSMasterKeyID",
+                    "kmsMasterKeyID",
+                    "kms_key_id",
+                ]:
+                    value = getattr(source, attr_name, None)
+                    if value:
+                        kms_key_id = str(value)
+                        break
+                    default = getattr(source, "apply_server_side_encryption_by_default", None)
+                    if default is not None:
+                        value = getattr(default, attr_name, None)
+                        if value:
+                            kms_key_id = str(value)
+                            break
+
+                if sse_algorithm:
+                    bucket.encryption_algorithm = sse_algorithm
+                    bucket.encryption_kms_key_id = kms_key_id or ""
+        except Exception as error:
+            error_code = getattr(error, "code", "") or getattr(error, "error_code", "")
+            error_message = str(error)
+            if (
+                error_code in ["NoSuchServerSideEncryptionRule", "NoSuchEncryptionRule"]
+                or "NoSuchServerSideEncryptionRule" in error_message
+                or "NoSuchEncryptionRule" in error_message
+            ):
+                bucket.encryption_algorithm = ""
+                bucket.encryption_kms_key_id = ""
+            else:
+                logger.error(
+                    f"{bucket.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
     @staticmethod
     def _normalize_bucket_region(bucket_location: str) -> str:
         """Normalize OSS bucket location values to region IDs."""
@@ -330,4 +401,6 @@ class Bucket(BaseModel):
     logging_enabled: bool = False
     logging_target_bucket: str = ""
     logging_target_prefix: str = ""
+    encryption_algorithm: str = ""  # "", AES256, KMS
+    encryption_kms_key_id: str = ""
     creation_date: Optional[datetime] = None
