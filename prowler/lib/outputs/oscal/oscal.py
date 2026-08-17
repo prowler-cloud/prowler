@@ -28,6 +28,15 @@ class OSCAL:
         file_path: Optional[str] = None,
         import_ap_href: str = DEFAULT_IMPORT_AP_HREF,
     ) -> None:
+        """Build and hold the OSCAL document(s) for the given findings.
+
+        Args:
+            findings: Prowler finding objects to transform.
+            file_path: Optional output path (used by callers that write
+                straight to disk rather than via ``batch_write_data_to_file``).
+            import_ap_href: The assessment-plan reference this run is
+                evaluated against, emitted at ``assessment-results.import-ap.href``.
+        """
         self.import_ap_href = import_ap_href
         self.file_path = file_path
         self.file_descriptor = None
@@ -37,6 +46,7 @@ class OSCAL:
 
     @property
     def data(self) -> List[OscalDocument]:
+        """The transformed OSCAL document(s), one per ``transform()`` call."""
         return self._data
 
     def transform(self, findings: List[Any]) -> None:
@@ -51,7 +61,8 @@ class OSCAL:
         account_uid = getattr(first_finding, "account_uid", "default-account")
         provider_name = (
             first_finding.metadata.Provider
-            if hasattr(first_finding, "metadata") and hasattr(first_finding.metadata, "Provider")
+            if hasattr(first_finding, "metadata")
+            and hasattr(first_finding.metadata, "Provider")
             else "aws"
         )
         prowler_version = getattr(first_finding, "prowler_version", "4.0.0")
@@ -63,12 +74,20 @@ class OSCAL:
             version=prowler_version,
             props=[
                 Property(name="generator", value="Prowler", class_="tool"),
-                Property(name="generator-version", value=prowler_version, class_="version"),
-                Property(name="account-id", value=str(account_uid), class_="provider-identity"),
+                Property(
+                    name="generator-version", value=prowler_version, class_="version"
+                ),
+                Property(
+                    name="account-id",
+                    value=str(account_uid),
+                    class_="provider-identity",
+                ),
             ],
         )
 
-        result_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, f"prowler.result.{account_uid}"))
+        result_uuid = str(
+            uuid.uuid5(uuid.NAMESPACE_DNS, f"prowler.result.{account_uid}")
+        )
         result = Result(
             result_uuid=result_uuid,
             title=f"Assessment Results for {provider_name.upper()} Account {account_uid}",
@@ -86,7 +105,8 @@ class OSCAL:
         for finding in findings:
             finding_timestamp = (
                 finding.timestamp.isoformat()
-                if hasattr(finding, "timestamp") and isinstance(finding.timestamp, datetime)
+                if hasattr(finding, "timestamp")
+                and isinstance(finding.timestamp, datetime)
                 else now_iso
             )
             resource_uid = getattr(finding, "resource_uid", "resource-default")
@@ -112,7 +132,8 @@ class OSCAL:
             )
             check_title = (
                 finding.metadata.CheckTitle
-                if hasattr(finding, "metadata") and hasattr(finding.metadata, "CheckTitle")
+                if hasattr(finding, "metadata")
+                and hasattr(finding.metadata, "CheckTitle")
                 else check_id
             )
             status_extended = getattr(finding, "status_extended", check_title)
@@ -151,19 +172,27 @@ class OSCAL:
 
             # Emit OSCAL finding only for FAIL status
             if status_val == "FAIL":
-                find_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, f"prowler.finding.{finding_uid}"))
+                find_uuid = str(
+                    uuid.uuid5(uuid.NAMESPACE_DNS, f"prowler.finding.{finding_uid}")
+                )
                 remediation_rec = ""
-                if hasattr(finding, "metadata") and hasattr(finding.metadata, "Remediation"):
+                if hasattr(finding, "metadata") and hasattr(
+                    finding.metadata, "Remediation"
+                ):
                     rem = finding.metadata.Remediation
-                    if hasattr(rem, "Recommendation") and hasattr(rem.Recommendation, "Text"):
+                    if hasattr(rem, "Recommendation") and hasattr(
+                        rem.Recommendation, "Text"
+                    ):
                         remediation_rec = rem.Recommendation.Text
 
                 oscal_finding = OscalFinding(
                     finding_uuid=find_uuid,
                     title=f"Non-compliant check: {check_id}",
                     description=status_extended,
-                    collected=finding_timestamp,
-                    related_observations=[RelatedObservation(observation_uuid=obs_uuid)],
+                    target_id=check_id,
+                    related_observations=[
+                        RelatedObservation(observation_uuid=obs_uuid)
+                    ],
                     props=[
                         Property(name="check-id", value=check_id),
                         Property(name="status", value="unsatisfied"),
@@ -172,7 +201,9 @@ class OSCAL:
                 )
                 if remediation_rec:
                     oscal_finding.props.append(
-                        Property(name="remediation-recommendation", value=remediation_rec)
+                        Property(
+                            name="remediation-recommendation", value=remediation_rec
+                        )
                     )
 
                 # Extract NIST compliance mappings if present
