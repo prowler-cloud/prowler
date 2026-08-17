@@ -1,3 +1,4 @@
+from copy import deepcopy
 from unittest import mock
 
 import botocore
@@ -63,6 +64,7 @@ PUBLIC_ALLOW_AND_DENY_POLICY = '{"Version":"2012-10-17","Statement":[{"Effect":"
 PUBLIC_ALLOW_SINGLE_STATEMENT_POLICY = '{"Version":"2012-10-17","Statement":{"Effect":"Allow","Principal":"*","Action":"ses:SendEmail","Resource":"*"}}'
 PRIVATE_ALLOW_SINGLE_STATEMENT_POLICY = '{"Version":"2012-10-17","Statement":{"Effect":"Allow","Principal":{"AWS":"arn:aws:iam::123456789012:root"},"Action":"ses:SendEmail","Resource":"*"}}'
 MATCHING_DENY_SINGLE_STATEMENT_POLICY = '{"Version":"2012-10-17","Statement":{"Effect":"Deny","Principal":"*","Action":"ses:SendEmail","Resource":"*"}}'
+CONDITIONAL_ALLOW_SINGLE_STATEMENT_POLICY = '{"Version":"2012-10-17","Statement":{"Effect":"Allow","Principal":"*","Action":"ses:SendEmail","Resource":"*","Condition":{"StringEquals":{"AWS:SourceAccount":"123456789012"}}}}'
 
 
 def make_multiple_policies_api_mock(policies):
@@ -133,6 +135,9 @@ mock_make_api_call_public_and_deny_single_statements = make_multiple_policies_ap
         "public-policy": PUBLIC_ALLOW_SINGLE_STATEMENT_POLICY,
         "deny-policy": MATCHING_DENY_SINGLE_STATEMENT_POLICY,
     }
+)
+mock_make_api_call_conditional_single_statement = make_multiple_policies_api_mock(
+    {"conditional-policy": CONDITIONAL_ALLOW_SINGLE_STATEMENT_POLICY}
 )
 
 
@@ -295,6 +300,36 @@ class Test_ses_identities_not_publicly_accessible:
 
         assert len(result) == 1
         assert result[0].status == expected_status
+
+    @mock_aws
+    def test_check_preserves_nested_policy_condition_keys(self):
+        with mock.patch(
+            "botocore.client.BaseClient._make_api_call",
+            new=mock_make_api_call_conditional_single_statement,
+        ):
+            client("sesv2", region_name=AWS_REGION_EU_WEST_1)
+            aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+            ses_client = SES(aws_provider)
+            identity = next(iter(ses_client.email_identities.values()))
+            policies_before_check = deepcopy(identity.policies)
+
+            with (
+                mock.patch(
+                    "prowler.providers.common.provider.Provider.get_global_provider",
+                    return_value=aws_provider,
+                ),
+                mock.patch(
+                    "prowler.providers.aws.services.ses.ses_identity_not_publicly_accessible.ses_identity_not_publicly_accessible.ses_client",
+                    new=ses_client,
+                ),
+            ):
+                from prowler.providers.aws.services.ses.ses_identity_not_publicly_accessible.ses_identity_not_publicly_accessible import (
+                    ses_identity_not_publicly_accessible,
+                )
+
+                ses_identity_not_publicly_accessible().execute()
+
+            assert identity.policies == policies_before_check
 
     @mock_aws
     @mock.patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call_v2)

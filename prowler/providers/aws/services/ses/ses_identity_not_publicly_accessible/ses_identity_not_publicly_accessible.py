@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.iam.lib.policy import is_policy_public
 from prowler.providers.aws.services.ses.ses_client import ses_client
@@ -37,7 +39,8 @@ class ses_identity_not_publicly_accessible(Check):
             )
             has_public_allow = any(
                 is_policy_public(
-                    _normalize_policy_statements(policy), ses_client.audited_account
+                    _normalize_policy_statements(deepcopy(policy)),
+                    ses_client.audited_account,
                 )
                 for policy in identity.policies.values()
             )
