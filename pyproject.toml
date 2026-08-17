@@ -68,6 +68,10 @@ dependencies = [
   "boto3==1.40.61",
   "botocore==1.40.61",
   "colorama==0.4.6",
+  # cryptography 50 needs alibabacloud-tea-openapi>=0.4.6, oci>=2.184.1 and, in the
+  # [tool.uv] pins, msal>=1.37.0 and pyopenssl>=26.4.0: earlier releases cap it below 49
+  # or 50. Keep the five in step. Never widen a cap with [tool.uv] override-dependencies:
+  # overrides do not ship in the wheel, and 5.38.0 was uninstallable with pip because of one.
   "cryptography==50.0.0",
   "dash==3.1.1",
   "dash-bootstrap-components==2.0.3",
@@ -103,10 +107,10 @@ dependencies = [
   "uuid6==2024.7.10",
   "py-iam-expand==0.3.0",
   "h2==4.3.0",
-  "oci==2.183.0",
+  "oci==2.184.1",
   "alibabacloud_credentials==1.0.3",
   "alibabacloud_ram20150501==1.2.0",
-  "alibabacloud_tea_openapi==0.4.5",
+  "alibabacloud_tea_openapi==0.4.6",
   "alibabacloud_sts20150401==1.1.6",
   "alibabacloud_vpc20160428==6.13.0",
   "alibabacloud_ecs20140526==7.2.5",
@@ -199,7 +203,7 @@ constraint-dependencies = [
   "alibabacloud-sas20181203==6.1.0",
   "alibabacloud-sts20150401==1.1.6",
   "alibabacloud-tea==0.4.3",
-  "alibabacloud-tea-openapi==0.4.5",
+  "alibabacloud-tea-openapi==0.4.6",
   "alibabacloud-tea-util==0.3.14",
   "alibabacloud-tea-xml==0.0.3",
   "alibabacloud-vpc20160428==6.13.0",
@@ -300,7 +304,7 @@ constraint-dependencies = [
   "mock==5.2.0",
   "moto==5.1.11",
   "mpmath==1.3.0",
-  "msal==1.36.0",
+  "msal==1.37.0",
   "msal-extensions==1.3.1",
   "msgraph-core==1.3.8",
   "msrest==0.7.1",
@@ -343,7 +347,7 @@ constraint-dependencies = [
   "pyjwt==2.13.0",
   "pylint==3.3.4",
   "pynacl==1.6.2",
-  "pyopenssl==26.2.0",
+  "pyopenssl==26.4.0",
   "pyparsing==3.3.2",
   "pytest==9.0.3",
   "pytest-cov==6.0.0",
@@ -387,13 +391,9 @@ constraint-dependencies = [
   "xmltodict==1.0.4",
   "yarl==1.23.0",
   "zipp==3.23.1",
-  "zstd==1.5.7.3"
+  "zstd==1.5.7.2"
 ]
-override-dependencies = [
-  "okta==3.4.2",
-  # alibabacloud-tea-openapi 0.4.5 caps cryptography below 49 and is the latest release.
-  "cryptography==50.0.0"
-]
+override-dependencies = ["okta==3.4.2"]
 
 [tool.vulture]
 # Suppress known false positives. The CI command only passes --exclude and
