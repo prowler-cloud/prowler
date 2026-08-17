@@ -9,7 +9,7 @@ import {
   slackErrorMessage,
   slackRateLimitMessage,
 } from "@/lib/integrations/slack-errors";
-import { handleApiError } from "@/lib/server-actions-helper";
+import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 import type { IntegrationProps } from "@/types/integrations";
 
 /**
@@ -103,6 +103,14 @@ const failureFrom = async (
 ): Promise<SlackUnavailable | SlackRateLimited | SlackActionError> => {
   if (isUnavailableStatus(response.status)) return { unavailable: true };
 
+  // A 5xx that is not the ship-dark 503 is a server fault rather than a Slack
+  // state — and `502` is the status the contract reserves for "Slack upstream
+  // broke" — so it goes through the repo's own 5xx handling, which is where
+  // Sentry hears about one. That call reports *and throws*, so each action's
+  // existing catch is what answers the user. It has to run before
+  // `readSlackFailure`: a response body can only be read once.
+  if (response.status >= 500) await handleApiResponse(response);
+
   const failure = await readSlackFailure(response);
 
   if (failure.status === RATE_LIMITED_STATUS) {
@@ -129,7 +137,9 @@ export const getSlackAuthorizeUrl =
       const response = await fetch(url.toString(), { method: "POST", headers });
 
       if (!response.ok) {
-        return failureFrom(
+        // Awaited inside the `try`: a returned promise's rejection is not this
+        // `catch`'s to see, and a 5xx now rejects.
+        return await failureFrom(
           response,
           `Unable to start the Slack install: ${response.statusText}`,
         );
@@ -181,7 +191,9 @@ export const exchangeSlackOAuthCode = async ({
       // `detail` is the reason to show. "A different workspace is already
       // connected" is a `409` named by its `code`, which is what turns it into
       // copy that says how to get out of it.
-      return failureFrom(
+      // Awaited inside the `try`, as above: unawaited, a 5xx's rejection would
+      // pass this `catch` and leave the callback on its spinner.
+      return await failureFrom(
         response,
         `Unable to connect the Slack workspace: ${response.statusText}`,
       );

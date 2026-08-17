@@ -29,6 +29,8 @@ import {
   SLACK_REFUSED_STATE_DETAIL,
   SLACK_RETRY_AFTER_SECONDS,
   SLACK_UNCONFIGURED_DETAIL,
+  SLACK_UPSTREAM_DETAIL,
+  SLACK_UPSTREAM_ERROR_CODE,
   SLACK_WORKSPACE_CONFLICT_CODE,
 } from "./slack.fixtures";
 import type {
@@ -146,11 +148,23 @@ export const handlersForSlack = (fx: SlackFixture) => {
       headers: { "Retry-After": String(SLACK_RETRY_AFTER_SECONDS) },
     });
 
+  /**
+   * Slack's own side broken, behind a deployment that is configured correctly.
+   * A `502`, per the contract's taxonomy — a server fault rather than a Slack
+   * state, which is the one refusal here the UI reports as well as describes.
+   */
+  const upstreamError = () =>
+    HttpResponse.json(
+      errorBody(SLACK_UPSTREAM_DETAIL, 502, SLACK_UPSTREAM_ERROR_CODE),
+      { status: 502, statusText: "Bad Gateway" },
+    );
+
   return [
     // --- OAuth ------------------------------------------------------------
     http.post(`${API}/integrations/slack/oauth/authorize-url`, () => {
       if (!fx.appConfigured) return unconfigured();
       if (fx.rateLimited) return rateLimited();
+      if (fx.oauthUpstreamError) return upstreamError();
       // A proxy answering in place of the API: a `200` the UI reads as success
       // and then finds nothing in.
       if (fx.authorizeUrlUnreadable) {
@@ -165,6 +179,7 @@ export const handlersForSlack = (fx: SlackFixture) => {
     http.post(`${API}/integrations/slack/oauth/exchange`, () => {
       if (!fx.appConfigured) return unconfigured();
       if (fx.rateLimited) return rateLimited();
+      if (fx.oauthUpstreamError) return upstreamError();
 
       switch (fx.exchangeOutcome) {
         case SLACK_EXCHANGE_OUTCOME.REFUSED_STATE:

@@ -114,6 +114,25 @@ describe("starting the install", () => {
     expect(harness.offersInstall()).toBe(true);
   }, 30000);
 
+  it("keeps the page usable when Slack's own side is broken upstream", async () => {
+    // Given — the `502` the contract reserves for a Slack upstream failure.
+    // The action hands that to the UI's shared 5xx handling, which *throws*, so
+    // this is the page's other rejection path: uncaught, the mount itself fails
+    // and the user gets the route's error boundary instead of the Slack page.
+    const harness = new SlackIntegrationHarness(
+      slackFixture({ oauthUpstreamError: true }),
+    );
+
+    // When
+    await harness.mount();
+
+    // Then — the failure is named, and it is not reported as this deployment
+    // having no Slack app: the app is configured, Slack is down.
+    const notice = await harness.loadErrorNotice();
+    expect(notice).toMatch(/temporarily unavailable/);
+    expect(harness.saysUnavailable()).toBe(false);
+  }, 30000);
+
   it("names the missing consent URL when a proxy answers that call with an HTML page", async () => {
     // Given — a 200 that is a challenge page rather than the API's JSON.
     // Nothing refused the call, so the action reaches its success path and
@@ -333,6 +352,32 @@ describe("returning from Slack", () => {
     expect(reason).toMatch(/rate limiting/);
     expect(reason).toMatch(/about 30 seconds/);
     expect(reason).not.toMatch(/not available in this environment/);
+    expect(harness.offersRetry()).toBe(true);
+  }, 30000);
+
+  it("reports Slack being broken upstream, rather than leaving the callback spinning", async () => {
+    // Given — the completion answers `502`, the contract's status for a Slack
+    // upstream failure. The action reports that through the UI's shared 5xx
+    // handling, which throws, so what the callback renders depends on the
+    // rejection being answered inside the action.
+    const harness = new SlackIntegrationHarness(
+      slackFixture({ oauthUpstreamError: true }),
+    );
+
+    // When
+    await harness.mountCallback({
+      code: SLACK_OAUTH_CODE,
+      state: SLACK_OAUTH_STATE,
+    });
+
+    // Then — the reason the API gave, not the "could not confirm whether the
+    // workspace was connected" the page falls back to when the call to the
+    // action never comes back at all: the API refused, so nothing was created,
+    // and telling the user to go check would send them looking for nothing.
+    const reason = await harness.installFailureReason();
+    expect(reason).toMatch(/temporarily unavailable/);
+    expect(reason).not.toMatch(/could not confirm/);
+    expect(await harness.completedInstall()).toBe(false);
     expect(harness.offersRetry()).toBe(true);
   }, 30000);
 

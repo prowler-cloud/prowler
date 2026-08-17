@@ -99,6 +99,17 @@ export interface SlackFixture {
    * anything, so the UI reaches its success path and finds no answer there.
    */
   authorizeUrlUnreadable: boolean;
+  /**
+   * Both Slack OAuth calls answer `502` — the status the contract reserves for
+   * `internal_error`, `fatal_error`, `service_unavailable` and transport
+   * failures ("Errors — one taxonomy for every Slack failure").
+   *
+   * Distinct from `appConfigured: false`: a `503` is this deployment having no
+   * Slack app, which is a state, while a `502` is Slack's side broken behind a
+   * deployment that is configured correctly — a server fault, and the one Slack
+   * status the UI reports rather than only describing.
+   */
+  oauthUpstreamError: boolean;
 }
 
 export const SLACK_INTEGRATION_ID = "slack-integration-1";
@@ -140,6 +151,12 @@ export const SLACK_INVALID_CODE_DETAIL = "The Slack OAuth code is invalid.";
 export const SLACK_DIFFERENT_WORKSPACE_DETAIL =
   "This tenant is already connected to a different Slack workspace.";
 export const SLACK_UPSTREAM_DETAIL = "Slack is temporarily unavailable.";
+/**
+ * The `code` an upstream failure is named by, on the `502` the contract reserves
+ * for it. Not one the UI maps to copy of its own — there is nothing for a user
+ * to do about Slack being down — so it is the `detail` that reaches them.
+ */
+export const SLACK_UPSTREAM_ERROR_CODE = "service_unavailable";
 /**
  * Raised as a service-level `ValidationError({"channel_id": ...})`, which still
  * points at `/data` rather than at the attribute.
@@ -204,6 +221,7 @@ export const slackFixture = (
   rateLimited: false,
   listServerError: false,
   authorizeUrlUnreadable: false,
+  oauthUpstreamError: false,
   ...overrides,
 });
 
