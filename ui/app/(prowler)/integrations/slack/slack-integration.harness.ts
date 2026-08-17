@@ -224,6 +224,37 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     );
   }
 
+  /**
+   * How the page reports the connection, in the badge's own words.
+   *
+   * Read off the badge's own state attribute rather than by matching copy: the
+   * heading right beside it starts "Connected to …", so a text search would
+   * happily report the heading as the badge.
+   */
+  async connectionBadge(): Promise<string> {
+    const badge = await this.waitFor(
+      () => this.q("[data-connection-status]"),
+      5000,
+      "the connection badge",
+    );
+    return (badge.textContent ?? "").trim();
+  }
+
+  /** Whether the page offers a connection check the user can actually run. */
+  async offersConnectionTest(): Promise<boolean> {
+    const button = await this.waitFor(
+      () => this.buttonByText(/Test connection/),
+      5000,
+      "the Test connection button",
+    );
+    return !button.disabled;
+  }
+
+  /** Whether the page names choosing a channel as what comes next. */
+  saysChannelIsNextStep(): boolean {
+    return this.containsText(/Choosing a destination channel is the next step/);
+  }
+
   async testConnection(): Promise<ConnectionOutcome> {
     await this.clickButton(/Test connection/);
 

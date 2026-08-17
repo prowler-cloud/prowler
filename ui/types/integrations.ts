@@ -72,7 +72,10 @@ export interface IntegrationProps {
     inserted_at: string;
     updated_at: string;
     enabled: boolean;
-    connected: boolean;
+    // `null` until a connection check has actually run: the integration exists
+    // but has never been verified — neither confirmed working nor known broken.
+    // A Slack install lands here, and returns here whenever its channel changes.
+    connected: boolean | null;
     connection_last_checked_at: string | null;
     integration_type: IntegrationType;
     configuration: {

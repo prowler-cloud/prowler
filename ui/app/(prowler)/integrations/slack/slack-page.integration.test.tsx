@@ -241,6 +241,8 @@ describe("a connected workspace", () => {
 
     // Then
     expect(await harness.connectedWorkspaceName()).toBe(WORKSPACE_NAME);
+    expect(await harness.connectionBadge()).toBe("Connected");
+    expect(await harness.offersConnectionTest()).toBe(true);
     expect(await harness.testConnection()).toBe(CONNECTION_OUTCOME.SUCCESS);
     // One workspace per tenant (design D10): a connected tenant is not invited
     // to install another, and no consent URL is minted for a page that would
@@ -261,5 +263,37 @@ describe("a connected workspace", () => {
     // one.
     expect(await harness.connectedWorkspaceName()).toBe(WORKSPACE_NAME);
     expect(harness.offersInstall()).toBe(false);
+  }, 30000);
+
+  it("reports the connection as never checked, not as broken, before the first check", async () => {
+    // Given — the state the OAuth exchange leaves behind: `connected` is null,
+    // which is neither true nor false (design.md, "Connection state, in
+    // order").
+    const harness = new SlackIntegrationHarness(connectedSlackFixture());
+
+    // When
+    await harness.mount();
+
+    // Then — the spec calls this connection "neither confirmed working nor
+    // reported broken", so a red "Disconnected" beside a heading that says the
+    // workspace is connected would report a break nothing has observed.
+    const badge = await harness.connectionBadge();
+    expect(badge).toBe("Not checked yet");
+    expect(badge).not.toMatch(/Disconnected/);
+  }, 30000);
+
+  it("does not offer a connection check the API is bound to refuse", async () => {
+    // Given — a workspace connected and no destination channel recorded.
+    const harness = new SlackIntegrationHarness(connectedSlackFixture());
+
+    // When
+    await harness.mount();
+
+    // Then — the check posts to the destination channel, so with none recorded
+    // the API answers 400 rather than `connected: false`. Offering the check
+    // here would guarantee a failure the user has no way to resolve, so the
+    // page names the next step instead.
+    expect(await harness.offersConnectionTest()).toBe(false);
+    expect(harness.saysChannelIsNextStep()).toBe(true);
   }, 30000);
 });

@@ -160,6 +160,11 @@ export const slackFixture = (
 /**
  * A tenant that already approved Prowler in its workspace, and has chosen no
  * destination channel yet — the state the OAuth exchange leaves behind.
+ *
+ * `connected` is `null`, not `true`: the check runs against the destination
+ * channel, so with none recorded it has never run (design.md, "Connection
+ * state, in order"). A `true` here would model a state the contract says
+ * cannot exist, and would disagree with the exchange handler that mints it.
  */
 export const connectedSlackFixture = (
   overrides: Partial<SlackFixture> = {},
@@ -167,8 +172,8 @@ export const connectedSlackFixture = (
   slackFixture({
     install: {
       id: SLACK_INTEGRATION_ID,
-      connected: true,
-      connectionLastCheckedAt: "2026-08-10T09:30:00Z",
+      connected: null,
+      connectionLastCheckedAt: null,
       workspace: { ...PROWLER_HQ },
     },
     exchangeOutcome: SLACK_EXCHANGE_OUTCOME.REINSTALLED,

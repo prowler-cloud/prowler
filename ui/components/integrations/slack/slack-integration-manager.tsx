@@ -86,6 +86,9 @@ export const SlackIntegrationManager = ({
 
   const configuration = integration?.attributes.configuration;
   const workspaceName = configuration?.team_name;
+  // Absent until a channel is chosen, never present-and-null (see the
+  // configuration comment on `IntegrationProps`).
+  const channelId = configuration?.channel_id ?? null;
 
   return (
     <div className="flex flex-col gap-6">
@@ -111,7 +114,7 @@ export const SlackIntegrationManager = ({
               title={`Connected to ${workspaceName ?? "your Slack workspace"}`}
               subtitle="Prowler posts to this workspace only."
               connectionStatus={{
-                connected: integration.attributes.connected === true,
+                connected: integration.attributes.connected,
               }}
             />
           </CardHeader>
@@ -130,11 +133,21 @@ export const SlackIntegrationManager = ({
                     )}
                   </p>
                 )}
+                {!channelId && (
+                  <p>
+                    Choosing a destination channel is the next step — the
+                    connection is checked against it.
+                  </p>
+                )}
               </div>
+              {/* The check posts to the destination channel, so with none
+                  recorded the API refuses it with a 400 rather than reporting a
+                  connection it never tested. Offering the button anyway would
+                  guarantee a failure the user has no way to resolve. */}
               <Button
                 size="sm"
                 variant="outline"
-                disabled={isTesting}
+                disabled={isTesting || !channelId}
                 onClick={() => handleTestConnection(integration.id)}
               >
                 <TestTube size={14} />
