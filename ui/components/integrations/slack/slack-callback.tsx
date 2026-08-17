@@ -23,6 +23,17 @@ const STATUS = {
 
 type Status = (typeof STATUS)[keyof typeof STATUS];
 
+/**
+ * What the user is told when the completion never came back with an answer.
+ *
+ * Deliberately not "the install failed": the API consumes the code before it
+ * answers, so a call that never made it back may well have connected the
+ * workspace. The honest report is that the result is unknown and where to look
+ * it up — which is exactly what the escape link below goes to.
+ */
+const UNCONFIRMED_COMPLETION_MESSAGE =
+  "Prowler could not confirm whether the workspace was connected. Open the Slack integration page to check — if none is listed there, start the install again.";
+
 /** Turn the `error` Slack puts on the callback URL into something readable. */
 const describeSlackError = (reason: string): string =>
   reason === "access_denied"
@@ -78,7 +89,7 @@ export const SlackCallback = () => {
 
       if ("integration" in result) {
         setWorkspaceName(
-          result.integration.attributes.configuration.team_name ?? null,
+          result.integration.attributes?.configuration?.team_name ?? null,
         );
         setStatus(STATUS.CONNECTED);
         router.replace(SLACK_INTEGRATION_PATH);
@@ -97,7 +108,18 @@ export const SlackCallback = () => {
       setStatus(STATUS.FAILED);
     };
 
-    void complete();
+    // A rejection here is not a refusal the action reported — it is the call to
+    // it never coming back: the request to Prowler's own server failing (a
+    // dropped connection on the way back from Slack), an action id a rolling
+    // deploy invalidated, a gateway answering with an HTML 502. None of those
+    // reach the action's own error handling, and nothing retries either, since
+    // the once-guard has already fired. Uncaught, the page spins on "Connecting
+    // your Slack workspace..." forever: no error, no way out, no boundary to
+    // catch it (a rejection awaited inside an effect is invisible to React's).
+    void complete().catch(() => {
+      setFailure(UNCONFIRMED_COMPLETION_MESSAGE);
+      setStatus(STATUS.FAILED);
+    });
   }, [router, searchParams]);
 
   if (status === STATUS.CONNECTING) {
