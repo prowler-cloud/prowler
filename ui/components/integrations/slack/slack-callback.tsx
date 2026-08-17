@@ -66,9 +66,15 @@ const describeSlackError = (reason: string): string => {
  * whose state it cannot match is refused there, and surfaced here.
  *
  * The exchange runs **exactly once**: the Slack code is single-use, so a second
- * invocation (a re-render, a Strict Mode double effect, a back navigation)
- * would burn it and report a failure for an install that actually succeeded.
- * The guard is the mechanism, not a nicety.
+ * invocation (a re-render, a Strict Mode double effect) would burn it and
+ * report a failure for an install that actually succeeded. The `hasStarted`
+ * guard is that mechanism, not a nicety — it holds within one mount, which is
+ * all a ref can do.
+ *
+ * A back navigation is a different hazard with a different answer: it remounts
+ * the component with a fresh ref, so what keeps it away from a completed
+ * install is `router.replace` below, which takes the callback URL off the
+ * history stack. Swapping it for a `push` would reopen this.
  */
 export const SlackCallback = () => {
   const router = useRouter();
