@@ -73,6 +73,13 @@ export interface SlackFixture {
    * Slack-backed endpoints answer the same way.
    */
   rateLimited: boolean;
+  /**
+   * The shared `GET /integrations` read answers `500`. Not a Slack refusal: the
+   * endpoint is the generic integrations list, so nothing names the reason in
+   * `code`, and the UI's own helper turns a `5xx` into a thrown error rather
+   * than into a result.
+   */
+  listServerError: boolean;
 }
 
 export const SLACK_INTEGRATION_ID = "slack-integration-1";
@@ -122,6 +129,12 @@ export const SLACK_NO_CHANNEL_DETAIL =
   "This Slack integration has no channel configured.";
 export const SLACK_RATE_LIMITED_DETAIL =
   "Slack is rate limiting requests from Prowler.";
+/**
+ * What a `500` from the shared `GET /integrations` read carries. The API's own
+ * wording about its own failure: nothing here is for the user to act on, which
+ * is why the UI answers a server error in its own words instead.
+ */
+export const INTEGRATIONS_SERVER_ERROR_DETAIL = "A server error occurred.";
 
 /**
  * The `code` a different-workspace refusal is named by. A wire value, spelled
@@ -154,6 +167,7 @@ export const slackFixture = (
   exchangeOutcome: SLACK_EXCHANGE_OUTCOME.CREATED,
   connection: { connected: true, error: null },
   rateLimited: false,
+  listServerError: false,
   ...overrides,
 });
 

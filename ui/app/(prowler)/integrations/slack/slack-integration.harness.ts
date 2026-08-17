@@ -191,6 +191,22 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     return (description.textContent ?? "").trim();
   }
 
+  /**
+   * What the page says when the tenant's Slack install could not be read.
+   *
+   * Reaching this at all is part of the assertion: the read fails by throwing,
+   * so a page that does not catch it never renders — the mount itself fails.
+   */
+  async loadErrorNotice(): Promise<string> {
+    await this.waitForText(/Could not load your Slack integration/, 10000);
+    const description = await this.waitFor(
+      () => this.q('[data-slot="alert-description"]'),
+      5000,
+      "the load error notice",
+    );
+    return (description.textContent ?? "").trim();
+  }
+
   // --- Connected state ----------------------------------------------------
 
   /**

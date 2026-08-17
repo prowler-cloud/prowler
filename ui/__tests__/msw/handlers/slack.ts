@@ -17,6 +17,7 @@
 import { http, HttpResponse } from "msw";
 
 import {
+  INTEGRATIONS_SERVER_ERROR_DETAIL,
   SLACK_AUTHORIZE_URL,
   SLACK_DIFFERENT_WORKSPACE_DETAIL,
   SLACK_EXCHANGE_OUTCOME,
@@ -183,6 +184,16 @@ export const handlersForSlack = (fx: SlackFixture) => {
 
     // --- Generic integration endpoints the Slack UI reuses -----------------
     http.get(`${API}/integrations`, ({ request }) => {
+      // The shared read failing on the API's own side, which is a different
+      // answer from every Slack refusal above: no `code` names it, and the
+      // status is all the UI has to go on.
+      if (fx.listServerError) {
+        return HttpResponse.json(
+          errorBody(INTEGRATIONS_SERVER_ERROR_DETAIL, 500),
+          { status: 500 },
+        );
+      }
+
       const type = new URL(request.url).searchParams.get(
         "filter[integration_type]",
       );

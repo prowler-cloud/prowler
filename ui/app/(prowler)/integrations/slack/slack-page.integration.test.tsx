@@ -15,6 +15,7 @@ import { it } from "@/__tests__/fixtures";
 import {
   configuredSlackFixture,
   connectedSlackFixture,
+  INTEGRATIONS_SERVER_ERROR_DETAIL,
   SLACK_EXCHANGE_OUTCOME,
   SLACK_OAUTH_CODE,
   SLACK_OAUTH_STATE,
@@ -91,6 +92,26 @@ describe("starting the install", () => {
     // over something that fixes itself in half a minute.
     expect(await harness.rateLimitNotice()).toMatch(/about 30 seconds/);
     expect(harness.saysUnavailable()).toBe(false);
+  }, 30000);
+
+  it("keeps the page usable when reading the install fails on the server", async () => {
+    // Given — the shared `GET /integrations` read answers 500. The action lets
+    // that surface as a thrown error rather than as a result, so the page has to
+    // catch it: uncaught, it reaches the route's error boundary and the user
+    // gets an error page instead of the Slack page.
+    const harness = new SlackIntegrationHarness(
+      slackFixture({ listServerError: true }),
+    );
+
+    // When
+    await harness.mount();
+
+    // Then — the failure is named in Prowler's words, not in the server's, and
+    // the install is still offered: one read failed, the Slack app is fine.
+    const notice = await harness.loadErrorNotice();
+    expect(notice).toMatch(/temporarily unavailable/);
+    expect(notice).not.toMatch(INTEGRATIONS_SERVER_ERROR_DETAIL);
+    expect(harness.offersInstall()).toBe(true);
   }, 30000);
 });
 

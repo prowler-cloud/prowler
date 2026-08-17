@@ -1,7 +1,34 @@
 import { getIntegrations } from "@/actions/integrations/integrations";
 import { getSlackAuthorizeUrl } from "@/actions/integrations/slack";
 import { SlackIntegrationManager } from "@/components/integrations/slack/slack-integration-manager";
+import { GENERIC_SERVER_ERROR_MESSAGE } from "@/lib/helper";
 import type { IntegrationProps } from "@/types/integrations";
+
+/**
+ * Read the tenant's Slack row, reporting a server failure the same way the API's
+ * own refusals arrive — as `{ error }` — so both take the page's one error path.
+ *
+ * `getIntegrations` returns its `handleApiResponse(...)` promise without
+ * awaiting it, so its own `catch` covers only a transport failure: a `>= 500`
+ * answer is *thrown*, past that catch, at whoever awaited the action. Left
+ * uncaught it escapes this page and trips the route's error boundary, replacing
+ * a page that could still offer the install with a full-page error. Awaiting
+ * inside the shared action would fix this rejection in the wrong place: the
+ * Jira / S3 / Security Hub pages read the same result with nowhere to route an
+ * error into, so they would silently render an empty list instead.
+ *
+ * `handleApiResponse` already reported the throw to Sentry, so this only
+ * classifies it.
+ */
+const readSlackIntegrations = async (searchParams: URLSearchParams) => {
+  try {
+    return await getIntegrations(searchParams);
+  } catch {
+    // The thrown message can carry the server's own wording; a server error is
+    // answered in Prowler's, as the rest of the UI answers one.
+    return { error: GENERIC_SERVER_ERROR_MESSAGE };
+  }
+};
 
 /**
  * Loads the tenant's Slack install and, when there is none, the consent URL to
@@ -28,7 +55,7 @@ export async function SlackIntegrationContent() {
   // One workspace per tenant, so one row is the whole result set.
   searchParams.set("page[size]", "1");
 
-  const integrations = await getIntegrations(searchParams);
+  const integrations = await readSlackIntegrations(searchParams);
   const loadError =
     integrations && "error" in integrations
       ? (integrations.error as string)
