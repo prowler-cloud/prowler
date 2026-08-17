@@ -37,8 +37,13 @@ ignore:
   # pyopenssl==26.2.0. The fix is in 50.0.0. A uv override reaches it inside this repo but
   # not in the published wheel: 5.38.0 shipped cryptography==50.0.0 and pip could not
   # install it. Held at 48.0.1 until both upstream caps move; the alibabacloud side is
-  # https://github.com/aliyun/darabonba-openapi/pull/287.
+  # https://github.com/aliyun/darabonba-openapi/pull/287. Grype has only ever reported
+  # CVE-2026-69247; CVE-2026-69249 (same package, same fix) is listed so a database
+  # update does not reopen a risk that is already accepted in .trivyignore.yaml.
   - vulnerability: CVE-2026-69247
+    package:
+      name: cryptography
+  - vulnerability: CVE-2026-69249
     package:
       name: cryptography
 

@@ -60,14 +60,20 @@ source = { editable = "." }
 
 
 class TestNormalize:
+    """normalize() applies PEP 503 so spellings of one project compare equal."""
+
     def test_pep503_equivalence(self):
+        """Underscores, dots and case collapse to the canonical dashed lowercase form."""
         assert normalize("alibabacloud_tea_openapi") == "alibabacloud-tea-openapi"
         assert normalize("Requests") == "requests"
         assert normalize("zope.interface") == "zope-interface"
 
 
 class TestPinsFromPyproject:
+    """pins_from_pyproject() reads exact pins from every dependency-bearing table."""
+
     def test_collects_exact_pins_from_every_table(self):
+        """Dependencies, extras, dependency groups and both [tool.uv] lists are covered."""
         pins = pins_from_pyproject(PYPROJECT, "")
         assert {(p.name, p.version) for p in pins} == {
             ("cryptography", "48.0.1"),
@@ -80,6 +86,7 @@ class TestPinsFromPyproject:
         }
 
     def test_ignores_ranges_and_records_source_table(self):
+        """Non-exact specifiers are skipped and each pin remembers its table."""
         pins = pins_from_pyproject(PYPROJECT, "api/")
         names = {p.name for p in pins}
         assert "boto3" not in names
@@ -87,6 +94,7 @@ class TestPinsFromPyproject:
         assert zstd.source == "api/pyproject.toml [tool.uv.constraint-dependencies]"
 
     def test_same_pin_in_two_tables_keeps_both_sources(self):
+        """The same version in two tables yields two pins, one per source."""
         okta = {
             p.source for p in pins_from_pyproject(PYPROJECT, "") if p.name == "okta"
         }
@@ -97,7 +105,10 @@ class TestPinsFromPyproject:
 
 
 class TestPinsFromUvLock:
+    """pins_from_uv_lock() reads locked versions that live on a registry."""
+
     def test_only_registry_packages(self):
+        """git, path and editable sources are not on PyPI and are skipped."""
         pins = pins_from_uv_lock(UV_LOCK, "")
         assert {(p.name, p.version) for p in pins} == {
             ("zstd", "1.5.7.3"),
@@ -107,11 +118,15 @@ class TestPinsFromUvLock:
 
 
 class TestCollectPins:
+    """collect_pins() merges a project's pyproject.toml and uv.lock."""
+
     def test_missing_files_raise(self, tmp_path: Path):
+        """A directory with neither file is a caller error, not an empty result."""
         with pytest.raises(FileNotFoundError):
             collect_pins(tmp_path)
 
     def test_merges_pyproject_and_lock(self, tmp_path: Path):
+        """Pins from both files are returned with the directory as source prefix."""
         (tmp_path / "pyproject.toml").write_text(PYPROJECT)
         (tmp_path / "uv.lock").write_text(UV_LOCK)
         sources = {p.source for p in collect_pins(tmp_path)}
@@ -121,10 +136,14 @@ class TestCollectPins:
 
 
 class TestEvaluate:
+    """evaluate() queries PyPI once per release and reports per pin."""
+
     def test_queries_each_release_once_and_fans_out_to_every_source(self):
+        """One fetch per (name, version); its verdict reaches every source of that pin."""
         calls = []
 
         def fake_fetch(name, version):
+            """Stand-in for fetch_release() that records calls and returns fixed verdicts."""
             calls.append((name, version))
             if (name, version) == ("zstd", "1.5.7.3"):
                 return "yanked", "buggy - not thread safe"
@@ -158,7 +177,10 @@ class TestEvaluate:
 
 
 class TestMain:
+    """main() turns verdicts into a process exit code and annotations."""
+
     def test_exit_code_reflects_verdicts(self, tmp_path: Path, monkeypatch, capsys):
+        """0 when every pin is ok, 1 plus a ::error:: line when one is yanked."""
         (tmp_path / "pyproject.toml").write_text(
             '[project]\ndependencies = ["zstd==1.5.7.3"]\n'
         )

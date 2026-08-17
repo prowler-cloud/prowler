@@ -30,7 +30,6 @@ import argparse
 import json
 import re
 import sys
-import tomllib
 import urllib.error
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
@@ -38,6 +37,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from time import sleep
 from typing import Callable, Iterable
+
+try:
+    import tomllib
+except ModuleNotFoundError:  # Python 3.10: tomllib arrived in 3.11
+    import tomli as tomllib
 
 PYPI_JSON = "https://pypi.org/pypi/{name}/{version}/json"
 USER_AGENT = "prowler-check-yanked-pins (+https://github.com/prowler-cloud/prowler)"
@@ -55,6 +59,8 @@ def normalize(name: str) -> str:
 
 @dataclass(frozen=True, order=True)
 class Pin:
+    """One exact version requirement and the file/table it was read from."""
+
     name: str
     version: str
     source: str
@@ -62,6 +68,8 @@ class Pin:
 
 @dataclass(frozen=True)
 class Verdict:
+    """PyPI's answer for one pin: ok, yanked, missing (404) or error (unreachable)."""
+
     pin: Pin
     status: str  # "ok" | "yanked" | "missing" | "error"
     detail: str = ""
@@ -124,6 +132,7 @@ def pins_from_uv_lock(text: str, source_prefix: str) -> set[Pin]:
 
 
 def collect_pins(project_dir: Path) -> set[Pin]:
+    """Gather pins from a project's pyproject.toml and uv.lock, whichever exist."""
     prefix = "" if project_dir == Path(".") else f"{project_dir.as_posix()}/"
     pins: set[Pin] = set()
     pyproject = project_dir / "pyproject.toml"
@@ -191,6 +200,7 @@ def evaluate(
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Check every project on the command line; return 1 if any pin is not ok."""
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument(
         "projects",
