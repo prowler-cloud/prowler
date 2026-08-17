@@ -305,13 +305,18 @@ export const getSlackChannels = async (
   const headers = await getAuthHeaders({ contentType: false });
   const channels: SlackChannelOption[] = [];
 
-  let next: string | null = new URL(
+  const listing = new URL(
     `${apiBaseUrl}/integrations/${integrationId}/slack/channels`,
-  ).toString();
+  );
+  let next: string | null = listing.toString();
 
   try {
     for (let page = 0; next && page < MAX_CHANNEL_PAGES; page += 1) {
-      const response: Response = await fetch(next, { method: "GET", headers });
+      const current: string = next;
+      const response: Response = await fetch(current, {
+        method: "GET",
+        headers,
+      });
 
       if (!response.ok) {
         return {
@@ -333,11 +338,18 @@ export const getSlackChannels = async (
       }
 
       const rawNext = body?.links?.next;
-      // Resolved against the API base so a relative `next` works too — the
-      // link is opaque, not necessarily absolute.
-      next =
+      const candidate =
         typeof rawNext === "string" && rawNext.length > 0
-          ? new URL(rawNext, `${apiBaseUrl}/`).toString()
+          ? new URL(rawNext, current)
+          : null;
+      // Resolved against the page it arrived on, so a `next` carrying only a
+      // cursor keeps this listing's path. Followed only while it stays on the
+      // origin the listing was read from: every page is fetched with the
+      // tenant's token, and `fetch` can only strip that from a redirect, never
+      // from a hop made here. An off-origin link ends the pagination.
+      next =
+        candidate !== null && candidate.origin === listing.origin
+          ? candidate.toString()
           : null;
     }
 

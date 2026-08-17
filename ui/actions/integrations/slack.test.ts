@@ -1,6 +1,8 @@
 /**
- * Sentry reporting for the Slack OAuth actions. A capture leaves no mark on the
- * DOM, so it cannot be covered from `slack-page.integration.test.tsx`.
+ * What the Slack actions do off the DOM, which
+ * `slack-page.integration.test.tsx` therefore cannot cover: the Sentry
+ * reporting of the OAuth calls, and the URLs the channel listing's cursor
+ * pagination follows.
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -50,7 +52,11 @@ vi.mock("@/lib", () => ({
   parseStringify: (value: unknown) => value,
 }));
 
-import { exchangeSlackOAuthCode, getSlackAuthorizeUrl } from "./slack";
+import {
+  exchangeSlackOAuthCode,
+  getSlackAuthorizeUrl,
+  getSlackChannels,
+} from "./slack";
 
 /** The status the contract reserves for an upstream Slack failure. */
 const UPSTREAM_STATUS = 502;
@@ -283,4 +289,87 @@ describe("exchangeSlackOAuthCode result shape", () => {
     // When / Then
     expect(await exchange()).toEqual({ integration: INTEGRATION });
   });
+});
+
+const SLACK_INTEGRATION_ID = "slack-integration-1";
+
+/** The listing every cursor page of the channel read hangs off. */
+const CHANNELS_URL =
+  `https://api.test/api/v1/integrations/${SLACK_INTEGRATION_ID}` +
+  "/slack/channels";
+
+const FIRST_CHANNEL = { id: "C0123AB", name: "security" };
+const SECOND_CHANNEL = { id: "C0789EF", name: "platform" };
+
+/** A cursor page carrying one channel and whatever `links.next` is passed. */
+const channelPage = (
+  channel: { id: string; name: string },
+  next: string | null,
+) =>
+  new Response(
+    JSON.stringify({
+      data: [
+        {
+          type: "slack-channels",
+          id: channel.id,
+          attributes: { name: channel.name, is_private: false },
+        },
+      ],
+      links: { next },
+    }),
+    { status: 200, headers: { "content-type": "application/vnd.api+json" } },
+  );
+
+const channelOption = (channel: { id: string; name: string }) => ({
+  id: channel.id,
+  name: channel.name,
+  is_private: false,
+});
+
+const requestedUrls = (): string[] =>
+  fetchMock.mock.calls.map(([url]) => String(url));
+
+describe("getSlackChannels", () => {
+  it("follows a cursor-only `next` on the listing's own URL, not on the API root", async () => {
+    // The link is opaque (design D6), so the API may answer with nothing but
+    // the cursor. Resolved against the API root that link loses the
+    // `/integrations/{id}/slack/channels` path, and every page after the first
+    // disappears without anything saying so.
+    fetchMock
+      .mockResolvedValueOnce(channelPage(FIRST_CHANNEL, "?page[cursor]=2"))
+      .mockResolvedValueOnce(channelPage(SECOND_CHANNEL, null));
+
+    const result = await getSlackChannels(SLACK_INTEGRATION_ID);
+
+    expect(requestedUrls()).toEqual([
+      CHANNELS_URL,
+      `${CHANNELS_URL}?page[cursor]=2`,
+    ]);
+    expect(result).toEqual({
+      channels: [channelOption(FIRST_CHANNEL), channelOption(SECOND_CHANNEL)],
+    });
+  });
+
+  it.each([
+    {
+      shape: "an absolute",
+      next: "https://evil.test/api/v1/integrations/x/slack/channels?cursor=2",
+    },
+    { shape: "a protocol-relative", next: "//evil.test/api/v1/channels?c=2" },
+  ])(
+    "stops at $shape off-origin `next` rather than sending the tenant's token to it",
+    async ({ next }) => {
+      // Every page is fetched with the tenant's `Authorization` header. Node's
+      // `fetch` strips it when a *redirect* leaves the origin; a hop the UI
+      // makes itself gets no such protection, so the origin is checked here.
+      fetchMock.mockResolvedValueOnce(channelPage(FIRST_CHANNEL, next));
+
+      const result = await getSlackChannels(SLACK_INTEGRATION_ID);
+
+      expect(requestedUrls()).toEqual([CHANNELS_URL]);
+      // Pagination ends, it does not fail: the channels already read are still
+      // the picker's options.
+      expect(result).toEqual({ channels: [channelOption(FIRST_CHANNEL)] });
+    },
+  );
 });
