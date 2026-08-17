@@ -1,13 +1,7 @@
 /**
- * Browser-mode tests for the integrations catalogue (`/integrations`).
- *
- * Slack is a Prowler Cloud feature — its API only exists in the cloud
- * deployment — so the catalogue offers it there and nowhere else. That gate is
- * the whole of this page's Slack behaviour, which is why these two tests are
- * the whole file.
- *
- * The page is driven through `SlackIntegrationHarness`, the shared harness for
- * the Slack flow: the catalogue is where that flow starts.
+ * Browser-mode tests for the Slack entry in the integrations catalogue
+ * (`/integrations`), which is offered in Prowler Cloud only. Driven through
+ * `SlackIntegrationHarness` against the MSW handlers.
  */
 
 import { describe, expect } from "vitest";
@@ -22,10 +16,8 @@ describe("the integrations catalogue", () => {
     // Given — a Prowler Cloud deployment (the fixtures' default island).
     const harness = new SlackIntegrationHarness(slackFixture());
 
-    // When
     harness.mountCatalogue();
 
-    // Then
     expect(await harness.listedIntegrations()).toContain("Slack");
     expect(harness.offersSlackManagement()).toBe(true);
   }, 30000);
@@ -33,19 +25,16 @@ describe("the integrations catalogue", () => {
   it("omits Slack in a deployment that is not Prowler Cloud", async ({
     seedRuntimeConfig,
   }) => {
-    // Given
     seedRuntimeConfig({ cloudEnabled: false });
     const harness = new SlackIntegrationHarness(slackFixture());
 
-    // When
     harness.mountCatalogue();
 
-    // Then — Slack is gone, and nothing offers to manage it.
     const listed = await harness.listedIntegrations();
     expect(listed).not.toContain("Slack");
     expect(harness.offersSlackManagement()).toBe(false);
-    // Tripwire: the catalogue itself still rendered, so the assertion above is
-    // Slack being absent rather than the page failing to load.
+    // Tripwire: the catalogue rendered, so the assertions above are Slack's
+    // absence rather than the page failing to load.
     expect(listed).toContain("Jira");
   }, 30000);
 });
