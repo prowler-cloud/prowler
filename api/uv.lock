@@ -45,7 +45,7 @@ constraints = [
     { name = "alibabacloud-sls20201230", specifier = "==5.9.0" },
     { name = "alibabacloud-sts20150401", specifier = "==1.1.6" },
     { name = "alibabacloud-tea", specifier = "==0.4.3" },
-    { name = "alibabacloud-tea-openapi", specifier = "==0.4.5" },
+    { name = "alibabacloud-tea-openapi", specifier = "==0.4.6" },
     { name = "alibabacloud-tea-util", specifier = "==0.3.14" },
     { name = "alibabacloud-tea-xml", specifier = "==0.0.3" },
     { name = "alibabacloud-vpc20160428", specifier = "==6.13.0" },
@@ -254,7 +254,7 @@ constraints = [
     { name = "nltk", specifier = "==3.9.4" },
     { name = "numpy", specifier = "==2.2.6" },
     { name = "oauthlib", specifier = "==3.3.1" },
-    { name = "oci", specifier = "==2.183.0" },
+    { name = "oci", specifier = "==2.184.1" },
     { name = "openai", specifier = "==1.109.1" },
     { name = "openstacksdk", specifier = "==4.2.0" },
     { name = "opentelemetry-api", specifier = "==1.39.1" },
@@ -295,7 +295,7 @@ constraints = [
     { name = "pylint", specifier = "==3.2.5" },
     { name = "pymsalruntime", specifier = "==0.18.1" },
     { name = "pynacl", specifier = "==1.6.2" },
-    { name = "pyopenssl", specifier = "==26.2.0" },
+    { name = "pyopenssl", specifier = "==26.4.0" },
     { name = "pyparsing", specifier = "==3.3.2" },
     { name = "pyreadline3", specifier = "==3.5.4" },
     { name = "pysocks", specifier = "==1.7.1" },
@@ -376,6 +376,7 @@ constraints = [
     { name = "zstd", specifier = "==1.5.7.2" },
 ]
 overrides = [
+    { name = "alibabacloud-tea-openapi", specifier = "==0.4.6" },
     { name = "azure-mgmt-containerservice", specifier = "==34.1.0" },
     { name = "cryptography", specifier = "==50.0.0" },
     { name = "dulwich", specifier = "==1.2.5" },
@@ -386,6 +387,7 @@ overrides = [
     { name = "microsoft-kiota-serialization-json", specifier = "==1.9.10" },
     { name = "microsoft-kiota-serialization-multipart", specifier = "==1.9.10" },
     { name = "microsoft-kiota-serialization-text", specifier = "==1.9.10" },
+    { name = "oci", specifier = "==2.184.1" },
     { name = "okta", specifier = "==3.4.2" },
     { name = "pyjwt", extras = ["crypto"], specifier = "==2.13.0" },
 ]
@@ -860,7 +862,7 @@ sdist = { url = "https://files.pythonhosted.org/packages/9a/7d/b22cb9a0d4f396ee0
 
 [[package]]
 name = "alibabacloud-tea-openapi"
-version = "0.4.5"
+version = "0.4.6"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "alibabacloud-credentials" },
@@ -869,9 +871,9 @@ dependencies = [
     { name = "cryptography" },
     { name = "darabonba-core" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/3b/73/fb0c4d44759791ecdf269fc715c1e810fa1aba3981bfaaf8a01f61899296/alibabacloud_tea_openapi-0.4.5.tar.gz", hash = "sha256:75fa1f4360a46e41f5bf5f8d4917e52efb6f64885839bc1328c35590670c97b9", size = 26616, upload-time = "2026-07-14T13:15:39.364Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ab/34/1918a2d780676494365c7f945bfab397ecddb988054d78025bd26f438977/alibabacloud_tea_openapi-0.4.6.tar.gz", hash = "sha256:dafc32401712f5b21c12dc3d05ba887a91ad156d9b49a7662279f9fd90526fb2", size = 26742, upload-time = "2026-08-17T08:34:11.55Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/8d/ec/6b368a10e9c2e8b1b394c69b96ac213ae66e8c4895e0baa1ffaf7178fd32/alibabacloud_tea_openapi-0.4.5-py3-none-any.whl", hash = "sha256:338979095c7beda80a5b413c31262892cafdc12069dde4ce4fc2e4f7ce0fc609", size = 33333, upload-time = "2026-07-14T13:15:38.365Z" },
+    { url = "https://files.pythonhosted.org/packages/35/00/2f534f5884e5f299d9cb3a1e8be2def8071bc6a6e2a192ba4ff2a8cd5e02/alibabacloud_tea_openapi-0.4.6-py3-none-any.whl", hash = "sha256:c9e1727b9fb2936f487d050fc3590c99f9f2065256dc3a927e5b61f414674ed6", size = 33448, upload-time = "2026-08-17T08:34:10.472Z" },
 ]
 
 [[package]]
@@ -4426,7 +4428,7 @@ wheels = [
 
 [[package]]
 name = "oci"
-version = "2.183.0"
+version = "2.184.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "certifi" },
@@ -4439,9 +4441,9 @@ dependencies = [
     { name = "pytz" },
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/1e/2a/77bd6cbf1c69b2f368fe3d6462d84369b0cba15e37ce713cdc08d459b95a/oci-2.183.0.tar.gz", hash = "sha256:ff572ef5f2030a788796bb509d257e6a41c6510ef9b4b6a75a079efd06e533ce", size = 17759723, upload-time = "2026-07-28T06:02:29.76Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/74/2d/fa5368cfabb868f4111c6978e8b5f66aa3a55076c40c1a59ac3081b0227b/oci-2.184.1.tar.gz", hash = "sha256:617dad69caf8dd6e521d224dbc3e8a8bc289906943a0214fd2c3419094e26435", size = 17990631, upload-time = "2026-08-11T11:01:26.194Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a9/de/8574b3e527996a099d196e87794a4652d91a0c3185fcc7fdbb5649b75a8a/oci-2.183.0-py3-none-any.whl", hash = "sha256:bd789c98a94d7c5ea08c20d11dcf68c9cd1ad479b134727d80a930b84387070b", size = 36133501, upload-time = "2026-07-28T06:02:18.239Z" },
+    { url = "https://files.pythonhosted.org/packages/5f/63/5ae22e42aaf96a5da74dc2b9de449c78b4d7418cce621d5da723b3e49f32/oci-2.184.1-py3-none-any.whl", hash = "sha256:bd814e38a70da2190e721937455a08689ab13c0750bd2ef8dd0c98b2dc5a38ea", size = 36628063, upload-time = "2026-08-11T11:01:18.178Z" },
 ]
 
 [[package]]
@@ -5426,15 +5428,15 @@ wheels = [
 
 [[package]]
 name = "pyopenssl"
-version = "26.2.0"
+version = "26.4.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cryptography" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/1a/51/27a5ad5f939d08f690a326ef9582cda7140555180db71695f6fb747d6a36/pyopenssl-26.2.0.tar.gz", hash = "sha256:8c6fcecd1183a7fc897548dfe388b0cdb7f37e018200d8409cf33959dbe35387", size = 182195, upload-time = "2026-05-04T23:06:09.72Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/3f/e8/7325d258199b159eb2c03fe32107533e2832e70e63f4fb88a6aa00023201/pyopenssl-26.4.0.tar.gz", hash = "sha256:28dfcce0162b9211413e26dfbfdf1d24317fbeba18fc93c12400a1856b2a0bc7", size = 182046, upload-time = "2026-08-01T19:50:50.512Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/73/b8/a0e2790ae249d6f38c9f66de7a211621a7ab2650217bcd04e1262f578a56/pyopenssl-26.2.0-py3-none-any.whl", hash = "sha256:4f9d971bc5298b8bc1fab282803da04bf000c755d4ad9d99b52de2569ca19a70", size = 55823, upload-time = "2026-05-04T23:06:08.395Z" },
+    { url = "https://files.pythonhosted.org/packages/51/ad/2cf6d3fa2fae5c79e1ed9960c0d42badd0f94d81dd12b50604cdc839e648/pyopenssl-26.4.0-py3-none-any.whl", hash = "sha256:f0eb0cb2d581d3ad2b9c489468485e7f2ab6727d08401bcf9d824c3caddf3c1c", size = 56026, upload-time = "2026-08-01T19:50:48.94Z" },
 ]
 
 [[package]]
