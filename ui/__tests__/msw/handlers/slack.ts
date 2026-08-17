@@ -1,15 +1,8 @@
 /**
  * MSW handlers for the Slack integration, derived from the API contract in
- * `openspec/changes/add-slack-integration/design.md`.
- *
- * The Slack API is implemented in the cloud repository, so these handlers are
- * the UI lane's only view of it: they are what the browser-mode tests run
- * against, and drift between them and the deployed backend is a contract
- * conversation, not a local fix.
- *
- * State is per-call: an exchange really does create the install the subsequent
- * `GET /integrations` returns, so a test can drive connect → read without
- * hand-seeding the result.
+ * `openspec/changes/add-slack-integration/design.md` (the API itself lives in
+ * the cloud repository). State is per-call: an exchange creates the install the
+ * subsequent `GET /integrations` returns.
  *
  * Wire them per test via `worker.use(...handlersForSlack(fx))`.
  */
@@ -45,12 +38,8 @@ const TS = "2026-08-10T09:00:00Z";
 const CONNECTION_TASK_PREFIX = "slack-conn-task-";
 
 /**
- * A JSON:API error as the Slack endpoints raise it.
- *
- * `code` is the machine-readable reason the UI maps; `detail` is human copy.
- * `status` is a string, per the spec. `source.pointer` is `/data` even when the
- * API raised a field-shaped `ValidationError` — the errors are about the
- * request, not about one attribute of it.
+ * `status` is a string, per the JSON:API spec. `source.pointer` is `/data` even
+ * for a field-shaped `ValidationError`: the errors are about the request.
  */
 const errorBody = (detail: string, status: number, code?: string) => ({
   errors: [
@@ -67,9 +56,7 @@ const configuration = (workspace: SlackInstallFixture["workspace"]) => ({
   team_id: workspace.teamId,
   team_name: workspace.teamName,
   bot_user_id: workspace.botUserId,
-  // Absent until a channel is chosen — the API omits the keys rather than
-  // serializing nulls, so a consumer that reads `null` as "not chosen" would
-  // be reading a value that never arrives.
+  // The API omits these keys until a channel is chosen, never sending nulls.
   ...(workspace.channelId ? { channel_id: workspace.channelId } : {}),
   ...(workspace.channelName ? { channel_name: workspace.channelName } : {}),
 });
@@ -85,7 +72,6 @@ const integrationResource = (install: SlackInstallFixture) => ({
     connection_last_checked_at: install.connectionLastCheckedAt,
     integration_type: "slack",
     // No credentials: the bot token is encrypted at rest and never serialized.
-    // The configuration carries server-owned keys the UI does not send.
     configuration: configuration(install.workspace),
   },
   links: { self: `${API}/integrations/${install.id}` },
@@ -108,11 +94,8 @@ const taskResource = (id: string, state: string, result: unknown) => ({
 });
 
 /**
- * A completion the API accepted and the UI cannot read back.
- *
- * All three are `2xx`, so `response.ok` is true and none of them travels the
- * refusal path: the first two make `response.json()` throw, the third parses
- * into a body that names no resource.
+ * All three are `2xx`: the first two make `response.json()` throw, the third
+ * parses into a body that names no resource.
  */
 const unreadableExchange = (outcome: SlackExchangeOutcome): Response => {
   switch (outcome) {
@@ -126,8 +109,7 @@ const unreadableExchange = (outcome: SlackExchangeOutcome): Response => {
 };
 
 export const handlersForSlack = (fx: SlackFixture) => {
-  // Mutable working copy: the exchange creates or updates the install the
-  // integration reads see afterwards.
+  // Mutable copy: the exchange must not write through to the caller's fixture.
   let install: SlackInstallFixture | null = fx.install
     ? { ...fx.install, workspace: { ...fx.install.workspace } }
     : null;
@@ -137,22 +119,13 @@ export const handlersForSlack = (fx: SlackFixture) => {
       status: 503,
     });
 
-  /**
-   * Slack's own rate limit, surfaced as a `429` carrying `Retry-After`. It is
-   * neither a refusal the user can act on nor "no Slack app here", so it names
-   * no `code`: the status is the whole reason.
-   */
   const rateLimited = () =>
     HttpResponse.json(errorBody(SLACK_RATE_LIMITED_DETAIL, 429), {
       status: 429,
       headers: { "Retry-After": String(SLACK_RETRY_AFTER_SECONDS) },
     });
 
-  /**
-   * Slack's own side broken, behind a deployment that is configured correctly.
-   * A `502`, per the contract's taxonomy — a server fault rather than a Slack
-   * state, which is the one refusal here the UI reports as well as describes.
-   */
+  /** A `502` per the contract's taxonomy: a server fault, not a Slack state. */
   const upstreamError = () =>
     HttpResponse.json(
       errorBody(SLACK_UPSTREAM_DETAIL, 502, SLACK_UPSTREAM_ERROR_CODE),
@@ -165,8 +138,6 @@ export const handlersForSlack = (fx: SlackFixture) => {
       if (!fx.appConfigured) return unconfigured();
       if (fx.rateLimited) return rateLimited();
       if (fx.oauthUpstreamError) return upstreamError();
-      // A proxy answering in place of the API: a `200` the UI reads as success
-      // and then finds nothing in.
       if (fx.authorizeUrlUnreadable) {
         return HttpResponse.html(PROXY_CHALLENGE_PAGE);
       }
@@ -191,8 +162,6 @@ export const handlersForSlack = (fx: SlackFixture) => {
             status: 400,
           });
         case SLACK_EXCHANGE_OUTCOME.DIFFERENT_WORKSPACE:
-          // A conflict with what the tenant already has, not a bad request:
-          // `409`, named by its `code` so the UI can say which conflict it is.
           return HttpResponse.json(
             errorBody(
               SLACK_DIFFERENT_WORKSPACE_DETAIL,
@@ -204,9 +173,7 @@ export const handlersForSlack = (fx: SlackFixture) => {
         case SLACK_EXCHANGE_OUTCOME.UNREADABLE_NO_CONTENT:
         case SLACK_EXCHANGE_OUTCOME.UNREADABLE_HTML:
         case SLACK_EXCHANGE_OUTCOME.UNREADABLE_NO_DATA:
-          // The install still happened: the API upserts the integration before
-          // it answers, so a subsequent read finds the workspace connected even
-          // though the answer that announced it was unreadable.
+          // The install still happened: the API upserts before it answers.
           install = {
             id: SLACK_INTEGRATION_ID,
             connected: null,
@@ -215,8 +182,6 @@ export const handlersForSlack = (fx: SlackFixture) => {
           };
           return unreadableExchange(fx.exchangeOutcome);
         case SLACK_EXCHANGE_OUTCOME.REINSTALLED:
-          // Same workspace: the credential is replaced on the row that exists,
-          // so the tenant still holds exactly one Slack integration.
           install = {
             id: install?.id ?? SLACK_INTEGRATION_ID,
             connected: null,
@@ -240,9 +205,6 @@ export const handlersForSlack = (fx: SlackFixture) => {
 
     // --- Generic integration endpoints the Slack UI reuses -----------------
     http.get(`${API}/integrations`, ({ request }) => {
-      // The shared read failing on the API's own side, which is a different
-      // answer from every Slack refusal above: no `code` names it, and the
-      // status is all the UI has to go on.
       if (fx.listServerError) {
         return HttpResponse.json(
           errorBody(INTEGRATIONS_SERVER_ERROR_DETAIL, 500),
@@ -253,17 +215,14 @@ export const handlersForSlack = (fx: SlackFixture) => {
       const type = new URL(request.url).searchParams.get(
         "filter[integration_type]",
       );
-      // An unfiltered read would pull every integration type into the Slack
-      // page, so serve the install only for the filter it actually sends.
+      // An unfiltered read would pull every type into the Slack page.
       return HttpResponse.json(collection(type === "slack" ? install : null));
     }),
 
     http.post<{ id: string }>(
       `${API}/integrations/:id/connection`,
       ({ params }) => {
-        // The check posts to the integration's channel, so there is nothing to
-        // check until one is recorded: the API refuses rather than reporting a
-        // connection it never tested.
+        // The check posts to the channel, so the API refuses until one exists.
         if (!install?.workspace.channelId) {
           return HttpResponse.json(errorBody(SLACK_NO_CHANNEL_DETAIL, 400), {
             status: 400,

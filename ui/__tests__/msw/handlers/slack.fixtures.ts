@@ -1,22 +1,15 @@
 /**
- * Fixture data for the Slack integration handlers.
- *
- * A fixture describes a world — "this deployment has no Slack app", "this
- * tenant already connected Prowler HQ", "the exchange will be refused" — and
- * `handlersForSlack` serves it. The shapes are derived from the API contract in
- * `openspec/changes/add-slack-integration/design.md`; that contract, not this
- * file, is where a disagreement with the deployed backend gets settled.
+ * Fixture data for the Slack handlers. Shapes follow the API contract in
+ * `openspec/changes/add-slack-integration/design.md`.
  */
 
 export interface SlackWorkspaceFixture {
   teamId: string;
   teamName: string;
-  /** The bot the install created, which the API keeps on the configuration. */
   botUserId: string;
   /**
-   * The integration's default destination. Both keys are *absent* from the
-   * serialized configuration until a channel is chosen — the API omits them
-   * rather than sending nulls — so they are optional here for the same reason.
+   * Absent from the serialized configuration until a channel is chosen: the API
+   * omits the keys rather than sending nulls.
    */
   channelId?: string;
   channelName?: string;
@@ -24,38 +17,26 @@ export interface SlackWorkspaceFixture {
 
 export interface SlackInstallFixture {
   id: string;
-  /** `null` until the first connection check runs, as the API upserts it. */
+  /** `null` until the first connection check runs. */
   connected: boolean | null;
   connectionLastCheckedAt: string | null;
   workspace: SlackWorkspaceFixture;
 }
 
 export const SLACK_EXCHANGE_OUTCOME = {
-  /** First install for the tenant: the exchange creates the integration. */
   CREATED: "created",
-  /** The same workspace re-installed: the existing row keeps its id. */
+  /** Same workspace re-installed: the existing row keeps its id. */
   REINSTALLED: "reinstalled",
-  /** The API could not match the `state` it minted, so it refuses. */
   REFUSED_STATE: "refused-state",
-  /** Slack itself rejected the code, so the API refuses the completion. */
   SLACK_REFUSED: "slack-refused",
-  /**
-   * A different workspace is already connected — one per tenant. A `409`,
-   * named by its `code`, not a plain refusal.
-   */
+  /** A `409` named by its `code`: one workspace per tenant. */
   DIFFERENT_WORKSPACE: "different-workspace",
   /**
-   * The three answers below are all the same event: the API validated the
-   * state, consumed the code and upserted the integration — so the workspace
-   * *is* connected — and then answered `2xx` with something the UI cannot read.
-   * They are not refusals: `response.ok` is true for every one of them, so
-   * nothing on the failure path ever sees them.
+   * The three below are `2xx`: the install happened, but the answer is
+   * unreadable, so nothing on the failure path sees them.
    */
-  /** `204`: accepted, with no body at all to describe what was created. */
   UNREADABLE_NO_CONTENT: "unreadable-no-content",
-  /** `200` whose body is a proxy's challenge page rather than the API's JSON. */
   UNREADABLE_HTML: "unreadable-html",
-  /** `200` carrying well-formed JSON:API that names no resource. */
   UNREADABLE_NO_DATA: "unreadable-no-data",
 } as const;
 
@@ -70,51 +51,32 @@ export interface SlackConnectionFixture {
 export interface SlackFixture {
   /**
    * The deployment has `SLACK_CLIENT_ID` / `SLACK_CLIENT_SECRET` /
-   * `SLACK_REDIRECT_URI`. Without them every Slack OAuth call answers 503.
+   * `SLACK_REDIRECT_URI`. Without them every Slack OAuth call answers `503`.
    */
   appConfigured: boolean;
-  /** The workspace this tenant has already connected, if any. */
   install: SlackInstallFixture | null;
-  /** The workspace an exchange connects. */
   exchangeWorkspace: SlackWorkspaceFixture;
   exchangeOutcome: SlackExchangeOutcome;
-  /** What a connection check reports. */
   connection: SlackConnectionFixture;
-  /**
-   * Slack is rate limiting Prowler: the Slack OAuth calls answer `429` with a
-   * `Retry-After`, whatever else the fixture says. Handlers added for other
-   * Slack-backed endpoints answer the same way.
-   */
+  /** The Slack OAuth calls answer `429` with a `Retry-After`. */
   rateLimited: boolean;
   /**
-   * The shared `GET /integrations` read answers `500`. Not a Slack refusal: the
-   * endpoint is the generic integrations list, so nothing names the reason in
-   * `code`, and the UI's own helper turns a `5xx` into a thrown error rather
-   * than into a result.
+   * The shared `GET /integrations` read answers `500`, which the UI's own
+   * helper turns into a thrown error rather than a result.
    */
   listServerError: boolean;
-  /**
-   * The call that mints the consent URL answers `200` with a proxy's HTML page
-   * instead of JSON. The `2xx` equivalent of `listServerError`: nothing refused
-   * anything, so the UI reaches its success path and finds no answer there.
-   */
+  /** The consent-URL call answers `200` with a proxy's HTML page, not JSON. */
   authorizeUrlUnreadable: boolean;
   /**
-   * Both Slack OAuth calls answer `502` — the status the contract reserves for
-   * `internal_error`, `fatal_error`, `service_unavailable` and transport
-   * failures ("Errors — one taxonomy for every Slack failure").
-   *
-   * Distinct from `appConfigured: false`: a `503` is this deployment having no
-   * Slack app, which is a state, while a `502` is Slack's side broken behind a
-   * deployment that is configured correctly — a server fault, and the one Slack
-   * status the UI reports rather than only describing.
+   * Both Slack OAuth calls answer `502`, the contract's status for upstream and
+   * transport failures. Distinct from `appConfigured: false`, which is a `503`.
    */
   oauthUpstreamError: boolean;
 }
 
 export const SLACK_INTEGRATION_ID = "slack-integration-1";
 
-/** Exactly the scopes D2 justifies — the picker and the posting need no more. */
+/** The scopes the channel picker and the posting need (design D2). */
 export const SLACK_BOT_SCOPES = [
   "chat:write",
   "chat:write.public",
@@ -129,7 +91,6 @@ export const SLACK_REDIRECT_URI =
 export const SLACK_OAUTH_STATE = "st-2f1c9d7a";
 export const SLACK_OAUTH_CODE = "slack-code-1f4a";
 
-/** The consent URL the API returns, with the state already inside it. */
 export const SLACK_AUTHORIZE_URL =
   "https://slack.com/oauth/v2/authorize" +
   "?client_id=1234567890.0987654321" +
@@ -138,10 +99,8 @@ export const SLACK_AUTHORIZE_URL =
   `&redirect_uri=${encodeURIComponent(SLACK_REDIRECT_URI)}`;
 
 /**
- * The `detail` strings the implementation actually sends. They are human copy,
- * not the machine-readable reason: that travels in `code`, which is what the UI
- * maps. Keeping the real wording here is what makes a test that reads `detail`
- * (an unmapped refusal) honest.
+ * The `detail` strings the implementation sends. Human copy; the
+ * machine-readable reason travels in `code`, which is what the UI maps.
  */
 export const SLACK_UNCONFIGURED_DETAIL =
   "Slack integration is not configured or temporarily unavailable.";
@@ -152,35 +111,28 @@ export const SLACK_DIFFERENT_WORKSPACE_DETAIL =
   "This tenant is already connected to a different Slack workspace.";
 export const SLACK_UPSTREAM_DETAIL = "Slack is temporarily unavailable.";
 /**
- * The `code` an upstream failure is named by, on the `502` the contract reserves
- * for it. Not one the UI maps to copy of its own — there is nothing for a user
- * to do about Slack being down — so it is the `detail` that reaches them.
+ * The `code` on the contract's `502`. The UI maps no copy of its own to it, so
+ * the `detail` is what reaches the user.
  */
 export const SLACK_UPSTREAM_ERROR_CODE = "service_unavailable";
 /**
- * Raised as a service-level `ValidationError({"channel_id": ...})`, which still
- * points at `/data` rather than at the attribute.
+ * Raised as a `ValidationError({"channel_id": ...})` that still points at
+ * `/data` rather than at the attribute.
  */
 export const SLACK_NO_CHANNEL_DETAIL =
   "This Slack integration has no channel configured.";
 export const SLACK_RATE_LIMITED_DETAIL =
   "Slack is rate limiting requests from Prowler.";
 /**
- * What a `500` from the shared `GET /integrations` read carries. The API's own
- * wording about its own failure: nothing here is for the user to act on, which
- * is why the UI answers a server error in its own words instead.
+ * What a `500` from the shared `GET /integrations` read carries. Nothing here
+ * is for the user to act on, so the UI answers a server error in its own words.
  */
 export const INTEGRATIONS_SERVER_ERROR_DETAIL = "A server error occurred.";
 
 /**
- * What a proxy or WAF answers with when it takes the call instead of the API:
- * a `200` carrying a challenge page.
- *
- * The `<!DOCTYPE html>` opening is the point of it. V8 truncates the parser
- * message for this body to `Unexpected token '<', "<!DOCTYPE "... is not valid
- * JSON` — cut off *before* the word `html` — so the UI's own HTML detection
- * (`HTML_ERROR_PATTERN`) cannot recognise the message either, and a leaked
- * parser error reaches the user with nothing left to intercept it.
+ * A `200` challenge page from a proxy or WAF that took the call instead of the
+ * API. V8 truncates the parser message for this body before the word `html`, so
+ * the UI's own detection (`HTML_ERROR_PATTERN`) cannot recognise it either.
  */
 export const PROXY_CHALLENGE_PAGE = [
   "<!DOCTYPE html>",
@@ -189,16 +141,13 @@ export const PROXY_CHALLENGE_PAGE = [
 ].join("\n");
 
 /**
- * The `code` a different-workspace refusal is named by. A wire value, spelled
- * out rather than imported from the UI's own mapping: a rename on our side must
- * fail these tests, not quietly agree with itself.
+ * A wire value, spelled out rather than imported from the UI's own mapping, so
+ * a rename on our side fails these tests instead of agreeing with itself.
  */
 export const SLACK_WORKSPACE_CONFLICT_CODE = "slack_workspace_conflict";
 
-/** What `Retry-After` carries on a rate-limited answer. */
 export const SLACK_RETRY_AFTER_SECONDS = 30;
 
-/** The channel a finished install posts to. */
 export const SLACK_DEFAULT_CHANNEL = {
   id: "C0123AB",
   name: "security",
@@ -226,13 +175,9 @@ export const slackFixture = (
 });
 
 /**
- * A tenant that already approved Prowler in its workspace, and has chosen no
- * destination channel yet — the state the OAuth exchange leaves behind.
- *
- * `connected` is `null`, not `true`: the check runs against the destination
- * channel, so with none recorded it has never run (design.md, "Connection
- * state, in order"). A `true` here would model a state the contract says
- * cannot exist, and would disagree with the exchange handler that mints it.
+ * A workspace approved with no destination channel yet. `connected` is `null`,
+ * not `true`: the check runs against the channel, so it has never run
+ * (design.md, "Connection state, in order").
  */
 export const connectedSlackFixture = (
   overrides: Partial<SlackFixture> = {},
@@ -249,10 +194,8 @@ export const connectedSlackFixture = (
   });
 
 /**
- * The same tenant with its setup finished: a workspace connected *and* a
- * destination channel on record. Anything the API refuses until a channel
- * exists — the connection check among them — needs this fixture, not the bare
- * connected one.
+ * A workspace connected *and* a channel on record. Anything the API refuses
+ * until a channel exists (the connection check) needs this fixture.
  */
 export const configuredSlackFixture = (
   overrides: Partial<SlackFixture> = {},
