@@ -204,7 +204,7 @@ describe("getColumnProviders", () => {
     await user.hover(indicator);
 
     expect(await screen.findByRole("tooltip")).toHaveTextContent(
-      /^Created from findings imported with the Prowler CLI$/,
+      /^This provider has findings imported with the Prowler CLI$/,
     );
   });
 
@@ -239,7 +239,7 @@ describe("getColumnProviders", () => {
     await user.hover(indicator);
 
     expect(await screen.findByRole("tooltip")).toHaveTextContent(
-      /^Created from findings imported with the Prowler CLI$/,
+      /^This provider has findings imported with the Prowler CLI$/,
     );
   });
 
