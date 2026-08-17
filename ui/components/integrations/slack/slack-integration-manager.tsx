@@ -66,7 +66,13 @@ export const SlackIntegrationManager = ({
   // channels rather than folded into `channelsError`: the two are different
   // claims — one replaces the picker, the other qualifies it.
   const [channelsNotice, setChannelsNotice] = useState<string | null>(null);
-  const [isLoadingChannels, setIsLoadingChannels] = useState(false);
+  // Seeded from the workspace, not from the effect that reads the channels: the
+  // effect never runs on the server, and this card is server-rendered, so a
+  // `false` here would serve — and hold until hydration — a picker claiming the
+  // workspace has no channels at all.
+  const [isLoadingChannels, setIsLoadingChannels] = useState(
+    Boolean(integrationId),
+  );
   // Bumped by the refresh affordance: a channel invited to in Slack after the
   // page loaded only shows up on a re-read.
   const [channelReloads, setChannelReloads] = useState(0);
@@ -352,8 +358,13 @@ export const SlackIntegrationManager = ({
 
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-text-neutral-secondary text-xs">
-                  {defaultChannelName
-                    ? `Prowler posts to #${defaultChannelName}.`
+                  {/* Recorded-ness is the id's answer, not the name's: a name
+                      the API left out would otherwise deny a destination that
+                      the test-message button beside it posts to. */}
+                  {defaultChannelId
+                    ? defaultChannelName
+                      ? `Prowler posts to #${defaultChannelName}.`
+                      : "Prowler posts to the channel you saved."
                     : "No destination channel recorded yet."}
                 </p>
                 <div className="flex gap-2">
