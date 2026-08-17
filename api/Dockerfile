@@ -36,7 +36,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libtool \
     libxslt1-dev \
     python3-dev \
-    && apt-get install -y --only-upgrade \
+    && apt-get install -y --no-install-recommends --only-upgrade \
     bsdutils libblkid1 liblastlog2-2 libmount1 libsmartcols1 libuuid1 login mount util-linux \
     && rm -rf /var/lib/apt/lists/*
 
@@ -102,6 +102,7 @@ RUN ARCH=$(uname -m) && \
 RUN addgroup --gid 1000 prowler && \
     adduser --uid 1000 --gid 1000 --disabled-password --gecos "" prowler
 
+# hadolint ignore=DL3066
 USER prowler
 
 WORKDIR /home/prowler
@@ -124,6 +125,7 @@ RUN uv sync --locked --no-install-project && \
 # into a site-packages path.
 RUN .venv/bin/python -m prowler.providers.m365.lib.powershell.m365_powershell
 
+# hadolint ignore=DL3066
 USER root
 
 # Remove build-only packages from the final image after Python dependencies are installed.
@@ -155,6 +157,7 @@ RUN rm -rf /usr/local/lib/python3.12/site-packages/pip \
     /usr/local/bin/pip /usr/local/bin/pip3 /usr/local/bin/pip3.12 \
     /home/prowler/.local/bin/pip /home/prowler/.local/bin/pip3 /home/prowler/.local/bin/pip3.12
 
+# hadolint ignore=DL3066
 USER prowler
 
 COPY --chown=prowler:prowler src/backend/ ./backend/
