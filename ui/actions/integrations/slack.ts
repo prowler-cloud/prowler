@@ -9,9 +9,11 @@ import {
   readSlackFailure,
   SLACK_GENERIC_ERROR_MESSAGE,
   SLACK_PARTIAL_CHANNEL_LIST_MESSAGE,
+  SLACK_REASON_TOKEN,
   SLACK_UNREADABLE_RESULT_MESSAGE,
   slackErrorMessage,
   slackRateLimitMessage,
+  slackUnknownReasonMessage,
 } from "@/lib/integrations/slack-errors";
 import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 import {
@@ -558,12 +560,20 @@ export const sendSlackTestMessage = async (
     // The contract leaves that result's exact shape to the cloud lane, agreeing
     // only that it reports the same stable reason the synchronous endpoints put
     // in `code` (contract, test-message). So a reason that *is* one of those
-    // codes gets Prowler's own wording, and anything else — prose, or a reason
-    // this UI has nothing better to say about — is shown as it arrived. A task
-    // that did not complete is a failure even when it names no reason at all.
+    // codes gets Prowler's own wording; a reason shaped like a code this UI has
+    // no wording for is kept inside Prowler's sentence, since a raw protocol
+    // token is not copy; and prose is shown as it arrived. A task that did not
+    // complete is a failure even when it names no reason at all.
     const reason = settled.result?.error?.trim();
     if (reason) {
-      return { error: slackErrorMessage({ code: reason, detail: reason }) };
+      return {
+        error: SLACK_REASON_TOKEN.test(reason)
+          ? slackErrorMessage(
+              { code: reason },
+              slackUnknownReasonMessage(reason),
+            )
+          : reason,
+      };
     }
     if (settled.state !== "completed") {
       return { error: "Slack did not accept the test message." };

@@ -57,6 +57,22 @@ export const SLACK_PARTIAL_CHANNEL_LIST_MESSAGE =
 export const SLACK_UNREADABLE_RESULT_MESSAGE =
   "Prowler could not read the result of the install. Open the Slack integration page to see the workspace — if none is listed there, start the install again.";
 
+/**
+ * The shape of a Slack reason code, as opposed to a sentence. Slack publishes
+ * no closed set of them, so a reason is gated on its shape before being
+ * interpolated into Prowler's own copy.
+ */
+export const SLACK_REASON_TOKEN = /^[a-z0-9_]{1,48}$/;
+
+/**
+ * Copy for a reason code this UI has no wording of its own for — the ordinary
+ * case, since the set is open-ended. The token is a protocol value, not
+ * user-facing copy, so it is kept inside Prowler's sentence for diagnosis
+ * rather than shown as the message.
+ */
+export const slackUnknownReasonMessage = (reason: string): string =>
+  `Slack refused the message (${reason}). Choose another channel, or check the channel in Slack.`;
+
 const RECONNECT = "Connect the workspace again to restore access.";
 
 export const SLACK_ERROR_MESSAGES = {

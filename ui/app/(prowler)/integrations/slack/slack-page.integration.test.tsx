@@ -24,6 +24,7 @@ import {
   SLACK_SECOND_PUBLIC_CHANNEL,
   SLACK_TEST_MESSAGE_REFUSED_DETAIL,
   SLACK_UNKNOWN_CHANNEL_DETAIL,
+  SLACK_UNMAPPED_REASON_CODE,
   SLACK_UPSTREAM_REFUSAL,
   slackFixture,
   slackFixtureWithDefaultChannel,
@@ -640,5 +641,28 @@ describe("sending a test message", () => {
     expect(await harness.lastTestMessageOutcome()).toMatch(
       new RegExp(SLACK_TEST_MESSAGE_REFUSED_DETAIL),
     );
+  }, 60000);
+
+  it("keeps a reason it has no copy for inside its own sentence, not as the whole message", async () => {
+    // Given — a real Slack reason this UI has nothing better to say about.
+    // Slack's set is open-ended, so this is the ordinary case, and the token
+    // alone tells the reader nothing they can act on.
+    const harness = new SlackIntegrationHarness(
+      connectedSlackFixture({
+        testMessage: { accepted: false, error: SLACK_UNMAPPED_REASON_CODE },
+      }),
+    );
+    await harness.mount();
+    await harness.chooseChannel(SLACK_PUBLIC_CHANNEL.name);
+
+    // When
+    const outcome = await harness.sendTestMessage();
+
+    // Then — Prowler's wording, with Slack's word for it kept for diagnosis.
+    expect(outcome).toBe(TEST_MESSAGE_OUTCOME.FAILED);
+    const reported = await harness.lastTestMessageOutcome();
+    expect(reported).toMatch(/Slack refused the message/);
+    expect(reported).toMatch(new RegExp(SLACK_UNMAPPED_REASON_CODE));
+    expect(reported).not.toBe(SLACK_UNMAPPED_REASON_CODE);
   }, 60000);
 });

@@ -9,6 +9,8 @@ import { revalidatePath } from "next/cache";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
+  SLACK_ERROR_CODE,
+  SLACK_ERROR_MESSAGES,
   SLACK_GENERIC_ERROR_MESSAGE,
   SLACK_PARTIAL_CHANNEL_LIST_MESSAGE,
   SLACK_UNREADABLE_RESULT_MESSAGE,
@@ -37,6 +39,8 @@ const { captureExceptionMock, captureMessageMock, fetchMock } = vi.hoisted(
 vi.mock("@sentry/nextjs", () => ({
   captureException: captureExceptionMock,
   captureMessage: captureMessageMock,
+  // The task poll leaves breadcrumbs on every read it makes.
+  addBreadcrumb: vi.fn(),
 }));
 
 vi.mock("next/cache", () => ({
@@ -592,6 +596,28 @@ describe("setSlackDefaultChannel", () => {
   );
 });
 
+/** The `202` that hands back the task the post is reported on (design D9). */
+const TEST_MESSAGE_TASK_ID = "5f8b1c2d-7e64-4a90-8c31-2b7d6e5f4a90";
+
+const testMessageAccepted = () =>
+  new Response(JSON.stringify({ data: { id: TEST_MESSAGE_TASK_ID } }), {
+    status: 202,
+    headers: { "content-type": "application/vnd.api+json" },
+  });
+
+/** The task read the poll makes, already settled on its first look. */
+const settledTask = (state: string, result: unknown) =>
+  new Response(
+    JSON.stringify({
+      data: {
+        type: "tasks",
+        id: TEST_MESSAGE_TASK_ID,
+        attributes: { state, result },
+      },
+    }),
+    { status: 200, headers: { "content-type": "application/vnd.api+json" } },
+  );
+
 describe("sendSlackTestMessage", () => {
   it("answers an unreadable `202` as no task started, not as parser prose", async () => {
     fetchMock.mockResolvedValueOnce(
@@ -605,6 +631,50 @@ describe("sendSlackTestMessage", () => {
 
     expect(result).toEqual({ error: "Slack did not start the test message." });
     expectNoParserProse(result);
+  });
+
+  it("wraps a reason it has no copy for instead of answering with the bare token", async () => {
+    // A real Slack reason outside the mapping: the set is open-ended, so this
+    // is the ordinary case rather than the exotic one.
+    fetchMock
+      .mockResolvedValueOnce(testMessageAccepted())
+      .mockResolvedValueOnce(settledTask("failed", { error: "is_archived" }));
+
+    const result = await sendSlackTestMessage(SLACK_INTEGRATION_ID);
+
+    const error = (result as { error?: string }).error ?? "";
+    // Prowler's sentence, with Slack's word for it kept inside — not instead
+    // of it: a protocol token alone tells the reader nothing to act on.
+    expect(error).toMatch(/Slack refused the message/);
+    expect(error).toContain("is_archived");
+    expect(error).not.toBe("is_archived");
+  });
+
+  it("keeps Prowler's own wording for a reason the mapping covers", async () => {
+    fetchMock
+      .mockResolvedValueOnce(testMessageAccepted())
+      .mockResolvedValueOnce(
+        settledTask("failed", { error: "not_in_channel" }),
+      );
+
+    const result = await sendSlackTestMessage(SLACK_INTEGRATION_ID);
+
+    expect(result).toEqual({
+      error: SLACK_ERROR_MESSAGES[SLACK_ERROR_CODE.NOT_IN_CHANNEL],
+    });
+  });
+
+  it("shows a reason the task worded itself as the prose it is", async () => {
+    // Not token-shaped, so nothing is wrapped around it: the alternative would
+    // be parsing prose, which the error model exists to prevent.
+    const prose = "Slack rejected the message: the channel is archived.";
+    fetchMock
+      .mockResolvedValueOnce(testMessageAccepted())
+      .mockResolvedValueOnce(settledTask("failed", { error: prose }));
+
+    const result = await sendSlackTestMessage(SLACK_INTEGRATION_ID);
+
+    expect(result).toEqual({ error: prose });
   });
 });
 

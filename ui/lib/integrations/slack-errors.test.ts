@@ -11,10 +11,12 @@ import {
   SLACK_ERROR_MESSAGES,
   SLACK_GENERIC_ERROR_MESSAGE,
   SLACK_RATE_LIMITED_MESSAGE,
+  SLACK_REASON_TOKEN,
   SLACK_TOKEN_ERROR_CODES,
   readSlackFailure,
   slackErrorMessage,
   slackRateLimitMessage,
+  slackUnknownReasonMessage,
 } from "./slack-errors";
 
 describe("slackErrorMessage", () => {
@@ -88,6 +90,67 @@ describe("slackErrorMessage", () => {
     expect(
       slackErrorMessage({ detail: "   " }, "Could not read channels."),
     ).toBe("Could not read channels.");
+  });
+});
+
+describe("slackUnknownReasonMessage", () => {
+  /** A real Slack reason this UI has no copy of its own for. */
+  const UNMAPPED_REASON = "is_archived";
+
+  it("keeps an unmapped reason diagnosable without letting it be the message", () => {
+    const message = slackUnknownReasonMessage(UNMAPPED_REASON);
+
+    // The token is a protocol value: it belongs inside Prowler's sentence, so
+    // the reader is told what to do and support still sees what Slack said.
+    expect(message).toMatch(/Slack refused the message/);
+    expect(message).toContain(UNMAPPED_REASON);
+    expect(message).not.toBe(UNMAPPED_REASON);
+    expect(message).toMatch(/Choose another channel/);
+  });
+
+  it("is only reached for a code the mapping does not cover", () => {
+    // As a fallback it never displaces copy Prowler already has...
+    expect(
+      slackErrorMessage(
+        { code: SLACK_ERROR_CODE.NOT_IN_CHANNEL },
+        slackUnknownReasonMessage(SLACK_ERROR_CODE.NOT_IN_CHANNEL),
+      ),
+    ).toBe(SLACK_ERROR_MESSAGES[SLACK_ERROR_CODE.NOT_IN_CHANNEL]);
+
+    // ...and for a code that has none, it is what the user reads. Passed
+    // without a `detail`, since a `detail` holding the same token would make
+    // the raw token the whole message again.
+    expect(
+      slackErrorMessage(
+        { code: UNMAPPED_REASON },
+        slackUnknownReasonMessage(UNMAPPED_REASON),
+      ),
+    ).toBe(slackUnknownReasonMessage(UNMAPPED_REASON));
+  });
+});
+
+describe("SLACK_REASON_TOKEN", () => {
+  it("recognises a reason code and refuses anything that reads as a sentence", () => {
+    // Slack publishes no closed set of reasons, so the guard is on the shape of
+    // a code rather than on an allowlist.
+    for (const reason of [
+      "is_archived",
+      "restricted_action",
+      "team_access_not_granted",
+      "ekm_access_denied",
+      "messages_tab_disabled",
+    ]) {
+      expect(SLACK_REASON_TOKEN.test(reason)).toBe(true);
+    }
+
+    for (const prose of [
+      "Slack rejected the message: the channel is archived.",
+      "). Contact support at +1-555-0100 (",
+      "",
+      "a".repeat(49),
+    ]) {
+      expect(SLACK_REASON_TOKEN.test(prose)).toBe(false);
+    }
   });
 });
 

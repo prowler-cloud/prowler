@@ -229,6 +229,11 @@ export const SLACK_WORKSPACE_CONFLICT_CODE = "slack_workspace_conflict";
 export const SLACK_MISSING_SCOPE_CODE = "missing_scope";
 export const SLACK_CHANNEL_NOT_FOUND_CODE = "channel_not_found";
 export const SLACK_NOT_IN_CHANNEL_CODE = "not_in_channel";
+/**
+ * A reason Slack really sends that the UI's mapping does not cover — the set is
+ * open-ended, so having no copy for one is the ordinary case.
+ */
+export const SLACK_UNMAPPED_REASON_CODE = "is_archived";
 
 export const SLACK_RETRY_AFTER_SECONDS = 30;
 

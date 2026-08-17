@@ -12,6 +12,7 @@ import {
   AlertTitle,
   Button,
 } from "@/components/shadcn";
+import { SLACK_REASON_TOKEN } from "@/lib/integrations/slack-errors";
 
 const SLACK_INTEGRATION_PATH = "/integrations/slack";
 
@@ -35,15 +36,13 @@ const FAILURE_TITLE = "Slack workspace not connected";
  */
 const UNCONFIRMED_TITLE = "Slack install not confirmed";
 
-// `error` comes straight off the URL and is interpolated into Prowler's own copy,
-// so gate on the shape of a code: Slack publishes no closed set of values.
-const REASON_TOKEN = /^[a-z0-9_]{1,48}$/;
-
 const describeSlackError = (reason: string): string => {
   if (reason === "access_denied") {
     return "The install was not approved in Slack, so no workspace was connected.";
   }
-  return REASON_TOKEN.test(reason)
+  // `error` comes straight off the URL and is interpolated into Prowler's own
+  // copy, so gate on the shape of a code: Slack publishes no closed set.
+  return SLACK_REASON_TOKEN.test(reason)
     ? `Slack could not complete the install (${reason}).`
     : "Slack could not complete the install.";
 };
