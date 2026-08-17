@@ -40,7 +40,8 @@ external_id = "your-unique-external-id-here"
 # Enable real-time detection
 # enable_realtime_detection = true
 
-# Prowler Cloud endpoint that receives the events (provided during onboarding)
+# Prowler Cloud endpoint that receives the events (leave default unless
+# self-hosted or testing against another endpoint)
 # prowler_webhook_url = "https://api.prowler.com/api/v1/realtime/events"
 
 # Prowler Cloud API key used to authenticate the events (shown once during onboarding)

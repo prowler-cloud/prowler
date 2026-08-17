@@ -80,10 +80,10 @@ Parameters:
 
   ProwlerWebhookUrl:
     Description: |
-      Prowler Cloud endpoint that receives the events. Provided during Prowler Cloud onboarding.
-      Required if EnableRealtimeDetection is true.
+      Prowler Cloud endpoint that receives the events. Defaults to the Prowler Cloud ingest endpoint;
+      change it only for a self-hosted deployment or for testing. Required if EnableRealtimeDetection is true.
     Type: String
-    Default: ""
+    Default: "https://api.prowler.com/api/v1/realtime/events"
     AllowedPattern: '^(https://.+)?$'
     ConstraintDescription: "ProwlerWebhookUrl must be an HTTPS URL."
 
@@ -768,7 +768,7 @@ Metadata:
           - S3IntegrationBucketName
           - S3IntegrationBucketAccountId
       - Label:
-          default: Optional Real-Time Detection (Required if EnableRealtimeDetection is true)
+          default: Optional Real-Time Detection (ProwlerApiKey required if EnableRealtimeDetection is true)
         Parameters:
           - ProwlerWebhookUrl
           - ProwlerApiKey

@@ -69,8 +69,8 @@ variable "enable_realtime_detection" {
 
 variable "prowler_webhook_url" {
   type        = string
-  description = "Prowler Cloud endpoint that receives the events. Provided during Prowler Cloud onboarding. Required if enable_realtime_detection is true."
-  default     = ""
+  description = "Prowler Cloud endpoint that receives the events. Defaults to the Prowler Cloud ingest endpoint; change it only for a self-hosted deployment or for testing."
+  default     = "https://api.prowler.com/api/v1/realtime/events"
 
   validation {
     condition     = var.prowler_webhook_url == "" || can(regex("^https://", var.prowler_webhook_url))

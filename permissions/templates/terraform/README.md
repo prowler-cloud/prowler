@@ -26,7 +26,7 @@ This Terraform configuration creates the necessary IAM role and policies to allo
 - `s3_integration_bucket_name` (conditional): S3 bucket name for reports (required if `enable_s3_integration` is true)
 - `s3_integration_bucket_account_id` (conditional): S3 bucket owner account ID (required if `enable_s3_integration` is true)
 - `enable_realtime_detection` (optional): Forward the tracked CloudTrail management events to Prowler Cloud through an EventBridge API destination (default: false)
-- `prowler_webhook_url` (conditional): Prowler Cloud endpoint that receives the events (required if `enable_realtime_detection` is true)
+- `prowler_webhook_url` (optional): Prowler Cloud endpoint that receives the events (defaults to Prowler Cloud: `https://api.prowler.com/api/v1/realtime/events`; change it only for a self-hosted deployment or for testing)
 - `prowler_api_key` (conditional): Prowler Cloud API key used to authenticate the events (required if `enable_realtime_detection` is true)
 
 ### Usage Examples
@@ -50,9 +50,10 @@ terraform apply \
 terraform apply \
   -var="external_id=your-external-id-here" \
   -var="enable_realtime_detection=true" \
-  -var="prowler_webhook_url=https://api.prowler.com/api/v1/realtime/events" \
   -var="prowler_api_key=your-prowler-api-key-here"
 ```
+
+`prowler_webhook_url` already defaults to the Prowler Cloud ingest endpoint, so only the API key is needed. Override it for a self-hosted deployment or for testing.
 
 > **Note:** the EventBridge rule is regional. It forwards only the events delivered to the default event bus of the region Terraform deploys to (`us-east-1` by default, see `versions.tf`). IAM events are global and always land in `us-east-1`, but regional services (EC2 security groups, RDS, per-region Config and GuardDuty) are only covered in that region. Deploy the module in every region you want covered.
 
