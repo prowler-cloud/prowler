@@ -72,9 +72,9 @@ export interface IntegrationProps {
     inserted_at: string;
     updated_at: string;
     enabled: boolean;
-    // `null` until a connection check has actually run: the integration exists
-    // but has never been verified — neither confirmed working nor known broken.
-    // A Slack install lands here, and returns here whenever its channel changes.
+    // `null` until a connection check has run: never verified, neither working
+    // nor broken. A Slack install starts here, and returns here on a channel
+    // change.
     connected: boolean | null;
     connection_last_checked_at: string | null;
     integration_type: IntegrationType;
@@ -94,11 +94,8 @@ export interface IntegrationProps {
       domain?: string;
       projects?: { [key: string]: string };
       issue_types?: { [key: string]: string[] };
-      // Slack specific configuration, all of it server-owned: the workspace and
-      // the bot are fixed at install time, and the channel is the integration's
-      // default destination. The channel keys are *absent* until one is chosen
-      // rather than present and null, so read them with `?? null` and never
-      // treat a missing key as a different state from an unchosen channel.
+      // Slack specific configuration, server-owned. The channel keys are absent
+      // until one is chosen, not present and null: read them with `?? null`.
       team_id?: string;
       team_name?: string;
       bot_user_id?: string;
