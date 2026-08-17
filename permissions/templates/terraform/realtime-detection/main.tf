@@ -40,11 +40,13 @@ data "aws_iam_policy_document" "prowler_realtime_assume_role" {
       values   = [data.aws_caller_identity.current.account_id]
     }
 
-    # Built from the rule name to avoid a circular dependency with the rule
     condition {
       test     = "ArnLike"
       variable = "aws:SourceArn"
-      values   = ["arn:${data.aws_partition.current.partition}:events:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:rule/ProwlerRealtimeDetection"]
+      values = [
+        aws_cloudwatch_event_rule.prowler_realtime.arn,
+        aws_cloudwatch_event_rule.prowler_realtime_hello.arn,
+      ]
     }
   }
 }
@@ -92,7 +94,10 @@ data "aws_iam_policy_document" "prowler_realtime_dlq" {
     condition {
       test     = "ArnEquals"
       variable = "aws:SourceArn"
-      values   = [aws_cloudwatch_event_rule.prowler_realtime.arn]
+      values = [
+        aws_cloudwatch_event_rule.prowler_realtime.arn,
+        aws_cloudwatch_event_rule.prowler_realtime_hello.arn,
+      ]
     }
   }
 }
@@ -165,6 +170,35 @@ resource "aws_cloudwatch_event_target" "prowler_realtime" {
   role_arn  = aws_iam_role.prowler_realtime_invoke.arn
 
   # Retries cover an endpoint outage; whatever outlives the window is dead-lettered
+  retry_policy {
+    maximum_event_age_in_seconds = 86400
+    maximum_retry_attempts       = 185
+  }
+
+  dead_letter_config {
+    arn = aws_sqs_queue.prowler_realtime_dlq.arn
+  }
+}
+
+# Rule carrying the synthetic hello event, which no CloudTrail pattern would match
+###################################
+resource "aws_cloudwatch_event_rule" "prowler_realtime_hello" {
+  name        = "ProwlerRealtimeDetectionHello"
+  description = "Forwards the Prowler real-time detection hello event used to verify the connection"
+  state       = "ENABLED"
+
+  event_pattern = jsonencode({
+    source        = ["prowler.simulation"]
+    "detail-type" = ["test_connection"]
+  })
+}
+
+resource "aws_cloudwatch_event_target" "prowler_realtime_hello" {
+  rule      = aws_cloudwatch_event_rule.prowler_realtime_hello.name
+  target_id = "ProwlerCloud"
+  arn       = aws_cloudwatch_event_api_destination.prowler_realtime.arn
+  role_arn  = aws_iam_role.prowler_realtime_invoke.arn
+
   retry_policy {
     maximum_event_age_in_seconds = 86400
     maximum_retry_attempts       = 185

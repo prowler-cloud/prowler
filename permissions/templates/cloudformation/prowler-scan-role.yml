@@ -660,8 +660,10 @@ Resources:
               StringEquals:
                 "aws:SourceAccount": !Ref AWS::AccountId
               ArnLike:
-                # Built from the rule name to avoid a circular dependency with the rule
-                "aws:SourceArn": !Sub "arn:${AWS::Partition}:events:${AWS::Region}:${AWS::AccountId}:rule/ProwlerRealtimeDetection"
+                # Built from the rule names to avoid a circular dependency with the rules
+                "aws:SourceArn":
+                  - !Sub "arn:${AWS::Partition}:events:${AWS::Region}:${AWS::AccountId}:rule/ProwlerRealtimeDetection"
+                  - !Sub "arn:${AWS::Partition}:events:${AWS::Region}:${AWS::AccountId}:rule/ProwlerRealtimeDetectionHello"
       Policies:
         - PolicyName: InvokeApiDestination
           PolicyDocument:
@@ -716,8 +718,10 @@ Resources:
             Resource: !GetAtt ProwlerRealtimeDlq.Arn
             Condition:
               ArnEquals:
-                # Built from the rule name to avoid a circular dependency with the rule
-                "aws:SourceArn": !Sub "arn:${AWS::Partition}:events:${AWS::Region}:${AWS::AccountId}:rule/ProwlerRealtimeDetection"
+                # Built from the rule names to avoid a circular dependency with the rules
+                "aws:SourceArn":
+                  - !Sub "arn:${AWS::Partition}:events:${AWS::Region}:${AWS::AccountId}:rule/ProwlerRealtimeDetection"
+                  - !Sub "arn:${AWS::Partition}:events:${AWS::Region}:${AWS::AccountId}:rule/ProwlerRealtimeDetectionHello"
 
   ProwlerRealtimeRule:
     Type: AWS::Events::Rule
@@ -789,6 +793,174 @@ Resources:
           Value: "true"
         - Key: "Name"
           Value: "ProwlerRealtimeDetection"
+
+  # Carries the synthetic hello event, which no CloudTrail pattern would match
+  ProwlerRealtimeHelloRule:
+    Type: AWS::Events::Rule
+    Condition: RealtimeDetectionEnabled
+    Properties:
+      Name: ProwlerRealtimeDetectionHello
+      Description: Forwards the Prowler real-time detection hello event used to verify the connection
+      State: ENABLED
+      EventPattern:
+        source:
+          - prowler.simulation
+        detail-type:
+          - test_connection
+      Targets:
+        - Id: ProwlerCloud
+          Arn: !GetAtt ProwlerRealtimeApiDestination.Arn
+          RoleArn: !GetAtt ProwlerRealtimeInvokeRole.Arn
+          RetryPolicy:
+            MaximumEventAgeInSeconds: 86400
+            MaximumRetryAttempts: 185
+          DeadLetterConfig:
+            Arn: !GetAtt ProwlerRealtimeDlq.Arn
+      Tags:
+        - Key: "Service"
+          Value: "https://prowler.com"
+        - Key: "Support"
+          Value: "support@prowler.com"
+        - Key: "CloudFormation"
+          Value: "true"
+        - Key: "Name"
+          Value: "ProwlerRealtimeDetectionHello"
+
+  # Explicit log group so the function does not leave one with unlimited retention behind
+  ProwlerRealtimeHelloLogGroup:
+    Type: AWS::Logs::LogGroup
+    Condition: RealtimeDetectionEnabled
+    Properties:
+      LogGroupName: /aws/lambda/ProwlerRealtimeHello
+      RetentionInDays: 30
+
+  ProwlerRealtimeHelloRole:
+    Type: AWS::IAM::Role
+    Condition: RealtimeDetectionEnabled
+    Properties:
+      RoleName: ProwlerRealtimeHello
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: "sts:AssumeRole"
+      Policies:
+        - PolicyName: PutHelloEvent
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: "events:PutEvents"
+                Resource: !Sub "arn:${AWS::Partition}:events:${AWS::Region}:${AWS::AccountId}:event-bus/default"
+              - Effect: Allow
+                Action:
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+                Resource: !GetAtt ProwlerRealtimeHelloLogGroup.Arn
+      Tags:
+        - Key: "Service"
+          Value: "https://prowler.com"
+        - Key: "Support"
+          Value: "support@prowler.com"
+        - Key: "CloudFormation"
+          Value: "true"
+        - Key: "Name"
+          Value: "ProwlerRealtimeHello"
+
+  ProwlerRealtimeHelloFunction:
+    Type: AWS::Lambda::Function
+    Condition: RealtimeDetectionEnabled
+    Properties:
+      FunctionName: ProwlerRealtimeHello
+      Description: Emits the Prowler real-time detection hello event when the stack is created or updated
+      Runtime: python3.13
+      Handler: index.handler
+      Timeout: 30
+      Role: !GetAtt ProwlerRealtimeHelloRole.Arn
+      Code:
+        ZipFile: |
+          import json
+          import urllib.request
+
+          import boto3
+
+
+          def respond(event, context, data):
+              """Answer CloudFormation. Always SUCCESS: see handler()."""
+              body = json.dumps(
+                  {
+                      "Status": "SUCCESS",
+                      "Reason": f"See CloudWatch log stream {context.log_stream_name}",
+                      "PhysicalResourceId": "ProwlerRealtimeHelloEvent",
+                      "StackId": event["StackId"],
+                      "RequestId": event["RequestId"],
+                      "LogicalResourceId": event["LogicalResourceId"],
+                      "Data": data,
+                  }
+              ).encode()
+              request = urllib.request.Request(
+                  event["ResponseURL"],
+                  data=body,
+                  method="PUT",
+                  headers={"content-type": "", "content-length": str(len(body))},
+              )
+              for attempt in range(3):
+                  try:
+                      urllib.request.urlopen(request, timeout=10)
+                      return
+                  except Exception as error:  # noqa: BLE001
+                      print(f"response attempt {attempt + 1} failed: {error}")
+
+
+          def handler(event, context):
+              """Emit the hello event, then always report SUCCESS.
+
+              A failed verification must never roll back the scan role, so any
+              error is reported in the response data instead of failing the stack.
+              """
+              data = {"Status": "Skipped"}
+              try:
+                  if event["RequestType"] in ("Create", "Update"):
+                      _, _, _, region, account = context.invoked_function_arn.split(":")[:5]
+                      entry = boto3.client("events").put_events(
+                          Entries=[
+                              {
+                                  "Source": "prowler.simulation",
+                                  "DetailType": "test_connection",
+                                  "Detail": json.dumps(
+                                      {
+                                          "account_id": account,
+                                          "region": region,
+                                          "stack_id": event["StackId"],
+                                          "request_type": event["RequestType"],
+                                      }
+                                  ),
+                                  "EventBusName": "default",
+                              }
+                          ]
+                      )["Entries"][0]
+                      if entry.get("ErrorCode"):
+                          data = {"Status": "Failed", "Error": entry["ErrorCode"]}
+                      else:
+                          data = {"Status": "Sent", "EventId": entry["EventId"]}
+              except Exception as error:  # noqa: BLE001
+                  data = {"Status": "Failed", "Error": str(error)[:200]}
+              print(json.dumps(data))
+              respond(event, context, data)
+
+  # Emitting the event is the last step: the rule, destination and DLQ must already exist
+  ProwlerRealtimeHelloTrigger:
+    Type: Custom::ProwlerHelloEvent
+    Condition: RealtimeDetectionEnabled
+    DependsOn:
+      - ProwlerRealtimeHelloRule
+      - ProwlerRealtimeDlqPolicy
+    Properties:
+      ServiceToken: !GetAtt ProwlerRealtimeHelloFunction.Arn
+      # Re-emits the event when the endpoint changes; the API key is deliberately not passed in
+      WebhookUrl: !Ref ProwlerWebhookUrl
 
 Metadata:
   AWS::CloudFormation::Interface:
