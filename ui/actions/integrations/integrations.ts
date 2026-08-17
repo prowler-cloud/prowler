@@ -214,8 +214,6 @@ export const updateIntegration = async (
         revalidatePath("/integrations/aws-security-hub");
       } else if (integration_type === "jira") {
         revalidatePath("/integrations/jira");
-      } else if (integration_type === "slack") {
-        revalidatePath("/integrations/slack");
       }
 
       return {
