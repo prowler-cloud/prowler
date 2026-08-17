@@ -66,6 +66,35 @@ Parameters:
     Type: String
     Default: ""
 
+  # Real-Time Detection Parameters
+  EnableRealtimeDetection:
+    Description: |
+      Enable real-time detection. Forwards the tracked CloudTrail management events to Prowler Cloud
+      through an EventBridge API destination, so a change is scanned within minutes instead of waiting
+      for the next scheduled scan. Adds no new read permissions to the ProwlerScan role.
+    Type: String
+    Default: false
+    AllowedValues:
+      - true
+      - false
+
+  ProwlerWebhookUrl:
+    Description: |
+      Prowler Cloud endpoint that receives the events. Provided during Prowler Cloud onboarding.
+      Required if EnableRealtimeDetection is true.
+    Type: String
+    Default: ""
+    AllowedPattern: '^(https://.+)?$'
+    ConstraintDescription: "ProwlerWebhookUrl must be an HTTPS URL."
+
+  ProwlerApiKey:
+    Description: |
+      Prowler Cloud API key used to authenticate the events sent to the endpoint above.
+      Shown once during Prowler Cloud onboarding. Required if EnableRealtimeDetection is true.
+    Type: String
+    Default: ""
+    NoEcho: true
+
   # Deployment Control Parameters
   DeployStackSet:
     Description: |
@@ -134,6 +163,7 @@ Conditions:
   DeployStackSetEnabled: !Equals [!Ref DeployStackSet, true]
   DeployLocalRoleEnabled: !Equals [!Ref DeployLocalRole, true]
   UseDelegatedAdmin: !Equals [!Ref DeployFromDelegatedAdmin, true]
+  RealtimeDetectionEnabled: !Equals [!Ref EnableRealtimeDetection, true]
 
 Rules:
   S3IntegrationRequiresParams:
@@ -143,6 +173,14 @@ Rules:
         AssertDescription: "S3IntegrationBucketName is required when EnableS3Integration is true."
       - Assert: !Not [!Equals [!Ref S3IntegrationBucketAccountId, ""]]
         AssertDescription: "S3IntegrationBucketAccountId is required when EnableS3Integration is true."
+
+  RealtimeDetectionRequiresParams:
+    RuleCondition: !Equals [!Ref EnableRealtimeDetection, "true"]
+    Assertions:
+      - Assert: !Not [!Equals [!Ref ProwlerWebhookUrl, ""]]
+        AssertDescription: "ProwlerWebhookUrl is required when EnableRealtimeDetection is true."
+      - Assert: !Not [!Equals [!Ref ProwlerApiKey, ""]]
+        AssertDescription: "ProwlerApiKey is required when EnableRealtimeDetection is true."
 
 Resources:
   # Local ProwlerScan Role (deployed in this account)
@@ -583,6 +621,130 @@ Resources:
             Export:
               Name: !Sub "${AWS::StackName}-ProwlerScanRoleArn"
 
+  # Real-Time Detection: forwards the tracked CloudTrail events to Prowler Cloud
+  ProwlerRealtimeConnection:
+    Type: AWS::Events::Connection
+    Condition: RealtimeDetectionEnabled
+    Properties:
+      Name: ProwlerRealtimeDetection
+      Description: Holds the Prowler Cloud API key used to authenticate forwarded events
+      AuthorizationType: API_KEY
+      AuthParameters:
+        ApiKeyAuthParameters:
+          ApiKeyName: x-api-key
+          ApiKeyValue: !Ref ProwlerApiKey
+
+  ProwlerRealtimeApiDestination:
+    Type: AWS::Events::ApiDestination
+    Condition: RealtimeDetectionEnabled
+    Properties:
+      Name: ProwlerRealtimeDetection
+      Description: Prowler Cloud endpoint that receives the forwarded CloudTrail events
+      ConnectionArn: !GetAtt ProwlerRealtimeConnection.Arn
+      InvocationEndpoint: !Ref ProwlerWebhookUrl
+      HttpMethod: POST
+
+  ProwlerRealtimeInvokeRole:
+    Type: AWS::IAM::Role
+    Condition: RealtimeDetectionEnabled
+    Properties:
+      RoleName: ProwlerRealtimeInvoke
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: events.amazonaws.com
+            Action: "sts:AssumeRole"
+            Condition:
+              StringEquals:
+                "aws:SourceAccount": !Ref AWS::AccountId
+              ArnLike:
+                # Built from the rule name to avoid a circular dependency with the rule
+                "aws:SourceArn": !Sub "arn:${AWS::Partition}:events:${AWS::Region}:${AWS::AccountId}:rule/ProwlerRealtimeDetection"
+      Policies:
+        - PolicyName: InvokeApiDestination
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: "events:InvokeApiDestination"
+                Resource: !GetAtt ProwlerRealtimeApiDestination.Arn
+      Tags:
+        - Key: "Service"
+          Value: "https://prowler.com"
+        - Key: "Support"
+          Value: "support@prowler.com"
+        - Key: "CloudFormation"
+          Value: "true"
+        - Key: "Name"
+          Value: "ProwlerRealtimeInvoke"
+
+  ProwlerRealtimeRule:
+    Type: AWS::Events::Rule
+    Condition: RealtimeDetectionEnabled
+    Properties:
+      Name: ProwlerRealtimeDetection
+      Description: Forwards the CloudTrail management events tracked by Prowler real-time detection to Prowler Cloud
+      State: ENABLED
+      EventPattern:
+        detail-type:
+          - "AWS API Call via CloudTrail"
+        detail:
+          eventSource:
+            - ec2.amazonaws.com
+            - rds.amazonaws.com
+            - iam.amazonaws.com
+            - s3.amazonaws.com
+            - s3-control.amazonaws.com
+            - cloudtrail.amazonaws.com
+            - config.amazonaws.com
+            - guardduty.amazonaws.com
+          eventName:
+            # Security group opened to 0.0.0.0/0
+            - AuthorizeSecurityGroupIngress
+            - ModifySecurityGroupRules
+            # RDS instance made publicly accessible
+            - CreateDBInstance
+            - ModifyDBInstance
+            # Administrator privileges attached to a principal
+            - AttachUserPolicy
+            - AttachRolePolicy
+            - AttachGroupPolicy
+            - PutUserPolicy
+            - PutRolePolicy
+            # S3 bucket policy or ACL grants public access
+            - PutBucketPolicy
+            - PutBucketAcl
+            # S3 Block Public Access weakened
+            - PutAccountPublicAccessBlock
+            - DeleteAccountPublicAccessBlock
+            - PutBucketPublicAccessBlock
+            - DeleteBucketPublicAccessBlock
+            # CloudTrail logging stopped or trail deleted
+            - StopLogging
+            - DeleteTrail
+            - UpdateTrail
+            # AWS Config recorder stopped or deleted
+            - StopConfigurationRecorder
+            - DeleteConfigurationRecorder
+            # GuardDuty detector disabled or deleted
+            - UpdateDetector
+            - DeleteDetector
+      Targets:
+        - Id: ProwlerCloud
+          Arn: !GetAtt ProwlerRealtimeApiDestination.Arn
+          RoleArn: !GetAtt ProwlerRealtimeInvokeRole.Arn
+      Tags:
+        - Key: "Service"
+          Value: "https://prowler.com"
+        - Key: "Support"
+          Value: "support@prowler.com"
+        - Key: "CloudFormation"
+          Value: "true"
+        - Key: "Name"
+          Value: "ProwlerRealtimeDetection"
+
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
@@ -599,11 +761,17 @@ Metadata:
           - IAMPrincipal
           - EnableOrganizations
           - EnableS3Integration
+          - EnableRealtimeDetection
       - Label:
           default: Optional S3 Integration
         Parameters:
           - S3IntegrationBucketName
           - S3IntegrationBucketAccountId
+      - Label:
+          default: Optional Real-Time Detection (Required if EnableRealtimeDetection is true)
+        Parameters:
+          - ProwlerWebhookUrl
+          - ProwlerApiKey
       - Label:
           default: StackSet Configuration (Required if DeployStackSet is true)
         Parameters:
@@ -624,3 +792,17 @@ Outputs:
     Condition: DeployStackSetEnabled
     Description: "StackSet ID for the ProwlerScan role deployment across accounts"
     Value: !Ref ProwlerScanStackSet
+
+  ProwlerRealtimeRuleArn:
+    Condition: RealtimeDetectionEnabled
+    Description: "ARN of the EventBridge rule forwarding the tracked CloudTrail events to Prowler Cloud"
+    Value: !GetAtt ProwlerRealtimeRule.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-ProwlerRealtimeRuleArn"
+
+  ProwlerRealtimeApiDestinationArn:
+    Condition: RealtimeDetectionEnabled
+    Description: "ARN of the EventBridge API destination targeting Prowler Cloud"
+    Value: !GetAtt ProwlerRealtimeApiDestination.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-ProwlerRealtimeApiDestinationArn"

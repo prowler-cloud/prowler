@@ -29,3 +29,19 @@ external_id = "your-unique-external-id-here"
 
 # AWS Account ID that owns the S3 bucket (usually your account)
 # s3_integration_bucket_account_id = "123456789012"
+
+# =============================================================================
+# Real-Time Detection Configuration
+# =============================================================================
+# Uncomment the following lines to forward the tracked CloudTrail management
+# events to Prowler Cloud through an EventBridge API destination, so a change
+# is scanned within minutes instead of waiting for the next scheduled scan.
+
+# Enable real-time detection
+# enable_realtime_detection = true
+
+# Prowler Cloud endpoint that receives the events (provided during onboarding)
+# prowler_webhook_url = "https://api.prowler.com/api/v1/realtime/events"
+
+# Prowler Cloud API key used to authenticate the events (shown once during onboarding)
+# prowler_api_key = "your-prowler-api-key-here"

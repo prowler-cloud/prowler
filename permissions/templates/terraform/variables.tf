@@ -60,3 +60,27 @@ variable "s3_integration_bucket_account_id" {
     error_message = "s3_integration_bucket_account_id must be a valid 12-digit AWS Account ID or empty."
   }
 }
+
+variable "enable_realtime_detection" {
+  type        = bool
+  description = "Enable real-time detection. Forwards the tracked CloudTrail management events to Prowler Cloud through an EventBridge API destination. Adds no new read permissions to the ProwlerScan role."
+  default     = false
+}
+
+variable "prowler_webhook_url" {
+  type        = string
+  description = "Prowler Cloud endpoint that receives the events. Provided during Prowler Cloud onboarding. Required if enable_realtime_detection is true."
+  default     = ""
+
+  validation {
+    condition     = var.prowler_webhook_url == "" || can(regex("^https://", var.prowler_webhook_url))
+    error_message = "prowler_webhook_url must be an HTTPS URL or empty."
+  }
+}
+
+variable "prowler_api_key" {
+  type        = string
+  description = "Prowler Cloud API key used to authenticate the events sent to the endpoint above. Shown once during Prowler Cloud onboarding. Required if enable_realtime_detection is true."
+  default     = ""
+  sensitive   = true
+}
