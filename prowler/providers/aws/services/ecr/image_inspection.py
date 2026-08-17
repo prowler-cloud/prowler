@@ -148,7 +148,7 @@ class ImageInspector:
         Returns:
             An ImageScanData, or None if the manifest could not be resolved.
         """
-        manifest = self._resolve_image_manifest(
+        manifest, truncated = self._resolve_image_manifest(
             client, registry_id, repository_name, image_digest
         )
         if manifest is None:
@@ -156,7 +156,6 @@ class ImageInspector:
 
         env = []
         history = []
-        truncated = False
 
         config_digest = (manifest.get("config") or {}).get("digest")
         if config_digest:
@@ -258,7 +257,7 @@ class ImageInspector:
 
     def _resolve_image_manifest(
         self, client, registry_id, repository_name, image_digest
-    ) -> Optional[dict]:
+    ) -> tuple[Optional[dict], bool]:
         """Resolve an image digest to a single scannable image manifest.
 
         Multi-arch images are stored as a manifest list/image index pointing
@@ -271,12 +270,14 @@ class ImageInspector:
                 client, registry_id, repository_name, image_digest
             )
             if manifest is None:
-                return None
+                return None, False
 
+            truncated = False
             if media_type in _MANIFEST_LIST_MEDIA_TYPES:
+                truncated = True
                 child_digest = self._select_child_manifest_digest(manifest)
                 if not child_digest:
-                    return None
+                    return None, truncated
                 manifest, _ = self._batch_get_manifest(
                     client, registry_id, repository_name, child_digest
                 )
@@ -287,13 +288,13 @@ class ImageInspector:
                 # nothing to scan (e.g. a nested manifest list, or an
                 # unsupported manifest shape) -- treat it as unresolvable so
                 # the caller reports MANUAL instead of a false PASS.
-                return None
-            return manifest
+                return None, truncated
+            return manifest, truncated
         except Exception as error:
             logger.error(
                 f"{client.meta.region_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            return None
+            return None, False
 
     @staticmethod
     def _batch_get_manifest(client, registry_id, repository_name, image_digest):

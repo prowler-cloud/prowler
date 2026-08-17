@@ -619,5 +619,7 @@ class Test_ECR_Service:
             target = ecr._get_scan_target_image(repository)
             scan_results = list(ecr._get_image_scan_data())
 
-        assert target is None
-        assert scan_results == []
+        assert isinstance(target, RuntimeError)
+        assert len(scan_results) == 1
+        _, result_image, result_error = scan_results[0]
+        assert result_image is None and isinstance(result_error, RuntimeError)

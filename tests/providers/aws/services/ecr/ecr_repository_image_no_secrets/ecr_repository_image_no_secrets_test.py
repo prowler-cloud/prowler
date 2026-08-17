@@ -615,6 +615,38 @@ class Test_ecr_repository_image_no_secrets:
                 in result[0].status_extended
             )
 
+    def test_latest_image_lookup_error_reports_repository_manual(self):
+        """A failed authoritative image lookup is reported for the repository."""
+        repository = create_repository()
+        lookup_error = RuntimeError("authoritative lookup failed")
+        ecr_client = mock.MagicMock()
+        ecr_client.audit_config = {
+            "secrets_ignore_patterns": [],
+            "secrets_validate": False,
+        }
+        ecr_client._get_image_scan_data = mock_image_scan_data(
+            [(repository, None, lookup_error)]
+        )
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ecr.ecr_repository_image_no_secrets.ecr_repository_image_no_secrets.ecr_client",
+                new=ecr_client,
+            ),
+        ):
+            from prowler.providers.aws.services.ecr.ecr_repository_image_no_secrets.ecr_repository_image_no_secrets import (
+                ecr_repository_image_no_secrets,
+            )
+
+            result = ecr_repository_image_no_secrets().execute()
+
+        assert result[0].status == "MANUAL"
+        assert "Could not determine the latest image" in result[0].status_extended
+
     def test_scan_error_reports_manual_for_latest_image_per_repository(self):
         """A scanner failure reports MANUAL once per repository's latest image."""
         from prowler.lib.utils.utils import SecretsScanError

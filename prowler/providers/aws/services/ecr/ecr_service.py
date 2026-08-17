@@ -1,4 +1,4 @@
-from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
+from concurrent.futures import FIRST_COMPLETED, Future, ThreadPoolExecutor, wait
 from datetime import datetime
 from json import loads
 from typing import Optional
@@ -344,9 +344,8 @@ class ECR(AWSService):
         pipeline independently of the shared metadata pool.
 
         Yields:
-            Tuple of (Repository, ImageDetails, Optional[ImageScanData]). The
-            scan data is None when the image manifest could not be resolved
-            or retrieved, so the caller can report it rather than drop it.
+            Tuple of repository, optional image, and scan data. The third item
+            is an exception when the authoritative image lookup failed.
         """
         logger.info("ECR - Fetching image manifests, configs, and layers...")
         inspector = ImageInspector()
@@ -355,8 +354,10 @@ class ECR(AWSService):
             for registry in self.registries.values():
                 for repository in registry.repositories:
                     image = self._get_scan_target_image(repository)
-                    if image is not None:
-                        yield repository, image
+                    if isinstance(image, Exception):
+                        yield repository, None, image
+                    elif image is not None:
+                        yield repository, image, None
 
         with ThreadPoolExecutor(max_workers=IMAGE_SCAN_MAX_WORKERS) as executor:
             pending = {}
@@ -364,18 +365,22 @@ class ECR(AWSService):
 
             def submit_next():
                 try:
-                    repository, image = next(targets)
+                    repository, image, error = next(targets)
                 except StopIteration:
                     return False
-                client = self.regional_clients[repository.region]
-                registry_id = self.registries[repository.region].id
-                future = executor.submit(
-                    inspector.fetch_image_scan_data,
-                    client,
-                    registry_id,
-                    repository.name,
-                    image.latest_digest,
-                )
+                if error:
+                    future = Future()
+                    future.set_result(error)
+                else:
+                    client = self.regional_clients[repository.region]
+                    registry_id = self.registries[repository.region].id
+                    future = executor.submit(
+                        inspector.fetch_image_scan_data,
+                        client,
+                        registry_id,
+                        repository.name,
+                        image.latest_digest,
+                    )
                 pending[future] = (repository, image)
                 return True
 
@@ -430,7 +435,7 @@ class ECR(AWSService):
 
         Returns:
             The latest scannable ImageDetails, or None if the repository has
-            no scannable image or the lookup failed.
+            no scannable image; an exception if the lookup failed.
         """
         latest = repository.images_details[-1] if repository.images_details else None
         try:
@@ -470,7 +475,7 @@ class ECR(AWSService):
             logger.error(
                 f"{repository.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            return None
+            return error
 
     @staticmethod
     def _is_artifact_scannable(artifact_media_type: str, tags: list[str] = []) -> bool:

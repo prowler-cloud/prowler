@@ -52,7 +52,7 @@ class ecr_repository_image_no_secrets(Check):
             for repository, image, scan_data in ecr_client._get_image_scan_data():
                 index = len(scanned)
                 scanned.append((repository, image, scan_data))
-                if scan_data is None:
+                if scan_data is None or isinstance(scan_data, Exception):
                     continue
                 for env_index, entry in enumerate(scan_data.env):
                     yield (index, f"environment:{env_index}"), entry
@@ -89,7 +89,11 @@ class ecr_repository_image_no_secrets(Check):
             for registry in ecr_client.registries.values():
                 for repository in registry.repositories:
                     image = ecr_client._get_scan_target_image(repository)
-                    if image is not None:
+                    if isinstance(image, Exception):
+                        findings.append(
+                            self._build_scan_error_report(repository, image)
+                        )
+                    elif image is not None:
                         report = self._build_report(repository, image)
                         report.status = "MANUAL"
                         report.status_extended = (
@@ -103,6 +107,9 @@ class ecr_repository_image_no_secrets(Check):
 
         # Phase 3: report — one finding per scanned image.
         for index, (repository, image, scan_data) in enumerate(scanned):
+            if isinstance(scan_data, Exception):
+                findings.append(self._build_scan_error_report(repository, scan_data))
+                continue
             report = self._build_report(repository, image)
             image_reference = (
                 f"image '{image.latest_tag}' ({image.latest_digest}) of ECR "
@@ -211,6 +218,16 @@ class ecr_repository_image_no_secrets(Check):
             findings.append(report)
 
         return findings
+
+    def _build_scan_error_report(self, repository, error) -> Check_Report_AWS:
+        """Build a repository-level report for a latest-image lookup failure."""
+        report = Check_Report_AWS(metadata=self.metadata(), resource=repository)
+        report.status = "MANUAL"
+        report.status_extended = (
+            f"Could not determine the latest image of ECR repository "
+            f"{repository.name}: {error}; manual review is required."
+        )
+        return report
 
     def _build_report(self, repository, image) -> Check_Report_AWS:
         """Build a report scoped to a single image within a repository.

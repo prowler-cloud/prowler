@@ -121,7 +121,7 @@ class Test_ImageInspector:
 
     @mock_aws
     def test_fetch_image_scan_data_resolves_multi_arch_manifest(self):
-        """A multi-arch manifest list resolves to its amd64/linux child."""
+        """A multi-arch scan is incomplete when only one child is inspected."""
         MANIFESTS_BY_DIGEST[MULTI_ARCH_INDEX_DIGEST] = MULTI_ARCH_MANIFEST_LIST
         MANIFESTS_BY_DIGEST[CHILD_AMD64_DIGEST] = SIMPLE_MANIFEST
         BLOBS_BY_DIGEST[CONFIG_DIGEST] = json.dumps(CONFIG_JSON).encode()
@@ -135,6 +135,7 @@ class Test_ImageInspector:
         assert scan_data.env == ["PATH=/usr/bin", "TOKEN=super-secret-value"]
         assert len(scan_data.files) == 1
         assert scan_data.files[0].path == "app/config.py"
+        assert scan_data.truncated is True
 
     @mock_aws
     def test_fetch_image_scan_data_skips_oversized_layer(self):
