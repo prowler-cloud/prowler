@@ -25,10 +25,6 @@ const readSlackIntegrations = async (searchParams: URLSearchParams) => {
  * surrounding `ContentLayout`.
  */
 export async function SlackIntegrationContent() {
-  // Without this the React Compiler (on for the browser-mode project) injects
-  // `useMemoCache`, which makes this async component uncallable outside a render.
-  "use no memo";
-
   const searchParams = new URLSearchParams();
   searchParams.set("filter[integration_type]", "slack");
   // One workspace per tenant, so one row is the whole result set.
