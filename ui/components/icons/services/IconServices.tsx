@@ -776,8 +776,8 @@ export const SlackIcon: React.FC<IconSvgProps> = ({
       d="M0 12C0 5.37258 5.37258 0 12 0H36C42.6274 0 48 5.37258 48 12V36C48 42.6274 42.6274 48 36 48H12C5.37258 48 0 42.6274 0 36V12Z"
       fill="#FFFFFF"
     />
-    {/* Slack mark, authored on its native 122.8 grid and scaled into the 30px
-        safe area of the 48px tile (30 / 122.8 = 0.2443). */}
+    {/* Slack mark on its native 122.8 grid, scaled into the 48px tile's 30px
+        safe area (30 / 122.8 = 0.2443). */}
     <g transform="translate(9 9) scale(0.2443)">
       <path
         d="M25.8 77.6c0 7.1-5.8 12.9-12.9 12.9S0 84.7 0 77.6s5.8-12.9 12.9-12.9h12.9v12.9zm6.5 0c0-7.1 5.8-12.9 12.9-12.9s12.9 5.8 12.9 12.9v32.3c0 7.1-5.8 12.9-12.9 12.9s-12.9-5.8-12.9-12.9V77.6z"

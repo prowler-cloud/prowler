@@ -20,15 +20,12 @@ import {
 import type { IntegrationProps } from "@/types/integrations";
 
 interface SlackIntegrationManagerProps {
-  /** The tenant's Slack integration — at most one exists (one workspace). */
+  /** At most one exists per tenant (one workspace). */
   integration: IntegrationProps | null;
-  /** Consent URL to start an install with, absent once one is connected. */
   authorizeUrl: string | null;
   /** This deployment has no Prowler Slack app, so no install can be started. */
   unavailable: boolean;
-  /** Slack is rate limiting Prowler: what to tell the user about the wait. */
   rateLimitMessage: string | null;
-  /** The install could not be read; the page still renders what it can. */
   loadError: string | null;
 }
 
@@ -73,8 +70,7 @@ export const SlackIntegrationManager = ({
 
   const configuration = integration?.attributes.configuration;
   const workspaceName = configuration?.team_name;
-  // Absent until a channel is chosen, never present-and-null (see the
-  // configuration comment on `IntegrationProps`).
+  // Absent until a channel is chosen, never present-and-null.
   const channelId = configuration?.channel_id ?? null;
 
   return (
@@ -93,10 +89,8 @@ export const SlackIntegrationManager = ({
         </Alert>
       )}
 
-      {/* Replaces the cards rather than the whole page: `unavailable` is a
-          standing state for a whole deployment phase, so returning early here
-          would swallow a read that failed underneath it — and the suppressed
-          notice is the actionable one ("try again in a few minutes"). */}
+      {/* Replaces the cards, not the whole page: an early return here would
+          swallow the rate-limit and load-error notices above. */}
       {unavailable ? (
         <Alert variant="info">
           <AlertTitle>
@@ -142,10 +136,8 @@ export const SlackIntegrationManager = ({
                   </p>
                 )}
               </div>
-              {/* The check posts to the destination channel, so with none
-                  recorded the API refuses it with a 400 rather than reporting a
-                  connection it never tested. Offering the button anyway would
-                  guarantee a failure the user has no way to resolve. */}
+              {/* The check posts to the destination channel: the API answers
+                  400 when none is recorded yet. */}
               <Button
                 size="sm"
                 variant="outline"

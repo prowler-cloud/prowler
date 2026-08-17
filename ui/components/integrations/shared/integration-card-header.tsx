@@ -6,11 +6,7 @@ import { ReactNode } from "react";
 import { Badge } from "@/components/shadcn";
 import { cn } from "@/lib/utils";
 
-/**
- * The three states a connection can be in. `null` is not "not connected": it is
- * an integration that exists and has never been checked, so painting it with
- * the fail tokens would report a break nothing has observed.
- */
+// `null` means never checked, not disconnected: it must not get the fail tokens.
 const CONNECTION_BADGE = {
   connected: {
     label: "Connected",
