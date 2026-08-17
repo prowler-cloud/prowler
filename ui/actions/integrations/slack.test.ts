@@ -5,6 +5,7 @@
  * pagination follows.
  */
 
+import { revalidatePath } from "next/cache";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -378,6 +379,146 @@ describe("getSlackChannels", () => {
       expect(result).toEqual({ channels: [channelOption(FIRST_CHANNEL)] });
     },
   );
+
+  it("answers an unreadable page as no channels rather than parser prose", async () => {
+    fetchMock.mockResolvedValueOnce(unreadableOk(HTML_INTERSTITIAL));
+
+    const result = await getSlackChannels(SLACK_INTEGRATION_ID);
+
+    expect(result).toEqual({ channels: [] });
+    expectNoParserProse(result);
+  });
+});
+
+/**
+ * A `2xx` whose body is not the JSON:API document the contract promises — an
+ * empty answer, or the HTML a proxy or WAF puts in front of one. Reading it
+ * must not throw: the raw `SyntaxError` message survives `sanitizeErrorMessage`
+ * (V8 truncates the HTML snippet to ten characters, so the `<!doctype html>`
+ * branch never matches it) and would be shown to the user verbatim.
+ */
+const HTML_INTERSTITIAL =
+  "<!DOCTYPE html><html><body><h1>Checking your browser</h1></body></html>";
+
+const unreadableOk = (body: string) =>
+  new Response(body, {
+    status: 200,
+    headers: { "content-type": body ? "text/html" : "application/json" },
+  });
+
+/** V8's parser wording, which no user should ever be shown. */
+const PARSER_PROSE = /unexpected (token|end of json)|not valid json/i;
+
+const expectNoParserProse = (result: unknown) => {
+  const message = (result as { error?: string }).error ?? "";
+  expect(message).not.toMatch(PARSER_PROSE);
+};
+
+const INTEGRATION_URL = `https://api.test/api/v1/integrations/${SLACK_INTEGRATION_ID}`;
+
+const saveChannel = () =>
+  setSlackDefaultChannel(SLACK_INTEGRATION_ID, FIRST_CHANNEL.id);
+
+const expectIntegrationsRevalidated = () => {
+  expect(vi.mocked(revalidatePath).mock.calls).toEqual([
+    ["/integrations"],
+    ["/integrations/slack"],
+  ]);
+};
+
+describe("setSlackDefaultChannel", () => {
+  it("returns the saved integration and revalidates the pages listing it", async () => {
+    fetchMock.mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          data: {
+            type: "integrations",
+            id: SLACK_INTEGRATION_ID,
+            attributes: {
+              integration_type: "slack",
+              configuration: {
+                channel_id: FIRST_CHANNEL.id,
+                channel_name: FIRST_CHANNEL.name,
+              },
+            },
+          },
+        }),
+        {
+          status: 200,
+          headers: { "content-type": "application/vnd.api+json" },
+        },
+      ),
+    );
+
+    const result = await saveChannel();
+
+    expect(requestedUrls()).toEqual([INTEGRATION_URL]);
+    expect(result).toMatchObject({
+      integration: {
+        attributes: { configuration: { channel_name: FIRST_CHANNEL.name } },
+      },
+    });
+    expectIntegrationsRevalidated();
+  });
+
+  it.each([
+    { shape: "empty", body: "" },
+    { shape: "an HTML interstitial", body: HTML_INTERSTITIAL },
+  ])(
+    "answers a $shape `200` as an unread result, not as a failed save",
+    async ({ body }) => {
+      fetchMock.mockResolvedValueOnce(unreadableOk(body));
+
+      const result = await saveChannel();
+
+      expect(result).toEqual({ error: SLACK_UNREADABLE_RESULT_MESSAGE });
+      expectNoParserProse(result);
+      // The API recorded the channel before answering, so both pages have to be
+      // refreshed even though its answer could not be read.
+      expectIntegrationsRevalidated();
+    },
+  );
+
+  // The caller reads `integration.attributes.configuration`, so a guard any
+  // shallower than that lets the miss surface later as a generic "something
+  // went wrong" from the manager's catch.
+  it.each([
+    { shape: "no `data`", body: {} },
+    { shape: "a null `data`", body: { data: null } },
+    { shape: "a `data` with no configuration", body: { data: {} } },
+  ])(
+    "answers a `200` carrying $shape as an unread result",
+    async ({ body }) => {
+      fetchMock.mockResolvedValueOnce(
+        new Response(JSON.stringify(body), {
+          status: 200,
+          headers: { "content-type": "application/vnd.api+json" },
+        }),
+      );
+
+      const result = await saveChannel();
+
+      expect(result).toEqual({ error: SLACK_UNREADABLE_RESULT_MESSAGE });
+      expectNoParserProse(result);
+      expectIntegrationsRevalidated();
+    },
+  );
+});
+
+describe("sendSlackTestMessage", () => {
+  it("answers an unreadable `202` as no task started, not as parser prose", async () => {
+    fetchMock.mockResolvedValueOnce(
+      new Response(HTML_INTERSTITIAL, {
+        status: 202,
+        headers: { "content-type": "text/html" },
+      }),
+    );
+
+    const result = await sendSlackTestMessage(SLACK_INTEGRATION_ID);
+
+    expect(result).toEqual({ error: "Slack did not start the test message." });
+    expectNoParserProse(result);
+  });
 });
 
 /**

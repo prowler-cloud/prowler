@@ -339,7 +339,9 @@ export const getSlackChannels = async (
         };
       }
 
-      const body = await response.json();
+      // A page that is not JSON reads as no channels, rather than throwing a
+      // parser message the user would be shown verbatim.
+      const body = await response.json().catch(() => null);
 
       for (const resource of body?.data ?? []) {
         channels.push({
@@ -428,10 +430,20 @@ export const setSlackDefaultChannel = async (
       };
     }
 
-    const body = await response.json();
+    const body = await response.json().catch(() => null);
 
+    // Before the guard and on both paths: the API recorded the channel before
+    // answering, so a cache still holding the previous one would keep showing
+    // it after a save that happened.
     revalidatePath("/integrations");
     revalidatePath("/integrations/slack");
+
+    // Guarded as deep as the caller reads: it names the saved channel from
+    // `attributes.configuration`, and a `2xx` this UI cannot read is an unknown
+    // result, not a parser message to put in front of the user.
+    if (!body?.data?.attributes?.configuration) {
+      return { error: SLACK_UNREADABLE_RESULT_MESSAGE };
+    }
 
     return { integration: parseStringify(body.data) as IntegrationProps };
   } catch (error) {
@@ -481,7 +493,9 @@ export const sendSlackTestMessage = async (
       };
     }
 
-    const body = await response.json();
+    // As above: an unreadable `202` is "no task to follow", not a parser
+    // message.
+    const body = await response.json().catch(() => null);
     const taskId = body?.data?.id;
 
     if (!taskId) {
