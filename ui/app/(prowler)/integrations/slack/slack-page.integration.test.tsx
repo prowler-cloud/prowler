@@ -416,7 +416,7 @@ describe("choosing a destination channel", () => {
     expect(message).toMatch(/Connect the workspace again and approve/);
     // Slack's reason is a protocol token, not copy: it travels in `code` and is
     // never shown, however the API happened to word its own `detail`.
-    expect(message).not.toMatch(new RegExp(SLACK_MISSING_SCOPE_CODE));
+    expect(message).not.toMatch(SLACK_MISSING_SCOPE_CODE);
     expect(harness.channelInviteHint()).toMatch(/invites @Prowler/);
 
     // And — a listing Prowler could not read says nothing about the channel
@@ -532,7 +532,7 @@ describe("choosing a destination channel", () => {
     // Then — the one fix the user can carry out themselves, in Slack.
     expect(refusal).toMatch(/Prowler is not in that channel/);
     expect(refusal).toMatch(/Invite @Prowler to it in Slack/);
-    expect(refusal).not.toMatch(new RegExp(SLACK_NOT_IN_CHANNEL_CODE));
+    expect(refusal).not.toMatch(SLACK_NOT_IN_CHANNEL_CODE);
 
     // And — nothing was recorded, so nothing is offered to post with.
     expect(await harness.defaultChannel()).toBeNull();
@@ -558,7 +558,7 @@ describe("choosing a destination channel", () => {
     expect(refusal).toMatch(/no longer exists in the workspace/);
     expect(refusal).toMatch(/Choose another one/);
     expect(refusal).not.toMatch(/Invite @Prowler/);
-    expect(refusal).not.toMatch(new RegExp(SLACK_UNKNOWN_CHANNEL_DETAIL));
+    expect(refusal).not.toMatch(SLACK_UNKNOWN_CHANNEL_DETAIL);
     expect(await harness.defaultChannel()).toBeNull();
   }, 60000);
 });
@@ -588,7 +588,7 @@ describe("sending a test message", () => {
     // Then — sent, and the user reads which channel it went to.
     expect(outcome).toBe(TEST_MESSAGE_OUTCOME.SENT);
     expect(await harness.lastTestMessageOutcome()).toMatch(
-      new RegExp(`#${SLACK_PUBLIC_CHANNEL.name}`),
+      `#${SLACK_PUBLIC_CHANNEL.name}`,
     );
   }, 60000);
 
@@ -613,7 +613,7 @@ describe("sending a test message", () => {
     const reported = await harness.lastTestMessageOutcome();
     expect(reported).toMatch(/Prowler is not in that channel/);
     expect(reported).toMatch(/Invite @Prowler to it in Slack/);
-    expect(reported).not.toMatch(new RegExp(SLACK_NOT_IN_CHANNEL_CODE));
+    expect(reported).not.toMatch(SLACK_NOT_IN_CHANNEL_CODE);
   }, 60000);
 
   it("reports a refusal the task words itself, rather than swallowing it", async () => {
@@ -639,7 +639,7 @@ describe("sending a test message", () => {
     // Then
     expect(outcome).toBe(TEST_MESSAGE_OUTCOME.FAILED);
     expect(await harness.lastTestMessageOutcome()).toMatch(
-      new RegExp(SLACK_TEST_MESSAGE_REFUSED_DETAIL),
+      SLACK_TEST_MESSAGE_REFUSED_DETAIL,
     );
   }, 60000);
 
@@ -662,7 +662,7 @@ describe("sending a test message", () => {
     expect(outcome).toBe(TEST_MESSAGE_OUTCOME.FAILED);
     const reported = await harness.lastTestMessageOutcome();
     expect(reported).toMatch(/Slack refused the message/);
-    expect(reported).toMatch(new RegExp(SLACK_UNMAPPED_REASON_CODE));
+    expect(reported).toMatch(SLACK_UNMAPPED_REASON_CODE);
     expect(reported).not.toBe(SLACK_UNMAPPED_REASON_CODE);
   }, 60000);
 });

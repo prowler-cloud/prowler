@@ -69,11 +69,16 @@ export const SlackChannelSelector = ({
   disabled = false,
 }: SlackChannelSelectorProps) => {
   const isEmpty = !isLoading && !error && options.length === 0;
+  // The trigger only exists in the picker branch, so the label only points at
+  // something there: an `htmlFor` naming a missing element is invalid markup.
+  const hasPicker = !error && !isEmpty;
 
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between gap-3">
-        <Label htmlFor="slack-channel">Destination channel</Label>
+        <Label htmlFor={hasPicker ? "slack-channel" : undefined}>
+          Destination channel
+        </Label>
         {onRefresh && (
           <Button
             size="sm"
