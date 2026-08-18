@@ -138,12 +138,13 @@ class ComplianceOutputBase(ComplianceOutput):
         self, requirement: Union[Mitre_Requirement, Compliance_Requirement]
     ) -> dict[str, str]:
         """Subclass hook to provide framework-specific fields from the requirement.
-        
+
         Args:
-            requirement (Union[Mitre_Requirement, Compliance_Requirement]): The compliance requirement to extract framework-specific data from.
-            
+            requirement (Union[Mitre_Requirement, Compliance_Requirement]):
+                The compliance requirement to extract framework-specific data from.
+
         Returns:
-            dict[str, str]: A dictionary containing framework-specific fields to be appended to the model.
+            dict[str, str]: Framework-specific fields appended to the model.
         """
         return {}
 
