@@ -193,6 +193,17 @@ export const connectedSlackFixture = (
     ...overrides,
   });
 
+const configuredInstall = (): SlackInstallFixture => ({
+  id: SLACK_INTEGRATION_ID,
+  connected: true,
+  connectionLastCheckedAt: "2026-08-10T09:30:00Z",
+  workspace: {
+    ...PROWLER_HQ,
+    channelId: SLACK_DEFAULT_CHANNEL.id,
+    channelName: SLACK_DEFAULT_CHANNEL.name,
+  },
+});
+
 /**
  * A workspace connected *and* a channel on record. Anything the API refuses
  * until a channel exists (the connection check) needs this fixture.
@@ -200,16 +211,17 @@ export const connectedSlackFixture = (
 export const configuredSlackFixture = (
   overrides: Partial<SlackFixture> = {},
 ): SlackFixture =>
+  connectedSlackFixture({ install: configuredInstall(), ...overrides });
+
+/**
+ * The same finished setup, with a check time no parser can read: a zero date
+ * from a bad write or a serializer change. The contract types the attribute as
+ * a string and rules nothing else out.
+ */
+export const unreadableCheckTimeSlackFixture = (): SlackFixture =>
   connectedSlackFixture({
     install: {
-      id: SLACK_INTEGRATION_ID,
-      connected: true,
-      connectionLastCheckedAt: "2026-08-10T09:30:00Z",
-      workspace: {
-        ...PROWLER_HQ,
-        channelId: SLACK_DEFAULT_CHANNEL.id,
-        channelName: SLACK_DEFAULT_CHANNEL.name,
-      },
+      ...configuredInstall(),
+      connectionLastCheckedAt: "0000-00-00T00:00:00Z",
     },
-    ...overrides,
   });

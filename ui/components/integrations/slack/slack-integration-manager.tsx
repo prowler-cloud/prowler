@@ -1,6 +1,6 @@
 "use client";
 
-import { format } from "date-fns";
+import { format, isValid, parseISO } from "date-fns";
 import { TestTube } from "lucide-react";
 import { useState } from "react";
 
@@ -73,6 +73,14 @@ export const SlackIntegrationManager = ({
   // Absent until a channel is chosen, never present-and-null.
   const channelId = configuration?.channel_id ?? null;
 
+  const checkedAt = integration?.attributes.connection_last_checked_at;
+  const checkedOn = checkedAt ? parseISO(checkedAt) : null;
+  // `format` throws a RangeError on an unreadable value, which would replace
+  // the page with the route's error boundary: show nothing instead, as for a
+  // connection that was never checked.
+  const lastCheckedOn =
+    checkedOn && isValid(checkedOn) ? format(checkedOn, "yyyy/MM/dd") : null;
+
   return (
     <div className="flex flex-col gap-6">
       {rateLimitMessage && (
@@ -118,15 +126,10 @@ export const SlackIntegrationManager = ({
           <CardContent className="pt-0">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="text-xs text-gray-500 dark:text-gray-300">
-                {integration.attributes.connection_last_checked_at && (
+                {lastCheckedOn && (
                   <p>
                     <span className="font-medium">Last checked:</span>{" "}
-                    {format(
-                      new Date(
-                        integration.attributes.connection_last_checked_at,
-                      ),
-                      "yyyy/MM/dd",
-                    )}
+                    {lastCheckedOn}
                   </p>
                 )}
                 {!channelId && (

@@ -13,6 +13,7 @@ import {
   connectedSlackFixture,
   INTEGRATIONS_SERVER_ERROR_DETAIL,
   slackFixture,
+  unreadableCheckTimeSlackFixture,
 } from "@/__tests__/msw/handlers/slack.fixtures";
 
 import {
@@ -188,6 +189,23 @@ describe("a connected workspace", () => {
     const badge = await harness.connectionBadge();
     expect(badge).toBe("Not checked yet");
     expect(badge).not.toMatch(/Disconnected/);
+  }, 30000);
+
+  it("keeps the page usable when the recorded check time is one no parser can read", async () => {
+    // Given — a finished setup whose `connection_last_checked_at` is a zero
+    // date. `date-fns` throws a RangeError on it, which would replace the whole
+    // page with the route's error boundary.
+    const harness = new SlackIntegrationHarness(
+      unreadableCheckTimeSlackFixture(),
+    );
+
+    await harness.mount();
+
+    expect(await harness.connectedWorkspaceName()).toBe(WORKSPACE_NAME);
+    expect(await harness.connectionBadge()).toBe("Connected");
+    // Nothing to show, so nothing is shown: the same line a workspace that was
+    // never checked renders.
+    expect(harness.lastCheckedLine()).toBeNull();
   }, 30000);
 
   it("does not offer a connection check the API is bound to refuse", async () => {

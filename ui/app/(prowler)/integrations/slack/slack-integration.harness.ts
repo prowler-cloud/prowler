@@ -240,6 +240,17 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     return this.containsText(/Choosing a destination channel is the next step/);
   }
 
+  /**
+   * The "last checked" line as rendered, or null when the page shows none —
+   * which is what a workspace whose connection was never checked shows.
+   */
+  lastCheckedLine(): string | null {
+    const line = Array.from(
+      this.container.querySelectorAll<HTMLElement>("p"),
+    ).find((p) => /^Last checked:/.test((p.textContent ?? "").trim()));
+    return line ? (line.textContent ?? "").trim() : null;
+  }
+
   async testConnection(): Promise<ConnectionOutcome> {
     await this.clickButton(/Test connection/);
 
