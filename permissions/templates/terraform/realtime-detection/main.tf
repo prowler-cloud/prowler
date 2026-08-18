@@ -115,6 +115,9 @@ resource "aws_cloudwatch_event_rule" "prowler_realtime" {
   state       = "ENABLED"
 
   event_pattern = jsonencode({
+    # PutEvents rejects the reserved aws. prefix, so this keeps a caller in the
+    # account from forging a CloudTrail-shaped event
+    source        = [{ prefix = "aws." }]
     "detail-type" = ["AWS API Call via CloudTrail"]
     detail = {
       eventSource = [

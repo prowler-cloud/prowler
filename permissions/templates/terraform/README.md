@@ -20,6 +20,7 @@ This Terraform configuration creates the necessary IAM role and policies to allo
 ### Variables
 
 - `external_id` (required): External ID for role assumption security
+- `region` (optional): AWS region to deploy to (default: `us-east-1`). The EventBridge rules are regional, so deploy once per region you want covered
 - `account_id` (optional): AWS Account ID that will assume the role (defaults to Prowler Cloud: "232136659152")
 - `iam_principal` (optional): IAM principal pattern allowed to assume the role (defaults to Prowler Cloud: "role/prowler*")
 - `enable_s3_integration` (optional): Enable S3 integration for storing scan reports (default: false)
@@ -55,12 +56,14 @@ terraform apply \
 
 `prowler_webhook_url` already defaults to the Prowler Cloud ingest endpoint, so only the API key is needed. Override it for a self-hosted deployment or for testing.
 
-The apply verifies the connection by emitting a hello event, without touching any real resource. It travels the same connection, API destination, API key and endpoint as a real event, and Prowler Cloud marks the provider as connected without running a scan. The `prowler_realtime_hello_status` output reports the result, and the event is emitted again whenever `prowler_webhook_url` changes.
+The apply publishes a hello event to verify the connection, without touching any real resource. It travels the same connection, API destination, API key and endpoint as a real event, and Prowler Cloud marks the provider as connected once it arrives, without running a scan.
 
-To re-check the connection at any point, emit it yourself:
+The `prowler_realtime_hello_status` output reports only that EventBridge accepted the event, which is not the same as the endpoint receiving it: delivery is asynchronous. Prowler Cloud is what confirms the connection, and a delivery that fails every retry lands in the dead-letter queue below. The event is published again whenever `prowler_webhook_url` changes.
+
+To re-check the connection at any point, publish it yourself. Use the same region the template deploys to, since the rule only exists on that region's event bus:
 
 ```bash
-aws events put-events --entries '[{
+aws events put-events --region us-east-1 --entries '[{
   "Source": "prowler.simulation",
   "DetailType": "test_connection",
   "Detail": "{}"
@@ -69,7 +72,7 @@ aws events put-events --entries '[{
 
 Failed deliveries are not lost: EventBridge retries for up to 24 hours and then writes the event to the `ProwlerRealtimeDetectionDLQ` queue created in your account, together with the error code and the number of attempts. Responses that are never retried (any 4xx other than 401, 407, 409 and 429) land there on the first attempt. The queue is yours: Prowler has no permission to read it.
 
-> **Note:** the EventBridge rule is regional. It forwards only the events delivered to the default event bus of the region Terraform deploys to (`us-east-1` by default, see `versions.tf`). IAM events are global and always land in `us-east-1`, but regional services (EC2 security groups, RDS, per-region Config and GuardDuty) are only covered in that region. Deploy the module in every region you want covered.
+> **Note:** the EventBridge rules are regional. They forward only the events delivered to the default event bus of the region set in `region` (`us-east-1` by default). IAM events are global and always land in `us-east-1`, but regional services (EC2 security groups, RDS, per-region Config and GuardDuty) are only covered in the region you deploy to. Run the template once per region you want covered, changing `region` each time.
 
 #### Using terraform.tfvars file (Recommended)
 ```bash
@@ -93,6 +96,15 @@ After successful deployment, you'll get:
 - `prowler_realtime_rule_arn`: ARN of the EventBridge rule (null if real-time detection is disabled)
 - `prowler_realtime_api_destination_arn`: ARN of the EventBridge API destination (null if real-time detection is disabled)
 - `prowler_realtime_dlq_url`: URL of the dead-letter queue (null if real-time detection is disabled)
-- `prowler_realtime_hello_status`: result of the hello event emitted on apply, `Sent` or `Failed` with the error
+- `prowler_realtime_hello_status`: whether EventBridge accepted the hello event on apply, `Published` or `Failed` with the error
+
+### Handling the API key
+
+Terraform writes every variable it is given to state, including `prowler_api_key`, and marking it `sensitive` only hides it from the CLI output. Before enabling real-time detection:
+
+- Configure an encrypted, access-controlled remote backend (S3 with SSE and a restrictive bucket policy, Terraform Cloud, or equivalent). The default local state is a plaintext file in your working directory.
+- Pass the key from your secret manager instead of typing it into a file, for example `export TF_VAR_prowler_api_key="$(your-secret-tool read prowler/api-key)"`.
+- Do not commit a populated `terraform.tfvars`, and treat plan files as secrets too.
+- Revoking the key in Prowler Cloud stops all ingestion, so rotate it there if a state file is ever exposed.
 
 > **Note:** Terraform will use the AWS credentials of your default profile or AWS_PROFILE environment variable.

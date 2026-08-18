@@ -731,6 +731,10 @@ Resources:
       Description: Forwards the CloudTrail management events tracked by Prowler real-time detection to Prowler Cloud
       State: ENABLED
       EventPattern:
+        # PutEvents rejects the reserved aws. prefix, so this keeps a caller in the
+        # account from forging a CloudTrail-shaped event
+        source:
+          - prefix: "aws."
         detail-type:
           - "AWS API Call via CloudTrail"
         detail:
@@ -915,7 +919,7 @@ Resources:
 
 
           def handler(event, context):
-              """Emit the hello event, then always report SUCCESS.
+              """Publish the hello event, then always report SUCCESS.
 
               A failed verification must never roll back the scan role, so any
               error is reported in the response data instead of failing the stack.
@@ -944,7 +948,7 @@ Resources:
                       if entry.get("ErrorCode"):
                           data = {"Status": "Failed", "Error": entry["ErrorCode"]}
                       else:
-                          data = {"Status": "Sent", "EventId": entry["EventId"]}
+                          data = {"Status": "Published", "EventId": entry["EventId"]}
               except Exception as error:  # noqa: BLE001
                   data = {"Status": "Failed", "Error": str(error)[:200]}
               print(json.dumps(data))

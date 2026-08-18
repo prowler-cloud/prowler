@@ -27,6 +27,12 @@ variable "iam_principal" {
   default     = "role/prowler*"
 }
 
+variable "region" {
+  type        = string
+  description = "AWS region to deploy to. Only relevant for real-time detection: the EventBridge rules are regional, so deploy once per region you want covered."
+  default     = "us-east-1"
+}
+
 variable "enable_organizations" {
   type        = bool
   description = "Enable AWS Organizations discovery permissions. Set to true only when deploying this role in the management account."

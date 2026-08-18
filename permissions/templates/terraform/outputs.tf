@@ -42,6 +42,6 @@ output "prowler_realtime_dlq_url" {
 }
 
 output "prowler_realtime_hello_status" {
-  description = "Result of the hello event emitted on apply (null if real-time detection is disabled)"
+  description = "Whether the hello event was accepted by EventBridge on apply (null if real-time detection is disabled)"
   value       = try(module.realtime_detection[0].prowler_realtime_hello_status, null)
 }

@@ -19,7 +19,7 @@ output "prowler_realtime_dlq_arn" {
 }
 
 output "prowler_realtime_hello_status" {
-  description = "Result of the hello event emitted on apply: Sent, or Failed with the error"
+  description = "Whether the hello event was accepted by EventBridge on apply. Prowler Cloud confirms the connection when the event reaches the endpoint"
   value       = try(jsondecode(aws_lambda_invocation.prowler_realtime_hello.result), null)
 }
 

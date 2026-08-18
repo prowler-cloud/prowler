@@ -1,4 +1,4 @@
-"""Emits the Prowler real-time detection hello event.
+"""Publishes the Prowler real-time detection hello event.
 
 Invoked once by Terraform when real-time detection is enabled, mirroring the
 CloudFormation custom resource. It never raises: a failed verification must not
@@ -34,12 +34,12 @@ def handler(_event, context):
         try:
             entry = client.put_events(Entries=entries)["Entries"][0]
             if not entry.get("ErrorCode"):
-                return {"status": "Sent", "event_id": entry["EventId"]}
+                return {"status": "Published", "event_id": entry["EventId"]}
             error = entry["ErrorCode"]
         except Exception as failure:  # noqa: BLE001
             error = str(failure)[:200]
         if attempt + 1 < ATTEMPTS:
             time.sleep(BACKOFF_SECONDS)
 
-    print(f"hello event not sent: {error}")
+    print(f"hello event not published: {error}")
     return {"status": "Failed", "error": error}
