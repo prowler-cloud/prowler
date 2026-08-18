@@ -43,9 +43,9 @@ describe("starting the install", () => {
     expect(`${consentScreen.origin}${consentScreen.pathname}`).toBe(
       "https://slack.com/oauth/v2/authorize",
     );
-    expect((consentScreen.searchParams.get("scope") ?? "").split(",")).toEqual(
-      expect.arrayContaining(REQUIRED_SCOPES),
-    );
+    const scopes = (consentScreen.searchParams.get("scope") ?? "").split(",");
+    expect(scopes).toHaveLength(REQUIRED_SCOPES.length);
+    expect(scopes).toEqual(expect.arrayContaining(REQUIRED_SCOPES));
     // The state is server-minted, binding this install to the session
     // (design D5).
     expect(consentScreen.searchParams.get("state")).toBeTruthy();
