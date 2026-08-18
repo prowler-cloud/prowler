@@ -782,6 +782,11 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     return (notice.textContent ?? "").replace(/\s+/g, " ").trim();
   }
 
+  /** Whether the page is saying Slack has stopped accepting the credential. */
+  showsRevokedCredentialNotice(): boolean {
+    return this.alertMatching(/no longer accepts Prowler's access/) !== null;
+  }
+
   private reconnectLink(): HTMLAnchorElement | null {
     return (
       Array.from(this.container.querySelectorAll("a")).find((anchor) =>

@@ -27,6 +27,7 @@ import {
 import { Modal } from "@/components/shadcn/modal";
 import {
   isSlackTokenErrorCode,
+  SLACK_REASON_TOKEN,
   slackErrorMessage,
 } from "@/lib/integrations/slack-errors";
 import type { SlackTokenErrorCode } from "@/lib/integrations/slack-errors";
@@ -71,6 +72,14 @@ const channelRefEquals = (
   a: SlackChannelRef | null,
   b: SlackChannelRef | null,
 ) => a?.id === b?.id && a?.name === b?.name;
+
+/**
+ * Slack's own reason, when the string is one at all: the generic connection
+ * check reports a reason and a sentence in the same field, and only a reason is
+ * an answer from Slack about the credential.
+ */
+const asReasonCode = (reason: string | null): string | null =>
+  reason && SLACK_REASON_TOKEN.test(reason) ? reason : null;
 
 interface SlackIntegrationManagerProps {
   /** At most one exists per tenant (one workspace). */
@@ -155,6 +164,15 @@ export const SlackIntegrationManager = ({
     }
   }
 
+  // Only an answer from Slack moves the bus. A refusal names its code; a
+  // success clears it. A call that never got an answer proves nothing and
+  // leaves the last answer standing.
+  const provedCredentialAlive = () => setLastRefusalCode(null);
+
+  const recordRefusal = (code: string | null | undefined) => {
+    if (code) setLastRefusalCode(code);
+  };
+
   /**
    * Whether that last refusal proves the Slack grant itself is dead, rather
    * than a channel unreachable or Slack busy.
@@ -215,7 +233,8 @@ export const SlackIntegrationManager = ({
         );
         // The listing is the call a dead credential shows up on first: it
         // runs on arrival, before the user has touched anything.
-        setLastRefusalCode("error" in result ? (result.code ?? null) : null);
+        if ("error" in result) recordRefusal(result.code);
+        else provedCredentialAlive();
       })
       .catch(() => {
         if (cancelled) return;
@@ -251,7 +270,7 @@ export const SlackIntegrationManager = ({
       if ("error" in result) {
         // The API validates the channel against Slack, so the save is one of
         // the calls that can discover the credential is gone.
-        setLastRefusalCode(result.code ?? null);
+        recordRefusal(result.code);
         toast({
           variant: "destructive",
           title: "Could not save the destination channel",
@@ -267,6 +286,9 @@ export const SlackIntegrationManager = ({
         channels.find((channel) => channel.id === selectedChannelId)?.name ??
         null;
 
+      // Slack validated this channel against the stored grant, so the grant is
+      // alive whatever an earlier call ran into.
+      provedCredentialAlive();
       setDefaultChannel({ id: selectedChannelId, name: savedName });
       saved = true;
       toast({
@@ -296,7 +318,7 @@ export const SlackIntegrationManager = ({
       const result = await testIntegrationConnection(id);
 
       if (result.success) {
-        setLastRefusalCode(null);
+        provedCredentialAlive();
         toast({
           title: "Connection test successful!",
           description:
@@ -308,10 +330,12 @@ export const SlackIntegrationManager = ({
         // wording, and only falls back to what arrived when it names a reason
         // this UI has nothing better to say about. A dead credential named here
         // is not a failure checking again can fix, which is what recording the
-        // reason — rather than only reporting it — is for.
+        // reason — rather than only reporting it — is for. The same field also
+        // carries this check's own prose for a failure Slack never answered,
+        // which is why only a reason-shaped one is recorded.
         const reason = result.error?.trim() || null;
 
-        setLastRefusalCode(reason);
+        recordRefusal(asReasonCode(reason));
 
         toast({
           variant: "destructive",

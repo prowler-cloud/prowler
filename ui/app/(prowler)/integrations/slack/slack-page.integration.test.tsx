@@ -718,4 +718,58 @@ describe("a credential Slack no longer accepts", () => {
     expect(message).toMatch(/Prowler's Slack credential has expired/);
     expect(message).not.toMatch(new RegExp(SLACK_TOKEN_EXPIRED_CODE));
   }, 30000);
+
+  it("keeps saying so when a later check fails without Slack naming a reason", async () => {
+    // Given — the listing found the credential dead on arrival, and a
+    // connection check that settles as failed naming nothing: the generic check
+    // reports its own wording for a failure Slack never answered.
+    const harness = new SlackIntegrationHarness(
+      configuredSlackFixture({
+        channelsRefusal: SLACK_TOKEN_EXPIRED_REFUSAL,
+        connection: { connected: false, error: null },
+      }),
+    );
+    await harness.mount();
+    expect(await harness.revokedCredentialNotice()).toMatch(
+      /Prowler's Slack credential has expired/,
+    );
+
+    // When — the user checks the connection, and the check fails saying nothing
+    // about the credential.
+    expect(await harness.testConnection()).toBe(CONNECTION_OUTCOME.FAILURE);
+
+    // Then — a failure Slack never answered is no evidence the grant works
+    // again: the dead credential is still what the page reports, and the way
+    // out of it is still a click away.
+    expect(await harness.revokedCredentialNotice()).toMatch(
+      /Prowler's Slack credential has expired/,
+    );
+    expect(harness.offersReconnect()).toBe(true);
+    expect(await harness.connectionBadge()).toBe("Disconnected");
+  }, 60000);
+
+  it("stops saying so once a save Slack validated goes through", async () => {
+    // Given — a finished setup whose test message found the grant revoked.
+    const harness = new SlackIntegrationHarness(
+      configuredSlackFixture({
+        testMessage: { accepted: false, error: SLACK_TOKEN_REVOKED_CODE },
+      }),
+    );
+    await harness.mount();
+    expect(await harness.connectionBadge()).toBe("Connected");
+    expect(await harness.sendTestMessage()).toBe(TEST_MESSAGE_OUTCOME.FAILED);
+    expect(harness.showsRevokedCredentialNotice()).toBe(true);
+    expect(await harness.connectionBadge()).toBe("Disconnected");
+
+    // When — the access is approved again in Slack, away from this page, and
+    // the user saves a destination here. The API validates the channel against
+    // Slack, so the save is an answer about the credential.
+    await harness.chooseChannel(SLACK_SECOND_PUBLIC_CHANNEL.name);
+
+    // Then — Slack answered, so the notice about a credential it no longer
+    // accepts goes, and the card is back to what it reported on arrival.
+    expect(harness.showsRevokedCredentialNotice()).toBe(false);
+    expect(harness.offersReconnect()).toBe(false);
+    expect(await harness.connectionBadge()).toBe("Connected");
+  }, 60000);
 });
