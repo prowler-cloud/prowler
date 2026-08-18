@@ -764,7 +764,6 @@ export const SlackIcon: React.FC<IconSvgProps> = ({
     fill="none"
     focusable="false"
     height={height ?? size}
-    role="presentation"
     viewBox="0 0 48 48"
     width={width ?? size}
     className={className}
