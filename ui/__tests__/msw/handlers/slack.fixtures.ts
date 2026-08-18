@@ -72,10 +72,10 @@ export interface SlackRefusalFixture {
 /**
  * What `DELETE /integrations/{id}` reports about revoking the token at Slack.
  * Revocation is best-effort: the row goes either way, and the outcome travels in
- * JSON:API `meta` so the UI can say when access still needs removing by hand.
+ * JSON:API `meta`.
  *
- * One boolean is the whole of it. The API sends no reason for a revocation that
- * did not happen, so modelling one here would let a test prove copy the real
+ * One boolean is the whole of it: the API sends no reason for a revocation that
+ * did not happen, so modelling one would let a test prove copy the real
  * deployment can never produce.
  */
 export interface SlackRevocationFixture {
@@ -129,7 +129,6 @@ export interface SlackFixture {
    * listing itself answered fine.
    */
   channelSaveRefusal: SlackRefusalFixture | null;
-  /** What disconnecting reports about revoking the token at Slack. */
   revocation: SlackRevocationFixture;
 }
 
@@ -194,9 +193,8 @@ export const INTEGRATIONS_SERVER_ERROR_DETAIL = "A server error occurred.";
 export const SLACK_MISSING_SCOPE_DETAIL =
   "Slack refused the request: missing_scope.";
 /**
- * The API wording a dead grant arrives with. It names the raw reason, the same
- * way the missing-scope one does — which is what lets a test tell "the UI read
- * `code` and used its own copy" apart from "the UI echoed `detail`".
+ * Names the raw reason, as the missing-scope wording does: what lets a test tell
+ * copy the UI mapped from `code` apart from an echoed `detail`.
  */
 export const SLACK_TOKEN_EXPIRED_DETAIL =
   "Slack refused the request: token_expired.";
@@ -233,9 +231,9 @@ export const SLACK_NOT_IN_CHANNEL_CODE = "not_in_channel";
  */
 export const SLACK_UNMAPPED_REASON_CODE = "is_archived";
 /**
- * The two dead-grant codes the tests drive with, out of the four the contract
- * lists. Whichever call surfaces one, the integration is disconnected and the
- * only way out is connecting the workspace again (contract, Cross-cutting).
+ * Two of the four dead-grant codes the contract lists. Whichever call surfaces
+ * one, the integration is disconnected and the only way out is connecting the
+ * workspace again (contract, Cross-cutting).
  */
 export const SLACK_TOKEN_REVOKED_CODE = "token_revoked";
 export const SLACK_TOKEN_EXPIRED_CODE = "token_expired";
@@ -262,9 +260,9 @@ export const SLACK_RATE_LIMITED_REFUSAL: SlackRefusalFixture = {
 };
 
 /**
- * The stored grant is no longer usable. A `400` like any other actionable
- * refusal — deliberately not a `401`, which would read as "your Prowler session
- * expired" (contract, Errors) — and the integration is marked disconnected.
+ * The stored grant is no longer usable: a `400` like any other actionable
+ * refusal, deliberately not the `401` that would read as an expired Prowler
+ * session (contract, Errors).
  */
 export const SLACK_TOKEN_EXPIRED_REFUSAL: SlackRefusalFixture = {
   status: 400,
@@ -442,9 +440,7 @@ export const configuredSlackFixture = (
 
 /**
  * A connected tenant whose disconnect removes the row but cannot revoke at
- * Slack — the outcome the user has to finish by hand in the workspace. The API
- * reports it as `revoked: false` and says no more than that, which is exactly
- * as much as the UI can honestly tell them.
+ * Slack — the outcome the user has to finish by hand in the workspace.
  */
 export const revokeFailureSlackFixture = (
   overrides: Partial<SlackFixture> = {},
@@ -456,8 +452,7 @@ export const revokeFailureSlackFixture = (
 
 /**
  * A connected tenant whose disconnect answers a plain `204` with no body: the
- * row is gone and the revocation is unreported. Neither a confirmed revocation
- * nor a failed one, so the UI can only say the workspace is no longer connected.
+ * row is gone and the revocation is unreported.
  */
 export const unreportedRevocationSlackFixture = (
   overrides: Partial<SlackFixture> = {},
@@ -469,9 +464,7 @@ export const unreportedRevocationSlackFixture = (
 
 /**
  * A connected tenant whose token has been revoked at Slack: the row still says
- * connected until a check runs, and the check is what surfaces it. The check
- * itself needs a destination channel on record — the API refuses to test one
- * that has none — so this builds on the finished setup, not the bare install.
+ * connected until a check runs, and the check is what surfaces it.
  */
 export const revokedTokenSlackFixture = (
   overrides: Partial<SlackFixture> = {},

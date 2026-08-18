@@ -353,15 +353,8 @@ export const handlersForSlack = (fx: SlackFixture) => {
     }),
 
     // Disconnect. Revocation at Slack is best-effort: the row is removed either
-    // way and the outcome is reported in `meta`, so the UI can tell the user
-    // when access still has to be removed by hand in the workspace.
-    //
-    // `revoked` is the entire outcome. The API sends no reason for a revocation
-    // that failed, and a handler that invented one would let the page grow copy
-    // around a field the deployment never sends.
-    //
-    // A `null` outcome is the plain `204` a deployment that overrides nothing
-    // sends: no body, so no `meta` to read the outcome from.
+    // way and the outcome travels in `meta` — or nowhere at all, in the plain
+    // `204` a deployment with no `destroy` override sends.
     http.delete(`${API}/integrations/:id`, () => {
       install = null;
       if (fx.revocation.revoked === null) {

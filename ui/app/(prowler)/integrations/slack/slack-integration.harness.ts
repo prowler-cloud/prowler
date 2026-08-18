@@ -32,7 +32,6 @@ export type ConnectionOutcome =
 /** Sentinel: the page settled on "no channel recorded", rather than not yet. */
 const NO_DEFAULT_CHANNEL = "<no channel recorded>";
 
-/** Whether disconnecting also revoked Prowler's token at Slack. */
 export const REVOCATION_OUTCOME = {
   REVOKED: "revoked",
   NOT_REVOKED: "not-revoked",
@@ -706,15 +705,15 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
 
   /**
    * Disconnects the workspace, confirming the way a user has to, and reports
-   * what the page says about the revocation — the three outcomes are mutually
-   * exclusive, so asking for one is also a check that the others are absent.
+   * what the page says about the revocation. The outcomes are mutually
+   * exclusive, so asking for one also checks the others are absent.
    *
-   * The two reported-by-toast outcomes share a title, so each is read from its
-   * own description: a title match alone would agree with either wording.
+   * The revoked and unreported outcomes share a toast title, so each is read
+   * from its own description: a title match would agree with either.
    */
   async disconnect(): Promise<RevocationOutcome> {
-    // The card's action opens the confirmation; the dialog's own button carries
-    // the noun too, so the two never resolve to each other.
+    // The dialog's own button carries the noun too, hence the exact match on
+    // the card's action.
     await this.clickButton(/^\s*Disconnect\s*$/);
     await this.clickButton(/Disconnect workspace/);
 
