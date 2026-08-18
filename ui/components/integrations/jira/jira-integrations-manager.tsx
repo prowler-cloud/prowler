@@ -302,7 +302,7 @@ export const JiraIntegrationsManager = ({
                     icon={<JiraIcon size={32} />}
                     title={`${integration.attributes.configuration.domain}`}
                     connectionStatus={{
-                      connected: integration.attributes.connected === true,
+                      connected: integration.attributes.connected,
                     }}
                   />
                 </CardHeader>

@@ -380,7 +380,7 @@ export const SecurityHubIntegrationsManager = ({
                         },
                       ]}
                       connectionStatus={{
-                        connected: integration.attributes.connected === true,
+                        connected: integration.attributes.connected,
                       }}
                     />
                   </CardHeader>
