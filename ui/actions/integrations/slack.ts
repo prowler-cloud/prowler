@@ -103,9 +103,9 @@ const INTEGRATIONS_RESOURCE_TYPE = "integrations";
 /**
  * The callback names the workspace and redirects on this value alone, so a `2xx`
  * payload that is not a JSON:API resource (`{}`, `[]`, `"invalid"`) must read as
- * unreadable rather than as a connected workspace. Identity is part of that: an
- * id the page cannot link to, another resource type, or another integration
- * kind would each be shown as the Slack workspace just installed.
+ * unreadable rather than as a connected workspace. Identity too: a resource
+ * that is not a linkable Slack integration would be shown as the workspace
+ * just installed.
  */
 const isIntegrationResource = (value: unknown): boolean => {
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
