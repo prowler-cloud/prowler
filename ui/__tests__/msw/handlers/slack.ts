@@ -59,9 +59,8 @@ const errorBody = (detail: string, status: number, code?: string) => ({
 });
 
 /**
- * Answer a fixture's refusal exactly as the API would: its own status, its
- * `code` when it names one, and `Retry-After` only where the status carries a
- * wait. A consumer that reads any of the three gets the real thing.
+ * Answer a fixture's refusal as the API would: its own status, its `code`
+ * when it names one, and `Retry-After` only where the status carries a wait.
  */
 const refuse = (refusal: SlackRefusalFixture) =>
   HttpResponse.json(
@@ -259,8 +258,7 @@ export const handlersForSlack = (fx: SlackFixture) => {
     ),
 
     http.get<{ taskId: string }>(`${API}/tasks/:taskId`, ({ params }) => {
-      // The test message settles as its own task (design D9), reporting only
-      // whether Slack accepted the post.
+      // The test message settles as its own task (design D9).
       if (params.taskId.startsWith(TEST_MESSAGE_TASK_PREFIX)) {
         const { accepted, error } = fx.testMessage;
         return HttpResponse.json(
@@ -284,18 +282,14 @@ export const handlersForSlack = (fx: SlackFixture) => {
     http.get<{ id: string }>(
       `${API}/integrations/:id/slack/channels`,
       ({ params, request }) => {
-        // Cursor pagination: the UI follows `links.next` opaquely, so the
-        // cursor's shape is this fixture's business alone. Read before the
-        // refusals: which page is being asked for decides whether this one is
-        // refused at all.
+        // The UI follows `links.next` opaquely, so the cursor's shape is this
+        // fixture's business alone. Read first: the page decides the refusal.
         const cursor = Number(
           new URL(request.url).searchParams.get(CHANNEL_CURSOR_PARAM) ?? "0",
         );
 
-        // A refusal named for this endpoint wins over the fixture's blanket
-        // rate limiting, which is the coarser switch of the two. It applies
-        // from the cursor the fixture names, so a read that fails partway
-        // through is expressible and not only one that fails outright.
+        // An endpoint-specific refusal wins over the blanket rate limiting,
+        // and applies from the named cursor, so a partial read is expressible.
         if (
           fx.channelsRefusal &&
           cursor >= (fx.channelsRefusalFromCursor ?? 0)
@@ -325,9 +319,8 @@ export const handlersForSlack = (fx: SlackFixture) => {
     ),
 
     /**
-     * The generic PATCH, recording the default channel. The UI submits only
-     * `channel_id`; the name here is derived from the channel the id resolves
-     * to, exactly as the API derives it from Slack (design D6).
+     * The generic PATCH. The UI submits only `channel_id`; the name is derived
+     * from it here, as the API derives it from Slack (design D6).
      */
     http.patch(`${API}/integrations/:id`, async ({ request }) => {
       const body = (await request.json().catch(() => null)) as {
@@ -339,8 +332,8 @@ export const handlersForSlack = (fx: SlackFixture) => {
       if (!install) {
         return HttpResponse.json(errorBody("Not found.", 404), { status: 404 });
       }
-      // Slack refused the channel while the API validated it: the id resolves
-      // to a channel the picker offered, and Slack still says no.
+      // Checked before the id lookup: the picker did offer this channel, and
+      // Slack refused it anyway when the API validated it.
       if (fx.channelSaveRefusal) return refuse(fx.channelSaveRefusal);
       if (!channel) {
         return HttpResponse.json(errorBody(SLACK_UNKNOWN_CHANNEL_DETAIL, 400), {

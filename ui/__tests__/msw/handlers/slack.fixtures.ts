@@ -57,13 +57,10 @@ export interface SlackChannelFixture {
 }
 
 export interface SlackTestMessageFixture {
-  /** Slack accepted the post. */
   accepted: boolean;
   /**
-   * The reason the settled task carries when it did not. The contract asks the
-   * task to report the same stable reason the synchronous endpoints put in
-   * `code`, but leaves the result's shape to the cloud lane — so this models
-   * both what it should carry (a reason token) and what it might (prose).
+   * Why it did not: the reason `code` would carry, or prose — the contract
+   * leaves the task result's shape open.
    */
   error: string | null;
 }
@@ -71,10 +68,6 @@ export interface SlackTestMessageFixture {
 /**
  * A refusal as the API sends one: the machine-readable reason in `code`, human
  * copy in `detail`, and — for a `429` — the wait in `Retry-After`.
- *
- * All three travel together because that is what makes a test honest: a client
- * that switched on `detail` would pass against a fixture carrying only `code`,
- * and one that ignored `Retry-After` would pass against a `429` without it.
  */
 export interface SlackRefusalFixture {
   status: number;
@@ -109,36 +102,30 @@ export interface SlackFixture {
    * transport failures. Distinct from `appConfigured: false`, which is a `503`.
    */
   oauthUpstreamError: boolean;
-  /** Every channel the connected workspace exposes to Prowler. */
   channels: SlackChannelFixture[];
   /**
-   * Channels per cursor page. Small on purpose: the default workspace spans
-   * two pages, so a UI that stopped at `data` instead of following `links.next`
-   * would visibly lose channels.
+   * Small on purpose: the default workspace spans two pages, so a UI that
+   * stopped at `data` instead of following `links.next` would lose channels.
    */
   channelsPageSize: number;
   /** Slack refused the listing outright, with the reason named in `code`. */
   channelsRefusal: SlackRefusalFixture | null;
   /**
-   * The cursor `channelsRefusal` starts being answered from. Absent means from
-   * the first page, so the whole read fails; a page size means the first page
-   * is served and the refusal lands on the second — the partial read, where the
-   * picker has something to show and a reason why it is short.
+   * The cursor the refusal starts at. Absent, the whole read fails; a page
+   * size serves the first page and refuses the second — the partial read.
    */
   channelsRefusalFromCursor?: number;
   /**
-   * Slack refused the channel the user chose, when the `PATCH` validated it.
-   * Distinct from a listing refusal: the workspace answered the picker fine and
-   * it is the destination itself that cannot be used.
+   * Slack refused the chosen channel when the `PATCH` validated it — the
+   * listing itself answered fine.
    */
   channelSaveRefusal: SlackRefusalFixture | null;
-  /** What the test-message task settles as. */
   testMessage: SlackTestMessageFixture;
 }
 
 /**
- * A UUID, as the API's integration ids are: the id travels in the URL of every
- * Slack call the management page makes, and the actions accept no other shape.
+ * A UUID, as the API's ids are: it travels in the URL of every Slack call and
+ * the actions accept no other shape.
  */
 export const SLACK_INTEGRATION_ID = "7c9e6a1b-2d3f-4e5a-8b6c-9d0e1f2a3b4c";
 
@@ -197,9 +184,8 @@ export const INTEGRATIONS_SERVER_ERROR_DETAIL = "A server error occurred.";
 export const SLACK_MISSING_SCOPE_DETAIL =
   "Slack refused the request: missing_scope.";
 /**
- * Sent for a channel that cannot be used, whichever way it cannot: the same
- * sentence for "it is gone" and for "the app was removed from it". Only `code`
- * separates them, which is the whole reason a client must read `code`.
+ * The same sentence for "it is gone" and "the app was removed from it": only
+ * `code` separates them, which is why a client must read `code`.
  */
 export const SLACK_UNKNOWN_CHANNEL_DETAIL =
   "That channel is not one Prowler can post to.";
@@ -246,8 +232,8 @@ export const SLACK_MISSING_SCOPE_REFUSAL: SlackRefusalFixture = {
 };
 
 /**
- * Slack rate limiting Prowler. The endpoint this actually happens on is the
- * channel listing: `conversations.list` is tier 2 and paginated.
+ * Where this really happens is the channel listing: `conversations.list` is
+ * tier 2 and paginated.
  */
 export const SLACK_RATE_LIMITED_REFUSAL: SlackRefusalFixture = {
   status: 429,
@@ -273,9 +259,8 @@ export const SLACK_CHANNEL_NOT_FOUND_REFUSAL: SlackRefusalFixture = {
 };
 
 /**
- * The chosen channel is fine — the Prowler app is simply not in it, which
- * someone in Slack fixes with `/invite @Prowler`. Identical `detail` to the
- * refusal above, deliberately.
+ * The channel is fine, the Prowler app is simply not in it — fixed with
+ * `/invite @Prowler`. Identical `detail` to the refusal above, deliberately.
  */
 export const SLACK_NOT_IN_CHANNEL_REFUSAL: SlackRefusalFixture = {
   status: 400,
@@ -285,9 +270,8 @@ export const SLACK_NOT_IN_CHANNEL_REFUSAL: SlackRefusalFixture = {
 };
 
 /**
- * The workspace's channels: two public, and one private the Prowler app has
- * been invited to. Ordered so the private one lands on the second cursor page
- * at the default page size — following `links.next` is what makes it visible.
+ * Two public channels and one private the Prowler app was invited to, ordered
+ * so the private one lands on the second cursor page.
  */
 export const SLACK_PUBLIC_CHANNEL: SlackChannelFixture = {
   id: "C0123AB",
@@ -317,8 +301,8 @@ export const SLACK_CHANNELS: SlackChannelFixture[] = [
 export const SLACK_CHANNELS_PAGE_SIZE = 2;
 
 /**
- * The channel a finished install posts to: the first one the picker offers, so
- * an install seeded with it always points at a channel the listing really has.
+ * The first channel the picker offers, so an install seeded with it always
+ * points at a channel the listing really has.
  */
 export const SLACK_DEFAULT_CHANNEL = SLACK_PUBLIC_CHANNEL;
 
@@ -381,9 +365,8 @@ const configuredInstall = (
 });
 
 /**
- * The same tenant, with a destination channel already on record — the state a
- * second visit starts from, and the one that shows whether a later failure
- * disturbs what was already saved.
+ * The same tenant with a destination channel already on record: the state a
+ * second visit starts from.
  */
 export const slackFixtureWithDefaultChannel = (
   channel: SlackChannelFixture = SLACK_PUBLIC_CHANNEL,
@@ -405,11 +388,8 @@ export const unreadableCheckTimeSlackFixture = (): SlackFixture =>
   });
 
 /**
- * The listing refused partway through: the first cursor page is served and
- * Slack rate limits the second. What a workspace larger than one page looks
- * like when `conversations.list` runs out of tier-2 budget mid-read — the
- * channels already read are still usable, and the refusal is only the reason
- * the list stops where it does.
+ * The first cursor page is served and Slack rate limits the second: what is
+ * already read stays usable, the refusal only says why the list is short.
  */
 export const partiallyReadSlackFixture = (
   overrides: Partial<SlackFixture> = {},
