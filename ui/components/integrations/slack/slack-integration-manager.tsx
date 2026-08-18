@@ -28,7 +28,6 @@ import type {
   SlackChannelOption,
 } from "@/types/integrations";
 
-/** What the user was told about the last test message they sent. */
 interface TestMessageOutcome {
   sent: boolean;
   detail: string;
@@ -62,39 +61,30 @@ export const SlackIntegrationManager = ({
 
   const [channels, setChannels] = useState<SlackChannelOption[]>([]);
   const [channelsError, setChannelsError] = useState<string | null>(null);
-  // Why the list is short of the workspace, when it is. Held beside the
-  // channels rather than folded into `channelsError`: the two are different
-  // claims — one replaces the picker, the other qualifies it.
+  // Kept apart from `channelsError`: one replaces the picker, the other only
+  // qualifies it.
   const [channelsNotice, setChannelsNotice] = useState<string | null>(null);
-  // Seeded from the workspace, not from the effect that reads the channels: the
-  // effect never runs on the server, and this card is server-rendered, so a
-  // `false` here would serve — and hold until hydration — a picker claiming the
-  // workspace has no channels at all.
+  // Seeded here, not by the effect: the effect never runs on the server, so a
+  // `false` would server-render a "no channels" picker until hydration.
   const [isLoadingChannels, setIsLoadingChannels] = useState(
     Boolean(integrationId),
   );
-  // Bumped by the refresh affordance: a channel invited to in Slack after the
-  // page loaded only shows up on a re-read.
+  // Bumped by refresh: a channel invited after load only shows on a re-read.
   const [channelReloads, setChannelReloads] = useState(0);
   // Local state needed: the pick is buffered until the user saves it.
   const [selectedChannelId, setSelectedChannelId] = useState<string | null>(
     recordedChannelId,
   );
-  // What the API has on record. Mirrored in state rather than read from the
-  // integration prop so that every affordance gated on a destination — the
-  // connection check, the test message, the copy naming the channel — moves the
-  // moment the save is acknowledged, instead of waiting on the revalidation
-  // that refreshes this page's server component afterwards.
+  // Mirrored in state, not read from the prop, so channel-gated affordances
+  // move on save instead of waiting for the revalidation.
   const [defaultChannelId, setDefaultChannelId] = useState<string | null>(
     recordedChannelId,
   );
   const [defaultChannelName, setDefaultChannelName] = useState<string | null>(
     recordedChannelName,
   );
-  // The prop the mirror was last taken from. A refresh of this page's data —
-  // the revalidation above, or a change made in another tab — moves the record
-  // under a card that never unmounts, and a mirror seeded only at mount would
-  // go on naming a channel Prowler no longer posts to.
+  // The prop the mirror was last taken from: the card never unmounts, so a
+  // mirror seeded only at mount would go stale when the record changes.
   const [syncedChannelId, setSyncedChannelId] = useState(recordedChannelId);
   const [syncedChannelName, setSyncedChannelName] =
     useState(recordedChannelName);
@@ -111,9 +101,8 @@ export const SlackIntegrationManager = ({
     setSyncedChannelName(recordedChannelName);
     setDefaultChannelId(recordedChannelId);
     setDefaultChannelName(recordedChannelName);
-    // The buffered pick follows only while it still shows the destination that
-    // was on record: a pick the user has made and not yet saved is theirs, and
-    // overwriting it would take the choice away mid-edit.
+    // Follow the record only while the buffered pick still matches it: an
+    // unsaved pick is the user's, not ours to overwrite mid-edit.
     if (selectedChannelId === syncedChannelId) {
       setSelectedChannelId(recordedChannelId);
     }
@@ -129,8 +118,8 @@ export const SlackIntegrationManager = ({
       .then((result) => {
         if (cancelled) return;
 
-        // Set on every path, including the ones that leave it empty: a notice
-        // left behind by an earlier read would qualify a list it is not about.
+        // Set on every path: a notice left by an earlier read would qualify a
+        // list it is not about.
         if ("error" in result) {
           setChannels([]);
           setChannelsError(result.error);
@@ -161,9 +150,8 @@ export const SlackIntegrationManager = ({
 
     setIsSavingChannel(true);
     try {
-      // Only the id travels: the API validates it against Slack and derives the
-      // channel's name itself (design D6), so a name sent from here could only
-      // ever drift from the id it belongs to.
+      // Only the id travels — the API validates it and derives the name
+      // (design D6).
       const result = await setSlackDefaultChannel(
         integrationId,
         selectedChannelId,
@@ -178,9 +166,8 @@ export const SlackIntegrationManager = ({
         return;
       }
 
-      // The name the API derived from the id, not the one this page happened to
-      // have in its list: a channel renamed in Slack since the list was read
-      // would otherwise be shown under its old name.
+      // Prefer the API's derived name: a channel renamed in Slack since the
+      // list was read would otherwise show its old name.
       const savedName =
         result.integration.attributes.configuration.channel_name ??
         channels.find((channel) => channel.id === selectedChannelId)?.name ??
@@ -358,9 +345,8 @@ export const SlackIntegrationManager = ({
 
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-text-neutral-secondary text-xs">
-                  {/* Recorded-ness is the id's answer, not the name's: a name
-                      the API left out would otherwise deny a destination that
-                      the test-message button beside it posts to. */}
+                  {/* The id decides, not the name: a missing name would deny
+                      a destination the test button posts to. */}
                   {defaultChannelId
                     ? defaultChannelName
                       ? `Prowler posts to #${defaultChannelName}.`
@@ -379,7 +365,6 @@ export const SlackIntegrationManager = ({
                   >
                     {isSavingChannel ? "Saving..." : "Save channel"}
                   </Button>
-                  {/* Nothing to prove delivery to until a channel is recorded. */}
                   {defaultChannelId && (
                     <Button
                       size="sm"
