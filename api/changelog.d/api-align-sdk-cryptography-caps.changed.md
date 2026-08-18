@@ -1,1 +1,0 @@
-Bump alibabacloud-tea-openapi to 0.4.6, oci to 2.184.1 and pyopenssl to 26.4.0 to match the SDK; the cryptography override now names its actual blockers (azure-cli-core pins msal below 1.37, workos 8.3.0 requires cryptography 48)
