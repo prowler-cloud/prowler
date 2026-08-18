@@ -629,6 +629,11 @@ describe("disconnecting a workspace", () => {
     // When
     expect(await harness.disconnect()).toBe(REVOCATION_OUTCOME.NOT_REVOKED);
 
+    // And — the disconnect revalidates the page, so the server data refreshes
+    // under the notice and comes back with no integration at all: the record
+    // the workspace was read from is gone by the time the user reads about it.
+    await harness.refreshPageData();
+
     // Then — the user reads what is true of both sides: nothing is left in
     // Prowler to retry, and the app may still be installed at Slack. Saying
     // "there is nothing to retry here" is the point — the one thing a user

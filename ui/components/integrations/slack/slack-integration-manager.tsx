@@ -62,6 +62,17 @@ type ChannelsState = ChannelsLoading | ChannelsFailed | ChannelsLoaded;
 
 const CHECK_BLOCKED_REASON_ID = "slack-connection-check-blocked";
 
+/**
+ * A disconnect that removed the row without Slack confirming the revocation.
+ * The workspace travels with it rather than being read from the record: naming
+ * the one to clean up is the point of the notice, and the record is gone by the
+ * time the disconnect's revalidation lands.
+ */
+interface UnconfirmedRevocation {
+  /** As the record named it, or `null` when it named none. */
+  workspace: string | null;
+}
+
 // The name may be missing: the id decides what the UI can do with it.
 interface SlackChannelRef {
   id: string;
@@ -105,8 +116,8 @@ export const SlackIntegrationManager = ({
   // and this page is what the user is looking at. The server component's own
   // revalidation refreshes the same thing on the next navigation.
   const [disconnected, setDisconnected] = useState(false);
-  /** A disconnect that removed the row without Slack confirming the revocation. */
-  const [revocationUnconfirmed, setRevocationUnconfirmed] = useState(false);
+  const [unconfirmedRevocation, setUnconfirmedRevocation] =
+    useState<UnconfirmedRevocation | null>(null);
   /**
    * The `code` of the last refusal any Slack-backed call on this page ran into,
    * or `null` when the last answer was not a refusal. Every call records it
@@ -357,8 +368,9 @@ export const SlackIntegrationManager = ({
   };
 
   const handleDisconnect = async (id: string) => {
-    const workspace =
-      integration?.attributes.configuration.team_name ?? "your Slack workspace";
+    const recordedWorkspace =
+      integration?.attributes.configuration.team_name ?? null;
+    const workspace = recordedWorkspace ?? "your Slack workspace";
 
     setIsDisconnecting(true);
     try {
@@ -384,7 +396,9 @@ export const SlackIntegrationManager = ({
       // Only an explicit "not revoked" sends the user to finish the job in
       // Slack. An unreported outcome is neither a failed revocation nor a
       // confirmed one, so it claims neither.
-      setRevocationUnconfirmed(revoked === false);
+      setUnconfirmedRevocation(
+        revoked === false ? { workspace: recordedWorkspace } : null,
+      );
 
       if (revoked !== false) {
         toast({
@@ -465,7 +479,7 @@ export const SlackIntegrationManager = ({
         </Alert>
       )}
 
-      {revocationUnconfirmed && (
+      {unconfirmedRevocation && (
         <Alert variant="warning">
           <AlertTitle>
             Slack disconnected — remove Prowler&apos;s access in Slack
@@ -474,8 +488,8 @@ export const SlackIntegrationManager = ({
             The integration and the token Prowler had stored are gone from
             Prowler, so there is nothing to retry here. Slack did not confirm
             the revocation, so the Prowler app may still be installed in{" "}
-            {workspaceName ?? "the workspace"} — remove it from that
-            workspace&apos;s Slack app settings.
+            {unconfirmedRevocation.workspace ?? "the workspace"} — remove it
+            from that workspace&apos;s Slack app settings.
           </AlertDescription>
         </Alert>
       )}
