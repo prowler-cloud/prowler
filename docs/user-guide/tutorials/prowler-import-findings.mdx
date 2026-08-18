@@ -153,6 +153,16 @@ export PROWLER_CLOUD_API_KEY="pk_your_api_key_here"
 prowler aws --push-to-cloud
 ```
 
+### TLS Certificate Trust
+
+For `--push-to-cloud` uploads, Prowler CLI creates one ingestion-scoped TLS context and validates HTTPS certificates with one handshake and one POST request. The upload does not retry or fall back to another TLS configuration. Redirect responses are rejected.
+
+The ingestion context combines the operating system roots with the previous Requests default certificate authority (CA) roots. If `REQUESTS_CA_BUNDLE` is configured, Prowler CLI adds that file or directory to the same context. Otherwise, Prowler CLI adds `CURL_CA_BUNDLE` when configured. These variables add roots only for this ingestion session and are not required when the CA is already installed in the operating system store.
+
+For Prowler Private Cloud deployments that use an organization CA or a TLS-intercepting corporate proxy, installing the required root CA in the operating system or container store remains the recommended approach. Containers have an isolated system CA store, so add the organization or proxy CA to the container image or runtime, then run the operating system's CA update command, such as `update-ca-certificates`, before starting Prowler CLI. Installing a CA on the container host does not automatically install it inside the container.
+
+This trust configuration applies only to the temporary `push-to-cloud` ingestion session. It does not change API, provider, integration, global SSL, environment variable, or unrelated Requests session behavior.
+
 ### Combining with Output Formats
 
 When using `--push-to-cloud` with custom output formats that exclude OCSF, Prowler generates a temporary OCSF file for upload:
