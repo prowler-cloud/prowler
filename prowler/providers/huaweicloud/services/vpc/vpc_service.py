@@ -91,6 +91,8 @@ class VPC(HuaweiCloudService):
                                         id=getattr(rule_data, "id", None) or "",
                                         direction=getattr(rule_data, "direction", None)
                                         or "",
+                                        action=getattr(rule_data, "action", None)
+                                        or "allow",
                                         protocol=getattr(rule_data, "protocol", None)
                                         or "",
                                         ethertype=getattr(rule_data, "ethertype", None)
@@ -107,6 +109,12 @@ class VPC(HuaweiCloudService):
                                         or "",
                                         remote_group_id=getattr(
                                             rule_data, "remote_group_id", None
+                                        )
+                                        or "",
+                                        remote_address_group_id=getattr(
+                                            rule_data,
+                                            "remote_address_group_id",
+                                            None,
                                         )
                                         or "",
                                         description=getattr(
@@ -148,12 +156,14 @@ class SecurityGroupRule(HuaweiCloudBaseModel):
 
     id: str
     direction: str
+    action: str = "allow"
     protocol: str
     ethertype: str
     port_range_min: Optional[int] = None
     port_range_max: Optional[int] = None
     remote_ip_prefix: str = ""
     remote_group_id: str = ""
+    remote_address_group_id: str = ""
     description: str = ""
 
 

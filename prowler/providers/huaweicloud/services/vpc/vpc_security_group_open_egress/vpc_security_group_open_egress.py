@@ -3,7 +3,7 @@ from prowler.providers.huaweicloud.services.vpc.vpc_client import vpc_client
 
 
 class vpc_security_group_open_egress(Check):
-    """Check if VPC security groups allow open egress (0.0.0.0/0) to the internet."""
+    """Check if VPC security groups allow unrestricted egress to the internet."""
 
     def execute(self) -> list[CheckReportHuaweiCloud]:
         findings = []
@@ -17,19 +17,27 @@ class vpc_security_group_open_egress(Check):
                 f"{vpc_client.audited_account}:security-group/{sg.id}"
             )
 
-            has_open_egress = False
+            open_egress_destination = None
             for rule in sg.rules:
-                if rule.direction != "egress":
+                if (
+                    rule.direction != "egress"
+                    or rule.action != "allow"
+                    or rule.remote_group_id
+                    or rule.remote_address_group_id
+                ):
                     continue
                 if rule.remote_ip_prefix in ("0.0.0.0/0", "::/0"):
-                    has_open_egress = True
+                    open_egress_destination = rule.remote_ip_prefix
+                    break
+                if not rule.remote_ip_prefix:
+                    open_egress_destination = "all destinations"
                     break
 
-            if has_open_egress:
+            if open_egress_destination:
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"Security group {sg.name} ({sg.id}) allows open egress (0.0.0.0/0) "
-                    f"to the internet."
+                    f"Security group {sg.name} ({sg.id}) allows open egress "
+                    f"({open_egress_destination}) to the internet."
                 )
             else:
                 report.status = "PASS"
