@@ -40,12 +40,8 @@ export const SLACK_RATE_LIMITED_MESSAGE =
   "Slack is rate limiting Prowler right now. Try again in a few moments.";
 
 /**
- * For a channel list that stopped short of the workspace — the page budget ran
- * out, or `links.next` left the API's origin. Not phrased as a failure: the
- * channels that were read are usable, and the only thing lost is the certainty
- * that they are all of them. Says so explicitly, because the picker's other
- * explanation for a missing channel — inviting `@Prowler` to it — is the wrong
- * one here and is on screen either way.
+ * For a channel list that stopped short of the workspace: the page budget ran
+ * out, or `links.next` left the API's origin.
  */
 export const SLACK_PARTIAL_CHANNEL_LIST_MESSAGE =
   "This workspace has more channels than Prowler reads in one go, so this list is not all of them. A channel missing from it is not necessarily one @Prowler has to be invited to.";
@@ -58,17 +54,14 @@ export const SLACK_UNREADABLE_RESULT_MESSAGE =
   "Prowler could not read the result of the install. Open the Slack integration page to see the workspace — if none is listed there, start the install again.";
 
 /**
- * The shape of a Slack reason code, as opposed to a sentence. Slack publishes
- * no closed set of them, so a reason is gated on its shape before being
- * interpolated into Prowler's own copy.
+ * The shape of a Slack reason code, as opposed to a sentence: the set is
+ * open-ended, so a reason is gated on its shape before being interpolated.
  */
 export const SLACK_REASON_TOKEN = /^[a-z0-9_]{1,48}$/;
 
 /**
- * Copy for a reason code this UI has no wording of its own for — the ordinary
- * case, since the set is open-ended. The token is a protocol value, not
- * user-facing copy, so it is kept inside Prowler's sentence for diagnosis
- * rather than shown as the message.
+ * Copy for a reason code Prowler has no wording of its own for — the ordinary
+ * case, since the set is open-ended.
  */
 export const slackUnknownReasonMessage = (reason: string): string =>
   `Slack refused the message (${reason}). Choose another channel, or check the channel in Slack.`;

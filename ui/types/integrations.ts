@@ -114,9 +114,8 @@ export interface IntegrationProps {
 }
 
 /**
- * A channel Prowler can post to in the connected Slack workspace: every active
- * public channel, plus the private ones the Prowler app has been invited to.
- * `is_private` keeps the API's own naming so the picker never has to translate.
+ * A channel Prowler can post to: every active public channel, plus the private
+ * ones `@Prowler` was invited to. `is_private` keeps the API's own naming.
  */
 export interface SlackChannelOption {
   id: string;

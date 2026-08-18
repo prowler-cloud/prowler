@@ -176,23 +176,18 @@ const failureFrom = async (
 };
 
 /**
- * The same classification flattened to one line of copy, for the calls whose
- * only outcome is "it did not work": the code's own wording when Prowler has
- * one, the API's `detail` when it does not, and `fallback` when neither.
- *
- * Rate limiting is part of that line rather than folded into the generic
- * wording. `conversations.list` is Slack tier 2, so the channel listing is
- * where a `429` actually shows up (contract, Errors), and answering it without
- * the wait turns "come back in half a minute" into a dead end.
+ * `failureFrom` flattened to one line of copy, for the calls whose only
+ * outcome is "it did not work". Rate limiting keeps its own wording:
+ * `conversations.list` is Slack tier 2, so a `429` shows up here (contract,
+ * Errors) and the wait it names is the useful part.
  */
 const errorMessageFrom = async (
   response: Response,
   fallback: string,
 ): Promise<string> => {
-  // Same 5xx handling as `failureFrom`, for the same reason and with the same
-  // exception: a `503` is Slack being unavailable here, which `failureFrom`
-  // also leaves unreported through its early return. Must run before
-  // `readSlackFailure`: a body can only be read once.
+  // Same 5xx handling as `failureFrom`, `503` excepted: here too it means Slack
+  // is unavailable. Must run before `readSlackFailure`: a body can only be read
+  // once.
   if (response.status >= 500 && response.status !== 503) {
     await handleApiResponse(response);
   }
@@ -300,9 +295,8 @@ interface SlackChannelsSuccess {
   channels: SlackChannelOption[];
   /**
    * Present when these channels are only part of the workspace's, carrying the
-   * sentence that says why. A read that stopped early with something to show is
-   * a success — the caller renders the picker *and* the reason, rather than
-   * choosing between them.
+   * sentence that says why: a partial read is a success, so the caller renders
+   * the picker *and* the reason.
    */
   incomplete?: string;
 }
@@ -310,11 +304,9 @@ interface SlackChannelsSuccess {
 export type SlackChannelsResult = SlackChannelsSuccess | SlackActionError;
 
 /**
- * Cursor pages followed before giving up. `conversations.list` is a tier-2,
+ * Cursor pages followed before giving up: `conversations.list` is a tier-2,
  * rate-limited Slack call (design.md, Risks), so the aggregation is bounded
- * rather than open-ended: a workspace larger than this shows the channels of
- * the pages that were read, which is a far better failure than hammering Slack
- * behind a picker the user is waiting on.
+ * rather than open-ended.
  */
 const MAX_CHANNEL_PAGES = 20;
 
@@ -322,17 +314,11 @@ const MAX_CHANNEL_PAGES = 20;
  * Every channel Prowler can post to in the connected workspace — the picker's
  * options.
  *
- * This is the durable primitive, not the channel stored on the integration
- * (design D6): a consumer that needs a different channel per alert rule reads
- * the same endpoint. The list is cursor-paginated, and `links.next` is followed
- * opaquely — the contract deliberately does not pin the parameter naming, so
- * the UI never constructs a cursor of its own.
- *
- * Every way the pagination can stop early reports through `incomplete` rather
- * than through a failure, as long as something was read: a workspace whose
- * listing is refused halfway is exactly the large one whose channels the picker
- * most needs, and answering it with an error alone throws away thousands of
- * usable options — permanently, since the next read hits the same limit.
+ * The durable primitive, not the channel stored on the integration (design D6):
+ * a consumer needing a per-rule channel reads the same endpoint. `links.next`
+ * is followed opaquely — the contract does not pin the cursor parameter naming,
+ * so the UI never builds one of its own. An early stop that still read
+ * something reports through `incomplete`, not as a failure.
  */
 export const getSlackChannels = async (
   integrationId: string,
@@ -361,9 +347,6 @@ export const getSlackChannels = async (
           `Unable to read the workspace's channels: ${response.statusText}`,
         );
 
-        // The refusal explains a short list instead of replacing it, once there
-        // is a list: Slack's own reason — the wait a `429` names, above all — is
-        // the best thing anyone can say about why it stops there.
         return channels.length > 0
           ? { channels, incomplete: message }
           : { error: message };
@@ -386,13 +369,10 @@ export const getSlackChannels = async (
         typeof rawNext === "string" && rawNext.length > 0
           ? new URL(rawNext, current)
           : null;
-      // Resolved against the page it arrived on, so a `next` carrying only a
-      // cursor keeps this listing's path. Followed only while it stays on the
-      // origin the listing was read from: every page is fetched with the
-      // tenant's token, and `fetch` can only strip that from a redirect, never
-      // from a hop made here. An off-origin link ends the pagination — which is
-      // the same short list to the user as running out of pages, so it is said
-      // the same way.
+      // Resolved against the page it arrived on, so a cursor-only `next` keeps
+      // this listing's path. Followed only while it stays on the listing's
+      // origin: every page is fetched with the tenant's token, and an
+      // off-origin hop made here would carry it along.
       if (candidate === null) {
         next = null;
       } else if (candidate.origin === listing.origin) {
@@ -405,8 +385,7 @@ export const getSlackChannels = async (
 
     // A link still waiting when the budget ran out. Checked rather than assumed
     // from the page count: a workspace of exactly `MAX_CHANNEL_PAGES` pages was
-    // read to the end, and claiming otherwise would send its user looking for
-    // channels that are already on the list.
+    // read to the end.
     if (next) incomplete = SLACK_PARTIAL_CHANNEL_LIST_MESSAGE;
 
     return incomplete === null ? { channels } : { channels, incomplete };
@@ -426,16 +405,10 @@ export type SlackDefaultChannelResult =
 /**
  * Record the channel Prowler posts to, on the generic integration endpoint.
  *
- * A Slack action despite the generic `PATCH`, because the refusal is a Slack
- * one: the API validates the channel against Slack, and answers `400` with
- * `code` = `channel_not_found` when the channel is gone or `not_in_channel`
- * when the Prowler app was removed from a private one. Both carry the same
- * `detail`, so only `code` tells them apart — and only one of them the user can
- * fix themselves, by inviting `@Prowler`. The generic action reads `detail`
- * alone and would collapse the two into one sentence that says neither.
- *
- * Only `channel_id` travels: the API validates it and derives `channel_name`
- * server-side (design D6), which is also the name the caller should show.
+ * A Slack action despite the generic `PATCH`: `channel_not_found` and
+ * `not_in_channel` carry the same `detail`, so only `code` tells them apart,
+ * and the generic action reads `detail` alone. Only `channel_id` travels — the
+ * API derives `channel_name` server-side (design D6).
  */
 export const setSlackDefaultChannel = async (
   integrationId: string,
@@ -474,15 +447,13 @@ export const setSlackDefaultChannel = async (
 
     const body = await response.json().catch(() => null);
 
-    // Before the guard and on both paths: the API recorded the channel before
-    // answering, so a cache still holding the previous one would keep showing
-    // it after a save that happened.
+    // Before the guard and on both paths: the save happened, so a cache still
+    // holding the previous channel would keep showing it.
     revalidatePath("/integrations");
     revalidatePath("/integrations/slack");
 
     // Guarded as deep as the caller reads: it names the saved channel from
-    // `attributes.configuration`, and a `2xx` this UI cannot read is an unknown
-    // result, not a parser message to put in front of the user.
+    // `attributes.configuration`.
     if (!body?.data?.attributes?.configuration) {
       return { error: SLACK_UNREADABLE_RESULT_MESSAGE };
     }
@@ -499,7 +470,6 @@ interface SlackTestMessageSuccess {
 
 export type SlackTestMessageResult = SlackTestMessageSuccess | SlackActionError;
 
-/** What the test-message task carries once it settles. */
 interface SlackTestMessageTaskResult {
   error?: string | null;
 }
@@ -510,9 +480,8 @@ const TEST_MESSAGE_POLL = { maxAttempts: 20, delayMs: 3000 } as const;
  * Post the test message to the integration's default channel.
  *
  * Async on the API's side — `202` plus a Task (design D9) — so this polls the
- * same task machinery the connection test uses instead of introducing a
- * synchronous path. A `400` means no default channel is recorded, which the UI
- * prevents by only offering the action once one is.
+ * same task machinery the connection test uses. A `400` means no default
+ * channel is recorded.
  */
 export const sendSlackTestMessage = async (
   integrationId: string,
@@ -553,17 +522,10 @@ export const sendSlackTestMessage = async (
       return { error: settled.error };
     }
 
-    // Slack's refusal travels in the task's own result, not in an HTTP error:
-    // the post happens after the `202`, so nothing about it is knowable when
-    // the request returns.
-    //
-    // The contract leaves that result's exact shape to the cloud lane, agreeing
-    // only that it reports the same stable reason the synchronous endpoints put
-    // in `code` (contract, test-message). So a reason that *is* one of those
-    // codes gets Prowler's own wording; a reason shaped like a code this UI has
-    // no wording for is kept inside Prowler's sentence, since a raw protocol
-    // token is not copy; and prose is shown as it arrived. A task that did not
-    // complete is a failure even when it names no reason at all.
+    // Slack's refusal travels in the task result, not in an HTTP error: the
+    // post happens after the `202`. A known code gets Prowler's own wording, a
+    // code-shaped reason is wrapped in one (contract, test-message), and prose
+    // is shown as it arrived.
     const reason = settled.result?.error?.trim();
     if (reason) {
       return {
