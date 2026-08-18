@@ -100,8 +100,6 @@ describe("slackUnknownReasonMessage", () => {
   it("keeps an unmapped reason diagnosable without letting it be the message", () => {
     const message = slackUnknownReasonMessage(UNMAPPED_REASON);
 
-    // The token is a protocol value: it belongs inside Prowler's sentence, so
-    // the reader is told what to do and support still sees what Slack said.
     expect(message).toMatch(/Slack refused the message/);
     expect(message).toContain(UNMAPPED_REASON);
     expect(message).not.toBe(UNMAPPED_REASON);
@@ -109,7 +107,6 @@ describe("slackUnknownReasonMessage", () => {
   });
 
   it("is only reached for a code the mapping does not cover", () => {
-    // As a fallback it never displaces copy Prowler already has...
     expect(
       slackErrorMessage(
         { code: SLACK_ERROR_CODE.NOT_IN_CHANNEL },
@@ -117,9 +114,8 @@ describe("slackUnknownReasonMessage", () => {
       ),
     ).toBe(SLACK_ERROR_MESSAGES[SLACK_ERROR_CODE.NOT_IN_CHANNEL]);
 
-    // ...and for a code that has none, it is what the user reads. Passed
-    // without a `detail`, since a `detail` holding the same token would make
-    // the raw token the whole message again.
+    // No `detail`: one holding the same token would make the raw token the
+    // whole message again.
     expect(
       slackErrorMessage(
         { code: UNMAPPED_REASON },
@@ -131,8 +127,8 @@ describe("slackUnknownReasonMessage", () => {
 
 describe("SLACK_REASON_TOKEN", () => {
   it("recognises a reason code and refuses anything that reads as a sentence", () => {
-    // Slack publishes no closed set of reasons, so the guard is on the shape of
-    // a code rather than on an allowlist.
+    // Slack publishes no closed set of reasons, so the guard is on shape rather
+    // than an allowlist.
     for (const reason of [
       "is_archived",
       "restricted_action",

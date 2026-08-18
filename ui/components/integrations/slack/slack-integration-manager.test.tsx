@@ -1,11 +1,8 @@
 /**
  * The case `slack-page.integration.test.tsx` cannot express: it asserts against
- * a hydrated, settled page, so it never sees the frame the user is served
- * first. The manager is a client component rendered on the server by an async
- * server component with nothing suspending in front of it, and the effect that
- * reads the channels only runs in the browser — so whatever the channel state
- * says at render time is what the served HTML says for the whole
- * first-paint→hydration window.
+ * a hydrated, settled page, so it never sees the first frame the user is
+ * served. The effect that reads the channels only runs in the browser, so the
+ * channel state at render time is what the served HTML says until hydration.
  */
 
 import { renderToString } from "react-dom/server";
@@ -26,10 +23,9 @@ vi.mock("@/actions/integrations/integrations", () => ({
 }));
 
 /**
- * A healthy workspace with no destination channel chosen yet — the channel keys
- * are absent, as the contract has them before a save. No channel is recorded on
- * purpose: with one, the picker shows that channel instead of its placeholder,
- * and the placeholder is what carries the "still reading" claim.
+ * A connected workspace with no channel recorded, as the contract has it before
+ * a save: with one, the picker would show that channel instead of the
+ * placeholder this test reads.
  */
 const CONNECTED_WORKSPACE: IntegrationProps = {
   type: "integrations",
@@ -63,9 +59,7 @@ describe("the first paint of a connected workspace", () => {
       />,
     );
 
-    // Then - the empty-list alert would tell a user with channels to go create
-    // one in Slack, and it is the only thing the picker's slot could hold that
-    // makes a claim about the workspace.
+    // Then
     expect(serverHtml).toContain("Reading channels...");
     expect(serverHtml).not.toContain("No channels available yet");
   });

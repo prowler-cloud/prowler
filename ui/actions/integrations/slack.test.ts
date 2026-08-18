@@ -1,8 +1,7 @@
 /**
  * What the Slack actions do off the DOM, which
- * `slack-page.integration.test.tsx` therefore cannot cover: which failures they
- * report to Sentry, and the URLs the channel listing's cursor pagination
- * follows.
+ * `slack-page.integration.test.tsx` cannot cover: which failures reach Sentry,
+ * and the URLs the channel listing's cursor pagination follows.
  */
 
 import { revalidatePath } from "next/cache";
@@ -305,7 +304,6 @@ describe("exchangeSlackOAuthCode result shape", () => {
 /** The shape the API's integration ids have, which is the only shape accepted. */
 const SLACK_INTEGRATION_ID = "b2c7fd0a-3e51-4d8f-9a6c-1f0e2d3c4b5a";
 
-/** The listing every cursor page of the channel read hangs off. */
 const CHANNELS_URL =
   `https://api.test/api/v1/integrations/${SLACK_INTEGRATION_ID}` +
   "/slack/channels";
@@ -313,7 +311,6 @@ const CHANNELS_URL =
 const FIRST_CHANNEL = { id: "C0123AB", name: "security" };
 const SECOND_CHANNEL = { id: "C0789EF", name: "platform" };
 
-/** A cursor page carrying one channel and whatever `links.next` is passed. */
 const channelPage = (
   channel: { id: string; name: string },
   next: string | null,
@@ -356,10 +353,8 @@ const RATE_LIMITED_MESSAGE =
 
 describe("getSlackChannels", () => {
   it("follows a cursor-only `next` on the listing's own URL, not on the API root", async () => {
-    // The link is opaque (design D6), so the API may answer with nothing but
-    // the cursor. Resolved against the API root that link loses the
-    // `/integrations/{id}/slack/channels` path, and every page after the first
-    // disappears without anything saying so.
+    // The link is opaque (design D6), so the API may answer with the cursor
+    // alone; resolved against the API root it loses the listing's own path.
     fetchMock
       .mockResolvedValueOnce(channelPage(FIRST_CHANNEL, "?page[cursor]=2"))
       .mockResolvedValueOnce(channelPage(SECOND_CHANNEL, null));
@@ -384,17 +379,13 @@ describe("getSlackChannels", () => {
   ])(
     "stops at $shape off-origin `next` rather than sending the tenant's token to it",
     async ({ next }) => {
-      // Every page is fetched with the tenant's `Authorization` header. Node's
-      // `fetch` strips it when a *redirect* leaves the origin; a hop the UI
-      // makes itself gets no such protection, so the origin is checked here.
+      // `fetch` strips the tenant's `Authorization` on a redirect that leaves
+      // the origin, but not on a hop the UI makes itself.
       fetchMock.mockResolvedValueOnce(channelPage(FIRST_CHANNEL, next));
 
       const result = await getSlackChannels(SLACK_INTEGRATION_ID);
 
       expect(requestedUrls()).toEqual([CHANNELS_URL]);
-      // Pagination ends, it does not fail: the channels already read are still
-      // the picker's options — and the list is marked short of the workspace,
-      // because a link was left unfollowed.
       expect(result).toEqual({
         channels: [channelOption(FIRST_CHANNEL)],
         incomplete: SLACK_PARTIAL_CHANNEL_LIST_MESSAGE,
@@ -412,19 +403,15 @@ describe("getSlackChannels", () => {
   });
 
   it("says the list is short of the workspace when the page budget runs out", async () => {
-    // Every page names another `next`, so only the budget ends the read — the
-    // bound exists because `conversations.list` is tier 2 and a workspace can be
-    // larger than any of it (design.md, Risks). A fresh `Response` per call: one
-    // instance reused is already consumed on its second read.
+    // The budget exists because `conversations.list` is tier 2 and a workspace
+    // can outgrow it (design.md, Risks). A fresh `Response` per call: one
+    // instance is already consumed on its second read.
     fetchMock.mockImplementation(() =>
       Promise.resolve(channelPage(FIRST_CHANNEL, "?page[cursor]=next")),
     );
 
     const result = await getSlackChannels(SLACK_INTEGRATION_ID);
 
-    // Bounded, and honest about it: a truncated list handed over as a complete
-    // one sends the user looking for a channel that was never read, and the
-    // invite hint beside the picker reads as the explanation.
     expect(fetchMock).toHaveBeenCalledTimes(MAX_CHANNEL_PAGES);
     expect(result).toEqual({
       channels: channelOptions(MAX_CHANNEL_PAGES),
@@ -433,8 +420,6 @@ describe("getSlackChannels", () => {
   });
 
   it("says nothing about a short list for a workspace that just fits the budget", async () => {
-    // The last page inside the budget names no `next`: the read is complete, and
-    // a workspace of exactly this size must not be described as cut off.
     let page = 0;
     fetchMock.mockImplementation(() => {
       page += 1;
@@ -460,10 +445,6 @@ describe("getSlackChannels", () => {
 
     const result = await getSlackChannels(SLACK_INTEGRATION_ID);
 
-    // The refusal explains the list instead of replacing it: the workspaces that
-    // page are the ones a tier-2 limit is hit on, and discarding what was read
-    // leaves the picker empty on every reload — each of which re-runs the same
-    // reads into the same limit.
     expect(result).toEqual({
       channels: [channelOption(FIRST_CHANNEL)],
       incomplete: RATE_LIMITED_MESSAGE,
@@ -475,18 +456,15 @@ describe("getSlackChannels", () => {
 
     const result = await getSlackChannels(SLACK_INTEGRATION_ID);
 
-    // Nothing was read, so there is no picker to explain: the refusal is the
-    // whole answer.
     expect(result).toEqual({ error: RATE_LIMITED_MESSAGE });
   });
 });
 
 /**
- * A `2xx` whose body is not the JSON:API document the contract promises — an
- * empty answer, or the HTML a proxy or WAF puts in front of one. Reading it
- * must not throw: the raw `SyntaxError` message survives `sanitizeErrorMessage`
- * (V8 truncates the HTML snippet to ten characters, so the `<!doctype html>`
- * branch never matches it) and would be shown to the user verbatim.
+ * A `2xx` whose body is not JSON:API: an empty answer, or the HTML a proxy or
+ * WAF puts in front of one. The raw `SyntaxError` survives
+ * `sanitizeErrorMessage` (V8 truncates the snippet to ten characters, so its
+ * `<!doctype html>` branch never matches) and would be shown verbatim.
  */
 const HTML_INTERSTITIAL =
   "<!DOCTYPE html><html><body><h1>Checking your browser</h1></body></html>";
@@ -564,15 +542,13 @@ describe("setSlackDefaultChannel", () => {
 
       expect(result).toEqual({ error: SLACK_UNREADABLE_RESULT_MESSAGE });
       expectNoParserProse(result);
-      // The API recorded the channel before answering, so both pages have to be
-      // refreshed even though its answer could not be read.
+      // The API recorded the channel before answering, so both pages refresh.
       expectIntegrationsRevalidated();
     },
   );
 
-  // The caller reads `integration.attributes.configuration`, so a guard any
-  // shallower than that lets the miss surface later as a generic "something
-  // went wrong" from the manager's catch.
+  // The caller reads `integration.attributes.configuration`, so a shallower
+  // guard lets the miss surface later as the manager's generic catch.
   it.each([
     { shape: "no `data`", body: {} },
     { shape: "a null `data`", body: { data: null } },
@@ -634,8 +610,6 @@ describe("sendSlackTestMessage", () => {
   });
 
   it("wraps a reason it has no copy for instead of answering with the bare token", async () => {
-    // A real Slack reason outside the mapping: the set is open-ended, so this
-    // is the ordinary case rather than the exotic one.
     fetchMock
       .mockResolvedValueOnce(testMessageAccepted())
       .mockResolvedValueOnce(settledTask("failed", { error: "is_archived" }));
@@ -643,8 +617,6 @@ describe("sendSlackTestMessage", () => {
     const result = await sendSlackTestMessage(SLACK_INTEGRATION_ID);
 
     const error = (result as { error?: string }).error ?? "";
-    // Prowler's sentence, with Slack's word for it kept inside — not instead
-    // of it: a protocol token alone tells the reader nothing to act on.
     expect(error).toMatch(/Slack refused the message/);
     expect(error).toContain("is_archived");
     expect(error).not.toBe("is_archived");
@@ -665,8 +637,7 @@ describe("sendSlackTestMessage", () => {
   });
 
   it("shows a reason the task worded itself as the prose it is", async () => {
-    // Not token-shaped, so nothing is wrapped around it: the alternative would
-    // be parsing prose, which the error model exists to prevent.
+    // Not token-shaped, so nothing is wrapped around it.
     const prose = "Slack rejected the message: the channel is archived.";
     fetchMock
       .mockResolvedValueOnce(testMessageAccepted())
@@ -708,11 +679,6 @@ const rateLimitedResponse = () =>
     },
   );
 
-/**
- * Answering in copy is not a reason to stay silent: a `5xx` on these calls is
- * the same fault the OAuth ones report, so it reaches Sentry the same way —
- * without changing a word of what the user is told.
- */
 describe.each(COPY_ONLY_ACTIONS)("$name", ({ call }) => {
   it("reports an upstream Slack failure and still answers in the same words", async () => {
     fetchMock.mockResolvedValue(
@@ -734,8 +700,6 @@ describe.each(COPY_ONLY_ACTIONS)("$name", ({ call }) => {
     });
     expect(captureMessageMock).not.toHaveBeenCalled();
 
-    // The API's own `detail`, which is what this 502 already said before it was
-    // reported: the throw is caught by the action and carries the same string.
     expect(result).toEqual({ error: UPSTREAM_DETAIL });
   });
 
@@ -771,9 +735,8 @@ describe.each(COPY_ONLY_ACTIONS)("$name", ({ call }) => {
 });
 
 /**
- * The integration id is interpolated into every one of these URLs, so an id
- * that is not one has to be refused before the request is built rather than
- * sent as a path of its own.
+ * The integration id is interpolated into every one of these URLs, so a
+ * malformed one is refused before the request is built.
  */
 describe.each(COPY_ONLY_ACTIONS)("$name", ({ call }) => {
   it.each(["../../users", "not-a-uuid", ""])(
@@ -782,8 +745,6 @@ describe.each(COPY_ONLY_ACTIONS)("$name", ({ call }) => {
       const result = await call(id);
 
       expect(fetchMock).not.toHaveBeenCalled();
-      // The same answer a malformed exchange argument gets: nothing about a
-      // refused id is the user's to act on.
       expect(result).toEqual({ error: SLACK_GENERIC_ERROR_MESSAGE });
     },
   );
