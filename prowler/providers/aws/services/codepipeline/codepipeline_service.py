@@ -1,7 +1,7 @@
-from typing import Optional
+from typing import List, Optional
 
 from botocore.exceptions import ClientError
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from prowler.lib.logger import logger
 from prowler.providers.aws.lib.service.service import AWSService
@@ -89,13 +89,29 @@ class CodePipeline(AWSService):
         try:
             regional_client = self.regional_clients[pipeline.region]
             pipeline_info = regional_client.get_pipeline(name=pipeline.name)
-            source_info = pipeline_info["pipeline"]["stages"][0]["actions"][0]
+            all_stages = pipeline_info["pipeline"]["stages"]
+
+            # Capture all stages and their action configurations for secret scanning
+            for stage in all_stages:
+                stage_obj = PipelineStage(name=stage["name"])
+                for action in stage.get("actions", []):
+                    stage_obj.actions.append(
+                        PipelineAction(
+                            name=action["name"],
+                            configuration=action.get("configuration"),
+                        )
+                    )
+                pipeline.stages.append(stage_obj)
+
+            # Capture source info from the first stage/action (existing behaviour)
+            source_info = all_stages[0]["actions"][0]
             repository_id = source_info["configuration"].get("FullRepositoryId", "")
             pipeline.source = Source(
                 type=source_info["actionTypeId"]["provider"],
                 repository_id=repository_id,
                 configuration=source_info["configuration"],
             )
+
         except ClientError as error:
             logger.error(
                 f"{pipeline.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -137,13 +153,37 @@ class Source(BaseModel):
 
     Attributes:
         type: The type of source provider.
-        location: The location/path of the source repository.
+        repository_id: The repository identifier.
         configuration: Optional dictionary containing additional source configuration.
     """
 
     type: str
     repository_id: str
     configuration: Optional[dict]
+
+
+class PipelineAction(BaseModel):
+    """Model representing a single action within a pipeline stage.
+
+    Attributes:
+        name: The name of the action.
+        configuration: Optional dictionary of action configuration key/value pairs.
+    """
+
+    name: str
+    configuration: Optional[dict] = None
+
+
+class PipelineStage(BaseModel):
+    """Model representing a stage within a CodePipeline pipeline.
+
+    Attributes:
+        name: The name of the stage.
+        actions: List of actions defined in this stage.
+    """
+
+    name: str
+    actions: List[PipelineAction] = Field(default_factory=list)
 
 
 class Pipeline(BaseModel):
@@ -154,6 +194,7 @@ class Pipeline(BaseModel):
         arn: The ARN (Amazon Resource Name) of the pipeline.
         region: The AWS region where the pipeline exists.
         source: Optional Source object containing source configuration.
+        stages: List of all pipeline stages with their action configurations.
         tags: Optional list of pipeline tags.
     """
 
@@ -161,4 +202,5 @@ class Pipeline(BaseModel):
     arn: str
     region: str
     source: Optional[Source] = None
+    stages: List[PipelineStage] = Field(default_factory=list)
     tags: Optional[list] = []
