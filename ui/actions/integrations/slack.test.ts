@@ -352,7 +352,7 @@ const channelOptions = (count: number) =>
 const RATE_LIMITED_MESSAGE =
   "Slack is rate limiting Prowler right now. Try again in about 30 seconds.";
 
-/** A dead grant, as the API reports one: the reason in `code`, prose in `detail`. */
+/** A dead grant as the API reports it: reason in `code`, prose in `detail`. */
 const TOKEN_EXPIRED_CODE = "token_expired";
 const TOKEN_EXPIRED_DETAIL = "Slack refused the request: token_expired.";
 const TOKEN_EXPIRED_MESSAGE =
@@ -452,8 +452,7 @@ describe("getSlackChannels", () => {
 
     const result = await getSlackChannels(SLACK_INTEGRATION_ID);
 
-    // Slack named no reason for the wait, so the truncation carries none: a
-    // rate limit says nothing about the grant itself.
+    // A rate limit says nothing about the grant, so the truncation names none.
     expect(result).toEqual({
       channels: [channelOption(FIRST_CHANNEL)],
       incomplete: RATE_LIMITED_MESSAGE,
@@ -462,9 +461,6 @@ describe("getSlackChannels", () => {
   });
 
   it("names the reason a later page was refused, not only the wording", async () => {
-    // A grant that has stopped working refuses the second cursor page exactly
-    // as it refuses the first (contract, Cross-cutting) — and the read is a
-    // success either way, so `code` is the only way the caller can hear it.
     fetchMock
       .mockResolvedValueOnce(channelPage(FIRST_CHANNEL, "?page[cursor]=2"))
       .mockResolvedValueOnce(
@@ -701,7 +697,7 @@ describe.each(COPY_ONLY_ACTIONS)("$name", ({ call }) => {
 
     expect(captureExceptionMock).not.toHaveBeenCalled();
     expect(captureMessageMock).not.toHaveBeenCalled();
-    // `code` travels alongside the copy; none of these refusals names one.
+    // None of these refusals names a `code`.
     expect(result).toEqual({ error: refusal.expected, code: null });
   });
 });

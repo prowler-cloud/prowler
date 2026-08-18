@@ -41,12 +41,11 @@ interface SlackUnconfirmed {
 interface SlackActionError {
   error: string;
   /**
-   * The refusal's `code`, when it named one, alongside the copy.
-   *
-   * A caller reads it to recognise a *class* of failure the wording cannot be
-   * pattern-matched for — a Slack grant that has stopped working, which the
-   * contract says can surface from any of these calls (Cross-cutting) and which
-   * is recovered from by reconnecting rather than by retrying.
+   * The refusal's `code`, when it named one, alongside the copy. A caller reads
+   * it to recognise a class of failure the wording cannot be pattern-matched
+   * for — a Slack grant that has stopped working, which the contract allows
+   * from any of these calls (Cross-cutting) and is recovered from by
+   * reconnecting rather than by retrying.
    */
   code?: string | null;
 }
@@ -183,11 +182,9 @@ const failureFrom = async (
 
 /**
  * `failureFrom` flattened to one refusal, for the calls whose only outcome is
- * "it did not work" — with the `code` carried alongside, unworded, for the
- * caller that has to act on the class rather than show the sentence. Rate
- * limiting keeps its own wording: `conversations.list` is Slack tier 2, so a
- * `429` shows up here (contract, Errors) and the wait it names is the useful
- * part.
+ * "it did not work". Rate limiting keeps its own wording: `conversations.list`
+ * is Slack tier 2, so a `429` shows up here (contract, Errors) and the wait it
+ * names is the useful part.
  */
 const refusalFrom = async (
   response: Response,
@@ -498,16 +495,15 @@ export const setSlackDefaultChannel = async (
 
 /**
  * What the API reports about revoking Prowler's token at Slack: one boolean in
- * `meta`, and nothing else. The API sends no reason for a revocation that did
- * not happen, so there is none to report — and a UI that invented a place to
- * put one would be promising the user an explanation it can never fill in.
+ * `meta`, and nothing else — it sends no reason for a revocation that did not
+ * happen, so there is no field here to hold one.
  */
 export interface SlackRevocation {
   /**
    * Whether Slack confirmed the token no longer grants Prowler anything, or
-   * `null` when the response carried no outcome at all. The contract says the
-   * outcome is always reported, so `null` means the response is wrong rather
-   * than the revocation — and neither answer is claimed on the user's behalf.
+   * `null` when the response carried no outcome. The contract says the outcome
+   * is always reported, so `null` means the response is wrong, not the
+   * revocation.
    */
   revoked: boolean | null;
 }
@@ -524,16 +520,14 @@ export type SlackDisconnectResult = SlackDisconnectSuccess | SlackActionError;
  * Disconnect the workspace: `DELETE /integrations/{id}`.
  *
  * The generic `deleteIntegration` cannot serve this: it discards the response
- * body, and the whole point here is what the body carries. Revocation at Slack
- * is best-effort — the row is removed either way and the outcome travels in
- * JSON:API `meta` — so a caller has to be able to distinguish "gone and revoked"
- * from "gone, but still installed in Slack".
+ * body, and the body is the whole point. Revocation at Slack is best-effort —
+ * the row is removed either way and the outcome travels in JSON:API `meta` — so
+ * a caller has to tell "gone and revoked" from "gone, but still installed in
+ * Slack".
  *
- * `revoked` is reported only as the API states it: a body without the field (an
- * empty `204`, say) yields `null`, not `false`. An unreported outcome is not a
- * failed revocation — it must not send the user off to clean up Slack — and it
- * is not a confirmed one either, so it must not be reported as access having
- * been revoked. The row is gone in all three cases, and that much is said.
+ * A body without the field (an empty `204`, say) yields `null`, not `false`: an
+ * unreported outcome must not send the user off to clean up Slack, nor be shown
+ * as access revoked.
  */
 export const disconnectSlackIntegration = async (
   integrationId: string,
@@ -548,8 +542,6 @@ export const disconnectSlackIntegration = async (
     const response = await fetch(url.toString(), { method: "DELETE", headers });
 
     if (!response.ok) {
-      // Awaited inside the `try`: unawaited, a 5xx's rejection would skip
-      // this `catch`.
       return await refusalFrom(
         response,
         `Unable to disconnect the Slack workspace: ${response.statusText}`,
