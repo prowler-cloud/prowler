@@ -12,7 +12,7 @@ import {
   slackRateLimitMessage,
 } from "@/lib/integrations/slack-errors";
 import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
-import type { IntegrationProps } from "@/types/integrations";
+import { INTEGRATION_TYPE, type IntegrationProps } from "@/types/integrations";
 
 interface SlackUnavailable {
   unavailable: true;
@@ -98,23 +98,36 @@ const isSlackAuthorizeUrl = (value: string): boolean => {
   }
 };
 
+const INTEGRATIONS_RESOURCE_TYPE = "integrations";
+
 /**
  * The callback names the workspace and redirects on this value alone, so a `2xx`
  * payload that is not a JSON:API resource (`{}`, `[]`, `"invalid"`) must read as
- * unreadable rather than as a connected workspace.
+ * unreadable rather than as a connected workspace. Identity is part of that: an
+ * id the page cannot link to, another resource type, or another integration
+ * kind would each be shown as the Slack workspace just installed.
  */
 const isIntegrationResource = (value: unknown): boolean => {
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
     return false;
   }
 
-  const { id, attributes } = value as Record<string, unknown>;
+  const { id, type, attributes } = value as Record<string, unknown>;
+
+  if (
+    typeof id !== "string" ||
+    id === "" ||
+    type !== INTEGRATIONS_RESOURCE_TYPE ||
+    typeof attributes !== "object" ||
+    attributes === null ||
+    Array.isArray(attributes)
+  ) {
+    return false;
+  }
 
   return (
-    typeof id === "string" &&
-    typeof attributes === "object" &&
-    attributes !== null &&
-    !Array.isArray(attributes)
+    (attributes as Record<string, unknown>).integration_type ===
+    INTEGRATION_TYPE.SLACK
   );
 };
 

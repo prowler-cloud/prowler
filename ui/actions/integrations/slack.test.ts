@@ -248,9 +248,18 @@ describe("exchangeSlackOAuthCode result shape", () => {
     ["an array", []],
     ["a bare string", "invalid"],
     ["a resource with no id", { type: "integrations", attributes: {} }],
+    ["a resource with an empty id", { ...INTEGRATION, id: "" }],
+    ["a resource of another type", { ...INTEGRATION, type: "tasks" }],
     [
       "a resource with no attributes",
       { id: INTEGRATION.id, type: "integrations" },
+    ],
+    [
+      "another kind of integration",
+      {
+        ...INTEGRATION,
+        attributes: { ...INTEGRATION.attributes, integration_type: "jira" },
+      },
     ],
   ])("cannot confirm the install from %s", async (_label, data) => {
     // Given — a 2xx whose `data` is truthy but is not an integration resource.
