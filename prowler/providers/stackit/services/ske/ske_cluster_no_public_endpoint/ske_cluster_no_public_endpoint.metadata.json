@@ -9,8 +9,8 @@
   "Severity": "high",
   "ResourceType": "NotDefined",
   "ResourceGroup": "container",
-  "Description": "The Kubernetes API server of an SKE cluster should not be reachable from the entire internet. Enable the ACL extension to restrict access to a known set of source CIDRs, or run the control plane inside a STACKIT Network Area (SNA) so that it is not published on the internet at all.",
-  "Risk": "**Exposed Kubernetes control plane.** A publicly reachable API server lets anyone on the internet attempt authentication, exploit unpatched control plane vulnerabilities, or brute-force credentials. Combined with leaked or weak credentials this can lead to full cluster takeover, workload tampering, and data exfiltration.",
+  "Description": "The **Kubernetes API server** of an SKE cluster should not be reachable from the entire internet. Enable the **ACL extension** to restrict access to a known set of source CIDRs, or run the control plane inside a **STACKIT Network Area (SNA)** so that it is not published on the internet at all.",
+  "Risk": "A publicly reachable **Kubernetes API server** lets anyone on the internet attempt authentication, exploit unpatched control plane vulnerabilities, or brute-force credentials. Combined with leaked or weak credentials, this can lead to **full cluster takeover**, workload tampering, and data exfiltration.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.stackit.cloud/products/runtime/kubernetes-engine/how-tos/enhance-the-security-of-your-cluster/",
@@ -25,7 +25,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "**Restrict access to the Kubernetes API.** Enable the SKE ACL extension and allowlist only the source CIDRs that legitimately need to reach the API server, never 0.0.0.0/0 or ::/0. Where available, place the control plane in a STACKIT Network Area so the endpoint is not exposed to the internet.",
+      "Text": "**Restrict access to the Kubernetes API.** Enable the **SKE ACL extension** and allowlist only the source CIDRs that legitimately need to reach the API server, never `0.0.0.0/0` or `::/0`. Where available, place the control plane in a **STACKIT Network Area** so the endpoint is not exposed to the internet.",
       "Url": "https://hub.prowler.com/check/ske_cluster_no_public_endpoint"
     }
   },

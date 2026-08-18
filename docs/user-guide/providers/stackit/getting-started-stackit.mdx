@@ -13,7 +13,7 @@ StackIT support in Prowler is community-maintained. For commercial support or to
 Before running Prowler with the StackIT provider, ensure you have:
 
 1. A StackIT account with at least one project
-2. A StackIT service account key file with permissions on the project (`iaas.viewer` is enough for the currently shipped IaaS checks; `project.owner` works for any future service). See the [Authentication guide](/user-guide/providers/stackit/authentication) for the full setup.
+2. A StackIT service account key file with project permissions for the services to scan. `iaas.viewer` is sufficient for the currently shipped IaaS checks. For SKE, assign the project-scoped `Reader` role as a broad read-only convenience, or create a custom role with `resource-manager.project.get`, `ske.cluster.list`, `ske.cluster.get`, and `ske.version.list`. The `resource-manager.project.get` permission is optional for scanning; it only lets Prowler verify and display the project name. See the [Authentication guide](/user-guide/providers/stackit/authentication) for the full setup.
 3. Access to Prowler CLI (see [Installation](/getting-started/installation/prowler-cli))
 
 ## Prowler CLI
@@ -138,6 +138,8 @@ If the scan fails with a 401 error, the service account key is no longer valid (
 
 ### Permission Errors
 
-If checks fail with a 403 error, the service account is missing the required role on the project. Re-check the role assignment in the StackIT portal (`iaas.viewer` is the minimum for the shipped IaaS checks).
+If the connection probe warns that Resource Manager access could not be verified with a 403 response, Prowler continues to service discovery. Grant the optional `resource-manager.project.get` permission to verify and display the project name.
+
+If a service call fails with a 403 response, the service account is missing a permission required by that service. `iaas.viewer` is sufficient for the shipped IaaS checks. The `ske_cluster_no_public_endpoint` check lists clusters and therefore requires `ske.cluster.list`; STACKIT least-privilege custom-role examples also include `ske.cluster.get` and `ske.version.list`. Service API calls remain authoritative and stop the scan when access is denied.
 
 For detailed setup steps, see the [Authentication guide](/user-guide/providers/stackit/authentication).

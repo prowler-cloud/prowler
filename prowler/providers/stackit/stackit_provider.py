@@ -559,10 +559,11 @@ class StackitProvider(Provider):
         """
         Test connection to StackIT by validating credentials.
 
-        This method validates the service account credentials and project ID
-        by making a Resource Manager ``get_project`` call. Pass either the
-        key file path or the inline key content; the SDK signs the RSA
-        challenge and mints a short-lived access token internally.
+        This method probes Resource Manager with a ``get_project`` call. A 403
+        response is non-fatal because service-specific permissions are checked
+        during discovery. Pass either the key file path or the inline key
+        content; the SDK signs the RSA challenge and mints a short-lived access
+        token internally.
 
         Args:
             project_id (str): StackIT project ID
@@ -602,6 +603,13 @@ class StackitProvider(Provider):
                 raise error
             return Connection(error=error)
         except Exception as test_error:
+            if getattr(test_error, "status", None) == 403:
+                logger.warning(
+                    "StackIT test_connection: Resource Manager access could not be "
+                    "verified (403). Service permissions will be checked during "
+                    "discovery."
+                )
+                return Connection(is_connected=True)
             try:
                 StackitProvider.handle_api_error(test_error)
             except StackITInvalidTokenError as auth_error:
