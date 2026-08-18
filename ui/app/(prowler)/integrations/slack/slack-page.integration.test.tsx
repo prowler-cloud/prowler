@@ -32,6 +32,7 @@ import {
   slackFixture,
   slackFixtureWithDefaultChannel,
   unreadableCheckTimeSlackFixture,
+  unreportedRevocationSlackFixture,
 } from "@/__tests__/msw/handlers/slack.fixtures";
 
 import {
@@ -641,6 +642,25 @@ describe("disconnecting a workspace", () => {
     );
     // The row is removed regardless, so the page does not keep offering a
     // workspace that no longer exists here.
+    expect(await harness.returnedToUnconnectedState()).toBe(true);
+  }, 30000);
+
+  it("says only that the workspace is no longer connected when nothing reports the revocation", async () => {
+    // Given — the disconnect answers a plain `204` with no body, so there is no
+    // `meta` to read the outcome from. A deployment that overrides nothing
+    // answers exactly this, which makes it the outcome users really meet.
+    const harness = new SlackIntegrationHarness(
+      unreportedRevocationSlackFixture(),
+    );
+    await harness.mount();
+
+    // When
+    expect(await harness.disconnect()).toBe(REVOCATION_OUTCOME.UNREPORTED);
+
+    // Then — an unreported outcome is neither a confirmed revocation nor a
+    // failed one, so the page claims neither: nothing sends the user to Slack
+    // to finish a job no answer said was unfinished.
+    expect(harness.showsRevocationNotice()).toBe(false);
     expect(await harness.returnedToUnconnectedState()).toBe(true);
   }, 30000);
 });

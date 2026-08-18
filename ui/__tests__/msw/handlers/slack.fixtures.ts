@@ -79,8 +79,12 @@ export interface SlackRefusalFixture {
  * deployment can never produce.
  */
 export interface SlackRevocationFixture {
-  /** Slack confirmed the token no longer grants Prowler anything. */
-  revoked: boolean;
+  /**
+   * Slack confirmed the token no longer grants Prowler anything. `null` when the
+   * answer reports nothing at all — the plain `204` a deployment without a
+   * `destroy` override sends, which is what the UI meets today.
+   */
+  revoked: boolean | null;
 }
 
 export interface SlackFixture {
@@ -447,6 +451,19 @@ export const revokeFailureSlackFixture = (
 ): SlackFixture =>
   connectedSlackFixture({
     revocation: { revoked: false },
+    ...overrides,
+  });
+
+/**
+ * A connected tenant whose disconnect answers a plain `204` with no body: the
+ * row is gone and the revocation is unreported. Neither a confirmed revocation
+ * nor a failed one, so the UI can only say the workspace is no longer connected.
+ */
+export const unreportedRevocationSlackFixture = (
+  overrides: Partial<SlackFixture> = {},
+): SlackFixture =>
+  connectedSlackFixture({
+    revocation: { revoked: null },
     ...overrides,
   });
 

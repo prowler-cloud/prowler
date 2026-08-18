@@ -359,8 +359,14 @@ export const handlersForSlack = (fx: SlackFixture) => {
     // `revoked` is the entire outcome. The API sends no reason for a revocation
     // that failed, and a handler that invented one would let the page grow copy
     // around a field the deployment never sends.
+    //
+    // A `null` outcome is the plain `204` a deployment that overrides nothing
+    // sends: no body, so no `meta` to read the outcome from.
     http.delete(`${API}/integrations/:id`, () => {
       install = null;
+      if (fx.revocation.revoked === null) {
+        return new HttpResponse(null, { status: 204 });
+      }
       return HttpResponse.json({ meta: { revoked: fx.revocation.revoked } });
     }),
   ];

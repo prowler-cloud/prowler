@@ -36,6 +36,8 @@ const NO_DEFAULT_CHANNEL = "<no channel recorded>";
 export const REVOCATION_OUTCOME = {
   REVOKED: "revoked",
   NOT_REVOKED: "not-revoked",
+  /** The answer said nothing either way, so the page claims neither. */
+  UNREPORTED: "unreported",
 } as const;
 
 export type RevocationOutcome =
@@ -704,8 +706,11 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
 
   /**
    * Disconnects the workspace, confirming the way a user has to, and reports
-   * what the page says about the revocation — the two outcomes are mutually
-   * exclusive, so asking for one is also a check that the other is absent.
+   * what the page says about the revocation — the three outcomes are mutually
+   * exclusive, so asking for one is also a check that the others are absent.
+   *
+   * The two reported-by-toast outcomes share a title, so each is read from its
+   * own description: a title match alone would agree with either wording.
    */
   async disconnect(): Promise<RevocationOutcome> {
     // The card's action opens the confirmation; the dialog's own button carries
@@ -718,8 +723,11 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
         if (this.alertMatching(/revocation/i)) {
           return REVOCATION_OUTCOME.NOT_REVOKED;
         }
-        if (this.containsText(/Slack workspace disconnected/)) {
+        if (this.containsText(/has been revoked/)) {
           return REVOCATION_OUTCOME.REVOKED;
+        }
+        if (this.containsText(/is no longer connected to Prowler/)) {
+          return REVOCATION_OUTCOME.UNREPORTED;
         }
         return null;
       },
@@ -742,6 +750,11 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
         "the install to be offered again",
       )) ?? false
     );
+  }
+
+  /** Whether the page is asking the user to remove the access in Slack. */
+  showsRevocationNotice(): boolean {
+    return this.alertMatching(/revocation/i) !== null;
   }
 
   /**
