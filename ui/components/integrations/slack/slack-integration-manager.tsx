@@ -28,10 +28,71 @@ import type {
   SlackChannelOption,
 } from "@/types/integrations";
 
-interface TestMessageOutcome {
-  sent: boolean;
+const CHANNELS_STATUS = {
+  LOADING: "loading",
+  ERROR: "error",
+  LOADED: "loaded",
+} as const;
+
+interface ChannelsLoading {
+  status: typeof CHANNELS_STATUS.LOADING;
+}
+
+interface ChannelsFailed {
+  status: typeof CHANNELS_STATUS.ERROR;
+  message: string;
+}
+
+interface ChannelsLoaded {
+  status: typeof CHANNELS_STATUS.LOADED;
+  channels: SlackChannelOption[];
+  // Rides with the list it qualifies, so it can never outlive it.
+  notice: string | null;
+}
+
+type ChannelsState = ChannelsLoading | ChannelsFailed | ChannelsLoaded;
+
+const TEST_MESSAGE_STATUS = {
+  IDLE: "idle",
+  SENDING: "sending",
+  SENT: "sent",
+  FAILED: "failed",
+} as const;
+
+interface TestMessageIdle {
+  status: typeof TEST_MESSAGE_STATUS.IDLE;
+}
+
+interface TestMessageSending {
+  status: typeof TEST_MESSAGE_STATUS.SENDING;
+}
+
+interface TestMessageSent {
+  status: typeof TEST_MESSAGE_STATUS.SENT;
   detail: string;
 }
+
+interface TestMessageFailed {
+  status: typeof TEST_MESSAGE_STATUS.FAILED;
+  detail: string;
+}
+
+type TestMessageState =
+  | TestMessageIdle
+  | TestMessageSending
+  | TestMessageSent
+  | TestMessageFailed;
+
+// The name may be missing: the id decides what the UI can do with it.
+interface SlackChannelRef {
+  id: string;
+  name: string | null;
+}
+
+const channelRefEquals = (
+  a: SlackChannelRef | null,
+  b: SlackChannelRef | null,
+) => a?.id === b?.id && a?.name === b?.name;
 
 interface SlackIntegrationManagerProps {
   /** At most one exists per tenant (one workspace). */
@@ -59,15 +120,17 @@ export const SlackIntegrationManager = ({
   const recordedChannelName =
     integration?.attributes.configuration.channel_name ?? null;
 
-  const [channels, setChannels] = useState<SlackChannelOption[]>([]);
-  const [channelsError, setChannelsError] = useState<string | null>(null);
-  // Kept apart from `channelsError`: one replaces the picker, the other only
-  // qualifies it.
-  const [channelsNotice, setChannelsNotice] = useState<string | null>(null);
-  // Seeded here, not by the effect: the effect never runs on the server, so a
-  // `false` would server-render a "no channels" picker until hydration.
-  const [isLoadingChannels, setIsLoadingChannels] = useState(
-    Boolean(integrationId),
+  const recordedChannel: SlackChannelRef | null = recordedChannelId
+    ? { id: recordedChannelId, name: recordedChannelName }
+    : null;
+
+  // Seeded `loading`, not by the effect: the effect never runs on the server,
+  // so anything else would server-render a "no channels" picker until
+  // hydration.
+  const [channelsState, setChannelsState] = useState<ChannelsState>(
+    integrationId
+      ? { status: CHANNELS_STATUS.LOADING }
+      : { status: CHANNELS_STATUS.LOADED, channels: [], notice: null },
   );
   // Bumped by refresh: a channel invited after load only shows on a re-read.
   const [channelReloads, setChannelReloads] = useState(0);
@@ -77,34 +140,23 @@ export const SlackIntegrationManager = ({
   );
   // Mirrored in state, not read from the prop, so channel-gated affordances
   // move on save instead of waiting for the revalidation.
-  const [defaultChannelId, setDefaultChannelId] = useState<string | null>(
-    recordedChannelId,
-  );
-  const [defaultChannelName, setDefaultChannelName] = useState<string | null>(
-    recordedChannelName,
-  );
+  const [defaultChannel, setDefaultChannel] = useState(recordedChannel);
   // The prop the mirror was last taken from: the card never unmounts, so a
   // mirror seeded only at mount would go stale when the record changes.
-  const [syncedChannelId, setSyncedChannelId] = useState(recordedChannelId);
-  const [syncedChannelName, setSyncedChannelName] =
-    useState(recordedChannelName);
+  const [syncedChannel, setSyncedChannel] = useState(recordedChannel);
   const [isSavingChannel, setIsSavingChannel] = useState(false);
-  const [isSendingTestMessage, setIsSendingTestMessage] = useState(false);
-  const [testMessageOutcome, setTestMessageOutcome] =
-    useState<TestMessageOutcome | null>(null);
+  const [testMessageState, setTestMessageState] = useState<TestMessageState>({
+    status: TEST_MESSAGE_STATUS.IDLE,
+  });
 
-  if (
-    recordedChannelId !== syncedChannelId ||
-    recordedChannelName !== syncedChannelName
-  ) {
-    setSyncedChannelId(recordedChannelId);
-    setSyncedChannelName(recordedChannelName);
-    setDefaultChannelId(recordedChannelId);
-    setDefaultChannelName(recordedChannelName);
+  if (!channelRefEquals(recordedChannel, syncedChannel)) {
+    const previousSyncedId = syncedChannel?.id ?? null;
+    setSyncedChannel(recordedChannel);
+    setDefaultChannel(recordedChannel);
     // Follow the record only while the buffered pick still matches it: an
     // unsaved pick is the user's, not ours to overwrite mid-edit.
-    if (selectedChannelId === syncedChannelId) {
-      setSelectedChannelId(recordedChannelId);
+    if (selectedChannelId === previousSyncedId) {
+      setSelectedChannelId(recordedChannel?.id ?? null);
     }
   }
 
@@ -112,38 +164,38 @@ export const SlackIntegrationManager = ({
     if (!integrationId) return;
 
     let cancelled = false;
-    setIsLoadingChannels(true);
+    setChannelsState({ status: CHANNELS_STATUS.LOADING });
 
     getSlackChannels(integrationId)
       .then((result) => {
         if (cancelled) return;
-
-        // Set on every path: a notice left by an earlier read would qualify a
-        // list it is not about.
-        if ("error" in result) {
-          setChannels([]);
-          setChannelsError(result.error);
-          setChannelsNotice(null);
-        } else {
-          setChannels(result.channels);
-          setChannelsError(null);
-          setChannelsNotice(result.incomplete ?? null);
-        }
+        setChannelsState(
+          "error" in result
+            ? { status: CHANNELS_STATUS.ERROR, message: result.error }
+            : {
+                status: CHANNELS_STATUS.LOADED,
+                channels: result.channels,
+                notice: result.incomplete ?? null,
+              },
+        );
       })
       .catch(() => {
         if (cancelled) return;
-        setChannels([]);
-        setChannelsError("Could not reach Slack to read the channel list.");
-        setChannelsNotice(null);
-      })
-      .finally(() => {
-        if (!cancelled) setIsLoadingChannels(false);
+        setChannelsState({
+          status: CHANNELS_STATUS.ERROR,
+          message: "Could not reach Slack to read the channel list.",
+        });
       });
 
     return () => {
       cancelled = true;
     };
   }, [integrationId, channelReloads]);
+
+  const channels =
+    channelsState.status === CHANNELS_STATUS.LOADED
+      ? channelsState.channels
+      : [];
 
   const handleSaveChannel = async () => {
     if (!integrationId || !selectedChannelId) return;
@@ -173,9 +225,9 @@ export const SlackIntegrationManager = ({
         channels.find((channel) => channel.id === selectedChannelId)?.name ??
         null;
 
-      setDefaultChannelId(selectedChannelId);
-      setDefaultChannelName(savedName);
-      setTestMessageOutcome(null);
+      setDefaultChannel({ id: selectedChannelId, name: savedName });
+      // An outcome about the previous destination would mislead here.
+      setTestMessageState({ status: TEST_MESSAGE_STATUS.IDLE });
       toast({
         title: "Destination channel saved",
         description: savedName
@@ -196,28 +248,25 @@ export const SlackIntegrationManager = ({
   const handleSendTestMessage = async () => {
     if (!integrationId) return;
 
-    setIsSendingTestMessage(true);
-    setTestMessageOutcome(null);
+    setTestMessageState({ status: TEST_MESSAGE_STATUS.SENDING });
     try {
       const result = await sendSlackTestMessage(integrationId);
 
-      setTestMessageOutcome(
+      setTestMessageState(
         "sent" in result
           ? {
-              sent: true,
-              detail: defaultChannelName
-                ? `Prowler posted a test message to #${defaultChannelName}.`
+              status: TEST_MESSAGE_STATUS.SENT,
+              detail: defaultChannel?.name
+                ? `Prowler posted a test message to #${defaultChannel.name}.`
                 : "Prowler posted a test message to your default channel.",
             }
-          : { sent: false, detail: result.error },
+          : { status: TEST_MESSAGE_STATUS.FAILED, detail: result.error },
       );
     } catch (_error) {
-      setTestMessageOutcome({
-        sent: false,
+      setTestMessageState({
+        status: TEST_MESSAGE_STATUS.FAILED,
         detail: "Something went wrong. Please try again.",
       });
-    } finally {
-      setIsSendingTestMessage(false);
     }
   };
 
@@ -311,7 +360,7 @@ export const SlackIntegrationManager = ({
                     {lastCheckedOn}
                   </p>
                 )}
-                {!defaultChannelId && (
+                {!defaultChannel && (
                   <p>
                     Choosing a destination channel is the next step — the
                     connection is checked against it.
@@ -323,7 +372,7 @@ export const SlackIntegrationManager = ({
               <Button
                 size="sm"
                 variant="outline"
-                disabled={isTesting || !defaultChannelId}
+                disabled={isTesting || !defaultChannel}
                 onClick={() => handleTestConnection(integration.id)}
               >
                 <TestTube size={14} />
@@ -336,9 +385,17 @@ export const SlackIntegrationManager = ({
                 options={channels}
                 value={selectedChannelId}
                 onChange={setSelectedChannelId}
-                isLoading={isLoadingChannels}
-                error={channelsError}
-                incompleteNotice={channelsNotice}
+                isLoading={channelsState.status === CHANNELS_STATUS.LOADING}
+                error={
+                  channelsState.status === CHANNELS_STATUS.ERROR
+                    ? channelsState.message
+                    : null
+                }
+                incompleteNotice={
+                  channelsState.status === CHANNELS_STATUS.LOADED
+                    ? channelsState.notice
+                    : null
+                }
                 onRefresh={() => setChannelReloads((reloads) => reloads + 1)}
                 disabled={isSavingChannel}
               />
@@ -347,9 +404,9 @@ export const SlackIntegrationManager = ({
                 <p className="text-text-neutral-secondary text-xs">
                   {/* The id decides, not the name: a missing name would deny
                       a destination the test button posts to. */}
-                  {defaultChannelId
-                    ? defaultChannelName
-                      ? `Prowler posts to #${defaultChannelName}.`
+                  {defaultChannel
+                    ? defaultChannel.name
+                      ? `Prowler posts to #${defaultChannel.name}.`
                       : "Prowler posts to the channel you saved."
                     : "No destination channel recorded yet."}
                 </p>
@@ -358,22 +415,24 @@ export const SlackIntegrationManager = ({
                     size="sm"
                     disabled={
                       !selectedChannelId ||
-                      selectedChannelId === defaultChannelId ||
+                      selectedChannelId === (defaultChannel?.id ?? null) ||
                       isSavingChannel
                     }
                     onClick={handleSaveChannel}
                   >
                     {isSavingChannel ? "Saving..." : "Save channel"}
                   </Button>
-                  {defaultChannelId && (
+                  {defaultChannel && (
                     <Button
                       size="sm"
                       variant="outline"
-                      disabled={isSendingTestMessage}
+                      disabled={
+                        testMessageState.status === TEST_MESSAGE_STATUS.SENDING
+                      }
                       onClick={handleSendTestMessage}
                     >
                       <Send size={14} />
-                      {isSendingTestMessage
+                      {testMessageState.status === TEST_MESSAGE_STATUS.SENDING
                         ? "Sending..."
                         : "Send test message"}
                     </Button>
@@ -381,16 +440,21 @@ export const SlackIntegrationManager = ({
                 </div>
               </div>
 
-              {testMessageOutcome && (
-                <Alert variant={testMessageOutcome.sent ? "success" : "error"}>
+              {(testMessageState.status === TEST_MESSAGE_STATUS.SENT ||
+                testMessageState.status === TEST_MESSAGE_STATUS.FAILED) && (
+                <Alert
+                  variant={
+                    testMessageState.status === TEST_MESSAGE_STATUS.SENT
+                      ? "success"
+                      : "error"
+                  }
+                >
                   <AlertTitle>
-                    {testMessageOutcome.sent
+                    {testMessageState.status === TEST_MESSAGE_STATUS.SENT
                       ? "Test message sent"
                       : "Test message failed"}
                   </AlertTitle>
-                  <AlertDescription>
-                    {testMessageOutcome.detail}
-                  </AlertDescription>
+                  <AlertDescription>{testMessageState.detail}</AlertDescription>
                 </Alert>
               )}
             </div>
