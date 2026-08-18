@@ -83,11 +83,9 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
   private mounted: ReturnType<typeof render> | null = null;
 
   /**
-   * Open the management page again, the way a later visit does — the handlers
-   * already in place keep serving whatever the previous visit left behind, so
-   * this reads the API's state rather than a re-seeded fixture. The previous
-   * render is unmounted first: two live copies of the page would make every
-   * assertion ambiguous.
+   * Open the management page again, the way a later visit does — the handlers in
+   * place keep serving what the previous visit left behind. Unmounts the previous
+   * render first: two live copies would make every assertion ambiguous.
    */
   async revisit(): Promise<void> {
     (await this.mounted)?.unmount();
@@ -98,11 +96,9 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
   }
 
   /**
-   * Refresh the page's server data under the open card, the way
-   * `revalidatePath` does after an action: the card is handed new props but is
-   * never unmounted, so whatever it holds in React state survives. That is what
-   * separates it from `revisit()`, which unmounts first and so re-seeds
-   * everything from scratch.
+   * Refresh the page's server data under the open card, as `revalidatePath` does
+   * after an action: new props, no unmount, so React state survives — unlike
+   * `revisit()`, which re-seeds everything from scratch.
    */
   async refreshPageData(): Promise<void> {
     const rendered = await this.mounted;
@@ -372,13 +368,9 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
   }
 
   /**
-   * Wait for the read of the workspace's channels a connected page starts on
-   * arrival, counting from the reads already issued.
-   *
-   * Every mount of a connected page starts one, and a test that asserts
-   * something else settles long before the read does — a read still in flight
-   * when the test ends lands in the middle of the next one, against a harness
-   * that never asked for it. Waiting here keeps each test's reads its own.
+   * Wait for the channel read every connected mount starts, counting from the
+   * reads already issued: one still in flight when the test ends lands in the
+   * middle of the next, against a harness that never asked for it.
    */
   private async waitForChannelsRead(readsBefore: number): Promise<void> {
     await this.waitFor(
@@ -396,11 +388,9 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
   }
 
   /**
-   * Open the picker and hand back its options.
-   *
-   * Radix mounts the listbox in a portal, and a re-render landing mid-gesture
-   * makes it drop the open state — so re-open from the keyboard when nothing
-   * mounted at all, the same recovery the attack-paths harness needs.
+   * Open the picker and hand back its options. A re-render landing mid-gesture
+   * makes Radix drop the open state, so re-open from the keyboard when nothing
+   * mounted at all.
    */
   private async openChannelPicker(): Promise<HTMLElement[]> {
     const mounted = (): HTMLElement[] | null => {
@@ -444,9 +434,8 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
 
   /**
    * Re-read the workspace's channels, the way a user does after inviting
-   * `@Prowler` to a channel in Slack: the picker only learns about it on a
-   * fresh read, so this waits for the read to have happened and settled rather
-   * than for the click alone.
+   * `@Prowler` to one in Slack. Waits for the read to have settled, not for the
+   * click alone.
    */
   async refreshChannels(): Promise<void> {
     const readsBefore = this.channelListCallCount;
@@ -493,7 +482,6 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     return /Private/.test(option?.textContent ?? "");
   }
 
-  /** Pick a channel out of the picker and ask for it to be saved. */
   private async pickAndSave(name: string): Promise<void> {
     const options = await this.openChannelPicker();
     const option = options.find(
@@ -509,7 +497,7 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     await this.clickButton(/Save channel/);
   }
 
-  /** Pick a channel by name and save it as the integration's destination. */
+  /** Pick a channel, save it, and wait for it to be recorded as the destination. */
   async chooseChannel(name: string): Promise<void> {
     await this.pickAndSave(name);
     await this.waitFor(
@@ -520,10 +508,9 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
   }
 
   /**
-   * Record a different destination away from this page — a second tab, or
-   * someone else in the tenant. Goes through the same call the page makes, so
-   * the API is left in the state a real one would be, and nothing about this
-   * page's own copy of it is touched.
+   * Record a different destination away from this page — a second tab, or someone
+   * else in the tenant. Goes through the same call the page makes, leaving this
+   * page's own copy of it untouched.
    */
   async channelRecordedElsewhere(name: string): Promise<void> {
     const channel = this.fixture.channels.find((c) => c.name === name);
@@ -551,8 +538,8 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
   }
 
   /**
-   * Try to save a channel the API refuses, and hand back what the user is told
-   * about it. A save that succeeds fails the test rather than timing out.
+   * Try to save a channel the API refuses and hand back what the user is told. A
+   * save that succeeds fails the test rather than timing out.
    */
   async refusedChannelSave(name: string): Promise<string> {
     await this.pickAndSave(name);
@@ -572,11 +559,8 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
   }
 
   /**
-   * The text of the toast matching `pattern` — title and message together.
-   *
-   * Radix portals each toast into its viewport as an `<li>`, so the toasts are
-   * the list items outside the page's own markup; matching on the text picks
-   * the one being asked about.
+   * The text of the toast matching `pattern` — title and message together. Radix
+   * portals each toast into its viewport as an `<li>`, outside the page's markup.
    */
   private toastText(pattern: RegExp): string | null {
     const toast = Array.from(
@@ -625,9 +609,8 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
   }
 
   /**
-   * What the user is told about a list that is short of the workspace — shown
-   * beside a picker that still works, unlike `channelPickerMessage()`, which is
-   * what replaces the picker when there is nothing to show.
+   * What the user is told about a list short of the workspace, shown beside a
+   * picker that still works — unlike `channelPickerMessage()`, which replaces it.
    */
   partialListNotice(): string | null {
     const notice = this.q("[data-channels-notice]");
@@ -651,7 +634,6 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
 
   // --- The test message ----------------------------------------------------
 
-  /** Whether sending a test message is offered at all. */
   offersTestMessage(): boolean {
     return this.buttonByText(/Send test message/) !== null;
   }
@@ -666,7 +648,6 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     );
   }
 
-  /** Send the test message and report how it went. */
   async sendTestMessage(): Promise<TestMessageOutcome> {
     await this.clickButton(/Send test message/);
 
@@ -683,7 +664,6 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     );
   }
 
-  /** What the user was told about the last test message. */
   async lastTestMessageOutcome(): Promise<string> {
     const alert = await this.waitFor(
       () => this.testMessageAlert(),
