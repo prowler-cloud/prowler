@@ -724,6 +724,36 @@ describe("a credential Slack no longer accepts", () => {
     expect(message).not.toMatch(new RegExp(SLACK_TOKEN_EXPIRED_CODE));
   }, 30000);
 
+  it("offers it too when only a later cursor page is what Slack refuses", async () => {
+    // Given — a two-page workspace whose first page reads fine and whose second
+    // is refused by a credential Slack no longer accepts. The read stopped
+    // short of the workspace rather than failing, and a grant that has stopped
+    // working refuses page two exactly as it refuses page one.
+    const harness = new SlackIntegrationHarness(
+      partiallyReadSlackFixture({
+        channelsRefusal: SLACK_TOKEN_EXPIRED_REFUSAL,
+      }),
+    );
+
+    // When — nothing but opening the page.
+    await harness.mount();
+
+    // Then — what was read stays on offer, as it does for any short list.
+    expect(await harness.channelOptions()).toEqual([
+      SLACK_PUBLIC_CHANNEL.name,
+      SLACK_SECOND_PUBLIC_CHANNEL.name,
+    ]);
+
+    // And — the dead credential is reported all the same: a picker that still
+    // works is no reason to leave the user without the one fix there is.
+    const notice = await harness.revokedCredentialNotice();
+    expect(notice).toMatch(/Prowler's Slack credential has expired/);
+    expect(harness.offersReconnect()).toBe(true);
+    // The row still reads connected until something says otherwise, and this
+    // is that something.
+    expect(await harness.connectionBadge()).toBe("Disconnected");
+  }, 60000);
+
   it("keeps saying so when a later check fails without Slack naming a reason", async () => {
     // Given — the listing found the credential dead on arrival, and a
     // connection check that settles as failed naming nothing: the generic check

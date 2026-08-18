@@ -311,6 +311,13 @@ interface SlackChannelsSuccess {
    * the picker *and* the reason.
    */
   incomplete?: string;
+  /**
+   * The `code` of the refusal that cut the read short, when it named one. A
+   * grant that has stopped working refuses the second cursor page exactly as it
+   * refuses the first, and a caller reading only the failure path would never
+   * hear about it.
+   */
+  code?: string | null;
 }
 
 export type SlackChannelsResult = SlackChannelsSuccess | SlackActionError;
@@ -368,7 +375,7 @@ export const getSlackChannels = async (
         }
 
         return channels.length > 0
-          ? { channels, incomplete: refusal.error }
+          ? { channels, incomplete: refusal.error, code: refusal.code }
           : refusal;
       }
 

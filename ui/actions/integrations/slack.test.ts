@@ -352,6 +352,12 @@ const channelOptions = (count: number) =>
 const RATE_LIMITED_MESSAGE =
   "Slack is rate limiting Prowler right now. Try again in about 30 seconds.";
 
+/** A dead grant, as the API reports one: the reason in `code`, prose in `detail`. */
+const TOKEN_EXPIRED_CODE = "token_expired";
+const TOKEN_EXPIRED_DETAIL = "Slack refused the request: token_expired.";
+const TOKEN_EXPIRED_MESSAGE =
+  "Prowler's Slack credential has expired. Connect the workspace again to restore access.";
+
 describe("getSlackChannels", () => {
   it("follows a cursor-only `next` on the listing's own URL, not on the API root", async () => {
     // The link is opaque (design D6), so the API may answer with the cursor
@@ -446,9 +452,31 @@ describe("getSlackChannels", () => {
 
     const result = await getSlackChannels(SLACK_INTEGRATION_ID);
 
+    // Slack named no reason for the wait, so the truncation carries none: a
+    // rate limit says nothing about the grant itself.
     expect(result).toEqual({
       channels: [channelOption(FIRST_CHANNEL)],
       incomplete: RATE_LIMITED_MESSAGE,
+      code: null,
+    });
+  });
+
+  it("names the reason a later page was refused, not only the wording", async () => {
+    // A grant that has stopped working refuses the second cursor page exactly
+    // as it refuses the first (contract, Cross-cutting) — and the read is a
+    // success either way, so `code` is the only way the caller can hear it.
+    fetchMock
+      .mockResolvedValueOnce(channelPage(FIRST_CHANNEL, "?page[cursor]=2"))
+      .mockResolvedValueOnce(
+        errorResponse(400, TOKEN_EXPIRED_DETAIL, TOKEN_EXPIRED_CODE),
+      );
+
+    const result = await getSlackChannels(SLACK_INTEGRATION_ID);
+
+    expect(result).toEqual({
+      channels: [channelOption(FIRST_CHANNEL)],
+      incomplete: TOKEN_EXPIRED_MESSAGE,
+      code: TOKEN_EXPIRED_CODE,
     });
   });
 

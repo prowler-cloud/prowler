@@ -243,8 +243,12 @@ export const SlackIntegrationManager = ({
               },
         );
         // The listing is the call a dead credential shows up on first: it
-        // runs on arrival, before the user has touched anything.
-        if ("error" in result) recordRefusal(result.code);
+        // runs on arrival, before the user has touched anything — and a read
+        // cut short names its refusal's code too, so a grant that died on a
+        // later cursor page is heard the same as one that refused the first.
+        // Channels that did arrive are Slack answering: a truncation naming no
+        // code (it was busy) leaves the credential proven alive.
+        if ("error" in result || result.code) recordRefusal(result.code);
         else provedCredentialAlive();
       })
       .catch(() => {
