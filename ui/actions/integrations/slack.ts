@@ -529,8 +529,11 @@ export type SlackDisconnectResult = SlackDisconnectSuccess | SlackActionError;
  * been revoked. The row is gone in all three cases, and that much is said.
  */
 export const disconnectSlackIntegration = async (
-  id: string,
+  integrationId: string,
 ): Promise<SlackDisconnectResult> => {
+  const id = parseIntegrationId(integrationId);
+  if (!id) return { error: SLACK_GENERIC_ERROR_MESSAGE };
+
   const headers = await getAuthHeaders({ contentType: true });
   const url = new URL(`${apiBaseUrl}/integrations/${id}`);
 

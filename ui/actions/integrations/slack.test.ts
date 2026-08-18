@@ -59,6 +59,7 @@ vi.mock("@/lib", () => ({
 }));
 
 import {
+  disconnectSlackIntegration,
   exchangeSlackOAuthCode,
   getSlackAuthorizeUrl,
   getSlackChannels,
@@ -600,6 +601,10 @@ const COPY_ONLY_ACTIONS = [
   {
     name: "setSlackDefaultChannel",
     call: (id: string) => setSlackDefaultChannel(id, FIRST_CHANNEL.id),
+  },
+  {
+    name: "disconnectSlackIntegration",
+    call: (id: string) => disconnectSlackIntegration(id),
   },
 ];
 
