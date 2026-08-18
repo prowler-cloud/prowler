@@ -258,11 +258,15 @@ export function buildLighthouseV2MessageFeedbackPayload(
   input: LighthouseV2MessageFeedbackInput,
 ) {
   const details = input.details?.trim();
+  const reasons = input.reasons
+    ? Array.from(new Set(input.reasons))
+    : undefined;
   return {
     data: {
       type: "lighthouse-message-feedback",
       attributes: filterUndefinedAttributes({
         rating: input.rating,
+        reasons: reasons?.length ? reasons : undefined,
         details: details || undefined,
       }),
     },

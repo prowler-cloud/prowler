@@ -215,6 +215,22 @@ describe("lighthouse-v2.adapter", () => {
       expect(payload.data.attributes).toEqual({ rating: "up" });
     });
 
+    it("should send each selected feedback reason once", () => {
+      // Given / When
+      const payload = buildLighthouseV2MessageFeedbackPayload({
+        sessionId: "session-1",
+        messageId: "message-1",
+        rating: "down",
+        reasons: ["Low quality", "Low quality", "Other"],
+      });
+
+      // Then
+      expect(payload.data.attributes).toEqual({
+        rating: "down",
+        reasons: ["Low quality", "Other"],
+      });
+    });
+
     it("should include agent text, display text, and UI context for contextual messages", () => {
       // Given
       const context: LighthouseContextEnvelope = {

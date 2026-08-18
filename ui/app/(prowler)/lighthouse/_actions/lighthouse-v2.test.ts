@@ -171,6 +171,7 @@ describe("Lighthouse v2 session write actions", () => {
       sessionId: "session-1",
       messageId: "message-1",
       rating: "down",
+      reasons: ["Low quality", "Other"],
       details: "Missing evidence",
     });
 
@@ -185,7 +186,11 @@ describe("Lighthouse v2 session write actions", () => {
         body: JSON.stringify({
           data: {
             type: "lighthouse-message-feedback",
-            attributes: { rating: "down", details: "Missing evidence" },
+            attributes: {
+              rating: "down",
+              reasons: ["Low quality", "Other"],
+              details: "Missing evidence",
+            },
           },
         }),
       }),

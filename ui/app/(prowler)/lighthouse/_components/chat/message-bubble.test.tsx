@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { type ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -8,6 +8,8 @@ import {
   LIGHTHOUSE_V2_PART_TYPE,
   type LighthouseV2Message,
 } from "@/app/(prowler)/lighthouse/_types";
+import { Toaster } from "@/components/shadcn/toast/Toaster";
+import { resetToasts } from "@/components/shadcn/toast/use-toast";
 
 import { MessageBubble } from "./message-bubble";
 
@@ -57,6 +59,7 @@ vi.mock("streamdown", () => ({
 
 describe("MessageBubble", () => {
   beforeEach(() => {
+    resetToasts();
     submitFeedbackMock.mockReset();
     submitFeedbackMock.mockResolvedValue({ data: buildUserMessage("down") });
   });
@@ -416,9 +419,34 @@ describe("MessageBubble", () => {
   });
 
   describe("when rating an assistant answer", () => {
-    it("should open the feedback form with the chosen rating without submitting", async () => {
+    it("should submit thumbs up immediately without opening the feedback form", async () => {
       // Given
       const user = userEvent.setup();
+      submitFeedbackMock.mockResolvedValue({ data: true, status: 204 });
+      renderFeedbackBubble();
+
+      // When
+      await user.click(
+        screen.getByRole("button", { name: "Mark outcome as helpful" }),
+      );
+
+      // Then
+      await waitFor(() =>
+        expect(submitFeedbackMock).toHaveBeenCalledWith({
+          sessionId: "session-1",
+          messageId: "message-user-1",
+          rating: "up",
+        }),
+      );
+      expect(
+        screen.queryByRole("heading", { name: "Share feedback" }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("should disable both rating controls while immediate feedback is pending", async () => {
+      // Given
+      const user = userEvent.setup();
+      submitFeedbackMock.mockImplementation(() => new Promise(() => undefined));
       renderFeedbackBubble();
 
       // When
@@ -428,15 +456,138 @@ describe("MessageBubble", () => {
 
       // Then
       expect(
+        screen.getByRole("button", { name: "Mark outcome as helpful" }),
+      ).toBeDisabled();
+      expect(
+        screen.getByRole("button", { name: "Mark outcome as not helpful" }),
+      ).toBeDisabled();
+    });
+
+    it("should announce a failed immediate thumbs-up submission without opening the feedback form", async () => {
+      // Given
+      const user = userEvent.setup();
+      submitFeedbackMock.mockResolvedValue({
+        error: "Feedback is temporarily unavailable.",
+      });
+      renderFeedbackBubble();
+
+      // When
+      await user.click(
+        screen.getByRole("button", { name: "Mark outcome as helpful" }),
+      );
+
+      // Then
+      await waitFor(() =>
+        expect(
+          screen.getByRole("button", { name: "Mark outcome as helpful" }),
+        ).toHaveAttribute("aria-pressed", "false"),
+      );
+      expect(
+        await screen.findByText("Feedback is temporarily unavailable."),
+      ).toBeVisible();
+      expect(
+        screen.getByRole("region", { name: "Notifications (F8)" }),
+      ).toHaveTextContent("Feedback is temporarily unavailable.");
+      expect(
+        screen.queryByRole("heading", { name: "Share feedback" }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("should announce a thrown immediate thumbs-up submission failure without opening the feedback form", async () => {
+      // Given
+      const user = userEvent.setup();
+      submitFeedbackMock.mockRejectedValue(new Error("Request failed"));
+      renderFeedbackBubble();
+
+      // When
+      await user.click(
+        screen.getByRole("button", { name: "Mark outcome as helpful" }),
+      );
+
+      // Then
+      expect(
+        await screen.findByText(
+          "Feedback is temporarily unavailable. Please try again.",
+        ),
+      ).toBeVisible();
+      expect(
+        screen.queryByRole("heading", { name: "Share feedback" }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("should open the feedback form with the chosen rating without submitting", async () => {
+      // Given
+      const user = userEvent.setup();
+      renderFeedbackBubble();
+
+      // When
+      await user.click(
+        screen.getByRole("button", { name: "Mark outcome as not helpful" }),
+      );
+
+      // Then
+      expect(
         screen.getByRole("heading", { name: "Share feedback" }),
       ).toBeVisible();
       expect(
-        screen.getByRole("button", { name: "Mark outcome as helpful" }),
+        screen.getByRole("button", { name: "Mark outcome as not helpful" }),
       ).toHaveAttribute("aria-pressed", "true");
       expect(
         screen.getByLabelText("Additional feedback (optional)"),
       ).toHaveAttribute("maxlength", "2000");
       expect(submitFeedbackMock).not.toHaveBeenCalled();
+    });
+
+    it("should submit selected feedback reasons with trimmed optional details", async () => {
+      // Given
+      const user = userEvent.setup();
+      submitFeedbackMock.mockResolvedValue({ data: true, status: 204 });
+      renderFeedbackBubble();
+
+      // When
+      await user.click(
+        screen.getByRole("button", { name: "Mark outcome as not helpful" }),
+      );
+      const styleReason = screen.getByRole("button", {
+        name: "Don't like the style",
+      });
+      expect(
+        within(screen.getByRole("group", { name: "Reasons (optional)" }))
+          .getAllByRole("button")
+          .map((button) => button.textContent),
+      ).toEqual([
+        "Don't like the style",
+        "Didn't fully follow instructions",
+        "Low quality",
+        "Biased",
+        "Safety or legal concern",
+        "Other",
+      ]);
+      styleReason.focus();
+      await user.keyboard("{Enter}");
+      await user.click(screen.getByRole("button", { name: "Low quality" }));
+
+      // Then - keyboard and pointer interactions retain a multi-select pressed state.
+      expect(styleReason).toHaveAttribute("aria-pressed", "true");
+      expect(
+        screen.getByRole("button", { name: "Low quality" }),
+      ).toHaveAttribute("aria-pressed", "true");
+
+      // When
+      await user.type(
+        screen.getByLabelText("Additional feedback (optional)"),
+        "  Missing evidence  ",
+      );
+      await user.click(screen.getByRole("button", { name: "Submit" }));
+
+      // Then
+      expect(submitFeedbackMock).toHaveBeenCalledWith({
+        sessionId: "session-1",
+        messageId: "message-user-1",
+        rating: "down",
+        reasons: ["Don't like the style", "Low quality"],
+        details: "Missing evidence",
+      });
     });
 
     it("should submit the chosen rating and trimmed optional details together", async () => {
@@ -472,6 +623,9 @@ describe("MessageBubble", () => {
       expect(
         screen.getByLabelText("Additional feedback (optional)"),
       ).toBeDisabled();
+      expect(
+        screen.getByRole("button", { name: "Don't like the style" }),
+      ).toBeDisabled();
 
       resolveFeedback!({ data: true, status: 204 });
       await waitFor(() =>
@@ -484,7 +638,7 @@ describe("MessageBubble", () => {
       ).toHaveAttribute("aria-pressed", "true");
     });
 
-    it("should submit a rating without optional details", async () => {
+    it("should submit thumbs down without optional reasons or details", async () => {
       // Given
       const user = userEvent.setup();
       submitFeedbackMock.mockResolvedValue({ data: true, status: 204 });
@@ -492,7 +646,7 @@ describe("MessageBubble", () => {
 
       // When
       await user.click(
-        screen.getByRole("button", { name: "Mark outcome as helpful" }),
+        screen.getByRole("button", { name: "Mark outcome as not helpful" }),
       );
       await user.click(screen.getByRole("button", { name: "Submit" }));
 
@@ -500,7 +654,7 @@ describe("MessageBubble", () => {
       expect(submitFeedbackMock).toHaveBeenCalledWith({
         sessionId: "session-1",
         messageId: "message-user-1",
-        rating: "up",
+        rating: "down",
       });
     });
 
@@ -510,6 +664,9 @@ describe("MessageBubble", () => {
       renderFeedbackBubble();
       await user.click(
         screen.getByRole("button", { name: "Mark outcome as not helpful" }),
+      );
+      await user.click(
+        screen.getByRole("button", { name: "Don't like the style" }),
       );
       await user.type(
         screen.getByLabelText("Additional feedback (optional)"),
@@ -525,11 +682,61 @@ describe("MessageBubble", () => {
         screen.queryByRole("heading", { name: "Share feedback" }),
       ).not.toBeInTheDocument();
       await user.click(
-        screen.getByRole("button", { name: "Mark outcome as helpful" }),
+        screen.getByRole("button", { name: "Mark outcome as not helpful" }),
       );
       expect(
         screen.getByLabelText("Additional feedback (optional)"),
       ).toHaveValue("");
+      expect(
+        screen.getByRole("button", { name: "Don't like the style" }),
+      ).toHaveAttribute("aria-pressed", "false");
+    });
+
+    it("should clear selected feedback reasons after a successful submission", async () => {
+      // Given
+      const user = userEvent.setup();
+      submitFeedbackMock.mockResolvedValue({ data: true, status: 204 });
+      renderFeedbackBubble();
+      await user.click(
+        screen.getByRole("button", { name: "Mark outcome as not helpful" }),
+      );
+      await user.click(
+        screen.getByRole("button", { name: "Don't like the style" }),
+      );
+
+      // When
+      await user.click(screen.getByRole("button", { name: "Submit" }));
+      await waitFor(() =>
+        expect(
+          screen.queryByRole("heading", { name: "Share feedback" }),
+        ).not.toBeInTheDocument(),
+      );
+      await user.click(
+        screen.getByRole("button", { name: "Mark outcome as not helpful" }),
+      );
+
+      // Then
+      expect(
+        screen.getByRole("button", { name: "Don't like the style" }),
+      ).toHaveAttribute("aria-pressed", "false");
+    });
+
+    it("should close the feedback popup without submitting", async () => {
+      // Given
+      const user = userEvent.setup();
+      renderFeedbackBubble();
+      await user.click(
+        screen.getByRole("button", { name: "Mark outcome as not helpful" }),
+      );
+
+      // When
+      await user.keyboard("{Escape}");
+
+      // Then
+      expect(submitFeedbackMock).not.toHaveBeenCalled();
+      expect(
+        screen.queryByRole("heading", { name: "Share feedback" }),
+      ).not.toBeInTheDocument();
     });
 
     it("should retain the draft and allow retry after a submission error", async () => {
@@ -543,6 +750,11 @@ describe("MessageBubble", () => {
       renderFeedbackBubble();
       await user.click(
         screen.getByRole("button", { name: "Mark outcome as not helpful" }),
+      );
+      await user.click(
+        screen.getByRole("button", {
+          name: "Didn't fully follow instructions",
+        }),
       );
       await user.type(
         screen.getByLabelText("Additional feedback (optional)"),
@@ -559,6 +771,11 @@ describe("MessageBubble", () => {
       expect(
         screen.getByLabelText("Additional feedback (optional)"),
       ).toHaveValue("Keep this draft");
+      expect(
+        screen.getByRole("button", {
+          name: "Didn't fully follow instructions",
+        }),
+      ).toHaveAttribute("aria-pressed", "true");
 
       // When - retry the intact draft
       await user.click(screen.getByRole("button", { name: "Retry" }));
@@ -569,6 +786,7 @@ describe("MessageBubble", () => {
         sessionId: "session-1",
         messageId: "message-user-1",
         rating: "down",
+        reasons: ["Didn't fully follow instructions"],
         details: "Keep this draft",
       });
     });
@@ -607,11 +825,14 @@ function buildUserMessage(id = "message-user-1"): LighthouseV2Message {
 
 function renderFeedbackBubble() {
   return render(
-    <MessageBubble
-      message={buildAssistantMessage([textPart("part-1", "Done")])}
-      feedbackTarget={buildUserMessage()}
-      sessionId="session-1"
-    />,
+    <>
+      <MessageBubble
+        message={buildAssistantMessage([textPart("part-1", "Done")])}
+        feedbackTarget={buildUserMessage()}
+        sessionId="session-1"
+      />
+      <Toaster />
+    </>,
   );
 }
 

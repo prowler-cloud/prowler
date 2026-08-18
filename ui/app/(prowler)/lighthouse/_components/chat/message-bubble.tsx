@@ -20,9 +20,11 @@ import {
 } from "@/app/(prowler)/lighthouse/_lib/messages";
 import {
   LIGHTHOUSE_V2_FEEDBACK_RATING,
+  LIGHTHOUSE_V2_FEEDBACK_REASON,
   LIGHTHOUSE_V2_MESSAGE_ROLE,
   LIGHTHOUSE_V2_PART_TYPE,
   type LighthouseV2FeedbackRating,
+  type LighthouseV2FeedbackReason,
   type LighthouseV2Message,
   type LighthouseV2Part,
 } from "@/app/(prowler)/lighthouse/_types";
@@ -33,6 +35,7 @@ import {
   PopoverAnchor,
   PopoverContent,
 } from "@/components/shadcn/popover";
+import { toast } from "@/components/shadcn/toast/use-toast";
 import { FeedbackForm } from "@/components/survey/feedback-form";
 import { cn } from "@/lib/utils";
 import type { LighthouseSkillDefinition } from "@/types/lighthouse-skills";
@@ -49,6 +52,10 @@ const ASSISTANT_PART_GROUP_TYPE = {
 
 type AssistantPartGroupType =
   (typeof ASSISTANT_PART_GROUP_TYPE)[keyof typeof ASSISTANT_PART_GROUP_TYPE];
+
+const LIGHTHOUSE_V2_FEEDBACK_REASON_OPTIONS = Object.values(
+  LIGHTHOUSE_V2_FEEDBACK_REASON,
+).map((reason) => ({ value: reason, label: reason }));
 
 interface AssistantPartGroup {
   id: string;
@@ -273,6 +280,8 @@ function MessageFeedbackControls({
 }) {
   const [open, setOpen] = useState(false);
   const [rating, setRating] = useState<LighthouseV2FeedbackRating | null>(null);
+  // Local state needed: reasons and details are buffered until "Submit" is clicked.
+  const [reasons, setReasons] = useState<LighthouseV2FeedbackReason[]>([]);
   const [details, setDetails] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -285,36 +294,65 @@ function MessageFeedbackControls({
   const selectRating = (nextRating: LighthouseV2FeedbackRating) => {
     setRating(nextRating);
     setError(null);
+    if (nextRating === LIGHTHOUSE_V2_FEEDBACK_RATING.UP) {
+      void submit(nextRating, "", []);
+      return;
+    }
     setOpen(true);
+  };
+
+  const toggleReason = (reason: LighthouseV2FeedbackReason) => {
+    setReasons((current) =>
+      current.includes(reason)
+        ? current.filter((currentReason) => currentReason !== reason)
+        : [...current, reason],
+    );
   };
 
   const cancel = () => {
     setOpen(false);
     setRating(null);
+    setReasons([]);
     setDetails("");
     setError(null);
   };
 
-  const submit = async () => {
-    if (!rating || isSubmitting) return;
+  const submit = async (
+    submittedRating = rating,
+    submittedDetails = details,
+    submittedReasons = reasons,
+  ) => {
+    if (!submittedRating || isSubmitting) return;
     setIsSubmitting(true);
     setError(null);
     try {
-      const trimmedDetails = details.trim();
+      const trimmedDetails = submittedDetails.trim();
       const result = await submitLighthouseV2MessageFeedback({
         sessionId,
         messageId: message.id,
-        rating,
+        rating: submittedRating,
+        ...(submittedReasons.length ? { reasons: submittedReasons } : {}),
         ...(trimmedDetails ? { details: trimmedDetails } : {}),
       });
       if ("error" in result) {
         setError(result.error);
+        if (submittedRating === LIGHTHOUSE_V2_FEEDBACK_RATING.UP) {
+          setRating(null);
+          toast({ variant: "destructive", description: result.error });
+        }
         return;
       }
       setOpen(false);
+      setReasons([]);
       setDetails("");
     } catch {
-      setError("Feedback is temporarily unavailable. Please try again.");
+      const errorMessage =
+        "Feedback is temporarily unavailable. Please try again.";
+      setError(errorMessage);
+      if (submittedRating === LIGHTHOUSE_V2_FEEDBACK_RATING.UP) {
+        setRating(null);
+        toast({ variant: "destructive", description: errorMessage });
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -327,11 +365,13 @@ function MessageFeedbackControls({
           <FeedbackRatingButton
             rating={LIGHTHOUSE_V2_FEEDBACK_RATING.UP}
             selectedRating={rating}
+            disabled={isSubmitting}
             onSelect={selectRating}
           />
           <FeedbackRatingButton
             rating={LIGHTHOUSE_V2_FEEDBACK_RATING.DOWN}
             selectedRating={rating}
+            disabled={isSubmitting}
             onSelect={selectRating}
           />
         </div>
@@ -344,6 +384,12 @@ function MessageFeedbackControls({
         <FeedbackForm
           title="Share feedback"
           description="Tell us more about this answer."
+          reasons={{
+            label: "Reasons (optional)",
+            options: LIGHTHOUSE_V2_FEEDBACK_REASON_OPTIONS,
+            selected: reasons,
+            onToggle: toggleReason,
+          }}
           detailsLabel="Additional feedback (optional)"
           placeholder="Type your answer here"
           details={details}
@@ -362,10 +408,12 @@ function MessageFeedbackControls({
 function FeedbackRatingButton({
   rating,
   selectedRating,
+  disabled,
   onSelect,
 }: {
   rating: LighthouseV2FeedbackRating;
   selectedRating: LighthouseV2FeedbackRating | null;
+  disabled: boolean;
   onSelect: (rating: LighthouseV2FeedbackRating) => void;
 }) {
   const isUp = rating === LIGHTHOUSE_V2_FEEDBACK_RATING.UP;
@@ -381,6 +429,7 @@ function FeedbackRatingButton({
         isUp ? "Mark outcome as helpful" : "Mark outcome as not helpful"
       }
       aria-pressed={selected}
+      disabled={disabled}
       onClick={() => onSelect(rating)}
       className={cn(
         "text-text-neutral-tertiary hover:text-text-neutral-primary size-6",
