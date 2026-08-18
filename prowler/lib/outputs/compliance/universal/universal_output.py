@@ -1,6 +1,6 @@
 from csv import DictWriter
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, Type, Optional
 
 from pydantic.v1 import create_model
 
@@ -47,6 +47,7 @@ class UniversalComplianceOutput:
         from_cli: bool = True,
         provider: str = None,
     ) -> None:
+        """Initialize compliance output instance."""
         self._data = []
         self._file_descriptor = None
         self.file_path = file_path
@@ -71,6 +72,11 @@ class UniversalComplianceOutput:
 
     @property
     def data(self):
+        """Get transformed compliance data.
+
+                Returns:
+                    list[BaseModel]: Transformed models list.
+                """
         return self._data
 
     def _build_row_model(self, framework: ComplianceFramework):
@@ -280,6 +286,11 @@ class UniversalComplianceOutput:
                     logger.debug(f"Skipping manual row for {req.id}: {e}")
 
     def _create_file_descriptor(self, file_path: str) -> None:
+        """Create file descriptor for output writing.
+
+                Returns:
+                    TextIOWrapper: Open file descriptor.
+                """
         try:
             self._file_descriptor = open_file(file_path, "a")
         except Exception as error:

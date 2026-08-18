@@ -1,3 +1,4 @@
+from typing import Type, Optional
 from colorama import Fore, Style
 from tabulate import tabulate
 
@@ -19,6 +20,16 @@ def get_c5_table(
     output_directory: str,
     compliance_overview: bool,
 ):
+    """Generate C5 compliance summary table.
+
+        Args:
+            findings (list): List of findings.
+            bulk_checks_metadata (dict): Compliance metadata.
+            compliance_framework (str): Framework identifier.
+            output_filename (str): Name of output file.
+            output_directory (str): Destination directory.
+            output_options (Any): Output options.
+        """
     section_table = {
         "Provider": [],
         "Section": [],

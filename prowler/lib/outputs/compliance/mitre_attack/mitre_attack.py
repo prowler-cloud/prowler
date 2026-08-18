@@ -1,3 +1,4 @@
+from typing import Type, Optional
 from colorama import Fore, Style
 from tabulate import tabulate
 
@@ -9,6 +10,36 @@ from prowler.lib.check.compliance_config_eval import (
     get_scan_audit_config,
     resolve_requirement_config_status,
 )
+from prowler.lib.check.compliance_models import Mitre_Requirement
+from prowler.lib.outputs.compliance.compliance_output import ComplianceOutputBase
+from prowler.lib.outputs.utils import unroll_list
+
+
+class MitreAttackOutputBase(ComplianceOutputBase):
+    """Base class for MITRE ATT&CK compliance outputs."""
+
+    def get_framework_specific_fields(
+        self, requirement: Mitre_Requirement
+    ) -> dict[str, str]:
+        """Returns framework-specific fields for the compliance output.
+
+        Args:
+            requirement (Mitre_Requirement): The MITRE requirement containing Tactics, SubTechniques, Platforms, TechniqueURL, and Name.
+
+        Returns:
+            dict[str, str]: A dictionary containing framework-specific fields.
+        """
+        return {
+            "Requirements_Name": requirement.Name,
+            "Requirements_Tactics": unroll_list(getattr(requirement, "Tactics", [])),
+            "Requirements_SubTechniques": unroll_list(
+                getattr(requirement, "SubTechniques", [])
+            ),
+            "Requirements_Platforms": unroll_list(
+                getattr(requirement, "Platforms", [])
+            ),
+            "Requirements_TechniqueURL": getattr(requirement, "TechniqueURL", ""),
+        }
 
 
 def get_mitre_attack_table(
@@ -19,6 +50,16 @@ def get_mitre_attack_table(
     output_directory: str,
     compliance_overview: bool,
 ):
+    """Generate MITRE ATT&CK compliance summary table.
+
+        Args:
+            findings (list): List of findings.
+            bulk_checks_metadata (dict): Compliance metadata.
+            compliance_framework (str): Framework identifier.
+            output_filename (str): Name of output file.
+            output_directory (str): Destination directory.
+            output_options (Any): Output options.
+        """
     tactics = {}
     tactic_seen = {}
     provider = ""

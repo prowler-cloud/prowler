@@ -13,6 +13,7 @@ from tests.lib.outputs.fixtures.fixtures import generate_finding_output
 
 class TestAzureENS:
     def test_output_transform(self):
+        """Test transforming findings into ENS compliance format."""
         findings = [
             generate_finding_output(
                 compliance={"ENS-RD2022": "op.exp.8.azure.ct.3"},
@@ -125,9 +126,10 @@ class TestAzureENS:
 
     @freeze_time("2025-01-01 00:00:00")
     @mock.patch(
-        "prowler.lib.outputs.compliance.ens.ens_azure.timestamp", "2025-01-01 00:00:00"
+        "prowler.lib.outputs.compliance.compliance_output.timestamp", "2025-01-01 00:00:00"
     )
     def test_batch_write_data_to_file(self):
+        """Test batch writing ENS compliance data to file."""
         mock_file = StringIO()
         findings = [
             generate_finding_output(
@@ -144,6 +146,23 @@ class TestAzureENS:
 
         mock_file.seek(0)
         content = mock_file.read()
-        expected_csv = f"PROVIDER;DESCRIPTION;SUBSCRIPTIONID;LOCATION;ASSESSMENTDATE;REQUIREMENTS_ID;REQUIREMENTS_DESCRIPTION;REQUIREMENTS_ATTRIBUTES_IDGRUPOCONTROL;REQUIREMENTS_ATTRIBUTES_MARCO;REQUIREMENTS_ATTRIBUTES_CATEGORIA;REQUIREMENTS_ATTRIBUTES_DESCRIPCIONCONTROL;REQUIREMENTS_ATTRIBUTES_NIVEL;REQUIREMENTS_ATTRIBUTES_TIPO;REQUIREMENTS_ATTRIBUTES_DIMENSIONES;REQUIREMENTS_ATTRIBUTES_MODOEJECUCION;REQUIREMENTS_ATTRIBUTES_DEPENDENCIAS;STATUS;STATUSEXTENDED;RESOURCEID;CHECKID;MUTED;RESOURCENAME;FRAMEWORK;NAME\r\nazure;The accreditation scheme of the ENS (National Security Scheme) has been developed by the Ministry of Finance and Public Administrations and the CCN (National Cryptological Center). This includes the basic principles and minimum requirements necessary for the adequate protection of information.;123456789012;global;{datetime.now()};op.exp.8.azure.ct.3;Registro de actividad;op.exp.8;operacional;explotación;Habilitar la validación de archivos en todos los trails, evitando así que estos se vean modificados o eliminados.;alto;requisito;trazabilidad;automático;;PASS;;;service_test_check_id;False;;ENS;ENS RD 311/2022 - Categoría Alta\r\nazure;The accreditation scheme of the ENS (National Security Scheme) has been developed by the Ministry of Finance and Public Administrations and the CCN (National Cryptological Center). This includes the basic principles and minimum requirements necessary for the adequate protection of information.;;;{datetime.now()};op.exp.8.azure.ct.4;Registro de actividad;op.exp.8;operacional;explotación;Habilitar la validación de archivos en todos los trails, evitando así que estos se vean modificados o eliminados.;alto;requisito;trazabilidad;automático;;MANUAL;Manual check;manual_check;manual;False;Manual check;ENS;ENS RD 311/2022 - Categoría Alta\r\n"
-
+        expected_csv = (
+            "PROVIDER;DESCRIPTION;SUBSCRIPTIONID;LOCATION;ASSESSMENTDATE;REQUIREMENTS_ID;REQUIREMENTS_DESCRIPTION;REQUIREMENTS_ATTRIBUTES_IDGRUPOCONTROL;REQUIREMENTS_ATTRIBUTES_MARCO;REQUIREMENTS_ATTRIBUTES_CATEGORIA;REQUIREMENTS_ATTRIBUTES_DESCRIPCIONCONTROL;REQUIREMENTS_ATTRIBUTES_NIVEL;REQUIREMENTS_ATTRIBUTES_TIPO;REQUIREMENTS_ATTRIBUTES_DIMENSIONES;REQUIREMENTS_ATTRIBUTES_MODOEJECUCION;REQUIREMENTS_ATTRIBUTES_DEPENDENCIAS;STATUS;STATUSEXTENDED;RESOURCEID;CHECKID;MUTED;RESOURCENAME;FRAMEWORK;NAME\r\n"
+            f"azure;The accreditation scheme of the ENS (National Security Scheme) has been developed by the Ministry of Finance and Public Administrations and the CCN (National Cryptological Center). This includes the basic principles and minimum requirements necessary for the adequate protection of information.;123456789012;global;{datetime.now()};op.exp.8.azure.ct.3;Registro de actividad;op.exp.8;operacional;explotación;Habilitar la validación de archivos en todos los trails, evitando así que estos se vean modificados o eliminados.;alto;requisito;trazabilidad;automático;;PASS;;;service_test_check_id;False;;ENS;ENS RD 311/2022 - Categoría Alta\r\n"
+            f"azure;The accreditation scheme of the ENS (National Security Scheme) has been developed by the Ministry of Finance and Public Administrations and the CCN (National Cryptological Center). This includes the basic principles and minimum requirements necessary for the adequate protection of information.;;;{datetime.now()};op.exp.8.azure.ct.4;Registro de actividad;op.exp.8;operacional;explotación;Habilitar la validación de archivos en todos los trails, evitando así que estos se vean modificados o eliminados.;alto;requisito;trazabilidad;automático;;MANUAL;Manual check;manual_check;manual;False;Manual check;ENS;ENS RD 311/2022 - Categoría Alta\r\n"
+        )
         assert content == expected_csv
+
+    def test_output_transform_with_none_account_name(self):
+        """Test transforming findings with None account name in ENS format."""
+        finding = generate_finding_output(
+            compliance={"ENS-RD2022": "op.exp.8.azure.ct.3"},
+            provider="azure",
+            region="global",
+        )
+        finding.account_name = None
+        output = AzureENS([finding], ENS_RD2022_AZURE)
+        output_data = output.data[0]
+        assert output_data.SubscriptionId == ""
+        assert output_data.Location == "global"
+

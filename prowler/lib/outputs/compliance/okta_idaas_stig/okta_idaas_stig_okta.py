@@ -1,15 +1,12 @@
-from prowler.config.config import timestamp
-from prowler.lib.check.compliance_config_eval import (
-    apply_config_status,
-    build_requirement_config_status,
-)
+from typing import Type, Optional
 from prowler.lib.check.compliance_models import Compliance
-from prowler.lib.outputs.compliance.compliance_output import ComplianceOutput
+from prowler.lib.outputs.compliance.compliance_output import ComplianceOutputBase
 from prowler.lib.outputs.compliance.okta_idaas_stig.models import OktaIDaaSSTIGModel
 from prowler.lib.outputs.finding import Finding
+from prowler.lib.check.compliance_models import Compliance_Requirement
 
 
-class OktaIDaaSSTIG(ComplianceOutput):
+class OktaIDaaSSTIG(ComplianceOutputBase):
     """
     This class represents the Okta IDaaS STIG compliance output.
 
@@ -21,87 +18,25 @@ class OktaIDaaSSTIG(ComplianceOutput):
         - transform: Transforms findings into Okta IDaaS STIG compliance format.
     """
 
-    def transform(
-        self,
-        findings: list[Finding],
-        compliance: Compliance,
-        _compliance_name: str,
-    ) -> None:
-        """
-        Transforms a list of findings into Okta IDaaS STIG compliance format.
 
-        Parameters:
-            - findings (list): A list of findings.
-            - compliance (Compliance): A compliance model.
-            - _compliance_name (str): The name of the compliance model (unused).
+    @property
+    def model(self) -> Type[OktaIDaaSSTIGModel]:
+        """Returns the specific OktaIDaaSSTIGModel."""
+        return OktaIDaaSSTIGModel
 
-        Returns:
-            - None
-        """
-        requirement_config_status = build_requirement_config_status(
-            compliance.Requirements
-        )
-        for finding in findings:
-            for requirement in compliance.Requirements:
-                # Source of truth: framework JSON, not finding.compliance snapshot (avoids CSV/UI count drift).
-                if finding.check_id in requirement.Checks:
-                    row_status, row_status_extended = apply_config_status(
-                        finding.status,
-                        finding.status_extended,
-                        requirement_config_status.get(requirement.Id),
-                    )
-                    for attribute in requirement.Attributes:
-                        compliance_row = OktaIDaaSSTIGModel(
-                            Provider=finding.provider,
-                            Description=compliance.Description,
-                            OrganizationDomain=finding.account_name,
-                            AssessmentDate=str(timestamp),
-                            Requirements_Id=requirement.Id,
-                            Requirements_Name=requirement.Name,
-                            Requirements_Description=requirement.Description,
-                            Requirements_Attributes_Section=attribute.Section,
-                            Requirements_Attributes_Severity=attribute.Severity.value,
-                            Requirements_Attributes_RuleID=attribute.RuleID,
-                            Requirements_Attributes_StigID=attribute.StigID,
-                            Requirements_Attributes_CCI=attribute.CCI,
-                            Requirements_Attributes_CheckText=attribute.CheckText,
-                            Requirements_Attributes_FixText=attribute.FixText,
-                            Status=row_status,
-                            StatusExtended=row_status_extended,
-                            ResourceId=finding.resource_uid,
-                            ResourceName=finding.resource_name,
-                            CheckId=finding.check_id,
-                            Muted=finding.muted,
-                            Framework=compliance.Framework,
-                            Name=compliance.Name,
-                        )
-                        self._data.append(compliance_row)
-        # Add manual requirements to the compliance output
-        for requirement in compliance.Requirements:
-            if not requirement.Checks:
-                for attribute in requirement.Attributes:
-                    compliance_row = OktaIDaaSSTIGModel(
-                        Provider=compliance.Provider.lower(),
-                        Description=compliance.Description,
-                        OrganizationDomain="",
-                        AssessmentDate=str(timestamp),
-                        Requirements_Id=requirement.Id,
-                        Requirements_Name=requirement.Name,
-                        Requirements_Description=requirement.Description,
-                        Requirements_Attributes_Section=attribute.Section,
-                        Requirements_Attributes_Severity=attribute.Severity.value,
-                        Requirements_Attributes_RuleID=attribute.RuleID,
-                        Requirements_Attributes_StigID=attribute.StigID,
-                        Requirements_Attributes_CCI=attribute.CCI,
-                        Requirements_Attributes_CheckText=attribute.CheckText,
-                        Requirements_Attributes_FixText=attribute.FixText,
-                        Status="MANUAL",
-                        StatusExtended="Manual check",
-                        ResourceId="manual_check",
-                        ResourceName="Manual check",
-                        CheckId="manual",
-                        Muted=False,
-                        Framework=compliance.Framework,
-                        Name=compliance.Name,
-                    )
-                    self._data.append(compliance_row)
+    def provider_identity_fields(self, finding: Optional[Finding]) -> dict:
+        """Returns the provider specific fields for the compliance output."""
+        if finding is None:
+            return {
+                "OrganizationDomain": "",
+            }
+        return {
+            "OrganizationDomain": "" if finding.account_name is None else finding.account_name,
+        }
+
+    def get_framework_specific_fields(self, requirement: Compliance_Requirement) -> dict[str, str]:
+        """Returns framework-specific fields for the compliance output."""
+        return {
+            "Requirements_Name": requirement.Name,
+        }
+

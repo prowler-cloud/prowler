@@ -1,3 +1,4 @@
+from typing import Type, Optional
 from colorama import Fore, Style
 from tabulate import tabulate
 
@@ -18,6 +19,16 @@ def get_kisa_ismsp_table(
     output_directory: str,
     compliance_overview: bool,
 ):
+    """Generate KISA-ISMS-P compliance summary table.
+
+        Args:
+            findings (list): List of findings.
+            bulk_checks_metadata (dict): Compliance metadata.
+            compliance_framework (str): Framework identifier.
+            output_filename (str): Name of output file.
+            output_directory (str): Destination directory.
+            output_options (Any): Output options.
+        """
     sections = {}
     section_seen = {}
     sections_status = {}

@@ -1,3 +1,4 @@
+from typing import Type, Optional
 from prowler.lib.check.models import Check_Report
 from prowler.lib.logger import logger
 
