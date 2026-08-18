@@ -77,6 +77,27 @@ const isUnavailableStatus = (status: number): boolean =>
 
 const RATE_LIMITED_STATUS = 429;
 
+const SLACK_AUTHORIZE_HOSTNAME = "slack.com";
+const SLACK_AUTHORIZE_PATHNAME = "/oauth/v2/authorize";
+const NO_AUTHORIZE_URL_MESSAGE = "Slack did not return an authorization URL.";
+
+/**
+ * The URL is rendered as the `Add to Slack` link's `href`, so anything that is
+ * not Slack's consent screen is a redirect to an origin the user did not choose.
+ */
+const isSlackAuthorizeUrl = (value: string): boolean => {
+  try {
+    const url = new URL(value);
+    return (
+      url.protocol === "https:" &&
+      url.hostname === SLACK_AUTHORIZE_HOSTNAME &&
+      url.pathname === SLACK_AUTHORIZE_PATHNAME
+    );
+  } catch {
+    return false;
+  }
+};
+
 const failureFrom = async (
   response: Response,
   fallback: string,
@@ -126,8 +147,12 @@ export const getSlackAuthorizeUrl =
       const body = await response.json().catch(() => null);
       const authorizeUrl = body?.meta?.authorize_url;
 
-      if (typeof authorizeUrl !== "string" || authorizeUrl.length === 0) {
-        return { error: "Slack did not return an authorization URL." };
+      // A URL that is not Slack's own is no more usable than a missing one.
+      if (
+        typeof authorizeUrl !== "string" ||
+        !isSlackAuthorizeUrl(authorizeUrl)
+      ) {
+        return { error: NO_AUTHORIZE_URL_MESSAGE };
       }
 
       return { authorizeUrl };

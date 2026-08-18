@@ -170,3 +170,54 @@ describe.each([
     expect(captureExceptionMock).not.toHaveBeenCalled();
   });
 });
+
+/**
+ * The URL is rendered as the `Add to Slack` link's `href`, so a value the API
+ * got wrong must not become a redirect to somewhere that is not Slack.
+ */
+describe("getSlackAuthorizeUrl authorize URL", () => {
+  const NO_AUTHORIZE_URL_MESSAGE = "Slack did not return an authorization URL.";
+  const CONSENT_SCREEN_URL =
+    "https://slack.com/oauth/v2/authorize" +
+    "?client_id=1234567890.0987654321&state=st-2f1c9d7a";
+
+  const authorizeUrlResponse = (authorizeUrl: unknown) =>
+    new Response(JSON.stringify({ meta: { authorize_url: authorizeUrl } }), {
+      status: 200,
+      headers: { "content-type": "application/vnd.api+json" },
+    });
+
+  it.each([
+    ["a hostile scheme", "javascript:alert(document.domain)"],
+    ["plain HTTP", "http://slack.com/oauth/v2/authorize?client_id=1"],
+    ["another origin", "https://evil.test/oauth/v2/authorize?client_id=1"],
+    ["a lookalike hostname", "https://slack.com.evil.test/oauth/v2/authorize"],
+    [
+      "another Slack path",
+      "https://slack.com/redirect?to=https%3A%2F%2Fevil.test",
+    ],
+    ["a value that is not a URL", "oauth/v2/authorize"],
+  ])(
+    "refuses %s instead of offering it as the install link",
+    async (_label, authorizeUrl) => {
+      // Given — a 2xx whose `meta.authorize_url` is not Slack's consent screen.
+      fetchMock.mockResolvedValue(authorizeUrlResponse(authorizeUrl));
+
+      // When
+      const result = await getSlackAuthorizeUrl();
+
+      // Then — the answer for no URL at all: nothing here is safe to link to.
+      expect(result).toEqual({ error: NO_AUTHORIZE_URL_MESSAGE });
+    },
+  );
+
+  it("hands over Slack's consent screen with its query untouched", async () => {
+    // Given
+    fetchMock.mockResolvedValue(authorizeUrlResponse(CONSENT_SCREEN_URL));
+
+    // When / Then
+    expect(await getSlackAuthorizeUrl()).toEqual({
+      authorizeUrl: CONSENT_SCREEN_URL,
+    });
+  });
+});
