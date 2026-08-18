@@ -98,6 +98,26 @@ const isSlackAuthorizeUrl = (value: string): boolean => {
   }
 };
 
+/**
+ * The callback names the workspace and redirects on this value alone, so a `2xx`
+ * payload that is not a JSON:API resource (`{}`, `[]`, `"invalid"`) must read as
+ * unreadable rather than as a connected workspace.
+ */
+const isIntegrationResource = (value: unknown): boolean => {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return false;
+  }
+
+  const { id, attributes } = value as Record<string, unknown>;
+
+  return (
+    typeof id === "string" &&
+    typeof attributes === "object" &&
+    attributes !== null &&
+    !Array.isArray(attributes)
+  );
+};
+
 const failureFrom = async (
   response: Response,
   fallback: string,
@@ -205,7 +225,7 @@ export const exchangeSlackOAuthCode = async (
     revalidatePath("/integrations");
     revalidatePath("/integrations/slack");
 
-    if (!body?.data) {
+    if (!isIntegrationResource(body?.data)) {
       return { unconfirmed: true, message: SLACK_UNREADABLE_RESULT_MESSAGE };
     }
 

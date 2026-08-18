@@ -5,6 +5,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { SLACK_UNREADABLE_RESULT_MESSAGE } from "@/lib/integrations/slack-errors";
 import { SentryErrorSource, SentryErrorType } from "@/sentry";
 
 const { captureExceptionMock, captureMessageMock, fetchMock } = vi.hoisted(
@@ -219,5 +220,58 @@ describe("getSlackAuthorizeUrl authorize URL", () => {
     expect(await getSlackAuthorizeUrl()).toEqual({
       authorizeUrl: CONSENT_SCREEN_URL,
     });
+  });
+});
+
+/**
+ * The callback names the workspace and redirects on `integration` alone, so a
+ * `2xx` body it cannot read back as an integration must not reach it.
+ */
+describe("exchangeSlackOAuthCode result shape", () => {
+  const INTEGRATION = {
+    id: "9b1f4c22-5e7a-4c2e-8f0d-6a3b1c9d7e42",
+    type: "integrations",
+    attributes: {
+      integration_type: "slack",
+      configuration: { team_name: "Prowler HQ" },
+    },
+  };
+
+  const exchangeResponse = (data: unknown) =>
+    new Response(JSON.stringify({ data }), {
+      status: 200,
+      headers: { "content-type": "application/vnd.api+json" },
+    });
+
+  it.each<[string, unknown]>([
+    ["an empty object", {}],
+    ["an array", []],
+    ["a bare string", "invalid"],
+    ["a resource with no id", { type: "integrations", attributes: {} }],
+    [
+      "a resource with no attributes",
+      { id: INTEGRATION.id, type: "integrations" },
+    ],
+  ])("cannot confirm the install from %s", async (_label, data) => {
+    // Given — a 2xx whose `data` is truthy but is not an integration resource.
+    fetchMock.mockResolvedValue(exchangeResponse(data));
+
+    // When
+    const result = await exchange();
+
+    // Then — the answer for a body with no `data`: the install happened, only
+    // its result is unknown.
+    expect(result).toEqual({
+      unconfirmed: true,
+      message: SLACK_UNREADABLE_RESULT_MESSAGE,
+    });
+  });
+
+  it("hands over the workspace the API upserted", async () => {
+    // Given
+    fetchMock.mockResolvedValue(exchangeResponse(INTEGRATION));
+
+    // When / Then
+    expect(await exchange()).toEqual({ integration: INTEGRATION });
   });
 });
