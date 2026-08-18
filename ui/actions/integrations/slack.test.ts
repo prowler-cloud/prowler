@@ -456,7 +456,7 @@ describe("getSlackChannels", () => {
 
     const result = await getSlackChannels(SLACK_INTEGRATION_ID);
 
-    expect(result).toEqual({ error: RATE_LIMITED_MESSAGE });
+    expect(result).toEqual({ error: RATE_LIMITED_MESSAGE, code: null });
   });
 });
 
@@ -668,7 +668,8 @@ describe.each(COPY_ONLY_ACTIONS)("$name", ({ call }) => {
 
     expect(captureExceptionMock).not.toHaveBeenCalled();
     expect(captureMessageMock).not.toHaveBeenCalled();
-    expect(result).toEqual({ error: refusal.expected });
+    // `code` travels alongside the copy; none of these refusals names one.
+    expect(result).toEqual({ error: refusal.expected, code: null });
   });
 });
 

@@ -462,7 +462,9 @@ export const setSlackDefaultChannel = async (
     });
 
     if (!response.ok) {
-      return refusalFrom(
+      // Awaited inside the `try`: unawaited, a 5xx's rejection would skip
+      // this `catch`.
+      return await refusalFrom(
         response,
         `Unable to save the destination channel: ${response.statusText}`,
       );
@@ -536,7 +538,9 @@ export const disconnectSlackIntegration = async (
     const response = await fetch(url.toString(), { method: "DELETE", headers });
 
     if (!response.ok) {
-      return refusalFrom(
+      // Awaited inside the `try`: unawaited, a 5xx's rejection would skip
+      // this `catch`.
+      return await refusalFrom(
         response,
         `Unable to disconnect the Slack workspace: ${response.statusText}`,
       );
