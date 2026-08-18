@@ -4837,7 +4837,7 @@ wheels = [
 
 [[package]]
 name = "prowler"
-version = "5.39.0"
+version = "5.39.1"
 source = { git = "https://github.com/prowler-cloud/prowler.git?rev=v5.39#7391798e8dfb1ea0f496846d6b4796a547b316f5" }
 dependencies = [
     { name = "alibabacloud-actiontrail20200706" },
@@ -4937,7 +4937,7 @@ dependencies = [
 
 [[package]]
 name = "prowler-api"
-version = "1.40.1"
+version = "1.40.2"
 source = { virtual = "." }
 dependencies = [
     { name = "cartography" },
