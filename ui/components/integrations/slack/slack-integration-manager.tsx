@@ -64,12 +64,10 @@ const CHECK_BLOCKED_REASON_ID = "slack-connection-check-blocked";
 
 /**
  * A disconnect that removed the row without Slack confirming the revocation.
- * The workspace travels with it rather than being read from the record: naming
- * the one to clean up is the point of the notice, and the record is gone by the
- * time the disconnect's revalidation lands.
+ * The workspace name travels with it: the notice exists to name the workspace
+ * to clean up, and the record is gone by the time revalidation lands.
  */
 interface UnconfirmedRevocation {
-  /** As the record named it, or `null` when it named none. */
   workspace: string | null;
 }
 
@@ -85,9 +83,9 @@ const channelRefEquals = (
 ) => a?.id === b?.id && a?.name === b?.name;
 
 /**
- * Slack's own reason, when the string is one at all: the generic connection
- * check reports a reason and a sentence in the same field, and only a reason is
- * an answer from Slack about the credential.
+ * Slack's own reason, when the string is one: the connection check reports a
+ * reason and its own prose in the same field, and only a reason is an answer
+ * from Slack about the credential.
  */
 const asReasonCode = (reason: string | null): string | null =>
   reason && SLACK_REASON_TOKEN.test(reason) ? reason : null;
@@ -112,23 +110,21 @@ export const SlackIntegrationManager = ({
   const [isTesting, setIsTesting] = useState(false);
   const [isDisconnectOpen, setIsDisconnectOpen] = useState(false);
   const [isDisconnecting, setIsDisconnecting] = useState(false);
-  // Local state after a mutation: the row is gone the moment the API says so,
-  // and this page is what the user is looking at. The server component's own
-  // revalidation refreshes the same thing on the next navigation.
+  // The row is gone the moment the API says so; the server component's
+  // revalidation only catches up on the next navigation.
   const [disconnected, setDisconnected] = useState(false);
   const [unconfirmedRevocation, setUnconfirmedRevocation] =
     useState<UnconfirmedRevocation | null>(null);
   /**
-   * The `code` of the last refusal any Slack-backed call on this page ran into,
-   * or `null` when the last answer was not a refusal. Every call records it
-   * here — the contract says a dead grant can surface from any of them
-   * (Cross-cutting), so none of them gets to decide on its own what that looks
-   * like.
+   * The `code` of the last refusal any Slack-backed call ran into, or `null`
+   * when the last answer was not a refusal. A dead grant can surface from any
+   * of them (contract, Cross-cutting), so every call reports here instead of
+   * deciding on its own.
    */
   const [lastRefusalCode, setLastRefusalCode] = useState<string | null>(null);
-  // A connected workspace arrives with no consent URL — there is no install left
-  // to start (design D10) — so one is minted only if the page turns out to need
-  // it: after a disconnect, or once the credential is known to be dead.
+  // A connected workspace arrives with no consent URL, since no install is left
+  // to start (design D10), so one is minted only if a reconnect turns out to be
+  // the way out.
   const [mintedInstallUrl, setMintedInstallUrl] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -175,9 +171,8 @@ export const SlackIntegrationManager = ({
     }
   }
 
-  // Only an answer from Slack moves the bus. A refusal names its code; a
-  // success clears it. A call that never got an answer proves nothing and
-  // leaves the last answer standing.
+  // Only an answer from Slack moves the bus: a call that never got one proves
+  // nothing and leaves the last answer standing.
   const provedCredentialAlive = () => setLastRefusalCode(null);
 
   const recordRefusal = (code: string | null | undefined) => {
@@ -185,13 +180,10 @@ export const SlackIntegrationManager = ({
   };
 
   /**
-   * Whether that last refusal proves the Slack grant itself is dead, rather
-   * than a channel unreachable or Slack busy.
-   *
-   * Derived, not stored, and recognised through the shared vocabulary — this
-   * page keeps no list of codes of its own. Derived also means self-clearing: a
-   * later call that Slack answered at all (even to refuse a channel) is proof
-   * the credential works again, and the notice goes with it.
+   * Whether the last refusal proves the grant itself is dead, rather than a
+   * channel unreachable or Slack busy. Derived, not stored, so it self-clears:
+   * a later call Slack answered at all (even to refuse a channel) is proof the
+   * credential works again, and the notice goes with it.
    */
   const credentialFailure: SlackTokenErrorCode | null = isSlackTokenErrorCode(
     lastRefusalCode,
@@ -199,9 +191,6 @@ export const SlackIntegrationManager = ({
     ? lastRefusalCode
     : null;
 
-  // The consent URL, minted when the page turns out to need one: after a
-  // disconnect, or once the credential is known to be dead. Both answers are a
-  // reconnect, and it should be a click away by the time the user has read why.
   const needsInstallUrl = disconnected || credentialFailure !== null;
 
   useEffect(() => {
@@ -215,8 +204,7 @@ export const SlackIntegrationManager = ({
         setMintedInstallUrl(result.authorizeUrl);
       })
       .catch(() => {
-        // Nothing to say: the page still offers everything it did before, minus
-        // a shortcut. The catalogue's own install path is unaffected.
+        // Nothing to say: the page loses a shortcut, not a way to reconnect.
       });
 
     return () => {
@@ -242,12 +230,10 @@ export const SlackIntegrationManager = ({
                 notice: result.incomplete ?? null,
               },
         );
-        // The listing is the call a dead credential shows up on first: it
-        // runs on arrival, before the user has touched anything — and a read
-        // cut short names its refusal's code too, so a grant that died on a
-        // later cursor page is heard the same as one that refused the first.
-        // Channels that did arrive are Slack answering: a truncation naming no
-        // code (it was busy) leaves the credential proven alive.
+        // The listing runs on arrival, so it is where a dead credential shows
+        // up first. A read cut short still names its refusal's code, so a grant
+        // that died on a later cursor page is heard too; a truncation naming
+        // none was Slack busy, not refusing.
         if ("error" in result || result.code) recordRefusal(result.code);
         else provedCredentialAlive();
       })
@@ -283,8 +269,8 @@ export const SlackIntegrationManager = ({
       );
 
       if ("error" in result) {
-        // The API validates the channel against Slack, so the save is one of
-        // the calls that can discover the credential is gone.
+        // The API validates the channel against Slack, so the save can
+        // discover the credential is gone.
         recordRefusal(result.code);
         toast({
           variant: "destructive",
@@ -301,8 +287,6 @@ export const SlackIntegrationManager = ({
         channels.find((channel) => channel.id === selectedChannelId)?.name ??
         null;
 
-      // Slack validated this channel against the stored grant, so the grant is
-      // alive whatever an earlier call ran into.
       provedCredentialAlive();
       setDefaultChannel({ id: selectedChannelId, name: savedName });
       saved = true;
@@ -340,14 +324,8 @@ export const SlackIntegrationManager = ({
             result.message || "Prowler can reach your Slack workspace.",
         });
       } else {
-        // The check reports Slack's own stable reason, which is a protocol
-        // token and not something to show anyone: it is mapped to Prowler's
-        // wording, and only falls back to what arrived when it names a reason
-        // this UI has nothing better to say about. A dead credential named here
-        // is not a failure checking again can fix, which is what recording the
-        // reason — rather than only reporting it — is for. The same field also
-        // carries this check's own prose for a failure Slack never answered,
-        // which is why only a reason-shaped one is recorded.
+        // A dead credential named here is not a failure checking again can
+        // fix, so the reason is recorded and not only reported.
         const reason = result.error?.trim() || null;
 
         recordRefusal(asReasonCode(reason));
@@ -391,15 +369,14 @@ export const SlackIntegrationManager = ({
 
       const { revoked } = result.revocation;
 
-      // The integration is gone whatever Slack answered, so the page goes back
-      // to its unconnected state either way — which is what puts a consent URL
-      // on the way, so connecting again is a click rather than a reload. A dead
-      // credential is moot once the row it belonged to is gone.
+      // The row is gone whatever Slack answered, so the page goes back to its
+      // unconnected state either way, and a dead credential is moot once the
+      // row it belonged to is gone.
       setDisconnected(true);
       setLastRefusalCode(null);
-      // Only an explicit "not revoked" sends the user to finish the job in
-      // Slack. An unreported outcome is neither a failed revocation nor a
-      // confirmed one, so it claims neither.
+      // Only an explicit `false` sends the user to finish the job in Slack: an
+      // unreported outcome is neither a failed revocation nor a confirmed one,
+      // so it claims neither.
       setUnconfirmedRevocation(
         revoked === false ? { workspace: recordedWorkspace } : null,
       );
@@ -445,7 +422,6 @@ export const SlackIntegrationManager = ({
         </Alert>
       )}
 
-      {/* Portaled by Radix, so its place in this tree costs no layout. */}
       <Modal
         open={isDisconnectOpen}
         onOpenChange={setIsDisconnectOpen}
@@ -504,12 +480,7 @@ export const SlackIntegrationManager = ({
             Slack no longer accepts Prowler&apos;s access to{" "}
             {workspaceName ?? "this workspace"}
           </AlertTitle>
-          {/*
-            The wording is the code's own, from the shared mapping: the four
-            ways a grant dies are four different sentences, and each already
-            ends in the one thing that fixes it. Slack's raw reason is a
-            protocol token and stays out of the copy.
-          */}
+          {/* Each mapped sentence already ends in the thing that fixes it. */}
           <AlertDescription>
             {slackErrorMessage({ code: credentialFailure })} Until then, nothing
             Prowler sends will reach the workspace.
@@ -548,8 +519,7 @@ export const SlackIntegrationManager = ({
               title={`Connected to ${workspaceName ?? "your Slack workspace"}`}
               subtitle="Prowler posts to this workspace only."
               connectionStatus={{
-                // A check that came back with a dead token outranks the state
-                // the page was loaded with.
+                // A dead token outranks the state the page was loaded with.
                 connected:
                   credentialFailure === null
                     ? integration.attributes.connected
