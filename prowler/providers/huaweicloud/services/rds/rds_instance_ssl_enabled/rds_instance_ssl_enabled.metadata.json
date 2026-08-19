@@ -1,7 +1,7 @@
 {
   "Provider": "huaweicloud",
   "CheckID": "rds_instance_ssl_enabled",
-  "CheckTitle": "RDS instances have SSL enabled",
+  "CheckTitle": "RDS for MySQL instances have SSL enabled",
   "CheckType": [],
   "ServiceName": "rds",
   "SubServiceName": "",
@@ -9,22 +9,22 @@
   "Severity": "medium",
   "ResourceType": "HUAWEICLOUD::RDS::Instance",
   "ResourceGroup": "database",
-  "Description": "Ensure that RDS instances have SSL enabled to encrypt data in transit.",
+  "Description": "Ensure that RDS for MySQL instances have SSL enabled to encrypt data in transit.",
   "Risk": "Without SSL, data transmitted between the application and the database is sent in plaintext, making it vulnerable to interception and man-in-the-middle attacks.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.huaweicloud.com/intl/en-us/api-rds/rds_00_0011.html",
+    "https://support.huaweicloud.com/intl/en-us/api-rds/rds_05_0017.html",
     "https://github.com/huaweicloud/terraform-provider-huaweicloud/blob/master/docs/resources/rds_instance.md"
   ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "Use the Huawei Cloud RDS API to update the instance SSL setting: PUT /v3/{project_id}/instances/{instance_id}/ssl with {\"ssl_option\": true}.",
-      "Terraform": "resource \"huaweicloud_rds_instance\" \"example\" {\n  # ...\n  ssl_enable = true\n}"
+      "Other": "For an RDS for MySQL instance, use the Huawei Cloud RDS API to update the SSL setting: PUT /v3/{project_id}/instances/{instance_id}/ssl with {\"ssl_option\": true}.",
+      "Terraform": "resource \"huaweicloud_rds_instance\" \"example\" {\n  # MySQL instances only\n  ssl_enable = true\n}"
     },
     "Recommendation": {
-      "Text": "Enable SSL for all RDS instances to encrypt data in transit.",
+      "Text": "Enable SSL for all RDS for MySQL instances to encrypt data in transit.",
       "Url": "https://hub.prowler.com/check/rds_instance_ssl_enabled"
     }
   },

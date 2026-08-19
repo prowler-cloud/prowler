@@ -3,12 +3,15 @@ from prowler.providers.huaweicloud.services.rds.rds_client import rds_client
 
 
 class rds_instance_ssl_enabled(Check):
-    """Check if RDS instances have SSL enabled."""
+    """Check if RDS for MySQL instances have SSL enabled."""
 
     def execute(self) -> list[CheckReportHuaweiCloud]:
         findings = []
 
         for instance in rds_client.instances:
+            if instance.engine.lower() != "mysql":
+                continue
+
             report = CheckReportHuaweiCloud(metadata=self.metadata(), resource=instance)
             report.region = instance.region
             report.resource_id = instance.id
