@@ -1,11 +1,14 @@
 import os
 from argparse import Namespace
+from pathlib import Path
 from unittest import mock
 
 import pytest
 
 from prowler.config.config import Provider as ProviderName
+from prowler.lib.check.models import CheckReportSupabase
 from prowler.lib.cli.parser import ProwlerArgumentParser
+from prowler.lib.outputs.finding import Finding
 from prowler.lib.outputs.html.html import HTML
 from prowler.providers.common.provider import Provider
 from prowler.providers.supabase.exceptions.exceptions import (
@@ -15,12 +18,16 @@ from prowler.providers.supabase.exceptions.exceptions import (
     SupabaseRateLimitError,
 )
 from prowler.providers.supabase.models import SupabaseOrganization, SupabaseSession
+from prowler.providers.supabase.services.organizations.organizations_service import (
+    SupabaseOrganizationMember,
+)
 from prowler.providers.supabase.supabase_provider import SupabaseProvider
 from tests.providers.supabase.supabase_fixtures import (
     ACCESS_TOKEN,
     ORGANIZATION_ID,
     ORGANIZATION_NAME,
     ORGANIZATION_SLUG,
+    USER_ID,
 )
 
 
@@ -148,6 +155,37 @@ class TestSupabaseProviderOutputHooks:
             "resource_uid": "user-id",
             "region": "global",
         }
+
+    def test_finding_output_pipeline_uses_supabase_fields(self):
+        provider = SupabaseProvider.__new__(SupabaseProvider)
+        provider._identity = mock.MagicMock(organizations=[])
+        member = SupabaseOrganizationMember(
+            id=USER_ID,
+            name=f"member {USER_ID}",
+            organization_slug=ORGANIZATION_SLUG,
+            organization_name=ORGANIZATION_NAME,
+            mfa_enabled=False,
+        )
+        metadata = Path(
+            "prowler/providers/supabase/services/organizations/"
+            "organizations_member_mfa_enabled/"
+            "organizations_member_mfa_enabled.metadata.json"
+        ).read_text()
+        check_output = CheckReportSupabase(metadata=metadata, resource=member)
+        check_output.status = "FAIL"
+        check_output.status_extended = "Member does not have MFA enabled."
+
+        finding = Finding.generate_output(
+            provider, check_output, Namespace(unix_timestamp=False)
+        )
+
+        assert finding.provider == "supabase"
+        assert finding.account_uid == ORGANIZATION_SLUG
+        assert finding.account_name == ORGANIZATION_NAME
+        assert finding.resource_name == f"member {USER_ID}"
+        assert finding.resource_uid == USER_ID
+        assert finding.region == "global"
+        assert finding.auth_method == "personal_access_token"
 
     @pytest.mark.parametrize(
         ("output_filename", "expected"),
