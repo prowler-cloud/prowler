@@ -6,6 +6,11 @@ class vpc_security_group_open_egress(Check):
     """Check if VPC security groups allow unrestricted egress to the internet."""
 
     def execute(self) -> list[CheckReportHuaweiCloud]:
+        """Execute the unrestricted egress check.
+
+        Returns:
+            list[CheckReportHuaweiCloud]: Reports for the evaluated security groups.
+        """
         findings = []
 
         for sg in vpc_client.security_groups.values():
