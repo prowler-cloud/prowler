@@ -324,13 +324,31 @@ export const handlersForSlack = (fx: SlackFixture) => {
      */
     http.patch(`${API}/integrations/:id`, async ({ request }) => {
       const body = (await request.json().catch(() => null)) as {
-        data?: { attributes?: { configuration?: { channel_id?: string } } };
+        data?: { attributes?: Record<string, unknown> };
       } | null;
-      const channelId = body?.data?.attributes?.configuration?.channel_id;
+      const attributes = body?.data?.attributes ?? {};
+      const configurationPatch = attributes.configuration as
+        | { channel_id?: string }
+        | undefined;
+      const channelId = configurationPatch?.channel_id;
       const channel = fx.channels.find((c) => c.id === channelId);
 
       if (!install) {
         return HttpResponse.json(errorBody("Not found.", 404), { status: 404 });
+      }
+      // The API's write serializer names the attributes it will not take and
+      // refuses the whole save, rather than quietly dropping the extra one:
+      // sending `integration_type` here refused every channel save.
+      const refusedAttributes = Object.keys(attributes).filter(
+        (attribute) => attribute !== "configuration",
+      );
+      if (refusedAttributes.length > 0) {
+        const named = refusedAttributes
+          .map((attribute) => `'${attribute}'`)
+          .join(", ");
+        return HttpResponse.json(errorBody(`Invalid fields: {${named}}`, 400), {
+          status: 400,
+        });
       }
       // Checked before the id lookup: the picker did offer this channel, and
       // Slack refused it anyway when the API validated it.

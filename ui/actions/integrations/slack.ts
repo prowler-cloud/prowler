@@ -440,10 +440,11 @@ export const setSlackDefaultChannel = async (
         data: {
           type: "integrations",
           id,
-          attributes: {
-            integration_type: "slack",
-            configuration: { channel_id: channelId },
-          },
+          // `configuration` is the only attribute the save may carry: the write
+          // serializer refuses whatever it does not accept, so naming the
+          // integration's own (immutable) type is answered with a 400,
+          // "Invalid fields: {'integration_type'}".
+          attributes: { configuration: { channel_id: channelId } },
         },
       }),
     });

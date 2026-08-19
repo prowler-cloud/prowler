@@ -338,6 +338,9 @@ const channelOption = (channel: { id: string; name: string }) => ({
 const requestedUrls = (): string[] =>
   fetchMock.mock.calls.map(([url]) => String(url));
 
+const sentBody = (callIndex = 0): unknown =>
+  JSON.parse(String(fetchMock.mock.calls[callIndex]?.[1]?.body));
+
 /**
  * `MAX_CHANNEL_PAGES` in the action, which a `"use server"` module cannot
  * export: only async functions may leave one.
@@ -488,6 +491,28 @@ const INTEGRATION_URL = `https://api.test/api/v1/integrations/${SLACK_INTEGRATIO
 const saveChannel = () =>
   setSlackDefaultChannel(SLACK_INTEGRATION_ID, FIRST_CHANNEL.id);
 
+/** The save as the API answers it: the channel's name derived server-side. */
+const savedIntegration = () =>
+  new Response(
+    JSON.stringify({
+      data: {
+        type: "integrations",
+        id: SLACK_INTEGRATION_ID,
+        attributes: {
+          integration_type: "slack",
+          configuration: {
+            channel_id: FIRST_CHANNEL.id,
+            channel_name: FIRST_CHANNEL.name,
+          },
+        },
+      },
+    }),
+    {
+      status: 200,
+      headers: { "content-type": "application/vnd.api+json" },
+    },
+  );
+
 const expectIntegrationsRevalidated = () => {
   expect(vi.mocked(revalidatePath).mock.calls).toEqual([
     ["/integrations"],
@@ -497,27 +522,7 @@ const expectIntegrationsRevalidated = () => {
 
 describe("setSlackDefaultChannel", () => {
   it("returns the saved integration and revalidates the pages listing it", async () => {
-    fetchMock.mockResolvedValueOnce(
-      new Response(
-        JSON.stringify({
-          data: {
-            type: "integrations",
-            id: SLACK_INTEGRATION_ID,
-            attributes: {
-              integration_type: "slack",
-              configuration: {
-                channel_id: FIRST_CHANNEL.id,
-                channel_name: FIRST_CHANNEL.name,
-              },
-            },
-          },
-        }),
-        {
-          status: 200,
-          headers: { "content-type": "application/vnd.api+json" },
-        },
-      ),
-    );
+    fetchMock.mockResolvedValueOnce(savedIntegration());
 
     const result = await saveChannel();
 
@@ -528,6 +533,23 @@ describe("setSlackDefaultChannel", () => {
       },
     });
     expectIntegrationsRevalidated();
+  });
+
+  // The write serializer names whatever it will not take and refuses the whole
+  // save, so a body that also carried the integration's own (immutable) type
+  // came back as `Invalid fields: {'integration_type'}` and recorded nothing.
+  it("submits the channel as the save's only attribute", async () => {
+    fetchMock.mockResolvedValueOnce(savedIntegration());
+
+    await saveChannel();
+
+    expect(sentBody()).toEqual({
+      data: {
+        type: "integrations",
+        id: SLACK_INTEGRATION_ID,
+        attributes: { configuration: { channel_id: FIRST_CHANNEL.id } },
+      },
+    });
   });
 
   it.each([
