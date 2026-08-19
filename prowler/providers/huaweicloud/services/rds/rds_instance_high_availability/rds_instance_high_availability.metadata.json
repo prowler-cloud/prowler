@@ -9,21 +9,22 @@
   "Severity": "medium",
   "ResourceType": "HUAWEICLOUD::RDS::Instance",
   "ResourceGroup": "database",
-  "Description": "Ensure that RDS instances have high availability (HA) configured with a standby instance.",
-  "Risk": "RDS instances without high availability do not have a standby instance, leading to downtime during maintenance windows or instance failures.",
+  "Description": "Check whether RDS instances use the primary/standby high availability (Ha) deployment type.",
+  "Risk": "Single-node RDS instances have no standby node for failover, increasing downtime risk during node failures and maintenance.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.huaweicloud.com/intl/en-us/usermanual-rds-mysql/rds_02_0025.html"
+    "https://support.huaweicloud.com/intl/en-us/api-rds/rds_01_0004.html",
+    "https://registry.terraform.io/providers/huaweicloud/huaweicloud/latest/docs/resources/rds_instance"
   ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "1. Log on to the Huawei Cloud console.\n2. Navigate to Relational Database Service.\n3. Select the instance.\n4. Click More > Create Standby Instance.\n5. Configure the standby instance and click Save.",
-      "Terraform": ""
+      "Other": "Create a primary/standby RDS instance or change the single-node instance to the primary/standby deployment type. High availability and multi-AZ placement are separate controls; select distinct AZs when multi-AZ resilience is also required.",
+      "Terraform": "```hcl\nresource \"huaweicloud_rds_instance\" \"example\" {\n  flavor              = \"rds.pg.n1.large.2.ha\"\n  ha_replication_mode = \"async\"\n  availability_zone   = [var.primary_az, var.standby_az]\n\n  # Configure the remaining required instance arguments.\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable high availability for RDS instances by creating a standby instance.",
+      "Text": "Use the RDS primary/standby (Ha) deployment type to provide a standby node for failover.",
       "Url": "https://hub.prowler.com/check/rds_instance_high_availability"
     }
   },

@@ -1,3 +1,4 @@
+import json
 from unittest import mock
 
 from tests.providers.huaweicloud.huaweicloud_fixtures import (
@@ -102,3 +103,14 @@ class TestRdsInstanceHighAvailability:
             result = check.execute()
 
             assert len(result) == 0
+
+            metadata = json.loads(check.metadata())
+            assert (
+                "https://support.huaweicloud.com/intl/en-us/api-rds/rds_01_0004.html"
+                in metadata["AdditionalURLs"]
+            )
+            assert "ha_replication_mode" in metadata["Remediation"]["Code"]["Terraform"]
+            assert (
+                "Create Standby Instance"
+                not in metadata["Remediation"]["Code"]["Other"]
+            )
