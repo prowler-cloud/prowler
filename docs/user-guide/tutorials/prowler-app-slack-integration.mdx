@@ -27,7 +27,7 @@ This guide covers the Slack integration in Prowler Cloud. It is unrelated to the
 When connected and configured:
 
 1. A Slack workspace is approved once through Slack's app install flow, and Prowler stores the resulting credential encrypted.
-2. Prowler reads the channels it can post to: every public channel, plus the private channels the Prowler app has been invited to.
+2. Prowler reads the channels it can post to: the workspace's public channels, plus the private channels the Prowler app has been invited to.
 3. One channel is recorded on the integration as the default destination.
 4. A test message proves the delivery path end to end.
 5. Disconnecting removes the integration from Prowler and attempts to revoke Prowler's access at Slack.
@@ -95,7 +95,7 @@ Declining the consent screen creates nothing. Prowler reports that the workspace
 
 Prowler posts to one channel, recorded on the integration as its default destination.
 
-1. Open the **Destination channel** picker. It lists every public channel in the workspace, plus the private channels the Prowler app has been invited to, each marked **Private**.
+1. Open the **Destination channel** picker. It lists the workspace's public channels, plus the private channels the Prowler app has been invited to, each marked **Private**.
 
     ![Destination channel picker listing public channels and an invited private channel marked Private](/images/prowler-app/slack/channel-picker.png)
 
@@ -105,6 +105,8 @@ Prowler posts to one channel, recorded on the integration as its default destina
 Prowler validates the selection against Slack and derives the channel name itself, so the recorded name can never drift from the channel it belongs to. Once a channel is saved, the page reports where Prowler posts.
 
 If the picker reports that no channels are available, the workspace exposes nothing Prowler can see. Create a public channel, or invite `@Prowler` to a private one, then click **Refresh channels**.
+
+A workspace can hold more channels than Prowler reads in one go. When that happens, the picker says so and lists what was read: every listed channel is usable, and a channel missing from a partial list is not necessarily one `@Prowler` has to be invited to.
 
 ## Sending a Test Message
 
