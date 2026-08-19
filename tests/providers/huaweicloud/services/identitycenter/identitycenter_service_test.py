@@ -6,6 +6,25 @@ from tests.providers.huaweicloud.huaweicloud_fixtures import (
 
 
 class TestIdentityCenterService:
+    def test_real_session_does_not_require_mock_flag(self):
+        from prowler.providers.huaweicloud.services.identitycenter.identitycenter_service import (
+            IdentityCenter,
+        )
+
+        provider = set_mocked_huaweicloud_provider(region="eu-west-101")
+        del provider.session.is_mock
+        provider.session.client.return_value.list_instances.return_value = (
+            SimpleNamespace(
+                instances=[],
+                page_info=SimpleNamespace(next_marker=None),
+            )
+        )
+
+        service = IdentityCenter(provider)
+
+        assert service.instances == []
+        assert service.error is None
+
     def test_preserves_instance_discovery_error(self):
         from prowler.providers.huaweicloud.services.identitycenter.identitycenter_service import (
             IdentityCenter,

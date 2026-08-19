@@ -22,7 +22,7 @@ class IdentityCenter(HuaweiCloudService):
         self.instances: List[IdentityCenterInstance] = []
         self.error: str | None = None
 
-        if self.session.is_mock:
+        if getattr(self.session, "is_mock", False):
             self._load_mock_data()
             return
 
