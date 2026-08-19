@@ -285,6 +285,21 @@ class TestHuaweiCloudEndpointAlignment:
         region = _aligned_region(EcsRegion, "eu-west-101")
         assert region.endpoints[0] == "https://ecs.eu-west-101.myhuaweicloud.eu"
 
+    def test_identitycenter_client_uses_eu_endpoint(self):
+        session = HuaweiCloudSession(
+            HuaweiCloudCredentials(
+                ak=ACCESS_KEY,
+                sk=SECRET_KEY,
+                domain_id="domain-1",
+            )
+        )
+
+        client = session.client("identitycenter", "eu-west-101")
+
+        assert client._endpoints == [
+            "https://identitycenter.eu-west-101.myhuaweicloud.eu"
+        ]
+
     def test_aligned_region_unknown_region_falls_through(self):
         from prowler.providers.huaweicloud.models import _align_endpoint_tld
 
