@@ -1,6 +1,7 @@
 "use client";
 
-import { Lock, RefreshCw } from "lucide-react";
+import { ChevronDown, RefreshCw } from "lucide-react";
+import { useState } from "react";
 
 import {
   Alert,
@@ -9,12 +10,20 @@ import {
   Badge,
   Button,
   Label,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
 } from "@/components/shadcn";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/shadcn/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/shadcn/popover";
 import type { SlackChannelOption } from "@/types/integrations";
 
 const INVITE_HINT =
@@ -44,10 +53,34 @@ export const SlackChannelSelector = ({
   onRefresh,
   disabled = false,
 }: SlackChannelSelectorProps) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [query, setQuery] = useState("");
+
   const isEmpty = !isLoading && !error && options.length === 0;
   // `htmlFor` may only name an element that exists, and the trigger is only
   // rendered in the picker branch.
   const hasPicker = !error && !isEmpty;
+
+  // A copy: the list belongs to the caller. Sorted here rather than upstream so
+  // every consumer of the picker offers the same order.
+  const listed = [...options].sort((left, right) =>
+    left.name.localeCompare(right.name, undefined, {
+      sensitivity: "base",
+      numeric: true,
+    }),
+  );
+  const selected = options.find((option) => option.id === value) ?? null;
+
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open);
+    // Drop the search with the popover, so re-opening it never starts filtered.
+    if (!open) setQuery("");
+  };
+
+  const handleSelect = (channelId: string) => {
+    onChange(channelId);
+    handleOpenChange(false);
+  };
 
   return (
     <div className="flex flex-col gap-2">
@@ -91,38 +124,68 @@ export const SlackChannelSelector = ({
               <AlertDescription>{incompleteNotice}</AlertDescription>
             </Alert>
           )}
-          <Select
-            value={value ?? undefined}
-            onValueChange={onChange}
-            disabled={disabled || isLoading}
-          >
-            <SelectTrigger id="slack-channel" size="sm">
-              <SelectValue
-                placeholder={
-                  isLoading ? "Reading channels..." : "Choose a channel"
-                }
-              />
-            </SelectTrigger>
-            <SelectContent>
-              {options.map((option) => (
-                <SelectItem
-                  key={option.id}
-                  value={option.id}
-                  // Name hook: the rendered label mixes it with a lock icon
-                  // and a "Private" badge.
-                  data-channel={option.name}
-                >
-                  {option.is_private && <Lock size={14} aria-hidden="true" />}
-                  <span className="min-w-0 truncate">#{option.name}</span>
-                  {option.is_private && (
-                    <Badge variant="tag" size="sm">
-                      Private
-                    </Badge>
-                  )}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Popover open={isOpen} onOpenChange={handleOpenChange}>
+            <PopoverTrigger asChild>
+              <Button
+                id="slack-channel"
+                variant="outline"
+                size="lg"
+                role="combobox"
+                aria-expanded={isOpen}
+                disabled={disabled || isLoading}
+                className="w-full justify-between"
+              >
+                <span className="min-w-0 truncate">
+                  {selected
+                    ? `#${selected.name}`
+                    : isLoading
+                      ? "Reading channels..."
+                      : "Choose a channel"}
+                </span>
+                <ChevronDown size={16} aria-hidden="true" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent
+              align="start"
+              className="w-(--radix-popover-trigger-width) p-0"
+            >
+              <Command>
+                <CommandInput
+                  placeholder="Search channels"
+                  value={query}
+                  onValueChange={setQuery}
+                  aria-label="Search channels"
+                />
+                <CommandList>
+                  {/* A workspace with no channels at all is a different
+                      situation, answered by the alert above. */}
+                  <CommandEmpty>No channel matches that search.</CommandEmpty>
+                  <CommandGroup>
+                    {listed.map((option) => (
+                      <CommandItem
+                        key={option.id}
+                        // The search matches on this value, so it carries the
+                        // name the user types; the id travels to `onChange`
+                        // through the closure. A name can be empty on the wire.
+                        value={option.name || option.id}
+                        onSelect={() => handleSelect(option.id)}
+                        // Name hook: the rendered label mixes it with a
+                        // "Private" badge.
+                        data-channel={option.name}
+                      >
+                        <span className="min-w-0 truncate">#{option.name}</span>
+                        {option.is_private && (
+                          <Badge variant="tag" size="sm">
+                            Private
+                          </Badge>
+                        )}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
         </>
       )}
 

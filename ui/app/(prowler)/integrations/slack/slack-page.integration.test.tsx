@@ -261,10 +261,11 @@ describe("choosing a destination channel", () => {
     await harness.mount();
 
     // Then — every channel is offered, so the picker followed `links.next`
-    // rather than stopping at the first page (design D6).
+    // rather than stopping at the first page (design D6). Alphabetically: the
+    // picker sorts, so the API's page order is not the offered order.
     expect(await harness.channelOptions()).toEqual([
-      SLACK_PUBLIC_CHANNEL.name,
       SLACK_SECOND_PUBLIC_CHANNEL.name,
+      SLACK_PUBLIC_CHANNEL.name,
       SLACK_PRIVATE_CHANNEL.name,
     ]);
     expect(harness.channelListCallCount).toBe(2);
@@ -284,6 +285,23 @@ describe("choosing a destination channel", () => {
     // And — a later visit shows it, under the name the API derived from the id.
     await harness.revisit();
     expect(await harness.defaultChannel()).toBe(SLACK_PUBLIC_CHANNEL.name);
+  }, 60000);
+
+  it("narrows the offered channels as the user types", async () => {
+    // Given — a connected workspace whose channels were read.
+    const harness = new SlackIntegrationHarness(connectedSlackFixture());
+    await harness.mount();
+
+    // When — the user types part of a name. Then — only the match stays on
+    // offer, so a long workspace list stays navigable.
+    const narrowed = await harness.searchChannels("plat");
+    expect(narrowed.offered).toEqual([SLACK_SECOND_PUBLIC_CHANNEL.name]);
+    expect(narrowed.emptyNote).toBeNull();
+
+    // And — a search matching nothing says so instead of listing channels.
+    const none = await harness.searchChannels("no-such-channel");
+    expect(none.offered).toEqual([]);
+    expect(none.emptyNote).toMatch(/No channel matches/);
   }, 60000);
 
   it("offers a private channel the app was invited to, marked as private, and saves it", async () => {
@@ -459,9 +477,10 @@ describe("choosing a destination channel", () => {
 
     // Then — the picker offers what was read rather than being replaced by the
     // refusal: every reload re-runs the same reads into the same limit.
+    // Alphabetically, as the picker sorts what it offers.
     expect(await harness.channelOptions()).toEqual([
-      SLACK_PUBLIC_CHANNEL.name,
       SLACK_SECOND_PUBLIC_CHANNEL.name,
+      SLACK_PUBLIC_CHANNEL.name,
     ]);
     expect(harness.saysChannelsUnreadable()).toBe(false);
 

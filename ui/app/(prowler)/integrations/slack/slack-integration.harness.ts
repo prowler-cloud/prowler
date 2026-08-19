@@ -47,6 +47,14 @@ interface CallbackParams {
   error?: string;
 }
 
+/** What a picker search leaves on offer. */
+interface ChannelSearch {
+  /** Names still offered once the filter landed, in the order offered. */
+  offered: string[];
+  /** The picker's no-match note; null while any channel is still offered. */
+  emptyNote: string | null;
+}
+
 export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
   get exchangeCallCount(): number {
     return this.countRequests("POST", "/slack/oauth/exchange");
@@ -480,6 +488,43 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     await this.closeChannelPicker();
 
     return /Private/.test(option?.textContent ?? "");
+  }
+
+  /**
+   * Open the picker, type `query` into its search, and hand back what the
+   * filter leaves on offer. The search dies with the popover, so each call
+   * starts from the full list.
+   */
+  async searchChannels(query: string): Promise<ChannelSearch> {
+    const all = await this.openChannelPicker();
+
+    const input = document.querySelector<HTMLInputElement>("[cmdk-input]");
+    if (!input) {
+      throw new Error("searchChannels: the open picker has no search field");
+    }
+    await this.user.fill(input, query);
+
+    // The filter lands a render after the last keystroke: the offered set
+    // shrinks, or the no-match note shows. A query that matches everything
+    // would never settle — the tests only narrow.
+    await this.waitFor(
+      () =>
+        document.querySelectorAll('[role="option"]').length !== all.length ||
+        document.querySelector("[cmdk-empty]") !== null ||
+        null,
+      5000,
+      "the search to narrow the channels",
+    );
+
+    const offered = Array.from(
+      document.querySelectorAll<HTMLElement>('[role="option"]'),
+    ).map((option) => option.getAttribute("data-channel") ?? "");
+    const emptyNote =
+      document.querySelector<HTMLElement>("[cmdk-empty]")?.textContent ?? null;
+
+    await this.closeChannelPicker();
+
+    return { offered, emptyNote };
   }
 
   private async pickAndSave(name: string): Promise<void> {
