@@ -30,7 +30,7 @@ When connected and configured:
 2. Prowler reads the channels it can post to: every public channel, plus the private channels the Prowler app has been invited to.
 3. One channel is recorded on the integration as the default destination.
 4. A test message proves the delivery path end to end.
-5. Disconnecting removes the integration from Prowler and revokes Prowler's access at Slack.
+5. Disconnecting removes the integration from Prowler and attempts to revoke Prowler's access at Slack.
 
 ## Prerequisites
 
@@ -120,7 +120,7 @@ Prowler reports the outcome on the page. When Slack refuses the message, the rea
 
 ## Disconnecting a Slack Workspace
 
-Disconnecting removes the integration from Prowler **and** revokes Prowler's access at Slack.
+Disconnecting removes the integration from Prowler **and** attempts to revoke Prowler's access at Slack.
 
 1. On the Slack management page, click **Disconnect**.
 2. Review the confirmation, then click **Disconnect workspace**.
@@ -135,8 +135,9 @@ Revocation is attempted at Slack, and it is best-effort:
 
 * **Revocation succeeded:** The stored credential no longer grants Prowler anything, and the integration is gone from Prowler.
 * **Revocation failed:** The integration and the stored credential are gone from Prowler either way, so there is nothing to retry. Slack did not confirm the revocation, which means the Prowler app may still be installed in the workspace. Remove it from that workspace's Slack app settings.
+* **Revocation unreported:** Slack's answer carried no outcome either way. The integration is gone from Prowler, and the disconnect is reported without any claim about revocation. When certainty matters, check the workspace's Slack app settings and remove the Prowler app if it is still installed.
 
-Prowler states which of the two happened, so a manual cleanup step is never left implicit.
+Prowler reports the outcome it received: a failed revocation always names the manual cleanup step, and an unreported one is never presented as revoked.
 
 <Warning>
 Disconnecting cannot be undone. Reconnecting means approving Prowler in Slack again, and the destination channel has to be chosen again.
@@ -152,7 +153,7 @@ The Slack management page reports the state of the connection and offers these a
 | **Refresh channels** | Re-read the workspace's channel list | Use after inviting `@Prowler` to a private channel |
 | **Save channel** | Record the selected channel as the default destination | Enabled once a channel other than the current default is selected |
 | **Send test message** | Post a test message to the recorded channel | Offered only once a destination channel is recorded |
-| **Disconnect** | Remove the integration and revoke access at Slack | ⚠️ **Cannot be undone** — confirm before disconnecting |
+| **Disconnect** | Remove the integration and attempt to revoke access at Slack | ⚠️ **Cannot be undone** — confirm before disconnecting |
 
 ## Troubleshooting
 
