@@ -19,7 +19,7 @@ class SFS(HuaweiCloudService):
 
         self.shares: List[SFSShare] = []
 
-        if self.session.is_mock:
+        if getattr(self.session, "is_mock", False):
             self._load_mock_data()
             return
 

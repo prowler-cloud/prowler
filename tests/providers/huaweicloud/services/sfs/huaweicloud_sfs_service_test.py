@@ -19,6 +19,15 @@ def _provider_with_client(regional_client):
 
 
 class TestSFSService:
+    def test_real_session_without_is_mock_lists_shares(self):
+        regional_client = mock.MagicMock(region=REGION)
+        regional_client.list_shares.return_value = SimpleNamespace(shares=[])
+        provider = _provider_with_client(regional_client)
+        del provider.session.is_mock
+
+        assert SFS(provider).shares == []
+        regional_client.list_shares.assert_called_once()
+
     def test_list_shares_parses_encryption_state(self):
         regional_client = mock.MagicMock(region=REGION)
         regional_client.list_shares.return_value = SimpleNamespace(
