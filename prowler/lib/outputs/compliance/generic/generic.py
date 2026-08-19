@@ -1,3 +1,4 @@
+from typing import Optional
 from prowler.config.config import timestamp
 from prowler.lib.check.compliance_config_eval import (
     apply_config_status,
@@ -48,6 +49,16 @@ class GenericCompliance(ComplianceOutput):
             # last-resort renderer for any framework, and provider-specific
             # schemas (e.g. CIS, ENS, ISO27001) do not declare the universal
             # Section/SubSection/SubGroup/Service/Type/Comment fields.
+            """Generate a compliance row model instance.
+
+            Args:
+                requirement (Compliance_Requirement): Requirement model.
+                attribute (Generic_Compliance_Requirement_Attribute): Attribute model.
+                finding (Finding, optional): Finding instance. None for manual checks.
+
+            Returns:
+                GenericComplianceModel: The compliance row instance.
+            """
             status, status_extended = (
                 apply_config_status(
                     finding.status,

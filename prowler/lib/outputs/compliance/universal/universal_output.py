@@ -2,7 +2,7 @@ from csv import DictWriter
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 
-from pydantic.v1 import create_model
+from pydantic.v1 import BaseModel, create_model
 
 from prowler.config.config import timestamp
 from prowler.lib.check.compliance_config_eval import (
@@ -47,6 +47,7 @@ class UniversalComplianceOutput:
         from_cli: bool = True,
         provider: str = None,
     ) -> None:
+        """Initialize compliance output instance."""
         self._data = []
         self._file_descriptor = None
         self.file_path = file_path
@@ -70,7 +71,12 @@ class UniversalComplianceOutput:
                 self._create_file_descriptor(file_path)
 
     @property
-    def data(self):
+    def data(self) -> list[BaseModel]:
+        """Get transformed compliance data.
+
+        Returns:
+            list[BaseModel]: Transformed models list.
+        """
         return self._data
 
     def _build_row_model(self, framework: ComplianceFramework):
@@ -280,6 +286,10 @@ class UniversalComplianceOutput:
                     logger.debug(f"Skipping manual row for {req.id}: {e}")
 
     def _create_file_descriptor(self, file_path: str) -> None:
+        """Create file descriptor for output writing.
+
+        Stores the open file in ``self._file_descriptor``.
+        """
         try:
             self._file_descriptor = open_file(file_path, "a")
         except Exception as error:
