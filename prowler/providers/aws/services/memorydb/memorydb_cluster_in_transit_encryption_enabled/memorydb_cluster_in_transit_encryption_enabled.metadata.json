@@ -22,7 +22,7 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "# TLSEnabled is set only at creation time; migrate via snapshot and restore\naws memorydb create-snapshot --cluster-name <cluster-name> --snapshot-name <snapshot-name>\naws memorydb create-cluster --cluster-name <new-cluster-name> --node-type <node-type> --acl-name <acl-name> --num-shards <number-of-shards> --snapshot-name <snapshot-name> --tls-enabled",
+      "CLI": "",
       "NativeIaC": "```yaml\n# Enable in-transit encryption for a MemoryDB cluster\nResources:\n  <example_resource_name>:\n    Type: AWS::MemoryDB::Cluster\n    Properties:\n      ClusterName: <example_resource_name>\n      ACLName: <example_acl_name>\n      NodeType: <example_node_type>\n      NumShards: 1\n      TLSEnabled: true  # CRITICAL: enables TLS in-transit; replaces the cluster if changed\n```",
       "Other": "1. In the AWS Console, go to MemoryDB > Clusters\n2. Select the cluster <cluster-name> and choose Actions > Take snapshot\n3. Once the snapshot is available, go to Snapshots, select it and choose Actions > Restore\n4. In the restore form, enable \"Encryption in transit\" and create the cluster\n5. Repoint clients at the new cluster endpoint using a TLS-enabled client, then delete the old cluster",
       "Terraform": "```hcl\nresource \"aws_memorydb_cluster\" \"<example_resource_name>\" {\n  name       = \"<example_resource_name>\"\n  acl_name   = \"<example_acl_name>\"\n  node_type  = \"<example_node_type>\"\n  num_shards = 1\n\n  tls_enabled = true  # CRITICAL: enables TLS in-transit; forces replacement if changed\n}\n```"
