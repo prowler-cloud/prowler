@@ -342,10 +342,18 @@ export const getSlackChannels = async (
       });
 
       if (!response.ok) {
-        const message = await errorMessageFrom(
-          response,
-          `Unable to read the workspace's channels: ${response.statusText}`,
-        );
+        let message: string;
+        try {
+          message = await errorMessageFrom(
+            response,
+            `Unable to read the workspace's channels: ${response.statusText}`,
+          );
+        } catch (error) {
+          // `handleApiResponse` reported the 5xx and threw; a first-page
+          // failure stays a failure, but later pages keep what was read.
+          if (channels.length === 0) throw error;
+          return { channels, incomplete: SLACK_GENERIC_ERROR_MESSAGE };
+        }
 
         return channels.length > 0
           ? { channels, incomplete: message }
@@ -357,8 +365,12 @@ export const getSlackChannels = async (
       const body = await response.json().catch(() => null);
 
       for (const resource of body?.data ?? []) {
+        // Radix `Select.Item` refuses an empty value; one malformed resource
+        // would break the whole picker.
+        const channelId = resource?.id;
+        if (typeof channelId !== "string" || channelId.length === 0) continue;
         channels.push({
-          id: resource?.id,
+          id: channelId,
           name: resource?.attributes?.name ?? "",
           is_private: Boolean(resource?.attributes?.is_private),
         });

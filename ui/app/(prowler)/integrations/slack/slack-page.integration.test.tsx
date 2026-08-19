@@ -39,7 +39,19 @@ import {
 
 /** The shape the channel save is asserted against — only the id travels. */
 interface PatchIntegrationBody {
-  data: { attributes: { configuration: { channel_id: string } } };
+  data: PatchIntegrationData;
+}
+
+interface PatchIntegrationData {
+  attributes: PatchIntegrationAttributes;
+}
+
+interface PatchIntegrationAttributes {
+  configuration: PatchChannelConfiguration;
+}
+
+interface PatchChannelConfiguration {
+  channel_id: string;
 }
 
 /** The workspace the fixtures connect. */
