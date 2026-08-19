@@ -13,7 +13,7 @@
   "Risk": "Short retention periods may result in loss of critical log data needed for security incident investigation and compliance audits.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.huaweicloud.com/intl/en-us/usermanual-lts/lts_04_0116.html"
+    "https://support.huaweicloud.com/intl/en-us/api-lts/UpdateLogGroup.html"
   ],
   "Remediation": {
     "Code": {

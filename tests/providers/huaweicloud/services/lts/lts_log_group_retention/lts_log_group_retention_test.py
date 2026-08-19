@@ -1,11 +1,22 @@
 from unittest import mock
 
+from prowler.lib.check.models import CheckMetadata
 from tests.providers.huaweicloud.huaweicloud_fixtures import (
     set_mocked_huaweicloud_provider,
 )
 
 
 class Test_lts_log_group_retention:
+    def test_metadata_references_log_group_retention_api(self):
+        metadata = CheckMetadata.parse_file(
+            "prowler/providers/huaweicloud/services/lts/"
+            "lts_log_group_retention/lts_log_group_retention.metadata.json"
+        )
+
+        assert metadata.AdditionalURLs == [
+            "https://support.huaweicloud.com/intl/en-us/api-lts/UpdateLogGroup.html"
+        ]
+
     def test_no_log_groups(self):
         lts_client = mock.MagicMock()
         lts_client.log_groups = []
