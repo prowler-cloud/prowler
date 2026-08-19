@@ -322,7 +322,7 @@ class HuaweiCloudSession:
 
                     endpoint = _align_endpoint_tld(
                         client_region,
-                        f"https://identitycenter.{client_region}.myhuaweicloud.com",
+                        "https://identitycenter.myhuaweicloud.com",
                     )
                     service_region = Region(client_region, endpoint)
                 return (
