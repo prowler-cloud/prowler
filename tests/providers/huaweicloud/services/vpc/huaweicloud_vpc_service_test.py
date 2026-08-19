@@ -6,6 +6,7 @@ from prowler.providers.huaweicloud.services.vpc.vpc_service import (
     SecurityGroupRule,
     SecurityGroups,
     VPCs,
+    rule_source_is_open,
 )
 from tests.providers.huaweicloud.huaweicloud_fixtures import (
     set_mocked_huaweicloud_provider,
@@ -24,6 +25,18 @@ def _provider_with_client(regional_client):
 
 
 class TestVPCService:
+    def test_rule_with_remote_address_group_is_not_open(self):
+        rule = SecurityGroupRule(
+            id="rule-1",
+            direction="ingress",
+            protocol="tcp",
+            ethertype="IPv4",
+            remote_ip_prefix="",
+            remote_address_group_id="address-group-1",
+        )
+
+        assert rule_source_is_open(rule) is False
+
     def test_list_vpcs_and_security_groups_parses(self):
         vpc = SimpleNamespace(
             id="vpc-1",

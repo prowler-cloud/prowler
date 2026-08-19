@@ -191,13 +191,16 @@ def rule_source_is_open(rule: SecurityGroupRule) -> bool:
 
     Huawei Cloud represents "any source" in two ways: an explicit ``0.0.0.0/0``
     (or ``::/0``) in ``remote_ip_prefix``, or leaving both ``remote_ip_prefix``
-    and ``remote_group_id`` empty. Rules that reference another security group
-    via ``remote_group_id`` are NOT open even when ``remote_ip_prefix`` is
-    empty.
+    and both group identifiers empty. Rules that reference a security group or
+    address group are NOT open even when ``remote_ip_prefix`` is empty.
     """
     if rule.remote_ip_prefix in ("0.0.0.0/0", "::/0"):
         return True
-    return not rule.remote_ip_prefix and not rule.remote_group_id
+    return (
+        not rule.remote_ip_prefix
+        and not rule.remote_group_id
+        and not rule.remote_address_group_id
+    )
 
 
 def rule_covers_all_ports(rule: SecurityGroupRule) -> bool:
