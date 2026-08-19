@@ -6,6 +6,29 @@ from tests.providers.huaweicloud.huaweicloud_fixtures import (
 
 
 class TestRdsInstanceSslEnabled:
+    def test_metadata_uses_rds_ssl_control(self):
+        rds_client = mock.MagicMock()
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_huaweicloud_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.huaweicloud.services.rds.rds_instance_ssl_enabled.rds_instance_ssl_enabled.rds_client",
+                new=rds_client,
+            ),
+        ):
+            from prowler.providers.huaweicloud.services.rds.rds_instance_ssl_enabled.rds_instance_ssl_enabled import (
+                rds_instance_ssl_enabled,
+            )
+
+            metadata = rds_instance_ssl_enabled()
+
+            assert "ssl_enable = true" in metadata.Remediation.Code.Terraform
+            assert "Parameters" not in metadata.Remediation.Code.Other
+            assert "rds_08_0032" not in metadata.AdditionalURLs[0]
+
     def test_ssl_enabled_passes(self):
         rds_client = mock.MagicMock()
 

@@ -13,14 +13,15 @@
   "Risk": "Without SSL, data transmitted between the application and the database is sent in plaintext, making it vulnerable to interception and man-in-the-middle attacks.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.huaweicloud.com/intl/en-us/usermanual-rds-mysql/rds_08_0032.html"
+    "https://support.huaweicloud.com/intl/en-us/api-rds/rds_00_0011.html",
+    "https://github.com/huaweicloud/terraform-provider-huaweicloud/blob/master/docs/resources/rds_instance.md"
   ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "1. Log on to the Huawei Cloud console.\n2. Navigate to Relational Database Service.\n3. Select the instance.\n4. Click the Parameters tab.\n5. Set require_ssl to ON.\n6. Click Save.",
-      "Terraform": ""
+      "Other": "Use the Huawei Cloud RDS API to update the instance SSL setting: PUT /v3/{project_id}/instances/{instance_id}/ssl with {\"ssl_option\": true}.",
+      "Terraform": "resource \"huaweicloud_rds_instance\" \"example\" {\n  # ...\n  ssl_enable = true\n}"
     },
     "Recommendation": {
       "Text": "Enable SSL for all RDS instances to encrypt data in transit.",
@@ -28,8 +29,7 @@
     }
   },
   "Categories": [
-    "encryption",
-    "identity-access"
+    "encryption"
   ],
   "DependsOn": [],
   "RelatedTo": [],
