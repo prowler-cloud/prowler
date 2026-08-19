@@ -201,6 +201,7 @@ class Organization(GithubService):
             else None
         )
         is_verified = _extract_flag("is_verified", bool)
+        default_workflow_permissions = self._get_default_workflow_permissions(org)
         organizations[org.id] = Org(
             id=org.id,
             name=org.login,
@@ -223,7 +224,56 @@ class Organization(GithubService):
             ],
             base_permission=base_permission,
             is_verified=is_verified,
+            default_workflow_permissions=default_workflow_permissions,
         )
+
+    def _get_default_workflow_permissions(self, org) -> Optional[str]:
+        """Fetch the default GITHUB_TOKEN permissions granted to workflows in the organization.
+
+        Args:
+            org: PyGithub Organization object.
+
+        Returns:
+            Optional[str]: "read" or "write", or None when the setting cannot be read.
+
+        Raises:
+            github.RateLimitExceededException: When API rate limits are exceeded
+        """
+        try:
+            _, response = org._requester.requestJsonAndCheck(  # type: ignore[attr-defined]
+                "GET",
+                f"/orgs/{org.login}/actions/permissions/workflow",
+                headers={
+                    "Accept": "application/vnd.github+json",
+                    "X-GitHub-Api-Version": "2022-11-28",
+                },
+            )
+            if isinstance(response, dict):
+                permissions = response.get("default_workflow_permissions")
+                if isinstance(permissions, str):
+                    return permissions
+        except github.RateLimitExceededException as error:
+            logger.error(f"GitHub API rate limit exceeded: {error}")
+            raise  # Re-raise rate limit errors as they need special handling
+        except github.GithubException as error:
+            status_code = getattr(error, "status", None)
+            if status_code == 404:
+                logger.info(
+                    f"'{org.login}': Actions workflow permissions endpoint not available for this account."
+                )
+            elif status_code == 403:
+                logger.warning(
+                    f"Access denied reading Actions workflow permissions for '{org.login}' - insufficient permissions"
+                )
+            else:
+                logger.error(
+                    f"GitHub API error reading Actions workflow permissions for '{org.login}': {error}"
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return None
 
 
 class Org(BaseModel):
@@ -240,3 +290,4 @@ class Org(BaseModel):
     members_allowed_repository_creation_type: Optional[str] = None
     base_permission: Optional[str] = None
     is_verified: Optional[bool] = None
+    default_workflow_permissions: Optional[str] = None
