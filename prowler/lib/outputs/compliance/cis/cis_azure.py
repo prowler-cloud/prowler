@@ -6,16 +6,7 @@ from prowler.lib.outputs.finding import Finding
 
 
 class AzureCIS(ComplianceOutputBase):
-    """
-    This class represents the Azure CIS compliance output.
-
-    Attributes:
-        - _data (list): A list to store transformed data from findings.
-        - _file_descriptor (TextIOWrapper): A file descriptor to write data to a file.
-
-    Methods:
-        - transform: Transforms findings into Azure CIS compliance format.
-    """
+    """This class represents the Azure CIS compliance output."""
 
 
     @property

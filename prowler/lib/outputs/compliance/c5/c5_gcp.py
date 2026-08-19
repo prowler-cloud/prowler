@@ -6,16 +6,7 @@ from prowler.lib.outputs.finding import Finding
 
 
 class GCPC5(ComplianceOutputBase):
-    """
-    This class represents the GCP C5 compliance output.
-
-    Attributes:
-        - _data (list): A list to store transformed data from findings.
-        - _file_descriptor (TextIOWrapper): A file descriptor to write data to a file.
-
-    Methods:
-        - transform: Transforms findings into GCP C5 compliance format.
-    """
+    """This class represents the GCP C5 compliance output."""
 
 
     @property

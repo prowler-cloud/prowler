@@ -8,16 +8,7 @@ from prowler.lib.outputs.finding import Finding
 
 
 class ProwlerThreatScoreGCP(ComplianceOutputBase):
-    """
-    This class represents the GCP Prowler ThreatScore compliance output.
-
-    Attributes:
-        - _data (list): A list to store transformed data from findings.
-        - _file_descriptor (TextIOWrapper): A file descriptor to write data to a file.
-
-    Methods:
-        - transform: Transforms findings into GCP Prowler ThreatScore compliance format.
-    """
+    """This class represents the GCP Prowler ThreatScore compliance output."""
 
 
     @property

@@ -6,16 +6,7 @@ from prowler.lib.outputs.finding import Finding
 
 
 class KubernetesISO27001(ComplianceOutputBase):
-    """
-    This class represents the Kubernetes ISO 27001 compliance output.
-
-    Attributes:
-        - _data (list): A list to store transformed data from findings.
-        - _file_descriptor (TextIOWrapper): A file descriptor to write data to a file.
-
-    Methods:
-        - transform: Transforms findings into Kubernetes ISO 27001 compliance format.
-    """
+    """This class represents the Kubernetes ISO 27001 compliance output."""
 
 
     @property

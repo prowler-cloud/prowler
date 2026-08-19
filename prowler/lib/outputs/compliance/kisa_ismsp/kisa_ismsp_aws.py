@@ -7,16 +7,7 @@ from prowler.lib.check.compliance_models import Compliance_Requirement
 
 
 class AWSKISAISMSP(ComplianceOutputBase):
-    """
-    This class represents the AWS KISA-ISMS-P compliance output.
-
-    Attributes:
-        - _data (list): A list to store transformed data from findings.
-        - _file_descriptor (TextIOWrapper): A file descriptor to write data to a file.
-
-    Methods:
-        - transform: Transforms findings into AWS KISA-ISMS-P compliance format.
-    """
+    """This class represents the AWS KISA-ISMS-P compliance output."""
 
 
     @property

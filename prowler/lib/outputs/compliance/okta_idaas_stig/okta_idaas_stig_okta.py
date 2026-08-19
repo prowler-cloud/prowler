@@ -7,16 +7,7 @@ from prowler.lib.check.compliance_models import Compliance_Requirement
 
 
 class OktaIDaaSSTIG(ComplianceOutputBase):
-    """
-    This class represents the Okta IDaaS STIG compliance output.
-
-    Attributes:
-        - _data (list): A list to store transformed data from findings.
-        - _file_descriptor (TextIOWrapper): A file descriptor to write data to a file.
-
-    Methods:
-        - transform: Transforms findings into Okta IDaaS STIG compliance format.
-    """
+    """This class represents the Okta IDaaS STIG compliance output."""
 
 
     @property

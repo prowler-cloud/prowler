@@ -8,16 +8,7 @@ from prowler.lib.outputs.finding import Finding
 
 
 class GoogleWorkspaceCISASCuBA(ComplianceOutputBase):
-    """
-    This class represents the Google Workspace CISA SCuBA compliance output.
-
-    Attributes:
-        - _data (list): A list to store transformed data from findings.
-        - _file_descriptor (TextIOWrapper): A file descriptor to write data to a file.
-
-    Methods:
-        - transform: Transforms findings into Google Workspace CISA SCuBA compliance format.
-    """
+    """This class represents the Google Workspace CISA SCuBA compliance output."""
 
 
     @property

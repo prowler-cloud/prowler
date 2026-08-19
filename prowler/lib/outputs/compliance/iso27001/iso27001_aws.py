@@ -7,16 +7,7 @@ from prowler.lib.check.compliance_models import Compliance_Requirement
 
 
 class AWSISO27001(ComplianceOutputBase):
-    """
-    This class represents the AWS ISO 27001 compliance output.
-
-    Attributes:
-        - _data (list): A list to store transformed data from findings.
-        - _file_descriptor (TextIOWrapper): A file descriptor to write data to a file.
-
-    Methods:
-        - transform: Transforms findings into AWS ISO 27001 compliance format.
-    """
+    """This class represents the AWS ISO 27001 compliance output."""
 
 
     @property
