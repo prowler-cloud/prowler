@@ -15,7 +15,7 @@
   "AdditionalURLs": [],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "hcloud IdentityCenter StartIdentityCenter",
       "NativeIaC": "",
       "Other": "",
       "Terraform": ""

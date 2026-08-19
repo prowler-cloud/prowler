@@ -1,3 +1,4 @@
+import json
 from unittest import mock
 
 from tests.providers.huaweicloud.huaweicloud_fixtures import (
@@ -6,6 +7,22 @@ from tests.providers.huaweicloud.huaweicloud_fixtures import (
 
 
 class TestIdentitycenterEnabled:
+    def test_metadata_has_cli_remediation(self):
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_huaweicloud_provider(),
+        ):
+            from prowler.providers.huaweicloud.services.identitycenter.identitycenter_enabled.identitycenter_enabled import (
+                identitycenter_enabled,
+            )
+
+            assert (
+                json.loads(identitycenter_enabled().metadata())["Remediation"]["Code"][
+                    "CLI"
+                ]
+                == "hcloud IdentityCenter StartIdentityCenter"
+            )
+
     def test_identity_center_enabled_passes(self):
         identitycenter_client = mock.MagicMock()
 
