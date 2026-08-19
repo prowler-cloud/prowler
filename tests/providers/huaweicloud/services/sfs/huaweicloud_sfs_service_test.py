@@ -74,6 +74,7 @@ class TestSFSService:
 
         assert len(sfs.shares) == 1001
         assert sfs.shares[-1].share_id == "sfs-1000"
+        assert regional_client.list_shares.call_count == 2
         assert regional_client.list_shares.call_args_list[1].args[0].offset == 1000
 
     def test_list_shares_handles_empty_response(self):
