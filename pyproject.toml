@@ -127,6 +127,7 @@ dependencies = [
   "huaweicloudsdkkms==3.1.204",
   "huaweicloudsdkobs==3.1.204",
   "huaweicloudsdkrds==3.1.204",
+  "huaweicloudsdksfsturbo==3.1.204",
   "huaweicloudsdkvpc==3.1.204",
   "huaweicloudsdkwaf==3.1.204"
 ]
@@ -264,6 +265,7 @@ constraint-dependencies = [
   "huaweicloudsdkkms==3.1.204",
   "huaweicloudsdkobs==3.1.204",
   "huaweicloudsdkrds==3.1.204",
+  "huaweicloudsdksfsturbo==3.1.204",
   "huaweicloudsdkvpc==3.1.204",
   "huaweicloudsdkwaf==3.1.204",
   "hyperframe==6.1.0",
@@ -392,7 +394,7 @@ constraint-dependencies = [
 override-dependencies = [
   "okta==3.4.2",
   # alibabacloud-tea-openapi 0.4.5 caps cryptography below 49 and is the latest release.
-  "cryptography==50.0.0",
+  "cryptography==50.0.0"
 ]
 
 [tool.vulture]

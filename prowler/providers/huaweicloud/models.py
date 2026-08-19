@@ -384,6 +384,21 @@ class HuaweiCloudSession:
                     .build()
                 )
 
+            elif service == "sfs":
+                from huaweicloudsdksfsturbo.v1 import SFSTurboClient
+                from huaweicloudsdksfsturbo.v1.region.sfsturbo_region import (
+                    SFSTurboRegion,
+                )
+
+                client_region = region or self._region
+                return (
+                    SFSTurboClient.new_builder()
+                    .with_credentials(self._get_basic_credentials(client_region))
+                    .with_http_config(self._http_config())
+                    .with_region(_aligned_region(SFSTurboRegion, client_region))
+                    .build()
+                )
+
             else:
                 raise HuaweiCloudServiceError(
                     message=f"Huawei Cloud service '{service}' is not supported"
