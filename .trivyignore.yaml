@@ -164,7 +164,3 @@ vulnerabilities:
     purls:
       - "pkg:golang/oras.land/oras-go/v2"
     expired_at: 2026-12-31
-  - id: CVE-2026-39822
-    purls:
-      - "pkg:golang/stdlib"
-    expired_at: 2026-12-31
