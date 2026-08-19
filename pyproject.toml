@@ -65,8 +65,8 @@ dependencies = [
   "azure-monitor-query==2.0.0",
   "azure-storage-blob==12.24.1",
   "cloudflare==4.3.1",
-  "boto3==1.40.61",
-  "botocore==1.40.61",
+  "boto3==1.42.93",
+  "botocore==1.42.96",
   "colorama==0.4.6",
   # cryptography 50 needs alibabacloud-tea-openapi>=0.4.6, oci>=2.184.1 and, in the
   # [tool.uv] pins, msal>=1.37.0 and pyopenssl>=26.4.0: earlier releases cap it below 49
