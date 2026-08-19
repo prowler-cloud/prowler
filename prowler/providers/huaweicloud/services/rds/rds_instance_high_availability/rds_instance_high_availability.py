@@ -6,6 +6,11 @@ class rds_instance_high_availability(Check):
     """Check if RDS instances have high availability configured."""
 
     def execute(self) -> list[CheckReportHuaweiCloud]:
+        """Evaluate high availability for each RDS instance.
+
+        Returns:
+            A list of Huawei Cloud check reports.
+        """
         findings = []
 
         for instance in rds_client.instances:
