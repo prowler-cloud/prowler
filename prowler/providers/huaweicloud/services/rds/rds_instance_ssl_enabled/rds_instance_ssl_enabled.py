@@ -6,6 +6,11 @@ class rds_instance_ssl_enabled(Check):
     """Check if RDS for MySQL instances have SSL enabled."""
 
     def execute(self) -> list[CheckReportHuaweiCloud]:
+        """Check whether SSL is enabled for RDS for MySQL instances.
+
+        Returns:
+            A list of findings for each RDS for MySQL instance.
+        """
         findings = []
 
         for instance in rds_client.instances:
