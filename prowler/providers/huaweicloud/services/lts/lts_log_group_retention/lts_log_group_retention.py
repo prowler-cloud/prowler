@@ -6,6 +6,11 @@ class lts_log_group_retention(Check):
     """Check if LTS log groups have adequate retention period (>= 30 days)."""
 
     def execute(self) -> list[CheckReportHuaweiCloud]:
+        """Generate findings for LTS log group retention settings.
+
+        Returns:
+            A list of findings for the evaluated LTS log groups.
+        """
         findings = []
         for group in lts_client.log_groups:
             report = CheckReportHuaweiCloud(
