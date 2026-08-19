@@ -6,6 +6,28 @@ from tests.providers.huaweicloud.huaweicloud_fixtures import (
 
 
 class Test_sfs_file_system_encryption:
+    def test_metadata_recommends_replacing_unencrypted_file_systems(self):
+        sfs_client = mock.MagicMock()
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_huaweicloud_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.huaweicloud.services.sfs.sfs_file_system_encryption.sfs_file_system_encryption.sfs_client",
+                new=sfs_client,
+            ),
+        ):
+            from prowler.providers.huaweicloud.services.sfs.sfs_file_system_encryption.sfs_file_system_encryption import (
+                sfs_file_system_encryption,
+            )
+
+            remediation = sfs_file_system_encryption().Remediation
+
+            assert "cannot be changed" in remediation.Code.Other
+            assert "new encrypted" in remediation.Code.Other
+
     def test_sfs_file_system_encryption_pass(self):
         sfs_client = mock.MagicMock()
 

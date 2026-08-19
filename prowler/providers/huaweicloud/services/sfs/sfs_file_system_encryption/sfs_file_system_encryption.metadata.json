@@ -13,17 +13,17 @@
   "Risk": "Unencrypted SFS Turbo file systems expose data at rest to unauthorized access, potentially leading to data breaches.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.huaweicloud.com/intl/en-us/usermanual-sfsturbo/sfsturbo_01_0034.html"
+    "https://support.huaweicloud.com/intl/en-us/usermanual-sfsturbo/sfsturbo_01_0359.html"
   ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "1. Log on to the Huawei Cloud console.\n2. Navigate to SFS Turbo.\n3. Select the file system.\n4. Enable encryption and select a KMS key.\n5. Verify that the file system is encrypted.",
+      "Other": "The encryption attribute of an existing SFS Turbo file system cannot be changed. Create a new encrypted SFS Turbo file system with a KMS key, migrate the data and clients to it, verify the migration, and then delete the unencrypted file system.",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Enable encryption on SFS Turbo file systems using KMS keys.",
+      "Text": "Create SFS Turbo file systems with KMS encryption enabled. Replace existing unencrypted file systems because their encryption attribute is immutable.",
       "Url": "https://hub.prowler.com/check/sfs_file_system_encryption"
     }
   },
