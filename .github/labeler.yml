@@ -82,6 +82,11 @@ provider/vercel:
       - any-glob-to-any-file: "prowler/providers/vercel/**"
       - any-glob-to-any-file: "tests/providers/vercel/**"
 
+provider/supabase:
+  - changed-files:
+      - any-glob-to-any-file: "prowler/providers/supabase/**"
+      - any-glob-to-any-file: "tests/providers/supabase/**"
+
 provider/okta:
   - changed-files:
       - any-glob-to-any-file: "prowler/providers/okta/**"
