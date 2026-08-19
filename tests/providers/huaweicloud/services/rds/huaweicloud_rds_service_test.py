@@ -81,6 +81,44 @@ class TestRDSService:
 
         assert rds.instances == []
 
+    def test_list_instances_derives_multi_az_from_distinct_node_zones(self):
+        multi_az_instance = SimpleNamespace(
+            id="rds-multi-az",
+            name="multi-az-db",
+            status="ACTIVE",
+            public_ips=[],
+            backup_strategy=None,
+            datastore=None,
+            disk_encryption_id="",
+            nodes=[
+                SimpleNamespace(availability_zone="eu-west-101a"),
+                SimpleNamespace(availability_zone="eu-west-101b"),
+            ],
+        )
+        single_az_instance = SimpleNamespace(
+            id="rds-single-az",
+            name="single-az-db",
+            status="ACTIVE",
+            public_ips=[],
+            backup_strategy=None,
+            datastore=None,
+            disk_encryption_id="",
+            nodes=[
+                SimpleNamespace(availability_zone="eu-west-101a"),
+                SimpleNamespace(availability_zone="eu-west-101a"),
+            ],
+        )
+        regional_client = mock.MagicMock(region=REGION)
+        regional_client.list_instances.return_value = SimpleNamespace(
+            instances=[multi_az_instance, single_az_instance]
+        )
+
+        rds = RDS(_provider_with_client(regional_client))
+
+        by_id = {instance.id: instance for instance in rds.instances}
+        assert by_id["rds-multi-az"].is_multi_az is True
+        assert by_id["rds-single-az"].is_multi_az is False
+
     def test_list_instances_handles_sdk_error(self):
         regional_client = mock.MagicMock(region=REGION)
         regional_client.list_instances.side_effect = Exception("boom")
