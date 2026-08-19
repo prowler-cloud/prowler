@@ -48,7 +48,7 @@ def _sanitize_resource_data(resource_details, resource_metadata) -> dict:
     """
 
     def _make_serializable(obj):
-        """Recursively convert objects to JSON-safe primitives."""
+        """Recursively normalize objects for JSON serialization."""
         if hasattr(obj, "model_dump") and callable(obj.model_dump):
             return _make_serializable(obj.model_dump())
         if hasattr(obj, "dict") and callable(obj.dict):
