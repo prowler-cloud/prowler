@@ -169,6 +169,12 @@ def _send_ocsf_to_cloud(file_path: str) -> dict | None:
     """Upload OCSF findings and report safe, actionable CLI failures."""
     try:
         return send_ocsf_to_api(file_path)
+    except requests.exceptions.JSONDecodeError:
+        print(
+            f"{Style.BRIGHT}{Fore.RED}\nPush to Prowler Cloud failed: "
+            "the API returned an invalid JSON response. "
+            f"Scan results were saved to {file_path}{Style.RESET_ALL}"
+        )
     except ValueError:
         print(
             f"{Style.BRIGHT}{Fore.YELLOW}\nPush to Prowler Cloud skipped: no API key configured. "
@@ -199,16 +205,25 @@ def _send_ocsf_to_cloud(file_path: str) -> dict | None:
             f"Scan results were saved to {file_path}{Style.RESET_ALL}"
         )
     except requests.HTTPError as http_err:
-        if http_err.response.status_code == 402:
+        status_code = (
+            http_err.response.status_code if http_err.response is not None else None
+        )
+        if status_code == 402:
             print(
                 f"{Style.BRIGHT}{Fore.RED}\nPush to Prowler Cloud failed: "
                 "this feature is only available with a Prowler Cloud subscription. "
                 f"Scan results were saved to {file_path}{Style.RESET_ALL}"
             )
+        elif status_code is None:
+            print(
+                f"{Style.BRIGHT}{Fore.RED}\nPush to Prowler Cloud failed: "
+                "the API request failed without a response status. "
+                f"Scan results were saved to {file_path}{Style.RESET_ALL}"
+            )
         else:
             print(
                 f"{Style.BRIGHT}{Fore.RED}\nPush to Prowler Cloud failed: the API returned HTTP "
-                f"{http_err.response.status_code}. Verify your API key is valid and has the right permissions. "
+                f"{status_code}. Verify your API key is valid and has the right permissions. "
                 f"Scan results were saved to {file_path}{Style.RESET_ALL}"
             )
     except Exception:

@@ -30,6 +30,11 @@ class _SystemTrustHTTPAdapter(HTTPAdapter):
     """Use one combined trust context for HTTPS origin connection pools."""
 
     def __init__(self, ssl_context: ssl.SSLContext) -> None:
+        """Initialize the adapter with a preconfigured TLS context.
+
+        Args:
+            ssl_context: TLS context used for HTTPS connections.
+        """
         self._ssl_context = ssl_context
         super().__init__()
 
@@ -39,6 +44,16 @@ class _SystemTrustHTTPAdapter(HTTPAdapter):
         verify: Any,
         cert: Any = None,
     ) -> tuple[Dict[str, Any], Dict[str, Any]]:
+        """Build pool attributes that enforce the configured TLS context.
+
+        Args:
+            request: Prepared request used to derive host parameters.
+            verify: Certificate verification setting supplied by Requests.
+            cert: Optional client certificate configuration.
+
+        Returns:
+            Host parameters and connection pool keyword arguments.
+        """
         verify = True
         host_params, pool_kwargs = super().build_connection_pool_key_attributes(
             request, verify, cert

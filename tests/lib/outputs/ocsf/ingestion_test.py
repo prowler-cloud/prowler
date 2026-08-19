@@ -436,6 +436,7 @@ def test_upload_rejects_redirect_response(tmp_path, monkeypatch):
         ingestion.send_ocsf_to_api(str(ocsf_file), api_key="safe-api-key")
 
     assert error.value.response is response
+    session.close.assert_called_once_with()
 
 
 @pytest.mark.parametrize("failure_stage", ["status", "json"])

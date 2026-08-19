@@ -49,6 +49,43 @@ def test_truststore_initialization_error_uses_safe_actionable_message(
     assert "secret initialization detail" not in output
 
 
+def test_json_decode_error_uses_safe_api_response_message(monkeypatch, capsys):
+    monkeypatch.setattr(
+        cli,
+        "send_ocsf_to_api",
+        MagicMock(
+            side_effect=requests.exceptions.JSONDecodeError(
+                "secret response detail", "invalid", 0
+            )
+        ),
+    )
+
+    response = cli._send_ocsf_to_cloud("/tmp/saved-findings.ocsf.json")
+
+    output = capsys.readouterr().out
+    assert response is None
+    assert "the API returned an invalid JSON response" in output
+    assert "no API key configured" not in output
+    assert "secret response detail" not in output
+    assert "Scan results were saved to /tmp/saved-findings.ocsf.json" in output
+
+
+def test_http_error_without_response_uses_safe_fallback(monkeypatch, capsys):
+    monkeypatch.setattr(
+        cli,
+        "send_ocsf_to_api",
+        MagicMock(side_effect=requests.HTTPError("secret transport detail")),
+    )
+
+    response = cli._send_ocsf_to_cloud("/tmp/saved-findings.ocsf.json")
+
+    output = capsys.readouterr().out
+    assert response is None
+    assert "the API request failed without a response status" in output
+    assert "secret transport detail" not in output
+    assert "Scan results were saved to /tmp/saved-findings.ocsf.json" in output
+
+
 @pytest.mark.parametrize(
     ("error", "expected_message"),
     [
