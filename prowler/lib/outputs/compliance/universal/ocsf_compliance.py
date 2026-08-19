@@ -48,7 +48,11 @@ def _sanitize_resource_data(resource_details, resource_metadata) -> dict:
     """
 
     def _make_serializable(obj):
-        """Recursively normalize objects for JSON serialization."""
+        """Recursively normalize objects by converting Pydantic models to dicts.
+
+        Non-serializable objects are left unchanged and resolved later by
+        ``json.dumps(..., default=str)``.
+        """
         if hasattr(obj, "model_dump") and callable(obj.model_dump):
             return _make_serializable(obj.model_dump())
         if hasattr(obj, "dict") and callable(obj.dict):
