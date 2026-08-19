@@ -28,9 +28,7 @@ class Test_lts_log_group_retention:
 
             check = lts_log_group_retention()
             result = check.execute()
-            assert len(result) == 1
-            assert result[0].status == "FAIL"
-            assert "No LTS log groups are configured" in result[0].status_extended
+            assert result == []
 
     def test_log_group_adequate_retention(self):
         lts_client = mock.MagicMock()

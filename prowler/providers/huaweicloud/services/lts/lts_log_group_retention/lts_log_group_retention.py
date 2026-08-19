@@ -7,20 +7,6 @@ class lts_log_group_retention(Check):
 
     def execute(self) -> list[CheckReportHuaweiCloud]:
         findings = []
-        if not lts_client.log_groups:
-            report = CheckReportHuaweiCloud(
-                metadata=self.metadata(),
-                resource={},
-            )
-            report.region = lts_client.region
-            report.resource_id = ""
-            report.resource_name = "LTS Log Groups"
-            report.resource_arn = f"huaweicloud:lts:{lts_client.region}:{lts_client.audited_account}:log-groups"
-            report.status = "FAIL"
-            report.status_extended = "No LTS log groups are configured. Log data is not being collected for analysis and incident investigation."
-            findings.append(report)
-            return findings
-
         for group in lts_client.log_groups:
             report = CheckReportHuaweiCloud(
                 metadata=self.metadata(),
