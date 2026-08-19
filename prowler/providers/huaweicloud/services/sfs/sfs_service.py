@@ -54,10 +54,14 @@ class SFS(HuaweiCloudService):
             try:
                 from huaweicloudsdksfsturbo.v1 import ListSharesRequest
 
-                request = ListSharesRequest()
-                response = self._call_with_retries(client.list_shares, request)
+                page_size = 1000
+                offset = 0
+                while True:
+                    request = ListSharesRequest(limit=page_size, offset=offset)
+                    response = self._call_with_retries(client.list_shares, request)
+                    if not response or not response.shares:
+                        break
 
-                if response and response.shares:
                     for share in response.shares:
                         share_id = getattr(share, "id", "")
                         name = getattr(share, "name", "")
@@ -71,6 +75,10 @@ class SFS(HuaweiCloudService):
                                 region=region,
                             )
                         )
+
+                    if len(response.shares) < page_size:
+                        break
+                    offset += page_size
 
             except Exception as error:
                 logger.error(

@@ -58,6 +58,24 @@ class TestSFSService:
             ),
         ]
 
+    def test_list_shares_paginates(self):
+        regional_client = mock.MagicMock(region=REGION)
+        regional_client.list_shares.side_effect = [
+            SimpleNamespace(
+                shares=[
+                    SimpleNamespace(id=f"sfs-{index}", name=f"share-{index}")
+                    for index in range(1000)
+                ]
+            ),
+            SimpleNamespace(shares=[SimpleNamespace(id="sfs-1000", name="share-1000")]),
+        ]
+
+        sfs = SFS(_provider_with_client(regional_client))
+
+        assert len(sfs.shares) == 1001
+        assert sfs.shares[-1].share_id == "sfs-1000"
+        assert regional_client.list_shares.call_args_list[1].args[0].offset == 1000
+
     def test_list_shares_handles_empty_response(self):
         regional_client = mock.MagicMock(region=REGION)
         regional_client.list_shares.return_value = SimpleNamespace(shares=[])
