@@ -13,14 +13,15 @@
   "Risk": "RDS instances deployed in a single availability zone are vulnerable to availability zone failures, which can cause database downtime.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.huaweicloud.com/intl/en-us/usermanual-rds-mysql/rds_02_0025.html"
+    "https://support.huaweicloud.com/intl/en-us/api-rds/rds_01_0004.html",
+    "https://registry.terraform.io/providers/huaweicloud/huaweicloud/latest/docs/resources/rds_instance"
   ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "1. Log on to the Huawei Cloud console.\n2. Navigate to Relational Database Service.\n3. Select the instance.\n4. Click More > Create Standby Instance to enable cross-AZ deployment.\n5. Select a different availability zone for the standby.\n6. Click Save.",
-      "Terraform": ""
+      "Other": "1. Log on to the Huawei Cloud console and navigate to Relational Database Service.\n2. Create or change the instance to primary/standby mode.\n3. Place the primary and standby nodes in different availability zones.\n4. Confirm that the instance nodes report distinct availability zones.",
+      "Terraform": "```hcl\nresource \"huaweicloud_rds_instance\" \"example\" {\n  flavor              = var.ha_flavor\n  ha_replication_mode = var.ha_replication_mode\n  availability_zone   = [var.primary_availability_zone, var.standby_availability_zone]\n\n  # Additional database, network, volume, and backup settings.\n}\n```"
     },
     "Recommendation": {
       "Text": "Deploy RDS instances across multiple availability zones to ensure high availability.",
