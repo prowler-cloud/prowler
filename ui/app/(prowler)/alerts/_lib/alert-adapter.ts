@@ -8,10 +8,7 @@ import {
   type AlertRule,
 } from "@/app/(prowler)/alerts/_types";
 
-import {
-  ALERT_NOTIFICATION_METHODS,
-  type AlertFormValues,
-} from "../_types/alert-form";
+import type { AlertFormValues } from "../_types/alert-form";
 
 const DEFAULT_CONDITION: AlertCondition = {
   op: ALERT_AGGREGATE_OPS.COUNT_GTE,
@@ -24,6 +21,11 @@ const normalizeRecipientEmails = (emails: string[]): string[] =>
     .map((email) => email.trim().toLowerCase())
     .filter((email) => email.length > 0);
 
+const normalizeSlackChannels = (channelIds: string[]): string[] =>
+  Array.from(
+    new Set(channelIds.map((id) => id.trim()).filter((id) => id.length > 0)),
+  );
+
 export const toAlertPayload = (values: AlertFormValues): AlertPayload => ({
   name: values.name.trim(),
   description: values.description.trim(),
@@ -31,6 +33,7 @@ export const toAlertPayload = (values: AlertFormValues): AlertPayload => ({
   trigger: values.frequency,
   condition: values.condition,
   recipientEmails: normalizeRecipientEmails(values.recipientEmails),
+  slackChannels: normalizeSlackChannels(values.slackChannels),
 });
 
 export const getEmptyAlertFormDefaults = (
@@ -39,20 +42,23 @@ export const getEmptyAlertFormDefaults = (
 ): AlertFormValues => ({
   name: "",
   description: "",
-  method: ALERT_NOTIFICATION_METHODS.EMAIL,
   frequency,
   condition,
   recipientEmails: [],
+  slackChannels: [],
   enabled: true,
 });
 
 export const getAlertFormDefaults = (alert: AlertRule): AlertFormValues => ({
   name: alert.attributes.name,
   description: alert.attributes.description,
-  method: ALERT_NOTIFICATION_METHODS.EMAIL,
   frequency: alert.attributes.trigger,
   condition: alert.attributes.condition,
   recipientEmails: alert.attributes.recipient_emails ?? [],
+  // TODO(Josema): `slack_channels` read shape pending contract sign-off (D3).
+  slackChannels: (alert.attributes.slack_channels ?? []).map(
+    (channel) => channel.id,
+  ),
   enabled: alert.attributes.enabled,
 });
 
