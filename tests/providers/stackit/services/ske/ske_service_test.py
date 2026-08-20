@@ -270,6 +270,18 @@ class Test_SKE_Service_FetchAllRegions:
     class _ServerError(Exception):
         status = 500
 
+    class _ServiceNotEnabled(Exception):
+        # Body copied from a live SKE 403 for a region the project never enabled.
+        status = 403
+        body = (
+            '{"timestamp":"2026-08-20T09:51:33Z","status":403,'
+            '"error":"Forbidden","message":"Service not enabled"}'
+        )
+
+    class _Forbidden(Exception):
+        status = 403
+        body = '{"status":403,"error":"Forbidden","message":"Access denied"}'
+
     def _service(self, regional_clients):
         from prowler.providers.stackit.stackit_provider import StackitProvider
 
@@ -305,6 +317,26 @@ class Test_SKE_Service_FetchAllRegions:
 
         # eu01 cluster is collected; the eu02 404 is skipped silently.
         assert [cluster.name for cluster in service.clusters] == ["cluster-eu01"]
+
+    def test_skips_region_where_ske_is_not_enabled(self):
+        service = self._service(
+            {
+                "eu01": self._good_client(),
+                "eu02": self._failing_client(self._ServiceNotEnabled()),
+            }
+        )
+
+        service._fetch_all_regions()
+
+        # A project may enable SKE per region; the eu02 403 "Service not
+        # enabled" is a skip, not the credentials failure a bare 403 implies.
+        assert [cluster.name for cluster in service.clusters] == ["cluster-eu01"]
+
+    def test_permission_denied_still_aborts_the_scan(self):
+        service = self._service({"eu01": self._failing_client(self._Forbidden())})
+
+        with pytest.raises(StackITInvalidTokenError):
+            service._fetch_all_regions()
 
     def test_invalid_token_aborts_the_scan(self):
         service = self._service({"eu01": self._failing_client(self._Unauthorized())})

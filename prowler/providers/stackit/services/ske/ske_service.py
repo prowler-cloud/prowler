@@ -1,3 +1,4 @@
+import json
 from typing import Optional
 
 from pydantic.v1 import BaseModel
@@ -53,8 +54,10 @@ class SKEService:
         region is skipped and the scan continues with the remaining regions
         instead of aborting.
 
-        Credential and permission failures (401/403) still propagate via
-        ``handle_api_error`` so a misconfigured account fails loudly.
+        A project that enabled SKE in some regions but not others answers the
+        remaining ones with HTTP 403 ``Service not enabled``; that region is
+        skipped too. Genuine credential and permission failures still propagate
+        via ``handle_api_error`` so a misconfigured account fails loudly.
         """
         for region, client in self.regional_clients.items():
             try:
@@ -64,6 +67,13 @@ class SKEService:
                     logger.info(
                         f"StackIT project {self.project_id} has no SKE presence "
                         f"in region {region} (404 resource not found); skipping "
+                        f"this region."
+                    )
+                    continue
+                if self._is_service_not_enabled(error):
+                    logger.info(
+                        f"StackIT project {self.project_id} has SKE disabled in "
+                        f"region {region} (403 service not enabled); skipping "
                         f"this region."
                     )
                     continue
@@ -119,6 +129,30 @@ class SKEService:
                 return value
         return default
 
+    @staticmethod
+    def _is_service_not_enabled(error) -> bool:
+        """Return True for the 403 SKE returns in a region that never enabled it.
+
+        Status alone cannot separate this from a missing IAM role -- both are
+        403 -- so the body message is the only discriminator.
+        """
+        if getattr(error, "status", None) != 403:
+            return False
+        body = getattr(error, "body", None)
+        if body is None:
+            return False
+        if isinstance(body, bytes):
+            body = body.decode("utf-8", errors="replace")
+        message = ""
+        if isinstance(body, str):
+            try:
+                message = json.loads(body).get("message", "")
+            except (ValueError, AttributeError):
+                message = body
+        elif isinstance(body, dict):
+            message = body.get("message", "")
+        return "service not enabled" in str(message).lower()
+
     def _handle_api_call(self, api_function, *args, **kwargs):
         """
         Centralized API call handler with authentication error detection.
@@ -139,6 +173,11 @@ class SKEService:
             with suppress_stderr():
                 return api_function(*args, **kwargs)
         except Exception as e:
+            # A region that never enabled SKE also answers 403; handing it to
+            # handle_api_error would abort the scan as a credentials failure
+            # instead of letting _fetch_all_regions skip the region.
+            if self._is_service_not_enabled(e):
+                raise
             # Use centralized error handler from provider
             self.provider.handle_api_error(e)
             raise
