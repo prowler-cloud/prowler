@@ -247,8 +247,7 @@ describe("a connected workspace", () => {
     // The check posts to the destination channel, so with none recorded the API
     // answers 400 rather than `connected: false`.
     expect(await harness.offersConnectionTest()).toBe(false);
-    // And — the control says what unblocks it. A disabled button whose reason
-    // sits elsewhere on the page reads as broken, which is how it was reported.
+    // And — the control itself says what unblocks it.
     expect(harness.connectionCheckBlockedReason()).toMatch(
       /destination channel/i,
     );
@@ -390,8 +389,7 @@ describe("choosing a destination channel", () => {
     // When
     await harness.chooseChannel(SLACK_PUBLIC_CHANNEL.name);
 
-    // Then — recording a destination is what makes a check possible, so the
-    // save runs it rather than leaving the user a second button to find.
+    // Then
     expect(await harness.connectionOutcome()).toBe(CONNECTION_OUTCOME.SUCCESS);
     expect(harness.connectionCheckCallCount).toBe(1);
     // And — everything waiting on a destination moves with the save, in the
@@ -413,9 +411,7 @@ describe("choosing a destination channel", () => {
     // When
     await harness.chooseChannel(SLACK_PUBLIC_CHANNEL.name);
 
-    // Then — the check is the half that failed. The destination is on record,
-    // so the page keeps showing it rather than dropping the user back to
-    // "nothing chosen".
+    // Then — only the check failed, so the destination stays on record.
     expect(await harness.connectionOutcome()).toBe(CONNECTION_OUTCOME.FAILURE);
     expect(await harness.defaultChannel()).toBe(SLACK_PUBLIC_CHANNEL.name);
     expect(await harness.offersConnectionTest()).toBe(true);

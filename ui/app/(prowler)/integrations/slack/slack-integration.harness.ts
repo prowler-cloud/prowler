@@ -279,9 +279,8 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
   }
 
   /**
-   * Why the check cannot run, read from the copy the button itself points at.
-   * Anywhere else on the page is not the same claim: the reason has to reach
-   * whoever is looking at the disabled control.
+   * Why the check cannot run, read from the copy the button points at: a reason
+   * found anywhere else on the page never reaches whoever sees the control.
    */
   connectionCheckBlockedReason(): string | null {
     const button = this.buttonByText(/Test connection/);
@@ -307,10 +306,7 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     return this.countRequests("POST", "/connection");
   }
 
-  /**
-   * The outcome of a check already under way, whoever started it — the button
-   * or the save that made one possible.
-   */
+  /** The outcome of a check under way, started by the button or by a save. */
   async connectionOutcome(): Promise<ConnectionOutcome> {
     return this.waitFor(
       () => {

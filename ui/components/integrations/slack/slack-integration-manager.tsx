@@ -51,7 +51,6 @@ interface ChannelsLoaded {
 
 type ChannelsState = ChannelsLoading | ChannelsFailed | ChannelsLoaded;
 
-/** Ties the disabled check to the copy saying what unblocks it. */
 const CHECK_BLOCKED_REASON_ID = "slack-connection-check-blocked";
 
 // The name may be missing: the id decides what the UI can do with it.
@@ -212,10 +211,8 @@ export const SlackIntegrationManager = ({
       setIsSavingChannel(false);
     }
 
-    // Saving a destination is what makes a check possible at all (design D7),
-    // and the save alone proves only that the API accepted the id. Run it here
-    // so a channel Prowler cannot actually reach is reported now, rather than
-    // waiting for someone to press the button.
+    // Recording a destination is what makes a check possible (design D7), and
+    // the save alone only proves the API took the id.
     if (saved) await handleTestConnection(integrationId);
   };
 
@@ -317,9 +314,8 @@ export const SlackIntegrationManager = ({
                   size="sm"
                   variant="outline"
                   disabled={isTesting || !defaultChannel}
-                  // The reason travels with the control, not just somewhere on
-                  // the page: a disabled button whose explanation sits across
-                  // the row reads as broken.
+                  // The reason travels with the control: a disabled button
+                  // whose explanation sits across the row reads as broken.
                   aria-describedby={
                     defaultChannel ? undefined : CHECK_BLOCKED_REASON_ID
                   }
