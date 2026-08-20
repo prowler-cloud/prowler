@@ -263,6 +263,10 @@ class Scan:
 
     @property
     def progress(self) -> float:
+        # A scan can legitimately end up with no checks to execute, e.g. when a
+        # severity or category filter matches nothing, so guard the division.
+        if not self._number_of_checks_to_execute:
+            return 0.0
         return (
             self._number_of_checks_completed / self._number_of_checks_to_execute * 100
         )
