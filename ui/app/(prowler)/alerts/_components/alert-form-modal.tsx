@@ -60,7 +60,6 @@ import type {
   AlertFormSubmitResult,
   AlertFormValues,
 } from "../_types/alert-form";
-import { ALERT_NOTIFICATION_METHODS } from "../_types/alert-form";
 
 interface AlertFormModalProps {
   open: boolean;
@@ -395,10 +394,13 @@ const AlertFormModalContent = ({
   const buildCurrentValues = (condition: AlertCondition): AlertFormValues => ({
     name,
     description,
-    method: ALERT_NOTIFICATION_METHODS.EMAIL,
     frequency,
     condition,
     recipientEmails: getRecipientEmails(selectedRecipientEmails),
+    // Stored channels round-trip untouched until the channels field lands:
+    // the write is replace-not-additive, so omitting them would wipe a rule's
+    // destinations on every edit.
+    slackChannels: defaults.slackChannels,
     enabled: defaults.enabled,
   });
 

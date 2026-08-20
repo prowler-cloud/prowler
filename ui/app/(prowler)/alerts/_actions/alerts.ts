@@ -24,6 +24,12 @@ export interface AlertPayload {
    * emails. Recipient IDs are NOT used by the rule write path.
    */
   recipientEmails?: string[];
+  /**
+   * Slack channel ids from the integration's authorized set. Replace-not-
+   * additive like `recipientEmails`; omitting the key leaves the rule's
+   * channels unchanged.
+   */
+  slackChannels?: string[];
 }
 
 const buildRuleEnvelope = (payload: AlertPayload, alertId?: string) => ({
@@ -39,6 +45,11 @@ const buildRuleEnvelope = (payload: AlertPayload, alertId?: string) => ({
       schema_version: ALERT_SCHEMA_VERSION,
       ...(payload.recipientEmails !== undefined
         ? { recipient_emails: payload.recipientEmails }
+        : {}),
+      // TODO(Josema): `slack_channels` write attribute pending contract
+      // sign-off (D3) — ids only, the API derives name and privacy.
+      ...(payload.slackChannels !== undefined
+        ? { slack_channels: payload.slackChannels }
         : {}),
     },
   },
