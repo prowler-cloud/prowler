@@ -902,6 +902,7 @@ class AwsProvider(Provider):
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+            return {}
 
     @staticmethod
     def get_available_aws_service_regions(
