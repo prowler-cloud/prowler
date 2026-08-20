@@ -8,8 +8,8 @@
  * The channel-destination readers are the harness side of the S2 contract:
  * the alert form's channels field renders a wrapper carrying
  * `data-alert-channels-state` (`no-integration` | `empty-pool` | `populated`),
- * its explanatory copy under `data-alert-channels-notice`, and its
- * multi-select trigger as `#alert-slack-channels`.
+ * its explanatory copy under `data-alert-channels-notice`, and the shared
+ * multi-select's trigger as `#slack-channels`.
  */
 
 import { createElement } from "react";
@@ -206,52 +206,129 @@ export class AlertsPageHarness extends BrowserHarness<AlertsFixture> {
   }
 
   /**
-   * Open the channel picker and hand back its options. Mirrors the Slack
-   * harness: a re-render landing mid-gesture makes Radix drop the open state,
-   * so re-open from the keyboard when nothing mounted.
+   * The options inside the popover THIS trigger controls, or null. Correlated
+   * through `aria-controls`: two pickers share the page (channels,
+   * recipients) and the MultiSelect also keeps a hidden mirror of its items,
+   * so any unscoped `[role="option"]` query can answer for the wrong picker.
    */
-  private async openChannelPicker(): Promise<HTMLElement[]> {
-    const mounted = (): HTMLElement[] | null => {
-      const options = Array.from(
-        document.querySelectorAll<HTMLElement>('[role="option"]'),
-      );
-      return options.length > 0 ? options : null;
-    };
+  private static optionsControlledBy(
+    trigger: HTMLElement,
+  ): HTMLElement[] | null {
+    const contentId = trigger.getAttribute("aria-controls");
+    const content = contentId ? document.getElementById(contentId) : null;
+    if (!content || content.getAttribute("data-state") !== "open") return null;
+    const options = Array.from(
+      content.querySelectorAll<HTMLElement>('[role="option"]'),
+    );
+    return options.length > 0 ? options : null;
+  }
+
+  private async openPicker(triggerSelector: string): Promise<HTMLElement[]> {
+    const trigger = await this.waitFor<HTMLElement>(
+      () => this.q(triggerSelector),
+      10000,
+      `the ${triggerSelector} picker`,
+    );
+    const mounted = () => AlertsPageHarness.optionsControlledBy(trigger);
 
     const alreadyOpen = mounted();
     if (alreadyOpen) return alreadyOpen;
 
-    const trigger = await this.waitFor<HTMLElement>(
-      () => this.q("#alert-slack-channels"),
-      10000,
-      "the channel picker",
-    );
     await this.clickElement(trigger, { fallbackToDomClick: true });
 
-    let options = await this.waitForOrNull(
-      mounted,
-      2000,
-      "the channel options",
-    );
+    let options = await this.waitForOrNull(mounted, 2000, "the picker options");
     if (!options) {
       await this.user.keyboard("{Enter}");
-      options = await this.waitForOrNull(mounted, 8000, "the channel options");
+      options = await this.waitForOrNull(mounted, 8000, "the picker options");
     }
     if (!options) {
-      throw new Error("openChannelPicker: the channel picker offered nothing");
+      throw new Error(`openPicker: ${triggerSelector} offered nothing`);
     }
     return options;
   }
 
-  private async closeChannelPicker(): Promise<void> {
-    await this.user.keyboard("{Escape}");
+  private async openChannelPicker(): Promise<HTMLElement[]> {
+    return this.openPicker("#slack-channels");
+  }
+
+  /** Whether the channel picker is rendered but refuses interaction. */
+  async channelPickerDisabled(): Promise<boolean> {
+    const trigger = await this.waitFor(
+      () => this.q("#slack-channels"),
+      10000,
+      "the channel picker trigger",
+    );
+    return (
+      (trigger as HTMLButtonElement).disabled ||
+      trigger.getAttribute("aria-disabled") === "true" ||
+      trigger.hasAttribute("disabled")
+    );
+  }
+
+  /**
+   * Toggle the named recipient emails in the recipients picker, verifying
+   * each pick against its chip like `pickChannels` does.
+   */
+  async pickRecipients(emails: string[]): Promise<void> {
+    for (const email of emails) {
+      let picked = false;
+      for (let attempt = 0; attempt < 3 && !picked; attempt += 1) {
+        const options = await this.openPicker("#alert-recipients");
+        const option = options.find((candidate) =>
+          (candidate.textContent ?? "").includes(email),
+        );
+        if (!option) {
+          await this.closePicker("#alert-recipients");
+          throw new Error(`pickRecipients: no recipient "${email}" is offered`);
+        }
+        await this.clickElement(option, { fallbackToDomClick: true });
+        picked =
+          (await this.waitForOrNull(
+            () => this.chipContaining(email),
+            2000,
+            `the ${email} chip`,
+          )) !== null;
+      }
+      if (!picked) {
+        throw new Error(`pickRecipients: ${email} never showed as selected`);
+      }
+    }
+    await this.closePicker("#alert-recipients");
+  }
+
+  /**
+   * Close an open picker by clicking a neutral spot inside the dialog (its
+   * title). Not a bare Escape — with focus outside the popover it reaches the
+   * dialog and closes the whole modal. Not the trigger either — its chips
+   * remove-on-click, so a click landing on one silently drops a selection.
+   */
+  private async closePicker(triggerSelector: string): Promise<void> {
+    const trigger = this.q(triggerSelector);
+    const isOpen = () => {
+      const contentId = trigger?.getAttribute("aria-controls");
+      const content = contentId ? document.getElementById(contentId) : null;
+      return content?.getAttribute("data-state") === "open";
+    };
+    if (trigger && isOpen()) {
+      const neutral =
+        this.dialog()?.querySelector<HTMLElement>("h2") ?? trigger;
+      await this.clickElement(neutral, { fallbackToDomClick: true });
+      await this.waitForOrNull(() => !isOpen(), 2000, "the picker to close");
+    }
     await this.waitForTransition();
+  }
+
+  private async closeChannelPicker(): Promise<void> {
+    await this.closePicker("#slack-channels");
   }
 
   private static optionChannelName(option: HTMLElement): string {
     return (
       option.getAttribute("data-channel") ??
-      (option.textContent ?? "").replace(/Private/g, "").trim()
+      (option.textContent ?? "")
+        .replace(/Private/g, "")
+        .trim()
+        .replace(/^#/, "")
     );
   }
 
@@ -273,18 +350,46 @@ export class AlertsPageHarness extends BrowserHarness<AlertsFixture> {
     return /Private/.test(option?.textContent ?? "");
   }
 
-  /** Toggle the named channels in the picker, then close it. */
+  /** A visible chip whose text contains `text`, anywhere in the open form. */
+  private chipContaining(text: string): HTMLElement | null {
+    return (
+      Array.from(
+        document.querySelectorAll<HTMLElement>("[data-selected-item]"),
+      ).find((chip) => (chip.textContent ?? "").includes(text)) ?? null
+    );
+  }
+
+  /**
+   * Toggle the named channels in the picker, then close it. Each pick is
+   * verified against the chip the user sees and retried when the click
+   * landed on a node the selection re-render had already replaced.
+   */
   async pickChannels(names: string[]): Promise<void> {
     for (const name of names) {
-      const options = await this.openChannelPicker();
-      const option = options.find(
-        (candidate) => AlertsPageHarness.optionChannelName(candidate) === name,
-      );
-      if (!option) {
-        await this.closeChannelPicker();
-        throw new Error(`pickChannels: no channel named "${name}" is offered`);
+      let picked = false;
+      for (let attempt = 0; attempt < 3 && !picked; attempt += 1) {
+        const options = await this.openChannelPicker();
+        const option = options.find(
+          (candidate) =>
+            AlertsPageHarness.optionChannelName(candidate) === name,
+        );
+        if (!option) {
+          await this.closeChannelPicker();
+          throw new Error(
+            `pickChannels: no channel named "${name}" is offered`,
+          );
+        }
+        await this.clickElement(option, { fallbackToDomClick: true });
+        picked =
+          (await this.waitForOrNull(
+            () => this.chipContaining(`#${name}`),
+            2000,
+            `the #${name} chip`,
+          )) !== null;
       }
-      await this.clickElement(option, { fallbackToDomClick: true });
+      if (!picked) {
+        throw new Error(`pickChannels: #${name} never showed as selected`);
+      }
     }
     await this.closeChannelPicker();
   }
@@ -306,7 +411,11 @@ export class AlertsPageHarness extends BrowserHarness<AlertsFixture> {
       const text = (chip.textContent ?? "").replace(/\s+/g, " ").trim();
       return {
         isPrivate: /Private/.test(text),
-        name: text.replace(/Private/g, "").trim(),
+        // The chip renders `#name` with an sr-only "Private" marker.
+        name: text
+          .replace(/Private/g, "")
+          .trim()
+          .replace(/^#/, ""),
       };
     });
   }

@@ -26,10 +26,19 @@ const alertsActionMocks = vi.hoisted(() => ({
   seedAlertRule: vi.fn(),
 }));
 
+const integrationsActionMocks = vi.hoisted(() => ({
+  getIntegrations: vi.fn(),
+}));
+
 vi.mock(
   "@/app/(prowler)/alerts/_actions/recipients",
   () => recipientsActionMocks,
 );
+
+// The channels field reads the Slack integration on mount; its behavior is
+// covered by the page integration tests (no-overlap rule), so the unit lane
+// only keeps the fetch from escaping jsdom.
+vi.mock("@/actions/integrations/integrations", () => integrationsActionMocks);
 
 vi.mock("@/app/(prowler)/alerts/_actions", () => alertsActionMocks);
 
@@ -247,6 +256,12 @@ describe("AlertFormModal", () => {
     recipientsActionMocks.listAlertRecipients.mockReturnValue(
       new Promise(() => {}),
     );
+    integrationsActionMocks.getIntegrations.mockReset();
+    // Never resolves, like the recipients read above: the channels field's
+    // settled states are integration-tested; the unit lane keeps it loading.
+    integrationsActionMocks.getIntegrations.mockReturnValue(
+      new Promise(() => {}),
+    );
     alertsActionMocks.previewAlertCondition.mockReset();
     alertsActionMocks.seedAlertRule.mockReset();
     alertsActionMocks.seedAlertRule.mockResolvedValue({
@@ -279,7 +294,8 @@ describe("AlertFormModal", () => {
     expect(screen.getByLabelText(/^description$/i)).toBeVisible();
     expect(screen.getByLabelText(/^frequency$/i)).toBeVisible();
     expect(screen.getByLabelText(/^recipients$/i)).toBeVisible();
-    expect(screen.getAllByRole("combobox")).toHaveLength(2);
+    // Frequency, Recipients, and the Slack destination channels trigger.
+    expect(screen.getAllByRole("combobox")).toHaveLength(3);
     expect(screen.queryByText("Alert criteria")).not.toBeInTheDocument();
     expect(screen.queryByText(/delivery settings/i)).not.toBeInTheDocument();
     expect(
