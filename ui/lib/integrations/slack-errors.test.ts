@@ -1,6 +1,6 @@
 /**
- * Unit-tested because most of the codes in the mapping belong to flows this
- * layer does not have yet: the channel picker, the test message, the disconnect.
+ * Unit-tested because the mapping carries copy for codes no page-level flow can
+ * be driven into — `no_permission`, `invalid_auth`, `account_inactive`.
  */
 
 import { describe, expect, it } from "vitest";
@@ -16,7 +16,6 @@ import {
   readSlackFailure,
   slackErrorMessage,
   slackRateLimitMessage,
-  slackUnknownReasonMessage,
 } from "./slack-errors";
 
 describe("slackErrorMessage", () => {
@@ -91,37 +90,16 @@ describe("slackErrorMessage", () => {
       slackErrorMessage({ detail: "   " }, "Could not read channels."),
     ).toBe("Could not read channels.");
   });
-});
 
-describe("slackUnknownReasonMessage", () => {
-  /** A real Slack reason this UI has no copy of its own for. */
-  const UNMAPPED_REASON = "is_archived";
+  it("falls back only for a code the mapping does not cover", () => {
+    const FALLBACK = "Slack refused it (is_archived).";
 
-  it("keeps an unmapped reason diagnosable without letting it be the message", () => {
-    const message = slackUnknownReasonMessage(UNMAPPED_REASON);
-
-    expect(message).toMatch(/Slack refused the message/);
-    expect(message).toContain(UNMAPPED_REASON);
-    expect(message).not.toBe(UNMAPPED_REASON);
-    expect(message).toMatch(/Choose another channel/);
-  });
-
-  it("is only reached for a code the mapping does not cover", () => {
     expect(
-      slackErrorMessage(
-        { code: SLACK_ERROR_CODE.NOT_IN_CHANNEL },
-        slackUnknownReasonMessage(SLACK_ERROR_CODE.NOT_IN_CHANNEL),
-      ),
+      slackErrorMessage({ code: SLACK_ERROR_CODE.NOT_IN_CHANNEL }, FALLBACK),
     ).toBe(SLACK_ERROR_MESSAGES[SLACK_ERROR_CODE.NOT_IN_CHANNEL]);
-
     // No `detail`: one holding the same token would make the raw token the
     // whole message again.
-    expect(
-      slackErrorMessage(
-        { code: UNMAPPED_REASON },
-        slackUnknownReasonMessage(UNMAPPED_REASON),
-      ),
-    ).toBe(slackUnknownReasonMessage(UNMAPPED_REASON));
+    expect(slackErrorMessage({ code: "is_archived" }, FALLBACK)).toBe(FALLBACK);
   });
 });
 

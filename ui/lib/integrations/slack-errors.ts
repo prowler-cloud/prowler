@@ -59,13 +59,6 @@ export const SLACK_UNREADABLE_RESULT_MESSAGE =
  */
 export const SLACK_REASON_TOKEN = /^[a-z0-9_]{1,48}$/;
 
-/**
- * Copy for a reason code Prowler has no wording of its own for — the ordinary
- * case, since the set is open-ended.
- */
-export const slackUnknownReasonMessage = (reason: string): string =>
-  `Slack refused the message (${reason}). Choose another channel, or check the channel in Slack.`;
-
 const RECONNECT = "Connect the workspace again to restore access.";
 
 export const SLACK_ERROR_MESSAGES = {
