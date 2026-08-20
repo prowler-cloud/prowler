@@ -413,9 +413,9 @@ describe("the alerts list shows destinations", () => {
       alertsFixture({
         rules: [
           alertRuleFixture({
-            slackChannels: [
-              { ...ALERTS_PUBLIC_CHANNEL },
-              { ...ALERTS_PRIVATE_CHANNEL },
+            slackChannelIds: [
+              ALERTS_PUBLIC_CHANNEL.id,
+              ALERTS_PRIVATE_CHANNEL.id,
             ],
           }),
         ],
@@ -437,7 +437,7 @@ describe("the alerts list shows destinations", () => {
             id: "rule-channels",
             name: "Channels only",
             recipientEmails: [],
-            slackChannels: [{ ...ALERTS_PRIVATE_CHANNEL }],
+            slackChannelIds: [ALERTS_PRIVATE_CHANNEL.id],
           }),
           alertRuleFixture({
             id: "rule-none",
