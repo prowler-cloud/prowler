@@ -6,6 +6,11 @@ class obs_bucket_public_access(Check):
     """Check if OBS buckets are not publicly accessible."""
 
     def execute(self) -> list[CheckReportHuaweiCloud]:
+        """Return one finding for each discovered OBS bucket.
+
+        Returns:
+            A list of reports describing each bucket's public access status.
+        """
         findings = []
 
         for bucket in obs_client.buckets:
