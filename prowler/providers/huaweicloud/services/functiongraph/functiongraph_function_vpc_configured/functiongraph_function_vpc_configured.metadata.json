@@ -1,0 +1,36 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "functiongraph_function_vpc_configured",
+  "CheckTitle": "FunctionGraph functions are configured within a VPC",
+  "CheckType": [],
+  "ServiceName": "functiongraph",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "FunctionGraphFunction",
+  "ResourceGroup": "serverless",
+  "Description": "Ensure FunctionGraph functions are attached to a VPC so workloads that require private connectivity can use VPC network controls.",
+  "Risk": "Functions without a VPC attachment cannot privately access VPC resources such as databases or internal services. They may depend on public service endpoints, reducing network isolation and increasing exposure to public-network paths.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.huaweicloud.com/intl/en-us/api-functiongraph/functiongraph_06_0111.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "In the FunctionGraph console, open the function, edit its network configuration, select the required VPC, subnet, and security groups, and save the configuration.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Attach functions that require private resource access to an appropriate VPC, subnet, and least-privilege security groups.",
+      "Url": "https://hub.prowler.com/check/functiongraph_function_vpc_configured"
+    }
+  },
+  "Categories": [
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
