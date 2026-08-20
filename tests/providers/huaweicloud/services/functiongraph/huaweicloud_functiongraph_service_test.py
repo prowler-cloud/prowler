@@ -11,9 +11,18 @@ from tests.providers.huaweicloud.huaweicloud_fixtures import (
 
 class TestFunctionGraphService:
     def test_real_session_lists_functions(self):
-        regional_client = mock.MagicMock(region="eu-west-101")
+        function = SimpleNamespace(
+            resource_id="resource-1",
+            func_urn="urn:fss:eu-west-101:project-1:function:default:first:latest",
+            func_name="first",
+            runtime="Python3.9",
+            timeout=30,
+            memory_size=128,
+            func_vpc_id=None,
+        )
+        regional_client = SimpleNamespace(list_functions=mock.MagicMock())
         regional_client.list_functions.return_value = SimpleNamespace(
-            functions=[], next_marker=None
+            functions=[function], next_marker=None
         )
         provider = set_mocked_huaweicloud_provider()
         provider.session = SimpleNamespace(client=mock.MagicMock())
@@ -24,7 +33,8 @@ class TestFunctionGraphService:
 
         service = FunctionGraph(provider)
 
-        assert service.functions == []
+        assert len(service.functions) == 1
+        assert service.functions[0].region == "eu-west-101"
         regional_client.list_functions.assert_called_once()
 
     def test_lists_every_page_and_maps_sdk_fields(self):
@@ -58,7 +68,7 @@ class TestFunctionGraphService:
             side_effect=regional_client.list_functions.side_effect
         )
 
-        service._list_functions(regional_client)
+        service._list_functions(("eu-west-101", regional_client))
 
         assert [function.id for function in service.functions] == [
             "resource-1",
@@ -98,7 +108,7 @@ class TestFunctionGraphService:
             ]
         )
 
-        service._list_functions(regional_client)
+        service._list_functions(("eu-west-101", regional_client))
 
         assert service.functions == []
 
@@ -123,7 +133,7 @@ class TestFunctionGraphService:
             ]
         )
 
-        service._list_functions(regional_client)
+        service._list_functions(("eu-west-101", regional_client))
 
         assert [item.id for item in service.functions] == ["resource-1"]
         assert service._call_with_retries.call_count == 2

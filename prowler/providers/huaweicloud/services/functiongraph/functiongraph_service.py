@@ -15,6 +15,11 @@ class FunctionGraph(HuaweiCloudService):
     """
 
     def __init__(self, provider):
+        """Initialize FunctionGraph and discover functions in enabled regions.
+
+        Args:
+            provider: The Huawei Cloud provider used to create regional clients.
+        """
         super().__init__(__class__.__name__, provider)
 
         self.functions: List[FunctionGraphFunction] = []
@@ -23,7 +28,9 @@ class FunctionGraph(HuaweiCloudService):
             self._load_mock_data()
             return
 
-        self.__threading_call__(self._list_functions)
+        self.__threading_call__(
+            self._list_functions, iterator=self.regional_clients.items()
+        )
 
     def _load_mock_data(self):
         """Load mock data for testing."""
@@ -51,9 +58,9 @@ class FunctionGraph(HuaweiCloudService):
             ),
         ]
 
-    def _list_functions(self, regional_client):
+    def _list_functions(self, regional_client_item):
         """List every FunctionGraph function in one region."""
-        region = getattr(regional_client, "region", "unknown")
+        region, regional_client = regional_client_item
         logger.info(f"FunctionGraph - Listing Functions in {region}...")
         discovered_functions = []
         marker = None
