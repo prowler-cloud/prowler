@@ -250,7 +250,11 @@ describe("a connected workspace", () => {
     // The check posts to the destination channel, so with none recorded the API
     // answers 400 rather than `connected: false`.
     expect(await harness.offersConnectionTest()).toBe(false);
-    expect(harness.saysChannelIsNextStep()).toBe(true);
+    // And — the control says what unblocks it. A disabled button whose reason
+    // sits elsewhere on the page reads as broken, which is how it was reported.
+    expect(harness.connectionCheckBlockedReason()).toMatch(
+      /destination channel/i,
+    );
   }, 30000);
 });
 
@@ -381,7 +385,9 @@ describe("choosing a destination channel", () => {
     const harness = new SlackIntegrationHarness(connectedSlackFixture());
     await harness.mount();
     expect(await harness.offersConnectionTest()).toBe(false);
-    expect(harness.saysChannelIsNextStep()).toBe(true);
+    expect(harness.connectionCheckBlockedReason()).toMatch(
+      /destination channel/i,
+    );
 
     // When
     await harness.chooseChannel(SLACK_PUBLIC_CHANNEL.name);
@@ -389,7 +395,7 @@ describe("choosing a destination channel", () => {
     // Then — everything waiting on a destination moves with the save, in the
     // same paint: no reload to find the check on offer.
     expect(await harness.offersConnectionTest()).toBe(true);
-    expect(harness.saysChannelIsNextStep()).toBe(false);
+    expect(harness.connectionCheckBlockedReason()).toBeNull();
     // And — the check really runs.
     expect(await harness.testConnection()).toBe(CONNECTION_OUTCOME.SUCCESS);
   }, 60000);

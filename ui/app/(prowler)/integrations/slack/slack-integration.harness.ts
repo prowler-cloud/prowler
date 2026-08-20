@@ -286,8 +286,18 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     return !button.disabled;
   }
 
-  saysChannelIsNextStep(): boolean {
-    return this.containsText(/Choosing a destination channel is the next step/);
+  /**
+   * Why the check cannot run, read from the copy the button itself points at.
+   * Anywhere else on the page is not the same claim: the reason has to reach
+   * whoever is looking at the disabled control.
+   */
+  connectionCheckBlockedReason(): string | null {
+    const button = this.buttonByText(/Test connection/);
+    const describedBy = button?.getAttribute("aria-describedby");
+    if (!describedBy) return null;
+
+    const reason = this.container.querySelector<HTMLElement>(`#${describedBy}`);
+    return reason ? (reason.textContent ?? "").trim() : null;
   }
 
   /**

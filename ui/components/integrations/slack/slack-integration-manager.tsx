@@ -83,6 +83,9 @@ type TestMessageState =
   | TestMessageSent
   | TestMessageFailed;
 
+/** Ties the disabled check to the copy saying what unblocks it. */
+const CHECK_BLOCKED_REASON_ID = "slack-connection-check-blocked";
+
 // The name may be missing: the id decides what the UI can do with it.
 interface SlackChannelRef {
   id: string;
@@ -352,7 +355,7 @@ export const SlackIntegrationManager = ({
           </CardHeader>
 
           <CardContent className="pt-0">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="text-xs text-gray-500 dark:text-gray-300">
                 {lastCheckedOn && (
                   <p>
@@ -360,24 +363,34 @@ export const SlackIntegrationManager = ({
                     {lastCheckedOn}
                   </p>
                 )}
+              </div>
+              <div className="flex flex-col items-start gap-1 sm:items-end">
+                {/* The check posts to the destination channel: the API answers
+                    400 when none is recorded yet. */}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={isTesting || !defaultChannel}
+                  // The reason travels with the control, not just somewhere on
+                  // the page: a disabled button whose explanation sits across
+                  // the row reads as broken.
+                  aria-describedby={
+                    defaultChannel ? undefined : CHECK_BLOCKED_REASON_ID
+                  }
+                  onClick={() => handleTestConnection(integration.id)}
+                >
+                  <TestTube size={14} />
+                  {isTesting ? "Testing..." : "Test connection"}
+                </Button>
                 {!defaultChannel && (
-                  <p>
-                    Choosing a destination channel is the next step — the
-                    connection is checked against it.
+                  <p
+                    id={CHECK_BLOCKED_REASON_ID}
+                    className="text-xs text-gray-500 dark:text-gray-300"
+                  >
+                    Choose a destination channel below to enable this check.
                   </p>
                 )}
               </div>
-              {/* The check posts to the destination channel: the API answers
-                  400 when none is recorded yet. */}
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={isTesting || !defaultChannel}
-                onClick={() => handleTestConnection(integration.id)}
-              >
-                <TestTube size={14} />
-                {isTesting ? "Testing..." : "Test connection"}
-              </Button>
             </div>
 
             <div className="border-border-neutral-secondary mt-6 flex flex-col gap-4 border-t pt-6">
