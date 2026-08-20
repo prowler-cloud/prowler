@@ -29,11 +29,26 @@ const TRIGGER_LABELS = {
   both: "After scan and daily",
 } as const satisfies Record<AlertRule["attributes"]["trigger"], string>;
 
-const formatRecipients = (alert: AlertRule): string => {
+const summarize = (first: string, count: number): string | null => {
+  if (count === 0) return null;
+  if (count === 1) return first;
+  return `${first} +${count - 1} more`;
+};
+
+/**
+ * One compact answer to "where does this go?" (design D6): the email summary
+ * and the channel summary side by side, either omitted when empty.
+ */
+const formatDestinations = (alert: AlertRule): string => {
   const recipients = alert.attributes.recipient_emails ?? [];
-  if (recipients.length === 0) return "No recipients";
-  if (recipients.length === 1) return recipients[0];
-  return `${recipients[0]} +${recipients.length - 1} more`;
+  const channels = alert.attributes.slack_channels ?? [];
+
+  const summaries = [
+    summarize(recipients[0], recipients.length),
+    summarize(channels[0] ? `#${channels[0].name}` : "", channels.length),
+  ].filter((summary): summary is string => summary !== null);
+
+  return summaries.length > 0 ? summaries.join(" · ") : "No destinations";
 };
 
 interface GetAlertsTableColumnsOptions {
@@ -148,14 +163,14 @@ const getAlertsTableColumns = ({
     cell: ({ row }) => TRIGGER_LABELS[row.original.attributes.trigger],
   },
   {
-    id: "recipients",
+    id: "destinations",
     size: 220,
     minSize: 180,
-    accessorFn: (alert) => formatRecipients(alert),
+    accessorFn: (alert) => formatDestinations(alert),
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Recipients" />
+      <DataTableColumnHeader column={column} title="Destinations" />
     ),
-    cell: ({ row }) => formatRecipients(row.original),
+    cell: ({ row }) => formatDestinations(row.original),
   },
   {
     id: "inserted_at",
