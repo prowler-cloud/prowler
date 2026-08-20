@@ -702,6 +702,38 @@ class TestCheck:
         recovered_checks = recover_checks_from_service(service_list, provider)
         assert recovered_checks == expected_checks
 
+    def test_parse_checks_from_file_returns_empty_set_on_error(self):
+        """A checks file with no section for the provider must return a set.
+
+        `__main__` passes the result straight to `list(...)`, so returning None
+        raises `TypeError: 'NoneType' object is not iterable`. Note a *missing*
+        file cannot be used to reach this handler, because `open_file` exits on
+        `OSError` first.
+        """
+        # The fixture only contains an "aws" section.
+        result = parse_checks_from_file(
+            f"{pathlib.Path().absolute()}/tests/lib/check/fixtures/checklistA.json",
+            "gcp",
+        )
+
+        assert result is not None
+        assert result == set()
+
+    def test_recover_checks_from_service_returns_empty_set_on_error(self):
+        """A failure while recovering checks must still return a set.
+
+        `AwsProvider` iterates the result directly, so returning None raises
+        `TypeError: 'NoneType' object is not iterable`.
+        """
+        with mock.patch(
+            "prowler.lib.check.utils.recover_checks_from_provider",
+            side_effect=Exception("cannot list modules"),
+        ):
+            result = recover_checks_from_service(["accessanalyzer"], "aws")
+
+        assert result is not None
+        assert result == set()
+
     # def test_parse_checks_from_compliance_framework_two(self):
     #     test_case = {
     #         "input": {"compliance_frameworks": ["cis_v1.4_aws", "ens_v3_aws"]},

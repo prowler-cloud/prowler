@@ -361,6 +361,26 @@ class TestCheckLoader:
             checks_to_execute, check_aliases
         )
 
+    def test_update_checks_to_execute_with_aliases_falls_back_on_error(self):
+        """Alias expansion is best effort and must still return a set.
+
+        The result is returned straight out of `load_checks_to_execute`, so
+        returning None propagates a non-iterable value to every caller.
+        """
+        checks_to_execute = {"renamed_check"}
+
+        class ExplodingAliases(dict):
+            def __contains__(self, key):
+                raise RuntimeError("alias lookup failed")
+
+        result = update_checks_to_execute_with_aliases(
+            checks_to_execute, ExplodingAliases()
+        )
+
+        assert result is not None
+        # Falls back to the checks originally requested.
+        assert result == {"renamed_check"}
+
     def test_threat_detection_category(self):
         bulk_checks_metadata = {
             CLOUDTRAIL_THREAT_DETECTION_ENUMERATION_NAME: self.get_threat_detection_check_metadata()

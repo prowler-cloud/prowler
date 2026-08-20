@@ -1,0 +1,1 @@
+﻿Check loading no longer returns `None` when it fails: `parse_checks_from_file` and `recover_checks_from_service` now return an empty set, and `update_checks_to_execute_with_aliases` falls back to the requested checks, preventing `TypeError: 'NoneType' object is not iterable` when a checks file has no section for the scanned provider or check discovery fails
