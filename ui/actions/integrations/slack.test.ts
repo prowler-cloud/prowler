@@ -719,8 +719,8 @@ describe.each(COPY_ONLY_ACTIONS)("$name", ({ call }) => {
     {
       status: 400,
       why: "a refusal the API meant to give",
-      response: () => errorResponse(400, "No default channel is set."),
-      expected: "No default channel is set.",
+      response: () => errorResponse(400, "The integration is not connected."),
+      expected: "The integration is not connected.",
     },
   ])("reports nothing for a $status: that is $why", async (refusal) => {
     fetchMock.mockResolvedValue(refusal.response());

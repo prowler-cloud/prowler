@@ -330,11 +330,11 @@ const MAX_CHANNEL_PAGES = 20;
  * Every channel Prowler can post to in the connected workspace — the picker's
  * options.
  *
- * The durable primitive, not the channel stored on the integration (design D6):
- * a consumer needing a per-rule channel reads the same endpoint. `links.next`
- * is followed opaquely — the contract does not pin the cursor parameter naming,
- * so the UI never builds one of its own. An early stop that still read
- * something reports through `incomplete`, not as a failure.
+ * The durable primitive, not the channels recorded on the integration
+ * (design D6): a consumer needing a per-rule channel reads the same endpoint.
+ * `links.next` is followed opaquely — the contract does not pin the cursor
+ * parameter naming, so the UI never builds one of its own. An early stop that
+ * still read something reports through `incomplete`, not as a failure.
  */
 export const getSlackChannels = async (
   integrationId: string,
