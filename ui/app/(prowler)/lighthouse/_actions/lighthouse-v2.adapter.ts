@@ -5,6 +5,7 @@ import {
   type LighthouseV2ConfigurationUpdateInput,
   type LighthouseV2Credentials,
   type LighthouseV2Message,
+  type LighthouseV2MessageFeedbackInput,
   type LighthouseV2MessageRole,
   type LighthouseV2Part,
   type LighthouseV2PartType,
@@ -248,6 +249,25 @@ export function buildLighthouseV2SessionUpdatePayload(
       attributes: filterUndefinedAttributes({
         title: attributes.title,
         is_archived: attributes.isArchived,
+      }),
+    },
+  };
+}
+
+export function buildLighthouseV2MessageFeedbackPayload(
+  input: LighthouseV2MessageFeedbackInput,
+) {
+  const details = input.details?.trim();
+  const reasons = input.reasons
+    ? Array.from(new Set(input.reasons))
+    : undefined;
+  return {
+    data: {
+      type: "lighthouse-message-feedback",
+      attributes: filterUndefinedAttributes({
+        rating: input.rating,
+        reasons: reasons?.length ? reasons : undefined,
+        details: details || undefined,
       }),
     },
   };

@@ -37,6 +37,26 @@ export interface LighthouseV2Part {
   updatedAt: string | null;
 }
 
+export const LIGHTHOUSE_V2_FEEDBACK_RATING = {
+  UP: "up",
+  DOWN: "down",
+} as const;
+
+export type LighthouseV2FeedbackRating =
+  (typeof LIGHTHOUSE_V2_FEEDBACK_RATING)[keyof typeof LIGHTHOUSE_V2_FEEDBACK_RATING];
+
+export const LIGHTHOUSE_V2_FEEDBACK_REASON = {
+  STYLE: "Don't like the style",
+  INSTRUCTIONS: "Didn't fully follow instructions",
+  QUALITY: "Low quality",
+  BIAS: "Biased",
+  SAFETY_OR_LEGAL: "Safety or legal concern",
+  OTHER: "Other",
+} as const;
+
+export type LighthouseV2FeedbackReason =
+  (typeof LIGHTHOUSE_V2_FEEDBACK_REASON)[keyof typeof LIGHTHOUSE_V2_FEEDBACK_REASON];
+
 // Normalized shape of a TOOL_CALL part's `content`. The backend persists this
 // blob in snake_case (tool_call_id, tool_name, ...); `getToolCallContent`
 // maps it to this camelCase form so the UI never touches the raw keys.
@@ -55,6 +75,14 @@ export interface LighthouseV2Message {
   tokenUsage: unknown;
   insertedAt: string;
   parts: LighthouseV2Part[];
+}
+
+export interface LighthouseV2MessageFeedbackInput {
+  sessionId: string;
+  messageId: string;
+  rating: LighthouseV2FeedbackRating;
+  reasons?: LighthouseV2FeedbackReason[];
+  details?: string;
 }
 
 export interface LighthouseV2SendMessageInput {

@@ -5,6 +5,7 @@ import type { LighthouseContextEnvelope } from "@/types/lighthouse-context";
 import {
   buildLighthouseV2ConfigurationPayload,
   buildLighthouseV2ConfigurationUpdatePayload,
+  buildLighthouseV2MessageFeedbackPayload,
   buildLighthouseV2MessagePayload,
   mapLighthouseV2Configuration,
   mapLighthouseV2Message,
@@ -122,6 +123,27 @@ describe("lighthouse-v2.adapter", () => {
       });
     });
 
+    it("should not expose removed feedback state on mapped messages", () => {
+      // Given
+      const resource: Parameters<typeof mapLighthouseV2Message>[0] = {
+        id: "message-1",
+        type: "lighthouse-messages",
+        attributes: {
+          role: "user",
+          model: null,
+          token_usage: null,
+          inserted_at: "2026-06-24T10:01:00Z",
+          parts: [],
+        },
+      };
+
+      // When
+      const message = mapLighthouseV2Message(resource);
+
+      // Then
+      expect(message).not.toHaveProperty("feedback");
+    });
+
     it("should give id-less parts stable fallback keys instead of empty strings", () => {
       // Given
       const resource: Parameters<typeof mapLighthouseV2Message>[0] = {
@@ -162,6 +184,53 @@ describe("lighthouse-v2.adapter", () => {
   });
 
   describe("when building Cloud payloads", () => {
+    it("should build the exact stateless Message feedback resource", () => {
+      // Given / When
+      const payload = buildLighthouseV2MessageFeedbackPayload({
+        sessionId: "session-1",
+        messageId: "message-1",
+        rating: "down",
+        details: "  Missing evidence  ",
+      });
+
+      // Then
+      expect(payload).toEqual({
+        data: {
+          type: "lighthouse-message-feedback",
+          attributes: { rating: "down", details: "Missing evidence" },
+        },
+      });
+    });
+
+    it("should omit blank optional Message feedback details", () => {
+      // Given / When
+      const payload = buildLighthouseV2MessageFeedbackPayload({
+        sessionId: "session-1",
+        messageId: "message-1",
+        rating: "up",
+        details: "   ",
+      });
+
+      // Then
+      expect(payload.data.attributes).toEqual({ rating: "up" });
+    });
+
+    it("should send each selected feedback reason once", () => {
+      // Given / When
+      const payload = buildLighthouseV2MessageFeedbackPayload({
+        sessionId: "session-1",
+        messageId: "message-1",
+        rating: "down",
+        reasons: ["Low quality", "Low quality", "Other"],
+      });
+
+      // Then
+      expect(payload.data.attributes).toEqual({
+        rating: "down",
+        reasons: ["Low quality", "Other"],
+      });
+    });
+
     it("should include agent text, display text, and UI context for contextual messages", () => {
       // Given
       const context: LighthouseContextEnvelope = {

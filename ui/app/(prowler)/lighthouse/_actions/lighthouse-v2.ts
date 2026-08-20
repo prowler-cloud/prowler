@@ -6,6 +6,7 @@ import type {
   LighthouseV2ConfigurationInput,
   LighthouseV2ConfigurationUpdateInput,
   LighthouseV2Message,
+  LighthouseV2MessageFeedbackInput,
   LighthouseV2ProviderType,
   LighthouseV2SendMessageInput,
   LighthouseV2SendMessageResult,
@@ -23,6 +24,7 @@ import type { ServerActionResult } from "@/types/server-actions";
 import {
   buildLighthouseV2ConfigurationPayload,
   buildLighthouseV2ConfigurationUpdatePayload,
+  buildLighthouseV2MessageFeedbackPayload,
   buildLighthouseV2MessagePayload,
   buildLighthouseV2SessionCreatePayload,
   buildLighthouseV2SessionUpdatePayload,
@@ -268,6 +270,20 @@ export async function sendLighthouseV2Message(
   }
 }
 
+export async function submitLighthouseV2MessageFeedback(
+  input: LighthouseV2MessageFeedbackInput,
+): Promise<LighthouseV2ActionResult<true>> {
+  return mutateEmpty(
+    `${SESSIONS_ENDPOINT}/${encodeURIComponent(input.sessionId)}/messages/${encodeURIComponent(input.messageId)}/feedback`,
+    {
+      method: "POST",
+      body: JSON.stringify(buildLighthouseV2MessageFeedbackPayload(input)),
+    },
+    "",
+    true,
+  );
+}
+
 async function getCollection<TResource, TOutput>(
   path: string,
   mapper: (resource: TResource) => TOutput,
@@ -345,11 +361,12 @@ async function mutateEmpty(
   path: string,
   init: RequestInit,
   pathToRevalidate: string,
+  includeContentType = false,
 ): Promise<LighthouseV2ActionResult<true>> {
   try {
     const response = await fetch(buildApiUrl(path), {
       ...init,
-      headers: await getAuthHeaders({ contentType: false }),
+      headers: await getAuthHeaders({ contentType: includeContentType }),
     });
     const document = await handleApiResponse(response, pathToRevalidate);
     if (isErrorDocument(document)) {

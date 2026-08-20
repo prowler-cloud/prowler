@@ -34,11 +34,13 @@ const {
   getMessagesMock,
   sendMessageMock,
   updateConfigurationMock,
+  submitFeedbackMock,
 } = vi.hoisted(() => ({
   createSessionMock: vi.fn(),
   getMessagesMock: vi.fn(),
   sendMessageMock: vi.fn(),
   updateConfigurationMock: vi.fn(),
+  submitFeedbackMock: vi.fn(),
 }));
 
 vi.mock("@/app/(prowler)/lighthouse/_actions", () => ({
@@ -46,6 +48,7 @@ vi.mock("@/app/(prowler)/lighthouse/_actions", () => ({
   getLighthouseV2Messages: getMessagesMock,
   sendLighthouseV2Message: sendMessageMock,
   updateLighthouseV2Configuration: updateConfigurationMock,
+  submitLighthouseV2MessageFeedback: submitFeedbackMock,
 }));
 
 vi.mock("next/navigation", () => ({
@@ -115,6 +118,7 @@ describe("LighthouseV2ChatPage", () => {
     getMessagesMock.mockReset();
     sendMessageMock.mockReset();
     updateConfigurationMock.mockReset();
+    submitFeedbackMock.mockReset();
     resetPanelChatStoreForTests();
     eventSources = stubEventSource();
     window.history.replaceState(null, "", "/lighthouse");
@@ -543,6 +547,93 @@ describe("LighthouseV2ChatPage", () => {
       "datetime",
       "2026-06-25T10:00:00Z",
     );
+  });
+
+  it("renders each outcome control under its paired assistant answer and submits against the initiating user message", async () => {
+    // Given
+    const user = userEvent.setup();
+    const firstUserMessage = message("message-user-1", "user", "First prompt");
+    const secondUserMessage = message(
+      "message-user-2",
+      "user",
+      "Second prompt",
+    );
+    submitFeedbackMock.mockResolvedValue({ data: true, status: 204 });
+    renderPage({
+      initialSessionId: "session-1",
+      initialMessages: [
+        firstUserMessage,
+        message("message-assistant-1", "assistant", "First answer"),
+        secondUserMessage,
+        message("message-assistant-2", "assistant", "Second answer"),
+      ],
+    });
+    const firstPrompt = screen.getByText("First prompt").closest("article");
+    const firstAnswer = screen.getByText("First answer").closest("article");
+    const secondPrompt = screen.getByText("Second prompt").closest("article");
+    const secondAnswer = screen.getByText("Second answer").closest("article");
+    if (!firstPrompt || !firstAnswer || !secondPrompt || !secondAnswer) {
+      throw new Error("Expected every chat message to render");
+    }
+
+    // When
+    await user.click(
+      within(firstAnswer).getByRole("button", {
+        name: "Mark outcome as not helpful",
+      }),
+    );
+    await user.click(screen.getByRole("button", { name: "Submit" }));
+    await user.click(
+      within(secondAnswer).getByRole("button", {
+        name: "Mark outcome as not helpful",
+      }),
+    );
+    await user.click(screen.getByRole("button", { name: "Submit" }));
+
+    // Then
+    expect(
+      within(firstPrompt).queryByRole("button", { name: /Mark outcome/ }),
+    ).not.toBeInTheDocument();
+    expect(
+      within(secondPrompt).queryByRole("button", { name: /Mark outcome/ }),
+    ).not.toBeInTheDocument();
+    expect(
+      within(firstAnswer).getByRole("button", {
+        name: "Mark outcome as helpful",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      within(secondAnswer).getByRole("button", {
+        name: "Mark outcome as helpful",
+      }),
+    ).toBeInTheDocument();
+    expect(submitFeedbackMock).toHaveBeenCalledWith({
+      sessionId: "session-1",
+      messageId: "message-user-1",
+      rating: "down",
+    });
+    expect(submitFeedbackMock).toHaveBeenCalledWith({
+      sessionId: "session-1",
+      messageId: "message-user-2",
+      rating: "down",
+    });
+    expect(submitFeedbackMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not attach outcome feedback to an assistant after an optimistic user prompt", () => {
+    // Given / When
+    renderPage({
+      initialSessionId: "session-1",
+      initialMessages: [
+        message("optimistic-user-1", "user", "Pending prompt"),
+        message("message-assistant-1", "assistant", "Unpaired answer"),
+      ],
+    });
+
+    // Then
+    expect(
+      screen.queryByRole("button", { name: /Mark outcome/ }),
+    ).not.toBeInTheDocument();
   });
 
   it("hands the suggested follow-up skill off to a fresh session", async () => {

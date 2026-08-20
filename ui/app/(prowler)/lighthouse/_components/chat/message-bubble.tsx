@@ -1,8 +1,16 @@
 "use client";
 
-import { Bot, Check, Copy, UserRound } from "lucide-react";
+import {
+  Bot,
+  Check,
+  Copy,
+  ThumbsDown,
+  ThumbsUp,
+  UserRound,
+} from "lucide-react";
 import { useState } from "react";
 
+import { submitLighthouseV2MessageFeedback } from "@/app/(prowler)/lighthouse/_actions";
 import { formatMessageTimestamp } from "@/app/(prowler)/lighthouse/_lib/format";
 import {
   getLighthouseContext,
@@ -11,13 +19,24 @@ import {
   type SkillRunInfo,
 } from "@/app/(prowler)/lighthouse/_lib/messages";
 import {
+  LIGHTHOUSE_V2_FEEDBACK_RATING,
+  LIGHTHOUSE_V2_FEEDBACK_REASON,
   LIGHTHOUSE_V2_MESSAGE_ROLE,
   LIGHTHOUSE_V2_PART_TYPE,
+  type LighthouseV2FeedbackRating,
+  type LighthouseV2FeedbackReason,
   type LighthouseV2Message,
   type LighthouseV2Part,
 } from "@/app/(prowler)/lighthouse/_types";
 import { LighthouseContextBadge } from "@/components/lighthouse/context-chip";
 import { Button } from "@/components/shadcn/button/button";
+import {
+  Popover,
+  PopoverAnchor,
+  PopoverContent,
+} from "@/components/shadcn/popover";
+import { toast } from "@/components/shadcn/toast/use-toast";
+import { FeedbackForm } from "@/components/survey/feedback-form";
 import { cn } from "@/lib/utils";
 import type { LighthouseSkillDefinition } from "@/types/lighthouse-skills";
 
@@ -34,22 +53,32 @@ const ASSISTANT_PART_GROUP_TYPE = {
 type AssistantPartGroupType =
   (typeof ASSISTANT_PART_GROUP_TYPE)[keyof typeof ASSISTANT_PART_GROUP_TYPE];
 
+const LIGHTHOUSE_V2_FEEDBACK_REASON_OPTIONS = Object.values(
+  LIGHTHOUSE_V2_FEEDBACK_REASON,
+).map((reason) => ({ value: reason, label: reason }));
+
 interface AssistantPartGroup {
   id: string;
   type: AssistantPartGroupType;
   parts: LighthouseV2Part[];
 }
 
-export function MessageBubble({
-  message,
-  skillRun,
-  onLaunchSkill,
-}: {
+interface MessageBubbleProps {
   message: LighthouseV2Message;
+  sessionId?: string;
+  feedbackTarget?: LighthouseV2Message;
   // Present when this assistant message answered a skill launch (design 1j).
   skillRun?: SkillRunInfo;
   onLaunchSkill?: (skill: LighthouseSkillDefinition) => void;
-}) {
+}
+
+export function MessageBubble({
+  message,
+  sessionId,
+  feedbackTarget,
+  skillRun,
+  onLaunchSkill,
+}: MessageBubbleProps) {
   const isUser = message.role === LIGHTHOUSE_V2_MESSAGE_ROLE.USER;
   const isSkillResponse = !isUser && skillRun !== undefined;
   // Text-only join feeds the copy button; tool calls are rendered separately.
@@ -125,6 +154,8 @@ export function MessageBubble({
           isUser={isUser}
           text={messageText}
           insertedAt={message.insertedAt}
+          feedbackTarget={feedbackTarget}
+          sessionId={sessionId}
         />
       </div>
       {isUser && (
@@ -204,10 +235,14 @@ function MessageMeta({
   isUser,
   text,
   insertedAt,
+  feedbackTarget,
+  sessionId,
 }: {
   isUser: boolean;
   text: string;
   insertedAt: string;
+  feedbackTarget?: LighthouseV2Message;
+  sessionId?: string;
 }) {
   // Copy is always shown; the timestamp only reveals on hover over the message.
   // Agent footer reads left-to-right ([copy] [time]); user footer mirrors it.
@@ -219,6 +254,13 @@ function MessageMeta({
       )}
     >
       <CopyMessageButton text={text} />
+      {feedbackTarget && (
+        <MessageFeedbackControls
+          key={feedbackTarget.id}
+          message={feedbackTarget}
+          sessionId={sessionId}
+        />
+      )}
       <time
         dateTime={insertedAt}
         className="text-text-neutral-tertiary text-xs opacity-0 transition-opacity group-hover:opacity-100"
@@ -226,6 +268,177 @@ function MessageMeta({
         {formatMessageTimestamp(insertedAt)}
       </time>
     </div>
+  );
+}
+
+function MessageFeedbackControls({
+  message,
+  sessionId,
+}: {
+  message: LighthouseV2Message;
+  sessionId?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [rating, setRating] = useState<LighthouseV2FeedbackRating | null>(null);
+  // Local state needed: reasons and details are buffered until "Submit" is clicked.
+  const [reasons, setReasons] = useState<LighthouseV2FeedbackReason[]>([]);
+  const [details, setDetails] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const isPersistedUserMessage =
+    message.role === LIGHTHOUSE_V2_MESSAGE_ROLE.USER &&
+    !message.id.startsWith("optimistic-");
+
+  if (!sessionId || !isPersistedUserMessage) return null;
+
+  const selectRating = (nextRating: LighthouseV2FeedbackRating) => {
+    setRating(nextRating);
+    setError(null);
+    if (nextRating === LIGHTHOUSE_V2_FEEDBACK_RATING.UP) {
+      void submit(nextRating, "", []);
+      return;
+    }
+    setOpen(true);
+  };
+
+  const toggleReason = (reason: LighthouseV2FeedbackReason) => {
+    setReasons((current) =>
+      current.includes(reason)
+        ? current.filter((currentReason) => currentReason !== reason)
+        : [...current, reason],
+    );
+  };
+
+  const cancel = () => {
+    setOpen(false);
+    setRating(null);
+    setReasons([]);
+    setDetails("");
+    setError(null);
+  };
+
+  const submit = async (
+    submittedRating = rating,
+    submittedDetails = details,
+    submittedReasons = reasons,
+  ) => {
+    if (!submittedRating || isSubmitting) return;
+    setIsSubmitting(true);
+    setError(null);
+    try {
+      const trimmedDetails = submittedDetails.trim();
+      const result = await submitLighthouseV2MessageFeedback({
+        sessionId,
+        messageId: message.id,
+        rating: submittedRating,
+        ...(submittedReasons.length ? { reasons: submittedReasons } : {}),
+        ...(trimmedDetails ? { details: trimmedDetails } : {}),
+      });
+      if ("error" in result) {
+        setError(result.error);
+        if (submittedRating === LIGHTHOUSE_V2_FEEDBACK_RATING.UP) {
+          setRating(null);
+          toast({ variant: "destructive", description: result.error });
+        }
+        return;
+      }
+      setOpen(false);
+      setReasons([]);
+      setDetails("");
+    } catch {
+      const errorMessage =
+        "Feedback is temporarily unavailable. Please try again.";
+      setError(errorMessage);
+      if (submittedRating === LIGHTHOUSE_V2_FEEDBACK_RATING.UP) {
+        setRating(null);
+        toast({ variant: "destructive", description: errorMessage });
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverAnchor asChild>
+        <div className="flex items-center gap-0.5">
+          <FeedbackRatingButton
+            rating={LIGHTHOUSE_V2_FEEDBACK_RATING.UP}
+            selectedRating={rating}
+            disabled={isSubmitting}
+            onSelect={selectRating}
+          />
+          <FeedbackRatingButton
+            rating={LIGHTHOUSE_V2_FEEDBACK_RATING.DOWN}
+            selectedRating={rating}
+            disabled={isSubmitting}
+            onSelect={selectRating}
+          />
+        </div>
+      </PopoverAnchor>
+      <PopoverContent
+        align="start"
+        side="top"
+        className="w-[min(92vw,26rem)] p-5"
+      >
+        <FeedbackForm
+          title="Share feedback"
+          description="Tell us more about this answer."
+          reasons={{
+            label: "Reasons (optional)",
+            options: LIGHTHOUSE_V2_FEEDBACK_REASON_OPTIONS,
+            selected: reasons,
+            onToggle: toggleReason,
+          }}
+          detailsLabel="Additional feedback (optional)"
+          placeholder="Type your answer here"
+          details={details}
+          detailsMaxLength={2000}
+          isSubmitting={isSubmitting}
+          error={error}
+          onDetailsChange={setDetails}
+          onSubmit={() => void submit()}
+          onCancel={cancel}
+        />
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function FeedbackRatingButton({
+  rating,
+  selectedRating,
+  disabled,
+  onSelect,
+}: {
+  rating: LighthouseV2FeedbackRating;
+  selectedRating: LighthouseV2FeedbackRating | null;
+  disabled: boolean;
+  onSelect: (rating: LighthouseV2FeedbackRating) => void;
+}) {
+  const isUp = rating === LIGHTHOUSE_V2_FEEDBACK_RATING.UP;
+  const selected = selectedRating === rating;
+  const Icon = isUp ? ThumbsUp : ThumbsDown;
+
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon-sm"
+      aria-label={
+        isUp ? "Mark outcome as helpful" : "Mark outcome as not helpful"
+      }
+      aria-pressed={selected}
+      disabled={disabled}
+      onClick={() => onSelect(rating)}
+      className={cn(
+        "text-text-neutral-tertiary hover:text-text-neutral-primary size-6",
+        selected &&
+          "bg-button-primary hover:bg-button-primary-hover active:bg-button-primary-press focus-visible:ring-button-primary/50 text-black hover:text-black",
+      )}
+    >
+      <Icon className="size-3.5" />
+    </Button>
   );
 }
 
