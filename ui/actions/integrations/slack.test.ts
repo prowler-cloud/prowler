@@ -528,6 +528,7 @@ const savedIntegration = () =>
                 id: FIRST_CHANNEL.id,
                 name: FIRST_CHANNEL.name,
                 is_private: false,
+                confirmation_sent_at: null,
               },
             ],
           },
@@ -569,7 +570,7 @@ describe("setSlackAuthorizedChannels", () => {
   // The write serializer names whatever it will not take and refuses the whole
   // save, so a body that also carried the integration's own (immutable) type
   // came back as `Invalid fields: {'integration_type'}` and recorded nothing.
-  it("submits the channel ids as the save's only attribute", async () => {
+  it("submits the channels as the save's only attribute, naming nothing but their ids", async () => {
     fetchMock.mockResolvedValueOnce(savedIntegration());
 
     await saveChannels();
@@ -578,7 +579,29 @@ describe("setSlackAuthorizedChannels", () => {
       data: {
         type: "integrations",
         id: SLACK_INTEGRATION_ID,
-        attributes: { configuration: { channel_ids: [FIRST_CHANNEL.id] } },
+        attributes: {
+          configuration: { channels: [{ id: FIRST_CHANNEL.id }] },
+        },
+      },
+    });
+  });
+
+  // The API deduplicates too; a caller that named a channel twice never meant
+  // to authorize it twice, and the write is what the whole set is validated
+  // from.
+  it("submits a channel once, however many times the caller named it", async () => {
+    fetchMock.mockResolvedValueOnce(savedIntegration());
+
+    await setSlackAuthorizedChannels(SLACK_INTEGRATION_ID, [
+      FIRST_CHANNEL.id,
+      FIRST_CHANNEL.id,
+    ]);
+
+    expect(sentBody()).toMatchObject({
+      data: {
+        attributes: {
+          configuration: { channels: [{ id: FIRST_CHANNEL.id }] },
+        },
       },
     });
   });

@@ -22,6 +22,8 @@ import {
   SLACK_MISSING_SCOPE_REFUSAL,
   SLACK_NOT_IN_CHANNEL_CODE,
   SLACK_NOT_IN_CHANNEL_REFUSAL,
+  SLACK_OAUTH_CODE,
+  SLACK_OAUTH_STATE,
   SLACK_PRIVATE_CHANNEL,
   SLACK_PUBLIC_CHANNEL,
   SLACK_RATE_LIMITED_REFUSAL,
@@ -57,11 +59,17 @@ interface PatchIntegrationAttributes {
 }
 
 interface PatchChannelConfiguration {
-  channel_ids: string[];
+  channels: { id: string }[];
 }
 
 /** The workspace the fixtures connect. */
 const WORKSPACE_NAME = "Prowler HQ";
+
+/**
+ * One channel named in copy. The tail guard is what keeps `#security` from
+ * matching `#security-alerts`, which is exactly the pair the fixtures use.
+ */
+const channelMention = (name: string) => new RegExp(`#${name}(?![\\w-])`);
 
 /** The only scopes Prowler asks a workspace for (design D2). */
 const REQUIRED_SCOPES = [
@@ -283,16 +291,18 @@ describe("authorizing destination channels", () => {
       SLACK_PRIVATE_CHANNEL.name,
     ]);
 
-    // Then — only the ids are submitted: the API derives the names from them.
+    // Then — objects naming nothing but the id: the API derives each name and
+    // its privacy from Slack itself.
     const saved = await harness.lastRequestBody<PatchIntegrationBody>(
       "PATCH",
       "/integrations/",
     );
-    expect(saved?.data.attributes.configuration.channel_ids).toHaveLength(2);
-    expect(saved?.data.attributes.configuration.channel_ids).toEqual(
+    const written = saved?.data.attributes.configuration.channels ?? [];
+    expect(written).toHaveLength(2);
+    expect(written).toEqual(
       expect.arrayContaining([
-        SLACK_PUBLIC_CHANNEL.id,
-        SLACK_PRIVATE_CHANNEL.id,
+        { id: SLACK_PUBLIC_CHANNEL.id },
+        { id: SLACK_PRIVATE_CHANNEL.id },
       ]),
     );
 
@@ -442,6 +452,9 @@ describe("authorizing destination channels", () => {
     // says what the check does over the set, before the user clicks.
     expect(await harness.offersConnectionTest()).toBe(true);
     expect(harness.connectionCheckHint()).toMatch(/every authorized channel/);
+    // And — a check is never a message to everyone: it confirms each channel
+    // once (design D7), so the copy promises exactly one post per channel.
+    expect(harness.connectionCheckHint()).not.toMatch(/test message/i);
   }, 60000);
 
   it("reports a saved destination the check cannot reach, naming the channel, without losing the save", async () => {
@@ -478,6 +491,14 @@ describe("authorizing destination channels", () => {
       ]),
     );
     expect(await harness.offersConnectionTest()).toBe(true);
+
+    // And — the confirmation is stamped only where Slack accepted it, so the
+    // next check has the refused channel alone left to confirm.
+    await harness.refreshPageData();
+    const hint = await harness.connectionCheckHintMatching(
+      channelMention(SLACK_PRIVATE_CHANNEL.name),
+    );
+    expect(hint).not.toMatch(channelMention(SLACK_PUBLIC_CHANNEL.name));
   }, 60000);
 
   it("follows the set recorded elsewhere when the page's data refreshes under it", async () => {
@@ -668,6 +689,161 @@ describe("authorizing destination channels", () => {
     expect(refusal).not.toMatch(/Invite @Prowler/);
     expect(refusal).not.toMatch(SLACK_UNKNOWN_CHANNEL_DETAIL);
     expect(await harness.authorizedChannels()).toEqual([]);
+  }, 60000);
+
+  it("promises the confirmation only to the channels that have not had one", async () => {
+    // Given — one channel authorized, confirmed by the check that left the
+    // install connected.
+    const harness = new SlackIntegrationHarness(configuredSlackFixture());
+    await harness.mount();
+
+    // Then — checking again posts nothing: the confirmation is one-time
+    // (design D7), not a fresh message every run.
+    expect(harness.connectionCheckHint()).toMatch(/nothing is posted/);
+    expect(harness.connectionCheckHint()).not.toMatch(/test message/i);
+
+    // When — a second channel is authorized.
+    await harness.authorizeChannels([SLACK_SECOND_PUBLIC_CHANNEL.name]);
+
+    // Then — the copy names the newly authorized channel alone, and says what
+    // will land in it.
+    const hint = harness.connectionCheckHint() ?? "";
+    expect(hint).toMatch(channelMention(SLACK_SECOND_PUBLIC_CHANNEL.name));
+    expect(hint).not.toMatch(channelMention(SLACK_PUBLIC_CHANNEL.name));
+    expect(hint).toMatch(
+      /✅ Prowler connection verified\. Notifications will be delivered to this channel\./,
+    );
+
+    // And — once the check the save ran has landed, there is nothing left to
+    // confirm at all.
+    expect(await harness.connectionOutcome()).toBe(CONNECTION_OUTCOME.SUCCESS);
+    await harness.refreshPageData();
+    expect(
+      await harness.connectionCheckHintMatching(/nothing is posted/),
+    ).toMatch(/every authorized channel/);
+  }, 60000);
+
+  it("warns that dropping a channel drops it from the alert rules too, before saving", async () => {
+    // Given — two channels authorized, either of which an alert rule may
+    // target.
+    const harness = new SlackIntegrationHarness(
+      slackFixtureWithAuthorizedChannels([
+        SLACK_PUBLIC_CHANNEL,
+        SLACK_PRIVATE_CHANNEL,
+      ]),
+    );
+    await harness.mount();
+    // Nothing pending, nothing to warn about.
+    expect(harness.deauthorizationWarning()).toBeNull();
+
+    // When — one is deselected and nothing is saved yet.
+    await harness.chooseChannels([SLACK_PRIVATE_CHANNEL.name]);
+
+    // Then — what the save would do server-side, said where it is decided
+    // (design D11): the rules lose the channel, delivery stops, history stays.
+    const warning = harness.deauthorizationWarning() ?? "";
+    expect(warning).toMatch(channelMention(SLACK_PRIVATE_CHANNEL.name));
+    expect(warning).not.toMatch(channelMention(SLACK_PUBLIC_CHANNEL.name));
+    expect(warning).toMatch(/alert rule/i);
+    expect(warning).toMatch(/stops delivering/);
+    expect(warning).toMatch(/already delivered stay in Slack/);
+
+    // And — it belongs to the pending selection, not to the record: putting the
+    // channel back takes it away.
+    await harness.chooseChannels([SLACK_PRIVATE_CHANNEL.name]);
+    expect(harness.deauthorizationWarning()).toBeNull();
+
+    // When — the removal is saved after all.
+    await harness.deauthorizeChannels([SLACK_PRIVATE_CHANNEL.name]);
+
+    // Then — the record follows and the warning has nothing left to say.
+    expect(await harness.authorizedChannels()).toEqual([
+      SLACK_PUBLIC_CHANNEL.name,
+    ]);
+    expect(harness.deauthorizationWarning()).toBeNull();
+  }, 60000);
+
+  it("clears the authorized set when the last channel is dropped", async () => {
+    // Given — a single authorized channel.
+    const harness = new SlackIntegrationHarness(configuredSlackFixture());
+    await harness.mount();
+
+    // When
+    await harness.deauthorizeChannels([SLACK_PUBLIC_CHANNEL.name]);
+
+    // Then — an empty list clears the set, where an omitted one would leave it
+    // untouched (contract, PATCH).
+    const saved = await harness.lastRequestBody<PatchIntegrationBody>(
+      "PATCH",
+      "/integrations/",
+    );
+    expect(saved?.data.attributes.configuration.channels).toEqual([]);
+    expect(await harness.authorizedChannels()).toEqual([]);
+
+    // And — with nothing to post to, the check is not offered and says why.
+    expect(await harness.offersConnectionTest()).toBe(false);
+    expect(harness.connectionCheckHint()).toMatch(
+      /Authorize at least one destination channel/,
+    );
+  }, 60000);
+
+  it("keeps the connection when the same channels are recorded in another order", async () => {
+    // Given — two channels authorized and a connection checked against them.
+    const harness = new SlackIntegrationHarness(
+      slackFixtureWithAuthorizedChannels([
+        SLACK_PUBLIC_CHANNEL,
+        SLACK_SECOND_PUBLIC_CHANNEL,
+      ]),
+    );
+    await harness.mount();
+    expect(await harness.connectionBadge()).toBe("Connected");
+
+    // When — the same ids are written back in the other order.
+    await harness.channelsRecordedElsewhere([
+      SLACK_SECOND_PUBLIC_CHANNEL.name,
+      SLACK_PUBLIC_CHANNEL.name,
+    ]);
+    await harness.refreshPageData();
+
+    // Then — a reorder is not a changed set, so the check that ran still
+    // covers it (contract, PATCH).
+    expect(await harness.connectionBadge()).toBe("Connected");
+
+    // When — the set itself changes.
+    await harness.channelsRecordedElsewhere([SLACK_PUBLIC_CHANNEL.name]);
+    await harness.refreshPageData();
+
+    // Then — no check has covered this set, and the card says exactly that
+    // rather than claiming a connection it cannot vouch for.
+    expect(await harness.connectionBadge()).toBe("Not checked yet");
+  }, 60000);
+
+  it("keeps the authorized channels through a reinstall, with their confirmations to run again", async () => {
+    // Given — a finished setup whose channel an earlier check confirmed.
+    const harness = new SlackIntegrationHarness(configuredSlackFixture());
+    await harness.mount();
+    expect(harness.connectionCheckHint()).toMatch(/nothing is posted/);
+
+    // When — the same workspace is approved again.
+    await harness.mountCallback({
+      code: SLACK_OAUTH_CODE,
+      state: SLACK_OAUTH_STATE,
+    });
+    expect(await harness.completedInstall()).toBe(true);
+    await harness.revisit();
+
+    // Then — a same-workspace reinstall keeps the channels and resets every
+    // confirmation along with the connection state (contract, OAuth and
+    // reads), so the check has each channel to confirm again.
+    expect(await harness.authorizedChannels()).toEqual([
+      SLACK_PUBLIC_CHANNEL.name,
+    ]);
+    expect(await harness.connectionBadge()).toBe("Not checked yet");
+    expect(
+      await harness.connectionCheckHintMatching(
+        channelMention(SLACK_PUBLIC_CHANNEL.name),
+      ),
+    ).toMatch(/Prowler connection verified/);
   }, 60000);
 });
 

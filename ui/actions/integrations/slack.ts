@@ -432,12 +432,14 @@ export type SlackAuthorizedChannelsResult =
 
 /**
  * Record the set of channels Prowler is authorized to post to, on the generic
- * integration endpoint.
+ * integration endpoint. The list replaces the whole set: an empty one clears
+ * it, and every id in it stays authorized, keeping the confirmation it already
+ * has.
  *
  * A Slack action despite the generic `PATCH`: `channel_not_found` and
  * `not_in_channel` carry the same `detail`, so only `code` tells them apart,
  * and the generic action reads `detail` alone. Only ids travel — the API
- * derives each name server-side.
+ * derives each name and its privacy server-side.
  */
 export const setSlackAuthorizedChannels = async (
   integrationId: string,
@@ -461,9 +463,16 @@ export const setSlackAuthorizedChannels = async (
           // serializer refuses whatever it does not accept, so naming the
           // integration's own (immutable) type is answered with a 400,
           // "Invalid fields: {'integration_type'}".
-          // TODO(Josema): D3 working assumption — the write property's name
-          // (`channel_ids`), keeping the ids-only-write principle.
-          attributes: { configuration: { channel_ids: channelIds } },
+          attributes: {
+            configuration: {
+              // Objects carrying only `id`, per the signed contract. The API
+              // deduplicates too; doing it here keeps a caller from asking for
+              // a set it did not mean.
+              channels: Array.from(new Set(channelIds), (channelId) => ({
+                id: channelId,
+              })),
+            },
+          },
         },
       }),
     });

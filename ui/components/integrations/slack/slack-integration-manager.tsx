@@ -33,6 +33,7 @@ import {
 import type { SlackTokenErrorCode } from "@/lib/integrations/slack-errors";
 import type {
   IntegrationProps,
+  SlackAuthorizedChannel,
   SlackChannelOption,
 } from "@/types/integrations";
 
@@ -63,6 +64,14 @@ type ChannelsState = ChannelsLoading | ChannelsFailed | ChannelsLoaded;
 const CHECK_HINT_ID = "slack-connection-check-hint";
 
 /**
+ * What the connection check posts, word for word (contract, Connection). Named
+ * here because the copy promises it: a user about to run the check sees exactly
+ * what will land in their channels.
+ */
+const CONFIRMATION_MESSAGE =
+  "✅ Prowler connection verified. Notifications will be delivered to this channel.";
+
+/**
  * A disconnect that removed the row without Slack confirming the revocation.
  * The workspace name travels with it: the notice exists to name the workspace
  * to clean up, and the record is gone by the time revalidation lands.
@@ -75,10 +84,24 @@ interface UnconfirmedRevocation {
 const sameChannelIds = (a: string[], b: string[]) =>
   a.length === b.length && new Set([...a, ...b]).size === a.length;
 
-const sameChannelSets = (a: SlackChannelOption[], b: SlackChannelOption[]) => {
+/**
+ * Confirmation counts as part of the record: a check that confirms a channel
+ * changes nothing else, and the mirror has to follow it or the card would keep
+ * offering to confirm what is already confirmed.
+ */
+const sameChannelSets = (
+  a: SlackAuthorizedChannel[],
+  b: SlackAuthorizedChannel[],
+) => {
   if (a.length !== b.length) return false;
   const byId = new Map(a.map((channel) => [channel.id, channel]));
-  return b.every((channel) => byId.get(channel.id)?.name === channel.name);
+  return b.every((channel) => {
+    const other = byId.get(channel.id);
+    return (
+      other?.name === channel.name &&
+      other?.confirmation_sent_at === channel.confirmation_sent_at
+    );
+  });
 };
 
 /**
@@ -88,14 +111,35 @@ const sameChannelSets = (a: SlackChannelOption[], b: SlackChannelOption[]) => {
  */
 const mergeChannelOptions = (
   listed: SlackChannelOption[],
-  stored: SlackChannelOption[],
+  stored: SlackAuthorizedChannel[],
 ): SlackChannelOption[] => {
   const merged = new Map(listed.map((channel) => [channel.id, channel]));
-  stored.forEach((channel) => {
-    if (!merged.has(channel.id)) merged.set(channel.id, channel);
+  stored.forEach(({ id, name, is_private }) => {
+    // Narrowed on the way in: the picker offers channels, and whether Prowler
+    // has confirmed one is no part of choosing it.
+    if (!merged.has(id)) merged.set(id, { id, name, is_private });
   });
   return Array.from(merged.values());
 };
+
+/**
+ * What the save recorded, for an answer that carried no channels back. Retained
+ * ids keep the confirmation they had and new ones start without one, which is
+ * the rule the API applies.
+ */
+const recordedFromSelection = (
+  channelIds: string[],
+  options: SlackChannelOption[],
+  previous: SlackAuthorizedChannel[],
+): SlackAuthorizedChannel[] =>
+  channelIds.flatMap((channelId) => {
+    const option = options.find((channel) => channel.id === channelId);
+    if (!option) return [];
+    const stored = previous.find((channel) => channel.id === channelId);
+    return [
+      { ...option, confirmation_sent_at: stored?.confirmation_sent_at ?? null },
+    ];
+  });
 
 const channelList = (names: string[]): string =>
   new Intl.ListFormat("en", { style: "long", type: "conjunction" }).format(
@@ -149,7 +193,7 @@ export const SlackIntegrationManager = ({
   const { toast } = useToast();
 
   const integrationId = integration?.id ?? null;
-  const recordedChannels: SlackChannelOption[] =
+  const recordedChannels: SlackAuthorizedChannel[] =
     integration?.attributes.configuration.channels ?? [];
 
   // Seeded `loading`, not by the effect: the effect never runs on the server,
@@ -274,6 +318,29 @@ export const SlackIntegrationManager = ({
     authorizedChannels,
   );
 
+  // The check posts its confirmation only where none has landed yet, so these
+  // are the channels the next one would post to (contract, Connection).
+  const unconfirmedChannels = authorizedChannels.filter(
+    (channel) => channel.confirmation_sent_at === null,
+  );
+  // Channels the buffered selection would drop. Removing one cascades into the
+  // alert rules that target it, in the same transaction (design D11), so the
+  // warning belongs to the pending save rather than to what is on record.
+  const droppedChannels = authorizedChannels.filter(
+    (channel) => !selectedChannelIds.includes(channel.id),
+  );
+
+  const checkHint = (): string => {
+    if (authorizedChannels.length === 0) {
+      return "Authorize at least one destination channel below to enable this check.";
+    }
+    return unconfirmedChannels.length > 0
+      ? `Checks every authorized channel and posts “${CONFIRMATION_MESSAGE}” once to ${channelList(
+          unconfirmedChannels.map((channel) => channel.name),
+        )}.`
+      : "Checks every authorized channel. Each was confirmed once already, so nothing is posted.";
+  };
+
   const handleSaveChannels = async () => {
     if (!integrationId) return;
 
@@ -298,12 +365,15 @@ export const SlackIntegrationManager = ({
         return;
       }
 
-      // Prefer the API's derived names: a channel renamed in Slack since the
-      // list was read would otherwise show its old name.
+      // Prefer the API's own record: it derives the names (a channel renamed
+      // in Slack since the list was read would otherwise show its old name)
+      // and it is what says which channels are confirmed.
       const savedChannels =
         result.integration.attributes.configuration.channels ??
-        channelOptions.filter((channel) =>
-          selectedChannelIds.includes(channel.id),
+        recordedFromSelection(
+          selectedChannelIds,
+          channelOptions,
+          authorizedChannels,
         );
 
       provedCredentialAlive();
@@ -330,8 +400,9 @@ export const SlackIntegrationManager = ({
     }
 
     // Recording destinations is what makes a check possible (design D7), and
-    // the save alone only proves the API took the ids. A save that cleared the
-    // set has nothing to post to.
+    // the save alone only proves the API took the ids: the check is what
+    // reaches each channel and confirms it. A save that cleared the set has
+    // nothing to post to.
     if (savedCount > 0) await handleTestConnection(integrationId);
   };
 
@@ -345,7 +416,8 @@ export const SlackIntegrationManager = ({
         toast({
           title: "Connection test successful!",
           description:
-            result.message || "Prowler can reach your Slack workspace.",
+            result.message ||
+            "Prowler can reach your Slack workspace and every authorized channel.",
         });
       } else {
         // A dead credential named here is not a failure checking again can
@@ -570,7 +642,7 @@ export const SlackIntegrationManager = ({
               </div>
               <div className="flex flex-col items-start gap-1 sm:items-end">
                 <div className="flex items-center gap-2">
-                  {/* The check posts to the authorized channels: the API
+                  {/* The check reaches the authorized channels: the API
                       answers 400 while the set is empty. */}
                   <Button
                     size="sm"
@@ -596,11 +668,9 @@ export const SlackIntegrationManager = ({
                 </div>
                 <p
                   id={CHECK_HINT_ID}
-                  className="text-xs text-gray-500 dark:text-gray-300"
+                  className="max-w-prose text-xs text-gray-500 sm:text-right dark:text-gray-300"
                 >
-                  {authorizedChannels.length > 0
-                    ? "Sends a test message to every authorized channel."
-                    : "Authorize at least one destination channel below to enable this check."}
+                  {checkHint()}
                 </p>
               </div>
             </div>
@@ -624,6 +694,23 @@ export const SlackIntegrationManager = ({
                 onRefresh={() => setChannelReloads((reloads) => reloads + 1)}
                 disabled={isSavingChannels}
               />
+
+              {droppedChannels.length > 0 && (
+                <Alert variant="warning" data-deauthorize-warning>
+                  <AlertTitle>
+                    Dropped channels leave your alert rules too
+                  </AlertTitle>
+                  <AlertDescription>
+                    Saving this selection drops{" "}
+                    {channelList(
+                      droppedChannels.map((channel) => channel.name),
+                    )}
+                    . Every alert rule targeting a dropped channel stops
+                    targeting it, and Prowler stops delivering there.
+                    Notifications already delivered stay in Slack.
+                  </AlertDescription>
+                </Alert>
+              )}
 
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 {/* The card's subtitle also starts "Prowler posts to", so the

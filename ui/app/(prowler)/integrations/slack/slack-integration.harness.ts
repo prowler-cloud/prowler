@@ -132,6 +132,9 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
   }
 
   async mountCallback({ code, state, error }: CallbackParams): Promise<void> {
+    // A different route: whatever this harness had mounted goes first, or two
+    // copies of the page would answer every query.
+    (await this.mounted)?.unmount();
     const params = new URLSearchParams();
     if (code) params.set("code", code);
     if (state) params.set("state", state);
@@ -143,7 +146,9 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     );
     this.wireHandlers();
 
-    render(createElement(SlackCallback));
+    // Held like any other mount: a reinstall is followed by a `revisit()`,
+    // which has to take this render down before the management page goes up.
+    this.mounted = render(createElement(SlackCallback));
   }
 
   /** Mount the integrations catalogue. No handlers: every card there is static. */
@@ -306,6 +311,21 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
    * points at: a reason found anywhere else on the page never reaches whoever
    * sees the control.
    */
+  /**
+   * The same copy, waited for: what the check will do follows the page's data,
+   * which lands a beat after an action that changed it.
+   */
+  async connectionCheckHintMatching(pattern: RegExp): Promise<string> {
+    return this.waitFor(
+      () => {
+        const hint = this.connectionCheckHint();
+        return hint && pattern.test(hint) ? hint : null;
+      },
+      10000,
+      `the connection check hint to match ${pattern}`,
+    );
+  }
+
   connectionCheckHint(): string | null {
     const button = this.buttonByText(/Test connection/);
     const describedBy = button?.getAttribute("aria-describedby");
@@ -603,9 +623,53 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     await this.closeChannelPicker();
   }
 
+  /**
+   * Toggle the named channels without saving: the picks stay buffered, which is
+   * the state the de-authorization warning is about.
+   */
+  async chooseChannels(names: string[]): Promise<void> {
+    await this.pickChannels(names);
+  }
+
   /** Save whatever channels are picked right now. */
   async saveChannels(): Promise<void> {
     await this.clickButton(/Save channels/);
+  }
+
+  /**
+   * What the page says before a save that drops channels — the cascade into the
+   * alert rules (design D11), read from the warning the pending selection
+   * raises rather than from the page at large.
+   */
+  deauthorizationWarning(): string | null {
+    const warning = this.q("[data-deauthorize-warning]");
+    return warning
+      ? (warning.textContent ?? "").replace(/\s+/g, " ").trim()
+      : null;
+  }
+
+  /**
+   * Drop the named channels from the authorized set and save, waiting for each
+   * to be gone from the record.
+   */
+  async deauthorizeChannels(names: string[]): Promise<void> {
+    await this.pickChannels(names);
+    await this.saveChannels();
+    await this.waitFor(
+      () => {
+        const authorized = this.authorizedChannelNames();
+        const settled =
+          authorized ??
+          (this.containsText(/No destination channels authorized yet/)
+            ? []
+            : null);
+        return settled && names.every((name) => !settled.includes(name))
+          ? true
+          : null;
+      },
+      15000,
+      `${names.map((name) => `#${name}`).join(", ")} to be de-authorized`,
+    );
   }
 
   /**

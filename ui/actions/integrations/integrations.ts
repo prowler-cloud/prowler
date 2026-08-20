@@ -270,8 +270,9 @@ export const deleteIntegration = async (
 type ConnectionTaskResult = {
   connected?: boolean;
   error?: string | null;
-  // TODO(Josema): D3/D7 working assumption — a channel-level failure names
-  // the channel Slack refused.
+  // The signed contract keeps the result at `{connected, error}` and has it
+  // name the failing channel, without spelling out the key.
+  // TODO(Josema): the key a channel-level failure names the channel under.
   channel?: string | null;
 };
 
