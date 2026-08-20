@@ -384,6 +384,19 @@ class HuaweiCloudSession:
                     .build()
                 )
 
+            elif service == "tms":
+                from huaweicloudsdktms.v1 import TmsClient
+                from huaweicloudsdktms.v1.region.tms_region import TmsRegion
+
+                client_region = region or self._region
+                return (
+                    TmsClient.new_builder()
+                    .with_credentials(self._get_global_credentials(client_region))
+                    .with_http_config(self._http_config())
+                    .with_region(_aligned_region(TmsRegion, client_region))
+                    .build()
+                )
+
             else:
                 raise HuaweiCloudServiceError(
                     message=f"Huawei Cloud service '{service}' is not supported"
@@ -446,6 +459,30 @@ class HuaweiCloudSession:
             basic_creds.security_token = creds.security_token
 
         return basic_creds
+
+    def _get_global_credentials(self, region: str = None):
+        """Get domain-scoped credentials for a global Huawei Cloud service.
+
+        Args:
+            region: Region whose IAM endpoint resolves the credentials' domain.
+
+        Returns:
+            GlobalCredentials: Credentials suitable for account-global APIs.
+        """
+        from huaweicloudsdkcore.auth.credentials import GlobalCredentials
+
+        creds = self._credentials
+        global_creds = GlobalCredentials(
+            ak=creds.ak,
+            sk=creds.sk,
+            domain_id=creds.domain_id,
+        )
+        iam_endpoint = _iam_endpoint_for_region(region or self._region)
+        if iam_endpoint:
+            global_creds.iam_endpoint = iam_endpoint
+        if creds.security_token:
+            global_creds.security_token = creds.security_token
+        return global_creds
 
 
 class HuaweiCloudOutputOptions(ProviderOutputOptions):
