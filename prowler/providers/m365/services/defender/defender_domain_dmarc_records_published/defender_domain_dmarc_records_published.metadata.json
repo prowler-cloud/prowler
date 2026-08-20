@@ -1,0 +1,39 @@
+{
+  "Provider": "m365",
+  "CheckID": "defender_domain_dmarc_records_published",
+  "CheckTitle": "Ensure DMARC records are published for all Exchange Online domains",
+  "CheckType": [],
+  "ServiceName": "defender",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "**Microsoft 365 Exchange Online domains** should have **DMARC TXT records** published in DNS with an enforcing policy. This evaluates each accepted domain to confirm a DMARC record exists at _dmarc.<domain> with p=quarantine or p=reject to prevent domain spoofing and phishing attacks.",
+  "Risk": "Without **DMARC** (or with p=none), attackers can **impersonate your domain** to send spoofed or phishing emails that appear to come from your organization.\n\nThis enables **business email compromise (BEC)**, credential theft, malware delivery, and reputational damage. DMARC builds on SPF and DKIM to provide enforcement and reporting.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/microsoft-365/security/office-365-security/email-authentication-dmarc-configure?view=o365-worldwide",
+    "https://learn.microsoft.com/en-us/powershell/module/exchange/set-dkimsigningconfig?view=exchange-ps",
+    "https://dmarc.org/overview/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to Microsoft 365 Defender: https://security.microsoft.com\n2. Go to Email & collaboration > Policies & rules > Threat policies > Email authentication settings > DMARC\n3. Review the DMARC status for each domain\n4. Publish a DMARC TXT record at _dmarc.<domain> with v=DMARC1; p=quarantine (or p=reject) at your DNS provider\n5. After DMARC is in place, monitor reports and move from p=none to p=quarantine to p=reject",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "- Publish **DMARC records** for all sending domains and subdomains\n- Start with **p=none** to monitor, then progress to **p=quarantine** and finally **p=reject**\n- Combine with **SPF** and **DKIM** for defense in depth\n- Review DMARC aggregate and forensic reports regularly to detect spoofing attempts",
+      "Url": "https://hub.prowler.com/check/defender_domain_dmarc_records_published"
+    }
+  },
+  "Categories": [
+    "email-security",
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
