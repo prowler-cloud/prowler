@@ -15,6 +15,20 @@ from prowler_mcp_server.prowler_app.utils.auth import ProwlerAppAuth
 ALLOWED_EXTERNAL_DOMAINS: frozenset[str] = frozenset({"raw.githubusercontent.com"})
 
 
+class ProwlerAPIError(Exception):
+    """An error response returned by the Prowler API.
+
+    Raised only when the API answered with an error status, which tells a caller
+    something no plain exception can: the request reached Prowler and was
+    rejected, so it changed nothing. A timeout or a dropped connection stays a
+    bare exception because the request may well have been processed.
+    """
+
+    def __init__(self, message: str, status_code: int) -> None:
+        super().__init__(message)
+        self.status_code: int = status_code
+
+
 class HTTPMethod(StrEnum):
     """HTTP methods enum."""
 
@@ -73,7 +87,8 @@ class ProwlerAPIClient(metaclass=SingletonMeta):
             API response as dictionary
 
         Raises:
-            Exception: If API request fails
+            ProwlerAPIError: If the API answered with an error status
+            Exception: If the request could not be completed
         """
         try:
             token: str = await self.auth_manager.get_valid_token()
@@ -105,8 +120,9 @@ class ProwlerAPIClient(metaclass=SingletonMeta):
             except Exception:
                 error_detail = e.response.text
 
-            raise Exception(
-                f"API request failed: {e.response.status_code} - {error_detail}"
+            raise ProwlerAPIError(
+                f"API request failed: {e.response.status_code} - {error_detail}",
+                e.response.status_code,
             )
         except Exception as e:
             logger.error(f"Error during {method.value} {path}: {e}")

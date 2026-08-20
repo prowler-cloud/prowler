@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useOrgSetupStore } from "@/store/organizations/store";
 import { useProviderWizardStore } from "@/store/provider-wizard/store";
-import { ORG_WIZARD_STEP } from "@/types/organizations";
+import { ORG_WIZARD_STEP, ORGANIZATION_TYPE } from "@/types/organizations";
 import {
   PROVIDER_WIZARD_MODE,
   PROVIDER_WIZARD_STEP,
@@ -170,8 +170,10 @@ describe("useProviderWizardController", () => {
     });
     expect(result.current.modalTitle).toBe("Update Provider Credentials");
     expect(result.current.isProviderFlow).toBe(true);
+    // Update mode enters at the credentials step, so the docs link scrolls
+    // the getting-started page to the credentials/authentication section.
     expect(result.current.docsLink).toBe(
-      "https://goto.prowler.com/provider-aws",
+      "https://docs.prowler.com/user-guide/providers/aws/getting-started-aws#step-3-set-up-aws-authentication",
     );
 
     const state = useProviderWizardStore.getState();
@@ -181,6 +183,36 @@ describe("useProviderWizardController", () => {
     expect(state.providerAlias).toBe("production");
     expect(state.secretId).toBe("secret-1");
     expect(state.mode).toBe(PROVIDER_WIZARD_MODE.UPDATE);
+  });
+
+  it("updates the credentials docs link when AWS assume role is selected", async () => {
+    const onOpenChange = vi.fn();
+    const { result } = renderHook(() =>
+      useProviderWizardController({
+        open: true,
+        onOpenChange,
+        initialData: {
+          providerId: "provider-1",
+          providerType: "aws",
+          providerUid: "111111111111",
+          providerAlias: "production",
+          secretId: null,
+          mode: PROVIDER_WIZARD_MODE.ADD,
+        },
+      }),
+    );
+
+    await waitFor(() => {
+      expect(result.current.currentStep).toBe(PROVIDER_WIZARD_STEP.CREDENTIALS);
+    });
+
+    act(() => {
+      useProviderWizardStore.getState().setVia("role");
+    });
+
+    expect(result.current.docsLink).toBe(
+      "https://docs.prowler.com/user-guide/providers/aws/getting-started-aws#assume-role-recommended",
+    );
   });
 
   it("switches into and out of organizations flow", () => {
@@ -202,6 +234,10 @@ describe("useProviderWizardController", () => {
     expect(result.current.wizardVariant).toBe("organizations");
     expect(result.current.isProviderFlow).toBe(false);
     expect(result.current.orgCurrentStep).toBe(ORG_WIZARD_STEP.SETUP);
+    // The flow tags the store with the type it was opened for; AWS by default.
+    expect(useOrgSetupStore.getState().organizationType).toBe(
+      ORGANIZATION_TYPE.AWS,
+    );
     expect(result.current.docsLink).toBe(
       "https://docs.prowler.com/user-guide/tutorials/prowler-cloud-aws-organizations",
     );
@@ -314,9 +350,10 @@ describe("useProviderWizardController", () => {
         .getState()
         .setOrganization("org-1", "My Org", "o-abc123def4");
       useOrgSetupStore.getState().setDiscovery("disc-1", {
-        roots: [],
-        organizational_units: [],
-        accounts: [],
+        orgType: ORGANIZATION_TYPE.AWS,
+        organization: { uid: "o-abc123def4", name: "My Org" },
+        nodes: [],
+        candidates: [],
       });
     });
 

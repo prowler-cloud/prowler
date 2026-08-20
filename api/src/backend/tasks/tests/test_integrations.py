@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -671,6 +672,8 @@ class TestSecurityHubIntegrationUploads:
         mock_integration = MagicMock()
         mock_integration.configuration = {"send_only_fails": True}
         mock_integration.credentials = {}  # Empty credentials, use provider
+        mock_integration.connected = False
+        mock_integration.connection_last_checked_at = None
 
         # Mock tenant_id
         tenant_id = "550e8400-e29b-41d4-a716-446655440000"  # Valid UUID
@@ -723,12 +726,22 @@ class TestSecurityHubIntegrationUploads:
             # Configure the test_connection to return our mock_connection
             mock_security_hub_class.test_connection = mock_test_connection
 
+            checked_at_before = datetime.now(tz=UTC)
             connected, security_hub = get_security_hub_client_from_integration(
                 mock_integration, tenant_id, mock_findings
             )
+            checked_at_after = datetime.now(tz=UTC)
 
         assert connected is True
         assert security_hub == mock_security_hub
+        assert mock_integration.connected is True
+        assert mock_integration.connection_last_checked_at.tzinfo is UTC
+        assert (
+            checked_at_before
+            <= mock_integration.connection_last_checked_at
+            <= checked_at_after
+        )
+        mock_integration.save.assert_called_once()
 
         # Verify SecurityHub was called once to create the client
         assert mock_security_hub_class.call_count == 1

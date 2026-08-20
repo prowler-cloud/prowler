@@ -25,6 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
+      actions: write
       contents: write
       pull-requests: write
     steps:
@@ -32,6 +33,12 @@ jobs:
       uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
       with:
         egress-policy: audit
+
+    - name: Enable release freeze
+      env:
+        GH_TOKEN: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
+      run: |
+        gh variable set RELEASE_FREEZE --body true --repo "${GITHUB_REPOSITORY}"
 
     - name: Checkout repository
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -70,7 +77,7 @@ jobs:
 
           echo "Prowler version: $PROWLER_VERSION"
           echo "Branch name: $BRANCH_NAME"
-          echo "Is minor release: $([ $PATCH_VERSION -eq 0 ] && echo 'true' || echo 'false')"
+          echo "Is minor release: $([ "$PATCH_VERSION" -eq 0 ] && echo 'true' || echo 'false')"
         else
           echo "Invalid version syntax: '$PROWLER_VERSION' (must be N.N.N)" >&2
           exit 1
@@ -100,7 +107,8 @@ jobs:
           if [ -f "$changelog_file" ]; then
             # Extract version that matches this Prowler release
             # Format: ## [version] (Prowler X.Y.Z) or ## [vversion] (Prowler vX.Y.Z)
-            local version=$(grep '^## \[' "$changelog_file" | grep "(Prowler v\?${prowler_version})" | head -1 | sed 's/^## \[\(.*\)\].*/\1/' | sed 's/^v//' | tr -d '[:space:]')
+            local version
+            version=$(grep '^## \[' "$changelog_file" | grep "(Prowler v\?${prowler_version})" | head -1 | sed 's/^## \[\(.*\)\].*/\1/' | sed 's/^v//' | tr -d '[:space:]')
             echo "$version"
           else
             echo ""
@@ -171,55 +179,55 @@ jobs:
 
         # Determine if components have changes for this specific release
         if [ -n "$SDK_VERSION" ]; then
-          echo "HAS_SDK_CHANGES=true" >> $GITHUB_ENV
+          echo "HAS_SDK_CHANGES=true" >> "$GITHUB_ENV"
           HAS_SDK_CHANGES="true"
           echo "✓ SDK changes detected - version: $SDK_VERSION"
           extract_changelog "prowler/CHANGELOG.md" "$SDK_VERSION" "prowler_changelog.md"
         else
-          echo "HAS_SDK_CHANGES=false" >> $GITHUB_ENV
+          echo "HAS_SDK_CHANGES=false" >> "$GITHUB_ENV"
           HAS_SDK_CHANGES="false"
           echo "ℹ No SDK changes for this release"
           touch "prowler_changelog.md"
         fi
 
         if [ -n "$API_VERSION" ]; then
-          echo "HAS_API_CHANGES=true" >> $GITHUB_ENV
+          echo "HAS_API_CHANGES=true" >> "$GITHUB_ENV"
           HAS_API_CHANGES="true"
           echo "✓ API changes detected - version: $API_VERSION"
           extract_changelog "api/CHANGELOG.md" "$API_VERSION" "api_changelog.md"
         else
-          echo "HAS_API_CHANGES=false" >> $GITHUB_ENV
+          echo "HAS_API_CHANGES=false" >> "$GITHUB_ENV"
           HAS_API_CHANGES="false"
           echo "ℹ No API changes for this release"
           touch "api_changelog.md"
         fi
 
         if [ -n "$UI_VERSION" ]; then
-          echo "HAS_UI_CHANGES=true" >> $GITHUB_ENV
+          echo "HAS_UI_CHANGES=true" >> "$GITHUB_ENV"
           HAS_UI_CHANGES="true"
           echo "✓ UI changes detected - version: $UI_VERSION"
           extract_changelog "ui/CHANGELOG.md" "$UI_VERSION" "ui_changelog.md"
         else
-          echo "HAS_UI_CHANGES=false" >> $GITHUB_ENV
+          echo "HAS_UI_CHANGES=false" >> "$GITHUB_ENV"
           HAS_UI_CHANGES="false"
           echo "ℹ No UI changes for this release"
           touch "ui_changelog.md"
         fi
 
         if [ -n "$MCP_VERSION" ]; then
-          echo "HAS_MCP_CHANGES=true" >> $GITHUB_ENV
+          echo "HAS_MCP_CHANGES=true" >> "$GITHUB_ENV"
           HAS_MCP_CHANGES="true"
           echo "✓ MCP changes detected - version: $MCP_VERSION"
           extract_changelog "mcp_server/CHANGELOG.md" "$MCP_VERSION" "mcp_changelog.md"
         else
-          echo "HAS_MCP_CHANGES=false" >> $GITHUB_ENV
+          echo "HAS_MCP_CHANGES=false" >> "$GITHUB_ENV"
           HAS_MCP_CHANGES="false"
           echo "ℹ No MCP changes for this release"
           touch "mcp_changelog.md"
         fi
 
         # Combine changelogs in order: UI, API, SDK, MCP
-        > combined_changelog.md
+        : > combined_changelog.md
 
         if [ "$HAS_UI_CHANGES" = "true" ] && [ -s "ui_changelog.md" ]; then
           echo "## UI" >> combined_changelog.md
@@ -382,3 +390,4 @@ jobs:
       if: always()
       run: |
         rm -f prowler_changelog.md api_changelog.md ui_changelog.md mcp_changelog.md combined_changelog.md
+

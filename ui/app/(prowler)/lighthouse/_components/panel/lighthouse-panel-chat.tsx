@@ -18,6 +18,7 @@ import {
   setPanelChatMessageState,
 } from "@/app/(prowler)/lighthouse/_lib/panel-chat-message-state";
 import {
+  flushPendingPanelChatMessage,
   getOrCreatePanelChatStore,
   resetPanelChatStore,
 } from "@/app/(prowler)/lighthouse/_lib/panel-chat-store";
@@ -166,6 +167,7 @@ function PanelChatReady({ config, modelsError }: PanelChatReadyProps) {
   };
 
   useMountEffect(() => {
+    flushPendingPanelChatMessage();
     void refreshSessions();
     const syncPanelChatState = () => {
       const chatState = store.getState();

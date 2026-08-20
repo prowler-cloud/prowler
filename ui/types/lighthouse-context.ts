@@ -8,9 +8,11 @@ import {
   LIGHTHOUSE_PAGE_ID,
 } from "@/lib/lighthouse/context/constants";
 import type {
+  lighthouseAlertContextItemSchema,
   lighthouseAttackPathContextItemSchema,
   lighthouseAttackPathParameterSchema,
   lighthouseAttackPathParametersSchema,
+  lighthouseAttackPathTypeCountsSchema,
   lighthouseComplianceContextItemSchema,
   lighthouseComplianceTotalsSchema,
   lighthouseContextEnvelopeSchema,
@@ -43,6 +45,26 @@ export type LighthouseContextTransport = z.infer<
 export type LighthousePageId =
   (typeof LIGHTHOUSE_PAGE_ID)[keyof typeof LIGHTHOUSE_PAGE_ID];
 
+export interface LighthousePageSuggestion {
+  label: string;
+  prompt: string;
+}
+
+export type LighthousePageSuggestions = readonly [
+  LighthousePageSuggestion,
+  LighthousePageSuggestion,
+  LighthousePageSuggestion,
+  LighthousePageSuggestion,
+];
+
+export interface LighthousePageDefinitionInput {
+  id: LighthousePageId;
+  label: string;
+  match: (pathname: string) => boolean;
+  allowedSearchParams: readonly string[];
+  suggestions: LighthousePageSuggestions;
+}
+
 export type LighthouseContextFilters = z.infer<
   typeof lighthouseContextFiltersSchema
 >;
@@ -70,6 +92,9 @@ export type LighthouseAttackPathParameter = z.infer<
 export type LighthouseAttackPathParameters = z.infer<
   typeof lighthouseAttackPathParametersSchema
 >;
+export type LighthouseAttackPathTypeCounts = z.infer<
+  typeof lighthouseAttackPathTypeCountsSchema
+>;
 export type LighthouseAttackPathContextItem = z.infer<
   typeof lighthouseAttackPathContextItemSchema
 >;
@@ -78,6 +103,9 @@ export type LighthouseScanContextItem = z.infer<
 >;
 export type LighthouseProviderContextItem = z.infer<
   typeof lighthouseProviderContextItemSchema
+>;
+export type LighthouseAlertContextItem = z.infer<
+  typeof lighthouseAlertContextItemSchema
 >;
 export type LighthouseContextItem = z.infer<typeof lighthouseContextItemSchema>;
 export type LighthouseContextEnvelope = z.infer<

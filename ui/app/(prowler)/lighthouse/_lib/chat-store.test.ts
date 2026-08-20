@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   createLighthouseChatStore,
+  selectLighthouseChatActiveSkill,
   selectLighthouseChatCanSend,
 } from "@/app/(prowler)/lighthouse/_lib/chat-store";
 import {
@@ -14,6 +15,7 @@ import type {
   LighthouseV2SupportedModel,
   LighthouseV2SupportedProvider,
 } from "@/app/(prowler)/lighthouse/_types";
+import { getSkillById } from "@/lib/lighthouse/skills/registry";
 import type { LighthouseContextEnvelope } from "@/types/lighthouse-context";
 
 const {
@@ -146,8 +148,77 @@ describe("createLighthouseChatStore", () => {
       displayText: "  Summarize critical findings  ",
       context,
     });
-    expect(store.getState().lastSubmittedText).toBe(
-      "  Summarize critical findings  ",
+  });
+
+  it("threads a launched skill through the optimistic message and the API call", async () => {
+    // Given
+    const store = makeStore();
+    const skill = getSkillById("triage-decision");
+    if (!skill) throw new Error("Expected skill definition");
+
+    // When
+    await store.getState().submitMessage(skill.name, undefined, skill);
+
+    // Then
+    expect(sendMessageMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        displayText: "Triage Decision",
+        skillId: "triage-decision",
+      }),
+    );
+    expect(store.getState().messages.at(-1)?.parts[0]?.content).toMatchObject({
+      text: expect.stringContaining("[PROWLER_UI_SKILL_V1]"),
+      display_text: "Triage Decision",
+      ui_skill: expect.objectContaining({
+        skill_id: "triage-decision",
+      }),
+    });
+    // The run is live, so the pill/progress surfaces see the active skill.
+    expect(selectLighthouseChatActiveSkill(store.getState())?.id).toBe(
+      "triage-decision",
+    );
+  });
+
+  it("preserves an active skill stream while EventSource reconnects", async () => {
+    // Given
+    const store = makeStore();
+    const skill = getSkillById("triage-decision");
+    if (!skill) throw new Error("Expected skill definition");
+    await store.getState().submitMessage(skill.name, undefined, skill);
+    eventSources[0].emit("message.delta", {
+      content: "Result ",
+    });
+
+    // When: the browser reports a transient failure and keeps reconnecting
+    eventSources[0].fail(0 /* EventSource.CONNECTING */);
+    eventSources[0].emit("message.delta", {
+      content: "Checking exposure.",
+    });
+
+    // Then
+    expect(store.getState().streamState).toMatchObject({
+      status: "streaming",
+      activeTaskId: "task-1",
+      assistantText: "Result Checking exposure.",
+    });
+  });
+
+  it("retries a failed skill launch with the same skill attached", async () => {
+    // Given
+    const store = makeStore();
+    const skill = getSkillById("contextual-fix");
+    if (!skill) throw new Error("Expected skill definition");
+    sendMessageMock.mockResolvedValueOnce({ error: "Agent unavailable" });
+    await store.getState().submitMessage(skill.name, undefined, skill);
+    // The failed run is no longer active, so the skill is not "active" either.
+    expect(selectLighthouseChatActiveSkill(store.getState())).toBeUndefined();
+
+    // When
+    await store.getState().retryLastMessage();
+
+    // Then
+    expect(sendMessageMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({ skillId: "contextual-fix" }),
     );
   });
 
@@ -184,9 +255,9 @@ describe("createLighthouseChatStore", () => {
   it("retries with the original context snapshot", async () => {
     // Given
     const store = makeStore();
-    const context = findingsContext();
+    const context = focusedFindingsContext();
     await store.getState().submitMessage("Prioritize findings", context);
-    context.items[0].label = "Mutated after send";
+    context.items[1].label = "Mutated after send";
     eventSources[0].fail(2 /* EventSource.CLOSED */);
     sendMessageMock.mockResolvedValueOnce({
       data: {
@@ -201,55 +272,10 @@ describe("createLighthouseChatStore", () => {
     expect(sendMessageMock).toHaveBeenNthCalledWith(2, {
       sessionId: "session-1",
       displayText: "Prioritize findings",
-      context: findingsContext(),
+      context: focusedFindingsContext(),
       provider: "openai",
       model: "gpt-5.1",
     });
-  });
-
-  it("retries with the original snapshot even when current context was disabled", async () => {
-    const store = makeStore();
-    const context = findingsContext();
-    await store.getState().submitMessage("Prioritize findings", context);
-    eventSources[0].fail(2 /* EventSource.CLOSED */);
-    store.getState().disableContext();
-
-    await store.getState().retryLastMessage();
-
-    expect(sendMessageMock).toHaveBeenNthCalledWith(2, {
-      sessionId: "session-1",
-      displayText: "Prioritize findings",
-      context,
-      provider: "openai",
-      model: "gpt-5.1",
-    });
-    expect(store.getState().isContextEnabled).toBe(false);
-  });
-
-  it("keeps context disabled for the conversation and restores it for a new chat", async () => {
-    // Given
-    const store = makeStore();
-    store.getState().disableContext();
-
-    // When
-    await store
-      .getState()
-      .submitMessage("Question without context", findingsContext());
-
-    // Then
-    expect(store.getState().isContextEnabled).toBe(false);
-    expect(sendMessageMock).toHaveBeenCalledWith({
-      sessionId: "session-1",
-      displayText: "Question without context",
-      provider: "openai",
-      model: "gpt-5.1",
-    });
-
-    // When
-    store.getState().resetToNewChat();
-
-    // Then
-    expect(store.getState().isContextEnabled).toBe(true);
   });
 
   it("degrades oversized context before sending without blocking the message", async () => {
@@ -266,7 +292,7 @@ describe("createLighthouseChatStore", () => {
         displayText: "Prioritize findings",
         context: {
           ...context,
-          items: context.items.slice(0, 3),
+          items: context.items.slice(0, 6),
         },
       }),
     );
@@ -690,6 +716,25 @@ function findingsContext(): LighthouseContextEnvelope {
         scopeKey: "findings:/findings",
         label: "Findings",
         path: "/findings",
+      },
+    ],
+  };
+}
+
+function focusedFindingsContext(): LighthouseContextEnvelope {
+  const context = findingsContext();
+  return {
+    ...context,
+    items: [
+      ...context.items,
+      {
+        kind: "finding",
+        id: "finding-1",
+        source: "focused",
+        scopeKey: "findings:/findings",
+        label: "Focused finding",
+        findingId: "finding-1",
+        checkId: "aws_s3_bucket_public_access",
       },
     ],
   };
