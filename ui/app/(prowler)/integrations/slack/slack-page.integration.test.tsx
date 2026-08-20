@@ -723,9 +723,10 @@ describe("a credential Slack no longer accepts", () => {
     await harness.mount();
 
     // Then — what was read stays on offer, as it does for any short list.
+    // Alphabetically, as the picker sorts what it offers.
     expect(await harness.channelOptions()).toEqual([
-      SLACK_PUBLIC_CHANNEL.name,
       SLACK_SECOND_PUBLIC_CHANNEL.name,
+      SLACK_PUBLIC_CHANNEL.name,
     ]);
 
     // And — the dead credential is reported all the same: a picker that still
