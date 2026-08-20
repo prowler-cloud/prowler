@@ -28,12 +28,13 @@ class Test_functiongraph_function_vpc_configured:
 
             functiongraph_client.functions = [
                 FunctionGraphFunction(
-                    function_id="fg-001",
+                    id="fg-001",
                     name="function-secure",
+                    arn="urn:fss:la-south-2:project:function:default:function-secure:latest",
                     runtime="Python3.9",
                     timeout=30,
                     memory_size=128,
-                    func_vpc_id="vpc-12345",
+                    vpc_id="vpc-12345",
                     region="la-south-2",
                 ),
             ]
@@ -45,6 +46,8 @@ class Test_functiongraph_function_vpc_configured:
             assert len(results) == 1
             assert results[0].status == "PASS"
             assert results[0].resource_id == "fg-001"
+            assert results[0].resource_name == "function-secure"
+            assert results[0].resource_arn.endswith("function-secure:latest")
             assert "configured within VPC" in results[0].status_extended
 
     def test_functiongraph_vpc_configured_fail(self):
@@ -69,12 +72,13 @@ class Test_functiongraph_function_vpc_configured:
 
             functiongraph_client.functions = [
                 FunctionGraphFunction(
-                    function_id="fg-002",
+                    id="fg-002",
                     name="function-insecure",
+                    arn="urn:fss:la-south-2:project:function:default:function-insecure:latest",
                     runtime="Python3.9",
                     timeout=30,
                     memory_size=128,
-                    func_vpc_id=None,
+                    vpc_id=None,
                     region="la-south-2",
                 ),
             ]
@@ -86,7 +90,7 @@ class Test_functiongraph_function_vpc_configured:
             assert len(results) == 1
             assert results[0].status == "FAIL"
             assert results[0].resource_id == "fg-002"
-            assert "not associated with a VPC" in results[0].status_extended
+            assert "not configured within a VPC" in results[0].status_extended
 
     def test_functiongraph_vpc_configured_mixed(self):
         functiongraph_client = mock.MagicMock()
@@ -110,21 +114,23 @@ class Test_functiongraph_function_vpc_configured:
 
             functiongraph_client.functions = [
                 FunctionGraphFunction(
-                    function_id="fg-001",
+                    id="fg-001",
                     name="function-secure",
+                    arn="urn:fss:la-south-2:project:function:default:function-secure:latest",
                     runtime="Python3.9",
                     timeout=30,
                     memory_size=128,
-                    func_vpc_id="vpc-12345",
+                    vpc_id="vpc-12345",
                     region="la-south-2",
                 ),
                 FunctionGraphFunction(
-                    function_id="fg-002",
+                    id="fg-002",
                     name="function-insecure",
+                    arn="urn:fss:la-south-2:project:function:default:function-insecure:latest",
                     runtime="Python3.9",
                     timeout=30,
                     memory_size=128,
-                    func_vpc_id=None,
+                    vpc_id=None,
                     region="la-south-2",
                 ),
             ]
