@@ -682,7 +682,7 @@ describe("a credential Slack no longer accepts", () => {
     expect(`${consentScreen.origin}${consentScreen.pathname}`).toBe(
       "https://slack.com/oauth/v2/authorize",
     );
-    expect(harness.offersReconnect()).toBe(true);
+    expect(await harness.waitForReconnect()).toBe(true);
   }, 30000);
 
   it("offers the same recovery when the channel listing is what finds the credential dead", async () => {
@@ -701,7 +701,7 @@ describe("a credential Slack no longer accepts", () => {
     const notice = await harness.revokedCredentialNotice();
     expect(notice).toMatch(/Prowler's Slack credential has expired/);
     expect(notice).toMatch(/Connect the workspace again to restore access/);
-    expect(harness.offersReconnect()).toBe(true);
+    expect(await harness.waitForReconnect()).toBe(true);
 
     // And — the picker says the same, in the same words: `detail` names the raw
     // reason, and it is `code` the UI answered from.
@@ -733,7 +733,7 @@ describe("a credential Slack no longer accepts", () => {
     // works is no reason to leave the user without the one fix there is.
     const notice = await harness.revokedCredentialNotice();
     expect(notice).toMatch(/Prowler's Slack credential has expired/);
-    expect(harness.offersReconnect()).toBe(true);
+    expect(await harness.waitForReconnect()).toBe(true);
     expect(await harness.connectionBadge()).toBe("Disconnected");
   }, 60000);
 
@@ -759,7 +759,7 @@ describe("a credential Slack no longer accepts", () => {
     expect(await harness.revokedCredentialNotice()).toMatch(
       /Prowler's Slack credential has expired/,
     );
-    expect(harness.offersReconnect()).toBe(true);
+    expect(await harness.waitForReconnect()).toBe(true);
     expect(await harness.connectionBadge()).toBe("Disconnected");
   }, 60000);
 

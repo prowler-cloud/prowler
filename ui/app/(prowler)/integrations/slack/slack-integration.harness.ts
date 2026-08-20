@@ -799,6 +799,16 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     return this.reconnectLink() !== null;
   }
 
+  /**
+   * Waits, unlike `offersReconnect`: the affordance needs a consent URL the
+   * page mints only once it knows it needs one, so it lands a beat after the
+   * notice that explains it.
+   */
+  async waitForReconnect(): Promise<boolean> {
+    await this.waitFor(() => this.reconnectLink(), 10000, "the reconnect link");
+    return true;
+  }
+
   /** The consent URL the reconnect affordance points at, once it is offered. */
   async reconnectUrl(): Promise<string> {
     const link = await this.waitFor(
