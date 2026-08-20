@@ -14,16 +14,16 @@ class Kubelet(KubernetesService):
         self.kubelet_config_maps = self._get_kubelet_config_maps()
 
     def _get_kubelet_config_maps(self):
+        kubelet_config_maps = []
         try:
-            kubelet_config_maps = []
             for cm in self.client.config_maps.values():
                 if cm.name.startswith("kubelet-config"):
                     cm.kubelet_args = yaml.safe_load(cm.data.get("kubelet", ""))
                     if not cm.kubelet_args:
                         cm.kubelet_args = []
                     kubelet_config_maps.append(cm)
-            return kubelet_config_maps
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+        return kubelet_config_maps

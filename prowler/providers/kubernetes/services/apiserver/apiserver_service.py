@@ -12,15 +12,15 @@ class APIServer(KubernetesService):
         self.apiserver_pods = self._get_apiserver_pods()
 
     def _get_apiserver_pods(self):
+        apiserver_pods = []
         try:
-            apiserver_pods = []
             for pod in self.client.pods.values():
                 if pod.namespace == "kube-system" and pod.name.startswith(
                     "kube-apiserver"
                 ):
                     apiserver_pods.append(pod)
-            return apiserver_pods
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+        return apiserver_pods
