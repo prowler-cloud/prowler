@@ -75,9 +75,18 @@ const configuration = (workspace: SlackInstallFixture["workspace"]) => ({
   team_id: workspace.teamId,
   team_name: workspace.teamName,
   bot_user_id: workspace.botUserId,
-  // The API omits these keys until a channel is chosen, never sending nulls.
-  ...(workspace.channelId ? { channel_id: workspace.channelId } : {}),
-  ...(workspace.channelName ? { channel_name: workspace.channelName } : {}),
+  // The API omits the key until channels are authorized, never sending an
+  // empty array. TODO(Josema): D3 working assumption — name and shape of the
+  // stored set (supersedes `channel_id`/`channel_name`).
+  ...(workspace.authorizedChannels?.length
+    ? {
+        channels: workspace.authorizedChannels.map((channel) => ({
+          id: channel.id,
+          name: channel.name,
+          is_private: channel.isPrivate,
+        })),
+      }
+    : {}),
 });
 
 const integrationResource = (install: SlackInstallFixture) => ({
@@ -237,8 +246,9 @@ export const handlersForSlack = (fx: SlackFixture) => {
     http.post<{ id: string }>(
       `${API}/integrations/:id/connection`,
       ({ params }) => {
-        // The check posts to the channel, so the API refuses until one exists.
-        if (!install?.workspace.channelId) {
+        // The check posts to the authorized channels, so the API refuses while
+        // the set is empty.
+        if (!install?.workspace.authorizedChannels?.length) {
           return HttpResponse.json(errorBody(SLACK_NO_CHANNEL_DETAIL, 400), {
             status: 400,
           });
@@ -256,13 +266,19 @@ export const handlersForSlack = (fx: SlackFixture) => {
     ),
 
     http.get<{ taskId: string }>(`${API}/tasks/:taskId`, ({ params }) => {
-      const { connected, error } = fx.connection;
+      const { connected, error, failedChannelName } = fx.connection;
       if (install && params.taskId.startsWith(CONNECTION_TASK_PREFIX)) {
         install.connected = connected;
         install.connectionLastCheckedAt = TS;
       }
       return HttpResponse.json(
-        taskResource(params.taskId, "completed", { connected, error }),
+        // TODO(Josema): D3/D7 working assumption — the result names the
+        // channel a channel-level failure is about.
+        taskResource(params.taskId, "completed", {
+          connected,
+          error,
+          channel: failedChannelName ?? null,
+        }),
       );
     }),
 
@@ -307,8 +323,9 @@ export const handlersForSlack = (fx: SlackFixture) => {
     ),
 
     /**
-     * The generic PATCH. The UI submits only `channel_id`; the name is derived
-     * from it here, as the API derives it from Slack (design D6).
+     * The generic PATCH. The UI submits only `channel_ids`; the names are
+     * derived from them here, as the API derives them from Slack.
+     * TODO(Josema): D3 working assumption — the write property's name.
      */
     http.patch(`${API}/integrations/:id`, async ({ request }) => {
       const body = (await request.json().catch(() => null)) as {
@@ -316,10 +333,14 @@ export const handlersForSlack = (fx: SlackFixture) => {
       } | null;
       const attributes = body?.data?.attributes ?? {};
       const configurationPatch = attributes.configuration as
-        | { channel_id?: string }
+        | { channel_ids?: string[] }
         | undefined;
-      const channelId = configurationPatch?.channel_id;
-      const channel = fx.channels.find((c) => c.id === channelId);
+      const channelIds = configurationPatch?.channel_ids ?? [];
+      const matched = channelIds
+        .map((channelId) =>
+          fx.channels.find((channel) => channel.id === channelId),
+        )
+        .filter((channel) => channel !== undefined);
 
       if (!install) {
         return HttpResponse.json(errorBody("Not found.", 404), { status: 404 });
@@ -338,17 +359,19 @@ export const handlersForSlack = (fx: SlackFixture) => {
           status: 400,
         });
       }
-      // Checked before the id lookup: the picker did offer this channel, and
-      // Slack refused it anyway when the API validated it.
+      // Checked before the id lookup: the picker did offer these channels, and
+      // Slack refused one anyway when the API validated the set.
       if (fx.channelSaveRefusal) return refuse(fx.channelSaveRefusal);
-      if (!channel) {
+      // One unknown id refuses the whole save: the set is validated together.
+      if (matched.length !== channelIds.length) {
         return HttpResponse.json(errorBody(SLACK_UNKNOWN_CHANNEL_DETAIL, 400), {
           status: 400,
         });
       }
 
-      install.workspace.channelId = channel.id;
-      install.workspace.channelName = channel.name;
+      install.workspace.authorizedChannels = matched.map((channel) => ({
+        ...channel,
+      }));
       return HttpResponse.json({ data: integrationResource(install) });
     }),
 

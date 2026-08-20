@@ -18,6 +18,8 @@ type TestConnectionResponse = {
   taskId?: string;
   data?: TaskStartResponse;
   error?: string;
+  /** The channel a channel-level failure named, when the task named one. */
+  failedChannel?: string | null;
 };
 
 export const getIntegrations = async (searchParams?: URLSearchParams) => {
@@ -265,7 +267,13 @@ export const deleteIntegration = async (
   }
 };
 
-type ConnectionTaskResult = { connected?: boolean; error?: string | null };
+type ConnectionTaskResult = {
+  connected?: boolean;
+  error?: string | null;
+  // TODO(Josema): D3/D7 working assumption — a channel-level failure names
+  // the channel Slack refused.
+  channel?: string | null;
+};
 
 type PollConnectionResult =
   | {
@@ -358,6 +366,7 @@ export const testIntegrationConnection = async (
           return {
             success: false,
             error: pollResult.message || "Connection test failed.",
+            failedChannel: pollResult.result?.channel ?? null,
           };
         }
       } else {

@@ -422,26 +422,27 @@ export const getSlackChannels = async (
   }
 };
 
-interface SlackDefaultChannelSuccess {
+interface SlackAuthorizedChannelsSuccess {
   integration: IntegrationProps;
 }
 
-export type SlackDefaultChannelResult =
-  | SlackDefaultChannelSuccess
+export type SlackAuthorizedChannelsResult =
+  | SlackAuthorizedChannelsSuccess
   | SlackActionError;
 
 /**
- * Record the channel Prowler posts to, on the generic integration endpoint.
+ * Record the set of channels Prowler is authorized to post to, on the generic
+ * integration endpoint.
  *
  * A Slack action despite the generic `PATCH`: `channel_not_found` and
  * `not_in_channel` carry the same `detail`, so only `code` tells them apart,
- * and the generic action reads `detail` alone. Only `channel_id` travels — the
- * API derives `channel_name` server-side (design D6).
+ * and the generic action reads `detail` alone. Only ids travel — the API
+ * derives each name server-side.
  */
-export const setSlackDefaultChannel = async (
+export const setSlackAuthorizedChannels = async (
   integrationId: string,
-  channelId: string,
-): Promise<SlackDefaultChannelResult> => {
+  channelIds: string[],
+): Promise<SlackAuthorizedChannelsResult> => {
   const id = parseIntegrationId(integrationId);
   if (!id) return { error: SLACK_GENERIC_ERROR_MESSAGE };
 
@@ -460,7 +461,9 @@ export const setSlackDefaultChannel = async (
           // serializer refuses whatever it does not accept, so naming the
           // integration's own (immutable) type is answered with a 400,
           // "Invalid fields: {'integration_type'}".
-          attributes: { configuration: { channel_id: channelId } },
+          // TODO(Josema): D3 working assumption — the write property's name
+          // (`channel_ids`), keeping the ids-only-write principle.
+          attributes: { configuration: { channel_ids: channelIds } },
         },
       }),
     });
@@ -470,18 +473,18 @@ export const setSlackDefaultChannel = async (
       // this `catch`.
       return await refusalFrom(
         response,
-        `Unable to save the destination channel: ${response.statusText}`,
+        `Unable to save the destination channels: ${response.statusText}`,
       );
     }
 
     const body = await response.json().catch(() => null);
 
     // Before the guard and on both paths: the save happened, so a cache still
-    // holding the previous channel would keep showing it.
+    // holding the previous channels would keep showing them.
     revalidatePath("/integrations");
     revalidatePath("/integrations/slack");
 
-    // Guarded as deep as the caller reads: it names the saved channel from
+    // Guarded as deep as the caller reads: it names the saved channels from
     // `attributes.configuration`.
     if (!body?.data?.attributes?.configuration) {
       return { error: SLACK_UNREADABLE_RESULT_MESSAGE };

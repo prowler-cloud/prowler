@@ -8,11 +8,11 @@ export interface SlackWorkspaceFixture {
   teamName: string;
   botUserId: string;
   /**
-   * Absent from the serialized configuration until a channel is chosen: the API
-   * omits the keys rather than sending nulls.
+   * Absent from the serialized configuration until channels are authorized:
+   * the API omits the key rather than sending an empty array.
+   * TODO(Josema): D3 working assumption — stored-shape name and pluralization.
    */
-  channelId?: string;
-  channelName?: string;
+  authorizedChannels?: SlackChannelFixture[];
 }
 
 export interface SlackInstallFixture {
@@ -46,6 +46,13 @@ export type SlackExchangeOutcome =
 export interface SlackConnectionFixture {
   connected: boolean;
   error: string | null;
+  /**
+   * The channel a channel-level failure is about, named by the task result so
+   * the user hears which one Slack refused (design D7). Absent for
+   * credential-level failures, which are about the workspace as a whole.
+   * TODO(Josema): D3 working assumption — how the result names the channel.
+   */
+  failedChannelName?: string | null;
 }
 
 /** A channel the listing endpoint offers for the picker. */
@@ -351,12 +358,6 @@ export const SLACK_CHANNELS: SlackChannelFixture[] = [
 /** Two channels per page, so `SLACK_CHANNELS` spans exactly two pages. */
 export const SLACK_CHANNELS_PAGE_SIZE = 2;
 
-/**
- * The first channel the picker offers, so an install seeded with it always
- * points at a channel the listing really has.
- */
-export const SLACK_DEFAULT_CHANNEL = SLACK_PUBLIC_CHANNEL;
-
 const PROWLER_HQ: SlackWorkspaceFixture = {
   teamId: "T01PROWLER",
   teamName: "Prowler HQ",
@@ -404,27 +405,27 @@ export const connectedSlackFixture = (
   });
 
 const configuredInstall = (
-  channel: SlackChannelFixture = SLACK_DEFAULT_CHANNEL,
+  channels: SlackChannelFixture[] = [SLACK_PUBLIC_CHANNEL],
 ): SlackInstallFixture => ({
   id: SLACK_INTEGRATION_ID,
   connected: true,
   connectionLastCheckedAt: "2026-08-10T09:30:00Z",
   workspace: {
     ...PROWLER_HQ,
-    channelId: channel.id,
-    channelName: channel.name,
+    authorizedChannels: channels.map((channel) => ({ ...channel })),
   },
 });
 
 /**
- * The same tenant with a destination channel already on record: the state a
- * second visit starts from.
+ * The same tenant with destination channels already authorized: the state a
+ * second visit starts from. A tenant migrated from the single-channel model
+ * arrives here too — its recorded default becomes the set's sole member.
  */
-export const slackFixtureWithDefaultChannel = (
-  channel: SlackChannelFixture = SLACK_PUBLIC_CHANNEL,
+export const slackFixtureWithAuthorizedChannels = (
+  channels: SlackChannelFixture[] = [SLACK_PUBLIC_CHANNEL],
   overrides: Partial<SlackFixture> = {},
 ): SlackFixture =>
-  connectedSlackFixture({ install: configuredInstall(channel), ...overrides });
+  connectedSlackFixture({ install: configuredInstall(channels), ...overrides });
 
 /**
  * The same finished setup, with a check time no parser can read: a zero date
@@ -446,20 +447,20 @@ export const unreadableCheckTimeSlackFixture = (): SlackFixture =>
 export const partiallyReadSlackFixture = (
   overrides: Partial<SlackFixture> = {},
 ): SlackFixture =>
-  slackFixtureWithDefaultChannel(SLACK_PUBLIC_CHANNEL, {
+  slackFixtureWithAuthorizedChannels([SLACK_PUBLIC_CHANNEL], {
     channelsRefusal: SLACK_RATE_LIMITED_REFUSAL,
     channelsRefusalFromCursor: SLACK_CHANNELS_PAGE_SIZE,
     ...overrides,
   });
 
 /**
- * A workspace connected *and* a channel on record. Anything the API refuses
- * until a channel exists (the connection check) needs this fixture.
+ * A workspace connected *and* channels authorized. Anything the API refuses
+ * while the set is empty (the connection check) needs this fixture.
  */
 export const configuredSlackFixture = (
   overrides: Partial<SlackFixture> = {},
 ): SlackFixture =>
-  slackFixtureWithDefaultChannel(SLACK_DEFAULT_CHANNEL, overrides);
+  slackFixtureWithAuthorizedChannels([SLACK_PUBLIC_CHANNEL], overrides);
 
 /**
  * A connected tenant whose disconnect removes the row but cannot revoke at
