@@ -1,11 +1,26 @@
 from unittest import mock
 
+from prowler.lib.check.models import CheckMetadata
 from tests.providers.huaweicloud.huaweicloud_fixtures import (
     set_mocked_huaweicloud_provider,
 )
 
 
 class Test_functiongraph_function_vpc_configured:
+    def test_metadata_describes_vpc_attachment_accurately(self):
+        metadata = CheckMetadata.parse_file(
+            "prowler/providers/huaweicloud/services/functiongraph/"
+            "functiongraph_function_vpc_configured/"
+            "functiongraph_function_vpc_configured.metadata.json"
+        )
+
+        assert metadata.ResourceIdTemplate == ""
+        assert "direct internet access" not in metadata.Risk
+        assert metadata.AdditionalURLs == [
+            "https://support.huaweicloud.com/intl/en-us/api-functiongraph/functiongraph_06_0111.html"
+        ]
+        assert metadata.Remediation.Code.Other
+
     def test_functiongraph_vpc_configured_pass(self):
         functiongraph_client = mock.MagicMock()
 
