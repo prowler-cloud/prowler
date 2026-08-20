@@ -66,6 +66,35 @@ Parameters:
     Type: String
     Default: ""
 
+  # Real-Time Detection Parameters
+  EnableRealtimeDetection:
+    Description: |
+      Enable real-time detection. Forwards the tracked CloudTrail management events to Prowler Cloud
+      through an EventBridge API destination, so a change is scanned within minutes instead of waiting
+      for the next scheduled scan. Adds no new read permissions to the ProwlerScan role.
+    Type: String
+    Default: false
+    AllowedValues:
+      - true
+      - false
+
+  ProwlerWebhookUrl:
+    Description: |
+      Prowler Cloud endpoint that receives the events. Defaults to the Prowler Cloud ingest endpoint;
+      change it only for a self-hosted deployment or for testing. Required if EnableRealtimeDetection is true.
+    Type: String
+    Default: "https://api.prowler.com/api/v1/realtime/events"
+    AllowedPattern: '^(https://.+)?$'
+    ConstraintDescription: "ProwlerWebhookUrl must be an HTTPS URL."
+
+  ProwlerApiKey:
+    Description: |
+      Prowler Cloud API key used to authenticate the events sent to the endpoint above.
+      Shown once during Prowler Cloud onboarding. Required if EnableRealtimeDetection is true.
+    Type: String
+    Default: ""
+    NoEcho: true
+
   # Deployment Control Parameters
   DeployStackSet:
     Description: |
@@ -134,6 +163,7 @@ Conditions:
   DeployStackSetEnabled: !Equals [!Ref DeployStackSet, true]
   DeployLocalRoleEnabled: !Equals [!Ref DeployLocalRole, true]
   UseDelegatedAdmin: !Equals [!Ref DeployFromDelegatedAdmin, true]
+  RealtimeDetectionEnabled: !Equals [!Ref EnableRealtimeDetection, true]
 
 Rules:
   S3IntegrationRequiresParams:
@@ -143,6 +173,14 @@ Rules:
         AssertDescription: "S3IntegrationBucketName is required when EnableS3Integration is true."
       - Assert: !Not [!Equals [!Ref S3IntegrationBucketAccountId, ""]]
         AssertDescription: "S3IntegrationBucketAccountId is required when EnableS3Integration is true."
+
+  RealtimeDetectionRequiresParams:
+    RuleCondition: !Equals [!Ref EnableRealtimeDetection, "true"]
+    Assertions:
+      - Assert: !Not [!Equals [!Ref ProwlerWebhookUrl, ""]]
+        AssertDescription: "ProwlerWebhookUrl is required when EnableRealtimeDetection is true."
+      - Assert: !Not [!Equals [!Ref ProwlerApiKey, ""]]
+        AssertDescription: "ProwlerApiKey is required when EnableRealtimeDetection is true."
 
 Resources:
   # Local ProwlerScan Role (deployed in this account)
@@ -587,6 +625,351 @@ Resources:
             Export:
               Name: !Sub "${AWS::StackName}-ProwlerScanRoleArn"
 
+  # Real-Time Detection: forwards the tracked CloudTrail events to Prowler Cloud
+  ProwlerRealtimeConnection:
+    Type: AWS::Events::Connection
+    Condition: RealtimeDetectionEnabled
+    Properties:
+      Name: ProwlerRealtimeDetection
+      Description: Holds the Prowler Cloud API key used to authenticate forwarded events
+      AuthorizationType: API_KEY
+      AuthParameters:
+        ApiKeyAuthParameters:
+          ApiKeyName: x-api-key
+          ApiKeyValue: !Ref ProwlerApiKey
+
+  ProwlerRealtimeApiDestination:
+    Type: AWS::Events::ApiDestination
+    Condition: RealtimeDetectionEnabled
+    Properties:
+      Name: ProwlerRealtimeDetection
+      Description: Prowler Cloud endpoint that receives the forwarded CloudTrail events
+      ConnectionArn: !GetAtt ProwlerRealtimeConnection.Arn
+      InvocationEndpoint: !Ref ProwlerWebhookUrl
+      HttpMethod: POST
+
+  ProwlerRealtimeInvokeRole:
+    Type: AWS::IAM::Role
+    Condition: RealtimeDetectionEnabled
+    Properties:
+      RoleName: ProwlerRealtimeInvoke
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: events.amazonaws.com
+            Action: "sts:AssumeRole"
+            Condition:
+              StringEquals:
+                "aws:SourceAccount": !Ref AWS::AccountId
+              ArnLike:
+                # Built from the rule names to avoid a circular dependency with the rules
+                "aws:SourceArn":
+                  - !Sub "arn:${AWS::Partition}:events:${AWS::Region}:${AWS::AccountId}:rule/ProwlerRealtimeDetection"
+                  - !Sub "arn:${AWS::Partition}:events:${AWS::Region}:${AWS::AccountId}:rule/ProwlerRealtimeDetectionHello"
+      Policies:
+        - PolicyName: InvokeApiDestination
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: "events:InvokeApiDestination"
+                Resource: !GetAtt ProwlerRealtimeApiDestination.Arn
+      Tags:
+        - Key: "Service"
+          Value: "https://prowler.com"
+        - Key: "Support"
+          Value: "support@prowler.com"
+        - Key: "CloudFormation"
+          Value: "true"
+        - Key: "Name"
+          Value: "ProwlerRealtimeInvoke"
+
+  # Captures the events EventBridge could not deliver, so a delivery failure is auditable
+  ProwlerRealtimeDlq:
+    Type: AWS::SQS::Queue
+    Condition: RealtimeDetectionEnabled
+    Properties:
+      QueueName: ProwlerRealtimeDetectionDLQ
+      MessageRetentionPeriod: 1209600
+      SqsManagedSseEnabled: true
+      Tags:
+        - Key: "Service"
+          Value: "https://prowler.com"
+        - Key: "Support"
+          Value: "support@prowler.com"
+        - Key: "CloudFormation"
+          Value: "true"
+        - Key: "Name"
+          Value: "ProwlerRealtimeDetectionDLQ"
+
+  # EventBridge writes to the DLQ as a service, not through the invoke role, so it needs a queue policy
+  ProwlerRealtimeDlqPolicy:
+    Type: AWS::SQS::QueuePolicy
+    Condition: RealtimeDetectionEnabled
+    Properties:
+      Queues:
+        - !Ref ProwlerRealtimeDlq
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: AllowEventBridgeDeadLetterDelivery
+            Effect: Allow
+            Principal:
+              Service: events.amazonaws.com
+            Action: "sqs:SendMessage"
+            Resource: !GetAtt ProwlerRealtimeDlq.Arn
+            Condition:
+              ArnEquals:
+                # Built from the rule names to avoid a circular dependency with the rules
+                "aws:SourceArn":
+                  - !Sub "arn:${AWS::Partition}:events:${AWS::Region}:${AWS::AccountId}:rule/ProwlerRealtimeDetection"
+                  - !Sub "arn:${AWS::Partition}:events:${AWS::Region}:${AWS::AccountId}:rule/ProwlerRealtimeDetectionHello"
+
+  ProwlerRealtimeRule:
+    Type: AWS::Events::Rule
+    Condition: RealtimeDetectionEnabled
+    Properties:
+      Name: ProwlerRealtimeDetection
+      Description: Forwards the CloudTrail management events tracked by Prowler real-time detection to Prowler Cloud
+      State: ENABLED
+      EventPattern:
+        # PutEvents rejects the reserved aws. prefix, so this keeps a caller in the
+        # account from forging a CloudTrail-shaped event
+        source:
+          - prefix: "aws."
+        detail-type:
+          - "AWS API Call via CloudTrail"
+        detail:
+          eventSource:
+            - ec2.amazonaws.com
+            - rds.amazonaws.com
+            - iam.amazonaws.com
+            - s3.amazonaws.com
+            - s3-control.amazonaws.com
+            - cloudtrail.amazonaws.com
+            - config.amazonaws.com
+            - guardduty.amazonaws.com
+          eventName:
+            # Security group opened to 0.0.0.0/0
+            - AuthorizeSecurityGroupIngress
+            - ModifySecurityGroupRules
+            # RDS instance made publicly accessible
+            - CreateDBInstance
+            - ModifyDBInstance
+            # Administrator privileges attached to a principal
+            - AttachUserPolicy
+            - AttachRolePolicy
+            - AttachGroupPolicy
+            - PutUserPolicy
+            - PutRolePolicy
+            # S3 bucket policy or ACL grants public access
+            - PutBucketPolicy
+            - PutBucketAcl
+            # S3 Block Public Access weakened
+            - PutAccountPublicAccessBlock
+            - DeleteAccountPublicAccessBlock
+            - PutBucketPublicAccessBlock
+            - DeleteBucketPublicAccessBlock
+            # CloudTrail logging stopped or trail deleted
+            - StopLogging
+            - DeleteTrail
+            - UpdateTrail
+            # AWS Config recorder stopped or deleted
+            - StopConfigurationRecorder
+            - DeleteConfigurationRecorder
+            # GuardDuty detector disabled or deleted
+            - UpdateDetector
+            - DeleteDetector
+      Targets:
+        - Id: ProwlerCloud
+          Arn: !GetAtt ProwlerRealtimeApiDestination.Arn
+          RoleArn: !GetAtt ProwlerRealtimeInvokeRole.Arn
+          # Retries cover an endpoint outage; whatever outlives the window is dead-lettered
+          RetryPolicy:
+            MaximumEventAgeInSeconds: 86400
+            MaximumRetryAttempts: 185
+          DeadLetterConfig:
+            Arn: !GetAtt ProwlerRealtimeDlq.Arn
+      Tags:
+        - Key: "Service"
+          Value: "https://prowler.com"
+        - Key: "Support"
+          Value: "support@prowler.com"
+        - Key: "CloudFormation"
+          Value: "true"
+        - Key: "Name"
+          Value: "ProwlerRealtimeDetection"
+
+  # Carries the synthetic hello event, which no CloudTrail pattern would match
+  ProwlerRealtimeHelloRule:
+    Type: AWS::Events::Rule
+    Condition: RealtimeDetectionEnabled
+    Properties:
+      Name: ProwlerRealtimeDetectionHello
+      Description: Forwards the Prowler real-time detection hello event used to verify the connection
+      State: ENABLED
+      EventPattern:
+        source:
+          - prowler.simulation
+        detail-type:
+          - test_connection
+      Targets:
+        - Id: ProwlerCloud
+          Arn: !GetAtt ProwlerRealtimeApiDestination.Arn
+          RoleArn: !GetAtt ProwlerRealtimeInvokeRole.Arn
+          RetryPolicy:
+            MaximumEventAgeInSeconds: 86400
+            MaximumRetryAttempts: 185
+          DeadLetterConfig:
+            Arn: !GetAtt ProwlerRealtimeDlq.Arn
+      Tags:
+        - Key: "Service"
+          Value: "https://prowler.com"
+        - Key: "Support"
+          Value: "support@prowler.com"
+        - Key: "CloudFormation"
+          Value: "true"
+        - Key: "Name"
+          Value: "ProwlerRealtimeDetectionHello"
+
+  # Explicit log group so the function does not leave one with unlimited retention behind
+  ProwlerRealtimeHelloLogGroup:
+    Type: AWS::Logs::LogGroup
+    Condition: RealtimeDetectionEnabled
+    Properties:
+      LogGroupName: /aws/lambda/ProwlerRealtimeHello
+      RetentionInDays: 30
+
+  ProwlerRealtimeHelloRole:
+    Type: AWS::IAM::Role
+    Condition: RealtimeDetectionEnabled
+    Properties:
+      RoleName: ProwlerRealtimeHello
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: "sts:AssumeRole"
+      Policies:
+        - PolicyName: PutHelloEvent
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: "events:PutEvents"
+                Resource: !Sub "arn:${AWS::Partition}:events:${AWS::Region}:${AWS::AccountId}:event-bus/default"
+              - Effect: Allow
+                Action:
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+                Resource: !GetAtt ProwlerRealtimeHelloLogGroup.Arn
+      Tags:
+        - Key: "Service"
+          Value: "https://prowler.com"
+        - Key: "Support"
+          Value: "support@prowler.com"
+        - Key: "CloudFormation"
+          Value: "true"
+        - Key: "Name"
+          Value: "ProwlerRealtimeHello"
+
+  ProwlerRealtimeHelloFunction:
+    Type: AWS::Lambda::Function
+    Condition: RealtimeDetectionEnabled
+    Properties:
+      FunctionName: ProwlerRealtimeHello
+      Description: Emits the Prowler real-time detection hello event when the stack is created or updated
+      Runtime: python3.13
+      Handler: index.handler
+      Timeout: 30
+      Role: !GetAtt ProwlerRealtimeHelloRole.Arn
+      Code:
+        ZipFile: |
+          import json
+          import urllib.request
+
+          import boto3
+
+
+          def respond(event, context, data):
+              """Answer CloudFormation. Always SUCCESS: see handler()."""
+              body = json.dumps(
+                  {
+                      "Status": "SUCCESS",
+                      "Reason": f"See CloudWatch log stream {context.log_stream_name}",
+                      "PhysicalResourceId": "ProwlerRealtimeHelloEvent",
+                      "StackId": event["StackId"],
+                      "RequestId": event["RequestId"],
+                      "LogicalResourceId": event["LogicalResourceId"],
+                      "Data": data,
+                  }
+              ).encode()
+              request = urllib.request.Request(
+                  event["ResponseURL"],
+                  data=body,
+                  method="PUT",
+                  headers={"content-type": "", "content-length": str(len(body))},
+              )
+              for attempt in range(3):
+                  try:
+                      urllib.request.urlopen(request, timeout=10)
+                      return
+                  except Exception as error:  # noqa: BLE001
+                      print(f"response attempt {attempt + 1} failed: {error}")
+
+
+          def handler(event, context):
+              """Publish the hello event, then always report SUCCESS.
+
+              A failed verification must never roll back the scan role, so any
+              error is reported in the response data instead of failing the stack.
+              """
+              data = {"Status": "Skipped"}
+              try:
+                  if event["RequestType"] in ("Create", "Update"):
+                      _, _, _, region, account = context.invoked_function_arn.split(":")[:5]
+                      entry = boto3.client("events").put_events(
+                          Entries=[
+                              {
+                                  "Source": "prowler.simulation",
+                                  "DetailType": "test_connection",
+                                  "Detail": json.dumps(
+                                      {
+                                          "account_id": account,
+                                          "region": region,
+                                          "stack_id": event["StackId"],
+                                          "request_type": event["RequestType"],
+                                      }
+                                  ),
+                                  "EventBusName": "default",
+                              }
+                          ]
+                      )["Entries"][0]
+                      if entry.get("ErrorCode"):
+                          data = {"Status": "Failed", "Error": entry["ErrorCode"]}
+                      else:
+                          data = {"Status": "Published", "EventId": entry["EventId"]}
+              except Exception as error:  # noqa: BLE001
+                  data = {"Status": "Failed", "Error": str(error)[:200]}
+              print(json.dumps(data))
+              respond(event, context, data)
+
+  # Emitting the event is the last step: the rule, destination and DLQ must already exist
+  ProwlerRealtimeHelloTrigger:
+    Type: Custom::ProwlerHelloEvent
+    Condition: RealtimeDetectionEnabled
+    DependsOn:
+      - ProwlerRealtimeHelloRule
+      - ProwlerRealtimeDlqPolicy
+    Properties:
+      ServiceToken: !GetAtt ProwlerRealtimeHelloFunction.Arn
+      # Re-emits the event when the endpoint changes; the API key is deliberately not passed in
+      WebhookUrl: !Ref ProwlerWebhookUrl
+
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
@@ -603,11 +986,17 @@ Metadata:
           - IAMPrincipal
           - EnableOrganizations
           - EnableS3Integration
+          - EnableRealtimeDetection
       - Label:
           default: Optional S3 Integration
         Parameters:
           - S3IntegrationBucketName
           - S3IntegrationBucketAccountId
+      - Label:
+          default: Optional Real-Time Detection (ProwlerApiKey required if EnableRealtimeDetection is true)
+        Parameters:
+          - ProwlerWebhookUrl
+          - ProwlerApiKey
       - Label:
           default: StackSet Configuration (Required if DeployStackSet is true)
         Parameters:
@@ -628,3 +1017,24 @@ Outputs:
     Condition: DeployStackSetEnabled
     Description: "StackSet ID for the ProwlerScan role deployment across accounts"
     Value: !Ref ProwlerScanStackSet
+
+  ProwlerRealtimeRuleArn:
+    Condition: RealtimeDetectionEnabled
+    Description: "ARN of the EventBridge rule forwarding the tracked CloudTrail events to Prowler Cloud"
+    Value: !GetAtt ProwlerRealtimeRule.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-ProwlerRealtimeRuleArn"
+
+  ProwlerRealtimeApiDestinationArn:
+    Condition: RealtimeDetectionEnabled
+    Description: "ARN of the EventBridge API destination targeting Prowler Cloud"
+    Value: !GetAtt ProwlerRealtimeApiDestination.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-ProwlerRealtimeApiDestinationArn"
+
+  ProwlerRealtimeDlqUrl:
+    Condition: RealtimeDetectionEnabled
+    Description: "URL of the dead-letter queue holding the events EventBridge could not deliver"
+    Value: !Ref ProwlerRealtimeDlq
+    Export:
+      Name: !Sub "${AWS::StackName}-ProwlerRealtimeDlqUrl"
