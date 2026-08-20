@@ -5,6 +5,8 @@ from pydantic.v1 import BaseModel
 from prowler.lib.logger import logger
 from prowler.providers.huaweicloud.lib.service.service import HuaweiCloudService
 
+SMN_PAGE_SIZE = 100
+
 
 class SMN(HuaweiCloudService):
     """
@@ -19,7 +21,7 @@ class SMN(HuaweiCloudService):
 
         self.topics: List[SMNTopic] = []
 
-        if self.session.is_mock:
+        if getattr(self.session, "is_mock", False):
             self._load_mock_data()
             return
 
@@ -35,7 +37,7 @@ class SMN(HuaweiCloudService):
                 name="alert-topic",
                 display_name="Alert Topic",
                 push_policy=0,
-                subscription_count=2,
+                confirmed_subscription_count=2,
                 region=region,
             ),
             SMNTopic(
@@ -44,7 +46,7 @@ class SMN(HuaweiCloudService):
                 name="empty-topic",
                 display_name="Empty Topic",
                 push_policy=0,
-                subscription_count=0,
+                confirmed_subscription_count=0,
                 region=region,
             ),
         ]
@@ -59,39 +61,54 @@ class SMN(HuaweiCloudService):
 
             try:
                 from huaweicloudsdksmn.v2 import (
-                    ListTopicsRequest,
                     ListSubscriptionsByTopicRequest,
+                    ListTopicsRequest,
                 )
 
-                request = ListTopicsRequest()
-                response = self._call_with_retries(client.list_topics, request)
+                offset = 0
+                while True:
+                    request = ListTopicsRequest(offset=offset, limit=SMN_PAGE_SIZE)
+                    response = self._call_with_retries(client.list_topics, request)
+                    topics = getattr(response, "topics", None) or []
 
-                if response and response.topics:
-                    for topic in response.topics:
+                    for topic in topics:
                         topic_urn = getattr(topic, "topic_urn", "") or ""
                         topic_id = getattr(topic, "topic_id", "") or ""
                         name = getattr(topic, "name", "") or ""
                         display_name = getattr(topic, "display_name", "") or ""
                         push_policy = getattr(topic, "push_policy", None)
 
-                        subscription_count = 0
-                        if topic_urn:
-                            try:
+                        try:
+                            confirmed_subscription_count = 0
+                            subscription_offset = 0
+                            while True:
                                 sub_request = ListSubscriptionsByTopicRequest(
-                                    topic_urn=topic_urn
+                                    topic_urn=topic_urn,
+                                    offset=subscription_offset,
+                                    limit=SMN_PAGE_SIZE,
                                 )
                                 sub_response = self._call_with_retries(
                                     client.list_subscriptions_by_topic, sub_request
                                 )
-                                if sub_response:
-                                    subscription_count = (
-                                        getattr(sub_response, "subscription_count", 0)
-                                        or 0
-                                    )
-                            except Exception as sub_error:
-                                logger.error(
-                                    f"{region} -- {sub_error.__class__.__name__}: {sub_error}"
+                                subscriptions = (
+                                    getattr(sub_response, "subscriptions", None) or []
                                 )
+                                confirmed_subscription_count += sum(
+                                    getattr(subscription, "status", None) == 1
+                                    for subscription in subscriptions
+                                )
+                                subscription_count = (
+                                    getattr(sub_response, "subscription_count", 0) or 0
+                                )
+                                subscription_offset += SMN_PAGE_SIZE
+                                if subscription_offset >= subscription_count:
+                                    break
+                        except Exception as sub_error:
+                            logger.error(
+                                f"{region} -- {sub_error.__class__.__name__}"
+                                f"[{sub_error.__traceback__.tb_lineno}]: {sub_error}"
+                            )
+                            continue
 
                         self.topics.append(
                             SMNTopic(
@@ -100,10 +117,15 @@ class SMN(HuaweiCloudService):
                                 name=name,
                                 display_name=display_name,
                                 push_policy=push_policy,
-                                subscription_count=subscription_count,
+                                confirmed_subscription_count=confirmed_subscription_count,
                                 region=region,
                             )
                         )
+
+                    offset += SMN_PAGE_SIZE
+                    topic_count = getattr(response, "topic_count", 0) or 0
+                    if offset >= topic_count:
+                        break
 
             except Exception as error:
                 logger.error(
@@ -119,5 +141,5 @@ class SMNTopic(BaseModel):
     name: str = ""
     display_name: str = ""
     push_policy: int = None
-    subscription_count: int = 0
+    confirmed_subscription_count: int = 0
     region: str = ""

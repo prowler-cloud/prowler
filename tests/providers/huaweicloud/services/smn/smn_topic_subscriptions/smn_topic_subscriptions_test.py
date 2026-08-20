@@ -1,3 +1,4 @@
+from types import SimpleNamespace
 from unittest import mock
 
 from tests.providers.huaweicloud.huaweicloud_fixtures import (
@@ -28,20 +29,18 @@ class Test_smn_topic_subscriptions:
 
             check = smn_topic_subscriptions()
             result = check.execute()
-            assert len(result) == 1
-            assert result[0].status == "FAIL"
-            assert "No SMN topics are configured" in result[0].status_extended
+            assert len(result) == 0
 
     def test_topic_with_subscriptions(self):
         smn_client = mock.MagicMock()
         smn_client.topics = [
-            mock.MagicMock(
+            SimpleNamespace(
                 topic_urn="urn:smn:la-south-2:123456789012:alert-topic",
                 topic_id="topic-001",
                 name="alert-topic",
                 display_name="Alert Topic",
                 push_policy=0,
-                subscription_count=2,
+                confirmed_subscription_count=2,
                 region="la-south-2",
             )
         ]
@@ -66,19 +65,26 @@ class Test_smn_topic_subscriptions:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert "alert-topic" in result[0].status_extended
-            assert "2" in result[0].status_extended
+            assert result[0].status_extended == (
+                "SMN topic 'alert-topic' (topic-001) has 2 confirmed "
+                "subscription(s)."
+            )
+            assert result[0].resource_id == "topic-001"
+            assert result[0].resource_name == "alert-topic"
+            assert result[0].resource_arn == (
+                "urn:smn:la-south-2:123456789012:alert-topic"
+            )
 
     def test_topic_without_subscriptions(self):
         smn_client = mock.MagicMock()
         smn_client.topics = [
-            mock.MagicMock(
+            SimpleNamespace(
                 topic_urn="urn:smn:la-south-2:123456789012:empty-topic",
                 topic_id="topic-002",
                 name="empty-topic",
                 display_name="Empty Topic",
                 push_policy=0,
-                subscription_count=0,
+                confirmed_subscription_count=0,
                 region="la-south-2",
             )
         ]
@@ -103,28 +109,33 @@ class Test_smn_topic_subscriptions:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert "empty-topic" in result[0].status_extended
-            assert "no subscriptions" in result[0].status_extended
+            assert result[0].status_extended == (
+                "SMN topic 'empty-topic' (topic-002) has no confirmed "
+                "subscriptions. Notifications will not be delivered."
+            )
+            assert result[0].resource_arn == (
+                "urn:smn:la-south-2:123456789012:empty-topic"
+            )
 
     def test_mixed_topics(self):
         smn_client = mock.MagicMock()
         smn_client.topics = [
-            mock.MagicMock(
+            SimpleNamespace(
                 topic_urn="urn:smn:la-south-2:123456789012:alert-topic",
                 topic_id="topic-001",
                 name="alert-topic",
                 display_name="Alert Topic",
                 push_policy=0,
-                subscription_count=3,
+                confirmed_subscription_count=3,
                 region="la-south-2",
             ),
-            mock.MagicMock(
+            SimpleNamespace(
                 topic_urn="urn:smn:la-south-2:123456789012:empty-topic",
                 topic_id="topic-002",
                 name="empty-topic",
                 display_name="Empty Topic",
                 push_policy=0,
-                subscription_count=0,
+                confirmed_subscription_count=0,
                 region="la-south-2",
             ),
         ]

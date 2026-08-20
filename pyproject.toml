@@ -127,6 +127,7 @@ dependencies = [
   "huaweicloudsdkkms==3.1.204",
   "huaweicloudsdkobs==3.1.204",
   "huaweicloudsdkrds==3.1.204",
+  "huaweicloudsdksmn==3.1.204",
   "huaweicloudsdkvpc==3.1.204",
   "huaweicloudsdkwaf==3.1.204"
 ]
@@ -264,6 +265,7 @@ constraint-dependencies = [
   "huaweicloudsdkkms==3.1.204",
   "huaweicloudsdkobs==3.1.204",
   "huaweicloudsdkrds==3.1.204",
+  "huaweicloudsdksmn==3.1.204",
   "huaweicloudsdkvpc==3.1.204",
   "huaweicloudsdkwaf==3.1.204",
   "hyperframe==6.1.0",
