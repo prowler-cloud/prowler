@@ -77,7 +77,16 @@ class Test_sqlserver_advanced_data_security_enabled:
 
             check = sqlserver_advanced_data_security_enabled()
             result = check.execute()
-            assert len(result) == 0
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == f"SQL Server {sql_server_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} does not have Advanced Data Security enabled."
+            )
+            assert result[0].subscription == AZURE_SUBSCRIPTION_ID
+            assert result[0].resource_name == sql_server_name
+            assert result[0].resource_id == sql_server_id
+            assert result[0].location == "location"
 
     def test_sql_servers_ads_disabled(self):
         sqlserver_client = mock.MagicMock

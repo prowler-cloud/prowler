@@ -5,23 +5,45 @@ from prowler.providers.azure.services.sqlserver.sqlserver_client import (
 
 
 class sqlserver_advanced_data_security_enabled(Check):
+    """
+    Check if Advanced Data Security is enabled for Azure SQL Servers.
+
+    This check evaluates SQL Servers to ensure they have an Advanced Data Security
+    policy enabled, which provides a set of advanced SQL security capabilities,
+    including vulnerability assessment and threat detection.
+    """
+
     def execute(self) -> list[Check_Report_Azure]:
+        """
+        Execute the SQL Server Advanced Data Security check.
+
+        Iterates over all SQL Servers in all subscriptions, verifying their
+        security alert policies.
+
+        Returns:
+            list[Check_Report_Azure]: A list of reports for each SQL Server
+            indicating whether Advanced Data Security is enabled (PASS) or not (FAIL).
+        """
         findings = []
         for subscription, sql_servers in sqlserver_client.sql_servers.items():
             subscription_name = sqlserver_client.subscriptions.get(
                 subscription, subscription
             )
             for sql_server in sql_servers:
-                if sql_server.security_alert_policies:
-                    report = Check_Report_Azure(
-                        metadata=self.metadata(), resource=sql_server
-                    )
-                    report.subscription = subscription
-                    report.status = "FAIL"
-                    report.status_extended = f"SQL Server {sql_server.name} from subscription {subscription_name} ({subscription}) does not have Advanced Data Security enabled."
-                    if sql_server.security_alert_policies.state == "Enabled":
-                        report.status = "PASS"
-                        report.status_extended = f"SQL Server {sql_server.name} from subscription {subscription_name} ({subscription}) has Advanced Data Security enabled."
-                    findings.append(report)
+                report = Check_Report_Azure(
+                    metadata=self.metadata(), resource=sql_server
+                )
+                report.subscription = subscription
+                report.status = "FAIL"
+                report.status_extended = f"SQL Server {sql_server.name} from subscription {subscription_name} ({subscription}) does not have Advanced Data Security enabled."
+
+                if (
+                    sql_server.security_alert_policies
+                    and sql_server.security_alert_policies.state == "Enabled"
+                ):
+                    report.status = "PASS"
+                    report.status_extended = f"SQL Server {sql_server.name} from subscription {subscription_name} ({subscription}) has Advanced Data Security enabled."
+
+                findings.append(report)
 
         return findings
