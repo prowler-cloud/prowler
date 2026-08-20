@@ -25,9 +25,9 @@ export interface AlertPayload {
    */
   recipientEmails?: string[];
   /**
-   * Slack channel ids from the integration's authorized set. Replace-not-
-   * additive like `recipientEmails`; omitting the key leaves the rule's
-   * channels unchanged.
+   * Slack channel ids from the eligible set. Replace-not-additive like
+   * `recipientEmails`: a supplied list replaces the whole Slack selection,
+   * `[]` clears it, and omitting the key leaves it unchanged.
    */
   slackChannels?: string[];
 }
@@ -46,10 +46,9 @@ const buildRuleEnvelope = (payload: AlertPayload, alertId?: string) => ({
       ...(payload.recipientEmails !== undefined
         ? { recipient_emails: payload.recipientEmails }
         : {}),
-      // TODO(Josema): `slack_channels` write attribute pending contract
-      // sign-off (D3) — ids only, the API derives name and privacy.
+      // Objects carrying only `id`; the API derives name and privacy.
       ...(payload.slackChannels !== undefined
-        ? { slack_channels: payload.slackChannels }
+        ? { slack_channels: payload.slackChannels.map((id) => ({ id })) }
         : {}),
     },
   },

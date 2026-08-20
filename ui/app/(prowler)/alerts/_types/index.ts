@@ -150,8 +150,8 @@ export interface AlertRuleAttributes {
   recipient_emails?: string[];
   /**
    * Slack channel destinations, resolved by the API to id + name + privacy so
-   * the UI renders stored channels without a Slack round-trip.
-   * TODO(Josema): attribute name and shape pending contract sign-off (D3).
+   * the UI renders stored channels without a Slack round-trip. The write side
+   * takes ids only.
    */
   slack_channels?: SlackChannelOption[];
   created_by?: string | null;

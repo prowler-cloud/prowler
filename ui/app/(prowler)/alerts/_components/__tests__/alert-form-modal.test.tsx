@@ -30,15 +30,24 @@ const integrationsActionMocks = vi.hoisted(() => ({
   getIntegrations: vi.fn(),
 }));
 
+const slackChannelsActionMocks = vi.hoisted(() => ({
+  getAlertSlackChannels: vi.fn(),
+}));
+
 vi.mock(
   "@/app/(prowler)/alerts/_actions/recipients",
   () => recipientsActionMocks,
 );
 
-// The channels field reads the Slack integration on mount; its behavior is
-// covered by the page integration tests (no-overlap rule), so the unit lane
-// only keeps the fetch from escaping jsdom.
+// The channels field reads the eligible channels and the Slack integration on
+// mount; its behavior is covered by the page integration tests (no-overlap
+// rule), so the unit lane only keeps the fetches from escaping jsdom.
 vi.mock("@/actions/integrations/integrations", () => integrationsActionMocks);
+
+vi.mock(
+  "@/app/(prowler)/alerts/_actions/slack-channels",
+  () => slackChannelsActionMocks,
+);
 
 vi.mock("@/app/(prowler)/alerts/_actions", () => alertsActionMocks);
 
@@ -257,9 +266,13 @@ describe("AlertFormModal", () => {
       new Promise(() => {}),
     );
     integrationsActionMocks.getIntegrations.mockReset();
-    // Never resolves, like the recipients read above: the channels field's
+    slackChannelsActionMocks.getAlertSlackChannels.mockReset();
+    // Never resolve, like the recipients read above: the channels field's
     // settled states are integration-tested; the unit lane keeps it loading.
     integrationsActionMocks.getIntegrations.mockReturnValue(
+      new Promise(() => {}),
+    );
+    slackChannelsActionMocks.getAlertSlackChannels.mockReturnValue(
       new Promise(() => {}),
     );
     alertsActionMocks.previewAlertCondition.mockReset();

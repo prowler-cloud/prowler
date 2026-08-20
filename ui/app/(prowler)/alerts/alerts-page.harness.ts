@@ -25,11 +25,11 @@ import { SeedFromFindingsButton } from "./_components/seed-from-findings-button"
 import AlertsPage from "./page";
 
 export const CHANNEL_FIELD_STATE = {
-  /** No Slack workspace connected: visible, disabled, explains itself. */
+  /** No enabled and connected Slack workspace: visible, disabled, explains itself. */
   NO_INTEGRATION: "no-integration",
-  /** Workspace connected, nothing authorized yet. */
+  /** Workspace connected, no channel eligible yet. */
   EMPTY_POOL: "empty-pool",
-  /** The authorized set is on offer. */
+  /** The eligible channels are on offer. */
   POPULATED: "populated",
 } as const;
 
@@ -151,7 +151,10 @@ export class AlertsPageHarness extends BrowserHarness<AlertsFixture> {
     return text.length > 0 ? text : null;
   }
 
-  /** The channel ids the last rule write actually submitted. */
+  /**
+   * The channel ids the last rule write actually submitted, read off the
+   * contract's `[{id}, …]` write shape.
+   */
   async savedRuleChannels(): Promise<string[] | undefined> {
     const method =
       this.countRequests("POST", "/alerts/rules") >
@@ -159,9 +162,9 @@ export class AlertsPageHarness extends BrowserHarness<AlertsFixture> {
         ? "POST"
         : "PATCH";
     const body = await this.lastRequestBody<{
-      data?: { attributes?: { slack_channels?: string[] } };
+      data?: { attributes?: { slack_channels?: { id: string }[] } };
     }>(method, "/alerts/rules");
-    return body?.data?.attributes?.slack_channels;
+    return body?.data?.attributes?.slack_channels?.map((channel) => channel.id);
   }
 
   // --- The channel destination field ---------------------------------------
