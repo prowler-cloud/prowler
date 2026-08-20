@@ -16,10 +16,7 @@ import {
   unreadableCheckTimeSlackFixture,
 } from "@/__tests__/msw/handlers/slack.fixtures";
 
-import {
-  CONNECTION_OUTCOME,
-  SlackIntegrationHarness,
-} from "./slack-integration.harness";
+import { SlackIntegrationHarness } from "./slack-integration.harness";
 
 /** The workspace the fixtures connect. */
 const WORKSPACE_NAME = "Prowler HQ";
@@ -159,8 +156,6 @@ describe("a connected workspace", () => {
 
     expect(await harness.connectedWorkspaceName()).toBe(WORKSPACE_NAME);
     expect(await harness.connectionBadge()).toBe("Connected");
-    expect(await harness.offersConnectionTest()).toBe(true);
-    expect(await harness.testConnection()).toBe(CONNECTION_OUTCOME.SUCCESS);
     // One workspace per tenant (design D10): no second install on offer, and no
     // consent URL minted for a page that would never use it.
     expect(harness.offersInstall()).toBe(false);
@@ -215,8 +210,10 @@ describe("a connected workspace", () => {
     await harness.mount();
 
     // The check posts to the destination channel, so with none recorded the API
-    // answers 400 rather than `connected: false`.
-    expect(await harness.offersConnectionTest()).toBe(false);
+    // answers 400 rather than `connected: false`. Nothing on this page can
+    // record one yet, so the check is not offered at all — a control that could
+    // never be enabled reads as broken, which is how it was first reported.
+    expect(harness.offersConnectionTest()).toBe(false);
     expect(harness.saysChannelIsNextStep()).toBe(true);
   }, 30000);
 });

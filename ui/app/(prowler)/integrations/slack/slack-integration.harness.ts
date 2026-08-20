@@ -20,14 +20,6 @@ import { IntegrationsContent } from "../integrations-content";
 
 import { SlackIntegrationContent } from "./slack-integration-content";
 
-export const CONNECTION_OUTCOME = {
-  SUCCESS: "success",
-  FAILURE: "failure",
-} as const;
-
-export type ConnectionOutcome =
-  (typeof CONNECTION_OUTCOME)[keyof typeof CONNECTION_OUTCOME];
-
 interface CallbackParams {
   code?: string;
   state?: string;
@@ -227,13 +219,13 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     return (badge.textContent ?? "").trim();
   }
 
-  async offersConnectionTest(): Promise<boolean> {
-    const button = await this.waitFor(
-      () => this.buttonByText(/Test connection/),
-      5000,
-      "the Test connection button",
-    );
-    return !button.disabled;
+  /**
+   * A check the user can actually run. A control that is absent, or there but
+   * disabled, is not one — both are "the page does not offer it".
+   */
+  offersConnectionTest(): boolean {
+    const button = this.buttonByText(/Test connection/);
+    return button !== null && !button.disabled;
   }
 
   saysChannelIsNextStep(): boolean {
@@ -249,24 +241,6 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
       this.container.querySelectorAll<HTMLElement>("p"),
     ).find((p) => /^Last checked:/.test((p.textContent ?? "").trim()));
     return line ? (line.textContent ?? "").trim() : null;
-  }
-
-  async testConnection(): Promise<ConnectionOutcome> {
-    await this.clickButton(/Test connection/);
-
-    return this.waitFor(
-      () => {
-        if (this.containsText(/Connection test successful/)) {
-          return CONNECTION_OUTCOME.SUCCESS;
-        }
-        if (this.containsText(/Connection test failed/)) {
-          return CONNECTION_OUTCOME.FAILURE;
-        }
-        return null;
-      },
-      15000,
-      "the connection test outcome",
-    );
   }
 
   // --- Returning from Slack -----------------------------------------------

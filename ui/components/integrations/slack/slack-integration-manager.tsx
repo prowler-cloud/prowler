@@ -1,10 +1,7 @@
 "use client";
 
 import { format, isValid, parseISO } from "date-fns";
-import { TestTube } from "lucide-react";
-import { useState } from "react";
 
-import { testIntegrationConnection } from "@/actions/integrations/integrations";
 import { SlackIcon } from "@/components/icons/services/IconServices";
 import { IntegrationCardHeader } from "@/components/integrations/shared";
 import {
@@ -15,7 +12,6 @@ import {
   Card,
   CardContent,
   CardHeader,
-  useToast,
 } from "@/components/shadcn";
 import type { IntegrationProps } from "@/types/integrations";
 
@@ -36,38 +32,6 @@ export const SlackIntegrationManager = ({
   rateLimitMessage,
   loadError,
 }: SlackIntegrationManagerProps) => {
-  const [isTesting, setIsTesting] = useState(false);
-  const { toast } = useToast();
-
-  const handleTestConnection = async (id: string) => {
-    setIsTesting(true);
-    try {
-      const result = await testIntegrationConnection(id);
-
-      if (result.success) {
-        toast({
-          title: "Connection test successful!",
-          description:
-            result.message || "Prowler can reach your Slack workspace.",
-        });
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Connection test failed",
-          description: result.error || "Failed to reach your Slack workspace.",
-        });
-      }
-    } catch (_error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to test connection. Please try again.",
-      });
-    } finally {
-      setIsTesting(false);
-    }
-  };
-
   const configuration = integration?.attributes.configuration;
   const workspaceName = configuration?.team_name;
   // Absent until a channel is chosen, never present-and-null.
@@ -124,32 +88,22 @@ export const SlackIntegrationManager = ({
           </CardHeader>
 
           <CardContent className="pt-0">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="text-xs text-gray-500 dark:text-gray-300">
-                {lastCheckedOn && (
-                  <p>
-                    <span className="font-medium">Last checked:</span>{" "}
-                    {lastCheckedOn}
-                  </p>
-                )}
-                {!channelId && (
-                  <p>
-                    Choosing a destination channel is the next step — the
-                    connection is checked against it.
-                  </p>
-                )}
-              </div>
-              {/* The check posts to the destination channel: the API answers
-                  400 when none is recorded yet. */}
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={isTesting || !channelId}
-                onClick={() => handleTestConnection(integration.id)}
-              >
-                <TestTube size={14} />
-                {isTesting ? "Testing..." : "Test connection"}
-              </Button>
+            {/* No connection check here: it posts to the destination channel,
+                which nothing on this page can record yet — the picker and the
+                check arrive together. */}
+            <div className="text-xs text-gray-500 dark:text-gray-300">
+              {lastCheckedOn && (
+                <p>
+                  <span className="font-medium">Last checked:</span>{" "}
+                  {lastCheckedOn}
+                </p>
+              )}
+              {!channelId && (
+                <p>
+                  Choosing a destination channel is the next step — the
+                  connection is checked against it.
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>
