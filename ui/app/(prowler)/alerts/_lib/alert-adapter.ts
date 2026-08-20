@@ -55,7 +55,6 @@ export const getAlertFormDefaults = (alert: AlertRule): AlertFormValues => ({
   frequency: alert.attributes.trigger,
   condition: alert.attributes.condition,
   recipientEmails: alert.attributes.recipient_emails ?? [],
-  // TODO(Josema): `slack_channels` read shape pending contract sign-off (D3).
   slackChannels: (alert.attributes.slack_channels ?? []).map(
     (channel) => channel.id,
   ),

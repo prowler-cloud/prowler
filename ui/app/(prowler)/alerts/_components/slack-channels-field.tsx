@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { getIntegrations } from "@/actions/integrations/integrations";
+import { getAlertSlackChannels } from "@/app/(prowler)/alerts/_actions/slack-channels";
 import { SlackChannelMultiSelect } from "@/components/integrations/slack/slack-channel-multi-select";
 import {
   Button,
@@ -27,10 +28,8 @@ const SLACK_INTEGRATION_HREF = "/integrations/slack";
 
 const NO_INTEGRATION_COPY =
   "Posting alerts to Slack channels needs a connected Slack workspace.";
-const NO_INTEGRATION_WITH_STORED_COPY =
-  "Channel delivery is unavailable until a Slack workspace is connected.";
 const EMPTY_POOL_COPY =
-  "No channels are authorized yet. Authorize channels on the Slack integration to offer them here.";
+  "No channels are ready yet. Authorize channels on the Slack integration and run its connection check to offer them here.";
 
 /**
  * The three presentations the spec allows (design D2/D4). Read by the page
@@ -44,26 +43,38 @@ const FIELD_STATE = {
 
 type FieldState = (typeof FIELD_STATE)[keyof typeof FIELD_STATE];
 
+/** `GET /alerts/slack-channels` — id is the channel id (contract section 2). */
+interface EligibleChannelResource {
+  id: string;
+  attributes: { name: string; is_private: boolean };
+}
+
 interface SlackChannelsFieldProps {
   selectedChannelIds: string[];
   /**
-   * The rule's stored channels from the read model (id, name, privacy), so a
-   * channel missing from the authorized set — or the whole workspace being
-   * gone — never blanks the stored selection.
+   * The rule's stored channels from the read model (id, name, privacy). They
+   * are merged into the options so a channel that is configured but not yet
+   * confirmed — what a same-workspace reinstall leaves behind — still renders
+   * by name and privacy instead of blanking the stored selection.
    */
   storedChannels: SlackChannelOption[];
   onValuesChange: (channelIds: string[]) => void;
 }
 
-/**
- * The authorized set is the pool; the stored selection is merged in so a
- * de-authorized channel stays visible and selected until the user removes it.
- */
+const toChannelOptions = (data: unknown): SlackChannelOption[] =>
+  Array.isArray(data)
+    ? (data as EligibleChannelResource[]).map((resource) => ({
+        id: resource.id,
+        name: resource.attributes.name,
+        is_private: resource.attributes.is_private,
+      }))
+    : [];
+
 const mergeOptions = (
-  authorized: SlackChannelOption[],
+  eligible: SlackChannelOption[],
   stored: SlackChannelOption[],
 ): SlackChannelOption[] => {
-  const byId = new Map(authorized.map((channel) => [channel.id, channel]));
+  const byId = new Map(eligible.map((channel) => [channel.id, channel]));
   stored.forEach((channel) => {
     if (!byId.has(channel.id)) byId.set(channel.id, channel);
   });
@@ -87,10 +98,11 @@ const FieldNotice = ({ copy }: { copy: string }) => (
 );
 
 /**
- * Slack channel destinations for an alert rule (design D4): reads the
- * tenant's Slack integration on mount — never the workspace listing (D2), so
- * there is no pagination and no listing-failure state — and offers exactly
- * the integration's authorized channels.
+ * Slack channel destinations for an alert rule (design D2/D4): the options
+ * come from the dedicated eligible-channels endpoint — never the workspace
+ * listing, so there is no pagination and no listing-failure state — and the
+ * integration is read only to tell an empty pool from no workspace at all,
+ * which an empty collection cannot say on its own.
  */
 export const SlackChannelsField = ({
   selectedChannelIds,
@@ -98,35 +110,45 @@ export const SlackChannelsField = ({
   onValuesChange,
 }: SlackChannelsFieldProps) => {
   const [loading, setLoading] = useState(true);
-  const [authorizedChannels, setAuthorizedChannels] = useState<
+  const [eligibleChannels, setEligibleChannels] = useState<
     SlackChannelOption[]
   >([]);
-  const [connected, setConnected] = useState(false);
+  const [integrationUsable, setIntegrationUsable] = useState(false);
 
   useMountEffect(() => {
-    getIntegrations(
-      new URLSearchParams({ "filter[integration_type]": "slack" }),
-    ).then((result) => {
+    Promise.all([
+      getAlertSlackChannels(),
+      getIntegrations(
+        new URLSearchParams({ "filter[integration_type]": "slack" }),
+      ),
+    ]).then(([channelsResult, integrationsResult]) => {
       setLoading(false);
-      // A failed read collapses to the disconnected presentation: the spec
-      // allows exactly three states, and the integration page is where a
-      // read problem gets diagnosed.
-      if (result?.error) return;
-      const integration = (result?.data as IntegrationProps[] | undefined)?.[0];
-      if (!integration) return;
-      setConnected(true);
-      setAuthorizedChannels(
-        integration.attributes.configuration.channels ?? [],
+      // A failed read collapses to the disabled presentation: the spec allows
+      // exactly three states, and the integration page is where a read
+      // problem gets diagnosed.
+      if (!channelsResult?.error) {
+        setEligibleChannels(toChannelOptions(channelsResult?.data));
+      }
+      if (integrationsResult?.error) return;
+      const integration = (
+        integrationsResult?.data as IntegrationProps[] | undefined
+      )?.[0];
+      setIntegrationUsable(
+        Boolean(integration?.attributes.enabled) &&
+          integration?.attributes.connected === true,
       );
     });
   });
 
-  const options = mergeOptions(authorizedChannels, storedChannels);
-  const state: FieldState = connected
-    ? authorizedChannels.length > 0
+  const options = mergeOptions(eligibleChannels, storedChannels);
+  // Eligibility decides the state; the merged stored channels only decide what
+  // an already-saved rule renders.
+  const state: FieldState =
+    eligibleChannels.length > 0
       ? FIELD_STATE.POPULATED
-      : FIELD_STATE.EMPTY_POOL
-    : FIELD_STATE.NO_INTEGRATION;
+      : integrationUsable
+        ? FIELD_STATE.EMPTY_POOL
+        : FIELD_STATE.NO_INTEGRATION;
 
   if (loading) {
     return (
@@ -145,9 +167,10 @@ export const SlackChannelsField = ({
   if (state === FIELD_STATE.NO_INTEGRATION) {
     return (
       <div data-alert-channels-state={state} className="flex flex-col gap-2">
-        {storedChannels.length > 0 ? (
-          // The stored selection stays visible and identified; only a
-          // connected workspace makes it editable again.
+        {options.length > 0 ? (
+          // A rule keeps its channels while its workspace is unverified — a
+          // reinstall resets the confirmations, not the mappings — so the
+          // stored selection stays readable until the check runs again.
           <SlackChannelMultiSelect
             options={options}
             values={selectedChannelIds}
@@ -177,18 +200,12 @@ export const SlackChannelsField = ({
             </Tooltip>
           </>
         )}
-        <FieldNotice
-          copy={
-            storedChannels.length > 0
-              ? NO_INTEGRATION_WITH_STORED_COPY
-              : NO_INTEGRATION_COPY
-          }
-        />
+        <FieldNotice copy={NO_INTEGRATION_COPY} />
       </div>
     );
   }
 
-  if (state === FIELD_STATE.EMPTY_POOL && options.length === 0) {
+  if (state === FIELD_STATE.EMPTY_POOL) {
     return (
       <div data-alert-channels-state={state} className="flex flex-col gap-2">
         <Label>Destination channels</Label>
@@ -204,9 +221,6 @@ export const SlackChannelsField = ({
         values={selectedChannelIds}
         onChange={onValuesChange}
       />
-      {state === FIELD_STATE.EMPTY_POOL && (
-        <FieldNotice copy={EMPTY_POOL_COPY} />
-      )}
     </div>
   );
 };

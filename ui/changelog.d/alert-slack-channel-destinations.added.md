@@ -1,1 +1,1 @@
-Slack channels from the integration's authorized set as alert rule destinations, selectable in the alert modal alongside email recipients
+Slack channels confirmed on the Slack integration as alert rule destinations, selectable in the alert modal alongside email recipients

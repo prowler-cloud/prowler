@@ -1,12 +1,12 @@
 /**
- * MSW handlers for the alerts pages: rules CRUD, recipients, the Slack
- * integration read the channel field depends on, and the sibling reads the
+ * MSW handlers for the alerts pages: rules CRUD, recipients, the eligible
+ * Slack channels the destination field offers, the integration read that
+ * tells an empty pool from no workspace at all, and the sibling reads the
  * alerts page issues on mount (providers, scans, findings metadata).
  *
- * The Slack-channel wire names are D3 working assumptions
- * (`openspec/changes/add-slack-alert-channels/design.md`) — each carries a
- * `TODO(Josema)` until the contract is signed off; a rename lands here and in
- * the adapter only.
+ * The Slack shapes follow the signed contract
+ * (`openspec/changes/add-slack-alert-channels/contract/slack-alerts-api.md`,
+ * section 2); what it leaves open carries a `TODO(Josema)`.
  *
  * State is per-call: a create is visible to the next rules read. Wire them
  * per test via `worker.use(...handlersForAlerts(fx))`.
@@ -16,10 +16,12 @@ import { http, HttpResponse } from "msw";
 
 import {
   ALERTS_CHANNEL_NOT_AUTHORIZED_CODE,
+  ALERTS_CHANNEL_NOT_CONFIRMED_CODE,
   ALERTS_LIST_SERVER_ERROR_DETAIL,
   ALERTS_SLACK_NOT_CONNECTED_CODE,
   ALERTS_SLACK_NOT_CONNECTED_DETAIL,
   alertsChannelNotAuthorizedDetail,
+  alertsChannelNotConfirmedDetail,
 } from "./alerts.fixtures";
 import type {
   AlertRuleFixture,
@@ -45,30 +47,6 @@ const errorBody = (detail: string, status: number, code?: string) => ({
   ],
 });
 
-const channelAttribute = (channel: AlertsSlackChannelFixture) => ({
-  id: channel.id,
-  name: channel.name,
-  is_private: channel.isPrivate,
-});
-
-const ruleResource = (rule: AlertRuleFixture) => ({
-  id: rule.id,
-  type: "alert-rules",
-  attributes: {
-    name: rule.name,
-    description: rule.description,
-    enabled: rule.enabled,
-    trigger: rule.trigger,
-    condition: rule.condition,
-    schema_version: 1,
-    recipient_emails: rule.recipientEmails,
-    // TODO(Josema): `slack_channels` read shape pending contract sign-off (D3).
-    slack_channels: rule.slackChannels.map(channelAttribute),
-    inserted_at: TS,
-    updated_at: TS,
-  },
-});
-
 const collection = (data: unknown[]) => ({
   data,
   meta: {
@@ -77,28 +55,11 @@ const collection = (data: unknown[]) => ({
   },
 });
 
-const integrationResource = (
-  integration: NonNullable<AlertsFixture["slackIntegration"]>,
-) => ({
-  id: integration.id,
-  type: "integrations",
-  attributes: {
-    inserted_at: TS,
-    updated_at: TS,
-    enabled: true,
-    connected: true,
-    connection_last_checked_at: TS,
-    integration_type: "slack",
-    configuration: {
-      team_id: "T01PROWLER",
-      team_name: integration.workspaceName,
-      bot_user_id: "U01PROWLERBOT",
-      // TODO(Josema): plural stored shape pending contract sign-off (D3) —
-      // supersedes the singular `channel_id` / `channel_name`.
-      channels: integration.authorizedChannels.map(channelAttribute),
-    },
-  },
-  links: { self: `${API}/integrations/${integration.id}` },
+/** The rule read's channel shape: resolved name and privacy, no Slack call. */
+const storedChannelAttribute = (channel: AlertsSlackChannelFixture) => ({
+  id: channel.id,
+  name: channel.name,
+  is_private: channel.isPrivate,
 });
 
 interface RuleWriteAttributes {
@@ -108,8 +69,8 @@ interface RuleWriteAttributes {
   trigger?: AlertRuleFixture["trigger"];
   condition?: AlertRuleFixture["condition"];
   recipient_emails?: string[];
-  // TODO(Josema): `slack_channels` write attribute pending contract sign-off (D3).
-  slack_channels?: string[];
+  /** Objects carrying only `id`; name and privacy are server-derived. */
+  slack_channels?: { id: string }[];
 }
 
 const parseRuleAttributes = async (
@@ -126,21 +87,48 @@ export const handlersForAlerts = (fx: AlertsFixture) => {
   const rules: AlertRuleFixture[] = fx.rules.map((rule) => ({
     ...rule,
     recipientEmails: [...rule.recipientEmails],
-    slackChannels: rule.slackChannels.map((channel) => ({ ...channel })),
+    slackChannelIds: [...rule.slackChannelIds],
   }));
   let createdCount = 0;
 
+  const isConnected = fx.slackIntegration?.connected === true;
+
+  const configuredChannel = (
+    channelId: string,
+  ): AlertsSlackChannelFixture | undefined =>
+    fx.slackIntegration?.channels.find(
+      (candidate) => candidate.id === channelId,
+    );
+
   /**
-   * The rule-write validation the contract promises: channels only while a
-   * workspace is connected, and each within the authorized set. Answered
-   * before any write lands, so a refusal leaves the stored rule unchanged.
+   * What `GET /alerts/slack-channels` offers: the enabled and connected
+   * integration's channels.
+   * TODO(Josema): the contract does not literally say the listing filters to
+   * *confirmed* channels (D3, Eligibility row). Assumed here — the rule write
+   * refuses unconfirmed ones, so offering them would offer a refusal.
+   */
+  const eligibleChannels = (): AlertsSlackChannelFixture[] =>
+    isConnected
+      ? (fx.slackIntegration?.channels ?? []).filter(
+          (channel) => channel.confirmationSentAt !== null,
+        )
+      : [];
+
+  /**
+   * The rule-write validation the contract signs: an enabled and connected
+   * integration, the channel configured on it, and a non-null
+   * `confirmation_sent_at`. Answered before any write lands, so a refusal
+   * leaves the stored rule unchanged.
+   * TODO(Josema): whether PATCH re-validates channels a rule already stores is
+   * open (tasks 7.14). The supplied list is validated on both writes here —
+   * the literal reading — and the UI only surfaces what comes back.
    */
   const refuseInvalidChannels = (
     channelIds: string[] | undefined,
   ): Response | null => {
     if (!channelIds || channelIds.length === 0) return null;
 
-    if (!fx.slackIntegration) {
+    if (!isConnected) {
       return HttpResponse.json(
         errorBody(
           ALERTS_SLACK_NOT_CONNECTED_DETAIL,
@@ -151,32 +139,91 @@ export const handlersForAlerts = (fx: AlertsFixture) => {
       );
     }
 
-    const authorized = new Set(
-      fx.slackIntegration.authorizedChannels.map((channel) => channel.id),
-    );
-    const outside = channelIds.find((id) => !authorized.has(id));
-    if (outside) {
-      return HttpResponse.json(
-        errorBody(
-          alertsChannelNotAuthorizedDetail(outside),
-          400,
-          ALERTS_CHANNEL_NOT_AUTHORIZED_CODE,
-        ),
-        { status: 400 },
-      );
+    for (const channelId of channelIds) {
+      const channel = configuredChannel(channelId);
+      if (!channel) {
+        return HttpResponse.json(
+          errorBody(
+            alertsChannelNotAuthorizedDetail(channelId),
+            400,
+            ALERTS_CHANNEL_NOT_AUTHORIZED_CODE,
+          ),
+          { status: 400 },
+        );
+      }
+      if (channel.confirmationSentAt === null) {
+        return HttpResponse.json(
+          errorBody(
+            alertsChannelNotConfirmedDetail(channelId),
+            400,
+            ALERTS_CHANNEL_NOT_CONFIRMED_CODE,
+          ),
+          { status: 400 },
+        );
+      }
     }
 
     return null;
   };
 
-  /** Total by construction: ids were validated against the same set. */
-  const resolveChannels = (channelIds: string[]): AlertsSlackChannelFixture[] =>
-    channelIds.flatMap((id) => {
-      const channel = fx.slackIntegration?.authorizedChannels.find(
-        (candidate) => candidate.id === id,
-      );
-      return channel ? [{ ...channel }] : [];
-    });
+  /** Deduplicated, as the contract requires of every Slack id list. */
+  const storedIds = (written: { id: string }[]): string[] =>
+    Array.from(new Set(written.map((channel) => channel.id)));
+
+  /**
+   * The read enriches the mapping's ids from the integration — the mapping
+   * table holds no metadata — so a channel the workspace no longer carries is
+   * simply absent, exactly as the cascade leaves it.
+   */
+  const ruleResource = (rule: AlertRuleFixture) => ({
+    id: rule.id,
+    type: "alert-rules",
+    attributes: {
+      name: rule.name,
+      description: rule.description,
+      enabled: rule.enabled,
+      trigger: rule.trigger,
+      condition: rule.condition,
+      schema_version: 1,
+      recipient_emails: rule.recipientEmails,
+      slack_channels: rule.slackChannelIds.flatMap((channelId) => {
+        const channel = configuredChannel(channelId);
+        return channel ? [storedChannelAttribute(channel)] : [];
+      }),
+      inserted_at: TS,
+      updated_at: TS,
+    },
+  });
+
+  const integrationResource = (
+    integration: NonNullable<AlertsFixture["slackIntegration"]>,
+  ) => ({
+    id: integration.id,
+    type: "integrations",
+    attributes: {
+      inserted_at: TS,
+      updated_at: TS,
+      enabled: true,
+      connected: integration.connected,
+      connection_last_checked_at: integration.connected === null ? null : TS,
+      integration_type: "slack",
+      configuration: {
+        team_id: "T01PROWLER",
+        team_name: integration.workspaceName,
+        bot_user_id: "U01PROWLERBOT",
+        channels: integration.channels.map((channel) => ({
+          ...storedChannelAttribute(channel),
+          confirmation_sent_at: channel.confirmationSentAt,
+        })),
+        verification: {
+          task_id: null,
+          started_at: null,
+          finished_at: integration.connected === null ? null : TS,
+        },
+      },
+    },
+    links: { self: `${API}/integrations/${integration.id}` },
+  });
 
   return [
     // --- Rules -------------------------------------------------------------
@@ -237,7 +284,8 @@ export const handlersForAlerts = (fx: AlertsFixture) => {
 
     http.post(`${API}/alerts/rules`, async ({ request }) => {
       const attributes = await parseRuleAttributes(request);
-      const refusal = refuseInvalidChannels(attributes.slack_channels);
+      const written = storedIds(attributes.slack_channels ?? []);
+      const refusal = refuseInvalidChannels(written);
       if (refusal) return refusal;
 
       createdCount += 1;
@@ -249,7 +297,8 @@ export const handlersForAlerts = (fx: AlertsFixture) => {
         trigger: attributes.trigger ?? "after_scan",
         condition: attributes.condition ?? {},
         recipientEmails: attributes.recipient_emails ?? [],
-        slackChannels: resolveChannels(attributes.slack_channels ?? []),
+        // Omission defaults both destination lists to empty.
+        slackChannelIds: written,
       };
       rules.push(created);
 
@@ -278,7 +327,10 @@ export const handlersForAlerts = (fx: AlertsFixture) => {
         }
 
         const attributes = await parseRuleAttributes(request);
-        const refusal = refuseInvalidChannels(attributes.slack_channels);
+        const written = attributes.slack_channels
+          ? storedIds(attributes.slack_channels)
+          : undefined;
+        const refusal = refuseInvalidChannels(written);
         if (refusal) return refusal;
 
         if (attributes.name !== undefined) rule.name = attributes.name;
@@ -293,10 +345,10 @@ export const handlersForAlerts = (fx: AlertsFixture) => {
         if (attributes.recipient_emails !== undefined) {
           rule.recipientEmails = attributes.recipient_emails;
         }
-        // Replace-not-additive, like `recipient_emails`; omitting the key
-        // leaves the stored channels — stale ones included — untouched.
-        if (attributes.slack_channels !== undefined) {
-          rule.slackChannels = resolveChannels(attributes.slack_channels);
+        // A supplied list replaces the whole Slack selection atomically, `[]`
+        // clears it, and omitting the key leaves it untouched.
+        if (written !== undefined) {
+          rule.slackChannelIds = written;
         }
 
         return HttpResponse.json({ data: ruleResource(rule) });
@@ -311,6 +363,17 @@ export const handlersForAlerts = (fx: AlertsFixture) => {
       rules.splice(index, 1);
       return new HttpResponse(null, { status: 204 });
     }),
+
+    // --- The channels the alert form offers ---------------------------------
+    http.get(`${API}/alerts/slack-channels`, () =>
+      HttpResponse.json({
+        data: eligibleChannels().map((channel) => ({
+          type: "slack-channels",
+          id: channel.id,
+          attributes: { name: channel.name, is_private: channel.isPrivate },
+        })),
+      }),
+    ),
 
     // --- Recipients ---------------------------------------------------------
     http.get(`${API}/alerts/recipients`, () =>
@@ -330,7 +393,7 @@ export const handlersForAlerts = (fx: AlertsFixture) => {
       ),
     ),
 
-    // --- The Slack integration the channel field reads ----------------------
+    // --- The integration read that tells the two empty states apart ---------
     http.get(`${API}/integrations`, ({ request }) => {
       const type = new URL(request.url).searchParams.get(
         "filter[integration_type]",

@@ -1,12 +1,12 @@
 /**
  * Browser-mode tests for the Alerts page (`/alerts`) and the alert modal's
  * Slack channel destinations, driven through `AlertsPageHarness`. MSW answers
- * from handlers derived from the D3 contract working assumptions
- * (`openspec/changes/add-slack-alert-channels/design.md`).
+ * from handlers encoding the signed contract
+ * (`openspec/changes/add-slack-alert-channels/contract/slack-alerts-api.md`).
  *
  * The no-integration and empty-pool states are driven through fixtures that
- * OMIT the integration or its channels (design D9) — never by handing the UI
- * a pre-disabled state.
+ * OMIT the integration, its channels or their confirmations (design D9) —
+ * never by handing the UI a pre-disabled state.
  */
 
 import { describe, expect } from "vitest";
@@ -15,12 +15,11 @@ import { it } from "@/__tests__/fixtures";
 import {
   ALERTS_PRIVATE_CHANNEL,
   ALERTS_PUBLIC_CHANNEL,
-  ALERTS_UNAUTHORIZED_CHANNEL,
   alertRuleFixture,
   alertsFixture,
   emptyChannelPoolAlertsFixture,
   noSlackAlertsFixture,
-  staleChannelAlertsFixture,
+  reinstalledWorkspaceAlertsFixture,
 } from "@/__tests__/msw/handlers/alerts.fixtures";
 
 import { AlertsPageHarness, CHANNEL_FIELD_STATE } from "./alerts-page.harness";
@@ -75,7 +74,7 @@ describe("alert rules target Slack channels", () => {
     expect(body?.data.attributes.recipient_emails).toEqual([]);
   });
 
-  it("offers exactly the integration's authorized set", async () => {
+  it("offers exactly the eligible channels", async () => {
     const harness = new AlertsPageHarness(alertsFixture());
     harness.mountCreateEntry();
     await harness.openCreateModal();
@@ -89,7 +88,6 @@ describe("alert rules target Slack channels", () => {
       ]),
     );
     expect(offered).toHaveLength(2);
-    expect(offered).not.toContain(ALERTS_UNAUTHORIZED_CHANNEL.name);
   });
 
   it("identifies a private channel in the listing and on its chip", async () => {
@@ -111,7 +109,7 @@ describe("alert rules target Slack channels", () => {
     ]);
   });
 
-  it("says channels must first be authorized when the pool is empty, and still saves", async () => {
+  it("says channels must be authorized and checked when nothing is eligible, and still saves", async () => {
     const harness = new AlertsPageHarness(emptyChannelPoolAlertsFixture());
     await harness.mount();
     await harness.openEditModal(RULE_NAME);
@@ -119,7 +117,9 @@ describe("alert rules target Slack channels", () => {
     expect(await harness.channelFieldState()).toBe(
       CHANNEL_FIELD_STATE.EMPTY_POOL,
     );
-    expect(await harness.channelFieldNotice()).toMatch(/authorized/i);
+    const notice = await harness.channelFieldNotice();
+    expect(notice).toMatch(/authorize/i);
+    expect(notice).toMatch(/connection check/i);
     expect(harness.integrationAffordanceHref()).toBe("/integrations/slack");
 
     // The rule's other fields and destinations still save.
@@ -136,6 +136,8 @@ describe("alert rules target Slack channels", () => {
       CHANNEL_FIELD_STATE.NO_INTEGRATION,
     );
     expect(await harness.channelPickerDisabled()).toBe(true);
+    // Deleting the workspace deletes the rules' channel mappings with it.
+    expect(await harness.selectedChannelChips()).toEqual([]);
     expect(await harness.channelFieldNotice()).toMatch(
       /connected Slack workspace/i,
     );
@@ -147,9 +149,9 @@ describe("alert rules target Slack channels", () => {
       alertsFixture({
         rules: [
           alertRuleFixture({
-            slackChannels: [
-              { ...ALERTS_PUBLIC_CHANNEL },
-              { ...ALERTS_PRIVATE_CHANNEL },
+            slackChannelIds: [
+              ALERTS_PUBLIC_CHANNEL.id,
+              ALERTS_PRIVATE_CHANNEL.id,
             ],
           }),
         ],
@@ -167,58 +169,51 @@ describe("alert rules target Slack channels", () => {
     ]);
   });
 
-  it("keeps a rule's channels visible after the workspace is disconnected", async () => {
+  it("submits the complete selection, not just the added channel", async () => {
     const harness = new AlertsPageHarness(
-      noSlackAlertsFixture({
+      alertsFixture({
         rules: [
-          alertRuleFixture({
-            slackChannels: [
-              { ...ALERTS_PUBLIC_CHANNEL },
-              { ...ALERTS_PRIVATE_CHANNEL },
-            ],
-          }),
+          alertRuleFixture({ slackChannelIds: [ALERTS_PUBLIC_CHANNEL.id] }),
         ],
       }),
     );
     await harness.mount();
     await harness.openEditModal(RULE_NAME);
 
+    await harness.pickChannels([ALERTS_PRIVATE_CHANNEL.name]);
+    await harness.saveRule();
+
+    expect(await harness.savedRuleChannels()).toEqual([
+      ALERTS_PUBLIC_CHANNEL.id,
+      ALERTS_PRIVATE_CHANNEL.id,
+    ]);
+  });
+
+  it("keeps a stored channel readable after a reinstall reset its confirmation", async () => {
+    const harness = new AlertsPageHarness(reinstalledWorkspaceAlertsFixture());
+    await harness.mount();
+    await harness.openEditModal(RULE_NAME);
+
+    // The workspace still carries both channels, but an unverified install
+    // offers none of them: the options come from the eligible-channels
+    // endpoint, never from the integration's configuration.
     expect(await harness.channelFieldState()).toBe(
       CHANNEL_FIELD_STATE.NO_INTEGRATION,
     );
+    expect(await harness.channelPickerDisabled()).toBe(true);
     expect(await harness.selectedChannelChips()).toEqual([
       { name: ALERTS_PUBLIC_CHANNEL.name, isPrivate: false },
       { name: ALERTS_PRIVATE_CHANNEL.name, isPrivate: true },
     ]);
-    expect(await harness.channelFieldNotice()).toMatch(
-      /unavailable until a Slack workspace is connected/i,
-    );
   });
 
-  it("keeps a stored channel selected after it leaves the authorized set", async () => {
-    const harness = new AlertsPageHarness(staleChannelAlertsFixture());
-    await harness.mount();
-    await harness.openEditModal(RULE_NAME);
-
-    const chips = await harness.selectedChannelChips();
-    expect(chips.map((chip) => chip.name)).toEqual([
-      ALERTS_PUBLIC_CHANNEL.name,
-      ALERTS_UNAUTHORIZED_CHANNEL.name,
-    ]);
-    // Merged into the options, so deselecting it is the user's explicit act.
-    expect(await harness.offeredChannels()).toContain(
-      ALERTS_UNAUTHORIZED_CHANNEL.name,
-    );
-  });
-
-  it("surfaces the refusal when a saved channel is outside the authorized set", async () => {
-    const harness = new AlertsPageHarness(staleChannelAlertsFixture());
+  it("surfaces the refusal when a stored channel is not confirmed and connected", async () => {
+    const harness = new AlertsPageHarness(reinstalledWorkspaceAlertsFixture());
     await harness.mount();
     await harness.openEditModal(RULE_NAME);
 
     const refusal = await harness.refusedRuleSave();
 
-    expect(refusal).toContain(ALERTS_UNAUTHORIZED_CHANNEL.id);
-    expect(refusal).toMatch(/authorized/i);
+    expect(refusal).toMatch(/Slack must be connected/i);
   });
 });
