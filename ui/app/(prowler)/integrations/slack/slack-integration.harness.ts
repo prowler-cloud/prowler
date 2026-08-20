@@ -219,10 +219,7 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     return (badge.textContent ?? "").trim();
   }
 
-  /**
-   * A check the user can actually run. A control that is absent, or there but
-   * disabled, is not one — both are "the page does not offer it".
-   */
+  /** Absent, or there but disabled: both read as "not offered". */
   offersConnectionTest(): boolean {
     const button = this.buttonByText(/Test connection/);
     return button !== null && !button.disabled;

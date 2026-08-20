@@ -210,9 +210,7 @@ describe("a connected workspace", () => {
     await harness.mount();
 
     // The check posts to the destination channel, so with none recorded the API
-    // answers 400 rather than `connected: false`. Nothing on this page can
-    // record one yet, so the check is not offered at all — a control that could
-    // never be enabled reads as broken, which is how it was first reported.
+    // answers 400. Nothing here records one, so it is not offered at all.
     expect(harness.offersConnectionTest()).toBe(false);
     expect(harness.saysChannelIsNextStep()).toBe(true);
   }, 30000);

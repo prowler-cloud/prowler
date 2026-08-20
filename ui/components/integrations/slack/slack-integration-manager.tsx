@@ -88,9 +88,8 @@ export const SlackIntegrationManager = ({
           </CardHeader>
 
           <CardContent className="pt-0">
-            {/* No connection check here: it posts to the destination channel,
-                which nothing on this page can record yet — the picker and the
-                check arrive together. */}
+            {/* No check here: it needs a destination channel, and nothing on
+                this page records one yet. */}
             <div className="text-xs text-gray-500 dark:text-gray-300">
               {lastCheckedOn && (
                 <p>
