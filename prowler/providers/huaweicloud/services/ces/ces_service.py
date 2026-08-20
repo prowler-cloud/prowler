@@ -1,6 +1,7 @@
-from typing import List
+from typing import Any, List
 
-from pydantic.v1 import BaseModel
+from huaweicloudsdkces.v2 import ListAlarmRulesRequest
+from pydantic.v1 import BaseModel, Field
 
 from prowler.lib.logger import logger
 from prowler.providers.huaweicloud.lib.service.service import HuaweiCloudService
@@ -51,31 +52,54 @@ class CES(HuaweiCloudService):
         for region, client in self.regional_clients.items():
             logger.info(f"CES - Listing Alarms in {region}...")
 
-            try:
-                from huaweicloudsdkces.v1 import ListAlarmsRequest
+            offset = 0
+            limit = 100
+            while True:
+                request = ListAlarmRulesRequest(offset=offset, limit=limit)
+                response = self._call_with_retries(client.list_alarm_rules, request)
+                alarms = getattr(response, "alarms", None) or []
 
-                request = ListAlarmsRequest()
-                response = self._call_with_retries(client.list_alarms, request)
-
-                if response and response.metric_alarms:
-                    for alarm in response.metric_alarms:
-                        alarm_id = getattr(alarm, "alarm_id", "") or ""
-                        alarm_name = getattr(alarm, "alarm_name", "") or ""
-                        alarm_enabled = getattr(alarm, "alarm_enabled", True)
-
-                        self.alarms.append(
-                            CESAlarm(
-                                alarm_id=alarm_id,
-                                alarm_name=alarm_name,
-                                alarm_enabled=alarm_enabled,
-                                region=region,
-                            )
+                for alarm in alarms:
+                    self.alarms.append(
+                        CESAlarm(
+                            alarm_id=getattr(alarm, "alarm_id", "") or "",
+                            alarm_name=getattr(alarm, "name", "") or "",
+                            alarm_enabled=getattr(alarm, "enabled", False) is True,
+                            region=region,
+                            policies=[
+                                self._model_to_dict(policy)
+                                for policy in (getattr(alarm, "policies", None) or [])
+                            ],
+                            resources=[
+                                self._model_to_dict(resource)
+                                for resource in (
+                                    getattr(alarm, "resources", None) or []
+                                )
+                            ],
                         )
+                    )
 
-            except Exception as error:
-                logger.error(
-                    f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                )
+                offset += len(alarms)
+                count = getattr(response, "count", None)
+                if not alarms or (count is not None and offset >= count):
+                    break
+                if count is None and len(alarms) < limit:
+                    break
+
+    @staticmethod
+    def _model_to_dict(model: Any) -> Any:
+        """Convert an SDK response model into a serializable dictionary."""
+        if hasattr(model, "to_dict"):
+            return model.to_dict()
+        if isinstance(model, list):
+            return [CES._model_to_dict(item) for item in model]
+        if isinstance(model, dict):
+            return {key: CES._model_to_dict(value) for key, value in model.items()}
+        if hasattr(model, "__dict__"):
+            return {
+                key: CES._model_to_dict(value) for key, value in vars(model).items()
+            }
+        return model
 
 
 class CESAlarm(BaseModel):
@@ -85,3 +109,5 @@ class CESAlarm(BaseModel):
     alarm_name: str = ""
     alarm_enabled: bool = True
     region: str = ""
+    policies: List[dict] = Field(default_factory=list)
+    resources: List[dict] = Field(default_factory=list)

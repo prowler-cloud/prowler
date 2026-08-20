@@ -9,21 +9,21 @@
   "Severity": "medium",
   "ResourceType": "HUAWEICLOUD::CES::Alarm",
   "ResourceGroup": "monitoring",
-  "Description": "Ensure that Cloud Eye (CES) alarm rules are configured and enabled for monitoring critical services.",
-  "Risk": "Without configured and enabled alarm rules, no alerts will be received for availability or security incidents, delaying incident response and increasing the risk of undetected issues.",
+  "Description": "Check whether each configured Cloud Eye (CES) alarm rule is enabled. The check returns no findings when the alarm inventory is empty.",
+  "Risk": "Disabled alarm rules do not evaluate their configured metrics or events, which can delay detection and response to availability or security incidents.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://support.huaweicloud.com/intl/en-us/usermanual-ces/ces_01_0030.html"
   ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "hcloud CES BatchEnableAlarmRules --cli-region=${region} --body='{\"alarm_ids\":[\"${alarm_id}\"],\"alarm_enabled\":true}'",
       "NativeIaC": "",
-      "Other": "1. Log on to the Huawei Cloud console.\n2. Navigate to Cloud Eye (CES).\n3. Create alarm rules for CPU, disk, network, and security events.\n4. Ensure all alarm rules are enabled.\n5. Verify that notifications are configured for alarm actions.",
+      "Other": "1. Log on to the Huawei Cloud console.\n2. Navigate to Cloud Eye (CES).\n3. Create alarm rules for the required metrics and events.\n4. Ensure all alarm rules are enabled.",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Configure and enable CES alarm rules for critical metrics and security events.",
+      "Text": "Enable configured CES alarm rules so their metric or event policies are evaluated.",
       "Url": "https://hub.prowler.com/check/ces_alarm_rules_configured"
     }
   },
@@ -32,5 +32,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "Checks if CES alarm rules exist and are enabled (alarm_enabled is True)."
+  "Notes": "Reports one finding per discovered CES alarm rule using its enabled state."
 }

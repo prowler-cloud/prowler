@@ -3,23 +3,16 @@ from prowler.providers.huaweicloud.services.ces.ces_client import ces_client
 
 
 class ces_alarm_rules_configured(Check):
-    """Check if CES alarm rules are configured and enabled."""
+    """Check whether discovered CES alarm rules are enabled."""
 
     def execute(self) -> list[CheckReportHuaweiCloud]:
+        """Return one finding for each discovered CES alarm rule.
+
+        Returns:
+            list[CheckReportHuaweiCloud]: Findings describing whether each CES
+            alarm rule is enabled.
+        """
         findings = []
-        if not ces_client.alarms:
-            report = CheckReportHuaweiCloud(
-                metadata=self.metadata(),
-                resource={},
-            )
-            report.region = ces_client.region
-            report.resource_id = ""
-            report.resource_name = "CES Alarms"
-            report.resource_arn = f"huaweicloud:ces:{ces_client.region}:{ces_client.audited_account}:alarms"
-            report.status = "FAIL"
-            report.status_extended = "No CES alarm rules are configured. No alerts will be received for availability or security incidents."
-            findings.append(report)
-            return findings
 
         for alarm in ces_client.alarms:
             report = CheckReportHuaweiCloud(
@@ -33,10 +26,14 @@ class ces_alarm_rules_configured(Check):
 
             if alarm.alarm_enabled:
                 report.status = "PASS"
-                report.status_extended = f"CES alarm rule '{alarm.alarm_name}' ({alarm.alarm_id}) is enabled."
+                report.status_extended = (
+                    f"CES alarm rule {alarm.alarm_name} ({alarm.alarm_id}) is enabled."
+                )
             else:
                 report.status = "FAIL"
-                report.status_extended = f"CES alarm rule '{alarm.alarm_name}' ({alarm.alarm_id}) is disabled."
+                report.status_extended = (
+                    f"CES alarm rule {alarm.alarm_name} ({alarm.alarm_id}) is disabled."
+                )
 
             findings.append(report)
 

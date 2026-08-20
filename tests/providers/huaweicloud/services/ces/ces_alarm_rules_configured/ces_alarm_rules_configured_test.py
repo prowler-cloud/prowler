@@ -28,9 +28,7 @@ class Test_ces_alarm_rules_configured:
 
             check = ces_alarm_rules_configured()
             result = check.execute()
-            assert len(result) == 1
-            assert result[0].status == "FAIL"
-            assert "No CES alarm rules are configured" in result[0].status_extended
+            assert result == []
 
     def test_alarm_enabled(self):
         ces_client = mock.MagicMock()
@@ -63,7 +61,15 @@ class Test_ces_alarm_rules_configured:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert "cpu-alarm" in result[0].status_extended
+            assert result[0].status_extended == (
+                "CES alarm rule cpu-alarm (alarm-001) is enabled."
+            )
+            assert result[0].resource_id == "alarm-001"
+            assert result[0].resource_name == "cpu-alarm"
+            assert result[0].region == "la-south-2"
+            assert result[0].resource_arn == (
+                "huaweicloud:ces:la-south-2:123456789012:alarm/alarm-001"
+            )
 
     def test_alarm_disabled(self):
         ces_client = mock.MagicMock()
@@ -96,8 +102,9 @@ class Test_ces_alarm_rules_configured:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert "disk-alarm" in result[0].status_extended
-            assert "disabled" in result[0].status_extended
+            assert result[0].status_extended == (
+                "CES alarm rule disk-alarm (alarm-002) is disabled."
+            )
 
     def test_mixed_alarms(self):
         ces_client = mock.MagicMock()

@@ -332,6 +332,19 @@ class HuaweiCloudSession:
                     .build()
                 )
 
+            elif service == "ces":
+                from huaweicloudsdkces.v2 import CesClient
+                from huaweicloudsdkces.v2.region.ces_region import CesRegion
+
+                client_region = region or self._region
+                return (
+                    CesClient.new_builder()
+                    .with_credentials(self._get_basic_credentials(client_region))
+                    .with_http_config(self._http_config())
+                    .with_region(_aligned_region(CesRegion, client_region))
+                    .build()
+                )
+
             elif service == "kms":
                 from huaweicloudsdkkms.v2 import KmsClient
                 from huaweicloudsdkkms.v2.region.kms_region import KmsRegion
