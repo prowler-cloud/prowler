@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 
 import { LighthouseV2SidebarChat } from "@/app/(prowler)/lighthouse/_components/navigation";
 import { ProwlerBrand } from "@/components/icons";
+import { useRegistryEligibility } from "@/components/registry/registry-eligibility-provider";
 import { useAuth } from "@/hooks";
 import { useRuntimeConfig } from "@/hooks/use-runtime-config";
 import { isCloud } from "@/lib/shared/env";
@@ -24,6 +25,7 @@ interface AppSidebarContentProps {
 export function AppSidebarContent({ onSelect }: AppSidebarContentProps) {
   const pathname = usePathname();
   const { permissions } = useAuth();
+  const { isEligible: registryEligible } = useRegistryEligibility();
   const { apiDocsUrl, cloudBillingEnabled } = useRuntimeConfig();
   const mode = useAppSidebarMode((state) => state.mode);
   const isCloudEnvironment = isCloud();
@@ -31,6 +33,7 @@ export function AppSidebarContent({ onSelect }: AppSidebarContentProps) {
     pathname,
     apiDocsUrl,
     cloudBillingEnabled,
+    registryEligible,
     permissions,
   });
   const showChat = isCloudEnvironment && mode === APP_SIDEBAR_MODE.CHAT;

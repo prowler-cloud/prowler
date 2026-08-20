@@ -12,6 +12,7 @@ import {
   OnboardingGate,
   OnboardingSequenceBanner,
 } from "@/components/onboarding";
+import { RegistryEligibilityProvider } from "@/components/registry/registry-eligibility-provider";
 import { RuntimePublicConfig } from "@/components/runtime-config/runtime-public-config";
 import { NavigationProgress } from "@/components/shadcn/navigation-progress";
 import { Toaster } from "@/components/shadcn/toast";
@@ -108,7 +109,9 @@ export default async function RootLayout({
               <OnboardingSequenceBanner hasCompletedScan={hasCompletedScan} />
             </>
           )}
-          <MainLayout>{children}</MainLayout>
+          <RegistryEligibilityProvider>
+            <MainLayout>{children}</MainLayout>
+          </RegistryEligibilityProvider>
           {cloudEnabled && <FeedbackSurvey />}
           {/* Always mounted: it hosts the detail (finding/resource) views in
               every deployment; the AI tab inside is cloud-gated on its own. */}

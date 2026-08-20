@@ -33,6 +33,10 @@ vi.mock("@/hooks/use-runtime-config", () => ({
   useRuntimeConfig: () => ({ apiDocsUrl: "https://local.example/docs" }),
 }));
 
+vi.mock("@/components/registry/registry-eligibility-provider", () => ({
+  useRegistryEligibility: () => ({ isEligible: true }),
+}));
+
 vi.mock("@/store", () => ({
   useScansStore: (
     selector: (state: {
@@ -87,6 +91,18 @@ describe("AppSidebarContent", () => {
       undefined,
     );
     expect(screen.getAllByText("Cloud").length).toBeGreaterThan(0);
+  });
+
+  it("uses the eligibility lease for Registry navigation", () => {
+    // Given / When
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    render(<AppSidebarContent />);
+
+    // Then
+    expect(screen.getByRole("link", { name: /Registry/ })).toHaveAttribute(
+      "href",
+      "/registry",
+    );
   });
 
   it("keeps the existing Lighthouse chat sidebar in Cloud Chat mode", () => {
