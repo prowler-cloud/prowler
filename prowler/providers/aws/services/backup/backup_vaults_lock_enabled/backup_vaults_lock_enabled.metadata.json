@@ -1,0 +1,41 @@
+{
+  "Provider": "aws",
+  "CheckID": "backup_vaults_lock_enabled",
+  "CheckTitle": "AWS Backup vault has Vault Lock enabled",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Effects/Data Destruction"
+  ],
+  "ServiceName": "backup",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "AwsBackupBackupVault",
+  "ResourceGroup": "storage",
+  "Description": "**AWS Backup vaults** are evaluated for **Vault Lock** (`Locked=true`), which enforces a write-once-read-many (WORM) retention policy on the recovery points the vault holds.",
+  "Risk": "Without **Vault Lock**, backups in the vault can be **deleted or have their retention shortened** by anyone with sufficient permissions.\n\nThat removes the last line of defence against **ransomware** and accidental deletion: an attacker with a privileged principal can destroy recovery points before encrypting production data, defeating the recovery plan.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/aws-backup/latest/devguide/vault-lock.html",
+    "https://docs.aws.amazon.com/aws-backup/latest/devguide/API_PutBackupVaultLockConfiguration.html",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/backup_vault_lock_configuration"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws backup put-backup-vault-lock-configuration --backup-vault-name <vault-name> --min-retention-days <min-days> --max-retention-days <max-days> --changeable-for-days <cooling-off-days>",
+      "NativeIaC": "```yaml\n# Enable Vault Lock on an AWS Backup vault\nResources:\n  <example_resource_name>:\n    Type: AWS::Backup::BackupVault\n    Properties:\n      BackupVaultName: <example_resource_name>\n      LockConfiguration:  # CRITICAL: enables Vault Lock\n        MinRetentionDays: 7\n        MaxRetentionDays: 365\n        ChangeableForDays: 3  # omit for governance mode; setting it selects compliance mode\n```",
+      "Other": "1. In the AWS Console, go to AWS Backup > Backup vaults\n2. Select the vault <vault-name>\n3. In the Vault Lock section choose Create or Edit lock\n4. Set the minimum and maximum retention periods\n5. Choose Governance mode, or Compliance mode with a cooling-off period if the lock must be irreversible, then confirm",
+      "Terraform": "```hcl\nresource \"aws_backup_vault_lock_configuration\" \"<example_resource_name>\" {\n  backup_vault_name   = <example_vault_name>\n  min_retention_days  = 7\n  max_retention_days  = 365\n  changeable_for_days = 3  # omit for governance mode; setting it selects compliance mode\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enable **Vault Lock** on backup vaults so recovery points cannot be deleted or have their retention shortened before the configured period elapses.\n\nUse **governance mode** where privileged users must retain the ability to remove the lock, and **compliance mode** where immutability is a regulatory requirement. Note that compliance mode cannot be undone once the cooling-off period expires, so validate the retention window first.",
+      "Url": "https://hub.prowler.com/check/backup_vaults_lock_enabled"
+    }
+  },
+  "Categories": [
+    "resilience"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "`Locked=true` is reported for both governance and compliance mode; the ListBackupVaults response does not distinguish them, so this check does not assert which mode is in use. Compliance mode becomes immutable once the cooling-off period set by ChangeableForDays expires and cannot be removed afterwards, including by the account root user."
+}
