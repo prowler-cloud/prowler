@@ -1,8 +1,19 @@
 from csv import DictWriter
 from pathlib import Path
-from typing import List
+from abc import ABC, abstractmethod
+from typing import Any, List, Optional, Type, Union
+from pydantic.v1 import BaseModel
+from prowler.config.config import timestamp
+from prowler.lib.check.compliance_config_eval import (
+    apply_config_status,
+    build_requirement_config_status,
+)
 
-from prowler.lib.check.compliance_models import Compliance
+from prowler.lib.check.compliance_models import (
+    Compliance,
+    Mitre_Requirement,
+    Compliance_Requirement,
+)
 from prowler.lib.logger import logger
 from prowler.lib.outputs.finding import Finding
 from prowler.lib.outputs.output import Output
@@ -34,6 +45,7 @@ class ComplianceOutput(Output):
         from_cli: bool = True,
     ) -> None:
         # TODO: This class needs to be refactored to use the Output class init, methods and properties
+        """Initialize compliance output instance."""
         self._data = []
         self.close_file = False
         self.file_path = file_path
@@ -91,3 +103,182 @@ class ComplianceOutput(Output):
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
+
+class ComplianceOutputBase(ComplianceOutput):
+    """
+    Base class for specific compliance outputs to eliminate duplicated transform logic.
+    Subclasses only need to implement `provider_identity_fields(finding)` and define
+    which `BaseModel` to use.
+    """
+
+    @property
+    @abstractmethod
+    def model(self) -> Type[BaseModel]:
+        """Must return the specific pydantic model class.
+
+        Returns:
+            Type[BaseModel]: The pydantic model class used for serialization.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def provider_identity_fields(self, finding: Optional[Finding]) -> dict:
+        """Returns a dictionary with provider-specific identity fields.
+
+        Args:
+            finding (Optional[Finding]): The finding to extract identity fields from, or None for manual checks.
+
+        Returns:
+            dict: A dictionary containing provider identity fields.
+        """
+        raise NotImplementedError
+
+    def get_framework_specific_fields(
+        self, requirement: Union[Mitre_Requirement, Compliance_Requirement]
+    ) -> dict[str, str]:
+        """Subclass hook to provide framework-specific fields from the requirement.
+
+        Args:
+            requirement (Union[Mitre_Requirement, Compliance_Requirement]):
+                The compliance requirement to extract framework-specific data from.
+
+        Returns:
+            dict[str, str]: Framework-specific fields appended to the model.
+        """
+        return {}
+
+    def _get_attribute_fields(self, attribute: Any) -> dict[str, Any]:
+        """Convert requirement attribute fields to model attribute mapping.
+
+        Args:
+            attribute (Any): The compliance requirement attribute.
+
+        Returns:
+            dict[str, Any]: Mapped attribute dictionary.
+        """
+        attribute_fields = {}
+        for k, v in attribute.dict().items():
+            field_name = f"Requirements_Attributes_{k}"
+            expected_type = None
+            if (
+                hasattr(self.model, "model_fields")
+                and field_name in self.model.model_fields
+            ):
+                field_obj = self.model.model_fields[field_name]
+                expected_type = getattr(field_obj, "annotation", None)
+            elif (
+                hasattr(self.model, "__fields__")
+                and field_name in self.model.__fields__
+            ):
+                field_obj = self.model.__fields__[field_name]
+                expected_type = getattr(field_obj, "outer_type_", None)
+
+            is_list_expected = False
+            if expected_type:
+                origin = getattr(expected_type, "__origin__", expected_type)
+                if origin == list:
+                    is_list_expected = True
+                elif origin is Union:
+                    args = getattr(expected_type, "__args__", ())
+                    for arg in args:
+                        if arg is not type(None) and getattr(arg, "__origin__", arg) == list:
+                            is_list_expected = True
+                            break
+
+            if is_list_expected:
+                val = v
+            elif isinstance(v, list):
+                if v and not all(isinstance(item, str) for item in v):
+                    val = v
+                else:
+                    val = ",".join(v)
+            else:
+                val = v
+
+            attribute_fields[field_name] = val
+        return attribute_fields
+
+    def transform(
+        self,
+        findings: List[Finding],
+        compliance: Compliance,
+        compliance_name: str,
+    ) -> None:
+        """Transforms a list of findings into compliance format based on the specific framework requirements.
+
+        Args:
+            findings (List[Finding]): The list of findings to transform.
+            compliance (Compliance): The compliance framework definition.
+            compliance_name (str): The name of the compliance framework.
+
+        Returns:
+            None
+        """
+
+        requirement_config_status = build_requirement_config_status(
+            compliance.Requirements
+        )
+
+        provider = findings[0].provider if findings else compliance.Provider.lower()
+
+        for finding in findings:
+            provider_fields = self.provider_identity_fields(finding)
+            for requirement in compliance.Requirements:
+                if finding.check_id in requirement.Checks:
+                    row_status, row_status_extended = apply_config_status(
+                        finding.status,
+                        finding.status_extended,
+                        requirement_config_status.get(requirement.Id),
+                    )
+                    framework_fields = self.get_framework_specific_fields(requirement)
+                    for attribute in requirement.Attributes:
+                        attribute_fields = self._get_attribute_fields(attribute)
+
+                        compliance_row = self.model(
+                            Provider=provider,
+                            Description=compliance.Description,
+                            **provider_fields,
+                            AssessmentDate=str(timestamp),
+                            Requirements_Id=requirement.Id,
+                            Requirements_Description=requirement.Description,
+                            **attribute_fields,
+                            Status=row_status,
+                            StatusExtended=row_status_extended,
+                            ResourceId=finding.resource_uid,
+                            ResourceName=finding.resource_name,
+                            CheckId=finding.check_id,
+                            Muted=finding.muted,
+                            Framework=compliance.Framework,
+                            Name=compliance.Name,
+                            **framework_fields,
+                        )
+                        self._data.append(compliance_row)
+
+        # Add manual requirements
+        provider_fields = self.provider_identity_fields(None)
+        for requirement in compliance.Requirements:
+            if not requirement.Checks:
+                framework_fields = self.get_framework_specific_fields(requirement)
+                for attribute in requirement.Attributes:
+                    attribute_fields = self._get_attribute_fields(attribute)
+
+                    compliance_row = self.model(
+                        Provider=provider,
+                        Description=compliance.Description,
+                        **provider_fields,
+                        AssessmentDate=str(timestamp),
+                        Requirements_Id=requirement.Id,
+                        Requirements_Description=requirement.Description,
+                        **attribute_fields,
+                        Status="MANUAL",
+                        StatusExtended="Manual check",
+                        ResourceId="manual_check",
+                        ResourceName="Manual check",
+                        CheckId="manual",
+                        Muted=False,
+                        Framework=compliance.Framework,
+                        Name=compliance.Name,
+                        **framework_fields,
+                    )
+                    self._data.append(compliance_row)
