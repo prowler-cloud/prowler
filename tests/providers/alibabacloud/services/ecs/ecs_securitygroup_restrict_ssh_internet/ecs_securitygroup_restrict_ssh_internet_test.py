@@ -34,9 +34,9 @@ class TestEcsSecurityGroupRestrictSSHInternet:
                 arn="arn:sg/sg-1",
                 ingress_rules=[
                     {
-                        "ip_protocol": "tcp",
-                        "source_cidr_ip": "0.0.0.0/0",
-                        "port_range": "22/22",
+                        "ip_protocol": "ALL",
+                        "ipv_6source_cidr_ip": "::/0",
+                        "port_range": "20/22",
                         "policy": "Accept",
                     }
                 ],
@@ -48,7 +48,7 @@ class TestEcsSecurityGroupRestrictSSHInternet:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert "SSH port 22 open to the internet" in result[0].status_extended
+            assert "SSH TCP port 22 open to the internet" in result[0].status_extended
 
     def test_security_group_restricted_passes(self):
         ecs_client = mock.MagicMock()
@@ -78,9 +78,9 @@ class TestEcsSecurityGroupRestrictSSHInternet:
                 arn="arn:sg/sg-2",
                 ingress_rules=[
                     {
-                        "ip_protocol": "tcp",
-                        "source_cidr_ip": "10.0.0.0/24",
-                        "port_range": "22/22",
+                        "ip_protocol": "all",
+                        "source_cidr_ip": "0.0.0.0/0",
+                        "port_range": "80/443",
                         "policy": "Accept",
                     }
                 ],
@@ -92,4 +92,4 @@ class TestEcsSecurityGroupRestrictSSHInternet:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert "does not have SSH port 22 open" in result[0].status_extended
+            assert "does not have SSH TCP port 22 open" in result[0].status_extended

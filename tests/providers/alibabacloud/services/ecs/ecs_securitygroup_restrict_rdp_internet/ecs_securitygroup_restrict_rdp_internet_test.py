@@ -34,9 +34,9 @@ class TestEcsSecurityGroupRestrictRdpInternet:
                 arn="arn:sg/sg-1",
                 ingress_rules=[
                     {
-                        "ip_protocol": "tcp",
-                        "source_cidr_ip": "0.0.0.0/0",
-                        "port_range": "3389/3389",
+                        "ip_protocol": "ALL",
+                        "ipv_6source_cidr_ip": "::/0",
+                        "port_range": "3000/4000",
                         "policy": "Accept",
                     }
                 ],
@@ -77,9 +77,9 @@ class TestEcsSecurityGroupRestrictRdpInternet:
                 arn="arn:sg/sg-2",
                 ingress_rules=[
                     {
-                        "ip_protocol": "tcp",
-                        "source_cidr_ip": "10.0.0.0/24",
-                        "port_range": "3389/3389",
+                        "ip_protocol": "all",
+                        "source_cidr_ip": "0.0.0.0/0",
+                        "port_range": "80/443",
                         "policy": "Accept",
                     }
                 ],
