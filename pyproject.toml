@@ -9,7 +9,7 @@ dev = [
   "coverage==7.6.12",
   "docker==7.1.0",
   "filelock==3.20.3",
-  "flake8==7.1.2",
+  "flake8==7.3.0",
   "freezegun==1.5.1",
   "mock==5.2.0",
   "moto[all]==5.1.11",
