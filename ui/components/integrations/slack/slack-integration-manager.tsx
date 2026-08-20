@@ -1,13 +1,12 @@
 "use client";
 
 import { format, isValid, parseISO } from "date-fns";
-import { Send, TestTube } from "lucide-react";
+import { TestTube } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { testIntegrationConnection } from "@/actions/integrations/integrations";
 import {
   getSlackChannels,
-  sendSlackTestMessage,
   setSlackDefaultChannel,
 } from "@/actions/integrations/slack";
 import { SlackIcon } from "@/components/icons/services/IconServices";
@@ -51,37 +50,6 @@ interface ChannelsLoaded {
 }
 
 type ChannelsState = ChannelsLoading | ChannelsFailed | ChannelsLoaded;
-
-const TEST_MESSAGE_STATUS = {
-  IDLE: "idle",
-  SENDING: "sending",
-  SENT: "sent",
-  FAILED: "failed",
-} as const;
-
-interface TestMessageIdle {
-  status: typeof TEST_MESSAGE_STATUS.IDLE;
-}
-
-interface TestMessageSending {
-  status: typeof TEST_MESSAGE_STATUS.SENDING;
-}
-
-interface TestMessageSent {
-  status: typeof TEST_MESSAGE_STATUS.SENT;
-  detail: string;
-}
-
-interface TestMessageFailed {
-  status: typeof TEST_MESSAGE_STATUS.FAILED;
-  detail: string;
-}
-
-type TestMessageState =
-  | TestMessageIdle
-  | TestMessageSending
-  | TestMessageSent
-  | TestMessageFailed;
 
 /** Ties the disabled check to the copy saying what unblocks it. */
 const CHECK_BLOCKED_REASON_ID = "slack-connection-check-blocked";
@@ -148,9 +116,6 @@ export const SlackIntegrationManager = ({
   // mirror seeded only at mount would go stale when the record changes.
   const [syncedChannel, setSyncedChannel] = useState(recordedChannel);
   const [isSavingChannel, setIsSavingChannel] = useState(false);
-  const [testMessageState, setTestMessageState] = useState<TestMessageState>({
-    status: TEST_MESSAGE_STATUS.IDLE,
-  });
 
   if (!channelRefEquals(recordedChannel, syncedChannel)) {
     const previousSyncedId = syncedChannel?.id ?? null;
@@ -203,6 +168,7 @@ export const SlackIntegrationManager = ({
   const handleSaveChannel = async () => {
     if (!integrationId || !selectedChannelId) return;
 
+    let saved = false;
     setIsSavingChannel(true);
     try {
       // Only the id travels — the API validates it and derives the name
@@ -229,8 +195,7 @@ export const SlackIntegrationManager = ({
         null;
 
       setDefaultChannel({ id: selectedChannelId, name: savedName });
-      // An outcome about the previous destination would mislead here.
-      setTestMessageState({ status: TEST_MESSAGE_STATUS.IDLE });
+      saved = true;
       toast({
         title: "Destination channel saved",
         description: savedName
@@ -246,31 +211,12 @@ export const SlackIntegrationManager = ({
     } finally {
       setIsSavingChannel(false);
     }
-  };
 
-  const handleSendTestMessage = async () => {
-    if (!integrationId) return;
-
-    setTestMessageState({ status: TEST_MESSAGE_STATUS.SENDING });
-    try {
-      const result = await sendSlackTestMessage(integrationId);
-
-      setTestMessageState(
-        "sent" in result
-          ? {
-              status: TEST_MESSAGE_STATUS.SENT,
-              detail: defaultChannel?.name
-                ? `Prowler posted a test message to #${defaultChannel.name}.`
-                : "Prowler posted a test message to your default channel.",
-            }
-          : { status: TEST_MESSAGE_STATUS.FAILED, detail: result.error },
-      );
-    } catch (_error) {
-      setTestMessageState({
-        status: TEST_MESSAGE_STATUS.FAILED,
-        detail: "Something went wrong. Please try again.",
-      });
-    }
+    // Saving a destination is what makes a check possible at all (design D7),
+    // and the save alone proves only that the API accepted the id. Run it here
+    // so a channel Prowler cannot actually reach is reported now, rather than
+    // waiting for someone to press the button.
+    if (saved) await handleTestConnection(integrationId);
   };
 
   const handleTestConnection = async (id: string) => {
@@ -416,60 +362,26 @@ export const SlackIntegrationManager = ({
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-text-neutral-secondary text-xs">
                   {/* The id decides, not the name: a missing name would deny
-                      a destination the test button posts to. */}
+                      a destination the check runs against. */}
                   {defaultChannel
                     ? defaultChannel.name
                       ? `Prowler posts to #${defaultChannel.name}.`
                       : "Prowler posts to the channel you saved."
                     : "No destination channel recorded yet."}
                 </p>
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    disabled={
-                      !selectedChannelId ||
-                      selectedChannelId === (defaultChannel?.id ?? null) ||
-                      isSavingChannel
-                    }
-                    onClick={handleSaveChannel}
-                  >
-                    {isSavingChannel ? "Saving..." : "Save channel"}
-                  </Button>
-                  {defaultChannel && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={
-                        testMessageState.status === TEST_MESSAGE_STATUS.SENDING
-                      }
-                      onClick={handleSendTestMessage}
-                    >
-                      <Send size={14} />
-                      {testMessageState.status === TEST_MESSAGE_STATUS.SENDING
-                        ? "Sending..."
-                        : "Send test message"}
-                    </Button>
-                  )}
-                </div>
-              </div>
-
-              {(testMessageState.status === TEST_MESSAGE_STATUS.SENT ||
-                testMessageState.status === TEST_MESSAGE_STATUS.FAILED) && (
-                <Alert
-                  variant={
-                    testMessageState.status === TEST_MESSAGE_STATUS.SENT
-                      ? "success"
-                      : "error"
+                <Button
+                  size="sm"
+                  disabled={
+                    !selectedChannelId ||
+                    selectedChannelId === (defaultChannel?.id ?? null) ||
+                    isSavingChannel ||
+                    isTesting
                   }
+                  onClick={handleSaveChannel}
                 >
-                  <AlertTitle>
-                    {testMessageState.status === TEST_MESSAGE_STATUS.SENT
-                      ? "Test message sent"
-                      : "Test message failed"}
-                  </AlertTitle>
-                  <AlertDescription>{testMessageState.detail}</AlertDescription>
-                </Alert>
-              )}
+                  {isSavingChannel ? "Saving..." : "Save channel"}
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>

@@ -56,15 +56,6 @@ export interface SlackChannelFixture {
   isPrivate: boolean;
 }
 
-export interface SlackTestMessageFixture {
-  accepted: boolean;
-  /**
-   * Why it did not: the reason `code` would carry, or prose — the contract
-   * leaves the task result's shape open.
-   */
-  error: string | null;
-}
-
 /**
  * A refusal as the API sends one: the machine-readable reason in `code`, human
  * copy in `detail`, and — for a `429` — the wait in `Retry-After`.
@@ -120,7 +111,6 @@ export interface SlackFixture {
    * listing itself answered fine.
    */
   channelSaveRefusal: SlackRefusalFixture | null;
-  testMessage: SlackTestMessageFixture;
 }
 
 /**
@@ -189,11 +179,6 @@ export const SLACK_MISSING_SCOPE_DETAIL =
  */
 export const SLACK_UNKNOWN_CHANNEL_DETAIL =
   "That channel is not one Prowler can post to.";
-export const SLACK_NO_DEFAULT_CHANNEL_DETAIL =
-  "No default channel is recorded on this integration.";
-/** A task result that reports the refusal as prose instead of as a reason. */
-export const SLACK_TEST_MESSAGE_REFUSED_DETAIL =
-  "Slack rejected the message: the channel is archived.";
 
 /**
  * A `200` challenge page from a proxy or WAF that took the call instead of the
@@ -328,7 +313,6 @@ export const slackFixture = (
   channelsPageSize: SLACK_CHANNELS_PAGE_SIZE,
   channelsRefusal: null,
   channelSaveRefusal: null,
-  testMessage: { accepted: true, error: null },
   ...overrides,
 });
 

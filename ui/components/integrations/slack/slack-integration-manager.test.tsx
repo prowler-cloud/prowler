@@ -14,7 +14,6 @@ import { SlackIntegrationManager } from "./slack-integration-manager";
 
 vi.mock("@/actions/integrations/slack", () => ({
   getSlackChannels: vi.fn(),
-  sendSlackTestMessage: vi.fn(),
   setSlackDefaultChannel: vi.fn(),
 }));
 

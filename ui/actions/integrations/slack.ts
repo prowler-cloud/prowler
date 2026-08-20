@@ -3,17 +3,14 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
-import { pollTaskUntilSettled } from "@/actions/task/poll";
 import { apiBaseUrl, getAuthHeaders, parseStringify } from "@/lib";
 import {
   readSlackFailure,
   SLACK_GENERIC_ERROR_MESSAGE,
   SLACK_PARTIAL_CHANNEL_LIST_MESSAGE,
-  SLACK_REASON_TOKEN,
   SLACK_UNREADABLE_RESULT_MESSAGE,
   slackErrorMessage,
   slackRateLimitMessage,
-  slackUnknownReasonMessage,
 } from "@/lib/integrations/slack-errors";
 import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 import {
@@ -472,89 +469,6 @@ export const setSlackDefaultChannel = async (
     }
 
     return { integration: parseStringify(body.data) as IntegrationProps };
-  } catch (error) {
-    return handleApiError(error);
-  }
-};
-
-interface SlackTestMessageSuccess {
-  sent: true;
-}
-
-export type SlackTestMessageResult = SlackTestMessageSuccess | SlackActionError;
-
-interface SlackTestMessageTaskResult {
-  error?: string | null;
-}
-
-const TEST_MESSAGE_POLL = { maxAttempts: 20, delayMs: 3000 } as const;
-
-/**
- * Post the test message to the integration's default channel.
- *
- * Async on the API's side — `202` plus a Task (design D9) — so this polls the
- * same task machinery the connection test uses. A `400` means no default
- * channel is recorded.
- */
-export const sendSlackTestMessage = async (
-  integrationId: string,
-): Promise<SlackTestMessageResult> => {
-  const id = parseIntegrationId(integrationId);
-  if (!id) return { error: SLACK_GENERIC_ERROR_MESSAGE };
-
-  const headers = await getAuthHeaders({ contentType: true });
-  const url = new URL(`${apiBaseUrl}/integrations/${id}/slack/test-message`);
-
-  try {
-    const response = await fetch(url.toString(), { method: "POST", headers });
-
-    if (!response.ok) {
-      return {
-        error: await errorMessageFrom(
-          response,
-          `Unable to send the test message: ${response.statusText}`,
-        ),
-      };
-    }
-
-    // As above: an unreadable `202` is "no task to follow", not a parser
-    // message.
-    const body = await response.json().catch(() => null);
-    const taskId = body?.data?.id;
-
-    if (!taskId) {
-      return { error: "Slack did not start the test message." };
-    }
-
-    const settled = await pollTaskUntilSettled<SlackTestMessageTaskResult>(
-      taskId,
-      TEST_MESSAGE_POLL,
-    );
-
-    if (!settled.ok) {
-      return { error: settled.error };
-    }
-
-    // Slack's refusal travels in the task result, not in an HTTP error: the
-    // post happens after the `202`. A known code gets Prowler's own wording, a
-    // code-shaped reason is wrapped in one (contract, test-message), and prose
-    // is shown as it arrived.
-    const reason = settled.result?.error?.trim();
-    if (reason) {
-      return {
-        error: SLACK_REASON_TOKEN.test(reason)
-          ? slackErrorMessage(
-              { code: reason },
-              slackUnknownReasonMessage(reason),
-            )
-          : reason,
-      };
-    }
-    if (settled.state !== "completed") {
-      return { error: "Slack did not accept the test message." };
-    }
-
-    return { sent: true };
   } catch (error) {
     return handleApiError(error);
   }

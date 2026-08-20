@@ -8,8 +8,6 @@ import { revalidatePath } from "next/cache";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
-  SLACK_ERROR_CODE,
-  SLACK_ERROR_MESSAGES,
   SLACK_GENERIC_ERROR_MESSAGE,
   SLACK_PARTIAL_CHANNEL_LIST_MESSAGE,
   SLACK_UNREADABLE_RESULT_MESSAGE,
@@ -64,7 +62,6 @@ import {
   exchangeSlackOAuthCode,
   getSlackAuthorizeUrl,
   getSlackChannels,
-  sendSlackTestMessage,
   setSlackDefaultChannel,
 } from "./slack";
 
@@ -594,83 +591,6 @@ describe("setSlackDefaultChannel", () => {
   );
 });
 
-/** The `202` that hands back the task the post is reported on (design D9). */
-const TEST_MESSAGE_TASK_ID = "5f8b1c2d-7e64-4a90-8c31-2b7d6e5f4a90";
-
-const testMessageAccepted = () =>
-  new Response(JSON.stringify({ data: { id: TEST_MESSAGE_TASK_ID } }), {
-    status: 202,
-    headers: { "content-type": "application/vnd.api+json" },
-  });
-
-/** The task read the poll makes, already settled on its first look. */
-const settledTask = (state: string, result: unknown) =>
-  new Response(
-    JSON.stringify({
-      data: {
-        type: "tasks",
-        id: TEST_MESSAGE_TASK_ID,
-        attributes: { state, result },
-      },
-    }),
-    { status: 200, headers: { "content-type": "application/vnd.api+json" } },
-  );
-
-describe("sendSlackTestMessage", () => {
-  it("answers an unreadable `202` as no task started, not as parser prose", async () => {
-    fetchMock.mockResolvedValueOnce(
-      new Response(HTML_INTERSTITIAL, {
-        status: 202,
-        headers: { "content-type": "text/html" },
-      }),
-    );
-
-    const result = await sendSlackTestMessage(SLACK_INTEGRATION_ID);
-
-    expect(result).toEqual({ error: "Slack did not start the test message." });
-    expectNoParserProse(result);
-  });
-
-  it("wraps a reason it has no copy for instead of answering with the bare token", async () => {
-    fetchMock
-      .mockResolvedValueOnce(testMessageAccepted())
-      .mockResolvedValueOnce(settledTask("failed", { error: "is_archived" }));
-
-    const result = await sendSlackTestMessage(SLACK_INTEGRATION_ID);
-
-    const error = (result as { error?: string }).error ?? "";
-    expect(error).toMatch(/Slack refused the message/);
-    expect(error).toContain("is_archived");
-    expect(error).not.toBe("is_archived");
-  });
-
-  it("keeps Prowler's own wording for a reason the mapping covers", async () => {
-    fetchMock
-      .mockResolvedValueOnce(testMessageAccepted())
-      .mockResolvedValueOnce(
-        settledTask("failed", { error: "not_in_channel" }),
-      );
-
-    const result = await sendSlackTestMessage(SLACK_INTEGRATION_ID);
-
-    expect(result).toEqual({
-      error: SLACK_ERROR_MESSAGES[SLACK_ERROR_CODE.NOT_IN_CHANNEL],
-    });
-  });
-
-  it("shows a reason the task worded itself as the prose it is", async () => {
-    // Not token-shaped, so nothing is wrapped around it.
-    const prose = "Slack rejected the message: the channel is archived.";
-    fetchMock
-      .mockResolvedValueOnce(testMessageAccepted())
-      .mockResolvedValueOnce(settledTask("failed", { error: prose }));
-
-    const result = await sendSlackTestMessage(SLACK_INTEGRATION_ID);
-
-    expect(result).toEqual({ error: prose });
-  });
-});
-
 /** The calls whose only failure path is one line of copy. */
 const COPY_ONLY_ACTIONS = [
   {
@@ -680,10 +600,6 @@ const COPY_ONLY_ACTIONS = [
   {
     name: "setSlackDefaultChannel",
     call: (id: string) => setSlackDefaultChannel(id, FIRST_CHANNEL.id),
-  },
-  {
-    name: "sendSlackTestMessage",
-    call: (id: string) => sendSlackTestMessage(id),
   },
 ];
 

@@ -18,7 +18,6 @@ import {
   SLACK_INTEGRATION_ID,
   SLACK_INVALID_CODE_DETAIL,
   SLACK_NO_CHANNEL_DETAIL,
-  SLACK_NO_DEFAULT_CHANNEL_DETAIL,
   SLACK_RATE_LIMITED_REFUSAL,
   SLACK_REFUSED_STATE_DETAIL,
   SLACK_UNCONFIGURED_DETAIL,
@@ -38,7 +37,6 @@ const API = process.env.UI_API_BASE_URL;
 const TS = "2026-08-10T09:00:00Z";
 
 const CONNECTION_TASK_PREFIX = "slack-conn-task-";
-const TEST_MESSAGE_TASK_PREFIX = "slack-test-message-task-";
 
 /** Opaque to the UI, which only ever follows `links.next` (design D6). */
 const CHANNEL_CURSOR_PARAM = "page[cursor]";
@@ -258,16 +256,6 @@ export const handlersForSlack = (fx: SlackFixture) => {
     ),
 
     http.get<{ taskId: string }>(`${API}/tasks/:taskId`, ({ params }) => {
-      // The test message settles as its own task (design D9).
-      if (params.taskId.startsWith(TEST_MESSAGE_TASK_PREFIX)) {
-        const { accepted, error } = fx.testMessage;
-        return HttpResponse.json(
-          taskResource(params.taskId, accepted ? "completed" : "failed", {
-            error,
-          }),
-        );
-      }
-
       const { connected, error } = fx.connection;
       if (install && params.taskId.startsWith(CONNECTION_TASK_PREFIX)) {
         install.connected = connected;
@@ -363,26 +351,5 @@ export const handlersForSlack = (fx: SlackFixture) => {
       install.workspace.channelName = channel.name;
       return HttpResponse.json({ data: integrationResource(install) });
     }),
-
-    // --- Test message ------------------------------------------------------
-    http.post<{ id: string }>(
-      `${API}/integrations/:id/slack/test-message`,
-      ({ params }) => {
-        if (!install?.workspace.channelId) {
-          return HttpResponse.json(
-            errorBody(SLACK_NO_DEFAULT_CHANNEL_DETAIL, 400),
-            { status: 400 },
-          );
-        }
-        return HttpResponse.json(
-          taskResource(
-            `${TEST_MESSAGE_TASK_PREFIX}${params.id}`,
-            "available",
-            null,
-          ),
-          { status: 202 },
-        );
-      },
-    ),
   ];
 };

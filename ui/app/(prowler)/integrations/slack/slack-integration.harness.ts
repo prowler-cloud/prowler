@@ -29,14 +29,6 @@ export const CONNECTION_OUTCOME = {
 export type ConnectionOutcome =
   (typeof CONNECTION_OUTCOME)[keyof typeof CONNECTION_OUTCOME];
 
-export const TEST_MESSAGE_OUTCOME = {
-  SENT: "sent",
-  FAILED: "failed",
-} as const;
-
-export type TestMessageOutcome =
-  (typeof TEST_MESSAGE_OUTCOME)[keyof typeof TEST_MESSAGE_OUTCOME];
-
 /** Sentinel: the page settled on "no channel recorded", rather than not yet. */
 const NO_DEFAULT_CHANNEL = "<no channel recorded>";
 
@@ -311,9 +303,15 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     return line ? (line.textContent ?? "").trim() : null;
   }
 
-  async testConnection(): Promise<ConnectionOutcome> {
-    await this.clickButton(/Test connection/);
+  get connectionCheckCallCount(): number {
+    return this.countRequests("POST", "/connection");
+  }
 
+  /**
+   * The outcome of a check already under way, whoever started it — the button
+   * or the save that made one possible.
+   */
+  async connectionOutcome(): Promise<ConnectionOutcome> {
     return this.waitFor(
       () => {
         if (this.containsText(/Connection test successful/)) {
@@ -327,6 +325,12 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
       15000,
       "the connection test outcome",
     );
+  }
+
+  async testConnection(): Promise<ConnectionOutcome> {
+    await this.clickButton(/Test connection/);
+
+    return this.connectionOutcome();
   }
 
   // --- Returning from Slack -----------------------------------------------
@@ -685,49 +689,5 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
       this.container.querySelectorAll<HTMLElement>("p"),
     ).find((element) => /invites? @Prowler/.test(element.textContent ?? ""));
     return hint ? (hint.textContent ?? "").trim() : null;
-  }
-
-  // --- The test message ----------------------------------------------------
-
-  offersTestMessage(): boolean {
-    return this.buttonByText(/Send test message/) !== null;
-  }
-
-  private testMessageAlert(): HTMLElement | null {
-    return (
-      Array.from(
-        this.container.querySelectorAll<HTMLElement>('[data-slot="alert"]'),
-      ).find((element) =>
-        /Test message (sent|failed)/.test(element.textContent ?? ""),
-      ) ?? null
-    );
-  }
-
-  async sendTestMessage(): Promise<TestMessageOutcome> {
-    await this.clickButton(/Send test message/);
-
-    return this.waitFor(
-      () => {
-        const alert = this.testMessageAlert();
-        if (!alert) return null;
-        return /Test message sent/.test(alert.textContent ?? "")
-          ? TEST_MESSAGE_OUTCOME.SENT
-          : TEST_MESSAGE_OUTCOME.FAILED;
-      },
-      15000,
-      "the test message outcome",
-    );
-  }
-
-  async lastTestMessageOutcome(): Promise<string> {
-    const alert = await this.waitFor(
-      () => this.testMessageAlert(),
-      10000,
-      "the test message outcome",
-    );
-    const description = alert.querySelector<HTMLElement>(
-      '[data-slot="alert-description"]',
-    );
-    return (description?.textContent ?? "").trim();
   }
 }
