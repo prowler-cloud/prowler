@@ -98,15 +98,15 @@ export interface IntegrationProps {
       domain?: string;
       projects?: { [key: string]: string };
       issue_types?: { [key: string]: string[] };
-      // Slack specific configuration, server-owned. The channels key is absent
-      // until channels are authorized, never present and null: read it with
-      // `?? []`.
+      // Slack specific configuration, server-owned. A new install carries an
+      // empty `channels` array and a `verification` whose fields are all null;
+      // the keys are optional here because this shape is shared with the other
+      // integration types, so read them with `?? []`.
       team_id?: string;
       team_name?: string;
       bot_user_id?: string;
-      // TODO(Josema): D3 working assumption — the stored set's property name
-      // and shape (supersedes the singular `channel_id`/`channel_name`).
-      channels?: SlackChannelOption[];
+      channels?: SlackAuthorizedChannel[];
+      verification?: SlackVerification;
       [key: string]: unknown;
     };
     url?: string;
@@ -118,11 +118,37 @@ export interface IntegrationProps {
 /**
  * A channel Prowler can post to: every active public channel, plus the private
  * ones `@Prowler` was invited to. `is_private` keeps the API's own naming.
+ *
+ * The picker's option type, deliberately without the integration's stored
+ * fields: whoever renders a choice has no business knowing whether Prowler has
+ * already confirmed the channel.
  */
 export interface SlackChannelOption {
   id: string;
   name: string;
   is_private: boolean;
+}
+
+/**
+ * A channel authorized on the integration. `confirmation_sent_at` is when the
+ * one-time confirmation the connection check posts landed in it: null until a
+ * check posts one, and null again after a same-workspace reinstall, which keeps
+ * the channels but resets every confirmation.
+ */
+export interface SlackAuthorizedChannel extends SlackChannelOption {
+  confirmation_sent_at: string | null;
+}
+
+/**
+ * The connection check the API last recorded. `task_id` is pre-generated when
+ * the check is queued, so it exists before the worker starts: `started_at` is
+ * what says execution began, and only a task whose id still matches may write
+ * here — which is what keeps a late check from overwriting a newer one.
+ */
+export interface SlackVerification {
+  task_id: string | null;
+  started_at: string | null;
+  finished_at: string | null;
 }
 
 // Jira dispatch types

@@ -1,6 +1,6 @@
 /**
- * Fixture data for the Slack handlers. Shapes follow the API contract in
- * `openspec/changes/add-slack-integration/design.md`.
+ * Fixture data for the Slack handlers. Shapes follow the signed API contract in
+ * `openspec/changes/add-slack-alert-channels/contract/slack-alerts-api.md`.
  */
 
 export interface SlackWorkspaceFixture {
@@ -8,12 +8,27 @@ export interface SlackWorkspaceFixture {
   teamName: string;
   botUserId: string;
   /**
-   * Absent from the serialized configuration until channels are authorized:
-   * the API omits the key rather than sending an empty array.
-   * TODO(Josema): D3 working assumption — stored-shape name and pluralization.
+   * The authorized set. A new install has none, which the API serializes as an
+   * empty `channels` array rather than by omitting the key.
    */
-  authorizedChannels?: SlackChannelFixture[];
+  authorizedChannels?: SlackAuthorizedChannelFixture[];
 }
+
+/**
+ * The connection check the API last recorded. Every field is null until one is
+ * queued; a same-workspace reinstall puts them back that way.
+ */
+export interface SlackVerificationFixture {
+  taskId: string | null;
+  startedAt: string | null;
+  finishedAt: string | null;
+}
+
+export const NO_VERIFICATION: SlackVerificationFixture = {
+  taskId: null,
+  startedAt: null,
+  finishedAt: null,
+};
 
 export interface SlackInstallFixture {
   id: string;
@@ -21,6 +36,7 @@ export interface SlackInstallFixture {
   connected: boolean | null;
   connectionLastCheckedAt: string | null;
   workspace: SlackWorkspaceFixture;
+  verification?: SlackVerificationFixture;
 }
 
 export const SLACK_EXCHANGE_OUTCOME = {
@@ -48,9 +64,9 @@ export interface SlackConnectionFixture {
   error: string | null;
   /**
    * The channel a channel-level failure is about, named by the task result so
-   * the user hears which one Slack refused (design D7). Absent for
+   * the user hears which one Slack refused (contract, Connection). Absent for
    * credential-level failures, which are about the workspace as a whole.
-   * TODO(Josema): D3 working assumption — how the result names the channel.
+   * TODO(Josema): the key the result names it under.
    */
   failedChannelName?: string | null;
 }
@@ -61,6 +77,15 @@ export interface SlackChannelFixture {
   name: string;
   /** Private channels are listed only where `@Prowler` has been invited. */
   isPrivate: boolean;
+}
+
+/**
+ * A channel authorized on the integration: the listing's fields plus when the
+ * one-time confirmation landed in it. `null` means the next connection check
+ * posts one there; a check never posts to a channel that already has one.
+ */
+export interface SlackAuthorizedChannelFixture extends SlackChannelFixture {
+  confirmationSentAt: string | null;
 }
 
 /**
@@ -398,34 +423,79 @@ export const connectedSlackFixture = (
       id: SLACK_INTEGRATION_ID,
       connected: null,
       connectionLastCheckedAt: null,
-      workspace: { ...PROWLER_HQ },
+      workspace: { ...PROWLER_HQ, authorizedChannels: [] },
+      verification: { ...NO_VERIFICATION },
     },
     exchangeOutcome: SLACK_EXCHANGE_OUTCOME.REINSTALLED,
     ...overrides,
   });
+
+/** When the check that left this install connected posted its confirmations. */
+export const SLACK_CONFIRMED_AT = "2026-08-10T09:30:00Z";
+
+/** The verification of that same check, as the configuration carries it. */
+const SETTLED_VERIFICATION: SlackVerificationFixture = {
+  taskId: "5d408881-3e9e-4195-a281-a8d1be849472",
+  startedAt: "2026-08-10T09:29:58Z",
+  finishedAt: SLACK_CONFIRMED_AT,
+};
+
+/**
+ * A channel as the integration stores it, confirmed by default: an install
+ * reporting itself connected has had a check post to every channel on it.
+ */
+export const authorizedChannel = (
+  channel: SlackChannelFixture,
+  confirmationSentAt: string | null = SLACK_CONFIRMED_AT,
+): SlackAuthorizedChannelFixture => ({ ...channel, confirmationSentAt });
 
 const configuredInstall = (
   channels: SlackChannelFixture[] = [SLACK_PUBLIC_CHANNEL],
 ): SlackInstallFixture => ({
   id: SLACK_INTEGRATION_ID,
   connected: true,
-  connectionLastCheckedAt: "2026-08-10T09:30:00Z",
+  connectionLastCheckedAt: SLACK_CONFIRMED_AT,
   workspace: {
     ...PROWLER_HQ,
-    authorizedChannels: channels.map((channel) => ({ ...channel })),
+    authorizedChannels: channels.map((channel) => authorizedChannel(channel)),
   },
+  verification: { ...SETTLED_VERIFICATION },
 });
 
 /**
- * The same tenant with destination channels already authorized: the state a
- * second visit starts from. A tenant migrated from the single-channel model
- * arrives here too — its recorded default becomes the set's sole member.
+ * The same tenant with destination channels already authorized and confirmed:
+ * the state a second visit starts from.
  */
 export const slackFixtureWithAuthorizedChannels = (
   channels: SlackChannelFixture[] = [SLACK_PUBLIC_CHANNEL],
   overrides: Partial<SlackFixture> = {},
 ): SlackFixture =>
   connectedSlackFixture({ install: configuredInstall(channels), ...overrides });
+
+/**
+ * Channels authorized and none of them confirmed: what a same-workspace
+ * reinstall leaves behind, which keeps the set but resets every confirmation
+ * along with the connection and verification state (contract, OAuth and reads).
+ */
+export const unconfirmedChannelsSlackFixture = (
+  channels: SlackChannelFixture[] = [SLACK_PUBLIC_CHANNEL],
+  overrides: Partial<SlackFixture> = {},
+): SlackFixture =>
+  connectedSlackFixture({
+    install: {
+      id: SLACK_INTEGRATION_ID,
+      connected: null,
+      connectionLastCheckedAt: null,
+      workspace: {
+        ...PROWLER_HQ,
+        authorizedChannels: channels.map((channel) =>
+          authorizedChannel(channel, null),
+        ),
+      },
+      verification: { ...NO_VERIFICATION },
+    },
+    ...overrides,
+  });
 
 /**
  * The same finished setup, with a check time no parser can read: a zero date
