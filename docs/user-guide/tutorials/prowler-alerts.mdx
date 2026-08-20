@@ -160,7 +160,7 @@ The field is always present, so channel delivery is never silently missing. It r
 In both states the rest of the Alert is unaffected: it can still be created or saved with its filters, frequency, and email recipients.
 
 <Note>
-Slack destinations stay in step with the integration. Removing a channel from the integration's authorized set — or disconnecting the Slack integration altogether — removes that channel from every Alert that targeted it, so an Alert never keeps a destination Prowler can no longer deliver to. The Alert keeps its filters, frequency, and email recipients, and stops posting to the removed channel. Restoring delivery means authorizing and confirming the channel again on the integration, then selecting it again on the Alert.
+Slack destinations stay in step with the integration. Removing a channel from the integration's authorized set — or disconnecting the Slack integration altogether — removes that channel from every Alert that targeted it, so an Alert never keeps a destination Prowler can no longer deliver to. The Alert keeps its filters, frequency, and email recipients, and future delivery to that channel stops: nothing is posted to announce the removal, and the notifications already delivered stay in the channel. Restoring delivery means authorizing and confirming the channel again on the integration, then selecting it again on the Alert.
 </Note>
 
 Saving an Alert that names a channel which is not a confirmed channel of a connected Slack integration is refused, and the reason is reported on the Alert form. Authorize and confirm the channel on the Slack integration, or remove it from the Alert, and save again.
