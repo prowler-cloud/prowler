@@ -32,7 +32,7 @@ import {
   SLACK_UNKNOWN_CHANNEL_DETAIL,
   SLACK_UPSTREAM_REFUSAL,
   slackFixture,
-  slackFixtureWithDefaultChannel,
+  slackFixtureWithAuthorizedChannels,
   unreadableCheckTimeSlackFixture,
   unreportedRevocationSlackFixture,
 } from "@/__tests__/msw/handlers/slack.fixtures";
@@ -43,7 +43,7 @@ import {
   SlackIntegrationHarness,
 } from "./slack-integration.harness";
 
-/** The shape the channel save is asserted against — only the id travels. */
+/** The shape the channels save is asserted against — only ids travel. */
 interface PatchIntegrationBody {
   data: PatchIntegrationData;
 }
@@ -57,7 +57,7 @@ interface PatchIntegrationAttributes {
 }
 
 interface PatchChannelConfiguration {
-  channel_id: string;
+  channel_ids: string[];
 }
 
 /** The workspace the fixtures connect. */
@@ -248,30 +248,28 @@ describe("a connected workspace", () => {
   }, 30000);
 
   it("does not offer a connection check the API is bound to refuse", async () => {
-    // Given — a workspace connected and no destination channel recorded.
+    // Given — a workspace connected and no channels authorized yet.
     const harness = new SlackIntegrationHarness(connectedSlackFixture());
 
     await harness.mount();
 
-    // The check posts to the destination channel, so with none recorded the API
-    // answers 400 rather than `connected: false`.
+    // The check posts to the authorized channels, so with none the API answers
+    // 400 rather than `connected: false`.
     expect(await harness.offersConnectionTest()).toBe(false);
     // And — the control itself says what unblocks it.
-    expect(harness.connectionCheckBlockedReason()).toMatch(
-      /destination channel/i,
-    );
+    expect(harness.connectionCheckHint()).toMatch(/destination channel/i);
   }, 30000);
 });
 
-describe("choosing a destination channel", () => {
-  it("offers the workspace's channels and remembers the one chosen", async () => {
+describe("authorizing destination channels", () => {
+  it("offers the workspace's channels and remembers the several authorized", async () => {
     // Given — a connected tenant whose channels span two cursor pages.
     const harness = new SlackIntegrationHarness(connectedSlackFixture());
     await harness.mount();
 
     // Then — every channel is offered, so the picker followed `links.next`
-    // rather than stopping at the first page (design D6). Alphabetically: the
-    // picker sorts, so the API's page order is not the offered order.
+    // rather than stopping at the first page. Alphabetically: the picker
+    // sorts, so the API's page order is not the offered order.
     expect(await harness.channelOptions()).toEqual([
       SLACK_SECOND_PUBLIC_CHANNEL.name,
       SLACK_PUBLIC_CHANNEL.name,
@@ -279,22 +277,60 @@ describe("choosing a destination channel", () => {
     ]);
     expect(harness.channelListCallCount).toBe(2);
 
-    // When
-    await harness.chooseChannel(SLACK_PUBLIC_CHANNEL.name);
+    // When — more than one channel is authorized in a single save.
+    await harness.authorizeChannels([
+      SLACK_PUBLIC_CHANNEL.name,
+      SLACK_PRIVATE_CHANNEL.name,
+    ]);
 
-    // Then — only the id is submitted: the API derives the name from it.
+    // Then — only the ids are submitted: the API derives the names from them.
     const saved = await harness.lastRequestBody<PatchIntegrationBody>(
       "PATCH",
       "/integrations/",
     );
-    expect(saved?.data.attributes.configuration).toEqual({
-      channel_id: SLACK_PUBLIC_CHANNEL.id,
-    });
+    expect(saved?.data.attributes.configuration.channel_ids).toHaveLength(2);
+    expect(saved?.data.attributes.configuration.channel_ids).toEqual(
+      expect.arrayContaining([
+        SLACK_PUBLIC_CHANNEL.id,
+        SLACK_PRIVATE_CHANNEL.id,
+      ]),
+    );
 
-    // And — a later visit shows it, under the name the API derived from the id.
+    // And — a later visit shows the set, under the names the API derived.
     await harness.revisit();
-    expect(await harness.defaultChannel()).toBe(SLACK_PUBLIC_CHANNEL.name);
+    expect(await harness.authorizedChannels()).toEqual(
+      expect.arrayContaining([
+        SLACK_PUBLIC_CHANNEL.name,
+        SLACK_PRIVATE_CHANNEL.name,
+      ]),
+    );
   }, 60000);
+
+  it("keeps a private channel identified on its chip with the listing closed", async () => {
+    // Given — an authorized set holding a private channel next to a public
+    // one, as a later visit reads it back.
+    const harness = new SlackIntegrationHarness(
+      slackFixtureWithAuthorizedChannels([
+        SLACK_PUBLIC_CHANNEL,
+        SLACK_PRIVATE_CHANNEL,
+      ]),
+    );
+
+    // When — nothing but opening the page: the listing stays closed.
+    await harness.mount();
+
+    // Then — the chips themselves carry the identification, not only the rows
+    // inside the open listing (spec: identified while a selected value).
+    const chips = await harness.authorizedChannelChips();
+    expect(chips).toContainEqual({
+      name: SLACK_PRIVATE_CHANNEL.name,
+      isPrivate: true,
+    });
+    expect(chips).toContainEqual({
+      name: SLACK_PUBLIC_CHANNEL.name,
+      isPrivate: false,
+    });
+  }, 30000);
 
   it("narrows the offered channels as the user types", async () => {
     // Given — a connected workspace whose channels were read.
@@ -313,7 +349,7 @@ describe("choosing a destination channel", () => {
     expect(none.emptyNote).toMatch(/No channel matches/);
   }, 60000);
 
-  it("offers a private channel the app was invited to, marked as private, and saves it", async () => {
+  it("offers a private channel the app was invited to, marked as private, and authorizes it", async () => {
     // Given — `@Prowler` was invited to one private channel; `groups:read` is
     // membership-gated (D2).
     const harness = new SlackIntegrationHarness(connectedSlackFixture());
@@ -331,10 +367,12 @@ describe("choosing a destination channel", () => {
     ).toBe(false);
 
     // When
-    await harness.chooseChannel(SLACK_PRIVATE_CHANNEL.name);
+    await harness.authorizeChannels([SLACK_PRIVATE_CHANNEL.name]);
 
     // Then
-    expect(await harness.defaultChannel()).toBe(SLACK_PRIVATE_CHANNEL.name);
+    expect(await harness.authorizedChannels()).toEqual([
+      SLACK_PRIVATE_CHANNEL.name,
+    ]);
   }, 60000);
 
   it("offers a private channel once @Prowler is invited to it and the list is refreshed", async () => {
@@ -380,79 +418,97 @@ describe("choosing a destination channel", () => {
     const message = await harness.channelPickerMessage();
     expect(message).toMatch(/No channels available yet/);
     expect(message).toMatch(/invite @Prowler/);
-    expect(await harness.defaultChannel()).toBeNull();
+    expect(await harness.authorizedChannels()).toEqual([]);
     expect(await harness.offersConnectionTest()).toBe(false);
   }, 30000);
 
-  it("checks the connection itself as soon as the destination is saved", async () => {
-    // Given — connected with nothing recorded: the check posts to the
-    // destination, so it is not offered yet.
+  it("checks the connection itself as soon as the channels are saved", async () => {
+    // Given — connected with nothing authorized: the check posts to the set,
+    // so it is not offered yet.
     const harness = new SlackIntegrationHarness(connectedSlackFixture());
     await harness.mount();
     expect(await harness.offersConnectionTest()).toBe(false);
-    expect(harness.connectionCheckBlockedReason()).toMatch(
-      /destination channel/i,
-    );
+    expect(harness.connectionCheckHint()).toMatch(/destination channel/i);
     expect(harness.connectionCheckCallCount).toBe(0);
 
     // When
-    await harness.chooseChannel(SLACK_PUBLIC_CHANNEL.name);
+    await harness.authorizeChannels([SLACK_PUBLIC_CHANNEL.name]);
 
     // Then
     expect(await harness.connectionOutcome()).toBe(CONNECTION_OUTCOME.SUCCESS);
     expect(harness.connectionCheckCallCount).toBe(1);
     // And — everything waiting on a destination moves with the save, in the
-    // same paint: no reload to find the check on offer for later.
+    // same paint: no reload to find the check on offer for later. The copy now
+    // says what the check does over the set, before the user clicks.
     expect(await harness.offersConnectionTest()).toBe(true);
-    expect(harness.connectionCheckBlockedReason()).toBeNull();
+    expect(harness.connectionCheckHint()).toMatch(/every authorized channel/);
   }, 60000);
 
-  it("reports a saved destination the check cannot reach, without losing the save", async () => {
-    // Given — a channel the API records, then refuses to reach: the bot is not
-    // in it, which only the check finds out.
+  it("reports a saved destination the check cannot reach, naming the channel, without losing the save", async () => {
+    // Given — channels the API records, then refuses to reach one of: the bot
+    // is not in it, which only the check finds out, and only the check can say
+    // which channel of the set it was (design D7).
     const harness = new SlackIntegrationHarness(
       connectedSlackFixture({
-        connection: { connected: false, error: SLACK_NOT_IN_CHANNEL_CODE },
+        connection: {
+          connected: false,
+          error: SLACK_NOT_IN_CHANNEL_CODE,
+          failedChannelName: SLACK_PRIVATE_CHANNEL.name,
+        },
       }),
     );
     await harness.mount();
 
     // When
-    await harness.chooseChannel(SLACK_PUBLIC_CHANNEL.name);
+    await harness.authorizeChannels([
+      SLACK_PUBLIC_CHANNEL.name,
+      SLACK_PRIVATE_CHANNEL.name,
+    ]);
 
-    // Then — only the check failed, so the destination stays on record.
+    // Then — only the check failed, so the destinations stay on record, and
+    // the failure names the one channel Slack refused.
     expect(await harness.connectionOutcome()).toBe(CONNECTION_OUTCOME.FAILURE);
-    expect(await harness.defaultChannel()).toBe(SLACK_PUBLIC_CHANNEL.name);
+    expect(await harness.connectionFailureToast()).toMatch(
+      new RegExp(`Slack refused #${SLACK_PRIVATE_CHANNEL.name}`),
+    );
+    expect(await harness.authorizedChannels()).toEqual(
+      expect.arrayContaining([
+        SLACK_PUBLIC_CHANNEL.name,
+        SLACK_PRIVATE_CHANNEL.name,
+      ]),
+    );
     expect(await harness.offersConnectionTest()).toBe(true);
   }, 60000);
 
-  it("follows the destination recorded elsewhere when the page's data refreshes under it", async () => {
+  it("follows the set recorded elsewhere when the page's data refreshes under it", async () => {
     // Given — a finished setup, open on screen.
     const harness = new SlackIntegrationHarness(configuredSlackFixture());
     await harness.mount();
-    expect(await harness.defaultChannel()).toBe(SLACK_PUBLIC_CHANNEL.name);
+    expect(await harness.authorizedChannels()).toEqual([
+      SLACK_PUBLIC_CHANNEL.name,
+    ]);
 
-    // When — the destination changes elsewhere (a second tab, another user) and
-    // this page's server data refreshes under the open card, as
-    // `revalidatePath` does after an action.
-    await harness.channelRecordedElsewhere(SLACK_SECOND_PUBLIC_CHANNEL.name);
+    // When — the set changes elsewhere (a second tab, another user) and this
+    // page's server data refreshes under the open card, as `revalidatePath`
+    // does after an action.
+    await harness.channelsRecordedElsewhere([SLACK_SECOND_PUBLIC_CHANNEL.name]);
     await harness.refreshPageData();
 
     // Then — the card reports what is on record, not the copy it took at mount.
-    expect(await harness.defaultChannel()).toBe(
+    expect(await harness.authorizedChannels()).toEqual([
       SLACK_SECOND_PUBLIC_CHANNEL.name,
-    );
+    ]);
     expect(await harness.offersConnectionTest()).toBe(true);
-    // And — the picker followed too: the superseded destination is not left one
-    // click from being saved back.
-    expect(harness.offersChannelSave()).toBe(false);
+    // And — the picker followed too: the superseded set is not left one click
+    // from being saved back.
+    expect(harness.offersChannelsSave()).toBe(false);
   }, 60000);
 
-  it("says which permission is missing when Slack refuses the channel listing, leaving the recorded channel alone", async () => {
-    // Given — a recorded destination, and an install missing a scope the listing
+  it("says which permission is missing when Slack refuses the channel listing, leaving the authorized set alone", async () => {
+    // Given — an authorized set, and an install missing a scope the listing
     // needs. The API names it in `code` (contract, Errors), not in `detail`.
     const harness = new SlackIntegrationHarness(
-      slackFixtureWithDefaultChannel(SLACK_PUBLIC_CHANNEL, {
+      slackFixtureWithAuthorizedChannels([SLACK_PUBLIC_CHANNEL], {
         channelsRefusal: SLACK_MISSING_SCOPE_REFUSAL,
       }),
     );
@@ -470,9 +526,11 @@ describe("choosing a destination channel", () => {
     expect(message).not.toMatch(SLACK_MISSING_SCOPE_CODE);
     expect(harness.channelInviteHint()).toMatch(/invites @Prowler/);
 
-    // And — a listing Prowler could not read says nothing about the channel
-    // already recorded.
-    expect(await harness.defaultChannel()).toBe(SLACK_PUBLIC_CHANNEL.name);
+    // And — a listing Prowler could not read says nothing about the channels
+    // already authorized.
+    expect(await harness.authorizedChannels()).toEqual([
+      SLACK_PUBLIC_CHANNEL.name,
+    ]);
     expect(await harness.offersConnectionTest()).toBe(true);
   }, 30000);
 
@@ -480,7 +538,7 @@ describe("choosing a destination channel", () => {
     // Given — `conversations.list` is Slack tier 2 and paginated (contract,
     // Errors); the `429` carries the wait in `Retry-After`.
     const harness = new SlackIntegrationHarness(
-      slackFixtureWithDefaultChannel(SLACK_PUBLIC_CHANNEL, {
+      slackFixtureWithAuthorizedChannels([SLACK_PUBLIC_CHANNEL], {
         channelsRefusal: SLACK_RATE_LIMITED_REFUSAL,
       }),
     );
@@ -496,7 +554,9 @@ describe("choosing a destination channel", () => {
 
     // And — waiting is the fix, so nothing is said about permissions.
     expect(message).not.toMatch(/permission/);
-    expect(await harness.defaultChannel()).toBe(SLACK_PUBLIC_CHANNEL.name);
+    expect(await harness.authorizedChannels()).toEqual([
+      SLACK_PUBLIC_CHANNEL.name,
+    ]);
   }, 30000);
 
   it("keeps the channels it did read on offer when Slack refuses a later page", async () => {
@@ -521,8 +581,10 @@ describe("choosing a destination channel", () => {
     expect(notice).toMatch(/rate limiting/);
     expect(notice).toMatch(/about 30 seconds/);
 
-    // And — a partial read says nothing about the destination already recorded.
-    expect(await harness.defaultChannel()).toBe(SLACK_PUBLIC_CHANNEL.name);
+    // And — a partial read says nothing about the channels already authorized.
+    expect(await harness.authorizedChannels()).toEqual([
+      SLACK_PUBLIC_CHANNEL.name,
+    ]);
     expect(await harness.offersConnectionTest()).toBe(true);
   }, 60000);
 
@@ -541,7 +603,7 @@ describe("choosing a destination channel", () => {
     // Given — a `502`, which names no `code` because there is nothing to act on
     // (contract, Errors).
     const harness = new SlackIntegrationHarness(
-      slackFixtureWithDefaultChannel(SLACK_PUBLIC_CHANNEL, {
+      slackFixtureWithAuthorizedChannels([SLACK_PUBLIC_CHANNEL], {
         channelsRefusal: SLACK_UPSTREAM_REFUSAL,
       }),
     );
@@ -553,12 +615,14 @@ describe("choosing a destination channel", () => {
     const message = await harness.channelPickerMessage();
     expect(message).toMatch(/Slack is temporarily unavailable/);
     expect(message).not.toMatch(/rate limiting/);
-    expect(await harness.defaultChannel()).toBe(SLACK_PUBLIC_CHANNEL.name);
+    expect(await harness.authorizedChannels()).toEqual([
+      SLACK_PUBLIC_CHANNEL.name,
+    ]);
   }, 30000);
 
-  it("says to invite @Prowler when Slack refuses the channel because the app is not in it", async () => {
+  it("says to invite @Prowler when Slack refuses a channel because the app is not in it", async () => {
     // Given — a private channel the app was removed from. The API validates the
-    // channel against Slack on the way in and refuses with `not_in_channel`.
+    // set against Slack on the way in and refuses with `not_in_channel`.
     const harness = new SlackIntegrationHarness(
       connectedSlackFixture({
         channelSaveRefusal: SLACK_NOT_IN_CHANNEL_REFUSAL,
@@ -567,9 +631,9 @@ describe("choosing a destination channel", () => {
     await harness.mount();
 
     // When
-    const refusal = await harness.refusedChannelSave(
+    const refusal = await harness.refusedChannelsSave([
       SLACK_PRIVATE_CHANNEL.name,
-    );
+    ]);
 
     // Then — the one fix the user can carry out themselves, in Slack.
     expect(refusal).toMatch(/Prowler is not in that channel/);
@@ -577,7 +641,7 @@ describe("choosing a destination channel", () => {
     expect(refusal).not.toMatch(SLACK_NOT_IN_CHANNEL_CODE);
 
     // And — nothing was recorded, so there is still nothing to check against.
-    expect(await harness.defaultChannel()).toBeNull();
+    expect(await harness.authorizedChannels()).toEqual([]);
     expect(await harness.offersConnectionTest()).toBe(false);
   }, 60000);
 
@@ -593,7 +657,9 @@ describe("choosing a destination channel", () => {
     await harness.mount();
 
     // When
-    const refusal = await harness.refusedChannelSave(SLACK_PUBLIC_CHANNEL.name);
+    const refusal = await harness.refusedChannelsSave([
+      SLACK_PUBLIC_CHANNEL.name,
+    ]);
 
     // Then — a different problem, so different copy: nothing to invite to a
     // channel that no longer exists.
@@ -601,7 +667,7 @@ describe("choosing a destination channel", () => {
     expect(refusal).toMatch(/Choose another one/);
     expect(refusal).not.toMatch(/Invite @Prowler/);
     expect(refusal).not.toMatch(SLACK_UNKNOWN_CHANNEL_DETAIL);
-    expect(await harness.defaultChannel()).toBeNull();
+    expect(await harness.authorizedChannels()).toEqual([]);
   }, 60000);
 });
 
@@ -808,10 +874,10 @@ describe("a credential Slack no longer accepts", () => {
     expect(harness.showsRevokedCredentialNotice()).toBe(true);
     expect(await harness.connectionBadge()).toBe("Disconnected");
 
-    // When — the access is approved again in Slack and the user saves a
-    // destination: both the save and the check it runs answer for the grant.
+    // When — the access is approved again in Slack and the user saves a wider
+    // set: both the save and the check it runs answer for the grant.
     harness.fixture.connection = { connected: true, error: null };
-    await harness.chooseChannel(SLACK_SECOND_PUBLIC_CHANNEL.name);
+    await harness.authorizeChannels([SLACK_SECOND_PUBLIC_CHANNEL.name]);
 
     // Then — Slack answered, so the notice about a credential it no longer
     // accepts goes, and the card is back to what it reported on arrival.

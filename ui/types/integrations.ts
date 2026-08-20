@@ -98,13 +98,15 @@ export interface IntegrationProps {
       domain?: string;
       projects?: { [key: string]: string };
       issue_types?: { [key: string]: string[] };
-      // Slack specific configuration, server-owned. The channel keys are absent
-      // until one is chosen, not present and null: read them with `?? null`.
+      // Slack specific configuration, server-owned. The channels key is absent
+      // until channels are authorized, never present and null: read it with
+      // `?? []`.
       team_id?: string;
       team_name?: string;
       bot_user_id?: string;
-      channel_id?: string;
-      channel_name?: string;
+      // TODO(Josema): D3 working assumption — the stored set's property name
+      // and shape (supersedes the singular `channel_id`/`channel_name`).
+      channels?: SlackChannelOption[];
       [key: string]: unknown;
     };
     url?: string;

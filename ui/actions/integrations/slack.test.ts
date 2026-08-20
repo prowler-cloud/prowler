@@ -63,7 +63,7 @@ import {
   exchangeSlackOAuthCode,
   getSlackAuthorizeUrl,
   getSlackChannels,
-  setSlackDefaultChannel,
+  setSlackAuthorizedChannels,
 } from "./slack";
 
 /** The status the contract reserves for an upstream Slack failure. */
@@ -510,10 +510,10 @@ const expectNoParserProse = (result: unknown) => {
 
 const INTEGRATION_URL = `https://api.test/api/v1/integrations/${SLACK_INTEGRATION_ID}`;
 
-const saveChannel = () =>
-  setSlackDefaultChannel(SLACK_INTEGRATION_ID, FIRST_CHANNEL.id);
+const saveChannels = () =>
+  setSlackAuthorizedChannels(SLACK_INTEGRATION_ID, [FIRST_CHANNEL.id]);
 
-/** The save as the API answers it: the channel's name derived server-side. */
+/** The save as the API answers it: the channels' names derived server-side. */
 const savedIntegration = () =>
   new Response(
     JSON.stringify({
@@ -523,8 +523,13 @@ const savedIntegration = () =>
         attributes: {
           integration_type: "slack",
           configuration: {
-            channel_id: FIRST_CHANNEL.id,
-            channel_name: FIRST_CHANNEL.name,
+            channels: [
+              {
+                id: FIRST_CHANNEL.id,
+                name: FIRST_CHANNEL.name,
+                is_private: false,
+              },
+            ],
           },
         },
       },
@@ -542,16 +547,20 @@ const expectIntegrationsRevalidated = () => {
   ]);
 };
 
-describe("setSlackDefaultChannel", () => {
+describe("setSlackAuthorizedChannels", () => {
   it("returns the saved integration and revalidates the pages listing it", async () => {
     fetchMock.mockResolvedValueOnce(savedIntegration());
 
-    const result = await saveChannel();
+    const result = await saveChannels();
 
     expect(requestedUrls()).toEqual([INTEGRATION_URL]);
     expect(result).toMatchObject({
       integration: {
-        attributes: { configuration: { channel_name: FIRST_CHANNEL.name } },
+        attributes: {
+          configuration: {
+            channels: [expect.objectContaining({ name: FIRST_CHANNEL.name })],
+          },
+        },
       },
     });
     expectIntegrationsRevalidated();
@@ -560,16 +569,16 @@ describe("setSlackDefaultChannel", () => {
   // The write serializer names whatever it will not take and refuses the whole
   // save, so a body that also carried the integration's own (immutable) type
   // came back as `Invalid fields: {'integration_type'}` and recorded nothing.
-  it("submits the channel as the save's only attribute", async () => {
+  it("submits the channel ids as the save's only attribute", async () => {
     fetchMock.mockResolvedValueOnce(savedIntegration());
 
-    await saveChannel();
+    await saveChannels();
 
     expect(sentBody()).toEqual({
       data: {
         type: "integrations",
         id: SLACK_INTEGRATION_ID,
-        attributes: { configuration: { channel_id: FIRST_CHANNEL.id } },
+        attributes: { configuration: { channel_ids: [FIRST_CHANNEL.id] } },
       },
     });
   });
@@ -582,11 +591,11 @@ describe("setSlackDefaultChannel", () => {
     async ({ body }) => {
       fetchMock.mockResolvedValueOnce(unreadableOk(body));
 
-      const result = await saveChannel();
+      const result = await saveChannels();
 
       expect(result).toEqual({ error: SLACK_UNREADABLE_RESULT_MESSAGE });
       expectNoParserProse(result);
-      // The API recorded the channel before answering, so both pages refresh.
+      // The API recorded the channels before answering, so both pages refresh.
       expectIntegrationsRevalidated();
     },
   );
@@ -607,7 +616,7 @@ describe("setSlackDefaultChannel", () => {
         }),
       );
 
-      const result = await saveChannel();
+      const result = await saveChannels();
 
       expect(result).toEqual({ error: SLACK_UNREADABLE_RESULT_MESSAGE });
       expectNoParserProse(result);
@@ -623,8 +632,8 @@ const COPY_ONLY_ACTIONS = [
     call: (id: string) => getSlackChannels(id),
   },
   {
-    name: "setSlackDefaultChannel",
-    call: (id: string) => setSlackDefaultChannel(id, FIRST_CHANNEL.id),
+    name: "setSlackAuthorizedChannels",
+    call: (id: string) => setSlackAuthorizedChannels(id, [FIRST_CHANNEL.id]),
   },
   {
     name: "disconnectSlackIntegration",
