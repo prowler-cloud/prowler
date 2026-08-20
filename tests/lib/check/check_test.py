@@ -827,6 +827,34 @@ class TestCheck:
         assert audit_metadata.expected_checks == expected_checks
         assert audit_metadata.completed_checks == 1
 
+    def test_update_audit_metadata_no_expected_checks(self):
+        """Providers that run no checks build `Audit_Metadata` with no expected checks.
+
+        `iac`, `llm`, `image`, `alibabacloud` and `huaweicloud` all construct it
+        with `expected_checks=[]`, so dividing by that length raises
+        `ZeroDivisionError`. The handler only logged, so the function returned
+        `None` despite being annotated `-> Audit_Metadata`, and callers assign
+        the result straight to `provider.audit_metadata`.
+        """
+        from prowler.providers.common.models import Audit_Metadata
+
+        audit_metadata = Audit_Metadata(
+            services_scanned=0,
+            expected_checks=[],
+            completed_checks=0,
+            audit_progress=0,
+        )
+
+        result = update_audit_metadata(audit_metadata, set(), set())
+
+        assert result is not None, (
+            "update_audit_metadata returned None, so provider.audit_metadata "
+            "is replaced with a non-object"
+        )
+        assert result.audit_progress == 0
+        assert result.services_scanned == 0
+        assert result.completed_checks == 0
+
     def test_list_checks_json_aws_lambda_and_s3(self):
         provider = "aws"
         check_list = {
