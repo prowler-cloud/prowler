@@ -109,7 +109,7 @@ If the selection reports that no channels are available, the workspace exposes n
 
 A workspace can hold more channels than Prowler reads in one go. When that happens, the selection says so and lists what was read: every listed channel is usable, and a channel missing from a partial list is not necessarily one `@Prowler` has to be invited to. Only listed channels can be selected: **Refresh channels** repeats the same bounded read rather than reading further, and the selection's search filters what was already read, so neither surfaces a channel the read left out.
 
-Saving a new selection replaces the authorized set: channels left out of it stop being authorized, and channels added to it are authorized but not yet confirmed. Changing which channels are in the set also resets the integration's connection state, so the check runs again over the new set — reordering the same channels does not. Saving an empty selection leaves the integration with no authorized channels, and **Test connection** is offered again only once at least one channel is authorized.
+Saving a new selection replaces the authorized set: channels left out of it stop being authorized, and channels added to it are authorized but not yet confirmed. Changing which channels are in the set also resets the integration's connection state, so the check runs again over the new set — reordering the same channels does not. Saving an empty selection leaves the integration with no authorized channels, and **Test connection** cannot be run again until at least one channel is authorized.
 
 <Warning>
 Removing a channel from the authorized set also removes it from every Alert that targeted it. Those Alerts keep their filters, frequency, and email recipients, and future delivery to that channel simply stops: nothing is posted to announce the removal, and the notifications already delivered stay in the channel. Disconnecting the integration has the same effect on every channel it had authorized. Restoring delivery means authorizing and confirming the channel again here, then selecting it again on each Alert.
@@ -123,7 +123,7 @@ A channel becomes usable as a destination once the connection check has confirme
 ✅ Prowler connection verified. Notifications will be delivered to this channel.
 ```
 
-Later checks never post that message again to a channel that is already confirmed, so it arrives once per channel. The integration reports as connected only when every check and every required confirmation succeeded; a failure names the channel that failed. The check needs at least one authorized channel — with none authorized, it is not offered.
+Later checks never post that message again to a channel that is already confirmed, so it arrives once per channel. The integration reports as connected only when every check and every required confirmation succeeded; a failure names the channel that failed. The check needs at least one authorized channel — with none authorized, it cannot be run yet.
 
 Confirmation is what makes a channel selectable elsewhere in Prowler Cloud. A channel authorized a moment ago is missing from an Alert's channel list until a connection check confirms it.
 
@@ -158,7 +158,7 @@ The Slack management page reports the state of the connection and offers these a
 
 | Button | Purpose | Notes |
 |--------|---------|-------|
-| **Test connection** | Verify the credential and every authorized channel, and confirm the ones not confirmed yet | Posts the confirmation message once per channel and updates the last-checked time. Offered only once at least one channel is authorized |
+| **Test connection** | Verify the credential and every authorized channel, and confirm the ones not confirmed yet | Posts the confirmation message once per channel and updates the last-checked time. Cannot be run until at least one channel is authorized |
 | **Refresh channels** | Re-read the workspace's channel list | Use after inviting `@Prowler` to a private channel |
 | **Save channels** | Record the selected channels as the integration's authorized set | Enabled once the selection differs from the authorized set |
 | **Disconnect** | Remove the integration and attempt to revoke access at Slack | ⚠️ **Cannot be undone** — confirm before disconnecting |
