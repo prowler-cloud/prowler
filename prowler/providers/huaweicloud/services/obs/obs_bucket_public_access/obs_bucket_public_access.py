@@ -14,16 +14,19 @@ class obs_bucket_public_access(Check):
             report.resource_id = bucket.name
             report.resource_arn = f"huaweicloud:obs:{bucket.region}:{obs_client.audited_account}:bucket/{bucket.name}"
 
-            if bucket.is_public:
+            if bucket.is_public is True:
                 report.status = "FAIL"
                 report.status_extended = (
                     f"OBS bucket {bucket.name} is publicly accessible."
                 )
-            else:
+            elif bucket.is_public is False:
                 report.status = "PASS"
                 report.status_extended = (
                     f"OBS bucket {bucket.name} is not publicly accessible."
                 )
+            else:
+                report.status = "MANUAL"
+                report.status_extended = f"OBS bucket {bucket.name} public access status could not be determined."
 
             findings.append(report)
 
