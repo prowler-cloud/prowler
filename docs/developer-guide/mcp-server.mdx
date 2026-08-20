@@ -44,6 +44,11 @@ The main server orchestrates three sub-servers with prefixed namespacing:
 mcp_server/prowler_mcp_server/
 ├── server.py                 # Main orchestrator
 ├── main.py                   # CLI entry point
+├── lib/
+│   ├── server.py             # ProwlerMCP, the base class of every sub-server
+│   ├── errors.py             # Exception types and the one error renderer
+│   ├── logger.py
+│   └── analytics.py
 ├── prowler_hub/
 ├── prowler_app/
 │   ├── tools/                # Tool implementations
@@ -58,6 +63,8 @@ The MCP Server uses two patterns for tool registration:
 
 1. **Direct Decorators** (Prowler Hub/Docs): Tools are registered using `@mcp.tool()` decorators
 2. **Auto-Discovery** (`prowler_app`): All public methods of `BaseTool` subclasses are auto-registered
+
+Both funnel through `ProwlerMCP.tool` (`lib/server.py`), which is what applies the error contract to every tool no matter how it was registered. Build sub-servers with `ProwlerMCP`, never `FastMCP` directly.
 
 ## Adding Tools to the `prowler_app` Sub-Server
 
@@ -120,12 +127,10 @@ class NewFeatureTools(BaseTool):
 
         Returns complete feature details including configuration and metadata.
         """
-        try:
-            response = await self.api_client.get(f"/api/v1/features/{feature_id}")
-            return DetailedFeature.from_api_response(response["data"]).model_dump()
-        except Exception as e:
-            self.logger.error(f"Failed to get feature {feature_id}: {e}")
-            return {"error": str(e), "status": "failed"}
+        # No try/except: a failure here raises, and the tool wrapper turns it into a
+        # ToolError the client sees as `isError: true`. See "Error Handling" below.
+        response = await self.api_client.get(f"/api/v1/features/{feature_id}")
+        return DetailedFeature.from_api_response(response["data"]).model_dump()
 ```
 
 ### Step 2: Create the Models
@@ -369,17 +374,100 @@ async def search_items(self, status: str = Field(...)) -> dict:
 
 ### Error Handling
 
-Return structured error responses instead of raising exceptions:
+Let failures raise. Every sub-server is a `ProwlerMCP` (`prowler_mcp_server/lib/server.py`),
+whose `tool()` wraps whatever it registers in `tool_errors`, turning any exception into a
+`ToolError`. The client sees `isError: true` and a message it can act on.
+
+That wrapping is not something you apply — the two registration styles (the `@mcp.tool()`
+decorators, and the direct `mcp.tool(fn)` call `BaseTool` uses) both funnel through
+`ProwlerMCP.tool`. Build sub-servers with `ProwlerMCP`, never `FastMCP` directly: masking
+is on everywhere, so a tool that escaped the funnel would answer `Error calling tool 'x'`
+with no detail at all.
+
+Never `return {"error": ...}`: a returned payload is `isError: false` at the MCP protocol
+level, so the client is told the call succeeded and only finds out otherwise if it happens
+to inspect the right key.
 
 ```python
 async def get_item(self, item_id: str) -> dict:
-    try:
-        response = await self.api_client.get(f"/api/v1/items/{item_id}")
-        return DetailedItem.from_api_response(response["data"]).model_dump()
-    except Exception as e:
-        self.logger.error(f"Failed to get item {item_id}: {e}")
-        return {"error": str(e), "status": "failed"}
+    """A rejected request, a timeout and a malformed payload all raise from here.
+
+    Each is rendered with the API's own words plus what it implies about retrying.
+    """
+    response = await self.api_client.get(f"/api/v1/items/{item_id}")
+    return DetailedItem.from_api_response(response["data"]).model_dump()
 ```
+
+Raise `ToolError` whenever the message is one you wrote for the caller. Its text reaches
+the client verbatim, so anything they need in order to recover has to be *in* the message
+— an error carries nothing else:
+
+```python
+from fastmcp.exceptions import ToolError
+
+if not data:
+    raise ToolError(
+        f"Item '{item_id}' was not found. Use prowler_list_items to find valid IDs."
+    )
+```
+
+**Do not raise `ValueError` from a tool.** The two are not interchangeable: anything that
+is not a `ToolError` is described as a bug in this server. That is right for a model
+factory rejecting an API payload or a pydantic `ValidationError`, and wrong for a
+refusal — so the exception type is what carries the distinction:
+
+```text
+Date range cannot exceed 2 days. Requested range: 2025-01-01 to 2025-01-10 (10 days)
+
+The Prowler MCP Server hit an unexpected ValueError: Missing pagination metadata in API
+response. This is a bug in the server, not something you can fix by changing the
+arguments.
+```
+
+If you surface an exception yourself — into a `ToolError` you build, or into a field of a
+structured result — pass it through `render_tool_error(e)` rather than `str(e)`, so the
+same failure is never described two ways. Pass `warn=False` when the result already
+reports the outcome.
+
+#### Deciding between an error and a result
+
+Ask two questions, in order:
+
+1. **Did the tool finish its own job?** `test_integration_connection`'s job is to run the
+   check and report what happened, so `connected: false` is the job finished.
+   `get_finding_details`' job is to return the finding, so no finding means it did not.
+2. **Is the reported state a fact about the remote world or about our call?** The world
+   (Jira refused the credentials, 3 of 40 items failed, a discovery found nothing) is a
+   **result**. Our call (403, connection reset, invalid UUID, a bug in a model factory) is
+   an **error**.
+
+One rule overrides both: **if a write may have partially landed, that fact travels in a
+successful structured result, never in an error.** An agent reads `isError: true` as
+"nothing happened, safe to retry"; reporting "I may have created 17 Jira issues" that way
+invites a duplicate dispatch.
+
+#### What the client reads
+
+`render_tool_error` describes the failure in one plain sentence: the call, the status and
+whatever the API said, with the field named when it named one.
+
+```text
+GET /findings/b1ca536c failed with HTTP 404. No Finding matches the given query.
+POST /integrations failed with HTTP 400. This field may not be blank. (/data/attributes/configuration/bucket_name); Enter a valid URL.
+Date range cannot exceed 2 days. Requested range: 2025-01-01 to 2025-01-10 (10 days)
+```
+
+Nothing is added that the status code already implies. The one exception is a request that
+could have changed something and never came back with a verdict — a 5xx or a timeout on a
+write — which gets a warning, because an agent otherwise reads any failure as "nothing
+happened" and sends the write again:
+
+```text
+DELETE /integrations/i1 failed with HTTP 500. A server error occurred. It may have been carried out anyway, so check the current state before retrying.
+```
+
+Every server sets `mask_error_details=True`. That costs nothing, because `ToolError`
+bypasses masking; it only stops raw internals escaping from code paths outside a tool.
 
 ### Parameter Descriptions
 

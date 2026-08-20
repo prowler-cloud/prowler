@@ -1,14 +1,17 @@
-"""What a Prowler MCP Server failure is, and the sentence it is described with.
+"""One way to fail: every tool failure reaches the client as a `ToolError`.
 
 MCP draws a line this server used to blur. A tool that *returns* `{"error": ...}`
 produces a successful result (`isError: false`) whose failure is only discoverable by
 guessing which key to look at; a tool that *raises* produces `isError: true`, which
-every client and model already understands as "this call did not work". Moving the
-server onto the second of those needs one vocabulary of failures and one way to render
-them, which is what this module is; raising them is the sub-servers' job.
+every client and model already understands as "this call did not work".
 
-`render_tool_error` is the single place an exception becomes text a client reads, so
-the same failure can never get described two different ways.
+`ToolError` is a `FastMCPError`, and `FastMCP._call_tool` re-raises those untouched
+(fastmcp/server/server.py:1241). So a message built here is what the client reads,
+verbatim, past every mount and past `mask_error_details`. That is what lets the servers
+mask by default while still telling the caller everything relevant.
+
+`render_tool_error` is the single place an exception becomes that text, and
+`tool_errors` is what makes sure no tool can escape it.
 
 The exception types live here rather than next to the API client because the hub and the
 documentation sub-servers must be able to raise and render them without taking a
@@ -17,11 +20,17 @@ dependency on `prowler_app`.
 
 from __future__ import annotations
 
+import functools
+import inspect
 import json
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
 import httpx
+from fastmcp.exceptions import ToolError
+
+from prowler_mcp_server.lib.logger import logger
 
 # Upstream bodies are not ours and may be large or HTML; enough to diagnose, not enough
 # to flood the model's context.
@@ -286,3 +295,53 @@ def render_tool_error(error: Exception, *, warn: bool = True) -> str:
         "This is a bug in the server, not something you can fix by changing the "
         "arguments."
     )
+
+
+def tool_errors(fn: Callable[..., Any]) -> Callable[..., Any]:
+    """Wrap a tool so that every failure leaves it as a `ToolError`.
+
+    Applied by `ProwlerMCP.tool()` rather than by hand, so no registration can miss
+    it. It wraps the callable handed to `mcp.tool()`, not the class attribute, so only
+    the MCP boundary is normalised: a tool calling another tool internally still sees
+    the real, typed exception and can branch on it.
+
+    Two constraints worth knowing before changing this:
+
+    - Never register the result with `exclude_args=`. That path
+      (fastmcp/utilities/types.py) rebuilds the function from `__code__`, which on a
+      wrapper is the wrapper's own. Nothing in this server passes it today.
+    - `inspect.iscoroutinefunction`, not the `asyncio` one, which is deprecated from
+      Python 3.14 and would be an error under this project's warning filters.
+    """
+    name = getattr(fn, "__qualname__", repr(fn))
+
+    def mark(wrapper: Callable[..., Any]) -> Callable[..., Any]:
+        """Flag the wrapper so a test can prove every registered tool went through it."""
+        wrapper.__prowler_tool_errors__ = True  # ty: ignore[unresolved-attribute]
+        return wrapper
+
+    if inspect.iscoroutinefunction(fn):
+
+        @functools.wraps(fn)
+        async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
+            try:
+                return await fn(*args, **kwargs)
+            except ToolError:
+                raise
+            except Exception as error:
+                logger.exception(f"Tool {name} failed: {error}")
+                raise ToolError(render_tool_error(error)) from error
+
+        return mark(async_wrapper)
+
+    @functools.wraps(fn)
+    def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
+        try:
+            return fn(*args, **kwargs)
+        except ToolError:
+            raise
+        except Exception as error:
+            logger.exception(f"Tool {name} failed: {error}")
+            raise ToolError(render_tool_error(error)) from error
+
+    return mark(sync_wrapper)

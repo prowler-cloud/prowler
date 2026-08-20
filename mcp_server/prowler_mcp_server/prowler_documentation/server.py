@@ -1,14 +1,14 @@
 from typing import Any
 
-from fastmcp import FastMCP
 from pydantic import Field
 
+from prowler_mcp_server.lib.server import ProwlerMCP
 from prowler_mcp_server.prowler_documentation.search_engine import (
     ProwlerDocsSearchEngine,
 )
 
-# Initialize FastMCP server
-docs_mcp_server = FastMCP("prowler-docs")
+# Initialize MCP server
+docs_mcp_server = ProwlerMCP("prowler-docs", mask_error_details=True)
 prowler_docs_search_engine = ProwlerDocsSearchEngine()
 
 

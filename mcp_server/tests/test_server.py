@@ -33,6 +33,34 @@ async def test_every_sub_server_contributes_tools(mcp_root_server):
     assert tools_in_namespace(tools, "prowler_"), "Prowler App registered no tools"
 
 
+async def test_no_tool_disappears_between_registration_and_the_client(mcp_root_server):
+    """Every tool registered on a sub-server must still be reachable through the mount.
+
+    `ProwlerMCP.tool` wraps every tool before handing it to FastMCP, whether it arrived
+    by decorator or by the direct call `BaseTool.register_tools` makes. A wrapper that
+    loses the signature, the name or the coroutine-ness of what it wraps drops the tool
+    silently: the mount still succeeds and the count is the only thing that moves.
+    """
+    from prowler_mcp_server.prowler_app.server import app_mcp_server
+    from prowler_mcp_server.prowler_documentation.server import docs_mcp_server
+    from prowler_mcp_server.prowler_hub.server import hub_mcp_server
+
+    async with Client(mcp_root_server) as client:
+        tools = await client.list_tools()
+
+    for namespace, sub_server in (
+        ("prowler_hub_", hub_mcp_server),
+        ("prowler_docs_", docs_mcp_server),
+        ("prowler_", app_mcp_server),
+    ):
+        expected = len(await sub_server.list_tools())
+        published = len(tools_in_namespace(tools, namespace))
+        assert published == expected, (
+            f"'{namespace}' publishes {published} tools but its sub-server registered "
+            f"{expected}"
+        )
+
+
 async def test_every_tool_is_namespaced(mcp_root_server):
     """Tool names are a published interface; nothing may escape the namespaces."""
     async with Client(mcp_root_server) as client:

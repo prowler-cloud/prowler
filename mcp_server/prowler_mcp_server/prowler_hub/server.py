@@ -5,13 +5,13 @@ Provides access to Prowler Hub API for security checks and compliance frameworks
 """
 
 import httpx
-from fastmcp import FastMCP
 from pydantic import Field
 
 from prowler_mcp_server import __version__
+from prowler_mcp_server.lib.server import ProwlerMCP
 
-# Initialize FastMCP for Prowler Hub
-hub_mcp_server = FastMCP("prowler-hub")
+# Initialize MCP server for Prowler Hub
+hub_mcp_server = ProwlerMCP("prowler-hub", mask_error_details=True)
 
 # API base URL
 BASE_URL = "https://hub.prowler.com/api"
