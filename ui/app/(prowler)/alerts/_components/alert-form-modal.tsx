@@ -61,6 +61,8 @@ import type {
   AlertFormValues,
 } from "../_types/alert-form";
 
+import { SlackChannelsField } from "./slack-channels-field";
+
 interface AlertFormModalProps {
   open: boolean;
   defaultFrequency: AlertTriggerKind;
@@ -368,6 +370,10 @@ const AlertFormModalContent = ({
   const [selectedRecipientEmails, setSelectedRecipientEmails] = useState(
     () => new Set(defaults.recipientEmails.map(normalizeEmail)),
   );
+  // Local state needed: channel picks are buffered until the form submits.
+  const [selectedSlackChannels, setSelectedSlackChannels] = useState<string[]>(
+    defaults.slackChannels,
+  );
   const [errors, setErrors] = useState<FormErrors>({});
   const [saving, setSaving] = useState(false);
   const [previewLoading, setPreviewLoading] = useState(false);
@@ -397,10 +403,7 @@ const AlertFormModalContent = ({
     frequency,
     condition,
     recipientEmails: getRecipientEmails(selectedRecipientEmails),
-    // Stored channels round-trip untouched until the channels field lands:
-    // the write is replace-not-additive, so omitting them would wipe a rule's
-    // destinations on every edit.
-    slackChannels: defaults.slackChannels,
+    slackChannels: selectedSlackChannels,
     enabled: defaults.enabled,
   });
 
@@ -555,6 +558,13 @@ const AlertFormModalContent = ({
           {errors.recipientEmails && (
             <FieldError>{errors.recipientEmails}</FieldError>
           )}
+        </Field>
+        <Field>
+          <SlackChannelsField
+            selectedChannelIds={selectedSlackChannels}
+            storedChannels={editingAlert?.attributes.slack_channels ?? []}
+            onValuesChange={setSelectedSlackChannels}
+          />
         </Field>
         {editingAlert && (
           <div className="flex flex-col gap-3">
