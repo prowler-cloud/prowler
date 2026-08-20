@@ -183,6 +183,7 @@ export const getUserByMe = async (accessToken: string) => {
       manage_alerts: userRole.attributes.manage_alerts || false,
       manage_lighthouse_ai_configuration:
         userRole.attributes.manage_lighthouse_ai_configuration || false,
+      manage_registry: userRole.attributes.manage_registry === true,
       unlimited_visibility: userRole.attributes.unlimited_visibility || false,
     };
 

@@ -30,6 +30,7 @@ declare global {
 
       // Prowler Cloud deployment flag — runtime read (server env, client island).
       UI_CLOUD_ENABLED?: "true" | "false";
+      UI_REGISTRY_ENABLED?: "true" | "false";
 
       CLOUD_BILLING_ENABLED?: "legacy" | "metronome" | "false";
 

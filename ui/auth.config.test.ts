@@ -36,12 +36,14 @@ const RESTRICTED_PERMISSIONS: RolePermissionAttributes = {
   manage_scans: false,
   manage_integrations: false,
   manage_alerts: false,
+  manage_registry: false,
   unlimited_visibility: false,
 };
 
 const ELEVATED_PERMISSIONS: RolePermissionAttributes = {
   ...RESTRICTED_PERMISSIONS,
   manage_users: true,
+  manage_registry: true,
   manage_scans: true,
 };
 
@@ -139,6 +141,25 @@ describe("authConfig JWT callback", () => {
     expect(result.user).toMatchObject({
       permissions: RESTRICTED_PERMISSIONS,
     });
+  });
+
+  it("should default manage_registry to false when a sign-in user omits it", async () => {
+    // Given
+    const jwtCallback = authConfig.callbacks?.jwt;
+    if (!jwtCallback) throw new Error("JWT callback is not configured");
+
+    // When
+    const result = await jwtCallback({
+      token: {},
+      account: {} as Parameters<typeof jwtCallback>[0]["account"],
+      user: {
+        accessToken: "access-token",
+        refreshToken: "refresh-token",
+      } as Parameters<typeof jwtCallback>[0]["user"],
+    });
+
+    // Then
+    expect(result.user?.permissions.manage_registry).toBe(false);
   });
 
   it("should report a tenant switch failure while preserving the current session", async () => {

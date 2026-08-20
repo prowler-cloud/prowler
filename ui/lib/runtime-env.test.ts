@@ -111,6 +111,23 @@ describe("readBoolEnv", () => {
     expect(readBoolEnv("UI_SENTRY_ENABLED")).toBe(false);
   });
 
+  it("defaults UI_REGISTRY_ENABLED to disabled and enables its true value", () => {
+    const cases: Array<[string | undefined, boolean]> = [
+      [undefined, false],
+      ["true", true],
+      ["TRUE", false],
+      ["1", false],
+    ];
+
+    for (const [value, enabled] of cases) {
+      // Given
+      vi.stubEnv("UI_REGISTRY_ENABLED", value);
+
+      // When / Then
+      expect(readBoolEnv("UI_REGISTRY_ENABLED")).toBe(enabled);
+    }
+  });
+
   it('is false for other truthy-looking values ("TRUE", "1", "yes")', () => {
     for (const value of ["TRUE", "1", "yes"]) {
       // Given

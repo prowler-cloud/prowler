@@ -55,6 +55,7 @@ const DEFAULT_PERMISSIONS: RolePermissionAttributes = {
   manage_billing: false,
   manage_alerts: false,
   manage_lighthouse_ai_configuration: false,
+  manage_registry: false,
   unlimited_visibility: false,
 };
 
