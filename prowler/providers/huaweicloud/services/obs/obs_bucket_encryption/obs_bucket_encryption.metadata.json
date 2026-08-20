@@ -1,7 +1,7 @@
 {
   "Provider": "huaweicloud",
   "CheckID": "obs_bucket_encryption",
-  "CheckTitle": "OBS buckets have encryption enabled",
+  "CheckTitle": "OBS buckets have default server-side encryption enabled",
   "CheckType": [],
   "ServiceName": "obs",
   "SubServiceName": "",
@@ -9,21 +9,21 @@
   "Severity": "high",
   "ResourceType": "HUAWEICLOUD::OBS::Bucket",
   "ResourceGroup": "storage",
-  "Description": "Ensure that OBS buckets have server-side encryption enabled to protect data at rest.",
-  "Risk": "Without server-side encryption, objects stored in OBS buckets are not encrypted at rest, exposing sensitive data if the underlying storage is compromised.",
+  "Description": "Ensure that OBS buckets have default server-side encryption configured so newly uploaded objects are encrypted at rest by default.",
+  "Risk": "Without default server-side encryption, new objects are not guaranteed to be encrypted unless each upload explicitly requests encryption. This weakens data-at-rest protection and encryption governance.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://support.huaweicloud.com/intl/en-us/usermanual-obs/obs_03_0088.html"
   ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "Python SDK: obsClient.setBucketEncryption('<bucket_name>', 'AES256')",
       "NativeIaC": "",
-      "Other": "1. Log on to the Huawei Cloud console.\n2. Navigate to Object Storage Service.\n3. Select the bucket.\n4. Click the Encryption tab.\n5. Enable server-side encryption and select a KMS key.\n6. Click Save.",
+      "Other": "1. Log on to the Huawei Cloud console.\n2. Navigate to Object Storage Service.\n3. Select the bucket.\n4. Open the server-side encryption settings.\n5. Enable SSE-OBS (AES-256) or SSE-KMS as required.\n6. Save the configuration.",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Enable server-side encryption (SSE-KMS) for all OBS buckets.",
+      "Text": "Enable default server-side encryption for all OBS buckets. Use SSE-OBS (AES-256) when OBS-managed keys are appropriate, or SSE-KMS when customer-managed key control and auditability are required.",
       "Url": "https://hub.prowler.com/check/obs_bucket_encryption"
     }
   },
