@@ -103,7 +103,7 @@ class TestOBSService:
         data_client.listBuckets.side_effect = [
             _response(
                 body=_list_body(
-                    _bucket("first"), is_truncated=True, next_marker="first"
+                    _bucket("first"), is_truncated=None, next_marker="first"
                 )
             ),
             _response(body=_list_body(_bucket("second"))),

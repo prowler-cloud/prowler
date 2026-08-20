@@ -172,14 +172,15 @@ class OBS(HuaweiCloudService):
                         )
                     )
 
-                if not getattr(body, "isTruncated", False):
-                    return
-                marker = getattr(body, "nextMarker", None)
-                if not marker:
+                next_marker = getattr(body, "nextMarker", None)
+                if next_marker:
+                    marker = next_marker
+                    continue
+                if getattr(body, "isTruncated", False):
                     logger.error(
                         "OBS - Bucket list response was truncated without a next marker"
                     )
-                    return
+                return
 
         except Exception as error:
             logger.error(
