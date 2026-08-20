@@ -764,21 +764,23 @@ describe("a credential Slack no longer accepts", () => {
   }, 60000);
 
   it("stops saying so once a save Slack validated goes through", async () => {
-    // Given — a finished setup whose test message found the grant revoked.
+    // Given — a finished setup whose connection check found the grant revoked.
     const harness = new SlackIntegrationHarness(
       configuredSlackFixture({
-        testMessage: { accepted: false, error: SLACK_TOKEN_REVOKED_CODE },
+        connection: { connected: false, error: SLACK_TOKEN_REVOKED_CODE },
       }),
     );
     await harness.mount();
     expect(await harness.connectionBadge()).toBe("Connected");
-    expect(await harness.sendTestMessage()).toBe(TEST_MESSAGE_OUTCOME.FAILED);
+    expect(await harness.testConnection()).toBe(CONNECTION_OUTCOME.FAILURE);
     expect(harness.showsRevokedCredentialNotice()).toBe(true);
     expect(await harness.connectionBadge()).toBe("Disconnected");
 
     // When — the access is approved again in Slack, away from this page, and
     // the user saves a destination here. The API validates the channel against
-    // Slack, so the save is an answer about the credential.
+    // Slack, so the save is an answer about the credential — as is the check
+    // the save runs straight after it.
+    harness.fixture.connection = { connected: true, error: null };
     await harness.chooseChannel(SLACK_SECOND_PUBLIC_CHANNEL.name);
 
     // Then — Slack answered, so the notice about a credential it no longer
