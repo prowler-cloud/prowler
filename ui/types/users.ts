@@ -91,6 +91,7 @@ export const PERMISSION_KEY = {
   MANAGE_BILLING: "manage_billing",
   MANAGE_ALERTS: "manage_alerts",
   MANAGE_LIGHTHOUSE_AI_CONFIGURATION: "manage_lighthouse_ai_configuration",
+  MANAGE_REGISTRY: "manage_registry",
   UNLIMITED_VISIBILITY: "unlimited_visibility",
 } as const;
 
@@ -123,6 +124,7 @@ export interface RoleDetail {
     manage_billing?: boolean;
     manage_alerts?: boolean;
     manage_lighthouse_ai_configuration?: boolean;
+    manage_registry?: boolean;
     unlimited_visibility: boolean;
     permission_state?: string;
     inserted_at?: string;

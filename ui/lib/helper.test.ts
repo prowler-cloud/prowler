@@ -141,6 +141,19 @@ describe("getErrorMessage", () => {
 });
 
 describe("permissionFormFields", () => {
+  it("describes Manage Registry", () => {
+    // Given
+    const field = permissionFormFields.find(
+      ({ field }) => field === "manage_registry",
+    );
+
+    // When / Then
+    expect(field).toMatchObject({
+      label: "Manage Registry",
+      description: expect.stringContaining("Registry"),
+    });
+  });
+
   it("describes Unlimited Visibility as organization-wide", () => {
     // Given
     const field = permissionFormFields.find(
