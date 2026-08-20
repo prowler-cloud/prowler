@@ -1,0 +1,45 @@
+{
+  "Provider": "aws",
+  "CheckID": "cloudtrail_agentcore_data_events_enabled",
+  "CheckTitle": "CloudTrail logs Amazon Bedrock AgentCore data events",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "cloudtrail",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "AwsCloudTrailTrail",
+  "ResourceGroup": "monitoring",
+  "Description": "**At least one actively logging CloudTrail trail** selects **Amazon Bedrock AgentCore data events** through an advanced event selector on an `AWS::BedrockAgentCore::*` resource type.\n\nAgentCore data events record agent invocations, memory record operations, gateway tool calls and built-in tool sessions. They are **not logged by default** and a basic event selector cannot select them.",
+  "Risk": "A trail limited to management events records which agents, memories and gateways exist, never who invoked them or what they returned. An agent driven into a confused-deputy or data-exfiltration path leaves no audit trail, so incident response cannot reconstruct the session, and detections built on agent activity have no source events to read.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/enabling-cloudtrail-data-event-logging.html",
+    "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/logging-data-events-with-cloudtrail.html",
+    "https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/understanding-gateway-cloudtrail-log-entries.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws cloudtrail put-event-selectors --trail-name <example_resource_name> --advanced-event-selectors '[{\"Name\":\"Management events\",\"FieldSelectors\":[{\"Field\":\"eventCategory\",\"Equals\":[\"Management\"]}]},{\"Name\":\"AgentCore Runtime data events\",\"FieldSelectors\":[{\"Field\":\"eventCategory\",\"Equals\":[\"Data\"]},{\"Field\":\"resources.type\",\"Equals\":[\"AWS::BedrockAgentCore::Runtime\"]}]},{\"Name\":\"AgentCore Memory data events\",\"FieldSelectors\":[{\"Field\":\"eventCategory\",\"Equals\":[\"Data\"]},{\"Field\":\"resources.type\",\"Equals\":[\"AWS::BedrockAgentCore::Memory\"]}]},{\"Name\":\"AgentCore Gateway data events\",\"FieldSelectors\":[{\"Field\":\"eventCategory\",\"Equals\":[\"Data\"]},{\"Field\":\"resources.type\",\"Equals\":[\"AWS::BedrockAgentCore::Gateway\"]}]}]'",
+      "NativeIaC": "```yaml\n# CloudFormation: log AgentCore data events on an actively logging trail\nResources:\n  ExampleTrail:\n    Type: AWS::CloudTrail::Trail\n    Properties:\n      TrailName: <example_resource_name>\n      S3BucketName: <example_resource_name>\n      IsLogging: true\n      AdvancedEventSelectors:\n        - Name: Management events\n          FieldSelectors:\n            - Field: eventCategory\n              Equals:\n                - Management\n        - Name: AgentCore Runtime data events\n          FieldSelectors:\n            - Field: eventCategory\n              Equals:\n                - Data\n            - Field: resources.type          # CRITICAL: one resources.type per selector\n              Equals:\n                - AWS::BedrockAgentCore::Runtime\n        - Name: AgentCore Memory data events\n          FieldSelectors:\n            - Field: eventCategory\n              Equals:\n                - Data\n            - Field: resources.type\n              Equals:\n                - AWS::BedrockAgentCore::Memory\n        - Name: AgentCore Gateway data events\n          FieldSelectors:\n            - Field: eventCategory\n              Equals:\n                - Data\n            - Field: resources.type\n              Equals:\n                - AWS::BedrockAgentCore::Gateway\n```",
+      "Other": "1. In the AWS Console, open CloudTrail and select a trail that is actively logging\n2. Edit the trail's Data events and choose the AgentCore data event types you run, for example Bedrock-AgentCore Runtime, Bedrock-AgentCore Memory and Bedrock-AgentCore Gateway\n3. Leave the log selector template on Log all events for each type; an eventName, readOnly or resources.ARN filter narrows coverage and this check reports it as undetermined\n4. Keep the existing Management events selector: applying advanced event selectors replaces every selector on the trail\n5. Save changes and confirm the trail remains in logging state",
+      "Terraform": "```hcl\n# Terraform: log AgentCore data events on an actively logging trail\nresource \"aws_cloudtrail\" \"example_resource\" {\n  name           = \"example_resource\"\n  s3_bucket_name = \"example_resource\"\n\n  advanced_event_selector {\n    name = \"Management events\"\n    field_selector {\n      field  = \"eventCategory\"\n      equals = [\"Management\"]\n    }\n  }\n\n  advanced_event_selector {\n    name = \"AgentCore Runtime data events\"\n    field_selector {\n      field  = \"eventCategory\"\n      equals = [\"Data\"]\n    }\n    field_selector {\n      field  = \"resources.type\"              # CRITICAL: one resources.type per selector\n      equals = [\"AWS::BedrockAgentCore::Runtime\"]\n    }\n  }\n\n  advanced_event_selector {\n    name = \"AgentCore Memory data events\"\n    field_selector {\n      field  = \"eventCategory\"\n      equals = [\"Data\"]\n    }\n    field_selector {\n      field  = \"resources.type\"\n      equals = [\"AWS::BedrockAgentCore::Memory\"]\n    }\n  }\n\n  advanced_event_selector {\n    name = \"AgentCore Gateway data events\"\n    field_selector {\n      field  = \"eventCategory\"\n      equals = [\"Data\"]\n    }\n    field_selector {\n      field  = \"resources.type\"\n      equals = [\"AWS::BedrockAgentCore::Gateway\"]\n    }\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Add an **advanced event selector** with `eventCategory` `Data` for each `AWS::BedrockAgentCore::*` resource type you run: `Runtime` and `RuntimeEndpoint` for invocations, `Memory` for record operations, `Gateway` for tool calls, `CodeInterpreter`, `CodeInterpreterCustom`, `Browser` and `BrowserCustom` for built-in tool sessions, `WorkloadIdentity`, `WorkloadIdentityDirectory`, `TokenVault`, `APIKeyCredentialProvider` and `OAuth2CredentialProvider` for identity and credential access, and `Evaluator` for evaluations. **One `resources.type` per selector.** Budget for the volume: data events are billed per event and a busy agent generates many.\n\nData events carry **no request or response content**, so treat them as an activity record rather than a transcript, and pair them with AgentCore observability for the reasoning trace.",
+      "Url": "https://hub.prowler.com/check/cloudtrail_agentcore_data_events_enabled"
+    }
+  },
+  "Categories": [
+    "logging",
+    "forensics-ready",
+    "gen-ai"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "cloudtrail_agentcore_memory_data_events_enabled",
+    "cloudtrail_bedrock_logging_enabled"
+  ],
+  "Notes": "Passing needs one AgentCore resource type covered, not all of them, because the trail configuration does not say which AgentCore resources the account runs; the passing result names the types it found so partial coverage stays visible. A selector that also filters on eventName, readOnly, resources.ARN or any other field is reported MANUAL rather than PASS, since the trail configuration cannot show how much of the resource type is left unlogged. There is no data event resource type for AgentCore policy engines, so Cedar allow and deny decisions are not in CloudTrail at all."
+}
