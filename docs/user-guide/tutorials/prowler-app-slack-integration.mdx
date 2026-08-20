@@ -1,7 +1,7 @@
 ---
 title: "Slack Integration"
 sidebarTitle: 'Slack'
-description: 'Connect a Slack workspace to Prowler Cloud, choose the channel Prowler posts to, and verify delivery with a test message.'
+description: 'Connect a Slack workspace to Prowler Cloud, choose the channel Prowler posts to, and verify the connection.'
 ---
 import { VersionBadge } from "/snippets/version-badge.mdx"
 import { SubscriptionBanner } from "/snippets/subscription-banner.mdx"
@@ -15,7 +15,7 @@ Prowler Cloud connects to a Slack workspace so security updates arrive where tea
 Integrating Prowler Cloud with Slack provides:
 
 * **Approval-based setup:** Approve Prowler once in Slack instead of building a Slack app and pasting a token.
-* **A verified delivery path:** Send a test message and confirm the channel receives it before anything depends on it.
+* **A verified destination:** Saving a channel checks it, so a channel Prowler cannot reach is reported straight away rather than when something depends on it.
 * **Controlled reach:** Prowler posts only to the channel recorded on the integration, and private channels stay invisible until the Prowler app is invited to them.
 
 <Note>
@@ -29,7 +29,7 @@ When connected and configured:
 1. A Slack workspace is approved once through Slack's app install flow, and Prowler stores the resulting credential encrypted.
 2. Prowler reads the channels it can post to: the workspace's public channels, plus the private channels the Prowler app has been invited to.
 3. One channel is recorded on the integration as the default destination.
-4. A test message proves the delivery path end to end.
+4. Saving that channel checks the connection against it, covering both the credential and the channel.
 5. Disconnecting removes the integration from Prowler and attempts to revoke Prowler's access at Slack.
 
 ## Prerequisites
@@ -46,7 +46,7 @@ Slack shows a consent screen listing everything the Prowler app asks for. Prowle
 
 | Scope | Why Prowler Requests It |
 |-------|-------------------------|
-| `chat:write` | Post the test message, and any later message, to the recorded channel. |
+| `chat:write` | Post to the recorded channel. |
 | `chat:write.public` | Post to a public channel without first inviting the Prowler app to it. |
 | `channels:read` | List public channels for the destination-channel picker and resolve the chosen one. |
 | `groups:read` | List the private channels the Prowler app has been invited to, so they appear in the picker. |
@@ -108,18 +108,6 @@ If the picker reports that no channels are available, the workspace exposes noth
 
 A workspace can hold more channels than Prowler reads in one go. When that happens, the picker says so and lists what was read: every listed channel is usable, and a channel missing from a partial list is not necessarily one `@Prowler` has to be invited to.
 
-## Sending a Test Message
-
-Sending a test message is how the delivery path gets verified before anything depends on it.
-
-1. Confirm a destination channel is saved. **Send test message** appears only once one is recorded.
-2. Click **Send test message**.
-3. Check the channel in Slack for the message.
-
-    ![Test message reported as sent to the recorded destination channel](/images/prowler-app/slack/test-message-sent.png)
-
-Prowler reports the outcome on the page. When Slack refuses the message, the reason Slack gave is shown — an archived or deleted channel, or an app that has been removed from a private channel, all surface here rather than failing silently.
-
 ## Disconnecting a Slack Workspace
 
 Disconnecting removes the integration from Prowler **and** attempts to revoke Prowler's access at Slack.
@@ -154,7 +142,6 @@ The Slack management page reports the state of the connection and offers these a
 | **Test connection** | Verify Prowler can reach the workspace and the recorded channel | Checks both the credential and the channel, and updates the last-checked time |
 | **Refresh channels** | Re-read the workspace's channel list | Use after inviting `@Prowler` to a private channel |
 | **Save channel** | Record the selected channel as the default destination | Enabled once a channel other than the current default is selected |
-| **Send test message** | Post a test message to the recorded channel | Offered only once a destination channel is recorded |
 | **Disconnect** | Remove the integration and attempt to revoke access at Slack | ⚠️ **Cannot be undone** — confirm before disconnecting |
 
 ## Troubleshooting
@@ -177,8 +164,8 @@ The Prowler app has not been invited to it. In Slack, run `/invite @Prowler` in 
 
 When Slack stops accepting the stored credential — because a workspace administrator revoked it, or the app was removed from the workspace — Prowler reports the workspace as disconnected and offers **Reconnect to Slack**. Approving Prowler in Slack again restores access.
 
-### The Test Message Does Not Arrive
+### The Connection Check Fails on the Channel
 
 * Confirm the destination channel saved on the integration is the channel being watched in Slack.
-* Check the outcome reported on the page: when Slack refuses the message, the reason Slack gave is shown there.
+* Check the outcome reported on the page: when Slack refuses the channel, the reason Slack gave is shown there — an archived or deleted channel surfaces here rather than failing silently.
 * For a private channel, confirm the Prowler app is still a member of it.
