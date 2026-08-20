@@ -776,10 +776,8 @@ describe("a credential Slack no longer accepts", () => {
     expect(harness.showsRevokedCredentialNotice()).toBe(true);
     expect(await harness.connectionBadge()).toBe("Disconnected");
 
-    // When — the access is approved again in Slack, away from this page, and
-    // the user saves a destination here. The API validates the channel against
-    // Slack, so the save is an answer about the credential — as is the check
-    // the save runs straight after it.
+    // When — the access is approved again in Slack and the user saves a
+    // destination: both the save and the check it runs answer for the grant.
     harness.fixture.connection = { connected: true, error: null };
     await harness.chooseChannel(SLACK_SECOND_PUBLIC_CHANNEL.name);
 
