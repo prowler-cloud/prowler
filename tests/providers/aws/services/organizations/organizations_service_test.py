@@ -22,8 +22,6 @@ ORGANIZATION_ARN = (
     f"arn:aws:organizations::{MANAGEMENT_ACCOUNT_ID}:organization/{ORGANIZATION_ID}"
 )
 
-make_api_call = botocore.client.BaseClient._make_api_call
-
 
 def scp_restrict_regions_with_deny():
     return '{"Version":"2012-10-17","Statement":{"Effect":"Deny","NotAction":"s3:*","Resource":"*","Condition":{"StringNotEquals":{"aws:RequestedRegion":["eu-central-1"]}}}}'
@@ -69,6 +67,10 @@ def build_mock_make_api_call(
     enabled_service_principals_pages = enabled_service_principals_pages or [[]]
     delegated_services_pages = delegated_services_pages or {}
     errors = errors or {}
+    # Captured per builder call rather than at module scope: the builder runs while
+    # constructing the patch, so this is the unpatched method even if the module was
+    # imported while some other patch was in force.
+    make_api_call = botocore.client.BaseClient._make_api_call
 
     def page_for(pages: list, next_token: str):
         index = int(next_token) if next_token else 0
