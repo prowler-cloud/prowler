@@ -413,6 +413,7 @@ export const pollConnectionTestStatus = async (
       return {
         success: false,
         error: pollResult.message || "Connection test failed.",
+        failedChannelId: pollResult.result?.channel ?? null,
       };
     }
   } catch (_error) {
