@@ -3,12 +3,9 @@ import json
 import sys
 from pathlib import Path
 
-
 REPOSITORY_ROOT = Path(__file__).resolve().parents[4]
 DEFAULT_SOURCE = Path(__file__).with_name("prowler-scan.json")
-DEFAULT_ASSET = (
-    REPOSITORY_ROOT / "docs/assets/templates/azure/prowler-scan.json"
-)
+DEFAULT_ASSET = REPOSITORY_ROOT / "docs/assets/templates/azure/prowler-scan.json"
 DEFAULT_SNIPPET = REPOSITORY_ROOT / "docs/snippets/azure-prowler-scan-template.mdx"
 SNIPPET_PREFIX = (
     b"{/* AUTO-GENERATED from permissions/templates/azure/bicep/"

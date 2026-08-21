@@ -1,9 +1,9 @@
+import json
 import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
-
 
 SCRIPT = Path(__file__).with_name("sync_docs_template.py")
 
@@ -73,6 +73,18 @@ class SyncDocsTemplateTest(unittest.TestCase):
 
         self.assertEqual(result.returncode, 1)
         self.assertIn("Azure documentation template drift detected", result.stderr)
+
+    def test_role_assignment_ids_ignore_cosmetic_deployment_label(self):
+        template = json.loads(Path(__file__).with_name("prowler-scan.json").read_text())
+        role_assignments = [
+            resource
+            for resource in template["resources"]
+            if resource["type"] == "Microsoft.Authorization/roleAssignments"
+        ]
+
+        self.assertEqual(len(role_assignments), 2)
+        for assignment in role_assignments:
+            self.assertNotIn("deploymentLabel", assignment["name"])
 
 
 if __name__ == "__main__":

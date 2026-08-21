@@ -156,8 +156,8 @@ $cert = New-SelfSignedCertificate -Subject "CN=Prowler" `
 # Save the .cer to upload in the Portal
 Export-Certificate -Cert $cert -FilePath prowler.cer
 
-# Certificate and private key bundle (PKCS#12), base64-encoded — paste into
-# Prowler. Keep secret.
+# Unencrypted certificate and private key bundle (PKCS#12/PFX), base64-encoded
+# for Prowler. Password-protected PKCS#12/PFX input is not supported. Keep secret.
 $pfxBytes = $cert.Export('Pfx', '')
 $keyBase64 = [Convert]::ToBase64String($pfxBytes)
 

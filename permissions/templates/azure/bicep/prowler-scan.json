@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.46.1.21595",
-      "templateHash": "4092263301802395344"
+      "templateHash": "16146816613430830317"
     }
   },
   "parameters": {
@@ -19,7 +19,7 @@
       "type": "string",
       "defaultValue": "Prowler",
       "metadata": {
-        "description": "Cosmetic label used inside the role assignment names so multiple deployments do not collide. Free text; keep the default unless you need to distinguish multiple Prowler deployments."
+        "description": "Cosmetic label included in the custom role description. Free text; keep the default unless you need to distinguish multiple Prowler deployments."
       }
     },
     "customRoleName": {
@@ -41,7 +41,7 @@
       "name": "[variables('customRoleDefinitionName')]",
       "properties": {
         "roleName": "[parameters('customRoleName')]",
-        "description": "Role used by Prowler for checks that require Azure actions beyond the built-in Reader role.",
+        "description": "[format('Role used by {0} for Prowler checks that require Azure actions beyond the built-in Reader role.', parameters('deploymentLabel'))]",
         "type": "CustomRole",
         "assignableScopes": [
           "[subscription().id]"
@@ -62,7 +62,7 @@
     {
       "type": "Microsoft.Authorization/roleAssignments",
       "apiVersion": "2022-04-01",
-      "name": "[guid(subscription().id, parameters('servicePrincipalObjectId'), parameters('deploymentLabel'), 'Reader')]",
+      "name": "[guid(subscription().id, parameters('servicePrincipalObjectId'), variables('readerRoleDefinitionId'))]",
       "properties": {
         "principalId": "[parameters('servicePrincipalObjectId')]",
         "principalType": "ServicePrincipal",
@@ -72,7 +72,7 @@
     {
       "type": "Microsoft.Authorization/roleAssignments",
       "apiVersion": "2022-04-01",
-      "name": "[guid(subscription().id, parameters('servicePrincipalObjectId'), parameters('deploymentLabel'), parameters('customRoleName'))]",
+      "name": "[guid(subscription().id, parameters('servicePrincipalObjectId'), subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('customRoleDefinitionName')))]",
       "properties": {
         "principalId": "[parameters('servicePrincipalObjectId')]",
         "principalType": "ServicePrincipal",

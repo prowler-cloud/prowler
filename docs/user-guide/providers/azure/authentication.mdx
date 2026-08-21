@@ -267,7 +267,7 @@ $cert = New-SelfSignedCertificate -Subject "CN=Prowler" `
 
 Export-Certificate -Cert $cert -FilePath prowler.cer
 
-# Export a PKCS#12 bundle for Prowler. Keep this value secret.
+# Export an unencrypted PKCS#12/PFX bundle for Prowler. Keep this value secret.
 $pfxBytes = $cert.Export('Pfx', '')
 [Convert]::ToBase64String($pfxBytes)
 ```
@@ -311,7 +311,7 @@ Paste the following into the Certificate Authentication form of the Azure add-pr
 
 - **Tenant ID** — copy the Directory (tenant) ID from the App Registration overview.
 - **Client ID** — copy the Application (client) ID from the App Registration overview.
-- **Certificate Content** — provide the base64-encoded **PEM bundle** (certificate + private key) or PKCS#12 export. Prowler needs both parts to sign the token request.
+- **Certificate Content** — provide the base64-encoded **PEM bundle** (certificate + private key) or an unencrypted PKCS#12/PFX export. Prowler needs both parts to sign the token request and does not accept password-protected PKCS#12/PFX input.
 
 ### Prowler CLI
 
@@ -325,7 +325,7 @@ export AZURE_CERTIFICATE_CONTENT="<base64-encoded certificate and private key bu
 prowler azure --certificate-auth
 ```
 
-Alternatively, provide a PEM or PKCS#12 file that contains both the certificate and matching private key:
+Alternatively, provide a PEM file or an unencrypted PKCS#12/PFX file that contains both the certificate and matching private key. Password-protected PKCS#12/PFX input is not supported:
 
 ```console
 prowler azure --certificate-auth --certificate-path /path/to/prowler-bundle.pem

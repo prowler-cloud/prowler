@@ -38,7 +38,7 @@ targetScope = 'subscription'
 @description('Object ID of the Service Principal for the App Registration Prowler will use. Find it in Azure Portal → Microsoft Entra ID → Enterprise applications → your app → Overview → Object ID. This is NOT the same as the App Registration\'s Object ID; the Service Principal has its own separate Object ID.')
 param servicePrincipalObjectId string
 
-@description('Cosmetic label used inside the role assignment names so multiple deployments do not collide. Free text; keep the default unless you need to distinguish multiple Prowler deployments.')
+@description('Cosmetic label included in the custom role description. Free text; keep the default unless you need to distinguish multiple Prowler deployments.')
 param deploymentLabel string = 'Prowler'
 
 @description('Name of the extra role Prowler creates. Keep the default unless your org already uses this name.')
@@ -60,7 +60,7 @@ resource prowlerRole 'Microsoft.Authorization/roleDefinitions@2022-05-01-preview
   name: customRoleDefinitionName
   properties: {
     roleName: customRoleName
-    description: 'Role used by Prowler for checks that require Azure actions beyond the built-in Reader role.'
+    description: 'Role used by ${deploymentLabel} for Prowler checks that require Azure actions beyond the built-in Reader role.'
     type: 'CustomRole'
     assignableScopes: [
       subscription().id
@@ -80,7 +80,7 @@ resource prowlerRole 'Microsoft.Authorization/roleDefinitions@2022-05-01-preview
 }
 
 resource readerAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(subscription().id, servicePrincipalObjectId, deploymentLabel, 'Reader')
+  name: guid(subscription().id, servicePrincipalObjectId, readerRoleDefinitionId)
   properties: {
     principalId: servicePrincipalObjectId
     principalType: 'ServicePrincipal'
@@ -89,7 +89,7 @@ resource readerAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' =
 }
 
 resource prowlerRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(subscription().id, servicePrincipalObjectId, deploymentLabel, customRoleName)
+  name: guid(subscription().id, servicePrincipalObjectId, prowlerRole.id)
   properties: {
     principalId: servicePrincipalObjectId
     principalType: 'ServicePrincipal'
