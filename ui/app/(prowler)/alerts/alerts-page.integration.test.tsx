@@ -16,6 +16,7 @@ import {
   ALERTS_PRIVATE_CHANNEL,
   ALERTS_PUBLIC_CHANNEL,
   alertRuleFixture,
+  alertsChannelNotConfirmedDetail,
   alertsFixture,
   emptyChannelPoolAlertsFixture,
   noSlackAlertsFixture,
@@ -207,13 +208,45 @@ describe("alert rules target Slack channels", () => {
     ]);
   });
 
-  it("surfaces the refusal when a stored channel is not confirmed and connected", async () => {
+  it("saves an edit that retains channels a reinstall left unconfirmed", async () => {
     const harness = new AlertsPageHarness(reinstalledWorkspaceAlertsFixture());
     await harness.mount();
     await harness.openEditModal(RULE_NAME);
 
+    await harness.saveRule();
+
+    // Only newly added channels are validated, so the retained selection goes
+    // back untouched even though the reinstall confirmed none of it — a rule
+    // never becomes uneditable behind the user's back.
+    expect(await harness.savedRuleChannels()).toEqual([
+      ALERTS_PUBLIC_CHANNEL.id,
+      ALERTS_PRIVATE_CHANNEL.id,
+    ]);
+  });
+
+  it("surfaces the refusal when a channel just added went stale before the save", async () => {
+    const fixture = alertsFixture();
+    const harness = new AlertsPageHarness(fixture);
+    await harness.mount();
+    await harness.openEditModal(RULE_NAME);
+    await harness.pickChannels([ALERTS_PRIVATE_CHANNEL.name]);
+
+    // The picker offered a confirmed channel; the connection state it was
+    // offered on is reset before the submit. Only a channel the user just
+    // added can reach the write ineligible, so this is the one path a refusal
+    // travels.
+    fixture.slackIntegration?.channels.forEach((channel) => {
+      if (channel.id === ALERTS_PRIVATE_CHANNEL.id) {
+        channel.confirmationSentAt = null;
+      }
+    });
+
     const refusal = await harness.refusedRuleSave();
 
-    expect(refusal).toMatch(/Slack must be connected/i);
+    // The modal stays open on the unchanged rule and repeats the API's own
+    // detail, which the UI never parses.
+    expect(refusal).toContain(
+      alertsChannelNotConfirmedDetail(ALERTS_PRIVATE_CHANNEL.id),
+    );
   });
 });

@@ -170,7 +170,8 @@ export const SlackChannelsField = ({
         {options.length > 0 ? (
           // A rule keeps its channels while its workspace is unverified — a
           // reinstall resets the confirmations, not the mappings — so the
-          // stored selection stays readable until the check runs again.
+          // stored selection stays readable, and retained ids never refuse a
+          // save: only channels just added are validated (contract 6.3).
           <SlackChannelMultiSelect
             options={options}
             values={selectedChannelIds}

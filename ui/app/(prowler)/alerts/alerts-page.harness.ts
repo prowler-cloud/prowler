@@ -117,6 +117,8 @@ export class AlertsPageHarness extends BrowserHarness<AlertsFixture> {
   /**
    * Submit the open modal expecting a refusal, and hand back what the user is
    * told. A save that closes the modal fails the test rather than timing out.
+   * Only newly added channels are validated (contract section 6.3), so a
+   * channel refusal needs options that went stale mid-edit.
    */
   async refusedRuleSave(): Promise<string> {
     await this.submitModal();
