@@ -1,0 +1,1 @@
+`organizations_delegated_administrators` no longer reports PASS when an untrusted delegated administrator is followed by a trusted one, which made the verdict depend on the order `ListDelegatedAdministrators` returned

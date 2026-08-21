@@ -8,10 +8,13 @@ class organizations_delegated_administrators(Check):
     def execute(self):
         findings = []
 
+        # `or []` covers the key being present but null in the configuration file,
+        # which `.get` returns as None and every membership test below then raises on.
         organizations_trusted_delegated_administrators = (
             organizations_client.audit_config.get(
                 "organizations_trusted_delegated_administrators", []
             )
+            or []
         )
 
         if (
@@ -27,6 +30,13 @@ class organizations_delegated_administrators(Check):
                 organizations_client.organization.delegated_administrators is not None
             ):  # Check if Access Denied to list_delegated_administrators
                 if organizations_client.organization.delegated_administrators:
+                    # Every administrator is collected before the verdict is set, so that
+                    # an untrusted one is not overwritten by a trusted one later in the
+                    # list. ListDelegatedAdministrators documents no ordering, so a
+                    # per-administrator verdict on a shared report made the result depend
+                    # on the order the API happened to return.
+                    untrusted = []
+                    trusted = []
                     for (
                         delegated_administrator
                     ) in organizations_client.organization.delegated_administrators:
@@ -34,11 +44,16 @@ class organizations_delegated_administrators(Check):
                             delegated_administrator.id
                             not in organizations_trusted_delegated_administrators
                         ):
-                            report.status = "FAIL"
-                            report.status_extended = f"AWS Organization {organizations_client.organization.id} has an untrusted Delegated Administrator: {delegated_administrator.id}."
+                            untrusted.append(delegated_administrator.id)
                         else:
-                            report.status = "PASS"
-                            report.status_extended = f"AWS Organization {organizations_client.organization.id} has a trusted Delegated Administrator: {delegated_administrator.id}."
+                            trusted.append(delegated_administrator.id)
+
+                    if untrusted:
+                        report.status = "FAIL"
+                        report.status_extended = f"AWS Organization {organizations_client.organization.id} has an untrusted Delegated Administrator: {', '.join(untrusted)}."
+                    else:
+                        report.status = "PASS"
+                        report.status_extended = f"AWS Organization {organizations_client.organization.id} has a trusted Delegated Administrator: {', '.join(trusted)}."
                 else:
                     report.status = "PASS"
                     report.status_extended = f"AWS Organization {organizations_client.organization.id} has no Delegated Administrators."
