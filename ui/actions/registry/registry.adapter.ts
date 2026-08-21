@@ -12,6 +12,7 @@ import {
   type RegistryCredentialSubmissionResult,
   type RegistryEndpoint,
   type RegistryFailureResult,
+  type RegistryTenantArtifact,
 } from "@/types/registry";
 
 const REGISTRY_TASK_PATH_PREFIX = "/api/v1/tasks/";
@@ -44,6 +45,21 @@ const taskSubmissionSchema = z.object({
   }),
 });
 
+const registryCollectionSchema = z.object({ data: z.array(z.unknown()) });
+const tenantArtifactsSchema = z.object({
+  data: z.array(
+    z.object({
+      type: z.string().trim().min(1),
+      id: z.string().trim().min(1),
+      attributes: z.object({
+        version_spec: z.string().trim().min(1),
+        inserted_at: z.string().optional(),
+        updated_at: z.string().optional(),
+      }),
+    }),
+  ),
+});
+
 const errorDocumentSchema = z.object({
   errors: z.array(z.object({ code: z.string().min(1) })).min(1),
 });
@@ -63,6 +79,30 @@ export function adaptRegistryCredentialStatus(
     validationStatus: attributes.validation_status,
     validationPending: attributes.validation_pending,
   };
+}
+
+export function adaptRegistryTenantArtifacts(
+  payload: unknown,
+): RegistryTenantArtifact[] | null {
+  const parsed = tenantArtifactsSchema.safeParse(payload);
+  if (!parsed.success) return null;
+
+  return parsed.data.data.map(({ attributes, id }) => ({
+    normalizedName: id,
+    versionSpec: attributes.version_spec,
+    insertedAt: attributes.inserted_at,
+    updatedAt: attributes.updated_at,
+  }));
+}
+
+export function isRegistryCollection(payload: unknown) {
+  return registryCollectionSchema.safeParse(payload).success;
+}
+
+export class RegistryCatalogPageError extends Error {
+  constructor(readonly failure: RegistryFailureResult) {
+    super("Registry catalog page request failed");
+  }
 }
 
 export async function parseRegistryCredentialSubmission(
@@ -184,7 +224,8 @@ export async function collectCompleteRegistryCatalog(
           "page[size]": String(REGISTRY_CATALOG_PAGE_SIZE),
         }),
       );
-    } catch {
+    } catch (error) {
+      if (error instanceof RegistryCatalogPageError) throw error;
       return incomplete("PAGE_FAILED", resources.length);
     }
     const parsed = catalogPageSchema.safeParse(payload);

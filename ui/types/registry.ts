@@ -98,3 +98,102 @@ export type RegistryCatalogResult =
       reason: RegistryCatalogIncompleteReason;
       collectedCount: number;
     };
+
+export const REGISTRY_CREDENTIAL_READ = {
+  STATUS: "status",
+} as const;
+
+export type RegistryCredentialReadResult =
+  | {
+      status: typeof REGISTRY_CREDENTIAL_READ.STATUS;
+      credential: RegistryCredentialStatus;
+    }
+  | RegistryFailureResult;
+
+export const REGISTRY_CREDENTIAL_ACTION = {
+  CONNECTED: "connected",
+  DISCONNECTED: "disconnected",
+  INVALID: "invalid",
+  PENDING: "pending",
+  REPLACEMENT_FAILED: "replacement_failed",
+} as const;
+
+export type RegistryCredentialActionResult =
+  | {
+      status: typeof REGISTRY_CREDENTIAL_ACTION.CONNECTED;
+      credential: RegistryCredentialStatus;
+    }
+  | {
+      status: typeof REGISTRY_CREDENTIAL_ACTION.DISCONNECTED;
+      credential: RegistryCredentialStatus;
+      tenantArtifacts: RegistryTenantArtifact[];
+    }
+  | {
+      status:
+        | typeof REGISTRY_CREDENTIAL_ACTION.INVALID
+        | typeof REGISTRY_CREDENTIAL_ACTION.PENDING
+        | typeof REGISTRY_CREDENTIAL_ACTION.REPLACEMENT_FAILED;
+      credential: RegistryCredentialStatus;
+    }
+  | RegistryFailureResult;
+
+type RegistryCompleteCatalog = Extract<
+  RegistryCatalogResult,
+  { status: typeof REGISTRY_CATALOG.COMPLETE }
+>;
+type RegistryIncompleteCatalog = Exclude<
+  RegistryCatalogResult,
+  RegistryCompleteCatalog
+>;
+
+export type RegistryCollectionsResult =
+  | {
+      status: typeof REGISTRY_CATALOG.COMPLETE;
+      catalog: RegistryCompleteCatalog;
+      tenantArtifacts: RegistryTenantArtifact[];
+    }
+  | RegistryIncompleteCatalog
+  | RegistryFailureResult;
+
+export const REGISTRY_BOOTSTRAP_STATE = {
+  ONBOARDING: "onboarding",
+  VALIDATION_PENDING: "validation_pending",
+  READY: "ready",
+  RECONNECT: "reconnect",
+  UNAVAILABLE: "unavailable",
+  INCOMPLETE: "incomplete",
+  ERROR: "error",
+} as const;
+
+export type RegistryBootstrapState =
+  | {
+      status:
+        | typeof REGISTRY_BOOTSTRAP_STATE.ONBOARDING
+        | typeof REGISTRY_BOOTSTRAP_STATE.VALIDATION_PENDING;
+      credential: RegistryCredentialStatus;
+      tenantArtifacts: RegistryTenantArtifact[];
+    }
+  | {
+      status: typeof REGISTRY_BOOTSTRAP_STATE.READY;
+      credential: RegistryCredentialStatus;
+      catalog: RegistryCompleteCatalog;
+      tenantArtifacts: RegistryTenantArtifact[];
+    }
+  | {
+      status:
+        | typeof REGISTRY_BOOTSTRAP_STATE.RECONNECT
+        | typeof REGISTRY_BOOTSTRAP_STATE.UNAVAILABLE
+        | typeof REGISTRY_BOOTSTRAP_STATE.ERROR;
+    }
+  | {
+      status: typeof REGISTRY_BOOTSTRAP_STATE.INCOMPLETE;
+      catalog: RegistryIncompleteCatalog;
+    };
+
+export type RegistryBootstrapResult =
+  | {
+      status: typeof REGISTRY_BOOTSTRAP_STATE.READY;
+      leaseDurationMs: number;
+      state: RegistryBootstrapState;
+    }
+  | { status: typeof REGISTRY_FAILURE.ACCESS_DENIED };
