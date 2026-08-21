@@ -208,9 +208,37 @@ class TestAzureProviderSecret:
         "client_id": "87654321-4321-4321-4321-210987654321",
         "tenant_id": "12345678-1234-1234-1234-123456789012",
     }
-    # Valid base64 of a tiny DER-shaped payload; the serializer only checks
-    # that the string decodes as base64, not that it parses as a real cert.
-    CERT_CONTENT_B64 = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA"
+
+    @staticmethod
+    def certificate_bundle():
+        import base64
+        from datetime import UTC, datetime, timedelta
+
+        from cryptography import x509
+        from cryptography.hazmat.primitives import hashes, serialization
+        from cryptography.hazmat.primitives.asymmetric import rsa
+        from cryptography.x509.oid import NameOID
+
+        private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "Prowler")])
+        certificate = (
+            x509.CertificateBuilder()
+            .subject_name(subject)
+            .issuer_name(subject)
+            .public_key(private_key.public_key())
+            .serial_number(x509.random_serial_number())
+            .not_valid_before(datetime.now(UTC))
+            .not_valid_after(datetime.now(UTC) + timedelta(days=1))
+            .sign(private_key, hashes.SHA256())
+        )
+        bundle = certificate.public_bytes(
+            serialization.Encoding.PEM
+        ) + private_key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.NoEncryption(),
+        )
+        return base64.b64encode(bundle).decode("ascii")
 
     def test_accepts_client_secret_only(self):
         # Backwards-compatibility guard: rows saved by the previous serializer
@@ -223,11 +251,12 @@ class TestAzureProviderSecret:
         assert "certificate_content" not in serializer.validated_data
 
     def test_accepts_certificate_content_only(self):
+        certificate_content = self.certificate_bundle()
         serializer = AzureProviderSecret(
-            data={**self.BASE, "certificate_content": self.CERT_CONTENT_B64}
+            data={**self.BASE, "certificate_content": certificate_content}
         )
         assert serializer.is_valid(), serializer.errors
-        assert serializer.validated_data["certificate_content"] == self.CERT_CONTENT_B64
+        assert serializer.validated_data["certificate_content"] == certificate_content
         assert "client_secret" not in serializer.validated_data
 
     def test_rejects_both_client_secret_and_certificate_content(self):
@@ -238,7 +267,7 @@ class TestAzureProviderSecret:
             data={
                 **self.BASE,
                 "client_secret": "fake-client-secret",
-                "certificate_content": self.CERT_CONTENT_B64,
+                "certificate_content": self.certificate_bundle(),
             }
         )
         assert not serializer.is_valid()
@@ -256,6 +285,41 @@ class TestAzureProviderSecret:
         serializer = AzureProviderSecret(
             data={**self.BASE, "certificate_content": "not!valid@base64$$"}
         )
+        assert not serializer.is_valid()
+        assert "certificate_content" in serializer.errors
+
+    def test_rejects_invalid_tenant_and_client_ids(self):
+        serializer = AzureProviderSecret(
+            data={
+                "tenant_id": "not-a-uuid",
+                "client_id": "also-not-a-uuid",
+                "client_secret": "fake-client-secret",
+            }
+        )
+
+        assert not serializer.is_valid()
+        assert "tenant_id" in serializer.errors
+        assert "client_id" in serializer.errors
+
+    def test_rejects_key_only_certificate_content(self):
+        import base64
+
+        from cryptography.hazmat.primitives import serialization
+        from cryptography.hazmat.primitives.asymmetric import rsa
+
+        private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+        key_only_pem = private_key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.NoEncryption(),
+        )
+        serializer = AzureProviderSecret(
+            data={
+                **self.BASE,
+                "certificate_content": base64.b64encode(key_only_pem).decode("ascii"),
+            }
+        )
+
         assert not serializer.is_valid()
         assert "certificate_content" in serializer.errors
 

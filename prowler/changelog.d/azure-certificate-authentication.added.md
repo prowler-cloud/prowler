@@ -1,1 +1,1 @@
-Add certificate-based service principal authentication to the Azure provider. `AzureProvider` now accepts a `keyCredentials` certificate — as base64 content or file path — and authenticates via `azure.identity.CertificateCredential`, mirroring the existing M365 provider flow
+Certificate-based Service Principal authentication for Azure using a base64-encoded or file-based certificate/private-key bundle

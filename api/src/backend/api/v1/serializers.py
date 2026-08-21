@@ -2,6 +2,7 @@ import base64
 import json
 import logging
 from datetime import UTC, datetime, timedelta
+from uuid import UUID
 
 import yaml
 from api.celery_utils import decode_celery_field
@@ -60,7 +61,10 @@ from api.v1.serializer_utils.lighthouse import (
 )
 from api.v1.serializer_utils.processors import ProcessorConfigField
 from api.v1.serializer_utils.providers import ProviderSecretField
-from api.validators import validate_lighthouse_openai_compatible_base_url
+from api.validators import (
+    validate_certificate_bundle,
+    validate_lighthouse_openai_compatible_base_url,
+)
 from config.custom_logging import BackendLogger
 from django.conf import settings
 from django.contrib.auth import authenticate
@@ -1791,6 +1795,24 @@ class AzureProviderSecret(serializers.Serializer):
     tenant_id = serializers.CharField()
     certificate_content = serializers.CharField(required=False)
 
+    def validate_client_id(self, client_id):
+        try:
+            UUID(client_id)
+        except (TypeError, ValueError) as error:
+            raise serializers.ValidationError(
+                "Client ID must be a valid UUID."
+            ) from error
+        return client_id
+
+    def validate_tenant_id(self, tenant_id):
+        try:
+            UUID(tenant_id)
+        except (TypeError, ValueError) as error:
+            raise serializers.ValidationError(
+                "Tenant ID must be a valid UUID."
+            ) from error
+        return tenant_id
+
     def validate(self, attrs):
         if attrs.get("client_secret") and attrs.get("certificate_content"):
             raise serializers.ValidationError(
@@ -1803,10 +1825,11 @@ class AzureProviderSecret(serializers.Serializer):
         return super().validate(attrs)
 
     def validate_certificate_content(self, certificate_content):
-        """Validate that Azure certificate content is valid base64 encoded data."""
+        """Validate the Azure certificate and matching private-key bundle."""
         if certificate_content:
             try:
-                base64.b64decode(certificate_content, validate=True)
+                certificate_data = base64.b64decode(certificate_content, validate=True)
+                validate_certificate_bundle(certificate_data)
             except Exception as e:
                 # Field validators are invoked per-field; DRF already knows
                 # this error belongs to `certificate_content` and will nest
@@ -1814,9 +1837,9 @@ class AzureProviderSecret(serializers.Serializer):
                 # double-nest the JSON:API pointer as
                 # `/certificate_content/certificate_content`.
                 raise serializers.ValidationError(
-                    f"The provided certificate content is not valid base64 encoded data: {str(e)}",
+                    "Certificate content must be valid base64 containing an X.509 certificate and its matching private key.",
                     code="azure-certificate-content",
-                )
+                ) from e
         return certificate_content
 
     class Meta:

@@ -63,6 +63,7 @@ from prowler.providers.azure.exceptions.exceptions import (
     AzureTenantIDNoBrowserAuthError,
 )
 from prowler.providers.azure.lib.arguments.arguments import validate_azure_region
+from prowler.providers.azure.lib.certificate import validate_certificate_bundle
 from prowler.providers.azure.lib.mutelist.mutelist import AzureMutelist
 from prowler.providers.azure.lib.regions.regions import get_regions_config
 from prowler.providers.azure.models import AzureIdentityInfo, AzureRegionConfig
@@ -217,8 +218,8 @@ class AzureProvider(Provider):
             client_id (str): The Azure client ID.
             client_secret (str): The Azure client secret.
             certificate_auth (bool): Flag indicating whether to use certificate authentication with environment variables (AZURE_TENANT_ID, AZURE_CLIENT_ID, AZURE_CERTIFICATE_CONTENT).
-            certificate_content (str): Base64-encoded certificate content bound to the app registration's `keyCredentials`.
-            certificate_path (str): Path to a certificate file bound to the app registration's `keyCredentials`.
+            certificate_content (str): Base64-encoded certificate and private key bundle matching the App Registration certificate.
+            certificate_path (str): Path to a certificate and private key bundle matching the App Registration certificate.
             resource_groups (list): List of resource group names.
 
         Returns:
@@ -1460,7 +1461,7 @@ class AzureProvider(Provider):
             AzureNotValidClientIdError: If the provided Azure Client ID is not valid.
             AzureNotValidClientSecretError: If the provided Azure Client Secret is not valid.
             AzureNotValidCertificateContentError: If the provided base64 certificate content is not valid.
-            AzureNotValidCertificatePathError: If the provided certificate path cannot be read.
+            AzureNotValidCertificatePathError: If the provided certificate path cannot be read or does not contain a valid certificate/private-key bundle.
             AzureClientIdAndClientSecretNotBelongingToTenantIdError: If the provided Azure Client ID and Client Secret do not belong to the specified Tenant ID.
             AzureTenantIdAndClientSecretNotBelongingToClientIdError: If the provided Azure Tenant ID and Client Secret do not belong to the specified Client ID.
             AzureTenantIdAndClientIdNotBelongingToClientSecretError: If the provided Azure Tenant ID and Client ID do not belong to the specified Client Secret.
@@ -1507,21 +1508,22 @@ class AzureProvider(Provider):
                 # azure-identity: `CertificateCredential` raises an opaque
                 # exception several call frames deeper if this fails, which
                 # makes for a bad UX in the API/UI.
-                base64.b64decode(certificate_content, validate=True)
+                certificate_data = base64.b64decode(certificate_content, validate=True)
+                validate_certificate_bundle(certificate_data)
             except Exception as e:
                 raise AzureNotValidCertificateContentError(
                     file=os.path.basename(__file__),
-                    message=f"The provided certificate content is not valid base64 encoded data: {str(e)}",
+                    message=f"The provided certificate content is not a valid base64-encoded certificate/private-key bundle: {str(e)}",
                 )
 
         if certificate_path:
             try:
                 with open(certificate_path, "rb") as cert_file:
-                    cert_file.read()
+                    validate_certificate_bundle(cert_file.read())
             except Exception as e:
                 raise AzureNotValidCertificatePathError(
                     file=os.path.basename(__file__),
-                    message=f"The provided certificate path is not valid: {str(e)}",
+                    message=f"The provided certificate path does not contain a valid certificate/private-key bundle: {str(e)}",
                 )
 
         if region_config is None:

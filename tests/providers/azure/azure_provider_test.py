@@ -1255,6 +1255,29 @@ class TestAzureProviderCertificateAuth:
     def _region_config(self):
         return AzureProvider.setup_region_config("AzureCloud")
 
+    @staticmethod
+    def _certificate_and_key():
+        from datetime import UTC, datetime, timedelta
+
+        from cryptography import x509
+        from cryptography.hazmat.primitives import hashes
+        from cryptography.hazmat.primitives.asymmetric import rsa
+        from cryptography.x509.oid import NameOID
+
+        private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "Prowler")])
+        certificate = (
+            x509.CertificateBuilder()
+            .subject_name(subject)
+            .issuer_name(subject)
+            .public_key(private_key.public_key())
+            .serial_number(x509.random_serial_number())
+            .not_valid_before(datetime.now(UTC))
+            .not_valid_after(datetime.now(UTC) + timedelta(days=1))
+            .sign(private_key, hashes.SHA256())
+        )
+        return certificate, private_key
+
     def test_validate_arguments_rejects_client_secret_and_cert_together(self):
         with pytest.raises(AzureConfigCredentialsError) as exception:
             AzureProvider.validate_arguments(
@@ -1334,6 +1357,77 @@ class TestAzureProviderCertificateAuth:
                 region_config=self._region_config(),
             )
 
+    def test_validate_static_credentials_rejects_key_only_pem(self):
+        import base64
+
+        from cryptography.hazmat.primitives import serialization
+        from cryptography.hazmat.primitives.asymmetric import rsa
+
+        private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+        key_only_pem = private_key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.NoEncryption(),
+        )
+
+        with (
+            patch.object(AzureProvider, "verify_client"),
+            pytest.raises(AzureNotValidCertificateContentError),
+        ):
+            AzureProvider.validate_static_credentials(
+                tenant_id=self._TENANT_ID,
+                client_id=self._CLIENT_ID,
+                client_secret=None,
+                certificate_content=base64.b64encode(key_only_pem).decode("ascii"),
+                certificate_path=None,
+                region_config=self._region_config(),
+            )
+
+    def test_validate_static_credentials_rejects_mismatched_certificate_and_key(self):
+        import base64
+        from datetime import datetime, timedelta, timezone
+
+        from cryptography import x509
+        from cryptography.hazmat.primitives import hashes, serialization
+        from cryptography.hazmat.primitives.asymmetric import rsa
+        from cryptography.x509.oid import NameOID
+
+        certificate_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+        different_private_key = rsa.generate_private_key(
+            public_exponent=65537, key_size=2048
+        )
+        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "Prowler")])
+        certificate = (
+            x509.CertificateBuilder()
+            .subject_name(subject)
+            .issuer_name(subject)
+            .public_key(certificate_key.public_key())
+            .serial_number(x509.random_serial_number())
+            .not_valid_before(datetime.now(timezone.utc))
+            .not_valid_after(datetime.now(timezone.utc) + timedelta(days=1))
+            .sign(certificate_key, hashes.SHA256())
+        )
+        mismatched_bundle = certificate.public_bytes(
+            serialization.Encoding.PEM
+        ) + different_private_key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.NoEncryption(),
+        )
+
+        with (
+            patch.object(AzureProvider, "verify_client"),
+            pytest.raises(AzureNotValidCertificateContentError),
+        ):
+            AzureProvider.validate_static_credentials(
+                tenant_id=self._TENANT_ID,
+                client_id=self._CLIENT_ID,
+                client_secret=None,
+                certificate_content=base64.b64encode(mismatched_bundle).decode("ascii"),
+                certificate_path=None,
+                region_config=self._region_config(),
+            )
+
     def test_validate_static_credentials_rejects_missing_cert_file(self):
         with pytest.raises(AzureNotValidCertificatePathError):
             AzureProvider.validate_static_credentials(
@@ -1344,6 +1438,134 @@ class TestAzureProviderCertificateAuth:
                 certificate_path="/tmp/does-not-exist-prowler-cert.pem",
                 region_config=self._region_config(),
             )
+
+    def test_validate_static_credentials_rejects_invalid_cert_file(self, tmp_path):
+        certificate_path = tmp_path / "invalid-certificate.pem"
+        certificate_path.write_bytes(b"not a certificate bundle")
+
+        with (
+            patch.object(AzureProvider, "verify_client"),
+            pytest.raises(AzureNotValidCertificatePathError),
+        ):
+            AzureProvider.validate_static_credentials(
+                tenant_id=self._TENANT_ID,
+                client_id=self._CLIENT_ID,
+                client_secret=None,
+                certificate_content=None,
+                certificate_path=str(certificate_path),
+                region_config=self._region_config(),
+            )
+
+    def test_validate_static_credentials_rejects_key_only_cert_file(self, tmp_path):
+        from cryptography.hazmat.primitives import serialization
+
+        _, private_key = self._certificate_and_key()
+        certificate_path = tmp_path / "key-only.pem"
+        certificate_path.write_bytes(
+            private_key.private_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PrivateFormat.PKCS8,
+                encryption_algorithm=serialization.NoEncryption(),
+            )
+        )
+
+        with (
+            patch.object(AzureProvider, "verify_client"),
+            pytest.raises(AzureNotValidCertificatePathError),
+        ):
+            AzureProvider.validate_static_credentials(
+                tenant_id=self._TENANT_ID,
+                client_id=self._CLIENT_ID,
+                client_secret=None,
+                certificate_content=None,
+                certificate_path=str(certificate_path),
+                region_config=self._region_config(),
+            )
+
+    def test_validate_static_credentials_rejects_mismatched_cert_file(self, tmp_path):
+        from cryptography.hazmat.primitives import serialization
+        from cryptography.hazmat.primitives.asymmetric import rsa
+
+        certificate, _ = self._certificate_and_key()
+        different_private_key = rsa.generate_private_key(
+            public_exponent=65537, key_size=2048
+        )
+        certificate_path = tmp_path / "mismatched-certificate.pem"
+        certificate_path.write_bytes(
+            certificate.public_bytes(serialization.Encoding.PEM)
+            + different_private_key.private_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PrivateFormat.PKCS8,
+                encryption_algorithm=serialization.NoEncryption(),
+            )
+        )
+
+        with (
+            patch.object(AzureProvider, "verify_client"),
+            pytest.raises(AzureNotValidCertificatePathError),
+        ):
+            AzureProvider.validate_static_credentials(
+                tenant_id=self._TENANT_ID,
+                client_id=self._CLIENT_ID,
+                client_secret=None,
+                certificate_content=None,
+                certificate_path=str(certificate_path),
+                region_config=self._region_config(),
+            )
+
+    def test_validate_static_credentials_accepts_valid_pem_cert_file(self, tmp_path):
+        from cryptography.hazmat.primitives import serialization
+
+        certificate, private_key = self._certificate_and_key()
+        certificate_path = tmp_path / "certificate-bundle.pem"
+        certificate_path.write_bytes(
+            certificate.public_bytes(serialization.Encoding.PEM)
+            + private_key.private_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PrivateFormat.PKCS8,
+                encryption_algorithm=serialization.NoEncryption(),
+            )
+        )
+
+        with patch.object(AzureProvider, "verify_client"):
+            credentials = AzureProvider.validate_static_credentials(
+                tenant_id=self._TENANT_ID,
+                client_id=self._CLIENT_ID,
+                client_secret=None,
+                certificate_content=None,
+                certificate_path=str(certificate_path),
+                region_config=self._region_config(),
+            )
+
+        assert credentials["certificate_path"] == str(certificate_path)
+
+    def test_validate_static_credentials_accepts_valid_pkcs12_cert_file(self, tmp_path):
+        from cryptography.hazmat.primitives import serialization
+        from cryptography.hazmat.primitives.serialization import pkcs12
+
+        certificate, private_key = self._certificate_and_key()
+        certificate_path = tmp_path / "certificate-bundle.pfx"
+        certificate_path.write_bytes(
+            pkcs12.serialize_key_and_certificates(
+                name=b"prowler",
+                key=private_key,
+                cert=certificate,
+                cas=None,
+                encryption_algorithm=serialization.NoEncryption(),
+            )
+        )
+
+        with patch.object(AzureProvider, "verify_client"):
+            credentials = AzureProvider.validate_static_credentials(
+                tenant_id=self._TENANT_ID,
+                client_id=self._CLIENT_ID,
+                client_secret=None,
+                certificate_content=None,
+                certificate_path=str(certificate_path),
+                region_config=self._region_config(),
+            )
+
+        assert credentials["certificate_path"] == str(certificate_path)
 
     def test_setup_session_static_credentials_cert_content_uses_certificate_credential(
         self,
