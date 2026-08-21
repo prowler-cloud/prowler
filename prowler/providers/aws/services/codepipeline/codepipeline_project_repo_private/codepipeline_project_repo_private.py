@@ -1,7 +1,9 @@
 import ssl
 import urllib.error
 import urllib.request
+from typing import Optional
 
+from prowler.lib.logger import logger
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.codepipeline.codepipeline_client import (
     codepipeline_client,
@@ -59,6 +61,13 @@ class codepipeline_project_repo_private(Check):
                 elif is_public_gitlab:
                     report.status = "FAIL"
                     report.status_extended = f"CodePipeline {pipeline.name} source repository is public: {gitlab_url}"
+                elif is_public_github is None and is_public_gitlab is None:
+                    report.status = "MANUAL"
+                    report.status_extended = (
+                        f"CodePipeline {pipeline.name} source repository "
+                        f"{pipeline.source.repository_id} could not be verified because "
+                        "the anonymous repository probes failed."
+                    )
                 else:
                     report.status = "PASS"
                     report.status_extended = f"CodePipeline {pipeline.name} source repository {pipeline.source.repository_id} is private."
@@ -67,7 +76,7 @@ class codepipeline_project_repo_private(Check):
 
         return findings
 
-    def _is_public_repo(self, repo_url: str) -> bool:
+    def _is_public_repo(self, repo_url: str) -> Optional[bool]:
         """Checks if a repository is publicly accessible.
 
         Attempts to access the repository URL anonymously to determine if it's
@@ -77,13 +86,14 @@ class codepipeline_project_repo_private(Check):
             repo_url: String containing the repository URL to check.
 
         Returns:
-            bool: True if the repository is public, False if private or inaccessible.
+            Optional[bool]: True if the repository is public, False if it is
+                inaccessible with a 404 response, or None if it could not be
+                verified due to a probe error.
 
         Note:
             The method considers a repository private if:
             - The URL redirects to a sign-in page
-            - The request fails with HTTP errors
-            - The URL is not accessible
+            - The URL returns a 404 response
         """
         if repo_url.endswith(".git"):
             repo_url = repo_url[:-4]
@@ -92,5 +102,16 @@ class codepipeline_project_repo_private(Check):
             req = urllib.request.Request(repo_url, method="HEAD")
             response = urllib.request.urlopen(req, timeout=HTTP_TIMEOUT)
             return not response.geturl().endswith("sign_in")
-        except (urllib.error.URLError, TimeoutError, ssl.SSLError):
-            return False
+        except urllib.error.HTTPError as error:
+            if error.code == 404:
+                return False
+            logger.warning(
+                f"Failed to verify repository {repo_url}: HTTP {error.code}."
+            )
+            return None
+        except (urllib.error.URLError, TimeoutError, ssl.SSLError) as error:
+            logger.warning(
+                f"Failed to verify repository {repo_url}: "
+                f"{error.__class__.__name__}: {error}"
+            )
+            return None

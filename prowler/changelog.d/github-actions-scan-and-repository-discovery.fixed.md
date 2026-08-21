@@ -1,0 +1,1 @@
+GitHub repository discovery now paginates GraphQL results, GitHub Actions scans report incomplete scanner runs as MANUAL, and CodePipeline repository privacy checks report failed anonymous probes as MANUAL

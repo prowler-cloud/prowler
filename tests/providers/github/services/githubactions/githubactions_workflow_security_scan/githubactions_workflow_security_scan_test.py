@@ -164,6 +164,40 @@ class Test_githubactions_workflow_security_scan:
                 in result[0].status_extended
             )
 
+    def test_repository_scan_failure_is_manual(self):
+        repo = _make_repo()
+        repository_client = mock.MagicMock()
+        repository_client.repositories = {1: repo}
+
+        githubactions_client = mock.MagicMock()
+        githubactions_client.findings = {}
+        githubactions_client.scan_errors = {1: "zizmor exited unsuccessfully"}
+        githubactions_client.scan_enabled = True
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_github_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.github.services.githubactions.githubactions_workflow_security_scan.githubactions_workflow_security_scan.repository_client",
+                new=repository_client,
+            ),
+            mock.patch(
+                "prowler.providers.github.services.githubactions.githubactions_workflow_security_scan.githubactions_workflow_security_scan.githubactions_client",
+                new=githubactions_client,
+            ),
+        ):
+            from prowler.providers.github.services.githubactions.githubactions_workflow_security_scan.githubactions_workflow_security_scan import (
+                githubactions_workflow_security_scan,
+            )
+
+            result = githubactions_workflow_security_scan().execute()
+
+        assert len(result) == 1
+        assert result[0].status == "MANUAL"
+        assert "could not be completed" in result[0].status_extended
+
     def test_repository_with_findings_fail(self):
         repo = _make_repo()
         finding = _make_finding()
