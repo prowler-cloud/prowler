@@ -1,0 +1,36 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "vpn_weak_encryption",
+  "CheckTitle": "VPN connections do not use weak encryption algorithms",
+  "CheckType": [],
+  "ServiceName": "vpn",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "HUAWEICLOUD::VPN::Connection",
+  "ResourceGroup": "network",
+  "Description": "Ensure that VPN connections do not use weak encryption algorithms (DES, 3DES) in IKE or IPSec policies.",
+  "Risk": "Weak encryption algorithms like DES and 3DES are vulnerable to brute-force attacks and do not provide adequate data protection. Using them compromises the confidentiality and integrity of VPN traffic.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.huaweicloud.com/intl/en-us/usermanual-vpn/en-us_topic_0066838084.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log on to the Huawei Cloud console.\n2. Navigate to Virtual Private Network.\n3. Identify VPN connections using DES or 3DES encryption.\n4. Update the IKE and IPSec policies to use AES-128 or AES-256.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Change VPN connection encryption algorithms from DES/3DES to AES-128 or AES-256.",
+      "Url": "https://hub.prowler.com/check/vpn_weak_encryption"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Checks IKE and IPSec encryption algorithms for DES and 3DES."
+}
