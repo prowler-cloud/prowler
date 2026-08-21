@@ -1,8 +1,8 @@
 /**
  * Fixture data for the alerts handlers. The alert-rule shapes mirror the API
  * the alerts UI already consumes; the Slack-channel shapes follow the signed
- * contract (`openspec/changes/add-slack-alert-channels/contract/`), and what
- * the contract still leaves open carries a `TODO(Josema)`.
+ * contract (`openspec/changes/add-slack-alert-channels/contract/`), addendum
+ * section 6 included — it leaves nothing open.
  *
  * The disabled/empty channel states are driven by what the fixture OMITS
  * (no integration, no configured channels, no confirmations), never by
@@ -116,16 +116,13 @@ export const ALERTS_CONFIGURED_CHANNELS: AlertsSlackChannelFixture[] = [
 ];
 
 /**
- * Refusal wire values for the rule-write validation, spelled out rather than
- * imported from any UI mapping: a rename on our side must fail these tests.
- * TODO(Josema): the refusal's HTTP status and error codes are the one thing
- * the signed contract leaves open (D3, Validation row); these stay the
- * working assumption until it answers.
+ * The signed refusal code for the rule-write validation (contract section 6.1):
+ * one code, and a 400, for every ineligible condition — only the human
+ * `detail` says which one refused. Spelled out rather than imported from any
+ * UI mapping: a rename on our side must fail these tests.
  */
-export const ALERTS_SLACK_NOT_CONNECTED_CODE = "slack_not_connected";
-export const ALERTS_CHANNEL_NOT_AUTHORIZED_CODE =
-  "slack_channel_not_authorized";
-export const ALERTS_CHANNEL_NOT_CONFIRMED_CODE = "slack_channel_not_confirmed";
+export const ALERTS_SLACK_CHANNEL_NOT_ELIGIBLE_CODE =
+  "slack_channel_not_eligible";
 
 export const ALERTS_SLACK_NOT_CONNECTED_DETAIL =
   "Slack must be connected before an alert rule can name channel destinations.";

@@ -6,7 +6,7 @@
  *
  * The Slack shapes follow the signed contract
  * (`openspec/changes/add-slack-alert-channels/contract/slack-alerts-api.md`,
- * section 2); what it leaves open carries a `TODO(Josema)`.
+ * section 2 and the section 6 addendum, which closed every open point).
  *
  * State is per-call: a create is visible to the next rules read. Wire them
  * per test via `worker.use(...handlersForAlerts(fx))`.
@@ -15,10 +15,8 @@
 import { http, HttpResponse } from "msw";
 
 import {
-  ALERTS_CHANNEL_NOT_AUTHORIZED_CODE,
-  ALERTS_CHANNEL_NOT_CONFIRMED_CODE,
   ALERTS_LIST_SERVER_ERROR_DETAIL,
-  ALERTS_SLACK_NOT_CONNECTED_CODE,
+  ALERTS_SLACK_CHANNEL_NOT_ELIGIBLE_CODE,
   ALERTS_SLACK_NOT_CONNECTED_DETAIL,
   alertsChannelNotAuthorizedDetail,
   alertsChannelNotConfirmedDetail,
@@ -101,11 +99,9 @@ export const handlersForAlerts = (fx: AlertsFixture) => {
     );
 
   /**
-   * What `GET /alerts/slack-channels` offers: the enabled and connected
-   * integration's channels.
-   * TODO(Josema): the contract does not literally say the listing filters to
-   * *confirmed* channels (D3, Eligibility row). Assumed here — the rule write
-   * refuses unconfirmed ones, so offering them would offer a refusal.
+   * What `GET /alerts/slack-channels` offers, as signed (section 6.2): only
+   * the confirmed channels of the enabled and connected integration. An
+   * unconfirmed one would just be an offer of a refusal.
    */
   const eligibleChannels = (): AlertsSlackChannelFixture[] =>
     isConnected
@@ -114,52 +110,40 @@ export const handlersForAlerts = (fx: AlertsFixture) => {
         )
       : [];
 
+  /** Every ineligible condition answers the one signed pair (section 6.1). */
+  const notEligible = (detail: string): Response =>
+    HttpResponse.json(
+      errorBody(detail, 400, ALERTS_SLACK_CHANNEL_NOT_ELIGIBLE_CODE),
+      { status: 400 },
+    );
+
   /**
-   * The rule-write validation the contract signs: an enabled and connected
-   * integration, the channel configured on it, and a non-null
-   * `confirmation_sent_at`. Answered before any write lands, so a refusal
-   * leaves the stored rule unchanged.
-   * TODO(Josema): whether PATCH re-validates channels a rule already stores is
-   * open (tasks 7.14). The supplied list is validated on both writes here —
-   * the literal reading — and the UI only surfaces what comes back.
+   * The rule-write validation the contract signs: every channel a write ADDS
+   * needs an enabled and connected integration, the channel configured on it,
+   * and a non-null `confirmation_sent_at`. Only newly added channels are
+   * validated (section 6.3), so ids the rule already stores never block an
+   * edit — a same-workspace reinstall that reset their confirmations does not
+   * freeze the rule. Answered before any write lands, so a refusal leaves the
+   * stored rule unchanged.
    */
   const refuseInvalidChannels = (
     channelIds: string[] | undefined,
+    retainedIds: readonly string[] = [],
   ): Response | null => {
-    if (!channelIds || channelIds.length === 0) return null;
+    const added = (channelIds ?? []).filter(
+      (channelId) => !retainedIds.includes(channelId),
+    );
+    if (added.length === 0) return null;
 
-    if (!isConnected) {
-      return HttpResponse.json(
-        errorBody(
-          ALERTS_SLACK_NOT_CONNECTED_DETAIL,
-          400,
-          ALERTS_SLACK_NOT_CONNECTED_CODE,
-        ),
-        { status: 400 },
-      );
-    }
+    if (!isConnected) return notEligible(ALERTS_SLACK_NOT_CONNECTED_DETAIL);
 
-    for (const channelId of channelIds) {
+    for (const channelId of added) {
       const channel = configuredChannel(channelId);
       if (!channel) {
-        return HttpResponse.json(
-          errorBody(
-            alertsChannelNotAuthorizedDetail(channelId),
-            400,
-            ALERTS_CHANNEL_NOT_AUTHORIZED_CODE,
-          ),
-          { status: 400 },
-        );
+        return notEligible(alertsChannelNotAuthorizedDetail(channelId));
       }
       if (channel.confirmationSentAt === null) {
-        return HttpResponse.json(
-          errorBody(
-            alertsChannelNotConfirmedDetail(channelId),
-            400,
-            ALERTS_CHANNEL_NOT_CONFIRMED_CODE,
-          ),
-          { status: 400 },
-        );
+        return notEligible(alertsChannelNotConfirmedDetail(channelId));
       }
     }
 
@@ -285,6 +269,7 @@ export const handlersForAlerts = (fx: AlertsFixture) => {
     http.post(`${API}/alerts/rules`, async ({ request }) => {
       const attributes = await parseRuleAttributes(request);
       const written = storedIds(attributes.slack_channels ?? []);
+      // A create retains nothing: everything supplied is newly added.
       const refusal = refuseInvalidChannels(written);
       if (refusal) return refusal;
 
@@ -330,7 +315,8 @@ export const handlersForAlerts = (fx: AlertsFixture) => {
         const written = attributes.slack_channels
           ? storedIds(attributes.slack_channels)
           : undefined;
-        const refusal = refuseInvalidChannels(written);
+        // Retained ids are the rule's stored selection: never re-validated.
+        const refusal = refuseInvalidChannels(written, rule.slackChannelIds);
         if (refusal) return refusal;
 
         if (attributes.name !== undefined) rule.name = attributes.name;
