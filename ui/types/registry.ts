@@ -43,3 +43,58 @@ export interface RegistryCredentialStatus {
   validationStatus?: string;
   validationPending: boolean;
 }
+
+export const REGISTRY_CATALOG = {
+  COMPLETE: "complete",
+  INCOMPLETE: "incomplete",
+} as const;
+export const REGISTRY_CATALOG_INCOMPLETE_REASON = {
+  CONFLICTING_DUPLICATE: "conflicting_duplicate",
+  COUNT_MISMATCH: "count_mismatch",
+  GUARD_EXHAUSTED: "guard_exhausted",
+  INVALID_PAGE: "invalid_page",
+  INVALID_RESOURCE: "invalid_resource",
+  PAGE_FAILED: "page_failed",
+} as const;
+export type RegistryCatalogIncompleteReason =
+  (typeof REGISTRY_CATALOG_INCOMPLETE_REASON)[keyof typeof REGISTRY_CATALOG_INCOMPLETE_REASON];
+
+export interface RegistryArtifactOwner {
+  name: string;
+  type: string;
+}
+
+export interface RegistryCatalogArtifact {
+  normalizedName: string;
+  name?: string;
+  description?: string;
+  latestVersion?: string;
+  providers: string[];
+  isVerified: boolean;
+  isOfficial: boolean;
+  isMeta: boolean;
+  hasProvider: boolean;
+  hasChecks: boolean;
+  hasCompliance: boolean;
+  versionCount: number;
+  totalDownloads: number;
+  owners: RegistryArtifactOwner[];
+}
+
+export interface RegistryTenantArtifact {
+  normalizedName: string;
+  versionSpec: string;
+  insertedAt?: string;
+  updatedAt?: string;
+}
+
+export type RegistryCatalogResult =
+  | {
+      status: typeof REGISTRY_CATALOG.COMPLETE;
+      artifacts: RegistryCatalogArtifact[];
+    }
+  | {
+      status: typeof REGISTRY_CATALOG.INCOMPLETE;
+      reason: RegistryCatalogIncompleteReason;
+      collectedCount: number;
+    };

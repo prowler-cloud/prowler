@@ -9,6 +9,7 @@ import {
 import {
   adaptRegistryCredentialStatus,
   classifyRegistryFailure,
+  collectCompleteRegistryCatalog,
   parseRegistryCredentialSubmission,
 } from "./registry.adapter";
 
@@ -213,5 +214,90 @@ describe("Registry adapter", () => {
       { status: REGISTRY_FAILURE.ERROR },
       { status: REGISTRY_FAILURE.ERROR },
     ]);
+  });
+
+  it("degrades a non-terminal empty first catalog page", async () => {
+    // Given
+    const document = (page: number) => ({
+      data: [],
+      meta: { pagination: { page, pages: 2, count: 0 } },
+    });
+
+    // When
+    const result = await collectCompleteRegistryCatalog(async (page) =>
+      document(page),
+    );
+
+    // Then
+    expect(result).toEqual({
+      status: "incomplete",
+      reason: "invalid_page",
+      collectedCount: 0,
+    });
+  });
+
+  it("accepts a terminal empty first catalog page", async () => {
+    // Given
+    const document = {
+      data: [],
+      meta: { pagination: { page: 1, pages: 1, count: 0 } },
+    };
+
+    // When
+    const result = await collectCompleteRegistryCatalog(async () => document);
+
+    // Then
+    expect(result).toEqual({ status: "complete", artifacts: [] });
+  });
+
+  it("traverses, merges, and degrades unsafe catalog data", async () => {
+    // Given
+    // prettier-ignore
+    const resource = (id: string, attributes: Record<string, unknown> = {}) => ({ type: "registry-artifacts", id, attributes });
+    // prettier-ignore
+    const document = (page: number, pages: number, count: number, data: unknown[]) => ({ data, meta: { pagination: { page, pages, count } } });
+    const requests: Array<[number, string | null, string | null]> = [];
+
+    // When
+    // prettier-ignore
+    const complete = await collectCompleteRegistryCatalog(async (page, query) => { requests.push([page, query.get("page[number]"), query.get("page[size]")]); return page === 1 ? document(1, 2, 3, [resource("core", { name: "Core", providers: ["AWS"], is_verified: true, version_count: 1, total_downloads: 2, owners: [{ type: "organization", name: "Prowler" }] }), resource("zeta")]) : document(2, 2, 3, [resource("core", { description: "Registry core", latest_version: "2.0.0", providers: ["gcp"], is_official: true, has_checks: true, version_count: 3, total_downloads: 8 })]); });
+    // prettier-ignore
+    const limits = await Promise.all([999, 1000, 1001].map(async (pages) => { let requests = 0; const result = await collectCompleteRegistryCatalog(async (page) => { requests += 1; return document(page, pages, pages, [resource(`item-${page}`)]); }); return [pages, requests, result] as const; }));
+    // prettier-ignore
+    const failures = await Promise.all([collectCompleteRegistryCatalog(async () => ({ data: {}, meta: {} })), collectCompleteRegistryCatalog(async () => document(1, 1, 2, [resource("one")])), collectCompleteRegistryCatalog(async (page) => document(page === 1 ? 1 : 1, 2, 2, [resource(`item-${page}`)])), collectCompleteRegistryCatalog(async (page) => document(page, page === 1 ? 2 : 3, 2, [resource(`item-${page}`)])), collectCompleteRegistryCatalog(async () => document(1, 1, 1, [resource("")])), collectCompleteRegistryCatalog(async (page) => document(page, 2, 2, [resource("duplicate", { name: page === 1 ? "One" : "Two" })])), collectCompleteRegistryCatalog(async (page) => { if (page === 2) throw new Error("offline"); return document(1, 2, 2, [resource("first")]); })]);
+
+    // Then
+    expect(requests).toEqual([
+      [1, "1", "100"],
+      [2, "2", "100"],
+    ]);
+    // prettier-ignore
+    expect(complete).toMatchObject({ status: "complete", artifacts: [{ normalizedName: "core", name: "Core", description: "Registry core", latestVersion: "2.0.0", providers: ["aws", "gcp"], isVerified: true, isOfficial: true, hasChecks: true, versionCount: 3, totalDownloads: 8, owners: [{ type: "organization", name: "Prowler" }] }, { normalizedName: "zeta" }] });
+    expect(limits.map(([pages, requests]) => [pages, requests])).toEqual([
+      [999, 999],
+      [1000, 1000],
+      [1001, 1],
+    ]);
+    expect(limits[2]?.[2]).toEqual({
+      status: "incomplete",
+      reason: "guard_exhausted",
+      collectedCount: 1,
+    });
+    expect(
+      failures.map((result) =>
+        result.status === "incomplete" ? result.reason : undefined,
+      ),
+    ).toEqual([
+      "invalid_page",
+      "count_mismatch",
+      "invalid_page",
+      "invalid_page",
+      "invalid_resource",
+      "conflicting_duplicate",
+      "page_failed",
+    ]);
+    failures.forEach((result) =>
+      expect(result).not.toHaveProperty("artifacts"),
+    );
   });
 });
