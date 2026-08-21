@@ -88,115 +88,146 @@ export const AzureCertificateCredentialsForm = ({
         </div>
       </div>
 
-      <ol className="border-content-neutral-tertiary flex flex-col gap-3 rounded-md border p-4 text-sm">
-        <li className="flex items-center justify-between gap-3">
-          <span>
-            <strong>1.</strong> Create an App Registration. Copy its Directory
-            (tenant) ID and Application (client) ID.
-          </span>
-          <Button variant="link" size="link-sm" asChild>
-            <a
-              href={AZURE_PORTAL_NEW_APP_REGISTRATION_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <ExternalLink className="size-3.5 shrink-0" />
-              <span>New App Registration</span>
-            </a>
-          </Button>
-        </li>
+      <div className="flex flex-col gap-4">
+        <section className="border-content-neutral-tertiary flex flex-col gap-3 rounded-md border p-4">
+          <h3 className="text-text-neutral-primary text-sm font-semibold">
+            Create the application
+          </h3>
+          <ol className="flex list-decimal flex-col gap-3 pl-5 text-sm">
+            <li>
+              <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <span>
+                  Register an Azure application, then copy its Directory
+                  (tenant) ID and Application (client) ID.
+                </span>
+                <Button variant="link" size="link-sm" asChild>
+                  <a
+                    href={AZURE_PORTAL_NEW_APP_REGISTRATION_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <ExternalLink className="size-3.5 shrink-0" />
+                    <span>Open Azure</span>
+                  </a>
+                </Button>
+              </div>
+            </li>
+            <li>
+              <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <span>
+                  Generate the certificate. The private bundle is filled below
+                  and submitted to Prowler only when you connect.
+                </span>
+                <Button
+                  type="button"
+                  variant="default"
+                  size="sm"
+                  onClick={handleGenerateCertificate}
+                  disabled={isGeneratingCert}
+                >
+                  {isGeneratingCert ? "Generating..." : "Generate certificate"}
+                </Button>
+              </div>
+              <div role="status" aria-live="polite" aria-atomic="true">
+                {isGeneratingCert && (
+                  <p className="text-text-neutral-tertiary mt-2 text-xs">
+                    Generating certificate...
+                  </p>
+                )}
+                {generatorError && (
+                  <p className="text-text-error-primary mt-2 text-xs">
+                    {generatorError}
+                  </p>
+                )}
+                {generatedThumbprint && (
+                  <p className="text-text-success-primary mt-2 text-xs">
+                    Downloaded <code>prowler-cert.cer</code>. Thumbprint{" "}
+                    <code>{generatedThumbprint}</code>
+                  </p>
+                )}
+              </div>
+            </li>
+          </ol>
+        </section>
 
-        <li className="flex flex-col gap-2">
-          <div className="flex items-center justify-between gap-3">
-            <span>
-              <strong>2.</strong> Generate the certificate bundle and upload the
-              public prowler-cert.cer file under Certificates &amp; secrets. The
-              private bundle is filled below and is submitted to Prowler only
-              when you connect.
-            </span>
-            <Button
-              type="button"
-              variant="default"
-              size="sm"
-              onClick={handleGenerateCertificate}
-              disabled={isGeneratingCert}
-            >
-              {isGeneratingCert ? "Generating..." : "Generate certificate"}
-            </Button>
-          </div>
-          {generatorError && (
-            <p className="text-text-error-primary text-xs">{generatorError}</p>
-          )}
-          {generatedThumbprint && (
-            <p className="text-text-success-primary text-xs">
-              Downloaded <code>prowler-cert.cer</code>. Thumbprint{" "}
-              <code>{generatedThumbprint}</code>
-            </p>
-          )}
-        </li>
-
-        <li>
-          <strong>3.</strong> Add Microsoft Graph application permissions:
-          AuditLog.Read.All, Directory.Read.All (or Domain.Read.All), and
-          Policy.Read.All. Then grant admin consent.
-        </li>
-
-        <li className="flex items-center justify-between gap-3">
-          <span>
-            <strong>4.</strong> Copy the Service Principal Object ID from{" "}
-            <Link
-              href={AZURE_PORTAL_ENTERPRISE_APPLICATIONS_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-button-tertiary inline-flex items-center gap-2"
-            >
-              <ExternalLink className="size-3.5 shrink-0" />
-              <span>Enterprise applications</span>
-            </Link>
-            .
-          </span>
-        </li>
-
-        <li className="flex flex-col gap-2">
-          <div className="flex items-center justify-between gap-3">
-            <span>
-              <strong>5.</strong> Deploy subscription RBAC with that Service
-              Principal Object ID. The template creates ProwlerRole and assigns
-              Reader and ProwlerRole; it does not create Entra resources.
-            </span>
-            <Button variant="link" size="link-sm" asChild>
-              <a
-                href={deployToAzureUrl}
+        <section className="border-content-neutral-tertiary flex flex-col gap-3 rounded-md border p-4">
+          <h3 className="text-text-neutral-primary text-sm font-semibold">
+            Configure access
+          </h3>
+          <ol
+            start={3}
+            className="flex list-decimal flex-col gap-3 pl-5 text-sm"
+          >
+            <li>
+              Upload <code>prowler-cert.cer</code> under Certificates &amp;
+              secrets. Add Microsoft Graph application permissions:
+              AuditLog.Read.All, Directory.Read.All (or Domain.Read.All), and
+              Policy.Read.All. Then grant admin consent.
+            </li>
+            <li>
+              Copy the Service Principal Object ID from{" "}
+              <Link
+                href={AZURE_PORTAL_ENTERPRISE_APPLICATIONS_URL}
                 target="_blank"
                 rel="noopener noreferrer"
+                className="text-button-tertiary inline-flex items-center gap-2"
               >
                 <ExternalLink className="size-3.5 shrink-0" />
-                <span>Deploy to Azure</span>
-              </a>
-            </Button>
-          </div>
-          <p className="text-text-neutral-tertiary text-xs">
-            To deploy the ARM JSON manually, use Azure Portal → Build your own
-            template in the editor.{" "}
-            <Button variant="link" size="link-sm" asChild>
-              <a
-                href={PROWLER_AZURE_ARM_TEMPLATE_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <ExternalLink className="size-3.5 shrink-0" />
-                <span>Open template</span>
-              </a>
-            </Button>
-          </p>
-        </li>
+                <span>Enterprise applications</span>
+              </Link>
+              .
+            </li>
+          </ol>
+        </section>
 
-        <li>
-          <strong>6.</strong> Return to Prowler and connect. Paste the Tenant ID
-          and Application Client ID below; the generated certificate bundle is
-          already filled.
-        </li>
-      </ol>
+        <section className="border-content-neutral-tertiary flex flex-col gap-3 rounded-md border p-4">
+          <h3 className="text-text-neutral-primary text-sm font-semibold">
+            Deploy and connect
+          </h3>
+          <ol
+            start={5}
+            className="flex list-decimal flex-col gap-3 pl-5 text-sm"
+          >
+            <li>
+              <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <span>
+                  Deploy subscription RBAC with the Service Principal Object ID.
+                  The template creates ProwlerRole and assigns Reader and
+                  ProwlerRole; it does not create Entra resources.
+                </span>
+                <Button variant="default" size="sm" asChild>
+                  <a
+                    href={deployToAzureUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <ExternalLink className="size-3.5 shrink-0" />
+                    <span>Deploy to Azure</span>
+                  </a>
+                </Button>
+              </div>
+              <p className="text-text-neutral-tertiary mt-2 text-xs">
+                Manual deployment: in Azure Portal, use Build your own template
+                in the editor.{" "}
+                <Button variant="link" size="link-sm" asChild>
+                  <a
+                    href={PROWLER_AZURE_ARM_TEMPLATE_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <ExternalLink className="size-3.5 shrink-0" />
+                    <span>Open template</span>
+                  </a>
+                </Button>
+              </p>
+            </li>
+            <li>
+              Return to Prowler and complete the fields below. The generated
+              certificate bundle is already filled.
+            </li>
+          </ol>
+        </section>
+      </div>
 
       <WizardInputField
         control={control}
