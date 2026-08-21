@@ -14,17 +14,37 @@ import { handlersForSlack } from "@/__tests__/msw/handlers/slack";
 import type { SlackFixture } from "@/__tests__/msw/handlers/slack.fixtures";
 import { worker } from "@/__tests__/msw/worker";
 import { render } from "@/__tests__/render-browser";
+import { setSlackDefaultChannel } from "@/actions/integrations/slack";
 import { SlackCallback } from "@/components/integrations/slack/slack-callback";
 
 import { IntegrationsContent } from "../integrations-content";
 
 import { SlackIntegrationContent } from "./slack-integration-content";
 
+export const CONNECTION_OUTCOME = {
+  SUCCESS: "success",
+  FAILURE: "failure",
+} as const;
+
+export type ConnectionOutcome =
+  (typeof CONNECTION_OUTCOME)[keyof typeof CONNECTION_OUTCOME];
+
+/** Sentinel: the page settled on "no channel recorded", rather than not yet. */
+const NO_DEFAULT_CHANNEL = "<no channel recorded>";
+
 interface CallbackParams {
   code?: string;
   state?: string;
   /** Slack's own refusal code, e.g. `access_denied`. */
   error?: string;
+}
+
+/** What a picker search leaves on offer. */
+interface ChannelSearch {
+  /** Names still offered once the filter landed, in the order offered. */
+  offered: string[];
+  /** The picker's no-match note; null while any channel is still offered. */
+  emptyNote: string | null;
 }
 
 export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
@@ -55,7 +75,37 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     window.history.replaceState(null, "", "/integrations/slack");
     this.wireHandlers();
 
-    render(await SlackIntegrationContent());
+    const readsBefore = this.channelListCallCount;
+    this.mounted = render(await SlackIntegrationContent());
+    if (this.fixture.install) await this.waitForChannelsRead(readsBefore);
+  }
+
+  private mounted: ReturnType<typeof render> | null = null;
+
+  /**
+   * Open the management page again, the way a later visit does — the handlers in
+   * place keep serving what the previous visit left behind. Unmounts the previous
+   * render first: two live copies would make every assertion ambiguous.
+   */
+  async revisit(): Promise<void> {
+    (await this.mounted)?.unmount();
+    const readsBefore = this.channelListCallCount;
+    this.mounted = render(await SlackIntegrationContent());
+    await this.mounted;
+    if (this.fixture.install) await this.waitForChannelsRead(readsBefore);
+  }
+
+  /**
+   * Refresh the page's server data under the open card, as `revalidatePath` does
+   * after an action: new props, no unmount, so React state survives — unlike
+   * `revisit()`, which re-seeds everything from scratch.
+   */
+  async refreshPageData(): Promise<void> {
+    const rendered = await this.mounted;
+    if (!rendered) {
+      throw new Error("refreshPageData: the page is not mounted");
+    }
+    await rendered.rerender(await SlackIntegrationContent());
   }
 
   async mountCallback({ code, state, error }: CallbackParams): Promise<void> {
@@ -219,14 +269,26 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     return (badge.textContent ?? "").trim();
   }
 
-  /** Absent, or there but disabled: both read as "not offered". */
-  offersConnectionTest(): boolean {
-    const button = this.buttonByText(/Test connection/);
-    return button !== null && !button.disabled;
+  async offersConnectionTest(): Promise<boolean> {
+    const button = await this.waitFor(
+      () => this.buttonByText(/Test connection/),
+      5000,
+      "the Test connection button",
+    );
+    return !button.disabled;
   }
 
-  saysChannelIsNextStep(): boolean {
-    return this.containsText(/Choosing a destination channel is the next step/);
+  /**
+   * Why the check cannot run, read from the copy the button points at: a reason
+   * found anywhere else on the page never reaches whoever sees the control.
+   */
+  connectionCheckBlockedReason(): string | null {
+    const button = this.buttonByText(/Test connection/);
+    const describedBy = button?.getAttribute("aria-describedby");
+    if (!describedBy) return null;
+
+    const reason = this.container.querySelector<HTMLElement>(`#${describedBy}`);
+    return reason ? (reason.textContent ?? "").trim() : null;
   }
 
   /**
@@ -238,6 +300,33 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
       this.container.querySelectorAll<HTMLElement>("p"),
     ).find((p) => /^Last checked:/.test((p.textContent ?? "").trim()));
     return line ? (line.textContent ?? "").trim() : null;
+  }
+
+  get connectionCheckCallCount(): number {
+    return this.countRequests("POST", "/connection");
+  }
+
+  /** The outcome of a check under way, started by the button or by a save. */
+  async connectionOutcome(): Promise<ConnectionOutcome> {
+    return this.waitFor(
+      () => {
+        if (this.containsText(/Connection test successful/)) {
+          return CONNECTION_OUTCOME.SUCCESS;
+        }
+        if (this.containsText(/Connection test failed/)) {
+          return CONNECTION_OUTCOME.FAILURE;
+        }
+        return null;
+      },
+      15000,
+      "the connection test outcome",
+    );
+  }
+
+  async testConnection(): Promise<ConnectionOutcome> {
+    await this.clickButton(/Test connection/);
+
+    return this.connectionOutcome();
   }
 
   // --- Returning from Slack -----------------------------------------------
@@ -287,5 +376,314 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
 
   offersRetry(): boolean {
     return this.backLink() !== null || this.offersInstall();
+  }
+
+  // --- Choosing a destination channel --------------------------------------
+
+  /** Channel reads issued — one per cursor page the UI followed. */
+  get channelListCallCount(): number {
+    return this.countRequests("GET", "/slack/channels");
+  }
+
+  /**
+   * Wait for the channel read every connected mount starts, counting from the
+   * reads already issued: one still in flight when the test ends lands in the
+   * middle of the next, against a harness that never asked for it.
+   */
+  private async waitForChannelsRead(readsBefore: number): Promise<void> {
+    await this.waitFor(
+      () => {
+        const refresh = this.buttonByText(/Refresh channels/);
+        return this.channelListCallCount > readsBefore &&
+          refresh !== null &&
+          !refresh.disabled
+          ? true
+          : null;
+      },
+      15000,
+      "the workspace's channels to be read",
+    );
+  }
+
+  /**
+   * Open the picker and hand back its options. A re-render landing mid-gesture
+   * makes Radix drop the open state, so re-open from the keyboard when nothing
+   * mounted at all.
+   */
+  private async openChannelPicker(): Promise<HTMLElement[]> {
+    const mounted = (): HTMLElement[] | null => {
+      const options = Array.from(
+        document.querySelectorAll<HTMLElement>('[role="option"]'),
+      );
+      return options.length > 0 ? options : null;
+    };
+
+    const alreadyOpen = mounted();
+    if (alreadyOpen) return alreadyOpen;
+
+    const trigger = await this.waitFor<HTMLElement>(
+      () => this.q("#slack-channel"),
+      10000,
+      "the channel picker",
+    );
+
+    await this.clickElement(trigger, { fallbackToDomClick: true });
+
+    let options = await this.waitForOrNull(
+      mounted,
+      2000,
+      "the channel options",
+    );
+    if (!options) {
+      await this.user.keyboard("{Enter}");
+      options = await this.waitForOrNull(mounted, 8000, "the channel options");
+    }
+
+    if (!options) {
+      throw new Error("openChannelPicker: the channel picker offered nothing");
+    }
+    return options;
+  }
+
+  private async closeChannelPicker(): Promise<void> {
+    await this.user.keyboard("{Escape}");
+    await this.waitForTransition();
+  }
+
+  /**
+   * Re-read the workspace's channels, the way a user does after inviting
+   * `@Prowler` to one in Slack. Waits for the read to have settled, not for the
+   * click alone.
+   */
+  async refreshChannels(): Promise<void> {
+    const readsBefore = this.channelListCallCount;
+    await this.clickButton(/Refresh channels/);
+
+    await this.waitFor(
+      () => {
+        const button = this.buttonByText(/Refresh channels/);
+        return (
+          this.channelListCallCount > readsBefore &&
+          button !== null &&
+          !button.disabled
+        );
+      },
+      15000,
+      "the workspace's channels to be read again",
+    );
+  }
+
+  /** The channels the workspace offers, in the order the picker lists them. */
+  async channelOptions(): Promise<string[]> {
+    const options = await this.openChannelPicker();
+    const names = options.map(
+      (option) => option.getAttribute("data-channel") ?? "",
+    );
+
+    await this.closeChannelPicker();
+
+    return names;
+  }
+
+  /**
+   * Whether the channel offered under `name` is presented as private — read
+   * from the marker the user sees, not from how the option is wired up.
+   */
+  async isChannelShownAsPrivate(name: string): Promise<boolean> {
+    const options = await this.openChannelPicker();
+    const option = options.find(
+      (element) => element.getAttribute("data-channel") === name,
+    );
+
+    await this.closeChannelPicker();
+
+    return /Private/.test(option?.textContent ?? "");
+  }
+
+  /**
+   * Open the picker, type `query` into its search, and hand back what the
+   * filter leaves on offer. The search dies with the popover, so each call
+   * starts from the full list.
+   */
+  async searchChannels(query: string): Promise<ChannelSearch> {
+    const all = await this.openChannelPicker();
+
+    const input = document.querySelector<HTMLInputElement>("[cmdk-input]");
+    if (!input) {
+      throw new Error("searchChannels: the open picker has no search field");
+    }
+    await this.user.fill(input, query);
+
+    // The filter lands a render after the last keystroke: the offered set
+    // shrinks, or the no-match note shows. A query that matches everything
+    // would never settle — the tests only narrow.
+    await this.waitFor(
+      () =>
+        document.querySelectorAll('[role="option"]').length !== all.length ||
+        document.querySelector("[cmdk-empty]") !== null ||
+        null,
+      5000,
+      "the search to narrow the channels",
+    );
+
+    const offered = Array.from(
+      document.querySelectorAll<HTMLElement>('[role="option"]'),
+    ).map((option) => option.getAttribute("data-channel") ?? "");
+    const emptyNote =
+      document.querySelector<HTMLElement>("[cmdk-empty]")?.textContent ?? null;
+
+    await this.closeChannelPicker();
+
+    return { offered, emptyNote };
+  }
+
+  private async pickAndSave(name: string): Promise<void> {
+    const options = await this.openChannelPicker();
+    const option = options.find(
+      (element) => element.getAttribute("data-channel") === name,
+    );
+
+    if (!option) {
+      throw new Error(`pickAndSave: no channel named "${name}" is offered`);
+    }
+
+    await this.user.click(option);
+    await this.waitForTransition();
+    await this.clickButton(/Save channel/);
+  }
+
+  /** Pick a channel, save it, and wait for it to be recorded as the destination. */
+  async chooseChannel(name: string): Promise<void> {
+    await this.pickAndSave(name);
+    await this.waitFor(
+      () => this.defaultChannelName() === name,
+      15000,
+      `#${name} to be recorded as the destination`,
+    );
+  }
+
+  /**
+   * Record a different destination away from this page — a second tab, or someone
+   * else in the tenant. Goes through the same call the page makes, leaving this
+   * page's own copy of it untouched.
+   */
+  async channelRecordedElsewhere(name: string): Promise<void> {
+    const channel = this.fixture.channels.find((c) => c.name === name);
+    if (!channel) {
+      throw new Error(
+        `channelRecordedElsewhere: no channel named "${name}" is offered`,
+      );
+    }
+
+    const integrationId = this.fixture.install?.id;
+    if (!integrationId) {
+      throw new Error("channelRecordedElsewhere: no workspace is connected");
+    }
+
+    const result = await setSlackDefaultChannel(integrationId, channel.id);
+    if ("error" in result) {
+      throw new Error(`channelRecordedElsewhere: ${result.error}`);
+    }
+  }
+
+  /** Whether the picked channel can be saved — false when there is nothing new to save. */
+  offersChannelSave(): boolean {
+    const button = this.buttonByText(/Save channel/);
+    return button !== null && !button.disabled;
+  }
+
+  /**
+   * Try to save a channel the API refuses and hand back what the user is told. A
+   * save that succeeds fails the test rather than timing out.
+   */
+  async refusedChannelSave(name: string): Promise<string> {
+    await this.pickAndSave(name);
+
+    return this.waitFor(
+      () => {
+        if (this.defaultChannelName() === name) {
+          throw new Error(
+            `refusedChannelSave: #${name} was recorded, not refused`,
+          );
+        }
+        return this.toastText(/Could not save the destination channel/);
+      },
+      15000,
+      "the refused channel save",
+    );
+  }
+
+  /**
+   * The text of the toast matching `pattern` — title and message together. Radix
+   * portals each toast into its viewport as an `<li>`, outside the page's markup.
+   */
+  private toastText(pattern: RegExp): string | null {
+    const toast = Array.from(
+      document.querySelectorAll<HTMLElement>("ol li"),
+    ).find((element) => pattern.test(element.textContent ?? ""));
+    return toast ? (toast.textContent ?? "").replace(/\s+/g, " ").trim() : null;
+  }
+
+  private defaultChannelName(): string | null {
+    return (
+      /Prowler posts to #(\S+?)\./.exec(
+        this.container.textContent ?? "",
+      )?.[1] ?? null
+    );
+  }
+
+  /** The channel recorded as the integration's destination, if any. */
+  async defaultChannel(): Promise<string | null> {
+    const settled = await this.waitFor(
+      () =>
+        this.defaultChannelName() ??
+        (this.containsText(/No destination channel recorded yet/)
+          ? NO_DEFAULT_CHANNEL
+          : null),
+      10000,
+      "the recorded destination channel",
+    );
+    return settled === NO_DEFAULT_CHANNEL ? null : settled;
+  }
+
+  /** What the user is told when the workspace exposes no channel at all. */
+  async channelPickerMessage(): Promise<string> {
+    const alert = await this.waitFor(
+      () =>
+        Array.from(
+          this.container.querySelectorAll<HTMLElement>('[data-slot="alert"]'),
+        ).find((element) =>
+          /No channels available yet|Could not read the workspace/.test(
+            element.textContent ?? "",
+          ),
+        ),
+      10000,
+      "the channel picker's message",
+    );
+    return (alert.textContent ?? "").replace(/\s+/g, " ").trim();
+  }
+
+  /**
+   * What the user is told about a list short of the workspace, shown beside a
+   * picker that still works — unlike `channelPickerMessage()`, which replaces it.
+   */
+  partialListNotice(): string | null {
+    const notice = this.q("[data-channels-notice]");
+    return notice
+      ? (notice.textContent ?? "").replace(/\s+/g, " ").trim()
+      : null;
+  }
+
+  /** Whether the picker was replaced by the "could not read them" alert. */
+  saysChannelsUnreadable(): boolean {
+    return this.containsText(/Could not read the workspace/);
+  }
+
+  /** The invite copy that says how to make a private channel appear. */
+  channelInviteHint(): string | null {
+    const hint = Array.from(
+      this.container.querySelectorAll<HTMLElement>("p"),
+    ).find((element) => /invites? @Prowler/.test(element.textContent ?? ""));
+    return hint ? (hint.textContent ?? "").trim() : null;
   }
 }

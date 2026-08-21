@@ -40,11 +40,24 @@ export const SLACK_RATE_LIMITED_MESSAGE =
   "Slack is rate limiting Prowler right now. Try again in a few moments.";
 
 /**
+ * For a channel list that stopped short of the workspace: the page budget ran
+ * out, or `links.next` left the API's origin.
+ */
+export const SLACK_PARTIAL_CHANNEL_LIST_MESSAGE =
+  "This workspace has more channels than Prowler reads in one go, so this list is not all of them. A channel missing from it is not necessarily one @Prowler has to be invited to.";
+
+/**
  * For a `2xx` the UI could not read. Not phrased as a failure: the install
  * happened, only the workspace cannot be named.
  */
 export const SLACK_UNREADABLE_RESULT_MESSAGE =
   "Prowler could not read the result of the install. Open the Slack integration page to see the workspace — if none is listed there, start the install again.";
+
+/**
+ * The shape of a Slack reason code, as opposed to a sentence: the set is
+ * open-ended, so a reason is gated on its shape before being interpolated.
+ */
+export const SLACK_REASON_TOKEN = /^[a-z0-9_]{1,48}$/;
 
 const RECONNECT = "Connect the workspace again to restore access.";
 

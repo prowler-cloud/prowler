@@ -1,11 +1,17 @@
 /**
- * Sentry reporting for the Slack OAuth actions. A capture leaves no mark on the
- * DOM, so it cannot be covered from `slack-page.integration.test.tsx`.
+ * What the Slack actions do off the DOM, which
+ * `slack-page.integration.test.tsx` cannot cover: which failures reach Sentry,
+ * and the URLs the channel listing's cursor pagination follows.
  */
 
+import { revalidatePath } from "next/cache";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { SLACK_UNREADABLE_RESULT_MESSAGE } from "@/lib/integrations/slack-errors";
+import {
+  SLACK_GENERIC_ERROR_MESSAGE,
+  SLACK_PARTIAL_CHANNEL_LIST_MESSAGE,
+  SLACK_UNREADABLE_RESULT_MESSAGE,
+} from "@/lib/integrations/slack-errors";
 import { SentryErrorSource, SentryErrorType } from "@/sentry";
 
 const { captureExceptionMock, captureMessageMock, fetchMock } = vi.hoisted(
@@ -30,6 +36,8 @@ const { captureExceptionMock, captureMessageMock, fetchMock } = vi.hoisted(
 vi.mock("@sentry/nextjs", () => ({
   captureException: captureExceptionMock,
   captureMessage: captureMessageMock,
+  // The task poll leaves breadcrumbs on every read it makes.
+  addBreadcrumb: vi.fn(),
 }));
 
 vi.mock("next/cache", () => ({
@@ -50,7 +58,12 @@ vi.mock("@/lib", () => ({
   parseStringify: (value: unknown) => value,
 }));
 
-import { exchangeSlackOAuthCode, getSlackAuthorizeUrl } from "./slack";
+import {
+  exchangeSlackOAuthCode,
+  getSlackAuthorizeUrl,
+  getSlackChannels,
+  setSlackDefaultChannel,
+} from "./slack";
 
 /** The status the contract reserves for an upstream Slack failure. */
 const UPSTREAM_STATUS = 502;
@@ -283,4 +296,394 @@ describe("exchangeSlackOAuthCode result shape", () => {
     // When / Then
     expect(await exchange()).toEqual({ integration: INTEGRATION });
   });
+});
+
+/** The shape the API's integration ids have, which is the only shape accepted. */
+const SLACK_INTEGRATION_ID = "b2c7fd0a-3e51-4d8f-9a6c-1f0e2d3c4b5a";
+
+const CHANNELS_URL =
+  `https://api.test/api/v1/integrations/${SLACK_INTEGRATION_ID}` +
+  "/slack/channels";
+
+const FIRST_CHANNEL = { id: "C0123AB", name: "security" };
+const SECOND_CHANNEL = { id: "C0789EF", name: "platform" };
+
+const channelPage = (
+  channel: { id: string; name: string },
+  next: string | null,
+) =>
+  new Response(
+    JSON.stringify({
+      data: [
+        {
+          type: "slack-channels",
+          id: channel.id,
+          attributes: { name: channel.name, is_private: false },
+        },
+      ],
+      links: { next },
+    }),
+    { status: 200, headers: { "content-type": "application/vnd.api+json" } },
+  );
+
+const channelOption = (channel: { id: string; name: string }) => ({
+  id: channel.id,
+  name: channel.name,
+  is_private: false,
+});
+
+const requestedUrls = (): string[] =>
+  fetchMock.mock.calls.map(([url]) => String(url));
+
+const sentBody = (callIndex = 0): unknown =>
+  JSON.parse(String(fetchMock.mock.calls[callIndex]?.[1]?.body));
+
+/**
+ * `MAX_CHANNEL_PAGES` in the action, which a `"use server"` module cannot
+ * export: only async functions may leave one.
+ */
+const MAX_CHANNEL_PAGES = 20;
+
+const channelOptions = (count: number) =>
+  Array.from({ length: count }, () => channelOption(FIRST_CHANNEL));
+
+/** What a `429` carrying `Retry-After: 30` is turned into. */
+const RATE_LIMITED_MESSAGE =
+  "Slack is rate limiting Prowler right now. Try again in about 30 seconds.";
+
+describe("getSlackChannels", () => {
+  it("follows a cursor-only `next` on the listing's own URL, not on the API root", async () => {
+    // The link is opaque (design D6), so the API may answer with the cursor
+    // alone; resolved against the API root it loses the listing's own path.
+    fetchMock
+      .mockResolvedValueOnce(channelPage(FIRST_CHANNEL, "?page[cursor]=2"))
+      .mockResolvedValueOnce(channelPage(SECOND_CHANNEL, null));
+
+    const result = await getSlackChannels(SLACK_INTEGRATION_ID);
+
+    expect(requestedUrls()).toEqual([
+      CHANNELS_URL,
+      `${CHANNELS_URL}?page[cursor]=2`,
+    ]);
+    expect(result).toEqual({
+      channels: [channelOption(FIRST_CHANNEL), channelOption(SECOND_CHANNEL)],
+    });
+  });
+
+  it.each([
+    {
+      shape: "an absolute",
+      next: "https://evil.test/api/v1/integrations/x/slack/channels?cursor=2",
+    },
+    { shape: "a protocol-relative", next: "//evil.test/api/v1/channels?c=2" },
+  ])(
+    "stops at $shape off-origin `next` rather than sending the tenant's token to it",
+    async ({ next }) => {
+      // `fetch` strips the tenant's `Authorization` on a redirect that leaves
+      // the origin, but not on a hop the UI makes itself.
+      fetchMock.mockResolvedValueOnce(channelPage(FIRST_CHANNEL, next));
+
+      const result = await getSlackChannels(SLACK_INTEGRATION_ID);
+
+      expect(requestedUrls()).toEqual([CHANNELS_URL]);
+      expect(result).toEqual({
+        channels: [channelOption(FIRST_CHANNEL)],
+        incomplete: SLACK_PARTIAL_CHANNEL_LIST_MESSAGE,
+      });
+    },
+  );
+
+  it("answers an unreadable page as no channels rather than parser prose", async () => {
+    fetchMock.mockResolvedValueOnce(unreadableOk(HTML_INTERSTITIAL));
+
+    const result = await getSlackChannels(SLACK_INTEGRATION_ID);
+
+    expect(result).toEqual({ channels: [] });
+    expectNoParserProse(result);
+  });
+
+  it("says the list is short of the workspace when the page budget runs out", async () => {
+    // The budget exists because `conversations.list` is tier 2 and a workspace
+    // can outgrow it (design.md, Risks). A fresh `Response` per call: one
+    // instance is already consumed on its second read.
+    fetchMock.mockImplementation(() =>
+      Promise.resolve(channelPage(FIRST_CHANNEL, "?page[cursor]=next")),
+    );
+
+    const result = await getSlackChannels(SLACK_INTEGRATION_ID);
+
+    expect(fetchMock).toHaveBeenCalledTimes(MAX_CHANNEL_PAGES);
+    expect(result).toEqual({
+      channels: channelOptions(MAX_CHANNEL_PAGES),
+      incomplete: SLACK_PARTIAL_CHANNEL_LIST_MESSAGE,
+    });
+  });
+
+  it("says nothing about a short list for a workspace that just fits the budget", async () => {
+    let page = 0;
+    fetchMock.mockImplementation(() => {
+      page += 1;
+      return Promise.resolve(
+        channelPage(
+          FIRST_CHANNEL,
+          page < MAX_CHANNEL_PAGES ? `?page[cursor]=${page}` : null,
+        ),
+      );
+    });
+
+    const result = await getSlackChannels(SLACK_INTEGRATION_ID);
+
+    expect(fetchMock).toHaveBeenCalledTimes(MAX_CHANNEL_PAGES);
+    expect(result).toEqual({ channels: channelOptions(MAX_CHANNEL_PAGES) });
+    expect(result).not.toHaveProperty("incomplete");
+  });
+
+  it("keeps the pages it read when a later one is refused, saying why the list stops", async () => {
+    fetchMock
+      .mockResolvedValueOnce(channelPage(FIRST_CHANNEL, "?page[cursor]=2"))
+      .mockResolvedValueOnce(rateLimitedResponse());
+
+    const result = await getSlackChannels(SLACK_INTEGRATION_ID);
+
+    expect(result).toEqual({
+      channels: [channelOption(FIRST_CHANNEL)],
+      incomplete: RATE_LIMITED_MESSAGE,
+    });
+  });
+
+  it("answers a refusal on the first page as a failure, having nothing to show", async () => {
+    fetchMock.mockResolvedValueOnce(rateLimitedResponse());
+
+    const result = await getSlackChannels(SLACK_INTEGRATION_ID);
+
+    expect(result).toEqual({ error: RATE_LIMITED_MESSAGE });
+  });
+});
+
+/**
+ * A `2xx` whose body is not JSON:API: an empty answer, or the HTML a proxy or
+ * WAF puts in front of one. The raw `SyntaxError` survives
+ * `sanitizeErrorMessage` (V8 truncates the snippet to ten characters, so its
+ * `<!doctype html>` branch never matches) and would be shown verbatim.
+ */
+const HTML_INTERSTITIAL =
+  "<!DOCTYPE html><html><body><h1>Checking your browser</h1></body></html>";
+
+const unreadableOk = (body: string) =>
+  new Response(body, {
+    status: 200,
+    headers: { "content-type": body ? "text/html" : "application/json" },
+  });
+
+/** V8's parser wording, which no user should ever be shown. */
+const PARSER_PROSE = /unexpected (token|end of json)|not valid json/i;
+
+const expectNoParserProse = (result: unknown) => {
+  const message = (result as { error?: string }).error ?? "";
+  expect(message).not.toMatch(PARSER_PROSE);
+};
+
+const INTEGRATION_URL = `https://api.test/api/v1/integrations/${SLACK_INTEGRATION_ID}`;
+
+const saveChannel = () =>
+  setSlackDefaultChannel(SLACK_INTEGRATION_ID, FIRST_CHANNEL.id);
+
+/** The save as the API answers it: the channel's name derived server-side. */
+const savedIntegration = () =>
+  new Response(
+    JSON.stringify({
+      data: {
+        type: "integrations",
+        id: SLACK_INTEGRATION_ID,
+        attributes: {
+          integration_type: "slack",
+          configuration: {
+            channel_id: FIRST_CHANNEL.id,
+            channel_name: FIRST_CHANNEL.name,
+          },
+        },
+      },
+    }),
+    {
+      status: 200,
+      headers: { "content-type": "application/vnd.api+json" },
+    },
+  );
+
+const expectIntegrationsRevalidated = () => {
+  expect(vi.mocked(revalidatePath).mock.calls).toEqual([
+    ["/integrations"],
+    ["/integrations/slack"],
+  ]);
+};
+
+describe("setSlackDefaultChannel", () => {
+  it("returns the saved integration and revalidates the pages listing it", async () => {
+    fetchMock.mockResolvedValueOnce(savedIntegration());
+
+    const result = await saveChannel();
+
+    expect(requestedUrls()).toEqual([INTEGRATION_URL]);
+    expect(result).toMatchObject({
+      integration: {
+        attributes: { configuration: { channel_name: FIRST_CHANNEL.name } },
+      },
+    });
+    expectIntegrationsRevalidated();
+  });
+
+  // The write serializer names whatever it will not take and refuses the whole
+  // save, so a body that also carried the integration's own (immutable) type
+  // came back as `Invalid fields: {'integration_type'}` and recorded nothing.
+  it("submits the channel as the save's only attribute", async () => {
+    fetchMock.mockResolvedValueOnce(savedIntegration());
+
+    await saveChannel();
+
+    expect(sentBody()).toEqual({
+      data: {
+        type: "integrations",
+        id: SLACK_INTEGRATION_ID,
+        attributes: { configuration: { channel_id: FIRST_CHANNEL.id } },
+      },
+    });
+  });
+
+  it.each([
+    { shape: "empty", body: "" },
+    { shape: "an HTML interstitial", body: HTML_INTERSTITIAL },
+  ])(
+    "answers a $shape `200` as an unread result, not as a failed save",
+    async ({ body }) => {
+      fetchMock.mockResolvedValueOnce(unreadableOk(body));
+
+      const result = await saveChannel();
+
+      expect(result).toEqual({ error: SLACK_UNREADABLE_RESULT_MESSAGE });
+      expectNoParserProse(result);
+      // The API recorded the channel before answering, so both pages refresh.
+      expectIntegrationsRevalidated();
+    },
+  );
+
+  // The caller reads `integration.attributes.configuration`, so a shallower
+  // guard lets the miss surface later as the manager's generic catch.
+  it.each([
+    { shape: "no `data`", body: {} },
+    { shape: "a null `data`", body: { data: null } },
+    { shape: "a `data` with no configuration", body: { data: {} } },
+  ])(
+    "answers a `200` carrying $shape as an unread result",
+    async ({ body }) => {
+      fetchMock.mockResolvedValueOnce(
+        new Response(JSON.stringify(body), {
+          status: 200,
+          headers: { "content-type": "application/vnd.api+json" },
+        }),
+      );
+
+      const result = await saveChannel();
+
+      expect(result).toEqual({ error: SLACK_UNREADABLE_RESULT_MESSAGE });
+      expectNoParserProse(result);
+      expectIntegrationsRevalidated();
+    },
+  );
+});
+
+/** The calls whose only failure path is one line of copy. */
+const COPY_ONLY_ACTIONS = [
+  {
+    name: "getSlackChannels",
+    call: (id: string) => getSlackChannels(id),
+  },
+  {
+    name: "setSlackDefaultChannel",
+    call: (id: string) => setSlackDefaultChannel(id, FIRST_CHANNEL.id),
+  },
+];
+
+const rateLimitedResponse = () =>
+  new Response(
+    JSON.stringify({
+      errors: [{ status: "429", detail: "Slack is rate limiting." }],
+    }),
+    {
+      status: 429,
+      headers: {
+        "content-type": "application/vnd.api+json",
+        "Retry-After": "30",
+      },
+    },
+  );
+
+describe.each(COPY_ONLY_ACTIONS)("$name", ({ call }) => {
+  it("reports an upstream Slack failure and still answers in the same words", async () => {
+    fetchMock.mockResolvedValue(
+      errorResponse(UPSTREAM_STATUS, UPSTREAM_DETAIL),
+    );
+
+    const result = await call(SLACK_INTEGRATION_ID);
+
+    // Once, not twice: `handleApiResponse` reports and throws, and the action's
+    // catch sees the mark.
+    expect(captureExceptionMock).toHaveBeenCalledTimes(1);
+    expect(captureExceptionMock.mock.calls[0]?.[1]).toMatchObject({
+      tags: {
+        api_error: true,
+        error_source: SentryErrorSource.HANDLE_API_RESPONSE,
+        error_type: SentryErrorType.SERVER_ERROR,
+        status_code: String(UPSTREAM_STATUS),
+      },
+    });
+    expect(captureMessageMock).not.toHaveBeenCalled();
+
+    expect(result).toEqual({ error: UPSTREAM_DETAIL });
+  });
+
+  it.each([
+    {
+      status: 503,
+      why: "Slack being unavailable, not a fault",
+      response: () => errorResponse(503, "Slack is unavailable."),
+      expected: "Slack is unavailable.",
+    },
+    {
+      status: 429,
+      why: "a wait, not a fault",
+      response: rateLimitedResponse,
+      expected:
+        "Slack is rate limiting Prowler right now. Try again in about 30 seconds.",
+    },
+    {
+      status: 400,
+      why: "a refusal the API meant to give",
+      response: () => errorResponse(400, "No default channel is set."),
+      expected: "No default channel is set.",
+    },
+  ])("reports nothing for a $status: that is $why", async (refusal) => {
+    fetchMock.mockResolvedValue(refusal.response());
+
+    const result = await call(SLACK_INTEGRATION_ID);
+
+    expect(captureExceptionMock).not.toHaveBeenCalled();
+    expect(captureMessageMock).not.toHaveBeenCalled();
+    expect(result).toEqual({ error: refusal.expected });
+  });
+});
+
+/**
+ * The integration id is interpolated into every one of these URLs, so a
+ * malformed one is refused before the request is built.
+ */
+describe.each(COPY_ONLY_ACTIONS)("$name", ({ call }) => {
+  it.each(["../../users", "not-a-uuid", ""])(
+    "asks the API nothing when the integration id is %o",
+    async (id) => {
+      const result = await call(id);
+
+      expect(fetchMock).not.toHaveBeenCalled();
+      expect(result).toEqual({ error: SLACK_GENERIC_ERROR_MESSAGE });
+    },
+  );
 });

@@ -18,10 +18,10 @@ import {
   SLACK_INTEGRATION_ID,
   SLACK_INVALID_CODE_DETAIL,
   SLACK_NO_CHANNEL_DETAIL,
-  SLACK_RATE_LIMITED_DETAIL,
+  SLACK_RATE_LIMITED_REFUSAL,
   SLACK_REFUSED_STATE_DETAIL,
-  SLACK_RETRY_AFTER_SECONDS,
   SLACK_UNCONFIGURED_DETAIL,
+  SLACK_UNKNOWN_CHANNEL_DETAIL,
   SLACK_UPSTREAM_DETAIL,
   SLACK_UPSTREAM_ERROR_CODE,
   SLACK_WORKSPACE_CONFLICT_CODE,
@@ -30,12 +30,16 @@ import type {
   SlackExchangeOutcome,
   SlackFixture,
   SlackInstallFixture,
+  SlackRefusalFixture,
 } from "./slack.fixtures";
 
 const API = process.env.UI_API_BASE_URL;
 const TS = "2026-08-10T09:00:00Z";
 
 const CONNECTION_TASK_PREFIX = "slack-conn-task-";
+
+/** Opaque to the UI, which only ever follows `links.next` (design D6). */
+const CHANNEL_CURSOR_PARAM = "page[cursor]";
 
 /**
  * `status` is a string, per the JSON:API spec. `source.pointer` is `/data` even
@@ -51,6 +55,21 @@ const errorBody = (detail: string, status: number, code?: string) => ({
     },
   ],
 });
+
+/**
+ * Answer a fixture's refusal as the API would: its own status, its `code`
+ * when it names one, and `Retry-After` only where the status carries a wait.
+ */
+const refuse = (refusal: SlackRefusalFixture) =>
+  HttpResponse.json(
+    errorBody(refusal.detail, refusal.status, refusal.code ?? undefined),
+    {
+      status: refusal.status,
+      ...(refusal.retryAfterSeconds === null
+        ? {}
+        : { headers: { "Retry-After": String(refusal.retryAfterSeconds) } }),
+    },
+  );
 
 const configuration = (workspace: SlackInstallFixture["workspace"]) => ({
   team_id: workspace.teamId,
@@ -119,11 +138,7 @@ export const handlersForSlack = (fx: SlackFixture) => {
       status: 503,
     });
 
-  const rateLimited = () =>
-    HttpResponse.json(errorBody(SLACK_RATE_LIMITED_DETAIL, 429), {
-      status: 429,
-      headers: { "Retry-After": String(SLACK_RETRY_AFTER_SECONDS) },
-    });
+  const rateLimited = () => refuse(SLACK_RATE_LIMITED_REFUSAL);
 
   /** A `502` per the contract's taxonomy: a server fault, not a Slack state. */
   const upstreamError = () =>
@@ -249,6 +264,92 @@ export const handlersForSlack = (fx: SlackFixture) => {
       return HttpResponse.json(
         taskResource(params.taskId, "completed", { connected, error }),
       );
+    }),
+
+    // --- Channels ----------------------------------------------------------
+    http.get<{ id: string }>(
+      `${API}/integrations/:id/slack/channels`,
+      ({ params, request }) => {
+        // The UI follows `links.next` opaquely, so the cursor's shape is this
+        // fixture's business alone. Read first: the page decides the refusal.
+        const cursor = Number(
+          new URL(request.url).searchParams.get(CHANNEL_CURSOR_PARAM) ?? "0",
+        );
+
+        // An endpoint-specific refusal wins over the blanket rate limiting,
+        // and applies from the named cursor, so a partial read is expressible.
+        if (
+          fx.channelsRefusal &&
+          cursor >= (fx.channelsRefusalFromCursor ?? 0)
+        ) {
+          return refuse(fx.channelsRefusal);
+        }
+        if (fx.rateLimited) return rateLimited();
+
+        const nextCursor = cursor + fx.channelsPageSize;
+        const page = fx.channels.slice(cursor, nextCursor);
+        const hasMore = nextCursor < fx.channels.length;
+
+        return HttpResponse.json({
+          data: page.map((channel) => ({
+            type: "slack-channels",
+            id: channel.id,
+            attributes: { name: channel.name, is_private: channel.isPrivate },
+          })),
+          links: {
+            next: hasMore
+              ? `${API}/integrations/${params.id}/slack/channels` +
+                `?${CHANNEL_CURSOR_PARAM}=${nextCursor}`
+              : null,
+          },
+        });
+      },
+    ),
+
+    /**
+     * The generic PATCH. The UI submits only `channel_id`; the name is derived
+     * from it here, as the API derives it from Slack (design D6).
+     */
+    http.patch(`${API}/integrations/:id`, async ({ request }) => {
+      const body = (await request.json().catch(() => null)) as {
+        data?: { attributes?: Record<string, unknown> };
+      } | null;
+      const attributes = body?.data?.attributes ?? {};
+      const configurationPatch = attributes.configuration as
+        | { channel_id?: string }
+        | undefined;
+      const channelId = configurationPatch?.channel_id;
+      const channel = fx.channels.find((c) => c.id === channelId);
+
+      if (!install) {
+        return HttpResponse.json(errorBody("Not found.", 404), { status: 404 });
+      }
+      // The API's write serializer names the attributes it will not take and
+      // refuses the whole save, rather than quietly dropping the extra one:
+      // sending `integration_type` here refused every channel save.
+      const refusedAttributes = Object.keys(attributes).filter(
+        (attribute) => attribute !== "configuration",
+      );
+      if (refusedAttributes.length > 0) {
+        const named = refusedAttributes
+          .map((attribute) => `'${attribute}'`)
+          .join(", ");
+        return HttpResponse.json(errorBody(`Invalid fields: {${named}}`, 400), {
+          status: 400,
+        });
+      }
+      // Checked before the id lookup: the picker did offer this channel, and
+      // Slack refused it anyway when the API validated it.
+      if (fx.channelSaveRefusal) return refuse(fx.channelSaveRefusal);
+      if (!channel) {
+        return HttpResponse.json(errorBody(SLACK_UNKNOWN_CHANNEL_DETAIL, 400), {
+          status: 400,
+        });
+      }
+
+      install.workspace.channelId = channel.id;
+      install.workspace.channelName = channel.name;
+      return HttpResponse.json({ data: integrationResource(install) });
     }),
   ];
 };

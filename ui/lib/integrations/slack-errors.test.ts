@@ -1,6 +1,6 @@
 /**
- * Unit-tested because most of the codes in the mapping belong to flows this
- * layer does not have yet: the channel picker, the test message, the disconnect.
+ * Unit-tested because the mapping carries copy for codes no page-level flow can
+ * be driven into — `no_permission`, `invalid_auth`, `account_inactive`.
  */
 
 import { describe, expect, it } from "vitest";
@@ -11,6 +11,7 @@ import {
   SLACK_ERROR_MESSAGES,
   SLACK_GENERIC_ERROR_MESSAGE,
   SLACK_RATE_LIMITED_MESSAGE,
+  SLACK_REASON_TOKEN,
   SLACK_TOKEN_ERROR_CODES,
   readSlackFailure,
   slackErrorMessage,
@@ -88,6 +89,42 @@ describe("slackErrorMessage", () => {
     expect(
       slackErrorMessage({ detail: "   " }, "Could not read channels."),
     ).toBe("Could not read channels.");
+  });
+
+  it("falls back only for a code the mapping does not cover", () => {
+    const FALLBACK = "Slack refused it (is_archived).";
+
+    expect(
+      slackErrorMessage({ code: SLACK_ERROR_CODE.NOT_IN_CHANNEL }, FALLBACK),
+    ).toBe(SLACK_ERROR_MESSAGES[SLACK_ERROR_CODE.NOT_IN_CHANNEL]);
+    // No `detail`: one holding the same token would make the raw token the
+    // whole message again.
+    expect(slackErrorMessage({ code: "is_archived" }, FALLBACK)).toBe(FALLBACK);
+  });
+});
+
+describe("SLACK_REASON_TOKEN", () => {
+  it("recognises a reason code and refuses anything that reads as a sentence", () => {
+    // Slack publishes no closed set of reasons, so the guard is on shape rather
+    // than an allowlist.
+    for (const reason of [
+      "is_archived",
+      "restricted_action",
+      "team_access_not_granted",
+      "ekm_access_denied",
+      "messages_tab_disabled",
+    ]) {
+      expect(SLACK_REASON_TOKEN.test(reason)).toBe(true);
+    }
+
+    for (const prose of [
+      "Slack rejected the message: the channel is archived.",
+      "). Contact support at +1-555-0100 (",
+      "",
+      "a".repeat(49),
+    ]) {
+      expect(SLACK_REASON_TOKEN.test(prose)).toBe(false);
+    }
   });
 });
 

@@ -48,6 +48,27 @@ export interface SlackConnectionFixture {
   error: string | null;
 }
 
+/** A channel the listing endpoint offers for the picker. */
+export interface SlackChannelFixture {
+  id: string;
+  name: string;
+  /** Private channels are listed only where `@Prowler` has been invited. */
+  isPrivate: boolean;
+}
+
+/**
+ * A refusal as the API sends one: the machine-readable reason in `code`, human
+ * copy in `detail`, and — for a `429` — the wait in `Retry-After`.
+ */
+export interface SlackRefusalFixture {
+  status: number;
+  /** Slack's stable reason. `null` for the failures classified by status. */
+  code: string | null;
+  detail: string;
+  /** Seconds `Retry-After` asked for; only a `429` carries one. */
+  retryAfterSeconds: number | null;
+}
+
 export interface SlackFixture {
   /**
    * The deployment has `SLACK_CLIENT_ID` / `SLACK_CLIENT_SECRET` /
@@ -72,9 +93,31 @@ export interface SlackFixture {
    * transport failures. Distinct from `appConfigured: false`, which is a `503`.
    */
   oauthUpstreamError: boolean;
+  channels: SlackChannelFixture[];
+  /**
+   * Small on purpose: the default workspace spans two pages, so a UI that
+   * stopped at `data` instead of following `links.next` would lose channels.
+   */
+  channelsPageSize: number;
+  /** Slack refused the listing outright, with the reason named in `code`. */
+  channelsRefusal: SlackRefusalFixture | null;
+  /**
+   * The cursor the refusal starts at. Absent, the whole read fails; a page
+   * size serves the first page and refuses the second — the partial read.
+   */
+  channelsRefusalFromCursor?: number;
+  /**
+   * Slack refused the chosen channel when the `PATCH` validated it — the
+   * listing itself answered fine.
+   */
+  channelSaveRefusal: SlackRefusalFixture | null;
 }
 
-export const SLACK_INTEGRATION_ID = "slack-integration-1";
+/**
+ * A UUID, as the API's ids are: it travels in the URL of every Slack call and
+ * the actions accept no other shape.
+ */
+export const SLACK_INTEGRATION_ID = "7c9e6a1b-2d3f-4e5a-8b6c-9d0e1f2a3b4c";
 
 /** The scopes the channel picker and the posting need (design D2). */
 export const SLACK_BOT_SCOPES = [
@@ -128,6 +171,14 @@ export const SLACK_RATE_LIMITED_DETAIL =
  * is for the user to act on, so the UI answers a server error in its own words.
  */
 export const INTEGRATIONS_SERVER_ERROR_DETAIL = "A server error occurred.";
+export const SLACK_MISSING_SCOPE_DETAIL =
+  "Slack refused the request: missing_scope.";
+/**
+ * The same sentence for "it is gone" and "the app was removed from it": only
+ * `code` separates them, which is why a client must read `code`.
+ */
+export const SLACK_UNKNOWN_CHANNEL_DETAIL =
+  "That channel is not one Prowler can post to.";
 
 /**
  * A `200` challenge page from a proxy or WAF that took the call instead of the
@@ -141,17 +192,104 @@ export const PROXY_CHALLENGE_PAGE = [
 ].join("\n");
 
 /**
- * A wire value, spelled out rather than imported from the UI's own mapping, so
- * a rename on our side fails these tests instead of agreeing with itself.
+ * The `code` values the refusals below are named by. Wire values, spelled out
+ * rather than imported from the UI's own mapping: a rename on our side must
+ * fail these tests, not quietly agree with itself.
  */
 export const SLACK_WORKSPACE_CONFLICT_CODE = "slack_workspace_conflict";
+export const SLACK_MISSING_SCOPE_CODE = "missing_scope";
+export const SLACK_CHANNEL_NOT_FOUND_CODE = "channel_not_found";
+export const SLACK_NOT_IN_CHANNEL_CODE = "not_in_channel";
+/**
+ * A reason Slack really sends that the UI's mapping does not cover — the set is
+ * open-ended, so having no copy for one is the ordinary case.
+ */
+export const SLACK_UNMAPPED_REASON_CODE = "is_archived";
 
 export const SLACK_RETRY_AFTER_SECONDS = 30;
 
-export const SLACK_DEFAULT_CHANNEL = {
+/** The install never granted a scope the call needs: actionable, so a `400`. */
+export const SLACK_MISSING_SCOPE_REFUSAL: SlackRefusalFixture = {
+  status: 400,
+  code: SLACK_MISSING_SCOPE_CODE,
+  detail: SLACK_MISSING_SCOPE_DETAIL,
+  retryAfterSeconds: null,
+};
+
+/**
+ * Where this really happens is the channel listing: `conversations.list` is
+ * tier 2 and paginated.
+ */
+export const SLACK_RATE_LIMITED_REFUSAL: SlackRefusalFixture = {
+  status: 429,
+  code: null,
+  detail: SLACK_RATE_LIMITED_DETAIL,
+  retryAfterSeconds: SLACK_RETRY_AFTER_SECONDS,
+};
+
+/** Slack-side or transport failure — a `502` naming no reason at all. */
+export const SLACK_UPSTREAM_REFUSAL: SlackRefusalFixture = {
+  status: 502,
+  code: null,
+  detail: SLACK_UPSTREAM_DETAIL,
+  retryAfterSeconds: null,
+};
+
+/** The chosen channel is archived, deleted, or was never in the workspace. */
+export const SLACK_CHANNEL_NOT_FOUND_REFUSAL: SlackRefusalFixture = {
+  status: 400,
+  code: SLACK_CHANNEL_NOT_FOUND_CODE,
+  detail: SLACK_UNKNOWN_CHANNEL_DETAIL,
+  retryAfterSeconds: null,
+};
+
+/**
+ * The channel is fine, the Prowler app is simply not in it — fixed with
+ * `/invite @Prowler`. Identical `detail` to the refusal above, deliberately.
+ */
+export const SLACK_NOT_IN_CHANNEL_REFUSAL: SlackRefusalFixture = {
+  status: 400,
+  code: SLACK_NOT_IN_CHANNEL_CODE,
+  detail: SLACK_UNKNOWN_CHANNEL_DETAIL,
+  retryAfterSeconds: null,
+};
+
+/**
+ * Two public channels and one private the Prowler app was invited to, ordered
+ * so the private one lands on the second cursor page.
+ */
+export const SLACK_PUBLIC_CHANNEL: SlackChannelFixture = {
   id: "C0123AB",
   name: "security",
-} as const;
+  isPrivate: false,
+};
+
+export const SLACK_SECOND_PUBLIC_CHANNEL: SlackChannelFixture = {
+  id: "C0789EF",
+  name: "platform",
+  isPrivate: false,
+};
+
+export const SLACK_PRIVATE_CHANNEL: SlackChannelFixture = {
+  id: "C0456CD",
+  name: "security-alerts",
+  isPrivate: true,
+};
+
+export const SLACK_CHANNELS: SlackChannelFixture[] = [
+  SLACK_PUBLIC_CHANNEL,
+  SLACK_SECOND_PUBLIC_CHANNEL,
+  SLACK_PRIVATE_CHANNEL,
+];
+
+/** Two channels per page, so `SLACK_CHANNELS` spans exactly two pages. */
+export const SLACK_CHANNELS_PAGE_SIZE = 2;
+
+/**
+ * The first channel the picker offers, so an install seeded with it always
+ * points at a channel the listing really has.
+ */
+export const SLACK_DEFAULT_CHANNEL = SLACK_PUBLIC_CHANNEL;
 
 const PROWLER_HQ: SlackWorkspaceFixture = {
   teamId: "T01PROWLER",
@@ -171,6 +309,10 @@ export const slackFixture = (
   listServerError: false,
   authorizeUrlUnreadable: false,
   oauthUpstreamError: false,
+  channels: SLACK_CHANNELS.map((channel) => ({ ...channel })),
+  channelsPageSize: SLACK_CHANNELS_PAGE_SIZE,
+  channelsRefusal: null,
+  channelSaveRefusal: null,
   ...overrides,
 });
 
@@ -193,25 +335,28 @@ export const connectedSlackFixture = (
     ...overrides,
   });
 
-const configuredInstall = (): SlackInstallFixture => ({
+const configuredInstall = (
+  channel: SlackChannelFixture = SLACK_DEFAULT_CHANNEL,
+): SlackInstallFixture => ({
   id: SLACK_INTEGRATION_ID,
   connected: true,
   connectionLastCheckedAt: "2026-08-10T09:30:00Z",
   workspace: {
     ...PROWLER_HQ,
-    channelId: SLACK_DEFAULT_CHANNEL.id,
-    channelName: SLACK_DEFAULT_CHANNEL.name,
+    channelId: channel.id,
+    channelName: channel.name,
   },
 });
 
 /**
- * A workspace connected *and* a channel on record. Anything the API refuses
- * until a channel exists (the connection check) needs this fixture.
+ * The same tenant with a destination channel already on record: the state a
+ * second visit starts from.
  */
-export const configuredSlackFixture = (
+export const slackFixtureWithDefaultChannel = (
+  channel: SlackChannelFixture = SLACK_PUBLIC_CHANNEL,
   overrides: Partial<SlackFixture> = {},
 ): SlackFixture =>
-  connectedSlackFixture({ install: configuredInstall(), ...overrides });
+  connectedSlackFixture({ install: configuredInstall(channel), ...overrides });
 
 /**
  * The same finished setup, with a check time no parser can read: a zero date
@@ -225,3 +370,25 @@ export const unreadableCheckTimeSlackFixture = (): SlackFixture =>
       connectionLastCheckedAt: "0000-00-00T00:00:00Z",
     },
   });
+
+/**
+ * The first cursor page is served and Slack rate limits the second: what is
+ * already read stays usable, the refusal only says why the list is short.
+ */
+export const partiallyReadSlackFixture = (
+  overrides: Partial<SlackFixture> = {},
+): SlackFixture =>
+  slackFixtureWithDefaultChannel(SLACK_PUBLIC_CHANNEL, {
+    channelsRefusal: SLACK_RATE_LIMITED_REFUSAL,
+    channelsRefusalFromCursor: SLACK_CHANNELS_PAGE_SIZE,
+    ...overrides,
+  });
+
+/**
+ * A workspace connected *and* a channel on record. Anything the API refuses
+ * until a channel exists (the connection check) needs this fixture.
+ */
+export const configuredSlackFixture = (
+  overrides: Partial<SlackFixture> = {},
+): SlackFixture =>
+  slackFixtureWithDefaultChannel(SLACK_DEFAULT_CHANNEL, overrides);
