@@ -87,10 +87,9 @@ class organizations_security_services_delegated_admin_not_management_account(Che
             findings.append(report)
             return findings
 
-        # An organization that integrates no security service administers none of them
-        # organization-wide, so there is nothing to attribute to an account. That is an
-        # empty scope rather than an undetermined one, so it reports nothing, the same
-        # way an account outside an organization does.
+        # Trusted access off for every security service is an empty scope, not an
+        # undetermined one, so it reports nothing rather than sharing the MANUAL above --
+        # the same shape as an account outside an organization.
         integrated_security_services = sorted(
             SECURITY_SERVICE_PRINCIPALS.intersection(enabled_service_principals)
         )

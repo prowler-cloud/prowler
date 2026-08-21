@@ -30,11 +30,9 @@ class organizations_delegated_administrators(Check):
                 organizations_client.organization.delegated_administrators is not None
             ):  # Check if Access Denied to list_delegated_administrators
                 if organizations_client.organization.delegated_administrators:
-                    # Every administrator is collected before the verdict is set, so that
-                    # an untrusted one is not overwritten by a trusted one later in the
-                    # list. ListDelegatedAdministrators documents no ordering, so a
-                    # per-administrator verdict on a shared report made the result depend
-                    # on the order the API happened to return.
+                    # Setting the verdict per administrator on a shared report let a
+                    # trusted entry overwrite an untrusted one, and
+                    # ListDelegatedAdministrators documents no ordering.
                     untrusted = []
                     trusted = []
                     for (
