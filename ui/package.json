@@ -96,7 +96,7 @@
     "lucide-react": "0.543.0",
     "marked": "15.0.12",
     "modern-screenshot": "4.7.0",
-    "nanoid": "5.1.6",
+    "nanoid": "5.1.16",
     "next": "16.2.11",
     "next-auth": "5.0.0-beta.32",
     "next-themes": "0.2.1",
