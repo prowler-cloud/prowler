@@ -1,0 +1,121 @@
+from prowler.lib.check.models import Check, Check_Report_AWS
+from prowler.lib.utils.utils import (
+    SecretsScanError,
+    annotate_verified_secrets,
+    detect_secrets_scan_batch,
+)
+from prowler.providers.aws.services.elasticbeanstalk import elasticbeanstalk_client
+
+
+class elasticbeanstalk_environment_no_secrets_in_configuration(Check):
+    """Check that Elastic Beanstalk environment configurations contain no hardcoded secrets."""
+
+    def execute(self) -> list[Check_Report_AWS]:
+        """Scan environment configuration option settings for secrets.
+
+        Returns:
+            A report for each Elastic Beanstalk environment.
+        """
+        findings = []
+        secrets_ignore_patterns = elasticbeanstalk_client.audit_config.get(
+            "secrets_ignore_patterns", []
+        )
+        validate = elasticbeanstalk_client.audit_config.get("secrets_validate", False)
+
+        for environment in elasticbeanstalk_client.environments.values():
+            if environment.option_settings is None:
+                report = Check_Report_AWS(
+                    metadata=self.metadata(),
+                    resource=environment,
+                )
+                report.status = "MANUAL"
+                report.status_extended = (
+                    f"No option settings found for Elastic Beanstalk "
+                    f"{environment.name} environment; manual review is required."
+                )
+                findings.append(report)
+                continue
+
+        def payloads():
+            for environment in elasticbeanstalk_client.environments.values():
+                if environment.option_settings is None:
+                    continue
+                for option_setting in environment.option_settings:
+                    value = option_setting.get("Value")
+                    if not value:
+                        continue
+                    yield (
+                        (
+                            environment.arn,
+                            option_setting["Namespace"],
+                            option_setting["OptionName"],
+                        ),
+                        value,
+                    )
+
+        scan_error = None
+        try:
+            batch_results = detect_secrets_scan_batch(
+                payloads(),
+                excluded_secrets=secrets_ignore_patterns,
+                validate=validate,
+            )
+        except SecretsScanError as error:
+            batch_results = {}
+            scan_error = error
+
+        if scan_error:
+            for environment in elasticbeanstalk_client.environments.values():
+                if environment.option_settings is None:
+                    continue
+                report = Check_Report_AWS(
+                    metadata=self.metadata(), resource=environment
+                )
+                report.status = "MANUAL"
+                report.status_extended = (
+                    f"Could not scan Elastic Beanstalk environment configuration for "
+                    f"{environment.name} environment for secrets; manual review is required."
+                )
+                findings.append(report)
+            return findings
+
+        for environment in elasticbeanstalk_client.environments.values():
+            if environment.option_settings is None:
+                continue
+            report = Check_Report_AWS(metadata=self.metadata(), resource=environment)
+            report.status = "PASS"
+            report.status_extended = f"No secrets found in Elastic Beanstalk environment configuration for {environment.name} environment."
+            detected_secret_settings = []
+            all_secrets = []
+            for option_setting in environment.option_settings:
+                detect_secret_outputs = batch_results.get(
+                    (
+                        environment.arn,
+                        option_setting["Namespace"],
+                        option_setting["OptionName"],
+                    )
+                )
+
+                if detect_secret_outputs:
+                    detected_secret_settings.append(
+                        (option_setting["Namespace"], option_setting["OptionName"])
+                    )
+                    all_secrets.extend(detect_secret_outputs)
+
+            if detected_secret_settings:
+                secret_setting = "; ".join(
+                    f"Namespace: {namespace}, OptionName: {option_name}"
+                    for namespace, option_name in detected_secret_settings
+                )
+                report.status = "FAIL"
+                report.status_extended = (
+                    f"Potential "
+                    f"{'secrets' if len(detected_secret_settings) > 1 else 'secret'} "
+                    f"found in Elastic Beanstalk environment configuration for "
+                    f"{environment.name} environment -> {secret_setting}."
+                )
+                annotate_verified_secrets(report, all_secrets)
+
+            findings.append(report)
+
+        return findings
