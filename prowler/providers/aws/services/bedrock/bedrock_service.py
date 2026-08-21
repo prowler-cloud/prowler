@@ -324,14 +324,10 @@ class BedrockAgent(AWSService):
                 f"{agent.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    # An alias that cannot invoke the version it routes to contributes no live exposure, so the role
-    # on that version must not count as shared. Both fields come from ListAgentAliases at the pinned
-    # botocore (1.40.61): aliasInvocationState is ACCEPT_INVOCATIONS | REJECT_INVOCATIONS and is an
-    # OPTIONAL member, so an absent value means the alias was never set to reject and still serves.
-    # agentAliasStatus is CREATING | PREPARED | FAILED | UPDATING | DELETING | DISSOCIATED; the three
-    # below are terminal or detached. CREATING and UPDATING are deliberately treated as active: both
-    # converge on serving the version they route to, so their role is live exposure.
-    INACTIVE_ALIAS_STATUSES = {"FAILED", "DELETING", "DISSOCIATED"}
+    # PREPARED is the only status AWS documents as ready to invoke. CREATING and
+    # UPDATING are in-flight, so their routed versions are unknown rather than
+    # definitely active or inactive.
+    TRANSITIONAL_ALIAS_STATUSES = {"CREATING", "UPDATING"}
 
     @staticmethod
     def _is_alias_active(alias: dict) -> bool:
@@ -341,11 +337,11 @@ class BedrockAgent(AWSService):
             alias: One agentAliasSummaries entry from ListAgentAliases.
 
         Returns:
-            False when the alias rejects invocations or its status is terminal.
+            True only when the alias is prepared and does not reject invocations.
         """
         if alias.get("aliasInvocationState") == "REJECT_INVOCATIONS":
             return False
-        return alias.get("agentAliasStatus") not in BedrockAgent.INACTIVE_ALIAS_STATUSES
+        return alias.get("agentAliasStatus") == "PREPARED"
 
     def _get_agent_version_roles(self, agent):
         """Fetch the execution role of every agent version an ACTIVE alias routes to.
@@ -362,8 +358,15 @@ class BedrockAgent(AWSService):
             client = self.regional_clients[agent.region]
             paginator = client.get_paginator("list_agent_aliases")
             routed_versions = set()
+            inventory_complete = True
             for page in paginator.paginate(agentId=agent.id):
                 for alias in page.get("agentAliasSummaries", []):
+                    if (
+                        alias.get("agentAliasStatus")
+                        in self.TRANSITIONAL_ALIAS_STATUSES
+                    ):
+                        inventory_complete = False
+                        continue
                     if not self._is_alias_active(alias):
                         continue
                     for route in alias.get("routingConfiguration", []):
@@ -381,7 +384,7 @@ class BedrockAgent(AWSService):
                 agent.version_role_arns[version] = version_info.get(
                     "agentVersion", {}
                 ).get("agentResourceRoleArn")
-            agent.versions_listed = True
+            agent.versions_listed = inventory_complete
         except ClientError as error:
             agent.versions_error = error.response["Error"].get(
                 "Code", error.__class__.__name__

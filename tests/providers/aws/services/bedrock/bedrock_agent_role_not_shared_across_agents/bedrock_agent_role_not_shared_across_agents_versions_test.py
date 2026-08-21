@@ -54,6 +54,8 @@ def _mock(
     no_aliases=(),
     alias_status="PREPARED",
     alias_invocation_state=None,
+    aliases=None,
+    draft_roles=DRAFT_ROLES,
 ):
     """Build a _make_api_call replacement for a two-agent account.
 
@@ -68,6 +70,8 @@ def _mock(
         alias_invocation_state: aliasInvocationState each alias reports; omitted
             from the response entirely when None, which is what the API does for
             an alias never set to reject.
+        aliases: agentAliasSummaries to return instead of building one alias.
+        draft_roles: agent id -> role ARN returned by GetAgent.
     """
 
     def _call(self, operation_name, kwarg):
@@ -95,7 +99,7 @@ def _mock(
                     "agentId": agent_id,
                     "agentName": agent_id,
                     "agentStatus": "PREPARED",
-                    "agentResourceRoleArn": DRAFT_ROLES[agent_id],
+                    "agentResourceRoleArn": draft_roles[agent_id],
                 }
             }
         if operation_name == "ListAgentAliases":
@@ -105,6 +109,8 @@ def _mock(
                     {"Error": {"Code": "AccessDeniedException", "Message": "denied"}},
                     operation_name,
                 )
+            if aliases is not None:
+                return {"agentAliasSummaries": aliases}
             if agent_id in no_aliases:
                 return {"agentAliasSummaries": []}
             alias = {
@@ -405,13 +411,10 @@ class Test_alias_must_be_invocable:
 
     @pytest.mark.parametrize("alias_status", ["CREATING", "UPDATING"])
     @mock_aws
-    def test_in_flight_alias_status_still_shares_its_version_role(self, alias_status):
-        """CREATING and UPDATING are deliberately treated as active.
-
-        Both converge on serving the version they route to, so the role on that
-        version is live exposure. Excluding them would report a shared role as
-        compliant for as long as the alias takes to settle.
-        """
+    def test_in_flight_alias_status_makes_version_inventory_incomplete(
+        self, alias_status
+    ):
+        """CREATING and UPDATING do not prove that their version is invocable."""
         service, results = _run(
             _mock(
                 {AGENT_A_ID: SHARED_VERSION_ARN, AGENT_B_ID: SHARED_VERSION_ARN},
@@ -420,12 +423,78 @@ class Test_alias_must_be_invocable:
         )
 
         for agent in service.all_agents.values():
-            assert agent.version_role_arns == {"3": SHARED_VERSION_ARN}
+            assert agent.versions_listed is False
+            assert agent.version_role_arns == {}
 
         assert len(results) == 2
-        assert {report.status for report in results} == {"FAIL"}
+        assert {report.status for report in results} == {"MANUAL"}
         for report in results:
-            assert SHARED_VERSION_ARN in report.status_extended
+            assert "deployed versions of" in report.status_extended
+
+    @pytest.mark.parametrize("alias_status", ["CREATING", "UPDATING"])
+    @mock_aws
+    def test_shared_draft_role_fails_despite_in_flight_alias(self, alias_status):
+        """Definite draft sharing outranks an incomplete alias inventory."""
+        service, results = _run(
+            _mock(
+                {AGENT_A_ID: DEDICATED_VERSION_ARN, AGENT_B_ID: DEDICATED_VERSION_ARN},
+                alias_status=alias_status,
+                draft_roles={AGENT_A_ID: DRAFT_A_ARN, AGENT_B_ID: DRAFT_A_ARN},
+            )
+        )
+
+        assert all(
+            agent.versions_listed is False for agent in service.all_agents.values()
+        )
+        assert {report.status for report in results} == {"FAIL"}
+        assert all(DRAFT_A_ARN in report.status_extended for report in results)
+
+    @mock_aws
+    def test_prepared_accepting_alias_shares_its_version_role(self):
+        """A PREPARED alias accepting invocations is active."""
+        service, results = _run(
+            _mock(
+                {AGENT_A_ID: SHARED_VERSION_ARN, AGENT_B_ID: SHARED_VERSION_ARN},
+                alias_status="PREPARED",
+                alias_invocation_state="ACCEPT_INVOCATIONS",
+            )
+        )
+
+        for agent in service.all_agents.values():
+            assert agent.versions_listed is True
+            assert agent.version_role_arns == {"3": SHARED_VERSION_ARN}
+
+        assert {report.status for report in results} == {"FAIL"}
+
+    @mock_aws
+    def test_prepared_alias_sharing_fails_despite_in_flight_alias(self):
+        """Definite prepared-version sharing outranks incomplete inventory."""
+        service, results = _run(
+            _mock(
+                {AGENT_A_ID: SHARED_VERSION_ARN, AGENT_B_ID: SHARED_VERSION_ARN},
+                aliases=[
+                    {
+                        "agentAliasId": "alias-prepared",
+                        "agentAliasName": "production",
+                        "agentAliasStatus": "PREPARED",
+                        "routingConfiguration": [{"agentVersion": "3"}],
+                    },
+                    {
+                        "agentAliasId": "alias-updating",
+                        "agentAliasName": "next",
+                        "agentAliasStatus": "UPDATING",
+                        "routingConfiguration": [{"agentVersion": "4"}],
+                    },
+                ],
+            )
+        )
+
+        for agent in service.all_agents.values():
+            assert agent.versions_listed is False
+            assert agent.version_role_arns == {"3": SHARED_VERSION_ARN}
+
+        assert {report.status for report in results} == {"FAIL"}
+        assert all("through deployed version 3" in r.status_extended for r in results)
 
     @mock_aws
     def test_absent_invocation_state_still_shares_its_version_role(self):
