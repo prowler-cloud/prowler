@@ -11,9 +11,13 @@ import { it } from "@/__tests__/fixtures";
 import {
   configuredSlackFixture,
   connectedSlackFixture,
+  disconnectRefusalSlackFixture,
   INTEGRATIONS_SERVER_ERROR_DETAIL,
   partiallyReadSlackFixture,
+  revokedTokenSlackFixture,
+  revokeFailureSlackFixture,
   SLACK_CHANNEL_NOT_FOUND_REFUSAL,
+  SLACK_DISCONNECT_FORBIDDEN_DETAIL,
   SLACK_MISSING_SCOPE_CODE,
   SLACK_MISSING_SCOPE_REFUSAL,
   SLACK_NOT_IN_CHANNEL_CODE,
@@ -22,15 +26,20 @@ import {
   SLACK_PUBLIC_CHANNEL,
   SLACK_RATE_LIMITED_REFUSAL,
   SLACK_SECOND_PUBLIC_CHANNEL,
+  SLACK_TOKEN_EXPIRED_CODE,
+  SLACK_TOKEN_EXPIRED_REFUSAL,
+  SLACK_TOKEN_REVOKED_CODE,
   SLACK_UNKNOWN_CHANNEL_DETAIL,
   SLACK_UPSTREAM_REFUSAL,
   slackFixture,
   slackFixtureWithDefaultChannel,
   unreadableCheckTimeSlackFixture,
+  unreportedRevocationSlackFixture,
 } from "@/__tests__/msw/handlers/slack.fixtures";
 
 import {
   CONNECTION_OUTCOME,
+  REVOCATION_OUTCOME,
   SlackIntegrationHarness,
 } from "./slack-integration.harness";
 
@@ -593,5 +602,221 @@ describe("choosing a destination channel", () => {
     expect(refusal).not.toMatch(/Invite @Prowler/);
     expect(refusal).not.toMatch(SLACK_UNKNOWN_CHANNEL_DETAIL);
     expect(await harness.defaultChannel()).toBeNull();
+  }, 60000);
+});
+
+describe("disconnecting a workspace", () => {
+  it("removes the integration and returns the card to its unconnected state", async () => {
+    // Given — a tenant with a workspace connected.
+    const harness = new SlackIntegrationHarness(connectedSlackFixture());
+    await harness.mount();
+
+    // When — the user opens the confirmation. Only the removal is Prowler's to
+    // promise: the revocation happens at Slack, which can refuse it or report
+    // nothing at all.
+    expect(await harness.openDisconnectConfirmation()).toBe(
+      "Prowler will remove the integration, stop posting to Prowler HQ, and " +
+        "attempt to revoke its access at Slack. Connecting again means " +
+        "approving Prowler in Slack.",
+    );
+
+    // And — the user confirms; Slack confirms the revocation.
+    expect(await harness.confirmDisconnect()).toBe(REVOCATION_OUTCOME.REVOKED);
+
+    expect(harness.disconnectCallCount).toBe(1);
+    expect(await harness.returnedToUnconnectedState()).toBe(true);
+  }, 30000);
+
+  it("still removes the integration when the revocation fails, and says access may need removing by hand", async () => {
+    // Given — Slack will not accept the revocation; the row goes either way.
+    const harness = new SlackIntegrationHarness(revokeFailureSlackFixture());
+    await harness.mount();
+
+    // When
+    expect(await harness.disconnect()).toBe(REVOCATION_OUTCOME.NOT_REVOKED);
+
+    // And — the disconnect revalidates, so the copy below is read from props
+    // that no longer carry an integration at all.
+    await harness.refreshPageData();
+
+    // Then — what is true of both sides: nothing is left in Prowler to retry,
+    // and the app may still be installed at Slack.
+    const notice = await harness.revocationNotice();
+    expect(notice).toMatch(/gone from Prowler/);
+    expect(notice).toMatch(/nothing to retry here/);
+    expect(notice).toMatch(/may still be installed in Prowler HQ/);
+    expect(notice).toMatch(
+      /remove it from that workspace's Slack app settings/,
+    );
+    expect(await harness.returnedToUnconnectedState()).toBe(true);
+  }, 30000);
+
+  it("says only that the workspace is no longer connected when nothing reports the revocation", async () => {
+    // Given — the plain `204` a deployment that overrides nothing answers: no
+    // body, so no `meta` to read the outcome from. The case users really meet.
+    const harness = new SlackIntegrationHarness(
+      unreportedRevocationSlackFixture(),
+    );
+    await harness.mount();
+
+    // When
+    expect(await harness.disconnect()).toBe(REVOCATION_OUTCOME.UNREPORTED);
+
+    // Then — nothing sends the user to Slack to finish a job no answer said
+    // was unfinished.
+    expect(harness.showsRevocationNotice()).toBe(false);
+    expect(await harness.returnedToUnconnectedState()).toBe(true);
+  }, 30000);
+
+  it("says why the disconnect failed and leaves the workspace connected", async () => {
+    // Given — a finished setup whose disconnect the API refuses outright, so
+    // nothing is removed and Slack is never asked to revoke anything.
+    const harness = new SlackIntegrationHarness(
+      disconnectRefusalSlackFixture(),
+    );
+    await harness.mount();
+
+    // When
+    const refusal = await harness.refusedDisconnect();
+
+    // Then — the API's own reason reaches the user, and nothing claims a
+    // revocation that never ran.
+    expect(refusal).toMatch(SLACK_DISCONNECT_FORBIDDEN_DETAIL);
+    expect(harness.showsRevocationNotice()).toBe(false);
+    // And — the card is untouched: the integration the user still has is the
+    // one to try again on.
+    expect(await harness.connectedWorkspaceName()).toBe(WORKSPACE_NAME);
+    expect(await harness.connectionBadge()).toBe("Connected");
+  }, 30000);
+});
+
+describe("a credential Slack no longer accepts", () => {
+  it("says the connection check found a dead credential, and offers to connect the workspace again", async () => {
+    // Given — the token was revoked at Slack, so the row still reads connected
+    // until a check runs (contract, Cross-cutting).
+    const harness = new SlackIntegrationHarness(revokedTokenSlackFixture());
+    await harness.mount();
+
+    // When
+    expect(await harness.testConnection()).toBe(CONNECTION_OUTCOME.FAILURE);
+
+    // Then — a way forward rather than only an error: a revoked token is fixed
+    // by approving Prowler again, not by checking a second time.
+    const notice = await harness.revokedCredentialNotice();
+    expect(notice).toMatch(/no longer accepts Prowler's access to Prowler HQ/);
+    expect(notice).toMatch(/Prowler's access to Slack was revoked/);
+    expect(notice).toMatch(/Connect the workspace again to restore access/);
+    // Slack's reason is a protocol token: it is what the UI switched on, never
+    // what it showed.
+    expect(notice).not.toMatch(new RegExp(SLACK_TOKEN_REVOKED_CODE));
+
+    const consentScreen = new URL(await harness.reconnectUrl());
+    expect(`${consentScreen.origin}${consentScreen.pathname}`).toBe(
+      "https://slack.com/oauth/v2/authorize",
+    );
+    await harness.waitForReconnect();
+  }, 30000);
+
+  it("offers the same recovery when the channel listing is what finds the credential dead", async () => {
+    // Given — a finished setup whose credential expired. The listing runs on
+    // arrival, so it meets Slack before any check does, and the contract says
+    // any call can be the one that surfaces this.
+    const harness = new SlackIntegrationHarness(
+      configuredSlackFixture({ channelsRefusal: SLACK_TOKEN_EXPIRED_REFUSAL }),
+    );
+
+    // When — nothing but opening the page.
+    await harness.mount();
+
+    // Then — the same answer the connection check gives, worded for how this
+    // credential died rather than left as a channel problem.
+    const notice = await harness.revokedCredentialNotice();
+    expect(notice).toMatch(/Prowler's Slack credential has expired/);
+    expect(notice).toMatch(/Connect the workspace again to restore access/);
+    await harness.waitForReconnect();
+
+    // And — the picker says the same, in the same words: `detail` names the raw
+    // reason, and it is `code` the UI answered from.
+    const message = await harness.channelPickerMessage();
+    expect(message).toMatch(/Prowler's Slack credential has expired/);
+    expect(message).not.toMatch(new RegExp(SLACK_TOKEN_EXPIRED_CODE));
+  }, 30000);
+
+  it("offers it too when only a later cursor page is what Slack refuses", async () => {
+    // Given — a two-page workspace whose second page is refused by a credential
+    // Slack no longer accepts: the read stops short rather than failing.
+    const harness = new SlackIntegrationHarness(
+      partiallyReadSlackFixture({
+        channelsRefusal: SLACK_TOKEN_EXPIRED_REFUSAL,
+      }),
+    );
+
+    // When — nothing but opening the page.
+    await harness.mount();
+
+    // Then — what was read stays on offer, as it does for any short list.
+    // Alphabetically, as the picker sorts what it offers.
+    expect(await harness.channelOptions()).toEqual([
+      SLACK_SECOND_PUBLIC_CHANNEL.name,
+      SLACK_PUBLIC_CHANNEL.name,
+    ]);
+
+    // And — the dead credential is reported all the same: a picker that still
+    // works is no reason to leave the user without the one fix there is.
+    const notice = await harness.revokedCredentialNotice();
+    expect(notice).toMatch(/Prowler's Slack credential has expired/);
+    await harness.waitForReconnect();
+    expect(await harness.connectionBadge()).toBe("Disconnected");
+  }, 60000);
+
+  it("keeps saying so when a later check fails without Slack naming a reason", async () => {
+    // Given — the listing found the credential dead on arrival, and a later
+    // check that fails naming no reason at all.
+    const harness = new SlackIntegrationHarness(
+      configuredSlackFixture({
+        channelsRefusal: SLACK_TOKEN_EXPIRED_REFUSAL,
+        connection: { connected: false, error: null },
+      }),
+    );
+    await harness.mount();
+    expect(await harness.revokedCredentialNotice()).toMatch(
+      /Prowler's Slack credential has expired/,
+    );
+
+    // When
+    expect(await harness.testConnection()).toBe(CONNECTION_OUTCOME.FAILURE);
+
+    // Then — a failure Slack never answered is no evidence the grant works
+    // again, so the dead credential is still what the page reports.
+    expect(await harness.revokedCredentialNotice()).toMatch(
+      /Prowler's Slack credential has expired/,
+    );
+    await harness.waitForReconnect();
+    expect(await harness.connectionBadge()).toBe("Disconnected");
+  }, 60000);
+
+  it("stops saying so once a save Slack validated goes through", async () => {
+    // Given — a finished setup whose connection check found the grant revoked.
+    const harness = new SlackIntegrationHarness(
+      configuredSlackFixture({
+        connection: { connected: false, error: SLACK_TOKEN_REVOKED_CODE },
+      }),
+    );
+    await harness.mount();
+    expect(await harness.connectionBadge()).toBe("Connected");
+    expect(await harness.testConnection()).toBe(CONNECTION_OUTCOME.FAILURE);
+    expect(harness.showsRevokedCredentialNotice()).toBe(true);
+    expect(await harness.connectionBadge()).toBe("Disconnected");
+
+    // When — the access is approved again in Slack and the user saves a
+    // destination: both the save and the check it runs answer for the grant.
+    harness.fixture.connection = { connected: true, error: null };
+    await harness.chooseChannel(SLACK_SECOND_PUBLIC_CHANNEL.name);
+
+    // Then — Slack answered, so the notice about a credential it no longer
+    // accepts goes, and the card is back to what it reported on arrival.
+    expect(harness.showsRevokedCredentialNotice()).toBe(false);
+    expect(harness.offersReconnect()).toBe(false);
+    expect(await harness.connectionBadge()).toBe("Connected");
   }, 60000);
 });

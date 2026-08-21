@@ -351,5 +351,22 @@ export const handlersForSlack = (fx: SlackFixture) => {
       install.workspace.channelName = channel.name;
       return HttpResponse.json({ data: integrationResource(install) });
     }),
+
+    // Disconnect. Revocation at Slack is best-effort: the row is removed either
+    // way and the outcome travels in `meta` — or nowhere at all, in the plain
+    // `204` a deployment with no `destroy` override sends.
+    http.delete<{ id: string }>(`${API}/integrations/:id`, ({ params }) => {
+      if (!install || install.id !== params.id) {
+        return HttpResponse.json(errorBody("Not found.", 404), { status: 404 });
+      }
+      // Checked first: a refused disconnect removes nothing.
+      if (fx.disconnectRefusal) return refuse(fx.disconnectRefusal);
+
+      install = null;
+      if (fx.revocation.revoked === null) {
+        return new HttpResponse(null, { status: 204 });
+      }
+      return HttpResponse.json({ meta: { revoked: fx.revocation.revoked } });
+    }),
   ];
 };

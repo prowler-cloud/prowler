@@ -59,6 +59,7 @@ vi.mock("@/lib", () => ({
 }));
 
 import {
+  disconnectSlackIntegration,
   exchangeSlackOAuthCode,
   getSlackAuthorizeUrl,
   getSlackChannels,
@@ -351,6 +352,12 @@ const channelOptions = (count: number) =>
 const RATE_LIMITED_MESSAGE =
   "Slack is rate limiting Prowler right now. Try again in about 30 seconds.";
 
+/** A dead grant as the API reports it: reason in `code`, prose in `detail`. */
+const TOKEN_EXPIRED_CODE = "token_expired";
+const TOKEN_EXPIRED_DETAIL = "Slack refused the request: token_expired.";
+const TOKEN_EXPIRED_MESSAGE =
+  "Prowler's Slack credential has expired. Connect the workspace again to restore access.";
+
 describe("getSlackChannels", () => {
   it("follows a cursor-only `next` on the listing's own URL, not on the API root", async () => {
     // The link is opaque (design D6), so the API may answer with the cursor
@@ -445,9 +452,27 @@ describe("getSlackChannels", () => {
 
     const result = await getSlackChannels(SLACK_INTEGRATION_ID);
 
+    // A rate limit says nothing about the grant, so the truncation names none.
     expect(result).toEqual({
       channels: [channelOption(FIRST_CHANNEL)],
       incomplete: RATE_LIMITED_MESSAGE,
+      code: null,
+    });
+  });
+
+  it("names the reason a later page was refused, not only the wording", async () => {
+    fetchMock
+      .mockResolvedValueOnce(channelPage(FIRST_CHANNEL, "?page[cursor]=2"))
+      .mockResolvedValueOnce(
+        errorResponse(400, TOKEN_EXPIRED_DETAIL, TOKEN_EXPIRED_CODE),
+      );
+
+    const result = await getSlackChannels(SLACK_INTEGRATION_ID);
+
+    expect(result).toEqual({
+      channels: [channelOption(FIRST_CHANNEL)],
+      incomplete: TOKEN_EXPIRED_MESSAGE,
+      code: TOKEN_EXPIRED_CODE,
     });
   });
 
@@ -456,7 +481,7 @@ describe("getSlackChannels", () => {
 
     const result = await getSlackChannels(SLACK_INTEGRATION_ID);
 
-    expect(result).toEqual({ error: RATE_LIMITED_MESSAGE });
+    expect(result).toEqual({ error: RATE_LIMITED_MESSAGE, code: null });
   });
 });
 
@@ -601,6 +626,10 @@ const COPY_ONLY_ACTIONS = [
     name: "setSlackDefaultChannel",
     call: (id: string) => setSlackDefaultChannel(id, FIRST_CHANNEL.id),
   },
+  {
+    name: "disconnectSlackIntegration",
+    call: (id: string) => disconnectSlackIntegration(id),
+  },
 ];
 
 const rateLimitedResponse = () =>
@@ -668,7 +697,8 @@ describe.each(COPY_ONLY_ACTIONS)("$name", ({ call }) => {
 
     expect(captureExceptionMock).not.toHaveBeenCalled();
     expect(captureMessageMock).not.toHaveBeenCalled();
-    expect(result).toEqual({ error: refusal.expected });
+    // None of these refusals names a `code`.
+    expect(result).toEqual({ error: refusal.expected, code: null });
   });
 });
 

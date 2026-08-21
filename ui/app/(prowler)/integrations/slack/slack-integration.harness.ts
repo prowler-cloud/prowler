@@ -32,6 +32,22 @@ export type ConnectionOutcome =
 /** Sentinel: the page settled on "no channel recorded", rather than not yet. */
 const NO_DEFAULT_CHANNEL = "<no channel recorded>";
 
+export const REVOCATION_OUTCOME = {
+  REVOKED: "revoked",
+  NOT_REVOKED: "not-revoked",
+  /** The answer said nothing either way, so the page claims neither. */
+  UNREPORTED: "unreported",
+} as const;
+
+export type RevocationOutcome =
+  (typeof REVOCATION_OUTCOME)[keyof typeof REVOCATION_OUTCOME];
+
+/** The alert shown when Slack never confirmed the revocation. */
+const REVOCATION_NOTICE = /revocation/i;
+
+/** The alert shown when Slack has stopped accepting the credential. */
+const REVOKED_CREDENTIAL_NOTICE = /no longer accepts Prowler's access/;
+
 interface CallbackParams {
   code?: string;
   state?: string;
@@ -685,5 +701,185 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
       this.container.querySelectorAll<HTMLElement>("p"),
     ).find((element) => /invites? @Prowler/.test(element.textContent ?? ""));
     return hint ? (hint.textContent ?? "").trim() : null;
+  }
+
+  // --- Disconnecting ------------------------------------------------------
+
+  get disconnectCallCount(): number {
+    return this.countRequests("DELETE", "/integrations/");
+  }
+
+  /**
+   * Disconnects the workspace, confirming the way a user has to, and reports
+   * what the page says about the revocation. The outcomes are mutually
+   * exclusive, so asking for one also checks the others are absent.
+   *
+   * The revoked and unreported outcomes share a toast title, so each is read
+   * from its own description: a title match would agree with either.
+   */
+  async disconnect(): Promise<RevocationOutcome> {
+    await this.openDisconnectConfirmation();
+    return this.confirmDisconnect();
+  }
+
+  /**
+   * Opens the confirmation and reports what it asks the user to accept, before
+   * anything is accepted.
+   */
+  async openDisconnectConfirmation(): Promise<string> {
+    // The dialog's own button carries the noun too, hence the exact match on
+    // the card's action.
+    await this.clickButton(/^\s*Disconnect\s*$/);
+
+    const description = await this.waitFor(
+      () => this.q('[data-slot="dialog-description"]'),
+      10000,
+      "the disconnect confirmation",
+    );
+    return (description.textContent ?? "").replace(/\s+/g, " ").trim();
+  }
+
+  /** Accepts the open confirmation and reports the revocation outcome. */
+  async confirmDisconnect(): Promise<RevocationOutcome> {
+    await this.clickButton(/Disconnect workspace/);
+
+    return this.waitFor(
+      () => {
+        const outcomes = [
+          this.alertMatching(REVOCATION_NOTICE)
+            ? REVOCATION_OUTCOME.NOT_REVOKED
+            : null,
+          this.containsText(/has been revoked/)
+            ? REVOCATION_OUTCOME.REVOKED
+            : null,
+          this.containsText(/is no longer connected to Prowler/)
+            ? REVOCATION_OUTCOME.UNREPORTED
+            : null,
+        ].filter((outcome): outcome is RevocationOutcome => outcome !== null);
+
+        if (outcomes.length > 1) {
+          throw new Error(
+            `confirmDisconnect: the page shows ${outcomes.join(" and ")} at once`,
+          );
+        }
+        return outcomes[0] ?? null;
+      },
+      15000,
+      "the disconnect outcome",
+    );
+  }
+
+  /**
+   * Try a disconnect the API refuses and hand back what the user is told. One
+   * that goes through fails the test rather than timing out.
+   */
+  async refusedDisconnect(): Promise<string> {
+    await this.openDisconnectConfirmation();
+    await this.clickButton(/Disconnect workspace/);
+
+    return this.waitFor(
+      () => {
+        if (this.containsText(/No workspace connected/)) {
+          throw new Error(
+            "refusedDisconnect: the workspace was disconnected, not refused",
+          );
+        }
+        return this.toastText(/Disconnect failed/);
+      },
+      15000,
+      "the refused disconnect",
+    );
+  }
+
+  /**
+   * Whether the page is back to offering an install with no workspace
+   * connected. The consent URL is minted after the disconnect, so the install
+   * affordance appears a beat after the copy does.
+   */
+  async returnedToUnconnectedState(): Promise<boolean> {
+    await this.waitForText(/No workspace connected/, 10000);
+    return (
+      (await this.waitForOrNull(
+        () => this.offersInstall(),
+        5000,
+        "the install to be offered again",
+      )) ?? false
+    );
+  }
+
+  /** Whether the page is asking the user to remove the access in Slack. */
+  showsRevocationNotice(): boolean {
+    return this.alertMatching(REVOCATION_NOTICE) !== null;
+  }
+
+  /**
+   * What the user is told when the row was removed but Slack never confirmed
+   * the revocation.
+   */
+  async revocationNotice(): Promise<string> {
+    const notice = await this.waitFor(
+      () => this.alertMatching(REVOCATION_NOTICE),
+      10000,
+      "the revocation notice",
+    );
+    return (notice.textContent ?? "").trim();
+  }
+
+  // --- A credential Slack no longer accepts --------------------------------
+
+  /** What the user is told when Slack has stopped accepting the credential. */
+  async revokedCredentialNotice(): Promise<string> {
+    const notice = await this.waitFor(
+      () => this.alertMatching(REVOKED_CREDENTIAL_NOTICE),
+      10000,
+      "the revoked-credential notice",
+    );
+    return (notice.textContent ?? "").replace(/\s+/g, " ").trim();
+  }
+
+  /** Whether the page is saying Slack has stopped accepting the credential. */
+  showsRevokedCredentialNotice(): boolean {
+    return this.alertMatching(REVOKED_CREDENTIAL_NOTICE) !== null;
+  }
+
+  private reconnectLink(): HTMLAnchorElement | null {
+    return (
+      Array.from(this.container.querySelectorAll("a")).find((anchor) =>
+        /Reconnect to Slack/.test(anchor.textContent ?? ""),
+      ) ?? null
+    );
+  }
+
+  /** Whether the page offers to approve Prowler in the workspace again. */
+  offersReconnect(): boolean {
+    return this.reconnectLink() !== null;
+  }
+
+  /**
+   * Waits, unlike `offersReconnect`: the affordance needs a consent URL the
+   * page mints only once it knows it needs one, so it lands a beat after the
+   * notice that explains it.
+   */
+  async waitForReconnect(): Promise<void> {
+    await this.waitFor(() => this.reconnectLink(), 10000, "the reconnect link");
+  }
+
+  /** The consent URL the reconnect affordance points at, once it is offered. */
+  async reconnectUrl(): Promise<string> {
+    const link = await this.waitFor(
+      () => this.reconnectLink(),
+      10000,
+      "the reconnect link",
+    );
+    return link.href;
+  }
+
+  /** The alert whose text matches, of however many the page is showing. */
+  private alertMatching(pattern: RegExp): HTMLElement | null {
+    return (
+      Array.from(
+        this.container.querySelectorAll<HTMLElement>('[data-slot="alert"]'),
+      ).find((alert) => pattern.test(alert.textContent ?? "")) ?? null
+    );
   }
 }

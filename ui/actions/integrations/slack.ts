@@ -40,6 +40,14 @@ interface SlackUnconfirmed {
 
 interface SlackActionError {
   error: string;
+  /**
+   * The refusal's `code`, when it named one, alongside the copy. A caller reads
+   * it to recognise a class of failure the wording cannot be pattern-matched
+   * for — a Slack grant that has stopped working, which the contract allows
+   * from any of these calls (Cross-cutting) and is recovered from by
+   * reconnecting rather than by retrying.
+   */
+  code?: string | null;
 }
 
 interface SlackAuthorizeUrl {
@@ -169,19 +177,19 @@ const failureFrom = async (
     };
   }
 
-  return { error: slackErrorMessage(failure, fallback) };
+  return { error: slackErrorMessage(failure, fallback), code: failure.code };
 };
 
 /**
- * `failureFrom` flattened to one line of copy, for the calls whose only
- * outcome is "it did not work". Rate limiting keeps its own wording:
- * `conversations.list` is Slack tier 2, so a `429` shows up here (contract,
- * Errors) and the wait it names is the useful part.
+ * `failureFrom` flattened to one refusal, for the calls whose only outcome is
+ * "it did not work". Rate limiting keeps its own wording: `conversations.list`
+ * is Slack tier 2, so a `429` shows up here (contract, Errors) and the wait it
+ * names is the useful part.
  */
-const errorMessageFrom = async (
+const refusalFrom = async (
   response: Response,
   fallback: string,
-): Promise<string> => {
+): Promise<SlackActionError> => {
   // Same 5xx handling as `failureFrom`, `503` excepted: here too it means Slack
   // is unavailable. Must run before `readSlackFailure`: a body can only be read
   // once.
@@ -191,9 +199,13 @@ const errorMessageFrom = async (
 
   const failure = await readSlackFailure(response);
 
-  return failure.status === RATE_LIMITED_STATUS
-    ? slackRateLimitMessage(failure.retryAfterSeconds)
-    : slackErrorMessage(failure, fallback);
+  return {
+    error:
+      failure.status === RATE_LIMITED_STATUS
+        ? slackRateLimitMessage(failure.retryAfterSeconds)
+        : slackErrorMessage(failure, fallback),
+    code: failure.code,
+  };
 };
 
 /** Mint an OAuth state and get the consent URL. Creates no integration. */
@@ -296,6 +308,13 @@ interface SlackChannelsSuccess {
    * the picker *and* the reason.
    */
   incomplete?: string;
+  /**
+   * The `code` of the refusal that cut the read short, when it named one. A
+   * grant that has stopped working refuses the second cursor page exactly as it
+   * refuses the first, and a caller reading only the failure path would never
+   * hear about it.
+   */
+  code?: string | null;
 }
 
 export type SlackChannelsResult = SlackChannelsSuccess | SlackActionError;
@@ -339,9 +358,9 @@ export const getSlackChannels = async (
       });
 
       if (!response.ok) {
-        let message: string;
+        let refusal: SlackActionError;
         try {
-          message = await errorMessageFrom(
+          refusal = await refusalFrom(
             response,
             `Unable to read the workspace's channels: ${response.statusText}`,
           );
@@ -353,8 +372,8 @@ export const getSlackChannels = async (
         }
 
         return channels.length > 0
-          ? { channels, incomplete: message }
-          : { error: message };
+          ? { channels, incomplete: refusal.error, code: refusal.code }
+          : refusal;
       }
 
       // A page that is not JSON reads as no channels, rather than throwing a
@@ -447,12 +466,12 @@ export const setSlackDefaultChannel = async (
     });
 
     if (!response.ok) {
-      return {
-        error: await errorMessageFrom(
-          response,
-          `Unable to save the destination channel: ${response.statusText}`,
-        ),
-      };
+      // Awaited inside the `try`: unawaited, a 5xx's rejection would skip
+      // this `catch`.
+      return await refusalFrom(
+        response,
+        `Unable to save the destination channel: ${response.statusText}`,
+      );
     }
 
     const body = await response.json().catch(() => null);
@@ -469,6 +488,78 @@ export const setSlackDefaultChannel = async (
     }
 
     return { integration: parseStringify(body.data) as IntegrationProps };
+  } catch (error) {
+    return handleApiError(error);
+  }
+};
+
+/**
+ * What the API reports about revoking Prowler's token at Slack: one boolean in
+ * `meta`, and nothing else — it sends no reason for a revocation that did not
+ * happen, so there is no field here to hold one.
+ */
+export interface SlackRevocation {
+  /**
+   * Whether Slack confirmed the token no longer grants Prowler anything, or
+   * `null` when the response carried no outcome. The contract says the outcome
+   * is always reported, so `null` means the response is wrong, not the
+   * revocation.
+   */
+  revoked: boolean | null;
+}
+
+interface SlackDisconnectSuccess {
+  /** The integration is gone from Prowler, whatever Slack answered. */
+  disconnected: true;
+  revocation: SlackRevocation;
+}
+
+export type SlackDisconnectResult = SlackDisconnectSuccess | SlackActionError;
+
+/**
+ * Disconnect the workspace: `DELETE /integrations/{id}`.
+ *
+ * The generic `deleteIntegration` cannot serve this: it discards the response
+ * body, and the body is the whole point. Revocation at Slack is best-effort —
+ * the row is removed either way and the outcome travels in JSON:API `meta` — so
+ * a caller has to tell "gone and revoked" from "gone, but still installed in
+ * Slack".
+ *
+ * A body without the field (an empty `204`, say) yields `null`, not `false`: an
+ * unreported outcome must not send the user off to clean up Slack, nor be shown
+ * as access revoked.
+ */
+export const disconnectSlackIntegration = async (
+  integrationId: string,
+): Promise<SlackDisconnectResult> => {
+  const id = parseIntegrationId(integrationId);
+  if (!id) return { error: SLACK_GENERIC_ERROR_MESSAGE };
+
+  const headers = await getAuthHeaders({ contentType: true });
+  const url = new URL(`${apiBaseUrl}/integrations/${id}`);
+
+  try {
+    const response = await fetch(url.toString(), { method: "DELETE", headers });
+
+    if (!response.ok) {
+      return await refusalFrom(
+        response,
+        `Unable to disconnect the Slack workspace: ${response.statusText}`,
+      );
+    }
+
+    const body = await response.json().catch(() => ({}));
+    const meta = body?.meta ?? {};
+
+    revalidatePath("/integrations");
+    revalidatePath("/integrations/slack");
+
+    return {
+      disconnected: true,
+      revocation: {
+        revoked: typeof meta.revoked === "boolean" ? meta.revoked : null,
+      },
+    };
   } catch (error) {
     return handleApiError(error);
   }

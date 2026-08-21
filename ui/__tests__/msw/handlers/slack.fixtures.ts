@@ -69,6 +69,24 @@ export interface SlackRefusalFixture {
   retryAfterSeconds: number | null;
 }
 
+/**
+ * What `DELETE /integrations/{id}` reports about revoking the token at Slack.
+ * Revocation is best-effort: the row goes either way, and the outcome travels in
+ * JSON:API `meta`.
+ *
+ * One boolean is the whole of it: the API sends no reason for a revocation that
+ * did not happen, so modelling one would let a test prove copy the real
+ * deployment can never produce.
+ */
+export interface SlackRevocationFixture {
+  /**
+   * Slack confirmed the token no longer grants Prowler anything. `null` when the
+   * answer reports nothing at all — the plain `204` a deployment without a
+   * `destroy` override sends, which is what the UI meets today.
+   */
+  revoked: boolean | null;
+}
+
 export interface SlackFixture {
   /**
    * The deployment has `SLACK_CLIENT_ID` / `SLACK_CLIENT_SECRET` /
@@ -111,6 +129,13 @@ export interface SlackFixture {
    * listing itself answered fine.
    */
   channelSaveRefusal: SlackRefusalFixture | null;
+  /**
+   * The API refused the disconnect itself, so the row is still there
+   * afterwards. Distinct from `revocation`, which is about a removal that
+   * happened.
+   */
+  disconnectRefusal: SlackRefusalFixture | null;
+  revocation: SlackRevocationFixture;
 }
 
 /**
@@ -174,11 +199,25 @@ export const INTEGRATIONS_SERVER_ERROR_DETAIL = "A server error occurred.";
 export const SLACK_MISSING_SCOPE_DETAIL =
   "Slack refused the request: missing_scope.";
 /**
+ * Names the raw reason, as the missing-scope wording does: what lets a test tell
+ * copy the UI mapped from `code` apart from an echoed `detail`.
+ */
+export const SLACK_TOKEN_EXPIRED_DETAIL =
+  "Slack refused the request: token_expired.";
+/**
  * The same sentence for "it is gone" and "the app was removed from it": only
  * `code` separates them, which is why a client must read `code`.
  */
 export const SLACK_UNKNOWN_CHANNEL_DETAIL =
   "That channel is not one Prowler can post to.";
+
+/**
+ * A `403` from the shared destroy route: the role can read the integration but
+ * not remove it. Names no Slack reason, so the API's own wording is what the
+ * user is shown.
+ */
+export const SLACK_DISCONNECT_FORBIDDEN_DETAIL =
+  "You do not have permission to disconnect this integration.";
 
 /**
  * A `200` challenge page from a proxy or WAF that took the call instead of the
@@ -205,6 +244,13 @@ export const SLACK_NOT_IN_CHANNEL_CODE = "not_in_channel";
  * open-ended, so having no copy for one is the ordinary case.
  */
 export const SLACK_UNMAPPED_REASON_CODE = "is_archived";
+/**
+ * Two of the four dead-grant codes the contract lists. Whichever call surfaces
+ * one, the integration is disconnected and the only way out is connecting the
+ * workspace again (contract, Cross-cutting).
+ */
+export const SLACK_TOKEN_REVOKED_CODE = "token_revoked";
+export const SLACK_TOKEN_EXPIRED_CODE = "token_expired";
 
 export const SLACK_RETRY_AFTER_SECONDS = 30;
 
@@ -225,6 +271,18 @@ export const SLACK_RATE_LIMITED_REFUSAL: SlackRefusalFixture = {
   code: null,
   detail: SLACK_RATE_LIMITED_DETAIL,
   retryAfterSeconds: SLACK_RETRY_AFTER_SECONDS,
+};
+
+/**
+ * The stored grant is no longer usable: a `400` like any other actionable
+ * refusal, deliberately not the `401` that would read as an expired Prowler
+ * session (contract, Errors).
+ */
+export const SLACK_TOKEN_EXPIRED_REFUSAL: SlackRefusalFixture = {
+  status: 400,
+  code: SLACK_TOKEN_EXPIRED_CODE,
+  detail: SLACK_TOKEN_EXPIRED_DETAIL,
+  retryAfterSeconds: null,
 };
 
 /** Slack-side or transport failure — a `502` naming no reason at all. */
@@ -251,6 +309,14 @@ export const SLACK_NOT_IN_CHANNEL_REFUSAL: SlackRefusalFixture = {
   status: 400,
   code: SLACK_NOT_IN_CHANNEL_CODE,
   detail: SLACK_UNKNOWN_CHANNEL_DETAIL,
+  retryAfterSeconds: null,
+};
+
+/** The disconnect is refused before Slack is asked anything: a `403`. */
+export const SLACK_DISCONNECT_FORBIDDEN_REFUSAL: SlackRefusalFixture = {
+  status: 403,
+  code: null,
+  detail: SLACK_DISCONNECT_FORBIDDEN_DETAIL,
   retryAfterSeconds: null,
 };
 
@@ -313,6 +379,8 @@ export const slackFixture = (
   channelsPageSize: SLACK_CHANNELS_PAGE_SIZE,
   channelsRefusal: null,
   channelSaveRefusal: null,
+  disconnectRefusal: null,
+  revocation: { revoked: true },
   ...overrides,
 });
 
@@ -392,3 +460,51 @@ export const configuredSlackFixture = (
   overrides: Partial<SlackFixture> = {},
 ): SlackFixture =>
   slackFixtureWithDefaultChannel(SLACK_DEFAULT_CHANNEL, overrides);
+
+/**
+ * A connected tenant whose disconnect removes the row but cannot revoke at
+ * Slack — the outcome the user has to finish by hand in the workspace.
+ */
+export const revokeFailureSlackFixture = (
+  overrides: Partial<SlackFixture> = {},
+): SlackFixture =>
+  connectedSlackFixture({
+    revocation: { revoked: false },
+    ...overrides,
+  });
+
+/**
+ * A connected tenant whose disconnect answers a plain `204` with no body: the
+ * row is gone and the revocation is unreported.
+ */
+export const unreportedRevocationSlackFixture = (
+  overrides: Partial<SlackFixture> = {},
+): SlackFixture =>
+  connectedSlackFixture({
+    revocation: { revoked: null },
+    ...overrides,
+  });
+
+/**
+ * A connected tenant whose disconnect the API refuses: nothing is removed and
+ * nothing is revoked, so the workspace is still connected afterwards.
+ */
+export const disconnectRefusalSlackFixture = (
+  overrides: Partial<SlackFixture> = {},
+): SlackFixture =>
+  configuredSlackFixture({
+    disconnectRefusal: SLACK_DISCONNECT_FORBIDDEN_REFUSAL,
+    ...overrides,
+  });
+
+/**
+ * A connected tenant whose token has been revoked at Slack: the row still says
+ * connected until a check runs, and the check is what surfaces it.
+ */
+export const revokedTokenSlackFixture = (
+  overrides: Partial<SlackFixture> = {},
+): SlackFixture =>
+  configuredSlackFixture({
+    connection: { connected: false, error: SLACK_TOKEN_REVOKED_CODE },
+    ...overrides,
+  });
