@@ -129,6 +129,12 @@ export interface SlackFixture {
    * listing itself answered fine.
    */
   channelSaveRefusal: SlackRefusalFixture | null;
+  /**
+   * The API refused the disconnect itself, so the row is still there
+   * afterwards. Distinct from `revocation`, which is about a removal that
+   * happened.
+   */
+  disconnectRefusal: SlackRefusalFixture | null;
   revocation: SlackRevocationFixture;
 }
 
@@ -204,6 +210,14 @@ export const SLACK_TOKEN_EXPIRED_DETAIL =
  */
 export const SLACK_UNKNOWN_CHANNEL_DETAIL =
   "That channel is not one Prowler can post to.";
+
+/**
+ * A `403` from the shared destroy route: the role can read the integration but
+ * not remove it. Names no Slack reason, so the API's own wording is what the
+ * user is shown.
+ */
+export const SLACK_DISCONNECT_FORBIDDEN_DETAIL =
+  "You do not have permission to disconnect this integration.";
 
 /**
  * A `200` challenge page from a proxy or WAF that took the call instead of the
@@ -298,6 +312,14 @@ export const SLACK_NOT_IN_CHANNEL_REFUSAL: SlackRefusalFixture = {
   retryAfterSeconds: null,
 };
 
+/** The disconnect is refused before Slack is asked anything: a `403`. */
+export const SLACK_DISCONNECT_FORBIDDEN_REFUSAL: SlackRefusalFixture = {
+  status: 403,
+  code: null,
+  detail: SLACK_DISCONNECT_FORBIDDEN_DETAIL,
+  retryAfterSeconds: null,
+};
+
 /**
  * Two public channels and one private the Prowler app was invited to, ordered
  * so the private one lands on the second cursor page.
@@ -357,6 +379,7 @@ export const slackFixture = (
   channelsPageSize: SLACK_CHANNELS_PAGE_SIZE,
   channelsRefusal: null,
   channelSaveRefusal: null,
+  disconnectRefusal: null,
   revocation: { revoked: true },
   ...overrides,
 });
@@ -459,6 +482,18 @@ export const unreportedRevocationSlackFixture = (
 ): SlackFixture =>
   connectedSlackFixture({
     revocation: { revoked: null },
+    ...overrides,
+  });
+
+/**
+ * A connected tenant whose disconnect the API refuses: nothing is removed and
+ * nothing is revoked, so the workspace is still connected afterwards.
+ */
+export const disconnectRefusalSlackFixture = (
+  overrides: Partial<SlackFixture> = {},
+): SlackFixture =>
+  configuredSlackFixture({
+    disconnectRefusal: SLACK_DISCONNECT_FORBIDDEN_REFUSAL,
     ...overrides,
   });
 

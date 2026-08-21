@@ -11,11 +11,13 @@ import { it } from "@/__tests__/fixtures";
 import {
   configuredSlackFixture,
   connectedSlackFixture,
+  disconnectRefusalSlackFixture,
   INTEGRATIONS_SERVER_ERROR_DETAIL,
   partiallyReadSlackFixture,
   revokedTokenSlackFixture,
   revokeFailureSlackFixture,
   SLACK_CHANNEL_NOT_FOUND_REFUSAL,
+  SLACK_DISCONNECT_FORBIDDEN_DETAIL,
   SLACK_MISSING_SCOPE_CODE,
   SLACK_MISSING_SCOPE_REFUSAL,
   SLACK_NOT_IN_CHANNEL_CODE,
@@ -665,6 +667,27 @@ describe("disconnecting a workspace", () => {
     expect(harness.showsRevocationNotice()).toBe(false);
     expect(await harness.returnedToUnconnectedState()).toBe(true);
   }, 30000);
+
+  it("says why the disconnect failed and leaves the workspace connected", async () => {
+    // Given — a finished setup whose disconnect the API refuses outright, so
+    // nothing is removed and Slack is never asked to revoke anything.
+    const harness = new SlackIntegrationHarness(
+      disconnectRefusalSlackFixture(),
+    );
+    await harness.mount();
+
+    // When
+    const refusal = await harness.refusedDisconnect();
+
+    // Then — the API's own reason reaches the user, and nothing claims a
+    // revocation that never ran.
+    expect(refusal).toMatch(SLACK_DISCONNECT_FORBIDDEN_DETAIL);
+    expect(harness.showsRevocationNotice()).toBe(false);
+    // And — the card is untouched: the integration the user still has is the
+    // one to try again on.
+    expect(await harness.connectedWorkspaceName()).toBe(WORKSPACE_NAME);
+    expect(await harness.connectionBadge()).toBe("Connected");
+  }, 30000);
 });
 
 describe("a credential Slack no longer accepts", () => {
@@ -691,7 +714,7 @@ describe("a credential Slack no longer accepts", () => {
     expect(`${consentScreen.origin}${consentScreen.pathname}`).toBe(
       "https://slack.com/oauth/v2/authorize",
     );
-    expect(await harness.waitForReconnect()).toBe(true);
+    await harness.waitForReconnect();
   }, 30000);
 
   it("offers the same recovery when the channel listing is what finds the credential dead", async () => {
@@ -710,7 +733,7 @@ describe("a credential Slack no longer accepts", () => {
     const notice = await harness.revokedCredentialNotice();
     expect(notice).toMatch(/Prowler's Slack credential has expired/);
     expect(notice).toMatch(/Connect the workspace again to restore access/);
-    expect(await harness.waitForReconnect()).toBe(true);
+    await harness.waitForReconnect();
 
     // And — the picker says the same, in the same words: `detail` names the raw
     // reason, and it is `code` the UI answered from.
@@ -742,7 +765,7 @@ describe("a credential Slack no longer accepts", () => {
     // works is no reason to leave the user without the one fix there is.
     const notice = await harness.revokedCredentialNotice();
     expect(notice).toMatch(/Prowler's Slack credential has expired/);
-    expect(await harness.waitForReconnect()).toBe(true);
+    await harness.waitForReconnect();
     expect(await harness.connectionBadge()).toBe("Disconnected");
   }, 60000);
 
@@ -768,7 +791,7 @@ describe("a credential Slack no longer accepts", () => {
     expect(await harness.revokedCredentialNotice()).toMatch(
       /Prowler's Slack credential has expired/,
     );
-    expect(await harness.waitForReconnect()).toBe(true);
+    await harness.waitForReconnect();
     expect(await harness.connectionBadge()).toBe("Disconnected");
   }, 60000);
 

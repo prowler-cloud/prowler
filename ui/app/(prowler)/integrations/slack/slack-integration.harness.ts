@@ -42,6 +42,12 @@ export const REVOCATION_OUTCOME = {
 export type RevocationOutcome =
   (typeof REVOCATION_OUTCOME)[keyof typeof REVOCATION_OUTCOME];
 
+/** The alert shown when Slack never confirmed the revocation. */
+const REVOCATION_NOTICE = /revocation/i;
+
+/** The alert shown when Slack has stopped accepting the credential. */
+const REVOKED_CREDENTIAL_NOTICE = /no longer accepts Prowler's access/;
+
 interface CallbackParams {
   code?: string;
   state?: string;
@@ -739,7 +745,7 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
 
     return this.waitFor(
       () => {
-        if (this.alertMatching(/revocation/i)) {
+        if (this.alertMatching(REVOCATION_NOTICE)) {
           return REVOCATION_OUTCOME.NOT_REVOKED;
         }
         if (this.containsText(/has been revoked/)) {
@@ -752,6 +758,28 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
       },
       15000,
       "the disconnect outcome",
+    );
+  }
+
+  /**
+   * Try a disconnect the API refuses and hand back what the user is told. One
+   * that goes through fails the test rather than timing out.
+   */
+  async refusedDisconnect(): Promise<string> {
+    await this.openDisconnectConfirmation();
+    await this.clickButton(/Disconnect workspace/);
+
+    return this.waitFor(
+      () => {
+        if (this.containsText(/No workspace connected/)) {
+          throw new Error(
+            "refusedDisconnect: the workspace was disconnected, not refused",
+          );
+        }
+        return this.toastText(/Disconnect failed/);
+      },
+      15000,
+      "the refused disconnect",
     );
   }
 
@@ -773,7 +801,7 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
 
   /** Whether the page is asking the user to remove the access in Slack. */
   showsRevocationNotice(): boolean {
-    return this.alertMatching(/revocation/i) !== null;
+    return this.alertMatching(REVOCATION_NOTICE) !== null;
   }
 
   /**
@@ -782,7 +810,7 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
    */
   async revocationNotice(): Promise<string> {
     const notice = await this.waitFor(
-      () => this.alertMatching(/revocation/i),
+      () => this.alertMatching(REVOCATION_NOTICE),
       10000,
       "the revocation notice",
     );
@@ -794,7 +822,7 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
   /** What the user is told when Slack has stopped accepting the credential. */
   async revokedCredentialNotice(): Promise<string> {
     const notice = await this.waitFor(
-      () => this.alertMatching(/no longer accepts Prowler's access/),
+      () => this.alertMatching(REVOKED_CREDENTIAL_NOTICE),
       10000,
       "the revoked-credential notice",
     );
@@ -803,7 +831,7 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
 
   /** Whether the page is saying Slack has stopped accepting the credential. */
   showsRevokedCredentialNotice(): boolean {
-    return this.alertMatching(/no longer accepts Prowler's access/) !== null;
+    return this.alertMatching(REVOKED_CREDENTIAL_NOTICE) !== null;
   }
 
   private reconnectLink(): HTMLAnchorElement | null {
@@ -824,9 +852,8 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
    * page mints only once it knows it needs one, so it lands a beat after the
    * notice that explains it.
    */
-  async waitForReconnect(): Promise<boolean> {
+  async waitForReconnect(): Promise<void> {
     await this.waitFor(() => this.reconnectLink(), 10000, "the reconnect link");
-    return true;
   }
 
   /** The consent URL the reconnect affordance points at, once it is offered. */

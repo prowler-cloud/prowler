@@ -356,6 +356,9 @@ export const handlersForSlack = (fx: SlackFixture) => {
     // way and the outcome travels in `meta` — or nowhere at all, in the plain
     // `204` a deployment with no `destroy` override sends.
     http.delete(`${API}/integrations/:id`, () => {
+      // Checked first: a refused disconnect removes nothing.
+      if (fx.disconnectRefusal) return refuse(fx.disconnectRefusal);
+
       install = null;
       if (fx.revocation.revoked === null) {
         return new HttpResponse(null, { status: 204 });
