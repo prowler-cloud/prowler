@@ -1,17 +1,17 @@
 import { redirect } from "next/navigation";
 
-import { auth } from "@/auth.config";
+import { getRegistryBootstrap } from "@/actions/registry/registry";
 import { RegistryAccessBoundary } from "@/components/registry/registry-access-boundary";
-import { REGISTRY_ACCESS } from "@/lib/registry/access";
-import { evaluateRegistryAccess } from "@/lib/registry/access.server";
+import { REGISTRY_FAILURE } from "@/types/registry";
 
 export const dynamic = "force-dynamic";
 
 export default async function RegistryPage() {
-  const access = await evaluateRegistryAccess((await auth())?.accessToken);
-  if (access.status !== REGISTRY_ACCESS.ELIGIBLE) redirect("/profile");
+  const bootstrap = await getRegistryBootstrap();
+  if (bootstrap.status === REGISTRY_FAILURE.ACCESS_DENIED) redirect("/profile");
+
   return (
-    <RegistryAccessBoundary initialLeaseDurationMs={access.leaseDurationMs}>
+    <RegistryAccessBoundary initialLeaseDurationMs={bootstrap.leaseDurationMs}>
       {null}
     </RegistryAccessBoundary>
   );
