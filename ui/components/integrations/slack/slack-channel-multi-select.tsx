@@ -33,6 +33,8 @@ interface SlackChannelMultiSelectProps {
   incompleteNotice?: string | null;
   onRefresh?: () => void;
   disabled?: boolean;
+  /** Override when two pickers share a page: the trigger's id has to stay unique. */
+  id?: string;
 }
 
 /**
@@ -61,6 +63,7 @@ export const SlackChannelMultiSelect = ({
   incompleteNotice = null,
   onRefresh,
   disabled = false,
+  id = "slack-channels",
 }: SlackChannelMultiSelectProps) => {
   const isEmpty = !isLoading && !error && options.length === 0;
   // `htmlFor` may only name an element that exists, and the trigger is only
@@ -79,9 +82,7 @@ export const SlackChannelMultiSelect = ({
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between gap-3">
-        <Label htmlFor={hasPicker ? "slack-channels" : undefined}>
-          Destination channels
-        </Label>
+        <Label htmlFor={hasPicker ? id : undefined}>Destination channels</Label>
         {onRefresh && (
           <Button
             size="sm"
@@ -120,7 +121,7 @@ export const SlackChannelMultiSelect = ({
           )}
           <MultiSelect values={values} onValuesChange={onChange}>
             <MultiSelectTrigger
-              id="slack-channels"
+              id={id}
               aria-label="Destination channels"
               disabled={disabled || isLoading}
             >

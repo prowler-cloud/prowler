@@ -647,7 +647,11 @@ export const SlackIntegrationManager = ({
                   <Button
                     size="sm"
                     variant="outline"
-                    disabled={isTesting || authorizedChannels.length === 0}
+                    disabled={
+                      isTesting ||
+                      isSavingChannels ||
+                      authorizedChannels.length === 0
+                    }
                     // What the control does — or why it cannot — travels with
                     // it: an explanation across the row reads as unrelated.
                     aria-describedby={CHECK_HINT_ID}

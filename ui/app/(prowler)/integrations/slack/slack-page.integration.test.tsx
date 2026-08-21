@@ -308,12 +308,10 @@ describe("authorizing destination channels", () => {
 
     // And — a later visit shows the set, under the names the API derived.
     await harness.revisit();
-    expect(await harness.authorizedChannels()).toEqual(
-      expect.arrayContaining([
-        SLACK_PUBLIC_CHANNEL.name,
-        SLACK_PRIVATE_CHANNEL.name,
-      ]),
-    );
+    expect(await harness.authorizedChannels()).toEqual([
+      SLACK_PUBLIC_CHANNEL.name,
+      SLACK_PRIVATE_CHANNEL.name,
+    ]);
   }, 60000);
 
   it("keeps a private channel identified on its chip with the listing closed", async () => {
@@ -484,12 +482,10 @@ describe("authorizing destination channels", () => {
     expect(await harness.connectionFailureToast()).toMatch(
       new RegExp(`Slack refused #${SLACK_PRIVATE_CHANNEL.name}`),
     );
-    expect(await harness.authorizedChannels()).toEqual(
-      expect.arrayContaining([
-        SLACK_PUBLIC_CHANNEL.name,
-        SLACK_PRIVATE_CHANNEL.name,
-      ]),
-    );
+    expect(await harness.authorizedChannels()).toEqual([
+      SLACK_PUBLIC_CHANNEL.name,
+      SLACK_PRIVATE_CHANNEL.name,
+    ]);
     expect(await harness.offersConnectionTest()).toBe(true);
 
     // And — the confirmation is stamped only where Slack accepted it, so the
