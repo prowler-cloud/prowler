@@ -464,7 +464,7 @@ describe("authorizing destination channels", () => {
         connection: {
           connected: false,
           error: SLACK_NOT_IN_CHANNEL_CODE,
-          failedChannelName: SLACK_PRIVATE_CHANNEL.name,
+          failedChannelId: SLACK_PRIVATE_CHANNEL.id,
         },
       }),
     );

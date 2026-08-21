@@ -344,7 +344,7 @@ export const SlackIntegrationManager = ({
   const handleSaveChannels = async () => {
     if (!integrationId) return;
 
-    let savedCount = 0;
+    let savedChannels: SlackAuthorizedChannel[] = [];
     setIsSavingChannels(true);
     try {
       // Only ids travel — the API validates them and derives the names.
@@ -368,7 +368,7 @@ export const SlackIntegrationManager = ({
       // Prefer the API's own record: it derives the names (a channel renamed
       // in Slack since the list was read would otherwise show its old name)
       // and it is what says which channels are confirmed.
-      const savedChannels =
+      savedChannels =
         result.integration.attributes.configuration.channels ??
         recordedFromSelection(
           selectedChannelIds,
@@ -379,7 +379,6 @@ export const SlackIntegrationManager = ({
       provedCredentialAlive();
       setAuthorizedChannels(savedChannels);
       setSelectedChannelIds(savedChannels.map((channel) => channel.id));
-      savedCount = savedChannels.length;
       toast({
         title: "Destination channels saved",
         description:
@@ -403,10 +402,17 @@ export const SlackIntegrationManager = ({
     // the save alone only proves the API took the ids: the check is what
     // reaches each channel and confirms it. A save that cleared the set has
     // nothing to post to.
-    if (savedCount > 0) await handleTestConnection(integrationId);
+    if (savedChannels.length > 0)
+      await handleTestConnection(integrationId, savedChannels);
   };
 
-  const handleTestConnection = async (id: string) => {
+  const handleTestConnection = async (
+    id: string,
+    // The set the failing channel is named from. A check chained onto a save
+    // runs before the state the save queued lands, so that caller passes the
+    // set it just recorded.
+    channels: SlackAuthorizedChannel[] = authorizedChannels,
+  ) => {
     setIsTesting(true);
     try {
       const result = await testIntegrationConnection(id);
@@ -430,13 +436,19 @@ export const SlackIntegrationManager = ({
           ? slackErrorMessage({ code: reason, detail: reason })
           : "Failed to reach your Slack workspace.";
 
+        // The failure names the channel it is about by id (design D7): the
+        // fix is in Slack, on that channel, not on the integration as a whole.
+        // An id the authorized set no longer holds names nothing to the user,
+        // so a raw Slack id is never shown — it reads as workspace-wide.
+        const refusedChannel = result.failedChannelId
+          ? channels.find((channel) => channel.id === result.failedChannelId)
+          : undefined;
+
         toast({
           variant: "destructive",
           title: "Connection test failed",
-          // The failure names the channel it is about (design D7): the fix is
-          // in Slack, on that channel, not on the integration as a whole.
-          description: result.failedChannel
-            ? `Slack refused #${result.failedChannel}: ${explanation}`
+          description: refusedChannel
+            ? `Slack refused #${refusedChannel.name}: ${explanation}`
             : explanation,
         });
       }

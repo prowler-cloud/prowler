@@ -63,12 +63,12 @@ export interface SlackConnectionFixture {
   connected: boolean;
   error: string | null;
   /**
-   * The channel a channel-level failure is about, named by the task result so
-   * the user hears which one Slack refused (contract, Connection). Absent for
-   * credential-level failures, which are about the workspace as a whole.
-   * TODO(Josema): the key the result names it under.
+   * The id of the channel a channel-level failure is about, which the task
+   * result names so the user hears which one Slack refused (contract,
+   * Connection). Absent for credential-level failures, which are about the
+   * workspace as a whole.
    */
-  failedChannelName?: string | null;
+  failedChannelId?: string | null;
 }
 
 /** A channel the listing endpoint offers for the picker. */

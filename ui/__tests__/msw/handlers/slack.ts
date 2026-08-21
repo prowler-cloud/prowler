@@ -140,9 +140,9 @@ const taskResource = (id: string, state: string, result: unknown) => ({
  * failure names keeps none, and a retry has it left to do.
  */
 const confirmedByThisRun =
-  (failedChannelName: string | null) =>
+  (failedChannelId: string | null) =>
   (channel: SlackAuthorizedChannelFixture): SlackAuthorizedChannelFixture =>
-    channel.confirmationSentAt === null && channel.name !== failedChannelName
+    channel.confirmationSentAt === null && channel.id !== failedChannelId
       ? { ...channel, confirmationSentAt: CHECK_TS }
       : channel;
 
@@ -300,7 +300,7 @@ export const handlersForSlack = (fx: SlackFixture) => {
     ),
 
     http.get<{ taskId: string }>(`${API}/tasks/:taskId`, ({ params }) => {
-      const { connected, error, failedChannelName } = fx.connection;
+      const { connected, error, failedChannelId } = fx.connection;
       // Only a task whose id still matches may write: a late one must not
       // overwrite a newer check (contract, Connection).
       if (
@@ -317,14 +317,14 @@ export const handlersForSlack = (fx: SlackFixture) => {
         };
         install.workspace.authorizedChannels = (
           install.workspace.authorizedChannels ?? []
-        ).map(confirmedByThisRun(failedChannelName ?? null));
+        ).map(confirmedByThisRun(failedChannelId ?? null));
       }
       return HttpResponse.json(
-        // TODO(Josema): the key the result names a failing channel under.
+        // The result names the failing channel by id under `channel`.
         taskResource(params.taskId, "completed", {
           connected,
           error,
-          channel: failedChannelName ?? null,
+          channel: failedChannelId ?? null,
         }),
       );
     }),

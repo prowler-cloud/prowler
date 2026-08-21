@@ -18,8 +18,8 @@ type TestConnectionResponse = {
   taskId?: string;
   data?: TaskStartResponse;
   error?: string;
-  /** The channel a channel-level failure named, when the task named one. */
-  failedChannel?: string | null;
+  /** The id of the channel a channel-level failure named, when it named one. */
+  failedChannelId?: string | null;
 };
 
 export const getIntegrations = async (searchParams?: URLSearchParams) => {
@@ -270,9 +270,8 @@ export const deleteIntegration = async (
 type ConnectionTaskResult = {
   connected?: boolean;
   error?: string | null;
-  // The signed contract keeps the result at `{connected, error}` and has it
-  // name the failing channel, without spelling out the key.
-  // TODO(Josema): the key a channel-level failure names the channel under.
+  // The failing channel's id, or null when the failure is not about one
+  // channel. The error text never carries it, so it is never parsed for it.
   channel?: string | null;
 };
 
@@ -367,7 +366,7 @@ export const testIntegrationConnection = async (
           return {
             success: false,
             error: pollResult.message || "Connection test failed.",
-            failedChannel: pollResult.result?.channel ?? null,
+            failedChannelId: pollResult.result?.channel ?? null,
           };
         }
       } else {
