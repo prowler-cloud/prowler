@@ -248,6 +248,11 @@ class BedrockAgent(AWSService):
         # Call AWSService's __init__
         super().__init__("bedrock-agent", provider)
         self.agents = {}
+        # Every agent in the account, including those --resource-arn excluded. A check whose verdict
+        # for one agent depends on another (role sharing) cannot read self.agents: the agent that
+        # proves the sharing may be the one the operator filtered out. Same shape as
+        # cloudwatch_service's all_log_groups/log_groups pair -- one object, two dicts.
+        self.all_agents = {}
         self.prompts = {}
         self.knowledge_bases = {}
         self.data_sources = {}
@@ -255,8 +260,10 @@ class BedrockAgent(AWSService):
         self.agents_scan_errors = {}
         self.prompt_scanned_regions: set = set()
         self.__threading_call__(self._list_agents)
-        self.__threading_call__(self._get_agent, self.agents.values())
-        self.__threading_call__(self._get_agent_version_roles, self.agents.values())
+        # Detail collection runs over the COMPLETE inventory: an out-of-scope agent's role still
+        # determines whether an in-scope agent's role is shared.
+        self.__threading_call__(self._get_agent, self.all_agents.values())
+        self.__threading_call__(self._get_agent_version_roles, self.all_agents.values())
         self.__threading_call__(self._list_prompts)
         self.__threading_call__(self._get_prompt, self.prompts.values())
         self.__threading_call__(self._list_tags_for_resource, self.agents.values())
@@ -270,19 +277,21 @@ class BedrockAgent(AWSService):
             paginator = regional_client.get_paginator("list_agents")
             for page in paginator.paginate():
                 for agent in page.get("agentSummaries", []):
-                    agent_arn = f"arn:aws:bedrock:{regional_client.region}:{self.audited_account}:agent/{agent['agentId']}"
+                    agent_arn = f"arn:{self.audited_partition}:bedrock:{regional_client.region}:{self.audited_account}:agent/{agent['agentId']}"
+                    agent_object = Agent(
+                        id=agent["agentId"],
+                        name=agent["agentName"],
+                        arn=agent_arn,
+                        guardrail_id=agent.get("guardrailConfiguration", {}).get(
+                            "guardrailIdentifier"
+                        ),
+                        region=regional_client.region,
+                    )
+                    self.all_agents[agent_arn] = agent_object
                     if not self.audit_resources or (
                         is_resource_filtered(agent_arn, self.audit_resources)
                     ):
-                        self.agents[agent_arn] = Agent(
-                            id=agent["agentId"],
-                            name=agent["agentName"],
-                            arn=agent_arn,
-                            guardrail_id=agent.get("guardrailConfiguration", {}).get(
-                                "guardrailIdentifier"
-                            ),
-                            region=regional_client.region,
-                        )
+                        self.agents[agent_arn] = agent_object
         except ClientError as error:
             code = error.response["Error"].get("Code", error.__class__.__name__)
             # ValidationException means Bedrock Agent is unavailable in the
@@ -315,15 +324,38 @@ class BedrockAgent(AWSService):
                 f"{agent.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    # An alias that cannot invoke the version it routes to contributes no live exposure, so the role
+    # on that version must not count as shared. Both fields come from ListAgentAliases at the pinned
+    # botocore (1.40.61): aliasInvocationState is ACCEPT_INVOCATIONS | REJECT_INVOCATIONS and is an
+    # OPTIONAL member, so an absent value means the alias was never set to reject and still serves.
+    # agentAliasStatus is CREATING | PREPARED | FAILED | UPDATING | DELETING | DISSOCIATED; the three
+    # below are terminal or detached. CREATING and UPDATING are deliberately treated as active: both
+    # converge on serving the version they route to, so their role is live exposure.
+    INACTIVE_ALIAS_STATUSES = {"FAILED", "DELETING", "DISSOCIATED"}
+
+    @staticmethod
+    def _is_alias_active(alias: dict) -> bool:
+        """Can this alias actually invoke the version it routes to?
+
+        Args:
+            alias: One agentAliasSummaries entry from ListAgentAliases.
+
+        Returns:
+            False when the alias rejects invocations or its status is terminal.
+        """
+        if alias.get("aliasInvocationState") == "REJECT_INVOCATIONS":
+            return False
+        return alias.get("agentAliasStatus") not in BedrockAgent.INACTIVE_ALIAS_STATUSES
+
     def _get_agent_version_roles(self, agent):
-        """Fetch the execution role of every agent version an alias routes to.
+        """Fetch the execution role of every agent version an ACTIVE alias routes to.
 
         GetAgent returns only the working draft. An agent version is an
         immutable snapshot that keeps the role it was cut with, and an alias
         routes invocations at a specific version, so a deployed version can
-        still hold a role the draft no longer has. Only routed versions are
-        fetched: a version no alias points at cannot be invoked, so reporting on
-        it would be noise.
+        still hold a role the draft no longer has. Only versions an active alias
+        routes to are fetched: a version nothing can invoke is not live
+        exposure, so reporting on it would be a false FAIL.
         """
         logger.info("Bedrock Agent - Getting Agent Version Roles...")
         try:
@@ -332,6 +364,8 @@ class BedrockAgent(AWSService):
             routed_versions = set()
             for page in paginator.paginate(agentId=agent.id):
                 for alias in page.get("agentAliasSummaries", []):
+                    if not self._is_alias_active(alias):
+                        continue
                     for route in alias.get("routingConfiguration", []):
                         version = route.get("agentVersion")
                         # agentVersion is an optional member of the routing

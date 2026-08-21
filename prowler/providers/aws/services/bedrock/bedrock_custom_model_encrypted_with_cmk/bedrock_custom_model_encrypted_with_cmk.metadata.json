@@ -13,7 +13,7 @@
   "ResourceType": "Other",
   "ResourceGroup": "ai_ml",
   "Description": "**Bedrock custom models** produced by model customization can be encrypted at rest with a customer-managed KMS key rather than resting under an AWS-owned key the organization cannot audit, rotate, or revoke.",
-  "Risk": "A fine-tuned model is derived from the training data used to build it and can leak that data through inference. Under an AWS-owned key the organization has no key policy to restrict who may decrypt the artifacts, no rotation it controls, no CloudTrail record of key usage, and no way to revoke access to the model by disabling a key.",
+  "Risk": "A **fine-tuned model** is derived from the training data used to build it and can leak that data through inference.\n\nUnder an **AWS-owned key**, the organization has no key policy to restrict who may decrypt the artifacts, no customer-controlled rotation, no **CloudTrail** record of key usage, and no way to revoke access to the model by disabling a key.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/bedrock/latest/userguide/encryption-custom-job.html",

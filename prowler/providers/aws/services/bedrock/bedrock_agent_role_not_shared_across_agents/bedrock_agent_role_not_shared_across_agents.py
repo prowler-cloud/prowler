@@ -30,6 +30,10 @@ class bedrock_agent_role_not_shared_across_agents(Check):
     the same role. A role already seen on two agents is shared whatever else is
     missing, so FAIL survives an incomplete inventory.
 
+    A scan scoped with ``--resource-arn`` narrows which agents are REPORTED on, not
+    which agents count towards sharing: the role index is built from the complete
+    account inventory, so selecting one of two agents that share a role still FAILs.
+
     - PASS: No role this agent holds is used by any other agent, every Region's
       agent inventory was listed, every discovered agent's role was readable, and
       every agent's deployed versions were listed.
@@ -66,9 +70,15 @@ class bedrock_agent_role_not_shared_across_agents(Check):
         # twice. An agent is indexed under every role it holds, because a
         # deployed version keeps the role it was cut with: sharing through a
         # version is the same exposure as sharing through the draft.
+        #
+        # Built from all_agents, the COMPLETE account inventory, never from the
+        # --resource-arn filtered set: whether a role is shared is a property of
+        # every agent that holds it, and the agent proving the sharing may be one
+        # the operator did not select. Findings are still emitted only for the
+        # filtered agents, further down.
         agents_by_role = {}
         unresolved_agents = []
-        for agent in bedrock_agent_client.agents.values():
+        for agent in bedrock_agent_client.all_agents.values():
             entry = (agent.arn, agent.name or agent.id)
             for role_arn in self._roles_held_by(agent):
                 if entry not in agents_by_role.setdefault(role_arn, []):

@@ -12,7 +12,7 @@
   "ResourceType": "Other",
   "ResourceGroup": "ai_ml",
   "Description": "Every **Bedrock Agent** assumes the role in its `agentResourceRoleArn`. That role must belong to exactly one agent, so no agent inherits another's permissions.",
-  "Risk": "A shared execution role gives every agent using it the union of all their permissions, so a low-trust agent reaching an untrusted tool holds the rights granted for a high-trust one, turning a single prompt injection into access it was never scoped for. It also destroys attribution: CloudTrail records the role session, so an action cannot be traced to one agent.",
+  "Risk": "A **shared execution role** gives every agent using it the union of all their permissions, so a low-trust agent reaching an untrusted tool holds the rights granted for a high-trust one, turning a single **prompt injection** into access it was never scoped for.\n\nIt also destroys **attribution**: **CloudTrail** records the role session, so an action cannot be traced to one agent.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/bedrock/latest/userguide/agents-permissions.html",
