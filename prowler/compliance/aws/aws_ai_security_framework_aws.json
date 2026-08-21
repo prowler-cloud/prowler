@@ -656,7 +656,7 @@
           "Section": "AI Application Security",
           "SubSection": "RAG Security",
           "Service": "bedrock",
-          "Type": "Automated"
+          "Type": "Partially Automated"
         }
       ],
       "Checks": [
@@ -686,7 +686,7 @@
           "Section": "AI Application Security",
           "SubSection": "Agent Governance",
           "Service": "bedrock",
-          "Type": "Automated"
+          "Type": "Partially Automated"
         }
       ],
       "Checks": [
