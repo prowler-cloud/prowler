@@ -69,13 +69,9 @@ class bedrock_agent_role_not_shared_across_agents(Check):
         # Keyed on agent ARN, not name, so two same-named agents still count
         # twice. An agent is indexed under every role it holds, because a
         # deployed version keeps the role it was cut with: sharing through a
-        # version is the same exposure as sharing through the draft.
-        #
-        # Built from all_agents, the COMPLETE account inventory, never from the
-        # --resource-arn filtered set: whether a role is shared is a property of
-        # every agent that holds it, and the agent proving the sharing may be one
-        # the operator did not select. Findings are still emitted only for the
-        # filtered agents, further down.
+        # version is the same exposure as sharing through the draft. Indexed over
+        # all_agents, not the filtered agents; findings are emitted from the
+        # filtered set below.
         agents_by_role = {}
         unresolved_agents = []
         for agent in bedrock_agent_client.all_agents.values():

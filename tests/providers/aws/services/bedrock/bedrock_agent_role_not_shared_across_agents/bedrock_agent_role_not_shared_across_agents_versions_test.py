@@ -445,3 +445,43 @@ class Test_alias_must_be_invocable:
             assert agent.version_role_arns == {"3": SHARED_VERSION_ARN}
 
         assert {report.status for report in results} == {"FAIL"}
+
+    @mock_aws
+    def test_rejecting_alias_does_not_mask_a_shared_draft_role(self):
+        """The predicate must gate ROUTING only, never the draft.
+
+        The draft role comes from GetAgent, not from an alias, so an unreachable
+        alias has no bearing on it. Without this, a predicate applied one level
+        too high would silence a genuinely shared draft role.
+        """
+        service, results = _run(
+            _mock(
+                {AGENT_A_ID: DEDICATED_VERSION_ARN, AGENT_B_ID: DEDICATED_VERSION_ARN},
+                alias_invocation_state="REJECT_INVOCATIONS",
+            )
+        )
+        # No routed version survives the predicate...
+        for agent in service.all_agents.values():
+            assert agent.version_role_arns == {}
+        # ...so make both DRAFTS share one role and re-run the verdict.
+        for agent in service.all_agents.values():
+            agent.role_arn = DRAFT_A_ARN
+
+        check_name = "bedrock_agent_role_not_shared_across_agents"
+        with mock.patch(
+            f"prowler.providers.aws.services.bedrock.{check_name}.{check_name}"
+            ".bedrock_agent_client",
+            new=service,
+        ):
+            module = __import__(
+                f"prowler.providers.aws.services.bedrock.{check_name}.{check_name}",
+                fromlist=[check_name],
+            )
+            results = getattr(module, check_name)().execute()
+
+        assert len(results) == 2
+        assert {report.status for report in results} == {"FAIL"}
+        for report in results:
+            assert DRAFT_A_ARN in report.status_extended
+            # The sharing is on the draft, so no version is named.
+            assert "through deployed version" not in report.status_extended
