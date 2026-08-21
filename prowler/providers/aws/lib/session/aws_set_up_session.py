@@ -6,11 +6,12 @@ from prowler.providers.aws.aws_provider import (
     get_aws_region_for_sts,
     parse_iam_credentials_arn,
 )
-from prowler.providers.aws.config import ROLE_SESSION_NAME
+from prowler.providers.aws.config import MAX_ROLE_CHAIN_STEPS, ROLE_SESSION_NAME
 from prowler.providers.aws.models import (
     AWSAssumeRoleConfiguration,
     AWSAssumeRoleInfo,
     AWSIdentityInfo,
+    AWSRoleChainStep,
     AWSSession,
 )
 
@@ -32,6 +33,7 @@ class AwsSetUpSession:
     def __init__(
         self,
         role_arn: str = None,
+        role_chain: list = None,
         session_duration: int = 3600,
         external_id: str = None,
         role_session_name: str = ROLE_SESSION_NAME,
@@ -47,7 +49,8 @@ class AwsSetUpSession:
         The constructor for the AwsSetUpSession class.
 
         Parameters:
-        - role_arn: The ARN of the IAM role to assume.
+        - role_arn: The ARN of the IAM role to assume. Mutually exclusive with role_chain.
+        - role_chain: An ordered list of dicts, each defining one AssumeRole hop.
         - session_duration: The duration of the session in seconds, between 900 and 43200.
         - external_id: The external ID to use when assuming the IAM role.
         - role_session_name: The name of the session when assuming the IAM role.
@@ -66,6 +69,7 @@ class AwsSetUpSession:
 
         validate_arguments(
             role_arn=role_arn,
+            role_chain=role_chain,
             session_duration=session_duration,
             external_id=external_id,
             role_session_name=role_session_name,
@@ -118,33 +122,73 @@ class AwsSetUpSession:
         ########
 
         ######## AWS Session with Assume Role (if needed)
-        if role_arn:
-            # Validate the input role
+        chain_steps: list[AWSRoleChainStep] = []
+
+        if role_chain and role_arn:
+            raise ValueError("role_chain and role_arn are mutually exclusive.")
+
+        if role_chain:
+            if len(role_chain) > MAX_ROLE_CHAIN_STEPS:
+                raise ValueError(
+                    f"role_chain exceeds maximum of {MAX_ROLE_CHAIN_STEPS} steps."
+                )
+            for idx, step in enumerate(role_chain):
+                if "role_arn" not in step:
+                    raise ValueError(
+                        f"role_chain step {idx} is missing required 'role_arn'."
+                    )
+                valid_arn = parse_iam_credentials_arn(step["role_arn"])
+                chain_steps.append(
+                    AWSRoleChainStep(
+                        role_arn=valid_arn,
+                        external_id=step.get("external_id"),
+                        session_duration=step.get("session_duration", 3600),
+                        role_session_name=step.get(
+                            "role_session_name", ROLE_SESSION_NAME
+                        ),
+                        sts_region=step.get("sts_region", sts_region),
+                    )
+                )
+        elif role_arn:
             valid_role_arn = parse_iam_credentials_arn(role_arn)
-            # Set assume IAM Role information
-            assumed_role_information = AWSAssumeRoleInfo(
-                role_arn=valid_role_arn,
-                session_duration=session_duration,
-                external_id=external_id,
-                mfa_enabled=mfa,
-                role_session_name=role_session_name,
-                sts_region=sts_region,
+            chain_steps = [
+                AWSRoleChainStep(
+                    role_arn=valid_role_arn,
+                    external_id=external_id,
+                    session_duration=session_duration,
+                    role_session_name=role_session_name,
+                    sts_region=sts_region,
+                )
+            ]
+
+        if chain_steps:
+            hop_count = len(chain_steps)
+            logger.info(
+                f"Assuming role chain ({hop_count} hop{'s' if hop_count > 1 else ''})..."
             )
-            # Assume the IAM Role
-            logger.info(f"Assuming role: {assumed_role_information.role_arn.arn}")
-            assumed_role_credentials = AwsProvider.assume_role(
+            final_session, final_credentials = AwsProvider.assume_role_chain(
                 self._session.current_session,
-                assumed_role_information,
+                chain_steps,
+                session_config,
             )
-            logger.info(f"IAM Role assumed: {assumed_role_information.role_arn.arn}")
+            logger.info("Role chain assumed successfully")
 
-            assumed_role_configuration = AWSAssumeRoleConfiguration(
-                info=assumed_role_information, credentials=assumed_role_credentials
+            # Store chain for credential refresh
+            self._session.role_chain = chain_steps
+
+            last_step = chain_steps[-1]
+            self._assumed_role_configuration = AWSAssumeRoleConfiguration(
+                info=AWSAssumeRoleInfo(
+                    role_arn=last_step.role_arn,
+                    session_duration=last_step.session_duration,
+                    external_id=last_step.external_id,
+                    mfa_enabled=mfa or False,
+                    role_session_name=last_step.role_session_name,
+                    sts_region=last_step.sts_region,
+                ),
+                credentials=final_credentials,
             )
-            # Store the assumed role configuration since it'll be needed to refresh the credentials
-            self._assumed_role_configuration = assumed_role_configuration
 
-            # Store a new current session using the assumed IAM Role
             self._session.current_session = AwsProvider.setup_assumed_session(
                 self._identity,
                 self._assumed_role_configuration,
@@ -154,16 +198,19 @@ class AwsSetUpSession:
 
             # Modify identity for the IAM Role assumed since this will be the identity to audit with
             logger.info("Setting new identity for the AWS IAM Role assumed")
-            self._identity.account = assumed_role_configuration.info.role_arn.account_id
-            self._identity.partition = (
-                assumed_role_configuration.info.role_arn.partition
+            self._identity.account = (
+                self._assumed_role_configuration.info.role_arn.account_id
             )
-            self._identity.account_arn = f"arn:{assumed_role_configuration.info.role_arn.partition}:iam::{assumed_role_configuration.info.role_arn.account_id}:root"
+            self._identity.partition = (
+                self._assumed_role_configuration.info.role_arn.partition
+            )
+            self._identity.account_arn = f"arn:{self._assumed_role_configuration.info.role_arn.partition}:iam::{self._assumed_role_configuration.info.role_arn.account_id}:root"
         ########
 
 
 def validate_arguments(
     role_arn: str = None,
+    role_chain: list = None,
     session_duration: int = None,
     external_id: str = None,
     role_session_name: str = None,
@@ -172,27 +219,30 @@ def validate_arguments(
     aws_secret_access_key: str = None,
 ) -> None:
     """
-    Validate the arguments provided to the S3 class."
+    Validate the arguments provided to the AwsSetUpSession class.
 
     Parameters:
     - role_arn: The ARN of the IAM role to assume.
+    - role_chain: An ordered list of role assumption steps.
     - session_duration: The duration of the session in seconds, between 900 and 43200.
     - external_id: The external ID to use when assuming the IAM role.
     - role_session_name: The name of the session when assuming the IAM role.
-    - mfa: A boolean indicating whether MFA is enabled.
     - profile: The name of the AWS CLI profile to use.
     - aws_access_key_id: The AWS access key ID.
     - aws_secret_access_key: The AWS secret access key.
-    - aws_session_token: The AWS session token, optional.
-    - retries_max_attempts: The maximum number of retries for the AWS client.
-    - regions: A set of regions to audit.
     """
+
+    if role_chain and role_arn:
+        raise ValueError("role_chain and role_arn are mutually exclusive.")
 
     if role_arn:
         if not session_duration or not external_id or not role_session_name:
             raise ValueError(
                 "If a role ARN is provided, a session duration, an external ID, and a role session name are required."
             )
+    elif role_chain:
+        # Chain validation is done in the constructor
+        pass
     else:
         if external_id:
             raise ValueError("If an external ID is provided, a role ARN is required.")

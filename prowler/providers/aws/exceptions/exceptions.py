@@ -231,3 +231,17 @@ class AWSInvalidPartitionError(AWSBaseException):
         super().__init__(
             1917, file=file, original_exception=original_exception, message=message
         )
+
+
+class AWSAssumeRoleChainError(AWSBaseException):
+    """Raised when a role assumption chain fails at a specific step."""
+
+    def __init__(self, step, file=None, original_exception=None, message=None):
+        self.step = step
+        default_message = f"Role chain assumption failed at step {step}"
+        super().__init__(
+            1018,
+            file=file,
+            original_exception=original_exception,
+            message=message or default_message,
+        )

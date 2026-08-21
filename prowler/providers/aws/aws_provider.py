@@ -31,6 +31,7 @@ from prowler.providers.aws.config import (
 from prowler.providers.aws.exceptions.exceptions import (
     AWSAccessKeyIDInvalidError,
     AWSArgumentTypeValidationError,
+    AWSAssumeRoleChainError,
     AWSAssumeRoleError,
     AWSClientError,
     AWSIAMRoleARNEmptyResourceError,
@@ -62,6 +63,7 @@ from prowler.providers.aws.models import (
     AWSIdentityInfo,
     AWSMFAInfo,
     AWSOrganizationsInfo,
+    AWSRoleChainStep,
     AWSSession,
     Partition,
 )
@@ -106,6 +108,7 @@ class AwsProvider(Provider):
         self,
         retries_max_attempts: int = 3,
         role_arn: str = None,
+        role_chain: list = None,
         session_duration: int = 3600,
         external_id: str = None,
         role_session_name: str = None,
@@ -131,7 +134,11 @@ class AwsProvider(Provider):
 
         Args:
             - retries_max_attempts: The maximum number of retries for the AWS client.
-            - role_arn: The ARN of the IAM role to assume.
+            - role_arn: The ARN of the IAM role to assume. Mutually exclusive with role_chain.
+            - role_chain: An ordered list of dicts, each defining one AssumeRole hop.
+              Mutually exclusive with role_arn. Each dict may contain:
+              ``role_arn`` (required), ``external_id``, ``session_duration``,
+              ``role_session_name``, ``sts_region``.
             - session_duration: The duration of the session in seconds, between 900 and 43200.
             - external_id: The external ID to use when assuming the IAM role.
             - role_session_name: The name of the session when assuming the IAM role.
@@ -276,47 +283,101 @@ class AwsProvider(Provider):
         )
         ########
         ######## AWS Session with Assume Role (if needed)
-        if role_arn:
-            # Validate the input role
-            valid_role_arn = parse_iam_credentials_arn(role_arn)
-            # Set assume IAM Role information
-            assumed_role_information = AWSAssumeRoleInfo(
-                role_arn=valid_role_arn,
-                session_duration=session_duration,
-                external_id=external_id,
-                mfa_enabled=mfa,
-                role_session_name=role_session_name,
-                sts_region=sts_region,
-            )
-            # Assume the IAM Role
-            logger.info(f"Assuming role: {assumed_role_information.role_arn.arn}")
-            assumed_role_credentials = AwsProvider.assume_role(
-                self._session.current_session,
-                assumed_role_information,
-            )
-            logger.info(f"IAM Role assumed: {assumed_role_information.role_arn.arn}")
+        # Normalize both single-role and chain inputs into an ordered
+        # list of AWSRoleChainStep objects.  A single --role becomes a
+        # one-element chain.  --role_chain (API/CLI) is used as-is.
+        chain_steps: list[AWSRoleChainStep] = []
 
-            assumed_role_configuration = AWSAssumeRoleConfiguration(
-                info=assumed_role_information, credentials=assumed_role_credentials
+        if role_chain and role_arn:
+            raise AWSArgumentTypeValidationError(
+                message="role_chain and role_arn are mutually exclusive.",
+                file=pathlib.Path(__file__).name,
             )
-            # Store the assumed role configuration since it'll be needed to refresh the credentials
-            self._assumed_role_configuration = assumed_role_configuration
+
+        if role_chain:
+            from prowler.providers.aws.config import MAX_ROLE_CHAIN_STEPS
+
+            if len(role_chain) > MAX_ROLE_CHAIN_STEPS:
+                raise AWSArgumentTypeValidationError(
+                    message=f"role_chain exceeds maximum of {MAX_ROLE_CHAIN_STEPS} steps.",
+                    file=pathlib.Path(__file__).name,
+                )
+            for idx, step in enumerate(role_chain):
+                if "role_arn" not in step:
+                    raise AWSArgumentTypeValidationError(
+                        message=f"role_chain step {idx} is missing required 'role_arn'.",
+                        file=pathlib.Path(__file__).name,
+                    )
+                valid_arn = parse_iam_credentials_arn(step["role_arn"])
+                chain_steps.append(
+                    AWSRoleChainStep(
+                        role_arn=valid_arn,
+                        external_id=step.get("external_id"),
+                        session_duration=step.get("session_duration", 3600),
+                        role_session_name=step.get(
+                            "role_session_name", ROLE_SESSION_NAME
+                        ),
+                        sts_region=step.get("sts_region", sts_region),
+                    )
+                )
+        elif role_arn:
+            valid_role_arn = parse_iam_credentials_arn(role_arn)
+            chain_steps = [
+                AWSRoleChainStep(
+                    role_arn=valid_role_arn,
+                    external_id=external_id,
+                    session_duration=session_duration,
+                    role_session_name=role_session_name,
+                    sts_region=sts_region,
+                )
+            ]
+
+        if chain_steps:
+            hop_count = len(chain_steps)
+            logger.info(
+                f"Assuming role chain ({hop_count} hop{'s' if hop_count > 1 else ''})..."
+            )
+            final_session, final_credentials = AwsProvider.assume_role_chain(
+                self._session.current_session,
+                chain_steps,
+                self._session.session_config,
+            )
+            logger.info("Role chain assumed successfully")
+
+            # Store chain on session so refresh_credentials can re-walk it
+            self._session.role_chain = chain_steps
+
+            # Backwards-compatible attribute (uses last hop)
+            last_step = chain_steps[-1]
+            self._assumed_role_configuration = AWSAssumeRoleConfiguration(
+                info=AWSAssumeRoleInfo(
+                    role_arn=last_step.role_arn,
+                    session_duration=last_step.session_duration,
+                    external_id=last_step.external_id,
+                    mfa_enabled=mfa,
+                    role_session_name=last_step.role_session_name,
+                    sts_region=last_step.sts_region,
+                ),
+                credentials=final_credentials,
+            )
 
             # Store a new current session using the assumed IAM Role
             self._session.current_session = AwsProvider.setup_assumed_session(
                 self._identity,
-                assumed_role_configuration,
+                self._assumed_role_configuration,
                 self._session,
             )
             logger.info("Audit session is the new session created assuming an IAM Role")
 
             # Modify identity for the IAM Role assumed since this will be the identity to audit with
             logger.info("Setting new identity for the AWS IAM Role assumed")
-            self._identity.account = assumed_role_configuration.info.role_arn.account_id
-            self._identity.partition = (
-                assumed_role_configuration.info.role_arn.partition
+            self._identity.account = (
+                self._assumed_role_configuration.info.role_arn.account_id
             )
-            self._identity.account_arn = f"arn:{assumed_role_configuration.info.role_arn.partition}:iam::{assumed_role_configuration.info.role_arn.account_id}:root"
+            self._identity.partition = (
+                self._assumed_role_configuration.info.role_arn.partition
+            )
+            self._identity.account_arn = f"arn:{self._assumed_role_configuration.info.role_arn.partition}:iam::{self._assumed_role_configuration.info.role_arn.account_id}:root"
         ########
 
         ######## AWS Organizations Metadata
@@ -782,6 +843,10 @@ class AwsProvider(Provider):
         """
         Refresh credentials method using AWS STS Assume Role.
 
+        When the session carries a ``role_chain``, the entire chain is re-walked
+        from ``original_session`` so that every hop gets fresh temporary
+        credentials.  Otherwise the legacy single-hop refresh path is used.
+
         This method is called adding "()" to the name, so it cannot accept arguments
         https://github.com/boto/botocore/blob/098cc255f81a25b852e1ecdeb7adebd94c7b1b73/botocore/credentials.py#L570
         """
@@ -803,16 +868,25 @@ class AwsProvider(Provider):
         if datetime.fromisoformat(refreshed_credentials["expiry_time"]) <= datetime.now(
             get_localzone()
         ):
-            assume_role_response = AwsProvider.assume_role(
-                session.original_session, assumed_role_configuration.info
-            )
+            if session.role_chain:
+                # Re-walk the entire chain from original_session
+                _, final_creds = AwsProvider.assume_role_chain(
+                    session.original_session,
+                    session.role_chain,
+                    session.session_config,
+                )
+            else:
+                # Single-hop legacy path
+                final_creds = AwsProvider.assume_role(
+                    session.original_session, assumed_role_configuration.info
+                )
             refreshed_credentials = dict(
                 # Keys of the dict has to be the same as those that are being searched in the parent class
                 # https://github.com/boto/botocore/blob/098cc255f81a25b852e1ecdeb7adebd94c7b1b73/botocore/credentials.py#L609
-                access_key=assume_role_response.aws_access_key_id,
-                secret_key=assume_role_response.aws_secret_access_key,
-                token=assume_role_response.aws_session_token,
-                expiry_time=assume_role_response.expiration.isoformat(),
+                access_key=final_creds.aws_access_key_id,
+                secret_key=final_creds.aws_secret_access_key,
+                token=final_creds.aws_session_token,
+                expiry_time=final_creds.expiration.isoformat(),
             )
             logger.info("Refreshed Credentials")
 
@@ -862,6 +936,16 @@ class AwsProvider(Provider):
             report_lines.append(
                 f"Assumed Role ARN: {Fore.YELLOW}[{self._assumed_role_configuration.info.role_arn.arn}]{Style.RESET_ALL}"
             )
+        # Show chain hops when a multi-hop chain is active
+        if (
+            getattr(self._session, "role_chain", None)
+            and len(self._session.role_chain) > 1
+        ):
+            report_lines.append("Role Chain:")
+            for i, step in enumerate(self._session.role_chain):
+                report_lines.append(
+                    f"  [{i + 1}] {Fore.YELLOW}{step.role_arn.arn}{Style.RESET_ALL}"
+                )
         report_title = (
             f"{Style.BRIGHT}Using the AWS credentials below:{Style.RESET_ALL}"
         )
@@ -1239,6 +1323,67 @@ class AwsProvider(Provider):
                 file=pathlib.Path(__file__).name,
             )
 
+    @staticmethod
+    def assume_role_chain(
+        base_session: Session,
+        steps: list[AWSRoleChainStep],
+        session_config: Config = None,
+    ) -> tuple[Session, AWSCredentials]:
+        """Walk an ordered chain of role assumptions iteratively.
+
+        Each step's output credentials become the input session for the next
+        step.  The final session and credentials are returned.
+
+        Args:
+            base_session: The starting session (profile / env / static creds).
+            steps: Ordered list of :class:`AWSRoleChainStep` objects.
+            session_config: Optional botocore Config applied to intermediate
+                sessions.
+
+        Returns:
+            Tuple of ``(final boto3.Session, final AWSCredentials)``.
+
+        Raises:
+            AWSAssumeRoleChainError: If any step in the chain fails.
+        """
+        current_session = base_session
+        total = len(steps)
+        final_credentials: AWSCredentials = None
+
+        for idx, step in enumerate(steps):
+            step_num = idx + 1
+            logger.info(f"Chain step {step_num}/{total}: assuming {step.role_arn.arn}")
+            role_info = AWSAssumeRoleInfo(
+                role_arn=step.role_arn,
+                session_duration=step.session_duration,
+                external_id=step.external_id,
+                mfa_enabled=False,
+                role_session_name=step.role_session_name,
+                sts_region=step.sts_region,
+            )
+            try:
+                final_credentials = AwsProvider.assume_role(current_session, role_info)
+            except Exception as error:
+                raise AWSAssumeRoleChainError(
+                    step=step_num,
+                    original_exception=error,
+                    file=pathlib.Path(__file__).name,
+                )
+            logger.info(f"Chain step {step_num}/{total}: assumed {step.role_arn.arn}")
+
+            if idx < total - 1:
+                # Build intermediate session for the next hop
+                current_session = Session(
+                    aws_access_key_id=final_credentials.aws_access_key_id,
+                    aws_secret_access_key=final_credentials.aws_secret_access_key,
+                    aws_session_token=final_credentials.aws_session_token,
+                    region_name=current_session.region_name,
+                )
+                if session_config:
+                    current_session._session.set_default_client_config(session_config)
+
+        return current_session, final_credentials
+
     def get_aws_enabled_regions(self, current_session: Session) -> set | None:
         """get_aws_enabled_regions returns a set of enabled AWS regions, or None on failure.
 
@@ -1354,6 +1499,7 @@ class AwsProvider(Provider):
         profile: str = None,
         aws_region: str = AWS_STS_GLOBAL_ENDPOINT_REGION,
         role_arn: str = None,
+        role_chain: list = None,
         role_session_name: str = ROLE_SESSION_NAME,
         session_duration: int = 3600,
         external_id: str = None,
@@ -1370,7 +1516,8 @@ class AwsProvider(Provider):
         Args:
             profile (str): The AWS profile to use for the session.
             aws_region (str): The AWS region to validate the credentials in.
-            role_arn (str): The ARN of the IAM role to assume.
+            role_arn (str): The ARN of the IAM role to assume. Mutually exclusive with role_chain.
+            role_chain (list): Ordered list of role assumption steps. Mutually exclusive with role_arn.
             role_session_name (str): The name of the role session.
             session_duration (int): The duration of the assumed role session in seconds.
             external_id (str): The external ID to use when assuming the role.
@@ -1420,7 +1567,27 @@ class AwsProvider(Provider):
                 aws_session_token=aws_session_token,
             )
 
-            if role_arn:
+            if role_chain and role_arn:
+                raise AWSArgumentTypeValidationError(
+                    message="role_chain and role_arn are mutually exclusive.",
+                    file=pathlib.Path(__file__).name,
+                )
+
+            if role_chain:
+                chain_steps = []
+                for step in role_chain:
+                    chain_steps.append(
+                        AWSRoleChainStep(
+                            role_arn=parse_iam_credentials_arn(step["role_arn"]),
+                            external_id=step.get("external_id"),
+                            session_duration=step.get("session_duration", 3600),
+                            role_session_name=step.get(
+                                "role_session_name", ROLE_SESSION_NAME
+                            ),
+                        )
+                    )
+                session, _ = AwsProvider.assume_role_chain(session, chain_steps)
+            elif role_arn:
                 session_duration = validate_session_duration(session_duration)
                 role_session_name = validate_role_session_name(role_session_name)
                 role_arn = parse_iam_credentials_arn(role_arn)

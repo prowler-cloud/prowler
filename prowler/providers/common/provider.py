@@ -383,6 +383,7 @@ class Provider(ABC):
                     provider_class(
                         retries_max_attempts=arguments.aws_retries_max_attempts,
                         role_arn=arguments.role,
+                        role_chain=getattr(arguments, "role_chain", None),
                         session_duration=arguments.session_duration,
                         external_id=arguments.external_id,
                         role_session_name=arguments.role_session_name,

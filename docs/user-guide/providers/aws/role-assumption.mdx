@@ -93,8 +93,113 @@ prowler aws -R arn:aws:iam::<account_id>:role/ProwlerScan -I <external_id>
 ```
 
 <Note>
-**Session Duration Considerations**: Depending on the number of checks performed and the size of your infrastructure, Prowler may require more than 1 hour to complete. Use the `-T <seconds>` option to allow up to 12 hours (43,200 seconds). If you need more than 1 hour, modify the _“Maximum CLI/API session duration”_ setting for the role. Learn more [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use.html#id_roles_use_view-role-max-session).
+**Session Duration Considerations**: Depending on the number of checks performed and the size of your infrastructure, Prowler may require more than 1 hour to complete. Use the `-T <seconds>` option to allow up to 12 hours (43,200 seconds). If you need more than 1 hour, modify the _"Maximum CLI/API session duration"_ setting for the role. Learn more [here](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use.html#id_roles_use_view-role-max-session).
 
 ⚠️ Important: If assuming roles via role chaining, there is a hard limit of 1 hour. Whenever possible, avoid role chaining to prevent session expiration issues. More details are available in footnote 1 below the table in the [AWS IAM guide](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use.html).
 
 </Note>
+
+## Ordered Role Assumption Chain
+
+import { VersionBadge } from "/snippets/version-badge.mdx"
+
+<VersionBadge version="5.9.0" />
+
+Some AWS environments use a hub-spoke model where reaching the target account requires multiple sequential `sts:AssumeRole` hops. For example, an audit account in a security hub must first assume a role in a landing zone, which then assumes the final scan role in the target spoke account.
+
+Prowler supports ordered role chains of up to 10 hops. Each hop's output credentials become the input session for the next hop.
+
+### Using a Chain File (CLI)
+
+Create a JSON file defining the ordered chain:
+
+```json
+[
+  {
+    "role_arn": "arn:aws:iam::111111111111:role/HubRole",
+    "external_id": "hub-external-id",
+    "session_duration": 3600
+  },
+  {
+    "role_arn": "arn:aws:iam::222222222222:role/LandingZoneRole",
+    "session_duration": 3600
+  },
+  {
+    "role_arn": "arn:aws:iam::333333333333:role/TargetScanRole",
+    "external_id": "target-external-id",
+    "session_duration": 900
+  }
+]
+```
+
+Then pass the file path to Prowler:
+
+```sh
+prowler aws --role-chain /path/to/chain.json
+```
+
+Each step in the chain supports the following optional parameters:
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `role_arn` | *(required)* | The ARN of the role to assume at this step. |
+| `external_id` | `None` | External ID for this assumption step. |
+| `session_duration` | `3600` | Session duration in seconds (900–43200). |
+| `role_session_name` | `ProwlerAssessmentSession` | Session name for this step. |
+| `sts_region` | `us-east-1` | AWS region for the STS endpoint of this step. |
+
+<Note>
+`--role` and `--role-chain` are mutually exclusive. Use one or the other, not both.
+
+</Note>
+
+<Note>
+MFA is not supported in role chains because AWS STS does not forward MFA tokens through sequential hops.
+
+</Note>
+
+<Warning>
+AWS imposes a hard 1-hour limit on chained role sessions regardless of the `session_duration` set per hop. Plan chain depth accordingly.
+
+</Warning>
+
+### Using the API
+
+When configuring an AWS provider through the API, pass the chain in the secret payload:
+
+```json
+{
+  "data": {
+    "type": "provider-secrets",
+    "attributes": {
+      "secret_type": "role",
+      "secret": {
+        "aws_access_key_id": "AKIA...",
+        "aws_secret_access_key": "...",
+        "role_chain": [
+          {
+            "role_arn": "arn:aws:iam::111111111111:role/BootstrapRole",
+            "external_id": "bootstrap-ext",
+            "role_session_name": "prowler-hop-1",
+            "session_duration": 3600
+          },
+          {
+            "role_arn": "arn:aws:iam::222222222222:role/FinalScanRole",
+            "role_session_name": "prowler-hop-2",
+            "session_duration": 3600
+          }
+        ]
+      }
+    },
+    "relationships": {
+      "provider": {
+        "data": { "type": "providers", "id": "<provider-id>" }
+      }
+    }
+  }
+}
+```
+
+### Credential Refresh
+
+When Prowler runs with a role chain, credentials are refreshed by re-walking the entire chain from the original session. This ensures every hop gets fresh temporary credentials when any credential in the chain expires.

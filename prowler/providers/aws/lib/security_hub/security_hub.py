@@ -41,7 +41,7 @@ from prowler.providers.aws.lib.security_hub.exceptions.exceptions import (
     SecurityHubNoEnabledRegionsError,
 )
 from prowler.providers.aws.lib.session.aws_set_up_session import AwsSetUpSession
-from prowler.providers.aws.models import AWSAssumeRoleInfo
+from prowler.providers.aws.models import AWSAssumeRoleInfo, AWSRoleChainStep
 from prowler.providers.common.models import Connection
 
 SECURITY_HUB_INTEGRATION_NAME = "prowler/prowler"
@@ -470,6 +470,7 @@ class SecurityHub:
         profile: str = None,
         aws_region: str = AWS_STS_GLOBAL_ENDPOINT_REGION,
         role_arn: str = None,
+        role_chain: list = None,
         role_session_name: str = ROLE_SESSION_NAME,
         session_duration: int = 3600,
         external_id: str = None,
@@ -522,8 +523,28 @@ class SecurityHub:
                     session, aws_region
                 ).arn.partition
 
-            # Handle role assumption if role_arn is provided
-            if role_arn:
+            # Handle role assumption if role_arn or role_chain is provided
+            if role_chain and role_arn:
+                raise AWSArgumentTypeValidationError(
+                    message="role_chain and role_arn are mutually exclusive.",
+                    file=os.path.basename(__file__),
+                )
+
+            if role_chain:
+                chain_steps = []
+                for step in role_chain:
+                    chain_steps.append(
+                        AWSRoleChainStep(
+                            role_arn=parse_iam_credentials_arn(step["role_arn"]),
+                            external_id=step.get("external_id"),
+                            session_duration=step.get("session_duration", 3600),
+                            role_session_name=step.get(
+                                "role_session_name", ROLE_SESSION_NAME
+                            ),
+                        )
+                    )
+                session, _ = AwsProvider.assume_role_chain(session, chain_steps)
+            elif role_arn:
                 session_duration = validate_session_duration(session_duration)
                 role_session_name = validate_role_session_name(
                     role_session_name or ROLE_SESSION_NAME
