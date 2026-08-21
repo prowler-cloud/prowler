@@ -173,12 +173,8 @@ class Test_codepipeline_project_repo_private:
                 assert result[0].resource_tags == []
                 assert result[0].region == AWS_REGION
 
-    def test_pipeline_repo_ssl_verification_failure(self):
-        """Test that a TLS certificate verification failure is treated as private.
-        When the probe cannot verify the server certificate (e.g. a MITM
-        presenting a forged certificate), the repository must not be reported
-        as public.
-        """
+    def test_pipeline_repo_ssl_verification_failure_is_manual(self):
+        """A TLS verification failure cannot establish that a repository is private."""
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_aws_provider([AWS_REGION]),
@@ -236,11 +232,8 @@ class Test_codepipeline_project_repo_private:
                 result = check.execute()
 
                 assert len(result) == 1
-                assert result[0].status == "PASS"
-                assert (
-                    result[0].status_extended
-                    == f"CodePipeline {pipeline_name} source repository {repo_id} is private."
-                )
+                assert result[0].status == "MANUAL"
+                assert "could not be verified" in result[0].status_extended
 
     def test_pipeline_repo_probe_verifies_certificate_and_sets_timeout(self):
         """Test the probe never disables certificate verification and sets a timeout.

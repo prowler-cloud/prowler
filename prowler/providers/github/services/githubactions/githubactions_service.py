@@ -20,6 +20,7 @@ class GithubActions(GithubService):
         super().__init__(__class__.__name__, provider)
 
         self.findings: dict[int, list[GithubActionsWorkflowFinding]] = {}
+        self.scan_errors: dict[int, str] = {}
         self.scan_enabled = False
 
         if not getattr(provider, "github_actions_enabled", True):
@@ -54,9 +55,13 @@ class GithubActions(GithubService):
                     provider.session.token,
                 )
                 if not temp_dir:
+                    self.scan_errors[repo_id] = "Repository could not be cloned."
                     continue
 
                 raw_findings = self._run_zizmor(temp_dir)
+                if raw_findings is None:
+                    self.scan_errors[repo_id] = "zizmor scan did not complete successfully."
+                    continue
 
                 repo_findings = []
                 for finding in raw_findings:
@@ -82,6 +87,7 @@ class GithubActions(GithubService):
                 self.findings[repo_id] = repo_findings
 
             except Exception as error:
+                self.scan_errors[repo_id] = "zizmor scan did not complete successfully."
                 logger.error(
                     f"Error scanning repository {repo.full_name}: "
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -93,6 +99,7 @@ class GithubActions(GithubService):
     def _clone_repository(
         self, repository_url: str, token: str = None
     ) -> Optional[str]:
+        temp_dir = None
         try:
             auth_url = repository_url
             if token:
@@ -106,6 +113,8 @@ class GithubActions(GithubService):
             porcelain.clone(auth_url, temp_dir, depth=1, errstream=io.BytesIO())
             return temp_dir
         except Exception as error:
+            if temp_dir:
+                shutil.rmtree(temp_dir, ignore_errors=True)
             error_msg = str(error)
             if token:
                 error_msg = error_msg.replace(token, "***")
@@ -115,7 +124,7 @@ class GithubActions(GithubService):
             )
             return None
 
-    def _run_zizmor(self, directory: str) -> list[dict]:
+    def _run_zizmor(self, directory: str) -> Optional[list[dict]]:
         try:
             process = subprocess.run(
                 ["zizmor", directory, "--format", "json"],
@@ -129,24 +138,33 @@ class GithubActions(GithubService):
                     if line.strip():
                         logger.debug(f"zizmor: {line}")
 
+            if process.returncode != 0:
+                logger.error(f"zizmor exited with code {process.returncode}.")
+                return None
+
             if not process.stdout:
-                return []
+                logger.warning("zizmor returned no JSON output.")
+                return None
 
             output = json.loads(process.stdout)
-            if not output or (isinstance(output, list) and len(output) == 0):
+            if not isinstance(output, list):
+                logger.warning("zizmor returned JSON in an unexpected format.")
+                return None
+
+            if not output:
                 return []
 
             return output
 
         except json.JSONDecodeError as error:
             logger.warning(f"Failed to parse zizmor output as JSON: {error}")
-            return []
+            return None
         except Exception as error:
             logger.error(
                 f"Error running zizmor: "
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            return []
+            return None
 
     @staticmethod
     def _should_exclude_workflow(

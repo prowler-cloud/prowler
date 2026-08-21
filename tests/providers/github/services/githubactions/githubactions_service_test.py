@@ -151,16 +151,18 @@ class TestGithubActionsService:
 
     def test_run_zizmor_no_output(self):
         mock_process = MagicMock()
+        mock_process.returncode = 0
         mock_process.stdout = ""
         mock_process.stderr = ""
 
         with patch("subprocess.run", return_value=mock_process):
             service = GithubActions.__new__(GithubActions)
             result = service._run_zizmor("/tmp/test")
-            assert result == []
+            assert result is None
 
     def test_run_zizmor_empty_array(self):
         mock_process = MagicMock()
+        mock_process.returncode = 0
         mock_process.stdout = "[]"
         mock_process.stderr = ""
 
@@ -191,6 +193,7 @@ class TestGithubActionsService:
             }
         ]
         mock_process = MagicMock()
+        mock_process.returncode = 0
         mock_process.stdout = json.dumps(mock_output)
         mock_process.stderr = ""
 
@@ -202,13 +205,26 @@ class TestGithubActionsService:
 
     def test_run_zizmor_invalid_json(self):
         mock_process = MagicMock()
+        mock_process.returncode = 0
         mock_process.stdout = "not valid json"
         mock_process.stderr = ""
 
         with patch("subprocess.run", return_value=mock_process):
             service = GithubActions.__new__(GithubActions)
             result = service._run_zizmor("/tmp/test")
-            assert result == []
+            assert result is None
+
+    def test_run_zizmor_nonzero_exit_does_not_look_clean(self):
+        mock_process = MagicMock()
+        mock_process.returncode = 1
+        mock_process.stdout = "[]"
+        mock_process.stderr = "zizmor failed"
+
+        with patch("subprocess.run", return_value=mock_process):
+            service = GithubActions.__new__(GithubActions)
+            result = service._run_zizmor("/tmp/test")
+
+        assert result is None
 
     def test_clone_repository_with_token(self):
         with (
@@ -252,10 +268,12 @@ class TestGithubActionsService:
         with (
             patch("tempfile.mkdtemp", return_value="/tmp/test"),
             patch("dulwich.porcelain.clone", side_effect=Exception("clone failed")),
+            patch("shutil.rmtree") as mock_rmtree,
         ):
             service = GithubActions.__new__(GithubActions)
             result = service._clone_repository("https://github.com/owner/repo")
             assert result is None
+            mock_rmtree.assert_called_once_with("/tmp/test", ignore_errors=True)
 
     def test_init_zizmor_missing(self):
         mock_provider = MagicMock()
@@ -351,6 +369,42 @@ class TestGithubActionsService:
             finding.workflow_url
             == "https://github.com/owner/repo/blob/main/.github/workflows/release.yml"
         )
+
+    def test_scan_repositories_records_scan_failure(self):
+        mock_repo = MagicMock()
+        mock_repo.id = 1
+        mock_repo.name = "repo"
+        mock_repo.full_name = "owner/repo"
+
+        mock_repo_client = MagicMock()
+        mock_repo_client.repositories = {1: mock_repo}
+
+        mock_provider = MagicMock()
+        mock_provider.session.token = "test-token"
+        mock_provider.exclude_workflows = []
+
+        service = GithubActions.__new__(GithubActions)
+        service.findings = {}
+        service.scan_errors = {}
+
+        mock_repo_module = MagicMock()
+        mock_repo_module.repository_client = mock_repo_client
+
+        with (
+            patch.object(service, "_clone_repository", return_value="/tmp/test"),
+            patch.object(service, "_run_zizmor", return_value=None),
+            patch.dict(
+                sys.modules,
+                {
+                    "prowler.providers.github.services.repository.repository_client": mock_repo_module,
+                },
+            ),
+            patch("shutil.rmtree"),
+        ):
+            service._scan_repositories(mock_provider)
+
+        assert service.findings == {}
+        assert 1 in service.scan_errors
 
     def test_init_github_actions_disabled(self):
         mock_provider = MagicMock()
