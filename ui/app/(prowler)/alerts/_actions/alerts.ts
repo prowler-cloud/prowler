@@ -24,6 +24,12 @@ export interface AlertPayload {
    * emails. Recipient IDs are NOT used by the rule write path.
    */
   recipientEmails?: string[];
+  /**
+   * Slack channel ids from the eligible set. Replace-not-additive like
+   * `recipientEmails`: a supplied list replaces the whole Slack selection,
+   * `[]` clears it, and omitting the key leaves it unchanged.
+   */
+  slackChannels?: string[];
 }
 
 const buildRuleEnvelope = (payload: AlertPayload, alertId?: string) => ({
@@ -39,6 +45,10 @@ const buildRuleEnvelope = (payload: AlertPayload, alertId?: string) => ({
       schema_version: ALERT_SCHEMA_VERSION,
       ...(payload.recipientEmails !== undefined
         ? { recipient_emails: payload.recipientEmails }
+        : {}),
+      // Objects carrying only `id`; the API derives name and privacy.
+      ...(payload.slackChannels !== undefined
+        ? { slack_channels: payload.slackChannels.map((id) => ({ id })) }
         : {}),
     },
   },

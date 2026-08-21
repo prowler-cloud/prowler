@@ -26,9 +26,27 @@ const alertsActionMocks = vi.hoisted(() => ({
   seedAlertRule: vi.fn(),
 }));
 
+const integrationsActionMocks = vi.hoisted(() => ({
+  getIntegrations: vi.fn(),
+}));
+
+const slackChannelsActionMocks = vi.hoisted(() => ({
+  getAlertSlackChannels: vi.fn(),
+}));
+
 vi.mock(
   "@/app/(prowler)/alerts/_actions/recipients",
   () => recipientsActionMocks,
+);
+
+// The channels field reads the eligible channels and the Slack integration on
+// mount; its behavior is covered by the page integration tests (no-overlap
+// rule), so the unit lane only keeps the fetches from escaping jsdom.
+vi.mock("@/actions/integrations/integrations", () => integrationsActionMocks);
+
+vi.mock(
+  "@/app/(prowler)/alerts/_actions/slack-channels",
+  () => slackChannelsActionMocks,
 );
 
 vi.mock("@/app/(prowler)/alerts/_actions", () => alertsActionMocks);
@@ -247,6 +265,16 @@ describe("AlertFormModal", () => {
     recipientsActionMocks.listAlertRecipients.mockReturnValue(
       new Promise(() => {}),
     );
+    integrationsActionMocks.getIntegrations.mockReset();
+    slackChannelsActionMocks.getAlertSlackChannels.mockReset();
+    // Never resolve, like the recipients read above: the channels field's
+    // settled states are integration-tested; the unit lane keeps it loading.
+    integrationsActionMocks.getIntegrations.mockReturnValue(
+      new Promise(() => {}),
+    );
+    slackChannelsActionMocks.getAlertSlackChannels.mockReturnValue(
+      new Promise(() => {}),
+    );
     alertsActionMocks.previewAlertCondition.mockReset();
     alertsActionMocks.seedAlertRule.mockReset();
     alertsActionMocks.seedAlertRule.mockResolvedValue({
@@ -279,7 +307,8 @@ describe("AlertFormModal", () => {
     expect(screen.getByLabelText(/^description$/i)).toBeVisible();
     expect(screen.getByLabelText(/^frequency$/i)).toBeVisible();
     expect(screen.getByLabelText(/^recipients$/i)).toBeVisible();
-    expect(screen.getAllByRole("combobox")).toHaveLength(2);
+    // Frequency, Recipients, and the Slack destination channels trigger.
+    expect(screen.getAllByRole("combobox")).toHaveLength(3);
     expect(screen.queryByText("Alert criteria")).not.toBeInTheDocument();
     expect(screen.queryByText(/delivery settings/i)).not.toBeInTheDocument();
     expect(
