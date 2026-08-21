@@ -3,28 +3,32 @@
 # accepts ARM JSON, not raw Bicep source, so the .json file is the artifact
 # actually consumed by users — keep it committed and in sync with the .bicep.
 #
-# Requires Bicep CLI (>= 0.30 for the Microsoft.Graph extension). Install
-# with `az bicep install` (via Azure CLI) or download the standalone binary
-# from https://github.com/Azure/bicep/releases.
-#
-# `bicepconfig.json` in this directory registers the Microsoft.Graph
-# extension against the public Microsoft Container Registry, so the CLI can
-# resolve `extension microsoftGraphV1` without extra flags.
+# Defaults to the standalone Bicep CLI. Set `BICEP=az bicep` to use the
+# Azure CLI wrapper installed by `az bicep install`.
 
 BICEP ?= bicep
+BICEP_BUILD := $(BICEP) build
 
-.PHONY: build check clean
+ifeq ($(strip $(BICEP)),az bicep)
+BICEP_BUILD += --file
+endif
 
-build: prowler-scan.json
+.PHONY: build check clean sync-docs
 
-prowler-scan.json: prowler-scan.bicep bicepconfig.json
-	$(BICEP) build $<
+build: prowler-scan.json sync-docs
+
+prowler-scan.json: prowler-scan.bicep
+	$(BICEP_BUILD) $<
+
+sync-docs: prowler-scan.json
+	python3 sync_docs_template.py --sync
 
 # CI hook: fail if the JSON is out of sync with the Bicep source. Run
 # `make build` locally and commit both files before opening the PR.
-check: prowler-scan.bicep bicepconfig.json
-	$(BICEP) build prowler-scan.bicep --outfile /tmp/prowler-scan.check.json
+check: prowler-scan.bicep
+	$(BICEP_BUILD) prowler-scan.bicep --outfile /tmp/prowler-scan.check.json
 	diff -q prowler-scan.json /tmp/prowler-scan.check.json
+	python3 sync_docs_template.py --check
 	rm /tmp/prowler-scan.check.json
 
 clean:

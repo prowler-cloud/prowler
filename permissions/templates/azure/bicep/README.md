@@ -1,12 +1,11 @@
-# Prowler Azure Bicep quick-start
+# Prowler Azure Bicep Template
 
-This directory hosts the Bicep template that powers the **Deploy to Azure**
-button in the Prowler UI (`add-provider` wizard → Azure → Certificate
-authentication). It is the Azure equivalent of the CloudFormation quick-create
-stack under `../../cloudformation/`.
+This directory contains the Bicep source and compiled Azure Resource Manager
+(ARM) JSON template documented in the [Azure authentication
+guide](../../../../docs/user-guide/providers/azure/authentication.mdx).
 
 Deploying `prowler-scan.bicep` at subscription scope grants a **pre-existing**
-App Registration the read-only permissions Prowler needs:
+App Registration the subscription permissions Prowler needs:
 
 1. A subscription-scoped assignment of the built-in `Reader` role.
 2. A subscription-scoped custom role (`ProwlerRole`) with the two extra
@@ -32,89 +31,98 @@ for templates containing `Microsoft.Graph/*` resources.
 A template that includes those resources fails at Portal deploy time with
 `Authorization_RequestDenied: Insufficient privileges to complete the
 operation` from Microsoft Graph, regardless of the deploying user's Entra
-ID role — a **Global Administrator** hits the same wall. The wizard
-therefore splits the flow: the user creates the App Registration and
-uploads the certificate manually in the Portal (both operations *are*
-supported through the Portal UI), then this template only grants that
-existing service principal the RBAC roles Prowler needs.
+ID role — a **Global Administrator** hits the same wall. Create the App
+Registration and upload the certificate separately, then use this template to
+grant the existing Service Principal the RBAC roles Prowler needs.
 
 ## Required permissions to run the deployment
 
-The account that clicks **Deploy to Azure** (or runs `az deployment sub
-create` locally) needs `Owner` on the target subscription. That is enough
+The account that deploys the template needs `Owner` on the target subscription.
+That is enough
 to create the custom role definition and assign both roles. `Contributor`
 is not sufficient because it cannot create role assignments.
 
-Creating the App Registration and uploading its certificate (the manual
-Portal steps *before* the Deploy to Azure click) require either the tenant
-setting *Users can register applications* to be enabled, or one of
-`Application Administrator`, `Cloud Application Administrator`, or
-`Global Administrator` in Entra ID. The wizard surfaces these prerequisites
-on the Certificate Authentication step.
+Creating and managing the App Registration requires the relevant Microsoft
+Entra ID permission. App Registration creation is available without an
+administrator when the tenant setting _Users can register applications_ is
+enabled. An administrator authorized to grant tenant-wide consent must approve
+the Microsoft Graph application permissions.
 
 ## Files
 
 - `prowler-scan.bicep` — Bicep source (source of truth). Vanilla ARM only —
   no `Microsoft.Graph` extension, so it deploys cleanly through the Portal.
-- `prowler-scan.json` — compiled ARM JSON. **This is the artifact the
-  Deploy to Azure button loads** — Azure Portal's
+- `prowler-scan.json` — compiled ARM JSON. Azure Portal's
   `#create/Microsoft.Template/uri/<url>` deep link only accepts ARM JSON,
   not raw Bicep source. Keep it committed and in sync with the `.bicep`.
-- `bicepconfig.json` — kept for the `az bicep build` invocation; no
-  extensions are required now that Microsoft.Graph resources have moved
-  to the manual Portal step, but the config file lets us re-add the
-  extension if a future Microsoft update supports Portal deployments.
-- `Makefile` — `make build` regenerates the JSON; `make check` fails when
-  the JSON is stale relative to the Bicep source (used by CI).
+- `sync_docs_template.py` — copies the canonical JSON bytes to the public docs
+  asset and generates the MDX code snippet shown in the authentication guide.
+- `Makefile` — `make build` regenerates the JSON and synchronizes both docs
+  outputs; `make check` fails when the Bicep build or either docs output drifts.
 
-Both files are hosted at:
+Prowler documentation serves the compiled JSON at:
 
 ```text
-https://prowler-cloud-public.s3.eu-west-1.amazonaws.com/permissions/templates/azure/bicep/prowler-scan.json
-https://prowler-cloud-public.s3.eu-west-1.amazonaws.com/permissions/templates/azure/bicep/prowler-scan.bicep
+https://docs.prowler.com/assets/templates/azure/prowler-scan.json
 ```
 
-The Deploy to Azure button opens
+The **Deploy to Azure** link in the authentication guide opens
 `https://portal.azure.com/#create/Microsoft.Template/uri/<encoded-json-url>`,
-which loads the ARM JSON into the Portal deployment wizard.
+which loads the documentation-hosted ARM JSON into Azure Portal. The Bicep
+source remains in this directory and is not served as a public asset.
 
 ## Regenerating the ARM JSON
 
-After editing `prowler-scan.bicep`, run:
+The Makefile uses the standalone Bicep CLI by default. After editing
+`prowler-scan.bicep`, run:
 
 ```bash
 make build
+make check
 ```
 
-Requires the Bicep CLI. Install with `az bicep install` or grab the
-standalone binary from <https://github.com/Azure/bicep/releases>.
+Download the standalone binary from
+<https://github.com/Azure/bicep/releases>. To use the Azure CLI wrapper
+instead, install it and pass the wrapper command explicitly:
 
-## Manual App Registration + certificate steps (what the wizard guides)
+```bash
+az bicep install
+make build BICEP='az bicep'
+make check BICEP='az bicep'
+```
+
+The Makefile adds Azure CLI's required `--file` option when
+`BICEP='az bicep'` is set.
+
+## Manual App Registration and Certificate Steps
 
 1. **Create the App Registration** in Portal → **Microsoft Entra ID** →
    **App registrations** → **New registration**. Give it any name, keep
-   the default *single tenant* audience, no redirect URI.
+   the default _single tenant_ audience, no redirect URI.
 2. **Upload the certificate** on the same App Registration → **Certificates
    and secrets** → **Certificates** tab → **Upload certificate**. Upload
-   the `.cer` (public) file you generated. Prowler's *Generate certificate
-   for me* button in the wizard produces a base64 file that decodes back to
-   the required `.cer` (see the wizard for the exact one-liner).
-3. **Copy the Service Principal Object ID**: Portal → **Microsoft Entra
+   the public `.cer` file. Prowler's **Generate certificate** button downloads
+   `prowler-cert.cer` directly and fills the private bundle field.
+3. **Grant Microsoft Graph permissions** on the App Registration. Add the
+   `AuditLog.Read.All`, `Directory.Read.All` (or `Domain.Read.All`), and
+   `Policy.Read.All` application permissions, then grant admin consent.
+4. **Copy the Service Principal Object ID**: Portal → **Microsoft Entra
    ID** → **Enterprise applications** → search for the app you just
    created → click it → **Object ID** on the Overview page. That is the
    value the Bicep template asks for as `servicePrincipalObjectId`. It is
    NOT the same as the App Registration's Object ID (Enterprise
    applications and App registrations are two separate objects with
    separate Object IDs — same App ID / Client ID, different Object IDs).
-4. **Copy the Application (client) ID** from the App Registration overview
-   — you paste this in the Prowler wizard's *Client ID* field.
+5. **Copy the Application (client) ID** from the App Registration overview
+   — provide this value in Prowler's _Client ID_ field.
 
 ### Certificate generation cheatsheet
 
-`Generate certificate for me` in the wizard is the easiest option — it
-generates a keypair in your browser, auto-fills the private key into the
-wizard, and downloads a text file with the base64-encoded public
-certificate you upload to the App Registration.
+**Generate certificate** in Prowler is the easiest option — it
+generates a keypair in your browser, auto-fills the base64-encoded
+certificate and private key bundle into the wizard, and downloads the raw
+DER public certificate as `prowler-cert.cer` for upload to the App
+Registration.
 
 If you prefer the command line:
 
@@ -134,7 +142,7 @@ openssl req -x509 -newkey rsa:4096 -keyout prowler.key -out prowler.crt \
 cat prowler.crt prowler.key > prowler-bundle.pem
 CERT_BUNDLE_BASE64=$(base64 < prowler-bundle.pem | tr -d '\n')
 
-echo "Certificate Private Key for Prowler wizard: $CERT_BUNDLE_BASE64"
+echo "Certificate and Private Key Bundle for Prowler: $CERT_BUNDLE_BASE64"
 ```
 
 #### Windows (PowerShell)
@@ -148,12 +156,12 @@ $cert = New-SelfSignedCertificate -Subject "CN=Prowler" `
 # Save the .cer to upload in the Portal
 Export-Certificate -Cert $cert -FilePath prowler.cer
 
-# Private key (PKCS#12), base64-encoded — paste into the Prowler wizard as
-# Certificate Private Key. Keep secret.
+# Certificate and private key bundle (PKCS#12), base64-encoded — paste into
+# Prowler. Keep secret.
 $pfxBytes = $cert.Export('Pfx', '')
 $keyBase64 = [Convert]::ToBase64String($pfxBytes)
 
-Write-Host "Certificate Private Key for Prowler wizard: $keyBase64"
+Write-Host "Certificate and Private Key Bundle for Prowler: $keyBase64"
 ```
 
 ## Deploying manually (CLI, when the button is not an option)
@@ -176,18 +184,17 @@ az deployment sub create \
     --parameters servicePrincipalObjectId=<sp-object-id>
 ```
 
-## After the deployment
+## After the Deployment
 
-Paste the following into the Prowler wizard's Certificate Authentication form:
+Paste the following into Prowler's Certificate Authentication form:
 
 - **Tenant ID** — the `tenantId` output (also visible in Portal → Entra ID
   → Overview).
 - **Client ID** — the Application (client) ID of the App Registration you
   created manually in step 1 of the manual flow above.
-- **Certificate Private Key** — the base64-encoded PEM bundle (certificate
-  + private key) or PKCS#12 export from the generation step. This is
-  Prowler's copy of the private half of the keypair; it never leaves the
-  wizard and never touches Azure.
+- **Certificate and Private Key Bundle** — the base64-encoded PEM bundle
+  (certificate + private key) or PKCS#12 export from the generation step.
+  This bundle is submitted to Prowler and never touches Azure.
 
 The manual fallback described in the Azure authentication docs (client
 secrets, sovereign clouds, personal accounts) remains supported for

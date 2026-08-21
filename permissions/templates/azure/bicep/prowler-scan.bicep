@@ -2,7 +2,7 @@
 // Prowler quick-start deployment (RBAC only)
 //
 // Subscription-scoped template that grants a pre-existing App Registration
-// / Service Principal the read-only permissions Prowler needs to scan an
+// / Service Principal the permissions Prowler needs to scan an
 // Azure subscription:
 //
 //   1. Assignment of the built-in `Reader` role at subscription scope so
@@ -60,7 +60,7 @@ resource prowlerRole 'Microsoft.Authorization/roleDefinitions@2022-05-01-preview
   name: customRoleDefinitionName
   properties: {
     roleName: customRoleName
-    description: 'Role used by Prowler for checks that require read-only access to Azure resources beyond the built-in Reader role.'
+    description: 'Role used by Prowler for checks that require Azure actions beyond the built-in Reader role.'
     type: 'CustomRole'
     assignableScopes: [
       subscription().id
