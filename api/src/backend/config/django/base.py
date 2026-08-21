@@ -1,3 +1,4 @@
+import logging
 from datetime import timedelta
 
 from config.custom_logging import LOGGING  # noqa
@@ -314,6 +315,57 @@ ATTACK_PATHS_SCAN_INACTIVITY_THRESHOLD_MINUTES = env.int(
 ATTACK_PATHS_SCAN_STALE_THRESHOLD_MINUTES = env.int(
     "ATTACK_PATHS_SCAN_STALE_THRESHOLD_MINUTES", 960
 )  # 16h
+
+# Stale scan cleanup. A scan whose worker dies mid-run is stranded; because scans
+# run one-at-a-time per provider (#11848), that also blocks every queued scan for
+# the provider. The periodic `scan-cleanup-stale-scans` task fails such scans and
+# drains the queue. A scan whose worker is alive, or whose liveness could not be
+# established, is only reaped past the stale ceiling; a scan whose worker is
+# confirmed gone is reaped after the shorter inactivity window.
+SCAN_INACTIVITY_THRESHOLD_MINUTES = env.int("SCAN_INACTIVITY_THRESHOLD_MINUTES", 30)
+SCAN_STALE_THRESHOLD_MINUTES = env.int("SCAN_STALE_THRESHOLD_MINUTES", 2880)  # 48h
+
+# Failing a scan is destructive, so an unsafe threshold policy disables the
+# watchdog instead of silently widening what it may reap. Startup is deliberately
+# NOT aborted: a config typo must not take down the API, worker and Beat.
+_scan_cleanup_config_error = None
+if SCAN_INACTIVITY_THRESHOLD_MINUTES <= 0 or SCAN_STALE_THRESHOLD_MINUTES <= 0:
+    _scan_cleanup_config_error = (
+        "SCAN_INACTIVITY_THRESHOLD_MINUTES and SCAN_STALE_THRESHOLD_MINUTES must "
+        "both be positive"
+    )
+elif SCAN_STALE_THRESHOLD_MINUTES < SCAN_INACTIVITY_THRESHOLD_MINUTES:
+    _scan_cleanup_config_error = (
+        "SCAN_STALE_THRESHOLD_MINUTES must be greater than or equal to "
+        "SCAN_INACTIVITY_THRESHOLD_MINUTES, otherwise a scan on a live worker "
+        "would be reaped sooner than one whose worker is confirmed gone"
+    )
+
+SCAN_CLEANUP_ENABLED = _scan_cleanup_config_error is None
+# Exported so the task can log the reason itself. Settings are imported before
+# Django applies `LOGGING`, so the message below is emitted by the logging
+# last-resort handler and does not reach the configured structured handlers.
+SCAN_CLEANUP_CONFIG_ERROR = _scan_cleanup_config_error
+
+if _scan_cleanup_config_error:
+    logging.getLogger(__name__).error(
+        "Stale scan cleanup is DISABLED - invalid configuration: %s",
+        _scan_cleanup_config_error,
+    )
+else:
+    # The stale ceiling must not undercut how long `scan-perform` is allowed to
+    # run, or a legitimately long scan on a live worker could be reaped early.
+    _scan_hard_limit_minutes = (
+        env.int("DJANGO_CELERY_LONG_TASK_TIME_LIMIT", 48 * 60 * 60) // 60
+    )
+    if SCAN_STALE_THRESHOLD_MINUTES < _scan_hard_limit_minutes:
+        logging.getLogger(__name__).warning(
+            "SCAN_STALE_THRESHOLD_MINUTES (%s) is below the scan hard time limit "
+            "(%s minutes); a long-running scan on a live worker may be reaped "
+            "before Celery stops it",
+            SCAN_STALE_THRESHOLD_MINUTES,
+            _scan_hard_limit_minutes,
+        )
 
 # Selects where the persistent attack-paths graph is stored. The scan
 # temporary database is always Neo4j; only the sink is configurable.
