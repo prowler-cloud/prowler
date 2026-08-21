@@ -10,6 +10,7 @@ compliant.
 from unittest import mock
 
 import botocore
+import pytest
 from botocore.exceptions import ClientError
 from moto import mock_aws
 
@@ -51,6 +52,8 @@ def _mock(
     fail_get_version=(),
     route_draft=False,
     no_aliases=(),
+    alias_status="PREPARED",
+    alias_invocation_state=None,
 ):
     """Build a _make_api_call replacement for a two-agent account.
 
@@ -61,6 +64,10 @@ def _mock(
         fail_get_version: agent ids whose GetAgentVersion must raise.
         route_draft: route the alias at DRAFT instead of a numbered version.
         no_aliases: agent ids that have no alias at all.
+        alias_status: agentAliasStatus each alias reports.
+        alias_invocation_state: aliasInvocationState each alias reports; omitted
+            from the response entirely when None, which is what the API does for
+            an alias never set to reject.
     """
 
     def _call(self, operation_name, kwarg):
@@ -100,18 +107,17 @@ def _mock(
                 )
             if agent_id in no_aliases:
                 return {"agentAliasSummaries": []}
-            return {
-                "agentAliasSummaries": [
-                    {
-                        "agentAliasId": "alias-1",
-                        "agentAliasName": "production",
-                        "agentAliasStatus": "PREPARED",
-                        "routingConfiguration": [
-                            {"agentVersion": "DRAFT" if route_draft else routed_version}
-                        ],
-                    }
-                ]
+            alias = {
+                "agentAliasId": "alias-1",
+                "agentAliasName": "production",
+                "agentAliasStatus": alias_status,
+                "routingConfiguration": [
+                    {"agentVersion": "DRAFT" if route_draft else routed_version}
+                ],
             }
+            if alias_invocation_state is not None:
+                alias["aliasInvocationState"] = alias_invocation_state
+            return {"agentAliasSummaries": [alias]}
         if operation_name == "GetAgentVersion":
             agent_id = kwarg["agentId"]
             if agent_id in fail_get_version:
@@ -342,3 +348,100 @@ class Test_agent_version_roles:
         assert {report.status for report in results} == {"FAIL"}
         for report in results:
             assert "through deployed version 2" in report.status_extended
+
+
+class Test_alias_must_be_invocable:
+    """A version only an unreachable alias routes to is not live exposure.
+
+    Widening the audit from the working draft to every routed version closes a
+    false PASS and opens the symmetric false FAIL: an alias that cannot invoke
+    the version it points at contributes no exposure, so the role on that
+    version must not count as shared. Both state fields come from
+    ListAgentAliases -- `aliasInvocationState` is ACCEPT_INVOCATIONS |
+    REJECT_INVOCATIONS, `agentAliasStatus` is CREATING | PREPARED | FAILED |
+    UPDATING | DELETING | DISSOCIATED.
+    """
+
+    @mock_aws
+    def test_reject_invocations_alias_does_not_share_its_version_role(self):
+        """An alias set to REJECT_INVOCATIONS cannot invoke the routed version.
+
+        Both agents' aliases route at a version cut with one shared role, so
+        judging routing alone reports FAIL -- but neither alias will accept an
+        invocation, so nothing is running under that role.
+        """
+        service, results = _run(
+            _mock(
+                {AGENT_A_ID: SHARED_VERSION_ARN, AGENT_B_ID: SHARED_VERSION_ARN},
+                alias_invocation_state="REJECT_INVOCATIONS",
+            )
+        )
+
+        for agent in service.all_agents.values():
+            assert agent.versions_listed is True, "the aliases WERE listed"
+            assert agent.version_role_arns == {}, "a rejecting alias routes nothing"
+
+        assert len(results) == 2
+        assert {report.status for report in results} == {"PASS"}
+        for report in results:
+            assert "has a dedicated execution role" in report.status_extended
+
+    @pytest.mark.parametrize("alias_status", ["FAILED", "DELETING", "DISSOCIATED"])
+    @mock_aws
+    def test_terminal_alias_status_does_not_share_its_version_role(self, alias_status):
+        """A failed, deleting or dissociated alias routes no live invocation."""
+        service, results = _run(
+            _mock(
+                {AGENT_A_ID: SHARED_VERSION_ARN, AGENT_B_ID: SHARED_VERSION_ARN},
+                alias_status=alias_status,
+            )
+        )
+
+        for agent in service.all_agents.values():
+            assert agent.version_role_arns == {}
+
+        assert len(results) == 2
+        assert {report.status for report in results} == {"PASS"}
+
+    @pytest.mark.parametrize("alias_status", ["CREATING", "UPDATING"])
+    @mock_aws
+    def test_in_flight_alias_status_still_shares_its_version_role(self, alias_status):
+        """CREATING and UPDATING are deliberately treated as active.
+
+        Both converge on serving the version they route to, so the role on that
+        version is live exposure. Excluding them would report a shared role as
+        compliant for as long as the alias takes to settle.
+        """
+        service, results = _run(
+            _mock(
+                {AGENT_A_ID: SHARED_VERSION_ARN, AGENT_B_ID: SHARED_VERSION_ARN},
+                alias_status=alias_status,
+            )
+        )
+
+        for agent in service.all_agents.values():
+            assert agent.version_role_arns == {"3": SHARED_VERSION_ARN}
+
+        assert len(results) == 2
+        assert {report.status for report in results} == {"FAIL"}
+        for report in results:
+            assert SHARED_VERSION_ARN in report.status_extended
+
+    @mock_aws
+    def test_absent_invocation_state_still_shares_its_version_role(self):
+        """aliasInvocationState is optional; absent means never set to reject.
+
+        Reading absence as "not accepting" would report every alias that was
+        never explicitly enabled as dead, and a genuinely shared role as PASS.
+        """
+        service, results = _run(
+            _mock(
+                {AGENT_A_ID: SHARED_VERSION_ARN, AGENT_B_ID: SHARED_VERSION_ARN},
+                alias_invocation_state=None,
+            )
+        )
+
+        for agent in service.all_agents.values():
+            assert agent.version_role_arns == {"3": SHARED_VERSION_ARN}
+
+        assert {report.status for report in results} == {"FAIL"}

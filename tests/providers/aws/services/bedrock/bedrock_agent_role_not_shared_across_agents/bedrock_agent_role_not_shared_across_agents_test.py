@@ -519,3 +519,115 @@ class Test_bedrock_agent_role_not_shared_across_agents:
         assert by_id[AGENT_A_ID].status == "MANUAL"
         assert AGENT_B_NAME in by_id[AGENT_A_ID].status_extended
         assert "PASS" not in {report.status for report in result}
+
+
+class Test_scoped_scan_still_sees_the_sharing:
+    """A --resource-arn scoped scan must not turn a shared role into a PASS.
+
+    Collectors apply is_resource_filtered at COLLECTION time, so
+    bedrock_agent_client.agents holds only the agents the operator selected.
+    Whether a role is shared is a property of every agent that holds it, so an
+    index built from the filtered set cannot see the agent that proves the
+    violation -- and an operator filter is not a scan error, so nothing marks the
+    inventory incomplete either. The check therefore aggregates over all_agents
+    and filters only when emitting findings.
+    """
+
+    def _run_scoped(self, audit_resources):
+        """Execute the check with a scan scoped to the given resource ARNs."""
+        from prowler.providers.aws.services.bedrock.bedrock_service import BedrockAgent
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider._audit_resources = audit_resources
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
+            service = BedrockAgent(aws_provider)
+        with mock.patch(
+            "prowler.providers.aws.services.bedrock."
+            "bedrock_agent_role_not_shared_across_agents."
+            "bedrock_agent_role_not_shared_across_agents.bedrock_agent_client",
+            new=service,
+        ):
+            from prowler.providers.aws.services.bedrock.bedrock_agent_role_not_shared_across_agents.bedrock_agent_role_not_shared_across_agents import (
+                bedrock_agent_role_not_shared_across_agents,
+            )
+
+            return service, bedrock_agent_role_not_shared_across_agents().execute()
+
+    @mock_aws
+    @mock.patch(
+        "botocore.client.BaseClient._make_api_call",
+        new=_agent_mock(
+            [
+                (AGENT_A_ID, AGENT_A_NAME, SHARED_ROLE_ARN),
+                (AGENT_B_ID, AGENT_B_NAME, SHARED_ROLE_ARN),
+            ]
+        ),
+    )
+    def test_selecting_one_of_two_sharing_agents_still_fails(self):
+        """The unselected agent is what proves the role is shared.
+
+        Only agent A is in scope, so exactly one finding is emitted -- but agent
+        B, filtered out of the report, still holds the same role, so agent A's
+        role is not dedicated. Reporting PASS here was the reproducible false
+        PASS a scoped scan produced.
+        """
+        service, result = self._run_scoped([AGENT_A_ARN])
+
+        # The report set is narrowed; the role index is not.
+        assert list(service.agents) == [AGENT_A_ARN]
+        assert sorted(service.all_agents) == sorted([AGENT_A_ARN, AGENT_B_ARN])
+
+        assert len(result) == 1
+        assert result[0].resource_id == AGENT_A_ID
+        assert result[0].resource_arn == AGENT_A_ARN
+        assert result[0].region == AWS_REGION_US_EAST_1
+        assert result[0].status == "FAIL"
+        assert SHARED_ROLE_ARN in result[0].status_extended
+        # The out-of-scope agent is still named, because it is the evidence.
+        assert AGENT_B_NAME in result[0].status_extended
+
+    @mock_aws
+    @mock.patch(
+        "botocore.client.BaseClient._make_api_call",
+        new=_agent_mock(
+            [
+                (AGENT_A_ID, AGENT_A_NAME, ROLE_A_ARN),
+                (AGENT_B_ID, AGENT_B_NAME, ROLE_B_ARN),
+            ]
+        ),
+    )
+    def test_scoped_scan_on_a_genuinely_dedicated_role_passes(self):
+        """Completeness must not manufacture a FAIL either.
+
+        Aggregating over the whole account is only correct if a genuinely
+        dedicated role still passes when the scan is scoped.
+        """
+        service, result = self._run_scoped([AGENT_A_ARN])
+
+        assert list(service.agents) == [AGENT_A_ARN]
+        assert len(service.all_agents) == 2
+        assert len(result) == 1
+        assert result[0].resource_id == AGENT_A_ID
+        assert result[0].status == "PASS"
+        assert "has a dedicated execution role" in result[0].status_extended
+
+    @mock_aws
+    @mock.patch(
+        "botocore.client.BaseClient._make_api_call",
+        new=_agent_mock(
+            [
+                (AGENT_A_ID, AGENT_A_NAME, SHARED_ROLE_ARN),
+                (AGENT_B_ID, AGENT_B_NAME, SHARED_ROLE_ARN),
+            ]
+        ),
+    )
+    def test_unscoped_scan_is_unchanged(self):
+        """With no filter, every agent is both aggregated and reported."""
+        service, result = self._run_scoped(None)
+
+        assert sorted(service.agents) == sorted(service.all_agents)
+        assert len(result) == 2
+        assert {report.status for report in result} == {"FAIL"}
