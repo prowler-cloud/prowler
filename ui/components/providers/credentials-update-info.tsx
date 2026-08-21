@@ -2,6 +2,7 @@
 
 import { SelectViaAlibabaCloud } from "@/components/providers/workflow/forms/select-credentials-type/alibabacloud";
 import { SelectViaAWS } from "@/components/providers/workflow/forms/select-credentials-type/aws";
+import { SelectViaAzure } from "@/components/providers/workflow/forms/select-credentials-type/azure";
 import { SelectViaCloudflare } from "@/components/providers/workflow/forms/select-credentials-type/cloudflare";
 import { SelectViaGCP } from "@/components/providers/workflow/forms/select-credentials-type/gcp";
 import { SelectViaGitHub } from "@/components/providers/workflow/forms/select-credentials-type/github";
@@ -20,6 +21,9 @@ export const CredentialsUpdateInfo = ({
   const renderSelectComponent = () => {
     if (providerType === "aws") {
       return <SelectViaAWS initialVia={initialVia} />;
+    }
+    if (providerType === "azure") {
+      return <SelectViaAzure initialVia={initialVia} />;
     }
     if (providerType === "gcp") {
       return <SelectViaGCP initialVia={initialVia} />;

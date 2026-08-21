@@ -10,8 +10,10 @@ import {
   buildGitHubPersonalAccessTokenOrgUrl,
   getAWSCredentialsTemplateLinks,
   getAWSOrgDeploymentQuickLink,
+  getAzureDeploymentQuickLink,
   PRECONFIGURED_CREDENTIAL_URLS,
   getProviderHelpText,
+  PROWLER_AZURE_ARM_TEMPLATE_URL,
   PROWLER_CF_TEMPLATE_URL,
 } from "./external-urls";
 
@@ -282,6 +284,24 @@ describe("buildGitHubPersonalAccessTokenOrgUrl", () => {
 
     expect(url.searchParams.get("target_name")).toBe("prowler & friends");
     expect(url.search).toContain("target_name=prowler+%26+friends");
+  });
+});
+
+describe("getAzureDeploymentQuickLink", () => {
+  it("uses the public Mintlify documentation asset", () => {
+    // Given / When
+    const url = getAzureDeploymentQuickLink();
+
+    // Then
+    expect(PROWLER_AZURE_ARM_TEMPLATE_URL).toBe(
+      "https://docs.prowler.com/assets/templates/azure/prowler-scan.json",
+    );
+    expect(url).toBe(
+      "https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fdocs.prowler.com%2Fassets%2Ftemplates%2Fazure%2Fprowler-scan.json",
+    );
+    expect(url).not.toContain("localhost");
+    expect(url).not.toContain("prowler-cloud-public.s3");
+    expect(decodeURIComponent(url)).not.toContain("/uri//templates/azure/");
   });
 });
 

@@ -5,6 +5,7 @@ from api.v1.serializer_utils.integrations import (
 )
 from api.v1.serializer_utils.providers import ProviderSecretField
 from api.v1.serializers import (
+    AzureProviderSecret,
     ImageProviderSecret,
     IntegrationSerializer,
     IntegrationUpdateSerializer,
@@ -196,6 +197,143 @@ class TestImageProviderSecret:
         serializer = ImageProviderSecret(data={"registry_password": "pass"})
         assert not serializer.is_valid()
         assert "non_field_errors" in serializer.errors
+
+
+class TestAzureProviderSecret:
+    """Coverage for the Azure provider secret serializer, including the
+    certificate authentication path added for the Deploy-to-Azure quick-start
+    (PROWLER-2378)."""
+
+    BASE = {
+        "client_id": "87654321-4321-4321-4321-210987654321",
+        "tenant_id": "12345678-1234-1234-1234-123456789012",
+    }
+
+    @staticmethod
+    def certificate_bundle():
+        import base64
+        from datetime import UTC, datetime, timedelta
+
+        from cryptography import x509
+        from cryptography.hazmat.primitives import hashes, serialization
+        from cryptography.hazmat.primitives.asymmetric import rsa
+        from cryptography.x509.oid import NameOID
+
+        private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "Prowler")])
+        certificate = (
+            x509.CertificateBuilder()
+            .subject_name(subject)
+            .issuer_name(subject)
+            .public_key(private_key.public_key())
+            .serial_number(x509.random_serial_number())
+            .not_valid_before(datetime.now(UTC))
+            .not_valid_after(datetime.now(UTC) + timedelta(days=1))
+            .sign(private_key, hashes.SHA256())
+        )
+        bundle = certificate.public_bytes(
+            serialization.Encoding.PEM
+        ) + private_key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.NoEncryption(),
+        )
+        return base64.b64encode(bundle).decode("ascii")
+
+    def test_accepts_client_secret_only(self):
+        # Backwards-compatibility guard: rows saved by the previous serializer
+        # only carry `client_secret` and must keep round-tripping cleanly.
+        serializer = AzureProviderSecret(
+            data={**self.BASE, "client_secret": "fake-client-secret"}
+        )
+        assert serializer.is_valid(), serializer.errors
+        assert serializer.validated_data["client_secret"] == "fake-client-secret"
+        assert "certificate_content" not in serializer.validated_data
+
+    def test_accepts_certificate_content_only(self):
+        certificate_content = self.certificate_bundle()
+        serializer = AzureProviderSecret(
+            data={**self.BASE, "certificate_content": certificate_content}
+        )
+        assert serializer.is_valid(), serializer.errors
+        assert serializer.validated_data["certificate_content"] == certificate_content
+        assert "client_secret" not in serializer.validated_data
+
+    def test_rejects_both_client_secret_and_certificate_content(self):
+        # Mutually exclusive: the backend must reject a payload carrying both
+        # so the ambiguity never reaches the SDK where `certificate_content`
+        # silently wins.
+        serializer = AzureProviderSecret(
+            data={
+                **self.BASE,
+                "client_secret": "fake-client-secret",
+                "certificate_content": self.certificate_bundle(),
+            }
+        )
+        assert not serializer.is_valid()
+        assert "non_field_errors" in serializer.errors
+
+    def test_rejects_missing_secret_and_certificate(self):
+        # At least one credential material must be provided.
+        serializer = AzureProviderSecret(data=self.BASE)
+        assert not serializer.is_valid()
+        assert "non_field_errors" in serializer.errors
+
+    def test_rejects_non_base64_certificate_content(self):
+        # `validate_certificate_content` short-circuits obvious garbage before
+        # it reaches the SDK, which would otherwise fail deep in azure-identity.
+        serializer = AzureProviderSecret(
+            data={**self.BASE, "certificate_content": "not!valid@base64$$"}
+        )
+        assert not serializer.is_valid()
+        assert "certificate_content" in serializer.errors
+
+    def test_rejects_invalid_tenant_and_client_ids(self):
+        serializer = AzureProviderSecret(
+            data={
+                "tenant_id": "not-a-uuid",
+                "client_id": "also-not-a-uuid",
+                "client_secret": "fake-client-secret",
+            }
+        )
+
+        assert not serializer.is_valid()
+        assert "tenant_id" in serializer.errors
+        assert "client_id" in serializer.errors
+
+    def test_rejects_key_only_certificate_content(self):
+        import base64
+
+        from cryptography.hazmat.primitives import serialization
+        from cryptography.hazmat.primitives.asymmetric import rsa
+
+        private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+        key_only_pem = private_key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.NoEncryption(),
+        )
+        serializer = AzureProviderSecret(
+            data={
+                **self.BASE,
+                "certificate_content": base64.b64encode(key_only_pem).decode("ascii"),
+            }
+        )
+
+        assert not serializer.is_valid()
+        assert "certificate_content" in serializer.errors
+
+    def test_rejects_empty_strings_for_both(self):
+        # DRF's CharField rejects "" at field-level before `validate()` runs.
+        # The errors surface per-field rather than as non_field_errors, but
+        # the important thing is that empty strings NEVER get persisted as
+        # credentials.
+        serializer = AzureProviderSecret(
+            data={**self.BASE, "client_secret": "", "certificate_content": ""}
+        )
+        assert not serializer.is_valid()
+        assert "client_secret" in serializer.errors
+        assert "certificate_content" in serializer.errors
 
 
 class TestOracleCloudProviderSecret:

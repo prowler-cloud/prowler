@@ -54,6 +54,79 @@ describe("addCredentialsRoleFormSchema", () => {
   });
 });
 
+describe("addCredentialsFormSchema - azure certificate", () => {
+  const BASE_AZURE_VALUES = {
+    [ProviderCredentialFields.PROVIDER_ID]: "provider-azure-1",
+    [ProviderCredentialFields.PROVIDER_TYPE]: "azure",
+    [ProviderCredentialFields.TENANT_ID]:
+      "12345678-1234-1234-1234-123456789012",
+    [ProviderCredentialFields.CLIENT_ID]:
+      "87654321-4321-4321-4321-210987654321",
+    [ProviderCredentialFields.CERTIFICATE_CONTENT]: "Y2VydGlmaWNhdGU=",
+  } as const;
+
+  it("rejects malformed tenant and client UUIDs", () => {
+    // Given
+    const schema = addCredentialsFormSchema("azure", "app_certificate");
+
+    // When
+    const result = schema.safeParse({
+      ...BASE_AZURE_VALUES,
+      [ProviderCredentialFields.TENANT_ID]: "not-a-uuid",
+      [ProviderCredentialFields.CLIENT_ID]: "also-not-a-uuid",
+    });
+
+    // Then
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    expect(result.error.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          path: [ProviderCredentialFields.TENANT_ID],
+        }),
+        expect.objectContaining({
+          path: [ProviderCredentialFields.CLIENT_ID],
+        }),
+      ]),
+    );
+  });
+
+  it("rejects malformed base64 certificate content", () => {
+    // Given
+    const schema = addCredentialsFormSchema("azure", "app_certificate");
+
+    // When
+    const result = schema.safeParse({
+      ...BASE_AZURE_VALUES,
+      [ProviderCredentialFields.CERTIFICATE_CONTENT]: "not!base64",
+    });
+
+    // Then
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    expect(result.error.issues).toContainEqual(
+      expect.objectContaining({
+        message: "Certificate and Private Key Bundle must be valid base64",
+        path: [ProviderCredentialFields.CERTIFICATE_CONTENT],
+      }),
+    );
+  });
+
+  it("rejects simultaneous client-secret and certificate credentials", () => {
+    // Given
+    const schema = addCredentialsFormSchema("azure", "app_certificate");
+
+    // When
+    const result = schema.safeParse({
+      ...BASE_AZURE_VALUES,
+      [ProviderCredentialFields.CLIENT_SECRET]: "fake-client-secret",
+    });
+
+    // Then
+    expect(result.success).toBe(false);
+  });
+});
+
 describe("addProviderFormSchema - okta", () => {
   const validUidFixtures = [
     "acme.okta.com",

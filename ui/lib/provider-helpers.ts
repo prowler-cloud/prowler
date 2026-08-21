@@ -87,6 +87,7 @@ export const getProviderFormType = (
   // Providers that need credential type selection
   const needsSelector = [
     "aws",
+    "azure",
     "gcp",
     "github",
     "m365",
@@ -115,6 +116,17 @@ export const getProviderFormType = (
   if (
     providerType === "github" &&
     ["personal_access_token", "oauth_app", "github_app"].includes(via || "")
+  ) {
+    return "credentials";
+  }
+
+  // Azure credential types — shares the M365 `app_client_secret` /
+  // `app_certificate` via values because both providers authenticate against
+  // an Entra ID App Registration; keeping the via strings identical lets the
+  // per-method docs URLs and the wizard state machine reuse the same logic.
+  if (
+    providerType === "azure" &&
+    ["app_client_secret", "app_certificate"].includes(via || "")
   ) {
     return "credentials";
   }

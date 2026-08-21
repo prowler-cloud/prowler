@@ -11,6 +11,7 @@ class AzureIdentityInfo(BaseModel):
     identity_type: str = ""
     tenant_ids: list[str] = []
     tenant_domain: str = "Unknown tenant domain (missing AAD permissions)"
+    certificate_thumbprint: str = ""
     subscriptions: dict = {}
     locations: dict = {}
 
