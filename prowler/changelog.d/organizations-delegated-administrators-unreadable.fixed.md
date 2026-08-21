@@ -1,1 +1,1 @@
-`organizations_delegated_administrators` no longer reports PASS when the delegated administrator list could not be read because of a throttle or service error, which previously returned an empty list with no log line
+`organizations_delegated_administrators` now reports MANUAL whenever the delegated administrator list cannot be read, replacing a PASS on a throttle or service error and no finding at all on an access denial, so scans from an account that cannot call AWS Organizations report the check as unevaluated instead of omitting it
