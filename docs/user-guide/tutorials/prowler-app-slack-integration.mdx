@@ -106,7 +106,7 @@ Prowler validates the selection against Slack and derives the channel name itsel
 
 If the picker reports that no channels are available, the workspace exposes nothing Prowler can see. Create a public channel, or invite `@Prowler` to a private one, then click **Refresh channels**.
 
-A workspace can hold more channels than Prowler reads in one go. When that happens, the picker says so and lists what was read: every listed channel is usable, and a channel missing from a partial list is not necessarily one `@Prowler` has to be invited to.
+A workspace can hold more channels than Prowler reads in one go. When that happens, the picker says so and lists what was read: every listed channel is usable, and a channel missing from a partial list is not necessarily one `@Prowler` has to be invited to. Only listed channels can be selected: **Refresh channels** repeats the same bounded read rather than reading further, and the picker's search filters what was already read, so neither surfaces a channel the read left out.
 
 ## Disconnecting a Slack Workspace
 
