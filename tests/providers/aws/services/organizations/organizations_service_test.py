@@ -378,6 +378,33 @@ class Test_Organizations_Service:
 
         assert organizations.organization.delegated_administrators is None
 
+    def test_list_delegated_administrators_renamed_result_key(self):
+        """A renamed result key reads as unknown, not as no administrators.
+
+        The collector indexes page["DelegatedAdministrators"], so a rename raises
+        KeyError rather than ClientError, reaching the generic handler. That handler
+        must set the sentinel too, or the empty list survives and reports a determined
+        answer from an inventory that was never read.
+        """
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_EU_WEST_1], create_default_organization=False
+        )
+        mock_make_api_call = build_mock_make_api_call()
+
+        def mock_renamed_result_key(self, operation_name, kwarg):
+            if operation_name == "ListDelegatedAdministrators":
+                # Deliberately not validated against the API model: this simulates the
+                # result key being renamed out from under the collector.
+                return {"Administrators": []}
+            return mock_make_api_call(self, operation_name, kwarg)
+
+        with patch(
+            "botocore.client.BaseClient._make_api_call", new=mock_renamed_result_key
+        ):
+            organizations = Organizations(aws_provider)
+
+        assert organizations.organization.delegated_administrators is None
+
     def test_describe_organization_without_master_account_id(self):
         """An organization without MasterAccountId is left unset, not defaulted.
 
