@@ -1,5 +1,6 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.awslambda.awslambda_client import awslambda_client
+from prowler.providers.aws.services.batch.batch_client import batch_client
 from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 
 
@@ -18,6 +19,9 @@ class ec2_securitygroup_not_used(Check):
                 sg_in_lambda = (
                     security_group.id in awslambda_client.security_groups_in_use
                 )
+                # A Batch compute environment scaled down to zero instances
+                # keeps its security groups in configuration without any ENI
+                sg_in_batch = security_group.id in batch_client.security_groups_in_use
                 sg_associated = False
                 for sg in ec2_client.security_groups.values():
                     if security_group.id in sg.associated_sgs:
@@ -25,10 +29,21 @@ class ec2_securitygroup_not_used(Check):
                 if (
                     len(security_group.network_interfaces) == 0
                     and not sg_in_lambda
+                    and not sg_in_batch
                     and not sg_associated
                 ):
-                    report.status = "FAIL"
-                    report.status_extended = f"Security group {security_group.name} ({security_group.id}) it is not being used."
+                    # Compute environments failing to list leaves their security
+                    # group associations unknown, not absent, so reporting the
+                    # group as unused would be a guess. Keep the default PASS
+                    # until discovery succeeds and say why it was not asserted.
+                    if (
+                        security_group.region
+                        in batch_client.compute_environment_lookup_failed_regions
+                    ):
+                        report.status_extended = f"Security group {security_group.name} ({security_group.id}) usage could not be verified because AWS Batch compute environments could not be listed in region {security_group.region}."
+                    else:
+                        report.status = "FAIL"
+                        report.status_extended = f"Security group {security_group.name} ({security_group.id}) it is not being used."
 
                 findings.append(report)
 
