@@ -288,7 +288,7 @@ class TestAzureProviderSecret:
         assert not serializer.is_valid()
         assert "certificate_content" in serializer.errors
 
-    def test_rejects_invalid_tenant_and_client_ids(self):
+    def test_accepts_non_uuid_tenant_and_client_ids_for_backward_compatibility(self):
         serializer = AzureProviderSecret(
             data={
                 "tenant_id": "not-a-uuid",
@@ -297,9 +297,7 @@ class TestAzureProviderSecret:
             }
         )
 
-        assert not serializer.is_valid()
-        assert "tenant_id" in serializer.errors
-        assert "client_id" in serializer.errors
+        assert serializer.is_valid(), serializer.errors
 
     def test_rejects_key_only_certificate_content(self):
         import base64

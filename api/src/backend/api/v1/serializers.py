@@ -2,7 +2,6 @@ import base64
 import json
 import logging
 from datetime import UTC, datetime, timedelta
-from uuid import UUID
 
 import yaml
 from api.celery_utils import decode_celery_field
@@ -1794,24 +1793,6 @@ class AzureProviderSecret(serializers.Serializer):
     client_secret = serializers.CharField(required=False)
     tenant_id = serializers.CharField()
     certificate_content = serializers.CharField(required=False)
-
-    def validate_client_id(self, client_id):
-        try:
-            UUID(client_id)
-        except (TypeError, ValueError) as error:
-            raise serializers.ValidationError(
-                "Client ID must be a valid UUID."
-            ) from error
-        return client_id
-
-    def validate_tenant_id(self, tenant_id):
-        try:
-            UUID(tenant_id)
-        except (TypeError, ValueError) as error:
-            raise serializers.ValidationError(
-                "Tenant ID must be a valid UUID."
-            ) from error
-        return tenant_id
 
     def validate(self, attrs):
         if attrs.get("client_secret") and attrs.get("certificate_content"):
