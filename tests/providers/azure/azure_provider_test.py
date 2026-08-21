@@ -1257,7 +1257,7 @@ class TestAzureProviderCertificateAuth:
 
     @staticmethod
     def _certificate_and_key():
-        from datetime import UTC, datetime, timedelta
+        from datetime import datetime, timedelta, timezone
 
         from cryptography import x509
         from cryptography.hazmat.primitives import hashes
@@ -1272,8 +1272,8 @@ class TestAzureProviderCertificateAuth:
             .issuer_name(subject)
             .public_key(private_key.public_key())
             .serial_number(x509.random_serial_number())
-            .not_valid_before(datetime.now(UTC))
-            .not_valid_after(datetime.now(UTC) + timedelta(days=1))
+            .not_valid_before(datetime.now(timezone.utc))
+            .not_valid_after(datetime.now(timezone.utc) + timedelta(days=1))
             .sign(private_key, hashes.SHA256())
         )
         return certificate, private_key

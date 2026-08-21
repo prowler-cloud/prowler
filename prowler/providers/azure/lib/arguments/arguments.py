@@ -29,6 +29,17 @@ def init_parser(self):
         action="store_true",
         help="Use managed identity authentication to log in against Azure ",
     )
+    azure_auth_modes_group.add_argument(
+        "--certificate-auth",
+        action="store_true",
+        help="Use certificate authentication to log in against Azure",
+    )
+    azure_parser.add_argument(
+        "--certificate-path",
+        nargs="?",
+        default=None,
+        help="Path to the certificate file to be used with --certificate-auth option",
+    )
     # Subscriptions
     azure_subscriptions_subparser = azure_parser.add_argument_group("Subscriptions")
     azure_subscriptions_subparser.add_argument(
