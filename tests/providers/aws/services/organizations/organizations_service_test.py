@@ -429,3 +429,51 @@ class Test_Organizations_Service:
         assert organizations.organization.delegated_service_principals == {
             DELEGATED_ADMIN_ACCOUNT_ID: None
         }
+
+    def test_list_aws_service_access_for_organization_renamed_member_key(self):
+        """A renamed ServicePrincipal member reads as unknown, not as an empty scope."""
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_EU_WEST_1], create_default_organization=False
+        )
+        mock_make_api_call = build_mock_make_api_call()
+
+        def mock_renamed_member_key(self, operation_name, kwarg):
+            if operation_name == "ListAWSServiceAccessForOrganization":
+                # Deliberately not validated against the API model: this simulates the
+                # member key being renamed out from under the collector.
+                return {"EnabledServicePrincipals": [{"Principal": "guardduty"}]}
+            return mock_make_api_call(self, operation_name, kwarg)
+
+        with patch(
+            "botocore.client.BaseClient._make_api_call", new=mock_renamed_member_key
+        ):
+            organizations = Organizations(aws_provider)
+
+        assert organizations.organization.enabled_service_principals is None
+
+    def test_list_delegated_services_for_account_renamed_member_key(self):
+        """A renamed ServicePrincipal member reads as unknown, not as no delegations."""
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_EU_WEST_1], create_default_organization=False
+        )
+        mock_make_api_call = build_mock_make_api_call(
+            delegated_administrators_pages=[
+                [delegated_administrator(DELEGATED_ADMIN_ACCOUNT_ID)]
+            ],
+        )
+
+        def mock_renamed_member_key(self, operation_name, kwarg):
+            if operation_name == "ListDelegatedServicesForAccount":
+                # Deliberately not validated against the API model: this simulates the
+                # member key being renamed out from under the collector.
+                return {"DelegatedServices": [{"Principal": "guardduty"}]}
+            return mock_make_api_call(self, operation_name, kwarg)
+
+        with patch(
+            "botocore.client.BaseClient._make_api_call", new=mock_renamed_member_key
+        ):
+            organizations = Organizations(aws_provider)
+
+        assert organizations.organization.delegated_service_principals == {
+            DELEGATED_ADMIN_ACCOUNT_ID: None
+        }

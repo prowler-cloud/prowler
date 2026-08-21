@@ -50,7 +50,8 @@ class organizations_security_services_delegated_admin_not_management_account(Che
 
         Returns:
             A single report for the organization, or no report when the audited
-            account is not part of an organization.
+            account is not part of an organization or when the organization
+            integrates no security service at all.
         """
         findings = []
 
@@ -86,17 +87,14 @@ class organizations_security_services_delegated_admin_not_management_account(Che
             findings.append(report)
             return findings
 
+        # An organization that integrates no security service administers none of them
+        # organization-wide, so there is nothing to attribute to an account. That is an
+        # empty scope rather than an undetermined one, so it reports nothing, the same
+        # way an account outside an organization does.
         integrated_security_services = sorted(
             SECURITY_SERVICE_PRINCIPALS.intersection(enabled_service_principals)
         )
         if not integrated_security_services:
-            report.status = "MANUAL"
-            report.status_extended = (
-                f"AWS Organization {organization.id} has no security service "
-                f"integrated with the organization, so no security service is "
-                f"administered organization-wide."
-            )
-            findings.append(report)
             return findings
 
         administered_from_management_account = []

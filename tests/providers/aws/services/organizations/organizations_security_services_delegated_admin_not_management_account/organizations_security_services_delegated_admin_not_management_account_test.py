@@ -213,9 +213,13 @@ class Test_organizations_security_services_delegated_admin_not_management_accoun
 
     @mock_aws
     def test_no_security_service_integrated(self):
+        """An empty scope reports nothing, the same as an account outside an organization.
+
+        Trusted access being off for every security service is a determined answer, not
+        an undetermined one, so it must not share the MANUAL status that the unreadable
+        cases above use.
+        """
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
-        conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
-        organization = conn.describe_organization()["Organization"]
         organizations = organizations_with(
             aws_provider,
             enabled_service_principals=["sso.amazonaws.com", "ram.amazonaws.com"],
@@ -238,47 +242,7 @@ class Test_organizations_security_services_delegated_admin_not_management_accoun
                 )
                 result = check.execute()
 
-                assert len(result) == 1
-                assert result[0].status == "MANUAL"
-                assert result[0].status_extended == (
-                    f"AWS Organization {organization['Id']} has no security service "
-                    f"integrated with the organization, so no security service is "
-                    f"administered organization-wide."
-                )
-
-    @mock_aws
-    def test_service_principal_field_missing_from_response(self):
-        """A renamed ServicePrincipal member must not read as a compliant organization."""
-        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
-        conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
-        organization = conn.describe_organization()["Organization"]
-        organizations = organizations_with(
-            aws_provider,
-            enabled_service_principals=[None],
-            delegated_service_principals={DELEGATED_ADMIN_ACCOUNT_ID: [None]},
-        )
-
-        with mock.patch(
-            "prowler.providers.common.provider.Provider.get_global_provider",
-            return_value=aws_provider,
-        ):
-            with mock.patch(f"{CHECK_MODULE}.organizations_client", new=organizations):
-                from prowler.providers.aws.services.organizations.organizations_security_services_delegated_admin_not_management_account.organizations_security_services_delegated_admin_not_management_account import (
-                    organizations_security_services_delegated_admin_not_management_account,
-                )
-
-                check = (
-                    organizations_security_services_delegated_admin_not_management_account()
-                )
-                result = check.execute()
-
-                assert len(result) == 1
-                assert result[0].status == "MANUAL"
-                assert result[0].status_extended == (
-                    f"AWS Organization {organization['Id']} has no security service "
-                    f"integrated with the organization, so no security service is "
-                    f"administered organization-wide."
-                )
+                assert len(result) == 0
 
     @mock_aws
     def test_security_service_without_delegated_administrator(self):
@@ -319,6 +283,14 @@ class Test_organizations_security_services_delegated_admin_not_management_accoun
 
     @mock_aws
     def test_management_account_is_the_delegated_administrator(self):
+        """Drives a state AWS cannot currently produce, by construction.
+
+        RegisterDelegatedAdministrator rejects the management account with
+        CANNOT_REGISTER_MASTER_AS_DELEGATED_ADMINISTRATOR, so ListDelegatedAdministrators
+        never returns it and this fixture is hand-built rather than reachable. This is
+        coverage of the guard against that constraint being relaxed, not of a
+        configuration an organization can be in today.
+        """
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
         organization = conn.describe_organization()["Organization"]

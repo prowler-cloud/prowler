@@ -210,7 +210,9 @@ class Organizations(AWSService):
         logger.info("Organizations - List AWS Service Access For Organization...")
 
         # None means the trusted access configuration could not be read, which is
-        # not the same as an organization with no service integrated at all.
+        # not the same as an organization with no service integrated at all. The
+        # service principal is read by key so that a response no longer carrying it
+        # raises into the sentinel instead of yielding a list of None.
         enabled_service_principals = []
         try:
             list_aws_service_access_paginator = self.client.get_paginator(
@@ -219,7 +221,7 @@ class Organizations(AWSService):
             for page in list_aws_service_access_paginator.paginate():
                 for enabled_service_principal in page["EnabledServicePrincipals"]:
                     enabled_service_principals.append(
-                        enabled_service_principal.get("ServicePrincipal")
+                        enabled_service_principal["ServicePrincipal"]
                     )
 
         except ClientError as error:
@@ -247,7 +249,9 @@ class Organizations(AWSService):
         )
 
         # None means the delegations of this account could not be read, which is not
-        # the same as an account that administers no service.
+        # the same as an account that administers no service. The service principal is
+        # read by key so that a response no longer carrying it raises into the sentinel
+        # instead of yielding a list of None.
         delegated_service_principals = []
         try:
             list_delegated_services_paginator = self.client.get_paginator(
@@ -258,7 +262,7 @@ class Organizations(AWSService):
             ):
                 for delegated_service in page["DelegatedServices"]:
                     delegated_service_principals.append(
-                        delegated_service.get("ServicePrincipal")
+                        delegated_service["ServicePrincipal"]
                     )
 
         except ClientError as error:
