@@ -1,9 +1,14 @@
 from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
 
+import pytest
 import requests
 from github import GithubException, RateLimitExceededException
 
+from prowler.exceptions.exceptions import ScanAbortError
+from prowler.providers.github.exceptions.exceptions import (
+    GithubRepositoryDiscoveryError,
+)
 from prowler.providers.github.services.repository.repository_service import (
     Branch,
     Repo,
@@ -131,6 +136,36 @@ class Test_Repository_GraphQL:
         self.mock_repo1.get_branch.side_effect = Exception("404 Not Found")
         self.mock_repo1.get_dependabot_alerts.side_effect = Exception("403 Forbidden")
 
+    def _repository_service(self):
+        provider = set_mocked_github_provider()
+        provider.repositories = []
+        provider.organizations = []
+
+        with patch.object(Repository, "__init__", lambda *_: None):
+            repository_service = Repository(provider)
+
+        repository_service.clients = [MagicMock()]
+        repository_service.provider = provider
+        return repository_service
+
+    @staticmethod
+    def _graphql_response(nodes, has_next_page=False, end_cursor=None):
+        response = MagicMock()
+        response.json.return_value = {
+            "data": {
+                "viewer": {
+                    "repositories": {
+                        "nodes": nodes,
+                        "pageInfo": {
+                            "hasNextPage": has_next_page,
+                            "endCursor": end_cursor,
+                        },
+                    }
+                }
+            }
+        }
+        return response
+
     def test_no_scoping_uses_graphql(self):
         """Test that no scoping triggers the GraphQL discovery method successfully"""
         provider = set_mocked_github_provider()
@@ -160,32 +195,246 @@ class Test_Repository_GraphQL:
                 mock_client.get_repo.assert_called_once_with("owner1/repo1")
 
     def test_graphql_call_api_error(self):
-        """Test that an error during the GraphQL call is handled gracefully"""
-        provider = set_mocked_github_provider()
-        provider.repositories = []
-        provider.organizations = []
+        repository_service = self._repository_service()
+        request_error = requests.exceptions.RequestException("API Error")
 
-        with patch.object(Repository, "__init__", lambda *_: None):
-            repository_service = Repository(provider)
-            repository_service.clients = [MagicMock()]
-            repository_service.provider = provider
+        with patch("requests.post", side_effect=request_error):
+            with pytest.raises(GithubRepositoryDiscoveryError) as exc_info:
+                repository_service._get_accessible_repos_graphql()
 
-            with patch(
-                "requests.post",
-                side_effect=requests.exceptions.RequestException("API Error"),
-            ):
-                with patch(
-                    "prowler.providers.github.services.repository.repository_service.logger"
-                ) as mock_logger:
+        assert exc_info.value.original_exception is request_error
 
-                    repos = repository_service._list_repositories()
+    def test_graphql_paginates_accessible_repositories(self):
+        repository_service = self._repository_service()
+        first_page_names = [f"owner/repo-{index}" for index in range(100)]
+        second_page_names = ["owner/repo-100"]
+        first_page = self._graphql_response(
+            [{"nameWithOwner": name} for name in first_page_names],
+            has_next_page=True,
+            end_cursor="page-2",
+        )
+        second_page = self._graphql_response(
+            [{"nameWithOwner": name} for name in second_page_names]
+        )
 
-                    assert len(repos) == 0
-                    mock_logger.error.assert_called_once()
+        with patch("requests.post", side_effect=[first_page, second_page]) as mock_post:
+            repositories = repository_service._get_accessible_repos_graphql()
 
-                    log_output = str(mock_logger.error.call_args)
-                    assert "RequestException" in log_output
-                    assert "API Error" in log_output
+        assert repositories == first_page_names + second_page_names
+        assert mock_post.call_count == 2
+
+        first_request = mock_post.call_args_list[0]
+        second_request = mock_post.call_args_list[1]
+        query = first_request.kwargs["json"]["query"]
+
+        assert "query ($cursor: String)" in query
+        assert "after: $cursor" in query
+        assert "pageInfo" in query
+        assert "hasNextPage" in query
+        assert "endCursor" in query
+        assert first_request.kwargs["json"]["variables"] == {"cursor": None}
+        assert second_request.kwargs["json"]["variables"] == {"cursor": "page-2"}
+        assert first_request.kwargs["timeout"] == (10, 60)
+        assert second_request.kwargs["timeout"] == (10, 60)
+
+    def test_graphql_skips_nullable_repository_nodes(self):
+        repository_service = self._repository_service()
+        response = self._graphql_response([None, {"nameWithOwner": "owner/repository"}])
+
+        with patch("requests.post", return_value=response):
+            repositories = repository_service._get_accessible_repos_graphql()
+
+        assert repositories == ["owner/repository"]
+
+    def test_graphql_discards_partial_results_when_a_later_page_fails(self):
+        repository_service = self._repository_service()
+        first_page = self._graphql_response(
+            [{"nameWithOwner": "owner/first"}],
+            has_next_page=True,
+            end_cursor="page-2",
+        )
+        request_error = requests.exceptions.RequestException("second page failed")
+
+        with patch(
+            "requests.post", side_effect=[first_page, request_error]
+        ) as mock_post:
+            with pytest.raises(GithubRepositoryDiscoveryError) as exc_info:
+                repository_service._get_accessible_repos_graphql()
+
+        assert exc_info.value.original_exception is request_error
+        assert mock_post.call_count == 2
+
+    def test_graphql_propagates_later_page_rate_limit_error(self):
+        repository_service = self._repository_service()
+        first_page = self._graphql_response(
+            [{"nameWithOwner": "owner/first"}],
+            has_next_page=True,
+            end_cursor="page-2",
+        )
+        rate_limited_page = MagicMock()
+        rate_limited_page.json.return_value = {
+            "data": None,
+            "errors": [
+                {
+                    "type": "RATE_LIMITED",
+                    "message": "API rate limit exceeded",
+                }
+            ],
+        }
+
+        with patch(
+            "requests.post", side_effect=[first_page, rate_limited_page]
+        ) as mock_post:
+            with pytest.raises(GithubRepositoryDiscoveryError) as exc_info:
+                repository_service._get_accessible_repos_graphql()
+
+        assert "RATE_LIMITED" in str(exc_info.value)
+        assert mock_post.call_count == 2
+
+    def test_graphql_propagates_http_error(self):
+        repository_service = self._repository_service()
+        response = MagicMock()
+        http_error = requests.exceptions.HTTPError("429 Client Error")
+        response.raise_for_status.side_effect = http_error
+
+        with patch("requests.post", return_value=response):
+            with pytest.raises(GithubRepositoryDiscoveryError) as exc_info:
+                repository_service._get_accessible_repos_graphql()
+
+        assert exc_info.value.original_exception is http_error
+
+    def test_graphql_uses_bounded_timeout_and_propagates_timeout(self):
+        repository_service = self._repository_service()
+        timeout_error = requests.exceptions.Timeout("request timed out")
+
+        with patch("requests.post", side_effect=timeout_error) as mock_post:
+            with pytest.raises(GithubRepositoryDiscoveryError) as exc_info:
+                repository_service._get_accessible_repos_graphql()
+
+        assert exc_info.value.original_exception is timeout_error
+        assert mock_post.call_args.kwargs["timeout"] == (10, 60)
+
+    @pytest.mark.parametrize("end_cursor", [None, ""])
+    def test_graphql_rejects_missing_or_empty_next_cursor(self, end_cursor):
+        repository_service = self._repository_service()
+        response = self._graphql_response([], has_next_page=True, end_cursor=end_cursor)
+
+        with patch("requests.post", return_value=response):
+            with pytest.raises(GithubRepositoryDiscoveryError):
+                repository_service._get_accessible_repos_graphql()
+
+    def test_graphql_rejects_stalled_pagination_cursor(self):
+        repository_service = self._repository_service()
+        first_page = self._graphql_response(
+            [], has_next_page=True, end_cursor="same-cursor"
+        )
+        second_page = self._graphql_response(
+            [], has_next_page=True, end_cursor="same-cursor"
+        )
+
+        with patch("requests.post", side_effect=[first_page, second_page]) as mock_post:
+            with pytest.raises(GithubRepositoryDiscoveryError):
+                repository_service._get_accessible_repos_graphql()
+
+        assert mock_post.call_count == 2
+
+    def test_graphql_rejects_pagination_cursor_cycle(self):
+        repository_service = self._repository_service()
+        pages = [
+            self._graphql_response([], has_next_page=True, end_cursor="cursor-a"),
+            self._graphql_response([], has_next_page=True, end_cursor="cursor-b"),
+            self._graphql_response([], has_next_page=True, end_cursor="cursor-a"),
+        ]
+
+        with patch("requests.post", side_effect=pages) as mock_post:
+            with pytest.raises(GithubRepositoryDiscoveryError):
+                repository_service._get_accessible_repos_graphql()
+
+        assert mock_post.call_count == 3
+
+    @pytest.mark.parametrize("page_info", [None, "not-an-object", {}])
+    def test_graphql_rejects_malformed_page_info(self, page_info):
+        repository_service = self._repository_service()
+        response = MagicMock()
+        response.json.return_value = {
+            "data": {"viewer": {"repositories": {"nodes": [], "pageInfo": page_info}}}
+        }
+
+        with patch("requests.post", return_value=response):
+            with pytest.raises(GithubRepositoryDiscoveryError):
+                repository_service._get_accessible_repos_graphql()
+
+    @pytest.mark.parametrize("has_next_page", [None, 0, 1, "false"])
+    def test_graphql_rejects_non_boolean_has_next_page(self, has_next_page):
+        repository_service = self._repository_service()
+        response = self._graphql_response([], has_next_page=has_next_page)
+
+        with patch("requests.post", return_value=response):
+            with pytest.raises(GithubRepositoryDiscoveryError):
+                repository_service._get_accessible_repos_graphql()
+
+    @pytest.mark.parametrize(
+        "nodes",
+        [
+            None,
+            {},
+            "not-a-list",
+            [{}],
+            [{"nameWithOwner": None}],
+            [{"nameWithOwner": ""}],
+        ],
+    )
+    def test_graphql_rejects_malformed_non_null_repository_nodes(self, nodes):
+        repository_service = self._repository_service()
+        response = self._graphql_response(nodes)
+
+        with patch("requests.post", return_value=response):
+            with pytest.raises(GithubRepositoryDiscoveryError):
+                repository_service._get_accessible_repos_graphql()
+
+    @pytest.mark.parametrize(
+        "response_data",
+        [
+            None,
+            [],
+            {},
+            {"data": None},
+            {"data": {"viewer": None}},
+            {"data": {"viewer": {"repositories": None}}},
+        ],
+    )
+    def test_graphql_rejects_malformed_response_structure(self, response_data):
+        repository_service = self._repository_service()
+        response = MagicMock()
+        response.json.return_value = response_data
+
+        with patch("requests.post", return_value=response):
+            with pytest.raises(GithubRepositoryDiscoveryError):
+                repository_service._get_accessible_repos_graphql()
+
+    def test_graphql_returns_legitimate_empty_repository_list(self):
+        repository_service = self._repository_service()
+        response = self._graphql_response([])
+
+        with patch("requests.post", return_value=response):
+            repositories = repository_service._get_accessible_repos_graphql()
+
+        assert repositories == []
+
+    def test_graphql_discovery_error_propagates_from_repository_listing(self):
+        repository_service = self._repository_service()
+        discovery_error = GithubRepositoryDiscoveryError()
+
+        with patch.object(
+            repository_service,
+            "_get_accessible_repos_graphql",
+            side_effect=discovery_error,
+        ):
+            with pytest.raises(ScanAbortError) as exc_info:
+                repository_service._list_repositories()
+
+        assert exc_info.value is discovery_error
+        assert isinstance(exc_info.value, GithubRepositoryDiscoveryError)
 
     def test_graphql_returns_empty_list(self):
         """Test the case where GraphQL returns no repositories"""
