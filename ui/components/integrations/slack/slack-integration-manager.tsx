@@ -426,7 +426,7 @@ export const SlackIntegrationManager = ({
         open={isDisconnectOpen}
         onOpenChange={setIsDisconnectOpen}
         title="Disconnect Slack workspace"
-        description={`Prowler will revoke its access at Slack and stop posting to ${workspaceName ?? "this workspace"}. Connecting again means approving Prowler in Slack.`}
+        description={`Prowler will remove the integration, stop posting to ${workspaceName ?? "this workspace"}, and attempt to revoke its access at Slack. Connecting again means approving Prowler in Slack.`}
       >
         <div className="flex w-full justify-end gap-4">
           <Button

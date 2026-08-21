@@ -609,8 +609,17 @@ describe("disconnecting a workspace", () => {
     const harness = new SlackIntegrationHarness(connectedSlackFixture());
     await harness.mount();
 
-    // When — the user disconnects and confirms; Slack confirms the revocation.
-    expect(await harness.disconnect()).toBe(REVOCATION_OUTCOME.REVOKED);
+    // When — the user opens the confirmation. Only the removal is Prowler's to
+    // promise: the revocation happens at Slack, which can refuse it or report
+    // nothing at all.
+    expect(await harness.openDisconnectConfirmation()).toBe(
+      "Prowler will remove the integration, stop posting to Prowler HQ, and " +
+        "attempt to revoke its access at Slack. Connecting again means " +
+        "approving Prowler in Slack.",
+    );
+
+    // And — the user confirms; Slack confirms the revocation.
+    expect(await harness.confirmDisconnect()).toBe(REVOCATION_OUTCOME.REVOKED);
 
     expect(harness.disconnectCallCount).toBe(1);
     expect(await harness.returnedToUnconnectedState()).toBe(true);

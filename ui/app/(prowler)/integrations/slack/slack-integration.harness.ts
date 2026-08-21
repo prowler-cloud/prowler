@@ -712,9 +712,29 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
    * from its own description: a title match would agree with either.
    */
   async disconnect(): Promise<RevocationOutcome> {
+    await this.openDisconnectConfirmation();
+    return this.confirmDisconnect();
+  }
+
+  /**
+   * Opens the confirmation and reports what it asks the user to accept, before
+   * anything is accepted.
+   */
+  async openDisconnectConfirmation(): Promise<string> {
     // The dialog's own button carries the noun too, hence the exact match on
     // the card's action.
     await this.clickButton(/^\s*Disconnect\s*$/);
+
+    const description = await this.waitFor(
+      () => this.q('[data-slot="dialog-description"]'),
+      10000,
+      "the disconnect confirmation",
+    );
+    return (description.textContent ?? "").replace(/\s+/g, " ").trim();
+  }
+
+  /** Accepts the open confirmation and reports the revocation outcome. */
+  async confirmDisconnect(): Promise<RevocationOutcome> {
     await this.clickButton(/Disconnect workspace/);
 
     return this.waitFor(
