@@ -27,6 +27,7 @@ export const AddRoleForm = ({ groups }: { groups: RoleGroupOption[] }) => {
     ...(isCloudEnvironment && {
       manage_billing: false,
       manage_alerts: false,
+      manage_lighthouse_ai_configuration: false,
     }),
   };
 
@@ -51,6 +52,10 @@ export const AddRoleForm = ({ groups }: { groups: RoleGroupOption[] }) => {
     if (isCloudEnvironment) {
       formData.append("manage_billing", String(values.manage_billing));
       formData.append("manage_alerts", String(values.manage_alerts));
+      formData.append(
+        "manage_lighthouse_ai_configuration",
+        String(values.manage_lighthouse_ai_configuration),
+      );
     }
 
     if (values.groups && values.groups.length > 0) {

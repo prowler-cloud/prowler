@@ -4,6 +4,43 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [5.39.1] (Prowler v5.39.1)
+
+### 🐞 Fixed
+
+- Bump alibabacloud-tea-openapi to 0.4.6, oci to 2.184.1 and pyopenssl to 26.4.0 so the published wheel installs with cryptography 50.0.0; 5.38.0 declared cryptography 50.0.0 while those packages capped it below 50, so pip could not install it and `pip install prowler` silently fell back to 5.37.1 [(#12477)](https://github.com/prowler-cloud/prowler/pull/12477)
+- Pin zstd to 1.5.7.2; 1.5.7.3 was yanked from PyPI as not thread safe [(#12477)](https://github.com/prowler-cloud/prowler/pull/12477)
+- ECS task-definition checks no longer report PASS when `DescribeTaskDefinition` fails before container evidence is gathered [(#12478)](https://github.com/prowler-cloud/prowler/pull/12478)
+- `ses_identity_not_publicly_accessible` now evaluates every SES identity authorization policy and marks mixed public Allow and Deny statements for manual review [(#12480)](https://github.com/prowler-cloud/prowler/pull/12480)
+
+### 🔐 Security
+
+- Trivy from v0.72.0 to v0.73.0 in the container image, fixing HIGH CVE-2026-46600 in the bundled `golang.org/x/net` [(#12445)](https://github.com/prowler-cloud/prowler/pull/12445)
+- Trivy v0.74.0 and Debian util-linux 2.41.5-0+deb13u1 in the SDK container image, patching Go standard library vulnerabilities and CVE-2026-53615 [(#12470)](https://github.com/prowler-cloud/prowler/pull/12470)
+
+---
+
+## [5.39.0] (Prowler v5.39.0)
+
+### 🚀 Added
+
+- `batch_job_definition_no_secrets` check for AWS provider, scanning Batch job definition environment variables and command parameters for hardcoded secrets [(#12117)](https://github.com/prowler-cloud/prowler/pull/12117)
+- 7 M365 Entra checks covering CIS Microsoft 365 Foundations Benchmark v7.0.0 password protection, default user permissions, and guest invitation domain restrictions [(#12153)](https://github.com/prowler-cloud/prowler/pull/12153)
+- 7 M365 entra checks covering CIS Microsoft 365 Foundations Benchmark v7.0.0 Conditional Access (5.2.2.x) and idle session timeout controls [(#12154)](https://github.com/prowler-cloud/prowler/pull/12154)
+- `entra_authentication_method_email_otp_disabled`, `entra_authentication_method_authenticator_show_context`, `entra_pim_global_administrator_approval_required`, `entra_pim_privileged_role_administrator_approval_required`, `entra_access_review_guest_users_configured` and `entra_access_review_privileged_roles_configured` checks for M365 provider covering CIS Microsoft 365 Foundations Benchmark v7.0.0 authentication method, PIM approval and access review controls [(#12155)](https://github.com/prowler-cloud/prowler/pull/12155)
+- `awslambda_layer_no_secrets_in_content` check for AWS provider, scanning Lambda layer package content for hardcoded secrets [(#12233)](https://github.com/prowler-cloud/prowler/pull/12233)
+- CMMC 2.0 universal compliance framework (`cmmc_2.0`) with the 149 official requirements from 32 CFR Part 170 — Level 1 (15, 48 CFR 52.204-21), Level 2 (110, NIST SP 800-171 Rev 2) and Level 3 (24, NIST SP 800-172) — with AWS, Azure, GCP, Alibaba Cloud, Oracle Cloud and M365 check mappings and config guardrails [(#12401)](https://github.com/prowler-cloud/prowler/pull/12401)
+
+### 🔄 Changed
+
+- GitHub `organization_repository_creation_limited` check now reports low severity for FAIL findings when repository creation is provably limited to private/internal visibility, instead of always reporting high [(#12164)](https://github.com/prowler-cloud/prowler/pull/12164)
+
+### 🔐 Security
+
+- HTML report header now HTML-escapes every provider identity field across all 23 providers, closing a stored XSS in the header block (Secur0, CWE-79) that was left unaddressed by the earlier finding-row fix in #12221 [(#12424)](https://github.com/prowler-cloud/prowler/pull/12424)
+
+---
+
 ## [5.38.0] (Prowler v5.38.0)
 
 ### 🚀 Added

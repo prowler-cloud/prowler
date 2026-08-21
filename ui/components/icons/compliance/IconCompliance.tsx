@@ -5,6 +5,7 @@ import C5Logo from "./c5.svg";
 import CCCLogo from "./ccc.svg";
 import CISLogo from "./cis.svg";
 import CISALogo from "./cisa.svg";
+import CMMCLogo from "./cmmc.svg";
 import CSALogo from "./csa.svg";
 import DORALogo from "./dora.svg";
 import ENSLogo from "./ens.png";
@@ -69,6 +70,10 @@ const COMPLIANCE_LOGOS = [
   ["c5", C5Logo],
   ["ccc", CCCLogo],
   ["csa", CSALogo],
+  // CMMC 2.0 — universal framework (`prowler/compliance/cmmc_2.0.json`). The
+  // compliance_id is `cmmc_2.0` and the `framework`/title is `CMMC`; the `cmmc`
+  // keyword matches both via `includes`, with no provider suffix.
+  ["cmmc", CMMCLogo],
   // DORA — universal framework (`prowler/compliance/dora_2022_2554.json`).
   // The compliance_id is `dora_2022_2554`; the `dora` keyword still matches
   // it via `includes`, with no provider suffix.

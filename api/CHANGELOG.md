@@ -4,6 +4,37 @@ All notable changes to the **Prowler API** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [1.40.1] (Prowler v5.39.1)
+
+### 🔄 Changed
+
+- Bump alibabacloud-tea-openapi to 0.4.6, oci to 2.184.1 and pyopenssl to 26.4.0 to match the SDK; the cryptography override now names its actual blockers (azure-cli-core pins msal below 1.37, workos 8.3.0 requires cryptography 48) [(#12477)](https://github.com/prowler-cloud/prowler/pull/12477)
+
+### 🐞 Fixed
+
+- Pin zstd to 1.5.7.2; 1.5.7.3 was yanked from PyPI as not thread safe [(#12477)](https://github.com/prowler-cloud/prowler/pull/12477)
+
+### 🔐 Security
+
+- Trivy from v0.72.0 to v0.73.0 in the container image, fixing HIGH CVE-2026-46600 in the bundled `golang.org/x/net` [(#12445)](https://github.com/prowler-cloud/prowler/pull/12445)
+- Trivy v0.74.0 and Debian util-linux 2.41.5-0+deb13u1 in the API container image, patching Go standard library vulnerabilities and CVE-2026-53615 [(#12470)](https://github.com/prowler-cloud/prowler/pull/12470)
+
+---
+
+## [1.40.0] (Prowler v5.39.0)
+
+### 🔄 Changed
+
+- `GET /api/v1/users/me` membership relationships identify the active tenant with `meta.active` for JWT and API key authentication [(#12388)](https://github.com/prowler-cloud/prowler/pull/12388)
+
+### 🐞 Fixed
+
+- Tenant deletion no longer leaves memberships partially removed when exclusive-user cleanup fails [(#12379)](https://github.com/prowler-cloud/prowler/pull/12379)
+- `/api/v1/accounts/saml/{organization_slug}/acs/` rejects non-POST requests before SAML response processing [(#12393)](https://github.com/prowler-cloud/prowler/pull/12393)
+- Social login derives a valid user name when identity providers omit the profile name [(#12413)](https://github.com/prowler-cloud/prowler/pull/12413)
+
+---
+
 ## [1.39.0] (Prowler v5.38.0)
 
 ### 🚀 Added

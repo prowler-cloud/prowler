@@ -1,6 +1,8 @@
+import re
 import sys
 from io import StringIO
 
+import pytest
 from mock import MagicMock, patch
 
 from prowler.config.config import prowler_version, timestamp
@@ -676,6 +678,192 @@ html_footer = """
 """
 
 
+def _setup_aws_xss(provider, payload):
+    provider.identity.account = payload
+    provider.identity.profile = payload
+    provider.identity.audited_regions = [payload]
+    provider.identity.user_id = payload
+    provider.identity.identity_arn = payload
+
+
+def _setup_azure_xss(provider, payload):
+    provider.identity.tenant_ids = [payload]
+    provider.identity.tenant_domain = payload
+    provider.identity.subscriptions = {payload: payload}
+    provider.identity.identity_type = payload
+    provider.identity.identity_id = payload
+
+
+def _setup_gcp_xss(provider, payload):
+    provider.project_ids = [payload]
+    provider.session._service_account_email = payload
+
+
+def _setup_kubernetes_xss(provider, payload):
+    provider.identity.cluster = payload
+    provider.identity.context = payload
+
+
+def _setup_github_xss(provider, payload):
+    provider.identity = MagicMock(spec=["account_name", "account_email"])
+    provider.identity.account_name = payload
+    provider.identity.account_email = payload
+    provider.auth_method = payload
+
+
+def _setup_m365_xss(provider, payload):
+    provider.identity.tenant_domain = payload
+    provider.identity.identity_type = payload
+    provider.identity.identity_id = payload
+    provider.identity.user = payload
+
+
+def _setup_nhn_xss(provider, payload):
+    provider.identity.tenant_domain = payload
+    provider.identity.identity_type = payload
+    provider.identity.identity_id = payload
+
+
+def _setup_mongodbatlas_xss(provider, payload):
+    provider.identity.organization_name = payload
+
+
+def _setup_iac_xss(provider, payload):
+    provider.scan_repository_url = payload
+    provider.scan_path = None
+    provider.auth_method = payload
+
+
+def _setup_image_xss(provider, payload):
+    provider.registry = payload
+    provider.images = [payload]
+    provider.auth_method = payload
+
+
+def _setup_llm_xss(provider, payload):
+    provider.model = payload
+    provider.plugins = [payload]
+    provider.max_concurrency = payload
+    provider.config_path = payload
+
+
+def _setup_oraclecloud_xss(provider, payload):
+    provider.session.profile = payload
+    provider.identity.tenancy_name = payload
+    provider.identity.tenancy_id = payload
+
+
+def _setup_stackit_xss(provider, payload):
+    provider.identity.project_id = payload
+    provider.identity.project_name = payload
+    provider.identity.audited_regions = {payload}
+
+
+def _setup_cloudflare_xss(provider, payload):
+    account = MagicMock()
+    account.id = payload
+    provider.accounts = [account]
+    provider.session.api_token = "token"
+    provider.session.api_key = None
+    provider.session.api_email = None
+    provider.identity.email = payload
+
+
+def _setup_alibabacloud_xss(provider, payload):
+    provider.identity.account_id = payload
+    provider.identity.account_name = payload
+    provider.identity.audited_regions = payload
+    provider.identity.identity_arn = payload
+    provider.identity.user_name = payload
+
+
+def _setup_openstack_xss(provider, payload):
+    provider.identity.project_id = payload
+    provider.identity.project_name = payload
+    provider.identity.region_name = payload
+    provider.identity.username = payload
+    provider.identity.user_id = payload
+
+
+def _setup_googleworkspace_xss(provider, payload):
+    provider.identity.domain = payload
+    provider.identity.customer_id = payload
+    provider.identity.delegated_user = payload
+
+
+def _setup_e2enetworks_xss(provider, payload):
+    provider.identity.project_id = payload
+    provider.identity.locations = [payload]
+
+
+def _setup_vercel_xss(provider, payload):
+    team = MagicMock()
+    team.name = payload
+    team.id = payload
+    provider.identity.team = team
+    provider.identity.email = payload
+    provider.identity.username = payload
+
+
+def _setup_okta_xss(provider, payload):
+    provider.identity.org_domain = payload
+    provider.auth_method = payload
+    provider.identity.client_id = payload
+
+
+def _setup_scaleway_xss(provider, payload):
+    provider.identity.organization_id = payload
+    provider.session.access_key = payload
+    provider.identity.bearer_type = payload
+    provider.identity.bearer_email = payload
+    provider.identity.bearer_id = payload
+    provider.session.default_region = payload
+
+
+def _setup_linode_xss(provider, payload):
+    provider.identity.username = payload
+    provider.identity.email = payload
+    provider.identity.account_id = payload
+
+
+def _setup_huaweicloud_xss(provider, payload):
+    provider.identity.account_id = payload
+    provider.identity.account_name = payload
+    provider.identity.profile = payload
+    provider.identity.regions = {payload}
+    provider.identity.domain_id = payload
+    provider.identity.user_id = payload
+    provider.identity.user_name = payload
+    provider.identity.identity_type = payload
+
+
+PROVIDER_XSS_SETUPS = [
+    ("aws", _setup_aws_xss),
+    ("azure", _setup_azure_xss),
+    ("gcp", _setup_gcp_xss),
+    ("kubernetes", _setup_kubernetes_xss),
+    ("github", _setup_github_xss),
+    ("m365", _setup_m365_xss),
+    ("nhn", _setup_nhn_xss),
+    ("mongodbatlas", _setup_mongodbatlas_xss),
+    ("iac", _setup_iac_xss),
+    ("image", _setup_image_xss),
+    ("llm", _setup_llm_xss),
+    ("oraclecloud", _setup_oraclecloud_xss),
+    ("stackit", _setup_stackit_xss),
+    ("cloudflare", _setup_cloudflare_xss),
+    ("alibabacloud", _setup_alibabacloud_xss),
+    ("openstack", _setup_openstack_xss),
+    ("googleworkspace", _setup_googleworkspace_xss),
+    ("e2enetworks", _setup_e2enetworks_xss),
+    ("vercel", _setup_vercel_xss),
+    ("okta", _setup_okta_xss),
+    ("scaleway", _setup_scaleway_xss),
+    ("linode", _setup_linode_xss),
+    ("huaweicloud", _setup_huaweicloud_xss),
+]
+
+
 class TestHTML:
     def test_transform_fail_finding(self):
         findings = [
@@ -1099,6 +1287,103 @@ class TestHTML:
 
         assert "<script>alert(1)</script>" not in summary
         assert "Delhi&#34;&gt;&lt;script&gt;alert(1)&lt;/script&gt;" in summary
+
+    @pytest.mark.parametrize(
+        "provider_type,setup_fn",
+        PROVIDER_XSS_SETUPS,
+        ids=[t for t, _ in PROVIDER_XSS_SETUPS],
+    )
+    def test_get_assessment_summary_escapes_provider_identity(
+        self, provider_type, setup_fn
+    ):
+        """Every provider header must HTML-escape tenant-controlled identity fields."""
+        payload = "<script>alert(1)</script>"
+        findings = [generate_finding_output()]
+        output = HTML(findings)
+
+        provider = MagicMock()
+        provider.type = provider_type
+        setup_fn(provider, payload)
+
+        summary = output.get_assessment_summary(provider)
+
+        assert payload not in summary
+        assert "&lt;script&gt;alert(1)&lt;/script&gt;" in summary
+
+    def test_provider_xss_setups_covers_every_assessment_summary_method(self):
+        """Adding a new get_<provider>_assessment_summary without a PROVIDER_XSS_SETUPS
+        entry must fail this test, so the escape guarantee cannot silently regress."""
+        pattern = re.compile(r"^get_(.+)_assessment_summary$")
+        discovered = set()
+        for name in dir(HTML):
+            match = pattern.match(name)
+            if match:
+                discovered.add(match.group(1))
+
+        covered = {ptype for ptype, _ in PROVIDER_XSS_SETUPS}
+
+        missing = discovered - covered
+        extra = covered - discovered
+        assert (
+            not missing
+        ), f"providers without XSS coverage in PROVIDER_XSS_SETUPS: {sorted(missing)}"
+        assert (
+            not extra
+        ), f"PROVIDER_XSS_SETUPS entries with no matching HTML method: {sorted(extra)}"
+
+    def test_github_app_get_assessment_summary_escapes_app_identity(self):
+        """The GitHub App branch (elif hasattr app_id) must escape app_name/app_id/installations,
+        which the PAT setup does not exercise."""
+        payload = "<script>alert(1)</script>"
+        findings = [generate_finding_output()]
+        output = HTML(findings)
+
+        provider = MagicMock()
+        provider.type = "github"
+        provider.identity = MagicMock(spec=["app_id", "app_name", "installations"])
+        provider.identity.app_id = payload
+        provider.identity.app_name = payload
+        provider.identity.installations = [payload]
+        provider.auth_method = payload
+
+        summary = output.get_assessment_summary(provider)
+
+        assert payload not in summary
+        assert "&lt;script&gt;alert(1)&lt;/script&gt;" in summary
+
+    def test_iac_get_assessment_summary_escapes_scan_path(self):
+        """The IAC scan_path branch (else of `if scan_repository_url`) must escape it."""
+        payload = "<script>alert(1)</script>"
+        findings = [generate_finding_output()]
+        output = HTML(findings)
+
+        provider = MagicMock()
+        provider.type = "iac"
+        provider.scan_repository_url = None
+        provider.scan_path = payload
+        provider.auth_method = payload
+
+        summary = output.get_assessment_summary(provider)
+
+        assert payload not in summary
+        assert "&lt;script&gt;alert(1)&lt;/script&gt;" in summary
+
+    def test_image_get_assessment_summary_escapes_images_list(self):
+        """The Image `else` branch (no registry, images list) must escape each image."""
+        payload = "<script>alert(1)</script>"
+        findings = [generate_finding_output()]
+        output = HTML(findings)
+
+        provider = MagicMock()
+        provider.type = "image"
+        provider.registry = None
+        provider.images = [payload]
+        provider.auth_method = payload
+
+        summary = output.get_assessment_summary(provider)
+
+        assert payload not in summary
+        assert "&lt;script&gt;alert(1)&lt;/script&gt;" in summary
 
     def test_process_markdown_bold_text(self):
         """Test that **text** is converted to <strong>text</strong>"""
