@@ -1,0 +1,1 @@
+`organizations_security_services_delegated_admin_not_management_account` check for AWS provider: security services integrated with the organization are administered from a delegated administrator account and not from the management account
