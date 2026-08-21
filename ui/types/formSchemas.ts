@@ -14,6 +14,23 @@ const isRecord = (value: unknown): value is Record<string, unknown> => {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 };
 
+const isValidBase64 = (value: string): boolean => {
+  if (
+    !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(
+      value,
+    )
+  ) {
+    return false;
+  }
+
+  try {
+    atob(value);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 export const kubeconfigContainsUnsupportedCommandAuthentication = (
   value: string,
 ): boolean => {
@@ -55,6 +72,7 @@ export const roleFormSchema = z.object({
   manage_integrations: z.boolean().default(false),
   manage_scans: z.boolean().default(false),
   manage_alerts: z.boolean().default(false),
+  manage_lighthouse_ai_configuration: z.boolean().default(false),
   unlimited_visibility: z.boolean().default(false),
   groups: z.array(z.string()).optional(),
 });
@@ -217,16 +235,16 @@ export const addCredentialsFormSchema = (
               // schema keeps both optional so switching methods without a
               // page reload does not trigger a stale "required" error on the
               // field that is not shown.
-              [ProviderCredentialFields.CLIENT_ID]: z
-                .string()
-                .min(1, "Client ID is required"),
+              [ProviderCredentialFields.CLIENT_ID]: z.guid({
+                error: "Client ID must be a valid GUID",
+              }),
               [ProviderCredentialFields.CLIENT_SECRET]: z.string().optional(),
               [ProviderCredentialFields.CERTIFICATE_CONTENT]: z
                 .string()
                 .optional(),
-              [ProviderCredentialFields.TENANT_ID]: z
-                .string()
-                .min(1, "Tenant ID is required"),
+              [ProviderCredentialFields.TENANT_ID]: z.guid({
+                error: "Tenant ID must be a valid GUID",
+              }),
             }
           : providerType === "gcp"
             ? {
@@ -455,10 +473,21 @@ export const addCredentialsFormSchema = (
         // form is shown). The visible field for the chosen `via` is what
         // the user must fill — enforce it here so the client catches empty
         // submissions before hitting the API, mirroring M365. Error copy is
-        // aligned with the visible field labels ("Certificate Private Key"
-        // vs. the technical `certificate_content` field name).
+        // aligned with the visible field label rather than the technical
+        // `certificate_content` field name.
+        const clientSecret = data[ProviderCredentialFields.CLIENT_SECRET];
+        const certificateContent =
+          data[ProviderCredentialFields.CERTIFICATE_CONTENT];
+        if (clientSecret?.trim() && certificateContent?.trim()) {
+          ctx.addIssue({
+            code: "custom",
+            message:
+              "Use either a Client Secret or Certificate and Private Key Bundle, not both",
+            path: [ProviderCredentialFields.CERTIFICATE_CONTENT],
+          });
+        }
+
         if (via === "app_client_secret") {
-          const clientSecret = data[ProviderCredentialFields.CLIENT_SECRET];
           if (!clientSecret || clientSecret.trim() === "") {
             ctx.addIssue({
               code: "custom",
@@ -467,12 +496,17 @@ export const addCredentialsFormSchema = (
             });
           }
         } else if (via === "app_certificate") {
-          const certificateContent =
-            data[ProviderCredentialFields.CERTIFICATE_CONTENT];
           if (!certificateContent || certificateContent.trim() === "") {
             ctx.addIssue({
               code: "custom",
-              message: "Certificate Private Key is required",
+              message: "Certificate and Private Key Bundle is required",
+              path: [ProviderCredentialFields.CERTIFICATE_CONTENT],
+            });
+          } else if (!isValidBase64(certificateContent)) {
+            ctx.addIssue({
+              code: "custom",
+              message:
+                "Certificate and Private Key Bundle must be valid base64",
               path: [ProviderCredentialFields.CERTIFICATE_CONTENT],
             });
           }

@@ -27,9 +27,8 @@ import {
 
 export interface GeneratedProwlerCertificate {
   /**
-   * Base64 of the DER-encoded X.509 public certificate. Feed this into the
-   * `certificateBase64` parameter of the Prowler Bicep quick-start template
-   * (or paste directly into the Azure Portal "Certificate Base64" field).
+   * Base64 of the DER-encoded X.509 public certificate. The download helper
+   * converts this value into the `.cer` file uploaded to the App Registration.
    */
   publicCertificateBase64Der: string;
   /**

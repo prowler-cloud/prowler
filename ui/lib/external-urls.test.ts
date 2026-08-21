@@ -13,7 +13,7 @@ import {
   getAzureDeploymentQuickLink,
   PRECONFIGURED_CREDENTIAL_URLS,
   getProviderHelpText,
-  PROWLER_AZURE_BICEP_TEMPLATE_URL,
+  PROWLER_AZURE_ARM_TEMPLATE_URL,
   PROWLER_CF_TEMPLATE_URL,
 } from "./external-urls";
 
@@ -288,55 +288,20 @@ describe("buildGitHubPersonalAccessTokenOrgUrl", () => {
 });
 
 describe("getAzureDeploymentQuickLink", () => {
-  it("pins the Bicep template to the public S3 bucket that hosts the Prowler templates", () => {
-    // Snapshot check: fixes the exact template URL so a stray edit to the
-    // bucket, path, or filename trips a failing test instead of silently
-    // pointing the Deploy to Azure button at a 404. Kept in sync with the
-    // Bicep file at `permissions/templates/azure/bicep/prowler-scan.json`
-    // and its README, plus the actual object hosted in S3.
-    expect(PROWLER_AZURE_BICEP_TEMPLATE_URL).toBe(
-      "https://prowler-cloud-public.s3.eu-west-1.amazonaws.com/permissions/templates/azure/bicep/prowler-scan.json",
-    );
-  });
-
-  it("routes through the Azure Portal custom-deployment URL fragment with the template URL percent-encoded exactly once", () => {
-    // The Portal SPA re-parses the hash fragment and URL-decodes the
-    // `uri/<value>` segment once, so double-encoding would land the user on
-    // a broken page. Asserting on the raw substring guards against a future
-    // refactor that swaps `encodeURIComponent` for `URLSearchParams`, which
-    // would encode differently (e.g. spaces as `+`).
+  it("uses the public Mintlify documentation asset", () => {
+    // Given / When
     const url = getAzureDeploymentQuickLink();
 
+    // Then
+    expect(PROWLER_AZURE_ARM_TEMPLATE_URL).toBe(
+      "https://docs.prowler.com/assets/templates/azure/prowler-scan.json",
+    );
     expect(url).toBe(
-      `https://portal.azure.com/#create/Microsoft.Template/uri/${encodeURIComponent(
-        PROWLER_AZURE_BICEP_TEMPLATE_URL,
-      )}`,
+      "https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fdocs.prowler.com%2Fassets%2Ftemplates%2Fazure%2Fprowler-scan.json",
     );
-    expect(url).toContain(
-      "https%3A%2F%2Fprowler-cloud-public.s3.eu-west-1.amazonaws.com%2Fpermissions%2Ftemplates%2Fazure%2Fbicep%2Fprowler-scan.json",
-    );
-  });
-
-  it("accepts a custom template URL so operators can point the button at a private mirror without editing the constant", () => {
-    // Self-hosted or air-gapped installs occasionally re-host the template
-    // on their own bucket for compliance reasons. The helper accepts an
-    // override so those callers don't have to reimplement the fragment
-    // encoding themselves.
-    const customUrl =
-      "https://example.internal/templates/prowler-scan.json?v=2";
-    const url = getAzureDeploymentQuickLink(customUrl);
-
-    expect(url).toBe(
-      `https://portal.azure.com/#create/Microsoft.Template/uri/${encodeURIComponent(
-        customUrl,
-      )}`,
-    );
-    // The `?` inside the query-string of the custom URL must be encoded so
-    // the Portal parser reads the entire value as the template URL instead
-    // of truncating at the first `?`.
-    expect(url).toContain(
-      "uri/https%3A%2F%2Fexample.internal%2Ftemplates%2Fprowler-scan.json%3Fv%3D2",
-    );
+    expect(url).not.toContain("localhost");
+    expect(url).not.toContain("prowler-cloud-public.s3");
+    expect(decodeURIComponent(url)).not.toContain("/uri//templates/azure/");
   });
 });
 

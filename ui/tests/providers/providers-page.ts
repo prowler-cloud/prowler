@@ -139,7 +139,8 @@ type AZURECredentialType =
 export interface AZUREProviderCredential {
   type: AZURECredentialType;
   clientId: string;
-  clientSecret: string;
+  clientSecret?: string;
+  certificateContent?: string;
   tenantId: string;
 }
 
@@ -343,6 +344,7 @@ export class ProvidersPage extends BasePage {
   readonly azureSubscriptionIdInput: Locator;
   readonly azureClientIdInput: Locator;
   readonly azureClientSecretInput: Locator;
+  readonly azureCertificateContentInput: Locator;
   readonly azureTenantIdInput: Locator;
 
   // M365 provider form elements
@@ -464,6 +466,9 @@ export class ProvidersPage extends BasePage {
     this.azureClientIdInput = page.getByRole("textbox", { name: "Client ID" });
     this.azureClientSecretInput = page.getByRole("textbox", {
       name: "Client Secret",
+    });
+    this.azureCertificateContentInput = page.getByRole("textbox", {
+      name: "Certificate and Private Key Bundle (Base64)",
     });
     this.azureTenantIdInput = page.getByRole("textbox", { name: "Tenant ID" });
 
@@ -1236,6 +1241,18 @@ export class ProvidersPage extends BasePage {
     }
   }
 
+  async fillAzureCertificateCredentials(
+    credentials: AZUREProviderCredential,
+  ): Promise<void> {
+    await this.azureClientIdInput.fill(credentials.clientId);
+    await this.azureTenantIdInput.fill(credentials.tenantId);
+    if (credentials.certificateContent) {
+      await this.azureCertificateContentInput.fill(
+        credentials.certificateContent,
+      );
+    }
+  }
+
   async fillM365Credentials(
     credentials: M365ProviderCredential,
   ): Promise<void> {
@@ -1611,6 +1628,35 @@ export class ProvidersPage extends BasePage {
     await expect(this.m365ClientIdInput).toBeVisible();
     await expect(this.m365ClientSecretInput).toBeVisible();
     await expect(this.m365TenantIdInput).toBeVisible();
+  }
+
+  async verifyAzureCertificateCredentialsPageLoaded(): Promise<void> {
+    await this.verifyPageHasProwlerTitle();
+    await expect(this.wizardModal.locator("ol > li")).toHaveCount(6);
+    await expect(
+      this.page.getByRole("link", {
+        name: "Deploy to Azure",
+        exact: true,
+      }),
+    ).toHaveAttribute(
+      "href",
+      "https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fdocs.prowler.com%2Fassets%2Ftemplates%2Fazure%2Fprowler-scan.json",
+    );
+    await expect(
+      this.page.getByRole("link", {
+        name: "Open template",
+        exact: true,
+      }),
+    ).toHaveAttribute(
+      "href",
+      "https://docs.prowler.com/assets/templates/azure/prowler-scan.json",
+    );
+    await expect(
+      this.page.getByRole("button", { name: "Generate certificate" }),
+    ).toBeVisible();
+    await expect(this.azureClientIdInput).toBeVisible();
+    await expect(this.azureTenantIdInput).toBeVisible();
+    await expect(this.azureCertificateContentInput).toBeVisible();
   }
 
   async verifyM365CertificateCredentialsPageLoaded(): Promise<void> {
