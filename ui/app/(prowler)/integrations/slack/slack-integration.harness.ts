@@ -745,16 +745,24 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
 
     return this.waitFor(
       () => {
-        if (this.alertMatching(REVOCATION_NOTICE)) {
-          return REVOCATION_OUTCOME.NOT_REVOKED;
+        const outcomes = [
+          this.alertMatching(REVOCATION_NOTICE)
+            ? REVOCATION_OUTCOME.NOT_REVOKED
+            : null,
+          this.containsText(/has been revoked/)
+            ? REVOCATION_OUTCOME.REVOKED
+            : null,
+          this.containsText(/is no longer connected to Prowler/)
+            ? REVOCATION_OUTCOME.UNREPORTED
+            : null,
+        ].filter((outcome): outcome is RevocationOutcome => outcome !== null);
+
+        if (outcomes.length > 1) {
+          throw new Error(
+            `confirmDisconnect: the page shows ${outcomes.join(" and ")} at once`,
+          );
         }
-        if (this.containsText(/has been revoked/)) {
-          return REVOCATION_OUTCOME.REVOKED;
-        }
-        if (this.containsText(/is no longer connected to Prowler/)) {
-          return REVOCATION_OUTCOME.UNREPORTED;
-        }
-        return null;
+        return outcomes[0] ?? null;
       },
       15000,
       "the disconnect outcome",
