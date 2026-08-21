@@ -26,9 +26,13 @@ class organizations_delegated_administrators(Check):
                 resource=organizations_client.organization,
             )
             report.region = organizations_client.region
-            if (
-                organizations_client.organization.delegated_administrators is not None
-            ):  # Check if Access Denied to list_delegated_administrators
+            if organizations_client.organization.delegated_administrators is None:
+                # The lookup failed, so there is nothing to compare against the trusted
+                # list. Reporting that is a lack of visibility, not a misconfiguration.
+                report.status = "MANUAL"
+                report.status_extended = f"AWS Organization {organizations_client.organization.id} delegated administrators could not be determined; run this check from the organization management account."
+                findings.append(report)
+            else:
                 if organizations_client.organization.delegated_administrators:
                     # Setting the verdict per administrator on a shared report let a
                     # trusted entry overwrite an untrusted one, and

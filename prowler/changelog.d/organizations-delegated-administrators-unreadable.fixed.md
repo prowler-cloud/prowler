@@ -1,0 +1,1 @@
+`organizations_delegated_administrators` no longer reports PASS when the delegated administrator list could not be read because of a throttle or service error, which previously returned an empty list with no log line

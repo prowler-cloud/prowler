@@ -1,5 +1,6 @@
 from unittest import mock
 
+import botocore
 from boto3 import client
 from moto import mock_aws
 
@@ -394,4 +395,120 @@ class Test_organizations_delegated_administrators:
                 assert (
                     result[0].status_extended
                     == f"AWS Organization {org_id} has an untrusted Delegated Administrator: {TRUSTED_ACCOUNT_ID}."
+                )
+
+    @mock_aws
+    def test_organization_delegated_administrators_throttled(self):
+        """A throttled lookup is undetermined, not an organization without administrators.
+
+        This drives the real collector so that the whole chain from the modeled error to
+        the verdict is covered, rather than only the sentinel the collector sets.
+        """
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
+        org_id = conn.describe_organization()["Organization"]["Id"]
+        aws_provider._audit_config = {
+            "organizations_trusted_delegated_administrators": []
+        }
+
+        real_make_api_call = botocore.client.BaseClient._make_api_call
+
+        def throttle_list_delegated_administrators(self, operation_name, kwarg):
+            if operation_name == "ListDelegatedAdministrators":
+                raise botocore.exceptions.ClientError(
+                    {
+                        "Error": {
+                            "Code": "TooManyRequestsException",
+                            "Message": "Rate exceeded",
+                        }
+                    },
+                    operation_name,
+                )
+            return real_make_api_call(self, operation_name, kwarg)
+
+        with mock.patch(
+            "botocore.client.BaseClient._make_api_call",
+            new=throttle_list_delegated_administrators,
+        ):
+            organizations = Organizations(aws_provider)
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.organizations.organizations_delegated_administrators.organizations_delegated_administrators.organizations_client",
+                new=organizations,
+            ):
+                # Test Check
+                from prowler.providers.aws.services.organizations.organizations_delegated_administrators.organizations_delegated_administrators import (
+                    organizations_delegated_administrators,
+                )
+
+                check = organizations_delegated_administrators()
+                result = check.execute()
+
+                assert len(result) == 1
+                assert result[0].status == "MANUAL"
+                assert (
+                    result[0].status_extended
+                    == f"AWS Organization {org_id} delegated administrators could not be determined; run this check from the organization management account."
+                )
+
+    @mock_aws
+    def test_organization_delegated_administrators_access_denied(self):
+        """Access denied reports MANUAL rather than nothing at all.
+
+        A member account cannot list delegated administrators, which previously left the
+        check silent for every such account instead of saying it could not evaluate.
+        """
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
+        org_id = conn.describe_organization()["Organization"]["Id"]
+        aws_provider._audit_config = {
+            "organizations_trusted_delegated_administrators": []
+        }
+
+        real_make_api_call = botocore.client.BaseClient._make_api_call
+
+        def deny_list_delegated_administrators(self, operation_name, kwarg):
+            if operation_name == "ListDelegatedAdministrators":
+                raise botocore.exceptions.ClientError(
+                    {
+                        "Error": {
+                            "Code": "AccessDeniedException",
+                            "Message": "not authorized",
+                        }
+                    },
+                    operation_name,
+                )
+            return real_make_api_call(self, operation_name, kwarg)
+
+        with mock.patch(
+            "botocore.client.BaseClient._make_api_call",
+            new=deny_list_delegated_administrators,
+        ):
+            organizations = Organizations(aws_provider)
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.organizations.organizations_delegated_administrators.organizations_delegated_administrators.organizations_client",
+                new=organizations,
+            ):
+                # Test Check
+                from prowler.providers.aws.services.organizations.organizations_delegated_administrators.organizations_delegated_administrators import (
+                    organizations_delegated_administrators,
+                )
+
+                check = organizations_delegated_administrators()
+                result = check.execute()
+
+                assert len(result) == 1
+                assert result[0].status == "MANUAL"
+                assert (
+                    result[0].status_extended
+                    == f"AWS Organization {org_id} delegated administrators could not be determined; run this check from the organization management account."
                 )

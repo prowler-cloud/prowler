@@ -1,5 +1,6 @@
 from unittest import mock
 
+import botocore
 from boto3 import client
 from moto import mock_aws
 
@@ -411,4 +412,64 @@ class Test_organizations_security_services_delegated_admin_not_management_accoun
                     f"guardduty.amazonaws.com, securityhub.amazonaws.com from "
                     f"delegated administrator accounts other than the management "
                     f"account {organization['MasterAccountId']}."
+                )
+
+    @mock_aws
+    def test_delegated_administrators_throttled(self):
+        """A throttled lookup reaches the MANUAL contract, not a FAIL.
+
+        Trusted access is on for GuardDuty with no readable delegation, which is
+        indistinguishable from "administered from the management account" unless the
+        collector reports the lookup as unreadable rather than as an empty list.
+        """
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
+        organization = conn.describe_organization()["Organization"]
+        conn.enable_aws_service_access(ServicePrincipal="guardduty.amazonaws.com")
+
+        real_make_api_call = botocore.client.BaseClient._make_api_call
+
+        def throttle_list_delegated_administrators(self, operation_name, kwarg):
+            if operation_name == "ListDelegatedAdministrators":
+                raise botocore.exceptions.ClientError(
+                    {
+                        "Error": {
+                            "Code": "TooManyRequestsException",
+                            "Message": "Rate exceeded",
+                        }
+                    },
+                    operation_name,
+                )
+            return real_make_api_call(self, operation_name, kwarg)
+
+        with mock.patch(
+            "botocore.client.BaseClient._make_api_call",
+            new=throttle_list_delegated_administrators,
+        ):
+            organizations = Organizations(aws_provider)
+
+        assert organizations.organization.enabled_service_principals == [
+            "guardduty.amazonaws.com"
+        ]
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
+            with mock.patch(f"{CHECK_MODULE}.organizations_client", new=organizations):
+                from prowler.providers.aws.services.organizations.organizations_security_services_delegated_admin_not_management_account.organizations_security_services_delegated_admin_not_management_account import (
+                    organizations_security_services_delegated_admin_not_management_account,
+                )
+
+                check = (
+                    organizations_security_services_delegated_admin_not_management_account()
+                )
+                result = check.execute()
+
+                assert len(result) == 1
+                assert result[0].status == "MANUAL"
+                assert result[0].status_extended == (
+                    f"AWS Organization {organization['Id']} delegated administration "
+                    f"of the security services could not be determined; run this "
+                    f"check from the organization management account."
                 )

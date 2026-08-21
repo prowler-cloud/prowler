@@ -196,10 +196,21 @@ class Organizations(AWSService):
                     )
 
         except ClientError as error:
+            # Any ClientError leaves the administrators unknown, not empty. Setting the
+            # sentinel only for AccessDeniedException let a throttle or a service error
+            # return the empty list, which reads as an organization that has none.
+            self.delegated_administrators = None
             if error.response["Error"]["Code"] == "AccessDeniedException":
-                self.delegated_administrators = None
+                logger.warning(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
         except Exception as error:
+            self.delegated_administrators = None
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )

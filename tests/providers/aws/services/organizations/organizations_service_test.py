@@ -356,6 +356,28 @@ class Test_Organizations_Service:
         assert organizations.organization.delegated_administrators is None
         assert organizations.organization.delegated_service_principals == {}
 
+    def test_list_delegated_administrators_throttled(self):
+        """A throttle is unreadable, not an organization without administrators.
+
+        Only AccessDeniedException used to set the sentinel, so every other modeled
+        error left the empty list in place and read as a determined answer.
+        """
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_EU_WEST_1], create_default_organization=False
+        )
+        with patch(
+            "botocore.client.BaseClient._make_api_call",
+            new=build_mock_make_api_call(
+                delegated_administrators_pages=[
+                    [delegated_administrator(DELEGATED_ADMIN_ACCOUNT_ID)]
+                ],
+                errors={"ListDelegatedAdministrators": "TooManyRequestsException"},
+            ),
+        ):
+            organizations = Organizations(aws_provider)
+
+        assert organizations.organization.delegated_administrators is None
+
     def test_describe_organization_without_master_account_id(self):
         """An organization without MasterAccountId is left unset, not defaulted.
 
