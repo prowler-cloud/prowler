@@ -1,12 +1,66 @@
 import socket
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from api.validators import (
     resolve_lighthouse_openai_compatible_host,
+    validate_certificate_bundle,
     validate_lighthouse_openai_compatible_base_url,
 )
+from cryptography import x509
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives.serialization import pkcs12
+from cryptography.x509.oid import NameOID
 from django.core.exceptions import ValidationError
 from django.test import override_settings
+
+
+def _certificate_and_key():
+    private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "Prowler")])
+    certificate = (
+        x509.CertificateBuilder()
+        .subject_name(subject)
+        .issuer_name(subject)
+        .public_key(private_key.public_key())
+        .serial_number(x509.random_serial_number())
+        .not_valid_before(datetime.now(UTC))
+        .not_valid_after(datetime.now(UTC) + timedelta(days=1))
+        .sign(private_key, hashes.SHA256())
+    )
+    return certificate, private_key
+
+
+def test_certificate_bundle_rejects_key_only_pkcs12():
+    _, private_key = _certificate_and_key()
+    key_only_pkcs12 = pkcs12.serialize_key_and_certificates(
+        name=b"prowler",
+        key=private_key,
+        cert=None,
+        cas=None,
+        encryption_algorithm=serialization.NoEncryption(),
+    )
+
+    with pytest.raises(ValueError, match="certificate and its private key"):
+        validate_certificate_bundle(key_only_pkcs12)
+
+
+def test_certificate_bundle_rejects_mismatched_pem_key():
+    certificate, _ = _certificate_and_key()
+    different_private_key = rsa.generate_private_key(
+        public_exponent=65537, key_size=2048
+    )
+    mismatched_bundle = certificate.public_bytes(
+        serialization.Encoding.PEM
+    ) + different_private_key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption(),
+    )
+
+    with pytest.raises(ValueError, match="does not match"):
+        validate_certificate_bundle(mismatched_bundle)
 
 
 def test_lighthouse_base_url_rejects_http_scheme():

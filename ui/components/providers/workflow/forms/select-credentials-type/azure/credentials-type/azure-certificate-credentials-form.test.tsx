@@ -69,7 +69,7 @@ describe("AzureCertificateCredentialsForm", () => {
         href: "https://docs.prowler.com/user-guide/providers/azure/authentication#certificate-authentication",
       },
       {
-        element: screen.getByRole("link", { name: "New App Registration" }),
+        element: screen.getByRole("link", { name: "Open Azure" }),
         href: "https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/CreateApplicationBlade",
       },
       {
@@ -103,22 +103,22 @@ describe("AzureCertificateCredentialsForm", () => {
     const steps = screen.getAllByRole("listitem");
     expect(steps).toHaveLength(6);
     expect(steps[0]).toHaveTextContent(
-      "1. Create an App Registration. Copy its Directory (tenant) ID and Application (client) ID.",
+      "Register an Azure application, then copy its Directory (tenant) ID and Application (client) ID.",
     );
     expect(steps[1]).toHaveTextContent(
-      "2. Generate the certificate bundle and upload the public prowler-cert.cer file under Certificates & secrets. The private bundle is filled below and is submitted to Prowler only when you connect.",
+      "Generate the certificate. The private bundle is filled below and submitted to Prowler only when you connect.",
     );
     expect(steps[2]).toHaveTextContent(
-      "3. Add Microsoft Graph application permissions: AuditLog.Read.All, Directory.Read.All (or Domain.Read.All), and Policy.Read.All. Then grant admin consent.",
+      "Upload prowler-cert.cer under Certificates & secrets. Add Microsoft Graph application permissions: AuditLog.Read.All, Directory.Read.All (or Domain.Read.All), and Policy.Read.All. Then grant admin consent.",
     );
     expect(steps[3]).toHaveTextContent(
-      "4. Copy the Service Principal Object ID from Enterprise applications.",
+      "Copy the Service Principal Object ID from Enterprise applications.",
     );
     expect(steps[4]).toHaveTextContent(
-      "5. Deploy subscription RBAC with that Service Principal Object ID. The template creates ProwlerRole and assigns Reader and ProwlerRole; it does not create Entra resources.",
+      "Deploy subscription RBAC with the Service Principal Object ID. The template creates ProwlerRole and assigns Reader and ProwlerRole; it does not create Entra resources.",
     );
     expect(steps[5]).toHaveTextContent(
-      "6. Return to Prowler and connect. Paste the Tenant ID and Application Client ID below; the generated certificate bundle is already filled.",
+      "Return to Prowler and complete the fields below. The generated certificate bundle is already filled.",
     );
     expect(
       screen.getByRole("textbox", {
