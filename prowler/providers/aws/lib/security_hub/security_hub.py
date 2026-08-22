@@ -541,6 +541,9 @@ class SecurityHub:
                             role_session_name=step.get(
                                 "role_session_name", ROLE_SESSION_NAME
                             ),
+                            sts_region=step.get(
+                                "sts_region", AWS_STS_GLOBAL_ENDPOINT_REGION
+                            ),
                         )
                     )
                 session, _ = AwsProvider.assume_role_chain(session, chain_steps)
