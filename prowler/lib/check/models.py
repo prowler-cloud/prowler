@@ -1448,6 +1448,28 @@ class CheckReportVercel(Check_Report):
 
 
 @dataclass
+class CheckReportSupabase(Check_Report):
+    """Contains a Supabase organization member finding."""
+
+    resource_name: str
+    resource_id: str
+    organization_slug: str
+    organization_name: str
+
+    def __init__(self, metadata: Dict, resource: Any) -> None:
+        super().__init__(metadata, resource)
+        self.resource_name = getattr(resource, "name", "")
+        self.resource_id = getattr(resource, "id", "")
+        self.organization_slug = getattr(resource, "organization_slug", "")
+        self.organization_name = getattr(resource, "organization_name", "")
+
+    @property
+    def region(self) -> str:
+        """Supabase organization membership is global."""
+        return "global"
+
+
+@dataclass
 class CheckReportScaleway(Check_Report):
     """Contains the Scaleway Check's finding information.
 

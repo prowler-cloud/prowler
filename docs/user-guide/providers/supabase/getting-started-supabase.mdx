@@ -1,0 +1,40 @@
+---
+title: "Getting Started With Supabase on Prowler"
+---
+
+Prowler for Supabase scans hosted Supabase Cloud organizations through the Management API. This proof of concept checks whether each organization member has multi-factor authentication (MFA) enabled.
+
+<Warning>
+This proof of concept supports Prowler SDK and Prowler CLI only. It does not support onboarding through Prowler Cloud, Prowler Private Cloud, or Prowler Local Server; self-hosted Supabase; direct PostgreSQL access; or OAuth.
+</Warning>
+
+## Prerequisites
+
+1. A hosted Supabase Cloud account with access to at least one organization.
+2. A Supabase Personal Access Token (PAT) for an account that can list organizations and organization members.
+3. A dedicated least-privilege or read-only organization account where your Supabase plan and organization roles allow one.
+
+See [Supabase Authentication in Prowler](./authentication) for PAT setup and security guidance.
+
+## Run a Scan
+
+Set the PAT through the environment and run Prowler:
+
+```bash
+export SUPABASE_ACCESS_TOKEN="your-personal-access-token"
+prowler supabase
+```
+
+To run only the organization member MFA check:
+
+```bash
+prowler supabase --check organizations_member_mfa_enabled
+```
+
+## Checks Shipped
+
+| Check ID | Severity | Description |
+|---|---|---|
+| `organizations_member_mfa_enabled` | High | Creates one finding per organization member and fails members whose Supabase account does not have MFA enabled. |
+
+The finding resource UID is the Management API `user_id`. Prowler does not include member email addresses in findings or normal logs.

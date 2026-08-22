@@ -716,6 +716,11 @@ cloudflare:
   # Set to 0 to disable retries
   max_retries: 3
 
+# Supabase Configuration
+supabase:
+  # Maximum retries for Management API requests (0 disables retries)
+  max_retries: 3
+
 # Vercel Configuration
 vercel:
   # vercel.deployment_production_uses_stable_target

@@ -83,6 +83,7 @@ class Provider(str, Enum):
     LINODE = "linode"
     HUAWEICLOUD = "huaweicloud"
     E2ENETWORKS = "e2enetworks"
+    SUPABASE = "supabase"
 
 
 # Compliance
