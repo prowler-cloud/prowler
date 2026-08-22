@@ -68,14 +68,6 @@ class AWSRoleChainStep:
 
 
 @dataclass
-class AWSRoleChainConfiguration:
-    """Immutable record of a full assumption chain and its final credentials."""
-
-    steps: list[AWSRoleChainStep]
-    final_credentials: AWSCredentials
-
-
-@dataclass
 class AWSIdentityInfo:
     account: str
     account_arn: str
