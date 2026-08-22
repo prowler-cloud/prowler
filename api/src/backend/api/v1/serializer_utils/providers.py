@@ -34,7 +34,7 @@ from rest_framework_json_api import serializers
                     "role_arn": {
                         "type": "string",
                         "description": "The Amazon Resource Name (ARN) of the role to assume. Required for AWS role "
-                        "assumption. Mutually exclusive with role_chain.",
+                        "assumption.",
                     },
                     "external_id": {
                         "type": "string",
@@ -72,43 +72,6 @@ from rest_framework_json_api import serializers
                         "- User_Session-1\n"
                         "- Test.Session@2",
                         "pattern": "^[a-zA-Z0-9=,.@_-]+$",
-                    },
-                    "role_chain": {
-                        "type": "array",
-                        "description": "Ordered list of IAM roles to assume sequentially to reach the target account. "
-                        "Mutually exclusive with role_arn. Each step defines one sts:AssumeRole hop.",
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "role_arn": {
-                                    "type": "string",
-                                    "description": "The ARN of the role to assume at this step.",
-                                },
-                                "external_id": {
-                                    "type": "string",
-                                    "description": "External ID for this assumption step.",
-                                },
-                                "role_session_name": {
-                                    "type": "string",
-                                    "description": "Session name for this step.",
-                                    "pattern": "^[a-zA-Z0-9=,.@_-]+$",
-                                },
-                                "session_duration": {
-                                    "type": "integer",
-                                    "minimum": 900,
-                                    "maximum": 43200,
-                                    "default": 3600,
-                                    "description": "Session duration in seconds for this step.",
-                                },
-                                "sts_region": {
-                                    "type": "string",
-                                    "description": "AWS region for the STS endpoint of this step.",
-                                },
-                            },
-                            "required": ["role_arn"],
-                        },
-                        "minItems": 1,
-                        "maxItems": 10,
                     },
                 },
                 "required": ["role_arn", "external_id"],
