@@ -1,3 +1,4 @@
+import pathlib
 from typing import Optional
 
 from prowler.lib.logger import logger
@@ -7,6 +8,7 @@ from prowler.providers.aws.aws_provider import (
     parse_iam_credentials_arn,
 )
 from prowler.providers.aws.config import MAX_ROLE_CHAIN_STEPS, ROLE_SESSION_NAME
+from prowler.providers.aws.exceptions.exceptions import AWSArgumentTypeValidationError
 from prowler.providers.aws.models import (
     AWSAssumeRoleConfiguration,
     AWSAssumeRoleInfo,
@@ -125,17 +127,22 @@ class AwsSetUpSession:
         chain_steps: list[AWSRoleChainStep] = []
 
         if role_chain and role_arn:
-            raise ValueError("role_chain and role_arn are mutually exclusive.")
+            raise AWSArgumentTypeValidationError(
+                message="role_chain and role_arn are mutually exclusive.",
+                file=pathlib.Path(__file__).name,
+            )
 
         if role_chain:
             if len(role_chain) > MAX_ROLE_CHAIN_STEPS:
-                raise ValueError(
-                    f"role_chain exceeds maximum of {MAX_ROLE_CHAIN_STEPS} steps."
+                raise AWSArgumentTypeValidationError(
+                    message=f"role_chain exceeds maximum of {MAX_ROLE_CHAIN_STEPS} steps.",
+                    file=pathlib.Path(__file__).name,
                 )
             for idx, step in enumerate(role_chain):
                 if "role_arn" not in step:
-                    raise ValueError(
-                        f"role_chain step {idx} is missing required 'role_arn'."
+                    raise AWSArgumentTypeValidationError(
+                        message=f"role_chain step {idx} is missing required 'role_arn'.",
+                        file=pathlib.Path(__file__).name,
                     )
                 valid_arn = parse_iam_credentials_arn(step["role_arn"])
                 chain_steps.append(
@@ -233,7 +240,10 @@ def validate_arguments(
     """
 
     if role_chain and role_arn:
-        raise ValueError("role_chain and role_arn are mutually exclusive.")
+        raise AWSArgumentTypeValidationError(
+            message="role_chain and role_arn are mutually exclusive.",
+            file=pathlib.Path(__file__).name,
+        )
 
     if role_arn:
         if not session_duration or not external_id or not role_session_name:
