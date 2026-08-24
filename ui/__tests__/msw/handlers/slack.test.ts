@@ -1,10 +1,7 @@
 /**
- * The Slack double's own writes, driven over HTTP instead of through the page.
- * A connection check is the one call that edits the install it answers about,
- * and which channels it stamps as confirmed decides what every later read says
- * — including states the page cannot navigate to, so a page test cannot reach
- * them. A double that serves a state the API cannot produce lets a UI test
- * prove copy no deployment can show.
+ * The Slack double's own writes, driven over HTTP because the page cannot
+ * navigate to every state a connection check leaves behind. A double serving a
+ * state the API cannot produce lets a UI test prove copy no deployment shows.
  */
 
 import { setupServer } from "msw/node";
@@ -23,7 +20,7 @@ import type { SlackConnectionFixture } from "./slack.fixtures";
 
 const API = process.env.UI_API_BASE_URL;
 
-/** The channel as the `configuration` serializes it (contract, OAuth and reads). */
+/** Re-declared, not imported from product code, so a rename fails here. */
 interface ChannelBody {
   id: string;
   confirmation_sent_at: string | null;
@@ -35,11 +32,7 @@ beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
 afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
 
-/**
- * A check as the UI runs one: queue it, poll the task that carries the outcome,
- * then read the install back — the poll is what writes, so the read has to
- * follow it.
- */
+/** The poll is what writes, so the read has to follow it. */
 const runConnectionCheck = async (connection: SlackConnectionFixture) => {
   server.use(
     ...handlersForSlack(
@@ -86,15 +79,14 @@ const runConnectionCheck = async (connection: SlackConnectionFixture) => {
 
 describe("the Slack double's connection check", () => {
   it("confirms no channel at all when the failure is about the workspace", async () => {
-    // Given/When — the stored grant is gone, which `auth.test` finds out before
-    // the per-channel loop starts, so the failure names no channel.
+    // Given/When — a revoked grant, which `auth.test` finds before the
+    // per-channel loop, so the failure names no channel.
     const { connected, confirmedAt } = await runConnectionCheck({
       connected: false,
       error: SLACK_TOKEN_REVOKED_CODE,
     });
 
-    // Then — nothing was posted, so nothing is confirmed: a record claiming
-    // otherwise would be a state the API cannot produce.
+    // Then
     expect(connected).toBe(false);
     expect(confirmedAt.get(SLACK_PUBLIC_CHANNEL.id)).toBeNull();
     expect(confirmedAt.get(SLACK_PRIVATE_CHANNEL.id)).toBeNull();
@@ -108,8 +100,7 @@ describe("the Slack double's connection check", () => {
       failedChannelId: SLACK_PRIVATE_CHANNEL.id,
     });
 
-    // Then — the refused channel is the retry's remaining work, the other one
-    // is done.
+    // Then — the refused channel is the retry's remaining work.
     expect(connected).toBe(false);
     expect(confirmedAt.get(SLACK_PUBLIC_CHANNEL.id)).not.toBeNull();
     expect(confirmedAt.get(SLACK_PRIVATE_CHANNEL.id)).toBeNull();

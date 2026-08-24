@@ -7,17 +7,11 @@ export interface SlackWorkspaceFixture {
   teamId: string;
   teamName: string;
   botUserId: string;
-  /**
-   * The authorized set. A new install has none, which the API serializes as an
-   * empty `channels` array rather than by omitting the key.
-   */
+  /** An empty array, never an omitted key (contract, OAuth and reads). */
   authorizedChannels?: SlackAuthorizedChannelFixture[];
 }
 
-/**
- * The connection check the API last recorded. Every field is null until one is
- * queued; a same-workspace reinstall puts them back that way.
- */
+/** Every field is null until a check is queued (contract, OAuth and reads). */
 export interface SlackVerificationFixture {
   taskId: string | null;
   startedAt: string | null;
@@ -63,10 +57,8 @@ export interface SlackConnectionFixture {
   connected: boolean;
   error: string | null;
   /**
-   * The id of the channel a channel-level failure is about, which the task
-   * result names so the user hears which one Slack refused (contract,
-   * Connection). Absent for credential-level failures, which are about the
-   * workspace as a whole.
+   * Set only for a channel-level failure; absent for a credential-level one,
+   * which is about the workspace as a whole (contract, Connection).
    */
   failedChannelId?: string | null;
 }
@@ -80,9 +72,8 @@ export interface SlackChannelFixture {
 }
 
 /**
- * A channel authorized on the integration: the listing's fields plus when the
- * one-time confirmation landed in it. `null` means the next connection check
- * posts one there; a check never posts to a channel that already has one.
+ * `confirmationSentAt` is null until a check posts there, and a check never
+ * posts to a channel that already has one (contract, Connection).
  */
 export interface SlackAuthorizedChannelFixture extends SlackChannelFixture {
   confirmationSentAt: string | null;
@@ -430,10 +421,8 @@ export const connectedSlackFixture = (
     ...overrides,
   });
 
-/** When the check that left this install connected posted its confirmations. */
 export const SLACK_CONFIRMED_AT = "2026-08-10T09:30:00Z";
 
-/** The verification of that same check, as the configuration carries it. */
 const SETTLED_VERIFICATION: SlackVerificationFixture = {
   taskId: "5d408881-3e9e-4195-a281-a8d1be849472",
   startedAt: "2026-08-10T09:29:58Z",
@@ -441,8 +430,8 @@ const SETTLED_VERIFICATION: SlackVerificationFixture = {
 };
 
 /**
- * A channel as the integration stores it, confirmed by default: an install
- * reporting itself connected has had a check post to every channel on it.
+ * Confirmed by default: an install reporting itself connected has had a check
+ * post to every channel on it.
  */
 export const authorizedChannel = (
   channel: SlackChannelFixture,
@@ -473,9 +462,8 @@ export const slackFixtureWithAuthorizedChannels = (
   connectedSlackFixture({ install: configuredInstall(channels), ...overrides });
 
 /**
- * Channels authorized and none of them confirmed: what a same-workspace
- * reinstall leaves behind, which keeps the set but resets every confirmation
- * along with the connection and verification state (contract, OAuth and reads).
+ * What a same-workspace reinstall leaves behind: the set kept, every
+ * confirmation and the verification reset (contract, OAuth and reads).
  */
 export const unconfirmedChannelsSlackFixture = (
   channels: SlackChannelFixture[] = [SLACK_PUBLIC_CHANNEL],
