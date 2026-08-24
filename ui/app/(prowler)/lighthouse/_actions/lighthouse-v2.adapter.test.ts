@@ -184,11 +184,10 @@ describe("lighthouse-v2.adapter", () => {
   });
 
   describe("when building Cloud payloads", () => {
-    it("should build the exact stateless Message feedback resource", () => {
+    it("should build the internal Lighthouse feedback resource", () => {
       // Given / When
       const payload = buildLighthouseV2MessageFeedbackPayload({
-        sessionId: "session-1",
-        messageId: "message-1",
+        targetMessageId: "message-1",
         rating: "down",
         details: "  Missing evidence  ",
       });
@@ -197,7 +196,11 @@ describe("lighthouse-v2.adapter", () => {
       expect(payload).toEqual({
         data: {
           type: "lighthouse-message-feedback",
-          attributes: { rating: "down", details: "Missing evidence" },
+          attributes: {
+            target_message_id: "message-1",
+            rating: "down",
+            details: "Missing evidence",
+          },
         },
       });
     });
@@ -205,27 +208,29 @@ describe("lighthouse-v2.adapter", () => {
     it("should omit blank optional Message feedback details", () => {
       // Given / When
       const payload = buildLighthouseV2MessageFeedbackPayload({
-        sessionId: "session-1",
-        messageId: "message-1",
+        targetMessageId: "message-1",
         rating: "up",
         details: "   ",
       });
 
       // Then
-      expect(payload.data.attributes).toEqual({ rating: "up" });
+      expect(payload.data.attributes).toEqual({
+        target_message_id: "message-1",
+        rating: "up",
+      });
     });
 
     it("should send each selected feedback reason once", () => {
       // Given / When
       const payload = buildLighthouseV2MessageFeedbackPayload({
-        sessionId: "session-1",
-        messageId: "message-1",
+        targetMessageId: "message-1",
         rating: "down",
         reasons: ["Low quality", "Low quality", "Other"],
       });
 
       // Then
       expect(payload.data.attributes).toEqual({
+        target_message_id: "message-1",
         rating: "down",
         reasons: ["Low quality", "Other"],
       });

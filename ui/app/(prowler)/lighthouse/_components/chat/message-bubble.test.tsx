@@ -377,7 +377,7 @@ describe("MessageBubble", () => {
       const message = buildUserMessage();
 
       // When
-      render(<MessageBubble message={message} sessionId="session-1" />);
+      render(<MessageBubble message={message} />);
 
       // Then
       expect(
@@ -390,7 +390,7 @@ describe("MessageBubble", () => {
       const message = buildAssistantMessage([textPart("part-1", "Done")]);
 
       // When
-      render(<MessageBubble message={message} sessionId="session-1" />);
+      render(<MessageBubble message={message} />);
 
       // Then
       expect(
@@ -407,7 +407,6 @@ describe("MessageBubble", () => {
         <MessageBubble
           message={message}
           feedbackTarget={buildUserMessage("optimistic-user-1")}
-          sessionId="session-1"
         />,
       );
 
@@ -433,8 +432,7 @@ describe("MessageBubble", () => {
       // Then
       await waitFor(() =>
         expect(submitFeedbackMock).toHaveBeenCalledWith({
-          sessionId: "session-1",
-          messageId: "message-user-1",
+          targetMessageId: "message-user-1",
           rating: "up",
         }),
       );
@@ -582,8 +580,7 @@ describe("MessageBubble", () => {
 
       // Then
       expect(submitFeedbackMock).toHaveBeenCalledWith({
-        sessionId: "session-1",
-        messageId: "message-user-1",
+        targetMessageId: "message-user-1",
         rating: "down",
         reasons: ["Don't like the style", "Low quality"],
         details: "Missing evidence",
@@ -614,8 +611,7 @@ describe("MessageBubble", () => {
 
       // Then
       expect(submitFeedbackMock).toHaveBeenCalledWith({
-        sessionId: "session-1",
-        messageId: "message-user-1",
+        targetMessageId: "message-user-1",
         rating: "down",
         details: "Missing evidence",
       });
@@ -652,8 +648,7 @@ describe("MessageBubble", () => {
 
       // Then
       expect(submitFeedbackMock).toHaveBeenCalledWith({
-        sessionId: "session-1",
-        messageId: "message-user-1",
+        targetMessageId: "message-user-1",
         rating: "down",
       });
     });
@@ -783,8 +778,7 @@ describe("MessageBubble", () => {
       // Then
       await waitFor(() => expect(submitFeedbackMock).toHaveBeenCalledTimes(2));
       expect(submitFeedbackMock).toHaveBeenLastCalledWith({
-        sessionId: "session-1",
-        messageId: "message-user-1",
+        targetMessageId: "message-user-1",
         rating: "down",
         reasons: ["Didn't fully follow instructions"],
         details: "Keep this draft",
@@ -829,7 +823,6 @@ function renderFeedbackBubble() {
       <MessageBubble
         message={buildAssistantMessage([textPart("part-1", "Done")])}
         feedbackTarget={buildUserMessage()}
-        sessionId="session-1"
       />
       <Toaster />
     </>,

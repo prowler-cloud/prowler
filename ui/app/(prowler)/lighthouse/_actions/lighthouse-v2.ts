@@ -274,7 +274,7 @@ export async function submitLighthouseV2MessageFeedback(
   input: LighthouseV2MessageFeedbackInput,
 ): Promise<LighthouseV2ActionResult<true>> {
   return mutateEmpty(
-    `${SESSIONS_ENDPOINT}/${encodeURIComponent(input.sessionId)}/messages/${encodeURIComponent(input.messageId)}/feedback`,
+    "/feedback/lighthouse",
     {
       method: "POST",
       body: JSON.stringify(buildLighthouseV2MessageFeedbackPayload(input)),

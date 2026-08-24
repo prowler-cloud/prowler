@@ -78,8 +78,7 @@ export interface LighthouseV2Message {
 }
 
 export interface LighthouseV2MessageFeedbackInput {
-  sessionId: string;
-  messageId: string;
+  targetMessageId: string;
   rating: LighthouseV2FeedbackRating;
   reasons?: LighthouseV2FeedbackReason[];
   details?: string;

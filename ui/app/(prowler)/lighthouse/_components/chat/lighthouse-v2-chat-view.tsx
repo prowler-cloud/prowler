@@ -67,7 +67,6 @@ export function LighthouseV2ChatView({
   const state = useLighthouseChatStore((current) => current);
   const {
     config,
-    activeSessionId,
     messages,
     streamState,
     input,
@@ -216,7 +215,6 @@ export function LighthouseV2ChatView({
                 <MessageBubble
                   key={message.id}
                   message={message}
-                  sessionId={activeSessionId ?? undefined}
                   feedbackTarget={feedbackTarget}
                   skillRun={skillRun}
                   onLaunchSkill={(skill) => {

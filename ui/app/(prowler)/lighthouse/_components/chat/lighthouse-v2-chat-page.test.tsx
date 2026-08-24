@@ -608,13 +608,11 @@ describe("LighthouseV2ChatPage", () => {
       }),
     ).toBeInTheDocument();
     expect(submitFeedbackMock).toHaveBeenCalledWith({
-      sessionId: "session-1",
-      messageId: "message-user-1",
+      targetMessageId: "message-user-1",
       rating: "down",
     });
     expect(submitFeedbackMock).toHaveBeenCalledWith({
-      sessionId: "session-1",
-      messageId: "message-user-2",
+      targetMessageId: "message-user-2",
       rating: "down",
     });
     expect(submitFeedbackMock).toHaveBeenCalledTimes(2);

@@ -159,7 +159,7 @@ describe("Lighthouse v2 session write actions", () => {
     );
   });
 
-  it("submits stateless Message feedback through the exact nested POST contract", async () => {
+  it("submits stateless Message feedback through the internal POST contract", async () => {
     // Given
     const fetchMock = vi
       .fn()
@@ -168,8 +168,7 @@ describe("Lighthouse v2 session write actions", () => {
 
     // When
     const result = await submitLighthouseV2MessageFeedback({
-      sessionId: "session-1",
-      messageId: "message-1",
+      targetMessageId: "message-1",
       rating: "down",
       reasons: ["Low quality", "Other"],
       details: "Missing evidence",
@@ -178,15 +177,14 @@ describe("Lighthouse v2 session write actions", () => {
     // Then
     expect(result).toEqual({ data: true, status: 204 });
     expect(fetchMock).toHaveBeenCalledWith(
-      new URL(
-        "https://api.example.com/api/v1/lighthouse/sessions/session-1/messages/message-1/feedback",
-      ),
+      new URL("https://api.example.com/api/v1/feedback/lighthouse"),
       expect.objectContaining({
         method: "POST",
         body: JSON.stringify({
           data: {
             type: "lighthouse-message-feedback",
             attributes: {
+              target_message_id: "message-1",
               rating: "down",
               reasons: ["Low quality", "Other"],
               details: "Missing evidence",
@@ -214,8 +212,7 @@ describe("Lighthouse v2 session write actions", () => {
 
     // When
     const result = await submitLighthouseV2MessageFeedback({
-      sessionId: "session-1",
-      messageId: "message-1",
+      targetMessageId: "message-1",
       rating: "up",
     });
 

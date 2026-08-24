@@ -265,6 +265,7 @@ export function buildLighthouseV2MessageFeedbackPayload(
     data: {
       type: "lighthouse-message-feedback",
       attributes: filterUndefinedAttributes({
+        target_message_id: input.targetMessageId,
         rating: input.rating,
         reasons: reasons?.length ? reasons : undefined,
         details: details || undefined,

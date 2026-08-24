@@ -65,7 +65,6 @@ interface AssistantPartGroup {
 
 interface MessageBubbleProps {
   message: LighthouseV2Message;
-  sessionId?: string;
   feedbackTarget?: LighthouseV2Message;
   // Present when this assistant message answered a skill launch (design 1j).
   skillRun?: SkillRunInfo;
@@ -74,7 +73,6 @@ interface MessageBubbleProps {
 
 export function MessageBubble({
   message,
-  sessionId,
   feedbackTarget,
   skillRun,
   onLaunchSkill,
@@ -155,7 +153,6 @@ export function MessageBubble({
           text={messageText}
           insertedAt={message.insertedAt}
           feedbackTarget={feedbackTarget}
-          sessionId={sessionId}
         />
       </div>
       {isUser && (
@@ -236,13 +233,11 @@ function MessageMeta({
   text,
   insertedAt,
   feedbackTarget,
-  sessionId,
 }: {
   isUser: boolean;
   text: string;
   insertedAt: string;
   feedbackTarget?: LighthouseV2Message;
-  sessionId?: string;
 }) {
   // Copy is always shown; the timestamp only reveals on hover over the message.
   // Agent footer reads left-to-right ([copy] [time]); user footer mirrors it.
@@ -258,7 +253,6 @@ function MessageMeta({
         <MessageFeedbackControls
           key={feedbackTarget.id}
           message={feedbackTarget}
-          sessionId={sessionId}
         />
       )}
       <time
@@ -273,10 +267,8 @@ function MessageMeta({
 
 function MessageFeedbackControls({
   message,
-  sessionId,
 }: {
   message: LighthouseV2Message;
-  sessionId?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [rating, setRating] = useState<LighthouseV2FeedbackRating | null>(null);
@@ -289,7 +281,7 @@ function MessageFeedbackControls({
     message.role === LIGHTHOUSE_V2_MESSAGE_ROLE.USER &&
     !message.id.startsWith("optimistic-");
 
-  if (!sessionId || !isPersistedUserMessage) return null;
+  if (!isPersistedUserMessage) return null;
 
   const selectRating = (nextRating: LighthouseV2FeedbackRating) => {
     setRating(nextRating);
@@ -328,8 +320,7 @@ function MessageFeedbackControls({
     try {
       const trimmedDetails = submittedDetails.trim();
       const result = await submitLighthouseV2MessageFeedback({
-        sessionId,
-        messageId: message.id,
+        targetMessageId: message.id,
         rating: submittedRating,
         ...(submittedReasons.length ? { reasons: submittedReasons } : {}),
         ...(trimmedDetails ? { details: trimmedDetails } : {}),
