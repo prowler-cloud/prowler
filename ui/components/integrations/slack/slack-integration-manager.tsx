@@ -63,11 +63,7 @@ type ChannelsState = ChannelsLoading | ChannelsFailed | ChannelsLoaded;
 
 const CHECK_HINT_ID = "slack-connection-check-hint";
 
-/**
- * What the connection check posts, word for word (contract, Connection). Named
- * here because the copy promises it: a user about to run the check sees exactly
- * what will land in their channels.
- */
+/** The exact text the check posts (contract, Connection); the hint quotes it. */
 const CONFIRMATION_MESSAGE =
   "✅ Prowler connection verified. Notifications will be delivered to this channel.";
 
@@ -84,11 +80,7 @@ interface UnconfirmedRevocation {
 const sameChannelIds = (a: string[], b: string[]) =>
   a.length === b.length && new Set([...a, ...b]).size === a.length;
 
-/**
- * Confirmation counts as part of the record: a check that confirms a channel
- * changes nothing else, and the mirror has to follow it or the card would keep
- * offering to confirm what is already confirmed.
- */
+/** Confirmation is part of the record: a confirm-only change must re-seed. */
 const sameChannelSets = (
   a: SlackAuthorizedChannel[],
   b: SlackAuthorizedChannel[],
@@ -105,9 +97,8 @@ const sameChannelSets = (
 };
 
 /**
- * The listing's copy of a channel wins over the stored one (a rename in Slack
- * shows up there first), and a stored channel the listing no longer carries
- * stays offered: dropping it silently would deselect it behind the user's back.
+ * A stored channel the listing no longer carries stays selectable: dropping it
+ * would deselect it behind the user's back.
  */
 const mergeChannelOptions = (
   listed: SlackChannelOption[],
@@ -115,17 +106,14 @@ const mergeChannelOptions = (
 ): SlackChannelOption[] => {
   const merged = new Map(listed.map((channel) => [channel.id, channel]));
   stored.forEach(({ id, name, is_private }) => {
-    // Narrowed on the way in: the picker offers channels, and whether Prowler
-    // has confirmed one is no part of choosing it.
     if (!merged.has(id)) merged.set(id, { id, name, is_private });
   });
   return Array.from(merged.values());
 };
 
 /**
- * What the save recorded, for an answer that carried no channels back. Retained
- * ids keep the confirmation they had and new ones start without one, which is
- * the rule the API applies.
+ * Fallback for a save that answered without channels. Retained ids keep their
+ * confirmation, new ones start without one (contract, PATCH).
  */
 const recordedFromSelection = (
   channelIds: string[],
@@ -220,9 +208,8 @@ export const SlackIntegrationManager = ({
   const [isSavingChannels, setIsSavingChannels] = useState(false);
 
   if (!sameChannelSets(recordedChannels, syncedChannels)) {
-    // The mirror, not the prop it was taken from: a save advances the mirror
-    // while the prop is still catching up, so measuring against the prop would
-    // read a pick made after that save as no pick at all.
+    // The baseline is `authorizedChannels`, not `syncedChannels`: a save
+    // advances the mirror first, so the prop reads a later pick as none.
     const shownIds = authorizedChannels.map((channel) => channel.id);
     setSyncedChannels(recordedChannels);
     setAuthorizedChannels(recordedChannels);
@@ -321,14 +308,11 @@ export const SlackIntegrationManager = ({
     authorizedChannels,
   );
 
-  // The check posts its confirmation only where none has landed yet, so these
-  // are the channels the next one would post to (contract, Connection).
+  // The check posts only where no confirmation has landed (contract, Connection).
   const unconfirmedChannels = authorizedChannels.filter(
     (channel) => channel.confirmation_sent_at === null,
   );
-  // Channels the buffered selection would drop. Removing one cascades into the
-  // alert rules that target it, in the same transaction (design D11), so the
-  // warning belongs to the pending save rather than to what is on record.
+  // Dropping a channel cascades into the alert rules targeting it (design D11).
   const droppedChannels = authorizedChannels.filter(
     (channel) => !selectedChannelIds.includes(channel.id),
   );
@@ -368,9 +352,8 @@ export const SlackIntegrationManager = ({
         return;
       }
 
-      // Prefer the API's own record: it derives the names (a channel renamed
-      // in Slack since the list was read would otherwise show its old name)
-      // and it is what says which channels are confirmed.
+      // Prefer the API's own record: a channel renamed in Slack since the list
+      // was read would otherwise show its old name.
       savedChannels =
         result.integration.attributes.configuration.channels ??
         recordedFromSelection(
@@ -402,18 +385,14 @@ export const SlackIntegrationManager = ({
     }
 
     // Recording destinations is what makes a check possible (design D7), and
-    // the save alone only proves the API took the ids: the check is what
-    // reaches each channel and confirms it. A save that cleared the set has
-    // nothing to post to.
+    // the save alone only proves the API took the ids.
     if (savedChannels.length > 0)
       await handleTestConnection(integrationId, savedChannels);
   };
 
   const handleTestConnection = async (
     id: string,
-    // The set the failing channel is named from. A check chained onto a save
-    // runs before the state the save queued lands, so that caller passes the
-    // set it just recorded.
+    // Passed in by a chained check: it runs before the save's state lands.
     channels: SlackAuthorizedChannel[] = authorizedChannels,
   ) => {
     setIsTesting(true);
@@ -439,10 +418,8 @@ export const SlackIntegrationManager = ({
           ? slackErrorMessage({ code: reason, detail: reason })
           : "Failed to reach your Slack workspace.";
 
-        // The failure names the channel it is about by id (design D7): the
-        // fix is in Slack, on that channel, not on the integration as a whole.
-        // An id the authorized set no longer holds names nothing to the user,
-        // so a raw Slack id is never shown — it reads as workspace-wide.
+        // The failure names its channel by id (design D7); an id the set no
+        // longer holds falls back to workspace-wide, never a raw Slack id.
         const refusedChannel = result.failedChannelId
           ? channels.find((channel) => channel.id === result.failedChannelId)
           : undefined;
@@ -732,8 +709,7 @@ export const SlackIntegrationManager = ({
               )}
 
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                {/* The card's subtitle also starts "Prowler posts to", so the
-                    recorded set is keyed for what reads it. */}
+                {/* Keyed: the card's subtitle also starts "Prowler posts to". */}
                 <p
                   className="text-text-neutral-secondary text-xs"
                   data-authorized-channels

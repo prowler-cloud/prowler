@@ -33,14 +33,9 @@ interface SlackChannelMultiSelectProps {
   incompleteNotice?: string | null;
   onRefresh?: () => void;
   disabled?: boolean;
-  /** Override when two pickers share a page: the trigger's id has to stay unique. */
   id?: string;
 }
 
-/**
- * The chip a selected channel renders with the listing closed: a private one
- * keeps its identification there, not only inside the open listing.
- */
 const chipLabel = (option: SlackChannelOption) => (
   <span className="flex min-w-0 items-center gap-1">
     {option.is_private && (
@@ -142,8 +137,7 @@ export const SlackChannelMultiSelect = ({
                   key={option.id}
                   value={option.id}
                   badgeLabel={chipLabel(option)}
-                  // The search matches on `value`, which is the id here, so the
-                  // name the user types has to be searchable on its own.
+                  // `value` is the id, so names match only via this keyword.
                   keywords={[option.name]}
                   // Name hook: the rendered label mixes it with a "Private"
                   // badge.
