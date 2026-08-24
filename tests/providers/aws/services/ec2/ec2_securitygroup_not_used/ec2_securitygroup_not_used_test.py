@@ -539,14 +539,15 @@ class Test_ec2_securitygroup_not_used:
 
             result = ec2_securitygroup_not_used().execute()
 
-        # Unknown associations must not be reported as unused
+        # Unknown associations must not be reported as unused; a lack of
+        # visibility is reported as MANUAL rather than asserted either way
         assert len(result) == 1
-        assert result[0].status == "PASS"
+        assert result[0].status == "MANUAL"
         assert result[0].region == AWS_REGION_US_EAST_1
         assert result[0].resource_id == sg_id
         assert (
             result[0].status_extended
-            == f"Security group {sg_name} ({sg_id}) usage could not be verified because AWS Batch compute environments could not be listed in region {AWS_REGION_US_EAST_1}."
+            == f"Security group {sg_name} ({sg_id}) usage could not be verified because AWS Batch compute environments could not be listed in region {AWS_REGION_US_EAST_1}; grant batch:DescribeComputeEnvironments and run the check again."
         )
 
     def test_ec2_sg_still_reported_used_when_batch_lookup_failed(self):
