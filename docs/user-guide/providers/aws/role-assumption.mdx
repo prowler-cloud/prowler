@@ -77,6 +77,15 @@ The template requires the following parameters:
 - **AccountId:** *(Optional)* AWS Account ID that will assume the role (default: Prowler Cloud account)
 - **IAMPrincipal:** *(Optional)* The IAM principal allowed to assume the role (default: `role/prowler*`)
 
+<Warning>
+From the CLI you assume the role with **your own** identity, not from Prowler Cloud. The `AccountId` and `IAMPrincipal` defaults target Prowler Cloud, so set **`AccountId`** to the account you run Prowler from and **`IAMPrincipal`** to your identity (for example `role/<name>` or `user/<name>`). Otherwise `sts:AssumeRole` fails with `AccessDenied`. See [Aligning the trust policy with your identity](/user-guide/providers/aws/authentication#trust-policy-align-iamprincipal-with-your-identity).
+</Warning>
+
+<Note>
+To deploy the role across an entire AWS Organization from a single stack (Management Account role plus a service-managed StackSet for the member accounts), the template also accepts `DeployLocalRole`, `DeployStackSet`, `AWSOrganizationalUnitId`, `DeployFromDelegatedAdmin`, `EnableOrganizations`, `FailureTolerancePercentage`, and `RetainStacksOnAccountRemoval`. See [AWS Organizations in Prowler](/user-guide/providers/aws/organizations#native-cloudformation-stackset-deployment-recommended) for the full parameter reference.
+
+</Note>
+
 When running Prowler CLI, include the External ID using the `-I/--external-id` flag:
 
 ```sh

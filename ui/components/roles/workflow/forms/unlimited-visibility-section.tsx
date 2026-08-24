@@ -2,6 +2,10 @@ import { InfoIcon } from "lucide-react";
 import { ReactNode } from "react";
 
 import { Checkbox } from "@/components/shadcn/checkbox/checkbox";
+import { CustomLink } from "@/components/shadcn/custom/custom-link";
+
+const PROVIDER_GROUPS_DOCS_URL =
+  "https://docs.prowler.com/user-guide/tutorials/prowler-app-rbac#provider-groups";
 
 export const UnlimitedVisibilitySection = ({
   children,
@@ -15,12 +19,20 @@ export const UnlimitedVisibilitySection = ({
           aria-hidden="true"
           className="text-bg-data-info mt-0.5 h-4 w-4 shrink-0"
         />
-        <p>
-          This is a tenant-wide visibility setting. It grants visibility into
-          every provider, account, resource, finding, scan, and compliance
-          result, regardless of the groups selected below. It is also{" "}
-          <strong>required to use the Jira integration</strong>.
-        </p>
+        <div className="flex flex-col gap-1">
+          <p>
+            Checking the box below grants visibility into every provider:
+            resources, findings, scans, and compliance results, regardless of
+            the provider groups selected.
+          </p>
+          <p>
+            Unlimited Visibility is also{" "}
+            <strong>required to use the Jira integration</strong>.{" "}
+            <CustomLink href={PROVIDER_GROUPS_DOCS_URL} size="sm">
+              Learn more about Provider Groups
+            </CustomLink>
+          </p>
+        </div>
       </div>
       <div>{children}</div>
     </section>

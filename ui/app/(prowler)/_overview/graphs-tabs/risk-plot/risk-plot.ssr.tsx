@@ -13,6 +13,7 @@ import {
   filterProvidersByScope,
   parseFilterIds,
 } from "../../_lib/provider-scope";
+
 import { RiskPlotClient } from "./risk-plot-client";
 
 export async function RiskPlotSSR({

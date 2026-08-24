@@ -552,7 +552,8 @@
         "s3_bucket_policy_public_write_access",
         "s3_account_level_public_access_blocks",
         "ssm_managed_compliant_patching",
-        "ec2_securitygroup_default_restrict_traffic"
+        "ec2_securitygroup_default_restrict_traffic",
+        "ec2_confidential_workload_host_vsock_proxy_exposed"
       ]
     },
     {
@@ -570,7 +571,8 @@
         "ec2_securitygroup_default_restrict_traffic",
         "ec2_networkacl_allow_ingress_any_port",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
-        "ec2_networkacl_allow_ingress_any_port"
+        "ec2_networkacl_allow_ingress_any_port",
+        "ec2_confidential_workload_host_vsock_proxy_exposed"
       ]
     },
     {
@@ -717,6 +719,7 @@
         "apigateway_restapi_client_certificate_enabled",
         "ec2_ebs_volume_encryption",
         "elbv2_insecure_ssl_ciphers",
+        "elbv2_listener_pqc_tls_enabled",
         "cloudfront_distributions_pqc_tls_enabled",
         "apigateway_domain_name_pqc_tls_enabled",
         "transfer_server_pqc_ssh_kex_enabled",
@@ -1057,7 +1060,8 @@
         "ec2_securitygroup_default_restrict_traffic",
         "ec2_networkacl_allow_ingress_any_port",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
-        "ec2_networkacl_allow_ingress_any_port"
+        "ec2_networkacl_allow_ingress_any_port",
+        "ec2_confidential_workload_host_public_ip"
       ]
     },
     {
@@ -1118,7 +1122,8 @@
         "s3_bucket_default_encryption",
         "s3_bucket_secure_transport_policy",
         "sagemaker_notebook_instance_encryption_enabled",
-        "sns_topics_kms_encryption_at_rest_enabled"
+        "sns_topics_kms_encryption_at_rest_enabled",
+        "kms_key_enclave_attestation_not_enforced"
       ]
     },
     {

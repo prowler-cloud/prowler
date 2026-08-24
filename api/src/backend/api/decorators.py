@@ -1,12 +1,13 @@
 import uuid
 from functools import wraps
 
+from api.attack_paths.database import GraphDatabaseQueryException
 from api.db_router import READ_REPLICA_ALIAS
 from api.db_utils import POSTGRES_TENANT_VAR, SET_CONFIG_QUERY, rls_transaction
 from api.exceptions import ProviderDeletedException
-from api.models import Provider, Scan
+from api.models import Membership, Provider, Scan, Tenant
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import DatabaseError, connection, transaction
+from django.db import DEFAULT_DB_ALIAS, DatabaseError, connection, transaction
 from rest_framework_json_api.serializers import ValidationError
 
 
@@ -75,9 +76,11 @@ def handle_provider_deletion(func):
     """
     Decorator that raises `ProviderDeletedException` if provider was deleted during execution.
 
-    Catches `ObjectDoesNotExist` and `DatabaseError` (including `IntegrityError`), checks if
-    provider still exists, and raises `ProviderDeletedException` if not. Otherwise,
-    re-raises original exception.
+    Catches `ObjectDoesNotExist`, `DatabaseError` (including `IntegrityError`), and
+    `GraphDatabaseQueryException`, checks if provider still exists, and raises
+    `ProviderDeletedException` if not. Graph database errors also check whether the
+    tenant still exists and has memberships. Otherwise, re-raises the original
+    exception.
 
     Requires `tenant_id` and `provider_id` in kwargs.
 
@@ -92,11 +95,16 @@ def handle_provider_deletion(func):
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
-        except (ObjectDoesNotExist, DatabaseError):
+        except (ObjectDoesNotExist, DatabaseError, GraphDatabaseQueryException) as exc:
             tenant_id = kwargs.get("tenant_id")
             provider_id = kwargs.get("provider_id")
+            database_alias = (
+                DEFAULT_DB_ALIAS
+                if isinstance(exc, GraphDatabaseQueryException)
+                else READ_REPLICA_ALIAS
+            )
 
-            with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+            with rls_transaction(tenant_id, using=database_alias):
                 if provider_id is None:
                     scan_id = kwargs.get("scan_id")
                     if scan_id is None:
@@ -112,6 +120,13 @@ def handle_provider_deletion(func):
                 if not Provider.objects.filter(pk=provider_id).exists():
                     raise ProviderDeletedException(
                         f"Provider '{provider_id}' was deleted during the scan"
+                    ) from None
+                if isinstance(exc, GraphDatabaseQueryException) and (
+                    not Tenant.objects.filter(pk=tenant_id).exists()
+                    or not Membership.objects.filter(tenant_id=tenant_id).exists()
+                ):
+                    raise ProviderDeletedException(
+                        f"Tenant '{tenant_id}' was deleted during the scan"
                     ) from None
             raise
 

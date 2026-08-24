@@ -79,7 +79,8 @@
         "rds_cluster_multi_az",
         "vpc_subnet_auto_assign_public_ip_disabled",
         "vpc_default_security_group_restricts_traffic",
-        "vpc_peering_connection_routing_tables_with_least_privilege"
+        "vpc_peering_connection_routing_tables_with_least_privilege",
+        "ec2_confidential_workload_host_imdsv2_not_enforced"
       ]
     },
     {
@@ -202,7 +203,9 @@
         "redshift_cluster_audit_logging",
         "s3_bucket_server_access_logging_enabled",
         "vpc_flow_logs_enabled",
-        "wafv2_webacl_logging_enabled"
+        "wafv2_webacl_logging_enabled",
+        "kms_key_enclave_debug_attestation_detected",
+        "kms_key_enclave_attestation_unknown_image"
       ]
     },
     {
@@ -310,7 +313,8 @@
         "s3_bucket_secure_transport_policy",
         "sagemaker_notebook_instance_encryption_enabled",
         "sns_topics_kms_encryption_at_rest_enabled",
-        "sqs_queue_server_side_encryption_enabled"
+        "sqs_queue_server_side_encryption_enabled",
+        "kms_key_enclave_attestation_not_enforced"
       ]
     },
     {

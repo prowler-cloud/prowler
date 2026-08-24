@@ -153,6 +153,12 @@ class AWSProviderConfig(ProviderConfigBase):
         le=1_000_000,
         description="Resource scan limit for ECS task definitions. Use 0 or -1 to disable.",
     )
+    max_batch_job_definitions: ResourceScanLimit = Field(
+        default=None,
+        ge=-1,
+        le=1_000_000,
+        description="Resource scan limit for Batch job definitions. Use 0 or -1 to disable.",
+    )
     max_codeartifact_packages: ResourceScanLimit = Field(
         default=None,
         ge=-1,
@@ -211,6 +217,15 @@ class AWSProviderConfig(ProviderConfigBase):
             "Days an EC2 instance can run before being flagged as old. "
             "Range: 1..1095 (3 years; instances should be refreshed for patching "
             "per NIST CM-3 — anything older is a security smell)."
+        ),
+    )
+    max_ec2_instance_stopped_days: Optional[int] = Field(
+        default=None,
+        ge=1,
+        le=1095,
+        description=(
+            "Days an EC2 instance can remain stopped before being flagged. "
+            "Range: 1..1095 (3 years)."
         ),
     )
     ec2_allowed_interface_types: Optional[list[str]] = None
@@ -414,6 +429,10 @@ class AWSProviderConfig(ProviderConfigBase):
         ge=1,
         le=6,
         description="Min AZs an Application/Network LB must span. Range: 1..6.",
+    )
+    elbv2_listener_pqc_tls_allowed_policies: Optional[list[str]] = Field(
+        default=None,
+        description="ELBv2 SSL policies that satisfy the PQ TLS listener check.",
     )
 
     # --- ElastiCache -----------------------------------------------------

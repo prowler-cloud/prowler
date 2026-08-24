@@ -5,8 +5,8 @@ import { tool } from "@langchain/core/tools";
 import { addBreadcrumb, captureException } from "@sentry/nextjs";
 import { z } from "zod";
 
+import { isAllowedTool } from "@/lib/lighthouse-v1/allowed-tools";
 import { getMCPTools, isMCPAvailable } from "@/lib/lighthouse-v1/mcp-client";
-import { isAllowedTool } from "@/lib/lighthouse-v1/workflow";
 
 /** Input type for describe_tool */
 interface DescribeToolInput {
@@ -95,7 +95,7 @@ Use this to understand what parameters a tool requires before executing it.
 Tool names are listed in your system prompt - use the exact name.
 
 You must always provide the toolName key in the JSON object.
-Example: describe_tool({ "toolName": "prowler_app_search_security_findings" })
+Example: describe_tool({ "toolName": "prowler_search_security_findings" })
 
 Returns:
 - Full parameter schema with types and descriptions
@@ -203,7 +203,7 @@ export const executeTool = tool(
 Provide the exact tool name and its input parameters as specified in the tool's schema.
 
 You must always provide the toolName and toolInput keys in the JSON object.
-Example: execute_tool({ "toolName": "prowler_app_search_security_findings", "toolInput": {} })
+Example: execute_tool({ "toolName": "prowler_search_security_findings", "toolInput": {} })
 
 All input to the tool must be provided in the toolInput key as a JSON object.
 Example: execute_tool({ "toolName": "prowler_hub_list_compliances", "toolInput": { "provider": ["aws"] } })

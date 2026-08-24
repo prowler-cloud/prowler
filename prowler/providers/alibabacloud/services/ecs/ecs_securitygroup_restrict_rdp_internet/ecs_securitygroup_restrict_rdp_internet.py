@@ -26,7 +26,7 @@ class ecs_securitygroup_restrict_rdp_internet(Check):
 
             for ingress_rule in security_group.ingress_rules:
                 # Check if rule allows traffic (policy == "accept")
-                if ingress_rule.get("policy", "accept") != "accept":
+                if str(ingress_rule.get("policy", "accept")).lower() != "accept":
                     continue
 
                 # Check protocol (tcp for RDP)

@@ -36,6 +36,7 @@ jobs:
     needs: impact-analysis
     if: |
       github.repository == 'prowler-cloud/prowler' &&
+      (github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false) &&
       (needs.impact-analysis.outputs.has-ui-e2e == 'true' || needs.impact-analysis.outputs.run-all == 'true')
     runs-on: ubuntu-latest
     env:
@@ -96,7 +97,7 @@ jobs:
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
         with:
           egress-policy: audit
 
@@ -107,16 +108,114 @@ jobs:
 
       - name: Show test scope
         run: |
-          echo "## E2E Test Scope" >> $GITHUB_STEP_SUMMARY
+          echo "## E2E Test Scope" >> "$GITHUB_STEP_SUMMARY"
           if [[ "${RUN_ALL_TESTS}" == "true" ]]; then
-            echo "Running **ALL** E2E tests (critical path changed)" >> $GITHUB_STEP_SUMMARY
+            echo "Running **ALL** E2E tests (critical path changed)" >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "Running tests matching: \`${E2E_TEST_PATHS}\`" >> $GITHUB_STEP_SUMMARY
+            echo "Running tests matching: \`${E2E_TEST_PATHS}\`" >> "$GITHUB_STEP_SUMMARY"
           fi
           echo ""
-          echo "Affected modules: \`${NEEDS_IMPACT_ANALYSIS_OUTPUTS_MODULES}\`" >> $GITHUB_STEP_SUMMARY
+          echo "Affected modules: \`${NEEDS_IMPACT_ANALYSIS_OUTPUTS_MODULES}\`" >> "$GITHUB_STEP_SUMMARY"
         env:
           NEEDS_IMPACT_ANALYSIS_OUTPUTS_MODULES: ${{ needs.impact-analysis.outputs.modules }}
+
+      - name: Validate E2E prerequisites
+        shell: bash
+        run: |
+          declare -A required=()
+
+          suite_selected() {
+            [[ "${RUN_ALL_TESTS}" == "true" ]] ||
+              [[ " ${E2E_TEST_PATHS} " == *"ui/tests/$1/"* ]]
+          }
+
+          require_vars() {
+            local variable
+            for variable in "$@"; do
+              required["${variable}"]=1
+            done
+          }
+
+          if suite_selected auth || suite_selected providers ||
+            suite_selected invitations || suite_selected scans ||
+            suite_selected navigation; then
+            require_vars E2E_ADMIN_USER E2E_ADMIN_PASSWORD
+          fi
+
+          if suite_selected sign-up; then
+            require_vars E2E_NEW_USER_PASSWORD
+          fi
+
+          if suite_selected invitations; then
+            require_vars E2E_NEW_USER_PASSWORD E2E_ORGANIZATION_ID
+          fi
+
+          if suite_selected scans; then
+            require_vars \
+              E2E_AWS_PROVIDER_ACCOUNT_ID \
+              E2E_AWS_PROVIDER_ACCESS_KEY \
+              E2E_AWS_PROVIDER_SECRET_KEY
+          fi
+
+          if suite_selected providers; then
+            require_vars \
+              E2E_AWS_PROVIDER_ACCOUNT_ID \
+              E2E_AWS_PROVIDER_ACCESS_KEY \
+              E2E_AWS_PROVIDER_SECRET_KEY \
+              E2E_AWS_PROVIDER_ROLE_ARN \
+              E2E_AZURE_SUBSCRIPTION_ID \
+              E2E_AZURE_CLIENT_ID \
+              E2E_AZURE_SECRET_ID \
+              E2E_AZURE_TENANT_ID \
+              E2E_M365_DOMAIN_ID \
+              E2E_M365_CLIENT_ID \
+              E2E_M365_SECRET_ID \
+              E2E_M365_TENANT_ID \
+              E2E_M365_CERTIFICATE_CONTENT \
+              E2E_GCP_BASE64_SERVICE_ACCOUNT_KEY \
+              E2E_GCP_PROJECT_ID \
+              E2E_GITHUB_APP_ID \
+              E2E_GITHUB_BASE64_APP_PRIVATE_KEY \
+              E2E_GITHUB_USERNAME \
+              E2E_GITHUB_PERSONAL_ACCESS_TOKEN \
+              E2E_GITHUB_ORGANIZATION \
+              E2E_GITHUB_ORGANIZATION_ACCESS_TOKEN \
+              E2E_OCI_TENANCY_ID \
+              E2E_OCI_USER_ID \
+              E2E_OCI_FINGERPRINT \
+              E2E_OCI_KEY_CONTENT \
+              E2E_ALIBABACLOUD_ACCOUNT_ID \
+              E2E_ALIBABACLOUD_ACCESS_KEY_ID \
+              E2E_ALIBABACLOUD_ACCESS_KEY_SECRET \
+              E2E_ALIBABACLOUD_ROLE_ARN \
+              E2E_OKTA_DOMAIN \
+              E2E_OKTA_CLIENT_ID \
+              E2E_OKTA_BASE64_PRIVATE_KEY \
+              E2E_GOOGLEWORKSPACE_CUSTOMER_ID \
+              E2E_GOOGLEWORKSPACE_SERVICE_ACCOUNT_JSON \
+              E2E_GOOGLEWORKSPACE_DELEGATED_USER \
+              E2E_VERCEL_TEAM_ID \
+              E2E_VERCEL_API_TOKEN
+          fi
+
+          missing=()
+          if (( ${#required[@]} > 0 )); then
+            while IFS= read -r variable; do
+              [[ -z "${!variable:-}" ]] && missing+=("${variable}")
+            done < <(printf '%s\n' "${!required[@]}" | sort)
+          fi
+
+          if (( ${#missing[@]} > 0 )); then
+            echo "Missing required E2E variables:"
+            printf ' - %s\n' "${missing[@]}"
+            {
+              echo "## Missing E2E prerequisites"
+              printf -- "- \`%s\`\n" "${missing[@]}"
+            } >> "${GITHUB_STEP_SUMMARY}"
+            exit 1
+          fi
+
+          echo "E2E prerequisite preflight passed."
 
       - name: Create k8s Kind Cluster
         uses: helm/kind-action@ef37e7f390d99f746eb8b610417061a60e82a6cc # v1
@@ -134,7 +233,7 @@ jobs:
           yq -i '.services.worker.networks = ["kind","default"]' docker-compose.yml
 
       - name: Fix API data directory permissions
-        run: docker run --rm -v $(pwd)/_data/api:/data alpine chown -R 1000:1000 /data
+        run: docker run --rm -v "$(pwd)/_data/api:/data" alpine chown -R 1000:1000 /data
 
       - name: Add AWS credentials for testing
         run: |
@@ -168,7 +267,7 @@ jobs:
           timeout=150
           elapsed=0
           while [ $elapsed -lt $timeout ]; do
-            if curl -s ${UI_API_BASE_URL}/docs >/dev/null 2>&1; then
+            if curl -s "${UI_API_BASE_URL}/docs" >/dev/null 2>&1; then
               echo "Prowler API is ready!"
               exit 0
             fi
@@ -202,7 +301,7 @@ jobs:
           run_install: false
 
       - name: Get pnpm store directory
-        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> "$GITHUB_ENV"
 
       - name: Setup pnpm and Next.js cache
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
@@ -288,7 +387,8 @@ jobs:
             fi
             TEST_PATHS=$(echo "$VALID_PATHS" | tr '\n' ' ')
             echo "Resolved test paths: $TEST_PATHS"
-            pnpm exec playwright test $TEST_PATHS
+            read -ra test_paths <<< "$TEST_PATHS"
+            pnpm exec playwright test "${test_paths[@]}"
           fi
 
       - name: Upload test reports
@@ -304,6 +404,29 @@ jobs:
         run: |
           docker compose down -v || true
 
+  # Fork pull requests cannot access the secrets required by the E2E suites.
+  fork-e2e-unavailable:
+    needs: impact-analysis
+    if: |
+      github.repository == 'prowler-cloud/prowler' &&
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.fork == true &&
+      (needs.impact-analysis.outputs.has-ui-e2e == 'true' || needs.impact-analysis.outputs.run-all == 'true')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: audit
+
+      - name: Report unavailable E2E tests
+        run: |
+          echo "## E2E Tests Skipped" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "UI E2E tests require repository secrets and cannot run for fork pull requests." >> "$GITHUB_STEP_SUMMARY"
+
   # Skip job - provides clear feedback when no E2E tests needed
   skip-e2e:
     needs: impact-analysis
@@ -316,18 +439,18 @@ jobs:
       contents: read
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
         with:
           egress-policy: audit
 
       - name: No E2E tests needed
         run: |
-          echo "## E2E Tests Skipped" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "No UI E2E tests needed for this change." >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Affected modules: \`${NEEDS_IMPACT_ANALYSIS_OUTPUTS_MODULES}\`" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "To run all tests, modify a file in a critical path (e.g., \`ui/lib/**\`)." >> $GITHUB_STEP_SUMMARY
+          echo "## E2E Tests Skipped" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "No UI E2E tests needed for this change." >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Affected modules: \`${NEEDS_IMPACT_ANALYSIS_OUTPUTS_MODULES}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "To run all tests, modify a file in a critical path (e.g., \`ui/lib/**\`)." >> "$GITHUB_STEP_SUMMARY"
         env:
           NEEDS_IMPACT_ANALYSIS_OUTPUTS_MODULES: ${{ needs.impact-analysis.outputs.modules }}

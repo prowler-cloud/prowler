@@ -33,7 +33,7 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
         with:
           egress-policy: block
           allowed-endpoints: >
@@ -69,7 +69,7 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
         with:
           egress-policy: block
           allowed-endpoints: >
@@ -88,6 +88,9 @@ jobs:
             get.trivy.dev:443
             release-assets.githubusercontent.com:443
             objects.githubusercontent.com:443
+            raw.githubusercontent.com:443
+            grype.anchore.io:443
+            get.anchore.io:443
 
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -99,7 +102,13 @@ jobs:
         id: check-changes
         uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
-          files: ui/**
+          files: |
+            ui/**
+            .trivyignore.yaml
+            .github/actions/trivy-scan/**
+            .github/actions/grype-scan/**
+            .grype.yaml
+            .github/scripts/grype-pr-comment.js
           files_ignore: |
             ui/CHANGELOG.md
             ui/changelog.d/**
@@ -130,5 +139,13 @@ jobs:
         with:
           image-name: ${{ env.IMAGE_NAME }}
           image-tag: ${{ github.sha }}
-          fail-on-critical: 'true'
-          severity: 'CRITICAL'
+          fail-on-severity: 'high'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Scan UI container with Grype
+        if: steps.check-changes.outputs.any_changed == 'true'
+        uses: ./.github/actions/grype-scan
+        with:
+          image-name: ${{ env.IMAGE_NAME }}
+          image-tag: ${{ github.sha }}
+          fail-on-severity: 'high'

@@ -24,7 +24,9 @@ import {
   extractSortAndKey,
   hasDateOrScanFilter,
 } from "@/lib";
+import { getFindingGroupFilterOptions } from "@/lib/finding-group-filter-options";
 import { resolveFindingScanDateFilters } from "@/lib/findings-scan-filters";
+import { isCloud } from "@/lib/shared/env";
 import { ScanEntity, ScanProps } from "@/types";
 import { SearchParamsProps } from "@/types/components";
 
@@ -67,6 +69,13 @@ export default async function Findings({
     metadataInfoData?.data?.attributes?.resource_types || [];
   const uniqueCategories = metadataInfoData?.data?.attributes?.categories || [];
   const uniqueGroups = metadataInfoData?.data?.attributes?.groups || [];
+  const fetchFindingGroupFilterOptions = hasHistoricalData
+    ? getFindingGroups
+    : getLatestFindingGroups;
+  const checkOptions = await getFindingGroupFilterOptions({
+    fetchFindingGroups: fetchFindingGroupFilterOptions,
+    filters: resolvedFilters,
+  });
 
   const completedScans = scansData?.data?.filter(
     (scan: ScanProps) =>
@@ -89,7 +98,7 @@ export default async function Findings({
     completedScans || [],
     providersData,
   ) as { [uid: string]: ScanEntity }[];
-  const alertsEnabled = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
+  const alertsEnabled = isCloud();
 
   return (
     <ContentLayout
@@ -109,6 +118,7 @@ export default async function Findings({
             uniqueResourceTypes={uniqueResourceTypes}
             uniqueCategories={uniqueCategories}
             uniqueGroups={uniqueGroups}
+            checkOptions={checkOptions}
             trailingControls={
               <SeedFromFindingsButton
                 filterBag={filters}
@@ -144,6 +154,10 @@ const SSRDataTable = async ({
 }) => {
   const page = parseInt(searchParams.page?.toString() || "1", 10);
   const pageSize = parseInt(searchParams.pageSize?.toString() || "10", 10);
+  const expandedCheckIdParam = searchParams.expandedCheckId;
+  const expandedCheckId = Array.isArray(expandedCheckIdParam)
+    ? expandedCheckIdParam[0]
+    : expandedCheckIdParam;
 
   const { encodedSort } = extractSortAndKey(searchParams);
   const hasHistoricalData = hasDateOrScanFilter(filters);
@@ -177,6 +191,7 @@ const SSRDataTable = async ({
         metadata={findingGroupsData?.meta}
         resolvedFilters={filters}
         hasHistoricalData={hasHistoricalData}
+        expandedCheckId={expandedCheckId}
       />
     </>
   );

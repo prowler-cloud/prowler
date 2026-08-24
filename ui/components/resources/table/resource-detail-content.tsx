@@ -5,10 +5,11 @@ import { Container, CornerDownRight, Link } from "lucide-react";
 import { useState } from "react";
 
 import {
+  loadFindingTriageDetail,
   loadLatestFindingTriageNote,
   updateFindingTriage,
 } from "@/actions/findings";
-import { FloatingMuteButton } from "@/components/findings/floating-mute-button";
+import { FloatingSelectionActions } from "@/components/findings/floating-selection-actions";
 import { FindingDetailDrawer } from "@/components/findings/table";
 import {
   Tabs,
@@ -18,8 +19,6 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/shadcn";
-import {
   BreadcrumbNavigation,
   CustomBreadcrumbItem,
 } from "@/components/shadcn";
@@ -39,11 +38,9 @@ import { shouldRefreshAfterTriageUpdate } from "@/lib/finding-triage";
 import { getRegionFlag } from "@/lib/region-flags";
 import { ProviderType, ResourceProps } from "@/types";
 import type { UpdateFindingTriageInput } from "@/types/findings-triage";
+import type { ResourceFinding } from "@/types/resources";
 
-import {
-  getResourceFindingsColumns,
-  ResourceFinding,
-} from "./resource-findings-columns";
+import { getResourceFindingsColumns } from "./resource-findings-columns";
 import { useFindingDetails } from "./use-finding-details";
 import { useResourceDrawerBootstrap } from "./use-resource-drawer-bootstrap";
 
@@ -151,14 +148,15 @@ export const ResourceDetailContent = ({
   };
 
   const handleTriageUpdate = async (input: UpdateFindingTriageInput) => {
-    await updateFindingTriage(input);
+    const result = await updateFindingTriage(input);
 
     if (shouldRefreshAfterTriageUpdate(input)) {
       setFindingsReloadNonce((value) => value + 1);
-      return;
+      return result;
     }
 
     patchTriageUpdate(input);
+    return result;
   };
 
   const failedFindings = findingsData;
@@ -184,6 +182,7 @@ export const ResourceDetailContent = ({
     handleMuteComplete,
     handleTriageUpdate,
     loadLatestFindingTriageNote,
+    loadFindingTriageDetail,
   );
 
   const findingTitle =
@@ -408,9 +407,12 @@ export const ResourceDetailContent = ({
                     isLoading={findingsLoading}
                   />
                   {selectedFindingIds.length > 0 && (
-                    <FloatingMuteButton
+                    <FloatingSelectionActions
                       selectedCount={selectedFindingIds.length}
                       selectedFindingIds={selectedFindingIds}
+                      muteLabel={`Mute ${selectedFindingIds.length} ${
+                        selectedFindingIds.length === 1 ? "Finding" : "Findings"
+                      }`}
                       onComplete={handleMuteComplete}
                     />
                   )}

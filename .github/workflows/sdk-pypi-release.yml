@@ -28,7 +28,7 @@ jobs:
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
         with:
           egress-policy: audit
 
@@ -66,7 +66,7 @@ jobs:
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
         with:
           egress-policy: audit
 
@@ -84,8 +84,18 @@ jobs:
       - name: Build Prowler package
         run: uv build
 
+      - name: Verify the wheel installs with pip
+        # Same check as "SDK: Package Checks", repeated on the exact artifact about to be
+        # published. Plain pip, --isolated, from outside the repo: an unsatisfiable
+        # Requires-Dist fails here instead of on users' machines (5.38.0 shipped one).
+        run: |
+          python -m venv "${RUNNER_TEMP}/consumer"
+          "${RUNNER_TEMP}/consumer/bin/python" -m pip install --quiet --upgrade pip
+          cd "${RUNNER_TEMP}"
+          "${RUNNER_TEMP}/consumer/bin/python" -m pip install --isolated --no-cache-dir --dry-run "${GITHUB_WORKSPACE}"/dist/*.whl
+
       - name: Publish Prowler package to PyPI
-        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # v1.14.0
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
         with:
           print-hash: true
 
@@ -102,7 +112,7 @@ jobs:
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
         with:
           egress-policy: audit
 
@@ -128,7 +138,17 @@ jobs:
       - name: Build prowler-cloud package
         run: uv build
 
+      - name: Verify the wheel installs with pip
+        # Same check as "SDK: Package Checks", repeated on the exact artifact about to be
+        # published. Plain pip, --isolated, from outside the repo: an unsatisfiable
+        # Requires-Dist fails here instead of on users' machines (5.38.0 shipped one).
+        run: |
+          python -m venv "${RUNNER_TEMP}/consumer"
+          "${RUNNER_TEMP}/consumer/bin/python" -m pip install --quiet --upgrade pip
+          cd "${RUNNER_TEMP}"
+          "${RUNNER_TEMP}/consumer/bin/python" -m pip install --isolated --no-cache-dir --dry-run "${GITHUB_WORKSPACE}"/dist/*.whl
+
       - name: Publish prowler-cloud package to PyPI
-        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # v1.14.0
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
         with:
           print-hash: true

@@ -5,6 +5,5 @@ export * from "./use-local-storage";
 export * from "./use-mount-effect";
 export * from "./use-related-filters";
 export * from "./use-scroll-hint";
-export * from "./use-sidebar";
 export * from "./use-store";
 export * from "./use-url-filters";

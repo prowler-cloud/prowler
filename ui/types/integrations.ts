@@ -2,7 +2,72 @@ import { z } from "zod";
 
 import type { TaskState } from "@/types/tasks";
 
-export type IntegrationType = "amazon_s3" | "aws_security_hub" | "jira";
+export const INTEGRATION_TYPE = {
+  AMAZON_S3: "amazon_s3",
+  AWS_SECURITY_HUB: "aws_security_hub",
+  JIRA: "jira",
+  SLACK: "slack",
+} as const;
+
+export type IntegrationType =
+  (typeof INTEGRATION_TYPE)[keyof typeof INTEGRATION_TYPE];
+
+export const JIRA_DISPATCH_MODE = {
+  INDIVIDUAL: "individual",
+  GROUPED: "grouped",
+} as const;
+
+export type JiraDispatchMode =
+  (typeof JIRA_DISPATCH_MODE)[keyof typeof JIRA_DISPATCH_MODE];
+
+export const JIRA_DISPATCH_TARGET = {
+  CHECK_ID: "check_id",
+  FINDING_ID: "finding_id",
+} as const;
+
+export type JiraDispatchTarget =
+  (typeof JIRA_DISPATCH_TARGET)[keyof typeof JIRA_DISPATCH_TARGET];
+
+export const JIRA_TARGET_SELECTION_KIND = {
+  SINGLE: "single",
+  TARGET_LIST: "target-list",
+  BATCHES: "batches",
+} as const;
+
+export type JiraTargetSelectionKind =
+  (typeof JIRA_TARGET_SELECTION_KIND)[keyof typeof JIRA_TARGET_SELECTION_KIND];
+
+export type NonEmptyStringArray = [string, ...string[]];
+
+export interface JiraDispatchTargetBatch {
+  targetIds: NonEmptyStringArray;
+  targetType: JiraDispatchTarget;
+  dispatchMode?: JiraDispatchMode;
+}
+
+export interface JiraSingleTargetSelection {
+  kind: typeof JIRA_TARGET_SELECTION_KIND.SINGLE;
+  targetId: string;
+  targetType: JiraDispatchTarget;
+}
+
+export interface JiraTargetListSelection {
+  kind: typeof JIRA_TARGET_SELECTION_KIND.TARGET_LIST;
+  targetIds: NonEmptyStringArray;
+  targetType: JiraDispatchTarget;
+}
+
+export interface JiraBatchSelection {
+  kind: typeof JIRA_TARGET_SELECTION_KIND.BATCHES;
+  batches: [JiraDispatchTargetBatch, ...JiraDispatchTargetBatch[]];
+}
+
+export type JiraSelection =
+  | JiraSingleTargetSelection
+  | JiraTargetListSelection
+  | JiraBatchSelection;
+
+export const JIRA_DISPATCH_TASK_KIND = "jira-dispatch";
 
 export interface IntegrationProps {
   type: "integrations";
@@ -11,7 +76,10 @@ export interface IntegrationProps {
     inserted_at: string;
     updated_at: string;
     enabled: boolean;
-    connected: boolean;
+    // `null` until a connection check has run: never verified, neither working
+    // nor broken. A Slack install starts here, and returns here on a channel
+    // change.
+    connected: boolean | null;
     connection_last_checked_at: string | null;
     integration_type: IntegrationType;
     configuration: {
@@ -30,12 +98,29 @@ export interface IntegrationProps {
       domain?: string;
       projects?: { [key: string]: string };
       issue_types?: { [key: string]: string[] };
+      // Slack specific configuration, server-owned. The channel keys are absent
+      // until one is chosen, not present and null: read them with `?? null`.
+      team_id?: string;
+      team_name?: string;
+      bot_user_id?: string;
+      channel_id?: string;
+      channel_name?: string;
       [key: string]: unknown;
     };
     url?: string;
   };
   relationships?: { providers?: { data: { type: "providers"; id: string }[] } };
   links: { self: string };
+}
+
+/**
+ * A channel Prowler can post to: every active public channel, plus the private
+ * ones `@Prowler` was invited to. `is_private` keeps the API's own naming.
+ */
+export interface SlackChannelOption {
+  id: string;
+  name: string;
+  is_private: boolean;
 }
 
 // Jira dispatch types
@@ -45,6 +130,7 @@ export interface JiraDispatchRequest {
     attributes: {
       project_key: string;
       issue_type: string;
+      dispatch_mode?: JiraDispatchMode;
     };
   };
 }
@@ -58,19 +144,28 @@ export interface JiraDispatchResponse {
       completed_at: string | null;
       name: string;
       state: TaskState;
-      result: {
-        success?: boolean;
-        error?: string;
-        message?: string;
-        issue_url?: string;
-        issue_key?: string;
-        created_count?: number;
-        failed_count?: number;
-      } | null;
+      result: JiraDispatchTaskResult | null;
       task_args: Record<string, unknown> | null;
       metadata: Record<string, unknown> | null;
     };
   };
+}
+
+export interface JiraDispatchTaskResult {
+  success?: boolean;
+  error?: string;
+  message?: string;
+  successful_count?: number;
+  created_count?: number;
+  updated_count?: number;
+  failed_count?: number;
+  created_issues?: unknown[];
+  updated_issues?: unknown[];
+  failed_groups?: unknown[];
+  failed_batches?: unknown[];
+  failed_finding_ids?: string[];
+  issue_url?: string;
+  issue_key?: string;
 }
 
 // Shared AWS credential fields schema
@@ -202,6 +297,14 @@ const baseS3IntegrationSchema = z.object({
   integration_type: z.literal("amazon_s3"),
   bucket_name: z.string().min(1, "Bucket name is required"),
   output_directory: z.string().min(1, "Output directory is required"),
+  // UI-only field used to prefill the S3IntegrationBucketAccountId parameter of
+  // the CloudFormation quick-create link. Not sent to the backend.
+  bucket_account_id: z
+    .string()
+    .optional()
+    .refine((value) => !value || /^\d{12}$/.test(value), {
+      error: "Must be a valid 12-digit AWS Account ID",
+    }),
   providers: z.array(z.string()).optional(),
   enabled: z.boolean().optional(),
   ...awsCredentialFields,

@@ -16,6 +16,18 @@ Resolve the egress IP via DNS:
 dig egress.prowler.com +short
 ```
 
+<Note>
+The egress IP address is stable, but it is recommended to periodically verify it remains current by querying `egress.prowler.com`.
+</Note>
+
+## Use Cases
+
+Allowlisting Prowler Cloud's egress IP address enables:
+
+- **Credential Usage Control**: Restrict where cloud provider credentials can be used from across AWS, Azure, GCP, and other providers
+- **Kubernetes Security**: Limit inbound HTTPS traffic to clusters by allowing only Prowler Cloud's IP address
+- **Compliance Requirements**: Meet security policies requiring allowlisting of external services
+
 ## Contact
 
 For questions about networking, visit the [Support page](/support).

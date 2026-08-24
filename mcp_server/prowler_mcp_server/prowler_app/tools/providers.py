@@ -1,4 +1,4 @@
-"""Provider Management tools for Prowler App MCP Server.
+"""Provider Management tools for Prowler MCP Server.
 
 This module provides tools for managing provider connections,
 including searching, connecting, and deleting providers.
@@ -19,9 +19,9 @@ class ProvidersTools(BaseTool):
     """Tools for provider management operations
 
     Provides tools for:
-    - prowler_app_search_providers: Search and view configured providers with their connection status
-    - prowler_app_connect_provider: Connect or register a provider for security scanning in Prowler
-    - prowler_app_delete_provider: Permanently remove a provider from Prowler
+    - prowler_search_providers: Search and view configured providers with their connection status
+    - prowler_connect_provider: Connect or register a provider for security scanning in Prowler
+    - prowler_delete_provider: Permanently remove a provider from Prowler
     """
 
     async def search_providers(
@@ -145,7 +145,7 @@ class ProvidersTools(BaseTool):
     ) -> dict[str, Any]:
         """Register a provider to be scanned with Prowler.
 
-        This tool will register a provider in Prowler App, even if the UID is wrong.
+        This tool will register a provider in Prowler, even if the UID is wrong.
         If the provider is already registered, it will be updated with the new provided alias or credentials if provided.
         If credentials are provided, they will be added to the indicated provider, if the provider does not exist, it will be created and the credentials will be added to it.
         If the connection test is successful, the provider will be connected.
@@ -292,13 +292,13 @@ class ProvidersTools(BaseTool):
     async def delete_provider(
         self,
         provider_id: str = Field(
-            description="Prowler's internal UUID (v4) for the provider to permanently remove, generated when the provider was registered in the system. Use `prowler_app_search_providers` tool to find the provider_id if you only know the alias or the provider's own identifier (provider_uid)"
+            description="Prowler's internal UUID (v4) for the provider to permanently remove, generated when the provider was registered in the system. Use `prowler_search_providers` tool to find the provider_id if you only know the alias or the provider's own identifier (provider_uid)"
         ),
     ) -> dict[str, Any]:
         """Permanently remove a registered provider from Prowler.
 
         WARNING: This is a destructive operation that cannot be undone. The provider will need to be
-        re-added with prowler_app_connect_provider if you want to scan it again.
+        re-added with prowler_connect_provider if you want to scan it again.
 
         The tool always returns the deletion status and message.
         """

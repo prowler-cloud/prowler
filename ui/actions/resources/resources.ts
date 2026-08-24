@@ -13,6 +13,7 @@ import {
 } from "@/lib";
 import { appendSanitizedProviderTypeFilters } from "@/lib/provider-filters";
 import { handleApiResponse } from "@/lib/server-actions-helper";
+import { isCloud } from "@/lib/shared/env";
 import { OrganizationResource } from "@/types/organizations";
 
 export const getResources = async ({
@@ -287,7 +288,7 @@ export const getResourceDrawerData = async ({
   pageSize?: number;
   query?: string;
 }) => {
-  const isCloudEnv = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
+  const isCloudEnv = isCloud();
 
   const [resourceData, findingsResponse, organizationsResponse] =
     await Promise.all([

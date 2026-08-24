@@ -1,3 +1,5 @@
+import type { ProviderType } from "./providers";
+
 export const REQUIREMENT_STATUS = {
   PASS: "PASS",
   FAIL: "FAIL",
@@ -7,6 +9,17 @@ export const REQUIREMENT_STATUS = {
 
 export type RequirementStatus =
   (typeof REQUIREMENT_STATUS)[keyof typeof REQUIREMENT_STATUS];
+
+/** Tabs of the compliance overview page. Multiple Scans is the default
+ *  landing tab, so it owns the bare `/compliance` route and Single Scan is
+ *  reachable through `?tab=per-scan`. */
+export const COMPLIANCE_TAB = {
+  PER_SCAN: "per-scan",
+  CROSS_PROVIDER: "cross-provider",
+} as const;
+
+export type ComplianceTab =
+  (typeof COMPLIANCE_TAB)[keyof typeof COMPLIANCE_TAB];
 
 export const COMPLIANCE_OVERVIEW_TYPE = {
   OVERVIEW: "compliance-overviews",
@@ -47,6 +60,10 @@ export interface Requirement {
   // because each compliance has different keys
   [key: string]: string | string[] | number | boolean | object[] | undefined;
 }
+
+/** Check id → provider types it belongs to, for provider-labeled check
+ *  lists in the cross-provider view (a check can exist in several). */
+export type CheckProviderTypesMap = Partial<Record<string, ProviderType[]>>;
 
 export interface Control {
   label: string;
@@ -410,6 +427,23 @@ export interface CISControlsRequirement extends Requirement {
   implementation_groups?: string[];
 }
 
+// CMMC 2.0 (Cybersecurity Maturity Model Certification, 32 CFR Part 170).
+// Universal framework — flat attributes dict with Domain/Level/SourceRequirement.
+// `Domain` is the grouping key; `Level` (1/2/3) and `SourceRequirement` are
+// surfaced in the requirement detail drawer.
+export const CMMC_LEVEL = {
+  LEVEL_1: "Level 1",
+  LEVEL_2: "Level 2",
+  LEVEL_3: "Level 3",
+} as const;
+export type CMMCLevel = (typeof CMMC_LEVEL)[keyof typeof CMMC_LEVEL];
+
+export interface CMMCAttributesMetadata {
+  Domain: string;
+  Level: CMMCLevel;
+  SourceRequirement: string;
+}
+
 export interface AttributesItemData {
   type: "compliance-requirements-attributes";
   id: string;
@@ -435,6 +469,7 @@ export interface AttributesItemData {
         | OktaIDaaSStigAttributesMetadata[]
         | DORAAttributesMetadata[]
         | CISControlsAttributesMetadata[]
+        | CMMCAttributesMetadata[]
         | GenericAttributesMetadata[];
       check_ids: string[];
       // MITRE structure

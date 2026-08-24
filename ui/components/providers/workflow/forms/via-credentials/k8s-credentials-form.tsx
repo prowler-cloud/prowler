@@ -1,13 +1,12 @@
 "use client";
 
-import { Control } from "react-hook-form";
-import { useWatch } from "react-hook-form";
+import { Control, useWatch } from "react-hook-form";
 
 import { WizardTextareaField } from "@/components/providers/workflow/forms/fields";
 import { KubernetesCredentials } from "@/types";
 import {
-  KUBECONFIG_EXEC_AUTHENTICATION_ERROR,
-  kubeconfigContainsExecAuthentication,
+  KUBECONFIG_UNSUPPORTED_COMMAND_AUTHENTICATION_ERROR,
+  kubeconfigContainsUnsupportedCommandAuthentication,
 } from "@/types/formSchemas";
 
 export const KubernetesCredentialsForm = ({
@@ -19,9 +18,8 @@ export const KubernetesCredentialsForm = ({
     control,
     name: "kubeconfig_content",
   });
-  const hasExecAuthentication = kubeconfigContainsExecAuthentication(
-    kubeconfigContent ?? "",
-  );
+  const hasUnsupportedCommandAuthentication =
+    kubeconfigContainsUnsupportedCommandAuthentication(kubeconfigContent ?? "");
 
   return (
     <>
@@ -43,9 +41,9 @@ export const KubernetesCredentialsForm = ({
         minRows={10}
         isRequired
       />
-      {hasExecAuthentication && (
+      {hasUnsupportedCommandAuthentication && (
         <p className="text-text-error-primary text-xs">
-          {KUBECONFIG_EXEC_AUTHENTICATION_ERROR}
+          {KUBECONFIG_UNSUPPORTED_COMMAND_AUTHENTICATION_ERROR}
         </p>
       )}
     </>

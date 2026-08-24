@@ -13,6 +13,7 @@ import {
 } from "@/actions/attack-paths";
 import { adaptQueryResultToGraphData } from "@/actions/attack-paths/query-result.adapter";
 import { FindingDetailDrawer } from "@/components/findings/table";
+import { LighthouseContextContributor } from "@/components/lighthouse/context-contributor";
 import { PageReady } from "@/components/onboarding";
 import { useFindingDetails } from "@/components/resources/table/use-finding-details";
 import { AutoRefresh } from "@/components/scans";
@@ -27,21 +28,27 @@ import {
 } from "@/components/shadcn/dialog";
 import { StatusAlert } from "@/components/shared/status-alert";
 import { useMountEffect } from "@/hooks/use-mount-effect";
+import { buildAttackPathContext } from "@/lib/lighthouse/context/contributions";
 import { isCloud } from "@/lib/shared/env";
+import { attackPathsEmptyTour } from "@/lib/tours/attack-paths-empty.tour";
 import {
   attackPathsTour,
   type AttackPathsTourTarget,
   pickDemoQuery,
   pickDemoScan,
 } from "@/lib/tours/attack-paths.tour";
-import { attackPathsEmptyTour } from "@/lib/tours/attack-paths-empty.tour";
 import { advanceActiveTour, useDriverTour } from "@/lib/tours/use-driver-tour";
 import type {
   AttackPathQuery,
   AttackPathQueryError,
   GraphNode,
+  AttackPathOutcome,
 } from "@/types/attack-paths";
-import { ATTACK_PATH_QUERY_IDS, SCAN_STATES } from "@/types/attack-paths";
+import {
+  ATTACK_PATH_QUERY_IDS,
+  ATTACK_PATH_QUERY_KIND,
+  SCAN_STATES,
+} from "@/types/attack-paths";
 
 import {
   AttackPathGraph,
@@ -60,13 +67,19 @@ import type { GraphHandle } from "./_components/graph/attack-path-graph";
 import { useAttackPathScans } from "./_hooks/use-attack-path-scans";
 import { useGraphState } from "./_hooks/use-graph-state";
 import { useQueryBuilder } from "./_hooks/use-query-builder";
-import { exportGraphAsPNG } from "./_lib";
+import { exportGraphAsPNG, isProwlerFindingNode } from "./_lib";
 import {
   ATTACK_PATHS_VIEW_STATES,
   getAttackPathsViewState,
   getGraphBuildingProgress,
   isScanInFlight,
 } from "./_lib/get-attack-paths-view-state";
+import {
+  buildAttackPathView,
+  GROUP_NODE_LABEL,
+  GROUP_PROPS,
+  OUTCOME_NODE_LABEL,
+} from "./_lib/group-graph";
 
 const SCROLL_CONTAINER_CLASS =
   "minimal-scrollbar relative z-0 w-full gap-4 overflow-auto shadow-sm";
@@ -101,6 +114,10 @@ export default function AttackPathsPage() {
   const graphContainerRef = useRef<HTMLDivElement>(null);
 
   const [queries, setQueries] = useState<AttackPathQuery[]>([]);
+  // Snapshot of the executed query's outcome, so the graph's terminal node
+  // reflects the query that produced the current graph (not a later selection).
+  const [executedOutcome, setExecutedOutcome] =
+    useState<AttackPathOutcome | null>(null);
 
   const queryBuilder = useQueryBuilder(queries);
 
@@ -258,12 +275,19 @@ export default function AttackPathsPage() {
     graphState.setError(null);
 
     try {
-      const parameters = queryBuilder.getQueryParameters();
-      const isCustomQuery =
-        queryBuilder.selectedQuery === ATTACK_PATH_QUERY_IDS.CUSTOM;
+      const queryId = queryBuilder.selectedQuery;
+      const queryLabel =
+        queryBuilder.selectedQueryData?.attributes.name ?? queryId;
+      const parameters = { ...queryBuilder.getQueryParameters() };
+      const isCustomQuery = queryId === ATTACK_PATH_QUERY_IDS.CUSTOM;
+      // Snapshot before awaiting: the selected query can change while the
+      // request is in flight. Custom queries have no catalog outcome → null.
+      const queryOutcome = isCustomQuery
+        ? null
+        : (queryBuilder.selectedQueryData?.attributes.outcome ?? null);
       const result = isCustomQuery
         ? await executeCustomQuery(scanId, String(parameters?.query ?? ""))
-        : await executeQuery(scanId, queryBuilder.selectedQuery, parameters);
+        : await executeQuery(scanId, queryId, parameters);
 
       if (result && "error" in result) {
         const apiError = result as AttackPathQueryError;
@@ -289,7 +313,15 @@ export default function AttackPathsPage() {
         }
       } else if (result?.data?.attributes) {
         const graphData = adaptQueryResultToGraphData(result.data.attributes);
-        graphState.updateGraphData(graphData);
+        graphState.updateGraphData(graphData, {
+          queryId,
+          queryLabel,
+          queryKind: isCustomQuery
+            ? ATTACK_PATH_QUERY_KIND.CUSTOM
+            : ATTACK_PATH_QUERY_KIND.PREDEFINED,
+          parameters,
+        });
+        setExecutedOutcome(queryOutcome);
         toast({
           title: "Success",
           description: "Query executed successfully",
@@ -324,10 +356,42 @@ export default function AttackPathsPage() {
     }
   };
 
-  const handleNodeClick = (node: GraphNode) => {
-    const isFinding = node.labels.some((label) =>
-      label.toLowerCase().includes("finding"),
+  // Shared attack-path view: the same grouped/outcome transform the graph
+  // renders, computed here so the PNG export and collapse-state pruning use the
+  // exact view the user sees. Cloud-only (OSS keeps the flat graph).
+  const attackPathView =
+    isCloud() && graphState.data
+      ? buildAttackPathView({
+          data: graphState.data,
+          expandedClasses: graphState.expandedClasses,
+          outcome: executedOutcome,
+        })
+      : null;
+
+  const membersOfClass = (classKey: string): string[] =>
+    attackPathView?.groupMembers.get(classKey) ?? [];
+
+  // Collapse every open class, pruning findings-expansion/selection that pointed
+  // at any member the collapse hides.
+  const handleCollapseAll = () => {
+    const memberIds = Array.from(graphState.expandedClasses).flatMap(
+      membersOfClass,
     );
+    graphState.collapseAllClasses(memberIds);
+  };
+
+  const handleNodeClick = (node: GraphNode) => {
+    // A collapsed class group expands to its members; the outcome node is inert.
+    if (node.labels.includes(GROUP_NODE_LABEL)) {
+      const key = String(node.properties[GROUP_PROPS.KEY] ?? "");
+      if (key) graphState.toggleExpandedClass(key, membersOfClass(key));
+      return;
+    }
+    if (node.labels.includes(OUTCOME_NODE_LABEL)) {
+      return;
+    }
+
+    const isFinding = isProwlerFindingNode(node.labels);
 
     if (isFinding) {
       if (findingNavigationInFlightRef.current) {
@@ -347,13 +411,23 @@ export default function AttackPathsPage() {
       if (edge.source !== node.id && edge.target !== node.id) return false;
       const otherId = edge.source === node.id ? edge.target : edge.source;
       const otherNode = sourceData.nodes?.find(({ id }) => id === otherId);
-      return otherNode?.labels.some((label) =>
-        label.toLowerCase().includes("finding"),
-      );
+      return otherNode ? isProwlerFindingNode(otherNode.labels) : false;
     });
 
     if (hasFindings) {
+      // Highlight the resource whose findings are on screen; clear on collapse.
+      const willExpand = !graphState.expandedResources.has(node.id);
       graphState.toggleExpandedResource(node.id);
+      graphState.selectNode(willExpand ? node.id : null);
+    }
+  };
+
+  // Double-click a member (or its group) collapses its class back.
+  const handleNodeDoubleClick = (node: GraphNode) => {
+    const memberKey = node.properties[GROUP_PROPS.MEMBER_KEY];
+    if (memberKey) {
+      const key = String(memberKey);
+      graphState.toggleExpandedClass(key, membersOfClass(key));
     }
   };
 
@@ -376,12 +450,18 @@ export default function AttackPathsPage() {
     const handle = ref.current;
     if (!handle) return;
 
+    // Export the same grouped/outcome view the canvas renders (Cloud); OSS
+    // exports the raw flat graph.
+    const exportData = attackPathView
+      ? { nodes: attackPathView.nodes, edges: attackPathView.edges }
+      : graphState.data;
+
     try {
       await exportGraphAsPNG(
         handle.getContainerElement(),
         handle.getNodesBounds(),
         "attack-path-graph.png",
-        graphState.data,
+        exportData,
         {
           expandedResources: graphState.expandedResources,
           isFilteredView: graphState.isFilteredView,
@@ -400,6 +480,29 @@ export default function AttackPathsPage() {
     }
   };
 
+  const lighthouseSelectedNode =
+    graphState.selectedNode ?? graphState.filteredNode;
+  const lighthouseGraphData = graphState.fullData ?? graphState.data;
+  const lighthouseExecution = graphState.loading ? null : graphState.execution;
+  const lighthouseContext = scanId
+    ? buildAttackPathContext({
+        pathname,
+        scanId,
+        queryId: lighthouseExecution?.queryId,
+        queryLabel: lighthouseExecution?.queryLabel,
+        queryKind: lighthouseExecution?.queryKind,
+        parameters: lighthouseExecution?.parameters,
+        graphData: lighthouseExecution ? lighthouseGraphData : null,
+        selectedNode:
+          lighthouseExecution && lighthouseSelectedNode
+            ? {
+                id: lighthouseSelectedNode.id,
+                type: lighthouseSelectedNode.labels[0],
+              }
+            : null,
+      })
+    : null;
+
   return (
     <div className="flex flex-col gap-6">
       <AutoRefresh
@@ -413,6 +516,14 @@ export default function AttackPathsPage() {
 
       {/* Enables the navbar replay icon once the initial scan load resolves. */}
       {!scansLoading && <PageReady />}
+
+      {lighthouseContext && (
+        <LighthouseContextContributor
+          key={JSON.stringify(lighthouseContext)}
+          contributorId="attack-path-current"
+          item={lighthouseContext}
+        />
+      )}
 
       <div data-tour-id="attack-paths-intro">
         <p className="text-text-neutral-secondary text-sm">
@@ -581,6 +692,10 @@ export default function AttackPathsPage() {
                         onZoomOut={() => graphRef.current?.zoomOut()}
                         onFitToScreen={() => graphRef.current?.resetZoom()}
                         onExport={() => handleGraphExport("main")}
+                        collapseAll={{
+                          can: graphState.expandedClasses.size > 0,
+                          onCollapse: handleCollapseAll,
+                        }}
                       />
 
                       <div className="border-border-neutral-primary bg-bg-neutral-tertiary flex gap-1 rounded-lg border p-1">
@@ -618,6 +733,10 @@ export default function AttackPathsPage() {
                                   fullscreenGraphRef.current?.resetZoom()
                                 }
                                 onExport={() => handleGraphExport("fullscreen")}
+                                collapseAll={{
+                                  can: graphState.expandedClasses.size > 0,
+                                  onCollapse: handleCollapseAll,
+                                }}
                               />
                             </div>
                             <div className="flex flex-1 flex-col gap-4 overflow-hidden px-4 pb-4 sm:px-6 sm:pb-6 lg:flex-row">
@@ -626,11 +745,15 @@ export default function AttackPathsPage() {
                                   ref={fullscreenGraphRef}
                                   data={graphState.data}
                                   onNodeClick={handleNodeClick}
+                                  onNodeDoubleClick={handleNodeDoubleClick}
                                   selectedNodeId={graphState.selectedNodeId}
                                   isFilteredView={graphState.isFilteredView}
                                   expandedResources={
                                     graphState.expandedResources
                                   }
+                                  expandedClasses={graphState.expandedClasses}
+                                  outcome={executedOutcome}
+                                  view={attackPathView}
                                 />
                               </div>
                             </div>
@@ -648,9 +771,13 @@ export default function AttackPathsPage() {
                       ref={graphRef}
                       data={graphState.data}
                       onNodeClick={handleNodeClick}
+                      onNodeDoubleClick={handleNodeDoubleClick}
                       selectedNodeId={graphState.selectedNodeId}
                       isFilteredView={graphState.isFilteredView}
                       expandedResources={graphState.expandedResources}
+                      expandedClasses={graphState.expandedClasses}
+                      outcome={executedOutcome}
+                      view={attackPathView}
                     />
                   </div>
 

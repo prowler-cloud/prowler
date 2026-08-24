@@ -2,6 +2,8 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
+import { updateRole } from "@/actions/roles/roles";
+
 import { EditRoleForm } from "./edit-role-form";
 
 const routerMocks = vi.hoisted(() => ({
@@ -61,6 +63,12 @@ vi.mock("@/lib", () => ({
       description: "Allows creating and managing custom alerts",
     },
     {
+      field: "manage_lighthouse_ai_configuration",
+      label: "Manage Lighthouse AI",
+      description:
+        "Allows configuring Lighthouse AI, including its provider credentials, default model and business context",
+    },
+    {
       field: "manage_billing",
       label: "Manage Billing",
       description: "Provides access to billing settings and invoices",
@@ -118,10 +126,66 @@ const renderEditRoleForm = (options?: Parameters<typeof roleData>[0]) =>
     <EditRoleForm roleId="role-1" roleData={roleData(options)} groups={[]} />,
   );
 
+const submittedFormData = () => {
+  const formData = vi.mocked(updateRole).mock.calls.at(-1)?.[0];
+  if (!formData) throw new Error("updateRole was not called");
+  return formData;
+};
+
 describe("EditRoleForm", () => {
   afterEach(() => {
     routerMocks.push.mockClear();
+    vi.mocked(updateRole).mockClear();
     vi.unstubAllEnvs();
+  });
+
+  it("submits manage_lighthouse_ai_configuration when granted in Prowler Cloud", async () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    const user = userEvent.setup();
+    renderEditRoleForm();
+
+    // When
+    await user.click(
+      screen.getByRole("checkbox", { name: "Manage Lighthouse AI" }),
+    );
+    await user.click(screen.getByRole("button", { name: "Update Role" }));
+
+    // Then
+    expect(submittedFormData().get("manage_lighthouse_ai_configuration")).toBe(
+      "true",
+    );
+    expect(vi.mocked(updateRole).mock.calls.at(-1)?.[1]).toBe("role-1");
+  });
+
+  it("submits manage_lighthouse_ai_configuration as false when not granted in Prowler Cloud", async () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    const user = userEvent.setup();
+    renderEditRoleForm();
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Update Role" }));
+
+    // Then
+    expect(submittedFormData().get("manage_lighthouse_ai_configuration")).toBe(
+      "false",
+    );
+  });
+
+  it("omits manage_lighthouse_ai_configuration from the submission outside Prowler Cloud", async () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+    const user = userEvent.setup();
+    renderEditRoleForm();
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Update Role" }));
+
+    // Then
+    expect(submittedFormData().has("manage_lighthouse_ai_configuration")).toBe(
+      false,
+    );
   });
 
   it("shows the subtle Unlimited Visibility description inside Visibility", () => {
@@ -131,16 +195,22 @@ describe("EditRoleForm", () => {
     // Then
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(
-      screen.getByText(/tenant-wide visibility setting/i),
-    ).toHaveTextContent(
-      /grants visibility into every provider, account, resource, finding, scan, and compliance result.*required to use the Jira integration/i,
-    );
+      screen.getByText(
+        "Checking the box below grants visibility into every provider: resources, findings, scans, and compliance results, regardless of the provider groups selected.",
+      ),
+    ).toBeInTheDocument();
     expect(
       screen.getByText(/required to use the Jira integration/i),
     ).toHaveProperty("tagName", "STRONG");
     expect(
+      screen.getByRole("link", { name: /learn more about provider groups/i }),
+    ).toHaveAttribute(
+      "href",
+      "https://docs.prowler.com/user-guide/tutorials/prowler-app-rbac#provider-groups",
+    );
+    expect(
       screen.queryByText(
-        /manage providers enables unlimited visibility in this form because provider administration needs tenant-wide provider-group context/i,
+        /manage providers enables unlimited visibility in this form because provider administration needs organization-wide provider-group context/i,
       ),
     ).not.toBeInTheDocument();
 
@@ -181,7 +251,7 @@ describe("EditRoleForm", () => {
       }),
     ).toBeChecked();
     expect(
-      screen.getByText(/tenant-wide visibility setting/i),
+      screen.getByText(/checking the box below grants visibility/i),
     ).toBeInTheDocument();
     expect(screen.queryByTestId("group-select")).not.toBeInTheDocument();
     expect(

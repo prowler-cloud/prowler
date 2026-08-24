@@ -6,6 +6,7 @@ import { DefaultValues } from "react-hook-form";
 import { addRole } from "@/actions/roles/roles";
 import { useToast } from "@/components/shadcn";
 import { getErrorMessage } from "@/lib";
+import { isCloud } from "@/lib/shared/env";
 import { RoleFormValues } from "@/types";
 
 import { RoleForm, RoleFormSubmitContext, RoleGroupOption } from "./role-form";
@@ -13,7 +14,7 @@ import { RoleForm, RoleFormSubmitContext, RoleGroupOption } from "./role-form";
 export const AddRoleForm = ({ groups }: { groups: RoleGroupOption[] }) => {
   const { toast } = useToast();
   const router = useRouter();
-  const isCloudEnvironment = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
+  const isCloudEnvironment = isCloud();
 
   const defaultValues: DefaultValues<RoleFormValues> = {
     name: "",
@@ -26,6 +27,7 @@ export const AddRoleForm = ({ groups }: { groups: RoleGroupOption[] }) => {
     ...(isCloudEnvironment && {
       manage_billing: false,
       manage_alerts: false,
+      manage_lighthouse_ai_configuration: false,
     }),
   };
 
@@ -50,6 +52,10 @@ export const AddRoleForm = ({ groups }: { groups: RoleGroupOption[] }) => {
     if (isCloudEnvironment) {
       formData.append("manage_billing", String(values.manage_billing));
       formData.append("manage_alerts", String(values.manage_alerts));
+      formData.append(
+        "manage_lighthouse_ai_configuration",
+        String(values.manage_lighthouse_ai_configuration),
+      );
     }
 
     if (values.groups && values.groups.length > 0) {

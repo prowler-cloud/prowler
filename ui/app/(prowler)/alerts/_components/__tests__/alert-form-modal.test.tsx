@@ -104,6 +104,7 @@ const mockProviders: ProviderProps[] = [
     type: "providers",
     attributes: {
       provider: "aws",
+      is_dynamic: false,
       uid: "123456789012",
       alias: "Production AWS",
       status: "completed",
@@ -131,6 +132,7 @@ const mockProviders: ProviderProps[] = [
     type: "providers",
     attributes: {
       provider: "gcp",
+      is_dynamic: false,
       uid: "prowler-prod-project",
       alias: "Production GCP",
       status: "completed",

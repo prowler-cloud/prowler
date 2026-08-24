@@ -100,3 +100,4 @@ parsed_matrix_regions_aws = f"{os.path.dirname(os.path.realpath(__name__))}/prow
 logging.info(f"Writing {parsed_matrix_regions_aws}")
 with open(parsed_matrix_regions_aws, "w") as outfile:
     json.dump(regions_by_service, outfile, indent=2, sort_keys=True)
+    outfile.write("\n")

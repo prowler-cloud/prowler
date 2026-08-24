@@ -1,6 +1,8 @@
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
+import { ProviderProps } from "@/types";
+
 import { ProviderTypeSelector } from "./provider-type-selector";
 
 const multiSelectContentSpy = vi.fn();
@@ -69,12 +71,13 @@ vi.mock("@/components/shadcn/select/multiselect", () => ({
   ),
 }));
 
-const providers = [
+const providers: ProviderProps[] = [
   {
     id: "provider-1",
     type: "providers" as const,
     attributes: {
       provider: "aws" as const,
+      is_dynamic: false,
       uid: "123456789012",
       alias: "Production AWS",
       status: "completed" as const,

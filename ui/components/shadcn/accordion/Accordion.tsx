@@ -111,7 +111,7 @@ export const Accordion = ({
     <div
       data-variant={variant}
       className={cn(
-        "bg-bg-neutral-primary border-border-neutral-secondary w-full rounded-lg border px-2 py-1",
+        "bg-bg-input-primary dark:bg-input/30 border-border-neutral-secondary w-full rounded-lg border px-2 py-1",
         className,
       )}
     >
@@ -138,7 +138,10 @@ export const Accordion = ({
                   isCompact ? "py-2" : "py-3",
                 )}
               >
-                <div className="flex-1 text-left">
+                {/* min-w-0 lets flex children of the title shrink/truncate;
+                    without it a long requirement title forces the row past
+                    the trigger's rounded border (flex min-width:auto). */}
+                <div className="min-w-0 flex-1 text-left">
                   <div className="text-sm">{item.title}</div>
                   {item.subtitle && (
                     <div className="text-text-neutral-tertiary text-xs">

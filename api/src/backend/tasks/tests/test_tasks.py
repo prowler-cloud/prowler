@@ -3,6 +3,7 @@ from contextlib import contextmanager
 from datetime import UTC, datetime, timedelta
 from unittest.mock import MagicMock, patch
 
+import httpx
 import openai
 import pytest
 from api.models import (
@@ -20,6 +21,7 @@ from django_celery_results.models import TaskResult
 from tasks.jobs.lighthouse_providers import (
     _create_bedrock_client,
     _extract_bedrock_credentials,
+    _LighthouseOpenAICompatibleNetworkBackend,
 )
 from tasks.tasks import (
     DJANGO_TMP_OUTPUT_DIRECTORY,
@@ -417,6 +419,124 @@ class TestGenerateOutputs:
 
             assert result == {"upload": False}
             mock_scan_update.return_value.update.assert_called_once()
+
+    def test_generate_outputs_removes_previous_run_artifacts(self):
+        """Regression for PROWLER-2266.
+
+        Output writers open files in append mode with a deterministic path
+        (derived from scan.started_at). If this task runs again for the same
+        scan (e.g. broker redelivery after a worker is killed mid-run with
+        task_acks_late), reusing the leftover files appends every finding row
+        again, duplicating rows in the CSV/output while the API console keeps
+        showing a single finding. The task must start from a clean slate by
+        removing the scan's tmp output directory before (re)generating.
+        """
+        import tempfile
+        from pathlib import Path
+
+        with tempfile.TemporaryDirectory() as tmp_root:
+            # Simulate artifacts left behind by a previous run of the same scan.
+            scan_tmp_dir = Path(tmp_root) / self.tenant_id / self.scan_id
+            scan_tmp_dir.mkdir(parents=True)
+            stale_artifact = scan_tmp_dir / "prowler-output-aws-20260723120000.csv"
+            stale_artifact.write_text("HEADER\nold-finding-row\n")
+
+            with (
+                patch("tasks.tasks.DJANGO_TMP_OUTPUT_DIRECTORY", tmp_root),
+                patch("tasks.tasks.ScanSummary.objects.filter") as mock_filter,
+                patch("tasks.tasks.Provider.objects.get"),
+                patch("tasks.tasks.initialize_prowler_provider"),
+                patch("tasks.tasks.Compliance.get_bulk"),
+                patch("tasks.tasks.get_compliance_frameworks"),
+                patch("tasks.tasks.get_prowler_provider_compliance", return_value={}),
+                patch("tasks.tasks.Finding.all_objects.filter") as mock_findings,
+                patch(
+                    "tasks.tasks._generate_output_directory",
+                    return_value=("/tmp/test/out", "/tmp/test/comp"),
+                ),
+                patch("tasks.tasks.FindingOutput._transform_findings_stats"),
+                patch("tasks.tasks.FindingOutput.transform_api_finding"),
+                patch(
+                    "tasks.tasks.OUTPUT_FORMATS_MAPPING",
+                    {
+                        "json": {
+                            "class": MagicMock(name="Writer"),
+                            "suffix": ".json",
+                            "kwargs": {},
+                        }
+                    },
+                ),
+                patch("tasks.tasks.COMPLIANCE_CLASS_MAP", {"aws": []}),
+                patch(
+                    "tasks.tasks._compress_output_files", return_value="/tmp/compressed"
+                ),
+                patch("tasks.tasks._upload_to_s3", return_value=None),
+                patch("tasks.tasks.Scan.all_objects.filter"),
+            ):
+                mock_filter.return_value.exists.return_value = True
+                mock_findings.return_value.order_by.return_value.iterator.return_value = [
+                    [MagicMock()],
+                    True,
+                ]
+
+                generate_outputs_task(
+                    scan_id=self.scan_id,
+                    provider_id=self.provider_id,
+                    tenant_id=self.tenant_id,
+                )
+
+            # The stale artifacts from the previous run must be gone, so the
+            # append-mode writers cannot duplicate rows onto them.
+            assert not stale_artifact.exists()
+            assert not scan_tmp_dir.exists()
+
+    def test_generate_outputs_aborts_when_stale_cleanup_fails(self):
+        """Regression for PROWLER-2266.
+
+        If the stale output directory cannot be removed (e.g. permission error),
+        the leftover files would be reopened in append mode and every finding
+        row would be duplicated. The task must abort instead of continuing and
+        publishing duplicated rows, so the retry can start from a clean slate.
+        """
+        import tempfile
+        from pathlib import Path
+
+        with tempfile.TemporaryDirectory() as tmp_root:
+            scan_tmp_dir = Path(tmp_root) / self.tenant_id / self.scan_id
+            scan_tmp_dir.mkdir(parents=True)
+            stale_artifact = scan_tmp_dir / "prowler-output-aws-20260723120000.csv"
+            stale_artifact.write_text("HEADER\nold-finding-row\n")
+
+            with (
+                patch("tasks.tasks.DJANGO_TMP_OUTPUT_DIRECTORY", tmp_root),
+                patch("tasks.tasks.ScanSummary.objects.filter") as mock_filter,
+                patch("tasks.tasks.Provider.objects.get"),
+                patch("tasks.tasks.initialize_prowler_provider"),
+                patch("tasks.tasks.Compliance.get_bulk"),
+                patch("tasks.tasks.get_compliance_frameworks"),
+                patch("tasks.tasks.get_prowler_provider_compliance", return_value={}),
+                # `rmtree(ignore_errors=True)` swallows the failure and leaves the
+                # directory behind; simulate that with a no-op so the guard fires.
+                patch("tasks.tasks.rmtree"),
+                patch("tasks.tasks._generate_output_directory") as mock_gen_dir,
+                patch("tasks.tasks._compress_output_files") as mock_compress,
+                patch("tasks.tasks._upload_to_s3") as mock_upload,
+                patch("tasks.tasks.Scan.all_objects.filter") as mock_scan_update,
+            ):
+                mock_filter.return_value.exists.return_value = True
+
+                with pytest.raises(RuntimeError, match="stale output directory"):
+                    generate_outputs_task(
+                        scan_id=self.scan_id,
+                        provider_id=self.provider_id,
+                        tenant_id=self.tenant_id,
+                    )
+
+            # The task must abort before generating/publishing any output.
+            mock_gen_dir.assert_not_called()
+            mock_compress.assert_not_called()
+            mock_upload.assert_not_called()
+            mock_scan_update.assert_not_called()
 
     def test_generate_outputs_triggers_html_extra_update(self):
         mock_finding_output = MagicMock()
@@ -1566,7 +1686,7 @@ class TestCheckLighthouseProviderConnectionTask:
             (
                 LighthouseProviderConfiguration.LLMProviderChoices.OPENAI_COMPATIBLE,
                 {"api_key": "sk-test123"},
-                "https://openrouter.ai/api/v1",
+                "https://93.184.216.34/api/v1",
                 {"connected": True, "error": None},
             ),
             (
@@ -1641,7 +1761,7 @@ class TestCheckLighthouseProviderConnectionTask:
             (
                 LighthouseProviderConfiguration.LLMProviderChoices.OPENAI_COMPATIBLE,
                 {"api_key": "sk-invalid"},
-                "https://openrouter.ai/api/v1",
+                "https://93.184.216.34/api/v1",
                 openai.APIConnectionError(request=MagicMock()),
             ),
             (
@@ -1755,6 +1875,166 @@ class TestCheckLighthouseProviderConnectionTask:
             provider_cfg.refresh_from_db()
             assert provider_cfg.is_active is False
 
+    def test_openai_compatible_connection_rejects_metadata_base_url_without_request(
+        self, tenants_fixture
+    ):
+        provider_cfg = LighthouseProviderConfiguration(
+            tenant_id=tenants_fixture[0].id,
+            provider_type=LighthouseProviderConfiguration.LLMProviderChoices.OPENAI_COMPATIBLE,
+            base_url="https://169.254.169.254/latest/meta-data",
+            is_active=True,
+        )
+        provider_cfg.credentials_decoded = {"api_key": "compatible-key"}
+        provider_cfg.save()
+
+        with patch("tasks.jobs.lighthouse_providers.openai.OpenAI") as mock_openai:
+            eager_result = check_lighthouse_provider_connection_task.apply(
+                kwargs={
+                    "provider_config_id": str(provider_cfg.id),
+                    "tenant_id": str(tenants_fixture[0].id),
+                }
+            )
+
+        assert eager_result.successful()
+        result = eager_result.result
+        assert result["connected"] is False
+        assert "base url" in result["error"].lower()
+        mock_openai.assert_not_called()
+        provider_cfg.refresh_from_db()
+        assert provider_cfg.is_active is False
+
+    def test_openai_compatible_connection_disables_redirects(self, tenants_fixture):
+        provider_cfg = LighthouseProviderConfiguration(
+            tenant_id=tenants_fixture[0].id,
+            provider_type=LighthouseProviderConfiguration.LLMProviderChoices.OPENAI_COMPATIBLE,
+            base_url="https://93.184.216.34/api/v1",
+            is_active=False,
+        )
+        provider_cfg.credentials_decoded = {"api_key": "compatible-key"}
+        provider_cfg.save()
+
+        with patch("tasks.jobs.lighthouse_providers.openai.OpenAI") as mock_openai:
+            mock_client = MagicMock()
+            mock_client.models.list.return_value = MagicMock()
+            mock_openai.return_value = mock_client
+
+            eager_result = check_lighthouse_provider_connection_task.apply(
+                kwargs={
+                    "provider_config_id": str(provider_cfg.id),
+                    "tenant_id": str(tenants_fixture[0].id),
+                }
+            )
+
+        assert eager_result.successful()
+        result = eager_result.result
+        assert result == {"connected": True, "error": None}
+        http_client = mock_openai.call_args.kwargs["http_client"]
+        assert http_client.follow_redirects is False
+        assert http_client.trust_env is False
+
+    def test_openai_compatible_connection_masks_remote_http_error(
+        self, tenants_fixture
+    ):
+        provider_cfg = LighthouseProviderConfiguration(
+            tenant_id=tenants_fixture[0].id,
+            provider_type=LighthouseProviderConfiguration.LLMProviderChoices.OPENAI_COMPATIBLE,
+            base_url="https://93.184.216.34/api/v1",
+            is_active=True,
+        )
+        provider_cfg.credentials_decoded = {"api_key": "compatible-key"}
+        provider_cfg.save()
+        remote_body = "<!DOCTYPE HTML><p>remote 404 body</p>"
+        response = httpx.Response(
+            404,
+            request=httpx.Request("GET", "https://provider.example/v1/models"),
+        )
+
+        with patch("tasks.jobs.lighthouse_providers.openai.OpenAI") as mock_openai:
+            mock_client = MagicMock()
+            mock_client.models.list.side_effect = openai.NotFoundError(
+                remote_body,
+                response=response,
+                body=remote_body,
+            )
+            mock_openai.return_value = mock_client
+
+            eager_result = check_lighthouse_provider_connection_task.apply(
+                kwargs={
+                    "provider_config_id": str(provider_cfg.id),
+                    "tenant_id": str(tenants_fixture[0].id),
+                }
+            )
+
+        assert eager_result.successful()
+        result = eager_result.result
+        assert result == {"connected": False, "error": "Provider connection failed"}
+        assert remote_body not in result["error"]
+        provider_cfg.refresh_from_db()
+        assert provider_cfg.is_active is False
+
+    def test_openai_compatible_connection_masks_remote_auth_error(
+        self, tenants_fixture
+    ):
+        provider_cfg = LighthouseProviderConfiguration(
+            tenant_id=tenants_fixture[0].id,
+            provider_type=LighthouseProviderConfiguration.LLMProviderChoices.OPENAI_COMPATIBLE,
+            base_url="https://93.184.216.34/api/v1",
+            is_active=True,
+        )
+        provider_cfg.credentials_decoded = {"api_key": "compatible-key"}
+        provider_cfg.save()
+        remote_body = {"error": {"message": "remote auth detail"}}
+        response = httpx.Response(
+            401,
+            request=httpx.Request("GET", "https://provider.example/v1/models"),
+        )
+
+        with patch("tasks.jobs.lighthouse_providers.openai.OpenAI") as mock_openai:
+            mock_client = MagicMock()
+            mock_client.models.list.side_effect = openai.AuthenticationError(
+                "Unauthorized",
+                response=response,
+                body=remote_body,
+            )
+            mock_openai.return_value = mock_client
+
+            eager_result = check_lighthouse_provider_connection_task.apply(
+                kwargs={
+                    "provider_config_id": str(provider_cfg.id),
+                    "tenant_id": str(tenants_fixture[0].id),
+                }
+            )
+
+        assert eager_result.successful()
+        result = eager_result.result
+        assert result == {"connected": False, "error": "API key is invalid or missing"}
+        assert "remote auth detail" not in result["error"]
+        provider_cfg.refresh_from_db()
+        assert provider_cfg.is_active is False
+
+    def test_openai_compatible_network_backend_uses_validated_ip(self, monkeypatch):
+        backend = _LighthouseOpenAICompatibleNetworkBackend()
+        stream = MagicMock()
+
+        def resolve_to_public_ip(host, port):
+            del host, port
+            return ("93.184.216.34",)
+
+        monkeypatch.setattr(
+            "tasks.jobs.lighthouse_providers.resolve_lighthouse_openai_compatible_host",
+            resolve_to_public_ip,
+        )
+
+        with patch(
+            "tasks.jobs.lighthouse_providers.httpcore.SyncBackend.connect_tcp",
+            return_value=stream,
+        ) as mock_connect_tcp:
+            result = backend.connect_tcp("provider.example", 443, timeout=1.0)
+
+        assert result is stream
+        assert mock_connect_tcp.call_args.args[:2] == ("93.184.216.34", 443)
+        assert mock_connect_tcp.call_args.kwargs["timeout"] == 1.0
+
     def test_check_connection_provider_does_not_exist(self, tenants_fixture):
         """Test that checking non-existent provider raises DoesNotExist."""
         non_existent_id = str(uuid.uuid4())
@@ -1784,7 +2064,7 @@ class TestRefreshLighthouseProviderModelsTask:
             (
                 LighthouseProviderConfiguration.LLMProviderChoices.OPENAI_COMPATIBLE,
                 {"api_key": "sk-test123"},
-                "https://openrouter.ai/api/v1",
+                "https://93.184.216.34/api/v1",
                 {"model-1": "Model One", "model-2": "Model Two"},
                 2,
             ),
@@ -1863,6 +2143,106 @@ class TestRefreshLighthouseProviderModelsTask:
                 ).count()
                 == expected_count
             )
+
+    def test_refresh_models_rejects_metadata_base_url_without_request(
+        self, tenants_fixture
+    ):
+        provider_cfg = LighthouseProviderConfiguration(
+            tenant_id=tenants_fixture[0].id,
+            provider_type=LighthouseProviderConfiguration.LLMProviderChoices.OPENAI_COMPATIBLE,
+            base_url="https://169.254.169.254/latest/meta-data",
+            is_active=True,
+        )
+        provider_cfg.credentials_decoded = {"api_key": "compatible-key"}
+        provider_cfg.save()
+
+        with patch(
+            "tasks.jobs.lighthouse_providers._fetch_openai_compatible_models"
+        ) as mock_fetch:
+            eager_result = refresh_lighthouse_provider_models_task.apply(
+                kwargs={
+                    "provider_config_id": str(provider_cfg.id),
+                    "tenant_id": str(tenants_fixture[0].id),
+                }
+            )
+
+        assert eager_result.successful()
+        result = eager_result.result
+        assert result["created"] == 0
+        assert result["updated"] == 0
+        assert result["deleted"] == 0
+        assert "base url" in result["error"].lower()
+        mock_fetch.assert_not_called()
+
+    def test_refresh_models_disables_redirects(self, tenants_fixture):
+        provider_cfg = LighthouseProviderConfiguration(
+            tenant_id=tenants_fixture[0].id,
+            provider_type=LighthouseProviderConfiguration.LLMProviderChoices.OPENAI_COMPATIBLE,
+            base_url="https://93.184.216.34/api/v1",
+            is_active=True,
+        )
+        provider_cfg.credentials_decoded = {"api_key": "compatible-key"}
+        provider_cfg.save()
+
+        with patch("tasks.jobs.lighthouse_providers.openai.OpenAI") as mock_openai:
+            mock_client = MagicMock()
+            mock_client.models.list.return_value = MagicMock(data=[])
+            mock_openai.return_value = mock_client
+
+            eager_result = refresh_lighthouse_provider_models_task.apply(
+                kwargs={
+                    "provider_config_id": str(provider_cfg.id),
+                    "tenant_id": str(tenants_fixture[0].id),
+                }
+            )
+
+        assert eager_result.successful()
+        result = eager_result.result
+        assert result["created"] == 0
+        assert result["updated"] == 0
+        assert result["deleted"] == 0
+        http_client = mock_openai.call_args.kwargs["http_client"]
+        assert http_client.follow_redirects is False
+        assert http_client.trust_env is False
+
+    def test_refresh_models_masks_remote_http_error(self, tenants_fixture):
+        provider_cfg = LighthouseProviderConfiguration(
+            tenant_id=tenants_fixture[0].id,
+            provider_type=LighthouseProviderConfiguration.LLMProviderChoices.OPENAI_COMPATIBLE,
+            base_url="https://93.184.216.34/api/v1",
+            is_active=True,
+        )
+        provider_cfg.credentials_decoded = {"api_key": "compatible-key"}
+        provider_cfg.save()
+        remote_body = "<!DOCTYPE HTML><p>remote 404 body</p>"
+        response = httpx.Response(
+            404,
+            request=httpx.Request("GET", "https://provider.example/v1/models"),
+        )
+
+        with patch("tasks.jobs.lighthouse_providers.openai.OpenAI") as mock_openai:
+            mock_client = MagicMock()
+            mock_client.models.list.side_effect = openai.NotFoundError(
+                remote_body,
+                response=response,
+                body=remote_body,
+            )
+            mock_openai.return_value = mock_client
+
+            eager_result = refresh_lighthouse_provider_models_task.apply(
+                kwargs={
+                    "provider_config_id": str(provider_cfg.id),
+                    "tenant_id": str(tenants_fixture[0].id),
+                }
+            )
+
+        assert eager_result.successful()
+        result = eager_result.result
+        assert result["created"] == 0
+        assert result["updated"] == 0
+        assert result["deleted"] == 0
+        assert result["error"] == "Provider connection failed"
+        assert remote_body not in result["error"]
 
     def test_refresh_models_mixed_operations(self, tenants_fixture):
         """Test mixed create, update, and delete operations."""
@@ -3042,6 +3422,7 @@ class TestTaskTimeLimits:
         for name in (
             "scan-perform",
             "scan-perform-scheduled",
+            "attack-paths-scan-perform",
             "provider-deletion",
             "tenant-deletion",
         ):

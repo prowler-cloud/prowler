@@ -13,6 +13,7 @@ def make_container(
     resources=None,
     liveness_probe=None,
     readiness_probe=None,
+    security_context=None,
 ):
     return Container(
         name=name,
@@ -20,7 +21,7 @@ def make_container(
         command=None,
         ports=None,
         env=None,
-        security_context={},
+        security_context=security_context if security_context is not None else {},
         resources=resources,
         liveness_probe=liveness_probe,
         readiness_probe=readiness_probe,
@@ -31,6 +32,7 @@ def make_pod(
     containers=None,
     init_containers=None,
     ephemeral_containers=None,
+    volumes=None,
     name="test-pod",
     uid="test-pod-uid",
 ):
@@ -52,6 +54,7 @@ def make_pod(
         containers=containers or {},
         init_containers=init_containers or {},
         ephemeral_containers=ephemeral_containers or {},
+        volumes=volumes,
     )
 
 

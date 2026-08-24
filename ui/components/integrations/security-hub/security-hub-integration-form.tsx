@@ -12,8 +12,7 @@ import {
   ProviderTypeIcon,
 } from "@/components/icons/providers-badge/provider-type-icon";
 import { AWSRoleCredentialsForm } from "@/components/providers/workflow/forms/select-credentials-type/aws/credentials-type/aws-role-credentials-form";
-import { Checkbox, Separator } from "@/components/shadcn";
-import { useToast } from "@/components/shadcn";
+import { Checkbox, Separator, useToast } from "@/components/shadcn";
 import { CustomLink } from "@/components/shadcn/custom/custom-link";
 import {
   Form,
@@ -482,11 +481,9 @@ export const SecurityHubIntegrationForm = ({
 
   const renderStepButtons = () => {
     if (isEditingConfig || isEditingCredentials) {
-      const updateText = isEditingConfig
-        ? "Update Configuration"
-        : "Update Credentials";
+      const updateText = "Update";
       const loadingText = isEditingConfig
-        ? "Updating Configuration..."
+        ? "Updating..."
         : "Updating Credentials...";
 
       return (

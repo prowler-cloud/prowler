@@ -1,12 +1,16 @@
 ---
 title: 'Managing Organizations (Multi-Tenant)'
+sidebarTitle: 'Organizations'
 ---
 
 import { VersionBadge } from "/snippets/version-badge.mdx"
+import { AppliesTo } from "/snippets/applies-to.mdx"
 
 <VersionBadge version="5.23.0" />
 
-Prowler App supports multi-tenancy through **Organizations**, allowing users to belong to multiple isolated environments within a single account. Each organization maintains its own providers, scans, findings, and user memberships, ensuring complete data separation between teams or business units.
+<AppliesTo />
+
+Prowler Cloud supports multi-tenancy through **Organizations**, allowing users to belong to multiple isolated environments within a single account. Each organization maintains its own providers, scans, findings, and user memberships, ensuring complete data separation between teams or business units.
 
 ## Key Concepts
 
@@ -128,7 +132,7 @@ When invited to join an organization, the invited user receives a link to accept
 
 1. Open the invitation link.
 
-2. If already authenticated, the invitation is accepted automatically and the user is redirected to Prowler App.
+2. If already authenticated, the invitation is accepted automatically and the user is redirected to Prowler Cloud.
 
 3. If not authenticated, choose **I have an account -- Sign in**, authenticate with existing credentials, and the invitation is accepted upon sign-in.
 

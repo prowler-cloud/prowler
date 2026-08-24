@@ -33,6 +33,7 @@ interface ModalProps {
   size?: ModalSize;
   className?: string;
   onOpenAutoFocus?: (event: Event) => void;
+  onCloseAutoFocus?: (event: Event) => void;
   /**
    * Cap the dialog at 90dvh and scroll overflowing content, instead of
    * letting it grow past the viewport. Opt-in per modal (e.g. for content
@@ -51,12 +52,14 @@ export const Modal = ({
   size = "xl",
   className,
   onOpenAutoFocus = preventInitialAutoFocus,
+  onCloseAutoFocus,
   scrollable = false,
 }: ModalProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         onOpenAutoFocus={onOpenAutoFocus}
+        onCloseAutoFocus={onCloseAutoFocus}
         // Radix requires an accessible description; opt out explicitly when none is provided.
         {...(description ? {} : { "aria-describedby": undefined })}
         className={cn(

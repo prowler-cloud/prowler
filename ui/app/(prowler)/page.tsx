@@ -5,12 +5,19 @@ import { getAllProviders } from "@/actions/providers";
 import { getLighthouseV2Configurations } from "@/app/(prowler)/lighthouse/_actions";
 import { ProviderAccountSelectors } from "@/components/filters/provider-account-selectors";
 import { ProviderGroupSelector } from "@/components/filters/provider-group-selector";
+import {
+  APP_SIDEBAR_MODE,
+  AppSidebarModeSync,
+} from "@/components/layout/app-sidebar";
 import { ContentLayout } from "@/components/shadcn/content-layout";
+import { DOCS_URLS } from "@/lib/external-urls";
 import { isCloud } from "@/lib/shared/env";
 import { SearchParamsProps } from "@/types";
 
-import { LighthouseOverviewBanner } from "./_overview/_components/lighthouse-overview-banner";
+import { OverviewBanner } from "./_overview/_components/overview-banner";
+import { OverviewProviderContext } from "./_overview/_components/overview-provider-context";
 import { getLighthouseOverviewBannerHref } from "./_overview/_lib/lighthouse-banner";
+import { OVERVIEW_BANNER_VARIANT } from "./_overview/_lib/overview-banner";
 import {
   AttackSurfaceSkeleton,
   AttackSurfaceSSR,
@@ -53,18 +60,37 @@ export default async function Home({
 
   return (
     <ContentLayout title="Overview" icon="lucide:square-chart-gantt">
+      <AppSidebarModeSync mode={APP_SIDEBAR_MODE.BROWSE} />
+      <OverviewProviderContext
+        searchParams={resolvedSearchParams}
+        providers={providersData?.data ?? []}
+        groups={providerGroupsData?.data ?? []}
+      />
+      {/* Agents banner shows everywhere; Lighthouse is Cloud-only, so on a
+          local server the agents banner is the only child and fills the row. */}
+      <div className="mb-6 flex flex-col gap-6 lg:flex-row">
+        {lighthouseBannerHref ? (
+          <div className="min-w-0 lg:flex-1">
+            <OverviewBanner
+              variant={OVERVIEW_BANNER_VARIANT.LIGHTHOUSE}
+              href={lighthouseBannerHref}
+            />
+          </div>
+        ) : null}
+        <div className="min-w-0 lg:flex-1">
+          <OverviewBanner
+            variant={OVERVIEW_BANNER_VARIANT.AGENTS}
+            href={DOCS_URLS.AI_AGENTS}
+          />
+        </div>
+      </div>
+
       <div className="xxl:grid-cols-4 mb-6 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
         <ProviderAccountSelectors providers={providersData?.data ?? []} />
         <ProviderGroupSelector groups={providerGroupsData?.data ?? []} />
       </div>
 
-      {lighthouseBannerHref ? (
-        <div className="mb-6">
-          <LighthouseOverviewBanner href={lighthouseBannerHref} />
-        </div>
-      ) : null}
-
-      <div className="flex flex-col gap-6 xl:flex-row xl:flex-wrap xl:items-stretch">
+      <div className="flex flex-col gap-6 lg:flex-row lg:flex-wrap lg:items-stretch">
         <Suspense fallback={<ThreatScoreSkeleton />}>
           <ThreatScoreSSR searchParams={resolvedSearchParams} />
         </Suspense>
@@ -86,8 +112,18 @@ export default async function Home({
 
       <div className="mt-6 flex flex-col gap-6 xl:flex-row">
         {/* Watchlists: stacked on mobile, row on tablet, stacked on desktop */}
-        <div className="flex min-w-0 flex-col gap-6 overflow-hidden sm:flex-row sm:flex-wrap sm:items-stretch xl:w-[312px] xl:shrink-0 xl:flex-col">
-          <div className="min-w-0 sm:flex-1 xl:flex-auto [&>*]:h-full">
+        {/* No `flex-wrap` here: a multi-line flex container sizes its items to
+            the line's max-content rather than to its own 312px, and a card wider
+            than the column loses its right border and padding to
+            `overflow-hidden`. It never wrapped anyway. */}
+        <div className="flex min-w-0 flex-col gap-6 overflow-hidden sm:flex-row sm:items-stretch xl:w-[312px] xl:shrink-0 xl:flex-col">
+          {/* Sized to its own list, unlike the service card below: this one is
+              as long as the organization made its watchlist, so growing it to
+              fill the column puts a hole under two pinned frameworks. */}
+          {/* `h-full` only where the cards sit side by side and share a row
+              height. In the column it would hand the card the stretched
+              wrapper's height and undo the fit-to-content sizing. */}
+          <div className="min-w-0 sm:flex-1 xl:flex-none sm:[&>*]:h-full xl:[&>*]:h-auto">
             <Suspense fallback={<WatchlistCardSkeleton />}>
               <ComplianceWatchlistSSR searchParams={resolvedSearchParams} />
             </Suspense>

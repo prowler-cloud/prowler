@@ -5,7 +5,14 @@ import type {
   InputHTMLAttributes,
   ReactNode,
 } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const { isCloudMock, isGroupedJiraDispatchEnabledMock, launchSkillMock } =
+  vi.hoisted(() => ({
+    isCloudMock: vi.fn(() => false),
+    isGroupedJiraDispatchEnabledMock: vi.fn(() => true),
+    launchSkillMock: vi.fn(),
+  }));
 
 // CustomLink pulls the "@/lib" barrel (and next-auth with it) into the unit env.
 vi.mock("@/components/shadcn/custom/custom-link", () => ({
@@ -14,8 +21,7 @@ vi.mock("@/components/shadcn/custom/custom-link", () => ({
   ),
 }));
 
-vi.mock("@/components/shadcn", async (importOriginal) => ({
-  ...(await importOriginal<Record<string, unknown>>()),
+vi.mock("@/components/shadcn", () => ({
   Button: ({ children, ...props }: ButtonHTMLAttributes<HTMLButtonElement>) => (
     <button {...props}>{children}</button>
   ),
@@ -41,22 +47,6 @@ vi.mock("@/components/findings/mute-findings-modal", () => ({
   MuteFindingsModal: () => null,
 }));
 
-vi.mock("@/components/findings/send-to-jira-modal", () => ({
-  SendToJiraModal: ({
-    findingId,
-    isOpen,
-  }: {
-    findingId: string;
-    isOpen: boolean;
-  }) => (
-    <div
-      data-testid="jira-modal"
-      data-finding-id={findingId}
-      data-open={isOpen ? "true" : "false"}
-    />
-  ),
-}));
-
 vi.mock("@/components/icons/services/IconServices", () => ({
   JiraIcon: () => null,
 }));
@@ -69,14 +59,29 @@ vi.mock("@/components/shadcn/dropdown", () => ({
     label,
     onSelect,
     disabled,
+    disabledTooltip,
   }: {
     label: string;
     onSelect?: () => void;
     disabled?: boolean;
+    disabledTooltip?: string;
   }) => (
-    <button disabled={disabled} onClick={onSelect}>
+    <button disabled={disabled} onClick={onSelect} title={disabledTooltip}>
       {label}
     </button>
+  ),
+  DropdownMenuLabel: ({ children }: { children?: ReactNode }) => (
+    <div>{children}</div>
+  ),
+  DropdownMenuSeparator: () => <hr />,
+  DropdownMenuSub: ({ children }: { children: ReactNode }) => (
+    <div>{children}</div>
+  ),
+  DropdownMenuSubContent: ({ children }: { children: ReactNode }) => (
+    <div>{children}</div>
+  ),
+  DropdownMenuSubTrigger: ({ children }: { children: ReactNode }) => (
+    <span>{children}</span>
   ),
 }));
 
@@ -175,6 +180,24 @@ vi.mock("@/lib/date-utils", () => ({
   getFailingForLabel: () => "2d",
 }));
 
+vi.mock("@/lib/deployment", () => ({
+  isGroupedJiraDispatchEnabled: isGroupedJiraDispatchEnabledMock,
+  PROWLER_CLOUD_ONLY_TOOLTIP: "Available only in Prowler Cloud",
+}));
+
+vi.mock("@/lib/shared/env", () => ({
+  isCloud: isCloudMock,
+}));
+
+vi.mock("./lighthouse-skills-launch", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("./lighthouse-skills-launch")>();
+  return {
+    ...actual,
+    useLighthouseSkillLaunch: () => launchSkillMock,
+  };
+});
+
 const notificationIndicatorMock = vi.fn((_props: unknown) => null);
 
 vi.mock("./notification-indicator", () => ({
@@ -184,6 +207,7 @@ vi.mock("./notification-indicator", () => ({
   },
 }));
 
+import { useJiraDispatchStore } from "@/store/jira-dispatch/store";
 import type { FindingResourceRow } from "@/types";
 import {
   FINDING_TRIAGE_DISABLED_REASON,
@@ -252,10 +276,14 @@ function getColumnIds(columns: ReturnType<typeof getColumnFindingResources>) {
 
 function renderResourceActionsCell({
   resource = makeResource(),
+  onSkillLaunchOpenDrawer,
   onTriageUpdateAction,
   onTriageNoteLoadAction,
 }: {
   resource?: FindingResourceRow;
+  onSkillLaunchOpenDrawer?: Parameters<
+    typeof getColumnFindingResources
+  >[0]["onSkillLaunchOpenDrawer"];
   onTriageUpdateAction?: Parameters<
     typeof getColumnFindingResources
   >[0]["onTriageUpdateAction"];
@@ -266,6 +294,7 @@ function renderResourceActionsCell({
   const columns = getColumnFindingResources({
     rowSelection: {},
     selectableRowCount: 1,
+    onSkillLaunchOpenDrawer,
     onTriageUpdateAction,
     onTriageNoteLoadAction,
   });
@@ -277,13 +306,48 @@ function renderResourceActionsCell({
     throw new Error("actions column not found");
   }
   const CellComponent = actionsColumn.cell as (props: {
-    row: { original: FindingResourceRow };
+    row: { original: FindingResourceRow; index: number };
   }) => ReactNode;
 
-  render(<div>{CellComponent({ row: { original: resource } })}</div>);
+  render(<div>{CellComponent({ row: { original: resource, index: 0 } })}</div>);
 }
 
 describe("column-finding-resources", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    isCloudMock.mockReturnValue(false);
+    isGroupedJiraDispatchEnabledMock.mockReturnValue(true);
+    useJiraDispatchStore.getState().closeJiraDispatch();
+  });
+
+  it("opens the finding drawer and launches a row skill with full context", async () => {
+    // Given
+    const user = userEvent.setup();
+    const onSkillLaunchOpenDrawer = vi.fn();
+    isCloudMock.mockReturnValue(true);
+    renderResourceActionsCell({ onSkillLaunchOpenDrawer });
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Triage Decision" }));
+
+    // Then
+    expect(onSkillLaunchOpenDrawer).toHaveBeenCalledWith(0);
+    expect(launchSkillMock).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "triage-decision" }),
+      expect.objectContaining({
+        kind: "finding",
+        findingId: "finding-1",
+        checkId: "s3_check",
+        providerUid: "123456789",
+        resourceUid: "arn:aws:s3:::my-bucket",
+        region: "us-east-1",
+      }),
+    );
+    expect(onSkillLaunchOpenDrawer.mock.invocationCallOrder[0]).toBeLessThan(
+      launchSkillMock.mock.invocationCallOrder[0],
+    );
+  });
+
   it("should render actions as the last visible column after Triage without Notes", () => {
     // Given
     const columns = getColumnFindingResources({
@@ -296,6 +360,7 @@ describe("column-finding-resources", () => {
 
     // Then
     expect(columnIds.slice(-2)).toEqual(["triage", "actions"]);
+    expect(columnIds).not.toContain("status");
     expect(columnIds).not.toContain("notes");
     expect(
       (columns.at(-1) as { id?: string; size?: number } | undefined)?.size,
@@ -473,7 +538,7 @@ describe("column-finding-resources", () => {
     expect(screen.getByText(CLOUD_ONLY_TOOLTIP_COPY)).toBeInTheDocument();
   });
 
-  it("should open Send to Jira modal with finding UUID directly", async () => {
+  it("should open Jira dispatch with the finding UUID directly", async () => {
     // Given
     const user = userEvent.setup();
 
@@ -506,16 +571,15 @@ describe("column-finding-resources", () => {
     );
 
     // When
-    await user.click(screen.getByRole("button", { name: "Send to Jira" }));
+    await user.click(
+      screen.getByRole("button", { name: "Send 1 Finding to Jira" }),
+    );
 
     // Then
-    expect(screen.getByTestId("jira-modal")).toHaveAttribute(
-      "data-finding-id",
-      "real-finding-uuid",
-    );
-    expect(screen.getByTestId("jira-modal")).toHaveAttribute(
-      "data-open",
-      "true",
-    );
+    expect(useJiraDispatchStore.getState().activePayload?.selection).toEqual({
+      kind: "single",
+      targetId: "real-finding-uuid",
+      targetType: "finding_id",
+    });
   });
 });

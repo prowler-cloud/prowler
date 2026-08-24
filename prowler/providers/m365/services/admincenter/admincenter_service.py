@@ -14,10 +14,12 @@ class AdminCenter(M365Service):
 
         self.organization_config = None
         self.sharing_policy = None
+        self.mailbox_policies = []
         if self.powershell:
             if self.powershell.connect_exchange_online():
                 self.organization_config = self._get_organization_config()
                 self.sharing_policy = self._get_sharing_policy()
+                self.mailbox_policies = self._get_mailbox_policy()
             self.powershell.close()
 
         created_loop = False
@@ -69,12 +71,48 @@ class AdminCenter(M365Service):
                     customer_lockbox_enabled=organization_configuration.get(
                         "CustomerLockboxEnabled", False
                     ),
+                    bookings_enabled=organization_configuration.get(
+                        "BookingsEnabled", True
+                    ),
                 )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return organization_config
+
+    def _get_mailbox_policy(self):
+        """Retrieve the OWA mailbox policies via Exchange Online PowerShell.
+
+        Reads the OWA mailbox policy configuration and captures each policy's
+        default flag and Bookings mailbox creation setting.
+
+        Returns:
+            List[OwaMailboxPolicy]: The parsed OWA mailbox policies, empty on error.
+        """
+        logger.info("Microsoft365 - Getting OWA mailbox policy configuration...")
+        mailbox_policies = []
+        try:
+            policies_data = self.powershell.get_mailbox_policy()
+            if policies_data:
+                if isinstance(policies_data, dict):
+                    policies_data = [policies_data]
+                for policy in policies_data:
+                    if policy:
+                        mailbox_policies.append(
+                            OwaMailboxPolicy(
+                                id=policy.get("Id", ""),
+                                is_default=policy.get("IsDefault", False),
+                                bookings_mailbox_creation_enabled=policy.get(
+                                    "BookingsMailboxCreationEnabled", True
+                                ),
+                            )
+                        )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return mailbox_policies
 
     def _get_sharing_policy(self):
         logger.info("M365 - Getting sharing policy...")
@@ -255,6 +293,22 @@ class Organization(BaseModel):
     name: str
     guid: str
     customer_lockbox_enabled: bool
+    bookings_enabled: bool = True
+
+
+class OwaMailboxPolicy(BaseModel):
+    """Represents an Outlook on the web (OWA) mailbox policy.
+
+    Attributes:
+        id: The mailbox policy identifier.
+        is_default: Whether the policy is the default OWA mailbox policy.
+        bookings_mailbox_creation_enabled: Whether users can create Bookings
+            mailboxes under this policy.
+    """
+
+    id: str
+    is_default: bool = False
+    bookings_mailbox_creation_enabled: bool = True
 
 
 class SharingPolicy(BaseModel):

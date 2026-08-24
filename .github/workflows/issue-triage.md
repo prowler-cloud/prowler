@@ -30,6 +30,12 @@ permissions:
 engine: copilot
 strict: false
 
+pre-steps:
+  - name: Harden the runner
+    uses: step-security/harden-runner@v2.20.0
+    with:
+      egress-policy: audit
+
 imports:
   - ../agents/issue-triage.md
 

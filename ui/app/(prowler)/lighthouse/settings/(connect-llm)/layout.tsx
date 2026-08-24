@@ -12,8 +12,7 @@ import {
 } from "@/actions/lighthouse-v1/lighthouse";
 import { DeleteLLMProviderForm } from "@/components/lighthouse-v1/forms/delete-llm-provider-form";
 import { WorkflowConnectLLM } from "@/components/lighthouse-v1/workflow";
-import { Button } from "@/components/shadcn";
-import { NavigationHeader } from "@/components/shadcn";
+import { Button, NavigationHeader } from "@/components/shadcn";
 import { Modal } from "@/components/shadcn/modal";
 import { LIGHTHOUSE_ROUTE } from "@/lib/lighthouse-routes";
 import type { LighthouseProvider } from "@/types/lighthouse-v1";
