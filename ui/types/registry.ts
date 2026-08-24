@@ -155,6 +155,26 @@ export type RegistryCollectionsResult =
   | RegistryIncompleteCatalog
   | RegistryFailureResult;
 
+export const REGISTRY_MUTATION = {
+  CONFIRMED: "confirmed",
+  REFRESH_FAILED: "refresh_failed",
+  REFUSED: "refused",
+} as const;
+
+export type RegistryMutationResult =
+  | {
+      status: typeof REGISTRY_MUTATION.CONFIRMED;
+      tenantArtifacts: RegistryTenantArtifact[];
+    }
+  | {
+      status: typeof REGISTRY_MUTATION.REFRESH_FAILED;
+    }
+  | {
+      status: typeof REGISTRY_MUTATION.REFUSED;
+      message: string;
+    }
+  | RegistryFailureResult;
+
 export const REGISTRY_BOOTSTRAP_STATE = {
   ONBOARDING: "onboarding",
   VALIDATION_PENDING: "validation_pending",
