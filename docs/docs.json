@@ -302,6 +302,15 @@
             "group": "Providers",
             "pages": [
               {
+                "group": "Organizations",
+                "pages": [
+                  "user-guide/organizations",
+                  "user-guide/providers/aws/organizations",
+                  "user-guide/providers/gcp/organization",
+                  "user-guide/providers/azure/management-groups"
+                ]
+              },
+              {
                 "group": "Alibaba Cloud",
                 "pages": [
                   "user-guide/providers/alibabacloud/getting-started-alibabacloud",
