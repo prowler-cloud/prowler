@@ -780,4 +780,23 @@ def test_defender__get_domain_dmarc_configurations_handles_pagination():
         domain_dmarc_configurations["domain1.com"].dmarc_record == "v=DMARC1; p=reject"
     )
     assert domains_builder.get.await_count == 1
+    assert domains_with_url_builder.get.await_count == 1
     with_url_mock.assert_called_once_with("next-link")
+
+
+def test_defender__get_domain_dmarc_configurations_marks_discovery_failure():
+    defender_service = Defender.__new__(Defender)
+    defender_service.domain_discovery_failed = False
+
+    domains_builder = SimpleNamespace(
+        get=AsyncMock(side_effect=Exception("Graph domains request failed"))
+    )
+    defender_service.client = SimpleNamespace(domains=domains_builder)
+
+    domain_dmarc_configurations = asyncio.run(
+        defender_service._get_domain_dmarc_configurations()
+    )
+
+    # An empty result caused by a discovery failure must be distinguishable.
+    assert domain_dmarc_configurations == {}
+    assert defender_service.domain_discovery_failed is True

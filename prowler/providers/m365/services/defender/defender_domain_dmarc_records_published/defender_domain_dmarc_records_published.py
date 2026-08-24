@@ -25,6 +25,24 @@ class defender_domain_dmarc_records_published(Check):
             List[CheckReportM365]: A list of reports containing the result of the check.
         """
         findings = []
+
+        # If the Graph domain list could not be retrieved, an empty result means
+        # the DMARC status is unknown for the tenant, not that it has no domains.
+        if (
+            not defender_client.domain_dmarc_configurations
+            and defender_client.domain_discovery_failed
+        ):
+            report = CheckReportM365(
+                metadata=self.metadata(),
+                resource={},
+                resource_name=defender_client.tenant_domain,
+                resource_id=defender_client.tenant_domain,
+            )
+            report.status = "MANUAL"
+            report.status_extended = "DMARC records could not be verified because the Exchange Online domain list could not be retrieved; manual review is required."
+            findings.append(report)
+            return findings
+
         for (
             domain_id,
             domain,
@@ -69,18 +87,28 @@ class defender_domain_dmarc_records_published(Check):
 
         Returns:
             Optional[str]: The lowercase policy value (e.g. ``"reject"``), or
-                ``None`` if the record is missing or malformed (does not start
-                with ``v=DMARC1`` or has no ``p=`` tag).
+                ``None`` if the record is missing or malformed. Per RFC 7489 the
+                record must start with an exact ``v=DMARC1`` version tag and the
+                ``p`` policy tag must immediately follow it.
         """
-        if not record or not record.strip().lower().startswith("v=dmarc1"):
+        if not record:
             return None
 
-        for tag in record.split(";"):
-            tag = tag.strip()
-            if not tag or "=" not in tag:
-                continue
-            name, _, value = tag.partition("=")
-            if name.strip().lower() == "p":
-                return value.strip().lower()
+        tags = [tag.strip() for tag in record.split(";") if tag.strip()]
+        if len(tags) < 2:
+            return None
 
-        return None
+        # RFC 7489: the version tag MUST be first and equal to "DMARC1" exactly
+        # (e.g. "v=DMARC10" is not a DMARC record).
+        version_name, _, version_value = tags[0].partition("=")
+        if version_name.strip().lower() != "v" or version_value.strip().lower() != (
+            "dmarc1"
+        ):
+            return None
+
+        # RFC 7489: the policy tag MUST immediately follow the version tag.
+        policy_name, _, policy_value = tags[1].partition("=")
+        if policy_name.strip().lower() != "p":
+            return None
+
+        return policy_value.strip().lower()

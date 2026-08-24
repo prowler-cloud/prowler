@@ -96,7 +96,11 @@ class Defender(M365Service):
                 self.email_tenant_settings = self._get_email_tenant_settings()
             self.powershell.close()
 
+        self.tenant_domain = provider.identity.tenant_domain
         self.domain_dmarc_configurations = {}
+        # Set when the Graph domain list could not be retrieved, so an empty
+        # result can be told apart from a tenant that genuinely has no domains.
+        self.domain_discovery_failed = False
 
         created_loop = False
         try:
@@ -807,6 +811,9 @@ class Defender(M365Service):
                     lookup_failed=lookup_failed,
                 )
         except Exception as error:
+            # The domain list could not be retrieved, so DMARC status is unknown
+            # for the whole tenant rather than confirmed absent.
+            self.domain_discovery_failed = True
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
@@ -836,7 +843,10 @@ class Defender(M365Service):
                     part.decode() if isinstance(part, bytes) else part
                     for part in answer.strings
                 )
-                if record.strip().lower().startswith("v=dmarc1"):
+                # RFC 7489: a DMARC record's first tag must be exactly "v=DMARC1"
+                # ("v=DMARC10" and other TXT records at the name are not DMARC).
+                name, _, value = record.split(";")[0].partition("=")
+                if name.strip().lower() == "v" and value.strip().lower() == "dmarc1":
                     return record, False
         except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
             # The domain resolves but publishes no DMARC record: a confirmed absence.

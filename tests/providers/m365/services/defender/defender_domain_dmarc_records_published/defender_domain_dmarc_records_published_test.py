@@ -9,6 +9,7 @@ class Test_defender_domain_dmarc_records_published:
         defender_client.audited_tenant = "audited_tenant"
         defender_client.audited_domain = DOMAIN
         defender_client.domain_dmarc_configurations = {}
+        defender_client.domain_discovery_failed = False
 
         with (
             mock.patch(
@@ -30,6 +31,88 @@ class Test_defender_domain_dmarc_records_published:
             check = defender_domain_dmarc_records_published()
             result = check.execute()
             assert len(result) == 0
+
+    def test_domain_discovery_failed(self):
+        defender_client = mock.MagicMock()
+        defender_client.audited_tenant = "audited_tenant"
+        defender_client.audited_domain = DOMAIN
+        defender_client.tenant_domain = DOMAIN
+        defender_client.domain_dmarc_configurations = {}
+        defender_client.domain_discovery_failed = True
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+            mock.patch(
+                "prowler.providers.m365.services.defender.defender_domain_dmarc_records_published.defender_domain_dmarc_records_published.defender_client",
+                new=defender_client,
+            ),
+        ):
+            from prowler.providers.m365.services.defender.defender_domain_dmarc_records_published.defender_domain_dmarc_records_published import (
+                defender_domain_dmarc_records_published,
+            )
+
+            check = defender_domain_dmarc_records_published()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert (
+                result[0].status_extended
+                == "DMARC records could not be verified because the Exchange Online domain list could not be retrieved; manual review is required."
+            )
+            assert result[0].resource_name == DOMAIN
+            assert result[0].resource_id == DOMAIN
+
+    def test_domain_dmarc_invalid_version(self):
+        defender_client = mock.MagicMock()
+        defender_client.audited_tenant = "audited_tenant"
+        defender_client.audited_domain = DOMAIN
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+            mock.patch(
+                "prowler.providers.m365.services.defender.defender_domain_dmarc_records_published.defender_domain_dmarc_records_published.defender_client",
+                new=defender_client,
+            ),
+        ):
+            from prowler.providers.m365.services.defender.defender_domain_dmarc_records_published.defender_domain_dmarc_records_published import (
+                defender_domain_dmarc_records_published,
+            )
+            from prowler.providers.m365.services.defender.defender_service import (
+                DomainDmarcConfiguration,
+            )
+
+            domain_id = "domain8"
+
+            # "v=DMARC10" must not be accepted as a valid "v=DMARC1" record.
+            defender_client.domain_dmarc_configurations = {
+                domain_id: DomainDmarcConfiguration(
+                    domain=domain_id,
+                    dmarc_record="v=DMARC10; p=reject",
+                )
+            }
+
+            check = defender_domain_dmarc_records_published()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == f"DMARC record for domain with ID {domain_id} is malformed and does not include a valid enforcement policy."
+            )
 
     def test_domain_dmarc_reject(self):
         defender_client = mock.MagicMock()
