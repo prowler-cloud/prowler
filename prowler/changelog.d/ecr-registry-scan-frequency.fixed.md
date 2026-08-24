@@ -1,0 +1,1 @@
+`ecr_registry_scan_images_on_push_enabled` now reads each registry scanning rule's `scanFrequency` instead of inferring automated scanning from the presence of a rule, so a registry whose rules specify only `MANUAL` scanning fails rather than passing, and a registry on `CONTINUOUS_SCAN` is no longer described as having scan on push.
