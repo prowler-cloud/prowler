@@ -32,10 +32,8 @@ export type ConnectionOutcome =
 /** Sentinel: the page settled on "no channels authorized", rather than not yet. */
 const NO_AUTHORIZED_CHANNELS = "<no channels authorized>";
 
-/** A chip the closed picker shows for an authorized channel. */
 interface ChannelChip {
   name: string;
-  /** Whether the chip itself identifies the channel as private. */
   isPrivate: boolean;
 }
 
@@ -132,8 +130,7 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
   }
 
   async mountCallback({ code, state, error }: CallbackParams): Promise<void> {
-    // A different route: whatever this harness had mounted goes first, or two
-    // copies of the page would answer every query.
+    // Unmount first, or two copies of the page answer every query.
     (await this.mounted)?.unmount();
     const params = new URLSearchParams();
     if (code) params.set("code", code);
@@ -146,8 +143,7 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     );
     this.wireHandlers();
 
-    // Held like any other mount: a reinstall is followed by a `revisit()`,
-    // which has to take this render down before the management page goes up.
+    // Held so the `revisit()` that follows a reinstall can take it down first.
     this.mounted = render(createElement(SlackCallback));
   }
 
@@ -306,15 +302,7 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     return !button.disabled;
   }
 
-  /**
-   * What the check does — or why it cannot run — read from the copy the button
-   * points at: a reason found anywhere else on the page never reaches whoever
-   * sees the control.
-   */
-  /**
-   * The same copy, waited for: what the check will do follows the page's data,
-   * which lands a beat after an action that changed it.
-   */
+  /** The same copy, waited for: it follows data that lands after the action. */
   async connectionCheckHintMatching(pattern: RegExp): Promise<string> {
     return this.waitFor(
       () => {
@@ -326,6 +314,11 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     );
   }
 
+  /**
+   * What the check does — or why it cannot run — read from the copy the button
+   * points at: a reason found anywhere else on the page never reaches whoever
+   * sees the control.
+   */
   connectionCheckHint(): string | null {
     const button = this.buttonByText(/Test connection/);
     const describedBy = button?.getAttribute("aria-describedby");
@@ -335,7 +328,6 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     return reason ? (reason.textContent ?? "").trim() : null;
   }
 
-  /** What the failure toast of a connection test told the user. */
   async connectionFailureToast(): Promise<string> {
     return this.waitFor(
       () => this.toastText(/Connection test failed/),
@@ -459,9 +451,8 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
   }
 
   /**
-   * The options of the open picker. Scoped to the popover: the multi-select
-   * also renders a hidden mirror of its items for the chips to read labels
-   * from, and that mirror exists with the listing closed.
+   * Scoped to the popover: the multi-select keeps a hidden mirror of its items
+   * that exists with the listing closed, so a bare `[role="option"]` matches it.
    */
   private openPickerOptions(): HTMLElement[] | null {
     const options = Array.from(
@@ -605,7 +596,6 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     return { offered, emptyNote };
   }
 
-  /** Toggle the named channels in the open picker, then close it. */
   private async pickChannels(names: string[]): Promise<void> {
     for (const name of names) {
       const options = await this.openChannelPicker();
@@ -623,24 +613,16 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     await this.closeChannelPicker();
   }
 
-  /**
-   * Toggle the named channels without saving: the picks stay buffered, which is
-   * the state the de-authorization warning is about.
-   */
+  /** Toggle the named channels without saving: the picks stay buffered. */
   async chooseChannels(names: string[]): Promise<void> {
     await this.pickChannels(names);
   }
 
-  /** Save whatever channels are picked right now. */
   async saveChannels(): Promise<void> {
     await this.clickButton(/Save channels/);
   }
 
-  /**
-   * What the page says before a save that drops channels — the cascade into the
-   * alert rules (design D11), read from the warning the pending selection
-   * raises rather than from the page at large.
-   */
+  /** What the page says before a save that drops channels (design D11). */
   deauthorizationWarning(): string | null {
     const warning = this.q("[data-deauthorize-warning]");
     return warning
@@ -648,10 +630,7 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
       : null;
   }
 
-  /**
-   * Drop the named channels from the authorized set and save, waiting for each
-   * to be gone from the record.
-   */
+  /** Drop the named channels, save, and wait until each is off the record. */
   async deauthorizeChannels(names: string[]): Promise<void> {
     await this.pickChannels(names);
     await this.saveChannels();
@@ -672,10 +651,7 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     );
   }
 
-  /**
-   * Toggle the named channels and save, waiting for each to be recorded among
-   * the authorized destinations.
-   */
+  /** Toggle the named channels, save, and wait until each is recorded. */
   async authorizeChannels(names: string[]): Promise<void> {
     await this.pickChannels(names);
     await this.saveChannels();
@@ -789,9 +765,8 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
   }
 
   /**
-   * The chips the closed picker shows for the current selection, each with
-   * whether it identifies its channel as private — the spec's "identified with
-   * the listing closed" is read from here.
+   * What the closed picker shows: a chip per selected channel, each carrying
+   * whether the chip itself marks the channel private.
    */
   async authorizedChannelChips(): Promise<ChannelChip[]> {
     const chips = await this.waitFor(

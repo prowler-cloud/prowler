@@ -65,10 +65,7 @@ interface PatchChannelConfiguration {
 /** The workspace the fixtures connect. */
 const WORKSPACE_NAME = "Prowler HQ";
 
-/**
- * One channel named in copy. The tail guard is what keeps `#security` from
- * matching `#security-alerts`, which is exactly the pair the fixtures use.
- */
+/** The tail guard keeps `#security` from matching `#security-alerts`. */
 const channelMention = (name: string) => new RegExp(`#${name}(?![\\w-])`);
 
 /** The only scopes Prowler asks a workspace for (design D2). */
@@ -327,8 +324,7 @@ describe("authorizing destination channels", () => {
     // When — nothing but opening the page: the listing stays closed.
     await harness.mount();
 
-    // Then — the chips themselves carry the identification, not only the rows
-    // inside the open listing (spec: identified while a selected value).
+    // Then — the chips carry the marking, not only the open listing's rows.
     const chips = await harness.authorizedChannelChips();
     expect(chips).toContainEqual({
       name: SLACK_PRIVATE_CHANNEL.name,
@@ -446,19 +442,16 @@ describe("authorizing destination channels", () => {
     expect(await harness.connectionOutcome()).toBe(CONNECTION_OUTCOME.SUCCESS);
     expect(harness.connectionCheckCallCount).toBe(1);
     // And — everything waiting on a destination moves with the save, in the
-    // same paint: no reload to find the check on offer for later. The copy now
-    // says what the check does over the set, before the user clicks.
+    // same paint: no reload to find the check on offer for later.
     expect(await harness.offersConnectionTest()).toBe(true);
     expect(harness.connectionCheckHint()).toMatch(/every authorized channel/);
-    // And — a check is never a message to everyone: it confirms each channel
-    // once (design D7), so the copy promises exactly one post per channel.
+    // And — one confirmation per channel (design D7), not a broadcast test message.
     expect(harness.connectionCheckHint()).not.toMatch(/test message/i);
   }, 60000);
 
   it("reports a saved destination the check cannot reach, naming the channel, without losing the save", async () => {
-    // Given — channels the API records, then refuses to reach one of: the bot
-    // is not in it, which only the check finds out, and only the check can say
-    // which channel of the set it was (design D7).
+    // Given — channels the API records, then refuses to reach one of: the bot is
+    // not in it, and only the check can say which channel that was (design D7).
     const harness = new SlackIntegrationHarness(
       connectedSlackFixture({
         connection: {
@@ -688,8 +681,7 @@ describe("authorizing destination channels", () => {
   }, 60000);
 
   it("promises the confirmation only to the channels that have not had one", async () => {
-    // Given — one channel authorized, confirmed by the check that left the
-    // install connected.
+    // Given — one authorized channel, and a check that already confirmed it.
     const harness = new SlackIntegrationHarness(configuredSlackFixture());
     await harness.mount();
 
@@ -720,8 +712,7 @@ describe("authorizing destination channels", () => {
   }, 60000);
 
   it("warns that dropping a channel drops it from the alert rules too, before saving", async () => {
-    // Given — two channels authorized, either of which an alert rule may
-    // target.
+    // Given — two channels authorized, either of which an alert rule may target.
     const harness = new SlackIntegrationHarness(
       slackFixtureWithAuthorizedChannels([
         SLACK_PUBLIC_CHANNEL,
@@ -729,7 +720,6 @@ describe("authorizing destination channels", () => {
       ]),
     );
     await harness.mount();
-    // Nothing pending, nothing to warn about.
     expect(harness.deauthorizationWarning()).toBeNull();
 
     // When — one is deselected and nothing is saved yet.
@@ -765,15 +755,13 @@ describe("authorizing destination channels", () => {
     await harness.mount();
     await harness.authorizeChannels([SLACK_SECOND_PUBLIC_CHANNEL.name]);
 
-    // When — the user changes their mind about the channel they just saved, and
-    // the revalidation the save triggered lands while that pick is still
-    // unsaved.
+    // When — the user changes their mind about the channel just saved, and the
+    // save's revalidation lands while that new pick is still unsaved.
     await harness.chooseChannels([SLACK_SECOND_PUBLIC_CHANNEL.name]);
     await harness.refreshPageData();
 
-    // Then — the record the refresh carries is the one this page just saved, so
-    // it is no reason to overwrite the pick taken since: the channel stays
-    // dropped, and the warning about dropping it still stands.
+    // Then — the refresh carries the record this page just saved, so it is no
+    // reason to overwrite the pick taken since: the drop and its warning stand.
     expect(
       (await harness.authorizedChannelChips()).map((chip) => chip.name),
     ).toEqual([SLACK_PUBLIC_CHANNEL.name]);
@@ -831,8 +819,7 @@ describe("authorizing destination channels", () => {
     await harness.channelsRecordedElsewhere([SLACK_PUBLIC_CHANNEL.name]);
     await harness.refreshPageData();
 
-    // Then — no check has covered this set, and the card says exactly that
-    // rather than claiming a connection it cannot vouch for.
+    // Then — no check has covered this set, so the card claims no connection.
     expect(await harness.connectionBadge()).toBe("Not checked yet");
   }, 60000);
 
@@ -851,8 +838,7 @@ describe("authorizing destination channels", () => {
     await harness.revisit();
 
     // Then — a same-workspace reinstall keeps the channels and resets every
-    // confirmation along with the connection state (contract, OAuth and
-    // reads), so the check has each channel to confirm again.
+    // confirmation with the connection state (contract, OAuth and reads).
     expect(await harness.authorizedChannels()).toEqual([
       SLACK_PUBLIC_CHANNEL.name,
     ]);
