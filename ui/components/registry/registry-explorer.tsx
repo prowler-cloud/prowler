@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { Check } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import {
@@ -10,14 +10,14 @@ import {
   removeRegistryArtifact,
   submitRegistryCredential,
 } from "@/actions/registry/registry";
+import { Badge } from "@/components/shadcn/badge/badge";
 import { Button } from "@/components/shadcn/button/button";
-import { Card } from "@/components/shadcn/card/card";
 import {
-  Sheet,
-  SheetContent,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/shadcn/sheet";
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/shadcn/tabs/tabs";
 import { toast } from "@/components/shadcn/toast/use-toast";
 import {
   REGISTRY_BOOTSTRAP_STATE,
@@ -27,16 +27,26 @@ import {
 } from "@/types/registry";
 
 import { RegistryAccessDialog } from "./registry-access-dialog";
-import { RegistryArtifactDetail } from "./registry-artifact-detail";
 import {
-  buildRegistryExplorerModel,
+  RegistryArtifactCard,
+  RegistryTenantArtifactCard,
+} from "./registry-artifact-card";
+import { RegistryArtifactDetail } from "./registry-artifact-detail";
+import { RegistryArtifactGrid } from "./registry-artifact-grid";
+import { RegistryArtifactPanel } from "./registry-artifact-panel";
+import { RegistryCredentialBanner } from "./registry-credential-banner";
+import {
+  buildRegistryMarketplaceModel,
   getRegistryArtifactDetail,
+  REGISTRY_MARKETPLACE_SORT,
   type RegistryExplorerFilters,
+  type RegistryMarketplaceSort,
 } from "./registry-explorer.model";
-import { RegistryNavigation } from "./registry-navigation";
-import { RegistryOnboarding } from "./registry-onboarding";
-import { RegistryOverview } from "./registry-overview";
 import { RegistryRemoveDialog } from "./registry-remove-dialog";
+import { RegistryToolbar } from "./registry-toolbar";
+
+const PAGE_SUBTITLE =
+  "Discover and install checks, compliance frameworks, and providers for your workspace.";
 
 function RetryState({ title, children }: { title: string; children: string }) {
   return (
@@ -50,35 +60,30 @@ function RetryState({ title, children }: { title: string; children: string }) {
   );
 }
 
-function artifactName(id: string) {
-  return id.startsWith("leaf:")
-    ? decodeURIComponent(id.slice(id.lastIndexOf(":") + 1))
-    : undefined;
-}
-
 function mutationFailureMessage(result: RegistryMutationResult) {
   if (result.status === REGISTRY_MUTATION.REFUSED) return result.message;
   if (result.status === REGISTRY_MUTATION.REFRESH_FAILED) {
     return "Registry membership could not be confirmed. Try again.";
   }
+  if (result.status === "access_denied") {
+    return "Registry access is no longer available.";
+  }
   return "The Registry operation could not be completed. Try again.";
 }
 
-export function RegistryExplorer({
-  initialState,
-}: {
+interface RegistryExplorerProps {
   initialState: RegistryBootstrapState;
-}) {
-  // The API is the sole access authority: a denied action result routes to
-  // Profile once, and the navigation unmounts this component with its state.
-  const router = useRouter();
+}
+
+export function RegistryExplorer({ initialState }: RegistryExplorerProps) {
+  // Access invalidation unmounts this component, clearing every local snapshot.
   const [state, setState] = useState(initialState);
   const [filters, setFilters] = useState<RegistryExplorerFilters>({});
-  const [selectedId, setSelectedId] = useState("root:available");
-  const [expandedIds, setExpandedIds] = useState([
-    "root:available",
-    "root:my-artifacts",
-  ]);
+  const [sort, setSort] = useState<RegistryMarketplaceSort>(
+    REGISTRY_MARKETPLACE_SORT.NAME,
+  );
+  const [activeTab, setActiveTab] = useState<"explore" | "mine">("explore");
+  const [selectedName, setSelectedName] = useState<string>();
   const [pendingOperation, setPendingOperation] = useState<
     "add" | "credential" | "remove" | null
   >(null);
@@ -87,12 +92,11 @@ export function RegistryExplorer({
   >();
   const [removeTarget, setRemoveTarget] = useState<string>();
   const [operationMessage, setOperationMessage] = useState<string>();
-  const [mobileNavigationOpen, setMobileNavigationOpen] = useState(false);
   const detailHeadingRef = useRef<HTMLHeadingElement>(null);
   const connectButtonRef = useRef<HTMLButtonElement>(null);
   const manageButtonRef = useRef<HTMLButtonElement>(null);
   const removeButtonRef = useRef<HTMLButtonElement>(null);
-  const focusDetailAfterMobileClose = useRef(false);
+  const panelTriggerRef = useRef<HTMLElement | null>(null);
   const operationGeneration = useRef(0);
 
   useEffect(
@@ -110,7 +114,6 @@ export function RegistryExplorer({
       versionSpec ? { normalizedName, versionSpec } : { normalizedName },
     );
     if (generation !== operationGeneration.current) return;
-    if (result.status === "access_denied") return router.replace("/profile");
 
     setPendingOperation(null);
     if (result.status !== REGISTRY_MUTATION.CONFIRMED) {
@@ -132,13 +135,10 @@ export function RegistryExplorer({
     setPendingOperation("credential");
     const result = await submitRegistryCredential(key);
     if (generation !== operationGeneration.current) return;
-    if (result.status === "access_denied") return router.replace("/profile");
 
     if (result.status === "connected") {
       const collections = await refreshRegistryCollections();
       if (generation !== operationGeneration.current) return;
-      if (collections.status === "access_denied")
-        return router.replace("/profile");
       setPendingOperation(null);
       if (collections.status === "complete") {
         setAccessDialogMode(undefined);
@@ -188,7 +188,6 @@ export function RegistryExplorer({
     setPendingOperation("credential");
     const result = await disconnectRegistryCredential();
     if (generation !== operationGeneration.current) return;
-    if (result.status === "access_denied") return router.replace("/profile");
 
     setPendingOperation(null);
     if (result.status !== "disconnected") {
@@ -199,6 +198,7 @@ export function RegistryExplorer({
     }
 
     setAccessDialogMode(undefined);
+    setSelectedName(undefined);
     setState({
       status: REGISTRY_BOOTSTRAP_STATE.ONBOARDING,
       credential: result.credential,
@@ -212,7 +212,6 @@ export function RegistryExplorer({
     setPendingOperation("remove");
     const result = await removeRegistryArtifact(normalizedName);
     if (generation !== operationGeneration.current) return;
-    if (result.status === "access_denied") return router.replace("/profile");
 
     setPendingOperation(null);
     if (result.status !== REGISTRY_MUTATION.CONFIRMED) {
@@ -229,12 +228,12 @@ export function RegistryExplorer({
     toast({ title: "Artifact removed" });
   }
 
-  function handleSelectedIdChange(id: string) {
-    setSelectedId(id);
-    if (mobileNavigationOpen && artifactName(id)) {
-      focusDetailAfterMobileClose.current = true;
-      setMobileNavigationOpen(false);
-    }
+  function openArtifactPanel(
+    normalizedName: string,
+    trigger: HTMLElement | null,
+  ) {
+    panelTriggerRef.current = trigger;
+    setSelectedName(normalizedName);
   }
 
   const accessDialogProps = {
@@ -265,17 +264,19 @@ export function RegistryExplorer({
     state.status === REGISTRY_BOOTSTRAP_STATE.VALIDATION_PENDING
   ) {
     return (
-      <>
-        <RegistryOnboarding
+      <div className="space-y-6">
+        <p className="text-text-neutral-secondary text-sm">{PAGE_SUBTITLE}</p>
+        {operationMessage && <p role="alert">{operationMessage}</p>}
+        <RegistryCredentialBanner
           connectButtonRef={connectButtonRef}
           onConnect={() => setAccessDialogMode("connect")}
-          tenantArtifacts={state.tenantArtifacts}
+          tenantArtifactCount={state.tenantArtifacts.length}
           validationPending={
             state.status === REGISTRY_BOOTSTRAP_STATE.VALIDATION_PENDING
           }
         />
         {accessDialog}
-      </>
+      </div>
     );
   }
   if (state.status !== REGISTRY_BOOTSTRAP_STATE.READY) {
@@ -301,10 +302,11 @@ export function RegistryExplorer({
     return <RetryState title={title}>{message}</RetryState>;
   }
 
-  const model = buildRegistryExplorerModel(
+  const model = buildRegistryMarketplaceModel(
     state.catalog,
     state.tenantArtifacts,
     filters,
+    sort,
   );
   if (!model.isComplete) {
     return (
@@ -313,112 +315,141 @@ export function RegistryExplorer({
       </RetryState>
     );
   }
-  if (state.catalog.artifacts.length === 0) {
-    return (
-      <>
-        <Card aria-label="Available artifacts" role="region" variant="base">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <h1 className="text-xl font-semibold">Available artifacts</h1>
-              <p className="text-text-neutral-secondary mt-2 text-sm">
-                No Registry artifacts are available.
-              </p>
-            </div>
-            <Button
-              onClick={() => setAccessDialogMode("manage")}
-              ref={manageButtonRef}
-              variant="outline"
-            >
-              Manage access
-            </Button>
-          </div>
-          {operationMessage && <p role="alert">{operationMessage}</p>}
-          {state.tenantArtifacts.length > 0 && (
-            <section aria-label="My artifacts" className="mt-6">
-              <h2 className="text-base font-semibold">My artifacts</h2>
-              <ul className="mt-3 space-y-2 text-sm">
-                {state.tenantArtifacts.map((artifact) => (
-                  <li
-                    className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1"
-                    key={artifact.normalizedName}
-                  >
-                    <span>{artifact.normalizedName}</span>
-                    <span className="text-text-neutral-secondary">
-                      {artifact.versionSpec}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
-        </Card>
-        {accessDialog}
-      </>
-    );
-  }
-  const selectedDetail = artifactName(selectedId)
+
+  const selectedDetail = selectedName
     ? getRegistryArtifactDetail(
-        artifactName(selectedId)!,
+        selectedName,
         state.catalog.artifacts,
         state.tenantArtifacts,
       )
     : null;
-  const providers = model.hierarchy.providers.map(({ provider }) => provider);
-  const navigation = (
-    <RegistryNavigation
-      artifacts={model.available}
-      expandedIds={expandedIds}
-      filters={filters}
-      onExpandedChange={setExpandedIds}
-      onFiltersChange={setFilters}
-      onSelectedIdChange={handleSelectedIdChange}
-      providers={providers}
-      selectedId={selectedId}
-      tenantArtifacts={state.tenantArtifacts}
-    />
-  );
+  const isPanelOpen = selectedDetail !== null;
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[18rem_minmax(0,1fr)]">
-      <aside className="hidden lg:block">{navigation}</aside>
-      <div className="lg:hidden">
-        <Sheet
-          onOpenChange={setMobileNavigationOpen}
-          open={mobileNavigationOpen}
-        >
-          <SheetTrigger asChild>
-            <Button variant="outline">Browse artifacts</Button>
-          </SheetTrigger>
-          <SheetContent
-            onCloseAutoFocus={(event) => {
-              if (focusDetailAfterMobileClose.current) {
-                event.preventDefault();
-                detailHeadingRef.current?.focus();
-                focusDetailAfterMobileClose.current = false;
-              }
-            }}
-            side="left"
+    <div className="space-y-6">
+      <h1 className="sr-only">Registry marketplace</h1>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <p className="text-text-neutral-secondary text-sm">{PAGE_SUBTITLE}</p>
+        <div className="flex items-center gap-3">
+          <Badge variant="success">
+            <Check aria-hidden />
+            API key connected
+          </Badge>
+          <Button
+            onClick={() => setAccessDialogMode("manage")}
+            ref={manageButtonRef}
+            type="button"
+            variant="outline"
           >
-            <SheetTitle>Browse artifacts</SheetTitle>
-            {navigation}
-          </SheetContent>
-        </Sheet>
+            Manage access
+          </Button>
+        </div>
       </div>
-      <main>
-        <Button
-          onClick={() => setAccessDialogMode("manage")}
-          ref={manageButtonRef}
-          type="button"
-          variant="outline"
-        >
-          Manage access
-        </Button>
-        {operationMessage && <p role="alert">{operationMessage}</p>}
-        {selectedDetail ? (
+      {!isPanelOpen && operationMessage && (
+        <p role="alert">{operationMessage}</p>
+      )}
+      <Tabs
+        onValueChange={(value) => setActiveTab(value as "explore" | "mine")}
+        value={activeTab}
+      >
+        <TabsList className="border-b">
+          <TabsTrigger
+            adornment={
+              <Badge size="sm" variant="tag">
+                {state.catalog.artifacts.length}
+              </Badge>
+            }
+            value="explore"
+          >
+            Explore
+          </TabsTrigger>
+          <TabsTrigger
+            adornment={
+              <Badge size="sm" variant="tag">
+                {state.tenantArtifacts.length}
+              </Badge>
+            }
+            value="mine"
+          >
+            My artifacts
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent className="space-y-4 pt-4" value="explore">
+          <RegistryToolbar
+            filters={filters}
+            onFiltersChange={setFilters}
+            onSortChange={setSort}
+            providers={model.providers}
+            resultsCount={model.artifacts.length}
+            sort={sort}
+          />
+          <RegistryArtifactGrid
+            emptyMessage={
+              state.catalog.artifacts.length === 0
+                ? "No Registry artifacts are available."
+                : "No artifacts match the current filters."
+            }
+            isEmpty={model.artifacts.length === 0}
+          >
+            {model.artifacts.map((artifact) => (
+              <li key={artifact.normalizedName}>
+                <RegistryArtifactCard
+                  artifact={artifact}
+                  onOpen={(trigger) =>
+                    openArtifactPanel(artifact.normalizedName, trigger)
+                  }
+                />
+              </li>
+            ))}
+          </RegistryArtifactGrid>
+        </TabsContent>
+        <TabsContent className="space-y-4 pt-4" value="mine">
+          <RegistryArtifactGrid
+            emptyMessage="No artifacts in this workspace yet."
+            isEmpty={model.myArtifacts.length === 0}
+          >
+            {model.myArtifacts.map((myArtifact) => (
+              <li key={myArtifact.normalizedName}>
+                {myArtifact.catalogArtifact ? (
+                  <RegistryArtifactCard
+                    artifact={myArtifact.catalogArtifact}
+                    onOpen={(trigger) =>
+                      openArtifactPanel(myArtifact.normalizedName, trigger)
+                    }
+                  />
+                ) : (
+                  <RegistryTenantArtifactCard
+                    normalizedName={myArtifact.normalizedName}
+                    onOpen={(trigger) =>
+                      openArtifactPanel(myArtifact.normalizedName, trigger)
+                    }
+                    versionSpec={myArtifact.versionSpec}
+                  />
+                )}
+              </li>
+            ))}
+          </RegistryArtifactGrid>
+        </TabsContent>
+      </Tabs>
+      <RegistryArtifactPanel
+        onClose={() => setSelectedName(undefined)}
+        onCloseAutoFocus={(event) => {
+          event.preventDefault();
+          panelTriggerRef.current?.focus();
+        }}
+        onOpenAutoFocus={(event) => {
+          event.preventDefault();
+          detailHeadingRef.current?.focus();
+        }}
+        open={isPanelOpen}
+      >
+        {selectedDetail && (
           <RegistryArtifactDetail
+            key={selectedName}
             {...selectedDetail}
             headingRef={detailHeadingRef}
             isMutationPending={pendingOperation === "add"}
+            operationMessage={operationMessage}
             removeButtonRef={removeButtonRef}
             onAdd={
               selectedDetail.catalogArtifact && !selectedDetail.tenantArtifact
@@ -438,15 +469,8 @@ export function RegistryExplorer({
                 : undefined
             }
           />
-        ) : (
-          <RegistryOverview
-            availableArtifacts={model.available}
-            metrics={model.metrics}
-            selectedId={selectedId}
-            tenantArtifacts={state.tenantArtifacts}
-          />
         )}
-      </main>
+      </RegistryArtifactPanel>
       {accessDialog}
       <RegistryRemoveDialog
         artifactName={removeTarget}

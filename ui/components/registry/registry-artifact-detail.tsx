@@ -15,23 +15,24 @@ import type {
 interface RegistryArtifactDetailProps {
   catalogArtifact?: RegistryCatalogArtifact;
   headingRef?: Ref<HTMLHeadingElement>;
-  removeButtonRef?: Ref<HTMLButtonElement>;
-  tenantArtifact?: RegistryTenantArtifact;
   isMutationPending?: boolean;
   onAdd?: (versionSpec?: string) => void;
   onRemove?: () => void;
+  operationMessage?: string;
+  removeButtonRef?: Ref<HTMLButtonElement>;
+  tenantArtifact?: RegistryTenantArtifact;
 }
 
 export function RegistryArtifactDetail({
   catalogArtifact: artifact,
   headingRef,
-  removeButtonRef,
-  tenantArtifact,
   isMutationPending = false,
   onAdd,
   onRemove,
+  operationMessage,
+  removeButtonRef,
+  tenantArtifact,
 }: RegistryArtifactDetailProps) {
-  const [isAddFormOpen, setIsAddFormOpen] = useState(false);
   const [usesExactVersion, setUsesExactVersion] = useState(false);
   const [exactVersion, setExactVersion] = useState("");
   const name = artifact?.name ?? tenantArtifact?.normalizedName;
@@ -47,61 +48,92 @@ export function RegistryArtifactDetail({
         [artifact.hasCompliance, "Compliance"],
       ]
     : [];
-  const metadata = artifact
+  const metadata: [string, string][] = artifact
     ? [
-        `Providers: ${artifact.providers.map(getProviderDisplayName).join(", ")}`,
-        `Latest version: ${artifact.latestVersion ?? "Not supplied"}`,
-        `Versions: ${artifact.versionCount}`,
-        `Downloads: ${artifact.totalDownloads}`,
-        `Owners: ${artifact.owners.length ? artifact.owners.map(({ name: ownerName, type }) => `${ownerName} (${type})`).join(", ") : "Not supplied"}`,
+        ["Latest version", artifact.latestVersion ?? "Not supplied"],
+        ["Downloads", `${artifact.totalDownloads}`],
+        ["Versions", `${artifact.versionCount}`],
+        [
+          "Owners",
+          artifact.owners.length
+            ? artifact.owners
+                .map(({ name: ownerName, type }) => `${ownerName} (${type})`)
+                .join(", ")
+            : "Not supplied",
+        ],
       ]
     : [];
 
   return (
-    <section aria-labelledby="registry-artifact-title">
-      <h1
-        className="text-xl font-semibold"
-        id="registry-artifact-title"
-        ref={headingRef}
-        tabIndex={-1}
-      >
-        {name}
-      </h1>
-      {artifact?.description && (
-        <p className="text-text-neutral-secondary mt-2 text-sm">
-          {artifact.description}
-        </p>
-      )}
-      <div className="mt-4 flex flex-wrap gap-2">
-        {badges.map(([visible, label]) =>
-          visible ? (
-            <Badge key={label} variant="outline">
-              {label}
-            </Badge>
-          ) : null,
-        )}
-      </div>
-      <div className="mt-6 space-y-3 text-sm">
-        {metadata.map((value) => (
-          <p key={value}>{value}</p>
-        ))}
-        {tenantArtifact && (
-          <p>My version specification: {tenantArtifact.versionSpec}</p>
-        )}
-      </div>
-      {tenantArtifact ? (
-        <Button
-          className="mt-6"
-          onClick={onRemove}
-          ref={removeButtonRef}
-          type="button"
-          variant="destructive"
+    <section
+      aria-labelledby="registry-artifact-title"
+      className="flex min-h-0 flex-1 flex-col"
+    >
+      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-6">
+        <h2
+          className="text-xl font-semibold"
+          id="registry-artifact-title"
+          ref={headingRef}
+          tabIndex={-1}
         >
-          Remove
-        </Button>
-      ) : artifact ? (
-        isAddFormOpen ? (
-          <div className="mt-6 space-y-4">
+          {name}
+        </h2>
+        {badges.some(([visible]) => visible) && (
+          <div className="flex flex-wrap gap-2">
+            {badges.map(([visible, label]) =>
+              visible ? (
+                <Badge key={label} variant="outline">
+                  {label}
+                </Badge>
+              ) : null,
+            )}
+          </div>
+        )}
+        {artifact?.description && (
+          <p className="text-text-neutral-secondary text-sm">
+            {artifact.description}
+          </p>
+        )}
+        {artifact && (
+          <>
+            <p className="text-sm">
+              Providers:{" "}
+              {artifact.providers.map(getProviderDisplayName).join(", ")}
+            </p>
+            <dl className="grid grid-cols-2 gap-3">
+              {metadata.map(([label, value]) => (
+                <div
+                  className="border-border-neutral-tertiary bg-bg-neutral-tertiary rounded-lg border px-3 py-2"
+                  key={label}
+                >
+                  <dt className="text-text-neutral-secondary text-xs">
+                    {label}
+                  </dt>
+                  <dd className="text-sm font-medium">{value}</dd>
+                </div>
+              ))}
+            </dl>
+          </>
+        )}
+        {tenantArtifact && (
+          <p className="text-sm">
+            My version specification: {tenantArtifact.versionSpec}
+          </p>
+        )}
+      </div>
+      <div className="border-border-neutral-secondary bg-bg-neutral-secondary sticky bottom-0 space-y-4 border-t p-6">
+        {operationMessage && <p role="alert">{operationMessage}</p>}
+        {onRemove ? (
+          <Button
+            onClick={onRemove}
+            ref={removeButtonRef}
+            type="button"
+            variant="destructive"
+          >
+            Remove
+          </Button>
+        ) : onAdd ? (
+          <>
             <label className="flex items-center gap-2 text-sm">
               <Checkbox
                 checked={usesExactVersion}
@@ -120,35 +152,22 @@ export function RegistryArtifactDetail({
                 value={exactVersion}
               />
             )}
-            <div className="flex flex-wrap gap-2">
-              <Button
-                disabled={
-                  isMutationPending ||
-                  (usesExactVersion && exactVersion.trim().length === 0)
-                }
-                onClick={() =>
-                  onAdd?.(usesExactVersion ? exactVersion.trim() : undefined)
-                }
-                type="button"
-              >
-                {isMutationPending ? "Adding artifact" : "Add artifact"}
-              </Button>
-              <Button
-                disabled={isMutationPending}
-                onClick={() => setIsAddFormOpen(false)}
-                type="button"
-                variant="outline"
-              >
-                Cancel
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <Button onClick={() => setIsAddFormOpen(true)} type="button">
-            Add
-          </Button>
-        )
-      ) : null}
+            <Button
+              className="w-full"
+              disabled={
+                isMutationPending ||
+                (usesExactVersion && exactVersion.trim().length === 0)
+              }
+              onClick={() =>
+                onAdd(usesExactVersion ? exactVersion.trim() : undefined)
+              }
+              type="button"
+            >
+              {isMutationPending ? "Adding artifact" : "Add to workspace"}
+            </Button>
+          </>
+        ) : null}
+      </div>
     </section>
   );
 }

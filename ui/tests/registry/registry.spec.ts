@@ -100,9 +100,7 @@ test.describe.serial("Registry", () => {
         FIXTURE_REGISTRY_KEY,
         requestUrls,
       );
-      await expect(
-        page.getByRole("heading", { name: "Registry overview" }),
-      ).toBeVisible();
+      await registryPage.verifyMarketplaceReady();
 
       const snapshot = await controlledRegistryFixture.snapshot();
       expect(snapshot.credentialAccepted).toBe(true);
@@ -122,15 +120,13 @@ test.describe.serial("Registry", () => {
       await registryPage.goto();
       await registryPage.connectFixtureRegistry();
       await registryPage.dismissWelcomeDialog();
-      await registryPage.verifyCompleteCatalogSearchAndMultiProvider();
+      await registryPage.verifyCompleteCatalogSearchAndFilters();
       await registryPage.selectDeterministicArtifactWithLatestVersion();
       await registryPage.addLatest();
       await registryPage.verifyMyVersionSpec("latest");
       await registryPage.removeArtifact();
       await page.reload();
-      await expect(
-        page.getByRole("heading", { name: "Registry overview" }),
-      ).toBeVisible();
+      await registryPage.verifyMarketplaceReady();
       const exactArtifact =
         await registryPage.selectDeterministicArtifactWithLatestVersion();
       await registryPage.addExactVersion(exactArtifact.latestVersion);
@@ -171,14 +167,11 @@ test.describe.serial("Registry", () => {
       await registryPage.goto();
       await registryPage.connectFixtureRegistry();
       await registryPage.dismissWelcomeDialog();
-      await registryPage.browseArtifactsButton.click();
-      await expect(
-        page.getByRole("dialog", { name: "Browse artifacts" }),
-      ).toBeVisible();
-      await expect(
-        page.getByRole("dialog", { name: "Browse artifacts" }),
-      ).toHaveCSS("animation-duration", "0s");
       await registryPage.selectMobileFixtureArtifact();
+      await expect(registryPage.artifactPanel).toHaveCSS(
+        "animation-duration",
+        "0s",
+      );
     },
   );
 });

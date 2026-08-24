@@ -9,20 +9,28 @@ export type RegistryCatalogCapability = (typeof REGISTRY_CATALOG_CAPABILITY)[key
 export interface RegistryExplorerFilters { search?: string; provider?: string; capabilities?: RegistryCatalogCapability[]; }
 
 // prettier-ignore
-export function buildRegistryExplorerModel(catalog: RegistryCatalogResult, myArtifacts: RegistryTenantArtifact[], filters: RegistryExplorerFilters) {
-  if (catalog.status !== "complete") return { isComplete: false as const, canExplore: false, canRetry: true, controls: { search: false, filters: false, hierarchy: false, metrics: false } };
-  const available = getAvailableArtifacts(catalog.artifacts, myArtifacts).filter((artifact) => matches(artifact, filters));
-  const providers = Array.from(new Set(available.flatMap((artifact) => artifact.providers))).sort(compare).map((provider) => ({ provider, artifacts: available.filter((artifact) => artifact.providers.includes(provider)) }));
-  return { isComplete: true as const, canExplore: true, available,
-    hierarchy: { providers, multiProvider: available.filter((artifact) => artifact.providers.length > 1) },
-    metrics: { providers: new Set(catalog.artifacts.flatMap((artifact) => artifact.providers)).size, availableArtifacts: getAvailableArtifacts(catalog.artifacts, myArtifacts).length, myArtifacts: myArtifacts.length, officialArtifacts: catalog.artifacts.filter((artifact) => artifact.isOfficial).length },
-  };
-}
+export const REGISTRY_MARKETPLACE_SORT = { NAME: "name", DOWNLOADS: "downloads" } as const;
+// prettier-ignore
+export type RegistryMarketplaceSort = (typeof REGISTRY_MARKETPLACE_SORT)[keyof typeof REGISTRY_MARKETPLACE_SORT];
+// prettier-ignore
+export type RegistryMarketplaceArtifact = RegistryCatalogArtifact & { isAdded: boolean; addedVersionSpec?: string };
+// prettier-ignore
+export interface RegistryMarketplaceMyArtifact { normalizedName: string; versionSpec: string; catalogArtifact?: RegistryMarketplaceArtifact }
 
 // prettier-ignore
-export function getAvailableArtifacts(artifacts: RegistryCatalogArtifact[], myArtifacts: RegistryTenantArtifact[]) {
-  const mine = new Set(myArtifacts.map(({ normalizedName }) => normalizedName));
-  return artifacts.filter(({ normalizedName }) => !mine.has(normalizedName)).sort((left, right) => compare(left.normalizedName, right.normalizedName));
+export function buildRegistryMarketplaceModel(catalog: RegistryCatalogResult, myArtifacts: RegistryTenantArtifact[], filters: RegistryExplorerFilters, sort: RegistryMarketplaceSort) {
+  if (catalog.status !== "complete") return { isComplete: false as const, canExplore: false, canRetry: true, controls: { search: false, filters: false, hierarchy: false, metrics: false } };
+  const specs = new Map(myArtifacts.map(({ normalizedName, versionSpec }) => [normalizedName, versionSpec]));
+  const merged = new Map(catalog.artifacts.map((artifact) => [artifact.normalizedName, { ...artifact, isAdded: specs.has(artifact.normalizedName), addedVersionSpec: specs.get(artifact.normalizedName) }]));
+  const artifacts = Array.from(merged.values()).filter((artifact) => matches(artifact, filters)).sort((left, right) =>
+    sort === REGISTRY_MARKETPLACE_SORT.DOWNLOADS
+      ? right.totalDownloads - left.totalDownloads || compare(left.normalizedName, right.normalizedName)
+      : compare(left.normalizedName, right.normalizedName));
+  return { isComplete: true as const, canExplore: true, artifacts,
+    providers: Array.from(new Set(catalog.artifacts.flatMap((artifact) => artifact.providers))).sort(compare),
+    myArtifacts: myArtifacts.map(({ normalizedName, versionSpec }) => ({ normalizedName, versionSpec, catalogArtifact: merged.get(normalizedName) })).sort((left, right) => compare(left.normalizedName, right.normalizedName)),
+    metrics: { providers: new Set(catalog.artifacts.flatMap((artifact) => artifact.providers)).size, availableArtifacts: catalog.artifacts.filter(({ normalizedName }) => !specs.has(normalizedName)).length, myArtifacts: myArtifacts.length, officialArtifacts: catalog.artifacts.filter((artifact) => artifact.isOfficial).length },
+  };
 }
 
 // prettier-ignore
