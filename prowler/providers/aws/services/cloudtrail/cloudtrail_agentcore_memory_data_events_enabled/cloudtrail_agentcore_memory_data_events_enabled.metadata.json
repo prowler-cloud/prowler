@@ -12,7 +12,7 @@
   "ResourceType": "AwsCloudTrailTrail",
   "ResourceGroup": "monitoring",
   "Description": "**At least one actively logging CloudTrail trail** selects **`AWS::BedrockAgentCore::Memory` data events** through an advanced event selector.\n\nMemory data events record the per-event and per-record operations of the AgentCore Memory data plane. They are **not logged by default**, and a basic event selector cannot select them.",
-  "Risk": "Management events show only that a memory exists. Without Memory data events there is no record of who read or wrote which memory, so cross-tenant reads through a wrong actorId or namespace, and memory poisoning that steers later agent turns, leave no audit trail and cannot be scoped after the fact.",
+  "Risk": "**Management events** show only that a memory exists, not who read or wrote which one.\n\nSo a cross-tenant read through a wrong `actorId` or namespace, and **memory poisoning** that steers later agent turns, both leave no audit trail and cannot be scoped after the fact.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/logging-data-events-with-cloudtrail.html",

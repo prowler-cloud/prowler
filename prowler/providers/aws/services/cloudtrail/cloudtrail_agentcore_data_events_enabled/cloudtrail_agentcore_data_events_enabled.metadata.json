@@ -12,7 +12,7 @@
   "ResourceType": "AwsCloudTrailTrail",
   "ResourceGroup": "monitoring",
   "Description": "**At least one actively logging CloudTrail trail** selects **Amazon Bedrock AgentCore data events** through an advanced event selector on an `AWS::BedrockAgentCore::*` resource type.\n\nAgentCore data events record agent invocations, memory record operations, gateway tool calls and built-in tool sessions. They are **not logged by default** and a basic event selector cannot select them.",
-  "Risk": "A trail limited to management events records which agents, memories and gateways exist, never who invoked them or what they returned. An agent driven into a confused-deputy or data-exfiltration path leaves no audit trail, so incident response cannot reconstruct the session, and detections built on agent activity have no source events to read.",
+  "Risk": "A trail limited to **management events** records which agents, memories and gateways exist, never who invoked them or what they returned.\n\nAn agent driven into a **confused-deputy** or exfiltration path therefore leaves no audit trail, so a session cannot be reconstructed and detections built on invocation activity never fire.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/enabling-cloudtrail-data-event-logging.html",
