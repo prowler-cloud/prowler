@@ -140,9 +140,13 @@ const taskResource = (id: string, state: string, result: unknown) => ({
  * failure names keeps none, and a retry has it left to do.
  */
 const confirmedByThisRun =
-  (failedChannelId: string | null) =>
+  (connected: boolean, failedChannelId: string | null) =>
   (channel: SlackAuthorizedChannelFixture): SlackAuthorizedChannelFixture =>
-    channel.confirmationSentAt === null && channel.id !== failedChannelId
+    // A failure that names no channel posted nothing at all: `auth.test` runs
+    // once, before the first channel is reached (contract, Connection).
+    (connected || failedChannelId !== null) &&
+    channel.confirmationSentAt === null &&
+    channel.id !== failedChannelId
       ? { ...channel, confirmationSentAt: CHECK_TS }
       : channel;
 
@@ -317,7 +321,7 @@ export const handlersForSlack = (fx: SlackFixture) => {
         };
         install.workspace.authorizedChannels = (
           install.workspace.authorizedChannels ?? []
-        ).map(confirmedByThisRun(failedChannelId ?? null));
+        ).map(confirmedByThisRun(connected, failedChannelId ?? null));
       }
       return HttpResponse.json(
         // The result names the failing channel by id under `channel`.
