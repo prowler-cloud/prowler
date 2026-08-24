@@ -73,8 +73,10 @@ export const AzureCertificateCredentialsForm = ({
           Certificate Authentication (Recommended)
         </div>
         <div className="text-text-neutral-tertiary text-xs">
-          Requires permission to create App Registrations and grant Microsoft
-          Graph admin consent, plus <strong>Owner</strong> on the subscription.{" "}
+          Requires <strong>Global Administrator</strong> or{" "}
+          <strong>Privileged Role Administrator</strong> in Microsoft Entra ID
+          (for the admin consent in step 3), plus <strong>Owner</strong> on the
+          target subscription (step 5).{" "}
           <Link
             href={DOCS_CERT_GENERATION_URL}
             target="_blank"
@@ -97,8 +99,8 @@ export const AzureCertificateCredentialsForm = ({
             <li>
               <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <span>
-                  Register an Azure application, then copy its Directory
-                  (tenant) ID and Application (client) ID.
+                  Register an Azure application. From its Overview page, copy
+                  the Directory (tenant) ID and Application (client) ID.
                 </span>
                 <Button variant="link" size="link-sm" asChild>
                   <a
@@ -115,8 +117,8 @@ export const AzureCertificateCredentialsForm = ({
             <li>
               <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <span>
-                  Generate the certificate. The private bundle is filled below
-                  and submitted to Prowler only when you connect.
+                  Generate a certificate. The private bundle fills the field
+                  below and <code>prowler-cert.cer</code> downloads for step 3.
                 </span>
                 <Button
                   type="button"
@@ -159,13 +161,16 @@ export const AzureCertificateCredentialsForm = ({
             className="flex list-decimal flex-col gap-3 pl-5 text-sm"
           >
             <li>
-              Upload <code>prowler-cert.cer</code> under Certificates &amp;
-              secrets. Add Microsoft Graph application permissions:
-              AuditLog.Read.All, Directory.Read.All (or Domain.Read.All), and
-              Policy.Read.All. Then grant admin consent.
+              In your App Registration, upload <code>prowler-cert.cer</code>{" "}
+              under <em>Certificates &amp; secrets</em>. Then in{" "}
+              <em>API permissions</em>, add the Microsoft Graph{" "}
+              <strong>application</strong> permissions{" "}
+              <code>AuditLog.Read.All</code>, <code>Directory.Read.All</code>,
+              and <code>Policy.Read.All</code>, and click{" "}
+              <em>Grant admin consent</em>.
             </li>
             <li>
-              Copy the Service Principal Object ID from{" "}
+              Open{" "}
               <Link
                 href={AZURE_PORTAL_ENTERPRISE_APPLICATIONS_URL}
                 target="_blank"
@@ -175,7 +180,8 @@ export const AzureCertificateCredentialsForm = ({
                 <ExternalLink className="size-3.5 shrink-0" />
                 <span>Enterprise applications</span>
               </Link>
-              .
+              , select the same app, and copy its Object ID (different from the
+              App Registration&apos;s Object ID).
             </li>
           </ol>
         </section>
@@ -191,9 +197,9 @@ export const AzureCertificateCredentialsForm = ({
             <li>
               <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <span>
-                  Deploy subscription RBAC with the Service Principal Object ID.
-                  The template creates ProwlerRole and assigns Reader and
-                  ProwlerRole; it does not create Entra resources.
+                  Deploy the template with the Service Principal Object ID from
+                  step 4. It grants Reader and a custom ProwlerRole on the
+                  subscription.
                 </span>
                 <Button variant="default" size="sm" asChild>
                   <a
@@ -222,8 +228,8 @@ export const AzureCertificateCredentialsForm = ({
               </p>
             </li>
             <li>
-              Return to Prowler and complete the fields below. The generated
-              certificate bundle is already filled.
+              Return to Prowler and paste the Tenant ID and Client ID from step
+              1 into the fields below. The certificate field is already filled.
             </li>
           </ol>
         </section>
@@ -235,7 +241,7 @@ export const AzureCertificateCredentialsForm = ({
         type="text"
         label="Tenant ID"
         labelPlacement="inside"
-        placeholder="Enter the Tenant ID"
+        placeholder="Directory (tenant) ID"
         variant="bordered"
         isRequired
       />
@@ -245,7 +251,7 @@ export const AzureCertificateCredentialsForm = ({
         type="text"
         label="Client ID"
         labelPlacement="inside"
-        placeholder="Enter the Client ID"
+        placeholder="Application (client) ID"
         variant="bordered"
         isRequired
       />

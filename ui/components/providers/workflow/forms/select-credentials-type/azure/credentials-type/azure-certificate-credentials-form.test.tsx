@@ -103,22 +103,22 @@ describe("AzureCertificateCredentialsForm", () => {
     const steps = screen.getAllByRole("listitem");
     expect(steps).toHaveLength(6);
     expect(steps[0]).toHaveTextContent(
-      "Register an Azure application, then copy its Directory (tenant) ID and Application (client) ID.",
+      "Register an Azure application. From its Overview page, copy the Directory (tenant) ID and Application (client) ID.",
     );
     expect(steps[1]).toHaveTextContent(
-      "Generate the certificate. The private bundle is filled below and submitted to Prowler only when you connect.",
+      "Generate a certificate. The private bundle fills the field below and prowler-cert.cer downloads for step 3.",
     );
     expect(steps[2]).toHaveTextContent(
-      "Upload prowler-cert.cer under Certificates & secrets. Add Microsoft Graph application permissions: AuditLog.Read.All, Directory.Read.All (or Domain.Read.All), and Policy.Read.All. Then grant admin consent.",
+      "In your App Registration, upload prowler-cert.cer under Certificates & secrets. Then in API permissions, add the Microsoft Graph application permissions AuditLog.Read.All, Directory.Read.All, and Policy.Read.All, and click Grant admin consent.",
     );
     expect(steps[3]).toHaveTextContent(
-      "Copy the Service Principal Object ID from Enterprise applications.",
+      "Open Enterprise applications, select the same app, and copy its Object ID (different from the App Registration's Object ID).",
     );
     expect(steps[4]).toHaveTextContent(
-      "Deploy subscription RBAC with the Service Principal Object ID. The template creates ProwlerRole and assigns Reader and ProwlerRole; it does not create Entra resources.",
+      "Deploy the template with the Service Principal Object ID from step 4. It grants Reader and a custom ProwlerRole on the subscription.",
     );
     expect(steps[5]).toHaveTextContent(
-      "Return to Prowler and complete the fields below. The generated certificate bundle is already filled.",
+      "Return to Prowler and paste the Tenant ID and Client ID from step 1 into the fields below. The certificate field is already filled.",
     );
     expect(
       screen.getByRole("textbox", {

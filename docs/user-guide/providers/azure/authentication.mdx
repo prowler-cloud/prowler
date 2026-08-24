@@ -231,12 +231,43 @@ Certificate authentication is the recommended way to run Prowler against Azure b
 
 ### Prerequisites
 
-Certificate authentication requires:
+Certificate authentication touches two separate permission systems: **Microsoft Entra ID** (identity) and **Azure RBAC** (subscription). Both are required.
 
-- Permission to create or manage a Microsoft Entra App Registration.
-- An administrator authorized to grant tenant-wide consent for the required Microsoft Graph application permissions.
-- `Owner` on each target subscription when using the deployment template. `Contributor` cannot create role definitions or role assignments.
-- The Service Principal Object ID from **Microsoft Entra ID** > **Enterprise applications** > the application > **Overview**. This value differs from the Object ID under **App registrations**.
+#### Microsoft Entra ID roles per setup step
+
+| Setup step                                                                                                                    | Minimum role required                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| ----------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **1. Register a new App Registration**                                                                                        | Any member user, _by default_. Member users can register applications through the built-in default user permissions. If the tenant disabled this by setting _Users can register applications_ to **No** (under **Microsoft Entra ID** > **Users** > **User settings**), the user needs one of: `Application Administrator`, `Cloud Application Administrator`, or `Global Administrator`.                                                                                                                                                                                                     |
+| **2. Upload the certificate to the App Registration**                                                                         | The App Registration's owner (the user who created it, added automatically) — or `Application Administrator`, `Cloud Application Administrator`, or `Global Administrator`.                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| **3. Add Microsoft Graph _application_ permissions (request)** — `AuditLog.Read.All`, `Directory.Read.All`, `Policy.Read.All` | The App Registration's owner — or `Application Administrator`, `Cloud Application Administrator`, or `Global Administrator`. Requesting a permission and granting consent are separate operations; see step 4 for the consent role.                                                                                                                                                                                                                                                                                                                                                           |
+| **4. Grant tenant-wide admin consent for those permissions** ⚠️                                                               | **`Global Administrator`** or **`Privileged Role Administrator`** _only_. `Application Administrator`, `Cloud Application Administrator`, and `AI Administrator` **cannot** consent to _Microsoft Graph_ application permissions — they can consent to application permissions for other APIs, but not Microsoft Graph app roles, per [Microsoft's admin consent documentation](https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/grant-admin-consent#prerequisites) and [Microsoft Graph permissions overview](https://learn.microsoft.com/en-us/graph/permissions-overview). |
+| **5. Read the Service Principal Object ID from Enterprise applications**                                                      | Any signed-in user (read-only, granted by default user permissions).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+
+The Service Principal Object ID lives on **Microsoft Entra ID** > **Enterprise applications** > _the application_ > **Overview**. This value is different from the Object ID that appears under **App registrations** for the same application; both objects share the same Application (client) ID but each has its own Object ID.
+
+#### Azure RBAC role for the subscription template
+
+The Deploy to Azure template creates one custom role definition and two role assignments (`Reader` and the custom `ProwlerRole`) at subscription scope. The account that runs the deployment needs one of:
+
+- **`Owner`** on the target subscription. Simplest and most common. `Owner` grants both `Microsoft.Authorization/roleDefinitions/write` and `Microsoft.Authorization/roleAssignments/write`.
+- Alternatively, **`Contributor` combined with `User Access Administrator`** on the target subscription. `Contributor` alone is not enough because it explicitly cannot create role assignments (see [Azure built-in roles](https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles)); `User Access Administrator` fills the gap for role definitions and role assignments.
+
+<Note>
+  **Global Administrator does not automatically have Azure RBAC.** Per
+  [Microsoft's Elevate access
+  documentation](https://learn.microsoft.com/en-us/azure/role-based-access-control/elevate-access-global-admin):
+  "As a Global Administrator in Microsoft Entra ID, you might not have access to
+  all subscriptions and management groups in your tenant." To grant a Global
+  Administrator temporary access, open **Microsoft Entra ID** > **Properties**
+  and set **Access management for Azure resources** to **Yes**. This assigns
+  `User Access Administrator` at root scope (`/`), which covers step 6. Disable
+  the toggle after the setup is done — the assignment persists per-user until
+  revoked.
+</Note>
+
+#### Shortest single-user path
+
+The simplest way for one user to complete the whole flow is **`Global Administrator`** in Microsoft Entra ID (covers steps 1-4 by inclusion) combined with the Elevate access toggle above (covers step 6). Deploying with a least-privilege split (for example, an `Application Administrator` for step 1-3, a `Privileged Role Administrator` for step 4, and an `Owner` for step 6) is also supported.
 
 ### Generating the Certificate
 
