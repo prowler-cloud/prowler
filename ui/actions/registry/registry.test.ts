@@ -67,7 +67,7 @@ const tenantArtifactsResponse = () =>
   jsonResponse({
     data: [
       {
-        type: "registry-tenant-artifacts",
+        type: "registry-artifacts",
         id: "prowler-aws",
         attributes: {
           version_spec: "latest",
@@ -199,7 +199,7 @@ describe("Registry guarded reads", () => {
     });
     expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
       "https://api.test/api/v1/registry/credential",
-      "https://api.test/api/v1/registry/my-artifacts",
+      "https://api.test/api/v1/registry/artifacts",
       "https://api.test/api/v1/registry/providers",
       "https://api.test/api/v1/registry/available-artifacts?page%5Bnumber%5D=1&page%5Bsize%5D=100",
     ]);
@@ -463,7 +463,7 @@ describe("Registry guarded reads", () => {
     expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
       "https://api.test/api/v1/registry/credential",
       "https://api.test/api/v1/registry/credential",
-      "https://api.test/api/v1/registry/my-artifacts",
+      "https://api.test/api/v1/registry/artifacts",
     ]);
     expect(fetchMock).toHaveBeenNthCalledWith(
       1,
@@ -674,7 +674,7 @@ describe("Registry guarded reads", () => {
         jsonResponse({
           data: [
             {
-              type: "registry-tenant-artifacts",
+              type: "registry-artifacts",
               id: "later-guard",
               attributes: { version_spec: "2.0.0" },
             },
@@ -697,13 +697,15 @@ describe("Registry guarded reads", () => {
     });
     expect(fetchMock).toHaveBeenNthCalledWith(
       1,
-      "https://api.test/api/v1/registry/my-artifacts",
+      "https://api.test/api/v1/registry/artifacts",
       expect.objectContaining({
         body: JSON.stringify({
           data: {
-            type: "registry-tenant-artifacts",
-            id: "later-guard",
-            attributes: { version_spec: "2.0.0" },
+            type: "registry-artifacts",
+            attributes: {
+              normalized_name: "later-guard",
+              version_spec: "2.0.0",
+            },
           },
         }),
         cache: "no-store",
@@ -720,7 +722,7 @@ describe("Registry guarded reads", () => {
         jsonResponse({
           data: [
             {
-              type: "registry-tenant-artifacts",
+              type: "registry-artifacts",
               id: "later-guard",
               attributes: { version_spec: "latest" },
             },
@@ -734,13 +736,15 @@ describe("Registry guarded reads", () => {
     // Then
     expect(fetchMock).toHaveBeenNthCalledWith(
       1,
-      "https://api.test/api/v1/registry/my-artifacts",
+      "https://api.test/api/v1/registry/artifacts",
       expect.objectContaining({
         body: JSON.stringify({
           data: {
-            type: "registry-tenant-artifacts",
-            id: "later-guard",
-            attributes: { version_spec: "latest" },
+            type: "registry-artifacts",
+            attributes: {
+              normalized_name: "later-guard",
+              version_spec: "latest",
+            },
           },
         }),
       }),
@@ -790,7 +794,7 @@ describe("Registry guarded reads", () => {
     expect(result).toEqual({ status: "confirmed", tenantArtifacts: [] });
     expect(fetchMock).toHaveBeenNthCalledWith(
       1,
-      "https://api.test/api/v1/registry/my-artifacts/guard%2Fwith%20space",
+      "https://api.test/api/v1/registry/artifacts/guard%2Fwith%20space",
       expect.objectContaining({ cache: "no-store", method: "DELETE" }),
     );
   });
@@ -807,7 +811,7 @@ describe("Registry guarded reads", () => {
       {
         data: [
           {
-            type: "registry-tenant-artifacts",
+            type: "registry-artifacts",
             id: "later-guard",
             attributes: { version_spec: "latest" },
           },

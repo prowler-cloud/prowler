@@ -97,7 +97,7 @@ async function readRegistryCredential(accessToken: string) {
 async function readRegistryTenantArtifacts(accessToken: string) {
   const result = await readRegistryResponse(
     accessToken,
-    "my-artifacts",
+    "artifacts",
     REGISTRY_ENDPOINT.MUTATION,
   );
   if (!(result instanceof Response)) return result;
@@ -347,7 +347,7 @@ export async function addRegistryArtifact({
 
   let response: Response;
   try {
-    response = await fetch(`${apiBaseUrl}/registry/my-artifacts`, {
+    response = await fetch(`${apiBaseUrl}/registry/artifacts`, {
       method: "POST",
       cache: "no-store",
       headers: {
@@ -357,9 +357,11 @@ export async function addRegistryArtifact({
       },
       body: JSON.stringify({
         data: {
-          type: "registry-tenant-artifacts",
-          id: normalizedName,
-          attributes: { version_spec: selectedVersion },
+          type: "registry-artifacts",
+          attributes: {
+            normalized_name: normalizedName,
+            version_spec: selectedVersion,
+          },
         },
       }),
     });
@@ -389,7 +391,7 @@ export async function removeRegistryArtifact(
   let response: Response;
   try {
     response = await fetch(
-      `${apiBaseUrl}/registry/my-artifacts/${encodeURIComponent(normalizedName)}`,
+      `${apiBaseUrl}/registry/artifacts/${encodeURIComponent(normalizedName)}`,
       {
         method: "DELETE",
         cache: "no-store",

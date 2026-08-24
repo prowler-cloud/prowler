@@ -10,6 +10,7 @@ import {
   submitRegistryCredential,
 } from "@/actions/registry/registry";
 import { Button } from "@/components/shadcn/button/button";
+import { Card } from "@/components/shadcn/card/card";
 import {
   Sheet,
   SheetContent,
@@ -304,6 +305,52 @@ export function RegistryExplorer({
       <RetryState title="Registry catalog is incomplete">
         Complete catalog controls and metrics are unavailable.
       </RetryState>
+    );
+  }
+  if (state.catalog.artifacts.length === 0) {
+    return (
+      <>
+        <Card variant="base">
+          <section aria-label="Available artifacts">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <h1 className="text-xl font-semibold">Available artifacts</h1>
+                <p className="text-text-neutral-secondary mt-2 text-sm">
+                  No Registry artifacts are available.
+                </p>
+              </div>
+              <Button
+                onClick={() => setAccessDialogMode("manage")}
+                ref={manageButtonRef}
+                type="button"
+                variant="outline"
+              >
+                Manage access
+              </Button>
+            </div>
+            {operationMessage && <p role="alert">{operationMessage}</p>}
+            {state.tenantArtifacts.length > 0 && (
+              <section aria-label="My artifacts" className="mt-6">
+                <h2 className="text-base font-semibold">My artifacts</h2>
+                <ul className="mt-3 space-y-2 text-sm">
+                  {state.tenantArtifacts.map((artifact) => (
+                    <li
+                      className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1"
+                      key={artifact.normalizedName}
+                    >
+                      <span>{artifact.normalizedName}</span>
+                      <span className="text-text-neutral-secondary">
+                        {artifact.versionSpec}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+          </section>
+        </Card>
+        {accessDialog}
+      </>
     );
   }
   const selectedDetail = artifactName(selectedId)

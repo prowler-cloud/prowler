@@ -15,14 +15,12 @@ export function RegistryAccessBoundary({
   initialLeaseDurationMs: number;
 }) {
   const router = useRouter();
-  const { generation, isEligible, status } = useRegistryEligibility();
+  const { isEligible, status } = useRegistryEligibility();
   const expiresAt = useRef(Date.now() + initialLeaseDurationMs);
   const [now, setNow] = useState(Date.now());
   const allowed =
     isEligible ||
-    (status === REGISTRY_ACCESS.UNKNOWN &&
-      generation <= 1 &&
-      now < expiresAt.current);
+    (status === REGISTRY_ACCESS.UNKNOWN && now < expiresAt.current);
 
   useEffect(() => {
     const timer = window.setTimeout(

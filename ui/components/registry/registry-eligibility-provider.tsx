@@ -39,40 +39,41 @@ export function RegistryEligibilityProvider({
     status: REGISTRY_ACCESS.UNKNOWN,
     generation: 0,
   });
-  const refresh = useEffectEvent(async (invalidate: boolean) => {
+  const refresh = useEffectEvent(async () => {
     const generation = ++generationRef.current;
-    if (invalidate) setState({ status: REGISTRY_ACCESS.UNKNOWN, generation });
     try {
       const result = await refreshRegistryEligibility();
       if (generation !== generationRef.current) return;
-      setState(
-        result.status === REGISTRY_ACCESS.ELIGIBLE
-          ? {
-              status: result.status,
-              generation,
-              leaseExpiresAt: Date.now() + result.leaseDurationMs,
-            }
-          : { status: result.status, generation },
-      );
-    } catch {
-      if (generation === generationRef.current) {
-        setState({ status: REGISTRY_ACCESS.UNKNOWN, generation });
+      if (result.status === REGISTRY_ACCESS.ELIGIBLE) {
+        const leaseExpiresAt = Date.now() + result.leaseDurationMs;
+        return setState({ status: result.status, generation, leaseExpiresAt });
       }
+      if (result.status === REGISTRY_ACCESS.INELIGIBLE) {
+        return setState({ status: result.status, generation });
+      }
+    } catch {
+      if (generation !== generationRef.current) return;
     }
+    setState((current) =>
+      current.status === REGISTRY_ACCESS.ELIGIBLE &&
+      current.leaseExpiresAt !== undefined &&
+      current.leaseExpiresAt > Date.now()
+        ? { ...current, generation }
+        : { status: REGISTRY_ACCESS.UNKNOWN, generation },
+    );
   });
 
-  useEffect(() => void refresh(true), [pathname]);
+  useEffect(() => void refresh(), [pathname]);
   useEffect(() => {
     const refreshVisible = () => {
-      if (document.visibilityState === "visible") void refresh(true);
+      if (document.visibilityState === "visible") void refresh();
     };
-    const refreshOnline = () => void refresh(true);
     window.addEventListener("focus", refreshVisible);
-    window.addEventListener("online", refreshOnline);
+    window.addEventListener("online", refresh);
     document.addEventListener("visibilitychange", refreshVisible);
     return () => {
       window.removeEventListener("focus", refreshVisible);
-      window.removeEventListener("online", refreshOnline);
+      window.removeEventListener("online", refresh);
       document.removeEventListener("visibilitychange", refreshVisible);
     };
   }, []);
@@ -89,7 +90,7 @@ export function RegistryEligibilityProvider({
       Math.max(0, state.leaseExpiresAt - Date.now()),
     );
     const renew = window.setInterval(() => {
-      if (document.visibilityState === "visible") void refresh(false);
+      if (document.visibilityState === "visible") void refresh();
     }, 15_000);
     return () => {
       window.clearTimeout(expire);
@@ -103,7 +104,7 @@ export function RegistryEligibilityProvider({
     Date.now() < state.leaseExpiresAt;
   const invalidate = () =>
     setState({
-      status: REGISTRY_ACCESS.UNKNOWN,
+      status: REGISTRY_ACCESS.INELIGIBLE,
       generation: ++generationRef.current,
     });
   return (
