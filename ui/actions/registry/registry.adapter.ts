@@ -5,6 +5,7 @@ import {
   REGISTRY_CATALOG_INCOMPLETE_REASON,
   REGISTRY_ENDPOINT,
   REGISTRY_FAILURE,
+  REGISTRY_MUTATION,
   REGISTRY_SUBMISSION,
   type RegistryCatalogArtifact,
   type RegistryCatalogResult,
@@ -12,6 +13,7 @@ import {
   type RegistryCredentialSubmissionResult,
   type RegistryEndpoint,
   type RegistryFailureResult,
+  type RegistryMutationResult,
   type RegistryTenantArtifact,
 } from "@/types/registry";
 
@@ -19,6 +21,14 @@ const REGISTRY_TASK_PATH_PREFIX = "/api/v1/tasks/";
 const REGISTRY_ERROR_CODE = {
   KEY_REJECTED: "registry_key_rejected",
   UNAVAILABLE: "registry_unavailable",
+} as const;
+const REGISTRY_MUTATION_REFUSAL_COPY = {
+  no_installable_version: "No available version can be added.",
+  registry_artifact_not_found: "This artifact is no longer available.",
+  version_not_found: "This version is not available.",
+  version_not_processed: "This version is not ready to add yet.",
+  version_not_verified: "This version is not verified and cannot be added.",
+  version_yanked: "This version is no longer available.",
 } as const;
 const registryDiscoveryEndpoints = new Set<RegistryEndpoint>([
   REGISTRY_ENDPOINT.PROVIDERS,
@@ -125,6 +135,18 @@ export async function parseRegistryCredentialSubmission(
   return { status: REGISTRY_SUBMISSION.PENDING, taskId };
 }
 
+export async function classifyRegistryMutationRefusal(
+  response: Response,
+): Promise<Extract<RegistryMutationResult, { status: "refused" }> | null> {
+  const code = await getRegistryErrorCode(response);
+  const message = code
+    ? REGISTRY_MUTATION_REFUSAL_COPY[
+        code as keyof typeof REGISTRY_MUTATION_REFUSAL_COPY
+      ]
+    : undefined;
+  return message ? { status: REGISTRY_MUTATION.REFUSED, message } : null;
+}
+
 export async function classifyRegistryFailure(
   response: Response,
   endpoint: RegistryEndpoint,
@@ -184,19 +206,37 @@ async function getRegistryErrorCode(response: Response) {
 const REGISTRY_CATALOG_PAGE_SIZE = 100;
 const REGISTRY_CATALOG_MAX_PAGES = 1000;
 const safeInteger = z.number().int().nonnegative().safe();
-// prettier-ignore
 const catalogPageSchema = z.object({
   data: z.array(z.unknown()),
-  meta: z.object({ pagination: z.object({ page: safeInteger, pages: safeInteger, count: safeInteger }) }),
+  meta: z.object({
+    pagination: z.object({
+      page: safeInteger,
+      pages: safeInteger,
+      count: safeInteger,
+    }),
+  }),
 });
-// prettier-ignore
 const catalogAttributesSchema = z.object({
-  name: z.string().optional(), description: z.string().optional(), latest_version: z.string().optional(),
+  name: z.string().optional(),
+  description: z.string().optional(),
+  latest_version: z.string().optional(),
   providers: z.array(z.string().trim().min(1)).optional(),
-  owners: z.array(z.object({ name: z.string().trim().min(1), type: z.string().trim().min(1) })).optional(),
-  is_verified: z.boolean().optional(), is_official: z.boolean().optional(), is_meta: z.boolean().optional(),
-  has_provider: z.boolean().optional(), has_checks: z.boolean().optional(), has_compliance: z.boolean().optional(),
-  version_count: safeInteger.optional(), total_downloads: safeInteger.optional(),
+  owners: z
+    .array(
+      z.object({
+        name: z.string().trim().min(1),
+        type: z.string().trim().min(1),
+      }),
+    )
+    .optional(),
+  is_verified: z.boolean().optional(),
+  is_official: z.boolean().optional(),
+  is_meta: z.boolean().optional(),
+  has_provider: z.boolean().optional(),
+  has_checks: z.boolean().optional(),
+  has_compliance: z.boolean().optional(),
+  version_count: safeInteger.optional(),
+  total_downloads: safeInteger.optional(),
 });
 const catalogResourceSchema = z.object({
   type: z.string().trim().min(1),
@@ -276,30 +316,58 @@ function mergeCatalogResources(resources: unknown[]): RegistryCatalogResult {
   };
 }
 
-// prettier-ignore
-function adaptCatalogArtifact(resource: unknown): RegistryCatalogArtifact | null {
+function adaptCatalogArtifact(
+  resource: unknown,
+): RegistryCatalogArtifact | null {
   const parsed = catalogResourceSchema.safeParse(resource);
   if (!parsed.success) return null;
   const { attributes: a, id } = parsed.data;
   return {
-    normalizedName: id, name: text(a.name), description: text(a.description), latestVersion: text(a.latest_version),
-    providers: unique(a.providers?.map((provider) => provider.toLowerCase()) ?? []), owners: uniqueOwners(a.owners ?? []),
-    isVerified: a.is_verified ?? false, isOfficial: a.is_official ?? false, isMeta: a.is_meta ?? false,
-    hasProvider: a.has_provider ?? false, hasChecks: a.has_checks ?? false, hasCompliance: a.has_compliance ?? false,
-    versionCount: a.version_count ?? 0, totalDownloads: a.total_downloads ?? 0,
+    normalizedName: id,
+    name: text(a.name),
+    description: text(a.description),
+    latestVersion: text(a.latest_version),
+    providers: unique(
+      a.providers?.map((provider) => provider.toLowerCase()) ?? [],
+    ),
+    owners: uniqueOwners(a.owners ?? []),
+    isVerified: a.is_verified ?? false,
+    isOfficial: a.is_official ?? false,
+    isMeta: a.is_meta ?? false,
+    hasProvider: a.has_provider ?? false,
+    hasChecks: a.has_checks ?? false,
+    hasCompliance: a.has_compliance ?? false,
+    versionCount: a.version_count ?? 0,
+    totalDownloads: a.total_downloads ?? 0,
   };
 }
 
-// prettier-ignore
-function mergeArtifacts(left: RegistryCatalogArtifact, right: RegistryCatalogArtifact): RegistryCatalogArtifact | null {
-  const [name, description, latestVersion] = [mergeText(left.name, right.name), mergeText(left.description, right.description), mergeText(left.latestVersion, right.latestVersion)];
-  if ([name, description, latestVersion].some((value) => value === null)) return null;
+function mergeArtifacts(
+  left: RegistryCatalogArtifact,
+  right: RegistryCatalogArtifact,
+): RegistryCatalogArtifact | null {
+  const [name, description, latestVersion] = [
+    mergeText(left.name, right.name),
+    mergeText(left.description, right.description),
+    mergeText(left.latestVersion, right.latestVersion),
+  ];
+  if ([name, description, latestVersion].some((value) => value === null))
+    return null;
   return {
-    ...left, name: name ?? undefined, description: description ?? undefined, latestVersion: latestVersion ?? undefined,
-    providers: unique([...left.providers, ...right.providers]), owners: uniqueOwners([...left.owners, ...right.owners]),
-    isVerified: left.isVerified || right.isVerified, isOfficial: left.isOfficial || right.isOfficial, isMeta: left.isMeta || right.isMeta,
-    hasProvider: left.hasProvider || right.hasProvider, hasChecks: left.hasChecks || right.hasChecks, hasCompliance: left.hasCompliance || right.hasCompliance,
-    versionCount: Math.max(left.versionCount, right.versionCount), totalDownloads: Math.max(left.totalDownloads, right.totalDownloads),
+    ...left,
+    name: name ?? undefined,
+    description: description ?? undefined,
+    latestVersion: latestVersion ?? undefined,
+    providers: unique([...left.providers, ...right.providers]),
+    owners: uniqueOwners([...left.owners, ...right.owners]),
+    isVerified: left.isVerified || right.isVerified,
+    isOfficial: left.isOfficial || right.isOfficial,
+    isMeta: left.isMeta || right.isMeta,
+    hasProvider: left.hasProvider || right.hasProvider,
+    hasChecks: left.hasChecks || right.hasChecks,
+    hasCompliance: left.hasCompliance || right.hasCompliance,
+    versionCount: Math.max(left.versionCount, right.versionCount),
+    totalDownloads: Math.max(left.totalDownloads, right.totalDownloads),
   };
 }
 

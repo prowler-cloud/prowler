@@ -25,9 +25,11 @@ vi.mock("@/lib/registry/access.server", () => ({
 }));
 
 import {
+  addRegistryArtifact,
   disconnectRegistryCredential,
   getRegistryBootstrap,
   refreshRegistryCollections,
+  removeRegistryArtifact,
   refreshRegistryCredential,
   refreshRegistryEligibility,
   submitRegistryCredential,
@@ -673,4 +675,169 @@ describe("Registry guarded reads", () => {
     expect(disconnected).toEqual({ status: "access_denied" });
     expect(fetchMock).toHaveBeenCalledTimes(6);
   });
+
+  it("confirms an exact Add only after My artifacts reports the artifact", async () => {
+    // Given
+    fetchMock
+      .mockResolvedValueOnce(new Response(null, { status: 201 }))
+      .mockResolvedValueOnce(
+        jsonResponse({
+          data: [
+            {
+              type: "registry-tenant-artifacts",
+              id: "later-guard",
+              attributes: { version_spec: "2.0.0" },
+            },
+          ],
+        }),
+      );
+
+    // When
+    const result = await addRegistryArtifact({
+      normalizedName: "later-guard",
+      versionSpec: " 2.0.0 ",
+    });
+
+    // Then
+    expect(result).toEqual({
+      status: "confirmed",
+      tenantArtifacts: [
+        { normalizedName: "later-guard", versionSpec: "2.0.0" },
+      ],
+    });
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      "https://api.test/api/v1/registry/my-artifacts",
+      expect.objectContaining({
+        body: JSON.stringify({
+          data: {
+            type: "registry-tenant-artifacts",
+            id: "later-guard",
+            attributes: { version_spec: "2.0.0" },
+          },
+        }),
+        cache: "no-store",
+        method: "POST",
+      }),
+    );
+  });
+
+  it("defaults Add to latest", async () => {
+    // Given
+    fetchMock
+      .mockResolvedValueOnce(new Response(null, { status: 201 }))
+      .mockResolvedValueOnce(
+        jsonResponse({
+          data: [
+            {
+              type: "registry-tenant-artifacts",
+              id: "later-guard",
+              attributes: { version_spec: "latest" },
+            },
+          ],
+        }),
+      );
+
+    // When
+    await addRegistryArtifact({ normalizedName: "later-guard" });
+
+    // Then
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      "https://api.test/api/v1/registry/my-artifacts",
+      expect.objectContaining({
+        body: JSON.stringify({
+          data: {
+            type: "registry-tenant-artifacts",
+            id: "later-guard",
+            attributes: { version_spec: "latest" },
+          },
+        }),
+      }),
+    );
+  });
+
+  it.each([
+    ["registry_artifact_not_found", "This artifact is no longer available."],
+    ["version_yanked", "This version is no longer available."],
+    [
+      "version_not_verified",
+      "This version is not verified and cannot be added.",
+    ],
+    ["version_not_processed", "This version is not ready to add yet."],
+    ["version_not_found", "This version is not available."],
+    ["no_installable_version", "No available version can be added."],
+  ])("keeps membership unchanged for %s", async (code, message) => {
+    // Given
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse(
+        { errors: [{ code }] },
+        code === "registry_artifact_not_found" ? 404 : 400,
+      ),
+    );
+
+    // When
+    const result = await addRegistryArtifact({
+      normalizedName: "later-guard",
+      versionSpec: "2.0.0",
+    });
+
+    // Then
+    expect(result).toEqual({ status: "refused", message });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("encodes the deletion identity and confirms Remove after an absent refresh", async () => {
+    // Given
+    fetchMock
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+      .mockResolvedValueOnce(jsonResponse({ data: [] }));
+
+    // When
+    const result = await removeRegistryArtifact("guard/with space");
+
+    // Then
+    expect(result).toEqual({ status: "confirmed", tenantArtifacts: [] });
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      "https://api.test/api/v1/registry/my-artifacts/guard%2Fwith%20space",
+      expect.objectContaining({ cache: "no-store", method: "DELETE" }),
+    );
+  });
+
+  it.each([
+    [
+      "Add",
+      () => addRegistryArtifact({ normalizedName: "later-guard" }),
+      { data: [] },
+    ],
+    [
+      "Remove",
+      () => removeRegistryArtifact("later-guard"),
+      {
+        data: [
+          {
+            type: "registry-tenant-artifacts",
+            id: "later-guard",
+            attributes: { version_spec: "latest" },
+          },
+        ],
+      },
+    ],
+  ])(
+    "keeps membership unchanged when %s refresh contradicts acceptance",
+    async (_name, mutate, refreshedArtifacts) => {
+      // Given
+      fetchMock
+        .mockResolvedValueOnce(new Response(null, { status: 204 }))
+        .mockResolvedValueOnce(jsonResponse(refreshedArtifacts));
+
+      // When
+      const result = await mutate();
+
+      // Then
+      expect(result).toEqual({ status: "refresh_failed" });
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    },
+  );
 });

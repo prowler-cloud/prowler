@@ -19,12 +19,14 @@ import {
   type RegistryCredentialReadResult,
   type RegistryCredentialStatus,
   type RegistryFailureResult,
+  type RegistryMutationResult,
 } from "@/types/registry";
 
 import {
   adaptRegistryCredentialStatus,
   adaptRegistryTenantArtifacts,
   classifyRegistryFailure,
+  classifyRegistryMutationRefusal,
   collectCompleteRegistryCatalog,
   isRegistryCollection,
   parseRegistryCredentialSubmission,
@@ -32,6 +34,11 @@ import {
 } from "./registry.adapter";
 
 type GuardedRegistryAccess = { accessToken: string; leaseDurationMs: number };
+
+interface RegistryAddArtifactInput {
+  normalizedName: string;
+  versionSpec?: string;
+}
 
 async function getRegistryAccess(): Promise<GuardedRegistryAccess | null> {
   const accessToken = (await auth())?.accessToken;
@@ -198,6 +205,28 @@ function credentialActionResult(
     : { status: REGISTRY_FAILURE.ERROR };
 }
 
+async function confirmRegistryMutation(
+  accessToken: string,
+  normalizedName: string,
+  shouldBePresent: boolean,
+): Promise<RegistryMutationResult> {
+  const tenantArtifacts = await readRegistryTenantArtifacts(accessToken);
+  if (tenantArtifacts.status === REGISTRY_FAILURE.ACCESS_DENIED)
+    return tenantArtifacts;
+  if (
+    tenantArtifacts.status !== "ready" ||
+    tenantArtifacts.tenantArtifacts.some(
+      (artifact) => artifact.normalizedName === normalizedName,
+    ) !== shouldBePresent
+  ) {
+    return { status: "refresh_failed" };
+  }
+  return {
+    status: "confirmed",
+    tenantArtifacts: tenantArtifacts.tenantArtifacts,
+  };
+}
+
 function bootstrapReady(
   access: GuardedRegistryAccess,
   state: RegistryBootstrapState,
@@ -304,6 +333,79 @@ export async function refreshRegistryCollections(): Promise<RegistryCollectionsR
         tenantArtifacts: tenantArtifactsRead.tenantArtifacts,
       }
     : tenantArtifactsRead;
+}
+
+export async function addRegistryArtifact({
+  normalizedName,
+  versionSpec,
+}: RegistryAddArtifactInput): Promise<RegistryMutationResult> {
+  const access = await getRegistryAccess();
+  if (!access) return { status: REGISTRY_FAILURE.ACCESS_DENIED } as const;
+  const selectedVersion = versionSpec?.trim() || "latest";
+
+  let response: Response;
+  try {
+    response = await fetch(`${apiBaseUrl}/registry/my-artifacts`, {
+      method: "POST",
+      cache: "no-store",
+      headers: {
+        Accept: "application/vnd.api+json",
+        "Content-Type": "application/vnd.api+json",
+        Authorization: `Bearer ${access.accessToken}`,
+      },
+      body: JSON.stringify({
+        data: {
+          type: "registry-tenant-artifacts",
+          id: normalizedName,
+          attributes: { version_spec: selectedVersion },
+        },
+      }),
+    });
+  } catch {
+    return { status: REGISTRY_FAILURE.ERROR } as const;
+  }
+  if (response.status === 401 || response.status === 403) {
+    return { status: REGISTRY_FAILURE.ACCESS_DENIED } as const;
+  }
+  if (!response.ok) {
+    return (
+      (await classifyRegistryMutationRefusal(response)) ?? {
+        status: REGISTRY_FAILURE.ERROR,
+      }
+    );
+  }
+
+  return confirmRegistryMutation(access.accessToken, normalizedName, true);
+}
+
+export async function removeRegistryArtifact(
+  normalizedName: string,
+): Promise<RegistryMutationResult> {
+  const access = await getRegistryAccess();
+  if (!access) return { status: REGISTRY_FAILURE.ACCESS_DENIED };
+
+  let response: Response;
+  try {
+    response = await fetch(
+      `${apiBaseUrl}/registry/my-artifacts/${encodeURIComponent(normalizedName)}`,
+      {
+        method: "DELETE",
+        cache: "no-store",
+        headers: {
+          Accept: "application/vnd.api+json",
+          Authorization: `Bearer ${access.accessToken}`,
+        },
+      },
+    );
+  } catch {
+    return { status: REGISTRY_FAILURE.ERROR };
+  }
+  if (response.status === 401 || response.status === 403) {
+    return { status: REGISTRY_FAILURE.ACCESS_DENIED };
+  }
+  if (!response.ok) return { status: REGISTRY_FAILURE.ERROR };
+
+  return confirmRegistryMutation(access.accessToken, normalizedName, false);
 }
 
 export async function submitRegistryCredential(
