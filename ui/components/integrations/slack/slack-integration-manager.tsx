@@ -220,12 +220,15 @@ export const SlackIntegrationManager = ({
   const [isSavingChannels, setIsSavingChannels] = useState(false);
 
   if (!sameChannelSets(recordedChannels, syncedChannels)) {
-    const previousSyncedIds = syncedChannels.map((channel) => channel.id);
+    // The mirror, not the prop it was taken from: a save advances the mirror
+    // while the prop is still catching up, so measuring against the prop would
+    // read a pick made after that save as no pick at all.
+    const shownIds = authorizedChannels.map((channel) => channel.id);
     setSyncedChannels(recordedChannels);
     setAuthorizedChannels(recordedChannels);
     // Follow the record only while the buffered picks still match it: an
     // unsaved pick is the user's, not ours to overwrite mid-edit.
-    if (sameChannelIds(selectedChannelIds, previousSyncedIds)) {
+    if (sameChannelIds(selectedChannelIds, shownIds)) {
       setSelectedChannelIds(recordedChannels.map((channel) => channel.id));
     }
   }

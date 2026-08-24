@@ -759,6 +759,28 @@ describe("authorizing destination channels", () => {
     expect(harness.deauthorizationWarning()).toBeNull();
   }, 60000);
 
+  it("keeps a pick made after a save when the page's data refreshes under it", async () => {
+    // Given — one authorized channel, and a second authorized from this page.
+    const harness = new SlackIntegrationHarness(configuredSlackFixture());
+    await harness.mount();
+    await harness.authorizeChannels([SLACK_SECOND_PUBLIC_CHANNEL.name]);
+
+    // When — the user changes their mind about the channel they just saved, and
+    // the revalidation the save triggered lands while that pick is still
+    // unsaved.
+    await harness.chooseChannels([SLACK_SECOND_PUBLIC_CHANNEL.name]);
+    await harness.refreshPageData();
+
+    // Then — the record the refresh carries is the one this page just saved, so
+    // it is no reason to overwrite the pick taken since: the channel stays
+    // dropped, and the warning about dropping it still stands.
+    expect(
+      (await harness.authorizedChannelChips()).map((chip) => chip.name),
+    ).toEqual([SLACK_PUBLIC_CHANNEL.name]);
+    const warning = harness.deauthorizationWarning() ?? "";
+    expect(warning).toMatch(channelMention(SLACK_SECOND_PUBLIC_CHANNEL.name));
+  }, 60000);
+
   it("clears the authorized set when the last channel is dropped", async () => {
     // Given — a single authorized channel.
     const harness = new SlackIntegrationHarness(configuredSlackFixture());
