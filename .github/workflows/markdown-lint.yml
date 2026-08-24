@@ -62,6 +62,3 @@ jobs:
         env:
           pnpm_config_ignore_scripts: 'true'
         run: git ls-files -z '*.md' | xargs -0 -r pnpm dlx markdownlint-cli@0.45.0 --
-
-      - name: Check Azure ARM documentation assets
-        run: python3 permissions/templates/azure/bicep/sync_docs_template.py --check

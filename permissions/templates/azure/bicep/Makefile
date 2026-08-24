@@ -26,10 +26,13 @@ sync-docs: prowler-scan.json
 # CI hook: fail if the JSON is out of sync with the Bicep source. Run
 # `make build` locally and commit both files before opening the PR.
 check: prowler-scan.bicep
-	$(BICEP_BUILD) prowler-scan.bicep --outfile /tmp/prowler-scan.check.json
-	diff -q prowler-scan.json /tmp/prowler-scan.check.json
+	@set -eu; \
+	tmp=$$(mktemp); \
+	trap 'rm -f "$$tmp"' EXIT; \
+	$(BICEP_BUILD) prowler-scan.bicep --outfile "$$tmp"; \
+	python3 -c 'from pathlib import Path; import sys; path = Path(sys.argv[1]); path.write_bytes(path.read_bytes().rstrip(b"\r\n") + b"\n")' "$$tmp"; \
+	diff -q prowler-scan.json "$$tmp"; \
 	python3 sync_docs_template.py --check
-	rm /tmp/prowler-scan.check.json
 
 clean:
 	rm -f prowler-scan.json

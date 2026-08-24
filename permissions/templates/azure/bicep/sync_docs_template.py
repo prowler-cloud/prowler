@@ -11,7 +11,7 @@ SNIPPET_PREFIX = (
     b"{/* AUTO-GENERATED from permissions/templates/azure/bicep/"
     b"prowler-scan.json. Do not edit manually. */}\n\n```json\n"
 )
-SNIPPET_SUFFIX = b"\n```\n"
+SNIPPET_SUFFIX = b"```\n"
 
 
 def parse_args():
@@ -33,18 +33,22 @@ def expected_snippet(source):
 
 def main():
     args = parse_args()
-    source = args.source.read_bytes()
+    source_bytes = args.source.read_bytes()
+    source = source_bytes.rstrip(b"\r\n") + b"\n"
     json.loads(source)
     snippet = expected_snippet(source)
 
     if args.sync:
         args.asset.parent.mkdir(parents=True, exist_ok=True)
         args.snippet.parent.mkdir(parents=True, exist_ok=True)
+        args.source.write_bytes(source)
         args.asset.write_bytes(source)
         args.snippet.write_bytes(snippet)
         return 0
 
     drifted = []
+    if source_bytes != source:
+        drifted.append(args.source)
     if not args.asset.exists() or args.asset.read_bytes() != source:
         drifted.append(args.asset)
     if not args.snippet.exists() or args.snippet.read_bytes() != snippet:

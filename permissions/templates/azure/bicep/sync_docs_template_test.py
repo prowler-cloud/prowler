@@ -39,13 +39,29 @@ class SyncDocsTemplateTest(unittest.TestCase):
             check=False,
         )
 
-    def test_sync_copies_asset_and_embeds_exact_canonical_bytes(self):
-        result = self.run_script("--sync")
+    def test_sync_normalizes_canonical_and_asset_to_one_trailing_lf(self):
+        for terminal_newlines in (b"", b"\n", b"\n\n", b"\r\n\r\n"):
+            with self.subTest(terminal_newlines=terminal_newlines):
+                self.source.write_bytes(self.canonical + terminal_newlines)
 
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(self.asset.read_bytes(), self.canonical)
-        snippet = self.snippet.read_bytes()
-        self.assertIn(b"```json\n" + self.canonical + b"\n```", snippet)
+                result = self.run_script("--sync")
+
+                self.assertEqual(result.returncode, 0, result.stderr)
+                expected = self.canonical + b"\n"
+                self.assertEqual(self.source.read_bytes(), expected)
+                self.assertEqual(self.asset.read_bytes(), expected)
+
+    def test_sync_normalizes_snippet_fence_and_final_lf(self):
+        for terminal_newlines in (b"", b"\n", b"\n\n", b"\r\n\r\n"):
+            with self.subTest(terminal_newlines=terminal_newlines):
+                self.source.write_bytes(self.canonical + terminal_newlines)
+
+                result = self.run_script("--sync")
+
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertTrue(
+                    self.snippet.read_bytes().endswith(self.canonical + b"\n```\n")
+                )
 
     def test_check_fails_when_generated_output_drifts(self):
         self.assertEqual(self.run_script("--sync").returncode, 0)
