@@ -176,3 +176,47 @@ class TestBigQueryConcurrentEnumeration:
         # sharing the client's non-thread-safe one.
         assert created, "no per-thread http was created; execute() shares the client's"
         assert len(created) <= bigquery_service.MAX_WORKERS
+
+    def test_http_clients_stay_bounded_across_projects_and_phases(self):
+        """The bound must hold across every project and both enumeration phases.
+
+        A pool opened per project, or a second pool for tables, spawns fresh
+        threads and therefore fresh thread-local http clients, so the ceiling
+        would scale with the project count instead of staying at MAX_WORKERS.
+        """
+        from prowler.providers.gcp.services.bigquery import bigquery_service
+
+        created = []
+
+        def _counting_http(self):
+            created.append(1)
+            return MagicMock()
+
+        tables_by_dataset = {"dataset_a": [f"t{i:03d}" for i in range(60)]}
+        client = _mocked_client(["dataset_a"], tables_by_dataset)
+
+        with patch(
+            "prowler.providers.gcp.lib.service.service.GCPService.__get_AuthorizedHttp_client__",
+            new=_counting_http,
+        ):
+            with (
+                patch(
+                    "prowler.providers.gcp.lib.service.service.GCPService.__is_api_active__",
+                    new=mock_is_api_active,
+                ),
+                patch(
+                    "prowler.providers.gcp.lib.service.service.GCPService.__generate_client__",
+                    new=lambda *_args, **_kwargs: client,
+                ),
+            ):
+                BigQuery(
+                    set_mocked_gcp_provider(
+                        project_ids=[GCP_PROJECT_ID, "second-project", "third-project"]
+                    )
+                )
+
+        assert created, "no per-thread http was created"
+        assert len(created) <= bigquery_service.MAX_WORKERS, (
+            f"created {len(created)} http clients across 3 projects; "
+            f"expected at most {bigquery_service.MAX_WORKERS}"
+        )

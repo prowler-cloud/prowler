@@ -21,8 +21,14 @@ class BigQuery(GCPService):
         self.datasets = []
         self.tables = []
         self._thread_local = threading.local()
-        self._get_datasets()
-        self._get_tables()
+        # One pool for the whole enumeration rather than one per project and
+        # another for tables. Each pool spawns its own threads, and the http
+        # clients below are thread-local, so a pool per project would let the
+        # client count scale with the project count instead of staying at
+        # MAX_WORKERS.
+        with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+            self._get_datasets(executor)
+            self._get_tables(executor)
 
     def _get_thread_http(self):
         """One AuthorizedHttp per worker thread.
@@ -42,12 +48,17 @@ class BigQuery(GCPService):
             self._thread_local.http = http
         return http
 
-    def _get_datasets(self):
+    def _get_datasets(self, executor):
         """Populate ``self.datasets`` for every audited project.
 
-        Datasets are listed serially, then described concurrently through a
-        bounded pool because ``datasets.get`` is one round trip per dataset.
-        Results are appended in listing order, not completion order.
+        Datasets are listed serially, then described concurrently because
+        ``datasets.get`` is one round trip per dataset. Results are appended in
+        listing order, not completion order.
+
+        Args:
+            executor: The shared pool for the enumeration's lifetime. Shared so
+                the worker count, and therefore the thread-local http clients,
+                stay bounded across every project.
 
         Returns:
             None. Appends to ``self.datasets`` as a side effect.
@@ -70,35 +81,34 @@ class BigQuery(GCPService):
 
                 # executor.map preserves input order, so self.datasets is built
                 # in listing order regardless of completion order.
-                with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-                    for dataset, dataset_info in zip(
+                for dataset, dataset_info in zip(
+                    dataset_refs,
+                    executor.map(
+                        lambda ref: self._describe_dataset(project_id, ref),
                         dataset_refs,
-                        executor.map(
-                            lambda ref: self._describe_dataset(project_id, ref),
-                            dataset_refs,
-                        ),
+                    ),
+                ):
+                    if dataset_info is None:
+                        continue
+                    cmk_encryption = False
+                    public = False
+                    roles = dataset_info.get("access", "")
+                    if "allAuthenticatedUsers" in str(roles) or "allUsers" in str(
+                        roles
                     ):
-                        if dataset_info is None:
-                            continue
-                        cmk_encryption = False
-                        public = False
-                        roles = dataset_info.get("access", "")
-                        if "allAuthenticatedUsers" in str(roles) or "allUsers" in str(
-                            roles
-                        ):
-                            public = True
-                        if dataset_info.get("defaultEncryptionConfiguration"):
-                            cmk_encryption = True
-                        self.datasets.append(
-                            Dataset(
-                                name=dataset["datasetReference"]["datasetId"],
-                                id=dataset["id"],
-                                region=dataset["location"],
-                                cmk_encryption=cmk_encryption,
-                                public=public,
-                                project_id=project_id,
-                            )
+                        public = True
+                    if dataset_info.get("defaultEncryptionConfiguration"):
+                        cmk_encryption = True
+                    self.datasets.append(
+                        Dataset(
+                            name=dataset["datasetReference"]["datasetId"],
+                            id=dataset["id"],
+                            region=dataset["location"],
+                            cmk_encryption=cmk_encryption,
+                            public=public,
+                            project_id=project_id,
                         )
+                    )
             except Exception as error:
                 logger.error(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -134,13 +144,17 @@ class BigQuery(GCPService):
             )
             return None
 
-    def _get_tables(self):
+    def _get_tables(self, executor):
         """Populate ``self.tables`` for every dataset already discovered.
 
         Table references are listed serially, then described concurrently
-        through a single bounded pool spanning all datasets, because
-        ``tables.get`` is one round trip per table and a production estate can
-        hold tens of thousands. Results are appended in listing order.
+        across all datasets at once, because ``tables.get`` is one round trip
+        per table and a production estate can hold tens of thousands. Results
+        are appended in listing order.
+
+        Args:
+            executor: The shared pool for the enumeration's lifetime, the same
+                one used for datasets.
 
         Returns:
             None. Appends to ``self.tables`` as a side effect.
@@ -170,27 +184,24 @@ class BigQuery(GCPService):
             return
 
         try:
-            # One bounded pool across every dataset rather than a pool per
-            # dataset: the concurrency ceiling is then global, not multiplied by
-            # the dataset count. executor.map preserves input order, so
-            # self.tables stays in listing order.
-            with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-                described = executor.map(self._describe_table, table_refs)
+            # Every dataset's tables go through the one shared pool, so the
+            # concurrency ceiling is global rather than multiplied by the
+            # dataset count. executor.map preserves input order, so self.tables
+            # stays in listing order.
+            described = executor.map(self._describe_table, table_refs)
 
-                for (dataset, table), table_info in zip(table_refs, described):
-                    if table_info is None:
-                        continue
-                    self.tables.append(
-                        Table(
-                            name=table["tableReference"]["tableId"],
-                            id=table["id"],
-                            region=dataset.region,
-                            cmk_encryption=bool(
-                                table_info.get("encryptionConfiguration")
-                            ),
-                            project_id=dataset.project_id,
-                        )
+            for (dataset, table), table_info in zip(table_refs, described):
+                if table_info is None:
+                    continue
+                self.tables.append(
+                    Table(
+                        name=table["tableReference"]["tableId"],
+                        id=table["id"],
+                        region=dataset.region,
+                        cmk_encryption=bool(table_info.get("encryptionConfiguration")),
+                        project_id=dataset.project_id,
                     )
+                )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
