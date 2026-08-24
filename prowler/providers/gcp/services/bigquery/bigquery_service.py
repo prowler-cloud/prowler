@@ -1,9 +1,17 @@
+import threading
+from concurrent.futures import ThreadPoolExecutor
+
 from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.providers.gcp.config import DEFAULT_RETRY_ATTEMPTS
 from prowler.providers.gcp.gcp_provider import GcpProvider
 from prowler.providers.gcp.lib.service.service import GCPService
+
+# Both datasets.get and tables.get are one round trip per resource, and a
+# production BigQuery estate can hold tens of thousands of tables. Bounded so a
+# large estate cannot exhaust the BigQuery API quota.
+MAX_WORKERS = 10
 
 
 class BigQuery(GCPService):
@@ -12,25 +20,53 @@ class BigQuery(GCPService):
 
         self.datasets = []
         self.tables = []
+        self._thread_local = threading.local()
         self._get_datasets()
         self._get_tables()
+
+    def _get_thread_http(self):
+        """One AuthorizedHttp per worker thread.
+
+        googleapiclient's http object is not thread safe, so a threaded call
+        cannot share the client's own. Building one per *thread* rather than per
+        *request* keeps the count at MAX_WORKERS instead of one per resource,
+        which matters when the estate has thousands of tables.
+        """
+        http = getattr(self._thread_local, "http", None)
+        if http is None:
+            http = self.__get_AuthorizedHttp_client__()
+            self._thread_local.http = http
+        return http
 
     def _get_datasets(self):
         for project_id in self.project_ids:
             try:
+                # Listing is a handful of paged calls; the per-dataset get below
+                # is what dominates, so only that is parallelised.
+                dataset_refs = []
                 request = self.client.datasets().list(projectId=project_id)
                 while request is not None:
                     response = request.execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
+                    dataset_refs.extend(response.get("datasets", []))
+                    request = self.client.datasets().list_next(
+                        previous_request=request, previous_response=response
+                    )
 
-                    for dataset in response.get("datasets", []):
-                        dataset_info = (
-                            self.client.datasets()
-                            .get(
-                                projectId=project_id,
-                                datasetId=dataset["datasetReference"]["datasetId"],
-                            )
-                            .execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
-                        )
+                if not dataset_refs:
+                    continue
+
+                # executor.map preserves input order, so self.datasets is built
+                # in listing order regardless of completion order.
+                with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+                    for dataset, dataset_info in zip(
+                        dataset_refs,
+                        executor.map(
+                            lambda ref: self._describe_dataset(project_id, ref),
+                            dataset_refs,
+                        ),
+                    ):
+                        if dataset_info is None:
+                            continue
                         cmk_encryption = False
                         public = False
                         roles = dataset_info.get("access", "")
@@ -50,16 +86,36 @@ class BigQuery(GCPService):
                                 project_id=project_id,
                             )
                         )
-
-                    request = self.client.datasets().list_next(
-                        previous_request=request, previous_response=response
-                    )
             except Exception as error:
                 logger.error(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
+    def _describe_dataset(self, project_id, dataset_ref):
+        """Fetch one dataset's detail. Returns None if it cannot be read."""
+        try:
+            return (
+                self.client.datasets()
+                .get(
+                    projectId=project_id,
+                    datasetId=dataset_ref["datasetReference"]["datasetId"],
+                )
+                .execute(
+                    http=self._get_thread_http(),
+                    num_retries=DEFAULT_RETRY_ATTEMPTS,
+                )
+            )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return None
+
     def _get_tables(self):
+        # Collect every table reference first. Listing is fast even for large
+        # estates; it is the per-table get that made this O(tables) in wall
+        # clock, so the refs are gathered here and described concurrently below.
+        table_refs = []
         for dataset in self.datasets:
             try:
                 request = self.client.tables().list(
@@ -67,30 +123,8 @@ class BigQuery(GCPService):
                 )
                 while request is not None:
                     response = request.execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
-
                     for table in response.get("tables", []):
-                        cmk_encryption = False
-                        if (
-                            self.client.tables()
-                            .get(
-                                projectId=dataset.project_id,
-                                datasetId=dataset.name,
-                                tableId=table["tableReference"]["tableId"],
-                            )
-                            .execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
-                            .get("encryptionConfiguration")
-                        ):
-                            cmk_encryption = True
-                        self.tables.append(
-                            Table(
-                                name=table["tableReference"]["tableId"],
-                                id=table["id"],
-                                region=dataset.region,
-                                cmk_encryption=cmk_encryption,
-                                project_id=dataset.project_id,
-                            )
-                        )
-
+                        table_refs.append((dataset, table))
                     request = self.client.tables().list_next(
                         previous_request=request, previous_response=response
                     )
@@ -98,6 +132,58 @@ class BigQuery(GCPService):
                 logger.error(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
+
+        if not table_refs:
+            return
+
+        try:
+            # One bounded pool across every dataset rather than a pool per
+            # dataset: the concurrency ceiling is then global, not multiplied by
+            # the dataset count. executor.map preserves input order, so
+            # self.tables stays in listing order.
+            with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+                described = executor.map(self._describe_table, table_refs)
+
+                for (dataset, table), table_info in zip(table_refs, described):
+                    if table_info is None:
+                        continue
+                    self.tables.append(
+                        Table(
+                            name=table["tableReference"]["tableId"],
+                            id=table["id"],
+                            region=dataset.region,
+                            cmk_encryption=bool(
+                                table_info.get("encryptionConfiguration")
+                            ),
+                            project_id=dataset.project_id,
+                        )
+                    )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _describe_table(self, ref):
+        """Fetch one table's detail. Returns None if it cannot be read."""
+        dataset, table = ref
+        try:
+            return (
+                self.client.tables()
+                .get(
+                    projectId=dataset.project_id,
+                    datasetId=dataset.name,
+                    tableId=table["tableReference"]["tableId"],
+                )
+                .execute(
+                    http=self._get_thread_http(),
+                    num_retries=DEFAULT_RETRY_ATTEMPTS,
+                )
+            )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return None
 
 
 class Dataset(BaseModel):

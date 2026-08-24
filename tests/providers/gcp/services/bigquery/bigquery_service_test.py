@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from prowler.providers.gcp.services.bigquery.bigquery_service import BigQuery
 from tests.providers.gcp.gcp_fixtures import (
@@ -56,3 +56,123 @@ class TestBigQueryService:
             assert bigquery_client.tables[1].region == "US"
             assert not bigquery_client.tables[1].cmk_encryption
             assert bigquery_client.tables[1].project_id == GCP_PROJECT_ID
+
+
+def _mocked_client(dataset_ids, tables_by_dataset, failing_table_ids=()):
+    """A BigQuery discovery client returning the given datasets and tables.
+
+    Purpose-built rather than extending the shared fixture so these tests can
+    control table counts and provoke per-table failures.
+    """
+    client = MagicMock()
+
+    datasets = client.datasets.return_value
+    datasets.list.return_value.execute.return_value = {
+        "datasets": [
+            {
+                "datasetReference": {"datasetId": d},
+                "id": f"project:{d}",
+                "location": "EU",
+            }
+            for d in dataset_ids
+        ]
+    }
+    datasets.list_next.return_value = None
+    datasets.get.side_effect = lambda projectId, datasetId: MagicMock(
+        execute=MagicMock(return_value={"access": []})
+    )
+
+    tables = client.tables.return_value
+    tables.list.side_effect = lambda projectId, datasetId: MagicMock(
+        execute=MagicMock(
+            return_value={
+                "tables": [
+                    {"tableReference": {"tableId": t}, "id": f"project:{datasetId}.{t}"}
+                    for t in tables_by_dataset[datasetId]
+                ]
+            }
+        )
+    )
+    tables.list_next.return_value = None
+
+    def _get_table(projectId, datasetId, tableId):
+        if tableId in failing_table_ids:
+            raise RuntimeError(f"boom for {tableId}")
+        return MagicMock(execute=MagicMock(return_value={}))
+
+    tables.get.side_effect = _get_table
+    return client
+
+
+def _bigquery_with(client):
+    with (
+        patch(
+            "prowler.providers.gcp.lib.service.service.GCPService.__is_api_active__",
+            new=mock_is_api_active,
+        ),
+        patch(
+            "prowler.providers.gcp.lib.service.service.GCPService.__generate_client__",
+            new=lambda *_args, **_kwargs: client,
+        ),
+    ):
+        return BigQuery(set_mocked_gcp_provider(project_ids=[GCP_PROJECT_ID]))
+
+
+class TestBigQueryConcurrentEnumeration:
+    def test_table_order_follows_listing_order(self):
+        """Tables are described concurrently but must land in listing order.
+
+        Without this the service's output would vary run to run, which the
+        assertions in TestBigQueryService depend on and pytest-randomly would
+        eventually expose.
+        """
+        tables_by_dataset = {
+            "dataset_a": [f"a_table_{i:03d}" for i in range(60)],
+            "dataset_b": [f"b_table_{i:03d}" for i in range(40)],
+        }
+        client = _mocked_client(["dataset_a", "dataset_b"], tables_by_dataset)
+        bigquery_client = _bigquery_with(client)
+
+        expected = tables_by_dataset["dataset_a"] + tables_by_dataset["dataset_b"]
+        assert [t.name for t in bigquery_client.tables] == expected
+
+    def test_one_unreadable_table_does_not_drop_the_rest(self):
+        """A failing tables.get must not abandon the remaining tables."""
+        tables_by_dataset = {"dataset_a": [f"t{i}" for i in range(10)]}
+        client = _mocked_client(
+            ["dataset_a"], tables_by_dataset, failing_table_ids={"t4"}
+        )
+        bigquery_client = _bigquery_with(client)
+
+        names = [t.name for t in bigquery_client.tables]
+        assert "t4" not in names
+        assert names == [f"t{i}" for i in range(10) if i != 4]
+
+    def test_http_clients_are_per_thread_not_per_request(self):
+        """googleapiclient's http is not thread safe, so each worker needs its own.
+
+        Building one per request would mean a TLS handshake per table; the count
+        must stay bounded by the worker pool no matter how many tables there are.
+        """
+        from prowler.providers.gcp.services.bigquery import bigquery_service
+
+        created = []
+
+        def _counting_http(self):
+            created.append(1)
+            return MagicMock()
+
+        tables_by_dataset = {"dataset_a": [f"t{i:03d}" for i in range(200)]}
+        client = _mocked_client(["dataset_a"], tables_by_dataset)
+
+        with patch(
+            "prowler.providers.gcp.lib.service.service.GCPService.__get_AuthorizedHttp_client__",
+            new=_counting_http,
+        ):
+            bigquery_client = _bigquery_with(client)
+
+        assert len(bigquery_client.tables) == 200
+        # At least one: the threaded path must pass an explicit http, or it is
+        # sharing the client's non-thread-safe one.
+        assert created, "no per-thread http was created; execute() shares the client's"
+        assert len(created) <= bigquery_service.MAX_WORKERS
