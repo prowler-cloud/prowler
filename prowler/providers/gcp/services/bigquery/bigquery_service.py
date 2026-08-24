@@ -31,6 +31,10 @@ class BigQuery(GCPService):
         cannot share the client's own. Building one per *thread* rather than per
         *request* keeps the count at MAX_WORKERS instead of one per resource,
         which matters when the estate has thousands of tables.
+
+        Returns:
+            An ``AuthorizedHttp`` belonging to the calling thread, created on
+            first use and cached on thread-local storage thereafter.
         """
         http = getattr(self._thread_local, "http", None)
         if http is None:
@@ -39,6 +43,15 @@ class BigQuery(GCPService):
         return http
 
     def _get_datasets(self):
+        """Populate ``self.datasets`` for every audited project.
+
+        Datasets are listed serially, then described concurrently through a
+        bounded pool because ``datasets.get`` is one round trip per dataset.
+        Results are appended in listing order, not completion order.
+
+        Returns:
+            None. Appends to ``self.datasets`` as a side effect.
+        """
         for project_id in self.project_ids:
             try:
                 # Listing is a handful of paged calls; the per-dataset get below
@@ -92,7 +105,17 @@ class BigQuery(GCPService):
                 )
 
     def _describe_dataset(self, project_id, dataset_ref):
-        """Fetch one dataset's detail. Returns None if it cannot be read."""
+        """Fetch one dataset's detail.
+
+        Args:
+            project_id: Project owning the dataset.
+            dataset_ref: A ``datasets.list`` entry for the dataset to describe.
+
+        Returns:
+            The ``datasets.get`` response, or ``None`` if it could not be read,
+            in which case the dataset is skipped rather than failing its
+            siblings.
+        """
         try:
             return (
                 self.client.datasets()
@@ -112,6 +135,16 @@ class BigQuery(GCPService):
             return None
 
     def _get_tables(self):
+        """Populate ``self.tables`` for every dataset already discovered.
+
+        Table references are listed serially, then described concurrently
+        through a single bounded pool spanning all datasets, because
+        ``tables.get`` is one round trip per table and a production estate can
+        hold tens of thousands. Results are appended in listing order.
+
+        Returns:
+            None. Appends to ``self.tables`` as a side effect.
+        """
         # Collect every table reference first. Listing is fast even for large
         # estates; it is the per-table get that made this O(tables) in wall
         # clock, so the refs are gathered here and described concurrently below.
@@ -164,7 +197,17 @@ class BigQuery(GCPService):
             )
 
     def _describe_table(self, ref):
-        """Fetch one table's detail. Returns None if it cannot be read."""
+        """Fetch one table's detail.
+
+        Args:
+            ref: A ``(dataset, table_ref)`` pair, where ``table_ref`` is a
+                ``tables.list`` entry belonging to ``dataset``.
+
+        Returns:
+            The ``tables.get`` response, or ``None`` if it could not be read,
+            in which case the table is skipped rather than failing the rest of
+            its dataset.
+        """
         dataset, table = ref
         try:
             return (
