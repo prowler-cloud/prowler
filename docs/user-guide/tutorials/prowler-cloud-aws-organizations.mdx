@@ -476,16 +476,17 @@ Deploy the ProwlerScan role to every member account with a [CloudFormation Stack
 </Note>
 
 1. In your management account, navigate to **CloudFormation > StackSets > Create StackSet** ([open directly](https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacksets/create)).
-2. Choose **Service-managed permissions** so AWS Organizations deploys the role automatically across current and future member accounts.
-3. Select **Amazon S3 URL** as the template source and paste:
+2. Choose **Service-managed permissions**.
+3. Enable **Automatic deployment** so CloudFormation deploys the role to accounts added to the targeted root or OUs. Configure the account removal behavior based on whether the stack and its resources should be retained when an account leaves the target.
+4. Select **Amazon S3 URL** as the template source and paste:
    ```
    https://prowler-cloud-public.s3.eu-west-1.amazonaws.com/permissions/templates/aws/cloudformation/prowler-scan-role.yml
    ```
-4. Set the **ExternalId** parameter to the External ID shown in the Prowler wizard.
-5. Choose your deployment targets (entire organization or specific OUs) and regions, then click **Create StackSet**.
-6. Open the **Stack instances** tab and confirm every instance shows **Status: CURRENT** and **Stack status: CREATE_COMPLETE**. Deployment typically takes **2–5 minutes**; large organizations (500+ accounts) may take longer.
+5. Set the **ExternalId** parameter to the External ID shown in the Prowler wizard.
+6. Choose your deployment targets (entire organization or specific OUs) and regions, then click **Create StackSet**.
+7. Open the **Stack instances** tab and confirm every instance shows **Status: CURRENT** and **Stack status: CREATE_COMPLETE**. Deployment typically takes **2–5 minutes**; large organizations (500+ accounts) may take longer.
 
-The StackSet role uses read-only access only (`SecurityAudit`, `ViewOnlyAccess`, plus a small set of additional read-only permissions). Prowler makes no changes to your accounts. See the [CloudFormation template](https://prowler-cloud-public.s3.eu-west-1.amazonaws.com/permissions/templates/aws/cloudformation/prowler-scan-role.yml) for the full list. When you add new accounts under the targeted OU or root, the StackSet deploys the role automatically. Repeat the [organization discovery flow](#add-or-remove-organization-accounts) to connect those accounts in Prowler Cloud.
+The StackSet role uses read-only access only (`SecurityAudit`, `ViewOnlyAccess`, plus a small set of additional read-only permissions). Prowler makes no changes to your accounts. See the [CloudFormation template](https://prowler-cloud-public.s3.eu-west-1.amazonaws.com/permissions/templates/aws/cloudformation/prowler-scan-role.yml) for the full list. When **Automatic deployment** is enabled, the StackSet deploys the role to new accounts under the targeted OU or root. Repeat the [organization discovery flow](#add-or-remove-organization-accounts) to connect those accounts in Prowler Cloud.
 
 ## Key Concepts
 
