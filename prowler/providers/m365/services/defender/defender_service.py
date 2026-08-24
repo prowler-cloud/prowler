@@ -798,10 +798,13 @@ class Defender(M365Service):
                     for domain_id in verified_domain_ids
                 )
             )
-            for domain_id, dmarc_record in zip(verified_domain_ids, dmarc_records):
+            for domain_id, (dmarc_record, lookup_failed) in zip(
+                verified_domain_ids, dmarc_records
+            ):
                 domain_dmarc_configurations[domain_id] = DomainDmarcConfiguration(
                     domain=domain_id,
                     dmarc_record=dmarc_record,
+                    lookup_failed=lookup_failed,
                 )
         except Exception as error:
             logger.error(
@@ -810,7 +813,7 @@ class Defender(M365Service):
         return domain_dmarc_configurations
 
     @staticmethod
-    async def _get_dmarc_txt_record(domain: str) -> Optional[str]:
+    async def _get_dmarc_txt_record(domain: str) -> tuple[Optional[str], bool]:
         """
         Resolve the DMARC DNS TXT record published at ``_dmarc.<domain>``.
 
@@ -818,8 +821,13 @@ class Defender(M365Service):
             domain: The domain name to look up the DMARC record for.
 
         Returns:
-            Optional[str]: The raw content of the first ``v=DMARC1`` TXT record
-                found, or ``None`` if no DMARC record exists or the lookup fails.
+            tuple[Optional[str], bool]: A ``(record, lookup_failed)`` pair.
+                ``record`` is the raw content of the first ``v=DMARC1`` TXT
+                record found, or ``None`` when the domain publishes no DMARC
+                record or the lookup could not be completed. ``lookup_failed``
+                is ``True`` only when the DNS lookup could not be completed
+                (timeout / no reachable nameserver), distinguishing an
+                unverifiable result from a confirmed absence.
         """
         try:
             answers = await dns.asyncresolver.resolve(f"_dmarc.{domain}", "TXT")
@@ -829,20 +837,22 @@ class Defender(M365Service):
                     for part in answer.strings
                 )
                 if record.strip().lower().startswith("v=dmarc1"):
-                    return record
-        except (
-            dns.resolver.NXDOMAIN,
-            dns.resolver.NoAnswer,
-            dns.resolver.NoNameservers,
-            dns.exception.Timeout,
-        ):
-            return None
+                    return record, False
+        except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
+            # The domain resolves but publishes no DMARC record: a confirmed absence.
+            return None, False
+        except (dns.resolver.NoNameservers, dns.exception.Timeout) as error:
+            # The lookup could not be completed, so the DMARC status is unknown.
+            logger.warning(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return None, True
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            return None
-        return None
+            return None, True
+        return None, False
 
 
 class MalwarePolicy(BaseModel):
@@ -1044,10 +1054,14 @@ class DomainDmarcConfiguration(BaseModel):
         domain: The domain name the DMARC record was looked up for.
         dmarc_record: The raw ``_dmarc.<domain>`` TXT record content, or
             ``None`` if no DMARC record was found.
+        lookup_failed: ``True`` when the DNS lookup could not be completed
+            (timeout / no reachable nameserver), so the DMARC status is unknown
+            rather than a confirmed absence.
     """
 
     domain: str
     dmarc_record: Optional[str] = None
+    lookup_failed: bool = False
 
 
 class PresetSecurityPolicyRule(BaseModel):

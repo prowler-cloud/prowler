@@ -38,7 +38,10 @@ class defender_domain_dmarc_records_published(Check):
 
             policy = self._get_dmarc_policy(domain.dmarc_record)
 
-            if policy in ("quarantine", "reject"):
+            if domain.lookup_failed:
+                report.status = "MANUAL"
+                report.status_extended = f"DMARC record for domain with ID {domain_id} could not be verified because the DNS lookup did not complete; manual review is required."
+            elif policy in ("quarantine", "reject"):
                 report.status = "PASS"
                 report.status_extended = f"DMARC record is published on Exchange Online for domain with ID {domain_id} with enforcement policy p={policy}."
             elif policy == "none":

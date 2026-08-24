@@ -604,8 +604,11 @@ class Test_Defender_Service:
             "prowler.providers.m365.services.defender.defender_service.dns.asyncresolver.resolve",
             new=AsyncMock(return_value=[FakeAnswer([b"v=DMARC1; p=reject"])]),
         ):
-            record = asyncio.run(Defender._get_dmarc_txt_record("domain1.com"))
+            record, lookup_failed = asyncio.run(
+                Defender._get_dmarc_txt_record("domain1.com")
+            )
             assert record == "v=DMARC1; p=reject"
+            assert lookup_failed is False
 
     def test_get_dmarc_txt_record_not_found(self):
         import dns.resolver
@@ -614,8 +617,26 @@ class Test_Defender_Service:
             "prowler.providers.m365.services.defender.defender_service.dns.asyncresolver.resolve",
             new=AsyncMock(side_effect=dns.resolver.NXDOMAIN),
         ):
-            record = asyncio.run(Defender._get_dmarc_txt_record("domain2.com"))
+            record, lookup_failed = asyncio.run(
+                Defender._get_dmarc_txt_record("domain2.com")
+            )
             assert record is None
+            # A confirmed absence, not an unverifiable lookup.
+            assert lookup_failed is False
+
+    def test_get_dmarc_txt_record_lookup_failed(self):
+        import dns.exception
+
+        with mock.patch(
+            "prowler.providers.m365.services.defender.defender_service.dns.asyncresolver.resolve",
+            new=AsyncMock(side_effect=dns.exception.Timeout),
+        ):
+            record, lookup_failed = asyncio.run(
+                Defender._get_dmarc_txt_record("domain3.com")
+            )
+            assert record is None
+            # A transient failure leaves the DMARC status unknown.
+            assert lookup_failed is True
 
     @patch(
         "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.get_eop_protection_policy_rule",
@@ -748,7 +769,7 @@ def test_defender__get_domain_dmarc_configurations_handles_pagination():
 
     with mock.patch(
         "prowler.providers.m365.services.defender.defender_service.Defender._get_dmarc_txt_record",
-        new=AsyncMock(return_value="v=DMARC1; p=reject"),
+        new=AsyncMock(return_value=("v=DMARC1; p=reject", False)),
     ):
         domain_dmarc_configurations = asyncio.run(
             defender_service._get_domain_dmarc_configurations()

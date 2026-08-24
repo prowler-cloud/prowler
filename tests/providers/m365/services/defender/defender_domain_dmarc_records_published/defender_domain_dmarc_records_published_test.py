@@ -271,6 +271,55 @@ class Test_defender_domain_dmarc_records_published:
             assert result[0].resource_id == domain_id
             assert result[0].location == "global"
 
+    def test_domain_dmarc_lookup_failed(self):
+        defender_client = mock.MagicMock()
+        defender_client.audited_tenant = "audited_tenant"
+        defender_client.audited_domain = DOMAIN
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+            mock.patch(
+                "prowler.providers.m365.services.defender.defender_domain_dmarc_records_published.defender_domain_dmarc_records_published.defender_client",
+                new=defender_client,
+            ),
+        ):
+            from prowler.providers.m365.services.defender.defender_domain_dmarc_records_published.defender_domain_dmarc_records_published import (
+                defender_domain_dmarc_records_published,
+            )
+            from prowler.providers.m365.services.defender.defender_service import (
+                DomainDmarcConfiguration,
+            )
+
+            domain_id = "domain7"
+
+            defender_client.domain_dmarc_configurations = {
+                domain_id: DomainDmarcConfiguration(
+                    domain=domain_id,
+                    dmarc_record=None,
+                    lookup_failed=True,
+                )
+            }
+
+            check = defender_domain_dmarc_records_published()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert (
+                result[0].status_extended
+                == f"DMARC record for domain with ID {domain_id} could not be verified because the DNS lookup did not complete; manual review is required."
+            )
+            assert result[0].resource == {}
+            assert result[0].resource_name == domain_id
+            assert result[0].resource_id == domain_id
+            assert result[0].location == "global"
+
     def test_domain_dmarc_no_policy_tag(self):
         defender_client = mock.MagicMock()
         defender_client.audited_tenant = "audited_tenant"
