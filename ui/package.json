@@ -25,6 +25,7 @@
     "test:e2e:debug": "playwright test --project=auth --project=sign-up --project=providers --project=invitations --project=scans --project=runtime-config --project=navigation --debug",
     "test:e2e:headed": "playwright test --project=auth --project=sign-up --project=providers --project=invitations --project=scans --project=runtime-config --project=navigation --headed",
     "test:e2e:install": "playwright install",
+    "test:e2e:registry": "E2E_REGISTRY_ACCEPTANCE_MODE=fixture playwright test --project=registry --project=registry-flag-off --project=registry-local --project=registry-mobile",
     "test:e2e:report": "playwright show-report",
     "test:e2e:ui": "playwright test --project=auth --project=sign-up --project=providers --project=invitations --project=scans --project=runtime-config --ui",
     "test:integration": "vitest run --project integration",

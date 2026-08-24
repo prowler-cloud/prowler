@@ -16,12 +16,6 @@ const hasEnabledProcessFlags = () =>
   readEnv("UI_CLOUD_ENABLED") === "true" &&
   readEnv("UI_REGISTRY_ENABLED") === "true";
 
-export async function refreshRegistryEligibility(): Promise<RegistryAccessResult> {
-  "use server";
-  const { auth } = await import("@/auth.config");
-  return evaluateRegistryAccess((await auth())?.accessToken);
-}
-
 export async function evaluateRegistryAccess(
   accessToken?: string | null,
 ): Promise<RegistryAccessResult> {

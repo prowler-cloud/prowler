@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { type FormEvent, type RefObject, useRef } from "react";
 
 import { Button } from "@/components/shadcn/button/button";
 import { Input } from "@/components/shadcn/input/input";
@@ -11,6 +11,7 @@ interface RegistryAccessDialogCommonProps {
   onSubmit: (key: string) => Promise<void>;
   open: boolean;
   pending: boolean;
+  returnFocusRef: RefObject<HTMLButtonElement | null>;
 }
 
 type ConnectRegistryAccessDialogProps = RegistryAccessDialogCommonProps & {
@@ -34,13 +35,15 @@ export function RegistryAccessDialog({
   onSubmit,
   open,
   pending,
+  returnFocusRef,
 }: RegistryAccessDialogProps) {
   const formRef = useRef<HTMLFormElement>(null);
   const keyInputRef = useRef<HTMLInputElement>(null);
   const actionLabel = mode === "connect" ? "Connect" : "Replace Registry key";
 
-  async function handleSubmit(formData: FormData) {
-    const key = formData.get("registry-key");
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const key = new FormData(event.currentTarget).get("registry-key");
     if (typeof key !== "string" || key.trim().length === 0) return;
 
     formRef.current?.reset();
@@ -54,12 +57,16 @@ export function RegistryAccessDialog({
         event.preventDefault();
         keyInputRef.current?.focus();
       }}
+      onCloseAutoFocus={(event) => {
+        event.preventDefault();
+        returnFocusRef.current?.focus();
+      }}
       onOpenChange={onOpenChange}
       open={open}
       size="sm"
       title={mode === "connect" ? "Connect Registry" : "Manage Registry access"}
     >
-      <form action={handleSubmit} ref={formRef} className="space-y-4">
+      <form className="space-y-4" onSubmit={handleSubmit} ref={formRef}>
         <label className="space-y-2 text-sm" htmlFor="registry-key">
           <span>Registry key</span>
           <Input
@@ -72,6 +79,11 @@ export function RegistryAccessDialog({
             type="password"
           />
         </label>
+        {pending && (
+          <p aria-live="polite" role="status">
+            Validating Registry key
+          </p>
+        )}
         <div className="flex flex-wrap justify-end gap-2">
           {mode === "manage" && (
             <Button

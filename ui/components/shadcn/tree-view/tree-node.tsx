@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ChevronRightIcon } from "lucide-react";
 import { KeyboardEvent } from "react";
 
@@ -38,6 +38,7 @@ export function TreeNode({
 }: TreeNodeProps) {
   const isExpanded = expandedIds.includes(item.id);
   const isSelected = selectedIds.includes(item.id);
+  const prefersReducedMotion = useReducedMotion();
   const statusIcon =
     !item.isLoading && item.status ? (
       <TreeStatusIndicator
@@ -131,7 +132,7 @@ export function TreeNode({
           ) : (
             <ChevronRightIcon
               className={cn(
-                "h-4 w-4 transition-transform duration-200",
+                "h-4 w-4 transition-transform duration-200 motion-reduce:transition-none motion-reduce:duration-0",
                 isExpanded && "rotate-90",
               )}
             />
@@ -175,7 +176,10 @@ export function TreeNode({
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.2, ease: "easeInOut" }}
+            transition={{
+              duration: prefersReducedMotion ? 0 : 0.2,
+              ease: "easeInOut",
+            }}
             className="mt-1 space-y-1 overflow-hidden"
             role="group"
           >

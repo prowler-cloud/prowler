@@ -86,6 +86,12 @@ export function RegistryExplorer({
   >();
   const [removeTarget, setRemoveTarget] = useState<string>();
   const [operationMessage, setOperationMessage] = useState<string>();
+  const [mobileNavigationOpen, setMobileNavigationOpen] = useState(false);
+  const detailHeadingRef = useRef<HTMLHeadingElement>(null);
+  const connectButtonRef = useRef<HTMLButtonElement>(null);
+  const manageButtonRef = useRef<HTMLButtonElement>(null);
+  const removeButtonRef = useRef<HTMLButtonElement>(null);
+  const focusDetailAfterMobileClose = useRef(false);
   const operationGeneration = useRef(0);
 
   useEffect(
@@ -216,6 +222,14 @@ export function RegistryExplorer({
     toast({ title: "Artifact removed" });
   }
 
+  function handleSelectedIdChange(id: string) {
+    setSelectedId(id);
+    if (mobileNavigationOpen && artifactName(id)) {
+      focusDetailAfterMobileClose.current = true;
+      setMobileNavigationOpen(false);
+    }
+  }
+
   const accessDialogProps = {
     onOpenChange: (open: boolean) => {
       if (!open && pendingOperation !== "credential") {
@@ -225,6 +239,8 @@ export function RegistryExplorer({
     onSubmit: handleCredentialSubmit,
     open: true,
     pending: pendingOperation === "credential",
+    returnFocusRef:
+      accessDialogMode === "connect" ? connectButtonRef : manageButtonRef,
   };
   const accessDialog =
     accessDialogMode === "connect" ? (
@@ -244,6 +260,7 @@ export function RegistryExplorer({
     return (
       <>
         <RegistryOnboarding
+          connectButtonRef={connectButtonRef}
           onConnect={() => setAccessDialogMode("connect")}
           tenantArtifacts={state.tenantArtifacts}
           validationPending={
@@ -304,7 +321,7 @@ export function RegistryExplorer({
       filters={filters}
       onExpandedChange={setExpandedIds}
       onFiltersChange={setFilters}
-      onSelectedIdChange={setSelectedId}
+      onSelectedIdChange={handleSelectedIdChange}
       providers={providers}
       selectedId={selectedId}
       tenantArtifacts={state.tenantArtifacts}
@@ -315,11 +332,23 @@ export function RegistryExplorer({
     <div className="grid gap-6 lg:grid-cols-[18rem_minmax(0,1fr)]">
       <aside className="hidden lg:block">{navigation}</aside>
       <div className="lg:hidden">
-        <Sheet>
+        <Sheet
+          onOpenChange={setMobileNavigationOpen}
+          open={mobileNavigationOpen}
+        >
           <SheetTrigger asChild>
             <Button variant="outline">Browse artifacts</Button>
           </SheetTrigger>
-          <SheetContent side="left">
+          <SheetContent
+            onCloseAutoFocus={(event) => {
+              if (focusDetailAfterMobileClose.current) {
+                event.preventDefault();
+                detailHeadingRef.current?.focus();
+                focusDetailAfterMobileClose.current = false;
+              }
+            }}
+            side="left"
+          >
             <SheetTitle>Browse artifacts</SheetTitle>
             {navigation}
           </SheetContent>
@@ -328,6 +357,7 @@ export function RegistryExplorer({
       <main>
         <Button
           onClick={() => setAccessDialogMode("manage")}
+          ref={manageButtonRef}
           type="button"
           variant="outline"
         >
@@ -337,7 +367,9 @@ export function RegistryExplorer({
         {selectedDetail ? (
           <RegistryArtifactDetail
             {...selectedDetail}
+            headingRef={detailHeadingRef}
             isMutationPending={pendingOperation === "add"}
+            removeButtonRef={removeButtonRef}
             onAdd={
               selectedDetail.catalogArtifact && !selectedDetail.tenantArtifact
                 ? (versionSpec) =>
@@ -375,6 +407,7 @@ export function RegistryExplorer({
             setRemoveTarget(undefined);
         }}
         open={removeTarget !== undefined}
+        returnFocusRef={removeButtonRef}
       />
     </div>
   );

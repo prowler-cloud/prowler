@@ -98,6 +98,7 @@ declare global {
       E2E_UNLIMITED_VISIBILITY_PASSWORD?: string;
       E2E_MANAGE_INTEGRATIONS_USER?: string;
       E2E_MANAGE_INTEGRATIONS_PASSWORD?: string;
+      E2E_REGISTRY_ACCEPTANCE_MODE?: "fixture";
       E2E_MANAGE_ACCOUNT_USER?: string;
       E2E_MANAGE_ACCOUNT_PASSWORD?: string;
       E2E_MANAGE_SCANS_USER?: string;

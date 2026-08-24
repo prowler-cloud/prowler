@@ -5,7 +5,7 @@ import { render } from "@/__tests__/render-browser";
 const { refreshAccessMock } = vi.hoisted(() => ({
   refreshAccessMock: vi.fn(),
 }));
-vi.mock("@/lib/registry/access.server", () => ({
+vi.mock("@/actions/registry/registry", () => ({
   refreshRegistryEligibility: refreshAccessMock,
 }));
 

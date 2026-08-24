@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { render } from "@/__tests__/render-browser";
 
-vi.mock("@/lib/registry/access.server", () => ({
+vi.mock("@/actions/registry/registry", () => ({
   refreshRegistryEligibility: () => Promise.resolve({ status: "ineligible" }),
 }));
 

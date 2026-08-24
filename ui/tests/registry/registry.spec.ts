@@ -1,0 +1,185 @@
+import { expect, test } from "@playwright/test";
+
+import { RegistryPage } from "./registry-page";
+import {
+  controlledRegistryFixture,
+  FIXTURE_REGISTRY_KEY,
+} from "./controlled-registry-fixture";
+
+const fixtureMode = process.env.E2E_REGISTRY_ACCEPTANCE_MODE === "fixture";
+const enabledProject = "registry";
+const flagOffProject = "registry-flag-off";
+const localProject = "registry-local";
+const mobileProject = "registry-mobile";
+
+function skipUnlessProject(projectName: string) {
+  test.skip(
+    test.info().project.name !== projectName,
+    `This scenario runs in the ${projectName} fixture profile.`,
+  );
+}
+
+test.describe.serial("Registry", () => {
+  test.use({ storageState: "playwright/.auth/manage_registry_user.json" });
+
+  test.beforeEach(async () => {
+    test.skip(
+      !fixtureMode,
+      "Registry browser acceptance is available only through the self-contained fixture profile.",
+    );
+    await controlledRegistryFixture.reset();
+  });
+
+  test(
+    "fails closed in Local and Registry-flag-off process profiles",
+    { tag: ["@critical", "@e2e", "@registry", "@REGISTRY-E2E-001"] },
+    async ({ page }) => {
+      test.skip(
+        ![flagOffProject, localProject].includes(test.info().project.name),
+        "This assertion requires the Local or Registry-flag-off fixture profile.",
+      );
+      const registryPage = new RegistryPage(page);
+
+      await page.goto("/");
+      await registryPage.verifyRegistryNavigationHidden();
+      await registryPage.goto();
+      await registryPage.verifyDirectRouteDenied();
+    },
+  );
+
+  test(
+    "shows the New Registry navigation entry only in the enabled manager profile",
+    { tag: ["@critical", "@e2e", "@registry", "@REGISTRY-E2E-002"] },
+    async ({ page }) => {
+      skipUnlessProject(enabledProject);
+      const registryPage = new RegistryPage(page);
+
+      await page.goto("/");
+      await registryPage.verifyRegistryNavigationVisible();
+      await expect(
+        registryPage.registryLink.getByText("New", { exact: true }),
+      ).toBeVisible();
+    },
+  );
+
+  test(
+    "denies stale manager storage after controlled current-authority revocation",
+    { tag: ["@critical", "@e2e", "@registry", "@REGISTRY-E2E-003"] },
+    async ({ page }) => {
+      skipUnlessProject(enabledProject);
+      const registryPage = new RegistryPage(page);
+
+      await page.goto("/");
+      await registryPage.verifyRegistryNavigationVisible();
+      await controlledRegistryFixture.revokeCurrentAuthority();
+      await page.evaluate(() => {
+        window.dispatchEvent(new Event("focus"));
+        document.dispatchEvent(new Event("visibilitychange"));
+      });
+      await registryPage.verifyRegistryNavigationHidden();
+      await registryPage.goto();
+      await registryPage.verifyDirectRouteDenied();
+    },
+  );
+
+  test(
+    "keeps an onboarding key write-only while 202 validation settles through an authoritative read",
+    { tag: ["@critical", "@e2e", "@registry", "@REGISTRY-E2E-004"] },
+    async ({ page }) => {
+      skipUnlessProject(enabledProject);
+      const registryPage = new RegistryPage(page);
+      const requestUrls: string[] = [];
+      page.on("request", (request) => requestUrls.push(request.url()));
+
+      await registryPage.goto();
+      await registryPage.verifyOnboarding();
+      await registryPage.submitRegistryKey(FIXTURE_REGISTRY_KEY);
+      await expect(page.getByRole("status")).toContainText(
+        "Validating Registry key",
+      );
+      await registryPage.verifyKeyIsNotDisclosed(
+        FIXTURE_REGISTRY_KEY,
+        requestUrls,
+      );
+      await expect(
+        page.getByRole("heading", { name: "Registry overview" }),
+      ).toBeVisible();
+
+      const snapshot = await controlledRegistryFixture.snapshot();
+      expect(snapshot.credentialAccepted).toBe(true);
+      expect(snapshot.credentialReadCount).toBeGreaterThanOrEqual(2);
+      expect(snapshot.taskReadCount).toBeGreaterThanOrEqual(2);
+    },
+  );
+
+  test(
+    "uses complete catalog data for recovery, latest and exact Add, and confirmed Remove",
+    { tag: ["@critical", "@e2e", "@registry", "@REGISTRY-E2E-005"] },
+    async ({ page }) => {
+      skipUnlessProject(enabledProject);
+      await page.setViewportSize({ height: 900, width: 1440 });
+      const registryPage = new RegistryPage(page);
+
+      await registryPage.goto();
+      await registryPage.connectFixtureRegistry();
+      await registryPage.dismissWelcomeDialog();
+      await registryPage.verifyCompleteCatalogSearchAndMultiProvider();
+      await registryPage.selectDeterministicArtifactWithLatestVersion();
+      await registryPage.addLatest();
+      await registryPage.verifyMyVersionSpec("latest");
+      await registryPage.removeArtifact();
+      await page.reload();
+      await expect(
+        page.getByRole("heading", { name: "Registry overview" }),
+      ).toBeVisible();
+      const exactArtifact =
+        await registryPage.selectDeterministicArtifactWithLatestVersion();
+      await registryPage.addExactVersion(exactArtifact.latestVersion);
+      await registryPage.verifyMyVersionSpec(exactArtifact.latestVersion);
+      await registryPage.removeArtifact();
+
+      await controlledRegistryFixture.setDiscoveryMode("reconnect");
+      await page.reload();
+      await expect(
+        page.getByRole("heading", { name: "Reconnect Registry" }),
+      ).toBeVisible();
+      await controlledRegistryFixture.setDiscoveryMode("unavailable");
+      await page.reload();
+      await expect(
+        page.getByRole("heading", { name: "Registry is unavailable" }),
+      ).toBeVisible();
+      await controlledRegistryFixture.setDiscoveryMode("error");
+      await page.reload();
+      await expect(
+        page.getByRole("heading", { name: "Registry could not be loaded" }),
+      ).toBeVisible();
+    },
+  );
+
+  test(
+    "keeps keyboard and reduced-motion Registry browsing usable on Pixel 5",
+    { tag: ["@high", "@e2e", "@registry", "@REGISTRY-E2E-006"] },
+    async ({ page }) => {
+      skipUnlessProject(mobileProject);
+      const registryPage = new RegistryPage(page);
+      await page.emulateMedia({ reducedMotion: "reduce" });
+      expect(
+        await page.evaluate(
+          () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+        ),
+      ).toBe(true);
+
+      await registryPage.goto();
+      await registryPage.connectFixtureRegistry();
+      await registryPage.dismissWelcomeDialog();
+      await registryPage.browseArtifactsButton.click();
+      await expect(
+        page.getByRole("dialog", { name: "Browse artifacts" }),
+      ).toBeVisible();
+      await expect(
+        page.getByRole("dialog", { name: "Browse artifacts" }),
+      ).toHaveCSS("animation-duration", "0s");
+      await registryPage.selectMobileFixtureArtifact();
+    },
+  );
+});

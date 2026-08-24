@@ -1,3 +1,5 @@
+import { type Ref } from "react";
+
 import { Button } from "@/components/shadcn/button/button";
 import type { RegistryTenantArtifact } from "@/types/registry";
 
@@ -5,7 +7,9 @@ export function RegistryOnboarding({
   tenantArtifacts,
   validationPending,
   onConnect,
+  connectButtonRef,
 }: {
+  connectButtonRef?: Ref<HTMLButtonElement>;
   tenantArtifacts: RegistryTenantArtifact[];
   validationPending: boolean;
   onConnect: () => void;
@@ -26,7 +30,12 @@ export function RegistryOnboarding({
         {tenantArtifacts.length === 1 ? "" : "s"} remain in My artifacts.
       </p>
       {!validationPending && (
-        <Button className="mt-6" onClick={onConnect} type="button">
+        <Button
+          className="mt-6"
+          onClick={onConnect}
+          ref={connectButtonRef}
+          type="button"
+        >
           Connect Registry
         </Button>
       )}

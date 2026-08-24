@@ -253,7 +253,9 @@ function bootstrapFailure(
   });
 }
 
-export { refreshRegistryEligibility } from "@/lib/registry/access.server";
+export async function refreshRegistryEligibility() {
+  return evaluateRegistryAccess((await auth())?.accessToken);
+}
 
 export async function getRegistryBootstrap(): Promise<RegistryBootstrapResult> {
   const access = await getRegistryAccess();

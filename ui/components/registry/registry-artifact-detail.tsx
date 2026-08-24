@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { type Ref, useState } from "react";
 
 import { Badge } from "@/components/shadcn/badge/badge";
 import { Button } from "@/components/shadcn/button/button";
@@ -14,6 +14,8 @@ import type {
 
 interface RegistryArtifactDetailProps {
   catalogArtifact?: RegistryCatalogArtifact;
+  headingRef?: Ref<HTMLHeadingElement>;
+  removeButtonRef?: Ref<HTMLButtonElement>;
   tenantArtifact?: RegistryTenantArtifact;
   isMutationPending?: boolean;
   onAdd?: (versionSpec?: string) => void;
@@ -22,6 +24,8 @@ interface RegistryArtifactDetailProps {
 
 export function RegistryArtifactDetail({
   catalogArtifact: artifact,
+  headingRef,
+  removeButtonRef,
   tenantArtifact,
   isMutationPending = false,
   onAdd,
@@ -55,7 +59,12 @@ export function RegistryArtifactDetail({
 
   return (
     <section aria-labelledby="registry-artifact-title">
-      <h1 id="registry-artifact-title" className="text-xl font-semibold">
+      <h1
+        className="text-xl font-semibold"
+        id="registry-artifact-title"
+        ref={headingRef}
+        tabIndex={-1}
+      >
         {name}
       </h1>
       {artifact?.description && (
@@ -84,6 +93,7 @@ export function RegistryArtifactDetail({
         <Button
           className="mt-6"
           onClick={onRemove}
+          ref={removeButtonRef}
           type="button"
           variant="destructive"
         >

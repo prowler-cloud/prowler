@@ -1,3 +1,5 @@
+import { type RefObject, useRef } from "react";
+
 import { Button } from "@/components/shadcn/button/button";
 import { Modal } from "@/components/shadcn/modal/modal";
 
@@ -7,6 +9,7 @@ interface RegistryRemoveDialogProps {
   onConfirm: () => void;
   onOpenChange: (open: boolean) => void;
   open: boolean;
+  returnFocusRef: RefObject<HTMLButtonElement | null>;
 }
 
 export function RegistryRemoveDialog({
@@ -15,10 +18,21 @@ export function RegistryRemoveDialog({
   onConfirm,
   onOpenChange,
   open,
+  returnFocusRef,
 }: RegistryRemoveDialogProps) {
+  const cancelButtonRef = useRef<HTMLButtonElement>(null);
+
   return (
     <Modal
       description={`Remove ${artifactName ?? "this artifact"} from My artifacts.`}
+      onOpenAutoFocus={(event) => {
+        event.preventDefault();
+        cancelButtonRef.current?.focus();
+      }}
+      onCloseAutoFocus={(event) => {
+        event.preventDefault();
+        returnFocusRef.current?.focus();
+      }}
       onOpenChange={onOpenChange}
       open={open}
       size="sm"
@@ -28,6 +42,7 @@ export function RegistryRemoveDialog({
         <Button
           disabled={isPending}
           onClick={() => onOpenChange(false)}
+          ref={cancelButtonRef}
           type="button"
           variant="outline"
         >

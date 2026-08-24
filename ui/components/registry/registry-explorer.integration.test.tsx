@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { userEvent } from "vitest/browser";
 
 const {
   addRegistryArtifactMock,
@@ -159,6 +160,48 @@ describe("RegistryExplorer", () => {
         "Search Registry artifacts",
       );
     });
+  });
+
+  it("moves focus into the access dialog and returns it to Connect Registry", async () => {
+    // Given
+    const screen = await render(
+      <RegistryExplorer initialState={onboardingState} />,
+    );
+    const connectButton = screen.getByRole("button", {
+      name: "Connect Registry",
+    });
+
+    // When
+    await connectButton.click();
+
+    // Then
+    await expect.element(screen.getByLabelText("Registry key")).toHaveFocus();
+
+    // When
+    await userEvent.keyboard("{Escape}");
+
+    // Then
+    await expect.element(connectButton).toHaveFocus();
+  });
+
+  it("announces credential validation while the submitted key stays write-only", async () => {
+    // Given
+    const key = "registry-test-key";
+    submitRegistryCredentialMock.mockReturnValue(new Promise(() => {}));
+    const screen = await render(
+      <RegistryExplorer initialState={onboardingState} />,
+    );
+
+    // When
+    await screen.getByRole("button", { name: "Connect Registry" }).click();
+    await screen.getByLabelText("Registry key").fill(key);
+    await screen.getByRole("button", { name: "Connect", exact: true }).click();
+
+    // Then
+    await expect
+      .element(screen.getByRole("status"))
+      .toHaveTextContent("Validating Registry key");
+    expect(document.body.innerHTML).not.toContain(key);
   });
 
   it("resets a write-only key before loading authoritative collections", async () => {
@@ -382,6 +425,26 @@ describe("RegistryExplorer", () => {
       .toBeVisible();
   });
 
+  it("announces an Add failure through an alert without animation callbacks", async () => {
+    // Given
+    addRegistryArtifactMock.mockResolvedValue({ status: "error" });
+    const screen = await render(<RegistryExplorer initialState={readyState} />);
+    await screen.getByText("Multi-provider").click();
+    await screen
+      .getByLabelText("Registry explorer")
+      .getByText("Cloud guard")
+      .click();
+    await screen.getByRole("button", { name: "Add" }).click();
+
+    // When
+    await screen.getByRole("button", { name: "Add artifact" }).click();
+
+    // Then
+    await expect
+      .element(screen.getByRole("alert"))
+      .toHaveTextContent("Registry operation could not be completed");
+  });
+
   it("keeps membership unchanged until an Add is authoritatively confirmed", async () => {
     // Given
     addRegistryArtifactMock.mockResolvedValue({
@@ -560,6 +623,30 @@ describe("RegistryExplorer", () => {
     await expect
       .poll(() => document.body.textContent)
       .toContain("Artifact removed");
+  });
+
+  it("moves focus into Remove confirmation and returns it to the invoker", async () => {
+    // Given
+    const screen = await render(<RegistryExplorer initialState={readyState} />);
+    await screen
+      .getByLabelText("Registry explorer")
+      .getByText("aws-guard")
+      .click();
+    const removeButton = screen.getByRole("button", { name: "Remove" });
+
+    // When
+    await removeButton.click();
+
+    // Then
+    await expect
+      .element(screen.getByRole("button", { name: "Cancel" }))
+      .toHaveFocus();
+
+    // When
+    await userEvent.keyboard("{Escape}");
+
+    // Then
+    await expect.element(removeButton).toHaveFocus();
   });
 
   it("disables duplicate Remove submission while confirmation is pending", async () => {

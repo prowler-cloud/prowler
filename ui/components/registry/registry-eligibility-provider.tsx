@@ -11,11 +11,11 @@ import {
   useState,
 } from "react";
 
+import { refreshRegistryEligibility } from "@/actions/registry/registry";
 import {
   REGISTRY_ACCESS,
   type RegistryAccessStatus,
 } from "@/lib/registry/access";
-import { refreshRegistryEligibility } from "@/lib/registry/access.server";
 
 type RegistryEligibilityState = {
   status: RegistryAccessStatus;

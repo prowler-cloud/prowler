@@ -1,18 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const {
-  authMock,
-  evaluateAccessMock,
-  fetchMock,
-  pollTaskUntilSettledMock,
-  refreshEligibilityMock,
-} = vi.hoisted(() => ({
-  authMock: vi.fn(),
-  evaluateAccessMock: vi.fn(),
-  fetchMock: vi.fn(),
-  pollTaskUntilSettledMock: vi.fn(),
-  refreshEligibilityMock: vi.fn(),
-}));
+const { authMock, evaluateAccessMock, fetchMock, pollTaskUntilSettledMock } =
+  vi.hoisted(() => ({
+    authMock: vi.fn(),
+    evaluateAccessMock: vi.fn(),
+    fetchMock: vi.fn(),
+    pollTaskUntilSettledMock: vi.fn(),
+  }));
 
 vi.mock("@/auth.config", () => ({ auth: authMock }));
 vi.mock("@/lib", () => ({ apiBaseUrl: "https://api.test/api/v1" }));
@@ -21,7 +15,6 @@ vi.mock("@/actions/task/poll", () => ({
 }));
 vi.mock("@/lib/registry/access.server", () => ({
   evaluateRegistryAccess: evaluateAccessMock,
-  refreshRegistryEligibility: refreshEligibilityMock,
 }));
 
 import {
@@ -103,10 +96,6 @@ beforeEach(() => {
     status: "eligible",
     leaseDurationMs: 30_000,
   });
-  refreshEligibilityMock.mockResolvedValue({
-    status: "eligible",
-    leaseDurationMs: 30_000,
-  });
   fetchMock.mockReset();
   pollTaskUntilSettledMock.mockReset();
 });
@@ -164,13 +153,14 @@ describe("Registry guarded reads", () => {
   it("returns only the current eligibility result without Registry I/O", async () => {
     // Given
     const access = { status: "unknown" } as const;
-    refreshEligibilityMock.mockResolvedValue(access);
+    evaluateAccessMock.mockResolvedValue(access);
 
     // When
     const result = await refreshRegistryEligibility();
 
     // Then
     expect(result).toEqual(access);
+    expect(evaluateAccessMock).toHaveBeenCalledWith("access-token");
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
