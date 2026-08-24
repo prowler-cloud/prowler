@@ -166,6 +166,7 @@ const getAlertsTableColumns = ({
     id: "destinations",
     size: 220,
     minSize: 180,
+    enableSorting: false,
     accessorFn: (alert) => formatDestinations(alert),
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Destinations" />
