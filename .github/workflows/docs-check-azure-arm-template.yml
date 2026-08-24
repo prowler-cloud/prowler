@@ -49,6 +49,7 @@ jobs:
           egress-policy: block
           allowed-endpoints: >
             api.github.com:443
+            downloads.bicep.azure.com:443
             github.com:443
             release-assets.githubusercontent.com:443
 
@@ -60,7 +61,7 @@ jobs:
       - name: Setup Bicep
         uses: anthony-c-martin/setup-bicep@faf8170f496c10a2ea75977d2e77024131331404 # v1
         with:
-          version: v0.46.1
+          version: 0.46.1
 
       - name: Test Azure ARM documentation synchronization
         run: python3 -m unittest permissions/templates/azure/bicep/sync_docs_template_test.py
