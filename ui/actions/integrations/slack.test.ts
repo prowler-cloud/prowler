@@ -586,9 +586,6 @@ describe("setSlackAuthorizedChannels", () => {
     });
   });
 
-  // The API deduplicates too; a caller that named a channel twice never meant
-  // to authorize it twice, and the write is what the whole set is validated
-  // from.
   it("submits a channel once, however many times the caller named it", async () => {
     fetchMock.mockResolvedValueOnce(savedIntegration());
 

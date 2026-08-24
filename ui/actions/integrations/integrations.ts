@@ -270,8 +270,7 @@ export const deleteIntegration = async (
 type ConnectionTaskResult = {
   connected?: boolean;
   error?: string | null;
-  // The failing channel's id, or null when the failure is not about one
-  // channel. The error text never carries it, so it is never parsed for it.
+  // The failing channel's id, or null when the failure names no channel.
   channel?: string | null;
 };
 
