@@ -6091,16 +6091,6 @@ paths:
         schema:
           type: string
           format: date
-      - in: query
-        name: filter[updated_at__gte]
-        schema:
-          type: string
-          format: date-time
-      - in: query
-        name: filter[updated_at__lte]
-        schema:
-          type: string
-          format: date-time
       - name: sort
         required: false
         in: query
@@ -16312,7 +16302,7 @@ paths:
           content:
             application/vnd.api+json:
               schema:
-                $ref: '#/components/schemas/UserResponse'
+                $ref: '#/components/schemas/UserMeResponse'
           description: ''
 components:
   schemas:
@@ -16444,6 +16434,17 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/AttackPathsQueryParameter'
+            outcome:
+              type: object
+              nullable: true
+              properties:
+                kind:
+                  type: string
+                label:
+                  type: string
+                partial:
+                  type: boolean
+              readOnly: true
           required:
           - id
           - name
@@ -17680,7 +17681,11 @@ components:
                       can be generated from your Atlassian account settings.
                   domain:
                     type: string
-                    description: The JIRA domain/instance URL (e.g., 'your-domain.atlassian.net').
+                    description: The Jira site name without the '.atlassian.net' suffix
+                      (e.g., 'your-domain').
+                    minLength: 1
+                    maxLength: 63
+                    pattern: ^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$
                 required:
                 - user_mail
                 - api_token
@@ -17865,7 +17870,11 @@ components:
                           can be generated from your Atlassian account settings.
                       domain:
                         type: string
-                        description: The JIRA domain/instance URL (e.g., 'your-domain.atlassian.net').
+                        description: The Jira site name without the '.atlassian.net'
+                          suffix (e.g., 'your-domain').
+                        minLength: 1
+                        maxLength: 63
+                        pattern: ^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$
                     required:
                     - user_mail
                     - api_token
@@ -18127,7 +18136,11 @@ components:
                       can be generated from your Atlassian account settings.
                   domain:
                     type: string
-                    description: The JIRA domain/instance URL (e.g., 'your-domain.atlassian.net').
+                    description: The Jira site name without the '.atlassian.net' suffix
+                      (e.g., 'your-domain').
+                    minLength: 1
+                    maxLength: 63
+                    pattern: ^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$
                 required:
                 - user_mail
                 - api_token
@@ -20554,7 +20567,11 @@ components:
                           can be generated from your Atlassian account settings.
                       domain:
                         type: string
-                        description: The JIRA domain/instance URL (e.g., 'your-domain.atlassian.net').
+                        description: The Jira site name without the '.atlassian.net'
+                          suffix (e.g., 'your-domain').
+                        minLength: 1
+                        maxLength: 63
+                        pattern: ^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$
                     required:
                     - user_mail
                     - api_token
@@ -21272,7 +21289,7 @@ components:
                     - role_arn
                     - external_id
                   - type: object
-                    title: Azure Static Credentials
+                    title: Azure Client Secret Credentials
                     properties:
                       client_id:
                         type: string
@@ -21290,6 +21307,27 @@ components:
                     - client_id
                     - client_secret
                     - tenant_id
+                    additionalProperties: false
+                  - type: object
+                    title: Azure Certificate Credentials
+                    properties:
+                      client_id:
+                        type: string
+                        description: The Azure application (client) ID for authentication
+                          in Azure AD.
+                      certificate_content:
+                        type: string
+                        description: Base64-encoded PEM certificate and private key
+                          content for certificate-based authentication.
+                      tenant_id:
+                        type: string
+                        description: The Azure tenant ID, representing the directory
+                          where the application is registered.
+                    required:
+                    - client_id
+                    - certificate_content
+                    - tenant_id
+                    additionalProperties: false
                   - type: object
                     title: M365 Static Credentials
                     properties:
@@ -21387,7 +21425,8 @@ components:
                       kubeconfig_content:
                         type: string
                         description: The content of the Kubernetes kubeconfig file,
-                          encoded as a string.
+                          encoded as a string. Kubeconfig command-based authentication
+                          is not supported in Prowler Cloud for security reasons.
                     required:
                     - kubeconfig_content
                   - type: object
@@ -21450,18 +21489,23 @@ components:
                       tenancy:
                         type: string
                         description: The OCID of the tenancy.
-                      region:
-                        type: string
-                        description: The OCI region identifier (e.g., us-ashburn-1,
-                          us-phoenix-1).
                       pass_phrase:
                         type: string
                         description: The passphrase for the private key, if encrypted.
+                      region:
+                        type: string
+                        deprecated: true
+                        description: Legacy OCI region field accepted for backwards
+                          compatibility but ignored; OCI scans all regions.
                     required:
                     - user
                     - fingerprint
                     - tenancy
-                    - region
+                    anyOf:
+                    - required:
+                      - key_file
+                    - required:
+                      - key_content
                   - type: object
                     title: MongoDB Atlas API Key
                     properties:
@@ -23396,7 +23440,7 @@ components:
                 - role_arn
                 - external_id
               - type: object
-                title: Azure Static Credentials
+                title: Azure Client Secret Credentials
                 properties:
                   client_id:
                     type: string
@@ -23414,6 +23458,27 @@ components:
                 - client_id
                 - client_secret
                 - tenant_id
+                additionalProperties: false
+              - type: object
+                title: Azure Certificate Credentials
+                properties:
+                  client_id:
+                    type: string
+                    description: The Azure application (client) ID for authentication
+                      in Azure AD.
+                  certificate_content:
+                    type: string
+                    description: Base64-encoded PEM certificate and private key content
+                      for certificate-based authentication.
+                  tenant_id:
+                    type: string
+                    description: The Azure tenant ID, representing the directory where
+                      the application is registered.
+                required:
+                - client_id
+                - certificate_content
+                - tenant_id
+                additionalProperties: false
               - type: object
                 title: M365 Static Credentials
                 properties:
@@ -23510,7 +23575,8 @@ components:
                   kubeconfig_content:
                     type: string
                     description: The content of the Kubernetes kubeconfig file, encoded
-                      as a string.
+                      as a string. Kubeconfig command-based authentication is not
+                      supported in Prowler Cloud for security reasons.
                 required:
                 - kubeconfig_content
               - type: object
@@ -23572,17 +23638,23 @@ components:
                   tenancy:
                     type: string
                     description: The OCID of the tenancy.
-                  region:
-                    type: string
-                    description: The OCI region identifier (e.g., us-ashburn-1, us-phoenix-1).
                   pass_phrase:
                     type: string
                     description: The passphrase for the private key, if encrypted.
+                  region:
+                    type: string
+                    deprecated: true
+                    description: Legacy OCI region field accepted for backwards compatibility
+                      but ignored; OCI scans all regions.
                 required:
                 - user
                 - fingerprint
                 - tenancy
-                - region
+                anyOf:
+                - required:
+                  - key_file
+                - required:
+                  - key_content
               - type: object
                 title: MongoDB Atlas API Key
                 properties:
@@ -23835,7 +23907,7 @@ components:
                     - role_arn
                     - external_id
                   - type: object
-                    title: Azure Static Credentials
+                    title: Azure Client Secret Credentials
                     properties:
                       client_id:
                         type: string
@@ -23853,6 +23925,27 @@ components:
                     - client_id
                     - client_secret
                     - tenant_id
+                    additionalProperties: false
+                  - type: object
+                    title: Azure Certificate Credentials
+                    properties:
+                      client_id:
+                        type: string
+                        description: The Azure application (client) ID for authentication
+                          in Azure AD.
+                      certificate_content:
+                        type: string
+                        description: Base64-encoded PEM certificate and private key
+                          content for certificate-based authentication.
+                      tenant_id:
+                        type: string
+                        description: The Azure tenant ID, representing the directory
+                          where the application is registered.
+                    required:
+                    - client_id
+                    - certificate_content
+                    - tenant_id
+                    additionalProperties: false
                   - type: object
                     title: M365 Static Credentials
                     properties:
@@ -23950,7 +24043,8 @@ components:
                       kubeconfig_content:
                         type: string
                         description: The content of the Kubernetes kubeconfig file,
-                          encoded as a string.
+                          encoded as a string. Kubeconfig command-based authentication
+                          is not supported in Prowler Cloud for security reasons.
                     required:
                     - kubeconfig_content
                   - type: object
@@ -24013,18 +24107,23 @@ components:
                       tenancy:
                         type: string
                         description: The OCID of the tenancy.
-                      region:
-                        type: string
-                        description: The OCI region identifier (e.g., us-ashburn-1,
-                          us-phoenix-1).
                       pass_phrase:
                         type: string
                         description: The passphrase for the private key, if encrypted.
+                      region:
+                        type: string
+                        deprecated: true
+                        description: Legacy OCI region field accepted for backwards
+                          compatibility but ignored; OCI scans all regions.
                     required:
                     - user
                     - fingerprint
                     - tenancy
-                    - region
+                    anyOf:
+                    - required:
+                      - key_file
+                    - required:
+                      - key_content
                   - type: object
                     title: MongoDB Atlas API Key
                     properties:
@@ -24297,7 +24396,7 @@ components:
                 - role_arn
                 - external_id
               - type: object
-                title: Azure Static Credentials
+                title: Azure Client Secret Credentials
                 properties:
                   client_id:
                     type: string
@@ -24315,6 +24414,27 @@ components:
                 - client_id
                 - client_secret
                 - tenant_id
+                additionalProperties: false
+              - type: object
+                title: Azure Certificate Credentials
+                properties:
+                  client_id:
+                    type: string
+                    description: The Azure application (client) ID for authentication
+                      in Azure AD.
+                  certificate_content:
+                    type: string
+                    description: Base64-encoded PEM certificate and private key content
+                      for certificate-based authentication.
+                  tenant_id:
+                    type: string
+                    description: The Azure tenant ID, representing the directory where
+                      the application is registered.
+                required:
+                - client_id
+                - certificate_content
+                - tenant_id
+                additionalProperties: false
               - type: object
                 title: M365 Static Credentials
                 properties:
@@ -24411,7 +24531,8 @@ components:
                   kubeconfig_content:
                     type: string
                     description: The content of the Kubernetes kubeconfig file, encoded
-                      as a string.
+                      as a string. Kubeconfig command-based authentication is not
+                      supported in Prowler Cloud for security reasons.
                 required:
                 - kubeconfig_content
               - type: object
@@ -24473,17 +24594,23 @@ components:
                   tenancy:
                     type: string
                     description: The OCID of the tenancy.
-                  region:
-                    type: string
-                    description: The OCI region identifier (e.g., us-ashburn-1, us-phoenix-1).
                   pass_phrase:
                     type: string
                     description: The passphrase for the private key, if encrypted.
+                  region:
+                    type: string
+                    deprecated: true
+                    description: Legacy OCI region field accepted for backwards compatibility
+                      but ignored; OCI scans all regions.
                 required:
                 - user
                 - fingerprint
                 - tenancy
-                - region
+                anyOf:
+                - required:
+                  - key_file
+                - required:
+                  - key_content
               - type: object
                 title: MongoDB Atlas API Key
                 properties:
@@ -26807,6 +26934,103 @@ components:
       properties:
         data:
           $ref: '#/components/schemas/UserCreate'
+      required:
+      - data
+    UserMe:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - users
+        id:
+          type: string
+          format: uuid
+        attributes:
+          type: object
+          properties:
+            name:
+              type: string
+              maxLength: 150
+              minLength: 3
+            email:
+              type: string
+              format: email
+              description: Case insensitive
+              maxLength: 254
+            company_name:
+              type: string
+              maxLength: 150
+            date_joined:
+              type: string
+              format: date-time
+              readOnly: true
+          required:
+          - name
+          - email
+        relationships:
+          type: object
+          properties:
+            memberships:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    type:
+                      type: string
+                      enum:
+                      - memberships
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
+              required:
+              - data
+              description: The identifier of the related object.
+              title: Resource Identifier
+              readOnly: true
+            roles:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    type:
+                      type: string
+                      enum:
+                      - roles
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
+              required:
+              - data
+              description: The identifier of the related object.
+              title: Resource Identifier
+              readOnly: true
+    UserMeResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/UserMe'
       required:
       - data
     UserResponse:

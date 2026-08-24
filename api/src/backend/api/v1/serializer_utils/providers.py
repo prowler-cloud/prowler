@@ -78,7 +78,7 @@ from rest_framework_json_api import serializers
             },
             {
                 "type": "object",
-                "title": "Azure Static Credentials",
+                "title": "Azure Client Secret Credentials",
                 "properties": {
                     "client_id": {
                         "type": "string",
@@ -96,6 +96,28 @@ from rest_framework_json_api import serializers
                     },
                 },
                 "required": ["client_id", "client_secret", "tenant_id"],
+                "additionalProperties": False,
+            },
+            {
+                "type": "object",
+                "title": "Azure Certificate Credentials",
+                "properties": {
+                    "client_id": {
+                        "type": "string",
+                        "description": "The Azure application (client) ID for authentication in Azure AD.",
+                    },
+                    "certificate_content": {
+                        "type": "string",
+                        "description": "Base64-encoded PEM certificate and private key content for certificate-based authentication.",
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "description": "The Azure tenant ID, representing the directory where the application is "
+                        "registered.",
+                    },
+                },
+                "required": ["client_id", "certificate_content", "tenant_id"],
+                "additionalProperties": False,
             },
             {
                 "type": "object",

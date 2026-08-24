@@ -244,6 +244,47 @@ class TestOracleCloudProviderSecret:
 
 
 class TestProviderSecretFieldSchema:
+    def test_azure_schema_exposes_exclusive_supported_credential_shapes(self):
+        schema = ProviderSecretField._spectacular_annotation["field"]
+        azure_schemas = {
+            credential_schema["title"]: credential_schema
+            for credential_schema in schema["oneOf"]
+            if credential_schema["title"].startswith("Azure ")
+        }
+
+        assert set(azure_schemas) == {
+            "Azure Client Secret Credentials",
+            "Azure Certificate Credentials",
+        }
+        assert azure_schemas["Azure Client Secret Credentials"]["required"] == [
+            "client_id",
+            "client_secret",
+            "tenant_id",
+        ]
+        assert set(azure_schemas["Azure Client Secret Credentials"]["properties"]) == {
+            "client_id",
+            "client_secret",
+            "tenant_id",
+        }
+        assert (
+            azure_schemas["Azure Client Secret Credentials"]["additionalProperties"]
+            is False
+        )
+        assert azure_schemas["Azure Certificate Credentials"]["required"] == [
+            "client_id",
+            "certificate_content",
+            "tenant_id",
+        ]
+        assert set(azure_schemas["Azure Certificate Credentials"]["properties"]) == {
+            "client_id",
+            "certificate_content",
+            "tenant_id",
+        }
+        assert (
+            azure_schemas["Azure Certificate Credentials"]["additionalProperties"]
+            is False
+        )
+
     def test_oraclecloud_schema_includes_legacy_region_field(self):
         schema = ProviderSecretField._spectacular_annotation["field"]
         oraclecloud_schema = next(
