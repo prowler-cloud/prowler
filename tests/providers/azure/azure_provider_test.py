@@ -1712,9 +1712,12 @@ class TestAzureProviderCertificateAuth:
         monkeypatch.setenv("AZURE_CLIENT_ID", self._CLIENT_ID)
         monkeypatch.setenv("AZURE_TENANT_ID", self._TENANT_ID)
         monkeypatch.setenv("AZURE_CERTIFICATE_CONTENT", self._CERT_CONTENT_B64)
-        with patch(
-            "prowler.providers.azure.azure_provider.CertificateCredential"
-        ) as mock_cert_cred:
+        with (
+            patch("prowler.providers.azure.azure_provider.validate_certificate_bundle"),
+            patch(
+                "prowler.providers.azure.azure_provider.CertificateCredential"
+            ) as mock_cert_cred,
+        ):
             AzureProvider.setup_session(
                 az_cli_auth=False,
                 sp_env_auth=False,
@@ -1740,10 +1743,13 @@ class TestAzureProviderCertificateAuth:
         monkeypatch.setenv("AZURE_TENANT_ID", self._TENANT_ID)
         expected_credentials = MagicMock()
 
-        with patch(
-            "prowler.providers.azure.azure_provider._build_certificate_credential",
-            return_value=expected_credentials,
-        ) as build_certificate_credential:
+        with (
+            patch("prowler.providers.azure.azure_provider.validate_certificate_bundle"),
+            patch(
+                "prowler.providers.azure.azure_provider._build_certificate_credential",
+                return_value=expected_credentials,
+            ) as build_certificate_credential,
+        ):
             credentials = AzureProvider.setup_session(
                 az_cli_auth=False,
                 sp_env_auth=False,
@@ -1800,6 +1806,11 @@ class TestAzureProviderCertificateAuth:
         monkeypatch.setenv("AZURE_CERTIFICATE_CONTENT", self._CERT_CONTENT_B64)
 
         with (
+            # `validate_certificate_bundle` runs first on the env-var branch to
+            # fail fast on unparseable bytes; this test isolates the
+            # authentication-error translation path, so keep the placeholder
+            # base64 payload from tripping the bundle check.
+            patch("prowler.providers.azure.azure_provider.validate_certificate_bundle"),
             patch(
                 "prowler.providers.azure.azure_provider._build_certificate_credential",
                 side_effect=ClientAuthenticationError("invalid certificate"),
@@ -2226,6 +2237,181 @@ class TestAzureProviderCertificateThumbprint:
         )
 
         assert _compute_certificate_thumbprint(key_only_pkcs12) is None
+
+
+class TestAzureProviderValidateArguments:
+    """Coverage for the CLI argument-validation edge cases the code review
+    of PROWLER-2378 surfaced (see the SDK PR description for the finding list)."""
+
+    _TENANT_ID = "12345678-1234-1234-1234-123456789012"
+    _CLIENT_ID = "87654321-4321-4321-4321-210987654321"
+
+    def test_certificate_path_without_certificate_auth_or_static_trio_fails(self):
+        # `--browser-auth --certificate-path X` used to parse cleanly and
+        # silently drop the certificate in setup_session; now it fails fast.
+        with pytest.raises(AzureConfigCredentialsError, match="--certificate-auth"):
+            AzureProvider.validate_arguments(
+                az_cli_auth=False,
+                sp_env_auth=False,
+                browser_auth=True,
+                managed_identity_auth=False,
+                certificate_auth=False,
+                tenant_id=self._TENANT_ID,
+                client_id=None,
+                client_secret=None,
+                certificate_content=None,
+                certificate_path="/tmp/prowler-cert.pem",
+            )
+
+    def test_certificate_auth_with_only_tenant_id_does_not_raise(self):
+        # Env-var flow: only --certificate-auth (and optionally --tenant-id)
+        # on the CLI; tenant_id/client_id/cert come from env at setup_session.
+        AzureProvider.validate_arguments(
+            az_cli_auth=False,
+            sp_env_auth=False,
+            browser_auth=False,
+            managed_identity_auth=False,
+            certificate_auth=True,
+            tenant_id=self._TENANT_ID,
+            client_id=None,
+            client_secret=None,
+            certificate_content=None,
+            certificate_path=None,
+        )
+
+    def test_certificate_auth_with_certificate_path_only_does_not_raise(self):
+        # The documented env-var + --certificate-path combination: setup_session
+        # reads AZURE_TENANT_ID / AZURE_CLIENT_ID and loads the file from disk.
+        AzureProvider.validate_arguments(
+            az_cli_auth=False,
+            sp_env_auth=False,
+            browser_auth=False,
+            managed_identity_auth=False,
+            certificate_auth=True,
+            tenant_id=None,
+            client_id=None,
+            client_secret=None,
+            certificate_content=None,
+            certificate_path="/tmp/prowler-cert.pem",
+        )
+
+
+class TestAzureProviderSetupSessionCertificateOverrides:
+    """Ensure the env-var certificate path prefers explicit args over env vars
+    and validates the bundle before instantiating CertificateCredential."""
+
+    _TENANT_ID = "12345678-1234-1234-1234-123456789012"
+    _STALE_TENANT_ID = "99999999-9999-9999-9999-999999999999"
+    _CLIENT_ID = "87654321-4321-4321-4321-210987654321"
+
+    def _region_config(self):
+        return AzureProvider.setup_region_config("AzureCloud")
+
+    def test_explicit_tenant_id_wins_over_env_tenant_id(self, monkeypatch, tmp_path):
+        certificate_path = tmp_path / "prowler-cert.pem"
+        certificate_path.write_bytes(b"env cert bundle")
+        monkeypatch.setenv("AZURE_CLIENT_ID", self._CLIENT_ID)
+        monkeypatch.setenv("AZURE_TENANT_ID", self._STALE_TENANT_ID)
+
+        with (
+            patch("prowler.providers.azure.azure_provider.validate_certificate_bundle"),
+            patch(
+                "prowler.providers.azure.azure_provider._build_certificate_credential"
+            ) as build_certificate_credential,
+        ):
+            AzureProvider.setup_session(
+                az_cli_auth=False,
+                sp_env_auth=False,
+                browser_auth=False,
+                managed_identity_auth=False,
+                certificate_auth=True,
+                certificate_path=str(certificate_path),
+                tenant_id=self._TENANT_ID,
+                azure_credentials=None,
+                region_config=self._region_config(),
+            )
+
+        _, kwargs = build_certificate_credential.call_args
+        assert kwargs["tenant_id"] == self._TENANT_ID
+
+    def test_env_var_branch_validates_bundle_before_building_credential(
+        self, monkeypatch, tmp_path
+    ):
+        # A malformed base64/bundle must raise a certificate-specific error
+        # BEFORE CertificateCredential is instantiated so the audit loop
+        # never runs against a bad bundle.
+        certificate_path = tmp_path / "prowler-cert.pem"
+        certificate_path.write_bytes(b"not a real cert bundle")
+        monkeypatch.setenv("AZURE_CLIENT_ID", self._CLIENT_ID)
+        monkeypatch.setenv("AZURE_TENANT_ID", self._TENANT_ID)
+
+        with (
+            patch(
+                "prowler.providers.azure.azure_provider._build_certificate_credential"
+            ) as build_certificate_credential,
+            pytest.raises(AzureSetUpSessionError),
+        ):
+            AzureProvider.setup_session(
+                az_cli_auth=False,
+                sp_env_auth=False,
+                browser_auth=False,
+                managed_identity_auth=False,
+                certificate_auth=True,
+                certificate_path=str(certificate_path),
+                tenant_id=None,
+                azure_credentials=None,
+                region_config=self._region_config(),
+            )
+
+        build_certificate_credential.assert_not_called()
+
+
+class TestValidateCertificateBundleOrdering:
+    """PEM bundles can arrive with the intermediate CA before the leaf. The
+    validator must find the certificate that actually pairs with the private
+    key instead of trusting the first block."""
+
+    def _self_signed(self):
+        from datetime import datetime, timedelta, timezone
+
+        from cryptography import x509
+        from cryptography.hazmat.primitives import hashes, serialization
+        from cryptography.hazmat.primitives.asymmetric import rsa
+        from cryptography.x509.oid import NameOID
+
+        private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "Prowler")])
+        certificate = (
+            x509.CertificateBuilder()
+            .subject_name(subject)
+            .issuer_name(subject)
+            .public_key(private_key.public_key())
+            .serial_number(x509.random_serial_number())
+            .not_valid_before(datetime.now(timezone.utc))
+            .not_valid_after(datetime.now(timezone.utc) + timedelta(days=1))
+            .sign(private_key, hashes.SHA256())
+        )
+        cert_pem = certificate.public_bytes(serialization.Encoding.PEM)
+        key_pem = private_key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.NoEncryption(),
+        )
+        return cert_pem, key_pem
+
+    def test_accepts_intermediate_before_leaf(self):
+        from prowler.providers.azure.lib.certificate import (
+            validate_certificate_bundle,
+        )
+
+        leaf_cert_pem, leaf_key_pem = self._self_signed()
+        other_cert_pem, _ = self._self_signed()
+
+        bundle = other_cert_pem + leaf_cert_pem + leaf_key_pem
+
+        # No exception: `validate_certificate_bundle` walks every cert block
+        # and pairs the private key with the one that actually matches.
+        validate_certificate_bundle(bundle)
 
 
 def serialization_no_encryption():

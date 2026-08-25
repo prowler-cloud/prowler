@@ -34,6 +34,10 @@ def init_parser(self):
         action="store_true",
         help="Use certificate authentication to log in against Azure",
     )
+    # Modifier of --certificate-auth, not a separate mode. The pairing is
+    # enforced in `validate_arguments` so a stray combination like
+    # `--browser-auth --certificate-path X` fails fast instead of dropping
+    # the certificate silently.
     azure_parser.add_argument(
         "--certificate-path",
         nargs="?",

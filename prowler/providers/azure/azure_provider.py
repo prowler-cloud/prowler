@@ -1,9 +1,12 @@
 import asyncio
 import base64
+import binascii
 import logging
 import os
 import re
 from argparse import ArgumentTypeError
+from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import TimeoutError as FuturesTimeoutError
 from itertools import chain
 from os import getenv
 from typing import Optional, Union
@@ -70,11 +73,16 @@ from prowler.providers.azure.models import AzureIdentityInfo, AzureRegionConfig
 from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
 
-# Attribute we stash on `CertificateCredential` instances so `setup_identity`
-# can surface the certificate SHA-1 thumbprint without reaching into
-# azure-identity's private `_client_credential` dict (which can — and does —
-# change shape across azure-identity versions).
 _PROWLER_CERT_THUMBPRINT_ATTR = "_prowler_certificate_thumbprint"
+
+# Fallback storage used only when `setattr` is rejected (a future azure-identity
+# release that locks the credential with `__slots__`); accessed via id() so no
+# extra references keep the credential alive.
+_CERTIFICATE_THUMBPRINT_FALLBACK: dict[int, str] = {}
+
+# Matches the 30s HTTP timeout on the client-secret path so a hung Entra ID
+# endpoint cannot stall a request thread or Celery worker on either flow.
+_TOKEN_ACQUISITION_TIMEOUT_SECONDS = 30
 
 
 def _build_certificate_credential(
@@ -83,51 +91,70 @@ def _build_certificate_credential(
     certificate_data: bytes,
     authority: Optional[str],
 ) -> "CertificateCredential":
-    """Build a `CertificateCredential` and stash the SHA-1 thumbprint on it.
-
-    Centralises the three-step ritual (construct credential, compute
-    thumbprint, `setattr` it under `_PROWLER_CERT_THUMBPRINT_ATTR`) that
-    `setup_session` and friends would otherwise repeat identically for every
-    cert entry point (static content, static path, env-var cert-auth). Missing
-    the `setattr` in any one call site silently degrades the identity report
-    to "Unknown certificate thumbprint", so keeping it in one place is a real
-    correctness win.
-    """
+    """Build a `CertificateCredential` and remember its SHA-1 thumbprint."""
     credentials = CertificateCredential(
         tenant_id=tenant_id,
         client_id=client_id,
         certificate_data=certificate_data,
         authority=authority,
     )
-    setattr(
-        credentials,
-        _PROWLER_CERT_THUMBPRINT_ATTR,
-        _compute_certificate_thumbprint(certificate_data),
+    _remember_certificate_thumbprint(
+        credentials, _compute_certificate_thumbprint(certificate_data)
     )
     return credentials
 
 
-def _compute_certificate_thumbprint(cert_data: bytes) -> Optional[str]:
-    """Compute the SHA-1 thumbprint of an X.509 certificate.
+def _remember_certificate_thumbprint(
+    credential: "CertificateCredential", thumbprint: Optional[str]
+) -> None:
+    """Stash the thumbprint on the credential, tolerating slotted types."""
+    if thumbprint is None:
+        return
+    try:
+        setattr(credential, _PROWLER_CERT_THUMBPRINT_ATTR, thumbprint)
+    except AttributeError:
+        _CERTIFICATE_THUMBPRINT_FALLBACK[id(credential)] = thumbprint
 
-    Accepts the same certificate_data formats `azure.identity.CertificateCredential`
-    accepts (PEM, DER, or PKCS#12/PFX with the private key) and returns the
-    thumbprint as an uppercase hex string, matching how Entra ID displays it
-    in the App Registration blade. Returns None if none of the parsers can
-    read the bytes so the caller can fall back to a placeholder.
+
+def _get_certificate_thumbprint(credential: object) -> Optional[str]:
+    """Return the thumbprint previously stashed for `credential`, if any."""
+    thumbprint = getattr(credential, _PROWLER_CERT_THUMBPRINT_ATTR, None)
+    if thumbprint is not None:
+        return thumbprint
+    return _CERTIFICATE_THUMBPRINT_FALLBACK.get(id(credential))
+
+
+def _compute_certificate_thumbprint(cert_data: bytes) -> Optional[str]:
+    """Compute the SHA-1 thumbprint of an X.509 certificate as uppercase hex.
+
+    Accepts PEM, DER, or PKCS#12/PFX (with the private key). Returns None if
+    no parser can read the bytes; logs each parser failure so the "Unknown
+    certificate thumbprint" placeholder in `setup_identity` is diagnosable.
     """
-    for loader in (
-        lambda data: pkcs12.load_key_and_certificates(data, None, default_backend())[1],
-        lambda data: x509.load_pem_x509_certificate(data, default_backend()),
-        lambda data: x509.load_der_x509_certificate(data, default_backend()),
+    parser_errors: list[str] = []
+    for loader_name, loader in (
+        (
+            "pkcs12",
+            lambda data: pkcs12.load_key_and_certificates(
+                data, None, default_backend()
+            )[1],
+        ),
+        ("pem", lambda data: x509.load_pem_x509_certificate(data, default_backend())),
+        ("der", lambda data: x509.load_der_x509_certificate(data, default_backend())),
     ):
         try:
             cert = loader(cert_data)
-        except Exception:
+        except Exception as error:
+            parser_errors.append(f"{loader_name}: {error.__class__.__name__}: {error}")
             continue
         if cert is None:
             continue
         return cert.fingerprint(hashes.SHA1()).hex().upper()
+    if parser_errors:
+        logger.warning(
+            "Could not compute certificate thumbprint. Parsers tried: "
+            + "; ".join(parser_errors)
+        )
     return None
 
 
@@ -474,13 +501,26 @@ class AzureProvider(Provider):
             AzureBrowserAuthNoTenantIDError: If browser authentication is enabled but the tenant ID is not found.
         """
 
+        # `--certificate-content`/`--certificate-path` are meaningful only with
+        # `--certificate-auth` or a full static-credentials trio; without one
+        # of those, setup_session would silently drop the certificate.
+        if (certificate_content or certificate_path) and not certificate_auth:
+            if not (tenant_id and client_id):
+                raise AzureConfigCredentialsError(
+                    file=os.path.basename(__file__),
+                    message=(
+                        "--certificate-content and --certificate-path require --certificate-auth, "
+                        "or --tenant-id together with --client-id for the static-credentials flow."
+                    ),
+                )
+
         if (
             not client_id
             and not client_secret
             and not certificate_content
             and not certificate_path
         ):
-            if not browser_auth and tenant_id:
+            if not browser_auth and not certificate_auth and tenant_id:
                 raise AzureTenantIDNoBrowserAuthError(
                     file=os.path.basename(__file__),
                     message="Azure Tenant ID (--tenant-id) is required for browser authentication mode",
@@ -502,7 +542,10 @@ class AzureProvider(Provider):
                     message="Azure Tenant ID (--tenant-id) is required for browser authentication mode",
                 )
         else:
-            if not tenant_id:
+            # `--certificate-auth` reads tenant_id from AZURE_TENANT_ID at
+            # setup_session time, so a missing --tenant-id is not a fatal
+            # error for this specific mode.
+            if not tenant_id and not certificate_auth:
                 raise AzureNotTenantIdButClientIdAndClienSecretError(
                     file=os.path.basename(__file__),
                     message="Tenant Id is required for Azure static credentials. Make sure you are using the correct credentials.",
@@ -652,7 +695,9 @@ class AzureProvider(Provider):
                         f"{environment_credentials_error.__class__.__name__}[{environment_credentials_error.__traceback__.tb_lineno}] -- {environment_credentials_error}"
                     )
                     raise environment_credentials_error
-            elif certificate_auth:
+            elif certificate_auth and not azure_credentials:
+                # Env vars are only required for the pure env-var flow; skip
+                # this check when azure_credentials already carries the material.
                 try:
                     AzureProvider.check_certificate_creds_env_vars(
                         check_certificate_content=not certificate_path
@@ -721,10 +766,14 @@ class AzureProvider(Provider):
                                 certificate_data = cert_file.read()
                         else:
                             certificate_data = base64.b64decode(
-                                getenv("AZURE_CERTIFICATE_CONTENT")
+                                getenv("AZURE_CERTIFICATE_CONTENT"), validate=True
                             )
+                        # Same fail-fast validation the static path runs.
+                        validate_certificate_bundle(certificate_data)
+                        # Prefer the explicit --tenant-id so a stale env var
+                        # cannot silently authenticate against the wrong tenant.
                         credentials = _build_certificate_credential(
-                            tenant_id=getenv("AZURE_TENANT_ID"),
+                            tenant_id=tenant_id or getenv("AZURE_TENANT_ID"),
                             client_id=getenv("AZURE_CLIENT_ID"),
                             certificate_data=certificate_data,
                             authority=region_config.authority,
@@ -736,6 +785,29 @@ class AzureProvider(Provider):
                         )
                         raise AzureClientAuthenticationError(
                             file=os.path.basename(__file__), original_exception=error
+                        )
+                    except (
+                        binascii.Error,
+                        FileNotFoundError,
+                        PermissionError,
+                        IsADirectoryError,
+                        OSError,
+                        ValueError,
+                    ) as error:
+                        # Base64 with stray whitespace, unreadable file, or bytes
+                        # CertificateCredential cannot parse. Surface a
+                        # certificate-specific error instead of a generic one.
+                        logger.error(
+                            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+                        )
+                        if certificate_path:
+                            raise AzureNotValidCertificatePathError(
+                                file=os.path.basename(__file__),
+                                original_exception=error,
+                            )
+                        raise AzureNotValidCertificateContentError(
+                            file=os.path.basename(__file__),
+                            original_exception=error,
                         )
                 else:
                     # Since the authentication method to be used will come as True, we have to negate it since
@@ -1199,15 +1271,8 @@ class AzureProvider(Provider):
                     # `None`.
                     identity.identity_id = client_id or getenv("AZURE_CLIENT_ID")
                     identity.identity_type = "Service Principal with Certificate"
-                    # The SHA-1 thumbprint is computed from the certificate
-                    # bytes by `_compute_certificate_thumbprint` at
-                    # `setup_session` time and stashed on the credential via
-                    # `_PROWLER_CERT_THUMBPRINT_ATTR`. This avoids the older
-                    # pattern of reaching into `credentials._client_credential`,
-                    # which is azure-identity private state and drifts across
-                    # library versions.
                     identity.certificate_thumbprint = (
-                        getattr(credentials, _PROWLER_CERT_THUMBPRINT_ATTR, None)
+                        _get_certificate_thumbprint(credentials)
                         or "Unknown certificate thumbprint"
                     )
                 elif sp_env_auth or client_id:
@@ -1665,7 +1730,7 @@ class AzureProvider(Provider):
         # entry on the app registration.
         try:
             if certificate_content:
-                certificate_data = base64.b64decode(certificate_content)
+                certificate_data = base64.b64decode(certificate_content, validate=True)
             elif certificate_path:
                 with open(certificate_path, "rb") as cert_file:
                     certificate_data = cert_file.read()
@@ -1678,10 +1743,23 @@ class AzureProvider(Provider):
                 certificate_data=certificate_data,
                 authority=region_config.authority,
             )
-            # Acquire a token to force msal to validate the certificate
-            # against Entra ID. A failure raises `ClientAuthenticationError`,
-            # which we translate into the specific certificate error below.
-            credential.get_token(region_config.graph_scope)
+            # get_token has no native timeout parameter, so run it off-thread
+            # with a hard deadline (matches the 30s on the client-secret path).
+            with ThreadPoolExecutor(max_workers=1) as executor:
+                future = executor.submit(
+                    credential.get_token, region_config.graph_scope
+                )
+                try:
+                    future.result(timeout=_TOKEN_ACQUISITION_TIMEOUT_SECONDS)
+                except FuturesTimeoutError as error:
+                    raise AzureCredentialsUnavailableError(
+                        file=os.path.basename(__file__),
+                        message=(
+                            "Timed out waiting for Entra ID to issue a token "
+                            "for the provided certificate."
+                        ),
+                        original_exception=error,
+                    )
         except ClientAuthenticationError as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
@@ -1696,4 +1774,26 @@ class AzureProvider(Provider):
                 file=os.path.basename(__file__),
                 original_exception=error,
                 message="The provided certificate is not valid for the specified Tenant ID and Client ID.",
+            )
+        except (
+            binascii.Error,
+            FileNotFoundError,
+            PermissionError,
+            IsADirectoryError,
+            OSError,
+            ValueError,
+        ) as error:
+            # Malformed base64, unreadable path, or bytes CertificateCredential
+            # cannot parse. Route to the typed certificate errors.
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            if certificate_content:
+                raise AzureNotValidCertificateContentError(
+                    file=os.path.basename(__file__),
+                    original_exception=error,
+                )
+            raise AzureNotValidCertificatePathError(
+                file=os.path.basename(__file__),
+                original_exception=error,
             )
