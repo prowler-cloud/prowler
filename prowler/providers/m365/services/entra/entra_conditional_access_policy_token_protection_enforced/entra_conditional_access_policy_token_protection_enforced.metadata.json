@@ -1,0 +1,37 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_conditional_access_policy_token_protection_enforced",
+  "CheckTitle": "Conditional Access policy enforces Token Protection",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "At least one enabled Conditional Access policy should enforce **Token Protection** (the **secureSignInSession** session control) for targeted users. Token Protection binds sign-in session tokens (such as Primary Refresh Tokens) to the device, reducing the effectiveness of token theft and replay attacks.",
+  "Risk": "Without **Token Protection**, stolen sign-in tokens can be replayed from an attacker's device to impersonate the user and bypass authentication, including **MFA**, because the token is not cryptographically bound to the original device.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-token-protection"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft Entra admin center at https://entra.microsoft.com/\n2. Go to **Protection** > **Conditional Access** > **Policies** > **New policy**\n3. Under **Users**, include the targeted users (exclude only documented break-glass accounts)\n4. Under **Target resources**, select the supported applications (e.g., Exchange Online, SharePoint Online)\n5. Under **Conditions** > **Device platforms**, include Windows\n6. Under **Session**, enable **Require token protection for sign-in sessions**\n7. Set the policy to **On** and click **Create**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Create a Conditional Access policy that enforces Token Protection (secure sign-in session) for supported applications on Windows devices to mitigate token theft and replay.",
+      "Url": "https://hub.prowler.com/check/entra_conditional_access_policy_token_protection_enforced"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

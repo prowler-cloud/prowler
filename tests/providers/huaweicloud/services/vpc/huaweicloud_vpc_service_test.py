@@ -6,6 +6,7 @@ from prowler.providers.huaweicloud.services.vpc.vpc_service import (
     SecurityGroupRule,
     SecurityGroups,
     VPCs,
+    rule_source_is_open,
 )
 from tests.providers.huaweicloud.huaweicloud_fixtures import (
     set_mocked_huaweicloud_provider,
@@ -24,6 +25,18 @@ def _provider_with_client(regional_client):
 
 
 class TestVPCService:
+    def test_rule_with_remote_address_group_is_not_open(self):
+        rule = SecurityGroupRule(
+            id="rule-1",
+            direction="ingress",
+            protocol="tcp",
+            ethertype="IPv4",
+            remote_ip_prefix="",
+            remote_address_group_id="address-group-1",
+        )
+
+        assert rule_source_is_open(rule) is False
+
     def test_list_vpcs_and_security_groups_parses(self):
         vpc = SimpleNamespace(
             id="vpc-1",
@@ -36,12 +49,14 @@ class TestVPCService:
         rule = SimpleNamespace(
             id="rule-1",
             direction="ingress",
+            action="deny",
             protocol="tcp",
             ethertype="IPv4",
             port_range_min=22,
             port_range_max=22,
             remote_ip_prefix="0.0.0.0/0",
             remote_group_id="",
+            remote_address_group_id="address-group-1",
             description="ssh open",
         )
         sg = SimpleNamespace(
@@ -82,8 +97,10 @@ class TestVPCService:
         parsed_rule = parsed_sg.rules[0]
         assert isinstance(parsed_rule, SecurityGroupRule)
         assert parsed_rule.direction == "ingress"
+        assert parsed_rule.action == "deny"
         assert parsed_rule.protocol == "tcp"
         assert parsed_rule.remote_ip_prefix == "0.0.0.0/0"
+        assert parsed_rule.remote_address_group_id == "address-group-1"
         assert parsed_rule.port_range_min == 22
         assert parsed_rule.port_range_max == 22
 
@@ -94,12 +111,14 @@ class TestVPCService:
         rule = SimpleNamespace(
             id="rule-1",
             direction=None,
+            action=None,
             protocol=None,
             ethertype=None,
             port_range_min=None,
             port_range_max=None,
             remote_ip_prefix=None,
             remote_group_id=None,
+            remote_address_group_id=None,
             description=None,
         )
         sg = SimpleNamespace(
@@ -134,8 +153,10 @@ class TestVPCService:
         assert parsed_sg.name == "sg-1"  # falls back to id
         assert parsed_sg.vpc_id == ""
         parsed_rule = parsed_sg.rules[0]
+        assert parsed_rule.action == "allow"
         assert parsed_rule.protocol == ""
         assert parsed_rule.remote_ip_prefix == ""
+        assert parsed_rule.remote_address_group_id == ""
         assert parsed_rule.description == ""
         assert parsed_rule.direction == ""
 

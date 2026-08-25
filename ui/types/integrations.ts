@@ -2,7 +2,15 @@ import { z } from "zod";
 
 import type { TaskState } from "@/types/tasks";
 
-export type IntegrationType = "amazon_s3" | "aws_security_hub" | "jira";
+export const INTEGRATION_TYPE = {
+  AMAZON_S3: "amazon_s3",
+  AWS_SECURITY_HUB: "aws_security_hub",
+  JIRA: "jira",
+  SLACK: "slack",
+} as const;
+
+export type IntegrationType =
+  (typeof INTEGRATION_TYPE)[keyof typeof INTEGRATION_TYPE];
 
 export const JIRA_DISPATCH_MODE = {
   INDIVIDUAL: "individual",
@@ -68,7 +76,10 @@ export interface IntegrationProps {
     inserted_at: string;
     updated_at: string;
     enabled: boolean;
-    connected: boolean;
+    // `null` until a connection check has run: never verified, neither working
+    // nor broken. A Slack install starts here, and returns here on a channel
+    // change.
+    connected: boolean | null;
     connection_last_checked_at: string | null;
     integration_type: IntegrationType;
     configuration: {
@@ -87,12 +98,29 @@ export interface IntegrationProps {
       domain?: string;
       projects?: { [key: string]: string };
       issue_types?: { [key: string]: string[] };
+      // Slack specific configuration, server-owned. The channel keys are absent
+      // until one is chosen, not present and null: read them with `?? null`.
+      team_id?: string;
+      team_name?: string;
+      bot_user_id?: string;
+      channel_id?: string;
+      channel_name?: string;
       [key: string]: unknown;
     };
     url?: string;
   };
   relationships?: { providers?: { data: { type: "providers"; id: string }[] } };
   links: { self: string };
+}
+
+/**
+ * A channel Prowler can post to: every active public channel, plus the private
+ * ones `@Prowler` was invited to. `is_private` keeps the API's own naming.
+ */
+export interface SlackChannelOption {
+  id: string;
+  name: string;
+  is_private: boolean;
 }
 
 // Jira dispatch types

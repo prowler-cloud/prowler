@@ -4,13 +4,9 @@ on:
   push:
     branches:
       - 'master'
-    paths:
-      - '.github/**'
   pull_request:
     branches:
       - 'master'
-    paths:
-      - '.github/**'
   schedule:
     - cron: '45 06 * * *'
   workflow_dispatch:
@@ -46,12 +42,22 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
-          persist-credentials: false
+          # zizmor: ignore[artipacked]
+          persist-credentials: true # Required by tj-actions/changed-files to fetch PR branch
 
-      # -shellcheck= because the shell-quality findings are a separate backlog; this
-      # check is here for the schema, and mixing the two would make it unactionable.
+      # Always runs so it always reports; the lint is skipped when nothing changed.
+      - name: Check for workflow changes
+        id: check-changes
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
+        with:
+          files: .github/**
+
+      # SC2129 is style only: it suggests grouping consecutive redirects.
       - name: Run actionlint
+        if: steps.check-changes.outputs.any_changed == 'true'
+        env:
+          SHELLCHECK_OPTS: '-e SC2129'
         run: |
-          docker run --rm -v "$PWD:/repo" --workdir /repo \
+          docker run --rm -v "$PWD:/repo" --workdir /repo -e SHELLCHECK_OPTS \
             rhysd/actionlint:1.7.12@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667 \
-            -color -shellcheck=
+            -color

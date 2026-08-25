@@ -51,8 +51,8 @@ repos:
     rev: v1.7.12
     hooks:
       - id: actionlint
-        # Shell-quality findings are a separate backlog; this hook is here for the schema.
-        args: ['-shellcheck=']
+        # SC2129 only suggests grouping consecutive redirects; not worth restructuring for.
+        args: ['-shellcheck=-e SC2129']
         priority: 30
 
   - repo: https://github.com/zizmorcore/zizmor-pre-commit

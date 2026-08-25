@@ -170,7 +170,10 @@
     {
       "Id": "1.3.2",
       "Description": "Idle session timeout allows the configuration of a setting which will timeout inactive users after a pre-determined amount of time. When a user reaches the set idle timeout session, they'll get a notification that they're about to be signed out. They must choose to stay signed in or they'll be automatically signed out of all Microsoft 365 web apps. Combined with a Conditional Access rule this will only impact unmanaged devices. A managed device is considered a device managed by Intune MDM or joined to a domain (Entra ID or Hybrid joined). The following Microsoft 365 web apps are supported. - Outlook Web App - OneDrive - SharePoint - Microsoft Fabric - Microsoft365.com and other start pages - Microsoft 365 web apps (Word, Excel, PowerPoint) - Microsoft 365 Admin Center - M365 Defender Portal - Microsoft Purview Compliance Portal The recommended setting is 3 hours (or less) for unmanaged devices. Note: Idle session timeout doesn't affect Microsoft 365 desktop and mobile apps.",
-      "Checks": [],
+      "Checks": [
+        "entra_idle_session_timeout_configured",
+        "entra_conditional_access_policy_app_enforced_restrictions"
+      ],
       "Attributes": [
         {
           "Section": "1 Microsoft 365 admin center",
@@ -551,7 +554,9 @@
     {
       "Id": "2.1.10",
       "Description": "DMARC, or Domain-based Message Authentication, Reporting, and Conformance, assists recipient mail systems in determining the appropriate action to take when messages from a domain fail to meet SPF or DKIM authentication criteria.",
-      "Checks": [],
+      "Checks": [
+        "defender_domain_dmarc_records_published"
+      ],
       "Attributes": [
         {
           "Section": "2 Microsoft Defender",
@@ -1166,7 +1171,9 @@
     {
       "Id": "5.1.3.1",
       "Description": "This setting allows users in the organization to create new security groups and add members to these groups in the Azure portal, API, or PowerShell. These new groups also show up in the Access Panel for all other users. If the policy setting on the group allows it, other users can create requests to join these groups. The recommended state is Users can create security groups in Azure portals, API or PowerShell set to No.",
-      "Checks": [],
+      "Checks": [
+        "entra_policy_default_user_cannot_create_security_groups"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",
@@ -1229,7 +1236,9 @@
     {
       "Id": "5.1.3.4",
       "Description": "All users within a Microsoft Entra organization are permitted to create new Microsoft 365 groups and add members to those groups through the Azure portal, API, or PowerShell. Newly created groups also appear in the Access Panel for all other users. When the applicable group policy settings allow it, users can submit requests to join these groups. The recommended state is No.",
-      "Checks": [],
+      "Checks": [
+        "entra_policy_default_user_cannot_create_m365_groups"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",
@@ -1526,7 +1535,9 @@
     {
       "Id": "5.1.6.1",
       "Description": "B2B collaboration is a feature within Microsoft Entra External ID that allows for guest invitations to an organization. Ensure users can only send invitations to specified domains. Note: This list works independently from OneDrive for Business and SharePoint Online allow/block lists. To restrict individual file sharing in SharePoint Online, set up an allow or blocklist for OneDrive for Business and SharePoint Online. For instance, in SharePoint or OneDrive users can still share with external users from prohibited domains by using Anyone links if they haven't been disabled.",
-      "Checks": [],
+      "Checks": [
+        "entra_policy_guest_invitations_restricted_to_allowed_domains"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",
@@ -1777,7 +1788,9 @@
     {
       "Id": "5.2.2.8",
       "Description": "Microsoft Entra ID Protection sign-in risk detects risks in real-time and offline. A risky sign-in is an indicator for a sign-in attempt that might not have been performed by the legitimate owner of a user account. Note: While Identity Protection also provides two risk policies with limited conditions, Microsoft highly recommends setting up risk-based policies in Conditional Access as opposed to the \"legacy method\" for the following benefits: - Enhanced diagnostic data - Report-only mode integration - Graph API support - Use more Conditional Access attributes like sign-in frequency in the policy",
-      "Checks": [],
+      "Checks": [
+        "entra_conditional_access_policy_block_high_medium_sign_in_risk"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",
@@ -1890,7 +1903,9 @@
     {
       "Id": "5.2.2.13",
       "Description": "Sign-in frequency defines the time period before a user is asked to sign in again when attempting to access a resource. The Microsoft Entra ID default configuration for user sign-in frequency is a rolling window of 90 days. The recommended state for all users is to enforce periodic reauthentication for 7 days or less.",
-      "Checks": [],
+      "Checks": [
+        "entra_conditional_access_policy_sign_in_frequency_all_users"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",
@@ -1911,7 +1926,9 @@
     {
       "Id": "5.2.2.14",
       "Description": "Microsoft Entra ID Conditional Access allows an organization to configure Named locations and configure whether those locations are trusted or untrusted. These settings provide organizations the means to specify Geographical locations for use in conditional access policies, or define actual IP addresses and IP ranges and whether or not those IP addresses and/or ranges are trusted by the organization. The recommended state is to define at least one trusted, IP range named location.",
-      "Checks": [],
+      "Checks": [
+        "entra_conditional_access_trusted_named_location_exists"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",
@@ -1932,7 +1949,9 @@
     {
       "Id": "5.2.2.15",
       "Description": "Conditional Access Policies can be used to block access from geographic locations that are deemed out-of-scope for your organization or application. The scope and variables for this policy should be carefully examined and defined. The recommended state is to configure at least one policy to block access from untrusted locations.",
-      "Checks": [],
+      "Checks": [
+        "entra_conditional_access_policy_untrusted_locations_blocked"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",
@@ -1953,7 +1972,9 @@
     {
       "Id": "5.2.2.16",
       "Description": "Token Protection is a Conditional Access session control that attempts to reduce token replay attacks by ensuring only device bound sign-in session tokens, like Primary Refresh Tokens (PRTs), are accepted by Microsoft Entra ID when applications request access to protected resources. When a user registers a supported device with Microsoft Entra, a PRT is issued and cryptographically bound to that device. This binding ensures that even if a threat actor steals the token, it can't be used from another device. With Token Protection enforced, Microsoft Entra validates that only these bound sign-in session tokens are used by supported applications. The recommended state is to enforce Token Protection for Office 365 Exchange Online, Office 365 SharePoint Online and Microsoft Teams Services.",
-      "Checks": [],
+      "Checks": [
+        "entra_conditional_access_policy_token_protection_enforced"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",
@@ -1974,7 +1995,9 @@
     {
       "Id": "5.2.2.17",
       "Description": "Authentication transfer is a flow that lets users seamlessly transfer authenticated state from one device to another. For example, users might see a QR code in the desktop version of Outlook that, when scanned on their mobile device, transfers their authenticated state to the mobile device. The recommended state is to block Authentication transfer.",
-      "Checks": [],
+      "Checks": [
+        "entra_conditional_access_policy_authentication_transfer_blocked"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",
@@ -1995,7 +2018,9 @@
     {
       "Id": "5.2.3.1",
       "Description": "Microsoft provides supporting settings to enhance the configuration of the Microsoft Authenticator application. These settings provide users with additional information and context when they receive MFA passwordless and push requests, including the geographic location of the request, the requesting application, and a requirement for number matching. The recommended state is Enabled for the following: - Show application name in push and passwordless notifications - Show geographic location in push and passwordless notifications Note: On February 27, 2023 Microsoft started enforcing number matching tenant-wide for all users using Microsoft Authenticator.",
-      "Checks": [],
+      "Checks": [
+        "entra_authentication_method_authenticator_show_context"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",
@@ -2016,7 +2041,9 @@
     {
       "Id": "5.2.3.2",
       "Description": "With Entra Password Protection, default global banned password lists are automatically applied to all users in an Entra ID tenant. To support business and security needs, custom banned password lists can be defined. When users change or reset their passwords, these banned password lists are checked to enforce the use of strong passwords. A custom banned password list should include some of the following examples: - Brand names - Product names - Locations, such as company headquarters - Company-specific internal terms - Abbreviations that have specific company meaning",
-      "Checks": [],
+      "Checks": [
+        "entra_password_protection_custom_banned_list_enforced"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",
@@ -2037,7 +2064,9 @@
     {
       "Id": "5.2.3.3",
       "Description": "Microsoft Entra Password Protection provides a global and custom banned password list. A password change request fails if there's a match in these banned password list. To protect on-premises Active Directory Domain Services (AD DS) environment, install and configure Entra Password Protection. Note: This recommendation applies to Hybrid deployments only and will have no impact unless working with on-premises Active Directory.",
-      "Checks": [],
+      "Checks": [
+        "entra_password_protection_on_premises_enforced"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",
@@ -2125,7 +2154,9 @@
     {
       "Id": "5.2.3.7",
       "Description": "Authentication methods support a wide variety of scenarios for signing in to Microsoft 365 resources. Some of these methods are inherently more secure than others but require more investment in time to get users enrolled and operational. The email one-time passcode feature is a way to authenticate B2B collaboration users when they can't be authenticated through other means, such as Microsoft Entra ID, Microsoft account (MSA), or social identity providers. When a B2B guest user tries to redeem your invitation or sign in to your shared resources, they can request a temporary passcode, which is sent to their email address. Then they enter this passcode to continue signing in. The recommended state is to Disable email OTP.",
-      "Checks": [],
+      "Checks": [
+        "entra_authentication_method_email_otp_disabled"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",
@@ -2146,7 +2177,9 @@
     {
       "Id": "5.2.3.8",
       "Description": "The account lockout threshold determines how many failed login attempts are permitted prior to placing the account in a locked-out state and initiating a variable lockout duration. The recommended Lockout threshold is 10 or less.",
-      "Checks": [],
+      "Checks": [
+        "entra_password_protection_lockout_threshold_limited"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",
@@ -2167,7 +2200,9 @@
     {
       "Id": "5.2.3.9",
       "Description": "The account lockout duration value determines how long an account retains the status of lockout, and therefore how long before a user can continue to attempt to login after passing the lockout threshold. The recommended state is Lockout duration in seconds is at least 60.",
-      "Checks": [],
+      "Checks": [
+        "entra_password_protection_lockout_duration_configured"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",
@@ -2335,7 +2370,9 @@
     {
       "Id": "5.3.2",
       "Description": "Access reviews enable administrators to establish an efficient automated process for reviewing group memberships, access to enterprise applications, and role assignments. These reviews can be scheduled to recur regularly, with flexible options for delegating the task of reviewing membership to different members of the organization. When configured for guest users, access reviews can automatically remove access if no reviewer responds within the review period, enforcing a fail-closed posture for external identities.",
-      "Checks": [],
+      "Checks": [
+        "entra_access_review_guest_users_configured"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",
@@ -2356,7 +2393,9 @@
     {
       "Id": "5.3.3",
       "Description": "Access reviews in Microsoft Entra Privileged Identity Management (PIM) enable administrators to periodically validate whether users still require their privileged role assignments. These reviews can be scheduled to recur on a regular cadence and can be delegated to reviewers other than the role holders themselves, such as security auditors.",
-      "Checks": [],
+      "Checks": [
+        "entra_access_review_privileged_roles_configured"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",
@@ -2377,7 +2416,9 @@
     {
       "Id": "5.3.4",
       "Description": "Microsoft Entra Privileged Identity Management can be used to audit roles, allow just in time activation of roles and allow for periodic role attestation. Requiring approval before activation allows one of the selected approvers to first review and then approve the activation prior to PIM granted the role. The approver doesn't have to be a group member or owner. The recommended state is Require approval to activate for the Global Administrator role.",
-      "Checks": [],
+      "Checks": [
+        "entra_pim_global_administrator_approval_required"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",
@@ -2398,7 +2439,9 @@
     {
       "Id": "5.3.5",
       "Description": "Microsoft Entra Privileged Identity Management can be used to audit roles, allow just in time activation of roles and allow for periodic role attestation. Requiring approval before activation allows one of the selected approvers to first review and then approve the activation prior to PIM granted the role. The approver doesn't have to be a group member or owner. The recommended state is Require approval to activate for the Privileged Role Administrator role.",
-      "Checks": [],
+      "Checks": [
+        "entra_pim_privileged_role_administrator_approval_required"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",

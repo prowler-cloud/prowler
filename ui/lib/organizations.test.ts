@@ -9,7 +9,7 @@ import {
 
 import {
   getCandidateNoun,
-  getNameSourceLabel,
+  organizationNameFallbackHint,
   getNodeLabel,
   toNodeKind,
 } from "./organizations";
@@ -22,6 +22,9 @@ describe("getNodeLabel", () => {
     expect(getNodeLabel(ORGANIZATION_TYPE.GCP, NODE_KIND.FOLDER)).toBe(
       "Folder",
     );
+    expect(
+      getNodeLabel(ORGANIZATION_TYPE.AZURE, NODE_KIND.MANAGEMENT_GROUP),
+    ).toBe("Management Group");
   });
 
   it("falls back to the organization type's container label when kind is absent", () => {
@@ -29,11 +32,6 @@ describe("getNodeLabel", () => {
     // rows that have no kind at all.
     expect(getNodeLabel(ORGANIZATION_TYPE.AWS)).toBe("Organizational Unit");
     expect(getNodeLabel(ORGANIZATION_TYPE.GCP)).toBe("Folder");
-  });
-
-  it("uses the organization type's own vocabulary for types without an onboarding flow", () => {
-    // Display covers every organization type the API can report; an Azure
-    // organization must never inherit AWS wording.
     expect(getNodeLabel(ORGANIZATION_TYPE.AZURE)).toBe("Management Group");
   });
 
@@ -41,8 +39,8 @@ describe("getNodeLabel", () => {
     // The enum mirrors a server-side one: an unknown value must render neutrally
     // instead of crashing the cell or claiming AWS.
     expect(getNodeLabel("oci" as OrganizationType)).toBe("Group");
-    expect(getNameSourceLabel("oci" as OrganizationType)).toBe(
-      "the cloud provider",
+    expect(organizationNameFallbackHint("oci" as OrganizationType)).toBe(
+      "If left blank, Prowler will use the organization identifier.",
     );
   });
 
@@ -50,13 +48,17 @@ describe("getNodeLabel", () => {
     // `kind` is typed but unvalidated: node rows pass the wire attribute
     // straight through, so a backend-added kind must resolve to the
     // organization's own container label. Returning `undefined` would crash
-    // callers that lowercase the result (the deletion dialog).
-    const unknownKind = "management-group" as NodeKind;
+    // callers that lowercase the result (the deletion dialog). Every kind this
+    // build knows now has a label, so the case needs a kind it does not.
+    const unknownKind = "compartment" as NodeKind;
 
     expect(getNodeLabel(ORGANIZATION_TYPE.AWS, unknownKind)).toBe(
       "Organizational Unit",
     );
     expect(getNodeLabel(ORGANIZATION_TYPE.GCP, unknownKind)).toBe("Folder");
+    expect(getNodeLabel(ORGANIZATION_TYPE.AZURE, unknownKind)).toBe(
+      "Management Group",
+    );
     expect(getNodeLabel("oci" as OrganizationType, unknownKind)).toBe("Group");
   });
 
@@ -79,8 +81,8 @@ describe("getNodeLabel", () => {
         "Folder",
       );
       expect(getNodeLabel(key as OrganizationType)).toBe("Group");
-      expect(getNameSourceLabel(key as OrganizationType)).toBe(
-        "the cloud provider",
+      expect(organizationNameFallbackHint(key as OrganizationType)).toBe(
+        "If left blank, Prowler will use the organization identifier.",
       );
       expect(getCandidateNoun(key as OrganizationType)).toEqual({
         singular: "account",
@@ -90,11 +92,18 @@ describe("getNodeLabel", () => {
   });
 });
 
-describe("getNameSourceLabel", () => {
-  it("names the provider-side source of the organization name", () => {
-    expect(getNameSourceLabel(ORGANIZATION_TYPE.AWS)).toBe("AWS");
-    expect(getNameSourceLabel(ORGANIZATION_TYPE.GCP)).toBe("Google Cloud");
-    expect(getNameSourceLabel(ORGANIZATION_TYPE.AZURE)).toBe("Azure");
+describe("organizationNameFallbackHint", () => {
+  it("names the identifier the organization falls back to, per type", () => {
+    // Never a provider-side name: the organization exists before discovery runs.
+    expect(organizationNameFallbackHint(ORGANIZATION_TYPE.AWS)).toBe(
+      "If left blank, Prowler will use the AWS organization ID.",
+    );
+    expect(organizationNameFallbackHint(ORGANIZATION_TYPE.GCP)).toBe(
+      "If left blank, Prowler will use the organization ID.",
+    );
+    expect(organizationNameFallbackHint(ORGANIZATION_TYPE.AZURE)).toBe(
+      "If left blank, Prowler will use the tenant ID.",
+    );
   });
 });
 
@@ -108,6 +117,10 @@ describe("getCandidateNoun", () => {
       singular: "project",
       plural: "projects",
     });
+    expect(getCandidateNoun(ORGANIZATION_TYPE.AZURE)).toEqual({
+      singular: "subscription",
+      plural: "subscriptions",
+    });
   });
 });
 
@@ -117,11 +130,13 @@ describe("toNodeKind", () => {
       NODE_KIND.ORGANIZATIONAL_UNIT,
     );
     expect(toNodeKind("folder")).toBe(NODE_KIND.FOLDER);
+    expect(toNodeKind("management-group")).toBe(NODE_KIND.MANAGEMENT_GROUP);
   });
 
   it("returns undefined for absent or unknown kinds", () => {
     expect(toNodeKind(undefined)).toBeUndefined();
     expect(toNodeKind("")).toBeUndefined();
     expect(toNodeKind("organizational_unit")).toBeUndefined();
+    expect(toNodeKind("management_group")).toBeUndefined();
   });
 });

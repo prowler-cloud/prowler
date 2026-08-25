@@ -9,6 +9,7 @@ import { ChevronLeft } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
 import {
+  loadFindingTriageDetail,
   loadLatestFindingTriageNote,
   updateFindingTriage,
 } from "@/actions/findings";
@@ -97,6 +98,7 @@ export function FindingsGroupDrillDown({
     onTriageUpdateAction: (input) =>
       updateTriageOptimistically(input, updateFindingTriage),
     onTriageNoteLoadAction: loadLatestFindingTriageNote,
+    onTriageDetailLoadAction: loadFindingTriageDetail,
   });
 
   const table = useReactTable({

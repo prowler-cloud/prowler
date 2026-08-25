@@ -157,7 +157,8 @@ jobs:
           echo "${STEPS_CHANGED_SOURCE_OUTPUTS_ALL_CHANGED_FILES}"
           # Convert space-separated to vitest related format (remove ui/ prefix for relative paths)
           CHANGED_FILES=$(echo "${STEPS_CHANGED_SOURCE_OUTPUTS_ALL_CHANGED_FILES}" | tr ' ' '\n' | sed 's|^ui/||' | tr '\n' ' ')
-          pnpm exec vitest related $CHANGED_FILES --run --project unit
+          read -ra changed <<< "$CHANGED_FILES"
+          pnpm exec vitest related "${changed[@]}" --run --project unit
         env:
           STEPS_CHANGED_SOURCE_OUTPUTS_ALL_CHANGED_FILES: ${{ steps.changed-source.outputs.all_changed_files }}
 

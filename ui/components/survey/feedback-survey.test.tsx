@@ -84,7 +84,11 @@ const provideSurveys = (surveys: Survey[]): void => {
   });
 };
 
-const renderSurvey = async () => {
+// Pre-evaluating the lazy chunk keeps findBy* queries from racing module
+// evaluation under full-suite load; guard tests that assert the chunk is never
+// touched opt out via preloadRuntime: false.
+const renderSurvey = async ({ preloadRuntime = true } = {}) => {
+  if (preloadRuntime) await import("./runtime-feedback-survey");
   const { FeedbackSurvey } = await import("./feedback-survey");
   return render(<FeedbackSurvey />);
 };
@@ -475,7 +479,7 @@ describe("FeedbackSurvey", () => {
     });
 
     // When
-    const view = await renderSurvey();
+    const view = await renderSurvey({ preloadRuntime: false });
 
     // Then - no init, no survey fetch, nothing rendered
     expect(mocks.init).not.toHaveBeenCalled();
@@ -495,7 +499,7 @@ describe("FeedbackSurvey", () => {
     });
 
     // When
-    const view = await renderSurvey();
+    const view = await renderSurvey({ preloadRuntime: false });
 
     // Then
     expect(view.container).toBeEmptyDOMElement();
@@ -515,7 +519,7 @@ describe("FeedbackSurvey", () => {
     provideSurveys([SURVEY_FIXTURE]);
 
     // When
-    const view = await renderSurvey();
+    const view = await renderSurvey({ preloadRuntime: false });
 
     // Then - no init, no trigger, no survey fetch, no capture, regardless of config
     expect(view.container).toBeEmptyDOMElement();
