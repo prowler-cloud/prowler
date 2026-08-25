@@ -473,14 +473,16 @@ export class AlertsPageHarness extends BrowserHarness<AlertsFixture> {
       /Destinations/.test(header.textContent ?? ""),
     );
     if (columnIndex === -1) {
-      throw new Error("ruleDestinationsSummary: no destinations column");
+      throw new Error("ruleDestinationsSummary: no alerts table");
     }
 
     const row = await this.waitFor(
       () =>
         Array.from(
-          this.container.querySelectorAll<HTMLTableRowElement>("tbody tr"),
-        ).find((candidate) => (candidate.textContent ?? "").includes(ruleName)),
+          this.container.querySelectorAll<HTMLButtonElement>("tbody tr button"),
+        )
+          .find((button) => (button.textContent ?? "").trim() === ruleName)
+          ?.closest("tr") ?? null,
       10000,
       `the listed rule "${ruleName}"`,
     );
