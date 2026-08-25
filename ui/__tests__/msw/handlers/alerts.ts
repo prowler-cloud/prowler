@@ -16,6 +16,7 @@ import { http, HttpResponse } from "msw";
 
 import {
   ALERTS_LIST_SERVER_ERROR_DETAIL,
+  ALERTS_READ_FORBIDDEN_DETAIL,
   ALERTS_SLACK_CHANNEL_NOT_ELIGIBLE_CODE,
   ALERTS_SLACK_NOT_CONNECTED_DETAIL,
   alertsChannelNotAuthorizedDetail,
@@ -44,6 +45,22 @@ const errorBody = (detail: string, status: number, code?: string) => ({
     },
   ],
 });
+
+/**
+ * A read the fixture asks to fail. The status is the whole point: a `5xx`
+ * throws out of `handleApiResponse` and rejects the caller's promise, a `4xx`
+ * comes back as an error payload — two routes into the UI, not one.
+ */
+const readFailure = (status: number): Response =>
+  HttpResponse.json(
+    errorBody(
+      status >= 500
+        ? ALERTS_LIST_SERVER_ERROR_DETAIL
+        : ALERTS_READ_FORBIDDEN_DETAIL,
+      status,
+    ),
+    { status },
+  );
 
 const collection = (data: unknown[]) => ({
   data,
@@ -351,15 +368,16 @@ export const handlersForAlerts = (fx: AlertsFixture) => {
     }),
 
     // --- The channels the alert form offers ---------------------------------
-    http.get(`${API}/alerts/slack-channels`, () =>
-      HttpResponse.json({
+    http.get(`${API}/alerts/slack-channels`, () => {
+      if (fx.channelsReadError) return readFailure(fx.channelsReadError);
+      return HttpResponse.json({
         data: eligibleChannels().map((channel) => ({
           type: "slack-channels",
           id: channel.id,
           attributes: { name: channel.name, is_private: channel.isPrivate },
         })),
-      }),
-    ),
+      });
+    }),
 
     // --- Recipients ---------------------------------------------------------
     http.get(`${API}/alerts/recipients`, () =>
@@ -381,6 +399,8 @@ export const handlersForAlerts = (fx: AlertsFixture) => {
 
     // --- The integration read that tells the two empty states apart ---------
     http.get(`${API}/integrations`, ({ request }) => {
+      if (fx.integrationsReadError)
+        return readFailure(fx.integrationsReadError);
       const type = new URL(request.url).searchParams.get(
         "filter[integration_type]",
       );

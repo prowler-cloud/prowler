@@ -21,6 +21,7 @@ import {
   emptyChannelPoolAlertsFixture,
   noSlackAlertsFixture,
   reinstalledWorkspaceAlertsFixture,
+  unconfirmedChannelPoolAlertsFixture,
 } from "@/__tests__/msw/handlers/alerts.fixtures";
 
 import { AlertsPageHarness, CHANNEL_FIELD_STATE } from "./alerts-page.harness";
@@ -221,6 +222,108 @@ describe("alert rules target Slack channels", () => {
     expect(await harness.savedRuleChannels()).toEqual([
       ALERTS_PUBLIC_CHANNEL.id,
       ALERTS_PRIVATE_CHANNEL.id,
+    ]);
+  });
+
+  it("keeps a rule's channels readable when the pool is empty but its own are stored", async () => {
+    const harness = new AlertsPageHarness(
+      unconfirmedChannelPoolAlertsFixture(),
+    );
+    await harness.mount();
+    await harness.openEditModal(RULE_NAME);
+
+    // Reachable from backend state alone: the read model enriches from what is
+    // configured, the pool offers only what is confirmed. An empty pool must
+    // not swallow the selection the rule actually holds.
+    expect(await harness.channelFieldState()).toBe(
+      CHANNEL_FIELD_STATE.EMPTY_POOL,
+    );
+    expect(await harness.channelPickerDisabled()).toBe(true);
+    expect(await harness.selectedChannelChips()).toEqual([
+      { name: ALERTS_PUBLIC_CHANNEL.name, isPrivate: false },
+      { name: ALERTS_PRIVATE_CHANNEL.name, isPrivate: true },
+    ]);
+    expect(await harness.channelFieldNotice()).toMatch(/authorize/i);
+
+    // Retained ids are never re-validated, so the unconfirmed pair still saves.
+    await harness.saveRule();
+    expect(await harness.savedRuleChannels()).toEqual([
+      ALERTS_PUBLIC_CHANNEL.id,
+      ALERTS_PRIVATE_CHANNEL.id,
+    ]);
+  });
+
+  it("settles, and claims nothing, when the channels read fails outright", async () => {
+    const harness = new AlertsPageHarness(
+      alertsFixture({
+        channelsReadError: 500,
+        rules: [
+          alertRuleFixture({
+            slackChannelIds: [
+              ALERTS_PUBLIC_CHANNEL.id,
+              ALERTS_PRIVATE_CHANNEL.id,
+            ],
+          }),
+        ],
+      }),
+    );
+    await harness.mount();
+    await harness.openEditModal(RULE_NAME);
+
+    // A `5xx` throws out of the action and rejects the mount's read. Reading
+    // the state at all is the assertion: the loading skeleton stamps no
+    // `data-alert-channels-state`, so an unguarded rejection times out here.
+    expect(await harness.channelFieldState()).toBe(
+      CHANNEL_FIELD_STATE.NO_INTEGRATION,
+    );
+    expect(await harness.channelPickerDisabled()).toBe(true);
+    expect(await harness.selectedChannelChips()).toEqual([
+      { name: ALERTS_PUBLIC_CHANNEL.name, isPrivate: false },
+      { name: ALERTS_PRIVATE_CHANNEL.name, isPrivate: true },
+    ]);
+
+    // The tenant's workspace is connected. A read that failed cannot say so
+    // either way, so the copy says neither.
+    const notice = await harness.channelFieldNotice();
+    expect(notice).toMatch(/could not be checked/i);
+    expect(notice).not.toMatch(/needs a connected Slack workspace/i);
+  });
+
+  it("does not blame an empty pool when the channels read was refused", async () => {
+    const harness = new AlertsPageHarness(
+      alertsFixture({ channelsReadError: 403 }),
+    );
+    await harness.mount();
+    await harness.openEditModal(RULE_NAME);
+
+    expect(await harness.channelFieldState()).toBe(
+      CHANNEL_FIELD_STATE.EMPTY_POOL,
+    );
+    // Channels may well be authorized and confirmed — the read never said.
+    const notice = await harness.channelFieldNotice();
+    expect(notice).toMatch(/could not be checked/i);
+    expect(notice).not.toMatch(/authorize/i);
+    expect(harness.integrationAffordanceHref()).toBe("/integrations/slack");
+  });
+
+  it("does not claim the workspace is missing when the integration read is refused", async () => {
+    // What every non-admin sees: `/integrations` gates even reads behind
+    // `MANAGE_INTEGRATIONS`, off by default, while `/alerts` is not gated.
+    const harness = new AlertsPageHarness(
+      unconfirmedChannelPoolAlertsFixture({ integrationsReadError: 403 }),
+    );
+    await harness.mount();
+    await harness.openEditModal(RULE_NAME);
+
+    expect(await harness.channelFieldState()).toBe(
+      CHANNEL_FIELD_STATE.NO_INTEGRATION,
+    );
+    const notice = await harness.channelFieldNotice();
+    expect(notice).toMatch(/could not be checked/i);
+    expect(notice).not.toMatch(/needs a connected Slack workspace/i);
+    expect(await harness.selectedChannelChips()).toEqual([
+      { name: ALERTS_PUBLIC_CHANNEL.name, isPrivate: false },
+      { name: ALERTS_PRIVATE_CHANNEL.name, isPrivate: true },
     ]);
   });
 

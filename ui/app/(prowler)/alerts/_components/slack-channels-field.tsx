@@ -28,8 +28,12 @@ const SLACK_INTEGRATION_HREF = "/integrations/slack";
 
 const NO_INTEGRATION_COPY =
   "Posting alerts to Slack channels needs a connected Slack workspace.";
+const UNVERIFIED_COPY =
+  "The Slack workspace has not passed a connection check yet. Run it on the Slack integration to offer its channels here.";
 const EMPTY_POOL_COPY =
   "No channels are ready yet. Authorize channels on the Slack integration and run its connection check to offer them here.";
+const UNKNOWN_COPY =
+  "The Slack workspace status could not be checked. Its channels may still be available on the Slack integration.";
 
 /**
  * The three presentations the spec allows (design D2/D4). Read by the page
@@ -43,11 +47,30 @@ const FIELD_STATE = {
 
 type FieldState = (typeof FIELD_STATE)[keyof typeof FIELD_STATE];
 
-/** `GET /alerts/slack-channels` — id is the channel id (contract section 2). */
-interface EligibleChannelResource {
-  id: string;
-  attributes: { name: string; is_private: boolean };
-}
+/**
+ * What the mount reads could establish about the workspace. Only the copy
+ * reads it, never the presentation: a read that failed must not be told as a
+ * workspace that is missing. `/integrations` gates even reads behind
+ * `MANAGE_INTEGRATIONS`, so every non-admin gets a 403 there while
+ * `/alerts/slack-channels` answers them normally.
+ */
+const WORKSPACE = {
+  READY: "ready",
+  /** A workspace is there; it is disabled, or no check has confirmed it. */
+  UNVERIFIED: "unverified",
+  MISSING: "missing",
+  UNKNOWN: "unknown",
+} as const;
+
+type Workspace = (typeof WORKSPACE)[keyof typeof WORKSPACE];
+
+/** A ready workspace only ever explains itself when its pool came back empty. */
+const WORKSPACE_COPY: Record<Workspace, string> = {
+  [WORKSPACE.READY]: EMPTY_POOL_COPY,
+  [WORKSPACE.UNVERIFIED]: UNVERIFIED_COPY,
+  [WORKSPACE.MISSING]: NO_INTEGRATION_COPY,
+  [WORKSPACE.UNKNOWN]: UNKNOWN_COPY,
+};
 
 interface SlackChannelsFieldProps {
   selectedChannelIds: string[];
@@ -61,14 +84,29 @@ interface SlackChannelsFieldProps {
   onValuesChange: (channelIds: string[]) => void;
 }
 
-const toChannelOptions = (data: unknown): SlackChannelOption[] =>
-  Array.isArray(data)
-    ? (data as EligibleChannelResource[]).map((resource) => ({
-        id: resource.id,
-        name: resource.attributes.name,
-        is_private: resource.attributes.is_private,
-      }))
-    : [];
+/**
+ * `GET /alerts/slack-channels` — id is the channel id (contract section 2).
+ * Mapped per resource, as the workspace listing is: one malformed element
+ * would otherwise empty the whole picker.
+ */
+const toChannelOptions = (data: unknown): SlackChannelOption[] => {
+  if (!Array.isArray(data)) return [];
+
+  const channels: SlackChannelOption[] = [];
+  for (const resource of data) {
+    const channelId = resource?.id;
+    if (typeof channelId !== "string" || channelId.length === 0) continue;
+    const name = resource?.attributes?.name;
+    channels.push({
+      id: channelId,
+      // The picker sorts on `name` through `localeCompare`, which anything
+      // but a string takes the whole list down with.
+      name: typeof name === "string" ? name : "",
+      is_private: Boolean(resource?.attributes?.is_private),
+    });
+  }
+  return channels;
+};
 
 const mergeOptions = (
   eligible: SlackChannelOption[],
@@ -97,12 +135,33 @@ const FieldNotice = ({ copy }: { copy: string }) => (
   </p>
 );
 
+interface StoredChannelsPickerProps {
+  options: SlackChannelOption[];
+  values: string[];
+  onChange: (channelIds: string[]) => void;
+}
+
+/** The rule's own channels, readable but not editable against a pool it left. */
+const StoredChannelsPicker = ({
+  options,
+  values,
+  onChange,
+}: StoredChannelsPickerProps) => (
+  <SlackChannelMultiSelect
+    options={options}
+    values={values}
+    onChange={onChange}
+    disabled
+  />
+);
+
 /**
  * Slack channel destinations for an alert rule (design D2/D4): the options
- * come from the dedicated eligible-channels endpoint — never the workspace
- * listing, so there is no pagination and no listing-failure state — and the
- * integration is read only to tell an empty pool from no workspace at all,
- * which an empty collection cannot say on its own.
+ * come from the dedicated eligible-channels endpoint rather than the Slack
+ * workspace listing, so the field makes no Slack round-trip and carries none
+ * of the cursor paging that listing needs. The integration is read only to
+ * tell an empty pool from no workspace at all, which an empty collection
+ * cannot say on its own — and, when a read fails, neither can the field.
  */
 export const SlackChannelsField = ({
   selectedChannelIds,
@@ -113,7 +172,8 @@ export const SlackChannelsField = ({
   const [eligibleChannels, setEligibleChannels] = useState<
     SlackChannelOption[]
   >([]);
-  const [integrationUsable, setIntegrationUsable] = useState(false);
+  const [channelsReadable, setChannelsReadable] = useState(false);
+  const [workspace, setWorkspace] = useState<Workspace>(WORKSPACE.UNKNOWN);
 
   useMountEffect(() => {
     Promise.all([
@@ -121,23 +181,35 @@ export const SlackChannelsField = ({
       getIntegrations(
         new URLSearchParams({ "filter[integration_type]": "slack" }),
       ),
-    ]).then(([channelsResult, integrationsResult]) => {
-      setLoading(false);
-      // A failed read collapses to the disabled presentation: the spec allows
-      // exactly three states, and the integration page is where a read
-      // problem gets diagnosed.
-      if (!channelsResult?.error) {
-        setEligibleChannels(toChannelOptions(channelsResult?.data));
-      }
-      if (integrationsResult?.error) return;
-      const integration = (
-        integrationsResult?.data as IntegrationProps[] | undefined
-      )?.[0];
-      setIntegrationUsable(
-        Boolean(integration?.attributes.enabled) &&
-          integration?.attributes.connected === true,
-      );
-    });
+    ])
+      .then(([channelsResult, integrationsResult]) => {
+        if (!channelsResult?.error) {
+          setChannelsReadable(true);
+          setEligibleChannels(toChannelOptions(channelsResult?.data));
+        }
+        // A read that failed leaves the workspace unknown, so nothing below
+        // claims the tenant has no Slack at all.
+        if (integrationsResult?.error) return;
+
+        const integration = (
+          integrationsResult?.data as IntegrationProps[] | undefined
+        )?.[0];
+        if (!integration) {
+          setWorkspace(WORKSPACE.MISSING);
+          return;
+        }
+        setWorkspace(
+          integration.attributes.enabled &&
+            integration.attributes.connected === true
+            ? WORKSPACE.READY
+            : WORKSPACE.UNVERIFIED,
+        );
+      })
+      // `handleApiResponse` throws on a 5xx and both actions return it
+      // unawaited, so the rejection lands here. Sentry already captured it;
+      // what matters is that the field leaves its loading skeleton.
+      .catch(() => undefined)
+      .finally(() => setLoading(false));
   });
 
   const options = mergeOptions(eligibleChannels, storedChannels);
@@ -146,9 +218,15 @@ export const SlackChannelsField = ({
   const state: FieldState =
     eligibleChannels.length > 0
       ? FIELD_STATE.POPULATED
-      : integrationUsable
+      : workspace === WORKSPACE.READY
         ? FIELD_STATE.EMPTY_POOL
         : FIELD_STATE.NO_INTEGRATION;
+
+  // A pool that could not be read tells nothing about the workspace either,
+  // so it drops back to the copy that claims nothing.
+  const noticeCopy = channelsReadable
+    ? WORKSPACE_COPY[workspace]
+    : UNKNOWN_COPY;
 
   if (loading) {
     return (
@@ -172,11 +250,10 @@ export const SlackChannelsField = ({
           // reinstall resets the confirmations, not the mappings — so the
           // stored selection stays readable, and retained ids never refuse a
           // save: only channels just added are validated (contract 6.3).
-          <SlackChannelMultiSelect
+          <StoredChannelsPicker
             options={options}
             values={selectedChannelIds}
             onChange={onValuesChange}
-            disabled
           />
         ) : (
           <>
@@ -190,18 +267,18 @@ export const SlackChannelsField = ({
                       aria-label="Destination channels"
                       disabled
                     >
-                      <MultiSelectValue placeholder="Requires a connected Slack workspace" />
+                      <MultiSelectValue placeholder="No channels available" />
                     </MultiSelectTrigger>
                   </MultiSelect>
                 </span>
               </TooltipTrigger>
               <TooltipContent side="top" className="max-w-xs">
-                {NO_INTEGRATION_COPY}
+                {noticeCopy}
               </TooltipContent>
             </Tooltip>
           </>
         )}
-        <FieldNotice copy={NO_INTEGRATION_COPY} />
+        <FieldNotice copy={noticeCopy} />
       </div>
     );
   }
@@ -209,8 +286,19 @@ export const SlackChannelsField = ({
   if (state === FIELD_STATE.EMPTY_POOL) {
     return (
       <div data-alert-channels-state={state} className="flex flex-col gap-2">
-        <Label>Destination channels</Label>
-        <FieldNotice copy={EMPTY_POOL_COPY} />
+        {options.length > 0 ? (
+          // The read model enriches from what is configured, the pool offers
+          // only what is confirmed, so a rule can hold channels an empty pool
+          // does not offer. Rendering the notice alone would hide them.
+          <StoredChannelsPicker
+            options={options}
+            values={selectedChannelIds}
+            onChange={onValuesChange}
+          />
+        ) : (
+          <Label>Destination channels</Label>
+        )}
+        <FieldNotice copy={noticeCopy} />
       </div>
     );
   }

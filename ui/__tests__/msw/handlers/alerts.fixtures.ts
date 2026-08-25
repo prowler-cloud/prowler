@@ -82,6 +82,19 @@ export interface AlertsFixture {
   slackIntegration: AlertsSlackIntegrationFixture | null;
   /** The rules list read answers `500`. */
   listServerError: boolean;
+  /**
+   * A failure status for `GET /alerts/slack-channels`, or null to serve it.
+   * The two statuses reach the UI by different routes: a `5xx` throws out of
+   * `handleApiResponse`, a `403` comes back as an error payload.
+   */
+  channelsReadError: number | null;
+  /**
+   * A failure status for `GET /integrations`, or null to serve it. `403` is
+   * the everyday one: the endpoint gates even reads behind
+   * `MANAGE_INTEGRATIONS`, which is off by default, while `/alerts` is not
+   * gated at all — so a non-admin editing an alert rule always lands here.
+   */
+  integrationsReadError: number | null;
 }
 
 /** UUIDs, as the API's ids are. */
@@ -135,6 +148,10 @@ export const alertsChannelNotConfirmedDetail = (channelId: string): string =>
 
 export const ALERTS_LIST_SERVER_ERROR_DETAIL = "A server error occurred.";
 
+/** DRF's own refusal body, what a read the caller may not perform answers. */
+export const ALERTS_READ_FORBIDDEN_DETAIL =
+  "You do not have permission to perform this action.";
+
 export const alertRuleFixture = (
   overrides: Partial<AlertRuleFixture> = {},
 ): AlertRuleFixture => ({
@@ -175,6 +192,8 @@ export const alertsFixture = (
     channels: ALERTS_CONFIGURED_CHANNELS.map((channel) => ({ ...channel })),
   },
   listServerError: false,
+  channelsReadError: null,
+  integrationsReadError: null,
   ...overrides,
 });
 
@@ -194,6 +213,34 @@ export const emptyChannelPoolAlertsFixture = (
       connected: true,
       channels: [],
     },
+    ...overrides,
+  });
+
+/**
+ * A connected workspace whose channels are all still unconfirmed, with a rule
+ * that already stores them: the eligible pool is empty while the rule's own
+ * channels read back in full. The read model enriches from what is CONFIGURED,
+ * the pool offers only what is CONFIRMED — so the empty-pool state and stored
+ * channels are not mutually exclusive, whatever an empty pool suggests.
+ */
+export const unconfirmedChannelPoolAlertsFixture = (
+  overrides: Partial<AlertsFixture> = {},
+): AlertsFixture =>
+  alertsFixture({
+    slackIntegration: {
+      id: ALERTS_SLACK_INTEGRATION_ID,
+      workspaceName: "Prowler HQ",
+      connected: true,
+      channels: ALERTS_CONFIGURED_CHANNELS.map((channel) => ({
+        ...channel,
+        confirmationSentAt: null,
+      })),
+    },
+    rules: [
+      alertRuleFixture({
+        slackChannelIds: [ALERTS_PUBLIC_CHANNEL.id, ALERTS_PRIVATE_CHANNEL.id],
+      }),
+    ],
     ...overrides,
   });
 
