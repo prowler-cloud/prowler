@@ -18,7 +18,7 @@ import {
   alertRuleFixture,
   alertsChannelNotConfirmedDetail,
   alertsFixture,
-  emptyChannelPoolAlertsFixture,
+  noAuthorizedChannelsAlertsFixture,
   noSlackAlertsFixture,
   reinstalledWorkspaceAlertsFixture,
   unconfirmedChannelPoolAlertsFixture,
@@ -111,17 +111,22 @@ describe("alert rules target Slack channels", () => {
     ]);
   });
 
-  it("says channels must be authorized and checked when nothing is eligible, and still saves", async () => {
-    const harness = new AlertsPageHarness(emptyChannelPoolAlertsFixture());
+  it("says the check has not run when the workspace has no channels, and still saves", async () => {
+    const harness = new AlertsPageHarness(noAuthorizedChannelsAlertsFixture());
     await harness.mount();
     await harness.openEditModal(RULE_NAME);
 
+    // A workspace with nothing authorized cannot have passed a check — the
+    // check requires a configured channel — so the field reads as unverified
+    // rather than as a connected workspace whose eligible pool came back empty.
     expect(await harness.channelFieldState()).toBe(
-      CHANNEL_FIELD_STATE.EMPTY_POOL,
+      CHANNEL_FIELD_STATE.NO_INTEGRATION,
     );
+    expect(await harness.channelPickerDisabled()).toBe(true);
     const notice = await harness.channelFieldNotice();
-    expect(notice).toMatch(/authorize/i);
     expect(notice).toMatch(/connection check/i);
+    // The tenant does have a workspace; only the check is missing.
+    expect(notice).not.toMatch(/needs a connected Slack workspace/i);
     expect(harness.integrationAffordanceHref()).toBe("/integrations/slack");
 
     // The rule's other fields and destinations still save.

@@ -29,7 +29,13 @@ export interface AlertsSlackChannelFixture {
 export interface AlertsSlackIntegrationFixture {
   id: string;
   workspaceName: string;
-  /** Null until a connection check has run; a reinstall resets it. */
+  /**
+   * Null until a connection check has run; a reinstall or a changed channel
+   * set resets it. `true` therefore implies a non-empty set with every channel
+   * on it confirmed: the check requires "at least one configured channel" and
+   * the integration "is connected only when every check and required
+   * confirmation succeeds" (contract, Connection).
+   */
   connected: boolean | null;
   /** The channels authorized on the integration. */
   channels: AlertsSlackChannelFixture[];
@@ -202,15 +208,21 @@ export const noSlackAlertsFixture = (
   overrides: Partial<AlertsFixture> = {},
 ): AlertsFixture => alertsFixture({ slackIntegration: null, ...overrides });
 
-/** Workspace connected, nothing authorized yet: the empty-pool state (D9). */
-export const emptyChannelPoolAlertsFixture = (
+/**
+ * A workspace approved with nothing authorized on it: a new install, or one
+ * whose channel set was cleared. `connected` is `null`, never `true` — a check
+ * needs at least one configured channel, so none can have run, and clearing the
+ * set resets the connection state anyway (contract, Connection and PATCH). The
+ * Slack lane models the same tenant in `connectedSlackFixture`.
+ */
+export const noAuthorizedChannelsAlertsFixture = (
   overrides: Partial<AlertsFixture> = {},
 ): AlertsFixture =>
   alertsFixture({
     slackIntegration: {
       id: ALERTS_SLACK_INTEGRATION_ID,
       workspaceName: "Prowler HQ",
-      connected: true,
+      connected: null,
       channels: [],
     },
     ...overrides,
