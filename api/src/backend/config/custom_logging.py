@@ -275,6 +275,16 @@ LOGGING = {
             "level": LEVEL,
             "propagate": False,
         },
+        "celery.app.trace": {
+            "handlers": ["tasks_console"],
+            "level": LEVEL,
+            "propagate": False,
+        },
+        "celery.beat": {
+            "handlers": ["tasks_console"],
+            "level": LEVEL,
+            "propagate": False,
+        },
     },
     # Gunicorn required configuration
     "root": {
