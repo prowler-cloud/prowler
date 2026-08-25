@@ -27,6 +27,13 @@ import {
 
 const SLACK_INTEGRATION_HREF = "/integrations/slack";
 
+/**
+ * The notice is what explains a disabled picker, so the picker points at it
+ * rather than leaving the reason to adjacency. Only one notice renders per
+ * state, so the id stays unique.
+ */
+const CHANNELS_NOTICE_ID = "alert-slack-channels-notice";
+
 const NO_INTEGRATION_COPY =
   "Posting alerts to Slack channels needs a connected Slack workspace.";
 const UNVERIFIED_COPY =
@@ -128,6 +135,7 @@ const ManageIntegrationLink = () => (
 
 const FieldNotice = ({ copy }: { copy: string }) => (
   <p
+    id={CHANNELS_NOTICE_ID}
     data-alert-channels-notice
     className="text-text-neutral-secondary flex flex-wrap items-center gap-1 text-xs"
   >
@@ -142,7 +150,10 @@ interface StoredChannelsPickerProps {
   onChange: (channelIds: string[]) => void;
 }
 
-/** The rule's own channels, readable but not editable against a pool it left. */
+/**
+ * The rule's own channels, readable but not editable against a pool it left.
+ * Only rendered alongside a notice, so it always has a reason to point at.
+ */
 const StoredChannelsPicker = ({
   options,
   values,
@@ -152,6 +163,7 @@ const StoredChannelsPicker = ({
     options={options}
     values={values}
     onChange={onChange}
+    describedBy={CHANNELS_NOTICE_ID}
     disabled
   />
 );
@@ -268,6 +280,9 @@ export const SlackChannelsField = ({
                     <MultiSelectTrigger
                       id="slack-channels"
                       aria-label="Destination channels"
+                      // Why it cannot be used travels with the control: the
+                      // tooltip only reaches a pointer or the wrapper's focus.
+                      aria-describedby={CHANNELS_NOTICE_ID}
                       disabled
                     >
                       <MultiSelectValue placeholder="No channels available" />

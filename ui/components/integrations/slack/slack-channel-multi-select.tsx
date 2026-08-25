@@ -34,6 +34,8 @@ interface SlackChannelMultiSelectProps {
   onRefresh?: () => void;
   disabled?: boolean;
   id?: string;
+  /** Element explaining the picker — a caller's reason for disabling it. */
+  describedBy?: string;
 }
 
 const chipLabel = (option: SlackChannelOption) => (
@@ -59,6 +61,7 @@ export const SlackChannelMultiSelect = ({
   onRefresh,
   disabled = false,
   id = "slack-channels",
+  describedBy,
 }: SlackChannelMultiSelectProps) => {
   const isEmpty = !isLoading && !error && options.length === 0;
   // `htmlFor` may only name an element that exists, and the trigger is only
@@ -118,6 +121,7 @@ export const SlackChannelMultiSelect = ({
             <MultiSelectTrigger
               id={id}
               aria-label="Destination channels"
+              aria-describedby={describedBy}
               disabled={disabled || isLoading}
             >
               <MultiSelectValue
