@@ -74,7 +74,7 @@ const WORKSPACE_COPY: Record<Workspace, string> = {
 
 interface SlackChannelsFieldProps {
   selectedChannelIds: string[];
-  /** Merged into the options, so channels outside the pool still render. */
+  /** Merged into the options while selected, so stored channels still render. */
   storedChannels: SlackChannelOption[];
   onValuesChange: (channelIds: string[]) => void;
 }
@@ -101,10 +101,15 @@ const toChannelOptions = (data: unknown): SlackChannelOption[] => {
 const mergeOptions = (
   eligible: SlackChannelOption[],
   stored: SlackChannelOption[],
+  selectedIds: string[],
 ): SlackChannelOption[] => {
   const byId = new Map(eligible.map((channel) => [channel.id, channel]));
+  // A stored channel outside the pool is kept only while it stays selected:
+  // deselecting it must not leave it offered for a pick the write refuses.
   stored.forEach((channel) => {
-    if (!byId.has(channel.id)) byId.set(channel.id, channel);
+    if (!byId.has(channel.id) && selectedIds.includes(channel.id)) {
+      byId.set(channel.id, channel);
+    }
   });
   return Array.from(byId.values());
 };
@@ -200,7 +205,11 @@ export const SlackChannelsField = ({
       .finally(() => setLoading(false));
   });
 
-  const options = mergeOptions(eligibleChannels, storedChannels);
+  const options = mergeOptions(
+    eligibleChannels,
+    storedChannels,
+    selectedChannelIds,
+  );
   // Eligibility decides the state, not the merged stored channels.
   const state: FieldState =
     eligibleChannels.length > 0
