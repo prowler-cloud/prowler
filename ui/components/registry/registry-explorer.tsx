@@ -237,6 +237,7 @@ export function RegistryExplorer({ initialState }: RegistryExplorerProps) {
   }
 
   const accessDialogProps = {
+    errorMessage: operationMessage,
     onOpenChange: (open: boolean) => {
       if (!open && pendingOperation !== "credential") {
         setAccessDialogMode(undefined);
@@ -266,7 +267,9 @@ export function RegistryExplorer({ initialState }: RegistryExplorerProps) {
     return (
       <div className="space-y-6">
         <p className="text-text-neutral-secondary text-sm">{PAGE_SUBTITLE}</p>
-        {operationMessage && <p role="alert">{operationMessage}</p>}
+        {!accessDialogMode && operationMessage && (
+          <p role="alert">{operationMessage}</p>
+        )}
         <RegistryCredentialBanner
           connectButtonRef={connectButtonRef}
           onConnect={() => setAccessDialogMode("connect")}
@@ -345,7 +348,7 @@ export function RegistryExplorer({ initialState }: RegistryExplorerProps) {
           </Button>
         </div>
       </div>
-      {!isPanelOpen && operationMessage && (
+      {!isPanelOpen && !accessDialogMode && operationMessage && (
         <p role="alert">{operationMessage}</p>
       )}
       <Tabs

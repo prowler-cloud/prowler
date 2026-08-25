@@ -223,6 +223,31 @@ describe("RegistryExplorer", () => {
       .not.toBeInTheDocument();
   });
 
+  it("shows credential failures inside the open access dialog", async () => {
+    // Given
+    submitRegistryCredentialMock.mockResolvedValue({
+      status: "replacement_failed",
+      credential: onboardingState.credential,
+    });
+    const screen = await render(
+      <RegistryExplorer initialState={onboardingState} />,
+    );
+
+    // When
+    await screen.getByRole("button", { name: "Connect API key" }).click();
+    await screen.getByLabelText("Registry key").fill("rejected-key");
+    await screen.getByRole("button", { name: "Connect", exact: true }).click();
+
+    // Then
+    const dialog = document.querySelector('[role="dialog"]');
+    expect(dialog).not.toBeNull();
+    await expect
+      .poll(() => dialog!.textContent)
+      .toContain(
+        "Registry key validation failed. Existing access is unchanged.",
+      );
+  });
+
   it("keeps every dialog control inside the dialog bounds", async () => {
     // Given
     const screen = await render(<RegistryExplorer initialState={readyState} />);

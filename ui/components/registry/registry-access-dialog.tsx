@@ -9,6 +9,7 @@ import { Modal } from "@/components/shadcn/modal/modal";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
 
 interface RegistryAccessDialogCommonProps {
+  errorMessage?: string;
   onOpenChange: (open: boolean) => void;
   onSubmit: (key: string) => Promise<void>;
   open: boolean;
@@ -31,6 +32,7 @@ type RegistryAccessDialogProps =
   | ManageRegistryAccessDialogProps;
 
 export function RegistryAccessDialog({
+  errorMessage,
   mode,
   onDisconnect,
   onOpenChange,
@@ -83,6 +85,11 @@ export function RegistryAccessDialog({
           onSubmit={handleSubmit}
           ref={formRef}
         >
+          {errorMessage && (
+            <p className="text-text-error-primary text-sm" role="alert">
+              {errorMessage}
+            </p>
+          )}
           <div className="flex flex-col gap-2">
             <label
               className="flex flex-col gap-2 text-sm"
