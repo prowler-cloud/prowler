@@ -4,8 +4,7 @@ import type { Dispatch, FormEvent, SetStateAction } from "react";
 import { useState } from "react";
 
 import { SaveIcon } from "@/components/icons";
-import { Button } from "@/components/shadcn";
-import { useToast } from "@/components/shadcn";
+import { Button, useToast } from "@/components/shadcn";
 import { Input } from "@/components/shadcn/input/input";
 
 interface EditNameFormProps {

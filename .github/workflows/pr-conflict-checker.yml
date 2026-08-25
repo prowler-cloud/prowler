@@ -74,15 +74,15 @@ jobs:
           done <<< "$STEPS_CHANGED_FILES_OUTPUTS_ALL_CHANGED_FILES"
 
           if [ "$HAS_CONFLICTS" = true ]; then
-            echo "has_conflicts=true" >> $GITHUB_OUTPUT
+            echo "has_conflicts=true" >> "$GITHUB_OUTPUT"
             {
               echo "conflict_files<<EOF"
               echo "$CONFLICT_FILES"
               echo "EOF"
-            } >> $GITHUB_OUTPUT
+            } >> "$GITHUB_OUTPUT"
             echo "Conflict markers detected"
           else
-            echo "has_conflicts=false" >> $GITHUB_OUTPUT
+            echo "has_conflicts=false" >> "$GITHUB_OUTPUT"
             echo "No conflict markers found in changed files"
           fi
         env:

@@ -39,6 +39,10 @@ vi.mock(
   () => ({ CISCustomDetails: stubFactory("CISStub") }),
 );
 vi.mock(
+  "@/components/compliance/compliance-custom-details/cmmc-details",
+  () => ({ CMMCCustomDetails: stubFactory("CMMCStub") }),
+);
+vi.mock(
   "@/components/compliance/compliance-custom-details/csa-details",
   () => ({ CSACustomDetails: stubFactory("CSAStub") }),
 );
@@ -152,6 +156,7 @@ describe("getComplianceMapper", () => {
       { framework: "ProwlerThreatScore", expected: "ThreatStub" },
       { framework: "CCC", expected: "CCCStub" },
       { framework: "CSA-CCM", expected: "CSAStub" },
+      { framework: "CMMC", expected: "CMMCStub" },
       { framework: "Okta-IDaaS-STIG", expected: "OktaIDaaSStigStub" },
       { framework: "Cyber-Essentials", expected: "CyberEssentialsStub" },
     ];
@@ -198,6 +203,7 @@ describe("getComplianceMapper", () => {
       "ProwlerThreatScore",
       "CCC",
       "CSA-CCM",
+      "CMMC",
       "Okta-IDaaS-STIG",
       "Cyber-Essentials",
     ]) {

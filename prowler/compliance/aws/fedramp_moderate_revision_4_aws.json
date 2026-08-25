@@ -313,7 +313,9 @@
         "s3_bucket_policy_public_write_access",
         "s3_account_level_public_access_blocks",
         "s3_bucket_public_access",
-        "sagemaker_notebook_instance_without_direct_internet_access_configured"
+        "sagemaker_notebook_instance_without_direct_internet_access_configured",
+        "ec2_confidential_workload_host_imdsv2_not_enforced",
+        "kms_key_enclave_attestation_not_enforced"
       ]
     },
     {
@@ -343,7 +345,8 @@
         "ec2_securitygroup_default_restrict_traffic",
         "ec2_networkacl_allow_ingress_any_port",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
-        "ec2_networkacl_allow_ingress_any_port"
+        "ec2_networkacl_allow_ingress_any_port",
+        "ec2_confidential_workload_host_public_ip"
       ]
     },
     {
@@ -424,7 +427,9 @@
         "s3_bucket_policy_public_write_access",
         "s3_account_level_public_access_blocks",
         "s3_bucket_public_access",
-        "sagemaker_notebook_instance_without_direct_internet_access_configured"
+        "sagemaker_notebook_instance_without_direct_internet_access_configured",
+        "ec2_confidential_workload_host_imdsv2_not_enforced",
+        "kms_key_enclave_attestation_bypassable_path"
       ]
     },
     {
@@ -754,7 +759,8 @@
         "guardduty_is_enabled",
         "rds_instance_enhanced_monitoring_enabled",
         "redshift_cluster_audit_logging",
-        "securityhub_enabled"
+        "securityhub_enabled",
+        "ec2_confidential_workload_host_imdsv2_not_enforced"
       ],
       "ConfigRequirements": [
         {
@@ -821,7 +827,8 @@
       ],
       "Checks": [
         "ec2_instance_managed_by_ssm",
-        "ssm_managed_compliant_patching"
+        "ssm_managed_compliant_patching",
+        "ec2_confidential_workload_host_vsock_proxy_exposed"
       ]
     },
     {
@@ -1324,7 +1331,8 @@
         "ec2_securitygroup_default_restrict_traffic",
         "ec2_networkacl_allow_ingress_any_port",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
-        "ec2_networkacl_allow_ingress_any_port"
+        "ec2_networkacl_allow_ingress_any_port",
+        "ec2_confidential_workload_host_public_ip"
       ]
     },
     {
@@ -1359,7 +1367,8 @@
         "ec2_securitygroup_default_restrict_traffic",
         "ec2_networkacl_allow_ingress_any_port",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
-        "ec2_networkacl_allow_ingress_any_port"
+        "ec2_networkacl_allow_ingress_any_port",
+        "ec2_confidential_workload_host_public_ip"
       ]
     },
     {
@@ -1377,6 +1386,7 @@
       "Checks": [
         "apigateway_restapi_client_certificate_enabled",
         "elbv2_insecure_ssl_ciphers",
+        "elbv2_listener_pqc_tls_enabled",
         "cloudfront_distributions_pqc_tls_enabled",
         "apigateway_domain_name_pqc_tls_enabled",
         "transfer_server_pqc_ssh_kex_enabled",
@@ -1399,6 +1409,7 @@
       "Checks": [
         "apigateway_restapi_client_certificate_enabled",
         "elbv2_insecure_ssl_ciphers",
+        "elbv2_listener_pqc_tls_enabled",
         "cloudfront_distributions_pqc_tls_enabled",
         "apigateway_domain_name_pqc_tls_enabled",
         "transfer_server_pqc_ssh_kex_enabled",
@@ -1420,7 +1431,9 @@
       ],
       "Checks": [
         "acm_certificates_expiration_check",
-        "kms_cmk_rotation_enabled"
+        "kms_cmk_rotation_enabled",
+        "kms_key_enclave_attestation_not_enforced",
+        "kms_key_enclave_attestation_bypassable_path"
       ]
     },
     {
@@ -1482,7 +1495,8 @@
         "s3_bucket_default_encryption",
         "s3_bucket_default_encryption",
         "sagemaker_notebook_instance_encryption_enabled",
-        "sns_topics_kms_encryption_at_rest_enabled"
+        "sns_topics_kms_encryption_at_rest_enabled",
+        "kms_key_enclave_debug_attestation_detected"
       ]
     },
     {
@@ -1587,7 +1601,9 @@
         "ec2_instance_imdsv2_enabled",
         "guardduty_is_enabled",
         "redshift_cluster_audit_logging",
-        "securityhub_enabled"
+        "securityhub_enabled",
+        "ec2_confidential_workload_host_imdsv2_not_enforced",
+        "kms_key_enclave_debug_attestation_detected"
       ],
       "ConfigRequirements": [
         {
@@ -1756,7 +1772,8 @@
         }
       ],
       "Checks": [
-        "cloudtrail_log_file_validation_enabled"
+        "cloudtrail_log_file_validation_enabled",
+        "kms_key_enclave_attestation_pcr_mismatch"
       ]
     },
     {

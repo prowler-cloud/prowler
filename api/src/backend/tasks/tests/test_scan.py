@@ -2,6 +2,7 @@ import csv
 import json
 import re
 import uuid
+from collections.abc import MutableMapping
 from contextlib import contextmanager
 from datetime import UTC, datetime
 from io import StringIO
@@ -15,17 +16,21 @@ from api.models import (
     MuteRule,
     Provider,
     Resource,
+    ResourceFindingMapping,
     ResourceScanSummary,
+    ResourceTag,
+    ResourceTagMapping,
     Scan,
     ScanSummary,
     StateChoices,
     StatusChoices,
 )
-from django.db import IntegrityError, OperationalError
+from django.db import IntegrityError, OperationalError, transaction
 from prowler.lib.check.models import Severity
 from prowler.lib.outputs.finding import Status
 from tasks.jobs.scan import (
     _ATTACK_SURFACE_MAPPING_CACHE,
+    ComplianceRowScopeError,
     _aggregate_findings_by_region,
     _bulk_update_resource_failed_findings_counts,
     _copy_compliance_requirement_rows,
@@ -52,6 +57,12 @@ def noop_rls_transaction(*args, **kwargs):
     yield
 
 
+@contextmanager
+def atomic_rls_transaction(*args, **kwargs):
+    with transaction.atomic():
+        yield
+
+
 class FakeFinding:
     def __init__(self, **attrs):
         self.metadata = attrs.pop("metadata", {})
@@ -68,6 +79,32 @@ class FakeFinding:
 
     def get_metadata(self):
         return self.metadata
+
+
+class CacheMissAfterPreResolve(MutableMapping):
+    def __init__(self, missing_uid):
+        self._cache = {}
+        self.missing_uid = missing_uid
+
+    def __contains__(self, key):
+        if key == self.missing_uid:
+            return True
+        return key in self._cache
+
+    def __getitem__(self, key):
+        return self._cache[key]
+
+    def __setitem__(self, key, value):
+        self._cache[key] = value
+
+    def __delitem__(self, key):
+        del self._cache[key]
+
+    def __iter__(self):
+        return iter(self._cache)
+
+    def __len__(self):
+        return len(self._cache)
 
 
 @pytest.mark.django_db
@@ -1054,8 +1091,12 @@ class TestPerformScan:
             perform_prowler_scan(tenant_id, scan_id, provider_id, [])
 
         # Verify findings are muted with correct reason
-        fail_finding_db = Finding.objects.get(uid=finding_uid_1)
-        pass_finding_db = Finding.objects.get(uid=finding_uid_2)
+        fail_finding_db = Finding.objects.get(
+            tenant_id=tenant.id, scan_id=scan.id, uid=finding_uid_1
+        )
+        pass_finding_db = Finding.objects.get(
+            tenant_id=tenant.id, scan_id=scan.id, uid=finding_uid_2
+        )
 
         assert fail_finding_db.muted
         assert fail_finding_db.muted_reason == mute_rule_reason
@@ -1066,7 +1107,9 @@ class TestPerformScan:
         assert pass_finding_db.muted_at is not None
 
         # Verify failed_findings_count is 0 for muted FAIL finding
-        resource_1 = Resource.objects.get(uid="resource_uid_1")
+        resource_1 = Resource.objects.get(
+            tenant_id=tenant.id, provider_id=provider.id, uid="resource_uid_1"
+        )
         assert resource_1.failed_findings_count == 0
 
     def test_perform_prowler_scan_with_inactive_mute_rules(
@@ -1146,13 +1189,17 @@ class TestPerformScan:
             perform_prowler_scan(tenant_id, scan_id, provider_id, [])
 
         # Verify finding is NOT muted
-        finding_db = Finding.objects.get(uid=finding_uid)
+        finding_db = Finding.objects.get(
+            tenant_id=tenant.id, scan_id=scan.id, uid=finding_uid
+        )
         assert not finding_db.muted
         assert finding_db.muted_reason is None
         assert finding_db.muted_at is None
 
         # Verify failed_findings_count increments for FAIL finding
-        resource = Resource.objects.get(uid="resource_uid_inactive")
+        resource = Resource.objects.get(
+            tenant_id=tenant.id, provider_id=provider.id, uid="resource_uid_inactive"
+        )
         assert resource.failed_findings_count == 1
 
     def test_perform_prowler_scan_mutelist_overrides_mute_rules(
@@ -1232,13 +1279,17 @@ class TestPerformScan:
             perform_prowler_scan(tenant_id, scan_id, provider_id, [])
 
         # Verify mutelist reason takes precedence
-        finding_db = Finding.objects.get(uid=finding_uid)
+        finding_db = Finding.objects.get(
+            tenant_id=tenant.id, scan_id=scan.id, uid=finding_uid
+        )
         assert finding_db.muted
         assert finding_db.muted_reason == "Muted by mutelist"
         assert finding_db.muted_at is not None
 
         # Verify failed_findings_count is 0
-        resource = Resource.objects.get(uid="resource_both")
+        resource = Resource.objects.get(
+            tenant_id=tenant.id, provider_id=provider.id, uid="resource_both"
+        )
         assert resource.failed_findings_count == 0
 
     def test_perform_prowler_scan_mute_rules_multiple_findings(
@@ -1330,14 +1381,20 @@ class TestPerformScan:
 
         # Verify all findings are muted with same reason
         for uid in finding_uids:
-            finding_db = Finding.objects.get(uid=uid)
+            finding_db = Finding.objects.get(
+                tenant_id=tenant.id, scan_id=scan.id, uid=uid
+            )
             assert finding_db.muted
             assert finding_db.muted_reason == mute_rule_reason
             assert finding_db.muted_at is not None
 
         # Verify all resources have failed_findings_count = 0
         for i in range(len(finding_uids)):
-            resource = Resource.objects.get(uid=f"resource_bulk_{i}")
+            resource = Resource.objects.get(
+                tenant_id=tenant.id,
+                provider_id=provider.id,
+                uid=f"resource_bulk_{i}",
+            )
             assert resource.failed_findings_count == 0
 
     def test_perform_prowler_scan_mute_rules_error_handling(
@@ -1415,12 +1472,18 @@ class TestPerformScan:
         assert scan.state == StateChoices.COMPLETED
 
         # Verify finding is not muted (mute_rules_cache was empty dict)
-        finding_db = Finding.objects.get(uid="finding_error_handling")
+        finding_db = Finding.objects.get(
+            tenant_id=tenant.id,
+            scan_id=scan.id,
+            uid="finding_error_handling",
+        )
         assert not finding_db.muted
         assert finding_db.muted_reason is None
 
         # Verify failed_findings_count increments
-        resource = Resource.objects.get(uid="resource_error")
+        resource = Resource.objects.get(
+            tenant_id=tenant.id, provider_id=provider.id, uid="resource_error"
+        )
         assert resource.failed_findings_count == 1
 
     def test_perform_prowler_scan_muted_at_timestamp(
@@ -1502,7 +1565,9 @@ class TestPerformScan:
             after_scan = datetime.now(UTC)
 
         # Verify muted_at is within the scan time window
-        finding_db = Finding.objects.get(uid=finding_uid)
+        finding_db = Finding.objects.get(
+            tenant_id=tenant.id, scan_id=scan.id, uid=finding_uid
+        )
         assert finding_db.muted
         assert finding_db.muted_at is not None
         assert before_scan <= finding_db.muted_at <= after_scan
@@ -1513,6 +1578,548 @@ class TestPerformScan:
 
 @pytest.mark.django_db
 class TestProcessFindingMicroBatch:
+    def _process_one_finding_micro_batch(
+        self,
+        tenant,
+        scan,
+        provider,
+        finding,
+        resource_cache=None,
+        resource_failed_findings_cache=None,
+    ):
+        resource_cache = resource_cache if resource_cache is not None else {}
+        resource_failed_findings_cache = (
+            resource_failed_findings_cache
+            if resource_failed_findings_cache is not None
+            else {}
+        )
+        caches = {
+            "resource_cache": resource_cache,
+            "tag_cache": {},
+            "last_status_cache": {},
+            "resource_failed_findings_cache": resource_failed_findings_cache,
+            "unique_resources": set(),
+            "scan_resource_cache": set(),
+            "mute_rules_cache": {},
+            "scan_categories_cache": {},
+            "scan_resource_groups_cache": {},
+            "group_resources_cache": {},
+        }
+
+        with (
+            patch("tasks.jobs.scan.rls_transaction", new=noop_rls_transaction),
+            patch("api.db_utils.rls_transaction", new=noop_rls_transaction),
+        ):
+            _process_finding_micro_batch(
+                str(tenant.id),
+                [finding],
+                scan,
+                provider,
+                caches["resource_cache"],
+                caches["tag_cache"],
+                caches["last_status_cache"],
+                caches["resource_failed_findings_cache"],
+                caches["unique_resources"],
+                caches["scan_resource_cache"],
+                caches["mute_rules_cache"],
+                caches["scan_categories_cache"],
+                caches["scan_resource_groups_cache"],
+                caches["group_resources_cache"],
+            )
+
+        return caches
+
+    def test_process_finding_micro_batch_fallback_creates_resource_after_cache_miss(
+        self, tenants_fixture, scans_fixture
+    ):
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        provider = scan.provider
+        resource_uid = "arn:aws:accessanalyzer:us-east-1:123456789012:analyzer/unknown"
+
+        finding = FakeFinding(
+            uid="finding-cache-miss-create",
+            status=StatusChoices.FAIL,
+            status_extended="missing analyzer",
+            severity=Severity.medium,
+            check_id="accessanalyzer_enabled",
+            resource_uid=resource_uid,
+            resource_name="analyzer/unknown",
+            region="us-east-1",
+            service_name="accessanalyzer",
+            resource_type="analyzer",
+            resource_tags={},
+            resource_metadata={},
+            resource_details={},
+            partition="aws",
+            raw={},
+            compliance={},
+            metadata={"resourcegroup": "identity"},
+            muted=False,
+        )
+
+        caches = self._process_one_finding_micro_batch(
+            tenant,
+            scan,
+            provider,
+            finding,
+            resource_cache=CacheMissAfterPreResolve(resource_uid),
+        )
+
+        resource = Resource.objects.get(
+            tenant_id=tenant.id, provider_id=provider.id, uid=resource_uid
+        )
+        created_finding = Finding.objects.get(
+            tenant_id=tenant.id, scan_id=scan.id, uid=finding.uid
+        )
+
+        assert created_finding.scan_id == scan.id
+        assert resource.provider_id == provider.id
+        assert resource.region == finding.region
+        assert resource.service == finding.service_name
+        assert resource.type == finding.resource_type
+        assert resource.name == finding.resource_name
+        assert resource.groups == ["identity"]
+        assert resource.findings.filter(
+            tenant_id=tenant.id, scan_id=scan.id, uid=finding.uid
+        ).exists()
+        assert caches["resource_cache"][resource_uid].id == resource.id
+        assert caches["resource_failed_findings_cache"][resource_uid] == 1
+
+    def test_process_finding_micro_batch_fallback_recovers_existing_resource_after_cache_miss(
+        self, tenants_fixture, scans_fixture
+    ):
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        provider = scan.provider
+        resource_uid = "arn:aws:guardduty:us-east-1:123456789012:detector/unknown"
+        existing_resource = Resource.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            uid=resource_uid,
+            name="detector/unknown",
+            region="us-east-1",
+            service="guardduty",
+            type="detector",
+        )
+
+        finding = FakeFinding(
+            uid="finding-cache-miss-existing",
+            status=StatusChoices.FAIL,
+            status_extended="missing detector",
+            severity=Severity.high,
+            check_id="guardduty_enabled",
+            resource_uid=resource_uid,
+            resource_name=existing_resource.name,
+            region=existing_resource.region,
+            service_name=existing_resource.service,
+            resource_type=existing_resource.type,
+            resource_tags={},
+            resource_metadata={},
+            resource_details={},
+            partition="aws",
+            raw={},
+            compliance={},
+            metadata={},
+            muted=False,
+        )
+
+        caches = self._process_one_finding_micro_batch(
+            tenant,
+            scan,
+            provider,
+            finding,
+            resource_cache=CacheMissAfterPreResolve(resource_uid),
+        )
+
+        assert (
+            Resource.objects.filter(
+                tenant_id=tenant.id, provider_id=provider.id, uid=resource_uid
+            ).count()
+            == 1
+        )
+        created_finding = Finding.objects.get(
+            tenant_id=tenant.id, scan_id=scan.id, uid=finding.uid
+        )
+        existing_resource.refresh_from_db()
+
+        assert created_finding.scan_id == scan.id
+        assert existing_resource.findings.filter(
+            tenant_id=tenant.id, scan_id=scan.id, uid=finding.uid
+        ).exists()
+        assert caches["resource_cache"][resource_uid].id == existing_resource.id
+        assert caches["resource_failed_findings_cache"][resource_uid] == 1
+
+    def test_process_finding_micro_batch_fallback_recovers_after_create_race(
+        self, tenants_fixture, scans_fixture
+    ):
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        provider = scan.provider
+        resource_uid = "arn:aws:securityhub:us-east-1:123456789012:hub/unknown"
+        raced_resource = Resource.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            uid=resource_uid,
+            name="hub/unknown",
+            region="us-east-1",
+            service="securityhub",
+            type="hub",
+        )
+
+        finding = FakeFinding(
+            uid="finding-cache-miss-failure",
+            status=StatusChoices.FAIL,
+            status_extended="missing hub",
+            severity=Severity.high,
+            check_id="securityhub_enabled",
+            resource_uid=resource_uid,
+            resource_name="hub/unknown",
+            region="us-east-1",
+            service_name="securityhub",
+            resource_type="hub",
+            resource_tags={},
+            resource_metadata={},
+            resource_details={},
+            partition="aws",
+            raw={},
+            compliance={},
+            metadata={},
+            muted=False,
+        )
+
+        resource_filter_result = MagicMock()
+        resource_filter_result.first.side_effect = [None, raced_resource]
+
+        with (
+            patch.object(
+                Resource.objects,
+                "filter",
+                return_value=resource_filter_result,
+            ),
+            patch.object(
+                Resource.objects,
+                "create",
+                side_effect=IntegrityError("duplicate resource"),
+            ),
+        ):
+            caches = self._process_one_finding_micro_batch(
+                tenant,
+                scan,
+                provider,
+                finding,
+                resource_cache=CacheMissAfterPreResolve(resource_uid),
+            )
+
+        assert (
+            Resource.objects.filter(
+                tenant_id=tenant.id, provider_id=provider.id, uid=resource_uid
+            ).count()
+            == 1
+        )
+        created_finding = Finding.objects.get(
+            tenant_id=tenant.id, scan_id=scan.id, uid=finding.uid
+        )
+        raced_resource.refresh_from_db()
+
+        assert created_finding.scan_id == scan.id
+        assert raced_resource.findings.filter(
+            tenant_id=tenant.id, scan_id=scan.id, uid=finding.uid
+        ).exists()
+        assert caches["resource_cache"][resource_uid].id == raced_resource.id
+        assert caches["resource_failed_findings_cache"][resource_uid] == 1
+
+    def test_process_finding_micro_batch_cache_miss_retry_drops_rolled_back_resource(
+        self, tenants_fixture, scans_fixture
+    ):
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        provider = scan.provider
+        resource_uid = "generic-resource-cache-miss-retry"
+        cached_resource = Resource.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            uid="generic-cached-resource-retry",
+            name="old-cached-resource",
+            region="us-west-2",
+            service="old-service",
+            type="old-type",
+        )
+        finding = FakeFinding(
+            uid="finding-cache-miss-retry-clean-resource-cache",
+            status=StatusChoices.FAIL,
+            status_extended="missing resource",
+            severity=Severity.high,
+            check_id="generic_resource_check",
+            resource_uid=resource_uid,
+            resource_name="generic-resource",
+            region="us-east-1",
+            service_name="generic-service",
+            resource_type="generic-type",
+            resource_tags={"team": "platform"},
+            resource_metadata={"owner": "security"},
+            resource_details={"id": "generic-resource"},
+            partition="aws",
+            raw={},
+            compliance={},
+            metadata={"categories": ["security"], "resourcegroup": "identity"},
+            muted=False,
+        )
+        cached_resource_finding = FakeFinding(
+            uid="finding-cache-miss-retry-restores-dirty-resource",
+            status=StatusChoices.FAIL,
+            status_extended="cached resource changed",
+            severity=Severity.high,
+            check_id="generic_cached_resource_check",
+            resource_uid=cached_resource.uid,
+            resource_name="new-cached-resource",
+            region="eu-west-1",
+            service_name="new-service",
+            resource_type="new-type",
+            resource_tags={},
+            resource_metadata={"owner": "platform"},
+            resource_details={"id": "cached-resource"},
+            partition="aws",
+            raw={},
+            compliance={},
+            metadata={"categories": ["security"], "resourcegroup": "identity"},
+            muted=False,
+        )
+        resource_cache = CacheMissAfterPreResolve(resource_uid)
+        resource_cache[cached_resource.uid] = cached_resource
+        tag_cache = {}
+        resource_failed_findings_cache = {cached_resource.uid: 0}
+        scan_resource_cache: set[tuple[str, str, str, str]] = set()
+        scan_categories_cache: dict[tuple[str, str], dict[str, int]] = {}
+        scan_resource_groups_cache: dict[tuple[str, str], dict[str, int]] = {}
+        group_resources_cache: dict[str, set] = {}
+        original_bulk_create = ResourceFindingMapping.objects.bulk_create
+        original_tag_mapping_bulk_create = ResourceTagMapping.objects.bulk_create
+        mapping_bulk_create_calls = []
+        tag_mapping_bulk_create_calls = []
+
+        def fail_once_then_bulk_create(objects, *args, **kwargs):
+            mapping_bulk_create_calls.append([str(obj.resource_id) for obj in objects])
+            if len(mapping_bulk_create_calls) == 1:
+                raise IntegrityError("rollback after fallback resource creation")
+            return original_bulk_create(objects, *args, **kwargs)
+
+        def track_tag_mappings_bulk_create(objects, *args, **kwargs):
+            tag_mapping_bulk_create_calls.append([str(obj.tag_id) for obj in objects])
+            return original_tag_mapping_bulk_create(objects, *args, **kwargs)
+
+        with (
+            patch("tasks.jobs.scan.CELERY_DEADLOCK_ATTEMPTS", 2),
+            patch("tasks.jobs.scan.rls_transaction", new=atomic_rls_transaction),
+            patch("api.db_utils.rls_transaction", new=atomic_rls_transaction),
+            patch.object(
+                ResourceTagMapping.objects,
+                "bulk_create",
+                side_effect=track_tag_mappings_bulk_create,
+            ),
+            patch.object(
+                ResourceFindingMapping.objects,
+                "bulk_create",
+                side_effect=fail_once_then_bulk_create,
+            ),
+        ):
+            _process_finding_micro_batch(
+                str(tenant.id),
+                [finding, cached_resource_finding],
+                scan,
+                provider,
+                resource_cache,
+                tag_cache,
+                {},
+                resource_failed_findings_cache,
+                set(),
+                scan_resource_cache,
+                {},
+                scan_categories_cache,
+                scan_resource_groups_cache,
+                group_resources_cache,
+            )
+
+        resource = Resource.objects.get(
+            tenant_id=tenant.id,
+            provider_id=provider.id,
+            uid=resource_uid,
+        )
+        created_finding = Finding.objects.get(
+            tenant_id=tenant.id,
+            scan_id=scan.id,
+            uid=finding.uid,
+        )
+        cached_resource.refresh_from_db()
+
+        assert len(mapping_bulk_create_calls) == 2
+        assert mapping_bulk_create_calls[0] != mapping_bulk_create_calls[1]
+        assert len(tag_mapping_bulk_create_calls) == 2
+        assert tag_mapping_bulk_create_calls[0] != tag_mapping_bulk_create_calls[1]
+        assert created_finding.scan_id == scan.id
+        assert resource.findings.filter(
+            tenant_id=tenant.id,
+            scan_id=scan.id,
+            uid=finding.uid,
+        ).exists()
+        assert cached_resource.findings.filter(
+            tenant_id=tenant.id,
+            scan_id=scan.id,
+            uid=cached_resource_finding.uid,
+        ).exists()
+        assert cached_resource.name == cached_resource_finding.resource_name
+        assert cached_resource.region == cached_resource_finding.region
+        assert cached_resource.service == cached_resource_finding.service_name
+        assert cached_resource.type == cached_resource_finding.resource_type
+        assert resource_cache[resource_uid].id == resource.id
+        assert resource_failed_findings_cache[resource_uid] == 1
+        assert resource_failed_findings_cache[cached_resource.uid] == 1
+        assert scan_resource_cache == {
+            (
+                str(resource.id),
+                finding.service_name,
+                finding.region,
+                finding.resource_type,
+            ),
+            (
+                str(cached_resource.id),
+                cached_resource_finding.service_name,
+                cached_resource_finding.region,
+                cached_resource_finding.resource_type,
+            ),
+        }
+        assert (
+            tag_cache[("team", "platform")].id
+            == ResourceTag.objects.get(
+                tenant_id=tenant.id,
+                key="team",
+                value="platform",
+            ).id
+        )
+        assert scan_categories_cache == {
+            ("security", "high"): {"total": 2, "failed": 2, "new_failed": 2}
+        }
+        assert scan_resource_groups_cache == {
+            ("identity", "high"): {"total": 2, "failed": 2, "new_failed": 2}
+        }
+        assert group_resources_cache == {
+            "identity": {resource_uid, cached_resource.uid}
+        }
+
+    def test_process_finding_micro_batch_propagates_retryable_cache_miss_db_errors(
+        self, tenants_fixture, scans_fixture
+    ):
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        provider = scan.provider
+        resource_uid = "arn:aws:securityhub:us-east-1:123456789012:hub/retryable"
+
+        finding = FakeFinding(
+            uid="finding-cache-miss-retryable-error",
+            status=StatusChoices.FAIL,
+            status_extended="missing hub",
+            severity=Severity.high,
+            check_id="securityhub_enabled",
+            resource_uid=resource_uid,
+            resource_name="hub/retryable",
+            region="us-east-1",
+            service_name="securityhub",
+            resource_type="hub",
+            resource_tags={},
+            resource_metadata={},
+            resource_details={},
+            partition="aws",
+            raw={},
+            compliance={},
+            metadata={},
+            muted=False,
+        )
+
+        with (
+            patch("tasks.jobs.scan.CELERY_DEADLOCK_ATTEMPTS", 1),
+            patch.object(
+                Resource.objects,
+                "create",
+                side_effect=OperationalError("deadlock detected"),
+            ),
+        ):
+            with pytest.raises(OperationalError, match="deadlock detected"):
+                self._process_one_finding_micro_batch(
+                    tenant,
+                    scan,
+                    provider,
+                    finding,
+                    resource_cache=CacheMissAfterPreResolve(resource_uid),
+                )
+
+        assert not Finding.objects.filter(
+            tenant_id=tenant.id, scan_id=scan.id, uid=finding.uid
+        ).exists()
+
+    def test_process_finding_micro_batch_propagates_unrecovered_cache_miss_integrity_error(
+        self, tenants_fixture, scans_fixture
+    ):
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        provider = scan.provider
+        resource_uid = "arn:aws:securityhub:us-east-1:123456789012:hub/unrecovered"
+
+        finding = FakeFinding(
+            uid="finding-cache-miss-unrecovered-integrity-error",
+            status=StatusChoices.FAIL,
+            status_extended="missing hub",
+            severity=Severity.high,
+            check_id="securityhub_enabled",
+            resource_uid=resource_uid,
+            resource_name="hub/unrecovered",
+            region="us-east-1",
+            service_name="securityhub",
+            resource_type="hub",
+            resource_tags={},
+            resource_metadata={},
+            resource_details={},
+            partition="aws",
+            raw={},
+            compliance={},
+            metadata={},
+            muted=False,
+        )
+
+        original_resource_filter = Resource.objects.filter
+        resource_filter_result = MagicMock()
+        resource_filter_result.first.side_effect = [None, None]
+
+        def resource_filter_side_effect(*args, **kwargs):
+            if kwargs.get("uid") == resource_uid:
+                return resource_filter_result
+            return original_resource_filter(*args, **kwargs)
+
+        with (
+            patch("tasks.jobs.scan.CELERY_DEADLOCK_ATTEMPTS", 1),
+            patch.object(
+                Resource.objects,
+                "filter",
+                side_effect=resource_filter_side_effect,
+            ),
+            patch.object(
+                Resource.objects,
+                "create",
+                side_effect=IntegrityError("constraint violation"),
+            ),
+        ):
+            with pytest.raises(IntegrityError, match="constraint violation"):
+                self._process_one_finding_micro_batch(
+                    tenant,
+                    scan,
+                    provider,
+                    finding,
+                    resource_cache=CacheMissAfterPreResolve(resource_uid),
+                )
+
+        assert not Finding.objects.filter(
+            tenant_id=tenant.id, scan_id=scan.id, uid=finding.uid
+        ).exists()
+
     def test_process_finding_micro_batch_creates_records_and_updates_caches(
         self, tenants_fixture, scans_fixture
     ):
@@ -1573,8 +2180,12 @@ class TestProcessFindingMicroBatch:
                 group_resources_cache,
             )
 
-        created_finding = Finding.objects.get(uid=finding.uid)
-        resource = Resource.objects.get(uid=finding.resource_uid)
+        created_finding = Finding.objects.get(
+            tenant_id=tenant.id, scan_id=scan.id, uid=finding.uid
+        )
+        resource = Resource.objects.get(
+            tenant_id=tenant.id, provider_id=provider.id, uid=finding.resource_uid
+        )
 
         assert created_finding.scan_id == scan.id
         assert created_finding.status == StatusChoices.PASS
@@ -1602,7 +2213,9 @@ class TestProcessFindingMicroBatch:
         assert set(resource.tags.values_list("key", "value")) == set(
             finding.resource_tags.items()
         )
-        assert resource.findings.filter(uid=finding.uid).exists()
+        assert resource.findings.filter(
+            tenant_id=tenant.id, scan_id=scan.id, uid=finding.uid
+        ).exists()
 
         assert resource_cache[finding.resource_uid].id == resource.id
         assert resource_failed_findings_cache[finding.resource_uid] == 0
@@ -1691,7 +2304,9 @@ class TestProcessFindingMicroBatch:
             )
 
         existing_resource.refresh_from_db()
-        created_finding = Finding.objects.get(uid=finding.uid)
+        created_finding = Finding.objects.get(
+            tenant_id=tenant.id, scan_id=scan.id, uid=finding.uid
+        )
 
         assert created_finding.delta == Finding.DeltaChoices.CHANGED
         assert created_finding.status == StatusChoices.FAIL
@@ -1725,7 +2340,9 @@ class TestProcessFindingMicroBatch:
         assert set(existing_resource.tags.values_list("key", "value")) == {
             ("team", "devsec")
         }
-        assert existing_resource.findings.filter(uid=finding.uid).exists()
+        assert existing_resource.findings.filter(
+            tenant_id=tenant.id, scan_id=scan.id, uid=finding.uid
+        ).exists()
 
         assert resource_cache[finding.resource_uid].region == finding.region
         assert resource_cache[finding.resource_uid].service == finding.service_name
@@ -1891,10 +2508,14 @@ class TestProcessFindingMicroBatch:
             )
 
         # Verify the long UID finding was NOT created
-        assert not Finding.objects.filter(uid=long_uid).exists()
+        assert not Finding.objects.filter(
+            tenant_id=tenant.id, scan_id=scan.id, uid=long_uid
+        ).exists()
 
         # Verify the normal finding WAS created
-        assert Finding.objects.filter(uid=normal_finding.uid).exists()
+        assert Finding.objects.filter(
+            tenant_id=tenant.id, scan_id=scan.id, uid=normal_finding.uid
+        ).exists()
 
         # Verify logging was called for skipped finding
         assert mock_logger.warning.called
@@ -2019,8 +2640,12 @@ class TestProcessFindingMicroBatch:
             "new_failed": 1,
         }
 
-        created_finding1 = Finding.objects.get(uid="finding-cat-1")
-        created_finding2 = Finding.objects.get(uid="finding-cat-2")
+        created_finding1 = Finding.objects.get(
+            tenant_id=tenant.id, scan_id=scan.id, uid="finding-cat-1"
+        )
+        created_finding2 = Finding.objects.get(
+            tenant_id=tenant.id, scan_id=scan.id, uid="finding-cat-2"
+        )
         assert set(created_finding1.categories) == {"gen-ai", "security"}
         assert set(created_finding2.categories) == {"security", "iam"}
 
@@ -2314,9 +2939,9 @@ class TestCreateComplianceRequirements:
             create_compliance_requirements(tenant_id, scan_id)
 
             mock_persist.assert_called_once()
-            persisted_rows = mock_persist.call_args[0][1]
+            rows_factory = mock_persist.call_args[0][2]
             requirement_row = next(
-                row for row in persisted_rows if row["requirement_id"] == "1.1"
+                row for row in rows_factory() if row["requirement_id"] == "1.1"
             )
             assert requirement_row["requirement_status"] == "FAIL"
 
@@ -2454,18 +3079,26 @@ class TestComplianceRequirementCopy:
         }
 
         with patch.object(MainRouter, "admin_db", "admin"):
-            _copy_compliance_requirement_rows(str(row["tenant_id"]), [row])
+            _copy_compliance_requirement_rows(
+                str(row["tenant_id"]), str(row["scan_id"]), [row], 2000
+            )
 
         mock_psycopg_connection.assert_called_once_with("admin")
         connection.cursor.assert_called_once()
-        cursor.execute.assert_called_once()
+        # One execute for set_config plus one for the scan's DELETE.
+        assert cursor.execute.call_count == 2
+        delete_sql, delete_params = cursor.execute.call_args_list[1][0]
+        assert "DELETE FROM compliance_requirements_overviews" in delete_sql
+        assert delete_params == [str(row["tenant_id"]), str(row["scan_id"])]
         cursor.copy_expert.assert_called_once()
+        connection.commit.assert_called_once()
 
         csv_rows = list(csv.reader(StringIO(captured["data"])))
         assert csv_rows[0][0] == str(row["id"])
         assert csv_rows[0][5] == ""
         assert csv_rows[0][-1] == str(row["scan_id"])
 
+    @patch("tasks.jobs.scan.ComplianceRequirementOverview.objects.filter")
     @patch("tasks.jobs.scan.ComplianceRequirementOverview.objects.bulk_create")
     @patch("tasks.jobs.scan.rls_transaction")
     @patch(
@@ -2473,7 +3106,7 @@ class TestComplianceRequirementCopy:
         side_effect=Exception("copy failed"),
     )
     def test_persist_compliance_requirement_rows_fallback(
-        self, mock_copy, mock_rls_transaction, mock_bulk_create
+        self, mock_copy, mock_rls_transaction, mock_bulk_create, mock_filter
     ):
         inserted_at = datetime.now(UTC)
         row = {
@@ -2494,16 +3127,22 @@ class TestComplianceRequirementCopy:
         }
 
         tenant_id = row["tenant_id"]
+        scan_id = str(row["scan_id"])
 
         ctx = MagicMock()
         ctx.__enter__.return_value = None
         ctx.__exit__.return_value = False
         mock_rls_transaction.return_value = ctx
 
-        _persist_compliance_requirement_rows(tenant_id, [row])
+        _persist_compliance_requirement_rows(tenant_id, scan_id, lambda: [row])
 
-        mock_copy.assert_called_once_with(tenant_id, [row])
+        mock_copy.assert_called_once()
+        assert mock_copy.call_args[0][0] == tenant_id
+        assert mock_copy.call_args[0][1] == scan_id
         mock_rls_transaction.assert_called_once_with(tenant_id)
+        # The fallback replaces the scan's rows: delete + insert atomically.
+        mock_filter.assert_called_once_with(scan_id=scan_id)
+        mock_filter.return_value.delete.assert_called_once()
         mock_bulk_create.assert_called_once()
 
         args, kwargs = mock_bulk_create.call_args
@@ -2515,13 +3154,18 @@ class TestComplianceRequirementCopy:
 
     @patch("tasks.jobs.scan.ComplianceRequirementOverview.objects.bulk_create")
     @patch("tasks.jobs.scan.rls_transaction")
-    @patch("tasks.jobs.scan._copy_compliance_requirement_rows")
+    @patch("tasks.jobs.scan._copy_compliance_requirement_rows", return_value=0)
     def test_persist_compliance_requirement_rows_no_rows(
         self, mock_copy, mock_rls_transaction, mock_bulk_create
     ):
-        _persist_compliance_requirement_rows(str(uuid.uuid4()), [])
+        # Even with no rows the COPY path runs: it must clear the scan's
+        # previous rows so a re-run with fewer findings drops stale data.
+        total = _persist_compliance_requirement_rows(
+            str(uuid.uuid4()), str(uuid.uuid4()), lambda: []
+        )
 
-        mock_copy.assert_not_called()
+        assert total == 0
+        mock_copy.assert_called_once()
         mock_rls_transaction.assert_not_called()
         mock_bulk_create.assert_not_called()
 
@@ -2610,11 +3254,12 @@ class TestComplianceRequirementCopy:
         ]
 
         with patch.object(MainRouter, "admin_db", "admin"):
-            _copy_compliance_requirement_rows(tenant_id, rows)
+            _copy_compliance_requirement_rows(tenant_id, str(scan_id), rows, 2000)
 
         mock_psycopg_connection.assert_called_once_with("admin")
         connection.cursor.assert_called_once()
-        cursor.execute.assert_called_once()
+        # set_config + DELETE of the scan's previous rows.
+        assert cursor.execute.call_count == 2
         cursor.copy_expert.assert_called_once()
 
         csv_rows = list(csv.reader(StringIO(captured["data"])))
@@ -2643,6 +3288,60 @@ class TestComplianceRequirementCopy:
         assert csv_rows[2][3] == "aws_foundational_security_aws"
         assert csv_rows[2][5] == "2.0"
         assert csv_rows[2][9] == "MANUAL"
+
+    @patch("tasks.jobs.scan.psycopg_connection")
+    def test_copy_compliance_requirement_rows_batches_share_one_transaction(
+        self, mock_psycopg_connection, settings
+    ):
+        """Every COPY batch runs on the same connection with a single commit."""
+        settings.DATABASES.setdefault("admin", settings.DATABASES["default"])
+
+        connection = MagicMock()
+        cursor = MagicMock()
+        cursor_context = MagicMock()
+        cursor_context.__enter__.return_value = cursor
+        cursor_context.__exit__.return_value = False
+        connection.cursor.return_value = cursor_context
+        connection.__enter__.return_value = connection
+        connection.__exit__.return_value = False
+
+        context_manager = MagicMock()
+        context_manager.__enter__.return_value = connection
+        context_manager.__exit__.return_value = False
+        mock_psycopg_connection.return_value = context_manager
+
+        tenant_id = str(uuid.uuid4())
+        scan_id = str(uuid.uuid4())
+        inserted_at = datetime.now(UTC)
+        rows = [
+            {
+                "id": uuid.uuid4(),
+                "tenant_id": tenant_id,
+                "inserted_at": inserted_at,
+                "compliance_id": "cisa_aws",
+                "framework": "CISA",
+                "version": "1.0",
+                "description": f"Requirement {index}",
+                "region": "us-east-1",
+                "requirement_id": f"req-{index}",
+                "requirement_status": "PASS",
+                "passed_checks": 1,
+                "failed_checks": 0,
+                "total_checks": 1,
+                "scan_id": scan_id,
+            }
+            for index in range(3)
+        ]
+
+        with patch.object(MainRouter, "admin_db", "admin"):
+            total = _copy_compliance_requirement_rows(tenant_id, scan_id, rows, 1)
+
+        assert total == 3
+        # One connection, three COPY statements, one commit for the whole scan.
+        mock_psycopg_connection.assert_called_once_with("admin")
+        assert cursor.copy_expert.call_count == 3
+        connection.commit.assert_called_once()
+        connection.rollback.assert_not_called()
 
     @patch("tasks.jobs.scan.psycopg_connection")
     def test_copy_compliance_requirement_rows_null_values(
@@ -2691,7 +3390,9 @@ class TestComplianceRequirementCopy:
         }
 
         with patch.object(MainRouter, "admin_db", "admin"):
-            _copy_compliance_requirement_rows(str(row["tenant_id"]), [row])
+            _copy_compliance_requirement_rows(
+                str(row["tenant_id"]), str(row["scan_id"]), [row], 2000
+            )
 
         csv_rows = list(csv.reader(StringIO(captured["data"])))
         assert len(csv_rows) == 1
@@ -2747,7 +3448,9 @@ class TestComplianceRequirementCopy:
         }
 
         with patch.object(MainRouter, "admin_db", "admin"):
-            _copy_compliance_requirement_rows(str(row["tenant_id"]), [row])
+            _copy_compliance_requirement_rows(
+                str(row["tenant_id"]), str(row["scan_id"]), [row], 2000
+            )
 
         # Verify CSV was generated (csv module handles escaping automatically)
         csv_rows = list(csv.reader(StringIO(captured["data"])))
@@ -2808,7 +3511,9 @@ class TestComplianceRequirementCopy:
 
         before_call = datetime.now(UTC)
         with patch.object(MainRouter, "admin_db", "admin"):
-            _copy_compliance_requirement_rows(str(row["tenant_id"]), [row])
+            _copy_compliance_requirement_rows(
+                str(row["tenant_id"]), str(row["scan_id"]), [row], 2000
+            )
         after_call = datetime.now(UTC)
 
         csv_rows = list(csv.reader(StringIO(captured["data"])))
@@ -2861,11 +3566,83 @@ class TestComplianceRequirementCopy:
 
         with patch.object(MainRouter, "admin_db", "admin"):
             with pytest.raises(Exception, match="COPY command failed"):
-                _copy_compliance_requirement_rows(str(row["tenant_id"]), [row])
+                _copy_compliance_requirement_rows(
+                    str(row["tenant_id"]), str(row["scan_id"]), [row], 2000
+                )
 
         # Verify rollback was called
         connection.rollback.assert_called_once()
         connection.commit.assert_not_called()
+
+    @pytest.mark.parametrize("mismatched_field", ["tenant_id", "scan_id"])
+    @patch("tasks.jobs.scan.psycopg_connection")
+    def test_copy_compliance_requirement_rows_rejects_out_of_scope_rows(
+        self, mock_psycopg_connection, mismatched_field, settings
+    ):
+        """COPY bypasses RLS, so rows from another tenant/scan must be rejected."""
+        settings.DATABASES.setdefault("admin", settings.DATABASES["default"])
+
+        connection = MagicMock()
+        cursor = MagicMock()
+        cursor_context = MagicMock()
+        cursor_context.__enter__.return_value = cursor
+        cursor_context.__exit__.return_value = False
+        connection.cursor.return_value = cursor_context
+        connection.__enter__.return_value = connection
+        connection.__exit__.return_value = False
+
+        context_manager = MagicMock()
+        context_manager.__enter__.return_value = connection
+        context_manager.__exit__.return_value = False
+        mock_psycopg_connection.return_value = context_manager
+
+        tenant_id = str(uuid.uuid4())
+        scan_id = str(uuid.uuid4())
+        row = {
+            "id": uuid.uuid4(),
+            "tenant_id": tenant_id,
+            "compliance_id": "test",
+            "framework": "Test",
+            "version": "1.0",
+            "description": "desc",
+            "region": "us-east-1",
+            "requirement_id": "req-1",
+            "requirement_status": "PASS",
+            "passed_checks": 1,
+            "failed_checks": 0,
+            "total_checks": 1,
+            "scan_id": scan_id,
+        }
+        row[mismatched_field] = str(uuid.uuid4())
+
+        with patch.object(MainRouter, "admin_db", "admin"):
+            with pytest.raises(ComplianceRowScopeError):
+                _copy_compliance_requirement_rows(tenant_id, scan_id, [row], 2000)
+
+        cursor.copy_expert.assert_not_called()
+        connection.rollback.assert_called_once()
+        connection.commit.assert_not_called()
+
+    @patch("tasks.jobs.scan.ComplianceRequirementOverview")
+    @patch("tasks.jobs.scan.rls_transaction")
+    @patch(
+        "tasks.jobs.scan._copy_compliance_requirement_rows",
+        side_effect=ComplianceRowScopeError("out of scope"),
+    )
+    def test_persist_compliance_requirement_rows_does_not_fall_back_on_scope_error(
+        self, mock_copy, mock_rls_transaction, mock_model
+    ):
+        """A scope violation is a caller bug: the ORM fallback must not persist it."""
+        tenant_id = str(uuid.uuid4())
+        scan_id = str(uuid.uuid4())
+
+        with pytest.raises(ComplianceRowScopeError):
+            _persist_compliance_requirement_rows(tenant_id, scan_id, lambda: [])
+
+        mock_copy.assert_called_once()
+        mock_rls_transaction.assert_not_called()
+        mock_model.objects.filter.assert_not_called()
+        mock_model.objects.bulk_create.assert_not_called()
 
     @patch("tasks.jobs.scan.psycopg_connection")
     def test_copy_compliance_requirement_rows_transaction_rollback_on_set_config_error(
@@ -2909,7 +3686,9 @@ class TestComplianceRequirementCopy:
 
         with patch.object(MainRouter, "admin_db", "admin"):
             with pytest.raises(Exception, match="SET prowler.tenant_id failed"):
-                _copy_compliance_requirement_rows(str(row["tenant_id"]), [row])
+                _copy_compliance_requirement_rows(
+                    str(row["tenant_id"]), str(row["scan_id"]), [row], 2000
+                )
 
         # Verify rollback was called
         connection.rollback.assert_called_once()
@@ -2955,7 +3734,9 @@ class TestComplianceRequirementCopy:
         }
 
         with patch.object(MainRouter, "admin_db", "admin"):
-            _copy_compliance_requirement_rows(str(row["tenant_id"]), [row])
+            _copy_compliance_requirement_rows(
+                str(row["tenant_id"]), str(row["scan_id"]), [row], 2000
+            )
 
         # Verify commit was called and rollback was not
         connection.commit.assert_called_once()
@@ -2966,9 +3747,10 @@ class TestComplianceRequirementCopy:
     @patch("tasks.jobs.scan._copy_compliance_requirement_rows")
     def test_persist_compliance_requirement_rows_success(self, mock_copy):
         """Test successful COPY path without fallback to ORM."""
-        mock_copy.return_value = None  # Success, no exception
+        mock_copy.return_value = 1  # Success, no exception
 
         tenant_id = str(uuid.uuid4())
+        scan_id = str(uuid.uuid4())
         rows = [
             {
                 "id": uuid.uuid4(),
@@ -2984,16 +3766,21 @@ class TestComplianceRequirementCopy:
                 "passed_checks": 1,
                 "failed_checks": 0,
                 "total_checks": 1,
-                "scan_id": uuid.uuid4(),
+                "scan_id": scan_id,
             }
         ]
 
-        _persist_compliance_requirement_rows(tenant_id, rows)
+        total = _persist_compliance_requirement_rows(tenant_id, scan_id, lambda: rows)
 
-        # Verify COPY was called
-        mock_copy.assert_called_once_with(tenant_id, rows)
+        assert total == 1
+        mock_copy.assert_called_once()
+        copy_args = mock_copy.call_args[0]
+        assert copy_args[0] == tenant_id
+        assert copy_args[1] == scan_id
+        assert list(copy_args[2]) == rows
 
     @patch("tasks.jobs.scan.logger")
+    @patch("tasks.jobs.scan.ComplianceRequirementOverview.objects.filter")
     @patch("tasks.jobs.scan.ComplianceRequirementOverview.objects.bulk_create")
     @patch("tasks.jobs.scan.rls_transaction")
     @patch(
@@ -3001,7 +3788,12 @@ class TestComplianceRequirementCopy:
         side_effect=Exception("COPY failed"),
     )
     def test_persist_compliance_requirement_rows_fallback_logging(
-        self, mock_copy, mock_rls_transaction, mock_bulk_create, mock_logger
+        self,
+        mock_copy,
+        mock_rls_transaction,
+        mock_bulk_create,
+        mock_filter,
+        mock_logger,
     ):
         """Test logger.exception is called when COPY fails and fallback occurs."""
         tenant_id = str(uuid.uuid4())
@@ -3027,7 +3819,9 @@ class TestComplianceRequirementCopy:
         ctx.__exit__.return_value = False
         mock_rls_transaction.return_value = ctx
 
-        _persist_compliance_requirement_rows(tenant_id, [row])
+        _persist_compliance_requirement_rows(
+            tenant_id, str(row["scan_id"]), lambda: [row]
+        )
 
         # Verify logger.exception was called
         mock_logger.exception.assert_called_once()
@@ -3036,6 +3830,7 @@ class TestComplianceRequirementCopy:
         assert "falling back to ORM" in args[0]
         assert kwargs.get("exc_info") is not None
 
+    @patch("tasks.jobs.scan.ComplianceRequirementOverview.objects.filter")
     @patch("tasks.jobs.scan.ComplianceRequirementOverview.objects.bulk_create")
     @patch("tasks.jobs.scan.rls_transaction")
     @patch(
@@ -3043,7 +3838,7 @@ class TestComplianceRequirementCopy:
         side_effect=Exception("copy failed"),
     )
     def test_persist_compliance_requirement_rows_fallback_multiple_rows(
-        self, mock_copy, mock_rls_transaction, mock_bulk_create
+        self, mock_copy, mock_rls_transaction, mock_bulk_create, mock_filter
     ):
         """Test ORM fallback with multiple rows."""
         tenant_id = str(uuid.uuid4())
@@ -3090,10 +3885,14 @@ class TestComplianceRequirementCopy:
         ctx.__exit__.return_value = False
         mock_rls_transaction.return_value = ctx
 
-        _persist_compliance_requirement_rows(tenant_id, rows)
+        total = _persist_compliance_requirement_rows(
+            tenant_id, str(scan_id), lambda: rows
+        )
 
-        mock_copy.assert_called_once_with(tenant_id, rows)
+        assert total == 2
+        mock_copy.assert_called_once()
         mock_rls_transaction.assert_called_once_with(tenant_id)
+        mock_filter.assert_called_once_with(scan_id=str(scan_id))
         mock_bulk_create.assert_called_once()
 
         args, kwargs = mock_bulk_create.call_args
@@ -3117,6 +3916,7 @@ class TestComplianceRequirementCopy:
         assert objects[1].passed_checks == 2
         assert objects[1].failed_checks == 3
 
+    @patch("tasks.jobs.scan.ComplianceRequirementOverview.objects.filter")
     @patch("tasks.jobs.scan.ComplianceRequirementOverview.objects.bulk_create")
     @patch("tasks.jobs.scan.rls_transaction")
     @patch(
@@ -3124,7 +3924,7 @@ class TestComplianceRequirementCopy:
         side_effect=Exception("copy failed"),
     )
     def test_persist_compliance_requirement_rows_fallback_all_fields(
-        self, mock_copy, mock_rls_transaction, mock_bulk_create
+        self, mock_copy, mock_rls_transaction, mock_bulk_create, mock_filter
     ):
         """Test ORM fallback correctly maps all fields from row dict to model."""
         tenant_id = str(uuid.uuid4())
@@ -3154,7 +3954,7 @@ class TestComplianceRequirementCopy:
         ctx.__exit__.return_value = False
         mock_rls_transaction.return_value = ctx
 
-        _persist_compliance_requirement_rows(tenant_id, [row])
+        _persist_compliance_requirement_rows(tenant_id, str(scan_id), lambda: [row])
 
         args, kwargs = mock_bulk_create.call_args
         objects = args[0]

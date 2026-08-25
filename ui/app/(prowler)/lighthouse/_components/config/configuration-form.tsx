@@ -24,6 +24,7 @@ import {
   trimToNullable,
 } from "@/app/(prowler)/lighthouse/_lib/config";
 import { formatLastChecked } from "@/app/(prowler)/lighthouse/_lib/format";
+import { notifyLighthouseV2ConfigurationsChanged } from "@/app/(prowler)/lighthouse/_lib/session-events";
 import {
   type LighthouseV2Configuration,
   type LighthouseV2ConfigurationUpdateInput,
@@ -138,6 +139,7 @@ export function LighthouseV2ConfigurationForm({
 
       form.reset(getFormDefaults(result.data));
       onConfigurationSaved(result.data);
+      notifyLighthouseV2ConfigurationsChanged();
       if (shouldTestAfterSave) {
         await runConnectionTest(result.data.id);
       }
@@ -178,6 +180,7 @@ export function LighthouseV2ConfigurationForm({
       setDeleteOpen(false);
       form.reset(EMPTY_FORM_VALUES);
       onConfigurationDeleted(configuration.id);
+      notifyLighthouseV2ConfigurationsChanged();
     } catch {
       onFeedback({
         title: "Configuration not removed",

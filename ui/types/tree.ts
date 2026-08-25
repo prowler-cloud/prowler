@@ -39,6 +39,7 @@ export interface TreeDataItem {
   errorMessage?: string;
   /** Additional CSS classes for the item */
   className?: string;
+  kind?: string;
 }
 
 /**

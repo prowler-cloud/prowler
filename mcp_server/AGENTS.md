@@ -15,6 +15,7 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Review changelog format and conventions | `prowler-changelog` |
 | Update CHANGELOG.md in any component | `prowler-changelog` |
 | Working on MCP server tools | `prowler-mcp` |
+| Writing tests for the MCP server | `prowler-test-mcp` |
 
 ## Project Overview
 
@@ -25,7 +26,7 @@ The Prowler MCP Server provides AI agents access to the Prowler ecosystem throug
 ## CRITICAL RULES
 
 ### Tool Implementation
-- ALWAYS: Extend `BaseTool` ABC for Prowler App tools (auto-registration)
+- ALWAYS: Extend `BaseTool` ABC for Prowler tools (auto-registration)
 - ALWAYS: Use `@mcp.tool()` decorator for Hub/Docs tools
 - NEVER: Manually register BaseTool subclasses
 - NEVER: Import tools directly in server.py
@@ -48,21 +49,21 @@ The Prowler MCP Server provides AI agents access to the Prowler ecosystem throug
 ### Three Sub-Servers
 
 ```python
-await prowler_mcp_server.import_server(hub_mcp_server, prefix="prowler_hub")
-await prowler_mcp_server.import_server(app_mcp_server, prefix="prowler_app")
-await prowler_mcp_server.import_server(docs_mcp_server, prefix="prowler_docs")
+prowler_mcp_server.mount(hub_mcp_server, namespace="prowler_hub")
+prowler_mcp_server.mount(app_mcp_server, namespace="prowler")
+prowler_mcp_server.mount(docs_mcp_server, namespace="prowler_docs")
 ```
 
 ### Tool Naming
 - `prowler_hub_*` - Catalog and compliance (no auth)
 - `prowler_docs_*` - Documentation search (no auth)
-- `prowler_app_*` - Cloud/App management (auth required)
+- `prowler_*` - Prowler Cloud, Private Cloud & Local Server management (auth required)
 
 ---
 
 ## TECH STACK
 
-Python 3.12+ | FastMCP 2.13.1 | httpx (async) | Pydantic | uv
+Python 3.12+ | FastMCP 3.4.4 | httpx (async) | Pydantic | uv | pytest
 
 ---
 
@@ -85,9 +86,23 @@ mcp_server/prowler_mcp_server/
 
 ## COMMANDS
 
+From `mcp_server/`:
+
 ```bash
-cd mcp_server && uv run prowler-mcp                              # STDIO mode
-cd mcp_server && uv run prowler-mcp --transport http --port 8000 # HTTP mode
+cd mcp_server
+
+uv run prowler-mcp                              # STDIO mode
+uv run prowler-mcp --transport http --port 8000 # HTTP mode
+
+uv run pytest                                   # Run the test suite
+uv run pytest tests/prowler_app/models          # Run one area
+uv run pytest --cov=./prowler_mcp_server        # With coverage
+```
+
+From the repository root:
+
+```bash
+make test-mcp   # Run the MCP test suite exactly as CI does
 ```
 
 ---
@@ -100,3 +115,7 @@ cd mcp_server && uv run prowler-mcp --transport http --port 8000 # HTTP mode
 - [ ] No hardcoded secrets
 - [ ] Error handling returns structured responses
 - [ ] Parameter descriptions use Pydantic `Field()`
+- [ ] Tests added under `mcp_server/tests/`, mirroring the source path below the
+      package root (`prowler_mcp_server/prowler_app/tools/` -> `tests/prowler_app/tools/`),
+      as the SDK does for `prowler/` -> `tests/`
+- [ ] `uv run pytest` passes

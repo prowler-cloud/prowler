@@ -1,0 +1,442 @@
+---
+title: 'GCP Organizations'
+description: 'Onboard all GCP projects in your organization through a single guided wizard'
+---
+
+import { VersionBadge } from "/snippets/version-badge.mdx"
+import { SubscriptionBanner } from "/snippets/subscription-banner.mdx"
+
+<VersionBadge version="5.37.0" />
+
+Prowler Cloud onboards every Google Cloud project in your organization through a single guided wizard. Instead of connecting projects one by one, you can discover every folder and project under your Google Cloud organization, select the ones you want to monitor, test connectivity, and launch scans — all from the Prowler Cloud UI.
+
+<SubscriptionBanner>
+For Command-Line Interface (CLI) scanning of a whole organization, see [Scanning a Specific GCP Organization](/user-guide/providers/gcp/organization).
+</SubscriptionBanner>
+
+To follow this guide you need an active [Prowler Cloud](https://cloud.prowler.com) account and a Google Cloud credential with read access granted **at the organization node**.
+
+## Overview
+
+### Individual Projects vs Organizations
+
+| Approach | Best for | How it works |
+|----------|----------|--------------|
+| **Individual projects** | A few Google Cloud projects | Connect each project one by one with its own credential. |
+| **GCP Organizations** | 10+ projects, or any organization-managed estate | Connect once with an organization-level credential, discover every folder and project automatically, and scan them in bulk. |
+
+### How It Works
+
+Onboarding runs in four stages:
+
+1. **Grant read access** to one credential at your organization node, and enable the Cloud Resource Manager Application Programming Interface (API).
+2. **Discover** — Prowler walks your hierarchy through the Cloud Resource Manager API and returns every active folder and project.
+3. **Select and connect** — choose the projects to monitor. Prowler creates one provider per project and tests every connection.
+4. **Launch scans** — apply a scan schedule across the connected projects.
+
+<Note>
+**No roles are deployed into your projects.** Unlike AWS Organizations onboarding, GCP onboarding deploys nothing in Google Cloud. Prowler reuses the organization credential you provide as the credential of every project it onboards, so a single grant covers discovery and scanning.
+</Note>
+
+## Before You Start
+
+### Grant Read Access at the Organization Node
+
+Discovery reads three Cloud Resource Manager resources: the organization itself, the folders beneath it, and the projects in each folder. Grant these permissions to the credential **directly on the organization**, not on a project:
+
+| Permission | Used for |
+|------------|----------|
+| `resourcemanager.organizations.get` | Reading the organization and its display name. |
+| `resourcemanager.folders.list` | Walking the folder hierarchy. |
+| `resourcemanager.projects.list` | Listing the projects in the organization and in every folder. |
+
+The **Browser (`roles/browser`)** predefined role covers all three. Scanning each project additionally needs the permissions described in [GCP Authentication in Prowler](/user-guide/providers/gcp/authentication#required-permissions) — **Viewer (`roles/viewer`)**, **Service Usage Consumer (`roles/serviceusage.serviceUsageConsumer`)**, and the custom `ProwlerRole`. Binding those at the organization node too means every project you onboard is scannable without a per-project grant:
+
+```bash
+ORG_ID=123456789012
+MEMBER="serviceAccount:prowler@<credentials-project-id>.iam.gserviceaccount.com"
+
+# Discovery: read the organization, its folders, and its projects
+gcloud organizations add-iam-policy-binding "$ORG_ID" \
+  --member="$MEMBER" --role="roles/browser"
+
+# Scanning: read resources in every project under the organization
+gcloud organizations add-iam-policy-binding "$ORG_ID" \
+  --member="$MEMBER" --role="roles/viewer"
+
+gcloud organizations add-iam-policy-binding "$ORG_ID" \
+  --member="$MEMBER" --role="roles/serviceusage.serviceUsageConsumer"
+```
+
+### Enable the Cloud Resource Manager API
+
+Enable the Cloud Resource Manager API in the project that owns the credential — the service account's host project, or the quota project for user credentials:
+
+```bash
+gcloud services enable cloudresourcemanager.googleapis.com \
+  --project <credentials-project-id>
+```
+
+### Find Your Organization ID
+
+Prowler identifies your organization by its numeric Google Cloud organization ID:
+
+```bash
+gcloud organizations list
+```
+
+In the Google Cloud console, the ID sits in the **ID** column next to the organization on the [Manage Resources](https://console.cloud.google.com/cloud-resource-manager) page, above the folders and projects it holds:
+
+<Frame>
+  <img src="/images/organizations/gcp/gcp-console-org-id.png" alt="Manage Resources page in the Google Cloud console, with the organization ID highlighted next to the organization" />
+</Frame>
+
+## Step 1: Start the Organization Wizard
+
+### Open the Wizard
+
+1. Navigate to **Providers** and click **Add Provider**.
+
+<Frame>
+  <img src="/images/organizations/cloud-providers-add.png" alt="Providers page showing the Add Provider button" />
+</Frame>
+
+2. Select **Google Cloud** as the provider.
+
+<Frame>
+  <img src="/images/organizations/gcp/select-gcp-provider.png" alt="Provider selection modal with Google Cloud highlighted" />
+</Frame>
+
+3. Choose **Add Multiple Projects With GCP Organization**.
+
+<Frame>
+  <img src="/images/organizations/gcp/select-gcp-organizations-method.png" alt="Method selector showing Add Multiple Projects With GCP Organization option highlighted" />
+</Frame>
+
+<Note>
+In Prowler Local Server the organization option is marked **Cloud** and opens an upgrade panel instead of the wizard. Organization-level onboarding is a Prowler Cloud feature; the single-project method remains available.
+</Note>
+
+### Enter Organization Details
+
+- **Organization ID**: the numeric ID of your Google Cloud organization (for example, `123456789012`). Non-numeric values are rejected before submission.
+- **Name** (optional): a display name for the organization in Prowler. If left blank, Prowler uses the organization ID.
+
+<Frame>
+  <img src="/images/organizations/gcp/gcp-organization-details-form.png" alt="Organization Details form with the Google Cloud organization ID and Name fields" />
+</Frame>
+
+Click **Next** to proceed to the authentication phase. Prowler matches the organization by ID, so submitting an organization that is already onboarded reuses it instead of creating a duplicate.
+
+## Step 2: Authenticate with Google Cloud
+
+The **Authentication Details** step collects the credential Prowler uses to read your hierarchy and, later, to scan each project. Choose one of two methods.
+
+<Frame>
+  <img src="/images/organizations/gcp/gcp-authentication-details.png" alt="Authentication Details step showing the Service Account Key and Client ID methods" />
+</Frame>
+
+### Service Account Key
+
+Paste the full contents of a service account key file into **Service Account Key**. The field validates that the pasted text is a JSON object before submission.
+
+To create the key for the service account you granted access to:
+
+```bash
+gcloud iam service-accounts keys create prowler-key.json \
+  --iam-account=prowler@<credentials-project-id>.iam.gserviceaccount.com
+```
+
+### Client ID, Client Secret and Refresh Token
+
+Use this method to authenticate as a Google account rather than a service account. It takes three values from an authorized-user credential:
+
+- **Client ID**
+- **Client Secret**
+- **Refresh Token**
+
+Running `gcloud auth application-default login` writes all three to `~/.config/gcloud/application_default_credentials.json`. The account must hold the roles listed in [Grant Read Access at the Organization Node](#grant-read-access-at-the-organization-node).
+
+<Warning>
+Every project you onboard inherits this credential. Revoking it, rotating the key, or deleting the service account stops the scans of every project in the organization.
+</Warning>
+
+### Authenticate and Discover
+
+Click **Authenticate**. Prowler then:
+
+- Creates the organization and stores the credential securely.
+- Triggers an asynchronous discovery that walks your hierarchy through the Cloud Resource Manager API.
+- Shows a **"Gathering GCP Projects..."** spinner while it waits.
+
+<Frame>
+  <img src="/images/organizations/gcp/gcp-gathering-projects.png" alt="Gathering GCP Projects spinner shown while discovery runs" />
+</Frame>
+
+Discovery usually takes seconds to a couple of minutes, depending on how many folders and projects your organization holds.
+
+#### When Discovery Takes Too Long
+
+Prowler waits up to **3 minutes** for a result. Past that, the wizard stops waiting — but the discovery keeps running in Google Cloud — and offers two actions:
+
+- **Keep waiting** — resume the same discovery. Nothing is re-read from Google Cloud.
+- **Retry** — start a fresh discovery, which reads your hierarchy again.
+
+<Frame>
+  <img src="/images/organizations/gcp/gcp-discovery-timeout.png" alt="Discovery timeout notice offering Keep waiting and Retry" />
+</Frame>
+
+If discovery fails outright, the wizard explains why and offers **Retry discovery**. See [Troubleshooting](#troubleshooting) for each message.
+
+## Step 3: Select Projects to Scan
+
+### Understanding the Tree View
+
+Once discovery completes, the wizard renders your organization as a hierarchical tree:
+
+<Frame>
+  <img src="/images/organizations/gcp/gcp-tree-view-projects.png" alt="Hierarchical tree view showing folders and projects with selection checkboxes" />
+</Frame>
+
+- **Folders** nest under the organization; projects created directly under the organization appear at the top level.
+- **Selecting a folder** selects every selectable project beneath it. A folder whose projects are only partly selected renders in an indeterminate state.
+- **Individual overrides**: deselect single projects even when the parent folder is selected.
+- The header tracks the selection as **"X of Y projects selected"**.
+- Only **ACTIVE** folders and projects appear. Projects pending deletion are not listed.
+- Folder hierarchies are read up to **10 levels** deep. Deeper organizations report an error at discovery — see [Troubleshooting](#troubleshooting).
+
+### Blocked Projects
+
+A project is shown grayed out and cannot be selected when onboarding it would conflict with something Prowler already stores. Hover the project to see the reason:
+
+| Reason | What it means |
+|--------|---------------|
+| `organization_conflict` | The project is already connected under a **different** Prowler organization. |
+| `organization_node_conflict` | The project is already grouped under a different folder in Prowler — for example, it moved in Google Cloud after it was onboarded. |
+| `provider_type_conflict` | A provider with the same identifier exists in Prowler for another cloud provider. |
+
+<Frame>
+  <img src="/images/organizations/gcp/gcp-blocked-project.png" alt="Blocked project row with the reason shown in a tooltip" />
+</Frame>
+
+### Folders With Nothing to Select
+
+A folder that holds no projects, or whose projects are all blocked, is shown disabled with the note *"No projects available to select in this folder."* The folder still expands, so you can see the blocked projects it holds and why they are blocked.
+
+<Frame>
+  <img src="/images/organizations/gcp/gcp-inert-folder.png" alt="Disabled folder row noting that no projects are available to select" />
+</Frame>
+
+### Custom Aliases
+
+Each project row carries an editable name, prefilled with the project's display name. The alias is used only inside Prowler — it does not rename anything in Google Cloud. Folder names are read-only: Prowler stores the folder display name from Google Cloud.
+
+### Projects That Already Have Credentials
+
+Applying your selection stores the organization credential on every selected project. When a selected project is already connected to Prowler with its own credential, that credential is **overwritten** — so the wizard asks first, naming the affected projects:
+
+<Frame>
+  <img src="/images/organizations/gcp/gcp-replace-credentials-apply.png" alt="Replace existing credentials modal listing the projects whose credentials will be replaced" />
+</Frame>
+
+Click **Replace and continue** to proceed, or **Cancel** to adjust your selection.
+
+<Note>
+**Your existing data is safe.** A project already connected as an individual provider is **linked** to the organization, never duplicated: its historical scans and findings are preserved, and it does not count twice toward your subscription.
+</Note>
+
+## Step 4: Test Connections
+
+Click **Test Connections** to verify that Prowler can authenticate against each selected project. Prowler creates one provider per project — identified by its Google Cloud project ID — and then tests every connection.
+
+<Frame>
+  <img src="/images/organizations/gcp/gcp-test-connections.png" alt="Connection testing in progress with status icons on each project" />
+</Frame>
+
+Each project shows a real-time status indicator:
+
+- **Spinner** — test in progress
+- **Green checkmark (✓)** — connection successful
+- **Red icon (✗)** — connection failed (hover to see the error)
+
+If every project connects successfully, you advance to the next step automatically.
+
+### When Some Tests Fail
+
+An error banner appears: **"There was a problem connecting to some projects. Hover each project to check the error."** You have two options:
+
+**a) Fix and retry:**
+
+1. Confirm the credential holds **Viewer** and **Service Usage Consumer** on the failing projects (or on the organization).
+2. Confirm the Identity and Access Management (IAM) API is enabled as described in [GCP Authentication in Prowler](/user-guide/providers/gcp/authentication#project-level-settings).
+3. Click **Test Connections** again — only the **failed projects are re-tested**. Projects that already passed are not tested again.
+
+**b) Skip and continue:**
+
+Click **Skip Connection Validation** to proceed with the projects that connected successfully. Failed projects stay onboarded and visible on the Providers page, but they are not scanned. This option appears only when at least one project connected.
+
+If **no project** connects, the banner instead reads *"No projects connected successfully. Fix the connection errors and retry before launching scans."* and you cannot proceed. Fix the underlying problem — see [Troubleshooting](#troubleshooting) — and retry.
+
+## Step 5: Launch Scans
+
+The Organizations wizard uses the same schedule controls described in [Scan Scheduling](/user-guide/tutorials/prowler-scan-scheduling#schedule-options).
+
+Click **Save**, **Save and launch scan**, or **Launch scan**, depending on the selected schedule option. A toast notification confirms whether the schedule was saved, scans were launched, or both, and links to the **Scans** page. Prowler then redirects to the **Providers** page. Scans launch only for projects that passed connection testing.
+
+<Frame>
+  <img src="/images/organizations/gcp/gcp-launch-scan.png" alt="Launch Scan step showing Projects Connected confirmation and the scan schedule selector" />
+</Frame>
+
+After launching:
+
+- Scans appear on the **Scans** page as they start and complete.
+- Results populate the **Overview** and **Findings** pages.
+- On the **Providers** page, your projects are grouped under the organization and, when they live in a folder, under that folder.
+
+<Frame>
+  <img src="/images/organizations/gcp/gcp-providers-grouping.png" alt="Providers page showing projects grouped under GCP folders and the organization" />
+</Frame>
+
+## Manage Your Organization After Onboarding
+
+Open the row actions menu on the organization row on the **Providers** page.
+
+<Frame>
+  <img src="/images/organizations/gcp/gcp-organization-row-actions.png" alt="Row actions menu on a GCP organization row" />
+</Frame>
+
+| Action | What it does |
+|--------|--------------|
+| **Edit Organization Name** | Renames the organization in Prowler. Leave it blank to fall back to the organization ID. |
+| **Update Credentials** | Reopens the Authentication Details step to store a new credential. |
+| **Edit Scan Schedule** | Applies one schedule to every connected project in the organization. |
+| **Test Connections (N)** | Re-tests every project in the organization. |
+| **Delete Organization** | Deletes the organization and cascades to its providers. |
+
+### Onboard Projects Created Later
+
+Projects added to your Google Cloud organization after onboarding are not picked up automatically. Run the wizard again with the same organization ID: discovery returns the current hierarchy, already-connected projects come back preselected, and the new ones are ready to select.
+
+### Update Organization Credentials
+
+Choosing **Update Credentials** re-enters the Authentication Details step. Because the organization already holds a credential, Prowler warns before overwriting it and names how many providers re-authenticate with the new one:
+
+<Frame>
+  <img src="/images/organizations/gcp/gcp-replace-credentials-setup.png" alt="Replace existing credentials modal showing how many providers re-authenticate" />
+</Frame>
+
+Storing a new credential runs a fresh discovery, so any discovery already in progress is discarded — discovery authenticates with the credential it started from.
+
+### Delete an Organization or Folder
+
+Deleting an organization or a folder **cascades to every provider grouped under it**, along with their scans and findings. Both dialogs state how many providers are affected before you confirm.
+
+<Frame>
+  <img src="/images/organizations/gcp/gcp-delete-organization.png" alt="Delete organization dialog showing how many providers are deleted with it" />
+</Frame>
+
+Deletion runs in the background. Prowler confirms with a **"Deletion started"** notification; if any part of it fails, the affected rows reappear on a later refresh.
+
+<Danger>
+Deleting an organization **permanently deletes every project provider grouped under it**, including their historical scans and findings. This action cannot be undone.
+</Danger>
+
+### When Grouping Is Unavailable
+
+If Prowler cannot read your hierarchy while loading the Providers page, a notice reads *"Organization grouping is incomplete. Some providers may appear ungrouped."* Your providers are still listed, just flat. Reload the page to try again.
+
+## Billing Impact
+
+Each Google Cloud project you connect through the Organizations wizard counts as one **provider** in your Prowler Cloud subscription.
+
+- **Already-connected projects**: linking an existing provider to the organization does **not** add billing. The existing provider is reused.
+- **Large organizations**: connecting a 500-project organization results in up to 500 providers on your subscription. Review your plan limits before proceeding.
+- **Deleted providers**: a project you later remove no longer counts toward your subscription.
+
+For pricing details, see [Prowler Cloud Pricing](https://prowler.com/pricing).
+
+## Troubleshooting
+
+### That Organization ID Is Not Valid
+
+*"That organization ID is not valid. Copy the numeric ID from the Google Cloud console and try again."*
+
+Google Cloud rejected the ID. Use only the digits — no `organizations/` prefix and no domain name. Run `gcloud organizations list` and copy the `ID` column.
+
+### No Organization With That ID Was Found
+
+*"No organization with that ID was found. Check the ID, and that the service account has been granted access to the organization."*
+
+Either the ID belongs to another organization, or the credential cannot see this one. Confirm the binding was created **on the organization** and not on a project:
+
+```bash
+gcloud organizations get-iam-policy <organization-id> \
+  --flatten="bindings[].members" \
+  --filter="bindings.members:<service-account-email>" \
+  --format="table(bindings.role)"
+```
+
+### The Service Account Cannot List Folders and Projects
+
+*"The service account cannot list this organization's folders and projects. Grant it the Folder Viewer and Project Viewer roles at the organization level, then try again."*
+
+The credential authenticated but lacks read access to the hierarchy. Grant **Browser (`roles/browser`)** at the organization node, as described in [Grant Read Access at the Organization Node](#grant-read-access-at-the-organization-node), and confirm the Cloud Resource Manager API is enabled in the credential's project.
+
+### Authentication Failed
+
+*"Authentication failed. Please verify the service account permissions or credentials, then try again."*
+
+- For a service account key, confirm the key is still active and the pasted JSON is the full key file.
+- For client credentials, confirm the refresh token has not been revoked — `gcloud auth application-default login` issues a new one.
+- Confirm the service account itself is not disabled or deleted.
+
+### Google Cloud Did Not Respond
+
+*"Google Cloud did not respond while reading the organization. Nothing is wrong with your credentials — try again in a few minutes."*
+
+A transient Cloud Resource Manager error. Click **Retry discovery**.
+
+### The Folder Hierarchy Is Too Deep
+
+*"This organization's folder hierarchy is deeper than Prowler can read. Contact support so we can help you onboard it."*
+
+Prowler reads up to 10 levels of nested folders. Contact [Prowler Support](mailto:support@prowler.com).
+
+### Discovery Never Finishes
+
+The wizard stops waiting after 3 minutes, but the discovery keeps running in Google Cloud. Click **Keep waiting** to resume the same discovery rather than **Retry**, which starts over and re-reads your whole hierarchy.
+
+## Key Concepts
+
+### How Projects Map to Prowler Providers
+
+Each selected project becomes one Prowler provider:
+
+| Prowler field | Comes from |
+|---------------|------------|
+| Provider identifier | The Google Cloud project ID (for example, `prowler-prod-1`). |
+| Alias | The name you typed in the tree, or the project's display name. |
+| Credential | A copy of the organization credential. |
+
+Folders that hold selected projects become grouping rows on the Providers page. You select projects only — Prowler derives the folder ancestors itself.
+
+### Organization Credential vs Project Credential
+
+One credential, stored twice: on the organization, where discovery reads it, and on each project provider, where scans read it. That is why replacing the organization credential re-authenticates every project under it, and why the wizard asks before overwriting a project's own credential.
+
+## What's Next
+
+<Columns cols={2}>
+  <Card title="Prowler Cloud" icon="cloud" href="/user-guide/tutorials/prowler-app">
+    Full guide to using Prowler Cloud features.
+  </Card>
+  <Card title="GCP Organizations (CLI)" icon="terminal" href="/user-guide/providers/gcp/organization">
+    CLI-based scanning of a specific Google Cloud organization.
+  </Card>
+  <Card title="GCP Authentication" icon="key" href="/user-guide/providers/gcp/authentication">
+    Credential types and the permissions Prowler needs in Google Cloud.
+  </Card>
+  <Card title="Bulk Provider Provisioning" icon="upload" href="/user-guide/tutorials/bulk-provider-provisioning">
+    Script-based bulk provisioning for advanced automation.
+  </Card>
+</Columns>

@@ -29,7 +29,7 @@ import {
   ActionDropdown,
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
-import { toLocalDateString } from "@/lib/date-utils";
+import { buildPerScanComplianceHref } from "@/lib/compliance/compliance-tab-url";
 import { downloadScanZip } from "@/lib/helper";
 import { getScanScheduleCapability } from "@/lib/schedules";
 import { isCloud } from "@/lib/shared/env";
@@ -79,7 +79,9 @@ export function ScanJobsRowActions({
   const isCompleted = scanState === "completed";
   const isFailed = scanState === "failed";
   const taskId = scan.relationships.task.data?.id;
-  const scanDate = toLocalDateString(scan.attributes.completed_at);
+  // The findings page bounds the UTC day range with completed_at; without it the
+  // range collapses to the start day and can miss later findings.
+  const hasCompletedAt = Boolean(scan.attributes.completed_at);
   const providerId = scan.relationships.provider.data?.id;
   const scheduleProvider: ScanScheduleProvider | undefined = providerId
     ? {
@@ -91,15 +93,15 @@ export function ScanJobsRowActions({
     : undefined;
 
   const openFindings = () => {
-    if (!isCompleted || !scanDate) return;
+    if (!isCompleted || !hasCompletedAt) return;
     router.push(
-      `/findings?filter[scan]=${scan.id}&filter[inserted_at]=${scanDate}&filter[status__in]=FAIL`,
+      `/findings?filter[scan__in]=${scan.id}&filter[status__in]=FAIL`,
     );
   };
 
   const openCompliance = () => {
     if (!isCompleted) return;
-    router.push(`/compliance?scanId=${scan.id}`);
+    router.push(buildPerScanComplianceHref({ scanId: scan.id }));
   };
 
   const openErrorDetails = async () => {
@@ -201,7 +203,7 @@ export function ScanJobsRowActions({
               icon={<Eye />}
               label="View Findings"
               onSelect={openFindings}
-              disabled={!isCompleted || !scanDate}
+              disabled={!isCompleted || !hasCompletedAt}
             />
             <ActionDropdownItem
               icon={<ShieldCheck />}

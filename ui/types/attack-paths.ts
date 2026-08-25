@@ -106,6 +106,14 @@ export const ATTACK_PATH_QUERY_IDS = {
   CUSTOM: "__custom-open-cypher__",
 } as const;
 
+export const ATTACK_PATH_QUERY_KIND = {
+  PREDEFINED: "predefined",
+  CUSTOM: "custom",
+} as const;
+
+export type AttackPathQueryKind =
+  (typeof ATTACK_PATH_QUERY_KIND)[keyof typeof ATTACK_PATH_QUERY_KIND];
+
 // Query Types
 export interface AttackPathQueryParameter {
   name: string;
@@ -129,6 +137,28 @@ export interface AttackPathQueryDocumentationLink {
   link: string;
 }
 
+export const ATTACK_PATH_QUERY_STATUSES = {
+  OK: "ok",
+  ERROR: "error",
+} as const;
+
+export type AttackPathQueryStatus =
+  (typeof ATTACK_PATH_QUERY_STATUSES)[keyof typeof ATTACK_PATH_QUERY_STATUSES];
+
+// Cloud-only precomputed query summary. Missing/null means no definitive empty verdict.
+export interface AttackPathQueryResultSummary {
+  status: AttackPathQueryStatus;
+  has_data: boolean | null;
+}
+
+// Terminal impact of an attack-path query, rendered as the graph's outcome node.
+// Optional: custom queries have no outcome, and older backends omit the field.
+export interface AttackPathOutcome {
+  kind: string;
+  label: string;
+  partial?: boolean;
+}
+
 export interface AttackPathQueryAttributes {
   name: string;
   short_description: string;
@@ -137,6 +167,8 @@ export interface AttackPathQueryAttributes {
   parameters: AttackPathQueryParameter[];
   attribution: AttackPathQueryAttribution | null;
   documentation_link?: AttackPathQueryDocumentationLink | null;
+  result_summary?: AttackPathQueryResultSummary | null;
+  outcome?: AttackPathOutcome | null;
 }
 
 export interface AttackPathQuery {
@@ -241,8 +273,16 @@ export interface WizardState {
 }
 
 // Graph State Types
+export interface AttackPathQueryExecution {
+  queryId: string;
+  queryLabel: string;
+  queryKind: AttackPathQueryKind;
+  parameters: Record<string, string | number | boolean>;
+}
+
 export interface GraphState {
   data: AttackPathGraphData | null;
+  execution: AttackPathQueryExecution | null;
   selectedNodeId: string | null;
   loading: boolean;
   error: string | null;

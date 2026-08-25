@@ -314,6 +314,25 @@ describe("column-finding-groups — accessibility of check title cell", () => {
     expect(columnIds.at(-1)).toBe("actions");
   });
 
+  it("should not expose the manual-only Resolved path on group-level rows", () => {
+    // Given
+    const columns = getColumnFindingGroups({
+      rowSelection: {},
+      selectableRowCount: 1,
+      onDrillDown: vi.fn(),
+    });
+
+    // When
+    const columnIds = columns.map(
+      (column) =>
+        (column as { id?: string; accessorKey?: string }).id ??
+        (column as { id?: string; accessorKey?: string }).accessorKey,
+    );
+
+    // Then
+    expect(columnIds).not.toContain("triage");
+  });
+
   it("should render the first provider icon with its provider name", () => {
     // Given
     renderFindingGroupTitleCell({ providers: ["iac"] });
@@ -409,7 +428,9 @@ describe("column-finding-groups — accessibility of check title cell", () => {
     expect(
       screen.queryByRole("button", { name: "Fallback IaC Check" }),
     ).not.toBeInTheDocument();
-    expect(screen.getByText("Fallback IaC Check")).toBeInTheDocument();
+    // The title renders as plain (non-clickable) text and the inline-mocked
+    // tooltip duplicates it, so exactly both copies must exist.
+    expect(screen.getAllByText("Fallback IaC Check")).toHaveLength(2);
     expect(onDrillDown).not.toHaveBeenCalled();
   });
 });

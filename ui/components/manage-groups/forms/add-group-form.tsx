@@ -5,8 +5,7 @@ import { Controller, useForm } from "react-hook-form";
 import * as z from "zod";
 
 import { createProviderGroup } from "@/actions/manage-groups";
-import { Button, Separator } from "@/components/shadcn";
-import { useToast } from "@/components/shadcn";
+import { Button, Separator, useToast } from "@/components/shadcn";
 import { CustomInput } from "@/components/shadcn/custom";
 import { Form } from "@/components/shadcn/form";
 import { EnhancedMultiSelect } from "@/components/shadcn/select/enhanced-multi-select";

@@ -1,8 +1,8 @@
 {
   "framework": "Cyber-Essentials",
-  "name": "NCSC Cyber Essentials: Requirements for IT Infrastructure (Azure)",
+  "name": "NCSC Cyber Essentials: Requirements for IT Infrastructure",
   "version": "3.3",
-  "description": "Mapping of the UK National Cyber Security Centre (NCSC) Cyber Essentials scheme - Requirements for IT Infrastructure v3.3 (April 2026) - to Azure checks. Cyber Essentials organises its technical requirements into five control themes: Firewalls, Secure Configuration, Security Update Management, User Access Control, and Malware Protection. Cloud services are explicitly in scope for Cyber Essentials, and this mapping focuses on the controls that the applicant organisation is responsible for implementing on Azure infrastructure (Infrastructure/Platform as a Service). Requirements that apply to end-user devices, on-premises network appliances, or organisational process and are not observable from Azure subscription-level evidence are included for completeness with an empty check list and 'non-applicable' or 'Manual' attributes.",
+  "description": "The UK National Cyber Security Centre (NCSC) Cyber Essentials scheme - Requirements for IT Infrastructure v3.3 (April 2026). Cyber Essentials organises its technical requirements into five control themes: Firewalls, Secure Configuration, Security Update Management, User Access Control, and Malware Protection. Cloud services are explicitly in scope for Cyber Essentials and cannot be excluded, so under the shared responsibility model this framework covers the controls the applicant organisation is responsible for implementing on its own cloud infrastructure (Infrastructure/Platform as a Service). Requirements that apply to end-user devices, on-premises network appliances, or organisational process and are not observable from cloud control-plane evidence are included for completeness with an empty check list and 'non-applicable' or 'Manual' attributes.",
   "icon": "cyber-essentials",
   "attributes_metadata": [
     {
@@ -143,7 +143,7 @@
         "Theme": "Firewalls",
         "AssessmentStatus": "Manual",
         "CloudApplicability": "non-applicable",
-        "RemediationProcedure": "This requirement applies to on-premises network appliances and home/remote routers, which are outside the scope of Azure control-plane evidence. Manage and document this control as part of your organisation's device estate.",
+        "RemediationProcedure": "This requirement applies to on-premises network appliances and home/remote routers, which are outside the scope of cloud control-plane evidence. Manage and document this control as part of your organisation's device estate.",
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
@@ -215,7 +215,7 @@
         "Theme": "Firewalls",
         "AssessmentStatus": "Manual",
         "CloudApplicability": "non-applicable",
-        "RemediationProcedure": "Periodically review Network Security Group rules and Azure Firewall rule collections, removing or disabling rules that no longer have a documented business need.",
+        "RemediationProcedure": "Periodically review firewall and network access-control rules, removing or disabling any rule that no longer has a documented business need.",
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
@@ -230,7 +230,7 @@
         "Theme": "Firewalls",
         "AssessmentStatus": "Manual",
         "CloudApplicability": "non-applicable",
-        "RemediationProcedure": "This is an end-user device control (host-based firewall) and has no Azure control-plane equivalent. Enforce via endpoint management policy.",
+        "RemediationProcedure": "This is an end-user device control (host-based firewall) and has no cloud control-plane equivalent. Enforce via endpoint management policy.",
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
@@ -281,7 +281,7 @@
         "Theme": "Secure Configuration",
         "AssessmentStatus": "Manual",
         "CloudApplicability": "non-applicable",
-        "RemediationProcedure": "This is an operating-system level control for devices and servers and has no direct Azure control-plane equivalent. Maintain an approved software baseline and image hardening process for VM images.",
+        "RemediationProcedure": "This is an operating-system level control for devices and servers and has no direct cloud control-plane equivalent. Maintain an approved software baseline and image hardening process for VM images.",
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
@@ -296,7 +296,7 @@
         "Theme": "Secure Configuration",
         "AssessmentStatus": "Manual",
         "CloudApplicability": "non-applicable",
-        "RemediationProcedure": "This is an operating-system level control and has no Azure control-plane equivalent. Disable AutoRun/AutoPlay via OS configuration or group policy on VM images.",
+        "RemediationProcedure": "This is an operating-system level control and has no cloud control-plane equivalent. Disable AutoRun/AutoPlay via OS configuration or group policy on VM images.",
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
@@ -350,7 +350,7 @@
         "Theme": "Security Update Management",
         "AssessmentStatus": "Manual",
         "CloudApplicability": "non-applicable",
-        "RemediationProcedure": "Maintain a software asset inventory confirming each product is licensed and has an active vendor support commitment, including for VM operating systems and any third-party software running on Azure compute resources.",
+        "RemediationProcedure": "Maintain a software asset inventory confirming each product is licensed and has an active vendor support commitment, including operating systems and any third-party software running on cloud compute resources.",
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
@@ -365,7 +365,7 @@
         "Theme": "Security Update Management",
         "AssessmentStatus": "Manual",
         "CloudApplicability": "non-applicable",
-        "RemediationProcedure": "Track vendor end-of-support dates for operating systems and applications running on Azure VMs, and decommission or isolate workloads before support ends.",
+        "RemediationProcedure": "Track vendor end-of-support dates for operating systems and applications running on cloud compute resources, and decommission or isolate workloads before support ends.",
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
@@ -380,7 +380,7 @@
         "Theme": "Security Update Management",
         "AssessmentStatus": "Manual",
         "CloudApplicability": "partial",
-        "RemediationProcedure": "Enable automatic updates on in-scope software where possible: configure automatic guest patching (patchMode 'AutomaticByPlatform') on Azure VMs and VM scale sets, and enable vendor auto-update mechanisms for any third-party software running on those workloads. Note: existing Azure checks do not directly observe whether automatic updates are enabled (Defender auto-provisioning and vulnerability assessment only prove monitoring and assessment coverage), so this requirement must be verified manually until a dedicated check validating update automation exists.",
+        "RemediationProcedure": "Enable automatic updates on in-scope software where possible: configure platform-managed guest patching on cloud virtual machines and instance groups, and enable vendor auto-update mechanisms for any third-party software running on those workloads. Note: no check currently observes whether automatic updates are enabled (vulnerability assessment and security-posture provisioning only prove monitoring and assessment coverage), so this requirement must be verified manually until a dedicated check validating update automation exists.",
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
@@ -413,7 +413,7 @@
         "Theme": "User Access Control",
         "AssessmentStatus": "Manual",
         "CloudApplicability": "non-applicable",
-        "RemediationProcedure": "Maintain a joiner/mover/leaver process with documented approval steps for creating Microsoft Entra ID accounts and assigning Azure RBAC roles.",
+        "RemediationProcedure": "Maintain a joiner/mover/leaver process with documented approval steps for creating identity-provider accounts and assigning cloud roles.",
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
@@ -594,7 +594,7 @@
         "Theme": "Malware Protection",
         "AssessmentStatus": "Manual",
         "CloudApplicability": "non-applicable",
-        "RemediationProcedure": "This is an end-user device control implemented through application control policies (e.g. Microsoft Defender Application Control) and has no Azure subscription-level control-plane equivalent.",
+        "RemediationProcedure": "This is an end-user device control implemented through application control policies (e.g. Microsoft Defender Application Control) and has no cloud control-plane equivalent.",
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {

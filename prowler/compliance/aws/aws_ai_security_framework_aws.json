@@ -110,7 +110,9 @@
         "eks_cluster_kms_cmk_encryption_in_secrets_enabled",
         "dynamodb_tables_kms_cmk_encryption_enabled",
         "sns_topics_kms_encryption_at_rest_enabled",
-        "sqs_queues_server_side_encryption_enabled"
+        "sqs_queues_server_side_encryption_enabled",
+        "bedrock_custom_model_encrypted_with_cmk",
+        "bedrock_knowledge_base_encrypted_with_cmk"
       ]
     },
     {
@@ -187,10 +189,15 @@
           "Section": "Infrastructure Security",
           "SubSection": "Compute Isolation",
           "Service": "ec2",
-          "Type": "Manual"
+          "Type": "Automated"
         }
       ],
-      "Checks": []
+      "Checks": [
+        "kms_key_enclave_attestation_not_enforced",
+        "kms_key_enclave_attestation_bypassable_path",
+        "kms_key_enclave_attestation_no_deployment_binding",
+        "kms_key_enclave_attestation_pcr_mismatch"
+      ]
     },
     {
       "Id": "AISF-IAM-01",
@@ -633,10 +640,12 @@
           "Section": "AI Application Security",
           "SubSection": "Output Validation",
           "Service": "bedrock",
-          "Type": "Manual"
+          "Type": "Automated"
         }
       ],
-      "Checks": []
+      "Checks": [
+        "bedrock_guardrail_contextual_grounding_filter_enabled"
+      ]
     },
     {
       "Id": "AISF-AI-10",
@@ -647,10 +656,12 @@
           "Section": "AI Application Security",
           "SubSection": "RAG Security",
           "Service": "bedrock",
-          "Type": "Manual"
+          "Type": "Automated"
         }
       ],
-      "Checks": []
+      "Checks": [
+        "bedrock_knowledge_base_encrypted_with_cmk"
+      ]
     },
     {
       "Id": "AISF-AI-11",
@@ -675,10 +686,12 @@
           "Section": "AI Application Security",
           "SubSection": "Agent Governance",
           "Service": "bedrock",
-          "Type": "Manual"
+          "Type": "Automated"
         }
       ],
-      "Checks": []
+      "Checks": [
+        "bedrock_agent_role_not_shared_across_agents"
+      ]
     },
     {
       "Id": "AISF-AGENT-02",
@@ -899,7 +912,9 @@
       "Checks": [
         "cloudtrail_threat_detection_llm_jacking",
         "cloudtrail_threat_detection_privilege_escalation",
-        "cloudtrail_threat_detection_enumeration"
+        "cloudtrail_threat_detection_enumeration",
+        "kms_key_enclave_debug_attestation_detected",
+        "kms_key_enclave_attestation_unknown_image"
       ]
     },
     {

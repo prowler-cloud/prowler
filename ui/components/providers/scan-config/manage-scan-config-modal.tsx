@@ -3,8 +3,7 @@
 import { useState } from "react";
 
 import { setScanConfigurationProviders } from "@/actions/scan-configurations";
-import { Button } from "@/components/shadcn";
-import { useToast } from "@/components/shadcn";
+import { Button, useToast } from "@/components/shadcn";
 import { CustomLink } from "@/components/shadcn/custom/custom-link";
 import { Modal } from "@/components/shadcn/modal";
 import {
