@@ -428,7 +428,7 @@ describe("the alerts list shows destinations", () => {
     );
   });
 
-  it("reads correctly for emails-only, channels-only and empty rules", async () => {
+  it("reads correctly for emails-only, channels-only, both-kinds and empty rules", async () => {
     const harness = new AlertsPageHarness(
       alertsFixture({
         rules: [
@@ -438,6 +438,15 @@ describe("the alerts list shows destinations", () => {
             name: "Channels only",
             recipientEmails: [],
             slackChannelIds: [ALERTS_PRIVATE_CHANNEL.id],
+          }),
+          alertRuleFixture({
+            id: "rule-both",
+            name: "Both kinds",
+            recipientEmails: ["security@example.com", "ops@example.com"],
+            slackChannelIds: [
+              ALERTS_PUBLIC_CHANNEL.id,
+              ALERTS_PRIVATE_CHANNEL.id,
+            ],
           }),
           alertRuleFixture({
             id: "rule-none",
@@ -454,6 +463,9 @@ describe("the alerts list shows destinations", () => {
     );
     expect(await harness.ruleDestinationsSummary("Channels only")).toBe(
       `#${ALERTS_PRIVATE_CHANNEL.name}`,
+    );
+    expect(await harness.ruleDestinationsSummary("Both kinds")).toBe(
+      `security@example.com +1 more · #${ALERTS_PUBLIC_CHANNEL.name} +1 more`,
     );
     expect(await harness.ruleDestinationsSummary("No destinations yet")).toBe(
       "No destinations",
