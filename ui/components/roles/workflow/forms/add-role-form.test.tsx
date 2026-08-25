@@ -2,6 +2,8 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
+import { addRole } from "@/actions/roles/roles";
+
 import { AddRoleForm } from "./add-role-form";
 
 const routerMocks = vi.hoisted(() => ({
@@ -61,6 +63,12 @@ vi.mock("@/lib", () => ({
       description: "Allows creating and managing custom alerts",
     },
     {
+      field: "manage_lighthouse_ai_configuration",
+      label: "Manage Lighthouse AI",
+      description:
+        "Allows configuring Lighthouse AI, including its provider credentials, default model and business context",
+    },
+    {
       field: "manage_billing",
       label: "Manage Billing",
       description: "Provides access to billing settings and invoices",
@@ -88,34 +96,103 @@ beforeAll(() => {
   window.ResizeObserver = ResizeObserverMock;
 });
 
+const submitRoleForm = async (
+  user: ReturnType<typeof userEvent.setup>,
+  { grantLighthouseAi }: { grantLighthouseAi: boolean },
+) => {
+  await user.type(screen.getByPlaceholderText("Enter role name"), "New role");
+
+  if (grantLighthouseAi) {
+    await user.click(
+      screen.getByRole("checkbox", { name: "Manage Lighthouse AI" }),
+    );
+  }
+
+  await user.click(screen.getByRole("button", { name: "Add Role" }));
+};
+
+const submittedFormData = () => {
+  const formData = vi.mocked(addRole).mock.calls.at(-1)?.[0];
+  if (!formData) throw new Error("addRole was not called");
+  return formData;
+};
+
 describe("AddRoleForm", () => {
   afterEach(() => {
     routerMocks.push.mockClear();
+    vi.mocked(addRole).mockClear();
     vi.unstubAllEnvs();
   });
 
   it("shows Manage Alerts in Prowler Cloud", () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
 
     // When
     render(<AddRoleForm groups={[]} />);
 
     // Then
     expect(screen.getByText("Manage Alerts")).toBeInTheDocument();
+    expect(screen.getByText("Manage Lighthouse AI")).toBeInTheDocument();
     expect(screen.getByText("Manage Billing")).toBeInTheDocument();
   });
 
   it("hides Manage Alerts outside Prowler Cloud", () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
 
     // When
     render(<AddRoleForm groups={[]} />);
 
     // Then
     expect(screen.queryByText("Manage Alerts")).not.toBeInTheDocument();
+    expect(screen.queryByText("Manage Lighthouse AI")).not.toBeInTheDocument();
     expect(screen.queryByText("Manage Billing")).not.toBeInTheDocument();
+  });
+
+  it("submits manage_lighthouse_ai_configuration when granted in Prowler Cloud", async () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    const user = userEvent.setup();
+    render(<AddRoleForm groups={[]} />);
+
+    // When
+    await submitRoleForm(user, { grantLighthouseAi: true });
+
+    // Then
+    expect(submittedFormData().get("manage_lighthouse_ai_configuration")).toBe(
+      "true",
+    );
+  });
+
+  it("submits manage_lighthouse_ai_configuration as false when not granted in Prowler Cloud", async () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    const user = userEvent.setup();
+    render(<AddRoleForm groups={[]} />);
+
+    // When
+    await submitRoleForm(user, { grantLighthouseAi: false });
+
+    // Then
+    expect(submittedFormData().get("manage_lighthouse_ai_configuration")).toBe(
+      "false",
+    );
+  });
+
+  it("omits manage_lighthouse_ai_configuration from the submission outside Prowler Cloud", async () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+    const user = userEvent.setup();
+    render(<AddRoleForm groups={[]} />);
+
+    // When
+    await submitRoleForm(user, { grantLighthouseAi: false });
+
+    // Then
+    expect(submittedFormData().has("manage_lighthouse_ai_configuration")).toBe(
+      false,
+    );
   });
 
   it("navigates back to roles when cancel is clicked", async () => {

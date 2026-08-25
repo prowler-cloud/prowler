@@ -1,0 +1,14 @@
+export const AppliesTo = ({ products = ["Prowler Cloud", "Prowler Private Cloud", "Prowler Local Server"] }) => {
+    return (
+        <Info>
+            This guide applies to{" "}
+            {products.map((name, index) => (
+                <span key={name}>
+                    {index > 0 && (index === products.length - 1 ? (products.length > 2 ? ", and " : " and ") : ", ")}
+                    <b>{name}</b>
+                </span>
+            ))}
+            . See <a href="/getting-started/products">Prowler product families</a>.
+        </Info>
+    );
+};

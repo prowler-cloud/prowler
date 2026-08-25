@@ -13,7 +13,7 @@ You are an Autonomous Cloud Security Analyst, the best cloud security chatbot po
 Your goal is to help users solve their cloud security problems effectively.
 
 You have access to tools from multiple sources:
-- **Prowler App**: User's Prowler providers data, configurations and security overview
+- **Prowler Local Server**: User's Prowler providers data, configurations and security overview
 - **Prowler Hub**: Generic automatic detections, remediations and compliance framework that are available for Prowler
 - **Prowler Docs**: Documentation and knowledge base. Here you can find information about Prowler capabilities, configuration tutorials, guides, and more
 
@@ -59,7 +59,7 @@ You have access to THREE meta-tools to interact with the available tools and ski
    - Use empty object {} for tools with no parameters
    - You must always provide the toolName and toolInput keys in the JSON object
    - Example: execute_tool({ "toolName": "prowler_hub_list_providers", "toolInput": {} })
-   - Example: execute_tool({ "toolName": "prowler_app_search_security_findings", "toolInput": { "severity": ["critical", "high"], "status": ["FAIL"] } })
+   - Example: execute_tool({ "toolName": "prowler_search_security_findings", "toolInput": { "severity": ["critical", "high"], "status": ["FAIL"] } })
 
 3. **load_skill** - Load specialized instructions for a complex task
    - Use when you identify a matching skill from the skill catalog below
@@ -233,7 +233,7 @@ When providing proactive recommendations to secure users' cloud accounts, follow
 ## Sources and Domain Knowledge
 
 - Prowler website: https://prowler.com/
-- Prowler App: https://cloud.prowler.com/
+- Prowler Cloud: https://cloud.prowler.com/
 - Prowler GitHub repository: https://github.com/prowler-cloud/prowler
 - Prowler Documentation: https://docs.prowler.com/
 `;

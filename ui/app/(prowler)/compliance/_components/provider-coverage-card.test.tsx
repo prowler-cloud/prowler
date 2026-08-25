@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import type { ProviderBreakdownEntry } from "../_types";
+
 import { ProviderCoverageCard } from "./provider-coverage-card";
 
 vi.mock("@/components/icons/providers-badge/provider-type-icon", () => ({
@@ -39,6 +40,7 @@ describe("ProviderCoverageCard", () => {
     expect(screen.getByTestId("coverage-row-aws")).toBeInTheDocument();
     expect(screen.queryByTestId("coverage-row-gcp")).not.toBeInTheDocument();
     expect(screen.queryByText("No completed scan")).not.toBeInTheDocument();
+    expect(screen.getByText("8/10 · 1 manual")).toBeInTheDocument();
   });
 
   it("shows an empty state when no provider has a scan", () => {

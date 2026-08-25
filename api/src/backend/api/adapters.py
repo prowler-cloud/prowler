@@ -1,5 +1,7 @@
+from allauth.account.models import EmailAddress
+from allauth.core.exceptions import ImmediateHttpResponse
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
-from api.db_router import MainRouter
+from api.db_router import MainRouter, write_db_alias
 from api.db_utils import rls_transaction
 from api.models import (
     Membership,
@@ -10,10 +12,37 @@ from api.models import (
     UserRoleRelationship,
 )
 from api.utils import accept_invitation_for_user
+from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.http import HttpResponseForbidden
 
 
 class ProwlerSocialAccountAdapter(DefaultSocialAccountAdapter):
+    @staticmethod
+    def _get_social_account_name(extra_data: dict, email: str) -> str:
+        name_field = User._meta.get_field("name")
+        for value in (
+            extra_data.get("name"),
+            extra_data.get("login"),
+            extra_data.get("username"),
+            email,
+        ):
+            if not isinstance(value, str):
+                continue
+
+            candidate = value.strip()[: name_field.max_length].rstrip()
+            if not candidate:
+                continue
+
+            try:
+                name_field.run_validators(candidate)
+            except ValidationError:
+                continue
+
+            return candidate
+
+        raise ValueError("Social account does not provide a valid user identity.")
+
     @staticmethod
     def get_user_by_email(email: str):
         try:
@@ -38,8 +67,13 @@ class ProwlerSocialAccountAdapter(DefaultSocialAccountAdapter):
         return None
 
     def pre_social_login(self, request, sociallogin):
-        # Link existing accounts with the same email address
-        email = sociallogin.account.extra_data.get("email")
+        # The provider account is already bound, so no email-based linking is needed.
+        if sociallogin.account.pk:
+            return
+
+        # Prefer the normalized email populated by allauth. GitHub can return the
+        # primary email separately from the profile stored in extra_data.
+        email = sociallogin.user.email or sociallogin.account.extra_data.get("email")
         if sociallogin.provider.id == "saml":
             # For SAML, the asserted NameID email cannot be trusted on its own:
             # any tenant can claim any email domain in its SAML configuration. To
@@ -80,6 +114,17 @@ class ProwlerSocialAccountAdapter(DefaultSocialAccountAdapter):
         if email:
             existing_user = self.get_user_by_email(email)
             if existing_user:
+                email_is_verified = EmailAddress.objects.filter(
+                    user=existing_user,
+                    email__iexact=email,
+                    verified=True,
+                ).exists()
+                provider_verified_email = any(
+                    address.verified and address.email.casefold() == email.casefold()
+                    for address in sociallogin.email_addresses
+                )
+                if not email_is_verified or not provider_verified_email:
+                    raise ImmediateHttpResponse(HttpResponseForbidden())
                 sociallogin.connect(request, existing_user)
 
     def save_user(self, request, sociallogin, form=None):
@@ -88,17 +133,17 @@ class ProwlerSocialAccountAdapter(DefaultSocialAccountAdapter):
         and is about to be saved to the DB for the first time.
         """
         with transaction.atomic(using=MainRouter.admin_db):
-            user = super().save_user(request, sociallogin, form)
+            # Allauth saves the user without an explicit alias. Route that save
+            # through admin so every signup record shares this transaction.
+            with write_db_alias(MainRouter.admin_db):
+                user = super().save_user(request, sociallogin, form)
             provider = sociallogin.provider.id
             extra = sociallogin.account.extra_data
 
             if provider != "saml":
                 # Handle other providers (e.g., GitHub, Google)
+                user.name = self._get_social_account_name(extra, user.email)
                 user.save(using=MainRouter.admin_db)
-                social_account_name = extra.get("name")
-                if social_account_name:
-                    user.name = social_account_name
-                    user.save(using=MainRouter.admin_db)
 
                 invitation_token = self._get_invitation_token(request)
                 if invitation_token:

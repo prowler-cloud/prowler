@@ -2,6 +2,7 @@
 
 import { useTheme } from "next-themes";
 import { useState } from "react";
+import { createPortal } from "react-dom";
 
 import { cn } from "@/lib/utils";
 import { CategoryData } from "@/types/compliance";
@@ -115,44 +116,49 @@ export const HeatmapChart = ({ categories = [] }: HeatmapChartProps) => {
         </div>
 
         {/* Custom Tooltip */}
-        {hoveredItem && (
-          <div
-            className="pointer-events-none fixed z-50 rounded border px-3 py-2 text-xs shadow-lg"
-            style={{
-              left: mousePosition.x + 10,
-              top: mousePosition.y - 10,
-              backgroundColor: theme === "dark" ? "#1e293b" : "white",
-              borderColor: theme === "dark" ? "#475569" : "rgba(0, 0, 0, 0.1)",
-              color: theme === "dark" ? "white" : "black",
-            }}
-          >
-            <div
-              className="mb-1 font-semibold"
-              style={{ color: theme === "dark" ? "white" : "black" }}
-            >
-              {capitalizeFirstLetter(hoveredItem.name)}
-            </div>
-            <div>
-              <span
+        {hoveredItem
+          ? createPortal(
+              <div
+                role="tooltip"
+                className="pointer-events-none fixed z-50 rounded border px-3 py-2 text-xs shadow-lg"
                 style={{
-                  color: getHeatmapColor(hoveredItem.failurePercentage),
+                  left: mousePosition.x + 10,
+                  top: mousePosition.y - 10,
+                  backgroundColor: theme === "dark" ? "#1e293b" : "white",
+                  borderColor:
+                    theme === "dark" ? "#475569" : "rgba(0, 0, 0, 0.1)",
+                  color: theme === "dark" ? "white" : "black",
                 }}
               >
-                Failure Rate: {hoveredItem.failurePercentage}%
-              </span>
-            </div>
-            <div>
-              <span
-                style={{
-                  color: getHeatmapColor(hoveredItem.failurePercentage),
-                }}
-              >
-                Failed: {hoveredItem.failedRequirements}/
-                {hoveredItem.totalRequirements}
-              </span>
-            </div>
-          </div>
-        )}
+                <div
+                  className="mb-1 font-semibold"
+                  style={{ color: theme === "dark" ? "white" : "black" }}
+                >
+                  {capitalizeFirstLetter(hoveredItem.name)}
+                </div>
+                <div>
+                  <span
+                    style={{
+                      color: getHeatmapColor(hoveredItem.failurePercentage),
+                    }}
+                  >
+                    Failure Rate: {hoveredItem.failurePercentage}%
+                  </span>
+                </div>
+                <div>
+                  <span
+                    style={{
+                      color: getHeatmapColor(hoveredItem.failurePercentage),
+                    }}
+                  >
+                    Failed: {hoveredItem.failedRequirements}/
+                    {hoveredItem.totalRequirements}
+                  </span>
+                </div>
+              </div>,
+              document.body,
+            )
+          : null}
       </div>
     </div>
   );

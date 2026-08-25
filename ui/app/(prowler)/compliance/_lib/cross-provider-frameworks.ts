@@ -60,6 +60,21 @@ export const CROSS_PROVIDER_FRAMEWORKS: CrossProviderFrameworkEntry[] = [
       "Digital Operational Resilience Act (EU 2022/2554) — the EU framework for the digital operational resilience of the financial sector.",
     compatibleProviders: ["aws", "azure", "gcp", "alibabacloud", "cloudflare"],
   },
+  {
+    complianceId: "cmmc_2.0",
+    title: "CMMC",
+    version: "2.0",
+    description:
+      "Cybersecurity Maturity Model Certification (CMMC) 2.0 (32 CFR Part 170) — the U.S. Department of Defense program verifying that defense contractors protect FCI and CUI across three levels.",
+    compatibleProviders: [
+      "aws",
+      "azure",
+      "gcp",
+      "m365",
+      "alibabacloud",
+      "oraclecloud",
+    ],
+  },
 ];
 
 /** Resolves only canonical catalog links. Missing, unknown, or mismatched

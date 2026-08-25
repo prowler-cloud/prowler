@@ -35,6 +35,7 @@ import {
   getUnlimitedVisibilityField,
   getVisiblePermissionFormFields,
 } from "@/lib/role-permissions";
+import { isCloud } from "@/lib/shared/env";
 import { roleFormSchema, RoleFormValues } from "@/types";
 
 import { UnlimitedVisibilityField } from "./unlimited-visibility-section";
@@ -74,7 +75,7 @@ export const RoleForm = ({
     defaultValues,
   });
 
-  const isCloudEnvironment = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
+  const isCloudEnvironment = isCloud();
   const visiblePermissionFormFields =
     getVisiblePermissionFormFields(isCloudEnvironment);
   const showUnlimitedVisibilityField = !!getUnlimitedVisibilityField();

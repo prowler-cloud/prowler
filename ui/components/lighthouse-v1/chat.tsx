@@ -34,8 +34,8 @@ import {
   CardHeader,
   CardTitle,
   Combobox,
+  useToast,
 } from "@/components/shadcn";
-import { useToast } from "@/components/shadcn";
 import { CustomLink } from "@/components/shadcn/custom/custom-link";
 import { useMountEffect } from "@/hooks/use-mount-effect";
 import type { LighthouseProvider } from "@/types/lighthouse-v1";

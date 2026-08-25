@@ -1,0 +1,36 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "vpc_security_group_open_egress",
+  "CheckTitle": "VPC security groups do not allow open egress to the internet",
+  "CheckType": [],
+  "ServiceName": "vpc",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "HUAWEICLOUD::VPC::SecurityGroup",
+  "ResourceGroup": "network",
+  "Description": "Security groups should not allow unrestricted egress to all destinations. Huawei Cloud represents unrestricted destinations as 0.0.0.0/0, ::/0, or an empty remote IP prefix without a remote security group or address group. Open egress allows instances to reach any destination on the internet, increasing the risk of data exfiltration and command-and-control communication.",
+  "Risk": "Unrestricted egress rules allow instances to communicate with any external destination. This increases the risk of data exfiltration, unauthorized outbound connections, and command-and-control channel establishment by compromised instances.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.huaweicloud.com/intl/en-us/usermanual-vpc/vpc_SecurityGroup_0001.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "hcloud VPC UpdateSecurityGroupRule --security_group_rule_id <rule_id> --remote_ip_prefix <restricted_cidr>",
+      "NativeIaC": "",
+      "Other": "1. Log on to the Huawei Cloud console.\n2. Choose VPC.\n3. Click Security Groups.\n4. Select the security group.\n5. Edit each allow egress rule whose destination is 0.0.0.0/0, ::/0, or empty and unscoped.\n6. Restrict the destination to required IP ranges or an appropriate security group or address group.\n7. Click OK.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Restrict allow egress rules to required destination IP ranges, security groups, or address groups instead of allowing all IPv4 or IPv6 destinations.",
+      "Url": "https://hub.prowler.com/check/vpc_security_group_open_egress"
+    }
+  },
+  "Categories": [
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

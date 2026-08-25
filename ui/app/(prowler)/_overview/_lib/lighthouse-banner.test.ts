@@ -16,7 +16,7 @@ const LIGHTHOUSE_OVERVIEW_CHAT_HREF = `/lighthouse?prompt=${encodeURIComponent(
 )}`;
 
 describe("resolveLighthouseOverviewBannerHref", () => {
-  it("routes to Lighthouse chat when any v2 configuration is connected", () => {
+  it("opens Lighthouse with the remediation prompt when any v2 configuration is connected", () => {
     // Given / When
     const href = resolveLighthouseOverviewBannerHref([
       configuration("openai", false),

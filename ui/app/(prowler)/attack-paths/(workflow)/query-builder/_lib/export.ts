@@ -14,14 +14,26 @@ import {
   getNodeBorderColor,
   getNodeColor,
   GRAPH_ALERT_BORDER_COLOR,
+  GRAPH_COUNT_BADGE_STROKE_COLOR,
   GRAPH_EDGE_COLOR_DARK,
+  GRAPH_OUTCOME_BORDER_COLOR,
+  GRAPH_OUTCOME_FILL_COLOR,
 } from "./graph-colors";
+import {
+  GROUP_NODE_LABEL,
+  GROUP_PROPS,
+  OUTCOME_NODE_LABEL,
+  OUTCOME_PROPS,
+} from "./group-graph";
 import { layoutWithDagre } from "./layout";
 import {
   FINDING_NODE_DIMENSIONS,
+  GROUP_NODE_DIMENSIONS,
+  OUTCOME_NODE_DIMENSIONS,
   RESOURCE_NODE_DIMENSIONS,
 } from "./node-dimensions";
 import { getNodeLabelDisplay } from "./node-label-lines";
+import { isProwlerFindingNode } from "./node-types";
 import { resolveNodeVisual } from "./node-visuals";
 
 interface ExportGraphOptions {
@@ -67,8 +79,7 @@ const downloadDataUrl = (dataUrl: string, filename: string) => {
   document.body.removeChild(link);
 };
 
-const isFindingNode = (labels: string[]) =>
-  labels.some((label) => label.toLowerCase().includes("finding"));
+const isFindingNode = isProwlerFindingNode;
 
 const getGraphEdges = (graphData: AttackPathGraphData): GraphEdge[] => {
   if (graphData.edges?.length) return graphData.edges;
@@ -389,12 +400,171 @@ const drawNodeIcon = (
   context.restore();
 };
 
+const drawWrappedLabel = (
+  context: CanvasRenderingContext2D,
+  text: string,
+  center: Point,
+  maxChars: number,
+  maxLines: number,
+  topY: number,
+) => {
+  getNodeLabelDisplay(text, maxChars, maxLines).lines.forEach((line, index) => {
+    context.fillText(
+      line,
+      center.x,
+      center.y + (topY - BADGE_CENTER_Y) + index * LABEL_LINE_HEIGHT,
+      RESOURCE_NODE_DIMENSIONS.WIDTH,
+    );
+  });
+};
+
+// A collapsed resource-class group: class badge + count, mirroring GroupNode.
+const drawGroupNode = (
+  context: CanvasRenderingContext2D,
+  graphNode: AttackPathGraphData["nodes"][number],
+  center: Point,
+) => {
+  const classLabel = String(graphNode.properties[GROUP_PROPS.CLASS] ?? "");
+  const className = String(graphNode.properties[GROUP_PROPS.CLASS_NAME] ?? "");
+  const count = Number(graphNode.properties[GROUP_PROPS.COUNT] ?? 0);
+  const hasFindings = Boolean(graphNode.properties[GROUP_PROPS.HAS_FINDINGS]);
+  const visual = resolveNodeVisual({
+    id: graphNode.id,
+    labels: [classLabel],
+    properties: {},
+  });
+  const fill = getNodeColor([classLabel]);
+  const stroke = hasFindings
+    ? GRAPH_ALERT_BORDER_COLOR
+    : getNodeBorderColor([classLabel]);
+
+  if (hasFindings) {
+    context.fillStyle = stroke;
+    context.globalAlpha = 0.13;
+    context.beginPath();
+    context.arc(center.x, center.y, GLOW_RADIUS, 0, Math.PI * 2);
+    context.fill();
+    context.globalAlpha = 1;
+  }
+
+  context.fillStyle = fill;
+  context.strokeStyle = stroke;
+  context.lineWidth = hasFindings ? 3 : 1.5;
+  context.beginPath();
+  context.arc(center.x, center.y, BADGE_RADIUS, 0, Math.PI * 2);
+  context.fill();
+  context.stroke();
+
+  const typeLabel = truncateLabel(visual.description, 22);
+  drawNodeIcon(context, center.x, center.y, visual.category, typeLabel);
+
+  // Count badge, top-right of the class icon.
+  const countCx = center.x + BADGE_RADIUS - 2;
+  const countCy = center.y - BADGE_RADIUS + 2;
+  context.fillStyle = stroke;
+  context.strokeStyle = GRAPH_COUNT_BADGE_STROKE_COLOR;
+  context.lineWidth = 2;
+  context.beginPath();
+  context.arc(countCx, countCy, 11, 0, Math.PI * 2);
+  context.fill();
+  context.stroke();
+  context.fillStyle = "#ffffff";
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  context.font = "700 11px sans-serif";
+  context.fillText(String(count), countCx, countCy + 1);
+
+  context.fillStyle = "#ffffff";
+  context.font = "600 11px sans-serif";
+  drawWrappedLabel(
+    context,
+    className || visual.description,
+    center,
+    GROUP_NODE_DIMENSIONS.LABEL_MAX_CHARS,
+    GROUP_NODE_DIMENSIONS.LABEL_MAX_LINES,
+    LABEL_Y,
+  );
+
+  context.fillStyle = "rgba(255,255,255,0.82)";
+  context.font = "9px sans-serif";
+  context.fillText(
+    `${count} ${count === 1 ? "resource" : "resources"}`,
+    center.x,
+    center.y + (TYPE_Y - BADGE_CENTER_Y),
+    RESOURCE_NODE_DIMENSIONS.WIDTH,
+  );
+};
+
+// The terminal outcome node: distinct orange badge, mirroring OutcomeNode.
+const drawOutcomeNode = (
+  context: CanvasRenderingContext2D,
+  graphNode: AttackPathGraphData["nodes"][number],
+  center: Point,
+) => {
+  const label = String(graphNode.properties[OUTCOME_PROPS.LABEL] ?? "Outcome");
+  const partial = Boolean(graphNode.properties[OUTCOME_PROPS.PARTIAL]);
+
+  context.fillStyle = GRAPH_OUTCOME_BORDER_COLOR;
+  context.globalAlpha = 0.18;
+  context.beginPath();
+  context.arc(center.x, center.y, GLOW_RADIUS, 0, Math.PI * 2);
+  context.fill();
+  context.globalAlpha = 1;
+
+  context.fillStyle = GRAPH_OUTCOME_FILL_COLOR;
+  context.strokeStyle = GRAPH_OUTCOME_BORDER_COLOR;
+  context.lineWidth = 2;
+  context.setLineDash(partial ? [4, 3] : []);
+  context.beginPath();
+  context.arc(center.x, center.y, BADGE_RADIUS, 0, Math.PI * 2);
+  context.fill();
+  context.stroke();
+  context.setLineDash([]);
+
+  // Simple target glyph in place of the Crosshair icon.
+  context.strokeStyle = "#ffffff";
+  context.lineWidth = 2;
+  context.beginPath();
+  context.arc(center.x, center.y, 8, 0, Math.PI * 2);
+  context.stroke();
+
+  context.fillStyle = GRAPH_OUTCOME_BORDER_COLOR;
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  context.font = "700 8px sans-serif";
+  context.fillText(
+    partial ? "LATENT OUTCOME" : "OUTCOME",
+    center.x,
+    center.y + (64 - BADGE_CENTER_Y),
+  );
+
+  context.fillStyle = "#ffffff";
+  context.font = "700 11px sans-serif";
+  drawWrappedLabel(
+    context,
+    label,
+    center,
+    OUTCOME_NODE_DIMENSIONS.LABEL_MAX_CHARS,
+    OUTCOME_NODE_DIMENSIONS.LABEL_MAX_LINES,
+    78,
+  );
+};
+
 const drawNode = (
   context: CanvasRenderingContext2D,
   graphNode: AttackPathGraphData["nodes"][number],
   center: Point,
   options: { hasFindings: boolean; selected: boolean },
 ) => {
+  if (graphNode.labels.includes(OUTCOME_NODE_LABEL)) {
+    drawOutcomeNode(context, graphNode, center);
+    return;
+  }
+  if (graphNode.labels.includes(GROUP_NODE_LABEL)) {
+    drawGroupNode(context, graphNode, center);
+    return;
+  }
+
   const isFinding = isFindingNode(graphNode.labels);
   const visual = resolveNodeVisual(graphNode);
   const fill = getNodeColor(graphNode.labels, graphNode.properties);

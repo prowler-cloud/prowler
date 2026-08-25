@@ -17,6 +17,11 @@ from prowler.lib.resource_limit import (
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
+# Presigned code/layer download URLs are short-lived S3 URLs, not AWS API
+# calls, so a hung request here would otherwise block a worker thread
+# indefinitely instead of failing like the surrounding boto3 calls do.
+CODE_DOWNLOAD_TIMEOUT_SECONDS = 30
+
 
 class Lambda(AWSService):
     def __init__(self, provider):
@@ -25,6 +30,7 @@ class Lambda(AWSService):
         # Functions are listed first, then trimmed to the subset selected for
         # analysis before expensive per-function detail is hydrated.
         self.functions = {}
+        self.layers = {}
         self.security_groups_in_use = set()
         self.regions_with_functions = set()
         self.function_limit = get_resource_scan_limit(
@@ -32,6 +38,7 @@ class Lambda(AWSService):
         )
         self.__threading_call__(self._list_functions)
         self._select_functions_for_analysis()
+        self._collect_layers()
         self._list_tags_for_resource()
         self.__threading_call__(self._get_policy)
         self.__threading_call__(self._get_function_url_config)
@@ -105,6 +112,11 @@ class Lambda(AWSService):
                 self.function_limit,
             )
         }
+
+    def _collect_layers(self):
+        for function in self.functions.values():
+            for layer in function.layers:
+                self.layers.setdefault(layer.arn, layer)
 
     def _list_event_source_mappings(self, regional_client):
         logger.info("Lambda - Listing Event Source Mappings...")
@@ -193,6 +205,15 @@ class Lambda(AWSService):
                     f"{function.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
+    def _download_code(self, code_location_uri):
+        raw_code_zip = requests.get(
+            code_location_uri, timeout=CODE_DOWNLOAD_TIMEOUT_SECONDS
+        ).content
+        return LambdaCode(
+            location=code_location_uri,
+            code_zip=zipfile.ZipFile(io.BytesIO(raw_code_zip)),
+        )
+
     def _fetch_function_code(self, function_name, function_region):
         try:
             regional_client = self.regional_clients[function_region]
@@ -200,15 +221,49 @@ class Lambda(AWSService):
                 FunctionName=function_name
             )
             if "Location" in function_information["Code"]:
-                code_location_uri = function_information["Code"]["Location"]
-                raw_code_zip = requests.get(code_location_uri).content
-                return LambdaCode(
-                    location=code_location_uri,
-                    code_zip=zipfile.ZipFile(io.BytesIO(raw_code_zip)),
-                )
+                return self._download_code(function_information["Code"]["Location"])
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            raise
+
+    def _get_layers_code(self):
+        logger.info("Lambda - Getting Layer Code...")
+        # Use a thread pool to handle the queueing and execution of the
+        # _fetch_layer_code tasks, up to max_workers tasks concurrently.
+        layers_to_fetch = {
+            self.thread_pool.submit(
+                self._fetch_layer_code, layer.arn, layer.region
+            ): layer
+            for layer in self.layers.values()
+        }
+
+        for fetched_layer_code in as_completed(layers_to_fetch):
+            layer = layers_to_fetch[fetched_layer_code]
+            try:
+                layer_code = fetched_layer_code.result()
+                if layer_code:
+                    yield layer, layer_code
+            except Exception as error:
+                logger.error(
+                    f"{layer.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
+    def _fetch_layer_code(self, layer_arn, layer_region):
+        try:
+            regional_client = self.regional_clients[layer_region]
+            # Fetch by the full layer-version ARN: layers attached to a
+            # function may be owned by another account (e.g. vendor or
+            # AWS-provided layers), where a bare layer name would resolve
+            # against the audited account instead.
+            layer_version = regional_client.get_layer_version_by_arn(Arn=layer_arn)
+            if "Location" in (layer_version.get("Content") or {}):
+                return self._download_code(layer_version["Content"]["Location"])
+            return None
+        except Exception as error:
+            logger.error(
+                f"{layer_region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             raise
 
@@ -307,6 +362,28 @@ class Layer(BaseModel):
         """Extract the account ID from the layer ARN."""
         parts = self.arn.split(":")
         return parts[4] if len(parts) >= 5 else ""
+
+    @property
+    def region(self) -> str:
+        """Extract the region from the layer ARN.
+
+        A layer can only be attached to a function in the same region, so
+        this is always one of the regions already being audited.
+        """
+        parts = self.arn.split(":")
+        return parts[3] if len(parts) >= 4 else ""
+
+    @property
+    def name(self) -> str:
+        """Extract the layer name from the ARN."""
+        parts = self.arn.split(":")
+        return parts[6] if len(parts) >= 7 else self.arn
+
+    @property
+    def version(self) -> str:
+        """Extract the layer version from the ARN."""
+        parts = self.arn.split(":")
+        return parts[7] if len(parts) >= 8 else ""
 
 
 class DeadLetterConfig(BaseModel):

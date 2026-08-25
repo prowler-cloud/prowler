@@ -1,15 +1,19 @@
 ---
 title: "Jira Integration"
+sidebarTitle: 'Jira'
 ---
 import { VersionBadge } from "/snippets/version-badge.mdx"
+import { AppliesTo } from "/snippets/applies-to.mdx"
 
 <VersionBadge version="5.12.0" />
 
-Prowler App enables automatic export of security findings to Jira, providing seamless integration with Atlassian's work item tracking and project management platform. This comprehensive guide demonstrates how to configure and manage Jira integrations to streamline security incident management and enhance team collaboration across security workflows.
+<AppliesTo />
 
-Integrating Prowler App with Jira provides:
+Prowler Cloud enables automatic export of security Findings to Jira, providing seamless integration with Atlassian's work item tracking and project management platform. This comprehensive guide demonstrates how to configure and manage Jira integrations to streamline security incident management and enhance team collaboration across security workflows.
 
-* **Streamlined management:** Convert security findings directly into actionable Jira work items
+Integrating Prowler Cloud with Jira provides:
+
+* **Streamlined management:** Convert security Findings directly into actionable Jira work items
 * **Enhanced team collaboration:** Leverage existing project management workflows for security remediation
 * **Automated ticket creation:** Reduce manual effort in tracking and assigning security work items
 
@@ -17,14 +21,24 @@ Integrating Prowler App with Jira provides:
 
 When enabled and configured:
 
-1. Security findings can be manually sent to Jira from the Findings table.
-2. Each finding creates a Jira work item with all the check's metadata, including guidance on how to remediate it.
+1. Select one or more complete Finding Groups, or expand a Finding Group and select multiple Findings, from the Findings table.
+2. Send the selection to Jira in one action.
+3. Choose how Jira issues are created:
+    * **Grouped issue:** Create one Jira issue that contains all selected Findings from the Finding Group.
+    * **Separate issues:** Create one Jira issue for each selected Finding. Each Finding represents one affected resource.
+4. Review the Finding Group summary and affected-resource details in Jira, then use the link at the bottom of the issue to open the complete Finding Group in Prowler Cloud.
+
+## Prerequisites
+
+<VersionBadge version="5.36.0" />
+
+Configuring and using the Jira integration requires the **Manage Integrations** permission. The Jira integration is tenant-wide, so it does not require **Unlimited Visibility** or any specific Provider Group. Findings sent to Jira are still limited to the providers the role can access.
 
 ## Configuration
 
-To configure Jira integration in Prowler App:
+To configure Jira integration in Prowler Cloud:
 
-1. Navigate to **Integrations** in the Prowler App interface
+1. Navigate to **Integrations** in Prowler Cloud
 2. Locate the **Jira** card and click **Manage**, then select **Add integration**
 
     ![Integrations tab](/images/prowler-app/jira/integrations-tab.png)
@@ -42,16 +56,68 @@ To generate a Jira API token, visit: https://id.atlassian.com/manage-profile/sec
 
 </Note>
 
-Once configured successfully, the integration is ready to send findings to Jira.
+Once configured successfully, the integration is ready to send Findings to Jira.
 
 ## Sending Findings to Jira
 
-### Manual Export
+Prowler Cloud can send a complete Finding Group or a selection of Findings within a group to Jira in one action.
 
-To manually send individual findings to Jira:
+### Sending a Complete Finding Group
 
-1. Navigate to the **Findings** section in Prowler App
-2. Select one finding you want to export
+<VersionBadge version="5.36.0" />
+
+To send every Finding in a Finding Group:
+
+1. Navigate to **Findings** in Prowler Cloud.
+2. Select one or more Finding Groups.
+3. Open the bulk actions menu and click **Send Finding Group to Jira**.
+
+    ![A complete Finding Group selected with the Send Finding Group to Jira action highlighted](/images/prowler-app/jira/select-group.png)
+
+4. Select the Jira project and issue type.
+5. Choose an issue creation mode:
+    * **Create one Jira issue for all selected Findings in this Finding Group:** Keeps the complete Finding Group in one Jira issue.
+    * **Create separate Jira issues:** Creates one Jira issue per selected Finding so that each affected resource can be tracked independently.
+6. Click **Send to Jira**.
+
+    ![Jira export dialog showing grouped and separate issue creation modes for a Finding Group](/images/prowler-app/jira/send-group-to-jira.png)
+
+### Sending Multiple Findings from a Group
+
+<VersionBadge version="5.36.0" />
+
+To send only specific affected resources:
+
+1. Expand a Finding Group.
+2. Select the Findings to send. Each Finding represents one affected resource.
+3. Open the bulk actions menu and click **Send Findings to Jira**.
+4. Select the Jira project, issue type, and grouped or separate issue creation mode.
+5. Click **Send to Jira**.
+
+    ![Multiple Findings selected within an expanded Finding Group before sending them to Jira](/images/prowler-app/jira/select-multiple-findings.png)
+
+### Reviewing the Jira Issue
+
+A grouped Jira issue starts with Finding Group summary information. This section identifies the check and provides context such as the check title and ID, severity, status, provider, service, number of affected failing resources, last-seen time, failure duration, and risk.
+
+![Finding Group summary information in a grouped Jira issue](/images/prowler-app/jira/group-info.png)
+
+The affected-resources table lists the selected Findings included in the Jira issue. Each row represents an affected resource and includes the information needed to identify and triage it, such as resource and provider identifiers, provider, service, status, severity, region, last-seen time, failure duration, and triage status.
+
+![Affected-resources table listing the Findings included in a grouped Jira issue](/images/prowler-app/jira/group-resources.png)
+
+At the bottom of the affected-resources table, click **View this Finding Group in Prowler Cloud** to open the complete Finding Group in Prowler Cloud. The link opens the group, not only the Findings included in the Jira issue.
+
+![Complete Finding Group opened in Prowler Cloud from the Jira issue link](/images/prowler-app/jira/prowler-finding-group.png)
+
+### Sending One Finding
+
+<VersionBadge version="5.12.0" />
+
+To manually send individual Findings to Jira:
+
+1. Navigate to the **Findings** section in Prowler Cloud
+2. Select one Finding you want to export
 3. Click the action button on the table row and select **Send to Jira**
 4. Select the Jira integration and project
 5. Click **Send to Jira**
@@ -65,8 +131,8 @@ Monitor and manage your Jira integrations through the management interface:
 1. Review configured integrations in the integrations dashboard
 2. Each integration displays:
 
-    - **Connection Status:** Connected or Disconnected indicator
-    - **Instance Information:** Jira domain and last checked timestamp
+    * **Connection Status:** Connected or Disconnected indicator
+    * **Instance Information:** Jira domain and last checked timestamp
 
 ### Actions
 
@@ -85,7 +151,7 @@ Each Jira integration provides management actions through dedicated buttons:
 
 Certain Jira issue types (such as Epic) may require mandatory custom fields that Prowler does not currently populate when creating work items. If a selected issue type enforces required fields beyond the standard set (e.g., "Team", "Epic Name"), the work item creation will fail.
 
-To avoid this, select an issue type that does not require additional custom fields — **Task**, **Bug**, or **Story** typically work without restrictions. If unsure which issue types are available for a project, Prowler automatically fetches and displays them in the "Issue Type" selector when sending a finding.
+To avoid this, select an issue type that does not require additional custom fields — **Task**, **Bug**, or **Story** typically work without restrictions. If unsure which issue types are available for a project, Prowler automatically fetches and displays them in the "Issue Type" selector when sending a Finding.
 
 <Note>
 Support for custom field mapping is planned for a future release.
@@ -95,9 +161,9 @@ Support for custom field mapping is planned for a future release.
 
 ### Connection test fails
 
-- Verify Jira instance domain is correct and accessible
-- Confirm API token or credentials are valid
-- Ensure API access is enabled in Jira settings and the needed scopes are granted
+* Verify Jira instance domain is correct and accessible
+* Confirm API token or credentials are valid
+* Ensure API access is enabled in Jira settings and the needed scopes are granted
 
 ### Check task status (API)
 
@@ -110,7 +176,7 @@ Replace `http://localhost:8080` with the base URL where your Prowler API is acce
 
 1) Get an access token (replace email and password):
 
-```
+```bash
 curl --location 'http://localhost:8080/api/v1/tokens' \
   --header 'Content-Type: application/vnd.api+json' \
   --header 'Accept: application/vnd.api+json' \
@@ -127,7 +193,7 @@ curl --location 'http://localhost:8080/api/v1/tokens' \
 
 2) List tasks filtered by the Jira task (`integration-jira`) using the access token:
 
-```
+```bash
 curl --location --globoff 'http://localhost:8080/api/v1/tasks?filter[name]=integration-jira' \
   --header 'Accept: application/vnd.api+json' \
   --header 'Authorization: Bearer ACCESS_TOKEN' | jq
@@ -140,7 +206,7 @@ If you don't have `jq` installed, run the command without `| jq`.
 
 3) Share the output so we can help. A typical result will look like:
 
-```
+```json
 {
   "links": {
     "first": "https://api.dev.prowler.com/api/v1/tasks?page%5Bnumber%5D=1",
@@ -209,5 +275,5 @@ If you don't have `jq` installed, run the command without `| jq`.
 
 How to read it:
 
-- "created_count": number of Jira issues successfully created.
-- "failed_count": number of Jira issues that could not be created. If `failed_count > 0` or the issue does not appear in Jira, please contact us so we can assist while detailed logs are not available through the UI.
+* "created_count": number of Jira issues successfully created.
+* "failed_count": number of Jira issues that could not be created. If `failed_count > 0` or the issue does not appear in Jira, please contact us so we can assist while detailed logs are not available through the UI.
