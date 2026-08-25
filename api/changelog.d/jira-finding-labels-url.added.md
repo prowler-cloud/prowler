@@ -1,0 +1,1 @@
+Jira issues created from Prowler Cloud now carry `prowler-*` labels (provider, severity, check id and a sanitized finding UID), a link back to the finding when `DJANGO_UI_BASE_URL` is configured, and the tenant name
