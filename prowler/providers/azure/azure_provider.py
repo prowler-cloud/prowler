@@ -499,18 +499,23 @@ class AzureProvider(Provider):
 
         Raises:
             AzureBrowserAuthNoTenantIDError: If browser authentication is enabled but the tenant ID is not found.
+            AzureTenantIDNoBrowserAuthError: If a tenant ID is passed without an authentication mode that supports it.
+            AzureNoAuthenticationMethodError: If no authentication mode is selected and no static credentials are supplied.
+            AzureNotTenantIdButClientIdAndClienSecretError: If static credentials are supplied without a tenant ID.
+            AzureConfigCredentialsError: If a certificate is supplied without --certificate-auth (or a static-credentials trio), if a client secret and a certificate are both supplied, or if both certificate content and path are supplied.
         """
 
-        # `--certificate-content`/`--certificate-path` are meaningful only with
-        # `--certificate-auth` or a full static-credentials trio; without one
+        # A certificate value (from --certificate-path, or from the API/UI
+        # `certificate_content` field) is meaningful only with
+        # --certificate-auth or a full static-credentials trio; without one
         # of those, setup_session would silently drop the certificate.
         if (certificate_content or certificate_path) and not certificate_auth:
             if not (tenant_id and client_id):
                 raise AzureConfigCredentialsError(
                     file=os.path.basename(__file__),
                     message=(
-                        "--certificate-content and --certificate-path require --certificate-auth, "
-                        "or --tenant-id together with --client-id for the static-credentials flow."
+                        "A certificate credential requires --certificate-auth, "
+                        "or a tenant id and client id for the static-credentials flow."
                     ),
                 )
 
@@ -792,11 +797,12 @@ class AzureProvider(Provider):
                         PermissionError,
                         IsADirectoryError,
                         OSError,
+                        TypeError,
                         ValueError,
                     ) as error:
                         # Base64 with stray whitespace, unreadable file, or bytes
-                        # CertificateCredential cannot parse. Surface a
-                        # certificate-specific error instead of a generic one.
+                        # (or a password-protected PEM) CertificateCredential
+                        # cannot parse. Surface a certificate-specific error.
                         logger.error(
                             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
                         )
@@ -848,6 +854,13 @@ class AzureProvider(Provider):
                         raise AzureDefaultAzureCredentialError(
                             file=os.path.basename(__file__), original_exception=error
                         )
+            except (
+                AzureNotValidCertificateContentError,
+                AzureNotValidCertificatePathError,
+            ):
+                # Preserve certificate-specific errors so API/UI consumers can
+                # distinguish "bad certificate" from a generic session failure.
+                raise
             except Exception as error:
                 logger.critical("Failed to retrieve azure credentials")
                 logger.critical(
@@ -1210,7 +1223,9 @@ class AzureProvider(Provider):
             sp_env_auth (bool): Flag indicating if Service Principal environment authentication is used.
             browser_auth (bool): Flag indicating if browser authentication is used.
             managed_identity_auth (bool): Flag indicating if managed entity authentication is used.
+            certificate_auth (bool): Flag indicating if certificate-based Service Principal authentication is used.
             subscription_ids (list): List of subscription IDs.
+            client_id (str): The Azure client ID; used to populate the identity id under static-credential and certificate flows.
 
         Returns:
             AzureIdentityInfo: An instance of AzureIdentityInfo containing the identity information.
@@ -1670,6 +1685,7 @@ class AzureProvider(Provider):
             AzureNotValidClientSecretError: If the provided Azure Client Secret is not valid.
             AzureNotValidCertificateContentError: If the provided certificate content cannot obtain a token.
             AzureNotValidCertificatePathError: If the provided certificate file cannot obtain a token.
+            AzureCredentialsUnavailableError: If the token acquisition exceeds the configured timeout.
 
         Returns:
             None
@@ -1695,9 +1711,13 @@ class AzureProvider(Provider):
             }
             # Hard timeout so a hung Entra ID endpoint cannot stall the
             # calling worker (this runs on request threads and Celery tasks
-            # in the API path). 30s covers the p99 of the token endpoint
-            # comfortably.
-            response = requests.post(url, headers=headers, data=data, timeout=30).json()
+            # in the API path).
+            response = requests.post(
+                url,
+                headers=headers,
+                data=data,
+                timeout=_TOKEN_ACQUISITION_TIMEOUT_SECONDS,
+            ).json()
             if (
                 "access_token" not in response.keys()
                 and "error_codes" in response.keys()
@@ -1745,21 +1765,25 @@ class AzureProvider(Provider):
             )
             # get_token has no native timeout parameter, so run it off-thread
             # with a hard deadline (matches the 30s on the client-secret path).
-            with ThreadPoolExecutor(max_workers=1) as executor:
-                future = executor.submit(
-                    credential.get_token, region_config.graph_scope
+            # Manage the executor explicitly: the context-manager form calls
+            # shutdown(wait=True) on exit and would block until get_token
+            # returns anyway, defeating the timeout.
+            executor = ThreadPoolExecutor(max_workers=1)
+            future = executor.submit(credential.get_token, region_config.graph_scope)
+            try:
+                future.result(timeout=_TOKEN_ACQUISITION_TIMEOUT_SECONDS)
+            except FuturesTimeoutError as error:
+                executor.shutdown(wait=False)
+                raise AzureCredentialsUnavailableError(
+                    file=os.path.basename(__file__),
+                    message=(
+                        "Timed out waiting for Entra ID to issue a token "
+                        "for the provided certificate."
+                    ),
+                    original_exception=error,
                 )
-                try:
-                    future.result(timeout=_TOKEN_ACQUISITION_TIMEOUT_SECONDS)
-                except FuturesTimeoutError as error:
-                    raise AzureCredentialsUnavailableError(
-                        file=os.path.basename(__file__),
-                        message=(
-                            "Timed out waiting for Entra ID to issue a token "
-                            "for the provided certificate."
-                        ),
-                        original_exception=error,
-                    )
+            else:
+                executor.shutdown(wait=True)
         except ClientAuthenticationError as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"

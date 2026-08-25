@@ -1298,7 +1298,7 @@ class TestAzureProviderCertificateAuth:
             )
         assert "not both" in exception.value.args[0]
 
-    def test_validate_arguments_rejects_cert_content_and_path_together(self):
+    def test_validate_arguments_rejects_cert_content_and_path_together(self, tmp_path):
         with pytest.raises(AzureConfigCredentialsError) as exception:
             AzureProvider.validate_arguments(
                 az_cli_auth=False,
@@ -1310,7 +1310,7 @@ class TestAzureProviderCertificateAuth:
                 client_id=self._CLIENT_ID,
                 client_secret=None,
                 certificate_content=self._CERT_CONTENT_B64,
-                certificate_path="/tmp/anything",
+                certificate_path=str(tmp_path / "anything"),
             )
         assert "not both" in exception.value.args[0]
 
@@ -1483,14 +1483,14 @@ class TestAzureProviderCertificateAuth:
                 region_config=self._region_config(),
             )
 
-    def test_validate_static_credentials_rejects_missing_cert_file(self):
+    def test_validate_static_credentials_rejects_missing_cert_file(self, tmp_path):
         with pytest.raises(AzureNotValidCertificatePathError):
             AzureProvider.validate_static_credentials(
                 tenant_id=self._TENANT_ID,
                 client_id=self._CLIENT_ID,
                 client_secret=None,
                 certificate_content=None,
-                certificate_path="/tmp/does-not-exist-prowler-cert.pem",
+                certificate_path=str(tmp_path / "does-not-exist-prowler-cert.pem"),
                 region_config=self._region_config(),
             )
 
@@ -2246,7 +2246,9 @@ class TestAzureProviderValidateArguments:
     _TENANT_ID = "12345678-1234-1234-1234-123456789012"
     _CLIENT_ID = "87654321-4321-4321-4321-210987654321"
 
-    def test_certificate_path_without_certificate_auth_or_static_trio_fails(self):
+    def test_certificate_path_without_certificate_auth_or_static_trio_fails(
+        self, tmp_path
+    ):
         # `--browser-auth --certificate-path X` used to parse cleanly and
         # silently drop the certificate in setup_session; now it fails fast.
         with pytest.raises(AzureConfigCredentialsError, match="--certificate-auth"):
@@ -2260,7 +2262,7 @@ class TestAzureProviderValidateArguments:
                 client_id=None,
                 client_secret=None,
                 certificate_content=None,
-                certificate_path="/tmp/prowler-cert.pem",
+                certificate_path=str(tmp_path / "prowler-cert.pem"),
             )
 
     def test_certificate_auth_with_only_tenant_id_does_not_raise(self):
@@ -2279,7 +2281,7 @@ class TestAzureProviderValidateArguments:
             certificate_path=None,
         )
 
-    def test_certificate_auth_with_certificate_path_only_does_not_raise(self):
+    def test_certificate_auth_with_certificate_path_only_does_not_raise(self, tmp_path):
         # The documented env-var + --certificate-path combination: setup_session
         # reads AZURE_TENANT_ID / AZURE_CLIENT_ID and loads the file from disk.
         AzureProvider.validate_arguments(
@@ -2292,7 +2294,7 @@ class TestAzureProviderValidateArguments:
             client_id=None,
             client_secret=None,
             certificate_content=None,
-            certificate_path="/tmp/prowler-cert.pem",
+            certificate_path=str(tmp_path / "prowler-cert.pem"),
         )
 
 
@@ -2349,7 +2351,7 @@ class TestAzureProviderSetupSessionCertificateOverrides:
             patch(
                 "prowler.providers.azure.azure_provider._build_certificate_credential"
             ) as build_certificate_credential,
-            pytest.raises(AzureSetUpSessionError),
+            pytest.raises(AzureNotValidCertificatePathError),
         ):
             AzureProvider.setup_session(
                 az_cli_auth=False,
