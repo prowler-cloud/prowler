@@ -1,12 +1,10 @@
 /**
- * Browser-mode tests for the Alerts page (`/alerts`) and the alert modal's
- * Slack channel destinations, driven through `AlertsPageHarness`. MSW answers
- * from handlers encoding the signed contract
+ * Browser-mode tests for the Alerts page and the alert modal's Slack channel
+ * destinations. MSW answers from the signed contract
  * (`openspec/changes/add-slack-alert-channels/contract/slack-alerts-api.md`).
  *
- * The no-integration and empty-pool states are driven through fixtures that
- * OMIT the integration, its channels or their confirmations (design D9) —
- * never by handing the UI a pre-disabled state.
+ * Degraded states come from fixtures that OMIT the integration, its channels
+ * or their confirmations (design D9) — never from a pre-disabled state.
  */
 
 import { describe, expect } from "vitest";
@@ -115,9 +113,8 @@ describe("alert rules target Slack channels", () => {
     await harness.mount();
     await harness.openEditModal(RULE_NAME);
 
-    // A workspace with nothing authorized cannot have passed a check — the
-    // check requires a configured channel — so the field reads as unverified
-    // rather than as a connected workspace whose eligible pool came back empty.
+    // Nothing authorized means the check cannot have passed (it requires a
+    // configured channel), so the field reads unverified, not empty-pool.
     expect(await harness.channelFieldState()).toBe(
       CHANNEL_FIELD_STATE.NO_INTEGRATION,
     );
@@ -128,7 +125,6 @@ describe("alert rules target Slack channels", () => {
     expect(notice).not.toMatch(/needs a connected Slack workspace/i);
     expect(harness.integrationAffordanceHref()).toBe("/integrations/slack");
 
-    // The rule's other fields and destinations still save.
     await harness.saveRule();
     expect(await harness.savedRuleChannels()).toEqual([]);
   });
@@ -200,9 +196,8 @@ describe("alert rules target Slack channels", () => {
     await harness.mount();
     await harness.openEditModal(RULE_NAME);
 
-    // The workspace still carries both channels, but an unverified install
-    // offers none of them: the options come from the eligible-channels
-    // endpoint, never from the integration's configuration.
+    // An unverified install still carries both channels but offers none: the
+    // options come from the eligible-channels endpoint, not the integration.
     expect(await harness.channelFieldState()).toBe(
       CHANNEL_FIELD_STATE.NO_INTEGRATION,
     );
@@ -221,8 +216,7 @@ describe("alert rules target Slack channels", () => {
     await harness.saveRule();
 
     // Only newly added channels are validated, so the retained selection goes
-    // back untouched even though the reinstall confirmed none of it — a rule
-    // never becomes uneditable behind the user's back.
+    // back untouched even though the reinstall confirmed none of it.
     expect(await harness.savedRuleChannels()).toEqual([
       ALERTS_PUBLIC_CHANNEL.id,
       ALERTS_PRIVATE_CHANNEL.id,
@@ -232,9 +226,8 @@ describe("alert rules target Slack channels", () => {
   it("keeps a rule's channels readable when the pool is empty but its own are stored", async () => {
     const harness = new AlertsPageHarness(
       alertsFixture({
-        // The one reachable route to an empty pool on a connected workspace: a
-        // refused read. A served pool of a `connected: true` install always
-        // holds its confirmed set — the check confirms every channel on it.
+        // The one reachable route to an empty pool on a connected workspace:
+        // a refused read — a served pool always holds its confirmed set.
         channelsReadError: 403,
         rules: [
           alertRuleFixture({
@@ -249,9 +242,8 @@ describe("alert rules target Slack channels", () => {
     await harness.mount();
     await harness.openEditModal(RULE_NAME);
 
-    // The rule's own channels come from the read model, which enriches them
-    // from the integration; the pool is a separate read. An empty pool must
-    // not swallow the selection the rule actually holds.
+    // The rule's own channels come from the read model, enriched from the
+    // integration; the pool is a separate read.
     expect(await harness.channelFieldState()).toBe(
       CHANNEL_FIELD_STATE.EMPTY_POOL,
     );
@@ -260,8 +252,8 @@ describe("alert rules target Slack channels", () => {
       { name: ALERTS_PUBLIC_CHANNEL.name, isPrivate: false },
       { name: ALERTS_PRIVATE_CHANNEL.name, isPrivate: true },
     ]);
-    // A refused pool read says nothing about the workspace's channels, so the
-    // copy cannot be the one that asks the user to authorize some.
+    // A refused read says nothing about the workspace's channels, so the copy
+    // cannot ask the user to authorize some.
     const notice = await harness.channelFieldNotice();
     expect(notice).toMatch(/could not be checked/i);
     expect(notice).not.toMatch(/authorize/i);
@@ -292,9 +284,9 @@ describe("alert rules target Slack channels", () => {
     await harness.mount();
     await harness.openEditModal(RULE_NAME);
 
-    // A `5xx` throws out of the action and rejects the mount's read. Reading
-    // the state at all is the assertion: the loading skeleton stamps no
-    // `data-alert-channels-state`, so an unguarded rejection times out here.
+    // A `5xx` throws out of the action. Reading the state at all is the
+    // assertion: the loading skeleton stamps no `data-alert-channels-state`,
+    // so an unguarded rejection times out here.
     expect(await harness.channelFieldState()).toBe(
       CHANNEL_FIELD_STATE.NO_INTEGRATION,
     );
@@ -304,8 +296,7 @@ describe("alert rules target Slack channels", () => {
       { name: ALERTS_PRIVATE_CHANNEL.name, isPrivate: true },
     ]);
 
-    // The tenant's workspace is connected. A read that failed cannot say so
-    // either way, so the copy says neither.
+    // The workspace is connected, but a failed read cannot say so either way.
     const notice = await harness.channelFieldNotice();
     expect(notice).toMatch(/could not be checked/i);
     expect(notice).not.toMatch(/needs a connected Slack workspace/i);
@@ -321,7 +312,6 @@ describe("alert rules target Slack channels", () => {
     expect(await harness.channelFieldState()).toBe(
       CHANNEL_FIELD_STATE.EMPTY_POOL,
     );
-    // Channels may well be authorized and confirmed — the read never said.
     const notice = await harness.channelFieldNotice();
     expect(notice).toMatch(/could not be checked/i);
     expect(notice).not.toMatch(/authorize/i);
@@ -330,9 +320,8 @@ describe("alert rules target Slack channels", () => {
 
   it("does not claim the workspace is missing when the integration read is refused", async () => {
     // What every non-admin sees: `/integrations` gates even reads behind
-    // `MANAGE_INTEGRATIONS`, off by default, while `/alerts` is not gated. On
-    // an unverified workspace, so the pool comes back empty and the field has
-    // to say something about a workspace it could not read.
+    // `MANAGE_INTEGRATIONS`, off by default, while `/alerts` is not — layered
+    // on an unverified workspace, so the pool comes back empty too.
     const harness = new AlertsPageHarness(
       reinstalledWorkspaceAlertsFixture({ integrationsReadError: 403 }),
     );
@@ -358,10 +347,9 @@ describe("alert rules target Slack channels", () => {
     await harness.openEditModal(RULE_NAME);
     await harness.pickChannels([ALERTS_PRIVATE_CHANNEL.name]);
 
-    // The picker offered a confirmed channel; the connection state it was
-    // offered on is reset before the submit. Only a channel the user just
-    // added can reach the write ineligible, so this is the one path a refusal
-    // travels.
+    // The picker offered a confirmed channel; its confirmation is reset before
+    // the submit. Only a just-added channel can reach the write ineligible, so
+    // this is the one path a refusal travels.
     fixture.slackIntegration?.channels.forEach((channel) => {
       if (channel.id === ALERTS_PRIVATE_CHANNEL.id) {
         channel.confirmationSentAt = null;
@@ -370,8 +358,7 @@ describe("alert rules target Slack channels", () => {
 
     const refusal = await harness.refusedRuleSave();
 
-    // The modal stays open on the unchanged rule and repeats the API's own
-    // detail, which the UI never parses.
+    // The refusal repeats the API's own detail, which the UI never parses.
     expect(refusal).toContain(
       alertsChannelNotConfirmedDetail(ALERTS_PRIVATE_CHANNEL.id),
     );
