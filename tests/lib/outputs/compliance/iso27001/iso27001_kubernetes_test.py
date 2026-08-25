@@ -13,7 +13,6 @@ from tests.providers.kubernetes.kubernetes_fixtures import (
     KUBERNETES_NAMESPACE,
 )
 
-
 ISO27001_2013_KUBERNETES = Compliance(
     Framework="ISO27001",
     Name="ISO/IEC 27001 Information Security Management Standard 2013",

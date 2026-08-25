@@ -597,15 +597,11 @@ class TestProviderHeaders:
                 keys[1] == "Description"
             ), f"{provider_name}: col 2 should be Description"
             for index, expected_column in enumerate(expected_columns, start=2):
-                assert (
-                    keys[index] == expected_column
-                ), (
+                assert keys[index] == expected_column, (
                     f"{provider_name}: col {index + 1} should be "
                     f"{expected_column}, got {keys[index]}"
                 )
-            assert (
-                keys[2 + len(expected_columns)] == "AssessmentDate"
-            ), (
+            assert keys[2 + len(expected_columns)] == "AssessmentDate", (
                 f"{provider_name}: col {3 + len(expected_columns)} should be "
                 "AssessmentDate"
             )

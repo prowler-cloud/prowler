@@ -15,7 +15,6 @@ from tests.providers.kubernetes.kubernetes_fixtures import (
     KUBERNETES_NAMESPACE,
 )
 
-
 PROWLER_THREATSCORE_KUBERNETES = Compliance(
     Framework="ProwlerThreatScore",
     Name="Prowler ThreatScore Compliance Framework for Kubernetes",
@@ -71,9 +70,7 @@ class TestProwlerThreatScoreKubernetes:
             )
         ]
 
-        output = ProwlerThreatScoreKubernetes(
-            findings, PROWLER_THREATSCORE_KUBERNETES
-        )
+        output = ProwlerThreatScoreKubernetes(findings, PROWLER_THREATSCORE_KUBERNETES)
 
         output_data = output.data[0]
         assert isinstance(output_data, ProwlerThreatScoreKubernetesModel)
