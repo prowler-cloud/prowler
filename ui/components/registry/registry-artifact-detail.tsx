@@ -12,27 +12,46 @@ import type {
   RegistryTenantArtifact,
 } from "@/types/registry";
 
-interface RegistryArtifactDetailProps {
+import { REGISTRY_CAPABILITY_LABELS } from "./registry-explorer.model";
+
+interface RegistryArtifactDetailCommonProps {
   catalogArtifact?: RegistryCatalogArtifact;
   headingRef?: Ref<HTMLHeadingElement>;
-  isMutationPending?: boolean;
-  onAdd?: (versionSpec?: string) => void;
-  onRemove?: () => void;
+  isMutationPending: boolean;
   operationMessage?: string;
-  removeButtonRef?: Ref<HTMLButtonElement>;
   tenantArtifact?: RegistryTenantArtifact;
 }
+
+type AddRegistryArtifactDetailProps = RegistryArtifactDetailCommonProps & {
+  mode: "add";
+  onAdd: (versionSpec?: string) => void;
+  onRemove?: never;
+  removeButtonRef?: never;
+};
+
+type RemoveRegistryArtifactDetailProps = RegistryArtifactDetailCommonProps & {
+  mode: "remove";
+  onAdd?: never;
+  onRemove: () => void;
+  removeButtonRef?: Ref<HTMLButtonElement>;
+};
+
+type RegistryArtifactDetailProps =
+  | AddRegistryArtifactDetailProps
+  | RemoveRegistryArtifactDetailProps;
 
 export function RegistryArtifactDetail({
   catalogArtifact: artifact,
   headingRef,
-  isMutationPending = false,
+  isMutationPending,
+  mode,
   onAdd,
   onRemove,
   operationMessage,
   removeButtonRef,
   tenantArtifact,
 }: RegistryArtifactDetailProps) {
+  // Local state needed: the version pin is buffered until "Add to workspace" submits.
   const [usesExactVersion, setUsesExactVersion] = useState(false);
   const [exactVersion, setExactVersion] = useState("");
   const name = artifact?.name ?? tenantArtifact?.normalizedName;
@@ -43,9 +62,9 @@ export function RegistryArtifactDetail({
         [artifact.isOfficial, "Official"],
         [artifact.isVerified, "Verified"],
         [artifact.isMeta, "Meta"],
-        [artifact.hasProvider, "Provider"],
-        [artifact.hasChecks, "Checks"],
-        [artifact.hasCompliance, "Compliance"],
+        [artifact.hasProvider, REGISTRY_CAPABILITY_LABELS.provider],
+        [artifact.hasChecks, REGISTRY_CAPABILITY_LABELS.checks],
+        [artifact.hasCompliance, REGISTRY_CAPABILITY_LABELS.compliance],
       ]
     : [];
   const metadata: [string, string][] = artifact
@@ -100,7 +119,7 @@ export function RegistryArtifactDetail({
               Providers:{" "}
               {artifact.providers.map(getProviderDisplayName).join(", ")}
             </p>
-            <dl className="grid grid-cols-2 gap-3">
+            <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {metadata.map(([label, value]) => (
                 <div
                   className="border-border-neutral-tertiary bg-bg-neutral-tertiary rounded-lg border px-3 py-2"
@@ -123,7 +142,7 @@ export function RegistryArtifactDetail({
       </div>
       <div className="border-border-neutral-secondary bg-bg-neutral-secondary sticky bottom-0 space-y-4 border-t p-6">
         {operationMessage && <p role="alert">{operationMessage}</p>}
-        {onRemove ? (
+        {mode === "remove" ? (
           <Button
             onClick={onRemove}
             ref={removeButtonRef}
@@ -132,7 +151,7 @@ export function RegistryArtifactDetail({
           >
             Remove
           </Button>
-        ) : onAdd ? (
+        ) : (
           <>
             <label className="flex items-center gap-2 text-sm">
               <Checkbox
@@ -166,7 +185,7 @@ export function RegistryArtifactDetail({
               {isMutationPending ? "Adding artifact" : "Add to workspace"}
             </Button>
           </>
-        ) : null}
+        )}
       </div>
     </section>
   );

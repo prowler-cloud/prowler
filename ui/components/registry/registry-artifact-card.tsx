@@ -8,7 +8,10 @@ import { Button } from "@/components/shadcn/button/button";
 import { Card } from "@/components/shadcn/card/card";
 import { getProviderDisplayName } from "@/types/providers";
 
-import type { RegistryMarketplaceArtifact } from "./registry-explorer.model";
+import {
+  REGISTRY_CAPABILITY_LABELS,
+  type RegistryMarketplaceArtifact,
+} from "./registry-explorer.model";
 
 interface RegistryArtifactCardProps {
   artifact: RegistryMarketplaceArtifact;
@@ -17,10 +20,10 @@ interface RegistryArtifactCardProps {
 
 function capabilitySummary(artifact: RegistryMarketplaceArtifact) {
   const labels = [
-    artifact.hasProvider && "Provider",
-    artifact.hasChecks && "Checks",
-    artifact.hasCompliance && "Compliance",
-  ].filter((label): label is string => Boolean(label));
+    artifact.hasProvider && REGISTRY_CAPABILITY_LABELS.provider,
+    artifact.hasChecks && REGISTRY_CAPABILITY_LABELS.checks,
+    artifact.hasCompliance && REGISTRY_CAPABILITY_LABELS.compliance,
+  ].filter((label) => label !== false);
   return labels.join(", ");
 }
 
@@ -39,6 +42,7 @@ export function RegistryArtifactCard({
     .join(" · ");
 
   return (
+    // Card onClick is a mouse-only enhancement; the keyboard path is the inner name button.
     <Card
       className="h-full gap-3"
       interactive
@@ -111,7 +115,7 @@ export function RegistryArtifactCard({
             </Badge>
           ) : (
             <Button
-              aria-label={`Add ${displayName}`}
+              aria-label={`Add ${displayName} from details`}
               onClick={(event) => {
                 event.stopPropagation();
                 onOpen(event.currentTarget);
@@ -140,7 +144,7 @@ export function RegistryTenantArtifactCard({
   versionSpec,
 }: RegistryTenantArtifactCardProps) {
   return (
-    <Card className="h-full gap-3" interactive padding="md" variant="inner">
+    <Card className="h-full gap-3" padding="md" variant="inner">
       <div className="flex items-start gap-3">
         <span
           aria-hidden

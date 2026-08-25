@@ -21,6 +21,9 @@ import {
 import { toast } from "@/components/shadcn/toast/use-toast";
 import {
   REGISTRY_BOOTSTRAP_STATE,
+  REGISTRY_CATALOG,
+  REGISTRY_CREDENTIAL_ACTION,
+  REGISTRY_FAILURE,
   REGISTRY_MUTATION,
   type RegistryBootstrapState,
   type RegistryMutationResult,
@@ -35,6 +38,7 @@ import { RegistryArtifactDetail } from "./registry-artifact-detail";
 import { RegistryArtifactGrid } from "./registry-artifact-grid";
 import { RegistryArtifactPanel } from "./registry-artifact-panel";
 import { RegistryCredentialBanner } from "./registry-credential-banner";
+import { useRegistryEligibility } from "./registry-eligibility-provider";
 import {
   buildRegistryMarketplaceModel,
   getRegistryArtifactDetail,
@@ -48,14 +52,37 @@ import { RegistryToolbar } from "./registry-toolbar";
 const PAGE_SUBTITLE =
   "Discover and install checks, compliance frameworks, and providers for your workspace.";
 
-function RetryState({ title, children }: { title: string; children: string }) {
+const REGISTRY_TAB = { EXPLORE: "explore", MINE: "mine" } as const;
+type RegistryTab = (typeof REGISTRY_TAB)[keyof typeof REGISTRY_TAB];
+
+const REGISTRY_PENDING_OPERATION = {
+  ADD: "add",
+  CREDENTIAL: "credential",
+  REMOVE: "remove",
+} as const;
+type RegistryPendingOperation =
+  (typeof REGISTRY_PENDING_OPERATION)[keyof typeof REGISTRY_PENDING_OPERATION];
+
+const REGISTRY_ACCESS_DIALOG_MODE = {
+  CONNECT: "connect",
+  MANAGE: "manage",
+} as const;
+type RegistryAccessDialogMode =
+  (typeof REGISTRY_ACCESS_DIALOG_MODE)[keyof typeof REGISTRY_ACCESS_DIALOG_MODE];
+
+interface RetryStateProps {
+  title: string;
+  children: string;
+}
+
+function RetryState({ title, children }: RetryStateProps) {
   return (
     <section aria-live="polite" className="mx-auto max-w-2xl py-12 text-center">
       <h1 className="text-xl font-semibold">{title}</h1>
       <p className="text-text-neutral-secondary mt-3 text-sm">{children}</p>
-      <Button className="mt-6" onClick={() => window.location.reload()}>
-        Retry
-      </Button>
+      <div className="mt-6">
+        <Button onClick={() => window.location.reload()}>Retry</Button>
+      </div>
     </section>
   );
 }
@@ -64,9 +91,6 @@ function mutationFailureMessage(result: RegistryMutationResult) {
   if (result.status === REGISTRY_MUTATION.REFUSED) return result.message;
   if (result.status === REGISTRY_MUTATION.REFRESH_FAILED) {
     return "Registry membership could not be confirmed. Try again.";
-  }
-  if (result.status === "access_denied") {
-    return "Registry access is no longer available.";
   }
   return "The Registry operation could not be completed. Try again.";
 }
@@ -77,19 +101,18 @@ interface RegistryExplorerProps {
 
 export function RegistryExplorer({ initialState }: RegistryExplorerProps) {
   // Access invalidation unmounts this component, clearing every local snapshot.
+  const { invalidate } = useRegistryEligibility();
   const [state, setState] = useState(initialState);
   const [filters, setFilters] = useState<RegistryExplorerFilters>({});
   const [sort, setSort] = useState<RegistryMarketplaceSort>(
     REGISTRY_MARKETPLACE_SORT.NAME,
   );
-  const [activeTab, setActiveTab] = useState<"explore" | "mine">("explore");
+  const [activeTab, setActiveTab] = useState<RegistryTab>(REGISTRY_TAB.EXPLORE);
   const [selectedName, setSelectedName] = useState<string>();
-  const [pendingOperation, setPendingOperation] = useState<
-    "add" | "credential" | "remove" | null
-  >(null);
-  const [accessDialogMode, setAccessDialogMode] = useState<
-    "connect" | "manage"
-  >();
+  const [pendingOperation, setPendingOperation] =
+    useState<RegistryPendingOperation | null>(null);
+  const [accessDialogMode, setAccessDialogMode] =
+    useState<RegistryAccessDialogMode>();
   const [removeTarget, setRemoveTarget] = useState<string>();
   const [operationMessage, setOperationMessage] = useState<string>();
   const detailHeadingRef = useRef<HTMLHeadingElement>(null);
@@ -109,11 +132,12 @@ export function RegistryExplorer({ initialState }: RegistryExplorerProps) {
   async function handleAdd(normalizedName: string, versionSpec?: string) {
     const generation = operationGeneration.current;
     setOperationMessage(undefined);
-    setPendingOperation("add");
+    setPendingOperation(REGISTRY_PENDING_OPERATION.ADD);
     const result = await addRegistryArtifact(
       versionSpec ? { normalizedName, versionSpec } : { normalizedName },
     );
     if (generation !== operationGeneration.current) return;
+    if (result.status === REGISTRY_FAILURE.ACCESS_DENIED) return invalidate();
 
     setPendingOperation(null);
     if (result.status !== REGISTRY_MUTATION.CONFIRMED) {
@@ -132,15 +156,19 @@ export function RegistryExplorer({ initialState }: RegistryExplorerProps) {
   async function handleCredentialSubmit(key: string) {
     const generation = operationGeneration.current;
     setOperationMessage(undefined);
-    setPendingOperation("credential");
+    setPendingOperation(REGISTRY_PENDING_OPERATION.CREDENTIAL);
     const result = await submitRegistryCredential(key);
     if (generation !== operationGeneration.current) return;
+    if (result.status === REGISTRY_FAILURE.ACCESS_DENIED) return invalidate();
 
-    if (result.status === "connected") {
+    if (result.status === REGISTRY_CREDENTIAL_ACTION.CONNECTED) {
       const collections = await refreshRegistryCollections();
       if (generation !== operationGeneration.current) return;
+      if (collections.status === REGISTRY_FAILURE.ACCESS_DENIED) {
+        return invalidate();
+      }
       setPendingOperation(null);
-      if (collections.status === "complete") {
+      if (collections.status === REGISTRY_CATALOG.COMPLETE) {
         setAccessDialogMode(undefined);
         setState({
           status: REGISTRY_BOOTSTRAP_STATE.READY,
@@ -157,14 +185,17 @@ export function RegistryExplorer({ initialState }: RegistryExplorerProps) {
     }
 
     setPendingOperation(null);
-    if (result.status === "pending" || result.status === "invalid") {
+    if (
+      result.status === REGISTRY_CREDENTIAL_ACTION.PENDING ||
+      result.status === REGISTRY_CREDENTIAL_ACTION.INVALID
+    ) {
       setAccessDialogMode(undefined);
       setState((current) =>
         current.status === REGISTRY_BOOTSTRAP_STATE.ONBOARDING ||
         current.status === REGISTRY_BOOTSTRAP_STATE.VALIDATION_PENDING
           ? {
               status:
-                result.status === "pending"
+                result.status === REGISTRY_CREDENTIAL_ACTION.PENDING
                   ? REGISTRY_BOOTSTRAP_STATE.VALIDATION_PENDING
                   : REGISTRY_BOOTSTRAP_STATE.ONBOARDING,
               credential: result.credential,
@@ -176,7 +207,7 @@ export function RegistryExplorer({ initialState }: RegistryExplorerProps) {
     }
 
     setOperationMessage(
-      result.status === "replacement_failed"
+      result.status === REGISTRY_CREDENTIAL_ACTION.REPLACEMENT_FAILED
         ? "Registry key validation failed. Existing access is unchanged."
         : "Registry key validation could not be completed. Try again.",
     );
@@ -185,12 +216,13 @@ export function RegistryExplorer({ initialState }: RegistryExplorerProps) {
   async function handleDisconnect() {
     const generation = operationGeneration.current;
     setOperationMessage(undefined);
-    setPendingOperation("credential");
+    setPendingOperation(REGISTRY_PENDING_OPERATION.CREDENTIAL);
     const result = await disconnectRegistryCredential();
     if (generation !== operationGeneration.current) return;
+    if (result.status === REGISTRY_FAILURE.ACCESS_DENIED) return invalidate();
 
     setPendingOperation(null);
-    if (result.status !== "disconnected") {
+    if (result.status !== REGISTRY_CREDENTIAL_ACTION.DISCONNECTED) {
       setOperationMessage(
         "Registry access could not be disconnected. Try again.",
       );
@@ -209,9 +241,10 @@ export function RegistryExplorer({ initialState }: RegistryExplorerProps) {
   async function handleRemove(normalizedName: string) {
     const generation = operationGeneration.current;
     setOperationMessage(undefined);
-    setPendingOperation("remove");
+    setPendingOperation(REGISTRY_PENDING_OPERATION.REMOVE);
     const result = await removeRegistryArtifact(normalizedName);
     if (generation !== operationGeneration.current) return;
+    if (result.status === REGISTRY_FAILURE.ACCESS_DENIED) return invalidate();
 
     setPendingOperation(null);
     if (result.status !== REGISTRY_MUTATION.CONFIRMED) {
@@ -239,20 +272,22 @@ export function RegistryExplorer({ initialState }: RegistryExplorerProps) {
   const accessDialogProps = {
     errorMessage: operationMessage,
     onOpenChange: (open: boolean) => {
-      if (!open && pendingOperation !== "credential") {
+      if (!open && pendingOperation !== REGISTRY_PENDING_OPERATION.CREDENTIAL) {
         setAccessDialogMode(undefined);
       }
     },
     onSubmit: handleCredentialSubmit,
     open: true,
-    pending: pendingOperation === "credential",
+    pending: pendingOperation === REGISTRY_PENDING_OPERATION.CREDENTIAL,
     returnFocusRef:
-      accessDialogMode === "connect" ? connectButtonRef : manageButtonRef,
+      accessDialogMode === REGISTRY_ACCESS_DIALOG_MODE.CONNECT
+        ? connectButtonRef
+        : manageButtonRef,
   };
   const accessDialog =
-    accessDialogMode === "connect" ? (
+    accessDialogMode === REGISTRY_ACCESS_DIALOG_MODE.CONNECT ? (
       <RegistryAccessDialog mode="connect" {...accessDialogProps} />
-    ) : accessDialogMode === "manage" ? (
+    ) : accessDialogMode === REGISTRY_ACCESS_DIALOG_MODE.MANAGE ? (
       <RegistryAccessDialog
         mode="manage"
         onDisconnect={handleDisconnect}
@@ -272,7 +307,9 @@ export function RegistryExplorer({ initialState }: RegistryExplorerProps) {
         )}
         <RegistryCredentialBanner
           connectButtonRef={connectButtonRef}
-          onConnect={() => setAccessDialogMode("connect")}
+          onConnect={() =>
+            setAccessDialogMode(REGISTRY_ACCESS_DIALOG_MODE.CONNECT)
+          }
           tenantArtifactCount={state.tenantArtifacts.length}
           validationPending={
             state.status === REGISTRY_BOOTSTRAP_STATE.VALIDATION_PENDING
@@ -284,19 +321,19 @@ export function RegistryExplorer({ initialState }: RegistryExplorerProps) {
   }
   if (state.status !== REGISTRY_BOOTSTRAP_STATE.READY) {
     const messages = {
-      incomplete: [
+      [REGISTRY_BOOTSTRAP_STATE.INCOMPLETE]: [
         "Registry catalog is incomplete",
         "Complete catalog controls and metrics are unavailable until every catalog page loads. Retry to load the catalog again.",
       ],
-      unavailable: [
+      [REGISTRY_BOOTSTRAP_STATE.UNAVAILABLE]: [
         "Registry is unavailable",
         "Registry data may be stale or unavailable. Retry when the service is available.",
       ],
-      reconnect: [
+      [REGISTRY_BOOTSTRAP_STATE.RECONNECT]: [
         "Reconnect Registry",
         "Reconnect Registry before exploring artifacts.",
       ],
-      error: [
+      [REGISTRY_BOOTSTRAP_STATE.ERROR]: [
         "Registry could not be loaded",
         "An unexpected Registry error occurred. Retry to load the explorer again.",
       ],
@@ -318,7 +355,6 @@ export function RegistryExplorer({ initialState }: RegistryExplorerProps) {
       </RetryState>
     );
   }
-
   const selectedDetail = selectedName
     ? getRegistryArtifactDetail(
         selectedName,
@@ -339,7 +375,9 @@ export function RegistryExplorer({ initialState }: RegistryExplorerProps) {
             API key connected
           </Badge>
           <Button
-            onClick={() => setAccessDialogMode("manage")}
+            onClick={() =>
+              setAccessDialogMode(REGISTRY_ACCESS_DIALOG_MODE.MANAGE)
+            }
             ref={manageButtonRef}
             type="button"
             variant="outline"
@@ -352,32 +390,34 @@ export function RegistryExplorer({ initialState }: RegistryExplorerProps) {
         <p role="alert">{operationMessage}</p>
       )}
       <Tabs
-        onValueChange={(value) => setActiveTab(value as "explore" | "mine")}
+        onValueChange={(value) => setActiveTab(value as RegistryTab)}
         value={activeTab}
       >
-        <TabsList className="border-b">
-          <TabsTrigger
-            adornment={
-              <Badge size="sm" variant="tag">
-                {state.catalog.artifacts.length}
-              </Badge>
-            }
-            value="explore"
-          >
-            Explore
-          </TabsTrigger>
-          <TabsTrigger
-            adornment={
-              <Badge size="sm" variant="tag">
-                {state.tenantArtifacts.length}
-              </Badge>
-            }
-            value="mine"
-          >
-            My artifacts
-          </TabsTrigger>
-        </TabsList>
-        <TabsContent className="space-y-4 pt-4" value="explore">
+        <div className="border-border-neutral-secondary border-b">
+          <TabsList>
+            <TabsTrigger
+              adornment={
+                <Badge size="sm" variant="tag">
+                  {state.catalog.artifacts.length}
+                </Badge>
+              }
+              value={REGISTRY_TAB.EXPLORE}
+            >
+              Explore
+            </TabsTrigger>
+            <TabsTrigger
+              adornment={
+                <Badge size="sm" variant="tag">
+                  {state.tenantArtifacts.length}
+                </Badge>
+              }
+              value={REGISTRY_TAB.MINE}
+            >
+              My artifacts
+            </TabsTrigger>
+          </TabsList>
+        </div>
+        <TabsContent className="space-y-4 pt-4" value={REGISTRY_TAB.EXPLORE}>
           <RegistryToolbar
             filters={filters}
             onFiltersChange={setFilters}
@@ -406,7 +446,7 @@ export function RegistryExplorer({ initialState }: RegistryExplorerProps) {
             ))}
           </RegistryArtifactGrid>
         </TabsContent>
-        <TabsContent className="space-y-4 pt-4" value="mine">
+        <TabsContent className="space-y-4 pt-4" value={REGISTRY_TAB.MINE}>
           <RegistryArtifactGrid
             emptyMessage="No artifacts in this workspace yet."
             isEmpty={model.myArtifacts.length === 0}
@@ -446,41 +486,48 @@ export function RegistryExplorer({ initialState }: RegistryExplorerProps) {
         }}
         open={isPanelOpen}
       >
-        {selectedDetail && (
-          <RegistryArtifactDetail
-            key={selectedName}
-            {...selectedDetail}
-            headingRef={detailHeadingRef}
-            isMutationPending={pendingOperation === "add"}
-            operationMessage={operationMessage}
-            removeButtonRef={removeButtonRef}
-            onAdd={
-              selectedDetail.catalogArtifact && !selectedDetail.tenantArtifact
-                ? (versionSpec) =>
-                    handleAdd(
-                      selectedDetail.catalogArtifact!.normalizedName,
-                      versionSpec,
-                    )
-                : undefined
-            }
-            onRemove={
-              selectedDetail.tenantArtifact
-                ? () =>
-                    setRemoveTarget(
-                      selectedDetail.tenantArtifact!.normalizedName,
-                    )
-                : undefined
-            }
-          />
-        )}
+        {selectedDetail &&
+          (selectedDetail.tenantArtifact ? (
+            <RegistryArtifactDetail
+              key={selectedName}
+              {...selectedDetail}
+              headingRef={detailHeadingRef}
+              isMutationPending={
+                pendingOperation === REGISTRY_PENDING_OPERATION.ADD
+              }
+              mode="remove"
+              onRemove={() =>
+                setRemoveTarget(selectedDetail.tenantArtifact!.normalizedName)
+              }
+              operationMessage={operationMessage}
+              removeButtonRef={removeButtonRef}
+            />
+          ) : (
+            <RegistryArtifactDetail
+              key={selectedName}
+              {...selectedDetail}
+              headingRef={detailHeadingRef}
+              isMutationPending={
+                pendingOperation === REGISTRY_PENDING_OPERATION.ADD
+              }
+              mode="add"
+              onAdd={(versionSpec) =>
+                handleAdd(
+                  selectedDetail.catalogArtifact!.normalizedName,
+                  versionSpec,
+                )
+              }
+              operationMessage={operationMessage}
+            />
+          ))}
       </RegistryArtifactPanel>
       {accessDialog}
       <RegistryRemoveDialog
         artifactName={removeTarget}
-        isPending={pendingOperation === "remove"}
+        isPending={pendingOperation === REGISTRY_PENDING_OPERATION.REMOVE}
         onConfirm={() => removeTarget && handleRemove(removeTarget)}
         onOpenChange={(open) => {
-          if (!open && pendingOperation !== "remove")
+          if (!open && pendingOperation !== REGISTRY_PENDING_OPERATION.REMOVE)
             setRemoveTarget(undefined);
         }}
         open={removeTarget !== undefined}

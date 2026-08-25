@@ -10,6 +10,7 @@ import {
 import { getProviderDisplayName } from "@/types/providers";
 
 import {
+  REGISTRY_CAPABILITY_LABELS,
   REGISTRY_CATALOG_CAPABILITY,
   REGISTRY_MARKETPLACE_SORT,
   type RegistryCatalogCapability,
@@ -27,9 +28,19 @@ interface RegistryToolbarProps {
 }
 
 const capabilityChips = [
-  { capability: REGISTRY_CATALOG_CAPABILITY.CHECKS, label: "Checks" },
-  { capability: REGISTRY_CATALOG_CAPABILITY.COMPLIANCE, label: "Compliance" },
-  { capability: REGISTRY_CATALOG_CAPABILITY.PROVIDER, label: "Providers" },
+  {
+    capability: REGISTRY_CATALOG_CAPABILITY.CHECKS,
+    label: REGISTRY_CAPABILITY_LABELS.checks,
+  },
+  {
+    capability: REGISTRY_CATALOG_CAPABILITY.COMPLIANCE,
+    label: REGISTRY_CAPABILITY_LABELS.compliance,
+  },
+  {
+    // The provider chip filters by provider capability but is labeled in the plural.
+    capability: REGISTRY_CATALOG_CAPABILITY.PROVIDER,
+    label: `${REGISTRY_CAPABILITY_LABELS.provider}s`,
+  },
 ] as const;
 
 export function RegistryToolbar({

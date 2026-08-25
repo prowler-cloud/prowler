@@ -141,8 +141,14 @@ function AuthorizedRegistryExplorer({
 async function expectRegistryAccessRevoked(
   screen: Awaited<ReturnType<typeof render>>,
 ) {
+  // The subtitle renders in both the ready and onboarding explorer states, so
+  // its absence proves the explorer actually unmounted on revocation.
   await expect
-    .element(screen.getByLabelText("Registry explorer"))
+    .element(
+      screen.getByText(
+        "Discover and install checks, compliance frameworks, and providers for your workspace.",
+      ),
+    )
     .not.toBeInTheDocument();
   await expect
     .poll(() => registryRouter.replace)
