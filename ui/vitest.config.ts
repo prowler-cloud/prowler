@@ -191,7 +191,6 @@ export default defineConfig(() => {
         "@uiw/react-codemirror",
         "@sentry/nextjs",
         "@extractus/feed-extractor",
-        "@stripe/stripe-js",
       ],
     },
   };
