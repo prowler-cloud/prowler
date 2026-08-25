@@ -39,9 +39,6 @@ vi.mock(
   () => recipientsActionMocks,
 );
 
-// The channels field reads the eligible channels and the Slack integration on
-// mount; its behavior is covered by the page integration tests (no-overlap
-// rule), so the unit lane only keeps the fetches from escaping jsdom.
 vi.mock("@/actions/integrations/integrations", () => integrationsActionMocks);
 
 vi.mock(
@@ -267,8 +264,8 @@ describe("AlertFormModal", () => {
     );
     integrationsActionMocks.getIntegrations.mockReset();
     slackChannelsActionMocks.getAlertSlackChannels.mockReset();
-    // Never resolve, like the recipients read above: the channels field's
-    // settled states are integration-tested; the unit lane keeps it loading.
+    // Never resolve, like the recipients read above: the field's settled
+    // states are integration-tested, so the unit lane keeps it loading.
     integrationsActionMocks.getIntegrations.mockReturnValue(
       new Promise(() => {}),
     );

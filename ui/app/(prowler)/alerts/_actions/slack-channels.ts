@@ -7,11 +7,9 @@ const ALERT_SLACK_CHANNELS_PATH = "/alerts/slack-channels";
 const CHANNELS_PAGE_SIZE = "100";
 
 /**
- * The channels eligible as alert destinations, from the tenant's enabled and
- * connected Slack integration. Server-side only: no Slack round-trip, so no
- * cursor pagination. The page size is still sent because the API paginates
- * collections by default and the picker reads `data` flat, so a default page
- * would truncate the pool silently.
+ * The channels eligible as alert destinations. A page size is sent because the
+ * API paginates collections by default and the picker reads `data` flat, so a
+ * default page could truncate the pool silently.
  */
 export const getAlertSlackChannels = async () => {
   const headers = await getAuthHeaders({ contentType: false });

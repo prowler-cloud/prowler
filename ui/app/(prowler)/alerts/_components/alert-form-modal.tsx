@@ -373,7 +373,6 @@ const AlertFormModalContent = ({
   const [selectedRecipientEmails, setSelectedRecipientEmails] = useState(
     () => new Set(defaults.recipientEmails.map(normalizeEmail)),
   );
-  // Local state needed: channel picks are buffered until the form submits.
   const [selectedSlackChannels, setSelectedSlackChannels] = useState<string[]>(
     defaults.slackChannels,
   );
@@ -478,8 +477,7 @@ const AlertFormModalContent = ({
         recipientEmails: fieldErrors.recipientEmails?.[0],
         slackChannels: fieldErrors.slackChannels?.[0],
       };
-      // Fields with no slot of their own must still surface something, or the
-      // parse failure leaves Save a silent no-op.
+      // A field with no error slot of its own would leave Save a silent no-op.
       setErrors(
         Object.values(fieldScoped).some(Boolean)
           ? fieldScoped

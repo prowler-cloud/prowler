@@ -9,7 +9,6 @@ export interface AlertFormValues {
   frequency: AlertTriggerKind;
   condition: AlertCondition;
   recipientEmails: string[];
-  /** Slack channel ids drawn from the integration's authorized set. */
   slackChannels: string[];
   enabled: boolean;
 }

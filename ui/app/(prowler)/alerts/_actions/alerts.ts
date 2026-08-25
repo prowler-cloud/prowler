@@ -25,9 +25,8 @@ export interface AlertPayload {
    */
   recipientEmails?: string[];
   /**
-   * Slack channel ids from the eligible set. Replace-not-additive like
-   * `recipientEmails`: a supplied list replaces the whole Slack selection,
-   * `[]` clears it, and omitting the key leaves it unchanged.
+   * Replace-not-additive like `recipientEmails`: `[]` clears the selection,
+   * omitting the key leaves it unchanged.
    */
   slackChannels?: string[];
 }
