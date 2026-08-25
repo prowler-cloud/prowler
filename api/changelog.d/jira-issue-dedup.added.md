@@ -1,0 +1,1 @@
+Jira issues created from findings are now tracked per finding UID in the new `jira_issues` table and exposed through `GET /api/v1/jira-issues`; sending a finding that already has an open Jira issue skips it (reported as `skipped_count`), and findings whose issue was closed or deleted in Jira get a new issue that replaces the link

@@ -134,6 +134,15 @@ Every Jira issue created from a single Finding carries a stable reference back t
 
 Prowler Cloud always includes the Finding URL. In a self-hosted Prowler App, set `DJANGO_UI_BASE_URL` in the API environment (for example, `https://prowler.example.com`) to enable it. When the variable is empty, the issue is created without the link.
 
+### Sending a Finding That Already Has a Jira Issue
+
+Prowler remembers the Jira issue created for each Finding, keyed by the Finding UID, so sending the same Finding again does not create a duplicate issue:
+
+* If the linked issue is still open in Jira, the Finding is skipped and the existing issue key is reported in the task result (`skipped_count`, `skipped`).
+* If the linked issue is closed (any Jira status in the **Done** category) or was deleted, a new issue is created and becomes the linked issue for that Finding.
+
+The link, and the last status observed in Jira, are available through the API at `GET /api/v1/jira-issues` (filter by `finding_uid`, `finding_uid__in`, `provider_id`, `integration` or `issue_key`). Each Jira integration keeps its own links, so the same Finding can have one issue per integration.
+
 ## Integration Status
 
 Monitor and manage your Jira integrations through the management interface:

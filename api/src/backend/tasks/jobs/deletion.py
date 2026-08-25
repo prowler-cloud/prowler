@@ -5,6 +5,7 @@ from api.db_utils import batch_delete, rls_transaction
 from api.models import (
     AttackPathsScan,
     Finding,
+    JiraIssue,
     Provider,
     ProviderComplianceScore,
     Resource,
@@ -86,6 +87,7 @@ def delete_provider(tenant_id: str, pk: str):
 
         deletion_steps = [
             ("Scan Summaries", ScanSummary.all_objects.filter(scan__provider=instance)),
+            ("Jira Issues", JiraIssue.objects.filter(provider=instance)),
             ("Findings", Finding.all_objects.filter(scan__provider=instance)),
             ("Resources", Resource.all_objects.filter(provider=instance)),
             ("Scans", Scan.all_objects.filter(provider=instance)),

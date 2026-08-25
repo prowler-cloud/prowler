@@ -14,6 +14,7 @@ from api.models import (
     IntegrationProviderRelationship,
     Invitation,
     InvitationRoleRelationship,
+    JiraIssue,
     LighthouseConfiguration,
     LighthouseProviderConfiguration,
     LighthouseProviderModels,
@@ -4147,6 +4148,41 @@ class LighthouseProviderModelsUpdateSerializer(BaseWriteSerializer):
 
 
 # Mute Rules
+
+
+class JiraIssueSerializer(RLSSerializer):
+    """
+    Read-only view of a Jira issue linked to a finding by a Jira integration.
+
+    Rows are keyed on the finding ``uid`` so the same finding maps to the same
+    issue across scans. ``issue_status`` is the last status Prowler observed in
+    Jira (refreshed whenever a dispatch touches the finding), not a live value.
+    """
+
+    class Meta:
+        model = JiraIssue
+        fields = [
+            "id",
+            "inserted_at",
+            "updated_at",
+            "finding_uid",
+            "finding_id",
+            "issue_key",
+            "issue_id",
+            "issue_url",
+            "project_key",
+            "issue_status",
+            "issue_status_category",
+            "status_synced_at",
+            "integration",
+            "provider",
+            "url",
+        ]
+        read_only_fields = fields
+
+    included_serializers = {
+        "provider": "api.v1.serializers.ProviderIncludeSerializer",
+    }
 
 
 class MuteRuleSerializer(RLSSerializer):

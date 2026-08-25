@@ -4,6 +4,7 @@ import pytest
 from allauth.socialaccount.models import SocialApp
 from api.db_router import MainRouter
 from api.models import (
+    JiraIssue,
     ProviderComplianceScore,
     Resource,
     ResourceTag,
@@ -524,3 +525,55 @@ class TestTenantComplianceSummaryModel:
 
         assert summary1.id != summary2.id
         assert summary1.requirements_passed != summary2.requirements_passed
+
+
+@pytest.mark.django_db
+class TestJiraIssueModel:
+    def test_create_jira_issue(
+        self, jira_integration_fixture, aws_provider, findings_fixture
+    ):
+        finding = findings_fixture[0]
+        issue = JiraIssue.objects.create(
+            tenant_id=jira_integration_fixture.tenant_id,
+            integration=jira_integration_fixture,
+            provider=aws_provider,
+            finding_uid=finding.uid,
+            finding_id=finding.id,
+            issue_key="TEST-1",
+            project_key="TEST",
+        )
+        assert issue.is_linked
+        assert not issue.is_done
+        assert issue.issue_status_category == ""
+
+    def test_reservation_is_not_linked(
+        self, jira_integration_fixture, aws_provider, findings_fixture
+    ):
+        finding = findings_fixture[0]
+        issue = JiraIssue.objects.create(
+            tenant_id=jira_integration_fixture.tenant_id,
+            integration=jira_integration_fixture,
+            provider=aws_provider,
+            finding_uid=finding.uid,
+            finding_id=finding.id,
+            project_key="TEST",
+        )
+        assert not issue.is_linked
+
+    def test_unique_per_integration_provider_and_finding_uid(
+        self, jira_integration_fixture, aws_provider_pair, findings_fixture
+    ):
+        provider, provider2 = aws_provider_pair
+        finding = findings_fixture[0]
+        common = {
+            "tenant_id": jira_integration_fixture.tenant_id,
+            "integration": jira_integration_fixture,
+            "finding_uid": finding.uid,
+            "finding_id": finding.id,
+            "project_key": "TEST",
+        }
+        JiraIssue.objects.create(provider=provider, issue_key="TEST-1", **common)
+        # Same finding uid on another provider is a different finding
+        JiraIssue.objects.create(provider=provider2, issue_key="TEST-2", **common)
+        with pytest.raises(IntegrityError):
+            JiraIssue.objects.create(provider=provider, issue_key="TEST-3", **common)

@@ -1,18 +1,19 @@
 import os
 import time
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from glob import glob
 from urllib.parse import quote
 
 from api.db_router import READ_REPLICA_ALIAS, MainRouter
 from api.db_utils import REPLICA_MAX_ATTEMPTS, REPLICA_RETRY_BASE_DELAY, rls_transaction
-from api.models import Finding, Integration, Provider
+from api.models import Finding, Integration, JiraIssue, Provider
 from api.rls import Tenant
 from api.utils import initialize_prowler_integration, initialize_prowler_provider
 from celery.utils.log import get_task_logger
 from config.django.base import DJANGO_FINDINGS_BATCH_SIZE
 from django.conf import settings
-from django.db import OperationalError
+from django.db import IntegrityError, OperationalError
+from django.utils import timezone
 from prowler.lib.outputs.asff.asff import ASFF
 from prowler.lib.outputs.compliance.generic.generic import GenericCompliance
 from prowler.lib.outputs.csv.csv import CSV
@@ -555,6 +556,182 @@ def get_tenant_name(tenant_id: str) -> str:
         return ""
 
 
+# Findings are pre-checked against existing Jira issues in chunks so the IN list
+# stays bounded however many findings a dispatch carries
+JIRA_DEDUP_CHUNK_SIZE = 500
+# A reservation (row without issue key) older than this belongs to a run that
+# died mid-send and can be reclaimed
+JIRA_RESERVATION_TTL = timedelta(minutes=15)
+# Cap on the per-finding detail returned in the task result; counts are exact
+JIRA_SKIPPED_REPORT_LIMIT = 100
+
+
+def _load_finding_refs(finding_ids: list[str]) -> dict[str, tuple[str, str]]:
+    """Map finding id -> (provider id, finding uid) for the batch, in one query."""
+    refs = {}
+    for finding_id, provider_id, uid in Finding.all_objects.filter(
+        id__in=finding_ids
+    ).values_list("id", "scan__provider_id", "uid"):
+        refs[str(finding_id)] = (str(provider_id), uid)
+    return refs
+
+
+def _load_existing_jira_issues(
+    tenant_id: str, integration_id: str, refs: dict[str, tuple[str, str]]
+) -> dict[tuple[str, str], JiraIssue]:
+    """Load the Jira issue rows already linked to the batch's findings.
+
+    Grouped by provider and chunked so each query is a bounded index lookup on
+    (tenant, integration, provider, finding_uid).
+    """
+    uids_by_provider: dict[str, list[str]] = {}
+    for provider_id, uid in refs.values():
+        uids_by_provider.setdefault(provider_id, []).append(uid)
+
+    existing: dict[tuple[str, str], JiraIssue] = {}
+    for provider_id, uids in uids_by_provider.items():
+        for start in range(0, len(uids), JIRA_DEDUP_CHUNK_SIZE):
+            chunk = uids[start : start + JIRA_DEDUP_CHUNK_SIZE]
+            for row in JiraIssue.objects.filter(
+                tenant_id=tenant_id,
+                integration_id=integration_id,
+                provider_id=provider_id,
+                finding_uid__in=chunk,
+            ):
+                existing[(str(row.provider_id), row.finding_uid)] = row
+    return existing
+
+
+def _refresh_jira_issue_statuses(
+    tenant_id: str, jira_integration, rows: list[JiraIssue]
+) -> dict[str, dict] | None:
+    """Fetch the current Jira status of linked rows and cache it on them.
+
+    Returns the statuses keyed by issue key (keys missing from the result no
+    longer exist in Jira), or None when Jira could not be queried, in which case
+    the cached values are left untouched.
+    """
+    keys = [row.issue_key for row in rows if row.issue_key]
+    if not keys:
+        return {}
+    try:
+        statuses = jira_integration.get_issues_status(keys)
+    except JiraBaseException as error:
+        logger.warning(
+            "Could not refresh Jira issue statuses, keeping cached values: %s",
+            error.message or error,
+        )
+        return None
+    except Exception:
+        logger.exception("Could not refresh Jira issue statuses, keeping cached values")
+        return None
+
+    now = timezone.now()
+    for row in rows:
+        status = statuses.get(row.issue_key)
+        if status is None:
+            # The issue is gone: keep the key for reference but mark it as done so
+            # the next send creates a fresh issue
+            row.issue_status = ""
+            row.issue_status_category = JiraIssue.StatusCategoryChoices.DONE
+        else:
+            row.issue_status = status.get("status", "")[:64]
+            row.issue_status_category = status.get("status_category", "")[:16]
+        row.status_synced_at = now
+    with rls_transaction(tenant_id):
+        JiraIssue.objects.bulk_update(
+            rows, ["issue_status", "issue_status_category", "status_synced_at"]
+        )
+    return statuses
+
+
+def _reserve_jira_issue(
+    tenant_id: str,
+    integration_id: str,
+    provider_id: str,
+    finding_uid: str,
+    finding_id: str,
+    project_key: str,
+) -> JiraIssue | None:
+    """Claim the (integration, provider, finding uid) slot before calling Jira.
+
+    The unique constraint makes this the arbiter between concurrent runs: only
+    the run that inserts the row (or reclaims an expired reservation) sends the
+    finding. Returns None when another run owns the slot.
+    """
+    with rls_transaction(tenant_id):
+        try:
+            row, created = JiraIssue.objects.get_or_create(
+                tenant_id=tenant_id,
+                integration_id=integration_id,
+                provider_id=provider_id,
+                finding_uid=finding_uid,
+                defaults={"finding_id": finding_id, "project_key": project_key},
+            )
+        except IntegrityError:
+            return None
+        if created:
+            return row
+        if row.issue_key:
+            # Linked by a concurrent run between the pre-check and now
+            return None
+        if timezone.now() - row.updated_at < JIRA_RESERVATION_TTL:
+            # Another run is sending this finding right now
+            return None
+        # Expired reservation from a run that died mid-send: reclaim it
+        row.finding_id = finding_id
+        row.project_key = project_key
+        row.save(update_fields=["finding_id", "project_key", "updated_at"])
+        return row
+
+
+def _link_jira_issue(
+    tenant_id: str, row: JiraIssue, issue: dict, finding_id: str, project_key: str
+) -> None:
+    """Point the row at the issue Jira just created."""
+    with rls_transaction(tenant_id):
+        row.issue_key = (issue.get("key") or "")[:64]
+        row.issue_id = str(issue.get("id") or "")[:64]
+        row.issue_url = (issue.get("url") or "")[:2048]
+        row.project_key = project_key
+        row.finding_id = finding_id
+        row.issue_status = ""
+        row.issue_status_category = JiraIssue.StatusCategoryChoices.NEW
+        row.status_synced_at = None
+        row.save(
+            update_fields=[
+                "issue_key",
+                "issue_id",
+                "issue_url",
+                "project_key",
+                "finding_id",
+                "issue_status",
+                "issue_status_category",
+                "status_synced_at",
+                "updated_at",
+            ]
+        )
+
+
+def _release_jira_issue(tenant_id: str, row: JiraIssue) -> None:
+    """Drop a reservation whose send failed so the finding can be retried."""
+    if row.issue_key:
+        # A previously linked (now closed) issue stays linked; the send failed so
+        # there is nothing newer to point at
+        return
+    with rls_transaction(tenant_id):
+        JiraIssue.objects.filter(id=row.id, issue_key="").delete()
+
+
+def _skipped_entry(finding_id: str, row: JiraIssue) -> dict:
+    return {
+        "finding_id": str(finding_id),
+        "issue_key": row.issue_key,
+        "issue_url": row.issue_url,
+        "issue_status": row.issue_status,
+    }
+
+
 def send_findings_to_jira(
     tenant_id: str,
     integration_id: str,
@@ -562,14 +739,50 @@ def send_findings_to_jira(
     issue_type: str,
     finding_ids: list[str],
 ):
+    """Create one Jira issue per finding, skipping findings that already have one.
+
+    Findings are matched to existing issues by (integration, provider, finding
+    uid), so a finding that was already sent in a previous scan is recognised.
+    Findings whose linked issue is still open are skipped and reported; findings
+    whose issue is closed or was deleted in Jira get a new issue that replaces
+    the link.
+    """
     with rls_transaction(tenant_id):
         integration = Integration.objects.get(id=integration_id)
         jira_integration = initialize_prowler_integration(integration)
         tenant_info = get_tenant_name(tenant_id)
+        finding_refs = _load_finding_refs(finding_ids)
+        existing = _load_existing_jira_issues(tenant_id, integration_id, finding_refs)
+
+    # Refresh the status of the linked issues in bulk so closed/deleted ones can be
+    # replaced. If Jira cannot be queried the linked findings are skipped as-is.
+    linked_rows = [row for row in existing.values() if row.issue_key]
+    statuses = (
+        _refresh_jira_issue_statuses(tenant_id, jira_integration, linked_rows)
+        if linked_rows
+        else {}
+    )
 
     num_tickets_created = 0
-    error_messages = []
+    skipped: list[dict] = []
+    error_messages: list[str] = []
+    created_rows: list[JiraIssue] = []
     for finding_id in finding_ids:
+        finding_id = str(finding_id)
+        provider_id, finding_uid = finding_refs.get(finding_id, (None, None))
+        row = existing.get((provider_id, finding_uid)) if provider_id else None
+        if row is not None:
+            if row.issue_key:
+                if statuses is None or not row.is_done:
+                    # Still open (or status unknown): already ticketed
+                    skipped.append(_skipped_entry(finding_id, row))
+                    continue
+                # Closed or deleted in Jira: create a replacement below
+            elif timezone.now() - row.updated_at < JIRA_RESERVATION_TTL:
+                # Another run is sending this finding right now
+                skipped.append(_skipped_entry(finding_id, row))
+                continue
+
         with rls_transaction(tenant_id):
             finding_instance = (
                 Finding.all_objects.select_related("scan__provider")
@@ -599,69 +812,98 @@ def send_findings_to_jira(
             remediation_code = remediation.get("code", {})
 
             provider_type = finding_instance.scan.provider.provider
+            if provider_id is None:
+                provider_id = str(finding_instance.scan.provider_id)
+                finding_uid = finding_instance.uid
             issue_labels = build_jira_issue_labels(
-                finding_uid=finding_instance.uid,
+                finding_uid=finding_uid,
                 provider=provider_type,
                 severity=finding_instance.severity,
                 check_id=finding_instance.check_id,
             )
-            finding_url = build_jira_finding_url(finding_instance.uid)
+            finding_url = build_jira_finding_url(finding_uid)
 
-            try:
-                # Send the individual finding to Jira
-                result = jira_integration.send_finding(
-                    check_id=finding_instance.check_id,
-                    check_title=check_metadata.get("checktitle", ""),
-                    severity=finding_instance.severity,
-                    status=finding_instance.status,
-                    status_extended=finding_instance.status_extended or "",
-                    provider=provider_type,
-                    region=region,
-                    resource_uid=resource_uid,
-                    resource_name=resource_name,
-                    risk=check_metadata.get("risk", ""),
-                    recommendation_text=recommendation.get("text", ""),
-                    recommendation_url=recommendation.get("url", ""),
-                    remediation_code_native_iac=remediation_code.get("nativeiac", ""),
-                    remediation_code_terraform=remediation_code.get("terraform", ""),
-                    remediation_code_cli=remediation_code.get("cli", ""),
-                    remediation_code_other=remediation_code.get("other", ""),
-                    resource_tags=resource_tags,
-                    compliance=finding_instance.compliance or {},
-                    project_key=project_key,
-                    issue_type=issue_type,
-                    issue_labels=issue_labels,
-                    finding_url=finding_url,
-                    tenant_info=tenant_info,
-                )
-            except JiraBaseException as error:
-                error_message = error.message or JIRA_GENERIC_SEND_ERROR
-                logger.exception(
-                    "Failed to send finding %s to Jira: %s", finding_id, error_message
-                )
-                error_messages.append(error_message)
-                continue
-            except Exception:
-                logger.exception("Failed to send finding %s to Jira", finding_id)
-                error_messages.append(JIRA_GENERIC_SEND_ERROR)
+        if row is None:
+            row = _reserve_jira_issue(
+                tenant_id,
+                integration_id,
+                provider_id,
+                finding_uid,
+                finding_id,
+                project_key,
+            )
+            if row is None:
+                skipped.append({"finding_id": finding_id})
                 continue
 
-            if result:
-                num_tickets_created += 1
-                logger.info(
-                    "Finding %s sent to Jira as %s",
-                    finding_id,
-                    result.get("key") if isinstance(result, dict) else result,
-                )
-            else:
-                error_message = JIRA_GENERIC_SEND_ERROR
-                logger.error(error_message)
-                error_messages.append(error_message)
+        try:
+            # Send the individual finding to Jira
+            result = jira_integration.send_finding(
+                check_id=finding_instance.check_id,
+                check_title=check_metadata.get("checktitle", ""),
+                severity=finding_instance.severity,
+                status=finding_instance.status,
+                status_extended=finding_instance.status_extended or "",
+                provider=provider_type,
+                region=region,
+                resource_uid=resource_uid,
+                resource_name=resource_name,
+                risk=check_metadata.get("risk", ""),
+                recommendation_text=recommendation.get("text", ""),
+                recommendation_url=recommendation.get("url", ""),
+                remediation_code_native_iac=remediation_code.get("nativeiac", ""),
+                remediation_code_terraform=remediation_code.get("terraform", ""),
+                remediation_code_cli=remediation_code.get("cli", ""),
+                remediation_code_other=remediation_code.get("other", ""),
+                resource_tags=resource_tags,
+                compliance=finding_instance.compliance or {},
+                project_key=project_key,
+                issue_type=issue_type,
+                issue_labels=issue_labels,
+                finding_url=finding_url,
+                tenant_info=tenant_info,
+            )
+        except JiraBaseException as error:
+            error_message = error.message or JIRA_GENERIC_SEND_ERROR
+            logger.exception(
+                "Failed to send finding %s to Jira: %s", finding_id, error_message
+            )
+            error_messages.append(error_message)
+            _release_jira_issue(tenant_id, row)
+            continue
+        except Exception:
+            logger.exception("Failed to send finding %s to Jira", finding_id)
+            error_messages.append(JIRA_GENERIC_SEND_ERROR)
+            _release_jira_issue(tenant_id, row)
+            continue
+
+        if result:
+            num_tickets_created += 1
+            issue = result if isinstance(result, dict) else {}
+            logger.info(
+                "Finding %s sent to Jira as %s", finding_id, issue.get("key") or result
+            )
+            _link_jira_issue(tenant_id, row, issue, finding_id, project_key)
+            created_rows.append(row)
+        else:
+            error_message = JIRA_GENERIC_SEND_ERROR
+            logger.error(error_message)
+            error_messages.append(error_message)
+            _release_jira_issue(tenant_id, row)
+
+    # Record the initial status of the issues just created, in bulk
+    if created_rows:
+        _refresh_jira_issue_statuses(
+            tenant_id, jira_integration, [row for row in created_rows if row.issue_key]
+        )
 
     result = {
         "created_count": num_tickets_created,
-        "failed_count": len(finding_ids) - num_tickets_created,
+        "skipped_count": len(skipped),
+        "failed_count": len(finding_ids) - num_tickets_created - len(skipped),
     }
+    if skipped:
+        result["skipped"] = skipped[:JIRA_SKIPPED_REPORT_LIMIT]
     if error_messages:
         result["error"] = "; ".join(dict.fromkeys(error_messages))
 

@@ -2,7 +2,7 @@ from unittest.mock import MagicMock, call, patch
 
 import pytest
 from api.attack_paths import database as graph_database
-from api.models import Provider, Tenant, TenantComplianceSummary
+from api.models import JiraIssue, Provider, Tenant, TenantComplianceSummary
 from django.core.exceptions import ObjectDoesNotExist
 from tasks.jobs.deletion import delete_provider, delete_tenant
 
@@ -32,6 +32,22 @@ class TestDeleteProvider:
                 "tenant-db",
                 str(instance.id),
             )
+
+    def test_delete_provider_removes_jira_issues(self, jira_issues_fixture):
+        linked, other_provider_issue, reservation = jira_issues_fixture
+        provider = linked.provider
+        tenant_id = str(provider.tenant_id)
+        with (
+            patch("tasks.jobs.deletion.graph_database.get_database_name"),
+            patch("tasks.jobs.deletion.graph_database.drop_subgraph"),
+        ):
+            delete_provider(tenant_id, provider.id)
+
+        remaining = set(JiraIssue.objects.values_list("id", flat=True))
+        assert linked.id not in remaining
+        assert reservation.id not in remaining
+        # Issues of other providers are untouched
+        assert other_provider_issue.id in remaining
 
     def test_delete_provider_does_not_exist(self, tenants_fixture):
         with (

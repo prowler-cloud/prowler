@@ -34,6 +34,7 @@ from api.models import (
     Integration,
     Invitation,
     InvitationRoleRelationship,
+    JiraIssue,
     LighthouseProviderConfiguration,
     LighthouseProviderModels,
     LighthouseTenantConfiguration,
@@ -13555,6 +13556,144 @@ class TestScheduleViewSet:
             reverse("schedule-daily"), data=json_payload, format="json"
         )
         assert response.status_code == status.HTTP_409_CONFLICT
+
+
+@pytest.mark.django_db
+class TestJiraIssueViewSet:
+    def test_list_hides_reservations(self, authenticated_client, jira_issues_fixture):
+        linked, other_provider_issue, reservation = jira_issues_fixture
+        response = authenticated_client.get(reverse("jiraissue-list"))
+        assert response.status_code == status.HTTP_200_OK
+        ids = {item["id"] for item in response.json()["data"]}
+        assert ids == {str(linked.id), str(other_provider_issue.id)}
+        assert str(reservation.id) not in ids
+
+    def test_retrieve(self, authenticated_client, jira_issues_fixture):
+        linked, *_ = jira_issues_fixture
+        response = authenticated_client.get(
+            reverse("jiraissue-detail", kwargs={"pk": linked.id})
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert data["type"] == "jira-issues"
+        attributes = data["attributes"]
+        assert attributes["finding_uid"] == linked.finding_uid
+        assert attributes["finding_id"] == str(linked.finding_id)
+        assert attributes["issue_key"] == "TEST-1"
+        assert attributes["issue_url"] == "https://test.atlassian.net/browse/TEST-1"
+        assert attributes["project_key"] == "TEST"
+        assert attributes["issue_status"] == "To Do"
+        assert attributes["issue_status_category"] == "new"
+        assert attributes["status_synced_at"] is not None
+        relationships = data["relationships"]
+        assert relationships["provider"]["data"]["id"] == str(linked.provider_id)
+        assert relationships["integration"]["data"]["id"] == str(linked.integration_id)
+
+    def test_retrieve_reservation_returns_404(
+        self, authenticated_client, jira_issues_fixture
+    ):
+        *_, reservation = jira_issues_fixture
+        response = authenticated_client.get(
+            reverse("jiraissue-detail", kwargs={"pk": reservation.id})
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_retrieve_other_tenant_returns_404(
+        self, authenticated_client, jira_issues_fixture, tenants_fixture
+    ):
+        linked, *_ = jira_issues_fixture
+        with rls_transaction(str(tenants_fixture[2].id)):
+            JiraIssue.objects.filter(id=linked.id).update(
+                tenant_id=tenants_fixture[2].id
+            )
+        response = authenticated_client.get(
+            reverse("jiraissue-detail", kwargs={"pk": linked.id})
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    @pytest.mark.parametrize(
+        "filter_name, filter_value, expected_keys",
+        [
+            ("finding_uid", "test_finding_uid_1", {"TEST-1"}),
+            (
+                "finding_uid__in",
+                "test_finding_uid_1,test_finding_uid_other_provider",
+                {"TEST-1", "TEST-2"},
+            ),
+            ("finding_uid__in", "does-not-exist", set()),
+            ("issue_key", "TEST-2", {"TEST-2"}),
+            ("issue_status_category", "done", {"TEST-2"}),
+            ("issue_status_category__in", "new,indeterminate", {"TEST-1"}),
+            ("project_key", "TEST", {"TEST-1", "TEST-2"}),
+            ("search", "TEST-1", {"TEST-1"}),
+        ],
+    )
+    def test_filters(
+        self,
+        authenticated_client,
+        jira_issues_fixture,
+        filter_name,
+        filter_value,
+        expected_keys,
+    ):
+        response = authenticated_client.get(
+            reverse("jiraissue-list"), {f"filter[{filter_name}]": filter_value}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        keys = {item["attributes"]["issue_key"] for item in response.json()["data"]}
+        assert keys == expected_keys
+
+    def test_filter_by_provider(self, authenticated_client, jira_issues_fixture):
+        linked, other_provider_issue, _ = jira_issues_fixture
+        response = authenticated_client.get(
+            reverse("jiraissue-list"),
+            {"filter[provider_id]": str(other_provider_issue.provider_id)},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert [item["id"] for item in response.json()["data"]] == [
+            str(other_provider_issue.id)
+        ]
+
+    def test_filter_by_integration_and_finding_id(
+        self, authenticated_client, jira_issues_fixture
+    ):
+        linked, *_ = jira_issues_fixture
+        response = authenticated_client.get(
+            reverse("jiraissue-list"),
+            {
+                "filter[integration]": str(linked.integration_id),
+                "filter[finding_id]": str(linked.finding_id),
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert [item["id"] for item in response.json()["data"]] == [str(linked.id)]
+
+    def test_invalid_filter(self, authenticated_client, jira_issues_fixture):
+        response = authenticated_client.get(
+            reverse("jiraissue-list"), {"filter[invalid]": "x"}
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_include_provider(self, authenticated_client, jira_issues_fixture):
+        response = authenticated_client.get(
+            reverse("jiraissue-list"), {"include": "provider"}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        included_types = {item["type"] for item in response.json()["included"]}
+        assert included_types == {"providers"}
+
+    def test_read_only(self, authenticated_client, jira_issues_fixture):
+        linked, *_ = jira_issues_fixture
+        response = authenticated_client.post(
+            reverse("jiraissue-list"),
+            data=json.dumps({"data": {"type": "jira-issues", "attributes": {}}}),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+        response = authenticated_client.delete(
+            reverse("jiraissue-detail", kwargs={"pk": linked.id})
+        )
+        assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
 
 
 @pytest.mark.django_db
