@@ -148,7 +148,14 @@ export class AlertsPageHarness extends BrowserHarness<AlertsFixture> {
   private modalErrorText(): string | null {
     const dialog = this.dialog();
     if (!dialog) return null;
-    const error = dialog.querySelector<HTMLElement>(".text-text-error-primary");
+    // The error class is shared, and first-in-DOM-order wins: the recipients
+    // read failure and the preview error both render one ABOVE the form-level
+    // message and would shadow it. Only the form-level one is a `div` — every
+    // field-scoped error is a `p` — so prefer that, and keep the broad query
+    // as the fallback for a refusal that never reaches the form level.
+    const error =
+      dialog.querySelector<HTMLElement>("div.text-text-error-primary") ??
+      dialog.querySelector<HTMLElement>(".text-text-error-primary");
     const text = (error?.textContent ?? "").trim();
     return text.length > 0 ? text : null;
   }
@@ -279,6 +286,12 @@ export class AlertsPageHarness extends BrowserHarness<AlertsFixture> {
       let picked = false;
       for (let attempt = 0; attempt < 3 && !picked; attempt += 1) {
         const options = await this.openPicker("#alert-recipients");
+        // The picker stays open between attempts, so a retry clicking an item
+        // the previous attempt did select would toggle it back off.
+        if (this.isRecipientSelected(email)) {
+          picked = true;
+          break;
+        }
         const option = options.find((candidate) =>
           (candidate.textContent ?? "").includes(email),
         );
@@ -289,10 +302,10 @@ export class AlertsPageHarness extends BrowserHarness<AlertsFixture> {
         await this.clickElement(option, { fallbackToDomClick: true });
         picked =
           (await this.waitForOrNull(
-            () => this.chipContaining(email),
+            () => this.isRecipientSelected(email),
             2000,
             `the ${email} chip`,
-          )) !== null;
+          )) ?? false;
       }
       if (!picked) {
         throw new Error(`pickRecipients: ${email} never showed as selected`);
@@ -355,12 +368,44 @@ export class AlertsPageHarness extends BrowserHarness<AlertsFixture> {
     return /Private/.test(option?.textContent ?? "");
   }
 
-  /** A visible chip whose text contains `text`, anywhere in the open form. */
-  private chipContaining(text: string): HTMLElement | null {
+  /**
+   * The text of every selected chip inside `scope`, as the user reads it.
+   * Always scoped to one field: two pickers share the open form, and a
+   * document-wide substring test answers for the wrong one — a private
+   * channel's chip reads `Private#security-alerts`, which contains
+   * `#security`, the name of the other fixture channel.
+   */
+  private static chipTexts(scope: ParentNode): string[] {
+    return Array.from(
+      scope.querySelectorAll<HTMLElement>("[data-selected-item]"),
+    ).map((chip) => (chip.textContent ?? "").replace(/\s+/g, " ").trim());
+  }
+
+  /** The chip renders `#name` with an sr-only "Private" marker. */
+  private static toChannelChip(text: string): SelectedChannelChip {
+    return {
+      isPrivate: /Private/.test(text),
+      name: text
+        .replace(/Private/g, "")
+        .trim()
+        .replace(/^#/, ""),
+    };
+  }
+
+  /** Whether the closed field already shows `name` among its chips. */
+  private isChannelSelected(name: string): boolean {
+    const field = this.channelField();
+    if (!field) return false;
+    return AlertsPageHarness.chipTexts(field)
+      .map(AlertsPageHarness.toChannelChip)
+      .some((chip) => chip.name === name);
+  }
+
+  /** Whether the recipients field already shows `email` among its chips. */
+  private isRecipientSelected(email: string): boolean {
+    const trigger = this.q("#alert-recipients");
     return (
-      Array.from(
-        document.querySelectorAll<HTMLElement>("[data-selected-item]"),
-      ).find((chip) => (chip.textContent ?? "").includes(text)) ?? null
+      trigger !== null && AlertsPageHarness.chipTexts(trigger).includes(email)
     );
   }
 
@@ -374,6 +419,12 @@ export class AlertsPageHarness extends BrowserHarness<AlertsFixture> {
       let picked = false;
       for (let attempt = 0; attempt < 3 && !picked; attempt += 1) {
         const options = await this.openChannelPicker();
+        // The picker stays open between attempts, so a retry clicking an item
+        // the previous attempt did select would toggle it back off.
+        if (this.isChannelSelected(name)) {
+          picked = true;
+          break;
+        }
         const option = options.find(
           (candidate) =>
             AlertsPageHarness.optionChannelName(candidate) === name,
@@ -387,10 +438,10 @@ export class AlertsPageHarness extends BrowserHarness<AlertsFixture> {
         await this.clickElement(option, { fallbackToDomClick: true });
         picked =
           (await this.waitForOrNull(
-            () => this.chipContaining(`#${name}`),
+            () => this.isChannelSelected(name),
             2000,
             `the #${name} chip`,
-          )) !== null;
+          )) ?? false;
       }
       if (!picked) {
         throw new Error(`pickChannels: #${name} never showed as selected`);
@@ -409,20 +460,9 @@ export class AlertsPageHarness extends BrowserHarness<AlertsFixture> {
       10000,
       "the channel destination field",
     );
-    const chips = Array.from(
-      field.querySelectorAll<HTMLElement>("[data-selected-item]"),
+    return AlertsPageHarness.chipTexts(field).map(
+      AlertsPageHarness.toChannelChip,
     );
-    return chips.map((chip) => {
-      const text = (chip.textContent ?? "").replace(/\s+/g, " ").trim();
-      return {
-        isPrivate: /Private/.test(text),
-        // The chip renders `#name` with an sr-only "Private" marker.
-        name: text
-          .replace(/Private/g, "")
-          .trim()
-          .replace(/^#/, ""),
-      };
-    });
   }
 
   // --- The alerts list ------------------------------------------------------
