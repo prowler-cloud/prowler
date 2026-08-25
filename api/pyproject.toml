@@ -45,6 +45,9 @@ dependencies = [
   "gunicorn==26.0.0",
   "uvloop==0.22.1",
   "lxml==6.1.0",
+  # TEMPORARY (draft only): pinned to the head of prowler-cloud/prowler#12539 so this
+  # branch runs against the new Jira SDK helpers. Before this PR leaves draft: restore
+  # "@master", run `uv lock --upgrade-package prowler`, and delete this comment.
   "prowler @ git+https://github.com/prowler-cloud/prowler.git@23e048fcd20738b68b54be6adc8b43f8a26d0d43",
   "psycopg2-binary==2.9.9",
   "pytest-celery[redis] (==1.3.0)",
