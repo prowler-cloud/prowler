@@ -6,13 +6,14 @@ Provides access to Prowler Hub API for security checks and compliance frameworks
 
 import httpx
 from fastmcp import FastMCP
+from fastmcp.exceptions import ToolError
 from pydantic import Field
 
 from prowler_mcp_server import __version__
 from prowler_mcp_server.lib.types import NonBlankStr
 
 # Initialize FastMCP for Prowler Hub
-hub_mcp_server = FastMCP("prowler-hub")
+hub_mcp_server = FastMCP("prowler-hub", mask_error_details=True)
 
 # API base URL
 BASE_URL = "https://hub.prowler.com/api"
@@ -25,6 +26,47 @@ prowler_hub_client = httpx.Client(
         "Accept": "application/json",
         "User-Agent": f"prowler-mcp-server/{__version__}",
     },
+)
+
+# Sentences for the not-found cases. They are authored here, and raised as a
+# ToolError without a `from` clause, because they name the resource the caller
+# asked for and the next tool to reach for -- neither of which the shared
+# classifier in lib/errors.py can know.
+_CHECK_NOT_FOUND = (
+    "No check with the ID '{check_id}' exists in Prowler Hub. Use "
+    "prowler_hub_semantic_search_checks to find the right ID."
+)
+_COMPLIANCE_NOT_FOUND = (
+    "No compliance framework with the ID '{compliance_id}' exists in Prowler Hub. "
+    "Use prowler_hub_semantic_search_compliances to find the right ID."
+)
+# The three causes of a missing check file on GitHub. Which one it was decides
+# what the caller has to change, so they are never collapsed into one sentence.
+_CHECK_NOT_IN_PROVIDER = (
+    "Provider '{provider_id}' has no check '{check_id}'. Prowler Hub lists that "
+    "check under provider '{hub_provider}', so retry with "
+    "provider_id='{hub_provider}'."
+)
+_CHECK_SOURCE_MISSING = (
+    "Prowler Hub lists check '{check_id}' under provider '{provider_id}', but "
+    "prowler-cloud/prowler has no source file for it on the master branch. The "
+    "check may have been renamed or moved since the Hub last indexed it."
+)
+_CHECK_PROVIDER_UNVERIFIED = (
+    "Provider '{provider_id}' has no check '{check_id}' in prowler-cloud/prowler, "
+    "and Prowler Hub could not be asked which provider does. Either the ID is "
+    "wrong or the check belongs to another provider -- "
+    "prowler_hub_get_check_details reports the provider a check belongs to."
+)
+_FIXER_NOT_FOUND = (
+    "Check {check_id} has no auto-remediation code. Many checks do not, and that "
+    "is normal."
+)
+_FIXER_NOT_FOUND_UNVERIFIED = (
+    "Provider '{provider_id}' has no auto-remediation code for check "
+    "'{check_id}'. Many checks have none, and that is normal, but Prowler Hub "
+    "could not be asked whether the check belongs to '{provider_id}' at all. "
+    "Confirm it with prowler_hub_get_check_details if you expected a fixer."
 )
 
 # GitHub raw content base URL for Prowler checks
@@ -54,6 +96,81 @@ def github_check_path(provider_id: str, check_id: str, suffix: str) -> str:
     except IndexError:
         service_id = check_id
     return f"{GITHUB_RAW_BASE}/{provider_id}/services/{service_id}/{check_id}/{check_id}{suffix}"
+
+
+def _hub_provider_for_check(check_id: str) -> tuple[bool, str | None]:
+    """Ask Prowler Hub which provider it lists a check under.
+
+    Only ever called to explain a missing file, so a Hub failure is answered
+    rather than raised: the caller still gets a message, just a hedged one.
+
+    Args:
+        check_id: Check ID the caller asked for
+
+    Returns:
+        (answered, provider). `answered` is False when the Hub could not be
+        asked at all. When it is True, `provider` is the provider the Hub lists
+        the check under, or None when the Hub knows no such check.
+    """
+    try:
+        response = prowler_hub_client.get(f"/check/{check_id}")
+        if response.status_code == 404:
+            return True, None
+        response.raise_for_status()
+        check = response.json()
+    except (httpx.HTTPError, ValueError):
+        return False, None
+
+    # An empty body is how the Hub reports an unknown ID on some routes, so it
+    # is read the same way get_check_details reads it: no such check.
+    if not isinstance(check, dict) or not check:
+        return True, None
+
+    provider = check.get("provider")
+    if isinstance(provider, str) and provider.strip():
+        return True, provider
+    # A check the Hub returned without a provider tells us nothing about the
+    # provider the caller asked for, so it counts as unanswered rather than as
+    # a check that does not exist.
+    return False, None
+
+
+def _explain_missing_check_file(
+    provider_id: str,
+    check_id: str,
+    *,
+    when_check_belongs_here: str,
+    when_unverified: str,
+) -> str:
+    """Explain a 404 from GitHub for one of a check's source files.
+
+    GitHub answers 404 to three different mistakes -- an ID that exists nowhere,
+    an ID that exists under a different provider, and an ID that exists right
+    here whose file is simply absent -- and cannot tell them apart. Prowler Hub
+    can, so it is asked before anything is claimed about the ID.
+
+    Args:
+        provider_id: Provider the caller asked for
+        check_id: Check the caller asked for
+        when_check_belongs_here: Message for the case where the Hub confirms the
+            check does belong to this provider, which is the only case the two
+            calling tools describe differently
+        when_unverified: Message for the case where the Hub could not be asked
+
+    Returns:
+        The sentence to fail the tool with
+    """
+    answered, hub_provider = _hub_provider_for_check(check_id)
+
+    if not answered:
+        return when_unverified
+    if hub_provider is None:
+        return _CHECK_NOT_FOUND.format(check_id=check_id)
+    if hub_provider != provider_id:
+        return _CHECK_NOT_IN_PROVIDER.format(
+            provider_id=provider_id, check_id=check_id, hub_provider=hub_provider
+        )
+    return when_check_belongs_here
 
 
 # Security Check Tools
@@ -123,29 +240,22 @@ async def list_checks(
     if compliances:
         params["compliances"] = ",".join(compliances)
 
-    try:
-        response = prowler_hub_client.get("/check", params=params)
-        response.raise_for_status()
-        checks = response.json()
+    response = prowler_hub_client.get("/check", params=params)
+    response.raise_for_status()
+    checks = response.json()
 
-        # Return checks as a lightweight list
-        checks_list = []
-        for check in checks:
-            check_data = {
-                "id": check["id"],
-                "provider": check["provider"],
-                "title": check["title"],
-                "severity": check["severity"],
-            }
-            checks_list.append(check_data)
-
-        return {"count": len(checks), "checks": checks_list}
-    except httpx.HTTPStatusError as e:
-        return {
-            "error": f"HTTP error {e.response.status_code}: {e.response.text}",
+    # Return checks as a lightweight list
+    checks_list = []
+    for check in checks:
+        check_data = {
+            "id": check["id"],
+            "provider": check["provider"],
+            "title": check["title"],
+            "severity": check["severity"],
         }
-    except Exception as e:
-        return {"error": str(e)}
+        checks_list.append(check_data)
+
+    return {"count": len(checks), "checks": checks_list}
 
 
 @hub_mcp_server.tool()
@@ -182,29 +292,22 @@ async def semantic_search_checks(
     2. Use `prowler_hub_list_checks` with filters for more targeted browsing
     3. Use `prowler_hub_get_check_details` to get complete information for a specific check
     """
-    try:
-        response = prowler_hub_client.get("/check/search", params={"term": term})
-        response.raise_for_status()
-        checks = response.json()
+    response = prowler_hub_client.get("/check/search", params={"term": term})
+    response.raise_for_status()
+    checks = response.json()
 
-        # Return checks as a lightweight list
-        checks_list = []
-        for check in checks:
-            check_data = {
-                "id": check["id"],
-                "provider": check["provider"],
-                "title": check["title"],
-                "severity": check["severity"],
-            }
-            checks_list.append(check_data)
-
-        return {"count": len(checks), "checks": checks_list}
-    except httpx.HTTPStatusError as e:
-        return {
-            "error": f"HTTP error {e.response.status_code}: {e.response.text}",
+    # Return checks as a lightweight list
+    checks_list = []
+    for check in checks:
+        check_data = {
+            "id": check["id"],
+            "provider": check["provider"],
+            "title": check["title"],
+            "severity": check["severity"],
         }
-    except Exception as e:
-        return {"error": str(e)}
+        checks_list.append(check_data)
+
+    return {"count": len(checks), "checks": checks_list}
 
 
 @hub_mcp_server.tool()
@@ -276,73 +379,73 @@ async def get_check_details(
     try:
         response = prowler_hub_client.get(f"/check/{check_id}")
         response.raise_for_status()
-        check = response.json()
-
-        if not check:
-            return {"error": f"Check '{check_id}' not found"}
-
-        # Build response with only non-empty fields to save tokens
-        result = {}
-
-        # Core fields
-        result["id"] = check["id"]
-        if check.get("title"):
-            result["title"] = check["title"]
-        if check.get("description"):
-            result["description"] = check["description"]
-        if check.get("provider"):
-            result["provider"] = check["provider"]
-        if check.get("service"):
-            result["service"] = check["service"]
-        if check.get("severity"):
-            result["severity"] = check["severity"]
-        if check.get("risk"):
-            result["risk"] = check["risk"]
-        if check.get("resource_type"):
-            result["resource_type"] = check["resource_type"]
-
-        # List fields
-        if check.get("reference"):
-            result["reference"] = check["reference"]
-        if check.get("additional_urls"):
-            result["additional_urls"] = check["additional_urls"]
-        if check.get("services_required"):
-            result["services_required"] = check["services_required"]
-        if check.get("categories"):
-            result["categories"] = check["categories"]
-        if check.get("compliances"):
-            result["compliances"] = check["compliances"]
-
-        # Other fields
-        if check.get("notes"):
-            result["notes"] = check["notes"]
-        if check.get("related_url"):
-            result["related_url"] = check["related_url"]
-        if check.get("fixer") is not None:
-            result["fixer"] = check["fixer"]
-
-        # Remediation - filter out empty nested values
-        remediation = check.get("remediation", {})
-        if remediation:
-            filtered_remediation = {}
-            for key, value in remediation.items():
-                if value and isinstance(value, dict):
-                    # Filter out empty values within nested dict
-                    filtered_value = {k: v for k, v in value.items() if v}
-                    if filtered_value:
-                        filtered_remediation[key] = filtered_value
-                elif value:
-                    filtered_remediation[key] = value
-            if filtered_remediation:
-                result["remediation"] = filtered_remediation
-
-        return result
     except httpx.HTTPStatusError as e:
-        return {
-            "error": f"HTTP error {e.response.status_code}: {e.response.text}",
-        }
-    except Exception as e:
-        return {"error": str(e)}
+        if e.response.status_code == 404:
+            # No `from`: this names the check, which the shared classifier cannot.
+            raise ToolError(_CHECK_NOT_FOUND.format(check_id=check_id))
+        raise
+
+    check = response.json()
+
+    if not check:
+        raise ToolError(_CHECK_NOT_FOUND.format(check_id=check_id))
+
+    # Build response with only non-empty fields to save tokens
+    result = {}
+
+    # Core fields
+    result["id"] = check["id"]
+    if check.get("title"):
+        result["title"] = check["title"]
+    if check.get("description"):
+        result["description"] = check["description"]
+    if check.get("provider"):
+        result["provider"] = check["provider"]
+    if check.get("service"):
+        result["service"] = check["service"]
+    if check.get("severity"):
+        result["severity"] = check["severity"]
+    if check.get("risk"):
+        result["risk"] = check["risk"]
+    if check.get("resource_type"):
+        result["resource_type"] = check["resource_type"]
+
+    # List fields
+    if check.get("reference"):
+        result["reference"] = check["reference"]
+    if check.get("additional_urls"):
+        result["additional_urls"] = check["additional_urls"]
+    if check.get("services_required"):
+        result["services_required"] = check["services_required"]
+    if check.get("categories"):
+        result["categories"] = check["categories"]
+    if check.get("compliances"):
+        result["compliances"] = check["compliances"]
+
+    # Other fields
+    if check.get("notes"):
+        result["notes"] = check["notes"]
+    if check.get("related_url"):
+        result["related_url"] = check["related_url"]
+    if check.get("fixer") is not None:
+        result["fixer"] = check["fixer"]
+
+    # Remediation - filter out empty nested values
+    remediation = check.get("remediation", {})
+    if remediation:
+        filtered_remediation = {}
+        for key, value in remediation.items():
+            if value and isinstance(value, dict):
+                # Filter out empty values within nested dict
+                filtered_value = {k: v for k, v in value.items() if v}
+                if filtered_value:
+                    filtered_remediation[key] = filtered_value
+            elif value:
+                filtered_remediation[key] = value
+        if filtered_remediation:
+            result["remediation"] = filtered_remediation
+
+    return result
 
 
 @hub_mcp_server.tool()
@@ -364,31 +467,31 @@ async def get_check_code(
             "content": "Python source code of the check implementation"
         }
     """
-    if provider_id and check_id:
-        url = github_check_path(provider_id, check_id, ".py")
-        try:
-            resp = github_raw_client.get(url)
-            resp.raise_for_status()
-            return {
-                "content": resp.text,
-            }
-        except httpx.HTTPStatusError as e:
-            if e.response.status_code == 404:
-                return {
-                    "error": f"Check {check_id} not found in Prowler",
-                }
-            else:
-                return {
-                    "error": f"HTTP error {e.response.status_code}: {e.response.text}",
-                }
-        except Exception as e:
-            return {
-                "error": str(e),
-            }
-    else:
-        return {
-            "error": "Provider ID and check ID are required",
-        }
+    url = github_check_path(provider_id, check_id, ".py")
+    try:
+        resp = github_raw_client.get(url)
+        resp.raise_for_status()
+    except httpx.HTTPStatusError as e:
+        if e.response.status_code == 404:
+            # No `from`: this names the check and the provider that does have
+            # it, neither of which the shared classifier in lib/errors.py knows.
+            raise ToolError(
+                _explain_missing_check_file(
+                    provider_id,
+                    check_id,
+                    when_check_belongs_here=_CHECK_SOURCE_MISSING.format(
+                        check_id=check_id, provider_id=provider_id
+                    ),
+                    when_unverified=_CHECK_PROVIDER_UNVERIFIED.format(
+                        provider_id=provider_id, check_id=check_id
+                    ),
+                )
+            )
+        raise
+
+    return {
+        "content": resp.text,
+    }
 
 
 @hub_mcp_server.tool()
@@ -402,8 +505,9 @@ async def get_check_fixer(
 ) -> dict:
     """Fetch the auto-remediation (fixer) code for a Prowler security check.
 
-    IMPORTANT: Not all checks have fixers. A "fixer not found" response means the check
-    doesn't have auto-remediation code - this is normal for many checks.
+    IMPORTANT: Not all checks have fixers. A check with no auto-remediation code fails
+    with a message saying so - this is normal for many checks and not a problem to
+    report or retry.
 
     Fixer code provides automated remediation that can fix security issues detected by checks.
     Use this to understand how to programmatically remediate findings.
@@ -412,40 +516,30 @@ async def get_check_fixer(
         {
             "content": "Python source code of the auto-remediation implementation"
         }
-        Or if no fixer exists:
-        {
-            "error": "Fixer not found for check {check_id}"
-        }
     """
-    if provider_id and check_id:
-        url = github_check_path(provider_id, check_id, "_fixer.py")
-        try:
-            resp = github_raw_client.get(url)
-            if resp.status_code == 404:
-                return {
-                    "error": f"Fixer not found for check {check_id}",
-                }
-            resp.raise_for_status()
-            return {
-                "content": resp.text,
-            }
-        except httpx.HTTPStatusError as e:
-            if e.response.status_code == 404:
-                return {
-                    "error": f"Check {check_id} not found in Prowler",
-                }
-            else:
-                return {
-                    "error": f"HTTP error {e.response.status_code}: {e.response.text}",
-                }
-        except Exception as e:
-            return {
-                "error": str(e),
-            }
-    else:
-        return {
-            "error": "Provider ID and check ID are required",
-        }
+    url = github_check_path(provider_id, check_id, "_fixer.py")
+    try:
+        resp = github_raw_client.get(url)
+        resp.raise_for_status()
+    except httpx.HTTPStatusError as e:
+        if e.response.status_code == 404:
+            # "No fixer" is only one of the reasons the file is missing, and the
+            # others are the caller's to fix, so they are told apart first.
+            raise ToolError(
+                _explain_missing_check_file(
+                    provider_id,
+                    check_id,
+                    when_check_belongs_here=_FIXER_NOT_FOUND.format(check_id=check_id),
+                    when_unverified=_FIXER_NOT_FOUND_UNVERIFIED.format(
+                        provider_id=provider_id, check_id=check_id
+                    ),
+                )
+            )
+        raise
+
+    return {
+        "content": resp.text,
+    }
 
 
 # Compliance Framework Tools
@@ -492,28 +586,21 @@ async def list_compliances(
     if provider:
         params["provider"] = ",".join(provider)
 
-    try:
-        response = prowler_hub_client.get("/compliance", params=params)
-        response.raise_for_status()
-        compliances = response.json()
+    response = prowler_hub_client.get("/compliance", params=params)
+    response.raise_for_status()
+    compliances = response.json()
 
-        # Return compliances as a lightweight list
-        compliances_list = []
-        for compliance in compliances:
-            compliance_data = {
-                "id": compliance["id"],
-                "name": compliance["name"],
-                "provider": compliance["provider"],
-            }
-            compliances_list.append(compliance_data)
-
-        return {"count": len(compliances), "compliances": compliances_list}
-    except httpx.HTTPStatusError as e:
-        return {
-            "error": f"HTTP error {e.response.status_code}: {e.response.text}",
+    # Return compliances as a lightweight list
+    compliances_list = []
+    for compliance in compliances:
+        compliance_data = {
+            "id": compliance["id"],
+            "name": compliance["name"],
+            "provider": compliance["provider"],
         }
-    except Exception as e:
-        return {"error": str(e)}
+        compliances_list.append(compliance_data)
+
+    return {"count": len(compliances), "compliances": compliances_list}
 
 
 @hub_mcp_server.tool()
@@ -543,28 +630,21 @@ async def semantic_search_compliances(
             ]
         }
     """
-    try:
-        response = prowler_hub_client.get("/compliance/search", params={"term": term})
-        response.raise_for_status()
-        compliances = response.json()
+    response = prowler_hub_client.get("/compliance/search", params={"term": term})
+    response.raise_for_status()
+    compliances = response.json()
 
-        # Return compliances as a lightweight list
-        compliances_list = []
-        for compliance in compliances:
-            compliance_data = {
-                "id": compliance["id"],
-                "name": compliance["name"],
-                "provider": compliance["provider"],
-            }
-            compliances_list.append(compliance_data)
-
-        return {"count": len(compliances), "compliances": compliances_list}
-    except httpx.HTTPStatusError as e:
-        return {
-            "error": f"HTTP error {e.response.status_code}: {e.response.text}",
+    # Return compliances as a lightweight list
+    compliances_list = []
+    for compliance in compliances:
+        compliance_data = {
+            "id": compliance["id"],
+            "name": compliance["name"],
+            "provider": compliance["provider"],
         }
-    except Exception as e:
-        return {"error": str(e)}
+        compliances_list.append(compliance_data)
+
+    return {"count": len(compliances), "compliances": compliances_list}
 
 
 @hub_mcp_server.tool()
@@ -601,61 +681,58 @@ async def get_compliance_details(
     try:
         response = prowler_hub_client.get(f"/compliance/{compliance_id}")
         response.raise_for_status()
-        compliance = response.json()
-
-        if not compliance:
-            return {"error": f"Compliance '{compliance_id}' not found"}
-
-        # Build response with only non-empty fields to save tokens
-        result = {}
-
-        # Core fields
-        result["id"] = compliance["id"]
-        if compliance.get("name"):
-            result["name"] = compliance["name"]
-        if compliance.get("framework"):
-            result["framework"] = compliance["framework"]
-        if compliance.get("provider"):
-            result["provider"] = compliance["provider"]
-        if compliance.get("version"):
-            result["version"] = compliance["version"]
-        if compliance.get("description"):
-            result["description"] = compliance["description"]
-
-        # Numeric fields
-        if compliance.get("total_checks"):
-            result["total_checks"] = compliance["total_checks"]
-        if compliance.get("total_requirements"):
-            result["total_requirements"] = compliance["total_requirements"]
-
-        # Requirements - filter out empty nested values
-        requirements = compliance.get("requirements", [])
-        if requirements:
-            filtered_requirements = []
-            for req in requirements:
-                filtered_req = {}
-                if req.get("id"):
-                    filtered_req["id"] = req["id"]
-                if req.get("name"):
-                    filtered_req["name"] = req["name"]
-                if req.get("description"):
-                    filtered_req["description"] = req["description"]
-                if req.get("checks"):
-                    filtered_req["checks"] = req["checks"]
-                if filtered_req:
-                    filtered_requirements.append(filtered_req)
-            if filtered_requirements:
-                result["requirements"] = filtered_requirements
-
-        return result
     except httpx.HTTPStatusError as e:
         if e.response.status_code == 404:
-            return {"error": f"Compliance '{compliance_id}' not found"}
-        return {
-            "error": f"HTTP error {e.response.status_code}: {e.response.text}",
-        }
-    except Exception as e:
-        return {"error": str(e)}
+            raise ToolError(_COMPLIANCE_NOT_FOUND.format(compliance_id=compliance_id))
+        raise
+
+    compliance = response.json()
+
+    if not compliance:
+        raise ToolError(_COMPLIANCE_NOT_FOUND.format(compliance_id=compliance_id))
+
+    # Build response with only non-empty fields to save tokens
+    result = {}
+
+    # Core fields
+    result["id"] = compliance["id"]
+    if compliance.get("name"):
+        result["name"] = compliance["name"]
+    if compliance.get("framework"):
+        result["framework"] = compliance["framework"]
+    if compliance.get("provider"):
+        result["provider"] = compliance["provider"]
+    if compliance.get("version"):
+        result["version"] = compliance["version"]
+    if compliance.get("description"):
+        result["description"] = compliance["description"]
+
+    # Numeric fields
+    if compliance.get("total_checks"):
+        result["total_checks"] = compliance["total_checks"]
+    if compliance.get("total_requirements"):
+        result["total_requirements"] = compliance["total_requirements"]
+
+    # Requirements - filter out empty nested values
+    requirements = compliance.get("requirements", [])
+    if requirements:
+        filtered_requirements = []
+        for req in requirements:
+            filtered_req = {}
+            if req.get("id"):
+                filtered_req["id"] = req["id"]
+            if req.get("name"):
+                filtered_req["name"] = req["name"]
+            if req.get("description"):
+                filtered_req["description"] = req["description"]
+            if req.get("checks"):
+                filtered_req["checks"] = req["checks"]
+            if filtered_req:
+                filtered_requirements.append(filtered_req)
+        if filtered_requirements:
+            result["requirements"] = filtered_requirements
+
+    return result
 
 
 # Provider Tools
@@ -684,27 +761,20 @@ async def list_providers() -> dict:
             ]
         }
     """
-    try:
-        response = prowler_hub_client.get("/providers")
-        response.raise_for_status()
-        providers = response.json()
+    response = prowler_hub_client.get("/providers")
+    response.raise_for_status()
+    providers = response.json()
 
-        providers_list = []
-        for provider in providers:
-            providers_list.append(
-                {
-                    "id": provider["id"],
-                    "name": provider.get("name", ""),
-                }
-            )
+    providers_list = []
+    for provider in providers:
+        providers_list.append(
+            {
+                "id": provider["id"],
+                "name": provider.get("name", ""),
+            }
+        )
 
-        return {"count": len(providers), "providers": providers_list}
-    except httpx.HTTPStatusError as e:
-        return {
-            "error": f"HTTP error {e.response.status_code}: {e.response.text}",
-        }
-    except Exception as e:
-        return {"error": str(e)}
+    return {"count": len(providers), "providers": providers_list}
 
 
 @hub_mcp_server.tool()
@@ -728,24 +798,20 @@ async def get_provider_services(
             "services": ["s3", "ec2", "iam", "rds", "lambda", ...]
         }
     """
-    try:
-        response = prowler_hub_client.get("/providers")
-        response.raise_for_status()
-        providers = response.json()
+    response = prowler_hub_client.get("/providers")
+    response.raise_for_status()
+    providers = response.json()
 
-        for provider in providers:
-            if provider["id"] == provider_id:
-                return {
-                    "provider_id": provider["id"],
-                    "provider_name": provider.get("name", ""),
-                    "count": len(provider.get("services", [])),
-                    "services": provider.get("services", []),
-                }
+    for provider in providers:
+        if provider["id"] == provider_id:
+            return {
+                "provider_id": provider["id"],
+                "provider_name": provider.get("name", ""),
+                "count": len(provider.get("services", [])),
+                "services": provider.get("services", []),
+            }
 
-        return {"error": f"Provider '{provider_id}' not found"}
-    except httpx.HTTPStatusError as e:
-        return {
-            "error": f"HTTP error {e.response.status_code}: {e.response.text}",
-        }
-    except Exception as e:
-        return {"error": str(e)}
+    known = ", ".join(sorted(str(provider["id"]) for provider in providers))
+    raise ToolError(
+        f"Prowler has no provider with the ID '{provider_id}'. Available: {known}."
+    )

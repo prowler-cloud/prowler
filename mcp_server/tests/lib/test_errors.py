@@ -227,3 +227,19 @@ async def test_a_tool_specific_message_survives_masking(
 
     assert result.isError is True
     assert "prowler_list_integrations" in result.content[0].text
+
+
+async def test_a_hub_tool_failure_says_which_host_refused_it(
+    mcp_root_server, hub_router
+):
+    """Hub failures arrive as raw httpx errors: host and status relayed, body not."""
+    hub_router.add(
+        "GET", "/api/check", status=503, text="<html>upstream nginx 10.1.2.3</html>"
+    )
+
+    async with Client(mcp_root_server) as client:
+        result = await client.call_tool_mcp("prowler_hub_list_checks", {})
+
+    assert result.isError is True
+    assert "hub.prowler.com" in result.content[0].text
+    assert "10.1.2.3" not in result.content[0].text
