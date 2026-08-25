@@ -29,6 +29,16 @@ FROM python:3.13.14-alpine3.23@sha256:9fdbf2e3e82628351513560b121e2ee6ce31cac212
 
 LABEL maintainer="https://github.com/prowler-cloud"
 
+# CVE-2026-11822 and CVE-2026-11824, both high, are fixed in Alpine 3.23's
+# sqlite 3.53.4-r0. The base image pins python 3.13.14, which has not been
+# rebuilt since that package was published and still ships 3.51.2-r0, so the
+# upgrade is taken here rather than by moving the pin -- the newest published
+# python:3.13-alpine3.23 carries the same vulnerable version.
+# `>=` rather than `=`: Alpine keeps only the newest build of a package in a
+# branch's index, so an exact pin breaks this build the day 3.53.4-r0 is
+# superseded. Drop this once the base image ships 3.53.4-r0 or later.
+RUN apk add --no-cache --upgrade "sqlite-libs>=3.53.4-r0"
+
 # Create non-root user for security
 # Using specific UID/GID for consistency across environments
 RUN addgroup -g 1001 prowler && \
