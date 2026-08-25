@@ -69,11 +69,7 @@ export function RegistryAccessDialog({
       title={mode === "connect" ? "Connect Registry" : "Manage Registry access"}
     >
       {pending ? (
-        <div
-          aria-live="polite"
-          className="flex items-center gap-3"
-          role="status"
-        >
+        <div className="flex items-center gap-3" role="status">
           <Spinner className="motion-reduce:animate-none" />
           <p className="font-medium">Validating your Registry key…</p>
         </div>

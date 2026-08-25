@@ -25,30 +25,21 @@ export function RegistryOnboarding({
   return (
     <section aria-live="polite" className="py-12">
       <Card variant="base" padding="lg" className="mx-auto max-w-2xl">
-        <CardContent className="flex flex-col items-center gap-4 py-8 text-center">
-          <div className="flex flex-col items-center gap-1">
-            <h2 className="text-text-neutral-primary text-xl font-semibold">
-              {title}
-            </h2>
+        <CardContent className="flex flex-col items-center gap-1 py-8 text-center">
+          <h2 className="text-text-neutral-primary text-xl font-semibold">
+            {title}
+          </h2>
+          <p className="text-text-neutral-secondary max-w-md text-sm">{copy}</p>
+          {tenantArtifacts.length > 0 && (
             <p className="text-text-neutral-secondary max-w-md text-sm">
-              {copy}
+              Your {tenantArtifacts.length} preserved tenant artifact
+              {tenantArtifacts.length === 1 ? "" : "s"} will remain available in
+              My artifacts.
             </p>
-            {tenantArtifacts.length > 0 && (
-              <p className="text-text-neutral-secondary max-w-md text-sm">
-                Your {tenantArtifacts.length} preserved tenant artifact
-                {tenantArtifacts.length === 1 ? "" : "s"} will remain available
-                in My artifacts.
-              </p>
-            )}
-          </div>
-          <div className="flex flex-wrap justify-center gap-3">
+          )}
+          <div className="mt-3 flex flex-wrap justify-center gap-3">
             {!validationPending && (
-              <Button
-                onClick={onConnect}
-                ref={connectButtonRef}
-                size="sm"
-                type="button"
-              >
+              <Button onClick={onConnect} ref={connectButtonRef} size="sm">
                 Connect Registry
               </Button>
             )}

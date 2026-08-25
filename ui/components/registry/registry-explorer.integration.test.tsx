@@ -1,17 +1,27 @@
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import type { ReactElement } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { userEvent } from "vitest/browser";
+
+import { render as renderBrowser } from "@/__tests__/render-browser";
+import type { RegistryBootstrapState } from "@/types/registry";
+
+import { RegistryAccessBoundary } from "./registry-access-boundary";
+import { RegistryEligibilityProvider } from "./registry-eligibility-provider";
+import { RegistryExplorer } from "./registry-explorer";
 
 const {
   addRegistryArtifactMock,
   disconnectRegistryCredentialMock,
   refreshRegistryCollectionsMock,
+  refreshRegistryEligibilityMock,
   removeRegistryArtifactMock,
   submitRegistryCredentialMock,
 } = vi.hoisted(() => ({
   addRegistryArtifactMock: vi.fn(),
   disconnectRegistryCredentialMock: vi.fn(),
   refreshRegistryCollectionsMock: vi.fn(),
+  refreshRegistryEligibilityMock: vi.fn(),
   removeRegistryArtifactMock: vi.fn(),
   submitRegistryCredentialMock: vi.fn(),
 }));
@@ -20,14 +30,19 @@ vi.mock("@/actions/registry/registry", () => ({
   addRegistryArtifact: addRegistryArtifactMock,
   disconnectRegistryCredential: disconnectRegistryCredentialMock,
   refreshRegistryCollections: refreshRegistryCollectionsMock,
+  refreshRegistryEligibility: refreshRegistryEligibilityMock,
   removeRegistryArtifact: removeRegistryArtifactMock,
   submitRegistryCredential: submitRegistryCredentialMock,
 }));
 
-import { render } from "@/__tests__/render-browser";
-import type { RegistryBootstrapState } from "@/types/registry";
-
-import { RegistryExplorer } from "./registry-explorer";
+const render = (
+  ui: ReactElement,
+  options?: Parameters<typeof renderBrowser>[1],
+) =>
+  renderBrowser(
+    <RegistryEligibilityProvider>{ui}</RegistryEligibilityProvider>,
+    options,
+  );
 
 const onboardingState: RegistryBootstrapState = {
   status: "onboarding",
@@ -107,17 +122,29 @@ const readyState: RegistryBootstrapState = {
   ],
 };
 
-function AccessInvalidationHarness() {
-  const [isAllowed, setIsAllowed] = useState(true);
+let registryRouter: ReturnType<typeof useRouter>;
+
+function AuthorizedRegistryExplorer({
+  initialState = readyState,
+}: {
+  initialState?: RegistryBootstrapState;
+}) {
+  registryRouter = useRouter();
 
   return (
-    <>
-      <button onClick={() => setIsAllowed(false)} type="button">
-        Invalidate access
-      </button>
-      {isAllowed && <RegistryExplorer initialState={readyState} />}
-    </>
+    <RegistryAccessBoundary initialLeaseDurationMs={30_000}>
+      <RegistryExplorer initialState={initialState} />
+    </RegistryAccessBoundary>
   );
+}
+
+async function expectRegistryAccessRevoked(
+  screen: Awaited<ReturnType<typeof render>>,
+) {
+  await expect
+    .element(screen.getByLabelText("Registry explorer"))
+    .not.toBeInTheDocument();
+  expect(registryRouter.replace).toHaveBeenCalledWith("/profile");
 }
 
 const incompleteState: RegistryBootstrapState = {
@@ -130,8 +157,13 @@ describe("RegistryExplorer", () => {
     addRegistryArtifactMock.mockReset();
     disconnectRegistryCredentialMock.mockReset();
     refreshRegistryCollectionsMock.mockReset();
+    refreshRegistryEligibilityMock.mockReset();
     removeRegistryArtifactMock.mockReset();
     submitRegistryCredentialMock.mockReset();
+    refreshRegistryEligibilityMock.mockResolvedValue({
+      status: "eligible",
+      leaseDurationMs: 30_000,
+    });
   });
 
   describe("when Registry access is not connected", () => {
@@ -385,16 +417,115 @@ describe("RegistryExplorer", () => {
       .toContain("Available artifacts");
   });
 
-  it("ignores a late mutation result after Registry access invalidates", async () => {
+  describe("when a Registry action loses authorization", () => {
+    it("removes Registry and routes to Profile when Add is denied", async () => {
+      // Given
+      addRegistryArtifactMock.mockResolvedValue({ status: "access_denied" });
+      const screen = await render(<AuthorizedRegistryExplorer />);
+      await screen.getByText("Multi-provider").click();
+      await screen
+        .getByLabelText("Registry explorer")
+        .getByText("Cloud guard")
+        .click();
+      await screen.getByRole("button", { name: "Add" }).click();
+
+      // When
+      await screen.getByRole("button", { name: "Add artifact" }).click();
+
+      // Then
+      await expectRegistryAccessRevoked(screen);
+    });
+
+    it("removes Registry and routes to Profile when Remove is denied", async () => {
+      // Given
+      removeRegistryArtifactMock.mockResolvedValue({ status: "access_denied" });
+      const screen = await render(<AuthorizedRegistryExplorer />);
+      await screen
+        .getByLabelText("Registry explorer")
+        .getByText("aws-guard")
+        .click();
+      await screen.getByRole("button", { name: "Remove" }).click();
+
+      // When
+      await screen.getByRole("button", { name: "Confirm Remove" }).click();
+
+      // Then
+      await expectRegistryAccessRevoked(screen);
+    });
+
+    it("removes Registry and routes to Profile when credential submission is denied", async () => {
+      // Given
+      submitRegistryCredentialMock.mockResolvedValue({
+        status: "access_denied",
+      });
+      const screen = await render(
+        <AuthorizedRegistryExplorer initialState={onboardingState} />,
+      );
+      await screen.getByRole("button", { name: "Connect Registry" }).click();
+      await screen.getByLabelText("Registry key").fill("registry-test-key");
+
+      // When
+      await screen
+        .getByRole("button", { name: "Connect", exact: true })
+        .click();
+
+      // Then
+      await expectRegistryAccessRevoked(screen);
+    });
+
+    it("removes Registry and routes to Profile when disconnect is denied", async () => {
+      // Given
+      disconnectRegistryCredentialMock.mockResolvedValue({
+        status: "access_denied",
+      });
+      const screen = await render(<AuthorizedRegistryExplorer />);
+      await screen.getByRole("button", { name: "Manage access" }).click();
+
+      // When
+      await screen.getByRole("button", { name: "Disconnect Registry" }).click();
+
+      // Then
+      await expectRegistryAccessRevoked(screen);
+    });
+
+    it("removes Registry and routes to Profile when post-connect collection refresh is denied", async () => {
+      // Given
+      submitRegistryCredentialMock.mockResolvedValue({
+        status: "connected",
+        credential: readyState.credential,
+      });
+      refreshRegistryCollectionsMock.mockResolvedValue({
+        status: "access_denied",
+      });
+      const screen = await render(
+        <AuthorizedRegistryExplorer initialState={onboardingState} />,
+      );
+      await screen.getByRole("button", { name: "Connect Registry" }).click();
+      await screen.getByLabelText("Registry key").fill("registry-test-key");
+
+      // When
+      await screen
+        .getByRole("button", { name: "Connect", exact: true })
+        .click();
+
+      // Then
+      await expectRegistryAccessRevoked(screen);
+    });
+  });
+
+  it("suppresses a late Add confirmation after the real access boundary revokes Registry", async () => {
     // Given
     let resolveMutation: ((result: unknown) => void) | undefined;
+    refreshRegistryEligibilityMock
+      .mockResolvedValueOnce({ status: "eligible", leaseDurationMs: 30_000 })
+      .mockResolvedValueOnce({ status: "ineligible" });
     addRegistryArtifactMock.mockImplementation(
       () =>
         new Promise((resolve) => {
           resolveMutation = resolve;
         }),
     );
-    const screen = await render(<AccessInvalidationHarness />);
+    const screen = await render(<AuthorizedRegistryExplorer />);
     await screen.getByText("Multi-provider").click();
     await screen
       .getByLabelText("Registry explorer")
@@ -404,7 +535,8 @@ describe("RegistryExplorer", () => {
     await screen.getByRole("button", { name: "Add artifact" }).click();
 
     // When
-    await screen.getByRole("button", { name: "Invalidate access" }).click();
+    window.dispatchEvent(new Event("focus"));
+    await expectRegistryAccessRevoked(screen);
     resolveMutation?.({
       status: "confirmed",
       tenantArtifacts: [
@@ -414,9 +546,7 @@ describe("RegistryExplorer", () => {
     });
 
     // Then
-    await expect
-      .poll(() => document.body.textContent)
-      .not.toContain("Artifact added");
+    expect(document.body.textContent).not.toContain("Artifact added");
   });
 
   it("keeps the rendered catalog after a failed credential replacement", async () => {
@@ -615,10 +745,10 @@ describe("RegistryExplorer", () => {
       .toBeVisible();
   });
 
-  it("announces an Add failure through an alert without animation callbacks", async () => {
+  it("keeps ordinary Add errors local without revoking Registry", async () => {
     // Given
     addRegistryArtifactMock.mockResolvedValue({ status: "error" });
-    const screen = await render(<RegistryExplorer initialState={readyState} />);
+    const screen = await render(<AuthorizedRegistryExplorer />);
     await screen.getByText("Multi-provider").click();
     await screen
       .getByLabelText("Registry explorer")
@@ -696,13 +826,13 @@ describe("RegistryExplorer", () => {
       .toBeVisible();
   });
 
-  it("shows documented Add refusals without moving membership", async () => {
+  it("keeps documented Add refusals local without revoking Registry", async () => {
     // Given
     addRegistryArtifactMock.mockResolvedValue({
       status: "refused",
       message: "This version is not verified and cannot be added.",
     });
-    const screen = await render(<RegistryExplorer initialState={readyState} />);
+    const screen = await render(<AuthorizedRegistryExplorer />);
     await screen.getByText("Multi-provider").click();
     await screen
       .getByLabelText("Registry explorer")
