@@ -7,6 +7,7 @@ import { DetailSidePanel } from "@/components/side-panel/detail-side-panel";
 import { buildFocusedFindingContext } from "@/lib/lighthouse/context/contributions";
 import type { FindingResourceRow } from "@/types";
 import type { UpdateFindingTriageInput } from "@/types/findings-triage";
+import type { JiraIssueLink } from "@/types/integrations";
 
 import { ResourceDetailDrawerContent } from "./resource-detail-drawer-content";
 import type { CheckMeta } from "./use-resource-detail-drawer";
@@ -22,6 +23,7 @@ interface ResourceDetailDrawerProps {
   currentResource: FindingResourceRow | null;
   currentFinding: ResourceDrawerFinding | null;
   otherFindings: ResourceDrawerFinding[];
+  jiraIssue?: JiraIssueLink | null;
   showSyntheticResourceHint?: boolean;
   // Forwarded to DetailSidePanel: false opens the Details tab without
   // selecting it (skill launches keep the AI chat tab in front).
@@ -43,6 +45,7 @@ export function ResourceDetailDrawer({
   currentResource,
   currentFinding,
   otherFindings,
+  jiraIssue = null,
   showSyntheticResourceHint = false,
   selectTabOnOpen,
   onNavigatePrev,
@@ -83,6 +86,7 @@ export function ResourceDetailDrawer({
         currentResource={currentResource}
         currentFinding={currentFinding}
         otherFindings={otherFindings}
+        jiraIssue={jiraIssue}
         showSyntheticResourceHint={showSyntheticResourceHint}
         onNavigatePrev={onNavigatePrev}
         onNavigateNext={onNavigateNext}

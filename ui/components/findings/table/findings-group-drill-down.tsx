@@ -277,6 +277,7 @@ export function FindingsGroupDrillDown({
         currentResource={drawer.currentResource}
         currentFinding={drawer.currentFinding}
         otherFindings={drawer.otherFindings}
+        jiraIssue={drawer.jiraIssue}
         showSyntheticResourceHint={group.resourcesTotal === 0}
         onNavigatePrev={drawer.navigatePrev}
         onNavigateNext={drawer.navigateNext}

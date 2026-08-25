@@ -32,6 +32,13 @@ vi.mock("@/actions/findings", () => ({
   getFindingComplianceFrameworks: getFindingComplianceFrameworksMock,
 }));
 
+vi.mock("@/actions/integrations/jira-issues", () => ({
+  getJiraIssuesForFindings: vi.fn(async () => ({
+    issues: [],
+    unavailable: false,
+  })),
+}));
+
 vi.mock("next/navigation", () => ({
   redirect: vi.fn(),
 }));
@@ -110,6 +117,7 @@ function makeDrawerFinding(
     resourceGroup: "default",
     resourceDetails: null,
     resourceMetadata: null,
+    providerId: "provider-1",
     providerType: "aws",
     providerAlias: "prod",
     providerUid: "123",

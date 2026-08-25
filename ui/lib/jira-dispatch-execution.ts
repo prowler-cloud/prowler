@@ -1,6 +1,7 @@
 import { sendJiraDispatch } from "@/actions/integrations/jira-dispatch";
 import {
   evaluateJiraDispatchTask,
+  getJiraDispatchSkippedCount,
   getJiraDispatchSuccessCount,
 } from "@/lib/jira-dispatch-result";
 import { buildJiraDispatchTaskMeta } from "@/lib/jira-dispatch-task";
@@ -29,6 +30,8 @@ export interface JiraDispatchExecutionResult {
   startedTaskCount: number;
   successfulTaskCount: number;
   successfulIssueCount: number;
+  /** Findings that already had an open Jira issue and were not sent again. */
+  skippedIssueCount: number;
   successMessage?: string;
   warnings: string[];
   errors: string[];
@@ -42,6 +45,7 @@ interface JiraTrackedOutcome {
   warning?: string;
   failedFindingIds?: string[];
   successfulCount?: number;
+  skippedCount?: number;
 }
 
 export function getJiraRetryBatch(
@@ -142,6 +146,7 @@ export async function executeJiraDispatchBatches(
         warning: outcome.warning,
         failedFindingIds: outcome.failedFindingIds,
         successfulCount: getJiraDispatchSuccessCount(trackedTask.result),
+        skippedCount: getJiraDispatchSkippedCount(trackedTask.result),
       } satisfies JiraTrackedOutcome;
     }),
   );
@@ -153,17 +158,28 @@ export async function executeJiraDispatchBatches(
     (count, outcome) => count + (outcome.successfulCount ?? 0),
     0,
   );
+  const skippedIssueCount = successfulOutcomes.reduce(
+    (count, outcome) => count + (outcome.skippedCount ?? 0),
+    0,
+  );
+  const skippedSummary =
+    skippedIssueCount > 0
+      ? ` ${skippedIssueCount} Finding${skippedIssueCount === 1 ? " already has" : "s already have"} an open Jira issue.`
+      : "";
   const successMessage =
     successfulOutcomes.length === 1
       ? successfulOutcomes[0].message
       : successfulOutcomes.length > 1
-        ? `${successfulIssueCount} Jira issues were created or updated successfully.`
+        ? successfulIssueCount > 0
+          ? `${successfulIssueCount} Jira issues were created or updated successfully.${skippedSummary}`
+          : skippedSummary.trim()
         : undefined;
 
   return {
     startedTaskCount: startedTasks.length,
     successfulTaskCount: successfulOutcomes.length,
     successfulIssueCount,
+    skippedIssueCount,
     successMessage,
     warnings: Array.from(
       new Set(

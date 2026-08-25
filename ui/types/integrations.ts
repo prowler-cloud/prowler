@@ -166,6 +166,49 @@ export interface JiraDispatchTaskResult {
   failed_finding_ids?: string[];
   issue_url?: string;
   issue_key?: string;
+  /** Findings that already had an open Jira issue and were not sent again. */
+  skipped_count?: number;
+  skipped?: JiraSkippedIssue[];
+}
+
+export interface JiraSkippedIssue {
+  finding_id: string;
+  issue_key?: string;
+  issue_url?: string;
+  issue_status?: string;
+}
+
+// Jira issues linked to findings (GET /jira-issues)
+export const JIRA_ISSUE_STATUS_CATEGORY = {
+  NEW: "new",
+  INDETERMINATE: "indeterminate",
+  DONE: "done",
+} as const;
+
+export type JiraIssueStatusCategory =
+  (typeof JIRA_ISSUE_STATUS_CATEGORY)[keyof typeof JIRA_ISSUE_STATUS_CATEGORY];
+
+/** The latest Jira issue created for a finding, keyed by finding UID. */
+export interface JiraIssueLink {
+  id: string;
+  findingUid: string;
+  findingId: string;
+  issueKey: string;
+  issueUrl: string | null;
+  projectKey: string;
+  /** Last status name observed in Jira, or null if never synced. */
+  issueStatus: string | null;
+  issueStatusCategory: JiraIssueStatusCategory | null;
+  statusSyncedAt: string | null;
+  insertedAt: string;
+  providerId: string | null;
+  integrationId: string | null;
+}
+
+export interface JiraIssueLinksResult {
+  issues: JiraIssueLink[];
+  /** True when the API has no `/jira-issues` endpoint or could not be reached. */
+  unavailable: boolean;
 }
 
 // Shared AWS credential fields schema

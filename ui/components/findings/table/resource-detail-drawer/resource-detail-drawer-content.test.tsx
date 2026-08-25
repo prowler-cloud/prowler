@@ -551,6 +551,7 @@ import {
   FINDING_TRIAGE_STATUS,
   type FindingTriageSummary,
 } from "@/types/findings-triage";
+import type { JiraIssueLink } from "@/types/integrations";
 
 import { ResourceDetailDrawerContent } from "./resource-detail-drawer-content";
 import type { CheckMeta } from "./use-resource-detail-drawer";
@@ -655,6 +656,7 @@ const mockFinding: ResourceDrawerFinding = {
   resourceGroup: "default",
   resourceDetails: null,
   resourceMetadata: null,
+  providerId: "provider-1",
   providerType: "aws",
   providerAlias: "prod",
   providerUid: "123456789",
@@ -2239,5 +2241,86 @@ describe("ResourceDetailDrawerContent — Metadata tab", () => {
     expect(
       screen.queryByText("No metadata available for this resource."),
     ).not.toBeInTheDocument();
+  });
+});
+
+describe("ResourceDetailDrawerContent — linked Jira issue", () => {
+  const renderWithJiraIssue = (
+    jiraIssue: JiraIssueLink | null,
+  ): ReturnType<typeof render> =>
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentResource={mockResourceRow}
+        currentFinding={mockFinding}
+        otherFindings={[]}
+        jiraIssue={jiraIssue}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+  it("should render the issue key as a link with its last known status", () => {
+    // When
+    renderWithJiraIssue({
+      id: "link-1",
+      findingUid: mockFinding.uid,
+      findingId: mockFinding.id,
+      issueKey: "SEC-42",
+      issueUrl: "https://acme.atlassian.net/browse/SEC-42",
+      projectKey: "SEC",
+      issueStatus: "In Progress",
+      issueStatusCategory: "indeterminate",
+      statusSyncedAt: "2026-08-25T10:00:00Z",
+      insertedAt: "2026-08-25T09:00:00Z",
+      providerId: "provider-1",
+      integrationId: "integration-1",
+    });
+
+    // Then
+    expect(screen.getByText("Jira issue")).toBeInTheDocument();
+    const link = screen.getByRole("link", { name: /SEC-42/ });
+    expect(link).toHaveAttribute(
+      "href",
+      "https://acme.atlassian.net/browse/SEC-42",
+    );
+    expect(link).toHaveAttribute("target", "_blank");
+    expect(screen.getByText("In Progress")).toBeInTheDocument();
+  });
+
+  it("should fall back to the category label and a plain key without a URL", () => {
+    // When
+    renderWithJiraIssue({
+      id: "link-2",
+      findingUid: mockFinding.uid,
+      findingId: mockFinding.id,
+      issueKey: "SEC-7",
+      issueUrl: null,
+      projectKey: "SEC",
+      issueStatus: null,
+      issueStatusCategory: "done",
+      statusSyncedAt: null,
+      insertedAt: "2026-08-25T09:00:00Z",
+      providerId: null,
+      integrationId: null,
+    });
+
+    // Then
+    expect(screen.getByText("SEC-7")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /SEC-7/ })).toBeNull();
+    expect(screen.getByText("Done")).toBeInTheDocument();
+  });
+
+  it("should render nothing about Jira when the finding has no linked issue", () => {
+    // When
+    renderWithJiraIssue(null);
+
+    // Then
+    expect(screen.queryByText("Jira issue")).toBeNull();
   });
 });

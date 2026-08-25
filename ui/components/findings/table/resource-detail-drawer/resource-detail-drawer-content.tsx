@@ -25,6 +25,7 @@ import {
   requestPanelSkillLaunch,
 } from "@/app/(prowler)/lighthouse/_lib/panel-chat-store";
 import { JiraDispatchActionItem } from "@/components/findings/jira-dispatch-action-item";
+import { JiraIssueStatusBadge } from "@/components/findings/jira-issue-status-badge";
 import { MarkdownContainer } from "@/components/findings/markdown-container";
 import { MuteFindingsModal } from "@/components/findings/mute-findings-modal";
 import { getComplianceIcon } from "@/components/icons";
@@ -88,6 +89,7 @@ import type {
   FindingTriageUpdateResult,
   UpdateFindingTriageInput,
 } from "@/types/findings-triage";
+import type { JiraIssueLink } from "@/types/integrations";
 import { JIRA_DISPATCH_TARGET } from "@/types/integrations";
 import {
   SKILL_LAUNCHER_VARIANT,
@@ -295,6 +297,8 @@ interface ResourceDetailDrawerContentProps {
   currentResource?: FindingResourceRow | null;
   currentFinding: ResourceDrawerFinding | null;
   otherFindings: ResourceDrawerFinding[];
+  /** Jira issue linked to the current finding, when one exists. */
+  jiraIssue?: JiraIssueLink | null;
   showSyntheticResourceHint?: boolean;
   onNavigatePrev: () => void;
   onNavigateNext: () => void;
@@ -311,6 +315,7 @@ export function ResourceDetailDrawerContent({
   currentResource = null,
   currentFinding,
   otherFindings,
+  jiraIssue = null,
   showSyntheticResourceHint = false,
   onNavigatePrev,
   onNavigateNext,
@@ -973,6 +978,43 @@ export function ResourceDetailDrawerContent({
                         <Skeleton className="h-5 w-36 rounded" />
                       )}
                     </InfoField>
+                    {jiraIssue && (
+                      <InfoField
+                        label="Jira issue"
+                        variant="compact"
+                        tooltipContent={
+                          jiraIssue.statusSyncedAt
+                            ? "Status as last seen by Prowler; open the issue for the current state."
+                            : undefined
+                        }
+                      >
+                        <div className="flex flex-wrap items-center gap-2">
+                          {jiraIssue.issueUrl ? (
+                            <Button variant="link" size="link-sm" asChild>
+                              <Link
+                                href={jiraIssue.issueUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                prefetch={false}
+                              >
+                                {jiraIssue.issueKey}
+                                <ExternalLink
+                                  className="size-3"
+                                  aria-hidden="true"
+                                />
+                              </Link>
+                            </Button>
+                          ) : (
+                            <CodeSnippet
+                              value={jiraIssue.issueKey}
+                              transparent
+                              className="max-w-full text-sm"
+                            />
+                          )}
+                          <JiraIssueStatusBadge issue={jiraIssue} />
+                        </div>
+                      </InfoField>
+                    )}
                   </div>
                 </Card>
               </>

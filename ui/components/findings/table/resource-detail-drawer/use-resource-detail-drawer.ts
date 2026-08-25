@@ -9,6 +9,7 @@ import {
   getLatestFindingsByResourceUid,
   type ResourceDrawerFinding,
 } from "@/actions/findings";
+import { getJiraIssuesForFindings } from "@/actions/integrations/jira-issues";
 import {
   applyOptimisticTriageSummaryUpdate,
   getOptimisticTriageMutedReason,
@@ -23,6 +24,7 @@ import {
 } from "@/types/compliance-watchlist";
 import { FINDING_STATUS } from "@/types/components";
 import type { UpdateFindingTriageInput } from "@/types/findings-triage";
+import type { JiraIssueLink } from "@/types/integrations";
 
 // Keep fast carousel navigations in a loading state for one short beat so
 // React doesn't batch away the skeleton frame when switching resources.
@@ -96,6 +98,8 @@ interface UseResourceDetailDrawerOptions {
 
 interface UseResourceDetailDrawerReturn {
   isOpen: boolean;
+  /** Jira issue linked to the current finding; null when none (or unknown). */
+  jiraIssue: JiraIssueLink | null;
   isLoading: boolean;
   isNavigating: boolean;
   checkMeta: CheckMeta | null;
@@ -147,6 +151,10 @@ export function useResourceDetailDrawer({
   const otherFindingsCacheRef = useRef<Map<string, ResourceDrawerFinding[]>>(
     new Map(),
   );
+  const jiraIssueCacheRef = useRef<Map<string, JiraIssueLink | null>>(
+    new Map(),
+  );
+  const [jiraIssue, setJiraIssue] = useState<JiraIssueLink | null>(null);
   // State, not a ref: the compliance frameworks land after the panel has
   // already painted, so the strip has to re-render on its own rather than
   // depend on some other setState happening to fire in the same tick.
@@ -200,6 +208,7 @@ export function useResourceDetailDrawer({
   const resetCurrentResourceState = () => {
     setCurrentFinding(null);
     setOtherFindings([]);
+    setJiraIssue(null);
   };
 
   // Abort any in-flight request on unmount to prevent state updates
@@ -292,6 +301,25 @@ export function useResourceDetailDrawer({
       return resolved;
     };
 
+    const fetchJiraIssue = async (finding: ResourceDrawerFinding | null) => {
+      if (!finding?.uid) return null;
+
+      const cached = jiraIssueCacheRef.current.get(findingId);
+      if (cached !== undefined) {
+        return cached;
+      }
+
+      const { issues } = await getJiraIssuesForFindings({
+        findingUids: [finding.uid],
+        ...(finding.providerId ? { providerId: finding.providerId } : {}),
+      });
+      // One integration may have ticketed the finding; show the most recent link
+      const resolved = issues[0] ?? null;
+      jiraIssueCacheRef.current.set(findingId, resolved);
+
+      return resolved;
+    };
+
     setIsLoading(true);
     try {
       const [nextCurrentFinding, nextOtherFindings] = await Promise.all([
@@ -349,6 +377,18 @@ export function useResourceDetailDrawer({
     } catch (_error) {
       // Leaves the strip empty; the panel stays as it is.
     }
+
+    // Same reasoning as the compliance frameworks: supporting detail, fetched
+    // after the panel painted, and never allowed to empty it.
+    try {
+      const linkedIssue = await fetchJiraIssue(
+        currentFindingCacheRef.current.get(findingId) ?? null,
+      );
+      if (controller.signal.aborted) return;
+      setJiraIssue(linkedIssue);
+    } catch (_error) {
+      // Leaves the Jira field out; the panel stays as it is.
+    }
   };
 
   useEffect(() => {
@@ -387,6 +427,7 @@ export function useResourceDetailDrawer({
     if (!resource) return;
     currentFindingCacheRef.current.delete(resource.findingId);
     complianceFrameworksCacheRef.current.delete(resource.findingId);
+    jiraIssueCacheRef.current.delete(resource.findingId);
     otherFindingsCacheRef.current.delete(resource.resourceUid);
     startNavigation();
     resetCurrentResourceState();
@@ -486,6 +527,7 @@ export function useResourceDetailDrawer({
 
   return {
     isOpen,
+    jiraIssue,
     isLoading,
     isNavigating,
     checkMeta,
