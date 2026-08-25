@@ -91,7 +91,9 @@ export interface AlertsFixture {
   /**
    * A failure status for `GET /alerts/slack-channels`, or null to serve it.
    * The two statuses reach the UI by different routes: a `5xx` throws out of
-   * `handleApiResponse`, a `403` comes back as an error payload.
+   * `handleApiResponse`, a `403` comes back as an error payload. A refused read
+   * is also the only route to an empty pool on a connected workspace: served,
+   * the pool of a `connected: true` install always holds its confirmed set.
    */
   channelsReadError: number | null;
   /**
@@ -225,34 +227,6 @@ export const noAuthorizedChannelsAlertsFixture = (
       connected: null,
       channels: [],
     },
-    ...overrides,
-  });
-
-/**
- * A connected workspace whose channels are all still unconfirmed, with a rule
- * that already stores them: the eligible pool is empty while the rule's own
- * channels read back in full. The read model enriches from what is CONFIGURED,
- * the pool offers only what is CONFIRMED — so the empty-pool state and stored
- * channels are not mutually exclusive, whatever an empty pool suggests.
- */
-export const unconfirmedChannelPoolAlertsFixture = (
-  overrides: Partial<AlertsFixture> = {},
-): AlertsFixture =>
-  alertsFixture({
-    slackIntegration: {
-      id: ALERTS_SLACK_INTEGRATION_ID,
-      workspaceName: "Prowler HQ",
-      connected: true,
-      channels: ALERTS_CONFIGURED_CHANNELS.map((channel) => ({
-        ...channel,
-        confirmationSentAt: null,
-      })),
-    },
-    rules: [
-      alertRuleFixture({
-        slackChannelIds: [ALERTS_PUBLIC_CHANNEL.id, ALERTS_PRIVATE_CHANNEL.id],
-      }),
-    ],
     ...overrides,
   });
 
