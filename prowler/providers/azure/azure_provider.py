@@ -1511,6 +1511,9 @@ class AzureProvider(Provider):
                 certificate_data = base64.b64decode(certificate_content, validate=True)
                 validate_certificate_bundle(certificate_data)
             except Exception as e:
+                logger.error(
+                    f"{e.__class__.__name__}[{e.__traceback__.tb_lineno}]: {e}"
+                )
                 raise AzureNotValidCertificateContentError(
                     file=os.path.basename(__file__),
                     message=f"The provided certificate content is not a valid base64-encoded certificate/private-key bundle: {str(e)}",
@@ -1521,6 +1524,9 @@ class AzureProvider(Provider):
                 with open(certificate_path, "rb") as cert_file:
                     validate_certificate_bundle(cert_file.read())
             except Exception as e:
+                logger.error(
+                    f"{e.__class__.__name__}[{e.__traceback__.tb_lineno}]: {e}"
+                )
                 raise AzureNotValidCertificatePathError(
                     file=os.path.basename(__file__),
                     message=f"The provided certificate path does not contain a valid certificate/private-key bundle: {str(e)}",

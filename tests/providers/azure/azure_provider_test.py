@@ -1592,7 +1592,16 @@ class TestAzureProviderCertificateAuth:
                 region_config=self._region_config(),
             )
 
-        assert credentials["certificate_path"] == str(certificate_path)
+        # Assert the full contract, not just certificate_path — a stray
+        # truthy certificate_content or client_secret would route
+        # setup_session to the wrong branch and stay undetected.
+        assert credentials == {
+            "tenant_id": self._TENANT_ID,
+            "client_id": self._CLIENT_ID,
+            "client_secret": None,
+            "certificate_content": None,
+            "certificate_path": str(certificate_path),
+        }
 
     def test_validate_static_credentials_accepts_valid_pkcs12_cert_file(self, tmp_path):
         from cryptography.hazmat.primitives import serialization
@@ -1620,7 +1629,14 @@ class TestAzureProviderCertificateAuth:
                 region_config=self._region_config(),
             )
 
-        assert credentials["certificate_path"] == str(certificate_path)
+        # Same rationale as the PEM test above: assert the full dict.
+        assert credentials == {
+            "tenant_id": self._TENANT_ID,
+            "client_id": self._CLIENT_ID,
+            "client_secret": None,
+            "certificate_content": None,
+            "certificate_path": str(certificate_path),
+        }
 
     def test_setup_session_static_credentials_cert_content_uses_certificate_credential(
         self,
