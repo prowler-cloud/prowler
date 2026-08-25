@@ -195,6 +195,34 @@ describe("RegistryExplorer", () => {
     await expect.element(connectButton).toHaveFocus();
   });
 
+  it("presents the connect dialog with help link and cancel action", async () => {
+    // Given
+    const screen = await render(
+      <RegistryExplorer initialState={onboardingState} />,
+    );
+
+    // When
+    await screen.getByRole("button", { name: "Connect API key" }).click();
+
+    // Then
+    await expect
+      .element(
+        screen.getByRole("heading", { name: "Connect Registry API key" }),
+      )
+      .toBeVisible();
+    await expect
+      .element(screen.getByRole("link", { name: "Where do I find my key?" }))
+      .toBeVisible();
+
+    // When
+    await screen.getByRole("button", { name: "Cancel", exact: true }).click();
+
+    // Then
+    await expect
+      .element(screen.getByLabelText("Registry key"))
+      .not.toBeInTheDocument();
+  });
+
   it("keeps the Connect action visibly separated from the Registry key input", async () => {
     // Given
     const screen = await render(

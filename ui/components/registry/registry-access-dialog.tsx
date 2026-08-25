@@ -54,7 +54,7 @@ export function RegistryAccessDialog({
 
   return (
     <Modal
-      description="Your Registry key is validated asynchronously and is never stored by this browser."
+      description="Your Registry API key links this workspace to the Prowler artifact registry. It is validated asynchronously and never stored by this browser."
       onOpenAutoFocus={(event) => {
         event.preventDefault();
         keyInputRef.current?.focus();
@@ -66,7 +66,11 @@ export function RegistryAccessDialog({
       onOpenChange={onOpenChange}
       open={open}
       size="sm"
-      title={mode === "connect" ? "Connect Registry" : "Manage Registry access"}
+      title={
+        mode === "connect"
+          ? "Connect Registry API key"
+          : "Manage Registry access"
+      }
     >
       {pending ? (
         <div className="flex items-center gap-3" role="status">
@@ -79,17 +83,36 @@ export function RegistryAccessDialog({
           onSubmit={handleSubmit}
           ref={formRef}
         >
-          <label className="flex flex-col gap-2 text-sm" htmlFor="registry-key">
-            <span>Registry key</span>
-            <Input
-              autoComplete="new-password"
-              id="registry-key"
-              name="registry-key"
-              ref={keyInputRef}
-              spellCheck={false}
-              type="password"
-            />
-          </label>
+          <div className="flex flex-col gap-2">
+            <label
+              className="flex flex-col gap-2 text-sm"
+              htmlFor="registry-key"
+            >
+              <span>Registry key</span>
+              <Input
+                autoComplete="new-password"
+                id="registry-key"
+                name="registry-key"
+                ref={keyInputRef}
+                spellCheck={false}
+                type="password"
+              />
+            </label>
+            <Button
+              asChild
+              className="self-start"
+              size="link-sm"
+              variant="link"
+            >
+              <a
+                href="https://registry.prowler.com"
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                Where do I find my key?
+              </a>
+            </Button>
+          </div>
           <DialogFooter>
             {mode === "manage" && (
               <Button
@@ -100,6 +123,13 @@ export function RegistryAccessDialog({
                 Disconnect Registry
               </Button>
             )}
+            <Button
+              onClick={() => onOpenChange(false)}
+              type="button"
+              variant="ghost"
+            >
+              Cancel
+            </Button>
             <Button type="submit">{actionLabel}</Button>
           </DialogFooter>
         </form>
