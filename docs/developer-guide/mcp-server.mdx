@@ -398,13 +398,14 @@ from prowler_mcp_server.lib.errors import InvalidArgument
 
 # 1. An argument this server rejected before any request went out. The message
 #    is repeated to the agent verbatim, so write it for one to read.
-if page_size > 1000:
+if not 1 <= page_size <= 1000:
     raise InvalidArgument("page_size must be between 1 and 1000.")
 
 # 2. A request the API answered or never answered: let it propagate untouched.
 #    `ProwlerAPIError` and `ProwlerAPIUnreachable` are what the classifier keys
 #    on, and the second one is what stops a retry from duplicating a write.
 response = await self.api_client.get(f"/api/v1/items/{item_id}")
+data = response["data"]
 
 # 3. A sentence the classifier cannot know -- a resource name, a precondition,
 #    the next tool to call. NOTE the absent `from` clause: it is what marks the

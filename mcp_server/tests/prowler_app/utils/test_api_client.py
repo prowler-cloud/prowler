@@ -7,12 +7,18 @@ query encoding and header assembly stay covered.
 
 import httpx
 import pytest
+from fastmcp.exceptions import ToolError
 
 from prowler_mcp_server.prowler_app.utils.api_client import (
     ProwlerAPIError,
     ProwlerAPIUnreachable,
 )
-from tests.helpers.jsonapi import jsonapi_collection, jsonapi_error, jsonapi_resource
+from tests.helpers.jsonapi import (
+    jsonapi_collection,
+    jsonapi_error,
+    jsonapi_resource,
+    task_document,
+)
 from tests.helpers.tokens import FAKE_API_KEY
 
 
@@ -98,6 +104,27 @@ async def test_a_request_that_got_no_answer_is_not_an_api_error(
         await mock_api_client.get("/findings")
 
     assert not isinstance(raised.value, ProwlerAPIError)
+
+
+async def test_a_failed_task_does_not_relay_its_own_error_text(
+    mock_api_client, mock_router
+):
+    """A failed task's error is an upstream body, so polling must not repeat it."""
+    mock_router.add(
+        "GET",
+        "/api/v1/tasks/t1",
+        json=task_document(
+            "t1",
+            "failed",
+            error="Traceback: connection to secret-internal-host:5432 refused",
+        ),
+    )
+
+    with pytest.raises(ToolError) as raised:
+        await mock_api_client.poll_task_until_complete(task_id="t1", timeout=5)
+
+    assert "secret-internal-host" not in str(raised.value)
+    assert "t1" in str(raised.value)
 
 
 def test_build_filter_params_normalises_types_for_the_api(mock_api_client):

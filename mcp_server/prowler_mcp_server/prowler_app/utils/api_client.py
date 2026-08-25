@@ -323,8 +323,12 @@ class ProwlerAPIClient(metaclass=SingletonMeta):
                     logger.info(f"Task {task_id} completed successfully")
                     return response
                 elif state == "failed":
-                    error_msg = task_attrs.get("error", "Unknown error")
-                    raise ToolError(f"Task {task_id} failed: {error_msg}")
+                    # The task's own failure text is an upstream body: a celery
+                    # traceback, a provider message. Log it, never relay it.
+                    logger.error(
+                        f"Task {task_id} failed: {task_attrs.get('error', 'no error reported')}"
+                    )
+                    raise ToolError(f"Task {task_id} failed.")
                 elif state == "cancelled":
                     raise ToolError(f"Task {task_id} was cancelled")
 
