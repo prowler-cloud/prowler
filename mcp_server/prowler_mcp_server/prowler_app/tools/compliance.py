@@ -6,8 +6,10 @@ across all cloud providers.
 
 from typing import Any
 
+from fastmcp.exceptions import ToolError
 from pydantic import Field
 
+from prowler_mcp_server.lib.errors import InvalidArgument
 from prowler_mcp_server.prowler_app.models.compliance import (
     ComplianceFrameworksListResponse,
     ComplianceRequirementAttributesListResponse,
@@ -34,7 +36,7 @@ class ComplianceTools(BaseTool):
             The scan_id of the latest completed scan for the provider.
 
         Raises:
-            ValueError: If no completed scans are found for the provider.
+            ToolError: If no completed scans are found for the provider
         """
         scan_params = {
             "filter[provider]": provider_id,
@@ -48,7 +50,7 @@ class ComplianceTools(BaseTool):
 
         scans_data = scans_response.get("data", [])
         if not scans_data:
-            raise ValueError(
+            raise ToolError(
                 f"No completed scans found for provider {provider_id}. "
                 "Run a scan first using prowler_trigger_scan."
             )
@@ -93,18 +95,15 @@ class ComplianceTools(BaseTool):
         2. Use prowler_get_compliance_framework_state_details with a specific compliance_id to see which requirements failed
         """
         if not scan_id and not provider_id:
-            return {
-                "error": "Either scan_id or provider_id must be provided. Use prowler_search_providers to find provider IDs or prowler_list_scans to find scan IDs."
-            }
+            raise InvalidArgument(
+                "Either scan_id or provider_id must be provided. Use prowler_search_providers to find provider IDs or prowler_list_scans to find scan IDs."
+            )
         elif scan_id and provider_id:
-            return {
-                "error": "Provide either scan_id or provider_id, not both. To get compliance data for a specific scan, use scan_id. To get data for the latest scan of a provider, use provider_id."
-            }
+            raise InvalidArgument(
+                "Provide either scan_id or provider_id, not both. To get compliance data for a specific scan, use scan_id. To get data for the latest scan of a provider, use provider_id."
+            )
         elif not scan_id and provider_id:
-            try:
-                scan_id = await self._get_latest_scan_id_for_provider(provider_id)
-            except ValueError as e:
-                return {"error": str(e)}
+            scan_id = await self._get_latest_scan_id_for_provider(provider_id)
 
         params: dict[str, Any] = {"filter[scan_id]": scan_id}
 
@@ -295,19 +294,14 @@ class ComplianceTools(BaseTool):
         """
         # Validate that either scan_id or provider_id is provided
         if not scan_id and not provider_id:
-            return {
-                "error": "Either scan_id or provider_id must be provided. Use prowler_search_providers to find provider IDs or prowler_list_scans to find scan IDs."
-            }
+            raise InvalidArgument(
+                "Either scan_id or provider_id must be provided. Use prowler_search_providers to find provider IDs or prowler_list_scans to find scan IDs."
+            )
 
         # Resolve provider_id to latest scan_id if needed
         resolved_scan_id = scan_id
         if not scan_id and provider_id:
-            try:
-                resolved_scan_id = await self._get_latest_scan_id_for_provider(
-                    provider_id
-                )
-            except ValueError as e:
-                return {"error": str(e)}
+            resolved_scan_id = await self._get_latest_scan_id_for_provider(provider_id)
 
         # Build params for requirements endpoint
         params: dict[str, Any] = {

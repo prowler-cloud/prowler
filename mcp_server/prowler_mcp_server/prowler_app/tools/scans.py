@@ -5,6 +5,7 @@ This module provides tools for managing and monitoring Prowler security scans.
 
 from typing import Any, Literal
 
+from fastmcp.exceptions import ToolError
 from pydantic import Field
 
 from prowler_mcp_server.prowler_app.models.scans import (
@@ -222,7 +223,14 @@ class ScansTools(BaseTool):
             )
 
             if not scan_id:
-                raise Exception("No scan_id returned from scan creation")
+                # The scan may well have been queued, so this must not read as
+                # "nothing happened" and invite a duplicate run.
+                raise ToolError(
+                    "Prowler accepted the scan but did not return its ID, so it "
+                    "cannot be looked up. Use prowler_list_scans for this provider "
+                    "to see whether a scan is already running before triggering "
+                    "another one."
+                )
 
             self.logger.info(f"Scan created successfully: {scan_id}")
             scan_response = await self.api_client.get(f"/scans/{scan_id}")

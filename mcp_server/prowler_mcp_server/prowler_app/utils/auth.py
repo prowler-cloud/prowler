@@ -6,6 +6,7 @@ from datetime import datetime
 from fastmcp.server.dependencies import get_http_headers
 
 from prowler_mcp_server import __version__
+from prowler_mcp_server.lib.errors import InvalidArgument
 from prowler_mcp_server.lib.logger import logger
 
 
@@ -31,10 +32,12 @@ class ProwlerAppAuth:
             )
 
             if not self.api_key:
-                raise ValueError("PROWLER_API_KEY environment variable is required")
+                raise InvalidArgument(
+                    "PROWLER_API_KEY environment variable is required"
+                )
 
             if not self.api_key.startswith("pk_"):
-                raise ValueError("Prowler API key format is incorrect")
+                raise InvalidArgument("Prowler API key format is incorrect")
 
     def _parse_jwt(self, token: str) -> dict | None:
         """Parse JWT token and return payload
@@ -76,13 +79,13 @@ class ProwlerAppAuth:
             authorization_header = headers.get("authorization", None)
 
             if not authorization_header:
-                raise ValueError("No authorization header provided")
+                raise InvalidArgument("No authorization header provided")
 
             # Extract token from Bearer header
             if authorization_header.startswith("Bearer "):
                 token = authorization_header.replace("Bearer ", "")
             else:
-                raise ValueError(
+                raise InvalidArgument(
                     "Invalid authorization header format. Expected 'Bearer <token>'"
                 )
 
@@ -94,17 +97,17 @@ class ProwlerAppAuth:
                 # JWT token - validate and check expiration
                 payload = self._parse_jwt(token)
                 if not payload:
-                    raise ValueError("Invalid JWT token format")
+                    raise InvalidArgument("Invalid JWT token format")
 
                 # Check if token is expired
                 now = int(datetime.now().timestamp())
                 exp = payload.get("exp", 0)
                 if exp <= now:
-                    raise ValueError("Token has expired")
+                    raise InvalidArgument("Token has expired")
 
                 return token
         else:
-            raise ValueError(f"Invalid mode: {self.mode}")
+            raise InvalidArgument(f"Invalid mode: {self.mode}")
 
     async def get_valid_token(self) -> str:
         """Get a valid token (API key or JWT token)."""

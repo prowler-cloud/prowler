@@ -76,39 +76,35 @@ class AttackPathsTools(BaseTool):
         2. Use prowler_list_attack_paths_queries to see available queries for a scan
         3. Use prowler_run_attack_paths_query to execute analysis
         """
-        try:
-            # Validate pagination
-            self.api_client.validate_page_size(page_size)
+        # Validate pagination
+        self.api_client.validate_page_size(page_size)
 
-            # Build query parameters
-            params: dict[str, Any] = {
-                "page[size]": page_size,
-                "page[number]": page_number,
-            }
+        # Build query parameters
+        params: dict[str, Any] = {
+            "page[size]": page_size,
+            "page[number]": page_number,
+        }
 
-            # Apply provider filters
-            if provider_id:
-                params["filter[provider__in]"] = provider_id
-            if provider_type:
-                params["filter[provider_type__in]"] = provider_type
+        # Apply provider filters
+        if provider_id:
+            params["filter[provider__in]"] = provider_id
+        if provider_type:
+            params["filter[provider_type__in]"] = provider_type
 
-            # Apply state filter
-            if state:
-                params["filter[state__in]"] = state
+        # Apply state filter
+        if state:
+            params["filter[state__in]"] = state
 
-            clean_params = self.api_client.build_filter_params(params)
+        clean_params = self.api_client.build_filter_params(params)
 
-            api_response = await self.api_client.get(
-                "/attack-paths-scans", params=clean_params
-            )
-            simplified_response = AttackPathScansListResponse.from_api_response(
-                api_response
-            )
+        api_response = await self.api_client.get(
+            "/attack-paths-scans", params=clean_params
+        )
+        simplified_response = AttackPathScansListResponse.from_api_response(
+            api_response
+        )
 
-            return simplified_response.model_dump()
-        except Exception as e:
-            self.logger.error(f"Failed to list attack paths scans: {e}")
-            return {"error": f"Failed to list attack paths scans: {str(e)}"}
+        return simplified_response.model_dump()
 
     async def list_attack_paths_queries(
         self,
@@ -137,20 +133,14 @@ class AttackPathsTools(BaseTool):
         2. Use this tool to discover available queries
         3. Use prowler_run_attack_paths_query with query_id and any required parameters
         """
-        try:
-            api_response = await self.api_client.get(
-                f"/attack-paths-scans/{scan_id}/queries"
-            )
+        api_response = await self.api_client.get(
+            f"/attack-paths-scans/{scan_id}/queries"
+        )
 
-            return [
-                AttackPathQuery.from_api_response(query).model_dump()
-                for query in api_response.get("data", [])
-            ]
-        except Exception as e:
-            self.logger.error(
-                f"Failed to list attack paths queries for scan {scan_id}: {e}"
-            )
-            return [{"error": f"Failed to list attack paths queries: {str(e)}"}]
+        return [
+            AttackPathQuery.from_api_response(query).model_dump()
+            for query in api_response.get("data", [])
+        ]
 
     async def run_attack_paths_query(
         self,
@@ -198,35 +188,29 @@ class AttackPathsTools(BaseTool):
         3. Execute this tool with appropriate parameters
         4. Analyze the returned graph for security insights
         """
-        try:
-            # Build the request payload following JSON:API format
-            request_data: dict[str, Any] = {
-                "data": {
-                    "type": "attack-paths-query-run-requests",
-                    "attributes": {
-                        "id": query_id,
-                    },
+        # Build the request payload following JSON:API format
+        request_data: dict[str, Any] = {
+            "data": {
+                "type": "attack-paths-query-run-requests",
+                "attributes": {
+                    "id": query_id,
                 },
-            }
+            },
+        }
 
-            # Add parameters if provided
-            if parameters:
-                request_data["data"]["attributes"]["parameters"] = parameters
+        # Add parameters if provided
+        if parameters:
+            request_data["data"]["attributes"]["parameters"] = parameters
 
-            api_response = await self.api_client.post(
-                f"/attack-paths-scans/{scan_id}/queries/run",
-                json_data=request_data,
-            )
+        api_response = await self.api_client.post(
+            f"/attack-paths-scans/{scan_id}/queries/run",
+            json_data=request_data,
+        )
 
-            # Parse the response
-            query_result = AttackPathQueryResult.from_api_response(api_response)
+        # Parse the response
+        query_result = AttackPathQueryResult.from_api_response(api_response)
 
-            return query_result.model_dump()
-        except Exception as e:
-            self.logger.error(
-                f"Failed to run attack paths query '{query_id}' on scan {scan_id}: {e}"
-            )
-            return {"error": f"Failed to run attack paths query '{query_id}': {str(e)}"}
+        return query_result.model_dump()
 
     async def get_attack_paths_cartography_schema(
         self,
@@ -258,22 +242,12 @@ class AttackPathsTools(BaseTool):
         3. Use the schema to craft custom openCypher queries
         4. Execute queries with prowler_run_attack_paths_query
         """
-        try:
-            api_response = await self.api_client.get(
-                f"/attack-paths-scans/{scan_id}/schema"
-            )
+        api_response = await self.api_client.get(
+            f"/attack-paths-scans/{scan_id}/schema"
+        )
 
-            schema = AttackPathCartographySchema.from_api_response(api_response)
+        schema = AttackPathCartographySchema.from_api_response(api_response)
 
-            schema_content = await self.api_client.fetch_external_url(
-                schema.raw_schema_url
-            )
+        schema_content = await self.api_client.fetch_external_url(schema.raw_schema_url)
 
-            return schema.model_copy(
-                update={"schema_content": schema_content}
-            ).model_dump()
-        except Exception as e:
-            self.logger.error(
-                f"Failed to get cartography schema for scan {scan_id}: {e}"
-            )
-            return {"error": f"Failed to get cartography schema: {str(e)}"}
+        return schema.model_copy(update={"schema_content": schema_content}).model_dump()

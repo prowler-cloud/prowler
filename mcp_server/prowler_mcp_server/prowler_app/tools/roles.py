@@ -11,6 +11,7 @@ adding to it.
 
 from typing import Any
 
+from fastmcp.exceptions import ToolError
 from pydantic import Field
 
 from prowler_mcp_server.prowler_app.models.roles import (
@@ -167,10 +168,13 @@ class RolesTools(BaseTool):
         try:
             await self.api_client.get(f"/roles/{role_id}")
         except Exception as e:
-            raise ValueError(
+            # No `from` clause: this says what state the user was left in, which
+            # the shared classifier cannot know, and a cause would let it replace
+            # this message with its own.
+            raise ToolError(
                 f"Role {role_id} could not be read ({e}), so user {user_id} was left "
                 f"unchanged. Use `prowler_list_roles` to find a valid role ID."
-            ) from e
+            )
 
         # PATCH replaces the user's whole role set with this single role, the
         # same call the Prowler UI makes when changing a user's role.

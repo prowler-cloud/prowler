@@ -312,17 +312,16 @@ async def test_creating_a_jira_integration_rejects_an_empty_domain(
 ):
     """A domain that normalizes to nothing is caught before the round trip."""
     async with Client(mcp_root_server) as client:
-        result = await client.call_tool(
-            "prowler_create_jira_integration",
-            {
-                "domain": "https://",
-                "user_mail": "security@acme.com",
-                "api_token": "fake-atlassian-token-for-testing",
-            },
-        )
+        with pytest.raises(Exception, match="Invalid Jira domain"):
+            await client.call_tool(
+                "prowler_create_jira_integration",
+                {
+                    "domain": "https://",
+                    "user_mail": "security@acme.com",
+                    "api_token": "fake-atlassian-token-for-testing",
+                },
+            )
 
-    assert result.data["status"] == "failed"
-    assert "Invalid Jira domain" in result.data["error"]
     assert mock_router.requests == []
 
 
@@ -334,14 +333,10 @@ async def test_creating_a_jira_integration_rejects_an_empty_domain(
     ],
     ids=["security-hub", "amazon-s3"],
 )
-async def test_a_rejected_creation_is_reported_rather_than_raised(
+async def test_a_rejected_creation_fails_with_the_api_reason(
     mcp_root_server, mock_api_client, mock_router, tool, arguments
 ):
-    """Write tools answer with an error object so the agent can act on it.
-
-    A raised exception reaches the model as a tool failure with no detail, and
-    the API's message is exactly what tells it what to do next.
-    """
+    """A refused creation is a tool error, and it still carries the API's reason."""
     mock_router.add(
         "POST",
         INTEGRATIONS,
@@ -350,10 +345,8 @@ async def test_a_rejected_creation_is_reported_rather_than_raised(
     )
 
     async with Client(mcp_root_server) as client:
-        result = await client.call_tool(tool, arguments)
-
-    assert result.data["status"] == "failed"
-    assert "already has this integration" in result.data["error"]
+        with pytest.raises(Exception, match="already has this integration"):
+            await client.call_tool(tool, arguments)
 
 
 async def test_a_creation_with_no_id_back_warns_before_a_blind_retry(
@@ -367,12 +360,11 @@ async def test_a_creation_with_no_id_back_warns_before_a_blind_retry(
     mock_router.add("POST", INTEGRATIONS, json={"data": {}})
 
     async with Client(mcp_root_server) as client:
-        result = await client.call_tool(
-            "prowler_create_amazon_s3_integration", {"bucket_name": "my-reports"}
-        )
+        with pytest.raises(Exception, match="did not return its ID"):
+            await client.call_tool(
+                "prowler_create_amazon_s3_integration", {"bucket_name": "my-reports"}
+            )
 
-    assert result.data["status"] == "failed"
-    assert "did not return its ID" in result.data["error"]
     assert mock_router.paths() == [f"POST {INTEGRATIONS}"]
 
 
@@ -395,12 +387,10 @@ async def test_a_creation_whose_read_back_fails_still_hands_over_the_id(
     )
 
     async with Client(mcp_root_server) as client:
-        result = await client.call_tool(
-            "prowler_create_amazon_s3_integration", {"bucket_name": "my-reports"}
-        )
-
-    assert result.data["status"] == "failed"
-    assert "Integration i1 was created" in result.data["error"]
+        with pytest.raises(Exception, match="Integration i1 was created"):
+            await client.call_tool(
+                "prowler_create_amazon_s3_integration", {"bucket_name": "my-reports"}
+            )
 
 
 async def test_a_connection_check_that_cannot_run_is_not_reported_as_a_failure(
@@ -542,13 +532,12 @@ async def test_a_configuration_that_is_not_an_object_is_rejected_before_the_writ
     stub_integration(mock_router, S3_ATTRIBUTES)
 
     async with Client(mcp_root_server) as client:
-        result = await client.call_tool(
-            "prowler_update_integration",
-            {"integration_id": "i1", "configuration": configuration},
-        )
+        with pytest.raises(Exception, match=message):
+            await client.call_tool(
+                "prowler_update_integration",
+                {"integration_id": "i1", "configuration": configuration},
+            )
 
-    assert result.data["status"] == "failed"
-    assert message in result.data["error"]
     assert f"PATCH {INTEGRATION}" not in mock_router.paths()
 
 
@@ -643,13 +632,12 @@ async def test_updating_a_jira_configuration_is_refused(
     stub_integration(mock_router, JIRA_ATTRIBUTES)
 
     async with Client(mcp_root_server) as client:
-        result = await client.call_tool(
-            "prowler_update_integration",
-            {"integration_id": "i1", "configuration": {"domain": "other"}},
-        )
+        with pytest.raises(Exception, match="do not accept a configuration"):
+            await client.call_tool(
+                "prowler_update_integration",
+                {"integration_id": "i1", "configuration": {"domain": "other"}},
+            )
 
-    assert result.data["status"] == "failed"
-    assert "do not accept a configuration" in result.data["error"]
     assert f"PATCH {INTEGRATION}" not in mock_router.paths()
 
 
@@ -660,12 +648,12 @@ async def test_attaching_a_jira_integration_to_a_provider_is_refused(
     stub_integration(mock_router, JIRA_ATTRIBUTES)
 
     async with Client(mcp_root_server) as client:
-        result = await client.call_tool(
-            "prowler_update_integration",
-            {"integration_id": "i1", "provider_ids": ["p1"]},
-        )
+        with pytest.raises(Exception, match="tenant-wide"):
+            await client.call_tool(
+                "prowler_update_integration",
+                {"integration_id": "i1", "provider_ids": ["p1"]},
+            )
 
-    assert "tenant-wide" in result.data["error"]
     assert f"PATCH {INTEGRATION}" not in mock_router.paths()
 
 
@@ -683,12 +671,12 @@ async def test_security_hub_must_keep_exactly_one_provider(
     stub_integration(mock_router, SECURITY_HUB_ATTRIBUTES, provider_ids=("p1",))
 
     async with Client(mcp_root_server) as client:
-        result = await client.call_tool(
-            "prowler_update_integration",
-            {"integration_id": "i1", "provider_ids": provider_ids},
-        )
+        with pytest.raises(Exception, match="exactly one AWS provider"):
+            await client.call_tool(
+                "prowler_update_integration",
+                {"integration_id": "i1", "provider_ids": provider_ids},
+            )
 
-    assert "exactly one AWS provider" in result.data["error"]
     assert f"PATCH {INTEGRATION}" not in mock_router.paths()
 
 
@@ -708,12 +696,12 @@ async def test_partial_jira_credentials_are_refused_to_protect_the_stored_ones(
     stub_integration(mock_router, JIRA_ATTRIBUTES)
 
     async with Client(mcp_root_server) as client:
-        result = await client.call_tool(
-            "prowler_update_integration",
-            {"integration_id": "i1", "credentials": credentials},
-        )
+        with pytest.raises(Exception, match="replaced as a whole"):
+            await client.call_tool(
+                "prowler_update_integration",
+                {"integration_id": "i1", "credentials": credentials},
+            )
 
-    assert "replaced as a whole" in result.data["error"]
     assert f"PATCH {INTEGRATION}" not in mock_router.paths()
 
 
@@ -751,14 +739,10 @@ async def test_replacing_jira_credentials_normalizes_the_domain(
 # ------------------------------------------------- delete and connection tools
 
 
-async def test_deleting_an_integration_reports_the_outcome_either_way(
+async def test_deleting_an_integration_confirms_it_happened(
     mcp_root_server, mock_api_client, mock_router
 ):
-    """Deletion is irreversible, so both outcomes are stated explicitly.
-
-    A bare exception would leave the agent unsure whether the credentials are
-    gone, and a retry of a delete that actually succeeded reads as a new failure.
-    """
+    """Deletion is irreversible, so a success says so rather than staying silent."""
     mock_router.add("DELETE", INTEGRATION, status=204)
 
     async with Client(mcp_root_server) as client:
@@ -769,21 +753,19 @@ async def test_deleting_an_integration_reports_the_outcome_either_way(
     assert result.data["deleted"] is True
 
 
-async def test_a_failed_deletion_says_it_did_not_happen(
+async def test_a_refused_deletion_fails_and_says_the_role_is_the_problem(
     mcp_root_server, mock_api_client, mock_router
 ):
-    """`deleted: false` is the part the agent must not have to infer."""
+    """A 403 is the same answer for every tool, so `lib.errors` writes it."""
     mock_router.add(
         "DELETE", INTEGRATION, status=403, json=jsonapi_error(403, "Permission denied.")
     )
 
     async with Client(mcp_root_server) as client:
-        result = await client.call_tool(
-            "prowler_delete_integration", {"integration_id": "i1"}
-        )
-
-    assert result.data["deleted"] is False
-    assert "Permission denied." in result.data["message"]
+        with pytest.raises(Exception, match="prowler_get_current_user"):
+            await client.call_tool(
+                "prowler_delete_integration", {"integration_id": "i1"}
+            )
 
 
 async def test_checking_a_connection_surfaces_why_it_failed(

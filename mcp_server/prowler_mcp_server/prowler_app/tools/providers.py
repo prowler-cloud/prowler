@@ -6,8 +6,10 @@ including searching, connecting, and deleting providers.
 
 from typing import Any
 
+from fastmcp.exceptions import ToolError
 from pydantic import Field
 
+from prowler_mcp_server.lib.errors import InvalidArgument
 from prowler_mcp_server.prowler_app.models.providers import (
     ProviderConnectionStatus,
     ProvidersListResponse,
@@ -95,7 +97,7 @@ class ProvidersTools(BaseTool):
                 elif connected.lower() == "false":
                     params["filter[connected]"] = False
                 else:
-                    raise ValueError(
+                    raise InvalidArgument(
                         f"Invalid connected value: {connected}. Valid values are True, False, 'true', 'false' or None."
                     )
 
@@ -357,7 +359,7 @@ class ProvidersTools(BaseTool):
             return prowler_provider_id
         else:
             # Multiple providers with the same UID is a data integrity issue
-            raise Exception(
+            raise ToolError(
                 f"Data integrity error: Found {len(providers)} providers with UID '{provider_uid}'. "
                 f"Each provider UID should be unique. Please contact support or manually clean up duplicate providers."
             )
@@ -392,7 +394,11 @@ class ProvidersTools(BaseTool):
 
         provider_id = await self._check_provider_exists(provider_uid)
         if provider_id is None:
-            raise Exception(f"Provider {provider_uid} creation failed")
+            raise ToolError(
+                f"Prowler accepted the creation of provider {provider_uid} but the "
+                "provider cannot be found afterwards. Use prowler_search_providers to "
+                "check whether it exists before creating it again."
+            )
         return provider_id
 
     async def _update_provider_alias(
@@ -418,7 +424,10 @@ class ProvidersTools(BaseTool):
             f"/providers/{prowler_provider_id}", json_data=update_body
         )
         if result.get("data", {}).get("attributes", {}).get("alias") != alias:
-            raise Exception(f"Provider {prowler_provider_id} alias update failed")
+            raise ToolError(
+                f"Provider {prowler_provider_id} exists, but its alias was not updated. "
+                "Use prowler_search_providers to read its current alias."
+            )
 
     def _determine_secret_type(self, credentials: dict[str, Any]) -> str:
         """Determine the secret type from credentials structure.

@@ -9,8 +9,10 @@ This module provides tools for managing where Prowler sends its results, includi
 import json
 from typing import Any
 
+from fastmcp.exceptions import ToolError
 from pydantic import Field
 
+from prowler_mcp_server.lib.errors import InvalidArgument
 from prowler_mcp_server.prowler_app.models.integrations import (
     DetailedIntegration,
     IntegrationConnectionStatus,
@@ -244,30 +246,26 @@ class IntegrationsTools(BaseTool):
         """
         self.logger.info(f"Creating Amazon S3 integration for bucket {bucket_name}...")
 
-        try:
-            credentials = self._build_aws_credentials(
-                role_arn=role_arn,
-                external_id=external_id,
-                role_session_name=role_session_name,
-                session_duration=session_duration,
-                aws_access_key_id=aws_access_key_id,
-                aws_secret_access_key=aws_secret_access_key,
-                aws_session_token=aws_session_token,
-            )
+        credentials = self._build_aws_credentials(
+            role_arn=role_arn,
+            external_id=external_id,
+            role_session_name=role_session_name,
+            session_duration=session_duration,
+            aws_access_key_id=aws_access_key_id,
+            aws_secret_access_key=aws_secret_access_key,
+            aws_session_token=aws_session_token,
+        )
 
-            return await self._create_integration(
-                integration_type="amazon_s3",
-                configuration={
-                    "bucket_name": bucket_name,
-                    "output_directory": output_directory,
-                },
-                credentials=credentials,
-                provider_ids=provider_ids,
-                enabled=enabled,
-            )
-        except Exception as e:
-            self.logger.error(f"Amazon S3 integration creation failed: {e}")
-            return {"error": str(e), "status": "failed"}
+        return await self._create_integration(
+            integration_type="amazon_s3",
+            configuration={
+                "bucket_name": bucket_name,
+                "output_directory": output_directory,
+            },
+            credentials=credentials,
+            provider_ids=provider_ids,
+            enabled=enabled,
+        )
 
     async def create_aws_security_hub_integration(
         self,
@@ -344,30 +342,26 @@ class IntegrationsTools(BaseTool):
             f"Creating AWS Security Hub integration for provider {provider_id}..."
         )
 
-        try:
-            credentials = self._build_aws_credentials(
-                role_arn=role_arn,
-                external_id=external_id,
-                role_session_name=role_session_name,
-                session_duration=session_duration,
-                aws_access_key_id=aws_access_key_id,
-                aws_secret_access_key=aws_secret_access_key,
-                aws_session_token=aws_session_token,
-            )
+        credentials = self._build_aws_credentials(
+            role_arn=role_arn,
+            external_id=external_id,
+            role_session_name=role_session_name,
+            session_duration=session_duration,
+            aws_access_key_id=aws_access_key_id,
+            aws_secret_access_key=aws_secret_access_key,
+            aws_session_token=aws_session_token,
+        )
 
-            return await self._create_integration(
-                integration_type="aws_security_hub",
-                configuration={
-                    "send_only_fails": send_only_fails,
-                    "archive_previous_findings": archive_previous_findings,
-                },
-                credentials=credentials,
-                provider_ids=[provider_id],
-                enabled=enabled,
-            )
-        except Exception as e:
-            self.logger.error(f"AWS Security Hub integration creation failed: {e}")
-            return {"error": str(e), "status": "failed"}
+        return await self._create_integration(
+            integration_type="aws_security_hub",
+            configuration={
+                "send_only_fails": send_only_fails,
+                "archive_previous_findings": archive_previous_findings,
+            },
+            credentials=credentials,
+            provider_ids=[provider_id],
+            enabled=enabled,
+        )
 
     async def create_jira_integration(
         self,
@@ -416,27 +410,21 @@ class IntegrationsTools(BaseTool):
         3. Use prowler_get_jira_issue_types with that project key to pick an issue type
         4. Use prowler_send_findings_to_jira to create the work items
         """
-        try:
-            normalized_domain = self._normalize_atlassian_domain(domain)
-            self.logger.info(
-                f"Creating Jira integration for domain {normalized_domain}..."
-            )
+        normalized_domain = self._normalize_atlassian_domain(domain)
+        self.logger.info(f"Creating Jira integration for domain {normalized_domain}...")
 
-            return await self._create_integration(
-                integration_type="jira",
-                # Jira rejects any configuration in the payload, the API generates it
-                configuration={},
-                credentials={
-                    "domain": normalized_domain,
-                    "user_mail": user_mail,
-                    "api_token": api_token,
-                },
-                provider_ids=[],
-                enabled=enabled,
-            )
-        except Exception as e:
-            self.logger.error(f"Jira integration creation failed: {e}")
-            return {"error": str(e), "status": "failed"}
+        return await self._create_integration(
+            integration_type="jira",
+            # Jira rejects any configuration in the payload, the API generates it
+            configuration={},
+            credentials={
+                "domain": normalized_domain,
+                "user_mail": user_mail,
+                "api_token": api_token,
+            },
+            provider_ids=[],
+            enabled=enabled,
+        )
 
     async def update_integration(
         self,
@@ -494,92 +482,82 @@ class IntegrationsTools(BaseTool):
         """
         self.logger.info(f"Updating integration {integration_id}...")
 
-        try:
-            current = DetailedIntegration.from_api_response(
-                await self._get_integration_raw(integration_id)
-            )
-            integration_type = current.integration_type
+        current = DetailedIntegration.from_api_response(
+            await self._get_integration_raw(integration_id)
+        )
+        integration_type = current.integration_type
 
-            if provider_ids is not None:
-                if integration_type == "jira":
-                    raise ValueError(
-                        "Jira integrations are tenant-wide and cannot be attached to providers."
-                    )
-                if integration_type == "aws_security_hub" and len(provider_ids) != 1:
-                    raise ValueError(
-                        "AWS Security Hub integrations must stay attached to exactly one AWS "
-                        f"provider, got {len(provider_ids)}. Pass a single provider ID, or use "
-                        "prowler_delete_integration to stop sending findings to Security Hub."
-                    )
-
-            attributes: dict[str, Any] = {}
-            if enabled is not None:
-                attributes["enabled"] = enabled
-
-            if credentials is not None:
-                attributes["credentials"] = self._validate_credentials(
-                    integration_type, self._as_dict(credentials, "credentials")
+        if provider_ids is not None:
+            if integration_type == "jira":
+                raise InvalidArgument(
+                    "Jira integrations are tenant-wide and cannot be attached to providers."
+                )
+            if integration_type == "aws_security_hub" and len(provider_ids) != 1:
+                raise InvalidArgument(
+                    "AWS Security Hub integrations must stay attached to exactly one AWS "
+                    f"provider, got {len(provider_ids)}. Pass a single provider ID, or use "
+                    "prowler_delete_integration to stop sending findings to Security Hub."
                 )
 
-            if configuration is not None:
-                if integration_type == "jira":
-                    raise ValueError(
-                        "Jira integrations do not accept a configuration: it is generated by Prowler. "
-                        "Update the credentials instead, or run prowler_test_integration_connection to "
-                        "refresh the available projects and issue types."
-                    )
-                merged = dict(current.configuration)
-                merged.update(self._as_dict(configuration, "configuration"))
-                # Server-owned, the API repopulates it from the connection check
-                merged.pop("regions", None)
-                merged.pop("enabled_regions", None)
-                attributes["configuration"] = merged
+        attributes: dict[str, Any] = {}
+        if enabled is not None:
+            attributes["enabled"] = enabled
 
-            if not attributes and provider_ids is None:
-                self.logger.info("No changes provided, returning the current state")
-                return current.model_dump()
+        if credentials is not None:
+            attributes["credentials"] = self._validate_credentials(
+                integration_type, self._as_dict(credentials, "credentials")
+            )
 
-            update_body: dict[str, Any] = {
-                "data": {
-                    "type": "integrations",
-                    "id": integration_id,
-                    "attributes": attributes,
-                }
+        if configuration is not None:
+            if integration_type == "jira":
+                raise InvalidArgument(
+                    "Jira integrations do not accept a configuration: it is generated by Prowler. "
+                    "Update the credentials instead, or run prowler_test_integration_connection to "
+                    "refresh the available projects and issue types."
+                )
+            merged = dict(current.configuration)
+            merged.update(self._as_dict(configuration, "configuration"))
+            # Server-owned, the API repopulates it from the connection check
+            merged.pop("regions", None)
+            merged.pop("enabled_regions", None)
+            attributes["configuration"] = merged
+
+        if not attributes and provider_ids is None:
+            self.logger.info("No changes provided, returning the current state")
+            return current.model_dump()
+
+        update_body: dict[str, Any] = {
+            "data": {
+                "type": "integrations",
+                "id": integration_id,
+                "attributes": attributes,
             }
-            if provider_ids is not None:
-                update_body["data"]["relationships"] = _providers_relationship(
-                    provider_ids
-                )
+        }
+        if provider_ids is not None:
+            update_body["data"]["relationships"] = _providers_relationship(provider_ids)
 
-            await self.api_client.patch(
-                f"/integrations/{integration_id}", json_data=update_body
-            )
+        await self.api_client.patch(
+            f"/integrations/{integration_id}", json_data=update_body
+        )
 
-            # A different provider means different effective credentials and different
-            # discovered configuration, so the stored connection state is stale too
-            providers_changed = provider_ids is not None and set(provider_ids) != set(
-                current.provider_ids
-            )
-            recheck_connection = (
-                credentials is not None
-                or configuration is not None
-                or providers_changed
-            )
-            connection_status = (
-                await self._test_connection(integration_id)
-                if recheck_connection
-                else None
-            )
+        # A different provider means different effective credentials and different
+        # discovered configuration, so the stored connection state is stale too
+        providers_changed = provider_ids is not None and set(provider_ids) != set(
+            current.provider_ids
+        )
+        recheck_connection = (
+            credentials is not None or configuration is not None or providers_changed
+        )
+        connection_status = (
+            await self._test_connection(integration_id) if recheck_connection else None
+        )
 
-            updated = await self._get_integration_raw(integration_id)
-            if connection_status is not None:
-                return IntegrationConnectionStatus.create(
-                    updated, connection_status
-                ).model_dump()
-            return DetailedIntegration.from_api_response(updated).model_dump()
-        except Exception as e:
-            self.logger.error(f"Integration update failed: {e}")
-            return {"error": str(e), "status": "failed"}
+        updated = await self._get_integration_raw(integration_id)
+        if connection_status is not None:
+            return IntegrationConnectionStatus.create(
+                updated, connection_status
+            ).model_dump()
+        return DetailedIntegration.from_api_response(updated).model_dump()
 
     async def delete_integration(
         self,
@@ -606,18 +584,11 @@ class IntegrationsTools(BaseTool):
         """
         self.logger.info(f"Deleting integration {integration_id}...")
 
-        try:
-            await self.api_client.delete(f"/integrations/{integration_id}")
-            return {
-                "deleted": True,
-                "message": f"Integration {integration_id} deleted successfully",
-            }
-        except Exception as e:
-            self.logger.error(f"Integration deletion failed: {e}")
-            return {
-                "deleted": False,
-                "message": f"Integration {integration_id} deletion failed: {str(e)}",
-            }
+        await self.api_client.delete(f"/integrations/{integration_id}")
+        return {
+            "deleted": True,
+            "message": f"Integration {integration_id} deleted successfully",
+        }
 
     async def test_integration_connection(
         self,
@@ -866,7 +837,7 @@ class IntegrationsTools(BaseTool):
         normalized = normalized.removesuffix(".atlassian.net")
 
         if not normalized:
-            raise ValueError(
+            raise InvalidArgument(
                 f"Invalid Jira domain: {domain}. Provide the Atlassian site name, for example "
                 "'acme' for the site 'https://acme.atlassian.net'."
             )
@@ -890,7 +861,7 @@ class IntegrationsTools(BaseTool):
             if not isinstance(credentials.get(key), str) or not credentials[key].strip()
         ]
         if missing:
-            raise ValueError(
+            raise InvalidArgument(
                 "Jira credentials are replaced as a whole, so 'domain', 'user_mail' and "
                 f"'api_token' are all required. Missing or empty: {', '.join(missing)}. "
                 "Sending an incomplete object would destroy the stored credentials and break "
@@ -908,29 +879,33 @@ class IntegrationsTools(BaseTool):
             try:
                 value = json.loads(value)
             except json.JSONDecodeError as e:
-                raise ValueError(f"Invalid JSON for {param_name}: {e}")
+                raise InvalidArgument(f"Invalid JSON for {param_name}: {e}") from e
 
         if not isinstance(value, dict):
-            raise ValueError(f"{param_name} must be a JSON object.")
+            raise InvalidArgument(f"{param_name} must be a JSON object.")
         return value
 
     async def _get_integration_raw(self, integration_id: str) -> dict[str, Any]:
         """Fetch the raw JSON:API resource of an integration.
 
         Raises:
-            ValueError: If the payload does not contain a usable integration resource
+            ToolError: If the payload does not contain a usable integration resource.
+                Raised without a ``from`` clause because these messages name the
+                integration and the tool that lists valid IDs, and the two cases
+                are reported differently: a missing resource is the caller's
+                mistake, a resource without attributes is the API's.
         """
         response = await self.api_client.get(f"/integrations/{integration_id}")
         integration = response.get("data")
 
         if not isinstance(integration, dict) or not integration.get("id"):
-            raise ValueError(
+            raise ToolError(
                 f"Integration {integration_id} was not found. Use prowler_list_integrations "
                 "to get a valid integration ID."
             )
 
         if not isinstance(integration.get("attributes"), dict):
-            raise ValueError(
+            raise ToolError(
                 f"Prowler returned integration {integration_id} without its attributes, so "
                 "its state cannot be read."
             )
@@ -970,7 +945,9 @@ class IntegrationsTools(BaseTool):
         integration_id = api_response.get("data", {}).get("id")
 
         if not integration_id:
-            raise ValueError(
+            # The integration may well exist, so this must not read as "nothing
+            # happened" and invite a duplicate.
+            raise ToolError(
                 "Prowler accepted the integration creation but did not return its ID, so the "
                 "connection could not be checked. Use prowler_list_integrations to see whether "
                 "the integration exists before creating it again."
@@ -981,11 +958,13 @@ class IntegrationsTools(BaseTool):
         try:
             integration = await self._get_integration_raw(integration_id)
         except Exception as e:
-            # The integration exists, so surface its ID instead of a plain read failure
-            raise ValueError(
+            # The integration exists, so surface its ID instead of a plain read
+            # failure. No `from` clause: a cause would let the shared classifier
+            # replace this with a sentence that does not mention the ID.
+            raise ToolError(
                 f"Integration {integration_id} was created, but reading its state failed: {e} "
                 "Use prowler_get_integration with that ID to check it."
-            ) from e
+            )
 
         return IntegrationConnectionStatus.create(
             integration, connection_status

@@ -8,8 +8,10 @@ This module provides tools for managing finding muting in Prowler, including:
 import json
 from typing import Any
 
+from fastmcp.exceptions import ToolError
 from pydantic import Field
 
+from prowler_mcp_server.lib.errors import InvalidArgument
 from prowler_mcp_server.prowler_app.models.muting import (
     DetailedMuteRule,
     MutelistResponse,
@@ -28,10 +30,31 @@ class MutingTools(BaseTool):
 
     # ===== MUTELIST TOOLS =====
 
+    async def _get_mutelist_raw(self) -> dict[str, Any] | None:
+        """Return the tenant's mutelist, or None when it has none.
+
+        Returns:
+            The mutelist configuration, or None when the tenant has none
+        """
+        params = {
+            "filter[processor_type]": "mutelist",
+            "fields[processors]": "processor_type,configuration,inserted_at,updated_at",
+        }
+
+        clean_params = self.api_client.build_filter_params(params)
+        api_response = await self.api_client.get("/processors", params=clean_params)
+
+        data = api_response.get("data", [])
+        if not data:
+            return None
+
+        # Only one mutelist can exist per tenant
+        return MutelistResponse.from_api_response(data[0]).model_dump()
+
     async def get_mutelist(self) -> dict[str, Any]:
         """Retrieve the current mutelist configuration for the tenant.
 
-        IMPORTANT: Only one mutelist can exist per tenant. Returns an error message if no mutelist exists.
+        IMPORTANT: Only one mutelist can exist per tenant. Fails with a message saying so if no mutelist exists.
         For detailed information about mutelist structure and configuration, search Prowler documentation
         using prowler_docs_search tool available in this MCP Server.
 
@@ -47,26 +70,15 @@ class MutingTools(BaseTool):
         """
         self.logger.info("Retrieving mutelist configuration...")
 
-        # Query processors filtered by type=mutelist
-        params = {
-            "filter[processor_type]": "mutelist",
-            "fields[processors]": "processor_type,configuration,inserted_at,updated_at",
-        }
-
-        clean_params = self.api_client.build_filter_params(params)
-        api_response = await self.api_client.get("/processors", params=clean_params)
-
-        data = api_response.get("data", [])
-
-        if len(data) == 0:
-            return {
-                "error": "No mutelist found",
-                "message": "No mutelist configuration exists for this tenant. Use prowler_set_mutelist to create one.",
-            }
-
-        # Return the first (and only) mutelist
-        mutelist = MutelistResponse.from_api_response(data[0])
-        return mutelist.model_dump()
+        mutelist = await self._get_mutelist_raw()
+        if mutelist is None:
+            # No `from`: this names the tool that creates one, which the shared
+            # classifier cannot know.
+            raise ToolError(
+                "No mutelist configuration exists for this tenant. Use "
+                "prowler_set_mutelist to create one."
+            )
+        return mutelist
 
     async def set_mutelist(
         self,
@@ -128,9 +140,9 @@ Structure:
             configuration = json.loads(configuration)
 
         # Check if mutelist already exists
-        existing_mutelist = await self.get_mutelist()
+        existing_mutelist = await self._get_mutelist_raw()
 
-        if "error" in existing_mutelist:
+        if existing_mutelist is None:
             # Create new mutelist
             self.logger.info("Creating new mutelist...")
             create_body = {
@@ -183,13 +195,13 @@ Structure:
         self.logger.info("Deleting mutelist configuration...")
 
         # Get existing mutelist
-        existing_mutelist = await self.get_mutelist()
+        existing_mutelist = await self._get_mutelist_raw()
 
-        if "error" in existing_mutelist:
-            return {
-                "success": False,
-                "message": "No mutelist found to delete",
-            }
+        if existing_mutelist is None:
+            raise ToolError(
+                "There is no mutelist configuration to delete. Use "
+                "prowler_get_mutelist to confirm the current state."
+            )
 
         # Delete the mutelist
         mutelist_id = existing_mutelist["id"]
@@ -268,7 +280,7 @@ Structure:
                 elif enabled.lower() == "false":
                     params["filter[enabled]"] = False
                 else:
-                    raise ValueError(
+                    raise InvalidArgument(
                         f"Invalid enabled value: {enabled}. Valid values are True, False, 'true', 'false' or None."
                     )
         if search:

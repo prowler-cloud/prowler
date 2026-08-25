@@ -195,3 +195,18 @@ async def test_an_unreadable_api_answer_does_not_reach_the_agent_as_a_bad_argume
     assert result.isError is True
     assert "gateway timeout" not in result.content[0].text
     assert "argument" not in result.content[0].text
+
+
+async def test_a_tool_specific_message_survives_masking(
+    mcp_root_server, mock_api_client, mock_router
+):
+    """A `ToolError` raised without a `from` clause is the final word."""
+    mock_router.add("GET", "/api/v1/integrations/i1", json={"data": None})
+
+    async with Client(mcp_root_server) as client:
+        result = await client.call_tool_mcp(
+            "prowler_get_integration", {"integration_id": "i1"}
+        )
+
+    assert result.isError is True
+    assert "prowler_list_integrations" in result.content[0].text
