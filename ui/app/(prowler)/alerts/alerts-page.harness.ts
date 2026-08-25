@@ -2,14 +2,7 @@
  * Page-level test harness for the Alerts page (Vitest Browser Mode).
  *
  * A client renderer cannot render an async server component, so the page is
- * called and the element it returns is what gets rendered — the providers and
- * Slack harnesses' pattern.
- *
- * The channel-destination readers are the harness side of the S2 contract:
- * the alert form's channels field renders a wrapper carrying
- * `data-alert-channels-state` (`no-integration` | `empty-pool` | `populated`),
- * its explanatory copy under `data-alert-channels-notice`, and the shared
- * multi-select's trigger as `#slack-channels`.
+ * called and the element it returns is what gets rendered.
  */
 
 import { createElement } from "react";
@@ -25,24 +18,21 @@ import { SeedFromFindingsButton } from "./_components/seed-from-findings-button"
 import AlertsPage from "./page";
 
 export const CHANNEL_FIELD_STATE = {
-  /** No enabled and connected Slack workspace: visible, disabled, explains itself. */
+  /** No Slack workspace both enabled and connected. */
   NO_INTEGRATION: "no-integration",
   /** Workspace connected, no channel eligible yet. */
   EMPTY_POOL: "empty-pool",
-  /** The eligible channels are on offer. */
   POPULATED: "populated",
 } as const;
 
 export type ChannelFieldState =
   (typeof CHANNEL_FIELD_STATE)[keyof typeof CHANNEL_FIELD_STATE];
 
-/** A selected channel as the user reads it off the closed field. */
 export interface SelectedChannelChip {
   name: string;
   isPrivate: boolean;
 }
 
-/** A channel as a rule write submits it — the contract's `[{id}, …]` shape. */
 interface RuleWriteChannel {
   id: string;
 }
@@ -57,7 +47,6 @@ interface RuleWriteData {
   attributes?: RuleWriteAttributes;
 }
 
-/** The envelope an alert rule create or update submits. */
 interface RuleWriteEnvelope {
   data?: RuleWriteData;
 }
@@ -74,7 +63,6 @@ export class AlertsPageHarness extends BrowserHarness<AlertsFixture> {
 
   // --- Mounting -----------------------------------------------------------
 
-  /** Open the alerts page, the way a visit does. */
   async mount(
     searchParams: Record<string, string | undefined> = {},
   ): Promise<void> {
@@ -85,10 +73,7 @@ export class AlertsPageHarness extends BrowserHarness<AlertsFixture> {
     await this.waitForText(/Get notified when findings match/);
   }
 
-  /**
-   * Mount the creation entry as the findings page composes it — the alerts
-   * page itself only edits; rules are created from Findings (seed flow).
-   */
+  /** Rules are created from Findings (seed flow), never from the alerts page. */
   mountCreateEntry(
     filterBag: AlertsFilterBag = DEFAULT_CREATE_FILTER_BAG,
   ): void {
@@ -104,13 +89,11 @@ export class AlertsPageHarness extends BrowserHarness<AlertsFixture> {
     return document.querySelector<HTMLElement>('[role="dialog"]');
   }
 
-  /** Seed from the mounted create entry and wait for the modal. */
   async openCreateModal(): Promise<void> {
     await this.clickButton(/Create Alert/);
     await this.waitFor(() => this.dialog(), 10000, "the create alert modal");
   }
 
-  /** Open a listed rule for editing, by its name. */
   async openEditModal(ruleName: string): Promise<void> {
     const nameButton = await this.waitFor(
       () =>
@@ -124,7 +107,6 @@ export class AlertsPageHarness extends BrowserHarness<AlertsFixture> {
     await this.waitFor(() => this.dialog(), 10000, "the edit alert modal");
   }
 
-  /** Submit the open modal (Create or Save) and wait for it to close. */
   async saveRule(): Promise<void> {
     await this.submitModal();
     await this.waitFor(
@@ -135,9 +117,7 @@ export class AlertsPageHarness extends BrowserHarness<AlertsFixture> {
   }
 
   /**
-   * Submit the open modal expecting a refusal, and hand back what the user is
-   * told. A save that closes the modal fails the test rather than timing out.
-   * Only newly added channels are validated (contract section 6.3), so a
+   * Only newly added channels are validated (contract 6.3), so provoking a
    * channel refusal needs options that went stale mid-edit.
    */
   async refusedRuleSave(): Promise<string> {
@@ -168,11 +148,8 @@ export class AlertsPageHarness extends BrowserHarness<AlertsFixture> {
   private modalErrorText(): string | null {
     const dialog = this.dialog();
     if (!dialog) return null;
-    // The error class is shared, and first-in-DOM-order wins: the recipients
-    // read failure and the preview error both render one ABOVE the form-level
-    // message and would shadow it. Only the form-level one is a `div` — every
-    // field-scoped error is a `p` — so prefer that, and keep the broad query
-    // as the fallback for a refusal that never reaches the form level.
+    // The error class is shared and first-in-DOM-order wins, so prefer the
+    // form-level error: it is the only `div`, every field-scoped one is a `p`.
     const error =
       dialog.querySelector<HTMLElement>("div.text-text-error-primary") ??
       dialog.querySelector<HTMLElement>(".text-text-error-primary");
@@ -180,23 +157,15 @@ export class AlertsPageHarness extends BrowserHarness<AlertsFixture> {
     return text.length > 0 ? text : null;
   }
 
-  /**
-   * The channel ids the last rule write actually submitted, read off the
-   * contract's `[{id}, …]` write shape.
-   */
   async savedRuleChannels(): Promise<string[] | undefined> {
     const body = await this.lastRuleWriteBody();
     return body?.data?.attributes?.slack_channels?.map((channel) => channel.id);
   }
 
   /**
-   * The most recent rule write in the request log, picked by payload rather
-   * than by method or path: `/alerts/rules` is a prefix of the seed and
-   * preview endpoints, so a path match — and the POST-vs-PATCH counting it
-   * invites — can resolve to a request that carries no channels. Seed and
-   * preview envelopes declare their own `type`; the enable/disable toggle
-   * reuses both the write's URL and its type, and only a real write carries
-   * `schema_version`.
+   * Matched by payload, not by method or path: `/alerts/rules` prefixes the
+   * seed and preview endpoints, and the enable/disable toggle reuses both the
+   * write's URL and its type — only a real write carries `schema_version`.
    */
   private async lastRuleWriteBody(): Promise<RuleWriteEnvelope | null> {
     for (const entry of [...this.requestLog].reverse()) {
@@ -211,7 +180,6 @@ export class AlertsPageHarness extends BrowserHarness<AlertsFixture> {
     return null;
   }
 
-  /** A request with no body, or one that is not JSON, is not a rule write. */
   private static async parsedBody(
     request: Request,
   ): Promise<RuleWriteEnvelope | null> {
@@ -228,7 +196,6 @@ export class AlertsPageHarness extends BrowserHarness<AlertsFixture> {
     return document.querySelector<HTMLElement>("[data-alert-channels-state]");
   }
 
-  /** Which of its three states the channel destination is presenting. */
   async channelFieldState(): Promise<ChannelFieldState> {
     const field = await this.waitFor(
       () => this.channelField(),
@@ -238,7 +205,6 @@ export class AlertsPageHarness extends BrowserHarness<AlertsFixture> {
     return field.getAttribute("data-alert-channels-state") as ChannelFieldState;
   }
 
-  /** The copy explaining a degraded state, wherever the field renders it. */
   async channelFieldNotice(): Promise<string> {
     const notice = await this.waitFor(
       () => document.querySelector<HTMLElement>("[data-alert-channels-notice]"),
@@ -248,7 +214,6 @@ export class AlertsPageHarness extends BrowserHarness<AlertsFixture> {
     return (notice.textContent ?? "").replace(/\s+/g, " ").trim();
   }
 
-  /** The affordance a degraded state offers toward the integration page. */
   integrationAffordanceHref(): string | null {
     const scopes: (ParentNode | null)[] = [
       document.querySelector("[data-alert-channels-notice]"),
@@ -264,10 +229,10 @@ export class AlertsPageHarness extends BrowserHarness<AlertsFixture> {
   }
 
   /**
-   * The options inside the popover THIS trigger controls, or null. Correlated
-   * through `aria-controls`: two pickers share the page (channels,
-   * recipients) and the MultiSelect also keeps a hidden mirror of its items,
-   * so any unscoped `[role="option"]` query can answer for the wrong picker.
+   * The options inside the popover THIS trigger controls, correlated through
+   * `aria-controls`: two pickers share the page and the MultiSelect keeps a
+   * hidden mirror of its items, so an unscoped `[role="option"]` query can
+   * answer for the wrong one.
    */
   private static optionsControlledBy(
     trigger: HTMLElement,
@@ -309,7 +274,6 @@ export class AlertsPageHarness extends BrowserHarness<AlertsFixture> {
     return this.openPicker("#slack-channels");
   }
 
-  /** Whether the channel picker is rendered but refuses interaction. */
   async channelPickerDisabled(): Promise<boolean> {
     const trigger = await this.waitFor(
       () => this.q("#slack-channels"),
@@ -323,17 +287,13 @@ export class AlertsPageHarness extends BrowserHarness<AlertsFixture> {
     );
   }
 
-  /**
-   * Toggle the named recipient emails in the recipients picker, verifying
-   * each pick against its chip like `pickChannels` does.
-   */
   async pickRecipients(emails: string[]): Promise<void> {
     for (const email of emails) {
       let picked = false;
       for (let attempt = 0; attempt < 3 && !picked; attempt += 1) {
         const options = await this.openPicker("#alert-recipients");
-        // The picker stays open between attempts, so a retry clicking an item
-        // the previous attempt did select would toggle it back off.
+        // The picker stays open between attempts: re-clicking an item the last
+        // attempt did select would toggle it back off.
         if (this.isRecipientSelected(email)) {
           picked = true;
           break;
@@ -361,10 +321,9 @@ export class AlertsPageHarness extends BrowserHarness<AlertsFixture> {
   }
 
   /**
-   * Close an open picker by clicking a neutral spot inside the dialog (its
-   * title). Not a bare Escape — with focus outside the popover it reaches the
-   * dialog and closes the whole modal. Not the trigger either — its chips
-   * remove-on-click, so a click landing on one silently drops a selection.
+   * Closed by clicking the dialog title. Not Escape — with focus outside the
+   * popover it reaches the dialog and closes the whole modal. Not the trigger
+   * — its chips remove on click, silently dropping a selection.
    */
   private async closePicker(triggerSelector: string): Promise<void> {
     const trigger = this.q(triggerSelector);
@@ -396,7 +355,6 @@ export class AlertsPageHarness extends BrowserHarness<AlertsFixture> {
     );
   }
 
-  /** The channels offered for the rule, in the order the picker lists them. */
   async offeredChannels(): Promise<string[]> {
     const options = await this.openChannelPicker();
     const names = options.map(AlertsPageHarness.optionChannelName);
@@ -404,7 +362,6 @@ export class AlertsPageHarness extends BrowserHarness<AlertsFixture> {
     return names;
   }
 
-  /** Whether the channel offered under `name` is presented as private. */
   async isChannelOfferedAsPrivate(name: string): Promise<boolean> {
     const options = await this.openChannelPicker();
     const option = options.find(
@@ -415,11 +372,10 @@ export class AlertsPageHarness extends BrowserHarness<AlertsFixture> {
   }
 
   /**
-   * The text of every selected chip inside `scope`, as the user reads it.
-   * Always scoped to one field: two pickers share the open form, and a
-   * document-wide substring test answers for the wrong one — a private
-   * channel's chip reads `Private#security-alerts`, which contains
-   * `#security`, the name of the other fixture channel.
+   * Always scoped to one field and matched exactly, never document-wide: two
+   * pickers share the open form, and a private chip reads
+   * `Private#security-alerts`, which contains `#security` — the other fixture
+   * channel.
    */
   private static chipTexts(scope: ParentNode): string[] {
     return Array.from(
@@ -438,7 +394,6 @@ export class AlertsPageHarness extends BrowserHarness<AlertsFixture> {
     };
   }
 
-  /** Whether the closed field already shows `name` among its chips. */
   private isChannelSelected(name: string): boolean {
     const field = this.channelField();
     if (!field) return false;
@@ -447,7 +402,6 @@ export class AlertsPageHarness extends BrowserHarness<AlertsFixture> {
       .some((chip) => chip.name === name);
   }
 
-  /** Whether the recipients field already shows `email` among its chips. */
   private isRecipientSelected(email: string): boolean {
     const trigger = this.q("#alert-recipients");
     return (
@@ -456,17 +410,17 @@ export class AlertsPageHarness extends BrowserHarness<AlertsFixture> {
   }
 
   /**
-   * Toggle the named channels in the picker, then close it. Each pick is
-   * verified against the chip the user sees and retried when the click
-   * landed on a node the selection re-render had already replaced.
+   * Each pick is verified against the chip the user sees, then re-resolved and
+   * re-clicked: the click can land on a node the selection re-render already
+   * replaced, and a native click on a detached node never reaches React.
    */
   async pickChannels(names: string[]): Promise<void> {
     for (const name of names) {
       let picked = false;
       for (let attempt = 0; attempt < 3 && !picked; attempt += 1) {
         const options = await this.openChannelPicker();
-        // The picker stays open between attempts, so a retry clicking an item
-        // the previous attempt did select would toggle it back off.
+        // The picker stays open between attempts: re-clicking an item the last
+        // attempt did select would toggle it back off.
         if (this.isChannelSelected(name)) {
           picked = true;
           break;
@@ -496,10 +450,6 @@ export class AlertsPageHarness extends BrowserHarness<AlertsFixture> {
     await this.closeChannelPicker();
   }
 
-  /**
-   * The rule's selected channels as the closed field shows them — name and
-   * privacy read from the chip the user sees.
-   */
   async selectedChannelChips(): Promise<SelectedChannelChip[]> {
     const field = await this.waitFor(
       () => this.channelField(),
@@ -514,8 +464,8 @@ export class AlertsPageHarness extends BrowserHarness<AlertsFixture> {
   // --- The alerts list ------------------------------------------------------
 
   /**
-   * The destinations summary the list shows for a rule, without opening it —
-   * the Destinations column once S3 lands (Recipients until then).
+   * No caller on this branch: the Destinations column lands in S3
+   * (`feature/alerts-destinations-column`), which consumes this. Not dead code.
    */
   async ruleDestinationsSummary(ruleName: string): Promise<string> {
     const headers = Array.from(
