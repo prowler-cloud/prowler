@@ -69,7 +69,9 @@ export class RegistryPage extends BasePage {
 
   async verifyMarketplaceReady(): Promise<void> {
     await expect(this.exploreTab).toBeVisible();
-    await expect(this.page.getByText("API key connected")).toBeVisible();
+    await expect(
+      this.page.getByRole("main").getByText("API key connected"),
+    ).toBeVisible();
   }
 
   async submitRegistryKey(key: string): Promise<void> {
