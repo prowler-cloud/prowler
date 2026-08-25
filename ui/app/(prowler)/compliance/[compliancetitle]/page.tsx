@@ -85,18 +85,11 @@ export default async function ComplianceDetail({
       redirect("/compliance");
     }
 
-    // Header only. The API validates the identity when the island fetches the
-    // roll-up; gating here would 404 on a transient catalog failure.
-    const crossProviderTitle = compliancetitle.split("-").join(" ");
     return (
-      <ContentLayout
-        title={
-          version ? `${crossProviderTitle} - ${version}` : crossProviderTitle
-        }
-      >
-        <Suspense
-          key={buildSearchParamsKey(resolvedSearchParams)}
-          fallback={
+      <Suspense
+        key={buildSearchParamsKey(resolvedSearchParams)}
+        fallback={
+          <ContentLayout title="Compliance">
             <div className="flex flex-col gap-8">
               <div className="grid grid-cols-1 gap-6 md:grid-cols-[minmax(280px,400px)_1fr]">
                 <RequirementsStatusCardSkeleton />
@@ -104,16 +97,16 @@ export default async function ComplianceDetail({
               </div>
               <SkeletonAccordion />
             </div>
-          }
-        >
-          <CrossProviderDetail
-            compliancetitle={compliancetitle}
-            complianceId={complianceId}
-            searchParams={resolvedSearchParams}
-            targetSection={section}
-          />
-        </Suspense>
-      </ContentLayout>
+          </ContentLayout>
+        }
+      >
+        <CrossProviderDetail
+          compliancetitle={compliancetitle}
+          complianceId={complianceId}
+          searchParams={resolvedSearchParams}
+          targetSection={section}
+        />
+      </Suspense>
     );
   }
   // Cross-account mode: one regular framework aggregated across every

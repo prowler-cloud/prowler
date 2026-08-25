@@ -199,7 +199,8 @@ describe("getComplianceCatalog", () => {
     expect(catalog.entries).toEqual([]);
   });
 
-  it("keeps the rest of the catalog when a single page fails", async () => {
+  it("flags the catalog as unavailable when a single page fails", async () => {
+    // Given - one of three catalog pages times out
     fetchMock
       .mockResolvedValueOnce(
         jsonResponse(catalogPage("cis_1.4_aws", { page: 1, pages: 3 })),
@@ -209,12 +210,15 @@ describe("getComplianceCatalog", () => {
         jsonResponse(catalogPage("iso27001_aws", { page: 3, pages: 3 })),
       );
 
+    // When - the catalog keeps the pages it could read
     const catalog = await getComplianceCatalog();
 
+    // Then - consumers know the merged result is incomplete
     expect(catalog.entries.map((entry) => entry.complianceId)).toEqual([
       "cis_1.4_aws",
       "iso27001_aws",
     ]);
+    expect(catalog.unavailable).toBe(true);
   });
 
   it("bounds how many pages it requests at once", async () => {

@@ -5,6 +5,7 @@ import { getAllProviders } from "@/actions/providers";
 import { getComplianceIcon } from "@/components/icons/compliance/IconCompliance";
 import { LighthouseContextContributor } from "@/components/lighthouse/context-contributor";
 import { Alert, AlertDescription } from "@/components/shadcn/alert";
+import { ContentLayout } from "@/components/shadcn/content-layout";
 import { getComplianceMapper } from "@/lib/compliance/compliance-mapper";
 import { LIGHTHOUSE_COMPLIANCE_CONTEXT_MODE } from "@/lib/lighthouse/context/constants";
 import { buildComplianceContext } from "@/lib/lighthouse/context/contributions";
@@ -70,31 +71,45 @@ export const CrossProviderDetail = async ({
     overviewResponse.status ===
     CROSS_PROVIDER_OVERVIEW_RESULT_STATUS.ACTION_ERROR
   ) {
-    return <CrossProviderErrorAlert result={overviewResponse.result} />;
+    return (
+      <ContentLayout title="Compliance">
+        <CrossProviderErrorAlert result={overviewResponse.result} />
+      </ContentLayout>
+    );
   }
 
   if (
     overviewResponse.status === CROSS_PROVIDER_OVERVIEW_RESULT_STATUS.LOAD_ERROR
   ) {
-    return <CrossProviderErrorAlert message={overviewResponse.message} />;
+    return (
+      <ContentLayout title="Compliance">
+        <CrossProviderErrorAlert message={overviewResponse.message} />
+      </ContentLayout>
+    );
   }
 
   const overviewData = overviewResponse.response.data;
 
   if (!overviewData?.attributes) {
     return (
-      <Alert variant="info">
-        <Info className="size-4" />
-        <AlertDescription>
-          No cross-provider compliance data was returned for this framework.
-          Universal frameworks aggregate the latest completed scan of every
-          compatible provider — run a scan to populate this view.
-        </AlertDescription>
-      </Alert>
+      <ContentLayout title="Compliance">
+        <Alert variant="info">
+          <Info className="size-4" />
+          <AlertDescription>
+            No cross-provider compliance data was returned for this framework.
+            Universal frameworks aggregate the latest completed scan of every
+            compatible provider — run a scan to populate this view.
+          </AlertDescription>
+        </Alert>
+      </ContentLayout>
     );
   }
 
   const attrs = overviewData.attributes;
+  const frameworkTitle = attrs.framework || attrs.name || "Compliance";
+  const pageTitle = attrs.version
+    ? `${frameworkTitle} - ${attrs.version}`
+    : frameworkTitle;
 
   // Scoped to the EXACT scans the overview resolved (not the raw filters), so
   // an offered "Download latest" always matches the data on screen even if a
@@ -133,7 +148,7 @@ export const CrossProviderDetail = async ({
   // Select and breakdown both need an icon and a label; the summary above
   // still counts the type as compatible.
   const selectableTypes = compatibleTypes.filter(isKnownProviderType);
-  const logoPath = getComplianceIcon(compliancetitle);
+  const logoPath = getComplianceIcon(frameworkTitle);
 
   const providerAccounts: CrossProviderAccountOption[] = (
     providersData?.data || []
@@ -154,7 +169,7 @@ export const CrossProviderDetail = async ({
   ).map((group) => ({ id: group.id, name: group.attributes.name }));
 
   return (
-    <>
+    <ContentLayout title={pageTitle}>
       <LighthouseContextContributor
         key={`cross-provider-detail-${complianceId}-${totals.pass}-${totals.fail}`}
         contributorId="compliance-detail"
@@ -171,11 +186,11 @@ export const CrossProviderDetail = async ({
         })}
       />
       <AggregatedComplianceDetail
-        compliancetitle={compliancetitle}
+        compliancetitle={frameworkTitle}
         logoPath={logoPath}
         title={
           <span className="truncate text-sm font-medium">
-            {attrs.name || compliancetitle.split("-").join(" ")}
+            {attrs.name || frameworkTitle}
           </span>
         }
         description={
@@ -210,6 +225,6 @@ export const CrossProviderDetail = async ({
         accordionItems={accordionItems}
         initialExpandedKeys={initialExpandedKeys}
       />
-    </>
+    </ContentLayout>
   );
 };

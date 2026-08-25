@@ -143,6 +143,7 @@ export const getComplianceCatalog = async (
     if (pageCount <= 1) return { ...firstPage.catalog, unavailable: false };
 
     const rest: ComplianceCatalog[] = [];
+    let incomplete = firstPage.pageCount > MAX_CATALOG_PAGES;
     for (let page = 2; page <= pageCount; page += CATALOG_FETCH_CONCURRENCY) {
       const batch = await Promise.all(
         Array.from(
@@ -150,12 +151,13 @@ export const getComplianceCatalog = async (
           (_, index) => fetchPage(page + index),
         ),
       );
+      if (batch.some((pageResult) => pageResult === null)) incomplete = true;
       rest.push(...batch.flatMap((page) => (page ? [page.catalog] : [])));
     }
 
     return {
       ...mergeCatalogPages([firstPage.catalog, ...rest]),
-      unavailable: false,
+      unavailable: incomplete,
     };
   } catch (error) {
     console.error("Error fetching compliance catalog:", error);
