@@ -4,7 +4,7 @@ from uuid import uuid4
 
 import pytest
 from azure.core.credentials import AccessToken
-from azure.core.exceptions import HttpResponseError
+from azure.core.exceptions import ClientAuthenticationError, HttpResponseError
 from azure.identity import DefaultAzureCredential
 from mock import MagicMock
 
@@ -16,9 +16,17 @@ from prowler.config.config import (
 from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.azure.exceptions.exceptions import (
     AzureBrowserAuthNoTenantIDError,
+    AzureConfigCredentialsError,
+    AzureEnvironmentVariableError,
     AzureHTTPResponseError,
     AzureInvalidProviderIdError,
     AzureNoAuthenticationMethodError,
+    AzureNotValidCertificateContentError,
+    AzureNotValidCertificatePathError,
+    AzureNotValidClientIdError,
+    AzureNotValidClientSecretError,
+    AzureNotValidTenantIdError,
+    AzureSetUpSessionError,
     AzureTenantIDNoBrowserAuthError,
 )
 from prowler.providers.azure.models import AzureIdentityInfo, AzureRegionConfig
@@ -158,7 +166,7 @@ class TestAzureProvider:
                 )
             assert exception.type == AzureNoAuthenticationMethodError
             assert (
-                "Azure provider requires at least one authentication method set: [--az-cli-auth | --sp-env-auth | --browser-auth | --managed-identity-auth]"
+                "Azure provider requires at least one authentication method set: [--az-cli-auth | --sp-env-auth | --browser-auth | --managed-identity-auth | --certificate-auth]"
                 in exception.value.args[0]
             )
 
@@ -475,7 +483,7 @@ class TestAzureProvider:
 
         assert exception.type == AzureNoAuthenticationMethodError
         assert (
-            "[2003] Azure provider requires at least one authentication method set: [--az-cli-auth | --sp-env-auth | --browser-auth | --managed-identity-auth]"
+            "[2003] Azure provider requires at least one authentication method set: [--az-cli-auth | --sp-env-auth | --browser-auth | --managed-identity-auth | --certificate-auth]"
             in exception.value.args[0]
         )
 
@@ -746,6 +754,7 @@ class TestAzureProviderSetupIdentitySubscriptions:
                 sp_env_auth=False,
                 browser_auth=False,
                 managed_identity_auth=False,
+                certificate_auth=False,
                 subscription_ids=[],
                 client_id=None,
             )
@@ -778,6 +787,7 @@ class TestAzureProviderSetupIdentitySubscriptions:
                 sp_env_auth=False,
                 browser_auth=False,
                 managed_identity_auth=False,
+                certificate_auth=False,
                 subscription_ids=[],
                 client_id=None,
             )
@@ -807,6 +817,7 @@ class TestAzureProviderSetupIdentitySubscriptions:
                 sp_env_auth=False,
                 browser_auth=False,
                 managed_identity_auth=False,
+                certificate_auth=False,
                 subscription_ids=[first_id, second_id],
                 client_id=None,
             )
@@ -837,6 +848,7 @@ class TestAzureProviderSetupIdentitySubscriptions:
                 sp_env_auth=False,
                 browser_auth=False,
                 managed_identity_auth=False,
+                certificate_auth=False,
                 subscription_ids=[first_id, second_id],
                 client_id=None,
             )
@@ -941,6 +953,8 @@ class TestAzureProviderSovereignCloudSupport:
                 sp_env_auth=False,
                 browser_auth=False,
                 managed_identity_auth=False,
+                certificate_auth=False,
+                certificate_path=None,
                 tenant_id=azure_credentials["tenant_id"],
                 azure_credentials=azure_credentials,
                 region_config=region_config,
@@ -978,6 +992,8 @@ class TestAzureProviderSovereignCloudSupport:
                 sp_env_auth=False,
                 browser_auth=True,
                 managed_identity_auth=False,
+                certificate_auth=False,
+                certificate_path=None,
                 tenant_id=tenant_id,
                 azure_credentials=None,
                 region_config=region_config,
@@ -1012,6 +1028,8 @@ class TestAzureProviderSovereignCloudSupport:
                 sp_env_auth=False,
                 browser_auth=False,
                 managed_identity_auth=False,
+                certificate_auth=False,
+                certificate_path=None,
                 tenant_id=None,
                 azure_credentials=None,
                 region_config=region_config,
@@ -1214,6 +1232,7 @@ class TestAzureProviderSetupIdentityEventLoop:
                     sp_env_auth=True,
                     browser_auth=False,
                     managed_identity_auth=False,
+                    certificate_auth=False,
                     subscription_ids=[],
                     client_id="00000000-0000-0000-0000-000000000000",
                 )
@@ -1224,3 +1243,978 @@ class TestAzureProviderSetupIdentityEventLoop:
         assert isinstance(identity, AzureIdentityInfo)
         assert identity.subscriptions == {sub_id: "Sub"}
         graph_client.domains.get.assert_awaited_once()
+
+
+class TestAzureProviderCertificateAuth:
+    """Coverage for the certificate-based service-principal auth path added
+    by the Deploy-to-Azure quick-start (PROWLER-2378)."""
+
+    _TENANT_ID = "12345678-1234-1234-1234-123456789012"
+    _CLIENT_ID = "87654321-4321-4321-4321-210987654321"
+    # Base64 of a valid tiny DER payload — the tests only check that base64
+    # decoding succeeds inside `validate_static_credentials`; the actual
+    # certificate parsing is mocked at the `CertificateCredential` boundary.
+    _CERT_CONTENT_B64 = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA"
+
+    def _region_config(self):
+        return AzureProvider.setup_region_config("AzureCloud")
+
+    @staticmethod
+    def _certificate_and_key():
+        from datetime import datetime, timedelta, timezone
+
+        from cryptography import x509
+        from cryptography.hazmat.primitives import hashes
+        from cryptography.hazmat.primitives.asymmetric import rsa
+        from cryptography.x509.oid import NameOID
+
+        private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "Prowler")])
+        certificate = (
+            x509.CertificateBuilder()
+            .subject_name(subject)
+            .issuer_name(subject)
+            .public_key(private_key.public_key())
+            .serial_number(x509.random_serial_number())
+            .not_valid_before(datetime.now(timezone.utc))
+            .not_valid_after(datetime.now(timezone.utc) + timedelta(days=1))
+            .sign(private_key, hashes.SHA256())
+        )
+        return certificate, private_key
+
+    def test_validate_arguments_rejects_client_secret_and_cert_together(self):
+        with pytest.raises(AzureConfigCredentialsError) as exception:
+            AzureProvider.validate_arguments(
+                az_cli_auth=False,
+                sp_env_auth=False,
+                browser_auth=False,
+                managed_identity_auth=False,
+                certificate_auth=False,
+                tenant_id=self._TENANT_ID,
+                client_id=self._CLIENT_ID,
+                client_secret="some-secret",
+                certificate_content=self._CERT_CONTENT_B64,
+                certificate_path=None,
+            )
+        assert "not both" in exception.value.args[0]
+
+    def test_validate_arguments_rejects_cert_content_and_path_together(self):
+        with pytest.raises(AzureConfigCredentialsError) as exception:
+            AzureProvider.validate_arguments(
+                az_cli_auth=False,
+                sp_env_auth=False,
+                browser_auth=False,
+                managed_identity_auth=False,
+                certificate_auth=False,
+                tenant_id=self._TENANT_ID,
+                client_id=self._CLIENT_ID,
+                client_secret=None,
+                certificate_content=self._CERT_CONTENT_B64,
+                certificate_path="/tmp/anything",
+            )
+        assert "not both" in exception.value.args[0]
+
+    def test_validate_arguments_accepts_certificate_content_only(self):
+        # Should not raise: cert content alone is a valid credential shape.
+        AzureProvider.validate_arguments(
+            az_cli_auth=False,
+            sp_env_auth=False,
+            browser_auth=False,
+            managed_identity_auth=False,
+            certificate_auth=False,
+            tenant_id=self._TENANT_ID,
+            client_id=self._CLIENT_ID,
+            client_secret=None,
+            certificate_content=self._CERT_CONTENT_B64,
+            certificate_path=None,
+        )
+
+    def test_validate_arguments_rejects_client_id_without_credential_material(self):
+        with pytest.raises(AzureConfigCredentialsError, match="must provide"):
+            AzureProvider.validate_arguments(
+                az_cli_auth=False,
+                sp_env_auth=False,
+                browser_auth=False,
+                managed_identity_auth=False,
+                certificate_auth=False,
+                tenant_id=self._TENANT_ID,
+                client_id=self._CLIENT_ID,
+                client_secret=None,
+                certificate_content=None,
+                certificate_path=None,
+            )
+
+    def test_check_certificate_creds_env_vars_missing_content(self, monkeypatch):
+        monkeypatch.setenv("AZURE_CLIENT_ID", self._CLIENT_ID)
+        monkeypatch.setenv("AZURE_TENANT_ID", self._TENANT_ID)
+        monkeypatch.delenv("AZURE_CERTIFICATE_CONTENT", raising=False)
+        with pytest.raises(AzureEnvironmentVariableError) as exception:
+            AzureProvider.check_certificate_creds_env_vars(
+                check_certificate_content=True
+            )
+        assert "AZURE_CERTIFICATE_CONTENT" in exception.value.args[0]
+
+    def test_check_certificate_creds_env_vars_skips_content_check_with_path(
+        self, monkeypatch
+    ):
+        # When a certificate path is provided at construction time, we must
+        # NOT require AZURE_CERTIFICATE_CONTENT in the environment.
+        monkeypatch.setenv("AZURE_CLIENT_ID", self._CLIENT_ID)
+        monkeypatch.setenv("AZURE_TENANT_ID", self._TENANT_ID)
+        monkeypatch.delenv("AZURE_CERTIFICATE_CONTENT", raising=False)
+        # Should not raise
+        AzureProvider.check_certificate_creds_env_vars(check_certificate_content=False)
+
+    def test_validate_static_credentials_rejects_non_base64_cert_content(self):
+        with pytest.raises(AzureNotValidCertificateContentError):
+            AzureProvider.validate_static_credentials(
+                tenant_id=self._TENANT_ID,
+                client_id=self._CLIENT_ID,
+                client_secret=None,
+                certificate_content="not_valid_base64_@@@",
+                certificate_path=None,
+                region_config=self._region_config(),
+            )
+
+    def test_validate_static_credentials_rejects_key_only_pem(self):
+        import base64
+
+        from cryptography.hazmat.primitives import serialization
+        from cryptography.hazmat.primitives.asymmetric import rsa
+
+        private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+        key_only_pem = private_key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.NoEncryption(),
+        )
+
+        with (
+            patch.object(AzureProvider, "verify_client"),
+            pytest.raises(AzureNotValidCertificateContentError),
+        ):
+            AzureProvider.validate_static_credentials(
+                tenant_id=self._TENANT_ID,
+                client_id=self._CLIENT_ID,
+                client_secret=None,
+                certificate_content=base64.b64encode(key_only_pem).decode("ascii"),
+                certificate_path=None,
+                region_config=self._region_config(),
+            )
+
+    def test_validate_static_credentials_rejects_key_only_pkcs12(self):
+        import base64
+
+        from cryptography.hazmat.primitives import serialization
+        from cryptography.hazmat.primitives.serialization import pkcs12
+
+        _, private_key = self._certificate_and_key()
+        key_only_pkcs12 = pkcs12.serialize_key_and_certificates(
+            name=b"prowler",
+            key=private_key,
+            cert=None,
+            cas=None,
+            encryption_algorithm=serialization.NoEncryption(),
+        )
+
+        with pytest.raises(AzureNotValidCertificateContentError):
+            AzureProvider.validate_static_credentials(
+                tenant_id=self._TENANT_ID,
+                client_id=self._CLIENT_ID,
+                client_secret=None,
+                certificate_content=base64.b64encode(key_only_pkcs12).decode("ascii"),
+                certificate_path=None,
+                region_config=self._region_config(),
+            )
+
+    def test_validate_static_credentials_rejects_missing_credential_material(self):
+        with pytest.raises(AzureNotValidClientSecretError, match="must provide"):
+            AzureProvider.validate_static_credentials(
+                tenant_id=self._TENANT_ID,
+                client_id=self._CLIENT_ID,
+                client_secret=None,
+                certificate_content=None,
+                certificate_path=None,
+                region_config=self._region_config(),
+            )
+
+    def test_validate_static_credentials_rejects_mismatched_certificate_and_key(self):
+        import base64
+        from datetime import datetime, timedelta, timezone
+
+        from cryptography import x509
+        from cryptography.hazmat.primitives import hashes, serialization
+        from cryptography.hazmat.primitives.asymmetric import rsa
+        from cryptography.x509.oid import NameOID
+
+        certificate_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+        different_private_key = rsa.generate_private_key(
+            public_exponent=65537, key_size=2048
+        )
+        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "Prowler")])
+        certificate = (
+            x509.CertificateBuilder()
+            .subject_name(subject)
+            .issuer_name(subject)
+            .public_key(certificate_key.public_key())
+            .serial_number(x509.random_serial_number())
+            .not_valid_before(datetime.now(timezone.utc))
+            .not_valid_after(datetime.now(timezone.utc) + timedelta(days=1))
+            .sign(certificate_key, hashes.SHA256())
+        )
+        mismatched_bundle = certificate.public_bytes(
+            serialization.Encoding.PEM
+        ) + different_private_key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.NoEncryption(),
+        )
+
+        with (
+            patch.object(AzureProvider, "verify_client"),
+            pytest.raises(AzureNotValidCertificateContentError),
+        ):
+            AzureProvider.validate_static_credentials(
+                tenant_id=self._TENANT_ID,
+                client_id=self._CLIENT_ID,
+                client_secret=None,
+                certificate_content=base64.b64encode(mismatched_bundle).decode("ascii"),
+                certificate_path=None,
+                region_config=self._region_config(),
+            )
+
+    def test_validate_static_credentials_rejects_missing_cert_file(self):
+        with pytest.raises(AzureNotValidCertificatePathError):
+            AzureProvider.validate_static_credentials(
+                tenant_id=self._TENANT_ID,
+                client_id=self._CLIENT_ID,
+                client_secret=None,
+                certificate_content=None,
+                certificate_path="/tmp/does-not-exist-prowler-cert.pem",
+                region_config=self._region_config(),
+            )
+
+    def test_validate_static_credentials_rejects_invalid_cert_file(self, tmp_path):
+        certificate_path = tmp_path / "invalid-certificate.pem"
+        certificate_path.write_bytes(b"not a certificate bundle")
+
+        with (
+            patch.object(AzureProvider, "verify_client"),
+            pytest.raises(AzureNotValidCertificatePathError),
+        ):
+            AzureProvider.validate_static_credentials(
+                tenant_id=self._TENANT_ID,
+                client_id=self._CLIENT_ID,
+                client_secret=None,
+                certificate_content=None,
+                certificate_path=str(certificate_path),
+                region_config=self._region_config(),
+            )
+
+    def test_validate_static_credentials_rejects_key_only_cert_file(self, tmp_path):
+        from cryptography.hazmat.primitives import serialization
+
+        _, private_key = self._certificate_and_key()
+        certificate_path = tmp_path / "key-only.pem"
+        certificate_path.write_bytes(
+            private_key.private_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PrivateFormat.PKCS8,
+                encryption_algorithm=serialization.NoEncryption(),
+            )
+        )
+
+        with (
+            patch.object(AzureProvider, "verify_client"),
+            pytest.raises(AzureNotValidCertificatePathError),
+        ):
+            AzureProvider.validate_static_credentials(
+                tenant_id=self._TENANT_ID,
+                client_id=self._CLIENT_ID,
+                client_secret=None,
+                certificate_content=None,
+                certificate_path=str(certificate_path),
+                region_config=self._region_config(),
+            )
+
+    def test_validate_static_credentials_rejects_mismatched_cert_file(self, tmp_path):
+        from cryptography.hazmat.primitives import serialization
+        from cryptography.hazmat.primitives.asymmetric import rsa
+
+        certificate, _ = self._certificate_and_key()
+        different_private_key = rsa.generate_private_key(
+            public_exponent=65537, key_size=2048
+        )
+        certificate_path = tmp_path / "mismatched-certificate.pem"
+        certificate_path.write_bytes(
+            certificate.public_bytes(serialization.Encoding.PEM)
+            + different_private_key.private_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PrivateFormat.PKCS8,
+                encryption_algorithm=serialization.NoEncryption(),
+            )
+        )
+
+        with (
+            patch.object(AzureProvider, "verify_client"),
+            pytest.raises(AzureNotValidCertificatePathError),
+        ):
+            AzureProvider.validate_static_credentials(
+                tenant_id=self._TENANT_ID,
+                client_id=self._CLIENT_ID,
+                client_secret=None,
+                certificate_content=None,
+                certificate_path=str(certificate_path),
+                region_config=self._region_config(),
+            )
+
+    def test_validate_static_credentials_accepts_valid_pem_cert_file(self, tmp_path):
+        from cryptography.hazmat.primitives import serialization
+
+        certificate, private_key = self._certificate_and_key()
+        certificate_path = tmp_path / "certificate-bundle.pem"
+        certificate_path.write_bytes(
+            certificate.public_bytes(serialization.Encoding.PEM)
+            + private_key.private_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PrivateFormat.PKCS8,
+                encryption_algorithm=serialization.NoEncryption(),
+            )
+        )
+
+        with patch.object(AzureProvider, "verify_client"):
+            credentials = AzureProvider.validate_static_credentials(
+                tenant_id=self._TENANT_ID,
+                client_id=self._CLIENT_ID,
+                client_secret=None,
+                certificate_content=None,
+                certificate_path=str(certificate_path),
+                region_config=self._region_config(),
+            )
+
+        assert credentials["certificate_path"] == str(certificate_path)
+
+    def test_validate_static_credentials_accepts_valid_pkcs12_cert_file(self, tmp_path):
+        from cryptography.hazmat.primitives import serialization
+        from cryptography.hazmat.primitives.serialization import pkcs12
+
+        certificate, private_key = self._certificate_and_key()
+        certificate_path = tmp_path / "certificate-bundle.pfx"
+        certificate_path.write_bytes(
+            pkcs12.serialize_key_and_certificates(
+                name=b"prowler",
+                key=private_key,
+                cert=certificate,
+                cas=None,
+                encryption_algorithm=serialization.NoEncryption(),
+            )
+        )
+
+        with patch.object(AzureProvider, "verify_client"):
+            credentials = AzureProvider.validate_static_credentials(
+                tenant_id=self._TENANT_ID,
+                client_id=self._CLIENT_ID,
+                client_secret=None,
+                certificate_content=None,
+                certificate_path=str(certificate_path),
+                region_config=self._region_config(),
+            )
+
+        assert credentials["certificate_path"] == str(certificate_path)
+
+    def test_setup_session_static_credentials_cert_content_uses_certificate_credential(
+        self,
+    ):
+        # When the credentials dict carries a certificate_content, setup_session
+        # must instantiate CertificateCredential (not ClientSecretCredential)
+        # with the decoded bytes.
+        with patch(
+            "prowler.providers.azure.azure_provider.CertificateCredential"
+        ) as mock_cert_cred:
+            AzureProvider.setup_session(
+                az_cli_auth=False,
+                sp_env_auth=False,
+                browser_auth=False,
+                managed_identity_auth=False,
+                certificate_auth=False,
+                certificate_path=None,
+                tenant_id=self._TENANT_ID,
+                azure_credentials={
+                    "tenant_id": self._TENANT_ID,
+                    "client_id": self._CLIENT_ID,
+                    "client_secret": None,
+                    "certificate_content": self._CERT_CONTENT_B64,
+                    "certificate_path": None,
+                },
+                region_config=self._region_config(),
+            )
+            mock_cert_cred.assert_called_once()
+            _, kwargs = mock_cert_cred.call_args
+            assert kwargs["tenant_id"] == self._TENANT_ID
+            assert kwargs["client_id"] == self._CLIENT_ID
+            # The dict content is passed through base64.b64decode into bytes.
+            assert isinstance(kwargs["certificate_data"], (bytes, bytearray))
+
+    def test_setup_session_static_credentials_certificate_path_reads_bundle(
+        self, tmp_path
+    ):
+        certificate_path = tmp_path / "prowler-cert.pem"
+        certificate_path.write_bytes(b"certificate bundle")
+        expected_credentials = MagicMock()
+
+        with patch(
+            "prowler.providers.azure.azure_provider._build_certificate_credential",
+            return_value=expected_credentials,
+        ) as build_certificate_credential:
+            credentials = AzureProvider.setup_session(
+                az_cli_auth=False,
+                sp_env_auth=False,
+                browser_auth=False,
+                managed_identity_auth=False,
+                certificate_auth=False,
+                certificate_path=None,
+                tenant_id=self._TENANT_ID,
+                azure_credentials={
+                    "tenant_id": self._TENANT_ID,
+                    "client_id": self._CLIENT_ID,
+                    "client_secret": None,
+                    "certificate_content": None,
+                    "certificate_path": str(certificate_path),
+                },
+                region_config=self._region_config(),
+            )
+
+        assert credentials is expected_credentials
+        build_certificate_credential.assert_called_once_with(
+            tenant_id=self._TENANT_ID,
+            client_id=self._CLIENT_ID,
+            certificate_data=b"certificate bundle",
+            authority=None,
+        )
+
+    def test_setup_session_env_cert_auth_uses_certificate_credential(self, monkeypatch):
+        monkeypatch.setenv("AZURE_CLIENT_ID", self._CLIENT_ID)
+        monkeypatch.setenv("AZURE_TENANT_ID", self._TENANT_ID)
+        monkeypatch.setenv("AZURE_CERTIFICATE_CONTENT", self._CERT_CONTENT_B64)
+        with patch(
+            "prowler.providers.azure.azure_provider.CertificateCredential"
+        ) as mock_cert_cred:
+            AzureProvider.setup_session(
+                az_cli_auth=False,
+                sp_env_auth=False,
+                browser_auth=False,
+                managed_identity_auth=False,
+                certificate_auth=True,
+                certificate_path=None,
+                tenant_id=None,
+                azure_credentials=None,
+                region_config=self._region_config(),
+            )
+            mock_cert_cred.assert_called_once()
+            _, kwargs = mock_cert_cred.call_args
+            assert kwargs["tenant_id"] == self._TENANT_ID
+            assert kwargs["client_id"] == self._CLIENT_ID
+
+    def test_setup_session_env_cert_auth_reads_certificate_path(
+        self, monkeypatch, tmp_path
+    ):
+        certificate_path = tmp_path / "prowler-cert.pem"
+        certificate_path.write_bytes(b"environment certificate bundle")
+        monkeypatch.setenv("AZURE_CLIENT_ID", self._CLIENT_ID)
+        monkeypatch.setenv("AZURE_TENANT_ID", self._TENANT_ID)
+        expected_credentials = MagicMock()
+
+        with patch(
+            "prowler.providers.azure.azure_provider._build_certificate_credential",
+            return_value=expected_credentials,
+        ) as build_certificate_credential:
+            credentials = AzureProvider.setup_session(
+                az_cli_auth=False,
+                sp_env_auth=False,
+                browser_auth=False,
+                managed_identity_auth=False,
+                certificate_auth=True,
+                certificate_path=str(certificate_path),
+                tenant_id=None,
+                azure_credentials=None,
+                region_config=self._region_config(),
+            )
+
+        assert credentials is expected_credentials
+        build_certificate_credential.assert_called_once_with(
+            tenant_id=self._TENANT_ID,
+            client_id=self._CLIENT_ID,
+            certificate_data=b"environment certificate bundle",
+            authority=None,
+        )
+
+    def test_setup_session_env_cert_auth_preserves_missing_variable_error(self):
+        expected_error = AzureEnvironmentVariableError(
+            file="azure_provider.py",
+            message="Missing certificate credentials.",
+        )
+
+        with (
+            patch.object(
+                AzureProvider,
+                "check_certificate_creds_env_vars",
+                side_effect=expected_error,
+            ),
+            pytest.raises(AzureEnvironmentVariableError) as exception,
+        ):
+            AzureProvider.setup_session(
+                az_cli_auth=False,
+                sp_env_auth=False,
+                browser_auth=False,
+                managed_identity_auth=False,
+                certificate_auth=True,
+                certificate_path=None,
+                tenant_id=None,
+                azure_credentials=None,
+                region_config=self._region_config(),
+            )
+
+        assert exception.value is expected_error
+
+    def test_setup_session_env_cert_auth_translates_authentication_error(
+        self, monkeypatch
+    ):
+        monkeypatch.setenv("AZURE_CLIENT_ID", self._CLIENT_ID)
+        monkeypatch.setenv("AZURE_TENANT_ID", self._TENANT_ID)
+        monkeypatch.setenv("AZURE_CERTIFICATE_CONTENT", self._CERT_CONTENT_B64)
+
+        with (
+            patch(
+                "prowler.providers.azure.azure_provider._build_certificate_credential",
+                side_effect=ClientAuthenticationError("invalid certificate"),
+            ),
+            pytest.raises(AzureSetUpSessionError, match="client authentication"),
+        ):
+            AzureProvider.setup_session(
+                az_cli_auth=False,
+                sp_env_auth=False,
+                browser_auth=False,
+                managed_identity_auth=False,
+                certificate_auth=True,
+                certificate_path=None,
+                tenant_id=None,
+                azure_credentials=None,
+                region_config=self._region_config(),
+            )
+
+    @pytest.mark.parametrize(
+        ("tenant_id", "client_id", "error_description", "expected_error"),
+        [
+            (
+                "invalid-tenant",
+                _CLIENT_ID,
+                "Tenant 'invalid-tenant' was not found",
+                AzureNotValidTenantIdError,
+            ),
+            (
+                _TENANT_ID,
+                "invalid-client",
+                "Application with identifier 'invalid-client' was not found",
+                AzureNotValidClientIdError,
+            ),
+            (
+                _TENANT_ID,
+                _CLIENT_ID,
+                "Invalid client secret provided",
+                AzureNotValidClientSecretError,
+            ),
+        ],
+    )
+    def test_verify_client_translates_token_endpoint_errors(
+        self, tenant_id, client_id, error_description, expected_error
+    ):
+        with (
+            patch("prowler.providers.azure.azure_provider.requests.post") as post,
+            pytest.raises(expected_error),
+        ):
+            post.return_value.json.return_value = {
+                "error_codes": [700016],
+                "error_description": error_description,
+            }
+            AzureProvider.verify_client(
+                tenant_id,
+                client_id,
+                "invalid-secret",
+                self._region_config(),
+            )
+
+    def test_verify_client_certificate_content_acquires_graph_token(self):
+        import base64
+
+        with patch(
+            "prowler.providers.azure.azure_provider.CertificateCredential"
+        ) as certificate_credential:
+            AzureProvider.verify_client(
+                self._TENANT_ID,
+                self._CLIENT_ID,
+                client_secret=None,
+                region_config=self._region_config(),
+                certificate_content=self._CERT_CONTENT_B64,
+            )
+
+        certificate_credential.assert_called_once_with(
+            client_id=self._CLIENT_ID,
+            tenant_id=self._TENANT_ID,
+            certificate_data=base64.b64decode(self._CERT_CONTENT_B64),
+            authority=None,
+        )
+        certificate_credential.return_value.get_token.assert_called_once_with(
+            "https://graph.microsoft.com/.default"
+        )
+
+    def test_verify_client_certificate_path_reads_bundle(self, tmp_path):
+        certificate_path = tmp_path / "prowler-cert.pem"
+        certificate_path.write_bytes(b"certificate bundle")
+
+        with patch(
+            "prowler.providers.azure.azure_provider.CertificateCredential"
+        ) as certificate_credential:
+            AzureProvider.verify_client(
+                self._TENANT_ID,
+                self._CLIENT_ID,
+                client_secret=None,
+                region_config=self._region_config(),
+                certificate_path=str(certificate_path),
+            )
+
+        assert (
+            certificate_credential.call_args.kwargs["certificate_data"]
+            == b"certificate bundle"
+        )
+        certificate_credential.return_value.get_token.assert_called_once_with(
+            "https://graph.microsoft.com/.default"
+        )
+
+    @pytest.mark.parametrize("credential_source", ["content", "path"])
+    def test_verify_client_translates_certificate_authentication_error(
+        self, credential_source, tmp_path
+    ):
+        certificate_content = None
+        certificate_path = None
+        expected_error = AzureNotValidCertificateContentError
+        if credential_source == "content":
+            certificate_content = self._CERT_CONTENT_B64
+        else:
+            path = tmp_path / "prowler-cert.pem"
+            path.write_bytes(b"certificate bundle")
+            certificate_path = str(path)
+            expected_error = AzureNotValidCertificatePathError
+
+        with (
+            patch(
+                "prowler.providers.azure.azure_provider.CertificateCredential",
+                side_effect=ClientAuthenticationError("invalid certificate"),
+            ),
+            pytest.raises(expected_error),
+        ):
+            AzureProvider.verify_client(
+                self._TENANT_ID,
+                self._CLIENT_ID,
+                client_secret=None,
+                region_config=self._region_config(),
+                certificate_content=certificate_content,
+                certificate_path=certificate_path,
+            )
+
+    def test_verify_client_without_credential_material_returns(self):
+        assert (
+            AzureProvider.verify_client(
+                self._TENANT_ID,
+                self._CLIENT_ID,
+                client_secret=None,
+                region_config=self._region_config(),
+            )
+            is None
+        )
+
+    def test_certificate_identity_and_printed_credentials_include_thumbprint(self):
+        from cryptography.hazmat.primitives import hashes, serialization
+
+        from prowler.providers.azure.azure_provider import (
+            _build_certificate_credential,
+        )
+
+        certificate, private_key = self._certificate_and_key()
+        bundle = certificate.public_bytes(
+            serialization.Encoding.PEM
+        ) + private_key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.NoEncryption(),
+        )
+        expected_thumbprint = certificate.fingerprint(hashes.SHA1()).hex().upper()
+        credentials = _build_certificate_credential(
+            tenant_id=self._TENANT_ID,
+            client_id=self._CLIENT_ID,
+            certificate_data=bundle,
+            authority=None,
+        )
+
+        with patch.object(AzureProvider, "__init__", return_value=None):
+            provider = AzureProvider()
+        provider._session = credentials
+        provider._region_config = self._region_config()
+
+        graph_client = MagicMock()
+        graph_client.domains.get = AsyncMock(return_value=MagicMock(value=[]))
+        subscription_client = MagicMock()
+        subscription_client.subscriptions.list.return_value = [
+            MagicMock(display_name="Subscription", subscription_id="subscription-id")
+        ]
+        subscription_client.tenants.list.return_value = [
+            MagicMock(tenant_id=self._TENANT_ID)
+        ]
+
+        with (
+            patch(
+                "prowler.providers.azure.azure_provider.GraphServiceClient",
+                return_value=graph_client,
+            ),
+            patch(
+                "prowler.providers.azure.azure_provider.SubscriptionClient",
+                return_value=subscription_client,
+            ),
+        ):
+            identity = provider.setup_identity(
+                az_cli_auth=False,
+                sp_env_auth=False,
+                browser_auth=False,
+                managed_identity_auth=False,
+                certificate_auth=False,
+                subscription_ids=[],
+                client_id=self._CLIENT_ID,
+            )
+
+        assert identity.identity_id == self._CLIENT_ID
+        assert identity.identity_type == "Service Principal with Certificate"
+        assert identity.certificate_thumbprint == expected_thumbprint
+
+        provider._identity = identity
+        provider._resource_groups = {}
+        with patch("prowler.providers.azure.azure_provider.print_boxes") as print_boxes:
+            provider.print_credentials()
+
+        report_lines = print_boxes.call_args.args[0]
+        assert any(expected_thumbprint in line for line in report_lines)
+
+    def test_setup_session_attaches_computed_thumbprint(self):
+        # Regression guard for the thumbprint handoff added in PROWLER-2378.
+        # The earlier `test_setup_session_static_credentials_cert_content_...`
+        # test patches `CertificateCredential` with a `MagicMock` which
+        # silently accepts any `setattr`, so even a missing hand-off would
+        # look green. This test uses a REAL certificate so
+        # `_compute_certificate_thumbprint` returns a real value and asserts
+        # the credential object actually carries it under
+        # `_PROWLER_CERT_THUMBPRINT_ATTR` — the sole reason that attribute
+        # exists is `setup_identity`'s cert-branch reading it.
+        import base64
+        from datetime import datetime, timedelta, timezone
+
+        from cryptography import x509
+        from cryptography.hazmat.backends import default_backend
+        from cryptography.hazmat.primitives import hashes, serialization
+        from cryptography.hazmat.primitives.asymmetric import rsa
+        from cryptography.hazmat.primitives.serialization import pkcs12
+        from cryptography.x509.oid import NameOID
+
+        from prowler.providers.azure.azure_provider import (
+            _PROWLER_CERT_THUMBPRINT_ATTR,
+        )
+
+        key = rsa.generate_private_key(
+            public_exponent=65537, key_size=2048, backend=default_backend()
+        )
+        subject = issuer = x509.Name(
+            [x509.NameAttribute(NameOID.COMMON_NAME, "prowler-test")]
+        )
+        cert = (
+            x509.CertificateBuilder()
+            .subject_name(subject)
+            .issuer_name(issuer)
+            .public_key(key.public_key())
+            .serial_number(x509.random_serial_number())
+            .not_valid_before(datetime.now(timezone.utc))
+            .not_valid_after(datetime.now(timezone.utc) + timedelta(days=1))
+            .sign(key, hashes.SHA256(), default_backend())
+        )
+        expected_thumbprint = cert.fingerprint(hashes.SHA1()).hex().upper()
+        # azure-identity accepts PKCS#12; encode it so the dict looks like
+        # what the API layer stores after the serializer runs.
+        pfx = pkcs12.serialize_key_and_certificates(
+            name=b"prowler",
+            key=key,
+            cert=cert,
+            cas=None,
+            encryption_algorithm=serialization.NoEncryption(),
+        )
+        cert_content_b64 = base64.b64encode(pfx).decode("ascii")
+
+        credentials = AzureProvider.setup_session(
+            az_cli_auth=False,
+            sp_env_auth=False,
+            browser_auth=False,
+            managed_identity_auth=False,
+            certificate_auth=False,
+            certificate_path=None,
+            tenant_id=self._TENANT_ID,
+            azure_credentials={
+                "tenant_id": self._TENANT_ID,
+                "client_id": self._CLIENT_ID,
+                "client_secret": None,
+                "certificate_content": cert_content_b64,
+                "certificate_path": None,
+            },
+            region_config=self._region_config(),
+        )
+        assert (
+            getattr(credentials, _PROWLER_CERT_THUMBPRINT_ATTR, None)
+            == expected_thumbprint
+        )
+
+    def test_setup_session_static_credentials_client_secret_still_works(self):
+        # Regression guard: adding cert branches to setup_session must not
+        # break the pre-existing client-secret static credentials flow.
+        with patch(
+            "prowler.providers.azure.azure_provider.ClientSecretCredential"
+        ) as mock_secret_cred:
+            AzureProvider.setup_session(
+                az_cli_auth=False,
+                sp_env_auth=False,
+                browser_auth=False,
+                managed_identity_auth=False,
+                certificate_auth=False,
+                certificate_path=None,
+                tenant_id=self._TENANT_ID,
+                azure_credentials={
+                    "tenant_id": self._TENANT_ID,
+                    "client_id": self._CLIENT_ID,
+                    "client_secret": "fake-secret",
+                    "certificate_content": None,
+                    "certificate_path": None,
+                },
+                region_config=self._region_config(),
+            )
+            mock_secret_cred.assert_called_once_with(
+                tenant_id=self._TENANT_ID,
+                client_id=self._CLIENT_ID,
+                client_secret="fake-secret",
+                authority=self._region_config().authority,
+            )
+
+
+class TestAzureProviderCertificateThumbprint:
+    """Coverage for `_compute_certificate_thumbprint` — the SHA-1 fingerprint
+    helper that replaces azure-identity's private `_client_credential` API
+    for the identity report."""
+
+    def _self_signed_pem_and_thumbprint(self):
+        # Generate a real self-signed cert in-memory so the test verifies the
+        # actual thumbprint computation instead of relying on hardcoded values.
+        # This mirrors what an openssl-generated cert looks like on disk.
+        from datetime import datetime, timedelta, timezone
+
+        from cryptography import x509
+        from cryptography.hazmat.backends import default_backend
+        from cryptography.hazmat.primitives import hashes, serialization
+        from cryptography.hazmat.primitives.asymmetric import rsa
+        from cryptography.x509.oid import NameOID
+
+        key = rsa.generate_private_key(
+            public_exponent=65537, key_size=2048, backend=default_backend()
+        )
+        subject = issuer = x509.Name(
+            [x509.NameAttribute(NameOID.COMMON_NAME, "prowler-test")]
+        )
+        cert = (
+            x509.CertificateBuilder()
+            .subject_name(subject)
+            .issuer_name(issuer)
+            .public_key(key.public_key())
+            .serial_number(x509.random_serial_number())
+            .not_valid_before(datetime.now(timezone.utc))
+            .not_valid_after(datetime.now(timezone.utc) + timedelta(days=1))
+            .sign(key, hashes.SHA256(), default_backend())
+        )
+        pem = cert.public_bytes(serialization.Encoding.PEM)
+        der = cert.public_bytes(serialization.Encoding.DER)
+        thumbprint = cert.fingerprint(hashes.SHA1()).hex().upper()
+        return pem, der, key, thumbprint
+
+    def test_computes_thumbprint_from_pem(self):
+        from prowler.providers.azure.azure_provider import (
+            _compute_certificate_thumbprint,
+        )
+
+        pem, _, _, expected = self._self_signed_pem_and_thumbprint()
+        assert _compute_certificate_thumbprint(pem) == expected
+
+    def test_computes_thumbprint_from_der(self):
+        from prowler.providers.azure.azure_provider import (
+            _compute_certificate_thumbprint,
+        )
+
+        _, der, _, expected = self._self_signed_pem_and_thumbprint()
+        assert _compute_certificate_thumbprint(der) == expected
+
+    def test_computes_thumbprint_from_pfx(self):
+        # PowerShell's `Export('Pfx', '')` produces exactly this: PKCS#12 with
+        # no password. `azure-identity.CertificateCredential` accepts it, so
+        # our helper must recognise it too.
+        from cryptography.hazmat.primitives.serialization import pkcs12
+
+        from prowler.providers.azure.azure_provider import (
+            _compute_certificate_thumbprint,
+        )
+
+        pem, _, key, expected = self._self_signed_pem_and_thumbprint()
+        from cryptography import x509
+        from cryptography.hazmat.backends import default_backend
+
+        cert = x509.load_pem_x509_certificate(pem, default_backend())
+        pfx = pkcs12.serialize_key_and_certificates(
+            name=b"prowler",
+            key=key,
+            cert=cert,
+            cas=None,
+            encryption_algorithm=serialization_no_encryption(),
+        )
+        assert _compute_certificate_thumbprint(pfx) == expected
+
+    def test_returns_none_for_garbage_bytes(self):
+        from prowler.providers.azure.azure_provider import (
+            _compute_certificate_thumbprint,
+        )
+
+        assert _compute_certificate_thumbprint(b"definitely not a cert") is None
+
+    def test_returns_none_for_key_only_pkcs12(self):
+        from cryptography.hazmat.primitives import serialization
+        from cryptography.hazmat.primitives.serialization import pkcs12
+
+        from prowler.providers.azure.azure_provider import (
+            _compute_certificate_thumbprint,
+        )
+
+        _, _, key, _ = self._self_signed_pem_and_thumbprint()
+        key_only_pkcs12 = pkcs12.serialize_key_and_certificates(
+            name=b"prowler",
+            key=key,
+            cert=None,
+            cas=None,
+            encryption_algorithm=serialization.NoEncryption(),
+        )
+
+        assert _compute_certificate_thumbprint(key_only_pkcs12) is None
+
+
+def serialization_no_encryption():
+    # Kept out of the test method so the PKCS#12 test reads cleanly. Wraps
+    # the deliberate "no password" export path.
+    from cryptography.hazmat.primitives import serialization
+
+    return serialization.NoEncryption()
