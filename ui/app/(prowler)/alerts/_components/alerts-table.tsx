@@ -35,10 +35,7 @@ const summarize = (first: string, count: number): string | null => {
   return `${first} +${count - 1} more`;
 };
 
-/**
- * One compact answer to "where does this go?" (design D6): the email summary
- * and the channel summary side by side, either omitted when empty.
- */
+/** Both destination kinds share one compact cell (design D6). */
 const formatDestinations = (alert: AlertRule): string => {
   const recipients = alert.attributes.recipient_emails ?? [];
   const channels = alert.attributes.slack_channels ?? [];
