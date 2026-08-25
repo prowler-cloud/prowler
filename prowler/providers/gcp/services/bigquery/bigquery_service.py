@@ -13,6 +13,28 @@ from prowler.providers.gcp.lib.service.service import GCPService
 # large estate cannot exhaust the BigQuery API quota.
 MAX_WORKERS = 10
 
+# Executor.map collects its input eagerly: CPython submits a future for every item
+# before yielding the first result. Handing it every table in a large estate would
+# therefore hold tens of thousands of pending futures, and the responses of those
+# already finished, in memory at once. Feeding it fixed batches keeps the outstanding
+# work proportional to the pool while preserving result order.
+SUBMIT_BATCH = MAX_WORKERS * 8
+
+
+def _map_in_batches(executor, call, items):
+    """``executor.map`` over ``items`` without submitting them all at once.
+
+    Args:
+        executor: The shared pool.
+        call: Applied to each item.
+        items: A sequence, consumed in order.
+
+    Yields:
+        Each result in input order, at most ``SUBMIT_BATCH`` submissions ahead.
+    """
+    for start in range(0, len(items), SUBMIT_BATCH):
+        yield from executor.map(call, items[start : start + SUBMIT_BATCH])
+
 
 class BigQuery(GCPService):
     def __init__(self, provider: GcpProvider):
@@ -83,7 +105,8 @@ class BigQuery(GCPService):
                 # in listing order regardless of completion order.
                 for dataset, dataset_info in zip(
                     dataset_refs,
-                    executor.map(
+                    _map_in_batches(
+                        executor,
                         lambda ref: self._describe_dataset(project_id, ref),
                         dataset_refs,
                     ),
@@ -188,7 +211,7 @@ class BigQuery(GCPService):
             # concurrency ceiling is global rather than multiplied by the
             # dataset count. executor.map preserves input order, so self.tables
             # stays in listing order.
-            described = executor.map(self._describe_table, table_refs)
+            described = _map_in_batches(executor, self._describe_table, table_refs)
 
             for (dataset, table), table_info in zip(table_refs, described):
                 if table_info is None:

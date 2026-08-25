@@ -220,3 +220,48 @@ class TestBigQueryConcurrentEnumeration:
             f"created {len(created)} http clients across 3 projects; "
             f"expected at most {bigquery_service.MAX_WORKERS}"
         )
+
+    def test_concurrent_workers_receive_distinct_http_clients(self):
+        """Bounding the client count is not enough; workers must not share one.
+
+        A single globally cached AuthorizedHttp would satisfy the upper-bound
+        assertion above with created == 1 while still handing the same
+        non-thread-safe object to every worker. This forces two describe calls
+        to overlap and checks they hold different clients.
+        """
+        import threading
+
+        seen = {}
+        overlap = threading.Barrier(2, timeout=10)
+
+        client = _mocked_client(
+            ["dataset_a"], {"dataset_a": [f"t{i}" for i in range(8)]}
+        )
+
+        def _execute(http=None, num_retries=None):
+            seen.setdefault(threading.get_ident(), []).append(id(http))
+            try:
+                overlap.wait()
+            except threading.BrokenBarrierError:
+                pass
+            return {}
+
+        client.tables.return_value.get.side_effect = (
+            lambda projectId, datasetId, tableId: MagicMock(execute=_execute)
+        )
+
+        _bigquery_with(client)
+
+        assert len(seen) >= 2, (
+            f"expected at least two concurrent workers, saw {len(seen)} thread(s)"
+        )
+        per_thread = {tid: set(ids) for tid, ids in seen.items()}
+        for tid, ids in per_thread.items():
+            assert len(ids) == 1, (
+                f"thread {tid} used {len(ids)} http clients, expected 1"
+            )
+        distinct = {next(iter(ids)) for ids in per_thread.values()}
+        assert len(distinct) == len(per_thread), (
+            "concurrent workers shared an http client; googleapiclient's http is "
+            "not thread safe"
+        )
