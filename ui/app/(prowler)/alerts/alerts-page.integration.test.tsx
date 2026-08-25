@@ -362,6 +362,26 @@ describe("alert rules target Slack channels", () => {
     ]);
   });
 
+  it("does not claim the workspace is missing when its integration read rejects", async () => {
+    // Given - The channel read succeeds with an empty eligible pool while the
+    // integration read fails before receiving an HTTP response.
+    const harness = new AlertsPageHarness(
+      reinstalledWorkspaceAlertsFixture({ integrationsNetworkError: true }),
+    );
+    await harness.mount();
+
+    // When
+    await harness.openEditModal(RULE_NAME);
+
+    // Then
+    expect(await harness.channelFieldState()).toBe(
+      CHANNEL_FIELD_STATE.NO_INTEGRATION,
+    );
+    const notice = await harness.channelFieldNotice();
+    expect(notice).toMatch(/could not be checked/i);
+    expect(notice).not.toMatch(/needs a connected Slack workspace/i);
+  });
+
   it("surfaces the refusal when a channel just added went stale before the save", async () => {
     const fixture = alertsFixture();
     const harness = new AlertsPageHarness(fixture);

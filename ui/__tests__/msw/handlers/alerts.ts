@@ -372,6 +372,7 @@ export const handlersForAlerts = (fx: AlertsFixture) => {
 
     // Read so the form can tell "no workspace" from "no eligible channels".
     http.get(`${API}/integrations`, ({ request }) => {
+      if (fx.integrationsNetworkError) return HttpResponse.error();
       if (fx.integrationsReadError)
         return readFailure(fx.integrationsReadError);
       const type = new URL(request.url).searchParams.get(

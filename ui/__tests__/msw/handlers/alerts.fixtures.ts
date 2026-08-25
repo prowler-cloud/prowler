@@ -87,6 +87,8 @@ export interface AlertsFixture {
    * non-admin editing an alert rule always lands here.
    */
   integrationsReadError: number | null;
+  /** Whether `GET /integrations` rejects at the transport layer. */
+  integrationsNetworkError: boolean;
 }
 
 export const ALERTS_SLACK_INTEGRATION_ID =
@@ -184,6 +186,7 @@ export const alertsFixture = (
   listServerError: false,
   channelsReadError: null,
   integrationsReadError: null,
+  integrationsNetworkError: false,
   ...overrides,
 });
 
