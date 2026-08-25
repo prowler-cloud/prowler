@@ -1,33 +1,8 @@
-import react, { type BabelOptions } from "@vitejs/plugin-react";
+import react from "@vitejs/plugin-react";
 import { playwright } from "@vitest/browser-playwright";
-import fs from "fs";
 import path from "path";
 import type { TestProjectConfiguration } from "vitest/config";
 import { defineConfig } from "vitest/config";
-
-/**
- * Next runs the React Compiler on the client compilation only — its
- * `getReactCompilerPlugins` returns nothing when `isServer` — so a Server
- * Component ships uncompiled. Mirror that: compiled, it calls `useMemoCache`
- * on the active dispatcher, which a harness invoking the component as a
- * function has none of, and `react/compiler-runtime` reads the client
- * internals the `react-server` build does not export anyway.
- */
-const isServerModule = (id: string): boolean => {
-  const file = id.split("?")[0];
-  if (!file.includes("/app/")) return false;
-  try {
-    return !/^\s*["']use client["']/.test(fs.readFileSync(file, "utf8"));
-  } catch {
-    return false;
-  }
-};
-
-const reactCompilerBabel = (id: string): BabelOptions => ({
-  plugins: isServerModule(id)
-    ? []
-    : [["babel-plugin-react-compiler", { target: "19" }]],
-});
 
 export default defineConfig(() => {
   const apiBaseUrl = process.env.UI_API_BASE_URL ?? "http://localhost/api/v1";
@@ -82,7 +57,13 @@ export default defineConfig(() => {
         },
         {
           extends: true,
-          plugins: [react({ babel: reactCompilerBabel })],
+          plugins: [
+            react({
+              babel: {
+                plugins: [["babel-plugin-react-compiler", { target: "19" }]],
+              },
+            }),
+          ],
           test: {
             name: "integration",
             setupFiles: ["./vitest.integration.setup.ts"],
@@ -125,12 +106,16 @@ export default defineConfig(() => {
         "vitest-browser-react",
         "msw/browser",
 
+        // Azure certificate generator (PROWLER-2378). Vite would otherwise
+        // discover these two on first import inside a component test, which
+        // triggers a mid-run "optimized dependencies changed. reloading" and
+        // races with Playwright's route handlers.
+        "@peculiar/x509",
+        "reflect-metadata",
+
         // React runtime (pre-bundle so a cold run doesn't re-optimize and
         // reload mid-test — see the on-demand-reload note above).
         "react-dom/client",
-        // What the compiler's output imports. `@vitejs/plugin-react` adds it
-        // itself only when `babel` is a plain object, and ours is a function.
-        "react/compiler-runtime",
 
         // Next runtime
         "next/headers",

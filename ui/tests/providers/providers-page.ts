@@ -123,9 +123,12 @@ export interface AWSProviderCredential {
   secretAccessKey?: string;
 }
 
-// AZURE credential options
+// AZURE credential options — mirror the M365 selector added for the
+// Deploy-to-Azure quick-start (PROWLER-2378). "credentials" keeps the
+// legacy name for the client-secret path so existing specs keep working.
 export const AZURE_CREDENTIAL_OPTIONS = {
   AZURE_CREDENTIALS: "credentials",
+  AZURE_CERTIFICATE_CREDENTIALS: "certificate",
 } as const;
 
 // AZURE credential type
@@ -136,7 +139,8 @@ type AZURECredentialType =
 export interface AZUREProviderCredential {
   type: AZURECredentialType;
   clientId: string;
-  clientSecret: string;
+  clientSecret?: string;
+  certificateContent?: string;
   tenantId: string;
 }
 
@@ -316,6 +320,10 @@ export class ProvidersPage extends BasePage {
   readonly roleCredentialsRadio: Locator;
   readonly staticCredentialsRadio: Locator;
 
+  // Azure credentials type selection
+  readonly azureServicePrincipalRadio: Locator;
+  readonly azureCertificateCredentialsRadio: Locator;
+
   // M365 credentials type selection
   readonly m365StaticCredentialsRadio: Locator;
   readonly m365CertificateCredentialsRadio: Locator;
@@ -336,6 +344,7 @@ export class ProvidersPage extends BasePage {
   readonly azureSubscriptionIdInput: Locator;
   readonly azureClientIdInput: Locator;
   readonly azureClientSecretInput: Locator;
+  readonly azureCertificateContentInput: Locator;
   readonly azureTenantIdInput: Locator;
 
   // M365 provider form elements
@@ -457,6 +466,9 @@ export class ProvidersPage extends BasePage {
     this.azureClientIdInput = page.getByRole("textbox", { name: "Client ID" });
     this.azureClientSecretInput = page.getByRole("textbox", {
       name: "Client Secret",
+    });
+    this.azureCertificateContentInput = page.getByRole("textbox", {
+      name: "Certificate and Private Key Bundle (Base64)",
     });
     this.azureTenantIdInput = page.getByRole("textbox", { name: "Tenant ID" });
 
@@ -593,6 +605,16 @@ export class ProvidersPage extends BasePage {
     });
     this.staticCredentialsRadio = page.getByRole("radio", {
       name: /Connect via Credentials/i,
+    });
+
+    // Radios for selecting Azure credentials method (PROWLER-2378 added the
+    // certificate flow; the client-secret radio stayed but is now inside a
+    // selector step instead of being the default form).
+    this.azureServicePrincipalRadio = page.getByRole("radio", {
+      name: /Service Principal with Client Secret/i,
+    });
+    this.azureCertificateCredentialsRadio = page.getByRole("radio", {
+      name: /Certificate Authentication/i,
     });
 
     // Radios for selecting M365 credentials method
@@ -1076,6 +1098,24 @@ export class ProvidersPage extends BasePage {
     }
   }
 
+  async selectAzureCredentialsType(type: AZURECredentialType): Promise<void> {
+    // PROWLER-2378 introduced a credential-type selector for Azure, mirroring
+    // AWS/GCP/M365. The credentials form is now behind a radio choice, so
+    // any spec that reaches Azure credentials must pick the type first.
+    await this.verifyWizardModalOpen();
+    await expect(this.azureServicePrincipalRadio).toBeVisible();
+
+    if (type === AZURE_CREDENTIAL_OPTIONS.AZURE_CREDENTIALS) {
+      await this.azureServicePrincipalRadio.click({ force: true });
+    } else if (
+      type === AZURE_CREDENTIAL_OPTIONS.AZURE_CERTIFICATE_CREDENTIALS
+    ) {
+      await this.azureCertificateCredentialsRadio.click({ force: true });
+    } else {
+      throw new Error(`Invalid Azure credential type: ${type}`);
+    }
+  }
+
   async selectM365CredentialsType(type: M365CredentialType): Promise<void> {
     await this.verifyWizardModalOpen();
     await expect(this.m365StaticCredentialsRadio).toBeVisible();
@@ -1198,6 +1238,18 @@ export class ProvidersPage extends BasePage {
     }
     if (credentials.tenantId) {
       await this.azureTenantIdInput.fill(credentials.tenantId);
+    }
+  }
+
+  async fillAzureCertificateCredentials(
+    credentials: AZUREProviderCredential,
+  ): Promise<void> {
+    await this.azureClientIdInput.fill(credentials.clientId);
+    await this.azureTenantIdInput.fill(credentials.tenantId);
+    if (credentials.certificateContent) {
+      await this.azureCertificateContentInput.fill(
+        credentials.certificateContent,
+      );
     }
   }
 
@@ -1576,6 +1628,35 @@ export class ProvidersPage extends BasePage {
     await expect(this.m365ClientIdInput).toBeVisible();
     await expect(this.m365ClientSecretInput).toBeVisible();
     await expect(this.m365TenantIdInput).toBeVisible();
+  }
+
+  async verifyAzureCertificateCredentialsPageLoaded(): Promise<void> {
+    await this.verifyPageHasProwlerTitle();
+    await expect(this.wizardModal.locator("ol > li")).toHaveCount(6);
+    await expect(
+      this.page.getByRole("link", {
+        name: "Deploy to Azure",
+        exact: true,
+      }),
+    ).toHaveAttribute(
+      "href",
+      "https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fdocs.prowler.com%2Fassets%2Ftemplates%2Fazure%2Fprowler-scan.json",
+    );
+    await expect(
+      this.page.getByRole("link", {
+        name: "Open template",
+        exact: true,
+      }),
+    ).toHaveAttribute(
+      "href",
+      "https://docs.prowler.com/assets/templates/azure/prowler-scan.json",
+    );
+    await expect(
+      this.page.getByRole("button", { name: "Generate certificate" }),
+    ).toBeVisible();
+    await expect(this.azureClientIdInput).toBeVisible();
+    await expect(this.azureTenantIdInput).toBeVisible();
+    await expect(this.azureCertificateContentInput).toBeVisible();
   }
 
   async verifyM365CertificateCredentialsPageLoaded(): Promise<void> {

@@ -17,7 +17,8 @@ import {
   ApiResponse,
   AWSCredentials,
   AWSCredentialsRole,
-  AzureCredentials,
+  AzureCertificateCredentials,
+  AzureClientSecretCredentials,
   CloudflareApiKeyCredentials,
   CloudflareTokenCredentials,
   GCPDefaultCredentials,
@@ -45,6 +46,10 @@ import {
 import { AWSStaticCredentialsForm } from "./select-credentials-type/aws/credentials-type";
 import { AWSRoleCredentialsForm } from "./select-credentials-type/aws/credentials-type/aws-role-credentials-form";
 import {
+  AzureCertificateCredentialsForm,
+  AzureServicePrincipalCredentialsForm,
+} from "./select-credentials-type/azure";
+import {
   CloudflareApiKeyCredentialsForm,
   CloudflareApiTokenCredentialsForm,
 } from "./select-credentials-type/cloudflare";
@@ -54,7 +59,6 @@ import {
   M365CertificateCredentialsForm,
   M365ClientSecretCredentialsForm,
 } from "./select-credentials-type/m365";
-import { AzureCredentialsForm } from "./via-credentials/azure-credentials-form";
 import { GitHubCredentialsForm } from "./via-credentials/github-credentials-form";
 import { GoogleWorkspaceCredentialsForm } from "./via-credentials/googleworkspace-credentials-form";
 import { IacCredentialsForm } from "./via-credentials/iac-credentials-form";
@@ -175,9 +179,18 @@ export const BaseCredentialsForm = ({
             control={form.control as unknown as Control<AWSCredentials>}
           />
         )}
-        {providerType === "azure" && (
-          <AzureCredentialsForm
-            control={form.control as unknown as Control<AzureCredentials>}
+        {providerType === "azure" && effectiveVia === "app_client_secret" && (
+          <AzureServicePrincipalCredentialsForm
+            control={
+              form.control as unknown as Control<AzureClientSecretCredentials>
+            }
+          />
+        )}
+        {providerType === "azure" && effectiveVia === "app_certificate" && (
+          <AzureCertificateCredentialsForm
+            control={
+              form.control as unknown as Control<AzureCertificateCredentials>
+            }
           />
         )}
         {providerType === "m365" && effectiveVia === "app_client_secret" && (
