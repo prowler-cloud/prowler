@@ -58,8 +58,7 @@ class ProwlerDocsSearchEngine:
         )
 
     def search(self, query: str, page_size: int = 5) -> list[SearchResult]:
-        """
-        Search documentation using Mintlify API.
+        """Search documentation using Mintlify API.
 
         Args:
             query: Search query string
@@ -69,82 +68,80 @@ class ProwlerDocsSearchEngine:
 
         Returns:
             list of search results
+
+        Raises:
+            httpx.HTTPError: If the search request failed, which is not the same
+                answer as no matches
         """
-        try:
-            # Make request to Mintlify API
-            response = self.mintlify_client.post(
-                self.api_base_url,
-                json={"query": query, "filters": {}},
-            )
-            response.raise_for_status()
-            data = response.json()
+        # Make request to Mintlify API
+        response = self.mintlify_client.post(
+            self.api_base_url,
+            json={"query": query, "filters": {}},
+        )
+        response.raise_for_status()
+        data = response.json()
 
-            # Parse results
-            results = []
-            for match in data.get("results", [])[:page_size]:
-                metadata = match.get("metadata", {})
-                breadcrumbs = metadata.get("breadcrumbs", [])
-                doc_path = match.get("page", "")
+        # Parse results
+        results = []
+        for match in data.get("results", [])[:page_size]:
+            metadata = match.get("metadata", {})
+            breadcrumbs = metadata.get("breadcrumbs", [])
+            doc_path = match.get("page", "")
 
-                # A match is one section of a page rather than the page: the
-                # heading it was found under is its header, and the page's own
-                # title is the last step of its breadcrumb trail.
-                section = match.get("header", "")
-                title = breadcrumbs[-1] if breadcrumbs else section
+            # A match is one section of a page rather than the page: the
+            # heading it was found under is its header, and the page's own
+            # title is the last step of its breadcrumb trail.
+            section = match.get("header", "")
+            title = breadcrumbs[-1] if breadcrumbs else section
 
-                # Sent as "" for the section a page opens with and as null for
-                # the pages that have no anchors at all; both mean the page.
-                anchor = metadata.get("hash")
-                url = f"{self.docs_base_url}/{doc_path}"
-                if anchor:
-                    url = f"{url}#{anchor}"
+            # Sent as "" for the section a page opens with and as null for
+            # the pages that have no anchors at all; both mean the page.
+            anchor = metadata.get("hash")
+            url = f"{self.docs_base_url}/{doc_path}"
+            if anchor:
+                url = f"{url}#{anchor}"
 
-                results.append(
-                    SearchResult(
-                        path=doc_path,
-                        title=title,
-                        section=section,
-                        breadcrumbs=breadcrumbs,
-                        url=url,
-                        excerpt=match.get("content", ""),
-                        score=match.get("score", 0.0),
-                    )
+            results.append(
+                SearchResult(
+                    path=doc_path,
+                    title=title,
+                    section=section,
+                    breadcrumbs=breadcrumbs,
+                    url=url,
+                    excerpt=match.get("content", ""),
+                    score=match.get("score", 0.0),
                 )
+            )
 
-            return results
-
-        except Exception as e:
-            # Return empty list on error
-            print(f"Search error: {e}")
-            return []
+        return results
 
     def get_document(self, doc_path: str) -> str | None:
-        """
-        Get full document content from Mintlify documentation.
+        """Get full document content from Mintlify documentation.
 
         Args:
             doc_path: Path to the documentation file (e.g., "getting-started/installation")
 
         Returns:
-            Full markdown content of the documentation, or None if not found
+            Full markdown content of the documentation, or None if there is no
+            page at that path
+
+        Raises:
+            httpx.HTTPError: If the fetch failed for any reason other than a 404
         """
-        try:
-            # Clean up the path
-            doc_path = doc_path.rstrip("/")
+        # Clean up the path
+        doc_path = doc_path.rstrip("/")
 
-            # Add .md extension if not present (Mintlify serves both .md and .mdx)
-            if not doc_path.endswith(".md"):
-                doc_path = f"{doc_path}.md"
+        # Add .md extension if not present (Mintlify serves both .md and .mdx)
+        if not doc_path.endswith(".md"):
+            doc_path = f"{doc_path}.md"
 
-            # Construct Mintlify URL
-            url = f"{self.docs_base_url}/{doc_path}"
+        # Construct Mintlify URL
+        url = f"{self.docs_base_url}/{doc_path}"
 
-            # Fetch the documentation page
-            response = self.docs_client.get(url)
-            response.raise_for_status()
-
-            return response.text
-
-        except Exception as e:
-            print(f"Error fetching document: {e}")
+        # Fetch the documentation page
+        response = self.docs_client.get(url)
+        if response.status_code == 404:
             return None
+        response.raise_for_status()
+
+        return response.text

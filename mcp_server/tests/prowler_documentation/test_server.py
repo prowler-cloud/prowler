@@ -1,7 +1,9 @@
-"""Tests for the Prowler documentation search tool.
+"""Tests for the Prowler documentation tools.
 
 Mintlify moved the docs search to a new endpoint that answers with page
-sections, so a result is a part of a page and has to read as one.
+sections, so a result is a part of a page and has to read as one. And a failed
+request must not reach an agent as "the documentation has nothing on this",
+which is an answer it would act on, confidently and wrongly.
 """
 
 import json
@@ -9,6 +11,7 @@ import json
 from fastmcp import Client
 
 SEARCH = "/api/search/prowler"
+DOC = "/getting-started/installation.md"
 
 
 def search_match(
@@ -107,3 +110,46 @@ async def test_page_size_caps_a_response_the_api_did_not_size(
         )
 
     assert len(result.data) == 2
+
+
+async def test_a_search_that_failed_is_not_reported_as_no_matches(
+    mcp_root_server, docs_router
+):
+    """An empty list is an answer. A failed request is not, and must not look like one."""
+    docs_router.add("POST", SEARCH, status=500, text="upstream error")
+
+    async with Client(mcp_root_server) as client:
+        result = await client.call_tool_mcp("prowler_docs_search", {"term": "install"})
+
+    assert result.isError is True
+    assert result.structuredContent is None
+
+
+async def test_a_missing_page_fails_and_names_the_tool_that_finds_a_valid_path(
+    mcp_root_server, docs_router
+):
+    """A 404 answers the question, and still reaches the agent as an error."""
+    docs_router.add("GET", DOC, status=404, text="Not Found")
+
+    async with Client(mcp_root_server) as client:
+        result = await client.call_tool_mcp(
+            "prowler_docs_get_document", {"doc_path": "getting-started/installation"}
+        )
+
+    assert result.isError is True
+    assert "prowler_docs_search" in result.content[0].text
+
+
+async def test_a_fetch_that_failed_is_not_reported_as_a_missing_page(
+    mcp_root_server, docs_router
+):
+    """Only a 404 answers the question; every other status left it unanswered."""
+    docs_router.add("GET", DOC, status=503, text="upstream error")
+
+    async with Client(mcp_root_server) as client:
+        result = await client.call_tool_mcp(
+            "prowler_docs_get_document", {"doc_path": "getting-started/installation"}
+        )
+
+    assert result.isError is True
+    assert "no page at" not in result.content[0].text
