@@ -21307,7 +21307,6 @@ components:
                     - client_id
                     - client_secret
                     - tenant_id
-                    additionalProperties: false
                   - type: object
                     title: Azure Certificate Credentials
                     properties:
@@ -21327,7 +21326,6 @@ components:
                     - client_id
                     - certificate_content
                     - tenant_id
-                    additionalProperties: false
                   - type: object
                     title: M365 Static Credentials
                     properties:
@@ -23458,7 +23456,6 @@ components:
                 - client_id
                 - client_secret
                 - tenant_id
-                additionalProperties: false
               - type: object
                 title: Azure Certificate Credentials
                 properties:
@@ -23478,7 +23475,6 @@ components:
                 - client_id
                 - certificate_content
                 - tenant_id
-                additionalProperties: false
               - type: object
                 title: M365 Static Credentials
                 properties:
@@ -23925,7 +23921,6 @@ components:
                     - client_id
                     - client_secret
                     - tenant_id
-                    additionalProperties: false
                   - type: object
                     title: Azure Certificate Credentials
                     properties:
@@ -23945,7 +23940,6 @@ components:
                     - client_id
                     - certificate_content
                     - tenant_id
-                    additionalProperties: false
                   - type: object
                     title: M365 Static Credentials
                     properties:
@@ -24414,7 +24408,6 @@ components:
                 - client_id
                 - client_secret
                 - tenant_id
-                additionalProperties: false
               - type: object
                 title: Azure Certificate Credentials
                 properties:
@@ -24434,7 +24427,6 @@ components:
                 - client_id
                 - certificate_content
                 - tenant_id
-                additionalProperties: false
               - type: object
                 title: M365 Static Credentials
                 properties:
@@ -27073,7 +27065,6 @@ components:
       required:
       - type
       - id
-      additionalProperties: false
       properties:
         type:
           type: string

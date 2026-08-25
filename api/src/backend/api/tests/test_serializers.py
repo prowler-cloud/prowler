@@ -402,10 +402,6 @@ class TestProviderSecretFieldSchema:
             "client_secret",
             "tenant_id",
         }
-        assert (
-            azure_schemas["Azure Client Secret Credentials"]["additionalProperties"]
-            is False
-        )
         assert azure_schemas["Azure Certificate Credentials"]["required"] == [
             "client_id",
             "certificate_content",
@@ -416,10 +412,6 @@ class TestProviderSecretFieldSchema:
             "certificate_content",
             "tenant_id",
         }
-        assert (
-            azure_schemas["Azure Certificate Credentials"]["additionalProperties"]
-            is False
-        )
 
     def test_oraclecloud_schema_includes_legacy_region_field(self):
         schema = ProviderSecretField._spectacular_annotation["field"]

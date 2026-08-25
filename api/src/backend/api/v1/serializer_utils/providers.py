@@ -96,7 +96,6 @@ from rest_framework_json_api import serializers
                     },
                 },
                 "required": ["client_id", "client_secret", "tenant_id"],
-                "additionalProperties": False,
             },
             {
                 "type": "object",
@@ -117,7 +116,6 @@ from rest_framework_json_api import serializers
                     },
                 },
                 "required": ["client_id", "certificate_content", "tenant_id"],
-                "additionalProperties": False,
             },
             {
                 "type": "object",

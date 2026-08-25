@@ -1,16 +1,19 @@
 import ipaddress
-import re
 import socket
 import string
 from urllib.parse import urlparse
 
-from cryptography import x509
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.serialization import pkcs12
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext as _
+
+# Re-exported so the SDK stays the single source of truth for bundle parsing:
+# it covers PKCS#12 UnsupportedAlgorithm, encrypted PEM keys (TypeError), the
+# full private-key PEM label set, and leaf-first normalization for
+# azure-identity's thumbprint. A local copy silently drifted before.
+from prowler.providers.azure.lib.certificate import (  # noqa: F401
+    validate_certificate_bundle,
+)
 
 LIGHTHOUSE_OPENAI_COMPATIBLE_ALLOWED_SCHEMES = frozenset({"https"})
 LIGHTHOUSE_NAT64_WELL_KNOWN_PREFIX = ipaddress.IPv6Network("64:ff9b::/96")
@@ -23,45 +26,6 @@ LIGHTHOUSE_BLOCKED_METADATA_HOSTS = frozenset(
         "metadata.google.internal",
     }
 )
-
-
-def validate_certificate_bundle(certificate_data: bytes) -> None:
-    """Validate that certificate data contains a matching certificate and key."""
-    try:
-        private_key, certificate, _ = pkcs12.load_key_and_certificates(
-            certificate_data, None, default_backend()
-        )
-    except ValueError:
-        certificate_match = re.search(
-            rb"-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----",
-            certificate_data,
-            re.DOTALL,
-        )
-        private_key_match = re.search(
-            rb"-----BEGIN (?:RSA |EC )?PRIVATE KEY-----.*?-----END (?:RSA |EC )?PRIVATE KEY-----",
-            certificate_data,
-            re.DOTALL,
-        )
-        if not certificate_match or not private_key_match:
-            raise ValueError(
-                "the payload must contain a certificate and its private key"
-            )
-        certificate = x509.load_pem_x509_certificate(
-            certificate_match.group(), default_backend()
-        )
-        private_key = serialization.load_pem_private_key(
-            private_key_match.group(), password=None, backend=default_backend()
-        )
-
-    if certificate is None or private_key is None:
-        raise ValueError("the payload must contain a certificate and its private key")
-
-    encoding = serialization.Encoding.DER
-    public_format = serialization.PublicFormat.SubjectPublicKeyInfo
-    if certificate.public_key().public_bytes(
-        encoding, public_format
-    ) != private_key.public_key().public_bytes(encoding, public_format):
-        raise ValueError("the certificate does not match the private key")
 
 
 def _normalize_hostname(hostname: str) -> str:

@@ -1812,6 +1812,9 @@ class AzureProviderSecret(serializers.Serializer):
                 certificate_data = base64.b64decode(certificate_content, validate=True)
                 validate_certificate_bundle(certificate_data)
             except Exception as e:
+                logger.error(
+                    f"{e.__class__.__name__}[{e.__traceback__.tb_lineno}]: {e}"
+                )
                 # Field validators are invoked per-field; DRF already knows
                 # this error belongs to `certificate_content` and will nest
                 # the message under that key. Raising a dict here would
