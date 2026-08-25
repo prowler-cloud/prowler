@@ -191,6 +191,28 @@ describe("alert rules target Slack channels", () => {
     ]);
   });
 
+  it("waits only for the submitted alert modal to close", async () => {
+    // Given
+    const harness = new AlertsPageHarness(alertsFixture());
+    await harness.mount();
+    await harness.openEditModal(RULE_NAME);
+    const unrelatedDialog = document.createElement("div");
+    unrelatedDialog.setAttribute("role", "dialog");
+    unrelatedDialog.setAttribute("aria-label", "Concurrent test dialog");
+    document.body.append(unrelatedDialog);
+
+    try {
+      // When
+      await harness.saveRule();
+
+      // Then
+      expect(await harness.savedRuleChannels()).toEqual([]);
+      expect(unrelatedDialog.isConnected).toBe(true);
+    } finally {
+      unrelatedDialog.remove();
+    }
+  });
+
   it("keeps a stored channel readable after a reinstall reset its confirmation", async () => {
     const harness = new AlertsPageHarness(reinstalledWorkspaceAlertsFixture());
     await harness.mount();

@@ -108,9 +108,9 @@ export class AlertsPageHarness extends BrowserHarness<AlertsFixture> {
   }
 
   async saveRule(): Promise<void> {
-    await this.submitModal();
+    const submittedDialog = await this.submitModal();
     await this.waitFor(
-      () => this.dialog() === null,
+      () => !submittedDialog.isConnected,
       10000,
       "the alert modal to close after saving",
     );
@@ -134,7 +134,7 @@ export class AlertsPageHarness extends BrowserHarness<AlertsFixture> {
     );
   }
 
-  private async submitModal(): Promise<void> {
+  private async submitModal(): Promise<HTMLElement> {
     const dialog = this.dialog();
     if (!dialog) throw new Error("submitModal: no alert modal is open");
     const submit = await this.waitFor(
@@ -143,6 +143,7 @@ export class AlertsPageHarness extends BrowserHarness<AlertsFixture> {
       "the modal submit button",
     );
     await this.clickElement(submit, { fallbackToDomClick: true });
+    return dialog;
   }
 
   private modalErrorText(): string | null {

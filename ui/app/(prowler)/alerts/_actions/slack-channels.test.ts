@@ -44,10 +44,15 @@ beforeEach(() => {
 });
 
 describe("getAlertSlackChannels", () => {
-  it("requests a page large enough for the whole eligible pool", async () => {
+  it("requests the unpaginated endpoint", async () => {
+    // Given - The endpoint rejects unsupported pagination parameters
+
+    // When
     await getAlertSlackChannels();
+
+    // Then
     const [url] = fetchMock.mock.calls.at(-1) ?? [""];
-    expect(String(url)).toContain("page%5Bsize%5D=100");
+    expect(String(url)).toBe("https://api.test/api/v1/alerts/slack-channels");
   });
 
   it("returns whatever handleApiResponse returns", async () => {
