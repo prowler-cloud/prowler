@@ -41,7 +41,7 @@ export function RegistryAccessDialog({
 }: RegistryAccessDialogProps) {
   const formRef = useRef<HTMLFormElement>(null);
   const keyInputRef = useRef<HTMLInputElement>(null);
-  const actionLabel = mode === "connect" ? "Connect" : "Replace Registry key";
+  const actionLabel = mode === "connect" ? "Connect" : "Replace key";
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -65,7 +65,7 @@ export function RegistryAccessDialog({
       }}
       onOpenChange={onOpenChange}
       open={open}
-      size="sm"
+      size="md"
       title={
         mode === "connect"
           ? "Connect Registry API key"
@@ -113,24 +113,28 @@ export function RegistryAccessDialog({
               </a>
             </Button>
           </div>
-          <DialogFooter>
+          <DialogFooter
+            className={mode === "manage" ? "sm:justify-between" : undefined}
+          >
             {mode === "manage" && (
               <Button
                 onClick={onDisconnect}
                 type="button"
                 variant="destructive"
               >
-                Disconnect Registry
+                Disconnect
               </Button>
             )}
-            <Button
-              onClick={() => onOpenChange(false)}
-              type="button"
-              variant="ghost"
-            >
-              Cancel
-            </Button>
-            <Button type="submit">{actionLabel}</Button>
+            <div className="flex flex-col-reverse gap-2 sm:flex-row">
+              <Button
+                onClick={() => onOpenChange(false)}
+                type="button"
+                variant="ghost"
+              >
+                Cancel
+              </Button>
+              <Button type="submit">{actionLabel}</Button>
+            </div>
           </DialogFooter>
         </form>
       )}

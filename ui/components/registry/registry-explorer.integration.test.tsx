@@ -223,6 +223,32 @@ describe("RegistryExplorer", () => {
       .not.toBeInTheDocument();
   });
 
+  it("keeps every dialog control inside the dialog bounds", async () => {
+    // Given
+    const screen = await render(<RegistryExplorer initialState={readyState} />);
+
+    // When
+    await screen.getByRole("button", { name: "Manage access" }).click();
+
+    // Then
+    await expect.element(screen.getByLabelText("Registry key")).toBeVisible();
+    const dialog = document.querySelector('[role="dialog"]');
+    expect(dialog).not.toBeNull();
+    const dialogRect = dialog!.getBoundingClientRect();
+    const controls = Array.from(dialog!.querySelectorAll("button, input, a"));
+    expect(controls.length).toBeGreaterThan(3);
+    for (const control of controls) {
+      const rect = control.getBoundingClientRect();
+      const name = control.textContent?.trim() || "registry key input";
+      expect(rect.right, `${name} overflows right edge`).toBeLessThanOrEqual(
+        dialogRect.right + 1,
+      );
+      expect(rect.left, `${name} overflows left edge`).toBeGreaterThanOrEqual(
+        dialogRect.left - 1,
+      );
+    }
+  });
+
   it("keeps the Connect action visibly separated from the Registry key input", async () => {
     // Given
     const screen = await render(
@@ -259,11 +285,11 @@ describe("RegistryExplorer", () => {
       .element()
       .getBoundingClientRect();
     const disconnectRect = screen
-      .getByRole("button", { name: "Disconnect Registry" })
+      .getByRole("button", { name: "Disconnect" })
       .element()
       .getBoundingClientRect();
     const replaceRect = screen
-      .getByRole("button", { name: "Replace Registry key" })
+      .getByRole("button", { name: "Replace key" })
       .element()
       .getBoundingClientRect();
     const earliestActionTop = Math.min(disconnectRect.top, replaceRect.top);
@@ -287,7 +313,7 @@ describe("RegistryExplorer", () => {
     // When
     await screen.getByRole("button", { name: "Manage access" }).click();
     await screen.getByLabelText("Registry key").fill(key);
-    await screen.getByRole("button", { name: "Replace Registry key" }).click();
+    await screen.getByRole("button", { name: "Replace key" }).click();
 
     // Then
     await expect
@@ -297,10 +323,10 @@ describe("RegistryExplorer", () => {
       .element(screen.getByLabelText("Registry key"))
       .not.toBeInTheDocument();
     await expect
-      .element(screen.getByRole("button", { name: "Disconnect Registry" }))
+      .element(screen.getByRole("button", { name: "Disconnect" }))
       .not.toBeInTheDocument();
     await expect
-      .element(screen.getByRole("button", { name: "Replace Registry key" }))
+      .element(screen.getByRole("button", { name: "Replace key" }))
       .not.toBeInTheDocument();
     expect(document.body.textContent).toContain("Cloud guard");
     expect(document.body.innerHTML).not.toContain(key);
@@ -424,7 +450,7 @@ describe("RegistryExplorer", () => {
     // When
     await screen.getByRole("button", { name: "Manage access" }).click();
     await screen.getByLabelText("Registry key").fill(key);
-    await screen.getByRole("button", { name: "Replace Registry key" }).click();
+    await screen.getByRole("button", { name: "Replace key" }).click();
 
     // Then
     await expect
@@ -447,7 +473,7 @@ describe("RegistryExplorer", () => {
 
     // When
     await screen.getByRole("button", { name: "Manage access" }).click();
-    await screen.getByRole("button", { name: "Disconnect Registry" }).click();
+    await screen.getByRole("button", { name: "Disconnect" }).click();
 
     // Then
     await expect
