@@ -85,6 +85,7 @@ interface AlertFormModalProps {
 interface FormErrors {
   name?: string;
   recipientEmails?: string;
+  slackChannels?: string;
   root?: string;
 }
 
@@ -109,6 +110,8 @@ const ALERT_FREQUENCY_OPTIONS = [
 ] as const;
 
 const ALERT_SEED_ERROR = "Apply at least one alert-compatible Findings filter.";
+
+const ALERT_FORM_ERROR = "Fix alert fields before saving.";
 
 const serializeCondition = (condition: AlertCondition | null): string =>
   condition ? JSON.stringify(condition) : "none";
@@ -470,10 +473,18 @@ const AlertFormModalContent = ({
     const parsed = alertFormSchema.safeParse(values);
     if (!parsed.success) {
       const fieldErrors = parsed.error.flatten().fieldErrors;
-      setErrors({
+      const fieldScoped: FormErrors = {
         name: fieldErrors.name?.[0],
         recipientEmails: fieldErrors.recipientEmails?.[0],
-      });
+        slackChannels: fieldErrors.slackChannels?.[0],
+      };
+      // Fields with no slot of their own must still surface something, or the
+      // parse failure leaves Save a silent no-op.
+      setErrors(
+        Object.values(fieldScoped).some(Boolean)
+          ? fieldScoped
+          : { ...fieldScoped, root: ALERT_FORM_ERROR },
+      );
       return;
     }
 
@@ -565,6 +576,9 @@ const AlertFormModalContent = ({
             storedChannels={editingAlert?.attributes.slack_channels ?? []}
             onValuesChange={setSelectedSlackChannels}
           />
+          {errors.slackChannels && (
+            <FieldError>{errors.slackChannels}</FieldError>
+          )}
         </Field>
         {editingAlert && (
           <div className="flex flex-col gap-3">

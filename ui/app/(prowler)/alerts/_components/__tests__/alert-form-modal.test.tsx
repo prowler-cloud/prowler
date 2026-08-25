@@ -476,6 +476,28 @@ describe("AlertFormModal", () => {
     expect(errorMessage).toHaveClass("text-text-error-primary");
   });
 
+  it("should surface a form error when a field without its own error slot fails validation", async () => {
+    // Given
+    const user = userEvent.setup();
+    const onSubmit = vi
+      .fn()
+      .mockResolvedValue({ ok: true, alertId: "alert-1" });
+    mockRecipientsList();
+    renderCreateModal({ onSubmit });
+
+    // When: paste in one event instead of 2001 keystrokes
+    await user.click(screen.getByLabelText(/^description$/i));
+    await user.paste("x".repeat(2001));
+    await user.click(screen.getByRole("button", { name: /^create$/i }));
+
+    // Then
+    const errorMessage = await screen.findByText(
+      "Fix alert fields before saving.",
+    );
+    expect(errorMessage).toHaveClass("text-text-error-primary");
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
   it("should reset form defaults when opening a different alert", () => {
     // Given
     const { rerender } = render(
