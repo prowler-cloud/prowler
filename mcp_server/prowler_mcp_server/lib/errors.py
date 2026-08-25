@@ -69,34 +69,38 @@ def _describe_prowler_api_error(exc: ProwlerAPIError) -> str:
     """Describe a request the Prowler API answered with an error status."""
     status = exc.status_code
 
+    # The fallback: a status this server has nothing specific to say about.
+    message = (
+        f"Prowler rejected the request with status {status} and gave no reason. "
+        "Check the arguments against the tool description."
+    )
+
     if status == 401:
-        return (
+        message = (
             "Prowler rejected this server's credential: it is missing, malformed "
             "or expired. In HTTP mode the request needs an 'Authorization: Bearer "
             "<token>' header; in STDIO mode PROWLER_API_KEY must hold a valid key."
         )
-    if status == 403:
-        return (
+    elif status == 403:
+        message = (
             "The credential is valid but not allowed to do this. Use "
             "prowler_get_current_user to see which role it holds."
         )
-    if status == 429:
-        return (
+    elif status == 429:
+        message = (
             "Prowler is rate limiting this credential. Wait before retrying, and "
             "narrow the request with tighter filters or a smaller page_size."
         )
-    if status >= 500:
-        return (
+    elif status >= 500:
+        message = (
             f"Prowler answered {status}: the request failed on Prowler's side, "
             "not because of anything in the call."
         )
-    if exc.detail:
+    elif exc.detail:
         # Written by the Prowler API for a caller to read, so it is ours to relay.
-        return f"Prowler rejected the request ({status}): {exc.detail}"
-    return (
-        f"Prowler rejected the request with status {status} and gave no reason. "
-        "Check the arguments against the tool description."
-    )
+        message = f"Prowler rejected the request ({status}): {exc.detail}"
+
+    return message
 
 
 def _describe_upstream_http_error(exc: httpx.HTTPError) -> str:
