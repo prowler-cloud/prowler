@@ -120,13 +120,13 @@ class NewFeatureTools(BaseTool):
 
         Returns complete feature details including configuration and metadata.
         """
-        try:
-            response = await self.api_client.get(f"/api/v1/features/{feature_id}")
-            return DetailedFeature.from_api_response(response["data"]).model_dump()
-        except Exception as e:
-            self.logger.error(f"Failed to get feature {feature_id}: {e}")
-            return {"error": str(e), "status": "failed"}
+        response = await self.api_client.get(f"/api/v1/features/{feature_id}")
+        return DetailedFeature.from_api_response(response["data"]).model_dump()
 ```
+
+There is no `try`/`except` here on purpose. A failed request raises, and
+[Error Handling](#error-handling) explains what turns that raise into a message
+the agent can act on.
 
 ### Step 2: Create the Models
 
@@ -369,17 +369,60 @@ async def search_items(self, status: str = Field(...)) -> dict:
 
 ### Error Handling
 
-Return structured error responses instead of raising exceptions:
+**Raise, never return.** A returned `{"error": ...}` dict is reported to the
+client as `isError: false` -- a *successful* tool call whose payload happens to
+mention a failure. Clients and models read that as success. A raised exception
+becomes a spec-correct tool execution error instead.
+
+The common case therefore needs no handler at all:
 
 ```python
 async def get_item(self, item_id: str) -> dict:
-    try:
-        response = await self.api_client.get(f"/api/v1/items/{item_id}")
-        return DetailedItem.from_api_response(response["data"]).model_dump()
-    except Exception as e:
-        self.logger.error(f"Failed to get item {item_id}: {e}")
-        return {"error": str(e), "status": "failed"}
+    response = await self.api_client.get(f"/api/v1/items/{item_id}")
+    return DetailedItem.from_api_response(response["data"]).model_dump()
 ```
+
+`prowler_mcp_server/lib/errors.py` classifies the failures every tool shares --
+a rejected credential, a missing permission, a rate limit, an outage, an
+unreachable API, a bad argument -- and gives each one a message that says what
+went wrong and what to do about it. Anything it does not recognise is masked,
+because `mask_error_details=True` is set on every sub-server and upstream
+response bodies must never be replayed into a model's context.
+
+Three ways to raise, in the order to reach for them:
+
+```python
+from fastmcp.exceptions import ToolError
+
+from prowler_mcp_server.lib.errors import InvalidArgument
+
+# 1. An argument this server rejected before any request went out. The message
+#    is repeated to the agent verbatim, so write it for one to read.
+if page_size > 1000:
+    raise InvalidArgument("page_size must be between 1 and 1000.")
+
+# 2. A request the API answered or never answered: let it propagate untouched.
+#    `ProwlerAPIError` and `ProwlerAPIUnreachable` are what the classifier keys
+#    on, and the second one is what stops a retry from duplicating a write.
+response = await self.api_client.get(f"/api/v1/items/{item_id}")
+
+# 3. A sentence the classifier cannot know -- a resource name, a precondition,
+#    the next tool to call. NOTE the absent `from` clause: it is what marks the
+#    message as already final. With `from e` the classifier would replace it.
+if not data:
+    raise ToolError(
+        f"No item with the ID {item_id!r} exists. Use prowler_list_items to "
+        "find a valid one."
+    )
+```
+
+The one thing that still *returns* rather than raises is a write whose outcome is
+genuinely unknown. `prowler_send_findings_to_jira` is the worked example: work
+items are created one at a time and Prowler cannot delete them, so a dispatch
+that stopped halfway answers with a result object carrying
+`safe_to_retry: false`. "This may have been applied" is a fact about the world,
+not an error, and squashing it into one loses the only thing that stops a retry
+from duplicating the write.
 
 ### Parameter Descriptions
 

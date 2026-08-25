@@ -8,7 +8,10 @@ query encoding and header assembly stay covered.
 import httpx
 import pytest
 
-from prowler_mcp_server.prowler_app.utils.api_client import ProwlerAPIError
+from prowler_mcp_server.prowler_app.utils.api_client import (
+    ProwlerAPIError,
+    ProwlerAPIUnreachable,
+)
 from tests.helpers.jsonapi import jsonapi_collection, jsonapi_error, jsonapi_resource
 from tests.helpers.tokens import FAKE_API_KEY
 
@@ -46,11 +49,7 @@ async def test_get_forwards_query_parameters(mock_api_client, mock_router):
 
 
 async def test_error_response_surfaces_the_jsonapi_detail(mock_api_client, mock_router):
-    """A failed request is raised with the API's own `errors[].detail` message.
-
-    Tools relay this text straight to the model, so losing it turns an actionable
-    error into an opaque one.
-    """
+    """A failed request carries the API's own `errors[].detail`."""
     mock_router.add(
         "GET",
         "/api/v1/findings/nope",
@@ -64,25 +63,41 @@ async def test_error_response_surfaces_the_jsonapi_detail(mock_api_client, mock_
         await mock_api_client.get("/findings/nope")
 
     assert raised.value.status_code == 404
+    assert raised.value.detail == "Not found."
+
+
+async def test_a_body_that_is_not_jsonapi_is_never_repeated(
+    mock_api_client, mock_router
+):
+    """A body that is not JSON:API leaves `detail` unset, so nothing is relayed."""
+    mock_router.add(
+        "GET",
+        "/api/v1/findings",
+        status=502,
+        text="<html><body>Traceback: secret-internal-host:5432</body></html>",
+    )
+
+    with pytest.raises(ProwlerAPIError) as raised:
+        await mock_api_client.get("/findings")
+
+    assert raised.value.detail is None
+    assert "secret-internal-host" not in str(raised.value)
 
 
 async def test_a_request_that_got_no_answer_is_not_an_api_error(
     mock_api_client, mock_router
 ):
-    """`ProwlerAPIError` means the API answered, and callers act on that.
-
-    A write tool tells a rejected request -- which changed nothing -- from one
-    that may have been processed by the type of the failure, so a timeout must
-    not be dressed up as a rejection.
-    """
+    """`ProwlerAPIError` means the API answered, so a timeout must not use it."""
 
     def timed_out(request):
         raise httpx.ReadTimeout("Timed out reading the response", request=request)
 
     mock_router.add_handler("GET", "/api/v1/findings", timed_out)
 
-    with pytest.raises(httpx.ReadTimeout):
+    with pytest.raises(ProwlerAPIUnreachable) as raised:
         await mock_api_client.get("/findings")
+
+    assert not isinstance(raised.value, ProwlerAPIError)
 
 
 def test_build_filter_params_normalises_types_for_the_api(mock_api_client):
