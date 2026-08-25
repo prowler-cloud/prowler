@@ -695,7 +695,9 @@ describe("authorizing destination channels", () => {
 
     // Then — the copy names the newly authorized channel alone, and says what
     // will land in it.
-    const hint = harness.connectionCheckHint() ?? "";
+    const hint = await harness.connectionCheckHintMatching(
+      channelMention(SLACK_SECOND_PUBLIC_CHANNEL.name),
+    );
     expect(hint).toMatch(channelMention(SLACK_SECOND_PUBLIC_CHANNEL.name));
     expect(hint).not.toMatch(channelMention(SLACK_PUBLIC_CHANNEL.name));
     expect(hint).toMatch(
