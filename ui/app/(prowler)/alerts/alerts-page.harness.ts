@@ -42,6 +42,26 @@ export interface SelectedChannelChip {
   isPrivate: boolean;
 }
 
+/** A channel as a rule write submits it — the contract's `[{id}, …]` shape. */
+interface RuleWriteChannel {
+  id: string;
+}
+
+interface RuleWriteAttributes {
+  schema_version?: number;
+  slack_channels?: RuleWriteChannel[];
+}
+
+interface RuleWriteData {
+  type?: string;
+  attributes?: RuleWriteAttributes;
+}
+
+/** The envelope an alert rule create or update submits. */
+interface RuleWriteEnvelope {
+  data?: RuleWriteData;
+}
+
 const DEFAULT_CREATE_FILTER_BAG: AlertsFilterBag = {
   "filter[severity__in]": ["critical"],
 };
@@ -165,15 +185,41 @@ export class AlertsPageHarness extends BrowserHarness<AlertsFixture> {
    * contract's `[{id}, …]` write shape.
    */
   async savedRuleChannels(): Promise<string[] | undefined> {
-    const method =
-      this.countRequests("POST", "/alerts/rules") >
-      this.countRequests("PATCH", "/alerts/rules")
-        ? "POST"
-        : "PATCH";
-    const body = await this.lastRequestBody<{
-      data?: { attributes?: { slack_channels?: { id: string }[] } };
-    }>(method, "/alerts/rules");
+    const body = await this.lastRuleWriteBody();
     return body?.data?.attributes?.slack_channels?.map((channel) => channel.id);
+  }
+
+  /**
+   * The most recent rule write in the request log, picked by payload rather
+   * than by method or path: `/alerts/rules` is a prefix of the seed and
+   * preview endpoints, so a path match — and the POST-vs-PATCH counting it
+   * invites — can resolve to a request that carries no channels. Seed and
+   * preview envelopes declare their own `type`; the enable/disable toggle
+   * reuses both the write's URL and its type, and only a real write carries
+   * `schema_version`.
+   */
+  private async lastRuleWriteBody(): Promise<RuleWriteEnvelope | null> {
+    for (const entry of [...this.requestLog].reverse()) {
+      const body = await AlertsPageHarness.parsedBody(entry.request);
+      if (
+        body?.data?.type === "alert-rules" &&
+        body.data.attributes?.schema_version !== undefined
+      ) {
+        return body;
+      }
+    }
+    return null;
+  }
+
+  /** A request with no body, or one that is not JSON, is not a rule write. */
+  private static async parsedBody(
+    request: Request,
+  ): Promise<RuleWriteEnvelope | null> {
+    try {
+      return (await request.clone().json()) as RuleWriteEnvelope;
+    } catch {
+      return null;
+    }
   }
 
   // --- The channel destination field ---------------------------------------
@@ -466,23 +512,6 @@ export class AlertsPageHarness extends BrowserHarness<AlertsFixture> {
   }
 
   // --- The alerts list ------------------------------------------------------
-
-  /** The names of the listed rules, in table order. */
-  async listedRules(): Promise<string[]> {
-    const rows = await this.waitFor(
-      () => {
-        const found = Array.from(
-          this.container.querySelectorAll<HTMLTableRowElement>("tbody tr"),
-        );
-        return found.length > 0 ? found : null;
-      },
-      10000,
-      "the alerts list",
-    );
-    return rows.map((row) =>
-      (row.querySelector("button")?.textContent ?? "").trim(),
-    );
-  }
 
   /**
    * The destinations summary the list shows for a rule, without opening it —

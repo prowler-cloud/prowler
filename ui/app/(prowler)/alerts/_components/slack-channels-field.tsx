@@ -19,9 +19,10 @@ import {
   MultiSelectValue,
 } from "@/components/shadcn/select/multiselect";
 import { useMountEffect } from "@/hooks/use-mount-effect";
-import type {
-  IntegrationProps,
-  SlackChannelOption,
+import {
+  INTEGRATION_TYPE,
+  type IntegrationProps,
+  type SlackChannelOption,
 } from "@/types/integrations";
 
 const SLACK_INTEGRATION_HREF = "/integrations/slack";
@@ -179,7 +180,9 @@ export const SlackChannelsField = ({
     Promise.all([
       getAlertSlackChannels(),
       getIntegrations(
-        new URLSearchParams({ "filter[integration_type]": "slack" }),
+        new URLSearchParams({
+          "filter[integration_type]": INTEGRATION_TYPE.SLACK,
+        }),
       ),
     ])
       .then(([channelsResult, integrationsResult]) => {
