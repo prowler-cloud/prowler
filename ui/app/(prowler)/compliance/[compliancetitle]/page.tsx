@@ -51,7 +51,6 @@ import { ScanEntity } from "@/types/scans";
 
 import { CrossAccountDetail } from "../_components/cross-account-detail";
 import { CrossProviderDetail } from "../_components/cross-provider-detail";
-import { resolveCrossProviderFramework } from "../_lib/cross-provider-frameworks";
 import { buildSearchParamsKey } from "../_lib/search-params-key";
 
 const getSingleSearchParam = (
@@ -86,17 +85,15 @@ export default async function ComplianceDetail({
       redirect("/compliance");
     }
 
-    const framework = resolveCrossProviderFramework(
-      complianceId,
-      compliancetitle,
-    );
-    if (!framework) {
-      notFound();
-    }
-
-    const crossProviderTitle = framework.title.split("-").join(" ");
+    // Header only. The API validates the identity when the island fetches the
+    // roll-up; gating here would 404 on a transient catalog failure.
+    const crossProviderTitle = compliancetitle.split("-").join(" ");
     return (
-      <ContentLayout title={`${crossProviderTitle} - ${framework.version}`}>
+      <ContentLayout
+        title={
+          version ? `${crossProviderTitle} - ${version}` : crossProviderTitle
+        }
+      >
         <Suspense
           key={buildSearchParamsKey(resolvedSearchParams)}
           fallback={

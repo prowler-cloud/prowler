@@ -93,6 +93,7 @@ describe("getComplianceCatalog", () => {
         watchlistCount: 0,
         eligibleProviderTypes: [],
       },
+      unavailable: true,
     });
     expect(fetchMock).not.toHaveBeenCalled();
   });
@@ -163,7 +164,7 @@ describe("getComplianceCatalog", () => {
     );
   });
 
-  it("degrades to an empty catalog when the request fails", async () => {
+  it("flags an empty catalog as unavailable when the request fails", async () => {
     fetchMock.mockResolvedValue(jsonResponse({ errors: [] }, 500));
 
     const catalog = await getComplianceCatalog();
@@ -175,7 +176,19 @@ describe("getComplianceCatalog", () => {
         watchlistCount: 0,
         eligibleProviderTypes: [],
       },
+      unavailable: true,
     });
+  });
+
+  it("does not flag a catalog that is legitimately empty", async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse({ data: [], meta: { pagination: { page: 1, pages: 1 } } }),
+    );
+
+    const catalog = await getComplianceCatalog();
+
+    expect(catalog.entries).toEqual([]);
+    expect(catalog.unavailable).toBe(false);
   });
 
   it("degrades to an empty catalog when fetch throws", async () => {
