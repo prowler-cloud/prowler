@@ -286,71 +286,37 @@ class OSS(AlibabaCloudService):
                 f"{bucket.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-
     def _get_bucket_encryption(self, bucket):
         """Get bucket default server-side encryption configuration using OSS SDK."""
-        logger.info(f"OSS - Getting encryption configuration for bucket {bucket.name}...")
+        logger.info(
+            f"OSS - Getting encryption configuration for bucket {bucket.name}..."
+        )
         try:
             oss_client = self.session.client("oss", bucket.region)
 
             response = oss_client.get_bucket_encryption(bucket.name)
 
             if response and response.body:
-                rule = getattr(response.body, "rule", None) or getattr(
-                    response.body, "server_side_encryption_rule", None
+                default_rule = getattr(
+                    response.body, "apply_server_side_encryption_by_default", None
                 )
-                source = rule if rule is not None else response.body
-
-                sse_algorithm = None
-                for attr_name in [
-                    "sse_algorithm",
-                    "SSEAlgorithm",
-                    "sseAlgorithm",
-                    "algorithm",
-                ]:
-                    value = getattr(source, attr_name, None)
-                    if value:
-                        sse_algorithm = str(value)
-                        break
-                    # nested ApplyServerSideEncryptionByDefault style objects
-                    default = getattr(source, "apply_server_side_encryption_by_default", None)
-                    if default is not None:
-                        value = getattr(default, attr_name, None)
-                        if value:
-                            sse_algorithm = str(value)
-                            break
-
-                kms_key_id = None
-                for attr_name in [
-                    "kms_master_key_id",
-                    "KMSMasterKeyID",
-                    "kmsMasterKeyID",
-                    "kms_key_id",
-                ]:
-                    value = getattr(source, attr_name, None)
-                    if value:
-                        kms_key_id = str(value)
-                        break
-                    default = getattr(source, "apply_server_side_encryption_by_default", None)
-                    if default is not None:
-                        value = getattr(default, attr_name, None)
-                        if value:
-                            kms_key_id = str(value)
-                            break
-
-                if sse_algorithm:
-                    bucket.encryption_algorithm = sse_algorithm
-                    bucket.encryption_kms_key_id = kms_key_id or ""
+                if default_rule:
+                    bucket.encryption_algorithm = str(
+                        getattr(default_rule, "ssealgorithm", None) or ""
+                    )
+                    bucket.encryption_kms_key_id = str(
+                        getattr(default_rule, "kmsmaster_key_id", None) or ""
+                    )
+                    bucket.encryption_kms_data_algorithm = str(
+                        getattr(default_rule, "kmsdata_encryption", None) or ""
+                    )
         except Exception as error:
-            error_code = getattr(error, "code", "") or getattr(error, "error_code", "")
-            error_message = str(error)
-            if (
-                error_code in ["NoSuchServerSideEncryptionRule", "NoSuchEncryptionRule"]
-                or "NoSuchServerSideEncryptionRule" in error_message
-                or "NoSuchEncryptionRule" in error_message
-            ):
+            # No encryption rule configured means default encryption is disabled
+            error_code = getattr(error, "code", "")
+            if error_code == "NoSuchServerSideEncryptionRule":
                 bucket.encryption_algorithm = ""
                 bucket.encryption_kms_key_id = ""
+                bucket.encryption_kms_data_algorithm = ""
             else:
                 logger.error(
                     f"{bucket.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -403,4 +369,5 @@ class Bucket(BaseModel):
     logging_target_prefix: str = ""
     encryption_algorithm: str = ""  # "", AES256, KMS
     encryption_kms_key_id: str = ""
+    encryption_kms_data_algorithm: str = ""  # "", AES256, SM4 (only with KMS)
     creation_date: Optional[datetime] = None

@@ -9,7 +9,7 @@
   "Severity": "medium",
   "ResourceType": "ALIYUN::OSS::Bucket",
   "ResourceGroup": "storage",
-  "Description": "**Alibaba Cloud OSS** buckets should define a **default server-side encryption** rule so every newly uploaded object is encrypted at rest with SSE-OSS (`AES256`), SSE-KMS (`KMS`), or `SM4` without relying on per-request headers.",
+  "Description": "**Alibaba Cloud OSS** buckets should define a **default server-side encryption** rule so every newly uploaded object is encrypted at rest with SSE-OSS (`AES256`) or SSE-KMS (`KMS`) without relying on per-request headers.",
   "Risk": "Without a default encryption rule, objects may be stored unencrypted unless every client sets encryption headers. This weakens **confidentiality** of data at rest and increases the impact of unauthorized bucket access or data exfiltration.",
   "RelatedUrl": "",
   "AdditionalURLs": [

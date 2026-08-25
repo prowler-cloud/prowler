@@ -79,8 +79,7 @@ class TestOssBucketServerSideEncryptionEnabled:
             assert result[0].resource_id == "encrypted-kms"
             assert result[0].resource_arn == bucket.arn
 
-
-    def test_bucket_with_sm4_encryption(self):
+    def test_bucket_with_kms_key_and_sm4_data_encryption(self):
         oss_client = mock.MagicMock()
 
         with (
@@ -102,7 +101,9 @@ class TestOssBucketServerSideEncryptionEnabled:
                 arn="acs:oss::1234567890:encrypted-sm4",
                 name="encrypted-sm4",
                 region="cn-hangzhou",
-                encryption_algorithm="SM4",
+                encryption_algorithm="KMS",
+                encryption_kms_key_id="00000000-1111-2222-3333-444444444444",
+                encryption_kms_data_algorithm="SM4",
             )
             oss_client.buckets = {bucket.arn: bucket}
 
@@ -112,7 +113,7 @@ class TestOssBucketServerSideEncryptionEnabled:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert "server-side encryption enabled" in result[0].status_extended
-            assert "SM4" in result[0].status_extended
+            assert "data encryption SM4" in result[0].status_extended
             assert result[0].resource_id == "encrypted-sm4"
             assert result[0].resource_arn == bucket.arn
 

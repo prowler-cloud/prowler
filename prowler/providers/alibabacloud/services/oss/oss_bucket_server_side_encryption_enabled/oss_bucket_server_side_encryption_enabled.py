@@ -16,24 +16,20 @@ class oss_bucket_server_side_encryption_enabled(Check):
             report.resource_arn = bucket.arn
 
             algorithm = (bucket.encryption_algorithm or "").upper()
-            if algorithm in {"AES256", "KMS", "SM4"}:
+            if algorithm in {"AES256", "KMS"}:
                 report.status = "PASS"
+                encryption_details = bucket.encryption_algorithm
                 if bucket.encryption_kms_key_id:
-                    report.status_extended = (
-                        f"OSS bucket {bucket.name} has server-side encryption enabled "
-                        f"with {bucket.encryption_algorithm} "
-                        f"(KMS key {bucket.encryption_kms_key_id})."
-                    )
-                else:
-                    report.status_extended = (
-                        f"OSS bucket {bucket.name} has server-side encryption enabled "
-                        f"with {bucket.encryption_algorithm}."
-                    )
+                    encryption_details += f" (KMS key {bucket.encryption_kms_key_id}"
+                    if bucket.encryption_kms_data_algorithm:
+                        encryption_details += (
+                            f", data encryption {bucket.encryption_kms_data_algorithm}"
+                        )
+                    encryption_details += ")"
+                report.status_extended = f"OSS bucket {bucket.name} has server-side encryption enabled with {encryption_details}."
             else:
                 report.status = "FAIL"
-                report.status_extended = (
-                    f"OSS bucket {bucket.name} does not have default server-side encryption enabled."
-                )
+                report.status_extended = f"OSS bucket {bucket.name} does not have default server-side encryption enabled."
 
             findings.append(report)
 
