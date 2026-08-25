@@ -1,0 +1,1 @@
+The compliance "Across providers" section builds its framework list from the API catalog instead of a hardcoded set of ids, so a universal framework registered by an installed package renders like a shipped one
