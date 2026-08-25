@@ -39,6 +39,7 @@ class OSS(AlibabaCloudService):
         self.__threading_call__(self._get_bucket_policy, self.buckets.values())
         self.__threading_call__(self._get_bucket_logging, self.buckets.values())
         self.__threading_call__(self._get_bucket_encryption, self.buckets.values())
+        self.__threading_call__(self._get_bucket_versioning, self.buckets.values())
 
     def _list_buckets(self, regional_client=None):
         region = "unknown"
@@ -322,6 +323,27 @@ class OSS(AlibabaCloudService):
                     f"{bucket.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
+    def _get_bucket_versioning(self, bucket):
+        """Get bucket versioning status using OSS SDK."""
+        logger.info(f"OSS - Getting versioning status for bucket {bucket.name}...")
+        try:
+            oss_client = self.session.client("oss", bucket.region)
+
+            response = oss_client.get_bucket_versioning(bucket.name)
+
+            if response and response.body:
+                status = None
+                for attr_name in ["version_status", "versioning_status", "status"]:
+                    if getattr(response.body, attr_name, None):
+                        status = getattr(response.body, attr_name)
+                        break
+                if status:
+                    bucket.versioning_status = str(status)
+        except Exception as error:
+            logger.error(
+                f"{bucket.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
     @staticmethod
     def _normalize_bucket_region(bucket_location: str) -> str:
         """Normalize OSS bucket location values to region IDs."""
@@ -370,4 +392,5 @@ class Bucket(BaseModel):
     encryption_algorithm: str = ""  # "", AES256, KMS
     encryption_kms_key_id: str = ""
     encryption_kms_data_algorithm: str = ""  # "", AES256, SM4 (only with KMS)
+    versioning_status: str = ""  # "", Enabled, Suspended
     creation_date: Optional[datetime] = None
