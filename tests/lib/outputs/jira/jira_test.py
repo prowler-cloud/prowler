@@ -13,6 +13,7 @@ from prowler.lib.outputs.jira.exceptions.exceptions import (
     JiraCreateIssueError,
     JiraGetAvailableIssueTypesError,
     JiraGetCloudIDError,
+    JiraGetIssuesStatusResponseError,
     JiraGetProjectsError,
     JiraGetProjectsResponseError,
     JiraNoProjectsError,
@@ -2003,8 +2004,270 @@ class TestJiraIntegration:
             issue_type="Bug",
         )
 
-        assert result is True
+        assert result == {"key": "TEST-123", "id": "ISSUE-123", "url": None}
         mock_post.assert_called_once()
+
+    @patch.object(Jira, "get_access_token", return_value="valid_access_token")
+    @patch.object(
+        Jira, "cloud_id", new_callable=PropertyMock, return_value="test_cloud_id"
+    )
+    @patch.object(Jira, "get_projects", return_value={"TEST": {"name": "Test Project"}})
+    @patch.object(Jira, "get_available_issue_types", return_value=["Bug"])
+    @patch("prowler.lib.outputs.jira.jira.requests.post")
+    def test_send_finding_returns_issue_url_with_basic_auth(
+        self,
+        mock_post,
+        mock_get_issue_types,
+        mock_get_projects,
+        mock_cloud_id,
+        mock_get_access_token,
+    ):
+        """Test that send_finding builds the browse URL from the basic auth site name."""
+        # To disable vulture
+        mock_cloud_id = mock_cloud_id
+        mock_get_access_token = mock_get_access_token
+        mock_get_projects = mock_get_projects
+        mock_get_issue_types = mock_get_issue_types
+
+        mock_response = MagicMock()
+        mock_response.status_code = 201
+        mock_response.json.return_value = {"id": "10001", "key": "TEST-7"}
+        mock_post.return_value = mock_response
+
+        result = self.jira_integration_basic_auth.send_finding(
+            check_id="test-check",
+            check_title="Test Finding",
+            severity="High",
+            status="FAIL",
+            project_key="TEST",
+            issue_type="Bug",
+        )
+
+        assert result == {
+            "key": "TEST-7",
+            "id": "10001",
+            "url": "https://test-domain.atlassian.net/browse/TEST-7",
+        }
+
+    @patch.object(Jira, "get_access_token", return_value="valid_access_token")
+    @patch.object(
+        Jira, "cloud_id", new_callable=PropertyMock, return_value="test_cloud_id"
+    )
+    @patch.object(Jira, "get_projects", return_value={"TEST": {"name": "Test Project"}})
+    @patch.object(Jira, "get_available_issue_types", return_value=["Bug"])
+    @patch("prowler.lib.outputs.jira.jira.requests.post")
+    def test_send_finding_sanitizes_issue_labels(
+        self,
+        mock_post,
+        mock_get_issue_types,
+        mock_get_projects,
+        mock_cloud_id,
+        mock_get_access_token,
+    ):
+        """Test that labels are sanitized, deduplicated and empties dropped before sending."""
+        # To disable vulture
+        mock_cloud_id = mock_cloud_id
+        mock_get_access_token = mock_get_access_token
+        mock_get_projects = mock_get_projects
+        mock_get_issue_types = mock_get_issue_types
+
+        mock_response = MagicMock()
+        mock_response.status_code = 201
+        mock_response.json.return_value = {"id": "ISSUE-123", "key": "TEST-123"}
+        mock_post.return_value = mock_response
+
+        self.jira_integration.send_finding(
+            check_id="test-check",
+            check_title="Test Finding",
+            severity="High",
+            status="FAIL",
+            project_key="TEST",
+            issue_type="Bug",
+            issue_labels=[
+                "prowler",
+                "prowler-finding-arn:aws:s3:::my bucket/with space",
+                "prowler",
+                "",
+                "   ",
+            ],
+        )
+
+        payload = mock_post.call_args.kwargs["json"]
+        assert payload["fields"]["labels"] == [
+            "prowler",
+            "prowler-finding-arn:aws:s3:::my_bucket/with_space",
+        ]
+
+    def test_sanitize_label(self):
+        """Test the deterministic Jira label sanitizer."""
+        assert Jira.sanitize_label("") == ""
+        assert Jira.sanitize_label(None) == ""
+        assert Jira.sanitize_label("   ") == ""
+        assert Jira.sanitize_label("simple") == "simple"
+        assert Jira.sanitize_label("with space") == "with_space"
+        assert Jira.sanitize_label("  many   spaces \t tabs\nnewline ") == (
+            "many_spaces_tabs_newline"
+        )
+        assert Jira.sanitize_label("ctrl\x00char\x07here") == "ctrlcharhere"
+        assert Jira.sanitize_label("arn:aws:iam::123456789012:role/Admin") == (
+            "arn:aws:iam::123456789012:role/Admin"
+        )
+        long_label = "x" * 300
+        assert Jira.sanitize_label(long_label) == "x" * 255
+        # Idempotent: sanitizing an already sanitized value is a no-op
+        once = Jira.sanitize_label("a b\tc")
+        assert Jira.sanitize_label(once) == once
+
+    def test_sanitize_labels(self):
+        """Test list sanitization keeps order, drops empties and duplicates."""
+        assert Jira.sanitize_labels(None) == []
+        assert Jira.sanitize_labels([]) == []
+        assert Jira.sanitize_labels(["b", "a b", "b", "", "a_b"]) == ["b", "a_b"]
+
+    def test_site_url_and_issue_url(self):
+        """Test site_url derivation and browse URL building for both auth modes."""
+        assert (
+            self.jira_integration_basic_auth.site_url
+            == "https://test-domain.atlassian.net"
+        )
+        assert (
+            self.jira_integration_basic_auth.get_issue_url("TEST-1")
+            == "https://test-domain.atlassian.net/browse/TEST-1"
+        )
+        # OAuth: unknown until accessible-resources is fetched
+        assert self.jira_integration.site_url is None
+        assert self.jira_integration.get_issue_url("TEST-1") is None
+        self.jira_integration._site_url = "https://oauth-site.atlassian.net/"
+        assert (
+            self.jira_integration.get_issue_url("TEST-1")
+            == "https://oauth-site.atlassian.net/browse/TEST-1"
+        )
+        assert self.jira_integration.get_issue_url("") is None
+
+    @patch.object(Jira, "get_access_token", return_value="valid_access_token")
+    @patch.object(
+        Jira, "cloud_id", new_callable=PropertyMock, return_value="test_cloud_id"
+    )
+    @patch("prowler.lib.outputs.jira.jira.requests.post")
+    def test_get_issues_status(self, mock_post, mock_cloud_id, mock_get_access_token):
+        """Test bulk status lookup: missing keys are absent, invalid keys ignored."""
+        # To disable vulture
+        mock_cloud_id = mock_cloud_id
+        mock_get_access_token = mock_get_access_token
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "issues": [
+                {
+                    "id": "10001",
+                    "key": "SEC-1",
+                    "fields": {
+                        "status": {
+                            "name": "Done",
+                            "statusCategory": {"key": "done"},
+                        }
+                    },
+                },
+                {
+                    "id": "10002",
+                    "key": "SEC-2",
+                    "fields": {
+                        "status": {
+                            "name": "In Progress",
+                            "statusCategory": {"key": "indeterminate"},
+                        }
+                    },
+                },
+            ],
+            "issueErrors": [{"id": "SEC-3", "errorMessages": ["not found"]}],
+        }
+        mock_post.return_value = mock_response
+
+        result = self.jira_integration.get_issues_status(
+            ["SEC-1", "SEC-2", "SEC-3", "SEC-1", "not a key", "", None]
+        )
+
+        assert result == {
+            "SEC-1": {"id": "10001", "status": "Done", "status_category": "done"},
+            "SEC-2": {
+                "id": "10002",
+                "status": "In Progress",
+                "status_category": "indeterminate",
+            },
+        }
+        mock_post.assert_called_once()
+        assert mock_post.call_args.args[0].endswith("/rest/api/3/issue/bulkfetch")
+        assert mock_post.call_args.kwargs["json"] == {
+            "issueIdsOrKeys": ["SEC-1", "SEC-2", "SEC-3"],
+            "fields": ["status"],
+        }
+
+    @patch.object(Jira, "get_access_token", return_value="valid_access_token")
+    @patch.object(
+        Jira, "cloud_id", new_callable=PropertyMock, return_value="test_cloud_id"
+    )
+    @patch("prowler.lib.outputs.jira.jira.requests.post")
+    def test_get_issues_status_batches_requests(
+        self, mock_post, mock_cloud_id, mock_get_access_token
+    ):
+        """Test that more than ISSUE_STATUS_BATCH_SIZE keys are fetched in batches."""
+        # To disable vulture
+        mock_cloud_id = mock_cloud_id
+        mock_get_access_token = mock_get_access_token
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"issues": []}
+        mock_post.return_value = mock_response
+
+        keys = [f"SEC-{i}" for i in range(1, 251)]
+        assert self.jira_integration.get_issues_status(keys) == {}
+        assert mock_post.call_count == 3
+        sizes = [
+            len(call.kwargs["json"]["issueIdsOrKeys"])
+            for call in mock_post.call_args_list
+        ]
+        assert sizes == [100, 100, 50]
+
+    def test_get_issues_status_without_keys(self):
+        """Test that no request is made when there is nothing to look up."""
+        assert self.jira_integration.get_issues_status([]) == {}
+        assert self.jira_integration.get_issues_status(["nope"]) == {}
+
+    @patch.object(Jira, "get_access_token", return_value="valid_access_token")
+    @patch.object(
+        Jira, "cloud_id", new_callable=PropertyMock, return_value="test_cloud_id"
+    )
+    @patch("prowler.lib.outputs.jira.jira.requests.post")
+    def test_get_issues_status_response_error(
+        self, mock_post, mock_cloud_id, mock_get_access_token
+    ):
+        """Test that a non-200 response raises JiraGetIssuesStatusResponseError."""
+        # To disable vulture
+        mock_cloud_id = mock_cloud_id
+        mock_get_access_token = mock_get_access_token
+
+        mock_response = MagicMock()
+        mock_response.status_code = 403
+        mock_response.text = "forbidden"
+        mock_post.return_value = mock_response
+
+        with pytest.raises(JiraGetIssuesStatusResponseError):
+            self.jira_integration.get_issues_status(["SEC-1"])
+
+    @patch("prowler.lib.outputs.jira.jira.requests.get")
+    def test_get_cloud_id_captures_site_url(self, mock_get):
+        """Test that the OAuth cloud id lookup records the site URL."""
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = [
+            {"id": "cloud-1", "url": "https://oauth-site.atlassian.net"}
+        ]
+        mock_get.return_value = mock_response
+
+        assert self.jira_integration.get_cloud_id("token") == "cloud-1"
+        assert self.jira_integration.site_url == "https://oauth-site.atlassian.net"
 
     @patch.object(Jira, "get_access_token", return_value="valid_access_token")
     @patch.object(
@@ -2045,7 +2308,7 @@ class TestJiraIntegration:
             grouped_resources=[],
         )
 
-        assert result is True
+        assert result["key"] == "TEST-123"
         payload = mock_post.call_args.kwargs["json"]
         expected_summary = (
             f"[Prowler] HIGH - {' '.join(long_check_id.split())} - "

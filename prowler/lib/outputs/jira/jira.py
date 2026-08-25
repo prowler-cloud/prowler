@@ -23,6 +23,8 @@ from prowler.lib.outputs.jira.exceptions.exceptions import (
     JiraGetCloudIDError,
     JiraGetCloudIDNoResourcesError,
     JiraGetCloudIDResponseError,
+    JiraGetIssuesStatusError,
+    JiraGetIssuesStatusResponseError,
     JiraGetProjectsError,
     JiraGetProjectsResponseError,
     JiraInvalidIssueTypeError,
@@ -368,6 +370,7 @@ class Jira:
     _refresh_token: str = None
     _expiration_date: int = None
     _cloud_id: str = None
+    _site_url: str = None
     _scopes: list[str] = None
     AUTH_URL = "https://auth.atlassian.com/authorize"
     PARAMS_TEMPLATE = {
@@ -382,6 +385,8 @@ class Jira:
     TOKEN_URL = "https://auth.atlassian.com/oauth/token"
     API_TOKEN_URL = "https://api.atlassian.com/oauth/token/accessible-resources"
     REQUEST_TIMEOUT = 90
+    ISSUE_STATUS_BATCH_SIZE = 100
+    ISSUE_KEY_REGEX = re.compile(r"^[A-Z][A-Z0-9_]*-\d+$")
     HEADER_TEMPLATE = {
         "Content-Type": "application/json",
         "X-Force-Accept-Language": "true",
@@ -431,6 +436,54 @@ class Jira:
             summary maximum.
         """
         return " ".join(summary.split())[:255]
+
+    @property
+    def site_url(self) -> Optional[str]:
+        """Base URL of the Jira site, used to build issue browse links.
+
+        Basic auth derives it from the configured site name; OAuth captures it
+        from the accessible-resources response when resolving the cloud id.
+        """
+        if self._using_basic_auth and self._domain:
+            return f"https://{self._domain}.atlassian.net"
+        return self._site_url
+
+    def get_issue_url(self, issue_key: str) -> Optional[str]:
+        """Build the browse URL for an issue key, or None if the site is unknown."""
+        site_url = self.site_url
+        if not site_url or not issue_key:
+            return None
+        return f"{site_url.rstrip('/')}/browse/{issue_key}"
+
+    @staticmethod
+    def sanitize_label(label: str) -> str:
+        """Make a value safe to use as a Jira label.
+
+        Jira rejects labels containing whitespace and longer than 255
+        characters. The transformation is deterministic so the same input always
+        yields the same label: whitespace runs become a single underscore,
+        control characters are dropped and the result is truncated.
+
+        Args:
+            label: Raw label text.
+
+        Returns:
+            The sanitized label, or an empty string if nothing usable remains.
+        """
+        if not label:
+            return ""
+        cleaned = "".join(ch for ch in str(label) if ch.isprintable() or ch.isspace())
+        return "_".join(cleaned.split())[:255]
+
+    @classmethod
+    def sanitize_labels(cls, labels: Optional[list[str]]) -> list[str]:
+        """Sanitize a list of labels, dropping empties and duplicates (order kept)."""
+        result: list[str] = []
+        for label in labels or []:
+            sanitized = cls.sanitize_label(label)
+            if sanitized and sanitized not in result:
+                result.append(sanitized)
+        return result
 
     @staticmethod
     def _build_code_block_content(code_value: str) -> Optional[Dict]:
@@ -707,6 +760,7 @@ class Jira:
             if response.status_code == 200:
                 resources = response.json()
                 if len(resources) > 0:
+                    self._site_url = resources[0].get("url")
                     return resources[0].get("id")
                 else:
                     error_message = (
@@ -1290,7 +1344,6 @@ class Jira:
         finding_url: str = "",
         tenant_info: str = "",
     ) -> dict:
-
         # ADF forbids empty text nodes, so Jira rejects them with 400 INVALID_INPUT.
         def _safe(value: str) -> str:
             return value if (value and value.strip()) else "-"
@@ -2195,6 +2248,84 @@ class Jira:
 
         return {"type": "doc", "version": 1, "content": content}
 
+    def get_issues_status(self, issue_keys: list[str]) -> Dict[str, Dict[str, str]]:
+        """Get the current status of Jira issues by key.
+
+        Uses the bulk fetch endpoint in batches of ``ISSUE_STATUS_BATCH_SIZE``
+        keys, so checking hundreds of linked issues costs a handful of calls.
+        Keys that Jira does not return (deleted, moved or not visible to the
+        integration user) are simply absent from the result, which lets callers
+        treat them as no longer tracked.
+
+        Args:
+            - issue_keys: Issue keys such as ``["SEC-1", "SEC-2"]``. Values that do
+              not look like an issue key are ignored.
+
+        Returns:
+            - dict: ``{key: {"id": issue_id, "status": status_name,
+              "status_category": category_key}}`` where ``status_category`` is
+              one of Jira's ``new``, ``indeterminate`` or ``done``.
+
+        Raises:
+            - JiraNoTokenError: Failed to get an access token
+            - JiraGetIssuesStatusResponseError: Jira returned a non-200 response
+            - JiraGetIssuesStatusError: Failed to get the issues status
+        """
+        valid_keys: list[str] = []
+        for key in issue_keys or []:
+            if key and self.ISSUE_KEY_REGEX.match(str(key)) and key not in valid_keys:
+                valid_keys.append(key)
+        if not valid_keys:
+            return {}
+
+        try:
+            access_token = self.get_access_token()
+            if not access_token:
+                raise JiraNoTokenError(
+                    message="No token was found",
+                    file=os.path.basename(__file__),
+                )
+            headers = self.get_headers(access_token, content_type_json=True)
+
+            statuses: Dict[str, Dict[str, str]] = {}
+            for start in range(0, len(valid_keys), self.ISSUE_STATUS_BATCH_SIZE):
+                batch = valid_keys[start : start + self.ISSUE_STATUS_BATCH_SIZE]
+                response = requests.post(
+                    f"https://api.atlassian.com/ex/jira/{self.cloud_id}/rest/api/3/issue/bulkfetch",
+                    json={"issueIdsOrKeys": batch, "fields": ["status"]},
+                    headers=headers,
+                    timeout=self.REQUEST_TIMEOUT,
+                )
+                if response.status_code != 200:
+                    response_error = f"Failed to get issues status: {response.status_code} - {response.text}"
+                    logger.error(response_error)
+                    raise JiraGetIssuesStatusResponseError(
+                        message=response_error, file=os.path.basename(__file__)
+                    )
+                for issue in response.json().get("issues", []):
+                    status = (issue.get("fields") or {}).get("status") or {}
+                    statuses[issue.get("key")] = {
+                        "id": issue.get("id"),
+                        "status": status.get("name", ""),
+                        "status_category": (status.get("statusCategory") or {}).get(
+                            "key", ""
+                        ),
+                    }
+            return statuses
+        except (
+            JiraNoTokenError,
+            JiraRefreshTokenError,
+            JiraRefreshTokenResponseError,
+            JiraGetIssuesStatusResponseError,
+        ) as error:
+            raise error
+        except Exception as e:
+            error_message = f"Failed to get issues status from Jira: {e}"
+            logger.error(error_message)
+            raise JiraGetIssuesStatusError(
+                message=error_message, file=os.path.basename(__file__)
+            )
+
     def send_findings(
         self,
         findings: list[Finding] = None,
@@ -2300,6 +2431,7 @@ class Jira:
                         "customfield_10088": {"value": "Core"},
                     }
                 }
+                issue_labels = self.sanitize_labels(issue_labels)
                 if issue_labels:
                     payload["fields"]["labels"] = issue_labels
 
@@ -2402,7 +2534,7 @@ class Jira:
         failing_for: str = "",
         finding_group_url: str = "",
         finding_group_link_text: str = "",
-    ) -> bool:
+    ) -> Optional[dict]:
         """
         Send the finding to Jira
 
@@ -2451,8 +2583,10 @@ class Jira:
             - JiraRequiredCustomFieldsError: Jira project requires custom fields that are not supported
 
         Returns:
-            - True if the finding was sent successfully
-            - False if the finding was not sent successfully
+            - A dict with the created issue ``key``, ``id`` and browse ``url``
+              (``url`` is None when the site URL is unknown) if the finding was
+              sent successfully
+            - None if the finding was not sent successfully
         """
         try:
             access_token = self.get_access_token()
@@ -2553,6 +2687,7 @@ class Jira:
                     "issuetype": {"name": issue_type},
                 }
             }
+            issue_labels = self.sanitize_labels(issue_labels)
             if issue_labels:
                 payload["fields"]["labels"] = issue_labels
 
@@ -2611,10 +2746,23 @@ class Jira:
                     response_json = response.json()
                     logger.info(f"Finding sent successfully: {response_json}")
                 except (ValueError, requests.exceptions.JSONDecodeError):
+                    response_json = {}
                     logger.info(
                         f"Finding sent successfully: Status {response.status_code}"
                     )
-                return True
+                issue_key = (
+                    response_json.get("key")
+                    if isinstance(response_json, dict)
+                    else None
+                )
+                issue_id = (
+                    response_json.get("id") if isinstance(response_json, dict) else None
+                )
+                return {
+                    "key": issue_key,
+                    "id": issue_id,
+                    "url": self.get_issue_url(issue_key),
+                }
         except JiraRequiredCustomFieldsError as custom_fields_error:
             logger.error(f"Custom fields error: {custom_fields_error}")
             raise custom_fields_error
@@ -2630,4 +2778,4 @@ class Jira:
             raise no_token_error
         except Exception as e:
             logger.error(f"Failed to send finding: {e}")
-            return False
+            return None
