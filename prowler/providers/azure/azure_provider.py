@@ -705,7 +705,8 @@ class AzureProvider(Provider):
                 # this check when azure_credentials already carries the material.
                 try:
                     AzureProvider.check_certificate_creds_env_vars(
-                        check_certificate_content=not certificate_path
+                        check_certificate_content=not certificate_path,
+                        tenant_id=tenant_id,
                     )
                 except AzureEnvironmentVariableError as environment_variable_error:
                     logger.critical(
@@ -719,8 +720,10 @@ class AzureProvider(Provider):
                             credentials = _build_certificate_credential(
                                 tenant_id=azure_credentials["tenant_id"],
                                 client_id=azure_credentials["client_id"],
-                                certificate_data=base64.b64decode(
-                                    azure_credentials["certificate_content"]
+                                certificate_data=validate_certificate_bundle(
+                                    base64.b64decode(
+                                        azure_credentials["certificate_content"]
+                                    )
                                 ),
                                 authority=region_config.authority,
                             )
@@ -732,7 +735,9 @@ class AzureProvider(Provider):
                             credentials = _build_certificate_credential(
                                 tenant_id=azure_credentials["tenant_id"],
                                 client_id=azure_credentials["client_id"],
-                                certificate_data=certificate_data,
+                                certificate_data=validate_certificate_bundle(
+                                    certificate_data
+                                ),
                                 authority=region_config.authority,
                             )
                         else:
@@ -773,8 +778,11 @@ class AzureProvider(Provider):
                             certificate_data = base64.b64decode(
                                 getenv("AZURE_CERTIFICATE_CONTENT"), validate=True
                             )
-                        # Same fail-fast validation the static path runs.
-                        validate_certificate_bundle(certificate_data)
+                        # Same fail-fast validation the static path runs. The
+                        # returned bundle is normalized so the leaf appears
+                        # before the private key — azure-identity picks the
+                        # first PEM certificate when computing the thumbprint.
+                        certificate_data = validate_certificate_bundle(certificate_data)
                         # Prefer the explicit --tenant-id so a stale env var
                         # cannot silently authenticate against the wrong tenant.
                         credentials = _build_certificate_credential(
@@ -1176,23 +1184,29 @@ class AzureProvider(Provider):
                 )
 
     @staticmethod
-    def check_certificate_creds_env_vars(check_certificate_content: bool):
+    def check_certificate_creds_env_vars(
+        check_certificate_content: bool,
+        tenant_id: Optional[str] = None,
+        client_id: Optional[str] = None,
+    ):
         """
         Checks the presence of required environment variables for certificate-based
         service principal authentication against Azure.
 
-        This method checks for the presence of the following environment variables:
-        - AZURE_CLIENT_ID: Azure client ID
-        - AZURE_TENANT_ID: Azure tenant ID
-        - AZURE_CERTIFICATE_CONTENT: base64-encoded certificate content (only
-          required when a certificate file path is not provided)
+        Environment variables are only required when the caller has not already
+        supplied the value explicitly: an explicit ``tenant_id`` or ``client_id``
+        substitutes for AZURE_TENANT_ID / AZURE_CLIENT_ID respectively.
 
         Raises:
             AzureEnvironmentVariableError: If any required environment variable
-                is missing.
+                is missing and no explicit value was supplied.
         """
         logger.info("Azure provider: checking certificate environment variables ...")
-        env_vars = ["AZURE_CLIENT_ID", "AZURE_TENANT_ID"]
+        env_vars: list[str] = []
+        if not tenant_id:
+            env_vars.append("AZURE_TENANT_ID")
+        if not client_id:
+            env_vars.append("AZURE_CLIENT_ID")
         if check_certificate_content:
             env_vars.append("AZURE_CERTIFICATE_CONTENT")
         for env_var in env_vars:
@@ -1588,8 +1602,12 @@ class AzureProvider(Provider):
                 # azure-identity: `CertificateCredential` raises an opaque
                 # exception several call frames deeper if this fails, which
                 # makes for a bad UX in the API/UI.
-                certificate_data = base64.b64decode(certificate_content, validate=True)
-                validate_certificate_bundle(certificate_data)
+                normalized_bundle = validate_certificate_bundle(
+                    base64.b64decode(certificate_content, validate=True)
+                )
+                # Persist the normalized (leaf-first) bundle so downstream
+                # `CertificateCredential` calls don't pick an intermediate CA.
+                certificate_content = base64.b64encode(normalized_bundle).decode()
             except Exception as e:
                 logger.error(
                     f"{e.__class__.__name__}[{e.__traceback__.tb_lineno}]: {e}"
@@ -1712,12 +1730,22 @@ class AzureProvider(Provider):
             # Hard timeout so a hung Entra ID endpoint cannot stall the
             # calling worker (this runs on request threads and Celery tasks
             # in the API path).
-            response = requests.post(
-                url,
-                headers=headers,
-                data=data,
-                timeout=_TOKEN_ACQUISITION_TIMEOUT_SECONDS,
-            ).json()
+            try:
+                response = requests.post(
+                    url,
+                    headers=headers,
+                    data=data,
+                    timeout=_TOKEN_ACQUISITION_TIMEOUT_SECONDS,
+                ).json()
+            except requests.exceptions.Timeout as error:
+                raise AzureCredentialsUnavailableError(
+                    file=os.path.basename(__file__),
+                    message=(
+                        "Timed out waiting for Entra ID to issue a token "
+                        "for the provided client secret."
+                    ),
+                    original_exception=error,
+                )
             if (
                 "access_token" not in response.keys()
                 and "error_codes" in response.keys()
@@ -1760,7 +1788,7 @@ class AzureProvider(Provider):
             credential = CertificateCredential(
                 client_id=client_id,
                 tenant_id=tenant_id,
-                certificate_data=certificate_data,
+                certificate_data=validate_certificate_bundle(certificate_data),
                 authority=region_config.authority,
             )
             # get_token has no native timeout parameter, so run it off-thread

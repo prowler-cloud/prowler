@@ -1644,9 +1644,15 @@ class TestAzureProviderCertificateAuth:
         # When the credentials dict carries a certificate_content, setup_session
         # must instantiate CertificateCredential (not ClientSecretCredential)
         # with the decoded bytes.
-        with patch(
-            "prowler.providers.azure.azure_provider.CertificateCredential"
-        ) as mock_cert_cred:
+        with (
+            patch(
+                "prowler.providers.azure.azure_provider.validate_certificate_bundle",
+                side_effect=lambda data: data,
+            ),
+            patch(
+                "prowler.providers.azure.azure_provider.CertificateCredential"
+            ) as mock_cert_cred,
+        ):
             AzureProvider.setup_session(
                 az_cli_auth=False,
                 sp_env_auth=False,
@@ -1678,10 +1684,16 @@ class TestAzureProviderCertificateAuth:
         certificate_path.write_bytes(b"certificate bundle")
         expected_credentials = MagicMock()
 
-        with patch(
-            "prowler.providers.azure.azure_provider._build_certificate_credential",
-            return_value=expected_credentials,
-        ) as build_certificate_credential:
+        with (
+            patch(
+                "prowler.providers.azure.azure_provider.validate_certificate_bundle",
+                side_effect=lambda data: data,
+            ),
+            patch(
+                "prowler.providers.azure.azure_provider._build_certificate_credential",
+                return_value=expected_credentials,
+            ) as build_certificate_credential,
+        ):
             credentials = AzureProvider.setup_session(
                 az_cli_auth=False,
                 sp_env_auth=False,
@@ -1713,7 +1725,10 @@ class TestAzureProviderCertificateAuth:
         monkeypatch.setenv("AZURE_TENANT_ID", self._TENANT_ID)
         monkeypatch.setenv("AZURE_CERTIFICATE_CONTENT", self._CERT_CONTENT_B64)
         with (
-            patch("prowler.providers.azure.azure_provider.validate_certificate_bundle"),
+            patch(
+                "prowler.providers.azure.azure_provider.validate_certificate_bundle",
+                side_effect=lambda data: data,
+            ),
             patch(
                 "prowler.providers.azure.azure_provider.CertificateCredential"
             ) as mock_cert_cred,
@@ -1744,7 +1759,10 @@ class TestAzureProviderCertificateAuth:
         expected_credentials = MagicMock()
 
         with (
-            patch("prowler.providers.azure.azure_provider.validate_certificate_bundle"),
+            patch(
+                "prowler.providers.azure.azure_provider.validate_certificate_bundle",
+                side_effect=lambda data: data,
+            ),
             patch(
                 "prowler.providers.azure.azure_provider._build_certificate_credential",
                 return_value=expected_credentials,
@@ -1810,7 +1828,10 @@ class TestAzureProviderCertificateAuth:
             # fail fast on unparseable bytes; this test isolates the
             # authentication-error translation path, so keep the placeholder
             # base64 payload from tripping the bundle check.
-            patch("prowler.providers.azure.azure_provider.validate_certificate_bundle"),
+            patch(
+                "prowler.providers.azure.azure_provider.validate_certificate_bundle",
+                side_effect=lambda data: data,
+            ),
             patch(
                 "prowler.providers.azure.azure_provider._build_certificate_credential",
                 side_effect=ClientAuthenticationError("invalid certificate"),
@@ -1873,9 +1894,15 @@ class TestAzureProviderCertificateAuth:
     def test_verify_client_certificate_content_acquires_graph_token(self):
         import base64
 
-        with patch(
-            "prowler.providers.azure.azure_provider.CertificateCredential"
-        ) as certificate_credential:
+        with (
+            patch(
+                "prowler.providers.azure.azure_provider.CertificateCredential"
+            ) as certificate_credential,
+            patch(
+                "prowler.providers.azure.azure_provider.validate_certificate_bundle",
+                side_effect=lambda data: data,
+            ),
+        ):
             AzureProvider.verify_client(
                 self._TENANT_ID,
                 self._CLIENT_ID,
@@ -1898,9 +1925,15 @@ class TestAzureProviderCertificateAuth:
         certificate_path = tmp_path / "prowler-cert.pem"
         certificate_path.write_bytes(b"certificate bundle")
 
-        with patch(
-            "prowler.providers.azure.azure_provider.CertificateCredential"
-        ) as certificate_credential:
+        with (
+            patch(
+                "prowler.providers.azure.azure_provider.CertificateCredential"
+            ) as certificate_credential,
+            patch(
+                "prowler.providers.azure.azure_provider.validate_certificate_bundle",
+                side_effect=lambda data: data,
+            ),
+        ):
             AzureProvider.verify_client(
                 self._TENANT_ID,
                 self._CLIENT_ID,
@@ -1936,6 +1969,10 @@ class TestAzureProviderCertificateAuth:
             patch(
                 "prowler.providers.azure.azure_provider.CertificateCredential",
                 side_effect=ClientAuthenticationError("invalid certificate"),
+            ),
+            patch(
+                "prowler.providers.azure.azure_provider.validate_certificate_bundle",
+                side_effect=lambda data: data,
             ),
             pytest.raises(expected_error),
         ):

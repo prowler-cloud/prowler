@@ -21,13 +21,19 @@ _PRIVATE_KEY_BLOCK_RE = re.compile(
 )
 
 
-def validate_certificate_bundle(certificate_data: bytes) -> None:
-    """Validate that certificate data contains a matching certificate and key.
+def validate_certificate_bundle(certificate_data: bytes) -> bytes:
+    """Validate the bundle and return a normalized copy safe for azure-identity.
 
     Accepts either a PKCS#12/PFX blob (encrypted or unencrypted with a null
-    password) or a concatenated PEM bundle. Raises `ValueError` with a
-    diagnostic message when the payload is missing a certificate, missing a
-    private key, or contains a pair whose public keys do not match.
+    password) or a concatenated PEM bundle. Raises ``ValueError`` when the
+    payload is missing a certificate, missing a private key, or contains a
+    pair whose public keys do not match.
+
+    The normalized bytes always place the leaf certificate before the private
+    key so ``azure.identity.CertificateCredential`` — which uses the first
+    ``BEGIN CERTIFICATE`` block to compute the credential thumbprint — never
+    picks an intermediate CA over the matching leaf. PKCS#12 blobs are
+    returned as-is.
     """
     try:
         private_key, certificate, _ = pkcs12.load_key_and_certificates(
@@ -36,7 +42,7 @@ def validate_certificate_bundle(certificate_data: bytes) -> None:
     except (ValueError, UnsupportedAlgorithm):
         # Not PKCS#12, or PKCS#12 uses a cipher this build cannot decrypt.
         # Fall through to the PEM path.
-        certificate, private_key = _load_pem_bundle(certificate_data)
+        return _normalize_pem_bundle(certificate_data)
 
     if certificate is None or private_key is None:
         raise ValueError("the payload must contain a certificate and its private key")
@@ -48,13 +54,12 @@ def validate_certificate_bundle(certificate_data: bytes) -> None:
     ) != private_key.public_key().public_bytes(encoding, public_format):
         raise ValueError("the certificate does not match the private key")
 
+    # PKCS#12 blobs are consumed directly by azure-identity; no reordering.
+    return certificate_data
 
-def _load_pem_bundle(certificate_data: bytes):
-    """Return the (certificate, private_key) pair from a PEM bundle.
 
-    Walks every certificate block so bundles that place the intermediate CA
-    before the leaf (openssl/Key Vault exports) still pair correctly.
-    """
+def _normalize_pem_bundle(certificate_data: bytes) -> bytes:
+    """Validate a PEM bundle and return it with the matching leaf first."""
     certificate_blocks = _CERTIFICATE_BLOCK_RE.findall(certificate_data)
     private_key_match = _PRIVATE_KEY_BLOCK_RE.search(certificate_data)
 
@@ -76,11 +81,10 @@ def _load_pem_bundle(certificate_data: bytes):
             serialization.PublicFormat.SubjectPublicKeyInfo,
         )
         if candidate_public_bytes == key_public_bytes:
-            return candidate, private_key
+            # azure-identity's CertificateCredential uses the first BEGIN
+            # CERTIFICATE block to compute the credential thumbprint. Put the
+            # matching leaf first so authentication uses the correct
+            # certificate regardless of the bundle's original ordering.
+            return pem_block + b"\n" + private_key_match.group() + b"\n"
 
-    # No match. Return the first cert so the caller's public-key comparison
-    # raises the canonical "certificate does not match" error.
-    return (
-        x509.load_pem_x509_certificate(certificate_blocks[0], default_backend()),
-        private_key,
-    )
+    raise ValueError("the certificate does not match the private key")
