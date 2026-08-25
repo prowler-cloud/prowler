@@ -27,7 +27,9 @@ def validate_certificate_bundle(certificate_data: bytes) -> bytes:
     Accepts either a PKCS#12/PFX blob (encrypted or unencrypted with a null
     password) or a concatenated PEM bundle. Raises ``ValueError`` when the
     payload is missing a certificate, missing a private key, or contains a
-    pair whose public keys do not match.
+    pair whose public keys do not match. Raises ``TypeError`` for
+    password-protected PEM private keys, which cryptography surfaces from
+    ``load_pem_private_key(..., password=None)``.
 
     The normalized bytes always place the leaf certificate before the private
     key so ``azure.identity.CertificateCredential`` — which uses the first

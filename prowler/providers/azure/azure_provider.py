@@ -1833,10 +1833,13 @@ class AzureProvider(Provider):
             PermissionError,
             IsADirectoryError,
             OSError,
+            TypeError,
             ValueError,
         ) as error:
-            # Malformed base64, unreadable path, or bytes CertificateCredential
-            # cannot parse. Route to the typed certificate errors.
+            # Malformed base64, unreadable path, encrypted PEM key
+            # (`load_pem_private_key(password=None)` raises `TypeError`), or
+            # bytes CertificateCredential cannot parse. Route to the typed
+            # certificate errors.
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
             )

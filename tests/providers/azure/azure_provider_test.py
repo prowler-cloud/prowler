@@ -2448,9 +2448,36 @@ class TestValidateCertificateBundleOrdering:
 
         bundle = other_cert_pem + leaf_cert_pem + leaf_key_pem
 
-        # No exception: `validate_certificate_bundle` walks every cert block
-        # and pairs the private key with the one that actually matches.
-        validate_certificate_bundle(bundle)
+        normalized = validate_certificate_bundle(bundle)
+
+        # The matching leaf must come first: azure-identity uses the first
+        # BEGIN CERTIFICATE block to compute the credential thumbprint.
+        assert normalized.startswith(leaf_cert_pem)
+        assert leaf_key_pem in normalized
+        assert other_cert_pem not in normalized
+
+    def test_rejects_password_protected_pem_key(self):
+        from cryptography.hazmat.primitives import serialization
+        from cryptography.hazmat.primitives.asymmetric import rsa
+
+        from prowler.providers.azure.lib.certificate import (
+            validate_certificate_bundle,
+        )
+
+        cert_pem, _ = self._self_signed()
+        encrypted_key_pem = rsa.generate_private_key(
+            public_exponent=65537, key_size=2048
+        ).private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.BestAvailableEncryption(b"prowler"),
+        )
+
+        # `load_pem_private_key(password=None)` raises TypeError for
+        # encrypted keys; the caller relies on that exception type to route
+        # to the typed certificate errors.
+        with pytest.raises(TypeError):
+            validate_certificate_bundle(cert_pem + encrypted_key_pem)
 
 
 def serialization_no_encryption():
