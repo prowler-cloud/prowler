@@ -1,12 +1,7 @@
 /**
- * MSW handlers for the alerts pages: rules CRUD, recipients, the eligible
- * Slack channels the destination field offers, the integration read that
- * tells an empty pool from no workspace at all, and the sibling reads the
- * alerts page issues on mount (providers, scans, findings metadata).
- *
- * The Slack shapes follow the signed contract
- * (`openspec/changes/add-slack-alert-channels/contract/slack-alerts-api.md`,
- * section 2 and the section 6 addendum, which closed every open point).
+ * MSW handlers for the alerts pages. The Slack shapes follow the signed
+ * contract, section 2 and the section 6 addendum
+ * (`openspec/changes/add-slack-alert-channels/contract/slack-alerts-api.md`).
  *
  * State is per-call: a create is visible to the next rules read. Wire them
  * per test via `worker.use(...handlersForAlerts(fx))`.
@@ -31,10 +26,7 @@ import type {
 const API = process.env.UI_API_BASE_URL;
 const TS = "2026-08-20T09:00:00Z";
 
-/**
- * `status` is a string, per the JSON:API spec — same taxonomy the Slack
- * handlers answer with, since the validation is about Slack state.
- */
+/** `status` is a string, per the JSON:API spec. */
 const errorBody = (detail: string, status: number, code?: string) => ({
   errors: [
     {
@@ -46,11 +38,7 @@ const errorBody = (detail: string, status: number, code?: string) => ({
   ],
 });
 
-/**
- * A read the fixture asks to fail. The status is the whole point: a `5xx`
- * throws out of `handleApiResponse` and rejects the caller's promise, a `4xx`
- * comes back as an error payload — two routes into the UI, not one.
- */
+/** `5xx` throws out of `handleApiResponse`; `4xx` returns an error payload. */
 const readFailure = (status: number): Response =>
   HttpResponse.json(
     errorBody(
@@ -70,7 +58,6 @@ const collection = (data: unknown[]) => ({
   },
 });
 
-/** The rule read's channel shape: resolved name and privacy, no Slack call. */
 const storedChannelAttribute = (channel: AlertsSlackChannelFixture) => ({
   id: channel.id,
   name: channel.name,
@@ -84,7 +71,7 @@ interface RuleWriteAttributes {
   trigger?: AlertRuleFixture["trigger"];
   condition?: AlertRuleFixture["condition"];
   recipient_emails?: string[];
-  /** Objects carrying only `id`; name and privacy are server-derived. */
+  /** Ids only; name and privacy are server-derived. */
   slack_channels?: { id: string }[];
 }
 
@@ -116,9 +103,8 @@ export const handlersForAlerts = (fx: AlertsFixture) => {
     );
 
   /**
-   * What `GET /alerts/slack-channels` offers, as signed (section 6.2): only
-   * the confirmed channels of the enabled and connected integration. An
-   * unconfirmed one would just be an offer of a refusal.
+   * Only the confirmed channels of the enabled and connected integration
+   * (section 6.2).
    */
   const eligibleChannels = (): AlertsSlackChannelFixture[] =>
     isConnected
@@ -135,13 +121,10 @@ export const handlersForAlerts = (fx: AlertsFixture) => {
     );
 
   /**
-   * The rule-write validation the contract signs: every channel a write ADDS
-   * needs an enabled and connected integration, the channel configured on it,
-   * and a non-null `confirmation_sent_at`. Only newly added channels are
-   * validated (section 6.3), so ids the rule already stores never block an
-   * edit — a same-workspace reinstall that reset their confirmations does not
-   * freeze the rule. Answered before any write lands, so a refusal leaves the
-   * stored rule unchanged.
+   * An added channel needs an enabled and connected integration, the channel
+   * configured on it, and a non-null `confirmation_sent_at`. Only NEWLY added
+   * ids are validated (section 6.3) — retained ids never block an edit — and
+   * the refusal is answered before any write lands.
    */
   const refuseInvalidChannels = (
     channelIds: string[] | undefined,
@@ -172,9 +155,8 @@ export const handlersForAlerts = (fx: AlertsFixture) => {
     Array.from(new Set(written.map((channel) => channel.id)));
 
   /**
-   * The read enriches the mapping's ids from the integration — the mapping
-   * table holds no metadata — so a channel the workspace no longer carries is
-   * simply absent, exactly as the cascade leaves it.
+   * The mapping table holds ids only, so the read enriches them from the
+   * integration — a channel the workspace no longer carries is simply absent.
    */
   const ruleResource = (rule: AlertRuleFixture) => ({
     id: rule.id,
@@ -227,7 +209,6 @@ export const handlersForAlerts = (fx: AlertsFixture) => {
   });
 
   return [
-    // --- Rules -------------------------------------------------------------
     http.get(`${API}/alerts/rules`, () => {
       if (fx.listServerError) {
         return HttpResponse.json(
@@ -238,11 +219,7 @@ export const handlersForAlerts = (fx: AlertsFixture) => {
       return HttpResponse.json(collection(rules.map(ruleResource)));
     }),
 
-    /**
-     * Registered before the `:id` routes so the literal paths win. The seed
-     * echoes the filter bag back as a leaf condition — the UI treats the DSL
-     * opaquely, so the exact translation is this fixture's business alone.
-     */
+    /** Registered before the `:id` routes so the literal paths win. */
     http.post(`${API}/alerts/rules/seed`, async ({ request }) => {
       const body = (await request.json().catch(() => null)) as {
         data?: { attributes?: { filter_bag?: Record<string, unknown> } };
@@ -299,7 +276,6 @@ export const handlersForAlerts = (fx: AlertsFixture) => {
         trigger: attributes.trigger ?? "after_scan",
         condition: attributes.condition ?? {},
         recipientEmails: attributes.recipient_emails ?? [],
-        // Omission defaults both destination lists to empty.
         slackChannelIds: written,
       };
       rules.push(created);
@@ -332,7 +308,6 @@ export const handlersForAlerts = (fx: AlertsFixture) => {
         const written = attributes.slack_channels
           ? storedIds(attributes.slack_channels)
           : undefined;
-        // Retained ids are the rule's stored selection: never re-validated.
         const refusal = refuseInvalidChannels(written, rule.slackChannelIds);
         if (refusal) return refusal;
 
@@ -348,8 +323,8 @@ export const handlersForAlerts = (fx: AlertsFixture) => {
         if (attributes.recipient_emails !== undefined) {
           rule.recipientEmails = attributes.recipient_emails;
         }
-        // A supplied list replaces the whole Slack selection atomically, `[]`
-        // clears it, and omitting the key leaves it untouched.
+        // A supplied list replaces the whole selection; omitting the key
+        // leaves it untouched.
         if (written !== undefined) {
           rule.slackChannelIds = written;
         }
@@ -367,7 +342,6 @@ export const handlersForAlerts = (fx: AlertsFixture) => {
       return new HttpResponse(null, { status: 204 });
     }),
 
-    // --- The channels the alert form offers ---------------------------------
     http.get(`${API}/alerts/slack-channels`, () => {
       if (fx.channelsReadError) return readFailure(fx.channelsReadError);
       return HttpResponse.json({
@@ -379,7 +353,6 @@ export const handlersForAlerts = (fx: AlertsFixture) => {
       });
     }),
 
-    // --- Recipients ---------------------------------------------------------
     http.get(`${API}/alerts/recipients`, () =>
       HttpResponse.json(
         collection(
@@ -397,7 +370,7 @@ export const handlersForAlerts = (fx: AlertsFixture) => {
       ),
     ),
 
-    // --- The integration read that tells the two empty states apart ---------
+    // Read so the form can tell "no workspace" from "no eligible channels".
     http.get(`${API}/integrations`, ({ request }) => {
       if (fx.integrationsReadError)
         return readFailure(fx.integrationsReadError);
@@ -412,7 +385,7 @@ export const handlersForAlerts = (fx: AlertsFixture) => {
       );
     }),
 
-    // --- Sibling reads the alerts page issues on mount -----------------------
+    // Sibling reads the alerts page issues on mount.
     http.get(`${API}/providers`, () => HttpResponse.json(collection([]))),
     http.get(`${API}/scans`, () => HttpResponse.json(collection([]))),
     http.get(`${API}/findings/metadata/latest`, () =>
