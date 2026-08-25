@@ -5,7 +5,6 @@ import type { LighthouseContextEnvelope } from "@/types/lighthouse-context";
 import {
   buildLighthouseV2ConfigurationPayload,
   buildLighthouseV2ConfigurationUpdatePayload,
-  buildLighthouseV2MessageFeedbackPayload,
   buildLighthouseV2MessagePayload,
   mapLighthouseV2Configuration,
   mapLighthouseV2Message,
@@ -184,58 +183,6 @@ describe("lighthouse-v2.adapter", () => {
   });
 
   describe("when building Cloud payloads", () => {
-    it("should build the internal Lighthouse feedback resource", () => {
-      // Given / When
-      const payload = buildLighthouseV2MessageFeedbackPayload({
-        targetMessageId: "message-1",
-        rating: "down",
-        details: "  Missing evidence  ",
-      });
-
-      // Then
-      expect(payload).toEqual({
-        data: {
-          type: "lighthouse-message-feedback",
-          attributes: {
-            target_message_id: "message-1",
-            rating: "down",
-            details: "Missing evidence",
-          },
-        },
-      });
-    });
-
-    it("should omit blank optional Message feedback details", () => {
-      // Given / When
-      const payload = buildLighthouseV2MessageFeedbackPayload({
-        targetMessageId: "message-1",
-        rating: "up",
-        details: "   ",
-      });
-
-      // Then
-      expect(payload.data.attributes).toEqual({
-        target_message_id: "message-1",
-        rating: "up",
-      });
-    });
-
-    it("should send each selected feedback reason once", () => {
-      // Given / When
-      const payload = buildLighthouseV2MessageFeedbackPayload({
-        targetMessageId: "message-1",
-        rating: "down",
-        reasons: ["Low quality", "Low quality", "Other"],
-      });
-
-      // Then
-      expect(payload.data.attributes).toEqual({
-        target_message_id: "message-1",
-        rating: "down",
-        reasons: ["Low quality", "Other"],
-      });
-    });
-
     it("should include agent text, display text, and UI context for contextual messages", () => {
       // Given
       const context: LighthouseContextEnvelope = {

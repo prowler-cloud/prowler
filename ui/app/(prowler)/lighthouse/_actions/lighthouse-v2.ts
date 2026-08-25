@@ -6,7 +6,6 @@ import type {
   LighthouseV2ConfigurationInput,
   LighthouseV2ConfigurationUpdateInput,
   LighthouseV2Message,
-  LighthouseV2MessageFeedbackInput,
   LighthouseV2ProviderType,
   LighthouseV2SendMessageInput,
   LighthouseV2SendMessageResult,
@@ -24,7 +23,6 @@ import type { ServerActionResult } from "@/types/server-actions";
 import {
   buildLighthouseV2ConfigurationPayload,
   buildLighthouseV2ConfigurationUpdatePayload,
-  buildLighthouseV2MessageFeedbackPayload,
   buildLighthouseV2MessagePayload,
   buildLighthouseV2SessionCreatePayload,
   buildLighthouseV2SessionUpdatePayload,
@@ -268,20 +266,6 @@ export async function sendLighthouseV2Message(
   } catch (error) {
     return handleApiError(error);
   }
-}
-
-export async function submitLighthouseV2MessageFeedback(
-  input: LighthouseV2MessageFeedbackInput,
-): Promise<LighthouseV2ActionResult<true>> {
-  return mutateEmpty(
-    "/feedback/lighthouse",
-    {
-      method: "POST",
-      body: JSON.stringify(buildLighthouseV2MessageFeedbackPayload(input)),
-    },
-    "",
-    true,
-  );
 }
 
 async function getCollection<TResource, TOutput>(

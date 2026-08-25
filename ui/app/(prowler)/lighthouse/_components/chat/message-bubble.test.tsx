@@ -1,25 +1,44 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { type ReactNode } from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   LIGHTHOUSE_V2_MESSAGE_ROLE,
   LIGHTHOUSE_V2_PART_TYPE,
   type LighthouseV2Message,
 } from "@/app/(prowler)/lighthouse/_types";
-import { Toaster } from "@/components/shadcn/toast/Toaster";
-import { resetToasts } from "@/components/shadcn/toast/use-toast";
 
+import {
+  LIGHTHOUSE_FEEDBACK_DETAILS_MAX_LENGTH,
+  type LighthouseFeedbackSurvey,
+} from "./lighthouse-feedback-survey";
 import { MessageBubble } from "./message-bubble";
 
-const { submitFeedbackMock } = vi.hoisted(() => ({
-  submitFeedbackMock: vi.fn(),
+const { captureMock } = vi.hoisted(() => ({
+  captureMock: vi.fn(),
 }));
 
-vi.mock("@/app/(prowler)/lighthouse/_actions", () => ({
-  submitLighthouseV2MessageFeedback: submitFeedbackMock,
+vi.mock("posthog-js", () => ({
+  default: { capture: captureMock },
 }));
+
+const FEEDBACK_SURVEY = {
+  id: "survey-123",
+  name: "Lighthouse Request Outcome Feedback",
+  ratingQuestion: {
+    id: "rating-question-id",
+    question: "How was this outcome?",
+  },
+  reasonsQuestion: {
+    id: "reasons-question-id",
+    question: "What could be improved?",
+  },
+  detailsQuestion: {
+    id: "details-question-id",
+    question: "Additional feedback",
+  },
+} satisfies LighthouseFeedbackSurvey;
 
 vi.mock("streamdown", () => ({
   Streamdown: ({ children }: { children: ReactNode }) => {
@@ -59,9 +78,11 @@ vi.mock("streamdown", () => ({
 
 describe("MessageBubble", () => {
   beforeEach(() => {
-    resetToasts();
-    submitFeedbackMock.mockReset();
-    submitFeedbackMock.mockResolvedValue({ data: buildUserMessage("down") });
+    captureMock.mockReset();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it("should never render the agent-facing context block for user messages", () => {
@@ -407,6 +428,7 @@ describe("MessageBubble", () => {
         <MessageBubble
           message={message}
           feedbackTarget={buildUserMessage("optimistic-user-1")}
+          feedbackSurvey={FEEDBACK_SURVEY}
         />,
       );
 
@@ -421,7 +443,6 @@ describe("MessageBubble", () => {
     it("should submit thumbs up immediately without opening the feedback form", async () => {
       // Given
       const user = userEvent.setup();
-      submitFeedbackMock.mockResolvedValue({ data: true, status: 204 });
       renderFeedbackBubble();
 
       // When
@@ -430,10 +451,14 @@ describe("MessageBubble", () => {
       );
 
       // Then
-      await waitFor(() =>
-        expect(submitFeedbackMock).toHaveBeenCalledWith({
-          targetMessageId: "message-user-1",
-          rating: "up",
+      expect(captureMock).toHaveBeenCalledWith(
+        "survey sent",
+        expect.objectContaining({
+          $ai_trace_id: "message-user-1",
+          $survey_id: "survey-123",
+          $survey_name: "Lighthouse Request Outcome Feedback",
+          "$survey_response_rating-question-id": 1,
+          $survey_completed: true,
         }),
       );
       expect(
@@ -441,76 +466,41 @@ describe("MessageBubble", () => {
       ).not.toBeInTheDocument();
     });
 
-    it("should disable both rating controls while immediate feedback is pending", async () => {
+    it("should keep controls usable and assign a fresh submission identifier for each capture", async () => {
       // Given
       const user = userEvent.setup();
-      submitFeedbackMock.mockImplementation(() => new Promise(() => undefined));
+      vi.spyOn(globalThis.crypto, "randomUUID")
+        .mockReturnValueOnce("submission-1")
+        .mockReturnValueOnce("submission-2");
       renderFeedbackBubble();
-
-      // When
-      await user.click(
-        screen.getByRole("button", { name: "Mark outcome as helpful" }),
-      );
-
-      // Then
-      expect(
-        screen.getByRole("button", { name: "Mark outcome as helpful" }),
-      ).toBeDisabled();
-      expect(
-        screen.getByRole("button", { name: "Mark outcome as not helpful" }),
-      ).toBeDisabled();
-    });
-
-    it("should announce a failed immediate thumbs-up submission without opening the feedback form", async () => {
-      // Given
-      const user = userEvent.setup();
-      submitFeedbackMock.mockResolvedValue({
-        error: "Feedback is temporarily unavailable.",
+      const helpfulButton = screen.getByRole("button", {
+        name: "Mark outcome as helpful",
       });
-      renderFeedbackBubble();
 
       // When
-      await user.click(
-        screen.getByRole("button", { name: "Mark outcome as helpful" }),
-      );
+      await user.click(helpfulButton);
 
       // Then
-      await waitFor(() =>
-        expect(
-          screen.getByRole("button", { name: "Mark outcome as helpful" }),
-        ).toHaveAttribute("aria-pressed", "false"),
+      expect(helpfulButton).toBeEnabled();
+      expect(captureMock).toHaveBeenNthCalledWith(
+        1,
+        "survey sent",
+        expect.objectContaining({
+          $survey_submission_id: "submission-1",
+        }),
       );
-      expect(
-        await screen.findByText("Feedback is temporarily unavailable."),
-      ).toBeVisible();
-      expect(
-        screen.getByRole("region", { name: "Notifications (F8)" }),
-      ).toHaveTextContent("Feedback is temporarily unavailable.");
-      expect(
-        screen.queryByRole("heading", { name: "Share feedback" }),
-      ).not.toBeInTheDocument();
-    });
-
-    it("should announce a thrown immediate thumbs-up submission failure without opening the feedback form", async () => {
-      // Given
-      const user = userEvent.setup();
-      submitFeedbackMock.mockRejectedValue(new Error("Request failed"));
-      renderFeedbackBubble();
 
       // When
-      await user.click(
-        screen.getByRole("button", { name: "Mark outcome as helpful" }),
-      );
+      await user.click(helpfulButton);
 
       // Then
-      expect(
-        await screen.findByText(
-          "Feedback is temporarily unavailable. Please try again.",
-        ),
-      ).toBeVisible();
-      expect(
-        screen.queryByRole("heading", { name: "Share feedback" }),
-      ).not.toBeInTheDocument();
+      expect(captureMock).toHaveBeenNthCalledWith(
+        2,
+        "survey sent",
+        expect.objectContaining({
+          $survey_submission_id: "submission-2",
+        }),
+      );
     });
 
     it("should open the feedback form with the chosen rating without submitting", async () => {
@@ -532,14 +522,16 @@ describe("MessageBubble", () => {
       ).toHaveAttribute("aria-pressed", "true");
       expect(
         screen.getByLabelText("Additional feedback (optional)"),
-      ).toHaveAttribute("maxlength", "2000");
-      expect(submitFeedbackMock).not.toHaveBeenCalled();
+      ).toHaveAttribute(
+        "maxlength",
+        String(LIGHTHOUSE_FEEDBACK_DETAILS_MAX_LENGTH),
+      );
+      expect(captureMock).not.toHaveBeenCalled();
     });
 
     it("should submit selected feedback reasons with trimmed optional details", async () => {
       // Given
       const user = userEvent.setup();
-      submitFeedbackMock.mockResolvedValue({ data: true, status: 204 });
       renderFeedbackBubble();
 
       // When
@@ -579,65 +571,25 @@ describe("MessageBubble", () => {
       await user.click(screen.getByRole("button", { name: "Submit" }));
 
       // Then
-      expect(submitFeedbackMock).toHaveBeenCalledWith({
-        targetMessageId: "message-user-1",
-        rating: "down",
-        reasons: ["Don't like the style", "Low quality"],
-        details: "Missing evidence",
-      });
-    });
-
-    it("should submit the chosen rating and trimmed optional details together", async () => {
-      // Given
-      const user = userEvent.setup();
-      let resolveFeedback: (result: { data: true; status: number }) => void;
-      submitFeedbackMock.mockImplementation(
-        () =>
-          new Promise((resolve) => {
-            resolveFeedback = resolve;
-          }),
+      expect(captureMock).toHaveBeenCalledTimes(3);
+      expect(captureMock).toHaveBeenLastCalledWith(
+        "survey sent",
+        expect.objectContaining({
+          $ai_trace_id: "message-user-1",
+          "$survey_response_rating-question-id": 2,
+          "$survey_response_reasons-question-id": [
+            "Don't like the style",
+            "Low quality",
+          ],
+          "$survey_response_details-question-id": "Missing evidence",
+          $survey_completed: true,
+        }),
       );
-      renderFeedbackBubble();
-
-      // When
-      await user.click(
-        screen.getByRole("button", { name: "Mark outcome as not helpful" }),
-      );
-      await user.type(
-        screen.getByLabelText("Additional feedback (optional)"),
-        "  Missing evidence  ",
-      );
-      await user.click(screen.getByRole("button", { name: "Submit" }));
-
-      // Then
-      expect(submitFeedbackMock).toHaveBeenCalledWith({
-        targetMessageId: "message-user-1",
-        rating: "down",
-        details: "Missing evidence",
-      });
-      expect(screen.getByRole("button", { name: "Sending..." })).toBeDisabled();
-      expect(
-        screen.getByLabelText("Additional feedback (optional)"),
-      ).toBeDisabled();
-      expect(
-        screen.getByRole("button", { name: "Don't like the style" }),
-      ).toBeDisabled();
-
-      resolveFeedback!({ data: true, status: 204 });
-      await waitFor(() =>
-        expect(
-          screen.queryByRole("heading", { name: "Share feedback" }),
-        ).not.toBeInTheDocument(),
-      );
-      expect(
-        screen.getByRole("button", { name: "Mark outcome as not helpful" }),
-      ).toHaveAttribute("aria-pressed", "true");
     });
 
     it("should submit thumbs down without optional reasons or details", async () => {
       // Given
       const user = userEvent.setup();
-      submitFeedbackMock.mockResolvedValue({ data: true, status: 204 });
       renderFeedbackBubble();
 
       // When
@@ -647,10 +599,14 @@ describe("MessageBubble", () => {
       await user.click(screen.getByRole("button", { name: "Submit" }));
 
       // Then
-      expect(submitFeedbackMock).toHaveBeenCalledWith({
-        targetMessageId: "message-user-1",
-        rating: "down",
-      });
+      expect(captureMock).toHaveBeenCalledWith(
+        "survey sent",
+        expect.objectContaining({
+          $ai_trace_id: "message-user-1",
+          "$survey_response_rating-question-id": 2,
+          $survey_completed: true,
+        }),
+      );
     });
 
     it("should cancel without submitting and clear the draft", async () => {
@@ -672,7 +628,7 @@ describe("MessageBubble", () => {
       await user.click(screen.getByRole("button", { name: "Cancel" }));
 
       // Then
-      expect(submitFeedbackMock).not.toHaveBeenCalled();
+      expect(captureMock).not.toHaveBeenCalled();
       expect(
         screen.queryByRole("heading", { name: "Share feedback" }),
       ).not.toBeInTheDocument();
@@ -690,7 +646,6 @@ describe("MessageBubble", () => {
     it("should clear selected feedback reasons after a successful submission", async () => {
       // Given
       const user = userEvent.setup();
-      submitFeedbackMock.mockResolvedValue({ data: true, status: 204 });
       renderFeedbackBubble();
       await user.click(
         screen.getByRole("button", { name: "Mark outcome as not helpful" }),
@@ -701,11 +656,9 @@ describe("MessageBubble", () => {
 
       // When
       await user.click(screen.getByRole("button", { name: "Submit" }));
-      await waitFor(() =>
-        expect(
-          screen.queryByRole("heading", { name: "Share feedback" }),
-        ).not.toBeInTheDocument(),
-      );
+      expect(
+        screen.queryByRole("heading", { name: "Share feedback" }),
+      ).not.toBeInTheDocument();
       await user.click(
         screen.getByRole("button", { name: "Mark outcome as not helpful" }),
       );
@@ -728,61 +681,10 @@ describe("MessageBubble", () => {
       await user.keyboard("{Escape}");
 
       // Then
-      expect(submitFeedbackMock).not.toHaveBeenCalled();
+      expect(captureMock).not.toHaveBeenCalled();
       expect(
         screen.queryByRole("heading", { name: "Share feedback" }),
       ).not.toBeInTheDocument();
-    });
-
-    it("should retain the draft and allow retry after a submission error", async () => {
-      // Given
-      const user = userEvent.setup();
-      submitFeedbackMock
-        .mockResolvedValueOnce({
-          error: "Feedback is temporarily unavailable.",
-        })
-        .mockResolvedValueOnce({ data: true, status: 204 });
-      renderFeedbackBubble();
-      await user.click(
-        screen.getByRole("button", { name: "Mark outcome as not helpful" }),
-      );
-      await user.click(
-        screen.getByRole("button", {
-          name: "Didn't fully follow instructions",
-        }),
-      );
-      await user.type(
-        screen.getByLabelText("Additional feedback (optional)"),
-        "Keep this draft",
-      );
-
-      // When
-      await user.click(screen.getByRole("button", { name: "Submit" }));
-
-      // Then
-      expect(await screen.findByRole("alert")).toHaveTextContent(
-        "Feedback is temporarily unavailable.",
-      );
-      expect(
-        screen.getByLabelText("Additional feedback (optional)"),
-      ).toHaveValue("Keep this draft");
-      expect(
-        screen.getByRole("button", {
-          name: "Didn't fully follow instructions",
-        }),
-      ).toHaveAttribute("aria-pressed", "true");
-
-      // When - retry the intact draft
-      await user.click(screen.getByRole("button", { name: "Retry" }));
-
-      // Then
-      await waitFor(() => expect(submitFeedbackMock).toHaveBeenCalledTimes(2));
-      expect(submitFeedbackMock).toHaveBeenLastCalledWith({
-        targetMessageId: "message-user-1",
-        rating: "down",
-        reasons: ["Didn't fully follow instructions"],
-        details: "Keep this draft",
-      });
     });
   });
 });
@@ -819,13 +721,11 @@ function buildUserMessage(id = "message-user-1"): LighthouseV2Message {
 
 function renderFeedbackBubble() {
   return render(
-    <>
-      <MessageBubble
-        message={buildAssistantMessage([textPart("part-1", "Done")])}
-        feedbackTarget={buildUserMessage()}
-      />
-      <Toaster />
-    </>,
+    <MessageBubble
+      message={buildAssistantMessage([textPart("part-1", "Done")])}
+      feedbackTarget={buildUserMessage()}
+      feedbackSurvey={FEEDBACK_SURVEY}
+    />,
   );
 }
 

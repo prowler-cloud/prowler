@@ -28,7 +28,6 @@ import {
   createLighthouseV2Session,
   getLighthouseV2SupportedModels,
   sendLighthouseV2Message,
-  submitLighthouseV2MessageFeedback,
   updateLighthouseV2Configuration,
   updateLighthouseV2Session,
 } from "./lighthouse-v2";
@@ -157,69 +156,6 @@ describe("Lighthouse v2 session write actions", () => {
         method: "GET",
       }),
     );
-  });
-
-  it("submits stateless Message feedback through the internal POST contract", async () => {
-    // Given
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue(new Response(null, { status: 204 }));
-    vi.stubGlobal("fetch", fetchMock);
-
-    // When
-    const result = await submitLighthouseV2MessageFeedback({
-      targetMessageId: "message-1",
-      rating: "down",
-      reasons: ["Low quality", "Other"],
-      details: "Missing evidence",
-    });
-
-    // Then
-    expect(result).toEqual({ data: true, status: 204 });
-    expect(fetchMock).toHaveBeenCalledWith(
-      new URL("https://api.example.com/api/v1/feedback/lighthouse"),
-      expect.objectContaining({
-        method: "POST",
-        body: JSON.stringify({
-          data: {
-            type: "lighthouse-message-feedback",
-            attributes: {
-              target_message_id: "message-1",
-              rating: "down",
-              reasons: ["Low quality", "Other"],
-              details: "Missing evidence",
-            },
-          },
-        }),
-      }),
-    );
-  });
-
-  it("sanitizes Message feedback server failures", async () => {
-    // Given
-    const consoleErrorMock = vi
-      .spyOn(console, "error")
-      .mockImplementation(() => undefined);
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue(
-        new Response("<html>private upstream error</html>", {
-          status: 500,
-          headers: { "content-type": "text/html" },
-        }),
-      ),
-    );
-
-    // When
-    const result = await submitLighthouseV2MessageFeedback({
-      targetMessageId: "message-1",
-      rating: "up",
-    });
-
-    // Then
-    expect(result).toEqual({ error: "Error: Server error" });
-    expect(JSON.stringify(result)).not.toContain("private upstream error");
-    consoleErrorMock.mockRestore();
   });
 
   it("rejects an unknown skill id before sending the message", async () => {

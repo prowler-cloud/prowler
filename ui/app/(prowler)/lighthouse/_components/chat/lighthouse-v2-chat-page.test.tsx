@@ -1,5 +1,6 @@
 import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { Survey } from "posthog-js";
 import { type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -34,13 +35,15 @@ const {
   getMessagesMock,
   sendMessageMock,
   updateConfigurationMock,
-  submitFeedbackMock,
+  captureMock,
+  onSurveysLoadedMock,
 } = vi.hoisted(() => ({
   createSessionMock: vi.fn(),
   getMessagesMock: vi.fn(),
   sendMessageMock: vi.fn(),
   updateConfigurationMock: vi.fn(),
-  submitFeedbackMock: vi.fn(),
+  captureMock: vi.fn(),
+  onSurveysLoadedMock: vi.fn(),
 }));
 
 vi.mock("@/app/(prowler)/lighthouse/_actions", () => ({
@@ -48,7 +51,13 @@ vi.mock("@/app/(prowler)/lighthouse/_actions", () => ({
   getLighthouseV2Messages: getMessagesMock,
   sendLighthouseV2Message: sendMessageMock,
   updateLighthouseV2Configuration: updateConfigurationMock,
-  submitLighthouseV2MessageFeedback: submitFeedbackMock,
+}));
+
+vi.mock("posthog-js", () => ({
+  default: {
+    capture: captureMock,
+    onSurveysLoaded: onSurveysLoadedMock,
+  },
 }));
 
 vi.mock("next/navigation", () => ({
@@ -100,6 +109,43 @@ const supportedProviders: LighthouseV2SupportedProvider[] = [
   { id: "openai-compatible", name: "OpenAI Compatible" },
 ];
 
+const OUTCOME_FEEDBACK_SURVEY = {
+  id: "survey-123",
+  name: "Lighthouse Request Outcome Feedback",
+  type: "api",
+  questions: [
+    {
+      id: "rating-question-id",
+      type: "rating",
+      display: "emoji",
+      scale: 2,
+      question: "How was this outcome?",
+      lowerBoundLabel: "Not helpful",
+      upperBoundLabel: "Helpful",
+    },
+    {
+      id: "reasons-question-id",
+      type: "multiple_choice",
+      optional: true,
+      choices: [
+        "Don't like the style",
+        "Didn't fully follow instructions",
+        "Low quality",
+        "Biased",
+        "Safety or legal concern",
+        "Other",
+      ],
+      question: "What could be improved?",
+    },
+    {
+      id: "details-question-id",
+      type: "open",
+      optional: true,
+      question: "Additional feedback",
+    },
+  ],
+} as unknown as Survey;
+
 describe("LighthouseV2ChatPage", () => {
   beforeEach(() => {
     vi.stubGlobal(
@@ -118,7 +164,12 @@ describe("LighthouseV2ChatPage", () => {
     getMessagesMock.mockReset();
     sendMessageMock.mockReset();
     updateConfigurationMock.mockReset();
-    submitFeedbackMock.mockReset();
+    captureMock.mockReset();
+    onSurveysLoadedMock.mockReset();
+    onSurveysLoadedMock.mockImplementation((callback) => {
+      callback([OUTCOME_FEEDBACK_SURVEY]);
+      return () => {};
+    });
     resetPanelChatStoreForTests();
     eventSources = stubEventSource();
     window.history.replaceState(null, "", "/lighthouse");
@@ -558,7 +609,6 @@ describe("LighthouseV2ChatPage", () => {
       "user",
       "Second prompt",
     );
-    submitFeedbackMock.mockResolvedValue({ data: true, status: 204 });
     renderPage({
       initialSessionId: "session-1",
       initialMessages: [
@@ -607,15 +657,81 @@ describe("LighthouseV2ChatPage", () => {
         name: "Mark outcome as helpful",
       }),
     ).toBeInTheDocument();
-    expect(submitFeedbackMock).toHaveBeenCalledWith({
-      targetMessageId: "message-user-1",
-      rating: "down",
+    expect(captureMock).toHaveBeenCalledWith(
+      "survey sent",
+      expect.objectContaining({
+        $ai_trace_id: "message-user-1",
+        "$survey_response_rating-question-id": 2,
+      }),
+    );
+    expect(captureMock).toHaveBeenCalledWith(
+      "survey sent",
+      expect.objectContaining({
+        $ai_trace_id: "message-user-2",
+        "$survey_response_rating-question-id": 2,
+      }),
+    );
+    expect(captureMock).toHaveBeenCalledTimes(2);
+    expect(onSurveysLoadedMock).toHaveBeenCalledOnce();
+  });
+
+  it.each([
+    ["unavailable", []],
+    [
+      "invalid",
+      [
+        {
+          ...OUTCOME_FEEDBACK_SURVEY,
+          questions: [
+            { ...OUTCOME_FEEDBACK_SURVEY.questions[0], optional: true },
+            OUTCOME_FEEDBACK_SURVEY.questions[1],
+            OUTCOME_FEEDBACK_SURVEY.questions[2],
+          ],
+        } as unknown as Survey,
+      ],
+    ],
+  ])(
+    "does not render outcome feedback controls when the API survey is %s",
+    (_state, surveys) => {
+      // Given
+      onSurveysLoadedMock.mockImplementation((callback) => {
+        callback(surveys);
+        return () => {};
+      });
+
+      // When
+      renderPage({
+        initialSessionId: "session-1",
+        initialMessages: [
+          message("message-user-1", "user", "Prompt"),
+          message("message-assistant-1", "assistant", "Answer"),
+        ],
+      });
+
+      // Then
+      expect(
+        screen.queryByRole("button", { name: "Mark outcome as helpful" }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: "Mark outcome as not helpful" }),
+      ).not.toBeInTheDocument();
+    },
+  );
+
+  it("cleans up the outcome feedback survey subscription when the chat unmounts", () => {
+    // Given
+    const unsubscribe = vi.fn();
+    onSurveysLoadedMock.mockImplementation((callback) => {
+      callback([OUTCOME_FEEDBACK_SURVEY]);
+      return unsubscribe;
     });
-    expect(submitFeedbackMock).toHaveBeenCalledWith({
-      targetMessageId: "message-user-2",
-      rating: "down",
-    });
-    expect(submitFeedbackMock).toHaveBeenCalledTimes(2);
+    const { unmount } = renderPage();
+
+    // When
+    unmount();
+
+    // Then
+    expect(unsubscribe).toHaveBeenCalledOnce();
   });
 
   it("does not attach outcome feedback to an assistant after an optimistic user prompt", () => {

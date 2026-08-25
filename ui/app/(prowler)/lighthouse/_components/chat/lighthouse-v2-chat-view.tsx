@@ -1,6 +1,7 @@
 "use client";
 
-import { type ReactNode, type SubmitEvent } from "react";
+import posthogClient from "posthog-js";
+import { type ReactNode, type SubmitEvent, useEffect, useState } from "react";
 
 import {
   Conversation,
@@ -40,6 +41,10 @@ import { ProviderIcon } from "../config/provider-icon";
 import { ChatComposerPanel } from "./composer";
 import { ChatEmptyState } from "./empty-state";
 import { useLighthouseChatStore } from "./lighthouse-chat-store-provider";
+import {
+  resolveLighthouseFeedbackSurvey,
+  type LighthouseFeedbackSurvey,
+} from "./lighthouse-feedback-survey";
 import { MessageBubble } from "./message-bubble";
 import { SkillComposerPill } from "./skill-composer-pill";
 import { SkillRunProgress } from "./skill-run-progress";
@@ -63,6 +68,7 @@ export function LighthouseV2ChatView({
   emptyStateFooter,
 }: LighthouseV2ChatViewProps) {
   const currentContext = useLighthouseCurrentContext();
+  const feedbackSurvey = useLighthouseOutcomeFeedbackSurvey();
   // Whole-store subscription is intentional: the view renders most of the state and selectLighthouseChatCanSend takes full state.
   const state = useLighthouseChatStore((current) => current);
   const {
@@ -216,6 +222,7 @@ export function LighthouseV2ChatView({
                   key={message.id}
                   message={message}
                   feedbackTarget={feedbackTarget}
+                  feedbackSurvey={feedbackSurvey}
                   skillRun={skillRun}
                   onLaunchSkill={(skill) => {
                     // The DyR prompts hand follow-up skills off to a separate
@@ -281,6 +288,18 @@ export function LighthouseV2ChatView({
       {chatBody}
     </div>
   );
+}
+
+function useLighthouseOutcomeFeedbackSurvey(): LighthouseFeedbackSurvey | null {
+  const [survey, setSurvey] = useState<LighthouseFeedbackSurvey | null>(null);
+
+  useEffect(() => {
+    return posthogClient.onSurveysLoaded((surveys) => {
+      setSurvey(resolveLighthouseFeedbackSurvey(surveys));
+    });
+  }, []);
+
+  return survey;
 }
 
 function SessionLoadingState() {
