@@ -329,6 +329,13 @@ export function ImportFindingsModal({
                 >
                   Retry status
                 </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => setState({ type: IMPORT_STATE.IDLE })}
+                >
+                  Stop tracking and start over
+                </Button>
               </>
             )}
             <Button
