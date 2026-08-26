@@ -25,8 +25,8 @@ describe("Scans page import findings", () => {
     await harness.submitImport();
 
     await harness.waitForCompletedSummary();
-    // The summary is already on screen, and the toast would have been raised in
-    // the same render — so its absence here is the open dialog suppressing it.
+    // The summary is on screen, so the toast would have been raised in the same
+    // render: its absence is the open dialog suppressing it.
     expect(harness.hasCompletionNotification()).toBe(false);
     expect(harness.pageRefreshCount).toBe(1);
     expect(harness.ingestionPostCount).toBe(1);
@@ -162,8 +162,7 @@ describe("Scans page import findings", () => {
     await expect(harness.activateDropzoneWithKeyboard()).resolves.toBe(false);
 
     expect(harness.selectedFileName()).toBe("findings.ocsf.json");
-    // A swap would reset the state to ready, re-enabling submission for a
-    // second, concurrent POST.
+    // A swap would reset to ready, re-enabling submission for a second POST.
     expect(harness.isUploadInProgress()).toBe(true);
 
     await harness.waitForTrackingStatus();
@@ -280,7 +279,7 @@ describe("Scans page import findings", () => {
     const pollsWhenLeaving = harness.ingestionStatusPollCount;
 
     // An unaborted poll answers into the dead page and chains the next one,
-    // eventually refreshing and toasting over whatever route the user is on.
+    // refreshing and toasting over whatever route the user moved to.
     await harness.waitPastTheNextPoll();
     expect(harness.ingestionStatusPollCount).toBe(pollsWhenLeaving);
   });

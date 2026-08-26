@@ -64,10 +64,8 @@ export const ingestionFixture = (): IngestionFixture => ({
   invalidRecords: 1,
 });
 
-/**
- * A job that stopped partway: the service accounts for every record it read,
- * so the ones it could not process are reported as invalid.
- */
+// Stopped partway: every record read is accounted for, so the unprocessed ones
+// are reported as invalid.
 export const partiallyProcessedIngestionFixture = (): IngestionFixture => ({
   id: INGESTION_ID,
   totalRecords: 5,

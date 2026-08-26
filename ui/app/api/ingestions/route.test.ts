@@ -12,8 +12,8 @@ import {
 
 import { POST } from "./route";
 
-// Browser MSW intercepts the browser's same-origin request before Next can run
-// this Route Handler, so this contract invokes the streaming boundary directly.
+// Browser MSW intercepts the same-origin request before Next can run this
+// Route Handler, so these tests call POST directly.
 const { getAuthHeadersMock, isCloudMock } = vi.hoisted(() => ({
   getAuthHeadersMock: vi.fn(),
   isCloudMock: vi.fn(),
@@ -88,8 +88,8 @@ describe("POST /api/ingestions", () => {
         },
       ),
     );
-    // Built by hand because a Request created from FormData carries no
-    // content-length header, which is the very thing this test pins.
+    // Built by hand: a Request created from FormData carries no content-length
+    // header, which is what this test pins.
     const boundary = "----ingestionBoundary";
     const multipartBody = [
       `--${boundary}`,
@@ -114,8 +114,6 @@ describe("POST /api/ingestions", () => {
     const response = await POST(request);
 
     expect(contentType).toBe(`multipart/form-data; boundary=${boundary}`);
-    // A length-less forward is sent chunked, and the ingestion API parses no
-    // file out of a chunked multipart body.
     expect(contentLength).toBe(
       String(new TextEncoder().encode(multipartBody).length),
     );
@@ -206,9 +204,6 @@ describe("POST /api/ingestions", () => {
     },
   );
 
-  // Only `invalid` has been seen from the real API; the other four codes were
-  // exercised by forcing the upstream response, so for those the status tier is
-  // plausibly the delivery path in production.
   const STATUS_TIER_REJECTIONS = [
     [400, "The report is not a valid Prowler OCSF finding report."],
     [402, "A Prowler Cloud subscription is required to import findings."],
@@ -276,9 +271,8 @@ describe("POST /api/ingestions", () => {
     },
   );
 
-  // An empty identifier would otherwise parse into a trackable-looking job and
-  // send the client polling `/api/ingestions/`, which matches no route, so a
-  // job that really was created would surface as a tracking error.
+  // An empty id parses into a trackable-looking job whose poll URL,
+  // `/api/ingestions/`, matches no route: a created import reads as a failure.
   it.each([
     ["no job identifier", { attributes: { status: "pending" } }],
     ["an empty job identifier", { id: "", attributes: { status: "pending" } }],

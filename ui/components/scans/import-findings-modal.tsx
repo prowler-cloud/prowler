@@ -10,9 +10,7 @@ import { useToast } from "@/components/shadcn/toast/use-toast";
 import type { Ingestion, IngestionResponse } from "@/types";
 
 const POLL_INTERVAL_MS = 5000;
-/** 5 minutes of watching, the longest polling budget in `ui/`. A bulk OCSF
- *  ingest can outlive it, so exhausting it only stops the watch: the job keeps
- *  running server-side and "Retry status" buys another budget. */
+// 60 polls at 5s = ~5 min of watching; timing out ends the watch, not the job.
 const MAX_POLL_ATTEMPTS = 60;
 
 const IMPORT_STATE = {
@@ -62,8 +60,7 @@ interface FailedImportState {
   type: typeof IMPORT_STATE.FAILED;
   error: string;
   file: File;
-  // Only a terminal `failed` job reports counters; a rejected upload never
-  // became one, so it has nothing to summarise.
+  // Absent when the upload itself was rejected: no job, so no counters.
   ingestion?: Ingestion;
 }
 
@@ -231,9 +228,8 @@ export function ImportFindingsModal({
   };
 
   const handleOpenChange = (nextOpen: boolean) => {
-    // Dismissing never aborts the request, so an in-flight upload keeps its
-    // state like tracking does: resetting here would lose the accepted job and
-    // re-enable submission for a second, concurrent POST.
+    // Dismissing never aborts the request: resetting here would drop the
+    // accepted job and re-enable submit for a second, concurrent POST.
     if (
       !nextOpen &&
       state.type !== IMPORT_STATE.UPLOADING &&

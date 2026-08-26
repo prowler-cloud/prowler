@@ -106,8 +106,6 @@ describe("GET /api/ingestions/[ingestionId]", () => {
       params: Promise.resolve({ ingestionId: "2026/08 report" }),
     });
 
-    // Unescaped, the slash would split into extra path segments and address a
-    // different upstream resource than the one being polled.
     expect(requestedUrl).toBe(
       "https://api.example.com/api/v1/ingestions/2026%2F08%20report",
     );

@@ -27,9 +27,7 @@ interface JsonApiIngestionResponse {
 const isIngestionStatus = (value: unknown): value is IngestionStatus =>
   Object.values(INGESTION_STATUS).includes(value as IngestionStatus);
 
-// Counts arrive nested under `summary` and are absent until the job reports
-// them; only the identifier and status make a job trackable, so a missing
-// summary reads as zero instead of failing the whole payload.
+// Counts are absent until the job reports them: read as 0, not a failure.
 const recordCount = (value: unknown): number =>
   typeof value === "number" ? value : 0;
 

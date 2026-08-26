@@ -68,10 +68,6 @@ export class ScansPageHarness extends BrowserHarness<IngestionFixture> {
     );
   }
 
-  /**
-   * Navigate away from Scans, taking the page down with whatever it had in
-   * flight — the tracked import included.
-   */
   async leaveScansPage(): Promise<void> {
     const mounted = await this.mounted;
     if (!mounted) throw new Error("leaveScansPage: the page is not mounted");
@@ -104,7 +100,7 @@ export class ScansPageHarness extends BrowserHarness<IngestionFixture> {
     );
   }
 
-  /** Drop a file without waiting for it to be taken: a frozen zone refuses it. */
+  /** Drop without waiting for the file to be taken: dropFile hangs on a refused drop. */
   async attemptDrop(file: File): Promise<void> {
     const dropzone = await this.waitFor(() =>
       this.q('[data-testid="import-findings-dropzone"] [role="button"]'),
@@ -116,10 +112,7 @@ export class ScansPageHarness extends BrowserHarness<IngestionFixture> {
     );
   }
 
-  /**
-   * Whether the zone refuses a new file. Both halves matter: the drop and
-   * keyboard paths gate on the zone, the file picker on the input itself.
-   */
+  /** Both halves matter: drop and keyboard gate on the zone, the file picker on the input. */
   isDropzoneFrozen(): boolean {
     const zone = this.q(
       '[data-testid="import-findings-dropzone"] [role="button"]',
@@ -195,11 +188,7 @@ export class ScansPageHarness extends BrowserHarness<IngestionFixture> {
     await this.waitFor(() => (this.ingestionPostCount === 2 ? true : null));
   }
 
-  /**
-   * The counters the completed job reported. Anchored on "Import completed" —
-   * the failed summary reports the very same numbers, so the counters alone
-   * cannot tell the two outcomes apart.
-   */
+  /** Anchored on "Import completed": the failed summary reports the same counters. */
   async waitForCompletedSummary(): Promise<void> {
     const { processedRecords, totalRecords, invalidRecords } = this.fixture;
     await this.waitForText(
@@ -211,7 +200,6 @@ export class ScansPageHarness extends BrowserHarness<IngestionFixture> {
     );
   }
 
-  /** Whether the out-of-dialog completion notification is on screen. */
   hasCompletionNotification(): boolean {
     return this.containsText(/Findings import completed/i);
   }
@@ -236,7 +224,6 @@ export class ScansPageHarness extends BrowserHarness<IngestionFixture> {
     await this.waitForText(/Import failed/i, 15000);
   }
 
-  /** The record counters the service reported for the job that failed. */
   async waitForFailedImportSummary(): Promise<void> {
     const { processedRecords, totalRecords, invalidRecords } = this.fixture;
     await this.waitForText(
@@ -263,15 +250,11 @@ export class ScansPageHarness extends BrowserHarness<IngestionFixture> {
     );
   }
 
-  /**
-   * Outlast a poll that was never called off: its delayed response lands, then
-   * a whole poll interval goes by (5s in the modal) and the next one would fire.
-   */
+  /** Outlast an uncancelled poll: its response lands, then the modal's 5s interval passes and the next would fire. */
   async waitPastTheNextPoll(): Promise<void> {
     await this.waitForTransition(this.statusDelayMs + 5700);
   }
 
-  /** Give up on a stuck import, returning the modal to a fresh selection. */
   async stopTracking(): Promise<void> {
     await this.clickButton(/Stop tracking and start over/i);
     await this.waitFor(
@@ -293,14 +276,7 @@ export class ScansPageHarness extends BrowserHarness<IngestionFixture> {
     return this.maxInFlightStatusRequests;
   }
 
-  /**
-   * How many times the page asked for its server data again — the only thing
-   * that brings an imported scan into the table, since the table's own refresh
-   * only polls while a scan is already executing.
-   *
-   * `next/navigation` is mocked suite-wide (`vitest.integration.setup.ts`) and
-   * hands out one router, so its `refresh` spy is the whole page's history.
-   */
+  /** A page refresh is the only thing that brings an imported scan into the table. */
   get pageRefreshCount(): number {
     return vi.mocked(readMockedRouter().refresh).mock.calls.length;
   }

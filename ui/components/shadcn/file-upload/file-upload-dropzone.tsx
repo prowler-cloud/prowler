@@ -16,8 +16,7 @@ import { cn } from "@/lib/utils";
 const KB = 1024;
 const MB = KB * 1024;
 
-// Whole KB below 1 MB, one decimal from 1 MB up. Deliberately not
-// toLocaleString: a locale-grouped "15.002 KB" reads as 15 KB in es-ES.
+// Not toLocaleString: a locale-grouped "15.002 KB" reads as 15 KB in es-ES.
 function formatFileSize(bytes: number) {
   const kb = Math.ceil(bytes / KB);
   return kb < KB ? `${kb} KB` : `${(bytes / MB).toFixed(1)} MB`;

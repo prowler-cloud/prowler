@@ -7,9 +7,8 @@ import type {
 
 const API = "/api/ingestions";
 
-// A job only reports its record counters once it reaches a terminal status —
-// `failed` included, which is how a partially processed import is told apart
-// from one that landed nothing.
+// Counters stay zero until the job reaches a terminal status; `failed` still
+// reports progress, which is what tells a partial import from one that landed nothing.
 const ingestionResponse = (
   fixture: IngestionFixture,
   status: "pending" | "processing" | "completed" | "failed",
@@ -26,7 +25,6 @@ const ingestionResponse = (
   };
 };
 
-/** A successful upload advances through the API's asynchronous job states. */
 interface IngestionHandlerOptions {
   uploadRejection?: IngestionRejectionFixture;
   uploadDelayMs?: number;
