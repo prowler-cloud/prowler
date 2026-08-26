@@ -1,6 +1,13 @@
 "use client";
 
-import { BadgeCheck, Check, Download, ShieldCheck } from "lucide-react";
+import {
+  BadgeCheck,
+  Check,
+  Download,
+  Package,
+  ShieldCheck,
+} from "lucide-react";
+import { useState } from "react";
 
 import { ProviderTypeIcon } from "@/components/icons/providers-badge/provider-type-icon";
 import { Badge } from "@/components/shadcn/badge/badge";
@@ -30,6 +37,81 @@ function capabilitySummary(artifact: RegistryMarketplaceArtifact) {
   return labels.join(", ");
 }
 
+/**
+ * Maximum provider logos rendered in the footer cluster before collapsing
+ * the remainder into a "+N" overflow badge (registry.dev card reference).
+ */
+const MAX_PROVIDER_LOGOS = 4;
+
+interface RegistryProviderClusterProps {
+  providers: string[];
+}
+
+function RegistryProviderCluster({ providers }: RegistryProviderClusterProps) {
+  if (providers.length === 0) return null;
+
+  const displayNames = providers.map(getProviderDisplayName);
+  const visibleProviders = providers.slice(0, MAX_PROVIDER_LOGOS);
+  const overflowCount = providers.length - visibleProviders.length;
+
+  return (
+    <span className="flex items-center gap-1.5">
+      {/* Icons alone must never be the only carrier of the provider names. */}
+      <span className="sr-only">
+        {providers.length === 1
+          ? `Provider: ${displayNames[0]}`
+          : `Providers: ${displayNames.join(", ")}`}
+      </span>
+      {providers.length > 1 && (
+        <span aria-hidden className="text-text-neutral-secondary text-xs">
+          {providers.length} providers
+        </span>
+      )}
+      <span aria-hidden className="flex items-center gap-1">
+        {visibleProviders.map((provider) => (
+          <ProviderTypeIcon key={provider} size={16} type={provider} />
+        ))}
+      </span>
+      {overflowCount > 0 && (
+        <span aria-hidden className="text-text-neutral-secondary text-xs">
+          +{overflowCount}
+        </span>
+      )}
+    </span>
+  );
+}
+
+interface RegistryOwnerAvatarProps {
+  owner: RegistryArtifactOwner;
+}
+
+function RegistryOwnerAvatar({ owner }: RegistryOwnerAvatarProps) {
+  // Owner logos come from short-lived signed URLs that can expire, so a
+  // failed load falls back to the initial-letter avatar.
+  const [logoFailed, setLogoFailed] = useState(false);
+
+  if (owner.logoUrl && !logoFailed) {
+    return (
+      <img
+        alt=""
+        aria-hidden
+        className="size-5 shrink-0 rounded-full object-cover"
+        onError={() => setLogoFailed(true)}
+        src={owner.logoUrl}
+      />
+    );
+  }
+
+  return (
+    <span
+      aria-hidden
+      className="bg-bg-neutral-tertiary text-text-neutral-secondary flex size-5 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold uppercase"
+    >
+      {owner.name.charAt(0)}
+    </span>
+  );
+}
+
 interface RegistryOwnerRowProps {
   isOfficial: boolean;
   isVerified: boolean;
@@ -47,21 +129,7 @@ function RegistryOwnerRow({
     <div className="flex flex-wrap items-center gap-2">
       {owner && (
         <span className="flex min-w-0 items-center gap-2">
-          {owner.logoUrl ? (
-            <img
-              alt=""
-              aria-hidden
-              className="size-5 shrink-0 rounded-full object-cover"
-              src={owner.logoUrl}
-            />
-          ) : (
-            <span
-              aria-hidden
-              className="bg-bg-neutral-tertiary text-text-neutral-secondary flex size-5 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold uppercase"
-            >
-              {owner.name.charAt(0)}
-            </span>
-          )}
+          <RegistryOwnerAvatar owner={owner} />
           <span className="text-text-neutral-secondary truncate text-xs">
             {owner.name}
           </span>
@@ -90,9 +158,6 @@ export function RegistryArtifactCard({
   onRemove,
 }: RegistryArtifactCardProps) {
   const displayName = artifact.name ?? artifact.normalizedName;
-  // Unknown or absent providers fall back to the generic provider badge
-  // rendered by ProviderTypeIcon itself.
-  const primaryProvider = artifact.providers[0] ?? "";
   const subtitle = [
     artifact.providers.map(getProviderDisplayName).join(", "),
     capabilitySummary(artifact),
@@ -105,9 +170,11 @@ export function RegistryArtifactCard({
       <div className="flex items-start gap-3">
         <span
           aria-hidden
-          className="bg-bg-neutral-tertiary flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-lg"
+          className="bg-bg-neutral-tertiary text-text-neutral-secondary flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-lg"
         >
-          <ProviderTypeIcon size={26} type={primaryProvider} />
+          {/* Artifacts can span several providers, so the header shows a
+              neutral package mark instead of any single provider logo. */}
+          <Package size={26} />
         </span>
         <div className="min-w-0">
           <p className="text-text-neutral-primary truncate text-sm font-semibold">
@@ -141,6 +208,7 @@ export function RegistryArtifactCard({
             <Download aria-hidden className="size-3.5" />
             {artifact.totalDownloads}
           </span>
+          <RegistryProviderCluster providers={artifact.providers} />
           <span className="ml-auto flex items-center gap-2">
             {artifact.isAdded ? (
               <>
@@ -192,11 +260,11 @@ export function RegistryTenantArtifactCard({
       <div className="flex items-start gap-3">
         <span
           aria-hidden
-          className="bg-bg-neutral-tertiary flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-lg"
+          className="bg-bg-neutral-tertiary text-text-neutral-secondary flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-lg"
         >
-          {/* Tenant artifacts carry no provider metadata, so the icon renders
-              its own generic provider fallback. */}
-          <ProviderTypeIcon size={26} type="" />
+          {/* Tenant artifacts carry no provider metadata; the neutral package
+              mark matches the marketplace card header. */}
+          <Package size={26} />
         </span>
         <div className="min-w-0">
           <p className="text-text-neutral-primary truncate text-sm font-semibold">

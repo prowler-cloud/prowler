@@ -12,7 +12,7 @@ export default async function RegistryPage() {
   if (bootstrap.status === REGISTRY_FAILURE.ACCESS_DENIED) redirect("/profile");
 
   return (
-    <ContentLayout title="Registry">
+    <ContentLayout title="Registry" icon="lucide:package">
       <RegistryExplorer initialState={bootstrap.state} />
     </ContentLayout>
   );

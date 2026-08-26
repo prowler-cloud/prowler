@@ -1,13 +1,10 @@
 import { useRouter } from "next/navigation";
-import type { ReactElement } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { userEvent } from "vitest/browser";
 
-import { render as renderBrowser } from "@/__tests__/render-browser";
+import { render } from "@/__tests__/render-browser";
 import type { RegistryBootstrapState } from "@/types/registry";
 
-import { RegistryAccessBoundary } from "./registry-access-boundary";
-import { RegistryEligibilityProvider } from "./registry-eligibility-provider";
 import { RegistryExplorer } from "./registry-explorer";
 
 const {
@@ -15,7 +12,6 @@ const {
   disconnectRegistryCredentialMock,
   refreshRegistryCollectionsMock,
   refreshRegistryCredentialMock,
-  refreshRegistryEligibilityMock,
   removeRegistryArtifactMock,
   submitRegistryCredentialMock,
   trackAndPollTaskMock,
@@ -24,7 +20,6 @@ const {
   disconnectRegistryCredentialMock: vi.fn(),
   refreshRegistryCollectionsMock: vi.fn(),
   refreshRegistryCredentialMock: vi.fn(),
-  refreshRegistryEligibilityMock: vi.fn(),
   removeRegistryArtifactMock: vi.fn(),
   submitRegistryCredentialMock: vi.fn(),
   trackAndPollTaskMock: vi.fn(),
@@ -35,7 +30,6 @@ vi.mock("@/actions/registry/registry", () => ({
   disconnectRegistryCredential: disconnectRegistryCredentialMock,
   refreshRegistryCollections: refreshRegistryCollectionsMock,
   refreshRegistryCredential: refreshRegistryCredentialMock,
-  refreshRegistryEligibility: refreshRegistryEligibilityMock,
   removeRegistryArtifact: removeRegistryArtifactMock,
   submitRegistryCredential: submitRegistryCredentialMock,
 }));
@@ -48,14 +42,11 @@ vi.mock("@/store/task-watcher/store", () => ({
   trackAndPollTask: trackAndPollTaskMock,
 }));
 
-const render = (
-  ui: ReactElement,
-  options?: Parameters<typeof renderBrowser>[1],
-) =>
-  renderBrowser(
-    <RegistryEligibilityProvider>{ui}</RegistryEligibilityProvider>,
-    options,
-  );
+// The integration setup mocks `next/navigation` with a module-level router,
+// so this "hook" is a plain function returning the shared router spies and
+// is safe to call outside a component.
+// eslint-disable-next-line react-hooks/rules-of-hooks
+const registryRouter = useRouter();
 
 const onboardingState: RegistryBootstrapState = {
   status: "onboarding",
@@ -158,37 +149,10 @@ const readyState: RegistryBootstrapState = {
   ],
 };
 
-let registryRouter: ReturnType<typeof useRouter>;
-
-function AuthorizedRegistryExplorer({
-  initialState = readyState,
-}: {
-  initialState?: RegistryBootstrapState;
-}) {
-  registryRouter = useRouter();
-
-  return (
-    <RegistryAccessBoundary initialLeaseDurationMs={30_000}>
-      <RegistryExplorer initialState={initialState} />
-    </RegistryAccessBoundary>
-  );
-}
-
-async function expectRegistryAccessRevoked(
-  screen: Awaited<ReturnType<typeof render>>,
-) {
-  // The subtitle renders in both the ready and onboarding explorer states, so
-  // its absence proves the explorer actually unmounted on revocation.
+async function expectRedirectedToProfile() {
   await expect
-    .element(
-      screen.getByText(
-        "Discover and install checks, compliance frameworks, and providers for your workspace.",
-      ),
-    )
-    .not.toBeInTheDocument();
-  await expect
-    .poll(() => registryRouter.replace)
-    .toHaveBeenCalledWith("/profile");
+    .poll(() => vi.mocked(registryRouter.replace).mock.calls)
+    .toEqual([["/profile"]]);
 }
 
 const incompleteState: RegistryBootstrapState = {
@@ -210,15 +174,11 @@ describe("RegistryExplorer", () => {
     disconnectRegistryCredentialMock.mockReset();
     refreshRegistryCollectionsMock.mockReset();
     refreshRegistryCredentialMock.mockReset();
-    refreshRegistryEligibilityMock.mockReset();
     removeRegistryArtifactMock.mockReset();
     submitRegistryCredentialMock.mockReset();
     trackAndPollTaskMock.mockReset();
-    refreshRegistryEligibilityMock.mockResolvedValue({
-      status: "eligible",
-      leaseDurationMs: 30_000,
-    });
     trackAndPollTaskMock.mockResolvedValue({ status: "ready" });
+    vi.mocked(registryRouter.replace).mockClear();
   });
 
   describe("when Registry access is not connected", () => {
@@ -746,48 +706,26 @@ describe("RegistryExplorer", () => {
   });
 
   describe("when a Registry action loses authorization", () => {
-    it("fails closed to Profile when unknown eligibility outlives the lease", async () => {
-      // Given: the session token is absent, so eligibility can only report unknown
-      refreshRegistryEligibilityMock.mockResolvedValue({ status: "unknown" });
-
-      function ShortLeaseRegistryExplorer() {
-        registryRouter = useRouter();
-
-        return (
-          <RegistryAccessBoundary initialLeaseDurationMs={80}>
-            <RegistryExplorer initialState={readyState} />
-          </RegistryAccessBoundary>
-        );
-      }
-
-      // When
-      const screen = await render(<ShortLeaseRegistryExplorer />);
-
-      // Then: the lease briefly holds access, then the boundary fails closed
-      await expect
-        .element(screen.getByRole("tab", { name: /Explore/ }))
-        .toBeVisible();
-      await expect
-        .poll(() => registryRouter.replace)
-        .toHaveBeenCalledWith("/profile");
-    });
-
-    it("removes Registry and routes to Profile when Add is denied", async () => {
+    it("routes to Profile once when Add is denied", async () => {
       // Given
       addRegistryArtifactMock.mockResolvedValue({ status: "access_denied" });
-      const screen = await render(<AuthorizedRegistryExplorer />);
+      const screen = await render(
+        <RegistryExplorer initialState={readyState} />,
+      );
 
       // When
       await screen.getByRole("button", { name: "Add Cloud guard" }).click();
 
       // Then
-      await expectRegistryAccessRevoked(screen);
+      await expectRedirectedToProfile();
     });
 
-    it("removes Registry and routes to Profile when Remove is denied", async () => {
+    it("routes to Profile once when Remove is denied", async () => {
       // Given
       removeRegistryArtifactMock.mockResolvedValue({ status: "access_denied" });
-      const screen = await render(<AuthorizedRegistryExplorer />);
+      const screen = await render(
+        <RegistryExplorer initialState={readyState} />,
+      );
       await screen.getByRole("tab", { name: /My artifacts/ }).click();
       await screen.getByRole("button", { name: "Remove AWS guard" }).click();
 
@@ -795,16 +733,16 @@ describe("RegistryExplorer", () => {
       await screen.getByRole("button", { name: "Confirm Remove" }).click();
 
       // Then
-      await expectRegistryAccessRevoked(screen);
+      await expectRedirectedToProfile();
     });
 
-    it("removes Registry and routes to Profile when credential submission is denied", async () => {
+    it("routes to Profile once when credential submission is denied", async () => {
       // Given
       submitRegistryCredentialMock.mockResolvedValue({
         status: "access_denied",
       });
       const screen = await render(
-        <AuthorizedRegistryExplorer initialState={onboardingState} />,
+        <RegistryExplorer initialState={onboardingState} />,
       );
       await screen.getByRole("button", { name: "Connect API key" }).click();
       await screen.getByLabelText("Registry key").fill("registry-test-key");
@@ -815,25 +753,27 @@ describe("RegistryExplorer", () => {
         .click();
 
       // Then
-      await expectRegistryAccessRevoked(screen);
+      await expectRedirectedToProfile();
     });
 
-    it("removes Registry and routes to Profile when disconnect is denied", async () => {
+    it("routes to Profile once when disconnect is denied", async () => {
       // Given
       disconnectRegistryCredentialMock.mockResolvedValue({
         status: "access_denied",
       });
-      const screen = await render(<AuthorizedRegistryExplorer />);
+      const screen = await render(
+        <RegistryExplorer initialState={readyState} />,
+      );
       await screen.getByRole("button", { name: "Manage access" }).click();
 
       // When
       await screen.getByRole("button", { name: "Disconnect" }).click();
 
       // Then
-      await expectRegistryAccessRevoked(screen);
+      await expectRedirectedToProfile();
     });
 
-    it("removes Registry and routes to Profile when post-connect collection refresh is denied", async () => {
+    it("routes to Profile once when post-connect collection refresh is denied", async () => {
       // Given
       submitRegistryCredentialMock.mockResolvedValue(submittedResult());
       refreshRegistryCredentialMock.mockResolvedValue({
@@ -844,7 +784,7 @@ describe("RegistryExplorer", () => {
         status: "access_denied",
       });
       const screen = await render(
-        <AuthorizedRegistryExplorer initialState={onboardingState} />,
+        <RegistryExplorer initialState={onboardingState} />,
       );
       await screen.getByRole("button", { name: "Connect API key" }).click();
       await screen.getByLabelText("Registry key").fill("registry-test-key");
@@ -855,38 +795,8 @@ describe("RegistryExplorer", () => {
         .click();
 
       // Then
-      await expectRegistryAccessRevoked(screen);
+      await expectRedirectedToProfile();
     });
-  });
-
-  it("suppresses a late Add confirmation after the real access boundary revokes Registry", async () => {
-    // Given
-    let resolveMutation: ((result: unknown) => void) | undefined;
-    refreshRegistryEligibilityMock
-      .mockResolvedValueOnce({ status: "eligible", leaseDurationMs: 30_000 })
-      .mockResolvedValueOnce({ status: "ineligible" });
-    addRegistryArtifactMock.mockImplementation(
-      () =>
-        new Promise((resolve) => {
-          resolveMutation = resolve;
-        }),
-    );
-    const screen = await render(<AuthorizedRegistryExplorer />);
-    await screen.getByRole("button", { name: "Add Cloud guard" }).click();
-
-    // When
-    window.dispatchEvent(new Event("focus"));
-    await expectRegistryAccessRevoked(screen);
-    resolveMutation?.({
-      status: "confirmed",
-      tenantArtifacts: [
-        ...readyState.tenantArtifacts,
-        { normalizedName: "cloud-guard", versionSpec: "latest" },
-      ],
-    });
-
-    // Then
-    expect(document.body.textContent).not.toContain("Artifact added");
   });
 
   it("keeps the rendered catalog after a failed credential replacement", async () => {
@@ -1191,12 +1101,122 @@ describe("RegistryExplorer", () => {
       // azure artifact) into the page text.
       expect(document.body.textContent).not.toContain("az");
     });
+
+    it("shows a neutral package mark instead of a provider logo in the header", async () => {
+      // Given / When
+      const screen = await render(
+        <RegistryExplorer initialState={readyState} />,
+      );
+
+      // Then: the first aria-hidden icon slot of the marketplace card holds
+      // the neutral package mark, not a provider logo.
+      const awsHeaderIcon = cardFor("AWS guard").querySelector(
+        'span[aria-hidden="true"] > svg',
+      );
+      expect(awsHeaderIcon?.getAttribute("class")).toContain("lucide-package");
+
+      // When: tenant-only cards render in My artifacts
+      await screen.getByRole("tab", { name: /My artifacts/ }).click();
+
+      // Then
+      const tenantHeaderIcon = cardFor("saved-artifact").querySelector(
+        'span[aria-hidden="true"] > svg',
+      );
+      expect(tenantHeaderIcon?.getAttribute("class")).toContain(
+        "lucide-package",
+      );
+    });
+
+    it("names the single provider accessibly beside its footer logo", async () => {
+      // Given / When
+      await render(<RegistryExplorer initialState={readyState} />);
+
+      // Then: one provider renders only its logo plus an accessible name,
+      // never a "1 providers" count.
+      const awsCard = cardFor("AWS guard");
+      expect(awsCard.textContent).toContain("Provider: AWS");
+      expect(awsCard.textContent).not.toContain("1 providers");
+    });
+
+    it("shows a provider count with accessible names for multi-provider artifacts", async () => {
+      // Given / When
+      await render(<RegistryExplorer initialState={readyState} />);
+
+      // Then
+      const cloudCard = cardFor("Cloud guard");
+      expect(cloudCard.textContent).toContain("2 providers");
+      expect(cloudCard.textContent).toContain("Providers: AWS, Google Cloud");
+    });
+
+    it("collapses provider logos past four into an overflow badge", async () => {
+      // Given
+      const wideArtifact = {
+        normalizedName: "wide-guard",
+        name: "Wide guard",
+        description: "Artifact spanning many providers",
+        latestVersion: "1.0.0",
+        providers: ["aws", "azure", "gcp", "kubernetes", "m365", "github"],
+        isVerified: false,
+        isOfficial: false,
+        isMeta: true,
+        hasProvider: true,
+        hasChecks: true,
+        hasCompliance: false,
+        versionCount: 1,
+        totalDownloads: 7,
+        owners: [],
+      };
+
+      // When
+      await render(
+        <RegistryExplorer
+          initialState={{
+            ...readyState,
+            catalog: { status: "complete", artifacts: [wideArtifact] },
+            tenantArtifacts: [],
+          }}
+        />,
+      );
+
+      // Then: count, capped logo row, overflow badge, and full accessible list
+      const wideCard = cardFor("Wide guard");
+      expect(wideCard.textContent).toContain("6 providers");
+      expect(wideCard.textContent).toContain(
+        "Providers: AWS, Azure, Google Cloud, Kubernetes, Microsoft 365, GitHub",
+      );
+      const overflowBadge = Array.from(wideCard.querySelectorAll("span")).find(
+        (span) => span.textContent === "+2",
+      );
+      expect(overflowBadge).toBeDefined();
+      expect(overflowBadge?.previousElementSibling?.childElementCount).toBe(4);
+    });
+
+    it("falls back to the initial-letter avatar when the owner logo fails to load", async () => {
+      // Given
+      await render(<RegistryExplorer initialState={readyState} />);
+      const logo = cardFor("AWS guard").querySelector("img");
+      expect(logo).not.toBeNull();
+
+      // When: the short-lived signed URL expires and the image errors out
+      logo?.dispatchEvent(new Event("error"));
+
+      // Then: the logo is replaced by the initial-letter avatar and the
+      // owner name stays visible.
+      await expect
+        .poll(() => cardFor("AWS guard").querySelector("img"))
+        .toBeNull();
+      const hiddenSpans = Array.from(
+        cardFor("AWS guard").querySelectorAll('span[aria-hidden="true"]'),
+      ).map((span) => span.textContent?.trim());
+      expect(hiddenSpans).toContain("P");
+      expect(cardFor("AWS guard").textContent).toContain("Prowler");
+    });
   });
 
-  it("keeps ordinary Add errors local without revoking Registry", async () => {
+  it("keeps ordinary Add errors local without redirecting to Profile", async () => {
     // Given
     addRegistryArtifactMock.mockResolvedValue({ status: "error" });
-    const screen = await render(<AuthorizedRegistryExplorer />);
+    const screen = await render(<RegistryExplorer initialState={readyState} />);
 
     // When
     await screen.getByRole("button", { name: "Add Cloud guard" }).click();
@@ -1208,6 +1228,7 @@ describe("RegistryExplorer", () => {
     await expect
       .element(screen.getByRole("button", { name: "Add Cloud guard" }))
       .toBeEnabled();
+    expect(registryRouter.replace).not.toHaveBeenCalled();
   });
 
   it("adds the latest version directly from the card once confirmed", async () => {
@@ -1262,13 +1283,13 @@ describe("RegistryExplorer", () => {
       .toHaveTextContent("2");
   });
 
-  it("keeps documented Add refusals local without revoking Registry", async () => {
+  it("keeps documented Add refusals local without redirecting to Profile", async () => {
     // Given
     addRegistryArtifactMock.mockResolvedValue({
       status: "refused",
       message: "This version is not verified and cannot be added.",
     });
-    const screen = await render(<AuthorizedRegistryExplorer />);
+    const screen = await render(<RegistryExplorer initialState={readyState} />);
 
     // When
     await screen.getByRole("button", { name: "Add Cloud guard" }).click();
@@ -1280,6 +1301,7 @@ describe("RegistryExplorer", () => {
     await expect
       .element(screen.getByRole("button", { name: "Add Cloud guard" }))
       .toBeEnabled();
+    expect(registryRouter.replace).not.toHaveBeenCalled();
   });
 
   it("disables only the pending card while an Add confirmation is pending", async () => {
