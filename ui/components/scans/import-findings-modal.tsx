@@ -98,7 +98,13 @@ const validateFile = (file: File): string | null => {
   return null;
 };
 
-const responseError = async (response: Response): Promise<string> => {
+const START_ERROR = "Unable to start the import. Please try again.";
+const STATUS_ERROR = "Unable to check the import status. Please try again.";
+
+const responseError = async (
+  response: Response,
+  fallback: string,
+): Promise<string> => {
   const payload = await response.json().catch(() => undefined);
   if (
     typeof payload === "object" &&
@@ -108,7 +114,7 @@ const responseError = async (response: Response): Promise<string> => {
   ) {
     return payload.error;
   }
-  return "Unable to start the import. Please try again.";
+  return fallback;
 };
 
 export function ImportFindingsModal({
@@ -147,7 +153,7 @@ export function ImportFindingsModal({
           signal: controller.signal,
         });
         if (!response.ok) {
-          throw new Error(await responseError(response));
+          throw new Error(await responseError(response, STATUS_ERROR));
         }
 
         const payload = (await response.json()) as IngestionResponse;
@@ -196,10 +202,7 @@ export function ImportFindingsModal({
         if (controller.signal.aborted) return;
         setState({
           type: IMPORT_STATE.TRACKING_ERROR,
-          error:
-            error instanceof Error
-              ? error.message
-              : "Unable to check the import status. Please try again.",
+          error: error instanceof Error ? error.message : STATUS_ERROR,
           file: activeTracking.file,
           ingestion: activeTracking.ingestion,
         });
@@ -254,8 +257,8 @@ export function ImportFindingsModal({
       setState({
         type: IMPORT_STATE.FAILED,
         error: response
-          ? await responseError(response)
-          : "Unable to start the import. Please try again.",
+          ? await responseError(response, START_ERROR)
+          : START_ERROR,
         file,
       });
       return;
