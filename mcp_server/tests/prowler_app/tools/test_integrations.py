@@ -742,7 +742,12 @@ async def test_replacing_jira_credentials_normalizes_the_domain(
 async def test_deleting_an_integration_confirms_it_happened(
     mcp_root_server, mock_api_client, mock_router
 ):
-    """Deletion is irreversible, so a success says so rather than staying silent."""
+    """Deletion is irreversible, so a success says so rather than staying silent.
+
+    It says so in the message and nowhere else: a `deleted: true` flag could only
+    ever be true, because an integration that was not deleted leaves the tool as
+    an error.
+    """
     mock_router.add("DELETE", INTEGRATION, status=204)
 
     async with Client(mcp_root_server) as client:
@@ -750,7 +755,8 @@ async def test_deleting_an_integration_confirms_it_happened(
             "prowler_delete_integration", {"integration_id": "i1"}
         )
 
-    assert result.data["deleted"] is True
+    assert "i1 deleted successfully" in result.data["message"]
+    assert "deleted" not in result.data
 
 
 async def test_a_refused_deletion_fails_and_says_the_role_is_the_problem(

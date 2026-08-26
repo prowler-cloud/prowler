@@ -208,9 +208,10 @@ Structure:
         mutelist_id = existing_mutelist["id"]
         await self.api_client.delete(f"/processors/{mutelist_id}")
 
+        # No success flag: a deletion that did not happen leaves this tool as an
+        # error, so there is no second shape for one to distinguish.
         return {
-            "success": True,
-            "message": "Mutelist deleted successfully",
+            "message": "Mutelist deleted successfully. Findings it had muted stay muted."
         }
 
     # ===== MUTE RULES TOOLS =====
@@ -470,15 +471,18 @@ Structure:
         """
         self.logger.info(f"Deleting mute rule {rule_id}...")
 
-        result = await self.api_client.delete(f"/mute-rules/{rule_id}")
+        # A deletion that did not happen answers with an error status, which
+        # leaves this tool as an error. Reaching this line means Prowler accepted
+        # it, whether it answered 204 with no body or 200 with the deleted
+        # resource, so there is no second outcome to report: the previous
+        # "Failed to delete mute rule" fired on the shape of the answer rather
+        # than on anything having gone wrong, and said nothing a caller could act
+        # on.
+        await self.api_client.delete(f"/mute-rules/{rule_id}")
 
-        if result.get("success"):
-            return {
-                "success": True,
-                "message": "Mute rule deleted successfully",
-            }
-        else:
-            return {
-                "success": False,
-                "message": "Failed to delete mute rule",
-            }
+        return {
+            "message": (
+                f"Mute rule {rule_id} deleted successfully. The findings it muted stay "
+                "muted."
+            )
+        }

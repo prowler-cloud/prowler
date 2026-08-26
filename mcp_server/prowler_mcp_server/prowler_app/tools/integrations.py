@@ -586,10 +586,10 @@ class IntegrationsTools(BaseTool):
         self.logger.info(f"Deleting integration {integration_id}...")
 
         await self.api_client.delete(f"/integrations/{integration_id}")
-        return {
-            "deleted": True,
-            "message": f"Integration {integration_id} deleted successfully",
-        }
+        # No `deleted` flag: an integration that was not deleted leaves this tool
+        # as an error, so the flag could only ever be True and a reader branching
+        # on it would be looking for a shape that does not exist.
+        return {"message": f"Integration {integration_id} deleted successfully"}
 
     async def test_integration_connection(
         self,
