@@ -1261,7 +1261,9 @@
           "DefaultValue": "Not encrypted."
         }
       ],
-      "Checks": []
+      "Checks": [
+        "oss_bucket_server_side_encryption_enabled"
+      ]
     },
     {
       "Id": "5.9",
