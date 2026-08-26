@@ -406,3 +406,69 @@ describe("alert rules target Slack channels", () => {
     );
   });
 });
+
+describe("the alerts list shows destinations", () => {
+  it("shows a rule's channels by name alongside its emails, without opening it", async () => {
+    const harness = new AlertsPageHarness(
+      alertsFixture({
+        rules: [
+          alertRuleFixture({
+            slackChannelIds: [
+              ALERTS_PUBLIC_CHANNEL.id,
+              ALERTS_PRIVATE_CHANNEL.id,
+            ],
+          }),
+        ],
+      }),
+    );
+    await harness.mount();
+
+    expect(await harness.ruleDestinationsSummary(RULE_NAME)).toBe(
+      `security@example.com · #${ALERTS_PUBLIC_CHANNEL.name} +1 more`,
+    );
+  });
+
+  it("reads correctly for emails-only, channels-only, both-kinds and empty rules", async () => {
+    const harness = new AlertsPageHarness(
+      alertsFixture({
+        rules: [
+          alertRuleFixture({ id: "rule-emails", name: "Emails only" }),
+          alertRuleFixture({
+            id: "rule-channels",
+            name: "Channels only",
+            recipientEmails: [],
+            slackChannelIds: [ALERTS_PRIVATE_CHANNEL.id],
+          }),
+          alertRuleFixture({
+            id: "rule-both",
+            name: "Both kinds",
+            recipientEmails: ["security@example.com", "ops@example.com"],
+            slackChannelIds: [
+              ALERTS_PUBLIC_CHANNEL.id,
+              ALERTS_PRIVATE_CHANNEL.id,
+            ],
+          }),
+          alertRuleFixture({
+            id: "rule-none",
+            name: "No destinations yet",
+            recipientEmails: [],
+          }),
+        ],
+      }),
+    );
+    await harness.mount();
+
+    expect(await harness.ruleDestinationsSummary("Emails only")).toBe(
+      "security@example.com",
+    );
+    expect(await harness.ruleDestinationsSummary("Channels only")).toBe(
+      `#${ALERTS_PRIVATE_CHANNEL.name}`,
+    );
+    expect(await harness.ruleDestinationsSummary("Both kinds")).toBe(
+      `security@example.com +1 more · #${ALERTS_PUBLIC_CHANNEL.name} +1 more`,
+    );
+    expect(await harness.ruleDestinationsSummary("No destinations yet")).toBe(
+      "No destinations",
+    );
+  });
+});

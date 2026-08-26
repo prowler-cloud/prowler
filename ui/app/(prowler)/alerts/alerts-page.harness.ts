@@ -464,26 +464,25 @@ export class AlertsPageHarness extends BrowserHarness<AlertsFixture> {
 
   // --- The alerts list ------------------------------------------------------
 
-  /**
-   * No caller on this branch: the Destinations column lands in S3
-   * (`feature/alerts-destinations-column`), which consumes this. Not dead code.
-   */
+  /** The destinations summary the list shows for a rule, without opening it. */
   async ruleDestinationsSummary(ruleName: string): Promise<string> {
     const headers = Array.from(
       this.container.querySelectorAll<HTMLElement>("thead th"),
     );
     const columnIndex = headers.findIndex((header) =>
-      /Destinations|Recipients/.test(header.textContent ?? ""),
+      /Destinations/.test(header.textContent ?? ""),
     );
     if (columnIndex === -1) {
-      throw new Error("ruleDestinationsSummary: no destinations column");
+      throw new Error("ruleDestinationsSummary: no alerts table");
     }
 
     const row = await this.waitFor(
       () =>
         Array.from(
-          this.container.querySelectorAll<HTMLTableRowElement>("tbody tr"),
-        ).find((candidate) => (candidate.textContent ?? "").includes(ruleName)),
+          this.container.querySelectorAll<HTMLButtonElement>("tbody tr button"),
+        )
+          .find((button) => (button.textContent ?? "").trim() === ruleName)
+          ?.closest("tr") ?? null,
       10000,
       `the listed rule "${ruleName}"`,
     );
