@@ -14,6 +14,7 @@ from pydantic import BaseModel, ValidationError
 from prowler_mcp_server.lib.errors import InvalidArgument, _describe_failure
 from prowler_mcp_server.prowler_app.utils.api_client import (
     ProwlerAPIError,
+    ProwlerAPIInvalidResponse,
     ProwlerAPIUnreachable,
 )
 from tests.helpers.jsonapi import jsonapi_error
@@ -63,6 +64,18 @@ def test_a_request_that_got_no_answer_says_the_outcome_is_unknown():
 
     assert "could not be reached" in message
     assert "unknown" in message
+
+
+def test_an_unreadable_api_answer_is_not_blamed_on_the_arguments():
+    """The same `JSONDecodeError` means opposite things on the two sides."""
+    message = _describe_failure(
+        ProwlerAPIInvalidResponse(
+            "GET /findings answered 200 with a body that is not JSON"
+        )
+    )
+
+    assert "could not read" in message
+    assert "argument" not in message
 
 
 def test_an_argument_this_server_rejected_is_repeated_verbatim():
@@ -156,3 +169,17 @@ async def test_a_bad_argument_is_rejected_before_any_request_goes_out(
     assert result.isError is True
     assert "Must be between 1 and 1000" in result.content[0].text
     assert mock_router.requests == []
+
+
+async def test_an_unreadable_api_answer_does_not_reach_the_agent_as_a_bad_argument(
+    mcp_root_server, mock_api_client, mock_router
+):
+    """Told apart by type, so the agent is not sent to fix an argument that is fine."""
+    mock_router.add("GET", LATEST, text="<html>gateway timeout</html>")
+
+    async with Client(mcp_root_server) as client:
+        result = await client.call_tool_mcp("prowler_search_security_findings", {})
+
+    assert result.isError is True
+    assert "gateway timeout" not in result.content[0].text
+    assert "argument" not in result.content[0].text

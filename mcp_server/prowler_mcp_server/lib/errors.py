@@ -18,7 +18,7 @@ class ProwlerAPIError(Exception):
 
     Attributes:
         status_code: HTTP status the API answered with
-        detail: JSON:API `errors[0].detail`, None when the body was not JSON:API
+        detail: JSON:API `errors[0].detail`, None when there is none to trust
     """
 
     def __init__(
@@ -29,7 +29,8 @@ class ProwlerAPIError(Exception):
         # Prowler's own JSON:API `errors[0].detail`, which our API writes for a
         # caller and we therefore trust. None when the body was not JSON:API --
         # a gateway HTML page or a debug traceback, which is exactly the case
-        # that must never be repeated to a model.
+        # that must never be repeated to a model -- and None for a 5xx, see
+        # `jsonapi_detail`.
         self.detail: str | None = detail
 
 
@@ -37,15 +38,23 @@ class ProwlerAPIUnreachable(Exception):
     """The request never got an answer, so whether it was applied is unknown."""
 
 
+class ProwlerAPIInvalidResponse(Exception):
+    """The API answered, but with a body this server could not read as JSON."""
+
+
 def jsonapi_detail(response: httpx.Response) -> str | None:
-    """Return the API's own JSON:API error detail.
+    """Return the API's own JSON:API error detail, when there is one to trust.
 
     Args:
         response: Error response returned by the Prowler API
 
     Returns:
-        `errors[0].detail`, or None if the body is not JSON:API
+        `errors[0].detail`, or None if the status is 5xx or the body is not
+        JSON:API
     """
+    if response.status_code >= 500:
+        return None
+
     try:
         errors = response.json().get("errors")
     except Exception:
@@ -137,6 +146,14 @@ def _describe_failure(exc: BaseException) -> str | None:
 
     if isinstance(exc, ProwlerAPIError):
         return _describe_prowler_api_error(exc)
+
+    if isinstance(exc, ProwlerAPIInvalidResponse):
+        # Nothing about the call was wrong, so it must not be described as if it
+        # were -- and the body that could not be parsed stays in the log.
+        return (
+            "Prowler answered with a body this server could not read. The call "
+            "itself was accepted, so retrying it unchanged is safe."
+        )
 
     if isinstance(exc, ProwlerAPIUnreachable):
         # The only failure a model can turn into a duplicate write by repeating.

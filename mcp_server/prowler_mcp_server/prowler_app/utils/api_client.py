@@ -13,6 +13,7 @@ from prowler_mcp_server import __version__
 from prowler_mcp_server.lib.errors import (
     InvalidArgument,
     ProwlerAPIError,
+    ProwlerAPIInvalidResponse,
     ProwlerAPIUnreachable,
     jsonapi_detail,
 )
@@ -82,6 +83,7 @@ class ProwlerAPIClient(metaclass=SingletonMeta):
         Raises:
             ProwlerAPIError: If the API answered with an error status
             ProwlerAPIUnreachable: If the request got no answer
+            ProwlerAPIInvalidResponse: If the answer was not readable as JSON
         """
         try:
             token: str = await self.auth_manager.get_valid_token()
@@ -96,16 +98,10 @@ class ProwlerAPIClient(metaclass=SingletonMeta):
                 json=json_data,
             )
             response.raise_for_status()
-
-            if not response.content:
-                return {
-                    "success": True,
-                    "status_code": response.status_code,
-                }
-            else:
-                return response.json()
         except httpx.HTTPStatusError as e:
             status: int = e.response.status_code
+            # `jsonapi_detail` returns nothing for a 5xx, so a server error never
+            # puts upstream text into the exception message either.
             detail: str | None = jsonapi_detail(e.response)
             # The full body goes to the log and nowhere else. A body that is not
             # JSON:API is upstream text of unknown provenance, and the exception
@@ -132,6 +128,30 @@ class ProwlerAPIClient(metaclass=SingletonMeta):
         except Exception as e:
             logger.error(f"Error during {method.value} {path}: {e}")
             raise
+
+        if not response.content:
+            return {
+                "success": True,
+                "status_code": response.status_code,
+            }
+
+        # Parsed outside the block above so that a body we cannot read is told
+        # apart from an argument a tool could not parse: both are a
+        # `JSONDecodeError`, and only the second one is the caller's doing.
+        try:
+            return response.json()
+        except ValueError as e:
+            logger.error(
+                "Unreadable response body during %s %s: %s %s",
+                method.value,
+                path,
+                response.status_code,
+                (response.text or "")[:500],
+            )
+            raise ProwlerAPIInvalidResponse(
+                f"{method.value} {path} answered {response.status_code} with a "
+                "body that is not JSON"
+            ) from e
 
     async def get(
         self, path: str, params: dict[str, any] | None = None

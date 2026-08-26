@@ -11,6 +11,7 @@ from fastmcp.exceptions import ToolError
 
 from prowler_mcp_server.prowler_app.utils.api_client import (
     ProwlerAPIError,
+    ProwlerAPIInvalidResponse,
     ProwlerAPIUnreachable,
 )
 from tests.helpers.jsonapi import (
@@ -88,6 +89,43 @@ async def test_a_body_that_is_not_jsonapi_is_never_repeated(
 
     assert raised.value.detail is None
     assert "secret-internal-host" not in str(raised.value)
+
+
+async def test_a_server_error_detail_never_reaches_the_exception_text(
+    mock_api_client, mock_router
+):
+    """On a 5xx `errors[].detail` carries the failure, not a reason for a caller.
+
+    Tools that answer with `str(exc)` bypass the shared classifier, so the check
+    is on the exception itself rather than on the message the classifier builds.
+    """
+    mock_router.add(
+        "GET",
+        "/api/v1/findings",
+        status=500,
+        json=jsonapi_error(
+            500, "OperationalError: could not connect to secret-internal-host:5432"
+        ),
+    )
+
+    with pytest.raises(ProwlerAPIError) as raised:
+        await mock_api_client.get("/findings")
+
+    assert raised.value.detail is None
+    assert "secret-internal-host" not in str(raised.value)
+
+
+async def test_an_unreadable_body_is_not_an_argument_failure(
+    mock_api_client, mock_router
+):
+    """A `JSONDecodeError` here is the API's doing, and must not read as ours."""
+    mock_router.add("GET", "/api/v1/findings", text="<html>gateway timeout</html>")
+
+    with pytest.raises(ProwlerAPIInvalidResponse) as raised:
+        await mock_api_client.get("/findings")
+
+    assert not isinstance(raised.value, ValueError)
+    assert "gateway timeout" not in str(raised.value)
 
 
 async def test_a_request_that_got_no_answer_is_not_an_api_error(
