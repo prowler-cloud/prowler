@@ -10,6 +10,10 @@ import { useToast } from "@/components/shadcn/toast/use-toast";
 import type { Ingestion, IngestionResponse } from "@/types";
 
 const POLL_INTERVAL_MS = 5000;
+/** 5 minutes of watching, the longest polling budget in `ui/`. A bulk OCSF
+ *  ingest can outlive it, so exhausting it only stops the watch: the job keeps
+ *  running server-side and "Retry status" buys another budget. */
+const MAX_POLL_ATTEMPTS = 60;
 
 const IMPORT_STATE = {
   IDLE: "idle",
@@ -131,10 +135,12 @@ export function ImportFindingsModal({
     const controller = new AbortController();
     pollAbortController.current = controller;
     let timeout: number | undefined;
+    let attempts = 0;
 
     const poll = async () => {
       const activeTracking = trackingRef.current;
       if (!activeTracking) return;
+      attempts += 1;
 
       try {
         const response = await fetch(`/api/ingestions/${trackingId}`, {
@@ -147,6 +153,17 @@ export function ImportFindingsModal({
         const payload = (await response.json()) as IngestionResponse;
         const ingestion = payload.data;
         if (!ingestion || !isTerminal(ingestion)) {
+          if (attempts >= MAX_POLL_ATTEMPTS) {
+            setState({
+              type: IMPORT_STATE.TRACKING_ERROR,
+              error:
+                "Import is taking longer than expected — it may still be running in the background.",
+              file: activeTracking.file,
+              ingestion: ingestion ?? activeTracking.ingestion,
+            });
+            return;
+          }
+
           setState({
             type: IMPORT_STATE.TRACKING,
             file: activeTracking.file,
