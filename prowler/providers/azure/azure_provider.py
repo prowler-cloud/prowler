@@ -907,14 +907,14 @@ class AzureProvider(Provider):
         raise_on_exception=True,
         client_id=None,
         client_secret=None,
-        # Certificate-based auth is keyword-only so callers cannot
-        # accidentally bind `provider_id` (which used to sit right after
-        # `client_secret`) to any of these when calling positionally.
+        provider_id=None,
+        # Keep `provider_id` in its original positional slot for callers
+        # that pass it positionally; only the new certificate kwargs are
+        # keyword-only.
         *,
         certificate_auth: bool = False,
         certificate_content: str = None,
         certificate_path: str = None,
-        provider_id=None,
     ) -> Connection:
         """Test connection to Azure subscription.
 

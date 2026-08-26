@@ -2042,6 +2042,154 @@ class TestAzureProviderCertificateAuth:
         assert connection.is_connected is False
         assert isinstance(connection.error, AzureCredentialsUnavailableError)
 
+    @staticmethod
+    def _leaf_first_bundle():
+        # Reuse the leaf-first helper from the ordering suite so certificate
+        # timeout tests exercise a real bundle instead of the tiny DER blob.
+        from datetime import datetime, timedelta, timezone
+
+        from cryptography import x509
+        from cryptography.hazmat.primitives import hashes, serialization
+        from cryptography.hazmat.primitives.asymmetric import rsa
+        from cryptography.x509.oid import NameOID
+
+        private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "Prowler")])
+        certificate = (
+            x509.CertificateBuilder()
+            .subject_name(subject)
+            .issuer_name(subject)
+            .public_key(private_key.public_key())
+            .serial_number(x509.random_serial_number())
+            .not_valid_before(datetime.now(timezone.utc))
+            .not_valid_after(datetime.now(timezone.utc) + timedelta(days=1))
+            .sign(private_key, hashes.SHA256())
+        )
+        return certificate.public_bytes(
+            serialization.Encoding.PEM
+        ) + private_key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.NoEncryption(),
+        )
+
+    def test_verify_client_certificate_content_timeout_translates_to_credentials_unavailable(
+        self,
+    ):
+        # The certificate path runs token acquisition on a
+        # `ThreadPoolExecutor` because `get_token` has no native timeout.
+        # A hung Entra ID endpoint surfaces as `FuturesTimeoutError` and
+        # must be translated to the typed Azure error.
+        import base64
+        from concurrent.futures import TimeoutError as FuturesTimeoutError
+
+        with (
+            patch("prowler.providers.azure.azure_provider.CertificateCredential"),
+            patch(
+                "prowler.providers.azure.azure_provider.ThreadPoolExecutor"
+            ) as executor_cls,
+            pytest.raises(AzureCredentialsUnavailableError),
+        ):
+            executor_cls.return_value.submit.return_value.result.side_effect = (
+                FuturesTimeoutError()
+            )
+            AzureProvider.verify_client(
+                self._TENANT_ID,
+                self._CLIENT_ID,
+                client_secret=None,
+                region_config=self._region_config(),
+                certificate_content=base64.b64encode(
+                    self._leaf_first_bundle()
+                ).decode(),
+            )
+
+    def test_verify_client_certificate_path_timeout_translates_to_credentials_unavailable(
+        self, tmp_path
+    ):
+        from concurrent.futures import TimeoutError as FuturesTimeoutError
+
+        certificate_path = tmp_path / "prowler-cert.pem"
+        certificate_path.write_bytes(self._leaf_first_bundle())
+
+        with (
+            patch("prowler.providers.azure.azure_provider.CertificateCredential"),
+            patch(
+                "prowler.providers.azure.azure_provider.ThreadPoolExecutor"
+            ) as executor_cls,
+            pytest.raises(AzureCredentialsUnavailableError),
+        ):
+            executor_cls.return_value.submit.return_value.result.side_effect = (
+                FuturesTimeoutError()
+            )
+            AzureProvider.verify_client(
+                self._TENANT_ID,
+                self._CLIENT_ID,
+                client_secret=None,
+                region_config=self._region_config(),
+                certificate_path=str(certificate_path),
+            )
+
+    def test_test_connection_certificate_content_timeout_returns_credentials_unavailable_error(
+        self,
+    ):
+        # `raise_on_exception=False` is the API contract for the certificate
+        # path too: consumers must receive
+        # `Connection(error=AzureCredentialsUnavailableError)`.
+        import base64
+        from concurrent.futures import TimeoutError as FuturesTimeoutError
+
+        with (
+            patch("prowler.providers.azure.azure_provider.CertificateCredential"),
+            patch(
+                "prowler.providers.azure.azure_provider.ThreadPoolExecutor"
+            ) as executor_cls,
+        ):
+            executor_cls.return_value.submit.return_value.result.side_effect = (
+                FuturesTimeoutError()
+            )
+            connection = AzureProvider.test_connection(
+                tenant_id=self._TENANT_ID,
+                client_id=self._CLIENT_ID,
+                certificate_auth=True,
+                certificate_content=base64.b64encode(
+                    self._leaf_first_bundle()
+                ).decode(),
+                region="AzureCloud",
+                raise_on_exception=False,
+            )
+
+        assert connection.is_connected is False
+        assert isinstance(connection.error, AzureCredentialsUnavailableError)
+
+    def test_test_connection_certificate_path_timeout_returns_credentials_unavailable_error(
+        self, tmp_path
+    ):
+        from concurrent.futures import TimeoutError as FuturesTimeoutError
+
+        certificate_path = tmp_path / "prowler-cert.pem"
+        certificate_path.write_bytes(self._leaf_first_bundle())
+
+        with (
+            patch("prowler.providers.azure.azure_provider.CertificateCredential"),
+            patch(
+                "prowler.providers.azure.azure_provider.ThreadPoolExecutor"
+            ) as executor_cls,
+        ):
+            executor_cls.return_value.submit.return_value.result.side_effect = (
+                FuturesTimeoutError()
+            )
+            connection = AzureProvider.test_connection(
+                tenant_id=self._TENANT_ID,
+                client_id=self._CLIENT_ID,
+                certificate_auth=True,
+                certificate_path=str(certificate_path),
+                region="AzureCloud",
+                raise_on_exception=False,
+            )
+
+        assert connection.is_connected is False
+        assert isinstance(connection.error, AzureCredentialsUnavailableError)
+
     def test_verify_client_without_credential_material_returns(self):
         assert (
             AzureProvider.verify_client(
@@ -2609,6 +2757,136 @@ class TestValidateCertificateBundleOrdering:
         # to the typed certificate errors.
         with pytest.raises(TypeError):
             validate_certificate_bundle(cert_pem + encrypted_key_pem)
+
+    def test_setup_session_azure_credentials_certificate_path_receives_leaf_first_bundle(
+        self, tmp_path
+    ):
+        # `setup_session` has a distinct branch for the API/UI path when the
+        # bundle is delivered as a file path instead of inline base64. It
+        # must also normalize before instantiating `CertificateCredential`.
+        leaf_cert_pem, leaf_key_pem = self._self_signed()
+        other_cert_pem, _ = self._self_signed()
+        bundle = other_cert_pem + leaf_cert_pem + leaf_key_pem
+
+        certificate_path = tmp_path / "prowler-cert.pem"
+        certificate_path.write_bytes(bundle)
+
+        region_config = AzureProvider.setup_region_config("AzureCloud")
+
+        with patch(
+            "prowler.providers.azure.azure_provider.CertificateCredential"
+        ) as cert_credential:
+            AzureProvider.setup_session(
+                az_cli_auth=False,
+                sp_env_auth=False,
+                browser_auth=False,
+                managed_identity_auth=False,
+                certificate_auth=False,
+                certificate_path=None,
+                tenant_id=None,
+                azure_credentials={
+                    "tenant_id": "12345678-1234-1234-1234-123456789012",
+                    "client_id": "87654321-4321-4321-4321-210987654321",
+                    "client_secret": None,
+                    "certificate_content": None,
+                    "certificate_path": str(certificate_path),
+                },
+                region_config=region_config,
+            )
+
+        certificate_data = cert_credential.call_args.kwargs["certificate_data"]
+        assert certificate_data.startswith(leaf_cert_pem)
+        assert other_cert_pem not in certificate_data
+
+    def test_verify_client_certificate_content_receives_leaf_first_bundle(self):
+        # `verify_client` builds its own `CertificateCredential` (not via
+        # `_build_certificate_credential`), so the leaf-first invariant must
+        # be verified here too.
+        import base64
+
+        leaf_cert_pem, leaf_key_pem = self._self_signed()
+        other_cert_pem, _ = self._self_signed()
+        bundle = other_cert_pem + leaf_cert_pem + leaf_key_pem
+
+        region_config = AzureProvider.setup_region_config("AzureCloud")
+
+        with (
+            patch(
+                "prowler.providers.azure.azure_provider.CertificateCredential"
+            ) as cert_credential,
+            patch(
+                "prowler.providers.azure.azure_provider.ThreadPoolExecutor"
+            ) as executor_cls,
+        ):
+            executor_cls.return_value.submit.return_value.result.return_value = (
+                MagicMock()
+            )
+            AzureProvider.verify_client(
+                "12345678-1234-1234-1234-123456789012",
+                "87654321-4321-4321-4321-210987654321",
+                client_secret=None,
+                region_config=region_config,
+                certificate_content=base64.b64encode(bundle).decode(),
+            )
+
+        certificate_data = cert_credential.call_args.kwargs["certificate_data"]
+        assert certificate_data.startswith(leaf_cert_pem)
+        assert other_cert_pem not in certificate_data
+
+    def test_verify_client_certificate_path_receives_leaf_first_bundle(self, tmp_path):
+        leaf_cert_pem, leaf_key_pem = self._self_signed()
+        other_cert_pem, _ = self._self_signed()
+        bundle = other_cert_pem + leaf_cert_pem + leaf_key_pem
+
+        certificate_path = tmp_path / "prowler-cert.pem"
+        certificate_path.write_bytes(bundle)
+
+        region_config = AzureProvider.setup_region_config("AzureCloud")
+
+        with (
+            patch(
+                "prowler.providers.azure.azure_provider.CertificateCredential"
+            ) as cert_credential,
+            patch(
+                "prowler.providers.azure.azure_provider.ThreadPoolExecutor"
+            ) as executor_cls,
+        ):
+            executor_cls.return_value.submit.return_value.result.return_value = (
+                MagicMock()
+            )
+            AzureProvider.verify_client(
+                "12345678-1234-1234-1234-123456789012",
+                "87654321-4321-4321-4321-210987654321",
+                client_secret=None,
+                region_config=region_config,
+                certificate_path=str(certificate_path),
+            )
+
+        certificate_data = cert_credential.call_args.kwargs["certificate_data"]
+        assert certificate_data.startswith(leaf_cert_pem)
+        assert other_cert_pem not in certificate_data
+
+    def test_validate_static_credentials_returns_leaf_first_certificate_content(self):
+        # `validate_static_credentials` re-encodes the certificate_content
+        # after normalization so downstream `CertificateCredential` calls
+        # never re-parse the un-normalized bundle. The persisted value must
+        # decode back to leaf-first bytes.
+        import base64
+
+        leaf_cert_pem, leaf_key_pem = self._self_signed()
+        other_cert_pem, _ = self._self_signed()
+        bundle = other_cert_pem + leaf_cert_pem + leaf_key_pem
+
+        with patch.object(AzureProvider, "verify_client"):
+            credentials = AzureProvider.validate_static_credentials(
+                tenant_id="12345678-1234-1234-1234-123456789012",
+                client_id="87654321-4321-4321-4321-210987654321",
+                certificate_content=base64.b64encode(bundle).decode(),
+            )
+
+        stored_bundle = base64.b64decode(credentials["certificate_content"])
+        assert stored_bundle.startswith(leaf_cert_pem)
+        assert other_cert_pem not in stored_bundle
 
 
 def serialization_no_encryption():
