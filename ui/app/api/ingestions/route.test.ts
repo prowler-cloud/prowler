@@ -1,0 +1,230 @@
+import { http, HttpResponse } from "msw";
+import { setupServer } from "msw/node";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
+
+import { POST } from "./route";
+
+// Browser MSW intercepts the browser's same-origin request before Next can run
+// this Route Handler, so this contract invokes the streaming boundary directly.
+const { getAuthHeadersMock, isCloudMock } = vi.hoisted(() => ({
+  getAuthHeadersMock: vi.fn(),
+  isCloudMock: vi.fn(),
+}));
+
+vi.mock("@/lib", () => ({
+  apiBaseUrl: "https://api.example.com/api/v1",
+  getAuthHeaders: getAuthHeadersMock,
+}));
+
+vi.mock("@/lib/shared/env", () => ({
+  isCloud: isCloudMock,
+}));
+
+describe("POST /api/ingestions", () => {
+  const server = setupServer();
+
+  beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
+
+  afterEach(() => {
+    server.resetHandlers();
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  afterAll(() => server.close());
+
+  it("returns not found outside Cloud without authenticating or forwarding the upload", async () => {
+    isCloudMock.mockReturnValue(false);
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    const request = new Request("http://localhost/api/ingestions", {
+      method: "POST",
+      headers: { "content-type": "multipart/form-data; boundary=report" },
+      body: "--report--",
+    });
+
+    const response = await POST(request);
+
+    expect(response.status).toBe(404);
+    expect(request.body?.locked).toBe(false);
+    expect(getAuthHeadersMock).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("forwards the original multipart stream and boundary in Cloud", async () => {
+    isCloudMock.mockReturnValue(true);
+    getAuthHeadersMock.mockResolvedValue({ Authorization: "Bearer token" });
+    let contentType: string | null = null;
+    let contentLength: string | null = null;
+    let uploadedBody = "";
+    server.use(
+      http.post(
+        "https://api.example.com/api/v1/ingestions",
+        async ({ request }) => {
+          contentType = request.headers.get("content-type");
+          contentLength = request.headers.get("content-length");
+          uploadedBody = await request.text();
+          return HttpResponse.json({
+            data: {
+              id: "ingestion-123",
+              type: "ingestions",
+              attributes: {
+                status: "pending",
+                summary: { total: 0, processed: 0, invalid: 0 },
+                requested_at: "2026-08-26T11:23:20.265770Z",
+                started_at: null,
+                completed_at: null,
+              },
+            },
+          });
+        },
+      ),
+    );
+    // Built by hand because a Request created from FormData carries no
+    // content-length header, which is the very thing this test pins.
+    const boundary = "----ingestionBoundary";
+    const multipartBody = [
+      `--${boundary}`,
+      'Content-Disposition: form-data; name="file"; filename="findings.ocsf.json"',
+      "Content-Type: application/json",
+      "",
+      "finding report",
+      `--${boundary}--`,
+      "",
+    ].join("\r\n");
+    const request = new Request("http://localhost/api/ingestions", {
+      method: "POST",
+      headers: {
+        "content-type": `multipart/form-data; boundary=${boundary}`,
+        "content-length": String(
+          new TextEncoder().encode(multipartBody).length,
+        ),
+      },
+      body: multipartBody,
+    });
+
+    const response = await POST(request);
+
+    expect(contentType).toBe(`multipart/form-data; boundary=${boundary}`);
+    // A length-less forward is sent chunked, and the ingestion API parses no
+    // file out of a chunked multipart body.
+    expect(contentLength).toBe(
+      String(new TextEncoder().encode(multipartBody).length),
+    );
+    expect(uploadedBody).toBe(multipartBody);
+    await expect(response.json()).resolves.toEqual({
+      data: {
+        id: "ingestion-123",
+        status: "pending",
+        totalRecords: 0,
+        processedRecords: 0,
+        invalidRecords: 0,
+      },
+    });
+  });
+
+  it("sanitizes unexpected upstream error pages", async () => {
+    isCloudMock.mockReturnValue(true);
+    getAuthHeadersMock.mockResolvedValue({ Authorization: "Bearer token" });
+    server.use(
+      http.post(
+        "https://api.example.com/api/v1/ingestions",
+        () =>
+          new HttpResponse("<html><body>upstream details</body></html>", {
+            status: 502,
+            headers: { "content-type": "text/html" },
+          }),
+      ),
+    );
+
+    const response = await POST(
+      new Request("http://localhost/api/ingestions", {
+        method: "POST",
+        body: "report",
+      }),
+    );
+
+    expect(response.status).toBe(502);
+    await expect(response.json()).resolves.toEqual({
+      error: "Unable to start the import. Please try again.",
+    });
+  });
+
+  it.each([
+    [400, "invalid", "The report is not a valid Prowler OCSF finding report."],
+    [
+      402,
+      "subscription_required",
+      "A Prowler Cloud subscription is required to import findings.",
+    ],
+    [
+      403,
+      "permission_denied",
+      "You do not have permission to import findings.",
+    ],
+    [
+      413,
+      "file_too_large",
+      "The selected file exceeds the allowed upload size.",
+    ],
+    [
+      429,
+      "rate_limited",
+      "Too many import requests. Please try again shortly.",
+    ],
+  ])(
+    "maps known upstream rejection %i/%s to safe import guidance",
+    async (status, code, message) => {
+      isCloudMock.mockReturnValue(true);
+      getAuthHeadersMock.mockResolvedValue({ Authorization: "Bearer token" });
+      server.use(
+        http.post("https://api.example.com/api/v1/ingestions", () =>
+          HttpResponse.json(
+            { errors: [{ code, detail: "internal implementation detail" }] },
+            { status },
+          ),
+        ),
+      );
+
+      const response = await POST(
+        new Request("http://localhost/api/ingestions", {
+          method: "POST",
+          body: "report",
+        }),
+      );
+
+      expect(response.status).toBe(status);
+      await expect(response.json()).resolves.toEqual({ error: message });
+    },
+  );
+
+  it("rejects accepted responses that cannot start a trackable ingestion", async () => {
+    isCloudMock.mockReturnValue(true);
+    getAuthHeadersMock.mockResolvedValue({ Authorization: "Bearer token" });
+    server.use(
+      http.post("https://api.example.com/api/v1/ingestions", () =>
+        HttpResponse.json({ data: { id: "ingestion-123", attributes: {} } }),
+      ),
+    );
+
+    const response = await POST(
+      new Request("http://localhost/api/ingestions", {
+        method: "POST",
+        body: "report",
+      }),
+    );
+
+    expect(response.status).toBe(502);
+    await expect(response.json()).resolves.toEqual({
+      error: "Unable to start the import. Please try again.",
+    });
+  });
+});
