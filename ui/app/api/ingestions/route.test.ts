@@ -206,6 +206,76 @@ describe("POST /api/ingestions", () => {
     },
   );
 
+  // Only `invalid` has been seen from the real API; the other four codes were
+  // exercised by forcing the upstream response, so for those the status tier is
+  // plausibly the delivery path in production.
+  const STATUS_TIER_REJECTIONS = [
+    [400, "The report is not a valid Prowler OCSF finding report."],
+    [402, "A Prowler Cloud subscription is required to import findings."],
+    [403, "You do not have permission to import findings."],
+    [413, "The selected file exceeds the allowed upload size."],
+    [429, "Too many import requests. Please try again shortly."],
+  ] as const;
+
+  it.each(STATUS_TIER_REJECTIONS)(
+    "maps a codeless upstream rejection to the %i status guidance",
+    async (status, message) => {
+      isCloudMock.mockReturnValue(true);
+      getAuthHeadersMock.mockResolvedValue({ Authorization: "Bearer token" });
+      server.use(
+        http.post("https://api.example.com/api/v1/ingestions", () =>
+          HttpResponse.json(
+            { detail: "internal implementation detail" },
+            { status },
+          ),
+        ),
+      );
+
+      const response = await POST(
+        new Request("http://localhost/api/ingestions", {
+          method: "POST",
+          body: "report",
+        }),
+      );
+
+      expect(response.status).toBe(status);
+      await expect(response.json()).resolves.toEqual({ error: message });
+    },
+  );
+
+  it.each(STATUS_TIER_REJECTIONS)(
+    "falls through an unrecognized error code to the %i status guidance",
+    async (status, message) => {
+      isCloudMock.mockReturnValue(true);
+      getAuthHeadersMock.mockResolvedValue({ Authorization: "Bearer token" });
+      server.use(
+        http.post("https://api.example.com/api/v1/ingestions", () =>
+          HttpResponse.json(
+            {
+              errors: [
+                {
+                  code: "invalid_findings",
+                  detail: "internal implementation detail",
+                },
+              ],
+            },
+            { status },
+          ),
+        ),
+      );
+
+      const response = await POST(
+        new Request("http://localhost/api/ingestions", {
+          method: "POST",
+          body: "report",
+        }),
+      );
+
+      expect(response.status).toBe(status);
+      await expect(response.json()).resolves.toEqual({ error: message });
+    },
+  );
+
   it("rejects accepted responses that cannot start a trackable ingestion", async () => {
     isCloudMock.mockReturnValue(true);
     getAuthHeadersMock.mockResolvedValue({ Authorization: "Bearer token" });
