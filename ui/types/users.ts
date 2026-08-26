@@ -87,6 +87,7 @@ export const PERMISSION_KEY = {
   MANAGE_ACCOUNT: "manage_account",
   MANAGE_PROVIDERS: "manage_providers",
   MANAGE_SCANS: "manage_scans",
+  MANAGE_INGESTIONS: "manage_ingestions",
   MANAGE_INTEGRATIONS: "manage_integrations",
   MANAGE_BILLING: "manage_billing",
   MANAGE_ALERTS: "manage_alerts",
@@ -119,6 +120,7 @@ export interface RoleDetail {
     manage_account: boolean;
     manage_providers: boolean;
     manage_scans: boolean;
+    manage_ingestions?: boolean;
     manage_integrations: boolean;
     manage_billing?: boolean;
     manage_alerts?: boolean;

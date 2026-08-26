@@ -34,8 +34,11 @@ const RESTRICTED_PERMISSIONS: RolePermissionAttributes = {
   manage_account: false,
   manage_providers: false,
   manage_scans: false,
+  manage_ingestions: false,
   manage_integrations: false,
+  manage_billing: false,
   manage_alerts: false,
+  manage_lighthouse_ai_configuration: false,
   unlimited_visibility: false,
 };
 

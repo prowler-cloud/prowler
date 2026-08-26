@@ -51,6 +51,7 @@ const DEFAULT_PERMISSIONS: RolePermissionAttributes = {
   manage_account: false,
   manage_providers: false,
   manage_scans: false,
+  manage_ingestions: false,
   manage_integrations: false,
   manage_billing: false,
   manage_alerts: false,
@@ -87,7 +88,7 @@ const toTokenUser = (user?: TokenUserInput): TokenUser =>
     email: user?.email ?? undefined,
     companyName: user?.companyName ?? user?.company,
     dateJoined: user?.dateJoined,
-    permissions: user?.permissions ?? { ...DEFAULT_PERMISSIONS },
+    permissions: { ...DEFAULT_PERMISSIONS, ...user?.permissions },
   }) as TokenUser;
 
 type UserMeResponse = Awaited<ReturnType<typeof getUserByMe>>;
