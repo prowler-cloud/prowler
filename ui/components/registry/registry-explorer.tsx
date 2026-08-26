@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import {
@@ -10,6 +11,7 @@ import {
   submitRegistryCredential,
 } from "@/actions/registry/registry";
 import { Button } from "@/components/shadcn/button/button";
+import { Card } from "@/components/shadcn/card/card";
 import {
   Sheet,
   SheetContent,
@@ -59,9 +61,6 @@ function mutationFailureMessage(result: RegistryMutationResult) {
   if (result.status === REGISTRY_MUTATION.REFRESH_FAILED) {
     return "Registry membership could not be confirmed. Try again.";
   }
-  if (result.status === "access_denied") {
-    return "Registry access is no longer available.";
-  }
   return "The Registry operation could not be completed. Try again.";
 }
 
@@ -70,7 +69,9 @@ export function RegistryExplorer({
 }: {
   initialState: RegistryBootstrapState;
 }) {
-  // Access invalidation unmounts this component, clearing every local snapshot.
+  // The API is the sole access authority: a denied action result routes to
+  // Profile once, and the navigation unmounts this component with its state.
+  const router = useRouter();
   const [state, setState] = useState(initialState);
   const [filters, setFilters] = useState<RegistryExplorerFilters>({});
   const [selectedId, setSelectedId] = useState("root:available");
@@ -86,6 +87,12 @@ export function RegistryExplorer({
   >();
   const [removeTarget, setRemoveTarget] = useState<string>();
   const [operationMessage, setOperationMessage] = useState<string>();
+  const [mobileNavigationOpen, setMobileNavigationOpen] = useState(false);
+  const detailHeadingRef = useRef<HTMLHeadingElement>(null);
+  const connectButtonRef = useRef<HTMLButtonElement>(null);
+  const manageButtonRef = useRef<HTMLButtonElement>(null);
+  const removeButtonRef = useRef<HTMLButtonElement>(null);
+  const focusDetailAfterMobileClose = useRef(false);
   const operationGeneration = useRef(0);
 
   useEffect(
@@ -103,6 +110,7 @@ export function RegistryExplorer({
       versionSpec ? { normalizedName, versionSpec } : { normalizedName },
     );
     if (generation !== operationGeneration.current) return;
+    if (result.status === "access_denied") return router.replace("/profile");
 
     setPendingOperation(null);
     if (result.status !== REGISTRY_MUTATION.CONFIRMED) {
@@ -124,10 +132,13 @@ export function RegistryExplorer({
     setPendingOperation("credential");
     const result = await submitRegistryCredential(key);
     if (generation !== operationGeneration.current) return;
+    if (result.status === "access_denied") return router.replace("/profile");
 
     if (result.status === "connected") {
       const collections = await refreshRegistryCollections();
       if (generation !== operationGeneration.current) return;
+      if (collections.status === "access_denied")
+        return router.replace("/profile");
       setPendingOperation(null);
       if (collections.status === "complete") {
         setAccessDialogMode(undefined);
@@ -177,6 +188,7 @@ export function RegistryExplorer({
     setPendingOperation("credential");
     const result = await disconnectRegistryCredential();
     if (generation !== operationGeneration.current) return;
+    if (result.status === "access_denied") return router.replace("/profile");
 
     setPendingOperation(null);
     if (result.status !== "disconnected") {
@@ -200,6 +212,7 @@ export function RegistryExplorer({
     setPendingOperation("remove");
     const result = await removeRegistryArtifact(normalizedName);
     if (generation !== operationGeneration.current) return;
+    if (result.status === "access_denied") return router.replace("/profile");
 
     setPendingOperation(null);
     if (result.status !== REGISTRY_MUTATION.CONFIRMED) {
@@ -216,6 +229,14 @@ export function RegistryExplorer({
     toast({ title: "Artifact removed" });
   }
 
+  function handleSelectedIdChange(id: string) {
+    setSelectedId(id);
+    if (mobileNavigationOpen && artifactName(id)) {
+      focusDetailAfterMobileClose.current = true;
+      setMobileNavigationOpen(false);
+    }
+  }
+
   const accessDialogProps = {
     onOpenChange: (open: boolean) => {
       if (!open && pendingOperation !== "credential") {
@@ -225,6 +246,8 @@ export function RegistryExplorer({
     onSubmit: handleCredentialSubmit,
     open: true,
     pending: pendingOperation === "credential",
+    returnFocusRef:
+      accessDialogMode === "connect" ? connectButtonRef : manageButtonRef,
   };
   const accessDialog =
     accessDialogMode === "connect" ? (
@@ -244,6 +267,7 @@ export function RegistryExplorer({
     return (
       <>
         <RegistryOnboarding
+          connectButtonRef={connectButtonRef}
           onConnect={() => setAccessDialogMode("connect")}
           tenantArtifacts={state.tenantArtifacts}
           validationPending={
@@ -289,6 +313,49 @@ export function RegistryExplorer({
       </RetryState>
     );
   }
+  if (state.catalog.artifacts.length === 0) {
+    return (
+      <>
+        <Card aria-label="Available artifacts" role="region" variant="base">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <h1 className="text-xl font-semibold">Available artifacts</h1>
+              <p className="text-text-neutral-secondary mt-2 text-sm">
+                No Registry artifacts are available.
+              </p>
+            </div>
+            <Button
+              onClick={() => setAccessDialogMode("manage")}
+              ref={manageButtonRef}
+              variant="outline"
+            >
+              Manage access
+            </Button>
+          </div>
+          {operationMessage && <p role="alert">{operationMessage}</p>}
+          {state.tenantArtifacts.length > 0 && (
+            <section aria-label="My artifacts" className="mt-6">
+              <h2 className="text-base font-semibold">My artifacts</h2>
+              <ul className="mt-3 space-y-2 text-sm">
+                {state.tenantArtifacts.map((artifact) => (
+                  <li
+                    className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1"
+                    key={artifact.normalizedName}
+                  >
+                    <span>{artifact.normalizedName}</span>
+                    <span className="text-text-neutral-secondary">
+                      {artifact.versionSpec}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+        </Card>
+        {accessDialog}
+      </>
+    );
+  }
   const selectedDetail = artifactName(selectedId)
     ? getRegistryArtifactDetail(
         artifactName(selectedId)!,
@@ -304,7 +371,7 @@ export function RegistryExplorer({
       filters={filters}
       onExpandedChange={setExpandedIds}
       onFiltersChange={setFilters}
-      onSelectedIdChange={setSelectedId}
+      onSelectedIdChange={handleSelectedIdChange}
       providers={providers}
       selectedId={selectedId}
       tenantArtifacts={state.tenantArtifacts}
@@ -315,11 +382,23 @@ export function RegistryExplorer({
     <div className="grid gap-6 lg:grid-cols-[18rem_minmax(0,1fr)]">
       <aside className="hidden lg:block">{navigation}</aside>
       <div className="lg:hidden">
-        <Sheet>
+        <Sheet
+          onOpenChange={setMobileNavigationOpen}
+          open={mobileNavigationOpen}
+        >
           <SheetTrigger asChild>
             <Button variant="outline">Browse artifacts</Button>
           </SheetTrigger>
-          <SheetContent side="left">
+          <SheetContent
+            onCloseAutoFocus={(event) => {
+              if (focusDetailAfterMobileClose.current) {
+                event.preventDefault();
+                detailHeadingRef.current?.focus();
+                focusDetailAfterMobileClose.current = false;
+              }
+            }}
+            side="left"
+          >
             <SheetTitle>Browse artifacts</SheetTitle>
             {navigation}
           </SheetContent>
@@ -328,6 +407,7 @@ export function RegistryExplorer({
       <main>
         <Button
           onClick={() => setAccessDialogMode("manage")}
+          ref={manageButtonRef}
           type="button"
           variant="outline"
         >
@@ -337,7 +417,9 @@ export function RegistryExplorer({
         {selectedDetail ? (
           <RegistryArtifactDetail
             {...selectedDetail}
+            headingRef={detailHeadingRef}
             isMutationPending={pendingOperation === "add"}
+            removeButtonRef={removeButtonRef}
             onAdd={
               selectedDetail.catalogArtifact && !selectedDetail.tenantArtifact
                 ? (versionSpec) =>
@@ -375,6 +457,7 @@ export function RegistryExplorer({
             setRemoveTarget(undefined);
         }}
         open={removeTarget !== undefined}
+        returnFocusRef={removeButtonRef}
       />
     </div>
   );

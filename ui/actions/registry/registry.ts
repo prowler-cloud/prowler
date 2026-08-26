@@ -33,18 +33,16 @@ import {
   RegistryCatalogPageError,
 } from "./registry.adapter";
 
-type GuardedRegistryAccess = { accessToken: string; leaseDurationMs: number };
-
 interface RegistryAddArtifactInput {
   normalizedName: string;
   versionSpec?: string;
 }
 
-async function getRegistryAccess(): Promise<GuardedRegistryAccess | null> {
+async function getRegistryAccess(): Promise<string | null> {
   const accessToken = (await auth())?.accessToken;
   const access = await evaluateRegistryAccess(accessToken);
   return access.status === REGISTRY_ACCESS.ELIGIBLE && accessToken?.trim()
-    ? { accessToken, leaseDurationMs: access.leaseDurationMs }
+    ? accessToken
     : null;
 }
 
@@ -97,7 +95,7 @@ async function readRegistryCredential(accessToken: string) {
 async function readRegistryTenantArtifacts(accessToken: string) {
   const result = await readRegistryResponse(
     accessToken,
-    "my-artifacts",
+    "artifacts",
     REGISTRY_ENDPOINT.MUTATION,
   );
   if (!(result instanceof Response)) return result;
@@ -228,24 +226,18 @@ async function confirmRegistryMutation(
 }
 
 function bootstrapReady(
-  access: GuardedRegistryAccess,
   state: RegistryBootstrapState,
 ): RegistryBootstrapResult {
-  return {
-    status: REGISTRY_BOOTSTRAP_STATE.READY,
-    leaseDurationMs: access.leaseDurationMs,
-    state,
-  };
+  return { status: REGISTRY_BOOTSTRAP_STATE.READY, state };
 }
 
 function bootstrapFailure(
-  access: GuardedRegistryAccess,
   failure: RegistryFailureResult,
 ): RegistryBootstrapResult {
   if (failure.status === REGISTRY_FAILURE.ACCESS_DENIED) {
     return { status: REGISTRY_FAILURE.ACCESS_DENIED };
   }
-  return bootstrapReady(access, {
+  return bootstrapReady({
     status:
       failure.status === REGISTRY_FAILURE.ONBOARDING
         ? REGISTRY_BOOTSTRAP_STATE.ERROR
@@ -253,27 +245,23 @@ function bootstrapFailure(
   });
 }
 
-export { refreshRegistryEligibility } from "@/lib/registry/access.server";
-
 export async function getRegistryBootstrap(): Promise<RegistryBootstrapResult> {
-  const access = await getRegistryAccess();
-  if (!access) return { status: REGISTRY_FAILURE.ACCESS_DENIED };
+  const accessToken = await getRegistryAccess();
+  if (!accessToken) return { status: REGISTRY_FAILURE.ACCESS_DENIED };
 
-  const credentialRead = await readRegistryCredential(access.accessToken);
+  const credentialRead = await readRegistryCredential(accessToken);
   if (credentialRead.status !== REGISTRY_CREDENTIAL_READ.STATUS) {
-    return bootstrapFailure(access, credentialRead);
+    return bootstrapFailure(credentialRead);
   }
-  const tenantArtifactsRead = await readRegistryTenantArtifacts(
-    access.accessToken,
-  );
+  const tenantArtifactsRead = await readRegistryTenantArtifacts(accessToken);
   if (tenantArtifactsRead.status !== "ready") {
-    return bootstrapFailure(access, tenantArtifactsRead);
+    return bootstrapFailure(tenantArtifactsRead);
   }
 
   const { credential } = credentialRead;
   const { tenantArtifacts } = tenantArtifactsRead;
   if (!hasActiveRegistryCredential(credential)) {
-    return bootstrapReady(access, {
+    return bootstrapReady({
       status: credential.validationPending
         ? REGISTRY_BOOTSTRAP_STATE.VALIDATION_PENDING
         : REGISTRY_BOOTSTRAP_STATE.ONBOARDING,
@@ -282,26 +270,23 @@ export async function getRegistryBootstrap(): Promise<RegistryBootstrapResult> {
     });
   }
 
-  const providers = await readRegistryProviders(access.accessToken, credential);
-  if (providers.status !== "ready") return bootstrapFailure(access, providers);
-  const catalog = await readCompleteRegistryCatalog(
-    access.accessToken,
-    credential,
-  );
+  const providers = await readRegistryProviders(accessToken, credential);
+  if (providers.status !== "ready") return bootstrapFailure(providers);
+  const catalog = await readCompleteRegistryCatalog(accessToken, credential);
   if (catalog.status === REGISTRY_FAILURE.ACCESS_DENIED) {
     return { status: REGISTRY_FAILURE.ACCESS_DENIED };
   }
   if (catalog.status === REGISTRY_CATALOG.INCOMPLETE) {
-    return bootstrapReady(access, {
+    return bootstrapReady({
       status: REGISTRY_BOOTSTRAP_STATE.INCOMPLETE,
       catalog,
     });
   }
   if (catalog.status !== REGISTRY_CATALOG.COMPLETE) {
-    return bootstrapFailure(access, catalog);
+    return bootstrapFailure(catalog);
   }
 
-  return bootstrapReady(access, {
+  return bootstrapReady({
     status: REGISTRY_BOOTSTRAP_STATE.READY,
     credential,
     catalog,
@@ -312,20 +297,18 @@ export async function getRegistryBootstrap(): Promise<RegistryBootstrapResult> {
 export async function refreshRegistryCredential(): Promise<RegistryCredentialReadResult> {
   const access = await getRegistryAccess();
   if (!access) return { status: REGISTRY_FAILURE.ACCESS_DENIED };
-  return readRegistryCredential(access.accessToken);
+  return readRegistryCredential(access);
 }
 
 export async function refreshRegistryCollections(): Promise<RegistryCollectionsResult> {
   const access = await getRegistryAccess();
   if (!access) return { status: REGISTRY_FAILURE.ACCESS_DENIED };
 
-  const providers = await readRegistryProviders(access.accessToken, null);
+  const providers = await readRegistryProviders(access, null);
   if (providers.status !== "ready") return providers;
-  const catalog = await readCompleteRegistryCatalog(access.accessToken, null);
+  const catalog = await readCompleteRegistryCatalog(access, null);
   if (catalog.status !== REGISTRY_CATALOG.COMPLETE) return catalog;
-  const tenantArtifactsRead = await readRegistryTenantArtifacts(
-    access.accessToken,
-  );
+  const tenantArtifactsRead = await readRegistryTenantArtifacts(access);
   return tenantArtifactsRead.status === "ready"
     ? {
         status: REGISTRY_CATALOG.COMPLETE,
@@ -345,19 +328,21 @@ export async function addRegistryArtifact({
 
   let response: Response;
   try {
-    response = await fetch(`${apiBaseUrl}/registry/my-artifacts`, {
+    response = await fetch(`${apiBaseUrl}/registry/artifacts`, {
       method: "POST",
       cache: "no-store",
       headers: {
         Accept: "application/vnd.api+json",
         "Content-Type": "application/vnd.api+json",
-        Authorization: `Bearer ${access.accessToken}`,
+        Authorization: `Bearer ${access}`,
       },
       body: JSON.stringify({
         data: {
-          type: "registry-tenant-artifacts",
-          id: normalizedName,
-          attributes: { version_spec: selectedVersion },
+          type: "registry-artifacts",
+          attributes: {
+            normalized_name: normalizedName,
+            version_spec: selectedVersion,
+          },
         },
       }),
     });
@@ -375,7 +360,7 @@ export async function addRegistryArtifact({
     );
   }
 
-  return confirmRegistryMutation(access.accessToken, normalizedName, true);
+  return confirmRegistryMutation(access, normalizedName, true);
 }
 
 export async function removeRegistryArtifact(
@@ -387,13 +372,13 @@ export async function removeRegistryArtifact(
   let response: Response;
   try {
     response = await fetch(
-      `${apiBaseUrl}/registry/my-artifacts/${encodeURIComponent(normalizedName)}`,
+      `${apiBaseUrl}/registry/artifacts/${encodeURIComponent(normalizedName)}`,
       {
         method: "DELETE",
         cache: "no-store",
         headers: {
           Accept: "application/vnd.api+json",
-          Authorization: `Bearer ${access.accessToken}`,
+          Authorization: `Bearer ${access}`,
         },
       },
     );
@@ -405,7 +390,7 @@ export async function removeRegistryArtifact(
   }
   if (!response.ok) return { status: REGISTRY_FAILURE.ERROR };
 
-  return confirmRegistryMutation(access.accessToken, normalizedName, false);
+  return confirmRegistryMutation(access, normalizedName, false);
 }
 
 export async function submitRegistryCredential(
@@ -414,7 +399,7 @@ export async function submitRegistryCredential(
   const access = await getRegistryAccess();
   if (!access) return { status: REGISTRY_FAILURE.ACCESS_DENIED };
 
-  const priorCredential = await readRegistryCredential(access.accessToken);
+  const priorCredential = await readRegistryCredential(access);
   if (priorCredential.status !== REGISTRY_CREDENTIAL_READ.STATUS) {
     return priorCredential;
   }
@@ -427,7 +412,7 @@ export async function submitRegistryCredential(
       headers: {
         Accept: "application/vnd.api+json",
         "Content-Type": "application/vnd.api+json",
-        Authorization: `Bearer ${access.accessToken}`,
+        Authorization: `Bearer ${access}`,
       },
       body: JSON.stringify({
         data: { type: "registry-credentials", attributes: { api_key: key } },
@@ -444,7 +429,7 @@ export async function submitRegistryCredential(
   const taskCompleted =
     submission.status === "pending" &&
     (await credentialTaskCompleted(submission.taskId));
-  const credential = await readRegistryCredential(access.accessToken);
+  const credential = await readRegistryCredential(access);
   if (credential.status !== REGISTRY_CREDENTIAL_READ.STATUS) return credential;
 
   return credentialActionResult(
@@ -466,7 +451,7 @@ export async function disconnectRegistryCredential(): Promise<RegistryCredential
       cache: "no-store",
       headers: {
         Accept: "application/vnd.api+json",
-        Authorization: `Bearer ${access.accessToken}`,
+        Authorization: `Bearer ${access}`,
       },
     });
   } catch {
@@ -476,8 +461,8 @@ export async function disconnectRegistryCredential(): Promise<RegistryCredential
     return { status: REGISTRY_FAILURE.ACCESS_DENIED };
   }
 
-  const credential = await readRegistryCredential(access.accessToken);
-  const tenantArtifacts = await readRegistryTenantArtifacts(access.accessToken);
+  const credential = await readRegistryCredential(access);
+  const tenantArtifacts = await readRegistryTenantArtifacts(access);
   if (credential.status !== REGISTRY_CREDENTIAL_READ.STATUS) return credential;
   if (tenantArtifacts.status !== "ready") return tenantArtifacts;
   if (!response.ok) return { status: REGISTRY_FAILURE.ERROR };

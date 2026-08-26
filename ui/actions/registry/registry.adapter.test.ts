@@ -59,6 +59,35 @@ describe("Registry adapter", () => {
     expect(adaptRegistryCredentialStatus(malformedPayload)).toBeNull();
   });
 
+  it("normalizes an absent credential status with nullable validation fields", () => {
+    // Given
+    const absentCredentialPayload = {
+      data: {
+        attributes: {
+          configured: false,
+          is_valid: false,
+          scopes: [],
+          last_validated_at: null,
+          validation_status: null,
+          validation_pending: false,
+        },
+      },
+    };
+
+    // When
+    const status = adaptRegistryCredentialStatus(absentCredentialPayload);
+
+    // Then
+    expect(status).toEqual({
+      configured: false,
+      isValid: false,
+      scopes: [],
+      lastValidatedAt: undefined,
+      validationStatus: undefined,
+      validationPending: false,
+    });
+  });
+
   it("accepts only a matching 202 task and fixed Content-Location path", async () => {
     // Given
     const response = new Response(

@@ -41,8 +41,8 @@ const credentialStatusSchema = z.object({
       configured: z.boolean(),
       is_valid: z.boolean(),
       scopes: z.array(z.string()),
-      last_validated_at: z.string().optional(),
-      validation_status: z.string().optional(),
+      last_validated_at: z.string().nullish(),
+      validation_status: z.string().nullish(),
       validation_pending: z.boolean(),
     }),
   }),
@@ -85,8 +85,8 @@ export function adaptRegistryCredentialStatus(
     configured: attributes.configured,
     isValid: attributes.is_valid,
     scopes: attributes.scopes,
-    lastValidatedAt: attributes.last_validated_at,
-    validationStatus: attributes.validation_status,
+    lastValidatedAt: attributes.last_validated_at ?? undefined,
+    validationStatus: attributes.validation_status ?? undefined,
     validationPending: attributes.validation_pending,
   };
 }

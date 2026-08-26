@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 
 import { getRegistryBootstrap } from "@/actions/registry/registry";
-import { RegistryAccessBoundary } from "@/components/registry/registry-access-boundary";
 import { RegistryExplorer } from "@/components/registry/registry-explorer";
 import { ContentLayout } from "@/components/shadcn/content-layout/content-layout";
 import { REGISTRY_FAILURE } from "@/types/registry";
@@ -14,11 +13,7 @@ export default async function RegistryPage() {
 
   return (
     <ContentLayout title="Registry">
-      <RegistryAccessBoundary
-        initialLeaseDurationMs={bootstrap.leaseDurationMs}
-      >
-        <RegistryExplorer initialState={bootstrap.state} />
-      </RegistryAccessBoundary>
+      <RegistryExplorer initialState={bootstrap.state} />
     </ContentLayout>
   );
 }

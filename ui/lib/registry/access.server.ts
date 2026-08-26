@@ -6,7 +6,6 @@ import { readEnv } from "@/lib/runtime-env";
 import {
   isRegistryEligible,
   REGISTRY_ACCESS,
-  registryAccessResult,
   type RegistryAccessResult,
 } from "./access";
 
@@ -16,17 +15,11 @@ const hasEnabledProcessFlags = () =>
   readEnv("UI_CLOUD_ENABLED") === "true" &&
   readEnv("UI_REGISTRY_ENABLED") === "true";
 
-export async function refreshRegistryEligibility(): Promise<RegistryAccessResult> {
-  "use server";
-  const { auth } = await import("@/auth.config");
-  return evaluateRegistryAccess((await auth())?.accessToken);
-}
-
 export async function evaluateRegistryAccess(
   accessToken?: string | null,
 ): Promise<RegistryAccessResult> {
   if (!hasEnabledProcessFlags() || !accessToken?.trim()) {
-    return registryAccessResult(REGISTRY_ACCESS.INELIGIBLE);
+    return { status: REGISTRY_ACCESS.INELIGIBLE };
   }
 
   const controller = new AbortController();
@@ -37,15 +30,15 @@ export async function evaluateRegistryAccess(
       signal: controller.signal,
     });
     if (currentUser.manageRegistry === undefined) {
-      return registryAccessResult(REGISTRY_ACCESS.UNKNOWN);
+      return { status: REGISTRY_ACCESS.UNKNOWN };
     }
-    return registryAccessResult(
-      isRegistryEligible(true, true, currentUser.manageRegistry)
+    return {
+      status: isRegistryEligible(true, true, currentUser.manageRegistry)
         ? REGISTRY_ACCESS.ELIGIBLE
         : REGISTRY_ACCESS.INELIGIBLE,
-    );
+    };
   } catch {
-    return registryAccessResult(REGISTRY_ACCESS.UNKNOWN);
+    return { status: REGISTRY_ACCESS.UNKNOWN };
   } finally {
     clearTimeout(timeout);
   }

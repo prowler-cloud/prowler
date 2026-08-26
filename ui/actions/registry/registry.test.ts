@@ -1,18 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const {
-  authMock,
-  evaluateAccessMock,
-  fetchMock,
-  pollTaskUntilSettledMock,
-  refreshEligibilityMock,
-} = vi.hoisted(() => ({
-  authMock: vi.fn(),
-  evaluateAccessMock: vi.fn(),
-  fetchMock: vi.fn(),
-  pollTaskUntilSettledMock: vi.fn(),
-  refreshEligibilityMock: vi.fn(),
-}));
+const { authMock, evaluateAccessMock, fetchMock, pollTaskUntilSettledMock } =
+  vi.hoisted(() => ({
+    authMock: vi.fn(),
+    evaluateAccessMock: vi.fn(),
+    fetchMock: vi.fn(),
+    pollTaskUntilSettledMock: vi.fn(),
+  }));
 
 vi.mock("@/auth.config", () => ({ auth: authMock }));
 vi.mock("@/lib", () => ({ apiBaseUrl: "https://api.test/api/v1" }));
@@ -21,7 +15,6 @@ vi.mock("@/actions/task/poll", () => ({
 }));
 vi.mock("@/lib/registry/access.server", () => ({
   evaluateRegistryAccess: evaluateAccessMock,
-  refreshRegistryEligibility: refreshEligibilityMock,
 }));
 
 import {
@@ -31,7 +24,6 @@ import {
   refreshRegistryCollections,
   removeRegistryArtifact,
   refreshRegistryCredential,
-  refreshRegistryEligibility,
   submitRegistryCredential,
 } from "./registry";
 
@@ -74,7 +66,7 @@ const tenantArtifactsResponse = () =>
   jsonResponse({
     data: [
       {
-        type: "registry-tenant-artifacts",
+        type: "registry-artifacts",
         id: "prowler-aws",
         attributes: {
           version_spec: "latest",
@@ -99,14 +91,7 @@ const catalogResponse = () =>
 beforeEach(() => {
   vi.stubGlobal("fetch", fetchMock);
   authMock.mockResolvedValue({ accessToken: "access-token" });
-  evaluateAccessMock.mockResolvedValue({
-    status: "eligible",
-    leaseDurationMs: 30_000,
-  });
-  refreshEligibilityMock.mockResolvedValue({
-    status: "eligible",
-    leaseDurationMs: 30_000,
-  });
+  evaluateAccessMock.mockResolvedValue({ status: "eligible" });
   fetchMock.mockReset();
   pollTaskUntilSettledMock.mockReset();
 });
@@ -161,19 +146,6 @@ describe("Registry guarded reads", () => {
     },
   );
 
-  it("returns only the current eligibility result without Registry I/O", async () => {
-    // Given
-    const access = { status: "unknown" } as const;
-    refreshEligibilityMock.mockResolvedValue(access);
-
-    // When
-    const result = await refreshRegistryEligibility();
-
-    // Then
-    expect(result).toEqual(access);
-    expect(fetchMock).not.toHaveBeenCalled();
-  });
-
   it("bootstraps in credential, tenant-artifact, providers, then complete-catalog order", async () => {
     // Given
     fetchMock
@@ -186,9 +158,9 @@ describe("Registry guarded reads", () => {
     const result = await getRegistryBootstrap();
 
     // Then
+    expect(result).not.toHaveProperty("leaseDurationMs");
     expect(result).toEqual({
       status: "ready",
-      leaseDurationMs: 30_000,
       state: {
         status: "ready",
         credential: activeCredential,
@@ -209,7 +181,7 @@ describe("Registry guarded reads", () => {
     });
     expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
       "https://api.test/api/v1/registry/credential",
-      "https://api.test/api/v1/registry/my-artifacts",
+      "https://api.test/api/v1/registry/artifacts",
       "https://api.test/api/v1/registry/providers",
       "https://api.test/api/v1/registry/available-artifacts?page%5Bnumber%5D=1&page%5Bsize%5D=100",
     ]);
@@ -239,9 +211,9 @@ describe("Registry guarded reads", () => {
       const result = await getRegistryBootstrap();
 
       // Then
+      expect(result).not.toHaveProperty("leaseDurationMs");
       expect(result).toEqual({
         status: "ready",
-        leaseDurationMs: 30_000,
         state: {
           status: expectedStatus,
           credential,
@@ -379,7 +351,7 @@ describe("Registry guarded reads", () => {
   it("rechecks access between separate actions after permission revocation", async () => {
     // Given
     evaluateAccessMock
-      .mockResolvedValueOnce({ status: "eligible", leaseDurationMs: 30_000 })
+      .mockResolvedValueOnce({ status: "eligible" })
       .mockResolvedValueOnce({ status: "ineligible" });
     fetchMock.mockResolvedValueOnce(credentialResponse());
 
@@ -473,7 +445,7 @@ describe("Registry guarded reads", () => {
     expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
       "https://api.test/api/v1/registry/credential",
       "https://api.test/api/v1/registry/credential",
-      "https://api.test/api/v1/registry/my-artifacts",
+      "https://api.test/api/v1/registry/artifacts",
     ]);
     expect(fetchMock).toHaveBeenNthCalledWith(
       1,
@@ -684,7 +656,7 @@ describe("Registry guarded reads", () => {
         jsonResponse({
           data: [
             {
-              type: "registry-tenant-artifacts",
+              type: "registry-artifacts",
               id: "later-guard",
               attributes: { version_spec: "2.0.0" },
             },
@@ -707,13 +679,15 @@ describe("Registry guarded reads", () => {
     });
     expect(fetchMock).toHaveBeenNthCalledWith(
       1,
-      "https://api.test/api/v1/registry/my-artifacts",
+      "https://api.test/api/v1/registry/artifacts",
       expect.objectContaining({
         body: JSON.stringify({
           data: {
-            type: "registry-tenant-artifacts",
-            id: "later-guard",
-            attributes: { version_spec: "2.0.0" },
+            type: "registry-artifacts",
+            attributes: {
+              normalized_name: "later-guard",
+              version_spec: "2.0.0",
+            },
           },
         }),
         cache: "no-store",
@@ -730,7 +704,7 @@ describe("Registry guarded reads", () => {
         jsonResponse({
           data: [
             {
-              type: "registry-tenant-artifacts",
+              type: "registry-artifacts",
               id: "later-guard",
               attributes: { version_spec: "latest" },
             },
@@ -744,13 +718,15 @@ describe("Registry guarded reads", () => {
     // Then
     expect(fetchMock).toHaveBeenNthCalledWith(
       1,
-      "https://api.test/api/v1/registry/my-artifacts",
+      "https://api.test/api/v1/registry/artifacts",
       expect.objectContaining({
         body: JSON.stringify({
           data: {
-            type: "registry-tenant-artifacts",
-            id: "later-guard",
-            attributes: { version_spec: "latest" },
+            type: "registry-artifacts",
+            attributes: {
+              normalized_name: "later-guard",
+              version_spec: "latest",
+            },
           },
         }),
       }),
@@ -800,7 +776,7 @@ describe("Registry guarded reads", () => {
     expect(result).toEqual({ status: "confirmed", tenantArtifacts: [] });
     expect(fetchMock).toHaveBeenNthCalledWith(
       1,
-      "https://api.test/api/v1/registry/my-artifacts/guard%2Fwith%20space",
+      "https://api.test/api/v1/registry/artifacts/guard%2Fwith%20space",
       expect.objectContaining({ cache: "no-store", method: "DELETE" }),
     );
   });
@@ -817,7 +793,7 @@ describe("Registry guarded reads", () => {
       {
         data: [
           {
-            type: "registry-tenant-artifacts",
+            type: "registry-artifacts",
             id: "later-guard",
             attributes: { version_spec: "latest" },
           },

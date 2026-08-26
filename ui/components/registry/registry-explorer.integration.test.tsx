@@ -1,5 +1,11 @@
-import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { userEvent } from "vitest/browser";
+
+import { render } from "@/__tests__/render-browser";
+import type { RegistryBootstrapState } from "@/types/registry";
+
+import { RegistryExplorer } from "./registry-explorer";
 
 const {
   addRegistryArtifactMock,
@@ -23,10 +29,11 @@ vi.mock("@/actions/registry/registry", () => ({
   submitRegistryCredential: submitRegistryCredentialMock,
 }));
 
-import { render } from "@/__tests__/render-browser";
-import type { RegistryBootstrapState } from "@/types/registry";
-
-import { RegistryExplorer } from "./registry-explorer";
+// The integration setup mocks `next/navigation` with a module-level router,
+// so this "hook" is a plain function returning the shared router spies and
+// is safe to call outside a component.
+// eslint-disable-next-line react-hooks/rules-of-hooks
+const registryRouter = useRouter();
 
 const onboardingState: RegistryBootstrapState = {
   status: "onboarding",
@@ -106,17 +113,10 @@ const readyState: RegistryBootstrapState = {
   ],
 };
 
-function AccessInvalidationHarness() {
-  const [isAllowed, setIsAllowed] = useState(true);
-
-  return (
-    <>
-      <button onClick={() => setIsAllowed(false)} type="button">
-        Invalidate access
-      </button>
-      {isAllowed && <RegistryExplorer initialState={readyState} />}
-    </>
-  );
+async function expectRedirectedToProfile() {
+  await expect
+    .poll(() => vi.mocked(registryRouter.replace).mock.calls)
+    .toEqual([["/profile"]]);
 }
 
 const incompleteState: RegistryBootstrapState = {
@@ -131,16 +131,55 @@ describe("RegistryExplorer", () => {
     refreshRegistryCollectionsMock.mockReset();
     removeRegistryArtifactMock.mockReset();
     submitRegistryCredentialMock.mockReset();
+    vi.mocked(registryRouter.replace).mockClear();
   });
 
   describe("when Registry access is not connected", () => {
     it("shows onboarding instead of a catalog", async () => {
       // Given / When
-      await render(<RegistryExplorer initialState={onboardingState} />);
+      const screen = await render(
+        <RegistryExplorer initialState={onboardingState} />,
+      );
 
       // Then
-      expect(document.body.textContent).toContain("Connect Registry");
+      await expect
+        .element(
+          screen.getByRole("heading", { name: "Connect Registry", level: 2 }),
+        )
+        .toBeVisible();
+      await expect
+        .element(screen.getByRole("button", { name: "Connect Registry" }))
+        .toBeVisible();
+      await expect
+        .element(
+          screen.getByRole("link", {
+            name: "Explore Prowler Registry (opens in a new tab)",
+          }),
+        )
+        .toBeVisible();
+      expect(document.body.textContent).not.toContain(
+        "preserved tenant artifact",
+      );
       expect(document.body.textContent).not.toContain("Available artifacts");
+    });
+
+    it("reassures tenants that preserved artifacts remain available", async () => {
+      // Given / When
+      await render(
+        <RegistryExplorer
+          initialState={{
+            ...onboardingState,
+            tenantArtifacts: [
+              { normalizedName: "saved-artifact", versionSpec: "1.0.0" },
+            ],
+          }}
+        />,
+      );
+
+      // Then
+      expect(document.body.textContent).toContain(
+        "Your 1 preserved tenant artifact will remain available in My artifacts.",
+      );
     });
 
     it("keeps catalog controls unavailable while validation is pending", async () => {
@@ -159,6 +198,143 @@ describe("RegistryExplorer", () => {
         "Search Registry artifacts",
       );
     });
+  });
+
+  it("moves focus into the access dialog and returns it to Connect Registry", async () => {
+    // Given
+    const screen = await render(
+      <RegistryExplorer initialState={onboardingState} />,
+    );
+    const connectButton = screen.getByRole("button", {
+      name: "Connect Registry",
+    });
+
+    // When
+    await connectButton.click();
+
+    // Then
+    await expect.element(screen.getByLabelText("Registry key")).toHaveFocus();
+
+    // When
+    await userEvent.keyboard("{Escape}");
+
+    // Then
+    await expect.element(connectButton).toHaveFocus();
+  });
+
+  describe("access dialog layout", () => {
+    it("keeps the Connect action visibly separated from the Registry key input", async () => {
+      // Given
+      const screen = await render(
+        <RegistryExplorer initialState={onboardingState} />,
+      );
+
+      // When
+      await screen.getByRole("button", { name: "Connect Registry" }).click();
+
+      // Then
+      const inputRect = screen
+        .getByLabelText("Registry key")
+        .element()
+        .getBoundingClientRect();
+      const connectRect = screen
+        .getByRole("button", { name: "Connect", exact: true })
+        .element()
+        .getBoundingClientRect();
+      const visibleGap = connectRect.top - inputRect.bottom;
+
+      expect(visibleGap).toBeGreaterThanOrEqual(15);
+    });
+
+    it("keeps Manage access actions separated from the Registry key input without overlapping", async () => {
+      // Given
+      const screen = await render(
+        <RegistryExplorer initialState={readyState} />,
+      );
+
+      // When
+      await screen.getByRole("button", { name: "Manage access" }).click();
+
+      // Then
+      const inputRect = screen
+        .getByLabelText("Registry key")
+        .element()
+        .getBoundingClientRect();
+      const disconnectRect = screen
+        .getByRole("button", { name: "Disconnect Registry" })
+        .element()
+        .getBoundingClientRect();
+      const replaceRect = screen
+        .getByRole("button", { name: "Replace Registry key" })
+        .element()
+        .getBoundingClientRect();
+      const earliestActionTop = Math.min(disconnectRect.top, replaceRect.top);
+      const visibleGap = earliestActionTop - inputRect.bottom;
+      const actionsOverlap =
+        disconnectRect.left < replaceRect.right &&
+        disconnectRect.right > replaceRect.left &&
+        disconnectRect.top < replaceRect.bottom &&
+        disconnectRect.bottom > replaceRect.top;
+
+      expect(visibleGap).toBeGreaterThanOrEqual(15);
+      expect(actionsOverlap).toBe(false);
+    });
+  });
+
+  it("shows validation progress without credential controls while a connection is pending", async () => {
+    // Given
+    const key = "registry-test-key";
+    submitRegistryCredentialMock.mockReturnValue(new Promise(() => {}));
+    const screen = await render(
+      <RegistryExplorer initialState={onboardingState} />,
+    );
+
+    // When
+    await screen.getByRole("button", { name: "Connect Registry" }).click();
+    await screen.getByLabelText("Registry key").fill(key);
+    await screen.getByRole("button", { name: "Connect", exact: true }).click();
+
+    // Then
+    await expect
+      .element(screen.getByRole("status"))
+      .toHaveTextContent("Validating your Registry key");
+    await expect.element(screen.getByLabelText("Loading")).toBeVisible();
+    await expect
+      .element(screen.getByLabelText("Registry key"))
+      .not.toBeInTheDocument();
+    await expect
+      .element(screen.getByRole("button", { name: "Connect", exact: true }))
+      .not.toBeInTheDocument();
+    expect(document.body.innerHTML).not.toContain(key);
+  });
+
+  it("preserves the catalog while replacement validation hides credential controls", async () => {
+    // Given
+    const key = "replacement-key";
+    submitRegistryCredentialMock.mockReturnValue(new Promise(() => {}));
+    const screen = await render(<RegistryExplorer initialState={readyState} />);
+
+    // When
+    await screen.getByRole("button", { name: "Manage access" }).click();
+    await screen.getByLabelText("Registry key").fill(key);
+    await screen.getByRole("button", { name: "Replace Registry key" }).click();
+
+    // Then
+    await expect
+      .element(screen.getByRole("status"))
+      .toHaveTextContent("Validating your Registry key");
+    await expect.element(screen.getByLabelText("Loading")).toBeVisible();
+    await expect
+      .element(screen.getByLabelText("Registry key"))
+      .not.toBeInTheDocument();
+    await expect
+      .element(screen.getByRole("button", { name: "Disconnect Registry" }))
+      .not.toBeInTheDocument();
+    await expect
+      .element(screen.getByRole("button", { name: "Replace Registry key" }))
+      .not.toBeInTheDocument();
+    expect(document.body.textContent).toContain("Available artifacts");
+    expect(document.body.innerHTML).not.toContain(key);
   });
 
   it("resets a write-only key before loading authoritative collections", async () => {
@@ -189,7 +365,9 @@ describe("RegistryExplorer", () => {
     await expect
       .poll(() => submitRegistryCredentialMock.mock.calls)
       .toEqual([[key]]);
-    await expect.element(screen.getByLabelText("Registry key")).toHaveValue("");
+    await expect
+      .element(screen.getByLabelText("Registry key"))
+      .not.toBeInTheDocument();
     expect(document.body.innerHTML).not.toContain(key);
     expect(window.location.href).not.toContain(key);
     expect(localStorage.getItem("registry-key")).toBeNull();
@@ -207,38 +385,106 @@ describe("RegistryExplorer", () => {
       .toContain("Available artifacts");
   });
 
-  it("ignores a late mutation result after Registry access invalidates", async () => {
-    // Given
-    let resolveMutation: ((result: unknown) => void) | undefined;
-    addRegistryArtifactMock.mockImplementation(
-      () =>
-        new Promise((resolve) => {
-          resolveMutation = resolve;
-        }),
-    );
-    const screen = await render(<AccessInvalidationHarness />);
-    await screen.getByText("Multi-provider").click();
-    await screen
-      .getByLabelText("Registry explorer")
-      .getByText("Cloud guard")
-      .click();
-    await screen.getByRole("button", { name: "Add" }).click();
-    await screen.getByRole("button", { name: "Add artifact" }).click();
+  describe("when a Registry action loses authorization", () => {
+    it("routes to Profile once when Add is denied", async () => {
+      // Given
+      addRegistryArtifactMock.mockResolvedValue({ status: "access_denied" });
+      const screen = await render(
+        <RegistryExplorer initialState={readyState} />,
+      );
+      await screen.getByText("Multi-provider").click();
+      await screen
+        .getByLabelText("Registry explorer")
+        .getByText("Cloud guard")
+        .click();
+      await screen.getByRole("button", { name: "Add" }).click();
 
-    // When
-    await screen.getByRole("button", { name: "Invalidate access" }).click();
-    resolveMutation?.({
-      status: "confirmed",
-      tenantArtifacts: [
-        ...readyState.tenantArtifacts,
-        { normalizedName: "cloud-guard", versionSpec: "latest" },
-      ],
+      // When
+      await screen.getByRole("button", { name: "Add artifact" }).click();
+
+      // Then
+      await expectRedirectedToProfile();
     });
 
-    // Then
-    await expect
-      .poll(() => document.body.textContent)
-      .not.toContain("Artifact added");
+    it("routes to Profile once when Remove is denied", async () => {
+      // Given
+      removeRegistryArtifactMock.mockResolvedValue({ status: "access_denied" });
+      const screen = await render(
+        <RegistryExplorer initialState={readyState} />,
+      );
+      await screen
+        .getByLabelText("Registry explorer")
+        .getByText("aws-guard")
+        .click();
+      await screen.getByRole("button", { name: "Remove" }).click();
+
+      // When
+      await screen.getByRole("button", { name: "Confirm Remove" }).click();
+
+      // Then
+      await expectRedirectedToProfile();
+    });
+
+    it("routes to Profile once when credential submission is denied", async () => {
+      // Given
+      submitRegistryCredentialMock.mockResolvedValue({
+        status: "access_denied",
+      });
+      const screen = await render(
+        <RegistryExplorer initialState={onboardingState} />,
+      );
+      await screen.getByRole("button", { name: "Connect Registry" }).click();
+      await screen.getByLabelText("Registry key").fill("registry-test-key");
+
+      // When
+      await screen
+        .getByRole("button", { name: "Connect", exact: true })
+        .click();
+
+      // Then
+      await expectRedirectedToProfile();
+    });
+
+    it("routes to Profile once when disconnect is denied", async () => {
+      // Given
+      disconnectRegistryCredentialMock.mockResolvedValue({
+        status: "access_denied",
+      });
+      const screen = await render(
+        <RegistryExplorer initialState={readyState} />,
+      );
+      await screen.getByRole("button", { name: "Manage access" }).click();
+
+      // When
+      await screen.getByRole("button", { name: "Disconnect Registry" }).click();
+
+      // Then
+      await expectRedirectedToProfile();
+    });
+
+    it("routes to Profile once when post-connect collection refresh is denied", async () => {
+      // Given
+      submitRegistryCredentialMock.mockResolvedValue({
+        status: "connected",
+        credential: readyState.credential,
+      });
+      refreshRegistryCollectionsMock.mockResolvedValue({
+        status: "access_denied",
+      });
+      const screen = await render(
+        <RegistryExplorer initialState={onboardingState} />,
+      );
+      await screen.getByRole("button", { name: "Connect Registry" }).click();
+      await screen.getByLabelText("Registry key").fill("registry-test-key");
+
+      // When
+      await screen
+        .getByRole("button", { name: "Connect", exact: true })
+        .click();
+
+      // Then
+      await expectRedirectedToProfile();
+    });
   });
 
   it("keeps the rendered catalog after a failed credential replacement", async () => {
@@ -296,7 +542,7 @@ describe("RegistryExplorer", () => {
         .not.toContain("Cloud guard");
     });
 
-    it("shows a complete empty catalog without degrading controls", async () => {
+    it("shows a dedicated available empty state without explorer controls", async () => {
       // Given / When
       const screen = await render(
         <RegistryExplorer
@@ -309,12 +555,67 @@ describe("RegistryExplorer", () => {
       );
 
       // Then
-      expect(document.body.textContent).toContain(
-        "No artifacts match this complete catalog view.",
+      await expect
+        .element(screen.getByRole("region", { name: "Available artifacts" }))
+        .toBeVisible();
+      await expect
+        .element(screen.getByRole("button", { name: "Manage access" }))
+        .toBeVisible();
+      await expect
+        .element(screen.getByLabelText("Registry explorer"))
+        .not.toBeInTheDocument();
+      await expect
+        .element(screen.getByLabelText("Search Registry artifacts"))
+        .not.toBeInTheDocument();
+      await expect
+        .element(screen.getByRole("button", { name: "Browse artifacts" }))
+        .not.toBeInTheDocument();
+      expect(document.body.textContent).not.toContain("Providers:");
+      expect(document.body.textContent).not.toContain("Official artifacts:");
+    });
+
+    it("lists authoritative My artifacts in the available empty state", async () => {
+      // Given / When
+      const screen = await render(
+        <RegistryExplorer
+          initialState={{
+            ...readyState,
+            catalog: { status: "complete", artifacts: [] },
+            tenantArtifacts: [
+              { normalizedName: "saved-artifact", versionSpec: "1.0.0" },
+            ],
+          }}
+        />,
       );
+
+      // Then
+      await expect.element(screen.getByText("My artifacts")).toBeVisible();
+      expect(document.body.textContent).toContain("saved-artifact");
+      expect(document.body.textContent).toContain("1.0.0");
+      expect(document.body.textContent).not.toContain("Official artifacts:");
+    });
+
+    it("keeps a nonempty catalog in the explorer when every item is in My artifacts", async () => {
+      // Given / When
+      const screen = await render(
+        <RegistryExplorer
+          initialState={{
+            ...readyState,
+            tenantArtifacts: readyState.catalog.artifacts.map((artifact) => ({
+              normalizedName: artifact.normalizedName,
+              versionSpec: "latest",
+            })),
+          }}
+        />,
+      );
+
+      // Then
       await expect
         .element(screen.getByLabelText("Search Registry artifacts"))
         .toBeVisible();
+      expect(document.body.textContent).not.toContain(
+        "No Registry artifacts are available.",
+      );
     });
 
     it("filters complete results by capability", async () => {
@@ -382,6 +683,27 @@ describe("RegistryExplorer", () => {
       .toBeVisible();
   });
 
+  it("keeps ordinary Add errors local without redirecting to Profile", async () => {
+    // Given
+    addRegistryArtifactMock.mockResolvedValue({ status: "error" });
+    const screen = await render(<RegistryExplorer initialState={readyState} />);
+    await screen.getByText("Multi-provider").click();
+    await screen
+      .getByLabelText("Registry explorer")
+      .getByText("Cloud guard")
+      .click();
+    await screen.getByRole("button", { name: "Add" }).click();
+
+    // When
+    await screen.getByRole("button", { name: "Add artifact" }).click();
+
+    // Then
+    await expect
+      .element(screen.getByRole("alert"))
+      .toHaveTextContent("Registry operation could not be completed");
+    expect(registryRouter.replace).not.toHaveBeenCalled();
+  });
+
   it("keeps membership unchanged until an Add is authoritatively confirmed", async () => {
     // Given
     addRegistryArtifactMock.mockResolvedValue({
@@ -443,7 +765,7 @@ describe("RegistryExplorer", () => {
       .toBeVisible();
   });
 
-  it("shows documented Add refusals without moving membership", async () => {
+  it("keeps documented Add refusals local without redirecting to Profile", async () => {
     // Given
     addRegistryArtifactMock.mockResolvedValue({
       status: "refused",
@@ -467,6 +789,7 @@ describe("RegistryExplorer", () => {
     await expect
       .element(screen.getByRole("button", { name: "Add artifact" }))
       .toBeVisible();
+    expect(registryRouter.replace).not.toHaveBeenCalled();
   });
 
   it("disables duplicate Add submission while confirmation is pending", async () => {
@@ -560,6 +883,30 @@ describe("RegistryExplorer", () => {
     await expect
       .poll(() => document.body.textContent)
       .toContain("Artifact removed");
+  });
+
+  it("moves focus into Remove confirmation and returns it to the invoker", async () => {
+    // Given
+    const screen = await render(<RegistryExplorer initialState={readyState} />);
+    await screen
+      .getByLabelText("Registry explorer")
+      .getByText("aws-guard")
+      .click();
+    const removeButton = screen.getByRole("button", { name: "Remove" });
+
+    // When
+    await removeButton.click();
+
+    // Then
+    await expect
+      .element(screen.getByRole("button", { name: "Cancel" }))
+      .toHaveFocus();
+
+    // When
+    await userEvent.keyboard("{Escape}");
+
+    // Then
+    await expect.element(removeButton).toHaveFocus();
   });
 
   it("disables duplicate Remove submission while confirmation is pending", async () => {

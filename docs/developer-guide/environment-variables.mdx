@@ -40,6 +40,14 @@ The former build-time variables map to the new runtime variables as follows:
 
 `UI_CLOUD_ENABLED` is a plain runtime boolean flag that enables Prowler Cloud behavior when set to the exact string `"true"` and defaults to off; unlike the other renamed variables it has no legacy fallback, so `NEXT_PUBLIC_IS_CLOUD_ENV` is no longer read.
 
+## Registry UI Rollout and Rollback
+
+`UI_REGISTRY_ENABLED` is an optional Prowler Cloud runtime flag. Registry is eligible only when both `UI_CLOUD_ENABLED` and `UI_REGISTRY_ENABLED` are the exact string `"true"` and the current user has the backend-authorized `MANAGE_REGISTRY` permission. Unset, `"false"`, malformed, or stale values fail closed. The flag defaults to off and is not a replacement for backend authorization.
+
+Roll out Registry only after the Registry backend dependency is deployed, intended Cloud roles have `MANAGE_REGISTRY`, and controlled acceptance has exercised credential onboarding, complete catalog loading, and Add/Remove behavior. Deploy the UI with `UI_REGISTRY_ENABLED` unset or `"false"`; set it to `"true"` only in the prepared Cloud process environment, then restart or otherwise apply the environment update required by the platform.
+
+To roll back, set `UI_REGISTRY_ENABLED=false` or remove it and apply the environment update. Proxy, page, and action checks deny on their next request. A visible client rechecks within 15 seconds, while a hidden client lease expires within 30 seconds and rechecks before showing Registry on return. Rollback does not delete Registry credentials or tenant artifact records.
+
 The build-time-only Sentry variables used for source-map upload — `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_AUTH_TOKEN`, and `SENTRY_RELEASE` — keep their names, as they are not part of Prowler Local Server's runtime configuration.
 
 ## Enabling Third-Party Integrations
