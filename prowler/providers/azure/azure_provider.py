@@ -15,6 +15,7 @@ from azure.core.exceptions import (
     ClientAuthenticationError,
     HttpResponseError,
     ServiceRequestError,
+    ServiceResponseError,
 )
 from azure.core.pipeline.transport import RequestsTransport
 from azure.identity import (
@@ -85,7 +86,29 @@ _CERTIFICATE_THUMBPRINT_FALLBACK: dict[int, str] = {}
 
 # Matches the 30s HTTP timeout on the client-secret path so a hung Entra ID
 # endpoint cannot stall a request thread or Celery worker on either flow.
+# Applied per-request as the RequestsTransport connect and read deadlines,
+# not as a token TTL or an overall pipeline timeout.
 _TOKEN_ACQUISITION_TIMEOUT_SECONDS = 30
+
+
+def _find_transport_cause(error: BaseException) -> Optional[BaseException]:
+    """Return the first transport-level cause in the exception chain, if any.
+
+    ``azure.identity`` decorates ``_request_token`` with ``wrap_exceptions``,
+    so a ``RequestsTransport`` connect or read failure arrives at the caller
+    as ``ClientAuthenticationError`` with the underlying
+    ``ServiceRequestError``/``ServiceResponseError`` preserved via
+    ``__cause__``/``__context__``. Callers use this to distinguish a real
+    transport failure from a rejected certificate.
+    """
+    seen: set[int] = set()
+    current = error.__cause__ or error.__context__
+    while current is not None and id(current) not in seen:
+        seen.add(id(current))
+        if isinstance(current, (ServiceRequestError, ServiceResponseError)):
+            return current
+        current = current.__cause__ or current.__context__
+    return None
 
 
 def _build_certificate_credential(
@@ -224,10 +247,14 @@ class AzureProvider(Provider):
         mutelist_content: dict = None,
         client_id: str = None,
         client_secret: str = None,
+        resource_groups: list = [],
+        # Keep `resource_groups` in its original positional slot for callers
+        # that pass it positionally; only the new certificate kwargs are
+        # keyword-only.
+        *,
         certificate_auth: bool = False,
         certificate_content: str = None,
         certificate_path: str = None,
-        resource_groups: list = [],
     ):
         """
         Initializes the Azure provider.
@@ -1536,9 +1563,13 @@ class AzureProvider(Provider):
         tenant_id: str = None,
         client_id: str = None,
         client_secret: str = None,
+        region_config: AzureRegionConfig = None,
+        # Keep `region_config` in its original positional slot for callers
+        # that pass it positionally; only the new certificate kwargs are
+        # keyword-only.
+        *,
         certificate_content: str = None,
         certificate_path: str = None,
-        region_config: AzureRegionConfig = None,
     ) -> dict:
         """
         Validates the static credentials for the Azure provider.
@@ -1779,6 +1810,7 @@ class AzureProvider(Provider):
         # Graph permissions, `get_token` still returns a token — the point
         # here is to prove the private key matches an active `keyCredentials`
         # entry on the app registration.
+        credential = None
         try:
             if certificate_content:
                 certificate_data = base64.b64decode(certificate_content, validate=True)
@@ -1788,10 +1820,12 @@ class AzureProvider(Provider):
             else:
                 return
 
-            # Enforce the deadline on the HTTP transport itself instead of
-            # racing an off-thread `get_token` — background workers cannot
-            # be cancelled once running, and any non-timeout exception used
-            # to bypass executor shutdown, leaking a thread per validation.
+            # Enforce the deadline on the HTTP transport — the previous
+            # off-thread `future.result(timeout=...)` could not cancel a
+            # running `get_token`, so timeouts and non-timeout failures
+            # leaked a worker per validation under Entra ID degradation.
+            # `retry_total=0` stops Azure Core from replaying each request
+            # and multiplying the effective deadline.
             credential = CertificateCredential(
                 client_id=client_id,
                 tenant_id=tenant_id,
@@ -1801,10 +1835,19 @@ class AzureProvider(Provider):
                     connection_timeout=_TOKEN_ACQUISITION_TIMEOUT_SECONDS,
                     read_timeout=_TOKEN_ACQUISITION_TIMEOUT_SECONDS,
                 ),
+                retry_total=0,
             )
-            try:
-                credential.get_token(region_config.graph_scope)
-            except ServiceRequestError as error:
+            credential.get_token(region_config.graph_scope)
+        except ClientAuthenticationError as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            # `azure.identity` wraps `_request_token` with `wrap_exceptions`,
+            # so a `RequestsTransport` connect/read timeout reaches this
+            # handler as `ClientAuthenticationError`. Distinguish transport
+            # failures (credentials unavailable) from a genuinely rejected
+            # certificate by walking the cause chain.
+            if _find_transport_cause(error) is not None:
                 raise AzureCredentialsUnavailableError(
                     file=os.path.basename(__file__),
                     message=(
@@ -1813,10 +1856,6 @@ class AzureProvider(Provider):
                     ),
                     original_exception=error,
                 )
-        except ClientAuthenticationError as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
-            )
             if certificate_content:
                 raise AzureNotValidCertificateContentError(
                     file=os.path.basename(__file__),
@@ -1853,3 +1892,15 @@ class AzureProvider(Provider):
                 file=os.path.basename(__file__),
                 original_exception=error,
             )
+        finally:
+            # Always release the transient credential (and its transport):
+            # a `close()` failure must be logged and swallowed so it cannot
+            # replace the primary typed exception on its way up.
+            if credential is not None:
+                try:
+                    credential.close()
+                except Exception as cleanup_error:
+                    logger.warning(
+                        f"{cleanup_error.__class__.__name__}: failed to close "
+                        f"CertificateCredential during verify_client cleanup"
+                    )

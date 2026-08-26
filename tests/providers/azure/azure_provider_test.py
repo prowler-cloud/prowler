@@ -2075,25 +2075,25 @@ class TestAzureProviderCertificateAuth:
             encryption_algorithm=serialization.NoEncryption(),
         )
 
-    def test_verify_client_certificate_content_timeout_translates_to_credentials_unavailable(
+    def test_verify_client_certificate_content_connect_timeout_translates_to_credentials_unavailable(
         self,
     ):
-        # The certificate path enforces the deadline on the HTTP transport,
-        # so a hung Entra ID endpoint surfaces as `ServiceRequestError`.
-        # `verify_client` must translate it to the typed Azure error.
+        # Exercise the full pipeline: real `CertificateCredential`,
+        # real `RequestsTransport`, only the underlying `requests.Session`
+        # is stubbed. `azure.identity` decorates `_request_token` with
+        # `wrap_exceptions`, so the transport's `ConnectTimeout` reaches
+        # `verify_client` as `ClientAuthenticationError` with the
+        # `ServiceRequestError` cause preserved via `__cause__`.
         import base64
 
-        from azure.core.exceptions import ServiceRequestError
-
         with (
-            patch(
-                "prowler.providers.azure.azure_provider.CertificateCredential"
-            ) as cert_credential_cls,
+            patch.object(
+                requests.Session,
+                "request",
+                side_effect=requests.ConnectTimeout("hung transport"),
+            ) as session_request,
             pytest.raises(AzureCredentialsUnavailableError),
         ):
-            cert_credential_cls.return_value.get_token.side_effect = (
-                ServiceRequestError("hung transport")
-            )
             AzureProvider.verify_client(
                 self._TENANT_ID,
                 self._CLIENT_ID,
@@ -2104,23 +2104,27 @@ class TestAzureProviderCertificateAuth:
                 ).decode(),
             )
 
-    def test_verify_client_certificate_path_timeout_translates_to_credentials_unavailable(
+        # `retry_total=0` on the credential — Azure Core must not replay
+        # the failed transport request.
+        assert session_request.call_count == 1
+
+    def test_verify_client_certificate_path_read_timeout_translates_to_credentials_unavailable(
         self, tmp_path
     ):
-        from azure.core.exceptions import ServiceRequestError
-
+        # `requests.ReadTimeout` becomes `ServiceResponseError` in Azure
+        # Core (not `ServiceRequestError`), so this test also covers the
+        # `ServiceResponseError` branch of the cause-chain walk.
         certificate_path = tmp_path / "prowler-cert.pem"
         certificate_path.write_bytes(self._leaf_first_bundle())
 
         with (
-            patch(
-                "prowler.providers.azure.azure_provider.CertificateCredential"
-            ) as cert_credential_cls,
+            patch.object(
+                requests.Session,
+                "request",
+                side_effect=requests.ReadTimeout("read timed out"),
+            ) as session_request,
             pytest.raises(AzureCredentialsUnavailableError),
         ):
-            cert_credential_cls.return_value.get_token.side_effect = (
-                ServiceRequestError("hung transport")
-            )
             AzureProvider.verify_client(
                 self._TENANT_ID,
                 self._CLIENT_ID,
@@ -2129,7 +2133,9 @@ class TestAzureProviderCertificateAuth:
                 certificate_path=str(certificate_path),
             )
 
-    def test_test_connection_certificate_content_timeout_returns_credentials_unavailable_error(
+        assert session_request.call_count == 1
+
+    def test_test_connection_certificate_content_transport_timeout_returns_credentials_unavailable_error(
         self,
     ):
         # `raise_on_exception=False` is the API contract for the certificate
@@ -2137,14 +2143,11 @@ class TestAzureProviderCertificateAuth:
         # `Connection(error=AzureCredentialsUnavailableError)`.
         import base64
 
-        from azure.core.exceptions import ServiceRequestError
-
-        with patch(
-            "prowler.providers.azure.azure_provider.CertificateCredential"
-        ) as cert_credential_cls:
-            cert_credential_cls.return_value.get_token.side_effect = (
-                ServiceRequestError("hung transport")
-            )
+        with patch.object(
+            requests.Session,
+            "request",
+            side_effect=requests.ConnectTimeout("hung transport"),
+        ) as session_request:
             connection = AzureProvider.test_connection(
                 tenant_id=self._TENANT_ID,
                 client_id=self._CLIENT_ID,
@@ -2158,21 +2161,19 @@ class TestAzureProviderCertificateAuth:
 
         assert connection.is_connected is False
         assert isinstance(connection.error, AzureCredentialsUnavailableError)
+        assert session_request.call_count == 1
 
-    def test_test_connection_certificate_path_timeout_returns_credentials_unavailable_error(
+    def test_test_connection_certificate_path_transport_timeout_returns_credentials_unavailable_error(
         self, tmp_path
     ):
-        from azure.core.exceptions import ServiceRequestError
-
         certificate_path = tmp_path / "prowler-cert.pem"
         certificate_path.write_bytes(self._leaf_first_bundle())
 
-        with patch(
-            "prowler.providers.azure.azure_provider.CertificateCredential"
-        ) as cert_credential_cls:
-            cert_credential_cls.return_value.get_token.side_effect = (
-                ServiceRequestError("hung transport")
-            )
+        with patch.object(
+            requests.Session,
+            "request",
+            side_effect=requests.ReadTimeout("read timed out"),
+        ) as session_request:
             connection = AzureProvider.test_connection(
                 tenant_id=self._TENANT_ID,
                 client_id=self._CLIENT_ID,
@@ -2184,6 +2185,35 @@ class TestAzureProviderCertificateAuth:
 
         assert connection.is_connected is False
         assert isinstance(connection.error, AzureCredentialsUnavailableError)
+        assert session_request.call_count == 1
+
+    def test_verify_client_certificate_cleanup_failure_preserves_typed_error(self):
+        # A failure in `credential.close()` must not replace the primary
+        # `AzureCredentialsUnavailableError`: the caller has to see the
+        # actionable transport error, not a cleanup traceback.
+        import base64
+
+        with (
+            patch.object(
+                requests.Session,
+                "request",
+                side_effect=requests.ConnectTimeout("hung transport"),
+            ),
+            patch(
+                "azure.identity.CertificateCredential.close",
+                side_effect=RuntimeError("close boom"),
+            ),
+            pytest.raises(AzureCredentialsUnavailableError),
+        ):
+            AzureProvider.verify_client(
+                self._TENANT_ID,
+                self._CLIENT_ID,
+                client_secret=None,
+                region_config=self._region_config(),
+                certificate_content=base64.b64encode(
+                    self._leaf_first_bundle()
+                ).decode(),
+            )
 
     def test_verify_client_without_credential_material_returns(self):
         assert (
@@ -2866,6 +2896,113 @@ class TestValidateCertificateBundleOrdering:
         stored_bundle = base64.b64decode(credentials["certificate_content"])
         assert stored_bundle.startswith(leaf_cert_pem)
         assert other_cert_pem not in stored_bundle
+
+
+class TestAzureProviderSignatureCompatibility:
+    """Every public entry point the certificate work touched has to preserve
+    the previous positional layout — inserting the cert kwargs anywhere
+    ahead of an existing positional parameter silently rebinds callers.
+    Freeze that contract with `inspect.signature(...).bind(...)`."""
+
+    _TENANT_ID = "12345678-1234-1234-1234-123456789012"
+    _CLIENT_ID = "87654321-4321-4321-4321-210987654321"
+
+    def _assert_certificate_kwargs_are_keyword_only(self, callable_):
+        import inspect
+
+        parameters = inspect.signature(callable_).parameters
+        for name in ("certificate_auth", "certificate_content", "certificate_path"):
+            if name in parameters:
+                assert (
+                    parameters[name].kind is inspect.Parameter.KEYWORD_ONLY
+                ), f"{callable_.__qualname__}: {name} must be keyword-only"
+
+    def test_azure_provider_init_positional_call_still_binds_resource_groups(self):
+        import inspect
+
+        # Master signature: `..., client_id, client_secret, resource_groups`.
+        # A caller passing everything positionally must still land
+        # `["rg-a"]` on `resource_groups`, not on any cert flag.
+        signature = inspect.signature(AzureProvider.__init__)
+        bound = signature.bind(
+            None,  # self
+            False,  # az_cli_auth
+            False,  # sp_env_auth
+            False,  # browser_auth
+            False,  # managed_identity_auth
+            self._TENANT_ID,  # tenant_id
+            "AzureCloud",  # region
+            [],  # subscription_ids
+            None,  # config_path
+            None,  # config_content
+            {},  # fixer_config
+            None,  # mutelist_path
+            None,  # mutelist_content
+            self._CLIENT_ID,  # client_id
+            "some-secret",  # client_secret
+            ["rg-a"],  # resource_groups
+        )
+
+        assert bound.arguments["resource_groups"] == ["rg-a"]
+        assert "certificate_auth" not in bound.arguments
+        assert "certificate_content" not in bound.arguments
+        assert "certificate_path" not in bound.arguments
+
+        self._assert_certificate_kwargs_are_keyword_only(AzureProvider.__init__)
+
+    def test_test_connection_positional_call_still_binds_provider_id(self):
+        import inspect
+
+        # Master signature: `..., client_id, client_secret, provider_id`.
+        signature = inspect.signature(AzureProvider.test_connection)
+        bound = signature.bind(
+            False,  # az_cli_auth
+            False,  # sp_env_auth
+            False,  # browser_auth
+            False,  # managed_identity_auth
+            self._TENANT_ID,  # tenant_id
+            "AzureCloud",  # region
+            True,  # raise_on_exception
+            self._CLIENT_ID,  # client_id
+            "some-secret",  # client_secret
+            "sub-id",  # provider_id
+        )
+
+        assert bound.arguments["provider_id"] == "sub-id"
+        assert "certificate_auth" not in bound.arguments
+        assert "certificate_content" not in bound.arguments
+        assert "certificate_path" not in bound.arguments
+
+        self._assert_certificate_kwargs_are_keyword_only(AzureProvider.test_connection)
+
+    def test_validate_static_credentials_positional_call_still_binds_region_config(
+        self,
+    ):
+        import inspect
+
+        # Master signature: `tenant_id, client_id, client_secret, region_config`.
+        signature = inspect.signature(AzureProvider.validate_static_credentials)
+        region_config = AzureProvider.setup_region_config("AzureCloud")
+        bound = signature.bind(
+            self._TENANT_ID,  # tenant_id
+            self._CLIENT_ID,  # client_id
+            "some-secret",  # client_secret
+            region_config,  # region_config
+        )
+
+        assert bound.arguments["region_config"] is region_config
+        assert "certificate_content" not in bound.arguments
+        assert "certificate_path" not in bound.arguments
+
+        # Only the certificate content/path are keyword-only here;
+        # `certificate_auth` is not part of this signature.
+        parameters = inspect.signature(
+            AzureProvider.validate_static_credentials
+        ).parameters
+        for name in ("certificate_content", "certificate_path"):
+            assert (
+                parameters[name].kind is inspect.Parameter.KEYWORD_ONLY
+            ), f"validate_static_credentials: {name} must be keyword-only"
 
 
 def serialization_no_encryption():
