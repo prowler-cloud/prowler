@@ -1,0 +1,1 @@
+`prowler_run_attack_paths_query` now reports a query that matched nothing as the answer it is, saying the query ran and found no attack path, instead of raising the 404 Prowler carries the empty result in as a failure with no reason that invited a retry of a correct call

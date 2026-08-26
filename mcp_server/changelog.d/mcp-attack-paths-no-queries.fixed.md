@@ -1,0 +1,1 @@
+`prowler_list_attack_paths_queries` now answers a 404 by saying the ID is not an Attack Paths scan, which are a separate resource from regular scans and exist only for AWS providers, instead of relaying a bare `Not found.` that invited a re-check of an ID the caller could not fix

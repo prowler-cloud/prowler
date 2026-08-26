@@ -7,8 +7,10 @@ through cloud infrastructure relationships.
 
 from typing import Any, Literal
 
+from fastmcp.exceptions import ToolError
 from pydantic import Field
 
+from prowler_mcp_server.lib.errors import ProwlerAPIError
 from prowler_mcp_server.lib.types import NonBlankStr
 from prowler_mcp_server.prowler_app.models.attack_paths import (
     AttackPathCartographySchema,
@@ -110,13 +112,14 @@ class AttackPathsTools(BaseTool):
     async def list_attack_paths_queries(
         self,
         scan_id: NonBlankStr = Field(
-            description="UUID of a COMPLETED attack paths scan. Use `prowler_list_attack_paths_scans` with state=['completed'] to find scan IDs"
+            description="UUID of a COMPLETED attack paths scan, as returned by `prowler_list_attack_paths_scans` with state=['completed']. This is NOT a regular scan ID: an ID from `prowler_search_scans` or `prowler_get_scan` names a different resource and is rejected here"
         ),
     ) -> list[dict[str, Any]]:
         """Discover available Attack Paths queries for a completed scan.
 
         IMPORTANT: The scan must be in 'completed' state to list queries.
-        Queries are provider-specific
+        Attack Paths covers AWS providers only, so only an AWS provider has an
+        Attack Paths scan to name here, and every query is an AWS one.
 
         Each query includes:
         - id: Query identifier to use with run_attack_paths_query
@@ -134,9 +137,24 @@ class AttackPathsTools(BaseTool):
         2. Use this tool to discover available queries
         3. Use prowler_run_attack_paths_query with query_id and any required parameters
         """
-        api_response = await self.api_client.get(
-            f"/attack-paths-scans/{scan_id}/queries"
-        )
+        try:
+            api_response = await self.api_client.get(
+                f"/attack-paths-scans/{scan_id}/queries"
+            )
+        except ProwlerAPIError as e:
+            # A 404 here is Prowler failing to resolve `scan_id` to an Attack
+            # Paths scan, and its own reason for it -- a bare "Not found." --
+            # does not say what kind of ID it was looking for. The mistake it
+            # stands for is a regular scan ID: an Attack Paths scan is a separate
+            # resource with IDs of its own, and Prowler only creates one for an
+            # AWS provider, so a scan of any other provider has none to pass.
+            #
+            # The endpoint answers 404 for a second thing -- a provider type with
+            # no query catalog -- but that one cannot happen: a scan only exists
+            # where Attack Paths runs, which is AWS, and AWS has a catalog.
+            if e.status_code == 404:
+                raise self._unknown_scan_error(scan_id)
+            raise
 
         return [
             AttackPathQuery.from_api_response(query).model_dump()
@@ -203,13 +221,41 @@ class AttackPathsTools(BaseTool):
         if parameters:
             request_data["data"]["attributes"]["parameters"] = parameters
 
-        api_response = await self.api_client.post(
-            f"/attack-paths-scans/{scan_id}/queries/run",
-            json_data=request_data,
-        )
+        try:
+            api_response = await self.api_client.post(
+                f"/attack-paths-scans/{scan_id}/queries/run",
+                json_data=request_data,
+            )
+        except ProwlerAPIError as e:
+            # Prowler answers a query that matched nothing with 404 and the empty
+            # result as the body. That is an answer -- this account has no such
+            # attack path, which is the good outcome -- so it is returned rather
+            # than raised: reporting it as a failure invites a retry of a call
+            # whose arguments were right, and hides a clean result.
+            if e.status_code == 404 and isinstance(e.payload, dict):
+                if "data" in e.payload:
+                    api_response = e.payload
+                else:
+                    # No result body, so `scan_id` did not resolve to an Attack
+                    # Paths scan. An unknown query_id is a 400, not this.
+                    raise self._unknown_scan_error(scan_id)
+            else:
+                raise
 
         # Parse the response
         query_result = AttackPathQueryResult.from_api_response(api_response)
+
+        if not query_result.nodes:
+            query_result = query_result.model_copy(
+                update={
+                    "message": (
+                        f"The query '{query_id}' ran against scan {scan_id} and matched "
+                        "nothing, so this provider has no attack path of that shape. "
+                        "The scan and the query ID were both valid; running it again "
+                        "will return the same thing."
+                    )
+                }
+            )
 
         return query_result.model_dump()
 
@@ -243,12 +289,53 @@ class AttackPathsTools(BaseTool):
         3. Use the schema to craft custom openCypher queries
         4. Execute queries with prowler_run_attack_paths_query
         """
-        api_response = await self.api_client.get(
-            f"/attack-paths-scans/{scan_id}/schema"
-        )
+        try:
+            api_response = await self.api_client.get(
+                f"/attack-paths-scans/{scan_id}/schema"
+            )
+        except ProwlerAPIError as e:
+            # Two 404s again, told apart by whether Prowler wrote a JSON:API
+            # error. Absent means the scan resolved and its graph simply records
+            # no Cartography module, so the ID is not the thing to change.
+            if e.status_code == 404 and e.detail is None:
+                raise ToolError(
+                    f"Scan {scan_id} has no Cartography schema recorded, so there is "
+                    "nothing to write custom queries against. Its graph was built "
+                    "without the module metadata this reads. Use "
+                    "prowler_list_attack_paths_queries for the ready-made queries of "
+                    "this scan, which do not need the schema."
+                )
+            if e.status_code == 404:
+                raise self._unknown_scan_error(scan_id)
+            raise
 
         schema = AttackPathCartographySchema.from_api_response(api_response)
 
         schema_content = await self.api_client.fetch_external_url(schema.raw_schema_url)
 
         return schema.model_copy(update={"schema_content": schema_content}).model_dump()
+
+    # Private helper methods
+
+    @staticmethod
+    def _unknown_scan_error(scan_id: str) -> ToolError:
+        """Describe a scan ID Prowler could not resolve to an Attack Paths scan.
+
+        Prowler's own reason for it -- a bare "Not found." -- names neither the
+        resource it looked in nor the tool that returns a usable ID, and the
+        mistake it stands for is a regular scan ID: an Attack Paths scan is a
+        separate resource, and Prowler only creates one for an AWS provider.
+
+        Returns:
+            The ``ToolError`` for the caller to raise. Built without a ``from``
+            clause on purpose: the sentence is the final word, not a wrapper
+            around the API's.
+        """
+        return ToolError(
+            f"Prowler has no Attack Paths scan with ID {scan_id} that this credential "
+            "can see. Attack Paths scans are a different resource from regular scans, "
+            "so an ID from prowler_search_scans or prowler_get_scan never resolves "
+            "here, and Attack Paths only covers AWS providers, so a scan of any other "
+            "provider has no Attack Paths scan to name. Use "
+            "prowler_list_attack_paths_scans to get an ID these tools take."
+        )
