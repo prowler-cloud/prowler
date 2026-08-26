@@ -1,0 +1,196 @@
+name: 'SDK: Package Checks'
+
+# Rehearses the PyPI release on every packaging change and once a week, from the
+# consumer's side. Two incidents this guards against:
+#
+# - 5.38.0 shipped an unsatisfiable Requires-Dist (cryptography==50.0.0 while
+#   alibabacloud-tea-openapi and pyopenssl cap it below 49). A [tool.uv] override hid
+#   the conflict inside the repo; pip could not install the wheel and silently
+#   resolved `pip install prowler` to 5.37.1 for a week.
+# - 5.39.0 never published: an unpinned build backend started emitting core metadata
+#   2.5 and the twine bundled in the publish action rejected it.
+#
+# Both were only detectable at release time because nothing built and installed the
+# artifact earlier. The weekly run also catches releases yanked from PyPI after we
+# pinned them (zstd 1.5.7.3, "buggy - not thread safe", sat in uv.lock for months).
+
+on:
+  push:
+    branches:
+      - 'master'
+      - 'v5.*'
+  pull_request:
+    branches:
+      - 'master'
+      - 'v5.*'
+  schedule:
+    # Monday 06:00 UTC. Yanks and upstream releases happen without a commit here.
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+env:
+  # Must equal the twine bundled in the pypa/gh-action-pypi-publish pin used by
+  # sdk-pypi-release.yml (requirements/runtime.txt in that repo at the pinned tag).
+  # A metadata check that passes here must pass there.
+  TWINE_VERSION: '7.0.0'
+
+jobs:
+  changes:
+    if: github.repository == 'prowler-cloud/prowler'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      # Scheduled and manual runs always execute; pushes and PRs only when a packaging
+      # input changed. Jobs skipped this way still report success to branch protection.
+      run: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || steps.filter.outputs.any_changed == 'true' }}
+
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            github.com:443
+            api.github.com:443
+
+      - name: Checkout repository
+        if: github.event_name == 'push' || github.event_name == 'pull_request'
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          # zizmor: ignore[artipacked]
+          persist-credentials: true # Required by tj-actions/changed-files to fetch PR branch
+
+      - name: Detect packaging changes
+        if: github.event_name == 'push' || github.event_name == 'pull_request'
+        id: filter
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
+        with:
+          files: |
+            pyproject.toml
+            uv.lock
+            README.md
+            util/replicate_pypi_package.py
+            util/check_yanked_pins.py
+            api/pyproject.toml
+            api/uv.lock
+            mcp_server/pyproject.toml
+            mcp_server/uv.lock
+            .github/workflows/sdk-package-checks.yml
+            .github/workflows/sdk-pypi-release.yml
+            .github/actions/setup-python-uv/**
+
+  install-from-wheel:
+    needs: changes
+    if: needs.changes.outputs.run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version:
+          - '3.10'
+          - '3.11'
+          - '3.12'
+          - '3.13'
+        package:
+          - 'prowler'
+        include:
+          # prowler-cloud is the same tree renamed by util/replicate_pypi_package.py;
+          # one Python is enough to prove the rename and its build still work.
+          - python-version: '3.12'
+            package: 'prowler-cloud'
+
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            github.com:443
+            api.github.com:443
+            release-assets.githubusercontent.com:443
+            pypi.org:443
+            files.pythonhosted.org:443
+
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Setup Python with uv
+        uses: ./.github/actions/setup-python-uv
+        with:
+          python-version: ${{ matrix.python-version }}
+          install-dependencies: 'false'
+
+      - name: Rename package to prowler-cloud
+        if: matrix.package == 'prowler-cloud'
+        run: |
+          pip install --no-cache-dir toml
+          python util/replicate_pypi_package.py
+
+      - name: Build sdist and wheel
+        run: uv build
+
+      - name: Check metadata with the release workflow's twine
+        run: uvx --from "twine==${TWINE_VERSION}" twine check --strict dist/*
+
+      - name: Install the wheel with pip into a clean virtualenv
+        # Plain pip, --isolated, from outside the repo: consumers never see [tool.uv]
+        # override-dependencies or constraint-dependencies, so neither does this step.
+        run: |
+          python -m venv "${RUNNER_TEMP}/consumer"
+          "${RUNNER_TEMP}/consumer/bin/python" -m pip install --quiet --upgrade pip
+          cd "${RUNNER_TEMP}"
+          "${RUNNER_TEMP}/consumer/bin/python" -m pip install --isolated --no-cache-dir "${GITHUB_WORKSPACE}"/dist/*.whl
+
+      - name: Smoke test the installed CLI
+        run: |
+          cd "${RUNNER_TEMP}"
+          "${RUNNER_TEMP}/consumer/bin/prowler" --version
+          # Loads every AWS check module from the installed wheel: catches files missing
+          # from the package. grep fails the step if the summary line never appears.
+          "${RUNNER_TEMP}/consumer/bin/prowler" aws --list-checks | grep 'available checks'
+
+  pinned-releases-not-yanked:
+    needs: changes
+    if: needs.changes.outputs.run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            github.com:443
+            api.github.com:443
+            release-assets.githubusercontent.com:443
+            pypi.org:443
+            files.pythonhosted.org:443
+
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+        with:
+          python-version: '3.12'
+
+      - name: Check every pinned and locked release against PyPI
+        run: python util/check_yanked_pins.py . api mcp_server

@@ -19,17 +19,18 @@ import { buildFindingResourceContext } from "@/lib/lighthouse/context/contributi
 import { isCloud } from "@/lib/shared/env";
 import { getOptionalText } from "@/lib/utils";
 import type {
-  FindingTriageLoadedNote,
+  FindingTriageContext,
+  FindingTriageDetailLoadHandler,
+  FindingTriageNoteLoadHandler,
   FindingTriageSummary,
+  FindingTriageUpdateHandler,
 } from "@/types/findings-triage";
 import { JIRA_DISPATCH_TARGET } from "@/types/integrations";
 import type { LighthouseSkillDefinition } from "@/types/lighthouse-skills";
 import type { ProviderType } from "@/types/providers";
 
 import { canMuteFindingGroup } from "./finding-group-selection";
-import type { FindingTriageContext } from "./finding-note-modal";
 import { FindingNoteActionItem } from "./finding-triage-cells";
-import type { FindingTriageUpdateHandler } from "./finding-triage-status-control";
 import { FindingsSelectionContext } from "./findings-selection-context";
 import {
   LighthouseSkillsSubmenu,
@@ -107,9 +108,8 @@ interface DataTableRowActionsProps<T extends FindingRowData> {
   onMuteComplete?: (findingIds: string[]) => void;
   findingContext?: FindingTriageContext;
   onTriageUpdateAction?: FindingTriageUpdateHandler;
-  onTriageNoteLoadAction?: (
-    triage: FindingTriageSummary,
-  ) => Promise<FindingTriageLoadedNote>;
+  onTriageNoteLoadAction?: FindingTriageNoteLoadHandler;
+  onTriageDetailLoadAction?: FindingTriageDetailLoadHandler;
 }
 
 export function DataTableRowActions<T extends FindingRowData>({
@@ -118,6 +118,7 @@ export function DataTableRowActions<T extends FindingRowData>({
   findingContext,
   onTriageUpdateAction,
   onTriageNoteLoadAction,
+  onTriageDetailLoadAction,
 }: DataTableRowActionsProps<T>) {
   const router = useRouter();
   const finding = row.original;
@@ -281,6 +282,7 @@ export function DataTableRowActions<T extends FindingRowData>({
               findingContext={resolvedFindingContext}
               onTriageUpdateAction={onTriageUpdateAction}
               onTriageNoteLoadAction={onTriageNoteLoadAction}
+              onTriageDetailLoadAction={onTriageDetailLoadAction}
             />
           )}
           <ActionDropdownItem

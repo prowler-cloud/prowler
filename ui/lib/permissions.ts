@@ -67,6 +67,11 @@ export const getRolePermissions = (attributes: RolePermissionAttributes) => {
             label: "Manage Alerts",
             enabled: attributes.manage_alerts ?? false,
           },
+          {
+            key: "manage_lighthouse_ai_configuration",
+            label: "Manage Lighthouse AI",
+            enabled: attributes.manage_lighthouse_ai_configuration ?? false,
+          },
         ]
       : []),
     {

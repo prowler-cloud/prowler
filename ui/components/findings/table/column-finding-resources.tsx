@@ -24,8 +24,10 @@ import { buildFindingResourceContext } from "@/lib/lighthouse/context/contributi
 import { isCloud } from "@/lib/shared/env";
 import { FindingResourceRow } from "@/types";
 import type {
-  FindingTriageLoadedNote,
-  FindingTriageSummary,
+  FindingTriageContext,
+  FindingTriageDetailLoadHandler,
+  FindingTriageNoteLoadHandler,
+  FindingTriageUpdateHandler,
 } from "@/types/findings-triage";
 import { JIRA_DISPATCH_TARGET } from "@/types/integrations";
 
@@ -34,7 +36,6 @@ import {
   FindingNoteActionItem,
   FindingTriageStatusCell,
 } from "./finding-triage-cells";
-import type { FindingTriageUpdateHandler } from "./finding-triage-status-control";
 import { FindingsSelectionContext } from "./findings-selection-context";
 import {
   LighthouseSkillsRowButton,
@@ -46,6 +47,16 @@ import {
   type DeltaType,
   NotificationIndicator,
 } from "./notification-indicator";
+
+const buildFindingResourceTriageContext = (
+  resource: FindingResourceRow,
+  findingTitle?: string,
+): FindingTriageContext => ({
+  title: findingTitle || resource.checkId,
+  resource: resource.resourceName,
+  provider: resource.providerAlias,
+  providerType: resource.providerType,
+});
 
 // One finding-context item per resource row, shared by the leading Skills
 // pill and the ⋮ submenu so both launch with identical context.
@@ -66,14 +77,14 @@ const ResourceRowActions = ({
   onSkillLaunchOpenDrawer,
   onTriageUpdateAction,
   onTriageNoteLoadAction,
+  onTriageDetailLoadAction,
 }: {
   row: Row<FindingResourceRow>;
   findingTitle?: string;
   onSkillLaunchOpenDrawer?: (rowIndex: number) => void;
   onTriageUpdateAction?: FindingTriageUpdateHandler;
-  onTriageNoteLoadAction?: (
-    triage: FindingTriageSummary,
-  ) => Promise<FindingTriageLoadedNote>;
+  onTriageNoteLoadAction?: FindingTriageNoteLoadHandler;
+  onTriageDetailLoadAction?: FindingTriageDetailLoadHandler;
 }) => {
   const resource = row.original;
   const canMute = canMuteFindingResource(resource);
@@ -160,14 +171,13 @@ const ResourceRowActions = ({
         <ActionDropdown ariaLabel="Resource actions">
           <FindingNoteActionItem
             triage={resource.triage}
-            findingContext={{
-              title: findingTitle || resource.checkId,
-              resource: resource.resourceName,
-              provider: resource.providerAlias,
-              providerType: resource.providerType,
-            }}
+            findingContext={buildFindingResourceTriageContext(
+              resource,
+              findingTitle,
+            )}
             onTriageUpdateAction={onTriageUpdateAction}
             onTriageNoteLoadAction={onTriageNoteLoadAction}
+            onTriageDetailLoadAction={onTriageDetailLoadAction}
           />
           <ActionDropdownItem
             icon={
@@ -215,9 +225,8 @@ interface GetColumnFindingResourcesOptions {
   // the chat tab, so the run and the finding share the side panel.
   onSkillLaunchOpenDrawer?: (rowIndex: number) => void;
   onTriageUpdateAction?: FindingTriageUpdateHandler;
-  onTriageNoteLoadAction?: (
-    triage: FindingTriageSummary,
-  ) => Promise<FindingTriageLoadedNote>;
+  onTriageNoteLoadAction?: FindingTriageNoteLoadHandler;
+  onTriageDetailLoadAction?: FindingTriageDetailLoadHandler;
 }
 
 export function getColumnFindingResources({
@@ -227,6 +236,7 @@ export function getColumnFindingResources({
   onSkillLaunchOpenDrawer,
   onTriageUpdateAction,
   onTriageNoteLoadAction,
+  onTriageDetailLoadAction,
 }: GetColumnFindingResourcesOptions): ColumnDef<FindingResourceRow>[] {
   const selectedCount = Object.values(rowSelection).filter(Boolean).length;
   const isAllSelected =
@@ -406,7 +416,12 @@ export function getColumnFindingResources({
         <InfoField label="Triage" variant="compact">
           <FindingTriageStatusCell
             triage={row.original.triage}
+            findingContext={buildFindingResourceTriageContext(
+              row.original,
+              findingTitle,
+            )}
             onTriageUpdateAction={onTriageUpdateAction}
+            onTriageDetailLoadAction={onTriageDetailLoadAction}
           />
         </InfoField>
       ),
@@ -424,6 +439,7 @@ export function getColumnFindingResources({
           onSkillLaunchOpenDrawer={onSkillLaunchOpenDrawer}
           onTriageUpdateAction={onTriageUpdateAction}
           onTriageNoteLoadAction={onTriageNoteLoadAction}
+          onTriageDetailLoadAction={onTriageDetailLoadAction}
         />
       ),
       enableSorting: false,

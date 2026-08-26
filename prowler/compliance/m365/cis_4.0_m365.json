@@ -526,7 +526,9 @@
     {
       "Id": "2.1.10",
       "Description": "DMARC, or Domain-based Message Authentication, Reporting, and Conformance, assists recipient mail systems in determining the appropriate action to take when messages from a domain fail to meet SPF or DKIM authentication criteria.",
-      "Checks": [],
+      "Checks": [
+        "defender_domain_dmarc_records_published"
+      ],
       "Attributes": [
         {
           "Section": "2 Microsoft 365 Defender",

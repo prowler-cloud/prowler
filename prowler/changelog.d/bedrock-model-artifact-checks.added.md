@@ -1,0 +1,1 @@
+`bedrock_guardrail_contextual_grounding_filter_enabled`, `bedrock_custom_model_encrypted_with_cmk`, `bedrock_knowledge_base_encrypted_with_cmk` and `bedrock_agent_role_not_shared_across_agents` are four new AWS Bedrock checks covering guardrail contextual grounding, custom model encryption, knowledge-base data-source encryption, and non-shared agent execution roles.

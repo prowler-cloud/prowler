@@ -126,12 +126,12 @@ Every AWS provider scan will enqueue an Attack Paths ingestion job automatically
 
 | Provider | Checks | Services | [Compliance Frameworks](https://docs.prowler.com/user-guide/compliance/tutorials/compliance) | [Categories](https://docs.prowler.com/user-guide/cli/tutorials/misc#categories) | Support | Interface |
 |---|---|---|---|---|---|---|
-| AWS | 621 | 86 | 47 | 19 | Official | UI, API, CLI |
+| AWS | 639 | 86 | 47 | 19 | Official | UI, API, CLI |
 | Azure | 191 | 22 | 21 | 16 | Official | UI, API, CLI |
 | GCP | 109 | 20 | 19 | 12 | Official | UI, API, CLI |
 | Kubernetes | 92 | 7 | 8 | 11 | Official | UI, API, CLI |
 | GitHub | 24 | 3 | 2 | 5 | Official | UI, API, CLI |
-| M365 | 111 | 10 | 6 | 10 | Official | UI, API, CLI |
+| M365 | 143 | 10 | 6 | 10 | Official | UI, API, CLI |
 | OCI | 52 | 14 | 5 | 10 | Official | UI, API, CLI |
 | Alibaba Cloud | 63 | 9 | 6 | 9 | Official | UI, API, CLI |
 | Cloudflare | 29 | 3 | 2 | 5 | Official | UI, API, CLI |
@@ -147,7 +147,7 @@ Every AWS provider scan will enqueue an Attack Paths ingestion job automatically
 | Huawei Cloud [Contact us](https://prowler.com/contact) | 25 | 10 | 1 | 6 | Unofficial | CLI |
 | E2E Networks [Contact us](https://prowler.com/contact) | 27 | 6 | 0 | 2 | Unofficial | CLI |
 | Scaleway [Contact us](https://prowler.com/contact) | 1 | 1 | 1 | 1 | Unofficial | CLI |
-| StackIT [Contact us](https://prowler.com/contact) | 7 | 2 | 1 | 3 | Unofficial | CLI |
+| StackIT [Contact us](https://prowler.com/contact) | 8 | 2 | 1 | 3 | Unofficial | CLI |
 | NHN | 6 | 2 | 2 | 0 | Unofficial | CLI |
 
 > [!Note]
