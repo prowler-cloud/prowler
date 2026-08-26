@@ -1,0 +1,22 @@
+# Optional: copy into a repository that wants local CI.
+name: Prowler Audit Agent (Scheduled)
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+  security-events: write
+  actions: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: prowler-cloud/prowler/.github/actions/prowler-audit@master
+        with:
+          mode: scheduled

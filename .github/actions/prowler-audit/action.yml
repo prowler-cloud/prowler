@@ -1,0 +1,66 @@
+name: "Prowler Audit Agent"
+description: "Optional in-repo SOC 2 / ISO 27001 audit (zero-touch central orchestrator preferred)"
+branding:
+  icon: shield
+  color: green
+
+inputs:
+  mode:
+    description: "pr or scheduled"
+    required: false
+    default: "pr"
+  config-path:
+    description: "Path to prowler-audit config in the calling repo"
+    required: false
+    default: ".github/prowler-audit.yml"
+  image-tag:
+    description: "prowlercloud/prowler image tag"
+    required: false
+    default: "stable"
+  fail-on-findings:
+    description: "Fail the job when findings meet severity threshold"
+    required: false
+    default: "true"
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+
+    - name: Run Audit Agent against this repository
+      shell: bash
+      env:
+        AUDIT_AGENT_TOKEN: ${{ github.token }}
+        MODE: ${{ inputs.mode }}
+        IMAGE_TAG: ${{ inputs.image-tag }}
+        FAIL_ON: ${{ inputs.fail-on-findings }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+      run: |
+        set -euo pipefail
+        if [ -d "${GITHUB_WORKSPACE}/contrib/audit-agent/audit_agent" ]; then
+          export PYTHONPATH="${GITHUB_WORKSPACE}/contrib/audit-agent:${PYTHONPATH:-}"
+        else
+          echo "::error::audit_agent package not found under contrib/audit-agent (checkout prowler or vendor the package)"
+          exit 1
+        fi
+
+        args=(--repo "${GITHUB_REPOSITORY}" --image-tag "${IMAGE_TAG}" --json-summary)
+        if [ "${MODE}" = "pr" ] && [ "${GITHUB_EVENT_NAME}" = "pull_request" ] && [ -n "${PR_NUMBER}" ]; then
+          args+=(--pr "${PR_NUMBER}")
+        elif [ "${MODE}" = "scheduled" ]; then
+          args+=(--sync-issues)
+        else
+          args+=(--dry-run)
+        fi
+
+        set +e
+        python -m audit_agent "${args[@]}"
+        code=$?
+        set -e
+        if [ "${FAIL_ON}" = "true" ] && [ "$code" -ne 0 ]; then
+          exit "$code"
+        fi
+        exit 0
