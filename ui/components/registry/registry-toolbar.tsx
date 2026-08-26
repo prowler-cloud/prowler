@@ -1,3 +1,4 @@
+import { ProviderTypeIcon } from "@/components/icons/providers-badge/provider-type-icon";
 import { Button } from "@/components/shadcn/button/button";
 import { SearchInput } from "@/components/shadcn/search-input/search-input";
 import {
@@ -91,7 +92,10 @@ export function RegistryToolbar({
             <SelectItem value="all">All providers</SelectItem>
             {providers.map((provider) => (
               <SelectItem key={provider} value={provider}>
-                {getProviderDisplayName(provider)}
+                <span aria-hidden="true">
+                  <ProviderTypeIcon size={24} type={provider} />
+                </span>
+                <span>{getProviderDisplayName(provider)}</span>
               </SelectItem>
             ))}
           </SelectContent>

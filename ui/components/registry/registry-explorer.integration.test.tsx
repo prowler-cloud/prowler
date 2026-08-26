@@ -759,7 +759,14 @@ describe("RegistryExplorer", () => {
 
       // When
       await screen.getByLabelText("Filter by provider").click();
-      await screen.getByRole("option", { name: /azure/i }).click();
+
+      // Then: options stay selectable by their plain accessible names
+      await expect
+        .element(screen.getByRole("option", { name: "All providers" }))
+        .toBeVisible();
+
+      // When
+      await screen.getByRole("option", { name: "Azure", exact: true }).click();
 
       // Then
       await expect
@@ -884,6 +891,57 @@ describe("RegistryExplorer", () => {
 
       // Then
       await expect.element(card).toHaveFocus();
+    });
+
+    it("lists Owners only when the artifact supplies at least one owner", async () => {
+      // Given
+      const screen = await render(
+        <RegistryExplorer initialState={readyState} />,
+      );
+
+      // When: an artifact with owners is opened
+      await screen
+        .getByRole("button", { name: "Cloud guard", exact: true })
+        .click();
+
+      // Then
+      await expect.poll(() => document.body.textContent).toContain("Owners");
+      expect(document.body.textContent).toContain(
+        "Registry team (organization)",
+      );
+
+      // When: it is replaced by an artifact without owners
+      await userEvent.keyboard("{Escape}");
+      await screen
+        .getByRole("button", { name: "Later guard", exact: true })
+        .click();
+
+      // Then
+      await expect
+        .poll(() => document.body.textContent)
+        .toContain("Latest version");
+      expect(document.body.textContent).not.toContain("Owners");
+      expect(document.body.textContent).not.toContain("Not supplied");
+    });
+
+    it("keeps card accessible names intact without monogram initials", async () => {
+      // Given / When
+      const screen = await render(
+        <RegistryExplorer initialState={readyState} />,
+      );
+
+      // Then: cards keep their name-based locators
+      await expect
+        .element(
+          screen.getByRole("button", { name: "Later guard", exact: true }),
+        )
+        .toBeVisible();
+      await expect
+        .element(screen.getByRole("button", { name: "Add Cloud guard" }))
+        .toBeVisible();
+      // The logo slot no longer leaks provider-derived initials ("az" for the
+      // azure artifact) into the page text.
+      expect(document.body.textContent).not.toContain("az");
     });
   });
 

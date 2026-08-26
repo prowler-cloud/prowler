@@ -3,6 +3,7 @@
 import { BadgeCheck, Check, Download, ShieldCheck } from "lucide-react";
 import { useRef } from "react";
 
+import { ProviderTypeIcon } from "@/components/icons/providers-badge/provider-type-icon";
 import { Badge } from "@/components/shadcn/badge/badge";
 import { Button } from "@/components/shadcn/button/button";
 import { Card } from "@/components/shadcn/card/card";
@@ -33,7 +34,9 @@ export function RegistryArtifactCard({
 }: RegistryArtifactCardProps) {
   const nameButtonRef = useRef<HTMLButtonElement>(null);
   const displayName = artifact.name ?? artifact.normalizedName;
-  const monogramSource = artifact.providers[0] ?? displayName;
+  // Unknown or absent providers fall back to the generic provider badge
+  // rendered by ProviderTypeIcon itself.
+  const primaryProvider = artifact.providers[0] ?? "";
   const subtitle = [
     artifact.providers.map(getProviderDisplayName).join(", "),
     capabilitySummary(artifact),
@@ -53,9 +56,9 @@ export function RegistryArtifactCard({
       <div className="flex items-start gap-3">
         <span
           aria-hidden
-          className="bg-bg-neutral-tertiary text-text-neutral-secondary flex size-10 shrink-0 items-center justify-center rounded-lg text-sm font-semibold uppercase"
+          className="bg-bg-neutral-tertiary flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-lg"
         >
-          {monogramSource.slice(0, 2)}
+          <ProviderTypeIcon size={26} type={primaryProvider} />
         </span>
         <div className="min-w-0">
           <button
@@ -148,9 +151,11 @@ export function RegistryTenantArtifactCard({
       <div className="flex items-start gap-3">
         <span
           aria-hidden
-          className="bg-bg-neutral-tertiary text-text-neutral-secondary flex size-10 shrink-0 items-center justify-center rounded-lg text-sm font-semibold uppercase"
+          className="bg-bg-neutral-tertiary flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-lg"
         >
-          {normalizedName.slice(0, 2)}
+          {/* Tenant artifacts carry no provider metadata, so the icon renders
+              its own generic provider fallback. */}
+          <ProviderTypeIcon size={26} type="" />
         </span>
         <div className="min-w-0">
           <button

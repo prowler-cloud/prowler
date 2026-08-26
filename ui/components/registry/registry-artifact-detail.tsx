@@ -72,14 +72,16 @@ export function RegistryArtifactDetail({
         ["Latest version", artifact.latestVersion ?? "Not supplied"],
         ["Downloads", `${artifact.totalDownloads}`],
         ["Versions", `${artifact.versionCount}`],
-        [
-          "Owners",
-          artifact.owners.length
-            ? artifact.owners
-                .map(({ name: ownerName, type }) => `${ownerName} (${type})`)
-                .join(", ")
-            : "Not supplied",
-        ],
+        ...(artifact.owners.length
+          ? [
+              [
+                "Owners",
+                artifact.owners
+                  .map(({ name: ownerName, type }) => `${ownerName} (${type})`)
+                  .join(", "),
+              ] as [string, string],
+            ]
+          : []),
       ]
     : [];
 
