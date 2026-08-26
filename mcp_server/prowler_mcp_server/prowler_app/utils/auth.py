@@ -6,7 +6,7 @@ from datetime import datetime
 from fastmcp.server.dependencies import get_http_headers
 
 from prowler_mcp_server import __version__
-from prowler_mcp_server.lib.errors import InvalidArgument
+from prowler_mcp_server.lib.errors import CredentialError
 from prowler_mcp_server.lib.logger import logger
 
 
@@ -32,12 +32,10 @@ class ProwlerAppAuth:
             )
 
             if not self.api_key:
-                raise InvalidArgument(
-                    "PROWLER_API_KEY environment variable is required"
-                )
+                raise ValueError("PROWLER_API_KEY environment variable is required")
 
             if not self.api_key.startswith("pk_"):
-                raise InvalidArgument("Prowler API key format is incorrect")
+                raise ValueError("Prowler API key format is incorrect")
 
     def _parse_jwt(self, token: str) -> dict | None:
         """Parse JWT token and return payload
@@ -79,14 +77,14 @@ class ProwlerAppAuth:
             authorization_header = headers.get("authorization", None)
 
             if not authorization_header:
-                raise InvalidArgument("No authorization header provided")
+                raise CredentialError("No Authorization header was sent")
 
             # Extract token from Bearer header
             if authorization_header.startswith("Bearer "):
                 token = authorization_header.replace("Bearer ", "")
             else:
-                raise InvalidArgument(
-                    "Invalid authorization header format. Expected 'Bearer <token>'"
+                raise CredentialError(
+                    "The Authorization header is not in 'Bearer <token>' form"
                 )
 
             # Check if it's an API key or JWT token
@@ -97,17 +95,21 @@ class ProwlerAppAuth:
                 # JWT token - validate and check expiration
                 payload = self._parse_jwt(token)
                 if not payload:
-                    raise InvalidArgument("Invalid JWT token format")
+                    raise CredentialError("The token is not a readable JWT")
 
                 # Check if token is expired
                 now = int(datetime.now().timestamp())
                 exp = payload.get("exp", 0)
                 if exp <= now:
-                    raise InvalidArgument("Token has expired")
+                    raise CredentialError("The token has expired")
 
                 return token
         else:
-            raise InvalidArgument(f"Invalid mode: {self.mode}")
+            # PROWLER_MCP_TRANSPORT_MODE holds something this server does not
+            # support. Nothing about a call caused it and nothing about a call
+            # can fix it, so it stays unclassified: masked for the model, logged
+            # for whoever runs the server.
+            raise RuntimeError(f"Invalid mode: {self.mode}")
 
     async def get_valid_token(self) -> str:
         """Get a valid token (API key or JWT token)."""

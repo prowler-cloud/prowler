@@ -71,6 +71,10 @@ class InvalidArgument(ValueError):
     """An argument this server rejected before any request went out."""
 
 
+class CredentialError(Exception):
+    """The credential the caller sent is missing, malformed or expired."""
+
+
 # ------------------------------------------------------------------- messages
 
 
@@ -152,6 +156,16 @@ def _describe_failure(exc: BaseException) -> str | None:
             "Prowler answered with a body this server could not read, so the "
             "outcome of the call is unknown. If it changes anything, check the "
             "current state before sending it again."
+        )
+
+    if isinstance(exc, CredentialError):
+        # Not an argument problem, so it is worth saying that plainly: the
+        # answer is a credential the user has to fix, not another attempt.
+        return (
+            f"This request carried no usable credential: {exc}. Retrying or "
+            "changing the arguments will not help -- the client has to send an "
+            "'Authorization: Bearer <token>' header holding a valid Prowler API "
+            "key or an unexpired JWT."
         )
 
     if isinstance(exc, ProwlerAPIUnreachable):

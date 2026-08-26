@@ -11,7 +11,11 @@ import pytest
 from fastmcp import Client
 from pydantic import BaseModel, ValidationError
 
-from prowler_mcp_server.lib.errors import InvalidArgument, _describe_failure
+from prowler_mcp_server.lib.errors import (
+    CredentialError,
+    InvalidArgument,
+    _describe_failure,
+)
 from prowler_mcp_server.prowler_app.utils.api_client import (
     ProwlerAPIError,
     ProwlerAPIInvalidResponse,
@@ -97,6 +101,19 @@ def test_an_argument_this_server_rejected_is_repeated_verbatim():
     )
 
     assert message == "page_size must be between 1 and 1000."
+
+
+def test_a_credential_caught_here_is_answered_like_the_401_it_would_have_got():
+    """It is not an argument problem, and saying so stops a pointless retry."""
+    message = _describe_failure(CredentialError("the token has expired"))
+
+    assert "the token has expired" in message
+    assert "changing the arguments will not help" in message
+
+
+def test_a_transport_this_server_cannot_serve_is_left_masked():
+    """No call caused a bad PROWLER_MCP_TRANSPORT_MODE and no call can fix it."""
+    assert _describe_failure(RuntimeError("Invalid mode: websocket")) is None
 
 
 def test_a_pydantic_rejection_names_the_field_without_echoing_the_value():

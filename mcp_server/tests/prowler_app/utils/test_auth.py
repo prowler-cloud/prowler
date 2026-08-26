@@ -8,6 +8,7 @@ and ``base_url=`` explicitly, as these tests do.
 
 import pytest
 
+from prowler_mcp_server.lib.errors import CredentialError
 from prowler_mcp_server.prowler_app.utils.auth import ProwlerAppAuth
 from tests.helpers.tokens import FAKE_API_KEY, MALFORMED_API_KEY, fake_jwt
 
@@ -48,7 +49,7 @@ async def test_http_mode_rejects_an_expired_jwt(http_request_headers):
 
     auth = ProwlerAppAuth(mode="http")
 
-    with pytest.raises(ValueError, match="Token has expired"):
+    with pytest.raises(CredentialError, match="The token has expired"):
         await auth.get_valid_token()
 
 
