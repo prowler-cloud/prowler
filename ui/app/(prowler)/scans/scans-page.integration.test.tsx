@@ -25,6 +25,9 @@ describe("Scans page import findings", () => {
     await harness.submitImport();
 
     await harness.waitForCompletedSummary();
+    // The summary is already on screen, and the toast would have been raised in
+    // the same render — so its absence here is the open dialog suppressing it.
+    expect(harness.hasCompletionNotification()).toBe(false);
     expect(harness.pageRefreshCount).toBe(1);
     expect(harness.ingestionPostCount).toBe(1);
     expect(await harness.uploadedFileName()).toBe("findings.ocsf.json");

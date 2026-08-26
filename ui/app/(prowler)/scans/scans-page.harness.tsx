@@ -197,8 +197,17 @@ export class ScansPageHarness extends BrowserHarness<IngestionFixture> {
     );
   }
 
+  /** Whether the out-of-dialog completion notification is on screen. */
+  hasCompletionNotification(): boolean {
+    return this.containsText(/Findings import completed/i);
+  }
+
   async waitForCompletionNotification(): Promise<void> {
-    await this.waitForText(/Findings import completed/i, 15000);
+    await this.waitFor(
+      () => this.hasCompletionNotification(),
+      15000,
+      "the import completion notification",
+    );
   }
 
   async waitForTrackingStatus(): Promise<void> {
