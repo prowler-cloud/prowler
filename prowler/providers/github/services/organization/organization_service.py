@@ -63,6 +63,10 @@ class Organization(GithubService):
                             try:
                                 org = client.get_organization(org_name)
                                 self._process_organization(org, organizations)
+                            except github.RateLimitExceededException:
+                                # Rate limits are transient and must not be mistaken
+                                # for a missing organization or a permissions gap
+                                raise
                             except github.GithubException as org_error:
                                 # If organization fails, try as a user (personal account)
                                 if "404" in str(org_error):

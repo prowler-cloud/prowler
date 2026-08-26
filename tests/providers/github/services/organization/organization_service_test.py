@@ -465,7 +465,7 @@ class Test_Organization_ErrorHandling:
                 assert any("Access denied" in msg for msg in log_messages)
 
     def test_rate_limit_error_handling(self):
-        """Test that rate limit errors are logged appropriately"""
+        """Test that rate limit errors in the scoped-organization path are propagated"""
         provider = set_mocked_github_provider()
         provider.repositories = []
         provider.organizations = ["test-org1"]
@@ -485,14 +485,14 @@ class Test_Organization_ErrorHandling:
             with patch(
                 "prowler.providers.github.services.organization.organization_service.logger"
             ) as mock_logger:
-                # Rate limit errors should be caught and logged at the outer level
-                orgs = organization_service._list_organizations()
+                # Rate limit errors are logged and propagated instead of silently
+                # dropping the scoped organization
+                with raises(RateLimitExceededException):
+                    organization_service._list_organizations()
 
-                # Should be empty due to rate limit error
-                assert len(orgs) == 0
-                # Should log rate limit error
                 mock_logger.error.assert_called()
                 assert "Rate limit exceeded" in str(mock_logger.error.call_args)
+                mock_client.get_user.assert_not_called()
 
 
 class Test_Organization_Default_Workflow_Permissions:
