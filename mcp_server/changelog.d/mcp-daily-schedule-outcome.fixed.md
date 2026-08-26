@@ -1,0 +1,1 @@
+`prowler_schedule_daily_scan` no longer reports a schedule that was created as a failure: it was reading the state of the first scan run, which Prowler starts alongside the schedule, as if it were the outcome of the scheduling itself

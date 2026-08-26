@@ -2,7 +2,7 @@
 
 from typing import Any, Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 
 from prowler_mcp_server.prowler_app.models.base import MinimalSerializerMixin
 
@@ -102,6 +102,29 @@ class ProvidersListResponse(BaseModel):
             total_num_pages=pagination["pages"],
             current_page=pagination["page"],
         )
+
+
+class ProviderDeletionResult(MinimalSerializerMixin, BaseModel):
+    """Outcome of a provider deletion.
+
+    Prowler deletes a provider in a background task, so the answer is not always
+    a finished deletion. A deletion that never started is raised as an error
+    instead of being reported here: this model only describes a deletion Prowler
+    accepted and began.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    status: Literal["deleted", "in_progress"] = Field(
+        description="Outcome of the deletion: 'deleted' when Prowler finished removing the provider, 'in_progress' when the background task was accepted and is still running, which is normal for a provider with many scans and findings"
+    )
+    task_id: str | None = Field(
+        default=None,
+        description="UUIDv4 of the background deletion task, present when the deletion did not finish within the polling window so its state can be checked later",
+    )
+    message: str = Field(
+        description="Human-readable description of what happened and what to do next"
+    )
 
 
 class ProviderConnectionStatus(MinimalSerializerMixin, BaseModel):
