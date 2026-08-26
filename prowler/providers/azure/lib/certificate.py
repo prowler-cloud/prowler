@@ -1,4 +1,5 @@
 import re
+from typing import Optional
 
 from cryptography import x509
 from cryptography.exceptions import UnsupportedAlgorithm
@@ -63,30 +64,42 @@ def validate_certificate_bundle(certificate_data: bytes) -> bytes:
 def _normalize_pem_bundle(certificate_data: bytes) -> bytes:
     """Validate a PEM bundle and return it with the matching leaf first."""
     certificate_blocks = _CERTIFICATE_BLOCK_RE.findall(certificate_data)
-    private_key_match = _PRIVATE_KEY_BLOCK_RE.search(certificate_data)
+    private_key_matches = list(_PRIVATE_KEY_BLOCK_RE.finditer(certificate_data))
 
-    if not certificate_blocks or not private_key_match:
+    if not certificate_blocks or not private_key_matches:
         raise ValueError("the payload must contain a certificate and its private key")
 
-    private_key = serialization.load_pem_private_key(
-        private_key_match.group(), password=None, backend=default_backend()
-    )
-    key_public_bytes = private_key.public_key().public_bytes(
-        serialization.Encoding.DER,
-        serialization.PublicFormat.SubjectPublicKeyInfo,
-    )
-
-    for pem_block in certificate_blocks:
-        candidate = x509.load_pem_x509_certificate(pem_block, default_backend())
-        candidate_public_bytes = candidate.public_key().public_bytes(
+    # A bundle may carry more than one private key block (e.g. legacy tools
+    # export both an RSA and a PKCS#8 copy). Try each in order; preserve the
+    # first parse error so that a single encrypted key still surfaces the
+    # TypeError callers rely on to route to the typed certificate errors.
+    first_key_error: Optional[Exception] = None
+    for key_match in private_key_matches:
+        try:
+            private_key = serialization.load_pem_private_key(
+                key_match.group(), password=None, backend=default_backend()
+            )
+        except (ValueError, TypeError) as error:
+            if first_key_error is None:
+                first_key_error = error
+            continue
+        key_public_bytes = private_key.public_key().public_bytes(
             serialization.Encoding.DER,
             serialization.PublicFormat.SubjectPublicKeyInfo,
         )
-        if candidate_public_bytes == key_public_bytes:
-            # azure-identity's CertificateCredential uses the first BEGIN
-            # CERTIFICATE block to compute the credential thumbprint. Put the
-            # matching leaf first so authentication uses the correct
-            # certificate regardless of the bundle's original ordering.
-            return pem_block + b"\n" + private_key_match.group() + b"\n"
+        for pem_block in certificate_blocks:
+            candidate = x509.load_pem_x509_certificate(pem_block, default_backend())
+            candidate_public_bytes = candidate.public_key().public_bytes(
+                serialization.Encoding.DER,
+                serialization.PublicFormat.SubjectPublicKeyInfo,
+            )
+            if candidate_public_bytes == key_public_bytes:
+                # azure-identity's CertificateCredential uses the first BEGIN
+                # CERTIFICATE block to compute the credential thumbprint. Put
+                # the matching leaf first so authentication uses the correct
+                # certificate regardless of the bundle's original ordering.
+                return pem_block + b"\n" + key_match.group() + b"\n"
 
+    if first_key_error is not None:
+        raise first_key_error
     raise ValueError("the certificate does not match the private key")

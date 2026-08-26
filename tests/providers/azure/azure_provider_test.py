@@ -3004,6 +3004,142 @@ class TestAzureProviderSignatureCompatibility:
                 parameters[name].kind is inspect.Parameter.KEYWORD_ONLY
             ), f"validate_static_credentials: {name} must be keyword-only"
 
+    def test_validate_arguments_positional_call_still_binds_tenant_and_client(self):
+        import inspect
+
+        # Master signature: `..., managed_identity_auth, tenant_id, client_id,
+        # client_secret`. Any external caller passing everything positionally
+        # must keep binding those three slots to the right names.
+        signature = inspect.signature(AzureProvider.validate_arguments)
+        bound = signature.bind(
+            False,  # az_cli_auth
+            False,  # sp_env_auth
+            False,  # browser_auth
+            False,  # managed_identity_auth
+            self._TENANT_ID,  # tenant_id
+            self._CLIENT_ID,  # client_id
+            "some-secret",  # client_secret
+        )
+
+        assert bound.arguments["tenant_id"] == self._TENANT_ID
+        assert bound.arguments["client_id"] == self._CLIENT_ID
+        assert bound.arguments["client_secret"] == "some-secret"
+        assert "certificate_auth" not in bound.arguments
+        assert "certificate_content" not in bound.arguments
+        assert "certificate_path" not in bound.arguments
+
+        self._assert_certificate_kwargs_are_keyword_only(
+            AzureProvider.validate_arguments
+        )
+
+    def test_setup_session_positional_call_still_binds_tenant_and_credentials(self):
+        import inspect
+
+        # Master signature: `..., managed_identity_auth, tenant_id,
+        # azure_credentials, region_config`. Callers passing the pre-cert
+        # positional shape must not rebind those slots.
+        signature = inspect.signature(AzureProvider.setup_session)
+        region_config = AzureProvider.setup_region_config("AzureCloud")
+        bound = signature.bind(
+            False,  # az_cli_auth
+            False,  # sp_env_auth
+            False,  # browser_auth
+            False,  # managed_identity_auth
+            self._TENANT_ID,  # tenant_id
+            {"tenant_id": self._TENANT_ID},  # azure_credentials
+            region_config,  # region_config
+        )
+
+        assert bound.arguments["tenant_id"] == self._TENANT_ID
+        assert bound.arguments["azure_credentials"] == {"tenant_id": self._TENANT_ID}
+        assert bound.arguments["region_config"] is region_config
+        assert "certificate_auth" not in bound.arguments
+        assert "certificate_path" not in bound.arguments
+
+        # Only the two certificate parameters are keyword-only in
+        # `setup_session` — `certificate_content` is not part of its shape.
+        parameters = inspect.signature(AzureProvider.setup_session).parameters
+        for name in ("certificate_auth", "certificate_path"):
+            assert (
+                parameters[name].kind is inspect.Parameter.KEYWORD_ONLY
+            ), f"setup_session: {name} must be keyword-only"
+
+
+class TestValidateCertificateBundleMultiKey:
+    """A PEM bundle may legitimately carry more than one private key block
+    (e.g. legacy tools that export both RSA and PKCS#8 encodings). The
+    normalizer must locate the key that actually pairs with the leaf
+    certificate, not stop at the first `-----BEGIN PRIVATE KEY-----`."""
+
+    def _self_signed(self):
+        from datetime import datetime, timedelta, timezone
+
+        from cryptography import x509
+        from cryptography.hazmat.primitives import hashes, serialization
+        from cryptography.hazmat.primitives.asymmetric import rsa
+        from cryptography.x509.oid import NameOID
+
+        private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "Prowler")])
+        certificate = (
+            x509.CertificateBuilder()
+            .subject_name(subject)
+            .issuer_name(subject)
+            .public_key(private_key.public_key())
+            .serial_number(x509.random_serial_number())
+            .not_valid_before(datetime.now(timezone.utc))
+            .not_valid_after(datetime.now(timezone.utc) + timedelta(days=1))
+            .sign(private_key, hashes.SHA256())
+        )
+        cert_pem = certificate.public_bytes(serialization.Encoding.PEM)
+        key_pem = private_key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.NoEncryption(),
+        )
+        return cert_pem, key_pem
+
+    def test_normalizes_when_matching_key_is_second_in_bundle(self):
+        from prowler.providers.azure.lib.certificate import (
+            validate_certificate_bundle,
+        )
+
+        _, unrelated_key_pem = self._self_signed()
+        leaf_cert_pem, leaf_key_pem = self._self_signed()
+
+        # First private key belongs to an unrelated pair; the leaf's key is
+        # the second block. `.search` used to stop at the first match and
+        # falsely reject the bundle.
+        bundle = leaf_cert_pem + unrelated_key_pem + leaf_key_pem
+
+        normalized = validate_certificate_bundle(bundle)
+
+        assert normalized.startswith(leaf_cert_pem)
+        assert leaf_key_pem in normalized
+
+    def test_encrypted_single_key_still_raises_type_error(self):
+        # Guardrail for the multi-key iteration: an encrypted single key
+        # must still surface `TypeError`, which the SDK caller relies on to
+        # route to `AzureNotValidCertificateContentError`.
+        from cryptography.hazmat.primitives import serialization
+        from cryptography.hazmat.primitives.asymmetric import rsa
+
+        from prowler.providers.azure.lib.certificate import (
+            validate_certificate_bundle,
+        )
+
+        cert_pem, _ = self._self_signed()
+        encrypted_key_pem = rsa.generate_private_key(
+            public_exponent=65537, key_size=2048
+        ).private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.BestAvailableEncryption(b"prowler"),
+        )
+
+        with pytest.raises(TypeError):
+            validate_certificate_bundle(cert_pem + encrypted_key_pem)
+
 
 def serialization_no_encryption():
     # Kept out of the test method so the PKCS#12 test reads cleanly. Wraps
