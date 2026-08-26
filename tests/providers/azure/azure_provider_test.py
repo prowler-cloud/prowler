@@ -3,6 +3,7 @@ from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 import pytest
+import requests
 from azure.core.credentials import AccessToken
 from azure.core.exceptions import ClientAuthenticationError, HttpResponseError
 from azure.identity import DefaultAzureCredential
@@ -17,6 +18,7 @@ from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.azure.exceptions.exceptions import (
     AzureBrowserAuthNoTenantIDError,
     AzureConfigCredentialsError,
+    AzureCredentialsUnavailableError,
     AzureEnvironmentVariableError,
     AzureHTTPResponseError,
     AzureInvalidProviderIdError,
@@ -1365,6 +1367,19 @@ class TestAzureProviderCertificateAuth:
         # Should not raise
         AzureProvider.check_certificate_creds_env_vars(check_certificate_content=False)
 
+    def test_check_certificate_creds_env_vars_explicit_tenant_replaces_missing_env(
+        self, monkeypatch
+    ):
+        # Reproduces the original failure: `--tenant-id` on the CLI must let
+        # the certificate flow work even when AZURE_TENANT_ID is not set.
+        monkeypatch.setenv("AZURE_CLIENT_ID", self._CLIENT_ID)
+        monkeypatch.delenv("AZURE_TENANT_ID", raising=False)
+        monkeypatch.setenv("AZURE_CERTIFICATE_CONTENT", "unused-by-this-check")
+        AzureProvider.check_certificate_creds_env_vars(
+            check_certificate_content=True,
+            tenant_id=self._TENANT_ID,
+        )
+
     def test_validate_static_credentials_rejects_non_base64_cert_content(self):
         with pytest.raises(AzureNotValidCertificateContentError):
             AzureProvider.validate_static_credentials(
@@ -1985,6 +2000,48 @@ class TestAzureProviderCertificateAuth:
                 certificate_path=certificate_path,
             )
 
+    def test_verify_client_client_secret_timeout_translates_to_credentials_unavailable(
+        self,
+    ):
+        # A hung Entra ID token endpoint must surface as a typed Azure error
+        # instead of leaking `requests.exceptions.Timeout`; API and UI
+        # consumers rely on the typed error to render "credentials
+        # unavailable" instead of a raw transport exception.
+        with (
+            patch(
+                "prowler.providers.azure.azure_provider.requests.post",
+                side_effect=requests.exceptions.Timeout("token endpoint hung"),
+            ),
+            pytest.raises(AzureCredentialsUnavailableError),
+        ):
+            AzureProvider.verify_client(
+                self._TENANT_ID,
+                self._CLIENT_ID,
+                "some-secret",
+                self._region_config(),
+            )
+
+    def test_test_connection_client_secret_timeout_returns_credentials_unavailable_error(
+        self,
+    ):
+        # `raise_on_exception=False` is the API contract: consumers must get
+        # `Connection(error=AzureCredentialsUnavailableError)` when the
+        # token endpoint stalls, never the raw `requests.exceptions.Timeout`.
+        with patch(
+            "prowler.providers.azure.azure_provider.requests.post",
+            side_effect=requests.exceptions.Timeout("token endpoint hung"),
+        ):
+            connection = AzureProvider.test_connection(
+                tenant_id=self._TENANT_ID,
+                client_id=self._CLIENT_ID,
+                client_secret="some-secret",
+                region="AzureCloud",
+                raise_on_exception=False,
+            )
+
+        assert connection.is_connected is False
+        assert isinstance(connection.error, AzureCredentialsUnavailableError)
+
     def test_verify_client_without_credential_material_returns(self):
         assert (
             AzureProvider.verify_client(
@@ -2455,6 +2512,80 @@ class TestValidateCertificateBundleOrdering:
         assert normalized.startswith(leaf_cert_pem)
         assert leaf_key_pem in normalized
         assert other_cert_pem not in normalized
+
+    def test_certificate_credential_receives_leaf_first_bundle(self, tmp_path):
+        # Bundles with the intermediate CA before the leaf must reach
+        # `CertificateCredential` with the leaf first — otherwise the
+        # thumbprint that azure-identity computes is the intermediate's
+        # and real authentication silently fails.
+        leaf_cert_pem, leaf_key_pem = self._self_signed()
+        other_cert_pem, _ = self._self_signed()
+        bundle = other_cert_pem + leaf_cert_pem + leaf_key_pem
+
+        import base64
+
+        from prowler.providers.azure.azure_provider import AzureProvider
+
+        certificate_path = tmp_path / "prowler-cert.pem"
+        certificate_path.write_bytes(bundle)
+
+        region_config = AzureProvider.setup_region_config("AzureCloud")
+
+        # Env-var / --certificate-path branch.
+        with (
+            patch(
+                "prowler.providers.azure.azure_provider.CertificateCredential"
+            ) as cert_credential_env,
+            patch.dict(
+                "os.environ",
+                {
+                    "AZURE_CLIENT_ID": "87654321-4321-4321-4321-210987654321",
+                    "AZURE_TENANT_ID": "12345678-1234-1234-1234-123456789012",
+                },
+                clear=False,
+            ),
+        ):
+            AzureProvider.setup_session(
+                az_cli_auth=False,
+                sp_env_auth=False,
+                browser_auth=False,
+                managed_identity_auth=False,
+                certificate_auth=True,
+                certificate_path=str(certificate_path),
+                tenant_id=None,
+                azure_credentials=None,
+                region_config=region_config,
+            )
+
+        certificate_data = cert_credential_env.call_args.kwargs["certificate_data"]
+        assert certificate_data.startswith(leaf_cert_pem)
+        assert other_cert_pem not in certificate_data
+
+        # azure_credentials (API/UI) branch, certificate_content variant.
+        with patch(
+            "prowler.providers.azure.azure_provider.CertificateCredential"
+        ) as cert_credential_api:
+            AzureProvider.setup_session(
+                az_cli_auth=False,
+                sp_env_auth=False,
+                browser_auth=False,
+                managed_identity_auth=False,
+                certificate_auth=False,
+                certificate_path=None,
+                tenant_id=None,
+                azure_credentials={
+                    "tenant_id": "12345678-1234-1234-1234-123456789012",
+                    "client_id": "87654321-4321-4321-4321-210987654321",
+                    "client_secret": None,
+                    "certificate_content": base64.b64encode(bundle).decode(),
+                    "certificate_path": None,
+                },
+                region_config=region_config,
+            )
+
+        api_certificate_data = cert_credential_api.call_args.kwargs["certificate_data"]
+        assert api_certificate_data.startswith(leaf_cert_pem)
+        assert other_cert_pem not in api_certificate_data
 
     def test_rejects_password_protected_pem_key(self):
         from cryptography.hazmat.primitives import serialization
