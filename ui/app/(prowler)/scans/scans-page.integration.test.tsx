@@ -250,4 +250,20 @@ describe("Scans page import findings", () => {
     await harness.waitForCompletedSummary();
     expect(harness.maximumInFlightStatusRequests).toBe(1);
   });
+
+  it("stops polling a tracked import after leaving the page", async () => {
+    const harness = new ScansPageHarness(ingestionFixture());
+    await harness.mount({ statusDelayMs: 500 });
+    await harness.openImportFindings();
+    await harness.selectFile(new File(["[]"], "findings.ocsf.json"));
+    await harness.submitImport();
+    await harness.waitForFirstStatusPoll();
+    await harness.leaveScansPage();
+    const pollsWhenLeaving = harness.ingestionStatusPollCount;
+
+    // An unaborted poll answers into the dead page and chains the next one,
+    // eventually refreshing and toasting over whatever route the user is on.
+    await harness.waitPastTheNextPoll();
+    expect(harness.ingestionStatusPollCount).toBe(pollsWhenLeaving);
+  });
 });

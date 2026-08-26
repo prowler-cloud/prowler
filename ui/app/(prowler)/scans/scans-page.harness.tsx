@@ -27,6 +27,8 @@ interface MountOptions {
 
 export class ScansPageHarness extends BrowserHarness<IngestionFixture> {
   private maxInFlightStatusRequests = 0;
+  private mounted: ReturnType<typeof render> | null = null;
+  private statusDelayMs = 0;
 
   async mount({
     hasManageIngestionsPermission = true,
@@ -53,8 +55,9 @@ export class ScansPageHarness extends BrowserHarness<IngestionFixture> {
       }),
     );
     this.trackRequests(worker);
+    this.statusDelayMs = statusDelayMs ?? 0;
 
-    render(
+    this.mounted = render(
       <ScansPageShell
         providers={[]}
         hasManageIngestionsPermission={hasManageIngestionsPermission}
@@ -63,6 +66,17 @@ export class ScansPageHarness extends BrowserHarness<IngestionFixture> {
         <ScanJobsTable data={[]} tab={SCAN_JOBS_TAB.ACTIVE} />
       </ScansPageShell>,
     );
+  }
+
+  /**
+   * Navigate away from Scans, taking the page down with whatever it had in
+   * flight — the tracked import included.
+   */
+  async leaveScansPage(): Promise<void> {
+    const mounted = await this.mounted;
+    if (!mounted) throw new Error("leaveScansPage: the page is not mounted");
+    mounted.unmount();
+    this.mounted = null;
   }
 
   hasImportFindingsAction(): boolean {
@@ -239,6 +253,22 @@ export class ScansPageHarness extends BrowserHarness<IngestionFixture> {
     await this.waitFor(() =>
       this.ingestionStatusPollCount >= 2 ? true : null,
     );
+  }
+
+  async waitForFirstStatusPoll(): Promise<void> {
+    await this.waitFor(
+      () => this.ingestionStatusPollCount >= 1,
+      5000,
+      "the first status poll",
+    );
+  }
+
+  /**
+   * Outlast a poll that was never called off: its delayed response lands, then
+   * a whole poll interval goes by (5s in the modal) and the next one would fire.
+   */
+  async waitPastTheNextPoll(): Promise<void> {
+    await this.waitForTransition(this.statusDelayMs + 5700);
   }
 
   get ingestionPostCount(): number {
