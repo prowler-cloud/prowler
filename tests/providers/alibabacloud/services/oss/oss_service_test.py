@@ -324,3 +324,53 @@ def test_get_bucket_acl_parses_grant():
     service._get_bucket_acl(bucket)
 
     assert bucket.acl == "public-read"
+
+
+def test_get_bucket_subresource_with_real_sdk_client_unwraps_xml_root():
+    """Regression test against the SDK deserialization the helper works around.
+
+    The generated ``get_bucket_*`` methods return empty response models for
+    XML bodies (root element kept by the gateway, dropped by the models). Drive
+    the real client with only the HTTP call mocked to make sure the helper still
+    returns the configuration after SDK upgrades.
+    """
+    import io
+
+    import darabonba.core as dara_core
+    from alibabacloud_oss20190517.client import Client as OssClient
+    from alibabacloud_tea_openapi import models as open_api_models
+
+    service = _build_oss_service()
+    bucket = _build_bucket()
+    service.session.client.return_value = OssClient(
+        open_api_models.Config(
+            access_key_id="AKID",
+            access_key_secret="SECRET",
+            endpoint="oss-ap-southeast-1.aliyuncs.com",
+            region_id="ap-southeast-1",
+        )
+    )
+    xml = (
+        b'<?xml version="1.0" encoding="UTF-8"?>'
+        b"<ServerSideEncryptionRule><ApplyServerSideEncryptionByDefault>"
+        b"<SSEAlgorithm>KMS</SSEAlgorithm>"
+        b"<KMSMasterKeyID>00000000-1111-2222-3333-444444444444</KMSMasterKeyID>"
+        b"</ApplyServerSideEncryptionByDefault></ServerSideEncryptionRule>"
+    )
+
+    class FakeHttpResponse:
+        status_code = 200
+        headers = {"content-type": "application/xml"}
+        body = io.BytesIO(xml)
+
+    with patch.object(dara_core.DaraCore, "do_action", return_value=FakeHttpResponse()):
+        result = service._get_bucket_subresource(
+            bucket, "GetBucketEncryption", "encryption"
+        )
+
+    assert result == {
+        "ApplyServerSideEncryptionByDefault": {
+            "SSEAlgorithm": "KMS",
+            "KMSMasterKeyID": "00000000-1111-2222-3333-444444444444",
+        }
+    }
