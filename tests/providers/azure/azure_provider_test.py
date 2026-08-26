@@ -1926,12 +1926,14 @@ class TestAzureProviderCertificateAuth:
                 certificate_content=self._CERT_CONTENT_B64,
             )
 
-        certificate_credential.assert_called_once_with(
-            client_id=self._CLIENT_ID,
-            tenant_id=self._TENANT_ID,
-            certificate_data=base64.b64decode(self._CERT_CONTENT_B64),
-            authority=None,
+        assert certificate_credential.call_count == 1
+        credential_kwargs = certificate_credential.call_args.kwargs
+        assert credential_kwargs["client_id"] == self._CLIENT_ID
+        assert credential_kwargs["tenant_id"] == self._TENANT_ID
+        assert credential_kwargs["certificate_data"] == base64.b64decode(
+            self._CERT_CONTENT_B64
         )
+        assert credential_kwargs["authority"] is None
         certificate_credential.return_value.get_token.assert_called_once_with(
             "https://graph.microsoft.com/.default"
         )
@@ -2076,22 +2078,21 @@ class TestAzureProviderCertificateAuth:
     def test_verify_client_certificate_content_timeout_translates_to_credentials_unavailable(
         self,
     ):
-        # The certificate path runs token acquisition on a
-        # `ThreadPoolExecutor` because `get_token` has no native timeout.
-        # A hung Entra ID endpoint surfaces as `FuturesTimeoutError` and
-        # must be translated to the typed Azure error.
+        # The certificate path enforces the deadline on the HTTP transport,
+        # so a hung Entra ID endpoint surfaces as `ServiceRequestError`.
+        # `verify_client` must translate it to the typed Azure error.
         import base64
-        from concurrent.futures import TimeoutError as FuturesTimeoutError
+
+        from azure.core.exceptions import ServiceRequestError
 
         with (
-            patch("prowler.providers.azure.azure_provider.CertificateCredential"),
             patch(
-                "prowler.providers.azure.azure_provider.ThreadPoolExecutor"
-            ) as executor_cls,
+                "prowler.providers.azure.azure_provider.CertificateCredential"
+            ) as cert_credential_cls,
             pytest.raises(AzureCredentialsUnavailableError),
         ):
-            executor_cls.return_value.submit.return_value.result.side_effect = (
-                FuturesTimeoutError()
+            cert_credential_cls.return_value.get_token.side_effect = (
+                ServiceRequestError("hung transport")
             )
             AzureProvider.verify_client(
                 self._TENANT_ID,
@@ -2106,20 +2107,19 @@ class TestAzureProviderCertificateAuth:
     def test_verify_client_certificate_path_timeout_translates_to_credentials_unavailable(
         self, tmp_path
     ):
-        from concurrent.futures import TimeoutError as FuturesTimeoutError
+        from azure.core.exceptions import ServiceRequestError
 
         certificate_path = tmp_path / "prowler-cert.pem"
         certificate_path.write_bytes(self._leaf_first_bundle())
 
         with (
-            patch("prowler.providers.azure.azure_provider.CertificateCredential"),
             patch(
-                "prowler.providers.azure.azure_provider.ThreadPoolExecutor"
-            ) as executor_cls,
+                "prowler.providers.azure.azure_provider.CertificateCredential"
+            ) as cert_credential_cls,
             pytest.raises(AzureCredentialsUnavailableError),
         ):
-            executor_cls.return_value.submit.return_value.result.side_effect = (
-                FuturesTimeoutError()
+            cert_credential_cls.return_value.get_token.side_effect = (
+                ServiceRequestError("hung transport")
             )
             AzureProvider.verify_client(
                 self._TENANT_ID,
@@ -2136,16 +2136,14 @@ class TestAzureProviderCertificateAuth:
         # path too: consumers must receive
         # `Connection(error=AzureCredentialsUnavailableError)`.
         import base64
-        from concurrent.futures import TimeoutError as FuturesTimeoutError
 
-        with (
-            patch("prowler.providers.azure.azure_provider.CertificateCredential"),
-            patch(
-                "prowler.providers.azure.azure_provider.ThreadPoolExecutor"
-            ) as executor_cls,
-        ):
-            executor_cls.return_value.submit.return_value.result.side_effect = (
-                FuturesTimeoutError()
+        from azure.core.exceptions import ServiceRequestError
+
+        with patch(
+            "prowler.providers.azure.azure_provider.CertificateCredential"
+        ) as cert_credential_cls:
+            cert_credential_cls.return_value.get_token.side_effect = (
+                ServiceRequestError("hung transport")
             )
             connection = AzureProvider.test_connection(
                 tenant_id=self._TENANT_ID,
@@ -2164,19 +2162,16 @@ class TestAzureProviderCertificateAuth:
     def test_test_connection_certificate_path_timeout_returns_credentials_unavailable_error(
         self, tmp_path
     ):
-        from concurrent.futures import TimeoutError as FuturesTimeoutError
+        from azure.core.exceptions import ServiceRequestError
 
         certificate_path = tmp_path / "prowler-cert.pem"
         certificate_path.write_bytes(self._leaf_first_bundle())
 
-        with (
-            patch("prowler.providers.azure.azure_provider.CertificateCredential"),
-            patch(
-                "prowler.providers.azure.azure_provider.ThreadPoolExecutor"
-            ) as executor_cls,
-        ):
-            executor_cls.return_value.submit.return_value.result.side_effect = (
-                FuturesTimeoutError()
+        with patch(
+            "prowler.providers.azure.azure_provider.CertificateCredential"
+        ) as cert_credential_cls:
+            cert_credential_cls.return_value.get_token.side_effect = (
+                ServiceRequestError("hung transport")
             )
             connection = AzureProvider.test_connection(
                 tenant_id=self._TENANT_ID,
@@ -2810,17 +2805,9 @@ class TestValidateCertificateBundleOrdering:
 
         region_config = AzureProvider.setup_region_config("AzureCloud")
 
-        with (
-            patch(
-                "prowler.providers.azure.azure_provider.CertificateCredential"
-            ) as cert_credential,
-            patch(
-                "prowler.providers.azure.azure_provider.ThreadPoolExecutor"
-            ) as executor_cls,
-        ):
-            executor_cls.return_value.submit.return_value.result.return_value = (
-                MagicMock()
-            )
+        with patch(
+            "prowler.providers.azure.azure_provider.CertificateCredential"
+        ) as cert_credential:
             AzureProvider.verify_client(
                 "12345678-1234-1234-1234-123456789012",
                 "87654321-4321-4321-4321-210987654321",
@@ -2843,17 +2830,9 @@ class TestValidateCertificateBundleOrdering:
 
         region_config = AzureProvider.setup_region_config("AzureCloud")
 
-        with (
-            patch(
-                "prowler.providers.azure.azure_provider.CertificateCredential"
-            ) as cert_credential,
-            patch(
-                "prowler.providers.azure.azure_provider.ThreadPoolExecutor"
-            ) as executor_cls,
-        ):
-            executor_cls.return_value.submit.return_value.result.return_value = (
-                MagicMock()
-            )
+        with patch(
+            "prowler.providers.azure.azure_provider.CertificateCredential"
+        ) as cert_credential:
             AzureProvider.verify_client(
                 "12345678-1234-1234-1234-123456789012",
                 "87654321-4321-4321-4321-210987654321",

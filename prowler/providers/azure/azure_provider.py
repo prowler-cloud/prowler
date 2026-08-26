@@ -5,15 +5,18 @@ import logging
 import os
 import re
 from argparse import ArgumentTypeError
-from concurrent.futures import ThreadPoolExecutor
-from concurrent.futures import TimeoutError as FuturesTimeoutError
 from itertools import chain
 from os import getenv
 from typing import Optional, Union
 from uuid import UUID
 
 import requests
-from azure.core.exceptions import ClientAuthenticationError, HttpResponseError
+from azure.core.exceptions import (
+    ClientAuthenticationError,
+    HttpResponseError,
+    ServiceRequestError,
+)
+from azure.core.pipeline.transport import RequestsTransport
 from azure.identity import (
     CertificateCredential,
     ClientSecretCredential,
@@ -1785,23 +1788,23 @@ class AzureProvider(Provider):
             else:
                 return
 
+            # Enforce the deadline on the HTTP transport itself instead of
+            # racing an off-thread `get_token` — background workers cannot
+            # be cancelled once running, and any non-timeout exception used
+            # to bypass executor shutdown, leaking a thread per validation.
             credential = CertificateCredential(
                 client_id=client_id,
                 tenant_id=tenant_id,
                 certificate_data=validate_certificate_bundle(certificate_data),
                 authority=region_config.authority,
+                transport=RequestsTransport(
+                    connection_timeout=_TOKEN_ACQUISITION_TIMEOUT_SECONDS,
+                    read_timeout=_TOKEN_ACQUISITION_TIMEOUT_SECONDS,
+                ),
             )
-            # get_token has no native timeout parameter, so run it off-thread
-            # with a hard deadline (matches the 30s on the client-secret path).
-            # Manage the executor explicitly: the context-manager form calls
-            # shutdown(wait=True) on exit and would block until get_token
-            # returns anyway, defeating the timeout.
-            executor = ThreadPoolExecutor(max_workers=1)
-            future = executor.submit(credential.get_token, region_config.graph_scope)
             try:
-                future.result(timeout=_TOKEN_ACQUISITION_TIMEOUT_SECONDS)
-            except FuturesTimeoutError as error:
-                executor.shutdown(wait=False)
+                credential.get_token(region_config.graph_scope)
+            except ServiceRequestError as error:
                 raise AzureCredentialsUnavailableError(
                     file=os.path.basename(__file__),
                     message=(
@@ -1810,8 +1813,6 @@ class AzureProvider(Provider):
                     ),
                     original_exception=error,
                 )
-            else:
-                executor.shutdown(wait=True)
         except ClientAuthenticationError as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
