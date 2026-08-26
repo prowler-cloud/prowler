@@ -375,6 +375,73 @@ describe("createLighthouseChatStore", () => {
     expect(store.getState().failedOutcomeMessageId).toBe("task-1");
   });
 
+  it("keeps a terminal error ratable when it arrives before the send resolves", async () => {
+    // Given
+    const store = makeStore();
+    let resolveSend: (value: unknown) => void = () => {};
+    sendMessageMock.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveSend = resolve;
+      }),
+    );
+    getMessagesMock.mockResolvedValue({
+      data: [message("task-1", "user", "Run this check")],
+    });
+    const submitting = store.getState().submitMessage("Run this check");
+    await vi.waitFor(() => expect(sendMessageMock).toHaveBeenCalledOnce());
+
+    // When
+    eventSources[0].emit("error", { detail: "Agent run failed." });
+    await vi.waitFor(() =>
+      expect(store.getState().feedback).toBe("Agent run failed."),
+    );
+    resolveSend({
+      data: {
+        task: { id: "task-1", name: "lighthouse-run", state: "executing" },
+      },
+    });
+    await submitting;
+
+    // Then
+    await vi.waitFor(() =>
+      expect(store.getState().failedOutcomeMessageId).toBe("task-1"),
+    );
+    expect(store.getState().messages).toEqual([
+      expect.objectContaining({ id: "task-1", role: "user" }),
+    ]);
+  });
+
+  it("reloads a completed message when it arrives before the send resolves", async () => {
+    // Given
+    const store = makeStore();
+    let resolveSend: (value: unknown) => void = () => {};
+    sendMessageMock.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveSend = resolve;
+      }),
+    );
+    getMessagesMock.mockResolvedValue({
+      data: [message("message-1", "assistant", "Persisted answer")],
+    });
+    const submitting = store.getState().submitMessage("Summarize findings");
+    await vi.waitFor(() => expect(sendMessageMock).toHaveBeenCalledOnce());
+
+    // When
+    eventSources[0].emit("message.end", { message_id: "message-1" });
+    resolveSend({
+      data: {
+        task: { id: "task-1", name: "lighthouse-run", state: "executing" },
+      },
+    });
+    await submitting;
+
+    // Then
+    expect(store.getState().messages).toEqual([
+      expect.objectContaining({ id: "message-1", role: "assistant" }),
+    ]);
+    expect(store.getState().failedOutcomeMessageId).toBeNull();
+  });
+
   it("blocks sending and refreshes messages on a 409 conflict", async () => {
     // Given
     const store = makeStore();
