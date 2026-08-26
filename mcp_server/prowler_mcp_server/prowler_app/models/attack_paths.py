@@ -376,7 +376,7 @@ class AttackPathQueryResult(MinimalSerializerMixin, BaseModel):
         Returns:
             AttackPathQueryResult with parsed data and summary
         """
-        attributes = response.get("data", {}).get("attributes") or {}
+        attributes = response.get("data", {}).get("attributes", {})
         nodes_data = attributes.get("nodes", [])
         relationships_data = attributes.get("relationships", [])
 
