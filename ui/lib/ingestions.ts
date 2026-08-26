@@ -37,7 +37,11 @@ export const parseIngestion = (payload: unknown): Ingestion | null => {
   const data = (payload as JsonApiIngestionResponse)?.data;
   const attributes = data?.attributes;
 
-  if (typeof data?.id !== "string" || !isIngestionStatus(attributes?.status)) {
+  if (
+    typeof data?.id !== "string" ||
+    data.id === "" ||
+    !isIngestionStatus(attributes?.status)
+  ) {
     return null;
   }
 

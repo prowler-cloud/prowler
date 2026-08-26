@@ -276,6 +276,34 @@ describe("POST /api/ingestions", () => {
     },
   );
 
+  // An empty identifier would otherwise parse into a trackable-looking job and
+  // send the client polling `/api/ingestions/`, which matches no route, so a
+  // job that really was created would surface as a tracking error.
+  it.each([
+    ["no job identifier", { attributes: { status: "pending" } }],
+    ["an empty job identifier", { id: "", attributes: { status: "pending" } }],
+  ])("refuses an accepted response with %s", async (_shape, data) => {
+    isCloudMock.mockReturnValue(true);
+    getAuthHeadersMock.mockResolvedValue({ Authorization: "Bearer token" });
+    server.use(
+      http.post("https://api.example.com/api/v1/ingestions", () =>
+        HttpResponse.json({ data }),
+      ),
+    );
+
+    const response = await POST(
+      new Request("http://localhost/api/ingestions", {
+        method: "POST",
+        body: "report",
+      }),
+    );
+
+    expect(response.status).toBe(502);
+    await expect(response.json()).resolves.toEqual({
+      error: "Unable to start the import. Please try again.",
+    });
+  });
+
   it("rejects accepted responses that cannot start a trackable ingestion", async () => {
     isCloudMock.mockReturnValue(true);
     getAuthHeadersMock.mockResolvedValue({ Authorization: "Bearer token" });

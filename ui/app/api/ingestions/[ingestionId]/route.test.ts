@@ -89,6 +89,31 @@ describe("GET /api/ingestions/[ingestionId]", () => {
     });
   });
 
+  it("forwards an identifier that needs escaping as one encoded path segment", async () => {
+    isCloudMock.mockReturnValue(true);
+    getAuthHeadersMock.mockResolvedValue({ Authorization: "Bearer token" });
+    let requestedUrl = "";
+    server.use(
+      http.get("https://api.example.com/api/v1/ingestions/*", ({ request }) => {
+        requestedUrl = request.url;
+        return HttpResponse.json({
+          data: { id: "2026/08 report", attributes: { status: "pending" } },
+        });
+      }),
+    );
+
+    const response = await GET(new Request("http://localhost/api/ingestions"), {
+      params: Promise.resolve({ ingestionId: "2026/08 report" }),
+    });
+
+    // Unescaped, the slash would split into extra path segments and address a
+    // different upstream resource than the one being polled.
+    expect(requestedUrl).toBe(
+      "https://api.example.com/api/v1/ingestions/2026%2F08%20report",
+    );
+    expect(response.status).toBe(200);
+  });
+
   it("sanitizes unreadable upstream status failures", async () => {
     isCloudMock.mockReturnValue(true);
     getAuthHeadersMock.mockResolvedValue({ Authorization: "Bearer token" });
