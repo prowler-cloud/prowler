@@ -38,6 +38,7 @@ class OSS(AlibabaCloudService):
         self.__threading_call__(self._get_bucket_acl, self.buckets.values())
         self.__threading_call__(self._get_bucket_policy, self.buckets.values())
         self.__threading_call__(self._get_bucket_logging, self.buckets.values())
+        self.__threading_call__(self._get_bucket_encryption, self.buckets.values())
         self.__threading_call__(self._get_bucket_versioning, self.buckets.values())
 
     def _list_buckets(self, regional_client=None):
@@ -286,6 +287,42 @@ class OSS(AlibabaCloudService):
                 f"{bucket.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _get_bucket_encryption(self, bucket):
+        """Get bucket default server-side encryption configuration using OSS SDK."""
+        logger.info(
+            f"OSS - Getting encryption configuration for bucket {bucket.name}..."
+        )
+        try:
+            oss_client = self.session.client("oss", bucket.region)
+
+            response = oss_client.get_bucket_encryption(bucket.name)
+
+            if response and response.body:
+                default_rule = getattr(
+                    response.body, "apply_server_side_encryption_by_default", None
+                )
+                if default_rule:
+                    bucket.encryption_algorithm = str(
+                        getattr(default_rule, "ssealgorithm", None) or ""
+                    )
+                    bucket.encryption_kms_key_id = str(
+                        getattr(default_rule, "kmsmaster_key_id", None) or ""
+                    )
+                    bucket.encryption_kms_data_algorithm = str(
+                        getattr(default_rule, "kmsdata_encryption", None) or ""
+                    )
+        except Exception as error:
+            # No encryption rule configured means default encryption is disabled
+            error_code = getattr(error, "code", "")
+            if error_code == "NoSuchServerSideEncryptionRule":
+                bucket.encryption_algorithm = ""
+                bucket.encryption_kms_key_id = ""
+                bucket.encryption_kms_data_algorithm = ""
+            else:
+                logger.error(
+                    f"{bucket.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
     def _get_bucket_versioning(self, bucket):
         """Get bucket versioning status using OSS SDK."""
         logger.info(f"OSS - Getting versioning status for bucket {bucket.name}...")
@@ -352,5 +389,8 @@ class Bucket(BaseModel):
     logging_enabled: bool = False
     logging_target_bucket: str = ""
     logging_target_prefix: str = ""
+    encryption_algorithm: str = ""  # "", AES256, KMS
+    encryption_kms_key_id: str = ""
+    encryption_kms_data_algorithm: str = ""  # "", AES256, SM4 (only with KMS)
     versioning_status: str = ""  # "", Enabled, Suspended
     creation_date: Optional[datetime] = None
