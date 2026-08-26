@@ -2255,7 +2255,10 @@ class Jira:
         keys, so checking hundreds of linked issues costs a handful of calls.
         Keys that Jira does not return (deleted, moved or not visible to the
         integration user) are simply absent from the result, which lets callers
-        treat them as no longer tracked.
+        treat them as no longer tracked. Because of that, the lookup is
+        all-or-nothing: if any batch fails the whole call raises and nothing is
+        returned, so a transient error can never make a still-existing issue
+        look deleted.
 
         Args:
             - issue_keys: Issue keys such as ``["SEC-1", "SEC-2"]``. Values that do
@@ -2272,8 +2275,10 @@ class Jira:
             - JiraGetIssuesStatusError: Failed to get the issues status
         """
         valid_keys: list[str] = []
+        seen_keys: set[str] = set()
         for key in issue_keys or []:
-            if key and self.ISSUE_KEY_REGEX.match(str(key)) and key not in valid_keys:
+            if key and self.ISSUE_KEY_REGEX.match(str(key)) and key not in seen_keys:
+                seen_keys.add(key)
                 valid_keys.append(key)
         if not valid_keys:
             return {}

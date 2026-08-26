@@ -2230,10 +2230,47 @@ class TestJiraIntegration:
         ]
         assert sizes == [100, 100, 50]
 
-    def test_get_issues_status_without_keys(self):
+    @patch("prowler.lib.outputs.jira.jira.requests.post")
+    def test_get_issues_status_without_keys(self, mock_post):
         """Test that no request is made when there is nothing to look up."""
         assert self.jira_integration.get_issues_status([]) == {}
         assert self.jira_integration.get_issues_status(["nope"]) == {}
+        mock_post.assert_not_called()
+
+    @patch.object(Jira, "get_access_token", return_value="valid_access_token")
+    @patch.object(
+        Jira, "cloud_id", new_callable=PropertyMock, return_value="test_cloud_id"
+    )
+    @patch("prowler.lib.outputs.jira.jira.requests.post")
+    def test_get_issues_status_is_all_or_nothing(
+        self, mock_post, mock_cloud_id, mock_get_access_token
+    ):
+        """Test that a failing later batch discards earlier batches (no partial result)."""
+        # To disable vulture
+        mock_cloud_id = mock_cloud_id
+        mock_get_access_token = mock_get_access_token
+
+        ok = MagicMock()
+        ok.status_code = 200
+        ok.json.return_value = {
+            "issues": [
+                {
+                    "id": "1",
+                    "key": "SEC-1",
+                    "fields": {
+                        "status": {"name": "Done", "statusCategory": {"key": "done"}}
+                    },
+                }
+            ]
+        }
+        failed = MagicMock()
+        failed.status_code = 502
+        failed.text = "bad gateway"
+        mock_post.side_effect = [ok, failed]
+
+        with pytest.raises(JiraGetIssuesStatusResponseError):
+            self.jira_integration.get_issues_status([f"SEC-{i}" for i in range(1, 102)])
+        assert mock_post.call_count == 2
 
     @patch.object(Jira, "get_access_token", return_value="valid_access_token")
     @patch.object(
