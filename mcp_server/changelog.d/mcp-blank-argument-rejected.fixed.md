@@ -1,1 +1,0 @@
-A blank identifier is now rejected by name before the request goes out: passing `prowler_run_attack_paths_query` an empty `query_id` answered with Prowler's `This field may not be blank`, which named no argument, and the same gap existed on every tool taking a required id and on the optional values that overwrite a stored one

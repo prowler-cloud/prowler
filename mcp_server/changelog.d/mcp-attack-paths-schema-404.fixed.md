@@ -1,1 +1,0 @@
-`prowler_get_attack_paths_cartography_schema` now tells a scan whose graph records no Cartography schema apart from a scan ID that does not exist, instead of answering both with a bare "check the arguments"

@@ -1,1 +1,0 @@
-`prowler_connect_provider` now reports a connection test it could not run as `not_tested` instead of `failed`, so an expired Prowler credential, a rate limit or a timeout is no longer read as the provider's own credentials being rejected

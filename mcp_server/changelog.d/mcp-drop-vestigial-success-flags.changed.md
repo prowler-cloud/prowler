@@ -1,1 +1,0 @@
-Tool results no longer carry a success flag that could only ever be true (`status`, `success`, `deleted`, `scheduled`): now that a failure is an MCP tool execution error, a flag with one reachable value says nothing and suggests there is a failure shape to branch on in the result, which there is not

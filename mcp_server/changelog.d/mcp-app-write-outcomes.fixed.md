@@ -1,1 +1,0 @@
-`prowler_trigger_scan` and `prowler_delete_provider` no longer report a failure as a successful result, and a deletion still running after the polling window is reported as in progress rather than as a failure that invites a retry of a destructive call
