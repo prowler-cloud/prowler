@@ -78,6 +78,18 @@ def test_an_unreadable_api_answer_is_not_blamed_on_the_arguments():
     assert "argument" not in message
 
 
+def test_an_unreadable_api_answer_is_never_called_safe_to_repeat():
+    """`post`, `patch` and `delete` reach this too, and a write may have landed."""
+    message = _describe_failure(
+        ProwlerAPIInvalidResponse(
+            "POST /providers answered 201 with a body that is not JSON"
+        )
+    )
+
+    assert "unknown" in message
+    assert "check the current state" in message
+
+
 def test_an_argument_this_server_rejected_is_repeated_verbatim():
     """`InvalidArgument` exists to mark a message as one we wrote."""
     message = _describe_failure(

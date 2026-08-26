@@ -148,11 +148,10 @@ def _describe_failure(exc: BaseException) -> str | None:
         return _describe_prowler_api_error(exc)
 
     if isinstance(exc, ProwlerAPIInvalidResponse):
-        # Nothing about the call was wrong, so it must not be described as if it
-        # were -- and the body that could not be parsed stays in the log.
         return (
-            "Prowler answered with a body this server could not read. The call "
-            "itself was accepted, so retrying it unchanged is safe."
+            "Prowler answered with a body this server could not read, so the "
+            "outcome of the call is unknown. If it changes anything, check the "
+            "current state before sending it again."
         )
 
     if isinstance(exc, ProwlerAPIUnreachable):

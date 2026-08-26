@@ -128,6 +128,18 @@ async def test_an_unreadable_body_is_not_an_argument_failure(
     assert "gateway timeout" not in str(raised.value)
 
 
+async def test_a_mutation_with_an_unreadable_answer_still_raises(
+    mock_api_client, mock_router
+):
+    """`post` shares the parse, so a write cannot answer with an unread body."""
+    mock_router.add(
+        "POST", "/api/v1/providers", status=201, text="<html>accepted</html>"
+    )
+
+    with pytest.raises(ProwlerAPIInvalidResponse):
+        await mock_api_client.post("/providers", json_data={"data": {}})
+
+
 async def test_a_request_that_got_no_answer_is_not_an_api_error(
     mock_api_client, mock_router
 ):
