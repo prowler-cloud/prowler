@@ -446,9 +446,14 @@ describe("exploring the graph", () => {
   test("Back to Full View restores the graph and keeps the expanded findings context fitted", async ({
     mountWith,
   }) => {
-    const graph = await mountWith(fixtures.large(20));
+    const fixture = fixtures.large(20);
+    const graph = await mountWith(fixture);
     await graph.executeQuery();
     await graph.waitForGraphStable(16);
+
+    const fullGraphResourceIds = (fixture.queryResult?.nodes ?? [])
+      .filter((node) => !isProwlerFindingNode(node.labels))
+      .map((node) => node.id);
 
     const expandedResource = await graph.clickFirstResourceNode();
     const expandedResourceId = expandedResource.getAttribute("data-id");
@@ -458,19 +463,21 @@ describe("exploring the graph", () => {
       .map((node) => node.getAttribute("data-id"))
       .filter((id): id is string => id !== null);
     const contextualNodeIds = [expandedResourceId!, ...expandedFindingIds];
+    const expectedVisibleNodeIds = [
+      ...fullGraphResourceIds,
+      ...expandedFindingIds,
+    ].sort();
     expect(graph.findingNodes.length).toBeGreaterThan(0);
 
     await graph.clickFirstFindingNode();
     expect(graph.isInFilteredView).toBe(true);
 
     await graph.exitFilteredView();
-    await graph.waitForGraphStable(16);
+    await graph.waitForGraphStable(expectedVisibleNodeIds.length);
     await graph.waitForNodesInViewport(contextualNodeIds);
 
     expect(graph.isInFilteredView).toBe(false);
-    expect(graph.renderedNodeIds).toEqual(
-      expect.arrayContaining(contextualNodeIds),
-    );
+    expect(graph.renderedNodeIds.sort()).toEqual(expectedVisibleNodeIds);
   });
   test("clicking a resource without findings does nothing", async ({
     mountWith,
@@ -488,21 +495,6 @@ describe("exploring the graph", () => {
     expect(graph.findingNodes.length).toBe(0);
     expect(graph.hasNodeDetailsModal).toBe(false);
     expect(graph.hasNodeActionDialog).toBe(false);
-  });
-
-  test("exiting the filtered view restores the full graph", async ({
-    mountWith,
-  }) => {
-    const graph = await mountWith();
-    await graph.executeQuery();
-    await graph.waitForGraphStable(3);
-    await graph.expandAllFindings();
-
-    const fullNodes = graph.nodes.length;
-    await graph.clickFirstFindingNode();
-    await graph.exitFilteredView();
-    await graph.waitForGraphStable(fullNodes);
-    expect(graph.isInFilteredView).toBe(false);
   });
 
   test("hovering a node highlights its path edges", async ({ mountWith }) => {
