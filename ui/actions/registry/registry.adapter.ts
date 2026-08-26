@@ -221,15 +221,9 @@ const catalogAttributesSchema = z.object({
   description: z.string().optional(),
   latest_version: z.string().optional(),
   providers: z.array(z.string().trim().min(1)).optional(),
-  owners: z
-    .array(
-      z.object({
-        name: z.string().trim().min(1),
-        type: z.string().trim().min(1),
-        logo_url: z.string().optional(),
-      }),
-    )
-    .optional(),
+  owner_name: z.string().optional(),
+  owner_type: z.string().optional(),
+  owner_logo_url: z.string().nullable().optional(),
   is_verified: z.boolean().optional(),
   is_official: z.boolean().optional(),
   is_meta: z.boolean().optional(),
@@ -331,13 +325,7 @@ function adaptCatalogArtifact(
     providers: unique(
       a.providers?.map((provider) => provider.toLowerCase()) ?? [],
     ),
-    owners: uniqueOwners(
-      (a.owners ?? []).map(({ logo_url, name, type }) => ({
-        name,
-        type,
-        logoUrl: text(logo_url),
-      })),
-    ),
+    owners: flatOwner(a),
     isVerified: a.is_verified ?? false,
     isOfficial: a.is_official ?? false,
     isMeta: a.is_meta ?? false,
@@ -396,6 +384,19 @@ function mergeText(left: string | undefined, right: string | undefined) {
 }
 function unique(values: string[]) {
   return Array.from(new Set(values)).sort(compare);
+}
+function flatOwner(
+  a: z.infer<typeof catalogAttributesSchema>,
+): RegistryCatalogArtifact["owners"] {
+  const name = text(a.owner_name);
+  if (!name) return [];
+  return [
+    {
+      name,
+      type: text(a.owner_type) ?? "",
+      logoUrl: text(a.owner_logo_url ?? undefined),
+    },
+  ];
 }
 function uniqueOwners(owners: RegistryCatalogArtifact["owners"]) {
   return Array.from(

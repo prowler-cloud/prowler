@@ -50,13 +50,10 @@ const catalogPages = [
       is_verified: true,
       latest_version: "1.2.3",
       name: "Fixture network audit",
-      owners: [
-        {
-          logo_url: `http://127.0.0.1:${port}/__fixture__/registry/owner-logo.png`,
-          name: "Prowler Fixtures",
-          type: "organization",
-        },
-      ],
+      owner_logo_url: `http://127.0.0.1:${port}/__fixture__/registry/owner-logo.png`,
+      owner_name: "Prowler Fixtures",
+      owner_slug: "prowler-fixtures",
+      owner_type: "organization",
       providers: ["aws"],
     }),
     catalogArtifact("fixture-shared-policy", {
@@ -64,7 +61,9 @@ const catalogPages = [
       has_compliance: true,
       latest_version: "2.0.0",
       name: "Fixture shared policy",
-      owners: [{ name: "Community Fixtures", type: "organization" }],
+      owner_name: "Community Fixtures",
+      owner_slug: "community-fixtures",
+      owner_type: "organization",
       providers: ["aws"],
     }),
   ],
