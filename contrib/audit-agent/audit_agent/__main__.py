@@ -239,7 +239,7 @@ def main(argv: list[str] | None = None) -> int:
             )
         )
 
-    if gate_hits and args.pr:
+    if gate_hits:
         return 1
     return 0
 

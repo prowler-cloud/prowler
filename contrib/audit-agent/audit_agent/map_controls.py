@@ -16,6 +16,11 @@ DEFAULT_MAPPING_PATH = (
 )
 
 
+def _as_mapping(value: Any) -> dict[str, Any]:
+    """Coerce non-dict metadata values to an empty mapping before nested gets."""
+    return value if isinstance(value, dict) else {}
+
+
 def load_mapping(path: Path | None = None) -> dict[str, Any]:
     mapping_path = path or DEFAULT_MAPPING_PATH
     with mapping_path.open(encoding="utf-8") as fh:
@@ -65,9 +70,12 @@ def normalize_finding(raw: dict[str, Any]) -> dict[str, Any]:
     )
     # Prefer short check id from metadata when present
     unmapped = raw.get("unmapped") or {}
+    if not isinstance(unmapped, dict):
+        unmapped = {}
+    metadata = _as_mapping(raw.get("metadata"))
     check_id = (
         unmapped.get("check_id")
-        or raw.get("metadata", {}).get("event_code")
+        or metadata.get("event_code")
         or check_id
     )
 
@@ -96,8 +104,10 @@ def normalize_finding(raw: dict[str, Any]) -> dict[str, Any]:
     if isinstance(data, dict) and data.get("path"):
         file_path = data["path"]
 
+    product = _as_mapping(metadata.get("product"))
+    feature = _as_mapping(product.get("feature"))
     service = (
-        raw.get("metadata", {}).get("product", {}).get("feature", {}).get("name")
+        feature.get("name")
         or unmapped.get("service_name")
         or raw.get("ServiceName")
         or ""
@@ -105,7 +115,7 @@ def normalize_finding(raw: dict[str, Any]) -> dict[str, Any]:
 
     provider = (
         unmapped.get("provider")
-        or raw.get("metadata", {}).get("product", {}).get("name")
+        or product.get("name")
         or raw.get("Provider")
         or ""
     )
@@ -166,6 +176,11 @@ def map_finding(finding: dict[str, Any], mapping: dict[str, Any] | None = None) 
     return normalized
 
 
+def _compact_match_text(value: str) -> str:
+    """Strip separators so secret.scanning matches secret_scanning / secret scanning."""
+    return "".join(ch for ch in value.lower() if ch.isalnum())
+
+
 def _heuristic_controls(
     normalized: dict[str, Any], mapping: dict[str, Any]
 ) -> tuple[list[str], list[str]]:
@@ -180,6 +195,7 @@ def _heuristic_controls(
             provider,
         ]
     ).lower()
+    haystack_compact = _compact_match_text(haystack)
 
     by_scanner = mapping.get("by_scanner", {})
     scanner_key = None
@@ -199,16 +215,16 @@ def _heuristic_controls(
     # GitHub provider checks (branch protection, secret scanning, Actions, …)
     if provider == "github" or "repository_" in haystack or "githubactions" in haystack:
         for rule in mapping.get("github_rules", []):
-            needles = [n.lower() for n in rule.get("match", [])]
-            if any(n in haystack for n in needles):
+            needles = [_compact_match_text(n) for n in rule.get("match", [])]
+            if any(n and n in haystack_compact for n in needles):
                 return (
                     list(rule.get("soc2", [])),
                     list(rule.get("iso27001", [])),
                 )
 
     for rule in mapping.get("misconfig_rules", []):
-        needles = [n.lower() for n in rule.get("match", [])]
-        if any(n in haystack for n in needles):
+        needles = [_compact_match_text(n) for n in rule.get("match", [])]
+        if any(n and n in haystack_compact for n in needles):
             return (
                 list(rule.get("soc2", [])),
                 list(rule.get("iso27001", [])),
@@ -229,23 +245,39 @@ def map_findings(
     return [f for f in mapped if f.get("status") == "FAIL"]
 
 
+def _paths_align(finding_path: str, changed_path: str) -> bool:
+    """True when paths are equal or one is a directory-bounded suffix of the other.
+
+    Bare basenames (e.g. ``main.tf`` vs ``submodule/main.tf``) do not match.
+    """
+    fp = finding_path.replace("\\", "/").strip("/")
+    cf = changed_path.replace("\\", "/").strip("/")
+    if not fp or not cf:
+        return False
+    if fp == cf:
+        return True
+    if "/" in cf and fp.endswith("/" + cf):
+        return True
+    if "/" in fp and cf.endswith("/" + fp):
+        return True
+    return False
+
+
 def filter_by_files(
     findings: list[dict[str, Any]], changed_files: set[str] | None
 ) -> list[dict[str, Any]]:
     if not changed_files:
         return findings
+    changed = {cf for cf in changed_files if cf}
     result = []
     for finding in findings:
-        file_path = finding.get("file") or ""
-        if any(
-            file_path == cf or file_path.endswith(cf) or cf.endswith(file_path)
-            for cf in changed_files
-            if cf
-        ):
-            result.append(finding)
+        file_path = (finding.get("file") or "").strip()
+        if not file_path:
+            # Pathless provider findings (e.g. GitHub repo-level checks) stay visible
+            if str(finding.get("provider") or "").lower() == "github":
+                result.append(finding)
             continue
-        # Also match basename / relative path containment
-        if any(cf in file_path or file_path in cf for cf in changed_files if cf):
+        if any(_paths_align(file_path, cf) for cf in changed):
             result.append(finding)
     return result
 
@@ -282,7 +314,5 @@ def _fw(control: str) -> str:
 
 
 def _controls_label(soc2: list[str], iso: list[str]) -> str:
-    parts = [f"CC{c[2:]}" if c.startswith("CC") else c for c in soc2]
-    # Keep original ids
     parts = list(soc2) + list(iso)
     return " / ".join(parts) if parts else "unmapped"

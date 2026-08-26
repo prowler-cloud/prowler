@@ -17,6 +17,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: prowler-cloud/prowler/.github/actions/prowler-audit@master
+      - uses: prowler-cloud/prowler/.github/actions/prowler-audit@e18cb600360428f1d4bca8e2cd066d031ed9194c
         with:
           mode: pr

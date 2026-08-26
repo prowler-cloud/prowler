@@ -192,15 +192,49 @@ def test_map_github_branch_protection(mapping):
             "status": "FAIL",
             "severity": "high",
             "title": "Default branch requires multiple approvals",
-            "file": "amardizdarevic45-wq/Lindle",
+            "file": "acme/demo",
             "service": "repository",
             "provider": "github",
         },
         mapping,
     )
-    assert finding["mapping_source"] == "heuristic"
     assert "CC8.1" in finding["soc2"]
     assert "A.8.9" in finding["iso27001"]
+
+
+def test_filter_by_files_skips_empty_and_avoids_basename_false_positives():
+    findings = [
+        {"file": "main.tf", "title": "root", "provider": "iac"},
+        {"file": "submodule/main.tf", "title": "nested", "provider": "iac"},
+        {"file": "", "title": "empty", "provider": "iac"},
+        {"file": "", "title": "github-pathless", "provider": "github"},
+    ]
+    filtered = filter_by_files(findings, {"submodule/main.tf"})
+    titles = {f["title"] for f in filtered}
+    assert titles == {"nested", "github-pathless"}
+
+
+def test_minimal_yaml_lists():
+    from audit_agent.config import _minimal_yaml
+
+    data = _minimal_yaml(
+        "\n".join(
+            [
+                "frameworks:",
+                "  - soc2",
+                "  - iso27001_2022",
+                "providers:",
+                "  - iac",
+                "reporting:",
+                "  issue_labels:",
+                "    - compliance",
+                "    - prowler-audit",
+            ]
+        )
+    )
+    assert data["frameworks"] == ["soc2", "iso27001_2022"]
+    assert data["providers"] == ["iac"]
+    assert data["reporting"]["issue_labels"] == ["compliance", "prowler-audit"]
 
 
 def test_save_audit_report(tmp_path):

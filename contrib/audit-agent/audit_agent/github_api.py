@@ -18,8 +18,16 @@ def _ssl_context() -> ssl.SSLContext:
         import certifi
 
         return ssl.create_default_context(cafile=certifi.where())
-    except Exception:
-        return ssl._create_unverified_context()
+    except ImportError:
+        return ssl.create_default_context()
+
+
+def _ensure_audit_label(labels: list[str]) -> list[str]:
+    """Always include prowler-audit so issue listing/filtering stays consistent."""
+    result = list(labels)
+    if "prowler-audit" not in result:
+        result.append("prowler-audit")
+    return result
 
 
 class GitHubClient:
@@ -78,14 +86,26 @@ class GitHubClient:
         return files
 
     def upsert_pr_comment(self, owner: str, repo: str, pr_number: int, body: str) -> None:
-        comments = self._request(
-            "GET",
-            f"/repos/{owner}/{repo}/issues/{pr_number}/comments?per_page=100",
-        ) or []
-        existing = next(
-            (c for c in comments if COMMENT_MARKER in (c.get("body") or "")),
-            None,
-        )
+        existing = None
+        page = 1
+        while existing is None:
+            comments = (
+                self._request(
+                    "GET",
+                    f"/repos/{owner}/{repo}/issues/{pr_number}/comments"
+                    f"?per_page=100&page={page}",
+                )
+                or []
+            )
+            if not comments:
+                break
+            existing = next(
+                (c for c in comments if COMMENT_MARKER in (c.get("body") or "")),
+                None,
+            )
+            if existing or len(comments) < 100:
+                break
+            page += 1
         if existing:
             self._request(
                 "PATCH",
@@ -156,7 +176,7 @@ class GitHubClient:
                     body={
                         "title": title[:250],
                         "body": body,
-                        "labels": labels,
+                        "labels": _ensure_audit_label(labels),
                     },
                 )
 
@@ -286,7 +306,9 @@ def report_to_github(
         result["conclusion"] = conclusion
 
     if sync_issues and reporting.get("issues", True):
-        labels = reporting.get("issue_labels") or ["compliance", "prowler-audit"]
+        labels = _ensure_audit_label(
+            reporting.get("issue_labels") or ["compliance", "prowler-audit"]
+        )
         client.sync_control_issues(owner, repo, findings, labels)
         result["issues"] = True
 

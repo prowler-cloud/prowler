@@ -38,16 +38,18 @@ runs:
         IMAGE_TAG: ${{ inputs.image-tag }}
         FAIL_ON: ${{ inputs.fail-on-findings }}
         PR_NUMBER: ${{ github.event.pull_request.number }}
+        CONFIG_PATH: ${{ inputs.config-path }}
       run: |
         set -euo pipefail
-        if [ -d "${GITHUB_WORKSPACE}/contrib/audit-agent/audit_agent" ]; then
-          export PYTHONPATH="${GITHUB_WORKSPACE}/contrib/audit-agent:${PYTHONPATH:-}"
+        REPO_ROOT="$(cd "${GITHUB_ACTION_PATH}/../../.." && pwd)"
+        if [ -d "${REPO_ROOT}/contrib/audit-agent/audit_agent" ]; then
+          export PYTHONPATH="${REPO_ROOT}/contrib/audit-agent:${PYTHONPATH:-}"
         else
           echo "::error::audit_agent package not found under contrib/audit-agent (checkout prowler or vendor the package)"
           exit 1
         fi
 
-        args=(--repo "${GITHUB_REPOSITORY}" --image-tag "${IMAGE_TAG}" --json-summary)
+        args=(--repo "${GITHUB_REPOSITORY}" --image-tag "${IMAGE_TAG}" --json-summary --config "${CONFIG_PATH}")
         if [ "${MODE}" = "pr" ] && [ "${GITHUB_EVENT_NAME}" = "pull_request" ] && [ -n "${PR_NUMBER}" ]; then
           args+=(--pr "${PR_NUMBER}")
         elif [ "${MODE}" = "scheduled" ]; then

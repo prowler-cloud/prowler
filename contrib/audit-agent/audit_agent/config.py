@@ -114,16 +114,6 @@ def fetch_remote_config(owner: str, repo: str, token: str, ref: str = "HEAD") ->
         if exc.code == 404:
             return dict(DEFAULT_CONFIG)
         raise
-    except ssl.SSLError:
-        # Retry once without custom verification only for config fetch
-        ctx = ssl._create_unverified_context()
-        try:
-            with urlopen(req, timeout=30, context=ctx) as resp:
-                text = resp.read().decode("utf-8")
-        except HTTPError as exc:
-            if exc.code == 404:
-                return dict(DEFAULT_CONFIG)
-            raise
 
     data = _parse_config_text(text)
     if not isinstance(data, dict):
@@ -157,8 +147,24 @@ def _parse_config_text(text: str) -> Any:
 def _minimal_yaml(text: str) -> dict[str, Any]:
     """Very small YAML subset for the documented config shape."""
     root: dict[str, Any] = {}
-    stack: list[tuple[int, dict[str, Any] | list[Any]]] = [(0, root)]
+    stack: list[tuple[int, dict[str, Any]]] = [(0, root)]
     pending_list_key: str | None = None
+
+    def _ensure_mapping_for_pending(container: dict[str, Any]) -> dict[str, Any]:
+        """If pending key still holds an empty list placeholder, promote it to a map."""
+        nonlocal pending_list_key
+        if pending_list_key is None:
+            return container
+        value = container.get(pending_list_key)
+        if isinstance(value, list) and len(value) == 0:
+            nested: dict[str, Any] = {}
+            container[pending_list_key] = nested
+            pending_list_key = None
+            return nested
+        if isinstance(value, dict):
+            pending_list_key = None
+            return value
+        return container
 
     for raw in text.splitlines():
         if not raw.strip() or raw.strip().startswith("#"):
@@ -174,13 +180,12 @@ def _minimal_yaml(text: str) -> dict[str, Any]:
 
         if line.startswith("- "):
             value = _scalar(line[2:].strip())
-            if isinstance(current, list):
-                current.append(value)
-            elif pending_list_key and isinstance(current, dict):
-                current.setdefault(pending_list_key, [])
-                if not isinstance(current[pending_list_key], list):
-                    current[pending_list_key] = []
-                current[pending_list_key].append(value)
+            if pending_list_key and isinstance(current, dict):
+                lst = current.get(pending_list_key)
+                if not isinstance(lst, list):
+                    lst = []
+                    current[pending_list_key] = lst
+                lst.append(value)
             continue
 
         if ":" not in line:
@@ -191,17 +196,19 @@ def _minimal_yaml(text: str) -> dict[str, Any]:
         rest = rest.strip()
 
         if rest == "":
-            # Nested map or list follows
             if not isinstance(current, dict):
                 continue
-            # Peek: could be list or dict — create dict; list items use pending_list_key
-            nested: dict[str, Any] = {}
-            current[key] = nested
-            stack.append((indent + 2, nested))
+            current = _ensure_mapping_for_pending(current)
+            # Start as an empty list; promote to a mapping if nested keys appear
+            current[key] = []
             pending_list_key = key
+            stack.append((indent + 2, current))
         else:
             if not isinstance(current, dict):
                 continue
+            current = _ensure_mapping_for_pending(current)
+            if current is not stack[-1][1]:
+                stack.append((indent, current))
             current[key] = _scalar(rest)
             pending_list_key = None
 

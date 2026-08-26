@@ -13,6 +13,9 @@ from typing import Any
 
 from audit_agent.prowler_compliance import frameworks_for_provider, repo_root
 
+# Stall watchdog for local Prowler invocations (import probe and full scan).
+_PROWLER_SUBPROCESS_TIMEOUT_S = 60 * 30
+
 
 def run_prowler_audit(
     repo_full_name: str,
@@ -125,24 +128,32 @@ def _run_provider(
     if local:
         full_cmd = [*local, *cmd]
         print(f"Running Prowler via: {' '.join(local)} …", file=sys.stderr)
-        result = subprocess.run(
-            full_cmd,
-            check=False,
-            env=env,
-            cwd=str(repo_root()),
-            capture_output=True,
-            text=True,
-        )
-        # Prowler exits 3 when findings exist — that is success for us
-        if result.returncode in (0, 3):
-            findings = load_ocsf_findings(output_dir)
-            if findings or result.returncode == 0:
-                return findings
-        err = (result.stderr or result.stdout or "").strip()
-        errors.append(
-            f"local CLI failed (exit {result.returncode}): {err[-2000:] or 'no output'}"
-        )
-        print(errors[-1], file=sys.stderr)
+        try:
+            result = subprocess.run(
+                full_cmd,
+                check=False,
+                env=env,
+                cwd=str(repo_root()),
+                capture_output=True,
+                text=True,
+                timeout=_PROWLER_SUBPROCESS_TIMEOUT_S,
+            )
+        except subprocess.TimeoutExpired as exc:
+            errors.append(
+                f"local CLI timed out after {exc.timeout}s"
+            )
+            print(errors[-1], file=sys.stderr)
+        else:
+            # Prowler exits 3 when findings exist — that is success for us
+            if result.returncode in (0, 3):
+                findings = load_ocsf_findings(output_dir)
+                if findings or result.returncode == 0:
+                    return findings
+            err = (result.stderr or result.stdout or "").strip()
+            errors.append(
+                f"local CLI failed (exit {result.returncode}): {err[-2000:] or 'no output'}"
+            )
+            print(errors[-1], file=sys.stderr)
 
     # Only use Docker when the image is already present (avoid hung pulls)
     if _docker_image_present(image_tag):
@@ -211,13 +222,32 @@ def _gh_clone(repo_full_name: str, dest: Path, token: str) -> None:
         raise RuntimeError("Need `gh` or `git` to clone the target repository")
 
     print(f"Cloning {repo_full_name} with git …", file=sys.stderr)
-    url = f"https://x-access-token:{token}@github.com/{repo_full_name}.git"
-    result = subprocess.run(
-        [git, "clone", "--depth", "1", url, str(dest)],
-        check=False,
-        capture_output=True,
-        text=True,
-    )
+    # Keep the token out of argv and out of the clone's .git/config
+    cred_file = dest.parent / f".git-credentials-{os.getpid()}"
+    try:
+        cred_file.write_text(
+            f"https://x-access-token:{token}@github.com\n",
+            encoding="utf-8",
+        )
+        cred_file.chmod(0o600)
+        result = subprocess.run(
+            [
+                git,
+                "-c",
+                f"credential.helper=store --file={cred_file}",
+                "clone",
+                "--depth",
+                "1",
+                f"https://github.com/{repo_full_name}.git",
+                str(dest),
+            ],
+            check=False,
+            env=env,
+            capture_output=True,
+            text=True,
+        )
+    finally:
+        cred_file.unlink(missing_ok=True)
     if result.returncode != 0:
         raise RuntimeError(
             f"git clone failed: {(result.stderr or result.stdout or '').strip()}"
@@ -271,7 +301,7 @@ def _can_import_prowler(python_prefix: list[str]) -> bool:
             capture_output=True,
             text=True,
             cwd=str(repo_root()),
-            timeout=60,
+            timeout=_PROWLER_SUBPROCESS_TIMEOUT_S,
         )
         return result.returncode == 0
     except (OSError, subprocess.TimeoutExpired):
@@ -352,10 +382,10 @@ def _docker_prowler(
         "docker",
         "run",
         "--rm",
-        "-e",
-        f"GITHUB_PERSONAL_ACCESS_TOKEN={token}",
-        "-e",
-        f"GITHUB_TOKEN={token}",
+        "--env",
+        "GITHUB_PERSONAL_ACCESS_TOKEN",
+        "--env",
+        "GITHUB_TOKEN",
         "-v",
         f"{output_dir.resolve()}:{container_out}",
         "-w",
@@ -365,6 +395,11 @@ def _docker_prowler(
     ]
     if scan_path and scan_path.is_dir():
         cmd[3:3] = ["-v", f"{scan_path.resolve()}:{container_repo}:ro"]
+
+    run_env = os.environ.copy()
+    run_env.update(env)
+    run_env["GITHUB_PERSONAL_ACCESS_TOKEN"] = token
+    run_env["GITHUB_TOKEN"] = token
 
     for key in (
         "AWS_ACCESS_KEY_ID",
@@ -376,11 +411,16 @@ def _docker_prowler(
         "AZURE_TENANT_ID",
         "GOOGLE_APPLICATION_CREDENTIALS",
     ):
-        if env.get(key):
-            cmd[3:3] = ["-e", f"{key}={env[key]}"]
+        if run_env.get(key):
+            cmd[3:3] = ["--env", key]
 
-    subprocess.run(cmd, check=False)
-    return load_ocsf_findings(output_dir)
+    result = subprocess.run(cmd, check=False, env=run_env)
+    findings = load_ocsf_findings(output_dir)
+    if result.returncode not in (0, 3) and not findings:
+        raise RuntimeError(
+            f"Docker Prowler failed (exit {result.returncode}) with no findings"
+        )
+    return findings
 
 
 def run_iac_scan(*args: Any, **kwargs: Any) -> tuple[list[dict[str, Any]], Path]:

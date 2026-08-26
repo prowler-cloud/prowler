@@ -161,7 +161,8 @@ packages = ["prowler", "dashboard"]
 
 [tool.pytest.ini_options]
 pythonpath = [
-  "."
+  ".",
+  "contrib/audit-agent",
 ]
 
 [tool.pytest_env]
