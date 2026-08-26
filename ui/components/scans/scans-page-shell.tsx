@@ -28,6 +28,7 @@ import type { ScanScheduleCapability } from "@/types/schedules";
 const viewFirstScanFlow = getFlowById("view-first-scan")!;
 
 import { CliImportBanner } from "./cli-import-banner";
+import { ImportFindingsModal } from "./import-findings-modal";
 import { LaunchScanModal } from "./launch-scan-modal";
 import { ScansFilterBar } from "./scans-filter-bar";
 import { ScansProvidersEmptyState } from "./scans-providers-empty-state";
@@ -37,6 +38,7 @@ interface ScansPageShellProps {
   providers: ProviderProps[];
   providerGroups?: ProviderGroup[];
   hasManageScansPermission: boolean;
+  hasManageIngestionsPermission?: boolean;
   activeScanCount?: number;
   children: ReactNode;
   /** Cloud overlay seam for the launch-scan modal. */
@@ -48,6 +50,7 @@ export function ScansPageShell({
   providers,
   providerGroups = [],
   hasManageScansPermission,
+  hasManageIngestionsPermission = false,
   activeScanCount = 0,
   children,
   scanScheduleCapability,
@@ -59,6 +62,7 @@ export function ScansPageShell({
     () =>
       searchParams.get(LAUNCH_SCAN_SEARCH_PARAM) === LAUNCH_SCAN_SEARCH_VALUE,
   );
+  const [isImportFindingsOpen, setIsImportFindingsOpen] = useState(false);
   const isLaunchScanModalOpen = useScansStore(
     (state) => state.isLaunchScanModalOpen,
   );
@@ -155,6 +159,17 @@ export function ScansPageShell({
         >
           Launch Scan
         </Button>
+        {isCloudEnvironment && hasManageIngestionsPermission && (
+          <Button
+            type="button"
+            size="lg"
+            variant="secondary"
+            onClick={() => setIsImportFindingsOpen(true)}
+            className="w-full md:w-auto"
+          >
+            Import Findings
+          </Button>
+        )}
       </div>
 
       {isCloudEnvironment && <CliImportBanner />}
@@ -194,6 +209,10 @@ export function ScansPageShell({
         providers={providers}
         capability={scanScheduleCapability}
         isScanLimitReached={isScanLimitReached}
+      />
+      <ImportFindingsModal
+        open={isImportFindingsOpen}
+        onOpenChange={setIsImportFindingsOpen}
       />
     </div>
   );

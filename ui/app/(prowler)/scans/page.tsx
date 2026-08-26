@@ -193,6 +193,9 @@ export default async function Scans({
   const hasManageScansPermission = Boolean(
     session?.user?.permissions?.manage_scans,
   );
+  const hasManageIngestionsPermission = Boolean(
+    session?.user?.permissions?.manage_ingestions,
+  );
   const activeScanCount = await getActiveScanCount(resolvedSearchParams);
   // Mirrors ScansPageShell's launch gate: it only mounts the view-first-scan trigger
   // when Launch Scan is usable (manage_scans + a connected provider). Without the
@@ -218,6 +221,7 @@ export default async function Scans({
         providers={providers}
         providerGroups={providerGroups}
         hasManageScansPermission={hasManageScansPermission}
+        hasManageIngestionsPermission={hasManageIngestionsPermission}
         activeScanCount={activeScanCount}
       >
         <Suspense

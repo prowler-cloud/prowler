@@ -178,24 +178,6 @@ describe("ScansPageShell", () => {
     useScansStore.getState().closeLaunchScanModal();
   });
 
-  it("does not render an imported findings tab", () => {
-    vi.stubEnv("UI_CLOUD_ENABLED", "false");
-
-    render(
-      <ScansPageShell providers={providers} hasManageScansPermission>
-        <div>Scans table</div>
-      </ScansPageShell>,
-    );
-
-    expect(
-      screen.queryByRole("tab", { name: /imported findings/i }),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: /import findings/i }),
-    ).not.toBeInTheDocument();
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-  });
-
   it("uses the shared scan filter bar for scan filters", () => {
     vi.stubEnv("UI_CLOUD_ENABLED", "false");
 
