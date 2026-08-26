@@ -516,6 +516,14 @@ class Test_Organization_Default_Workflow_Permissions:
         assert (
             organization_service._get_default_workflow_permissions(mock_org) == "read"
         ), "The organization default GITHUB_TOKEN permissions should be read from the Actions permissions endpoint"
+        mock_org._requester.requestJsonAndCheck.assert_called_once_with(
+            "GET",
+            "/orgs/test-org/actions/permissions/workflow",
+            headers={
+                "Accept": "application/vnd.github+json",
+                "X-GitHub-Api-Version": "2022-11-28",
+            },
+        )
 
     def test_default_workflow_permissions_missing_field(self):
         """Test that a response without the permissions field yields no value"""

@@ -8,7 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "NotDefined",
-  "ResourceGroup": "devops",
+  "ResourceGroup": "governance",
   "Description": "GitHub Actions organization settings define the default **GITHUB_TOKEN** permissions granted to every workflow run.\n\nThe evaluation determines whether the organization default is read-only, so that workflows have to opt in to write access through an explicit `permissions` block.",
   "Risk": "A write-capable default **GITHUB_TOKEN** is available to every workflow in the organization, so any compromised step or dependency inherits it, leading to:\n- Code integrity loss from pushed commits, moved tags, or altered releases\n- Supply chain compromise when the token publishes packages or artifacts\n- Weakened review controls when the token acts on pull requests and issues",
   "RelatedUrl": "",
