@@ -297,16 +297,16 @@ class AttackPathsTools(BaseTool):
             # Two 404s again, told apart by whether Prowler wrote a JSON:API
             # error. Absent means the scan resolved and its graph simply records
             # no Cartography module, so the ID is not the thing to change.
-            if e.status_code == 404 and e.detail is None:
-                raise ToolError(
-                    f"Scan {scan_id} has no Cartography schema recorded, so there is "
-                    "nothing to write custom queries against. Its graph was built "
-                    "without the module metadata this reads. Use "
-                    "prowler_list_attack_paths_queries for the ready-made queries of "
-                    "this scan, which do not need the schema."
-                )
             if e.status_code == 404:
-                raise self._unknown_scan_error(scan_id)
+                if e.detail is None:
+                    raise ToolError(
+                        f"Scan {scan_id} has no Cartography schema recorded, so there is "
+                        "nothing to write custom queries against. Use "
+                        "prowler_list_attack_paths_queries for the ready-made queries of "
+                        "this scan, which do not need the schema."
+                    )
+                else:
+                    raise self._unknown_scan_error(scan_id)
             raise
 
         schema = AttackPathCartographySchema.from_api_response(api_response)
@@ -321,21 +321,15 @@ class AttackPathsTools(BaseTool):
     def _unknown_scan_error(scan_id: str) -> ToolError:
         """Describe a scan ID Prowler could not resolve to an Attack Paths scan.
 
-        Prowler's own reason for it -- a bare "Not found." -- names neither the
-        resource it looked in nor the tool that returns a usable ID, and the
-        mistake it stands for is a regular scan ID: an Attack Paths scan is a
-        separate resource, and Prowler only creates one for an AWS provider.
-
         Returns:
             The ``ToolError`` for the caller to raise. Built without a ``from``
             clause on purpose: the sentence is the final word, not a wrapper
             around the API's.
         """
         return ToolError(
-            f"Prowler has no Attack Paths scan with ID {scan_id} that this credential "
-            "can see. Attack Paths scans are a different resource from regular scans, "
-            "so an ID from prowler_search_scans or prowler_get_scan never resolves "
-            "here, and Attack Paths only covers AWS providers, so a scan of any other "
-            "provider has no Attack Paths scan to name. Use "
-            "prowler_list_attack_paths_scans to get an ID these tools take."
+            f"Prowler has no Attack Paths scan with ID {scan_id}. These are a "
+            "different resource from regular scans and only exist for AWS "
+            "providers, so an ID from prowler_search_scans or prowler_get_scan "
+            "never resolves here. Use prowler_list_attack_paths_scans to get an "
+            "ID these tools take."
         )
