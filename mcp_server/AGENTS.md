@@ -113,7 +113,8 @@ make test-mcp   # Run the MCP test suite exactly as CI does
 - [ ] Models use `MinimalSerializerMixin`
 - [ ] API responses transformed to simplified models
 - [ ] No hardcoded secrets
-- [ ] Error handling returns structured responses
+- [ ] Failures are raised, not returned (see `prowler_mcp_server/lib/errors.py`);
+      a returned error dict is reported to the client as a success
 - [ ] Parameter descriptions use Pydantic `Field()`
 - [ ] Tests added under `mcp_server/tests/`, mirroring the source path below the
       package root (`prowler_mcp_server/prowler_app/tools/` -> `tests/prowler_app/tools/`),

@@ -137,8 +137,8 @@ export const SlackCallback = () => {
           Connected to {workspaceName ?? "your Slack workspace"}
         </AlertTitle>
         <AlertDescription>
-          Taking you back to the Slack integration, where you can choose the
-          channel Prowler posts to.
+          Taking you back to the Slack integration, where you can authorize the
+          channels Prowler posts to.
         </AlertDescription>
       </Alert>
     );

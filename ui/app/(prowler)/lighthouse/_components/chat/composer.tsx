@@ -4,6 +4,7 @@ import { CornerDownLeft, Settings, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import { type ReactNode, type SubmitEvent, useRef } from "react";
 
+import type { LighthouseV2Message } from "@/app/(prowler)/lighthouse/_types";
 import { Alert, AlertDescription } from "@/components/shadcn/alert";
 import { Button } from "@/components/shadcn/button/button";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
@@ -16,8 +17,13 @@ import {
 import { useMountEffect } from "@/hooks/use-mount-effect";
 import { LIGHTHOUSE_ROUTE } from "@/lib/lighthouse-routes";
 
+import type { LighthouseFeedbackSurvey } from "./lighthouse-feedback-survey";
+import { LighthouseOutcomeFeedbackControls } from "./message-bubble";
+
 interface ChatComposerPanelProps {
   feedback: string | null;
+  feedbackTarget?: LighthouseV2Message;
+  feedbackSurvey?: LighthouseFeedbackSurvey | null;
   canRetry: boolean;
   onRetry: () => void;
   onDismissFeedback: () => void;
@@ -36,6 +42,8 @@ interface ChatComposerPanelProps {
 // two branches can't drift apart.
 export function ChatComposerPanel({
   feedback,
+  feedbackTarget,
+  feedbackSurvey,
   canRetry,
   onRetry,
   onDismissFeedback,
@@ -45,6 +53,8 @@ export function ChatComposerPanel({
     <>
       <ChatFeedbackBar
         feedback={feedback}
+        feedbackTarget={feedbackTarget}
+        feedbackSurvey={feedbackSurvey}
         canRetry={canRetry}
         onRetry={onRetry}
         onDismiss={onDismissFeedback}
@@ -56,11 +66,15 @@ export function ChatComposerPanel({
 
 function ChatFeedbackBar({
   feedback,
+  feedbackTarget,
+  feedbackSurvey,
   canRetry,
   onRetry,
   onDismiss,
 }: {
   feedback: string | null;
+  feedbackTarget?: LighthouseV2Message;
+  feedbackSurvey?: LighthouseFeedbackSurvey | null;
   canRetry: boolean;
   onRetry: () => void;
   onDismiss: () => void;
@@ -72,11 +86,19 @@ function ChatFeedbackBar({
       <TriangleAlert />
       <AlertDescription className="flex items-center justify-between gap-3">
         <span>{feedback}</span>
-        {canRetry && (
-          <Button type="button" variant="outline" size="sm" onClick={onRetry}>
-            Retry
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {feedbackTarget && feedbackSurvey && (
+            <LighthouseOutcomeFeedbackControls
+              message={feedbackTarget}
+              survey={feedbackSurvey}
+            />
+          )}
+          {canRetry && (
+            <Button type="button" variant="outline" size="sm" onClick={onRetry}>
+              Retry
+            </Button>
+          )}
+        </div>
       </AlertDescription>
     </Alert>
   );
