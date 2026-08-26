@@ -443,25 +443,34 @@ describe("exploring the graph", () => {
     await graph.waitForViewportChange(expandedViewport);
   });
 
-  test("returning from a finding keeps the expanded findings context fitted", async ({
+  test("Back to Full View restores the graph and keeps the expanded findings context fitted", async ({
     mountWith,
   }) => {
     const graph = await mountWith(fixtures.large(20));
     await graph.executeQuery();
     await graph.waitForGraphStable(16);
 
-    await graph.clickFirstResourceNode();
+    const expandedResource = await graph.clickFirstResourceNode();
+    const expandedResourceId = expandedResource.getAttribute("data-id");
+    expect(expandedResourceId).toBeTruthy();
+
+    const expandedFindingIds = graph.findingNodes
+      .map((node) => node.getAttribute("data-id"))
+      .filter((id): id is string => id !== null);
+    const contextualNodeIds = [expandedResourceId!, ...expandedFindingIds];
     expect(graph.findingNodes.length).toBeGreaterThan(0);
 
     await graph.clickFirstFindingNode();
     expect(graph.isInFilteredView).toBe(true);
 
     await graph.exitFilteredView();
+    await graph.waitForGraphStable(16);
+    await graph.waitForNodesInViewport(contextualNodeIds);
 
     expect(graph.isInFilteredView).toBe(false);
-
-    expect(graph.findingNodes.length).toBeGreaterThan(0);
-    expect(graph.viewportTransform).toBeTruthy();
+    expect(graph.renderedNodeIds).toEqual(
+      expect.arrayContaining(contextualNodeIds),
+    );
   });
   test("clicking a resource without findings does nothing", async ({
     mountWith,
@@ -635,27 +644,6 @@ describe("auto-fitting the viewport", () => {
     await graph.waitForViewportChange(beforeFilter);
 
     expect(graph.viewportTransform).not.toBe(beforeFilter);
-  });
-
-  test("Back to Full View re-fits the viewport for the full graph", async ({
-    mountWith,
-  }) => {
-    const graph = await mountWith();
-    await graph.executeQuery();
-    await graph.waitForGraphStable(3);
-    await graph.expandAllFindings();
-
-    const beforeFilter = graph.viewportTransform;
-    await graph.clickFirstFindingNode();
-    expect(graph.isInFilteredView).toBe(true);
-    await graph.waitForViewportChange(beforeFilter);
-    const filterT = graph.viewportTransform;
-
-    await graph.exitFilteredView();
-    await graph.waitForGraphStable(3);
-    await graph.waitForViewportChange(filterT);
-
-    expect(graph.viewportTransform).not.toBe(filterT);
   });
 });
 
