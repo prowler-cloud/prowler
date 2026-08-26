@@ -143,6 +143,30 @@ describe("Scans page import findings", () => {
     expect(harness.ingestionPostCount).toBe(1);
   });
 
+  it("refuses to swap the file while an import is in flight", async () => {
+    const harness = new ScansPageHarness(ingestionFixture());
+    await harness.mount({
+      uploadDelayMs: 3000,
+      statusSequence: ["processing", "completed"],
+    });
+    await harness.openImportFindings();
+    await harness.selectFile(new File(["[]"], "findings.ocsf.json"));
+    await harness.submitImport();
+    await harness.waitForUploadInProgress();
+
+    expect(harness.isDropzoneFrozen()).toBe(true);
+    await harness.attemptDrop(new File(["[]"], "swapped.ocsf.json"));
+    await expect(harness.activateDropzoneWithKeyboard()).resolves.toBe(false);
+
+    expect(harness.selectedFileName()).toBe("findings.ocsf.json");
+    // A swap would reset the state to ready, re-enabling submission for a
+    // second, concurrent POST.
+    expect(harness.isUploadInProgress()).toBe(true);
+
+    await harness.waitForTrackingStatus();
+    expect(harness.ingestionPostCount).toBe(1);
+  });
+
   it("notifies when an import completes while the dialog is closed", async () => {
     const harness = new ScansPageHarness(ingestionFixture());
     await harness.mount({ statusSequence: ["processing", "completed"] });

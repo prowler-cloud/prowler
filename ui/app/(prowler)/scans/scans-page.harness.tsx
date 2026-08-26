@@ -82,6 +82,16 @@ export class ScansPageHarness extends BrowserHarness<IngestionFixture> {
   }
 
   async dropFile(file: File): Promise<void> {
+    await this.attemptDrop(file);
+    await this.waitFor(() =>
+      this.q('[data-testid="import-findings-dropzone"]')?.textContent?.includes(
+        file.name,
+      ),
+    );
+  }
+
+  /** Drop a file without waiting for it to be taken: a frozen zone refuses it. */
+  async attemptDrop(file: File): Promise<void> {
     const dropzone = await this.waitFor(() =>
       this.q('[data-testid="import-findings-dropzone"] [role="button"]'),
     );
@@ -90,10 +100,21 @@ export class ScansPageHarness extends BrowserHarness<IngestionFixture> {
     dropzone.dispatchEvent(
       new DragEvent("drop", { bubbles: true, dataTransfer }),
     );
-    await this.waitFor(() =>
-      this.q('[data-testid="import-findings-dropzone"]')?.textContent?.includes(
-        file.name,
-      ),
+  }
+
+  /**
+   * Whether the zone refuses a new file. Both halves matter: the drop and
+   * keyboard paths gate on the zone, the file picker on the input itself.
+   */
+  isDropzoneFrozen(): boolean {
+    const zone = this.q(
+      '[data-testid="import-findings-dropzone"] [role="button"]',
+    );
+    const input = this.container.querySelector<HTMLInputElement>(
+      '[data-testid="import-findings-dropzone"] input[type="file"]',
+    );
+    return (
+      zone?.getAttribute("aria-disabled") === "true" && input?.disabled === true
     );
   }
 
