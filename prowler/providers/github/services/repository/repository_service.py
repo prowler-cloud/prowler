@@ -398,6 +398,10 @@ class Repository(GithubService):
                             try:
                                 repo = client.get_repo(repo_name)
                                 self._process_repository(repo, repos)
+                            except github.RateLimitExceededException:
+                                # Rate limits are transient and must not leave the
+                                # scan running with an incomplete repository set
+                                raise
                             except Exception as error:
                                 self._handle_github_api_error(
                                     error, "accessing repository", repo_name
@@ -414,6 +418,10 @@ class Repository(GithubService):
                                 )
                                 for repo in repos_list:
                                     self._process_repository(repo, repos)
+                            except github.RateLimitExceededException:
+                                # Rate limits are transient and must not leave the
+                                # scan running with an incomplete repository set
+                                raise
                             except Exception as error:
                                 self._handle_github_api_error(
                                     error, "processing organization", org_name
@@ -433,6 +441,10 @@ class Repository(GithubService):
                                 )
                                 for repo in repos_list:
                                     self._process_repository(repo, repos)
+                            except github.RateLimitExceededException:
+                                # Rate limits are transient and must not leave the
+                                # scan running with an incomplete repository set
+                                raise
                             except Exception as error:
                                 self._handle_github_api_error(
                                     error, "processing organization", org_name
@@ -455,6 +467,10 @@ class Repository(GithubService):
                                 f"Processing repository found via GraphQL: {repo.full_name}"
                             )
                             self._process_repository(repo, repos)
+                        except github.RateLimitExceededException:
+                            # Rate limits are transient and must not leave the
+                            # scan running with an incomplete repository set
+                            raise
                         except Exception as error:
                             if hasattr(self, "_handle_github_api_error"):
                                 self._handle_github_api_error(

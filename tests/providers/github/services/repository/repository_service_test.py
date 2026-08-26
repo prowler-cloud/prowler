@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
 
+import pytest
 import requests
 from github import GithubException, RateLimitExceededException
 from pytest import raises
@@ -435,7 +436,7 @@ class Test_Repository_ErrorHandling:
                 assert any("Access denied" in msg for msg in log_messages)
 
     def test_rate_limit_error_handling(self):
-        """Test that rate limit errors are logged appropriately"""
+        """Test that rate limit errors propagate out of _list_repositories"""
         provider = set_mocked_github_provider()
         provider.repositories = ["owner/repo1"]
         provider.organizations = []
@@ -452,17 +453,10 @@ class Test_Repository_ErrorHandling:
             repository_service.clients = [mock_client]
             repository_service.provider = provider
 
-            with patch(
-                "prowler.providers.github.lib.service.service.logger"
-            ) as mock_logger:
-                # Rate limit errors should be caught and logged at the outer level
-                repos = repository_service._list_repositories()
-
-                # Should be empty due to rate limit error
-                assert len(repos) == 0
-                # Should log rate limit error
-                mock_logger.error.assert_called()
-                assert "Rate limit exceeded" in str(mock_logger.error.call_args)
+            # Rate limits are transient: the scan must abort rather than
+            # continue with an incomplete repository set
+            with pytest.raises(RateLimitExceededException):
+                repository_service._list_repositories()
 
 
 class Test_Repository_BranchProtectionRulesets:
