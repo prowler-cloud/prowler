@@ -6,6 +6,7 @@ import requests
 from github import GithubException, RateLimitExceededException
 from pytest import raises
 
+from prowler.providers.github.models import GithubAppIdentityInfo
 from prowler.providers.github.services.repository.repository_service import (
     Branch,
     Repo,
@@ -1010,6 +1011,33 @@ class Test_Repository_Default_Workflow_Permissions:
         with raises(RateLimitExceededException):
             self.repository_service._get_default_workflow_permissions(repo)
 
+    def test_default_workflow_permissions_unexpected_api_error(self):
+        """Test that an unexpected GitHub API error is logged and yields no value."""
+        repo = self._mock_repo()
+        repo._requester.requestJsonAndCheck.side_effect = GithubException(
+            500, "Internal Server Error", None
+        )
+
+        with patch(
+            "prowler.providers.github.services.repository.repository_service.logger"
+        ):
+            assert (
+                self.repository_service._get_default_workflow_permissions(repo) is None
+            ), "An unexpected API error should not produce a value"
+
+    def test_default_workflow_permissions_unexpected_error(self):
+        """Test that an unexpected non-GitHub error is logged and yields no value."""
+        repo = self._mock_repo()
+        repo._requester.requestJsonAndCheck.side_effect = Exception("unexpected")
+
+        with patch(
+            "prowler.providers.github.services.repository.repository_service.logger"
+        ) as mock_logger:
+            assert (
+                self.repository_service._get_default_workflow_permissions(repo) is None
+            ), "An unexpected error should not produce a value"
+            mock_logger.error.assert_called()
+
     def test_process_repository_propagates_rate_limit(self):
         """Test that a rate limit while reading the setting aborts repository processing."""
         self.repository_service.clients = []
@@ -1038,3 +1066,88 @@ class Test_Repository_Default_Workflow_Permissions:
             self.repository_service._process_repository(repo, repos)
 
         assert repos == {}, "A rate limited repository should not be partially recorded"
+
+
+class Test_Repository_List_Rate_Limit_Propagation:
+    """Rate limits must abort _list_repositories instead of being swallowed."""
+
+    def _service_with(self, provider, mock_client):
+        with patch.object(Repository, "__init__", lambda *_: None):
+            repository_service = Repository(provider)
+            repository_service.clients = [mock_client]
+            repository_service.provider = provider
+            return repository_service
+
+    def test_direct_repositories_branch_propagates_rate_limit(self):
+        """A rate limit on a directly requested repository aborts the listing."""
+        provider = set_mocked_github_provider()
+        provider.repositories = ["owner/repo1"]
+        provider.organizations = []
+
+        mock_client = MagicMock()
+        mock_client.get_repo.side_effect = RateLimitExceededException(
+            429, "Rate limit exceeded", None
+        )
+
+        repository_service = self._service_with(provider, mock_client)
+
+        with raises(RateLimitExceededException):
+            repository_service._list_repositories()
+
+    def test_organization_branch_propagates_rate_limit(self):
+        """A rate limit while listing an organization's repositories aborts the listing."""
+        provider = set_mocked_github_provider()
+        provider.repositories = []
+        provider.organizations = ["org1"]
+
+        mock_client = MagicMock()
+        with patch.object(
+            Repository,
+            "_get_repositories_from_owner",
+            side_effect=RateLimitExceededException(429, "Rate limit exceeded", None),
+        ):
+            repository_service = self._service_with(provider, mock_client)
+
+            with raises(RateLimitExceededException):
+                repository_service._list_repositories()
+
+    def test_installations_branch_propagates_rate_limit(self):
+        """A rate limit while listing a GitHub App installation's repositories aborts the listing."""
+        provider = set_mocked_github_provider()
+        provider.repositories = []
+        provider.organizations = []
+        provider.identity = GithubAppIdentityInfo(
+            app_id="1", app_name="app", installations=["installed-org"]
+        )
+
+        mock_client = MagicMock()
+        with patch.object(
+            Repository,
+            "_get_repositories_from_owner",
+            side_effect=RateLimitExceededException(429, "Rate limit exceeded", None),
+        ):
+            repository_service = self._service_with(provider, mock_client)
+
+            with raises(RateLimitExceededException):
+                repository_service._list_repositories()
+
+    def test_graphql_branch_propagates_rate_limit(self):
+        """A rate limit on a repository discovered via GraphQL aborts the listing."""
+        provider = set_mocked_github_provider()
+        provider.repositories = []
+        provider.organizations = []
+
+        mock_client = MagicMock()
+        mock_client.get_repo.side_effect = RateLimitExceededException(
+            429, "Rate limit exceeded", None
+        )
+
+        repository_service = self._service_with(provider, mock_client)
+
+        with patch.object(
+            repository_service,
+            "_get_accessible_repos_graphql",
+            return_value=["owner1/repo1"],
+        ):
+            with raises(RateLimitExceededException):
+                repository_service._list_repositories()
