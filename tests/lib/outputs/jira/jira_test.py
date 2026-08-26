@@ -2235,6 +2235,10 @@ class TestJiraIntegration:
         """Test that no request is made when there is nothing to look up."""
         assert self.jira_integration.get_issues_status([]) == {}
         assert self.jira_integration.get_issues_status(["nope"]) == {}
+        # `$` alone would accept a key with a trailing newline; the regex must
+        # match the whole string
+        assert self.jira_integration.get_issues_status(["SEC-1\n"]) == {}
+        assert self.jira_integration.get_issues_status([" SEC-1", "SEC-1 "]) == {}
         mock_post.assert_not_called()
 
     @patch.object(Jira, "get_access_token", return_value="valid_access_token")

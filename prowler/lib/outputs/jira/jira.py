@@ -2277,7 +2277,11 @@ class Jira:
         valid_keys: list[str] = []
         seen_keys: set[str] = set()
         for key in issue_keys or []:
-            if key and self.ISSUE_KEY_REGEX.match(str(key)) and key not in seen_keys:
+            if (
+                key
+                and self.ISSUE_KEY_REGEX.fullmatch(str(key))
+                and key not in seen_keys
+            ):
                 seen_keys.add(key)
                 valid_keys.append(key)
         if not valid_keys:
