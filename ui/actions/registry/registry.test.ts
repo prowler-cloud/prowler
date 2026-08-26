@@ -366,15 +366,9 @@ describe("Registry guarded reads", () => {
     expect(evaluateAccessMock).toHaveBeenCalledTimes(2);
   });
 
-  it("treats a matching credential task as pending until status confirms connection", async () => {
+  it("returns the accepted validation task immediately without server-side polling", async () => {
     // Given
     const key = "registry-test-key";
-    pollTaskUntilSettledMock.mockResolvedValue({
-      ok: true,
-      state: "completed",
-      task: { attributes: { result: { key } } },
-      result: { key },
-    });
     fetchMock
       .mockResolvedValueOnce(credentialResponse(noCredential))
       .mockResolvedValueOnce(
@@ -385,21 +379,19 @@ describe("Registry guarded reads", () => {
             headers: { "Content-Location": "/api/v1/tasks/task-123" },
           },
         ),
-      )
-      .mockResolvedValueOnce(credentialResponse());
+      );
 
     // When
     const result = await submitRegistryCredential(key);
 
     // Then
     expect(result).toEqual({
-      status: "connected",
-      credential: activeCredential,
+      status: "submitted",
+      taskId: "task-123",
+      priorConfigured: false,
     });
-    expect(pollTaskUntilSettledMock).toHaveBeenCalledWith("task-123", {
-      maxAttempts: 20,
-      delayMs: 3000,
-    });
+    expect(pollTaskUntilSettledMock).not.toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(fetchMock).toHaveBeenNthCalledWith(
       2,
       "https://api.test/api/v1/registry/credential",
@@ -415,9 +407,32 @@ describe("Registry guarded reads", () => {
       }),
     );
     expect(JSON.stringify(result)).not.toContain(key);
-    expect(result).not.toHaveProperty("taskId");
-    expect(result).not.toHaveProperty("result");
-    expect(result).not.toHaveProperty("task");
+  });
+
+  it("marks an accepted replacement as superseding a configured credential", async () => {
+    // Given
+    fetchMock
+      .mockResolvedValueOnce(credentialResponse(activeCredential))
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({ data: { type: "tasks", id: "task-456" } }),
+          {
+            status: 202,
+            headers: { "Content-Location": "/api/v1/tasks/task-456" },
+          },
+        ),
+      );
+
+    // When
+    const result = await submitRegistryCredential("registry-replacement-key");
+
+    // Then
+    expect(result).toEqual({
+      status: "submitted",
+      taskId: "task-456",
+      priorConfigured: true,
+    });
+    expect(pollTaskUntilSettledMock).not.toHaveBeenCalled();
   });
 
   it("re-reads credential and preserves authoritative My artifacts after disconnect", async () => {
@@ -454,7 +469,7 @@ describe("Registry guarded reads", () => {
     );
   });
 
-  it("re-reads authoritatively after a task-binding mismatch without returning the key", async () => {
+  it("rejects a task-binding mismatch without returning the key or a task", async () => {
     // Given
     const key = "registry-test-key";
     fetchMock
@@ -467,19 +482,19 @@ describe("Registry guarded reads", () => {
             headers: { "Content-Location": "/api/v1/tasks/other-task" },
           },
         ),
-      )
-      .mockResolvedValueOnce(credentialResponse(pendingCredential));
+      );
 
     // When
     const result = await submitRegistryCredential(key);
 
     // Then
     expect(result).toEqual({ status: "error" });
-    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(pollTaskUntilSettledMock).not.toHaveBeenCalled();
     expect(JSON.stringify(result)).not.toContain(key);
   });
 
-  it("re-reads authoritatively after malformed accepted task data", async () => {
+  it("rejects malformed accepted task data without a task identity", async () => {
     // Given
     fetchMock
       .mockResolvedValueOnce(credentialResponse(noCredential))
@@ -491,15 +506,15 @@ describe("Registry guarded reads", () => {
             headers: { "Content-Location": "/api/v1/tasks/task-123" },
           },
         ),
-      )
-      .mockResolvedValueOnce(credentialResponse(noCredential));
+      );
 
     // When
     const result = await submitRegistryCredential("registry-test-key");
 
     // Then
     expect(result).toEqual({ status: "error" });
-    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(result).not.toHaveProperty("taskId");
   });
 
   it("preserves an active credential after a rejected replacement", async () => {
@@ -507,8 +522,7 @@ describe("Registry guarded reads", () => {
     const key = "registry-replacement-key";
     fetchMock
       .mockResolvedValueOnce(credentialResponse(activeCredential))
-      .mockResolvedValueOnce(jsonResponse({ errors: [] }, 500))
-      .mockResolvedValueOnce(credentialResponse(activeCredential));
+      .mockResolvedValueOnce(jsonResponse({ errors: [] }, 500));
 
     // When
     const result = await submitRegistryCredential(key);
@@ -518,134 +532,25 @@ describe("Registry guarded reads", () => {
       status: "replacement_failed",
       credential: activeCredential,
     });
-    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(JSON.stringify(result)).not.toContain(key);
   });
 
-  it("keeps an initial validation timeout pending after the authoritative re-read", async () => {
+  it("handles action authorization failures safely", async () => {
     // Given
-    const key = "registry-test-key";
-    pollTaskUntilSettledMock.mockResolvedValue({
-      ok: false,
-      error: "Task timeout",
-      task: { attributes: { result: { key } } },
-      result: { key },
-    });
     fetchMock
       .mockResolvedValueOnce(credentialResponse(noCredential))
-      .mockResolvedValueOnce(
-        new Response(
-          JSON.stringify({ data: { type: "tasks", id: "task-123" } }),
-          {
-            status: 202,
-            headers: { "Content-Location": "/api/v1/tasks/task-123" },
-          },
-        ),
-      )
-      .mockResolvedValueOnce(credentialResponse(pendingCredential));
-
-    // When
-    const result = await submitRegistryCredential(key);
-
-    // Then
-    expect(result).toEqual({
-      status: "pending",
-      credential: pendingCredential,
-    });
-    expect(JSON.stringify(result)).not.toContain(key);
-  });
-
-  it("does not promote a cancelled replacement despite an active credential re-read", async () => {
-    // Given
-    const key = "registry-replacement-key";
-    pollTaskUntilSettledMock.mockResolvedValue({
-      ok: true,
-      state: "cancelled",
-      task: { attributes: { result: { key } } },
-      result: { key },
-    });
-    fetchMock
-      .mockResolvedValueOnce(credentialResponse(activeCredential))
-      .mockResolvedValueOnce(
-        new Response(
-          JSON.stringify({ data: { type: "tasks", id: "task-123" } }),
-          {
-            status: 202,
-            headers: { "Content-Location": "/api/v1/tasks/task-123" },
-          },
-        ),
-      )
-      .mockResolvedValueOnce(credentialResponse(activeCredential));
-
-    // When
-    const result = await submitRegistryCredential(key);
-
-    // Then
-    expect(result).toEqual({
-      status: "replacement_failed",
-      credential: activeCredential,
-    });
-    expect(JSON.stringify(result)).not.toContain(key);
-  });
-
-  it("keeps a completed task generic when authoritative status is not active", async () => {
-    // Given
-    pollTaskUntilSettledMock.mockResolvedValue({
-      ok: true,
-      state: "completed",
-    });
-    fetchMock
-      .mockResolvedValueOnce(credentialResponse(noCredential))
-      .mockResolvedValueOnce(
-        new Response(
-          JSON.stringify({ data: { type: "tasks", id: "task-123" } }),
-          {
-            status: 202,
-            headers: { "Content-Location": "/api/v1/tasks/task-123" },
-          },
-        ),
-      )
-      .mockResolvedValueOnce(credentialResponse(noCredential));
-
-    // When
-    const result = await submitRegistryCredential("registry-test-key");
-
-    // Then
-    expect(result).toEqual({ status: "invalid", credential: noCredential });
-  });
-
-  it("handles malformed authoritative status and action authorization failures safely", async () => {
-    // Given
-    pollTaskUntilSettledMock.mockResolvedValue({
-      ok: true,
-      state: "completed",
-    });
-    fetchMock
-      .mockResolvedValueOnce(credentialResponse(noCredential))
-      .mockResolvedValueOnce(
-        new Response(
-          JSON.stringify({ data: { type: "tasks", id: "task-123" } }),
-          {
-            status: 202,
-            headers: { "Content-Location": "/api/v1/tasks/task-123" },
-          },
-        ),
-      )
-      .mockResolvedValueOnce(jsonResponse({ data: { attributes: {} } }))
-      .mockResolvedValueOnce(credentialResponse(activeCredential))
       .mockResolvedValueOnce(jsonResponse({ errors: [] }, 401))
       .mockResolvedValueOnce(jsonResponse({ errors: [] }, 403));
 
     // When
-    const malformed = await submitRegistryCredential("registry-test-key");
     const rejected = await submitRegistryCredential("registry-test-key");
     const disconnected = await disconnectRegistryCredential();
 
     // Then
-    expect(malformed).toEqual({ status: "error" });
     expect(rejected).toEqual({ status: "access_denied" });
     expect(disconnected).toEqual({ status: "access_denied" });
-    expect(fetchMock).toHaveBeenCalledTimes(6);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 
   it("confirms an exact Add only after My artifacts reports the artifact", async () => {

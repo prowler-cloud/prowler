@@ -14,25 +14,38 @@ const {
   addRegistryArtifactMock,
   disconnectRegistryCredentialMock,
   refreshRegistryCollectionsMock,
+  refreshRegistryCredentialMock,
   refreshRegistryEligibilityMock,
   removeRegistryArtifactMock,
   submitRegistryCredentialMock,
+  trackAndPollTaskMock,
 } = vi.hoisted(() => ({
   addRegistryArtifactMock: vi.fn(),
   disconnectRegistryCredentialMock: vi.fn(),
   refreshRegistryCollectionsMock: vi.fn(),
+  refreshRegistryCredentialMock: vi.fn(),
   refreshRegistryEligibilityMock: vi.fn(),
   removeRegistryArtifactMock: vi.fn(),
   submitRegistryCredentialMock: vi.fn(),
+  trackAndPollTaskMock: vi.fn(),
 }));
 
 vi.mock("@/actions/registry/registry", () => ({
   addRegistryArtifact: addRegistryArtifactMock,
   disconnectRegistryCredential: disconnectRegistryCredentialMock,
   refreshRegistryCollections: refreshRegistryCollectionsMock,
+  refreshRegistryCredential: refreshRegistryCredentialMock,
   refreshRegistryEligibility: refreshRegistryEligibilityMock,
   removeRegistryArtifact: removeRegistryArtifactMock,
   submitRegistryCredential: submitRegistryCredentialMock,
+}));
+
+// The credential flow watches its validation task through the house task
+// watcher; integration tests drive settlement through this mock the same way
+// `lib/jira-dispatch-execution.test.ts` does.
+vi.mock("@/store/task-watcher/store", () => ({
+  TASK_WATCHER_STATUS: { PENDING: "pending", READY: "ready", ERROR: "error" },
+  trackAndPollTask: trackAndPollTaskMock,
 }));
 
 const render = (
@@ -54,6 +67,23 @@ const onboardingState: RegistryBootstrapState = {
   },
   tenantArtifacts: [],
 };
+
+const validationPendingState: RegistryBootstrapState = {
+  status: "validation_pending",
+  credential: {
+    configured: true,
+    isValid: false,
+    scopes: [],
+    validationPending: true,
+  },
+  tenantArtifacts: [],
+};
+
+const submittedResult = (priorConfigured = false) => ({
+  status: "submitted" as const,
+  taskId: "registry-task-1",
+  priorConfigured,
+});
 
 const readyState: RegistryBootstrapState = {
   status: "ready",
@@ -179,13 +209,16 @@ describe("RegistryExplorer", () => {
     addRegistryArtifactMock.mockReset();
     disconnectRegistryCredentialMock.mockReset();
     refreshRegistryCollectionsMock.mockReset();
+    refreshRegistryCredentialMock.mockReset();
     refreshRegistryEligibilityMock.mockReset();
     removeRegistryArtifactMock.mockReset();
     submitRegistryCredentialMock.mockReset();
+    trackAndPollTaskMock.mockReset();
     refreshRegistryEligibilityMock.mockResolvedValue({
       status: "eligible",
       leaseDurationMs: 30_000,
     });
+    trackAndPollTaskMock.mockResolvedValue({ status: "ready" });
   });
 
   describe("when Registry access is not connected", () => {
@@ -208,12 +241,10 @@ describe("RegistryExplorer", () => {
       expect(document.body.textContent).not.toContain("Search artifacts");
     });
 
-    it("keeps catalog controls unavailable while validation is pending", async () => {
+    it("keeps catalog controls unavailable while validation is pending without locking out the connect action", async () => {
       // Given / When
       const screen = await render(
-        <RegistryExplorer
-          initialState={{ ...onboardingState, status: "validation_pending" }}
-        />,
+        <RegistryExplorer initialState={validationPendingState} />,
       );
 
       // Then
@@ -222,8 +253,40 @@ describe("RegistryExplorer", () => {
       );
       await expect
         .element(screen.getByRole("button", { name: "Connect API key" }))
-        .toBeDisabled();
+        .toBeEnabled();
       expect(document.body.textContent).not.toContain("Search artifacts");
+    });
+
+    it("lets a replacement key supersede a pending validation from the banner", async () => {
+      // Given: a validation that never settled must not dead-end the user
+      submitRegistryCredentialMock.mockResolvedValue(submittedResult(true));
+      refreshRegistryCredentialMock.mockResolvedValue({
+        status: "status",
+        credential: readyState.credential,
+      });
+      refreshRegistryCollectionsMock.mockResolvedValue({
+        status: "complete",
+        catalog: readyState.catalog,
+        tenantArtifacts: readyState.tenantArtifacts,
+      });
+      const screen = await render(
+        <RegistryExplorer initialState={validationPendingState} />,
+      );
+
+      // When
+      await screen.getByRole("button", { name: "Connect API key" }).click();
+      await screen.getByLabelText("Registry key").fill("replacement-key");
+      await screen
+        .getByRole("button", { name: "Connect", exact: true })
+        .click();
+
+      // Then: the replacement POST supersedes the pending validation
+      await expect
+        .poll(() => submitRegistryCredentialMock.mock.calls)
+        .toEqual([["replacement-key"]]);
+      await expect
+        .poll(() => document.body.textContent)
+        .toContain("API key connected");
     });
   });
 
@@ -383,10 +446,11 @@ describe("RegistryExplorer", () => {
     expect(actionsOverlap).toBe(false);
   });
 
-  it("preserves the catalog while replacement validation hides credential controls", async () => {
+  it("preserves the catalog while a watched replacement keeps the form visible and disabled", async () => {
     // Given
     const key = "replacement-key";
-    submitRegistryCredentialMock.mockReturnValue(new Promise(() => {}));
+    submitRegistryCredentialMock.mockResolvedValue(submittedResult(true));
+    trackAndPollTaskMock.mockReturnValue(new Promise(() => {}));
     const screen = await render(<RegistryExplorer initialState={readyState} />);
 
     // When
@@ -394,27 +458,24 @@ describe("RegistryExplorer", () => {
     await screen.getByLabelText("Registry key").fill(key);
     await screen.getByRole("button", { name: "Replace key" }).click();
 
-    // Then
+    // Then: the form stays visible; submit shows a disabled Connecting… state
     await expect
-      .element(screen.getByRole("status"))
-      .toHaveTextContent("Validating your Registry key");
-    await expect
-      .element(screen.getByLabelText("Registry key"))
-      .not.toBeInTheDocument();
+      .element(screen.getByRole("button", { name: "Connecting…" }))
+      .toBeDisabled();
+    await expect.element(screen.getByLabelText("Registry key")).toBeDisabled();
+    await expect.element(screen.getByLabelText("Registry key")).toHaveValue("");
     await expect
       .element(screen.getByRole("button", { name: "Disconnect" }))
-      .not.toBeInTheDocument();
-    await expect
-      .element(screen.getByRole("button", { name: "Replace key" }))
-      .not.toBeInTheDocument();
+      .toBeDisabled();
     expect(document.body.textContent).toContain("Cloud guard");
     expect(document.body.innerHTML).not.toContain(key);
   });
 
-  it("announces credential validation while the submitted key stays write-only", async () => {
+  it("shows a disabled Connecting control while the submitted key stays write-only", async () => {
     // Given
     const key = "registry-test-key";
-    submitRegistryCredentialMock.mockReturnValue(new Promise(() => {}));
+    submitRegistryCredentialMock.mockResolvedValue(submittedResult());
+    trackAndPollTaskMock.mockReturnValue(new Promise(() => {}));
     const screen = await render(
       <RegistryExplorer initialState={onboardingState} />,
     );
@@ -424,14 +485,208 @@ describe("RegistryExplorer", () => {
     await screen.getByLabelText("Registry key").fill(key);
     await screen.getByRole("button", { name: "Connect", exact: true }).click();
 
+    // Then: the form stays visible while the watcher owns the wait
+    await expect
+      .element(screen.getByRole("button", { name: "Connecting…" }))
+      .toBeDisabled();
+    await expect.element(screen.getByLabelText("Registry key")).toBeDisabled();
+    await expect.element(screen.getByLabelText("Registry key")).toHaveValue("");
+    expect(document.body.innerHTML).not.toContain(key);
+  });
+
+  it("shows the invalid-key error inline below the input and keeps the form retry-capable", async () => {
+    // Given
+    submitRegistryCredentialMock.mockResolvedValue(submittedResult());
+    refreshRegistryCredentialMock.mockResolvedValue({
+      status: "status",
+      credential: onboardingState.credential,
+    });
+    const screen = await render(
+      <RegistryExplorer initialState={onboardingState} />,
+    );
+
+    // When
+    await screen.getByRole("button", { name: "Connect API key" }).click();
+    await screen.getByLabelText("Registry key").fill("bad-key");
+    await screen.getByRole("button", { name: "Connect", exact: true }).click();
+
+    // Then: the error renders inside the dialog, below the input
+    const dialog = document.querySelector('[role="dialog"]');
+    expect(dialog).not.toBeNull();
+    await expect
+      .poll(() => dialog!.querySelector('[role="alert"]')?.textContent)
+      .toContain("This Registry key is invalid. Check it and try again.");
+    const input = screen.getByLabelText("Registry key").element();
+    const alert = dialog!.querySelector('[role="alert"]');
+    expect(
+      input.compareDocumentPosition(alert!) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+
+    // Then: the form is re-enabled for a retry with the key cleared
+    await expect
+      .element(screen.getByRole("button", { name: "Connect", exact: true }))
+      .toBeEnabled();
+    await expect.element(screen.getByLabelText("Registry key")).toBeEnabled();
+    await expect.element(screen.getByLabelText("Registry key")).toHaveValue("");
+    await expect.element(screen.getByLabelText("Registry key")).toHaveFocus();
+
+    // When: a retry submits a fresh key through the same form
+    await screen.getByLabelText("Registry key").fill("second-key");
+    await screen.getByRole("button", { name: "Connect", exact: true }).click();
+
     // Then
     await expect
-      .element(screen.getByRole("status"))
-      .toHaveTextContent("Validating your Registry key");
+      .poll(() => submitRegistryCredentialMock.mock.calls)
+      .toEqual([["bad-key"], ["second-key"]]);
+  });
+
+  it("keeps a retry-capable form after a watcher failure", async () => {
+    // Given
+    submitRegistryCredentialMock.mockResolvedValue(submittedResult());
+    trackAndPollTaskMock.mockRejectedValue(new Error("watcher crashed"));
+    const screen = await render(
+      <RegistryExplorer initialState={onboardingState} />,
+    );
+
+    // When
+    await screen.getByRole("button", { name: "Connect API key" }).click();
+    await screen.getByLabelText("Registry key").fill("registry-test-key");
+    await screen.getByRole("button", { name: "Connect", exact: true }).click();
+
+    // Then
+    const dialog = document.querySelector('[role="dialog"]');
+    expect(dialog).not.toBeNull();
     await expect
-      .element(screen.getByLabelText("Registry key"))
-      .not.toBeInTheDocument();
-    expect(document.body.innerHTML).not.toContain(key);
+      .poll(() => dialog!.querySelector('[role="alert"]')?.textContent)
+      .toContain("Registry key validation could not be completed. Try again.");
+    await expect
+      .element(screen.getByRole("button", { name: "Connect", exact: true }))
+      .toBeEnabled();
+    await expect.element(screen.getByLabelText("Registry key")).toBeEnabled();
+  });
+
+  it("recovers the form with an inline notice when the watch exhausts without settling", async () => {
+    // Given: the watcher gives up while the task is still unsettled (e.g. no
+    // worker consumes the queue) — the tracking result resolves as pending
+    submitRegistryCredentialMock.mockResolvedValue(submittedResult());
+    trackAndPollTaskMock.mockResolvedValue({ status: "pending" });
+    refreshRegistryCredentialMock.mockResolvedValue({
+      status: "status",
+      credential: validationPendingState.credential,
+    });
+    const screen = await render(
+      <RegistryExplorer initialState={onboardingState} />,
+    );
+
+    // When
+    await screen.getByRole("button", { name: "Connect API key" }).click();
+    await screen.getByLabelText("Registry key").fill("stuck-key");
+    await screen.getByRole("button", { name: "Connect", exact: true }).click();
+
+    // Then: the dialog exits Connecting… into a retry-capable form
+    const dialog = document.querySelector('[role="dialog"]');
+    expect(dialog).not.toBeNull();
+    await expect
+      .poll(() => dialog!.querySelector('[role="alert"]')?.textContent)
+      .toContain(
+        "Registry key validation is taking longer than expected. Try again.",
+      );
+    await expect
+      .element(screen.getByRole("button", { name: "Connect", exact: true }))
+      .toBeEnabled();
+    await expect.element(screen.getByLabelText("Registry key")).toBeEnabled();
+    expect(document.body.textContent).toContain(
+      "Registry validation in progress",
+    );
+  });
+
+  it("recovers the form when the submit RPC rejects instead of stranding Connecting", async () => {
+    // Given: the server-action RPC itself rejects (network drop, dev reload)
+    submitRegistryCredentialMock.mockRejectedValue(new Error("rpc dropped"));
+    const screen = await render(
+      <RegistryExplorer initialState={onboardingState} />,
+    );
+
+    // When
+    await screen.getByRole("button", { name: "Connect API key" }).click();
+    await screen.getByLabelText("Registry key").fill("registry-test-key");
+    await screen.getByRole("button", { name: "Connect", exact: true }).click();
+
+    // Then: no stranded Connecting… — the form recovers with an inline error
+    const dialog = document.querySelector('[role="dialog"]');
+    expect(dialog).not.toBeNull();
+    await expect
+      .poll(() => dialog!.querySelector('[role="alert"]')?.textContent)
+      .toContain("Registry key validation could not be completed. Try again.");
+    await expect
+      .element(screen.getByRole("button", { name: "Connect", exact: true }))
+      .toBeEnabled();
+    await expect.element(screen.getByLabelText("Registry key")).toBeEnabled();
+  });
+
+  it("recovers the form when the post-connect collections RPC rejects", async () => {
+    // Given: validation succeeds but the collections server action rejects
+    submitRegistryCredentialMock.mockResolvedValue(submittedResult());
+    refreshRegistryCredentialMock.mockResolvedValue({
+      status: "status",
+      credential: readyState.credential,
+    });
+    refreshRegistryCollectionsMock.mockRejectedValue(new Error("rpc dropped"));
+    const screen = await render(
+      <RegistryExplorer initialState={onboardingState} />,
+    );
+
+    // When
+    await screen.getByRole("button", { name: "Connect API key" }).click();
+    await screen.getByLabelText("Registry key").fill("registry-test-key");
+    await screen.getByRole("button", { name: "Connect", exact: true }).click();
+
+    // Then: no stranded Connecting… — the form recovers with an inline error
+    const dialog = document.querySelector('[role="dialog"]');
+    expect(dialog).not.toBeNull();
+    await expect
+      .poll(() => dialog!.querySelector('[role="alert"]')?.textContent)
+      .toContain("Registry key validation could not be completed. Try again.");
+    await expect
+      .element(screen.getByRole("button", { name: "Connect", exact: true }))
+      .toBeEnabled();
+  });
+
+  it("keeps the dialog open with an inline notice when validation outlasts the watch", async () => {
+    // Given
+    submitRegistryCredentialMock.mockResolvedValue(submittedResult());
+    trackAndPollTaskMock.mockResolvedValue({
+      status: "error",
+      error: "The task expired before it could be tracked to completion.",
+    });
+    refreshRegistryCredentialMock.mockResolvedValue({
+      status: "status",
+      credential: validationPendingState.credential,
+    });
+    const screen = await render(
+      <RegistryExplorer initialState={onboardingState} />,
+    );
+
+    // When
+    await screen.getByRole("button", { name: "Connect API key" }).click();
+    await screen.getByLabelText("Registry key").fill("slow-key");
+    await screen.getByRole("button", { name: "Connect", exact: true }).click();
+
+    // Then: an inline notice keeps the retry path available in the dialog
+    const dialog = document.querySelector('[role="dialog"]');
+    expect(dialog).not.toBeNull();
+    await expect
+      .poll(() => dialog!.querySelector('[role="alert"]')?.textContent)
+      .toContain(
+        "Registry key validation is taking longer than expected. Try again.",
+      );
+    await expect
+      .element(screen.getByRole("button", { name: "Connect", exact: true }))
+      .toBeEnabled();
+    // And the underlying banner reflects the pending validation
+    expect(document.body.textContent).toContain(
+      "Registry validation in progress",
+    );
   });
 
   it("resets a write-only key before loading authoritative collections", async () => {
@@ -444,6 +699,10 @@ describe("RegistryExplorer", () => {
           resolveSubmission = resolve;
         }),
     );
+    refreshRegistryCredentialMock.mockResolvedValue({
+      status: "status",
+      credential: readyState.credential,
+    });
     refreshRegistryCollectionsMock.mockResolvedValue({
       status: "complete",
       catalog: readyState.catalog,
@@ -458,31 +717,32 @@ describe("RegistryExplorer", () => {
     await screen.getByLabelText("Registry key").fill(key);
     await screen.getByRole("button", { name: "Connect", exact: true }).click();
 
-    // Then
+    // Then: while the submission is in flight the key exists nowhere
     await expect
       .poll(() => submitRegistryCredentialMock.mock.calls)
       .toEqual([[key]]);
-    await expect
-      .element(screen.getByLabelText("Registry key"))
-      .not.toBeInTheDocument();
+    await expect.element(screen.getByLabelText("Registry key")).toHaveValue("");
     expect(document.body.innerHTML).not.toContain(key);
     expect(window.location.href).not.toContain(key);
     expect(localStorage.getItem("registry-key")).toBeNull();
     expect(sessionStorage.getItem("registry-key")).toBeNull();
 
-    // When
-    resolveSubmission?.({
-      status: "connected",
-      credential: readyState.credential,
-    });
+    // When: the accepted task settles through the watcher
+    resolveSubmission?.(submittedResult());
 
-    // Then
+    // Then: the explorer lands in ready state and announces the connection
     await expect
       .poll(() => document.body.textContent)
       .toContain("API key connected");
     await expect
       .element(screen.getByRole("tab", { name: /Explore/ }))
       .toBeVisible();
+    await expect
+      .poll(() => document.body.textContent)
+      .toContain("Registry connected");
+    await expect
+      .element(screen.getByLabelText("Registry key"))
+      .not.toBeInTheDocument();
   });
 
   describe("when a Registry action loses authorization", () => {
@@ -575,8 +835,9 @@ describe("RegistryExplorer", () => {
 
     it("removes Registry and routes to Profile when post-connect collection refresh is denied", async () => {
       // Given
-      submitRegistryCredentialMock.mockResolvedValue({
-        status: "connected",
+      submitRegistryCredentialMock.mockResolvedValue(submittedResult());
+      refreshRegistryCredentialMock.mockResolvedValue({
+        status: "status",
         credential: readyState.credential,
       });
       refreshRegistryCollectionsMock.mockResolvedValue({

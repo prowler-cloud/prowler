@@ -9,7 +9,9 @@ import {
   crossProviderPdfHandler,
 } from "@/app/(prowler)/compliance/_lib/cross-provider-pdf";
 import { jiraDispatchTaskHandler } from "@/components/findings/jira-dispatch-task-handler";
+import { registryCredentialTaskHandler } from "@/components/registry/registry-credential-task-handler";
 import { useMountEffect } from "@/hooks/use-mount-effect";
+import { REGISTRY_CREDENTIAL_TASK_KIND } from "@/lib/registry-credential-task";
 import {
   registerTaskKindHandler,
   resumePendingTasks,
@@ -22,6 +24,10 @@ import { JIRA_DISPATCH_TASK_KIND } from "@/types/integrations";
 registerTaskKindHandler(CROSS_PROVIDER_PDF_TASK_KIND, crossProviderPdfHandler);
 registerTaskKindHandler(CROSS_ACCOUNT_PDF_TASK_KIND, crossAccountPdfHandler);
 registerTaskKindHandler(JIRA_DISPATCH_TASK_KIND, jiraDispatchTaskHandler);
+registerTaskKindHandler(
+  REGISTRY_CREDENTIAL_TASK_KIND,
+  registryCredentialTaskHandler,
+);
 
 /**
  * Mounted once in the app layout (next to `Toaster`): resumes polling any

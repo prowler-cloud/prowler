@@ -41,12 +41,9 @@ export function RegistryCredentialBanner({
             </p>
           )}
           <div className="flex flex-wrap gap-2 pt-2">
-            <Button
-              disabled={validationPending}
-              onClick={onConnect}
-              ref={connectButtonRef}
-              type="button"
-            >
+            {/* Stays enabled while validation is pending: submitting a
+                replacement key supersedes a validation that never settles. */}
+            <Button onClick={onConnect} ref={connectButtonRef} type="button">
               Connect API key
             </Button>
             <Button asChild variant="outline">

@@ -1,12 +1,11 @@
 "use client";
 
-import { type FormEvent, type RefObject, useRef } from "react";
+import { type FormEvent, type RefObject, useEffect, useRef } from "react";
 
 import { Button } from "@/components/shadcn/button/button";
 import { DialogFooter } from "@/components/shadcn/dialog";
 import { Input } from "@/components/shadcn/input/input";
 import { Modal } from "@/components/shadcn/modal/modal";
-import { Spinner } from "@/components/shadcn/spinner/spinner";
 
 interface RegistryAccessDialogCommonProps {
   errorMessage?: string;
@@ -43,10 +42,19 @@ export function RegistryAccessDialog({
 }: RegistryAccessDialogProps) {
   const formRef = useRef<HTMLFormElement>(null);
   const keyInputRef = useRef<HTMLInputElement>(null);
+  const wasPendingRef = useRef(pending);
   const actionLabel = mode === "connect" ? "Connect" : "Replace key";
+
+  // Re-enabling the form after a watched validation settles loses focus from
+  // the disabled input; hand it back so a retry can start from the keyboard.
+  useEffect(() => {
+    if (wasPendingRef.current && !pending) keyInputRef.current?.focus();
+    wasPendingRef.current = pending;
+  }, [pending]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (pending) return;
     const key = new FormData(event.currentTarget).get("registry-key");
     if (typeof key !== "string" || key.trim().length === 0) return;
 
@@ -74,77 +82,72 @@ export function RegistryAccessDialog({
           : "Manage Registry access"
       }
     >
-      {pending ? (
-        <div className="flex items-center gap-3" role="status">
-          <Spinner className="motion-reduce:animate-none" />
-          <p className="font-medium">Validating your Registry key…</p>
-        </div>
-      ) : (
-        <form
-          className="flex flex-col gap-4"
-          onSubmit={handleSubmit}
-          ref={formRef}
-        >
+      <form
+        className="flex flex-col gap-4"
+        onSubmit={handleSubmit}
+        ref={formRef}
+      >
+        <div className="flex flex-col gap-2">
+          <label className="flex flex-col gap-2 text-sm" htmlFor="registry-key">
+            <span>Registry key</span>
+            <Input
+              aria-describedby={errorMessage ? "registry-key-error" : undefined}
+              autoComplete="new-password"
+              disabled={pending}
+              id="registry-key"
+              name="registry-key"
+              ref={keyInputRef}
+              spellCheck={false}
+              type="password"
+            />
+          </label>
           {errorMessage && (
-            <p className="text-text-error-primary text-sm" role="alert">
+            <p
+              className="text-text-error-primary text-sm"
+              id="registry-key-error"
+              role="alert"
+            >
               {errorMessage}
             </p>
           )}
-          <div className="flex flex-col gap-2">
-            <label
-              className="flex flex-col gap-2 text-sm"
-              htmlFor="registry-key"
+          <Button asChild className="self-start" size="link-sm" variant="link">
+            <a
+              href="https://registry.prowler.com"
+              rel="noopener noreferrer"
+              target="_blank"
             >
-              <span>Registry key</span>
-              <Input
-                autoComplete="new-password"
-                id="registry-key"
-                name="registry-key"
-                ref={keyInputRef}
-                spellCheck={false}
-                type="password"
-              />
-            </label>
+              Where do I find my key?
+            </a>
+          </Button>
+        </div>
+        <DialogFooter
+          className={mode === "manage" ? "sm:justify-between" : undefined}
+        >
+          {mode === "manage" && (
             <Button
-              asChild
-              className="self-start"
-              size="link-sm"
-              variant="link"
+              disabled={pending}
+              onClick={onDisconnect}
+              type="button"
+              variant="destructive"
             >
-              <a
-                href="https://registry.prowler.com"
-                rel="noopener noreferrer"
-                target="_blank"
-              >
-                Where do I find my key?
-              </a>
+              Disconnect
+            </Button>
+          )}
+          <div className="flex flex-col-reverse gap-2 sm:flex-row">
+            <Button
+              disabled={pending}
+              onClick={() => onOpenChange(false)}
+              type="button"
+              variant="ghost"
+            >
+              Cancel
+            </Button>
+            <Button disabled={pending} type="submit">
+              {pending ? "Connecting…" : actionLabel}
             </Button>
           </div>
-          <DialogFooter
-            className={mode === "manage" ? "sm:justify-between" : undefined}
-          >
-            {mode === "manage" && (
-              <Button
-                onClick={onDisconnect}
-                type="button"
-                variant="destructive"
-              >
-                Disconnect
-              </Button>
-            )}
-            <div className="flex flex-col-reverse gap-2 sm:flex-row">
-              <Button
-                onClick={() => onOpenChange(false)}
-                type="button"
-                variant="ghost"
-              >
-                Cancel
-              </Button>
-              <Button type="submit">{actionLabel}</Button>
-            </div>
-          </DialogFooter>
-        </form>
-      )}
+        </DialogFooter>
+      </form>
     </Modal>
   );
 }

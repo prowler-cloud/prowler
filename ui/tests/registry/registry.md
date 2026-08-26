@@ -39,7 +39,7 @@
 **Priority:** `critical`
 **Tags:** @e2e, @registry
 
-**Expected Result:** Synthetic key validation remains pending for a `202` task, settles through an authoritative status read, and does not disclose the key in the DOM, URL, or browser storage.
+**Expected Result:** Synthetic key submission returns a `202` task that the client-side task watcher polls to settlement while the dialog form shows a disabled Connecting… control; the flow settles through an authoritative status read into the connected marketplace with a "Registry connected" toast, and does not disclose the key in the DOM, URL, or browser storage.
 
 ## Test Case: `REGISTRY-E2E-005` - Complete Catalog, Recovery, and Lifecycle
 

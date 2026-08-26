@@ -93,14 +93,20 @@ test.describe.serial("Registry", () => {
       await registryPage.goto();
       await registryPage.verifyOnboarding();
       await registryPage.submitRegistryKey(FIXTURE_REGISTRY_KEY);
-      await expect(page.getByRole("status")).toContainText(
-        "Validating your Registry key",
-      );
+      // The form stays visible while the task watcher tracks validation: the
+      // submit control flips to a disabled Connecting… state.
+      await expect(
+        page.getByRole("button", { name: "Connecting…" }),
+      ).toBeDisabled();
+      await expect(page.getByLabel("Registry key")).toBeDisabled();
       await registryPage.verifyKeyIsNotDisclosed(
         FIXTURE_REGISTRY_KEY,
         requestUrls,
       );
       await registryPage.verifyMarketplaceReady();
+      await expect(
+        page.getByText("Registry connected", { exact: true }),
+      ).toBeVisible();
 
       const snapshot = await controlledRegistryFixture.snapshot();
       expect(snapshot.credentialAccepted).toBe(true);

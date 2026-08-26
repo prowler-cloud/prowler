@@ -8,7 +8,6 @@ import {
   disconnectRegistryCredential,
   refreshRegistryCollections,
   removeRegistryArtifact,
-  submitRegistryCredential,
 } from "@/actions/registry/registry";
 import { Badge } from "@/components/shadcn/badge/badge";
 import { Button } from "@/components/shadcn/button/button";
@@ -19,6 +18,7 @@ import {
   TabsTrigger,
 } from "@/components/shadcn/tabs/tabs";
 import { toast } from "@/components/shadcn/toast/use-toast";
+import { executeRegistryCredentialValidation } from "@/lib/registry-credential-execution";
 import {
   REGISTRY_BOOTSTRAP_STATE,
   REGISTRY_CATALOG,
@@ -149,60 +149,81 @@ export function RegistryExplorer({ initialState }: RegistryExplorerProps) {
     const generation = operationGeneration.current;
     setOperationMessage(undefined);
     setPendingOperation(REGISTRY_PENDING_OPERATION.CREDENTIAL);
-    const result = await submitRegistryCredential(key);
-    if (generation !== operationGeneration.current) return;
-    if (result.status === REGISTRY_FAILURE.ACCESS_DENIED) return invalidate();
-
-    if (result.status === REGISTRY_CREDENTIAL_ACTION.CONNECTED) {
-      const collections = await refreshRegistryCollections();
+    try {
+      // The dialog stays mounted with a disabled Connecting… form while the
+      // house task watcher tracks the validation task to settlement.
+      const result = await executeRegistryCredentialValidation(key);
       if (generation !== operationGeneration.current) return;
-      if (collections.status === REGISTRY_FAILURE.ACCESS_DENIED) {
+      if (result.status === REGISTRY_FAILURE.ACCESS_DENIED) {
         return invalidate();
       }
-      setPendingOperation(null);
-      if (collections.status === REGISTRY_CATALOG.COMPLETE) {
-        setAccessDialogMode(undefined);
-        setState({
-          status: REGISTRY_BOOTSTRAP_STATE.READY,
-          credential: result.credential,
-          catalog: collections.catalog,
-          tenantArtifacts: collections.tenantArtifacts,
-        });
+
+      if (result.status === REGISTRY_CREDENTIAL_ACTION.CONNECTED) {
+        const collections = await refreshRegistryCollections();
+        if (generation !== operationGeneration.current) return;
+        if (collections.status === REGISTRY_FAILURE.ACCESS_DENIED) {
+          return invalidate();
+        }
+        setPendingOperation(null);
+        if (collections.status === REGISTRY_CATALOG.COMPLETE) {
+          setAccessDialogMode(undefined);
+          setState({
+            status: REGISTRY_BOOTSTRAP_STATE.READY,
+            credential: result.credential,
+            catalog: collections.catalog,
+            tenantArtifacts: collections.tenantArtifacts,
+          });
+          toast({ title: "Registry connected" });
+          return;
+        }
+        setOperationMessage(
+          "Registry collections could not be loaded. Try again.",
+        );
         return;
       }
+
+      setPendingOperation(null);
+      if (
+        result.status === REGISTRY_CREDENTIAL_ACTION.PENDING ||
+        result.status === REGISTRY_CREDENTIAL_ACTION.INVALID
+      ) {
+        // Keep the dialog open for an inline retry; the underlying banner
+        // still tracks the authoritative credential state.
+        setState((current) =>
+          current.status === REGISTRY_BOOTSTRAP_STATE.ONBOARDING ||
+          current.status === REGISTRY_BOOTSTRAP_STATE.VALIDATION_PENDING
+            ? {
+                status:
+                  result.status === REGISTRY_CREDENTIAL_ACTION.PENDING
+                    ? REGISTRY_BOOTSTRAP_STATE.VALIDATION_PENDING
+                    : REGISTRY_BOOTSTRAP_STATE.ONBOARDING,
+                credential: result.credential,
+                tenantArtifacts: current.tenantArtifacts,
+              }
+            : current,
+        );
+        setOperationMessage(
+          result.status === REGISTRY_CREDENTIAL_ACTION.PENDING
+            ? "Registry key validation is taking longer than expected. Try again."
+            : "This Registry key is invalid. Check it and try again.",
+        );
+        return;
+      }
+
       setOperationMessage(
-        "Registry collections could not be loaded. Try again.",
+        result.status === REGISTRY_CREDENTIAL_ACTION.REPLACEMENT_FAILED
+          ? "Registry key validation failed. Existing access is unchanged."
+          : "Registry key validation could not be completed. Try again.",
       );
-      return;
-    }
-
-    setPendingOperation(null);
-    if (
-      result.status === REGISTRY_CREDENTIAL_ACTION.PENDING ||
-      result.status === REGISTRY_CREDENTIAL_ACTION.INVALID
-    ) {
-      setAccessDialogMode(undefined);
-      setState((current) =>
-        current.status === REGISTRY_BOOTSTRAP_STATE.ONBOARDING ||
-        current.status === REGISTRY_BOOTSTRAP_STATE.VALIDATION_PENDING
-          ? {
-              status:
-                result.status === REGISTRY_CREDENTIAL_ACTION.PENDING
-                  ? REGISTRY_BOOTSTRAP_STATE.VALIDATION_PENDING
-                  : REGISTRY_BOOTSTRAP_STATE.ONBOARDING,
-              credential: result.credential,
-              tenantArtifacts: current.tenantArtifacts,
-            }
-          : current,
+    } catch {
+      // A rejected server-action RPC must never strand the dialog in the
+      // disabled Connecting… state: recover into a retry-capable form.
+      if (generation !== operationGeneration.current) return;
+      setPendingOperation(null);
+      setOperationMessage(
+        "Registry key validation could not be completed. Try again.",
       );
-      return;
     }
-
-    setOperationMessage(
-      result.status === REGISTRY_CREDENTIAL_ACTION.REPLACEMENT_FAILED
-        ? "Registry key validation failed. Existing access is unchanged."
-        : "Registry key validation could not be completed. Try again.",
-    );
   }
 
   async function handleDisconnect() {
