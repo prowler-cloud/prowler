@@ -231,6 +231,7 @@ function isReasonsQuestion(
     hasQuestionIdentity(question) &&
     question.type === "multiple_choice" &&
     question.optional === true &&
+    Array.isArray(question.choices) &&
     question.choices.length === LIGHTHOUSE_FEEDBACK_REASONS.length &&
     question.choices.every(
       (choice, index) => choice === LIGHTHOUSE_FEEDBACK_REASONS[index],

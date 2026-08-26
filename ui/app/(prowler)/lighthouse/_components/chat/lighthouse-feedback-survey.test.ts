@@ -186,6 +186,42 @@ describe("Lighthouse outcome feedback survey", () => {
     expect(survey).toBeNull();
   });
 
+  it("should reject an API survey whose reasons question has no choices", () => {
+    // Given
+    const invalidSurvey = {
+      ...SURVEY,
+      questions: [
+        SURVEY.questions[0],
+        { ...SURVEY.questions[1], choices: undefined },
+        SURVEY.questions[2],
+      ],
+    } as unknown as Survey;
+
+    // When
+    const survey = resolveLighthouseFeedbackSurvey([invalidSurvey]);
+
+    // Then
+    expect(survey).toBeNull();
+  });
+
+  it("should reject an API survey whose reason choices are not an array", () => {
+    // Given
+    const invalidSurvey = {
+      ...SURVEY,
+      questions: [
+        SURVEY.questions[0],
+        { ...SURVEY.questions[1], choices: "Low quality" },
+        SURVEY.questions[2],
+      ],
+    } as unknown as Survey;
+
+    // When
+    const survey = resolveLighthouseFeedbackSurvey([invalidSurvey]);
+
+    // Then
+    expect(survey).toBeNull();
+  });
+
   it("should reject an API survey with an optional rating question", () => {
     // Given
     const invalidSurvey = {

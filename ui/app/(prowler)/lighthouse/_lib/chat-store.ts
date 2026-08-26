@@ -21,6 +21,7 @@ import { notifyLighthouseV2SessionsChanged } from "@/app/(prowler)/lighthouse/_l
 import { parseStreamEvent } from "@/app/(prowler)/lighthouse/_lib/stream-event-parser";
 import { buildLighthouseV2StreamUrl } from "@/app/(prowler)/lighthouse/_lib/stream-url";
 import {
+  LIGHTHOUSE_V2_MESSAGE_ROLE,
   LIGHTHOUSE_V2_PROVIDER_TYPE,
   LIGHTHOUSE_V2_SSE_EVENT,
   type LighthouseV2Configuration,
@@ -65,6 +66,7 @@ export interface LighthouseChatState {
   isSubmitting: boolean;
   isLoadingSession: boolean;
   lastSubmission: LighthouseChatSubmission | null;
+  failedOutcomeMessageId: string | null;
   selectedModelSelection: LighthouseV2ModelSelection | null;
   modelPreferenceSaving: boolean;
   setSessionUrlSyncEnabled: (enabled: boolean) => void;
@@ -90,6 +92,21 @@ export interface LighthouseChatSubmission {
 }
 
 export type LighthouseChatStore = StoreApi<LighthouseChatState>;
+
+function findLastPersistedUserMessageId(
+  messages: LighthouseV2Message[],
+): string | null {
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    const message = messages[index];
+    if (
+      message?.role === LIGHTHOUSE_V2_MESSAGE_ROLE.USER &&
+      !message.id.startsWith("optimistic-")
+    ) {
+      return message.id;
+    }
+  }
+  return null;
+}
 
 export function selectLighthouseChatCanSend(
   state: LighthouseChatState,
@@ -193,7 +210,14 @@ export function createLighthouseChatStore(
           !get().isSubmitting && !get().streamState.activeTaskId;
         const refreshed = await refreshMessages(sessionId, noNewerSubmission);
         if (refreshed) {
-          set({ streamState: createInitialLighthouseV2StreamState() });
+          const failedOutcomeMessageId =
+            event.type === LIGHTHOUSE_V2_SSE_EVENT.ERROR
+              ? findLastPersistedUserMessageId(get().messages)
+              : null;
+          set({
+            streamState: createInitialLighthouseV2StreamState(),
+            failedOutcomeMessageId,
+          });
         }
         notifyLighthouseV2SessionsChanged();
       }
@@ -313,6 +337,7 @@ export function createLighthouseChatStore(
         };
         set((current) => ({
           feedback: null,
+          failedOutcomeMessageId: null,
           blockedByConflict: false,
           lastSubmission,
           input: "",
@@ -383,6 +408,7 @@ export function createLighthouseChatStore(
       isSubmitting: false,
       isLoadingSession: false,
       lastSubmission: null,
+      failedOutcomeMessageId: null,
       selectedModelSelection: resolveInitialModelSelection(
         connectedConfigurations,
         config.modelsByProvider,
@@ -395,13 +421,18 @@ export function createLighthouseChatStore(
 
       setInput: (value) => set({ input: value }),
 
-      dismissFeedback: () => set({ feedback: null }),
+      dismissFeedback: () =>
+        set({ feedback: null, failedOutcomeMessageId: null }),
 
       selectModel: async (selection) => {
         // The selection drives the model used for the next message, so it stays
         // applied even if persisting it as the provider's default model fails —
         // reverting it would make a connected provider unusable when the save 4xxs.
-        set({ selectedModelSelection: selection, feedback: null });
+        set({
+          selectedModelSelection: selection,
+          feedback: null,
+          failedOutcomeMessageId: null,
+        });
 
         const configId = connectedConfigurations.find(
           (configuration) =>
@@ -449,6 +480,7 @@ export function createLighthouseChatStore(
           isSubmitting: false,
           isLoadingSession: true,
           lastSubmission: null,
+          failedOutcomeMessageId: null,
           streamState: createInitialLighthouseV2StreamState(),
         });
         syncSessionUrl(sessionId);
@@ -476,6 +508,7 @@ export function createLighthouseChatStore(
           isSubmitting: false,
           isLoadingSession: false,
           lastSubmission: null,
+          failedOutcomeMessageId: null,
           streamState: createInitialLighthouseV2StreamState(),
         });
         syncSessionUrl(null);

@@ -903,6 +903,39 @@ describe("LighthouseV2ChatPage", () => {
     expect(sendMessageMock).toHaveBeenCalledTimes(1);
   });
 
+  it("keeps outcome feedback available after a terminal run error", async () => {
+    // Given
+    const user = userEvent.setup();
+    getMessagesMock.mockResolvedValue({
+      data: [message("task-1", "user", "Run this check")],
+    });
+    renderPage();
+    await user.type(
+      screen.getByRole("textbox", { name: "Message" }),
+      ["Run this check", "{Enter}"].join(""),
+    );
+    await waitFor(() => expect(eventSources).toHaveLength(1));
+
+    // When
+    act(() => eventSources[0].emit("error", { detail: "Agent run failed." }));
+
+    // Then
+    expect(await screen.findByText("Agent run failed.")).toBeInTheDocument();
+    await user.click(
+      await screen.findByRole("button", {
+        name: "Mark outcome as not helpful",
+      }),
+    );
+    await user.click(screen.getByRole("button", { name: "Submit" }));
+    expect(captureMock).toHaveBeenCalledWith(
+      "survey sent",
+      expect.objectContaining({
+        $ai_trace_id: "task-1",
+        "$survey_response_rating-question-id": 2,
+      }),
+    );
+  });
+
   it("surfaces a connection error when the stream closes without retrying", async () => {
     // Given
     const user = userEvent.setup();

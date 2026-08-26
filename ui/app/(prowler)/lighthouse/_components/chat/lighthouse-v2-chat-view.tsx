@@ -1,7 +1,7 @@
 "use client";
 
 import posthogClient from "posthog-js";
-import { type ReactNode, type SubmitEvent, useEffect, useState } from "react";
+import { type ReactNode, type SubmitEvent, useState } from "react";
 
 import {
   Conversation,
@@ -35,6 +35,7 @@ import {
 } from "@/components/shadcn/combobox/combobox";
 import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
 import { useLighthouseCurrentContext } from "@/hooks/use-lighthouse-context";
+import { useMountEffect } from "@/hooks/use-mount-effect";
 
 import { ProviderIcon } from "../config/provider-icon";
 
@@ -79,6 +80,7 @@ export function LighthouseV2ChatView({
     feedback,
     isLoadingSession,
     lastSubmission,
+    failedOutcomeMessageId,
     selectedModelSelection,
     modelPreferenceSaving,
     setInput,
@@ -149,9 +151,14 @@ export function LighthouseV2ChatView({
     Boolean(streamState.assistantText) ||
     streamState.toolCalls.length > 0;
   const hasConversation = messages.length > 0 || hasLiveAssistantActivity;
+  const failedOutcomeFeedbackTarget = failedOutcomeMessageId
+    ? messages.find((message) => message.id === failedOutcomeMessageId)
+    : undefined;
 
   const composerPanelProps = {
     feedback,
+    feedbackTarget: failedOutcomeFeedbackTarget,
+    feedbackSurvey,
     canRetry:
       streamState.status === LIGHTHOUSE_V2_STREAM_STATUS.DISCONNECTED &&
       lastSubmission !== null,
@@ -293,11 +300,11 @@ export function LighthouseV2ChatView({
 function useLighthouseOutcomeFeedbackSurvey(): LighthouseFeedbackSurvey | null {
   const [survey, setSurvey] = useState<LighthouseFeedbackSurvey | null>(null);
 
-  useEffect(() => {
+  useMountEffect(() => {
     return posthogClient.onSurveysLoaded((surveys) => {
       setSurvey(resolveLighthouseFeedbackSurvey(surveys));
     });
-  }, []);
+  });
 
   return survey;
 }

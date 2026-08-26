@@ -356,12 +356,7 @@ describe("createLighthouseChatStore", () => {
     const store = makeStore();
     await store.getState().submitMessage("Run this check");
     getMessagesMock.mockResolvedValue({
-      data: [
-        {
-          ...message("task-1", "user", "Run this check"),
-          feedback: null,
-        },
-      ],
+      data: [message("task-1", "user", "Run this check")],
     });
 
     // When
@@ -373,11 +368,11 @@ describe("createLighthouseChatStore", () => {
         expect.objectContaining({
           id: "task-1",
           role: "user",
-          feedback: null,
         }),
       ]),
     );
     expect(store.getState().feedback).toBe("Agent run failed.");
+    expect(store.getState().failedOutcomeMessageId).toBe("task-1");
   });
 
   it("blocks sending and refreshes messages on a 409 conflict", async () => {

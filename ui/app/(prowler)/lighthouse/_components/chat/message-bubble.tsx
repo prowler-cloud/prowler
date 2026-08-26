@@ -259,7 +259,7 @@ function MessageMeta({
     >
       <CopyMessageButton text={text} />
       {feedbackTarget && feedbackSurvey && (
-        <MessageFeedbackControls
+        <LighthouseOutcomeFeedbackControls
           key={feedbackTarget.id}
           message={feedbackTarget}
           survey={feedbackSurvey}
@@ -275,7 +275,7 @@ function MessageMeta({
   );
 }
 
-function MessageFeedbackControls({
+export function LighthouseOutcomeFeedbackControls({
   message,
   survey,
 }: {
@@ -342,8 +342,16 @@ function MessageFeedbackControls({
     setDetails("");
   };
 
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (nextOpen) {
+      setOpen(true);
+      return;
+    }
+    cancel();
+  };
+
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverAnchor asChild>
         <div className="flex items-center gap-0.5">
           <FeedbackRatingButton

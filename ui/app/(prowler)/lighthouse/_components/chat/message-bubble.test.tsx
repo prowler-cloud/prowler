@@ -686,6 +686,36 @@ describe("MessageBubble", () => {
         screen.queryByRole("heading", { name: "Share feedback" }),
       ).not.toBeInTheDocument();
     });
+
+    it("should discard the feedback draft when the popup closes with Escape", async () => {
+      // Given
+      const user = userEvent.setup();
+      renderFeedbackBubble();
+      await user.click(
+        screen.getByRole("button", { name: "Mark outcome as not helpful" }),
+      );
+      await user.click(
+        screen.getByRole("button", { name: "Don't like the style" }),
+      );
+      await user.type(
+        screen.getByLabelText("Additional feedback (optional)"),
+        "Unsaved draft",
+      );
+
+      // When
+      await user.keyboard("{Escape}");
+      await user.click(
+        screen.getByRole("button", { name: "Mark outcome as not helpful" }),
+      );
+
+      // Then
+      expect(
+        screen.getByLabelText("Additional feedback (optional)"),
+      ).toHaveValue("");
+      expect(
+        screen.getByRole("button", { name: "Don't like the style" }),
+      ).toHaveAttribute("aria-pressed", "false");
+    });
   });
 });
 
