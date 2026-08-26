@@ -13,7 +13,7 @@ import { ProviderTypeIcon } from "@/components/icons/providers-badge/provider-ty
 import { Badge } from "@/components/shadcn/badge/badge";
 import { Button } from "@/components/shadcn/button/button";
 import { Card } from "@/components/shadcn/card/card";
-import { getProviderDisplayName } from "@/types/providers";
+import { getProviderDisplayName, isKnownProviderType } from "@/types/providers";
 import type { RegistryArtifactOwner } from "@/types/registry";
 
 import {
@@ -68,9 +68,18 @@ function RegistryProviderCluster({ providers }: RegistryProviderClusterProps) {
         </span>
       )}
       <span aria-hidden className="flex items-center gap-1">
-        {visibleProviders.map((provider) => (
-          <ProviderTypeIcon key={provider} size={16} type={provider} />
-        ))}
+        {visibleProviders.map((provider) =>
+          isKnownProviderType(provider) ? (
+            <ProviderTypeIcon key={provider} size={16} type={provider} />
+          ) : (
+            // Providers without a bespoke badge render their display name as
+            // a tiny text pill (registry.dev "template" tag reference) instead
+            // of the anonymous generic glyph.
+            <Badge key={provider} size="sm" variant="tag">
+              {getProviderDisplayName(provider)}
+            </Badge>
+          ),
+        )}
       </span>
       {overflowCount > 0 && (
         <span aria-hidden className="text-text-neutral-secondary text-xs">

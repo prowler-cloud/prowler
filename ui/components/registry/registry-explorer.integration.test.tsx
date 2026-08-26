@@ -1191,6 +1191,148 @@ describe("RegistryExplorer", () => {
       expect(overflowBadge?.previousElementSibling?.childElementCount).toBe(4);
     });
 
+    it("renders a text pill for a provider without a bespoke badge beside known logos", async () => {
+      // Given: one known provider (logo) plus one dynamic provider (pill)
+      const mixedArtifact = {
+        normalizedName: "mixed-guard",
+        name: "Mixed guard",
+        description: "Artifact mixing known and dynamic providers",
+        latestVersion: "1.0.0",
+        providers: ["aws", "template"],
+        isVerified: false,
+        isOfficial: false,
+        isMeta: false,
+        hasProvider: true,
+        hasChecks: true,
+        hasCompliance: false,
+        versionCount: 1,
+        totalDownloads: 5,
+        owners: [],
+      };
+
+      // When
+      await render(
+        <RegistryExplorer
+          initialState={{
+            ...readyState,
+            catalog: { status: "complete", artifacts: [mixedArtifact] },
+            tenantArtifacts: [],
+          }}
+        />,
+      );
+
+      // Then: the dynamic provider renders a visible-text pill, the known
+      // provider keeps its logo, and the sr-only carrier names both.
+      const mixedCard = cardFor("Mixed guard");
+      const pills = Array.from(
+        mixedCard.querySelectorAll('span[data-slot="badge"]'),
+      );
+      expect(pills.map((pill) => pill.textContent)).toEqual(["Template"]);
+      expect(mixedCard.textContent).toContain("Providers: AWS, Template");
+      // The visible cluster row holds exactly the logo + the pill.
+      expect(pills[0]?.parentElement?.childElementCount).toBe(2);
+    });
+
+    it("renders only text pills when no provider has a bespoke badge", async () => {
+      // Given: every provider is dynamic
+      const dynamicArtifact = {
+        normalizedName: "dynamic-guard",
+        name: "Dynamic guard",
+        description: "Artifact with only dynamic providers",
+        latestVersion: "1.0.0",
+        providers: ["template", "custom-scan"],
+        isVerified: false,
+        isOfficial: false,
+        isMeta: false,
+        hasProvider: true,
+        hasChecks: true,
+        hasCompliance: false,
+        versionCount: 1,
+        totalDownloads: 2,
+        owners: [],
+      };
+
+      // When
+      await render(
+        <RegistryExplorer
+          initialState={{
+            ...readyState,
+            catalog: { status: "complete", artifacts: [dynamicArtifact] },
+            tenantArtifacts: [],
+          }}
+        />,
+      );
+
+      // Then: both providers render as name pills and no icon glyph remains
+      // in the visible cluster row.
+      const dynamicCard = cardFor("Dynamic guard");
+      const pills = Array.from(
+        dynamicCard.querySelectorAll('span[data-slot="badge"]'),
+      );
+      expect(pills.map((pill) => pill.textContent)).toEqual([
+        "Template",
+        "Custom Scan",
+      ]);
+      const clusterRow = pills[0]?.parentElement;
+      expect(clusterRow?.childElementCount).toBe(2);
+      expect(clusterRow?.querySelector("svg")).toBeNull();
+    });
+
+    it("counts logos and pills together toward the four-item cap and overflow", async () => {
+      // Given: six providers alternating known logos and dynamic pills
+      const blendedArtifact = {
+        normalizedName: "blended-guard",
+        name: "Blended guard",
+        description: "Artifact spanning logos and pills",
+        latestVersion: "1.0.0",
+        providers: [
+          "aws",
+          "template",
+          "azure",
+          "custom-scan",
+          "gcp",
+          "local_thing",
+        ],
+        isVerified: false,
+        isOfficial: false,
+        isMeta: true,
+        hasProvider: true,
+        hasChecks: true,
+        hasCompliance: false,
+        versionCount: 1,
+        totalDownloads: 9,
+        owners: [],
+      };
+
+      // When
+      await render(
+        <RegistryExplorer
+          initialState={{
+            ...readyState,
+            catalog: { status: "complete", artifacts: [blendedArtifact] },
+            tenantArtifacts: [],
+          }}
+        />,
+      );
+
+      // Then: the cap keeps the first four items of BOTH kinds, so only the
+      // first two pills are visible and two items collapse into "+2".
+      const blendedCard = cardFor("Blended guard");
+      expect(blendedCard.textContent).toContain("6 providers");
+      const pills = Array.from(
+        blendedCard.querySelectorAll('span[data-slot="badge"]'),
+      );
+      expect(pills.map((pill) => pill.textContent)).toEqual([
+        "Template",
+        "Custom Scan",
+      ]);
+      expect(pills[0]?.parentElement?.childElementCount).toBe(4);
+      const overflowBadge = Array.from(
+        blendedCard.querySelectorAll("span"),
+      ).find((span) => span.textContent === "+2");
+      expect(overflowBadge).toBeDefined();
+    });
+
     it("falls back to the initial-letter avatar when the owner logo fails to load", async () => {
       // Given
       await render(<RegistryExplorer initialState={readyState} />);
