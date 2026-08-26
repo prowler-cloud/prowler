@@ -25,6 +25,7 @@ describe("Scans page import findings", () => {
     await harness.submitImport();
 
     await harness.waitForCompletedSummary();
+    expect(harness.pageRefreshCount).toBe(1);
     expect(harness.ingestionPostCount).toBe(1);
     expect(await harness.uploadedFileName()).toBe("findings.ocsf.json");
     expect(harness.ingestionStatusPollCount).toBeGreaterThanOrEqual(2);
@@ -162,6 +163,7 @@ describe("Scans page import findings", () => {
     await harness.selectFile(new File(["[]"], "findings.ocsf.json"));
     await harness.submitImport();
     await harness.waitForFailedImport();
+    expect(harness.pageRefreshCount).toBe(0);
 
     await harness.retryUpload();
     expect(harness.ingestionPostCount).toBe(2);

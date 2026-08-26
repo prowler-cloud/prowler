@@ -1,3 +1,8 @@
+// Aliased: `useRouter()` inside a class trips rules-of-hooks, and under the
+// suite's mock it is a plain getter for the shared router singleton.
+import { useRouter as readMockedRouter } from "next/navigation";
+import { vi } from "vitest";
+
 import { BrowserHarness } from "@/__tests__/browser-harness";
 import { handlersForIngestion } from "@/__tests__/msw/handlers/ingestions";
 import type {
@@ -216,6 +221,18 @@ export class ScansPageHarness extends BrowserHarness<IngestionFixture> {
 
   get maximumInFlightStatusRequests(): number {
     return this.maxInFlightStatusRequests;
+  }
+
+  /**
+   * How many times the page asked for its server data again — the only thing
+   * that brings an imported scan into the table, since the table's own refresh
+   * only polls while a scan is already executing.
+   *
+   * `next/navigation` is mocked suite-wide (`vitest.integration.setup.ts`) and
+   * hands out one router, so its `refresh` spy is the whole page's history.
+   */
+  get pageRefreshCount(): number {
+    return vi.mocked(readMockedRouter().refresh).mock.calls.length;
   }
 
   async uploadedFileName(): Promise<string | null> {
