@@ -376,7 +376,15 @@ class AttackPathQueryResult(MinimalSerializerMixin, BaseModel):
         Returns:
             AttackPathQueryResult with parsed data and summary
         """
-        attributes = response.get("data", {}).get("attributes", {})
+        data = response.get("data")
+        attributes = data.get("attributes") if data is not None else None
+        # Prowler spells a graph with nothing in it either as empty lists or as
+        # a null `attributes`. Both say the same thing -- the query ran and
+        # matched nothing -- so the null reads as the empty graph it stands for
+        # instead of crashing the parse.
+        if attributes is None:
+            attributes = {}
+
         nodes_data = attributes.get("nodes", [])
         relationships_data = attributes.get("relationships", [])
 

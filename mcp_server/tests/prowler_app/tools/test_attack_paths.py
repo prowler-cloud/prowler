@@ -154,6 +154,25 @@ async def test_an_empty_result_does_not_come_back_as_an_empty_object(
     assert result.data != {}
 
 
+async def test_a_null_graph_is_read_as_an_empty_one(
+    mcp_root_server, mock_api_client, mock_router
+):
+    """Prowler can spell the empty graph as `null` rather than as empty lists.
+
+    Reading `null` as if it were a graph crashed the parse, turning the same
+    "nothing matched" answer into an error the agent could not act on.
+    """
+    mock_router.add("POST", RUN, status=404, json={"data": {"attributes": None}})
+
+    async with Client(mcp_root_server) as client:
+        result = await client.call_tool_mcp(
+            "prowler_run_attack_paths_query", _run_args()
+        )
+
+    assert result.isError is False
+    assert "matched nothing" in result.structuredContent["message"]
+
+
 async def test_a_run_against_an_unknown_scan_still_names_the_confusion(
     mcp_root_server, mock_api_client, mock_router
 ):
