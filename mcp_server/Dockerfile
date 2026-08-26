@@ -29,8 +29,6 @@ FROM python:3.13.14-alpine3.23@sha256:9fdbf2e3e82628351513560b121e2ee6ce31cac212
 
 LABEL maintainer="https://github.com/prowler-cloud"
 
-<<<<<<< HEAD
-=======
 # High CVEs fixed in Alpine 3.23 but not yet in the pinned base image:
 #   sqlite-libs 3.53.4-r0  CVE-2026-11822, CVE-2026-11824  (image ships 3.51.2-r0)
 #   libcrypto3/libssl3 3.5.8-r0  CVE-2026-14456            (image ships 3.5.7-r0)
@@ -47,7 +45,6 @@ RUN apk add --no-cache --upgrade \
     "libcrypto3>=3.5.8-r0" \
     "libssl3>=3.5.8-r0"
 
->>>>>>> bcd37988b (fix(mcp): patch the high openssl CVE in the container image (#12547))
 # Create non-root user for security
 # Using specific UID/GID for consistency across environments
 RUN addgroup -g 1001 prowler && \
