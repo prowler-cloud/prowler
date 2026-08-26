@@ -326,6 +326,35 @@ def test_get_bucket_acl_parses_grant():
     assert bucket.acl == "public-read"
 
 
+def test_get_bucket_acl_parses_private_grant_value():
+    service = _build_oss_service()
+    bucket = _build_bucket()
+    oss_client = MagicMock()
+    oss_client.execute.return_value = _mock_subresource_response(
+        "AccessControlPolicy",
+        {"Owner": {"ID": "1234567890"}, "AccessControlList": {"Grant": "private"}},
+    )
+    service.session.client.return_value = oss_client
+
+    service._get_bucket_acl(bucket)
+
+    assert bucket.acl == "private"
+
+
+def test_get_bucket_acl_defaults_to_private_without_grant():
+    service = _build_oss_service()
+    bucket = _build_bucket()
+    oss_client = MagicMock()
+    oss_client.execute.return_value = _mock_subresource_response(
+        "AccessControlPolicy", {"Owner": {"ID": "1234567890"}}
+    )
+    service.session.client.return_value = oss_client
+
+    service._get_bucket_acl(bucket)
+
+    assert bucket.acl == "private"
+
+
 def test_get_bucket_subresource_with_real_sdk_client_unwraps_xml_root():
     """Regression test against the SDK deserialization the helper works around.
 
