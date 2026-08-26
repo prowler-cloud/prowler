@@ -1,0 +1,1 @@
+OSS bucket logging and ACL configurations are now read correctly from the Alibaba Cloud SDK, so `oss_bucket_logging_enabled` and `oss_bucket_not_publicly_accessible` no longer report every bucket as unconfigured
