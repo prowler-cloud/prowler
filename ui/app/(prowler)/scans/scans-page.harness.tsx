@@ -155,9 +155,20 @@ export class ScansPageHarness extends BrowserHarness<IngestionFixture> {
     await this.waitFor(() => (this.ingestionPostCount === 2 ? true : null));
   }
 
+  /**
+   * The counters the completed job reported. Anchored on "Import completed" —
+   * the failed summary reports the very same numbers, so the counters alone
+   * cannot tell the two outcomes apart.
+   */
   async waitForCompletedSummary(): Promise<void> {
-    await this.waitForText(/3 total|3 records/i, 15000);
-    await this.waitForText(/1 invalid/i, 15000);
+    const { processedRecords, totalRecords, invalidRecords } = this.fixture;
+    await this.waitForText(
+      new RegExp(
+        `Import completed: ${totalRecords} total records, ${processedRecords} processed, ${invalidRecords} invalid`,
+        "i",
+      ),
+      15000,
+    );
   }
 
   async waitForCompletionNotification(): Promise<void> {
