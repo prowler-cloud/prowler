@@ -6,7 +6,10 @@
   <b><i>Prowler</b> is the Open Cloud Security Platform trusted by thousands to automate security and compliance in any cloud environment. With thousands of ready-to-use checks and compliance frameworks, Prowler delivers real-time, customizable monitoring and seamless integrations, making cloud security simple, scalable, and cost-effective for organizations of any size.
 </p>
 <p align="center">
-<b>Secure ANY cloud at AI Speed at <a href="https://prowler.com">prowler.com</i></b>
+<b>The Agentic Cloud Defender</i></b>
+</p>
+<p align="center">
+<a href="https://cloud.prowler.com/sign-up">Try Prowler Cloud</a>
 </p>
 
 <p align="center">
@@ -56,7 +59,7 @@ Prowler includes hundreds of built-in controls to ensure compliance with standar
 
 ## Prowler Cloud & Prowler Local Server
 
-[Prowler Cloud](https://cloud.prowler.com/) and Prowler Local Server, its self-hosted open-source version, are web applications that simplify running Prowler across your cloud provider accounts. They provide a user-friendly interface to visualize the results and streamline your security assessments.
+[Prowler Cloud](https://cloud.prowler.com/sign-up) and Prowler Local Server, its self-hosted open-source version, are web applications that simplify running Prowler across your cloud provider accounts. They provide a user-friendly interface to visualize the results and streamline your security assessments.
 
 ![Prowler Cloud](docs/images/products/overview.png)
 ![Risk Pipeline](docs/images/products/risk-pipeline.png)
@@ -123,12 +126,12 @@ Every AWS provider scan will enqueue an Attack Paths ingestion job automatically
 
 | Provider | Checks | Services | [Compliance Frameworks](https://docs.prowler.com/user-guide/compliance/tutorials/compliance) | [Categories](https://docs.prowler.com/user-guide/cli/tutorials/misc#categories) | Support | Interface |
 |---|---|---|---|---|---|---|
-| AWS | 621 | 86 | 47 | 19 | Official | UI, API, CLI |
+| AWS | 639 | 86 | 47 | 19 | Official | UI, API, CLI |
 | Azure | 191 | 22 | 21 | 16 | Official | UI, API, CLI |
 | GCP | 109 | 20 | 19 | 12 | Official | UI, API, CLI |
 | Kubernetes | 92 | 7 | 8 | 11 | Official | UI, API, CLI |
 | GitHub | 24 | 3 | 2 | 5 | Official | UI, API, CLI |
-| M365 | 111 | 10 | 6 | 10 | Official | UI, API, CLI |
+| M365 | 143 | 10 | 6 | 10 | Official | UI, API, CLI |
 | OCI | 52 | 14 | 5 | 10 | Official | UI, API, CLI |
 | Alibaba Cloud | 63 | 9 | 6 | 9 | Official | UI, API, CLI |
 | Cloudflare | 29 | 3 | 2 | 5 | Official | UI, API, CLI |
@@ -141,9 +144,10 @@ Every AWS provider scan will enqueue an Attack Paths ingestion job automatically
 | Vercel | 26 | 6 | 1 | 8 | Official | UI, API, CLI |
 | Okta | 29 | 8 | 2 | 2 | Official | UI, API, CLI |
 | Linode [Contact us](https://prowler.com/contact) | 10 | 3 | 1 | 4 | Unofficial | CLI |
+| Huawei Cloud [Contact us](https://prowler.com/contact) | 25 | 10 | 1 | 6 | Unofficial | CLI |
 | E2E Networks [Contact us](https://prowler.com/contact) | 27 | 6 | 0 | 2 | Unofficial | CLI |
 | Scaleway [Contact us](https://prowler.com/contact) | 1 | 1 | 1 | 1 | Unofficial | CLI |
-| StackIT [Contact us](https://prowler.com/contact) | 7 | 2 | 1 | 3 | Unofficial | CLI |
+| StackIT [Contact us](https://prowler.com/contact) | 8 | 2 | 1 | 3 | Unofficial | CLI |
 | NHN | 6 | 2 | 2 | 0 | Unofficial | CLI |
 
 > [!Note]

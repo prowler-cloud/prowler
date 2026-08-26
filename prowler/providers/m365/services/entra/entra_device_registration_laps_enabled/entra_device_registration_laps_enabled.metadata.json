@@ -1,0 +1,37 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_device_registration_laps_enabled",
+  "CheckTitle": "Microsoft Entra Local Administrator Password Solution (LAPS) is enabled",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "The tenant device registration policy should enable **Microsoft Entra Local Administrator Password Solution (LAPS)** (**localAdminPassword.isEnabled**). LAPS securely manages and rotates the built-in local administrator password on Windows devices and stores it for controlled retrieval.",
+  "Risk": "Without **LAPS**, local administrator passwords are often static and shared across devices, enabling **lateral movement**: an attacker who recovers one device's local admin password can reuse it across the fleet.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/identity/devices/howto-manage-local-admin-passwords"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft Entra admin center at https://entra.microsoft.com/\n2. Go to **Identity** > **Devices** > **Device settings**\n3. Set **Enable Microsoft Entra Local Administrator Password Solution (LAPS)** to **Yes**\n4. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable Microsoft Entra LAPS and deploy a matching Intune policy so local administrator passwords are unique per device, rotated automatically, and retrievable only by authorized roles.",
+      "Url": "https://hub.prowler.com/check/entra_device_registration_laps_enabled"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

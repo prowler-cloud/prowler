@@ -1,3 +1,6 @@
+import type { LighthouseContextEnvelope } from "@/types/lighthouse-context";
+import type { LighthouseSkillId } from "@/types/lighthouse-skills";
+
 import type { LighthouseV2ProviderType } from "./config";
 
 export const LIGHTHOUSE_V2_MESSAGE_ROLE = {
@@ -56,7 +59,12 @@ export interface LighthouseV2Message {
 
 export interface LighthouseV2SendMessageInput {
   sessionId: string;
-  text: string;
+  displayText: string;
+  context?: LighthouseContextEnvelope;
+  // Only the id crosses the server-action boundary (definitions hold React
+  // icon components, which are not serializable); the adapter resolves it
+  // against the UI-defined skills registry.
+  skillId?: LighthouseSkillId;
   provider: LighthouseV2ProviderType;
   model?: string | null;
 }

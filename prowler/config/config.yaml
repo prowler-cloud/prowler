@@ -27,6 +27,8 @@ aws:
   max_lambda_functions: null
   # aws.max_ecs_task_definitions --> ecs_task_definitions_* checks
   max_ecs_task_definitions: null
+  # aws.max_batch_job_definitions --> batch_job_definition_* checks
+  max_batch_job_definitions: null
   # aws.max_codeartifact_packages --> codeartifact_packages_* checks
   max_codeartifact_packages: null
   # aws.disallowed_regions --> List of AWS regions to exclude from the scan.
@@ -63,6 +65,8 @@ aws:
   max_security_group_rules: 50
   # aws.ec2_instance_older_than_specific_days --> by default is 6 months (180 days)
   max_ec2_instance_age_in_days: 180
+  # aws.ec2_instance_stopped_older_than_specific_days --> by default is 30 days
+  max_ec2_instance_stopped_days: 30
   # aws.ec2_securitygroup_allow_ingress_from_internet_to_any_port
   # allowed network interface types for security groups open to the Internet
   ec2_allowed_interface_types:
@@ -465,9 +469,11 @@ aws:
   secrets_ignore_patterns: []
 
   # aws.awslambda_function_no_secrets_in_code
-  # Glob patterns of file names inside the Lambda deployment package to skip
-  # when scanning for secrets. Useful to suppress known false positives such
-  # as .NET dependency manifests.
+  # aws.codecommit_repository_no_secrets
+  # Glob patterns of file names inside the Lambda deployment package or the
+  # CodeCommit repository to skip when scanning for secrets. Useful to
+  # suppress known false positives such as .NET dependency manifests or
+  # package lock files.
   # Example:
   #   secrets_ignore_files:
   #     - "*.deps.json"

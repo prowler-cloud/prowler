@@ -133,3 +133,100 @@ def test_list_buckets_inventory_is_loaded_once_across_regions():
         oss.__threading_call__(oss._list_buckets)
 
     assert get_mock.call_count == 1
+
+
+def _build_bucket(name="prowler-test"):
+    from prowler.providers.alibabacloud.services.oss.oss_service import Bucket
+
+    return Bucket(arn=f"acs:oss::1234567890:{name}", name=name, region="ap-southeast-1")
+
+
+def test_get_bucket_encryption_parses_aes256_rule():
+    from alibabacloud_oss20190517 import models as oss_models
+
+    service = _build_oss_service()
+    bucket = _build_bucket()
+    oss_client = MagicMock()
+    oss_client.get_bucket_encryption.return_value = (
+        oss_models.GetBucketEncryptionResponse(
+            body=oss_models.GetBucketEncryptionResponseBody().from_map(
+                {"ApplyServerSideEncryptionByDefault": {"SSEAlgorithm": "AES256"}}
+            )
+        )
+    )
+    service.session.client.return_value = oss_client
+
+    service._get_bucket_encryption(bucket)
+
+    oss_client.get_bucket_encryption.assert_called_once_with(bucket.name)
+    assert bucket.encryption_algorithm == "AES256"
+    assert bucket.encryption_kms_key_id == ""
+    assert bucket.encryption_kms_data_algorithm == ""
+
+
+def test_get_bucket_encryption_parses_kms_rule():
+    from alibabacloud_oss20190517 import models as oss_models
+
+    service = _build_oss_service()
+    bucket = _build_bucket()
+    oss_client = MagicMock()
+    oss_client.get_bucket_encryption.return_value = (
+        oss_models.GetBucketEncryptionResponse(
+            body=oss_models.GetBucketEncryptionResponseBody().from_map(
+                {
+                    "ApplyServerSideEncryptionByDefault": {
+                        "SSEAlgorithm": "KMS",
+                        "KMSMasterKeyID": "00000000-1111-2222-3333-444444444444",
+                        "KMSDataEncryption": "SM4",
+                    }
+                }
+            )
+        )
+    )
+    service.session.client.return_value = oss_client
+
+    service._get_bucket_encryption(bucket)
+
+    assert bucket.encryption_algorithm == "KMS"
+    assert bucket.encryption_kms_key_id == "00000000-1111-2222-3333-444444444444"
+    assert bucket.encryption_kms_data_algorithm == "SM4"
+
+
+def test_get_bucket_encryption_no_rule_is_not_logged_as_error():
+    from Tea.exceptions import TeaException
+
+    service = _build_oss_service()
+    bucket = _build_bucket()
+    oss_client = MagicMock()
+    oss_client.get_bucket_encryption.side_effect = TeaException(
+        {
+            "code": "NoSuchServerSideEncryptionRule",
+            "message": "No encryption rules are configured for this bucket.",
+        }
+    )
+    service.session.client.return_value = oss_client
+
+    with patch(
+        "prowler.providers.alibabacloud.services.oss.oss_service.logger"
+    ) as mock_logger:
+        service._get_bucket_encryption(bucket)
+
+    mock_logger.error.assert_not_called()
+    assert bucket.encryption_algorithm == ""
+    assert bucket.encryption_kms_key_id == ""
+
+
+def test_get_bucket_encryption_unexpected_error_is_logged():
+    service = _build_oss_service()
+    bucket = _build_bucket()
+    oss_client = MagicMock()
+    oss_client.get_bucket_encryption.side_effect = RuntimeError("boom")
+    service.session.client.return_value = oss_client
+
+    with patch(
+        "prowler.providers.alibabacloud.services.oss.oss_service.logger"
+    ) as mock_logger:
+        service._get_bucket_encryption(bucket)
+
+    mock_logger.error.assert_called_once()
+    assert bucket.encryption_algorithm == ""

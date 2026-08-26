@@ -22,8 +22,13 @@ import {
   useState,
 } from "react";
 
+import { isCloud } from "@/lib/shared/env";
 import { cn } from "@/lib/utils";
-import type { AttackPathGraphData, GraphNode } from "@/types/attack-paths";
+import type {
+  AttackPathGraphData,
+  AttackPathOutcome,
+  GraphNode,
+} from "@/types/attack-paths";
 
 import {
   computeFilteredSubgraph,
@@ -31,12 +36,19 @@ import {
   getNodeColor,
   getPathEdges,
   GRAPH_EDGE_HIGHLIGHT_COLOR,
+  isProwlerFindingNode,
   resolveHiddenFindingIds,
 } from "../../_lib";
-import { isFindingNode, layoutWithDagre } from "../../_lib/layout";
+import {
+  type AttackPathView,
+  buildAttackPathView,
+} from "../../_lib/group-graph";
+import { layoutWithDagre, NODE_TYPE } from "../../_lib/layout";
 
 import { FindingNode } from "./nodes/finding-node";
+import { GroupNode } from "./nodes/group-node";
 import { InternetNode } from "./nodes/internet-node";
+import { OutcomeNode } from "./nodes/outcome-node";
 import { ResourceNode } from "./nodes/resource-node";
 
 // --- Types ---
@@ -56,7 +68,15 @@ interface AttackPathGraphProps {
   isFilteredView?: boolean;
   initialNodeId?: string;
   expandedResources?: Set<string>;
+  // Which resource-class groups are expanded to their members.
+  expandedClasses?: Set<string>;
+  // Terminal outcome for the current query; injected as the graph's end node.
+  outcome?: AttackPathOutcome | null;
+  // Pre-built attack-path view shared with the PNG export so both render the
+  // same grouped/outcome graph. Falls back to an internal build when omitted.
+  view?: AttackPathView | null;
   onNodeClick?: (node: GraphNode) => void;
+  onNodeDoubleClick?: (node: GraphNode) => void;
   onInitialFilter?: (filteredData: AttackPathGraphData) => void;
   ref?: Ref<GraphHandle>;
   className?: string;
@@ -67,9 +87,11 @@ const EMPTY_EXPANDED: ReadonlySet<string> = new Set();
 // --- Node type registry (stable reference) ---
 
 const NODE_TYPES = {
-  finding: FindingNode,
-  internet: InternetNode,
-  resource: ResourceNode,
+  [NODE_TYPE.FINDING]: FindingNode,
+  [NODE_TYPE.INTERNET]: InternetNode,
+  [NODE_TYPE.RESOURCE]: ResourceNode,
+  [NODE_TYPE.GROUP]: GroupNode,
+  [NODE_TYPE.OUTCOME]: OutcomeNode,
 } as const;
 
 // --- CSS for animated dashed edges, selected node pulse, and edge highlight ---
@@ -204,7 +226,11 @@ const GraphCanvas = ({
   isFilteredView = false,
   initialNodeId,
   expandedResources,
+  expandedClasses,
+  outcome,
+  view,
   onNodeClick,
+  onNodeDoubleClick,
   onInitialFilter,
   ref,
 }: GraphCanvasProps) => {
@@ -227,6 +253,23 @@ const GraphCanvas = ({
   // Tier 1 expansion is controlled by the parent (zustand store) so it
   // survives the data-swaps that happen on filtered-view enter/exit.
   const expanded = expandedResources ?? EMPTY_EXPANDED;
+
+  // Re-frame when a class group is expanded/collapsed so the new member set
+  // fits smoothly instead of overflowing the viewport. Newly revealed members
+  // are measured asynchronously, so poll until they have real dimensions rather
+  // than fitting on a single frame where measured.width can still be 0.
+  useEffect(() => {
+    return scheduleMeasuredFit(
+      () => {
+        const visibleNodes = getNodes().filter((n) => !n.hidden);
+        return (
+          visibleNodes.length > 0 &&
+          visibleNodes.every((n) => (n.measured?.width ?? 0) > 0)
+        );
+      },
+      () => fitView(AUTO_FIT_OPTIONS),
+    );
+  }, [expandedClasses, fitView, getNodes]);
 
   // --- initialNodeId: synchronous filtered-view derivation on first render ---
   // Compute the effective data: if initialNodeId is set and valid, derive filtered subgraph
@@ -379,8 +422,25 @@ const GraphCanvas = ({
     );
   }, [expanded, fitView, getNodes]);
 
-  const nodes = effectiveData.nodes ?? [];
-  const edges = effectiveData.edges ?? [];
+  // Cloud reshapes into the attack-path view: drop the account hub, collapse
+  // each resource class into one expandable node, and inject the outcome node.
+  // OSS keeps the original flat graph, so the grouped/outcome view is Cloud-only.
+  // Findings pass through either way; the finding-hide logic below reveals them
+  // per-resource, preserving existing behaviour.
+  //
+  // The parent builds and shares this view with the PNG export so both stay in
+  // sync; only fall back to an internal build when it is not provided.
+  const resolvedView =
+    view ??
+    (isCloud()
+      ? buildAttackPathView({
+          data: effectiveData,
+          expandedClasses: expandedClasses ?? EMPTY_EXPANDED,
+          outcome,
+        })
+      : { nodes: effectiveData.nodes ?? [], edges: effectiveData.edges ?? [] });
+  const nodes = resolvedView.nodes;
+  const edges = resolvedView.edges;
 
   // Pre-compute which resources have findings connected (O(n+e))
   const findingNodeIds = new Set<string>();
@@ -388,7 +448,7 @@ const GraphCanvas = ({
   const findingToResources = new Map<string, Set<string>>();
 
   nodes.forEach((n) => {
-    if (isFindingNode(n.labels)) findingNodeIds.add(n.id);
+    if (isProwlerFindingNode(n.labels)) findingNodeIds.add(n.id);
   });
 
   const resourcesWithFindings = new Set<string>();
@@ -460,7 +520,7 @@ const GraphCanvas = ({
     hidden: hiddenFindingIds.has(node.id),
     className: cn(
       node.className,
-      isFindingNode(node.data.graphNode.labels) ||
+      isProwlerFindingNode(node.data.graphNode.labels) ||
         resourcesWithFindings.has(node.id)
         ? "cursor-pointer"
         : "cursor-default",
@@ -509,6 +569,11 @@ const GraphCanvas = ({
     onNodeClick?.(graphNode);
   };
 
+  const handleNodeDoubleClick = (_event: MouseEvent, node: Node) => {
+    const graphNode = (node.data as { graphNode: GraphNode }).graphNode;
+    onNodeDoubleClick?.(graphNode);
+  };
+
   // Path highlight on hover
   const handleNodeMouseEnter = (_event: MouseEvent, node: Node) => {
     setHoveredNodeId(node.id);
@@ -525,6 +590,7 @@ const GraphCanvas = ({
         edges={enrichedEdges}
         nodeTypes={NODE_TYPES}
         onNodeClick={handleNodeClick}
+        onNodeDoubleClick={handleNodeDoubleClick}
         onNodeMouseEnter={handleNodeMouseEnter}
         onNodeMouseLeave={handleNodeMouseLeave}
         fitView
@@ -576,7 +642,11 @@ export const AttackPathGraph = ({
   isFilteredView,
   initialNodeId,
   expandedResources,
+  expandedClasses,
+  outcome,
+  view,
   onNodeClick,
+  onNodeDoubleClick,
   onInitialFilter,
   ref,
   className,
@@ -600,7 +670,11 @@ export const AttackPathGraph = ({
           isFilteredView={isFilteredView}
           initialNodeId={initialNodeId}
           expandedResources={expandedResources}
+          expandedClasses={expandedClasses}
+          outcome={outcome}
+          view={view}
           onNodeClick={onNodeClick}
+          onNodeDoubleClick={onNodeDoubleClick}
           onInitialFilter={onInitialFilter}
         />
       </ReactFlowProvider>

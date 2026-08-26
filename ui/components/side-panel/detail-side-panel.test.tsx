@@ -3,6 +3,8 @@ import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { useLighthouseContextStore } from "@/store/lighthouse-context/store";
+import { resetLighthouseContextStore } from "@/store/lighthouse-context/store.test-utils";
 import { SIDE_PANEL_TAB, useSidePanelStore } from "@/store/side-panel";
 
 import { DetailSidePanel } from "./detail-side-panel";
@@ -26,7 +28,13 @@ vi.mock(
 );
 
 // Mimics a table host: local open state, detail content as children.
-function Host({ initialOpen = true }: { initialOpen?: boolean }) {
+function Host({
+  initialOpen = true,
+  selectTabOnOpen,
+}: {
+  initialOpen?: boolean;
+  selectTabOnOpen?: boolean;
+}) {
   const [open, setOpen] = useState(initialOpen);
   return (
     <>
@@ -37,8 +45,17 @@ function Host({ initialOpen = true }: { initialOpen?: boolean }) {
       <DetailSidePanel
         open={open}
         onOpenChange={setOpen}
+        selectTabOnOpen={selectTabOnOpen}
         title="Resource Details"
         description="View the resource details"
+        context={{
+          kind: "finding",
+          id: "finding-1",
+          source: "focused",
+          scopeKey: "findings:/findings",
+          label: "Focused finding",
+          findingId: "finding-1",
+        }}
       >
         <div data-testid="detail-content">detail body</div>
       </DetailSidePanel>
@@ -61,14 +78,66 @@ function DualHost() {
         Open B
       </button>
       <GlobalSidePanel />
-      <DetailSidePanel open={openA} onOpenChange={setOpenA} title="Finding A">
+      <DetailSidePanel
+        open={openA}
+        onOpenChange={setOpenA}
+        title="Finding A"
+        context={{
+          kind: "finding",
+          id: "finding-a",
+          source: "focused",
+          scopeKey: "findings:/findings",
+          label: "Focused finding A",
+          findingId: "finding-a",
+        }}
+      >
         <div data-testid="detail-a">A body</div>
       </DetailSidePanel>
-      <DetailSidePanel open={openB} onOpenChange={setOpenB} title="Finding B">
+      <DetailSidePanel
+        open={openB}
+        onOpenChange={setOpenB}
+        title="Finding B"
+        context={{
+          kind: "finding",
+          id: "finding-b",
+          source: "focused",
+          scopeKey: "findings:/findings",
+          label: "Focused finding B",
+          findingId: "finding-b",
+        }}
+      >
         <div data-testid="detail-b">B body</div>
       </DetailSidePanel>
       <output data-testid="open-a">{String(openA)}</output>
       <output data-testid="open-b">{String(openB)}</output>
+    </>
+  );
+}
+
+function NavigatingHost() {
+  const [findingId, setFindingId] = useState("finding-1");
+
+  return (
+    <>
+      <button type="button" onClick={() => setFindingId("finding-2")}>
+        Next finding
+      </button>
+      <GlobalSidePanel />
+      <DetailSidePanel
+        open
+        onOpenChange={vi.fn()}
+        title="Finding"
+        context={{
+          kind: "finding",
+          id: findingId,
+          source: "focused",
+          scopeKey: "findings:/findings",
+          label: "Focused finding",
+          findingId,
+        }}
+      >
+        <div data-testid="navigating-detail">{findingId}</div>
+      </DetailSidePanel>
     </>
   );
 }
@@ -85,6 +154,7 @@ describe("DetailSidePanel", () => {
       contextOwnerToken: 0,
       contextOutlet: null,
     });
+    resetLighthouseContextStore();
   });
 
   it("portals the detail content into the global panel when open", async () => {
@@ -101,6 +171,26 @@ describe("DetailSidePanel", () => {
       "true",
     );
     expect(useSidePanelStore.getState().isOpen).toBe(true);
+  });
+
+  it("keeps the AI tab in front when opened with selectTabOnOpen: false", async () => {
+    // Given: a skill launch selected the AI tab before the drawer mounted
+    useSidePanelStore.getState().openPanel(SIDE_PANEL_TAB.AI_CHAT);
+
+    // When: the detail registers without stealing the selection
+    render(<Host selectTabOnOpen={false} />);
+    await screen.findByTestId("detail-content");
+
+    // Then: chat stays selected, Details is available in the background
+    expect(screen.getByRole("tab", { name: "Lighthouse AI" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(screen.getByRole("tab", { name: "Details" })).toHaveAttribute(
+      "aria-selected",
+      "false",
+    );
+    expect(screen.getByTestId("detail-content")).not.toBeVisible();
   });
 
   it("clears the host selection when the panel is dismissed", async () => {
@@ -131,6 +221,13 @@ describe("DetailSidePanel", () => {
     expect(await screen.findByTestId("panel-chat-content")).toBeInTheDocument();
     expect(screen.getByTestId("detail-content")).toBeInTheDocument();
     expect(screen.getByTestId("detail-content")).not.toBeVisible();
+    expect(useLighthouseContextStore.getState().focused?.id).toBe("finding-1");
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Close side panel" }));
+
+    // Then
+    expect(useLighthouseContextStore.getState().focused).toBeNull();
   });
 
   it("hands the panel to the newest detail view and closes the previous one", async () => {
@@ -151,6 +248,7 @@ describe("DetailSidePanel", () => {
     expect(screen.queryByTestId("detail-a")).not.toBeInTheDocument();
     expect(screen.getByTestId("open-a")).toHaveTextContent("false");
     expect(screen.getByTestId("open-b")).toHaveTextContent("true");
+    expect(useLighthouseContextStore.getState().focused?.id).toBe("finding-b");
 
     // When: the panel is dismissed
     await user.click(screen.getByRole("button", { name: "Close side panel" }));
@@ -159,6 +257,7 @@ describe("DetailSidePanel", () => {
     expect(screen.getByTestId("open-b")).toHaveTextContent("false");
     expect(screen.queryByTestId("detail-b")).not.toBeInTheDocument();
     expect(useSidePanelStore.getState().contextTab).toBeNull();
+    expect(useLighthouseContextStore.getState().focused).toBeNull();
   });
 
   it("registers nothing while closed and registers on open", async () => {
@@ -173,5 +272,22 @@ describe("DetailSidePanel", () => {
     // Then
     expect(await screen.findByTestId("detail-content")).toBeInTheDocument();
     expect(useSidePanelStore.getState().contextTab?.label).toBe("Details");
+  });
+
+  it("updates focused context while navigating inside the current drawer", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(<NavigatingHost />);
+    await screen.findByText("finding-1");
+    expect(useLighthouseContextStore.getState().focused?.id).toBe("finding-1");
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Next finding" }));
+
+    // Then
+    expect(screen.getByTestId("navigating-detail")).toHaveTextContent(
+      "finding-2",
+    );
+    expect(useLighthouseContextStore.getState().focused?.id).toBe("finding-2");
   });
 });

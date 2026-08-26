@@ -1,3 +1,4 @@
+import logging
 from math import isfinite
 from uuid import UUID
 
@@ -5,6 +6,7 @@ from api.db_router import MainRouter
 from api.models import TenantAPIKey, TenantAPIKeyManager
 from cryptography.fernet import InvalidToken
 from django.core.exceptions import ObjectDoesNotExist
+from django.db import transaction
 from django.utils import timezone
 from drf_simple_apikey.backends import APIKeyAuthentication as BaseAPIKeyAuth
 from drf_simple_apikey.crypto import get_crypto
@@ -13,6 +15,16 @@ from rest_framework.authentication import BaseAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.request import Request
 from rest_framework_simplejwt.authentication import JWTAuthentication
+
+logger = logging.getLogger(__name__)
+
+
+class OrphanedAPIKeyError(Exception):
+    """Raised when an API key outlived the user that owns it.
+
+    Handled by `authenticate`, which commits the revocation written while detecting it
+    and then rejects the request with `AuthenticationFailed`.
+    """
 
 
 class TenantAPIKeyAuthentication(BaseAPIKeyAuth):
@@ -24,10 +36,13 @@ class TenantAPIKeyAuthentication(BaseAPIKeyAuth):
     def _authenticate_credentials(self, request, key):
         """
         Override to use admin connection, bypassing RLS during authentication.
+
+        Returns the validated API key row, locked with `select_for_update`, so callers
+        must run inside `transaction.atomic(using=MainRouter.admin_db)`.
         """
         try:
             payload = self.key_crypto.decrypt(key)
-        except ValueError:
+        except (ValueError, InvalidToken):
             raise AuthenticationFailed("Invalid API Key.")
 
         if not isinstance(payload, dict):
@@ -52,12 +67,32 @@ class TenantAPIKeyAuthentication(BaseAPIKeyAuth):
             raise AuthenticationFailed("API Key has already expired.")
 
         try:
-            api_key = self.model.objects.using(MainRouter.admin_db).get(id=api_key_pk)
+            api_key = (
+                self.model.objects.using(MainRouter.admin_db)
+                .select_for_update()
+                .get(id=api_key_pk)
+            )
         except ObjectDoesNotExist:
             raise AuthenticationFailed("No entity matching this api key.")
 
         if api_key.revoked:
             raise AuthenticationFailed("This API Key has been revoked.")
+
+        # `entity` is nullable and `on_delete=SET_NULL` leaves the key behind when its
+        # owner is deleted, so a key can outlive its user. Reject it here: further down
+        # the authentication would return `None` as the authenticated user, which blows
+        # up while building the auth dict and surfaces as a 500 instead of a 401.
+        # Revoke it as well, so it stops showing up as active and later attempts fail
+        # the `revoked` check above like any other revoked key.
+        if api_key.entity_id is None:
+            api_key.revoked = True
+            api_key.save(update_fields=["revoked"], using=MainRouter.admin_db)
+            logger.warning(
+                "Revoked orphaned API key: prefix=%s tenant=%s",
+                api_key.prefix,
+                api_key.tenant_id,
+            )
+            raise OrphanedAPIKeyError
 
         client_ip = request.META.get(package_settings.IP_ADDRESS_HEADER)
         if api_key.blacklisted_ips and client_ip in api_key.blacklisted_ips:
@@ -66,7 +101,7 @@ class TenantAPIKeyAuthentication(BaseAPIKeyAuth):
         if api_key.whitelisted_ips and client_ip not in api_key.whitelisted_ips:
             raise AuthenticationFailed("Access restricted to specific IP addresses.")
 
-        return api_key.entity, key
+        return api_key
 
     def authenticate(self, request: Request):
         prefixed_key = self.get_key(request)
@@ -77,36 +112,34 @@ class TenantAPIKeyAuthentication(BaseAPIKeyAuth):
         except ValueError:
             raise AuthenticationFailed("Invalid API Key.")
 
-        try:
-            entity, _ = self._authenticate_credentials(request, key)
-        except InvalidToken:
-            raise AuthenticationFailed("Invalid API Key.")
+        # Validation, the `last_used_at` update and the auth claims all read the same
+        # row, locked until the transaction ends. Looking the key up a second time to
+        # build the claims used to leave a window where a key revoked or orphaned right
+        # after passing validation still authenticated.
+        with transaction.atomic(using=MainRouter.admin_db):
+            try:
+                api_key = self._authenticate_credentials(request, key)
+            except OrphanedAPIKeyError:
+                # Rejected below instead of here: leaving the block normally commits
+                # the revocation `_authenticate_credentials` wrote, while raising from
+                # inside would roll it back.
+                pass
+            else:
+                # The prefix used to be checked by the second lookup
+                if api_key.prefix != prefix:
+                    raise AuthenticationFailed("Invalid API Key.")
 
-        # Get the API key instance to update last_used_at and retrieve tenant info
-        # We need to decrypt again to get the pk (already validated by _authenticate_credentials)
-        payload = self.key_crypto.decrypt(key)
-        api_key_pk = payload["_pk"]
+                api_key.last_used_at = timezone.now()
+                api_key.save(update_fields=["last_used_at"], using=MainRouter.admin_db)
 
-        # Convert string UUID back to UUID object for lookup
-        if isinstance(api_key_pk, str):
-            api_key_pk = UUID(api_key_pk)
+                entity = api_key.entity
+                return entity, {
+                    "tenant_id": str(api_key.tenant_id),
+                    "sub": str(entity.id),
+                    "api_key_prefix": api_key.prefix,
+                }
 
-        try:
-            api_key_instance = TenantAPIKey.objects.using(MainRouter.admin_db).get(
-                id=api_key_pk, prefix=prefix
-            )
-        except TenantAPIKey.DoesNotExist:
-            raise AuthenticationFailed("Invalid API Key.")
-
-        # Update last_used_at
-        api_key_instance.last_used_at = timezone.now()
-        api_key_instance.save(update_fields=["last_used_at"], using=MainRouter.admin_db)
-
-        return entity, {
-            "tenant_id": str(api_key_instance.tenant_id),
-            "sub": str(api_key_instance.entity.id),
-            "api_key_prefix": prefix,
-        }
+        raise AuthenticationFailed("No entity matching this api key.")
 
 
 class CombinedJWTOrAPIKeyAuthentication(BaseAuthentication):

@@ -3,10 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 
 import { applyDiscovery } from "@/actions/organizations/organizations";
-import { getOuIdsForSelectedAccounts } from "@/actions/organizations/organizations.adapter";
+import { buildApplyPayload } from "@/actions/organizations/organizations.adapter";
 import {
-  checkConnectionProvider,
-  getProvider,
+  getProviderUidsByIds,
+  revalidateProviders,
+  startProviderConnectionChecks,
 } from "@/actions/providers/providers";
 import {
   WIZARD_FOOTER_ACTION_TYPE,
@@ -16,15 +17,15 @@ import { useOrgSetupStore } from "@/store/organizations/store";
 import {
   CONNECTION_TEST_STATUS,
   ConnectionTestStatus,
+  PROVIDER_SECRET_STATE,
 } from "@/types/organizations";
 import { TREE_ITEM_STATUS, TreeDataItem } from "@/types/tree";
 
 import {
-  buildAccountToProviderMap,
+  buildCandidateToProviderMap,
   canAdvanceToLaunchStep,
   getLaunchableProviderIds,
-  pollConnectionTask,
-  runWithConcurrencyLimit,
+  pollConnectionTasks,
 } from "../org-account-selection.utils";
 
 import { extractErrorMessage } from "./error-utils";
@@ -106,6 +107,7 @@ function buildTreeWithConnectionState(
   connectionResults: Record<string, ConnectionTestStatus>,
   connectionErrors: Record<string, string>,
   showPendingState: boolean,
+  hasAppliedProviders: boolean,
 ): TreeDataItem[] {
   return nodes.map((node) => {
     const children = node.children
@@ -116,6 +118,7 @@ function buildTreeWithConnectionState(
           connectionResults,
           connectionErrors,
           showPendingState,
+          hasAppliedProviders,
         )
       : undefined;
 
@@ -145,6 +148,13 @@ function buildTreeWithConnectionState(
         isLoading = true;
         status = undefined;
         errorMessage = undefined;
+      } else if (hasAppliedProviders) {
+        // Applied, but no outcome ever arrived for this account — typically an
+        // unresolved provider uid. Without this the row falls back to a plain
+        // checked box and reads as if the test had passed.
+        isLoading = false;
+        status = TREE_ITEM_STATUS.ERROR;
+        errorMessage = "Connection result unavailable for this account.";
       }
     }
 
@@ -179,18 +189,18 @@ export function useOrgAccountSelectionFlow({
     organizationId,
     organizationExternalId,
     discoveryId,
-    discoveryResult,
+    hierarchy,
     treeData,
-    accountLookup,
-    selectableAccountIds,
-    selectableAccountIdSet,
-    selectedAccountIds,
-    accountAliases,
+    candidateLookup,
+    selectableCandidateIds,
+    selectableCandidateIdSet,
+    selectedCandidateIds,
+    candidateAliases,
     createdProviderIds,
     connectionResults,
     connectionErrors,
-    setSelectedAccountIds,
-    setAccountAlias,
+    setSelectedCandidateIds,
+    setCandidateAlias,
     setCreatedProviderIds,
     clearValidationState,
     setConnectionError,
@@ -201,7 +211,13 @@ export function useOrgAccountSelectionFlow({
   const [isApplying, setIsApplying] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
   const [applyError, setApplyError] = useState<string | null>(null);
-  const [accountToProviderMap, setAccountToProviderMap] = useState<
+  // Apply overwrites the credentials of already-onboarded providers whose
+  // registration is `will_replace`, so it is confirmed first.
+  const [replaceWarning, setReplaceWarning] = useState<{
+    names: string[];
+  } | null>(null);
+  const replaceConfirmedRef = useRef(false);
+  const [candidateToProviderMap, setCandidateToProviderMap] = useState<
     Map<string, string>
   >(new Map());
   const isMountedRef = useRef(true);
@@ -210,21 +226,30 @@ export function useOrgAccountSelectionFlow({
   const lastAppliedSelectionKeyRef = useRef<string>("");
   const startTestingActionRef = useRef<() => void>(() => {});
 
-  const sanitizedSelectedAccountIds = selectedAccountIds.filter((id) =>
-    selectableAccountIdSet.has(id),
+  const sanitizedSelectedCandidateIds = selectedCandidateIds.filter((id) =>
+    selectableCandidateIdSet.has(id),
   );
-  const selectedAccountKey = getSelectionKey(sanitizedSelectedAccountIds);
+  const selectedCandidateKey = getSelectionKey(sanitizedSelectedCandidateIds);
   const selectedIdsForTree = buildTreeSelectedIds(
     treeData,
-    sanitizedSelectedAccountIds,
-    selectableAccountIdSet,
+    sanitizedSelectedCandidateIds,
+    selectableCandidateIdSet,
   );
-  const selectedAccountIdSet = new Set(sanitizedSelectedAccountIds);
-  const selectedCount = sanitizedSelectedAccountIds.length;
-  const totalAccounts = selectableAccountIds.length;
+  const selectedCandidateIdSet = new Set(sanitizedSelectedCandidateIds);
+  const selectedCount = sanitizedSelectedCandidateIds.length;
+  const totalCandidates = selectableCandidateIds.length;
   const hasConnectionErrors = Object.values(connectionResults).some(
     (status) => status === CONNECTION_TEST_STATUS.ERROR,
   );
+  const willReplaceSelectedNames = sanitizedSelectedCandidateIds
+    .map((id) => candidateLookup.get(id))
+    .filter(
+      (candidate) =>
+        candidate?.registration?.provider_secret_state ===
+        PROVIDER_SECRET_STATE.WILL_REPLACE,
+    )
+    .map((candidate) => candidate?.label || candidate?.uid || "")
+    .filter((name) => name.length > 0);
   const launchableProviderIds = getLaunchableProviderIds(
     createdProviderIds,
     connectionResults,
@@ -238,11 +263,12 @@ export function useOrgAccountSelectionFlow({
   const treeDataWithConnectionState = isTestingView
     ? buildTreeWithConnectionState(
         treeData,
-        selectedAccountIdSet,
-        accountToProviderMap,
+        selectedCandidateIdSet,
+        candidateToProviderMap,
         connectionResults,
         connectionErrors,
         isApplying || isTesting,
+        createdProviderIds.length > 0,
       )
     : treeData;
 
@@ -268,64 +294,86 @@ export function useOrgAccountSelectionFlow({
       setConnectionError(id, null);
     }
 
+    const settleProvider = (
+      providerId: string,
+      result: { success: boolean; error?: string },
+    ) => {
+      if (!isMountedRef.current || signal.aborted) {
+        return;
+      }
+      setConnectionResult(
+        providerId,
+        result.success
+          ? CONNECTION_TEST_STATUS.SUCCESS
+          : CONNECTION_TEST_STATUS.ERROR,
+      );
+      setConnectionError(
+        providerId,
+        result.success
+          ? null
+          : result.error || "Connection failed for this account.",
+      );
+    };
+
     try {
-      await runWithConcurrencyLimit(providerIds, 5, async (providerId) => {
-        if (!isMountedRef.current || signal.aborted) {
-          return;
-        }
+      // One action dispatches every check and one reads every pending task per
+      // round: Next runs client-invoked server actions one at a time, so a loop
+      // here would serialize the batch whatever concurrency it asked for.
+      const outcomes = await startProviderConnectionChecks(providerIds);
+      if (!isMountedRef.current || signal.aborted) {
+        return;
+      }
 
-        try {
-          const formData = new FormData();
-          formData.set("providerId", providerId);
+      const providerIdByTaskId = new Map<string, string>();
 
-          const checkResult = await checkConnectionProvider(formData);
-          if (!isMountedRef.current || signal.aborted) {
-            return;
-          }
+      for (const providerId of providerIds) {
+        const outcome = outcomes[providerId];
 
-          if (checkResult?.error || checkResult?.errors?.length) {
-            setConnectionResult(providerId, CONNECTION_TEST_STATUS.ERROR);
-            setConnectionError(
-              providerId,
-              extractErrorMessage(checkResult, "Connection test failed."),
-            );
-            return;
-          }
-
-          const taskId = checkResult?.data?.id;
-          if (!taskId) {
-            setConnectionResult(providerId, CONNECTION_TEST_STATUS.SUCCESS);
-            setConnectionError(providerId, null);
-            return;
-          }
-
-          const taskResult = await pollConnectionTask(taskId, { signal });
-          if (!isMountedRef.current || signal.aborted) {
-            return;
-          }
-          setConnectionResult(
-            providerId,
-            taskResult.success
-              ? CONNECTION_TEST_STATUS.SUCCESS
-              : CONNECTION_TEST_STATUS.ERROR,
-          );
-          setConnectionError(
-            providerId,
-            taskResult.success
-              ? null
-              : taskResult.error || "Connection failed for this account.",
-          );
-        } catch {
-          if (!isMountedRef.current || signal.aborted) {
-            return;
-          }
+        if (!outcome || outcome.error) {
           setConnectionResult(providerId, CONNECTION_TEST_STATUS.ERROR);
           setConnectionError(
             providerId,
-            "Unexpected error during connection test.",
+            extractErrorMessage(outcome?.error, "Connection test failed."),
           );
+          continue;
         }
+
+        // No task id means no check ever ran, so it cannot count as passing.
+        if (!outcome.taskId) {
+          settleProvider(providerId, {
+            success: false,
+            error: "Connection test did not start.",
+          });
+          continue;
+        }
+
+        providerIdByTaskId.set(outcome.taskId, providerId);
+      }
+
+      await pollConnectionTasks(Array.from(providerIdByTaskId.keys()), {
+        signal,
+        onSettled: (taskId, result) => {
+          const providerId = providerIdByTaskId.get(taskId);
+          if (providerId) {
+            settleProvider(providerId, result);
+          }
+        },
       });
+    } catch {
+      if (isMountedRef.current && !signal.aborted) {
+        for (const providerId of providerIds) {
+          if (
+            useOrgSetupStore.getState().connectionResults[providerId] ===
+            CONNECTION_TEST_STATUS.PENDING
+          ) {
+            setConnectionResult(providerId, CONNECTION_TEST_STATUS.ERROR);
+            setConnectionError(
+              providerId,
+              "Unexpected error during connection test.",
+            );
+          }
+        }
+      }
     } finally {
       if (connectionTestAbortControllerRef.current === abortController) {
         connectionTestAbortControllerRef.current = null;
@@ -338,6 +386,9 @@ export function useOrgAccountSelectionFlow({
     if (!isMountedRef.current || signal.aborted) {
       return;
     }
+
+    // Once for the whole batch: the checks themselves revalidate nothing.
+    void revalidateProviders();
 
     const latestResults = useOrgSetupStore.getState().connectionResults;
     const allPassed =
@@ -353,34 +404,28 @@ export function useOrgAccountSelectionFlow({
   };
 
   const handleApplyAndTest = async () => {
-    if (!organizationId || !discoveryId || !discoveryResult) {
+    if (!organizationId || !discoveryId || !hierarchy) {
       return;
     }
 
     setApplyError(null);
     setIsApplying(true);
 
-    const currentSelectedAccountIds = useOrgSetupStore
+    const currentSelectedCandidateIds = useOrgSetupStore
       .getState()
-      .selectedAccountIds.filter((id) => selectableAccountIdSet.has(id));
-    const currentSelectionKey = getSelectionKey(currentSelectedAccountIds);
+      .selectedCandidateIds.filter((id) => selectableCandidateIdSet.has(id));
+    const currentSelectionKey = getSelectionKey(currentSelectedCandidateIds);
 
-    const accounts = currentSelectedAccountIds.map((id) => ({
-      id,
-      ...(accountAliases[id] ? { alias: accountAliases[id] } : {}),
-    }));
-    const ouIds = getOuIdsForSelectedAccounts(
-      discoveryResult,
-      currentSelectedAccountIds,
+    // Per-type apply payload, discriminated by the hierarchy being applied: AWS
+    // derives OU ancestors client-side; GCP sends projects only (folder
+    // ancestors are derived server-side).
+    const payload = buildApplyPayload(
+      hierarchy,
+      currentSelectedCandidateIds,
+      candidateAliases,
     );
-    const organizationalUnits = ouIds.map((id) => ({ id }));
 
-    const result = await applyDiscovery(
-      organizationId,
-      discoveryId,
-      accounts,
-      organizationalUnits,
-    );
+    const result = await applyDiscovery(organizationId, discoveryId, payload);
     if (!isMountedRef.current) {
       return;
     }
@@ -398,29 +443,16 @@ export function useOrgAccountSelectionFlow({
       ) ?? [];
 
     setCreatedProviderIds(providerIds);
-    const mapping = await buildAccountToProviderMap({
-      selectedAccountIds: currentSelectedAccountIds,
+    const mapping = await buildCandidateToProviderMap({
+      selectedCandidateIds: currentSelectedCandidateIds,
       providerIds,
-      applyResult: result,
-      resolveProviderUidById: async (providerId) => {
-        const providerFormData = new FormData();
-        providerFormData.set("id", providerId);
-        const providerResponse = await getProvider(providerFormData);
-
-        if (providerResponse?.error || providerResponse?.errors?.length) {
-          return null;
-        }
-
-        return typeof providerResponse?.data?.attributes?.uid === "string"
-          ? providerResponse.data.attributes.uid
-          : null;
-      },
+      resolveProviderUids: getProviderUidsByIds,
     });
     if (!isMountedRef.current) {
       return;
     }
 
-    setAccountToProviderMap(mapping);
+    setCandidateToProviderMap(mapping);
     setIsApplying(false);
     lastAppliedSelectionKeyRef.current = currentSelectionKey;
 
@@ -438,9 +470,13 @@ export function useOrgAccountSelectionFlow({
 
     const shouldApplySelection =
       !hasAppliedRef.current ||
-      lastAppliedSelectionKeyRef.current !== selectedAccountKey;
+      lastAppliedSelectionKeyRef.current !== selectedCandidateKey;
 
     if (shouldApplySelection) {
+      if (willReplaceSelectedNames.length > 0 && !replaceConfirmedRef.current) {
+        setReplaceWarning({ names: willReplaceSelectedNames });
+        return;
+      }
       hasAppliedRef.current = true;
       void handleApplyAndTest();
       return;
@@ -520,26 +556,38 @@ export function useOrgAccountSelectionFlow({
   ]);
 
   const handleTreeSelectionChange = (ids: string[]) => {
-    const filteredIds = ids.filter((id) => selectableAccountIdSet.has(id));
-    const nextSelectedAccountKey = getSelectionKey(filteredIds);
+    const filteredIds = ids.filter((id) => selectableCandidateIdSet.has(id));
+    const nextSelectedCandidateKey = getSelectionKey(filteredIds);
 
-    if (nextSelectedAccountKey !== selectedAccountKey) {
+    if (nextSelectedCandidateKey !== selectedCandidateKey) {
       hasAppliedRef.current = false;
       lastAppliedSelectionKeyRef.current = "";
+      replaceConfirmedRef.current = false;
       setApplyError(null);
-      setAccountToProviderMap(new Map());
+      setCandidateToProviderMap(new Map());
       clearValidationState();
     }
 
-    setSelectedAccountIds(filteredIds);
+    setSelectedCandidateIds(filteredIds);
+  };
+
+  const confirmReplaceAndApply = () => {
+    replaceConfirmedRef.current = true;
+    setReplaceWarning(null);
+    startTestingActionRef.current();
+  };
+
+  const cancelReplace = () => {
+    setReplaceWarning(null);
+    setIsTestingView(false);
   };
 
   return {
-    accountAliases,
-    accountLookup,
+    candidateAliases,
+    candidateLookup,
     applyError,
     canAdvanceToLaunch,
-    discoveryResult,
+    hierarchy,
     handleTreeSelectionChange,
     hasConnectionErrors,
     isTesting,
@@ -548,9 +596,12 @@ export function useOrgAccountSelectionFlow({
     organizationExternalId,
     selectedCount,
     selectedIdsForTree,
-    setAccountAlias,
+    setCandidateAlias,
     showHeaderHelperText,
-    totalAccounts,
+    totalCandidates,
     treeDataWithConnectionState,
+    replaceWarning,
+    confirmReplaceAndApply,
+    cancelReplace,
   };
 }

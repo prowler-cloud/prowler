@@ -14,7 +14,7 @@ import {
 } from "@/components/shadcn";
 import { SidePanelTrigger } from "@/components/side-panel";
 import { ThemeSwitch } from "@/components/ThemeSwitch";
-import { getFlowById } from "@/lib/onboarding";
+import { getFlowById, isOnFlowRoute } from "@/lib/onboarding";
 import { isCloud } from "@/lib/shared/env";
 import { useTourCompletion } from "@/lib/tours/use-tour-completion";
 import { cn } from "@/lib/utils";
@@ -67,8 +67,13 @@ export function NavbarClient({
     if (!flow) return;
 
     // Already on the flow's page: start the replay via an in-memory signal so the
-    // URL never changes and Next.js never refetches the (often heavy) page.
-    if (flow.route === pathname) {
+    // URL never changes and Next.js never refetches the (often heavy) page — and
+    // the params the user built up (selected scan, filters) survive.
+    // The query is read from `window` rather than `useSearchParams()` on purpose:
+    // the hook would hoist the CSR bailout to this component, outside the Suspense
+    // boundary below that exists to contain it. This runs on click, client-only.
+    const currentQuery = new URLSearchParams(window.location.search);
+    if (isOnFlowRoute(flow.route, pathname, currentQuery)) {
       requestReplay(flow.id);
       return;
     }
@@ -83,8 +88,9 @@ export function NavbarClient({
     // -ml-4/pl-4: bleed the bar across <main>'s 16px left gutter so its
     // border-b meets the sidebar's border-r. The gutter is main's padding —
     // main scrolls and would clip anything bled past its padding box.
-    <header className="border-border-neutral-secondary sticky top-0 z-10 -ml-4 border-b pt-4 pl-4 backdrop-blur-sm">
-      <div className="flex h-14 items-center pr-6">
+    <header className="border-border-neutral-secondary sticky top-0 z-10 -ml-4 border-b pl-4 backdrop-blur-sm">
+      {/* h-15 (60px) matches the side panel's tab header so both border-b lines align. */}
+      <div className="flex h-15 items-center pr-6">
         <div className="flex items-center gap-2">
           <MobileAppSidebar />
           {/* Suspense contains the useSearchParams() CSR bailout in BreadcrumbNavigation

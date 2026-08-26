@@ -154,9 +154,17 @@
                 ]
               },
               {
+                "group": "Attack Paths",
+                "pages": [
+                  "user-guide/tutorials/prowler-app-attack-paths",
+                  "user-guide/tutorials/prowler-app-attack-paths-active-queries"
+                ]
+              },
+              {
                 "group": "Compliance",
                 "pages": [
                   "user-guide/compliance/tutorials/compliance",
+                  "user-guide/compliance/tutorials/cross-provider-type-compliance",
                   "user-guide/compliance/tutorials/cross-provider-compliance",
                   "user-guide/compliance/tutorials/threatscore"
                 ]
@@ -165,7 +173,6 @@
                 "group": "Findings",
                 "pages": [
                   "user-guide/tutorials/prowler-alerts",
-                  "user-guide/tutorials/prowler-app-attack-paths",
                   "user-guide/tutorials/prowler-app-finding-groups",
                   "user-guide/tutorials/prowler-app-findings-triage"
                 ]
@@ -175,7 +182,8 @@
                 "pages": [
                   "user-guide/tutorials/prowler-app-s3-integration",
                   "user-guide/tutorials/prowler-app-security-hub-integration",
-                  "user-guide/tutorials/prowler-app-jira-integration"
+                  "user-guide/tutorials/prowler-app-jira-integration",
+                  "user-guide/tutorials/prowler-app-slack-integration"
                 ]
               },
               {
@@ -295,6 +303,15 @@
             "group": "Providers",
             "pages": [
               {
+                "group": "Organizations",
+                "pages": [
+                  "user-guide/organizations",
+                  "user-guide/providers/aws/organizations",
+                  "user-guide/providers/gcp/organization",
+                  "user-guide/providers/azure/management-groups"
+                ]
+              },
+              {
                 "group": "Alibaba Cloud",
                 "pages": [
                   "user-guide/providers/alibabacloud/getting-started-alibabacloud",
@@ -323,6 +340,7 @@
                   "user-guide/providers/azure/getting-started-azure",
                   "user-guide/providers/azure/authentication",
                   "user-guide/providers/azure/use-non-default-cloud",
+                  "user-guide/providers/azure/management-groups",
                   "user-guide/providers/azure/subscriptions",
                   "user-guide/providers/azure/resource-groups",
                   "user-guide/providers/azure/create-prowler-service-principal"
@@ -364,6 +382,13 @@
                 "pages": [
                   "user-guide/providers/googleworkspace/getting-started-googleworkspace",
                   "user-guide/providers/googleworkspace/authentication"
+                ]
+              },
+              {
+                "group": "Huawei Cloud",
+                "pages": [
+                  "user-guide/providers/huaweicloud/getting-started-huaweicloud",
+                  "user-guide/providers/huaweicloud/authentication"
                 ]
               },
               {
@@ -488,7 +513,8 @@
               "developer-guide/mcp-server",
               "developer-guide/ai-skills",
               "developer-guide/prowler-studio",
-              "developer-guide/server-sent-events"
+              "developer-guide/server-sent-events",
+              "developer-guide/attack-paths-queries"
             ]
           },
           {
@@ -559,14 +585,15 @@
         ]
       },
       {
+        "tab": "Changelog",
+        "pages": [
+          "changelog"
+        ]
+      },
+      {
         "tab": "About Us",
         "icon": "/favicon.ico",
         "href": "https://prowler.com/about#team"
-      },
-      {
-        "tab": "Changelog",
-        "icon": "github",
-        "href": "https://github.com/prowler-cloud/prowler/releases"
       }
     ],
     "global": {
@@ -603,7 +630,7 @@
     ]
   },
   "banner": {
-    "content": "Prowler App is now Prowler Local Server, and Prowler Enterprise is now Prowler Private Cloud. See [Prowler product families](/getting-started/products).",
+    "content": "Prowler App is now Prowler Local Server, and Prowler Enterprise is now Prowler Private Cloud. See [Prowler product families](/getting-started/products). Check the [latest changes](/changelog).",
     "dismissible": false
   },
   "markdown": {

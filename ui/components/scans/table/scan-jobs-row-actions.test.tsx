@@ -44,11 +44,6 @@ vi.mock("@/lib/helper", () => ({
   downloadScanZip: downloadScanZipMock,
 }));
 
-vi.mock("@/lib/date-utils", () => ({
-  toLocalDateString: (value: string | null | undefined) =>
-    value ? "2026-01-01" : undefined,
-}));
-
 vi.mock("@/components/scans/edit-alias-modal", () => ({
   EditAliasModal: ({
     open,
@@ -282,7 +277,9 @@ describe("ScanJobsRowActions", () => {
     );
 
     // Then
-    expect(pushMock).toHaveBeenCalledWith("/compliance?scanId=scan-1");
+    expect(pushMock).toHaveBeenCalledWith(
+      "/compliance?tab=per-scan&scanId=scan-1",
+    );
   });
 
   it("renames the completed scan report download action", async () => {
@@ -312,13 +309,14 @@ describe("ScanJobsRowActions", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("links completed scans to filtered findings", async () => {
+  it("links completed scans to filtered findings without a browser-local date", async () => {
     // Given
     const user = userEvent.setup();
     render(
       <ScanJobsRowActions
         scan={makeScan({
           state: "completed",
+          started_at: "2026-01-01T09:50:00Z",
           completed_at: "2026-01-01T10:05:00Z",
         })}
         tab="completed"
@@ -333,8 +331,32 @@ describe("ScanJobsRowActions", () => {
 
     // Then
     expect(pushMock).toHaveBeenCalledWith(
-      "/findings?filter[scan__in]=scan-1&filter[inserted_at]=2026-01-01&filter[status__in]=FAIL",
+      "/findings?filter[scan__in]=scan-1&filter[status__in]=FAIL",
     );
+  });
+
+  it("disables View Findings when the completed scan has no completion timestamp", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(
+      <ScanJobsRowActions
+        scan={makeScan({ state: "completed", completed_at: "" })}
+        tab="completed"
+      />,
+    );
+
+    // When
+    await user.click(
+      screen.getByRole("button", { name: /open actions menu/i }),
+    );
+    const viewFindings = screen.getByRole("menuitem", {
+      name: /view findings/i,
+    });
+    await user.click(viewFindings);
+
+    // Then
+    expect(viewFindings).toHaveAttribute("aria-disabled", "true");
+    expect(pushMock).not.toHaveBeenCalled();
   });
 
   it("triggers downloadScanZip with the scan id when downloading reports", async () => {

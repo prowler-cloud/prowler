@@ -521,6 +521,14 @@
   },
   {
     "section": "dependencies",
+    "name": "posthog-js",
+    "from": "1.260.1",
+    "to": "1.407.2",
+    "strategy": "installed",
+    "generatedAt": "2026-07-27T08:35:41.397Z"
+  },
+  {
+    "section": "dependencies",
     "name": "react",
     "from": "19.2.6",
     "to": "19.2.7",
@@ -587,9 +595,9 @@
     "section": "dependencies",
     "name": "sharp",
     "from": "0.33.5",
-    "to": "0.33.5",
+    "to": "0.35.3",
     "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
+    "generatedAt": "2026-08-11T11:35:35.609Z"
   },
   {
     "section": "dependencies",

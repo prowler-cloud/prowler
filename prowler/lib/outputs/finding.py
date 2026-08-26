@@ -514,6 +514,23 @@ class Finding(BaseModel):
                 )
                 output_data["region"] = check_output.region
 
+            elif provider.type == "huaweicloud":
+                output_data["auth_method"] = get_nested_attribute(
+                    provider, "identity.identity_type"
+                )
+                output_data["account_uid"] = get_nested_attribute(
+                    provider, "identity.account_id"
+                )
+                output_data["account_name"] = get_nested_attribute(
+                    provider, "identity.account_name"
+                )
+                output_data["resource_name"] = check_output.resource_name
+                output_data["resource_uid"] = (
+                    getattr(check_output, "resource_arn", "")
+                    or check_output.resource_id
+                )
+                output_data["region"] = check_output.region
+
             elif provider.type == "openstack":
                 output_data["auth_method"] = (
                     f"Username: {get_nested_attribute(provider, 'identity.username')}"
