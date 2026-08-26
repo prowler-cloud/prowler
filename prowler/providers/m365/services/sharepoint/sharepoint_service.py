@@ -15,7 +15,7 @@ class SharePoint(M365Service):
         super().__init__(provider)
         self.tenant_settings = None
         if self.powershell:
-            if self.powershell.connect_sharepoint_online():
+            if self.powershell.connect_sharepoint_online(provider.region_config.name):
                 self.tenant_settings = self.powershell.get_sharepoint_tenant_config()
             self.powershell.close()
 

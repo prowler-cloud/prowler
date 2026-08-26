@@ -409,11 +409,13 @@ class Testm365PowerShell:
         mock_popen.return_value = mock_process
 
         # Mock the execute method to simulate successful module installation
-        def mock_execute(command, *args, **kwargs):
+        def mock_execute(command, *args, **_kwargs):
             if "Get-Module" in command:
                 return None  # Module not installed
             elif "Install-Module" in command:
                 return None  # Installation successful
+            elif 'Import-Module "PnP.PowerShell"' in command:
+                return "3.4.1"
             elif "Import-Module" in command:
                 return None  # Import successful
             return None
@@ -432,17 +434,31 @@ class Testm365PowerShell:
 
             # Verify successful initialization
             assert result is True
-            # Verify that execute was called for each module
-            assert (
-                mock_execute_obj.call_count == 4 * 3
-            )  # number of modules * 3 commands each
             # Verify success messages were logged
             mock_info.assert_any_call(
                 "Successfully installed module ExchangeOnlineManagement"
             )
             mock_info.assert_any_call("Successfully installed module MicrosoftTeams")
             mock_info.assert_any_call(
-                "Successfully installed module Microsoft.Online.SharePoint.PowerShell"
+                "Successfully installed module PnP.PowerShell 3.4.1"
+            )
+            commands = [
+                mock_call.args[0] for mock_call in mock_execute_obj.call_args_list
+            ]
+            assert any(
+                "Install-Module PnP.PowerShell" in command
+                and "-RequiredVersion 3.4.1" in command
+                for command in commands
+            )
+            assert any(
+                "Get-Module -ListAvailable PnP.PowerShell" in command
+                and "[version]'3.4.1'" in command
+                for command in commands
+            )
+            assert any(
+                'Import-Module "PnP.PowerShell"' in command
+                and "-RequiredVersion 3.4.1" in command
+                for command in commands
             )
 
     @patch("subprocess.Popen")
@@ -452,7 +468,7 @@ class Testm365PowerShell:
         mock_popen.return_value = mock_process
 
         # Mock the execute method to simulate installation failure
-        def mock_execute(command, *args, **kwargs):
+        def mock_execute(command, *args, **_kwargs):
             if "Get-Module" in command:
                 return None  # Module not installed
             elif "Install-Module" in command:
@@ -481,17 +497,75 @@ class Testm365PowerShell:
             )
 
     @patch("subprocess.Popen")
+    def test_initialize_m365_powershell_modules_imports_installed_pnp_module(
+        self, mock_popen
+    ):
+        """The pinned PnP module is imported even when it is already installed."""
+        mock_popen.return_value = MagicMock()
+
+        def execute(command, *args, **_kwargs):
+            if 'Import-Module "PnP.PowerShell"' in command:
+                return "3.4.1"
+            return "Installed"
+
+        with patch.object(
+            PowerShellSession, "execute", side_effect=execute
+        ) as mock_execute:
+            from prowler.providers.m365.lib.powershell.m365_powershell import (
+                initialize_m365_powershell_modules,
+            )
+
+            assert initialize_m365_powershell_modules() is True
+
+        commands = [mock_call.args[0] for mock_call in mock_execute.call_args_list]
+        assert any(
+            'Import-Module "PnP.PowerShell"' in command
+            and "-RequiredVersion 3.4.1" in command
+            for command in commands
+        )
+        assert all(
+            "Install-Module PnP.PowerShell" not in command for command in commands
+        )
+        pnp_import_call = next(
+            mock_call
+            for mock_call in mock_execute.call_args_list
+            if 'Import-Module "PnP.PowerShell"' in mock_call.args[0]
+        )
+        assert "timeout" not in pnp_import_call.kwargs
+
+    @patch("subprocess.Popen")
+    def test_initialize_m365_powershell_modules_fails_when_pnp_import_fails(
+        self, mock_popen
+    ):
+        """PnP import must be validated before initialization reports success."""
+        mock_popen.return_value = MagicMock()
+
+        def execute(command, *args, **_kwargs):
+            if "Get-Module" in command:
+                return "" if "PnP.PowerShell" in command else "Installed"
+            return ""
+
+        with patch.object(PowerShellSession, "execute", side_effect=execute):
+            from prowler.providers.m365.lib.powershell.m365_powershell import (
+                initialize_m365_powershell_modules,
+            )
+
+            assert initialize_m365_powershell_modules() is False
+
+    @patch("subprocess.Popen")
     def test_main_success(self, mock_popen):
         """Test main() function when module initialization is successful"""
         mock_process = MagicMock()
         mock_popen.return_value = mock_process
 
         # Mock the execute method to simulate successful module installation
-        def mock_execute(command, *args, **kwargs):
+        def mock_execute(command, *args, **_kwargs):
             if "Get-Module" in command:
                 return None  # Module not installed
             elif "Install-Module" in command:
                 return None  # Installation successful
+            elif 'Import-Module "PnP.PowerShell"' in command:
+                return "3.4.1"
             elif "Import-Module" in command:
                 return None  # Import successful
             return None
@@ -512,9 +586,7 @@ class Testm365PowerShell:
                     call("Successfully installed module ExchangeOnlineManagement"),
                     call("Successfully installed module MicrosoftTeams"),
                     call("Successfully installed module MSAL.PS"),
-                    call(
-                        "Successfully installed module Microsoft.Online.SharePoint.PowerShell"
-                    ),
+                    call("Successfully installed module PnP.PowerShell 3.4.1"),
                     call("M365 PowerShell modules initialized successfully"),
                 ]
             )
@@ -528,7 +600,7 @@ class Testm365PowerShell:
         mock_popen.return_value = mock_process
 
         # Mock the execute method to simulate installation failure
-        def mock_execute(command, *args, **kwargs):
+        def mock_execute(command, *args, **_kwargs):
             if "Get-Module" in command:
                 return None  # Module not installed
             elif "Install-Module" in command:
@@ -676,7 +748,7 @@ class Testm365PowerShell:
         session = M365PowerShell(credentials, identity)
 
         # Mock execute to return valid responses
-        def mock_execute(command, *args, **kwargs):
+        def mock_execute(command, *args, **_kwargs):
             if "Write-Output $exchangeToken" in command:
                 return "valid_exchange_token"
             return None
@@ -726,7 +798,7 @@ class Testm365PowerShell:
         session = M365PowerShell(credentials, identity)
 
         # Mock execute to return valid token but decode returns no permissions
-        def mock_execute(command, *args, **kwargs):
+        def mock_execute(command, *args, **_kwargs):
             if "Write-Output $exchangeToken" in command:
                 return "valid_exchange_token"
             return None
@@ -1272,200 +1344,182 @@ class Testm365PowerShell:
 
         session.close()
 
+    @pytest.mark.parametrize(
+        "region,tenant_domain,azure_environment,admin_url",
+        [
+            (
+                "M365Global",
+                "contoso.onmicrosoft.com",
+                "Production",
+                "https://contoso-admin.sharepoint.com",
+            ),
+            (
+                "M365China",
+                "contoso.partner.onmschina.cn",
+                "China",
+                "https://contoso-admin.sharepoint.cn",
+            ),
+            (
+                "M365USGovernment",
+                "contoso.onmicrosoft.us",
+                "USGovernmentHigh",
+                "https://contoso-admin.sharepoint.us",
+            ),
+        ],
+    )
     @patch("subprocess.Popen")
-    def test_connect_sharepoint_online_certificate_auth(self, mock_popen):
-        """Test connect_sharepoint_online method with certificate authentication"""
-        mock_process = MagicMock()
-        mock_popen.return_value = mock_process
-
-        credentials = M365Credentials()
-        identity = M365IdentityInfo()
-        session = M365PowerShell(credentials, identity)
-
-        execute_calls = []
-
-        def mock_execute_side_effect(command):
-            execute_calls.append(command)
-            if "Write-Output $certificate" in command:
-                return "certificate_content"
-            return ""
-
-        session.execute = MagicMock(side_effect=mock_execute_side_effect)
-        session.test_sharepoint_certificate_connection = MagicMock(return_value=True)
-
-        result = session.connect_sharepoint_online()
-        assert result is True
-        session.test_sharepoint_certificate_connection.assert_called_once()
-        session.close()
-
-    @patch("subprocess.Popen")
-    def test_connect_sharepoint_online_app_auth(self, mock_popen):
-        """Test connect_sharepoint_online method with application authentication"""
-        mock_process = MagicMock()
-        mock_popen.return_value = mock_process
-
-        credentials = M365Credentials()
-        identity = M365IdentityInfo()
-        session = M365PowerShell(credentials, identity)
-
-        execute_calls = []
-
-        def mock_execute_side_effect(command):
-            execute_calls.append(command)
-            if "Write-Output $certificate" in command:
-                return ""
-            return ""
-
-        session.execute = MagicMock(side_effect=mock_execute_side_effect)
-        session.test_sharepoint_connection = MagicMock(return_value=True)
-
-        result = session.connect_sharepoint_online()
-        assert result is True
-        session.test_sharepoint_connection.assert_called_once()
-        session.close()
-
-    @patch("subprocess.Popen")
-    def test_sharepoint_connection(self, mock_popen):
-        """Test test_sharepoint_connection method"""
-        mock_process = MagicMock()
-        mock_popen.return_value = mock_process
-
-        credentials = M365Credentials()
-        identity = M365IdentityInfo(tenant_domain="example.com")
-        session = M365PowerShell(credentials, identity)
-
-        session.execute = MagicMock()
+    def test_connect_sharepoint_online_certificate_auth(
+        self,
+        mock_popen,
+        region,
+        tenant_domain,
+        azure_environment,
+        admin_url,
+    ):
+        """Certificate auth uses validated tenant and sovereign-cloud settings."""
+        mock_popen.return_value = MagicMock()
+        session = M365PowerShell(
+            M365Credentials(),
+            M365IdentityInfo(tenant_domains=[tenant_domain]),
+        )
+        session.execute = MagicMock(
+            side_effect=lambda command, **_: (
+                "certificate_content"
+                if "Write-Output $certificateBase64" in command
+                else ""
+            )
+        )
         session.execute_connect = MagicMock(return_value="Connected")
 
-        result = session.test_sharepoint_connection()
-        assert result is True
-        session.execute.assert_called_once_with(
-            '$spoAdminUrl = "https://" + $tenantDomain.Split(".")[0] + "-admin.sharepoint.com"'
-        )
-        session.execute_connect.assert_called_once_with(
-            "Connect-SPOService -Url $spoAdminUrl; if ($?) { Write-Output 'Connected' }"
-        )
+        assert session.connect_sharepoint_online(region) is True
+
+        commands = [mock_call.args[0] for mock_call in session.execute.call_args_list]
+        connect_command = session.execute_connect.call_args.args[0]
+        assert any(admin_url in command for command in commands)
+        assert any(tenant_domain in command for command in commands)
+        assert "Connect-PnPOnline" in connect_command
+        assert "-CertificateBase64Encoded $certificateBase64" in connect_command
+        assert "-ClientId $clientID" in connect_command
+        assert "-ReturnConnection" in connect_command
+        assert "-ValidateConnection" in connect_command
+        assert "-ErrorAction Stop" in connect_command
+        assert f"-AzureEnvironment {azure_environment}" in connect_command
+        assert "-Interactive" not in connect_command
+        assert "-ClientSecret" not in connect_command
         session.close()
 
     @patch("subprocess.Popen")
-    def test_sharepoint_certificate_connection(self, mock_popen):
-        """Test test_sharepoint_certificate_connection method"""
-        mock_process = MagicMock()
-        mock_popen.return_value = mock_process
+    def test_connect_sharepoint_online_client_secret_skips_without_prompt(
+        self, mock_popen
+    ):
+        """Client-secret auth skips PnP enrichment without starting a prompt."""
+        mock_popen.return_value = MagicMock()
+        session = M365PowerShell(M365Credentials(), M365IdentityInfo())
+        session.execute = MagicMock(return_value="")
+        session.execute_connect = MagicMock()
 
-        credentials = M365Credentials()
-        identity = M365IdentityInfo(tenant_domain="example.com")
-        session = M365PowerShell(credentials, identity)
+        assert session.connect_sharepoint_online("M365Global") is False
+        session.execute_connect.assert_not_called()
+        session.close()
 
-        session.execute = MagicMock()
+    @patch("subprocess.Popen")
+    def test_connect_sharepoint_online_skips_when_pnp_initialization_failed(
+        self, mock_popen
+    ):
+        """Failed PnP initialization disables only SharePoint enrichment."""
+        mock_popen.return_value = MagicMock()
+        session = M365PowerShell(
+            M365Credentials(pnp_powershell_ready=False),
+            M365IdentityInfo(tenant_domains=["contoso.onmicrosoft.com"]),
+        )
+        session.execute = MagicMock(return_value="certificate_content")
         session.execute_connect = MagicMock(return_value="Connected")
 
-        result = session.test_sharepoint_certificate_connection()
-        assert result is True
-        session.execute.assert_called_once_with(
-            '$spoAdminUrl = "https://" + $tenantDomain.Split(".")[0] + "-admin.sharepoint.com"'
-        )
-        session.execute_connect.assert_called_once_with(
-            "Connect-SPOService -Url $spoAdminUrl -Certificate $certificate -ClientId $clientID -TenantId $tenantID; if ($?) { Write-Output 'Connected' }"
-        )
+        assert session.connect_sharepoint_online("M365Global") is False
+        session.execute.assert_not_called()
+        session.execute_connect.assert_not_called()
         session.close()
 
     @patch("subprocess.Popen")
-    def test_sharepoint_connection_failure(self, mock_popen):
-        """Test test_sharepoint_connection method failure"""
-        mock_process = MagicMock()
-        mock_popen.return_value = mock_process
-
-        credentials = M365Credentials()
-        identity = M365IdentityInfo(tenant_domain="example.com")
-        session = M365PowerShell(credentials, identity)
-
-        session.execute = MagicMock()
-        session.execute_connect = MagicMock(
-            return_value="'execute_connect' command timeout reached"
+    def test_connect_sharepoint_online_rejects_unvalidated_tenant_domain(
+        self, mock_popen
+    ):
+        """Custom domains cannot be used to guess the SharePoint admin hostname."""
+        mock_popen.return_value = MagicMock()
+        session = M365PowerShell(
+            M365Credentials(),
+            M365IdentityInfo(tenant_domains=["contoso.example"]),
         )
+        session.execute = MagicMock(return_value="certificate_content")
+        session.execute_connect = MagicMock()
 
-        result = session.test_sharepoint_connection()
-        assert result is False
+        assert session.connect_sharepoint_online("M365Global") is False
+        session.execute_connect.assert_not_called()
+        session.close()
+
+    @pytest.mark.parametrize(
+        "connection_result", ["", "Unexpected", "Connected\nUnexpected"]
+    )
+    @patch("subprocess.Popen")
+    def test_connect_sharepoint_online_validates_connection_result(
+        self, mock_popen, connection_result
+    ):
+        """Only the explicit PnP connection success marker enables enrichment."""
+        mock_popen.return_value = MagicMock()
+        session = M365PowerShell(
+            M365Credentials(),
+            M365IdentityInfo(tenant_domains=["contoso.onmicrosoft.com"]),
+        )
+        session.execute = MagicMock(return_value="certificate_content")
+        session.execute_connect = MagicMock(return_value=connection_result)
+
+        assert session.connect_sharepoint_online("M365Global") is False
         session.close()
 
     @patch("subprocess.Popen")
-    def test_sharepoint_certificate_connection_failure(self, mock_popen):
-        """Test test_sharepoint_certificate_connection method failure"""
-        mock_process = MagicMock()
-        mock_popen.return_value = mock_process
-
-        credentials = M365Credentials()
-        identity = M365IdentityInfo(tenant_domain="example.com")
-        session = M365PowerShell(credentials, identity)
-
-        session.execute = MagicMock()
-        session.execute_connect = MagicMock(
-            return_value="error connecting to SharePoint"
-        )
-
-        result = session.test_sharepoint_certificate_connection()
-        assert result is False
-        session.close()
-
-    @patch("subprocess.Popen")
-    def test_sharepoint_connection_exception(self, mock_popen):
-        """Test test_sharepoint_connection method exception"""
-        mock_process = MagicMock()
-        mock_popen.return_value = mock_process
-
-        credentials = M365Credentials()
-        identity = M365IdentityInfo(tenant_domain="example.com")
-        session = M365PowerShell(credentials, identity)
-
-        session.execute = MagicMock(side_effect=Exception("SharePoint API error"))
-
-        with patch("prowler.lib.logger.logger.error") as mock_error:
-            result = session.test_sharepoint_connection()
-
-        assert result is False
-        mock_error.assert_called_once_with(
-            "SharePoint Online connection failed: SharePoint API error. Please check your permissions and try again."
-        )
-        session.close()
-
-    @patch("subprocess.Popen")
-    def test_sharepoint_certificate_connection_exception(self, mock_popen):
-        """Test test_sharepoint_certificate_connection method exception"""
-        mock_process = MagicMock()
-        mock_popen.return_value = mock_process
-
-        credentials = M365Credentials()
-        identity = M365IdentityInfo(tenant_domain="example.com")
-        session = M365PowerShell(credentials, identity)
-
-        session.execute = MagicMock(side_effect=Exception("SharePoint API error"))
-
-        with patch("prowler.lib.logger.logger.error") as mock_error:
-            result = session.test_sharepoint_certificate_connection()
-
-        assert result is False
-        mock_error.assert_called_once_with(
-            "SharePoint Online Certificate connection failed: SharePoint API error"
-        )
-        session.close()
-
-    @patch("subprocess.Popen")
-    def test_get_sharepoint_tenant_config(self, mock_popen):
-        """Test get_sharepoint_tenant_config method"""
-        mock_process = MagicMock()
-        mock_popen.return_value = mock_process
-
-        credentials = M365Credentials()
-        identity = M365IdentityInfo()
-        session = M365PowerShell(credentials, identity)
-
+    def test_get_sharepoint_tenant_config_projects_default_permission(self, mock_popen):
+        """Tenant retrieval uses the retained PnP connection and string enums."""
+        mock_popen.return_value = MagicMock()
+        session = M365PowerShell(M365Credentials(), M365IdentityInfo())
         expected_result = {"DefaultLinkPermission": "View"}
         session.execute = MagicMock(return_value=expected_result)
 
-        result = session.get_sharepoint_tenant_config()
-        assert result == expected_result
-        session.execute.assert_called_once_with(
-            "Get-SPOTenant | ConvertTo-Json -Depth 10", json_parse=True
+        assert session.get_sharepoint_tenant_config() == expected_result
+
+        command = session.execute.call_args.args[0]
+        assert "Get-PnPTenant -Connection $sharePointConnection" in command
+        assert "Select-Object DefaultLinkPermission" in command
+        assert "ConvertTo-Json -Compress -EnumsAsStrings" in command
+        assert "Get-SPOTenant" not in command
+        session.close()
+
+    @patch("subprocess.Popen")
+    def test_certificate_content_is_not_logged(self, mock_popen):
+        """The in-memory PFX value must never be written to logs."""
+        mock_popen.return_value = MagicMock()
+        certificate_content = "sensitive-base64-pfx"
+        credentials = M365Credentials(
+            client_id="client-id",
+            tenant_id="tenant-id",
+            tenant_domains=["contoso.onmicrosoft.com"],
+            certificate_content=certificate_content,
         )
+        with patch.object(M365PowerShell, "init_credential"):
+            session = M365PowerShell(credentials, M365IdentityInfo())
+        session.execute = MagicMock(return_value="")
+
+        with (
+            patch("prowler.lib.logger.logger.info") as info,
+            patch("prowler.lib.logger.logger.warning") as warning,
+            patch("prowler.lib.logger.logger.error") as error,
+        ):
+            M365PowerShell.init_credential(session, credentials)
+
+        logged = " ".join(
+            str(mock_call)
+            for logger_mock in (info, warning, error)
+            for mock_call in logger_mock.call_args_list
+        )
+        assert certificate_content not in logged
+        session.execute.assert_any_call(f'$certificateBase64 = "{certificate_content}"')
         session.close()

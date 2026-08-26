@@ -8,6 +8,28 @@ from tests.providers.m365.m365_fixtures import DOMAIN, set_mocked_m365_provider
 
 
 class Test_sharepoint_default_sharing_link_permission_configured:
+    def test_no_settings(self):
+        sharepoint_client = mock.MagicMock
+        sharepoint_client.settings = None
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.m365.services.sharepoint.sharepoint_default_sharing_link_permission_configured.sharepoint_default_sharing_link_permission_configured.sharepoint_client",
+                new=sharepoint_client,
+            ),
+        ):
+            from prowler.providers.m365.services.sharepoint.sharepoint_default_sharing_link_permission_configured.sharepoint_default_sharing_link_permission_configured import (
+                sharepoint_default_sharing_link_permission_configured,
+            )
+
+            result = sharepoint_default_sharing_link_permission_configured().execute()
+
+        assert result == []
+
     def test_sharepoint_default_sharing_link_permission_configured_view(self):
         sharepoint_client = mock.MagicMock
 
