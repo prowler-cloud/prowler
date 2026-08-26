@@ -2,10 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { RegistryCatalogArtifact } from "@/types/registry";
 
-import {
-  buildRegistryMarketplaceModel,
-  getRegistryArtifactDetail,
-} from "./registry-explorer.model";
+import { buildRegistryMarketplaceModel } from "./registry-explorer.model";
 
 // prettier-ignore
 const artifact = (normalizedName: string, overrides: Partial<RegistryCatalogArtifact> = {}): RegistryCatalogArtifact => ({ normalizedName, name: normalizedName, providers: [], isVerified: false, isOfficial: false, isMeta: false, hasProvider: false, hasChecks: false, hasCompliance: false, versionCount: 0, totalDownloads: 0, owners: [], ...overrides });
@@ -85,22 +82,5 @@ describe("Registry marketplace model", () => {
     // Then
     // prettier-ignore
     expect(model).toEqual({ isComplete: false, canExplore: false, canRetry: true, controls: { search: false, filters: false, hierarchy: false, metrics: false } });
-  });
-
-  it("resolves one artifact detail from catalog and tenant collections", () => {
-    // Given
-    // prettier-ignore
-    const catalog = { status: "complete" as const, artifacts: [artifact("core")] };
-    // prettier-ignore
-    const mine = [{ normalizedName: "core", versionSpec: "latest" }, { normalizedName: "manual", versionSpec: "1.2.3" }];
-
-    // Then
-    // prettier-ignore
-    expect(getRegistryArtifactDetail("manual", catalog.artifacts, mine)).toEqual({ catalogArtifact: undefined, tenantArtifact: mine[1] });
-    // prettier-ignore
-    expect(getRegistryArtifactDetail("core", catalog.artifacts, mine)).toEqual({ catalogArtifact: catalog.artifacts[0], tenantArtifact: mine[0] });
-    expect(
-      getRegistryArtifactDetail("missing", catalog.artifacts, mine),
-    ).toBeNull();
   });
 });

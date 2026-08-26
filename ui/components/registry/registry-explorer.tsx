@@ -34,14 +34,11 @@ import {
   RegistryArtifactCard,
   RegistryTenantArtifactCard,
 } from "./registry-artifact-card";
-import { RegistryArtifactDetail } from "./registry-artifact-detail";
 import { RegistryArtifactGrid } from "./registry-artifact-grid";
-import { RegistryArtifactPanel } from "./registry-artifact-panel";
 import { RegistryCredentialBanner } from "./registry-credential-banner";
 import { useRegistryEligibility } from "./registry-eligibility-provider";
 import {
   buildRegistryMarketplaceModel,
-  getRegistryArtifactDetail,
   REGISTRY_MARKETPLACE_SORT,
   type RegistryExplorerFilters,
   type RegistryMarketplaceSort,
@@ -56,7 +53,6 @@ const REGISTRY_TAB = { EXPLORE: "explore", MINE: "mine" } as const;
 type RegistryTab = (typeof REGISTRY_TAB)[keyof typeof REGISTRY_TAB];
 
 const REGISTRY_PENDING_OPERATION = {
-  ADD: "add",
   CREDENTIAL: "credential",
   REMOVE: "remove",
 } as const;
@@ -108,18 +104,16 @@ export function RegistryExplorer({ initialState }: RegistryExplorerProps) {
     REGISTRY_MARKETPLACE_SORT.NAME,
   );
   const [activeTab, setActiveTab] = useState<RegistryTab>(REGISTRY_TAB.EXPLORE);
-  const [selectedName, setSelectedName] = useState<string>();
   const [pendingOperation, setPendingOperation] =
     useState<RegistryPendingOperation | null>(null);
+  const [pendingAddName, setPendingAddName] = useState<string>();
   const [accessDialogMode, setAccessDialogMode] =
     useState<RegistryAccessDialogMode>();
   const [removeTarget, setRemoveTarget] = useState<string>();
   const [operationMessage, setOperationMessage] = useState<string>();
-  const detailHeadingRef = useRef<HTMLHeadingElement>(null);
   const connectButtonRef = useRef<HTMLButtonElement>(null);
   const manageButtonRef = useRef<HTMLButtonElement>(null);
-  const removeButtonRef = useRef<HTMLButtonElement>(null);
-  const panelTriggerRef = useRef<HTMLElement | null>(null);
+  const removeTriggerRef = useRef<HTMLButtonElement | null>(null);
   const operationGeneration = useRef(0);
 
   useEffect(
@@ -129,17 +123,15 @@ export function RegistryExplorer({ initialState }: RegistryExplorerProps) {
     [],
   );
 
-  async function handleAdd(normalizedName: string, versionSpec?: string) {
+  async function handleAdd(normalizedName: string) {
     const generation = operationGeneration.current;
     setOperationMessage(undefined);
-    setPendingOperation(REGISTRY_PENDING_OPERATION.ADD);
-    const result = await addRegistryArtifact(
-      versionSpec ? { normalizedName, versionSpec } : { normalizedName },
-    );
+    setPendingAddName(normalizedName);
+    const result = await addRegistryArtifact({ normalizedName });
     if (generation !== operationGeneration.current) return;
     if (result.status === REGISTRY_FAILURE.ACCESS_DENIED) return invalidate();
 
-    setPendingOperation(null);
+    setPendingAddName(undefined);
     if (result.status !== REGISTRY_MUTATION.CONFIRMED) {
       setOperationMessage(mutationFailureMessage(result));
       return;
@@ -230,7 +222,6 @@ export function RegistryExplorer({ initialState }: RegistryExplorerProps) {
     }
 
     setAccessDialogMode(undefined);
-    setSelectedName(undefined);
     setState({
       status: REGISTRY_BOOTSTRAP_STATE.ONBOARDING,
       credential: result.credential,
@@ -261,12 +252,12 @@ export function RegistryExplorer({ initialState }: RegistryExplorerProps) {
     toast({ title: "Artifact removed" });
   }
 
-  function openArtifactPanel(
+  function openRemoveDialog(
     normalizedName: string,
-    trigger: HTMLElement | null,
+    trigger: HTMLButtonElement | null,
   ) {
-    panelTriggerRef.current = trigger;
-    setSelectedName(normalizedName);
+    removeTriggerRef.current = trigger;
+    setRemoveTarget(normalizedName);
   }
 
   const accessDialogProps = {
@@ -355,15 +346,6 @@ export function RegistryExplorer({ initialState }: RegistryExplorerProps) {
       </RetryState>
     );
   }
-  const selectedDetail = selectedName
-    ? getRegistryArtifactDetail(
-        selectedName,
-        state.catalog.artifacts,
-        state.tenantArtifacts,
-      )
-    : null;
-  const isPanelOpen = selectedDetail !== null;
-
   return (
     <div className="space-y-6">
       <h1 className="sr-only">Registry marketplace</h1>
@@ -386,7 +368,7 @@ export function RegistryExplorer({ initialState }: RegistryExplorerProps) {
           </Button>
         </div>
       </div>
-      {!isPanelOpen && !accessDialogMode && operationMessage && (
+      {!accessDialogMode && operationMessage && (
         <p role="alert">{operationMessage}</p>
       )}
       <Tabs
@@ -438,8 +420,10 @@ export function RegistryExplorer({ initialState }: RegistryExplorerProps) {
               <li key={artifact.normalizedName}>
                 <RegistryArtifactCard
                   artifact={artifact}
-                  onOpen={(trigger) =>
-                    openArtifactPanel(artifact.normalizedName, trigger)
+                  isAddPending={pendingAddName === artifact.normalizedName}
+                  onAdd={() => handleAdd(artifact.normalizedName)}
+                  onRemove={(trigger) =>
+                    openRemoveDialog(artifact.normalizedName, trigger)
                   }
                 />
               </li>
@@ -456,15 +440,17 @@ export function RegistryExplorer({ initialState }: RegistryExplorerProps) {
                 {myArtifact.catalogArtifact ? (
                   <RegistryArtifactCard
                     artifact={myArtifact.catalogArtifact}
-                    onOpen={(trigger) =>
-                      openArtifactPanel(myArtifact.normalizedName, trigger)
+                    isAddPending={pendingAddName === myArtifact.normalizedName}
+                    onAdd={() => handleAdd(myArtifact.normalizedName)}
+                    onRemove={(trigger) =>
+                      openRemoveDialog(myArtifact.normalizedName, trigger)
                     }
                   />
                 ) : (
                   <RegistryTenantArtifactCard
                     normalizedName={myArtifact.normalizedName}
-                    onOpen={(trigger) =>
-                      openArtifactPanel(myArtifact.normalizedName, trigger)
+                    onRemove={(trigger) =>
+                      openRemoveDialog(myArtifact.normalizedName, trigger)
                     }
                     versionSpec={myArtifact.versionSpec}
                   />
@@ -474,53 +460,6 @@ export function RegistryExplorer({ initialState }: RegistryExplorerProps) {
           </RegistryArtifactGrid>
         </TabsContent>
       </Tabs>
-      <RegistryArtifactPanel
-        onClose={() => setSelectedName(undefined)}
-        onCloseAutoFocus={(event) => {
-          event.preventDefault();
-          panelTriggerRef.current?.focus();
-        }}
-        onOpenAutoFocus={(event) => {
-          event.preventDefault();
-          detailHeadingRef.current?.focus();
-        }}
-        open={isPanelOpen}
-      >
-        {selectedDetail &&
-          (selectedDetail.tenantArtifact ? (
-            <RegistryArtifactDetail
-              key={selectedName}
-              {...selectedDetail}
-              headingRef={detailHeadingRef}
-              isMutationPending={
-                pendingOperation === REGISTRY_PENDING_OPERATION.ADD
-              }
-              mode="remove"
-              onRemove={() =>
-                setRemoveTarget(selectedDetail.tenantArtifact!.normalizedName)
-              }
-              operationMessage={operationMessage}
-              removeButtonRef={removeButtonRef}
-            />
-          ) : (
-            <RegistryArtifactDetail
-              key={selectedName}
-              {...selectedDetail}
-              headingRef={detailHeadingRef}
-              isMutationPending={
-                pendingOperation === REGISTRY_PENDING_OPERATION.ADD
-              }
-              mode="add"
-              onAdd={(versionSpec) =>
-                handleAdd(
-                  selectedDetail.catalogArtifact!.normalizedName,
-                  versionSpec,
-                )
-              }
-              operationMessage={operationMessage}
-            />
-          ))}
-      </RegistryArtifactPanel>
       {accessDialog}
       <RegistryRemoveDialog
         artifactName={removeTarget}
@@ -531,7 +470,7 @@ export function RegistryExplorer({ initialState }: RegistryExplorerProps) {
             setRemoveTarget(undefined);
         }}
         open={removeTarget !== undefined}
-        returnFocusRef={removeButtonRef}
+        returnFocusRef={removeTriggerRef}
       />
     </div>
   );

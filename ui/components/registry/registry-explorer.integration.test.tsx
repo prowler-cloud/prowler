@@ -80,7 +80,13 @@ const readyState: RegistryBootstrapState = {
         hasCompliance: false,
         versionCount: 2,
         totalDownloads: 12,
-        owners: [{ name: "Prowler", type: "organization" }],
+        owners: [
+          {
+            name: "Prowler",
+            type: "organization",
+            logoUrl: "https://cdn.example/prowler-logo.png",
+          },
+        ],
       },
       {
         normalizedName: "later-guard",
@@ -159,6 +165,14 @@ const incompleteState: RegistryBootstrapState = {
   status: "incomplete",
   catalog: { status: "incomplete", reason: "page_failed", collectedCount: 100 },
 };
+
+function cardFor(name: string) {
+  const card = Array.from(document.querySelectorAll("li")).find((item) =>
+    item.textContent?.includes(name),
+  );
+  if (!card) throw new Error(`Expected a rendered card for ${name}`);
+  return card;
+}
 
 describe("RegistryExplorer", () => {
   beforeEach(() => {
@@ -502,10 +516,9 @@ describe("RegistryExplorer", () => {
       // Given
       addRegistryArtifactMock.mockResolvedValue({ status: "access_denied" });
       const screen = await render(<AuthorizedRegistryExplorer />);
-      await screen.getByRole("button", { name: "Add Cloud guard" }).click();
 
       // When
-      await screen.getByRole("button", { name: "Add to workspace" }).click();
+      await screen.getByRole("button", { name: "Add Cloud guard" }).click();
 
       // Then
       await expectRegistryAccessRevoked(screen);
@@ -516,10 +529,7 @@ describe("RegistryExplorer", () => {
       removeRegistryArtifactMock.mockResolvedValue({ status: "access_denied" });
       const screen = await render(<AuthorizedRegistryExplorer />);
       await screen.getByRole("tab", { name: /My artifacts/ }).click();
-      await screen
-        .getByRole("button", { name: "AWS guard", exact: true })
-        .click();
-      await screen.getByRole("button", { name: "Remove" }).click();
+      await screen.getByRole("button", { name: "Remove AWS guard" }).click();
 
       // When
       await screen.getByRole("button", { name: "Confirm Remove" }).click();
@@ -602,7 +612,6 @@ describe("RegistryExplorer", () => {
     );
     const screen = await render(<AuthorizedRegistryExplorer />);
     await screen.getByRole("button", { name: "Add Cloud guard" }).click();
-    await screen.getByRole("button", { name: "Add to workspace" }).click();
 
     // When
     window.dispatchEvent(new Event("focus"));
@@ -689,7 +698,7 @@ describe("RegistryExplorer", () => {
       expect(document.body.textContent).toContain("42");
     });
 
-    it("marks already-added artifacts instead of offering Add", async () => {
+    it("marks already-added artifacts with Remove instead of Add", async () => {
       // Given / When
       const screen = await render(
         <RegistryExplorer initialState={readyState} />,
@@ -699,6 +708,9 @@ describe("RegistryExplorer", () => {
       expect(document.body.textContent).toContain("Added");
       await expect
         .element(screen.getByRole("button", { name: "Add Cloud guard" }))
+        .toBeVisible();
+      await expect
+        .element(screen.getByRole("button", { name: "Remove AWS guard" }))
         .toBeVisible();
       expect(
         screen.container.ownerDocument.querySelector(
@@ -863,65 +875,44 @@ describe("RegistryExplorer", () => {
         .toBeVisible();
     });
 
-    it("opens the detail panel from a card, focuses it, and returns focus on close", async () => {
-      // Given
-      const screen = await render(
-        <RegistryExplorer initialState={readyState} />,
-      );
-      const card = screen.getByRole("button", {
-        name: "Cloud guard",
-        exact: true,
-      });
-
-      // When
-      await card.click();
+    it("shows the first owner with its logo on the card", async () => {
+      // Given / When
+      await render(<RegistryExplorer initialState={readyState} />);
 
       // Then
-      await expect
-        .element(screen.getByRole("heading", { name: "Cloud guard" }))
-        .toHaveFocus();
-      expect(document.body.textContent).toContain("Latest version");
-      expect(document.body.textContent).toContain(
-        "Registry team (organization)",
+      const awsCard = cardFor("AWS guard");
+      expect(awsCard.textContent).toContain("Prowler");
+      const logo = awsCard.querySelector("img");
+      expect(logo?.getAttribute("src")).toBe(
+        "https://cdn.example/prowler-logo.png",
       );
-      expect(document.body.textContent).not.toContain("Browse versions");
-
-      // When
-      await userEvent.keyboard("{Escape}");
-
-      // Then
-      await expect.element(card).toHaveFocus();
     });
 
-    it("lists Owners only when the artifact supplies at least one owner", async () => {
-      // Given
-      const screen = await render(
-        <RegistryExplorer initialState={readyState} />,
-      );
-
-      // When: an artifact with owners is opened
-      await screen
-        .getByRole("button", { name: "Cloud guard", exact: true })
-        .click();
+    it("falls back to an initial-letter owner avatar without a logo", async () => {
+      // Given / When
+      await render(<RegistryExplorer initialState={readyState} />);
 
       // Then
-      await expect.poll(() => document.body.textContent).toContain("Owners");
-      expect(document.body.textContent).toContain(
-        "Registry team (organization)",
-      );
+      const cloudCard = cardFor("Cloud guard");
+      expect(cloudCard.textContent).toContain("Registry team");
+      expect(cloudCard.querySelector("img")).toBeNull();
+      const hiddenSpans = Array.from(
+        cloudCard.querySelectorAll('span[aria-hidden="true"]'),
+      ).map((span) => span.textContent?.trim());
+      expect(hiddenSpans).toContain("R");
+    });
 
-      // When: it is replaced by an artifact without owners
-      await userEvent.keyboard("{Escape}");
-      await screen
-        .getByRole("button", { name: "Later guard", exact: true })
-        .click();
+    it("hides the whole owner row when the artifact has no owners", async () => {
+      // Given / When
+      await render(<RegistryExplorer initialState={readyState} />);
 
       // Then
-      await expect
-        .poll(() => document.body.textContent)
-        .toContain("Latest version");
-      expect(document.body.textContent).not.toContain("Owners");
-      expect(document.body.textContent).not.toContain("Not supplied");
+      const laterCard = cardFor("Later guard");
+      expect(laterCard.querySelector("img")).toBeNull();
+      const hiddenLetters = Array.from(
+        laterCard.querySelectorAll('span[aria-hidden="true"]'),
+      ).filter((span) => /^[A-Za-z]$/.test(span.textContent?.trim() ?? ""));
+      expect(hiddenLetters).toEqual([]);
     });
 
     it("keeps card accessible names intact without monogram initials", async () => {
@@ -930,12 +921,8 @@ describe("RegistryExplorer", () => {
         <RegistryExplorer initialState={readyState} />,
       );
 
-      // Then: cards keep their name-based locators
-      await expect
-        .element(
-          screen.getByRole("button", { name: "Later guard", exact: true }),
-        )
-        .toBeVisible();
+      // Then: cards keep their name-based content and action locators
+      expect(document.body.textContent).toContain("Later guard");
       await expect
         .element(screen.getByRole("button", { name: "Add Cloud guard" }))
         .toBeVisible();
@@ -949,21 +936,20 @@ describe("RegistryExplorer", () => {
     // Given
     addRegistryArtifactMock.mockResolvedValue({ status: "error" });
     const screen = await render(<AuthorizedRegistryExplorer />);
-    await screen.getByRole("button", { name: "Add Cloud guard" }).click();
 
     // When
-    await screen.getByRole("button", { name: "Add to workspace" }).click();
+    await screen.getByRole("button", { name: "Add Cloud guard" }).click();
 
     // Then
     await expect
       .element(screen.getByRole("alert"))
       .toHaveTextContent("Registry operation could not be completed");
     await expect
-      .element(screen.getByRole("button", { name: "Add to workspace" }))
-      .toBeVisible();
+      .element(screen.getByRole("button", { name: "Add Cloud guard" }))
+      .toBeEnabled();
   });
 
-  it("keeps membership unchanged until an Add is authoritatively confirmed", async () => {
+  it("adds the latest version directly from the card once confirmed", async () => {
     // Given
     addRegistryArtifactMock.mockResolvedValue({
       status: "confirmed",
@@ -974,18 +960,10 @@ describe("RegistryExplorer", () => {
       ],
     });
     const screen = await render(<RegistryExplorer initialState={readyState} />);
-
-    // When
-    await screen.getByRole("button", { name: "Add Cloud guard" }).click();
-
-    // Then
-    await expect
-      .element(screen.getByRole("button", { name: "Add to workspace" }))
-      .toBeVisible();
     expect(document.body.textContent).not.toContain("Artifact added");
 
     // When
-    await screen.getByRole("button", { name: "Add to workspace" }).click();
+    await screen.getByRole("button", { name: "Add Cloud guard" }).click();
 
     // Then
     await expect
@@ -994,28 +972,33 @@ describe("RegistryExplorer", () => {
     await expect
       .poll(() => document.body.textContent)
       .toContain("Artifact added");
-    // The confirmed membership now offers Remove instead of Add in the panel.
+    // The confirmed membership now offers Remove instead of Add on the card.
     await expect
-      .element(screen.getByRole("button", { name: "Remove" }))
+      .element(screen.getByRole("button", { name: "Remove Cloud guard" }))
       .toBeVisible();
+    await expect
+      .element(screen.getByRole("tab", { name: /My artifacts/ }))
+      .toHaveTextContent("3");
   });
 
   it("keeps membership unchanged when an accepted Add cannot be confirmed", async () => {
     // Given
     addRegistryArtifactMock.mockResolvedValue({ status: "refresh_failed" });
     const screen = await render(<RegistryExplorer initialState={readyState} />);
-    await screen.getByRole("button", { name: "Add Cloud guard" }).click();
 
     // When
-    await screen.getByRole("button", { name: "Add to workspace" }).click();
+    await screen.getByRole("button", { name: "Add Cloud guard" }).click();
 
     // Then
     await expect
       .poll(() => document.body.textContent)
       .toContain("Registry membership could not be confirmed");
     await expect
-      .element(screen.getByRole("button", { name: "Add to workspace" }))
-      .toBeVisible();
+      .element(screen.getByRole("button", { name: "Add Cloud guard" }))
+      .toBeEnabled();
+    await expect
+      .element(screen.getByRole("tab", { name: /My artifacts/ }))
+      .toHaveTextContent("2");
   });
 
   it("keeps documented Add refusals local without revoking Registry", async () => {
@@ -1025,59 +1008,37 @@ describe("RegistryExplorer", () => {
       message: "This version is not verified and cannot be added.",
     });
     const screen = await render(<AuthorizedRegistryExplorer />);
-    await screen.getByRole("button", { name: "Add Cloud guard" }).click();
 
     // When
-    await screen.getByRole("button", { name: "Add to workspace" }).click();
+    await screen.getByRole("button", { name: "Add Cloud guard" }).click();
 
     // Then
     await expect
       .poll(() => document.body.textContent)
       .toContain("This version is not verified and cannot be added.");
     await expect
-      .element(screen.getByRole("button", { name: "Add to workspace" }))
-      .toBeVisible();
+      .element(screen.getByRole("button", { name: "Add Cloud guard" }))
+      .toBeEnabled();
   });
 
-  it("disables duplicate Add submission while confirmation is pending", async () => {
+  it("disables only the pending card while an Add confirmation is pending", async () => {
     // Given
     addRegistryArtifactMock.mockReturnValue(new Promise(() => {}));
     const screen = await render(<RegistryExplorer initialState={readyState} />);
-    await screen.getByRole("button", { name: "Add Cloud guard" }).click();
-
-    // When
-    await screen.getByRole("button", { name: "Add to workspace" }).click();
-
-    // Then
-    await expect
-      .element(screen.getByRole("button", { name: "Adding artifact" }))
-      .toBeDisabled();
-    expect(addRegistryArtifactMock).toHaveBeenCalledTimes(1);
-  });
-
-  it("submits a manually entered exact version without version browsing", async () => {
-    // Given
-    addRegistryArtifactMock.mockResolvedValue({
-      status: "confirmed",
-      tenantArtifacts: [
-        { normalizedName: "aws-guard", versionSpec: "latest" },
-        { normalizedName: "saved-artifact", versionSpec: "1.0.0" },
-        { normalizedName: "cloud-guard", versionSpec: "2.0.0" },
-      ],
+    const addCloudGuard = screen.getByRole("button", {
+      name: "Add Cloud guard",
     });
-    const screen = await render(<RegistryExplorer initialState={readyState} />);
-    await screen.getByRole("button", { name: "Add Cloud guard" }).click();
 
     // When
-    await screen.getByLabelText("Use an exact version").click();
-    await screen.getByLabelText("Exact version pin").fill(" 2.0.0 ");
-    await screen.getByRole("button", { name: "Add to workspace" }).click();
+    await addCloudGuard.click();
 
     // Then
+    await expect.element(addCloudGuard).toBeDisabled();
+    await expect.element(addCloudGuard).toHaveTextContent("Adding…");
     await expect
-      .poll(() => addRegistryArtifactMock.mock.calls)
-      .toEqual([[{ normalizedName: "cloud-guard", versionSpec: "2.0.0" }]]);
-    expect(document.body.textContent).not.toContain("Browse versions");
+      .element(screen.getByRole("button", { name: "Add Later guard" }))
+      .toBeEnabled();
+    expect(addRegistryArtifactMock).toHaveBeenCalledTimes(1);
   });
 
   it("requires confirmation before Remove and commits only after confirmation", async () => {
@@ -1090,12 +1051,9 @@ describe("RegistryExplorer", () => {
     });
     const screen = await render(<RegistryExplorer initialState={readyState} />);
     await screen.getByRole("tab", { name: /My artifacts/ }).click();
-    await screen
-      .getByRole("button", { name: "AWS guard", exact: true })
-      .click();
 
     // When
-    await screen.getByRole("button", { name: "Remove" }).click();
+    await screen.getByRole("button", { name: "Remove AWS guard" }).click();
 
     // Then
     await expect
@@ -1110,7 +1068,7 @@ describe("RegistryExplorer", () => {
     expect(removeRegistryArtifactMock).not.toHaveBeenCalled();
 
     // When
-    await screen.getByRole("button", { name: "Remove" }).click();
+    await screen.getByRole("button", { name: "Remove AWS guard" }).click();
     await screen.getByRole("button", { name: "Confirm Remove" }).click();
 
     // Then
@@ -1122,14 +1080,13 @@ describe("RegistryExplorer", () => {
       .toContain("Artifact removed");
   });
 
-  it("moves focus into Remove confirmation and returns it to the invoker", async () => {
-    // Given
+  it("moves focus into Remove confirmation and returns it to the invoking card button", async () => {
+    // Given: the tenant-only artifact carries its own card Remove action
     const screen = await render(<RegistryExplorer initialState={readyState} />);
     await screen.getByRole("tab", { name: /My artifacts/ }).click();
-    await screen
-      .getByRole("button", { name: "AWS guard", exact: true })
-      .click();
-    const removeButton = screen.getByRole("button", { name: "Remove" });
+    const removeButton = screen.getByRole("button", {
+      name: "Remove saved-artifact",
+    });
 
     // When
     await removeButton.click();
@@ -1151,10 +1108,7 @@ describe("RegistryExplorer", () => {
     removeRegistryArtifactMock.mockReturnValue(new Promise(() => {}));
     const screen = await render(<RegistryExplorer initialState={readyState} />);
     await screen.getByRole("tab", { name: /My artifacts/ }).click();
-    await screen
-      .getByRole("button", { name: "AWS guard", exact: true })
-      .click();
-    await screen.getByRole("button", { name: "Remove" }).click();
+    await screen.getByRole("button", { name: "Remove AWS guard" }).click();
 
     // When
     await screen.getByRole("button", { name: "Confirm Remove" }).click();
@@ -1171,10 +1125,7 @@ describe("RegistryExplorer", () => {
     removeRegistryArtifactMock.mockResolvedValue({ status: "refresh_failed" });
     const screen = await render(<RegistryExplorer initialState={readyState} />);
     await screen.getByRole("tab", { name: /My artifacts/ }).click();
-    await screen
-      .getByRole("button", { name: "AWS guard", exact: true })
-      .click();
-    await screen.getByRole("button", { name: "Remove" }).click();
+    await screen.getByRole("button", { name: "Remove AWS guard" }).click();
 
     // When
     await screen.getByRole("button", { name: "Confirm Remove" }).click();

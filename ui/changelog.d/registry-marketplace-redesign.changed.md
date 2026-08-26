@@ -1,1 +1,1 @@
-Registry page redesigned as a marketplace: artifact card grid with capability and provider filters, `Explore`/`My artifacts` tabs, detail side panel, and an API key connection banner
+Registry page redesigned as a marketplace: self-sufficient artifact cards with provider logos, owner attribution, direct install and remove, capability and provider filters, `Explore`/`My artifacts` tabs, and an API key connection banner

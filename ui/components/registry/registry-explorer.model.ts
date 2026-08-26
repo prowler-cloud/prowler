@@ -46,13 +46,6 @@ export function buildRegistryMarketplaceModel(catalog: RegistryCatalogResult, my
 }
 
 // prettier-ignore
-export function getRegistryArtifactDetail(normalizedName: string, artifacts: RegistryCatalogArtifact[], myArtifacts: RegistryTenantArtifact[]) {
-  const catalogArtifact = artifacts.find((artifact) => artifact.normalizedName === normalizedName);
-  const tenantArtifact = myArtifacts.find((artifact) => artifact.normalizedName === normalizedName);
-  return catalogArtifact || tenantArtifact ? { catalogArtifact, tenantArtifact } : null;
-}
-
-// prettier-ignore
 function matches(artifact: RegistryCatalogArtifact, filters: RegistryExplorerFilters) {
   const search = filters.search?.trim().toLowerCase();
   const provider = filters.provider?.trim().toLowerCase();

@@ -110,7 +110,7 @@ test.describe.serial("Registry", () => {
   );
 
   test(
-    "uses complete catalog data for recovery, latest and exact Add, and confirmed Remove",
+    "uses complete catalog data for recovery, direct card Add, and confirmed Remove",
     { tag: ["@critical", "@e2e", "@registry", "@REGISTRY-E2E-005"] },
     async ({ page }) => {
       skipUnlessProject(enabledProject);
@@ -121,17 +121,15 @@ test.describe.serial("Registry", () => {
       await registryPage.connectFixtureRegistry();
       await registryPage.dismissWelcomeDialog();
       await registryPage.verifyCompleteCatalogSearchAndFilters();
-      await registryPage.selectDeterministicArtifactWithLatestVersion();
-      await registryPage.addLatest();
-      await registryPage.verifyMyVersionSpec("latest");
-      await registryPage.removeArtifact();
+      await registryPage.verifyOwnerRows();
+      await registryPage.addLatest("Fixture network audit");
+      await registryPage.verifyAddedInMyArtifacts("Fixture network audit");
+      await registryPage.removeArtifact("Fixture network audit");
       await page.reload();
       await registryPage.verifyMarketplaceReady();
-      const exactArtifact =
-        await registryPage.selectDeterministicArtifactWithLatestVersion();
-      await registryPage.addExactVersion(exactArtifact.latestVersion);
-      await registryPage.verifyMyVersionSpec(exactArtifact.latestVersion);
-      await registryPage.removeArtifact();
+      await registryPage.addLatest("Fixture shared policy");
+      await registryPage.verifyAddedInMyArtifacts("Fixture shared policy");
+      await registryPage.removeArtifact("Fixture shared policy");
 
       await controlledRegistryFixture.setDiscoveryMode("reconnect");
       await page.reload();
@@ -167,11 +165,13 @@ test.describe.serial("Registry", () => {
       await registryPage.goto();
       await registryPage.connectFixtureRegistry();
       await registryPage.dismissWelcomeDialog();
-      await registryPage.selectMobileFixtureArtifact();
-      await expect(registryPage.artifactPanel).toHaveCSS(
-        "animation-duration",
-        "0s",
-      );
+      // With no detail panel, direct card actions are the keyboard path.
+      const addButton = registryPage.addButtonFor("Fixture network audit");
+      await addButton.focus();
+      await addButton.press("Enter");
+      await expect(
+        page.getByText("Artifact added", { exact: true }),
+      ).toBeVisible();
     },
   );
 });

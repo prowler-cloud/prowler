@@ -279,6 +279,52 @@ describe("Registry adapter", () => {
     expect(result).toEqual({ status: "complete", artifacts: [] });
   });
 
+  it("reads optional owner logo URLs tolerantly", async () => {
+    // Given
+    const document = {
+      data: [
+        {
+          type: "registry-artifacts",
+          id: "core",
+          attributes: {
+            owners: [
+              {
+                type: "organization",
+                name: "Prowler",
+                logo_url: "https://cdn.example/prowler.png",
+              },
+              { type: "user", name: "Ada" },
+              { type: "user", name: "Blank", logo_url: "   " },
+            ],
+          },
+        },
+      ],
+      meta: { pagination: { page: 1, pages: 1, count: 1 } },
+    };
+
+    // When
+    const result = await collectCompleteRegistryCatalog(async () => document);
+
+    // Then
+    expect(result).toMatchObject({
+      status: "complete",
+      artifacts: [
+        {
+          normalizedName: "core",
+          owners: [
+            {
+              type: "organization",
+              name: "Prowler",
+              logoUrl: "https://cdn.example/prowler.png",
+            },
+            { type: "user", name: "Ada", logoUrl: undefined },
+            { type: "user", name: "Blank", logoUrl: undefined },
+          ],
+        },
+      ],
+    });
+  });
+
   it("traverses, merges, and degrades unsafe catalog data", async () => {
     // Given
     // prettier-ignore

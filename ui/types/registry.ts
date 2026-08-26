@@ -62,6 +62,7 @@ export type RegistryCatalogIncompleteReason =
 export interface RegistryArtifactOwner {
   name: string;
   type: string;
+  logoUrl?: string;
 }
 
 export interface RegistryCatalogArtifact {

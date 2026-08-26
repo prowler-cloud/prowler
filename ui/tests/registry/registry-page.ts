@@ -2,29 +2,17 @@ import { expect, type Locator, type Page } from "@playwright/test";
 
 import { BasePage } from "../base-page";
 
-interface RegistryCatalogSelection {
-  latestVersion: string;
-  name: string;
-}
-
 export class RegistryPage extends BasePage {
-  readonly addToWorkspaceButton: Locator;
-  readonly artifactPanel: Locator;
   readonly connectButton: Locator;
   readonly connectDialog: Locator;
   readonly exploreTab: Locator;
   readonly myArtifactsTab: Locator;
   readonly registryKeyInput: Locator;
   readonly registryLink: Locator;
-  readonly removeButton: Locator;
   readonly searchInput: Locator;
 
   constructor(page: Page) {
     super(page);
-    this.addToWorkspaceButton = page.getByRole("button", {
-      name: "Add to workspace",
-    });
-    this.artifactPanel = page.getByRole("dialog", { name: "Artifact details" });
     this.connectButton = page.getByRole("button", {
       name: "Connect API key",
     });
@@ -35,12 +23,19 @@ export class RegistryPage extends BasePage {
     this.myArtifactsTab = page.getByRole("tab", { name: /My artifacts/ });
     this.registryKeyInput = page.getByLabel("Registry key");
     this.registryLink = page.getByRole("link", { name: "Registry" });
-    this.removeButton = page.getByRole("button", { name: "Remove" });
     this.searchInput = page.getByLabel("Search artifacts");
   }
 
   async goto(): Promise<void> {
     await super.goto("/registry");
+  }
+
+  addButtonFor(name: string): Locator {
+    return this.page.getByRole("button", { name: `Add ${name}` });
+  }
+
+  removeButtonFor(name: string): Locator {
+    return this.page.getByRole("button", { name: `Remove ${name}` });
   }
 
   async verifyDirectRouteDenied(): Promise<void> {
@@ -92,8 +87,10 @@ export class RegistryPage extends BasePage {
   }
 
   async verifyCompleteCatalogSearchAndFilters(): Promise<void> {
-    const sharedPolicyCard = this.page.getByRole("button", {
-      name: "Fixture shared policy",
+    const sharedPolicyCard = this.page.getByText("Fixture shared policy", {
+      exact: true,
+    });
+    const networkAuditCard = this.page.getByText("Fixture network audit", {
       exact: true,
     });
     await this.searchInput.fill("shared");
@@ -111,56 +108,45 @@ export class RegistryPage extends BasePage {
       .click();
     await this.page.getByRole("option", { name: "Google Cloud" }).click();
     await expect(sharedPolicyCard).toBeVisible();
-    await expect(
-      this.page.getByRole("button", {
-        name: "Fixture network audit",
-        exact: true,
-      }),
-    ).toBeHidden();
+    await expect(networkAuditCard).toBeHidden();
 
     await this.page
       .getByRole("combobox", { name: "Filter by provider" })
       .click();
     await this.page.getByRole("option", { name: "All providers" }).click();
     await this.searchInput.clear();
+    await expect(networkAuditCard).toBeVisible();
+  }
+
+  async verifyOwnerRows(): Promise<void> {
+    // Logo-backed owner renders its image; the logo-less owner falls back to
+    // an initial avatar, so only its name is asserted.
+    await expect(this.page.getByText("Prowler Fixtures")).toBeVisible();
+    await expect(this.page.locator('img[src*="owner-logo.png"]')).toBeVisible();
+    await expect(this.page.getByText("Community Fixtures")).toBeVisible();
+  }
+
+  async addLatest(name: string): Promise<void> {
+    await this.addButtonFor(name).click();
     await expect(
-      this.page.getByRole("button", {
-        name: "Fixture network audit",
-        exact: true,
-      }),
+      this.page.getByText("Artifact added", { exact: true }),
     ).toBeVisible();
   }
 
-  async verifyMyVersionSpec(version: string): Promise<void> {
-    await expect(
-      this.page.getByText(`My version specification: ${version}`),
-    ).toBeVisible();
+  async verifyAddedInMyArtifacts(name: string): Promise<void> {
+    await this.myArtifactsTab.click();
+    await expect(this.removeButtonFor(name)).toBeVisible();
   }
 
-  async openArtifact(name: string): Promise<void> {
-    await this.page.getByRole("button", { name, exact: true }).click();
+  async removeArtifact(name: string): Promise<void> {
+    await this.removeButtonFor(name).click();
     await expect(
-      this.artifactPanel.getByRole("heading", { name }),
-    ).toBeVisible();
-  }
-
-  async closeArtifactPanel(): Promise<void> {
-    await this.artifactPanel.getByRole("button", { name: "Close" }).click();
-    await expect(this.artifactPanel).toBeHidden();
-  }
-
-  async selectMobileFixtureArtifact(): Promise<void> {
-    const card = this.page.getByRole("button", {
-      name: "Fixture network audit",
-      exact: true,
-    });
-    await card.focus();
-    await card.press("Enter");
-    await expect(
-      this.artifactPanel.getByRole("heading", {
-        name: "Fixture network audit",
-      }),
+      this.page.getByRole("button", { name: "Cancel" }),
     ).toBeFocused();
+    await this.page.getByRole("button", { name: "Confirm Remove" }).click();
+    await expect(
+      this.page.getByText("Artifact removed", { exact: true }),
+    ).toBeVisible();
   }
 
   async dismissWelcomeDialog(): Promise<void> {
@@ -181,64 +167,5 @@ export class RegistryPage extends BasePage {
       ...Object.values(sessionStorage),
     ]);
     expect(storedValues).not.toContain(key);
-  }
-
-  async selectDeterministicArtifactWithLatestVersion(): Promise<RegistryCatalogSelection> {
-    const addButtons = this.page.getByRole("button", {
-      name: /^Add (?!to workspace)/,
-    });
-    const total = await addButtons.count();
-    for (let index = 0; index < total; index += 1) {
-      await addButtons.nth(index).click();
-      await expect(this.artifactPanel).toBeVisible();
-      const name = (
-        await this.artifactPanel
-          .getByRole("heading")
-          .filter({ hasNotText: "Artifact details" })
-          .innerText()
-      ).trim();
-      const latestVersion = (
-        await this.artifactPanel
-          .locator("dt", { hasText: "Latest version" })
-          .locator("xpath=following-sibling::dd")
-          .innerText()
-      ).trim();
-
-      if (name && latestVersion && latestVersion !== "Not supplied") {
-        return { name, latestVersion };
-      }
-      await this.closeArtifactPanel();
-    }
-
-    throw new Error(
-      "Controlled Registry catalog has no available artifact with an exposed latest version.",
-    );
-  }
-
-  async addLatest(): Promise<void> {
-    await this.addToWorkspaceButton.click();
-    await expect(
-      this.page.getByText("Artifact added", { exact: true }),
-    ).toBeVisible();
-  }
-
-  async addExactVersion(version: string): Promise<void> {
-    await this.page.getByLabel("Use an exact version").check();
-    await this.page.getByLabel("Exact version pin").fill(version);
-    await this.addToWorkspaceButton.click();
-    await expect(
-      this.page.getByText("Artifact added", { exact: true }),
-    ).toBeVisible();
-  }
-
-  async removeArtifact(): Promise<void> {
-    await this.removeButton.click();
-    await expect(
-      this.page.getByRole("button", { name: "Cancel" }),
-    ).toBeFocused();
-    await this.page.getByRole("button", { name: "Confirm Remove" }).click();
-    await expect(
-      this.page.getByText("Artifact removed", { exact: true }),
-    ).toBeVisible();
   }
 }

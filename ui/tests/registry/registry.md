@@ -46,11 +46,11 @@
 **Priority:** `critical`
 **Tags:** @e2e, @registry
 
-**Expected Result:** Multi-page fixture catalog search/filter/Multi-provider behavior, documented reconnect/unavailable/generic recovery states, Add latest, derived exact pin, and confirmed Remove all use real UI and server-action paths.
+**Expected Result:** Multi-page fixture catalog search/filter/Multi-provider behavior, card owner rows (logo and initial fallback), documented reconnect/unavailable/generic recovery states, direct card Add of the latest version, and confirmed Remove all use real UI and server-action paths.
 
 ## Test Case: `REGISTRY-E2E-006` - Pixel 5 Reduced-Motion Browsing
 
 **Priority:** `high`
 **Tags:** @e2e, @registry
 
-**Expected Result:** The Pixel 5 Sheet has zero non-essential motion, keyboard selection closes it, and focus moves to the selected artifact detail heading.
+**Expected Result:** Pixel 5 browsing honors reduced motion, and the card Add action stays fully keyboard-operable with an authoritative confirmation toast.

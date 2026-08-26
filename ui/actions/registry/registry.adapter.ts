@@ -226,6 +226,7 @@ const catalogAttributesSchema = z.object({
       z.object({
         name: z.string().trim().min(1),
         type: z.string().trim().min(1),
+        logo_url: z.string().optional(),
       }),
     )
     .optional(),
@@ -330,7 +331,13 @@ function adaptCatalogArtifact(
     providers: unique(
       a.providers?.map((provider) => provider.toLowerCase()) ?? [],
     ),
-    owners: uniqueOwners(a.owners ?? []),
+    owners: uniqueOwners(
+      (a.owners ?? []).map(({ logo_url, name, type }) => ({
+        name,
+        type,
+        logoUrl: text(logo_url),
+      })),
+    ),
     isVerified: a.is_verified ?? false,
     isOfficial: a.is_official ?? false,
     isMeta: a.is_meta ?? false,

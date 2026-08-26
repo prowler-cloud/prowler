@@ -1,13 +1,13 @@
 "use client";
 
 import { BadgeCheck, Check, Download, ShieldCheck } from "lucide-react";
-import { useRef } from "react";
 
 import { ProviderTypeIcon } from "@/components/icons/providers-badge/provider-type-icon";
 import { Badge } from "@/components/shadcn/badge/badge";
 import { Button } from "@/components/shadcn/button/button";
 import { Card } from "@/components/shadcn/card/card";
 import { getProviderDisplayName } from "@/types/providers";
+import type { RegistryArtifactOwner } from "@/types/registry";
 
 import {
   REGISTRY_CAPABILITY_LABELS,
@@ -16,7 +16,9 @@ import {
 
 interface RegistryArtifactCardProps {
   artifact: RegistryMarketplaceArtifact;
-  onOpen: (trigger: HTMLElement | null) => void;
+  isAddPending: boolean;
+  onAdd: () => void;
+  onRemove: (trigger: HTMLButtonElement | null) => void;
 }
 
 function capabilitySummary(artifact: RegistryMarketplaceArtifact) {
@@ -28,11 +30,65 @@ function capabilitySummary(artifact: RegistryMarketplaceArtifact) {
   return labels.join(", ");
 }
 
+interface RegistryOwnerRowProps {
+  isOfficial: boolean;
+  isVerified: boolean;
+  owner?: RegistryArtifactOwner;
+}
+
+function RegistryOwnerRow({
+  isOfficial,
+  isVerified,
+  owner,
+}: RegistryOwnerRowProps) {
+  if (!owner && !isOfficial && !isVerified) return null;
+
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      {owner && (
+        <span className="flex min-w-0 items-center gap-2">
+          {owner.logoUrl ? (
+            <img
+              alt=""
+              aria-hidden
+              className="size-5 shrink-0 rounded-full object-cover"
+              src={owner.logoUrl}
+            />
+          ) : (
+            <span
+              aria-hidden
+              className="bg-bg-neutral-tertiary text-text-neutral-secondary flex size-5 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold uppercase"
+            >
+              {owner.name.charAt(0)}
+            </span>
+          )}
+          <span className="text-text-neutral-secondary truncate text-xs">
+            {owner.name}
+          </span>
+        </span>
+      )}
+      {isOfficial && (
+        <Badge variant="tag">
+          <ShieldCheck aria-hidden />
+          Official
+        </Badge>
+      )}
+      {isVerified && (
+        <Badge variant="success">
+          <BadgeCheck aria-hidden />
+          Verified
+        </Badge>
+      )}
+    </div>
+  );
+}
+
 export function RegistryArtifactCard({
   artifact,
-  onOpen,
+  isAddPending,
+  onAdd,
+  onRemove,
 }: RegistryArtifactCardProps) {
-  const nameButtonRef = useRef<HTMLButtonElement>(null);
   const displayName = artifact.name ?? artifact.normalizedName;
   // Unknown or absent providers fall back to the generic provider badge
   // rendered by ProviderTypeIcon itself.
@@ -45,14 +101,7 @@ export function RegistryArtifactCard({
     .join(" · ");
 
   return (
-    // Card onClick is a mouse-only enhancement; the keyboard path is the inner name button.
-    <Card
-      className="h-full gap-3"
-      interactive
-      onClick={() => onOpen(nameButtonRef.current)}
-      padding="md"
-      variant="inner"
-    >
+    <Card className="h-full gap-3" padding="md" variant="inner">
       <div className="flex items-start gap-3">
         <span
           aria-hidden
@@ -61,17 +110,9 @@ export function RegistryArtifactCard({
           <ProviderTypeIcon size={26} type={primaryProvider} />
         </span>
         <div className="min-w-0">
-          <button
-            className="text-text-neutral-primary block max-w-full truncate text-left text-sm font-semibold"
-            onClick={(event) => {
-              event.stopPropagation();
-              onOpen(event.currentTarget);
-            }}
-            ref={nameButtonRef}
-            type="button"
-          >
+          <p className="text-text-neutral-primary truncate text-sm font-semibold">
             {displayName}
-          </button>
+          </p>
           {subtitle && (
             <p className="text-text-neutral-secondary truncate text-xs">
               {subtitle}
@@ -84,52 +125,52 @@ export function RegistryArtifactCard({
           {artifact.description}
         </p>
       )}
-      {(artifact.isOfficial || artifact.isVerified) && (
-        <div className="flex flex-wrap gap-2">
-          {artifact.isOfficial && (
-            <Badge variant="tag">
-              <ShieldCheck aria-hidden />
-              Official
-            </Badge>
+      <div className="mt-auto space-y-3">
+        <RegistryOwnerRow
+          isOfficial={artifact.isOfficial}
+          isVerified={artifact.isVerified}
+          owner={artifact.owners[0]}
+        />
+        <div className="flex items-center gap-3">
+          {artifact.latestVersion && (
+            <span className="text-text-neutral-secondary font-mono text-xs">
+              v{artifact.latestVersion}
+            </span>
           )}
-          {artifact.isVerified && (
-            <Badge variant="success">
-              <BadgeCheck aria-hidden />
-              Verified
-            </Badge>
-          )}
-        </div>
-      )}
-      <div className="mt-auto flex items-center gap-3">
-        {artifact.latestVersion && (
-          <span className="text-text-neutral-secondary font-mono text-xs">
-            v{artifact.latestVersion}
+          <span className="text-text-neutral-secondary flex items-center gap-1 text-xs">
+            <Download aria-hidden className="size-3.5" />
+            {artifact.totalDownloads}
           </span>
-        )}
-        <span className="text-text-neutral-secondary flex items-center gap-1 text-xs">
-          <Download aria-hidden className="size-3.5" />
-          {artifact.totalDownloads}
-        </span>
-        <span className="ml-auto">
-          {artifact.isAdded ? (
-            <Badge variant="outline">
-              <Check aria-hidden />
-              Added
-            </Badge>
-          ) : (
-            <Button
-              aria-label={`Add ${displayName} from details`}
-              onClick={(event) => {
-                event.stopPropagation();
-                onOpen(event.currentTarget);
-              }}
-              size="sm"
-              type="button"
-            >
-              Add
-            </Button>
-          )}
-        </span>
+          <span className="ml-auto flex items-center gap-2">
+            {artifact.isAdded ? (
+              <>
+                <Badge variant="outline">
+                  <Check aria-hidden />
+                  Added
+                </Badge>
+                <Button
+                  aria-label={`Remove ${displayName}`}
+                  onClick={(event) => onRemove(event.currentTarget)}
+                  size="sm"
+                  type="button"
+                  variant="outline"
+                >
+                  Remove
+                </Button>
+              </>
+            ) : (
+              <Button
+                aria-label={`Add ${displayName}`}
+                disabled={isAddPending}
+                onClick={onAdd}
+                size="sm"
+                type="button"
+              >
+                {isAddPending ? "Adding…" : "Add"}
+              </Button>
+            )}
+          </span>
+        </div>
       </div>
     </Card>
   );
@@ -137,13 +178,13 @@ export function RegistryArtifactCard({
 
 interface RegistryTenantArtifactCardProps {
   normalizedName: string;
-  onOpen: (trigger: HTMLElement | null) => void;
+  onRemove: (trigger: HTMLButtonElement | null) => void;
   versionSpec: string;
 }
 
 export function RegistryTenantArtifactCard({
   normalizedName,
-  onOpen,
+  onRemove,
   versionSpec,
 }: RegistryTenantArtifactCardProps) {
   return (
@@ -158,13 +199,9 @@ export function RegistryTenantArtifactCard({
           <ProviderTypeIcon size={26} type="" />
         </span>
         <div className="min-w-0">
-          <button
-            className="text-text-neutral-primary block max-w-full truncate text-left text-sm font-semibold"
-            onClick={(event) => onOpen(event.currentTarget)}
-            type="button"
-          >
+          <p className="text-text-neutral-primary truncate text-sm font-semibold">
             {normalizedName}
-          </button>
+          </p>
           <p className="text-text-neutral-secondary truncate text-xs">
             Version {versionSpec}
           </p>
@@ -174,6 +211,19 @@ export function RegistryTenantArtifactCard({
         Installed in this workspace. Catalog metadata is not available for this
         artifact.
       </p>
+      <div className="mt-auto flex items-center">
+        <span className="ml-auto">
+          <Button
+            aria-label={`Remove ${normalizedName}`}
+            onClick={(event) => onRemove(event.currentTarget)}
+            size="sm"
+            type="button"
+            variant="outline"
+          >
+            Remove
+          </Button>
+        </span>
+      </div>
     </Card>
   );
 }
