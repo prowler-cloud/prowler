@@ -237,6 +237,24 @@ describe("Scans page import findings", () => {
     expect(harness.ingestionPostCount).toBe(1);
   });
 
+  it("abandons a stuck import and starts over", async () => {
+    const harness = new ScansPageHarness(ingestionFixture());
+    await harness.mount({ statusErrorAt: 1 });
+    await harness.openImportFindings();
+    await harness.selectFile(new File(["[]"], "findings.ocsf.json"));
+    await harness.submitImport();
+    await harness.waitForStatusError();
+
+    await harness.stopTracking();
+    expect(harness.isDropzoneFrozen()).toBe(false);
+    expect(harness.selectedFileName()).toBeNull();
+
+    await harness.selectFile(new File(["[]"], "another.ocsf.json"));
+    expect(harness.selectedFileName()).toBe("another.ocsf.json");
+    expect(harness.isImportEnabled()).toBe(true);
+    expect(harness.ingestionPostCount).toBe(1);
+  });
+
   it("never overlaps status polls for an accepted import", async () => {
     const harness = new ScansPageHarness(ingestionFixture());
     await harness.mount({
