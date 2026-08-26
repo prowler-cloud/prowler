@@ -58,7 +58,7 @@ export class RegistryPage extends BasePage {
     await expect(this.connectButton).toBeVisible();
     await expect(
       this.page.getByRole("link", {
-        name: "Open Registry (opens in a new tab)",
+        name: "Explore Prowler Registry (opens in a new tab)",
       }),
     ).toBeVisible();
   }

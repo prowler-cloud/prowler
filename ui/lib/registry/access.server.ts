@@ -6,7 +6,6 @@ import { readEnv } from "@/lib/runtime-env";
 import {
   isRegistryEligible,
   REGISTRY_ACCESS,
-  registryAccessResult,
   type RegistryAccessResult,
 } from "./access";
 
@@ -20,7 +19,7 @@ export async function evaluateRegistryAccess(
   accessToken?: string | null,
 ): Promise<RegistryAccessResult> {
   if (!hasEnabledProcessFlags() || !accessToken?.trim()) {
-    return registryAccessResult(REGISTRY_ACCESS.INELIGIBLE);
+    return { status: REGISTRY_ACCESS.INELIGIBLE };
   }
 
   const controller = new AbortController();
@@ -31,15 +30,15 @@ export async function evaluateRegistryAccess(
       signal: controller.signal,
     });
     if (currentUser.manageRegistry === undefined) {
-      return registryAccessResult(REGISTRY_ACCESS.UNKNOWN);
+      return { status: REGISTRY_ACCESS.UNKNOWN };
     }
-    return registryAccessResult(
-      isRegistryEligible(true, true, currentUser.manageRegistry)
+    return {
+      status: isRegistryEligible(true, true, currentUser.manageRegistry)
         ? REGISTRY_ACCESS.ELIGIBLE
         : REGISTRY_ACCESS.INELIGIBLE,
-    );
+    };
   } catch {
-    return registryAccessResult(REGISTRY_ACCESS.UNKNOWN);
+    return { status: REGISTRY_ACCESS.UNKNOWN };
   } finally {
     clearTimeout(timeout);
   }

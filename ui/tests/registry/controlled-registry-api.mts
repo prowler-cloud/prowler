@@ -216,14 +216,18 @@ async function handleApiRequest(
     return;
   }
 
-  if (method === "GET" && pathname === "/api/v1/registry/my-artifacts") {
+  if (method === "GET" && pathname === "/api/v1/registry/artifacts") {
     sendJson(response, 200, tenantArtifactsDocument());
     return;
   }
 
-  if (method === "POST" && pathname === "/api/v1/registry/my-artifacts") {
+  if (method === "POST" && pathname === "/api/v1/registry/artifacts") {
     const body = bodyOrEmpty(await readJson(request));
-    const normalizedName = readNestedString(body, ["data", "id"]);
+    const normalizedName = readNestedString(body, [
+      "data",
+      "attributes",
+      "normalized_name",
+    ]);
     const versionSpec = readNestedString(body, [
       "data",
       "attributes",
@@ -241,17 +245,17 @@ async function handleApiRequest(
     }
     state.tenantArtifacts.set(normalizedName, versionSpec);
     sendJson(response, 201, {
-      data: { id: normalizedName, type: "registry-tenant-artifacts" },
+      data: { id: normalizedName, type: "registry-artifacts" },
     });
     return;
   }
 
   if (
     method === "DELETE" &&
-    pathname.startsWith("/api/v1/registry/my-artifacts/")
+    pathname.startsWith("/api/v1/registry/artifacts/")
   ) {
     const normalizedName = decodeURIComponent(
-      pathname.slice("/api/v1/registry/my-artifacts/".length),
+      pathname.slice("/api/v1/registry/artifacts/".length),
     );
     state.tenantArtifacts.delete(normalizedName);
     sendJson(response, 204);
@@ -350,7 +354,7 @@ function tenantArtifactsDocument() {
         version_spec: versionSpec,
       },
       id,
-      type: "registry-tenant-artifacts",
+      type: "registry-artifacts",
     })),
   };
 }

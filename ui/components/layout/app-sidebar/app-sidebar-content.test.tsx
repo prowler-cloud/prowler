@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { useUIStore } from "@/store/ui/store";
 import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 
 import { AppSidebarContent } from "./app-sidebar-content";
@@ -33,10 +34,6 @@ vi.mock("@/hooks/use-runtime-config", () => ({
   useRuntimeConfig: () => ({ apiDocsUrl: "https://local.example/docs" }),
 }));
 
-vi.mock("@/components/registry/registry-eligibility-provider", () => ({
-  useRegistryEligibility: () => ({ isEligible: true }),
-}));
-
 vi.mock("@/store", () => ({
   useScansStore: (
     selector: (state: {
@@ -61,6 +58,7 @@ describe("AppSidebarContent", () => {
     openCloudUpgradeMock.mockClear();
     openLaunchScanModalMock.mockClear();
     useAppSidebarMode.setState({ mode: APP_SIDEBAR_MODE.BROWSE });
+    useUIStore.setState({ registryEligible: false });
   });
 
   afterEach(() => {
@@ -93,9 +91,12 @@ describe("AppSidebarContent", () => {
     expect(screen.getAllByText("Cloud").length).toBeGreaterThan(0);
   });
 
-  it("uses the eligibility lease for Registry navigation", () => {
-    // Given / When
+  it("shows Registry navigation when the server marked this request eligible", () => {
+    // Given
     vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    useUIStore.setState({ registryEligible: true });
+
+    // When
     render(<AppSidebarContent />);
 
     // Then
@@ -103,6 +104,17 @@ describe("AppSidebarContent", () => {
       "href",
       "/registry",
     );
+  });
+
+  it("hides Registry navigation without a server eligibility decision", () => {
+    // Given / When
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    render(<AppSidebarContent />);
+
+    // Then
+    expect(
+      screen.queryByRole("link", { name: /Registry/ }),
+    ).not.toBeInTheDocument();
   });
 
   it("keeps the existing Lighthouse chat sidebar in Cloud Chat mode", () => {

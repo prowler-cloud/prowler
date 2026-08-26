@@ -18,11 +18,11 @@ describe("evaluateRegistryAccess", () => {
     fetchCurrentUserMock.mockResolvedValue({ manageRegistry: true });
   });
 
-  it("allows a fresh exact-true current permission with a five-second signal", async () => {
+  it("allows a fresh exact-true current permission without lease metadata", async () => {
     // Given / When
     const result = await evaluateRegistryAccess("access-token");
     // Then
-    expect(result.status).toBe(REGISTRY_ACCESS.ELIGIBLE);
+    expect(result).toStrictEqual({ status: REGISTRY_ACCESS.ELIGIBLE });
   });
 
   it.each([

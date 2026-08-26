@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import {
@@ -27,7 +28,6 @@ import {
 
 import { RegistryAccessDialog } from "./registry-access-dialog";
 import { RegistryArtifactDetail } from "./registry-artifact-detail";
-import { useRegistryEligibility } from "./registry-eligibility-provider";
 import {
   buildRegistryExplorerModel,
   getRegistryArtifactDetail,
@@ -69,8 +69,9 @@ export function RegistryExplorer({
 }: {
   initialState: RegistryBootstrapState;
 }) {
-  // Access invalidation unmounts this component, clearing every local snapshot.
-  const { invalidate } = useRegistryEligibility();
+  // The API is the sole access authority: a denied action result routes to
+  // Profile once, and the navigation unmounts this component with its state.
+  const router = useRouter();
   const [state, setState] = useState(initialState);
   const [filters, setFilters] = useState<RegistryExplorerFilters>({});
   const [selectedId, setSelectedId] = useState("root:available");
@@ -109,7 +110,7 @@ export function RegistryExplorer({
       versionSpec ? { normalizedName, versionSpec } : { normalizedName },
     );
     if (generation !== operationGeneration.current) return;
-    if (result.status === "access_denied") return invalidate();
+    if (result.status === "access_denied") return router.replace("/profile");
 
     setPendingOperation(null);
     if (result.status !== REGISTRY_MUTATION.CONFIRMED) {
@@ -131,12 +132,13 @@ export function RegistryExplorer({
     setPendingOperation("credential");
     const result = await submitRegistryCredential(key);
     if (generation !== operationGeneration.current) return;
-    if (result.status === "access_denied") return invalidate();
+    if (result.status === "access_denied") return router.replace("/profile");
 
     if (result.status === "connected") {
       const collections = await refreshRegistryCollections();
       if (generation !== operationGeneration.current) return;
-      if (collections.status === "access_denied") return invalidate();
+      if (collections.status === "access_denied")
+        return router.replace("/profile");
       setPendingOperation(null);
       if (collections.status === "complete") {
         setAccessDialogMode(undefined);
@@ -186,7 +188,7 @@ export function RegistryExplorer({
     setPendingOperation("credential");
     const result = await disconnectRegistryCredential();
     if (generation !== operationGeneration.current) return;
-    if (result.status === "access_denied") return invalidate();
+    if (result.status === "access_denied") return router.replace("/profile");
 
     setPendingOperation(null);
     if (result.status !== "disconnected") {
@@ -210,7 +212,7 @@ export function RegistryExplorer({
     setPendingOperation("remove");
     const result = await removeRegistryArtifact(normalizedName);
     if (generation !== operationGeneration.current) return;
-    if (result.status === "access_denied") return invalidate();
+    if (result.status === "access_denied") return router.replace("/profile");
 
     setPendingOperation(null);
     if (result.status !== REGISTRY_MUTATION.CONFIRMED) {

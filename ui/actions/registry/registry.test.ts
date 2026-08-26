@@ -24,7 +24,6 @@ import {
   refreshRegistryCollections,
   removeRegistryArtifact,
   refreshRegistryCredential,
-  refreshRegistryEligibility,
   submitRegistryCredential,
 } from "./registry";
 
@@ -92,10 +91,7 @@ const catalogResponse = () =>
 beforeEach(() => {
   vi.stubGlobal("fetch", fetchMock);
   authMock.mockResolvedValue({ accessToken: "access-token" });
-  evaluateAccessMock.mockResolvedValue({
-    status: "eligible",
-    leaseDurationMs: 30_000,
-  });
+  evaluateAccessMock.mockResolvedValue({ status: "eligible" });
   fetchMock.mockReset();
   pollTaskUntilSettledMock.mockReset();
 });
@@ -150,20 +146,6 @@ describe("Registry guarded reads", () => {
     },
   );
 
-  it("returns only the current eligibility result without Registry I/O", async () => {
-    // Given
-    const access = { status: "unknown" } as const;
-    evaluateAccessMock.mockResolvedValue(access);
-
-    // When
-    const result = await refreshRegistryEligibility();
-
-    // Then
-    expect(result).toEqual(access);
-    expect(evaluateAccessMock).toHaveBeenCalledWith("access-token");
-    expect(fetchMock).not.toHaveBeenCalled();
-  });
-
   it("bootstraps in credential, tenant-artifact, providers, then complete-catalog order", async () => {
     // Given
     fetchMock
@@ -176,9 +158,9 @@ describe("Registry guarded reads", () => {
     const result = await getRegistryBootstrap();
 
     // Then
+    expect(result).not.toHaveProperty("leaseDurationMs");
     expect(result).toEqual({
       status: "ready",
-      leaseDurationMs: 30_000,
       state: {
         status: "ready",
         credential: activeCredential,
@@ -229,9 +211,9 @@ describe("Registry guarded reads", () => {
       const result = await getRegistryBootstrap();
 
       // Then
+      expect(result).not.toHaveProperty("leaseDurationMs");
       expect(result).toEqual({
         status: "ready",
-        leaseDurationMs: 30_000,
         state: {
           status: expectedStatus,
           credential,
@@ -369,7 +351,7 @@ describe("Registry guarded reads", () => {
   it("rechecks access between separate actions after permission revocation", async () => {
     // Given
     evaluateAccessMock
-      .mockResolvedValueOnce({ status: "eligible", leaseDurationMs: 30_000 })
+      .mockResolvedValueOnce({ status: "eligible" })
       .mockResolvedValueOnce({ status: "ineligible" });
     fetchMock.mockResolvedValueOnce(credentialResponse());
 

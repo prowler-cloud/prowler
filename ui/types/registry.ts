@@ -213,7 +213,6 @@ export type RegistryBootstrapState =
 export type RegistryBootstrapResult =
   | {
       status: typeof REGISTRY_BOOTSTRAP_STATE.READY;
-      leaseDurationMs: number;
       state: RegistryBootstrapState;
     }
   | { status: typeof REGISTRY_FAILURE.ACCESS_DENIED };

@@ -146,7 +146,7 @@ describe("getNavigationConfig", () => {
     ]);
   });
 
-  it("shows the New Registry link for a fresh eligibility lease", () => {
+  it("shows the New Registry link for a server-eligible request", () => {
     // Given / When
     vi.stubEnv("UI_CLOUD_ENABLED", "true");
     const registry = getNavigationConfig({

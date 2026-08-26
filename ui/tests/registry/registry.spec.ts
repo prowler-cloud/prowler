@@ -72,10 +72,9 @@ test.describe.serial("Registry", () => {
       await page.goto("/");
       await registryPage.verifyRegistryNavigationVisible();
       await controlledRegistryFixture.revokeCurrentAuthority();
-      await page.evaluate(() => {
-        window.dispatchEvent(new Event("focus"));
-        document.dispatchEvent(new Event("visibilitychange"));
-      });
+      // No client-side lease machinery: revocation is enforced by the API and
+      // lands on the next server-rendered request.
+      await page.goto("/");
       await registryPage.verifyRegistryNavigationHidden();
       await registryPage.goto();
       await registryPage.verifyDirectRouteDenied();
@@ -95,7 +94,7 @@ test.describe.serial("Registry", () => {
       await registryPage.verifyOnboarding();
       await registryPage.submitRegistryKey(FIXTURE_REGISTRY_KEY);
       await expect(page.getByRole("status")).toContainText(
-        "Validating Registry key",
+        "Validating your Registry key",
       );
       await registryPage.verifyKeyIsNotDisclosed(
         FIXTURE_REGISTRY_KEY,
