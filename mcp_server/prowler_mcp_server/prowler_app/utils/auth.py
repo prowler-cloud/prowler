@@ -65,7 +65,12 @@ class ProwlerAppAuth:
 
             # Decode and parse JSON
             decoded = base64.b64decode(base64_payload).decode("utf-8")
-            return json.loads(decoded)
+            payload = json.loads(decoded)
+
+            # A JWT payload is a JSON object. A list or a scalar decodes just as
+            # cleanly, so the type is checked here rather than left to blow up as
+            # an AttributeError on the first claim read.
+            return payload if isinstance(payload, dict) else None
         except Exception as e:
             logger.warning(f"Failed to parse JWT token: {e}")
             return None
@@ -79,10 +84,12 @@ class ProwlerAppAuth:
             if not authorization_header:
                 raise CredentialError("No Authorization header was sent")
 
-            # Extract token from Bearer header
-            if authorization_header.startswith("Bearer "):
-                token = authorization_header.replace("Bearer ", "")
-            else:
+            # Extract token from Bearer header. Authentication scheme names are
+            # case-insensitive (RFC 7235), and only the scheme prefix is removed:
+            # a token that happens to contain the word again keeps it.
+            scheme, _, credential = authorization_header.partition(" ")
+            token = credential.strip()
+            if scheme.lower() != "bearer" or not token:
                 raise CredentialError(
                     "The Authorization header is not in 'Bearer <token>' form"
                 )
@@ -97,9 +104,17 @@ class ProwlerAppAuth:
                 if not payload:
                     raise CredentialError("The token is not a readable JWT")
 
-                # Check if token is expired
+                # Check if token is expired. `exp` is a numeric date in the
+                # spec, so a missing or non-numeric one makes the token
+                # unusable rather than merely stale -- comparing it would raise
+                # a TypeError and leave the failure masked as unclassified.
+                exp = payload.get("exp")
+                if isinstance(exp, bool) or not isinstance(exp, (int, float)):
+                    raise CredentialError(
+                        "The token carries no readable 'exp' expiration claim"
+                    )
+
                 now = int(datetime.now().timestamp())
-                exp = payload.get("exp", 0)
                 if exp <= now:
                     raise CredentialError("The token has expired")
 
