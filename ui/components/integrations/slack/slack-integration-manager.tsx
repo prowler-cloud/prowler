@@ -9,11 +9,11 @@ import {
   disconnectSlackIntegration,
   getSlackAuthorizeUrl,
   getSlackChannels,
-  setSlackDefaultChannel,
+  setSlackAuthorizedChannels,
 } from "@/actions/integrations/slack";
 import { SlackIcon } from "@/components/icons/services/IconServices";
 import { IntegrationCardHeader } from "@/components/integrations/shared";
-import { SlackChannelSelector } from "@/components/integrations/slack/slack-channel-selector";
+import { SlackChannelMultiSelect } from "@/components/integrations/slack/slack-channel-multi-select";
 import {
   Alert,
   AlertDescription,
@@ -33,6 +33,7 @@ import {
 import type { SlackTokenErrorCode } from "@/lib/integrations/slack-errors";
 import type {
   IntegrationProps,
+  SlackAuthorizedChannel,
   SlackChannelOption,
 } from "@/types/integrations";
 
@@ -60,7 +61,11 @@ interface ChannelsLoaded {
 
 type ChannelsState = ChannelsLoading | ChannelsFailed | ChannelsLoaded;
 
-const CHECK_BLOCKED_REASON_ID = "slack-connection-check-blocked";
+const CHECK_HINT_ID = "slack-connection-check-hint";
+
+/** The exact text the check posts (contract, Connection); the hint quotes it. */
+const CONFIRMATION_MESSAGE =
+  "✅ Prowler connection verified. Notifications will be delivered to this channel.";
 
 /**
  * A disconnect that removed the row without Slack confirming the revocation.
@@ -71,16 +76,63 @@ interface UnconfirmedRevocation {
   workspace: string | null;
 }
 
-// The name may be missing: the id decides what the UI can do with it.
-interface SlackChannelRef {
-  id: string;
-  name: string | null;
-}
+/** Order-insensitive: the mirror must not re-seed on a mere reordering. */
+const sameChannelIds = (a: string[], b: string[]) =>
+  a.length === b.length && new Set([...a, ...b]).size === a.length;
 
-const channelRefEquals = (
-  a: SlackChannelRef | null,
-  b: SlackChannelRef | null,
-) => a?.id === b?.id && a?.name === b?.name;
+/** Confirmation is part of the record: a confirm-only change must re-seed. */
+const sameChannelSets = (
+  a: SlackAuthorizedChannel[],
+  b: SlackAuthorizedChannel[],
+) => {
+  if (a.length !== b.length) return false;
+  const byId = new Map(a.map((channel) => [channel.id, channel]));
+  return b.every((channel) => {
+    const other = byId.get(channel.id);
+    return (
+      other?.name === channel.name &&
+      other?.confirmation_sent_at === channel.confirmation_sent_at
+    );
+  });
+};
+
+/**
+ * A stored channel the listing no longer carries stays selectable: dropping it
+ * would deselect it behind the user's back.
+ */
+const mergeChannelOptions = (
+  listed: SlackChannelOption[],
+  stored: SlackAuthorizedChannel[],
+): SlackChannelOption[] => {
+  const merged = new Map(listed.map((channel) => [channel.id, channel]));
+  stored.forEach(({ id, name, is_private }) => {
+    if (!merged.has(id)) merged.set(id, { id, name, is_private });
+  });
+  return Array.from(merged.values());
+};
+
+/**
+ * Fallback for a save that answered without channels. Retained ids keep their
+ * confirmation, new ones start without one (contract, PATCH).
+ */
+const recordedFromSelection = (
+  channelIds: string[],
+  options: SlackChannelOption[],
+  previous: SlackAuthorizedChannel[],
+): SlackAuthorizedChannel[] =>
+  channelIds.flatMap((channelId) => {
+    const option = options.find((channel) => channel.id === channelId);
+    if (!option) return [];
+    const stored = previous.find((channel) => channel.id === channelId);
+    return [
+      { ...option, confirmation_sent_at: stored?.confirmation_sent_at ?? null },
+    ];
+  });
+
+const channelList = (names: string[]): string =>
+  new Intl.ListFormat("en", { style: "long", type: "conjunction" }).format(
+    names.map((name) => `#${name}`),
+  );
 
 /**
  * Slack's own reason, when the string is one: the connection check reports a
@@ -129,14 +181,8 @@ export const SlackIntegrationManager = ({
   const { toast } = useToast();
 
   const integrationId = integration?.id ?? null;
-  const recordedChannelId =
-    integration?.attributes.configuration.channel_id ?? null;
-  const recordedChannelName =
-    integration?.attributes.configuration.channel_name ?? null;
-
-  const recordedChannel: SlackChannelRef | null = recordedChannelId
-    ? { id: recordedChannelId, name: recordedChannelName }
-    : null;
+  const recordedChannels: SlackAuthorizedChannel[] =
+    integration?.attributes.configuration.channels ?? [];
 
   // Seeded `loading`, not by the effect: the effect never runs on the server,
   // so anything else would server-render a "no channels" picker until
@@ -148,26 +194,29 @@ export const SlackIntegrationManager = ({
   );
   // Bumped by refresh: a channel invited after load only shows on a re-read.
   const [channelReloads, setChannelReloads] = useState(0);
-  // Local state needed: the pick is buffered until the user saves it.
-  const [selectedChannelId, setSelectedChannelId] = useState<string | null>(
-    recordedChannelId,
+  // Local state needed: the picks are buffered until the user saves them.
+  const [selectedChannelIds, setSelectedChannelIds] = useState<string[]>(
+    recordedChannels.map((channel) => channel.id),
   );
   // Mirrored in state, not read from the prop, so channel-gated affordances
   // move on save instead of waiting for the revalidation.
-  const [defaultChannel, setDefaultChannel] = useState(recordedChannel);
+  const [authorizedChannels, setAuthorizedChannels] =
+    useState(recordedChannels);
   // The prop the mirror was last taken from: the card never unmounts, so a
   // mirror seeded only at mount would go stale when the record changes.
-  const [syncedChannel, setSyncedChannel] = useState(recordedChannel);
-  const [isSavingChannel, setIsSavingChannel] = useState(false);
+  const [syncedChannels, setSyncedChannels] = useState(recordedChannels);
+  const [isSavingChannels, setIsSavingChannels] = useState(false);
 
-  if (!channelRefEquals(recordedChannel, syncedChannel)) {
-    const previousSyncedId = syncedChannel?.id ?? null;
-    setSyncedChannel(recordedChannel);
-    setDefaultChannel(recordedChannel);
-    // Follow the record only while the buffered pick still matches it: an
+  if (!sameChannelSets(recordedChannels, syncedChannels)) {
+    // The baseline is `authorizedChannels`, not `syncedChannels`: a save
+    // advances the mirror first, so the prop reads a later pick as none.
+    const shownIds = authorizedChannels.map((channel) => channel.id);
+    setSyncedChannels(recordedChannels);
+    setAuthorizedChannels(recordedChannels);
+    // Follow the record only while the buffered picks still match it: an
     // unsaved pick is the user's, not ours to overwrite mid-edit.
-    if (selectedChannelId === previousSyncedId) {
-      setSelectedChannelId(recordedChannel?.id ?? null);
+    if (sameChannelIds(selectedChannelIds, shownIds)) {
+      setSelectedChannelIds(recordedChannels.map((channel) => channel.id));
     }
   }
 
@@ -250,68 +299,102 @@ export const SlackIntegrationManager = ({
     };
   }, [integrationId, channelReloads]);
 
-  const channels =
+  const listedChannels =
     channelsState.status === CHANNELS_STATUS.LOADED
       ? channelsState.channels
       : [];
+  const channelOptions = mergeChannelOptions(
+    listedChannels,
+    authorizedChannels,
+  );
 
-  const handleSaveChannel = async () => {
-    if (!integrationId || !selectedChannelId) return;
+  // The check posts only where no confirmation has landed (contract, Connection).
+  const unconfirmedChannels = authorizedChannels.filter(
+    (channel) => channel.confirmation_sent_at === null,
+  );
+  // Dropping a channel cascades into the alert rules targeting it (design D11).
+  const droppedChannels = authorizedChannels.filter(
+    (channel) => !selectedChannelIds.includes(channel.id),
+  );
 
-    let saved = false;
-    setIsSavingChannel(true);
+  const checkHint = (): string => {
+    if (authorizedChannels.length === 0) {
+      return "Authorize at least one destination channel below to enable this check.";
+    }
+    return unconfirmedChannels.length > 0
+      ? `Checks every authorized channel and posts “${CONFIRMATION_MESSAGE}” once to ${channelList(
+          unconfirmedChannels.map((channel) => channel.name),
+        )}.`
+      : "Checks every authorized channel. Each was confirmed once already, so nothing is posted.";
+  };
+
+  const handleSaveChannels = async () => {
+    if (!integrationId) return;
+
+    let savedChannels: SlackAuthorizedChannel[] = [];
+    setIsSavingChannels(true);
     try {
-      // Only the id travels — the API validates it and derives the name
-      // (design D6).
-      const result = await setSlackDefaultChannel(
+      // Only ids travel — the API validates them and derives the names.
+      const result = await setSlackAuthorizedChannels(
         integrationId,
-        selectedChannelId,
+        selectedChannelIds,
       );
 
       if ("error" in result) {
-        // The API validates the channel against Slack, so the save can
+        // The API validates the channels against Slack, so the save can
         // discover the credential is gone.
         recordRefusal(result.code);
         toast({
           variant: "destructive",
-          title: "Could not save the destination channel",
+          title: "Could not save the destination channels",
           description: result.error,
         });
         return;
       }
 
-      // Prefer the API's derived name: a channel renamed in Slack since the
-      // list was read would otherwise show its old name.
-      const savedName =
-        result.integration.attributes.configuration.channel_name ??
-        channels.find((channel) => channel.id === selectedChannelId)?.name ??
-        null;
+      // Prefer the API's own record: a channel renamed in Slack since the list
+      // was read would otherwise show its old name.
+      savedChannels =
+        result.integration.attributes.configuration.channels ??
+        recordedFromSelection(
+          selectedChannelIds,
+          channelOptions,
+          authorizedChannels,
+        );
 
       provedCredentialAlive();
-      setDefaultChannel({ id: selectedChannelId, name: savedName });
-      saved = true;
+      setAuthorizedChannels(savedChannels);
+      setSelectedChannelIds(savedChannels.map((channel) => channel.id));
       toast({
-        title: "Destination channel saved",
-        description: savedName
-          ? `Prowler will post to #${savedName}.`
-          : "Prowler will post to the channel you chose.",
+        title: "Destination channels saved",
+        description:
+          savedChannels.length > 0
+            ? `Prowler will post to ${channelList(
+                savedChannels.map((channel) => channel.name),
+              )}.`
+            : "No destination channels are authorized any more.",
       });
     } catch (_error) {
       toast({
         variant: "destructive",
-        title: "Could not save the destination channel",
+        title: "Could not save the destination channels",
         description: "Something went wrong. Please try again.",
       });
     } finally {
-      setIsSavingChannel(false);
+      setIsSavingChannels(false);
     }
 
-    // Recording a destination is what makes a check possible (design D7), and
-    // the save alone only proves the API took the id.
-    if (saved) await handleTestConnection(integrationId);
+    // Recording destinations is what makes a check possible (design D7), and
+    // the save alone only proves the API took the ids.
+    if (savedChannels.length > 0)
+      await handleTestConnection(integrationId, savedChannels);
   };
 
-  const handleTestConnection = async (id: string) => {
+  const handleTestConnection = async (
+    id: string,
+    // Passed in by a chained check: it runs before the save's state lands.
+    channels: SlackAuthorizedChannel[] = authorizedChannels,
+  ) => {
     setIsTesting(true);
     try {
       const result = await testIntegrationConnection(id);
@@ -321,7 +404,8 @@ export const SlackIntegrationManager = ({
         toast({
           title: "Connection test successful!",
           description:
-            result.message || "Prowler can reach your Slack workspace.",
+            result.message ||
+            "Prowler can reach your Slack workspace and every authorized channel.",
         });
       } else {
         // A dead credential named here is not a failure checking again can
@@ -330,12 +414,22 @@ export const SlackIntegrationManager = ({
 
         recordRefusal(asReasonCode(reason));
 
+        const explanation = reason
+          ? slackErrorMessage({ code: reason, detail: reason })
+          : "Failed to reach your Slack workspace.";
+
+        // The failure names its channel by id (design D7); an id the set no
+        // longer holds falls back to workspace-wide, never a raw Slack id.
+        const refusedChannel = result.failedChannelId
+          ? channels.find((channel) => channel.id === result.failedChannelId)
+          : undefined;
+
         toast({
           variant: "destructive",
           title: "Connection test failed",
-          description: reason
-            ? slackErrorMessage({ code: reason, detail: reason })
-            : "Failed to reach your Slack workspace.",
+          description: refusedChannel
+            ? `Slack refused #${refusedChannel.name}: ${explanation}`
+            : explanation,
         });
       }
     } catch (_error) {
@@ -540,17 +634,19 @@ export const SlackIntegrationManager = ({
               </div>
               <div className="flex flex-col items-start gap-1 sm:items-end">
                 <div className="flex items-center gap-2">
-                  {/* The check posts to the destination channel: the API answers
-                      400 when none is recorded yet. */}
+                  {/* The check reaches the authorized channels: the API
+                      answers 400 while the set is empty. */}
                   <Button
                     size="sm"
                     variant="outline"
-                    disabled={isTesting || !defaultChannel}
-                    // The reason travels with the control: a disabled button
-                    // whose explanation sits across the row reads as broken.
-                    aria-describedby={
-                      defaultChannel ? undefined : CHECK_BLOCKED_REASON_ID
+                    disabled={
+                      isTesting ||
+                      isSavingChannels ||
+                      authorizedChannels.length === 0
                     }
+                    // What the control does — or why it cannot — travels with
+                    // it: an explanation across the row reads as unrelated.
+                    aria-describedby={CHECK_HINT_ID}
                     onClick={() => handleTestConnection(integration.id)}
                   >
                     <TestTube size={14} />
@@ -566,22 +662,20 @@ export const SlackIntegrationManager = ({
                     Disconnect
                   </Button>
                 </div>
-                {!defaultChannel && (
-                  <p
-                    id={CHECK_BLOCKED_REASON_ID}
-                    className="text-xs text-gray-500 dark:text-gray-300"
-                  >
-                    Choose a destination channel below to enable this check.
-                  </p>
-                )}
+                <p
+                  id={CHECK_HINT_ID}
+                  className="max-w-prose text-xs text-gray-500 sm:text-right dark:text-gray-300"
+                >
+                  {checkHint()}
+                </p>
               </div>
             </div>
 
             <div className="border-border-neutral-secondary mt-6 flex flex-col gap-4 border-t pt-6">
-              <SlackChannelSelector
-                options={channels}
-                value={selectedChannelId}
-                onChange={setSelectedChannelId}
+              <SlackChannelMultiSelect
+                options={channelOptions}
+                values={selectedChannelIds}
+                onChange={setSelectedChannelIds}
                 isLoading={channelsState.status === CHANNELS_STATUS.LOADING}
                 error={
                   channelsState.status === CHANNELS_STATUS.ERROR
@@ -594,30 +688,51 @@ export const SlackIntegrationManager = ({
                     : null
                 }
                 onRefresh={() => setChannelReloads((reloads) => reloads + 1)}
-                disabled={isSavingChannel}
+                disabled={isSavingChannels}
               />
 
+              {droppedChannels.length > 0 && (
+                <Alert variant="warning" data-deauthorize-warning>
+                  <AlertTitle>
+                    Dropped channels leave your alert rules too
+                  </AlertTitle>
+                  <AlertDescription>
+                    Saving this selection drops{" "}
+                    {channelList(
+                      droppedChannels.map((channel) => channel.name),
+                    )}
+                    . Every alert rule targeting a dropped channel stops
+                    targeting it, and Prowler stops delivering there.
+                    Notifications already delivered stay in Slack.
+                  </AlertDescription>
+                </Alert>
+              )}
+
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-text-neutral-secondary text-xs">
-                  {/* The id decides, not the name: a missing name would deny
-                      a destination the check runs against. */}
-                  {defaultChannel
-                    ? defaultChannel.name
-                      ? `Prowler posts to #${defaultChannel.name}.`
-                      : "Prowler posts to the channel you saved."
-                    : "No destination channel recorded yet."}
+                {/* Keyed: the card's subtitle also starts "Prowler posts to". */}
+                <p
+                  className="text-text-neutral-secondary text-xs"
+                  data-authorized-channels
+                >
+                  {authorizedChannels.length > 0
+                    ? `Prowler posts to ${channelList(
+                        authorizedChannels.map((channel) => channel.name),
+                      )}.`
+                    : "No destination channels authorized yet."}
                 </p>
                 <Button
                   size="sm"
                   disabled={
-                    !selectedChannelId ||
-                    selectedChannelId === (defaultChannel?.id ?? null) ||
-                    isSavingChannel ||
+                    sameChannelIds(
+                      selectedChannelIds,
+                      authorizedChannels.map((channel) => channel.id),
+                    ) ||
+                    isSavingChannels ||
                     isTesting
                   }
-                  onClick={handleSaveChannel}
+                  onClick={handleSaveChannels}
                 >
-                  {isSavingChannel ? "Saving..." : "Save channel"}
+                  {isSavingChannels ? "Saving..." : "Save channels"}
                 </Button>
               </div>
             </div>

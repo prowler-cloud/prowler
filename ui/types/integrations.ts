@@ -98,13 +98,13 @@ export interface IntegrationProps {
       domain?: string;
       projects?: { [key: string]: string };
       issue_types?: { [key: string]: string[] };
-      // Slack specific configuration, server-owned. The channel keys are absent
-      // until one is chosen, not present and null: read them with `?? null`.
+      // Slack specific configuration, server-owned. The keys are optional here
+      // because the shape is shared with every integration: read with `?? []`.
       team_id?: string;
       team_name?: string;
       bot_user_id?: string;
-      channel_id?: string;
-      channel_name?: string;
+      channels?: SlackAuthorizedChannel[];
+      verification?: SlackVerification;
       [key: string]: unknown;
     };
     url?: string;
@@ -121,6 +121,24 @@ export interface SlackChannelOption {
   id: string;
   name: string;
   is_private: boolean;
+}
+
+/**
+ * `confirmation_sent_at` is null until a connection check posts one, and null
+ * again after a same-workspace reinstall (contract, OAuth and reads).
+ */
+export interface SlackAuthorizedChannel extends SlackChannelOption {
+  confirmation_sent_at: string | null;
+}
+
+/**
+ * The contract's `verification` block in full, though nothing reads it yet
+ * (contract, OAuth and reads).
+ */
+export interface SlackVerification {
+  task_id: string | null;
+  started_at: string | null;
+  finished_at: string | null;
 }
 
 // Jira dispatch types

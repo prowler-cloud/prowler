@@ -14,7 +14,7 @@ import { handlersForSlack } from "@/__tests__/msw/handlers/slack";
 import type { SlackFixture } from "@/__tests__/msw/handlers/slack.fixtures";
 import { worker } from "@/__tests__/msw/worker";
 import { render } from "@/__tests__/render-browser";
-import { setSlackDefaultChannel } from "@/actions/integrations/slack";
+import { setSlackAuthorizedChannels } from "@/actions/integrations/slack";
 import { SlackCallback } from "@/components/integrations/slack/slack-callback";
 
 import { IntegrationsContent } from "../integrations-content";
@@ -29,8 +29,13 @@ export const CONNECTION_OUTCOME = {
 export type ConnectionOutcome =
   (typeof CONNECTION_OUTCOME)[keyof typeof CONNECTION_OUTCOME];
 
-/** Sentinel: the page settled on "no channel recorded", rather than not yet. */
-const NO_DEFAULT_CHANNEL = "<no channel recorded>";
+/** Sentinel: the page settled on "no channels authorized", rather than not yet. */
+const NO_AUTHORIZED_CHANNELS = "<no channels authorized>";
+
+interface ChannelChip {
+  name: string;
+  isPrivate: boolean;
+}
 
 export const REVOCATION_OUTCOME = {
   REVOKED: "revoked",
@@ -125,6 +130,8 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
   }
 
   async mountCallback({ code, state, error }: CallbackParams): Promise<void> {
+    // Unmount first, or two copies of the page answer every query.
+    (await this.mounted)?.unmount();
     const params = new URLSearchParams();
     if (code) params.set("code", code);
     if (state) params.set("state", state);
@@ -136,7 +143,8 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     );
     this.wireHandlers();
 
-    render(createElement(SlackCallback));
+    // Held so the `revisit()` that follows a reinstall can take it down first.
+    this.mounted = render(createElement(SlackCallback));
   }
 
   /** Mount the integrations catalogue. No handlers: every card there is static. */
@@ -294,17 +302,38 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     return !button.disabled;
   }
 
+  /** The same copy, waited for: it follows data that lands after the action. */
+  async connectionCheckHintMatching(pattern: RegExp): Promise<string> {
+    return this.waitFor(
+      () => {
+        const hint = this.connectionCheckHint();
+        return hint && pattern.test(hint) ? hint : null;
+      },
+      10000,
+      `the connection check hint to match ${pattern}`,
+    );
+  }
+
   /**
-   * Why the check cannot run, read from the copy the button points at: a reason
-   * found anywhere else on the page never reaches whoever sees the control.
+   * What the check does — or why it cannot run — read from the copy the button
+   * points at: a reason found anywhere else on the page never reaches whoever
+   * sees the control.
    */
-  connectionCheckBlockedReason(): string | null {
+  connectionCheckHint(): string | null {
     const button = this.buttonByText(/Test connection/);
     const describedBy = button?.getAttribute("aria-describedby");
     if (!describedBy) return null;
 
     const reason = this.container.querySelector<HTMLElement>(`#${describedBy}`);
     return reason ? (reason.textContent ?? "").trim() : null;
+  }
+
+  async connectionFailureToast(): Promise<string> {
+    return this.waitFor(
+      () => this.toastText(/Connection test failed/),
+      15000,
+      "the connection failure toast",
+    );
   }
 
   /**
@@ -422,23 +451,29 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
   }
 
   /**
+   * Scoped to the popover: the multi-select keeps a hidden mirror of its items
+   * that exists with the listing closed, so a bare `[role="option"]` matches it.
+   */
+  private openPickerOptions(): HTMLElement[] | null {
+    const options = Array.from(
+      document.querySelectorAll<HTMLElement>(
+        '[data-slot="multiselect-content"] [role="option"]',
+      ),
+    );
+    return options.length > 0 ? options : null;
+  }
+
+  /**
    * Open the picker and hand back its options. A re-render landing mid-gesture
    * makes Radix drop the open state, so re-open from the keyboard when nothing
    * mounted at all.
    */
   private async openChannelPicker(): Promise<HTMLElement[]> {
-    const mounted = (): HTMLElement[] | null => {
-      const options = Array.from(
-        document.querySelectorAll<HTMLElement>('[role="option"]'),
-      );
-      return options.length > 0 ? options : null;
-    };
-
-    const alreadyOpen = mounted();
+    const alreadyOpen = this.openPickerOptions();
     if (alreadyOpen) return alreadyOpen;
 
     const trigger = await this.waitFor<HTMLElement>(
-      () => this.q("#slack-channel"),
+      () => this.q("#slack-channels"),
       10000,
       "the channel picker",
     );
@@ -446,13 +481,17 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     await this.clickElement(trigger, { fallbackToDomClick: true });
 
     let options = await this.waitForOrNull(
-      mounted,
+      () => this.openPickerOptions(),
       2000,
       "the channel options",
     );
     if (!options) {
       await this.user.keyboard("{Enter}");
-      options = await this.waitForOrNull(mounted, 8000, "the channel options");
+      options = await this.waitForOrNull(
+        () => this.openPickerOptions(),
+        8000,
+        "the channel options",
+      );
     }
 
     if (!options) {
@@ -535,97 +574,155 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     // would never settle — the tests only narrow.
     await this.waitFor(
       () =>
-        document.querySelectorAll('[role="option"]').length !== all.length ||
-        document.querySelector("[cmdk-empty]") !== null ||
+        (this.openPickerOptions() ?? []).length !== all.length ||
+        document.querySelector(
+          '[data-slot="multiselect-content"] [cmdk-empty]',
+        ) !== null ||
         null,
       5000,
       "the search to narrow the channels",
     );
 
-    const offered = Array.from(
-      document.querySelectorAll<HTMLElement>('[role="option"]'),
-    ).map((option) => option.getAttribute("data-channel") ?? "");
+    const offered = (this.openPickerOptions() ?? []).map(
+      (option) => option.getAttribute("data-channel") ?? "",
+    );
     const emptyNote =
-      document.querySelector<HTMLElement>("[cmdk-empty]")?.textContent ?? null;
+      document.querySelector<HTMLElement>(
+        '[data-slot="multiselect-content"] [cmdk-empty]',
+      )?.textContent ?? null;
 
     await this.closeChannelPicker();
 
     return { offered, emptyNote };
   }
 
-  private async pickAndSave(name: string): Promise<void> {
-    const options = await this.openChannelPicker();
-    const option = options.find(
-      (element) => element.getAttribute("data-channel") === name,
-    );
+  private async pickChannels(names: string[]): Promise<void> {
+    for (const name of names) {
+      const options = await this.openChannelPicker();
+      const option = options.find(
+        (element) => element.getAttribute("data-channel") === name,
+      );
 
-    if (!option) {
-      throw new Error(`pickAndSave: no channel named "${name}" is offered`);
+      if (!option) {
+        throw new Error(`pickChannels: no channel named "${name}" is offered`);
+      }
+
+      await this.user.click(option);
+      await this.waitForTransition();
     }
-
-    await this.user.click(option);
-    await this.waitForTransition();
-    await this.clickButton(/Save channel/);
+    await this.closeChannelPicker();
   }
 
-  /** Pick a channel, save it, and wait for it to be recorded as the destination. */
-  async chooseChannel(name: string): Promise<void> {
-    await this.pickAndSave(name);
+  /** Toggle the named channels without saving: the picks stay buffered. */
+  async chooseChannels(names: string[]): Promise<void> {
+    await this.pickChannels(names);
+  }
+
+  async saveChannels(): Promise<void> {
+    await this.clickButton(/Save channels/);
+  }
+
+  /** What the page says before a save that drops channels (design D11). */
+  deauthorizationWarning(): string | null {
+    const warning = this.q("[data-deauthorize-warning]");
+    return warning
+      ? (warning.textContent ?? "").replace(/\s+/g, " ").trim()
+      : null;
+  }
+
+  /** Drop the named channels, save, and wait until each is off the record. */
+  async deauthorizeChannels(names: string[]): Promise<void> {
+    await this.pickChannels(names);
+    await this.saveChannels();
     await this.waitFor(
-      () => this.defaultChannelName() === name,
+      () => {
+        const authorized = this.authorizedChannelNames();
+        const settled =
+          authorized ??
+          (this.containsText(/No destination channels authorized yet/)
+            ? []
+            : null);
+        return settled && names.every((name) => !settled.includes(name))
+          ? true
+          : null;
+      },
       15000,
-      `#${name} to be recorded as the destination`,
+      `${names.map((name) => `#${name}`).join(", ")} to be de-authorized`,
+    );
+  }
+
+  /** Toggle the named channels, save, and wait until each is recorded. */
+  async authorizeChannels(names: string[]): Promise<void> {
+    await this.pickChannels(names);
+    await this.saveChannels();
+    await this.waitFor(
+      () => {
+        const authorized = this.authorizedChannelNames();
+        return authorized && names.every((name) => authorized.includes(name))
+          ? true
+          : null;
+      },
+      15000,
+      `${names.map((name) => `#${name}`).join(", ")} to be authorized`,
     );
   }
 
   /**
-   * Record a different destination away from this page — a second tab, or someone
+   * Authorize a different set away from this page — a second tab, or someone
    * else in the tenant. Goes through the same call the page makes, leaving this
    * page's own copy of it untouched.
    */
-  async channelRecordedElsewhere(name: string): Promise<void> {
-    const channel = this.fixture.channels.find((c) => c.name === name);
-    if (!channel) {
-      throw new Error(
-        `channelRecordedElsewhere: no channel named "${name}" is offered`,
-      );
-    }
+  async channelsRecordedElsewhere(names: string[]): Promise<void> {
+    const channels = names.map((name) => {
+      const channel = this.fixture.channels.find((c) => c.name === name);
+      if (!channel) {
+        throw new Error(
+          `channelsRecordedElsewhere: no channel named "${name}" is offered`,
+        );
+      }
+      return channel;
+    });
 
     const integrationId = this.fixture.install?.id;
     if (!integrationId) {
-      throw new Error("channelRecordedElsewhere: no workspace is connected");
+      throw new Error("channelsRecordedElsewhere: no workspace is connected");
     }
 
-    const result = await setSlackDefaultChannel(integrationId, channel.id);
+    const result = await setSlackAuthorizedChannels(
+      integrationId,
+      channels.map((channel) => channel.id),
+    );
     if ("error" in result) {
-      throw new Error(`channelRecordedElsewhere: ${result.error}`);
+      throw new Error(`channelsRecordedElsewhere: ${result.error}`);
     }
   }
 
-  /** Whether the picked channel can be saved — false when there is nothing new to save. */
-  offersChannelSave(): boolean {
-    const button = this.buttonByText(/Save channel/);
+  /** Whether the picked channels can be saved — false when there is nothing new to save. */
+  offersChannelsSave(): boolean {
+    const button = this.buttonByText(/Save channels/);
     return button !== null && !button.disabled;
   }
 
   /**
-   * Try to save a channel the API refuses and hand back what the user is told. A
-   * save that succeeds fails the test rather than timing out.
+   * Try to save channels the API refuses and hand back what the user is told.
+   * A save that succeeds fails the test rather than timing out.
    */
-  async refusedChannelSave(name: string): Promise<string> {
-    await this.pickAndSave(name);
+  async refusedChannelsSave(names: string[]): Promise<string> {
+    await this.pickChannels(names);
+    await this.saveChannels();
 
     return this.waitFor(
       () => {
-        if (this.defaultChannelName() === name) {
+        const authorized = this.authorizedChannelNames() ?? [];
+        if (names.every((name) => authorized.includes(name))) {
           throw new Error(
-            `refusedChannelSave: #${name} was recorded, not refused`,
+            `refusedChannelsSave: ${names.join(", ")} were recorded, not refused`,
           );
         }
-        return this.toastText(/Could not save the destination channel/);
+        return this.toastText(/Could not save the destination channels/);
       },
       15000,
-      "the refused channel save",
+      "the refused channels save",
     );
   }
 
@@ -640,26 +737,58 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     return toast ? (toast.textContent ?? "").replace(/\s+/g, " ").trim() : null;
   }
 
-  private defaultChannelName(): string | null {
-    return (
-      /Prowler posts to #(\S+?)\./.exec(
-        this.container.textContent ?? "",
-      )?.[1] ?? null
-    );
+  /** The names the "Prowler posts to …" summary carries, or null while unsettled. */
+  private authorizedChannelNames(): string[] | null {
+    // The keyed element, not a text search: the card's subtitle also starts
+    // with "Prowler posts to".
+    const summary = this.q("[data-authorized-channels]");
+    const text = (summary?.textContent ?? "").trim();
+    if (!/^Prowler posts to /.test(text)) return null;
+
+    return Array.from(text.matchAll(/#([^\s,.]+)/g), (match) => match[1]);
   }
 
-  /** The channel recorded as the integration's destination, if any. */
-  async defaultChannel(): Promise<string | null> {
-    const settled = await this.waitFor(
+  /** The channels recorded as the integration's authorized destinations. */
+  async authorizedChannels(): Promise<string[]> {
+    const settled = await this.waitFor<
+      string[] | typeof NO_AUTHORIZED_CHANNELS
+    >(
       () =>
-        this.defaultChannelName() ??
-        (this.containsText(/No destination channel recorded yet/)
-          ? NO_DEFAULT_CHANNEL
+        this.authorizedChannelNames() ??
+        (this.containsText(/No destination channels authorized yet/)
+          ? NO_AUTHORIZED_CHANNELS
           : null),
       10000,
-      "the recorded destination channel",
+      "the authorized destination channels",
     );
-    return settled === NO_DEFAULT_CHANNEL ? null : settled;
+    return settled === NO_AUTHORIZED_CHANNELS ? [] : settled;
+  }
+
+  /**
+   * What the closed picker shows: a chip per selected channel, each carrying
+   * whether the chip itself marks the channel private.
+   */
+  async authorizedChannelChips(): Promise<ChannelChip[]> {
+    const chips = await this.waitFor(
+      () => {
+        const found = Array.from(
+          this.container.querySelectorAll<HTMLElement>(
+            '[data-slot="multiselect-value"] [data-selected-item]',
+          ),
+        );
+        return found.length > 0 ? found : null;
+      },
+      10000,
+      "the authorized channel chips",
+    );
+
+    return chips.map((chip) => {
+      const text = (chip.textContent ?? "").trim();
+      return {
+        name: text.replace(/^Private/, "").replace(/^#/, ""),
+        isPrivate: /^Private/.test(text),
+      };
+    });
   }
 
   /** What the user is told when the workspace exposes no channel at all. */
