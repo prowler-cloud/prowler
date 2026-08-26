@@ -37,8 +37,7 @@ export const getIntegrations = async (searchParams?: URLSearchParams) => {
 
     return handleApiResponse(response);
   } catch (error) {
-    console.error("Error fetching integrations:", error);
-    return { data: [], meta: { pagination: { count: 0 } } };
+    return handleApiError(error);
   }
 };
 
