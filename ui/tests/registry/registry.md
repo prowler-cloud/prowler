@@ -39,18 +39,18 @@
 **Priority:** `critical`
 **Tags:** @e2e, @registry
 
-**Expected Result:** Synthetic key validation remains pending for a `202` task, settles through an authoritative status read, and does not disclose the key in the DOM, URL, or browser storage.
+**Expected Result:** Synthetic key submission returns a `202` task that the client-side task watcher polls to settlement while the dialog form shows a disabled Connecting… control; the flow settles through an authoritative status read into the connected marketplace with a "Registry connected" toast, and does not disclose the key in the DOM, URL, or browser storage.
 
 ## Test Case: `REGISTRY-E2E-005` - Complete Catalog, Recovery, and Lifecycle
 
 **Priority:** `critical`
 **Tags:** @e2e, @registry
 
-**Expected Result:** Multi-page fixture catalog search/filter/Multi-provider behavior, documented reconnect/unavailable/generic recovery states, Add latest, derived exact pin, and confirmed Remove all use real UI and server-action paths.
+**Expected Result:** Multi-page fixture catalog search/filter/Multi-provider behavior, card owner rows (logo and initial fallback), documented reconnect/unavailable/generic recovery states, direct card Add of the latest version, and confirmed Remove all use real UI and server-action paths.
 
 ## Test Case: `REGISTRY-E2E-006` - Pixel 5 Reduced-Motion Browsing
 
 **Priority:** `high`
 **Tags:** @e2e, @registry
 
-**Expected Result:** The Pixel 5 Sheet has zero non-essential motion, keyboard selection closes it, and focus moves to the selected artifact detail heading.
+**Expected Result:** Pixel 5 browsing honors reduced motion, and the card Add action stays fully keyboard-operable with an authoritative confirmation toast.

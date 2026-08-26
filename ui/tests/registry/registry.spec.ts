@@ -93,15 +93,19 @@ test.describe.serial("Registry", () => {
       await registryPage.goto();
       await registryPage.verifyOnboarding();
       await registryPage.submitRegistryKey(FIXTURE_REGISTRY_KEY);
-      await expect(page.getByRole("status")).toContainText(
-        "Validating your Registry key",
-      );
+      // The form stays visible while the task watcher tracks validation: the
+      // submit control flips to a disabled Connecting… state.
+      await expect(
+        page.getByRole("button", { name: "Connecting…" }),
+      ).toBeDisabled();
+      await expect(page.getByLabel("Registry key")).toBeDisabled();
       await registryPage.verifyKeyIsNotDisclosed(
         FIXTURE_REGISTRY_KEY,
         requestUrls,
       );
+      await registryPage.verifyMarketplaceReady();
       await expect(
-        page.getByRole("heading", { name: "Registry overview" }),
+        page.getByText("Registry connected", { exact: true }),
       ).toBeVisible();
 
       const snapshot = await controlledRegistryFixture.snapshot();
@@ -112,7 +116,7 @@ test.describe.serial("Registry", () => {
   );
 
   test(
-    "uses complete catalog data for recovery, latest and exact Add, and confirmed Remove",
+    "uses complete catalog data for recovery, direct card Add, and confirmed Remove",
     { tag: ["@critical", "@e2e", "@registry", "@REGISTRY-E2E-005"] },
     async ({ page }) => {
       skipUnlessProject(enabledProject);
@@ -122,20 +126,16 @@ test.describe.serial("Registry", () => {
       await registryPage.goto();
       await registryPage.connectFixtureRegistry();
       await registryPage.dismissWelcomeDialog();
-      await registryPage.verifyCompleteCatalogSearchAndMultiProvider();
-      await registryPage.selectDeterministicArtifactWithLatestVersion();
-      await registryPage.addLatest();
-      await registryPage.verifyMyVersionSpec("latest");
-      await registryPage.removeArtifact();
+      await registryPage.verifyCompleteCatalogSearchAndFilters();
+      await registryPage.verifyOwnerRows();
+      await registryPage.addLatest("Fixture network audit");
+      await registryPage.verifyAddedInMyArtifacts("Fixture network audit");
+      await registryPage.removeArtifact("Fixture network audit");
       await page.reload();
-      await expect(
-        page.getByRole("heading", { name: "Registry overview" }),
-      ).toBeVisible();
-      const exactArtifact =
-        await registryPage.selectDeterministicArtifactWithLatestVersion();
-      await registryPage.addExactVersion(exactArtifact.latestVersion);
-      await registryPage.verifyMyVersionSpec(exactArtifact.latestVersion);
-      await registryPage.removeArtifact();
+      await registryPage.verifyMarketplaceReady();
+      await registryPage.addLatest("Fixture shared policy");
+      await registryPage.verifyAddedInMyArtifacts("Fixture shared policy");
+      await registryPage.removeArtifact("Fixture shared policy");
 
       await controlledRegistryFixture.setDiscoveryMode("reconnect");
       await page.reload();
@@ -171,14 +171,13 @@ test.describe.serial("Registry", () => {
       await registryPage.goto();
       await registryPage.connectFixtureRegistry();
       await registryPage.dismissWelcomeDialog();
-      await registryPage.browseArtifactsButton.click();
+      // With no detail panel, direct card actions are the keyboard path.
+      const addButton = registryPage.addButtonFor("Fixture network audit");
+      await addButton.focus();
+      await addButton.press("Enter");
       await expect(
-        page.getByRole("dialog", { name: "Browse artifacts" }),
+        page.getByText("Artifact added", { exact: true }),
       ).toBeVisible();
-      await expect(
-        page.getByRole("dialog", { name: "Browse artifacts" }),
-      ).toHaveCSS("animation-duration", "0s");
-      await registryPage.selectMobileFixtureArtifact();
     },
   );
 });

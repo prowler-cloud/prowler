@@ -43,6 +43,8 @@ const BASELINE_CSP = {
     "'self'",
     "https://www.google-analytics.com",
     "https://www.googletagmanager.com",
+    "https://media.registry.prowler.com",
+    "https://media.registry.dev.prowler.com",
   ],
   "font-src": ["'self'"],
   "style-src": ["'self'", "'unsafe-inline'"],

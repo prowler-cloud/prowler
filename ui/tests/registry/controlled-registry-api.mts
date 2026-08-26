@@ -50,6 +50,10 @@ const catalogPages = [
       is_verified: true,
       latest_version: "1.2.3",
       name: "Fixture network audit",
+      owner_logo_url: `http://127.0.0.1:${port}/__fixture__/registry/owner-logo.png`,
+      owner_name: "Prowler Fixtures",
+      owner_slug: "prowler-fixtures",
+      owner_type: "organization",
       providers: ["aws"],
     }),
     catalogArtifact("fixture-shared-policy", {
@@ -57,6 +61,9 @@ const catalogPages = [
       has_compliance: true,
       latest_version: "2.0.0",
       name: "Fixture shared policy",
+      owner_name: "Community Fixtures",
+      owner_slug: "community-fixtures",
+      owner_type: "organization",
       providers: ["aws"],
     }),
   ],
@@ -88,11 +95,30 @@ const server = createServer(async (request, response) => {
 
 server.listen(port, "127.0.0.1");
 
+// 1x1 transparent PNG so owner logo rendering is exercised with a real image.
+const ownerLogoPng = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+  "base64",
+);
+
 async function handleFixtureControl(
   request: IncomingMessage,
   response: ServerResponse,
   pathname: string,
 ) {
+  if (pathname === "/__fixture__/registry/owner-logo.png") {
+    if (request.method !== "GET") {
+      sendJson(response, 405, { errors: [{ code: "method_not_allowed" }] });
+      return;
+    }
+    response.writeHead(200, {
+      "Cache-Control": "no-store",
+      "Content-Type": "image/png",
+    });
+    response.end(ownerLogoPng);
+    return;
+  }
+
   if (
     request.method !== "POST" &&
     pathname !== "/__fixture__/registry/snapshot"

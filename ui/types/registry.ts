@@ -62,6 +62,7 @@ export type RegistryCatalogIncompleteReason =
 export interface RegistryArtifactOwner {
   name: string;
   type: string;
+  logoUrl?: string;
 }
 
 export interface RegistryCatalogArtifact {
@@ -116,7 +117,20 @@ export const REGISTRY_CREDENTIAL_ACTION = {
   INVALID: "invalid",
   PENDING: "pending",
   REPLACEMENT_FAILED: "replacement_failed",
+  SUBMITTED: "submitted",
 } as const;
+
+export type RegistryCredentialSubmitResult =
+  | {
+      status: typeof REGISTRY_CREDENTIAL_ACTION.SUBMITTED;
+      taskId: string;
+      priorConfigured: boolean;
+    }
+  | {
+      status: typeof REGISTRY_CREDENTIAL_ACTION.REPLACEMENT_FAILED;
+      credential: RegistryCredentialStatus;
+    }
+  | RegistryFailureResult;
 
 export type RegistryCredentialActionResult =
   | {

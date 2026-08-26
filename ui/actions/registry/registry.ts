@@ -1,6 +1,5 @@
 "use server";
 
-import { pollTaskUntilSettled } from "@/actions/task/poll";
 import { auth } from "@/auth.config";
 import { apiBaseUrl } from "@/lib";
 import { REGISTRY_ACCESS } from "@/lib/registry/access";
@@ -12,12 +11,14 @@ import {
   REGISTRY_CREDENTIAL_READ,
   REGISTRY_ENDPOINT,
   REGISTRY_FAILURE,
+  REGISTRY_SUBMISSION,
   type RegistryBootstrapResult,
   type RegistryBootstrapState,
   type RegistryCollectionsResult,
   type RegistryCredentialActionResult,
   type RegistryCredentialReadResult,
   type RegistryCredentialStatus,
+  type RegistryCredentialSubmitResult,
   type RegistryFailureResult,
   type RegistryMutationResult,
 } from "@/types/registry";
@@ -172,37 +173,6 @@ async function readCompleteRegistryCatalog(
 const hasActiveRegistryCredential = (credential: RegistryCredentialStatus) =>
   credential.configured && credential.isValid && !credential.validationPending;
 
-async function credentialTaskCompleted(taskId: string) {
-  const { ok, state } = await pollTaskUntilSettled(taskId, {
-    maxAttempts: 20,
-    delayMs: 3000,
-  });
-  return ok && state === "completed";
-}
-
-function credentialActionResult(
-  priorCredential: RegistryCredentialStatus,
-  credential: RegistryCredentialStatus,
-  taskAccepted: boolean,
-  taskCompleted: boolean,
-): RegistryCredentialActionResult {
-  if (taskCompleted && hasActiveRegistryCredential(credential)) {
-    return { status: REGISTRY_CREDENTIAL_ACTION.CONNECTED, credential };
-  }
-  if (taskAccepted && credential.validationPending) {
-    return { status: REGISTRY_CREDENTIAL_ACTION.PENDING, credential };
-  }
-  if (priorCredential.configured) {
-    return {
-      status: REGISTRY_CREDENTIAL_ACTION.REPLACEMENT_FAILED,
-      credential,
-    };
-  }
-  return taskAccepted
-    ? { status: REGISTRY_CREDENTIAL_ACTION.INVALID, credential }
-    : { status: REGISTRY_FAILURE.ERROR };
-}
-
 async function confirmRegistryMutation(
   accessToken: string,
   normalizedName: string,
@@ -246,14 +216,14 @@ function bootstrapFailure(
 }
 
 export async function getRegistryBootstrap(): Promise<RegistryBootstrapResult> {
-  const accessToken = await getRegistryAccess();
-  if (!accessToken) return { status: REGISTRY_FAILURE.ACCESS_DENIED };
+  const access = await getRegistryAccess();
+  if (!access) return { status: REGISTRY_FAILURE.ACCESS_DENIED };
 
-  const credentialRead = await readRegistryCredential(accessToken);
+  const credentialRead = await readRegistryCredential(access);
   if (credentialRead.status !== REGISTRY_CREDENTIAL_READ.STATUS) {
     return bootstrapFailure(credentialRead);
   }
-  const tenantArtifactsRead = await readRegistryTenantArtifacts(accessToken);
+  const tenantArtifactsRead = await readRegistryTenantArtifacts(access);
   if (tenantArtifactsRead.status !== "ready") {
     return bootstrapFailure(tenantArtifactsRead);
   }
@@ -270,9 +240,9 @@ export async function getRegistryBootstrap(): Promise<RegistryBootstrapResult> {
     });
   }
 
-  const providers = await readRegistryProviders(accessToken, credential);
+  const providers = await readRegistryProviders(access, credential);
   if (providers.status !== "ready") return bootstrapFailure(providers);
-  const catalog = await readCompleteRegistryCatalog(accessToken, credential);
+  const catalog = await readCompleteRegistryCatalog(access, credential);
   if (catalog.status === REGISTRY_FAILURE.ACCESS_DENIED) {
     return { status: REGISTRY_FAILURE.ACCESS_DENIED };
   }
@@ -395,7 +365,7 @@ export async function removeRegistryArtifact(
 
 export async function submitRegistryCredential(
   key: string,
-): Promise<RegistryCredentialActionResult> {
+): Promise<RegistryCredentialSubmitResult> {
   const access = await getRegistryAccess();
   if (!access) return { status: REGISTRY_FAILURE.ACCESS_DENIED };
 
@@ -425,19 +395,23 @@ export async function submitRegistryCredential(
     return { status: REGISTRY_FAILURE.ACCESS_DENIED };
   }
 
+  // The task settles client-side through the task watcher; this action only
+  // hands back the verified task identity so the caller can watch it.
   const submission = await parseRegistryCredentialSubmission(response);
-  const taskCompleted =
-    submission.status === "pending" &&
-    (await credentialTaskCompleted(submission.taskId));
-  const credential = await readRegistryCredential(access);
-  if (credential.status !== REGISTRY_CREDENTIAL_READ.STATUS) return credential;
+  if (submission.status !== REGISTRY_SUBMISSION.PENDING) {
+    return priorCredential.credential.configured
+      ? {
+          status: REGISTRY_CREDENTIAL_ACTION.REPLACEMENT_FAILED,
+          credential: priorCredential.credential,
+        }
+      : { status: REGISTRY_FAILURE.ERROR };
+  }
 
-  return credentialActionResult(
-    priorCredential.credential,
-    credential.credential,
-    submission.status === "pending",
-    taskCompleted,
-  );
+  return {
+    status: REGISTRY_CREDENTIAL_ACTION.SUBMITTED,
+    taskId: submission.taskId,
+    priorConfigured: priorCredential.credential.configured,
+  };
 }
 
 export async function disconnectRegistryCredential(): Promise<RegistryCredentialActionResult> {

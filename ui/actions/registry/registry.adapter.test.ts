@@ -279,6 +279,68 @@ describe("Registry adapter", () => {
     expect(result).toEqual({ status: "complete", artifacts: [] });
   });
 
+  it("maps the flat owner attributes tolerantly", async () => {
+    // Given
+    const document = {
+      data: [
+        {
+          type: "registry-artifacts",
+          id: "core",
+          attributes: {
+            owner_name: "Prowler",
+            owner_slug: "prowler",
+            owner_type: "organization",
+            owner_logo_url: "https://cdn.example/prowler.png",
+          },
+        },
+        {
+          type: "registry-artifacts",
+          id: "plain-owner",
+          attributes: {
+            owner_name: "Ada",
+            owner_slug: "ada",
+            owner_type: "user",
+            owner_logo_url: null,
+          },
+        },
+        {
+          type: "registry-artifacts",
+          id: "ownerless",
+          attributes: { owner_name: "   ", owner_logo_url: "   " },
+        },
+      ],
+      meta: { pagination: { page: 1, pages: 1, count: 3 } },
+    };
+
+    // When
+    const result = await collectCompleteRegistryCatalog(async () => document);
+
+    // Then
+    expect(result).toMatchObject({
+      status: "complete",
+      artifacts: [
+        {
+          normalizedName: "core",
+          owners: [
+            {
+              type: "organization",
+              name: "Prowler",
+              logoUrl: "https://cdn.example/prowler.png",
+            },
+          ],
+        },
+        {
+          normalizedName: "ownerless",
+          owners: [],
+        },
+        {
+          normalizedName: "plain-owner",
+          owners: [{ type: "user", name: "Ada", logoUrl: undefined }],
+        },
+      ],
+    });
+  });
+
   it("traverses, merges, and degrades unsafe catalog data", async () => {
     // Given
     // prettier-ignore
@@ -289,7 +351,7 @@ describe("Registry adapter", () => {
 
     // When
     // prettier-ignore
-    const complete = await collectCompleteRegistryCatalog(async (page, query) => { requests.push([page, query.get("page[number]"), query.get("page[size]")]); return page === 1 ? document(1, 2, 3, [resource("core", { name: "Core", providers: ["AWS"], is_verified: true, version_count: 1, total_downloads: 2, owners: [{ type: "organization", name: "Prowler" }] }), resource("zeta")]) : document(2, 2, 3, [resource("core", { description: "Registry core", latest_version: "2.0.0", providers: ["gcp"], is_official: true, has_checks: true, version_count: 3, total_downloads: 8 })]); });
+    const complete = await collectCompleteRegistryCatalog(async (page, query) => { requests.push([page, query.get("page[number]"), query.get("page[size]")]); return page === 1 ? document(1, 2, 3, [resource("core", { name: "Core", providers: ["AWS"], is_verified: true, version_count: 1, total_downloads: 2, owner_name: "Prowler", owner_type: "organization" }), resource("zeta")]) : document(2, 2, 3, [resource("core", { description: "Registry core", latest_version: "2.0.0", providers: ["gcp"], is_official: true, has_checks: true, version_count: 3, total_downloads: 8 })]); });
     // prettier-ignore
     const limits = await Promise.all([999, 1000, 1001].map(async (pages) => { let requests = 0; const result = await collectCompleteRegistryCatalog(async (page) => { requests += 1; return document(page, pages, pages, [resource(`item-${page}`)]); }); return [pages, requests, result] as const; }));
     // prettier-ignore
