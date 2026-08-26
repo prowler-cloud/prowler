@@ -10,6 +10,7 @@ from fastmcp.exceptions import ToolError
 from pydantic import Field
 
 from prowler_mcp_server.lib.errors import InvalidArgument
+from prowler_mcp_server.lib.types import NonBlankStr
 from prowler_mcp_server.prowler_app.models.providers import (
     ProviderConnectionStatus,
     ProvidersListResponse,
@@ -130,13 +131,13 @@ class ProvidersTools(BaseTool):
 
     async def connect_provider(
         self,
-        provider_uid: str = Field(
+        provider_uid: NonBlankStr = Field(
             description="Provider's unique identifier. For supported UID provider formats, please refer to Prowler Hub/Prowler Documentation that you can also find in form of tools in this MCP Server"
         ),
-        provider_type: str = Field(
+        provider_type: NonBlankStr = Field(
             description="Type of provider to be scanned with Prowler. Valid values include: 'aws', 'azure', 'gcp', 'kubernetes'... For more valid values, please refer to Prowler Hub/Prowler Documentation that you can also find in form of tools in this MCP Server."
         ),
-        alias: str | None = Field(
+        alias: NonBlankStr | None = Field(
             default=None,
             description="Human-friendly name for this provider. Optional but recommended for easy identification. Use descriptive names to distinguish multiple accounts of the same type.",
         ),
@@ -293,7 +294,7 @@ class ProvidersTools(BaseTool):
 
     async def delete_provider(
         self,
-        provider_id: str = Field(
+        provider_id: NonBlankStr = Field(
             description="Prowler's internal UUID (v4) for the provider to permanently remove, generated when the provider was registered in the system. Use `prowler_search_providers` tool to find the provider_id if you only know the alias or the provider's own identifier (provider_uid)"
         ),
     ) -> dict[str, Any]:

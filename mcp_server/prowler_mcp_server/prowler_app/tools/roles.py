@@ -14,6 +14,7 @@ from typing import Any
 from fastmcp.exceptions import ToolError
 from pydantic import Field
 
+from prowler_mcp_server.lib.types import NonBlankStr
 from prowler_mcp_server.prowler_app.models.roles import (
     DetailedRole,
     RolesListResponse,
@@ -71,7 +72,7 @@ class RolesTools(BaseTool):
 
     async def get_role(
         self,
-        role_id: str = Field(
+        role_id: NonBlankStr = Field(
             description="Prowler's internal UUID (v4) for the role to retrieve. Use `prowler_list_roles` to find role IDs if you only know a name."
         ),
     ) -> dict[str, Any]:
@@ -99,7 +100,7 @@ class RolesTools(BaseTool):
 
     async def get_user_roles(
         self,
-        user_id: str = Field(
+        user_id: NonBlankStr = Field(
             description="Prowler's internal UUID (v4) for the user whose roles you want. Use `prowler_list_users` to find user IDs, or `prowler_get_current_user` for the caller."
         ),
     ) -> dict[str, Any]:
@@ -125,10 +126,10 @@ class RolesTools(BaseTool):
 
     async def set_user_role(
         self,
-        user_id: str = Field(
+        user_id: NonBlankStr = Field(
             description="Prowler's internal UUID (v4) for the user whose role you want to set. Use `prowler_list_users` to find user IDs."
         ),
-        role_id: str = Field(
+        role_id: NonBlankStr = Field(
             description="Prowler's internal UUID (v4) for the role the user should hold. Use `prowler_list_roles` to find role IDs."
         ),
     ) -> dict[str, Any]:

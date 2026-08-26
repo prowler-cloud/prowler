@@ -12,6 +12,7 @@ from fastmcp.exceptions import ToolError
 from pydantic import Field
 
 from prowler_mcp_server.lib.errors import InvalidArgument
+from prowler_mcp_server.lib.types import NonBlankStr
 from prowler_mcp_server.prowler_app.models.muting import (
     DetailedMuteRule,
     MutelistResponse,
@@ -294,7 +295,7 @@ Structure:
 
     async def get_mute_rule(
         self,
-        rule_id: str = Field(
+        rule_id: NonBlankStr = Field(
             description="UUID of the mute rule to retrieve. Must be a valid UUID format (e.g., '019ac0d6-90d5-73e9-9acf-c22e256f1bac')."
         ),
     ) -> dict[str, Any]:
@@ -328,10 +329,10 @@ Structure:
 
     async def create_mute_rule(
         self,
-        name: str = Field(
+        name: NonBlankStr = Field(
             description="Name for the mute rule. Should be descriptive and meaningful (e.g., 'Dev S3 Public Access', 'Test Environment IMDSv1')."
         ),
-        reason: str = Field(
+        reason: NonBlankStr = Field(
             description="Reason for muting these findings. Document why this security issue is acceptable or intentional (e.g., 'Development environment with controlled access', 'Legacy application requires IMDSv1')."
         ),
         finding_ids: list[str] = Field(
@@ -379,14 +380,14 @@ Structure:
 
     async def update_mute_rule(
         self,
-        rule_id: str = Field(
+        rule_id: NonBlankStr = Field(
             description="UUID of the mute rule to update. Must be a valid UUID format."
         ),
-        name: str | None = Field(
+        name: NonBlankStr | None = Field(
             default=None,
             description="New name for the rule. If not specified, name remains unchanged.",
         ),
-        reason: str | None = Field(
+        reason: NonBlankStr | None = Field(
             default=None,
             description="New reason for the rule. If not specified, reason remains unchanged.",
         ),
@@ -447,7 +448,7 @@ Structure:
 
     async def delete_mute_rule(
         self,
-        rule_id: str = Field(
+        rule_id: NonBlankStr = Field(
             description="UUID of the mute rule to delete. Must be a valid UUID format."
         ),
     ) -> dict[str, Any]:

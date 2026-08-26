@@ -3,6 +3,7 @@ from typing import Any
 from fastmcp import FastMCP
 from pydantic import Field
 
+from prowler_mcp_server.lib.types import NonBlankStr
 from prowler_mcp_server.prowler_documentation.search_engine import (
     ProwlerDocsSearchEngine,
 )
@@ -14,7 +15,9 @@ prowler_docs_search_engine = ProwlerDocsSearchEngine()
 
 @docs_mcp_server.tool()
 def search(
-    term: str = Field(description="The term to search for in the documentation"),
+    term: NonBlankStr = Field(
+        description="The term to search for in the documentation"
+    ),
     page_size: int = Field(
         5,
         description="Number of top results to return to return. It must be between 1 and 20.",
@@ -38,7 +41,7 @@ def search(
 
 @docs_mcp_server.tool()
 def get_document(
-    doc_path: str = Field(
+    doc_path: NonBlankStr = Field(
         description="Path to the documentation file to retrieve. It is the same as the 'path' field of the search results. Use `prowler_docs_search` to find the path first."
     ),
 ) -> dict[str, str]:

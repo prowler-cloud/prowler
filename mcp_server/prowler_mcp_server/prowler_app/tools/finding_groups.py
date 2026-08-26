@@ -9,6 +9,7 @@ from urllib.parse import quote
 from fastmcp.exceptions import ToolError
 from pydantic import Field
 
+from prowler_mcp_server.lib.types import NonBlankStr
 from prowler_mcp_server.prowler_app.models.finding_groups import (
     DetailedFindingGroup,
     FindingGroupResourcesListResponse,
@@ -276,7 +277,7 @@ class FindingGroupsTools(BaseTool):
 
     async def get_finding_group_details(
         self,
-        check_id: str = Field(
+        check_id: NonBlankStr = Field(
             description="Public check ID that identifies the finding group. This is not a UUID."
         ),
         date_from: str | None = Field(
@@ -324,7 +325,7 @@ class FindingGroupsTools(BaseTool):
 
     async def list_finding_group_resources(
         self,
-        check_id: str = Field(
+        check_id: NonBlankStr = Field(
             description="Public check ID that identifies the finding group. This is not a UUID."
         ),
         provider: list[str] = Field(

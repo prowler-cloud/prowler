@@ -9,6 +9,7 @@ from typing import Any, Literal
 
 from pydantic import Field
 
+from prowler_mcp_server.lib.types import NonBlankStr
 from prowler_mcp_server.prowler_app.models.attack_paths import (
     AttackPathCartographySchema,
     AttackPathQuery,
@@ -108,7 +109,7 @@ class AttackPathsTools(BaseTool):
 
     async def list_attack_paths_queries(
         self,
-        scan_id: str = Field(
+        scan_id: NonBlankStr = Field(
             description="UUID of a COMPLETED attack paths scan. Use `prowler_list_attack_paths_scans` with state=['completed'] to find scan IDs"
         ),
     ) -> list[dict[str, Any]]:
@@ -144,10 +145,10 @@ class AttackPathsTools(BaseTool):
 
     async def run_attack_paths_query(
         self,
-        scan_id: str = Field(
+        scan_id: NonBlankStr = Field(
             description="UUID of a COMPLETED attack paths scan. The scan must be in 'completed' state"
         ),
-        query_id: str = Field(
+        query_id: NonBlankStr = Field(
             description="Query ID to execute (e.g., 'aws-internet-exposed-ec2-sensitive-s3-access'). Use `prowler_list_attack_paths_queries` to discover available queries"
         ),
         parameters: dict[str, str] = Field(
@@ -214,7 +215,7 @@ class AttackPathsTools(BaseTool):
 
     async def get_attack_paths_cartography_schema(
         self,
-        scan_id: str = Field(
+        scan_id: NonBlankStr = Field(
             description="UUID of a COMPLETED attack paths scan. Use `prowler_list_attack_paths_scans` with state=['completed'] to find scan IDs"
         ),
     ) -> dict[str, Any]:

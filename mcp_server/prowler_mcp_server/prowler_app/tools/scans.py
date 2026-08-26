@@ -8,6 +8,7 @@ from typing import Any, Literal
 from fastmcp.exceptions import ToolError
 from pydantic import Field
 
+from prowler_mcp_server.lib.types import NonBlankStr
 from prowler_mcp_server.prowler_app.models.scans import (
     DetailedScan,
     ScanCreationResult,
@@ -128,7 +129,7 @@ class ScansTools(BaseTool):
 
     async def get_scan(
         self,
-        scan_id: str = Field(
+        scan_id: NonBlankStr = Field(
             description="Prowler's internal UUID (v4) for the scan to retrieve, generated when the scan was created (e.g., '123e4567-e89b-12d3-a456-426614174000'). Use `prowler_list_scans` tool to find scan IDs"
         ),
     ) -> dict[str, Any]:
@@ -172,10 +173,10 @@ class ScansTools(BaseTool):
 
     async def trigger_scan(
         self,
-        provider_id: str = Field(
+        provider_id: NonBlankStr = Field(
             description="Prowler's internal UUID (v4) for the provider to scan, generated when the provider was registered in the system (e.g., '4d0e2614-6385-4fa7-bf0b-c2e2f75c6877'). Use `prowler_search_providers` tool to find the provider ID"
         ),
-        name: str | None = Field(
+        name: NonBlankStr | None = Field(
             default=None,
             description="Optional human-friendly name for the scan. Use descriptive names to identify scan purpose or context, e.g., 'Weekly Production Security Audit', 'Pre-Deployment Validation', 'Compliance Check Q4 2025'",
         ),
@@ -252,7 +253,7 @@ class ScansTools(BaseTool):
 
     async def schedule_daily_scan(
         self,
-        provider_id: str = Field(
+        provider_id: NonBlankStr = Field(
             description="Prowler's internal UUID (v4) for the provider to scan, generated when the provider was registered in the system (e.g., '4d0e2614-6385-4fa7-bf0b-c2e2f75c6877'). Use `prowler_search_providers` tool to find the provider ID"
         ),
     ) -> dict[str, Any]:
@@ -304,10 +305,10 @@ class ScansTools(BaseTool):
 
     async def update_scan(
         self,
-        scan_id: str = Field(
+        scan_id: NonBlankStr = Field(
             description="Prowler's internal UUID (v4) for the scan to update, generated when the scan was created (e.g., '123e4567-e89b-12d3-a456-426614174000'). Use `prowler_list_scans` tool to find the scan ID if you only know the provider or scan name. Returns an error if the scan ID is invalid or not found."
         ),
-        name: str = Field(
+        name: NonBlankStr = Field(
             description="New human-friendly name for the scan (3-100 characters). Use descriptive names to improve organization and tracking, e.g., 'Production Security Audit - Q4 2025', 'Post-Deployment Compliance Check'. IMPORTANT: Only the scan name can be updated - other attributes (state, progress, duration) are read-only and managed by the system."
         ),
     ) -> dict[str, Any]:

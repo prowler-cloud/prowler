@@ -13,6 +13,7 @@ from fastmcp.exceptions import ToolError
 from pydantic import Field
 
 from prowler_mcp_server.lib.errors import InvalidArgument
+from prowler_mcp_server.lib.types import NonBlankStr
 from prowler_mcp_server.prowler_app.models.integrations import (
     DetailedIntegration,
     IntegrationConnectionStatus,
@@ -128,7 +129,7 @@ class IntegrationsTools(BaseTool):
 
     async def get_integration(
         self,
-        integration_id: str = Field(
+        integration_id: NonBlankStr = Field(
             description="UUID of the integration to retrieve. Must be a valid UUID format (e.g., '019ac0d6-90d5-73e9-9acf-c22e256f1bac'). Use prowler_list_integrations to find it."
         ),
     ) -> dict[str, Any]:
@@ -159,7 +160,7 @@ class IntegrationsTools(BaseTool):
 
     async def create_amazon_s3_integration(
         self,
-        bucket_name: str = Field(
+        bucket_name: NonBlankStr = Field(
             description="Name of the S3 bucket where Prowler will upload the scan outputs (CSV, HTML, OCSF JSON and compliance reports)."
         ),
         output_directory: str = Field(
@@ -170,15 +171,15 @@ class IntegrationsTools(BaseTool):
             default=[],
             description="Prowler UUIDs of the providers whose scan outputs are exported to this bucket. Use prowler_search_providers to find them. Leave empty to attach no provider yet.",
         ),
-        role_arn: str | None = Field(
+        role_arn: NonBlankStr | None = Field(
             default=None,
             description="ARN of the IAM role Prowler assumes to write to the bucket (e.g. 'arn:aws:iam::123456789012:role/ProwlerS3Integration'). Recommended over static keys.",
         ),
-        external_id: str | None = Field(
+        external_id: NonBlankStr | None = Field(
             default=None,
             description="External ID required by the trust policy of the assumed role. In Prowler Cloud this is the tenant ID.",
         ),
-        role_session_name: str | None = Field(
+        role_session_name: NonBlankStr | None = Field(
             default=None,
             description="Identifier for the role session, useful to track it in AWS logs. Only letters, digits and the characters =,.@_- are allowed.",
         ),
@@ -186,15 +187,15 @@ class IntegrationsTools(BaseTool):
             default=3600,
             description="Duration of the assumed role session in seconds. Must be between 900 and 43200. Defaults to 3600 when omitted.",
         ),
-        aws_access_key_id: str | None = Field(
+        aws_access_key_id: NonBlankStr | None = Field(
             default=None,
             description="AWS access key ID. Only needed when the Prowler deployment has no ambient AWS credentials.",
         ),
-        aws_secret_access_key: str | None = Field(
+        aws_secret_access_key: NonBlankStr | None = Field(
             default=None,
             description="AWS secret access key. Required when 'aws_access_key_id' is provided.",
         ),
-        aws_session_token: str | None = Field(
+        aws_session_token: NonBlankStr | None = Field(
             default=None,
             description="AWS session token, only for temporary credentials.",
         ),
@@ -269,7 +270,7 @@ class IntegrationsTools(BaseTool):
 
     async def create_aws_security_hub_integration(
         self,
-        provider_id: str = Field(
+        provider_id: NonBlankStr = Field(
             description="Prowler UUID of the AWS provider whose findings are sent to Security Hub. It must be an AWS provider, and it can only have one Security Hub integration. Use prowler_search_providers with provider_type=['aws'] to find it."
         ),
         send_only_fails: bool = Field(
@@ -280,15 +281,15 @@ class IntegrationsTools(BaseTool):
             default=False,
             description="When true, findings that are no longer present in the latest scan are archived in Security Hub.",
         ),
-        role_arn: str | None = Field(
+        role_arn: NonBlankStr | None = Field(
             default=None,
             description="ARN of a dedicated IAM role Prowler assumes to write to Security Hub. Leave every credential parameter empty to reuse the credentials already stored for the provider, which is the recommended setup.",
         ),
-        external_id: str | None = Field(
+        external_id: NonBlankStr | None = Field(
             default=None,
             description="External ID required by the trust policy of the assumed role.",
         ),
-        role_session_name: str | None = Field(
+        role_session_name: NonBlankStr | None = Field(
             default=None,
             description="Identifier for the role session, useful to track it in AWS logs. Only letters, digits and the characters =,.@_- are allowed.",
         ),
@@ -296,14 +297,14 @@ class IntegrationsTools(BaseTool):
             default=None,
             description="Duration of the assumed role session in seconds. Must be between 900 and 43200. Defaults to 3600 when omitted.",
         ),
-        aws_access_key_id: str | None = Field(
+        aws_access_key_id: NonBlankStr | None = Field(
             default=None, description="AWS access key ID for dedicated credentials."
         ),
-        aws_secret_access_key: str | None = Field(
+        aws_secret_access_key: NonBlankStr | None = Field(
             default=None,
             description="AWS secret access key. Required when 'aws_access_key_id' is provided.",
         ),
-        aws_session_token: str | None = Field(
+        aws_session_token: NonBlankStr | None = Field(
             default=None,
             description="AWS session token, only for temporary credentials.",
         ),
@@ -365,13 +366,13 @@ class IntegrationsTools(BaseTool):
 
     async def create_jira_integration(
         self,
-        domain: str = Field(
+        domain: NonBlankStr = Field(
             description="Atlassian site name, without the '.atlassian.net' suffix. For the site 'https://acme.atlassian.net' the value is 'acme'. Full URLs are accepted and normalized automatically."
         ),
-        user_mail: str = Field(
+        user_mail: NonBlankStr = Field(
             description="Email address of the Atlassian account that owns the API token."
         ),
-        api_token: str = Field(
+        api_token: NonBlankStr = Field(
             description="Atlassian API token, created from the account settings. It needs the 'read:jira-user', 'read:jira-work' and 'write:jira-work' scopes."
         ),
         enabled: bool = Field(
@@ -428,7 +429,7 @@ class IntegrationsTools(BaseTool):
 
     async def update_integration(
         self,
-        integration_id: str = Field(
+        integration_id: NonBlankStr = Field(
             description="UUID of the integration to update. Use prowler_list_integrations to find it."
         ),
         enabled: bool | None = Field(
@@ -561,7 +562,7 @@ class IntegrationsTools(BaseTool):
 
     async def delete_integration(
         self,
-        integration_id: str = Field(
+        integration_id: NonBlankStr = Field(
             description="UUID of the integration to permanently remove. Use prowler_list_integrations to find it."
         ),
     ) -> dict[str, Any]:
@@ -592,7 +593,7 @@ class IntegrationsTools(BaseTool):
 
     async def test_integration_connection(
         self,
-        integration_id: str = Field(
+        integration_id: NonBlankStr = Field(
             description="UUID of the integration to check. Use prowler_list_integrations to find it."
         ),
     ) -> dict[str, Any]:
@@ -625,10 +626,10 @@ class IntegrationsTools(BaseTool):
 
     async def get_jira_issue_types(
         self,
-        integration_id: str = Field(
+        integration_id: NonBlankStr = Field(
             description="UUID of the Jira integration. Use prowler_list_integrations with integration_type=['jira'] to find it."
         ),
-        project_key: str = Field(
+        project_key: NonBlankStr = Field(
             description="Key of the Jira project to read the issue types from (e.g. 'PROJ'). It must be one of the keys in the 'projects' mapping of the integration configuration."
         ),
     ) -> dict[str, Any]:
@@ -663,13 +664,13 @@ class IntegrationsTools(BaseTool):
 
     async def send_findings_to_jira(
         self,
-        integration_id: str = Field(
+        integration_id: NonBlankStr = Field(
             description="UUID of the Jira integration to send the findings through. It must be enabled."
         ),
-        project_key: str = Field(
+        project_key: NonBlankStr = Field(
             description="Key of the Jira project the work items are created in (e.g. 'PROJ'). It must be one of the keys in the 'projects' mapping of the integration configuration."
         ),
-        issue_type: str = Field(
+        issue_type: NonBlankStr = Field(
             description="Jira issue type for the created work items (e.g. 'Task', 'Bug', 'Story'). It must be one of the values returned by prowler_get_jira_issue_types for this project."
         ),
         finding_ids: list[str] = Field(

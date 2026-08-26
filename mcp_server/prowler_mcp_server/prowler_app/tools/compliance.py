@@ -10,6 +10,7 @@ from fastmcp.exceptions import ToolError
 from pydantic import Field
 
 from prowler_mcp_server.lib.errors import InvalidArgument
+from prowler_mcp_server.lib.types import NonBlankStr
 from prowler_mcp_server.prowler_app.models.compliance import (
     ComplianceFrameworksListResponse,
     ComplianceRequirementAttributesListResponse,
@@ -252,7 +253,7 @@ class ComplianceTools(BaseTool):
 
     async def get_compliance_framework_state_details(
         self,
-        compliance_id: str = Field(
+        compliance_id: NonBlankStr = Field(
             description="Compliance framework ID to get details for (e.g., 'cis_1.5_aws', 'pci_dss_v4.0_aws'). You can get compliance IDs from prowler_get_compliance_overview or consulting Prowler Hub/Prowler Documentation that you can also find in form of tools in this MCP Server",
         ),
         scan_id: str | None = Field(
