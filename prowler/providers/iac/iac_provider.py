@@ -192,7 +192,7 @@ class IacProvider(Provider):
         try:
             if "VulnerabilityID" in finding:
                 finding_id = finding["VulnerabilityID"]
-                finding_description = finding["Description"]
+                finding_description = finding.get("Description") or finding_id
                 finding_status = finding.get("Status", "FAIL")
                 recommendation_url, additional_urls = (
                     resolve_vulnerability_reference_urls(
@@ -206,26 +206,42 @@ class IacProvider(Provider):
                     additional_urls = [recommendation_url]
             elif "RuleID" in finding:
                 finding_id = finding["RuleID"]
-                finding_description = finding["Title"]
+                finding_description = (
+                    finding.get("Title") or finding.get("Description") or finding_id
+                )
                 finding_status = finding.get("Status", "FAIL")
                 recommendation_url = build_finding_reference_url(finding_id)
                 additional_urls = [recommendation_url]
             else:
-                finding_id = finding["ID"]
-                finding_description = finding["Description"]
-                finding_status = finding["Status"]
+                # Secrets / licenses and other Trivy shapes (ID, Name, …)
+                finding_id = (
+                    finding.get("ID")
+                    or finding.get("Name")
+                    or finding.get("Title")
+                    or "unknown"
+                )
+                finding_description = (
+                    finding.get("Description")
+                    or finding.get("Title")
+                    or finding.get("Name")
+                    or finding_id
+                )
+                finding_status = finding.get("Status", "FAIL")
                 recommendation_url = build_finding_reference_url(finding_id)
                 additional_urls = [recommendation_url]
+
+            title = finding.get("Title") or finding.get("Name") or finding_id
+            severity = finding.get("Severity") or "medium"
 
             metadata_dict = {
                 "Provider": "iac",
                 "CheckID": finding_id,
-                "CheckTitle": finding["Title"],
+                "CheckTitle": title,
                 "CheckType": ["Infrastructure as Code"],
                 "ServiceName": type,
                 "SubServiceName": "",
                 "ResourceIdTemplate": "",
-                "Severity": finding["Severity"],
+                "Severity": severity,
                 "ResourceType": "iac",
                 "Description": finding_description,
                 "Risk": "This provider has not defined a risk for this check.",
@@ -260,6 +276,7 @@ class IacProvider(Provider):
                 finding.get("Message", "")
                 if finding.get("Message")
                 else finding.get("Description", "")
+                or finding_description
             )
             if finding_status == "MUTED":
                 report.muted = True
@@ -267,10 +284,10 @@ class IacProvider(Provider):
             report.region = self.region
             return report
         except Exception as error:
-            logger.critical(
+            logger.error(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
-            sys.exit(1)
+            return None
 
     def _detect_branch_name(self, repo_path: str) -> str:
         """
@@ -506,12 +523,19 @@ class IacProvider(Provider):
 
             # Process all trivy findings
             for finding in output:
+                target = finding.get("Target", "")
+                # Trivy results may expose Type and/or Class depending on scanner
+                result_type = (
+                    finding.get("Type") or finding.get("Class") or "unknown"
+                )
 
                 # Process Misconfigurations
                 for misconfiguration in finding.get("Misconfigurations", []):
                     report = self._process_finding(
-                        misconfiguration, finding["Target"], finding["Type"]
+                        misconfiguration, target, result_type
                     )
+                    if report is None:
+                        continue
                     batch.append(report)
                     if len(batch) >= batch_size:
                         yield batch
@@ -520,8 +544,10 @@ class IacProvider(Provider):
                 # Process Vulnerabilities
                 for vulnerability in finding.get("Vulnerabilities", []):
                     report = self._process_finding(
-                        vulnerability, finding["Target"], finding["Type"]
+                        vulnerability, target, result_type
                     )
+                    if report is None:
+                        continue
                     batch.append(report)
                     if len(batch) >= batch_size:
                         yield batch
@@ -530,8 +556,10 @@ class IacProvider(Provider):
                 # Process Secrets
                 for secret in finding.get("Secrets", []):
                     report = self._process_finding(
-                        secret, finding["Target"], finding["Class"]
+                        secret, target, finding.get("Class") or result_type
                     )
+                    if report is None:
+                        continue
                     batch.append(report)
                     if len(batch) >= batch_size:
                         yield batch
@@ -540,8 +568,10 @@ class IacProvider(Provider):
                 # Process Licenses
                 for license in finding.get("Licenses", []):
                     report = self._process_finding(
-                        license, finding["Target"], finding["Type"]
+                        license, target, result_type
                     )
+                    if report is None:
+                        continue
                     batch.append(report)
                     if len(batch) >= batch_size:
                         yield batch

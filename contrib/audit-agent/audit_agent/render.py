@@ -32,6 +32,7 @@ def render_pr_comment(
     enabled_aspects: list[dict[str, str]] | None = None,
 ) -> str:
     mapping = mapping or load_mapping()
+    findings = _dedupe_findings(findings)
     summary = summarize_by_section(findings, mapping)
 
     soc2_rows = [
@@ -93,24 +94,11 @@ def render_pr_comment(
 
     lines.append("")
     if findings:
-        lines.append("### New gaps")
-        for finding in sorted(
-            findings, key=lambda f: _sev_rank(f.get("severity", "")), reverse=True
-        )[:25]:
-            sev = (finding.get("severity") or "unknown").upper()
-            label = finding.get("controls_label") or "unmapped"
-            title = finding.get("title") or finding.get("check_id")
-            file_path = finding.get("file") or ""
-            provider = finding.get("provider") or ""
-            aspect = classify_aspect(finding)
-            prefix = f"`{provider}` " if provider else ""
-            aspect_tag = f" _{aspect}_" if aspect else ""
-            loc = f" — `{file_path}`" if file_path else ""
-            lines.append(
-                f"- **{sev}** {prefix}[{label}]{aspect_tag} {title}{loc}"
-            )
-        if len(findings) > 25:
-            lines.append(f"- _…and {len(findings) - 25} more_")
+        lines.extend(_control_findings_section("SOC 2 — All findings", findings, "soc2"))
+        lines.append("")
+        lines.extend(
+            _control_findings_section("ISO 27001:2022 — All findings", findings, "iso27001")
+        )
     else:
         lines.append("### No compliance gaps detected")
         lines.append("")
@@ -121,6 +109,67 @@ def render_pr_comment(
         "<sub>Zero-touch Audit Agent · frameworks SOC 2 + ISO 27001 · no product UI</sub>"
     )
     return "\n".join(lines)
+
+
+def _dedupe_findings(findings: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Keep one finding per check_id (highest severity wins)."""
+    best: dict[str, dict[str, Any]] = {}
+    for finding in findings:
+        key = str(finding.get("check_id") or finding.get("title") or id(finding))
+        current = best.get(key)
+        if current is None or _sev_rank(finding.get("severity", "")) > _sev_rank(
+            current.get("severity", "")
+        ):
+            best[key] = finding
+    return list(best.values())
+
+
+def _control_findings_section(
+    title: str, findings: list[dict[str, Any]], framework_key: str
+) -> list[str]:
+    """List every finding under each control id for soc2 or iso27001."""
+    by_control: dict[str, list[dict[str, Any]]] = {}
+    for finding in findings:
+        for control in finding.get(framework_key) or []:
+            by_control.setdefault(str(control), []).append(finding)
+
+    lines = [f"### {title}"]
+    if not by_control:
+        lines.append("")
+        lines.append("_No findings mapped to this framework._")
+        return lines
+
+    for control in sorted(by_control):
+        lines.append("")
+        lines.append(f"#### {control}")
+        ordered = sorted(
+            by_control[control],
+            key=lambda f: _sev_rank(f.get("severity", "")),
+            reverse=True,
+        )
+        for finding in ordered:
+            lines.append(f"- {_format_finding_line(finding)}")
+    return lines
+
+
+def _format_finding_line(finding: dict[str, Any]) -> str:
+    sev = (finding.get("severity") or "unknown").upper()
+    title = finding.get("title") or finding.get("check_id")
+    check_id = finding.get("check_id") or ""
+    file_path = finding.get("file") or ""
+    provider = finding.get("provider") or ""
+    aspect = classify_aspect(finding)
+    parts = [f"**{sev}**"]
+    if provider:
+        parts.append(f"`{provider}`")
+    if aspect:
+        parts.append(f"_{aspect}_")
+    if check_id:
+        parts.append(f"`{check_id}`")
+    parts.append(str(title))
+    if file_path:
+        parts.append(f"— `{file_path}`")
+    return " ".join(parts)
 
 
 def classify_aspect(finding: dict[str, Any]) -> str:

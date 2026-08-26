@@ -72,13 +72,24 @@ def run_prowler_audit(
 
 
 def load_ocsf_findings(output_dir: Path) -> list[dict[str, Any]]:
-    files = sorted(output_dir.glob("**/*.ocsf.json"))
+    files = sorted(
+        output_dir.glob("**/*.ocsf.json"),
+        key=lambda p: p.stat().st_mtime,
+        reverse=True,
+    )
     if not files:
-        files = [
-            p
-            for p in sorted(output_dir.glob("**/*.json"))
-            if "sarif" not in p.name.lower() and "compliance" not in p.name.lower()
-        ]
+        files = sorted(
+            (
+                p
+                for p in output_dir.glob("**/*.json")
+                if "sarif" not in p.name.lower() and "compliance" not in p.name.lower()
+            ),
+            key=lambda p: p.stat().st_mtime,
+            reverse=True,
+        )
+    # Prefer the newest file so re-runs into the same --output-dir do not stack duplicates
+    if files:
+        files = [files[0]]
     findings: list[dict[str, Any]] = []
     for path in files:
         try:

@@ -148,6 +148,8 @@ def test_render_pr_comment_contains_marker(mapping):
     assert "SOC 2" in body
     assert "ISO 27001" in body
     assert "Public SSH" in body
+    assert "SOC 2 — All findings" in body
+    assert "ISO 27001:2022 — All findings" in body
     assert "Security Aspects" in body
     assert "Secrets in source" in body
     assert "License compliance" in body
