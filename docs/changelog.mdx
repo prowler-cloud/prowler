@@ -41,6 +41,16 @@ rss: true
 
   Read more in the [Import Findings documentation](https://docs.prowler.com/user-guide/tutorials/prowler-import-findings).
 
+  ### 📚 New Compliance Framework — NCSC Cyber Essentials 3.3
+
+  Cyber Essentials is the UK National Cyber Security Centre (NCSC) scheme certifying the baseline technical controls an organization must implement, and cloud services are explicitly in scope and cannot be excluded from an assessment. Prowler now includes NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026) as a universal framework, with its 28 requirements organized in the five control themes: Firewalls, Secure Configuration, Security Update Management, User Access Control, and Malware Protection.
+
+  Sixteen requirements map to Azure checks covering the controls the applicant organization owns under the shared responsibility model. The remaining twelve apply to end-user devices, on-premises network appliances, or organizational process, which cloud control-plane evidence cannot observe, so they are reported as Manual.
+
+  Contributed by @m-khan-97. Thank you!
+
+  Read more in the [Compliance documentation](https://docs.prowler.com/user-guide/compliance/tutorials/compliance).
+
   ### 🔍 Checks
 
   Fifteen new checks land across seven providers in this release.
@@ -112,6 +122,7 @@ rss: true
   - @0xTaoZ: ECS task-definition checks no longer report PASS when `DescribeTaskDefinition` fails, shipped early in v5.39.1 ([#12217](https://github.com/prowler-cloud/prowler/pull/12217))
   - @ye11oc4t: `ses_identity_not_publicly_accessible` now evaluates every identity authorization policy, shipped early in v5.39.1 ([#12464](https://github.com/prowler-cloud/prowler/pull/12464))
   - @Zuhef: IaC provider raises typed exceptions instead of `sys.exit` when cloning the scanned repository or running Trivy fails ([#12227](https://github.com/prowler-cloud/prowler/pull/12227))
+  - @m-khan-97: NCSC Cyber Essentials 3.3 compliance framework with Azure provider coverage across the five Cyber Essentials themes ([#11588](https://github.com/prowler-cloud/prowler/pull/11588))
 
   See the [full release notes on GitHub](https://github.com/prowler-cloud/prowler/releases/tag/5.40.0) for the complete list of changes.
 </Update>
