@@ -360,6 +360,10 @@ class ProvidersTools(BaseTool):
         going, so calling it failed would be wrong twice over -- it is not, and
         it invites a retry of a destructive call already in flight.
 
+        The task is read once more here, because polling gives up on the clock
+        rather than on the task: a deletion that finished just after the last
+        poll is a finished deletion and is reported as one.
+
         Only a task that actually stopped is an error, and it is raised rather
         than returned, because then the provider is still there.
 
@@ -374,6 +378,13 @@ class ProvidersTools(BaseTool):
             state = task.get("data", {}).get("attributes", {}).get("state")
         except Exception as e:
             self.logger.error(f"Could not read the state of task {task_id}: {e}")
+
+        if state == "completed":
+            # The deletion outran the polling window by a moment, not by more.
+            return ProviderDeletionResult(
+                status="deleted",
+                message=f"Provider {provider_id} deleted successfully",
+            ).model_dump()
 
         if state in ("failed", "cancelled"):
             # The failure that got us here is logged, not relayed: it carries

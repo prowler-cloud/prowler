@@ -59,6 +59,21 @@ def mock_fast_polling(monkeypatch, api_client):
     monkeypatch.setattr(type(api_client), "poll_task_until_complete", _fast)
 
 
+@pytest.fixture
+def mock_polling_timeout(monkeypatch, api_client):
+    """Make the polling window run out on the first call, without the wait.
+
+    The clock is what ends the polling loop here, so a test about *what happens
+    afterwards* has no reason to spend it. The read the fallback then makes is
+    the real one.
+    """
+
+    async def _timeout(self, task_id, **_overridden):
+        raise TimeoutError(f"Task {task_id} polling timed out after 60 seconds.")
+
+    monkeypatch.setattr(type(api_client), "poll_task_until_complete", _timeout)
+
+
 def stub_deletion_start(mock_router: MockRouter) -> MockRouter:
     """Serve the DELETE as Prowler does: a task to poll, not a finished deletion."""
     return mock_router.add(
@@ -137,6 +152,27 @@ async def test_a_deletion_still_running_is_not_reported_as_a_failure(
     assert result.data["status"] == "in_progress"
     assert result.data["task_id"] == "t1"
     assert "Do not send the deletion again" in result.data["message"]
+
+
+async def test_a_deletion_that_finished_just_after_the_wait_is_reported_as_deleted(
+    mcp_root_server, mock_api_client, mock_router, mock_polling_timeout
+):
+    """Polling gives up on the clock, not on the task.
+
+    A deletion that completed a moment after the last poll is a finished
+    deletion, and the read the fallback makes is what says so. Reporting it as
+    still running would send the caller off to watch a provider that is gone.
+    """
+    stub_deletion_start(mock_router)
+    mock_router.add("GET", TASK, json=task_document("t1", "completed"))
+
+    async with Client(mcp_root_server) as client:
+        result = await client.call_tool(
+            "prowler_delete_provider", {"provider_id": "p1"}
+        )
+
+    assert result.data["status"] == "deleted"
+    assert "task_id" not in result.data
 
 
 async def test_a_deletion_task_that_stopped_is_an_error_naming_what_is_left(
