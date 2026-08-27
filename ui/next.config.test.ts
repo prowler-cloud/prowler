@@ -16,7 +16,8 @@ const ENABLED_POSTHOG_CONFIG = {
   cloudEnabled: true,
   posthogEnabled: true,
   posthogKey: "phc_key",
-  posthogHost: "https://eu.posthog.com",
+  posthogIngestionHost: "https://eu.i.posthog.com",
+  posthogToolbarEnabled: false,
 };
 
 const BASELINE_CSP = {
@@ -85,7 +86,8 @@ describe("PostHog Content Security Policy", () => {
         cloudEnabled: false,
         posthogEnabled: false,
         posthogKey: null,
-        posthogHost: null,
+        posthogIngestionHost: null,
+        posthogToolbarEnabled: false,
       }),
     );
 
@@ -104,14 +106,54 @@ describe("PostHog Content Security Policy", () => {
     expect(csp["img-src"]).toContain(POSTHOG_WILDCARD);
     expect(csp["frame-src"]).toContain(POSTHOG_WILDCARD);
     expect(csp["font-src"]).not.toContain(POSTHOG_WILDCARD);
+    expect(csp["style-src"]).not.toContain(POSTHOG_WILDCARD);
+    expect(csp["media-src"]).toBeUndefined();
+    expect(csp["worker-src"]).toBeUndefined();
+    expect(csp["frame-ancestors"]).toEqual(["'none'"]);
     expect(csp["default-src"]).not.toContain(POSTHOG_WILDCARD);
+  });
+
+  it("adds Toolbar permissions for a fully enabled Cloud development request", () => {
+    // Given
+    const toolbarConfig = {
+      ...ENABLED_POSTHOG_CONFIG,
+      posthogToolbarEnabled: true,
+    };
+
+    // When
+    const csp = parseCsp(getCspHeader(toolbarConfig));
+
+    // Then
+    expect(csp["style-src"]).toContain(POSTHOG_WILDCARD);
+    expect(csp["font-src"]).toContain(POSTHOG_WILDCARD);
+    expect(csp["media-src"]).toContain(POSTHOG_WILDCARD);
+    expect(csp["worker-src"]).toEqual(["'self'", "blob:", "data:"]);
+    expect(csp["frame-ancestors"]).toEqual(["'self'", POSTHOG_WILDCARD]);
+  });
+
+  it("keeps Toolbar permissions closed when PostHog is not fully enabled", () => {
+    // Given
+    const toolbarConfig = {
+      ...ENABLED_POSTHOG_CONFIG,
+      posthogEnabled: false,
+      posthogToolbarEnabled: true,
+    };
+
+    // When
+    const csp = parseCsp(getCspHeader(toolbarConfig));
+
+    // Then
+    expect(Object.values(csp).flat()).not.toContain(POSTHOG_WILDCARD);
+    expect(csp["media-src"]).toBeUndefined();
+    expect(csp["worker-src"]).toBeUndefined();
+    expect(csp["frame-ancestors"]).toEqual(["'none'"]);
   });
 
   it.each([
     ["Cloud is disabled", { cloudEnabled: false }],
     ["PostHog is disabled", { posthogEnabled: false }],
     ["the key is missing", { posthogKey: null }],
-    ["the host is missing", { posthogHost: null }],
+    ["the host is missing", { posthogIngestionHost: null }],
   ])("omits PostHog permissions when %s", (_case, override) => {
     // Given
     const config = { ...ENABLED_POSTHOG_CONFIG, ...override };
