@@ -11,6 +11,7 @@ from pydantic import Field
 
 from prowler_mcp_server import __version__
 from prowler_mcp_server.lib.types import NonBlankStr
+from prowler_mcp_server.lib.urls import url_path
 
 # Initialize FastMCP for Prowler Hub
 hub_mcp_server = FastMCP("prowler-hub", mask_error_details=True)
@@ -57,6 +58,19 @@ github_raw_client = httpx.Client(
 )
 
 
+def _hub_get(*path: str, params: dict[str, str] | None = None) -> httpx.Response:
+    """GET a Prowler Hub endpoint, named as one argument per path segment.
+
+    Args:
+        *path: The endpoint path segments, in order.
+        params: Query parameters for the request.
+
+    Returns:
+        The response unread, so a caller can tell a 404 from a failed request.
+    """
+    return prowler_hub_client.get(url_path(*path), params=params)
+
+
 def github_check_path(provider_id: str, check_id: str, suffix: str) -> str:
     """Build the GitHub raw URL for a given check artifact suffix using provider
     and check_id.
@@ -67,7 +81,8 @@ def github_check_path(provider_id: str, check_id: str, suffix: str) -> str:
         service_id = check_id.split("_", 1)[0]
     except IndexError:
         service_id = check_id
-    return f"{GITHUB_RAW_BASE}/{provider_id}/services/{service_id}/{check_id}/{check_id}{suffix}"
+    path = url_path(provider_id, "services", service_id, check_id, check_id)
+    return f"{GITHUB_RAW_BASE}{path}{suffix}"
 
 
 def _hub_provider_for_check(check_id: str) -> str | None:
@@ -84,7 +99,7 @@ def _hub_provider_for_check(check_id: str) -> str | None:
         httpx.HTTPError: The Hub could not be reached.
         ValueError: The Hub answered with something that names no provider.
     """
-    response = prowler_hub_client.get(f"/check/{check_id}")
+    response = _hub_get("check", check_id)
     if response.status_code == 404:
         return None
     response.raise_for_status()
@@ -113,9 +128,9 @@ def _explain_missing_check_file(
 ) -> str:
     """Explain a 404 from GitHub for one of a check's source files.
 
-    GitHub answers 404 to three different mistakes -- an ID that exists nowhere,
+    GitHub answers 404 to three different mistakes, an ID that exists nowhere,
     an ID that exists under a different provider, and an ID that exists right
-    here whose file is simply absent -- and cannot tell them apart. Prowler Hub
+    here whose file is simply absent, and cannot tell them apart. Prowler Hub
     can, so it is asked before anything is claimed about the ID.
 
     Args:
@@ -211,7 +226,7 @@ async def list_checks(
     if compliances:
         params["compliances"] = ",".join(compliances)
 
-    response = prowler_hub_client.get("/check", params=params)
+    response = _hub_get("check", params=params)
     response.raise_for_status()
     checks = response.json()
 
@@ -263,7 +278,7 @@ async def semantic_search_checks(
     2. Use `prowler_hub_list_checks` with filters for more targeted browsing
     3. Use `prowler_hub_get_check_details` to get complete information for a specific check
     """
-    response = prowler_hub_client.get("/check/search", params={"term": term})
+    response = _hub_get("check", "search", params={"term": term})
     response.raise_for_status()
     checks = response.json()
 
@@ -348,7 +363,7 @@ async def get_check_details(
     2. Use this tool with the check 'id' to get complete information including remediation guidance
     """
     try:
-        response = prowler_hub_client.get(f"/check/{check_id}")
+        response = _hub_get("check", check_id)
         response.raise_for_status()
     except httpx.HTTPStatusError as e:
         if e.response.status_code == 404:
@@ -460,7 +475,7 @@ async def get_check_code(
                         f"Provider '{provider_id}' has no check '{check_id}' in "
                         "prowler-cloud/prowler, and Prowler Hub could not be asked which "
                         "provider does. Either the ID is wrong or the check belongs to "
-                        "another provider -- prowler_hub_get_check_details reports the "
+                        "another provider, prowler_hub_get_check_details reports the "
                         "provider a check belongs to."
                     ),
                 )
@@ -571,7 +586,7 @@ async def list_compliances(
     if provider:
         params["provider"] = ",".join(provider)
 
-    response = prowler_hub_client.get("/compliance", params=params)
+    response = _hub_get("compliance", params=params)
     response.raise_for_status()
     compliances = response.json()
 
@@ -615,7 +630,7 @@ async def semantic_search_compliances(
             ]
         }
     """
-    response = prowler_hub_client.get("/compliance/search", params={"term": term})
+    response = _hub_get("compliance", "search", params={"term": term})
     response.raise_for_status()
     compliances = response.json()
 
@@ -664,7 +679,7 @@ async def get_compliance_details(
         }
     """
     try:
-        response = prowler_hub_client.get(f"/compliance/{compliance_id}")
+        response = _hub_get("compliance", compliance_id)
         response.raise_for_status()
     except httpx.HTTPStatusError as e:
         if e.response.status_code == 404:
@@ -746,7 +761,7 @@ async def list_providers() -> dict:
             ]
         }
     """
-    response = prowler_hub_client.get("/providers")
+    response = _hub_get("providers")
     response.raise_for_status()
     providers = response.json()
 
@@ -783,7 +798,7 @@ async def get_provider_services(
             "services": ["s3", "ec2", "iam", "rds", "lambda", ...]
         }
     """
-    response = prowler_hub_client.get("/providers")
+    response = _hub_get("providers")
     response.raise_for_status()
     providers = response.json()
 

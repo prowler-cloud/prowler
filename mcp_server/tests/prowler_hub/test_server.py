@@ -5,6 +5,7 @@ the Prowler API client. They still have to arrive as tool errors rather than as 
 result object, which the protocol, the client and the model all read as a success.
 """
 
+import pytest
 from fastmcp import Client
 
 CHECKS = "/api/check"
@@ -205,3 +206,73 @@ async def test_a_hub_outage_is_reported_rather_than_returned_as_an_empty_list(
 
     assert result.isError is True
     assert result.structuredContent is None
+
+
+@pytest.mark.parametrize(
+    ("check_id", "routed_as", "sent_as"),
+    [
+        ("../../evil", f"{CHECKS}/../../evil", b"/api/check/..%2F..%2Fevil"),
+        ("s3/../evil", f"{CHECKS}/s3/../evil", b"/api/check/s3%2F..%2Fevil"),
+        ("..", f"{CHECKS}/..", b"/api/check/%2E%2E"),
+        (
+            "s3_x?fields=all",
+            f"{CHECKS}/s3_x?fields=all",
+            b"/api/check/s3_x%3Ffields%3Dall",
+        ),
+        ("s3_x#frag", f"{CHECKS}/s3_x#frag", b"/api/check/s3_x%23frag"),
+    ],
+    ids=["traversal", "mid-path", "dot-segment", "query", "fragment"],
+)
+async def test_an_id_names_a_check_and_cannot_name_an_endpoint(
+    mcp_root_server, hub_router, check_id, routed_as, sent_as
+):
+    """The bug this pins: httpx resolved "../.." away and the request left
+    /api/check for another endpoint of the Hub."""
+    hub_router.add("GET", routed_as, status=404)
+
+    async with Client(mcp_root_server) as client:
+        result = await client.call_tool_mcp(
+            "prowler_hub_get_check_details", {"check_id": check_id}
+        )
+
+    assert hub_router.requests[0].url.raw_path == sent_as
+    assert result.isError is True
+    assert "No check with the ID" in result.content[0].text
+
+
+async def test_a_compliance_id_cannot_name_an_endpoint_either(
+    mcp_root_server, hub_router
+):
+    """Every Hub path is built by the same helper, so this holds without its own
+    guard."""
+    hub_router.add("GET", f"{COMPLIANCE}/../../evil", status=404)
+
+    async with Client(mcp_root_server) as client:
+        result = await client.call_tool_mcp(
+            "prowler_hub_get_compliance_details", {"compliance_id": "../../evil"}
+        )
+
+    assert hub_router.requests[0].url.raw_path == b"/api/compliance/..%2F..%2Fevil"
+    assert result.isError is True
+    assert "No compliance framework with the ID" in result.content[0].text
+
+
+async def test_a_check_source_url_confines_the_provider_and_the_check_alike(
+    mcp_root_server, hub_router
+):
+    """Both halves of the GitHub raw URL come from the caller, so both are
+    confined."""
+    hub_router.add("GET", github_check("../../../../evil"), status=404)
+    hub_router.add("GET", HUB_CHECK, json={"id": CHECK_ID, "provider": "aws"})
+
+    async with Client(mcp_root_server) as client:
+        result = await client.call_tool_mcp(
+            "prowler_hub_get_check_code",
+            {"provider_id": "../../../../evil", "check_id": CHECK_ID},
+        )
+
+    assert (
+        hub_router.requests[0].url.raw_path
+        == github_check("..%2F..%2F..%2F..%2Fevil").encode()
+    )
+    assert result.isError is True
