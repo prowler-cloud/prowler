@@ -133,10 +133,13 @@ export const SlackConnectNotice = ({
     const params = new URLSearchParams(window.location.search);
     SLACK_CONNECT_PARAMS.forEach((param) => params.delete(param));
     const query = params.toString();
+    const fragment = window.location.hash;
     window.history.replaceState(
       null,
       "",
-      query ? `${window.location.pathname}?${query}` : window.location.pathname,
+      query
+        ? `${window.location.pathname}?${query}${fragment}`
+        : `${window.location.pathname}${fragment}`,
     );
   });
 

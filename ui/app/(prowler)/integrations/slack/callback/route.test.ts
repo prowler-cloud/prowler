@@ -257,6 +257,22 @@ describe("the Slack OAuth callback route", () => {
     expect(exchangeCalls).toHaveLength(0);
   });
 
+  it("detects a prefetch when an earlier purpose header describes navigation", async () => {
+    // Given - different clients supplied purpose headers with mixed values.
+    const headers = {
+      "sec-purpose": "navigate",
+      purpose: "prefetch",
+      "x-moz": "navigate",
+    };
+
+    // When
+    const response = await get(HAPPY_QUERY, headers);
+
+    // Then - any prefetch marker prevents the single-use code exchange.
+    expect(response.status).toBe(204);
+    expect(exchangeCalls).toHaveLength(0);
+  });
+
   it("sends non-cloud deployments home without exchanging anything", async () => {
     vi.stubEnv("UI_CLOUD_ENABLED", "false");
 

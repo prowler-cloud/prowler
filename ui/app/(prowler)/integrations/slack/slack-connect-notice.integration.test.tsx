@@ -70,6 +70,21 @@ describe("returning from Slack", () => {
     expect(await harness.strippedQuery()).toBe("?foo=bar");
   }, 30000);
 
+  it("keeps the URL fragment while removing the Slack query params", async () => {
+    // Given
+    const harness = new SlackIntegrationHarness(slackFixture());
+
+    // When
+    await harness.mountAfterReturnFromSlack(
+      { slack: "unconfirmed" },
+      "#channels",
+    );
+
+    // Then
+    expect(await harness.strippedQuery()).toBe("");
+    expect(window.location.hash).toBe("#channels");
+  }, 30000);
+
   it("connects nothing when the user declines in Slack, and still offers the install", async () => {
     const harness = new SlackIntegrationHarness(slackFixture());
 

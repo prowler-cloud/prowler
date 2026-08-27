@@ -130,13 +130,14 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
    */
   async mountAfterReturnFromSlack(
     params: Record<string, string>,
+    fragment = "",
   ): Promise<void> {
     // Unmount first, or two copies of the page answer every query.
     (await this.mounted)?.unmount();
     window.history.replaceState(
       null,
       "",
-      `/integrations/slack?${new URLSearchParams(params).toString()}`,
+      `/integrations/slack?${new URLSearchParams(params).toString()}${fragment}`,
     );
     this.wireHandlers();
 

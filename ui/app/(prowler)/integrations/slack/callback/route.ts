@@ -39,12 +39,10 @@ const outcomeRedirect = (
  * Chrome/Safari and Firefox spellings.
  */
 const isPrefetch = (request: Request): boolean => {
-  const purpose =
-    request.headers.get("sec-purpose") ??
-    request.headers.get("purpose") ??
-    request.headers.get("x-moz") ??
-    "";
-  return purpose.toLowerCase().includes("prefetch");
+  return ["sec-purpose", "purpose", "x-moz"].some(
+    (header) =>
+      request.headers.get(header)?.toLowerCase().includes("prefetch") ?? false,
+  );
 };
 
 /**
