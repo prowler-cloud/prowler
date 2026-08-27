@@ -141,47 +141,80 @@ def _build_bucket(name="prowler-test"):
     return Bucket(arn=f"acs:oss::1234567890:{name}", name=name, region="ap-southeast-1")
 
 
-def test_get_bucket_encryption_parses_aes256_rule():
-    from alibabacloud_oss20190517 import models as oss_models
+def _mock_subresource_response(root_element, content):
+    """Mimic the dict the OSS SDK execute path returns for XML bodies."""
+    return {"headers": {}, "statusCode": 200, "body": {root_element: content}}
 
+
+def test_get_bucket_subresource_calls_execute_and_unwraps_root():
     service = _build_oss_service()
     bucket = _build_bucket()
     oss_client = MagicMock()
-    oss_client.get_bucket_encryption.return_value = (
-        oss_models.GetBucketEncryptionResponse(
-            body=oss_models.GetBucketEncryptionResponseBody().from_map(
-                {"ApplyServerSideEncryptionByDefault": {"SSEAlgorithm": "AES256"}}
-            )
-        )
+    oss_client.execute.return_value = _mock_subresource_response(
+        "VersioningConfiguration", {"Status": "Enabled"}
+    )
+    service.session.client.return_value = oss_client
+
+    result = service._get_bucket_subresource(
+        bucket, "GetBucketVersioning", "versioning"
+    )
+
+    assert result == {"Status": "Enabled"}
+    service.session.client.assert_called_once_with("oss", bucket.region)
+    params, request, _ = oss_client.execute.call_args.args
+    assert params.action == "GetBucketVersioning"
+    assert params.pathname == "/?versioning"
+    assert params.method == "GET"
+    assert params.style == "ROA"
+    assert params.body_type == "xml"
+    assert request.host_map == {"bucket": bucket.name}
+
+
+def test_get_bucket_subresource_returns_empty_dict_for_empty_root():
+    service = _build_oss_service()
+    bucket = _build_bucket()
+    oss_client = MagicMock()
+    oss_client.execute.return_value = _mock_subresource_response(
+        "VersioningConfiguration", None
+    )
+    service.session.client.return_value = oss_client
+
+    assert (
+        service._get_bucket_subresource(bucket, "GetBucketVersioning", "versioning")
+        == {}
+    )
+
+
+def test_get_bucket_encryption_parses_aes256_rule():
+    service = _build_oss_service()
+    bucket = _build_bucket()
+    oss_client = MagicMock()
+    oss_client.execute.return_value = _mock_subresource_response(
+        "ServerSideEncryptionRule",
+        {"ApplyServerSideEncryptionByDefault": {"SSEAlgorithm": "AES256"}},
     )
     service.session.client.return_value = oss_client
 
     service._get_bucket_encryption(bucket)
 
-    oss_client.get_bucket_encryption.assert_called_once_with(bucket.name)
     assert bucket.encryption_algorithm == "AES256"
     assert bucket.encryption_kms_key_id == ""
     assert bucket.encryption_kms_data_algorithm == ""
 
 
 def test_get_bucket_encryption_parses_kms_rule():
-    from alibabacloud_oss20190517 import models as oss_models
-
     service = _build_oss_service()
     bucket = _build_bucket()
     oss_client = MagicMock()
-    oss_client.get_bucket_encryption.return_value = (
-        oss_models.GetBucketEncryptionResponse(
-            body=oss_models.GetBucketEncryptionResponseBody().from_map(
-                {
-                    "ApplyServerSideEncryptionByDefault": {
-                        "SSEAlgorithm": "KMS",
-                        "KMSMasterKeyID": "00000000-1111-2222-3333-444444444444",
-                        "KMSDataEncryption": "SM4",
-                    }
-                }
-            )
-        )
+    oss_client.execute.return_value = _mock_subresource_response(
+        "ServerSideEncryptionRule",
+        {
+            "ApplyServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "KMS",
+                "KMSMasterKeyID": "00000000-1111-2222-3333-444444444444",
+                "KMSDataEncryption": "SM4",
+            }
+        },
     )
     service.session.client.return_value = oss_client
 
@@ -198,7 +231,7 @@ def test_get_bucket_encryption_no_rule_is_not_logged_as_error():
     service = _build_oss_service()
     bucket = _build_bucket()
     oss_client = MagicMock()
-    oss_client.get_bucket_encryption.side_effect = TeaException(
+    oss_client.execute.side_effect = TeaException(
         {
             "code": "NoSuchServerSideEncryptionRule",
             "message": "No encryption rules are configured for this bucket.",
@@ -220,7 +253,7 @@ def test_get_bucket_encryption_unexpected_error_is_logged():
     service = _build_oss_service()
     bucket = _build_bucket()
     oss_client = MagicMock()
-    oss_client.get_bucket_encryption.side_effect = RuntimeError("boom")
+    oss_client.execute.side_effect = RuntimeError("boom")
     service.session.client.return_value = oss_client
 
     with patch(
@@ -230,3 +263,143 @@ def test_get_bucket_encryption_unexpected_error_is_logged():
 
     mock_logger.error.assert_called_once()
     assert bucket.encryption_algorithm == ""
+
+
+def test_get_bucket_logging_parses_target():
+    service = _build_oss_service()
+    bucket = _build_bucket()
+    oss_client = MagicMock()
+    oss_client.execute.return_value = _mock_subresource_response(
+        "BucketLoggingStatus",
+        {"LoggingEnabled": {"TargetBucket": "log-bucket", "TargetPrefix": "logs/"}},
+    )
+    service.session.client.return_value = oss_client
+
+    service._get_bucket_logging(bucket)
+
+    assert bucket.logging_enabled is True
+    assert bucket.logging_target_bucket == "log-bucket"
+    assert bucket.logging_target_prefix == "logs/"
+
+
+def test_get_bucket_logging_disabled_when_no_target():
+    service = _build_oss_service()
+    bucket = _build_bucket()
+    oss_client = MagicMock()
+    oss_client.execute.return_value = _mock_subresource_response(
+        "BucketLoggingStatus", None
+    )
+    service.session.client.return_value = oss_client
+
+    service._get_bucket_logging(bucket)
+
+    assert bucket.logging_enabled is False
+    assert bucket.logging_target_bucket == ""
+
+
+def test_get_bucket_versioning_parses_suspended_status():
+    service = _build_oss_service()
+    bucket = _build_bucket()
+    oss_client = MagicMock()
+    oss_client.execute.return_value = _mock_subresource_response(
+        "VersioningConfiguration", {"Status": "Suspended"}
+    )
+    service.session.client.return_value = oss_client
+
+    service._get_bucket_versioning(bucket)
+
+    assert bucket.versioning_status == "Suspended"
+
+
+def test_get_bucket_acl_parses_grant():
+    service = _build_oss_service()
+    bucket = _build_bucket()
+    oss_client = MagicMock()
+    oss_client.execute.return_value = _mock_subresource_response(
+        "AccessControlPolicy",
+        {"Owner": {"ID": "1234567890"}, "AccessControlList": {"Grant": "public-read"}},
+    )
+    service.session.client.return_value = oss_client
+
+    service._get_bucket_acl(bucket)
+
+    assert bucket.acl == "public-read"
+
+
+def test_get_bucket_acl_parses_private_grant_value():
+    service = _build_oss_service()
+    bucket = _build_bucket()
+    oss_client = MagicMock()
+    oss_client.execute.return_value = _mock_subresource_response(
+        "AccessControlPolicy",
+        {"Owner": {"ID": "1234567890"}, "AccessControlList": {"Grant": "private"}},
+    )
+    service.session.client.return_value = oss_client
+
+    service._get_bucket_acl(bucket)
+
+    assert bucket.acl == "private"
+
+
+def test_get_bucket_acl_defaults_to_private_without_grant():
+    service = _build_oss_service()
+    bucket = _build_bucket()
+    oss_client = MagicMock()
+    oss_client.execute.return_value = _mock_subresource_response(
+        "AccessControlPolicy", {"Owner": {"ID": "1234567890"}}
+    )
+    service.session.client.return_value = oss_client
+
+    service._get_bucket_acl(bucket)
+
+    assert bucket.acl == "private"
+
+
+def test_get_bucket_subresource_with_real_sdk_client_unwraps_xml_root():
+    """Regression test against the SDK deserialization the helper works around.
+
+    The generated ``get_bucket_*`` methods return empty response models for
+    XML bodies (root element kept by the gateway, dropped by the models). Drive
+    the real client with only the HTTP call mocked to make sure the helper still
+    returns the configuration after SDK upgrades.
+    """
+    import io
+
+    import darabonba.core as dara_core
+    from alibabacloud_oss20190517.client import Client as OssClient
+    from alibabacloud_tea_openapi import models as open_api_models
+
+    service = _build_oss_service()
+    bucket = _build_bucket()
+    service.session.client.return_value = OssClient(
+        open_api_models.Config(
+            access_key_id="AKID",
+            access_key_secret="SECRET",
+            endpoint="oss-ap-southeast-1.aliyuncs.com",
+            region_id="ap-southeast-1",
+        )
+    )
+    xml = (
+        b'<?xml version="1.0" encoding="UTF-8"?>'
+        b"<ServerSideEncryptionRule><ApplyServerSideEncryptionByDefault>"
+        b"<SSEAlgorithm>KMS</SSEAlgorithm>"
+        b"<KMSMasterKeyID>00000000-1111-2222-3333-444444444444</KMSMasterKeyID>"
+        b"</ApplyServerSideEncryptionByDefault></ServerSideEncryptionRule>"
+    )
+
+    class FakeHttpResponse:
+        status_code = 200
+        headers = {"content-type": "application/xml"}
+        body = io.BytesIO(xml)
+
+    with patch.object(dara_core.DaraCore, "do_action", return_value=FakeHttpResponse()):
+        result = service._get_bucket_subresource(
+            bucket, "GetBucketEncryption", "encryption"
+        )
+
+    assert result == {
+        "ApplyServerSideEncryptionByDefault": {
+            "SSEAlgorithm": "KMS",
+            "KMSMasterKeyID": "00000000-1111-2222-3333-444444444444",
+        }
+    }
