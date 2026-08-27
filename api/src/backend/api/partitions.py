@@ -153,10 +153,11 @@ class PostgresUUIDv7PartitioningStrategy(PostgresRangePartitioningStrategy):
         )
 
 
-def relative_days_or_none(value):
-    if value is None:
+def relative_months_or_none(value):
+    # A non-positive value keeps partitions indefinitely, like None.
+    if value is None or value <= 0:
         return None
-    return relativedelta(days=value)
+    return relativedelta(months=value)
 
 
 #
@@ -173,7 +174,7 @@ manager = PostgresPartitioningManager(
                     months=settings.FINDINGS_TABLE_PARTITION_MONTHS
                 ),
                 count=settings.FINDINGS_TABLE_PARTITION_COUNT,
-                max_age=relative_days_or_none(
+                max_age=relative_months_or_none(
                     settings.FINDINGS_TABLE_PARTITION_MAX_AGE_MONTHS
                 ),
                 name_format="%Y_%b",
@@ -189,7 +190,7 @@ manager = PostgresPartitioningManager(
                     months=settings.FINDINGS_TABLE_PARTITION_MONTHS
                 ),
                 count=settings.FINDINGS_TABLE_PARTITION_COUNT,
-                max_age=relative_days_or_none(
+                max_age=relative_months_or_none(
                     settings.FINDINGS_TABLE_PARTITION_MAX_AGE_MONTHS
                 ),
                 name_format="%Y_%b",
