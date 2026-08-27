@@ -126,7 +126,10 @@ from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_m365
 from prowler.lib.outputs.csv.csv import CSV
 from prowler.lib.outputs.finding import Finding
 from prowler.lib.outputs.html.html import HTML
-from prowler.lib.outputs.ocsf.ingestion import send_ocsf_to_api
+from prowler.lib.outputs.ocsf.ingestion import (
+    SystemTrustStoreError,
+    send_ocsf_to_api,
+)
 from prowler.lib.outputs.ocsf.ocsf import OCSF
 from prowler.lib.outputs.outputs import extract_findings_statistics, report
 from prowler.lib.outputs.sarif.sarif import SARIF
@@ -160,6 +163,75 @@ from prowler.providers.oraclecloud.models import OCIOutputOptions
 from prowler.providers.scaleway.models import ScalewayOutputOptions
 from prowler.providers.stackit.models import StackITOutputOptions
 from prowler.providers.vercel.models import VercelOutputOptions
+
+
+def _send_ocsf_to_cloud(file_path: str) -> dict | None:
+    """Upload OCSF findings and report safe, actionable CLI failures."""
+    try:
+        return send_ocsf_to_api(file_path)
+    except requests.exceptions.JSONDecodeError:
+        print(
+            f"{Style.BRIGHT}{Fore.RED}\nPush to Prowler Cloud failed: "
+            "the API returned an invalid JSON response. "
+            f"Scan results were saved to {file_path}{Style.RESET_ALL}"
+        )
+    except ValueError:
+        print(
+            f"{Style.BRIGHT}{Fore.YELLOW}\nPush to Prowler Cloud skipped: no API key configured. "
+            "Set the PROWLER_CLOUD_API_KEY environment variable to enable it. "
+            f"Scan results were saved to {file_path}{Style.RESET_ALL}"
+        )
+    except SystemTrustStoreError:
+        print(
+            f"{Style.BRIGHT}{Fore.RED}\nPush to Prowler Cloud failed: the operating system trust store "
+            "could not be initialized. Check the configured CA bundle paths, verify the host certificate "
+            "hostname, validity period, and certificate chain, and install the organization or TLS-intercepting "
+            "proxy CA in the operating system trust store. In containers, configure and update the container "
+            "system CA store. "
+            f"Scan results were saved to {file_path}{Style.RESET_ALL}"
+        )
+    except requests.exceptions.SSLError:
+        print(
+            f"{Style.BRIGHT}{Fore.RED}\nPush to Prowler Cloud failed: TLS certificate validation failed. "
+            "Verify the hostname, validity period, and certificate chain, and install the organization or "
+            "TLS-intercepting proxy CA in the operating system trust store. In containers, configure and update "
+            "the container system CA store. "
+            f"Scan results were saved to {file_path}{Style.RESET_ALL}"
+        )
+    except requests.ConnectionError:
+        print(
+            f"{Style.BRIGHT}{Fore.RED}\nPush to Prowler Cloud failed: could not reach the Prowler Cloud API at "
+            f"{cloud_api_base_url}. Check the URL and your network connection. "
+            f"Scan results were saved to {file_path}{Style.RESET_ALL}"
+        )
+    except requests.HTTPError as http_err:
+        status_code = (
+            http_err.response.status_code if http_err.response is not None else None
+        )
+        if status_code == 402:
+            print(
+                f"{Style.BRIGHT}{Fore.RED}\nPush to Prowler Cloud failed: "
+                "this feature is only available with a Prowler Cloud subscription. "
+                f"Scan results were saved to {file_path}{Style.RESET_ALL}"
+            )
+        elif status_code is None:
+            print(
+                f"{Style.BRIGHT}{Fore.RED}\nPush to Prowler Cloud failed: "
+                "the API request failed without a response status. "
+                f"Scan results were saved to {file_path}{Style.RESET_ALL}"
+            )
+        else:
+            print(
+                f"{Style.BRIGHT}{Fore.RED}\nPush to Prowler Cloud failed: the API returned HTTP "
+                f"{status_code}. Verify your API key is valid and has the right permissions. "
+                f"Scan results were saved to {file_path}{Style.RESET_ALL}"
+            )
+    except Exception:
+        print(
+            f"{Style.BRIGHT}{Fore.RED}\nPush to Prowler Cloud failed unexpectedly. "
+            f"Scan results were saved to {file_path}{Style.RESET_ALL}"
+        )
+    return None
 
 
 def prowler():
@@ -641,39 +713,8 @@ def prowler():
         print(
             f"{Style.BRIGHT}\nPushing findings to Prowler Cloud, please wait...{Style.RESET_ALL}"
         )
-        try:
-            response = send_ocsf_to_api(ocsf_output.file_path)
-        except ValueError:
-            print(
-                f"{Style.BRIGHT}{Fore.YELLOW}\nPush to Prowler Cloud skipped: no API key configured. "
-                "Set the PROWLER_CLOUD_API_KEY environment variable to enable it. "
-                f"Scan results were saved to {ocsf_output.file_path}{Style.RESET_ALL}"
-            )
-        except requests.ConnectionError:
-            print(
-                f"{Style.BRIGHT}{Fore.RED}\nPush to Prowler Cloud failed: could not reach the Prowler Cloud API at "
-                f"{cloud_api_base_url}. Check the URL and your network connection. "
-                f"Scan results were saved to {ocsf_output.file_path}{Style.RESET_ALL}"
-            )
-        except requests.HTTPError as http_err:
-            if http_err.response.status_code == 402:
-                print(
-                    f"{Style.BRIGHT}{Fore.RED}\nPush to Prowler Cloud failed: "
-                    "this feature is only available with a Prowler Cloud subscription. "
-                    f"Scan results were saved to {ocsf_output.file_path}{Style.RESET_ALL}"
-                )
-            else:
-                print(
-                    f"{Style.BRIGHT}{Fore.RED}\nPush to Prowler Cloud failed: the API returned HTTP {http_err.response.status_code}. "
-                    "Verify your API key is valid and has the right permissions. "
-                    f"Scan results were saved to {ocsf_output.file_path}{Style.RESET_ALL}"
-                )
-        except Exception as error:
-            print(
-                f"{Style.BRIGHT}{Fore.RED}\nPush to Prowler Cloud failed unexpectedly: {error}. "
-                f"Scan results were saved to {ocsf_output.file_path}{Style.RESET_ALL}"
-            )
-        else:
+        response = _send_ocsf_to_cloud(ocsf_output.file_path)
+        if response is not None:
             job_id = response.get("data", {}).get("id") if response else None
             if job_id:
                 print(
