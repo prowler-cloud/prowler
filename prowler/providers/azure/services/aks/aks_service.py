@@ -129,6 +129,9 @@ class AKS(AzureService):
                                             False,
                                         )
                                     ),
+                                    kubernetes_version=getattr(
+                                        cluster, "kubernetes_version", None
+                                    ),
                                 )
                             }
                         )
@@ -162,3 +165,4 @@ class Cluster:
     azure_monitor_enabled: bool = False
     local_accounts_disabled: bool = False
     kms_cmk_encryption_enabled: bool = False
+    kubernetes_version: Optional[str] = None

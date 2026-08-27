@@ -23,6 +23,7 @@ def mock_aks_get_clusters(_):
                 rbac_enabled=True,
                 node_os_upgrade_channel="NodeImage",
                 kms_cmk_encryption_enabled=True,
+                kubernetes_version="1.34.0",
             )
         }
     }
@@ -77,6 +78,10 @@ class Test_AKS_Service:
         assert aks.clusters[AZURE_SUBSCRIPTION_ID][
             "cluster_id-1"
         ].kms_cmk_encryption_enabled
+        assert (
+            aks.clusters[AZURE_SUBSCRIPTION_ID]["cluster_id-1"].kubernetes_version
+            == "1.34.0"
+        )
 
 
 class Test_AKS_get_clusters:
@@ -121,6 +126,9 @@ class Test_AKS_get_clusters:
         assert (
             result[AZURE_SUBSCRIPTION_ID]["cluster_id-1"].kms_cmk_encryption_enabled
             is False
+        )
+        assert (
+            result[AZURE_SUBSCRIPTION_ID]["cluster_id-1"].kubernetes_version == "1.28.0"
         )
 
     def test_get_clusters_with_resource_group(self):
