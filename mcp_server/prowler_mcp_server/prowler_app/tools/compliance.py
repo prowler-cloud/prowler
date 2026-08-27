@@ -258,11 +258,11 @@ class ComplianceTools(BaseTool):
         ),
         scan_id: str | None = Field(
             default=None,
-            description="UUID of a specific scan to get compliance data for. Required if provider_id is not specified.",
+            description="UUID of a specific scan to get compliance data for. Required if provider_id is not specified. Do not pass it together with provider_id.",
         ),
         provider_id: str | None = Field(
             default=None,
-            description="Prowler's internal UUID (v4) for a specific provider. If provided without scan_id, the tool will automatically find the latest completed scan for this provider. Use `prowler_search_providers` tool to find provider IDs.",
+            description="Prowler's internal UUID (v4) for a specific provider. The tool will automatically find the latest completed scan for this provider. Use `prowler_search_providers` tool to find provider IDs. Do not pass it together with scan_id.",
         ),
     ) -> dict[str, Any]:
         """Get detailed requirement-level breakdown for a specific compliance framework.
@@ -283,8 +283,8 @@ class ComplianceTools(BaseTool):
            - Use prowler_get_finding_details with these finding IDs for more details and remediation guidance
 
         Default behavior:
-        - Requires either scan_id OR provider_id
-        - With provider_id (no scan_id): Automatically finds the latest completed scan for that provider
+        - Requires exactly one of scan_id OR provider_id; providing both is rejected
+        - With provider_id: Automatically finds the latest completed scan for that provider
         - With scan_id: Uses that specific scan's compliance data
         - Only shows failed requirements with their associated failed finding IDs
 
@@ -293,10 +293,16 @@ class ComplianceTools(BaseTool):
         2. Use this tool with the compliance_id to see failed requirements and their finding IDs
         3. Use prowler_get_finding_details with the finding IDs to get remediation guidance
         """
-        # Validate that either scan_id or provider_id is provided
+        # Exactly one of the two: taking scan_id and ignoring provider_id would
+        # answer for whatever provider that scan belongs to, which is not
+        # necessarily the one the caller named.
         if not scan_id and not provider_id:
             raise InvalidArgument(
                 "Either scan_id or provider_id must be provided. Use prowler_search_providers to find provider IDs or prowler_list_scans to find scan IDs."
+            )
+        elif scan_id and provider_id:
+            raise InvalidArgument(
+                "Provide either scan_id or provider_id, not both. To get compliance data for a specific scan, use scan_id. To get data for the latest scan of a provider, use provider_id."
             )
 
         # Resolve provider_id to latest scan_id if needed
