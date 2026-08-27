@@ -1,8 +1,9 @@
 /**
- * MSW handlers for the Slack integration, derived from the API contract in
- * `openspec/changes/add-slack-integration/design.md` (the API itself lives in
- * the cloud repository). State is per-call: an exchange creates the install the
- * subsequent `GET /integrations` returns.
+ * MSW handlers for the Slack integration, derived from the signed API contract
+ * in `openspec/changes/add-slack-alert-channels/contract/slack-alerts-api.md`
+ * (the API itself lives in the cloud repository). State is per-call: an
+ * exchange creates the install the subsequent `GET /integrations` returns, and
+ * a save or a connection check writes to it.
  *
  * Wire them per test via `worker.use(...handlersForSlack(fx))`.
  */
@@ -11,6 +12,7 @@ import { http, HttpResponse } from "msw";
 
 import {
   INTEGRATIONS_SERVER_ERROR_DETAIL,
+  NO_VERIFICATION,
   PROXY_CHALLENGE_PAGE,
   SLACK_AUTHORIZE_URL,
   SLACK_DIFFERENT_WORKSPACE_DETAIL,
@@ -27,6 +29,7 @@ import {
   SLACK_WORKSPACE_CONFLICT_CODE,
 } from "./slack.fixtures";
 import type {
+  SlackAuthorizedChannelFixture,
   SlackExchangeOutcome,
   SlackFixture,
   SlackInstallFixture,
@@ -35,8 +38,14 @@ import type {
 
 const API = process.env.UI_API_BASE_URL;
 const TS = "2026-08-10T09:00:00Z";
+/** The time a check records, distinct from `TS` so a test can tell one ran. */
+const CHECK_TS = "2026-08-10T10:15:00Z";
 
 const CONNECTION_TASK_PREFIX = "slack-conn-task-";
+
+/** Order-insensitive: a reorder is not a changed set (contract, PATCH). */
+const sameChannelIds = (a: string[], b: string[]) =>
+  a.length === b.length && new Set([...a, ...b]).size === a.length;
 
 /** Opaque to the UI, which only ever follows `links.next` (design D6). */
 const CHANNEL_CURSOR_PARAM = "page[cursor]";
@@ -71,14 +80,26 @@ const refuse = (refusal: SlackRefusalFixture) =>
     },
   );
 
-const configuration = (workspace: SlackInstallFixture["workspace"]) => ({
-  team_id: workspace.teamId,
-  team_name: workspace.teamName,
-  bot_user_id: workspace.botUserId,
-  // The API omits these keys until a channel is chosen, never sending nulls.
-  ...(workspace.channelId ? { channel_id: workspace.channelId } : {}),
-  ...(workspace.channelName ? { channel_name: workspace.channelName } : {}),
-});
+const configuration = (install: SlackInstallFixture) => {
+  const verification = install.verification ?? NO_VERIFICATION;
+  return {
+    team_id: install.workspace.teamId,
+    team_name: install.workspace.teamName,
+    bot_user_id: install.workspace.botUserId,
+    // Always an array, empty rather than omitted (contract, OAuth and reads).
+    channels: (install.workspace.authorizedChannels ?? []).map((channel) => ({
+      id: channel.id,
+      name: channel.name,
+      is_private: channel.isPrivate,
+      confirmation_sent_at: channel.confirmationSentAt,
+    })),
+    verification: {
+      task_id: verification.taskId,
+      started_at: verification.startedAt,
+      finished_at: verification.finishedAt,
+    },
+  };
+};
 
 const integrationResource = (install: SlackInstallFixture) => ({
   id: install.id,
@@ -91,7 +112,7 @@ const integrationResource = (install: SlackInstallFixture) => ({
     connection_last_checked_at: install.connectionLastCheckedAt,
     integration_type: "slack",
     // No credentials: the bot token is encrypted at rest and never serialized.
-    configuration: configuration(install.workspace),
+    configuration: configuration(install),
   },
   links: { self: `${API}/integrations/${install.id}` },
 });
@@ -111,6 +132,18 @@ const collection = (install: SlackInstallFixture | null) => ({
 const taskResource = (id: string, state: string, result: unknown) => ({
   data: { id, type: "tasks", attributes: { state, result } },
 });
+
+/** Stamps only channels this run posted to, never one already confirmed. */
+const confirmedByThisRun =
+  (connected: boolean, failedChannelId: string | null) =>
+  (channel: SlackAuthorizedChannelFixture): SlackAuthorizedChannelFixture =>
+    // A failure naming no channel posted nothing: `auth.test` runs once, before
+    // the per-channel loop (contract, Connection).
+    (connected || failedChannelId !== null) &&
+    channel.confirmationSentAt === null &&
+    channel.id !== failedChannelId
+      ? { ...channel, confirmationSentAt: CHECK_TS }
+      : channel;
 
 /**
  * All three are `2xx`: the first two make `response.json()` throw, the third
@@ -132,6 +165,14 @@ export const handlersForSlack = (fx: SlackFixture) => {
   let install: SlackInstallFixture | null = fx.install
     ? { ...fx.install, workspace: { ...fx.install.workspace } }
     : null;
+
+  const freshInstall = (id?: string): SlackInstallFixture => ({
+    id: id ?? SLACK_INTEGRATION_ID,
+    connected: null,
+    connectionLastCheckedAt: null,
+    workspace: { ...fx.exchangeWorkspace, authorizedChannels: [] },
+    verification: { ...NO_VERIFICATION },
+  });
 
   const unconfigured = () =>
     HttpResponse.json(errorBody(SLACK_UNCONFIGURED_DETAIL, 503), {
@@ -189,28 +230,23 @@ export const handlersForSlack = (fx: SlackFixture) => {
         case SLACK_EXCHANGE_OUTCOME.UNREADABLE_HTML:
         case SLACK_EXCHANGE_OUTCOME.UNREADABLE_NO_DATA:
           // The install still happened: the API upserts before it answers.
-          install = {
-            id: SLACK_INTEGRATION_ID,
-            connected: null,
-            connectionLastCheckedAt: null,
-            workspace: { ...fx.exchangeWorkspace },
-          };
+          install = freshInstall();
           return unreadableExchange(fx.exchangeOutcome);
         case SLACK_EXCHANGE_OUTCOME.REINSTALLED:
           install = {
-            id: install?.id ?? SLACK_INTEGRATION_ID,
-            connected: null,
-            connectionLastCheckedAt: null,
-            workspace: { ...fx.exchangeWorkspace },
+            ...freshInstall(install?.id),
+            workspace: {
+              ...fx.exchangeWorkspace,
+              // A reinstall keeps the set and resets every confirmation, with the
+              // connection and verification state (contract, OAuth and reads).
+              authorizedChannels: (
+                install?.workspace.authorizedChannels ?? []
+              ).map((channel) => ({ ...channel, confirmationSentAt: null })),
+            },
           };
           return HttpResponse.json({ data: integrationResource(install) });
         default:
-          install = {
-            id: SLACK_INTEGRATION_ID,
-            connected: null,
-            connectionLastCheckedAt: null,
-            workspace: { ...fx.exchangeWorkspace },
-          };
+          install = freshInstall();
           return HttpResponse.json(
             { data: integrationResource(install) },
             { status: 201 },
@@ -237,32 +273,55 @@ export const handlersForSlack = (fx: SlackFixture) => {
     http.post<{ id: string }>(
       `${API}/integrations/:id/connection`,
       ({ params }) => {
-        // The check posts to the channel, so the API refuses until one exists.
-        if (!install?.workspace.channelId) {
+        // A check posts to every authorized channel, so the API requires at least
+        // one (contract, Connection).
+        if (!install?.workspace.authorizedChannels?.length) {
           return HttpResponse.json(errorBody(SLACK_NO_CHANNEL_DETAIL, 400), {
             status: 400,
           });
         }
 
-        return HttpResponse.json(
-          taskResource(
-            `${CONNECTION_TASK_PREFIX}${params.id}`,
-            "executing",
-            null,
-          ),
-          { status: 202 },
-        );
+        // Id stored before the task is published; the worker stamps `started_at`.
+        const taskId = `${CONNECTION_TASK_PREFIX}${params.id}`;
+        install.verification = {
+          taskId,
+          startedAt: null,
+          finishedAt: null,
+        };
+
+        return HttpResponse.json(taskResource(taskId, "executing", null), {
+          status: 202,
+        });
       },
     ),
 
     http.get<{ taskId: string }>(`${API}/tasks/:taskId`, ({ params }) => {
-      const { connected, error } = fx.connection;
-      if (install && params.taskId.startsWith(CONNECTION_TASK_PREFIX)) {
+      const { connected, error, failedChannelId } = fx.connection;
+      // Only the task whose id still matches may write: a late poll must not
+      // overwrite a newer check (contract, Connection).
+      if (
+        install &&
+        params.taskId.startsWith(CONNECTION_TASK_PREFIX) &&
+        install.verification?.taskId === params.taskId
+      ) {
         install.connected = connected;
-        install.connectionLastCheckedAt = TS;
+        install.connectionLastCheckedAt = CHECK_TS;
+        install.verification = {
+          taskId: params.taskId,
+          startedAt: CHECK_TS,
+          finishedAt: CHECK_TS,
+        };
+        install.workspace.authorizedChannels = (
+          install.workspace.authorizedChannels ?? []
+        ).map(confirmedByThisRun(connected, failedChannelId ?? null));
       }
       return HttpResponse.json(
-        taskResource(params.taskId, "completed", { connected, error }),
+        // `channel` carries the failing channel's id, not an object.
+        taskResource(params.taskId, "completed", {
+          connected,
+          error,
+          channel: failedChannelId ?? null,
+        }),
       );
     }),
 
@@ -307,8 +366,8 @@ export const handlersForSlack = (fx: SlackFixture) => {
     ),
 
     /**
-     * The generic PATCH. The UI submits only `channel_id`; the name is derived
-     * from it here, as the API derives it from Slack (design D6).
+     * The generic PATCH. The write names only `id`; name and privacy are derived
+     * here, as the API derives them from Slack (contract, PATCH).
      */
     http.patch(`${API}/integrations/:id`, async ({ request }) => {
       const body = (await request.json().catch(() => null)) as {
@@ -316,10 +375,9 @@ export const handlersForSlack = (fx: SlackFixture) => {
       } | null;
       const attributes = body?.data?.attributes ?? {};
       const configurationPatch = attributes.configuration as
-        | { channel_id?: string }
+        | { channels?: { id: string }[] }
         | undefined;
-      const channelId = configurationPatch?.channel_id;
-      const channel = fx.channels.find((c) => c.id === channelId);
+      const requested = configurationPatch?.channels;
 
       if (!install) {
         return HttpResponse.json(errorBody("Not found.", 404), { status: 404 });
@@ -338,17 +396,53 @@ export const handlersForSlack = (fx: SlackFixture) => {
           status: 400,
         });
       }
-      // Checked before the id lookup: the picker did offer this channel, and
-      // Slack refused it anyway when the API validated it.
+      // Omitted leaves the set alone; empty clears it (contract, PATCH).
+      if (requested === undefined) {
+        return HttpResponse.json({ data: integrationResource(install) });
+      }
+
+      const channelIds = Array.from(
+        new Set(requested.map((channel) => channel.id)),
+      );
+      const matched = channelIds
+        .map((channelId) =>
+          fx.channels.find((channel) => channel.id === channelId),
+        )
+        .filter((channel) => channel !== undefined);
+
+      // Checked before the id lookup: the picker did offer these channels, and
+      // Slack refused one anyway when the API validated the set.
       if (fx.channelSaveRefusal) return refuse(fx.channelSaveRefusal);
-      if (!channel) {
+      // One unknown id refuses the whole save: the set is validated together.
+      if (matched.length !== channelIds.length) {
         return HttpResponse.json(errorBody(SLACK_UNKNOWN_CHANNEL_DETAIL, 400), {
           status: 400,
         });
       }
 
-      install.workspace.channelId = channel.id;
-      install.workspace.channelName = channel.name;
+      const previous = install.workspace.authorizedChannels ?? [];
+      const confirmedAt = new Map(
+        previous.map((channel) => [channel.id, channel.confirmationSentAt]),
+      );
+      install.workspace.authorizedChannels = matched.map((channel) => ({
+        ...channel,
+        // Retained ids keep their confirmation; new ones start without one.
+        confirmationSentAt: confirmedAt.get(channel.id) ?? null,
+      }));
+
+      // A changed id set resets the connection and verification state, so the
+      // record never claims a check covered a channel it never saw.
+      if (
+        !sameChannelIds(
+          previous.map((channel) => channel.id),
+          channelIds,
+        )
+      ) {
+        install.connected = null;
+        install.connectionLastCheckedAt = null;
+        install.verification = { ...NO_VERIFICATION };
+      }
+
       return HttpResponse.json({ data: integrationResource(install) });
     }),
 
