@@ -2,6 +2,9 @@ from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.organizations.organizations_client import (
     organizations_client,
 )
+from prowler.providers.aws.services.organizations.organizations_service import (
+    ORGANIZATIONS_ACCESS_DENIED_ERROR_CODE,
+)
 
 
 class organizations_delegated_administrators(Check):
@@ -15,8 +18,10 @@ class organizations_delegated_administrators(Check):
         Returns:
             A single report for the organization, or no report when the audited account
             is not part of an active organization. The report is MANUAL when the
-            administrators could not be listed, which no account outside the management
-            account and the delegated administrators is allowed to do.
+            administrators could not be listed, and names the failure unless it was the
+            access denial that every account outside the management account and the
+            delegated administrators gets, which is reported as where to run the scan
+            from instead.
         """
         findings = []
 
@@ -42,7 +47,17 @@ class organizations_delegated_administrators(Check):
                 # The lookup failed, so there is nothing to compare against the trusted
                 # list. Reporting that is a lack of visibility, not a misconfiguration.
                 report.status = "MANUAL"
-                report.status_extended = f"AWS Organization {organizations_client.organization.id} delegated administrators could not be determined; run this check from the organization management account."
+                # Only an access denial is answered by running the scan from another
+                # account. A throttle, a validation error or a transport failure leave the
+                # same sentinel, so naming their code keeps them from being read as a
+                # denial and from being sent the remediation for one.
+                if (
+                    organizations_client.organization.delegated_administrators_error_code
+                    == ORGANIZATIONS_ACCESS_DENIED_ERROR_CODE
+                ):
+                    report.status_extended = f"AWS Organization {organizations_client.organization.id} delegated administrators could not be determined; run this check from the organization management account."
+                else:
+                    report.status_extended = f"AWS Organization {organizations_client.organization.id} delegated administrators could not be determined: {organizations_client.organization.delegated_administrators_error_code}."
                 findings.append(report)
             else:
                 if organizations_client.organization.delegated_administrators:

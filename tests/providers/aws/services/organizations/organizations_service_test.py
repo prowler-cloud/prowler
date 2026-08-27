@@ -411,13 +411,19 @@ class Test_Organizations_Service:
             organizations = Organizations(aws_provider)
 
         assert organizations.organization.delegated_administrators is None
+        assert (
+            organizations.organization.delegated_administrators_error_code
+            == "AccessDeniedException"
+        )
         assert organizations.organization.delegated_service_principals == {}
 
     def test_list_delegated_administrators_throttled(self):
         """A throttle is unreadable, not an organization without administrators.
 
         Only AccessDeniedException used to set the sentinel, so every other modeled
-        error left the empty list in place and read as a determined answer.
+        error left the empty list in place and read as a determined answer. The code is
+        recorded alongside the sentinel because the sentinel alone cannot tell this
+        apart from the access denial that asks the operator to move the scan.
         """
         aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1], create_default_organization=False
@@ -434,6 +440,10 @@ class Test_Organizations_Service:
             organizations = Organizations(aws_provider)
 
         assert organizations.organization.delegated_administrators is None
+        assert (
+            organizations.organization.delegated_administrators_error_code
+            == "TooManyRequestsException"
+        )
 
     def test_list_delegated_administrators_renamed_result_key(self):
         """A renamed result key reads as unknown, not as no administrators.
@@ -462,6 +472,11 @@ class Test_Organizations_Service:
             organizations = Organizations(aws_provider)
 
         assert organizations.organization.delegated_administrators is None
+        # A failure that carries no AWS error code records its exception class, so the
+        # generic handler is still distinguishable from an access denial.
+        assert (
+            organizations.organization.delegated_administrators_error_code == "KeyError"
+        )
 
     def test_describe_organization_without_master_account_id(self):
         """An organization without MasterAccountId is left unset, not defaulted.
