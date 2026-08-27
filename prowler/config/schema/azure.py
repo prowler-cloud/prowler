@@ -25,6 +25,14 @@ class AzureProviderConfig(ProviderConfigBase):
         description="API key for Shodan lookups on Azure public IPs.",
     )
 
+    # --- AKS -------------------------------------------------------------
+    aks_cluster_oldest_version_supported: Annotated[
+        Optional[str], AfterValidator(_validate_dotted_version)
+    ] = Field(
+        default=None,
+        description='Oldest AKS Kubernetes version still considered supported, e.g. "1.34".',
+    )
+
     # --- Defender --------------------------------------------------------
     defender_attack_path_minimal_risk_level: Optional[
         Literal["Low", "Medium", "High", "Critical"]
