@@ -555,10 +555,10 @@ def send_findings_to_jira(
                 error_messages.append(JIRA_GENERIC_SEND_ERROR)
                 continue
 
-            if result:
+            if result.is_confirmed_success:
                 num_tickets_created += 1
             else:
-                error_message = JIRA_GENERIC_SEND_ERROR
+                error_message = result.error_message or JIRA_GENERIC_SEND_ERROR
                 logger.error(error_message)
                 error_messages.append(error_message)
 

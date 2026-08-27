@@ -1,1 +1,1 @@
-`Jira.get_issues_status()` looks up the current status of issues by key in batches, so callers can tell whether a linked issue is still open, closed or gone
+`Jira.get_issues_status()` resolves issue references by immutable ID in batches and returns explicit open, done, moved, missing, forbidden or unknown outcomes without treating missing issues as deleted

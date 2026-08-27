@@ -1,4 +1,5 @@
 from datetime import UTC, datetime
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -18,6 +19,11 @@ from tasks.jobs.integrations import (
     send_findings_to_jira,
     upload_s3_integration,
     upload_security_hub_integration,
+)
+
+CONFIRMED_JIRA_CREATION = SimpleNamespace(
+    is_confirmed_success=True,
+    error_message=None,
 )
 
 
@@ -1678,7 +1684,10 @@ class TestJiraIntegration:
 
         # Mock Jira integration
         mock_jira_integration = MagicMock()
-        mock_jira_integration.send_finding.side_effect = [True, True]  # Both succeed
+        mock_jira_integration.send_finding.side_effect = [
+            CONFIRMED_JIRA_CREATION,
+            CONFIRMED_JIRA_CREATION,
+        ]
         mock_initialize_integration.return_value = mock_jira_integration
 
         # Mock findings with resources
@@ -1811,10 +1820,13 @@ class TestJiraIntegration:
         # Mock Jira integration with mixed results
         mock_jira_integration = MagicMock()
         mock_jira_integration.send_finding.side_effect = [
-            True,
-            False,
-            True,
-        ]  # Second fails
+            CONFIRMED_JIRA_CREATION,
+            SimpleNamespace(
+                is_confirmed_success=False,
+                error_message="Jira issue creation could not be confirmed.",
+            ),
+            CONFIRMED_JIRA_CREATION,
+        ]
         mock_initialize_integration.return_value = mock_jira_integration
 
         # Mock findings (simplified for this test)
@@ -1850,11 +1862,13 @@ class TestJiraIntegration:
         assert result == {
             "created_count": 2,
             "failed_count": 1,
-            "error": "Failed to create Jira issue.",
+            "error": "Jira issue creation could not be confirmed.",
         }
 
         # Verify error was logged for the failed finding
-        mock_logger.error.assert_called_with("Failed to create Jira issue.")
+        mock_logger.error.assert_called_with(
+            "Jira issue creation could not be confirmed."
+        )
 
     @patch("tasks.jobs.integrations.rls_transaction")
     @patch("tasks.jobs.integrations.Finding")
@@ -2083,7 +2097,7 @@ class TestJiraIntegration:
 
         # Mock Jira integration
         mock_jira_integration = MagicMock()
-        mock_jira_integration.send_finding.return_value = True
+        mock_jira_integration.send_finding.return_value = CONFIRMED_JIRA_CREATION
         mock_initialize_integration.return_value = mock_jira_integration
 
         # Mock finding without resources
@@ -2161,7 +2175,7 @@ class TestJiraIntegration:
 
         # Mock Jira integration
         mock_jira_integration = MagicMock()
-        mock_jira_integration.send_finding.return_value = True
+        mock_jira_integration.send_finding.return_value = CONFIRMED_JIRA_CREATION
         mock_initialize_integration.return_value = mock_jira_integration
 
         # Mock finding with minimal/empty check_metadata

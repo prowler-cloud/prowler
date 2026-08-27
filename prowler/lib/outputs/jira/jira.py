@@ -1,6 +1,8 @@
 import base64
+import hashlib
 import os
 import re
+from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
@@ -23,8 +25,6 @@ from prowler.lib.outputs.jira.exceptions.exceptions import (
     JiraGetCloudIDError,
     JiraGetCloudIDNoResourcesError,
     JiraGetCloudIDResponseError,
-    JiraGetIssuesStatusError,
-    JiraGetIssuesStatusResponseError,
     JiraGetProjectsError,
     JiraGetProjectsResponseError,
     JiraInvalidIssueTypeError,
@@ -37,6 +37,16 @@ from prowler.lib.outputs.jira.exceptions.exceptions import (
     JiraRequiredCustomFieldsError,
     JiraSendFindingsResponseError,
     JiraTestConnectionError,
+)
+from prowler.lib.outputs.jira.models import (
+    JiraCreationOutcome,
+    JiraCreationResult,
+    JiraIssueLookupOutcome,
+    JiraIssueReference,
+    JiraIssueSearchMatch,
+    JiraIssueSearchOutcome,
+    JiraIssueSearchResult,
+    JiraIssueStatusResult,
 )
 from prowler.providers.common.models import Connection
 
@@ -386,7 +396,11 @@ class Jira:
     API_TOKEN_URL = "https://api.atlassian.com/oauth/token/accessible-resources"
     REQUEST_TIMEOUT = 90
     ISSUE_STATUS_BATCH_SIZE = 100
-    ISSUE_KEY_REGEX = re.compile(r"^[A-Z][A-Z0-9_]*-\d+$")
+    LABEL_MAX_LENGTH = 255
+    FINDING_LABEL_PREFIX = "prowler-finding"
+    DELIVERY_ATTEMPT_LABEL_PREFIX = "prowler-attempt"
+    ISSUE_KEY_REGEX = re.compile(r"^[A-Z][A-Z0-9_]*-[0-9]+$")
+    ISSUE_ID_REGEX = re.compile(r"^[0-9]+$")
     HEADER_TEMPLATE = {
         "Content-Type": "application/json",
         "X-Force-Accept-Language": "true",
@@ -409,6 +423,7 @@ class Jira:
         self._api_token = api_token
         self._domain = domain
         self._scopes = ["read:jira-user", "read:jira-work", "write:jira-work"]
+        self._validated_destinations: set[tuple[str, str]] = set()
         # If the client mail, API token and site name are present, use basic auth
         if user_mail and api_token and domain:
             self._using_basic_auth = True
@@ -456,7 +471,7 @@ class Jira:
         return f"{site_url.rstrip('/')}/browse/{issue_key}"
 
     @staticmethod
-    def sanitize_label(label: str) -> str:
+    def sanitize_label(label: Optional[str]) -> str:
         """Make a value safe to use as a Jira label.
 
         Jira rejects labels containing whitespace and longer than 255
@@ -473,7 +488,8 @@ class Jira:
         if not label:
             return ""
         cleaned = "".join(ch for ch in str(label) if ch.isprintable() or ch.isspace())
-        return "_".join(cleaned.split())[:255]
+        collapsed = re.sub(r"_+", "_", "_".join(cleaned.split()))
+        return collapsed.strip("_")[: Jira.LABEL_MAX_LENGTH]
 
     @classmethod
     def sanitize_labels(cls, labels: Optional[list[str]]) -> list[str]:
@@ -484,6 +500,206 @@ class Jira:
             if sanitized and sanitized not in result:
                 result.append(sanitized)
         return result
+
+    @classmethod
+    def _build_prefixed_label(cls, prefix: str, raw_value: Optional[str]) -> str:
+        """Build a deterministic Jira label with collision-safe truncation."""
+        if not raw_value:
+            return ""
+        raw_value = str(raw_value)
+        readable_value = cls.sanitize_label(raw_value)
+        if not readable_value:
+            return ""
+        complete_label = f"{prefix}-{readable_value}"
+        if len(complete_label) <= cls.LABEL_MAX_LENGTH:
+            return complete_label
+
+        digest = hashlib.sha256(raw_value.encode("utf-8")).hexdigest()
+        readable_length = cls.LABEL_MAX_LENGTH - len(prefix) - len(digest) - 2
+        readable_prefix = readable_value[:readable_length].rstrip("_")
+        return f"{prefix}-{readable_prefix}-{digest}"
+
+    @classmethod
+    def build_finding_label(cls, finding_uid: Optional[str]) -> str:
+        """Build the stable label used to identify a Prowler finding."""
+        return cls._build_prefixed_label(cls.FINDING_LABEL_PREFIX, finding_uid)
+
+    @classmethod
+    def build_delivery_attempt_label(cls, marker: Optional[str]) -> str:
+        """Build the stable label used to reconcile a delivery attempt."""
+        return cls._build_prefixed_label(cls.DELIVERY_ATTEMPT_LABEL_PREFIX, marker)
+
+    @staticmethod
+    def _retry_after(response: requests.Response) -> Optional[str]:
+        """Return Jira's Retry-After header without parsing or normalizing it."""
+        headers = getattr(response, "headers", None)
+        if not isinstance(headers, Mapping):
+            return None
+        retry_after = headers.get("Retry-After")
+        return str(retry_after) if retry_after is not None else None
+
+    @staticmethod
+    def _response_json(response: requests.Response) -> object:
+        """Decode a Jira response, returning None for invalid JSON."""
+        try:
+            return response.json()
+        except (ValueError, requests.exceptions.JSONDecodeError):
+            return None
+
+    def _issue_identity(
+        self, issue: object
+    ) -> tuple[Optional[str], Optional[str], Optional[str]]:
+        """Return individually validated Jira issue identity fields."""
+        issue = issue if isinstance(issue, dict) else {}
+        issue_id = issue.get("id")
+        issue_key = issue.get("key")
+        if not isinstance(issue_id, str) or not self.ISSUE_ID_REGEX.fullmatch(issue_id):
+            issue_id = None
+        if not isinstance(issue_key, str) or not self.ISSUE_KEY_REGEX.fullmatch(
+            issue_key
+        ):
+            issue_key = None
+        return issue_id, issue_key, self.get_issue_url(issue_key) if issue_key else None
+
+    def _classify_creation_response(
+        self,
+        response: requests.Response,
+        delivery_marker: Optional[str] = None,
+    ) -> JiraCreationResult:
+        """Classify Jira's create-issue response without inferring delivery."""
+        status_code = response.status_code
+        retry_after = self._retry_after(response)
+        response_json = self._response_json(response)
+        response_details = {
+            "delivery_marker": delivery_marker,
+            "http_status": status_code,
+            "retry_after": retry_after,
+        }
+
+        if status_code == 201:
+            if not isinstance(response_json, dict):
+                return JiraCreationResult(
+                    outcome=JiraCreationOutcome.UNCERTAIN,
+                    error_code="malformed_success_response",
+                    error_message="Jira returned an invalid successful creation response.",
+                    **response_details,
+                )
+
+            issue_id, issue_key, issue_url = self._issue_identity(response_json)
+            if not issue_key or not issue_id or not issue_url:
+                missing_fields = [
+                    field
+                    for field, value in zip(
+                        ("key", "id", "url"), (issue_key, issue_id, issue_url)
+                    )
+                    if not value
+                ]
+                return JiraCreationResult(
+                    outcome=JiraCreationOutcome.UNCERTAIN,
+                    issue_key=issue_key,
+                    issue_id=issue_id,
+                    issue_url=issue_url,
+                    error_code="incomplete_success_response",
+                    error_message=(
+                        "Jira confirmed creation without a usable "
+                        f"{', '.join(missing_fields)}."
+                    ),
+                    **response_details,
+                )
+            return JiraCreationResult(
+                outcome=JiraCreationOutcome.CONFIRMED_SUCCESS,
+                issue_key=issue_key,
+                issue_id=issue_id,
+                issue_url=issue_url,
+                **response_details,
+            )
+
+        error_message = _format_jira_issue_creation_error(response_json, status_code)
+        if status_code == 429:
+            outcome = JiraCreationOutcome.RETRYABLE_FAILURE
+            error_code = "rate_limited"
+        elif status_code == 408:
+            outcome = JiraCreationOutcome.UNCERTAIN
+            error_code = "jira_http_408"
+        elif 400 <= status_code < 500:
+            outcome = JiraCreationOutcome.CONFIRMED_REJECTION
+            error_code = f"jira_http_{status_code}"
+        else:
+            outcome = JiraCreationOutcome.UNCERTAIN
+            error_code = f"jira_http_{status_code}"
+        return JiraCreationResult(
+            outcome=outcome,
+            error_code=error_code,
+            error_message=error_message,
+            **response_details,
+        )
+
+    @staticmethod
+    def _creation_transport_result(
+        exception: requests.exceptions.RequestException,
+        delivery_marker: Optional[str],
+    ) -> JiraCreationResult:
+        """Classify create-issue transport failures by delivery certainty."""
+        if isinstance(exception, requests.exceptions.ConnectTimeout):
+            outcome = JiraCreationOutcome.RETRYABLE_FAILURE
+            error_code = "connect_timeout"
+            error_message = "Jira could not be reached before the request was sent."
+        else:
+            outcome = JiraCreationOutcome.UNCERTAIN
+            error_code = "ambiguous_transport_failure"
+            error_message = "Jira did not confirm whether it created the issue."
+        return JiraCreationResult(
+            outcome=outcome,
+            delivery_marker=delivery_marker,
+            error_code=error_code,
+            error_message=error_message,
+        )
+
+    @staticmethod
+    def _destination_validation_result(
+        error: Exception,
+        delivery_marker: Optional[str],
+    ) -> JiraCreationResult:
+        """Classify a catalog failure that happened before issue creation."""
+        errors = (error, getattr(error, "original_exception", None))
+        no_projects = any(isinstance(item, JiraNoProjectsError) for item in errors)
+        http_status = next(
+            (item.http_status for item in errors if hasattr(item, "http_status")), None
+        )
+        retry_after = next(
+            (item.retry_after for item in errors if hasattr(item, "retry_after")), None
+        )
+
+        if no_projects:
+            outcome = JiraCreationOutcome.CONFIRMED_REJECTION
+            error_code = "invalid_project"
+            error_message = "The Jira project key is invalid."
+        elif http_status is not None and 400 <= http_status < 500:
+            if http_status in (408, 429):
+                outcome = JiraCreationOutcome.RETRYABLE_FAILURE
+                error_code = "destination_temporarily_unavailable"
+            else:
+                outcome = JiraCreationOutcome.CONFIRMED_REJECTION
+                error_code = (
+                    "invalid_credentials"
+                    if http_status in (401, 403)
+                    else "destination_rejected"
+                )
+            error_message = "The Jira destination could not be validated."
+        else:
+            outcome = JiraCreationOutcome.RETRYABLE_FAILURE
+            error_code = "destination_validation_failed"
+            error_message = (
+                "The Jira destination could not be validated before sending."
+            )
+        return JiraCreationResult(
+            outcome=outcome,
+            delivery_marker=delivery_marker,
+            http_status=http_status,
+            retry_after=retry_after,
+            error_code=error_code,
+            error_message=error_message,
+        )
 
     @staticmethod
     def _build_code_block_content(code_value: str) -> Optional[Dict]:
@@ -1019,10 +1235,13 @@ class Jira:
                 logger.error(
                     f"Failed to get projects: {response.status_code} - {response.text}"
                 )
-                raise JiraGetProjectsResponseError(
+                response_error = JiraGetProjectsResponseError(
                     message="Failed to get projects from Jira",
                     file=os.path.basename(__file__),
                 )
+                response_error.http_status = response.status_code
+                response_error.retry_after = self._retry_after(response)
+                raise response_error
         except JiraNoProjectsError as no_projects_error:
             raise no_projects_error
         except JiraRefreshTokenError as refresh_error:
@@ -1034,6 +1253,7 @@ class Jira:
             raise JiraGetProjectsError(
                 message="Failed to get projects from Jira",
                 file=os.path.basename(__file__),
+                original_exception=e,
             )
 
     def get_available_issue_types(self, project_key: str = None) -> list[str]:
@@ -1083,9 +1303,12 @@ class Jira:
             else:
                 response_error = f"Failed to get available issue types: {response.status_code} - {response.text}"
                 logger.error(response_error)
-                raise JiraGetAvailableIssueTypesResponseError(
+                response_error = JiraGetAvailableIssueTypesResponseError(
                     message=response_error, file=os.path.basename(__file__)
                 )
+                response_error.http_status = response.status_code
+                response_error.retry_after = self._retry_after(response)
+                raise response_error
         except JiraRefreshTokenError as refresh_error:
             raise refresh_error
         except JiraRefreshTokenResponseError as response_error:
@@ -1095,6 +1318,7 @@ class Jira:
             raise JiraGetAvailableIssueTypesError(
                 message="Failed to get available issue types",
                 file=os.path.basename(__file__),
+                original_exception=e,
             )
 
     def get_metadata(self) -> dict:
@@ -2248,99 +2472,363 @@ class Jira:
 
         return {"type": "doc", "version": 1, "content": content}
 
-    def get_issues_status(self, issue_keys: list[str]) -> Dict[str, Dict[str, str]]:
-        """Get the current status of Jira issues by key.
+    @staticmethod
+    def _unknown_issue_status(
+        reference: JiraIssueReference,
+        *,
+        http_status: Optional[int] = None,
+        retry_after: Optional[str] = None,
+        error_code: str = "unknown",
+        error_message: str = "Jira could not confirm the issue status.",
+    ) -> JiraIssueStatusResult:
+        """Build a safe unknown status without implying deletion."""
+        return JiraIssueStatusResult(
+            reference=reference,
+            outcome=JiraIssueLookupOutcome.UNKNOWN,
+            http_status=http_status,
+            retry_after=retry_after,
+            error_code=error_code,
+            error_message=error_message,
+        )
 
-        Uses the bulk fetch endpoint in batches of ``ISSUE_STATUS_BATCH_SIZE``
-        keys, so checking hundreds of linked issues costs a handful of calls.
-        Keys that Jira does not return (deleted, moved or not visible to the
-        integration user) are simply absent from the result, which lets callers
-        treat them as no longer tracked. Because of that, the lookup is
-        all-or-nothing: if any batch fails the whole call raises and nothing is
-        returned, so a transient error can never make a still-existing issue
-        look deleted.
+    def _set_unknown_issue_statuses(
+        self,
+        results: dict[JiraIssueReference, JiraIssueStatusResult],
+        references: list[JiraIssueReference],
+        **details,
+    ) -> None:
+        """Assign the same unknown observation to a group of references."""
+        for reference in references:
+            results[reference] = self._unknown_issue_status(reference, **details)
 
-        Args:
-            - issue_keys: Issue keys such as ``["SEC-1", "SEC-2"]``. Values that do
-              not look like an issue key are ignored.
+    def _resolved_issue_status(
+        self,
+        reference: JiraIssueReference,
+        issue: dict,
+        retry_after: Optional[str],
+    ) -> JiraIssueStatusResult:
+        """Classify one issue returned by Jira's bulk fetch endpoint."""
+        malformed = {
+            "http_status": 200,
+            "retry_after": retry_after,
+            "error_code": "malformed_issue",
+            "error_message": "Jira returned malformed issue data.",
+        }
+        issue_id = str(issue.get("id"))
+        issue_key = issue.get("key")
+        if not isinstance(issue_key, str) or not self.ISSUE_KEY_REGEX.fullmatch(
+            issue_key
+        ):
+            return self._unknown_issue_status(reference, **malformed)
 
-        Returns:
-            - dict: ``{key: {"id": issue_id, "status": status_name,
-              "status_category": category_key}}`` where ``status_category`` is
-              one of Jira's ``new``, ``indeterminate`` or ``done``.
+        fields = issue.get("fields")
+        status = fields.get("status") if isinstance(fields, dict) else None
+        category = status.get("statusCategory") if isinstance(status, dict) else None
+        category_key = category.get("key") if isinstance(category, dict) else None
+        status_name = status.get("name") if isinstance(status, dict) else None
+        if issue_key != reference.issue_key:
+            outcome = JiraIssueLookupOutcome.MOVED
+        else:
+            outcome = {
+                "new": JiraIssueLookupOutcome.OPEN,
+                "indeterminate": JiraIssueLookupOutcome.OPEN,
+                "done": JiraIssueLookupOutcome.DONE,
+            }.get(category_key)
+            if not outcome or not isinstance(status_name, str):
+                return self._unknown_issue_status(reference, **malformed)
 
-        Raises:
-            - JiraNoTokenError: Failed to get an access token
-            - JiraGetIssuesStatusResponseError: Jira returned a non-200 response
-            - JiraGetIssuesStatusError: Failed to get the issues status
-        """
-        valid_keys: list[str] = []
-        seen_keys: set[str] = set()
-        for key in issue_keys or []:
+        return JiraIssueStatusResult(
+            reference=reference,
+            outcome=outcome,
+            current_issue_id=issue_id,
+            current_issue_key=issue_key,
+            current_issue_url=self.get_issue_url(issue_key),
+            status=status_name if isinstance(status_name, str) else None,
+            status_category=category_key if isinstance(category_key, str) else None,
+            http_status=200,
+            retry_after=retry_after,
+        )
+
+    def get_issues_status(
+        self, issue_references: list[JiraIssueReference]
+    ) -> list[JiraIssueStatusResult]:
+        """Resolve unique Jira references by ID without inferring deletion."""
+        references = list(dict.fromkeys(issue_references or []))
+        if not references:
+            return []
+
+        results: dict[JiraIssueReference, JiraIssueStatusResult] = {}
+        valid_references: list[JiraIssueReference] = []
+        for reference in references:
             if (
-                key
-                and self.ISSUE_KEY_REGEX.fullmatch(str(key))
-                and key not in seen_keys
+                not reference.issue_id
+                or not isinstance(reference.issue_id, str)
+                or not self.ISSUE_ID_REGEX.fullmatch(reference.issue_id)
+                or not isinstance(reference.issue_key, str)
+                or not self.ISSUE_KEY_REGEX.fullmatch(reference.issue_key)
             ):
-                seen_keys.add(key)
-                valid_keys.append(key)
-        if not valid_keys:
-            return {}
+                results[reference] = self._unknown_issue_status(
+                    reference,
+                    error_code="invalid_reference",
+                    error_message="The stored Jira issue reference is invalid.",
+                )
+            else:
+                valid_references.append(reference)
 
+        if valid_references:
+            try:
+                access_token = self.get_access_token()
+            except (JiraRefreshTokenError, JiraRefreshTokenResponseError):
+                access_token = None
+            if not access_token:
+                self._set_unknown_issue_statuses(
+                    results,
+                    valid_references,
+                    error_code="authentication_failed",
+                    error_message="Jira authentication failed during status lookup.",
+                )
+                return [results[reference] for reference in references]
+
+            headers = self.get_headers(access_token, content_type_json=True)
+            for start in range(0, len(valid_references), self.ISSUE_STATUS_BATCH_SIZE):
+                batch = valid_references[start : start + self.ISSUE_STATUS_BATCH_SIZE]
+                try:
+                    response = requests.post(
+                        f"https://api.atlassian.com/ex/jira/{self.cloud_id}/rest/api/3/issue/bulkfetch",
+                        json={
+                            "issueIdsOrKeys": [
+                                reference.issue_id for reference in batch
+                            ],
+                            "fields": ["status"],
+                        },
+                        headers=headers,
+                        timeout=self.REQUEST_TIMEOUT,
+                    )
+                except requests.exceptions.RequestException:
+                    self._set_unknown_issue_statuses(
+                        results,
+                        batch,
+                        error_code="transport_failure",
+                        error_message="Jira status lookup failed in transit.",
+                    )
+                    continue
+
+                retry_after = self._retry_after(response)
+                if response.status_code != 200:
+                    self._set_unknown_issue_statuses(
+                        results,
+                        batch,
+                        http_status=response.status_code,
+                        retry_after=retry_after,
+                        error_code=f"jira_http_{response.status_code}",
+                    )
+                    continue
+
+                response_json = self._response_json(response)
+                if not isinstance(response_json, dict) or not isinstance(
+                    response_json.get("issues", []), list
+                ):
+                    self._set_unknown_issue_statuses(
+                        results,
+                        batch,
+                        http_status=200,
+                        retry_after=retry_after,
+                        error_code="malformed_response",
+                        error_message="Jira returned a malformed status response.",
+                    )
+                    continue
+
+                references_by_id: dict[str, list[JiraIssueReference]] = {}
+                for reference in batch:
+                    references_by_id.setdefault(reference.issue_id, []).append(
+                        reference
+                    )
+
+                for issue in response_json.get("issues", []):
+                    if not isinstance(issue, dict):
+                        continue
+                    current_issue_id = issue.get("id")
+                    matching_references = references_by_id.get(
+                        str(current_issue_id), []
+                    )
+                    if not matching_references:
+                        continue
+                    for reference in matching_references:
+                        results[reference] = self._resolved_issue_status(
+                            reference, issue, retry_after
+                        )
+
+                issue_errors = response_json.get("issueErrors", [])
+                if isinstance(issue_errors, list):
+                    for issue_error in issue_errors:
+                        if not isinstance(issue_error, dict):
+                            continue
+                        error_reference = issue_error.get(
+                            "issueIdOrKey",
+                            issue_error.get("issueId", issue_error.get("id")),
+                        )
+                        matching_references = references_by_id.get(
+                            str(error_reference), []
+                        )
+                        error_status = issue_error.get(
+                            "statusCode",
+                            issue_error.get("status", issue_error.get("errorCode")),
+                        )
+                        try:
+                            error_status = int(error_status)
+                        except (TypeError, ValueError):
+                            error_status = None
+                        outcome = {
+                            403: JiraIssueLookupOutcome.FORBIDDEN,
+                            404: JiraIssueLookupOutcome.MISSING,
+                        }.get(error_status)
+                        if outcome:
+                            for reference in matching_references:
+                                results[reference] = JiraIssueStatusResult(
+                                    reference=reference,
+                                    outcome=outcome,
+                                    http_status=error_status,
+                                    retry_after=retry_after,
+                                    error_code=f"jira_http_{error_status}",
+                                    error_message="Jira could not return the issue.",
+                                )
+
+                for reference in batch:
+                    if reference not in results:
+                        results[reference] = self._unknown_issue_status(
+                            reference,
+                            http_status=200,
+                            retry_after=retry_after,
+                            error_code="omitted_issue",
+                            error_message="Jira omitted the issue from its response.",
+                        )
+
+        return [results[reference] for reference in references]
+
+    @staticmethod
+    def _escape_jql_string(value: str) -> str:
+        """Escape a string used inside a quoted JQL value."""
+        return value.replace("\\", "\\\\").replace('"', '\\"')
+
+    def search_issues_by_delivery_attempt(
+        self, delivery_attempt_marker: Optional[str]
+    ) -> JiraIssueSearchResult:
+        """Search Jira by a caller-owned delivery marker."""
+        matches: list[JiraIssueSearchMatch] = []
+
+        def result(
+            outcome: JiraIssueSearchOutcome,
+            *,
+            error_code: Optional[str] = None,
+            error_message: Optional[str] = None,
+            response: Optional[requests.Response] = None,
+        ) -> JiraIssueSearchResult:
+            return JiraIssueSearchResult(
+                outcome=outcome,
+                matches=tuple(matches),
+                http_status=getattr(response, "status_code", None),
+                retry_after=(
+                    self._retry_after(response) if response is not None else None
+                ),
+                error_code=error_code,
+                error_message=error_message,
+            )
+
+        attempt_label = self.build_delivery_attempt_label(delivery_attempt_marker)
+        if not attempt_label:
+            return result(
+                JiraIssueSearchOutcome.UNKNOWN,
+                error_code="invalid_delivery_marker",
+                error_message="The Jira delivery marker is empty.",
+            )
         try:
             access_token = self.get_access_token()
-            if not access_token:
-                raise JiraNoTokenError(
-                    message="No token was found",
-                    file=os.path.basename(__file__),
-                )
-            headers = self.get_headers(access_token, content_type_json=True)
+        except (JiraRefreshTokenError, JiraRefreshTokenResponseError):
+            access_token = None
+        if not access_token:
+            return result(
+                JiraIssueSearchOutcome.UNKNOWN,
+                error_code="authentication_failed",
+                error_message="Jira authentication failed during marker lookup.",
+            )
 
-            statuses: Dict[str, Dict[str, str]] = {}
-            for start in range(0, len(valid_keys), self.ISSUE_STATUS_BATCH_SIZE):
-                batch = valid_keys[start : start + self.ISSUE_STATUS_BATCH_SIZE]
+        headers = self.get_headers(access_token, content_type_json=True)
+        payload = {
+            "jql": f'labels = "{self._escape_jql_string(attempt_label)}"',
+            "fields": ["key"],
+            "maxResults": 100,
+        }
+        seen_matches: set[tuple[str, str]] = set()
+        while True:
+            try:
                 response = requests.post(
-                    f"https://api.atlassian.com/ex/jira/{self.cloud_id}/rest/api/3/issue/bulkfetch",
-                    json={"issueIdsOrKeys": batch, "fields": ["status"]},
+                    f"https://api.atlassian.com/ex/jira/{self.cloud_id}/rest/api/3/search/jql",
+                    json=payload,
                     headers=headers,
                     timeout=self.REQUEST_TIMEOUT,
                 )
-                if response.status_code != 200:
-                    response_error = f"Failed to get issues status: {response.status_code} - {response.text}"
-                    logger.error(response_error)
-                    raise JiraGetIssuesStatusResponseError(
-                        message=response_error, file=os.path.basename(__file__)
+            except requests.exceptions.RequestException:
+                return result(
+                    JiraIssueSearchOutcome.RETRYABLE_FAILURE,
+                    error_code="transport_failure",
+                    error_message="Jira marker lookup failed in transit.",
+                )
+
+            if response.status_code != 200:
+                retryable = response.status_code == 429 or response.status_code >= 500
+                return result(
+                    (
+                        JiraIssueSearchOutcome.RETRYABLE_FAILURE
+                        if retryable
+                        else JiraIssueSearchOutcome.UNKNOWN
+                    ),
+                    error_code=f"jira_http_{response.status_code}",
+                    error_message="Jira marker lookup failed.",
+                    response=response,
+                )
+
+            response_json = self._response_json(response)
+            if not isinstance(response_json, dict) or not isinstance(
+                response_json.get("issues"), list
+            ):
+                return result(
+                    JiraIssueSearchOutcome.UNKNOWN,
+                    error_code="malformed_response",
+                    error_message="Jira returned a malformed marker lookup response.",
+                    response=response,
+                )
+
+            for issue in response_json["issues"]:
+                issue_id, issue_key, issue_url = self._issue_identity(issue)
+                if not issue_id or not issue_key or not issue_url:
+                    return result(
+                        JiraIssueSearchOutcome.UNKNOWN,
+                        error_code="malformed_issue",
+                        error_message="Jira returned malformed marker lookup data.",
+                        response=response,
                     )
-                for issue in response.json().get("issues", []):
-                    status = (issue.get("fields") or {}).get("status") or {}
-                    statuses[issue.get("key")] = {
-                        "id": issue.get("id"),
-                        "status": status.get("name", ""),
-                        "status_category": (status.get("statusCategory") or {}).get(
-                            "key", ""
-                        ),
-                    }
-            return statuses
-        except (
-            JiraNoTokenError,
-            JiraRefreshTokenError,
-            JiraRefreshTokenResponseError,
-            JiraGetIssuesStatusResponseError,
-        ) as error:
-            raise error
-        except Exception as e:
-            error_message = f"Failed to get issues status from Jira: {e}"
-            logger.error(error_message)
-            raise JiraGetIssuesStatusError(
-                message=error_message, file=os.path.basename(__file__)
-            )
+                identity = (issue_id, issue_key)
+                if identity not in seen_matches:
+                    seen_matches.add(identity)
+                    matches.append(
+                        JiraIssueSearchMatch(
+                            issue_id=issue_id,
+                            issue_key=issue_key,
+                            issue_url=issue_url,
+                        )
+                    )
+
+            next_page_token = response_json.get("nextPageToken")
+            if not next_page_token:
+                return result(JiraIssueSearchOutcome.SUCCESS, response=response)
+            payload["nextPageToken"] = next_page_token
 
     def send_findings(
         self,
         findings: list[Finding] = None,
         project_key: str = None,
         issue_type: str = None,
-        issue_labels: list[str] = None,
+        issue_labels: Optional[list[str]] = None,
         finding_url: str = None,
         tenant_info: str = None,
     ):
@@ -2451,25 +2939,25 @@ class Jira:
                     timeout=self.REQUEST_TIMEOUT,
                 )
 
-                if response.status_code != 201:
-                    try:
-                        response_json = response.json()
-                    except (ValueError, requests.exceptions.JSONDecodeError):
-                        response_error = f"Failed to send finding: {response.status_code} - {response.text}"
-                        logger.error(response_error)
-                        raise JiraSendFindingsResponseError(
-                            message=response_error, file=os.path.basename(__file__)
-                        )
+                creation_result = self._classify_creation_response(response)
+                if not creation_result.is_confirmed_success:
+                    response_json = self._response_json(response) or {}
 
                     # Check if the error is due to required custom fields
-                    if response.status_code == 400 and "errors" in response_json:
+                    if (
+                        response.status_code == 400
+                        and isinstance(response_json, dict)
+                        and "errors" in response_json
+                    ):
                         errors = response_json.get("errors", {})
                         # Look for custom field errors (fields starting with "customfield_")
-                        custom_field_errors = {
-                            k: v
-                            for k, v in errors.items()
-                            if k.startswith("customfield_")
-                        }
+                        custom_field_errors = {}
+                        if isinstance(errors, dict):
+                            custom_field_errors = {
+                                k: v
+                                for k, v in errors.items()
+                                if k.startswith("customfield_")
+                            }
                         if custom_field_errors:
                             custom_fields_formatted = ", ".join(
                                 [
@@ -2482,19 +2970,19 @@ class Jira:
                                 file=os.path.basename(__file__),
                             )
 
-                    response_error = f"Failed to send finding: {response.status_code} - {response_json}"
+                    response_error = (
+                        creation_result.error_message
+                        or "Jira did not confirm issue creation."
+                    )
                     logger.error(response_error)
                     raise JiraSendFindingsResponseError(
                         message=response_error, file=os.path.basename(__file__)
                     )
                 else:
-                    try:
-                        response_json = response.json()
-                        logger.info(f"Finding sent successfully: {response_json}")
-                    except (ValueError, requests.exceptions.JSONDecodeError):
-                        logger.info(
-                            f"Finding sent successfully: Status {response.status_code}"
-                        )
+                    logger.info(
+                        "Finding sent successfully: %s",
+                        creation_result.issue_key,
+                    )
         except JiraRequiredCustomFieldsError as custom_fields_error:
             raise custom_fields_error
         except JiraRefreshTokenError as refresh_error:
@@ -2532,7 +3020,8 @@ class Jira:
         compliance: dict = "",
         project_key: str = "",
         issue_type: str = "",
-        issue_labels: list[str] = "",
+        issue_labels: Optional[list[str]] = None,
+        delivery_attempt_marker: Optional[str] = None,
         finding_url: str = "",
         tenant_info: str = "",
         affected_failing_resources: int = 0,
@@ -2543,7 +3032,7 @@ class Jira:
         failing_for: str = "",
         finding_group_url: str = "",
         finding_group_link_text: str = "",
-    ) -> Optional[dict]:
+    ) -> JiraCreationResult:
         """
         Send the finding to Jira
 
@@ -2571,6 +3060,8 @@ class Jira:
             - project_key: The project key
             - issue_type: The issue type
             - issue_labels: The issue labels
+            - delivery_attempt_marker: Caller-owned marker used to reconcile an
+              ambiguous delivery attempt
             - finding_url: The finding URL
             - tenant_info: The tenant info
             - affected_failing_resources: The number of affected failing resources
@@ -2583,45 +3074,43 @@ class Jira:
             - finding_group_url: The finding group URL
             - finding_group_link_text: The link text for the finding group URL
 
-        Raises:
-            - JiraRefreshTokenError: Failed to refresh the access token
-            - JiraRefreshTokenResponseError: Failed to refresh the access token, response code did not match 200
-            - JiraNoTokenError: Failed to get an access token
-            - JiraCreateIssueError: Failed to create an issue in Jira
-            - JiraSendFindingsResponseError: Failed to send the finding to Jira
-            - JiraRequiredCustomFieldsError: Jira project requires custom fields that are not supported
-
         Returns:
-            - A dict with the created issue ``key``, ``id`` and browse ``url``
-              (``url`` is None when the site URL is unknown) if the finding was
-              sent successfully
-            - None if the finding was not sent successfully
+            - A typed creation result. Only ``confirmed_success`` proves that
+              Jira created the issue.
         """
         try:
             access_token = self.get_access_token()
 
             if not access_token:
-                raise JiraNoTokenError(
-                    message="No token was found",
-                    file=os.path.basename(__file__),
+                return JiraCreationResult(
+                    outcome=JiraCreationOutcome.CONFIRMED_REJECTION,
+                    delivery_marker=delivery_attempt_marker,
+                    error_code="missing_credentials",
+                    error_message="Jira credentials are unavailable.",
                 )
 
-            projects = self.get_projects()
+            destination = (project_key, issue_type)
+            if destination not in self._validated_destinations:
+                projects = self.get_projects()
+                if project_key not in projects:
+                    logger.error("The project key is invalid")
+                    return JiraCreationResult(
+                        outcome=JiraCreationOutcome.CONFIRMED_REJECTION,
+                        delivery_marker=delivery_attempt_marker,
+                        error_code="invalid_project",
+                        error_message="The Jira project key is invalid.",
+                    )
 
-            if project_key not in projects:
-                logger.error("The project key is invalid")
-                raise JiraInvalidProjectKeyError(
-                    message="The project key is invalid",
-                    file=os.path.basename(__file__),
-                )
-
-            available_issue_types = self.get_available_issue_types(project_key)
-
-            if issue_type not in available_issue_types:
-                logger.error("The issue type is invalid")
-                raise JiraInvalidIssueTypeError(
-                    message="The issue type is invalid", file=os.path.basename(__file__)
-                )
+                available_issue_types = self.get_available_issue_types(project_key)
+                if issue_type not in available_issue_types:
+                    logger.error("The issue type is invalid")
+                    return JiraCreationResult(
+                        outcome=JiraCreationOutcome.CONFIRMED_REJECTION,
+                        delivery_marker=delivery_attempt_marker,
+                        error_code="invalid_issue_type",
+                        error_message="The Jira issue type is invalid.",
+                    )
+                self._validated_destinations.add(destination)
 
             headers = self.get_headers(access_token, content_type_json=True)
 
@@ -2696,95 +3185,36 @@ class Jira:
                     "issuetype": {"name": issue_type},
                 }
             }
+            issue_labels = list(issue_labels or [])
+            attempt_label = self.build_delivery_attempt_label(delivery_attempt_marker)
+            if attempt_label:
+                issue_labels.append(attempt_label)
             issue_labels = self.sanitize_labels(issue_labels)
             if issue_labels:
                 payload["fields"]["labels"] = issue_labels
 
-            response = requests.post(
-                f"https://api.atlassian.com/ex/jira/{self.cloud_id}/rest/api/3/issue",
-                json=payload,
-                headers=headers,
-                timeout=self.REQUEST_TIMEOUT,
+            try:
+                response = requests.post(
+                    f"https://api.atlassian.com/ex/jira/{self.cloud_id}/rest/api/3/issue",
+                    json=payload,
+                    headers=headers,
+                    timeout=self.REQUEST_TIMEOUT,
+                )
+            except requests.exceptions.RequestException as error:
+                return self._creation_transport_result(error, delivery_attempt_marker)
+            return self._classify_creation_response(response, delivery_attempt_marker)
+        except (JiraRefreshTokenError, JiraRefreshTokenResponseError):
+            return JiraCreationResult(
+                outcome=JiraCreationOutcome.RETRYABLE_FAILURE,
+                delivery_marker=delivery_attempt_marker,
+                error_code="authentication_refresh_failed",
+                error_message="Jira authentication could not be refreshed before sending.",
             )
-
-            if response.status_code != 201:
-                try:
-                    response_json = response.json()
-                except (ValueError, requests.exceptions.JSONDecodeError):
-                    response_error = _format_jira_issue_creation_error(
-                        {}, response.status_code
-                    )
-                    logger.error(response_error)
-                    raise JiraSendFindingsResponseError(
-                        message=response_error, file=os.path.basename(__file__)
-                    )
-
-                # Check if the error is due to required custom fields
-                if (
-                    response.status_code == 400
-                    and isinstance(response_json, dict)
-                    and "errors" in response_json
-                ):
-                    errors = response_json.get("errors", {})
-                    # Look for custom field errors (fields starting with "customfield_")
-                    custom_field_errors = {}
-                    if isinstance(errors, dict):
-                        custom_field_errors = {
-                            k: v
-                            for k, v in errors.items()
-                            if k.startswith("customfield_")
-                        }
-                    if custom_field_errors:
-                        custom_fields_formatted = ", ".join(
-                            [f"'{k}': '{v}'" for k, v in custom_field_errors.items()]
-                        )
-                        raise JiraRequiredCustomFieldsError(
-                            message=f"Jira project requires custom fields that are not supported: {custom_fields_formatted}",
-                            file=os.path.basename(__file__),
-                        )
-
-                response_error = _format_jira_issue_creation_error(
-                    response_json, response.status_code
-                )
-                logger.error(response_error)
-                raise JiraSendFindingsResponseError(
-                    message=response_error, file=os.path.basename(__file__)
-                )
-            else:
-                try:
-                    response_json = response.json()
-                    logger.info(f"Finding sent successfully: {response_json}")
-                except (ValueError, requests.exceptions.JSONDecodeError):
-                    response_json = {}
-                    logger.info(
-                        f"Finding sent successfully: Status {response.status_code}"
-                    )
-                issue_key = (
-                    response_json.get("key")
-                    if isinstance(response_json, dict)
-                    else None
-                )
-                issue_id = (
-                    response_json.get("id") if isinstance(response_json, dict) else None
-                )
-                return {
-                    "key": issue_key,
-                    "id": issue_id,
-                    "url": self.get_issue_url(issue_key),
-                }
-        except JiraRequiredCustomFieldsError as custom_fields_error:
-            logger.error(f"Custom fields error: {custom_fields_error}")
-            raise custom_fields_error
-        except JiraSendFindingsResponseError as response_error:
-            logger.error(f"Jira response error: {response_error}")
-            raise response_error
-        except JiraRefreshTokenError as refresh_error:
-            logger.error(f"Token refresh error: {refresh_error}")
-            raise refresh_error
-        except JiraRefreshTokenResponseError as response_error:
-            raise response_error
-        except JiraNoTokenError as no_token_error:
-            raise no_token_error
-        except Exception as e:
-            logger.error(f"Failed to send finding: {e}")
-            return None
+        except (
+            JiraNoProjectsError,
+            JiraGetProjectsError,
+            JiraGetProjectsResponseError,
+            JiraGetAvailableIssueTypesError,
+            JiraGetAvailableIssueTypesResponseError,
+        ) as error:
+            return self._destination_validation_result(error, delivery_attempt_marker)
