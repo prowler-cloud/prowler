@@ -38,6 +38,9 @@ prod_variant_name = "Variant1"
 test_domain_name = "test-domain"
 test_domain_id = "d-testdomain123"
 test_domain_arn = f"arn:aws:sagemaker:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:domain/{test_domain_id}"
+test_domain_kms_key_id = (
+    f"arn:aws:kms:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:key/test-domain-key"
+)
 test_sso_instance_id = "app-test-instance-id"
 test_sso_application_arn = (
     f"arn:aws:sso::{AWS_ACCOUNT_NUMBER}:application/sagemaker/apl-test"
@@ -174,6 +177,7 @@ def mock_make_api_call(self, operation_name, kwarg):
             "AuthMode": "SSO",
             "SingleSignOnManagedApplicationInstanceId": test_sso_instance_id,
             "SingleSignOnApplicationArn": test_sso_application_arn,
+            "KmsKeyId": test_domain_kms_key_id,
         }
 
     return make_api_call(self, operation_name, kwarg)
@@ -350,6 +354,8 @@ class Test_SageMaker_Service:
             sagemaker.sagemaker_domains[0].single_sign_on_application_arn
             == test_sso_application_arn
         )
+        assert sagemaker.sagemaker_domains[0].kms_key_id == test_domain_kms_key_id
+        assert sagemaker.sagemaker_domains[0].detail_fetch_error is None
 
     # Test SageMaker _list_tags_for_resource
     def test_list_tags_for_resource_calls_client(self):

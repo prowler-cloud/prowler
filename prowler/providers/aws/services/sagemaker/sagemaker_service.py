@@ -451,7 +451,9 @@ class SageMaker(AWSService):
             domain.single_sign_on_application_arn = describe_domain.get(
                 "SingleSignOnApplicationArn"
             )
+            domain.kms_key_id = describe_domain.get("KmsKeyId")
         except Exception as error:
+            domain.detail_fetch_error = error.__class__.__name__
             logger.error(
                 f"{domain.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
@@ -617,6 +619,13 @@ class Domain(BaseModel):
     auth_mode: Optional[str] = None
     single_sign_on_managed_application_instance_id: Optional[str] = None
     single_sign_on_application_arn: Optional[str] = None
+    kms_key_id: Optional[str] = None
+    # Populated by _describe_domain on API failure. Distinguishes "domain uses
+    # the AWS managed key" (None + no error) from "domain details could not be
+    # described" (None + error class name). Checks that make security
+    # assertions from the domain details should emit MANUAL when this is set,
+    # rather than reporting a FAIL they cannot substantiate.
+    detail_fetch_error: Optional[str] = None
     tags: Optional[list] = []
 
 
