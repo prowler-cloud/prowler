@@ -1,8 +1,9 @@
 /**
  * Browser-mode tests for the Slack integration page (`/integrations/slack`),
  * driven through `SlackIntegrationHarness`. MSW answers from handlers derived
- * from the API contract in `design.md`. The OAuth callback is its own route,
- * covered in `slack-callback-page.integration.test.tsx`.
+ * from the API contract in `design.md`. The OAuth callback is a Route Handler,
+ * covered in `callback/route.test.ts`; the notice its redirect leaves on this
+ * page is covered in `slack-connect-notice.integration.test.tsx`.
  */
 
 import { describe, expect } from "vitest";
@@ -38,6 +39,7 @@ import {
   unreadableCheckTimeSlackFixture,
   unreportedRevocationSlackFixture,
 } from "@/__tests__/msw/handlers/slack.fixtures";
+import { exchangeSlackOAuthCode } from "@/actions/integrations/slack";
 
 import {
   CONNECTION_OUTCOME,
@@ -831,12 +833,15 @@ describe("authorizing destination channels", () => {
     await harness.mount();
     expect(harness.connectionCheckHint()).toMatch(/nothing is posted/);
 
-    // When — the same workspace is approved again.
-    await harness.mountCallback({
+    // When — the same workspace is approved again. The exchange is the
+    // callback route's doing (covered in `callback/route.test.ts`); here it
+    // runs directly against the same wired double, whose state the next
+    // visit reads back.
+    const exchanged = await exchangeSlackOAuthCode({
       code: SLACK_OAUTH_CODE,
       state: SLACK_OAUTH_STATE,
     });
-    expect(await harness.completedInstall()).toBe(true);
+    expect("integration" in exchanged).toBe(true);
     await harness.revisit();
 
     // Then — a same-workspace reinstall keeps the channels and resets every

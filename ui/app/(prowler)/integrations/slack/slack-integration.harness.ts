@@ -15,7 +15,6 @@ import type { SlackFixture } from "@/__tests__/msw/handlers/slack.fixtures";
 import { worker } from "@/__tests__/msw/worker";
 import { render } from "@/__tests__/render-browser";
 import { setSlackAuthorizedChannels } from "@/actions/integrations/slack";
-import { SlackCallback } from "@/components/integrations/slack/slack-callback";
 
 import { IntegrationsContent } from "../integrations-content";
 
@@ -52,13 +51,6 @@ const REVOCATION_NOTICE = /revocation/i;
 
 /** The alert shown when Slack has stopped accepting the credential. */
 const REVOKED_CREDENTIAL_NOTICE = /no longer accepts Prowler's access/;
-
-interface CallbackParams {
-  code?: string;
-  state?: string;
-  /** Slack's own refusal code, e.g. `access_denied`. */
-  error?: string;
-}
 
 /** What a picker search leaves on offer. */
 interface ChannelSearch {
@@ -129,22 +121,27 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     await rendered.rerender(await SlackIntegrationContent());
   }
 
-  async mountCallback({ code, state, error }: CallbackParams): Promise<void> {
+  /**
+   * Open the integration page the way the OAuth callback route's redirect
+   * does: with the outcome it wrote in the query string. The route handler
+   * itself cannot run in this lane, so its side of the contract is covered by
+   * `callback/route.test.ts`.
+   */
+  async mountAfterReturnFromSlack(
+    params: Record<string, string>,
+  ): Promise<void> {
     // Unmount first, or two copies of the page answer every query.
     (await this.mounted)?.unmount();
-    const params = new URLSearchParams();
-    if (code) params.set("code", code);
-    if (state) params.set("state", state);
-    if (error) params.set("error", error);
     window.history.replaceState(
       null,
       "",
-      `/integrations/slack/callback?${params.toString()}`,
+      `/integrations/slack?${new URLSearchParams(params).toString()}`,
     );
     this.wireHandlers();
 
-    // Held so the `revisit()` that follows a reinstall can take it down first.
-    this.mounted = render(createElement(SlackCallback));
+    const readsBefore = this.channelListCallCount;
+    this.mounted = render(await SlackIntegrationContent());
+    if (this.fixture.install) await this.waitForChannelsRead(readsBefore);
   }
 
   /** Mount the integrations catalogue. No handlers: every card there is static. */
@@ -376,51 +373,48 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
 
   // --- Returning from Slack -----------------------------------------------
 
-  /**
-   * The one element every non-success outcome renders. Keyed on it rather than
-   * the alert title, which is not the same claim on every outcome.
-   */
-  private backLink(): HTMLAnchorElement | null {
-    return (
-      Array.from(this.container.querySelectorAll("a")).find(
-        (anchor) =>
-          anchor.getAttribute("href") === "/integrations/slack" &&
-          /Back to Slack integration/.test(anchor.textContent ?? ""),
-      ) ?? null
-    );
+  private connectNotice(): HTMLElement | null {
+    return this.q("[data-slack-connect-notice]");
   }
 
-  async completedInstall(): Promise<boolean> {
-    const outcome = await this.waitFor(
-      () => this.containsText(/Connected to /) || this.backLink() !== null,
-      10000,
-      "the callback outcome",
-    );
-    return outcome && this.containsText(/Connected to /);
+  /** Whether the page shows a callback outcome at all. Does not wait. */
+  hasConnectNotice(): boolean {
+    return this.connectNotice() !== null;
   }
 
-  async installFailureReason(): Promise<string> {
-    await this.waitFor(() => this.backLink(), 10000, "the failed callback");
-    const description = await this.waitFor(
-      () => this.q('[data-slot="alert-description"]'),
-      5000,
-      "the failure reason",
-    );
-    return (description.textContent ?? "").trim();
-  }
-
-  async installFailureTitle(): Promise<string> {
-    await this.waitFor(() => this.backLink(), 10000, "the failed callback");
+  async connectNoticeTitle(): Promise<string> {
     const title = await this.waitFor(
-      () => this.q('[data-slot="alert-title"]'),
-      5000,
-      "the failure title",
+      () => this.q('[data-slack-connect-notice] [data-slot="alert-title"]'),
+      10000,
+      "the connect notice title",
     );
     return (title.textContent ?? "").trim();
   }
 
-  offersRetry(): boolean {
-    return this.backLink() !== null || this.offersInstall();
+  async connectNoticeDescription(): Promise<string> {
+    const description = await this.waitFor(
+      () =>
+        this.q('[data-slack-connect-notice] [data-slot="alert-description"]'),
+      10000,
+      "the connect notice description",
+    );
+    return (description.textContent ?? "").trim();
+  }
+
+  /**
+   * The query string once the notice's own URL cleanup has landed. Waits on
+   * the `slack*` params being gone, so an assertion never reads mid-strip.
+   */
+  async strippedQuery(): Promise<string> {
+    const settled = await this.waitFor(
+      () => {
+        const current = window.location.search;
+        return current.includes("slack") ? null : current || "<none>";
+      },
+      5000,
+      "the slack params to be stripped from the URL",
+    );
+    return settled === "<none>" ? "" : settled;
   }
 
   // --- Choosing a destination channel --------------------------------------

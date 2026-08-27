@@ -48,6 +48,12 @@ interface SlackActionError {
    * reconnecting rather than by retrying.
    */
   code?: string | null;
+  /**
+   * The refusal's HTTP status, for callers that map a class of refusal the
+   * `code` does not name — the exchange's code-less `400` for a consumed
+   * state/code, which no retry can fix.
+   */
+  status?: number;
 }
 
 interface SlackAuthorizeUrl {
@@ -177,7 +183,11 @@ const failureFrom = async (
     };
   }
 
-  return { error: slackErrorMessage(failure, fallback), code: failure.code };
+  return {
+    error: slackErrorMessage(failure, fallback),
+    code: failure.code,
+    status: failure.status,
+  };
 };
 
 /**
@@ -205,6 +215,7 @@ const refusalFrom = async (
         ? slackRateLimitMessage(failure.retryAfterSeconds)
         : slackErrorMessage(failure, fallback),
     code: failure.code,
+    status: failure.status,
   };
 };
 

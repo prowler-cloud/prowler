@@ -1,0 +1,1 @@
+Returning from Slack now lands reliably on the Slack integration page: the OAuth callback completes the install server-side and redirects over HTTP instead of racing the client-side router (Prowler Cloud only)
