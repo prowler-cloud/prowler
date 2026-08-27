@@ -14,8 +14,9 @@ class gmail_groups_spoofing_protection_enabled(Check):
     This check verifies that Gmail is configured to take action on
     inbound emails to groups that spoof the organization's domain,
     helping prevent impersonation attacks targeting group mailboxes.
-    CIS requires the configured action to move the message to spam, so an
-    action that only shows a warning is reported as a failure.
+    CIS requires the configured action to move the message to spam or
+    quarantine it, so an action that only shows a warning is reported as a
+    failure.
     """
 
     def execute(self) -> List[CheckReportGoogleWorkspace]:

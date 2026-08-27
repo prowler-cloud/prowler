@@ -1,13 +1,16 @@
 """Shared evaluation of the system-defined alert rules audited by CIS section 6."""
 
-from typing import List, Set
+from typing import TYPE_CHECKING, List, Set
 
 from prowler.lib.check.models import CheckReportGoogleWorkspace
 
+if TYPE_CHECKING:
+    from prowler.providers.googleworkspace.services.rules.rules_service import Rules
+
 
 def evaluate_system_defined_alert(
-    client,
-    metadata,
+    client: "Rules",
+    metadata: dict,
     rule_name: str,
     expected_severities: Set[str],
 ) -> List[CheckReportGoogleWorkspace]:
@@ -23,6 +26,10 @@ def evaluate_system_defined_alert(
         metadata: the calling check's metadata.
         rule_name: display name of the system-defined alert to evaluate.
         expected_severities: severities the benchmark accepts for this rule.
+
+    Returns:
+        One report for the named rule, or an empty list when the policies could
+        not be fetched or the rule is not present.
     """
     findings = []
 

@@ -14,8 +14,8 @@ class gmail_domain_spoofing_protection_enabled(Check):
     This check verifies that Gmail is configured to take action on
     emails that appear to come from similar-looking domain names,
     helping prevent phishing via domain impersonation. CIS requires the
-    configured action to move the message to spam, so an action that only
-    shows a warning is reported as a failure.
+    configured action to move the message to spam or quarantine it, so an action
+    that only shows a warning is reported as a failure.
     """
 
     def execute(self) -> List[CheckReportGoogleWorkspace]:
