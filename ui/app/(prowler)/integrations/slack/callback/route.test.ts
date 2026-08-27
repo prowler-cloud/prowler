@@ -240,6 +240,7 @@ describe("the Slack OAuth callback route", () => {
     const response = HEAD();
 
     expect(response.status).toBe(204);
+    expect(response.headers.get("Cache-Control")).toBe("no-store");
     expect(exchangeCalls).toHaveLength(0);
   });
 
@@ -253,6 +254,7 @@ describe("the Slack OAuth callback route", () => {
       const response = await get(HAPPY_QUERY, headers);
 
       expect(response.status).toBe(204);
+      expect(response.headers.get("Cache-Control")).toBe("no-store");
     }
     expect(exchangeCalls).toHaveLength(0);
   });
@@ -271,6 +273,22 @@ describe("the Slack OAuth callback route", () => {
     // Then - any prefetch marker prevents the single-use code exchange.
     expect(response.status).toBe(204);
     expect(exchangeCalls).toHaveLength(0);
+  });
+
+  it("exchanges the code when ordinary navigation follows a prefetch", async () => {
+    // Given - a speculative request reached the callback before navigation.
+    wire(slackFixture());
+    const prefetchResponse = await get(HAPPY_QUERY, {
+      "sec-purpose": "prefetch",
+    });
+
+    // When - the browser performs the ordinary callback navigation.
+    const location = locationOf(await get(HAPPY_QUERY));
+
+    // Then - the guard cannot be cached and the real exchange still runs once.
+    expect(prefetchResponse.headers.get("Cache-Control")).toBe("no-store");
+    expect(location.searchParams.get("slack")).toBe("connected");
+    expect(exchangeCalls).toHaveLength(1);
   });
 
   it("sends non-cloud deployments home without exchanging anything", async () => {

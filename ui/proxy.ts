@@ -8,6 +8,10 @@ import {
   isGatedIntegrationEnabled,
   readGatedEnv,
 } from "@/lib/integrations";
+import {
+  SLACK_CALLBACK_PATH,
+  SLACK_EXPIRED_CALLBACK_URL,
+} from "@/lib/integrations/slack-connect-status";
 import { readEnv } from "@/lib/runtime-env";
 import { isCloud } from "@/lib/shared/env";
 import { copyAttributionParams } from "@/lib/utm";
@@ -25,9 +29,6 @@ const publicRoutes = [
 const isPublicRoute = (pathname: string): boolean => {
   return publicRoutes.some((route) => pathname.startsWith(route));
 };
-
-const SLACK_CALLBACK_PATH = "/integrations/slack/callback";
-const SLACK_EXPIRED_CALLBACK_URL = "/integrations/slack?slack=expired";
 
 const withSecurityHeaders = (response: NextResponse): NextResponse => {
   response.headers.set(

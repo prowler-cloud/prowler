@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { exchangeSlackOAuthCode } from "@/actions/integrations/slack";
 import type { SlackExchangeResult } from "@/actions/integrations/slack";
 import {
+  SLACK_INTEGRATION_PATH,
   SLACK_CONNECT_STATUS,
   slackConnectQuery,
 } from "@/lib/integrations/slack-connect-status";
@@ -20,7 +21,11 @@ import { isCloud } from "@/lib/shared/env";
  * client code or the session history, which the redirect guarantees.
  */
 
-const SLACK_INTEGRATION_PATH = "/integrations/slack";
+const noStoreNoContent = (): NextResponse =>
+  new NextResponse(null, {
+    status: 204,
+    headers: { "Cache-Control": "no-store" },
+  });
 
 const redirectTo = (request: Request, target: string): NextResponse =>
   NextResponse.redirect(new URL(target, request.url), 303);
@@ -51,7 +56,7 @@ const isPrefetch = (request: Request): boolean => {
  * GET arrives.
  */
 export function HEAD(): Response {
-  return new Response(null, { status: 204 });
+  return noStoreNoContent();
 }
 
 export async function GET(request: Request): Promise<NextResponse> {
@@ -59,7 +64,7 @@ export async function GET(request: Request): Promise<NextResponse> {
 
   // A speculative fetch would burn the single-use code before the user
   // arrives — answer it nothing instead.
-  if (isPrefetch(request)) return new NextResponse(null, { status: 204 });
+  if (isPrefetch(request)) return noStoreNoContent();
 
   const { searchParams } = new URL(request.url);
   const slackError = searchParams.get("error");

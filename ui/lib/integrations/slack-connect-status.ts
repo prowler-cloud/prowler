@@ -7,6 +7,9 @@
  */
 import { SLACK_REASON_TOKEN } from "@/lib/integrations/slack-errors";
 
+export const SLACK_INTEGRATION_PATH = "/integrations/slack";
+export const SLACK_CALLBACK_PATH = `${SLACK_INTEGRATION_PATH}/callback`;
+
 export const SLACK_CONNECT_STATUS = {
   CONNECTED: "connected",
   /** Slack itself refused the install (`?error=` on the callback). */
@@ -22,6 +25,8 @@ export const SLACK_CONNECT_STATUS = {
   /** The API refused the exchange, optionally naming a reason in `code`. */
   ERROR: "error",
 } as const;
+
+export const SLACK_EXPIRED_CALLBACK_URL = `${SLACK_INTEGRATION_PATH}?slack=${SLACK_CONNECT_STATUS.EXPIRED}`;
 
 export type SlackConnectStatus =
   (typeof SLACK_CONNECT_STATUS)[keyof typeof SLACK_CONNECT_STATUS];
