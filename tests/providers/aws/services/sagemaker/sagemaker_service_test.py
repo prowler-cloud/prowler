@@ -4,6 +4,7 @@ from uuid import uuid4
 import botocore
 
 from prowler.providers.aws.services.sagemaker.sagemaker_service import (
+    Domain,
     Model,
     SageMaker,
 )
@@ -350,6 +351,46 @@ class Test_SageMaker_Service:
             sagemaker.sagemaker_domains[0].single_sign_on_application_arn
             == test_sso_application_arn
         )
+
+    def test_describe_domain_network_access_type(self):
+        regional_client = MagicMock()
+        regional_client.region = AWS_REGION_EU_WEST_1
+        regional_client.describe_domain.return_value = {
+            "AppNetworkAccessType": "VpcOnly"
+        }
+        domain = Domain(
+            domain_id=test_domain_id,
+            name=test_domain_name,
+            arn=test_domain_arn,
+            region=AWS_REGION_EU_WEST_1,
+        )
+
+        with patch.object(SageMaker, "__init__", return_value=None):
+            sagemaker = SageMaker(MagicMock())
+            sagemaker.regional_clients = {AWS_REGION_EU_WEST_1: regional_client}
+            sagemaker._describe_domain(domain)
+
+        assert domain.app_network_access_type == "VpcOnly"
+        assert domain.details_retrieved is True
+
+    def test_describe_domain_network_access_type_retrieval_failure(self):
+        regional_client = MagicMock()
+        regional_client.region = AWS_REGION_EU_WEST_1
+        regional_client.describe_domain.side_effect = Exception("access denied")
+        domain = Domain(
+            domain_id=test_domain_id,
+            name=test_domain_name,
+            arn=test_domain_arn,
+            region=AWS_REGION_EU_WEST_1,
+        )
+
+        with patch.object(SageMaker, "__init__", return_value=None):
+            sagemaker = SageMaker(MagicMock())
+            sagemaker.regional_clients = {AWS_REGION_EU_WEST_1: regional_client}
+            sagemaker._describe_domain(domain)
+
+        assert domain.app_network_access_type is None
+        assert domain.details_retrieved is False
 
     # Test SageMaker _list_tags_for_resource
     def test_list_tags_for_resource_calls_client(self):

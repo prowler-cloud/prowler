@@ -451,6 +451,8 @@ class SageMaker(AWSService):
             domain.single_sign_on_application_arn = describe_domain.get(
                 "SingleSignOnApplicationArn"
             )
+            domain.app_network_access_type = describe_domain.get("AppNetworkAccessType")
+            domain.details_retrieved = True
         except Exception as error:
             logger.error(
                 f"{domain.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -617,6 +619,11 @@ class Domain(BaseModel):
     auth_mode: Optional[str] = None
     single_sign_on_managed_application_instance_id: Optional[str] = None
     single_sign_on_application_arn: Optional[str] = None
+    app_network_access_type: Optional[str] = None
+    # Set after DescribeDomain succeeds, even if a particular optional field is
+    # absent. Consumers use this to distinguish a missing configuration value
+    # from an API retrieval failure.
+    details_retrieved: bool = False
     tags: Optional[list] = []
 
 

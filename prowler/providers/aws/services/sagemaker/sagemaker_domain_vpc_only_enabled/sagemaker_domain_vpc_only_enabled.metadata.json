@@ -1,0 +1,40 @@
+{
+  "Provider": "aws",
+  "CheckID": "sagemaker_domain_vpc_only_enabled",
+  "CheckTitle": "SageMaker domains use VPC-only network access",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "sagemaker",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Other",
+  "ResourceGroup": "ai_ml",
+  "Description": "Ensure that Amazon SageMaker Domains use VPC-only network access. The check validates that each SageMaker Domain has `AppNetworkAccessType` set to `VpcOnly`, preventing application traffic from using public internet access.",
+  "Risk": "SageMaker Domains configured with public internet access allow notebook and application traffic to traverse the public internet. This increases the attack surface and can bypass network controls such as VPC endpoints, security groups, and centralized egress inspection.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_DescribeDomain.html",
+    "https://docs.aws.amazon.com/sagemaker/latest/dg/studio-updated-vpc.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws sagemaker update-domain --domain-id <domain_id> --app-network-access-type VpcOnly",
+      "NativeIaC": "```yaml\nResources:\n  SageMakerDomain:\n    Type: AWS::SageMaker::Domain\n    Properties:\n      DomainName: <example_domain_name>\n      AuthMode: IAM\n      DefaultUserSettings:\n        ExecutionRole: <example_role_arn>\n      VpcId: <example_vpc_id>\n      SubnetIds:\n        - <example_subnet_id>\n      AppNetworkAccessType: VpcOnly\n```",
+      "Other": "Configure the SageMaker Domain to use VPC-only network access. Ensure the VPC has the required SageMaker VPC endpoints and routing before changing the setting.",
+      "Terraform": "```hcl\nresource \"aws_sagemaker_domain\" \"example\" {\n  domain_name             = \"<example_domain_name>\"\n  auth_mode               = \"IAM\"\n  vpc_id                  = \"<example_vpc_id>\"\n  subnet_ids              = [\"<example_subnet_id>\"]\n  app_network_access_type = \"VpcOnly\"\n\n  default_user_settings {\n    execution_role = \"<example_role_arn>\"\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Configure every SageMaker Domain with AppNetworkAccessType set to VpcOnly. Prepare the VPC networking and required endpoints before applying the change so that Studio applications continue to reach AWS services privately.",
+      "Url": "https://hub.prowler.com/check/sagemaker_domain_vpc_only_enabled"
+    }
+  },
+  "Categories": [
+    "internet-exposed",
+    "gen-ai"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
