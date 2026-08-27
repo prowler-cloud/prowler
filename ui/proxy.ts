@@ -8,6 +8,10 @@ import {
   isGatedIntegrationEnabled,
   readGatedEnv,
 } from "@/lib/integrations";
+import {
+  SLACK_CALLBACK_PATH,
+  SLACK_EXPIRED_CALLBACK_URL,
+} from "@/lib/integrations/slack-connect-status";
 import { readEnv } from "@/lib/runtime-env";
 import { isCloud } from "@/lib/shared/env";
 import { copyAttributionParams } from "@/lib/utm";
@@ -63,15 +67,29 @@ export default auth((req: NextAuthRequest) => {
   if (sessionError && !isPublicRoute(pathname)) {
     const signInUrl = new URL("/sign-in", req.url);
     signInUrl.searchParams.set("error", sessionError);
-    signInUrl.searchParams.set("callbackUrl", pathname + req.nextUrl.search);
-    copyAttributionParams(req.nextUrl.searchParams, signInUrl.searchParams);
+    signInUrl.searchParams.set(
+      "callbackUrl",
+      pathname === SLACK_CALLBACK_PATH
+        ? SLACK_EXPIRED_CALLBACK_URL
+        : pathname + req.nextUrl.search,
+    );
+    if (pathname !== SLACK_CALLBACK_PATH) {
+      copyAttributionParams(req.nextUrl.searchParams, signInUrl.searchParams);
+    }
     return redirect(signInUrl);
   }
 
   if (!user && !isPublicRoute(pathname)) {
     const signInUrl = new URL("/sign-in", req.url);
-    signInUrl.searchParams.set("callbackUrl", pathname + req.nextUrl.search);
-    copyAttributionParams(req.nextUrl.searchParams, signInUrl.searchParams);
+    signInUrl.searchParams.set(
+      "callbackUrl",
+      pathname === SLACK_CALLBACK_PATH
+        ? SLACK_EXPIRED_CALLBACK_URL
+        : pathname + req.nextUrl.search,
+    );
+    if (pathname !== SLACK_CALLBACK_PATH) {
+      copyAttributionParams(req.nextUrl.searchParams, signInUrl.searchParams);
+    }
     return redirect(signInUrl);
   }
 
