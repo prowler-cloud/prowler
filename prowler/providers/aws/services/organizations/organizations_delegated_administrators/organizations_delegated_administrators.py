@@ -8,6 +8,21 @@ from prowler.providers.aws.services.organizations.organizations_service import (
 
 
 class organizations_delegated_administrators(Check):
+    """Check that every AWS Organizations delegated administrator is one you trust.
+
+    A delegated administrator holds organization-wide authority over the service it was
+    delegated, so an account registered as one that nobody intended is a standing path into
+    every account in the organization. The trusted set comes from the
+    `organizations_trusted_delegated_administrators` audit configuration, and an empty
+    configuration is read as "none is trusted" rather than as "all are".
+
+    Only the management account can list delegated administrators, so a scan run anywhere
+    else cannot see them. That is reported as MANUAL rather than as a pass, because an
+    unreadable inventory is not evidence of an empty one. Failures that are not an access
+    denial name their own error code, so a retryable throttle is not answered with the
+    advice to move accounts.
+    """
+
     def execute(self) -> list[Check_Report_AWS]:
         """Compare every delegated administrator against the trusted list in the configuration.
 
