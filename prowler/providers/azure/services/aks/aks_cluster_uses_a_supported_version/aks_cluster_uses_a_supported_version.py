@@ -2,6 +2,13 @@ from prowler.lib.check.models import Check, Check_Report_Azure
 from prowler.lib.logger import logger
 from prowler.providers.azure.services.aks.aks_client import aks_client
 
+DEFAULT_OLDEST_VERSION_SUPPORTED = "1.34"
+
+
+def _minor_version(version: str) -> tuple[int, int]:
+    major, minor = version.split(".")[:2]
+    return int(major), int(minor)
+
 
 class aks_cluster_uses_a_supported_version(Check):
     """
@@ -16,12 +23,20 @@ class aks_cluster_uses_a_supported_version(Check):
     def execute(self) -> list[Check_Report_Azure]:
         findings = []
 
-        aks_cluster_oldest_version_supported = aks_client.audit_config.get(
-            "aks_cluster_oldest_version_supported", "1.34"
+        # An explicit null in the config file survives .get(), so fall back here
+        # rather than relying on the default argument alone.
+        baseline = (
+            aks_client.audit_config.get("aks_cluster_oldest_version_supported")
+            or DEFAULT_OLDEST_VERSION_SUPPORTED
         )
-        oldest_supported_version = tuple(
-            map(int, aks_cluster_oldest_version_supported.split(".")[:2])
-        )
+        try:
+            oldest_supported_version = _minor_version(str(baseline))
+        except ValueError as error:
+            logger.error(
+                f"aks_cluster_oldest_version_supported: {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}. Falling back to {DEFAULT_OLDEST_VERSION_SUPPORTED}."
+            )
+            baseline = DEFAULT_OLDEST_VERSION_SUPPORTED
+            oldest_supported_version = _minor_version(baseline)
 
         for subscription_id, clusters in aks_client.clusters.items():
             subscription_name = aks_client.subscriptions.get(
@@ -32,12 +47,10 @@ class aks_cluster_uses_a_supported_version(Check):
                     continue
 
                 try:
-                    cluster_version = tuple(
-                        map(int, cluster.kubernetes_version.split(".")[:2])
-                    )
-                except ValueError:
+                    cluster_version = _minor_version(cluster.kubernetes_version)
+                except ValueError as error:
                     logger.error(
-                        f"Subscription ID: {subscription_id} -- Cluster {cluster.name} has an unparseable Kubernetes version: {cluster.kubernetes_version}"
+                        f"Subscription ID: {subscription_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
                     continue
 
@@ -46,7 +59,7 @@ class aks_cluster_uses_a_supported_version(Check):
 
                 if cluster_version < oldest_supported_version:
                     report.status = "FAIL"
-                    report.status_extended = f"AKS cluster '{cluster.name}' is running an unsupported Kubernetes version {cluster.kubernetes_version} in subscription '{subscription_name} ({subscription_id})'. The oldest supported version is {aks_cluster_oldest_version_supported}."
+                    report.status_extended = f"AKS cluster '{cluster.name}' is running an unsupported Kubernetes version {cluster.kubernetes_version} in subscription '{subscription_name} ({subscription_id})'. The oldest supported version is {baseline}."
                 else:
                     report.status = "PASS"
                     report.status_extended = f"AKS cluster '{cluster.name}' is running a supported Kubernetes version {cluster.kubernetes_version} in subscription '{subscription_name} ({subscription_id})'."
