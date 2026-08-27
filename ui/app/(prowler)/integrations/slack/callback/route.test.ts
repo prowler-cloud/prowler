@@ -304,7 +304,7 @@ describe("the Slack OAuth callback route", () => {
   // inherit it.
   it("keeps the redirect relative when reached on an internal hostname", async () => {
     wire(slackFixture());
-    const internalCallback = `http://ip-172-29-15-236.eu-west-1.compute.internal:3000/integrations/slack/callback?${HAPPY_QUERY}`;
+    const internalCallback = `http://ip-10-0-0-1.eu-west-1.compute.internal:3000/integrations/slack/callback?${HAPPY_QUERY}`;
 
     const response = await GET(new Request(internalCallback));
 
