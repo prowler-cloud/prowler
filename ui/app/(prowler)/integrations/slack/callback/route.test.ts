@@ -76,12 +76,18 @@ const get = (query: string, headers?: HeadersInit) =>
 
 const HAPPY_QUERY = `code=${SLACK_OAUTH_CODE}&state=${SLACK_OAUTH_STATE}`;
 
-/** The redirect's target, with the `303` asserted on the way. */
+/**
+ * The redirect's target, with the `303` and the header's relativity asserted
+ * on the way: behind the reverse proxy the handler is reached on the
+ * instance's internal hostname, so an absolute `Location` echoing the request
+ * would send the browser somewhere no DNS resolves.
+ */
 const locationOf = (response: Response): URL => {
   expect(response.status).toBe(303);
   const location = response.headers.get("location");
   expect(location).not.toBeNull();
-  return new URL(location as string);
+  expect(location).toMatch(/^\//);
+  return new URL(location as string, CALLBACK_URL);
 };
 
 const revalidatedPaths = () =>
@@ -170,9 +176,11 @@ describe("the Slack OAuth callback route", () => {
   });
 
   // The back button's path: replaying the callback re-sends a state/code the
-  // API already consumed, which it refuses with a code-less 400.
+  // API already consumed, which it refuses with a code-less 400 — or, in the
+  // deployed API's spelling, a 400 naming `invalid_oauth_state`.
   it.each([
     SLACK_EXCHANGE_OUTCOME.REFUSED_STATE,
+    SLACK_EXCHANGE_OUTCOME.REFUSED_STATE_CODED,
     SLACK_EXCHANGE_OUTCOME.SLACK_REFUSED,
   ])(
     "reports a consumed or timed-out completion (%s) as expired, not as retryable",
@@ -289,6 +297,26 @@ describe("the Slack OAuth callback route", () => {
     expect(prefetchResponse.headers.get("Cache-Control")).toBe("no-store");
     expect(location.searchParams.get("slack")).toBe("connected");
     expect(exchangeCalls).toHaveLength(1);
+  });
+
+  // The prod topology: the reverse proxy reaches Next on the instance's
+  // internal hostname, which no browser can resolve — the redirect must not
+  // inherit it.
+  it("keeps the redirect relative when reached on an internal hostname", async () => {
+    wire(slackFixture());
+    const internalCallback = `http://ip-172-29-15-236.eu-west-1.compute.internal:3000/integrations/slack/callback?${HAPPY_QUERY}`;
+
+    const response = await GET(new Request(internalCallback));
+
+    expect(response.status).toBe(303);
+    expect(response.headers.get("location")).toBe(
+      "/integrations/slack?slack=connected",
+    );
+
+    // The non-cloud "go home" redirect must not echo the internal host either.
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+    const home = await GET(new Request(internalCallback));
+    expect(home.headers.get("location")).toBe("/");
   });
 
   it("sends non-cloud deployments home without exchanging anything", async () => {
