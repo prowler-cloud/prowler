@@ -40,34 +40,6 @@ _COMPLIANCE_NOT_FOUND = (
     "No compliance framework with the ID '{compliance_id}' exists in Prowler Hub. "
     "Use prowler_hub_semantic_search_compliances to find the right ID."
 )
-# The three causes of a missing check file on GitHub. Which one it was decides
-# what the caller has to change, so they are never collapsed into one sentence.
-_CHECK_NOT_IN_PROVIDER = (
-    "Provider '{provider_id}' has no check '{check_id}'. Prowler Hub lists that "
-    "check under provider '{hub_provider}', so retry with "
-    "provider_id='{hub_provider}'."
-)
-_CHECK_SOURCE_MISSING = (
-    "Prowler Hub lists check '{check_id}' under provider '{provider_id}', but "
-    "prowler-cloud/prowler has no source file for it on the master branch. The "
-    "check may have been renamed or moved since the Hub last indexed it."
-)
-_CHECK_PROVIDER_UNVERIFIED = (
-    "Provider '{provider_id}' has no check '{check_id}' in prowler-cloud/prowler, "
-    "and Prowler Hub could not be asked which provider does. Either the ID is "
-    "wrong or the check belongs to another provider -- "
-    "prowler_hub_get_check_details reports the provider a check belongs to."
-)
-_FIXER_NOT_FOUND = (
-    "Check {check_id} has no auto-remediation code. Many checks do not, and that "
-    "is normal."
-)
-_FIXER_NOT_FOUND_UNVERIFIED = (
-    "Provider '{provider_id}' has no auto-remediation code for check "
-    "'{check_id}'. Many checks have none, and that is normal, but Prowler Hub "
-    "could not be asked whether the check belongs to '{provider_id}' at all. "
-    "Confirm it with prowler_hub_get_check_details if you expected a fixer."
-)
 
 # GitHub raw content base URL for Prowler checks
 GITHUB_RAW_BASE = (
@@ -98,41 +70,38 @@ def github_check_path(provider_id: str, check_id: str, suffix: str) -> str:
     return f"{GITHUB_RAW_BASE}/{provider_id}/services/{service_id}/{check_id}/{check_id}{suffix}"
 
 
-def _hub_provider_for_check(check_id: str) -> tuple[bool, str | None]:
+def _hub_provider_for_check(check_id: str) -> str | None:
     """Ask Prowler Hub which provider it lists a check under.
-
-    Only ever called to explain a missing file, so a Hub failure is answered
-    rather than raised: the caller still gets a message, just a hedged one.
 
     Args:
         check_id: Check ID the caller asked for
 
     Returns:
-        (answered, provider). `answered` is False when the Hub could not be
-        asked at all. When it is True, `provider` is the provider the Hub lists
-        the check under, or None when the Hub knows no such check.
+        The provider the Hub lists the check under, or None when the Hub knows
+        no such check.
+
+    Raises:
+        httpx.HTTPError: The Hub could not be reached.
+        ValueError: The Hub answered with something that names no provider.
     """
-    try:
-        response = prowler_hub_client.get(f"/check/{check_id}")
-        if response.status_code == 404:
-            return True, None
-        response.raise_for_status()
-        check = response.json()
-    except (httpx.HTTPError, ValueError):
-        return False, None
+    response = prowler_hub_client.get(f"/check/{check_id}")
+    if response.status_code == 404:
+        return None
+    response.raise_for_status()
+    check = response.json()
 
     # An empty body is how the Hub reports an unknown ID on some routes, so it
     # is read the same way get_check_details reads it: no such check.
     if not isinstance(check, dict) or not check:
-        return True, None
+        return None
 
     provider = check.get("provider")
     if isinstance(provider, str) and provider.strip():
-        return True, provider
+        return provider
     # A check the Hub returned without a provider tells us nothing about the
     # provider the caller asked for, so it counts as unanswered rather than as
     # a check that does not exist.
-    return False, None
+    raise ValueError(f"Prowler Hub listed check '{check_id}' without a provider")
 
 
 def _explain_missing_check_file(
@@ -153,22 +122,24 @@ def _explain_missing_check_file(
         provider_id: Provider the caller asked for
         check_id: Check the caller asked for
         when_check_belongs_here: Message for the case where the Hub confirms the
-            check does belong to this provider, which is the only case the two
-            calling tools describe differently
+            check does belong to this provider
         when_unverified: Message for the case where the Hub could not be asked
 
     Returns:
         The sentence to fail the tool with
     """
-    answered, hub_provider = _hub_provider_for_check(check_id)
-
-    if not answered:
+    try:
+        hub_provider = _hub_provider_for_check(check_id)
+    except (httpx.HTTPError, ValueError):
         return when_unverified
+
     if hub_provider is None:
         return _CHECK_NOT_FOUND.format(check_id=check_id)
     if hub_provider != provider_id:
-        return _CHECK_NOT_IN_PROVIDER.format(
-            provider_id=provider_id, check_id=check_id, hub_provider=hub_provider
+        return (
+            f"Provider '{provider_id}' has no check '{check_id}'. Prowler Hub lists "
+            f"that check under provider '{hub_provider}', so retry with "
+            f"provider_id='{hub_provider}'."
         )
     return when_check_belongs_here
 
@@ -479,11 +450,18 @@ async def get_check_code(
                 _explain_missing_check_file(
                     provider_id,
                     check_id,
-                    when_check_belongs_here=_CHECK_SOURCE_MISSING.format(
-                        check_id=check_id, provider_id=provider_id
+                    when_check_belongs_here=(
+                        f"Prowler Hub lists check '{check_id}' under provider "
+                        f"'{provider_id}', but prowler-cloud/prowler has no source file "
+                        "for it on the master branch. The check may have been renamed or "
+                        "moved since the Hub last indexed it."
                     ),
-                    when_unverified=_CHECK_PROVIDER_UNVERIFIED.format(
-                        provider_id=provider_id, check_id=check_id
+                    when_unverified=(
+                        f"Provider '{provider_id}' has no check '{check_id}' in "
+                        "prowler-cloud/prowler, and Prowler Hub could not be asked which "
+                        "provider does. Either the ID is wrong or the check belongs to "
+                        "another provider -- prowler_hub_get_check_details reports the "
+                        "provider a check belongs to."
                     ),
                 )
             )
@@ -529,9 +507,16 @@ async def get_check_fixer(
                 _explain_missing_check_file(
                     provider_id,
                     check_id,
-                    when_check_belongs_here=_FIXER_NOT_FOUND.format(check_id=check_id),
-                    when_unverified=_FIXER_NOT_FOUND_UNVERIFIED.format(
-                        provider_id=provider_id, check_id=check_id
+                    when_check_belongs_here=(
+                        f"Check {check_id} has no auto-remediation code. Many checks do "
+                        "not, and that is normal."
+                    ),
+                    when_unverified=(
+                        f"Provider '{provider_id}' has no auto-remediation code for "
+                        f"check '{check_id}'. Many checks have none, and that is normal, "
+                        f"but Prowler Hub could not be asked whether the check belongs "
+                        f"to '{provider_id}' at all. Confirm it with "
+                        "prowler_hub_get_check_details if you expected a fixer."
                     ),
                 )
             )
