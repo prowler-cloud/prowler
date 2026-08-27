@@ -26,6 +26,7 @@ from prowler.lib.check.compliance_models import (
     UniversalComplianceRequirement,
     adapt_legacy_to_universal,
     get_bulk_compliance_frameworks_universal,
+    get_universal_compliance_entry_point_dirs,
     load_compliance_framework_universal,
 )
 from tests.lib.outputs.compliance.fixtures import (
@@ -1237,3 +1238,91 @@ class TestGetBulkUniversalEntryPoints:
 
         assert "pkg_a_1.0" in bulk
         assert "pkg_b_1.0" in bulk
+
+
+class TestGetUniversalComplianceEntryPointDirs:
+    """Directories external packages contribute."""
+
+    @staticmethod
+    def _entry_point(path=None, *, file_path=None, load_error=None):
+        ep = MagicMock()
+        ep.name = "external"
+        ep.group = "prowler.compliance.universal"
+        if load_error is not None:
+            ep.load.side_effect = load_error
+            return ep
+        module = MagicMock()
+        if path is not None:
+            module.__path__ = [path]
+        else:
+            # A module, not a package: only __file__.
+            del module.__path__
+            module.__file__ = file_path
+        ep.load.return_value = module
+        return ep
+
+    @patch("prowler.lib.check.compliance_models.importlib.metadata.entry_points")
+    def test_returns_entry_point_dirs_in_order(self, mock_ep):
+        with (
+            tempfile.TemporaryDirectory() as dir_a,
+            tempfile.TemporaryDirectory() as dir_b,
+        ):
+            mock_ep.return_value = [
+                self._entry_point(dir_a),
+                self._entry_point(dir_b),
+            ]
+
+            assert get_universal_compliance_entry_point_dirs() == [dir_a, dir_b]
+
+        mock_ep.assert_called_with(group="prowler.compliance.universal")
+
+    @patch("prowler.lib.check.compliance_models.importlib.metadata.entry_points")
+    def test_dedupes_the_same_directory(self, mock_ep):
+        """Two entry points, one directory: loaded once."""
+        with tempfile.TemporaryDirectory() as ep_dir:
+            mock_ep.return_value = [
+                self._entry_point(ep_dir),
+                self._entry_point(ep_dir),
+            ]
+
+            assert get_universal_compliance_entry_point_dirs() == [ep_dir]
+
+    @patch("prowler.lib.check.compliance_models.importlib.metadata.entry_points")
+    def test_dedupes_a_directory_reached_through_a_symlink(self, mock_ep, tmp_path):
+        """Same directory behind a symlink: still loaded once."""
+        real = tmp_path / "real"
+        real.mkdir()
+        link = tmp_path / "link"
+        link.symlink_to(real, target_is_directory=True)
+        mock_ep.return_value = [
+            self._entry_point(str(real)),
+            self._entry_point(str(link)),
+        ]
+
+        assert get_universal_compliance_entry_point_dirs() == [str(real)]
+
+    @patch("prowler.lib.check.compliance_models.importlib.metadata.entry_points")
+    def test_skips_paths_that_are_not_directories(self, mock_ep):
+        mock_ep.return_value = [self._entry_point("/does/not/exist")]
+
+        assert get_universal_compliance_entry_point_dirs() == []
+
+    @patch("prowler.lib.check.compliance_models.importlib.metadata.entry_points")
+    def test_a_broken_entry_point_does_not_hide_the_others(self, mock_ep):
+        with tempfile.TemporaryDirectory() as ep_dir:
+            mock_ep.return_value = [
+                self._entry_point(load_error=ImportError("boom")),
+                self._entry_point(ep_dir),
+            ]
+
+            assert get_universal_compliance_entry_point_dirs() == [ep_dir]
+
+    @patch("prowler.lib.check.compliance_models.importlib.metadata.entry_points")
+    def test_module_without_path_falls_back_to_its_file_directory(self, mock_ep):
+        with tempfile.TemporaryDirectory() as ep_dir:
+            module_file = os.path.join(ep_dir, "compliance.py")
+            with open(module_file, "w"):
+                pass
+            mock_ep.return_value = [self._entry_point(file_path=module_file)]
+
+            assert get_universal_compliance_entry_point_dirs() == [ep_dir]

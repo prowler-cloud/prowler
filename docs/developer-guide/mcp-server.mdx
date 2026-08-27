@@ -120,13 +120,13 @@ class NewFeatureTools(BaseTool):
 
         Returns complete feature details including configuration and metadata.
         """
-        try:
-            response = await self.api_client.get(f"/api/v1/features/{feature_id}")
-            return DetailedFeature.from_api_response(response["data"]).model_dump()
-        except Exception as e:
-            self.logger.error(f"Failed to get feature {feature_id}: {e}")
-            return {"error": str(e), "status": "failed"}
+        response = await self.api_client.get(f"/api/v1/features/{feature_id}")
+        return DetailedFeature.from_api_response(response["data"]).model_dump()
 ```
+
+There is no `try`/`except` here on purpose. A failed request raises, and
+[Error Handling](#error-handling) explains what turns that raise into a message
+the agent can act on.
 
 ### Step 2: Create the Models
 
@@ -352,7 +352,7 @@ result = await self.api_client.poll_task_until_complete(
 
 ### Tool Docstrings
 
-Tool docstrings become description that is going to be read by the LLM. Provide clear usage instructions and common workflows:
+Tool docstrings become the description that is going to be read by the LLM. Provide clear usage instructions and common workflows:
 
 ```python
 async def search_items(self, status: str = Field(...)) -> dict:
@@ -369,17 +369,61 @@ async def search_items(self, status: str = Field(...)) -> dict:
 
 ### Error Handling
 
-Return structured error responses instead of raising exceptions:
+**Raise, never return.** A returned `{"error": ...}` dict is reported to the
+client as `isError: false` -- a *successful* tool call whose payload happens to
+mention a failure. Clients and models read that as success. A raised exception
+becomes a spec-correct tool execution error instead.
+
+The common case therefore needs no handler at all:
 
 ```python
 async def get_item(self, item_id: str) -> dict:
-    try:
-        response = await self.api_client.get(f"/api/v1/items/{item_id}")
-        return DetailedItem.from_api_response(response["data"]).model_dump()
-    except Exception as e:
-        self.logger.error(f"Failed to get item {item_id}: {e}")
-        return {"error": str(e), "status": "failed"}
+    response = await self.api_client.get(f"/api/v1/items/{item_id}")
+    return DetailedItem.from_api_response(response["data"]).model_dump()
 ```
+
+`prowler_mcp_server/lib/errors.py` classifies the failures every tool shares --
+a rejected credential, a missing permission, a rate limit, an outage, an
+unreachable API, a bad argument -- and gives each one a message that says what
+went wrong and what to do about it. Anything it does not recognise is masked,
+because `mask_error_details=True` is set on every sub-server and upstream
+response bodies must never be replayed into a model's context.
+
+Three ways to raise, in the order to reach for them:
+
+```python
+from fastmcp.exceptions import ToolError
+
+from prowler_mcp_server.lib.errors import InvalidArgument
+
+# 1. An argument this server rejected before any request went out. The message
+#    is repeated to the agent verbatim, so write it for one to read.
+if not 1 <= page_size <= 1000:
+    raise InvalidArgument("page_size must be between 1 and 1000.")
+
+# 2. A request the API answered or never answered: let it propagate untouched.
+#    `ProwlerAPIError` and `ProwlerAPIUnreachable` are what the classifier keys
+#    on, and the second one is what stops a retry from duplicating a write.
+response = await self.api_client.get(f"/api/v1/items/{item_id}")
+data = response["data"]
+
+# 3. A sentence the classifier cannot know -- a resource name, a precondition,
+#    the next tool to call. NOTE the absent `from` clause: it is what marks the
+#    message as already final. With `from e` the classifier would replace it.
+if not data:
+    raise ToolError(
+        f"No item with the ID {item_id!r} exists. Use prowler_list_items to "
+        "find a valid one."
+    )
+```
+
+The one thing that still *returns* rather than raises is a write whose outcome is
+genuinely unknown. `prowler_send_findings_to_jira` is the worked example: work
+items are created one at a time and Prowler cannot delete them, so a dispatch
+that stopped halfway answers with a result object carrying
+`safe_to_retry: false`. "This may have been applied" is a fact about the world,
+not an error, and squashing it into one loses the only thing that stops a retry
+from duplicating the write.
 
 ### Parameter Descriptions
 
@@ -425,6 +469,150 @@ For complete installation and deployment options, see:
 - [Configuration Guide](/getting-started/basic-usage/prowler-mcp) - MCP client configuration
 
 For development I recommend to use the [Model Context Protocol Inspector](https://github.com/modelcontextprotocol/inspector) as MCP client to test and debug your tools.
+
+## Testing
+
+Tests live in `mcp_server/tests/`, mirroring the source tree, and use the `test_*.py`
+prefix (the same convention as the API, not the SDK's `*_test.py` suffix).
+
+From `mcp_server/`:
+
+```bash
+cd mcp_server
+
+uv run pytest                              # Whole suite
+uv run pytest tests/prowler_app/models     # One area
+uv run pytest --cov=./prowler_mcp_server   # With coverage
+```
+
+From the repository root:
+
+```bash
+make test-mcp   # Runs the MCP suite exactly as CI does
+```
+
+Async tests need no marker — `asyncio_mode` is set to `auto`.
+
+### Reading the Coverage Numbers
+
+<Warning>
+Coverage here has a high floor that means nothing. `coverage.py` measures
+*statements*, and in a Pydantic model module nearly every statement is a class-body
+field declaration that runs at **import** time. `prowler_app/server.py` imports
+every tool module — and therefore every model module — when it is first imported,
+so all of those declarations execute and count as covered before a single test runs.
+
+Importing the package and executing no tests at all already reports **36% overall**,
+with individual model modules between 54% and 84%. A model module sitting at ~68%
+with no tests written for it has **none** of its behaviour covered: the covered lines
+are its imports, `class` statements and `Field(...)` declarations, and the missing
+ranges are its `from_api_response()` bodies.
+
+Judge a module against that import-only floor, not against zero, and do not set a
+Codecov target from the raw total.
+</Warning>
+
+### Shared Fixtures
+
+All fixtures live in `mcp_server/tests/conftest.py`. Three are autouse and apply to
+every test: the environment is pinned to deterministic values, real socket
+connections are blocked, and the API client singleton registry is snapshotted and
+restored.
+
+| Fixture | What it gives you |
+|---------|-------------------|
+| `mock_api_client` | The API client singleton with its transport mocked. The workhorse. |
+| `mock_router` | Route registry and request recorder |
+| `mcp_root_server` | The mounted root server, for in-memory client tests |
+| `health_client` | Starlette `TestClient` for the `/health` route |
+| `http_request_headers` | Injects request headers for HTTP-transport auth tests |
+| `hub_router` / `docs_router` | Mock the Hub and Docs sub-servers' sync HTTP clients |
+| `api_client` / `isolated_api_client` | The live singleton / a freshly-constructed one |
+
+Helpers live in `mcp_server/tests/helpers/`: JSON:API document builders
+(`jsonapi.py`), the `MockRouter` (`http.py`), tool-contract assertions
+(`assertions.py`) and fake credentials (`tokens.py`).
+
+### Writing a Tool Test
+
+Drive tools through an in-memory MCP client, and open the client inside the test —
+FastMCP warns that holding a client in a fixture causes event-loop problems.
+
+```python
+from fastmcp import Client
+
+from tests.helpers.jsonapi import jsonapi_collection, jsonapi_resource
+
+FINDING_ATTRIBUTES = {
+    "uid": "prowler-aws-s3_bucket_public_access-123456789012-us-east-1-my-bucket",
+    "status": "FAIL",
+    "severity": "high",
+    "status_extended": "S3 bucket my-bucket is publicly accessible.",
+    "delta": "new",
+    "muted": False,
+    "muted_reason": None,
+    "check_metadata": {"checkid": "s3_bucket_public_access"},
+}
+
+
+async def test_search_without_dates_queries_the_latest_scan_endpoint(
+    mcp_root_server, mock_api_client, mock_router
+):
+    """With no date range the tool targets the cheaper `/findings/latest`."""
+    mock_router.add(
+        "GET",
+        "/api/v1/findings/latest",
+        json=jsonapi_collection(
+            [jsonapi_resource("findings", "f1", FINDING_ATTRIBUTES)]
+        ),
+    )
+
+    async with Client(mcp_root_server) as client:
+        result = await client.call_tool("prowler_search_security_findings", {})
+
+    assert result.data["findings"][0]["check_id"] == "s3_bucket_public_access"
+    assert mock_router.paths() == ["GET /api/v1/findings/latest"]
+```
+
+The exemplar suite covers `findings` end to end — `tests/prowler_app/models/test_findings.py`
+and `tests/prowler_app/tools/test_findings.py`. It is deliberately one feature
+across both layers rather than a scattering of unrelated samples, and `findings`
+is the feature that exercises the whole foundation: two-tier models, nested
+sub-models, both relationship shapes, endpoint switching on a date range,
+list-to-CSV filter encoding, and a tool that returns prose instead of a model.
+
+Note the two files share a name. That is why `__init__.py` is required in every
+`tests/` subdirectory here — without it they would collide on import.
+
+<Warning>
+Tool parameters are declared with pydantic `Field(default=...)`, and only FastMCP's
+tool wrapper resolves those defaults. Calling a tool method directly with an
+argument omitted leaves it as a raw `FieldInfo` object, which is truthy — so a
+filter such as `if email:` silently builds a query out of the `FieldInfo` repr.
+Call tools through the client, or pass every argument explicitly.
+</Warning>
+
+### Why the API Key Is Pinned, Not Stripped
+
+`prowler_app/server.py` builds every tool at import time. Constructing a tool
+reaches `ProwlerAppAuth`, which raises when `PROWLER_API_KEY` is missing, and
+`load_all_tools` swallows that error per tool class. The result is that the whole
+`prowler_*` namespace registers **zero** tools while the server still logs
+"Successfully mounted Prowler tools server".
+
+The suite therefore pins a fake key in `[tool.pytest_env]`, which is applied before
+any test module is imported, and `tests/test_server.py` asserts each namespace is
+non-empty so this failure can never return silently.
+
+<Note>
+`ProwlerAppAuth` resolves `PROWLER_MCP_TRANSPORT_MODE` and `API_BASE_URL` in its
+default arguments, which Python evaluates once at module import. `monkeypatch.setenv`
+cannot change them — pass `mode=` and `base_url=` explicitly in auth tests.
+</Note>
+
+For the full set of rules and templates, see the
+[`prowler-test-mcp` skill](https://github.com/prowler-cloud/prowler/blob/master/skills/prowler-test-mcp/SKILL.md)
+and the [official FastMCP testing guide](https://gofastmcp.com/development/tests).
 
 ## Related Documentation
 

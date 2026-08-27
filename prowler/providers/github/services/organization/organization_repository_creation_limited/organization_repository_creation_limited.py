@@ -1,6 +1,6 @@
 from typing import List
 
-from prowler.lib.check.models import Check, CheckReportGithub
+from prowler.lib.check.models import Check, CheckReportGithub, Severity
 from prowler.providers.github.services.organization.organization_client import (
     organization_client,
 )
@@ -15,8 +15,19 @@ def _join_human_readable(items: List[str]) -> str:
     return ", ".join(items[:-1]) + f" and {items[-1]}"
 
 
+PUBLIC_CREATION_TYPES = {"all", "public"}
+NON_PUBLIC_CREATION_TYPES = {"private", "internal"}
+PUBLIC_DISABLED_CREATION_TYPES = NON_PUBLIC_CREATION_TYPES | {"none"}
+KNOWN_CREATION_TYPES = PUBLIC_CREATION_TYPES | PUBLIC_DISABLED_CREATION_TYPES
+
+
 class organization_repository_creation_limited(Check):
-    """Check if repository creation is limited to trusted organization members."""
+    """Check if repository creation is limited to trusted organization members.
+
+    FAIL severity scales with the visibility members can create: high when public
+    repository creation is (or may be) allowed, low when it is provably limited to
+    private/internal repositories.
+    """
 
     def execute(self) -> List[CheckReportGithub]:
         findings = []
@@ -48,12 +59,19 @@ class organization_repository_creation_limited(Check):
                 org, "members_allowed_repository_creation_type", None
             )
 
+            normalized_type = creation_type.lower() if creation_type else ""
+
             type_flags = []
             enabled_types = []
 
             if global_creation is not None:
                 if global_creation:
-                    enabled_types.append("repositories of any type")
+                    public_known_disabled = (
+                        public_creation is False
+                        or normalized_type in PUBLIC_DISABLED_CREATION_TYPES
+                    )
+                    if not public_known_disabled:
+                        enabled_types.append("repositories of any type")
                 else:
                     type_flags.append(False)
 
@@ -70,7 +88,6 @@ class organization_repository_creation_limited(Check):
                         enabled_types.append(label)
 
             if creation_type:
-                normalized_type = creation_type.lower()
                 if normalized_type == "none":
                     type_flags.append(False)
                 else:
@@ -97,7 +114,28 @@ class organization_repository_creation_limited(Check):
                 unique_enabled = list(dict.fromkeys(enabled_types))
                 allowed_desc = _join_human_readable(unique_enabled)
                 if allowed_desc:
-                    report.status_extended = f"Organization {org.name} allows members to create {allowed_desc}."
+                    public_allowed = (
+                        public_creation is True
+                        or normalized_type in PUBLIC_CREATION_TYPES
+                    )
+                    non_public_allowed = (
+                        private_creation is True
+                        or internal_creation is True
+                        or normalized_type in NON_PUBLIC_CREATION_TYPES
+                    )
+                    public_known = (
+                        public_creation is not None
+                        or normalized_type in KNOWN_CREATION_TYPES
+                    )
+
+                    if not public_allowed and non_public_allowed and public_known:
+                        report.check_metadata.Severity = Severity.low
+                        report.status_extended = (
+                            f"Organization {org.name} allows members to create {allowed_desc}. "
+                            "Public repository creation is disabled."
+                        )
+                    else:
+                        report.status_extended = f"Organization {org.name} allows members to create {allowed_desc}."
                 else:
                     report.status_extended = f"Organization {org.name} does not have enough data to confirm repository creation restrictions."
 

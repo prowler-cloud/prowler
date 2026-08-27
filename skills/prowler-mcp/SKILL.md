@@ -69,13 +69,19 @@ Use `@mcp.tool()` decorator directly—no BaseTool or models required.
 - [ ] Tool docstrings describe LLM-relevant behavior
 - [ ] Models use `MinimalSerializerMixin`
 - [ ] API responses transformed to simplified models
-- [ ] Error handling returns `{"error": str, "status": "failed"}`
+- [ ] Failures are **raised**, never returned. A returned error dict is reported
+      as a success. Raise `InvalidArgument` for a bad argument, let
+      `ProwlerAPIError`/`ProwlerAPIUnreachable` propagate, and raise `ToolError`
+      **without a `from` clause** only for a sentence `lib/errors.py` cannot know
+      (a resource name, a precondition, the next tool to call)
 - [ ] Parameters use `Field()` with descriptions
 - [ ] No hardcoded secrets
+- [ ] Tests added under `mcp_server/tests/`
 
 ---
 
 ## Resources
 
-- **Full Guide**: [docs/developer-guide/mcp-server.mdx](../../../docs/developer-guide/mcp-server.mdx)
+- **Full Guide**: [docs/developer-guide/mcp-server.mdx](../../docs/developer-guide/mcp-server.mdx)
 - **Templates**: See [assets/](assets/) for tool and model templates
+- **Testing**: See [prowler-test-mcp](../prowler-test-mcp/SKILL.md) for fixtures and test patterns

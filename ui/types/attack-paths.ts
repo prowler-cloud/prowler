@@ -151,6 +151,14 @@ export interface AttackPathQueryResultSummary {
   has_data: boolean | null;
 }
 
+// Terminal impact of an attack-path query, rendered as the graph's outcome node.
+// Optional: custom queries have no outcome, and older backends omit the field.
+export interface AttackPathOutcome {
+  kind: string;
+  label: string;
+  partial?: boolean;
+}
+
 export interface AttackPathQueryAttributes {
   name: string;
   short_description: string;
@@ -160,6 +168,7 @@ export interface AttackPathQueryAttributes {
   attribution: AttackPathQueryAttribution | null;
   documentation_link?: AttackPathQueryDocumentationLink | null;
   result_summary?: AttackPathQueryResultSummary | null;
+  outcome?: AttackPathOutcome | null;
 }
 
 export interface AttackPathQuery {

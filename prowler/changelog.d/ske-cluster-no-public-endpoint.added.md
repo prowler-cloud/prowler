@@ -1,0 +1,1 @@
+`ske_cluster_no_public_endpoint` check for STACKIT provider, flagging SKE clusters whose Kubernetes API endpoint is reachable from the whole internet because the ACL extension is disabled or its allowed CIDR list contains `0.0.0.0/0` or `::/0`
