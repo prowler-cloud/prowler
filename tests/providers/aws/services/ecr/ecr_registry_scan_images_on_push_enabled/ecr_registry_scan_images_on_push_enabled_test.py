@@ -239,6 +239,69 @@ class Test_ecr_registry_scan_images_on_push_enabled:
             )
             assert result[0].region == AWS_REGION_EU_WEST_1
 
+    def test_enhanced_with_no_rules_fails(self):
+        """An ENHANCED registry with an empty rule set fails: nothing is scanned automatically.
+
+        Reviewed as a false FAIL, on the grounds that enhanced scanning defaults to continuous
+        scanning for all repositories when no rules are configured. It does not. Enhanced scanning
+        is filter-driven, and a repository matching no filter is not scanned at all: "Any
+        repositories that don't match a filter will have an Off scan frequency and won't be
+        scanned" (https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning-enhanced.html),
+        and "Any repositories not matching an enhanced scanning filter will have scanning disabled"
+        (https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning-filters.html). With
+        no rules at all, no repository matches, so the whole registry goes unscanned.
+
+        Nor is this state a disguised pass. ECR materialises "continuous scanning for all
+        repositories" as an explicit CONTINUOUS_SCAN rule filtered on '*' -- which the check already
+        passes, and which an observed ENHANCED registry returns instead of an empty list. So an
+        empty rule set is either unreachable or genuinely means nothing is scanned, and PASS here
+        would report a registry that scans nothing as covered.
+        """
+        ecr_client = mock.MagicMock
+        ecr_client.audited_account_arn = AWS_ACCOUNT_ARN
+        ecr_client.registries = {}
+        ecr_client.registries[AWS_REGION_EU_WEST_1] = Registry(
+            id=AWS_ACCOUNT_NUMBER,
+            arn=f"arn:aws:ecr:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:registry/{AWS_ACCOUNT_NUMBER}",
+            region=AWS_REGION_EU_WEST_1,
+            scan_type="ENHANCED",
+            repositories=[
+                Repository(
+                    name=repository_name,
+                    arn=repository_arn,
+                    region=AWS_REGION_EU_WEST_1,
+                    scan_on_push=False,
+                    policy="",
+                    images_details=None,
+                    lifecycle_policy="",
+                )
+            ],
+            rules=[],
+        )
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ecr.ecr_registry_scan_images_on_push_enabled.ecr_registry_scan_images_on_push_enabled.ecr_client",
+                ecr_client,
+            ),
+        ):
+            from prowler.providers.aws.services.ecr.ecr_registry_scan_images_on_push_enabled.ecr_registry_scan_images_on_push_enabled import (
+                ecr_registry_scan_images_on_push_enabled,
+            )
+
+            check = ecr_registry_scan_images_on_push_enabled()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == f"ECR registry {AWS_ACCOUNT_NUMBER} has ENHANCED scanning without automated scanning enabled."
+            )
+
     def test_continuous_scan_is_not_reported_as_scan_on_push(self):
         """A CONTINUOUS_SCAN-only registry passes, but must not be described as scan on push.
 
