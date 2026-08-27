@@ -28,12 +28,33 @@ export const REGISTRY_SUBMISSION = {
   ERROR: "error",
 } as const;
 
-export type RegistryCredentialSubmissionResult =
+export type RegistryTaskSubmissionResult =
   | {
       status: typeof REGISTRY_SUBMISSION.PENDING;
       taskId: string;
     }
   | { status: typeof REGISTRY_SUBMISSION.ERROR };
+
+export type RegistryCredentialSubmissionResult = RegistryTaskSubmissionResult;
+
+export interface RegistryArtifactTaskResult {
+  installed: boolean;
+  error: string | null;
+}
+
+export interface RegistryAddArtifactInput {
+  normalizedName: string;
+  versionSpec?: string;
+}
+
+export const REGISTRY_ARTIFACT_ACTION = {
+  SUBMITTED: "submitted",
+} as const;
+
+export type RegistryArtifactSubmitResult = {
+  status: typeof REGISTRY_ARTIFACT_ACTION.SUBMITTED;
+  taskId: string;
+};
 
 export interface RegistryCredentialStatus {
   configured: boolean;
@@ -187,6 +208,7 @@ export type RegistryMutationResult =
       status: typeof REGISTRY_MUTATION.REFUSED;
       message: string;
     }
+  | RegistryArtifactSubmitResult
   | RegistryFailureResult;
 
 export const REGISTRY_BOOTSTRAP_STATE = {
