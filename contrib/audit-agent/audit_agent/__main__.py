@@ -10,7 +10,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from audit_agent.pipeline import AuditRequest, run_audit
+from audit_agent.application.pipeline import AuditRequest, run_audit
 
 
 def _resolve_token(explicit: str | None) -> str | None:

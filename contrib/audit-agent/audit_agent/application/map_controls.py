@@ -6,13 +6,13 @@ import json
 from pathlib import Path
 from typing import Any
 
-from audit_agent.prowler_compliance import (
+from audit_agent.infrastructure.prowler_compliance import (
     controls_for_check,
     extract_compliance_from_ocsf,
 )
 
 DEFAULT_MAPPING_PATH = (
-    Path(__file__).resolve().parent.parent / "mappings" / "soc2_iso27001.json"
+    Path(__file__).resolve().parents[2] / "mappings" / "soc2_iso27001.json"
 )
 
 

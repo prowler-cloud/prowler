@@ -7,7 +7,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
-from audit_agent.enums import FrameworkFamily, Provider
+from audit_agent.domain.enums import FrameworkFamily, Provider
 
 # Framework IDs accepted by `prowler <provider> --compliance …`
 PROVIDER_COMPLIANCE: dict[str, list[str]] = {
@@ -30,9 +30,11 @@ PROVIDER_EXTRA_COMPLIANCE: dict[str, list[str]] = {
 
 
 def repo_root() -> Path:
-    """Prowler monorepo root (…/prowler) relative to this package."""
-    # contrib/audit-agent/audit_agent/prowler_compliance.py → repo root
-    return Path(__file__).resolve().parents[3]
+    """Prowler monorepo root (directory containing prowler-cli.py)."""
+    for parent in Path(__file__).resolve().parents:
+        if (parent / "prowler-cli.py").is_file():
+            return parent
+    raise RuntimeError("Prowler repo root not found (expected prowler-cli.py)")
 
 
 def compliance_dir() -> Path:

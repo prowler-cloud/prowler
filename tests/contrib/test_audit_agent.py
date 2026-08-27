@@ -7,24 +7,24 @@ from pathlib import Path
 
 import pytest
 
-from audit_agent.config import (
+from audit_agent.infrastructure.config import (
     DEFAULT_CONFIG,
     load_local_config,
     meets_severity_threshold,
     scanners_for_trivy,
 )
-from audit_agent.map_controls import (
+from audit_agent.application.map_controls import (
     filter_by_files,
     map_finding,
     map_findings,
     normalize_finding,
 )
-from audit_agent.render import COMMENT_MARKER, render_pr_comment
+from audit_agent.reporting.render import COMMENT_MARKER, render_pr_comment
 
 
 @pytest.fixture
 def mapping():
-    from audit_agent.map_controls import load_mapping
+    from audit_agent.application.map_controls import load_mapping
 
     return load_mapping()
 
@@ -125,7 +125,7 @@ def test_filter_by_files():
 
 
 def test_render_pr_comment_contains_marker(mapping):
-    from audit_agent.config import enabled_security_aspects
+    from audit_agent.infrastructure.config import enabled_security_aspects
 
     findings = [
         map_finding(
@@ -171,7 +171,7 @@ def test_normalize_simplified():
 
 
 def test_prowler_compliance_index_loads():
-    from audit_agent.prowler_compliance import (
+    from audit_agent.infrastructure.prowler_compliance import (
         controls_for_check,
         frameworks_for_provider,
         load_check_control_index,
@@ -241,7 +241,7 @@ def test_yaml_config_lists(tmp_path):
 
 
 def test_save_audit_report(tmp_path):
-    from audit_agent.report_files import save_audit_report
+    from audit_agent.reporting.reports import save_audit_report
 
     findings = [
         {
@@ -269,7 +269,7 @@ def test_save_audit_report(tmp_path):
 
 
 def test_frameworks_for_github_includes_cis():
-    from audit_agent.prowler_compliance import frameworks_for_provider
+    from audit_agent.infrastructure.prowler_compliance import frameworks_for_provider
 
     fws = frameworks_for_provider("github", ["soc2", "iso27001_2022"])
     assert "cis_1.2.0_github" in fws

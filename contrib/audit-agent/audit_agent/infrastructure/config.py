@@ -10,7 +10,7 @@ from urllib.request import Request, urlopen
 
 import yaml
 
-from audit_agent.enums import (
+from audit_agent.domain.enums import (
     ASPECT_SPECS,
     SCANNER_TO_TRIVY,
     SEVERITY_RANK,
@@ -19,7 +19,7 @@ from audit_agent.enums import (
     Scanner,
     TrivyScanner,
 )
-from audit_agent.http_util import ssl_context
+from audit_agent.infrastructure.http import ssl_context
 
 DEFAULT_CONFIG: dict[str, Any] = {
     "version": 1,

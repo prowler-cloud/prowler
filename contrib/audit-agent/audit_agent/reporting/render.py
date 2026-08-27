@@ -4,14 +4,14 @@ from __future__ import annotations
 
 from typing import Any
 
-from audit_agent.enums import (
+from audit_agent.domain.enums import (
     SEVERITY_RANK,
     FrameworkFamily,
     Provider,
     SecurityAspect,
     TrivyScanner,
 )
-from audit_agent.map_controls import load_mapping, summarize_by_section
+from audit_agent.application.map_controls import load_mapping, summarize_by_section
 
 COMMENT_MARKER = "<!-- prowler-audit-agent -->"
 

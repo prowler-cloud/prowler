@@ -134,21 +134,15 @@ fail-pr-on:
 ```text
 contrib/audit-agent/
 ├── README.md
-├── run.py                      # Entry without PYTHONPATH
+├── run.py                         # Entry without PYTHONPATH
 ├── prowler-audit.yml.example
 ├── mappings/soc2_iso27001.json
-└── audit_agent/                # Python package
-    ├── __main__.py             # CLI
-    ├── pipeline.py             # Orchestration (scan → map → report)
-    ├── scan.py                 # Prowler provider runner
-    ├── map_controls.py         # SOC2 / ISO mapping
-    ├── prowler_compliance.py   # Compliance framework index
-    ├── render.py               # PR / report markdown
-    ├── report_files.py         # Persist md + json
-    ├── github_api.py           # Optional GitHub API writes
-    ├── config.py               # Config load / merge
-    ├── enums.py                # Providers, scanners, aspects
-    └── http_util.py            # Shared SSL helpers
+└── audit_agent/
+    ├── __main__.py                # CLI adapter
+    ├── domain/                    # enums / aspect specs (no I/O)
+    ├── application/               # pipeline + control mapping
+    ├── infrastructure/            # config, Prowler CLI, GitHub API
+    └── reporting/                 # markdown + JSON reports
 ```
 
 Developer docs: [docs/developer-guide/audit-agent.mdx](../../docs/developer-guide/audit-agent.mdx)

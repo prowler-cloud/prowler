@@ -7,19 +7,19 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from audit_agent.config import (
+from audit_agent.infrastructure.config import (
     enabled_security_aspects,
     fetch_remote_config,
     load_local_config,
     meets_severity_threshold,
     scanners_for_trivy,
 )
-from audit_agent.enums import Framework, Provider, Scanner
-from audit_agent.github_api import GitHubClient, report_to_github
-from audit_agent.map_controls import filter_by_files, map_findings
-from audit_agent.render import render_pr_comment
-from audit_agent.report_files import save_audit_report
-from audit_agent.scan import run_prowler_audit
+from audit_agent.domain.enums import Framework, Provider, Scanner
+from audit_agent.infrastructure.github import GitHubClient, report_to_github
+from audit_agent.application.map_controls import filter_by_files, map_findings
+from audit_agent.reporting.render import render_pr_comment
+from audit_agent.reporting.reports import save_audit_report
+from audit_agent.infrastructure.scan import run_prowler_audit
 
 
 @dataclass

@@ -9,9 +9,9 @@ import urllib.parse
 import urllib.request
 from typing import Any
 
-from audit_agent.config import meets_severity_threshold
-from audit_agent.http_util import ssl_context
-from audit_agent.render import (
+from audit_agent.infrastructure.config import meets_severity_threshold
+from audit_agent.infrastructure.http import ssl_context
+from audit_agent.reporting.render import (
     COMMENT_MARKER,
     group_findings_by_control,
     render_issue_body,

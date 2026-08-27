@@ -12,8 +12,8 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
-from audit_agent.enums import Framework, Provider, TrivyScanner
-from audit_agent.prowler_compliance import frameworks_for_provider, repo_root
+from audit_agent.domain.enums import Framework, Provider, TrivyScanner
+from audit_agent.infrastructure.prowler_compliance import frameworks_for_provider, repo_root
 
 _PROWLER_SUBPROCESS_TIMEOUT_S = 60 * 30
 _PROWLER_OK_EXIT_CODES = frozenset({0, 3})  # 3 = findings present
