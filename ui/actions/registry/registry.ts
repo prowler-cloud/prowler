@@ -5,6 +5,7 @@ import { apiBaseUrl } from "@/lib";
 import { REGISTRY_ACCESS } from "@/lib/registry/access";
 import { evaluateRegistryAccess } from "@/lib/registry/access.server";
 import {
+  REGISTRY_ARTIFACT_ACTION,
   REGISTRY_BOOTSTRAP_STATE,
   REGISTRY_CATALOG,
   REGISTRY_CREDENTIAL_ACTION,
@@ -12,6 +13,7 @@ import {
   REGISTRY_ENDPOINT,
   REGISTRY_FAILURE,
   REGISTRY_SUBMISSION,
+  type RegistryAddArtifactInput,
   type RegistryBootstrapResult,
   type RegistryBootstrapState,
   type RegistryCollectionsResult,
@@ -30,14 +32,10 @@ import {
   classifyRegistryMutationRefusal,
   collectCompleteRegistryCatalog,
   isRegistryCollection,
+  parseRegistryArtifactSubmission,
   parseRegistryCredentialSubmission,
   RegistryCatalogPageError,
 } from "./registry.adapter";
-
-interface RegistryAddArtifactInput {
-  normalizedName: string;
-  versionSpec?: string;
-}
 
 async function getRegistryAccess(): Promise<string | null> {
   const accessToken = (await auth())?.accessToken;
@@ -322,6 +320,9 @@ export async function addRegistryArtifact({
   if (response.status === 401 || response.status === 403) {
     return { status: REGISTRY_FAILURE.ACCESS_DENIED } as const;
   }
+  if (response.status === 409) {
+    return { status: REGISTRY_FAILURE.ONBOARDING };
+  }
   if (!response.ok) {
     return (
       (await classifyRegistryMutationRefusal(response)) ?? {
@@ -330,6 +331,17 @@ export async function addRegistryArtifact({
     );
   }
 
+  const submission = await parseRegistryArtifactSubmission(response);
+  return submission.status === REGISTRY_SUBMISSION.PENDING
+    ? { status: REGISTRY_ARTIFACT_ACTION.SUBMITTED, taskId: submission.taskId }
+    : { status: REGISTRY_FAILURE.ERROR };
+}
+
+export async function confirmRegistryArtifactAddition(
+  normalizedName: string,
+): Promise<RegistryMutationResult> {
+  const access = await getRegistryAccess();
+  if (!access) return { status: REGISTRY_FAILURE.ACCESS_DENIED };
   return confirmRegistryMutation(access, normalizedName, true);
 }
 

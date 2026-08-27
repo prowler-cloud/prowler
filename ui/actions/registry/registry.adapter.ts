@@ -10,7 +10,7 @@ import {
   type RegistryCatalogArtifact,
   type RegistryCatalogResult,
   type RegistryCredentialStatus,
-  type RegistryCredentialSubmissionResult,
+  type RegistryTaskSubmissionResult,
   type RegistryEndpoint,
   type RegistryFailureResult,
   type RegistryMutationResult,
@@ -115,9 +115,19 @@ export class RegistryCatalogPageError extends Error {
   }
 }
 
-export async function parseRegistryCredentialSubmission(
+export const parseRegistryCredentialSubmission = (
   response: Response,
-): Promise<RegistryCredentialSubmissionResult> {
+): Promise<RegistryTaskSubmissionResult> =>
+  parseRegistryTaskSubmission(response);
+
+export const parseRegistryArtifactSubmission = (
+  response: Response,
+): Promise<RegistryTaskSubmissionResult> =>
+  parseRegistryTaskSubmission(response);
+
+async function parseRegistryTaskSubmission(
+  response: Response,
+): Promise<RegistryTaskSubmissionResult> {
   if (response.status !== 202) return { status: REGISTRY_SUBMISSION.ERROR };
 
   const parsed = taskSubmissionSchema.safeParse(

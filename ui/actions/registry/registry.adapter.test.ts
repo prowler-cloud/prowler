@@ -10,7 +10,7 @@ import {
   adaptRegistryCredentialStatus,
   classifyRegistryFailure,
   collectCompleteRegistryCatalog,
-  parseRegistryCredentialSubmission,
+  parseRegistryArtifactSubmission,
 } from "./registry.adapter";
 
 const credentialPayload = {
@@ -88,7 +88,7 @@ describe("Registry adapter", () => {
     });
   });
 
-  it("accepts only a matching 202 task and fixed Content-Location path", async () => {
+  it("accepts only a matching artifact 202 task and fixed Content-Location path", async () => {
     // Given
     const response = new Response(
       JSON.stringify({ data: { type: "tasks", id: "task-123" } }),
@@ -99,7 +99,7 @@ describe("Registry adapter", () => {
     );
 
     // When
-    const result = await parseRegistryCredentialSubmission(response);
+    const result = await parseRegistryArtifactSubmission(response);
 
     // Then
     expect(result).toEqual({
@@ -119,8 +119,8 @@ describe("Registry adapter", () => {
 
     // When
     const results = await Promise.all([
-      parseRegistryCredentialSubmission(wrongStatus),
-      parseRegistryCredentialSubmission(wrongLocation),
+      parseRegistryArtifactSubmission(wrongStatus),
+      parseRegistryArtifactSubmission(wrongLocation),
     ]);
 
     // Then

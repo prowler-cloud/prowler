@@ -553,21 +553,17 @@ describe("Registry guarded reads", () => {
     expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 
-  it("confirms an exact Add only after My artifacts reports the artifact", async () => {
+  it("returns an accepted Add task without reading My artifacts", async () => {
     // Given
-    fetchMock
-      .mockResolvedValueOnce(new Response(null, { status: 201 }))
-      .mockResolvedValueOnce(
-        jsonResponse({
-          data: [
-            {
-              type: "registry-artifacts",
-              id: "later-guard",
-              attributes: { version_spec: "2.0.0" },
-            },
-          ],
-        }),
-      );
+    fetchMock.mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({ data: { type: "tasks", id: "artifact-task" } }),
+        {
+          status: 202,
+          headers: { "Content-Location": "/api/v1/tasks/artifact-task" },
+        },
+      ),
+    );
 
     // When
     const result = await addRegistryArtifact({
@@ -576,12 +572,8 @@ describe("Registry guarded reads", () => {
     });
 
     // Then
-    expect(result).toEqual({
-      status: "confirmed",
-      tenantArtifacts: [
-        { normalizedName: "later-guard", versionSpec: "2.0.0" },
-      ],
-    });
+    expect(result).toEqual({ status: "submitted", taskId: "artifact-task" });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(fetchMock).toHaveBeenNthCalledWith(
       1,
       "https://api.test/api/v1/registry/artifacts",
@@ -603,24 +595,21 @@ describe("Registry guarded reads", () => {
 
   it("defaults Add to latest", async () => {
     // Given
-    fetchMock
-      .mockResolvedValueOnce(new Response(null, { status: 201 }))
-      .mockResolvedValueOnce(
-        jsonResponse({
-          data: [
-            {
-              type: "registry-artifacts",
-              id: "later-guard",
-              attributes: { version_spec: "latest" },
-            },
-          ],
-        }),
-      );
+    fetchMock.mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({ data: { type: "tasks", id: "artifact-task" } }),
+        {
+          status: 202,
+          headers: { "Content-Location": "/api/v1/tasks/artifact-task" },
+        },
+      ),
+    );
 
     // When
-    await addRegistryArtifact({ normalizedName: "later-guard" });
+    const result = await addRegistryArtifact({ normalizedName: "later-guard" });
 
     // Then
+    expect(result).toEqual({ status: "submitted", taskId: "artifact-task" });
     expect(fetchMock).toHaveBeenNthCalledWith(
       1,
       "https://api.test/api/v1/registry/artifacts",
@@ -636,6 +625,61 @@ describe("Registry guarded reads", () => {
         }),
       }),
     );
+  });
+
+  it("rejects invalid accepted task bindings without reading My artifacts", async () => {
+    // Given
+    const document = JSON.stringify({
+      data: { type: "tasks", id: "artifact-task" },
+    });
+    fetchMock
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ data: { type: "tasks" } }), {
+          status: 202,
+          headers: { "Content-Location": "/api/v1/tasks/artifact-task" },
+        }),
+      )
+      .mockResolvedValueOnce(new Response(document, { status: 202 }))
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({ data: { type: "other", id: "artifact-task" } }),
+          {
+            status: 202,
+            headers: { "Content-Location": "/api/v1/tasks/artifact-task" },
+          },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(document, {
+          status: 202,
+          headers: { "Content-Location": "/api/v1/tasks/other" },
+        }),
+      );
+
+    // When
+    const outcomes = await Promise.all(
+      ["missing-id", "missing-location", "wrong-type", "wrong-location"].map(
+        () => addRegistryArtifact({ normalizedName: "later-guard" }),
+      ),
+    );
+
+    // Then
+    expect(outcomes).toEqual(Array(4).fill({ status: "error" }));
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+  });
+
+  it("keeps a missing Registry credential synchronous", async () => {
+    // Given
+    fetchMock.mockResolvedValueOnce(jsonResponse({ errors: [] }, 409));
+
+    // When
+    const outcome = await addRegistryArtifact({
+      normalizedName: "later-guard",
+    });
+
+    // Then
+    expect(outcome).toEqual({ status: "onboarding" });
+    expect(fetchMock).toHaveBeenCalledOnce();
   });
 
   it.each([
@@ -691,6 +735,8 @@ describe("Registry guarded reads", () => {
       "Add",
       () => addRegistryArtifact({ normalizedName: "later-guard" }),
       { data: [] },
+      { status: "error" },
+      1,
     ],
     [
       "Remove",
@@ -704,10 +750,12 @@ describe("Registry guarded reads", () => {
           },
         ],
       },
+      { status: "refresh_failed" },
+      2,
     ],
   ])(
     "keeps membership unchanged when %s refresh contradicts acceptance",
-    async (_name, mutate, refreshedArtifacts) => {
+    async (_name, mutate, refreshedArtifacts, expected, calls) => {
       // Given
       fetchMock
         .mockResolvedValueOnce(new Response(null, { status: 204 }))
@@ -717,8 +765,8 @@ describe("Registry guarded reads", () => {
       const result = await mutate();
 
       // Then
-      expect(result).toEqual({ status: "refresh_failed" });
-      expect(fetchMock).toHaveBeenCalledTimes(2);
+      expect(result).toEqual(expected);
+      expect(fetchMock).toHaveBeenCalledTimes(calls);
     },
   );
 });
