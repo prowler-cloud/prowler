@@ -55,8 +55,9 @@ const CALLBACK_URL =
 
 const invokeProxy = async (
   auth: NextAuthRequest["auth"],
+  href = CALLBACK_URL,
 ): Promise<Response> => {
-  const url = new URL(CALLBACK_URL);
+  const url = new URL(href);
   const request = {
     auth,
     nextUrl: url,
@@ -93,4 +94,36 @@ describe("Slack OAuth callback authentication", () => {
       expect(location.href).not.toContain("st-2f1c9d7a");
     },
   );
+
+  it("keeps any other page's own query, so sign-in still returns where the user was", async () => {
+    // Given - an ordinary protected page carrying state worth resuming on.
+    const findings = "https://cloud.prowler.com/findings?severity=critical";
+
+    // When
+    const response = await invokeProxy(null, findings);
+
+    // Then - only the callback's credentials are dropped, nothing else.
+    const location = new URL(response.headers.get("location") as string);
+    expect(location.searchParams.get("callbackUrl")).toBe(
+      "/findings?severity=critical",
+    );
+  });
+
+  it("is answered by the authorized callback, never by the proxy behind it", async () => {
+    // Given - the proxy is the only layer that attaches the security headers,
+    // which makes it observable whether it ran at all.
+
+    // When
+    const turnedAway = await invokeProxy(null);
+    const allowed = await invokeProxy({
+      user: { permissions: { manage_integrations: true } },
+    } as NextAuthRequest["auth"]);
+
+    // Then - an unauthenticated request is settled before the proxy is reached,
+    // so a fix that lands only there would never run in production.
+    expect(turnedAway.headers.get("content-security-policy")).toBeNull();
+    expect(allowed.headers.get("content-security-policy")).toBe(
+      "default-src 'self'",
+    );
+  });
 });
