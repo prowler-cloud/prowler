@@ -1,0 +1,44 @@
+{
+  "Provider": "aws",
+  "CheckID": "sagemaker_full_access_policy_attached",
+  "CheckTitle": "IAM role does not have AmazonSageMakerFullAccess managed policy attached",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
+  ],
+  "ServiceName": "sagemaker",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "AwsIamRole",
+  "ResourceGroup": "IAM",
+  "Description": "**IAM roles** (excluding service roles) are evaluated for attachment of the AWS-managed `AmazonSageMakerFullAccess` policy.\n\nThis policy grants unrestricted access to all Amazon SageMaker actions and many supporting services.",
+  "Risk": "The `AmazonSageMakerFullAccess` policy grants broad permissions across SageMaker and supporting services like S3 and ECR. If a compromised role has this policy, an attacker could create or delete notebooks, training jobs, and endpoints, access training data and model artifacts, and incur significant costs through unrestricted instance provisioning.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/sagemaker/latest/dg/security_iam_id-based-policy-examples.html#security_iam_service-with-iam-policy-best-practices",
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#grant-least-privilege"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws iam detach-role-policy --role-name <ROLE_NAME> --policy-arn arn:aws:iam::aws:policy/AmazonSageMakerFullAccess",
+      "NativeIaC": "```yaml\n# CloudFormation: IAM Role without AmazonSageMakerFullAccess\nResources:\n  <example_resource_name>:\n    Type: AWS::IAM::Role\n    Properties:\n      AssumeRolePolicyDocument:\n        Version: '2012-10-17'\n        Statement:\n          - Effect: Allow\n            Principal:\n              Service: sagemaker.amazonaws.com\n            Action: sts:AssumeRole\n      ManagedPolicyArns: []  # Critical: ensure AmazonSageMakerFullAccess is NOT attached\n```",
+      "Other": "1. Open the AWS Console and go to IAM > Roles\n2. Select the role flagged by the check\n3. On the Permissions tab, find \"AmazonSageMakerFullAccess\" under Attached policies\n4. Click Detach next to \"AmazonSageMakerFullAccess\"\n5. Confirm the detach\n6. Attach a scoped policy granting only required SageMaker actions",
+      "Terraform": "```hcl\n# IAM Role without AmazonSageMakerFullAccess\nresource \"aws_iam_role\" \"<example_resource_name>\" {\n  assume_role_policy = <<POLICY\n{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [{\n    \"Effect\": \"Allow\",\n    \"Principal\": {\"Service\": \"sagemaker.amazonaws.com\"},\n    \"Action\": \"sts:AssumeRole\"\n  }]\n}\nPOLICY\n\n  managed_policy_arns = []  # Critical: ensures AmazonSageMakerFullAccess is NOT attached\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Apply **least privilege**: replace `AmazonSageMakerFullAccess` with a custom policy granting only the specific SageMaker actions required.\n\nUse **permissions boundaries** and **SCPs** to limit the scope of SageMaker permissions. Regularly review access with **IAM Access Analyzer** to identify and remove unused privileges.",
+      "Url": "https://hub.prowler.com/check/sagemaker_full_access_policy_attached"
+    }
+  },
+  "Categories": [
+    "gen-ai",
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "iam_role_administratoraccess_policy",
+    "bedrock_full_access_policy_attached"
+  ],
+  "Notes": ""
+}
