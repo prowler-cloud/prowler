@@ -1,0 +1,90 @@
+---
+title: 'Provider Scaffold Command'
+---
+
+`prowler-dev provider create` writes the files a new provider needs in order to be discovered and loaded, so that the first thing you write is the part only you can write. It generates structure and `TODO` markers, and it never guesses authentication behavior, API semantics or security checks.
+
+The command is contributor tooling. Nothing it generates runs during a scan, and nothing in `prowler-dev` is used by the `prowler` CLI.
+
+## Usage
+
+```bash
+uv run prowler-dev provider create --name acmecloud --kind api --scope full-stack \
+    --regional false --auth token
+```
+
+Add `--dry-run` to print the file list and exit without writing anything.
+
+### Required Arguments
+
+Three inputs change what gets generated, so the command refuses to guess them.
+
+* **`--name`:** The provider name, lowercase letters and digits only. `Provider.get_class()` builds the class name with Python's `str.capitalize()`, so `acmecloud` resolves to `AcmecloudProvider`. A name containing an underscore, a hyphen or an inner capital cannot be discovered, and the command rejects it rather than generating a provider that silently fails to load.
+* **`--kind`:** `sdk`, `api`, `tool` or `hybrid`, per [Classifying your Provider](./provider#classifying-your-provider). A `tool` provider wraps another binary rather than auditing a live API, so it gets no service layer, matching what `iac`, `image` and `llm` ship today.
+* **`--scope`:** How far the provider reaches. `builtin` generates a CLI/SDK provider inside this repository. `full-stack` does the same and sets `sdk_only = False`, which is what makes the API and UI list it. `external` generates a standalone package discovered through the `prowler.providers` entry point, outside this repository.
+
+### Optional Arguments
+
+* **`--regional`:** `true` or `false`, default `false`. When true, the provider gets a `--region` argument, a `regions` property and a `validate_regions` stub.
+* **`--auth`:** `env`, `token`, `key-file` or `browser`, default `env`. This decides which credential arguments exist and what the `TODO` markers say. It does not decide how credentials are resolved. `token` also adds the flag to the provider's `SENSITIVE_ARGUMENTS` set, so its value is redacted in HTML output.
+* **`--path`:** Where to generate. For `builtin` and `full-stack`, the Prowler checkout to write into, auto-detected from the working directory when omitted. For `external`, the directory to create, defaulting to `./prowler-provider-<name>`.
+* **`--force`:** Overwrite files that already exist. The command refuses to overwrite by default.
+
+## What Gets Generated
+
+For a built-in provider, the command writes the provider package and its tests:
+
+```text
+prowler/providers/<name>/
+├── __init__.py
+├── <name>_provider.py            # <Name>Provider, with the abstract members stubbed
+├── models.py                     # <Name>Session, <Name>IdentityInfo, <Name>OutputOptions
+├── exceptions/exceptions.py      # provider exceptions in the next free code block
+├── lib/arguments/arguments.py    # init_parser, required for every built-in provider
+├── lib/mutelist/mutelist.py      # <Name>Mutelist
+├── lib/service/service.py        # base service class, omitted for --kind tool
+└── services/__init__.py          # package marker, omitted for --kind tool
+tests/providers/<name>/
+├── <name>_provider_test.py
+├── <name>_fixtures.py
+└── lib/arguments/<name>_arguments_test.py
+```
+
+`lib/arguments/arguments.py` is generated for every kind because it is not optional. `prowler/providers/common/arguments.py` imports that module for every built-in provider and calls `init_parser` on it, and when the provider being invoked fails to load its arguments the CLI exits. All current providers have it.
+
+Test files are named with the provider prefix so that they do not collide with another provider's tests, which CI checks for.
+
+For an external provider, the command writes a standalone package instead:
+
+```text
+pyproject.toml                    # declares the prowler.providers entry point
+prowler_provider_<name>/
+├── __init__.py
+├── provider.py                   # <Name>Provider, with init_parser and from_cli_args
+└── models.py
+tests/test_provider.py
+```
+
+An external provider carries two pieces of the contract that no built-in provider implements, so there is nothing in this repository to copy them from. `init_parser` is called by `prowler/providers/common/arguments.py` to build the CLI subparser, and `from_cli_args` is called by the dynamic fallback branch of `init_global_provider()` to build the instance. Both are generated.
+
+## What Is Reported Instead Of Generated
+
+Three registrations live in files shared by every provider. Editing those by code generation produces a diff nobody wants to review and a conflict for whoever runs the command next, so the command reports them with a ready-to-paste snippet:
+
+1. The dispatch branch in `init_global_provider()` (`prowler/providers/common/provider.py`), which parses the provider's arguments and instantiates it. The reported snippet already passes the credential and region arguments that match your flags.
+2. `CheckReport<Name>` in `prowler/lib/check/models.py`. The names in that file are not derived from the provider name, so the spelling is yours to pick.
+3. The exception code block. The command reads the highest code currently in use and suggests the next free block of 100, which is worth re-checking before you commit.
+
+The report also names the changelog fragment to add, the verification commands to run, and, for a full-stack provider, that the API and UI work is a separate scope.
+
+## Verifying A Generated Provider
+
+```bash
+prowler --help              # the provider is listed with its help text
+prowler <name> --help       # the provider shows its own arguments
+pytest tests/providers/<name>
+```
+
+All three pass on a freshly generated provider, before any implementation work. The generated `setup_session` and `setup_identity` raise until you implement them, and the generated tests assert exactly that, so replace them as you go.
+
+Generated Python is formatted with `black` when it is importable, which it is in a Prowler checkout. That keeps a freshly generated provider clean against the repository's own `black` and `flake8` gates before your first push.

@@ -147,6 +147,8 @@ version = "5.40.0"
 
 [project.scripts]
 prowler = "prowler.__main__:prowler"
+# Contributor tooling, not part of a scan. See prowler/lib/dev/.
+prowler-dev = "prowler.lib.dev.cli:main"
 
 [project.urls]
 "Changelog" = "https://github.com/prowler-cloud/prowler/releases"
