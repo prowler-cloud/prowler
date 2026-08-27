@@ -21,6 +21,12 @@ class aks_cluster_uses_a_supported_version(Check):
     """
 
     def execute(self) -> list[Check_Report_Azure]:
+        """Compare each cluster's Kubernetes minor version against the configured baseline.
+
+        Returns:
+            One report per cluster with a parseable version. Clusters reporting no
+            version, or one that cannot be parsed, are skipped without a finding.
+        """
         findings = []
 
         # An explicit null in the config file survives .get(), so fall back here
