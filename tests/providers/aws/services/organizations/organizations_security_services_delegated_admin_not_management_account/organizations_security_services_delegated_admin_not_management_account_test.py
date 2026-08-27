@@ -16,6 +16,14 @@ SECOND_DELEGATED_ADMIN_ACCOUNT_ID = "333333333333"
 
 
 def delegated_administrator(account_id: str) -> DelegatedAdministrator:
+    """Build a delegated administrator for a given account.
+
+    Args:
+        account_id: The account ID to register as a delegated administrator.
+
+    Returns:
+        The delegated administrator the Organizations collector would have built.
+    """
     return DelegatedAdministrator(
         arn=f"arn:aws:organizations::123456789012:account/o-abcde12345/{account_id}",
         id=account_id,
@@ -105,6 +113,12 @@ class Test_organizations_security_services_delegated_admin_not_management_accoun
 
     @mock_aws
     def test_delegated_administrators_unreadable(self):
+        """An unreadable administrator list is MANUAL, not a FAIL on an empty one.
+
+        Trusted access is on for GuardDuty, so an empty administrator list would read as
+        administration from the management account. Only the sentinel distinguishes the
+        two.
+        """
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
         organization = conn.describe_organization()["Organization"]
@@ -143,6 +157,12 @@ class Test_organizations_security_services_delegated_admin_not_management_accoun
 
     @mock_aws
     def test_enabled_service_principals_unreadable(self):
+        """An unreadable trusted access list is MANUAL, not an empty scope.
+
+        Without it the check cannot tell which services are administered
+        organization-wide, so it must not fall through to the no-security-service exit
+        that reports nothing.
+        """
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
         organization = conn.describe_organization()["Organization"]
@@ -178,6 +198,14 @@ class Test_organizations_security_services_delegated_admin_not_management_accoun
 
     @mock_aws
     def test_delegated_services_unreadable_for_one_administrator(self):
+        """One unreadable administrator makes the whole verdict undetermined.
+
+        GuardDuty is readable and delegated here, so the fixture is a delegation map that
+        would answer the in-scope service on its own. The guard is still on the map as a
+        whole rather than per service, because a service absent from the administrators
+        that could be read is indistinguishable from one delegated to the administrator
+        that could not.
+        """
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
         organization = conn.describe_organization()["Organization"]
@@ -247,6 +275,12 @@ class Test_organizations_security_services_delegated_admin_not_management_accoun
 
     @mock_aws
     def test_security_service_without_delegated_administrator(self):
+        """Trusted access on with no delegation at all is administration from the management account.
+
+        Registering a delegated administrator is the only way to move organization-wide
+        administration out of the management account, so no registration means the
+        management account still holds it.
+        """
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
         organization = conn.describe_organization()["Organization"]
@@ -328,6 +362,11 @@ class Test_organizations_security_services_delegated_admin_not_management_accoun
 
     @mock_aws
     def test_only_some_security_services_delegated(self):
+        """Only the undelegated security services are named, and non-security ones never are.
+
+        GuardDuty is delegated and IAM Identity Center is out of scope, so neither appears
+        in the finding even though both have trusted access enabled.
+        """
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
         organization = conn.describe_organization()["Organization"]
@@ -372,6 +411,11 @@ class Test_organizations_security_services_delegated_admin_not_management_accoun
 
     @mock_aws
     def test_all_integrated_security_services_delegated(self):
+        """A PASS names the in-scope services, spread across two administrators.
+
+        The delegations do not have to sit in one account for the organization to pass,
+        and the out-of-scope service that is also integrated stays out of the message.
+        """
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
         organization = conn.describe_organization()["Organization"]
@@ -430,6 +474,11 @@ class Test_organizations_security_services_delegated_admin_not_management_accoun
         real_make_api_call = botocore.client.BaseClient._make_api_call
 
         def throttle_list_delegated_administrators(self, operation_name, kwarg):
+            """Raise TooManyRequestsException from ListDelegatedAdministrators only.
+
+            Every other operation reaches the real client, so trusted access is still
+            read and the fixture isolates the one lookup that fails.
+            """
             if operation_name == "ListDelegatedAdministrators":
                 raise botocore.exceptions.ClientError(
                     {

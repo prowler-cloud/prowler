@@ -5,7 +5,19 @@ from prowler.providers.aws.services.organizations.organizations_client import (
 
 
 class organizations_delegated_administrators(Check):
-    def execute(self):
+    def execute(self) -> list[Check_Report_AWS]:
+        """Compare every delegated administrator against the trusted list in the configuration.
+
+        A single administrator outside the trusted list fails the organization, so the
+        administrators are collected before the verdict is set rather than each one
+        overwriting the verdict of the previous.
+
+        Returns:
+            A single report for the organization, or no report when the audited account
+            is not part of an active organization. The report is MANUAL when the
+            administrators could not be listed, which no account outside the management
+            account and the delegated administrators is allowed to do.
+        """
         findings = []
 
         # `or []` covers the key being present but null in the configuration file,

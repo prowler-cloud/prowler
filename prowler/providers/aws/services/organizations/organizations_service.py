@@ -26,6 +26,12 @@ class Organizations(AWSService):
         self._describe_organization()
 
     def _describe_organization(self):
+        """Describe the organization the audited account belongs to and its delegations.
+
+        Sets `self.organization` to None when the account is not part of an organization,
+        and leaves the trusted access and per-administrator delegation attributes at the
+        sentinel their collectors returned when they could not be read.
+        """
         logger.info("Organizations - Describe Organization...")
 
         try:
@@ -176,6 +182,13 @@ class Organizations(AWSService):
             return []
 
     def _list_delegated_administrators(self):
+        """List the member accounts registered as delegated administrators.
+
+        Returns:
+            The delegated administrators of the organization, or None when the list could
+            not be read. None is a distinct answer from the empty list, which means the
+            organization has no delegated administrator at all.
+        """
         logger.info("Organizations - List Delegated Administrators...")
 
         try:
@@ -218,6 +231,13 @@ class Organizations(AWSService):
         return self.delegated_administrators
 
     def _list_aws_service_access_for_organization(self):
+        """List the service principals that have trusted access enabled organization-wide.
+
+        Returns:
+            The enabled service principals, or None when the trusted access configuration
+            could not be read. None is a distinct answer from the empty list, which means
+            no service is integrated with the organization at all.
+        """
         logger.info("Organizations - List AWS Service Access For Organization...")
 
         # None means the trusted access configuration could not be read, which is
@@ -255,6 +275,16 @@ class Organizations(AWSService):
         return enabled_service_principals
 
     def _list_delegated_services_for_account(self, account_id):
+        """List the service principals one delegated administrator administers.
+
+        Args:
+            account_id: The delegated administrator account to read the delegations of.
+
+        Returns:
+            The service principals delegated to the account, or None when they could not
+            be read. None is a distinct answer from the empty list, which means the
+            account administers no service.
+        """
         logger.info(
             "Organizations - List Delegated Services For Account: %s ...", account_id
         )

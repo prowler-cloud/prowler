@@ -11,11 +11,20 @@ from prowler.providers.aws.services.organizations.organizations_service import (
 from tests.providers.aws.utils import AWS_REGION_EU_WEST_1, set_mocked_aws_provider
 
 TRUSTED_ACCOUNT_ID = "222222222222"
+SECOND_TRUSTED_ACCOUNT_ID = "333333333333"
 UNTRUSTED_ACCOUNT_ID = "999999999999"
 SECOND_UNTRUSTED_ACCOUNT_ID = "888888888888"
 
 
 def delegated_administrator(account_id: str) -> DelegatedAdministrator:
+    """Build a delegated administrator for a given account.
+
+    Args:
+        account_id: The account ID to register as a delegated administrator.
+
+    Returns:
+        The delegated administrator the Organizations collector would have built.
+    """
     return DelegatedAdministrator(
         arn=f"arn:aws:organizations::123456789012:account/o-abcde12345/{account_id}",
         id=account_id,
@@ -326,11 +335,11 @@ class Test_organizations_delegated_administrators:
         aws_provider._audit_config = {
             "organizations_trusted_delegated_administrators": [
                 TRUSTED_ACCOUNT_ID,
-                SECOND_UNTRUSTED_ACCOUNT_ID,
+                SECOND_TRUSTED_ACCOUNT_ID,
             ]
         }
         organizations = organizations_with_administrators(
-            aws_provider, [TRUSTED_ACCOUNT_ID, SECOND_UNTRUSTED_ACCOUNT_ID]
+            aws_provider, [TRUSTED_ACCOUNT_ID, SECOND_TRUSTED_ACCOUNT_ID]
         )
 
         with mock.patch(
@@ -353,7 +362,7 @@ class Test_organizations_delegated_administrators:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == f"AWS Organization {org_id} has a trusted Delegated Administrator: {TRUSTED_ACCOUNT_ID}, {SECOND_UNTRUSTED_ACCOUNT_ID}."
+                    == f"AWS Organization {org_id} has a trusted Delegated Administrator: {TRUSTED_ACCOUNT_ID}, {SECOND_TRUSTED_ACCOUNT_ID}."
                 )
 
     @mock_aws
@@ -363,6 +372,10 @@ class Test_organizations_delegated_administrators:
         `audit_config.get` returns None for a key that is present but null in the
         configuration file, and every membership test against None raises TypeError,
         which the framework swallows into a check that reports nothing at all.
+
+        The administrator is deliberately the account the trusted constant names: the
+        FAIL below is then attributable to the null configuration alone, rather than to
+        having picked an account that no trusted list in this file ever contains.
         """
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
@@ -414,6 +427,7 @@ class Test_organizations_delegated_administrators:
         real_make_api_call = botocore.client.BaseClient._make_api_call
 
         def throttle_list_delegated_administrators(self, operation_name, kwarg):
+            """Raise TooManyRequestsException from ListDelegatedAdministrators only."""
             if operation_name == "ListDelegatedAdministrators":
                 raise botocore.exceptions.ClientError(
                     {
@@ -472,6 +486,7 @@ class Test_organizations_delegated_administrators:
         real_make_api_call = botocore.client.BaseClient._make_api_call
 
         def deny_list_delegated_administrators(self, operation_name, kwarg):
+            """Raise AccessDeniedException from ListDelegatedAdministrators only."""
             if operation_name == "ListDelegatedAdministrators":
                 raise botocore.exceptions.ClientError(
                     {

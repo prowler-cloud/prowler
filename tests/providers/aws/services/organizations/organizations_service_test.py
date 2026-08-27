@@ -28,6 +28,14 @@ def scp_restrict_regions_with_deny():
 
 
 def delegated_administrator(account_id: str) -> dict:
+    """Build one `ListDelegatedAdministrators` entry.
+
+    Args:
+        account_id: The account ID the entry describes.
+
+    Returns:
+        The entry as the API models it, keyed the way the collector reads it.
+    """
     return {
         "Id": account_id,
         "Arn": f"arn:aws:organizations::{MANAGEMENT_ACCOUNT_ID}:account/{ORGANIZATION_ID}/{account_id}",
@@ -73,6 +81,15 @@ def build_mock_make_api_call(
     make_api_call = botocore.client.BaseClient._make_api_call
 
     def page_for(pages: list, next_token: str):
+        """Resolve one page and the token that follows it.
+
+        Args:
+            pages: The pages to serve, in order.
+            next_token: The token the caller sent, or None for the first page.
+
+        Returns:
+            A dict carrying the page under `page`, plus `NextToken` when another follows.
+        """
         index = int(next_token) if next_token else 0
         response = {"page": pages[index]}
         if index + 1 < len(pages):
@@ -80,6 +97,11 @@ def build_mock_make_api_call(
         return response
 
     def mock_make_api_call(self, operation_name, kwarg):
+        """Serve the configured Organizations responses and defer anything else.
+
+        Every response is validated against the API model, so a page this mock builds
+        with a key the service does not define fails here rather than in the collector.
+        """
         if operation_name in errors:
             raise botocore.exceptions.ClientError(
                 {"Error": {"Code": errors[operation_name], "Message": "denied"}},
@@ -202,6 +224,11 @@ class Test_Organizations_Service:
         assert policy == json.loads(response["Policy"]["Content"])
 
     def test_list_delegated_administrators_reads_every_page(self):
+        """The collector follows NextToken, so an administrator on page two is not lost.
+
+        An administrator dropped with the second page would be an untrusted account this
+        service never reports, so the fields of that second entry are asserted too.
+        """
         aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1], create_default_organization=False
         )
@@ -230,6 +257,7 @@ class Test_Organizations_Service:
         assert administrators[1].joinedmethod == "CREATED"
 
     def test_list_aws_service_access_for_organization_reads_every_page(self):
+        """Trusted access is read across pages, in the order the API returned it."""
         aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1], create_default_organization=False
         )
@@ -251,6 +279,11 @@ class Test_Organizations_Service:
         ]
 
     def test_list_delegated_services_for_account_reads_every_page(self):
+        """Per-account delegations are read across pages.
+
+        A delegation dropped with the second page would make its service look
+        administered from the management account.
+        """
         aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1], create_default_organization=False
         )
@@ -278,6 +311,12 @@ class Test_Organizations_Service:
         }
 
     def test_list_delegated_services_for_account_is_called_per_administrator(self):
+        """Every administrator is queried, not only the first one listed.
+
+        ListDelegatedServicesForAccount takes one account at a time, so a loop that
+        stopped early would leave later administrators looking as if they held no
+        delegation.
+        """
         aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1], create_default_organization=False
         )
@@ -304,6 +343,11 @@ class Test_Organizations_Service:
         }
 
     def test_list_aws_service_access_for_organization_access_denied(self):
+        """A denied trusted access read is the sentinel, not the page the mock offered.
+
+        The mock is given a service principal so that the empty list cannot be mistaken
+        for the collector having simply read nothing.
+        """
         aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1], create_default_organization=False
         )
@@ -319,6 +363,11 @@ class Test_Organizations_Service:
         assert organizations.organization.enabled_service_principals is None
 
     def test_list_delegated_services_for_account_access_denied(self):
+        """A denied per-account read leaves that account keyed to the sentinel.
+
+        The administrator stays in the map so a caller can tell an account whose
+        delegations are unknown from an account that is not an administrator at all.
+        """
         aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1], create_default_organization=False
         )
@@ -341,6 +390,12 @@ class Test_Organizations_Service:
         }
 
     def test_list_delegated_administrators_access_denied(self):
+        """Unknown administrators means no per-account read is attempted at all.
+
+        The delegation map stays empty rather than being keyed to accounts the collector
+        never established, which is what the `or []` in the loop over administrators is
+        for.
+        """
         aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1], create_default_organization=False
         )
@@ -394,6 +449,7 @@ class Test_Organizations_Service:
         mock_make_api_call = build_mock_make_api_call()
 
         def mock_renamed_result_key(self, operation_name, kwarg):
+            """Return ListDelegatedAdministrators under a key the collector does not read."""
             if operation_name == "ListDelegatedAdministrators":
                 # Deliberately not validated against the API model: this simulates the
                 # result key being renamed out from under the collector.
@@ -432,12 +488,19 @@ class Test_Organizations_Service:
         assert organizations.organization is None
 
     def test_list_aws_service_access_for_organization_unexpected_response_shape(self):
+        """A renamed result key reads as unknown, not as an organization with no integration.
+
+        The collector indexes page["EnabledServicePrincipals"], so a rename raises
+        KeyError rather than ClientError and only the generic handler can turn it into the
+        sentinel.
+        """
         aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1], create_default_organization=False
         )
         mock_make_api_call = build_mock_make_api_call()
 
         def mock_renamed_result_key(self, operation_name, kwarg):
+            """Return the trusted access list under a key the collector does not read."""
             if operation_name == "ListAWSServiceAccessForOrganization":
                 # Deliberately not validated against the API model: this simulates the
                 # response key being renamed out from under the collector.
@@ -456,6 +519,11 @@ class Test_Organizations_Service:
         assert organizations.organization.enabled_service_principals is None
 
     def test_list_delegated_services_for_account_unexpected_response_shape(self):
+        """A renamed result key reads as unknown, not as an account with no delegation.
+
+        Reported per administrator, so the account stays in the map keyed to the sentinel
+        rather than dropping out of it.
+        """
         aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1], create_default_organization=False
         )
@@ -466,6 +534,7 @@ class Test_Organizations_Service:
         )
 
         def mock_renamed_result_key(self, operation_name, kwarg):
+            """Return the per-account delegations under a key the collector does not read."""
             if operation_name == "ListDelegatedServicesForAccount":
                 # Deliberately not validated against the API model: this simulates the
                 # response key being renamed out from under the collector.
@@ -489,6 +558,7 @@ class Test_Organizations_Service:
         mock_make_api_call = build_mock_make_api_call()
 
         def mock_renamed_member_key(self, operation_name, kwarg):
+            """Keep the trusted access result key but rename the member inside it."""
             if operation_name == "ListAWSServiceAccessForOrganization":
                 # Deliberately not validated against the API model: this simulates the
                 # member key being renamed out from under the collector.
@@ -514,6 +584,7 @@ class Test_Organizations_Service:
         )
 
         def mock_renamed_member_key(self, operation_name, kwarg):
+            """Keep the per-account delegation result key but rename the member inside it."""
             if operation_name == "ListDelegatedServicesForAccount":
                 # Deliberately not validated against the API model: this simulates the
                 # member key being renamed out from under the collector.
