@@ -83,11 +83,6 @@ def main(argv: list[str] | None = None) -> int:
         help="Optional local config override (JSON). Target-repo config is fetched if present.",
     )
     parser.add_argument(
-        "--image-tag",
-        default=os.environ.get("PROWLER_IMAGE_TAG", "stable"),
-        help="prowlercloud/prowler Docker tag",
-    )
-    parser.add_argument(
         "--output-dir",
         type=Path,
         default=None,
@@ -153,7 +148,6 @@ def main(argv: list[str] | None = None) -> int:
             frameworks=frameworks,
             scanners=scanners,
             github_actions=github_actions,
-            image_tag=args.image_tag,
             output_dir=args.output_dir,
         )
     except RuntimeError as exc:

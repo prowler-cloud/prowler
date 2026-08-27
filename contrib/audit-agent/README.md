@@ -125,7 +125,6 @@ fail-pr-on:
 --report-file PATH         Extra path for the markdown report
 --dry-run                  Print report; skip GitHub write APIs
 --json-summary             Print a JSON summary to stdout
---image-tag TAG            Docker fallback image tag (only if image already local)
 ```
 
 ---

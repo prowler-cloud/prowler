@@ -26,12 +26,11 @@ def run_prowler_audit(
     frameworks: list[str] | None = None,
     scanners: list[str] | None = None,
     github_actions: bool = True,
-    image_tag: str = "stable",
     output_dir: Path | None = None,
 ) -> tuple[list[dict[str, Any]], Path]:
     """Run configured Prowler providers and return combined OCSF findings.
 
-    Prefers the local monorepo CLI. For IaC, clones the target with `gh`
+    Uses the local monorepo CLI. For IaC, clones the target with `gh`
     (avoids Python SSL issues on macOS) then scans `--scan-path`.
     """
     providers = [p.lower() for p in (providers or Provider.defaults())]
@@ -57,7 +56,6 @@ def run_prowler_audit(
                 frameworks=frameworks,
                 scanners=scanners,
                 github_actions=github_actions,
-                image_tag=image_tag,
                 output_dir=provider_out,
             )
             all_findings.extend(findings)
@@ -116,7 +114,6 @@ def _run_provider(
     frameworks: list[str],
     scanners: list[str],
     github_actions: bool,
-    image_tag: str,
     output_dir: Path,
 ) -> list[dict[str, Any]]:
     env = os.environ.copy()
@@ -139,62 +136,36 @@ def _run_provider(
         github_actions=github_actions,
     )
 
-    errors: list[str] = []
     local = _local_prowler_launcher()
-    if local:
-        full_cmd = [*local, *cmd]
-        print(f"Running Prowler via: {' '.join(local)} …", file=sys.stderr)
-        try:
-            result = subprocess.run(
-                full_cmd,
-                check=False,
-                env=env,
-                cwd=str(repo_root()),
-                capture_output=True,
-                text=True,
-                timeout=_PROWLER_SUBPROCESS_TIMEOUT_S,
-            )
-        except subprocess.TimeoutExpired as exc:
-            errors.append(
-                f"local CLI timed out after {exc.timeout}s"
-            )
-            print(errors[-1], file=sys.stderr)
-        else:
-            # Prowler exits 3 when findings exist — that is success for us
-            if result.returncode in (0, 3):
-                findings = load_ocsf_findings(output_dir)
-                if findings or result.returncode == 0:
-                    return findings
-            err = (result.stderr or result.stdout or "").strip()
-            errors.append(
-                f"local CLI failed (exit {result.returncode}): {err[-2000:] or 'no output'}"
-            )
-            print(errors[-1], file=sys.stderr)
-
-    # Only use Docker when the image is already present (avoid hung pulls)
-    if _docker_image_present(image_tag):
-        print(
-            f"Falling back to local Docker image prowlercloud/prowler:{image_tag} …",
-            file=sys.stderr,
+    if not local:
+        raise RuntimeError(
+            "Local Prowler CLI not found. Run `uv sync` from the repo root."
         )
-        return _docker_prowler(
-            provider_args=cmd,
-            token=token,
-            image_tag=image_tag,
-            output_dir=output_dir,
+
+    full_cmd = [*local, *cmd]
+    print(f"Running Prowler via: {' '.join(local)} …", file=sys.stderr)
+    try:
+        result = subprocess.run(
+            full_cmd,
+            check=False,
             env=env,
-            scan_path=clone_dir,
+            cwd=str(repo_root()),
+            capture_output=True,
+            text=True,
+            timeout=_PROWLER_SUBPROCESS_TIMEOUT_S,
         )
+    except subprocess.TimeoutExpired as exc:
+        raise RuntimeError(f"local CLI timed out after {exc.timeout}s") from exc
 
-    hint = (
-        "Fix the local CLI error above, or pre-pull "
-        f"`docker pull prowlercloud/prowler:{image_tag}` "
-        "(the agent will not auto-pull to avoid hangs)."
-    )
+    # Prowler exits 3 when findings exist — that is success for us
+    if result.returncode in (0, 3):
+        findings = load_ocsf_findings(output_dir)
+        if findings or result.returncode == 0:
+            return findings
+
+    err = (result.stderr or result.stdout or "").strip()
     raise RuntimeError(
-        "Prowler could not run. "
-        + (" ".join(errors) + " " if errors else "")
-        + hint
+        f"local CLI failed (exit {result.returncode}): {err[-2000:] or 'no output'}"
     )
 
 
@@ -268,17 +239,6 @@ def _gh_clone(repo_full_name: str, dest: Path, token: str) -> None:
         raise RuntimeError(
             f"git clone failed: {(result.stderr or result.stdout or '').strip()}"
         )
-
-
-def _docker_image_present(image_tag: str) -> bool:
-    if not shutil.which("docker"):
-        return False
-    result = subprocess.run(
-        ["docker", "image", "inspect", f"prowlercloud/prowler:{image_tag}"],
-        check=False,
-        capture_output=True,
-    )
-    return result.returncode == 0
 
 
 def _local_prowler_launcher() -> list[str] | None:
@@ -366,77 +326,6 @@ def _build_prowler_args(
             args.append("--no-github-actions")
 
     return args
-
-
-def _docker_prowler(
-    *,
-    provider_args: list[str],
-    token: str,
-    image_tag: str,
-    output_dir: Path,
-    env: dict[str, str],
-    scan_path: Path | None = None,
-) -> list[dict[str, Any]]:
-    container_out = "/home/prowler/workspace/output"
-    container_repo = "/home/prowler/workspace/repo"
-    rewritten: list[str] = []
-    skip_next = False
-    for i, part in enumerate(provider_args):
-        if skip_next:
-            skip_next = False
-            continue
-        if part == "--output-directory" and i + 1 < len(provider_args):
-            rewritten.extend([part, container_out])
-            skip_next = True
-        elif part == "--scan-path" and i + 1 < len(provider_args):
-            rewritten.extend([part, container_repo])
-            skip_next = True
-        else:
-            rewritten.append(part)
-
-    cmd = [
-        "docker",
-        "run",
-        "--rm",
-        "--env",
-        "GITHUB_PERSONAL_ACCESS_TOKEN",
-        "--env",
-        "GITHUB_TOKEN",
-        "-v",
-        f"{output_dir.resolve()}:{container_out}",
-        "-w",
-        "/home/prowler/workspace",
-        f"prowlercloud/prowler:{image_tag}",
-        *rewritten,
-    ]
-    if scan_path and scan_path.is_dir():
-        cmd[3:3] = ["-v", f"{scan_path.resolve()}:{container_repo}:ro"]
-
-    run_env = os.environ.copy()
-    run_env.update(env)
-    run_env["GITHUB_PERSONAL_ACCESS_TOKEN"] = token
-    run_env["GITHUB_TOKEN"] = token
-
-    for key in (
-        "AWS_ACCESS_KEY_ID",
-        "AWS_SECRET_ACCESS_KEY",
-        "AWS_SESSION_TOKEN",
-        "AWS_DEFAULT_REGION",
-        "AZURE_CLIENT_ID",
-        "AZURE_CLIENT_SECRET",
-        "AZURE_TENANT_ID",
-        "GOOGLE_APPLICATION_CREDENTIALS",
-    ):
-        if run_env.get(key):
-            cmd[3:3] = ["--env", key]
-
-    result = subprocess.run(cmd, check=False, env=run_env)
-    findings = load_ocsf_findings(output_dir)
-    if result.returncode not in (0, 3) and not findings:
-        raise RuntimeError(
-            f"Docker Prowler failed (exit {result.returncode}) with no findings"
-        )
-    return findings
 
 
 def run_iac_scan(*args: Any, **kwargs: Any) -> tuple[list[dict[str, Any]], Path]:
