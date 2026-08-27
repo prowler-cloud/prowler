@@ -72,6 +72,7 @@ class Test_ecr_registry_scan_images_on_push_enabled:
             assert len(result) == 0
 
     def test_registry_scan_on_push_enabled(self):
+        """A BASIC registry whose one unfiltered rule is SCAN_ON_PUSH passes as scan on push."""
         ecr_client = mock.MagicMock
         ecr_client.audited_account_arn = AWS_ACCOUNT_ARN
         ecr_client.registries = {}
@@ -186,6 +187,7 @@ class Test_ecr_registry_scan_images_on_push_enabled:
             assert result[0].region == AWS_REGION_EU_WEST_1
 
     def test_scan_on_push_disabled(self):
+        """A registry with no scanning rules at all fails: no frequency is configured to read."""
         ecr_client = mock.MagicMock
         ecr_client.audited_account_arn = AWS_ACCOUNT_ARN
         ecr_client.registries = {}
@@ -297,9 +299,11 @@ class Test_ecr_registry_scan_images_on_push_enabled:
     def test_manual_only_scanning_fails(self):
         """MANUAL is the third frequency the API returns, and nothing scans a pushed image.
 
-        A BASIC registry gets MANUAL by default when scan on push is not specified, so this is not a
-        hypothetical shape. Before this was read, any rule at all produced PASS -- so a registry that
-        scans nothing until someone asks reported as scanning on push."""
+        The registry is BASIC because that is the only scan type MANUAL occurs under: scanFrequency
+        documents CONTINUOUS_SCAN and SCAN_ON_PUSH for ENHANCED, and MANUAL as the BASIC default
+        when scan on push is not specified. Before this was read, any rule at all produced PASS --
+        so a registry that scans nothing until someone asks reported as scanning on push.
+        """
         ecr_client = mock.MagicMock
         ecr_client.audited_account_arn = AWS_ACCOUNT_ARN
         ecr_client.registries = {}
@@ -307,7 +311,7 @@ class Test_ecr_registry_scan_images_on_push_enabled:
             id=AWS_ACCOUNT_NUMBER,
             arn=f"arn:aws:ecr:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:registry/{AWS_ACCOUNT_NUMBER}",
             region=AWS_REGION_EU_WEST_1,
-            scan_type="ENHANCED",
+            scan_type="BASIC",
             repositories=[
                 Repository(
                     name=repository_name,
@@ -347,7 +351,7 @@ class Test_ecr_registry_scan_images_on_push_enabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"ECR registry {AWS_ACCOUNT_NUMBER} has ENHANCED scanning set to manual only, so images are not scanned when they are pushed."
+                == f"ECR registry {AWS_ACCOUNT_NUMBER} has BASIC scanning set to manual only, so images are not scanned when they are pushed."
             )
 
     def test_both_frequencies_are_named_in_a_fixed_order(self):

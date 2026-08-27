@@ -8,7 +8,13 @@ AUTOMATED_SCAN_FREQUENCIES = {"SCAN_ON_PUSH", "CONTINUOUS_SCAN"}
 
 
 class ecr_registry_scan_images_on_push_enabled(Check):
-    def execute(self):
+    def execute(self) -> list[Check_Report_AWS]:
+        """Execute the check against every ECR registry that holds repositories.
+
+        Returns:
+            A list of reports, one per in-use registry, PASS when its rules cover all
+            repositories with a frequency in AUTOMATED_SCAN_FREQUENCIES.
+        """
         findings = []
         for registry in ecr_client.registries.values():
             # We want to check the registry if it is in use, hence there are repositories
@@ -44,7 +50,16 @@ class ecr_registry_scan_images_on_push_enabled(Check):
 
     @staticmethod
     def _describe(frequencies: set) -> str:
-        """Name the frequencies in a fixed order, so the message does not vary between runs."""
+        """Name automated scan frequencies in a fixed order.
+
+        Args:
+            frequencies: The registry's configured frequencies, already narrowed to
+                AUTOMATED_SCAN_FREQUENCIES.
+
+        Returns:
+            The frequencies in a fixed order, so the message does not vary between runs for
+            the same registry.
+        """
         wording = {
             "SCAN_ON_PUSH": "scan on push",
             "CONTINUOUS_SCAN": "continuous scanning",
