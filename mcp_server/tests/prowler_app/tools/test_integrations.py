@@ -1014,6 +1014,32 @@ async def test_an_accepted_dispatch_with_no_task_id_is_not_safe_to_retry(
     assert "task_id" not in result.data
 
 
+async def test_a_dispatch_with_no_usable_credential_is_raised_not_called_unknown(
+    mcp_root_server, mock_api_client, mock_router, monkeypatch
+):
+    """Authentication runs before the request, so nothing was ever queued.
+
+    Reported as `unknown` it reads as "work items may exist in Jira, go and
+    look" -- for a call that never reached Prowler. It is not a dispatch outcome
+    at all: the credential has to be fixed, and no retry of this call does that.
+    """
+    monkeypatch.setattr(mock_api_client.auth_manager, "mode", "http")
+
+    async with Client(mcp_root_server) as client:
+        with pytest.raises(Exception, match="no usable credential"):
+            await client.call_tool(
+                "prowler_send_findings_to_jira",
+                {
+                    "integration_id": "i1",
+                    "project_key": "PROJ",
+                    "issue_type": "Task",
+                    "finding_ids": ["f1"],
+                },
+            )
+
+    assert mock_router.paths() == []
+
+
 async def test_a_dispatch_task_that_died_halfway_is_never_safe_to_retry(
     mcp_root_server, mock_api_client, mock_router
 ):

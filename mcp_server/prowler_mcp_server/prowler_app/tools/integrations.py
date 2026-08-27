@@ -12,7 +12,7 @@ from typing import Any
 from fastmcp.exceptions import ToolError
 from pydantic import Field
 
-from prowler_mcp_server.lib.errors import InvalidArgument
+from prowler_mcp_server.lib.errors import CredentialError, InvalidArgument
 from prowler_mcp_server.lib.types import NonBlankStr
 from prowler_mcp_server.prowler_app.models.integrations import (
     DetailedIntegration,
@@ -762,6 +762,12 @@ class IntegrationsTools(BaseTool):
 
             self.logger.error(f"Jira dispatch was rejected by Prowler: {e}")
             return self._jira_dispatch_rejected(str(e))
+        except CredentialError:
+            # Authentication happens before the request goes out, so nothing was
+            # queued. It is raised rather than reported as a dispatch outcome:
+            # there is no partial state to describe, and the shared classifier
+            # says what has to be fixed, which no retry of this call can.
+            raise
         except Exception as e:
             # No answer came back, so the request may still have been accepted
             self.logger.error(f"Jira dispatch could not be started: {e}")
