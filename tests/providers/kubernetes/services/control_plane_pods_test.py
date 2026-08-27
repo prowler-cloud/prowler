@@ -86,7 +86,7 @@ GATHERERS = {
         "source": "config_maps",
         "namespaced": False,
         "attribute": "kubelet_config_maps",
-        "match": "kubelet-config",
+        "match": "kubelet-config-node",
         "miss": "unrelated-config",
         "check": (
             "prowler.providers.kubernetes.services.kubelet."
@@ -176,11 +176,11 @@ def failing_core_client(spec):
 class Test_kubernetes_resource_gathering:
     """Regression tests for failed resource gathering in Kubernetes services.
 
-    ``_get_<service>_pods`` and ``_get_kubelet_config_maps`` placed their
-    ``return`` inside the ``try`` block, so when the Kubernetes API call raised,
-    the ``except`` branch only logged and the function fell through to an
-    implicit ``return None``. That ``None`` was assigned straight to the service
-    attribute, and every check that iterates it raised
+    Before this fix, ``_get_<service>_pods`` and ``_get_kubelet_config_maps``
+    placed their ``return`` inside the ``try`` block, so when resource
+    collection raised, the ``except`` branch only logged and the function fell
+    through to an implicit ``return None``. That ``None`` was assigned straight
+    to the service attribute, and every check that iterates it raised
     ``TypeError: 'NoneType' object is not iterable``.
     """
 
@@ -210,8 +210,10 @@ class Test_kubernetes_resource_gathering:
             service = build_service(spec, core_client)
             gathered = getattr(service, spec["attribute"])
 
-            expected = [spec["match"]] * (1 if spec["namespaced"] else 2)
-            assert [item.name for item in gathered] == expected, (
+            expected = [(spec["match"], "kube-system")]
+            if not spec["namespaced"]:
+                expected.append((spec["match"], "default"))
+            assert [(item.name, item.namespace) for item in gathered] == expected, (
                 f"{name}: expected only the matching resource(s); "
                 f"namespaced={spec['namespaced']}"
             )
@@ -245,3 +247,47 @@ class Test_kubernetes_resource_gathering:
                 findings = check.execute()
 
             assert findings == [], f"{name}: expected no findings after a failed gather"
+
+
+class Test_kubelet_config_map_parsing:
+    """A broken `kubelet-config*` ConfigMap must not hide the valid ones."""
+
+    def _kubelet_config_maps(self, config_maps):
+        spec = GATHERERS["kubelet"]
+        core_client = mock.MagicMock()
+        core_client.config_maps = config_maps
+        return build_service(spec, core_client).kubelet_config_maps
+
+    def test_malformed_yaml_config_map_is_skipped(self):
+        bad = ConfigMap(
+            name="kubelet-config-bad",
+            uid="bad-uid",
+            namespace="kube-system",
+            data={"kubelet": "authentication: [unclosed"},
+        )
+        good = make_config_map("kubelet-config")
+
+        # The broken ConfigMap is listed first, so an early return would lose
+        # the valid one that follows it.
+        gathered = self._kubelet_config_maps({"bad": bad, "good": good})
+
+        assert [cm.name for cm in gathered] == ["kubelet-config"]
+        assert gathered[0].kubelet_args["authentication"]["anonymous"] == {
+            "enabled": False
+        }
+
+    def test_config_map_without_data_is_kept_with_empty_args(self):
+        empty = ConfigMap(
+            name="kubelet-config-empty", uid="empty-uid", namespace="kube-system"
+        )
+        good = make_config_map("kubelet-config")
+
+        gathered = self._kubelet_config_maps({"empty": empty, "good": good})
+
+        assert [cm.name for cm in gathered] == [
+            "kubelet-config-empty",
+            "kubelet-config",
+        ]
+        # Checks use both `key not in cm.kubelet_args` and `cm.kubelet_args.get`,
+        # so an empty configuration must be a dict, not a list.
+        assert gathered[0].kubelet_args == {}

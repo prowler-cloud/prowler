@@ -12,6 +12,12 @@ class ControllerManager(KubernetesService):
         self.controllermanager_pods = self._get_controllermanager_pods()
 
     def _get_controllermanager_pods(self):
+        """Collect the `kube-controller-manager` pods from the `kube-system` namespace.
+
+        Returns:
+            list: Matching pods. Any pods collected before an error are kept, so
+            the checks always receive an iterable instead of `None`.
+        """
         controllermanager_pods = []
         try:
             for pod in self.client.pods.values():

@@ -12,6 +12,12 @@ class APIServer(KubernetesService):
         self.apiserver_pods = self._get_apiserver_pods()
 
     def _get_apiserver_pods(self):
+        """Collect the `kube-apiserver` pods from the `kube-system` namespace.
+
+        Returns:
+            list: Matching pods. Any pods collected before an error are kept, so
+            the checks always receive an iterable instead of `None`.
+        """
         apiserver_pods = []
         try:
             for pod in self.client.pods.values():
