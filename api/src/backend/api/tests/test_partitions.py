@@ -1,7 +1,6 @@
 import pytest
-from dateutil.relativedelta import relativedelta
-
 from api.partitions import relative_months_or_none
+from dateutil.relativedelta import relativedelta
 
 
 class TestRelativeMonthsOrNone:
