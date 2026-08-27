@@ -17,6 +17,7 @@ from audit_agent.config import (
     meets_severity_threshold,
     scanners_for_trivy,
 )
+from audit_agent.enums import Framework, Provider, Scanner
 from audit_agent.github_api import GitHubClient, report_to_github
 from audit_agent.map_controls import filter_by_files, map_findings
 from audit_agent.render import render_pr_comment
@@ -132,10 +133,12 @@ def main(argv: list[str] | None = None) -> int:
     except Exception as exc:  # noqa: BLE001 — fall back to defaults/local
         print(f"warning: could not fetch remote config ({exc}); using defaults", file=sys.stderr)
 
-    providers = config.get("providers") or ["iac", "github"]
-    frameworks = config.get("frameworks") or ["soc2", "iso27001_2022"]
+    providers = config.get("providers") or Provider.defaults()
+    frameworks = config.get("frameworks") or Framework.defaults()
     scanners = scanners_for_trivy(config)
-    github_actions = bool(config.get("scanners", {}).get("github_actions", True))
+    github_actions = bool(
+        config.get("scanners", {}).get(Scanner.GITHUB_ACTIONS.value, True)
+    )
     print(
         f"Scanning {args.repo} with Prowler providers={providers} "
         f"frameworks={frameworks} scanners={scanners} …",

@@ -2,7 +2,7 @@
 
 Zero-touch **SOC 2** and **ISO 27001** compliance audits for **any GitHub repository**.
 
-Like Dependabot for compliance posture: enable a target, scan the repo (and optionally its PRs), get findings mapped to controls. There is **no product UI** — reporting is GitHub-native (PR comments, checks, issues, SARIF) plus local report files.
+Scan a repo (and optionally its PRs) from the CLI; get findings mapped to controls. There is **no product UI** — reporting is local report files plus optional GitHub-native writes (PR comments, checks, issues).
 
 The agent orchestrates **this monorepo’s Prowler providers and compliance modules** (`prowler-cli.py`, `prowler/providers/*`, `prowler/compliance/*`). It is not a separate scanner engine.
 
@@ -111,24 +111,6 @@ fail-pr-on:
   new-findings-only: true
 ```
 
-Standing targets for the central workflow: [`targets.yml`](targets.yml).
-
----
-
-## Central workflow (this repo)
-
-Workflow: [`.github/workflows/audit-agent.yml`](../../.github/workflows/audit-agent.yml)
-
-1. List repos in `targets.yml`
-2. Set repository secret `AUDIT_AGENT_TOKEN` (PAT with access to private targets)
-3. Run **Audit Agent (zero-touch)** via `workflow_dispatch` or the weekly schedule
-
----
-
-## Optional in-repo Action
-
-For teams that want CI **inside** the audited repo, copy examples from [`workflows/`](workflows/) and use [`.github/actions/prowler-audit`](../../.github/actions/prowler-audit). This is **not** required for zero-touch.
-
 ---
 
 ## CLI reference
@@ -154,25 +136,17 @@ For teams that want CI **inside** the audited repo, copy examples from [`workflo
 contrib/audit-agent/
 ├── README.md
 ├── run.py                      # Entry without PYTHONPATH
-├── targets.yml                 # Central orchestrator targets
 ├── prowler-audit.yml.example
 ├── mappings/soc2_iso27001.json
-├── audit_agent/                # Python package
-│   ├── __main__.py             # CLI
-│   ├── scan.py                 # Prowler provider runner
-│   ├── map_controls.py         # SOC2 / ISO mapping
-│   ├── prowler_compliance.py   # Compliance framework index
-│   ├── render.py               # PR / report markdown
-│   ├── report_files.py         # Persist md + json
-│   ├── github_api.py           # Zero-touch GitHub API writes
-│   └── config.py
-└── workflows/                  # Optional in-repo CI templates
+└── audit_agent/                # Python package
+    ├── __main__.py             # CLI
+    ├── scan.py                 # Prowler provider runner
+    ├── map_controls.py         # SOC2 / ISO mapping
+    ├── prowler_compliance.py   # Compliance framework index
+    ├── render.py               # PR / report markdown
+    ├── report_files.py         # Persist md + json
+    ├── github_api.py           # Optional GitHub API writes
+    └── config.py
 ```
 
 Developer docs: [docs/developer-guide/audit-agent.mdx](../../docs/developer-guide/audit-agent.mdx)
-
----
-
-## Phase 2 (planned)
-
-Marketplace **GitHub App** for org install and automatic PR webhooks — still zero files in target repos. Phase 1 uses the CLI + central workflow instead.

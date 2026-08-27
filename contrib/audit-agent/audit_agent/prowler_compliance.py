@@ -7,24 +7,26 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
+from audit_agent.enums import FrameworkFamily, Provider
+
 # Framework IDs accepted by `prowler <provider> --compliance …`
 PROVIDER_COMPLIANCE: dict[str, list[str]] = {
-    "aws": ["soc2_aws", "iso27001_2022_aws"],
-    "azure": ["soc2_azure", "iso27001_2022_azure"],
-    "gcp": ["soc2_gcp", "iso27001_2022_gcp"],
-    "kubernetes": ["iso27001_2022_kubernetes"],
-    "m365": ["iso27001_2022_m365"],
-    "nhn": ["iso27001_2022_nhn"],
+    Provider.AWS.value: ["soc2_aws", "iso27001_2022_aws"],
+    Provider.AZURE.value: ["soc2_azure", "iso27001_2022_azure"],
+    Provider.GCP.value: ["soc2_gcp", "iso27001_2022_gcp"],
+    Provider.KUBERNETES.value: ["iso27001_2022_kubernetes"],
+    Provider.M365.value: ["iso27001_2022_m365"],
+    Provider.NHN.value: ["iso27001_2022_nhn"],
     # IaC is an external-tool provider — no compliance JSON yet
-    "iac": [],
-    "github": [],
-    "image": [],
-    "llm": [],
+    Provider.IAC.value: [],
+    Provider.GITHUB.value: [],
+    Provider.IMAGE.value: [],
+    Provider.LLM.value: [],
 }
 
 # Always-on security frameworks for providers that lack SOC2/ISO JSON
 PROVIDER_EXTRA_COMPLIANCE: dict[str, list[str]] = {
-    "github": ["cis_1.2.0_github"],
+    Provider.GITHUB.value: ["cis_1.2.0_github"],
 }
 
 
@@ -84,9 +86,9 @@ def load_check_control_index() -> dict[str, dict[str, list[str]]]:
     for path in root.rglob("*.json"):
         name = path.name.lower()
         if "soc2" in name:
-            family = "soc2"
+            family = FrameworkFamily.SOC2.value
         elif "iso27001" in name:
-            family = "iso27001"
+            family = FrameworkFamily.ISO27001.value
         else:
             continue
         try:
@@ -113,7 +115,13 @@ def load_check_control_index() -> dict[str, dict[str, list[str]]]:
                 check_ids = [str(c) for c in checks]
 
             for check_id in check_ids:
-                bucket = index.setdefault(check_id, {"soc2": [], "iso27001": []})
+                bucket = index.setdefault(
+                    check_id,
+                    {
+                        FrameworkFamily.SOC2.value: [],
+                        FrameworkFamily.ISO27001.value: [],
+                    },
+                )
                 if display not in bucket[family]:
                     bucket[family].append(display)
 
@@ -122,12 +130,15 @@ def load_check_control_index() -> dict[str, dict[str, list[str]]]:
 
 def controls_for_check(check_id: str) -> dict[str, list[str]]:
     index = load_check_control_index()
-    return index.get(check_id, {"soc2": [], "iso27001": []})
+    return index.get(
+        check_id,
+        {FrameworkFamily.SOC2.value: [], FrameworkFamily.ISO27001.value: []},
+    )
 
 
 def _normalize_control_id(control_id: str, family: str) -> str:
     raw = control_id.strip()
-    if family == "soc2":
+    if family == FrameworkFamily.SOC2.value:
         # cc_6_1 → CC6.1 ; CC6.1 stays
         if raw.lower().startswith("cc_") or raw.lower().startswith("a_") or raw.lower().startswith("c_") or raw.lower().startswith("pi_"):
             parts = raw.lower().split("_")
@@ -151,17 +162,24 @@ def extract_compliance_from_ocsf(raw: dict[str, Any]) -> dict[str, list[str]]:
     unmapped = raw.get("unmapped") or {}
     compliance = unmapped.get("compliance") or raw.get("compliance") or {}
     if not isinstance(compliance, dict):
-        return {"soc2": soc2, "iso27001": iso}
+        return {
+            FrameworkFamily.SOC2.value: soc2,
+            FrameworkFamily.ISO27001.value: iso,
+        }
 
     for key, values in compliance.items():
         key_l = str(key).lower()
         vals = values if isinstance(values, list) else [values]
         vals = [str(v) for v in vals if v]
         if "soc2" in key_l or "soc-2" in key_l:
-            soc2.extend(_normalize_control_id(v, "soc2") for v in vals)
+            soc2.extend(
+                _normalize_control_id(v, FrameworkFamily.SOC2.value) for v in vals
+            )
         elif "iso27001" in key_l or "iso-27001" in key_l or "iso_27001" in key_l:
-            iso.extend(_normalize_control_id(v, "iso27001") for v in vals)
+            iso.extend(
+                _normalize_control_id(v, FrameworkFamily.ISO27001.value) for v in vals
+            )
     return {
-        "soc2": list(dict.fromkeys(soc2)),
-        "iso27001": list(dict.fromkeys(iso)),
+        FrameworkFamily.SOC2.value: list(dict.fromkeys(soc2)),
+        FrameworkFamily.ISO27001.value: list(dict.fromkeys(iso)),
     }

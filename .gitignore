@@ -32,6 +32,7 @@ tags
 
 # Prowler output
 /output
+/audit-out/
 
 # Prowler found secrets
 secrets-*/

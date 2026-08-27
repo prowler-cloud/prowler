@@ -4,24 +4,12 @@ from __future__ import annotations
 
 from typing import Any
 
+from audit_agent.enums import FrameworkFamily, Provider, SecurityAspect, TrivyScanner
 from audit_agent.map_controls import load_mapping, summarize_by_section
 
 COMMENT_MARKER = "<!-- prowler-audit-agent -->"
 
-ASPECT_ORDER = [
-    "iac",
-    "secrets",
-    "dependencies",
-    "licenses",
-    "containers",
-    "github",
-    "github_actions",
-    "aws",
-    "azure",
-    "gcp",
-    "kubernetes",
-    "m365",
-]
+ASPECT_ORDER = [aspect.value for aspect in SecurityAspect]
 
 
 def render_pr_comment(
@@ -38,12 +26,12 @@ def render_pr_comment(
     soc2_rows = [
         (section, data)
         for section, data in summary.items()
-        if data["framework"] == "soc2"
+        if data["framework"] == FrameworkFamily.SOC2.value
     ]
     iso_rows = [
         (section, data)
         for section, data in summary.items()
-        if data["framework"] == "iso27001"
+        if data["framework"] == FrameworkFamily.ISO27001.value
     ]
 
     lines = [
@@ -94,10 +82,18 @@ def render_pr_comment(
 
     lines.append("")
     if findings:
-        lines.extend(_control_findings_section("SOC 2 — All findings", findings, "soc2"))
+        lines.extend(
+            _control_findings_section(
+                "SOC 2 — All findings", findings, FrameworkFamily.SOC2.value
+            )
+        )
         lines.append("")
         lines.extend(
-            _control_findings_section("ISO 27001:2022 — All findings", findings, "iso27001")
+            _control_findings_section(
+                "ISO 27001:2022 — All findings",
+                findings,
+                FrameworkFamily.ISO27001.value,
+            )
         )
     else:
         lines.append("### No compliance gaps detected")
@@ -179,30 +175,35 @@ def classify_aspect(finding: dict[str, Any]) -> str:
     check = (finding.get("check_id") or "").lower()
     title = (finding.get("title") or "").lower()
     blob = f"{check} {title} {service}"
+    cloud_values = {p.value for p in Provider.clouds()}
 
-    if check.startswith("githubactions_") or "workflow" in blob and provider == "github":
-        return "github_actions"
-    if provider == "github" or check.startswith(("repository_", "organization_")):
-        return "github"
-    if provider in ("aws", "azure", "gcp", "kubernetes", "m365"):
+    if check.startswith("githubactions_") or (
+        "workflow" in blob and provider == Provider.GITHUB.value
+    ):
+        return SecurityAspect.GITHUB_ACTIONS.value
+    if provider == Provider.GITHUB.value or check.startswith(
+        ("repository_", "organization_")
+    ):
+        return SecurityAspect.GITHUB.value
+    if provider in cloud_values:
         return provider
-    if service == "secret" or "secret" in blob:
-        return "secrets"
-    if service in ("vuln", "vulnerability") or check.startswith("cve-"):
-        return "dependencies"
-    if service == "license" or "license" in blob:
-        return "licenses"
+    if service == TrivyScanner.SECRET.value or "secret" in blob:
+        return SecurityAspect.SECRETS.value
+    if service in (TrivyScanner.VULN.value, "vulnerability") or check.startswith("cve-"):
+        return SecurityAspect.DEPENDENCIES.value
+    if service == TrivyScanner.LICENSE.value or "license" in blob:
+        return SecurityAspect.LICENSES.value
     if any(x in blob for x in ("dockerfile", "container", "image", "docker-compose")):
-        return "containers"
-    if provider == "iac" or service == "misconfig":
-        return "iac"
-    return "iac"
+        return SecurityAspect.CONTAINERS.value
+    if provider == Provider.IAC.value or service == TrivyScanner.MISCONFIG.value:
+        return SecurityAspect.IAC.value
+    return SecurityAspect.IAC.value
 
 
 def render_issue_body(finding_group: dict[str, Any]) -> str:
     """finding_group: control ids + list of findings."""
-    soc2 = finding_group.get("soc2", [])
-    iso = finding_group.get("iso27001", [])
+    soc2 = finding_group.get(FrameworkFamily.SOC2.value, [])
+    iso = finding_group.get(FrameworkFamily.ISO27001.value, [])
     findings = finding_group.get("findings", [])
     title_finding = findings[0] if findings else {}
 
@@ -236,26 +237,25 @@ def group_findings_by_control(
 ) -> dict[str, dict[str, Any]]:
     groups: dict[str, dict[str, Any]] = {}
     for finding in findings:
-        soc2 = finding.get("soc2") or []
-        iso = finding.get("iso27001") or []
+        soc2 = finding.get(FrameworkFamily.SOC2.value) or []
+        iso = finding.get(FrameworkFamily.ISO27001.value) or []
         key = "+".join(sorted(soc2 + iso)) or "unmapped"
         group = groups.setdefault(
-            key, {"soc2": list(soc2), "iso27001": list(iso), "findings": []}
+            key,
+            {
+                FrameworkFamily.SOC2.value: list(soc2),
+                FrameworkFamily.ISO27001.value: list(iso),
+                "findings": [],
+            },
         )
         group["findings"].append(finding)
     return groups
 
 
 def _sev_rank(severity: str) -> int:
-    order = {
-        "critical": 4,
-        "high": 3,
-        "medium": 2,
-        "low": 1,
-        "informational": 0,
-        "info": 0,
-    }
-    return order.get(severity.lower(), 0)
+    from audit_agent.enums import SEVERITY_RANK
+
+    return SEVERITY_RANK.get((severity or "").lower(), 0)
 
 
 def _aspect_table(

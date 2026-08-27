@@ -1,7 +1,7 @@
 ---
 title: "Audit Agent"
 sidebarTitle: "Audit Agent"
-description: "Zero-touch GitHub agent that audits any repository for SOC 2 and ISO 27001 — no files required in the target repo, GitHub-native reporting only."
+description: "CLI that audits any GitHub repository for SOC 2 and ISO 27001 — no files required in the target repo."
 ---
 
 import { VersionBadge } from "/snippets/version-badge.mdx"
@@ -10,9 +10,9 @@ import { VersionBadge } from "/snippets/version-badge.mdx"
 
 <VersionBadge version="5.40.0" />
 
-The Audit Agent continuously audits **any GitHub repository** against **SOC 2** and **ISO 27001**. Register a target to get compliance findings on pull requests and on a schedule via the Prowler CLI and GitHub API.
+The Audit Agent audits **any GitHub repository** against **SOC 2** and **ISO 27001** from the Prowler CLI. Pass `--repo owner/name` to scan; optionally post findings to a PR or sync issues via the GitHub API.
 
-There is **no product UI**. Reporting is GitHub-only (PR comments, check runs, issues, Code Scanning).
+There is **no product UI**. Reporting is local markdown/JSON plus optional GitHub writes (PR comments, check runs, issues).
 
 ## Zero-Touch Model
 
@@ -20,20 +20,18 @@ Target repositories do **not** need workflows, Actions, or config files.
 
 | Piece | Where it lives |
 |-------|----------------|
-| Orchestrator + CLI | This Prowler repository (`contrib/audit-agent/`) |
-| Target list | [`contrib/audit-agent/targets.yml`](https://github.com/prowler-cloud/prowler/blob/master/contrib/audit-agent/targets.yml) |
-| Credentials | `AUDIT_AGENT_TOKEN` secret (personal access token (PAT) or installation token with access to targets) |
+| CLI | This Prowler repository (`contrib/audit-agent/`) |
+| Credentials | `AUDIT_AGENT_TOKEN` (or `gh auth token`) with access to the target |
 | Optional config | `.github/prowler-audit.yml` **in the target** only if customization is wanted; otherwise defaults apply |
 
 ```mermaid
 flowchart LR
-  targets["targets.yml"] --> orch["Central workflow / CLI"]
-  orch --> scan["prowler iac remote scan"]
+  cli["audit_agent CLI"] --> scan["prowler iac + github"]
   scan --> map["Map to SOC2 + ISO27001"]
-  map --> api["GitHub API on target"]
+  map --> report["Local report files"]
+  map --> api["Optional GitHub API"]
   api --> comment["PR comment"]
   api --> issues["Issues"]
-  api --> sarif["Code Scanning"]
 ```
 
 ## What It Checks
@@ -59,7 +57,7 @@ The report lists **every enabled aspect** (with finding counts), not only those 
 export AUDIT_AGENT_TOKEN="$(gh auth token)"
 export PYTHONPATH=contrib/audit-agent
 
-# Scan and print the compliance comment (no writes to the target)
+# Scan and print the compliance report (no writes to the target)
 python -m audit_agent --repo owner/name --dry-run
 
 # Sticky PR comment + check run via API (still no commits to the target)
@@ -68,14 +66,6 @@ python -m audit_agent --repo owner/name --pr 12
 # Open/close control-gap issues on the target
 python -m audit_agent --repo owner/name --sync-issues
 ```
-
-## Central Workflow
-
-Workflow: [`.github/workflows/audit-agent.yml`](https://github.com/prowler-cloud/prowler/blob/master/.github/workflows/audit-agent.yml)
-
-1. Add the repo to `contrib/audit-agent/targets.yml`
-2. Set repository secret `AUDIT_AGENT_TOKEN` (must access private targets)
-3. Run **Audit Agent (zero-touch)** via `workflow_dispatch` (optional `repo`, `pr_number`, `sync_issues`) or wait for the weekly schedule
 
 ## Configuration Defaults
 
@@ -97,20 +87,9 @@ reporting:
 
 See [`contrib/audit-agent/prowler-audit.yml.example`](https://github.com/prowler-cloud/prowler/blob/master/contrib/audit-agent/prowler-audit.yml.example).
 
-## Optional In-Repo Action
-
-For teams that want CI **inside** the audited repo, copy the example workflows under `contrib/audit-agent/workflows/` and use `.github/actions/prowler-audit`. This is optional; zero-touch does not use it.
-
-## Phase 2 — GitHub App (Planned)
-
-A Marketplace GitHub App will install on an org/account, select repos, and receive `pull_request` webhooks automatically — still with **zero files** in target repos. Phase 1 uses the central workflow + CLI instead of App webhooks.
-
-## Getting Started (Pilot)
+## Getting Started
 
 <Steps>
-  <Step title="Register the target">
-    Add `owner/name` under `targets:` in `contrib/audit-agent/targets.yml`.
-  </Step>
   <Step title="Provide a token">
     Create a PAT (or use `gh auth token`) with access to the target: contents read, pull requests write, issues write, security events write. Set `AUDIT_AGENT_TOKEN`.
   </Step>
@@ -123,5 +102,5 @@ A Marketplace GitHub App will install on an org/account, select repos, and recei
 </Steps>
 
 <Note>
-Nothing is committed to the target repository. Register a target in `targets.yml` and run a dry scan to validate the zero-touch flow.
+Nothing is committed to the target repository. Pass `--repo owner/name` and run a dry scan to validate the flow.
 </Note>

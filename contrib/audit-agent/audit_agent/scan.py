@@ -11,6 +11,7 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
+from audit_agent.enums import Framework, Provider, TrivyScanner
 from audit_agent.prowler_compliance import frameworks_for_provider, repo_root
 
 # Stall watchdog for local Prowler invocations (import probe and full scan).
@@ -33,9 +34,13 @@ def run_prowler_audit(
     Prefers the local monorepo CLI. For IaC, clones the target with `gh`
     (avoids Python SSL issues on macOS) then scans `--scan-path`.
     """
-    providers = [p.lower() for p in (providers or ["iac", "github"])]
-    scanners = scanners or ["misconfig", "secret", "vuln"]
-    frameworks = frameworks or ["soc2", "iso27001_2022"]
+    providers = [p.lower() for p in (providers or Provider.defaults())]
+    scanners = scanners or [
+        TrivyScanner.MISCONFIG.value,
+        TrivyScanner.SECRET.value,
+        TrivyScanner.VULN.value,
+    ]
+    frameworks = frameworks or Framework.defaults()
     out = output_dir or Path(tempfile.mkdtemp(prefix="prowler-audit-"))
     out.mkdir(parents=True, exist_ok=True)
 
@@ -120,7 +125,7 @@ def _run_provider(
     env.setdefault("GH_TOKEN", token)
 
     clone_dir: Path | None = None
-    if provider == "iac":
+    if provider == Provider.IAC.value:
         clone_dir = output_dir / "repo"
         _gh_clone(repo_full_name, clone_dir, token)
 
@@ -331,7 +336,7 @@ def _build_prowler_args(
 ) -> list[str]:
     """Build the argument list after `prowler` / `prowler-cli.py`."""
     # SARIF is only supported for the IaC provider
-    formats = ["json-ocsf", "sarif"] if provider == "iac" else ["json-ocsf"]
+    formats = ["json-ocsf", "sarif"] if provider == Provider.IAC.value else ["json-ocsf"]
     args: list[str] = [
         provider,
         "--output-formats",
@@ -344,7 +349,7 @@ def _build_prowler_args(
     if compliance:
         args.extend(["--compliance", *compliance])
 
-    if provider == "iac":
+    if provider == Provider.IAC.value:
         if not scan_path:
             raise RuntimeError("IaC scan requires a local clone path")
         args.extend(
@@ -355,7 +360,7 @@ def _build_prowler_args(
                 *scanners,
             ]
         )
-    elif provider == "github":
+    elif provider == Provider.GITHUB.value:
         args.extend(["--repository", repo_full_name])
         if not github_actions:
             args.append("--no-github-actions")
@@ -435,5 +440,5 @@ def _docker_prowler(
 
 
 def run_iac_scan(*args: Any, **kwargs: Any) -> tuple[list[dict[str, Any]], Path]:
-    kwargs.setdefault("providers", ["iac"])
+    kwargs.setdefault("providers", [Provider.IAC.value])
     return run_prowler_audit(*args, **kwargs)

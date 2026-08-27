@@ -1,7 +1,0 @@
-# Repositories audited by the central Prowler Audit Agent.
-# Nothing is committed to these targets — scans run here and report via GitHub API.
-#
-# Example:
-# targets:
-#   - repo: org/example-repo
-targets: []

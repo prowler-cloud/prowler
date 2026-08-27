@@ -9,6 +9,28 @@ from typing import Any
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
+from audit_agent.enums import (
+    SCANNER_TO_TRIVY,
+    SEVERITY_RANK,
+    Framework,
+    Provider,
+    Scanner,
+    SecurityAspect,
+    Severity,
+    TrivyScanner,
+)
+
+# Re-export for callers that imported SEVERITY_RANK from config
+__all__ = [
+    "DEFAULT_CONFIG",
+    "SEVERITY_RANK",
+    "enabled_security_aspects",
+    "fetch_remote_config",
+    "load_local_config",
+    "meets_severity_threshold",
+    "scanners_for_trivy",
+]
+
 
 def _ssl_context() -> ssl.SSLContext:
     """Build an SSL context; fall back when local CA certs are missing."""
@@ -20,22 +42,17 @@ def _ssl_context() -> ssl.SSLContext:
         ctx = ssl.create_default_context()
         return ctx
 
+
 DEFAULT_CONFIG: dict[str, Any] = {
     "version": 1,
-    "frameworks": ["soc2", "iso27001_2022"],
+    "frameworks": Framework.defaults(),
     # Providers executed via the Prowler SDK/CLI.
     # Default: repo-level zero-touch (IaC + GitHub hardening). Add aws/azure/gcp when credentials exist.
-    "providers": ["iac", "github"],
+    "providers": Provider.defaults(),
     "schedule": {"cron": "0 6 * * 1"},
-    "scanners": {
-        "iac": True,
-        "secrets": True,
-        "dependencies": True,
-        "licenses": True,
-        "github_actions": True,
-    },
+    "scanners": {scanner.value: True for scanner in Scanner},
     "fail_pr_on": {
-        "severity": "high",
+        "severity": Severity.HIGH.value,
         "new_findings_only": True,
     },
     "reporting": {
@@ -44,16 +61,6 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "issues": True,
         "issue_labels": ["compliance", "prowler-audit"],
     },
-}
-
-SEVERITY_RANK = {
-    "critical": 4,
-    "high": 3,
-    "medium": 2,
-    "low": 1,
-    "informational": 0,
-    "info": 0,
-    "unknown": 0,
 }
 
 
@@ -234,88 +241,83 @@ def _scalar(value: str) -> Any:
 def scanners_for_trivy(config: dict[str, Any]) -> list[str]:
     scanners = config.get("scanners", {})
     result: list[str] = []
-    if scanners.get("iac", True):
-        result.append("misconfig")
-    if scanners.get("secrets", True):
-        result.append("secret")
-    if scanners.get("dependencies", True):
-        result.append("vuln")
-    if scanners.get("licenses", True):
-        result.append("license")
-    return result or ["misconfig", "secret"]
+    for scanner, trivy in SCANNER_TO_TRIVY.items():
+        if scanners.get(scanner.value, True):
+            result.append(trivy.value)
+    return result or [TrivyScanner.MISCONFIG.value, TrivyScanner.SECRET.value]
 
 
 def enabled_security_aspects(config: dict[str, Any]) -> list[dict[str, str]]:
     """Return the security aspects this audit run is configured to cover."""
-    providers = {p.lower() for p in (config.get("providers") or ["iac", "github"])}
+    providers = {p.lower() for p in (config.get("providers") or Provider.defaults())}
     scanners = config.get("scanners") or {}
     aspects: list[dict[str, str]] = []
 
-    if "iac" in providers:
-        if scanners.get("iac", True):
+    if Provider.IAC.value in providers:
+        if scanners.get(Scanner.IAC.value, True):
             aspects.append(
                 {
-                    "id": "iac",
+                    "id": SecurityAspect.IAC.value,
                     "label": "IaC / config",
                     "detail": "Terraform, Docker, K8s, CloudFormation misconfigurations",
                 }
             )
-        if scanners.get("secrets", True):
+        if scanners.get(Scanner.SECRETS.value, True):
             aspects.append(
                 {
-                    "id": "secrets",
+                    "id": SecurityAspect.SECRETS.value,
                     "label": "Secrets in source",
                     "detail": "Hardcoded credentials and tokens (Trivy secret)",
                 }
             )
-        if scanners.get("dependencies", True):
+        if scanners.get(Scanner.DEPENDENCIES.value, True):
             aspects.append(
                 {
-                    "id": "dependencies",
+                    "id": SecurityAspect.DEPENDENCIES.value,
                     "label": "Dependencies / CVEs",
                     "detail": "Lockfile and package vulnerabilities (Trivy vuln)",
                 }
             )
-        if scanners.get("licenses", True):
+        if scanners.get(Scanner.LICENSES.value, True):
             aspects.append(
                 {
-                    "id": "licenses",
+                    "id": SecurityAspect.LICENSES.value,
                     "label": "License compliance",
                     "detail": "Third-party license risk (Trivy license)",
                 }
             )
         aspects.append(
             {
-                "id": "containers",
+                "id": SecurityAspect.CONTAINERS.value,
                 "label": "Containers / Dockerfiles",
                 "detail": "Dockerfile and container config issues via IaC",
             }
         )
 
-    if "github" in providers:
+    if Provider.GITHUB.value in providers:
         aspects.append(
             {
-                "id": "github",
+                "id": SecurityAspect.GITHUB.value,
                 "label": "GitHub hardening",
                 "detail": "Branch protection, secret scanning, Dependabot, org settings",
             }
         )
-        if scanners.get("github_actions", True):
+        if scanners.get(Scanner.GITHUB_ACTIONS.value, True):
             aspects.append(
                 {
-                    "id": "github_actions",
+                    "id": SecurityAspect.GITHUB_ACTIONS.value,
                     "label": "GitHub Actions / CI-CD",
                     "detail": "Workflow security and supply-chain risks in Actions",
                 }
             )
 
-    for cloud in ("aws", "azure", "gcp", "kubernetes", "m365"):
-        if cloud in providers:
+    for cloud in Provider.clouds():
+        if cloud.value in providers:
             aspects.append(
                 {
-                    "id": cloud,
-                    "label": f"Cloud ({cloud})",
-                    "detail": f"Live {cloud} account checks with SOC 2 / ISO mappings",
+                    "id": cloud.value,
+                    "label": f"Cloud ({cloud.value})",
+                    "detail": f"Live {cloud.value} account checks with SOC 2 / ISO mappings",
                 }
             )
 
@@ -324,5 +326,5 @@ def enabled_security_aspects(config: dict[str, Any]) -> list[dict[str, str]]:
 
 def meets_severity_threshold(severity: str, threshold: str) -> bool:
     return SEVERITY_RANK.get(severity.lower(), 0) >= SEVERITY_RANK.get(
-        threshold.lower(), 3
+        threshold.lower(), SEVERITY_RANK[Severity.HIGH.value]
     )
