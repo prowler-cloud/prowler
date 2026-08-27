@@ -193,6 +193,9 @@ async def test_a_deletion_whose_progress_cannot_be_read_still_says_do_not_retry(
     assert result.data["status"] == "in_progress"
     assert "could not be read" in result.data["message"]
     assert "Do not send the deletion again" in result.data["message"]
+    # The failure that got us here is the classifier's to phrase, so its raw
+    # text stays in the log rather than riding along in the message.
+    assert "API request failed" not in result.data["message"]
 
 
 # ------------------------------------------------------- connection check

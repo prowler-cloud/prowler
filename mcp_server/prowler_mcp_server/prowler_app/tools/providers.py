@@ -340,7 +340,7 @@ class ProvidersTools(BaseTool):
             )
         except Exception as e:
             self.logger.error(f"Provider deletion did not complete cleanly: {e}")
-            return await self._provider_deletion_fallback(provider_id, task_id, str(e))
+            return await self._provider_deletion_fallback(provider_id, task_id)
 
         return ProviderDeletionResult(
             status="deleted",
@@ -350,7 +350,7 @@ class ProvidersTools(BaseTool):
     # Private helper methods
 
     async def _provider_deletion_fallback(
-        self, provider_id: str, task_id: str, error: str
+        self, provider_id: str, task_id: str
     ) -> dict[str, Any]:
         """Report a provider deletion whose polling did not end on a completed task.
 
@@ -376,17 +376,20 @@ class ProvidersTools(BaseTool):
             self.logger.error(f"Could not read the state of task {task_id}: {e}")
 
         if state in ("failed", "cancelled"):
+            # The failure that got us here is logged, not relayed: it carries
+            # upstream text, and the classifier masks exactly this kind of
+            # message when a tool does not write it itself.
             raise ToolError(
                 f"The task deleting provider {provider_id} ended as '{state}', so the "
                 "provider was not deleted. Prowler removes a provider together with its "
                 "scans, findings and resources, so part of that may already be gone. Use "
-                f"prowler_search_providers to check the current state. Original error: {error}"
+                "prowler_search_providers to check the current state."
             )
 
         if state is None:
             message = (
                 f"The deletion of provider {provider_id} was accepted, but its progress "
-                f"could not be read ({error}), so whether it finished is unknown. Do not "
+                "could not be read, so whether it finished is unknown. Do not "
                 "send the deletion again. Use prowler_search_providers to check whether "
                 "the provider is gone."
             )
@@ -713,7 +716,7 @@ class ProvidersTools(BaseTool):
             return {
                 "connected": None,
                 "error": (
-                    f"The connection test could not be completed: {e} This says nothing "
+                    "The connection test could not be completed. This says nothing "
                     "about the provider's credentials, they were never tested. Use "
                     "prowler_search_providers to read the connection state Prowler has "
                     "stored for this provider."

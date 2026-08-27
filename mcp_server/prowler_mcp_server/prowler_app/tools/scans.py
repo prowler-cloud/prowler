@@ -240,9 +240,12 @@ class ScansTools(BaseTool):
             scan_response = await self.api_client.get(f"/scans/{scan_id}")
             scan_info = DetailedScan.from_api_response(scan_response["data"])
         except Exception as e:
+            # The failure itself is logged, not relayed: what it says is the
+            # shared classifier's to mask, and what the caller needs is the ID.
+            self.logger.error(f"Scan {scan_id} could not be read back: {e}")
             raise ToolError(
                 f"Scan {scan_id} was created for provider {provider_id}, but reading "
-                f"its state failed: {e} Use prowler_get_scan with that ID to monitor "
+                "its state failed. Use prowler_get_scan with that ID to monitor "
                 "it. Do not trigger the scan again."
             )
 

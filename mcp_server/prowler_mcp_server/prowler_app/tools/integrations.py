@@ -755,7 +755,7 @@ class IntegrationsTools(BaseTool):
                 return self._jira_dispatch_unknown(
                     task_id=None,
                     error=(
-                        f"the request that starts the dispatch failed on the server: {e} "
+                        "the request that starts the dispatch failed on Prowler's side. "
                         "It may have been queued anyway."
                     ),
                 )
@@ -768,7 +768,7 @@ class IntegrationsTools(BaseTool):
             return self._jira_dispatch_unknown(
                 task_id=None,
                 error=(
-                    f"the request that starts the dispatch got no answer: {e} "
+                    "the request that starts the dispatch got no answer. "
                     "It may have been accepted anyway."
                 ),
             )
@@ -961,9 +961,13 @@ class IntegrationsTools(BaseTool):
         except Exception as e:
             # The integration exists, so surface its ID instead of a plain read
             # failure. No `from` clause: a cause would let the shared classifier
-            # replace this with a sentence that does not mention the ID.
+            # replace this with a sentence that does not mention the ID. The
+            # failure text stays in the log, where the classifier would keep it.
+            self.logger.error(
+                f"Integration {integration_id} could not be read back: {e}"
+            )
             raise ToolError(
-                f"Integration {integration_id} was created, but reading its state failed: {e} "
+                f"Integration {integration_id} was created, but reading its state failed. "
                 "Use prowler_get_integration with that ID to check it."
             )
 
@@ -1010,7 +1014,7 @@ class IntegrationsTools(BaseTool):
             return {
                 "connected": None,
                 "error": (
-                    f"The connection check could not be completed: {e} This says nothing "
+                    "The connection check could not be completed. This says nothing "
                     "about the stored credentials, run prowler_test_integration_connection "
                     "to check them again."
                 ),

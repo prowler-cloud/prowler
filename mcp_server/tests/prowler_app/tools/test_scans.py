@@ -96,11 +96,17 @@ async def test_a_scan_whose_read_back_fails_still_hands_over_the_id(
     and invite a duplicate, so the error carries the ID to monitor instead.
     """
     stub_scan_creation(mock_router)
-    mock_router.add("GET", SCAN, status=500, json=jsonapi_error(500, "Server error."))
+    mock_router.add("GET", SCAN, status=400, json=jsonapi_error(400, "Server error."))
 
     async with Client(mcp_root_server) as client:
-        with pytest.raises(Exception, match="Scan s1 was created"):
+        with pytest.raises(Exception, match="Scan s1 was created") as raised:
             await client.call_tool("prowler_trigger_scan", {"provider_id": "p1"})
+
+    # Naming the scan is the whole reason this message exists, so it is written
+    # here rather than assembled from the failure. Splicing the failure text in
+    # would put whatever it happens to say in front of the model unclassified,
+    # which is the one thing the shared classifier exists to decide.
+    assert "API request failed" not in str(raised.value)
 
 
 async def test_a_created_scan_comes_back_with_its_details(
