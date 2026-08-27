@@ -1,10 +1,10 @@
 import { expect, test } from "@playwright/test";
 
-import { RegistryPage } from "./registry-page";
 import {
   controlledRegistryFixture,
   FIXTURE_REGISTRY_KEY,
 } from "./controlled-registry-fixture";
+import { RegistryPage } from "./registry-page";
 
 const fixtureMode = process.env.E2E_REGISTRY_ACCEPTANCE_MODE === "fixture";
 const enabledProject = "registry";
@@ -128,7 +128,21 @@ test.describe.serial("Registry", () => {
       await registryPage.dismissWelcomeDialog();
       await registryPage.verifyCompleteCatalogSearchAndFilters();
       await registryPage.verifyOwnerRows();
+      const artifactSnapshotBefore = await controlledRegistryFixture.snapshot();
       await registryPage.addLatest("Fixture network audit");
+      const artifactSnapshotAfter = await controlledRegistryFixture.snapshot();
+      expect(artifactSnapshotAfter.artifactSubmissionCount).toBe(
+        artifactSnapshotBefore.artifactSubmissionCount + 1,
+      );
+      expect(artifactSnapshotAfter.artifactTaskReadCount).toBe(2);
+      expect(artifactSnapshotAfter.artifactReadCount).toBeGreaterThan(
+        artifactSnapshotBefore.artifactReadCount,
+      );
+      expect(
+        artifactSnapshotAfter.artifactEvents.slice(
+          artifactSnapshotBefore.artifactEvents.length,
+        ),
+      ).toEqual(["submission", "task-poll", "task-poll", "authoritative-read"]);
       await registryPage.verifyAddedInMyArtifacts("Fixture network audit");
       await registryPage.removeArtifact("Fixture network audit");
       await page.reload();

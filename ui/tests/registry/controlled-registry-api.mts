@@ -6,6 +6,7 @@ import {
 
 const port = 4300;
 const taskId = "fixture-registry-validation-task";
+const artifactTaskId = "fixture-registry-artifact-task";
 const fixtureAccessToken = [
   base64UrlJson({ alg: "none", typ: "JWT" }),
   base64UrlJson({
@@ -20,6 +21,12 @@ type CredentialState = "active" | "onboarding" | "pending";
 type DiscoveryMode = "error" | "ready" | "reconnect" | "unavailable";
 
 interface FixtureState {
+  artifactEvents: string[];
+  artifactReadCount: number;
+  artifactSubmissionCount: number;
+  artifactTaskNormalizedName?: string;
+  artifactTaskReadCount: number;
+  artifactTaskVersionSpec?: string;
   credentialAccepted: boolean;
   credentialReadCount: number;
   credentialState: CredentialState;
@@ -30,6 +37,10 @@ interface FixtureState {
 }
 
 const initialState = (): FixtureState => ({
+  artifactEvents: [],
+  artifactReadCount: 0,
+  artifactSubmissionCount: 0,
+  artifactTaskReadCount: 0,
   credentialAccepted: false,
   credentialReadCount: 0,
   credentialState: "onboarding",
@@ -153,6 +164,10 @@ async function handleFixtureControl(
 
   if (pathname === "/__fixture__/registry/snapshot") {
     sendJson(response, 200, {
+      artifactEvents: state.artifactEvents,
+      artifactReadCount: state.artifactReadCount,
+      artifactSubmissionCount: state.artifactSubmissionCount,
+      artifactTaskReadCount: state.artifactTaskReadCount,
       credentialAccepted: state.credentialAccepted,
       credentialReadCount: state.credentialReadCount,
       taskReadCount: state.taskReadCount,
@@ -243,6 +258,8 @@ async function handleApiRequest(
   }
 
   if (method === "GET" && pathname === "/api/v1/registry/artifacts") {
+    state.artifactReadCount += 1;
+    state.artifactEvents.push("authoritative-read");
     sendJson(response, 200, tenantArtifactsDocument());
     return;
   }
@@ -269,9 +286,43 @@ async function handleApiRequest(
       });
       return;
     }
-    state.tenantArtifacts.set(normalizedName, versionSpec);
-    sendJson(response, 201, {
-      data: { id: normalizedName, type: "registry-artifacts" },
+    state.artifactEvents.push("submission");
+    state.artifactSubmissionCount += 1;
+    state.artifactTaskNormalizedName = normalizedName;
+    state.artifactTaskReadCount = 0;
+    state.artifactTaskVersionSpec = versionSpec;
+    sendJson(
+      response,
+      202,
+      { data: { id: artifactTaskId, type: "tasks" } },
+      { "Content-Location": `/api/v1/tasks/${artifactTaskId}` },
+    );
+    return;
+  }
+
+  if (method === "GET" && pathname === `/api/v1/tasks/${artifactTaskId}`) {
+    if (!state.artifactTaskNormalizedName || !state.artifactTaskVersionSpec) {
+      sendJson(response, 404, { errors: [{ code: "fixture_task_not_found" }] });
+      return;
+    }
+
+    state.artifactEvents.push("task-poll");
+    state.artifactTaskReadCount += 1;
+    const complete = state.artifactTaskReadCount >= 2;
+    if (complete) {
+      state.tenantArtifacts.set(
+        state.artifactTaskNormalizedName,
+        state.artifactTaskVersionSpec,
+      );
+    }
+    sendJson(response, 200, {
+      data: {
+        attributes: complete
+          ? { state: "completed", result: { installed: true, error: null } }
+          : { state: "executing" },
+        id: artifactTaskId,
+        type: "tasks",
+      },
     });
     return;
   }

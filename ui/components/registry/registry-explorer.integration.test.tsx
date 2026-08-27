@@ -8,16 +8,16 @@ import type { RegistryBootstrapState } from "@/types/registry";
 import { RegistryExplorer } from "./registry-explorer";
 
 const {
-  addRegistryArtifactMock,
   disconnectRegistryCredentialMock,
+  executeRegistryArtifactAdditionMock,
   refreshRegistryCollectionsMock,
   refreshRegistryCredentialMock,
   removeRegistryArtifactMock,
   submitRegistryCredentialMock,
   trackAndPollTaskMock,
 } = vi.hoisted(() => ({
-  addRegistryArtifactMock: vi.fn(),
   disconnectRegistryCredentialMock: vi.fn(),
+  executeRegistryArtifactAdditionMock: vi.fn(),
   refreshRegistryCollectionsMock: vi.fn(),
   refreshRegistryCredentialMock: vi.fn(),
   removeRegistryArtifactMock: vi.fn(),
@@ -26,7 +26,6 @@ const {
 }));
 
 vi.mock("@/actions/registry/registry", () => ({
-  addRegistryArtifact: addRegistryArtifactMock,
   disconnectRegistryCredential: disconnectRegistryCredentialMock,
   refreshRegistryCollections: refreshRegistryCollectionsMock,
   refreshRegistryCredential: refreshRegistryCredentialMock,
@@ -37,6 +36,10 @@ vi.mock("@/actions/registry/registry", () => ({
 // The credential flow watches its validation task through the house task
 // watcher; integration tests drive settlement through this mock the same way
 // `lib/jira-dispatch-execution.test.ts` does.
+vi.mock("@/lib/registry-artifact-execution", () => ({
+  executeRegistryArtifactAddition: executeRegistryArtifactAdditionMock,
+}));
+
 vi.mock("@/store/task-watcher/store", () => ({
   TASK_WATCHER_STATUS: { PENDING: "pending", READY: "ready", ERROR: "error" },
   trackAndPollTask: trackAndPollTaskMock,
@@ -170,8 +173,8 @@ function cardFor(name: string) {
 
 describe("RegistryExplorer", () => {
   beforeEach(() => {
-    addRegistryArtifactMock.mockReset();
     disconnectRegistryCredentialMock.mockReset();
+    executeRegistryArtifactAdditionMock.mockReset();
     refreshRegistryCollectionsMock.mockReset();
     refreshRegistryCredentialMock.mockReset();
     removeRegistryArtifactMock.mockReset();
@@ -708,7 +711,9 @@ describe("RegistryExplorer", () => {
   describe("when a Registry action loses authorization", () => {
     it("routes to Profile once when Add is denied", async () => {
       // Given
-      addRegistryArtifactMock.mockResolvedValue({ status: "access_denied" });
+      executeRegistryArtifactAdditionMock.mockResolvedValue({
+        status: "access_denied",
+      });
       const screen = await render(
         <RegistryExplorer initialState={readyState} />,
       );
@@ -1357,7 +1362,7 @@ describe("RegistryExplorer", () => {
 
   it("keeps ordinary Add errors local without redirecting to Profile", async () => {
     // Given
-    addRegistryArtifactMock.mockResolvedValue({ status: "error" });
+    executeRegistryArtifactAdditionMock.mockResolvedValue({ status: "error" });
     const screen = await render(<RegistryExplorer initialState={readyState} />);
 
     // When
@@ -1375,7 +1380,7 @@ describe("RegistryExplorer", () => {
 
   it("adds the latest version directly from the card once confirmed", async () => {
     // Given
-    addRegistryArtifactMock.mockResolvedValue({
+    executeRegistryArtifactAdditionMock.mockResolvedValue({
       status: "confirmed",
       tenantArtifacts: [
         { normalizedName: "aws-guard", versionSpec: "latest" },
@@ -1391,7 +1396,7 @@ describe("RegistryExplorer", () => {
 
     // Then
     await expect
-      .poll(() => addRegistryArtifactMock.mock.calls)
+      .poll(() => executeRegistryArtifactAdditionMock.mock.calls)
       .toEqual([[{ normalizedName: "cloud-guard" }]]);
     await expect
       .poll(() => document.body.textContent)
@@ -1407,7 +1412,9 @@ describe("RegistryExplorer", () => {
 
   it("keeps membership unchanged when an accepted Add cannot be confirmed", async () => {
     // Given
-    addRegistryArtifactMock.mockResolvedValue({ status: "refresh_failed" });
+    executeRegistryArtifactAdditionMock.mockResolvedValue({
+      status: "refresh_failed",
+    });
     const screen = await render(<RegistryExplorer initialState={readyState} />);
 
     // When
@@ -1427,7 +1434,7 @@ describe("RegistryExplorer", () => {
 
   it("keeps documented Add refusals local without redirecting to Profile", async () => {
     // Given
-    addRegistryArtifactMock.mockResolvedValue({
+    executeRegistryArtifactAdditionMock.mockResolvedValue({
       status: "refused",
       message: "This version is not verified and cannot be added.",
     });
@@ -1448,7 +1455,7 @@ describe("RegistryExplorer", () => {
 
   it("disables only the pending card while an Add confirmation is pending", async () => {
     // Given
-    addRegistryArtifactMock.mockReturnValue(new Promise(() => {}));
+    executeRegistryArtifactAdditionMock.mockReturnValue(new Promise(() => {}));
     const screen = await render(<RegistryExplorer initialState={readyState} />);
     const addCloudGuard = screen.getByRole("button", {
       name: "Add Cloud guard",
@@ -1463,7 +1470,7 @@ describe("RegistryExplorer", () => {
     await expect
       .element(screen.getByRole("button", { name: "Add Later guard" }))
       .toBeEnabled();
-    expect(addRegistryArtifactMock).toHaveBeenCalledTimes(1);
+    expect(executeRegistryArtifactAdditionMock).toHaveBeenCalledTimes(1);
   });
 
   it("requires confirmation before Remove and commits only after confirmation", async () => {

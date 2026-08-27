@@ -24,6 +24,10 @@ export const controlledRegistryFixture = {
 };
 
 interface FixtureSnapshot {
+  artifactEvents: string[];
+  artifactReadCount: number;
+  artifactSubmissionCount: number;
+  artifactTaskReadCount: number;
   credentialAccepted: boolean;
   credentialReadCount: number;
   taskReadCount: number;
