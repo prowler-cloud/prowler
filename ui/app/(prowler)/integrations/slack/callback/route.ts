@@ -34,10 +34,16 @@ const outcomeRedirect = (
     `${SLACK_INTEGRATION_PATH}?${slackConnectQuery(outcome)}`,
   );
 
-/** `Sec-Purpose` per the fetch spec; `Purpose` is the legacy spelling. */
+/**
+ * `Sec-Purpose` per the fetch spec; `Purpose` and `X-moz` are the legacy
+ * Chrome/Safari and Firefox spellings.
+ */
 const isPrefetch = (request: Request): boolean => {
   const purpose =
-    request.headers.get("sec-purpose") ?? request.headers.get("purpose") ?? "";
+    request.headers.get("sec-purpose") ??
+    request.headers.get("purpose") ??
+    request.headers.get("x-moz") ??
+    "";
   return purpose.toLowerCase().includes("prefetch");
 };
 

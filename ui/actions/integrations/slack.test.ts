@@ -284,10 +284,7 @@ describe("exchangeSlackOAuthCode result shape", () => {
 
     // Then — the answer for a body with no `data`: the install happened, only
     // its result is unknown.
-    expect(result).toEqual({
-      unconfirmed: true,
-      message: SLACK_UNREADABLE_RESULT_MESSAGE,
-    });
+    expect(result).toEqual({ unconfirmed: true });
   });
 
   it("hands over the workspace the API upserted", async () => {

@@ -35,7 +35,6 @@ interface SlackRateLimited {
  */
 interface SlackUnconfirmed {
   unconfirmed: true;
-  message: string;
 }
 
 interface SlackActionError {
@@ -302,7 +301,9 @@ export const exchangeSlackOAuthCode = async (
     revalidatePath("/integrations/slack");
 
     if (!isIntegrationResource(body?.data)) {
-      return { unconfirmed: true, message: SLACK_UNREADABLE_RESULT_MESSAGE };
+      // The discriminant is the whole answer: the notice on the integration
+      // page carries its own unconfirmed copy.
+      return { unconfirmed: true };
     }
 
     return { integration: parseStringify(body.data) as IntegrationProps };

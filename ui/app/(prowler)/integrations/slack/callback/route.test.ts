@@ -247,6 +247,7 @@ describe("the Slack OAuth callback route", () => {
     const prefetchHeaders: HeadersInit[] = [
       { "sec-purpose": "prefetch" },
       { purpose: "prefetch" },
+      { "x-moz": "prefetch" },
     ];
     for (const headers of prefetchHeaders) {
       const response = await get(HAPPY_QUERY, headers);

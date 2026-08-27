@@ -3,6 +3,7 @@
 import { AlertCircle, CircleCheck } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import type { ComponentProps } from "react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/shadcn";
 import {
@@ -40,7 +41,7 @@ const describeSlackError = (reason: string | null): string => {
 };
 
 interface NoticeContent {
-  variant: "success" | "error";
+  variant: ComponentProps<typeof Alert>["variant"];
   title: string;
   description: string;
 }

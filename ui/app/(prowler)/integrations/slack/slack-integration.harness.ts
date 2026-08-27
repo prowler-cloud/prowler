@@ -15,6 +15,7 @@ import type { SlackFixture } from "@/__tests__/msw/handlers/slack.fixtures";
 import { worker } from "@/__tests__/msw/worker";
 import { render } from "@/__tests__/render-browser";
 import { setSlackAuthorizedChannels } from "@/actions/integrations/slack";
+import { SLACK_CONNECT_PARAMS } from "@/lib/integrations/slack-connect-status";
 
 import { IntegrationsContent } from "../integrations-content";
 
@@ -409,7 +410,12 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     const settled = await this.waitFor(
       () => {
         const current = window.location.search;
-        return current.includes("slack") ? null : current || "<none>";
+        // Keyed on the contract's own param names, not a substring: a
+        // preserved param merely mentioning "slack" is not a leftover.
+        const params = new URLSearchParams(current);
+        return SLACK_CONNECT_PARAMS.some((param) => params.has(param))
+          ? null
+          : current || "<none>";
       },
       5000,
       "the slack params to be stripped from the URL",
