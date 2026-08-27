@@ -144,3 +144,106 @@ class Test_policy_ensure_allowed_locations_is_enabled:
                 "Policy assignment for definition 'e56962a6-4747-49cd-b67b-bf8b01975c4c' does not exist or enforcement is disabled."
                 in result[0].status_extended
             )
+
+    def test_assignment_with_custom_id_containing_guid_should_fail(self):
+        """Regression: custom definition containing GUID as substring must not PASS."""
+        policy_client = mock.MagicMock()
+        policy_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
+        # Contains built-in GUID but has trailing suffix → not equal after normalization
+        policy_client.policy_assigments = {
+            AZURE_SUBSCRIPTION_ID: {
+                "policy-1": PolicyAssigment(
+                    id=str(uuid4()),
+                    name="policy-1",
+                    policy_definition_id="e56962a6-4747-49cd-b67b-bf8b01975c4c-custom",
+                    enforcement_mode="Default",
+                )
+            }
+        }
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.policy.policy_ensure_allowed_locations_is_enabled.policy_ensure_allowed_locations_is_enabled.policy_client",
+                new=policy_client,
+            ),
+        ):
+            from prowler.providers.azure.services.policy.policy_ensure_allowed_locations_is_enabled.policy_ensure_allowed_locations_is_enabled import (
+                policy_ensure_allowed_locations_is_enabled,
+            )
+
+            check = policy_ensure_allowed_locations_is_enabled()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+
+    def test_assignment_with_full_arm_id_should_pass(self):
+        """Full ARM ID should be normalized to GUID and PASS when enforced."""
+        policy_client = mock.MagicMock()
+        policy_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
+        policy_client.policy_assigments = {
+            AZURE_SUBSCRIPTION_ID: {
+                "policy-1": PolicyAssigment(
+                    id=str(uuid4()),
+                    name="policy-1",
+                    policy_definition_id="/providers/Microsoft.Authorization/policyDefinitions/e56962a6-4747-49cd-b67b-bf8b01975c4c",
+                    enforcement_mode="Default",
+                )
+            }
+        }
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.policy.policy_ensure_allowed_locations_is_enabled.policy_ensure_allowed_locations_is_enabled.policy_client",
+                new=policy_client,
+            ),
+        ):
+            from prowler.providers.azure.services.policy.policy_ensure_allowed_locations_is_enabled.policy_ensure_allowed_locations_is_enabled import (
+                policy_ensure_allowed_locations_is_enabled,
+            )
+
+            check = policy_ensure_allowed_locations_is_enabled()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+
+    def test_full_arm_id_with_custom_suffix_should_fail(self):
+        """Full ARM ID with custom suffix after GUID must not match."""
+        policy_client = mock.MagicMock()
+        policy_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
+        policy_client.policy_assigments = {
+            AZURE_SUBSCRIPTION_ID: {
+                "policy-1": PolicyAssigment(
+                    id=str(uuid4()),
+                    name="policy-1",
+                    policy_definition_id="/providers/Microsoft.Authorization/policyDefinitions/e56962a6-4747-49cd-b67b-bf8b01975c4c-custom",
+                    enforcement_mode="Default",
+                )
+            }
+        }
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.policy.policy_ensure_allowed_locations_is_enabled.policy_ensure_allowed_locations_is_enabled.policy_client",
+                new=policy_client,
+            ),
+        ):
+            from prowler.providers.azure.services.policy.policy_ensure_allowed_locations_is_enabled.policy_ensure_allowed_locations_is_enabled import (
+                policy_ensure_allowed_locations_is_enabled,
+            )
+
+            check = policy_ensure_allowed_locations_is_enabled()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "FAIL"

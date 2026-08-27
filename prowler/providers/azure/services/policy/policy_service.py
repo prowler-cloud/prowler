@@ -28,7 +28,9 @@ class Policy(AzureService):
         for subscription_id, client in self.clients.items():
             try:
                 policy_assigments.update({subscription_id: {}})
-                policy_assigments_list = client.policy_assignments.list()
+                policy_assigments_list = client.policy_assignments.list(
+                    filter="atScope()"
+                )
 
                 for policy_assigment in policy_assigments_list:
                     policy_assigments[subscription_id].update(
@@ -65,6 +67,11 @@ class PolicyAssigment:
     policy_definition_id: Optional[str] = None
 
 
+def _normalize_policy_definition_id(definition_id: str) -> str:
+    """Normalize a policy definition ID to its canonical GUID for comparison."""
+    return definition_id.strip().split("/")[-1].lower()
+
+
 def check_policy_assignment_exists(
     assignments: dict[str, PolicyAssigment], definition_id: str
 ) -> bool:
@@ -78,10 +85,12 @@ def check_policy_assignment_exists(
     Returns:
         bool: True if the policy is assigned and enforced (Default mode), False otherwise.
     """
+    normalized_target = _normalize_policy_definition_id(definition_id)
     for assignment in assignments.values():
         if (
             assignment.policy_definition_id
-            and definition_id.lower() in assignment.policy_definition_id.lower()
+            and _normalize_policy_definition_id(assignment.policy_definition_id)
+            == normalized_target
             and assignment.enforcement_mode == "Default"
         ):
             return True
