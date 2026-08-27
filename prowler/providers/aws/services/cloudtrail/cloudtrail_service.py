@@ -91,6 +91,15 @@ class Cloudtrail(AWSService):
             )
 
     def _get_trail_status(self):
+        """Retrieve the logging status of every named trail, one ``GetTrailStatus`` call per trail.
+
+        Sets ``is_logging`` from the response, and ``latest_cloudwatch_delivery_time``
+        when the trail reports a ``LatestCloudWatchLogsDeliveryTime``.
+
+        A trail whose status cannot be read keeps its ``is_logging`` default of ``False``
+        and records the exception class name in ``status_error``, so a check can report an
+        undetermined result instead of reading that default as "not logging".
+        """
         logger.info("Cloudtrail - Getting trail status")
         for trail in self.trails.values():
             for region, client in self.regional_clients.items():
@@ -113,6 +122,16 @@ class Cloudtrail(AWSService):
                         )
 
     def _get_event_selectors(self):
+        """Retrieve the event selectors of every named trail, one ``GetEventSelectors`` call per trail.
+
+        Appends every selector the trail returns to its ``data_events``, as basic
+        (``EventSelectors``) or advanced (``AdvancedEventSelectors``) entries. A trail
+        carries one kind or the other, never both.
+
+        A trail whose selectors cannot be read records the exception class name in
+        ``event_selectors_error`` and is skipped, so the empty ``data_events`` left behind
+        is not read as "this trail selects no data events".
+        """
         logger.info("Cloudtrail - Getting event selector")
         for trail in self.trails.values():
             for region, client in self.regional_clients.items():

@@ -302,6 +302,7 @@ class Test_cloudtrail_agentcore_data_events_enabled:
         _create_trail()
 
         def deny_selectors(service):
+            """Mark every named trail's event selectors as unreadable."""
             for trail in service.trails.values():
                 if trail.name:
                     trail.event_selectors_error = "ClientError"
@@ -311,8 +312,8 @@ class Test_cloudtrail_agentcore_data_events_enabled:
         assert len(result) == 1
         assert result[0].status == "MANUAL"
         assert result[0].status_extended == (
-            f"The event selectors of trails {TRAIL_NAME} could not be retrieved, so Amazon "
-            "Bedrock AgentCore data event coverage could not be determined."
+            "Amazon Bedrock AgentCore data event coverage could not be determined because "
+            f"the event selectors of trails {TRAIL_NAME} could not be retrieved."
         )
         assert result[0].resource_id == AWS_ACCOUNT_NUMBER
 
@@ -324,6 +325,7 @@ class Test_cloudtrail_agentcore_data_events_enabled:
         )
 
         def deny_status(service):
+            """Mark every named trail's logging status as unreadable."""
             for trail in service.trails.values():
                 if trail.name:
                     trail.status_error = "ClientError"
@@ -332,7 +334,61 @@ class Test_cloudtrail_agentcore_data_events_enabled:
 
         assert len(result) == 1
         assert result[0].status == "MANUAL"
-        assert TRAIL_NAME in result[0].status_extended
+        # Attributed to the status read, not the selector read: the selectors were retrieved
+        # here, and naming the wrong API sends the reader to the wrong permission.
+        assert result[0].status_extended == (
+            "Amazon Bedrock AgentCore data event coverage could not be determined because "
+            f"the logging status of trails {TRAIL_NAME} could not be retrieved."
+        )
+
+    @mock_aws
+    def test_stopped_trail_with_unreadable_selectors_still_fails(self):
+        """A trail known to be stopped cannot cover AgentCore, so it cannot mask the FAIL.
+
+        The selector read failed, but the status read did not: the trail is definitively not
+        logging, so whatever its selectors say it delivers nothing. Reporting MANUAL here
+        would downgrade a definitive finding on the strength of an irrelevant unknown.
+        """
+        _create_trail(is_logging=False)
+
+        def deny_selectors(service):
+            """Mark the stopped trail's event selectors as unreadable."""
+            for trail in service.trails.values():
+                if trail.name:
+                    trail.event_selectors_error = "ClientError"
+
+        result = _run_check(mutate_service=deny_selectors)
+
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+        assert (
+            result[0].status_extended
+            == "No CloudTrail trails have an advanced data event selector for Amazon Bedrock AgentCore resource types."
+        )
+
+    @mock_aws
+    def test_both_read_failures_are_reported_separately(self):
+        """Two trails failing two different reads are named under their own cause."""
+        _create_trail()
+        _create_trail(trail_name="trail_no_status", bucket_name="bucket_no_status")
+
+        def deny_one_of_each(service):
+            """Deny the selector read on one trail and the status read on the other."""
+            for trail in service.trails.values():
+                if trail.name == TRAIL_NAME:
+                    trail.event_selectors_error = "ClientError"
+                elif trail.name == "trail_no_status":
+                    trail.status_error = "ClientError"
+
+        result = _run_check(mutate_service=deny_one_of_each)
+
+        assert len(result) == 1
+        assert result[0].status == "MANUAL"
+        assert result[0].status_extended == (
+            "Amazon Bedrock AgentCore data event coverage could not be determined because "
+            f"the event selectors of trails {TRAIL_NAME} could not be retrieved; the logging "
+            "status of trails trail_no_status could not be retrieved."
+        )
 
     @mock_aws
     def test_unreadable_trail_does_not_mask_a_passing_trail(self):
@@ -343,6 +399,7 @@ class Test_cloudtrail_agentcore_data_events_enabled:
         _create_trail(trail_name="trail_unreadable", bucket_name="bucket_unreadable")
 
         def deny_one(service):
+            """Mark only trail_unreadable's event selectors as unreadable."""
             for trail in service.trails.values():
                 if trail.name == "trail_unreadable":
                     trail.event_selectors_error = "ClientError"
@@ -367,6 +424,7 @@ class Test_cloudtrail_agentcore_data_events_enabled:
         _create_trail(trail_name="trail_unreadable", bucket_name="bucket_unreadable")
 
         def deny_one(service):
+            """Mark only trail_unreadable's event selectors as unreadable."""
             for trail in service.trails.values():
                 if trail.name == "trail_unreadable":
                     trail.event_selectors_error = "ClientError"

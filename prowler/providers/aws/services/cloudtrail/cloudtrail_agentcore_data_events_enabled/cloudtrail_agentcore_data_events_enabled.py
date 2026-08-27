@@ -37,9 +37,10 @@ class cloudtrail_agentcore_data_events_enabled(Check):
 
     - PASS: An actively logging trail selects every data event of at least one AgentCore
       resource type.
-    - MANUAL: The event selectors of a trail could not be read, or the only AgentCore
-      selectors also filter on other fields, so their coverage cannot be determined.
-    - FAIL: No trail selects AgentCore data events.
+    - MANUAL: The logging status or the event selectors of a trail could not be read, or the
+      only AgentCore selectors also filter on other fields, so coverage cannot be determined.
+    - FAIL: No actively logging trail selects AgentCore data events. A stopped trail cannot
+      change that verdict, so an unreadable selector on one does not make it undetermined.
     """
 
     def execute(self) -> list[Check_Report_AWS]:
@@ -52,17 +53,25 @@ class cloudtrail_agentcore_data_events_enabled(Check):
         if cloudtrail_client.trails is None:
             return findings
 
-        undetermined_trails = []
+        selectors_unknown_trails = []
+        status_unknown_trails = []
         narrowed_trails = {}
         for trail in cloudtrail_client.trails.values():
             # Regions with no trail are held as a placeholder with no name; there is no trail
             # configuration to read there.
             if not trail.name:
                 continue
-            if trail.status_error or trail.event_selectors_error:
-                undetermined_trails.append(trail.name)
+            # Status first: a failed GetTrailStatus leaves is_logging at its False default, so
+            # the stopped-trail skip below would read that default as an answer.
+            if trail.status_error:
+                status_unknown_trails.append(trail.name)
                 continue
+            # A stopped trail delivers nothing, so it cannot be the trail that covers AgentCore
+            # however its selectors are configured -- including when they could not be read.
             if not trail.is_logging:
+                continue
+            if trail.event_selectors_error:
+                selectors_unknown_trails.append(trail.name)
                 continue
             complete, narrowed = trail_data_event_coverage(
                 trail, AGENTCORE_RESOURCE_TYPES
@@ -96,12 +105,25 @@ class cloudtrail_agentcore_data_events_enabled(Check):
                     f"{', '.join(sorted(set().union(*narrowed_trails.values())))} but also "
                     "filter on other fields, so their coverage could not be determined."
                 )
-            elif undetermined_trails:
+            elif selectors_unknown_trails or status_unknown_trails:
                 report.status = "MANUAL"
+                # Named separately: a status read and a selector read fail for different
+                # reasons, and reporting one as the other sends the reader to the wrong API.
+                reasons = []
+                if selectors_unknown_trails:
+                    reasons.append(
+                        "the event selectors of trails "
+                        f"{', '.join(sorted(selectors_unknown_trails))} could not be "
+                        "retrieved"
+                    )
+                if status_unknown_trails:
+                    reasons.append(
+                        "the logging status of trails "
+                        f"{', '.join(sorted(status_unknown_trails))} could not be retrieved"
+                    )
                 report.status_extended = (
-                    "The event selectors of trails "
-                    f"{', '.join(sorted(undetermined_trails))} could not be retrieved, so "
-                    "Amazon Bedrock AgentCore data event coverage could not be determined."
+                    "Amazon Bedrock AgentCore data event coverage could not be determined "
+                    f"because {'; '.join(reasons)}."
                 )
             else:
                 report.status = "FAIL"
