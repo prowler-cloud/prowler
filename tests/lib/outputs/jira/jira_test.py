@@ -15,6 +15,7 @@ from prowler.lib.outputs.jira.exceptions.exceptions import (
     JiraAuthenticationError,
     JiraBasicAuthError,
     JiraCreateIssueError,
+    JiraGetAccessTokenError,
     JiraGetAvailableIssueTypesError,
     JiraGetCloudIDError,
     JiraGetProjectsError,
@@ -926,6 +927,20 @@ class TestJiraIntegration:
 
         with pytest.raises(JiraRefreshTokenError):
             self.jira_integration.get_projects()
+
+    @pytest.mark.parametrize(
+        ("method_name", "args", "error"),
+        [
+            ("get_projects", (), JiraGetProjectsError),
+            ("get_available_issue_types", ("TEST",), JiraGetAvailableIssueTypesError),
+        ],
+    )
+    @patch.object(Jira, "get_access_token", return_value=None)
+    def test_catalog_methods_raise_without_access_token(
+        self, mock_get_access_token, method_name, args, error
+    ):
+        with pytest.raises(error):
+            getattr(self.jira_integration, method_name)(*args)
 
     @patch.object(Jira, "get_access_token", return_value="valid_access_token")
     @patch.object(
@@ -2774,6 +2789,13 @@ class TestJiraIntegration:
                 "transport_failure",
                 None,
             ),
+            (
+                {"payload": {"issues": [], "nextPageToken": "repeated"}},
+                None,
+                JiraIssueSearchOutcome.UNKNOWN,
+                "pagination_stalled",
+                None,
+            ),
         ],
     )
     def test_search_issues_by_delivery_attempt_classifies_failures(
@@ -2991,14 +3013,19 @@ class TestJiraIntegration:
         assert "customfield_10001" in result.error_message
         mock_post.assert_called_once()
 
-    @patch.object(
-        Jira,
-        "get_access_token",
-        side_effect=JiraRefreshTokenError(message="Failed to refresh the access token"),
+    @pytest.mark.parametrize(
+        "access_token_error",
+        [
+            JiraRefreshTokenError(message="Failed to refresh the access token"),
+            JiraGetAccessTokenError(message="Failed to get the access token"),
+        ],
     )
-    def test_send_finding_reraises_refresh_token_error(self, mock_get_access_token):
-        """Test refresh failures before sending are retryable."""
-        mock_get_access_token = mock_get_access_token
+    @patch.object(Jira, "get_access_token")
+    def test_send_finding_access_token_errors_are_retryable(
+        self, mock_get_access_token, access_token_error
+    ):
+        """Test access-token failures before sending are retryable."""
+        mock_get_access_token.side_effect = access_token_error
         result = self.jira_integration.send_finding(
             check_id="test-check",
             check_title="Test Finding",

@@ -1209,7 +1209,10 @@ class Jira:
             access_token = self.get_access_token()
 
             if not access_token:
-                return ValueError("Failed to get access token")
+                raise JiraNoTokenError(
+                    message="No token was found",
+                    file=os.path.basename(__file__),
+                )
 
             headers = self.get_headers(access_token)
 
@@ -1278,7 +1281,7 @@ class Jira:
             access_token = self.get_access_token()
 
             if not access_token:
-                return JiraNoTokenError(
+                raise JiraNoTokenError(
                     message="No token was found",
                     file=os.path.basename(__file__),
                 )
@@ -2759,6 +2762,7 @@ class Jira:
             "maxResults": 100,
         }
         seen_matches: set[tuple[str, str]] = set()
+        seen_page_tokens: set[str] = set()
         while True:
             try:
                 response = requests.post(
@@ -2821,6 +2825,17 @@ class Jira:
             next_page_token = response_json.get("nextPageToken")
             if not next_page_token:
                 return result(JiraIssueSearchOutcome.SUCCESS, response=response)
+            if (
+                not isinstance(next_page_token, str)
+                or next_page_token in seen_page_tokens
+            ):
+                return result(
+                    JiraIssueSearchOutcome.UNKNOWN,
+                    error_code="pagination_stalled",
+                    error_message="Jira marker lookup pagination did not complete.",
+                    response=response,
+                )
+            seen_page_tokens.add(next_page_token)
             payload["nextPageToken"] = next_page_token
 
     def send_findings(
@@ -3203,12 +3218,16 @@ class Jira:
             except requests.exceptions.RequestException as error:
                 return self._creation_transport_result(error, delivery_attempt_marker)
             return self._classify_creation_response(response, delivery_attempt_marker)
-        except (JiraRefreshTokenError, JiraRefreshTokenResponseError):
+        except (
+            JiraRefreshTokenError,
+            JiraRefreshTokenResponseError,
+            JiraGetAccessTokenError,
+        ):
             return JiraCreationResult(
                 outcome=JiraCreationOutcome.RETRYABLE_FAILURE,
                 delivery_marker=delivery_attempt_marker,
-                error_code="authentication_refresh_failed",
-                error_message="Jira authentication could not be refreshed before sending.",
+                error_code="authentication_failed_before_send",
+                error_message="Jira authentication failed before sending.",
             )
         except (
             JiraNoProjectsError,
