@@ -7,6 +7,10 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from prowler.lib.check.models import CheckReportIAC
+from prowler.providers.iac.exceptions.exceptions import (
+    IacRepositoryCloneError,
+    IacScanError,
+)
 from prowler.providers.iac.iac_provider import IacProvider
 from tests.providers.iac.iac_fixtures import (
     DEFAULT_SCAN_PATH,
@@ -323,12 +327,10 @@ class TestIacProvider:
             stdout=get_invalid_trivy_output(), stderr=""
         )
 
-        with pytest.raises(SystemExit) as excinfo:
+        with pytest.raises(IacScanError):
             # Consume the generator
             for _ in provider.run_scan("/test/directory", ["all"], []):
                 pass
-
-        assert excinfo.value.code == 1
 
     @patch("subprocess.run")
     def test_iac_provider_run_scan_null_output(self, mock_subprocess):
@@ -337,13 +339,12 @@ class TestIacProvider:
 
         mock_subprocess.return_value = MagicMock(stdout="null", stderr="")
 
-        with pytest.raises(SystemExit) as exc_info:
+        with pytest.raises(IacScanError):
             # Consume the generator
             for _ in provider.run_scan(
                 "/test/directory", ["vuln", "misconfig", "secret"], []
             ):
                 pass
-        assert exc_info.value.code == 1
 
     def test_iac_provider_process_finding_dockerfile(self):
         """Test processing a Dockerfile finding"""
@@ -514,14 +515,12 @@ class TestIacProvider:
         # Make subprocess.run raise an exception
         mock_subprocess.side_effect = Exception("Test exception")
 
-        with pytest.raises(SystemExit) as exc_info:
+        with pytest.raises(IacScanError):
             # Consume the generator
             for _ in provider.run_scan(
                 "/test/directory", ["vuln", "misconfig", "secret"], []
             ):
                 pass
-
-        assert exc_info.value.code == 1
 
     @patch("subprocess.run")
     def test_run_scan_with_different_frameworks(self, mock_subprocess):
@@ -819,21 +818,23 @@ class TestIacProvider:
 
     @mock.patch("prowler.providers.iac.iac_provider.porcelain.clone")
     @mock.patch("tempfile.mkdtemp", return_value="/tmp/fake-dir")
-    def test_clone_repository_failure_exits(self, _mock_mkdtemp, mock_clone):
-        """A failed clone must exit instead of returning `None`.
+    def test_clone_repository_failure_raises(self, _mock_mkdtemp, mock_clone):
+        """A failed clone must raise a typed error instead of returning `None`.
 
         `_clone_repository` is annotated `-> tuple[str, str]` and `__init__`
-        unpacks the result directly, so falling through the error handler
-        raises `TypeError: cannot unpack non-sequence NoneType` rather than the
-        clean exit the sibling handlers in this module perform.
+        unpacks the result directly, so falling through the error handler used
+        to raise `TypeError: cannot unpack non-sequence NoneType`. Raising
+        `IacRepositoryCloneError` lets the CLI exit with the logged message and
+        lets the API report the failure as a normal task error instead of a
+        `SystemExit` escaping the Celery worker.
         """
         mock_clone.side_effect = Exception("repository not found")
-        provider = IacProvider()
 
-        with pytest.raises(SystemExit) as exc_info:
-            provider._clone_repository("https://github.com/user/repo.git")
+        with pytest.raises(IacRepositoryCloneError) as exc_info:
+            IacProvider(scan_repository_url="https://github.com/user/repo.git")
 
-        assert exc_info.value.code == 1
+        assert "repository not found" in str(exc_info.value)
+        assert exc_info.value.code == 21000
 
     def test_detect_branch_name_main(self):
         """Test detecting 'main' branch from .git/HEAD"""

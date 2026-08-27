@@ -1,1 +1,1 @@
-IaC provider now exits cleanly when cloning the scanned repository fails, instead of returning `None` and raising `TypeError: cannot unpack non-sequence NoneType`, matching the other critical error handlers in the provider
+IaC provider now raises typed `IacBaseException` errors (repository clone, Trivy missing, scan and output processing failures) instead of calling `sys.exit(1)`; the CLI still stops with the logged message, and API scans fail as regular task errors instead of a `SystemExit` escaping the worker
