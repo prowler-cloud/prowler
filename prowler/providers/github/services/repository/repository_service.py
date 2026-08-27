@@ -861,7 +861,7 @@ class Repository(GithubService):
             )
             if isinstance(response, dict):
                 permissions = response.get("default_workflow_permissions")
-                if isinstance(permissions, str):
+                if permissions in ("read", "write"):
                     return permissions
             return None
         except github.RateLimitExceededException as error:

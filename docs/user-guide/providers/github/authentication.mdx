@@ -42,7 +42,7 @@ Required for scanning repository security settings:
 
 | Permission | Access Level | Purpose | Checks Enabled |
 |------------|-------------|---------|----------------|
-| **Administration** | Read | Branch protection, security settings | All branch protection checks, secret scanning status |
+| **Administration** | Read | Branch protection, security and Actions settings | All branch protection checks, secret scanning status, `repository_default_workflow_permissions_read_only` |
 | **Contents** | Read | File existence checks | `repository_public_has_securitymd_file`, `repository_has_codeowners_file` |
 | **Metadata** | Read | Basic repository information | All checks (automatically granted) |
 | **Dependabot alerts** | Read | Dependency vulnerability scanning | `repository_dependency_scanning_enabled` |
@@ -83,7 +83,7 @@ With the **Read-only permissions** listed above, Prowler can run:
 | Check Category | Coverage | Notes |
 |----------------|----------|-------|
 | Branch protection checks (12 checks) | ✅ Full | Signed commits, status checks, PR reviews, etc. |
-| Repository security checks | ✅ Full | Secret scanning, Dependabot, SECURITY.md, CODEOWNERS |
+| Repository security checks | ✅ Full | Secret scanning, Dependabot, SECURITY.md, CODEOWNERS, default workflow permissions |
 | Organization checks (4 checks) | ✅ Full | MFA, repo creation policies, default permissions, default workflow permissions |
 | Compliance frameworks | ✅ Full | CIS GitHub Benchmark and others |
 | Merge settings (`delete_branch_on_merge`) | ⚠️ MANUAL | Requires write permission (see below) |
@@ -215,7 +215,7 @@ If a GitHub App is required:
 
 | Permission | Access Level | Purpose | Checks Enabled |
 |------------|-------------|---------|----------------|
-| **Administration** | Read | Branch protection, security settings | All branch protection checks, `repository_secret_scanning_enabled` |
+| **Administration** | Read | Branch protection, security and Actions settings | All branch protection checks, `repository_secret_scanning_enabled`, `repository_default_workflow_permissions_read_only` |
 | **Contents** | Read | File existence checks | `repository_public_has_securitymd_file`, `repository_has_codeowners_file` |
 | **Metadata** | Read | Basic repository information | All checks (automatically granted) |
 | **Dependabot alerts** | Read | Dependency vulnerability scanning | `repository_dependency_scanning_enabled` |

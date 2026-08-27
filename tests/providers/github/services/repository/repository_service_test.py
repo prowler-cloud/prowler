@@ -975,6 +975,18 @@ class Test_Repository_Default_Workflow_Permissions:
             self.repository_service._get_default_workflow_permissions(repo) is None
         ), "An unexpected response payload should not be reported as a permissions value"
 
+    def test_default_workflow_permissions_unsupported_value(self):
+        """Test that a value outside read/write is treated as unknown rather than a failure."""
+        repo = self._mock_repo()
+        repo._requester.requestJsonAndCheck.return_value = (
+            {},
+            {"default_workflow_permissions": "none"},
+        )
+
+        assert (
+            self.repository_service._get_default_workflow_permissions(repo) is None
+        ), "An unsupported permissions value should be left unknown instead of reported as write"
+
     def test_default_workflow_permissions_not_available(self):
         """Test that repositories without the setting yield no value."""
         repo = self._mock_repo()
@@ -1019,11 +1031,13 @@ class Test_Repository_Default_Workflow_Permissions:
         )
 
         with patch(
-            "prowler.providers.github.services.repository.repository_service.logger"
-        ):
+            "prowler.providers.github.lib.service.service.logger"
+        ) as mock_logger:
             assert (
                 self.repository_service._get_default_workflow_permissions(repo) is None
             ), "An unexpected API error should not produce a value"
+            mock_logger.error.assert_called()
+            assert "Internal Server Error" in str(mock_logger.error.call_args)
 
     def test_default_workflow_permissions_unexpected_error(self):
         """Test that an unexpected non-GitHub error is logged and yields no value."""
