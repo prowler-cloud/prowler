@@ -8,7 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "NotDefined",
-  "ResourceGroup": "devops",
+  "ResourceGroup": "governance",
   "Description": "GitHub Actions organization settings define whether workflows are allowed to create and approve pull requests.\n\nThe evaluation determines whether that permission is disabled, so that approving a pull request always requires a human reviewer.",
   "Risk": "When workflows can approve pull requests, automation can satisfy the review requirement it was meant to be checked by, leading to:\n- Required reviews being cleared without any human inspecting the change\n- Self-approving pull requests opened by a workflow\n- Merge gates that appear enforced while providing no real oversight",
   "RelatedUrl": "",

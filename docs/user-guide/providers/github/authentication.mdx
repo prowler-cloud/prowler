@@ -63,7 +63,7 @@ Required for scanning organization-level security settings:
 
 | Permission | Access Level | Purpose | Checks Enabled |
 |------------|-------------|---------|----------------|
-| **Administration** | Read | Organization security policies and Actions settings | `organization_members_mfa_required`, `organization_repository_creation_limited`, `organization_default_repository_permission_strict`, `organization_default_workflow_permissions_read_only` |
+| **Administration** | Read | Organization security policies and Actions settings | `organization_members_mfa_required`, `organization_repository_creation_limited`, `organization_default_repository_permission_strict`, `organization_default_workflow_permissions_read_only`, `organization_actions_pull_request_approval_disabled` |
 | **Members** | Read | Member access reviews | Organization membership auditing |
 
 #### Account Permissions (Fine-Grained PAT only)
@@ -84,7 +84,7 @@ With the **Read-only permissions** listed above, Prowler can run:
 |----------------|----------|-------|
 | Branch protection checks (12 checks) | ✅ Full | Signed commits, status checks, PR reviews, etc. |
 | Repository security checks | ✅ Full | Secret scanning, Dependabot, SECURITY.md, CODEOWNERS |
-| Organization checks (4 checks) | ✅ Full | MFA, repo creation policies, default permissions, default workflow permissions |
+| Organization checks (5 checks) | ✅ Full | MFA, repo creation policies, default permissions, Actions workflow permissions |
 | Compliance frameworks | ✅ Full | CIS GitHub Benchmark and others |
 | Merge settings (`delete_branch_on_merge`) | ⚠️ MANUAL | Requires write permission (see below) |
 
@@ -171,7 +171,7 @@ Use OAuth App Tokens when building applications that need delegated user permiss
 
 - `repo`: Full control of repositories
 - `read:org`: Read organization and team membership
-- `admin:org`: Required by `organization_default_workflow_permissions_read_only` to read the organization Actions workflow permissions
+- `admin:org`: Required by `organization_default_workflow_permissions_read_only` and `organization_actions_pull_request_approval_disabled` to read the organization Actions workflow permissions
 - `read:user`: Read user profile data
 
 **Create an OAuth App:**
@@ -224,7 +224,7 @@ If a GitHub App is required:
 
 | Permission | Access Level | Purpose | Checks Enabled |
 |------------|-------------|---------|----------------|
-| **Administration** | Read | Organization security policies and Actions settings | `organization_members_mfa_required`, `organization_repository_creation_limited`, `organization_default_repository_permission_strict`, `organization_default_workflow_permissions_read_only` |
+| **Administration** | Read | Organization security policies and Actions settings | `organization_members_mfa_required`, `organization_repository_creation_limited`, `organization_default_repository_permission_strict`, `organization_default_workflow_permissions_read_only`, `organization_actions_pull_request_approval_disabled` |
 | **Members** | Read | Member access reviews | Organization membership auditing |
 
 **Create a GitHub App:**
