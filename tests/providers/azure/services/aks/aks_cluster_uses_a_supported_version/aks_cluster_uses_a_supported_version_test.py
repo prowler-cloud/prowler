@@ -165,6 +165,34 @@ class Test_aks_cluster_uses_a_supported_version:
             assert len(result) == 1
             assert result[0].status == "FAIL"
 
+    # An explicit null in config.yaml survives audit_config.get(), so the check
+    # has to fall back on its own rather than crash on None.split()
+    @pytest.mark.parametrize("baseline", [None, "", "1", "not-a-version", 1])
+    def test_invalid_baseline_falls_back_to_default(self, baseline):
+        aks_client = mock.MagicMock
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(f"{CHECK_PATH}.aks_client", new=aks_client),
+        ):
+            from prowler.providers.azure.services.aks.aks_cluster_uses_a_supported_version.aks_cluster_uses_a_supported_version import (
+                aks_cluster_uses_a_supported_version,
+            )
+
+            cluster = build_cluster(kubernetes_version="1.28.3")
+            aks_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
+            aks_client.clusters = {AZURE_SUBSCRIPTION_ID: {cluster.id: cluster}}
+            aks_client.audit_config = {"aks_cluster_oldest_version_supported": baseline}
+
+            check = aks_cluster_uses_a_supported_version()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert "The oldest supported version is 1.34." in result[0].status_extended
+
     @pytest.mark.parametrize("kubernetes_version", [None, ""])
     def test_cluster_without_version_is_skipped(self, kubernetes_version):
         aks_client = mock.MagicMock
