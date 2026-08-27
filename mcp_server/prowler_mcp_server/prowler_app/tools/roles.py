@@ -14,6 +14,7 @@ from typing import Any
 from fastmcp.exceptions import ToolError
 from pydantic import Field
 
+from prowler_mcp_server.lib.errors import ProwlerAPIError
 from prowler_mcp_server.lib.types import NonBlankStr
 from prowler_mcp_server.prowler_app.models.roles import (
     DetailedRole,
@@ -168,13 +169,19 @@ class RolesTools(BaseTool):
         # user with no role at all. Confirm the role exists before replacing.
         try:
             await self.api_client.get(f"/roles/{role_id}")
-        except Exception as e:
+        except ProwlerAPIError as e:
+            if e.status_code != 404:
+                # Only a not-found says anything about the role ID. A permission
+                # error, a rate limit or a server error is about the request, so
+                # it goes to the shared classifier rather than being reported as
+                # an ID the caller should replace.
+                raise
             # No `from` clause: this says what state the user was left in, which
             # the shared classifier cannot know, and a cause would let it replace
             # this message with its own.
             raise ToolError(
-                f"Role {role_id} could not be read ({e}), so user {user_id} was left "
-                f"unchanged. Use `prowler_list_roles` to find a valid role ID."
+                f"Role {role_id} does not exist in this tenant, so user {user_id} was "
+                f"left unchanged. Use `prowler_list_roles` to find a valid role ID."
             )
 
         # PATCH replaces the user's whole role set with this single role, the
