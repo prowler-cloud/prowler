@@ -65,19 +65,6 @@ class PolicyAssigment:
     policy_definition_id: Optional[str] = None
 
 
-def get_asc_default_policy(assignments: dict) -> Optional[PolicyAssigment]:
-    """Find and return the ASC default policy assignment from an assignments dict."""
-    for name, assignment in assignments.items():
-        def_id = (assignment.policy_definition_id or "").lower()
-        if "1f3afdf9-d0c9-4c3d-847f-89da613e70a8" in def_id:
-            return assignment
-    for name, assignment in assignments.items():
-        asg_name = (assignment.name or "").lower()
-        if "securitycenterbuiltin" in asg_name or "asc default" in asg_name:
-            return assignment
-    return None
-
-
 def check_policy_assignment_exists(
     assignments: dict[str, PolicyAssigment], definition_id: str
 ) -> bool:
