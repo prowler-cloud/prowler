@@ -111,6 +111,20 @@ def _find_transport_cause(error: BaseException) -> Optional[BaseException]:
     return None
 
 
+def _decode_certificate_content(certificate_content: str) -> bytes:
+    """Base64-decode certificate content, tolerating shell-added whitespace.
+
+    ``AZURE_CERTIFICATE_CONTENT`` values almost always arrive with a
+    trailing newline (shell command substitution) or embedded line
+    breaks (``openssl base64`` wraps output at 64 columns by default).
+    ``base64.b64decode(..., validate=True)`` rejects both as
+    ``binascii.Error``. Strip whitespace before decoding so the strict
+    validation still rejects non-base64 characters without penalising the
+    common copy-paste and env-var flows.
+    """
+    return base64.b64decode("".join(certificate_content.split()), validate=True)
+
+
 def _build_certificate_credential(
     tenant_id: str,
     client_id: str,
@@ -417,9 +431,9 @@ class AzureProvider(Provider):
             sp_env_auth,
             browser_auth,
             managed_identity_auth,
-            certificate_auth,
             subscription_ids,
             client_id,
+            certificate_auth=certificate_auth,
         )
 
         # TODO: should we keep this here or within the identity?
@@ -813,8 +827,8 @@ class AzureProvider(Provider):
                             with open(certificate_path, "rb") as cert_file:
                                 certificate_data = cert_file.read()
                         else:
-                            certificate_data = base64.b64decode(
-                                getenv("AZURE_CERTIFICATE_CONTENT"), validate=True
+                            certificate_data = _decode_certificate_content(
+                                getenv("AZURE_CERTIFICATE_CONTENT")
                             )
                         # Same fail-fast validation the static path runs. The
                         # returned bundle is normalized so the leaf appears
@@ -1134,13 +1148,20 @@ class AzureProvider(Provider):
             if raise_on_exception:
                 raise credential_unavailable_error
             return Connection(error=credential_unavailable_error)
-        except AzureDefaultAzureCredentialError as default_credentials_error:
+        except AzureNotValidCertificateContentError as certificate_content_error:
             logger.error(
-                f"{default_credentials_error.__class__.__name__}[{default_credentials_error.__traceback__.tb_lineno}]: {default_credentials_error}"
+                f"{certificate_content_error.__class__.__name__}[{certificate_content_error.__traceback__.tb_lineno}]: {certificate_content_error}"
             )
             if raise_on_exception:
-                raise default_credentials_error
-            return Connection(error=default_credentials_error)
+                raise certificate_content_error
+            return Connection(error=certificate_content_error)
+        except AzureNotValidCertificatePathError as certificate_path_error:
+            logger.error(
+                f"{certificate_path_error.__class__.__name__}[{certificate_path_error.__traceback__.tb_lineno}]: {certificate_path_error}"
+            )
+            if raise_on_exception:
+                raise certificate_path_error
+            return Connection(error=certificate_path_error)
         except (
             AzureClientIdAndClientSecretNotBelongingToTenantIdError
         ) as tenant_id_error:
@@ -1261,9 +1282,13 @@ class AzureProvider(Provider):
         sp_env_auth,
         browser_auth,
         managed_identity_auth,
-        certificate_auth,
         subscription_ids,
         client_id,
+        # Keyword-only so external callers using the pre-cert-auth positional
+        # layout (`..., managed_identity_auth, subscription_ids, client_id`)
+        # keep binding those slots correctly.
+        *,
+        certificate_auth: bool = False,
     ):
         """
         Sets up the identity for the Azure provider.
@@ -1643,7 +1668,7 @@ class AzureProvider(Provider):
                 # exception several call frames deeper if this fails, which
                 # makes for a bad UX in the API/UI.
                 normalized_bundle = validate_certificate_bundle(
-                    base64.b64decode(certificate_content, validate=True)
+                    _decode_certificate_content(certificate_content)
                 )
                 # Persist the normalized (leaf-first) bundle so downstream
                 # `CertificateCredential` calls don't pick an intermediate CA.
@@ -1821,7 +1846,7 @@ class AzureProvider(Provider):
         transport = None
         try:
             if certificate_content:
-                certificate_data = base64.b64decode(certificate_content, validate=True)
+                certificate_data = _decode_certificate_content(certificate_content)
             elif certificate_path:
                 with open(certificate_path, "rb") as cert_file:
                     certificate_data = cert_file.read()
@@ -1855,15 +1880,17 @@ class AzureProvider(Provider):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
             )
             # `azure.identity` wraps `_request_token` with `wrap_exceptions`,
-            # so a `RequestsTransport` connect/read timeout reaches this
+            # so a `RequestsTransport` connect/read failure reaches this
             # handler as `ClientAuthenticationError`. Distinguish transport
             # failures (credentials unavailable) from a genuinely rejected
-            # certificate by walking the cause chain.
+            # certificate by walking the cause chain. The transport error
+            # covers DNS, TLS, connection reset and timeout indistinctly, so
+            # the message must not claim the request timed out.
             if _find_transport_cause(error) is not None:
                 raise AzureCredentialsUnavailableError(
                     file=os.path.basename(__file__),
                     message=(
-                        "Timed out waiting for Entra ID to issue a token "
+                        "Entra ID was not reachable while acquiring a token "
                         "for the provided certificate."
                     ),
                     original_exception=error,
@@ -1908,18 +1935,21 @@ class AzureProvider(Provider):
             # Always release the transient credential and its transport:
             # cleanup failures are logged and swallowed so they cannot
             # replace the primary typed exception on its way up. The
-            # transport is closed independently to cover the case where
-            # `CertificateCredential.__init__` raised before `credential`
-            # took ownership of it.
+            # transport is closed as a fallback when the credential was
+            # never assigned (`CertificateCredential.__init__` raised
+            # before ownership transferred) or when `credential.close()`
+            # itself failed and could not release the underlying pipeline.
+            credential_closed = False
             if credential is not None:
                 try:
                     credential.close()
+                    credential_closed = True
                 except Exception as cleanup_error:
                     logger.warning(
                         f"{cleanup_error.__class__.__name__}: failed to close "
                         f"CertificateCredential during verify_client cleanup"
                     )
-            elif transport is not None:
+            if transport is not None and not credential_closed:
                 try:
                     transport.close()
                 except Exception as cleanup_error:

@@ -39,26 +39,57 @@ def validate_certificate_bundle(certificate_data: bytes) -> bytes:
     returned as-is.
     """
     try:
-        private_key, certificate, _ = pkcs12.load_key_and_certificates(
+        private_key, certificate, additional_certs = pkcs12.load_key_and_certificates(
             certificate_data, None, default_backend()
         )
-    except (ValueError, UnsupportedAlgorithm):
-        # Not PKCS#12, or PKCS#12 uses a cipher this build cannot decrypt.
-        # Fall through to the PEM path.
+    except (ValueError, UnsupportedAlgorithm) as error:
+        # `load_key_and_certificates` also raises `ValueError` when the
+        # PKCS#12 archive is password-protected (message text: "Invalid
+        # password or PKCS12 data"). Fall through to the PEM parser only
+        # when the payload smells like PEM; otherwise raise a specific
+        # error so the caller does not see the misleading "missing
+        # certificate or key" message from `_normalize_pem_bundle`.
+        if b"-----BEGIN" not in certificate_data:
+            raise ValueError(
+                "the payload is not a valid PEM bundle nor an unencrypted "
+                "PKCS#12 archive; password-protected PKCS#12 archives are "
+                "not supported"
+            ) from error
         return _normalize_pem_bundle(certificate_data)
 
-    if certificate is None or private_key is None:
-        raise ValueError("the payload must contain a certificate and its private key")
+    if private_key is None:
+        raise ValueError("the PKCS#12 archive does not contain a private key")
+    if certificate is None and not additional_certs:
+        raise ValueError("the PKCS#12 archive does not contain a certificate")
 
     encoding = serialization.Encoding.DER
     public_format = serialization.PublicFormat.SubjectPublicKeyInfo
-    if certificate.public_key().public_bytes(
-        encoding, public_format
-    ) != private_key.public_key().public_bytes(encoding, public_format):
-        raise ValueError("the certificate does not match the private key")
+    key_public_bytes = private_key.public_key().public_bytes(encoding, public_format)
+    if (
+        certificate is not None
+        and certificate.public_key().public_bytes(encoding, public_format)
+        == key_public_bytes
+    ):
+        # PKCS#12 blobs are consumed directly by azure-identity; no reordering.
+        return certificate_data
 
-    # PKCS#12 blobs are consumed directly by azure-identity; no reordering.
-    return certificate_data
+    # Some `openssl pkcs12 -export -certfile` workflows write the leaf
+    # certificate into the additional-certs bag instead of the primary
+    # slot. azure-identity reads the primary certificate for the
+    # thumbprint, so accepting the archive as-is would authenticate
+    # against the wrong thumbprint. Detect that case and raise an
+    # actionable error rather than the opaque "does not match" message.
+    for candidate in additional_certs or ():
+        if (
+            candidate.public_key().public_bytes(encoding, public_format)
+            == key_public_bytes
+        ):
+            raise ValueError(
+                "the PKCS#12 archive has the certificate matching the "
+                "private key in the additional-certs bag; re-export the "
+                "archive with the leaf certificate as the primary entry"
+            )
+    raise ValueError("the certificate does not match the private key")
 
 
 def _normalize_pem_bundle(certificate_data: bytes) -> bytes:

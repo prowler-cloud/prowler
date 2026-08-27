@@ -1391,6 +1391,37 @@ class TestAzureProviderCertificateAuth:
                 region_config=self._region_config(),
             )
 
+    def test_validate_static_credentials_accepts_wrapped_base64_cert_content(self):
+        # `openssl base64 -in cert.pfx` wraps at 64 columns by default and
+        # every shell command substitution adds a trailing newline. The
+        # UX target is that both are accepted without the operator having
+        # to strip whitespace by hand — strict `validate=True` decoding
+        # would otherwise reject perfectly valid payloads with a
+        # misleading `binascii.Error`.
+        import base64
+        import textwrap
+
+        bundle = self._leaf_first_bundle()
+        wrapped_with_trailing_newline = (
+            textwrap.fill(base64.b64encode(bundle).decode("ascii"), width=64) + "\n"
+        )
+
+        with patch.object(AzureProvider, "verify_client"):
+            credentials = AzureProvider.validate_static_credentials(
+                tenant_id=self._TENANT_ID,
+                client_id=self._CLIENT_ID,
+                client_secret=None,
+                certificate_content=wrapped_with_trailing_newline,
+                certificate_path=None,
+                region_config=self._region_config(),
+            )
+
+        # `validate_static_credentials` re-encodes the normalized bundle
+        # into `certificate_content`; the returned value must decode
+        # cleanly with strict validation and match the original bundle.
+        stored = base64.b64decode(credentials["certificate_content"], validate=True)
+        assert stored == bundle
+
     def test_validate_static_credentials_rejects_key_only_pem(self):
         import base64
 
@@ -2214,6 +2245,47 @@ class TestAzureProviderCertificateAuth:
                     self._leaf_first_bundle()
                 ).decode(),
             )
+
+    def test_verify_client_certificate_cleanup_failure_still_closes_transport(self):
+        # When `credential.close()` fails, `verify_client` must still fall
+        # back to closing the underlying `RequestsTransport`; otherwise the
+        # transport (and its connection pool + retry thread) leaks for the
+        # lifetime of the worker every time Entra ID misbehaves.
+        import base64
+
+        from azure.core.pipeline.transport import RequestsTransport
+
+        with (
+            patch.object(
+                requests.Session,
+                "request",
+                side_effect=requests.ConnectTimeout("hung transport"),
+            ),
+            patch(
+                "azure.identity.CertificateCredential.close",
+                side_effect=RuntimeError("close boom"),
+            ),
+            patch.object(
+                RequestsTransport,
+                "close",
+                autospec=True,
+            ) as transport_close,
+            pytest.raises(AzureCredentialsUnavailableError),
+        ):
+            AzureProvider.verify_client(
+                self._TENANT_ID,
+                self._CLIENT_ID,
+                client_secret=None,
+                region_config=self._region_config(),
+                certificate_content=base64.b64encode(
+                    self._leaf_first_bundle()
+                ).decode(),
+            )
+
+        assert transport_close.called, (
+            "transport.close() must be invoked as a fallback when "
+            "credential.close() fails, otherwise the transport leaks"
+        )
 
     def test_verify_client_without_credential_material_returns(self):
         assert (
@@ -3063,6 +3135,35 @@ class TestAzureProviderSignatureCompatibility:
             assert (
                 parameters[name].kind is inspect.Parameter.KEYWORD_ONLY
             ), f"setup_session: {name} must be keyword-only"
+
+    def test_setup_identity_positional_call_still_binds_subscription_ids(self):
+        import inspect
+
+        # Master signature: `self, az_cli_auth, sp_env_auth, browser_auth,
+        # managed_identity_auth, subscription_ids, client_id`. Inserting
+        # `certificate_auth` as a positional between `managed_identity_auth`
+        # and `subscription_ids` would silently rebind existing callers.
+        signature = inspect.signature(AzureProvider.setup_identity)
+        bound = signature.bind(
+            None,  # self
+            False,  # az_cli_auth
+            False,  # sp_env_auth
+            False,  # browser_auth
+            False,  # managed_identity_auth
+            ["sub-a"],  # subscription_ids
+            self._CLIENT_ID,  # client_id
+        )
+
+        assert bound.arguments["subscription_ids"] == ["sub-a"]
+        assert bound.arguments["client_id"] == self._CLIENT_ID
+        assert "certificate_auth" not in bound.arguments
+
+        # `certificate_auth` is the only certificate parameter in
+        # `setup_identity`; assert it is keyword-only.
+        parameters = inspect.signature(AzureProvider.setup_identity).parameters
+        assert (
+            parameters["certificate_auth"].kind is inspect.Parameter.KEYWORD_ONLY
+        ), "setup_identity: certificate_auth must be keyword-only"
 
 
 class TestValidateCertificateBundleMultiKey:
