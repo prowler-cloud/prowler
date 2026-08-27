@@ -46,7 +46,80 @@ class TestRulesGmailEmployeeSpoofingAlertConfigured:
 
             assert len(findings) == 1
             assert findings[0].status == "PASS"
-            assert "properly configured" in findings[0].status_extended
+            assert "is properly configured" in findings[0].status_extended
+            assert findings[0].customer_id == CUSTOMER_ID
+
+    def test_fail_wrong_severity(self):
+        """Test FAIL when the alert is on but the severity is not the one CIS requires."""
+        mock_provider = set_mocked_googleworkspace_provider()
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.services.rules.rules_gmail_employee_spoofing_alert_configured.rules_gmail_employee_spoofing_alert_configured.rules_client"
+            ) as mock_rules_client,
+        ):
+            from prowler.providers.googleworkspace.services.rules.rules_gmail_employee_spoofing_alert_configured.rules_gmail_employee_spoofing_alert_configured import (
+                rules_gmail_employee_spoofing_alert_configured,
+            )
+
+            mock_rules_client.provider = mock_provider
+            mock_rules_client.policies_fetched = True
+            mock_rules_client.system_defined_alerts = [
+                SystemDefinedAlert(
+                    display_name=RULE_NAME,
+                    state="ACTIVE",
+                    severity="HIGH",
+                    email_notifications_enabled=True,
+                    all_super_admins=True,
+                )
+            ]
+
+            check = rules_gmail_employee_spoofing_alert_configured()
+            findings = check.execute()
+
+            assert len(findings) == 1
+            assert findings[0].status == "FAIL"
+            assert "severity is HIGH" in findings[0].status_extended
+            assert findings[0].customer_id == CUSTOMER_ID
+
+    def test_fail_severity_not_configured(self):
+        """Test FAIL when the alert is on but no severity is configured."""
+        mock_provider = set_mocked_googleworkspace_provider()
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.services.rules.rules_gmail_employee_spoofing_alert_configured.rules_gmail_employee_spoofing_alert_configured.rules_client"
+            ) as mock_rules_client,
+        ):
+            from prowler.providers.googleworkspace.services.rules.rules_gmail_employee_spoofing_alert_configured.rules_gmail_employee_spoofing_alert_configured import (
+                rules_gmail_employee_spoofing_alert_configured,
+            )
+
+            mock_rules_client.provider = mock_provider
+            mock_rules_client.policies_fetched = True
+            mock_rules_client.system_defined_alerts = [
+                SystemDefinedAlert(
+                    display_name=RULE_NAME,
+                    state="ACTIVE",
+                    email_notifications_enabled=True,
+                    all_super_admins=True,
+                )
+            ]
+
+            check = rules_gmail_employee_spoofing_alert_configured()
+            findings = check.execute()
+
+            assert len(findings) == 1
+            assert findings[0].status == "FAIL"
+            assert "severity is not configured" in findings[0].status_extended
             assert findings[0].customer_id == CUSTOMER_ID
 
     def test_fail_alert_off(self):

@@ -9,7 +9,7 @@
   "Severity": "high",
   "ResourceType": "NotDefined",
   "ResourceGroup": "IAM",
-  "Description": "The domain-level policy **enforces 2-Step Verification (Multi-Factor Authentication)** for all users. 2-Step Verification requires users to present a second form of authentication beyond their password, significantly reducing the risk of account compromise.",
+  "Description": "The domain-level policy **enforces 2-Step Verification** for all users, allows users to turn it on, keeps the new user enrollment period at two weeks or less, disables device trust and excludes verification codes via text or phone call from the accepted methods.",
   "Risk": "Without 2-Step Verification enforcement, users can access their accounts with **only a password**. If credentials are compromised through phishing, credential stuffing, or data breaches, attackers gain **immediate access** to the user's account and organizational data without any additional verification.",
   "RelatedUrl": "",
   "AdditionalURLs": [

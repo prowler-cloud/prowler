@@ -9,7 +9,7 @@
   "Severity": "low",
   "ResourceType": "NotDefined",
   "ResourceGroup": "monitoring",
-  "Description": "The **Suspicious programmatic login** system-defined alert rule should be enabled with alerts sent to the alert center, email notifications turned on, and recipients set to all super administrators. This ensures administrators are notified when Google detects suspicious login attempts from applications or programs.",
+  "Description": "The **Suspicious programmatic login** system-defined alert rule should be enabled with alerts sent to the alert center, email notifications turned on, recipients set to all super administrators, and severity set to Low. This ensures administrators are notified when Google detects suspicious login attempts from applications or programs.",
   "Risk": "Without this alert enabled, administrators will not be notified of **suspicious programmatic login attempts**. This could indicate automated credential stuffing or unauthorized API access using compromised credentials.",
   "RelatedUrl": "",
   "AdditionalURLs": [

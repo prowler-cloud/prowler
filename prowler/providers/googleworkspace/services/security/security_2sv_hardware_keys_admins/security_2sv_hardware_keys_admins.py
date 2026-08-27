@@ -1,20 +1,36 @@
 from typing import List
 
 from prowler.lib.check.models import Check, CheckReportGoogleWorkspace
+from prowler.providers.googleworkspace.services.security.lib.durations import (
+    ONE_DAY_SECONDS,
+    format_duration,
+    is_enforcement_active,
+    is_enforcement_off,
+    parse_duration_seconds,
+)
 from prowler.providers.googleworkspace.services.security.security_client import (
     security_client,
 )
+
+# "Methods: Only security key". The values that also accept security codes are
+# PASSKEY_PLUS_SECURITY_CODE and PASSKEY_PLUS_IP_BOUND_SECURITY_CODE, so
+# requiring this one covers the benchmark's "don't allow users to generate
+# security codes" step as well.
+SECURITY_KEYS_ONLY = "PASSKEY_ONLY"
 
 
 class security_2sv_hardware_keys_admins(Check):
     """Check that 2SV enforcement requires hardware security keys.
 
-    This check verifies that the domain-level 2-Step Verification enforcement
-    factor is set to security keys only, providing the strongest protection
-    against phishing attacks. Note: the Cloud Identity Policy API returns
-    domain-wide policies — it cannot verify enforcement for admin roles
-    specifically. This check evaluates the customer-level policy which
-    applies to all users including administrators.
+    CIS 4.1.1.2 asks for security keys to be the only accepted method, with
+    enrollment allowed, enforcement on, a policy suspension grace period of at
+    most one day and security code generation blocked. All of them are
+    evaluated so the requirement cannot pass on the accepted method alone.
+
+    Note: the Cloud Identity Policy API returns domain-wide policies, it cannot
+    verify enforcement for admin roles specifically. This check evaluates the
+    customer-level policy, which applies to all users including administrators,
+    so a passing domain-wide policy also covers the administrative accounts.
     """
 
     def execute(self) -> List[CheckReportGoogleWorkspace]:
@@ -29,35 +45,67 @@ class security_2sv_hardware_keys_admins(Check):
                 customer_id=security_client.provider.identity.customer_id,
             )
 
-            factor_set = security_client.policies.two_sv_allowed_factor_set
+            policies = security_client.policies
+            domain = security_client.provider.identity.domain
+            issues = []
 
-            if factor_set == "PASSKEY_ONLY":
+            factor_set = policies.two_sv_allowed_factor_set
+            if factor_set != SECURITY_KEYS_ONLY:
+                issues.append(
+                    "the accepted method is not configured and defaults to any "
+                    "method, including SMS and phone call"
+                    if factor_set is None
+                    else f"the accepted method is {factor_set} "
+                    f"(should be {SECURITY_KEYS_ONLY})"
+                )
+
+            enforced_from = policies.two_sv_enforced_from
+            if is_enforcement_off(enforced_from):
+                issues.append(
+                    "enforcement is not configured and defaults to OFF"
+                    if enforced_from is None
+                    else "enforcement is set to OFF"
+                )
+            elif not is_enforcement_active(enforced_from):
+                # "On from <future date>" means nobody is enforced yet.
+                issues.append(f"enforcement does not start until {enforced_from}")
+
+            if policies.two_sv_allow_enrollment is False:
+                issues.append("users are not allowed to turn on 2-Step Verification")
+
+            # Google's default is no suspension grace period, which is stricter
+            # than the one day the benchmark asks for, so only longer periods
+            # fail. A value Prowler cannot read fails closed.
+            raw_grace_period = policies.two_sv_backup_code_exception_period
+            grace_period = parse_duration_seconds(raw_grace_period)
+            if raw_grace_period and grace_period is None:
+                issues.append(
+                    f"the 2-Step Verification policy suspension grace period "
+                    f"'{raw_grace_period}' could not be read"
+                )
+            elif grace_period is not None and grace_period > ONE_DAY_SECONDS:
+                issues.append(
+                    f"the 2-Step Verification policy suspension grace period is "
+                    f"{format_duration(raw_grace_period)} "
+                    f"(should not exceed 1 day)"
+                )
+
+            if not issues:
                 report.status = "PASS"
                 report.status_extended = (
-                    f"2-Step Verification enforcement requires security keys only "
-                    f"in domain {security_client.provider.identity.domain}."
+                    f"2-Step Verification requires security keys only in domain "
+                    f"{domain} and enforcement has already started. Note: this "
+                    f"check evaluates the domain-wide policy, the Policy API "
+                    f"does not expose role-specific 2SV enforcement."
                 )
             else:
                 report.status = "FAIL"
-                if factor_set is None:
-                    report.status_extended = (
-                        f"2-Step Verification enforcement factor is not configured "
-                        f"in domain {security_client.provider.identity.domain}. "
-                        f"The default allows all methods including SMS and phone call. "
-                        f"Security keys should be required for administrative accounts. "
-                        f"Note: this check evaluates the domain-wide policy, the Policy "
-                        f"API does not expose role-specific 2SV enforcement."
-                    )
-                else:
-                    report.status_extended = (
-                        f"2-Step Verification enforcement factor is set to "
-                        f"{factor_set} "
-                        f"in domain {security_client.provider.identity.domain}. "
-                        f"Only security keys (PASSKEY_ONLY) should be allowed for "
-                        f"administrative accounts. "
-                        f"Note: this check evaluates the domain-wide policy, the Policy "
-                        f"API does not expose role-specific 2SV enforcement."
-                    )
+                report.status_extended = (
+                    f"2-Step Verification does not require security keys as "
+                    f"configured in domain {domain}: {'; '.join(issues)}. "
+                    f"Note: this check evaluates the domain-wide policy, the "
+                    f"Policy API does not expose role-specific 2SV enforcement."
+                )
 
             findings.append(report)
 

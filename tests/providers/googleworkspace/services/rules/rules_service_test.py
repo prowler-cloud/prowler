@@ -1,8 +1,18 @@
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+from prowler.lib.check.models import CheckMetadata
+from prowler.providers.googleworkspace.services.rules import rules_service
 from tests.providers.googleworkspace.googleworkspace_fixtures import (
     set_mocked_googleworkspace_provider,
 )
+
+METADATA_FILE = (
+    Path(rules_service.__file__).parent
+    / "rules_government_backed_attacks_alert_configured"
+    / "rules_government_backed_attacks_alert_configured.metadata.json"
+)
+METADATA = CheckMetadata.parse_file(METADATA_FILE).json()
 
 
 class TestRulesService:
@@ -203,6 +213,57 @@ class TestRulesService:
             assert gov_attacks.state == "ACTIVE"
             assert gov_attacks.email_notifications_enabled is True
             assert gov_attacks.all_super_admins is True
+
+    def test_empty_response_marks_alerts_as_inferred(self):
+        """A rule the API never returned must not be reported as tenant configuration."""
+        mock_provider = set_mocked_googleworkspace_provider()
+        mock_provider.audit_config = {}
+        mock_provider.fixer_config = {}
+        mock_session = MagicMock()
+        mock_session.credentials = MagicMock()
+        mock_provider.session = mock_session
+
+        mock_service = MagicMock()
+        mock_policies_list = MagicMock()
+        mock_policies_list.execute.return_value = {"policies": []}
+        mock_service.policies().list.return_value = mock_policies_list
+        mock_service.policies().list_next.return_value = None
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.services.rules.rules_service.GoogleWorkspaceService._build_service",
+                return_value=mock_service,
+            ),
+        ):
+            from prowler.providers.googleworkspace.services.rules.lib.alerts import (
+                evaluate_system_defined_alert,
+            )
+            from prowler.providers.googleworkspace.services.rules.rules_service import (
+                Rules,
+            )
+
+            rules = Rules(mock_provider)
+
+            assert all(alert.from_default for alert in rules.system_defined_alerts)
+
+            # End to end: the severity was never observed, so the finding must
+            # say that instead of claiming the tenant left it unset.
+            client = MagicMock()
+            client.provider = mock_provider
+            client.policies_fetched = True
+            client.system_defined_alerts = rules.system_defined_alerts
+            findings = evaluate_system_defined_alert(
+                client, METADATA, "Government-backed attacks", {"HIGH"}
+            )
+
+            assert len(findings) == 1
+            assert findings[0].status == "FAIL"
+            assert "was not returned by the API" in findings[0].status_extended
+            assert "severity is not configured" not in findings[0].status_extended
 
     def test_api_error_sets_policies_fetched_false(self):
         """Test that API errors result in policies_fetched being False."""

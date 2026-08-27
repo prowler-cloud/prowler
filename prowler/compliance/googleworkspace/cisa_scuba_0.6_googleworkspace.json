@@ -9,7 +9,6 @@
       "Id": "GWS.COMMONCONTROLS.1.1",
       "Description": "Phishing-resistant MFA SHALL be required for all users",
       "Checks": [
-        "security_2sv_enforced",
         "security_2sv_hardware_keys_admins"
       ],
       "Attributes": [
@@ -24,9 +23,7 @@
     {
       "Id": "GWS.COMMONCONTROLS.1.2",
       "Description": "If phishing-resistant MFA is not yet tenable, an MFA method from the list of acceptable MFA methods SHALL be used as an interim solution",
-      "Checks": [
-        "security_2sv_enforced"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "Common Controls",
@@ -132,9 +129,7 @@
     {
       "Id": "GWS.COMMONCONTROLS.5.1",
       "Description": "Password strength SHALL be enforced",
-      "Checks": [
-        "security_password_policy_strong"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "Common Controls",
@@ -147,9 +142,7 @@
     {
       "Id": "GWS.COMMONCONTROLS.5.2",
       "Description": "Minimum password length SHALL be at least 12 characters",
-      "Checks": [
-        "security_password_policy_strong"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "Common Controls",
@@ -162,9 +155,7 @@
     {
       "Id": "GWS.COMMONCONTROLS.5.3",
       "Description": "Minimum password length SHOULD be at least 15 characters",
-      "Checks": [
-        "security_password_policy_strong"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "Common Controls",
@@ -177,9 +168,7 @@
     {
       "Id": "GWS.COMMONCONTROLS.5.4",
       "Description": "Password policy SHALL be enforced at next sign-in",
-      "Checks": [
-        "security_password_policy_strong"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "Common Controls",
@@ -192,9 +181,7 @@
     {
       "Id": "GWS.COMMONCONTROLS.5.5",
       "Description": "Password reuse SHALL be restricted",
-      "Checks": [
-        "security_password_policy_strong"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "Common Controls",
@@ -427,16 +414,7 @@
     {
       "Id": "GWS.COMMONCONTROLS.13.1",
       "Description": "All system-defined alerting rules SHALL be enabled with alerts sent to admin email addresses",
-      "Checks": [
-        "rules_password_changed_alert_configured",
-        "rules_government_backed_attacks_alert_configured",
-        "rules_suspicious_activity_suspension_alert_configured",
-        "rules_admin_privilege_granted_alert_configured",
-        "rules_suspicious_programmatic_login_alert_configured",
-        "rules_suspicious_login_alert_configured",
-        "rules_leaked_password_alert_configured",
-        "rules_gmail_employee_spoofing_alert_configured"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "Common Controls",
@@ -842,9 +820,7 @@
     {
       "Id": "GWS.GMAIL.7.1",
       "Description": "Protect against domain spoofing based on similar domain names SHALL be enabled",
-      "Checks": [
-        "gmail_domain_spoofing_protection_enabled"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "Gmail",
@@ -857,9 +833,7 @@
     {
       "Id": "GWS.GMAIL.7.2",
       "Description": "Protect against spoofing of employee names SHALL be enabled",
-      "Checks": [
-        "gmail_employee_name_spoofing_protection_enabled"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "Gmail",
@@ -872,9 +846,7 @@
     {
       "Id": "GWS.GMAIL.7.3",
       "Description": "Protect against inbound emails spoofing your domain SHALL be enabled",
-      "Checks": [
-        "gmail_inbound_domain_spoofing_protection_enabled"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "Gmail",
@@ -902,9 +874,7 @@
     {
       "Id": "GWS.GMAIL.7.5",
       "Description": "Protect your Groups from inbound emails spoofing your domain SHALL be enabled",
-      "Checks": [
-        "gmail_groups_spoofing_protection_enabled"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "Gmail",

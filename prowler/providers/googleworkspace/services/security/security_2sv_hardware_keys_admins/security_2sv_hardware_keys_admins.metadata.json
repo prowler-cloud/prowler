@@ -9,7 +9,7 @@
   "Severity": "high",
   "ResourceType": "NotDefined",
   "ResourceGroup": "IAM",
-  "Description": "The domain-level 2-Step Verification policy requires **hardware security keys only** as the allowed sign-in factor, providing the strongest phishing-resistant authentication. **Note**: the Policy API returns domain-wide policies only and cannot verify admin role-specific enforcement.",
+  "Description": "The domain-level 2-Step Verification policy requires **hardware security keys only** as the allowed sign-in factor, with enforcement already started and a policy suspension grace period of at most one day. **Note**: the Policy API returns domain-wide policies only and cannot verify admin role-specific enforcement.",
   "Risk": "When 2SV methods include **SMS, phone calls, or software-based authenticators**, users are vulnerable to **SIM swapping, SS7 attacks, and real-time phishing proxies** that can intercept one-time codes. Hardware security keys are resistant to all known remote phishing techniques.",
   "RelatedUrl": "",
   "AdditionalURLs": [

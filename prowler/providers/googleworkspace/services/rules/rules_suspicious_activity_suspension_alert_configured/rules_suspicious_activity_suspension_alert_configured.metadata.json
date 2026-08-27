@@ -9,7 +9,7 @@
   "Severity": "high",
   "ResourceType": "NotDefined",
   "ResourceGroup": "monitoring",
-  "Description": "The **User suspended due to suspicious activity** system-defined alert rule should be enabled with alerts sent to the alert center, email notifications turned on, and recipients set to all super administrators. This ensures administrators are notified when Google suspends an account due to a potential compromise.",
+  "Description": "The **User suspended due to suspicious activity** system-defined alert rule should be enabled with alerts sent to the alert center, email notifications turned on, recipients set to all super administrators, and severity set to High. This ensures administrators are notified when Google suspends an account due to a potential compromise.",
   "Risk": "Without this alert enabled, administrators will not be promptly notified when Google **suspends a user account** due to detected compromise. The suspended user cannot work, and the underlying security incident requires immediate investigation.",
   "RelatedUrl": "",
   "AdditionalURLs": [

@@ -183,6 +183,207 @@ class TestSecurityPasswordPolicyStrong:
             assert findings[0].status == "FAIL"
             assert "minimum length is not configured" in findings[0].status_extended
 
+    def test_fail_expiration_longer_than_365_days(self):
+        """Test FAIL when the password reset frequency exceeds 365 days"""
+        mock_provider = set_mocked_googleworkspace_provider()
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.services.security.security_password_policy_strong.security_password_policy_strong.security_client"
+            ) as mock_client,
+        ):
+            from prowler.providers.googleworkspace.services.security.security_password_policy_strong.security_password_policy_strong import (
+                security_password_policy_strong,
+            )
+
+            mock_client.provider = mock_provider
+            mock_client.policies_fetched = True
+            mock_client.policies = SecurityPolicies(
+                password_minimum_length=14,
+                password_allowed_strength="STRONG",
+                password_allow_reuse=False,
+                password_enforce_at_login=True,
+                password_expiration_duration="63072000s",
+            )
+
+            check = security_password_policy_strong()
+            findings = check.execute()
+
+            assert len(findings) == 1
+            assert findings[0].status == "FAIL"
+            assert "expiration is 730 day(s)" in findings[0].status_extended
+            assert "requires 365 days or less" in findings[0].status_extended
+
+    def test_pass_expiration_shorter_than_365_days(self):
+        """Test PASS when the reset frequency is shorter, which is more restrictive"""
+        mock_provider = set_mocked_googleworkspace_provider()
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.services.security.security_password_policy_strong.security_password_policy_strong.security_client"
+            ) as mock_client,
+        ):
+            from prowler.providers.googleworkspace.services.security.security_password_policy_strong.security_password_policy_strong import (
+                security_password_policy_strong,
+            )
+
+            mock_client.provider = mock_provider
+            mock_client.policies_fetched = True
+            mock_client.policies = SecurityPolicies(
+                password_minimum_length=14,
+                password_allowed_strength="STRONG",
+                password_allow_reuse=False,
+                password_enforce_at_login=True,
+                password_expiration_duration="7776000s",
+            )
+
+            check = security_password_policy_strong()
+            findings = check.execute()
+
+            assert len(findings) == 1
+            assert findings[0].status == "PASS"
+            assert "expiration 90 day(s)" in findings[0].status_extended
+
+    def test_fail_reuse_allowed(self):
+        """Test FAIL when password reuse is allowed (CIS 4.1.5.1 step 7)"""
+        mock_provider = set_mocked_googleworkspace_provider()
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.services.security.security_password_policy_strong.security_password_policy_strong.security_client"
+            ) as mock_client,
+        ):
+            from prowler.providers.googleworkspace.services.security.security_password_policy_strong.security_password_policy_strong import (
+                security_password_policy_strong,
+            )
+
+            mock_client.provider = mock_provider
+            mock_client.policies_fetched = True
+            mock_client.policies = SecurityPolicies(
+                password_minimum_length=14,
+                password_allowed_strength="STRONG",
+                password_allow_reuse=True,
+                password_enforce_at_login=True,
+                password_expiration_duration="31536000s",
+            )
+
+            findings = security_password_policy_strong().execute()
+
+            assert len(findings) == 1
+            assert findings[0].status == "FAIL"
+            assert "password reuse is allowed" in findings[0].status_extended
+
+    def test_fail_not_enforced_at_next_sign_in(self):
+        """Test FAIL when the policy is not enforced at next sign-in (CIS 4.1.5.1 step 6)"""
+        mock_provider = set_mocked_googleworkspace_provider()
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.services.security.security_password_policy_strong.security_password_policy_strong.security_client"
+            ) as mock_client,
+        ):
+            from prowler.providers.googleworkspace.services.security.security_password_policy_strong.security_password_policy_strong import (
+                security_password_policy_strong,
+            )
+
+            mock_client.provider = mock_provider
+            mock_client.policies_fetched = True
+            mock_client.policies = SecurityPolicies(
+                password_minimum_length=14,
+                password_allowed_strength="STRONG",
+                password_allow_reuse=False,
+                password_enforce_at_login=False,
+                password_expiration_duration="31536000s",
+            )
+
+            findings = security_password_policy_strong().execute()
+
+            assert len(findings) == 1
+            assert findings[0].status == "FAIL"
+            assert "not enforced at next sign-in" in findings[0].status_extended
+
+    def test_fail_passwords_never_expire(self):
+        """Test FAIL naming Google's 'Never expires' rather than 'not configured'"""
+        mock_provider = set_mocked_googleworkspace_provider()
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.services.security.security_password_policy_strong.security_password_policy_strong.security_client"
+            ) as mock_client,
+        ):
+            from prowler.providers.googleworkspace.services.security.security_password_policy_strong.security_password_policy_strong import (
+                security_password_policy_strong,
+            )
+
+            mock_client.provider = mock_provider
+            mock_client.policies_fetched = True
+            mock_client.policies = SecurityPolicies(
+                password_minimum_length=14,
+                password_allowed_strength="STRONG",
+                password_allow_reuse=False,
+                password_enforce_at_login=True,
+                password_expiration_duration="0s",
+            )
+
+            findings = security_password_policy_strong().execute()
+
+            assert len(findings) == 1
+            assert findings[0].status == "FAIL"
+            assert "never expire" in findings[0].status_extended
+
+    def test_fail_unreadable_expiration(self):
+        """Test FAIL when the expiration value cannot be parsed, instead of skipping it"""
+        mock_provider = set_mocked_googleworkspace_provider()
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.services.security.security_password_policy_strong.security_password_policy_strong.security_client"
+            ) as mock_client,
+        ):
+            from prowler.providers.googleworkspace.services.security.security_password_policy_strong.security_password_policy_strong import (
+                security_password_policy_strong,
+            )
+
+            mock_client.provider = mock_provider
+            mock_client.policies_fetched = True
+            mock_client.policies = SecurityPolicies(
+                password_minimum_length=14,
+                password_allowed_strength="STRONG",
+                password_allow_reuse=False,
+                password_enforce_at_login=True,
+                password_expiration_duration="365d",
+            )
+
+            findings = security_password_policy_strong().execute()
+
+            assert len(findings) == 1
+            assert findings[0].status == "FAIL"
+            assert "could not be read" in findings[0].status_extended
+
     def test_no_findings_when_fetch_failed(self):
         """Test no findings returned when the API fetch failed"""
         mock_provider = set_mocked_googleworkspace_provider()

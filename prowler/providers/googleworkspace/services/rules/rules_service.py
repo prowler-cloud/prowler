@@ -90,6 +90,7 @@ class Rules(GoogleWorkspaceService):
                         state=default_state,
                         email_notifications_enabled=is_active_default,
                         all_super_admins=is_active_default,
+                        from_default=True,
                     )
                     logger.debug(
                         f"System-defined alert rule (default): {rule_name} "
@@ -141,3 +142,6 @@ class SystemDefinedAlert(BaseModel):
     severity: Optional[str] = None
     email_notifications_enabled: bool = False
     all_super_admins: bool = False
+    # True when the API returned no policy for the rule and the values above
+    # were inferred from Google's documented defaults rather than observed.
+    from_default: bool = False

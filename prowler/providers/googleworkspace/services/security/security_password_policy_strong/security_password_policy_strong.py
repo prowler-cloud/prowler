@@ -1,6 +1,11 @@
 from typing import List
 
 from prowler.lib.check.models import Check, CheckReportGoogleWorkspace
+from prowler.providers.googleworkspace.services.security.lib.durations import (
+    ONE_YEAR_SECONDS,
+    format_duration,
+    parse_duration_seconds,
+)
 from prowler.providers.googleworkspace.services.security.security_client import (
     security_client,
 )
@@ -11,8 +16,9 @@ class security_password_policy_strong(Check):
 
     This check verifies that the domain-level password policy meets CIS
     requirements: minimum length of 14 characters, strong passwords enforced,
-    password reuse disallowed, enforcement at next sign-in, and password
-    expiration configured.
+    password reuse disallowed, enforcement at next sign-in, and a password
+    reset frequency of 365 days or less. Shorter periods are more restrictive
+    than the benchmark asks for, so only longer ones fail.
     """
 
     def execute(self) -> List[CheckReportGoogleWorkspace]:
@@ -52,9 +58,22 @@ class security_password_policy_strong(Check):
             if policies.password_enforce_at_login is not True:
                 issues.append("password policy is not enforced at next sign-in")
 
-            expiration = policies.password_expiration_duration
-            if expiration is None or expiration == "0s":
+            raw_expiration = policies.password_expiration_duration
+            expiration = parse_duration_seconds(raw_expiration)
+            if raw_expiration and expiration is None:
+                issues.append(
+                    f"password expiration '{raw_expiration}' could not be read"
+                )
+            elif expiration is None:
                 issues.append("password expiration is not configured")
+            elif expiration == 0:
+                issues.append("passwords are set to never expire")
+            elif expiration > ONE_YEAR_SECONDS:
+                issues.append(
+                    f"password expiration is "
+                    f"{format_duration(policies.password_expiration_duration)} "
+                    f"(requires 365 days or less)"
+                )
 
             if not issues:
                 report.status = "PASS"
@@ -62,7 +81,8 @@ class security_password_policy_strong(Check):
                     f"Password policy meets CIS requirements "
                     f"in domain {domain}: minimum length {min_length}, "
                     f"strong passwords enforced, reuse disallowed, "
-                    f"enforced at next sign-in, expiration configured."
+                    f"enforced at next sign-in, expiration "
+                    f"{format_duration(policies.password_expiration_duration)}."
                 )
             else:
                 report.status = "FAIL"

@@ -9,7 +9,7 @@
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "monitoring",
-  "Description": "The **Gmail potential employee spoofing** system-defined alert rule should be enabled with alerts sent to the alert center, email notifications turned on, and recipients set to all super administrators. This ensures administrators are notified when incoming messages have a sender name matching the directory but from an external domain.",
+  "Description": "The **Gmail potential employee spoofing** system-defined alert rule should be enabled with alerts sent to the alert center, email notifications turned on, recipients set to all super administrators, and severity set to Medium. This ensures administrators are notified when incoming messages have a sender name matching the directory but from an external domain.",
   "Risk": "Without this alert enabled, administrators will not be notified of potential **employee spoofing via email**. Attackers may impersonate internal employees using external email addresses to conduct phishing attacks against the organization.",
   "RelatedUrl": "",
   "AdditionalURLs": [

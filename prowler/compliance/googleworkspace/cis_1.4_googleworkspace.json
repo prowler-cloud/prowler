@@ -40,7 +40,7 @@
           "SubSection": "1.1 Users",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
-          "Description": "Super admin accounts have access to all features in the Google Admin console and Admin API and can manage every aspect of your organization's account. Super admins also have full access to all users' calendars and event details. It is recommended to give each super administrator two accounts. One for their super admin account and a second account for daily activities. Users should only sign in to a super admin account to perform super admin tasks, such as setting up 2-Step Verification (2SV), managing billing and user licenses, or helping another admin recover their account. Super administrators should use a separate, non-admin account for day- to-day activities. Super admins should sign in as needed to do specific tasks and then sign out. Leaving super admin accounts sign-in can increase exposure to phishing attacks.",
+          "Description": "Super admin accounts have access to all features in the Google Admin console and Admin API and can manage every aspect of your organization's account. Super admins also have full access to all users' calendars and event details. It is recommended to give each super administrator two accounts. One for their super admin account and a second account for daily activities. Users should only sign in to a super admin account to perform super admin tasks, such as setting up 2-Step Verification (2SV), managing billing and user licenses, or helping another admin recover their account. Super administrators should use a separate, non-admin account for day-to-day activities. Super admins should sign in as needed to do specific tasks and then sign out. Leaving super admin accounts sign-in can increase exposure to phishing attacks.",
           "RationaleStatement": "Use the super admin account only when needed. Delegate administrator tasks to user accounts with limited admin roles. Use the least privilege approach, where each user has access to the resources and tools needed for their typical tasks. For example, you could grant an admin permissions to create user accounts and reset passwords, but not let them delete user accounts.",
           "ImpactStatement": "Super admin users will have to switch accounts as well as utilize login/logout functionality when performing administrative tasks.",
           "RemediationProcedure": "For every Super admin that is also a Delegated admin account, either create a Delegated admin account for the user of elevate or their existing non-admin account to a Delegated admin account.",
@@ -67,7 +67,7 @@
           "RemediationProcedure": "To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Open the collapsed menu via \"hamburger button \\ 3 horizontal lines\" 3. Under Directory, select Directory settings 4. Under Sharing settings, select External Directory sharing 5. Select Authenticated user basic profile fields",
           "AuditProcedure": "To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Open the collapsed menu via \"hamburger button \\ 3 horizontal lines\" 3. Under Directory, select Directory settings 4. Under Sharing settings, select External Directory sharing 5. Ensure Authenticated user basic profile fields is set 6. Select Save",
           "AdditionalInformation": "",
-          "DefaultValue": "External Directory sharing = Domain and public data",
+          "DefaultValue": "• External Directory sharing = Domain and public data",
           "References": ""
         }
       ]
@@ -553,10 +553,10 @@
           "SubSection": "3.1.3 Gmail",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
-          "Description": "For all the email domains configured in Google Workspace, a corresponding Sender Policy Framework (SPF) record should be created. NOTE: There are a number of ways SPF can be configured, this document presents a most basic method. For more information on setting up SPF for Google Workspace please refer to the Google documentation. How SPF protects against spoofing and spam Define your SPF record—Basic setup",
+          "Description": "For all the email domains configured in Google Workspace, a corresponding Sender Policy Framework (SPF) record should be created. NOTE: There are a number of ways SPF can be configured, this document presents a most basic method. For more information on setting up SPF for Google Workspace please refer to the Google documentation. • How SPF protects against spoofing and spam • Define your SPF record—Basic setup",
           "RationaleStatement": "SPF records allow Gmail and other mail systems to know where messages from your domains are allowed to originate. This information can be used by that system to determine how to treat the message based on if it is being spoofed or is valid.",
           "ImpactStatement": "There should be minimal impact of setting up SPF records however, organizations should ensure proper SPF record setup as email could be flagged as spam if SPF is not set up appropriately.",
-          "RemediationProcedure": "Configure the DNS record for each domain. If all email in your domain is sent from and received by Google Gmail, add the following TXT record for each domain: v=spf1 include:_spf.google.com ~all NOTE: This will likely need to be configured at your domain registrar (Godaddy, etc.).",
+          "RemediationProcedure": "Configure the DNS record for each domain. • If all email in your domain is sent from and received by Google Gmail, add the following TXT record for each domain: v=spf1 include:_spf.google.com ~all NOTE: This will likely need to be configured at your domain registrar (Godaddy, etc.).",
           "AuditProcedure": "Check the DNS records for each domain. 1. Use a Domain Name System (DNS) lookup tool to review the current configuration for your domain (DNS Records). This information can be discovered in a variety of ways: o Reviewing the DNS Record information at your domain registrar (GoDaddy, etc.) o Using an OS based nslookup tool on your workstation OS o Using Google Dig tool available from the Google Admin Toolbox site (Link: Dig) 2. Using the chosen tool, enter your email domain name (ex. domain1.com) 3. In the results displayed, ensure that a TXT Record with the value of v=spf1 include:_spf.google.com ~all exists and designates Google Gmail as a authorized sender.",
           "AdditionalInformation": "",
           "DefaultValue": "None",
@@ -574,7 +574,7 @@
           "SubSection": "3.1.3 Gmail",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
-          "Description": "For all email domains configured in Google Workspace, a corresponding Domain-Based Message Authentication, Reporting and Conformance (DMARC) record should be created. NOTE: There are a number of ways DMARC can be configured, this document presents a most basic method. For more information on setting up DMARC for Google Workspace please refer to the Google documentation. Help prevent spoofing and spam with DMARC Tutorial: Recommended DMARC rollout",
+          "Description": "For all email domains configured in Google Workspace, a corresponding Domain-Based Message Authentication, Reporting and Conformance (DMARC) record should be created. NOTE: There are a number of ways DMARC can be configured, this document presents a most basic method. For more information on setting up DMARC for Google Workspace please refer to the Google documentation. • Help prevent spoofing and spam with DMARC • Tutorial: Recommended DMARC rollout",
           "RationaleStatement": "DMARC works with Sender Policy Framework (SPF) and Domain Keys Identified Mail (DKIM) to authenticate mail senders and ensure that destination email systems trust messages sent from your domain. Spammers can spoof your domain or organization to send fake messages that impersonate your organization. DMARC tells receiving mail servers what to do when they get a message that appears to be from your organization, but doesn't pass authentication checks, or doesn’t meet the authentication requirements in your DMARC policy record. Messages that aren't authenticated might be impersonating your organization, or might be sent from unauthorized servers.",
           "ImpactStatement": "There should be minimal impact of setting up DMARC records however, organizations should ensure proper DMARC record setup as email could be flagged as spam if DMARC is not set up appropriately.",
           "RemediationProcedure": "Configure the DNS record for each domain. 1. If all email in your domain is sent from and received by Google Gmail, add the following TXT record for the domain: v=DMARC1; p=none; rua=mailto:<report@domain1.com> NOTE: This will likely need to be configured at your domain registrar (Godaddy, etc.).",
@@ -762,7 +762,7 @@
           "RemediationProcedure": "To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under Safety - Spoofing and authentication, set Protect against domain spoofing based on similar domain names to checked 6. Set Action to Move email to spam 7. Select Save",
           "AuditProcedure": "To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under Safety - Spoofing and authentication, ensure Protect against domain spoofing based on similar domain names is checked 6. Ensure Action is Move email to spam",
           "AdditionalInformation": "",
-          "DefaultValue": "Protect against domain spoofing based on similar domain names is checked Action is Keep email in inbox and show warning (default)",
+          "DefaultValue": "• Protect against domain spoofing based on similar domain names is checked • Action is Keep email in inbox and show warning (default)",
           "References": ""
         }
       ]
@@ -785,7 +785,7 @@
           "RemediationProcedure": "To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under Safety - Spoofing and authentication, set Protect against spoofing of employee names to checked 6. Set Action to Move email to spam 7. Select Save",
           "AuditProcedure": "To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under Safety - Spoofing and authentication, ensure Protect against spoofing of employee names is checked 6. Ensure Action is Move email to spam",
           "AdditionalInformation": "",
-          "DefaultValue": "Protect against spoofing of employee names = checked Action = Keep email in inbox and show warning (default)",
+          "DefaultValue": "• Protect against spoofing of employee names = checked • Action = Keep email in inbox and show warning (default)",
           "References": ""
         }
       ]
@@ -808,7 +808,7 @@
           "RemediationProcedure": "To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under Safety - Spoofing and authentication, set Protect against inbound emails spoofing your domain to checked 6. Set Action to Move email to spam 7. Select Save",
           "AuditProcedure": "To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under Safety - Spoofing and authentication, ensure Protect against inbound emails spoofing your domain is checked 6. Ensure Action is Move email to spam",
           "AdditionalInformation": "",
-          "DefaultValue": "Protect against inbound emails spoofing your domain = checked Action = Keep email in inbox and show warning (default)",
+          "DefaultValue": "• Protect against inbound emails spoofing your domain = checked • Action = Keep email in inbox and show warning (default)",
           "References": ""
         }
       ]
@@ -854,7 +854,7 @@
           "RemediationProcedure": "To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under Safety - Spoofing and authentication, set Protect your Groups from inbound emails spoofing your domain to checked 6. Set Action to Move email to spam 7. Select Save",
           "AuditProcedure": "To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under Safety - Spoofing and authentication, ensure Protect your Groups from inbound emails spoofing your domain is checked 6. Ensure Action is set to Move email to spam",
           "AdditionalInformation": "",
-          "DefaultValue": "Protect against any unauthenticated emails = unchecked Action = Keep email in inbox and display warning (default)",
+          "DefaultValue": "• Protect against any unauthenticated emails = unchecked • Action = Keep email in inbox and display warning (default)",
           "References": ""
         }
       ]
@@ -877,7 +877,7 @@
           "RemediationProcedure": "To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under End User Access - POP and IMAP Access 6. Set Enable IMAP access for all users to unchecked 7. Set Enable POP access for all users to unchecked 8. Select Save",
           "AuditProcedure": "To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Under End User Access - POP and IMAP Access 6. Ensure Enable IMAP access for all users is unchecked 7. Ensure Enable POP access for all users is unchecked",
           "AdditionalInformation": "",
-          "DefaultValue": "Enable IMAP access for all users is checked Enable POP access for all users is checked",
+          "DefaultValue": "• Enable IMAP access for all users is checked • Enable POP access for all users is checked",
           "References": ""
         }
       ]
@@ -940,7 +940,7 @@
           "AssessmentStatus": "Manual",
           "Description": "Gmail adds an image or colored border to external addresses.",
           "RationaleStatement": "As an admin for your organization, you can turn alerts on or off for messages that include external recipients (people with email addresses outside of your organization). These alerts help people avoid unintentional replies, and remind them to treat external messages with caution.",
-          "ImpactStatement": "When this setting is on, Gmail shows warnings (colored boarder) when: An email thread includes external recipients (not available on iOS). Replying to a message from an external recipient. Composing a new message to an external recipient (not available on iOS). Gmail doesn't show a warning if the external recipient is in your organization's Directory, personal Contacts, or other Contacts. Warnings aren't displayed for secondary domain or domain alias addresses.",
+          "ImpactStatement": "When this setting is on, Gmail shows warnings (colored boarder) when: • An email thread includes external recipients (not available on iOS). • Replying to a message from an external recipient. • Composing a new message to an external recipient (not available on iOS). Gmail doesn't show a warning if the external recipient is in your organization's Directory, personal Contacts, or other Contacts. Warnings aren't displayed for secondary domain or domain alias addresses.",
           "RemediationProcedure": "To configure external recipient warnings are enabled, use the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Select End User Access 6. Select Warn for external recipients 7. Set Highlight any external recipients in a conversation. Warn users before they reply to email with external recipients who aren't in their contacts. to checked 8. Select Save",
           "AuditProcedure": "To verify Ensure external recipient warnings are enabled, use the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Gmail 5. Select End User Access 6. Under Warn for external recipients, ensure Highlight any external recipients in a conversation. Warn users before they reply to email with external recipients who aren't in their contacts. is ON",
           "AdditionalInformation": "",
@@ -1101,7 +1101,7 @@
           "RemediationProcedure": "To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Chat and classic Hangouts 4. Select External Chat Settings 5. Select Chat externally 6. Set Allow users to send messages outside <company> to ON 7. Set Only allow this for allowlisted domains to checked 8. Select Save",
           "AuditProcedure": "To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Chat and classic Hangouts 4. Select External Chat Settings 5. Select Chat externally 6. Verify Allow users to send messages outside <company> is ON 7. Verify Only allow this for allowlisted domains is checked",
           "AdditionalInformation": "",
-          "DefaultValue": "Allow users to send messages outside <company> is set to ON Only allow this for allowlisted domains is unchecked",
+          "DefaultValue": "• Allow users to send messages outside <company> is set to ON • Only allow this for allowlisted domains is unchecked",
           "References": ""
         }
       ]
@@ -1124,7 +1124,7 @@
           "RemediationProcedure": "To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Chat and classic Hangouts 4. Select External Spaces 5. Under Setting, set Allow users at <domain> to create and join spaces with people outside their organization to ON 6. Set Only allow users to add people from allowlisted domains to checked 7. Select Save",
           "AuditProcedure": "To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Chat and classic Hangouts 4. Select External Spaces 5. Under Setting, verify Allow users at <domain> to create and join spaces with people outside their organization is ON 6. Verify Only allow users to add people from allowlisted domains is checked",
           "AdditionalInformation": "",
-          "DefaultValue": "Allow users at <company> to create and join spaces with people outside their organization is ON Only allow users to add people from allowlisted domains is unchecked",
+          "DefaultValue": "• Allow users at <company> to create and join spaces with people outside their organization is ON • Only allow users to add people from allowlisted domains is unchecked",
           "References": ""
         }
       ]
@@ -1194,7 +1194,7 @@
           "AuditProcedure": "To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Groups for Business 5. Select Sharing options 6. Verify Accessing groups from outside this organization is Private",
           "AdditionalInformation": "",
           "DefaultValue": "Accessing groups from outside this organization is Private",
-          "References": "https://apps.google.com/supportwidget/articlehome?hl=en&article_url=https%3A"
+          "References": "https://support.google.com/a/answer/10308022?hl=en"
         }
       ]
     },
@@ -1216,7 +1216,7 @@
           "RemediationProcedure": "To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Groups for Business 5. Select Creating groups 6. Select Only organization admins can create groups 7. Set Group owners can allow external members Organization admins can always add external members to unchecked 8. Set Group owners can allow incoming email from outside the organization to unchecked 9. Select Save",
           "AuditProcedure": "To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Apps 3. Select Google Workspace 4. Select Groups for Business 5. Select Creating groups 6. Verify Only organization admins can create groups is selected 7. Verify Group owners can allow external members Organization admins can always add external members is unchecked 8. Verify Group owners can allow incoming email from outside the organization is unchecked",
           "AdditionalInformation": "",
-          "DefaultValue": "Anyone in the organization can create groups is selected Group owners can allow external members Organization admins can always add external members is unchecked Group owners can allow incoming email from outside the organization is unchecked",
+          "DefaultValue": "• Anyone in the organization can create groups is selected • Group owners can allow external members Organization admins can always add external members is unchecked • Group owners can allow incoming email from outside the organization is unchecked",
           "References": ""
         }
       ]
@@ -1325,13 +1325,13 @@
           "SubSection": "4.1 Authentication",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
-          "Description": "Enforce 2-Step Verification (Multi-Factor Authentication) for all users assigned administrative roles. These include roles such as: Help Desk Admin Groups Admin Super Admin Services Admin User Management Admin Mobile Admin Android Admin Custom Admin Roles",
-          "RationaleStatement": "Add an extra layer of security to users accounts by asking users to verify their identity when they enter a username and password. 2-Step Verification (Multi-factor authentication) requires an individual to present a minimum of two separate forms of authentication before access is granted. 2-Step Verification provides additional assurance that the individual attempting to gain access is who they claim to be. With 2- Step Verification, an attacker would need to compromise at least two different authentication mechanisms, increasing the difficulty of compromise and thus reducing the risk.",
+          "Description": "Enforce 2-Step Verification (Multi-Factor Authentication) for all users assigned administrative roles. These include roles such as: • Help Desk Admin • Groups Admin • Super Admin • Services Admin • User Management Admin • Mobile Admin • Android Admin • Custom Admin Roles",
+          "RationaleStatement": "Add an extra layer of security to users accounts by asking users to verify their identity when they enter a username and password. 2-Step Verification (Multi-factor authentication) requires an individual to present a minimum of two separate forms of authentication before access is granted. 2-Step Verification provides additional assurance that the individual attempting to gain access is who they claim to be. With 2-Step Verification, an attacker would need to compromise at least two different authentication mechanisms, increasing the difficulty of compromise and thus reducing the risk.",
           "ImpactStatement": "Implementation of 2-Step Verification (multi-factor authentication) for all users in administrative roles will necessitate a change to user routine. All users in administrative roles will be required to enroll in 2-Step Verification using using phone, SMS, or an authentication application. After enrollment, use of 2-Step Verification will be required for future access to the environment.",
           "RemediationProcedure": "To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Go to Security and click on 2-Step Verification 3. Select the appropriate group with ALL ADMIN ROLES -- Create this group if needed 4. Under Authentication, set Allow users to turn on 2-Step Verification to checked 5. Set Enforcement to On 6. Set New user enrollment period is set to 2 weeks 7. Under Frequency, set Allow user to trust device to unchecked 8. Under Methods, set Any except verification codes via text, phone call to selected 9. Select Save",
           "AuditProcedure": "To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Go to Security and click on 2-Step Verification 3. Select the appropriate group with ALL ADMIN ROLES -- Create this group if needed 4. Under Authentication, ensure Allow users to turn on 2-Step Verification is checked 5. Ensure Enforcement is set to On 6. Ensure New user enrollment period is set to 2 weeks 7. Under Frequency, ensure Allow user to trust device is unchecked 8. Under Methods, ensure Any except verification codes via text, phone call is selected",
           "AdditionalInformation": "",
-          "DefaultValue": "Allow users to turn on 2-Step Verification is checked Enforcement is Off New user enrollment period is None Frequency - Allow user to trust device is checked Methods is Any",
+          "DefaultValue": "• Allow users to turn on 2-Step Verification is checked • Enforcement is Off • New user enrollment period is None • Frequency - Allow user to trust device is checked • Methods is Any",
           "References": ""
         }
       ]
@@ -1354,7 +1354,7 @@
           "RemediationProcedure": "To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Go to Security and click on Authentication 3. Under Authentication, select 2-Step Verification 4. Select the option to Allow users to turn on 2-Step Verification 5. Under Enforcement, enable either 'On' or else 'On from' and configure a valid date 6. Under Methods, select Only security key to force the use of a security key 7. Under 2-Step Verification policy suspension grace period, select 1 day 8. Under Security codes, select Don't allow users to generate security codes 9. Select Save",
           "AuditProcedure": "To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Go to Security and click on Authentication 3. Under Authentication, select 2-Step Verification 4. Ensure the option to Allow users to turn on 2-Step Verification is checked 5. Ensure that the Enforcement option is set to either 'On' or 'On from' with a valid date present 6. Under Methods ensure that Only security key is selected 7. Under 2-Step Verification policy suspension grace period ensure that 1 day is selected 8. Under Security codes ensure that Don't allow users to generate security codes is selected",
           "AdditionalInformation": "",
-          "DefaultValue": "Allow users to turn on 2-Step Verification is checked Enforcement is Off New user enrollment period is None Frequency - Allow user to trust device is checked Methods is Any",
+          "DefaultValue": "• Allow users to turn on 2-Step Verification is checked • Enforcement is Off • New user enrollment period is None • Frequency - Allow user to trust device is checked • Methods is Any",
           "References": "https://support.google.com/accounts/answer/6103523?hl=En"
         }
       ]
@@ -1372,12 +1372,12 @@
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
           "Description": "Enforce 2-Step Verification (Multi-Factor Authentication) for all users.",
-          "RationaleStatement": "Add an extra layer of security to users accounts by asking users to verify their identity when they enter a username and password. 2-Step Verification (Multi-factor authentication) requires an individual to present a minimum of two separate forms of authentication before access is granted. 2-Step Verification provides additional assurance that the individual attempting to gain access is who they claim to be. With 2- Step Verification, an attacker would need to compromise at least two different authentication mechanisms, increasing the difficulty of compromise and thus reducing the risk.",
+          "RationaleStatement": "Add an extra layer of security to users accounts by asking users to verify their identity when they enter a username and password. 2-Step Verification (Multi-factor authentication) requires an individual to present a minimum of two separate forms of authentication before access is granted. 2-Step Verification provides additional assurance that the individual attempting to gain access is who they claim to be. With 2-Step Verification, an attacker would need to compromise at least two different authentication mechanisms, increasing the difficulty of compromise and thus reducing the risk.",
           "ImpactStatement": "Implementation of 2-Step Verification (multi-factor authentication) for all users will necessitate a change to user routine. All users will be required to enroll in 2-Step Verification using using phone, SMS, or an authentication application. After enrollment, use of 2-Step Verification will be required for future access to the environment.",
           "RemediationProcedure": "To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Security 3. Select 2-Step Verification 4. Under Authentication, check - Allow users to turn on 2-Step Verification 5. Set Enforcement to On 6. Set New user enrollment period to 2 weeks 7. Under Frequency, uncheck - Allow user to trust device 8. Under Methods, select - Any except verification codes via text, phone call 9. Select Save",
           "AuditProcedure": "To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Security 3. Select 2-Step Verification 4. Under Authentication, ensure Allow users to turn on 2-Step Verification is checked 5. Ensure Enforcement is set to On 6. Ensure New user enrollment period is set to 2 weeks 7. Under Frequency, ensure Allow user to trust device is not checked 8. Under Methods, ensure Any except verification codes via text, phone call is selected",
           "AdditionalInformation": "",
-          "DefaultValue": "Allow users to turn on 2-Step Verification is checked Enforcement is Off New user enrollment period is None Frequency - Allow user to trust device is checked Methods is Any",
+          "DefaultValue": "• Allow users to turn on 2-Step Verification is checked • Enforcement is Off • New user enrollment period is None • Frequency - Allow user to trust device is checked • Methods is Any",
           "References": ""
         }
       ]
@@ -1446,7 +1446,7 @@
           "RemediationProcedure": "To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Security 3. Select Advanced Protection Program 4. Under Enrollment - Allow users to enroll in the Advanced Protection Program, set Enable user enrollment to selected for the desired organizational unit or group 5. Under Security Codes, set Do not allow users to generate security codes to selected for the desired organizational unit or group 6. Select Save",
           "AuditProcedure": "To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Security 3. Select Advanced Protection Program 4. Under Enrollment - Allow users to enroll in the Advanced Protection Program, ensure Enable user enrollment is selected for the desired organizational unit or group 5. Under Security Codes, ensure Do not allow users to generate security codes is selected for the desired organizational unit or group",
           "AdditionalInformation": "",
-          "DefaultValue": "Allow users to enroll in the Advanced Protection Platform is selected Security codes is Allow security codes without remote access",
+          "DefaultValue": "• Allow users to enroll in the Advanced Protection Platform is selected • Security codes is Allow security codes without remote access",
           "References": ""
         }
       ]
@@ -1454,9 +1454,7 @@
     {
       "Id": "4.1.4.1",
       "Description": "Ensure login challenges are enforced",
-      "Checks": [
-        "security_login_challenges_configured"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "4 Security",
@@ -1465,11 +1463,11 @@
           "AssessmentStatus": "Manual",
           "Description": "Configure Google Workspace to verify a user's identity post-sso.",
           "RationaleStatement": "Many organizations use third-party identity providers (IdPs) to authenticate users who use single sign on (SSO) through SAML. The third-party IdP authenticates users and no additional risk-based challenges are presented to them. Any Google 2-Step Verification (2SV) configuration is ignored. This is the default behavior. You can set a policy to allow additional risk-based authentication challenges and 2SV if it’s configured. If Google receives a valid SAML assertion (authentication information about the user) from the IdP during user sign-in, Google can present additional challenges to the user. Login challenges requires users have a recovery phone number or email account associated with their organizational account. If not previously configured, users will be prompted to enter this information periodically until provided. One login challenge option prompts users to enter their employee ID. This method is susceptible to information gathering attacks, should a list of employee IDs ever be leaked.",
-          "ImpactStatement": "The potential impact associated with implementation of this setting is dependent upon the existing 2-Step Verification (2SV) polices. If you have existing 2SV policies, such as 2SV enforcement, those policies apply immediately. Users affected by the new policy and who are enrolled in 2SV get a 2SV challenge at sign-in. Based on Google sign-in risk analysis, users might see risk-based challenges at sign-in.",
+          "ImpactStatement": "The potential impact associated with implementation of this setting is dependent upon the existing 2-Step Verification (2SV) polices. • If you have existing 2SV policies, such as 2SV enforcement, those policies apply immediately. • Users affected by the new policy and who are enrolled in 2SV get a 2SV challenge at sign-in. • Based on Google sign-in risk analysis, users might see risk-based challenges at sign-in.",
           "RemediationProcedure": "To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Security 3. Select Authentication 4. Select Login Challenges 5. Depending on your organization's SSO configuration: o Under Settings for users signing in using the legacy SSO profile set Ask users for additional verifications from Google if a sign-in or session behavior looks suspicious, and always apply 2-Step Verification policies (if configured) to checked o Under Settings for users signing in using other SSO profiles set Ask users for additional verifications from Google if a sign-in or session behavior looks suspicious, and always apply 2-Step Verification policies (if configured) to checked 6. Select Save 7. Under Login challenges, set Use employee ID to keep my users more secure to unchecked 8. Select Save",
           "AuditProcedure": "To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Security 3. Select Authentication 4. Select Login Challenges 5. Select Post-SSO verification 6. Depending on your organization's SSO configuration: o Under Settings for users signing in using the legacy SSO profile ensure Ask users for additional verifications from Google if a sign-in or session behavior looks suspicious, and always apply 2-Step Verification policies (if configured) is checked o Under Settings for users signing in using other SSO profiles ensure Ask users for additional verifications from Google if a sign-in or session behavior looks suspicious, and always apply 2-Step Verification policies (if configured) is checked 7. Under Login challenges, ensure Use employee ID to keep my users more secure is unchecked",
           "AdditionalInformation": "This recommendation is giving guidance for using Google authentication as your primary SSO. If you are using a third-party SSO, you will need to configure that through either: To configure this setting via the Google Workspace Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Security 3. Select Authentication 4. Depending on your organization's SSO and SAML configuration: o Select SSO with SAML applications o Select SSO with third-party IdP You will need to configure either option to your organization's third-party provider's requirements. Your provider should be able to assist you with that configuration, but it is outside the scope of the benchmark.",
-          "DefaultValue": "Post-SSO verification is Logins using SSO bypass additional verifications Use employee ID to keep my users more secure is unchecked",
+          "DefaultValue": "• Post-SSO verification is Logins using SSO bypass additional verifications • Use employee ID to keep my users more secure is unchecked",
           "References": ""
         }
       ]
@@ -1492,7 +1490,7 @@
           "RemediationProcedure": "To configure this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Security 3. Select Password management 4. Under Strength, set Enforce strong passwords to checked 5. Under Length, set Minimum Length to 14 or greater 6. Under Strength and Length enforcement, set Enforce password policy at next sign-in is checked 7. Under Reuse, set Allow password reuse to unchecked 8. Under Expiration, set Password reset frequency to 365 Days 9. Select Save",
           "AuditProcedure": "To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Security 3. Select Password management 4. Under Strength, ensure Enforce strong passwords is checked 5. Under Length, ensure Minimum Length is set to 14+ 6. Under Strength and Length enforcement, ensure Enforce password policy at next sign-in is set to checked 7. Under Reuse, ensure Allow password reuse is unchecked 8. Under Expiration, ensure Password reset frequency is set to 365 Days",
           "AdditionalInformation": "",
-          "DefaultValue": "Enforce strong password is checked Minimum length is 8 Maximum length is 100 Enforce password policy at next sign-in is not checked Allow password reuse is not checked Expiration is Never expires",
+          "DefaultValue": "• Enforce strong password is checked • Minimum length is 8 • Maximum length is 100 • Enforce password policy at next sign-in is not checked • Allow password reuse is not checked • Expiration is Never expires",
           "References": ""
         }
       ]
@@ -1625,7 +1623,7 @@
           "AuditProcedure": "To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator 2. Select Security 3. Select Access and Data Control 4. Select Data protection 5. Select Manage Rules 6. Ensure data protection rules exist and are enabled",
           "AdditionalInformation": "",
           "DefaultValue": "No DLP policies for Google Drive are configured by default",
-          "References": "https://apps.google.com/supportwidget/articlehome?article_url=https%3A%2F%2:https://workspaceupdates.googleblog.com/2020/10/data-protection-dlp-"
+          "References": "https://support.google.com/a/answer/10846568:https://workspaceupdates.googleblog.com/2020/10/data-protection-dlp-reports.html"
         }
       ]
     },
@@ -1683,14 +1681,14 @@
           "SubSection": "4.3 Security Center",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
-          "Description": "As an administrator, you can use the security dashboard to see an overview of different security reports. By default, each security report panel displays data from the last 7 days. You can customize the dashboard to view data from Today, Yesterday, This week, Last week, This month, Last month, or Days ago (up to 180 days). Charts/reports available (Minimum, but could be many more depending on account type): DLP incidents Top policy incidents Failed device password attempts Compromised device events Suspicious device activities OAuth scope grants by product (beta customers only) OAuth grant activity OAuth grants to new apps User login attempts – Challenge method User login attempts – Failed User login attempts – Suspicious Details on what each of these charts/reports mean can be found here. This report should be reviewed weekly. NOTE: The availability of each individual report on the security dashboard depends on your Google Workspace edition. See Google documentation for more details. NOTE: In larger organizations reviewing this entire report weekly may not be possible. At a minimum, all Administrator and Super Administrator users should be reviewed, since they are a higher risk. These can be filtered from the overall user list.",
+          "Description": "As an administrator, you can use the security dashboard to see an overview of different security reports. By default, each security report panel displays data from the last 7 days. You can customize the dashboard to view data from Today, Yesterday, This week, Last week, This month, Last month, or Days ago (up to 180 days). Charts/reports available (Minimum, but could be many more depending on account type): • DLP incidents • Top policy incidents • Failed device password attempts • Compromised device events • Suspicious device activities • OAuth scope grants by product (beta customers only) • OAuth grant activity • OAuth grants to new apps • User login attempts – Challenge method • User login attempts – Failed • User login attempts – Suspicious Details on what each of these charts/reports mean can be found here. This report should be reviewed weekly. NOTE: The availability of each individual report on the security dashboard depends on your Google Workspace edition. See Google documentation for more details. NOTE: In larger organizations reviewing this entire report weekly may not be possible. At a minimum, all Administrator and Super Administrator users should be reviewed, since they are a higher risk. These can be filtered from the overall user list.",
           "RationaleStatement": "The Security report provides a comprehensive view of how people share and access data and whether they take appropriate security precautions. For example, you can review who installs external apps, shares numerous files, skips 2-Step Verification, and uses security keys.",
           "ImpactStatement": "No user impact.",
           "RemediationProcedure": "The remediation for any anomalies in the various fields varies widely (different sections of the Google Workspace Admin UI). Please refer to Google's documentation for specifics (here). NOTE: Many of these settings will be remedied by implementing other sections of this Benchmark. For example, an Admin not enrolled in 2-Step Verification can be remedied by implementing the Remediation procedure for the recommendation Ensure 2-Step Verification (Multi-Factor Authentication) is enforced for all users in administrative roles.",
           "AuditProcedure": "To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator. 2. Select Reporting 3. Select Reports 4. Select User Reports 5. Select Security, and a table of results will be displayed with the fields listed in the Recommendation description above. 6. Review the displayed users and values for anomalies",
           "AdditionalInformation": "",
           "DefaultValue": "The report will display all users and fields.",
-          "References": "https://apps.google.com/supportwidget/articlehome?article_url=https%3A%2F%2"
+          "References": "https://support.google.com/a/answer/7492330"
         }
       ]
     },
@@ -1704,14 +1702,14 @@
           "SubSection": "4.3 Security Center",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
-          "Description": "As an administrator, the security health page enables you to monitor the configuration of your Admin console settings from one location. For example, you can check the status of settings like automatic email forwarding, device encryption, Drive sharing settings, and much more. Settings reported (Minimum, but could be many more depending on account type): Blocking of compromised mobile devices Mobile management Mobile password requirements Device encryption Mobile inactivity reports Auto account wipe Application verification Installation of mobile applications from unknown sources External media storage Two-step verification for users Two-step verification for admins Security key enforcement for admins Details on what each of these report entries mean can be found here. This report should be reviewed weekly. NOTE: The availability of each individual report on the security dashboard depends on your Google Workspace edition. See Google documentation for more details.",
+          "Description": "As an administrator, the security health page enables you to monitor the configuration of your Admin console settings from one location. For example, you can check the status of settings like automatic email forwarding, device encryption, Drive sharing settings, and much more. Settings reported (Minimum, but could be many more depending on account type): • Blocking of compromised mobile devices • Mobile management • Mobile password requirements • Device encryption • Mobile inactivity reports • Auto account wipe • Application verification • Installation of mobile applications from unknown sources • External media storage • Two-step verification for users • Two-step verification for admins • Security key enforcement for admins Details on what each of these report entries mean can be found here. This report should be reviewed weekly. NOTE: The availability of each individual report on the security dashboard depends on your Google Workspace edition. See Google documentation for more details.",
           "RationaleStatement": "The security health page provides visibility into your Admin console settings to help you better understand and manage security risks. If needed, you can make adjustments to your domain’s settings based on general security guidelines and best practices, while balancing these guidelines with your organization’s business needs and risk management policy.",
           "ImpactStatement": "No user impact.",
           "RemediationProcedure": "The remediation for any anomalies in the various settings varies widely (different sections of the Google Workspace Admin UI). Please refer to Google's documentation for specifics (here). NOTE: Many of these settings will be remedied by implementing other sections of this Benchmark. For example, an Admin not enrolled in 2-Step Verification can be remedied by implementing the Remediation procedure for the recommendation Ensure 2-Step Verification (Multi-Factor Authentication) is enforced for all users in administrative roles.",
           "AuditProcedure": "To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator. 2. Select Security 3. Select Security center 4. Select Security health, and a table of results will be displayed with the settings listed in the Recommendation description above. 5. Review the displayed values for anomalies",
           "AdditionalInformation": "",
           "DefaultValue": "The report will display the status of a predefined group of settings based on your Google Workspace license.",
-          "References": "https://apps.google.com/supportwidget/articlehome?article_url=https%3A%2F%2"
+          "References": "https://support.google.com/a/answer/7491656"
         }
       ]
     },
@@ -1725,14 +1723,14 @@
           "SubSection": "5.1 Reports",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
-          "Description": "As an administrator, you can use Apps usage reports to get an in-depth understanding of how your users use Google Workspace apps. Fields Available: User Gmail storage used (MB) Drive storage used (MB) Photos storage used (MB) Total storage used (MB) Storage used (%) Classroom - last used time Classes created Posts created Total emails Emails sent Emails received Gmail (IMAP) - last used time Gmail (POP) - last used time Gmail (Web) - last used time Files edited Files viewed Drive - last active time Files added Other types added Google Docs added Google Sheets added Google Slides added Google Forms added Google Drawings added Posts +1s +1s received Comments Comments received Reshares Reshares received Search queries Search queries from web Search queries from Android Search queries from iOS Details on what each of these fields mean can be found here. This report should be reviewed weekly. NOTE: In larger organizations reviewing this entire report weekly may not be possible. At a minimum, all Administrator and Super Administrator users should be reviewed, since they are a higher risk. These can be filtered from the overall user list.",
+          "Description": "As an administrator, you can use Apps usage reports to get an in-depth understanding of how your users use Google Workspace apps. Fields Available: • User • Gmail storage used (MB) • Drive storage used (MB) • Photos storage used (MB) • Total storage used (MB) • Storage used (%) • Classroom - last used time • Classes created • Posts created • Total emails • Emails sent • Emails received • Gmail (IMAP) - last used time • Gmail (POP) - last used time • Gmail (Web) - last used time • Files edited • Files viewed • Drive - last active time • Files added • Other types added • Google Docs added • Google Sheets added • Google Slides added • Google Forms added • Google Drawings added • Posts • +1s • +1s received • Comments • Comments received • Reshares • Reshares received • Search queries • Search queries from web • Search queries from Android • Search queries from iOS Details on what each of these fields mean can be found here. This report should be reviewed weekly. NOTE: In larger organizations reviewing this entire report weekly may not be possible. At a minimum, all Administrator and Super Administrator users should be reviewed, since they are a higher risk. These can be filtered from the overall user list.",
           "RationaleStatement": "The App usage report can allow administrator to discover user that are potentially using application that they do not have access to and/or using in atypical ways.",
           "ImpactStatement": "No user impact.",
           "RemediationProcedure": "The remediation for any anomalies in the various fields varies widely (different sections of the Google Workspace Admin UI). Please refer to Google's documentation for specifics (here). NOTE: Many of these settings will be remedied by implementing other sections of this Benchmark. For example, an Admin showing recent Gmail (IMAP) - last used time and/or Gmail (POP) - last used time can be remedied by implementing the Remediation procedure for the recommendation Ensure POP and IMAP access is disabled for all users.",
           "AuditProcedure": "To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator. 2. Select Reporting 3. Select Reports 4. Select User Reports 5. Select App usage, and a table of results will be displayed with the fields listed in the Recommendation description above. 6. Review the displayed users and values for anomalies",
           "AdditionalInformation": "",
           "DefaultValue": "The report will display all users and fields.",
-          "References": "https://apps.google.com/supportwidget/articlehome?hl=en&article_url=https%3A"
+          "References": "https://support.google.com/a/answer/4579578?hl=en"
         }
       ]
     },
@@ -1746,14 +1744,14 @@
           "SubSection": "5.1 Reports",
           "Profile": "Level 1",
           "AssessmentStatus": "Manual",
-          "Description": "As your organization's administrator, you can monitor your users' exposure to data compromise by reviewing the security report. Fields Available: User External apps 2-Step verification enrollment 2-Step verification enforcement Password length compliance Password strength User account status Admin status Security keys enrolled Less secure apps access Gmail (IMAP) - last used time Gmail (POP) - last used time Gmail (Web) - last used time External shares Internal shares Public Anyone with link Outside domain Anyone in domain shares Anyone in domain with link shares Within domain shares Private shares Details on what each of these fields mean can be found here. This report should be reviewed weekly. NOTE: In larger organizations reviewing this entire report weekly may not be possible. At a minimum, all Administrator and Super Administrator users should be reviewed, since they are a higher risk. These can be filtered from the overall user list.",
+          "Description": "As your organization's administrator, you can monitor your users' exposure to data compromise by reviewing the security report. Fields Available: • User • External apps • 2-Step verification enrollment • 2-Step verification enforcement • Password length compliance • Password strength • User account status • Admin status • Security keys enrolled • Less secure apps access • Gmail (IMAP) - last used time • Gmail (POP) - last used time • Gmail (Web) - last used time • External shares • Internal shares • Public • Anyone with link • Outside domain • Anyone in domain shares • Anyone in domain with link shares • Within domain shares • Private shares Details on what each of these fields mean can be found here. This report should be reviewed weekly. NOTE: In larger organizations reviewing this entire report weekly may not be possible. At a minimum, all Administrator and Super Administrator users should be reviewed, since they are a higher risk. These can be filtered from the overall user list.",
           "RationaleStatement": "The Security report provides a comprehensive view of how people share and access data and whether they take appropriate security precautions. For example, you can review who installs external apps, shares numerous files, skips 2-Step Verification, and uses security keys.",
           "ImpactStatement": "No user impact.",
           "RemediationProcedure": "The remediation for any anomalies in the various fields varies widely (different sections of the Google Workspace Admin UI). Please refer to Google's documentation for specifics (here). NOTE: Many of these settings will be remedied by implementing other sections of this Benchmark. For example, an Admin not enrolled in 2-Step Verification can be remedied by implementing the Remediation procedure for the recommendation Ensure 2-Step Verification (Multi-Factor Authentication) is enforced for all users in administrative roles.",
           "AuditProcedure": "To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator. 2. Select Reporting 3. Select Reports 4. Select User Reports 5. Select Security, and a table of results will be displayed with the fields listed in the Recommendation description above. 6. Review the displayed users and values for anomalies",
           "AdditionalInformation": "",
           "DefaultValue": "The report will display all users and fields.",
-          "References": "https://apps.google.com/supportwidget/articlehome?hl=en&article_url=https%3A"
+          "References": "https://support.google.com/a/answer/6000269?hl=en"
         }
       ]
     },
@@ -1799,7 +1797,7 @@
           "AuditProcedure": "To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator. 2. Select Rules 3. Under Google protects you by default select View list. 4. Scroll to Government-backed attacks and select it. 5. Ensure that Alerts is set to On. 6. Ensure the Severity is set to High 7. Ensure that Email Notifications is set to On 8. Ensure that Email notification recipients is set to All super administrators",
           "AdditionalInformation": "",
           "DefaultValue": "Government-backed attacks is ON",
-          "References": "https://apps.google.com/supportwidget/articlehome?article_url=https%3A%2F%2"
+          "References": "https://support.google.com/a/answer/3230421"
         }
       ]
     },
@@ -1822,7 +1820,7 @@
           "AuditProcedure": "To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator. 2. Select Rules 3. Under Google protects you by default select View list. 4. Scroll to User suspended due to suspicious activity and select it. 5. Ensure that Alerts is set to On. 6. Ensure the Severity is set to High 7. Ensure that Email Notifications is set to On 8. Ensure that Email notification recipients is set to All super administrators",
           "AdditionalInformation": "",
           "DefaultValue": "User suspended due to suspicious activity is ON",
-          "References": "https://apps.google.com/supportwidget/articlehome?article_url=https%3A%2F%2"
+          "References": "https://support.google.com/a/answer/3230421"
         }
       ]
     },
@@ -1845,7 +1843,7 @@
           "AuditProcedure": "To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator. 2. Select Rules 3. Under Google protects you by default select View list. 4. Scroll to User granted Admin privilege and select it. 5. Ensure that Alerts is set to On. 6. Ensure the Severity is set to Medium 7. Ensure that Email Notifications is set to On 8. Ensure that Email notification recipients is set to All super administrators",
           "AdditionalInformation": "",
           "DefaultValue": "User granted Admin privilege is OFF",
-          "References": "https://apps.google.com/supportwidget/articlehome?article_url=https%3A%2F%2"
+          "References": "https://support.google.com/a/answer/3230421"
         }
       ]
     },
@@ -1868,7 +1866,7 @@
           "AuditProcedure": "To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator. 2. Select Rules 3. Under Google protects you by default select View list. 4. Scroll to Suspicious programmatic login and select it. 5. Ensure that Alerts is set to On. 6. Ensure the Severity is set to Low 7. Ensure that Email Notifications is set to On 8. Ensure that Email notification recipients is set to All super administrators",
           "AdditionalInformation": "",
           "DefaultValue": "Suspicious programmatic login is ON",
-          "References": "https://apps.google.com/supportwidget/articlehome?article_url=https%3A%2F%2"
+          "References": "https://support.google.com/a/answer/3230421"
         }
       ]
     },
@@ -1891,7 +1889,7 @@
           "AuditProcedure": "To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator. 2. Select Rules 3. Under Google protects you by default select View list. 4. Scroll to Suspicious login and select it. 5. Ensure that Alerts is set to On. 6. Ensure the Severity is set to Low 7. Ensure that Email Notifications is set to On 8. Ensure that Email notification recipients is set to All super administrators",
           "AdditionalInformation": "",
           "DefaultValue": "Suspicious login is ON",
-          "References": "https://apps.google.com/supportwidget/articlehome?article_url=https%3A%2F%2"
+          "References": "https://support.google.com/a/answer/3230421"
         }
       ]
     },
@@ -1914,7 +1912,7 @@
           "AuditProcedure": "To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator. 2. Select Rules 3. Under Google protects you by default select View list. 4. Scroll to Leaked password and select it. 5. Ensure that Alerts is set to On. 6. Ensure the Severity is set to Medium 7. Ensure that Email Notifications is set to On 8. Ensure that Email notification recipients is set to All super administrators",
           "AdditionalInformation": "",
           "DefaultValue": "Leaked password is ON",
-          "References": "https://apps.google.com/supportwidget/articlehome?article_url=https%3A%2F%2"
+          "References": "https://support.google.com/a/answer/3230421"
         }
       ]
     },
@@ -1937,7 +1935,7 @@
           "AuditProcedure": "To verify this setting via the Google Admin Console: 1. Log in to https://admin.google.com as an administrator. 2. Select Rules 3. Under Google protects you by default select View list. 4. Scroll to Gmail potential employee spoofing and select it. 5. Ensure that Alerts is set to On. 6. Ensure the Severity is set to Medium 7. Ensure that Email Notifications is set to On 8. Ensure that Email notification recipients is set to All super administrators",
           "AdditionalInformation": "",
           "DefaultValue": "Gmail potential employee spoofing is ON",
-          "References": "https://apps.google.com/supportwidget/articlehome?article_url=https%3A%2F%2"
+          "References": "https://support.google.com/a/answer/3230421"
         }
       ]
     }
