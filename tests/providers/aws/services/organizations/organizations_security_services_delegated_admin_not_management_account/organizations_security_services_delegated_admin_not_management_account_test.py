@@ -152,7 +152,12 @@ class Test_organizations_security_services_delegated_admin_not_management_accoun
                 assert result[0].status_extended == (
                     f"AWS Organization {organization['Id']} delegated administration "
                     f"of the security services could not be determined; run this "
-                    f"check from the organization management account."
+                    f"check from the organization management account or a registered "
+                    f"delegated administrator allowed "
+                    f"organizations:ListDelegatedAdministrators, "
+                    f"organizations:ListAWSServiceAccessForOrganization and "
+                    f"organizations:ListDelegatedServicesForAccount, and retry if the "
+                    f"failure was transient."
                 )
 
     @mock_aws
@@ -193,7 +198,12 @@ class Test_organizations_security_services_delegated_admin_not_management_accoun
                 assert result[0].status_extended == (
                     f"AWS Organization {organization['Id']} delegated administration "
                     f"of the security services could not be determined; run this "
-                    f"check from the organization management account."
+                    f"check from the organization management account or a registered "
+                    f"delegated administrator allowed "
+                    f"organizations:ListDelegatedAdministrators, "
+                    f"organizations:ListAWSServiceAccessForOrganization and "
+                    f"organizations:ListDelegatedServicesForAccount, and retry if the "
+                    f"failure was transient."
                 )
 
     @mock_aws
@@ -237,7 +247,12 @@ class Test_organizations_security_services_delegated_admin_not_management_accoun
                 assert result[0].status_extended == (
                     f"AWS Organization {organization['Id']} delegated administration "
                     f"of the security services could not be determined; run this "
-                    f"check from the organization management account."
+                    f"check from the organization management account or a registered "
+                    f"delegated administrator allowed "
+                    f"organizations:ListDelegatedAdministrators, "
+                    f"organizations:ListAWSServiceAccessForOrganization and "
+                    f"organizations:ListDelegatedServicesForAccount, and retry if the "
+                    f"failure was transient."
                 )
 
     @mock_aws
@@ -520,5 +535,10 @@ class Test_organizations_security_services_delegated_admin_not_management_accoun
                 assert result[0].status_extended == (
                     f"AWS Organization {organization['Id']} delegated administration "
                     f"of the security services could not be determined; run this "
-                    f"check from the organization management account."
+                    f"check from the organization management account or a registered "
+                    f"delegated administrator allowed "
+                    f"organizations:ListDelegatedAdministrators, "
+                    f"organizations:ListAWSServiceAccessForOrganization and "
+                    f"organizations:ListDelegatedServicesForAccount, and retry if the "
+                    f"failure was transient."
                 )

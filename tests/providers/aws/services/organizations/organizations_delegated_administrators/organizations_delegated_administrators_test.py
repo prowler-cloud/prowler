@@ -48,6 +48,37 @@ def organizations_with_administrators(aws_provider, account_ids: list[str]):
     return organizations
 
 
+def status_extended_for_order(aws_provider, account_ids: list[str]) -> str:
+    """Run the check over administrators returned in `account_ids` order.
+
+    Args:
+        aws_provider: The mocked provider, carrying the trusted list to compare against.
+        account_ids: The administrator IDs in the order the API returned them.
+
+    Returns:
+        The `status_extended` of the single report the check produced.
+    """
+    organizations = organizations_with_administrators(aws_provider, account_ids)
+
+    with mock.patch(
+        "prowler.providers.common.provider.Provider.get_global_provider",
+        return_value=aws_provider,
+    ):
+        with mock.patch(
+            "prowler.providers.aws.services.organizations.organizations_delegated_administrators.organizations_delegated_administrators.organizations_client",
+            new=organizations,
+        ):
+            # Test Check
+            from prowler.providers.aws.services.organizations.organizations_delegated_administrators.organizations_delegated_administrators import (
+                organizations_delegated_administrators,
+            )
+
+            result = organizations_delegated_administrators().execute()
+
+            assert len(result) == 1
+            return result[0].status_extended
+
+
 def client_error(code: str) -> botocore.exceptions.ClientError:
     """Build the ClientError botocore raises for a `ListDelegatedAdministrators` code.
 
@@ -366,7 +397,7 @@ class Test_organizations_delegated_administrators:
                 assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == f"AWS Organization {org_id} has an untrusted Delegated Administrator: {UNTRUSTED_ACCOUNT_ID}, {SECOND_UNTRUSTED_ACCOUNT_ID}."
+                    == f"AWS Organization {org_id} has untrusted Delegated Administrators: {SECOND_UNTRUSTED_ACCOUNT_ID}, {UNTRUSTED_ACCOUNT_ID}."
                 )
 
     @mock_aws
@@ -405,8 +436,57 @@ class Test_organizations_delegated_administrators:
                 assert result[0].status == "PASS"
                 assert (
                     result[0].status_extended
-                    == f"AWS Organization {org_id} has a trusted Delegated Administrator: {TRUSTED_ACCOUNT_ID}, {SECOND_TRUSTED_ACCOUNT_ID}."
+                    == f"AWS Organization {org_id} has trusted Delegated Administrators: {TRUSTED_ACCOUNT_ID}, {SECOND_TRUSTED_ACCOUNT_ID}."
                 )
+
+    @mock_aws
+    def test_organization_administrator_order_does_not_change_the_text(self):
+        """One set of administrators reads the same whichever order it arrives in.
+
+        `ListDelegatedAdministrators` documents no ordering of its response, so reporting
+        the administrators in the order they arrived let one unchanged organization
+        produce two different texts across scans, which reads downstream as a finding
+        that changed when nothing had.
+
+        Both sides are covered: the FAIL text names only the untrusted administrators and
+        the PASS text only the trusted ones, so sorting one list would leave the other
+        still order-dependent.
+        """
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
+        org_id = conn.describe_organization()["Organization"]["Id"]
+        aws_provider._audit_config = {
+            "organizations_trusted_delegated_administrators": [
+                TRUSTED_ACCOUNT_ID,
+                SECOND_TRUSTED_ACCOUNT_ID,
+            ]
+        }
+
+        untrusted_ascending = status_extended_for_order(
+            aws_provider, [SECOND_UNTRUSTED_ACCOUNT_ID, UNTRUSTED_ACCOUNT_ID]
+        )
+        untrusted_descending = status_extended_for_order(
+            aws_provider, [UNTRUSTED_ACCOUNT_ID, SECOND_UNTRUSTED_ACCOUNT_ID]
+        )
+
+        assert untrusted_ascending == untrusted_descending
+        assert (
+            untrusted_ascending
+            == f"AWS Organization {org_id} has untrusted Delegated Administrators: {SECOND_UNTRUSTED_ACCOUNT_ID}, {UNTRUSTED_ACCOUNT_ID}."
+        )
+
+        trusted_ascending = status_extended_for_order(
+            aws_provider, [TRUSTED_ACCOUNT_ID, SECOND_TRUSTED_ACCOUNT_ID]
+        )
+        trusted_descending = status_extended_for_order(
+            aws_provider, [SECOND_TRUSTED_ACCOUNT_ID, TRUSTED_ACCOUNT_ID]
+        )
+
+        assert trusted_ascending == trusted_descending
+        assert (
+            trusted_ascending
+            == f"AWS Organization {org_id} has trusted Delegated Administrators: {TRUSTED_ACCOUNT_ID}, {SECOND_TRUSTED_ACCOUNT_ID}."
+        )
 
     @mock_aws
     def test_organization_trusted_list_set_to_null(self):
@@ -455,12 +535,17 @@ class Test_organizations_delegated_administrators:
 
     @mock_aws
     def test_organization_delegated_administrators_access_denied(self):
-        """Access denied reports MANUAL, and reports where to run the scan from.
+        """Access denied reports MANUAL, naming both ways the caller can answer it.
 
         A member account cannot list delegated administrators, which previously left the
         check silent for every such account instead of saying it could not evaluate. It is
-        the only collection failure the audited account can answer by running the scan
-        somewhere else, so it is the only one that says so.
+        the only collection failure the audited account can act on directly, so it is the
+        only one that says how.
+
+        `AccessDeniedException` covers two causes, and the text names both: the account
+        cannot make the call at all, or it can and the caller is not granted the action.
+        Naming only the account would send an operator already in a valid account to
+        change accounts, which is the same wrong remediation a throttle used to get.
         """
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
@@ -492,7 +577,7 @@ class Test_organizations_delegated_administrators:
                 assert result[0].status == "MANUAL"
                 assert (
                     result[0].status_extended
-                    == f"AWS Organization {org_id} delegated administrators could not be determined; run this check from the organization management account."
+                    == f"AWS Organization {org_id} delegated administrators could not be determined; run this check from the organization management account or a registered delegated administrator, with organizations:ListDelegatedAdministrators allowed for the caller."
                 )
 
     @mock_aws

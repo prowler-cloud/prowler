@@ -79,10 +79,18 @@ class organizations_security_services_delegated_admin_not_management_account(Che
             )
         ):
             report.status = "MANUAL"
+            # Three different reads leave this same sentinel and only one of them
+            # records an error code, so the cause is genuinely unknown here: the text
+            # names what the caller can check without asserting which read failed, and
+            # keeps the retry in it because a throttle arrives as this branch too.
             report.status_extended = (
                 f"AWS Organization {organization.id} delegated administration of the "
                 f"security services could not be determined; run this check from the "
-                f"organization management account."
+                f"organization management account or a registered delegated "
+                f"administrator allowed organizations:ListDelegatedAdministrators, "
+                f"organizations:ListAWSServiceAccessForOrganization and "
+                f"organizations:ListDelegatedServicesForAccount, and retry if the "
+                f"failure was transient."
             )
             findings.append(report)
             return findings
