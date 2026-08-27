@@ -8,6 +8,7 @@ import { CISControlsCustomDetails } from "@/components/compliance/compliance-cus
 import { CISCustomDetails } from "@/components/compliance/compliance-custom-details/cis-details";
 import { CMMCCustomDetails } from "@/components/compliance/compliance-custom-details/cmmc-details";
 import { CSACustomDetails } from "@/components/compliance/compliance-custom-details/csa-details";
+import { CyberEssentialsCustomDetails } from "@/components/compliance/compliance-custom-details/cyber-essentials-details";
 import { DORACustomDetails } from "@/components/compliance/compliance-custom-details/dora-details";
 import { ENSCustomDetails } from "@/components/compliance/compliance-custom-details/ens-details";
 import { GenericCustomDetails } from "@/components/compliance/compliance-custom-details/generic-details";
@@ -59,6 +60,10 @@ import {
   mapComplianceData as mapCSAComplianceData,
   toAccordionItems as toCSAAccordionItems,
 } from "./csa";
+import {
+  mapComplianceData as mapCyberEssentialsComplianceData,
+  toAccordionItems as toCyberEssentialsAccordionItems,
+} from "./cyber-essentials";
 import {
   mapComplianceData as mapDORAComplianceData,
   toAccordionItems as toDORAAccordionItems,
@@ -263,6 +268,20 @@ const getComplianceMappers = (): Record<string, ComplianceMapper> => ({
       calculateCategoryHeatmapData(data),
     getDetailsComponent: (requirement: Requirement) =>
       createElement(DORACustomDetails, { requirement }),
+  },
+  // Cyber Essentials v3.3 — universal framework keyed by the `framework` field
+  // of `prowler/compliance/cyber_essentials_3.3.json` ("Cyber-Essentials").
+  // Groups by Theme (the 5 NCSC control themes) and surfaces Theme /
+  // AssessmentStatus / CloudApplicability / RemediationProcedure / References in
+  // the requirement detail drawer.
+  "Cyber-Essentials": {
+    mapComplianceData: mapCyberEssentialsComplianceData,
+    toAccordionItems: toCyberEssentialsAccordionItems,
+    getTopFailedSections,
+    calculateCategoryHeatmapData: (data: Framework[]) =>
+      calculateCategoryHeatmapData(data),
+    getDetailsComponent: (requirement: Requirement) =>
+      createElement(CyberEssentialsCustomDetails, { requirement }),
   },
   // CMMC 2.0 — universal framework keyed by the `framework` field of
   // `prowler/compliance/cmmc_2.0.json` ("CMMC"). Groups by Domain (14 NIST
