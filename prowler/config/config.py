@@ -10,7 +10,10 @@ import requests
 import yaml
 from packaging import version
 
-from prowler.lib.check.compliance_models import load_compliance_framework_universal
+from prowler.lib.check.compliance_models import (
+    get_universal_compliance_entry_point_dirs,
+    load_compliance_framework_universal,
+)
 
 # Re-exported from a leaf module so prowler.lib.check.utils can import the
 # constant without participating in the config <-> compliance_models <-> utils
@@ -170,21 +173,7 @@ def get_available_compliance_frameworks(provider=None):
                         available_compliance_frameworks.append(name)
     # External multi-provider frameworks via the dedicated universal group;
     # filtered by supports_provider when a provider is given.
-    for ep in importlib.metadata.entry_points(group="prowler.compliance.universal"):
-        try:
-            module = ep.load()
-            path = (
-                module.__path__[0]
-                if hasattr(module, "__path__")
-                else os.path.dirname(module.__file__)
-            )
-        except Exception as error:
-            logger.warning(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-            continue
-        if not os.path.isdir(path):
-            continue
+    for path in get_universal_compliance_entry_point_dirs():
         for file in os.scandir(path):
             if file.is_file() and file.name.endswith(".json"):
                 name = file.name.removesuffix(".json")
