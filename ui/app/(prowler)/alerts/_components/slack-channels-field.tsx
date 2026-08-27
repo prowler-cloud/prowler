@@ -6,13 +6,7 @@ import { useState } from "react";
 import { getIntegrations } from "@/actions/integrations/integrations";
 import { getAlertSlackChannels } from "@/app/(prowler)/alerts/_actions/slack-channels";
 import { SlackChannelMultiSelect } from "@/components/integrations/slack/slack-channel-multi-select";
-import {
-  Button,
-  Label,
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/shadcn";
+import { Button, Label } from "@/components/shadcn";
 import {
   MultiSelect,
   MultiSelectTrigger,
@@ -115,7 +109,9 @@ const mergeOptions = (
 };
 
 const ManageIntegrationLink = () => (
-  <Button variant="link" size="link-sm" className="h-auto p-0" asChild>
+  // `text-xs` over `link-sm`'s `text-sm`: the link sits inline with the
+  // notice's own copy and must not read louder than it.
+  <Button variant="link" size="link-sm" className="h-auto p-0 text-xs" asChild>
     <Link href={SLACK_INTEGRATION_HREF}>Manage the Slack integration</Link>
   </Button>
 );
@@ -253,27 +249,18 @@ export const SlackChannelsField = ({
         ) : (
           <>
             <Label>Destination channels</Label>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className="inline-flex w-full" tabIndex={0}>
-                  <MultiSelect values={[]} onValuesChange={() => undefined}>
-                    <MultiSelectTrigger
-                      id="slack-channels"
-                      aria-label="Destination channels"
-                      // The reason must travel with the control; the tooltip
-                      // only reaches a pointer or the wrapper's focus.
-                      aria-describedby={CHANNELS_NOTICE_ID}
-                      disabled
-                    >
-                      <MultiSelectValue placeholder="No channels available" />
-                    </MultiSelectTrigger>
-                  </MultiSelect>
-                </span>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="max-w-xs">
-                {noticeCopy}
-              </TooltipContent>
-            </Tooltip>
+            <MultiSelect values={[]} onValuesChange={() => undefined}>
+              <MultiSelectTrigger
+                id="slack-channels"
+                aria-label="Destination channels"
+                // The reason travels with the control: the notice below is
+                // visible, this makes assistive tech read it from the field.
+                aria-describedby={CHANNELS_NOTICE_ID}
+                disabled
+              >
+                <MultiSelectValue placeholder="No channels available" />
+              </MultiSelectTrigger>
+            </MultiSelect>
           </>
         )}
         <FieldNotice copy={noticeCopy} />
