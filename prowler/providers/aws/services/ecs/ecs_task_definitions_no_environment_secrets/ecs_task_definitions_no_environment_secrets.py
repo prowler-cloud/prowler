@@ -16,7 +16,11 @@ class ecs_task_definitions_no_environment_secrets(Check):
             "secrets_ignore_patterns", []
         )
         validate = ecs_client.audit_config.get("secrets_validate", False)
-        task_definitions = list(ecs_client.task_definitions.values())
+        task_definitions = [
+            task_definition
+            for task_definition in ecs_client.task_definitions.values()
+            if task_definition.container_definitions is not None
+        ]
 
         # Scan every (task definition, container) environment in batched
         # Kingfisher invocations instead of one subprocess per container.

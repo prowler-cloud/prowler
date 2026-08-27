@@ -8,11 +8,23 @@ const { withSentryConfig } = require("@sentry/nextjs");
 // HTTP Security Headers
 const nextConfig = {
   poweredByHeader: false,
+  // Dev-only. Lets the dev server accept HMR/asset requests from a tunnel
+  // hostname (ngrok/cloudflared), needed when testing the local UI through a
+  // public tunnel or from an external device.
+  // Comma-separated, e.g. NEXT_ALLOWED_DEV_ORIGINS=foo.ngrok-free.dev
+  allowedDevOrigins: (process.env.NEXT_ALLOWED_DEV_ORIGINS || "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean),
   // Use standalone only in production deployments, not for CI/testing
   ...(process.env.NODE_ENV === "production" &&
     !process.env.CI && {
       output: "standalone",
       outputFileTracingRoot: __dirname,
+      // sharp 0.35 loads its native binary dynamically, so tracing misses it.
+      outputFileTracingIncludes: {
+        "**": ["./node_modules/.pnpm/@img+sharp-libvips-linuxmusl-*/**/*"],
+      },
     }),
   // React Compiler is now stable in Next.js 16
   reactCompiler: true,

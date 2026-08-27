@@ -1,13 +1,8 @@
 "use client";
 
 import { useControllableState } from "@radix-ui/react-use-controllable-state";
-import {
-  BrainIcon,
-  ChevronDownIcon,
-  DotIcon,
-  type LucideIcon,
-} from "lucide-react";
-import type { ComponentProps, ReactNode } from "react";
+import { BrainIcon, ChevronDownIcon, DotIcon } from "lucide-react";
+import type { ComponentProps, ComponentType, ReactNode } from "react";
 import { createContext, useContext } from "react";
 
 import { Badge } from "@/components/shadcn/badge/badge";
@@ -117,7 +112,8 @@ export type ChainOfThoughtStatus =
   (typeof CHAIN_OF_THOUGHT_STATUS)[keyof typeof CHAIN_OF_THOUGHT_STATUS];
 
 export type ChainOfThoughtStepProps = ComponentProps<"div"> & {
-  icon?: LucideIcon;
+  // Any className-driven icon fits (lucide icons, the shadcn Spinner, …).
+  icon?: ComponentType<{ className?: string }>;
   label: ReactNode;
   description?: ReactNode;
   status?: ChainOfThoughtStatus;

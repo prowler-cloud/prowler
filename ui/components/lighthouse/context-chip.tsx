@@ -85,15 +85,26 @@ function LighthouseContextTooltip({ context }: LighthouseContextBadgeProps) {
   const page = context.items.find(
     (item) => item.kind === LIGHTHOUSE_CONTEXT_KIND.PAGE,
   );
-  const filters =
+  // Entries with no values (possible in stored envelopes) carry nothing, so
+  // they count neither for the filters line nor against the page-only notice.
+  const filterEntries =
     page?.kind === LIGHTHOUSE_CONTEXT_KIND.PAGE
-      ? Object.entries(page.filters ?? {})
-          .map(([key, values]) => `${key}: ${values.join(", ")}`)
-          .join("; ")
-      : "";
+      ? Object.entries(page.filters ?? {}).filter(
+          ([, values]) => values.length > 0,
+        )
+      : [];
+  const filters = filterEntries
+    .map(([key, values]) => `${key}: ${values.join(", ")}`)
+    .join("; ");
   const itemDescriptions = context.items
     .map(getContextItemDescription)
     .filter((description) => description !== null);
+  // A single filterless page item means the model only learns which page the
+  // user is on — say so instead of implying richer context travels with it.
+  const sharesOnlyPage =
+    page?.kind === LIGHTHOUSE_CONTEXT_KIND.PAGE &&
+    context.items.length === 1 &&
+    filterEntries.length === 0;
 
   return (
     <TooltipContent maxWidth="md">
@@ -104,6 +115,7 @@ function LighthouseContextTooltip({ context }: LighthouseContextBadgeProps) {
           </p>
         )}
         {filters && <p>Filters: {filters}</p>}
+        {sharesOnlyPage && <p>Only the current page name is shared.</p>}
         {itemDescriptions.map(({ id, text }) => (
           <p key={id}>{text}</p>
         ))}

@@ -164,6 +164,7 @@
                 "group": "Compliance",
                 "pages": [
                   "user-guide/compliance/tutorials/compliance",
+                  "user-guide/compliance/tutorials/cross-provider-type-compliance",
                   "user-guide/compliance/tutorials/cross-provider-compliance",
                   "user-guide/compliance/tutorials/threatscore"
                 ]
@@ -181,7 +182,8 @@
                 "pages": [
                   "user-guide/tutorials/prowler-app-s3-integration",
                   "user-guide/tutorials/prowler-app-security-hub-integration",
-                  "user-guide/tutorials/prowler-app-jira-integration"
+                  "user-guide/tutorials/prowler-app-jira-integration",
+                  "user-guide/tutorials/prowler-app-slack-integration"
                 ]
               },
               {
@@ -301,6 +303,15 @@
             "group": "Providers",
             "pages": [
               {
+                "group": "Organizations",
+                "pages": [
+                  "user-guide/organizations",
+                  "user-guide/providers/aws/organizations",
+                  "user-guide/providers/gcp/organization",
+                  "user-guide/providers/azure/management-groups"
+                ]
+              },
+              {
                 "group": "Alibaba Cloud",
                 "pages": [
                   "user-guide/providers/alibabacloud/getting-started-alibabacloud",
@@ -329,6 +340,7 @@
                   "user-guide/providers/azure/getting-started-azure",
                   "user-guide/providers/azure/authentication",
                   "user-guide/providers/azure/use-non-default-cloud",
+                  "user-guide/providers/azure/management-groups",
                   "user-guide/providers/azure/subscriptions",
                   "user-guide/providers/azure/resource-groups",
                   "user-guide/providers/azure/create-prowler-service-principal"

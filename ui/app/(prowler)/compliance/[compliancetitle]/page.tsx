@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
 
 import {
+  COMPLIANCE_OVERVIEW_RESOURCE_TYPE,
   getComplianceAttributes,
   getComplianceOverviewMetadataInfo,
   getComplianceRequirements,
@@ -50,7 +51,6 @@ import { ScanEntity } from "@/types/scans";
 
 import { CrossAccountDetail } from "../_components/cross-account-detail";
 import { CrossProviderDetail } from "../_components/cross-provider-detail";
-import { resolveCrossProviderFramework } from "../_lib/cross-provider-frameworks";
 import { buildSearchParamsKey } from "../_lib/search-params-key";
 
 const getSingleSearchParam = (
@@ -85,20 +85,11 @@ export default async function ComplianceDetail({
       redirect("/compliance");
     }
 
-    const framework = resolveCrossProviderFramework(
-      complianceId,
-      compliancetitle,
-    );
-    if (!framework) {
-      notFound();
-    }
-
-    const crossProviderTitle = framework.title.split("-").join(" ");
     return (
-      <ContentLayout title={`${crossProviderTitle} - ${framework.version}`}>
-        <Suspense
-          key={buildSearchParamsKey(resolvedSearchParams)}
-          fallback={
+      <Suspense
+        key={buildSearchParamsKey(resolvedSearchParams)}
+        fallback={
+          <ContentLayout title="Compliance">
             <div className="flex flex-col gap-8">
               <div className="grid grid-cols-1 gap-6 md:grid-cols-[minmax(280px,400px)_1fr]">
                 <RequirementsStatusCardSkeleton />
@@ -106,16 +97,16 @@ export default async function ComplianceDetail({
               </div>
               <SkeletonAccordion />
             </div>
-          }
-        >
-          <CrossProviderDetail
-            compliancetitle={compliancetitle}
-            complianceId={complianceId}
-            searchParams={resolvedSearchParams}
-            targetSection={section}
-          />
-        </Suspense>
-      </ContentLayout>
+          </ContentLayout>
+        }
+      >
+        <CrossProviderDetail
+          compliancetitle={compliancetitle}
+          complianceId={complianceId}
+          searchParams={resolvedSearchParams}
+          targetSection={section}
+        />
+      </Suspense>
     );
   }
   // Cross-account mode: one regular framework aggregated across every
@@ -267,7 +258,13 @@ export default async function ComplianceDetail({
       const snapshot = threatScoreResponse.data[0];
       threatScoreData = {
         overallScore: parseFloat(snapshot.attributes.overall_score),
-        sectionScores: snapshot.attributes.section_scores,
+        // The multi-provider aggregation branch serializes section scores as
+        // decimal strings.
+        sectionScores: Object.fromEntries(
+          Object.entries(snapshot.attributes.section_scores).map(
+            ([name, value]) => [name, Number(value)],
+          ),
+        ),
       };
     }
   }
@@ -391,9 +388,14 @@ const SSRComplianceContent = async ({
     scanId,
     region,
   });
-  const type = requirementsData?.data?.[0]?.type;
+  const requirements = requirementsData?.data;
+  const type = Array.isArray(requirements) ? undefined : requirements?.type;
 
-  if (!scanId || type === "tasks") {
+  if (
+    !scanId ||
+    type === COMPLIANCE_OVERVIEW_RESOURCE_TYPE.TASK ||
+    !Array.isArray(requirements)
+  ) {
     return (
       <div className="flex flex-col gap-8">
         <div className="grid grid-cols-1 gap-6 md:grid-cols-[minmax(280px,400px)_1fr]">
@@ -410,7 +412,7 @@ const SSRComplianceContent = async ({
   const mapper = getComplianceMapper(framework);
   const data = mapper.mapComplianceData(
     attributesData,
-    requirementsData,
+    { data: requirements },
     filter,
   );
   // const categoryHeatmapData = mapper.calculateCategoryHeatmapData(data);
