@@ -85,6 +85,15 @@ class CloudWatch(AWSService):
 class Logs(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
+        """Collect CloudWatch Logs inventory for the audited account.
+
+        Args:
+            provider: The AWS provider whose session and Regions to scan.
+
+        Beyond the log groups and metric filters this class already collected, it now resolves
+        vended-log delivery sources and deliveries -- but only when ``expected_checks`` names a check
+        that reads them, following the same gating this class already applies to ``_get_log_events``.
+        """
         super().__init__(__class__.__name__, provider)
         self.log_group_arn_template = f"arn:{self.audited_partition}:logs:{self.region}:{self.audited_account}:log-group"
         # Log groups are listed first, then only the selected subset is enriched
@@ -104,6 +113,21 @@ class Logs(AWSService):
         self.__threading_call__(self._describe_resource_policies)
         self.metric_filters = []
         self.__threading_call__(self._describe_metric_filters)
+        # Vended-log delivery inventory. Only collected when a check that reads
+        # it is in scope, following the _get_log_events precedent below, so the
+        # two extra paginated calls per Region are not paid by every audit.
+        self.delivery_sources = {}
+        self.deliveries = {}
+        # These two CheckIDs are load-bearing STRINGS, not documentation: if either stops matching a
+        # real check, the delivery inventory is silently not collected and the check that reads it
+        # degrades with nothing failing anywhere. They moved with AgentCore into its own service
+        # directory, so the prefix here is bedrockagentcore_.
+        if {
+            "bedrockagentcore_gateway_application_logs_enabled",
+            "bedrockagentcore_memory_application_logs_enabled",
+        }.intersection(provider.audit_metadata.expected_checks):
+            self.__threading_call__(self._describe_delivery_sources)
+            self.__threading_call__(self._describe_deliveries)
         if self.log_groups:
             if (
                 "cloudwatch_log_group_no_secrets_in_logs"
@@ -292,6 +316,81 @@ class Logs(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _describe_delivery_sources(self, regional_client):
+        """List the vended-log delivery sources registered in a Region.
+
+        A delivery source names the resource that emits logs and the log type it
+        emits. It is only half of the configuration: a source with no delivery
+        attached delivers nothing.
+
+        Args:
+            regional_client: CloudWatch Logs client for the Region to scan.
+        """
+        logger.info("CloudWatch Logs - Describing delivery sources...")
+        try:
+            paginator = regional_client.get_paginator("describe_delivery_sources")
+            sources = []
+            for page in paginator.paginate():
+                for source in page.get("deliverySources", []):
+                    sources.append(
+                        DeliverySource(
+                            name=source.get("name", ""),
+                            arn=source.get("arn", ""),
+                            # Every member of DeliverySource is optional, so a
+                            # missing resourceArns must become an empty list
+                            # rather than propagate None into the ARN match.
+                            resource_arns=source.get("resourceArns") or [],
+                            service=source.get("service"),
+                            log_type=source.get("logType"),
+                            region=regional_client.region,
+                        )
+                    )
+            self.delivery_sources[regional_client.region] = sources
+        except Exception as error:
+            # None means "unknown", not "none configured", following the
+            # _describe_resource_policies sentinel above. Callers must not read
+            # an unreadable inventory as a disabled one.
+            self.delivery_sources[regional_client.region] = None
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _describe_deliveries(self, regional_client):
+        """List the vended-log deliveries configured in a Region.
+
+        A delivery is the link that makes a source actually emit to a
+        destination, so it is the object that proves logging is on.
+
+        Args:
+            regional_client: CloudWatch Logs client for the Region to scan.
+        """
+        logger.info("CloudWatch Logs - Describing deliveries...")
+        try:
+            paginator = regional_client.get_paginator("describe_deliveries")
+            deliveries = []
+            for page in paginator.paginate():
+                for delivery in page.get("deliveries", []):
+                    deliveries.append(
+                        Delivery(
+                            id=delivery.get("id", ""),
+                            arn=delivery.get("arn", ""),
+                            delivery_source_name=delivery.get("deliverySourceName"),
+                            delivery_destination_arn=delivery.get(
+                                "deliveryDestinationArn"
+                            ),
+                            delivery_destination_type=delivery.get(
+                                "deliveryDestinationType"
+                            ),
+                            region=regional_client.region,
+                        )
+                    )
+            self.deliveries[regional_client.region] = deliveries
+        except Exception as error:
+            self.deliveries[regional_client.region] = None
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
     def _list_tags_for_resource(self, log_group):
         """Hydrate tags for a selected log group once.
 
@@ -356,6 +455,31 @@ class MetricFilter(BaseModel):
     metric: str
     pattern: str
     log_group: Optional[LogGroup] = None
+    region: str
+
+
+class DeliverySource(BaseModel):
+    """A vended-log delivery source: the resource emitting logs and its log type."""
+
+    name: str
+    arn: str
+    # ARNs of the resources that emit through this source. This is the only
+    # field that ties a source to a specific resource, so it is the join key.
+    resource_arns: list = []
+    service: Optional[str] = None
+    log_type: Optional[str] = None
+    region: str
+
+
+class Delivery(BaseModel):
+    """A vended-log delivery linking a delivery source to a destination."""
+
+    id: str
+    arn: str
+    # Matches DeliverySource.name; there is no source ARN on the delivery.
+    delivery_source_name: Optional[str] = None
+    delivery_destination_arn: Optional[str] = None
+    delivery_destination_type: Optional[str] = None
     region: str
 
 
