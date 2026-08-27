@@ -89,12 +89,6 @@ rss: true
 
   - `ske_cluster_no_public_endpoint` flags SKE clusters whose Kubernetes API endpoint is reachable from the whole internet, because the ACL extension is disabled or its allowed CIDR list contains `0.0.0.0/0` or `::/0`. Thanks to @johannes-engler-mw!
 
-  ### 🛠️ Prowler MCP Server — Actionable Failures
-
-  Failures shared by every tool (a rejected credential, a missing permission, a rate limit, an outage, an unreachable API, a bad argument) now come back with a message that says what went wrong and what to do about it. The server also stops relaying upstream response bodies to agents: a failed request reaches the caller as a sentence the server wrote, with the full body kept in the logs, so a gateway error page or a debug traceback can no longer be replayed into a model's context.
-
-  Read more in the [Prowler MCP documentation](https://docs.prowler.com/getting-started/products/prowler-mcp).
-
   ### 🔐 Security Updates
 
   - The API and SDK container images upgrade OpenSSL to 3.5.7-1~deb13u2, patching ten high CVEs; the UI image upgrades `libcrypto3` and `libssl3` to 3.5.8-r0, patching seven high CVEs; the MCP Server image patches CVE-2026-14456 (OpenSSL), CVE-2026-11822, and CVE-2026-11824 (SQLite).
