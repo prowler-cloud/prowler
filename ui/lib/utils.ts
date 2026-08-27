@@ -1,5 +1,16 @@
 import { type ClassValue, clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { extendTailwindMerge } from "tailwind-merge";
+
+// Custom --background-image-* theme utilities (globals.css). Without this,
+// tailwind-merge classifies them as background-color and silently drops an
+// opaque bg-* base declared alongside, turning overlays translucent.
+const twMerge = extendTailwindMerge({
+  extend: {
+    classGroups: {
+      "bg-image": ["bg-lighthouse", "bg-lighthouse-soft", "bg-feature-cloud"],
+    },
+  },
+});
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));

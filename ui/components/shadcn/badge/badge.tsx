@@ -28,6 +28,8 @@ const badgeVariants = cva(
         cloud:
           "bg-feature-cloud h-6 rounded-lg border-0 px-2 py-0 text-xs leading-5 font-bold text-black",
         new: "bg-bg-feature-new text-text-feature-new border-0 font-bold",
+        lighthouse:
+          "border-border-lighthouse bg-lighthouse-soft text-text-lighthouse",
       },
       size: {
         default: "",

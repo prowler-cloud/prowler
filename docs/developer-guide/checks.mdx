@@ -172,7 +172,7 @@ else:
 
 ### Resource Identification in Prowler
 
-Each check **must** populate the report with an unique identifier for the audited resource. This identifier or identifiers are going to depend on the provider and the resource that is being audited. Here are the criteria for each provider:
+Each check **must** populate the report with a unique identifier for the audited resource. This identifier or identifiers are going to depend on the provider and the resource that is being audited. Here are the criteria for each provider:
 
 - AWS
     - Amazon Resource ID — `report.resource_id`.
@@ -224,9 +224,9 @@ Each check **must** populate the report with an unique identifier for the audite
             - `resource_name`: Description of the configuration (e.g., "SharePoint Settings")
 - GitHub
     - Resource ID — `report.resource_id`.
-        - The ID of the Github resource. This is a system-generated integer that uniquely identifies the resource within the Github platform.
+        - The ID of the GitHub resource. This is a system-generated integer that uniquely identifies the resource within the GitHub platform.
     - Resource Name — `report.resource_name`.
-        - The name of the Github resource. In the case of a repository, this is just the repository name. For full repository names use the resource `full_name`.
+        - The name of the GitHub resource. In the case of a repository, this is just the repository name. For full repository names use the resource `full_name`.
 
 ### Configurable Checks in Prowler
 

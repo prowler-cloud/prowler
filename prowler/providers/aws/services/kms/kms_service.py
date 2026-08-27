@@ -19,6 +19,7 @@ class KMS(AWSService):
             self._get_key_rotation_status()
             self._get_key_policy()
             self._list_resource_tags()
+            self.__threading_call__(self._list_aliases)
 
     def _list_keys(self, regional_client):
         logger.info("KMS - Listing Keys...")
@@ -58,6 +59,7 @@ class KMS(AWSService):
                     key.manager = response["KeyMetadata"]["KeyManager"]
                     key.spec = response["KeyMetadata"]["CustomerMasterKeySpec"]
                     key.multi_region = response["KeyMetadata"]["MultiRegion"]
+                    key.description = response["KeyMetadata"].get("Description", "")
                 except Exception as error:
                     logger.error(
                         f"{regional_client.region} -- {error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
@@ -106,6 +108,7 @@ class KMS(AWSService):
                             )["Policy"]
                         )
                     except Exception as error:
+                        key.policy_fetch_error = error.__class__.__name__
                         logger.error(
                             f"{regional_client.region} -- {error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
                         )
@@ -136,6 +139,26 @@ class KMS(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
+    def _list_aliases(self, regional_client):
+        logger.info("KMS - Listing Aliases...")
+        try:
+            aliases_by_key_id = {}
+            paginator = regional_client.get_paginator("list_aliases")
+            for page in paginator.paginate():
+                for alias in page.get("Aliases", []):
+                    target_key_id = alias.get("TargetKeyId")
+                    if target_key_id:
+                        aliases_by_key_id.setdefault(target_key_id, []).append(
+                            alias["AliasName"]
+                        )
+            for key in self.keys:
+                if key.region == regional_client.region and key.id in aliases_by_key_id:
+                    key.aliases = aliases_by_key_id[key.id]
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
+            )
+
 
 class Key(BaseModel):
     id: str
@@ -145,7 +168,14 @@ class Key(BaseModel):
     manager: Optional[str]
     rotation_enabled: Optional[bool]
     policy: Optional[dict]
+    # Populated by _get_key_policy on API failure. Distinguishes "policy not
+    # applicable" (None + no error) from "policy could not be fetched" (None +
+    # error class name). Checks that make security assertions from the policy
+    # should emit MANUAL when this is set, not silently skip the key.
+    policy_fetch_error: Optional[str] = None
     spec: Optional[str]
     region: str
     multi_region: Optional[bool]
+    description: Optional[str] = ""
+    aliases: Optional[list] = []
     tags: Optional[list] = []

@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock, patch
 
 from github import GithubException, RateLimitExceededException
+from pytest import raises
 
 from prowler.providers.github.services.organization.organization_service import (
     Org,
@@ -464,7 +465,7 @@ class Test_Organization_ErrorHandling:
                 assert any("Access denied" in msg for msg in log_messages)
 
     def test_rate_limit_error_handling(self):
-        """Test that rate limit errors are logged appropriately"""
+        """Test that rate limit errors in the scoped-organization path are propagated"""
         provider = set_mocked_github_provider()
         provider.repositories = []
         provider.organizations = ["test-org1"]
@@ -484,11 +485,140 @@ class Test_Organization_ErrorHandling:
             with patch(
                 "prowler.providers.github.services.organization.organization_service.logger"
             ) as mock_logger:
-                # Rate limit errors should be caught and logged at the outer level
-                orgs = organization_service._list_organizations()
+                # Rate limit errors are logged and propagated instead of silently
+                # dropping the scoped organization
+                with raises(RateLimitExceededException):
+                    organization_service._list_organizations()
 
-                # Should be empty due to rate limit error
-                assert len(orgs) == 0
-                # Should log rate limit error
                 mock_logger.error.assert_called()
                 assert "Rate limit exceeded" in str(mock_logger.error.call_args)
+                mock_client.get_user.assert_not_called()
+
+
+class Test_Organization_Default_Workflow_Permissions:
+    def _get_service(self):
+        """Build an Organization service without contacting GitHub"""
+        with patch(
+            "prowler.providers.github.services.organization.organization_service.GithubService.__init__"
+        ):
+            return Organization(set_mocked_github_provider())
+
+    def test_default_workflow_permissions_read(self):
+        """Test that the default workflow permissions value is read from the API response"""
+        organization_service = self._get_service()
+        mock_org = MagicMock()
+        mock_org.login = "test-org"
+        mock_org._requester.requestJsonAndCheck.return_value = (
+            {},
+            {"default_workflow_permissions": "read"},
+        )
+
+        assert (
+            organization_service._get_actions_workflow_permissions(mock_org)[0]
+            == "read"
+        ), "The organization default GITHUB_TOKEN permissions should be read from the Actions permissions endpoint"
+        mock_org._requester.requestJsonAndCheck.assert_called_once_with(
+            "GET",
+            "/orgs/test-org/actions/permissions/workflow",
+            headers={
+                "Accept": "application/vnd.github+json",
+                "X-GitHub-Api-Version": "2022-11-28",
+            },
+        )
+
+    def test_can_approve_pull_request_reviews(self):
+        """Test that the pull request approval setting is read from the same API response"""
+        organization_service = self._get_service()
+        mock_org = MagicMock()
+        mock_org.login = "test-org"
+        mock_org._requester.requestJsonAndCheck.return_value = (
+            {},
+            {
+                "default_workflow_permissions": "write",
+                "can_approve_pull_request_reviews": True,
+            },
+        )
+
+        assert organization_service._get_actions_workflow_permissions(mock_org) == (
+            "write",
+            True,
+        ), "Both Actions workflow permissions settings should come from a single request"
+        assert (
+            mock_org._requester.requestJsonAndCheck.call_count == 1
+        ), "Both settings should be read without issuing a second request"
+
+    def test_default_workflow_permissions_missing_field(self):
+        """Test that a response without the permissions field yields no value"""
+        organization_service = self._get_service()
+        mock_org = MagicMock()
+        mock_org.login = "test-org"
+        mock_org._requester.requestJsonAndCheck.return_value = ({}, {})
+
+        assert organization_service._get_actions_workflow_permissions(mock_org) == (
+            None,
+            None,
+        ), "An unexpected response payload should not be reported as a permissions value"
+
+    def test_default_workflow_permissions_unsupported_value(self):
+        """Test that a value outside read/write is treated as unknown rather than a failure
+
+        The endpoint documents only "read" and "write". Accepting any string meant a
+        value such as "READ" or "none" reached the check and produced a FAIL finding,
+        reporting a write-capable default the organization may not actually have.
+        """
+        organization_service = self._get_service()
+        mock_org = MagicMock()
+        mock_org.login = "test-org"
+        mock_org._requester.requestJsonAndCheck.return_value = (
+            {},
+            {"default_workflow_permissions": "none"},
+        )
+
+        assert organization_service._get_actions_workflow_permissions(mock_org) == (
+            None,
+            None,
+        ), "An unsupported permissions value should be left unknown instead of reported as write"
+
+    def test_default_workflow_permissions_not_available(self):
+        """Test that accounts without Actions permissions settings yield no value"""
+        organization_service = self._get_service()
+        mock_org = MagicMock()
+        mock_org.login = "test-user"
+        mock_org._requester.requestJsonAndCheck.side_effect = GithubException(
+            404, "Not Found", None
+        )
+
+        assert organization_service._get_actions_workflow_permissions(mock_org) == (
+            None,
+            None,
+        ), "Accounts without Actions permissions settings should not produce a value"
+
+    def test_default_workflow_permissions_access_denied(self):
+        """Test that a token without organization administration access yields no value"""
+        organization_service = self._get_service()
+        mock_org = MagicMock()
+        mock_org.login = "test-org"
+        mock_org._requester.requestJsonAndCheck.side_effect = GithubException(
+            403, "Forbidden", None
+        )
+
+        with patch(
+            "prowler.providers.github.services.organization.organization_service.logger"
+        ) as mock_logger:
+            assert organization_service._get_actions_workflow_permissions(mock_org) == (
+                None,
+                None,
+            ), "Insufficient permissions should not produce a value"
+            mock_logger.warning.assert_called()
+
+    def test_default_workflow_permissions_rate_limit(self):
+        """Test that rate limit errors are propagated instead of being reported as unavailable"""
+        organization_service = self._get_service()
+        mock_org = MagicMock()
+        mock_org.login = "test-org"
+        mock_org._requester.requestJsonAndCheck.side_effect = (
+            RateLimitExceededException(403, "Rate limit exceeded", None)
+        )
+
+        with raises(RateLimitExceededException):
+            organization_service._get_actions_workflow_permissions(mock_org)

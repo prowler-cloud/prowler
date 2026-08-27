@@ -41,6 +41,7 @@ jobs:
     timeout-minutes: 5
     outputs:
       short-sha: ${{ steps.set-short-sha.outputs.short-sha }}
+      created: ${{ steps.set-short-sha.outputs.created }}
     permissions:
       contents: read
     steps:
@@ -51,7 +52,9 @@ jobs:
 
       - name: Calculate short SHA
         id: set-short-sha
-        run: echo "short-sha=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+        run: |
+          echo "short-sha=${GITHUB_SHA::7}" >> "${GITHUB_OUTPUT}"
+          echo "created=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "${GITHUB_OUTPUT}"
 
   notify-release-started:
     if: github.repository == 'prowler-cloud/prowler' && (github.event_name == 'release' || github.event_name == 'workflow_dispatch')
@@ -110,15 +113,17 @@ jobs:
         with:
           egress-policy: block
           allowed-endpoints: >
-            github.com:443
-            registry-1.docker.io:443
             auth.docker.io:443
+            dl-cdn.alpinelinux.org:443
+            dualstack.j.sni.global.fastly.net:443
+            files.pythonhosted.org:443
+            ghcr.io:443
+            github.com:443
+            pkg-containers.githubusercontent.com:443
             production.cloudflare.docker.com:443
             production.cloudfront.docker.com:443
-            ghcr.io:443
-            pkg-containers.githubusercontent.com:443
-            files.pythonhosted.org:443
             pypi.org:443
+            registry-1.docker.io:443
 
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -141,17 +146,20 @@ jobs:
         with:
           context: ${{ env.WORKING_DIRECTORY }}
           push: true
+          sbom: true
+          # max, not the default min: min records little beyond the build ref.
+          provenance: mode=max
           platforms: ${{ matrix.platform }}
           tags: |
             ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.setup.outputs.short-sha }}-${{ matrix.arch }}
           labels: |
-            org.opencontainers.image.title=Prowler MCP Server
+            org.opencontainers.image.title=Prowler MCP
             org.opencontainers.image.description=Model Context Protocol server for Prowler
             org.opencontainers.image.vendor=ProwlerPro, Inc.
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
-            org.opencontainers.image.created=${{ github.event_name == 'release' && github.event.release.published_at || github.event.head_commit.timestamp }}
-            ${{ github.event_name == 'release' && format('org.opencontainers.image.version={0}', env.RELEASE_TAG) || '' }}
+            org.opencontainers.image.created=${{ needs.setup.outputs.created }}
+            ${{ (github.event_name == 'release' || github.event_name == 'workflow_dispatch') && format('org.opencontainers.image.version={0}', env.RELEASE_TAG) || '' }}
           cache-from: type=gha,scope=${{ matrix.arch }}
           cache-to: type=gha,mode=${{ github.event_name == 'pull_request' && 'min' || 'max' }},scope=${{ matrix.arch }}
 
@@ -169,11 +177,11 @@ jobs:
         with:
           egress-policy: block
           allowed-endpoints: >
-            registry-1.docker.io:443
             auth.docker.io:443
+            github.com:443
             production.cloudflare.docker.com:443
             production.cloudfront.docker.com:443
-            github.com:443
+            registry-1.docker.io:443
             release-assets.githubusercontent.com:443
 
       - name: Login to DockerHub
@@ -187,9 +195,9 @@ jobs:
         run: |
           docker buildx imagetools create \
             -t ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ env.LATEST_TAG }} \
-            -t ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${NEEDS_SETUP_OUTPUTS_SHORT_SHA} \
-            ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${NEEDS_SETUP_OUTPUTS_SHORT_SHA}-amd64 \
-            ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${NEEDS_SETUP_OUTPUTS_SHORT_SHA}-arm64
+            -t "${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${NEEDS_SETUP_OUTPUTS_SHORT_SHA}" \
+            "${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${NEEDS_SETUP_OUTPUTS_SHORT_SHA}-amd64" \
+            "${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${NEEDS_SETUP_OUTPUTS_SHORT_SHA}-arm64"
         env:
           NEEDS_SETUP_OUTPUTS_SHORT_SHA: ${{ needs.setup.outputs.short-sha }}
 
@@ -197,10 +205,10 @@ jobs:
         if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
         run: |
           docker buildx imagetools create \
-            -t ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${RELEASE_TAG} \
+            -t "${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${RELEASE_TAG}" \
             -t ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ env.STABLE_TAG }} \
-            ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${NEEDS_SETUP_OUTPUTS_SHORT_SHA}-amd64 \
-            ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${NEEDS_SETUP_OUTPUTS_SHORT_SHA}-arm64
+            "${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${NEEDS_SETUP_OUTPUTS_SHORT_SHA}-amd64" \
+            "${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${NEEDS_SETUP_OUTPUTS_SHORT_SHA}-arm64"
         env:
           NEEDS_SETUP_OUTPUTS_SHORT_SHA: ${{ needs.setup.outputs.short-sha }}
 
@@ -240,9 +248,9 @@ jobs:
         id: outcome
         run: |
           if [[ "${NEEDS_CONTAINER_BUILD_PUSH_RESULT}" == "success" && "${NEEDS_CREATE_MANIFEST_RESULT}" == "success" ]]; then
-            echo "outcome=success" >> $GITHUB_OUTPUT
+            echo "outcome=success" >> "$GITHUB_OUTPUT"
           else
-            echo "outcome=failure" >> $GITHUB_OUTPUT
+            echo "outcome=failure" >> "$GITHUB_OUTPUT"
           fi
         env:
           NEEDS_CONTAINER_BUILD_PUSH_RESULT: ${{ needs.container-build-push.result }}

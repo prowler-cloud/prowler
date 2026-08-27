@@ -1,0 +1,1 @@
+`ec2_securitygroup_not_used` no longer reports a false positive for security groups attached only to an AWS Batch compute environment, which holds them in configuration without creating a network interface while scaled down to zero instances

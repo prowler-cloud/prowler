@@ -1,0 +1,1 @@
+`prowler.compliance.universal` entry point directories are resolved through a single shared helper and deduplicated by resolved path, so a directory reached through two entry points is parsed once and a package that fails to import no longer hides the rest

@@ -166,9 +166,9 @@ export const pickLatestCisPerProvider = (
  *
  * Only universal compliance frameworks that declare an ``outputs`` block in
  * their schema (see ``prowler/compliance/<name>.json``) produce a dedicated
- * OCSF artifact during scan output generation. Today that is DORA and
- * CSA CCM 4.0. Any other framework only offers CSV (and, for the curated
- * list above, PDF).
+ * OCSF artifact during scan output generation. Today that is DORA,
+ * CSA CCM 4.0, CIS Controls 8.1 and CMMC 2.0. Any other framework only
+ * offers CSV (and, for the curated list above, PDF).
  *
  * Keep this Set in lock-step with the backend: ``get_prowler_provider_compliance``
  * + ``ComplianceFramework.outputs`` is the source of truth. The API will
@@ -181,6 +181,7 @@ const OCSF_SUPPORTED_COMPLIANCE_IDS: ReadonlySet<string> = new Set([
   "dora_2022_2554",
   "csa_ccm_4.0",
   "cis_controls_8.1",
+  "cmmc_2.0",
 ]);
 
 export const isOcsfSupported = (complianceId: string | undefined): boolean =>

@@ -1,12 +1,30 @@
 # Keep in sync with ui/.nvmrc.
-FROM node:24.13.0-alpine@sha256:cd6fb7efa6490f039f3471a189214d5f548c11df1ff9e5b181aa49e22c14383e AS base
+FROM node:24.18.1-alpine@sha256:f70403e87646dc51b45295f4b8b70cdad0b63d2297c4c9899119b03f7af7a6b3 AS base
 
 LABEL maintainer="https://github.com/prowler-cloud"
 
-# Patch Alpine OpenSSL runtime packages before all stages inherit the base image.
 # The build uses pnpm via corepack, so npm is unused — remove it (and npx) to drop
-# the bundled-npm CVE surface (node-tar CVE-2026-59873) from every stage, incl. prod.
-RUN apk upgrade --no-cache libcrypto3 libssl3 && corepack enable && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
+# the bundled-npm CVE surface from every stage, incl. prod.
+# No blanket apk upgrade: it resolves against Alpine's live repo, so the digest pin
+# above would not make the image reproducible. Move the digest forward instead, or
+# take a named package as the targeted exception below.
+RUN corepack enable && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
+
+# High CVEs fixed in Alpine 3.24 but not yet in the pinned base image:
+#   libcrypto3/libssl3 3.5.8-r0  CVE-2026-14456, CVE-2026-14457, CVE-2026-18798,
+#                                CVE-2026-54874, CVE-2026-63072, CVE-2026-63075,
+#                                CVE-2026-63076  (image ships 3.5.7-r0)
+# The base image pins node 24.18.1, which has not been rebuilt since that package
+# was published, so the upgrade is taken here rather than by moving the pin -- the
+# newest published node:24-alpine (24.19.0, built 2026-08-03) predates the
+# 2026-08-13 advisory and carries the same vulnerable version. libcrypto3 and
+# libssl3 are both built from openssl and are flagged separately, so both are named.
+# `>=` rather than `=`: Alpine keeps only the newest build of a package in a
+# branch's index, so an exact pin breaks this build the day 3.5.8-r0 is superseded.
+# Drop this once the base image ships 3.5.8-r0 or later.
+RUN apk add --no-cache --upgrade \
+    "libcrypto3>=3.5.8-r0" \
+    "libssl3>=3.5.8-r0"
 
 # Install dependencies only when needed
 FROM base AS deps
