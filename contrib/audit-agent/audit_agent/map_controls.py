@@ -172,7 +172,7 @@ def map_finding(finding: dict[str, Any], mapping: dict[str, Any] | None = None) 
     normalized["soc2"] = soc2
     normalized["iso27001"] = iso
     normalized["mapping_source"] = source
-    normalized["controls_label"] = _controls_label(soc2, iso)
+    normalized["controls_label"] = " / ".join(soc2 + iso) or "unmapped"
     return normalized
 
 
@@ -311,8 +311,3 @@ def summarize_by_section(
 
 def _fw(control: str) -> str:
     return "iso27001" if control.startswith("A.") else "soc2"
-
-
-def _controls_label(soc2: list[str], iso: list[str]) -> str:
-    parts = list(soc2) + list(iso)
-    return " / ".join(parts) if parts else "unmapped"

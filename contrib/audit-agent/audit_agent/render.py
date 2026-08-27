@@ -4,7 +4,13 @@ from __future__ import annotations
 
 from typing import Any
 
-from audit_agent.enums import FrameworkFamily, Provider, SecurityAspect, TrivyScanner
+from audit_agent.enums import (
+    SEVERITY_RANK,
+    FrameworkFamily,
+    Provider,
+    SecurityAspect,
+    TrivyScanner,
+)
 from audit_agent.map_controls import load_mapping, summarize_by_section
 
 COMMENT_MARKER = "<!-- prowler-audit-agent -->"
@@ -253,8 +259,6 @@ def group_findings_by_control(
 
 
 def _sev_rank(severity: str) -> int:
-    from audit_agent.enums import SEVERITY_RANK
-
     return SEVERITY_RANK.get((severity or "").lower(), 0)
 
 

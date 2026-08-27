@@ -17,11 +17,10 @@ PROVIDER_COMPLIANCE: dict[str, list[str]] = {
     Provider.KUBERNETES.value: ["iso27001_2022_kubernetes"],
     Provider.M365.value: ["iso27001_2022_m365"],
     Provider.NHN.value: ["iso27001_2022_nhn"],
-    # IaC is an external-tool provider — no compliance JSON yet
     Provider.IAC.value: [],
     Provider.GITHUB.value: [],
-    Provider.IMAGE.value: [],
-    Provider.LLM.value: [],
+    "image": [],
+    "llm": [],
 }
 
 # Always-on security frameworks for providers that lack SOC2/ISO JSON

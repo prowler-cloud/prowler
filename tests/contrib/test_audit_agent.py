@@ -216,10 +216,9 @@ def test_filter_by_files_skips_empty_and_avoids_basename_false_positives():
     assert titles == {"nested", "github-pathless"}
 
 
-def test_minimal_yaml_lists():
-    from audit_agent.config import _minimal_yaml
-
-    data = _minimal_yaml(
+def test_yaml_config_lists(tmp_path):
+    path = tmp_path / "prowler-audit.yml"
+    path.write_text(
         "\n".join(
             [
                 "frameworks:",
@@ -228,12 +227,14 @@ def test_minimal_yaml_lists():
                 "providers:",
                 "  - iac",
                 "reporting:",
-                "  issue_labels:",
+                "  issue-labels:",
                 "    - compliance",
                 "    - prowler-audit",
             ]
-        )
+        ),
+        encoding="utf-8",
     )
+    data = load_local_config(path)
     assert data["frameworks"] == ["soc2", "iso27001_2022"]
     assert data["providers"] == ["iac"]
     assert data["reporting"]["issue_labels"] == ["compliance", "prowler-audit"]
