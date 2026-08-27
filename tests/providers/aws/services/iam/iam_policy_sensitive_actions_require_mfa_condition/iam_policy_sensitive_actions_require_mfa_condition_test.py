@@ -353,3 +353,199 @@ class Test_iam_policy_sensitive_actions_require_mfa_condition:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].resource_arn == policy_arn
+
+    @mock_aws
+    def test_no_resources(self):
+        """No customer-managed policies means no findings, not a spurious FAIL."""
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        from prowler.providers.aws.services.iam.iam_service import IAM
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.iam.iam_policy_sensitive_actions_require_mfa_condition.iam_policy_sensitive_actions_require_mfa_condition.iam_client",
+                new=IAM(aws_provider),
+            ),
+        ):
+            from prowler.providers.aws.services.iam.iam_policy_sensitive_actions_require_mfa_condition.iam_policy_sensitive_actions_require_mfa_condition import (
+                iam_policy_sensitive_actions_require_mfa_condition,
+            )
+
+            check = iam_policy_sensitive_actions_require_mfa_condition()
+            result = check.execute()
+            assert result == []
+
+    @mock_aws
+    def test_fail_mfa_condition_explicitly_false(self):
+        """A Condition setting aws:MultiFactorAuthPresent to false is not a
+        passing MFA requirement; it must still be flagged as unprotected."""
+        iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
+        policy_name = "policy1"
+        policy_document = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Action": "iam:PassRole",
+                    "Resource": f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:role/ecs",
+                    "Condition": {"Bool": {"aws:MultiFactorAuthPresent": "false"}},
+                },
+            ],
+        }
+        policy_arn = iam_client.create_policy(
+            PolicyName=policy_name, PolicyDocument=dumps(policy_document)
+        )["Policy"]["Arn"]
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        from prowler.providers.aws.services.iam.iam_service import IAM
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.iam.iam_policy_sensitive_actions_require_mfa_condition.iam_policy_sensitive_actions_require_mfa_condition.iam_client",
+                new=IAM(aws_provider),
+            ),
+        ):
+            from prowler.providers.aws.services.iam.iam_policy_sensitive_actions_require_mfa_condition.iam_policy_sensitive_actions_require_mfa_condition import (
+                iam_policy_sensitive_actions_require_mfa_condition,
+            )
+
+            check = iam_policy_sensitive_actions_require_mfa_condition()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert result[0].resource_arn == policy_arn
+
+    @mock_aws
+    def test_fail_mfa_condition_wrong_operator(self):
+        """StringEquals is not a valid operator for the Boolean
+        aws:MultiFactorAuthPresent key; it must not satisfy the check."""
+        iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
+        policy_name = "policy1"
+        policy_document = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Action": "iam:PassRole",
+                    "Resource": f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:role/ecs",
+                    "Condition": {
+                        "StringEquals": {"aws:MultiFactorAuthPresent": "true"}
+                    },
+                },
+            ],
+        }
+        policy_arn = iam_client.create_policy(
+            PolicyName=policy_name, PolicyDocument=dumps(policy_document)
+        )["Policy"]["Arn"]
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        from prowler.providers.aws.services.iam.iam_service import IAM
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.iam.iam_policy_sensitive_actions_require_mfa_condition.iam_policy_sensitive_actions_require_mfa_condition.iam_client",
+                new=IAM(aws_provider),
+            ),
+        ):
+            from prowler.providers.aws.services.iam.iam_policy_sensitive_actions_require_mfa_condition.iam_policy_sensitive_actions_require_mfa_condition import (
+                iam_policy_sensitive_actions_require_mfa_condition,
+            )
+
+            check = iam_policy_sensitive_actions_require_mfa_condition()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert result[0].resource_arn == policy_arn
+
+    @mock_aws
+    def test_fail_iam_wildcard_without_mfa(self):
+        """iam:* covers the sensitive actions and must be expanded, not
+        exact-matched, to be caught."""
+        iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
+        policy_name = "policy1"
+        policy_document = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {"Effect": "Allow", "Action": "iam:*", "Resource": "*"},
+            ],
+        }
+        policy_arn = iam_client.create_policy(
+            PolicyName=policy_name, PolicyDocument=dumps(policy_document)
+        )["Policy"]["Arn"]
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        from prowler.providers.aws.services.iam.iam_service import IAM
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.iam.iam_policy_sensitive_actions_require_mfa_condition.iam_policy_sensitive_actions_require_mfa_condition.iam_client",
+                new=IAM(aws_provider),
+            ),
+        ):
+            from prowler.providers.aws.services.iam.iam_policy_sensitive_actions_require_mfa_condition.iam_policy_sensitive_actions_require_mfa_condition import (
+                iam_policy_sensitive_actions_require_mfa_condition,
+            )
+
+            check = iam_policy_sensitive_actions_require_mfa_condition()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert result[0].resource_arn == policy_arn
+            assert search("iam:passrole", result[0].status_extended)
+            assert search("iam:createaccesskey", result[0].status_extended)
+
+    @mock_aws
+    def test_fail_notaction_without_mfa(self):
+        """A NotAction excluding an unrelated service implicitly grants the
+        sensitive actions and must still be caught."""
+        iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
+        policy_name = "policy1"
+        policy_document = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {"Effect": "Allow", "NotAction": "s3:*", "Resource": "*"},
+            ],
+        }
+        policy_arn = iam_client.create_policy(
+            PolicyName=policy_name, PolicyDocument=dumps(policy_document)
+        )["Policy"]["Arn"]
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        from prowler.providers.aws.services.iam.iam_service import IAM
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.iam.iam_policy_sensitive_actions_require_mfa_condition.iam_policy_sensitive_actions_require_mfa_condition.iam_client",
+                new=IAM(aws_provider),
+            ),
+        ):
+            from prowler.providers.aws.services.iam.iam_policy_sensitive_actions_require_mfa_condition.iam_policy_sensitive_actions_require_mfa_condition import (
+                iam_policy_sensitive_actions_require_mfa_condition,
+            )
+
+            check = iam_policy_sensitive_actions_require_mfa_condition()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert result[0].resource_arn == policy_arn
+            assert search("iam:passrole", result[0].status_extended)
+            assert result[0].resource_arn == policy_arn

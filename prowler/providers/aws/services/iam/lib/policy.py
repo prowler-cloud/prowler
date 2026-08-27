@@ -1122,8 +1122,14 @@ def has_codebuild_trusted_principal(trust_policy: dict) -> bool:
 
 def has_mfa_condition(statement: dict) -> bool:
     """
-    has_mfa_condition checks whether an IAM policy statement's Condition block
-    requires the aws:MultiFactorAuthPresent context key to be present.
+    Checks whether an IAM policy statement's Condition block requires
+    aws:MultiFactorAuthPresent to be true.
+
+    aws:MultiFactorAuthPresent is a Boolean context key, so it is only
+    meaningful under the Bool or BoolIfExists operators, and only when its
+    value actually evaluates to true — a statement setting it to "false" is
+    not requiring MFA, it is explicitly describing the unauthenticated case,
+    so it must not be treated as a passing condition.
 
     Args:
         statement (dict): An IAM policy statement, e.g.:
@@ -1137,20 +1143,27 @@ def has_mfa_condition(statement: dict) -> bool:
         }
 
     Returns:
-        bool: True if the statement's Condition block references
-            aws:MultiFactorAuthPresent under any condition operator
-            (e.g. Bool, BoolIfExists), False otherwise.
+        bool: True if the statement's Condition block requires
+            aws:MultiFactorAuthPresent to be true under Bool or
+            BoolIfExists, False otherwise.
     """
     condition = statement.get("Condition")
     if not isinstance(condition, dict):
         return False
 
-    for operator_block in condition.values():
+    for operator, operator_block in condition.items():
+        # Condition operator and context key names are not case-sensitive,
+        # so compare in lowercase (see is_condition_block_restrictive above).
+        if operator.lower() not in ("bool", "boolifexists"):
+            continue
         if not isinstance(operator_block, dict):
             continue
-        # Condition context key names are not case-sensitive, so compare
-        # in lowercase (see is_condition_block_restrictive above).
-        if any(key.lower() == "aws:multifactorauthpresent" for key in operator_block):
-            return True
+
+        for key, value in operator_block.items():
+            if key.lower() != "aws:multifactorauthpresent":
+                continue
+            values = value if isinstance(value, list) else [value]
+            if any(str(v).lower() == "true" for v in values):
+                return True
 
     return False

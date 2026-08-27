@@ -1,6 +1,9 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.iam.iam_client import iam_client
-from prowler.providers.aws.services.iam.lib.policy import has_mfa_condition
+from prowler.providers.aws.services.iam.lib.policy import (
+    get_effective_actions,
+    has_mfa_condition,
+)
 
 # Actions capable of privilege escalation or credential creation, where
 # requiring MFA at the point of use is a meaningful defense-in-depth control
@@ -15,7 +18,22 @@ SENSITIVE_ACTIONS = {
 
 
 class iam_policy_sensitive_actions_require_mfa_condition(Check):
-    def execute(self) -> Check_Report_AWS:
+    """Check that customer-managed IAM policies require MFA for sensitive actions.
+
+    Flags statements that grant sensitive, escalation-capable actions
+    (see SENSITIVE_ACTIONS) — including via wildcards like `iam:*` or a
+    `NotAction` clause — without a Condition block requiring
+    aws:MultiFactorAuthPresent.
+    """
+
+    def execute(self) -> list[Check_Report_AWS]:
+        """Execute the check against every customer-managed IAM policy.
+
+        Returns:
+            list[Check_Report_AWS]: One report per customer-managed policy,
+                FAIL if any statement grants a sensitive action without an
+                MFA condition, PASS otherwise.
+        """
         findings = []
 
         for policy in iam_client.policies.values():
@@ -39,14 +57,16 @@ class iam_policy_sensitive_actions_require_mfa_condition(Check):
                     if statement.get("Effect") != "Allow":
                         continue
 
-                    actions = statement.get("Action", [])
-                    if not isinstance(actions, list):
-                        actions = [actions]
-                    normalized_actions = {
-                        action.lower() for action in actions if isinstance(action, str)
+                    # Wrapping the single statement lets get_effective_actions
+                    # expand wildcards (e.g. iam:*) and NotAction clauses for
+                    # just this statement, using the same logic already
+                    # relied on elsewhere in this file.
+                    effective_actions = {
+                        action.lower()
+                        for action in get_effective_actions({"Statement": [statement]})
                     }
 
-                    matched_actions = normalized_actions & SENSITIVE_ACTIONS
+                    matched_actions = effective_actions & SENSITIVE_ACTIONS
                     if matched_actions and not has_mfa_condition(statement):
                         unprotected_actions.update(matched_actions)
 
