@@ -2735,6 +2735,19 @@ class TestJiraIntegration:
         assert result.outcome == JiraIssueLookupOutcome.UNKNOWN
         assert result.http_status == 403
 
+    @patch.object(Jira, "get_access_token", side_effect=JiraGetAccessTokenError())
+    @patch("prowler.lib.outputs.jira.jira.requests.post")
+    def test_get_issues_status_access_token_error_returns_unknown(
+        self, mock_post, mock_get_access_token
+    ):
+        reference = JiraIssueReference("10001", "SEC-1")
+        result = self.jira_integration.get_issues_status([reference])[0]
+
+        assert result.outcome == JiraIssueLookupOutcome.UNKNOWN
+        assert result.error_code == "authentication_failed"
+        mock_get_access_token.assert_called_once_with()
+        mock_post.assert_not_called()
+
     @pytest.mark.parametrize(
         "issues",
         [
@@ -2815,6 +2828,18 @@ class TestJiraIntegration:
         assert result.outcome == expected_outcome
         assert result.error_code == expected_code
         assert result.retry_after == retry_after
+
+    @patch.object(Jira, "get_access_token", side_effect=JiraGetAccessTokenError())
+    @patch("prowler.lib.outputs.jira.jira.requests.post")
+    def test_search_issues_by_delivery_attempt_access_token_error_returns_unknown(
+        self, mock_post, mock_get_access_token
+    ):
+        result = self.jira_integration.search_issues_by_delivery_attempt("attempt-123")
+
+        assert result.outcome == JiraIssueSearchOutcome.UNKNOWN
+        assert result.error_code == "authentication_failed"
+        mock_get_access_token.assert_called_once_with()
+        mock_post.assert_not_called()
 
     @pytest.mark.parametrize(
         "issue",

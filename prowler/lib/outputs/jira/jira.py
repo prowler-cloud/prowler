@@ -2581,7 +2581,11 @@ class Jira:
         if valid_references:
             try:
                 access_token = self.get_access_token()
-            except (JiraRefreshTokenError, JiraRefreshTokenResponseError):
+            except (
+                JiraRefreshTokenError,
+                JiraRefreshTokenResponseError,
+                JiraGetAccessTokenError,
+            ):
                 access_token = None
             if not access_token:
                 self._set_unknown_issue_statuses(
@@ -2746,7 +2750,11 @@ class Jira:
             )
         try:
             access_token = self.get_access_token()
-        except (JiraRefreshTokenError, JiraRefreshTokenResponseError):
+        except (
+            JiraRefreshTokenError,
+            JiraRefreshTokenResponseError,
+            JiraGetAccessTokenError,
+        ):
             access_token = None
         if not access_token:
             return result(
