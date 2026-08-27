@@ -109,9 +109,7 @@ const mergeOptions = (
 };
 
 const ManageIntegrationLink = () => (
-  // `text-xs` over `link-sm`'s `text-sm`: the link sits inline with the
-  // notice's own copy and must not read louder than it.
-  <Button variant="link" size="link-sm" className="h-auto p-0 text-xs" asChild>
+  <Button variant="link" size="link-xs" className="h-auto p-0" asChild>
     <Link href={SLACK_INTEGRATION_HREF}>Manage the Slack integration</Link>
   </Button>
 );

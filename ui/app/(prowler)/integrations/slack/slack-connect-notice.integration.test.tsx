@@ -46,6 +46,18 @@ describe("returning from Slack", () => {
     expect(harness.hasConnectNotice()).toBe(true);
   }, 30000);
 
+  it("does not claim success when the server lists no connected workspace", async () => {
+    // Given - a handcrafted success token but no Slack integration in server data.
+    const harness = new SlackIntegrationHarness(slackFixture());
+
+    // When
+    await harness.mountAfterReturnFromSlack({ slack: "connected" });
+
+    // Then - the page treats the unverified claim as an unconfirmed install.
+    expect(await harness.connectNoticeTitle()).toBe(UNCONFIRMED_TITLE);
+    expect(harness.offersInstall()).toBe(true);
+  }, 30000);
+
   it("keeps the query params the notice does not own", async () => {
     const harness = new SlackIntegrationHarness(slackFixture());
 

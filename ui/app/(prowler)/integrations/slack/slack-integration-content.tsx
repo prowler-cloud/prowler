@@ -47,7 +47,7 @@ export async function SlackIntegrationContent() {
     <div className="flex flex-col gap-6">
       {/* Suspense: the notice reads `useSearchParams`. */}
       <Suspense fallback={null}>
-        <SlackConnectNotice />
+        <SlackConnectNotice hasConnectedWorkspace={Boolean(integration)} />
       </Suspense>
       <SlackIntegrationManager
         integration={integration}

@@ -2,10 +2,11 @@
 
 import { AlertCircle, CircleCheck } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { ComponentProps } from "react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/shadcn";
+import { useMountEffect } from "@/hooks/use-mount-effect";
 import {
   readSlackConnectOutcome,
   SLACK_CONNECT_PARAMS,
@@ -114,14 +115,20 @@ const noticeFor = (outcome: SlackConnectOutcome): NoticeContent => {
  * RSC refetch here buys nothing (the exchange already revalidated), and a
  * client navigation is exactly what the callback stopped relying on.
  */
-export const SlackConnectNotice = () => {
+interface SlackConnectNoticeProps {
+  hasConnectedWorkspace: boolean;
+}
+
+export const SlackConnectNotice = ({
+  hasConnectedWorkspace,
+}: SlackConnectNoticeProps) => {
   const searchParams = useSearchParams();
   // Read once into state: the notice has to survive its own URL cleanup.
   const [outcome] = useState<SlackConnectOutcome | null>(() =>
     readSlackConnectOutcome(new URLSearchParams(searchParams.toString())),
   );
 
-  useEffect(() => {
+  useMountEffect(() => {
     if (!outcome) return;
     const params = new URLSearchParams(window.location.search);
     SLACK_CONNECT_PARAMS.forEach((param) => params.delete(param));
@@ -131,11 +138,15 @@ export const SlackConnectNotice = () => {
       "",
       query ? `${window.location.pathname}?${query}` : window.location.pathname,
     );
-  }, [outcome]);
+  });
 
   if (!outcome) return null;
 
-  const notice = noticeFor(outcome);
+  const verifiedOutcome =
+    outcome.status === SLACK_CONNECT_STATUS.CONNECTED && !hasConnectedWorkspace
+      ? { ...outcome, status: SLACK_CONNECT_STATUS.UNCONFIRMED }
+      : outcome;
+  const notice = noticeFor(verifiedOutcome);
 
   return (
     <Alert data-slack-connect-notice variant={notice.variant}>
