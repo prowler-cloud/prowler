@@ -148,6 +148,7 @@ from prowler.providers.gcp.models import GCPOutputOptions
 from prowler.providers.github.models import GithubOutputOptions
 from prowler.providers.googleworkspace.models import GoogleWorkspaceOutputOptions
 from prowler.providers.huaweicloud.models import HuaweiCloudOutputOptions
+from prowler.providers.iac.exceptions.exceptions import IacBaseException
 from prowler.providers.iac.models import IACOutputOptions
 from prowler.providers.image.exceptions.exceptions import ImageBaseException
 from prowler.providers.image.models import ImageOutputOptions
@@ -565,12 +566,16 @@ def prowler():
                 except ImageBaseException as error:
                     logger.critical(f"{error}")
                     sys.exit(1)
+            elif provider == "iac":
+                try:
+                    findings = global_provider.run()
+                except IacBaseException as error:
+                    logger.critical(f"{error}")
+                    sys.exit(1)
             else:
-                # IAC and external tool-wrapper providers registered via entry
-                # points. Unexpected failures propagate to the outer except
-                # Exception backstop further down in this file — keeping the
-                # branch free of an Image-specific catch that would otherwise
-                # mislead plug-in authors reading this code.
+                # External tool-wrapper providers registered via entry points.
+                # Unexpected failures propagate to the outer except Exception
+                # backstop further down in this file.
                 findings = global_provider.run()
             # Note: External tool providers don't support granular progress tracking since
             # they run external tools as a black box and return all findings at once.
