@@ -45,6 +45,39 @@ class TestOutputs:
 
         client = get_s3_client()
         assert client is not None
+        mock_boto_client.assert_called_once_with(
+            "s3",
+            aws_access_key_id="test",
+            aws_secret_access_key="test",
+            aws_session_token="token",
+            region_name="eu-west-1",
+        )
+        client_mock.list_buckets.assert_called()
+
+    @patch("tasks.jobs.export.boto3.client")
+    @patch("tasks.jobs.export.settings")
+    def test_get_s3_client_empty_session_token_passed_as_none(
+        self, mock_settings, mock_boto_client
+    ):
+        mock_settings.DJANGO_OUTPUT_S3_AWS_ACCESS_KEY_ID = "test"
+        mock_settings.DJANGO_OUTPUT_S3_AWS_SECRET_ACCESS_KEY = "test"
+        mock_settings.DJANGO_OUTPUT_S3_AWS_SESSION_TOKEN = ""
+        mock_settings.DJANGO_OUTPUT_S3_AWS_DEFAULT_REGION = "eu-west-1"
+
+        client_mock = MagicMock()
+        mock_boto_client.return_value = client_mock
+
+        client = get_s3_client()
+        assert client is not None
+        # botocore emits an empty X-Amz-Security-Token in presigned URLs for
+        # any token that is not None, which S3-compatible stores reject.
+        mock_boto_client.assert_called_once_with(
+            "s3",
+            aws_access_key_id="test",
+            aws_secret_access_key="test",
+            aws_session_token=None,
+            region_name="eu-west-1",
+        )
         client_mock.list_buckets.assert_called()
 
     @patch("tasks.jobs.export.boto3.client")
