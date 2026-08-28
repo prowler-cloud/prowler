@@ -188,7 +188,7 @@ Examples:
 Never set `FAIL` because an API call failed (missing permission or scope, API not enabled, feature not licensed, data unavailable). That is a scan-configuration problem, not a security issue, and it surfaces as a misleading high-severity finding.
 
 - Service: log the error and expose it distinctly from an empty result (`None` instead of `[]`, an `*_error` attribute, or a `*_lookup_failed` set). Only treat real access errors this way; a `404`/not-found usually means "not configured" and IS a legitimate `FAIL`.
-- Check: emit ONE tenant/account/project-level `MANUAL` finding (not one per resource) whose `status_extended` says the check cannot be evaluated and names the required permission/API/license.
+- Check: emit ONE tenant/account/project/subscription-level `MANUAL` finding (not one per resource) whose `status_extended` says the check cannot be evaluated and names the required permission/API/license.
 - Do not touch `report.check_metadata.Severity` to hide it.
 
 ```python

@@ -34,23 +34,26 @@ class cloudwatch_changes_to_network_acls_alarm_configured(Check):
             self.metadata(),
         )
 
-        if cloudtrail_client.trails is not None:
-            if report is None:
-                report = Check_Report_AWS(metadata=self.metadata(), resource={})
-                if (
-                    logs_client.metric_filters is None
-                    or cloudwatch_client.metric_alarms is None
-                ):
-                    report.status = "MANUAL"
-                    report.status_extended = "Cannot evaluate CloudWatch metric filters and alarms: metric filters or alarms could not be listed. Verify that the scanning credentials are allowed to call logs:DescribeMetricFilters and cloudwatch:DescribeAlarms."
-                else:
-                    report.status = "FAIL"
-                    report.status_extended = "No CloudWatch log groups found with metric filters or alarms associated."
-                report.region = logs_client.region
-                report.resource_id = logs_client.audited_account
-                report.resource_arn = logs_client.log_group_arn_template
-                report.resource_tags = []
+        if report is None:
+            report = Check_Report_AWS(metadata=self.metadata(), resource={})
+            if (
+                cloudtrail_client.trails_unavailable
+                or logs_client.metric_filters_unavailable
+                or cloudwatch_client.metric_alarms_unavailable
+            ):
+                # A denied listing in any region means the inventory is
+                # incomplete, so the absence of a matching filter/alarm cannot
+                # be treated as a finding.
+                report.status = "MANUAL"
+                report.status_extended = "Cannot evaluate CloudWatch metric filters and alarms: CloudTrail trails, metric filters or alarms could not be listed in at least one region. Verify that the scanning credentials are allowed to call cloudtrail:DescribeTrails, logs:DescribeMetricFilters and cloudwatch:DescribeAlarms."
+            else:
+                report.status = "FAIL"
+                report.status_extended = "No CloudWatch log groups found with metric filters or alarms associated."
+            report.region = logs_client.region
+            report.resource_id = logs_client.audited_account
+            report.resource_arn = logs_client.log_group_arn_template
+            report.resource_tags = []
 
-            findings.append(report)
+        findings.append(report)
 
         return findings

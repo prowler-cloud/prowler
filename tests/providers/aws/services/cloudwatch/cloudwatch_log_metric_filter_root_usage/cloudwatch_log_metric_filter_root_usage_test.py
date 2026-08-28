@@ -615,8 +615,10 @@ class Test_cloudwatch_log_metric_filter_root_usage:
         # (AccessDeniedException / AccessDenied).
         if metric_filters_none:
             logs.metric_filters = None
+            logs.metric_filters_unavailable = True
         if metric_alarms_none:
             cloudwatch.metric_alarms = None
+            cloudwatch.metric_alarms_unavailable = True
 
         with (
             mock.patch(
@@ -657,6 +659,103 @@ class Test_cloudwatch_log_metric_filter_root_usage:
         assert "logs:DescribeMetricFilters" in result[0].status_extended
         assert result[0].resource_id == AWS_ACCOUNT_NUMBER
         assert result[0].region == AWS_REGION_EU_WEST_1
+
+    @mock_aws
+    def test_cloudwatch_metric_filters_partially_denied(self):
+        """Filters listed in one region but denied in another -> MANUAL.
+
+        The service keeps the partial list (not None) and only raises the
+        ``metric_filters_unavailable`` flag; with no matching filter the check
+        must not claim FAIL.
+        """
+        from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
+            Cloudtrail,
+        )
+        from prowler.providers.aws.services.cloudwatch.cloudwatch_service import (
+            CloudWatch,
+            Logs,
+        )
+
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
+        logs = Logs(aws_provider)
+        assert logs.metric_filters == []
+        logs.metric_filters_unavailable = True
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_root_usage.cloudwatch_log_metric_filter_root_usage.logs_client",
+                new=logs,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_root_usage.cloudwatch_log_metric_filter_root_usage.cloudwatch_client",
+                new=CloudWatch(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_root_usage.cloudwatch_log_metric_filter_root_usage.cloudtrail_client",
+                new=Cloudtrail(aws_provider),
+            ),
+        ):
+            from prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_root_usage.cloudwatch_log_metric_filter_root_usage import (
+                cloudwatch_log_metric_filter_root_usage,
+            )
+
+            result = cloudwatch_log_metric_filter_root_usage().execute()
+
+        assert len(result) == 1
+        assert result[0].status == "MANUAL"
+        assert "in at least one region" in result[0].status_extended
+
+    @mock_aws
+    def test_cloudwatch_trails_access_denied(self):
+        """cloudtrail:DescribeTrails denied -> MANUAL instead of no finding."""
+        from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
+            Cloudtrail,
+        )
+        from prowler.providers.aws.services.cloudwatch.cloudwatch_service import (
+            CloudWatch,
+            Logs,
+        )
+
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
+        cloudtrail = Cloudtrail(aws_provider)
+        cloudtrail.trails = None
+        cloudtrail.trails_unavailable = True
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_root_usage.cloudwatch_log_metric_filter_root_usage.logs_client",
+                new=Logs(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_root_usage.cloudwatch_log_metric_filter_root_usage.cloudwatch_client",
+                new=CloudWatch(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_root_usage.cloudwatch_log_metric_filter_root_usage.cloudtrail_client",
+                new=cloudtrail,
+            ),
+        ):
+            from prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_root_usage.cloudwatch_log_metric_filter_root_usage import (
+                cloudwatch_log_metric_filter_root_usage,
+            )
+
+            result = cloudwatch_log_metric_filter_root_usage().execute()
+
+        assert len(result) == 1
+        assert result[0].status == "MANUAL"
+        assert "cloudtrail:DescribeTrails" in result[0].status_extended
 
     @mock_aws
     def test_cloudwatch_metric_alarms_access_denied(self):

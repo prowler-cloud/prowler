@@ -19,6 +19,9 @@ class CloudWatch(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.metric_alarms = []
+        # True when DescribeAlarms was denied in at least one audited region,
+        # so the alarm inventory may be incomplete.
+        self.metric_alarms_unavailable = False
         self.__threading_call__(self._describe_alarms)
         if self.metric_alarms:
             self._list_tags_for_resource()
@@ -56,6 +59,7 @@ class CloudWatch(AWSService):
                 logger.error(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
+                self.metric_alarms_unavailable = True
                 if not self.metric_alarms:
                     self.metric_alarms = None
             else:
@@ -103,6 +107,9 @@ class Logs(AWSService):
         self.resource_policies = {}
         self.__threading_call__(self._describe_resource_policies)
         self.metric_filters = []
+        # True when DescribeMetricFilters was denied in at least one audited
+        # region, so the metric filter inventory may be incomplete.
+        self.metric_filters_unavailable = False
         self.__threading_call__(self._describe_metric_filters)
         if self.log_groups:
             if (
@@ -176,6 +183,7 @@ class Logs(AWSService):
                 logger.error(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
+                self.metric_filters_unavailable = True
                 if not self.metric_filters:
                     self.metric_filters = None
             else:
