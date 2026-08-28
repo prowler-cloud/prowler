@@ -1,6 +1,8 @@
 from pathlib import Path
 from unittest.mock import MagicMock
 
+import pytest
+
 from prowler.lib.check.models import CheckMetadata
 from prowler.providers.googleworkspace.services.rules import rules_service
 from prowler.providers.googleworkspace.services.rules.lib.alerts import (
@@ -48,15 +50,14 @@ METADATA_FILE = (
 METADATA = CheckMetadata.parse_file(METADATA_FILE).json()
 
 
-def run(alerts, severities={"MEDIUM"}, policies_fetched=True):
+def run(alerts, minimum_severity="MEDIUM", policies_fetched=True):
     return evaluate_system_defined_alert(
-        make_client(alerts, policies_fetched), METADATA, RULE_NAME, severities
+        make_client(alerts, policies_fetched), METADATA, RULE_NAME, minimum_severity
     )
 
 
 class TestEvaluateSystemDefinedAlert:
     def test_evaluates_only_the_requested_rule(self):
-        """A workspace returns every system rule; only the mapped one is reported"""
         findings = run(
             [
                 configured(display_name=OTHER_RULE, state="INACTIVE", severity=None),
@@ -75,26 +76,46 @@ class TestEvaluateSystemDefinedAlert:
     def test_no_finding_when_fetch_failed(self):
         assert run([configured()], policies_fetched=False) == []
 
-    def test_accepts_any_of_several_severities(self):
-        for severity in ("HIGH", "MEDIUM"):
-            findings = run([configured(severity=severity)], {"HIGH", "MEDIUM"})
-            assert findings[0].status == "PASS"
+    @pytest.mark.parametrize("severity", ["MEDIUM", "HIGH"])
+    def test_a_severity_above_the_minimum_is_stricter_not_weaker(self, severity):
+        findings = run([configured(severity=severity)], "MEDIUM")
 
-    def test_reports_the_accepted_severities_on_failure(self):
-        findings = run([configured(severity="LOW")], {"HIGH", "MEDIUM"})
+        assert findings[0].status == "PASS"
+
+    @pytest.mark.parametrize("severity", ["CRITICAL", "high", "SEVERITY_UNSPECIFIED"])
+    def test_an_unrankable_severity_is_not_claimed_to_be_below_the_minimum(
+        self, severity
+    ):
+        """Saying CRITICAL falls short of MEDIUM would be a lie, not a finding"""
+        findings = run([configured(severity=severity)], "MEDIUM")
 
         assert findings[0].status == "FAIL"
-        assert "severity is LOW (should be HIGH or MEDIUM)" in (
+        assert f"severity is {severity}, which is not one of" in (
+            findings[0].status_extended
+        )
+        assert f"should be at least {severity}" not in findings[0].status_extended
+
+    def test_reports_the_minimum_severity_on_failure(self):
+        findings = run([configured(severity="LOW")], "MEDIUM")
+
+        assert findings[0].status == "FAIL"
+        assert "severity is LOW (should be at least MEDIUM)" in (
             findings[0].status_extended
         )
 
-    def test_does_not_blame_the_tenant_for_a_rule_the_api_never_returned(self):
-        """Values inferred from Google's defaults were never observed"""
+    def test_an_unobserved_rule_left_on_an_active_default_is_manual(self):
+        """Google documents no default severity, so it cannot be verified"""
         findings = run([configured(severity=None, from_default=True)])
 
-        assert findings[0].status == "FAIL"
+        assert findings[0].status == "MANUAL"
         assert "was not returned by the API" in findings[0].status_extended
-        assert "severity is not configured" not in findings[0].status_extended
+
+    def test_an_unobserved_rule_that_defaults_to_off_still_fails(self):
+        """The OFF default is documented, so it fails whatever the severity is"""
+        findings = run([configured(state="INACTIVE", severity=None, from_default=True)])
+
+        assert findings[0].status == "FAIL"
+        assert "Google's default for it is OFF" in findings[0].status_extended
 
     def test_reports_every_failing_condition(self):
         findings = run(

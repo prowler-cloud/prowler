@@ -2542,6 +2542,16 @@
           "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
           "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled"
         ],
+        "googleworkspace": [
+          "rules_admin_privilege_granted_alert_configured",
+          "rules_gmail_employee_spoofing_alert_configured",
+          "rules_government_backed_attacks_alert_configured",
+          "rules_leaked_password_alert_configured",
+          "rules_password_changed_alert_configured",
+          "rules_suspicious_activity_suspension_alert_configured",
+          "rules_suspicious_login_alert_configured",
+          "rules_suspicious_programmatic_login_alert_configured"
+        ],
         "oraclecloud": [
           "events_rule_cloudguard_problems",
           "events_rule_iam_group_changes",
@@ -3391,6 +3401,16 @@
           "defender_ensure_notify_alerts_severity_is_high",
           "defender_ensure_notify_emails_to_owners",
           "monitor_alert_create_update_security_solution"
+        ],
+        "googleworkspace": [
+          "rules_admin_privilege_granted_alert_configured",
+          "rules_gmail_employee_spoofing_alert_configured",
+          "rules_government_backed_attacks_alert_configured",
+          "rules_leaked_password_alert_configured",
+          "rules_password_changed_alert_configured",
+          "rules_suspicious_activity_suspension_alert_configured",
+          "rules_suspicious_login_alert_configured",
+          "rules_suspicious_programmatic_login_alert_configured"
         ],
         "oraclecloud": [
           "events_notification_topic_and_subscription_exists",

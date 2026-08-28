@@ -80,7 +80,7 @@ class TestSecurity2svEnforced:
         "overrides, expected",
         [
             ({"two_sv_enforced_from": None}, "not configured"),
-            ({"two_sv_enforced_from": ""}, "enforcement is set to OFF"),
+            ({"two_sv_enforced_from": ""}, "not configured"),
             ({"two_sv_enforced_from": "1970-01-01T00:00:00Z"}, "OFF"),
             ({"two_sv_allow_enrollment": False}, "not allowed to turn on"),
             (
@@ -97,10 +97,21 @@ class TestSecurity2svEnforced:
                 "enforcement does not start until 2099-01-01T00:00:00Z",
             ),
             (
+                {"two_sv_enforced_from": "not-a-date"},
+                "enforcement start date 'not-a-date' could not be read",
+            ),
+            (
                 {"two_sv_enrollment_grace_period": "28d"},
                 "enrollment period '28d' could not be read",
             ),
-            ({"two_sv_allowed_factor_set": "ALL"}, "any method is allowed"),
+            (
+                {"two_sv_allowed_factor_set": "ALL"},
+                "the allowed methods are ALL",
+            ),
+            (
+                {"two_sv_allowed_factor_set": "SOME_FUTURE_ENUM"},
+                "the allowed methods are SOME_FUTURE_ENUM",
+            ),
             (
                 {"two_sv_allowed_factor_set": None},
                 "allowed methods are not configured",

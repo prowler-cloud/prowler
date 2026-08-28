@@ -1,35 +1,45 @@
 """Shared evaluation of the system-defined alert rules audited by CIS section 6."""
 
-from typing import TYPE_CHECKING, List, Set
+from typing import TYPE_CHECKING, List
 
 from prowler.lib.check.models import CheckReportGoogleWorkspace
 
 if TYPE_CHECKING:
     from prowler.providers.googleworkspace.services.rules.rules_service import Rules
 
+# A rule classified above what the benchmark asks for is stricter, not weaker,
+# so severities are compared by rank instead of by equality.
+SEVERITY_RANK = {"LOW": 1, "MEDIUM": 2, "HIGH": 3}
+
+
+def _severity_issue(severity: str, minimum_severity: str) -> str:
+    """Return why a severity does not meet the benchmark, or an empty string."""
+    if severity is None:
+        return f"severity is not configured (should be at least {minimum_severity})"
+    rank = SEVERITY_RANK.get(severity)
+    if rank is None:
+        return (
+            f"severity is {severity}, which is not one of "
+            f"{', '.join(SEVERITY_RANK)}, so it could not be compared against "
+            f"the {minimum_severity} the benchmark asks for"
+        )
+    if rank < SEVERITY_RANK[minimum_severity]:
+        return f"severity is {severity} (should be at least {minimum_severity})"
+    return ""
+
 
 def evaluate_system_defined_alert(
     client: "Rules",
     metadata: dict,
     rule_name: str,
-    expected_severities: Set[str],
+    minimum_severity: str,
 ) -> List[CheckReportGoogleWorkspace]:
     """Report on one system-defined alert rule against the CIS audit procedure.
 
     Every recommendation in CIS section 6 asks for the rule to be on, to notify
     by email, to include all super administrators as recipients and to carry a
-    specific severity. The severity is evaluated here as well, so a rule that is
-    on but classified below what the benchmark asks for cannot pass.
-
-    Args:
-        client: the rules client, passed in so each check keeps its own import.
-        metadata: the calling check's metadata.
-        rule_name: display name of the system-defined alert to evaluate.
-        expected_severities: severities the benchmark accepts for this rule.
-
-    Returns:
-        One report for the named rule, or an empty list when the policies could
-        not be fetched or the rule is not present.
+    minimum severity. Returns no finding at all when the policies could not be
+    fetched or the rule is not among the ones the client collected.
     """
     findings = []
 
@@ -49,6 +59,28 @@ def evaluate_system_defined_alert(
             customer_id=client.provider.identity.customer_id,
         )
 
+        if alert.from_default:
+            # Nothing was observed: the state below is Google's documented
+            # default and the severity has no documented default at all.
+            if alert.state != "ACTIVE":
+                report.status = "FAIL"
+                report.status_extended = (
+                    f"System-defined alert rule '{rule_name}' was not returned "
+                    f"by the API in domain {domain} and Google's default for it "
+                    f"is OFF."
+                )
+            else:
+                report.status = "MANUAL"
+                report.status_extended = (
+                    f"System-defined alert rule '{rule_name}' was not returned "
+                    f"by the API in domain {domain}, so its configuration could "
+                    f"not be verified. Review it in the Admin console: it should "
+                    f"be ON, notify all super administrators by email and be set "
+                    f"to {minimum_severity} severity or higher."
+                )
+            findings.append(report)
+            continue
+
         issues = []
 
         if alert.state != "ACTIVE":
@@ -59,19 +91,9 @@ def evaluate_system_defined_alert(
         elif not alert.all_super_admins:
             issues.append("email recipients do not include all super administrators")
 
-        if alert.severity not in expected_severities:
-            expected = " or ".join(sorted(expected_severities))
-            if alert.from_default:
-                # The API returned no policy for this rule, so its severity was
-                # never observed. Report that instead of blaming the tenant.
-                issues.append(
-                    f"the rule was not returned by the API, so its severity "
-                    f"could not be verified (should be {expected})"
-                )
-            elif alert.severity is None:
-                issues.append(f"severity is not configured (should be {expected})")
-            else:
-                issues.append(f"severity is {alert.severity} (should be {expected})")
+        severity = _severity_issue(alert.severity, minimum_severity)
+        if severity:
+            issues.append(severity)
 
         if issues:
             report.status = "FAIL"

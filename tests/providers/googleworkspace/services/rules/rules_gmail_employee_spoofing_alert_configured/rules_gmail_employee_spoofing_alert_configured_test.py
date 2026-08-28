@@ -49,8 +49,7 @@ class TestRulesGmailEmployeeSpoofingAlertConfigured:
             assert "is properly configured" in findings[0].status_extended
             assert findings[0].customer_id == CUSTOMER_ID
 
-    def test_fail_wrong_severity(self):
-        """Test FAIL when the alert is on but the severity is not the one CIS requires."""
+    def test_fail_severity_below_the_minimum(self):
         mock_provider = set_mocked_googleworkspace_provider()
 
         with (
@@ -72,7 +71,7 @@ class TestRulesGmailEmployeeSpoofingAlertConfigured:
                 SystemDefinedAlert(
                     display_name=RULE_NAME,
                     state="ACTIVE",
-                    severity="HIGH",
+                    severity="LOW",
                     email_notifications_enabled=True,
                     all_super_admins=True,
                 )
@@ -83,7 +82,7 @@ class TestRulesGmailEmployeeSpoofingAlertConfigured:
 
             assert len(findings) == 1
             assert findings[0].status == "FAIL"
-            assert "severity is HIGH" in findings[0].status_extended
+            assert "severity is LOW" in findings[0].status_extended
             assert findings[0].customer_id == CUSTOMER_ID
 
     def test_fail_severity_not_configured(self):

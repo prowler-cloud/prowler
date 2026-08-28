@@ -45,12 +45,11 @@ class security_password_policy_strong(Check):
                     else f"minimum length is {min_length} (requires 14+)"
                 )
 
-            if policies.password_allowed_strength != "STRONG":
-                issues.append(
-                    "password strength is not configured (requires STRONG)"
-                    if policies.password_allowed_strength is None
-                    else f"password strength is {policies.password_allowed_strength} (requires STRONG)"
-                )
+            # Google enforces strong passwords by default, so an unset value is
+            # the secure default rather than a missing configuration.
+            strength = policies.password_allowed_strength
+            if strength is not None and strength != "STRONG":
+                issues.append(f"password strength is {strength} (requires STRONG)")
 
             if policies.password_allow_reuse is True:
                 issues.append("password reuse is allowed")

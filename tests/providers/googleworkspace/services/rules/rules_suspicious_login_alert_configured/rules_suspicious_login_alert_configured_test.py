@@ -49,8 +49,7 @@ class TestRulesSuspiciousLoginAlertConfigured:
             assert "is properly configured" in findings[0].status_extended
             assert findings[0].customer_id == CUSTOMER_ID
 
-    def test_fail_wrong_severity(self):
-        """Test FAIL when the alert is on but the severity is not the one CIS requires."""
+    def test_pass_severity_above_the_minimum(self):
         mock_provider = set_mocked_googleworkspace_provider()
 
         with (
@@ -82,8 +81,8 @@ class TestRulesSuspiciousLoginAlertConfigured:
             findings = check.execute()
 
             assert len(findings) == 1
-            assert findings[0].status == "FAIL"
-            assert "severity is MEDIUM" in findings[0].status_extended
+            assert findings[0].status == "PASS"
+            assert "is properly configured" in findings[0].status_extended
             assert findings[0].customer_id == CUSTOMER_ID
 
     def test_fail_severity_not_configured(self):

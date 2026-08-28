@@ -58,8 +58,17 @@ class TestSecurity2svHardwareKeysAdmins:
         assert findings[0].resource_id == "securityPolicies"
         assert findings[0].customer_id == CUSTOMER_ID
 
+    def test_pass_enforcement_scheduled_for_a_future_date(self):
+        """4.1.1.2 accepts 'On from <date>', unlike 4.1.1.1 and 4.1.1.3"""
+        findings = run_check(
+            **{**COMPLIANT, "two_sv_enforced_from": "2099-01-01T00:00:00Z"}
+        )
+
+        assert len(findings) == 1
+        assert findings[0].status == "PASS"
+
     def test_pass_no_suspension_grace_period(self):
-        """PASS with no suspension grace period, which is stricter than 1 day"""
+        """No grace period is stricter than the 1 day the benchmark asks for"""
         findings = run_check(
             **{**COMPLIANT, "two_sv_backup_code_exception_period": "0s"}
         )
@@ -103,8 +112,8 @@ class TestSecurity2svHardwareKeysAdmins:
             ),
             ({"two_sv_allow_enrollment": False}, "not allowed to turn on"),
             (
-                {"two_sv_enforced_from": "2099-01-01T00:00:00Z"},
-                "enforcement does not start until 2099-01-01T00:00:00Z",
+                {"two_sv_enforced_from": "not-a-date"},
+                "enforcement start date 'not-a-date' could not be read",
             ),
             (
                 {"two_sv_backup_code_exception_period": "1209600s"},

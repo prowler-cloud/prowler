@@ -115,8 +115,8 @@ class TestSecurityPasswordPolicyStrong:
             assert findings[0].status == "FAIL"
             assert "does not meet" in findings[0].status_extended
 
-    def test_fail_strength_unset_treated_as_missing(self):
-        """Test FAIL when password_allowed_strength is None even with other fields strong"""
+    def test_pass_strength_unset_is_googles_secure_default(self):
+        """CIS documents 'Enforce strong password' as checked out of the box"""
         mock_provider = set_mocked_googleworkspace_provider()
 
         with (
@@ -146,8 +146,7 @@ class TestSecurityPasswordPolicyStrong:
             findings = check.execute()
 
             assert len(findings) == 1
-            assert findings[0].status == "FAIL"
-            assert "password strength is not configured" in findings[0].status_extended
+            assert findings[0].status == "PASS"
 
     def test_fail_min_length_unset_reports_not_configured(self):
         """Test FAIL message uses 'not configured' when password_minimum_length is None"""

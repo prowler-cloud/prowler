@@ -3,20 +3,22 @@ from typing import List
 from prowler.lib.check.models import Check, CheckReportGoogleWorkspace
 from prowler.providers.googleworkspace.services.security.lib.durations import (
     TWO_WEEKS_SECONDS,
+    enforcement_issue,
     format_duration,
-    is_enforcement_active,
-    is_enforcement_off,
     parse_duration_seconds,
 )
 from prowler.providers.googleworkspace.services.security.security_client import (
     security_client,
 )
 
-# "Methods: Any" allows verification codes via text and phone call, which the
-# benchmark excludes. Every other value of the enum (NO_TELEPHONY,
-# PASSKEY_ONLY, PASSKEY_PLUS_SECURITY_CODE, PASSKEY_PLUS_IP_BOUND_SECURITY_CODE)
-# rules telephony out.
-ALL_SIGN_IN_FACTORS = "ALL"
+# "Methods: Any except verification codes via text, phone call". Listed as an
+# allow list so a value Prowler does not know cannot pass by not being "ALL".
+TELEPHONY_FREE_FACTOR_SETS = {
+    "NO_TELEPHONY",
+    "PASSKEY_ONLY",
+    "PASSKEY_PLUS_SECURITY_CODE",
+    "PASSKEY_PLUS_IP_BOUND_SECURITY_CODE",
+}
 
 
 class security_2sv_enforced(Check):
@@ -27,6 +29,10 @@ class security_2sv_enforced(Check):
     must not exceed two weeks, device trust must be off and verification codes
     via text or phone call must not be an accepted method. Each of those is
     evaluated here so the requirement cannot pass on enforcement alone.
+
+    Note: 4.1.1.1 audits the group holding every admin role, but the Cloud
+    Identity Policy API returns domain-wide policies only. This check evaluates
+    the customer-level policy, which applies to administrators too.
     """
 
     def execute(self) -> List[CheckReportGoogleWorkspace]:
@@ -46,15 +52,9 @@ class security_2sv_enforced(Check):
             issues = []
 
             enforced_from = policies.two_sv_enforced_from
-            if is_enforcement_off(enforced_from):
-                issues.append(
-                    "enforcement is not configured and defaults to OFF"
-                    if enforced_from is None
-                    else "enforcement is set to OFF"
-                )
-            elif not is_enforcement_active(enforced_from):
-                # "On from <future date>" means nobody is enforced yet.
-                issues.append(f"enforcement does not start until {enforced_from}")
+            enforcement = enforcement_issue(enforced_from)
+            if enforcement:
+                issues.append(enforcement)
 
             if policies.two_sv_allow_enrollment is False:
                 issues.append("users are not allowed to turn on 2-Step Verification")
@@ -84,13 +84,13 @@ class security_2sv_enforced(Check):
                 )
 
             factor_set = policies.two_sv_allowed_factor_set
-            if factor_set is None or factor_set == ALL_SIGN_IN_FACTORS:
+            if factor_set not in TELEPHONY_FREE_FACTOR_SETS:
                 issues.append(
                     "the allowed methods are not configured and default to any method, "
                     "including verification codes via text and phone call"
                     if factor_set is None
-                    else "any method is allowed, including verification codes via "
-                    "text and phone call"
+                    else f"the allowed methods are {factor_set}, which does not "
+                    f"exclude verification codes via text and phone call"
                 )
 
             if not issues:

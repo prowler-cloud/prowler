@@ -49,8 +49,7 @@ class TestRulesSuspiciousActivitySuspensionAlertConfigured:
             assert "is properly configured" in findings[0].status_extended
             assert findings[0].customer_id == CUSTOMER_ID
 
-    def test_fail_wrong_severity(self):
-        """Test FAIL when the alert is on but the severity is not the one CIS requires."""
+    def test_fail_severity_below_the_minimum(self):
         mock_provider = set_mocked_googleworkspace_provider()
 
         with (

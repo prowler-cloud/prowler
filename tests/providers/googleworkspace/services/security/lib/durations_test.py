@@ -6,8 +6,8 @@ from prowler.providers.googleworkspace.services.security.lib.durations import (
     ONE_DAY_SECONDS,
     ONE_YEAR_SECONDS,
     TWO_WEEKS_SECONDS,
+    enforcement_issue,
     format_duration,
-    is_enforcement_active,
     parse_duration_seconds,
 )
 
@@ -44,7 +44,9 @@ class TestFormatDuration:
             ("86400s", "1 day(s)"),
             ("1209600s", "14 day(s)"),
             ("31536000s", "365 day(s)"),
-            ("3600s", "3600 second(s)"),
+            ("3600s", "1 hour(s)"),
+            ("129600s", "36 hour(s)"),
+            ("5400s", "5400 second(s)"),
             (None, "not configured"),
             ("28d", "not configured"),
         ],
@@ -53,25 +55,43 @@ class TestFormatDuration:
         assert format_duration(value) == expected
 
 
-class TestIsEnforcementActive:
+class TestEnforcementIssue:
     NOW = datetime(2026, 8, 25, 12, 0, 0, tzinfo=timezone.utc)
 
     @pytest.mark.parametrize(
-        "value, expected",
-        [
-            ("2026-05-25T15:27:52.352Z", True),
-            ("2026-08-25T11:59:59Z", True),
-            ("2099-01-01T00:00:00Z", False),
-            ("2026-12-31T23:59:59+00:00", False),
-        ],
+        "value", ["2026-05-25T15:27:52.352Z", "2026-08-25T11:59:59Z"]
     )
-    def test_compares_against_now(self, value, expected):
-        assert is_enforcement_active(value, now=self.NOW) is expected
+    def test_no_issue_once_enforcement_has_started(self, value):
+        assert enforcement_issue(value, now=self.NOW) is None
 
     def test_naive_timestamp_is_read_as_utc(self):
-        assert is_enforcement_active("2026-01-01T00:00:00", now=self.NOW) is True
+        assert enforcement_issue("2026-01-01T00:00:00", now=self.NOW) is None
 
-    @pytest.mark.parametrize("value", ["not-a-date", "", None])
-    def test_unreadable_timestamp_does_not_fail_on_its_own(self, value):
-        """A format Prowler cannot read must not become a failure by itself"""
-        assert is_enforcement_active(value, now=self.NOW) is True
+    @pytest.mark.parametrize("value", [None, ""])
+    def test_missing_value_defaults_to_off(self, value):
+        assert (
+            enforcement_issue(value, now=self.NOW)
+            == "enforcement is not configured and defaults to OFF"
+        )
+
+    @pytest.mark.parametrize(
+        "value", ["1970-01-01T00:00:00Z", "1970-01-01T00:00:00.000000000Z"]
+    )
+    def test_zero_value_timestamp_is_off(self, value):
+        """The API reports OFF as the protobuf zero-value Timestamp"""
+        assert enforcement_issue(value, now=self.NOW) == "enforcement is set to OFF"
+
+    @pytest.mark.parametrize(
+        "value", ["2099-01-01T00:00:00Z", "2026-12-31T23:59:59+00:00"]
+    )
+    def test_future_start_date_means_nobody_is_enforced_yet(self, value):
+        assert (
+            enforcement_issue(value, now=self.NOW)
+            == f"enforcement does not start until {value}"
+        )
+
+    def test_unreadable_timestamp_is_reported_instead_of_assumed_active(self):
+        assert (
+            enforcement_issue("not-a-date", now=self.NOW)
+            == "the enforcement start date 'not-a-date' could not be read"
+        )

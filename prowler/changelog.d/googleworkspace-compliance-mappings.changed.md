@@ -1,0 +1,1 @@
+`security_login_challenges_configured` and `security_2sv_enforced` unmapped from CIS Google Workspace 4.1.4.1 and CISA SCuBA 0.6 `GWS.COMMONCONTROLS.1.1`, whose Post-SSO verification and phishing-resistant MFA requirements neither check can prove

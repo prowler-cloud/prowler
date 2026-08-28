@@ -3,9 +3,8 @@ from typing import List
 from prowler.lib.check.models import Check, CheckReportGoogleWorkspace
 from prowler.providers.googleworkspace.services.security.lib.durations import (
     ONE_DAY_SECONDS,
+    enforcement_issue,
     format_duration,
-    is_enforcement_active,
-    is_enforcement_off,
     parse_duration_seconds,
 )
 from prowler.providers.googleworkspace.services.security.security_client import (
@@ -23,9 +22,9 @@ class security_2sv_hardware_keys_admins(Check):
     """Check that 2SV enforcement requires hardware security keys.
 
     CIS 4.1.1.2 asks for security keys to be the only accepted method, with
-    enrollment allowed, enforcement on, a policy suspension grace period of at
-    most one day and security code generation blocked. All of them are
-    evaluated so the requirement cannot pass on the accepted method alone.
+    enrollment allowed, enforcement on or scheduled, and a policy suspension
+    grace period of at most one day, so the requirement cannot pass on the
+    accepted method alone.
 
     Note: the Cloud Identity Policy API returns domain-wide policies, it cannot
     verify enforcement for admin roles specifically. This check evaluates the
@@ -59,16 +58,12 @@ class security_2sv_hardware_keys_admins(Check):
                     f"(should be {SECURITY_KEYS_ONLY})"
                 )
 
-            enforced_from = policies.two_sv_enforced_from
-            if is_enforcement_off(enforced_from):
-                issues.append(
-                    "enforcement is not configured and defaults to OFF"
-                    if enforced_from is None
-                    else "enforcement is set to OFF"
-                )
-            elif not is_enforcement_active(enforced_from):
-                # "On from <future date>" means nobody is enforced yet.
-                issues.append(f"enforcement does not start until {enforced_from}")
+            # 4.1.1.2 accepts "On from <date>", unlike 4.1.1.1 and 4.1.1.3.
+            enforcement = enforcement_issue(
+                policies.two_sv_enforced_from, allow_scheduled=True
+            )
+            if enforcement:
+                issues.append(enforcement)
 
             if policies.two_sv_allow_enrollment is False:
                 issues.append("users are not allowed to turn on 2-Step Verification")
@@ -94,9 +89,11 @@ class security_2sv_hardware_keys_admins(Check):
                 report.status = "PASS"
                 report.status_extended = (
                     f"2-Step Verification requires security keys only in domain "
-                    f"{domain} and enforcement has already started. Note: this "
-                    f"check evaluates the domain-wide policy, the Policy API "
-                    f"does not expose role-specific 2SV enforcement."
+                    f"{domain}, enforcement is on or scheduled and the policy "
+                    f"suspension grace period is "
+                    f"{format_duration(policies.two_sv_backup_code_exception_period)}. "
+                    f"Note: this check evaluates the domain-wide policy, the "
+                    f"Policy API does not expose role-specific 2SV enforcement."
                 )
             else:
                 report.status = "FAIL"

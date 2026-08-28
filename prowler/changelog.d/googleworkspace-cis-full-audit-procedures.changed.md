@@ -1,1 +1,1 @@
-Google Workspace checks mapped to CIS evaluate the full audit procedure instead of a single condition, so Gmail spoofing actions, 2-Step Verification, password expiration and alert severity left on Google's defaults now fail
+Google Workspace checks mapped to CIS evaluate the full audit procedure instead of a single condition, so Gmail spoofing actions, 2-Step Verification, password expiration and alert severity left on Google's defaults no longer pass

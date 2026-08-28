@@ -1,1 +1,0 @@
-CISA SCuBA 0.6 Gmail spoofing, password and alerting requirements and CIS Controls 8.1 requirements 8.11 and 13.1 are now reported as manual for Google Workspace, after the checks mapped to them became stricter than those requirements ask for

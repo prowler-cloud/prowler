@@ -214,6 +214,64 @@ class TestRulesService:
             assert gov_attacks.email_notifications_enabled is True
             assert gov_attacks.all_super_admins is True
 
+    def test_ou_and_group_scoped_policies_are_skipped(self):
+        """Only the customer-level policy describes the whole domain"""
+        mock_provider = set_mocked_googleworkspace_provider()
+        mock_provider.audit_config = {}
+        mock_provider.fixer_config = {}
+        mock_session = MagicMock()
+        mock_session.credentials = MagicMock()
+        mock_provider.session = mock_session
+
+        def alert_policy(display_name, state, policy_query=None):
+            policy = {
+                "setting": {
+                    "type": "settings/rule.system_defined_alerts",
+                    "value": {"displayName": display_name, "state": state},
+                }
+            }
+            if policy_query:
+                policy["policyQuery"] = policy_query
+            return policy
+
+        mock_service = MagicMock()
+        mock_policies_list = MagicMock()
+        mock_policies_list.execute.return_value = {
+            "policies": [
+                alert_policy("Suspicious login", "ACTIVE"),
+                alert_policy(
+                    "Suspicious login", "INACTIVE", {"orgUnit": "orgUnits/sales_team"}
+                ),
+                alert_policy(
+                    "Leaked password", "INACTIVE", {"group": "groups/contractors"}
+                ),
+            ]
+        }
+        mock_service.policies().list.return_value = mock_policies_list
+        mock_service.policies().list_next.return_value = None
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.services.rules.rules_service.GoogleWorkspaceService._build_service",
+                return_value=mock_service,
+            ),
+        ):
+            from prowler.providers.googleworkspace.services.rules.rules_service import (
+                Rules,
+            )
+
+            rules = Rules(mock_provider)
+
+            by_name = {a.display_name: a for a in rules.system_defined_alerts}
+            assert by_name["Suspicious login"].state == "ACTIVE"
+            assert by_name["Suspicious login"].from_default is False
+            # Only seen in a group-scoped policy, so it falls back to the default.
+            assert by_name["Leaked password"].from_default is True
+
     def test_empty_response_marks_alerts_as_inferred(self):
         """A rule the API never returned must not be reported as tenant configuration."""
         mock_provider = set_mocked_googleworkspace_provider()
@@ -250,20 +308,19 @@ class TestRulesService:
 
             assert all(alert.from_default for alert in rules.system_defined_alerts)
 
-            # End to end: the severity was never observed, so the finding must
-            # say that instead of claiming the tenant left it unset.
+            # End to end: nothing was observed for a rule that defaults to ON,
+            # so it has to be reviewed by hand instead of blamed on the tenant.
             client = MagicMock()
             client.provider = mock_provider
             client.policies_fetched = True
             client.system_defined_alerts = rules.system_defined_alerts
             findings = evaluate_system_defined_alert(
-                client, METADATA, "Government-backed attacks", {"HIGH"}
+                client, METADATA, "Government-backed attacks", "HIGH"
             )
 
             assert len(findings) == 1
-            assert findings[0].status == "FAIL"
+            assert findings[0].status == "MANUAL"
             assert "was not returned by the API" in findings[0].status_extended
-            assert "severity is not configured" not in findings[0].status_extended
 
     def test_api_error_sets_policies_fetched_false(self):
         """Test that API errors result in policies_fetched being False."""

@@ -35,5 +35,5 @@
   "RelatedTo": [
     "security_2sv_hardware_keys_admins"
   ],
-  "Notes": ""
+  "Notes": "CIS 4.1.1.1 audits the group holding every admin role, but the Cloud Identity Policy API returns domain-wide policies only. This check evaluates the customer-level policy, which applies to administrators as well, so it cannot confirm a separate admin-role group is configured."
 }
