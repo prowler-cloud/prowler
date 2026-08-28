@@ -1,0 +1,1 @@
+CLI Slack integration (`--slack`) no longer fails when a scan produces no findings: the pass and fail percentages are guarded against a `findings_count` of 0, which previously raised `ZeroDivisionError` and sent `blocks=None` to Slack instead of the summary
