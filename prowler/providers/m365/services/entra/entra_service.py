@@ -948,10 +948,11 @@ class Entra(M365Service):
         """Retrieve the tenant users with their directory roles and MFA registration.
 
         Depends on ``GET /users``, ``GET /directoryRoles`` and the members of
-        each role, plus ``_get_user_registration_details``. If any of those
-        Graph calls fails, ``self.users_error`` is set so checks can report
-        that the directory could not be read instead of evaluating an empty
-        user set.
+        each role. If any of those Graph calls fails, ``self.users_error`` is
+        set so checks can report that the directory could not be read instead
+        of evaluating an empty user set. Registration details are fetched via
+        ``_get_user_registration_details``, which handles its own failures
+        through ``self.user_registration_details_error``.
 
         Returns:
             dict: User id mapped to ``User``. Empty (or partial, on a
