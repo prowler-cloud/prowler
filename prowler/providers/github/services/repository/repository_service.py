@@ -507,6 +507,10 @@ class Repository(GithubService):
                             try:
                                 repo = client.get_repo(repo_name)
                                 self._process_repository(repo, repos)
+                            except github.RateLimitExceededException:
+                                # Rate limits are transient and must not leave the
+                                # scan running with an incomplete repository set
+                                raise
                             except Exception as error:
                                 self._handle_github_api_error(
                                     error, "accessing repository", repo_name
@@ -523,6 +527,10 @@ class Repository(GithubService):
                                 )
                                 for repo in repos_list:
                                     self._process_repository(repo, repos)
+                            except github.RateLimitExceededException:
+                                # Rate limits are transient and must not leave the
+                                # scan running with an incomplete repository set
+                                raise
                             except Exception as error:
                                 self._handle_github_api_error(
                                     error, "processing organization", org_name
@@ -542,6 +550,10 @@ class Repository(GithubService):
                                 )
                                 for repo in repos_list:
                                     self._process_repository(repo, repos)
+                            except github.RateLimitExceededException:
+                                # Rate limits are transient and must not leave the
+                                # scan running with an incomplete repository set
+                                raise
                             except Exception as error:
                                 self._handle_github_api_error(
                                     error, "processing organization", org_name
@@ -564,6 +576,10 @@ class Repository(GithubService):
                                 f"Processing repository found via GraphQL: {repo.full_name}"
                             )
                             self._process_repository(repo, repos)
+                        except github.RateLimitExceededException:
+                            # Rate limits are transient and must not leave the
+                            # scan running with an incomplete repository set
+                            raise
                         except Exception as error:
                             if hasattr(self, "_handle_github_api_error"):
                                 self._handle_github_api_error(
@@ -832,6 +848,9 @@ class Repository(GithubService):
                 immutable_releases_enabled=self._get_repository_immutable_releases_status(
                     repo
                 ),
+                default_workflow_permissions=self._get_default_workflow_permissions(
+                    repo
+                ),
                 default_branch=Branch(
                     name=default_branch,
                     protected=branch_protection,
@@ -869,6 +888,8 @@ class Repository(GithubService):
                 dependabot_alerts_enabled=dependabot_alerts_enabled,
                 delete_branch_on_merge=delete_branch_on_merge,
             )
+        except github.RateLimitExceededException:
+            raise  # Re-raise rate limit errors so the listing flow can handle them
         except Exception as error:
             logger.error(
                 f"{repo.full_name}: {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -922,6 +943,66 @@ class Repository(GithubService):
             )
         return None
 
+    def _get_default_workflow_permissions(self, repo) -> Optional[str]:
+        """Retrieve the default GITHUB_TOKEN permissions granted to workflows in the repository.
+
+        The API returns a response in the format:
+        {
+            "default_workflow_permissions": "read",
+            "can_approve_pull_request_reviews": false
+        }
+
+        Args:
+            repo: The PyGithub repository instance to query.
+
+        Returns:
+            Optional[str]: "read" or "write", and None when the setting cannot be determined.
+
+        Raises:
+            github.RateLimitExceededException: When API rate limits are exceeded
+        """
+        try:
+            _, response = repo._requester.requestJsonAndCheck(  # type: ignore[attr-defined]
+                "GET",
+                f"/repos/{repo.full_name}/actions/permissions/workflow",
+                headers={
+                    "Accept": "application/vnd.github+json",
+                    "X-GitHub-Api-Version": "2022-11-28",
+                },
+            )
+            if isinstance(response, dict):
+                permissions = response.get("default_workflow_permissions")
+                if permissions in ("read", "write"):
+                    return permissions
+            return None
+        except github.RateLimitExceededException as error:
+            self._handle_github_api_error(
+                error,
+                "fetching default workflow permissions",
+                repo.full_name,
+                reraise_rate_limit=True,
+            )
+        except github.GithubException as error:
+            status_code = getattr(error, "status", None)
+            if status_code == 404:
+                logger.info(
+                    f"{repo.full_name}: Actions workflow permissions endpoint not available for this repository."
+                )
+                return None
+            if status_code == 403:
+                logger.warning(
+                    f"{repo.full_name}: insufficient permissions to query Actions workflow permissions."
+                )
+                return None
+            self._handle_github_api_error(
+                error, "fetching default workflow permissions", repo.full_name
+            )
+        except Exception as error:
+            logger.error(
+                f"{repo.full_name}: {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return None
+
 
 class Branch(BaseModel):
     """Model for Github Branch"""
@@ -962,6 +1043,7 @@ class Repo(BaseModel):
     owner: str
     full_name: str
     immutable_releases_enabled: Optional[bool] = None
+    default_workflow_permissions: Optional[str] = None
     default_branch: Branch
     private: bool
     archived: bool

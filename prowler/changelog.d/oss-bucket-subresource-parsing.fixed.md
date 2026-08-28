@@ -1,0 +1,1 @@
+OSS bucket logging, versioning, default encryption and ACL configurations are now read correctly from the Alibaba Cloud SDK, so `oss_bucket_logging_enabled`, `oss_bucket_versioning_enabled`, `oss_bucket_server_side_encryption_enabled` and `oss_bucket_not_publicly_accessible` no longer report every bucket as unconfigured
