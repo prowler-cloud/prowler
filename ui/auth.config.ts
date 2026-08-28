@@ -206,6 +206,17 @@ const refreshAccessToken = async (token: AuthToken): Promise<AuthToken> => {
 
       applyDecodedClaims(nextToken, newAccessToken, "refreshed access token");
 
+      try {
+        const userMeResponse = await getUserByMe(newAccessToken);
+        nextToken.user = tokenUserFromApi(userMeResponse);
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.warn(
+          "Error refreshing user after access token refresh:",
+          error,
+        );
+      }
+
       return nextToken;
     } catch (error) {
       // eslint-disable-next-line no-console
