@@ -13,7 +13,23 @@ from prowler.providers.aws.services.cloudwatch.logs_client import logs_client
 
 
 class cloudwatch_changes_to_network_route_tables_alarm_configured(Check):
-    def execute(self):
+    """Account monitors VPC route table changes with a CloudWatch Logs metric filter and alarm.
+
+    Looks for a CloudWatch Logs metric filter matching the expected pattern on a
+    log group used by a CloudTrail trail, with at least one alarm on its metric.
+
+    - PASS: A matching metric filter with an associated alarm exists.
+    - FAIL: No matching metric filter, or a filter without an alarm, was found.
+    - MANUAL: CloudTrail trails, metric filters or alarms could not be listed in
+      at least one region, so the absence of a filter/alarm cannot be asserted.
+    """
+
+    def execute(self) -> list[Check_Report_AWS]:
+        """Evaluate the metric filter and alarm coverage for the account.
+
+        Returns:
+            list[Check_Report_AWS]: A single report for the account.
+        """
         pattern = build_metric_filter_pattern(
             event_source="ec2.amazonaws.com",
             event_names=[
