@@ -525,7 +525,6 @@ SERVICES_INIT = Template("""# Each service lives in its own package next to this
 PROVIDER_TEST = Template('''from unittest.mock import patch
 
 import pytest
-from tests.providers.$name.${name}_fixtures import set_mocked_${name}_provider
 
 $provider_imports
 

@@ -44,6 +44,10 @@ NAME_HELP = (
 EXCEPTION_CODE_BLOCK = 100
 EXCEPTION_CODE_FLOOR = 18000
 
+# The column limit black and isort share, which decides whether a generated
+# import fits on one line.
+IMPORT_LINE_LENGTH = 88
+
 
 class ScaffoldError(Exception):
     """Raised when the requested provider cannot be scaffolded."""
@@ -432,6 +436,21 @@ def _sorted_imports(*statements: str) -> str:
     )
 
 
+def _import_statement(module: str, *names: str) -> str:
+    """Render one `from ... import ...` the way isort and black would.
+
+    Both wrap at the same 88 columns, so a statement is one line when it fits
+    and a parenthesized block with a trailing comma when it does not. Whether a
+    given import fits depends on the provider's name, so hand-written statements
+    are canonical for some names and not others.
+    """
+    single_line = f"from {module} import {', '.join(names)}"
+    if len(single_line) <= IMPORT_LINE_LENGTH:
+        return single_line
+    body = "".join(f"    {name},\n" for name in names)
+    return f"from {module} import (\n{body})"
+
+
 def _format_python(source: str) -> str:
     """Format generated Python with black when it is importable.
 
@@ -453,36 +472,58 @@ def _format_python(source: str) -> str:
 
 
 def _builtin_import_blocks(spec: ProviderSpec) -> dict:
-    """Build the import blocks whose order depends on the provider's name."""
+    """Build the import blocks whose shape depends on the provider's name.
+
+    Both the order and the wrapping depend on the name, which is why neither
+    can live in the templates. `tests` is first-party to isort inside this
+    repository, so a generated test's fixture import belongs in the same block
+    as the `prowler` imports rather than beside `pytest`.
+    """
     name, cls = spec.name, spec.class_prefix
     return {
         "provider_class": _sorted_imports(
-            "from prowler.providers.common.models import Audit_Metadata, Connection",
-            "from prowler.providers.common.provider import Provider",
-            f"from prowler.providers.{name}.exceptions.exceptions import (\n"
-            f"    {cls}CredentialsError,\n"
-            f"    {cls}IdentityError,\n"
-            f"    {cls}SessionError,\n"
-            ")",
-            f"from prowler.providers.{name}.lib.mutelist.mutelist import {cls}Mutelist",
-            f"from prowler.providers.{name}.models import (\n"
-            f"    {cls}IdentityInfo,\n"
-            f"    {cls}Session,\n"
-            ")",
+            _import_statement(
+                "prowler.providers.common.models", "Audit_Metadata", "Connection"
+            ),
+            _import_statement("prowler.providers.common.provider", "Provider"),
+            _import_statement(
+                f"prowler.providers.{name}.exceptions.exceptions",
+                f"{cls}CredentialsError",
+                f"{cls}IdentityError",
+                f"{cls}SessionError",
+            ),
+            _import_statement(
+                f"prowler.providers.{name}.lib.mutelist.mutelist", f"{cls}Mutelist"
+            ),
+            _import_statement(
+                f"prowler.providers.{name}.models",
+                f"{cls}IdentityInfo",
+                f"{cls}Session",
+            ),
         ),
         "provider_test": _sorted_imports(
-            f"from prowler.providers.{name}.exceptions.exceptions import (\n"
-            f"    {cls}CredentialsError,\n"
-            f"    {cls}IdentityError,\n"
-            ")",
-            f"from prowler.providers.{name}.{name}_provider import {cls}Provider",
+            _import_statement(
+                f"prowler.providers.{name}.exceptions.exceptions",
+                f"{cls}CredentialsError",
+                f"{cls}IdentityError",
+            ),
+            _import_statement(
+                f"prowler.providers.{name}.{name}_provider", f"{cls}Provider"
+            ),
+            _import_statement(
+                f"tests.providers.{name}.{name}_fixtures",
+                f"set_mocked_{name}_provider",
+            ),
         ),
         "provider_fixtures": _sorted_imports(
-            f"from prowler.providers.{name}.{name}_provider import {cls}Provider",
-            f"from prowler.providers.{name}.models import (\n"
-            f"    {cls}IdentityInfo,\n"
-            f"    {cls}Session,\n"
-            ")",
+            _import_statement(
+                f"prowler.providers.{name}.{name}_provider", f"{cls}Provider"
+            ),
+            _import_statement(
+                f"prowler.providers.{name}.models",
+                f"{cls}IdentityInfo",
+                f"{cls}Session",
+            ),
         ),
     }
 

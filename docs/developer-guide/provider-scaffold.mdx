@@ -2,11 +2,15 @@
 title: 'Provider Scaffold Command'
 ---
 
+import { VersionBadge } from "/snippets/version-badge.mdx"
+
 `prowler-dev provider create` writes the files a new provider needs in order to be discovered and loaded, so that the first thing you write is the part only you can write. It generates structure and `TODO` markers, and it never guesses authentication behavior, API semantics or security checks.
 
 The command is contributor tooling. Nothing it generates runs during a scan, and nothing in `prowler-dev` is used by the `prowler` CLI.
 
 ## Usage
+
+<VersionBadge version="5.40.0" />
 
 ```bash
 uv run prowler-dev provider create --name acmecloud --kind api --scope full-stack \
@@ -19,7 +23,7 @@ Add `--dry-run` to print the file list and exit without writing anything.
 
 Three inputs change what gets generated, so the command refuses to guess them.
 
-* **`--name`:** The provider name, lowercase letters and digits only. `Provider.get_class()` builds the class name with Python's `str.capitalize()`, so `acmecloud` resolves to `AcmecloudProvider`. A name containing an underscore, a hyphen or an inner capital cannot be discovered, and the command rejects it rather than generating a provider that silently fails to load.
+* **`--name`:** The provider name, starting with a lowercase letter and followed by lowercase letters or digits. `Provider.get_class()` builds the class name with Python's `str.capitalize()`, so `acmecloud` resolves to `AcmecloudProvider`. A name containing an underscore, a hyphen or an inner capital cannot be discovered, and the command rejects it rather than generating a provider that silently fails to load.
 * **`--kind`:** `sdk`, `api`, `tool` or `hybrid`, per [Classifying your Provider](./provider#classifying-your-provider). A `tool` provider wraps another binary rather than auditing a live API, so it gets no service layer, matching what `iac`, `image` and `llm` ship today.
 * **`--scope`:** How far the provider reaches. `builtin` generates a CLI/SDK provider inside this repository. `full-stack` does the same and sets `sdk_only = False`, which is what makes the API and UI list it. `external` generates a standalone package discovered through the `prowler.providers` entry point, outside this repository.
 
@@ -85,6 +89,8 @@ prowler <name> --help       # the provider shows its own arguments
 pytest tests/providers/<name>
 ```
 
-All three pass on a freshly generated provider, before any implementation work. The generated `setup_session` and `setup_identity` raise until you implement them, and the generated tests assert exactly that, so replace them as you go.
+All three pass on a freshly generated provider, before any implementation work and before the reported registrations are done. Both `--help` paths need only discovery and `init_parser`, which are generated.
+
+Running an actual scan is what needs the dispatch branch in `init_global_provider()`. Until you add it, `prowler <name>` cannot construct the provider. The generated `setup_session` and `setup_identity` raise until you implement them, and the generated tests assert exactly that, so replace them as you go.
 
 Generated Python is formatted with `black` when it is importable, which it is in a Prowler checkout. That keeps a freshly generated provider clean against the repository's own `black` and `flake8` gates before your first push.

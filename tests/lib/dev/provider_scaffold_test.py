@@ -38,6 +38,27 @@ def builtin_spec(**overrides) -> ProviderSpec:
     return ProviderSpec(**defaults)
 
 
+def import_blocks(source: str) -> list:
+    """Split a module's imports into blocks, as the module paths they name.
+
+    isort groups imports into blank-line-separated blocks and sorts each block
+    by module path, so the blocks are the unit these assertions check.
+    """
+    blocks, current = [], []
+    for line in source.splitlines():
+        if line.startswith(("import ", "from ")):
+            current.append(line.split()[1])
+        elif not line.strip():
+            if current:
+                blocks.append(current)
+                current = []
+        elif not line.startswith((" ", ")")):
+            break
+    if current:
+        blocks.append(current)
+    return blocks
+
+
 def discovered_builtin_names() -> set:
     """Enumerate built-in providers the way get_available_providers() does.
 
@@ -414,30 +435,68 @@ class Test_generated_code_quality:
         IN_REPO_SPECS,
         ids=lambda s: f"{s.kind}-{s.scope}-{s.auth}-{s.regional}",
     )
-    def test_generated_python_is_import_sorted(self, spec):
-        """Whether a provider's own imports sort before or after
-        prowler.providers.common depends on its name, so the templates cannot
-        hardcode the order. External packages are excluded: they live outside
-        this repository and isort never runs on them here.
+    def test_generated_imports_are_ordered_within_each_block(self, spec):
+        """isort orders a block by module path, and whether a provider's own
+        imports fall before or after prowler.providers.common depends on its
+        name, so the templates cannot hardcode the order.
+
+        These assertions read the generated source rather than calling
+        isort.code(). isort's first-party detection depends on where a file
+        sits, and the string API cannot be told a path that does not exist yet,
+        so it disagrees with the pre-commit hook on exactly the import this
+        covers.
         """
-        isort = pytest.importorskip("isort")
         plan = build_builtin_plan(spec, REPO_ROOT)
 
         for relative, source in plan.files.items():
-            if relative.endswith(".py") and source:
-                assert source == isort.code(
-                    source, profile="black"
-                ), f"{relative} is not import-sorted"
+            if not relative.endswith(".py") or not source:
+                continue
+            for block in import_blocks(source):
+                assert block == sorted(block), f"{relative} has an unsorted block"
 
     @pytest.mark.parametrize("name", ["acloud", "zcloud", "m365x"])
     def test_import_order_holds_either_side_of_common(self, name):
         """A name sorting before `common` and one sorting after it both have to
         come out ordered."""
-        isort = pytest.importorskip("isort")
         plan = build_builtin_plan(builtin_spec(name=name, auth="token"), REPO_ROOT)
 
-        provider = plan.files[f"prowler/providers/{name}/{name}_provider.py"]
-        assert provider == isort.code(provider, profile="black")
+        source = plan.files[f"prowler/providers/{name}/{name}_provider.py"]
+        modules = [module for block in import_blocks(source) for module in block]
+        assert f"prowler.providers.{name}.models" in modules
+        assert "prowler.providers.common.provider" in modules
+        for block in import_blocks(source):
+            assert block == sorted(block)
+
+    def test_the_fixture_import_joins_the_first_party_block(self):
+        """`tests` is first-party to isort inside this repository, so the
+        fixture import belongs with the prowler imports and not beside pytest.
+        Placing it next to pytest is what the pre-commit hook rejects."""
+        plan = build_builtin_plan(builtin_spec(), REPO_ROOT)
+
+        source = plan.files["tests/providers/acmecloud/acmecloud_provider_test.py"]
+        blocks = import_blocks(source)
+        fixture = "tests.providers.acmecloud.acmecloud_fixtures"
+        first_party = [block for block in blocks if fixture in block]
+
+        assert len(first_party) == 1
+        assert any(module.startswith("prowler.") for module in first_party[0])
+        assert "pytest" not in first_party[0]
+
+    @pytest.mark.parametrize(
+        "spec", IN_REPO_SPECS, ids=lambda s: f"{s.kind}-{s.scope}-{s.auth}-{s.regional}"
+    )
+    def test_import_wrapping_matches_the_column_limit(self, spec):
+        """black and isort both wrap at 88 columns, so a generated import is
+        one line when it fits and parenthesized when it does not. Which one a
+        given import needs depends on the provider's name."""
+        plan = build_builtin_plan(spec, REPO_ROOT)
+
+        for relative, source in plan.files.items():
+            if not relative.endswith(".py") or not source:
+                continue
+            for line in source.splitlines():
+                if line.startswith("from ") and not line.endswith("("):
+                    assert len(line) <= 88, f"{relative} has an overlong import"
 
 
 class Test_generated_provider_is_loadable:

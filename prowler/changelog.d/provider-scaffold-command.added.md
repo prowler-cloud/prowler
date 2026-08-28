@@ -1,1 +1,1 @@
-`prowler-dev provider create` scaffolds a new provider from explicit inputs (name, kind, scope, regional behavior and authentication mode), generating the structure discovery depends on plus its tests, and reporting the registrations that live in shared files rather than editing them
+`prowler-dev provider create` command that scaffolds a new provider from explicit inputs (name, kind, scope, regional behavior and authentication mode), generating the structure discovery depends on plus its tests and reporting the registrations that live in shared files
