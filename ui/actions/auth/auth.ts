@@ -4,6 +4,7 @@ import { AuthError } from "next-auth";
 
 import { signIn, signOut } from "@/auth.config";
 import { apiBaseUrl } from "@/lib";
+import { UserMeError } from "@/lib/auth-errors";
 import { addAuthEvent } from "@/lib/sentry-breadcrumbs";
 import type { UtmParams } from "@/lib/utm";
 import type { SignInFormData, SignUpFormData } from "@/types";
@@ -140,7 +141,10 @@ export const getToken = async (formData: SignInFormData) => {
   }
 };
 
-export const getUserByMe = async (accessToken: string) => {
+export const getUserByMe = async (
+  accessToken: string,
+  signal?: AbortSignal,
+) => {
   const url = new URL(`${apiBaseUrl}/users/me?include=roles`);
 
   try {
@@ -150,24 +154,21 @@ export const getUserByMe = async (accessToken: string) => {
         Accept: "application/vnd.api+json",
         Authorization: `Bearer ${accessToken}`,
       },
+      signal,
     });
 
-    const parsedResponse = await response.json();
     if (!response.ok) {
-      // Handle different HTTP error codes
-      switch (response.status) {
-        case 401:
-          throw new Error("Invalid or expired token");
-        case 403:
-          throw new Error(parsedResponse.errors?.[0]?.detail);
-        case 404:
-          throw new Error("User not found");
-        default:
-          throw new Error(
-            parsedResponse.errors?.[0]?.detail || "Unknown error",
-          );
-      }
+      const parsedResponse = await response.json().catch(() => undefined);
+      const errorMessage =
+        response.status === 401
+          ? "Invalid or expired token"
+          : response.status === 404
+            ? "User not found"
+            : parsedResponse.errors?.[0]?.detail || "Unknown error";
+      throw new UserMeError(errorMessage, response.status);
     }
+
+    const parsedResponse = await response.json();
 
     const userRole = parsedResponse.included?.find(
       (item: any) => item.type === "roles",
@@ -193,8 +194,14 @@ export const getUserByMe = async (accessToken: string) => {
       dateJoined: parsedResponse.data.attributes.date_joined,
       permissions,
     };
-  } catch (error: any) {
-    throw new Error(error.message || "Network error or server unreachable");
+  } catch (error: unknown) {
+    if (error instanceof UserMeError) throw error;
+
+    throw new UserMeError(
+      error instanceof Error
+        ? error.message
+        : "Network error or server unreachable",
+    );
   }
 };
 

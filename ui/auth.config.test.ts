@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { authConfig } from "./auth.config";
+import { UserMeError } from "./lib/auth-errors";
 import type { RolePermissionAttributes } from "./types/users";
 
 const { getUserByMeMock } = vi.hoisted(() => ({
@@ -255,7 +256,10 @@ describe("authConfig JWT callback", () => {
     });
 
     // Then
-    expect(getUserByMeMock).toHaveBeenCalledWith(newAccessToken);
+    expect(getUserByMeMock).toHaveBeenCalledWith(
+      newAccessToken,
+      expect.any(AbortSignal),
+    );
     expect(result).toMatchObject({
       accessToken: newAccessToken,
       refreshToken: "new-refresh-token",
@@ -298,7 +302,10 @@ describe("authConfig JWT callback", () => {
     });
 
     // Then
-    expect(getUserByMeMock).toHaveBeenCalledWith(newAccessToken);
+    expect(getUserByMeMock).toHaveBeenCalledWith(
+      newAccessToken,
+      expect.any(AbortSignal),
+    );
     expect(result.user?.permissions).toEqual(RESTRICTED_PERMISSIONS);
     expect(result.error).toBeUndefined();
   });
@@ -311,7 +318,9 @@ describe("authConfig JWT callback", () => {
       .spyOn(console, "warn")
       .mockImplementation(() => undefined);
     mockSuccessfulRefresh(newAccessToken);
-    getUserByMeMock.mockRejectedValue(new Error("Temporary API failure"));
+    getUserByMeMock.mockRejectedValue(
+      new UserMeError("Sensitive backend detail", 500),
+    );
     const jwtCallback = authConfig.callbacks?.jwt;
     if (!jwtCallback) throw new Error("JWT callback is not configured");
     const sessionCallback = authConfig.callbacks?.session;
@@ -349,10 +358,118 @@ describe("authConfig JWT callback", () => {
     });
     expect(result.error).toBeUndefined();
     expect(warnSpy).toHaveBeenCalledWith(
-      "Error refreshing user after access token refresh:",
-      expect.any(Error),
+      "Unable to refresh user after access token refresh",
     );
   });
+
+  it("should bound a pending user reload and keep the refreshed session", async () => {
+    // Given
+    const currentAccessToken = accessTokenFor("tenant-1", 1);
+    const newAccessToken = accessTokenFor("tenant-1", 4_102_444_800);
+    const abortController = new AbortController();
+    const timeoutSpy = vi
+      .spyOn(AbortSignal, "timeout")
+      .mockReturnValue(abortController.signal);
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    mockSuccessfulRefresh(newAccessToken);
+    getUserByMeMock.mockImplementation(
+      (_accessToken: string, signal?: AbortSignal) => {
+        if (!signal) return Promise.reject(new Error("Missing abort signal"));
+
+        return new Promise((_resolve, reject) => {
+          signal.addEventListener("abort", () => reject(signal.reason), {
+            once: true,
+          });
+        });
+      },
+    );
+    const jwtCallback = authConfig.callbacks?.jwt;
+    if (!jwtCallback) throw new Error("JWT callback is not configured");
+    const cachedUser = {
+      name: "Tenant User",
+      email: "tenant@example.com",
+      dateJoined: "2026-01-01",
+      permissions: ELEVATED_PERMISSIONS,
+    };
+
+    // When
+    const resultPromise = jwtCallback({
+      token: {
+        accessToken: currentAccessToken,
+        refreshToken: "current-refresh-token",
+        user: cachedUser,
+      },
+      user: {} as Parameters<typeof jwtCallback>[0]["user"],
+    });
+    await vi.waitFor(() => expect(getUserByMeMock).toHaveBeenCalled());
+
+    // Then
+    expect(timeoutSpy).toHaveBeenCalledWith(5_000);
+    expect(getUserByMeMock).toHaveBeenCalledWith(
+      newAccessToken,
+      abortController.signal,
+    );
+
+    abortController.abort(
+      new DOMException("Request timed out", "TimeoutError"),
+    );
+    await expect(resultPromise).resolves.toMatchObject({
+      accessToken: newAccessToken,
+      refreshToken: "new-refresh-token",
+      user: cachedUser,
+      error: undefined,
+    });
+  });
+
+  it.each([401, 403, 404])(
+    "should invalidate the session when reloading the user returns %i",
+    async (status) => {
+      // Given
+      const currentAccessToken = accessTokenFor("tenant-1", 1);
+      const newAccessToken = accessTokenFor("tenant-1", 4_102_444_800);
+      vi.spyOn(console, "warn").mockImplementation(() => undefined);
+      mockSuccessfulRefresh(newAccessToken);
+      getUserByMeMock.mockRejectedValue(
+        new UserMeError("Unable to load user", status),
+      );
+      const jwtCallback = authConfig.callbacks?.jwt;
+      if (!jwtCallback) throw new Error("JWT callback is not configured");
+      const sessionCallback = authConfig.callbacks?.session;
+      if (!sessionCallback)
+        throw new Error("Session callback is not configured");
+
+      // When
+      const result = await jwtCallback({
+        token: {
+          accessToken: currentAccessToken,
+          refreshToken: "current-refresh-token",
+          user: {
+            name: "Tenant User",
+            email: "tenant@example.com",
+            dateJoined: "2026-01-01",
+            permissions: ELEVATED_PERMISSIONS,
+          },
+        },
+        user: {} as Parameters<typeof jwtCallback>[0]["user"],
+      });
+      const session = await sessionCallback({
+        session: {
+          expires: "2026-12-31T23:59:59.999Z",
+          user: { name: "Tenant User" },
+        },
+        token: result,
+      } as Parameters<typeof sessionCallback>[0]);
+
+      // Then
+      expect(result.user).toBeUndefined();
+      expect(result.accessToken).toBeUndefined();
+      expect(result.refreshToken).toBeUndefined();
+      expect(result.error).toBe("RefreshAccessTokenError");
+      expect(session.user).toBeUndefined();
+      expect(session.accessToken).toBeUndefined();
+      expect(session.refreshToken).toBeUndefined();
+    },
+  );
 
   it("should invalidate the session when access token refresh fails", async () => {
     // Given
@@ -504,8 +621,16 @@ describe("authConfig JWT callback", () => {
 
     // Then
     expect(fetchMock).toHaveBeenCalledTimes(2);
-    expect(getUserByMeMock).toHaveBeenNthCalledWith(1, firstAccessToken);
-    expect(getUserByMeMock).toHaveBeenNthCalledWith(2, secondAccessToken);
+    expect(getUserByMeMock).toHaveBeenNthCalledWith(
+      1,
+      firstAccessToken,
+      expect.any(AbortSignal),
+    );
+    expect(getUserByMeMock).toHaveBeenNthCalledWith(
+      2,
+      secondAccessToken,
+      expect.any(AbortSignal),
+    );
     expect(firstResult.user?.permissions).toEqual(ELEVATED_PERMISSIONS);
     expect(secondResult).toMatchObject({
       accessToken: secondAccessToken,
