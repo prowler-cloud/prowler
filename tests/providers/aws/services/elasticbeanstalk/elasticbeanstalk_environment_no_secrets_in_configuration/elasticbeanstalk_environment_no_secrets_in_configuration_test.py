@@ -39,11 +39,7 @@ class Test_elasticbeanstalk_environment_no_secrets_in_configuration:
         elasticbeanstalk_client.environments = {eb_env_arn: environment}
 
         mocked_scan_results = {
-            (
-                eb_env_arn,
-                "aws:elasticbeanstalk:application:environment",
-                "JSON_WEB_TOKEN",
-            ): [
+            (0, 0): [
                 {
                     "filename": "payload",
                     "line_number": 1,
@@ -52,11 +48,7 @@ class Test_elasticbeanstalk_environment_no_secrets_in_configuration:
                     "is_verified": False,
                 }
             ],
-            (
-                eb_env_arn,
-                "aws:elasticbeanstalk:application:environment",
-                "MONGODB_URI",
-            ): [
+            (0, 1): [
                 {
                     "filename": "payload",
                     "line_number": 1,
@@ -140,7 +132,7 @@ class Test_elasticbeanstalk_environment_no_secrets_in_configuration:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"No secrets found in Elastic Beanstalk environment configuration for {environment.name} environment."
+                == f"No secrets found in the configuration of Elastic Beanstalk environment {environment.name}."
             )
 
     def test_environment_configuration_scan_error(self):
@@ -192,7 +184,7 @@ class Test_elasticbeanstalk_environment_no_secrets_in_configuration:
             assert len(result) == 1
             assert result[0].status == "MANUAL"
             assert (
-                f"Could not scan Elastic Beanstalk environment configuration for {environment.name} environment"
+                f"Could not scan the configuration of Elastic Beanstalk environment {environment.name} for secrets; manual review is required."
                 in result[0].status_extended
             )
 
@@ -256,5 +248,68 @@ class Test_elasticbeanstalk_environment_no_secrets_in_configuration:
             assert result[0].status == "MANUAL"
             assert (
                 result[0].status_extended
-                == f"No option settings found for Elastic Beanstalk {environment.name} environment; manual review is required."
+                == f"Could not retrieve the configuration of Elastic Beanstalk environment {environment.name}; manual review is required."
             )
+
+    def test_environment_configuration_with_password_real_scanner(self):
+        """Run the real scanner: a plaintext password in an environment variable must be reported.
+
+        The option name is part of the scanned payload; without it generic
+        credentials such as passwords are not detected.
+        """
+        elasticbeanstalk_client = mock.MagicMock()
+        elasticbeanstalk_client.audit_config = {"secrets_ignore_patterns": []}
+        eb_env_arn = f"arn:partition:elasticbeanstalk:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:environment/production"
+
+        environment = Environment(
+            id="e-vbxmknpy2z",
+            name="production",
+            arn=eb_env_arn,
+            region=AWS_REGION_US_EAST_1,
+            application_name="test-app",
+            option_settings=[
+                {
+                    "Namespace": "aws:elasticbeanstalk:application:environment",
+                    "OptionName": "APP_ENV",
+                    "Value": "production",
+                },
+                {
+                    "Namespace": "aws:elasticbeanstalk:application:environment",
+                    "OptionName": "DB_PASSWORD",
+                    "Value": "Tr0ub4dor3xKq9vLmZ",
+                },
+                {
+                    "Namespace": "aws:autoscaling:launchconfiguration",
+                    "OptionName": "InstanceType",
+                    "Value": "t3.micro",
+                },
+            ],
+        )
+        elasticbeanstalk_client.environments = {eb_env_arn: environment}
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.elasticbeanstalk.elasticbeanstalk_environment_no_secrets_in_configuration.elasticbeanstalk_environment_no_secrets_in_configuration.elasticbeanstalk_client",
+                new=elasticbeanstalk_client,
+            ),
+        ):
+            from prowler.providers.aws.services.elasticbeanstalk.elasticbeanstalk_environment_no_secrets_in_configuration.elasticbeanstalk_environment_no_secrets_in_configuration import (
+                elasticbeanstalk_environment_no_secrets_in_configuration,
+            )
+
+            check = elasticbeanstalk_environment_no_secrets_in_configuration()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == "Potential secret found in the configuration of Elastic Beanstalk environment production -> aws:elasticbeanstalk:application:environment/DB_PASSWORD."
+            )
+            assert result[0].resource_id == "e-vbxmknpy2z"
+            assert result[0].resource_arn == eb_env_arn
+            assert result[0].region == AWS_REGION_US_EAST_1

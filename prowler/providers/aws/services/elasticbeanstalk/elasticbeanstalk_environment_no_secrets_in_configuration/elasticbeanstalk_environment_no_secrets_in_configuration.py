@@ -1,118 +1,107 @@
+import json
+
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.lib.utils.utils import (
     SecretsScanError,
     annotate_verified_secrets,
     detect_secrets_scan_batch,
 )
-from prowler.providers.aws.services.elasticbeanstalk import elasticbeanstalk_client
+from prowler.providers.aws.services.elasticbeanstalk.elasticbeanstalk_client import (
+    elasticbeanstalk_client,
+)
 
 
 class elasticbeanstalk_environment_no_secrets_in_configuration(Check):
     """Check that Elastic Beanstalk environment configurations contain no hardcoded secrets."""
 
     def execute(self) -> list[Check_Report_AWS]:
-        """Scan environment configuration option settings for secrets.
+        """Scan the option settings of each Elastic Beanstalk environment for secrets.
+
+        Every option setting is scanned as ``{OptionName: Value}`` so the scanner
+        gets the same name context the other secrets checks provide. Findings are
+        keyed by ``(environment index, option setting index)`` because the same
+        namespace and option name can appear more than once per environment (one
+        entry per ``ResourceName``).
 
         Returns:
-            A report for each Elastic Beanstalk environment.
+            list[Check_Report_AWS]: A report for each Elastic Beanstalk environment.
         """
         findings = []
         secrets_ignore_patterns = elasticbeanstalk_client.audit_config.get(
             "secrets_ignore_patterns", []
         )
         validate = elasticbeanstalk_client.audit_config.get("secrets_validate", False)
+        environments = list(elasticbeanstalk_client.environments.values())
 
-        for environment in elasticbeanstalk_client.environments.values():
-            if environment.option_settings is None:
-                report = Check_Report_AWS(
-                    metadata=self.metadata(),
-                    resource=environment,
-                )
-                report.status = "MANUAL"
-                report.status_extended = (
-                    f"No option settings found for Elastic Beanstalk "
-                    f"{environment.name} environment; manual review is required."
-                )
-                findings.append(report)
-                continue
-
+        # Phase 1: collect — build the payload strings only, no scan yet.
         def payloads():
-            for environment in elasticbeanstalk_client.environments.values():
-                if environment.option_settings is None:
-                    continue
-                for option_setting in environment.option_settings:
+            for environment_index, environment in enumerate(environments):
+                for option_index, option_setting in enumerate(
+                    environment.option_settings or []
+                ):
                     value = option_setting.get("Value")
                     if not value:
                         continue
-                    yield (
-                        (
-                            environment.arn,
-                            option_setting["Namespace"],
-                            option_setting["OptionName"],
-                        ),
-                        value,
+                    yield (environment_index, option_index), json.dumps(
+                        {option_setting.get("OptionName", ""): value}
                     )
 
+        # Phase 2: batch — one scan for every environment.
         scan_error = None
         try:
             batch_results = detect_secrets_scan_batch(
-                payloads(),
-                excluded_secrets=secrets_ignore_patterns,
-                validate=validate,
+                payloads(), excluded_secrets=secrets_ignore_patterns, validate=validate
             )
         except SecretsScanError as error:
             batch_results = {}
             scan_error = error
 
-        if scan_error:
-            for environment in elasticbeanstalk_client.environments.values():
-                if environment.option_settings is None:
-                    continue
-                report = Check_Report_AWS(
-                    metadata=self.metadata(), resource=environment
-                )
+        # Phase 3: report — one finding per environment.
+        for environment_index, environment in enumerate(environments):
+            report = Check_Report_AWS(metadata=self.metadata(), resource=environment)
+
+            if environment.option_settings is None:
                 report.status = "MANUAL"
                 report.status_extended = (
-                    f"Could not scan Elastic Beanstalk environment configuration for "
-                    f"{environment.name} environment for secrets; manual review is required."
+                    f"Could not retrieve the configuration of Elastic Beanstalk "
+                    f"environment {environment.name}; manual review is required."
                 )
                 findings.append(report)
-            return findings
-
-        for environment in elasticbeanstalk_client.environments.values():
-            if environment.option_settings is None:
                 continue
-            report = Check_Report_AWS(metadata=self.metadata(), resource=environment)
+
+            if scan_error and any(
+                option_setting.get("Value")
+                for option_setting in environment.option_settings
+            ):
+                report.status = "MANUAL"
+                report.status_extended = (
+                    f"Could not scan the configuration of Elastic Beanstalk "
+                    f"environment {environment.name} for secrets; manual review is required."
+                )
+                findings.append(report)
+                continue
+
             report.status = "PASS"
-            report.status_extended = f"No secrets found in Elastic Beanstalk environment configuration for {environment.name} environment."
-            detected_secret_settings = []
+            report.status_extended = f"No secrets found in the configuration of Elastic Beanstalk environment {environment.name}."
+
+            secret_settings = []
             all_secrets = []
-            for option_setting in environment.option_settings:
-                detect_secret_outputs = batch_results.get(
-                    (
-                        environment.arn,
-                        option_setting["Namespace"],
-                        option_setting["OptionName"],
-                    )
+            for option_index, option_setting in enumerate(environment.option_settings):
+                detect_secrets_output = batch_results.get(
+                    (environment_index, option_index)
                 )
-
-                if detect_secret_outputs:
-                    detected_secret_settings.append(
-                        (option_setting["Namespace"], option_setting["OptionName"])
+                if detect_secrets_output:
+                    all_secrets.extend(detect_secrets_output)
+                    secret_settings.append(
+                        f"{option_setting.get('Namespace', '')}/{option_setting.get('OptionName', '')}"
                     )
-                    all_secrets.extend(detect_secret_outputs)
 
-            if detected_secret_settings:
-                secret_setting = "; ".join(
-                    f"Namespace: {namespace}, OptionName: {option_name}"
-                    for namespace, option_name in detected_secret_settings
-                )
+            if secret_settings:
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"Potential "
-                    f"{'secrets' if len(detected_secret_settings) > 1 else 'secret'} "
-                    f"found in Elastic Beanstalk environment configuration for "
-                    f"{environment.name} environment -> {secret_setting}."
+                    f"Potential {'secrets' if len(secret_settings) > 1 else 'secret'} "
+                    f"found in the configuration of Elastic Beanstalk environment "
+                    f"{environment.name} -> {', '.join(secret_settings)}."
                 )
                 annotate_verified_secrets(report, all_secrets)
 
