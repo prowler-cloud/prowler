@@ -4,6 +4,19 @@ All notable changes to the **Prowler API** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [1.41.0] (Prowler v5.40.0)
+
+### 🐞 Fixed
+
+- `FINDINGS_TABLE_PARTITION_MAX_AGE_MONTHS` is now applied in months instead of days, and negative values are rejected [(#12580)](https://github.com/prowler-cloud/prowler/pull/12580)
+
+### 🔐 Security
+
+- `sqlparse` upgraded to 0.6.0, patching CVE-2026-54284, CVE-2026-59893, and CVE-2026-71491 [(#12509)](https://github.com/prowler-cloud/prowler/pull/12509)
+- `openssl`, `libssl3t64` and `openssl-provider-legacy` upgraded to 3.5.7-1~deb13u2 in the API container image, patching ten high OpenSSL CVEs [(#12549)](https://github.com/prowler-cloud/prowler/pull/12549)
+
+---
+
 ## [1.40.1] (Prowler v5.39.1)
 
 ### 🔄 Changed
