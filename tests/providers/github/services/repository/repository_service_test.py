@@ -414,6 +414,54 @@ class Test_Repository_GraphQL:
             with pytest.raises(GithubRepositoryDiscoveryError):
                 repository_service._get_accessible_repos_graphql()
 
+    def test_graphql_keeps_accessible_repositories_on_partial_errors(self):
+        """Per-node errors (e.g. SAML-protected repositories) must not abort discovery."""
+        repository_service = self._repository_service()
+        response = MagicMock()
+        response.json.return_value = {
+            "data": {
+                "viewer": {
+                    "repositories": {
+                        "nodes": [{"nameWithOwner": "owner/visible"}, None],
+                        "pageInfo": {"hasNextPage": False, "endCursor": None},
+                    }
+                }
+            },
+            "errors": [
+                {
+                    "type": "FORBIDDEN",
+                    "path": ["viewer", "repositories", "nodes", 1],
+                    "message": "Resource protected by organization SAML enforcement.",
+                }
+            ],
+        }
+
+        with (
+            patch("requests.post", return_value=response),
+            patch(
+                "prowler.providers.github.services.repository.repository_service.logger"
+            ) as mock_logger,
+        ):
+            repositories = repository_service._get_accessible_repos_graphql()
+
+        assert repositories == ["owner/visible"]
+        assert mock_logger.warning.call_count == 2
+        assert "SAML" in str(mock_logger.warning.call_args_list[0])
+
+    def test_graphql_aborts_on_errors_without_data(self):
+        repository_service = self._repository_service()
+        response = MagicMock()
+        response.json.return_value = {
+            "data": None,
+            "errors": [{"type": "FORBIDDEN", "message": "Bad credentials"}],
+        }
+
+        with patch("requests.post", return_value=response):
+            with pytest.raises(GithubRepositoryDiscoveryError) as exc_info:
+                repository_service._get_accessible_repos_graphql()
+
+        assert "Bad credentials" in str(exc_info.value)
+
     def test_graphql_returns_legitimate_empty_repository_list(self):
         repository_service = self._repository_service()
         response = self._graphql_response([])

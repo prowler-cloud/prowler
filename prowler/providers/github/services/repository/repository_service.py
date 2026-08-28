@@ -115,19 +115,25 @@ class Repository(GithubService):
                     )
                 )
 
-            if "errors" in data:
-                raise GithubRepositoryDiscoveryError(
-                    original_exception=ValueError(
-                        f"GitHub GraphQL returned errors: {data['errors']}"
-                    )
-                )
-
+            # GitHub returns partial responses: repositories the token cannot
+            # access (for example behind organization SAML enforcement) come
+            # back as null nodes together with an "errors" entry, while the
+            # rest of the page is valid. Only abort when there is no usable
+            # data to continue with.
+            graphql_errors = data.get("errors")
             response_data = data.get("data")
             if not isinstance(response_data, dict):
                 raise GithubRepositoryDiscoveryError(
                     original_exception=ValueError(
-                        "GitHub GraphQL response is missing a valid data object"
+                        f"GitHub GraphQL returned errors: {graphql_errors}"
+                        if graphql_errors
+                        else "GitHub GraphQL response is missing a valid data object"
                     )
+                )
+            if graphql_errors:
+                logger.warning(
+                    f"GitHub GraphQL returned errors while discovering repositories, "
+                    f"some repositories may be skipped: {graphql_errors}"
                 )
 
             viewer = response_data.get("viewer")
@@ -165,6 +171,9 @@ class Repository(GithubService):
                 # GitHub connection nodes are nullable. A null entry does not make the
                 # rest of the repository page incomplete.
                 if repo_node is None:
+                    logger.warning(
+                        "Skipping a repository the token cannot access during discovery."
+                    )
                     continue
                 if not isinstance(repo_node, dict):
                     raise GithubRepositoryDiscoveryError(
