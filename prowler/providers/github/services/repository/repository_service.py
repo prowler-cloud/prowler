@@ -122,7 +122,16 @@ class Repository(GithubService):
                         f"some repositories may be skipped: {errors}"
                     )
 
-                for repo_node in repository_connection.get("nodes") or []:
+                repo_nodes = repository_connection.get("nodes") or []
+                page_info = repository_connection.get("pageInfo") or {}
+                if not isinstance(repo_nodes, list) or not isinstance(page_info, dict):
+                    logger.error(
+                        "GitHub GraphQL returned an invalid repositories page; "
+                        "repository discovery may be incomplete."
+                    )
+                    return repositories
+
+                for repo_node in repo_nodes:
                     if not repo_node:
                         logger.warning(
                             "Skipping a repository the token cannot access during discovery."
@@ -130,7 +139,6 @@ class Repository(GithubService):
                         continue
                     repositories.append(repo_node["nameWithOwner"])
 
-                page_info = repository_connection.get("pageInfo") or {}
                 if not page_info.get("hasNextPage"):
                     return repositories
 
@@ -143,7 +151,13 @@ class Repository(GithubService):
                     return repositories
                 seen_cursors.add(cursor)
 
-        except (requests.exceptions.RequestException, ValueError, KeyError) as error:
+        except (
+            requests.exceptions.RequestException,
+            ValueError,
+            KeyError,
+            TypeError,
+            AttributeError,
+        ) as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )

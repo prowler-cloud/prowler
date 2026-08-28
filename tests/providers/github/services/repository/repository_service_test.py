@@ -1319,3 +1319,34 @@ class Test_Repository_GraphQL_Pagination:
         assert repositories == ["owner/a", "owner/b"]
         assert mock_post.call_count == 2
         mock_logger.error.assert_called_once()
+
+    @pytest.mark.parametrize(
+        "nodes, page_info",
+        [
+            ("not-a-list", {"hasNextPage": False}),
+            ([{"nameWithOwner": "owner/b"}], ["invalid"]),
+            ([{"nameWithOwner": "owner/b"}], "invalid"),
+        ],
+    )
+    def test_graphql_invalid_page_keeps_collected_repositories(self, nodes, page_info):
+        repository_service = self._repository_service()
+        first_page = self._graphql_response(
+            [{"nameWithOwner": "owner/a"}], has_next_page=True, end_cursor="page-2"
+        )
+        invalid_page = MagicMock()
+        invalid_page.json.return_value = {
+            "data": {
+                "viewer": {"repositories": {"nodes": nodes, "pageInfo": page_info}}
+            }
+        }
+
+        with (
+            patch("requests.post", side_effect=[first_page, invalid_page]),
+            patch(
+                "prowler.providers.github.services.repository.repository_service.logger"
+            ) as mock_logger,
+        ):
+            repositories = repository_service._get_accessible_repos_graphql()
+
+        assert repositories == ["owner/a"]
+        mock_logger.error.assert_called_once()
