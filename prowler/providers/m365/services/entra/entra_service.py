@@ -945,6 +945,18 @@ class Entra(M365Service):
         return directory_sync_settings, error_message
 
     async def _get_users(self):
+        """Retrieve the tenant users with their directory roles and MFA registration.
+
+        Depends on ``GET /users``, ``GET /directoryRoles`` and the members of
+        each role, plus ``_get_user_registration_details``. If any of those
+        Graph calls fails, ``self.users_error`` is set so checks can report
+        that the directory could not be read instead of evaluating an empty
+        user set.
+
+        Returns:
+            dict: User id mapped to ``User``. Empty (or partial, on a
+            mid-pagination failure) when ``self.users_error`` is set.
+        """
         logger.info("Entra - Getting users...")
         users = {}
         try:

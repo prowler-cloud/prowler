@@ -13,7 +13,7 @@ class s3_bucket_cross_region_replication(Check):
       account/scope so its region cannot be determined.
     """
 
-    def execute(self):
+    def execute(self) -> list[Check_Report_AWS]:
         findings = []
         for bucket in s3_client.buckets.values():
             report = Check_Report_AWS(metadata=self.metadata(), resource=bucket)

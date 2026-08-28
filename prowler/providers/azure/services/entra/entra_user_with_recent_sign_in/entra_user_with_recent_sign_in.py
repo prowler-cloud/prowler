@@ -17,7 +17,7 @@ class entra_user_with_recent_sign_in(Check):
     - MANUAL (tenant-level): Microsoft Graph refused to return sign-in activity for the tenant (missing Entra ID P1/P2 licensing or the AuditLog.Read.All permission), so the check cannot be evaluated; reported once per tenant.
     """
 
-    def execute(self) -> Check_Report_Azure:
+    def execute(self) -> list[Check_Report_Azure]:
         findings = []
 
         for tenant_domain, users in entra_client.users.items():

@@ -75,6 +75,18 @@ class Entra(AzureService):
             loop.close()
 
     async def _get_users(self):
+        """Retrieve the users of every audited tenant from Microsoft Graph.
+
+        Users are requested with ``signInActivity``. When Graph rejects that
+        request (the tenant lacks Entra ID P1/P2 or the application lacks
+        ``AuditLog.Read.All``), the tenant is recorded in
+        ``self.sign_in_activity_unavailable`` and the users are fetched again
+        without ``signInActivity`` so the remaining user checks can still run.
+
+        Returns:
+            dict: Tenant domain mapped to a dict of user id -> ``User``. A
+            tenant whose users could not be retrieved maps to an empty dict.
+        """
         logger.info("Entra - Getting users...")
         users = {}
         base_select = ["id", "displayName", "accountEnabled"]
