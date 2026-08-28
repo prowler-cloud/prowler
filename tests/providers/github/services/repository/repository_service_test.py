@@ -1324,8 +1324,14 @@ class Test_Repository_GraphQL_Pagination:
         "nodes, page_info",
         [
             ("not-a-list", {"hasNextPage": False}),
+            ({}, {"hasNextPage": False}),
+            (None, {"hasNextPage": False}),
             ([{"nameWithOwner": "owner/b"}], ["invalid"]),
             ([{"nameWithOwner": "owner/b"}], "invalid"),
+            ([{"nameWithOwner": "owner/b"}], []),
+            ([{"nameWithOwner": "owner/b"}], None),
+            ([{"nameWithOwner": "owner/b"}], {}),
+            ([{"nameWithOwner": "owner/b"}], {"hasNextPage": "false"}),
         ],
     )
     def test_graphql_invalid_page_keeps_collected_repositories(self, nodes, page_info):

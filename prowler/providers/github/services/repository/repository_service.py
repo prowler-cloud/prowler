@@ -122,9 +122,13 @@ class Repository(GithubService):
                         f"some repositories may be skipped: {errors}"
                     )
 
-                repo_nodes = repository_connection.get("nodes") or []
-                page_info = repository_connection.get("pageInfo") or {}
-                if not isinstance(repo_nodes, list) or not isinstance(page_info, dict):
+                repo_nodes = repository_connection.get("nodes")
+                page_info = repository_connection.get("pageInfo")
+                if (
+                    not isinstance(repo_nodes, list)
+                    or not isinstance(page_info, dict)
+                    or not isinstance(page_info.get("hasNextPage"), bool)
+                ):
                     logger.error(
                         "GitHub GraphQL returned an invalid repositories page; "
                         "repository discovery may be incomplete."
@@ -139,7 +143,7 @@ class Repository(GithubService):
                         continue
                     repositories.append(repo_node["nameWithOwner"])
 
-                if not page_info.get("hasNextPage"):
+                if not page_info["hasNextPage"]:
                     return repositories
 
                 cursor = page_info.get("endCursor")
