@@ -256,8 +256,10 @@ describe("Scans page import findings", () => {
 
   it("never overlaps status polls for an accepted import", async () => {
     const harness = new ScansPageHarness(ingestionFixture());
+    // The delay has to outlast POLL_INTERVAL_MS: an interval-driven poll fires
+    // its second request while this first one is still in flight.
     await harness.mount({
-      statusDelayMs: 5100,
+      statusDelayMs: 7500,
       statusSequence: ["completed"],
     });
     await harness.openImportFindings();

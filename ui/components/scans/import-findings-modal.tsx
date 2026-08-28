@@ -7,7 +7,11 @@ import { Button } from "@/components/shadcn/button/button";
 import { FileUploadDropzone } from "@/components/shadcn/file-upload/file-upload-dropzone";
 import { Modal } from "@/components/shadcn/modal/modal";
 import { useToast } from "@/components/shadcn/toast/use-toast";
-import type { Ingestion, IngestionResponse } from "@/types";
+import {
+  INGESTION_STATUS,
+  type Ingestion,
+  type IngestionResponse,
+} from "@/types";
 
 const POLL_INTERVAL_MS = 5000;
 // 60 polls at 5s = ~5 min of watching; timing out ends the watch, not the job.
@@ -85,7 +89,8 @@ interface ImportFindingsModalProps {
 }
 
 const isTerminal = (ingestion: Ingestion): boolean =>
-  ingestion.status === "completed" || ingestion.status === "failed";
+  ingestion.status === INGESTION_STATUS.COMPLETED ||
+  ingestion.status === INGESTION_STATUS.FAILED;
 
 const validateFile = (file: File): string | null => {
   if (!file.name.toLowerCase().endsWith(".ocsf.json")) {
@@ -176,7 +181,7 @@ export function ImportFindingsModal({
           return;
         }
 
-        if (ingestion.status === "completed") {
+        if (ingestion.status === INGESTION_STATUS.COMPLETED) {
           router.refresh();
           if (!openRef.current) {
             toast({

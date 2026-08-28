@@ -99,7 +99,7 @@ export type PermissionKey =
   (typeof PERMISSION_KEY)[keyof typeof PERMISSION_KEY];
 
 export type RolePermissionAttributes = Pick<
-  RoleDetail["attributes"],
+  RoleDetailAttributes,
   PermissionKey
 >;
 
@@ -111,44 +111,54 @@ export const TENANT_MEMBERSHIP_ROLE = {
 export type TenantMembershipRole =
   (typeof TENANT_MEMBERSHIP_ROLE)[keyof typeof TENANT_MEMBERSHIP_ROLE];
 
+export interface RoleDetailAttributes {
+  name: string;
+  manage_users: boolean;
+  manage_account: boolean;
+  manage_providers: boolean;
+  manage_scans: boolean;
+  manage_ingestions?: boolean;
+  manage_integrations: boolean;
+  manage_billing?: boolean;
+  manage_alerts?: boolean;
+  manage_lighthouse_ai_configuration?: boolean;
+  unlimited_visibility: boolean;
+  permission_state?: string;
+  inserted_at?: string;
+  updated_at?: string;
+}
+
 export interface RoleDetail {
   id: string;
   type: "roles";
-  attributes: {
-    name: string;
-    manage_users: boolean;
-    manage_account: boolean;
-    manage_providers: boolean;
-    manage_scans: boolean;
-    manage_ingestions?: boolean;
-    manage_integrations: boolean;
-    manage_billing?: boolean;
-    manage_alerts?: boolean;
-    manage_lighthouse_ai_configuration?: boolean;
-    unlimited_visibility: boolean;
-    permission_state?: string;
-    inserted_at?: string;
-    updated_at?: string;
-  };
+  attributes: RoleDetailAttributes;
+}
+
+export interface MembershipDetailAttributes {
+  role: string;
+  date_joined: string;
+  [key: string]: any;
+}
+
+export interface MembershipTenantIdentifier {
+  type: string;
+  id: string;
+}
+
+export interface MembershipTenantRelationship {
+  data: MembershipTenantIdentifier;
+}
+
+export interface MembershipDetailRelationships {
+  tenant: MembershipTenantRelationship;
+  [key: string]: any;
 }
 
 export interface MembershipDetailData {
   id: string;
   type: "memberships";
-  attributes: {
-    role: string;
-    date_joined: string;
-    [key: string]: any;
-  };
-  relationships: {
-    tenant: {
-      data: {
-        type: string;
-        id: string;
-      };
-    };
-    [key: string]: any;
-  };
+  attributes: MembershipDetailAttributes;
+  relationships: MembershipDetailRelationships;
 }
 
 export interface UserDataWithRoles
