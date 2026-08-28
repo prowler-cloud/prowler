@@ -137,7 +137,7 @@ export interface RoleDetail {
 export interface MembershipDetailAttributes {
   role: string;
   date_joined: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface MembershipTenantIdentifier {
@@ -151,7 +151,7 @@ export interface MembershipTenantRelationship {
 
 export interface MembershipDetailRelationships {
   tenant: MembershipTenantRelationship;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface MembershipDetailData {
