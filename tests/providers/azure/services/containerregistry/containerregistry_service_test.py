@@ -1,6 +1,8 @@
 from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
+from azure.mgmt.containerregistry.v2023_11_01_preview.models import Registry, Sku
+
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
     RESOURCE_GROUP,
@@ -10,6 +12,34 @@ from tests.providers.azure.azure_fixtures import (
 
 
 class TestContainerRegistryService:
+    def test_get_client_uses_api_version_with_network_properties(self):
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            patch(
+                "prowler.providers.azure.services.monitor.monitor_service.Monitor",
+                new=MagicMock(),
+            ),
+            patch(
+                "prowler.providers.azure.services.containerregistry.containerregistry_service.ContainerRegistry._get_container_registries",
+                return_value={},
+            ),
+        ):
+            from prowler.providers.azure.services.containerregistry.containerregistry_service import (
+                ContainerRegistry,
+            )
+
+            containerregistry_service = ContainerRegistry(set_mocked_azure_provider())
+
+        assert (
+            containerregistry_service.clients[
+                AZURE_SUBSCRIPTION_ID
+            ].registries._api_version
+            == "2023-11-01-preview"
+        )
+
     def test_get_container_registry(self):
         with (
             patch(
@@ -94,6 +124,103 @@ class TestContainerRegistryService:
 
 
 class Test_ContainerRegistry_get_registries:
+    @staticmethod
+    def _create_service(mock_client):
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            patch(
+                "prowler.providers.azure.services.monitor.monitor_service.Monitor",
+                new=MagicMock(),
+            ),
+            patch(
+                "prowler.providers.azure.services.containerregistry.containerregistry_service.ContainerRegistry._get_container_registries",
+                return_value={},
+            ),
+        ):
+            from prowler.providers.azure.services.containerregistry.containerregistry_service import (
+                ContainerRegistry,
+            )
+
+            containerregistry_service = ContainerRegistry(set_mocked_azure_provider())
+
+        containerregistry_service.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        containerregistry_service.resource_groups = None
+        return containerregistry_service
+
+    def test_get_container_registries_maps_network_properties(self):
+        registry_id = (
+            f"/subscriptions/{AZURE_SUBSCRIPTION_ID}/resourceGroups/{RESOURCE_GROUP}"
+            "/providers/Microsoft.ContainerRegistry/registries/mock-registry"
+        )
+        registry = Registry(
+            location="westeurope",
+            sku=Sku(name="Premium"),
+            public_network_access="Disabled",
+        )
+        registry.id = registry_id
+        registry.name = "mock-registry"
+        registry.login_server = "mock-registry.azurecr.io"
+
+        private_endpoint_connection = MagicMock()
+        private_endpoint_connection.id = (
+            f"{registry_id}/privateEndpointConnections/pec-1"
+        )
+        private_endpoint_connection.name = "pec-1"
+        private_endpoint_connection.type = (
+            "Microsoft.ContainerRegistry/registries/privateEndpointConnections"
+        )
+        registry.private_endpoint_connections = [private_endpoint_connection]
+
+        mock_client = MagicMock()
+        mock_client.registries.list.return_value = [registry]
+        containerregistry_service = self._create_service(mock_client)
+
+        with patch.object(
+            containerregistry_service,
+            "_get_registry_monitor_settings",
+            return_value=[],
+        ):
+            result = containerregistry_service._get_container_registries()
+
+        registry_info = result[AZURE_SUBSCRIPTION_ID][registry_id]
+        assert not registry_info.public_network_access
+        assert len(registry_info.private_endpoint_connections) == 1
+        assert registry_info.private_endpoint_connections[0].id == (
+            private_endpoint_connection.id
+        )
+
+    def test_get_container_registries_without_private_endpoints(self):
+        registry_id = (
+            f"/subscriptions/{AZURE_SUBSCRIPTION_ID}/resourceGroups/{RESOURCE_GROUP}"
+            "/providers/Microsoft.ContainerRegistry/registries/public-registry"
+        )
+        registry = Registry(
+            location="westeurope",
+            sku=Sku(name="Basic"),
+            public_network_access="Enabled",
+        )
+        registry.id = registry_id
+        registry.name = "public-registry"
+        registry.login_server = "public-registry.azurecr.io"
+
+        mock_client = MagicMock()
+        mock_client.registries.list.return_value = [registry]
+        containerregistry_service = self._create_service(mock_client)
+
+        with patch.object(
+            containerregistry_service,
+            "_get_registry_monitor_settings",
+            return_value=[],
+        ):
+            result = containerregistry_service._get_container_registries()
+
+        registry_info = result[AZURE_SUBSCRIPTION_ID][registry_id]
+        assert registry_info.public_network_access
+        assert registry_info.private_endpoint_connections == []
+
     def test_get_container_registries_no_resource_groups(self):
         mock_client = MagicMock()
         mock_client.registries.list.return_value = []
