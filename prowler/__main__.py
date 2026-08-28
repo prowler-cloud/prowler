@@ -19,7 +19,6 @@ from prowler.config.config import (
     orange_color,
     sarif_file_suffix,
 )
-from prowler.exceptions.exceptions import ScanAbortError
 from prowler.lib.banner import print_banner, print_prowler_cloud_banner
 from prowler.lib.check.check import (
     exclude_checks_to_run,
@@ -588,17 +587,13 @@ def prowler():
             # Report findings for verbose output
             report(findings, global_provider, output_options)
     elif len(checks_to_execute):
-        try:
-            findings = execute_checks(
-                checks_to_execute,
-                global_provider,
-                custom_checks_metadata,
-                args.config_file,
-                output_options,
-            )
-        except ScanAbortError as error:
-            logger.critical(str(error))
-            sys.exit(1)
+        findings = execute_checks(
+            checks_to_execute,
+            global_provider,
+            custom_checks_metadata,
+            args.config_file,
+            output_options,
+        )
     else:
         logger.error(
             "There are no checks to execute. Please, check your input arguments"

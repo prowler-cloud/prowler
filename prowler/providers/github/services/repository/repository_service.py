@@ -7,9 +7,6 @@ import requests
 from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
-from prowler.providers.github.exceptions.exceptions import (
-    GithubRepositoryDiscoveryError,
-)
 from prowler.providers.github.lib.service.service import GithubService
 from prowler.providers.github.models import GithubAppIdentityInfo
 
@@ -93,8 +90,8 @@ class Repository(GithubService):
         cursor = None
         seen_cursors = set()
 
-        while True:
-            try:
+        try:
+            while True:
                 response = requests.post(
                     graphql_url,
                     json={"query": query, "variables": {"cursor": cursor}},
@@ -103,121 +100,54 @@ class Repository(GithubService):
                 )
                 response.raise_for_status()
                 data = response.json()
-            except (requests.exceptions.RequestException, ValueError) as error:
-                raise GithubRepositoryDiscoveryError(
-                    original_exception=error
-                ) from error
 
-            if not isinstance(data, dict):
-                raise GithubRepositoryDiscoveryError(
-                    original_exception=ValueError(
-                        "GitHub GraphQL response must be a JSON object"
+                errors = data.get("errors") if isinstance(data, dict) else None
+                repository_connection = (
+                    ((data.get("data") or {}).get("viewer") or {}).get("repositories")
+                    if isinstance(data, dict)
+                    else None
+                )
+                if not isinstance(repository_connection, dict):
+                    logger.error(
+                        f"Error in GraphQL query: {errors or 'invalid response'}"
                     )
-                )
-
-            # GitHub returns partial responses: repositories the token cannot
-            # access (for example behind organization SAML enforcement) come
-            # back as null nodes together with an "errors" entry, while the
-            # rest of the page is valid. Only abort when there is no usable
-            # data to continue with.
-            graphql_errors = data.get("errors")
-            response_data = data.get("data")
-            if not isinstance(response_data, dict):
-                raise GithubRepositoryDiscoveryError(
-                    original_exception=ValueError(
-                        f"GitHub GraphQL returned errors: {graphql_errors}"
-                        if graphql_errors
-                        else "GitHub GraphQL response is missing a valid data object"
-                    )
-                )
-            if graphql_errors:
-                logger.warning(
-                    f"GitHub GraphQL returned errors while discovering repositories, "
-                    f"some repositories may be skipped: {graphql_errors}"
-                )
-
-            viewer = response_data.get("viewer")
-            if not isinstance(viewer, dict):
-                raise GithubRepositoryDiscoveryError(
-                    original_exception=ValueError(
-                        "GitHub GraphQL response is missing a valid viewer object"
-                    )
-                )
-
-            repository_connection = viewer.get("repositories")
-            if not isinstance(repository_connection, dict):
-                raise GithubRepositoryDiscoveryError(
-                    original_exception=ValueError(
-                        "GitHub GraphQL response is missing a valid repositories connection"
-                    )
-                )
-
-            repo_nodes = repository_connection.get("nodes")
-            page_info = repository_connection.get("pageInfo")
-            if not isinstance(repo_nodes, list):
-                raise GithubRepositoryDiscoveryError(
-                    original_exception=ValueError(
-                        "GitHub GraphQL repositories connection has invalid nodes"
-                    )
-                )
-            if not isinstance(page_info, dict):
-                raise GithubRepositoryDiscoveryError(
-                    original_exception=ValueError(
-                        "GitHub GraphQL repositories connection has invalid pageInfo"
-                    )
-                )
-
-            for repo_node in repo_nodes:
-                # GitHub connection nodes are nullable. A null entry does not make the
-                # rest of the repository page incomplete.
-                if repo_node is None:
+                    return repositories
+                if errors:
+                    # GitHub returns partial responses: repositories the token
+                    # cannot access (e.g. behind organization SAML enforcement)
+                    # come back as null nodes together with an "errors" entry,
+                    # while the rest of the page is valid.
                     logger.warning(
-                        "Skipping a repository the token cannot access during discovery."
+                        f"GitHub GraphQL returned errors while discovering repositories, "
+                        f"some repositories may be skipped: {errors}"
                     )
-                    continue
-                if not isinstance(repo_node, dict):
-                    raise GithubRepositoryDiscoveryError(
-                        original_exception=ValueError(
-                            "GitHub GraphQL repositories connection contains an invalid node"
+
+                for repo_node in repository_connection.get("nodes") or []:
+                    if not repo_node:
+                        logger.warning(
+                            "Skipping a repository the token cannot access during discovery."
                         )
-                    )
+                        continue
+                    repositories.append(repo_node["nameWithOwner"])
 
-                repo_name = repo_node.get("nameWithOwner")
-                if not isinstance(repo_name, str) or not repo_name.strip():
-                    raise GithubRepositoryDiscoveryError(
-                        original_exception=ValueError(
-                            "GitHub GraphQL repository node has an invalid nameWithOwner"
-                        )
-                    )
-                repositories.append(repo_name)
+                page_info = repository_connection.get("pageInfo") or {}
+                if not page_info.get("hasNextPage"):
+                    return repositories
 
-            has_next_page = page_info.get("hasNextPage")
-            if not isinstance(has_next_page, bool):
-                raise GithubRepositoryDiscoveryError(
-                    original_exception=ValueError(
-                        "GitHub GraphQL pageInfo has an invalid hasNextPage value"
+                cursor = page_info.get("endCursor")
+                if not cursor or cursor in seen_cursors:
+                    logger.error(
+                        "GitHub GraphQL pagination returned an invalid cursor; "
+                        "repository discovery may be incomplete."
                     )
-                )
+                    return repositories
+                seen_cursors.add(cursor)
 
-            if not has_next_page:
-                return repositories
-
-            next_cursor = page_info.get("endCursor")
-            if not isinstance(next_cursor, str) or not next_cursor:
-                raise GithubRepositoryDiscoveryError(
-                    original_exception=ValueError(
-                        "GitHub GraphQL pageInfo is missing a valid endCursor"
-                    )
-                )
-            if next_cursor in seen_cursors:
-                raise GithubRepositoryDiscoveryError(
-                    original_exception=ValueError(
-                        "GitHub GraphQL pagination returned a repeated endCursor"
-                    )
-                )
-
-            seen_cursors.add(next_cursor)
-            cursor = next_cursor
+        except (requests.exceptions.RequestException, ValueError, KeyError) as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return repositories
 
     def _default_branch_matches_rule_pattern(
         self, pattern: str, default_branch: str
@@ -601,8 +531,6 @@ class Repository(GithubService):
                                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                                 )
 
-        except GithubRepositoryDiscoveryError:
-            raise
         except github.RateLimitExceededException as error:
             logger.error(f"GitHub API rate limit exceeded: {error}")
             raise

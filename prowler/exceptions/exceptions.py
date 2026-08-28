@@ -1,7 +1,3 @@
-class ScanAbortError(Exception):
-    """Marker for errors that make a scan incomplete and must stop execution."""
-
-
 class ProwlerException(Exception):
     """Base exception for all Prowler SDK errors."""
 
