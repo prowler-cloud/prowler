@@ -6,7 +6,7 @@ import { VersionBadge } from "/snippets/version-badge.mdx"
 
 `prowler-dev provider create` writes the files a new provider needs in order to be discovered and loaded, so that the first thing you write is the part only you can write. It generates structure and `TODO` markers, and it never guesses authentication behavior, API semantics or security checks.
 
-The command is contributor tooling. Nothing it generates runs during a scan, and nothing in `prowler-dev` is used by the `prowler` CLI.
+`prowler-dev` is contributor tooling. It never runs during a scan, and the `prowler` CLI does not use any part of it. What it generates is ordinary provider code, which does run during a scan once you have implemented it and added the registrations reported below.
 
 ## Usage
 
