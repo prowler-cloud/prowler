@@ -130,6 +130,7 @@ class KubernetesCISModel(CISBaseModel):
     _swap_references_default_value = True
 
     Context: str
+    Cluster: str
     Namespace: str
 
 

@@ -18,6 +18,8 @@ type TestConnectionResponse = {
   taskId?: string;
   data?: TaskStartResponse;
   error?: string;
+  /** The id of the channel a channel-level failure named, when it named one. */
+  failedChannelId?: string | null;
 };
 
 export const getIntegrations = async (searchParams?: URLSearchParams) => {
@@ -35,8 +37,7 @@ export const getIntegrations = async (searchParams?: URLSearchParams) => {
 
     return handleApiResponse(response);
   } catch (error) {
-    console.error("Error fetching integrations:", error);
-    return { data: [], meta: { pagination: { count: 0 } } };
+    return handleApiError(error);
   }
 };
 
@@ -265,7 +266,12 @@ export const deleteIntegration = async (
   }
 };
 
-type ConnectionTaskResult = { connected?: boolean; error?: string | null };
+type ConnectionTaskResult = {
+  connected?: boolean;
+  error?: string | null;
+  // The failing channel's id, or null when the failure names no channel.
+  channel?: string | null;
+};
 
 type PollConnectionResult =
   | {
@@ -341,6 +347,7 @@ export const testIntegrationConnection = async (
         revalidatePath("/integrations/amazon-s3");
         revalidatePath("/integrations/aws-security-hub");
         revalidatePath("/integrations/jira");
+        revalidatePath("/integrations/slack");
 
         if ("error" in pollResult) {
           return { success: false, error: pollResult.error };
@@ -357,6 +364,7 @@ export const testIntegrationConnection = async (
           return {
             success: false,
             error: pollResult.message || "Connection test failed.",
+            failedChannelId: pollResult.result?.channel ?? null,
           };
         }
       } else {
@@ -387,6 +395,7 @@ export const pollConnectionTestStatus = async (
     revalidatePath("/integrations/amazon-s3");
     revalidatePath("/integrations/aws-security-hub");
     revalidatePath("/integrations/jira");
+    revalidatePath("/integrations/slack");
 
     if ("error" in pollResult) {
       return { success: false, error: pollResult.error };
@@ -402,6 +411,7 @@ export const pollConnectionTestStatus = async (
       return {
         success: false,
         error: pollResult.message || "Connection test failed.",
+        failedChannelId: pollResult.result?.channel ?? null,
       };
     }
   } catch (_error) {

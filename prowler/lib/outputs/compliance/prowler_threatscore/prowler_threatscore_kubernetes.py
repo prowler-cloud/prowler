@@ -30,9 +30,11 @@ class ProwlerThreatScoreKubernetes(ComplianceOutputBase):
         if finding is None:
             return {
                 "Context": "",
+                "Cluster": "",
                 "Namespace": "",
             }
         return {
             "Context": finding.account_name or "",
+            "Cluster": finding.account_uid or "",
             "Namespace": finding.region,
         }

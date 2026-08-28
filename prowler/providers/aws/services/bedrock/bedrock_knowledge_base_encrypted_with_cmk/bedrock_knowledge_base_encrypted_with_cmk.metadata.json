@@ -1,0 +1,43 @@
+{
+  "Provider": "aws",
+  "CheckID": "bedrock_knowledge_base_encrypted_with_cmk",
+  "CheckTitle": "Bedrock knowledge base data source is encrypted with a customer-managed KMS key",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/AWS Security Best Practices/Data Encryption"
+  ],
+  "ServiceName": "bedrock",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Other",
+  "ResourceGroup": "ai_ml",
+  "Description": "Each data source of a **Bedrock knowledge base** can set `serverSideEncryptionConfiguration.kmsKeyArn`, which encrypts the transient storage used while documents are chunked and embedded, rather than relying on an AWS-owned key.",
+  "Risk": "**Knowledge base data sources** carry the private corpus a **RAG application** answers from, often the most sensitive content in the workload.\n\nUnder an **AWS-owned key**, there is no key policy restricting who may decrypt the ingestion storage, no account-controlled rotation, no **CloudTrail** record of key usage, and no way to revoke access by disabling a key.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/bedrock/latest/userguide/encryption-kb.html",
+    "https://docs.aws.amazon.com/bedrock/latest/APIReference/API_agent_GetDataSource.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws bedrock-agent update-data-source --knowledge-base-id example-kb-id --data-source-id example-ds-id --name example-data-source --data-source-configuration '{\"type\":\"S3\",\"s3Configuration\":{\"bucketArn\":\"arn:aws:s3:::example-bucket\"}}' --server-side-encryption-configuration '{\"kmsKeyArn\":\"arn:aws:kms:us-east-1:123456789012:key/example-key-id\"}'",
+      "NativeIaC": "```yaml\nResources:\n  ExampleResource:\n    Type: AWS::Bedrock::DataSource\n    Properties:\n      Name: example_resource\n      KnowledgeBaseId: ABCDE12345\n      DataSourceConfiguration:\n        Type: S3\n        S3Configuration:\n          BucketArn: arn:aws:s3:::example-bucket\n      ServerSideEncryptionConfiguration:\n        KmsKeyArn: arn:aws:kms:us-east-1:123456789012:key/1234abcd-12ab-34cd-56ef-1234567890ab  # Critical: omitting this uses an AWS-owned key\n```",
+      "Other": "1. Open the AWS Console and go to Amazon Bedrock\n2. Select **Knowledge bases**, then the knowledge base\n3. Select the data source and choose Edit\n4. Under transient data encryption, choose a customer-managed KMS key\n5. Grant the knowledge base service role kms:Decrypt and kms:GenerateDataKey on that key\n6. Save and re-sync the data source",
+      "Terraform": "```hcl\nresource \"aws_bedrockagent_data_source\" \"example_resource\" {\n  name              = \"example_resource\"\n  knowledge_base_id = \"ABCDE12345\"\n  data_source_configuration {\n    type = \"S3\"\n    s3_configuration {\n      bucket_arn = \"arn:aws:s3:::example-bucket\"\n    }\n  }\n  server_side_encryption_configuration {\n    kms_key_arn = \"arn:aws:kms:us-east-1:123456789012:key/1234abcd-12ab-34cd-56ef-1234567890ab\" # Critical: omitting this uses an AWS-owned key\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Set a customer-managed KMS key on every knowledge base data source so the transient ingestion storage rests under a key with an auditable policy, and grant the knowledge base service role only kms:Decrypt and kms:GenerateDataKey on it.",
+      "Url": "https://hub.prowler.com/check/bedrock_knowledge_base_encrypted_with_cmk"
+    }
+  },
+  "Categories": [
+    "gen-ai",
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "bedrock_custom_model_encrypted_with_cmk"
+  ],
+  "Notes": "Reports one finding per DATA SOURCE, not per knowledge base, because the key is configured on the data source; the knowledge base name is carried into the message. GetDataSource nests its payload under a top-level dataSource object. A data source whose detail could not be retrieved returns MANUAL rather than PASS, because an absent key ARN means the answer is unknown, not that no key is set."
+}

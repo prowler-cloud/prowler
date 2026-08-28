@@ -91,6 +91,7 @@ class KubernetesISO27001Model(BaseModel):
     Provider: str
     Description: str
     Context: str
+    Cluster: str
     Namespace: str
     AssessmentDate: str
     Requirements_Id: str
