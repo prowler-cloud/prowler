@@ -14,7 +14,7 @@ class entra_user_with_recent_sign_in(Check):
 
     - PASS: The enabled user signed in within the last 90 days.
     - FAIL: The enabled user has not signed in for more than 90 days, or has never signed in.
-    - FAIL (tenant-level): No sign-in activity data is available for any enabled user, indicating missing P1/P2 licensing or Graph permissions (reported once instead of flagging every user).
+    - MANUAL (tenant-level): No sign-in activity data is available for any enabled user, indicating missing P1/P2 licensing or Graph permissions (reported once instead of flagging every user).
     """
 
     def execute(self) -> Check_Report_Azure:
@@ -39,12 +39,13 @@ class entra_user_with_recent_sign_in(Check):
                 report.resource_name = "Sign-in Activity Data"
                 count = len(enabled_users)
                 noun = "user" if count == 1 else "users"
-                report.status = "FAIL"
+                report.status = "MANUAL"
                 report.status_extended = (
-                    f"No sign-in activity data available for any of the "
-                    f"{count} enabled {noun}. This likely means the tenant "
-                    f"is missing Entra ID P1/P2 licensing or the required "
-                    f"Graph permissions to read sign-in activity."
+                    f"Cannot evaluate sign-in activity: no sign-in activity "
+                    f"data is available for any of the {count} enabled {noun}. "
+                    f"This likely means the tenant is missing Entra ID P1/P2 "
+                    f"licensing or the required Graph permissions to read "
+                    f"sign-in activity."
                 )
                 findings.append(report)
                 continue

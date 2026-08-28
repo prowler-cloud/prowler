@@ -129,11 +129,40 @@ Each check **must** populate the `report.status` and `report.status_extended` fi
 - Status field: `report.status`
     - `PASS` – Assigned when the check confirms compliance with the configured value.
     - `FAIL` – Assigned when the check detects non-compliance with the configured value.
-    - `MANUAL` – This status must not be used unless manual verification is necessary to determine whether the status (`report.status`) passes (`PASS`) or fails (`FAIL`).
+    - `MANUAL` – This status must not be used unless manual verification is necessary to determine whether the status (`report.status`) passes (`PASS`) or fails (`FAIL`). This includes the case where Prowler could not retrieve the data needed to evaluate the resource (see below).
 
 - Status extended field: `report.status_extended`
     - It **must** end with a period (`.`).
     - It **must** include the audited service, the resource, and a concise explanation of the check result, for instance: `EC2 AMI ami-0123456789 is not public.`.
+
+### Permission and Data-Availability Errors Are Not Findings
+
+A `FAIL` must only be emitted when an insecure condition has actually been detected. A check **must never** report `FAIL` because the underlying API call failed: missing permissions or scopes on the scanning identity, an API that is not enabled, a feature that is not licensed, or data that could not be retrieved are scan-configuration problems, not security issues. Reporting them as `FAIL` surfaces a misleading (and often high-severity) finding to the user and skews compliance scores.
+
+When the service layer cannot obtain the data a check depends on, the check must:
+
+1. Emit a single `MANUAL` finding scoped to the widest affected resource (the tenant, account, project or subscription), not one finding per resource. For example, if user registration details cannot be read, emit one tenant-level `MANUAL` instead of one per user.
+2. Explain in `status_extended` that the check could not be evaluated and what to fix, naming the permission, scope, API or license required, for instance: `Cannot evaluate credential exposure for privileged users: unable to query Microsoft Defender XDR Advanced Hunting. Verify that the ThreatHunting.Read.All permission is granted to the scanning application.`
+3. Leave the check's severity untouched. Do not override `report.check_metadata.Severity` to hide the problem.
+
+The service layer must make the distinction possible: log the error and expose it to checks in a way that cannot be confused with a legitimate empty result. Common patterns already used in Prowler are:
+
+- Defaulting the attribute to `None` (data could not be read) instead of `[]`/`{}` (data was read and is empty), e.g. `logs_client.metric_filters is None` in the AWS CloudWatch checks.
+- Keeping an error flag or message next to the data, e.g. `entra_client.user_registration_details_error` in M365 or `*_scan_errors` in AWS Bedrock.
+- Keeping a set of resources whose lookup failed, e.g. `accessapproval_client.settings_lookup_failed` in GCP.
+
+Make sure the error branch only captures real access errors. A `404`/not-found response frequently means the feature is simply not configured, which **is** a legitimate `FAIL`; a `403`, an "API not enabled" error or an unexpected exception is not.
+
+```python
+if <service>_client.<data> is None:
+    report = CheckReport<Provider>(metadata=self.metadata(), resource={})
+    report.resource_name = "<Tenant/Account-level resource>"
+    report.resource_id = "<stable-id>"
+    report.status = "MANUAL"
+    report.status_extended = "Cannot evaluate <requirement>: <data> could not be retrieved. Verify that <permission/API/license> is granted to the scanning identity."
+    findings.append(report)
+    return findings
+```
 
 ### Prowler's Check Severity Levels
 
@@ -437,6 +466,7 @@ The metadata structure is enforced in code using a Pydantic model. For reference
 - Use clear, actionable, and user-friendly language in `status_extended` to explain the result. Always provide information to identify the resource.
 - Use helper functions/utilities for repeated logic to avoid code duplication. Save them in the `lib` folder of the service.
 - Handle exceptions gracefully: catch errors per resource, log them, and continue processing other resources.
+- Never report `FAIL` because data could not be retrieved (missing permissions, API not enabled, feature not licensed). Emit a single `MANUAL` finding explaining what is required instead; see [Permission and Data-Availability Errors Are Not Findings](#permission-and-data-availability-errors-are-not-findings).
 - Document the check with a class and function level docstring explaining what it does, what it checks, and any caveats or provider-specific behaviors.
 - Use type hints for the `execute()` method (e.g., `-> list[CheckReport<Provider>]`) for clarity and static analysis.
 - Ensure checks are efficient; avoid excessive nested loops. If the complexity is high, consider refactoring the check.

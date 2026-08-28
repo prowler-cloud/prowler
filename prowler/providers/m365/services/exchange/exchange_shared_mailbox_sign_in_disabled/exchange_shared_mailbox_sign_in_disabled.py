@@ -15,6 +15,8 @@ class exchange_shared_mailbox_sign_in_disabled(Check):
 
     - PASS: Shared mailbox has sign-in blocked (AccountEnabled = False in Entra ID).
     - FAIL: Shared mailbox has sign-in enabled (AccountEnabled = True in Entra ID).
+    - MANUAL: The shared mailbox could not be resolved in Entra ID, so its sign-in
+      status cannot be verified.
     """
 
     def execute(self) -> List[CheckReportM365]:
@@ -45,8 +47,8 @@ class exchange_shared_mailbox_sign_in_disabled(Check):
             )
 
             if not entra_user:
-                report.status = "FAIL"
-                report.status_extended = f"Shared mailbox {shared_mailbox.user_principal_name} could not be found in Entra ID for verification."
+                report.status = "MANUAL"
+                report.status_extended = f"Cannot verify sign-in status for shared mailbox {shared_mailbox.user_principal_name}: the user could not be resolved in Entra ID."
             elif entra_user.account_enabled:
                 report.status = "FAIL"
                 report.status_extended = f"Shared mailbox {shared_mailbox.user_principal_name} has sign-in enabled."

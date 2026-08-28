@@ -16,7 +16,8 @@ class entra_break_glass_account_fido2_security_key_registered(Check):
 
     - PASS: The break glass account has a FIDO2 security key (fido2SecurityKey) registered.
     - MANUAL: The account has a device-bound passkey but it cannot be confirmed as FIDO2,
-              or no break glass accounts could be identified.
+              no break glass accounts could be identified, or the user registration
+              details could not be read (insufficient permissions).
     - FAIL: The break glass account does not have a FIDO2 security key registered.
     """
 
@@ -86,7 +87,7 @@ class entra_break_glass_account_fido2_security_key_registered(Check):
             )
 
             if entra_client.user_registration_details_error:
-                report.status = "FAIL"
+                report.status = "MANUAL"
                 report.status_extended = (
                     f"Cannot verify FIDO2 security key registration for break glass account {user.name}: "
                     f"{entra_client.user_registration_details_error}."

@@ -169,7 +169,7 @@ class Test_entra_seamless_sso_disabled:
             assert result[0].resource_name == "Cloud Only Org"
 
     def test_insufficient_permissions_error(self):
-        """Test FAIL when there's a permission error reading directory sync settings."""
+        """Test MANUAL when there's a permission error reading directory sync settings."""
         entra_client = mock.MagicMock()
 
         with (
@@ -199,7 +199,7 @@ class Test_entra_seamless_sso_disabled:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].status == "FAIL"
+            assert result[0].status == "MANUAL"
             assert "Cannot verify Seamless SSO status" in result[0].status_extended
             assert "Insufficient privileges" in result[0].status_extended
             assert (

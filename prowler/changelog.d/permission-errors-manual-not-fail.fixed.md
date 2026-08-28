@@ -1,0 +1,1 @@
+Checks no longer report `FAIL` when the scanning identity lacks permissions, an API is not enabled or a feature is not licensed; they now emit a single `MANUAL` finding naming what is required, across 30 M365, Azure, AWS and GCP checks

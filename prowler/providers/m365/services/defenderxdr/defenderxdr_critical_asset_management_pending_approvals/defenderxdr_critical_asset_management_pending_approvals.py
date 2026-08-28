@@ -25,6 +25,8 @@ class defenderxdr_critical_asset_management_pending_approvals(Check):
     Results:
     - PASS: No pending approvals for Critical Asset Management are found.
     - FAIL: At least one asset classification has pending approvals.
+    - MANUAL: Defender XDR could not be queried (missing permission), so the
+      check cannot be evaluated.
     """
 
     def execute(self) -> List[CheckReportM365]:
@@ -47,10 +49,12 @@ class defenderxdr_critical_asset_management_pending_approvals(Check):
                 resource_name="Critical Asset Management",
                 resource_id="criticalAssetManagement",
             )
-            report.status = "FAIL"
+            report.status = "MANUAL"
             report.status_extended = (
-                "Unable to query Critical Asset Management status. "
-                "Verify that ThreatHunting.Read.All permission is granted."
+                "Cannot evaluate Critical Asset Management pending approvals: "
+                "unable to query Microsoft Defender XDR Advanced Hunting. "
+                "Verify that the ThreatHunting.Read.All permission is granted "
+                "to the scanning application."
             )
             findings.append(report)
             return findings

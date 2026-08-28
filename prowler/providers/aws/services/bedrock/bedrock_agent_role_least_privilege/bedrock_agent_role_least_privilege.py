@@ -24,8 +24,8 @@ class bedrock_agent_role_least_privilege(Check):
 
         Returns:
             A list of ``Check_Report_AWS`` with one entry per agent. The
-            status is ``FAIL`` when any of the criteria above is violated,
-            or when the execution role cannot be resolved in IAM.
+            status is ``FAIL`` when any of the criteria above is violated and
+            ``MANUAL`` when the execution role cannot be resolved in IAM.
         """
         findings = []
         roles_by_arn = {role.arn: role for role in (iam_client.roles or [])}
@@ -39,10 +39,11 @@ class bedrock_agent_role_least_privilege(Check):
 
             role = roles_by_arn.get(agent.role_arn) if agent.role_arn else None
             if role is None:
-                report.status = "FAIL"
+                report.status = "MANUAL"
                 report.status_extended = (
                     f"Bedrock Agent {agent.name} execution role could not be "
-                    f"resolved in IAM and cannot be evaluated for least privilege."
+                    f"resolved in IAM and cannot be evaluated for least privilege; "
+                    f"verify the role manually."
                 )
                 findings.append(report)
                 continue

@@ -512,7 +512,7 @@ class Test_entra_break_glass_account_fido2_security_key_registered:
             assert result[0].resource_name == "BreakGlass1"
 
     def test_user_registration_details_permission_error(self):
-        """Test FAIL when there's a permission error reading user registration details."""
+        """Test MANUAL when there's a permission error reading user registration details."""
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
@@ -551,7 +551,7 @@ class Test_entra_break_glass_account_fido2_security_key_registered:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].status == "FAIL"
+            assert result[0].status == "MANUAL"
             assert (
                 "Cannot verify FIDO2 security key registration for break glass account BreakGlass1"
                 in result[0].status_extended
@@ -565,7 +565,7 @@ class Test_entra_break_glass_account_fido2_security_key_registered:
 
         Two break-glass user IDs are excluded from all CAPs, but only one is
         present in ``entra_client.users``.  With ``user_registration_details_error``
-        set, the present user must produce one preventive FAIL anchored to the
+        set, the present user must produce one MANUAL finding anchored to the
         real user; the missing user must be skipped by the existing
         ``if not user: continue`` guard rather than crash or yield a synthetic
         finding.
@@ -615,7 +615,7 @@ class Test_entra_break_glass_account_fido2_security_key_registered:
 
             # One finding for the present user; the missing one is skipped.
             assert len(result) == 1
-            assert result[0].status == "FAIL"
+            assert result[0].status == "MANUAL"
             assert (
                 "Cannot verify FIDO2 security key registration for break glass account BreakGlass1"
                 in result[0].status_extended

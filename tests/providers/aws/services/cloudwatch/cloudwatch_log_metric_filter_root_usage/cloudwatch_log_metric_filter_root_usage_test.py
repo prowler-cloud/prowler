@@ -596,3 +596,75 @@ class Test_cloudwatch_log_metric_filter_root_usage:
                 == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test:*"
             )
             assert result[0].region == AWS_REGION_US_EAST_1
+
+    def _run_with_unavailable_data(self, *, metric_filters_none, metric_alarms_none):
+        from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
+            Cloudtrail,
+        )
+        from prowler.providers.aws.services.cloudwatch.cloudwatch_service import (
+            CloudWatch,
+            Logs,
+        )
+
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
+        logs = Logs(aws_provider)
+        cloudwatch = CloudWatch(aws_provider)
+        # The services set these to None when the describe call is denied
+        # (AccessDeniedException / AccessDenied).
+        if metric_filters_none:
+            logs.metric_filters = None
+        if metric_alarms_none:
+            cloudwatch.metric_alarms = None
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_root_usage.cloudwatch_log_metric_filter_root_usage.logs_client",
+                new=logs,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_root_usage.cloudwatch_log_metric_filter_root_usage.cloudwatch_client",
+                new=cloudwatch,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_root_usage.cloudwatch_log_metric_filter_root_usage.cloudtrail_client",
+                new=Cloudtrail(aws_provider),
+            ),
+        ):
+            from prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_root_usage.cloudwatch_log_metric_filter_root_usage import (
+                cloudwatch_log_metric_filter_root_usage,
+            )
+
+            return cloudwatch_log_metric_filter_root_usage().execute()
+
+    @mock_aws
+    def test_cloudwatch_metric_filters_access_denied(self):
+        """logs:DescribeMetricFilters denied -> MANUAL, not FAIL."""
+        result = self._run_with_unavailable_data(
+            metric_filters_none=True, metric_alarms_none=False
+        )
+
+        assert len(result) == 1
+        assert result[0].status == "MANUAL"
+        assert (
+            "metric filters or alarms could not be listed" in result[0].status_extended
+        )
+        assert "logs:DescribeMetricFilters" in result[0].status_extended
+        assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+        assert result[0].region == AWS_REGION_EU_WEST_1
+
+    @mock_aws
+    def test_cloudwatch_metric_alarms_access_denied(self):
+        """cloudwatch:DescribeAlarms denied -> MANUAL, not FAIL."""
+        result = self._run_with_unavailable_data(
+            metric_filters_none=False, metric_alarms_none=True
+        )
+
+        assert len(result) == 1
+        assert result[0].status == "MANUAL"
+        assert "cloudwatch:DescribeAlarms" in result[0].status_extended

@@ -21,6 +21,8 @@ class defenderidentity_health_issues_no_open(Check):
     - PASS: The health issue has been resolved (status is not open).
     - FAIL: The health issue is open and requires attention.
     - FAIL: No sensors are deployed (MDI cannot protect the environment).
+    - MANUAL: The Defender for Identity APIs could not be queried (missing
+      permissions), so the check cannot be evaluated.
     """
 
     def execute(self) -> List[CheckReportM365]:
@@ -50,11 +52,12 @@ class defenderidentity_health_issues_no_open(Check):
                 resource_name="Defender for Identity",
                 resource_id="defenderIdentity",
             )
-            report.status = "FAIL"
+            report.status = "MANUAL"
             report.status_extended = (
-                "Defender for Identity APIs are not accessible. "
-                "Ensure the Service Principal has SecurityIdentitiesSensors.Read.All and "
-                "SecurityIdentitiesHealth.Read.All permissions granted."
+                "Cannot evaluate Defender for Identity health issues: the "
+                "Defender for Identity APIs are not accessible. Ensure the "
+                "scanning application has the SecurityIdentitiesSensors.Read.All "
+                "and SecurityIdentitiesHealth.Read.All permissions granted."
             )
             findings.append(report)
             return findings
@@ -67,11 +70,12 @@ class defenderidentity_health_issues_no_open(Check):
                 resource_name="Defender for Identity",
                 resource_id="defenderIdentity",
             )
-            report.status = "FAIL"
+            report.status = "MANUAL"
             report.status_extended = (
-                f"Cannot read health issues from Defender for Identity "
-                f"(found {len(defenderidentity_client.sensors)} sensor(s) deployed). "
-                "Ensure the Service Principal has SecurityIdentitiesHealth.Read.All permission."
+                f"Cannot evaluate Defender for Identity health issues "
+                f"(found {len(defenderidentity_client.sensors)} sensor(s) deployed): "
+                "the health issues API is not accessible. Ensure the scanning "
+                "application has the SecurityIdentitiesHealth.Read.All permission granted."
             )
             findings.append(report)
             return findings

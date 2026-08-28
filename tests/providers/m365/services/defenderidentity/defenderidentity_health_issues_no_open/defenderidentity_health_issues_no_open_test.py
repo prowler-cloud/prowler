@@ -94,7 +94,7 @@ class Test_defenderidentity_health_issues_no_open:
             assert result[0].resource_id == "defenderIdentity"
 
     def test_both_apis_failed(self):
-        """Test when both sensors and health_issues APIs fail (None): expected FAIL with permission message."""
+        """Test when both sensors and health_issues APIs fail (None): expected MANUAL with permission message."""
         defenderidentity_client = mock.MagicMock()
         defenderidentity_client.audited_tenant = "audited_tenant"
         defenderidentity_client.audited_domain = DOMAIN
@@ -120,7 +120,7 @@ class Test_defenderidentity_health_issues_no_open:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].status == "FAIL"
+            assert result[0].status == "MANUAL"
             assert "APIs are not accessible" in result[0].status_extended
             assert "SecurityIdentitiesSensors.Read.All" in result[0].status_extended
             assert "SecurityIdentitiesHealth.Read.All" in result[0].status_extended
@@ -155,8 +155,11 @@ class Test_defenderidentity_health_issues_no_open:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].status == "FAIL"
-            assert "Cannot read health issues" in result[0].status_extended
+            assert result[0].status == "MANUAL"
+            assert (
+                "Cannot evaluate Defender for Identity health issues"
+                in result[0].status_extended
+            )
             assert "1 sensor(s) deployed" in result[0].status_extended
             assert "SecurityIdentitiesHealth.Read.All" in result[0].status_extended
             assert result[0].resource == {}

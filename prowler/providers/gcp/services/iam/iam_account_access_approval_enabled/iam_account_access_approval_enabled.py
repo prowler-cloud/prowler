@@ -18,7 +18,15 @@ class iam_account_access_approval_enabled(Check):
             report.status_extended = (
                 f"Project {project_id} has Access Approval enabled."
             )
-            if project_id not in accessapproval_client.settings:
+            if project_id in accessapproval_client.settings_lookup_failed:
+                report.status = "MANUAL"
+                report.status_extended = (
+                    f"Cannot evaluate Access Approval for project {project_id}: "
+                    "the Access Approval settings could not be read. Verify that "
+                    "the Access Approval API is enabled and the scanning "
+                    "credentials have the accessapproval.settings.get permission."
+                )
+            elif project_id not in accessapproval_client.settings:
                 report.status = "FAIL"
                 report.status_extended = (
                     f"Project {project_id} does not have Access Approval enabled."

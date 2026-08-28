@@ -209,10 +209,10 @@ class Test_exchange_shared_mailbox_sign_in_disabled:
                 result = check.execute()
 
                 assert len(result) == 1
-                assert result[0].status == "FAIL"
+                assert result[0].status == "MANUAL"
                 assert (
                     result[0].status_extended
-                    == "Shared mailbox orphan@contoso.com could not be found in Entra ID for verification."
+                    == "Cannot verify sign-in status for shared mailbox orphan@contoso.com: the user could not be resolved in Entra ID."
                 )
                 assert result[0].resource_name == "Orphan Mailbox"
                 assert result[0].resource_id == "00000000-0000-0000-0000-000000000000"
@@ -310,8 +310,8 @@ class Test_exchange_shared_mailbox_sign_in_disabled:
                     == "Shared mailbox insecure@contoso.com has sign-in enabled."
                 )
 
-                assert result[2].status == "FAIL"
+                assert result[2].status == "MANUAL"
                 assert (
                     result[2].status_extended
-                    == "Shared mailbox unknown@contoso.com could not be found in Entra ID for verification."
+                    == "Cannot verify sign-in status for shared mailbox unknown@contoso.com: the user could not be resolved in Entra ID."
                 )

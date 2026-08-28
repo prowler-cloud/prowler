@@ -56,13 +56,13 @@ class rolesanywhere_trust_anchor_pqc_pki(Check):
                         "post-quantum (ML-DSA)."
                     )
                 else:
-                    report.status = "FAIL"
+                    report.status = "MANUAL"
                     report.status_extended = (
                         f"IAM Roles Anywhere trust anchor {trust_anchor.name} is "
                         f"backed by Private CA {trust_anchor.acm_pca_arn}, which "
                         "could not be inspected (cross-account or missing "
-                        "acm-pca permissions). Verify the CA uses an ML-DSA key "
-                        "algorithm."
+                        "acm-pca permissions). Verify manually that the CA uses "
+                        "an ML-DSA key algorithm."
                     )
             else:
                 source = trust_anchor.source_type or "<none>"

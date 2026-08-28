@@ -92,8 +92,8 @@ class Test_entra_user_with_recent_sign_in:
             check = entra_user_with_recent_sign_in()
             result = check.execute()
             assert len(result) == 1
-            assert result[0].status == "FAIL"
-            assert "No sign-in activity data available" in result[0].status_extended
+            assert result[0].status == "MANUAL"
+            assert "no sign-in activity data is available" in result[0].status_extended
 
     def test_entra_single_user_no_sign_in_data_reports_telemetry_gap(self):
         entra_client = mock.MagicMock
@@ -126,8 +126,8 @@ class Test_entra_user_with_recent_sign_in:
             check = entra_user_with_recent_sign_in()
             result = check.execute()
             assert len(result) == 1
-            assert result[0].status == "FAIL"
-            assert "No sign-in activity data available" in result[0].status_extended
+            assert result[0].status == "MANUAL"
+            assert "no sign-in activity data is available" in result[0].status_extended
             assert "1 enabled user" in result[0].status_extended
 
     def test_entra_user_stale_sign_in(self):
@@ -231,9 +231,9 @@ class Test_entra_user_with_recent_sign_in:
 
             check = entra_user_with_recent_sign_in()
             result = check.execute()
-            # Should produce 1 finding (license warning), not 5 individual FAILs
+            # Should produce 1 MANUAL finding (license warning), not 5 individual FAILs
             assert len(result) == 1
-            assert result[0].status == "FAIL"
+            assert result[0].status == "MANUAL"
             assert "Entra ID P1/P2 licensing" in result[0].status_extended
             assert "5 enabled users" in result[0].status_extended
 
