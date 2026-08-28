@@ -908,12 +908,14 @@ class TestCyberEssentialsFramework:
         )
         return os.path.normpath(base)
 
-    def test_loads_and_supports_azure(self):
+    def test_loads_and_supports_aws_and_azure(self):
         fw = load_compliance_framework_universal(self._path())
         assert fw is not None
         assert fw.framework == "Cyber-Essentials"
         assert fw.version == "3.3"
-        assert fw.get_providers() == ["azure"]
+        assert fw.get_providers() == ["aws", "azure"]
+        assert all("aws" in requirement.checks for requirement in fw.requirements)
+        assert fw.supports_provider("aws")
         assert fw.supports_provider("azure")
 
     def test_covers_all_five_themes(self):
@@ -941,8 +943,8 @@ class TestCyberEssentialsFramework:
                 "partial",
                 "non-applicable",
             }
-            # Requirements with no checks must not claim to be Automated.
-            if not req.checks.get("azure"):
+            # Requirements with no checks for any provider must not claim to be Automated.
+            if not any(req.checks.values()):
                 assert req.attributes["AssessmentStatus"] == "Manual"
 
 
