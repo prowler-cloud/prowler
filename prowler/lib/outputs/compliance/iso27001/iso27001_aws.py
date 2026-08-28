@@ -40,7 +40,14 @@ class AWSISO27001(ComplianceOutputBase):
     def get_framework_specific_fields(
         self, requirement: Compliance_Requirement
     ) -> dict[str, str]:
-        """Returns the framework specific fields for the compliance output."""
+        """Returns the framework specific fields for the compliance output.
+        
+        Args:
+            requirement (Compliance_Requirement): The compliance requirement.
+            
+        Returns:
+            dict[str, str]: The framework specific fields mapping.
+        """
         return {
             "Requirements_Name": requirement.Name or "",
         }

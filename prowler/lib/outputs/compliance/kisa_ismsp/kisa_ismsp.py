@@ -17,7 +17,7 @@ def get_kisa_ismsp_table(
     output_filename: str,
     output_directory: str,
     compliance_overview: bool,
-):
+) -> None:
     """Generate KISA-ISMS-P compliance summary table.
 
     Args:

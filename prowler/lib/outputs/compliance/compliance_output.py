@@ -192,7 +192,7 @@ class ComplianceOutputBase(ComplianceOutput):
                 if v and not all(isinstance(item, str) for item in v):
                     val = v
                 else:
-                    val = ",".join(v)
+                    val = ", ".join(v)
             else:
                 val = v
 

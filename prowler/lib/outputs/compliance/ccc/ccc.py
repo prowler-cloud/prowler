@@ -18,7 +18,7 @@ def get_ccc_table(
     output_filename: str,
     output_directory: str,
     compliance_overview: bool,
-):
+) -> None:
     """Generate CCC compliance summary table.
 
     Args:

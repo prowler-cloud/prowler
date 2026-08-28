@@ -41,6 +41,24 @@ class MitreAttackOutputBase(ComplianceOutputBase):
             "Requirements_TechniqueURL": getattr(requirement, "TechniqueURL", ""),
         }
 
+    def _get_attribute_fields(self, attribute) -> dict[str, str]:
+        """Convert MITRE requirement attribute fields to model attribute mapping.
+
+        Args:
+            attribute: The compliance requirement attribute.
+
+        Returns:
+            dict[str, str]: Mapped attribute dictionary with plural keys.
+        """
+        return {
+            "Requirements_Attributes_Services": getattr(
+                attribute, "AWSService", getattr(attribute, "AzureService", getattr(attribute, "GCPService", ""))
+            ),
+            "Requirements_Attributes_Categories": getattr(attribute, "Category", ""),
+            "Requirements_Attributes_Values": getattr(attribute, "Value", ""),
+            "Requirements_Attributes_Comments": getattr(attribute, "Comment", ""),
+        }
+
 
 def get_mitre_attack_table(
     findings: list,
@@ -49,7 +67,7 @@ def get_mitre_attack_table(
     output_filename: str,
     output_directory: str,
     compliance_overview: bool,
-):
+) -> None:
     """Generate MITRE ATT&CK compliance summary table.
 
     Args:

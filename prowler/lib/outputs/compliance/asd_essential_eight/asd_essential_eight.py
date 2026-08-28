@@ -19,7 +19,7 @@ def get_asd_essential_eight_table(
     output_filename: str,
     output_directory: str,
     compliance_overview: bool,
-):
+) -> None:
     """Generate ASD Essential Eight compliance summary table.
 
     Args:

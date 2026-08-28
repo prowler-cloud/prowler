@@ -164,6 +164,7 @@ class TestCISBaseModel:
         k8s_model = KubernetesCISModel(
             Provider="kubernetes",
             Description="test",
+            Cluster="cluster",
             Context="ctx",
             Namespace="default",
             AssessmentDate="2023-01-01",
