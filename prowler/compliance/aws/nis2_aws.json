@@ -1345,7 +1345,8 @@
         "autoscaling_group_launch_configuration_requires_imdsv2",
         "ec2_instance_account_imdsv2_enabled",
         "ec2_instance_imdsv2_enabled",
-        "ec2_launch_template_imdsv2_required"
+        "ec2_launch_template_imdsv2_required",
+        "ec2_confidential_workload_host_imdsv2_not_enforced"
       ],
       "Attributes": [
         {

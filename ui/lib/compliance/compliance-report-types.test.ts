@@ -40,6 +40,7 @@ describe("isOcsfSupported", () => {
     expect(isOcsfSupported("dora_2022_2554")).toBe(true);
     expect(isOcsfSupported("csa_ccm_4.0")).toBe(true);
     expect(isOcsfSupported("cis_controls_8.1")).toBe(true);
+    expect(isOcsfSupported("cmmc_2.0")).toBe(true);
   });
 
   it("returns false for legacy/per-provider frameworks without OCSF output", () => {

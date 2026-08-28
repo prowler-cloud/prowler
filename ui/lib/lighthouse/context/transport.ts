@@ -105,6 +105,11 @@ function toApiContextItem(
         resource_uid: item.resourceUid,
         region: item.region,
         total: item.total,
+        passed: item.passed,
+        failed: item.failed,
+        new_passed: item.newPassed,
+        new_failed: item.newFailed,
+        severity_counts: item.severityCounts,
       });
     case LIGHTHOUSE_CONTEXT_KIND.RESOURCE:
       return compact({
@@ -129,6 +134,10 @@ function toApiContextItem(
         section: item.section,
         region: item.region,
         score: item.score,
+        score_delta: item.scoreDelta,
+        critical_requirements_count: item.criticalRequirementsCount,
+        worst_section: item.worstSection,
+        worst_section_score: item.worstSectionScore,
         totals: item.totals,
       });
     case LIGHTHOUSE_CONTEXT_KIND.ATTACK_PATH:
@@ -164,6 +173,15 @@ function toApiContextItem(
         provider_type: item.providerType,
         total: item.total,
       });
+    case LIGHTHOUSE_CONTEXT_KIND.ALERT:
+      return compact({
+        ...base,
+        alert_id: item.alertId,
+        trigger: item.trigger,
+        enabled: item.enabled,
+        total: item.total,
+        enabled_count: item.enabledCount,
+      });
     default: {
       const exhaustiveItem: never = item;
       return exhaustiveItem;
@@ -196,6 +214,11 @@ function fromApiContextItem(value: unknown): unknown | undefined {
         resourceUid: value.resource_uid,
         region: value.region,
         total: value.total,
+        passed: value.passed,
+        failed: value.failed,
+        newPassed: value.new_passed,
+        newFailed: value.new_failed,
+        severityCounts: value.severity_counts,
       });
     case LIGHTHOUSE_CONTEXT_KIND.RESOURCE:
       return compact({
@@ -220,6 +243,10 @@ function fromApiContextItem(value: unknown): unknown | undefined {
         section: value.section,
         region: value.region,
         score: value.score,
+        scoreDelta: value.score_delta,
+        criticalRequirementsCount: value.critical_requirements_count,
+        worstSection: value.worst_section,
+        worstSectionScore: value.worst_section_score,
         totals: value.totals,
       });
     case LIGHTHOUSE_CONTEXT_KIND.ATTACK_PATH:
@@ -254,6 +281,15 @@ function fromApiContextItem(value: unknown): unknown | undefined {
         providerUid: value.provider_uid,
         providerType: value.provider_type,
         total: value.total,
+      });
+    case LIGHTHOUSE_CONTEXT_KIND.ALERT:
+      return compact({
+        ...base,
+        alertId: value.alert_id,
+        trigger: value.trigger,
+        enabled: value.enabled,
+        total: value.total,
+        enabledCount: value.enabled_count,
       });
     default:
       return undefined;

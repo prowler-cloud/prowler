@@ -14,6 +14,7 @@ import type {
   LighthouseV2SupportedProvider,
 } from "@/app/(prowler)/lighthouse/_types";
 import { apiBaseUrl, getAuthHeaders } from "@/lib/helper";
+import { getSkillById } from "@/lib/lighthouse/skills/registry";
 import { LIGHTHOUSE_ROUTE } from "@/lib/lighthouse-routes";
 import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 import type { JsonApiDocument } from "@/types/jsonapi";
@@ -221,6 +222,22 @@ export async function getLighthouseV2Messages(
 export async function sendLighthouseV2Message(
   input: LighthouseV2SendMessageInput,
 ): Promise<LighthouseV2ActionResult<LighthouseV2SendMessageResult>> {
+  if (input.skillId) {
+    const skill = getSkillById(input.skillId);
+    if (!skill) {
+      return {
+        error: `Unknown Lighthouse skill: ${input.skillId}.`,
+        status: 400,
+      };
+    }
+    if (!skill.enabled) {
+      return {
+        error: `Lighthouse skill not available yet: ${input.skillId}.`,
+        status: 400,
+      };
+    }
+  }
+
   try {
     const response = await fetch(
       buildApiUrl(
@@ -328,11 +345,12 @@ async function mutateEmpty(
   path: string,
   init: RequestInit,
   pathToRevalidate: string,
+  includeContentType = false,
 ): Promise<LighthouseV2ActionResult<true>> {
   try {
     const response = await fetch(buildApiUrl(path), {
       ...init,
-      headers: await getAuthHeaders({ contentType: false }),
+      headers: await getAuthHeaders({ contentType: includeContentType }),
     });
     const document = await handleApiResponse(response, pathToRevalidate);
     if (isErrorDocument(document)) {

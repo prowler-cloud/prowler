@@ -1049,6 +1049,46 @@ def load_compliance_framework_universal(path: str) -> ComplianceFramework:
         return None
 
 
+# Kept apart from the per-provider `prowler.compliance` group so the legacy
+# loader never parses a universal JSON.
+UNIVERSAL_COMPLIANCE_ENTRY_POINT_GROUP = "prowler.compliance.universal"
+
+
+def get_universal_compliance_entry_point_dirs() -> list[str]:
+    """Existing directories contributed through the universal compliance entry
+    point group, in entry point order.
+
+    Deduped by resolved path, so a directory reached through a symlink counts
+    once. A package that fails to import is logged and skipped: one broken
+    plugin must not hide the rest.
+    """
+    dirs = []
+    seen = set()
+    for ep in importlib.metadata.entry_points(
+        group=UNIVERSAL_COMPLIANCE_ENTRY_POINT_GROUP
+    ):
+        try:
+            module = ep.load()
+            path = (
+                module.__path__[0]
+                if hasattr(module, "__path__")
+                else os.path.dirname(module.__file__)
+            )
+        except Exception as error:
+            logger.warning(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            continue
+        if not os.path.isdir(path):
+            continue
+        resolved = os.path.realpath(path)
+        if resolved in seen:
+            continue
+        seen.add(resolved)
+        dirs.append(path)
+    return dirs
+
+
 def _load_jsons_from_dir(dir_path: str, provider: str, bulk: dict) -> None:
     """Scan *dir_path* for JSON files and add matching frameworks to *bulk*."""
     for filename in os.listdir(dir_path):
@@ -1109,20 +1149,10 @@ def get_bulk_compliance_frameworks_universal(provider: str) -> dict:
         if compliance_root and os.path.isdir(compliance_root):
             _load_jsons_from_dir(compliance_root, provider, bulk)
 
-        # External multi-provider frameworks via the dedicated universal entry
-        # point group, kept separate from the per-provider `prowler.compliance`
-        # group so the legacy loader never parses a universal JSON. Built-ins
-        # (already in bulk) win on a name collision.
-        for ep in importlib.metadata.entry_points(group="prowler.compliance.universal"):
+        # Built-ins are already in `bulk` and win on a name collision.
+        for ep_dir in get_universal_compliance_entry_point_dirs():
             try:
-                module = ep.load()
-                ep_dir = (
-                    module.__path__[0]
-                    if hasattr(module, "__path__")
-                    else os.path.dirname(module.__file__)
-                )
-                if os.path.isdir(ep_dir):
-                    _load_jsons_from_dir(ep_dir, provider, bulk)
+                _load_jsons_from_dir(ep_dir, provider, bulk)
             except Exception as error:
                 logger.warning(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

@@ -153,6 +153,18 @@ export PROWLER_CLOUD_API_KEY="pk_your_api_key_here"
 prowler aws --push-to-cloud
 ```
 
+### TLS Certificate Trust
+
+For `--push-to-cloud` uploads, Prowler CLI creates one ingestion-scoped TLS context and validates HTTPS certificates with one handshake and one POST request. The upload does not retry or fall back to another TLS configuration. Redirect responses are rejected.
+
+The ingestion context combines the operating system roots with the default certificate authority (CA) roots bundled with Requests. If `REQUESTS_CA_BUNDLE` is configured, Prowler CLI also loads that file or directory into the ingestion context. Otherwise, Prowler CLI loads `CURL_CA_BUNDLE` when configured.
+
+`REQUESTS_CA_BUNDLE` and `CURL_CA_BUNDLE` can also affect other Requests-based connections throughout the Prowler CLI process, including provider authentication. A bundle containing only a private CA can cause connections to public services to fail before the upload starts. Installing the private CA in the operating system or container trust store is recommended. If a custom bundle is required, it must include both the public CA roots, such as the certifi bundle, and the required private CA certificates.
+
+For Prowler Private Cloud deployments that use an organization CA or a TLS-intercepting corporate proxy, installing the required root CA in the operating system or container store remains the recommended approach. Containers have an isolated system CA store, so add the organization or proxy CA to the container image or runtime, then run the operating system's CA update command, such as `update-ca-certificates`, before starting Prowler CLI. Installing a CA on the container host does not automatically install it inside the container.
+
+Prowler CLI does not create, modify, or remove these environment variables. The custom TLS context created by `--push-to-cloud` applies only to the temporary ingestion session and does not change API, provider, integration, global SSL, or unrelated Requests session behavior.
+
 ### Combining with Output Formats
 
 When using `--push-to-cloud` with custom output formats that exclude OCSF, Prowler generates a temporary OCSF file for upload:

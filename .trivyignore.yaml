@@ -1,0 +1,166 @@
+# Trivy suppressions for the prowlercloud/prowler SDK and API container images.
+#
+# This file replaces the classic .trivyignore, which parsed only the CVE id: the
+# `pkg:` selector written on each line was documentation and the entry suppressed
+# its CVE across every package in the image. The `purls` field below is honoured,
+# so each entry is scoped to the package it names. Verified against Trivy 0.71.2:
+# an entry given the wrong purl leaves the finding reported, where the classic
+# format suppressed it.
+#
+# `expired_at` forces re-review. Keep the dates staggered.
+#
+# The four entries below are currently redundant: the scan runs with ignore-unfixed,
+# and none of them has a published fix, so they never reach the gate either way. They
+# are kept because the reasoning is what justifies accepting them, and because they
+# apply again the moment any of them gains a fix we do not take.
+#
+# perl-base is Debian "Essential: yes". Trivy spreads src:perl CVEs across every
+# binary package built from that source, so perl-base is flagged for modules only
+# perl-modules-* ships. Neither image installs those, and nothing in either
+# invokes perl.
+#
+# Why these four are accepted rather than fixed (reviewed 2026-07-31):
+#
+#   1. No fix exists. All four report no fixed version on perl-base 5.40.1-6.
+#      Debian marks CVE-2026-42496 "fix_deferred" and the other three "affected".
+#      A newer base image, apt upgrade, or a newer Debian release changes nothing.
+#   2. The package cannot be removed. "Essential: yes" means removal needs
+#      dpkg --force-remove-essential, which breaks apt for anything built
+#      downstream from these images.
+#   3. Changing base distribution was evaluated and rejected. Alpine drops perl
+#      entirely, but PowerShell publishes no linux-musl-arm64 build in any
+#      release, so M365 scanning would break on arm64 -- which is what we run in
+#      production. Wolfi keeps glibc and drops perl, but pinnable versioned tags
+#      are a paid tier, so builds would not be reproducibly pinnable.
+#
+# Not-invoked claim verified by sweeping both images for files with a perl
+# shebang, shell/python callers of perl, ELF binaries containing "perl", and
+# .pl/.pm files or perl subprocess calls anywhere in site-packages. The only
+# consumers found are dpkg/debconf/adduser/pam tooling, none of which runs at
+# runtime, plus one build-time script inside the ExchangeOnlineManagement
+# PowerShell module that is never invoked.
+
+vulnerabilities:
+  # Archive::Tar path traversal. Not installed: `perl -MArchive::Tar -e1` cannot locate it.
+  - id: CVE-2026-42496
+    purls:
+      - "pkg:deb/debian/perl-base"
+    expired_at: 2027-01-31
+
+  # Storable integer overflow. Not installed: `perl -MStorable -e1` cannot locate it.
+  - id: CVE-2026-57433
+    purls:
+      - "pkg:deb/debian/perl-base"
+    expired_at: 2027-01-31
+
+  # Regex heap overflow on 32-bit builds only; both published arches are 64-bit.
+  - id: CVE-2026-8376
+    purls:
+      - "pkg:deb/debian/perl-base"
+    expired_at: 2027-01-31
+
+  # Regex trie bug giving silently wrong matches above 65535 alternation branches.
+  # perl 5.40.1 is in range, so this rests on nothing invoking perl. Short expiry
+  # to force a re-look. Ref: https://github.com/Perl/perl5/issues/23388
+  - id: CVE-2026-13221
+    purls:
+      - "pkg:deb/debian/perl-base"
+    expired_at: 2026-11-30
+
+  # Declared in the SPDX manifest that ships inside PowerShell's MicrosoftTeams module
+  # (Modules/MicrosoftTeams/7.9.0/_manifest/spdx_2.2/manifest.spdx.json). Trivy reads that
+  # SBOM and reports what it declares, which is not the same as what the image contains:
+  # there is no Node runtime and no node_modules anywhere in the image, and the .NET
+  # assemblies target net472, a Windows-only framework. Nothing here is reachable, and none
+  # of it is a dependency we declare -- only Microsoft can change the module's contents.
+  - id: CVE-2020-0606
+    purls:
+      - "pkg:nuget/Microsoft.WindowsDesktop.App.Ref"
+    expired_at: 2027-01-31
+  - id: CVE-2019-0820
+    purls:
+      - "pkg:nuget/System.Text.RegularExpressions"
+    expired_at: 2027-01-31
+  - id: CVE-2026-47302
+    purls:
+      - "pkg:nuget/System.Security.Cryptography.Xml"
+    expired_at: 2027-01-31
+  - id: CVE-2026-47304
+    purls:
+      - "pkg:nuget/System.Security.Cryptography.Xml"
+    expired_at: 2027-01-31
+  - id: CVE-2026-50525
+    purls:
+      - "pkg:nuget/System.Security.Cryptography.Xml"
+    expired_at: 2027-01-31
+  - id: CVE-2026-50527
+    purls:
+      - "pkg:nuget/System.Security.Cryptography.Xml"
+    expired_at: 2027-01-31
+  - id: CVE-2026-50648
+    purls:
+      - "pkg:nuget/System.Security.Cryptography.Xml"
+    expired_at: 2027-01-31
+  - id: CVE-2026-13676
+    purls:
+      - "pkg:npm/fast-uri"
+    expired_at: 2027-01-31
+  - id: CVE-2026-16221
+    purls:
+      - "pkg:npm/fast-uri"
+    expired_at: 2027-01-31
+  - id: CVE-2026-18446
+    purls:
+      - "pkg:npm/fast-uri"
+    expired_at: 2027-01-31
+  - id: CVE-2026-69192
+    purls:
+      - "pkg:npm/ip-address"
+    expired_at: 2027-01-31
+
+  # CVE-2026-62901 is a DoS in System.Net.WebSockets (unchecked input for loop condition,
+  # CWE-606), fixed in .NET 9.0.19 / 10.0.11 (published 2026-08-11). The vulnerable runtime
+  # ships inside the PowerShell tarball the Dockerfile pins: 7.5.9 is the latest 7.5.x and
+  # bundles .NET 9.0.18; 7.6.4 bundles .NET 10.0.x < 10.0.11, so no published PowerShell
+  # release contains the fix yet. Prowler only invokes pwsh locally to run M365 module
+  # cmdlets; the image does not accept inbound WebSocket connections, so the DoS path is
+  # not reachable from the network. Remove this temporary suppression as soon as a
+  # PowerShell release shipping .NET 9.0.19+ is available.
+  - id: CVE-2026-62901
+    purls:
+      - "pkg:nuget/Microsoft.NETCore.App.Runtime.linux-x64"
+      - "pkg:nuget/Microsoft.NETCore.App.Runtime.linux-arm64"
+    expired_at: 2026-09-15
+
+  # Modules compiled into the Trivy binary the images ship. The binary is pinned by version
+  # and verified by checksum in the Dockerfile; only a rebuild by its vendor moves these.
+  # CVE-2026-71556 affects go-git worktree operations that can follow symlinks outside a
+  # cloned repository. Trivy 0.73.0, the latest published release and the version the
+  # images ship, still pins that vulnerable version:
+  # https://github.com/aquasecurity/trivy/blob/v0.73.0/go.mod#L46
+  # Trivy main already contains the 5.19.2 fix, but no published release includes it yet:
+  # https://github.com/aquasecurity/trivy/commit/a2edba9a03987ba0d2ebc8212c1a9a1e6979497b
+  # Prowler invokes Trivy only with `fs` on an existing local path or with `image`; it does
+  # not ask Trivy to clone or mutate a Git worktree, so the affected path is not reachable.
+  # Remove this temporary suppression as soon as a fixed Trivy release is available.
+  - id: CVE-2026-71556
+    purls:
+      - "pkg:golang/github.com/go-git/go-git/v5"
+    expired_at: 2026-09-15
+
+  - id: CVE-2026-56852
+    purls:
+      - "pkg:golang/golang.org/x/text"
+    expired_at: 2026-12-31
+  - id: GHSA-hrxh-6v49-42gf
+    purls:
+      - "pkg:golang/google.golang.org/grpc"
+    expired_at: 2026-12-31
+  - id: CVE-2026-50151
+    purls:
+      - "pkg:golang/oras.land/oras-go/v2"
+    expired_at: 2026-12-31
+  - id: CVE-2026-50163
+    purls:
+      - "pkg:golang/oras.land/oras-go/v2"
+    expired_at: 2026-12-31

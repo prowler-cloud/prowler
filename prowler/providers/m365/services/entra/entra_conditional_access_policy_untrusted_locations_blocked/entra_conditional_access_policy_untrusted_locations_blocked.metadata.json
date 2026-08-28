@@ -1,0 +1,37 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_conditional_access_policy_untrusted_locations_blocked",
+  "CheckTitle": "Conditional Access policy blocks access from untrusted locations",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "At least one enabled Conditional Access policy should target **all users** and **all resources**, include **all network locations**, exclude **trusted locations**, and set the grant control to **Block**. This blocks access originating from locations that are not explicitly trusted by the organization.",
+  "Risk": "Without a location-based block policy, users can authenticate from any geography or network, including regions where the organization has no presence, giving attackers operating from those locations a viable path to access resources with stolen credentials.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-assignment-network"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft Entra admin center at https://entra.microsoft.com/\n2. Go to **Protection** > **Conditional Access** > **Policies** > **New policy**\n3. Under **Users**, include **All users** (exclude only documented break-glass accounts)\n4. Under **Target resources**, select **All resources**\n5. Under **Network**, include **Any location** and exclude **All trusted locations** (or selected trusted named locations)\n6. Under **Grant**, select **Block access**\n7. Set the policy to **On** and click **Create**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Create a Conditional Access policy that blocks access from all locations except trusted named locations, targeting all users and resources, excluding only documented break-glass accounts.",
+      "Url": "https://hub.prowler.com/check/entra_conditional_access_policy_untrusted_locations_blocked"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

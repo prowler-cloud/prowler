@@ -60,6 +60,8 @@ export const EditRoleForm = ({
       if (isCloudEnvironment) {
         updatedFields.manage_billing = values.manage_billing;
         updatedFields.manage_alerts = values.manage_alerts;
+        updatedFields.manage_lighthouse_ai_configuration =
+          values.manage_lighthouse_ai_configuration;
       }
 
       if (

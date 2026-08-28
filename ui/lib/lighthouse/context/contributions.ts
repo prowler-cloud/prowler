@@ -8,6 +8,7 @@ import {
   LIGHTHOUSE_CONTEXT_KIND,
   LIGHTHOUSE_CONTEXT_LIMIT,
   LIGHTHOUSE_CONTEXT_SOURCE,
+  type LighthouseAlertContextItem,
   type LighthouseAttackPathContextItem,
   type LighthouseAttackPathParameter,
   type LighthouseComplianceContextItem,
@@ -23,6 +24,7 @@ import {
   getLighthouseScopeKey,
 } from "./pages";
 
+const ALERTS_SCOPE_KEY = getLighthouseScopeKey("/alerts");
 const FINDINGS_SCOPE_KEY = getLighthouseScopeKey("/findings");
 const RESOURCES_SCOPE_KEY = getLighthouseScopeKey("/resources");
 const SCANS_SCOPE_KEY = getLighthouseScopeKey("/scans");
@@ -34,6 +36,26 @@ interface FindingGroupContextInput {
   checkTitle: string;
   severity: string;
   status: string;
+}
+
+interface FocusedAlertContextInput {
+  id: string;
+  name?: string;
+  trigger?: string;
+  enabled?: boolean;
+}
+
+interface FindingStatusSummaryContextInput {
+  pathname: string;
+  passed: number;
+  failed: number;
+  newPassed?: number;
+  newFailed?: number;
+}
+
+interface FindingSeveritySummaryContextInput {
+  pathname: string;
+  severityCounts: Record<string, number>;
 }
 
 interface FindingResourceContextInput {
@@ -79,6 +101,10 @@ interface ComplianceContextInput {
   section?: string;
   region?: string;
   score?: number;
+  scoreDelta?: number;
+  criticalRequirementsCount?: number;
+  worstSection?: string;
+  worstSectionScore?: number;
   passed?: number;
   failed?: number;
   total?: number;
@@ -114,6 +140,59 @@ interface ProviderContextInput {
   type?: string;
 }
 
+interface FilteredProviderContextInput {
+  pathname: string;
+  id: string;
+  uid?: string;
+  type?: string;
+  alias?: string;
+}
+
+interface ProviderGroupContextInput {
+  pathname: string;
+  id: string;
+  name: string;
+}
+
+interface ServiceSummaryContextInput {
+  pathname: string;
+  service: string;
+  failedFindingsCount: number;
+  total?: number;
+}
+
+export function buildAlertSummaryContext(
+  total: number,
+  enabledCount?: number,
+): LighthouseAlertContextItem {
+  const safeTotal = toSafeCount(total);
+  return {
+    kind: LIGHTHOUSE_CONTEXT_KIND.ALERT,
+    id: "summary",
+    source: LIGHTHOUSE_CONTEXT_SOURCE.AUTOMATIC,
+    scopeKey: ALERTS_SCOPE_KEY,
+    label: `${safeTotal} alert rules`,
+    total: safeTotal,
+    enabledCount: optionalSafeCount(enabledCount),
+  };
+}
+
+export function buildFocusedAlertContext(
+  input: FocusedAlertContextInput,
+): LighthouseAlertContextItem {
+  const safeId = toBoundedString(input.id);
+  return {
+    kind: LIGHTHOUSE_CONTEXT_KIND.ALERT,
+    id: safeId,
+    source: LIGHTHOUSE_CONTEXT_SOURCE.FOCUSED,
+    scopeKey: ALERTS_SCOPE_KEY,
+    label: toBoundedString(input.name || "Edited alert rule"),
+    alertId: safeId,
+    trigger: optionalBoundedString(input.trigger),
+    enabled: input.enabled,
+  };
+}
+
 export function buildFindingSummaryContext(
   total: number,
 ): LighthouseFindingContextItem {
@@ -126,6 +205,47 @@ export function buildFindingSummaryContext(
     label: `${safeTotal} findings`,
     findingId: "summary",
     total: safeTotal,
+  };
+}
+
+export function buildFindingStatusSummaryContext(
+  input: FindingStatusSummaryContextInput,
+): LighthouseFindingContextItem {
+  const passed = toSafeCount(input.passed);
+  const failed = toSafeCount(input.failed);
+  return {
+    kind: LIGHTHOUSE_CONTEXT_KIND.FINDING,
+    id: "status-summary",
+    source: LIGHTHOUSE_CONTEXT_SOURCE.AUTOMATIC,
+    scopeKey: getLighthouseScopeKey(input.pathname),
+    label: `${failed} failed / ${passed} passed findings`,
+    findingId: "status-summary",
+    passed,
+    failed,
+    newPassed: optionalSafeCount(input.newPassed),
+    newFailed: optionalSafeCount(input.newFailed),
+  };
+}
+
+export function buildFindingSeveritySummaryContext(
+  input: FindingSeveritySummaryContextInput,
+): LighthouseFindingContextItem {
+  const severityCounts = Object.fromEntries(
+    Object.entries(input.severityCounts)
+      .slice(0, LIGHTHOUSE_CONTEXT_LIMIT.SEVERITY_COUNTS)
+      .map(([severity, count]) => [
+        toBoundedString(severity),
+        toSafeCount(count),
+      ]),
+  );
+  return {
+    kind: LIGHTHOUSE_CONTEXT_KIND.FINDING,
+    id: "severity-summary",
+    source: LIGHTHOUSE_CONTEXT_SOURCE.AUTOMATIC,
+    scopeKey: getLighthouseScopeKey(input.pathname),
+    label: "Failing findings by severity",
+    findingId: "severity-summary",
+    severityCounts,
   };
 }
 
@@ -238,6 +358,24 @@ export function buildFocusedResourceContext(
   };
 }
 
+export function buildServiceSummaryContext(
+  input: ServiceSummaryContextInput,
+): LighthouseResourceContextItem {
+  const safeService = toBoundedString(input.service);
+  const safeId = toBoundedString(`service-${safeService}`);
+  return {
+    kind: LIGHTHOUSE_CONTEXT_KIND.RESOURCE,
+    id: safeId,
+    source: LIGHTHOUSE_CONTEXT_SOURCE.AUTOMATIC,
+    scopeKey: getLighthouseScopeKey(input.pathname),
+    label: toBoundedString(`Service: ${safeService}`),
+    resourceId: safeId,
+    service: safeService,
+    failedFindingsCount: toSafeCount(input.failedFindingsCount),
+    total: optionalSafeCount(input.total),
+  };
+}
+
 export function buildComplianceContext(
   input: ComplianceContextInput,
 ): LighthouseComplianceContextItem {
@@ -267,6 +405,15 @@ export function buildComplianceContext(
     section: optionalBoundedString(input.section),
     region: optionalBoundedString(input.region),
     score,
+    scoreDelta: optionalSafeScoreDelta(input.scoreDelta),
+    criticalRequirementsCount: optionalSafeCount(
+      input.criticalRequirementsCount,
+    ),
+    worstSection: optionalBoundedString(input.worstSection),
+    worstSectionScore:
+      input.worstSectionScore === undefined
+        ? undefined
+        : toSafeScore(input.worstSectionScore),
     totals: hasTotals ? { passed, failed, total } : undefined,
   };
 }
@@ -372,6 +519,36 @@ export function buildProviderContext(
   };
 }
 
+export function buildFilteredProviderContext(
+  input: FilteredProviderContextInput,
+): LighthouseProviderContextItem {
+  const safeId = toBoundedString(input.id);
+  return {
+    kind: LIGHTHOUSE_CONTEXT_KIND.PROVIDER,
+    id: safeId,
+    source: LIGHTHOUSE_CONTEXT_SOURCE.AUTOMATIC,
+    scopeKey: getLighthouseScopeKey(input.pathname),
+    label: toBoundedString(
+      `Provider: ${input.alias || input.uid || "filtered"}`,
+    ),
+    providerId: safeId,
+    providerUid: optionalBoundedString(input.uid),
+    providerType: optionalBoundedString(input.type),
+  };
+}
+
+export function buildProviderGroupContext(
+  input: ProviderGroupContextInput,
+): LighthouseProviderContextItem {
+  return {
+    kind: LIGHTHOUSE_CONTEXT_KIND.PROVIDER,
+    id: toBoundedString(`group-${input.id}`),
+    source: LIGHTHOUSE_CONTEXT_SOURCE.AUTOMATIC,
+    scopeKey: getLighthouseScopeKey(input.pathname),
+    label: toBoundedString(`Provider group: ${input.name}`),
+  };
+}
+
 function toBoundedString(value: string): string {
   return value.slice(0, LIGHTHOUSE_CONTEXT_LIMIT.STRING_LENGTH);
 }
@@ -391,6 +568,11 @@ function optionalSafeCount(value: number | undefined): number | undefined {
 function toSafeScore(value: number): number {
   if (!Number.isFinite(value)) return 0;
   return Math.min(100, Math.max(0, Math.round(value * 100) / 100));
+}
+
+function optionalSafeScoreDelta(value: number | undefined): number | undefined {
+  if (value === undefined || !Number.isFinite(value)) return undefined;
+  return Math.min(100, Math.max(-100, Math.round(value * 100) / 100));
 }
 
 function sanitizeAttackPathParameters(

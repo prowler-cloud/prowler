@@ -36,7 +36,7 @@ This page allows for multiple functions:
 
 - Apply filters:
 
-  - Assesment Date
+  - Assessment Date
   - Account
   - Region
   - Severity
@@ -45,7 +45,7 @@ This page allows for multiple functions:
   - Status
   - Category
 
-- See which files has been scanned to generate the dashboard by placing your mouse on the `?` icon:
+- See which files have been scanned to generate the dashboard by placing your mouse on the `?` icon:
 
   {" "}
   <img src="/images/cli/dashboard/dashboard-files-scanned.png" />
@@ -67,7 +67,7 @@ This page shows all the info related to the compliance selected. Multiple filter
 
 To add your own compliance to compliance page, add a file with the compliance name (using `_` instead of `.`) to the path `/dashboard/compliance`.
 
-In this file use the format present in the others compliance files to create the table. Example for CIS 2.0:
+In this file use the format present in the other compliance files to create the table. Example for CIS 2.0:
 
 ```python
 import warnings
@@ -99,7 +99,7 @@ def get_table(data):
 
 ## S3 Integration
 
-If you are using Prowler Cloud with the S3 integration or that integration from Prowler CLI and you want to use your data from your S3 bucket, you can run the following command in order to load the dashboard with the new files:
+If you are using Prowler Cloud with the S3 integration or that integration from Prowler CLI and you want to use your data from your S3 bucket, you can run the following command to load the dashboard with the new files:
 
 ```sh
 aws s3 cp s3://<your-bucket>/output/csv ./output --recursive

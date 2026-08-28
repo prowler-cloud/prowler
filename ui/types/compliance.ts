@@ -427,6 +427,53 @@ export interface CISControlsRequirement extends Requirement {
   implementation_groups?: string[];
 }
 
+// Universal framework — flat attributes dict with Theme/AssessmentStatus/
+// CloudApplicability/RemediationProcedure/References. `Theme` is the canonical
+// grouping key for tables and PDF; the enum mirrors the five Cyber Essentials
+// control themes declared in `prowler/compliance/cyber_essentials_3.3.json`.
+export const CYBER_ESSENTIALS_THEME = {
+  FIREWALLS: "Firewalls",
+  SECURE_CONFIGURATION: "Secure Configuration",
+  SECURITY_UPDATE_MANAGEMENT: "Security Update Management",
+  USER_ACCESS_CONTROL: "User Access Control",
+  MALWARE_PROTECTION: "Malware Protection",
+} as const;
+export type CyberEssentialsTheme =
+  (typeof CYBER_ESSENTIALS_THEME)[keyof typeof CYBER_ESSENTIALS_THEME];
+
+export interface CyberEssentialsAttributesMetadata {
+  Theme: CyberEssentialsTheme;
+  AssessmentStatus: string; // "Automated" or "Manual"
+  CloudApplicability: string; // "full", "partial" or "non-applicable"
+  RemediationProcedure: string;
+  References: string;
+}
+
+export interface CyberEssentialsRequirement extends Requirement {
+  theme: CyberEssentialsAttributesMetadata["Theme"];
+  assessment_status: CyberEssentialsAttributesMetadata["AssessmentStatus"];
+  cloud_applicability: CyberEssentialsAttributesMetadata["CloudApplicability"];
+  remediation_procedure: CyberEssentialsAttributesMetadata["RemediationProcedure"];
+  references: CyberEssentialsAttributesMetadata["References"];
+}
+
+// CMMC 2.0 (Cybersecurity Maturity Model Certification, 32 CFR Part 170).
+// Universal framework — flat attributes dict with Domain/Level/SourceRequirement.
+// `Domain` is the grouping key; `Level` (1/2/3) and `SourceRequirement` are
+// surfaced in the requirement detail drawer.
+export const CMMC_LEVEL = {
+  LEVEL_1: "Level 1",
+  LEVEL_2: "Level 2",
+  LEVEL_3: "Level 3",
+} as const;
+export type CMMCLevel = (typeof CMMC_LEVEL)[keyof typeof CMMC_LEVEL];
+
+export interface CMMCAttributesMetadata {
+  Domain: string;
+  Level: CMMCLevel;
+  SourceRequirement: string;
+}
+
 export interface AttributesItemData {
   type: "compliance-requirements-attributes";
   id: string;
@@ -452,6 +499,8 @@ export interface AttributesItemData {
         | OktaIDaaSStigAttributesMetadata[]
         | DORAAttributesMetadata[]
         | CISControlsAttributesMetadata[]
+        | CyberEssentialsAttributesMetadata[]
+        | CMMCAttributesMetadata[]
         | GenericAttributesMetadata[];
       check_ids: string[];
       // MITRE structure

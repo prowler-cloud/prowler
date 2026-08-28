@@ -11,6 +11,10 @@ import { z } from "zod";
 
 import { getToken, getUserByMe } from "./actions/auth";
 import { apiBaseUrl } from "./lib";
+import {
+  SLACK_CALLBACK_PATH,
+  SLACK_EXPIRED_CALLBACK_URL,
+} from "./lib/integrations/slack-connect-status";
 import type { RolePermissionAttributes } from "./types/users";
 
 interface CustomJwtPayload extends JwtPayload {
@@ -54,6 +58,7 @@ const DEFAULT_PERMISSIONS: RolePermissionAttributes = {
   manage_integrations: false,
   manage_billing: false,
   manage_alerts: false,
+  manage_lighthouse_ai_configuration: false,
   unlimited_visibility: false,
 };
 
@@ -316,7 +321,9 @@ export const authConfig = {
         const signInUrl = new URL("/sign-in", nextUrl.origin);
         signInUrl.searchParams.set(
           "callbackUrl",
-          nextUrl.pathname + nextUrl.search,
+          nextUrl.pathname === SLACK_CALLBACK_PATH
+            ? SLACK_EXPIRED_CALLBACK_URL
+            : nextUrl.pathname + nextUrl.search,
         );
         // Include session error if present (e.g., RefreshAccessTokenError)
         if (sessionError) {

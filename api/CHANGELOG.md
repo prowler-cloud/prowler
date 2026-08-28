@@ -4,6 +4,103 @@ All notable changes to the **Prowler API** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [1.40.1] (Prowler v5.39.1)
+
+### 🔄 Changed
+
+- Bump alibabacloud-tea-openapi to 0.4.6, oci to 2.184.1 and pyopenssl to 26.4.0 to match the SDK; the cryptography override now names its actual blockers (azure-cli-core pins msal below 1.37, workos 8.3.0 requires cryptography 48) [(#12477)](https://github.com/prowler-cloud/prowler/pull/12477)
+
+### 🐞 Fixed
+
+- Pin zstd to 1.5.7.2; 1.5.7.3 was yanked from PyPI as not thread safe [(#12477)](https://github.com/prowler-cloud/prowler/pull/12477)
+
+### 🔐 Security
+
+- Trivy from v0.72.0 to v0.73.0 in the container image, fixing HIGH CVE-2026-46600 in the bundled `golang.org/x/net` [(#12445)](https://github.com/prowler-cloud/prowler/pull/12445)
+- Trivy v0.74.0 and Debian util-linux 2.41.5-0+deb13u1 in the API container image, patching Go standard library vulnerabilities and CVE-2026-53615 [(#12470)](https://github.com/prowler-cloud/prowler/pull/12470)
+
+---
+
+## [1.40.0] (Prowler v5.39.0)
+
+### 🔄 Changed
+
+- `GET /api/v1/users/me` membership relationships identify the active tenant with `meta.active` for JWT and API key authentication [(#12388)](https://github.com/prowler-cloud/prowler/pull/12388)
+
+### 🐞 Fixed
+
+- Tenant deletion no longer leaves memberships partially removed when exclusive-user cleanup fails [(#12379)](https://github.com/prowler-cloud/prowler/pull/12379)
+- `/api/v1/accounts/saml/{organization_slug}/acs/` rejects non-POST requests before SAML response processing [(#12393)](https://github.com/prowler-cloud/prowler/pull/12393)
+- Social login derives a valid user name when identity providers omit the profile name [(#12413)](https://github.com/prowler-cloud/prowler/pull/12413)
+
+---
+
+## [1.39.0] (Prowler v5.38.0)
+
+### 🚀 Added
+
+- Attack Paths adds 20 AWS privilege-escalation detection queries from pathfinding.cloud, covering service PassRole escalations (Batch, Braket, Cognito Identity, ECS, EMR, EMR Serverless, GameLift, Glue, EC2 Image Builder, Kinesis Analytics, HealthOmics, EventBridge Scheduler, SSM, Step Functions), CodeDeploy and Step Functions existing-resource abuse, role permissions-boundary removal with role assumption, and IAM Identity Center permission-set policy injection [(#12237)](https://github.com/prowler-cloud/prowler/pull/12237)
+- Attack Paths query metadata now carries an outcome (Code execution, Privilege escalation, Public exposure, or Resource inventory), exposed on the queries endpoint so the graph can show a terminal outcome node [(#12344)](https://github.com/prowler-cloud/prowler/pull/12344)
+- Container images now ship an SBOM and build provenance as OCI attestations [(#12352)](https://github.com/prowler-cloud/prowler/pull/12352)
+
+### 🔄 Changed
+
+- Pin the container vulnerability scanner to Trivy v0.72.0, matching prowler-registry and partner-portal [(#12346)](https://github.com/prowler-cloud/prowler/pull/12346)
+
+### 🐞 Fixed
+
+- Compliance report output directory failures are now logged with the exception attached and fingerprinted by `errno` in Sentry, so `ENOSPC`, `ENOENT` and `EACCES` no longer share a single issue [(#12142)](https://github.com/prowler-cloud/prowler/pull/12142)
+- Restored the SDK dependency to `@master` now that the dependency bumps have landed there, and regenerated the lock. The API image no longer builds against a temporary integration branch [(#12309)](https://github.com/prowler-cloud/prowler/pull/12309)
+
+### 🔐 Security
+
+- The API container image now verifies the checksum of every third-party binary it downloads (PowerShell, Trivy, zizmor) before installing it [(#12334)](https://github.com/prowler-cloud/prowler/pull/12334)
+- Upgrade aiohttp to 3.14.3 to pick up the fix for CVE-2026-69244 [(#12340)](https://github.com/prowler-cloud/prowler/pull/12340)
+- Upgrade cryptography to 50.0.0, closing CVE-2026-69247 and CVE-2026-69249 [(#12356)](https://github.com/prowler-cloud/prowler/pull/12356)
+
+---
+
+## [1.38.1] (Prowler v5.37.1)
+
+### 🐞 Fixed
+
+- Entra Conditional Access guest-user checks no longer report false FAILs in M365 scans: microsoft-kiota packages overridden to 1.9.10 so `guestOrExternalUserTypes` (a flags enum Graph serializes as a comma-separated string) deserializes correctly instead of returning an empty list [(#12315)](https://github.com/prowler-cloud/prowler/pull/12315)
+
+### 🔐 Security
+
+- The API container image now builds on Debian 13 (trixie), taking its critical CVE count from 18 to 4 [(#12311)](https://github.com/prowler-cloud/prowler/pull/12311)
+- Bumped PowerShell, Trivy and uv in the API container image, clearing 14 high-severity CVEs [(#12311)](https://github.com/prowler-cloud/prowler/pull/12311)
+- Bumped `workos` and `pyopenssl` so the API can move to `cryptography` 48.0.1 [(#12311)](https://github.com/prowler-cloud/prowler/pull/12311)
+- Removed `gnupg` and `apt-transport-https` from the API container image [(#12311)](https://github.com/prowler-cloud/prowler/pull/12311)
+- The API container image no longer ships `git`; removing it also dropped `perl`, `perl-modules`, `libperl` and `liberror-perl`, clearing 12 critical CVEs. Only `perl-base` remains, which Debian marks Essential and cannot be removed [(#12311)](https://github.com/prowler-cloud/prowler/pull/12311)
+- Removed `pip` from the API container image, clearing two high-severity CVEs in the vendored copies of `setuptools` and `msgpack` [(#12311)](https://github.com/prowler-cloud/prowler/pull/12311)
+- Bumped `pillow` to 12.3.0, `httplib2` to 0.32.0 and `pyasn1` to 0.6.4 to resolve known CVEs [(#12311)](https://github.com/prowler-cloud/prowler/pull/12311)
+
+---
+
+## [1.38.0] (Prowler v5.37.0)
+
+### 🚀 Added
+
+- Attack Paths: four AWS privilege-escalation detection queries from pathfinding.cloud: cross-account role trust (STS-002), wildcard role trust (STS-003), user permissions-boundary removal (IAM-022), and IAM Identity Center permission-set escalation (SSO-001) [(#11460)](https://github.com/prowler-cloud/prowler/pull/11460)
+
+### 🐞 Fixed
+
+- Attack Paths IAM privilege-escalation queries no longer build an all-nodes × all-resource-items cartesian product, fixing runtime errors and timeouts on accounts with many IAM roles, users, or groups [(#12136)](https://github.com/prowler-cloud/prowler/pull/12136)
+- `task_args` serialization no longer returns HTTP 500 errors when Celery truncates stored task keyword arguments [(#12165)](https://github.com/prowler-cloud/prowler/pull/12165)
+- Attack Paths predefined queries on migrated graphs are now scoped with the provider label, letting the graph database seed from its label index instead of a global label scan and preventing query timeouts on Neptune [(#12167)](https://github.com/prowler-cloud/prowler/pull/12167)
+- Authentication with an API key whose owning user was deleted now returns `401` instead of an unhandled `AttributeError`, and user deletion now revokes the user's API keys across all their tenants [(#12210)](https://github.com/prowler-cloud/prowler/pull/12210)
+- AWS Security Hub integrations now persist successful connection checks during finding delivery so their connection status and last checked timestamp stay current [(#12212)](https://github.com/prowler-cloud/prowler/pull/12212)
+- SAML users without a `userType` attribute and without an existing role in the SAML tenant now receive a least-privilege `read_only` fallback role; a numeric suffix is used when that name belongs to a role with different permissions [(#12223)](https://github.com/prowler-cloud/prowler/pull/12223)
+- Social signups create users and authentication records in one database transaction, preventing incomplete accounts when provisioning fails [(#12245)](https://github.com/prowler-cloud/prowler/pull/12245)
+- Requesting integrations with a sparse fieldset that leaves out `configuration` no longer returns HTTP 500 errors when the tenant has a Jira integration [(#12261)](https://github.com/prowler-cloud/prowler/pull/12261)
+
+### 🔐 Security
+
+- Provider deletion and connection checks, scan creation, provider secrets, provider groups, and daily schedules now respect role provider-group visibility [(#12216)](https://github.com/prowler-cloud/prowler/pull/12216)
+
+---
+
 ## [1.37.0] (Prowler v5.36.0)
 
 ### 🔄 Changed
