@@ -278,7 +278,7 @@ class TestOCSFComplianceOutput:
         )
         output.batch_write_data_to_file()
 
-        with open(filepath) as f:
+        with open(filepath, encoding="utf-8") as f:
             data = json.load(f)
 
         assert isinstance(data, list)
