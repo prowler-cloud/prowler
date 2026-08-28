@@ -58,8 +58,15 @@ export async function POST(request: Request) {
 
   if (contentType) headers["Content-Type"] = contentType;
   // Without the length the stream is forwarded chunked, and the ingestion API
-  // parses no file out of a chunked multipart body.
-  if (contentLength) headers["Content-Length"] = contentLength;
+  // parses no file out of a chunked multipart body: refuse rather than spend
+  // the upload on a request that cannot succeed.
+  if (!contentLength) {
+    return NextResponse.json(
+      { error: INVALID_INGESTION_RESPONSE },
+      { status: 411 },
+    );
+  }
+  headers["Content-Length"] = contentLength;
 
   const upstreamRequest: RequestInit & { duplex: "half" } = {
     method: "POST",

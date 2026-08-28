@@ -28,6 +28,17 @@ vi.mock("@/lib/shared/env", () => ({
   isCloud: isCloudMock,
 }));
 
+// A browser upload always reaches the route with a length on the wire, and the
+// route refuses anything it cannot measure, so a forwarded Request needs one.
+const uploadRequest = (body = "report") =>
+  new Request("http://localhost/api/ingestions", {
+    method: "POST",
+    headers: {
+      "content-length": String(new TextEncoder().encode(body).length),
+    },
+    body,
+  });
+
 describe("POST /api/ingestions", () => {
   const server = setupServer();
 
@@ -129,6 +140,29 @@ describe("POST /api/ingestions", () => {
     });
   });
 
+  it("refuses an upload it cannot measure instead of forwarding it chunked", async () => {
+    isCloudMock.mockReturnValue(true);
+    getAuthHeadersMock.mockResolvedValue({ Authorization: "Bearer token" });
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    // A Request built from FormData carries no content-length, and the ingestion
+    // API parses no file out of the chunked body that would be forwarded.
+    const request = new Request("http://localhost/api/ingestions", {
+      method: "POST",
+      headers: { "content-type": "multipart/form-data; boundary=report" },
+      body: "--report--",
+    });
+
+    const response = await POST(request);
+
+    expect(response.status).toBe(411);
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(request.body?.locked).toBe(false);
+    await expect(response.json()).resolves.toEqual({
+      error: "Unable to start the import. Please try again.",
+    });
+  });
+
   it("sanitizes unexpected upstream error pages", async () => {
     isCloudMock.mockReturnValue(true);
     getAuthHeadersMock.mockResolvedValue({ Authorization: "Bearer token" });
@@ -143,12 +177,7 @@ describe("POST /api/ingestions", () => {
       ),
     );
 
-    const response = await POST(
-      new Request("http://localhost/api/ingestions", {
-        method: "POST",
-        body: "report",
-      }),
-    );
+    const response = await POST(uploadRequest());
 
     expect(response.status).toBe(502);
     await expect(response.json()).resolves.toEqual({
@@ -192,12 +221,7 @@ describe("POST /api/ingestions", () => {
         ),
       );
 
-      const response = await POST(
-        new Request("http://localhost/api/ingestions", {
-          method: "POST",
-          body: "report",
-        }),
-      );
+      const response = await POST(uploadRequest());
 
       expect(response.status).toBe(status);
       await expect(response.json()).resolves.toEqual({ error: message });
@@ -226,12 +250,7 @@ describe("POST /api/ingestions", () => {
         ),
       );
 
-      const response = await POST(
-        new Request("http://localhost/api/ingestions", {
-          method: "POST",
-          body: "report",
-        }),
-      );
+      const response = await POST(uploadRequest());
 
       expect(response.status).toBe(status);
       await expect(response.json()).resolves.toEqual({ error: message });
@@ -259,12 +278,7 @@ describe("POST /api/ingestions", () => {
         ),
       );
 
-      const response = await POST(
-        new Request("http://localhost/api/ingestions", {
-          method: "POST",
-          body: "report",
-        }),
-      );
+      const response = await POST(uploadRequest());
 
       expect(response.status).toBe(status);
       await expect(response.json()).resolves.toEqual({ error: message });
@@ -285,12 +299,7 @@ describe("POST /api/ingestions", () => {
       ),
     );
 
-    const response = await POST(
-      new Request("http://localhost/api/ingestions", {
-        method: "POST",
-        body: "report",
-      }),
-    );
+    const response = await POST(uploadRequest());
 
     expect(response.status).toBe(502);
     await expect(response.json()).resolves.toEqual({
@@ -307,12 +316,7 @@ describe("POST /api/ingestions", () => {
       ),
     );
 
-    const response = await POST(
-      new Request("http://localhost/api/ingestions", {
-        method: "POST",
-        body: "report",
-      }),
-    );
+    const response = await POST(uploadRequest());
 
     expect(response.status).toBe(502);
     await expect(response.json()).resolves.toEqual({
