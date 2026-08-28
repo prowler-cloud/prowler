@@ -39,6 +39,7 @@ def _all_calls_raise(code):
     """Build a _make_api_call replacement failing every AgentCore call."""
 
     def _mock(self, operation_name, kwarg):
+        """Raise for every AgentCore listing and delegate anything else to botocore."""
         if operation_name in LISTING_TO_STORE:
             raise ClientError(
                 {"Error": {"Code": code, "Message": "denied"}}, operation_name
@@ -60,6 +61,7 @@ def _one_call_raises(failing_operation, code="AccessDeniedException"):
     }
 
     def _mock(self, operation_name, kwarg):
+        """Raise for the named listing, empty the other listings, delegate the rest."""
         if operation_name == failing_operation:
             raise ClientError(
                 {"Error": {"Code": code, "Message": "denied"}}, operation_name

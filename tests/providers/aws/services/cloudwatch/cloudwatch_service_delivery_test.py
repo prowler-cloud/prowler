@@ -91,6 +91,7 @@ def _mock(
     """
 
     def _make_call(self, operation_name, kwarg):
+        """Mock CloudWatch delivery operations with optional access denial and pagination."""
         region = self.meta.region_name
         paging = bool(kwarg.get("nextToken"))
         if (operation_name in denied and denied_region in (None, region)) or (
