@@ -75,10 +75,15 @@ export async function POST(request: Request) {
     duplex: "half",
     cache: "no-store",
   };
-  const upstreamResponse = await fetch(
-    `${apiBaseUrl}/ingestions`,
-    upstreamRequest,
-  );
+  let upstreamResponse: Response;
+  try {
+    upstreamResponse = await fetch(`${apiBaseUrl}/ingestions`, upstreamRequest);
+  } catch {
+    return NextResponse.json(
+      { error: INVALID_INGESTION_RESPONSE },
+      { status: 502 },
+    );
+  }
   const payload = await upstreamResponse.json().catch(() => undefined);
 
   if (!upstreamResponse.ok) {

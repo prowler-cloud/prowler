@@ -26,10 +26,18 @@ export async function GET(
   if (!ingestionId) return new Response(null, { status: 404 });
 
   const headers = await getAuthHeaders({ contentType: false });
-  const upstreamResponse = await fetch(
-    `${apiBaseUrl}/ingestions/${encodeURIComponent(ingestionId)}`,
-    { headers, cache: "no-store" },
-  );
+  let upstreamResponse: Response;
+  try {
+    upstreamResponse = await fetch(
+      `${apiBaseUrl}/ingestions/${encodeURIComponent(ingestionId)}`,
+      { headers, cache: "no-store" },
+    );
+  } catch {
+    return NextResponse.json(
+      { error: INVALID_INGESTION_RESPONSE },
+      { status: 502 },
+    );
+  }
   const payload = await upstreamResponse.json().catch(() => undefined);
 
   if (!upstreamResponse.ok) {

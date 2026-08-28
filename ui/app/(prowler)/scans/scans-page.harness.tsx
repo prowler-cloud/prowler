@@ -18,6 +18,7 @@ import { SCAN_JOBS_TAB } from "@/types";
 interface MountOptions {
   hasManageIngestionsPermission?: boolean;
   hasManageScansPermission?: boolean;
+  holdStatusResponse?: boolean;
   uploadRejection?: IngestionRejectionFixture;
   uploadDelayMs?: number;
   statusErrorAt?: number;
@@ -28,23 +29,32 @@ interface MountOptions {
 export class ScansPageHarness extends BrowserHarness<IngestionFixture> {
   private maxInFlightStatusRequests = 0;
   private mounted: ReturnType<typeof render> | null = null;
+  private releaseHeldStatusResponse: (() => void) | null = null;
   private statusDelayMs = 0;
 
   async mount({
     hasManageIngestionsPermission = true,
     hasManageScansPermission = false,
+    holdStatusResponse = false,
     uploadRejection,
     uploadDelayMs,
     statusErrorAt,
     statusDelayMs,
     statusSequence,
   }: MountOptions = {}): Promise<void> {
+    const statusResponseGate = holdStatusResponse
+      ? new Promise<void>((resolve) => {
+          this.releaseHeldStatusResponse = resolve;
+        })
+      : undefined;
+
     worker.use(
       ...handlersForIngestion(this.fixture, {
         uploadRejection,
         uploadDelayMs,
         statusErrorAt,
         statusDelayMs,
+        statusResponseGate,
         statusSequence,
         onStatusRequest: (inFlight) => {
           this.maxInFlightStatusRequests = Math.max(
@@ -169,6 +179,23 @@ export class ScansPageHarness extends BrowserHarness<IngestionFixture> {
 
   async closeImportFindings(): Promise<void> {
     await this.user.keyboard("[Escape]");
+    await this.waitFor(() =>
+      this.q('[role="dialog"]') === null ? true : null,
+    );
+  }
+
+  async closeImmediatelyBeforeStatusCompletes(): Promise<void> {
+    const closeButton = await this.waitForButton(/^Close$/i);
+    const releaseStatusResponse = this.releaseHeldStatusResponse;
+    if (!releaseStatusResponse) {
+      throw new Error(
+        "closeImmediatelyBeforeStatusCompletes: no status response is held",
+      );
+    }
+
+    closeButton.click();
+    releaseStatusResponse();
+    this.releaseHeldStatusResponse = null;
     await this.waitFor(() =>
       this.q('[role="dialog"]') === null ? true : null,
     );

@@ -39,7 +39,7 @@ describe("GET /api/ingestions/[ingestionId]", () => {
 
   afterAll(() => server.close());
 
-  it("returns not found outside Cloud before reading the ingestion identifier", async () => {
+  it("returns not found in OSS and Local Server before reading the ingestion identifier", async () => {
     isCloudMock.mockReturnValue(false);
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
@@ -131,6 +131,27 @@ describe("GET /api/ingestions/[ingestionId]", () => {
     });
 
     expect(response.status).toBe(503);
+    await expect(response.json()).resolves.toEqual({
+      error: "Unable to retrieve the import status. Please try again.",
+    });
+  });
+
+  it("returns a safe bad gateway response when the ingestion API connection fails", async () => {
+    // Given
+    isCloudMock.mockReturnValue(true);
+    getAuthHeadersMock.mockResolvedValue({ Authorization: "Bearer token" });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockRejectedValue(new Error("socket hang up from api.internal")),
+    );
+
+    // When
+    const response = await GET(new Request("http://localhost/api/ingestions"), {
+      params: Promise.resolve({ ingestionId: "ingestion-123" }),
+    });
+
+    // Then
+    expect(response.status).toBe(502);
     await expect(response.json()).resolves.toEqual({
       error: "Unable to retrieve the import status. Please try again.",
     });

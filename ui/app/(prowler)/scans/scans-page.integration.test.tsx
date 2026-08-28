@@ -202,6 +202,24 @@ describe("Scans page import findings", () => {
     expect(harness.ingestionPostCount).toBe(1);
   });
 
+  it("notifies when the dialog closes immediately before the import completes", async () => {
+    const harness = new ScansPageHarness(ingestionFixture());
+    await harness.mount({
+      holdStatusResponse: true,
+      statusSequence: ["completed"],
+    });
+    await harness.openImportFindings();
+    await harness.selectFile(new File(["[]"], "findings.ocsf.json"));
+    await harness.submitImport();
+    await harness.waitForFirstStatusPoll();
+
+    await harness.closeImmediatelyBeforeStatusCompletes();
+
+    await harness.waitForCompletionNotification();
+    expect(harness.pageRefreshCount).toBe(1);
+    expect(harness.ingestionPostCount).toBe(1);
+  });
+
   it("retries a failed terminal import with the selected file", async () => {
     const harness = new ScansPageHarness(ingestionFixture());
     await harness.mount({ statusSequence: ["failed"] });

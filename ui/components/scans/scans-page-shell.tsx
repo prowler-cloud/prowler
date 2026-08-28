@@ -62,7 +62,6 @@ export function ScansPageShell({
     () =>
       searchParams.get(LAUNCH_SCAN_SEARCH_PARAM) === LAUNCH_SCAN_SEARCH_VALUE,
   );
-  const [isImportFindingsOpen, setIsImportFindingsOpen] = useState(false);
   const isLaunchScanModalOpen = useScansStore(
     (state) => state.isLaunchScanModalOpen,
   );
@@ -160,15 +159,7 @@ export function ScansPageShell({
           Launch Scan
         </Button>
         {isCloudEnvironment && hasManageIngestionsPermission && (
-          <Button
-            type="button"
-            size="lg"
-            variant="secondary"
-            onClick={() => setIsImportFindingsOpen(true)}
-            className="w-full md:w-auto"
-          >
-            Import Findings
-          </Button>
+          <ImportFindingsModal />
         )}
       </div>
 
@@ -209,10 +200,6 @@ export function ScansPageShell({
         providers={providers}
         capability={scanScheduleCapability}
         isScanLimitReached={isScanLimitReached}
-      />
-      <ImportFindingsModal
-        open={isImportFindingsOpen}
-        onOpenChange={setIsImportFindingsOpen}
       />
     </div>
   );

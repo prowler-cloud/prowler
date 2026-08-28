@@ -52,7 +52,7 @@ describe("POST /api/ingestions", () => {
 
   afterAll(() => server.close());
 
-  it("returns not found outside Cloud without authenticating or forwarding the upload", async () => {
+  it("returns not found in OSS and Local Server without authenticating or forwarding the upload", async () => {
     isCloudMock.mockReturnValue(false);
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
@@ -179,6 +179,25 @@ describe("POST /api/ingestions", () => {
 
     const response = await POST(uploadRequest());
 
+    expect(response.status).toBe(502);
+    await expect(response.json()).resolves.toEqual({
+      error: "Unable to start the import. Please try again.",
+    });
+  });
+
+  it("returns a safe bad gateway response when the ingestion API connection fails", async () => {
+    // Given
+    isCloudMock.mockReturnValue(true);
+    getAuthHeadersMock.mockResolvedValue({ Authorization: "Bearer token" });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockRejectedValue(new Error("connect ECONNREFUSED api.internal")),
+    );
+
+    // When
+    const response = await POST(uploadRequest());
+
+    // Then
     expect(response.status).toBe(502);
     await expect(response.json()).resolves.toEqual({
       error: "Unable to start the import. Please try again.",

@@ -30,6 +30,7 @@ interface IngestionHandlerOptions {
   uploadDelayMs?: number;
   statusErrorAt?: number;
   statusDelayMs?: number;
+  statusResponseGate?: Promise<void>;
   statusSequence?: Array<"processing" | "completed" | "failed">;
   onStatusRequest?: (inFlight: number) => void;
 }
@@ -41,6 +42,7 @@ export const handlersForIngestion = (
     uploadDelayMs,
     statusErrorAt,
     statusDelayMs,
+    statusResponseGate,
     statusSequence,
     onStatusRequest,
   }: IngestionHandlerOptions = {},
@@ -79,6 +81,7 @@ export const handlersForIngestion = (
       inFlightStatusRequests += 1;
       onStatusRequest?.(inFlightStatusRequests);
       if (statusDelayMs) await delay(statusDelayMs);
+      if (statusResponseGate) await statusResponseGate;
       inFlightStatusRequests -= 1;
       onStatusRequest?.(inFlightStatusRequests);
       if (statusRequestCount === statusErrorAt) {

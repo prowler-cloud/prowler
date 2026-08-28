@@ -1,1 +1,1 @@
-Import Prowler OCSF finding reports from the Scans page in Prowler Cloud
+Finding-report imports from Scans for Cloud and Private Cloud deployments
