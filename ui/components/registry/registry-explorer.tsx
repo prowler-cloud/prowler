@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import {
-  addRegistryArtifact,
   disconnectRegistryCredential,
   refreshRegistryCollections,
   removeRegistryArtifact,
@@ -19,6 +18,7 @@ import {
   TabsTrigger,
 } from "@/components/shadcn/tabs/tabs";
 import { toast } from "@/components/shadcn/toast/use-toast";
+import { executeRegistryArtifactAddition } from "@/lib/registry-artifact-execution";
 import { executeRegistryCredentialValidation } from "@/lib/registry-credential-execution";
 import {
   REGISTRY_BOOTSTRAP_STATE,
@@ -128,7 +128,7 @@ export function RegistryExplorer({ initialState }: RegistryExplorerProps) {
     const generation = operationGeneration.current;
     setOperationMessage(undefined);
     setPendingAddName(normalizedName);
-    const result = await addRegistryArtifact({ normalizedName });
+    const result = await executeRegistryArtifactAddition({ normalizedName });
     if (generation !== operationGeneration.current) return;
     if (result.status === REGISTRY_FAILURE.ACCESS_DENIED)
       return router.replace("/profile");
