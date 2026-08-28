@@ -439,6 +439,11 @@ class SageMaker(AWSService):
             )
 
     def _describe_domain(self, domain):
+        """Populate a SageMaker Domain with values from DescribeDomain.
+
+        The `details_retrieved` flag separates an unavailable response from a
+        response that successfully omits an optional domain setting.
+        """
         logger.info("SageMaker - describing domain...")
         try:
             regional_client = self.regional_clients[domain.region]

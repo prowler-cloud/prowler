@@ -13,6 +13,7 @@ domain_arn = f"arn:aws:sagemaker:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:dom
 
 
 def run_check(domain):
+    """Run the check with either one Domain or no Domain resources."""
     sagemaker_client = mock.MagicMock
     sagemaker_client.sagemaker_domains = [] if domain is None else [domain]
     aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
@@ -36,9 +37,11 @@ def run_check(domain):
 
 class Test_sagemaker_domain_vpc_only_enabled:
     def test_no_domains(self):
+        """Return no findings when the account has no SageMaker Domains."""
         assert run_check(None) == []
 
     def test_domain_with_vpc_only_network_access(self):
+        """Pass a Domain configured with VPC-only network access."""
         result = run_check(
             Domain(
                 domain_id=test_domain_id,
@@ -60,6 +63,7 @@ class Test_sagemaker_domain_vpc_only_enabled:
         assert result[0].resource_arn == domain_arn
 
     def test_domain_with_public_or_missing_network_access(self):
+        """Fail Domains with public or absent network access settings."""
         for network_access_type in ("PublicInternetOnly", None):
             result = run_check(
                 Domain(
@@ -80,6 +84,7 @@ class Test_sagemaker_domain_vpc_only_enabled:
             )
 
     def test_domain_with_unavailable_details_requires_manual_review(self):
+        """Require manual review when DescribeDomain could not return details."""
         result = run_check(
             Domain(
                 domain_id=test_domain_id,

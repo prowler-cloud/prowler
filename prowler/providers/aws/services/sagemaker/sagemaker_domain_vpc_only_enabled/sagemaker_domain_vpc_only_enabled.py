@@ -5,7 +5,14 @@ from prowler.providers.aws.services.sagemaker.sagemaker_client import (
 
 
 class sagemaker_domain_vpc_only_enabled(Check):
-    def execute(self):
+    """Ensure that SageMaker Domains use VPC-only network access."""
+
+    def execute(self) -> list[Check_Report_AWS]:
+        """Evaluate each SageMaker Domain network access configuration.
+
+        Returns:
+            list[Check_Report_AWS]: Findings for the discovered SageMaker Domains.
+        """
         findings = []
 
         for domain in sagemaker_client.sagemaker_domains:

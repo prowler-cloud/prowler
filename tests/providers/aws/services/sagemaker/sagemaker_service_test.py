@@ -353,6 +353,7 @@ class Test_SageMaker_Service:
         )
 
     def test_describe_domain_network_access_type(self):
+        """Store the VPC-only network setting after a successful describe."""
         regional_client = MagicMock()
         regional_client.region = AWS_REGION_EU_WEST_1
         regional_client.describe_domain.return_value = {
@@ -374,6 +375,7 @@ class Test_SageMaker_Service:
         assert domain.details_retrieved is True
 
     def test_describe_domain_network_access_type_retrieval_failure(self):
+        """Keep the detail flag unset when DescribeDomain raises an error."""
         regional_client = MagicMock()
         regional_client.region = AWS_REGION_EU_WEST_1
         regional_client.describe_domain.side_effect = Exception("access denied")

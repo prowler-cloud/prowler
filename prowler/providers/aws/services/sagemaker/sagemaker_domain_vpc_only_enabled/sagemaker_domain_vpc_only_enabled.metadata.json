@@ -8,7 +8,7 @@
   "ServiceName": "sagemaker",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
+  "Severity": "high",
   "ResourceType": "Other",
   "ResourceGroup": "ai_ml",
   "Description": "Ensure that Amazon SageMaker Domains use VPC-only network access. The check validates that each SageMaker Domain has `AppNetworkAccessType` set to `VpcOnly`, preventing application traffic from using public internet access.",
