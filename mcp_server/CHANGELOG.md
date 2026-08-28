@@ -4,6 +4,24 @@ All notable changes to the **Prowler MCP Server** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [0.11.0] (Prowler v5.40.0)
+
+### 🚀 Added
+
+- Failures shared by every tool - a rejected credential, a missing permission, a rate limit, an outage, an unreachable API, a bad argument - are now explained with a message that says what went wrong and what to do about it [(#12531)](https://github.com/prowler-cloud/prowler/pull/12531)
+
+### 🐞 Fixed
+
+- `prowler_docs_search` returns results again: it calls the search endpoint docs.prowler.com moved to, since the one it used no longer exists, and each result now names the page's title, the section it matched and a URL anchored at that section [(#12578)](https://github.com/prowler-cloud/prowler/pull/12578)
+
+### 🔐 Security
+
+- Stop relaying upstream response bodies to agents: a failed request now reaches the caller as a sentence this server wrote, with the full body kept to the logs, so a gateway error page or a debug traceback can no longer be replayed into a model's context [(#12531)](https://github.com/prowler-cloud/prowler/pull/12531)
+- `sqlite-libs` upgraded to 3.53.4-r0 in the container image, patching CVE-2026-11822 and CVE-2026-11824 [(#12537)](https://github.com/prowler-cloud/prowler/pull/12537)
+- `libcrypto3` and `libssl3` upgraded to 3.5.8-r0 in the container image, patching CVE-2026-14456 [(#12547)](https://github.com/prowler-cloud/prowler/pull/12547)
+
+---
+
 ## [0.10.0] (Prowler v5.38.0)
 
 ### 🚀 Added
