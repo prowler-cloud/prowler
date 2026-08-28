@@ -908,13 +908,14 @@ class TestCyberEssentialsFramework:
         )
         return os.path.normpath(base)
 
-    def test_loads_and_supports_azure(self):
+    def test_loads_and_supports_providers(self):
         fw = load_compliance_framework_universal(self._path())
         assert fw is not None
         assert fw.framework == "Cyber-Essentials"
         assert fw.version == "3.3"
-        assert fw.get_providers() == ["azure"]
+        assert fw.get_providers() == ["azure", "cloudflare"]
         assert fw.supports_provider("azure")
+        assert fw.supports_provider("cloudflare")
 
     def test_covers_all_five_themes(self):
         fw = load_compliance_framework_universal(self._path())
