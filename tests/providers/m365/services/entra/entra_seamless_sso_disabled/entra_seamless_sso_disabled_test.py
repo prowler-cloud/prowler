@@ -272,3 +272,39 @@ class Test_entra_seamless_sso_disabled:
             result = check.execute()
 
             assert len(result) == 0
+
+    def test_hybrid_org_without_sync_settings_is_manual(self):
+        """Hybrid org, no error, but no directory sync settings returned -> MANUAL."""
+        entra_client = mock.MagicMock()
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.m365.services.entra.entra_seamless_sso_disabled.entra_seamless_sso_disabled.entra_client",
+                new=entra_client,
+            ),
+        ):
+            from prowler.providers.m365.services.entra.entra_seamless_sso_disabled.entra_seamless_sso_disabled import (
+                entra_seamless_sso_disabled,
+            )
+
+            entra_client.directory_sync_settings = []
+            entra_client.directory_sync_error = None
+            entra_client.organizations = [
+                Organization(
+                    id="org1", name="Hybrid Org", on_premises_sync_enabled=True
+                )
+            ]
+
+            result = entra_seamless_sso_disabled().execute()
+
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert (
+                "no directory synchronization settings were returned"
+                in result[0].status_extended
+            )
+            assert result[0].resource_id == "org1"

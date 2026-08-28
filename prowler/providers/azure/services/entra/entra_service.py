@@ -39,6 +39,12 @@ class Entra(AzureService):
                 "Cannot initialize Entra service while event loop is running"
             )
 
+        # Tenants (keyed by domain) whose sign-in activity could not be read,
+        # mapped to the reason. Microsoft Graph rejects the whole /users request
+        # with a 403 when the tenant lacks Entra ID P1/P2 or the application
+        # lacks AuditLog.Read.All, so users are re-fetched without
+        # signInActivity and the tenant is recorded here.
+        self.sign_in_activity_unavailable: dict[str, str] = {}
         # Get users first alone because it is a dependency for other attributes
         self.users = loop.run_until_complete(self._get_users())
 
@@ -71,22 +77,40 @@ class Entra(AzureService):
     async def _get_users(self):
         logger.info("Entra - Getting users...")
         users = {}
+        base_select = ["id", "displayName", "accountEnabled"]
         try:
-            request_configuration = RequestConfiguration(
-                query_parameters=UsersRequestBuilder.UsersRequestBuilderGetQueryParameters(
-                    select=[
-                        "id",
-                        "displayName",
-                        "accountEnabled",
-                        "signInActivity",
-                    ]
-                )
-            )
             for tenant, client in self.clients.items():
                 users.update({tenant: {}})
-                users_response = await client.users.get(
-                    request_configuration=request_configuration
-                )
+                try:
+                    users_response = await client.users.get(
+                        request_configuration=RequestConfiguration(
+                            query_parameters=UsersRequestBuilder.UsersRequestBuilderGetQueryParameters(
+                                select=base_select + ["signInActivity"]
+                            )
+                        )
+                    )
+                except Exception as error:
+                    # signInActivity requires Entra ID P1/P2 and AuditLog.Read.All;
+                    # without them Graph rejects the whole request. Record it and
+                    # retry without the property so the other user checks still run.
+                    reason = self._describe_graph_error(error)
+                    self.sign_in_activity_unavailable[tenant] = reason
+                    logger.error(
+                        f"{tenant} -- sign-in activity unavailable, retrying without signInActivity: {reason}"
+                    )
+                    try:
+                        users_response = await client.users.get(
+                            request_configuration=RequestConfiguration(
+                                query_parameters=UsersRequestBuilder.UsersRequestBuilderGetQueryParameters(
+                                    select=base_select
+                                )
+                            )
+                        )
+                    except Exception as retry_error:
+                        logger.error(
+                            f"{tenant} -- {retry_error.__class__.__name__}[{retry_error.__traceback__.tb_lineno}]: {retry_error}"
+                        )
+                        continue
                 registration_details = await self._get_user_registration_details(client)
 
                 try:
@@ -133,6 +157,21 @@ class Entra(AzureService):
             )
 
         return users
+
+    @staticmethod
+    def _describe_graph_error(error: Exception) -> str:
+        """Return a short, single-line description of a Graph error."""
+        code = None
+        main_error = getattr(error, "error", None)
+        if main_error is not None:
+            code = getattr(main_error, "code", None)
+        status = getattr(error, "response_status_code", None)
+        parts = [error.__class__.__name__]
+        if status:
+            parts.append(f"HTTP {status}")
+        if code:
+            parts.append(str(code))
+        return " ".join(parts)
 
     async def _get_user_registration_details(self, client):
         registration_details = {}

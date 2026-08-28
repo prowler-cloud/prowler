@@ -67,6 +67,7 @@ class Test_entra_break_glass_account_fido2_security_key_registered:
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.users_error = None
         entra_client.user_registration_details_error = None
 
         with (
@@ -105,6 +106,7 @@ class Test_entra_break_glass_account_fido2_security_key_registered:
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.users_error = None
         entra_client.user_registration_details_error = None
 
         with (
@@ -144,6 +146,7 @@ class Test_entra_break_glass_account_fido2_security_key_registered:
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.users_error = None
         entra_client.user_registration_details_error = None
 
         with (
@@ -181,6 +184,7 @@ class Test_entra_break_glass_account_fido2_security_key_registered:
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.users_error = None
         entra_client.user_registration_details_error = None
 
         with (
@@ -232,6 +236,7 @@ class Test_entra_break_glass_account_fido2_security_key_registered:
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.users_error = None
         entra_client.user_registration_details_error = None
 
         with (
@@ -280,6 +285,7 @@ class Test_entra_break_glass_account_fido2_security_key_registered:
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.users_error = None
         entra_client.user_registration_details_error = None
 
         with (
@@ -327,6 +333,7 @@ class Test_entra_break_glass_account_fido2_security_key_registered:
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.users_error = None
         entra_client.user_registration_details_error = None
 
         with (
@@ -375,6 +382,7 @@ class Test_entra_break_glass_account_fido2_security_key_registered:
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.users_error = None
         entra_client.user_registration_details_error = None
 
         with (
@@ -430,6 +438,7 @@ class Test_entra_break_glass_account_fido2_security_key_registered:
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.users_error = None
         entra_client.user_registration_details_error = None
 
         with (
@@ -466,6 +475,7 @@ class Test_entra_break_glass_account_fido2_security_key_registered:
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.users_error = None
         entra_client.user_registration_details_error = None
 
         with (
@@ -516,6 +526,7 @@ class Test_entra_break_glass_account_fido2_security_key_registered:
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.users_error = None
         entra_client.user_registration_details_error = "Insufficient privileges to read user registration details. Required permission: AuditLog.Read.All"
 
         with (
@@ -573,6 +584,7 @@ class Test_entra_break_glass_account_fido2_security_key_registered:
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.users_error = None
         entra_client.user_registration_details_error = "Insufficient privileges to read user registration details. Required permission: AuditLog.Read.All"
 
         with (

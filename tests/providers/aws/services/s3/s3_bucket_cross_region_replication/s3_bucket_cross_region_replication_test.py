@@ -1,6 +1,8 @@
 from unittest import mock
 
 from boto3 import client
+from botocore.client import BaseClient
+from botocore.exceptions import ClientError
 from moto import mock_aws
 
 from tests.providers.aws.utils import (
@@ -8,6 +10,20 @@ from tests.providers.aws.utils import (
     AWS_REGION_US_EAST_1,
     set_mocked_aws_provider,
 )
+
+_orig_make_api_call = BaseClient._make_api_call
+
+
+def _deny(operation):
+    def mock_make_api_call(self, operation_name, kwarg):
+        if operation_name == operation:
+            raise ClientError(
+                {"Error": {"Code": "AccessDenied", "Message": "Access Denied"}},
+                operation_name,
+            )
+        return _orig_make_api_call(self, operation_name, kwarg)
+
+    return mock_make_api_call
 
 
 class Test_s3_bucket_cross_region_replication:
@@ -609,3 +625,77 @@ class Test_s3_bucket_cross_region_replication:
                     == f"arn:{aws_provider.identity.partition}:s3:::{bucket_name_us}"
                 )
                 assert result[0].region == AWS_REGION_US_EAST_1
+
+    @mock_aws
+    def test_bucket_replication_access_denied_is_manual(self):
+        """s3:GetReplicationConfiguration denied -> MANUAL, not FAIL."""
+        from prowler.providers.aws.services.s3.s3_service import S3
+
+        s3_client_us_east_1 = client("s3", region_name=AWS_REGION_US_EAST_1)
+        bucket_name = "bucket_test_us"
+        s3_client_us_east_1.create_bucket(Bucket=bucket_name)
+        s3_client_us_east_1.put_bucket_versioning(
+            Bucket=bucket_name, VersioningConfiguration={"Status": "Enabled"}
+        )
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        with (
+            mock.patch(
+                "botocore.client.BaseClient._make_api_call",
+                new=_deny("GetBucketReplication"),
+            ),
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.s3.s3_bucket_cross_region_replication.s3_bucket_cross_region_replication.s3_client",
+                new=S3(aws_provider),
+            ),
+        ):
+            from prowler.providers.aws.services.s3.s3_bucket_cross_region_replication.s3_bucket_cross_region_replication import (
+                s3_bucket_cross_region_replication,
+            )
+
+            result = s3_bucket_cross_region_replication().execute()
+
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert "s3:GetReplicationConfiguration" in result[0].status_extended
+            assert result[0].resource_id == bucket_name
+
+    @mock_aws
+    def test_bucket_versioning_access_denied_is_manual(self):
+        """s3:GetBucketVersioning denied -> MANUAL, not FAIL."""
+        from prowler.providers.aws.services.s3.s3_service import S3
+
+        s3_client_us_east_1 = client("s3", region_name=AWS_REGION_US_EAST_1)
+        bucket_name = "bucket_test_us"
+        s3_client_us_east_1.create_bucket(Bucket=bucket_name)
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        with (
+            mock.patch(
+                "botocore.client.BaseClient._make_api_call",
+                new=_deny("GetBucketVersioning"),
+            ),
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.s3.s3_bucket_cross_region_replication.s3_bucket_cross_region_replication.s3_client",
+                new=S3(aws_provider),
+            ),
+        ):
+            from prowler.providers.aws.services.s3.s3_bucket_cross_region_replication.s3_bucket_cross_region_replication import (
+                s3_bucket_cross_region_replication,
+            )
+
+            result = s3_bucket_cross_region_replication().execute()
+
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert "s3:GetBucketVersioning" in result[0].status_extended

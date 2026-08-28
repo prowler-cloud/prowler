@@ -16,7 +16,8 @@ class entra_seamless_sso_disabled(Check):
     - PASS: Seamless SSO is disabled or on-premises sync is not enabled (cloud-only).
     - FAIL: Seamless SSO is enabled in a hybrid deployment.
     - MANUAL: Hybrid deployment whose directory sync settings could not be read
-      (insufficient permissions), so the check cannot be evaluated.
+      (insufficient permissions or no settings returned), so the check cannot be
+      evaluated.
     """
 
     def execute(self) -> List[CheckReportM365]:
@@ -68,7 +69,8 @@ class entra_seamless_sso_disabled(Check):
 
             findings.append(report)
 
-        # If no directory sync settings and no error, it's a cloud-only tenant
+        # No directory sync settings and no error: cloud-only organizations are
+        # not applicable; a hybrid organization without settings cannot be verified.
         if not entra_client.directory_sync_settings:
             for organization in entra_client.organizations:
                 report = CheckReportM365(
@@ -77,8 +79,12 @@ class entra_seamless_sso_disabled(Check):
                     resource_id=organization.id,
                     resource_name=organization.name,
                 )
-                report.status = "PASS"
-                report.status_extended = f"Entra organization {organization.name} is cloud-only (no on-premises sync), Seamless SSO is not applicable."
+                if organization.on_premises_sync_enabled:
+                    report.status = "MANUAL"
+                    report.status_extended = f"Cannot verify Seamless SSO status for {organization.name}: no directory synchronization settings were returned for this hybrid organization."
+                else:
+                    report.status = "PASS"
+                    report.status_extended = f"Entra organization {organization.name} is cloud-only (no on-premises sync), Seamless SSO is not applicable."
                 findings.append(report)
 
         return findings

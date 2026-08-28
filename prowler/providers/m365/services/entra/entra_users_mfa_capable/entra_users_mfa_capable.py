@@ -18,8 +18,8 @@ class entra_users_mfa_capable(Check):
 
     - PASS: The member user is MFA capable.
     - FAIL: The member user is not MFA capable.
-    - MANUAL: User registration details could not be read (insufficient
-      permissions), so MFA capability cannot be verified for any user.
+    - MANUAL: Users or their registration details could not be read
+      (insufficient permissions), so MFA capability cannot be verified.
     """
 
     def execute(self) -> List[CheckReportM365]:
@@ -38,7 +38,10 @@ class entra_users_mfa_capable(Check):
         """
         findings = []
 
-        if entra_client.user_registration_details_error:
+        data_error = (
+            entra_client.users_error or entra_client.user_registration_details_error
+        )
+        if data_error:
             report = CheckReportM365(
                 metadata=self.metadata(),
                 resource={},
@@ -47,8 +50,7 @@ class entra_users_mfa_capable(Check):
             )
             report.status = "MANUAL"
             report.status_extended = (
-                "Cannot verify MFA capability for member users: "
-                f"{entra_client.user_registration_details_error}."
+                f"Cannot verify MFA capability for member users: {data_error}."
             )
             findings.append(report)
             return findings
