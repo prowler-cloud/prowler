@@ -71,6 +71,8 @@ rss: true
 
   - `iam_workload_identity_pool_provider_attribute_condition` flags Workload Identity Federation providers that trust a multi-tenant issuer without an attribute condition restricting which external identities can impersonate federated principals.
 
+  Explore all GCP checks at [Prowler Hub](https://hub.prowler.com/check?provider=gcp).
+
   #### GitHub
 
   Three new checks harden GitHub Actions defaults, all contributed by @Edneam. Thank you!
@@ -84,6 +86,8 @@ rss: true
 
   - `defender_domain_dmarc_records_published` checks that every Exchange Online domain publishes a DMARC record with an enforcing policy (`p=quarantine` or `p=reject`). Thanks to @Rishi943!
 
+  Explore all Microsoft 365 checks at [Prowler Hub](https://hub.prowler.com/check?provider=m365).
+
   #### Alibaba Cloud
 
   - `oss_bucket_versioning_enabled` verifies that OSS buckets keep versioning enabled, allowing recovery from accidental or malicious object overwrite and deletion. Thanks to @abidedavana!
@@ -91,13 +95,19 @@ rss: true
 
   OSS bucket logging, versioning, default encryption, and ACL configurations are also now read correctly from the Alibaba Cloud SDK, so the checks reading them no longer report every bucket as unconfigured.
 
+  Explore all Alibaba Cloud checks at [Prowler Hub](https://hub.prowler.com/check?provider=alibabacloud).
+
   #### Huawei Cloud
 
   - `vpc_security_group_open_egress` flags VPC security groups that allow open egress to the internet. Thanks to @tomitobio!
 
+  Explore all Huawei Cloud checks at [Prowler Hub](https://hub.prowler.com/check?provider=huaweicloud).
+
   #### STACKIT
 
   - `ske_cluster_no_public_endpoint` flags SKE clusters whose Kubernetes API endpoint is reachable from the whole internet, because the ACL extension is disabled or its allowed CIDR list contains `0.0.0.0/0` or `::/0`. Thanks to @johannes-engler-mw!
+
+  Explore all STACKIT checks at [Prowler Hub](https://hub.prowler.com/check?provider=stackit).
 
   ### 🔐 Security Updates
 
