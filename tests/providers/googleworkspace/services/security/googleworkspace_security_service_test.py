@@ -280,6 +280,72 @@ class TestSecurityService:
             assert security.policies.trust_internal_apps is None
             assert security.policies.dlp_drive_rules_exist is None
 
+    def test_group_and_sub_ou_policies_are_recorded_as_overrides(self):
+        """Test handling empty policies response across all namespaces"""
+        mock_provider = set_mocked_googleworkspace_provider()
+        mock_provider.audit_config = {}
+        mock_provider.fixer_config = {}
+        mock_session = MagicMock()
+        mock_session.credentials = MagicMock()
+        mock_provider.session = mock_session
+
+        mock_service = MagicMock()
+        mock_empty = MagicMock()
+        mock_empty.execute.return_value = {
+            "policies": [
+                {
+                    "policyQuery": {"group": "groups/abc123"},
+                    "setting": {
+                        "type": "settings/security.two_step_verification_enforcement",
+                        "value": {"enforcedFrom": "1970-01-01T00:00:00Z"},
+                    },
+                },
+                {
+                    "policyQuery": {"orgUnit": "orgUnits/03ph8a2z1xdnme9"},
+                    "setting": {
+                        "type": "settings/security.two_step_verification_enforcement_factor",
+                        "value": {"allowedSignInFactorSet": "ALL"},
+                    },
+                },
+                {
+                    "setting": {
+                        "type": "settings/security.two_step_verification_enforcement",
+                        "value": {"enforcedFrom": "2026-05-25T15:27:52.352Z"},
+                    }
+                },
+            ]
+        }
+        mock_service.policies().list.side_effect = [
+            mock_empty,
+            mock_empty,
+            mock_empty,
+        ]
+        mock_service.policies().list_next.return_value = None
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.services.security.security_service.GoogleWorkspaceService._build_service",
+                return_value=mock_service,
+            ),
+        ):
+            from prowler.providers.googleworkspace.services.security.security_service import (
+                Security,
+            )
+
+            security = Security(mock_provider)
+
+            assert security.policies.overridden_settings == {
+                "security.two_step_verification_enforcement",
+                "security.two_step_verification_enforcement_factor",
+            }
+            # The customer-level policy is still read, it is just not effective
+            # for everyone.
+            assert security.policies.two_sv_enforced_from == "2026-05-25T15:27:52.352Z"
+
     def test_fetch_policies_api_error(self):
         """Test handling of API errors during policy fetch"""
         mock_provider = set_mocked_googleworkspace_provider()

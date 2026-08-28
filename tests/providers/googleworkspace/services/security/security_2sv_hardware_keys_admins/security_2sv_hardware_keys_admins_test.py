@@ -141,6 +141,30 @@ class TestSecurity2svHardwareKeysAdmins:
         assert findings[0].status == "FAIL"
         assert "role-specific 2SV enforcement" in findings[0].status_extended
 
+    def test_manual_when_a_group_or_sub_ou_overrides_the_policy(self):
+        """The customer-level policy is not what every user gets, so do not judge it"""
+        findings = run_check(
+            **{
+                **COMPLIANT,
+                "overridden_settings": {"security.two_step_verification_enforcement"},
+            }
+        )
+
+        assert len(findings) == 1
+        assert findings[0].status == "MANUAL"
+        assert "overridden for some groups" in findings[0].status_extended
+        assert "security keys only" in findings[0].status_extended
+
+    def test_manual_takes_precedence_over_a_domain_wide_failure(self):
+        """An override makes even a failing domain-wide value inconclusive"""
+        findings = run_check(
+            two_sv_enforced_from=None,
+            overridden_settings={"security.two_step_verification_enforcement_factor"},
+        )
+
+        assert len(findings) == 1
+        assert findings[0].status == "MANUAL"
+
     def test_no_findings_when_fetch_failed(self):
         """No findings returned when the API fetch failed"""
         assert run_check(policies_fetched=False) == []

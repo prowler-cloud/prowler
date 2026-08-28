@@ -10,6 +10,9 @@ from prowler.providers.googleworkspace.services.security.lib.durations import (
 from prowler.providers.googleworkspace.services.security.security_client import (
     security_client,
 )
+from prowler.providers.googleworkspace.services.security.security_service import (
+    TWO_SV_SETTING_TYPES,
+)
 
 # "Methods: Any except verification codes via text, phone call". Listed as an
 # allow list so a value Prowler does not know cannot pass by not being "ALL".
@@ -49,6 +52,22 @@ class security_2sv_enforced(Check):
 
             policies = security_client.policies
             domain = security_client.provider.identity.domain
+
+            # A group or sub-OU can override the domain-wide policy, and the
+            # Policy API does not resolve which users each override reaches, so
+            # the customer-level values below are not the effective ones.
+            overridden = sorted(policies.overridden_settings & TWO_SV_SETTING_TYPES)
+            if overridden:
+                report.status = "MANUAL"
+                report.status_extended = (
+                    f"2-Step Verification enforcement is overridden for some groups or organizational "
+                    f"units in domain {domain} ({', '.join(overridden)}), so the "
+                    f"effective configuration could not be determined. Review it "
+                    f"in the Admin console: it should be enforced for every user, with device trust disabled and verification codes via text or phone call excluded from the accepted methods."
+                )
+                findings.append(report)
+                return findings
+
             issues = []
 
             enforced_from = policies.two_sv_enforced_from

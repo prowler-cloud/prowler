@@ -117,6 +117,19 @@ class TestEvaluateSystemDefinedAlert:
         assert findings[0].status == "FAIL"
         assert "Google's default for it is OFF" in findings[0].status_extended
 
+    def test_fail_when_the_alert_is_not_sent_to_the_alert_center(self):
+        """An active rule whose alert center delivery is DISABLED is not compliant"""
+        findings = run([configured(alert_center_status="DISABLED")], "MEDIUM")
+
+        assert findings[0].status == "FAIL"
+        assert "not sent to the alert center" in findings[0].status_extended
+
+    def test_pass_when_the_alert_center_status_is_not_reported(self):
+        """A missing delivery field was never observed, the rule state covers it"""
+        findings = run([configured(alert_center_status=None)], "MEDIUM")
+
+        assert findings[0].status == "PASS"
+
     def test_reports_every_failing_condition(self):
         findings = run(
             [

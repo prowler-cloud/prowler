@@ -10,6 +10,9 @@ from prowler.providers.googleworkspace.services.security.lib.durations import (
 from prowler.providers.googleworkspace.services.security.security_client import (
     security_client,
 )
+from prowler.providers.googleworkspace.services.security.security_service import (
+    TWO_SV_SETTING_TYPES,
+)
 
 # "Methods: Only security key". The values that also accept security codes are
 # PASSKEY_PLUS_SECURITY_CODE and PASSKEY_PLUS_IP_BOUND_SECURITY_CODE, so
@@ -46,6 +49,22 @@ class security_2sv_hardware_keys_admins(Check):
 
             policies = security_client.policies
             domain = security_client.provider.identity.domain
+
+            # A group or sub-OU can override the domain-wide policy, and the
+            # Policy API does not resolve which users each override reaches, so
+            # the customer-level values below are not the effective ones.
+            overridden = sorted(policies.overridden_settings & TWO_SV_SETTING_TYPES)
+            if overridden:
+                report.status = "MANUAL"
+                report.status_extended = (
+                    f"2-Step Verification is overridden for some groups or organizational "
+                    f"units in domain {domain} ({', '.join(overridden)}), so the "
+                    f"effective configuration could not be determined. Review it "
+                    f"in the Admin console: administrative accounts should accept security keys only, with enforcement already started and a policy suspension grace period of at most one day."
+                )
+                findings.append(report)
+                return findings
+
             issues = []
 
             factor_set = policies.two_sv_allowed_factor_set

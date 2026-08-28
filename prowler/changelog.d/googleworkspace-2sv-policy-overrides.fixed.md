@@ -1,0 +1,1 @@
+`security_2sv_enforced` and `security_2sv_hardware_keys_admins` report MANUAL instead of judging the domain-wide policy when a group or a sub-organizational unit overrides the 2-Step Verification settings

@@ -1,9 +1,23 @@
-from typing import Optional
+from typing import Optional, Set
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from prowler.lib.logger import logger
 from prowler.providers.googleworkspace.lib.service.service import GoogleWorkspaceService
+
+# The settings behind the CIS 2-Step Verification recommendations. When any of
+# them is overridden by a group or a sub-OU, the customer-level policy no longer
+# describes what every user, administrators included, actually gets.
+TWO_SV_SETTING_TYPES = frozenset(
+    {
+        "security.two_step_verification_enrollment",
+        "security.two_step_verification_enforcement",
+        "security.two_step_verification_enforcement_factor",
+        "security.two_step_verification_device_trust",
+        "security.two_step_verification_grace_period",
+        "security.two_step_verification_sign_in_code",
+    }
+)
 
 
 class Security(GoogleWorkspaceService):
@@ -79,11 +93,15 @@ class Security(GoogleWorkspaceService):
                     response = request.execute()
 
                     for policy in response.get("policies", []):
-                        if not self._is_customer_level_policy(policy):
-                            continue
-
                         setting = policy.get("setting", {})
                         setting_type = setting.get("type", "").removeprefix("settings/")
+
+                        if not self._is_customer_level_policy(policy):
+                            # A group or sub-OU overrides this setting, so the
+                            # customer-level value is not what every user gets.
+                            self.policies.overridden_settings.add(setting_type)
+                            continue
+
                         value = setting.get("value", {})
 
                         self._process_setting(setting_type, value)
@@ -238,6 +256,10 @@ class Security(GoogleWorkspaceService):
 
 class SecurityPolicies(BaseModel):
     """Model for domain-level Security policy settings."""
+
+    # Setting types that a group or a sub-OU overrides. The customer-level
+    # value is still recorded, but it is not the effective policy for everyone.
+    overridden_settings: Set[str] = Field(default_factory=set)
 
     # security.two_step_verification_enrollment
     two_sv_allow_enrollment: Optional[bool] = None

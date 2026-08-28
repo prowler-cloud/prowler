@@ -120,7 +120,12 @@ class Rules(GoogleWorkspaceService):
         state = value.get("state", "INACTIVE")
 
         alert_center_action = value.get("action", {}).get("alertCenterAction", {})
-        severity = alert_center_action.get("alertCenterConfig", {}).get("severity")
+        alert_center_config = alert_center_action.get("alertCenterConfig", {})
+        severity = alert_center_config.get("severity")
+        # CIS remediation step 6: "Select Send to alert center (This will result
+        # in the alert being set to On)", so this is the toggle the audit's
+        # "Ensure that Alerts is set to On" refers to.
+        alert_center_status = alert_center_config.get("status")
         recipients = alert_center_action.get("recipients", [])
 
         all_super_admins = any(r.get("allSuperAdmins") is True for r in recipients)
@@ -129,6 +134,7 @@ class Rules(GoogleWorkspaceService):
             display_name=display_name,
             state=state,
             severity=severity,
+            alert_center_status=alert_center_status,
             email_notifications_enabled=len(recipients) > 0,
             all_super_admins=all_super_admins,
         )
@@ -140,6 +146,8 @@ class SystemDefinedAlert(BaseModel):
     display_name: str
     state: str = "INACTIVE"
     severity: Optional[str] = None
+    # rule.system_defined_alerts action.alertCenterAction.alertCenterConfig.status
+    alert_center_status: Optional[str] = None
     email_notifications_enabled: bool = False
     all_super_admins: bool = False
     # True when the API returned no policy for the rule and the values above

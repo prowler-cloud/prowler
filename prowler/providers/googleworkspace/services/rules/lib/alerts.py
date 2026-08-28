@@ -11,6 +11,10 @@ if TYPE_CHECKING:
 # so severities are compared by rank instead of by equality.
 SEVERITY_RANK = {"LOW": 1, "MEDIUM": 2, "HIGH": 3}
 
+# The rule can be active while its delivery to the alert center is switched
+# off, which is what the audit's "Ensure that Alerts is set to On" checks.
+ALERT_CENTER_DISABLED = "DISABLED"
+
 
 def _severity_issue(severity: str, minimum_severity: str) -> str:
     """Return why a severity does not meet the benchmark, or an empty string."""
@@ -85,6 +89,11 @@ def evaluate_system_defined_alert(
 
         if alert.state != "ACTIVE":
             issues.append("alert is OFF")
+
+        # Only an explicit DISABLED fails: when the API omits the field the
+        # delivery state was never reported and the rule state already covers it.
+        if alert.alert_center_status == ALERT_CENTER_DISABLED:
+            issues.append("the alert is not sent to the alert center")
 
         if not alert.email_notifications_enabled:
             issues.append("email notifications are disabled")

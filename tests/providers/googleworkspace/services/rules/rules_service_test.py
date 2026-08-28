@@ -38,7 +38,10 @@ class TestRulesService:
                             "action": {
                                 "alertCenterAction": {
                                     "recipients": [{"allSuperAdmins": True}],
-                                    "alertCenterConfig": {"severity": "LOW"},
+                                    "alertCenterConfig": {
+                                        "severity": "LOW",
+                                        "status": "ENABLED",
+                                    },
                                 }
                             },
                             "state": "ACTIVE",
@@ -78,6 +81,7 @@ class TestRulesService:
             assert suspicious_login.email_notifications_enabled is True
             assert suspicious_login.all_super_admins is True
             assert suspicious_login.severity == "LOW"
+            assert suspicious_login.alert_center_status == "ENABLED"
 
     def test_fetch_rule_without_email_notifications(self):
         """Test a rule that is ACTIVE but has no email recipients configured."""
