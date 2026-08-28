@@ -4,6 +4,139 @@ description: "New features and improvements in each Prowler release"
 rss: true
 ---
 
+<Update label="v5.40.0" description="August 28, 2026">
+  ### 💬 Slack Integration — Alert Channel Destinations
+
+  <Note>
+  This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
+  </Note>
+
+  Alerts can now reach Slack. Connect a Slack workspace from the Integrations page, authorize one or several destination channels (the connection check confirms each channel with a one-time message and names any channel Slack refuses), and pick those channels in the alert modal's "Destination channels" selector, next to the "Recipients" selector for email. The alerts list summarizes both in a single "Destinations" column, showing a rule's email recipients and Slack channels at a glance. Disconnecting the workspace and recovering from revoked credentials are handled from the same page.
+
+  ![Connected Slack workspace on the Integrations page](/images/prowler-app/slack/connected-workspace.png)
+
+  ![Alert rule with Slack channel destinations](/images/prowler-app/alerts/create-alert-modal.png)
+
+  Read more in the [Slack integration documentation](https://docs.prowler.com/user-guide/tutorials/prowler-app-slack-integration) and the [Alerts documentation](https://docs.prowler.com/user-guide/tutorials/prowler-alerts).
+
+  ### 🤖 Lighthouse AI — Answer Feedback
+
+  <Note>
+  This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
+  </Note>
+
+  Every Lighthouse AI answer can now be rated with a thumbs up or thumbs down, with an optional field to describe what worked or what did not. Feedback is collected per answer, directly in the chat, and tells the team where Lighthouse should improve next.
+
+  Read more in the [Lighthouse AI documentation](https://docs.prowler.com/getting-started/products/prowler-cloud-lighthouse).
+
+  ### 📥 Providers — Imported Findings Indicator
+
+  <Note>
+  This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
+  </Note>
+
+  Providers whose findings were imported with the Prowler CLI now show an "Imported provider" indicator next to their connection status in the providers table. In accounts that mix connected providers with Import Findings uploads, the table now tells them apart at a glance.
+
+  ![Provider row with the Imported provider indicator and its tooltip](/images/changelog/v5.40.0-imported-provider-indicator.png)
+
+  Read more in the [Import Findings documentation](https://docs.prowler.com/user-guide/tutorials/prowler-import-findings).
+
+  ### 📚 Compliance — NCSC Cyber Essentials 3.3
+
+  Cyber Essentials is the UK National Cyber Security Centre (NCSC) scheme certifying the baseline technical controls an organization must implement, and cloud services are explicitly in scope and cannot be excluded from an assessment. Prowler now includes NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026) as a universal framework, with its 28 requirements organized in the five control themes: Firewalls, Secure Configuration, Security Update Management, User Access Control, and Malware Protection.
+
+  Sixteen requirements map to Azure checks covering the controls the applicant organization owns under the shared responsibility model. The remaining twelve apply to end-user devices, on-premises network appliances, or organizational process, which cloud control-plane evidence cannot observe, so they are reported as Manual.
+
+  Contributed by @m-khan-97. Thank you!
+
+  Read more in the [Compliance documentation](https://docs.prowler.com/user-guide/compliance/tutorials/compliance).
+
+  ### 🔍 Checks
+
+  Fifteen new checks land across seven providers in this release.
+
+  #### AWS
+
+  - `ecr_repository_image_no_secrets` scans the latest image of each ECR repository, both its configuration and its filesystem layers, for hardcoded secrets. Thanks to @esquaredsec!
+  - Four new Amazon Bedrock checks, thanks to @tamg-aws!
+    - `bedrock_guardrail_contextual_grounding_filter_enabled` verifies that guardrails enable both contextual grounding filters, blocking responses that are not supported by the retrieved source or do not answer the question asked.
+    - `bedrock_custom_model_encrypted_with_cmk` verifies that custom models are encrypted at rest with a customer-managed KMS key instead of an AWS-owned key the organization cannot audit, rotate, or revoke.
+    - `bedrock_knowledge_base_encrypted_with_cmk` verifies that each knowledge-base data source encrypts with a customer-managed KMS key the transient storage used while documents are chunked and embedded.
+    - `bedrock_agent_role_not_shared_across_agents` verifies that every agent has a dedicated execution role, so no agent inherits another's permissions.
+  - `rolesanywhere_profile_restricts_session_permissions` flags IAM Roles Anywhere profiles that reference an administrative role without scoping down the vended session with a session policy or managed policies.
+
+  Explore all AWS checks at [Prowler Hub](https://hub.prowler.com/check?provider=aws).
+
+  #### GCP
+
+  - `iam_workload_identity_pool_provider_attribute_condition` flags Workload Identity Federation providers that trust a multi-tenant issuer without an attribute condition restricting which external identities can impersonate federated principals.
+
+  Explore all GCP checks at [Prowler Hub](https://hub.prowler.com/check?provider=gcp).
+
+  #### GitHub
+
+  Three new checks harden GitHub Actions defaults, all contributed by @Edneam. Thank you!
+
+  - `organization_default_workflow_permissions_read_only` and `repository_default_workflow_permissions_read_only` verify that workflows get a read-only default `GITHUB_TOKEN` at the organization and repository level.
+  - `organization_actions_pull_request_approval_disabled` verifies that organizations prevent GitHub Actions from creating and approving pull requests.
+
+  Explore all GitHub checks at [Prowler Hub](https://hub.prowler.com/check?provider=github).
+
+  #### Microsoft 365
+
+  - `defender_domain_dmarc_records_published` checks that every Exchange Online domain publishes a DMARC record with an enforcing policy (`p=quarantine` or `p=reject`). Thanks to @Rishi943!
+
+  Explore all Microsoft 365 checks at [Prowler Hub](https://hub.prowler.com/check?provider=m365).
+
+  #### Alibaba Cloud
+
+  - `oss_bucket_versioning_enabled` verifies that OSS buckets keep versioning enabled, allowing recovery from accidental or malicious object overwrite and deletion. Thanks to @abidedavana!
+  - `oss_bucket_server_side_encryption_enabled` verifies that OSS buckets define a default server-side encryption rule, either AES256 or KMS. Thanks to @alexchen-sys!
+
+  OSS bucket logging, versioning, default encryption, and ACL configurations are also now read correctly from the Alibaba Cloud SDK, so the checks reading them no longer report every bucket as unconfigured.
+
+  Explore all Alibaba Cloud checks at [Prowler Hub](https://hub.prowler.com/check?provider=alibabacloud).
+
+  #### Huawei Cloud
+
+  - `vpc_security_group_open_egress` flags VPC security groups that allow open egress to the internet. Thanks to @tomitobio!
+
+  Explore all Huawei Cloud checks at [Prowler Hub](https://hub.prowler.com/check?provider=huaweicloud).
+
+  #### STACKIT
+
+  - `ske_cluster_no_public_endpoint` flags SKE clusters whose Kubernetes API endpoint is reachable from the whole internet, because the ACL extension is disabled or its allowed CIDR list contains `0.0.0.0/0` or `::/0`. Thanks to @johannes-engler-mw!
+
+  Explore all STACKIT checks at [Prowler Hub](https://hub.prowler.com/check?provider=stackit).
+
+  ### 🔐 Security Updates
+
+  - The API and SDK container images upgrade OpenSSL to 3.5.7-1~deb13u2, patching ten high CVEs; the UI image upgrades `libcrypto3` and `libssl3` to 3.5.8-r0, patching seven high CVEs; the MCP Server image patches CVE-2026-14456 (OpenSSL), CVE-2026-11822, and CVE-2026-11824 (SQLite).
+  - `sqlparse` upgraded to 0.6.0 in the API, patching CVE-2026-54284, CVE-2026-59893, and CVE-2026-71491.
+
+  ### 🙌 External Contributors
+
+  Thank you to our community contributors for this release!
+
+  - @Edneam: GitHub `organization_default_workflow_permissions_read_only` ([#12122](https://github.com/prowler-cloud/prowler/pull/12122)), `repository_default_workflow_permissions_read_only` ([#12143](https://github.com/prowler-cloud/prowler/pull/12143)), and `organization_actions_pull_request_approval_disabled` ([#12394](https://github.com/prowler-cloud/prowler/pull/12394)) checks
+  - @tamg-aws: four AWS Bedrock checks covering guardrail grounding, CMK encryption, and agent role isolation ([#12459](https://github.com/prowler-cloud/prowler/pull/12459))
+  - @esquaredsec: AWS `ecr_repository_image_no_secrets` check ([#12123](https://github.com/prowler-cloud/prowler/pull/12123))
+  - @Rishi943: Microsoft 365 `defender_domain_dmarc_records_published` check ([#11936](https://github.com/prowler-cloud/prowler/pull/11936))
+  - @abidedavana: Alibaba Cloud `oss_bucket_versioning_enabled` check ([#11913](https://github.com/prowler-cloud/prowler/pull/11913))
+  - @alexchen-sys: Alibaba Cloud `oss_bucket_server_side_encryption_enabled` check ([#11981](https://github.com/prowler-cloud/prowler/pull/11981))
+  - @tomitobio: Huawei Cloud `vpc_security_group_open_egress` check ([#12209](https://github.com/prowler-cloud/prowler/pull/12209))
+  - @johannes-engler-mw: STACKIT `ske_cluster_no_public_endpoint` check ([#11943](https://github.com/prowler-cloud/prowler/pull/11943))
+  - @gabrielfrdev: cluster name in Kubernetes compliance report outputs ([#12506](https://github.com/prowler-cloud/prowler/pull/12506))
+  - @jfgmesquita: AWS FSBP compliance mapping fix for IAM.9 and EKS.1 ([#12372](https://github.com/prowler-cloud/prowler/pull/12372))
+  - @hackertwinten: `ec2_securitygroup_not_used` no longer flags security groups held only by scaled-down AWS Batch compute environments ([#12458](https://github.com/prowler-cloud/prowler/pull/12458))
+  - @0xTaoZ: ECS task-definition checks no longer report PASS when `DescribeTaskDefinition` fails, shipped early in v5.39.1 ([#12217](https://github.com/prowler-cloud/prowler/pull/12217))
+  - @ye11oc4t: `ses_identity_not_publicly_accessible` now evaluates every identity authorization policy, shipped early in v5.39.1 ([#12464](https://github.com/prowler-cloud/prowler/pull/12464))
+  - @Zuhef: IaC provider raises typed exceptions instead of `sys.exit` when cloning the scanned repository or running Trivy fails ([#12227](https://github.com/prowler-cloud/prowler/pull/12227)), Kubernetes kubelet checks no longer disappear from the scan when a `kubelet-config` ConfigMap is broken ([#12225](https://github.com/prowler-cloud/prowler/pull/12225)), and the CLI `--slack` summary is sent for scans with no findings instead of failing with `ZeroDivisionError` ([#12229](https://github.com/prowler-cloud/prowler/pull/12229))
+  - @m-khan-97: NCSC Cyber Essentials 3.3 compliance framework with Azure provider coverage across the five Cyber Essentials themes ([#11588](https://github.com/prowler-cloud/prowler/pull/11588))
+
+  See the [full release notes on GitHub](https://github.com/prowler-cloud/prowler/releases/tag/5.40.0) for the complete list of changes.
+</Update>
+
 <Update label="v5.39.0" description="August 13, 2026">
   ### 🤖 Lighthouse AI — Finding Skills
 
