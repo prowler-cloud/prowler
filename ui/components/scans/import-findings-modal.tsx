@@ -126,6 +126,7 @@ export function ImportFindingsModal({
   const router = useRouter();
   const { toast } = useToast();
   const [state, setState] = useState<ImportState>({ type: IMPORT_STATE.IDLE });
+  const [hasAbandonedImport, setHasAbandonedImport] = useState(false);
   const pollAbortController = useRef<AbortController | null>(null);
   const openRef = useRef(open);
   const tracking = state.type === IMPORT_STATE.TRACKING ? state : undefined;
@@ -134,7 +135,17 @@ export function ImportFindingsModal({
   trackingRef.current = tracking;
 
   useEffect(() => {
+    const wasOpen = openRef.current;
     openRef.current = open;
+    // A job that turned terminal while the dialog was closed leaves a summary
+    // nobody dismissed, and it renders in place of the dropzone and submit.
+    if (open && !wasOpen) {
+      setState((current) =>
+        current.type === IMPORT_STATE.COMPLETED
+          ? { type: IMPORT_STATE.IDLE }
+          : current,
+      );
+    }
   }, [open]);
 
   useEffect(() => {
@@ -266,6 +277,7 @@ export function ImportFindingsModal({
     }
 
     const payload = (await response.json()) as IngestionResponse;
+    setHasAbandonedImport(false);
     setState({ type: IMPORT_STATE.TRACKING, file, ingestion: payload.data });
   };
 
@@ -314,6 +326,15 @@ export function ImportFindingsModal({
                 }
               />
             </div>
+            {hasAbandonedImport &&
+              (state.type === IMPORT_STATE.IDLE ||
+                state.type === IMPORT_STATE.READY ||
+                state.type === IMPORT_STATE.INVALID) && (
+                <p role="status">
+                  The abandoned import may still be running. Importing the same
+                  report again can duplicate its findings.
+                </p>
+              )}
             {state.type === IMPORT_STATE.INVALID && (
               <p role="alert">{state.error}</p>
             )}
@@ -353,7 +374,10 @@ export function ImportFindingsModal({
                 <Button
                   type="button"
                   variant="secondary"
-                  onClick={() => setState({ type: IMPORT_STATE.IDLE })}
+                  onClick={() => {
+                    setHasAbandonedImport(true);
+                    setState({ type: IMPORT_STATE.IDLE });
+                  }}
                 >
                   Stop tracking and start over
                 </Button>

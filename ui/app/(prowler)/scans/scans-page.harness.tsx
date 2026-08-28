@@ -204,6 +204,14 @@ export class ScansPageHarness extends BrowserHarness<IngestionFixture> {
     return this.containsText(/Findings import completed/i);
   }
 
+  hasCompletedSummary(): boolean {
+    return this.containsText(/Import completed:/i);
+  }
+
+  hasDuplicateImportWarning(): boolean {
+    return this.containsText(/The abandoned import may still be running/i);
+  }
+
   async waitForCompletionNotification(): Promise<void> {
     await this.waitFor(
       () => this.hasCompletionNotification(),

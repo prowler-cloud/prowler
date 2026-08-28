@@ -182,6 +182,26 @@ describe("Scans page import findings", () => {
     expect(harness.ingestionPostCount).toBe(1);
   });
 
+  it("offers a fresh import when reopening after a background completion", async () => {
+    const harness = new ScansPageHarness(ingestionFixture());
+    await harness.mount({ statusSequence: ["processing", "completed"] });
+    await harness.openImportFindings();
+    await harness.selectFile(new File(["[]"], "findings.ocsf.json"));
+    await harness.submitImport();
+    await harness.waitForTrackingStatus();
+    await harness.closeImportFindings();
+    await harness.waitForCompletionNotification();
+
+    await harness.openImportFindings();
+    // Without the reopen reset the summary renders in place of the dropzone and
+    // the submit, leaving no way to import a second report.
+    expect(harness.hasCompletedSummary()).toBe(false);
+    await harness.selectFile(new File(["[]"], "another.ocsf.json"));
+    expect(harness.selectedFileName()).toBe("another.ocsf.json");
+    expect(harness.isImportEnabled()).toBe(true);
+    expect(harness.ingestionPostCount).toBe(1);
+  });
+
   it("retries a failed terminal import with the selected file", async () => {
     const harness = new ScansPageHarness(ingestionFixture());
     await harness.mount({ statusSequence: ["failed"] });
@@ -247,6 +267,8 @@ describe("Scans page import findings", () => {
     await harness.stopTracking();
     expect(harness.isDropzoneFrozen()).toBe(false);
     expect(harness.selectedFileName()).toBeNull();
+    // The backend job survives the reset, so a second upload can duplicate it.
+    expect(harness.hasDuplicateImportWarning()).toBe(true);
 
     await harness.selectFile(new File(["[]"], "another.ocsf.json"));
     expect(harness.selectedFileName()).toBe("another.ocsf.json");
