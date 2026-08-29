@@ -1,6 +1,6 @@
 from typing import Any, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from prowler.config.config import output_file_timestamp
 from prowler.providers.common.models import ProviderOutputOptions
@@ -16,9 +16,27 @@ class SnowflakeSession(BaseModel):
 
     account: str
     user: str
-    client: Any = None
+    # Excluded from serialization, not merely from __repr__. The client holds the
+    # RSA private key, so model_dump(), model_dump_json() and dict(session) would
+    # each publish the whole credential -- and an output pipeline reaches for
+    # those long before anyone prints the object.
+    client: Any = Field(default=None, exclude=True)
     role: Optional[str] = None
     warehouse: Optional[str] = None
+
+    def __iter__(self):
+        """Iterate the session without the client.
+
+        ``Field(exclude=True)`` governs ``model_dump`` and ``model_dump_json`` but not
+        model iteration, so ``dict(session)`` would still hand out the object holding
+        the private key. Closing that path too.
+
+        Yields:
+            tuple: Each field name and value except ``client``.
+        """
+        for key, value in super().__iter__():
+            if key != "client":
+                yield key, value
 
     def __repr__(self) -> str:
         """Never print the client.
@@ -49,8 +67,18 @@ class SnowflakeOutputOptions(ProviderOutputOptions):
     """Customize output filenames for Snowflake scans."""
 
     def __init__(
-        self, arguments, bulk_checks_metadata, identity: SnowflakeIdentityInfo
-    ):
+        self,
+        arguments: Any,
+        bulk_checks_metadata: dict,
+        identity: SnowflakeIdentityInfo,
+    ) -> None:
+        """Initialize the Snowflake output options.
+
+        Args:
+            arguments: The parsed CLI arguments.
+            bulk_checks_metadata: The metadata of every loaded check.
+            identity: The Snowflake identity the scan is running under.
+        """
         super().__init__(arguments, bulk_checks_metadata)
         if (
             not hasattr(arguments, "output_filename")

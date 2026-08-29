@@ -64,6 +64,27 @@ class TestNormalizeAccount:
         assert _normalize_account(supplied) == "myorg-myaccount"
 
 
+class TestNormalizeAccountRejectsUnsafeValues:
+    # The account is interpolated into the request host and a signed JWT is sent there,
+    # so a value carrying a port, credentials, a query or a fragment must be refused
+    # rather than trimmed.
+    @pytest.mark.parametrize(
+        "supplied",
+        [
+            "myacct?redirect=evil.test",
+            "myacct#fragment",
+            "https://evil.test:8443",
+            "https://user:pw@myacct.snowflakecomputing.com",
+            "http://myacct.snowflakecomputing.com",
+            "my acct",
+            "",
+        ],
+    )
+    def test_unsafe_values_are_rejected(self, supplied):
+        with pytest.raises(SnowflakeCredentialsError):
+            _normalize_account(supplied)
+
+
 class TestAccountForClaims:
     def test_identifier_is_uppercased(self):
         assert _account_for_claims("myorg-myaccount") == "MYORG-MYACCOUNT"
@@ -208,7 +229,7 @@ class TestSnowflakeSqlApiClient:
             "data": [["ALICE", "false"], ["BOB", "true"]],
         }
         with mock.patch(
-            "prowler.providers.snowflake.snowflake_provider.requests.post",
+            "prowler.providers.snowflake.snowflake_provider.requests.request",
             return_value=response,
         ):
             rows = client.query("SELECT 1")
@@ -222,7 +243,7 @@ class TestSnowflakeSqlApiClient:
         response = mock.MagicMock()
         response.status_code = status_code
         with mock.patch(
-            "prowler.providers.snowflake.snowflake_provider.requests.post",
+            "prowler.providers.snowflake.snowflake_provider.requests.request",
             return_value=response,
         ):
             with pytest.raises(SnowflakeAuthenticationError):
@@ -233,7 +254,7 @@ class TestSnowflakeSqlApiClient:
         response.status_code = 500
         response.text = "internal error"
         with mock.patch(
-            "prowler.providers.snowflake.snowflake_provider.requests.post",
+            "prowler.providers.snowflake.snowflake_provider.requests.request",
             return_value=response,
         ):
             with pytest.raises(SnowflakeSessionError):
@@ -306,3 +327,143 @@ class TestSnowflakeProviderTestConnection:
     def test_missing_credentials_raise_by_default(self):
         with pytest.raises(SnowflakeCredentialsError):
             SnowflakeProvider.test_connection()
+
+
+class TestSnowflakeSqlApiClientAsyncAndPartitions:
+    def _client(self):
+        return SnowflakeSqlApiClient(
+            account=ACCOUNT,
+            user=USER,
+            private_key=SnowflakeProvider.load_private_key(
+                private_key_content=generate_private_key_pem()
+            ),
+        )
+
+    @staticmethod
+    def _response(status_code, body):
+        response = mock.MagicMock()
+        response.status_code = status_code
+        response.json.return_value = body
+        return response
+
+    def test_a_202_is_polled_until_the_statement_completes(self):
+        # The SQL API answers 202 while a statement is still running. Parsing that body
+        # as a result set would return zero rows with no error -- a large account
+        # silently reporting nothing found.
+        running = self._response(
+            202,
+            {"statementHandle": "h1", "statementStatusUrl": "/api/v2/statements/h1"},
+        )
+        done = self._response(
+            200,
+            {
+                "resultSetMetaData": {"rowType": [{"name": "NAME"}]},
+                "data": [["ALICE"]],
+            },
+        )
+        with (
+            mock.patch(
+                "prowler.providers.snowflake.snowflake_provider.requests.request",
+                side_effect=[running, done],
+            ),
+            mock.patch("prowler.providers.snowflake.snowflake_provider.time.sleep"),
+        ):
+            rows = self._client().query("SELECT 1")
+        assert rows == [{"NAME": "ALICE"}]
+
+    def test_a_statement_that_never_completes_raises_instead_of_returning_nothing(self):
+        running = self._response(
+            202,
+            {"statementHandle": "h1", "statementStatusUrl": "/api/v2/statements/h1"},
+        )
+        with (
+            mock.patch(
+                "prowler.providers.snowflake.snowflake_provider.requests.request",
+                return_value=running,
+            ),
+            mock.patch("prowler.providers.snowflake.snowflake_provider.time.sleep"),
+        ):
+            with pytest.raises(SnowflakeSessionError):
+                self._client().query("SELECT 1")
+
+    def test_every_partition_is_read(self):
+        # A large result set is split across partitions and the first response carries
+        # only partition 0. Returning it alone is a subset with no error set, which is
+        # indistinguishable from a complete read.
+        first = self._response(
+            200,
+            {
+                "statementHandle": "h1",
+                "resultSetMetaData": {
+                    "rowType": [{"name": "NAME"}],
+                    "partitionInfo": [
+                        {"rowCount": 1},
+                        {"rowCount": 1},
+                        {"rowCount": 1},
+                    ],
+                },
+                "data": [["ALICE"]],
+            },
+        )
+        second = self._response(200, {"data": [["BOB"]]})
+        third = self._response(200, {"data": [["CAROL"]]})
+        with mock.patch(
+            "prowler.providers.snowflake.snowflake_provider.requests.request",
+            side_effect=[first, second, third],
+        ):
+            rows = self._client().query("SELECT 1")
+        assert rows == [{"NAME": "ALICE"}, {"NAME": "BOB"}, {"NAME": "CAROL"}]
+
+    def test_partitions_without_a_handle_raise_rather_than_truncate(self):
+        first = self._response(
+            200,
+            {
+                "resultSetMetaData": {
+                    "rowType": [{"name": "NAME"}],
+                    "partitionInfo": [{"rowCount": 1}, {"rowCount": 1}],
+                },
+                "data": [["ALICE"]],
+            },
+        )
+        with mock.patch(
+            "prowler.providers.snowflake.snowflake_provider.requests.request",
+            return_value=first,
+        ):
+            with pytest.raises(SnowflakeSessionError):
+                self._client().query("SELECT 1")
+
+    def test_a_single_partition_needs_no_extra_request(self):
+        only = self._response(
+            200,
+            {
+                "statementHandle": "h1",
+                "resultSetMetaData": {
+                    "rowType": [{"name": "NAME"}],
+                    "partitionInfo": [{"rowCount": 1}],
+                },
+                "data": [["ALICE"]],
+            },
+        )
+        with mock.patch(
+            "prowler.providers.snowflake.snowflake_provider.requests.request",
+            return_value=only,
+        ) as request:
+            rows = self._client().query("SELECT 1")
+        assert rows == [{"NAME": "ALICE"}]
+        assert request.call_count == 1
+
+
+class TestSnowflakeSessionNeverSerializesTheKey:
+    def test_the_client_is_excluded_from_every_serialization_path(self):
+        # __repr__ alone is not enough: an output pipeline reaches for model_dump() and
+        # model_dump_json() long before anyone prints the object, and the client holds
+        # the RSA private key.
+        session = SnowflakeProvider.setup_session(
+            account=ACCOUNT,
+            user=USER,
+            private_key_content=generate_private_key_pem(),
+        )
+        assert "client" not in session.model_dump()
+        assert "client" not in session.model_dump_json()
+        assert "client" not in dict(session)
+        assert "client=***" in repr(session)

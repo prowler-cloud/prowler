@@ -1,7 +1,9 @@
 import base64
 import hashlib
 import os
+import re
 import time
+from urllib.parse import urlparse
 
 import jwt
 import requests
@@ -42,27 +44,80 @@ STATEMENT_TIMEOUT_SECONDS = 120
 
 REQUEST_TIMEOUT_SECONDS = 60
 
+# The SQL API answers 202 while a statement is still running. These bound the wait
+# so a stuck statement fails loudly instead of hanging the scan.
+POLL_INTERVAL_SECONDS = 2
+POLL_MAX_ATTEMPTS = 30
+
+SNOWFLAKE_HOST_SUFFIX = ".snowflakecomputing.com"
+
+# Snowflake account identifiers are alphanumeric with hyphens, underscores and dots
+# (the legacy locator carries region and cloud segments). Anything else is rejected
+# rather than interpolated into the request host.
+ACCOUNT_IDENTIFIER_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,255}")
+
 
 def _normalize_account(raw: str) -> str:
-    """Whatever the user supplied, reduced to the bare account identifier.
+    """Whatever the user supplied, reduced to a validated account identifier.
 
     The Snowflake console shows the account in three different forms depending on where
     you look -- as a full URL, with a trailing ``.snowflakecomputing.com``, or on its
     own -- so all three are accepted rather than only the one the documentation happens
     to use.
 
+    The result is interpolated into the request host, so it is validated rather than
+    merely trimmed: a value carrying a port, credentials, a query string or a fragment
+    would otherwise redirect a signed JWT at a host of the supplier's choosing.
+
     Args:
         raw: The account identifier, hostname or URL as supplied.
 
     Returns:
         str: The bare account identifier, e.g. ``myorg-myaccount``.
+
+    Raises:
+        SnowflakeCredentialsError: If the value is not a Snowflake account identifier.
     """
     host = raw.strip()
     if "://" in host:
-        host = host.split("://", 1)[1]
+        parsed = urlparse(host)
+        if parsed.scheme != "https":
+            raise SnowflakeCredentialsError(
+                file=os.path.basename(__file__),
+                message=(
+                    "A Snowflake account URL must use https. Supply the account "
+                    "identifier on its own if in doubt."
+                ),
+            )
+        if parsed.username or parsed.password or parsed.port:
+            raise SnowflakeCredentialsError(
+                file=os.path.basename(__file__),
+                message=(
+                    "A Snowflake account URL must not carry credentials or a port."
+                ),
+            )
+        if parsed.query or parsed.fragment:
+            raise SnowflakeCredentialsError(
+                file=os.path.basename(__file__),
+                message=(
+                    "A Snowflake account URL must not carry a query string or fragment."
+                ),
+            )
+        host = parsed.hostname or ""
     host = host.split("/", 1)[0]
-    if host.lower().endswith(".snowflakecomputing.com"):
-        host = host[: -len(".snowflakecomputing.com")]
+
+    if host.lower().endswith(SNOWFLAKE_HOST_SUFFIX):
+        host = host[: -len(SNOWFLAKE_HOST_SUFFIX)]
+
+    if not ACCOUNT_IDENTIFIER_RE.fullmatch(host):
+        raise SnowflakeCredentialsError(
+            file=os.path.basename(__file__),
+            message=(
+                f"'{raw}' is not a Snowflake account identifier. Expected a value like "
+                "myorg-myaccount, optionally as a "
+                "https://<account>.snowflakecomputing.com URL."
+            ),
+        )
     return host
 
 
@@ -157,29 +212,29 @@ class SnowflakeSqlApiClient:
             algorithm="RS256",
         )
 
-    def query(self, statement: str) -> list[dict]:
-        """Run one read-only statement and return its rows as dictionaries.
+    def _send(self, method: str, url: str, json_body: dict = None):
+        """Perform one authenticated SQL API request.
+
+        A fresh JWT is signed per request rather than cached, because the token lives
+        five minutes and a long-running scan would otherwise present an expired one.
 
         Args:
-            statement: The SQL statement to execute.
+            method: The HTTP method.
+            url: The absolute URL to call.
+            json_body: The JSON payload, for POST requests.
 
         Returns:
-            list[dict]: One dictionary per row, keyed by column name.
+            requests.Response: The raw response.
 
         Raises:
             SnowflakeAuthenticationError: If Snowflake rejects the credentials.
-            SnowflakeSessionError: If the request fails or the response is unusable.
+            SnowflakeSessionError: If the request fails or Snowflake returns an error.
         """
-        payload = {"statement": statement, "timeout": STATEMENT_TIMEOUT_SECONDS}
-        if self.role:
-            payload["role"] = self.role
-        if self.warehouse:
-            payload["warehouse"] = self.warehouse
-
         try:
-            response = requests.post(
-                f"{self.base_url}/api/v2/statements",
-                json=payload,
+            response = requests.request(
+                method,
+                url,
+                json=json_body,
                 headers={
                     "Authorization": f"Bearer {self._build_jwt()}",
                     "X-Snowflake-Authorization-Token-Type": "KEYPAIR_JWT",
@@ -211,13 +266,133 @@ class SnowflakeSqlApiClient:
                     f"{response.text[:200]}"
                 ),
             )
+        return response
 
-        body = response.json()
-        columns = [
-            column["name"]
-            for column in body.get("resultSetMetaData", {}).get("rowType", [])
-        ]
-        return [dict(zip(columns, row)) for row in body.get("data", [])]
+    def _absolute(self, url: str) -> str:
+        """Resolve a SQL API path against the account host.
+
+        Args:
+            url: An absolute URL or a path returned by the API.
+
+        Returns:
+            str: An absolute URL.
+        """
+        if url.startswith(("https://", "http://")):
+            return url
+        return f"{self.base_url}{url if url.startswith('/') else '/' + url}"
+
+    def _await_result(self, response) -> dict:
+        """Resolve an in-progress statement into its completed response body.
+
+        The SQL API answers HTTP 202 when a statement runs longer than 45 seconds,
+        returning a status document rather than results. Treating that as success would
+        parse the status document as a result set and yield **zero rows with no error**
+        -- a large account would silently report nothing found.
+
+        Args:
+            response: The response to the initial request.
+
+        Returns:
+            dict: The completed response body.
+
+        Raises:
+            SnowflakeSessionError: If the statement does not complete in time.
+        """
+        for _ in range(POLL_MAX_ATTEMPTS):
+            if response.status_code != 202:
+                return response.json()
+            body = response.json()
+            status_url = body.get("statementStatusUrl")
+            if not status_url:
+                handle = body.get("statementHandle")
+                if not handle:
+                    raise SnowflakeSessionError(
+                        file=os.path.basename(__file__),
+                        message=(
+                            "Snowflake reported a statement as still running but "
+                            "returned no way to poll it."
+                        ),
+                    )
+                status_url = f"/api/v2/statements/{handle}"
+            time.sleep(POLL_INTERVAL_SECONDS)
+            response = self._send("GET", self._absolute(status_url))
+
+        raise SnowflakeSessionError(
+            file=os.path.basename(__file__),
+            message=(
+                "A Snowflake statement did not finish within "
+                f"{POLL_MAX_ATTEMPTS * POLL_INTERVAL_SECONDS}s. Reporting the failure "
+                "rather than an empty result set."
+            ),
+        )
+
+    @staticmethod
+    def _rows(body: dict, columns: list[str]) -> list[dict]:
+        """Zip one response body's rows against the column names.
+
+        Args:
+            body: A response body containing a ``data`` array.
+            columns: The column names, in order.
+
+        Returns:
+            list[dict]: One dictionary per row.
+        """
+        return [dict(zip(columns, row)) for row in body.get("data") or []]
+
+    def query(self, statement: str) -> list[dict]:
+        """Run one read-only statement and return every row as a dictionary.
+
+        Args:
+            statement: The SQL statement to execute.
+
+        Returns:
+            list[dict]: One dictionary per row, keyed by column name, across every
+            partition of the result set.
+
+        Raises:
+            SnowflakeAuthenticationError: If Snowflake rejects the credentials.
+            SnowflakeSessionError: If the request fails, the statement does not
+                complete, or a partition cannot be read.
+        """
+        payload = {"statement": statement, "timeout": STATEMENT_TIMEOUT_SECONDS}
+        if self.role:
+            payload["role"] = self.role
+        if self.warehouse:
+            payload["warehouse"] = self.warehouse
+
+        response = self._send(
+            "POST", f"{self.base_url}/api/v2/statements", json_body=payload
+        )
+        body = self._await_result(response)
+
+        metadata = body.get("resultSetMetaData") or {}
+        columns = [column["name"] for column in metadata.get("rowType") or []]
+        rows = self._rows(body, columns)
+
+        # A large result set is split into partitions and the initial response carries
+        # only the first. Reading `data` alone returns a subset with no error set, which
+        # is indistinguishable from a complete read -- so a big account would silently
+        # under-report.
+        partitions = metadata.get("partitionInfo") or []
+        if len(partitions) > 1:
+            handle = body.get("statementHandle")
+            if not handle:
+                raise SnowflakeSessionError(
+                    file=os.path.basename(__file__),
+                    message=(
+                        f"Snowflake split the result across {len(partitions)} "
+                        "partitions but returned no statement handle to read them "
+                        "with. Reporting the failure rather than a partial result set."
+                    ),
+                )
+            for index in range(1, len(partitions)):
+                partition = self._send(
+                    "GET",
+                    f"{self.base_url}/api/v2/statements/{handle}?partition={index}",
+                )
+                rows.extend(self._rows(self._await_result(partition), columns))
+
+        return rows
 
 
 class SnowflakeProvider(Provider):

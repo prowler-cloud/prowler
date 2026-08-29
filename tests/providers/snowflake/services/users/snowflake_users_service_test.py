@@ -116,8 +116,10 @@ class TestUsersService:
         assert user.has_mfa is True
         assert user.default_role == "ANALYST"
 
-    def test_a_failed_read_leaves_the_inventory_empty_without_raising(self):
-        # One service failing must not abort the whole scan.
+    def test_a_failed_read_raises_rather_than_reporting_an_empty_inventory(self):
+        # With one service, swallowing this leaves the inventory empty and the check
+        # then emits no findings -- a scan that could not read a single user would
+        # render as a clean account.
         provider = set_mocked_snowflake_provider()
         provider.session.client.query.side_effect = Exception(
             "ACCOUNT_USAGE unreadable"
@@ -126,5 +128,5 @@ class TestUsersService:
             "prowler.providers.snowflake.lib.service.service.SnowflakeProvider",
             new=mock.MagicMock(),
         ):
-            service = Users(provider)
-        assert service.users == []
+            with pytest.raises(Exception, match="ACCOUNT_USAGE unreadable"):
+                Users(provider)

@@ -10,7 +10,7 @@ Prowler for Snowflake authenticates with an **RSA key pair** rather than a passw
 
 ## Required Permissions
 
-Prowler needs read-only access to Snowflake's own metadata. A single grant covers every check:
+Prowler needs read-only access to Snowflake's own metadata. Two grants are required:
 
 | Grant | Description |
 |-------|-------------|
@@ -80,9 +80,16 @@ export SNOWFLAKE_PRIVATE_KEY_PATH="/path/to/prowler_key.p8"
 export SNOWFLAKE_ROLE="PROWLER_RO"
 export SNOWFLAKE_WAREHOUSE="<warehouse_name>"
 
-# Only if the key is encrypted
-export SNOWFLAKE_PRIVATE_KEY_PASSPHRASE="<passphrase>"
+# Only if the key is encrypted. Read it rather than typing it, so the passphrase
+# does not land in the shell history file.
+read -rs SNOWFLAKE_PRIVATE_KEY_PASSPHRASE && export SNOWFLAKE_PRIVATE_KEY_PASSPHRASE
 ```
+
+<Note>
+Using an environment variable keeps the passphrase off the command line and out of the
+process list, but a value typed into an `export` is still written to the shell history
+file. Read it with a silent prompt as above, or inject it from a secret manager.
+</Note>
 
 | Variable | Required | Description |
 |----------|----------|-------------|

@@ -1,3 +1,6 @@
+import argparse
+
+
 def init_parser(self):
     """Init the Snowflake provider CLI parser."""
     snowflake_parser = self.subparsers.add_parser(
@@ -62,7 +65,7 @@ def init_parser(self):
     )
 
 
-def validate_arguments(arguments):
+def validate_arguments(arguments: argparse.Namespace) -> tuple[bool, str]:
     """Validate the Snowflake provider arguments.
 
     Args:

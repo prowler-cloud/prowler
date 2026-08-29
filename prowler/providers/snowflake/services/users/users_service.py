@@ -145,6 +145,11 @@ class Users(SnowflakeService):
                     )
                 )
         except Exception as error:
+            # Deliberately re-raised. With one service, swallowing this leaves the
+            # inventory empty and `users_mfa_enabled` then emits no findings -- a scan
+            # that could not read a single user renders as a clean account. A failure
+            # the operator can see is worth more than a reassuring empty report.
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+            raise
