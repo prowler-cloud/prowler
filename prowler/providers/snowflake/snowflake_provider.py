@@ -44,10 +44,15 @@ STATEMENT_TIMEOUT_SECONDS = 120
 
 REQUEST_TIMEOUT_SECONDS = 60
 
-# The SQL API answers 202 while a statement is still running. These bound the wait
-# so a stuck statement fails loudly instead of hanging the scan.
+# The SQL API answers 202 while a statement is still running. These bound the wait so
+# a stuck statement fails loudly instead of hanging the scan.
+#
+# The budget is derived from the statement timeout rather than set independently:
+# Snowflake answers 202 at 45 seconds and can keep running until
+# STATEMENT_TIMEOUT_SECONDS, so a shorter poll budget would abandon a statement
+# that was about to return rows -- reporting a failure where there was none.
 POLL_INTERVAL_SECONDS = 2
-POLL_MAX_ATTEMPTS = 30
+POLL_MAX_ATTEMPTS = STATEMENT_TIMEOUT_SECONDS // POLL_INTERVAL_SECONDS + 15
 
 SNOWFLAKE_HOST_SUFFIX = ".snowflakecomputing.com"
 
@@ -172,7 +177,8 @@ class SnowflakeSqlApiClient:
         self.private_key = private_key
         self.role = role
         self.warehouse = warehouse
-        self.base_url = f"https://{account}.snowflakecomputing.com"
+        self.host = f"{account}{SNOWFLAKE_HOST_SUFFIX}"
+        self.base_url = f"https://{self.host}"
 
     def public_key_fingerprint(self) -> str:
         """``SHA256:<base64>`` over the DER-encoded public key.
@@ -271,13 +277,30 @@ class SnowflakeSqlApiClient:
     def _absolute(self, url: str) -> str:
         """Resolve a SQL API path against the account host.
 
+        The returned URL carries a signed JWT, so a value taken from the API response is
+        constrained rather than trusted: only https, and only this account's host. An
+        `http://` or off-host status URL would otherwise transmit the credential in
+        cleartext or to somewhere else entirely.
+
         Args:
             url: An absolute URL or a path returned by the API.
 
         Returns:
-            str: An absolute URL.
+            str: An absolute URL on the account host.
+
+        Raises:
+            SnowflakeSessionError: If the URL is not https on the account host.
         """
-        if url.startswith(("https://", "http://")):
+        if "://" in url:
+            parsed = urlparse(url)
+            if parsed.scheme != "https" or parsed.hostname != self.host:
+                raise SnowflakeSessionError(
+                    file=os.path.basename(__file__),
+                    message=(
+                        "Snowflake returned a status URL that is not https on "
+                        f"{self.host}. Refusing to send the signed token to it."
+                    ),
+                )
             return url
         return f"{self.base_url}{url if url.startswith('/') else '/' + url}"
 

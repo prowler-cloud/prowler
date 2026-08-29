@@ -14,6 +14,9 @@ from prowler.providers.snowflake.exceptions.exceptions import (
 )
 from prowler.providers.snowflake.models import SnowflakeIdentityInfo, SnowflakeSession
 from prowler.providers.snowflake.snowflake_provider import (
+    POLL_INTERVAL_SECONDS,
+    POLL_MAX_ATTEMPTS,
+    STATEMENT_TIMEOUT_SECONDS,
     SnowflakeProvider,
     SnowflakeSqlApiClient,
     _account_for_claims,
@@ -467,3 +470,43 @@ class TestSnowflakeSessionNeverSerializesTheKey:
         assert "client" not in session.model_dump_json()
         assert "client" not in dict(session)
         assert "client=***" in repr(session)
+
+
+class TestSnowflakeSqlApiClientStatusUrlHandling:
+    def _client(self):
+        return SnowflakeSqlApiClient(
+            account=ACCOUNT,
+            user=USER,
+            private_key=SnowflakeProvider.load_private_key(
+                private_key_content=generate_private_key_pem()
+            ),
+        )
+
+    def test_the_poll_budget_covers_the_statement_timeout(self):
+        # Snowflake answers 202 at 45s and can run to STATEMENT_TIMEOUT_SECONDS. A
+        # shorter budget would abandon a statement that was about to return rows.
+        assert POLL_MAX_ATTEMPTS * POLL_INTERVAL_SECONDS >= STATEMENT_TIMEOUT_SECONDS
+
+    def test_a_relative_status_path_resolves_against_the_account_host(self):
+        client = self._client()
+        assert client._absolute("/api/v2/statements/h1") == (
+            f"{client.base_url}/api/v2/statements/h1"
+        )
+
+    def test_an_https_status_url_on_the_account_host_is_accepted(self):
+        client = self._client()
+        url = f"{client.base_url}/api/v2/statements/h1"
+        assert client._absolute(url) == url
+
+    @pytest.mark.parametrize(
+        "url",
+        [
+            "http://myorg-myaccount.snowflakecomputing.com/api/v2/statements/h1",
+            "https://evil.test/api/v2/statements/h1",
+        ],
+    )
+    def test_a_status_url_that_would_move_the_token_is_refused(self, url):
+        # _send attaches the signed JWT to whatever this returns, so an http:// or
+        # off-host URL from the API response must not be followed.
+        with pytest.raises(SnowflakeSessionError):
+            self._client()._absolute(url)
