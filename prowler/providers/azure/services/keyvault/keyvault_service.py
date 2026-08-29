@@ -3,8 +3,6 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import List, Optional, Union
 
-from azure.core.exceptions import HttpResponseError
-from azure.keyvault.keys import KeyClient
 from azure.mgmt.keyvault import KeyVaultManagementClient
 
 from prowler.lib.logger import logger
@@ -17,10 +15,9 @@ from prowler.providers.azure.services.monitor.monitor_service import DiagnosticS
 class KeyVault(AzureService):
     def __init__(self, provider: AzureProvider):
         super().__init__(KeyVaultManagementClient, provider)
-        # TODO: review this credentials assignment
-        self.key_vaults = self._get_key_vaults(provider)
+        self.key_vaults = self._get_key_vaults()
 
-    def _get_key_vaults(self, provider):
+    def _get_key_vaults(self):
         """
         Get all KeyVaults with parallel processing.
 
@@ -49,7 +46,6 @@ class KeyVault(AzureService):
                     {
                         "subscription": subscription,
                         "keyvault": vault,
-                        "provider": provider,
                     }
                     for vault in vaults_list
                 ]
@@ -69,7 +65,6 @@ class KeyVault(AzureService):
         """Process a single KeyVault in parallel."""
         subscription = item["subscription"]
         keyvault = item["keyvault"]
-        provider = item["provider"]
 
         try:
             resource_group = keyvault.id.split("/")[4]
@@ -83,7 +78,6 @@ class KeyVault(AzureService):
                     subscription,
                     resource_group,
                     keyvault_name,
-                    provider,
                 )
                 secrets_future = executor.submit(
                     self._get_secrets, subscription, resource_group, keyvault_name
@@ -150,10 +144,9 @@ class KeyVault(AzureService):
             )
             return None
 
-    def _get_keys(self, subscription, resource_group, keyvault_name, provider):
+    def _get_keys(self, subscription, resource_group, keyvault_name):
         logger.info(f"KeyVault - Getting keys for {keyvault_name}...")
         keys = []
-        keys_dict = {}
 
         try:
             client = self.clients[subscription]
@@ -170,64 +163,36 @@ class KeyVault(AzureService):
                         updated=getattr(key.attributes, "updated", 0),
                         expires=getattr(key.attributes, "expires", 0),
                     ),
+                    rotation_policy=self._transform_rotation_policy(
+                        getattr(key, "rotation_policy", None)
+                    ),
                 )
                 keys.append(key_obj)
-                keys_dict[key_obj.name] = key_obj
 
         except Exception as error:
             logger.error(
                 f"Subscription ID: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-        try:
-            key_client = KeyClient(
-                vault_url=f"https://{keyvault_name}.vault.azure.net/",
-                # TODO: review the following line
-                credential=provider.session,
-            )
-            properties = list(key_client.list_properties_of_keys())
-
-            if properties:
-                items = [
-                    {"key_client": key_client, "prop": prop} for prop in properties
-                ]
-                rotation_results = self.__threading_call__(
-                    self._get_single_rotation_policy, items
-                )
-
-                for name, policy in rotation_results:
-                    if policy and name in keys_dict:
-                        keys_dict[name].rotation_policy = KeyRotationPolicy(
-                            id=getattr(policy, "id", ""),
-                            lifetime_actions=[
-                                KeyRotationLifetimeAction(action=action.action)
-                                for action in getattr(policy, "lifetime_actions", [])
-                            ],
-                        )
-
-        # TODO: handle different errors here since we are catching all HTTP Errors here
-        except HttpResponseError:
-            logger.warning(
-                f"Subscription ID: {subscription} -- has no access policy configured for keyvault {keyvault_name}"
-            )
-
         return keys
 
-    def _get_single_rotation_policy(self, item: dict) -> tuple:
-        """Thread-safe rotation policy retrieval."""
-        key_client = item["key_client"]
-        prop = item["prop"]
+    @staticmethod
+    def _transform_rotation_policy(policy) -> Optional["KeyRotationPolicy"]:
+        """Transform an ARM key rotation policy into Prowler's model."""
+        if not policy:
+            return None
 
-        try:
-            policy = key_client.get_key_rotation_policy(prop.name)
-            return (prop.name, policy)
-        except HttpResponseError:
-            return (prop.name, None)
-        except Exception as error:
-            logger.warning(
-                f"KeyVault - Failed to get rotation policy for key {prop.name}: {error}"
-            )
-            return (prop.name, None)
+        return KeyRotationPolicy(
+            id=getattr(policy, "id", ""),
+            lifetime_actions=[
+                KeyRotationLifetimeAction(
+                    action=(
+                        getattr(getattr(action, "action", None), "type", "") or ""
+                    ).capitalize()
+                )
+                for action in (getattr(policy, "lifetime_actions", []) or [])
+            ],
+        )
 
     def _get_secrets(self, subscription, resource_group, keyvault_name):
         logger.info(f"KeyVault - Getting secrets for {keyvault_name}...")

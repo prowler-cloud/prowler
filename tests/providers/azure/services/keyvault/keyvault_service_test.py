@@ -1,6 +1,16 @@
 from unittest import mock
 from unittest.mock import MagicMock, patch
 
+from azure.mgmt.keyvault.v2023_07_01.models import (
+    Action,
+)
+from azure.mgmt.keyvault.v2023_07_01.models import Key as ArmKey
+from azure.mgmt.keyvault.v2023_07_01.models import KeyAttributes as ArmKeyAttributes
+from azure.mgmt.keyvault.v2023_07_01.models import (
+    LifetimeAction,
+    RotationPolicy,
+)
+
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
     RESOURCE_GROUP,
@@ -298,11 +308,10 @@ class Test_KeyVault_get_key_vaults:
         keyvault.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
         keyvault.resource_groups = None
 
-        provider = set_mocked_azure_provider()
         with patch(
             "prowler.providers.azure.services.keyvault.keyvault_service.monitor_client"
         ):
-            result = keyvault._get_key_vaults(provider)
+            result = keyvault._get_key_vaults()
 
         mock_client.vaults.list_by_subscription.assert_called_once()
         mock_client.vaults.list_by_resource_group.assert_not_called()
@@ -338,11 +347,10 @@ class Test_KeyVault_get_key_vaults:
         keyvault.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
         keyvault.resource_groups = {AZURE_SUBSCRIPTION_ID: [RESOURCE_GROUP]}
 
-        provider = set_mocked_azure_provider()
         with patch(
             "prowler.providers.azure.services.keyvault.keyvault_service.monitor_client"
         ):
-            result = keyvault._get_key_vaults(provider)
+            result = keyvault._get_key_vaults()
 
         mock_client.vaults.list_by_resource_group.assert_called_once_with(
             resource_group_name=RESOURCE_GROUP
@@ -379,11 +387,10 @@ class Test_KeyVault_get_key_vaults:
         keyvault.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
         keyvault.resource_groups = {AZURE_SUBSCRIPTION_ID: []}
 
-        provider = set_mocked_azure_provider()
         with patch(
             "prowler.providers.azure.services.keyvault.keyvault_service.monitor_client"
         ):
-            result = keyvault._get_key_vaults(provider)
+            result = keyvault._get_key_vaults()
 
         mock_client.vaults.list_by_resource_group.assert_not_called()
         mock_client.vaults.list_by_subscription.assert_not_called()
@@ -419,11 +426,10 @@ class Test_KeyVault_get_key_vaults:
         keyvault.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
         keyvault.resource_groups = {AZURE_SUBSCRIPTION_ID: RESOURCE_GROUP_LIST}
 
-        provider = set_mocked_azure_provider()
         with patch(
             "prowler.providers.azure.services.keyvault.keyvault_service.monitor_client"
         ):
-            result = keyvault._get_key_vaults(provider)
+            result = keyvault._get_key_vaults()
 
         assert mock_client.vaults.list_by_resource_group.call_count == len(
             RESOURCE_GROUP_LIST
@@ -461,12 +467,115 @@ class Test_KeyVault_get_key_vaults:
         keyvault.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
         keyvault.resource_groups = {AZURE_SUBSCRIPTION_ID: ["MyRG"]}
 
-        provider = set_mocked_azure_provider()
         with patch(
             "prowler.providers.azure.services.keyvault.keyvault_service.monitor_client"
         ):
-            keyvault._get_key_vaults(provider)
+            keyvault._get_key_vaults()
 
         mock_client.vaults.list_by_resource_group.assert_called_once_with(
             resource_group_name="MyRG"
         )
+
+
+class Test_KeyVault_get_keys:
+    def test_get_keys_uses_arm_rotation_policy(self):
+        arm_key = ArmKey(
+            attributes=ArmKeyAttributes(enabled=True),
+            rotation_policy=RotationPolicy(
+                lifetime_actions=[
+                    LifetimeAction(action=Action(type="rotate")),
+                    LifetimeAction(action=Action(type="notify")),
+                ]
+            ),
+        )
+        arm_key.id = "/subscriptions/subscription/resourceGroups/resource-group/providers/Microsoft.KeyVault/vaults/vault/keys/key"
+        arm_key.name = "key"
+        arm_key.location = "westeurope"
+
+        mock_client = MagicMock()
+        mock_client.keys.list.return_value = [arm_key]
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            patch(
+                "prowler.providers.azure.services.monitor.monitor_service.Monitor",
+                new=MagicMock(),
+            ),
+            patch(
+                "prowler.providers.azure.services.keyvault.keyvault_service.KeyVault._get_key_vaults",
+                return_value={},
+            ),
+        ):
+            from prowler.providers.azure.services.keyvault.keyvault_service import (
+                KeyVault,
+            )
+
+            keyvault = KeyVault(set_mocked_azure_provider())
+
+        keyvault.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+
+        with patch(
+            "prowler.providers.azure.services.keyvault.keyvault_service.KeyClient",
+            create=True,
+        ) as data_plane_key_client:
+            data_plane_key_client.return_value.list_properties_of_keys.return_value = []
+            keys = keyvault._get_keys(
+                AZURE_SUBSCRIPTION_ID,
+                RESOURCE_GROUP,
+                "vault",
+            )
+
+        assert len(keys) == 1
+        assert keys[0].rotation_policy is not None
+        assert [
+            action.action for action in keys[0].rotation_policy.lifetime_actions
+        ] == ["Rotate", "Notify"]
+        data_plane_key_client.assert_not_called()
+
+    def test_get_keys_preserves_missing_arm_rotation_policy(self):
+        arm_key = ArmKey(attributes=ArmKeyAttributes(enabled=True))
+        arm_key.id = "/subscriptions/subscription/resourceGroups/resource-group/providers/Microsoft.KeyVault/vaults/vault/keys/key"
+        arm_key.name = "key"
+        arm_key.location = "westeurope"
+
+        mock_client = MagicMock()
+        mock_client.keys.list.return_value = [arm_key]
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            patch(
+                "prowler.providers.azure.services.monitor.monitor_service.Monitor",
+                new=MagicMock(),
+            ),
+            patch(
+                "prowler.providers.azure.services.keyvault.keyvault_service.KeyVault._get_key_vaults",
+                return_value={},
+            ),
+        ):
+            from prowler.providers.azure.services.keyvault.keyvault_service import (
+                KeyVault,
+            )
+
+            keyvault = KeyVault(set_mocked_azure_provider())
+
+        keyvault.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+
+        with patch(
+            "prowler.providers.azure.services.keyvault.keyvault_service.KeyClient",
+            create=True,
+        ) as data_plane_key_client:
+            keys = keyvault._get_keys(
+                AZURE_SUBSCRIPTION_ID,
+                RESOURCE_GROUP,
+                "vault",
+            )
+
+        assert len(keys) == 1
+        assert keys[0].rotation_policy is None
+        data_plane_key_client.assert_not_called()
