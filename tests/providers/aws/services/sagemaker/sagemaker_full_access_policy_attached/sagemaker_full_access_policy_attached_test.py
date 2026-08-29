@@ -313,6 +313,53 @@ class Test_sagemaker_full_access_policy_attached:
             )
 
     @mock_aws(config={"iam": {"load_aws_managed_policies": True}})
+    def test_customer_role_named_like_service_linked_is_evaluated(self):
+        """A customer-created role whose NAME contains "aws-service-role" is not
+        service-linked: the reserved path is :role/aws-service-role/."""
+        iam_client = mock.MagicMock
+        iam_client.region = AWS_REGION_US_EAST_1
+        iam_client.roles = []
+        iam_client.roles.append(
+            Role(
+                name="my-aws-service-role-auditor",
+                arn=f"arn:aws:iam::{AWS_ACCOUNT_ID}:role/my-aws-service-role-auditor",
+                assume_role_policy=ASSUME_ROLE_POLICY_DOCUMENT,
+                is_service_role=False,
+                attached_policies=[
+                    {
+                        "PolicyName": "AmazonSageMakerFullAccess",
+                        "PolicyArn": SAGEMAKER_FULL_ACCESS_ARN,
+                    }
+                ],
+            )
+        )
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.sagemaker.sagemaker_full_access_policy_attached.sagemaker_full_access_policy_attached.iam_client",
+                new=iam_client,
+            ),
+        ):
+            from prowler.providers.aws.services.sagemaker.sagemaker_full_access_policy_attached.sagemaker_full_access_policy_attached import (
+                sagemaker_full_access_policy_attached,
+            )
+
+            check = sagemaker_full_access_policy_attached()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == "IAM Role my-aws-service-role-auditor has AmazonSageMakerFullAccess policy attached."
+            )
+
+    @mock_aws(config={"iam": {"load_aws_managed_policies": True}})
     def test_access_denied(self):
         iam_client = mock.MagicMock
         iam_client.roles = None

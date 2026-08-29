@@ -10,9 +10,9 @@ class sagemaker_full_access_policy_attached(Check):
     supporting-service permissions and violates the principle of least
     privilege.
 
-    Only AWS service-linked roles are excluded, identified by the
-    ``aws-service-role`` path in their ARN, since their permissions are managed
-    by AWS and cannot be changed by the account owner. Customer-created service
+    Only AWS service-linked roles are excluded, identified by the reserved
+    ``:role/aws-service-role/`` path in their ARN, since their permissions are
+    managed by AWS and cannot be changed by the account owner. Customer-created service
     roles are evaluated: a SageMaker execution role is trusted by
     ``sagemaker.amazonaws.com`` alone, and is exactly where this policy is
     typically attached.
@@ -29,7 +29,7 @@ class sagemaker_full_access_policy_attached(Check):
         findings = []
         if iam_client.roles:
             for role in iam_client.roles:
-                if "aws-service-role" not in role.arn:
+                if ":role/aws-service-role/" not in role.arn:
                     report = Check_Report_AWS(metadata=self.metadata(), resource=role)
                     report.region = iam_client.region
                     report.status = "PASS"
