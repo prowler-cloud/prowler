@@ -1,0 +1,40 @@
+{
+  "Provider": "aws",
+  "CheckID": "oam_sink_policy_restricted_to_organization",
+  "CheckTitle": "Observability Access Manager sink policy does not let any AWS account link without an organization scope",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "TTPs/Initial Access/Unauthorized Access"
+  ],
+  "ServiceName": "oam",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Other",
+  "ResourceGroup": "monitoring",
+  "Description": "**Observability Access Manager sink** resource policy is evaluated for the scope of the accounts allowed to link to it. The finding highlights `Allow` statements that grant a wildcard principal permission to link without an `aws:PrincipalOrgID` or `aws:PrincipalOrgPaths` Condition, and notes when a sink carries no policy at all.",
+  "Risk": "An unscoped sink policy lets **any AWS account** link to the monitoring account and share telemetry into it.\n\nFabricated observability data then floods the dashboards, alarms and log groups incident response depends on, eroding the **integrity** of the detection signal while driving ingestion cost.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/OAM/latest/APIReference/API_PutSinkPolicy.html",
+    "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Unified-Cross-Account-Setup.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws oam put-sink-policy --sink-identifier <SINK_ARN> --policy '{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":\"*\",\"Action\":[\"oam:CreateLink\",\"oam:UpdateLink\"],\"Resource\":\"*\",\"Condition\":{\"StringEquals\":{\"aws:PrincipalOrgID\":\"<ORGANIZATION_ID>\"}}}]}'",
+      "NativeIaC": "```yaml\n# CloudFormation: sink policy scoped to a single AWS Organization\nResources:\n  <example_resource_name>:\n    Type: AWS::Oam::Sink\n    Properties:\n      Name: <example_resource_name>\n      Policy:\n        Version: \"2012-10-17\"\n        Statement:\n          - Effect: Allow\n            Principal: \"*\"\n            Resource: \"*\"\n            Action:\n              - oam:CreateLink\n              - oam:UpdateLink\n            Condition:\n              StringEquals:\n                # CRITICAL: without this condition any AWS account can link to the sink\n                aws:PrincipalOrgID: <example_resource_id>\n```",
+      "Other": "1. In the AWS Console, open Amazon CloudWatch in the monitoring account\n2. In the navigation pane, choose Settings\n3. By Monitoring account configuration, choose Configure\n4. For List source accounts, enter only your organization ID, your organization paths, or the specific source account IDs\n5. Choose Configure to save the change",
+      "Terraform": "```hcl\n# Sink policy scoped to a single AWS Organization\nresource \"aws_oam_sink_policy\" \"<example_resource_name>\" {\n  sink_identifier = \"<example_resource_id>\"\n  policy = jsonencode({\n    Version = \"2012-10-17\"\n    Statement = [\n      {\n        Action    = [\"oam:CreateLink\", \"oam:UpdateLink\"]\n        Effect    = \"Allow\"\n        Resource  = \"*\"\n        Principal = \"*\"\n        Condition = {\n          # CRITICAL: without this condition any AWS account can link to the sink\n          StringEquals = { \"aws:PrincipalOrgID\" = \"<example_resource_id>\" }\n        }\n      }\n    ]\n  })\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Scope the sink policy to the accounts that must share telemetry. Keep a wildcard `Principal` only alongside a `StringEquals` on `aws:PrincipalOrgID`, or a `ForAnyValue:StringLike` on `aws:PrincipalOrgPaths`, and otherwise name the source account IDs explicitly. Re-review the policy whenever the organization structure changes.",
+      "Url": "https://hub.prowler.com/check/oam_sink_policy_restricted_to_organization"
+    }
+  },
+  "Categories": [
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

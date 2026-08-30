@@ -995,6 +995,22 @@
       "Checks": []
     },
     {
+      "Id": "AISF-DETECT-08",
+      "Description": "Ensure agent telemetry aggregated into a central monitoring account is shared over cross-account links scoped to your organization, so that accounts outside it cannot attach to the CloudWatch Observability Access Manager sink.",
+      "Name": "Cross-Account Telemetry Aggregation Scope",
+      "Attributes": [
+        {
+          "Section": "Threat Detection and Monitoring",
+          "SubSection": "Telemetry Aggregation",
+          "Service": "oam",
+          "Type": "Automated"
+        }
+      ],
+      "Checks": [
+        "oam_sink_policy_restricted_to_organization"
+      ]
+    },
+    {
       "Id": "AISF-GOV-01",
       "Description": "Ensure AWS Config recorder is enabled in all regions to continuously monitor and record AI resource configurations, detect drift, and enforce compliance rules.",
       "Name": "Configuration Compliance Monitoring",
