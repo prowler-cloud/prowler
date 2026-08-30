@@ -1750,3 +1750,5 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Restore packages location in PyProject [(#7510)](https://github.com/prowler-cloud/prowler/pull/7510)
 
 ---
+
+- feat(bedrock): add bedrock_agent_idle_session_ttl_not_excessive check (#12611) - configurable via max_bedrock_agent_idle_session_ttl_seconds (default 3600s)
