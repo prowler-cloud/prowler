@@ -318,6 +318,9 @@ class BedrockAgent(AWSService):
         try:
             agent_info = self.regional_clients[agent.region].get_agent(agentId=agent.id)
             agent.role_arn = agent_info.get("agent", {}).get("agentResourceRoleArn")
+            agent.idle_session_ttl_seconds = agent_info.get("agent", {}).get(
+                "idleSessionTTLInSeconds"
+            )
             agent.detail_retrieved = True
         except Exception as error:
             logger.error(
@@ -570,6 +573,8 @@ class Agent(BaseModel):
     tags: Optional[list] = []
     # False when GetAgent failed: absent role is unknown, not unset.
     detail_retrieved: bool = False
+    # Idle session TTL in seconds, from GetAgent.idleSessionTTLInSeconds
+    idle_session_ttl_seconds: Optional[int] = None
     # Execution role of each numbered version an alias routes to, keyed by
     # version. A version is an immutable snapshot, so it keeps the role it was
     # cut with even after the working draft's role changes.
