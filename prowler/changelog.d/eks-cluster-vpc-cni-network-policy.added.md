@@ -1,0 +1,1 @@
+`eks_cluster_vpc_cni_network_policy_enforced` check for AWS provider, flagging EKS clusters whose Amazon VPC CNI managed add-on does not enable Kubernetes network policy enforcement, and reporting MANUAL where the EKS API cannot show the setting
