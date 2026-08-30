@@ -5,7 +5,26 @@ from prowler.providers.aws.services.bedrock.bedrock_agent_client import (
 
 
 class bedrock_agent_idle_session_ttl_not_excessive(Check):
+    """Check that Bedrock Agent idle session TTL is not excessive.
+
+    This check verifies that Amazon Bedrock Agents are configured with
+    an idle session TTL at or below the configured maximum (default 3600s).
+    A shorter TTL reduces the window for session reuse and stale context.
+
+    Attributes:
+        metadata: Inherited check metadata.
+    """
+
     def execute(self) -> list[Check_Report_AWS]:
+        """Execute the check for Bedrock Agent idle session TTL.
+
+        Evaluates each collected Bedrock Agent against the maximum TTL.
+        Returns MANUAL when detail retrieval failed or TTL is missing,
+        FAIL when TTL exceeds the threshold, and PASS otherwise.
+
+        Returns:
+            list[Check_Report_AWS]: List of findings with PASS, FAIL, or MANUAL.
+        """
         findings = []
         max_ttl = bedrock_agent_client.audit_config.get(
             "max_bedrock_agent_idle_session_ttl_seconds", 3600
