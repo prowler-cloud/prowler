@@ -33,6 +33,13 @@ class Bedrock(AWSService):
         )
 
     def _get_model_invocation_logging_configuration(self, regional_client):
+        """Read the model invocation logging configuration for a region.
+
+        An empty `loggingConfig` is how the API reports logging switched off, so it maps to
+        `enabled=False` rather than to an absent entry. The four per-data-type delivery flags are
+        stored as reported, including None: the API omits a flag it was never given, and None
+        cannot be collapsed to False without asserting an exclusion that was never configured.
+        """
         logger.info("Bedrock - Getting Model Invocation Logging Configuration...")
         try:
             logging_config = (
@@ -48,6 +55,18 @@ class Bedrock(AWSService):
                         ).get("logGroupName"),
                         s3_bucket=logging_config.get("s3Config", {}).get("bucketName"),
                         enabled=True,
+                        text_data_delivery_enabled=logging_config.get(
+                            "textDataDeliveryEnabled"
+                        ),
+                        image_data_delivery_enabled=logging_config.get(
+                            "imageDataDeliveryEnabled"
+                        ),
+                        embedding_data_delivery_enabled=logging_config.get(
+                            "embeddingDataDeliveryEnabled"
+                        ),
+                        video_data_delivery_enabled=logging_config.get(
+                            "videoDataDeliveryEnabled"
+                        ),
                     )
                 )
             else:
@@ -94,6 +113,17 @@ class Bedrock(AWSService):
             )
 
     def _get_guardrail(self, guardrail):
+        """Read one guardrail's policies and flatten its sensitive-information entries.
+
+        `piiEntities` and `regexes` are flattened into a single list because both carry the same
+        action/outputAction/outputEnabled triple and both leak the same way; the entry name keeps
+        the kind visible in findings. Each field is stored as reported, so an action the API did
+        not return stays None instead of becoming a verdict.
+
+        `detail_retrieved` is set only on the success path. A guardrail whose configuration could
+        not be read therefore carries no filter claims at all, and `detail_error` names the API
+        error code so a check can report the cause rather than a compliant-looking default.
+        """
         logger.info("Bedrock - Getting Guardrail...")
         try:
             guardrail_info = self.regional_clients[guardrail.region].get_guardrail(
@@ -119,8 +149,37 @@ class Bedrock(AWSService):
                     "filters", []
                 )
             ]
+            sensitive_information_policy = guardrail_info.get(
+                "sensitiveInformationPolicy", {}
+            )
+            for entity in sensitive_information_policy.get("piiEntities", []):
+                guardrail.sensitive_information_entries.append(
+                    SensitiveInformationEntry(
+                        name=f"PII entity {entity.get('type', 'unknown')}",
+                        action=entity.get("action"),
+                        output_action=entity.get("outputAction"),
+                        output_enabled=entity.get("outputEnabled"),
+                    )
+                )
+            for regex in sensitive_information_policy.get("regexes", []):
+                guardrail.sensitive_information_entries.append(
+                    SensitiveInformationEntry(
+                        name=f"regex {regex.get('name', 'unknown')}",
+                        action=regex.get("action"),
+                        output_action=regex.get("outputAction"),
+                        output_enabled=regex.get("outputEnabled"),
+                    )
+                )
             guardrail.detail_retrieved = True
+        except ClientError as error:
+            guardrail.detail_error = error.response["Error"].get(
+                "Code", error.__class__.__name__
+            )
+            logger.error(
+                f"{guardrail.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
         except Exception as error:
+            guardrail.detail_error = error.__class__.__name__
             logger.error(
                 f"{guardrail.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
@@ -201,6 +260,29 @@ class LoggingConfiguration(BaseModel):
     enabled: bool = False
     cloudwatch_log_group: Optional[str] = None
     s3_bucket: Optional[str] = None
+    # GetModelInvocationLoggingConfiguration reports which data types are actually delivered.
+    # A configuration can name a destination while excluding the prompt and response bodies, so
+    # the destination alone does not establish that invocation content is captured. None means
+    # the API did not report the flag, which is not the same as False.
+    text_data_delivery_enabled: Optional[bool] = None
+    image_data_delivery_enabled: Optional[bool] = None
+    embedding_data_delivery_enabled: Optional[bool] = None
+    video_data_delivery_enabled: Optional[bool] = None
+
+
+class SensitiveInformationEntry(BaseModel):
+    """One entry of a guardrail sensitive-information policy: a PII entity or a custom regex.
+
+    GetGuardrail always reports `action` (the API marks it required) and omits the per-path
+    `outputAction` / `outputEnabled` unless they were configured explicitly, in which case
+    `action` governs both the input and the output path. None therefore means the API did not
+    report the per-path setting, which is not the same as False or NONE.
+    """
+
+    name: str
+    action: Optional[str] = None
+    output_action: Optional[str] = None
+    output_enabled: Optional[bool] = None
 
 
 class ContextualGroundingFilter(BaseModel):
@@ -227,6 +309,8 @@ class Guardrail(BaseModel):
     contextual_grounding_filters: list[ContextualGroundingFilter] = []
     # False when GetGuardrail failed: absent policy is unknown, not unset.
     detail_retrieved: bool = False
+    detail_error: Optional[str] = None
+    sensitive_information_entries: list[SensitiveInformationEntry] = []
 
 
 class CustomModel(BaseModel):

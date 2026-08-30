@@ -548,7 +548,8 @@
         }
       ],
       "Checks": [
-        "bedrock_guardrail_sensitive_information_filter_enabled"
+        "bedrock_guardrail_sensitive_information_filter_enabled",
+        "bedrock_guardrail_sensitive_information_filter_enforced"
       ]
     },
     {
@@ -581,6 +582,7 @@
       ],
       "Checks": [
         "bedrock_model_invocation_logging_enabled",
+        "bedrock_model_invocation_logging_text_data_enabled",
         "bedrock_model_invocation_logs_encryption_enabled"
       ]
     },
