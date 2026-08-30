@@ -512,7 +512,6 @@
               "developer-guide/lighthouse-architecture",
               "developer-guide/mcp-server",
               "developer-guide/ai-skills",
-              "developer-guide/audit-agent",
               "developer-guide/prowler-studio",
               "developer-guide/server-sent-events",
               "developer-guide/attack-paths-queries"

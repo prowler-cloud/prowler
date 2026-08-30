@@ -34,6 +34,13 @@ tags
 /output
 /audit-out/
 
+# Local-only Audit Agent (not shipped)
+contrib/audit-agent/
+docs/developer-guide/audit-agent.mdx
+prowler/changelog.d/audit-agent.added.md
+tests/contrib/test_audit_agent.py
+tests/contrib/conftest.py
+
 # Prowler found secrets
 secrets-*/
 
