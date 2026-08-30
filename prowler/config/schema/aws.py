@@ -267,6 +267,15 @@ class AWSProviderConfig(ProviderConfigBase):
             f"values accepted by the AWS API: {list(_CLOUDWATCH_RETENTION_DAYS)}."
         ),
     )
+    agentcore_log_group_name_prefixes: Optional[list[str]] = Field(
+        default=None,
+        description=(
+            "Log group name prefixes that identify Bedrock AgentCore agent "
+            "telemetry. Set this when AgentCore log delivery is pointed at log "
+            "groups outside the service defaults; the value replaces the "
+            "defaults, so list them alongside any prefix of your own."
+        ),
+    )
     recommended_cdk_bootstrap_version: Optional[int] = Field(
         default=None,
         ge=1,
