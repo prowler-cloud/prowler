@@ -1,0 +1,41 @@
+{
+  "Provider": "aws",
+  "CheckID": "ecr_registry_enhanced_scanning_enabled",
+  "CheckTitle": "ECR registry has enhanced scanning enabled",
+  "CheckType": [
+    "Software and Configuration Checks/Vulnerabilities/CVE",
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "ecr",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Other",
+  "ResourceGroup": "container",
+  "Description": "Amazon ECR registries with repositories are evaluated for **enhanced scanning**, the Amazon Inspector-powered scan type that covers operating system **and** programming language packages and can rescan images continuously as new CVEs are published. A registry left on **basic** scanning is reported as failing.",
+  "Risk": "**Basic** scanning matches only OS packages against a static CVE list, so **application dependencies** (npm, PyPI, Maven, Go, .NET) are never assessed. It rescans only on push or on an explicit StartImageScan, at most once per 24 hours, so a CVE published since the last scan stays invisible until someone acts. Vulnerable images keep being pulled, enabling **RCE** and supply chain compromise.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning-enhanced.html",
+    "https://docs.aws.amazon.com/inspector/latest/user/scanning-ecr.html",
+    "https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws ecr put-registry-scanning-configuration --scan-type ENHANCED --rules 'scanFrequency=CONTINUOUS_SCAN,repositoryFilters=[{filter=*,filterType=WILDCARD}]'",
+      "NativeIaC": "",
+      "Other": "1. Open the AWS Management Console and go to Amazon ECR\n2. In the left menu, click Private registry, then Scanning\n3. Click Edit\n4. Set Scanning type to Enhanced scanning\n5. Under Enhanced scanning, add or keep a repository filter matching every repository that must be scanned. Coverage comes from the filters, not from the frequency: a filter of * covers the whole registry, and any repository no filter matches is left unscanned\n6. Set the scan frequency for those filters, either Continuous scanning or Scan on push\n7. Click Save",
+      "Terraform": "```hcl\nresource \"aws_ecr_registry_scanning_configuration\" \"<example_resource_name>\" {\n  scan_type = \"ENHANCED\"\n\n  rule {\n    scan_frequency = \"CONTINUOUS_SCAN\"\n    repository_filter {\n      filter      = \"*\"\n      filter_type = \"WILDCARD\"\n    }\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Set the registry scan type to **enhanced scanning**, which delegates scanning to **Amazon Inspector** and adds programming language package coverage plus continuous rescanning on top of the operating system coverage that basic scanning provides. Feed the resulting findings into CI/CD gates so vulnerable images are not promoted.",
+      "Url": "https://hub.prowler.com/check/ecr_registry_enhanced_scanning_enabled"
+    }
+  },
+  "Categories": [
+    "container-security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Scoped to registries that hold at least one repository. The ECR API accepts both the CONTINUOUS_SCAN and SCAN_ON_PUSH frequencies for the ENHANCED scan type, so ENHANCED on its own does not imply continuous rescanning; frequency is a separate axis this check does not assert. It is NOT a coverage guarantee, and this check does not claim one: enhanced scanning is driven by repository filters, so clearing the scan-all filter leaves any repository no filter matches unscanned. What this check asserts is the registry's scan TYPE, not that every repository in it is covered. Registry-wide scan-on-push coverage and its repository filters are asserted by ecr_registry_scan_images_on_push_enabled, which passes for either scan type. Reported as MANUAL when GetRegistryScanningConfiguration could not be read, because an unretrieved scan type is not evidence of compliance."
+}
