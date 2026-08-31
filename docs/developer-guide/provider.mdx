@@ -108,7 +108,7 @@ Once you have decided the provider you want or need to add to Prowler, the next 
 - **SDK Providers**: Low complexity. You have mature examples like AWS, Azure, GCP, Kubernetes, etc. that you can leverage to implement your provider.
 - **API Providers**: Medium complexity. You need to implement the authentication and session management, and the API calls to the provider. You now have NHN and MongoDB Atlas as example to follow.
 - **Tool/Wrapper Providers**: High complexity. You need to implement the argument/output mapping to the provider and handle problems that the tool/wrapper may have. You now have IAC and the PowerShell wrapper as example to follow.
-- **Hybrid Providers**: High complexity. You need to "customize" your provider, mixing the other types of providers in order to achieve the desired result. You have M365 (msgraph SDK + PowerShell wrapper) and Github (PyGithub SDK + graphql API requests) as examples.
+- **Hybrid Providers**: High complexity. You need to "customize" your provider, mixing the other types of providers to achieve the desired result. You have M365 (msgraph SDK + PowerShell wrapper) and GitHub (PyGithub SDK + graphql API requests) as examples.
 
 ### Determining Regional vs Non-Regional Architecture
 
@@ -815,7 +815,7 @@ class YourProviderMutelist(Mutelist):
 Region management is essential for cloud providers that operate across multiple geographic locations. This component handles region validation and provides region-specific functionality.
 
 <Note>
-Regions are optional, only if the provider has regions, for example Github does not have regions, but AWS does.
+Regions are optional, only if the provider has regions, for example GitHub does not have regions, but AWS does.
 </Note>
 
 **File:** `prowler/providers/<provider_name>/lib/regions/<provider_name>_regions.py`
@@ -1774,7 +1774,7 @@ The implementation of the mutelist is the same as the [SDK providers](#step-5-im
 Region management is essential for cloud providers that operate across multiple geographic locations. This component handles region validation and provides region-specific functionality.
 
 <Note>
-Regions are optional, only if the provider has regions, for example Github does not have regions, but AWS does.
+Regions are optional, only if the provider has regions, for example GitHub does not have regions, but AWS does.
 </Note>
 
 **File:** `prowler/providers/<provider_name>/lib/regions/<provider_name>_regions.py`

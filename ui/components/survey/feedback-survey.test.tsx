@@ -315,6 +315,7 @@ describe("FeedbackSurvey", () => {
     ).toBeVisible();
     const input = screen.getByPlaceholderText("Type your answer here");
     expect(input).toBeVisible();
+    expect(input).not.toHaveAttribute("maxlength");
     expect(screen.getByRole("button", { name: "Submit answer" })).toBeVisible();
   });
 

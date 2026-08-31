@@ -148,6 +148,29 @@ describe("TrialSidebarBanner", () => {
     ).toHaveAttribute("href", "/billing");
   });
 
+  it("renders the cancelled subscription card with the terminal treatment", () => {
+    // Given / When
+    render(
+      <TrialSidebarBanner variant={TRIAL_SIDEBAR_BANNER_VARIANT.CANCELLED} />,
+    );
+
+    // Then
+    const banner = screen.getByRole("status", {
+      name: "Cancelled subscription",
+    });
+    expect(banner).toHaveTextContent("Subscription cancelled");
+    expect(banner).toHaveTextContent("Subscription required");
+    expect(banner).toHaveTextContent(
+      "Scans are paused and your assessment data remains available. Subscribe again to continue scanning.",
+    );
+    expect(banner).toHaveAttribute("data-urgency", "critical");
+    expect(
+      screen.getByRole("link", {
+        name: "Explore plans after your cancelled subscription",
+      }),
+    ).toHaveAttribute("href", "/billing");
+  });
+
   it("invokes the sidebar selection callback from the billing CTA", async () => {
     // Given
     const user = userEvent.setup();

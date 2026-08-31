@@ -52,6 +52,16 @@ provider/alibabacloud:
       - any-glob-to-any-file: "prowler/providers/alibabacloud/**"
       - any-glob-to-any-file: "tests/providers/alibabacloud/**"
 
+provider/huaweicloud:
+  - changed-files:
+      - any-glob-to-any-file: "prowler/providers/huaweicloud/**"
+      - any-glob-to-any-file: "tests/providers/huaweicloud/**"
+
+provider/image:
+  - changed-files:
+      - any-glob-to-any-file: "prowler/providers/image/**"
+      - any-glob-to-any-file: "tests/providers/image/**"
+
 provider/cloudflare:
   - changed-files:
       - any-glob-to-any-file: "prowler/providers/cloudflare/**"
@@ -81,6 +91,11 @@ provider/linode:
   - changed-files:
       - any-glob-to-any-file: "prowler/providers/linode/**"
       - any-glob-to-any-file: "tests/providers/linode/**"
+
+provider/stackit:
+  - changed-files:
+      - any-glob-to-any-file: "prowler/providers/stackit/**"
+      - any-glob-to-any-file: "tests/providers/stackit/**"
 
 github_actions:
   - changed-files:

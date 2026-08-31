@@ -1,6 +1,7 @@
 "use client";
 
-import { type ReactNode, type SubmitEvent } from "react";
+import posthogClient from "posthog-js";
+import { type ReactNode, type SubmitEvent, useState } from "react";
 
 import {
   Conversation,
@@ -19,6 +20,7 @@ import {
   parseLighthouseV2ModelSelectionValue,
 } from "@/app/(prowler)/lighthouse/_lib/model-selection";
 import {
+  LIGHTHOUSE_V2_MESSAGE_ROLE,
   LIGHTHOUSE_V2_PROVIDER_TYPE,
   type LighthouseV2Configuration,
   type LighthouseV2ProviderType,
@@ -33,12 +35,17 @@ import {
 } from "@/components/shadcn/combobox/combobox";
 import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
 import { useLighthouseCurrentContext } from "@/hooks/use-lighthouse-context";
+import { useMountEffect } from "@/hooks/use-mount-effect";
 
 import { ProviderIcon } from "../config/provider-icon";
 
 import { ChatComposerPanel } from "./composer";
 import { ChatEmptyState } from "./empty-state";
 import { useLighthouseChatStore } from "./lighthouse-chat-store-provider";
+import {
+  resolveLighthouseFeedbackSurvey,
+  type LighthouseFeedbackSurvey,
+} from "./lighthouse-feedback-survey";
 import { MessageBubble } from "./message-bubble";
 import { SkillComposerPill } from "./skill-composer-pill";
 import { SkillRunProgress } from "./skill-run-progress";
@@ -62,6 +69,7 @@ export function LighthouseV2ChatView({
   emptyStateFooter,
 }: LighthouseV2ChatViewProps) {
   const currentContext = useLighthouseCurrentContext();
+  const feedbackSurvey = useLighthouseOutcomeFeedbackSurvey();
   // Whole-store subscription is intentional: the view renders most of the state and selectLighthouseChatCanSend takes full state.
   const state = useLighthouseChatStore((current) => current);
   const {
@@ -72,6 +80,7 @@ export function LighthouseV2ChatView({
     feedback,
     isLoadingSession,
     lastSubmission,
+    failedOutcomeMessageId,
     selectedModelSelection,
     modelPreferenceSaving,
     setInput,
@@ -142,9 +151,14 @@ export function LighthouseV2ChatView({
     Boolean(streamState.assistantText) ||
     streamState.toolCalls.length > 0;
   const hasConversation = messages.length > 0 || hasLiveAssistantActivity;
+  const failedOutcomeFeedbackTarget = failedOutcomeMessageId
+    ? messages.find((message) => message.id === failedOutcomeMessageId)
+    : undefined;
 
   const composerPanelProps = {
     feedback,
+    feedbackTarget: failedOutcomeFeedbackTarget,
+    feedbackSurvey,
     canRetry:
       streamState.status === LIGHTHOUSE_V2_STREAM_STATUS.DISCONNECTED &&
       lastSubmission !== null,
@@ -200,14 +214,22 @@ export function LighthouseV2ChatView({
             scrollClassName="minimal-scrollbar overflow-x-hidden overflow-y-auto"
           >
             {messages.map((message, index) => {
-              const skillRun = getSkillRunFromLaunch(
-                message,
-                messages[index - 1],
-              );
+              const previousMessage = messages[index - 1];
+              const skillRun = getSkillRunFromLaunch(message, previousMessage);
+              // The assistant owns the controls visually; its adjacent persisted
+              // user turn remains the API task/trace feedback target.
+              const feedbackTarget =
+                message.role === LIGHTHOUSE_V2_MESSAGE_ROLE.ASSISTANT &&
+                previousMessage?.role === LIGHTHOUSE_V2_MESSAGE_ROLE.USER &&
+                !previousMessage.id.startsWith("optimistic-")
+                  ? previousMessage
+                  : undefined;
               return (
                 <MessageBubble
                   key={message.id}
                   message={message}
+                  feedbackTarget={feedbackTarget}
+                  feedbackSurvey={feedbackSurvey}
                   skillRun={skillRun}
                   onLaunchSkill={(skill) => {
                     // The DyR prompts hand follow-up skills off to a separate
@@ -273,6 +295,18 @@ export function LighthouseV2ChatView({
       {chatBody}
     </div>
   );
+}
+
+function useLighthouseOutcomeFeedbackSurvey(): LighthouseFeedbackSurvey | null {
+  const [survey, setSurvey] = useState<LighthouseFeedbackSurvey | null>(null);
+
+  useMountEffect(() => {
+    return posthogClient.onSurveysLoaded((surveys) => {
+      setSurvey(resolveLighthouseFeedbackSurvey(surveys));
+    });
+  });
+
+  return survey;
 }
 
 function SessionLoadingState() {

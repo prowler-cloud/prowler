@@ -8,24 +8,34 @@ ENV POWERSHELL_VERSION=${POWERSHELL_VERSION}
 # Opt out of PowerShell telemetry (Application Insights -> dc.services.visualstudio.com)
 ENV POWERSHELL_TELEMETRY_OPTOUT=1
 
-ARG TRIVY_VERSION=0.73.0
+ARG TRIVY_VERSION=0.74.0
 ENV TRIVY_VERSION=${TRIVY_VERSION}
 
 ARG ZIZMOR_VERSION=1.24.1
 ENV ZIZMOR_VERSION=${ZIZMOR_VERSION}
 
 # Pinned here, not fetched with the artefact: a compromised release ships its own checksum.
-ARG TRIVY_SHA256_AMD64=2edd39da482bb4e9831962487b68f68e3928ec3137794757f54d00383d79547b
-ARG TRIVY_SHA256_ARM64=13833d97e8a1a5367471c372a173180157f593bece570e20d5d925fef552f5dd
+ARG TRIVY_SHA256_AMD64=2ae6fe3ee734b7fdf11335663e18c75ea12dccc76062f09f164a3b0f8be4371a
+ARG TRIVY_SHA256_ARM64=b94ce1976bbf3c15b514b605ee88be7c6d94a29be2302847ff01cb794d47aad5
 ARG POWERSHELL_SHA256_AMD64=492ff26bb958336bf61e597ce19e07648b4003bd2a08659e02f0e3e0446ebfe0
 ARG POWERSHELL_SHA256_ARM64=2503b71da3e83635592b092df59a0aca4c3606b4d9b068217bb00be989cb0d56
 ARG ZIZMOR_SHA256_AMD64=a8000f3c683319a523d3b20df0e75457ba591f049cfcbfa98966631b56733c03
 ARG ZIZMOR_SHA256_ARM64=d66e37ef8a375fb07939c630ebf9709a6e0f20242bdc3faf672a7ed97e0b768d
 
+# High CVEs fixed in Debian trixie-security but not yet in the pinned base image:
+#   openssl/libssl3t64/openssl-provider-legacy 3.5.7-1~deb13u2  CVE-2026-14456,
+#   -14457, -18798, -54874, -63072, -63073, -63074, -63075, -63076, -75803
+#   (image ships 3.5.6-1~deb13u2)
+# Taken as a targeted --only-upgrade rather than by moving the digest: the newest
+# published python:3.12-slim-trixie carries the same vulnerable version. The three
+# packages are all built from openssl and are flagged separately, so all are named.
+# Drop them once the base image ships 3.5.7-1~deb13u2 or later.
 # hadolint ignore=DL3008
 RUN apt-get update && apt-get install -y --no-install-recommends \
     wget libicu76 libunwind8 libssl3 libcurl4 ca-certificates apt-transport-https gnupg \
     build-essential pkg-config libzstd-dev zlib1g-dev \
+    && apt-get install -y --no-install-recommends --only-upgrade \
+       util-linux libssl3t64 openssl openssl-provider-legacy \
     && rm -rf /var/lib/apt/lists/*
 
 # Install PowerShell
