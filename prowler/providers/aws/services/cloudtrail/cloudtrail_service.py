@@ -86,10 +86,12 @@ class Cloudtrail(AWSService):
                 if not self.trails:
                     self.trails = None
             else:
+                self.trails_unavailable = True
                 logger.error(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         except Exception as error:
+            self.trails_unavailable = True
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )

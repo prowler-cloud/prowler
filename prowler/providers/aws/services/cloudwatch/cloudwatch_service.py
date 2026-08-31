@@ -63,10 +63,12 @@ class CloudWatch(AWSService):
                 if not self.metric_alarms:
                     self.metric_alarms = None
             else:
+                self.metric_alarms_unavailable = True
                 logger.error(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         except Exception as error:
+            self.metric_alarms_unavailable = True
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
@@ -193,10 +195,12 @@ class Logs(AWSService):
                 if not self.metric_filters:
                     self.metric_filters = None
             else:
+                self.metric_filters_unavailable = True
                 logger.error(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         except Exception as error:
+            self.metric_filters_unavailable = True
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
@@ -243,10 +247,12 @@ class Logs(AWSService):
                     self.all_log_groups = None
                     self.log_groups = None
             else:
+                self.log_groups_unavailable = True
                 logger.error(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         except Exception as error:
+            self.log_groups_unavailable = True
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )

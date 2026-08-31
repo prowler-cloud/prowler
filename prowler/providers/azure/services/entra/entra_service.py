@@ -44,7 +44,7 @@ class Entra(AzureService):
         # with a 403 when the tenant lacks Entra ID P1/P2 or the application
         # lacks AuditLog.Read.All, so users are re-fetched without
         # signInActivity and the tenant is recorded here.
-        self.sign_in_activity_unavailable: dict[str, str] = {}
+        self.sign_in_activity_errors: dict[str, str] = {}
         # Get users first alone because it is a dependency for other attributes
         self.users = loop.run_until_complete(self._get_users())
 
@@ -80,7 +80,7 @@ class Entra(AzureService):
         Users are requested with ``signInActivity``. When Graph rejects that
         request (the tenant lacks Entra ID P1/P2 or the application lacks
         ``AuditLog.Read.All``), the tenant is recorded in
-        ``self.sign_in_activity_unavailable`` and the users are fetched again
+        ``self.sign_in_activity_errors`` and the users are fetched again
         without ``signInActivity`` so the remaining user checks can still run.
 
         Returns:
@@ -102,11 +102,21 @@ class Entra(AzureService):
                         )
                     )
                 except Exception as error:
-                    # signInActivity requires Entra ID P1/P2 and AuditLog.Read.All;
-                    # without them Graph rejects the whole request. Record it and
-                    # retry without the property so the other user checks still run.
+                    status = getattr(error, "response_status_code", None)
                     reason = self._describe_graph_error(error)
-                    self.sign_in_activity_unavailable[tenant] = reason
+                    if status != 403:
+                        # Transient or unexpected failure (throttling, 5xx,
+                        # network): do not blame licensing/permissions and do
+                        # not degrade the tenant's sign-in evaluation to MANUAL.
+                        logger.error(
+                            f"{tenant} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+                        continue
+                    # A 403 means signInActivity is rejected for the whole
+                    # request (no Entra ID P1/P2 or missing AuditLog.Read.All).
+                    # Record it and retry without the property so the other
+                    # user checks still run.
+                    self.sign_in_activity_errors[tenant] = reason
                     logger.error(
                         f"{tenant} -- sign-in activity unavailable, retrying without signInActivity: {reason}"
                     )

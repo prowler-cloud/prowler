@@ -15,10 +15,13 @@ class rolesanywhere_trust_anchor_pqc_pki(Check):
     """Verify that IAM Roles Anywhere trust anchors are backed by a post-quantum PKI.
 
     For trust anchors whose source is ``AWS_ACM_PCA``, the linked Private CA's
-    ``KeyAlgorithm`` is checked against the configured ML-DSA allowlist.
+    ``KeyAlgorithm`` is checked against the configured ML-DSA allowlist. A CA
+    that exists but cannot be inspected (cross-account or missing acm-pca
+    permissions) is a data-availability gap and is reported as MANUAL.
     Trust anchors backed by an external ``CERTIFICATE_BUNDLE`` are reported as
-    FAIL because their certificate signature algorithm cannot be inspected
-    from the IAM Roles Anywhere API alone.
+    FAIL by design: the bundle is user-supplied rather than an AWS-managed CA,
+    so migrating to an ML-DSA AWS Private CA is the remediation regardless of
+    the bundle's contents.
     """
 
     def execute(self) -> list[Check_Report_AWS]:

@@ -305,3 +305,60 @@ def test_azure_entra__get_users_handles_pagination():
     assert users["tenant-1"]["user-2"].account_enabled is True
     assert users["tenant-1"]["user-3"].is_mfa_capable is False
     assert users["tenant-1"]["user-3"].account_enabled is True
+
+
+class TestGetUsersSignInActivity:
+    """Service-level coverage for the signInActivity 403 fallback."""
+
+    @staticmethod
+    def _graph_error(status):
+        error = Exception("graph error")
+        error.response_status_code = status
+        return error
+
+    @staticmethod
+    def _users_response():
+        from types import SimpleNamespace
+
+        return SimpleNamespace(value=[], odata_next_link=None)
+
+    def _service(self, side_effect):
+        # SimpleNamespace instead of MagicMock: several check tests assign
+        # attributes on the MagicMock *class*, which would shadow instance
+        # child mocks here.
+        from types import SimpleNamespace
+        from unittest.mock import AsyncMock
+
+        from prowler.providers.azure.services.entra.entra_service import Entra
+
+        service = Entra.__new__(Entra)
+        client = SimpleNamespace(
+            users=SimpleNamespace(get=AsyncMock(side_effect=side_effect))
+        )
+        service.clients = {"tenant.onmicrosoft.com": client}
+        service.sign_in_activity_errors = {}
+        service._get_user_registration_details = AsyncMock(return_value={})
+        return service
+
+    def test_403_records_tenant_and_retries_without_sign_in_activity(self):
+        import asyncio
+
+        service = self._service(
+            side_effect=[self._graph_error(403), self._users_response()]
+        )
+        users = asyncio.run(service._get_users())
+
+        assert "tenant.onmicrosoft.com" in service.sign_in_activity_errors
+        assert "403" in service.sign_in_activity_errors["tenant.onmicrosoft.com"]
+        assert users == {"tenant.onmicrosoft.com": {}}
+        assert service.clients["tenant.onmicrosoft.com"].users.get.await_count == 2
+
+    def test_transient_error_does_not_blame_licensing(self):
+        import asyncio
+
+        service = self._service(side_effect=[self._graph_error(503)])
+        users = asyncio.run(service._get_users())
+
+        assert service.sign_in_activity_errors == {}
+        assert users == {"tenant.onmicrosoft.com": {}}
+        assert service.clients["tenant.onmicrosoft.com"].users.get.await_count == 1

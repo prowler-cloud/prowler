@@ -5,9 +5,28 @@ from prowler.providers.gcp.services.iam.accessapproval_client import (
 
 
 class iam_account_access_approval_enabled(Check):
-    def execute(self) -> Check_Report_GCP:
+    """Ensure Access Approval is enabled for every audited project.
+
+    - PASS: The project has Access Approval settings configured.
+    - FAIL: Access Approval is not configured (404 on the settings read), or
+      the accessapproval.googleapis.com API is disabled — with the API off,
+      Access Approval provably cannot be enabled.
+    - MANUAL: The settings could not be read (permission error) or the API
+      activation state could not be determined.
+    """
+
+    def execute(self) -> list[Check_Report_GCP]:
+        """Evaluate Access Approval for the audited projects.
+
+        Returns:
+            list[Check_Report_GCP]: One report per audited project.
+        """
         findings = []
         for project_id in accessapproval_client.project_ids:
+            # Under --skip-api-check a disabled API is detected while reading
+            # the settings; those projects are reported by the loop below.
+            if project_id in accessapproval_client.api_disabled_project_ids:
+                continue
             report = Check_Report_GCP(
                 metadata=self.metadata(),
                 resource=accessapproval_client.projects[project_id],

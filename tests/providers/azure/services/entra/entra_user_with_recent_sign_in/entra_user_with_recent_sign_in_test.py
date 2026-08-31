@@ -14,7 +14,7 @@ TENANT_ID = TENANT_IDS[0]
 class Test_entra_user_with_recent_sign_in:
     def test_entra_no_tenants(self):
         entra_client = mock.MagicMock
-        entra_client.sign_in_activity_unavailable = {}
+        entra_client.sign_in_activity_errors = {}
         entra_client.tenant_ids = [TENANT_ID]
 
         with (
@@ -39,7 +39,7 @@ class Test_entra_user_with_recent_sign_in:
 
     def test_entra_user_disabled(self):
         entra_client = mock.MagicMock
-        entra_client.sign_in_activity_unavailable = {}
+        entra_client.sign_in_activity_errors = {}
         entra_client.tenant_ids = [TENANT_ID]
         user_id = str(uuid4())
 
@@ -73,7 +73,7 @@ class Test_entra_user_with_recent_sign_in:
 
     def test_entra_user_never_signed_in(self):
         entra_client = mock.MagicMock
-        entra_client.sign_in_activity_unavailable = {}
+        entra_client.sign_in_activity_errors = {}
         entra_client.tenant_ids = [TENANT_ID]
         user_id = str(uuid4())
 
@@ -109,7 +109,7 @@ class Test_entra_user_with_recent_sign_in:
 
     def test_entra_single_user_no_sign_in_data_fails(self):
         entra_client = mock.MagicMock
-        entra_client.sign_in_activity_unavailable = {}
+        entra_client.sign_in_activity_errors = {}
         entra_client.tenant_ids = [TENANT_ID]
         user_id = str(uuid4())
 
@@ -145,7 +145,7 @@ class Test_entra_user_with_recent_sign_in:
 
     def test_entra_user_stale_sign_in(self):
         entra_client = mock.MagicMock
-        entra_client.sign_in_activity_unavailable = {}
+        entra_client.sign_in_activity_errors = {}
         entra_client.tenant_ids = [TENANT_ID]
         user_id = str(uuid4())
 
@@ -181,7 +181,7 @@ class Test_entra_user_with_recent_sign_in:
 
     def test_entra_user_recent_sign_in(self):
         entra_client = mock.MagicMock
-        entra_client.sign_in_activity_unavailable = {}
+        entra_client.sign_in_activity_errors = {}
         entra_client.tenant_ids = [TENANT_ID]
         user_id = str(uuid4())
 
@@ -217,7 +217,7 @@ class Test_entra_user_with_recent_sign_in:
 
     def test_entra_all_users_no_sign_in_data_fail(self):
         entra_client = mock.MagicMock
-        entra_client.sign_in_activity_unavailable = {}
+        entra_client.sign_in_activity_errors = {}
         entra_client.tenant_ids = [TENANT_ID]
 
         with (
@@ -254,11 +254,11 @@ class Test_entra_user_with_recent_sign_in:
             assert len(result) == 5
             assert all(r.status == "FAIL" for r in result)
 
-    def test_entra_sign_in_activity_unavailable_reports_single_manual(self):
+    def test_entra_sign_in_activity_errors_reports_single_manual(self):
         """Graph refused signInActivity (no P1/P2 or AuditLog.Read.All) -> one tenant MANUAL."""
         entra_client = mock.MagicMock
         entra_client.tenant_ids = [TENANT_ID]
-        entra_client.sign_in_activity_unavailable = {
+        entra_client.sign_in_activity_errors = {
             DOMAIN: "ODataError HTTP 403 Authentication_RequestFromNonPremiumTenantOrB2CTenant"
         }
 
@@ -303,7 +303,7 @@ class Test_entra_user_with_recent_sign_in:
 
     def test_entra_user_never_signed_in_when_telemetry_exists_for_tenant(self):
         entra_client = mock.MagicMock
-        entra_client.sign_in_activity_unavailable = {}
+        entra_client.sign_in_activity_errors = {}
         entra_client.tenant_ids = [TENANT_ID]
 
         with (
@@ -355,7 +355,7 @@ class Test_entra_user_with_recent_sign_in:
 
     def test_entra_user_boundary_90_days(self):
         entra_client = mock.MagicMock
-        entra_client.sign_in_activity_unavailable = {}
+        entra_client.sign_in_activity_errors = {}
         entra_client.tenant_ids = [TENANT_ID]
         user_id = str(uuid4())
 

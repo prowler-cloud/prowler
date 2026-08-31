@@ -1972,3 +1972,21 @@ class TestGetOAuthApps:
         response.results = []
         service = self._entra_with_hunting_response(response)
         assert asyncio.run(service._get_oauth_apps()) == {}
+
+
+class TestGetUsersError:
+    def test_users_error_set_on_graph_failure(self):
+        """A failing /users request must set users_error and return no users."""
+        service = entra_service.Entra.__new__(entra_service.Entra)
+        service.users_error = None
+        # SimpleNamespace: check tests assign attributes on the MagicMock
+        # class, which would shadow instance child mocks here.
+        service.client = SimpleNamespace(
+            users=SimpleNamespace(get=AsyncMock(side_effect=Exception("boom")))
+        )
+
+        users = asyncio.run(service._get_users())
+
+        assert users == {}
+        assert service.users_error is not None
+        assert "Unable to retrieve users from Microsoft Graph" in service.users_error

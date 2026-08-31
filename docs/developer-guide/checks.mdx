@@ -147,11 +147,12 @@ When the service layer cannot obtain the data a check depends on, the check must
 
 The service layer must make the distinction possible: log the error and expose it to checks in a way that cannot be confused with a legitimate empty result. Common patterns already used in Prowler are:
 
-- Defaulting the attribute to `None` (data could not be read) instead of `[]`/`{}` (data was read and is empty), e.g. `logs_client.metric_filters is None` in the AWS CloudWatch checks.
+- Defaulting the attribute to `None` (data could not be read) instead of `[]`/`{}` (data was read and is empty), e.g. the `metric_filters is not None` guard in `prowler/providers/aws/services/cloudwatch/lib/metric_filters.py`.
+- Keeping an availability flag raised on any denied listing, e.g. `logs_client.metric_filters_unavailable` consumed by the AWS CloudWatch metric filter checks.
 - Keeping an error flag or message next to the data, e.g. `entra_client.user_registration_details_error` in M365 or `*_scan_errors` in AWS Bedrock.
 - Keeping a set of resources whose lookup failed, e.g. `accessapproval_client.settings_lookup_failed` in GCP.
 
-Make sure the error branch only captures real access errors. A `404`/not-found response frequently means the feature is simply not configured, which **is** a legitimate `FAIL`; a `403`, an "API not enabled" error or an unexpected exception is not.
+Make sure the error branch only captures real access errors. A `404`/not-found response frequently means the feature is simply not configured, which **is** a legitimate `FAIL`; a `403` or an unexpected exception is not. An "API not enabled" error is usually a scan-configuration problem too — **except** when the API's activation is itself the control being audited (e.g. GCP Access Approval: with `accessapproval.googleapis.com` disabled the feature provably cannot be enabled, so a definitive API-disabled state is a legitimate `FAIL`, while an undetermined state stays `MANUAL`).
 
 ```python
 if <service>_client.<data> is None:

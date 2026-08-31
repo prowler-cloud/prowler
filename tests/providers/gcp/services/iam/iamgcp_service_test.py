@@ -158,6 +158,74 @@ class TestAccessApproval:
         assert access_approval_client.settings == {}
         assert access_approval_client.settings_lookup_failed == {GCP_PROJECT_ID}
 
+    def test_access_approval_api_disabled_is_tracked(self):
+        """A DISABLED serviceusage state must land in api_disabled_project_ids."""
+        serviceusage_client = MagicMock()
+        serviceusage_client.services().get().execute.return_value = {
+            "state": "DISABLED"
+        }
+
+        provider = set_mocked_gcp_provider(project_ids=[GCP_PROJECT_ID])
+        # The fixture is a MagicMock: make the API-activation precheck run.
+        provider.skip_api_check = False
+
+        with (
+            patch(
+                "prowler.providers.gcp.lib.service.service.discovery.build",
+                return_value=serviceusage_client,
+            ),
+            patch(
+                "prowler.providers.gcp.lib.service.service.GCPService.__generate_client__",
+                return_value=MagicMock(),
+            ),
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=provider,
+            ),
+        ):
+            from prowler.providers.gcp.services.iam.iam_service import AccessApproval
+
+            access_approval_client = AccessApproval(provider)
+
+            assert access_approval_client.project_ids == []
+            assert access_approval_client.api_disabled_project_ids == {GCP_PROJECT_ID}
+            assert access_approval_client.api_state_unknown_project_ids == set()
+            assert access_approval_client.settings == {}
+
+    def test_access_approval_api_state_unknown_is_tracked(self):
+        """A failing serviceusage call must land in api_state_unknown_project_ids."""
+        serviceusage_client = MagicMock()
+        serviceusage_client.services().get().execute.side_effect = Exception(
+            "PERMISSION_DENIED: serviceusage.services.get"
+        )
+
+        provider = set_mocked_gcp_provider(project_ids=[GCP_PROJECT_ID])
+        provider.skip_api_check = False
+
+        with (
+            patch(
+                "prowler.providers.gcp.lib.service.service.discovery.build",
+                return_value=serviceusage_client,
+            ),
+            patch(
+                "prowler.providers.gcp.lib.service.service.GCPService.__generate_client__",
+                return_value=MagicMock(),
+            ),
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=provider,
+            ),
+        ):
+            from prowler.providers.gcp.services.iam.iam_service import AccessApproval
+
+            access_approval_client = AccessApproval(provider)
+
+            assert access_approval_client.project_ids == []
+            assert access_approval_client.api_disabled_project_ids == set()
+            assert access_approval_client.api_state_unknown_project_ids == {
+                GCP_PROJECT_ID
+            }
+
 
 class TestEssentialContacts:
     def test_service(self):
@@ -199,37 +267,3 @@ class TestEssentialContacts:
             assert essential_contacts_client.organizations[1].name == "Organization 2"
             assert essential_contacts_client.organizations[1].id == "987654321"
             assert not essential_contacts_client.organizations[1].contacts
-
-    def test_api_disabled_project_is_tracked_as_inactive(self):
-        """A DISABLED serviceusage state must land in inactive_api_project_ids."""
-        serviceusage_client = MagicMock()
-        serviceusage_client.services().get().execute.return_value = {
-            "state": "DISABLED"
-        }
-
-        provider = set_mocked_gcp_provider(project_ids=[GCP_PROJECT_ID])
-        # The fixture is a MagicMock: make the API-activation precheck run.
-        provider.skip_api_check = False
-
-        with (
-            patch(
-                "prowler.providers.gcp.lib.service.service.discovery.build",
-                return_value=serviceusage_client,
-            ),
-            patch(
-                "prowler.providers.gcp.lib.service.service.GCPService.__generate_client__",
-                return_value=MagicMock(),
-            ),
-            patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=provider,
-            ),
-        ):
-            from prowler.providers.gcp.services.iam.iam_service import AccessApproval
-
-            access_approval_client = AccessApproval(provider)
-
-            assert access_approval_client.project_ids == []
-            assert access_approval_client.api_disabled_project_ids == {GCP_PROJECT_ID}
-            assert access_approval_client.api_state_unknown_project_ids == set()
-            assert access_approval_client.settings == {}

@@ -21,7 +21,7 @@ class entra_user_with_recent_sign_in(Check):
         findings = []
 
         for tenant_domain, users in entra_client.users.items():
-            if tenant_domain in entra_client.sign_in_activity_unavailable:
+            if tenant_domain in entra_client.sign_in_activity_errors:
                 report = Check_Report_Azure(metadata=self.metadata(), resource={})
                 report.subscription = f"Tenant: {tenant_domain}"
                 report.resource_name = tenant_domain
@@ -30,7 +30,7 @@ class entra_user_with_recent_sign_in(Check):
                 report.status_extended = (
                     f"Cannot evaluate sign-in activity for tenant {tenant_domain}: "
                     f"Microsoft Graph did not return sign-in activity "
-                    f"({entra_client.sign_in_activity_unavailable[tenant_domain]}). "
+                    f"({entra_client.sign_in_activity_errors[tenant_domain]}). "
                     f"Verify that the tenant has Entra ID P1/P2 licensing and the "
                     f"scanning application has the AuditLog.Read.All permission."
                 )

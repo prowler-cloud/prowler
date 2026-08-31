@@ -245,6 +245,17 @@ class AccessApproval(GCPService):
                     logger.info(
                         f"{self.region} -- Access Approval settings not found for project {project_id}: {error}"
                     )
+                elif error.status_code == 403 and (
+                    "SERVICE_DISABLED" in str(error)
+                    or "has not been used" in str(error)
+                ):
+                    # Under --skip-api-check the API-activation precheck does
+                    # not run; a SERVICE_DISABLED 403 here is the same
+                    # definitive "API disabled" state.
+                    self.api_disabled_project_ids.add(project_id)
+                    logger.info(
+                        f"{self.region} -- Access Approval API disabled for project {project_id}: {error}"
+                    )
                 else:
                     self.settings_lookup_failed.add(project_id)
                     logger.error(
