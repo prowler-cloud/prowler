@@ -1,5 +1,3 @@
-"use client";
-
 import { Check, CircleAlert, Loader2, type LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
