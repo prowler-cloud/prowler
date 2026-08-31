@@ -917,6 +917,8 @@ class TestCyberEssentialsFramework:
         assert "alibabacloud" in fw.get_providers()
         assert fw.supports_provider("azure")
         assert fw.supports_provider("alibabacloud")
+        assert len(fw.requirements) == 28
+        assert all("alibabacloud" in req.checks for req in fw.requirements)
 
     def test_alibabacloud_check_ids_exist(self):
         # Nothing validates check IDs at load time, so a typo silently
