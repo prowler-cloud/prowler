@@ -508,8 +508,8 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
 
   /**
    * Re-read the workspace's channels, the way a user does after inviting
-   * `@Prowler` to one in Slack. Waits for the read to have settled, not for the
-   * click alone.
+   * `@Prowler Cloud` to one in Slack. Waits for the read to have settled, not
+   * for the click alone.
    */
   async refreshChannels(): Promise<void> {
     const readsBefore = this.channelListCallCount;
@@ -825,12 +825,25 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     return this.containsText(/Could not read the workspace/);
   }
 
+  private channelInviteHintParagraph(): HTMLElement | null {
+    return (
+      Array.from(this.container.querySelectorAll<HTMLElement>("p")).find(
+        (element) => /invites? @Prowler Cloud/.test(element.textContent ?? ""),
+      ) ?? null
+    );
+  }
+
   /** The invite copy that says how to make a private channel appear. */
   channelInviteHint(): string | null {
-    const hint = Array.from(
-      this.container.querySelectorAll<HTMLElement>("p"),
-    ).find((element) => /invites? @Prowler/.test(element.textContent ?? ""));
+    const hint = this.channelInviteHintParagraph();
     return hint ? (hint.textContent ?? "").trim() : null;
+  }
+
+  /** Where the invite hint sends a user stuck on a missing private channel. */
+  channelInviteHintDocsUrl(): string | null {
+    const link =
+      this.channelInviteHintParagraph()?.querySelector<HTMLAnchorElement>("a");
+    return link ? link.href : null;
   }
 
   // --- Disconnecting ------------------------------------------------------

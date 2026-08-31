@@ -19,6 +19,10 @@ export const DOCS_URLS = {
   GCP_ORGANIZATIONS:
     "https://docs.prowler.com/user-guide/tutorials/prowler-cloud-gcp-organizations",
   ALERTS: "https://docs.prowler.com/user-guide/tutorials/prowler-app-alerts",
+  SLACK_INTEGRATION:
+    "https://docs.prowler.com/user-guide/tutorials/prowler-app-slack-integration",
+  SLACK_INTEGRATION_PRIVATE_CHANNELS:
+    "https://docs.prowler.com/user-guide/tutorials/prowler-app-slack-integration#why-a-private-channel-is-missing-from-the-channel-list",
   SCAN_CONFIGURATION:
     "https://docs.prowler.com/user-guide/tutorials/prowler-app-scan-configuration",
   ATTACK_PATHS_CUSTOM_QUERIES:

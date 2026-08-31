@@ -546,6 +546,20 @@ describe("authorizing destination channels", () => {
     expect(await harness.offersConnectionTest()).toBe(true);
   }, 30000);
 
+  it("sends a user stuck on a missing private channel to the docs section about it", async () => {
+    // Given — a connected workspace, so the picker's invite copy is on screen.
+    const harness = new SlackIntegrationHarness(connectedSlackFixture());
+
+    // When
+    await harness.mount();
+
+    // Then — the whole anchored URL: the anchor is the point of the link, and
+    // it is derived from a docs heading that a rewording would silently move.
+    expect(harness.channelInviteHintDocsUrl()).toBe(
+      "https://docs.prowler.com/user-guide/tutorials/prowler-app-slack-integration#why-a-private-channel-is-missing-from-the-channel-list",
+    );
+  }, 30000);
+
   it("names the wait Slack asked for when it rate limits the channel listing", async () => {
     // Given — `conversations.list` is Slack tier 2 and paginated (contract,
     // Errors); the `429` carries the wait in `Retry-After`.

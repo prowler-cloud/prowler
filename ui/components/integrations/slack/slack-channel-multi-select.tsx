@@ -11,6 +11,7 @@ import {
   Button,
   Label,
 } from "@/components/shadcn";
+import { CustomLink } from "@/components/shadcn/custom/custom-link";
 import {
   MultiSelect,
   MultiSelectContent,
@@ -18,13 +19,21 @@ import {
   MultiSelectTrigger,
   MultiSelectValue,
 } from "@/components/shadcn/select/multiselect";
+import { DOCS_URLS } from "@/lib/external-urls";
 import type { SlackChannelOption } from "@/types/integrations";
 
 const INVITE_HINT = (
   <>
     A private channel only appears here after someone invites{" "}
     <SlackInlineCode>@Prowler Cloud</SlackInlineCode> to it in Slack. Invite it,
-    then refresh.
+    then refresh.{" "}
+    <CustomLink
+      href={DOCS_URLS.SLACK_INTEGRATION_PRIVATE_CHANNELS}
+      ariaLabel="Learn more about why a private channel is missing from the channel list"
+      size="xs"
+    >
+      Learn more
+    </CustomLink>
   </>
 );
 
