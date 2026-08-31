@@ -42,7 +42,7 @@ def test_certificate_bundle_rejects_key_only_pkcs12():
         encryption_algorithm=serialization.NoEncryption(),
     )
 
-    with pytest.raises(ValueError, match="certificate and its private key"):
+    with pytest.raises(ValueError, match="does not contain a certificate"):
         validate_certificate_bundle(key_only_pkcs12)
 
 
@@ -61,6 +61,69 @@ def test_certificate_bundle_rejects_mismatched_pem_key():
 
     with pytest.raises(ValueError, match="does not match"):
         validate_certificate_bundle(mismatched_bundle)
+
+
+def test_certificate_bundle_rejects_encrypted_pem_key():
+    # `cryptography.load_pem_private_key(..., password=None)` raises
+    # TypeError for encrypted keys; the API relies on that specific type
+    # to route to `azure-certificate-content`, not a generic 500.
+    certificate, _ = _certificate_and_key()
+    encrypted_key_pem = rsa.generate_private_key(
+        public_exponent=65537, key_size=2048
+    ).private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.BestAvailableEncryption(b"prowler"),
+    )
+    encrypted_bundle = (
+        certificate.public_bytes(serialization.Encoding.PEM) + encrypted_key_pem
+    )
+
+    with pytest.raises(TypeError):
+        validate_certificate_bundle(encrypted_bundle)
+
+
+def test_certificate_bundle_normalizes_multi_key_bundle_when_second_key_matches():
+    # A PEM bundle may legitimately carry more than one private key block
+    # (e.g. legacy tools that export both RSA and PKCS#8 encodings).
+    # The validator must find the key that actually pairs with the leaf
+    # instead of stopping at the first `-----BEGIN PRIVATE KEY-----`.
+    leaf_cert, leaf_key = _certificate_and_key()
+    _, unrelated_key = _certificate_and_key()
+
+    leaf_cert_pem = leaf_cert.public_bytes(serialization.Encoding.PEM)
+    unrelated_key_pem = unrelated_key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption(),
+    )
+    leaf_key_pem = leaf_key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption(),
+    )
+    bundle = leaf_cert_pem + unrelated_key_pem + leaf_key_pem
+
+    normalized = validate_certificate_bundle(bundle)
+
+    # The leaf still leads (azure-identity's thumbprint invariant) and the
+    # matching key is the one paired in the normalized output.
+    assert normalized.startswith(leaf_cert_pem)
+    assert leaf_key_pem in normalized
+
+
+def test_certificate_bundle_rejects_oversized_payload():
+    # Legitimate PEM/PFX bundles are well under 10 KiB. Reject anything
+    # above the 50 KiB cap before base64 decoding + PKCS#12/PEM parsing
+    # allocate the doubled memory a multi-MB payload would need.
+    from prowler.providers.azure.lib.certificate import (
+        _MAX_CERTIFICATE_BUNDLE_BYTES,
+    )
+
+    oversized = b"\x00" * (_MAX_CERTIFICATE_BUNDLE_BYTES + 1)
+
+    with pytest.raises(ValueError, match="maximum bundle size"):
+        validate_certificate_bundle(oversized)
 
 
 def test_lighthouse_base_url_rejects_http_scheme():

@@ -107,7 +107,7 @@ from rest_framework_json_api import serializers
                     },
                     "certificate_content": {
                         "type": "string",
-                        "description": "Base64-encoded PEM certificate and private key content for certificate-based authentication.",
+                        "description": "Base64-encoded PEM or PKCS#12/PFX bundle containing the certificate and its matching private key for certificate-based authentication.",
                     },
                     "tenant_id": {
                         "type": "string",
@@ -169,7 +169,7 @@ from rest_framework_json_api import serializers
                     },
                     "certificate_content": {
                         "type": "string",
-                        "description": "The certificate content in base64 format for certificate-based authentication.",
+                        "description": "Base64-encoded PEM or PKCS#12/PFX bundle containing the certificate and its matching private key for certificate-based authentication.",
                     },
                 },
                 "required": [

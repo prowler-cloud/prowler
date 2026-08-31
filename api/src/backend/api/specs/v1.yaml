@@ -21316,8 +21316,9 @@ components:
                           in Azure AD.
                       certificate_content:
                         type: string
-                        description: Base64-encoded PEM certificate and private key
-                          content for certificate-based authentication.
+                        description: Base64-encoded PEM or PKCS#12/PFX bundle containing the certificate
+                          and its matching private key for certificate-based authentication.
+                        maxLength: 68266
                       tenant_id:
                         type: string
                         description: The Azure tenant ID, representing the directory
@@ -21368,8 +21369,9 @@ components:
                           where the application is registered.
                       certificate_content:
                         type: string
-                        description: The certificate content in base64 format for
-                          certificate-based authentication.
+                        description: Base64-encoded PEM or PKCS#12/PFX bundle containing the certificate
+                          and its matching private key for certificate-based authentication.
+                        maxLength: 68266
                     required:
                     - client_id
                     - tenant_id
@@ -23465,8 +23467,9 @@ components:
                       in Azure AD.
                   certificate_content:
                     type: string
-                    description: Base64-encoded PEM certificate and private key content
-                      for certificate-based authentication.
+                    description: Base64-encoded PEM or PKCS#12/PFX bundle containing the certificate
+                      and its matching private key for certificate-based authentication.
+                    maxLength: 68266
                   tenant_id:
                     type: string
                     description: The Azure tenant ID, representing the directory where
@@ -23517,8 +23520,9 @@ components:
                       the application is registered.
                   certificate_content:
                     type: string
-                    description: The certificate content in base64 format for certificate-based
-                      authentication.
+                    description: Base64-encoded PEM or PKCS#12/PFX bundle containing the certificate
+                      and its matching private key for certificate-based authentication.
+                    maxLength: 68266
                 required:
                 - client_id
                 - tenant_id
@@ -23930,8 +23934,9 @@ components:
                           in Azure AD.
                       certificate_content:
                         type: string
-                        description: Base64-encoded PEM certificate and private key
-                          content for certificate-based authentication.
+                        description: Base64-encoded PEM or PKCS#12/PFX bundle containing the certificate
+                          and its matching private key for certificate-based authentication.
+                        maxLength: 68266
                       tenant_id:
                         type: string
                         description: The Azure tenant ID, representing the directory
@@ -23982,8 +23987,9 @@ components:
                           where the application is registered.
                       certificate_content:
                         type: string
-                        description: The certificate content in base64 format for
-                          certificate-based authentication.
+                        description: Base64-encoded PEM or PKCS#12/PFX bundle containing the certificate
+                          and its matching private key for certificate-based authentication.
+                        maxLength: 68266
                     required:
                     - client_id
                     - tenant_id
@@ -24417,8 +24423,9 @@ components:
                       in Azure AD.
                   certificate_content:
                     type: string
-                    description: Base64-encoded PEM certificate and private key content
-                      for certificate-based authentication.
+                    description: Base64-encoded PEM or PKCS#12/PFX bundle containing the certificate
+                      and its matching private key for certificate-based authentication.
+                    maxLength: 68266
                   tenant_id:
                     type: string
                     description: The Azure tenant ID, representing the directory where
@@ -24469,8 +24476,9 @@ components:
                       the application is registered.
                   certificate_content:
                     type: string
-                    description: The certificate content in base64 format for certificate-based
-                      authentication.
+                    description: Base64-encoded PEM or PKCS#12/PFX bundle containing the certificate
+                      and its matching private key for certificate-based authentication.
+                    maxLength: 68266
                 required:
                 - client_id
                 - tenant_id

@@ -333,6 +333,98 @@ class TestAzureProviderSecret:
         assert "client_secret" in serializer.errors
         assert "certificate_content" in serializer.errors
 
+    def test_rejects_encrypted_pem_certificate_content(self):
+        # `load_pem_private_key(password=None)` raises TypeError for
+        # encrypted keys — the narrowed `except (binascii.Error, TypeError,
+        # ValueError)` in the serializer must catch it and surface the
+        # typed `azure-certificate-content` code rather than a 500.
+        import base64
+
+        from cryptography.hazmat.primitives import serialization
+        from cryptography.hazmat.primitives.asymmetric import rsa
+
+        certificate = self._self_signed_certificate()
+        encrypted_key_pem = rsa.generate_private_key(
+            public_exponent=65537, key_size=2048
+        ).private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.BestAvailableEncryption(b"prowler"),
+        )
+        bundle = (
+            certificate.public_bytes(serialization.Encoding.PEM) + encrypted_key_pem
+        )
+
+        serializer = AzureProviderSecret(
+            data={
+                **self.BASE,
+                "certificate_content": base64.b64encode(bundle).decode("ascii"),
+            }
+        )
+
+        assert not serializer.is_valid()
+        assert "certificate_content" in serializer.errors
+        assert (
+            serializer.errors["certificate_content"][0].code
+            == "azure-certificate-content"
+        )
+
+    def test_rejects_oversized_certificate_content(self):
+        # Payloads larger than the base64 cap must be rejected at the DRF
+        # field layer before base64 decoding or bundle parsing runs, so a
+        # multi-MB blob cannot exhaust API-worker memory.
+        from api.v1.serializers import _MAX_CERTIFICATE_CONTENT_LENGTH
+
+        serializer = AzureProviderSecret(
+            data={
+                **self.BASE,
+                "certificate_content": "A" * (_MAX_CERTIFICATE_CONTENT_LENGTH + 1),
+            }
+        )
+
+        assert not serializer.is_valid()
+        assert "certificate_content" in serializer.errors
+
+    def test_mutex_errors_carry_stable_codes(self):
+        # JSON:API clients key on `code`; without it they cannot tell the
+        # mutex ("both provided") apart from the required-material error
+        # ("neither provided") without string-matching the message.
+        both = AzureProviderSecret(
+            data={
+                **self.BASE,
+                "client_secret": "fake-client-secret",
+                "certificate_content": self.certificate_bundle(),
+            }
+        )
+        assert not both.is_valid()
+        assert both.errors["non_field_errors"][0].code == "azure-credential-mutex"
+
+        neither = AzureProviderSecret(data=self.BASE)
+        assert not neither.is_valid()
+        assert neither.errors["non_field_errors"][0].code == "azure-credential-required"
+
+    @staticmethod
+    def _self_signed_certificate():
+        from datetime import UTC, datetime, timedelta
+
+        from cryptography import x509
+        from cryptography.hazmat.primitives import hashes
+        from cryptography.hazmat.primitives.asymmetric import rsa
+        from cryptography.x509.oid import NameOID
+
+        private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "Prowler")])
+        return (
+            x509.CertificateBuilder()
+            .subject_name(subject)
+            .issuer_name(subject)
+            .public_key(private_key.public_key())
+            .serial_number(x509.random_serial_number())
+            .not_valid_before(datetime.now(UTC))
+            .not_valid_after(datetime.now(UTC) + timedelta(days=1))
+            .sign(private_key, hashes.SHA256())
+        )
+
 
 class TestOracleCloudProviderSecret:
     def valid_secret(self, **overrides):

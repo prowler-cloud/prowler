@@ -1,4 +1,5 @@
 import base64
+import binascii
 import json
 import logging
 from datetime import UTC, datetime, timedelta
@@ -1788,20 +1789,31 @@ class AwsProviderSecret(serializers.Serializer):
         resource_name = "provider-secrets"
 
 
+# Base64 cap that matches the SDK's 50 KiB `_MAX_CERTIFICATE_BUNDLE_BYTES`
+# limit on the decoded bundle. Rejects oversized payloads at the request
+# layer so DRF never allocates the doubled memory that base64 decoding plus
+# PKCS#12/PEM parsing would need for a multi-MB blob.
+_MAX_CERTIFICATE_CONTENT_LENGTH = 68266
+
+
 class AzureProviderSecret(serializers.Serializer):
     client_id = serializers.CharField()
     client_secret = serializers.CharField(required=False)
     tenant_id = serializers.CharField()
-    certificate_content = serializers.CharField(required=False)
+    certificate_content = serializers.CharField(
+        required=False, max_length=_MAX_CERTIFICATE_CONTENT_LENGTH
+    )
 
     def validate(self, attrs):
         if attrs.get("client_secret") and attrs.get("certificate_content"):
             raise serializers.ValidationError(
-                "You cannot provide both client_secret and certificate_content."
+                "You cannot provide both client_secret and certificate_content.",
+                code="azure-credential-mutex",
             )
         if not attrs.get("client_secret") and not attrs.get("certificate_content"):
             raise serializers.ValidationError(
-                "You must provide either client_secret or certificate_content."
+                "You must provide either client_secret or certificate_content.",
+                code="azure-credential-required",
             )
         return super().validate(attrs)
 
@@ -1811,7 +1823,12 @@ class AzureProviderSecret(serializers.Serializer):
             try:
                 certificate_data = base64.b64decode(certificate_content, validate=True)
                 validate_certificate_bundle(certificate_data)
-            except Exception as e:
+            # `binascii.Error` (bad base64), `TypeError` (encrypted PEM key)
+            # and `ValueError` (mismatched cert/key, oversized bundle,
+            # malformed bytes) are the failure modes `validate_certificate_bundle`
+            # and `base64.b64decode` surface. Anything else is a real bug
+            # and should propagate.
+            except (binascii.Error, TypeError, ValueError) as e:
                 logger.error(
                     f"{e.__class__.__name__}[{e.__traceback__.tb_lineno}]: {e}"
                 )
@@ -1836,16 +1853,20 @@ class M365ProviderSecret(serializers.Serializer):
     tenant_id = serializers.CharField()
     user = serializers.EmailField(required=False)
     password = serializers.CharField(required=False)
-    certificate_content = serializers.CharField(required=False)
+    certificate_content = serializers.CharField(
+        required=False, max_length=_MAX_CERTIFICATE_CONTENT_LENGTH
+    )
 
     def validate(self, attrs):
         if attrs.get("client_secret") and attrs.get("certificate_content"):
             raise serializers.ValidationError(
-                "You cannot provide both client_secret and certificate_content."
+                "You cannot provide both client_secret and certificate_content.",
+                code="m365-credential-mutex",
             )
         if not attrs.get("client_secret") and not attrs.get("certificate_content"):
             raise serializers.ValidationError(
-                "You must provide either client_secret or certificate_content."
+                "You must provide either client_secret or certificate_content.",
+                code="m365-credential-required",
             )
         return super().validate(attrs)
 
@@ -1854,7 +1875,9 @@ class M365ProviderSecret(serializers.Serializer):
         if certificate_content:
             try:
                 base64.b64decode(certificate_content, validate=True)
-            except Exception as e:
+            # `base64.b64decode(validate=True)` raises `binascii.Error`; the
+            # legacy alias `ValueError` is preserved for older builds.
+            except (binascii.Error, ValueError) as e:
                 # DRF field validators are already keyed to `certificate_content`,
                 # so raising a dict here would double-nest the JSON:API pointer.
                 raise serializers.ValidationError(
