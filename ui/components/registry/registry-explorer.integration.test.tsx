@@ -98,6 +98,7 @@ const readyState: RegistryBootstrapState = {
         providers: ["aws"],
         isVerified: true,
         isOfficial: true,
+        isBuiltin: false,
         isMeta: false,
         hasProvider: true,
         hasChecks: true,
@@ -120,6 +121,7 @@ const readyState: RegistryBootstrapState = {
         providers: ["azure"],
         isVerified: false,
         isOfficial: false,
+        isBuiltin: false,
         isMeta: false,
         hasProvider: false,
         hasChecks: true,
@@ -136,6 +138,7 @@ const readyState: RegistryBootstrapState = {
         providers: ["aws", "gcp"],
         isVerified: true,
         isOfficial: true,
+        isBuiltin: false,
         isMeta: true,
         hasProvider: true,
         hasChecks: true,
@@ -895,6 +898,97 @@ describe("RegistryExplorer", () => {
       ).toBeNull();
     });
 
+    it("adds non-member built-ins through the standard Add flow", async () => {
+      // Given
+      executeRegistryArtifactAdditionMock.mockResolvedValue({
+        status: "confirmed",
+        tenantArtifacts: [
+          { normalizedName: "built-in-guard", versionSpec: "latest" },
+        ],
+      });
+      const builtInState: RegistryBootstrapState = {
+        ...readyState,
+        catalog: {
+          ...readyState.catalog,
+          artifacts: [
+            {
+              ...readyState.catalog.artifacts[2],
+              normalizedName: "built-in-guard",
+              name: "Built in guard",
+              isBuiltin: true,
+            },
+          ],
+        },
+        tenantArtifacts: [],
+      };
+      const screen = await render(
+        <RegistryExplorer initialState={builtInState} />,
+      );
+      const addButton = screen.getByRole("button", {
+        name: "Add Built in guard",
+      });
+
+      // When
+      await addButton.click();
+
+      // Then
+      await expect
+        .poll(() => executeRegistryArtifactAdditionMock.mock.calls)
+        .toEqual([[{ normalizedName: "built-in-guard" }]]);
+      await expect
+        .poll(() => document.body.textContent)
+        .toContain("Artifact added");
+      await expect
+        .element(screen.getByRole("status", { name: "Built in" }))
+        .toBeVisible();
+      await expect
+        .element(screen.getByRole("button", { name: "Remove Built in guard" }))
+        .toBeVisible();
+    });
+
+    it("keeps an authoritative built-in membership removable", async () => {
+      // Given
+      removeRegistryArtifactMock.mockResolvedValue({
+        status: "confirmed",
+        tenantArtifacts: [
+          { normalizedName: "saved-artifact", versionSpec: "1.0.0" },
+        ],
+      });
+      const builtInMemberState: RegistryBootstrapState = {
+        ...readyState,
+        catalog: {
+          ...readyState.catalog,
+          artifacts: readyState.catalog.artifacts.map((artifact) =>
+            artifact.normalizedName === "aws-guard"
+              ? { ...artifact, isBuiltin: true }
+              : artifact,
+          ),
+        },
+      };
+      const screen = await render(
+        <RegistryExplorer initialState={builtInMemberState} />,
+      );
+
+      // Then
+      await expect
+        .element(screen.getByRole("status", { name: "Built in" }))
+        .toBeVisible();
+      expect(document.body.textContent).toContain("Added");
+      const removeButton = screen.getByRole("button", {
+        name: "Remove AWS guard",
+      });
+      await expect.element(removeButton).toBeVisible();
+
+      // When
+      await removeButton.click();
+      await screen.getByRole("button", { name: "Confirm Remove" }).click();
+
+      // Then
+      await expect
+        .poll(() => removeRegistryArtifactMock.mock.calls)
+        .toEqual([["aws-guard"]]);
+    });
+
     it("switches to authoritative My artifacts and back", async () => {
       // Given
       const screen = await render(
@@ -1163,6 +1257,7 @@ describe("RegistryExplorer", () => {
         providers: ["aws", "azure", "gcp", "kubernetes", "m365", "github"],
         isVerified: false,
         isOfficial: false,
+        isBuiltin: false,
         isMeta: true,
         hasProvider: true,
         hasChecks: true,
@@ -1206,6 +1301,7 @@ describe("RegistryExplorer", () => {
         providers: ["aws", "template"],
         isVerified: false,
         isOfficial: false,
+        isBuiltin: false,
         isMeta: false,
         hasProvider: true,
         hasChecks: true,
@@ -1248,6 +1344,7 @@ describe("RegistryExplorer", () => {
         providers: ["template", "custom-scan"],
         isVerified: false,
         isOfficial: false,
+        isBuiltin: false,
         isMeta: false,
         hasProvider: true,
         hasChecks: true,
@@ -1300,6 +1397,7 @@ describe("RegistryExplorer", () => {
         ],
         isVerified: false,
         isOfficial: false,
+        isBuiltin: false,
         isMeta: true,
         hasProvider: true,
         hasChecks: true,

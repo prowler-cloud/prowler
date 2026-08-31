@@ -341,6 +341,77 @@ describe("Registry adapter", () => {
     });
   });
 
+  it("defaults omitted built-in status and maps explicit built-ins", async () => {
+    // Given
+    const document = {
+      data: [
+        { type: "registry-artifacts", id: "installable", attributes: {} },
+        {
+          type: "registry-artifacts",
+          id: "built-in",
+          attributes: { is_builtin: true },
+        },
+      ],
+      meta: { pagination: { page: 1, pages: 1, count: 2 } },
+    };
+
+    // When
+    const result = await collectCompleteRegistryCatalog(async () => document);
+
+    // Then
+    expect(result).toMatchObject({
+      status: "complete",
+      artifacts: [
+        { normalizedName: "built-in", isBuiltin: true },
+        { normalizedName: "installable", isBuiltin: false },
+      ],
+    });
+  });
+
+  it("rejects malformed built-in values and preserves built-in duplicates", async () => {
+    // Given
+    const document = (data: unknown[]) => ({
+      data,
+      meta: { pagination: { page: 1, pages: 1, count: data.length } },
+    });
+    const resource = (id: string, isBuiltin: unknown) => ({
+      type: "registry-artifacts",
+      id,
+      attributes: { is_builtin: isBuiltin },
+    });
+
+    // When
+    const explicitFalse = await collectCompleteRegistryCatalog(async () =>
+      document([resource("installable", false)]),
+    );
+    const malformed = await Promise.all(
+      [null, "true", 1].map((isBuiltin) =>
+        collectCompleteRegistryCatalog(async () =>
+          document([resource("malformed", isBuiltin)]),
+        ),
+      ),
+    );
+    const duplicate = await collectCompleteRegistryCatalog(async (page) => ({
+      data: [resource("built-in", page === 2)],
+      meta: { pagination: { page, pages: 2, count: 2 } },
+    }));
+
+    // Then
+    expect(explicitFalse).toMatchObject({
+      status: "complete",
+      artifacts: [{ normalizedName: "installable", isBuiltin: false }],
+    });
+    expect(malformed).toEqual([
+      { status: "incomplete", reason: "invalid_resource", collectedCount: 1 },
+      { status: "incomplete", reason: "invalid_resource", collectedCount: 1 },
+      { status: "incomplete", reason: "invalid_resource", collectedCount: 1 },
+    ]);
+    expect(duplicate).toMatchObject({
+      status: "complete",
+      artifacts: [{ normalizedName: "built-in", isBuiltin: true }],
+    });
+  });
+
   it("traverses, merges, and degrades unsafe catalog data", async () => {
     // Given
     // prettier-ignore

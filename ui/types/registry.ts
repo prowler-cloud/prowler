@@ -94,6 +94,7 @@ export interface RegistryCatalogArtifact {
   providers: string[];
   isVerified: boolean;
   isOfficial: boolean;
+  isBuiltin: boolean;
   isMeta: boolean;
   hasProvider: boolean;
   hasChecks: boolean;

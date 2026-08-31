@@ -46,7 +46,7 @@
 **Priority:** `critical`
 **Tags:** @e2e, @registry
 
-**Expected Result:** Multi-page fixture catalog search/filter/Multi-provider behavior, card owner rows (logo and initial fallback), documented reconnect/unavailable/generic recovery states, direct card Add submits a `202` task, polls it to completion, and confirms membership through an authoritative artifact read before rendering success; confirmed Remove uses the real UI and server-action paths.
+**Expected Result:** Multi-page fixture catalog search/filter/multi-provider behavior, card owner rows (logo and initial fallback), and a discoverable provider-capable Built in artifact that exposes Add. Its Add submits a `202` task, polls it to completion, confirms membership through an authoritative artifact read, then renders Built in + Added with synchronous Remove. Ordinary Add and Remove regressions plus documented reconnect/unavailable/generic recovery states use the real UI and server-action paths.
 
 ## Test Case: `REGISTRY-E2E-006` - Pixel 5 Reduced-Motion Browsing
 
