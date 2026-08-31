@@ -55,6 +55,59 @@ class ProwlerAPIInvalidResponse(Exception):
     """The API answered, but with a body this server could not read as JSON."""
 
 
+class UpstreamInvalidResponse(Exception):
+    """An upstream this server reads directly answered with a body that is not JSON.
+
+    Raised in place of the `json.JSONDecodeError` httpx would otherwise let out.
+    That one is a ValueError this module reads as a malformed argument, which is
+    the opposite story: it sends a model off to fix a call that was fine.
+
+    Attributes:
+        host: Host that answered, so the message can name what has to be fixed
+    """
+
+    def __init__(self, message: str, *, host: str) -> None:
+        super().__init__(message)
+        self.host: str = host
+
+
+def parse_json_response(response: httpx.Response) -> Any:
+    """Parse an upstream answer as JSON, telling an unreadable body from a bad
+    argument.
+
+    For every upstream a sub-server reads with an httpx client of its own --
+    Prowler Hub, the documentation site. `httpx` lets a body it cannot decode
+    out as a `json.JSONDecodeError`, which is a ValueError this module reads as
+    a malformed argument. Coming from an upstream -- an HTML error page from an
+    edge, a truncated body -- that is the wrong story, and the caller has no
+    argument to fix.
+
+    The Prowler API client parses its own answers and raises
+    `ProwlerAPIInvalidResponse` instead: it also carries writes, where an
+    unreadable answer leaves the outcome unknown rather than merely absent.
+
+    Args:
+        response: The answer to parse.
+
+    Returns:
+        The parsed body.
+
+    Raises:
+        UpstreamInvalidResponse: The body is not JSON.
+    """
+    try:
+        return response.json()
+    except ValueError as e:
+        # `.request` raises rather than returning None when it was never set.
+        request = getattr(response, "_request", None)
+        host = request.url.host if request is not None else "The upstream service"
+        # Status only: the decoder's own message quotes the body it choked on,
+        # and that body is the upstream text this server never relays.
+        raise UpstreamInvalidResponse(
+            f"{response.status_code} body is not JSON", host=host
+        ) from e
+
+
 def jsonapi_detail(response: httpx.Response) -> str | None:
     """Return the API's own JSON:API error detail, when there is one to trust.
 
@@ -169,6 +222,17 @@ def _describe_failure(exc: BaseException) -> str | None:
             "Prowler answered with a body this server could not read, so the "
             "outcome of the call is unknown. If it changes anything, check the "
             "current state before sending it again."
+        )
+
+    if isinstance(exc, UpstreamInvalidResponse):
+        # The counterpart of the `json.JSONDecodeError` branch below: the same
+        # decode failure is a malformed argument on one side of this server and
+        # an upstream fault on the other, and only the type tells them apart.
+        return (
+            f"{exc.host} answered with a body this server could not read as JSON, "
+            "so the call has no result to return. Nothing in the arguments caused "
+            f"this and changing them will not help -- {exc.host} is answering with "
+            "something other than the JSON it documents. Retry later."
         )
 
     if isinstance(exc, CredentialError):

@@ -7,6 +7,7 @@ reaches a model is text this server produced.
 
 import json
 
+import httpx
 import pytest
 from fastmcp import Client
 from pydantic import BaseModel, ValidationError
@@ -14,7 +15,9 @@ from pydantic import BaseModel, ValidationError
 from prowler_mcp_server.lib.errors import (
     CredentialError,
     InvalidArgument,
+    UpstreamInvalidResponse,
     _describe_failure,
+    parse_json_response,
 )
 from prowler_mcp_server.prowler_app.utils.api_client import (
     ProwlerAPIError,
@@ -24,6 +27,42 @@ from prowler_mcp_server.prowler_app.utils.api_client import (
 from tests.helpers.jsonapi import jsonapi_error
 
 LATEST = "/api/v1/findings/latest"
+
+
+# --------------------------------------------------------------- json bodies
+
+
+def _answer(
+    body: str, *, url: str = "https://hub.prowler.com/api/check"
+) -> httpx.Response:
+    """An answer as a client would hand it back, request attached."""
+    return httpx.Response(200, text=body, request=httpx.Request("GET", url))
+
+
+def test_a_json_body_is_returned_as_it_is():
+    """The helper only classifies the failure; the success path is untouched."""
+    assert parse_json_response(_answer('{"id": "s3_bucket_public_access"}')) == {
+        "id": "s3_bucket_public_access"
+    }
+
+
+def test_a_body_that_is_not_json_names_the_host_that_answered():
+    """Which upstream is misbehaving is the one useful fact here, and the shared
+    helper is reached from every sub-server that reads an upstream directly."""
+    with pytest.raises(UpstreamInvalidResponse) as raised:
+        parse_json_response(_answer("<html><body>502 Bad Gateway</body></html>"))
+
+    assert raised.value.host == "hub.prowler.com"
+    assert "Bad Gateway" not in str(raised.value)
+
+
+def test_a_body_that_is_not_json_is_not_a_valueerror():
+    """`JSONDecodeError` is a ValueError, and callers tell an upstream fault from
+    a bad argument by type alone."""
+    with pytest.raises(UpstreamInvalidResponse) as raised:
+        parse_json_response(_answer("not json"))
+
+    assert not isinstance(raised.value, ValueError)
 
 
 # ------------------------------------------------------------ classification
@@ -92,6 +131,29 @@ def test_an_unreadable_api_answer_is_never_called_safe_to_repeat():
 
     assert "unknown" in message
     assert "check the current state" in message
+
+
+def test_an_unreadable_upstream_answer_is_not_blamed_on_the_arguments():
+    """A `JSONDecodeError` from an upstream and one from an argument are the same
+    exception and opposite instructions."""
+    message = _describe_failure(
+        UpstreamInvalidResponse("200 body is not JSON", host="hub.prowler.com")
+    )
+
+    assert "hub.prowler.com" in message
+    assert "could not read as JSON" in message
+    assert "changing them will not help" in message
+
+
+def test_an_unreadable_upstream_answer_never_quotes_the_body():
+    """The body is someone else's text, so only the host and the status leave here."""
+    message = _describe_failure(
+        UpstreamInvalidResponse(
+            "502 body is not JSON", host="raw.githubusercontent.com"
+        )
+    )
+
+    assert "body is not JSON" not in message
 
 
 def test_an_argument_this_server_rejected_is_repeated_verbatim():
@@ -227,3 +289,19 @@ async def test_a_tool_specific_message_survives_masking(
 
     assert result.isError is True
     assert "prowler_list_integrations" in result.content[0].text
+
+
+async def test_a_hub_tool_failure_says_which_host_refused_it(
+    mcp_root_server, hub_router
+):
+    """Hub failures arrive as raw httpx errors: host and status relayed, body not."""
+    hub_router.add(
+        "GET", "/api/check", status=503, text="<html>upstream nginx 10.1.2.3</html>"
+    )
+
+    async with Client(mcp_root_server) as client:
+        result = await client.call_tool_mcp("prowler_hub_list_checks", {})
+
+    assert result.isError is True
+    assert "hub.prowler.com" in result.content[0].text
+    assert "10.1.2.3" not in result.content[0].text
