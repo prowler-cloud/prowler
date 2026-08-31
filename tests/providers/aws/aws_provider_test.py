@@ -1784,6 +1784,18 @@ aws:
         assert sts_session._endpoint.host == f"https://sts.{aws_region}.amazonaws.eu"
 
     @mock_aws
+    def test_create_sts_session_empty_endpoint_url(self):
+        current_session = session.Session()
+        aws_region = AWS_REGION_US_EAST_1
+        with mock.patch.dict(os.environ, {"AWS_ENDPOINT_URL": ""}):
+            sts_session = AwsProvider.create_sts_session(current_session, aws_region)
+
+        assert sts_session._service_model.service_name == "sts"
+        assert sts_session._client_config.region_name == aws_region
+        assert sts_session._endpoint._endpoint_prefix == "sts"
+        assert sts_session._endpoint.host == f"https://sts.{aws_region}.amazonaws.com"
+
+    @mock_aws
     def test_create_sts_session_iso(self):
         current_session = session.Session()
         aws_region = "us-iso-east-1"
