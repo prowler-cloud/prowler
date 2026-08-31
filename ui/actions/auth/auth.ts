@@ -158,13 +158,14 @@ export const getUserByMe = async (
     });
 
     if (!response.ok) {
-      const parsedResponse = await response.json().catch(() => undefined);
       const errorMessage =
         response.status === 401
           ? "Invalid or expired token"
-          : response.status === 404
-            ? "User not found"
-            : parsedResponse?.errors?.[0]?.detail || "Unknown error";
+          : response.status === 403
+            ? "Access denied"
+            : response.status === 404
+              ? "User not found"
+              : "Unable to load user";
       throw new UserMeError(errorMessage, response.status);
     }
 

@@ -176,7 +176,11 @@ describe("auth actions", () => {
       detail: "Rejected by API",
       message: "Invalid or expired token",
     },
-    { status: 403, detail: "Access denied", message: "Access denied" },
+    {
+      status: 403,
+      detail: "Database password: super-secret",
+      message: "Access denied",
+    },
     { status: 404, detail: "Rejected by API", message: "User not found" },
   ])(
     "should preserve a $status status when loading the current user fails",
@@ -217,8 +221,29 @@ describe("auth actions", () => {
 
     // Then
     await expect(result).rejects.toMatchObject({
-      message: "Unknown error",
+      message: "Access denied",
       status: 403,
+    });
+  });
+
+  it("should not expose upstream details for unexpected errors", async () => {
+    // Given
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          errors: [{ detail: "Database password: super-secret" }],
+        }),
+        { status: 500 },
+      ),
+    );
+
+    // When
+    const result = getUserByMe("access-token");
+
+    // Then
+    await expect(result).rejects.toMatchObject({
+      message: "Unable to load user",
+      status: 500,
     });
   });
 });
