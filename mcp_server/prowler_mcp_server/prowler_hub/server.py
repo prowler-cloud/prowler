@@ -9,6 +9,7 @@ from fastmcp import FastMCP
 from pydantic import Field
 
 from prowler_mcp_server import __version__
+from prowler_mcp_server.lib.types import NonBlankStr
 
 # Initialize FastMCP for Prowler Hub
 hub_mcp_server = FastMCP("prowler-hub")
@@ -149,7 +150,7 @@ async def list_checks(
 
 @hub_mcp_server.tool()
 async def semantic_search_checks(
-    term: str = Field(
+    term: NonBlankStr = Field(
         description="Search term. Examples: 'public access', 'encryption', 'MFA', 'logging'.",
     ),
 ) -> dict:
@@ -208,7 +209,7 @@ async def semantic_search_checks(
 
 @hub_mcp_server.tool()
 async def get_check_details(
-    check_id: str = Field(
+    check_id: NonBlankStr = Field(
         description="The check ID to retrieve details for. Example: 's3_bucket_level_public_access_block'"
     ),
 ) -> dict:
@@ -346,10 +347,10 @@ async def get_check_details(
 
 @hub_mcp_server.tool()
 async def get_check_code(
-    provider_id: str = Field(
+    provider_id: NonBlankStr = Field(
         description="Prowler Provider ID. Example: 'aws', 'azure', 'gcp', 'kubernetes'. Use `prowler_hub_list_providers` to get available provider IDs.",
     ),
-    check_id: str = Field(
+    check_id: NonBlankStr = Field(
         description="The check ID. Example: 's3_bucket_public_access'. Get IDs from `prowler_hub_list_checks` or `prowler_hub_search_checks`.",
     ),
 ) -> dict:
@@ -392,10 +393,10 @@ async def get_check_code(
 
 @hub_mcp_server.tool()
 async def get_check_fixer(
-    provider_id: str = Field(
+    provider_id: NonBlankStr = Field(
         description="Prowler Provider ID. Example: 'aws', 'azure', 'gcp', 'kubernetes'. Use `prowler_hub_list_providers` to get available provider IDs.",
     ),
-    check_id: str = Field(
+    check_id: NonBlankStr = Field(
         description="The check ID. Example: 's3_bucket_public_access'. Get IDs from `prowler_hub_list_checks` or `prowler_hub_search_checks`.",
     ),
 ) -> dict:
@@ -517,7 +518,7 @@ async def list_compliances(
 
 @hub_mcp_server.tool()
 async def semantic_search_compliances(
-    term: str = Field(
+    term: NonBlankStr = Field(
         description="Search term. Examples: 'CIS', 'HIPAA', 'PCI', 'GDPR', 'SOC2', 'NIST'.",
     ),
 ) -> dict:
@@ -568,7 +569,7 @@ async def semantic_search_compliances(
 
 @hub_mcp_server.tool()
 async def get_compliance_details(
-    compliance_id: str = Field(
+    compliance_id: NonBlankStr = Field(
         description="The compliance framework ID to retrieve details for. Example: 'cis_4.0_aws'. Use `prowler_hub_list_compliances` or `prowler_hub_semantic_search_compliances` to find available compliance IDs.",
     ),
 ) -> dict:
@@ -708,7 +709,7 @@ async def list_providers() -> dict:
 
 @hub_mcp_server.tool()
 async def get_provider_services(
-    provider_id: str = Field(
+    provider_id: NonBlankStr = Field(
         description="The provider ID to get services for. Example: 'aws', 'azure', 'gcp', 'kubernetes'. Use `prowler_hub_list_providers` to get available provider IDs.",
     ),
 ) -> dict:

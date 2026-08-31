@@ -19,10 +19,17 @@ class ProwlerAPIError(Exception):
     Attributes:
         status_code: HTTP status the API answered with
         detail: JSON:API `errors[0].detail`, None when there is none to trust
+        payload: Parsed JSON body, for a tool that has to read the answer rather
+            than only report it
     """
 
     def __init__(
-        self, message: str, status_code: int, *, detail: str | None = None
+        self,
+        message: str,
+        status_code: int,
+        *,
+        detail: str | None = None,
+        payload: dict[str, Any] | None = None,
     ) -> None:
         super().__init__(message)
         self.status_code: int = status_code
@@ -32,6 +39,12 @@ class ProwlerAPIError(Exception):
         # that must never be repeated to a model -- and None for a 5xx, see
         # `jsonapi_detail`.
         self.detail: str | None = detail
+        # Not every error status means the request failed: Prowler answers 404
+        # with the result itself when a query ran and matched nothing. A tool
+        # reads this to tell such an answer apart from a real failure. It is the
+        # upstream body, so it is read structurally and never relayed as text --
+        # `detail` above is the only part of it that may be repeated to a model.
+        self.payload: dict[str, Any] | None = payload
 
 
 class ProwlerAPIUnreachable(Exception):
@@ -69,6 +82,10 @@ def jsonapi_detail(response: httpx.Response) -> str | None:
 
 class InvalidArgument(ValueError):
     """An argument this server rejected before any request went out."""
+
+
+class CredentialError(Exception):
+    """The credential the caller sent is missing, malformed or expired."""
 
 
 # ------------------------------------------------------------------- messages
@@ -152,6 +169,16 @@ def _describe_failure(exc: BaseException) -> str | None:
             "Prowler answered with a body this server could not read, so the "
             "outcome of the call is unknown. If it changes anything, check the "
             "current state before sending it again."
+        )
+
+    if isinstance(exc, CredentialError):
+        # Not an argument problem, so it is worth saying that plainly: the
+        # answer is a credential the user has to fix, not another attempt.
+        return (
+            f"This request carried no usable credential: {exc}. Retrying or "
+            "changing the arguments will not help -- the client has to send an "
+            "'Authorization: Bearer <token>' header holding a valid Prowler API "
+            "key or an unexpired JWT."
         )
 
     if isinstance(exc, ProwlerAPIUnreachable):
