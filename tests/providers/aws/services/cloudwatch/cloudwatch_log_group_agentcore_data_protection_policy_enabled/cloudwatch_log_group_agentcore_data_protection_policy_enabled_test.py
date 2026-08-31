@@ -270,10 +270,21 @@ class Test_cloudwatch_log_group_agentcore_data_protection_policy_enabled:
         a prefix added only to the in-code list would be silently ignored by every operator running
         the default config -- and an unmatched log group produces no finding at all, not a FAIL. This
         makes that drift a failing test instead of missing coverage.
+
+        The provider is mocked around the import because importing the check module constructs
+        `logs_client`, which reads the global provider's identity. Every other test here reaches that
+        import through `run_check`, which mocks it; this one imports the module directly for the
+        constant, so without the patch it is the only test in the file that cannot be selected on its
+        own -- 12 of 13 pass alone, and did not.
         """
-        from prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_agentcore_data_protection_policy_enabled.cloudwatch_log_group_agentcore_data_protection_policy_enabled import (
-            DEFAULT_AGENTCORE_LOG_GROUP_PREFIXES,
-        )
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
+            from prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_agentcore_data_protection_policy_enabled.cloudwatch_log_group_agentcore_data_protection_policy_enabled import (
+                DEFAULT_AGENTCORE_LOG_GROUP_PREFIXES,
+            )
 
         repo_root = pathlib.Path(os.path.dirname(os.path.realpath(__file__))).parents[5]
         shipped = yaml.safe_load(
