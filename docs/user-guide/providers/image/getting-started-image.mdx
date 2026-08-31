@@ -306,7 +306,7 @@ prowler image --registry internal-registry.local --registry-insecure
 ```
 
 <Warning>
-Skipping TLS verification disables certificate validation for registry connections. Use this flag only for trusted internal registries with self-signed certificates.
+Skipping TLS verification disables certificate validation for registry connections, including the Trivy image pull (`TRIVY_INSECURE`). Use this flag only for trusted internal registries with self-signed certificates.
 </Warning>
 
 #### On-Premises Registries and Private Networks

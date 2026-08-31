@@ -678,6 +678,18 @@ class TestImageProviderRegistryAuth:
 
         assert env["TRIVY_REGISTRY_TOKEN"] == "my-token"
 
+    def test_build_trivy_env_registry_insecure_sets_trivy_insecure(self):
+        provider = _make_provider(registry_insecure=True)
+        env = provider._build_trivy_env()
+
+        assert env["TRIVY_INSECURE"] == "true"
+
+    def test_build_trivy_env_secure_registry_leaves_trivy_insecure_unset(self):
+        provider = _make_provider()
+        env = provider._build_trivy_env()
+
+        assert "TRIVY_INSECURE" not in env
+
     @patch("subprocess.run")
     def test_execute_trivy_sets_trivy_env_with_basic_auth(self, mock_subprocess):
         """Test that _execute_trivy sets TRIVY_USERNAME/PASSWORD for native Trivy auth."""

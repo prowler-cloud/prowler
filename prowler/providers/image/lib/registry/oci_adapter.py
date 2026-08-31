@@ -184,6 +184,21 @@ class OciRegistryAdapter(RegistryAdapter):
             self._bearer_token = None
             self._ensure_auth()
             resp = self._do_authed_request(method, url, **kwargs)
+        if (
+            resp.status_code == 401
+            and self._bearer_token
+            and self.username
+            and self.password
+            and self._is_same_origin_as_registry(url)
+            and resp.headers.get("Www-Authenticate", "").lower().startswith("basic")
+        ):
+            # Registries like Harbor guard some endpoints (e.g. /_catalog) with
+            # Basic even when /v2/ negotiates Bearer.
+            logger.debug(
+                f"Bearer token not accepted for {url}, retrying with Basic auth"
+            )
+            user, pwd = self._resolve_basic_credentials()
+            resp = self._request_with_retry(method, url, auth=(user, pwd), **kwargs)
         return resp
 
     def _do_authed_request(self, method: str, url: str, **kwargs) -> requests.Response:
