@@ -21,6 +21,8 @@ class bedrock_agent_idle_session_ttl_not_excessive(Check):
         Evaluates each collected Bedrock Agent against the maximum TTL.
         Returns MANUAL when detail retrieval failed or TTL is missing,
         FAIL when TTL exceeds the threshold, and PASS otherwise.
+        Emits MANUAL for regions where ListAgents failed to avoid hiding
+        incomplete scan coverage.
 
         Returns:
             list[Check_Report_AWS]: List of findings with PASS, FAIL, or MANUAL.
@@ -29,6 +31,25 @@ class bedrock_agent_idle_session_ttl_not_excessive(Check):
         max_ttl = bedrock_agent_client.audit_config.get(
             "max_bedrock_agent_idle_session_ttl_seconds", 3600
         )
+
+        # Incomplete region discovery must not be silent. When ListAgents fails,
+        # no agent from that region is present in agents.values(), so without
+        # this block the region would produce zero findings and hide the gap.
+        for region, error in sorted(bedrock_agent_client.agents_scan_errors.items()):
+            report = Check_Report_AWS(
+                metadata=self.metadata(), resource={"region": region}
+            )
+            report.region = region
+            report.resource_id = "agent/unknown"
+            report.resource_arn = f"arn:{bedrock_agent_client.audited_partition}:bedrock:{region}:{bedrock_agent_client.audited_account}:agent/unknown"
+            report.status = "MANUAL"
+            report.status_extended = (
+                f"Bedrock Agents could not be listed in region {region} ({error}); "
+                "verify manually that every agent's idle session TTL does not exceed "
+                f"{max_ttl} seconds."
+            )
+            findings.append(report)
+
         for agent in bedrock_agent_client.agents.values():
             report = Check_Report_AWS(
                 metadata=self.metadata(),
