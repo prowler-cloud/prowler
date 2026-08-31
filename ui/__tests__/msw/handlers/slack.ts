@@ -213,6 +213,11 @@ export const handlersForSlack = (fx: SlackFixture) => {
           return HttpResponse.json(errorBody(SLACK_REFUSED_STATE_DETAIL, 400), {
             status: 400,
           });
+        case SLACK_EXCHANGE_OUTCOME.REFUSED_STATE_CODED:
+          return HttpResponse.json(
+            errorBody(SLACK_REFUSED_STATE_DETAIL, 400, "invalid_oauth_state"),
+            { status: 400 },
+          );
         case SLACK_EXCHANGE_OUTCOME.SLACK_REFUSED:
           return HttpResponse.json(errorBody(SLACK_INVALID_CODE_DETAIL, 400), {
             status: 400,

@@ -141,18 +141,18 @@ Muting a finding does not fix the underlying configuration. Review the finding b
 
 ## Troubleshooting
 
-### Triage controls do not appear
+### Triage Controls Do Not Appear
 
 Make sure the row is an individual finding row. Finding Groups rows do not show triage controls. Expand a group to see affected resources and their triage controls.
 
-### Changes cannot be saved
+### Changes Cannot Be Saved
 
 Confirm that the user role has **Manage Scans** permission. Prowler Local Server does not support Findings Triage writes.
 
-### Resolved or Reopened is missing from the selector
+### Resolved or Reopened Is Missing from the Selector
 
 **Reopened** is always automatic. **Resolved** is set automatically from scan result changes and appears as a selector option only on `MANUAL` findings, where it records a [Manual Pass](#verify-a-manual-finding-as-pass). On findings with any other status, this is expected.
 
-### Risk Accepted or False Positive muted a finding
+### Risk Accepted or False Positive Muted a Finding
 
 This is expected. Those statuses create a mute rule through Mutelist.

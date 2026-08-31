@@ -1165,3 +1165,194 @@ class Test_Repository_List_Rate_Limit_Propagation:
         ):
             with raises(RateLimitExceededException):
                 repository_service._list_repositories()
+
+
+class Test_Repository_GraphQL_Pagination:
+    """Accessible repository discovery must follow GraphQL pagination."""
+
+    def _repository_service(self):
+        provider = set_mocked_github_provider()
+        provider.repositories = []
+        provider.organizations = []
+        with patch.object(Repository, "__init__", lambda *_: None):
+            repository_service = Repository(provider)
+        repository_service.clients = [MagicMock()]
+        repository_service.provider = provider
+        return repository_service
+
+    @staticmethod
+    def _graphql_response(nodes, has_next_page=False, end_cursor=None, errors=None):
+        response = MagicMock()
+        payload = {
+            "data": {
+                "viewer": {
+                    "repositories": {
+                        "nodes": nodes,
+                        "pageInfo": {
+                            "hasNextPage": has_next_page,
+                            "endCursor": end_cursor,
+                        },
+                    }
+                }
+            }
+        }
+        if errors is not None:
+            payload["errors"] = errors
+        response.json.return_value = payload
+        return response
+
+    def test_graphql_paginates_accessible_repositories(self):
+        repository_service = self._repository_service()
+        first_page_names = [f"owner/repo-{index}" for index in range(100)]
+        second_page_names = ["owner/repo-100"]
+        pages = [
+            self._graphql_response(
+                [{"nameWithOwner": name} for name in first_page_names],
+                has_next_page=True,
+                end_cursor="page-2",
+            ),
+            self._graphql_response(
+                [{"nameWithOwner": name} for name in second_page_names]
+            ),
+        ]
+
+        with patch("requests.post", side_effect=pages) as mock_post:
+            repositories = repository_service._get_accessible_repos_graphql()
+
+        assert repositories == first_page_names + second_page_names
+        assert mock_post.call_count == 2
+        first_request, second_request = mock_post.call_args_list
+        assert "after: $cursor" in first_request.kwargs["json"]["query"]
+        assert first_request.kwargs["json"]["variables"] == {"cursor": None}
+        assert second_request.kwargs["json"]["variables"] == {"cursor": "page-2"}
+        assert first_request.kwargs["timeout"] == (10, 60)
+
+    def test_graphql_keeps_accessible_repositories_on_partial_errors(self):
+        """Per-node errors (e.g. SAML-protected repositories) must not drop the page."""
+        repository_service = self._repository_service()
+        response = self._graphql_response(
+            [{"nameWithOwner": "owner/visible"}, None],
+            errors=[
+                {
+                    "type": "FORBIDDEN",
+                    "path": ["viewer", "repositories", "nodes", 1],
+                    "message": "Resource protected by organization SAML enforcement.",
+                }
+            ],
+        )
+
+        with (
+            patch("requests.post", return_value=response),
+            patch(
+                "prowler.providers.github.services.repository.repository_service.logger"
+            ) as mock_logger,
+        ):
+            repositories = repository_service._get_accessible_repos_graphql()
+
+        assert repositories == ["owner/visible"]
+        assert mock_logger.warning.call_count == 2
+        assert "SAML" in str(mock_logger.warning.call_args_list[0])
+
+    def test_graphql_later_page_failure_keeps_collected_repositories(self):
+        repository_service = self._repository_service()
+        first_page = self._graphql_response(
+            [{"nameWithOwner": "owner/first"}], has_next_page=True, end_cursor="page-2"
+        )
+
+        with (
+            patch(
+                "requests.post",
+                side_effect=[
+                    first_page,
+                    requests.exceptions.Timeout("second page timed out"),
+                ],
+            ) as mock_post,
+            patch(
+                "prowler.providers.github.services.repository.repository_service.logger"
+            ) as mock_logger,
+        ):
+            repositories = repository_service._get_accessible_repos_graphql()
+
+        assert repositories == ["owner/first"]
+        assert mock_post.call_count == 2
+        mock_logger.error.assert_called_once()
+        assert "Timeout" in str(mock_logger.error.call_args)
+
+    def test_graphql_errors_without_data_return_empty_list(self):
+        repository_service = self._repository_service()
+        response = MagicMock()
+        response.json.return_value = {
+            "data": None,
+            "errors": [{"type": "RATE_LIMITED", "message": "API rate limit exceeded"}],
+        }
+
+        with (
+            patch("requests.post", return_value=response),
+            patch(
+                "prowler.providers.github.services.repository.repository_service.logger"
+            ) as mock_logger,
+        ):
+            repositories = repository_service._get_accessible_repos_graphql()
+
+        assert repositories == []
+        assert "RATE_LIMITED" in str(mock_logger.error.call_args)
+
+    def test_graphql_stops_on_repeated_cursor(self):
+        repository_service = self._repository_service()
+        pages = [
+            self._graphql_response(
+                [{"nameWithOwner": "owner/a"}], has_next_page=True, end_cursor="same"
+            ),
+            self._graphql_response(
+                [{"nameWithOwner": "owner/b"}], has_next_page=True, end_cursor="same"
+            ),
+        ]
+
+        with (
+            patch("requests.post", side_effect=pages) as mock_post,
+            patch(
+                "prowler.providers.github.services.repository.repository_service.logger"
+            ) as mock_logger,
+        ):
+            repositories = repository_service._get_accessible_repos_graphql()
+
+        assert repositories == ["owner/a", "owner/b"]
+        assert mock_post.call_count == 2
+        mock_logger.error.assert_called_once()
+
+    @pytest.mark.parametrize(
+        "nodes, page_info",
+        [
+            ("not-a-list", {"hasNextPage": False}),
+            ({}, {"hasNextPage": False}),
+            (None, {"hasNextPage": False}),
+            ([{"nameWithOwner": "owner/b"}], ["invalid"]),
+            ([{"nameWithOwner": "owner/b"}], "invalid"),
+            ([{"nameWithOwner": "owner/b"}], []),
+            ([{"nameWithOwner": "owner/b"}], None),
+            ([{"nameWithOwner": "owner/b"}], {}),
+            ([{"nameWithOwner": "owner/b"}], {"hasNextPage": "false"}),
+        ],
+    )
+    def test_graphql_invalid_page_keeps_collected_repositories(self, nodes, page_info):
+        repository_service = self._repository_service()
+        first_page = self._graphql_response(
+            [{"nameWithOwner": "owner/a"}], has_next_page=True, end_cursor="page-2"
+        )
+        invalid_page = MagicMock()
+        invalid_page.json.return_value = {
+            "data": {
+                "viewer": {"repositories": {"nodes": nodes, "pageInfo": page_info}}
+            }
+        }
+
+        with (
+            patch("requests.post", side_effect=[first_page, invalid_page]),
+            patch(
+                "prowler.providers.github.services.repository.repository_service.logger"
+            ) as mock_logger,
+        ):
+            repositories = repository_service._get_accessible_repos_graphql()
+
+        assert repositories == ["owner/a"]
+        mock_logger.error.assert_called_once()

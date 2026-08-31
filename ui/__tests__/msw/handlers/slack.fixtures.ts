@@ -38,6 +38,12 @@ export const SLACK_EXCHANGE_OUTCOME = {
   /** Same workspace re-installed: the existing row keeps its id. */
   REINSTALLED: "reinstalled",
   REFUSED_STATE: "refused-state",
+  /**
+   * The same refusal, but naming `invalid_oauth_state` in `code` — the
+   * contract words it code-less, the deployed API names it; the UI maps both
+   * to `expired`.
+   */
+  REFUSED_STATE_CODED: "refused-state-coded",
   SLACK_REFUSED: "slack-refused",
   /** A `409` named by its `code`: one workspace per tenant. */
   DIFFERENT_WORKSPACE: "different-workspace",

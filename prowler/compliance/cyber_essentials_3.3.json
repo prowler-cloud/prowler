@@ -123,7 +123,7 @@
         "Theme": "Firewalls",
         "AssessmentStatus": "Automated",
         "CloudApplicability": "partial",
-        "RemediationProcedure": "Use Network Security Groups (or Azure Firewall) on every subnet/NIC and remove rules that allow unrestricted inbound access from the internet to RDP, SSH, and other management or data services.",
+        "RemediationProcedure": "Restrict inbound access from the internet to management and data services (RDP, SSH, database ports) using the provider's network firewall, security group or access-control-list controls, and remove any rule that allows unrestricted inbound access.",
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
@@ -157,8 +157,8 @@
       "attributes": {
         "Theme": "Firewalls",
         "AssessmentStatus": "Automated",
-        "CloudApplicability": "full",
-        "RemediationProcedure": "Disable public network access on management-plane resources (storage accounts, Key Vaults) or restrict access to trusted networks/IP ranges, and require MFA for any administrative access exposed to the internet.",
+        "CloudApplicability": "partial",
+        "RemediationProcedure": "Disable public network access on management-plane resources (object storage, secret and key management services) or restrict access to trusted networks and IP ranges, and require MFA for any administrative access exposed to the internet.",
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
@@ -179,7 +179,7 @@
         "Theme": "Firewalls",
         "AssessmentStatus": "Automated",
         "CloudApplicability": "full",
-        "RemediationProcedure": "Configure Network Security Group rules with a default-deny inbound posture and only allow specific, documented inbound services. Disable public network access on PaaS resources that do not require it.",
+        "RemediationProcedure": "Configure network access-control rules with a default-deny inbound posture and only allow specific, documented inbound services. Disable public network access on managed services that do not require it.",
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
@@ -200,7 +200,7 @@
         "Theme": "Firewalls",
         "AssessmentStatus": "Manual",
         "CloudApplicability": "non-applicable",
-        "RemediationProcedure": "Maintain a change-approval record (e.g. change tickets or a network rule register) for every inbound Network Security Group rule, including the business justification and approver.",
+        "RemediationProcedure": "Maintain a change-approval record (e.g. change tickets or a network rule register) for every inbound network access-control rule, including the business justification and approver.",
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
@@ -245,14 +245,13 @@
         "Theme": "Secure Configuration",
         "AssessmentStatus": "Automated",
         "CloudApplicability": "partial",
-        "RemediationProcedure": "Restrict guest user invitations and access, and review Microsoft Entra ID and Azure RBAC role assignments to remove unused guest or administrative accounts.",
+        "RemediationProcedure": "Restrict guest and external user invitations and access, and review identity-provider and cloud role assignments to remove unused guest or administrative accounts.",
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
         "azure": [
           "entra_policy_guest_users_access_restrictions",
-          "entra_policy_guest_invite_only_for_admin_roles",
-          "iam_role_user_access_admin_restricted"
+          "entra_policy_guest_invite_only_for_admin_roles"
         ]
       }
     },
@@ -264,7 +263,7 @@
         "Theme": "Secure Configuration",
         "AssessmentStatus": "Automated",
         "CloudApplicability": "partial",
-        "RemediationProcedure": "Enable Microsoft Entra ID security defaults (or an equivalent Conditional Access baseline) so that default/weak credentials cannot be used for sign-in.",
+        "RemediationProcedure": "Enable identity-provider security defaults (or an equivalent sign-in protection baseline) so that default or weak credentials cannot be used for sign-in.",
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
@@ -311,7 +310,7 @@
         "Theme": "Secure Configuration",
         "AssessmentStatus": "Automated",
         "CloudApplicability": "full",
-        "RemediationProcedure": "Disable anonymous/public access to storage and require authenticated, encrypted (TLS 1.2+) access. Use Azure RBAC for Key Vault data-plane access instead of access policies that allow unauthenticated retrieval.",
+        "RemediationProcedure": "Disable anonymous or public access to object storage and require authenticated, encrypted (TLS 1.2+) access. Use role-based access control for secret and key management data-plane access instead of policies that allow unauthenticated retrieval.",
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
@@ -330,16 +329,13 @@
       "description": "Devices that require a user's physical presence must use an unlocking credential (biometric, password or PIN) of at least 6 characters, protected against brute-force guessing by throttling or lockout after no more than 10 attempts.",
       "attributes": {
         "Theme": "Secure Configuration",
-        "AssessmentStatus": "Automated",
-        "CloudApplicability": "partial",
-        "RemediationProcedure": "Enforce key-based SSH authentication on Linux VMs (disabling password authentication) and enable Microsoft Entra ID security defaults to apply baseline sign-in protections.",
+        "AssessmentStatus": "Manual",
+        "CloudApplicability": "non-applicable",
+        "RemediationProcedure": "This is an end-user device control (screen lock credential length and brute-force lockout) and has no cloud control-plane equivalent. Enforce a minimum unlock credential length and a lockout threshold of no more than 10 attempts through your device management policy.",
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": [
-          "vm_linux_enforce_ssh_authentication",
-          "entra_security_defaults_enabled"
-        ]
+        "azure": []
       }
     },
     {
@@ -395,7 +391,7 @@
         "Theme": "Security Update Management",
         "AssessmentStatus": "Automated",
         "CloudApplicability": "partial",
-        "RemediationProcedure": "Enable Microsoft Defender for Cloud system update recommendations and vulnerability assessment, and remediate flagged virtual machines within 14 days of a critical or high-risk update being released.",
+        "RemediationProcedure": "Enable the provider's security-posture service for system update recommendations and vulnerability assessment, and remediate flagged virtual machines within 14 days of a critical or high-risk update being released. Note: these checks evidence that update monitoring and vulnerability assessment coverage is enabled, not that a given update was applied within the 14-day window, which must be verified from your patch management records.",
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
@@ -428,7 +424,7 @@
         "Theme": "User Access Control",
         "AssessmentStatus": "Automated",
         "CloudApplicability": "partial",
-        "RemediationProcedure": "Enable Microsoft Entra ID security defaults and prefer Entra ID authentication (over shared keys) for Azure resources such as storage accounts, so every user authenticates with their own unique identity.",
+        "RemediationProcedure": "Enable identity-provider security defaults and require every user to authenticate with their own directory-backed identity rather than shared account keys or long-lived access keys when accessing cloud resources such as object storage.",
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
@@ -446,7 +442,7 @@
         "Theme": "User Access Control",
         "AssessmentStatus": "Manual",
         "CloudApplicability": "non-applicable",
-        "RemediationProcedure": "Implement a leaver process and periodic access reviews (e.g. Microsoft Entra ID access reviews) to disable or remove accounts that are no longer required.",
+        "RemediationProcedure": "Implement a leaver process and periodic identity-provider access reviews to disable or remove accounts that are no longer required.",
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
@@ -461,7 +457,7 @@
         "Theme": "User Access Control",
         "AssessmentStatus": "Automated",
         "CloudApplicability": "full",
-        "RemediationProcedure": "Require multi-factor authentication for all users via Conditional Access policies, covering admin portals, the Azure management API, and users with access to virtual machines.",
+        "RemediationProcedure": "Require multi-factor authentication for all users through an enforced sign-in policy, covering administrative consoles, management APIs, and users with access to virtual machines.",
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
@@ -482,7 +478,7 @@
         "Theme": "User Access Control",
         "AssessmentStatus": "Automated",
         "CloudApplicability": "partial",
-        "RemediationProcedure": "Limit the number of Global Administrator assignments, avoid granting the User Access Administrator or subscription Owner role broadly, and require named administrators to use dedicated privileged accounts for administrative tasks.",
+        "RemediationProcedure": "Limit the number of highly privileged role assignments (global or organisation administrator), avoid granting owner or access-administrator roles at the account, subscription or project scope, and require named administrators to use dedicated privileged accounts for administrative tasks.",
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
@@ -501,7 +497,7 @@
         "Theme": "User Access Control",
         "AssessmentStatus": "Automated",
         "CloudApplicability": "partial",
-        "RemediationProcedure": "Periodically review Microsoft Entra ID directory role assignments and Azure RBAC role assignments, removing privileged roles that are no longer needed for a user's current role.",
+        "RemediationProcedure": "Periodically review identity-provider directory role assignments and cloud role-based access control assignments, removing privileged roles that are no longer needed for a user's current role.",
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
@@ -519,7 +515,7 @@
         "Theme": "User Access Control",
         "AssessmentStatus": "Automated",
         "CloudApplicability": "partial",
-        "RemediationProcedure": "Enable Microsoft Entra ID security defaults (which include smart lockout) and require MFA, particularly for privileged accounts, to mitigate brute-force password attacks.",
+        "RemediationProcedure": "Enable identity-provider security defaults (which include account lockout on repeated failed sign-ins) and require MFA, particularly for privileged accounts, to mitigate brute-force password attacks.",
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
@@ -537,7 +533,7 @@
         "Theme": "User Access Control",
         "AssessmentStatus": "Automated",
         "CloudApplicability": "partial",
-        "RemediationProcedure": "Enable Microsoft Entra ID security defaults and Microsoft Entra ID Password Protection (banned password list), and require MFA so that password length alone is not the only protection.",
+        "RemediationProcedure": "Enable identity-provider security defaults and password protection (banned or breached password lists), and require MFA so that password length alone is not the only protection.",
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
@@ -556,7 +552,7 @@
         "Theme": "Malware Protection",
         "AssessmentStatus": "Automated",
         "CloudApplicability": "partial",
-        "RemediationProcedure": "Ensure endpoint protection is installed on all virtual machines, enable Microsoft Defender for Endpoint integration, and enable Microsoft Defender for Servers.",
+        "RemediationProcedure": "Ensure endpoint protection is installed on all virtual machines and enable the provider's workload protection service for servers, including endpoint detection and response integration.",
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
@@ -575,7 +571,7 @@
         "Theme": "Malware Protection",
         "AssessmentStatus": "Automated",
         "CloudApplicability": "partial",
-        "RemediationProcedure": "Enable Microsoft Defender for Endpoint, Microsoft Defender for Servers, and Microsoft Defender for Storage so that signatures stay current and malicious files, code execution and connections are blocked.",
+        "RemediationProcedure": "Enable the provider's workload protection services for endpoints, servers and object storage so that signatures stay current and malicious files, code execution and connections are blocked.",
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
@@ -594,7 +590,7 @@
         "Theme": "Malware Protection",
         "AssessmentStatus": "Manual",
         "CloudApplicability": "non-applicable",
-        "RemediationProcedure": "This is an end-user device control implemented through application control policies (e.g. Microsoft Defender Application Control) and has no cloud control-plane equivalent.",
+        "RemediationProcedure": "This is an end-user device control implemented through application control or allow-listing policies and has no cloud control-plane equivalent.",
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {

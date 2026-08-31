@@ -20,9 +20,9 @@ def search(
     ),
     page_size: int = Field(
         5,
-        description="Number of top results to return to return. It must be between 1 and 20.",
-        gt=1,
-        lt=20,
+        description="Number of top results to return. It must be between 1 and 20.",
+        ge=1,
+        le=20,
     ),
 ) -> list[dict[str, Any]]:
     """Search in Prowler documentation.
@@ -30,11 +30,12 @@ def search(
     This tool searches through the official Prowler documentation
     to find relevant information about everything related to Prowler.
 
-    Uses fulltext search to find the most relevant documentation pages
-    based on your query.
+    A result is one section of a documentation page, not the page itself: its
+    'excerpt' is that section alone. Read the whole page with
+    `prowler_docs_get_document`, passing the result's 'path'.
 
     Returns:
-        List of search results with highlights showing matched terms (in <mark><b> tags)
+        List of matching documentation sections, most relevant first
     """
     return prowler_docs_search_engine.search(term, page_size)  # type: ignore In the hint we cannot put SearchResult type because JSON API MCP Generator cannot handle Pydantic models yet
 

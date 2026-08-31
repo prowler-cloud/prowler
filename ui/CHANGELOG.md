@@ -4,6 +4,36 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [1.40.0] (Prowler v5.40.0)
+
+### 🚀 Added
+
+- NCSC Cyber Essentials 3.3 compliance support with its dedicated mapper, details panel, and icon [(#11588)](https://github.com/prowler-cloud/prowler/pull/11588)
+- Thumbs-up and thumbs-down feedback form for Lighthouse assistant answers with optional details [(#12419)](https://github.com/prowler-cloud/prowler/pull/12419)
+- Display the default one-scan free trial and trial expiration in the existing sidebar banner [(#12420)](https://github.com/prowler-cloud/prowler/pull/12420)
+- Slack integration: connect a Slack workspace from the Integrations page (Prowler Cloud only) [(#12435)](https://github.com/prowler-cloud/prowler/pull/12435)
+- Prowler Cloud indicator for providers created via Import Findings alongside every connection status [(#12447)](https://github.com/prowler-cloud/prowler/pull/12447)
+- Slack integration: authorize several destination channels at once — the connection check confirms each authorized channel with a one-time message and names the one Slack refuses [(#12491)](https://github.com/prowler-cloud/prowler/pull/12491)
+- Slack channels confirmed on the Slack integration as alert rule destinations, selectable in the alert modal alongside email recipients [(#12492)](https://github.com/prowler-cloud/prowler/pull/12492)
+- Cancelled-subscription variant in the sidebar trial banner (Prowler Cloud only) [(#12538)](https://github.com/prowler-cloud/prowler/pull/12538)
+
+### 🔄 Changed
+
+- Alerts list Recipients column becomes Destinations, summarizing a rule's email recipients and Slack channels at a glance [(#12493)](https://github.com/prowler-cloud/prowler/pull/12493)
+
+### 🐞 Fixed
+
+- Scan auto-refresh no longer overlaps slow client refreshes and now signals when scan execution settles [(#12455)](https://github.com/prowler-cloud/prowler/pull/12455)
+- The compliance "Across providers" section builds its framework list from the API catalog instead of a hardcoded set of ids, so a universal framework registered by an installed package renders like a shipped one [(#12536)](https://github.com/prowler-cloud/prowler/pull/12536)
+- The compliance "Across providers" section reports a failed catalog request instead of rendering the "no data yet" empty state [(#12536)](https://github.com/prowler-cloud/prowler/pull/12536)
+- Returning from Slack after approving the install now reliably lands on the Slack integration page instead of getting stuck on the callback screen (Prowler Cloud only) [(#12572)](https://github.com/prowler-cloud/prowler/pull/12572)
+
+### 🔐 Security
+
+- `libcrypto3` and `libssl3` upgraded to 3.5.8-r0 in the UI container image, patching seven high OpenSSL CVEs [(#12549)](https://github.com/prowler-cloud/prowler/pull/12549)
+
+---
+
 ## [1.39.0] (Prowler v5.39.0)
 
 ### 🚀 Added

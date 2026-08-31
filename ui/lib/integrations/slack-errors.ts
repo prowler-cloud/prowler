@@ -9,6 +9,8 @@ export const SLACK_ERROR_CODE = {
   TOKEN_EXPIRED: "token_expired",
   /** One workspace per tenant. */
   WORKSPACE_CONFLICT: "slack_workspace_conflict",
+  /** The exchange's `state` was already consumed, timed out, or never minted. */
+  INVALID_OAUTH_STATE: "invalid_oauth_state",
 } as const;
 
 export type SlackErrorCode =
@@ -76,6 +78,10 @@ export const SLACK_ERROR_MESSAGES = {
   [SLACK_ERROR_CODE.TOKEN_EXPIRED]: `Prowler's Slack credential has expired. ${RECONNECT}`,
   [SLACK_ERROR_CODE.WORKSPACE_CONFLICT]:
     "Prowler is already connected to a different Slack workspace. Disconnect it before connecting another one.",
+  // Same wording as the callback notice's `expired` status: a spent install
+  // link never recovers, so "try again in a moment" would mislead.
+  [SLACK_ERROR_CODE.INVALID_OAUTH_STATE]:
+    "The install link from Slack had already been used or expired, so no workspace was connected. Start the install again.",
 } as const satisfies Record<SlackErrorCode, string>;
 
 /** The parts of a JSON:API error this mapping reads. */
