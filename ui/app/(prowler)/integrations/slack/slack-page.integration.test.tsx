@@ -356,8 +356,8 @@ describe("authorizing destination channels", () => {
   }, 60000);
 
   it("offers a private channel the app was invited to, marked as private, and authorizes it", async () => {
-    // Given — `@Prowler` was invited to one private channel; `groups:read` is
-    // membership-gated (D2).
+    // Given — `@Prowler Cloud` was invited to one private channel;
+    // `groups:read` is membership-gated (D2).
     const harness = new SlackIntegrationHarness(connectedSlackFixture());
     await harness.mount();
 
@@ -381,7 +381,7 @@ describe("authorizing destination channels", () => {
     ]);
   }, 60000);
 
-  it("offers a private channel once @Prowler is invited to it and the list is refreshed", async () => {
+  it("offers a private channel once @Prowler Cloud is invited to it and the list is refreshed", async () => {
     // Given — a workspace whose only channels are public: `groups:read` is
     // membership-gated (design D2).
     const harness = new SlackIntegrationHarness(
@@ -397,8 +397,8 @@ describe("authorizing destination channels", () => {
       SLACK_PRIVATE_CHANNEL.name,
     );
 
-    // When — `@Prowler` is invited to a private channel, and the user refreshes
-    // instead of reconnecting the workspace.
+    // When — `@Prowler Cloud` is invited to a private channel, and the user
+    // refreshes instead of reconnecting the workspace.
     harness.fixture.channels.push({ ...SLACK_PRIVATE_CHANNEL });
     await harness.refreshChannels();
 
@@ -423,7 +423,7 @@ describe("authorizing destination channels", () => {
     // Then — the user is told what to do, not merely that the list is empty.
     const message = await harness.channelPickerMessage();
     expect(message).toMatch(/No channels available yet/);
-    expect(message).toMatch(/invite @Prowler/);
+    expect(message).toMatch(/invite @Prowler Cloud/);
     expect(await harness.authorizedChannels()).toEqual([]);
     expect(await harness.offersConnectionTest()).toBe(false);
   }, 30000);
@@ -536,7 +536,7 @@ describe("authorizing destination channels", () => {
     // Slack's reason is a protocol token: it travels in `code` and is never
     // shown.
     expect(message).not.toMatch(SLACK_MISSING_SCOPE_CODE);
-    expect(harness.channelInviteHint()).toMatch(/invites @Prowler/);
+    expect(harness.channelInviteHint()).toMatch(/invites @Prowler Cloud/);
 
     // And — a listing Prowler could not read says nothing about the channels
     // already authorized.
@@ -632,7 +632,7 @@ describe("authorizing destination channels", () => {
     ]);
   }, 30000);
 
-  it("says to invite @Prowler when Slack refuses a channel because the app is not in it", async () => {
+  it("says to invite @Prowler Cloud when Slack refuses a channel because the app is not in it", async () => {
     // Given — a private channel the app was removed from. The API validates the
     // set against Slack on the way in and refuses with `not_in_channel`.
     const harness = new SlackIntegrationHarness(
@@ -649,7 +649,7 @@ describe("authorizing destination channels", () => {
 
     // Then — the one fix the user can carry out themselves, in Slack.
     expect(refusal).toMatch(/Prowler is not in that channel/);
-    expect(refusal).toMatch(/Invite @Prowler to it in Slack/);
+    expect(refusal).toMatch(/Invite @Prowler Cloud to it in Slack/);
     expect(refusal).not.toMatch(SLACK_NOT_IN_CHANNEL_CODE);
 
     // And — nothing was recorded, so there is still nothing to check against.
@@ -657,7 +657,7 @@ describe("authorizing destination channels", () => {
     expect(await harness.offersConnectionTest()).toBe(false);
   }, 60000);
 
-  it("says the channel is gone, not that @Prowler needs inviting, when Slack no longer has it", async () => {
+  it("says the channel is gone, not that @Prowler Cloud needs inviting, when Slack no longer has it", async () => {
     // Given — a channel archived since the listing was read. The API's `detail`
     // is word-for-word the one for `not_in_channel`, so only `code` tells them
     // apart.
@@ -677,7 +677,7 @@ describe("authorizing destination channels", () => {
     // channel that no longer exists.
     expect(refusal).toMatch(/no longer exists in the workspace/);
     expect(refusal).toMatch(/Choose another one/);
-    expect(refusal).not.toMatch(/Invite @Prowler/);
+    expect(refusal).not.toMatch(/Invite @Prowler Cloud/);
     expect(refusal).not.toMatch(SLACK_UNKNOWN_CHANNEL_DETAIL);
     expect(await harness.authorizedChannels()).toEqual([]);
   }, 60000);
