@@ -908,13 +908,36 @@ class TestCyberEssentialsFramework:
         )
         return os.path.normpath(base)
 
-    def test_loads_and_supports_azure(self):
+    def test_loads_and_supports_azure_and_gcp(self):
         fw = load_compliance_framework_universal(self._path())
         assert fw is not None
         assert fw.framework == "Cyber-Essentials"
         assert fw.version == "3.3"
-        assert fw.get_providers() == ["azure"]
+        assert fw.get_providers() == ["azure", "gcp"]
         assert fw.supports_provider("azure")
+        assert fw.supports_provider("gcp")
+        assert all("gcp" in requirement.checks for requirement in fw.requirements)
+
+    def test_gcp_check_mappings_reference_registered_checks(self):
+        fw = load_compliance_framework_universal(self._path())
+        repository_root = os.path.normpath(
+            os.path.join(os.path.dirname(__file__), "..", "..", "..")
+        )
+        services_root = os.path.join(
+            repository_root, "prowler", "providers", "gcp", "services"
+        )
+        registered_checks = set()
+        for dirpath, _, filenames in os.walk(services_root):
+            for filename in filenames:
+                if filename.endswith(".metadata.json"):
+                    registered_checks.add(filename.replace(".metadata.json", ""))
+        referenced_checks = {
+            check_id
+            for requirement in fw.requirements
+            for check_id in requirement.checks.get("gcp", [])
+        }
+        assert referenced_checks
+        assert referenced_checks <= registered_checks
 
     def test_covers_all_five_themes(self):
         fw = load_compliance_framework_universal(self._path())
@@ -941,8 +964,8 @@ class TestCyberEssentialsFramework:
                 "partial",
                 "non-applicable",
             }
-            # Requirements with no checks must not claim to be Automated.
-            if not req.checks.get("azure"):
+            # Requirements with no checks for any provider must not claim to be Automated.
+            if not any(req.checks.values()):
                 assert req.attributes["AssessmentStatus"] == "Manual"
 
 
