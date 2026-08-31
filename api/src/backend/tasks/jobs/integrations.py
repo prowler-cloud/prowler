@@ -2,13 +2,16 @@ import os
 import time
 from datetime import UTC, datetime
 from glob import glob
+from urllib.parse import quote
 
 from api.db_router import READ_REPLICA_ALIAS, MainRouter
 from api.db_utils import REPLICA_MAX_ATTEMPTS, REPLICA_RETRY_BASE_DELAY, rls_transaction
 from api.models import Finding, Integration, Provider
+from api.rls import Tenant
 from api.utils import initialize_prowler_integration, initialize_prowler_provider
 from celery.utils.log import get_task_logger
 from config.django.base import DJANGO_FINDINGS_BATCH_SIZE
+from django.conf import settings
 from django.db import OperationalError
 from prowler.lib.outputs.asff.asff import ASFF
 from prowler.lib.outputs.compliance.generic.generic import GenericCompliance
@@ -477,6 +480,81 @@ def upload_security_hub_integration(
         return False
 
 
+JIRA_LABEL_PREFIX = "prowler"
+JIRA_LABEL_MAX_LENGTH = 255
+
+
+def sanitize_jira_label(label: str) -> str:
+    """Make a value safe to use as a Jira label.
+
+    Jira rejects labels containing whitespace or longer than 255 characters. The
+    transformation is deterministic so the same finding always yields the same
+    label: whitespace runs become a single underscore, control characters are
+    dropped and the result is truncated. Mirrors ``Jira.sanitize_label`` in the
+    SDK; kept local so the API does not depend on an unreleased SDK symbol.
+    """
+    if not label:
+        return ""
+    cleaned = "".join(ch for ch in str(label) if ch.isprintable() or ch.isspace())
+    return "_".join(cleaned.split())[:JIRA_LABEL_MAX_LENGTH]
+
+
+def sanitize_jira_labels(labels: list[str]) -> list[str]:
+    """Sanitize a list of labels, dropping empties and duplicates (order kept)."""
+    result: list[str] = []
+    for label in labels or []:
+        sanitized = sanitize_jira_label(label)
+        if sanitized and sanitized not in result:
+            result.append(sanitized)
+    return result
+
+
+def build_jira_finding_url(finding_uid: str) -> str:
+    """Build the Prowler UI link for a finding, or "" when no UI base URL is set.
+
+    The link filters by the finding ``uid`` rather than the per-scan record id so
+    it keeps resolving after the finding is seen again in later scans.
+    """
+    base_url = getattr(settings, "UI_BASE_URL", "")
+    if not base_url or not finding_uid:
+        return ""
+    return f"{base_url}/findings?filter[uid]={quote(finding_uid, safe='')}"
+
+
+def build_jira_issue_labels(
+    finding_uid: str, provider: str, severity: str, check_id: str
+) -> list[str]:
+    """Build the deterministic label set written to every Jira issue.
+
+    Labels are prefixed to avoid colliding with customer labels and sanitized so
+    Jira never rejects them; the finding-uid label is what lets a ticket be traced
+    back (or JQL-filtered) to its finding.
+    """
+    raw_labels = [
+        JIRA_LABEL_PREFIX,
+        f"{JIRA_LABEL_PREFIX}-{provider}" if provider else "",
+        f"{JIRA_LABEL_PREFIX}-{severity}" if severity else "",
+        f"{JIRA_LABEL_PREFIX}-{check_id}" if check_id else "",
+        f"{JIRA_LABEL_PREFIX}-finding-{finding_uid}" if finding_uid else "",
+    ]
+    return sanitize_jira_labels(raw_labels)
+
+
+def get_tenant_name(tenant_id: str) -> str:
+    """Return the tenant name for the Jira issue "Tenant Info" row, or "" if unknown.
+
+    The name is informational only, so a lookup failure must never block the send.
+    """
+    try:
+        return (
+            Tenant.objects.filter(id=tenant_id).values_list("name", flat=True).first()
+            or ""
+        )
+    except Exception:
+        logger.warning("Could not resolve tenant name for %s", tenant_id)
+        return ""
+
+
 def send_findings_to_jira(
     tenant_id: str,
     integration_id: str,
@@ -487,6 +565,7 @@ def send_findings_to_jira(
     with rls_transaction(tenant_id):
         integration = Integration.objects.get(id=integration_id)
         jira_integration = initialize_prowler_integration(integration)
+        tenant_info = get_tenant_name(tenant_id)
 
     num_tickets_created = 0
     error_messages = []
@@ -519,6 +598,15 @@ def send_findings_to_jira(
             recommendation = remediation.get("recommendation", {})
             remediation_code = remediation.get("code", {})
 
+            provider_type = finding_instance.scan.provider.provider
+            issue_labels = build_jira_issue_labels(
+                finding_uid=finding_instance.uid,
+                provider=provider_type,
+                severity=finding_instance.severity,
+                check_id=finding_instance.check_id,
+            )
+            finding_url = build_jira_finding_url(finding_instance.uid)
+
             try:
                 # Send the individual finding to Jira
                 result = jira_integration.send_finding(
@@ -527,7 +615,7 @@ def send_findings_to_jira(
                     severity=finding_instance.severity,
                     status=finding_instance.status,
                     status_extended=finding_instance.status_extended or "",
-                    provider=finding_instance.scan.provider.provider,
+                    provider=provider_type,
                     region=region,
                     resource_uid=resource_uid,
                     resource_name=resource_name,
@@ -542,6 +630,9 @@ def send_findings_to_jira(
                     compliance=finding_instance.compliance or {},
                     project_key=project_key,
                     issue_type=issue_type,
+                    issue_labels=issue_labels,
+                    finding_url=finding_url,
+                    tenant_info=tenant_info,
                 )
             except JiraBaseException as error:
                 error_message = error.message or JIRA_GENERIC_SEND_ERROR
@@ -557,6 +648,11 @@ def send_findings_to_jira(
 
             if result:
                 num_tickets_created += 1
+                logger.info(
+                    "Finding %s sent to Jira as %s",
+                    finding_id,
+                    result.get("key") if isinstance(result, dict) else result,
+                )
             else:
                 error_message = JIRA_GENERIC_SEND_ERROR
                 logger.error(error_message)
