@@ -11,6 +11,11 @@ import { z } from "zod";
 
 import { getToken, getUserByMe } from "./actions/auth";
 import { apiBaseUrl } from "./lib";
+import { UserMeError } from "./lib/auth-errors";
+import {
+  SLACK_CALLBACK_PATH,
+  SLACK_EXPIRED_CALLBACK_URL,
+} from "./lib/integrations/slack-connect-status";
 import type { RolePermissionAttributes } from "./types/users";
 
 interface CustomJwtPayload extends JwtPayload {
@@ -59,6 +64,9 @@ const DEFAULT_PERMISSIONS: RolePermissionAttributes = {
 };
 
 const TENANT_SWITCH_ERROR = "TenantSwitchError";
+
+const NON_RETRYABLE_USER_ME_STATUSES = new Set([401, 403, 404]);
+const USER_REFRESH_TIMEOUT_MS = 5_000;
 
 type TokenUserInput = Partial<TokenUser> & { company?: string };
 
@@ -202,6 +210,31 @@ const refreshAccessToken = async (token: AuthToken): Promise<AuthToken> => {
 
       applyDecodedClaims(nextToken, newAccessToken, "refreshed access token");
 
+      try {
+        const userMeResponse = await getUserByMe(
+          newAccessToken,
+          AbortSignal.timeout(USER_REFRESH_TIMEOUT_MS),
+        );
+        nextToken.user = tokenUserFromApi(userMeResponse);
+      } catch (error) {
+        if (
+          error instanceof UserMeError &&
+          error.status !== undefined &&
+          NON_RETRYABLE_USER_ME_STATUSES.has(error.status)
+        ) {
+          return {
+            ...nextToken,
+            accessToken: undefined,
+            refreshToken: undefined,
+            user: undefined,
+            error: "RefreshAccessTokenError",
+          };
+        }
+
+        // eslint-disable-next-line no-console
+        console.warn("Unable to refresh user after access token refresh");
+      }
+
       return nextToken;
     } catch (error) {
       // eslint-disable-next-line no-console
@@ -317,7 +350,9 @@ export const authConfig = {
         const signInUrl = new URL("/sign-in", nextUrl.origin);
         signInUrl.searchParams.set(
           "callbackUrl",
-          nextUrl.pathname + nextUrl.search,
+          nextUrl.pathname === SLACK_CALLBACK_PATH
+            ? SLACK_EXPIRED_CALLBACK_URL
+            : nextUrl.pathname + nextUrl.search,
         );
         // Include session error if present (e.g., RefreshAccessTokenError)
         if (sessionError) {

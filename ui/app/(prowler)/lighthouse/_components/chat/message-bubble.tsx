@@ -1,6 +1,14 @@
 "use client";
 
-import { Bot, Check, Copy, UserRound } from "lucide-react";
+import {
+  Bot,
+  Check,
+  Copy,
+  ThumbsDown,
+  ThumbsUp,
+  UserRound,
+} from "lucide-react";
+import posthogClient from "posthog-js";
 import { useState } from "react";
 
 import { formatMessageTimestamp } from "@/app/(prowler)/lighthouse/_lib/format";
@@ -18,9 +26,24 @@ import {
 } from "@/app/(prowler)/lighthouse/_types";
 import { LighthouseContextBadge } from "@/components/lighthouse/context-chip";
 import { Button } from "@/components/shadcn/button/button";
+import {
+  Popover,
+  PopoverAnchor,
+  PopoverContent,
+} from "@/components/shadcn/popover";
+import { FeedbackForm } from "@/components/survey/feedback-form";
 import { cn } from "@/lib/utils";
 import type { LighthouseSkillDefinition } from "@/types/lighthouse-skills";
 
+import {
+  buildLighthouseFeedbackSurveyEvents,
+  LIGHTHOUSE_FEEDBACK_DETAILS_MAX_LENGTH,
+  LIGHTHOUSE_FEEDBACK_RATING,
+  LIGHTHOUSE_FEEDBACK_REASON,
+  type LighthouseFeedbackRating,
+  type LighthouseFeedbackReason,
+  type LighthouseFeedbackSurvey,
+} from "./lighthouse-feedback-survey";
 import { MessageMarkdown } from "./message-markdown";
 import { SkillActionsRow, SkillRunReceipt } from "./skill-completed";
 import { SkillMessageCard } from "./skill-message-card";
@@ -34,22 +57,32 @@ const ASSISTANT_PART_GROUP_TYPE = {
 type AssistantPartGroupType =
   (typeof ASSISTANT_PART_GROUP_TYPE)[keyof typeof ASSISTANT_PART_GROUP_TYPE];
 
+const LIGHTHOUSE_FEEDBACK_REASON_OPTIONS = Object.values(
+  LIGHTHOUSE_FEEDBACK_REASON,
+).map((reason) => ({ value: reason, label: reason }));
+
 interface AssistantPartGroup {
   id: string;
   type: AssistantPartGroupType;
   parts: LighthouseV2Part[];
 }
 
-export function MessageBubble({
-  message,
-  skillRun,
-  onLaunchSkill,
-}: {
+interface MessageBubbleProps {
   message: LighthouseV2Message;
+  feedbackTarget?: LighthouseV2Message;
+  feedbackSurvey?: LighthouseFeedbackSurvey | null;
   // Present when this assistant message answered a skill launch (design 1j).
   skillRun?: SkillRunInfo;
   onLaunchSkill?: (skill: LighthouseSkillDefinition) => void;
-}) {
+}
+
+export function MessageBubble({
+  message,
+  feedbackTarget,
+  feedbackSurvey,
+  skillRun,
+  onLaunchSkill,
+}: MessageBubbleProps) {
   const isUser = message.role === LIGHTHOUSE_V2_MESSAGE_ROLE.USER;
   const isSkillResponse = !isUser && skillRun !== undefined;
   // Text-only join feeds the copy button; tool calls are rendered separately.
@@ -125,6 +158,8 @@ export function MessageBubble({
           isUser={isUser}
           text={messageText}
           insertedAt={message.insertedAt}
+          feedbackTarget={feedbackTarget}
+          feedbackSurvey={feedbackSurvey}
         />
       </div>
       {isUser && (
@@ -204,10 +239,14 @@ function MessageMeta({
   isUser,
   text,
   insertedAt,
+  feedbackTarget,
+  feedbackSurvey,
 }: {
   isUser: boolean;
   text: string;
   insertedAt: string;
+  feedbackTarget?: LighthouseV2Message;
+  feedbackSurvey?: LighthouseFeedbackSurvey | null;
 }) {
   // Copy is always shown; the timestamp only reveals on hover over the message.
   // Agent footer reads left-to-right ([copy] [time]); user footer mirrors it.
@@ -219,6 +258,13 @@ function MessageMeta({
       )}
     >
       <CopyMessageButton text={text} />
+      {feedbackTarget && feedbackSurvey && (
+        <LighthouseOutcomeFeedbackControls
+          key={feedbackTarget.id}
+          message={feedbackTarget}
+          survey={feedbackSurvey}
+        />
+      )}
       <time
         dateTime={insertedAt}
         className="text-text-neutral-tertiary text-xs opacity-0 transition-opacity group-hover:opacity-100"
@@ -226,6 +272,158 @@ function MessageMeta({
         {formatMessageTimestamp(insertedAt)}
       </time>
     </div>
+  );
+}
+
+export function LighthouseOutcomeFeedbackControls({
+  message,
+  survey,
+}: {
+  message: LighthouseV2Message;
+  survey: LighthouseFeedbackSurvey;
+}) {
+  const [open, setOpen] = useState(false);
+  const [rating, setRating] = useState<LighthouseFeedbackRating | null>(null);
+  // Local state needed: reasons and details are buffered until "Submit" is clicked.
+  const [reasons, setReasons] = useState<LighthouseFeedbackReason[]>([]);
+  const [details, setDetails] = useState("");
+  const isPersistedUserMessage =
+    message.role === LIGHTHOUSE_V2_MESSAGE_ROLE.USER &&
+    !message.id.startsWith("optimistic-");
+
+  if (!isPersistedUserMessage) return null;
+
+  const submit = (
+    submittedRating = rating,
+    submittedDetails = details,
+    submittedReasons = reasons,
+  ) => {
+    if (!submittedRating) return;
+
+    const submissionId = globalThis.crypto?.randomUUID();
+    if (!submissionId) return;
+
+    for (const event of buildLighthouseFeedbackSurveyEvents(survey, {
+      targetMessageId: message.id,
+      rating: submittedRating,
+      reasons: submittedReasons,
+      details: submittedDetails,
+      submissionId,
+    })) {
+      posthogClient.capture("survey sent", event);
+    }
+
+    setOpen(false);
+    setReasons([]);
+    setDetails("");
+  };
+
+  const selectRating = (nextRating: LighthouseFeedbackRating) => {
+    setRating(nextRating);
+    if (nextRating === LIGHTHOUSE_FEEDBACK_RATING.UP) {
+      submit(nextRating, "", []);
+      return;
+    }
+    setOpen(true);
+  };
+
+  const toggleReason = (reason: LighthouseFeedbackReason) => {
+    setReasons((current) =>
+      current.includes(reason)
+        ? current.filter((currentReason) => currentReason !== reason)
+        : [...current, reason],
+    );
+  };
+
+  const cancel = () => {
+    setOpen(false);
+    setRating(null);
+    setReasons([]);
+    setDetails("");
+  };
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (nextOpen) {
+      setOpen(true);
+      return;
+    }
+    cancel();
+  };
+
+  return (
+    <Popover open={open} onOpenChange={handleOpenChange}>
+      <PopoverAnchor asChild>
+        <div className="flex items-center gap-0.5">
+          <FeedbackRatingButton
+            rating={LIGHTHOUSE_FEEDBACK_RATING.UP}
+            selectedRating={rating}
+            onSelect={selectRating}
+          />
+          <FeedbackRatingButton
+            rating={LIGHTHOUSE_FEEDBACK_RATING.DOWN}
+            selectedRating={rating}
+            onSelect={selectRating}
+          />
+        </div>
+      </PopoverAnchor>
+      <PopoverContent
+        align="start"
+        side="top"
+        className="w-[min(92vw,26rem)] p-5"
+      >
+        <FeedbackForm
+          title="Share feedback"
+          description="Tell us more about this answer."
+          reasons={{
+            label: "Reasons (optional)",
+            options: LIGHTHOUSE_FEEDBACK_REASON_OPTIONS,
+            selected: reasons,
+            onToggle: toggleReason,
+          }}
+          detailsLabel="Additional feedback (optional)"
+          placeholder="Type your answer here"
+          details={details}
+          detailsMaxLength={LIGHTHOUSE_FEEDBACK_DETAILS_MAX_LENGTH}
+          onDetailsChange={setDetails}
+          onSubmit={submit}
+          onCancel={cancel}
+        />
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function FeedbackRatingButton({
+  rating,
+  selectedRating,
+  onSelect,
+}: {
+  rating: LighthouseFeedbackRating;
+  selectedRating: LighthouseFeedbackRating | null;
+  onSelect: (rating: LighthouseFeedbackRating) => void;
+}) {
+  const isUp = rating === LIGHTHOUSE_FEEDBACK_RATING.UP;
+  const selected = selectedRating === rating;
+  const Icon = isUp ? ThumbsUp : ThumbsDown;
+
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon-sm"
+      aria-label={
+        isUp ? "Mark outcome as helpful" : "Mark outcome as not helpful"
+      }
+      aria-pressed={selected}
+      onClick={() => onSelect(rating)}
+      className={cn(
+        "text-text-neutral-tertiary hover:text-text-neutral-primary size-6",
+        selected &&
+          "bg-button-primary hover:bg-button-primary-hover active:bg-button-primary-press focus-visible:ring-button-primary/50 text-black hover:text-black",
+      )}
+    >
+      <Icon className="size-3.5" />
+    </Button>
   );
 }
 

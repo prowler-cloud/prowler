@@ -104,6 +104,7 @@ dependencies = [
   "stackit-resourcemanager==0.8.0",
   "stackit-ske==1.12.0",
   "tabulate==0.9.0",
+  "truststore==0.10.4",
   "tzlocal==5.3.1",
   "uuid6==2024.7.10",
   "py-iam-expand==0.3.0",
@@ -142,7 +143,7 @@ maintainers = [{name = "Prowler Engineering", email = "engineering@prowler.com"}
 name = "prowler"
 readme = "README.md"
 requires-python = ">=3.10,<3.14"
-version = "5.40.0"
+version = "5.41.0"
 
 [project.scripts]
 prowler = "prowler.__main__:prowler"

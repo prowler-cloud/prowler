@@ -12,13 +12,19 @@ class Etcd(KubernetesService):
         self.etcd_pods = self._get_etcd_pods()
 
     def _get_etcd_pods(self):
+        """Collect the `etcd` pods from the `kube-system` namespace.
+
+        Returns:
+            list: Matching pods. Any pods collected before an error are kept, so
+            the checks always receive an iterable instead of `None`.
+        """
+        etcd_pods = []
         try:
-            etcd_pods = []
             for pod in self.client.pods.values():
                 if pod.namespace == "kube-system" and pod.name.startswith("etcd"):
                     etcd_pods.append(pod)
-            return etcd_pods
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+        return etcd_pods

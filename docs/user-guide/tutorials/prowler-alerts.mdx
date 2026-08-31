@@ -1,7 +1,7 @@
 ---
 title: 'Alerts'
 sidebarTitle: 'Alerts'
-description: 'Create email alerts from Prowler Cloud findings to monitor relevant security changes after scans or in daily digests.'
+description: 'Create alerts from Prowler Cloud findings, deliver them to email recipients and Slack channels, and monitor relevant security changes after scans or in daily digests.'
 ---
 
 import { VersionBadge } from "/snippets/version-badge.mdx"
@@ -9,7 +9,7 @@ import { SubscriptionBanner } from "/snippets/subscription-banner.mdx"
 
 <VersionBadge version="5.26.0" />
 
-Alerts notify recipients by email when security findings match saved filter conditions. Use Alerts to track high-priority findings, monitor specific providers or services, and keep teams informed about scan results that match defined criteria.
+Alerts notify their destinations — email recipients, Slack channels, or both — when security findings match saved filter conditions. Use Alerts to track high-priority findings, monitor specific providers or services, and keep teams informed about scan results that match defined criteria.
 
 <SubscriptionBanner />
 
@@ -19,12 +19,13 @@ Before creating Alerts, ensure that:
 
 * At least one scan has completed and produced findings.
 * The user role includes the `manage_alerts` permission.
+* To deliver Alerts to Slack channels, a Slack workspace is connected, at least one channel is authorized on it, and the integration's connection check has confirmed that channel. See [Slack Integration](/user-guide/tutorials/prowler-app-slack-integration).
 
 The `manage_alerts` permission is required to create, edit, test, enable, disable, and delete Alerts. See [RBAC Administrative Permissions](/user-guide/tutorials/prowler-app-rbac#rbac-administrative-permissions) for details.
 
 ## How Alerts Work
 
-Alerts are created from Findings filters. When an Alert runs, Prowler Cloud evaluates the saved conditions against findings and sends an email digest when matching findings exist.
+Alerts are created from Findings filters. When an Alert runs, Prowler Cloud evaluates the saved conditions against findings and notifies the Alert's destinations when matching findings exist: an email digest to each recipient, a message to each Slack channel, or both. Destination kinds are independent — neither requires the other, and neither displaces the other.
 
 <Note>
 Alerts evaluate findings with status `FAIL` only. Findings with status `PASS` or `MANUAL`, and muted findings, never trigger an Alert regardless of the saved filters.
@@ -53,6 +54,7 @@ To create an Alert:
     * **Description:** Add optional context for the Alert.
     * **Frequency:** Select when Prowler Cloud should evaluate the Alert.
     * **Recipients:** Select the recipients who should receive the email digest.
+    * **Destination channels:** Select the Slack channels that should receive the Alert. See [Slack Channel Destinations](#slack-channel-destinations).
 
     ![Create Alert Modal](/images/prowler-app/alerts/create-alert-modal.png)
 
@@ -86,11 +88,18 @@ Navigate to **Alerts** to review and manage existing Alerts.
 
 ![Alerts List](/images/prowler-app/alerts/alerts-list.png)
 
+The **Destinations** column summarizes where each Alert delivers, without the Alert being opened:
+
+* **Email recipients:** The first address, plus a count of the rest, such as `security@example.com +2 more`.
+* **Slack channels:** The first channel, plus a count of the rest, such as `#sec-alerts +1 more`.
+
+Each summary is omitted when that destination kind is empty, and the column reads **No destinations** when an Alert has neither.
+
 Each Alert provides these actions:
 
 | Action | Description |
 |--------|-------------|
-| Edit | Update name, description, recipients, frequency, or filters. |
+| Edit | Update name, description, recipients, Slack channels, frequency, or filters. |
 | Enable/Disable | Start or stop Alert evaluation without deleting the Alert. |
 | Delete | Permanently remove the Alert. |
 
@@ -125,6 +134,37 @@ By default, the **organization owner** receives a **daily digest** for **critica
 
 If a recipient unsubscribes from Alerts, that address stops receiving digests until it is reconfirmed.
 
+An Alert does not require email recipients: an Alert that targets Slack channels only is accepted with those channels as its sole destinations. An Alert with no destinations at all stays valid and keeps evaluating its filters, but it delivers nothing.
+
+## Slack Channel Destinations
+
+<VersionBadge version="5.40.0" />
+
+An Alert can post to Slack channels alongside its email recipients, or instead of them. The **Destination channels** field sits directly below **Recipients** in the Alert form, both when creating an Alert and when editing one. When the Alert matches findings, Prowler Cloud posts a message to each of its channels and sends the email digest to each of its recipients, independently of each other.
+
+The channels offered are the confirmed channels of the connected Slack integration, never the whole Slack workspace. Widening the pool takes two steps on the integration: authorize the channel there, then run its connection check, which confirms the channel by posting a one-time confirmation message to it. Once confirmed, the channel is selectable on every Alert. See [Slack Integration](/user-guide/tutorials/prowler-app-slack-integration) for connecting a workspace, authorizing its channels, and confirming them.
+
+A channel that was authorized a moment ago but does not appear in the Alert form has not been confirmed yet. Run **Test connection** on the Slack integration, then reopen the Alert form.
+
+Private channels are identified as **Private** both in the open channel list and on the selected channels once the list is closed, so a private destination is never mistaken for a public one.
+
+### When Slack Channels Cannot Be Selected
+
+The field is always present, so channel delivery is never silently missing. It reports why it cannot be used:
+
+| State | What the Alert form shows |
+|-------|---------------------------|
+| No Slack workspace connected | The field is visible but cannot be edited, explaining that posting Alerts to Slack channels needs a connected Slack workspace, with a link to the Slack integration. |
+| Workspace connected, no confirmed channels | A notice that no channels are available yet and that they are authorized and confirmed on the Slack integration, with the same link. |
+
+In both states the rest of the Alert is unaffected: it can still be created or saved with its filters, frequency, and email recipients.
+
+<Note>
+Slack destinations stay in step with the integration. Removing a channel from the integration's authorized set — or disconnecting the Slack integration altogether — removes that channel from every Alert that targeted it, so an Alert never keeps a destination Prowler can no longer deliver to. The Alert keeps its filters, frequency, and email recipients, and future delivery to that channel stops: nothing is posted to announce the removal, and the notifications already delivered stay in the channel. Restoring delivery means authorizing and confirming the channel again on the integration, then selecting it again on the Alert.
+</Note>
+
+Saving an Alert that names a channel which is not a confirmed channel of a connected Slack integration is refused, and the reason is reported on the Alert form. Authorize and confirm the channel on the Slack integration, or remove it from the Alert, and save again.
+
 ## Email Notifications
 
 When an Alert matches findings, Prowler Cloud sends a security alert email that summarizes the matching findings. The email includes:
@@ -141,6 +181,6 @@ When an Alert matches findings, Prowler Cloud sends a security alert email that 
 
 * **Start with focused filters:** Create Alerts for specific high-priority scopes, such as critical findings, production providers, or important services.
 * **Use clear names:** Choose names that explain the intent of the Alert.
-* **Review recipients regularly:** Keep recipient lists aligned with current ownership.
+* **Review destinations regularly:** Keep recipient lists and channel selections aligned with current ownership.
 * **Test before saving edits:** Use **Test** after changing filters to confirm that the Alert matches the expected findings.
-* **Disable instead of deleting during tuning:** Disable Alerts temporarily when adjusting filters or recipients.
+* **Disable instead of deleting during tuning:** Disable Alerts temporarily when adjusting filters or destinations.
