@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 
+// Read by the page harness off `data-connection-check-status`.
 export const CHECK_STATUS = {
   /** No check has run against the channels currently on record. */
   IDLE: "idle",
@@ -77,7 +78,10 @@ export const SlackConnectionCheckStatus = ({
   const { icon: Icon, className } = CHECK_STATUS_STYLES[status];
 
   return (
-    <div className={cn("flex w-full flex-col", outcome && "gap-2")}>
+    <div
+      data-connection-check-status={status}
+      className={cn("flex w-full flex-col", outcome && "gap-2")}
+    >
       <div
         className={cn(
           "flex items-start gap-2 text-xs",
@@ -96,8 +100,13 @@ export const SlackConnectionCheckStatus = ({
         )}
         {/* Always mounted, so a landing outcome is announced as a change to a
             region that was already there — and polite, since the user asked
-            for the check and is watching it. Empty, it takes no room. */}
+            for the check and is watching it. Empty, it takes no room.
+
+            Keyed, because the check's toast carries this same refusal copy: a
+            reader going by text alone would answer for the toast, and pass
+            with this line never rendered. */}
         <p
+          data-connection-check-outcome
           aria-live="polite"
           className={cn("font-medium", !outcome && "sr-only")}
         >

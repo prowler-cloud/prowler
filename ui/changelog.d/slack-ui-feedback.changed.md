@@ -1,1 +1,1 @@
-Slack bot mention renamed to `@Prowler Cloud`, identifiers set as inline code, private-channel hint links to its docs
+Slack integration: the bot is referred to as `@Prowler Cloud`, identifiers are set as inline code, and the private-channel hint links to its docs (Prowler Cloud only)

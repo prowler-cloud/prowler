@@ -211,6 +211,18 @@ describe("a connected workspace", () => {
     expect(harness.lastCheckedLine()).toMatch(/2026\/08\/10/);
     expect(await harness.offersConnectionTest()).toBe(true);
     expect(await harness.testConnection()).toBe(CONNECTION_OUTCOME.SUCCESS);
+    // And — the card says what the check reached, naming the one channel it
+    // covered. Asserted off the card's own region, not the page's text: the
+    // toast below says "Connection test successful" too, so a text match would
+    // stand with this line never rendered.
+    expect(await harness.connectionCheckOutcomeText()).toBe(
+      `#${SLACK_PUBLIC_CHANNEL.name} is reachable.`,
+    );
+    // And — the toast, which is the other half and goes on its own. Read
+    // separately so neither surface can vouch for the other.
+    expect(await harness.connectionSuccessToast()).toMatch(
+      /Connection test successful/,
+    );
     // One workspace per tenant (design D10): no second install on offer, and no
     // consent URL minted for a page that would never use it.
     expect(harness.offersInstall()).toBe(false);
@@ -447,6 +459,12 @@ describe("authorizing destination channels", () => {
     // Then
     expect(await harness.connectionOutcome()).toBe(CONNECTION_OUTCOME.SUCCESS);
     expect(harness.connectionCheckCallCount).toBe(1);
+    // And — the card names the channel the chained check covered, which the
+    // save hands it directly: the set the check ran against is not on record
+    // as state yet when the summary is built.
+    expect(await harness.connectionCheckOutcomeText()).toBe(
+      `#${SLACK_PUBLIC_CHANNEL.name} is reachable.`,
+    );
     // And — everything waiting on a destination moves with the save, in the
     // same paint: no reload to find the check on offer for later.
     expect(await harness.offersConnectionTest()).toBe(true);
@@ -478,6 +496,11 @@ describe("authorizing destination channels", () => {
     // Then — only the check failed, so the destinations stay on record, and
     // the failure names the one channel Slack refused.
     expect(await harness.connectionOutcome()).toBe(CONNECTION_OUTCOME.FAILURE);
+    // The card and the toast each name it, and each is read where it lives:
+    // the toast goes, and what the card keeps is what the user comes back to.
+    expect(await harness.connectionCheckOutcomeText()).toMatch(
+      new RegExp(`^Slack refused #${SLACK_PRIVATE_CHANNEL.name}\\b`),
+    );
     expect(await harness.connectionFailureToast()).toMatch(
       new RegExp(`Slack refused #${SLACK_PRIVATE_CHANNEL.name}`),
     );
@@ -518,6 +541,41 @@ describe("authorizing destination channels", () => {
     // And — the picker followed too: the superseded set is not left one click
     // from being saved back.
     expect(harness.offersChannelsSave()).toBe(false);
+  }, 60000);
+
+  it("takes back a passing result once the set it vouched for is no longer the set on record", async () => {
+    // Given — a check that passed against the one channel then authorized, said
+    // in the card in those terms.
+    const harness = new SlackIntegrationHarness(configuredSlackFixture());
+    await harness.mount();
+    expect(await harness.testConnection()).toBe(CONNECTION_OUTCOME.SUCCESS);
+    expect(await harness.connectionCheckOutcomeText()).toBe(
+      `#${SLACK_PUBLIC_CHANNEL.name} is reachable.`,
+    );
+
+    // When — a channel nothing has checked joins the record, from elsewhere, so
+    // no new check runs to overwrite the standing one.
+    await harness.channelsRecordedElsewhere([
+      SLACK_PUBLIC_CHANNEL.name,
+      SLACK_SECOND_PUBLIC_CHANNEL.name,
+    ]);
+    await harness.refreshPageData();
+
+    // Then — the result is withdrawn rather than left standing: a line saying
+    // the channels are reachable, over a set one of them was never tried
+    // against, would be a claim the check never made.
+    await harness.waitForRetiredConnectionCheck();
+    // And — the badge steps back with it, because the record does too: the API
+    // clears its own verdict on a changed set for the same reason the card
+    // clears the finding, so the two never disagree about what was checked.
+    expect(await harness.connectionBadge()).toBe("Not checked yet");
+    // And — only the finding is withdrawn, not the setup: the wider set is on
+    // record, with the check still there to be run over it.
+    expect(await harness.authorizedChannels()).toEqual([
+      SLACK_PUBLIC_CHANNEL.name,
+      SLACK_SECOND_PUBLIC_CHANNEL.name,
+    ]);
+    expect(await harness.offersConnectionTest()).toBe(true);
   }, 60000);
 
   it("says which permission is missing when Slack refuses the channel listing, leaving the authorized set alone", async () => {

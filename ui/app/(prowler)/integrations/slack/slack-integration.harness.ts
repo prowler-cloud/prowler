@@ -15,6 +15,10 @@ import type { SlackFixture } from "@/__tests__/msw/handlers/slack.fixtures";
 import { worker } from "@/__tests__/msw/worker";
 import { render } from "@/__tests__/render-browser";
 import { setSlackAuthorizedChannels } from "@/actions/integrations/slack";
+import {
+  CHECK_STATUS,
+  type CheckStatus,
+} from "@/components/integrations/slack/slack-connection-check-status";
 import { SLACK_CONNECT_PARAMS } from "@/lib/integrations/slack-connect-status";
 
 import { IntegrationsContent } from "../integrations-content";
@@ -335,6 +339,69 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     );
   }
 
+  async connectionSuccessToast(): Promise<string> {
+    return this.waitFor(
+      () => this.toastText(/Connection test successful/),
+      15000,
+      "the connection success toast",
+    );
+  }
+
+  /**
+   * The check's standing state, read from the card's own marker. The status is
+   * the card's alone: the toast reports a check that just ran and then goes,
+   * where this retires on its own once the channels it covered have moved.
+   */
+  async connectionCheckStatus(): Promise<CheckStatus> {
+    const region = await this.waitFor(
+      () => this.q("[data-connection-check-status]"),
+      10000,
+      "the connection check status",
+    );
+    return region.getAttribute("data-connection-check-status") as CheckStatus;
+  }
+
+  /**
+   * What the card says the last check found, or null when it shows no outcome
+   * at all. The element is always mounted — `sr-only` while empty — so an empty
+   * one has to read as "no outcome", not as an outcome that says nothing.
+   */
+  connectionCheckOutcome(): string | null {
+    const outcome = this.q("[data-connection-check-outcome]");
+    return (outcome?.textContent ?? "").replace(/\s+/g, " ").trim() || null;
+  }
+
+  /** The same copy, waited for: the outcome lands a render after the answer. */
+  async connectionCheckOutcomeText(): Promise<string> {
+    return this.waitFor(
+      () => this.connectionCheckOutcome(),
+      15000,
+      "the connection check outcome",
+    );
+  }
+
+  /**
+   * Wait until the card has taken its finding back — no outcome, and resting.
+   * Both, together: a status that says nothing while the line it decorated is
+   * still on screen would be the half-retired state the derivation exists to
+   * make impossible.
+   */
+  async waitForRetiredConnectionCheck(): Promise<void> {
+    await this.waitFor(
+      () => {
+        const status = this.q("[data-connection-check-status]")?.getAttribute(
+          "data-connection-check-status",
+        );
+        return status === CHECK_STATUS.IDLE &&
+          this.connectionCheckOutcome() === null
+          ? true
+          : null;
+      },
+      10000,
+      "the connection check finding to be retired",
+    );
+  }
+
   /**
    * The "last checked" line as rendered, or null when the page shows none —
    * which is what a workspace whose connection was never checked shows.
@@ -350,16 +417,24 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     return this.countRequests("POST", "/connection");
   }
 
-  /** The outcome of a check under way, started by the button or by a save. */
+  /**
+   * The outcome of a check under way, started by the button or by a save, read
+   * from the card's status.
+   *
+   * Deliberately not read from the copy: the toast titles the page has always
+   * raised are the only text saying "Connection test succeeded/failed", and
+   * they are portaled outside the card — so a reader going by text would settle
+   * on the toast and report an outcome the card never showed. The toasts have
+   * assertions of their own, which is what keeps the two surfaces independent.
+   */
   async connectionOutcome(): Promise<ConnectionOutcome> {
     return this.waitFor(
       () => {
-        if (this.containsText(/Connection test successful/)) {
-          return CONNECTION_OUTCOME.SUCCESS;
-        }
-        if (this.containsText(/Connection test failed/)) {
-          return CONNECTION_OUTCOME.FAILURE;
-        }
+        const status = this.q("[data-connection-check-status]")?.getAttribute(
+          "data-connection-check-status",
+        );
+        if (status === CHECK_STATUS.PASSED) return CONNECTION_OUTCOME.SUCCESS;
+        if (status === CHECK_STATUS.FAILED) return CONNECTION_OUTCOME.FAILURE;
         return null;
       },
       15000,
