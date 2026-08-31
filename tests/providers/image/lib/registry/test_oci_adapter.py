@@ -6,6 +6,7 @@ import pytest
 import requests
 
 from prowler.providers.image.exceptions.exceptions import (
+    ImageInvalidAllowedNetworksError,
     ImageRegistryAuthError,
     ImageRegistryCatalogError,
     ImageRegistryNetworkError,
@@ -709,3 +710,102 @@ class TestCredentialRedaction:
         adapter = OciRegistryAdapter("reg.io", password="secret", token="tok")
         assert adapter.password == "secret"
         assert adapter.token == "tok"
+
+
+class TestAllowedPrivateNetworks:
+    """PROWLER_IMAGE_PROVIDER_ALLOWED_PRIVATE_NETWORKS: explicit CIDR allowlist
+    consulted by the SSRF guard; unset preserves the default rejection."""
+
+    ENV = "PROWLER_IMAGE_PROVIDER_ALLOWED_PRIVATE_NETWORKS"
+
+    def test_unset_env_keeps_private_origin_rejected(self, monkeypatch):
+        monkeypatch.delenv(self.ENV, raising=False)
+        adapter = OciRegistryAdapter("https://10.0.0.5:5000")
+        with pytest.raises(ImageRegistryAuthError, match="non-public"):
+            adapter._validate_outbound_url("https://10.0.0.5:5000/v2/_catalog?last=x")
+
+    def test_empty_env_keeps_private_origin_rejected(self, monkeypatch):
+        monkeypatch.setenv(self.ENV, "  ")
+        adapter = OciRegistryAdapter("https://10.0.0.5:5000")
+        with pytest.raises(ImageRegistryAuthError, match="non-public"):
+            adapter._validate_outbound_url("https://10.0.0.5:5000/v2/_catalog?last=x")
+
+    def test_allowlisted_literal_ip_permitted(self, monkeypatch):
+        monkeypatch.setenv(self.ENV, "192.168.65.254/32,10.20.0.0/16")
+        adapter = OciRegistryAdapter("https://10.20.0.5:5000")
+        url = adapter._validate_outbound_url(
+            "https://10.20.0.5:5000/v2/_catalog?last=x"
+        )
+        assert url == "https://10.20.0.5:5000/v2/_catalog?last=x"
+
+    def test_allowlisted_resolved_hostname_permitted(self, monkeypatch):
+        monkeypatch.setenv(self.ENV, "10.20.0.0/16")
+        adapter = OciRegistryAdapter("https://harbor.internal")
+        with patch(
+            "prowler.providers.image.lib.registry.base.socket.getaddrinfo",
+            side_effect=_fake_getaddrinfo({"harbor.internal": "10.20.0.5"}),
+        ):
+            url = adapter._validate_outbound_url(
+                "https://harbor.internal/service/token"
+            )
+        assert url == "https://harbor.internal/service/token"
+
+    def test_private_ip_outside_allowlist_rejected(self, monkeypatch):
+        monkeypatch.setenv(self.ENV, "10.20.0.0/16")
+        adapter = OciRegistryAdapter("https://harbor.internal")
+        with patch(
+            "prowler.providers.image.lib.registry.base.socket.getaddrinfo",
+            side_effect=_fake_getaddrinfo(
+                {"harbor.internal": "10.20.0.5", "evil.internal": "192.168.1.99"}
+            ),
+        ):
+            with pytest.raises(ImageRegistryAuthError, match="non-public"):
+                adapter._validate_outbound_url("https://evil.internal/token")
+
+    def test_metadata_ip_rejected_unless_allowlisted(self, monkeypatch):
+        monkeypatch.setenv(self.ENV, "10.20.0.0/16")
+        adapter = OciRegistryAdapter("https://harbor.internal")
+        with patch(
+            "prowler.providers.image.lib.registry.base.socket.getaddrinfo",
+            side_effect=_fake_getaddrinfo({"harbor.internal": "10.20.0.5"}),
+        ):
+            with pytest.raises(ImageRegistryAuthError, match="non-public"):
+                adapter._validate_outbound_url("https://169.254.169.254/latest")
+
+    def test_private_link_from_public_origin_still_rejected(self, monkeypatch):
+        """Regression: the allowlist does not open ranges it does not name."""
+        monkeypatch.setenv(self.ENV, "10.20.0.0/16")
+        adapter = OciRegistryAdapter("https://reg.example.com")
+        with patch(
+            "prowler.providers.image.lib.registry.base.socket.getaddrinfo",
+            side_effect=_fake_getaddrinfo({"reg.example.com": "8.8.8.8"}),
+        ):
+            with pytest.raises(ImageRegistryAuthError, match="non-public"):
+                adapter._validate_outbound_url("http://192.168.0.99/v2/_catalog")
+
+    def test_local_tld_origin_enforcement_falls_back_to_allowlist(self, monkeypatch):
+        """Hosts without a registrable domain pass only if they resolve into the allowlist."""
+        monkeypatch.setenv(self.ENV, "10.20.0.0/16")
+        adapter = OciRegistryAdapter("https://registry.corp.local")
+        with patch(
+            "prowler.providers.image.lib.registry.base.socket.getaddrinfo",
+            side_effect=_fake_getaddrinfo(
+                {"registry.corp.local": "10.20.2.3", "auth.corp.local": "10.20.2.4"}
+            ),
+        ):
+            url = adapter._validate_outbound_url("https://auth.corp.local/token")
+        assert url == "https://auth.corp.local/token"
+
+    def test_malformed_allowlist_fails_loudly(self, monkeypatch):
+        monkeypatch.setenv(self.ENV, "10.20.0.0/16,banana")
+        with pytest.raises(ImageInvalidAllowedNetworksError, match="banana"):
+            OciRegistryAdapter("https://reg.example.com")
+
+    def test_allowlist_logged_as_relaxed_control(self, monkeypatch, caplog):
+        monkeypatch.setenv(self.ENV, "10.20.0.0/16")
+        with caplog.at_level("WARNING"):
+            OciRegistryAdapter("https://reg.example.com")
+        assert any(
+            "10.20.0.0/16" in message and "SSRF" in message
+            for message in caplog.messages
+        )
