@@ -8,6 +8,7 @@ from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provi
 class Test_bedrock_agent_idle_session_ttl_not_excessive:
     @mock_aws
     def test_no_agents(self):
+        """Test no agents returns empty findings."""
         from prowler.providers.aws.services.bedrock.bedrock_service import BedrockAgent
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
@@ -33,6 +34,7 @@ class Test_bedrock_agent_idle_session_ttl_not_excessive:
 
     @mock_aws
     def test_agent_ttl_pass_below_default(self):
+        """Test PASS when TTL below default 3600."""
         from prowler.providers.aws.services.bedrock.bedrock_service import Agent, BedrockAgent
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
@@ -80,6 +82,7 @@ class Test_bedrock_agent_idle_session_ttl_not_excessive:
 
     @mock_aws
     def test_agent_ttl_pass_exactly_default(self):
+        """Test PASS when TTL exactly at 3600 boundary."""
         from prowler.providers.aws.services.bedrock.bedrock_service import Agent, BedrockAgent
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
@@ -119,6 +122,7 @@ class Test_bedrock_agent_idle_session_ttl_not_excessive:
 
     @mock_aws
     def test_agent_ttl_fail_above_default(self):
+        """Test FAIL when TTL exceeds default."""
         from prowler.providers.aws.services.bedrock.bedrock_service import Agent, BedrockAgent
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
@@ -163,6 +167,7 @@ class Test_bedrock_agent_idle_session_ttl_not_excessive:
 
     @mock_aws
     def test_custom_audit_config_override(self):
+        """Test custom audit config overrides default threshold."""
         from prowler.providers.aws.services.bedrock.bedrock_service import Agent, BedrockAgent
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
@@ -215,6 +220,7 @@ class Test_bedrock_agent_idle_session_ttl_not_excessive:
 
     @mock_aws
     def test_missing_ttl_returns_manual(self):
+        """Test MANUAL when TTL missing."""
         from prowler.providers.aws.services.bedrock.bedrock_service import Agent, BedrockAgent
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
@@ -258,6 +264,7 @@ class Test_bedrock_agent_idle_session_ttl_not_excessive:
 
     @mock_aws
     def test_failed_get_agent_returns_manual_not_pass(self):
+        """Test MANUAL when GetAgent failed, not PASS."""
         from prowler.providers.aws.services.bedrock.bedrock_service import Agent, BedrockAgent
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
