@@ -65,6 +65,7 @@ from tasks.jobs.export import (
     _upload_to_s3,
 )
 from tasks.jobs.integrations import (
+    reconcile_due_jira_issues,
     send_findings_to_jira,
     upload_s3_integration,
     upload_security_hub_integration,
@@ -1378,23 +1379,53 @@ def security_hub_integration_task(
     return upload_security_hub_integration(tenant_id, provider_id, scan_id)
 
 
-# acks_late=False: Jira sends are not deduplicated and the task is not auto-recovered,
-# so a crashed send is dropped rather than redelivered (avoids duplicate Jira issues).
 @shared_task(
     base=RLSTask,
+    bind=True,
     name="integration-jira",
     queue="integrations",
-    acks_late=False,
+    acks_late=True,
+    reject_on_worker_lost=True,
 )
 def jira_integration_task(
+    self,
     tenant_id: str,
     integration_id: str,
     project_key: str,
     issue_type: str,
     finding_ids: list[str],
+    force_replace: bool = False,
 ):
     return send_findings_to_jira(
-        tenant_id, integration_id, project_key, issue_type, finding_ids
+        tenant_id,
+        integration_id,
+        project_key,
+        issue_type,
+        finding_ids,
+        task_id=self.request.id,
+        force_replace=force_replace,
+    )
+
+
+@shared_task(
+    base=RLSTask,
+    bind=True,
+    name="jira-issue-reconciliation",
+    queue="integrations",
+    acks_late=True,
+    reject_on_worker_lost=True,
+)
+def jira_issue_reconciliation_task(
+    self,
+    tenant_id: str,
+    integration_id: str,
+    limit: int = 100,
+):
+    return reconcile_due_jira_issues(
+        tenant_id,
+        integration_id,
+        task_id=self.request.id,
+        limit=limit,
     )
 
 

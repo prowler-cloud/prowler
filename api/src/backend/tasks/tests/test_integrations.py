@@ -1,33 +1,44 @@
-import itertools
 from datetime import UTC, datetime, timedelta
 from unittest.mock import MagicMock, patch
+from uuid import uuid4
 
 import pytest
 from api.db_router import READ_REPLICA_ALIAS, MainRouter
 from api.db_utils import rls_transaction
 from api.models import Integration, JiraIssue
 from api.utils import prowler_integration_connection_test
-from django.db import OperationalError
+from django.db import OperationalError, connection
 from django.test import override_settings
+from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
-from prowler.lib.outputs.jira.exceptions.exceptions import (
-    JiraRefreshTokenError,
-    JiraRequiredCustomFieldsError,
-)
 from prowler.lib.outputs.jira.jira import Jira
+from prowler.lib.outputs.jira.models import (
+    JiraCreationOutcome,
+    JiraCreationResult,
+    JiraIssueLookupOutcome,
+    JiraIssueSearchMatch,
+    JiraIssueSearchOutcome,
+    JiraIssueSearchResult,
+    JiraIssueStatusResult,
+)
 from prowler.providers.aws.lib.security_hub.security_hub import SecurityHubConnection
 from prowler.providers.common.models import Connection
 from tasks.jobs.integrations import (
-    JIRA_RESERVATION_TTL,
+    JIRA_CLAIM_LEASE,
+    _claim_existing_attempt,
+    _finish_owned_failure,
+    _load_jira_delivery_page,
     build_jira_finding_url,
     build_jira_issue_labels,
     get_s3_client_from_integration,
     get_security_hub_client_from_integration,
     get_tenant_name,
+    reconcile_due_jira_issues,
     send_findings_to_jira,
     upload_s3_integration,
     upload_security_hub_integration,
 )
+from tasks.tasks import jira_integration_task, jira_issue_reconciliation_task
 
 
 @pytest.mark.django_db
@@ -1657,615 +1668,6 @@ class TestSecurityHubIntegrationUploads:
         mock_security_hub.archive_previous_findings.assert_called_once()
 
 
-@pytest.mark.django_db
-class TestJiraIntegration:
-    """Sending findings to Jira, with the dedup bookkeeping stubbed out.
-
-    These tests use fake tenant ids and fully mocked findings; the dedup helpers
-    are exercised with real rows in TestJiraIssueDedup.
-    """
-
-    @pytest.fixture(autouse=True)
-    def no_dedup_bookkeeping(self):
-        reservation = MagicMock()
-        reservation.issue_key = ""
-        with patch.multiple(
-            "tasks.jobs.integrations",
-            _load_finding_refs=MagicMock(return_value={}),
-            _load_existing_jira_issues=MagicMock(return_value={}),
-            _refresh_jira_issue_statuses=MagicMock(return_value={}),
-            _reserve_jira_issue=MagicMock(return_value=reservation),
-            _link_jira_issue=MagicMock(),
-            _release_jira_issue=MagicMock(),
-        ):
-            yield
-
-    @patch("tasks.jobs.integrations.rls_transaction")
-    @patch("tasks.jobs.integrations.Finding")
-    @patch("tasks.jobs.integrations.Integration")
-    @patch("tasks.jobs.integrations.initialize_prowler_integration")
-    def test_send_findings_to_jira_success(
-        self,
-        mock_initialize_integration,
-        mock_integration_model,
-        mock_finding_model,
-        mock_rls_transaction,
-    ):
-        """Test successful sending of findings to Jira using send_finding method"""
-        tenant_id = "tenant-123"
-        integration_id = "integration-456"
-        project_key = "PROJ"
-        issue_type = "Task"
-        finding_ids = ["finding-1", "finding-2"]
-
-        # Mock RLS transaction
-        mock_rls_transaction.return_value.__enter__ = MagicMock()
-        mock_rls_transaction.return_value.__exit__ = MagicMock()
-
-        # Mock integration
-        integration = MagicMock()
-        mock_integration_model.objects.get.return_value = integration
-
-        # Mock Jira integration
-        mock_jira_integration = MagicMock()
-        mock_jira_integration.send_finding.side_effect = [True, True]  # Both succeed
-        mock_initialize_integration.return_value = mock_jira_integration
-
-        # Mock findings with resources
-        resource1 = MagicMock()
-        resource1.uid = "resource-uid-1"
-        resource1.name = "resource-name-1"
-        resource1.region = "us-east-1"
-        resource1.get_tags.return_value = {"env": "prod", "team": "security"}
-
-        resource2 = MagicMock()
-        resource2.uid = "resource-uid-2"
-        resource2.name = "resource-name-2"
-        resource2.region = "eu-west-1"
-        resource2.get_tags.return_value = {"env": "dev"}
-
-        finding1 = MagicMock()
-        finding1.id = "finding-1"
-        finding1.uid = "prowler-aws-check_001-123456789012-us-east-1-my bucket"
-        finding1.check_id = "check_001"
-        finding1.severity = "high"
-        finding1.status = "FAIL"
-        finding1.status_extended = "Resource is not compliant"
-        finding1.resource_regions = ["us-east-1"]
-        finding1.compliance = {"cis": ["1.1", "1.2"]}
-        finding1.resources.exists.return_value = True
-        finding1.resources.first.return_value = resource1
-        finding1.scan.provider.provider = "aws"
-        finding1.check_metadata = {
-            "checktitle": "Check Title 1",
-            "risk": "High risk finding",
-            "remediation": {
-                "recommendation": {
-                    "text": "Fix this issue",
-                    "url": "https://docs.example.com/fix",
-                },
-                "code": {
-                    "nativeiac": "native code",
-                    "terraform": "terraform code",
-                    "cli": "aws cli command",
-                    "other": "",
-                },
-            },
-        }
-
-        finding2 = MagicMock()
-        finding2.id = "finding-2"
-        finding2.uid = "prowler-azure-check_002-sub/resource"
-        finding2.check_id = "check_002"
-        finding2.severity = "medium"
-        finding2.status = "PASS"
-        finding2.status_extended = None
-        finding2.resource_regions = []
-        finding2.compliance = {}
-        finding2.resources.exists.return_value = True
-        finding2.resources.first.return_value = resource2
-        finding2.scan.provider.provider = "azure"
-        finding2.check_metadata = {
-            "checktitle": "Check Title 2",
-            "risk": "Medium risk",
-            "remediation": {
-                "recommendation": {"text": "Consider fixing", "url": ""},
-                "code": {},
-            },
-        }
-
-        mock_finding_model.all_objects.select_related.return_value.prefetch_related.return_value.get.side_effect = [
-            finding1,
-            finding2,
-        ]
-
-        # Call the function
-        with (
-            override_settings(UI_BASE_URL="https://cloud.example.com"),
-            patch("tasks.jobs.integrations.get_tenant_name", return_value="Acme"),
-        ):
-            result = send_findings_to_jira(
-                tenant_id, integration_id, project_key, issue_type, finding_ids
-            )
-
-        # Assertions
-        assert result == {"created_count": 2, "skipped_count": 0, "failed_count": 0}
-
-        # Verify Jira integration was initialized
-        mock_initialize_integration.assert_called_once_with(integration)
-
-        # Verify send_finding was called twice with correct parameters
-        assert mock_jira_integration.send_finding.call_count == 2
-
-        # Verify first call
-        first_call = mock_jira_integration.send_finding.call_args_list[0]
-        assert first_call.kwargs["check_id"] == "check_001"
-        assert first_call.kwargs["check_title"] == "Check Title 1"
-        assert first_call.kwargs["severity"] == "high"
-        assert first_call.kwargs["status"] == "FAIL"
-        assert first_call.kwargs["resource_uid"] == "resource-uid-1"
-        assert first_call.kwargs["resource_name"] == "resource-name-1"
-        assert first_call.kwargs["region"] == "us-east-1"
-        assert first_call.kwargs["provider"] == "aws"
-        assert first_call.kwargs["project_key"] == project_key
-        assert first_call.kwargs["issue_type"] == issue_type
-        # Finding reference: labels, link back and tenant info
-        assert first_call.kwargs["issue_labels"] == [
-            "prowler",
-            "prowler-aws",
-            "prowler-high",
-            "prowler-check_001",
-            "prowler-finding-prowler-aws-check_001-123456789012-us-east-1-my_bucket",
-        ]
-        assert first_call.kwargs["finding_url"] == (
-            "https://cloud.example.com/findings?filter[uid]="
-            "prowler-aws-check_001-123456789012-us-east-1-my%20bucket"
-        )
-        assert first_call.kwargs["tenant_info"] == "Acme"
-
-        # Verify second call
-        second_call = mock_jira_integration.send_finding.call_args_list[1]
-        assert second_call.kwargs["check_id"] == "check_002"
-        assert second_call.kwargs["severity"] == "medium"
-        assert second_call.kwargs["status"] == "PASS"
-        assert second_call.kwargs["issue_labels"] == [
-            "prowler",
-            "prowler-azure",
-            "prowler-medium",
-            "prowler-check_002",
-            "prowler-finding-prowler-azure-check_002-sub/resource",
-        ]
-        assert second_call.kwargs["finding_url"] == (
-            "https://cloud.example.com/findings?filter[uid]="
-            "prowler-azure-check_002-sub%2Fresource"
-        )
-
-    @patch("tasks.jobs.integrations.rls_transaction")
-    @patch("tasks.jobs.integrations.Finding")
-    @patch("tasks.jobs.integrations.Integration")
-    @patch("tasks.jobs.integrations.initialize_prowler_integration")
-    @patch("tasks.jobs.integrations.logger")
-    def test_send_findings_to_jira_partial_failure(
-        self,
-        mock_logger,
-        mock_initialize_integration,
-        mock_integration_model,
-        mock_finding_model,
-        mock_rls_transaction,
-    ):
-        """Test partial failure when sending findings to Jira"""
-        tenant_id = "tenant-123"
-        integration_id = "integration-456"
-        project_key = "PROJ"
-        issue_type = "Task"
-        finding_ids = ["finding-1", "finding-2", "finding-3"]
-
-        # Mock RLS transaction
-        mock_rls_transaction.return_value.__enter__ = MagicMock()
-        mock_rls_transaction.return_value.__exit__ = MagicMock()
-
-        # Mock integration
-        integration = MagicMock()
-        mock_integration_model.objects.get.return_value = integration
-
-        # Mock Jira integration with mixed results
-        mock_jira_integration = MagicMock()
-        mock_jira_integration.send_finding.side_effect = [
-            True,
-            False,
-            True,
-        ]  # Second fails
-        mock_initialize_integration.return_value = mock_jira_integration
-
-        # Mock findings (simplified for this test)
-        findings = []
-        for i in range(3):
-            finding = MagicMock()
-            finding.id = f"finding-{i + 1}"
-            finding.check_id = f"check_{i + 1:03d}"
-            finding.severity = "low"
-            finding.status = "FAIL"
-            finding.status_extended = ""
-            finding.resource_regions = []
-            finding.compliance = {}
-
-            finding.resources.exists.return_value = False
-            finding.resources.first.return_value = None
-            finding.scan.provider.provider = "aws"
-            finding.check_metadata = {
-                "checktitle": f"Check {i + 1}",
-                "risk": "Low risk",
-                "remediation": {"recommendation": {}, "code": {}},
-            }
-            findings.append(finding)
-
-        mock_finding_model.all_objects.select_related.return_value.prefetch_related.return_value.get.side_effect = findings
-
-        # Call the function
-        result = send_findings_to_jira(
-            tenant_id, integration_id, project_key, issue_type, finding_ids
-        )
-
-        # Assertions
-        assert result == {
-            "created_count": 2,
-            "skipped_count": 0,
-            "failed_count": 1,
-            "error": "Failed to create Jira issue.",
-        }
-
-        # Verify error was logged for the failed finding
-        mock_logger.error.assert_called_with("Failed to create Jira issue.")
-
-    @patch("tasks.jobs.integrations.rls_transaction")
-    @patch("tasks.jobs.integrations.Finding")
-    @patch("tasks.jobs.integrations.Integration")
-    @patch("tasks.jobs.integrations.initialize_prowler_integration")
-    @patch("tasks.jobs.integrations.logger")
-    def test_send_findings_to_jira_preserves_exception_message(
-        self,
-        mock_logger,
-        mock_initialize_integration,
-        mock_integration_model,
-        mock_finding_model,
-        mock_rls_transaction,
-    ):
-        """Test Jira send exceptions are returned for UI polling."""
-        tenant_id = "tenant-123"
-        integration_id = "integration-456"
-        project_key = "PROJ"
-        issue_type = "Task"
-        finding_ids = ["finding-1"]
-        error_message = "Jira project requires custom fields: Team is required"
-
-        mock_rls_transaction.return_value.__enter__ = MagicMock()
-        mock_rls_transaction.return_value.__exit__ = MagicMock()
-
-        integration = MagicMock()
-        mock_integration_model.objects.get.return_value = integration
-
-        mock_jira_integration = MagicMock()
-
-        mock_jira_integration.send_finding.side_effect = JiraRequiredCustomFieldsError(
-            message=error_message
-        )
-        mock_initialize_integration.return_value = mock_jira_integration
-
-        finding = MagicMock()
-        finding.id = "finding-1"
-        finding.check_id = "check_001"
-        finding.severity = "high"
-        finding.status = "FAIL"
-        finding.status_extended = "Resource is not compliant"
-        finding.compliance = {}
-        finding.resources.exists.return_value = False
-        finding.resources.first.return_value = None
-        finding.scan.provider.provider = "aws"
-        finding.check_metadata = {
-            "checktitle": "Check Title",
-            "risk": "High risk",
-            "remediation": {"recommendation": {}, "code": {}},
-        }
-        mock_select_related = mock_finding_model.all_objects.select_related.return_value
-        mock_finding_query = mock_select_related.prefetch_related.return_value
-        mock_finding_query.get.return_value = finding
-
-        result = send_findings_to_jira(
-            tenant_id, integration_id, project_key, issue_type, finding_ids
-        )
-
-        assert result == {
-            "created_count": 0,
-            "skipped_count": 0,
-            "failed_count": 1,
-            "error": error_message,
-        }
-        mock_logger.exception.assert_called_with(
-            "Failed to send finding %s to Jira: %s",
-            "finding-1",
-            error_message,
-        )
-
-    @patch("tasks.jobs.integrations.rls_transaction")
-    @patch("tasks.jobs.integrations.Finding")
-    @patch("tasks.jobs.integrations.Integration")
-    @patch("tasks.jobs.integrations.initialize_prowler_integration")
-    @patch("tasks.jobs.integrations.logger")
-    def test_send_findings_to_jira_preserves_refresh_token_error_message(
-        self,
-        mock_logger,
-        mock_initialize_integration,
-        mock_integration_model,
-        mock_finding_model,
-        mock_rls_transaction,
-    ):
-        """Test Jira refresh token exceptions return their UI-friendly message."""
-        tenant_id = "tenant-123"
-        integration_id = "integration-456"
-        project_key = "PROJ"
-        issue_type = "Task"
-        finding_ids = ["finding-1"]
-        error_message = "Failed to refresh the access token"
-
-        mock_rls_transaction.return_value.__enter__ = MagicMock()
-        mock_rls_transaction.return_value.__exit__ = MagicMock()
-
-        integration = MagicMock()
-        mock_integration_model.objects.get.return_value = integration
-
-        mock_jira_integration = MagicMock()
-
-        mock_jira_integration.send_finding.side_effect = JiraRefreshTokenError(
-            message=error_message
-        )
-        mock_initialize_integration.return_value = mock_jira_integration
-
-        finding = MagicMock()
-        finding.id = "finding-1"
-        finding.check_id = "check_001"
-        finding.severity = "high"
-        finding.status = "FAIL"
-        finding.status_extended = "Resource is not compliant"
-        finding.compliance = {}
-        finding.resources.exists.return_value = False
-        finding.resources.first.return_value = None
-        finding.scan.provider.provider = "aws"
-        finding.check_metadata = {
-            "checktitle": "Check Title",
-            "risk": "High risk",
-            "remediation": {"recommendation": {}, "code": {}},
-        }
-        mock_select_related = mock_finding_model.all_objects.select_related.return_value
-        mock_finding_query = mock_select_related.prefetch_related.return_value
-        mock_finding_query.get.return_value = finding
-
-        result = send_findings_to_jira(
-            tenant_id, integration_id, project_key, issue_type, finding_ids
-        )
-
-        assert result == {
-            "created_count": 0,
-            "skipped_count": 0,
-            "failed_count": 1,
-            "error": error_message,
-        }
-        mock_logger.exception.assert_called_with(
-            "Failed to send finding %s to Jira: %s",
-            "finding-1",
-            error_message,
-        )
-
-    @patch("tasks.jobs.integrations.rls_transaction")
-    @patch("tasks.jobs.integrations.Finding")
-    @patch("tasks.jobs.integrations.Integration")
-    @patch("tasks.jobs.integrations.initialize_prowler_integration")
-    @patch("tasks.jobs.integrations.logger")
-    def test_send_findings_to_jira_sanitizes_unexpected_exception_message(
-        self,
-        mock_logger,
-        mock_initialize_integration,
-        mock_integration_model,
-        mock_finding_model,
-        mock_rls_transaction,
-    ):
-        """Test unexpected Jira send exceptions do not leak raw details to UI."""
-        tenant_id = "tenant-123"
-        integration_id = "integration-456"
-        project_key = "PROJ"
-        issue_type = "Task"
-        finding_ids = ["finding-1"]
-
-        mock_rls_transaction.return_value.__enter__ = MagicMock()
-        mock_rls_transaction.return_value.__exit__ = MagicMock()
-
-        integration = MagicMock()
-        mock_integration_model.objects.get.return_value = integration
-
-        mock_jira_integration = MagicMock()
-        mock_jira_integration.send_finding.side_effect = Exception("token=secret-value")
-        mock_initialize_integration.return_value = mock_jira_integration
-
-        finding = MagicMock()
-        finding.id = "finding-1"
-        finding.check_id = "check_001"
-        finding.severity = "high"
-        finding.status = "FAIL"
-        finding.status_extended = "Resource is not compliant"
-        finding.compliance = {}
-        finding.resources.exists.return_value = False
-        finding.resources.first.return_value = None
-        finding.scan.provider.provider = "aws"
-        finding.check_metadata = {
-            "checktitle": "Check Title",
-            "risk": "High risk",
-            "remediation": {"recommendation": {}, "code": {}},
-        }
-        mock_select_related = mock_finding_model.all_objects.select_related.return_value
-        mock_finding_query = mock_select_related.prefetch_related.return_value
-        mock_finding_query.get.return_value = finding
-
-        result = send_findings_to_jira(
-            tenant_id, integration_id, project_key, issue_type, finding_ids
-        )
-
-        assert result == {
-            "created_count": 0,
-            "skipped_count": 0,
-            "failed_count": 1,
-            "error": "Failed to create Jira issue.",
-        }
-        assert "secret-value" not in result["error"]
-        mock_logger.exception.assert_called_with(
-            "Failed to send finding %s to Jira", "finding-1"
-        )
-
-    @patch("tasks.jobs.integrations.rls_transaction")
-    @patch("tasks.jobs.integrations.Finding")
-    @patch("tasks.jobs.integrations.Integration")
-    @patch("tasks.jobs.integrations.initialize_prowler_integration")
-    def test_send_findings_to_jira_no_resources(
-        self,
-        mock_initialize_integration,
-        mock_integration_model,
-        mock_finding_model,
-        mock_rls_transaction,
-    ):
-        """Test sending findings to Jira when finding has no resources"""
-        tenant_id = "tenant-123"
-        integration_id = "integration-456"
-        project_key = "PROJ"
-        issue_type = "Task"
-        finding_ids = ["finding-1"]
-
-        # Mock RLS transaction
-        mock_rls_transaction.return_value.__enter__ = MagicMock()
-        mock_rls_transaction.return_value.__exit__ = MagicMock()
-
-        # Mock integration
-        integration = MagicMock()
-        mock_integration_model.objects.get.return_value = integration
-
-        # Mock Jira integration
-        mock_jira_integration = MagicMock()
-        mock_jira_integration.send_finding.return_value = True
-        mock_initialize_integration.return_value = mock_jira_integration
-
-        # Mock finding without resources
-        finding = MagicMock()
-        finding.id = "finding-1"
-        finding.check_id = "check_001"
-        finding.severity = "critical"
-        finding.status = "FAIL"
-        finding.status_extended = "Critical issue found"
-        finding.resource_regions = None
-        finding.compliance = {"pci": ["3.1"]}
-
-        finding.resources.exists.return_value = False
-        finding.resources.first.return_value = None
-        finding.scan.provider.provider = "gcp"
-        finding.check_metadata = {
-            "checktitle": "Critical Check",
-            "risk": "Very high risk",
-            "remediation": {
-                "recommendation": {
-                    "text": "Immediate action required",
-                    "url": "https://example.com/critical",
-                },
-                "code": {
-                    "nativeiac": "",
-                    "terraform": "terraform fix",
-                    "cli": "",
-                    "other": "manual fix",
-                },
-            },
-        }
-
-        mock_finding_model.all_objects.select_related.return_value.prefetch_related.return_value.get.return_value = finding
-
-        # Call the function
-        result = send_findings_to_jira(
-            tenant_id, integration_id, project_key, issue_type, finding_ids
-        )
-
-        # Assertions
-        assert result == {"created_count": 1, "skipped_count": 0, "failed_count": 0}
-
-        # Verify send_finding was called with empty resource fields
-        call_kwargs = mock_jira_integration.send_finding.call_args.kwargs
-        assert call_kwargs["resource_uid"] == ""
-        assert call_kwargs["resource_name"] == ""
-        assert call_kwargs["resource_tags"] == {}
-        assert call_kwargs["region"] == ""
-
-    @patch("tasks.jobs.integrations.rls_transaction")
-    @patch("tasks.jobs.integrations.Finding")
-    @patch("tasks.jobs.integrations.Integration")
-    @patch("tasks.jobs.integrations.initialize_prowler_integration")
-    def test_send_findings_to_jira_with_empty_check_metadata(
-        self,
-        mock_initialize_integration,
-        mock_integration_model,
-        mock_finding_model,
-        mock_rls_transaction,
-    ):
-        """Test sending findings to Jira when check_metadata is empty or missing fields"""
-        tenant_id = "tenant-123"
-        integration_id = "integration-456"
-        project_key = "PROJ"
-        issue_type = "Task"
-        finding_ids = ["finding-1"]
-
-        # Mock RLS transaction
-        mock_rls_transaction.return_value.__enter__ = MagicMock()
-        mock_rls_transaction.return_value.__exit__ = MagicMock()
-
-        # Mock integration
-        integration = MagicMock()
-        mock_integration_model.objects.get.return_value = integration
-
-        # Mock Jira integration
-        mock_jira_integration = MagicMock()
-        mock_jira_integration.send_finding.return_value = True
-        mock_initialize_integration.return_value = mock_jira_integration
-
-        # Mock finding with minimal/empty check_metadata
-        finding = MagicMock()
-        finding.id = "finding-1"
-        finding.check_id = "check_001"
-        finding.severity = "low"
-        finding.status = "PASS"
-        finding.status_extended = None
-        finding.resource_regions = []
-        finding.compliance = None
-
-        finding.resources.exists.return_value = False
-        finding.resources.first.return_value = None
-        finding.scan.provider.provider = "kubernetes"
-        finding.check_metadata = {}  # Empty metadata
-
-        mock_finding_model.all_objects.select_related.return_value.prefetch_related.return_value.get.return_value = finding
-
-        # Call the function
-        result = send_findings_to_jira(
-            tenant_id, integration_id, project_key, issue_type, finding_ids
-        )
-
-        # Assertions
-        assert result == {"created_count": 1, "skipped_count": 0, "failed_count": 0}
-
-        # Verify send_finding was called with default/empty values
-        call_kwargs = mock_jira_integration.send_finding.call_args.kwargs
-        assert call_kwargs["check_title"] == ""
-        assert call_kwargs["risk"] == ""
-        assert call_kwargs["recommendation_text"] == ""
-        assert call_kwargs["recommendation_url"] == ""
-        assert call_kwargs["remediation_code_native_iac"] == ""
-        assert call_kwargs["remediation_code_terraform"] == ""
-        assert call_kwargs["remediation_code_cli"] == ""
-        assert call_kwargs["remediation_code_other"] == ""
-        assert call_kwargs["compliance"] == {}
-
-
 class TestJiraFindingReference:
     """Helpers that give Jira issues a stable reference back to the finding."""
 
@@ -2365,279 +1767,634 @@ class TestJiraFindingReference:
 
 
 @pytest.mark.django_db
-class TestJiraIssueDedup:
-    """send_findings_to_jira with real JiraIssue rows: skip, replace, reserve."""
-
+class TestSafeJiraDelivery:
     @pytest.fixture
     def jira_mock(self):
-        jira = MagicMock()
-        counter = itertools.count(1)
+        jira = MagicMock(spec=Jira)
+        issue_number = 0
 
-        def _create_issue(**kwargs):
-            number = next(counter)
-            return {
-                "key": f"TEST-{number}",
-                "id": str(10000 + number),
-                "url": f"https://test.atlassian.net/browse/TEST-{number}",
-            }
+        def create_issue(**kwargs):
+            nonlocal issue_number
+            issue_number += 1
+            return JiraCreationResult(
+                outcome=JiraCreationOutcome.CONFIRMED_SUCCESS,
+                issue_id=str(10000 + issue_number),
+                issue_key=f"TEST-{issue_number}",
+                issue_url=(f"https://test.atlassian.net/browse/TEST-{issue_number}"),
+                delivery_marker=kwargs["delivery_attempt_marker"],
+            )
 
-        jira.send_finding.side_effect = _create_issue
-        jira.get_issues_status.return_value = {}
+        jira.send_finding.side_effect = create_issue
+        jira.search_issues_by_delivery_attempt.return_value = JiraIssueSearchResult(
+            outcome=JiraIssueSearchOutcome.SUCCESS
+        )
         return jira
 
-    @pytest.fixture
-    def send(self, jira_mock, jira_integration_fixture):
-        def _send(finding_ids):
-            with patch(
-                "tasks.jobs.integrations.initialize_prowler_integration",
-                return_value=jira_mock,
-            ):
-                return send_findings_to_jira(
-                    str(jira_integration_fixture.tenant_id),
-                    str(jira_integration_fixture.id),
-                    "TEST",
-                    "Task",
-                    [str(finding_id) for finding_id in finding_ids],
-                )
-
-        return _send
+    @staticmethod
+    def _send(
+        integration,
+        jira,
+        finding_ids,
+        *,
+        task_id="jira-task-1",
+        force_replace=False,
+    ):
+        with patch(
+            "tasks.jobs.integrations.initialize_prowler_integration",
+            return_value=jira,
+        ):
+            return send_findings_to_jira(
+                str(integration.tenant_id),
+                str(integration.id),
+                "TEST",
+                "Task",
+                [str(finding_id) for finding_id in finding_ids],
+                task_id=task_id,
+                force_replace=force_replace,
+            )
 
     @staticmethod
-    def _rows(integration):
+    def _row(integration, finding):
         with rls_transaction(str(integration.tenant_id)):
-            return {
-                row.finding_uid: row
-                for row in JiraIssue.objects.filter(integration=integration)
-            }
+            return JiraIssue.objects.get(
+                integration=integration,
+                provider_id=finding.scan.provider_id,
+                finding_uid=finding.uid,
+            )
 
-    def test_first_send_links_findings(
-        self, send, jira_mock, jira_integration_fixture, findings_fixture
+    @staticmethod
+    def _status_results(outcome, *, moved_key=None):
+        def build(references):
+            results = []
+            for reference in references:
+                if outcome in {
+                    JiraIssueLookupOutcome.MISSING,
+                    JiraIssueLookupOutcome.FORBIDDEN,
+                    JiraIssueLookupOutcome.UNKNOWN,
+                }:
+                    results.append(
+                        JiraIssueStatusResult(
+                            reference=reference,
+                            outcome=outcome,
+                            error_code=f"jira_{outcome.value}",
+                            error_message="Jira could not confirm the linked issue.",
+                        )
+                    )
+                    continue
+                issue_key = moved_key or reference.issue_key
+                results.append(
+                    JiraIssueStatusResult(
+                        reference=reference,
+                        outcome=outcome,
+                        current_issue_id=reference.issue_id,
+                        current_issue_key=issue_key,
+                        current_issue_url=(
+                            f"https://test.atlassian.net/browse/{issue_key}"
+                        ),
+                        status=(
+                            "Done"
+                            if outcome == JiraIssueLookupOutcome.DONE
+                            else "In Progress"
+                        ),
+                        status_category=(
+                            "done"
+                            if outcome == JiraIssueLookupOutcome.DONE
+                            else "indeterminate"
+                        ),
+                    )
+                )
+            return results
+
+        return build
+
+    def test_first_send_links_typed_result_and_returns_json_safe_summary(
+        self, jira_mock, jira_integration_fixture, findings_fixture
     ):
         finding1, finding2 = findings_fixture
-        jira_mock.get_issues_status.return_value = {
-            "TEST-1": {"id": "10001", "status": "To Do", "status_category": "new"},
-            "TEST-2": {"id": "10002", "status": "To Do", "status_category": "new"},
-        }
 
-        result = send([finding1.id, finding2.id])
+        result = self._send(
+            jira_integration_fixture, jira_mock, [finding1.id, finding2.id]
+        )
 
-        assert result == {"created_count": 2, "skipped_count": 0, "failed_count": 0}
-        assert jira_mock.send_finding.call_count == 2
-        rows = self._rows(jira_integration_fixture)
-        assert set(rows) == {finding1.uid, finding2.uid}
-        row = rows[finding1.uid]
-        assert row.issue_key == "TEST-1"
+        assert result["created_count"] == 2
+        assert result["skipped_count"] == 0
+        assert result["deferred_count"] == 0
+        assert result["uncertain_count"] == 0
+        assert result["failed_count"] == 0
+        assert result["truncated"] is False
+        assert [entry["outcome"] for entry in result["results"]] == [
+            "created",
+            "created",
+        ]
+        row = self._row(jira_integration_fixture, finding1)
         assert row.issue_id == "10001"
-        assert row.issue_url == "https://test.atlassian.net/browse/TEST-1"
-        assert row.project_key == "TEST"
-        assert row.finding_id == finding1.id
-        assert row.provider_id == finding1.scan.provider_id
-        # Status of the new issues is fetched once, in bulk, after creation
-        jira_mock.get_issues_status.assert_called_once_with(["TEST-1", "TEST-2"])
-        assert row.issue_status == "To Do"
-        assert row.issue_status_category == "new"
-        assert row.status_synced_at is not None
-
-    def test_second_send_skips_open_issue(
-        self, send, jira_mock, jira_integration_fixture, findings_fixture
-    ):
-        finding1, _ = findings_fixture
-        send([finding1.id])
-        jira_mock.send_finding.reset_mock()
-        jira_mock.get_issues_status.reset_mock()
-        jira_mock.get_issues_status.return_value = {
-            "TEST-1": {
-                "id": "10001",
-                "status": "In Progress",
-                "status_category": "indeterminate",
-            }
-        }
-
-        result = send([finding1.id])
-
-        assert result == {
-            "created_count": 0,
-            "skipped_count": 1,
-            "failed_count": 0,
-            "skipped": [
-                {
-                    "finding_id": str(finding1.id),
-                    "issue_key": "TEST-1",
-                    "issue_url": "https://test.atlassian.net/browse/TEST-1",
-                    "issue_status": "In Progress",
-                }
-            ],
-        }
-        jira_mock.send_finding.assert_not_called()
-        jira_mock.get_issues_status.assert_called_once_with(["TEST-1"])
-        row = self._rows(jira_integration_fixture)[finding1.uid]
         assert row.issue_key == "TEST-1"
-        # The refreshed status is cached on the row
-        assert row.issue_status == "In Progress"
-        assert row.issue_status_category == "indeterminate"
+        assert row.attempt_state == JiraIssue.AttemptStateChoices.IDLE
+        assert row.claim_token is None
+        assert row.attempt_count == 1
+        assert jira_mock.send_finding.call_args_list[0].kwargs[
+            "delivery_attempt_marker"
+        ] == str(row.delivery_attempt_token)
 
-    @pytest.mark.parametrize(
-        "status_response",
-        [
-            {"TEST-1": {"id": "10001", "status": "Done", "status_category": "done"}},
-            {},  # deleted in Jira
-        ],
-        ids=["closed", "deleted"],
-    )
-    def test_closed_or_deleted_issue_is_replaced(
-        self,
-        send,
-        jira_mock,
-        jira_integration_fixture,
-        findings_fixture,
-        status_response,
+    def test_open_issue_is_refreshed_and_skipped(
+        self, jira_mock, jira_integration_fixture, findings_fixture
     ):
-        finding1, _ = findings_fixture
-        send([finding1.id])
+        finding, _ = findings_fixture
+        self._send(jira_integration_fixture, jira_mock, [finding.id])
         jira_mock.send_finding.reset_mock()
-        jira_mock.get_issues_status.return_value = status_response
-
-        result = send([finding1.id])
-
-        assert result == {"created_count": 1, "skipped_count": 0, "failed_count": 0}
-        jira_mock.send_finding.assert_called_once()
-        rows = self._rows(jira_integration_fixture)
-        assert len(rows) == 1
-        assert rows[finding1.uid].issue_key == "TEST-2"
-        assert (
-            rows[finding1.uid].issue_url == "https://test.atlassian.net/browse/TEST-2"
+        jira_mock.get_issues_status.side_effect = self._status_results(
+            JiraIssueLookupOutcome.OPEN
         )
 
-    def test_status_lookup_failure_skips_linked_findings(
-        self, send, jira_mock, jira_integration_fixture, findings_fixture
-    ):
-        finding1, _ = findings_fixture
-        send([finding1.id])
-        jira_mock.send_finding.reset_mock()
-        jira_mock.get_issues_status.side_effect = JiraRefreshTokenError(
-            message="token expired"
+        result = self._send(
+            jira_integration_fixture, jira_mock, [finding.id], task_id="jira-task-2"
         )
 
-        result = send([finding1.id])
-
-        assert result["created_count"] == 0
         assert result["skipped_count"] == 1
         jira_mock.send_finding.assert_not_called()
-        # Cached status untouched
-        row = self._rows(jira_integration_fixture)[finding1.uid]
-        assert row.issue_key == "TEST-1"
+        row = self._row(jira_integration_fixture, finding)
+        assert row.issue_status == "In Progress"
+        assert row.issue_status_category == "indeterminate"
+        assert row.status_synced_at is not None
 
-    def test_failed_send_releases_reservation(
-        self, send, jira_mock, jira_integration_fixture, findings_fixture
+    def test_moved_issue_updates_key_by_immutable_id_and_skips(
+        self, jira_mock, jira_integration_fixture, findings_fixture
     ):
-        finding1, _ = findings_fixture
-        jira_mock.send_finding.side_effect = JiraRequiredCustomFieldsError(
-            message="custom fields"
+        finding, _ = findings_fixture
+        self._send(jira_integration_fixture, jira_mock, [finding.id])
+        jira_mock.send_finding.reset_mock()
+        jira_mock.get_issues_status.side_effect = self._status_results(
+            JiraIssueLookupOutcome.MOVED, moved_key="MOVED-7"
         )
 
-        result = send([finding1.id])
+        result = self._send(
+            jira_integration_fixture, jira_mock, [finding.id], task_id="jira-task-2"
+        )
 
-        assert result["created_count"] == 0
-        assert result["failed_count"] == 1
-        assert result["error"] == "custom fields"
-        assert self._rows(jira_integration_fixture) == {}
-
-    def test_failed_replacement_keeps_previous_link(
-        self, send, jira_mock, jira_integration_fixture, findings_fixture
-    ):
-        finding1, _ = findings_fixture
-        send([finding1.id])
-        jira_mock.get_issues_status.return_value = {
-            "TEST-1": {"id": "10001", "status": "Done", "status_category": "done"}
-        }
-        jira_mock.send_finding.side_effect = Exception("boom")
-
-        result = send([finding1.id])
-
-        assert result["failed_count"] == 1
-        row = self._rows(jira_integration_fixture)[finding1.uid]
-        assert row.issue_key == "TEST-1"
-        assert row.issue_status_category == "done"
-
-    def test_fresh_reservation_is_skipped_and_stale_one_reclaimed(
-        self, send, jira_mock, jira_integration_fixture, findings_fixture
-    ):
-        finding1, _ = findings_fixture
-        tenant_id = str(jira_integration_fixture.tenant_id)
-        with rls_transaction(tenant_id):
-            reservation = JiraIssue.objects.create(
-                tenant_id=tenant_id,
-                integration=jira_integration_fixture,
-                provider_id=finding1.scan.provider_id,
-                finding_uid=finding1.uid,
-                finding_id=finding1.id,
-                project_key="TEST",
-            )
-
-        # Another run is sending this finding right now
-        result = send([finding1.id])
-        assert result == {
-            "created_count": 0,
-            "skipped_count": 1,
-            "failed_count": 0,
-            "skipped": [
-                {
-                    "finding_id": str(finding1.id),
-                    "issue_key": "",
-                    "issue_url": "",
-                    "issue_status": "",
-                }
-            ],
-        }
+        assert result["skipped_count"] == 1
+        row = self._row(jira_integration_fixture, finding)
+        assert row.issue_id == "10001"
+        assert row.issue_key == "MOVED-7"
+        assert row.issue_url.endswith("/MOVED-7")
         jira_mock.send_finding.assert_not_called()
 
-        # The run died: the reservation expired and is reclaimed
-        with rls_transaction(tenant_id):
-            JiraIssue.objects.filter(id=reservation.id).update(
-                updated_at=timezone.now() - JIRA_RESERVATION_TTL - timedelta(minutes=1)
-            )
-        result = send([finding1.id])
-        assert result == {"created_count": 1, "skipped_count": 0, "failed_count": 0}
-        rows = self._rows(jira_integration_fixture)
-        assert len(rows) == 1
-        assert rows[finding1.uid].id == reservation.id
-        assert rows[finding1.uid].issue_key == "TEST-1"
-
-    def test_other_integration_does_not_dedup(
+    @pytest.mark.parametrize(
+        ("creation_result", "outcome", "attempt_state"),
+        [
+            (
+                JiraCreationResult(
+                    outcome=JiraCreationOutcome.CONFIRMED_REJECTION,
+                    error_code="invalid_project",
+                    error_message="The Jira project key is invalid.",
+                ),
+                "failed",
+                JiraIssue.AttemptStateChoices.TERMINAL_FAILURE,
+            ),
+            (
+                JiraCreationResult(
+                    outcome=JiraCreationOutcome.RETRYABLE_FAILURE,
+                    error_code="rate_limited",
+                    error_message="Jira rejected the request temporarily.",
+                ),
+                "failed",
+                JiraIssue.AttemptStateChoices.RETRYABLE_FAILURE,
+            ),
+            (
+                JiraCreationResult(
+                    outcome=JiraCreationOutcome.UNCERTAIN,
+                    error_code="ambiguous_transport_failure",
+                    error_message="Jira did not confirm whether it created the issue.",
+                ),
+                "uncertain",
+                JiraIssue.AttemptStateChoices.UNCERTAIN,
+            ),
+        ],
+    )
+    def test_creation_outcomes_are_mapped_explicitly(
         self,
-        send,
         jira_mock,
         jira_integration_fixture,
         findings_fixture,
-        tenants_fixture,
+        creation_result,
+        outcome,
+        attempt_state,
     ):
-        finding1, _ = findings_fixture
+        finding, _ = findings_fixture
+        jira_mock.send_finding.side_effect = None
+        jira_mock.send_finding.return_value = creation_result
+
+        result = self._send(jira_integration_fixture, jira_mock, [finding.id])
+
+        assert result["results"][0]["outcome"] == outcome
+        row = self._row(jira_integration_fixture, finding)
+        assert row.attempt_state == attempt_state
+        assert row.issue_id is None
+        assert row.claim_token is None
+        if attempt_state == JiraIssue.AttemptStateChoices.UNCERTAIN:
+            assert row.next_reconcile_at is not None
+
+    def test_unexpected_send_exception_is_uncertain_and_does_not_leak_details(
+        self, jira_mock, jira_integration_fixture, findings_fixture
+    ):
+        finding, _ = findings_fixture
+        jira_mock.send_finding.side_effect = Exception("token=private-value")
+
+        result = self._send(jira_integration_fixture, jira_mock, [finding.id])
+
+        entry = result["results"][0]
+        assert entry["outcome"] == "uncertain"
+        assert entry["error_code"] == "unexpected_send_exception"
+        assert "private-value" not in entry["error_message"]
+        assert self._row(jira_integration_fixture, finding).issue_id is None
+
+    def test_uncertain_result_honors_longer_retry_after(
+        self, jira_mock, jira_integration_fixture, findings_fixture
+    ):
+        finding, _ = findings_fixture
+        jira_mock.send_finding.side_effect = None
+        jira_mock.send_finding.return_value = JiraCreationResult(
+            outcome=JiraCreationOutcome.UNCERTAIN,
+            retry_after="1200",
+            error_code="rate_limited_after_send",
+            error_message="Jira did not confirm whether it created the issue.",
+        )
+        before = timezone.now()
+
+        self._send(jira_integration_fixture, jira_mock, [finding.id])
+
+        row = self._row(jira_integration_fixture, finding)
+        assert row.next_reconcile_at >= before + timedelta(seconds=1200)
+
+    def test_done_replacement_keeps_old_link_when_creation_is_uncertain(
+        self, jira_mock, jira_integration_fixture, findings_fixture
+    ):
+        finding, _ = findings_fixture
+        self._send(jira_integration_fixture, jira_mock, [finding.id])
+        original = self._row(jira_integration_fixture, finding)
+        original_marker = original.delivery_attempt_token
+        jira_mock.get_issues_status.side_effect = self._status_results(
+            JiraIssueLookupOutcome.DONE
+        )
+        jira_mock.send_finding.side_effect = None
+        jira_mock.send_finding.return_value = JiraCreationResult(
+            outcome=JiraCreationOutcome.UNCERTAIN,
+            error_code="ambiguous_transport_failure",
+            error_message="Jira did not confirm whether it created the issue.",
+        )
+
+        result = self._send(
+            jira_integration_fixture, jira_mock, [finding.id], task_id="jira-task-2"
+        )
+
+        assert result["uncertain_count"] == 1
+        row = self._row(jira_integration_fixture, finding)
+        assert row.issue_id == original.issue_id
+        assert row.issue_key == original.issue_key
+        assert row.issue_url == original.issue_url
+        assert row.attempt_operation == JiraIssue.AttemptOperationChoices.REPLACEMENT
+        assert row.delivery_attempt_token != original_marker
+
+    @pytest.mark.parametrize(
+        "lookup_outcome",
+        [
+            JiraIssueLookupOutcome.MISSING,
+            JiraIssueLookupOutcome.FORBIDDEN,
+            JiraIssueLookupOutcome.UNKNOWN,
+        ],
+    )
+    def test_unconfirmed_issue_requires_force_replace(
+        self,
+        jira_mock,
+        jira_integration_fixture,
+        findings_fixture,
+        lookup_outcome,
+    ):
+        finding, _ = findings_fixture
+        self._send(jira_integration_fixture, jira_mock, [finding.id])
+        original = self._row(jira_integration_fixture, finding)
+        original_marker = original.delivery_attempt_token
+        jira_mock.get_issues_status.side_effect = self._status_results(lookup_outcome)
+        jira_mock.send_finding.reset_mock()
+
+        skipped = self._send(
+            jira_integration_fixture, jira_mock, [finding.id], task_id="jira-task-2"
+        )
+        assert skipped["skipped_count"] == 1
+        jira_mock.send_finding.assert_not_called()
+
+        forced = self._send(
+            jira_integration_fixture,
+            jira_mock,
+            [finding.id],
+            task_id="jira-task-3",
+            force_replace=True,
+        )
+        assert forced["created_count"] == 1
+        row = self._row(jira_integration_fixture, finding)
+        assert row.issue_key == "TEST-2"
+        assert row.delivery_attempt_token != original_marker
+
+    def test_retryable_failure_reuses_delivery_marker(
+        self, jira_mock, jira_integration_fixture, findings_fixture
+    ):
+        finding, _ = findings_fixture
+        jira_mock.send_finding.side_effect = None
+        jira_mock.send_finding.return_value = JiraCreationResult(
+            outcome=JiraCreationOutcome.RETRYABLE_FAILURE,
+            error_code="rate_limited",
+            error_message="Jira rejected the request temporarily.",
+        )
+        self._send(jira_integration_fixture, jira_mock, [finding.id])
+        marker = self._row(jira_integration_fixture, finding).delivery_attempt_token
+        jira_mock.send_finding.return_value = JiraCreationResult(
+            outcome=JiraCreationOutcome.CONFIRMED_SUCCESS,
+            issue_id="20001",
+            issue_key="TEST-RETRY",
+            issue_url="https://test.atlassian.net/browse/TEST-RETRY",
+        )
+
+        result = self._send(
+            jira_integration_fixture, jira_mock, [finding.id], task_id="jira-task-2"
+        )
+
+        assert result["created_count"] == 1
+        assert jira_mock.send_finding.call_args.kwargs[
+            "delivery_attempt_marker"
+        ] == str(marker)
+        assert (
+            self._row(jira_integration_fixture, finding).delivery_attempt_token
+            == marker
+        )
+
+    def test_fresh_foreign_claim_defers_and_stale_claim_reconciles(
+        self, jira_mock, jira_integration_fixture, findings_fixture
+    ):
+        finding, _ = findings_fixture
         tenant_id = str(jira_integration_fixture.tenant_id)
         with rls_transaction(tenant_id):
-            other = Integration.objects.create(
+            row = JiraIssue.objects.create(
                 tenant_id=tenant_id,
-                enabled=True,
-                connected=True,
-                integration_type=Integration.IntegrationChoices.JIRA,
-                configuration={"projects": {"OTHER": "Other"}},
-                credentials={
-                    "domain": "other",
-                    "user_mail": "a@b.com",
-                    "api_token": "t",
-                },
+                integration=jira_integration_fixture,
+                provider_id=finding.scan.provider_id,
+                finding_uid=finding.uid,
+                finding_id=finding.id,
+                attempt_state=JiraIssue.AttemptStateChoices.CREATING,
+                claim_token="other-task",
+                claim_expires_at=timezone.now() + JIRA_CLAIM_LEASE,
+                delivery_attempt_token=uuid4(),
+                attempt_operation=JiraIssue.AttemptOperationChoices.INITIAL,
+                attempt_project_key="TEST",
+                attempt_issue_type="Task",
+                attempt_count=1,
+                last_attempt_at=timezone.now(),
             )
-        send([finding1.id])
+
+        deferred = self._send(
+            jira_integration_fixture, jira_mock, [finding.id], task_id="new-task"
+        )
+        assert deferred["deferred_count"] == 1
+        jira_mock.send_finding.assert_not_called()
+        jira_mock.search_issues_by_delivery_attempt.assert_not_called()
+
+        with rls_transaction(tenant_id):
+            JiraIssue.objects.filter(id=row.id).update(
+                claim_expires_at=timezone.now() - timedelta(seconds=1)
+            )
+        jira_mock.search_issues_by_delivery_attempt.return_value = (
+            JiraIssueSearchResult(
+                outcome=JiraIssueSearchOutcome.SUCCESS,
+                matches=(
+                    JiraIssueSearchMatch(
+                        issue_id="30001",
+                        issue_key="TEST-RECOVERED",
+                        issue_url=("https://test.atlassian.net/browse/TEST-RECOVERED"),
+                    ),
+                ),
+            )
+        )
+
+        recovered = self._send(
+            jira_integration_fixture, jira_mock, [finding.id], task_id="new-task"
+        )
+        assert recovered["created_count"] == 1
+        jira_mock.send_finding.assert_not_called()
+        assert self._row(jira_integration_fixture, finding).issue_key == (
+            "TEST-RECOVERED"
+        )
+
+    @pytest.mark.parametrize("match_count", [0, 2])
+    def test_uncertain_attempt_reconciles_without_another_post(
+        self,
+        jira_mock,
+        jira_integration_fixture,
+        findings_fixture,
+        match_count,
+    ):
+        finding, _ = findings_fixture
+        jira_mock.send_finding.side_effect = None
+        jira_mock.send_finding.return_value = JiraCreationResult(
+            outcome=JiraCreationOutcome.UNCERTAIN,
+            error_code="ambiguous_transport_failure",
+            error_message="Jira did not confirm whether it created the issue.",
+        )
+        self._send(jira_integration_fixture, jira_mock, [finding.id])
+        marker = self._row(jira_integration_fixture, finding).delivery_attempt_token
+        jira_mock.send_finding.reset_mock()
+        jira_mock.search_issues_by_delivery_attempt.return_value = (
+            JiraIssueSearchResult(
+                outcome=JiraIssueSearchOutcome.SUCCESS,
+                matches=tuple(
+                    JiraIssueSearchMatch(
+                        issue_id=str(40000 + index),
+                        issue_key=f"TEST-{index}",
+                        issue_url=f"https://test.atlassian.net/browse/TEST-{index}",
+                    )
+                    for index in range(match_count)
+                ),
+            )
+        )
+
+        result = self._send(
+            jira_integration_fixture, jira_mock, [finding.id], task_id="jira-task-2"
+        )
+
+        assert result["uncertain_count"] == 1
+        jira_mock.send_finding.assert_not_called()
+        jira_mock.search_issues_by_delivery_attempt.assert_called_once_with(str(marker))
+        row = self._row(jira_integration_fixture, finding)
+        assert row.delivery_attempt_token == marker
+        assert (row.next_reconcile_at is None) is (match_count == 2)
+
+    @pytest.mark.parametrize(
+        "lookup_outcome",
+        [
+            JiraIssueSearchOutcome.RETRYABLE_FAILURE,
+            JiraIssueSearchOutcome.UNKNOWN,
+        ],
+    )
+    def test_failed_marker_lookup_remains_uncertain(
+        self,
+        jira_mock,
+        jira_integration_fixture,
+        findings_fixture,
+        lookup_outcome,
+    ):
+        finding, _ = findings_fixture
+        jira_mock.send_finding.side_effect = None
+        jira_mock.send_finding.return_value = JiraCreationResult(
+            outcome=JiraCreationOutcome.UNCERTAIN,
+            error_code="ambiguous_transport_failure",
+            error_message="Jira did not confirm whether it created the issue.",
+        )
+        self._send(jira_integration_fixture, jira_mock, [finding.id])
+        jira_mock.send_finding.reset_mock()
+        jira_mock.search_issues_by_delivery_attempt.return_value = (
+            JiraIssueSearchResult(
+                outcome=lookup_outcome,
+                retry_after="120",
+                error_code="marker_lookup_failed",
+                error_message="Jira marker lookup failed.",
+            )
+        )
+
+        result = self._send(
+            jira_integration_fixture, jira_mock, [finding.id], task_id="jira-task-2"
+        )
+
+        assert result["uncertain_count"] == 1
+        jira_mock.send_finding.assert_not_called()
+        row = self._row(jira_integration_fixture, finding)
+        assert row.attempt_state == JiraIssue.AttemptStateChoices.UNCERTAIN
+        assert row.next_reconcile_at is not None
+
+    def test_stale_worker_cannot_finish_a_newer_claim(
+        self, jira_integration_fixture, findings_fixture
+    ):
+        finding, _ = findings_fixture
+        tenant_id = str(jira_integration_fixture.tenant_id)
+        with rls_transaction(tenant_id):
+            row = JiraIssue.objects.create(
+                tenant_id=tenant_id,
+                integration=jira_integration_fixture,
+                provider_id=finding.scan.provider_id,
+                finding_uid=finding.uid,
+                finding_id=finding.id,
+                attempt_state=JiraIssue.AttemptStateChoices.CREATING,
+                claim_token="stale-worker",
+                claim_expires_at=timezone.now() - timedelta(seconds=1),
+                delivery_attempt_token=uuid4(),
+                attempt_operation=JiraIssue.AttemptOperationChoices.INITIAL,
+                attempt_project_key="TEST",
+                attempt_issue_type="Task",
+                attempt_count=1,
+                last_attempt_at=timezone.now(),
+            )
+        claimed = _claim_existing_attempt(
+            tenant_id,
+            row,
+            str(finding.id),
+            "new-worker",
+            reconcile=True,
+        )
+        assert claimed is not None
+
+        assert not _finish_owned_failure(
+            tenant_id,
+            row,
+            "stale-worker",
+            attempt_state=JiraIssue.AttemptStateChoices.RETRYABLE_FAILURE,
+            error_code="stale",
+            error_message="stale",
+        )
+        current = self._row(jira_integration_fixture, finding)
+        assert current.attempt_state == JiraIssue.AttemptStateChoices.CREATING
+        assert current.claim_token == "new-worker"
+
+    def test_due_reconciliation_job_links_one_marker_match(
+        self, jira_mock, jira_integration_fixture, findings_fixture
+    ):
+        finding, _ = findings_fixture
+        jira_mock.send_finding.side_effect = None
+        jira_mock.send_finding.return_value = JiraCreationResult(
+            outcome=JiraCreationOutcome.UNCERTAIN,
+            error_code="ambiguous_transport_failure",
+            error_message="Jira did not confirm whether it created the issue.",
+        )
+        self._send(jira_integration_fixture, jira_mock, [finding.id])
+        row = self._row(jira_integration_fixture, finding)
+        with rls_transaction(str(jira_integration_fixture.tenant_id)):
+            JiraIssue.objects.filter(id=row.id).update(
+                next_reconcile_at=timezone.now() - timedelta(seconds=1)
+            )
+        jira_mock.search_issues_by_delivery_attempt.return_value = (
+            JiraIssueSearchResult(
+                outcome=JiraIssueSearchOutcome.SUCCESS,
+                matches=(
+                    JiraIssueSearchMatch(
+                        issue_id="50001",
+                        issue_key="TEST-DUE",
+                        issue_url="https://test.atlassian.net/browse/TEST-DUE",
+                    ),
+                ),
+            )
+        )
         jira_mock.send_finding.reset_mock()
 
         with patch(
             "tasks.jobs.integrations.initialize_prowler_integration",
             return_value=jira_mock,
         ):
-            result = send_findings_to_jira(
-                tenant_id, str(other.id), "OTHER", "Task", [str(finding1.id)]
+            result = reconcile_due_jira_issues(
+                str(jira_integration_fixture.tenant_id),
+                str(jira_integration_fixture.id),
+                task_id="reconcile-task",
             )
 
         assert result["created_count"] == 1
-        jira_mock.send_finding.assert_called_once()
-        with rls_transaction(tenant_id):
-            assert JiraIssue.objects.filter(finding_uid=finding1.uid).count() == 2
+        jira_mock.send_finding.assert_not_called()
+        assert self._row(jira_integration_fixture, finding).issue_key == "TEST-DUE"
+
+    def test_result_details_are_capped_but_counts_remain_exact(
+        self, jira_mock, jira_integration_fixture
+    ):
+        missing_ids = [str(uuid4()) for _ in range(101)]
+
+        result = self._send(jira_integration_fixture, jira_mock, missing_ids)
+
+        assert result["failed_count"] == 101
+        assert len(result["results"]) == 100
+        assert result["truncated"] is True
+        jira_mock.send_finding.assert_not_called()
+
+    def test_page_hydration_query_count_is_bounded(
+        self, jira_integration_fixture, findings_fixture
+    ):
+        finding1, finding2 = findings_fixture
+        tenant_id = str(jira_integration_fixture.tenant_id)
+        integration_id = str(jira_integration_fixture.id)
+        with CaptureQueriesContext(connection) as one_finding_queries:
+            _load_jira_delivery_page(tenant_id, integration_id, [str(finding1.id)])
+        with CaptureQueriesContext(connection) as two_finding_queries:
+            _load_jira_delivery_page(
+                tenant_id,
+                integration_id,
+                [str(finding1.id), str(finding2.id)],
+            )
+
+        assert len(two_finding_queries) == len(one_finding_queries)
+
+    def test_delivery_uses_prefetched_tags(
+        self, jira_mock, jira_integration_fixture, findings_fixture
+    ):
+        finding, _ = findings_fixture
+        with patch("api.models.Resource.get_tags") as get_tags:
+            result = self._send(jira_integration_fixture, jira_mock, [finding.id])
+
+        assert result["created_count"] == 1
+        get_tags.assert_not_called()
+
+    def test_jira_tasks_use_late_acknowledgement(self):
+        assert jira_integration_task.acks_late is True
+        assert jira_integration_task.reject_on_worker_lost is True
+        assert jira_issue_reconciliation_task.acks_late is True
+        assert jira_issue_reconciliation_task.reject_on_worker_lost is True

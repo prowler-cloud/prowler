@@ -319,8 +319,7 @@ class TestReconcileTaskResults:
         mock_task.apply_async.assert_not_called()
 
     def test_jira_integration_task_is_not_reenqueued(self, tenants_fixture):
-        """integration-jira stays terminal: re-running it would create duplicate Jira
-        issues, so an orphaned send is failed instead of re-enqueued."""
+        """The watchdog leaves Jira recovery to same-ID broker redelivery."""
         tenant = tenants_fixture[0]
         kwargs = {
             "tenant_id": str(tenant.id),

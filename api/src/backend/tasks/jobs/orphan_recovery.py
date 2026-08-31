@@ -39,9 +39,11 @@ IN_FLIGHT_STATES = (states.STARTED, states.RECEIVED)
 # Tasks with proven idempotency are eligible for auto re-enqueue, grouped so each
 # group can be toggled independently by a feature flag (see config.django.base).
 # Summaries clear and rewrite their own rows and deletions are idempotent. Tasks with
-# external side effects are never eligible: integration-jira would create duplicate
-# issues, integration-s3 rebuilds its upload from worker-local files that do not
-# survive a crash, and report/Security Hub recovery is out of scope.
+# External side effects are not re-enqueued by this watchdog. Integration Jira uses
+# late acknowledgement and broker redelivery so the original task ID remains the
+# ledger claim owner; creating a second task here would lose that ownership identity.
+# Integration S3 rebuilds its upload from worker-local files that do not survive a
+# crash, and report/Security Hub recovery is out of scope.
 RECOVERY_TASK_GROUPS = {
     "summaries": {
         "scan-summary",
