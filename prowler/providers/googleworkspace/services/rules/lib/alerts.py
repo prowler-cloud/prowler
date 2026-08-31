@@ -90,8 +90,6 @@ def evaluate_system_defined_alert(
         if alert.state != "ACTIVE":
             issues.append("alert is OFF")
 
-        # Only an explicit DISABLED fails: when the API omits the field the
-        # delivery state was never reported and the rule state already covers it.
         if alert.alert_center_status == ALERT_CENTER_DISABLED:
             issues.append("the alert is not sent to the alert center")
 
@@ -109,6 +107,16 @@ def evaluate_system_defined_alert(
             report.status_extended = (
                 f"System-defined alert rule '{rule_name}' is not properly "
                 f"configured in domain {domain}: {', '.join(issues)}."
+            )
+        elif alert.alert_center_status is None:
+            # Rule state and alert center delivery are separate settings, so an
+            # omitted delivery status leaves the audited value unverified.
+            report.status = "MANUAL"
+            report.status_extended = (
+                f"System-defined alert rule '{rule_name}' is properly "
+                f"configured in domain {domain}, but the API did not report "
+                f"whether the alert is sent to the alert center. Review in the "
+                f"Admin console that Alerts is set to On for this rule."
             )
         else:
             report.status = "PASS"

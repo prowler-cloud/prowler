@@ -8,6 +8,7 @@ from prowler.providers.googleworkspace.services.security.lib.durations import (
     parse_duration_seconds,
 )
 from prowler.providers.googleworkspace.services.security.lib.scope import (
+    failures_shadowed_by_overrides,
     override_caveat,
     unevaluable_reason,
 )
@@ -72,16 +73,19 @@ class security_2sv_hardware_keys_admins(Check):
                 return findings
 
             caveat = override_caveat(policies, EVALUATED_SETTINGS)
-            issues = []
+            issues = []  # (setting, why it fails)
 
             factor_set = policies.two_sv_allowed_factor_set
             if factor_set != SECURITY_KEYS_ONLY:
                 issues.append(
-                    "the accepted method is not configured and defaults to any "
-                    "method, including SMS and phone call"
-                    if factor_set is None
-                    else f"the accepted method is {factor_set} "
-                    f"(should be {SECURITY_KEYS_ONLY})"
+                    (
+                        "security.two_step_verification_enforcement_factor",
+                        "the accepted method is not configured and defaults to "
+                        "any method, including SMS and phone call"
+                        if factor_set is None
+                        else f"the accepted method is {factor_set} "
+                        f"(should be {SECURITY_KEYS_ONLY})",
+                    )
                 )
 
             # 4.1.1.2 accepts "On from <date>", unlike 4.1.1.1 and 4.1.1.3.
@@ -89,10 +93,17 @@ class security_2sv_hardware_keys_admins(Check):
                 policies.two_sv_enforced_from, allow_scheduled=True
             )
             if enforcement:
-                issues.append(enforcement)
+                issues.append(
+                    ("security.two_step_verification_enforcement", enforcement)
+                )
 
             if policies.two_sv_allow_enrollment is False:
-                issues.append("users are not allowed to turn on 2-Step Verification")
+                issues.append(
+                    (
+                        "security.two_step_verification_enrollment",
+                        "users are not allowed to turn on 2-Step Verification",
+                    )
+                )
 
             # Google's default is no suspension grace period, which is stricter
             # than the one day the benchmark asks for, so only longer periods
@@ -101,21 +112,43 @@ class security_2sv_hardware_keys_admins(Check):
             grace_period = parse_duration_seconds(raw_grace_period)
             if raw_grace_period and grace_period is None:
                 issues.append(
-                    f"the 2-Step Verification policy suspension grace period "
-                    f"'{raw_grace_period}' could not be read"
+                    (
+                        "security.two_step_verification_sign_in_code",
+                        f"the 2-Step Verification policy suspension grace period "
+                        f"'{raw_grace_period}' could not be read",
+                    )
                 )
             elif grace_period is not None and grace_period > ONE_DAY_SECONDS:
                 issues.append(
-                    f"the 2-Step Verification policy suspension grace period is "
-                    f"{format_duration(raw_grace_period)} "
-                    f"(should not exceed 1 day)"
+                    (
+                        "security.two_step_verification_sign_in_code",
+                        f"the 2-Step Verification policy suspension grace period "
+                        f"is {format_duration(raw_grace_period)} "
+                        f"(should not exceed 1 day)",
+                    )
                 )
 
-            if issues:
+            failing_settings = frozenset(setting for setting, _ in issues)
+            reasons = "; ".join(text for _, text in issues)
+
+            if issues and failures_shadowed_by_overrides(policies, failing_settings):
+                # The admin group of 4.1.1.2 may get the overriding value,
+                # which the Policy API does not expose, so the domain-wide
+                # failure cannot be confirmed for it.
+                report.status = "MANUAL"
+                report.status_extended = (
+                    f"2-Step Verification does not require security keys in the "
+                    f"domain-wide policy of {domain}: {reasons}. However, every "
+                    f"failing setting is also overridden for at least one group "
+                    f"or organizational unit, so the administrative accounts may "
+                    f"be configured correctly. Review those overrides in the "
+                    f"Admin console."
+                )
+            elif issues:
                 report.status = "FAIL"
                 report.status_extended = (
                     f"2-Step Verification does not require security keys as "
-                    f"configured in domain {domain}: {'; '.join(issues)}. "
+                    f"configured in domain {domain}: {reasons}. "
                     + (f"Note: {caveat}. " if caveat else "")
                     + "Note: this check evaluates the domain-wide policy, the "
                     "Policy API does not expose role-specific 2SV enforcement."

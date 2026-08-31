@@ -215,6 +215,42 @@ class TestSecurity2svHardwareKeysAdmins:
         assert "accepted method is ALL" in findings[0].status_extended
         assert "also overridden" in findings[0].status_extended
 
+    def test_manual_when_every_failing_setting_is_overridden(self):
+        """The admin group may get the overriding value, which is not exposed"""
+        findings = run_check(
+            **{
+                **COMPLIANT,
+                "two_sv_allowed_factor_set": "ALL",
+                "overridden_settings": [
+                    "security.two_step_verification_enforcement_factor"
+                ],
+            }
+        )
+
+        assert len(findings) == 1
+        assert findings[0].status == "MANUAL"
+        assert "accepted method is ALL" in findings[0].status_extended
+        assert "administrative accounts may be configured correctly" in (
+            findings[0].status_extended
+        )
+
+    def test_fail_when_only_some_failing_settings_are_overridden(self):
+        """A failure no override reaches is still proven for the whole domain"""
+        findings = run_check(
+            **{
+                **COMPLIANT,
+                "two_sv_allowed_factor_set": "ALL",
+                "two_sv_allow_enrollment": False,
+                "overridden_settings": [
+                    "security.two_step_verification_enforcement_factor"
+                ],
+            }
+        )
+
+        assert len(findings) == 1
+        assert findings[0].status == "FAIL"
+        assert "not allowed to turn on" in findings[0].status_extended
+
     def test_an_override_on_a_setting_this_check_ignores_does_not_apply(self):
         """Device trust belongs to 4.1.1.1 and 4.1.1.3, not to 4.1.1.2"""
         findings = run_check(

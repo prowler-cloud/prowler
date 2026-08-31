@@ -8,6 +8,7 @@ from prowler.providers.googleworkspace.services.security.lib.durations import (
     parse_duration_seconds,
 )
 from prowler.providers.googleworkspace.services.security.lib.scope import (
+    failures_shadowed_by_overrides,
     override_caveat,
     unevaluable_reason,
 )
@@ -76,15 +77,22 @@ class security_2sv_enforced(Check):
                 return findings
 
             caveat = override_caveat(policies, EVALUATED_SETTINGS)
-            issues = []
+            issues = []  # (setting, why it fails)
 
             enforced_from = policies.two_sv_enforced_from
             enforcement = enforcement_issue(enforced_from)
             if enforcement:
-                issues.append(enforcement)
+                issues.append(
+                    ("security.two_step_verification_enforcement", enforcement)
+                )
 
             if policies.two_sv_allow_enrollment is False:
-                issues.append("users are not allowed to turn on 2-Step Verification")
+                issues.append(
+                    (
+                        "security.two_step_verification_enrollment",
+                        "users are not allowed to turn on 2-Step Verification",
+                    )
+                )
 
             # Google's default is no enrollment period, which is stricter than
             # the two weeks the benchmark asks for, so only longer periods fail.
@@ -93,38 +101,67 @@ class security_2sv_enforced(Check):
             grace_period = parse_duration_seconds(raw_grace_period)
             if raw_grace_period and grace_period is None:
                 issues.append(
-                    f"the new user enrollment period '{raw_grace_period}' "
-                    f"could not be read"
+                    (
+                        "security.two_step_verification_grace_period",
+                        f"the new user enrollment period '{raw_grace_period}' "
+                        f"could not be read",
+                    )
                 )
             elif grace_period is not None and grace_period > TWO_WEEKS_SECONDS:
                 issues.append(
-                    f"the new user enrollment period is "
-                    f"{format_duration(policies.two_sv_enrollment_grace_period)} "
-                    f"(should not exceed 2 weeks)"
+                    (
+                        "security.two_step_verification_grace_period",
+                        f"the new user enrollment period is "
+                        f"{format_duration(policies.two_sv_enrollment_grace_period)} "
+                        f"(should not exceed 2 weeks)",
+                    )
                 )
 
             if policies.two_sv_allow_trusting_device is not False:
                 issues.append(
-                    "users are allowed to trust their device"
-                    if policies.two_sv_allow_trusting_device
-                    else "device trust is not configured and defaults to allowed"
+                    (
+                        "security.two_step_verification_device_trust",
+                        "users are allowed to trust their device"
+                        if policies.two_sv_allow_trusting_device
+                        else "device trust is not configured and defaults to allowed",
+                    )
                 )
 
             factor_set = policies.two_sv_allowed_factor_set
             if factor_set not in TELEPHONY_FREE_FACTOR_SETS:
                 issues.append(
-                    "the allowed methods are not configured and default to any method, "
-                    "including verification codes via text and phone call"
-                    if factor_set is None
-                    else f"the allowed methods are {factor_set}, which does not "
-                    f"exclude verification codes via text and phone call"
+                    (
+                        "security.two_step_verification_enforcement_factor",
+                        "the allowed methods are not configured and default to "
+                        "any method, including verification codes via text and "
+                        "phone call"
+                        if factor_set is None
+                        else f"the allowed methods are {factor_set}, which does "
+                        f"not exclude verification codes via text and phone call",
+                    )
                 )
 
-            if issues:
+            failing_settings = frozenset(setting for setting, _ in issues)
+            reasons = "; ".join(text for _, text in issues)
+
+            if issues and failures_shadowed_by_overrides(policies, failing_settings):
+                # The audited scope (e.g. the admin group of 4.1.1.1) may get
+                # the overriding value, which the Policy API does not expose,
+                # so the domain-wide failure cannot be confirmed for it.
+                report.status = "MANUAL"
+                report.status_extended = (
+                    f"2-Step Verification is not enforced as required in the "
+                    f"domain-wide policy of {domain}: {reasons}. However, every "
+                    f"failing setting is also overridden for at least one group "
+                    f"or organizational unit, so the audited scope may be "
+                    f"configured correctly. Review those overrides in the Admin "
+                    f"console."
+                )
+            elif issues:
                 report.status = "FAIL"
                 report.status_extended = (
                     f"2-Step Verification is not enforced as required in domain "
-                    f"{domain}: {'; '.join(issues)}."
+                    f"{domain}: {reasons}."
                     + (f" Note: {caveat}." if caveat else "")
                 )
             elif caveat:

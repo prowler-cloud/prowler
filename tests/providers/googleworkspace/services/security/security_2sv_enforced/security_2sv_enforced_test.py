@@ -224,6 +224,38 @@ class TestSecurity2svEnforced:
         assert "trust their device" in findings[0].status_extended
         assert "also overridden" in findings[0].status_extended
 
+    def test_manual_when_every_failing_setting_is_overridden(self):
+        """The overriding value is not exposed, so the failure is unconfirmed"""
+        findings = run_check(
+            **{
+                **COMPLIANT,
+                "two_sv_allow_trusting_device": True,
+                "overridden_settings": ["security.two_step_verification_device_trust"],
+            }
+        )
+
+        assert len(findings) == 1
+        assert findings[0].status == "MANUAL"
+        assert "trust their device" in findings[0].status_extended
+        assert "every failing setting is also overridden" in (
+            findings[0].status_extended
+        )
+
+    def test_fail_when_only_some_failing_settings_are_overridden(self):
+        """A failure no override reaches is still proven for the whole domain"""
+        findings = run_check(
+            **{
+                **COMPLIANT,
+                "two_sv_allow_trusting_device": True,
+                "two_sv_allowed_factor_set": "ALL",
+                "overridden_settings": ["security.two_step_verification_device_trust"],
+            }
+        )
+
+        assert len(findings) == 1
+        assert findings[0].status == "FAIL"
+        assert "the allowed methods are ALL" in findings[0].status_extended
+
     def test_an_override_on_a_setting_this_check_ignores_does_not_apply(self):
         """The sign-in code setting belongs to 4.1.1.2, not to 4.1.1.1 or 4.1.1.3"""
         findings = run_check(

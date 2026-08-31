@@ -28,6 +28,13 @@ def unevaluable_reason(policies, evaluated_settings: FrozenSet[str]) -> Optional
     return None
 
 
+def failures_shadowed_by_overrides(policies, failing_settings: FrozenSet[str]) -> bool:
+    """Whether every failing setting is also overridden below the domain."""
+    return bool(failing_settings) and failing_settings <= set(
+        policies.overridden_settings
+    )
+
+
 def override_caveat(policies, evaluated_settings: FrozenSet[str]) -> str:
     """Return what a group or an OU also overrides on top of the domain, or an empty string."""
     overridden = sorted(set(policies.overridden_settings) & evaluated_settings)
