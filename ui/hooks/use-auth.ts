@@ -11,6 +11,7 @@ export function useAuth() {
     manage_account: false,
     manage_providers: false,
     manage_scans: false,
+    manage_ingestions: false,
     manage_integrations: false,
     manage_billing: false,
     manage_alerts: false,

@@ -5,6 +5,7 @@ export * from "./filters";
 export * from "./findings-table";
 export * from "./findings-triage";
 export * from "./formSchemas";
+export * from "./ingestions";
 export * from "./organizations";
 export * from "./processors";
 export * from "./provider-wizard";

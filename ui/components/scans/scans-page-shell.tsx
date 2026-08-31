@@ -28,6 +28,7 @@ import type { ScanScheduleCapability } from "@/types/schedules";
 const viewFirstScanFlow = getFlowById("view-first-scan")!;
 
 import { CliImportBanner } from "./cli-import-banner";
+import { ImportFindingsModal } from "./import-findings-modal";
 import { LaunchScanModal } from "./launch-scan-modal";
 import { ScansFilterBar } from "./scans-filter-bar";
 import { ScansProvidersEmptyState } from "./scans-providers-empty-state";
@@ -37,6 +38,7 @@ interface ScansPageShellProps {
   providers: ProviderProps[];
   providerGroups?: ProviderGroup[];
   hasManageScansPermission: boolean;
+  hasManageIngestionsPermission?: boolean;
   activeScanCount?: number;
   children: ReactNode;
   /** Cloud overlay seam for the launch-scan modal. */
@@ -48,6 +50,7 @@ export function ScansPageShell({
   providers,
   providerGroups = [],
   hasManageScansPermission,
+  hasManageIngestionsPermission = false,
   activeScanCount = 0,
   children,
   scanScheduleCapability,
@@ -155,6 +158,9 @@ export function ScansPageShell({
         >
           Launch Scan
         </Button>
+        {isCloudEnvironment && hasManageIngestionsPermission && (
+          <ImportFindingsModal />
+        )}
       </div>
 
       {isCloudEnvironment && <CliImportBanner />}
