@@ -1591,6 +1591,19 @@ class TestLimitedVisibility:
 
         assert response.status_code == status.HTTP_204_NO_CONTENT
 
+    def test_jira_issues_limited_to_visible_providers(
+        self, authenticated_client_rbac_limited, jira_issues_fixture
+    ):
+        linked, other_provider_issue, _ = jira_issues_fixture
+        response = authenticated_client_rbac_limited.get(reverse("jiraissue-list"))
+        assert response.status_code == status.HTTP_200_OK
+        assert [item["id"] for item in response.json()["data"]] == [str(linked.id)]
+
+        response = authenticated_client_rbac_limited.get(
+            reverse("jiraissue-detail", kwargs={"pk": other_provider_issue.id})
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
     def test_jira_issue_types_allowed_without_unlimited_visibility(
         self, authenticated_client_rbac_limited, jira_integration_fixture
     ):

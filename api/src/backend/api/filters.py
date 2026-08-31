@@ -17,6 +17,7 @@ from api.models import (
     FindingGroupDailySummary,
     Integration,
     Invitation,
+    JiraIssue,
     LighthouseProviderConfiguration,
     LighthouseProviderModels,
     Membership,
@@ -1900,3 +1901,30 @@ class ComplianceWatchlistFilter(BaseProviderFilter):
 
     class Meta(BaseProviderFilter.Meta):
         model = ProviderComplianceScore
+
+
+class JiraIssueFilter(BaseProviderFilter):
+    finding_uid = CharFilter(field_name="finding_uid", lookup_expr="exact")
+    finding_uid__in = CharInFilter(field_name="finding_uid", lookup_expr="in")
+    finding_id = UUIDFilter(field_name="finding_id", lookup_expr="exact")
+    finding_id__in = UUIDInFilter(field_name="finding_id", lookup_expr="in")
+    integration = UUIDFilter(field_name="integration__id", lookup_expr="exact")
+    integration__in = UUIDInFilter(field_name="integration__id", lookup_expr="in")
+    issue_key = CharFilter(field_name="issue_key", lookup_expr="exact")
+    issue_key__in = CharInFilter(field_name="issue_key", lookup_expr="in")
+    issue_status_category = ChoiceFilter(
+        choices=JiraIssue.StatusCategoryChoices.choices
+    )
+    issue_status_category__in = ChoiceInFilter(
+        choices=JiraIssue.StatusCategoryChoices.choices,
+        field_name="issue_status_category",
+        lookup_expr="in",
+    )
+
+    class Meta:
+        model = JiraIssue
+        fields = {
+            "inserted_at": ["date", "gte", "lte"],
+            "updated_at": ["date", "gte", "lte"],
+            "project_key": ["exact", "in"],
+        }
