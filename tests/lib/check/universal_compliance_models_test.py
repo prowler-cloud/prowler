@@ -930,7 +930,12 @@ class TestCyberEssentialsFramework:
         for dirpath, _, filenames in os.walk(services_root):
             for filename in filenames:
                 if filename.endswith(".metadata.json"):
-                    registered_checks.add(filename.replace(".metadata.json", ""))
+                    with open(os.path.join(dirpath, filename)) as metadata_file:
+                        check_id = json.load(metadata_file)["CheckID"]
+                    # Runtime finding identity is metadata CheckID; it must
+                    # match the filename/folder name.
+                    assert check_id == filename.replace(".metadata.json", "")
+                    registered_checks.add(check_id)
         referenced_checks = {
             check_id
             for requirement in fw.requirements
