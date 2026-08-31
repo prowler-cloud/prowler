@@ -914,6 +914,8 @@ class TestCyberEssentialsFramework:
         assert fw.framework == "Cyber-Essentials"
         assert fw.version == "3.3"
         assert set(fw.get_providers()) == {"azure", "cloudflare"}
+        assert all("azure" in req.checks for req in fw.requirements)
+        assert all("cloudflare" in req.checks for req in fw.requirements)
         assert fw.supports_provider("azure")
         assert fw.supports_provider("cloudflare")
 
