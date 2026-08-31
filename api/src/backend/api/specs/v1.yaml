@@ -21318,7 +21318,7 @@ components:
                         type: string
                         description: Base64-encoded PEM or PKCS#12/PFX bundle containing the certificate
                           and its matching private key for certificate-based authentication.
-                        maxLength: 68266
+                        maxLength: 68268
                       tenant_id:
                         type: string
                         description: The Azure tenant ID, representing the directory
@@ -21371,7 +21371,7 @@ components:
                         type: string
                         description: Base64-encoded PEM or PKCS#12/PFX bundle containing the certificate
                           and its matching private key for certificate-based authentication.
-                        maxLength: 68266
+                        maxLength: 68268
                     required:
                     - client_id
                     - tenant_id
@@ -23469,7 +23469,7 @@ components:
                     type: string
                     description: Base64-encoded PEM or PKCS#12/PFX bundle containing the certificate
                       and its matching private key for certificate-based authentication.
-                    maxLength: 68266
+                    maxLength: 68268
                   tenant_id:
                     type: string
                     description: The Azure tenant ID, representing the directory where
@@ -23522,7 +23522,7 @@ components:
                     type: string
                     description: Base64-encoded PEM or PKCS#12/PFX bundle containing the certificate
                       and its matching private key for certificate-based authentication.
-                    maxLength: 68266
+                    maxLength: 68268
                 required:
                 - client_id
                 - tenant_id
@@ -23936,7 +23936,7 @@ components:
                         type: string
                         description: Base64-encoded PEM or PKCS#12/PFX bundle containing the certificate
                           and its matching private key for certificate-based authentication.
-                        maxLength: 68266
+                        maxLength: 68268
                       tenant_id:
                         type: string
                         description: The Azure tenant ID, representing the directory
@@ -23989,7 +23989,7 @@ components:
                         type: string
                         description: Base64-encoded PEM or PKCS#12/PFX bundle containing the certificate
                           and its matching private key for certificate-based authentication.
-                        maxLength: 68266
+                        maxLength: 68268
                     required:
                     - client_id
                     - tenant_id
@@ -24425,7 +24425,7 @@ components:
                     type: string
                     description: Base64-encoded PEM or PKCS#12/PFX bundle containing the certificate
                       and its matching private key for certificate-based authentication.
-                    maxLength: 68266
+                    maxLength: 68268
                   tenant_id:
                     type: string
                     description: The Azure tenant ID, representing the directory where
@@ -24478,7 +24478,7 @@ components:
                     type: string
                     description: Base64-encoded PEM or PKCS#12/PFX bundle containing the certificate
                       and its matching private key for certificate-based authentication.
-                    maxLength: 68266
+                    maxLength: 68268
                 required:
                 - client_id
                 - tenant_id

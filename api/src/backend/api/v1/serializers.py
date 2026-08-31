@@ -1793,16 +1793,21 @@ class AwsProviderSecret(serializers.Serializer):
 # limit on the decoded bundle. Rejects oversized payloads at the request
 # layer so DRF never allocates the doubled memory that base64 decoding plus
 # PKCS#12/PEM parsing would need for a multi-MB blob.
-_MAX_CERTIFICATE_CONTENT_LENGTH = 68266
+# `((51200 + 2) // 3) * 4` = 68268 base64 chars for a bundle exactly at the
+# SDK cap. Keep the two constants aligned if either side moves.
+_MAX_CERTIFICATE_CONTENT_LENGTH = 68268
 
 
 class AzureProviderSecret(serializers.Serializer):
     client_id = serializers.CharField()
     client_secret = serializers.CharField(required=False)
     tenant_id = serializers.CharField()
-    certificate_content = serializers.CharField(
-        required=False, max_length=_MAX_CERTIFICATE_CONTENT_LENGTH
-    )
+    # The size cap is enforced in `validate_certificate_content` with the
+    # typed `azure-certificate-content` code, not via `max_length=`. DRF's
+    # built-in max-length check runs before per-field validators and emits
+    # `code="max_length"`, which JSON:API clients keyed to the typed
+    # certificate error code cannot recognize as a certificate failure.
+    certificate_content = serializers.CharField(required=False)
 
     def validate(self, attrs):
         if attrs.get("client_secret") and attrs.get("certificate_content"):
@@ -1820,6 +1825,19 @@ class AzureProviderSecret(serializers.Serializer):
     def validate_certificate_content(self, certificate_content):
         """Validate the Azure certificate and matching private-key bundle."""
         if certificate_content:
+            # Tolerate whitespace inside the base64 payload: exports from
+            # Windows terminals (CRLF) or wrapped copy-paste survive without
+            # tripping `base64.b64decode(validate=True)`, and the reader is
+            # base64 anyway — internal whitespace carries no information.
+            certificate_content = "".join(certificate_content.split())
+            if len(certificate_content) > _MAX_CERTIFICATE_CONTENT_LENGTH:
+                # Reject oversized payloads with the typed certificate code
+                # so JSON:API clients recognize this as a certificate-content
+                # failure rather than a generic length violation.
+                raise serializers.ValidationError(
+                    "Certificate content exceeds the maximum size.",
+                    code="azure-certificate-content",
+                )
             try:
                 certificate_data = base64.b64decode(certificate_content, validate=True)
                 validate_certificate_bundle(certificate_data)

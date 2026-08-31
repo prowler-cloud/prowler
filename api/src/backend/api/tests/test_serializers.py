@@ -370,9 +370,12 @@ class TestAzureProviderSecret:
         )
 
     def test_rejects_oversized_certificate_content(self):
-        # Payloads larger than the base64 cap must be rejected at the DRF
-        # field layer before base64 decoding or bundle parsing runs, so a
-        # multi-MB blob cannot exhaust API-worker memory.
+        # Payloads larger than the base64 cap must be rejected inside
+        # `validate_certificate_content` (before base64 decoding or bundle
+        # parsing runs) so a multi-MB blob cannot exhaust API-worker
+        # memory. The typed `azure-certificate-content` code lets JSON:API
+        # clients recognize this as a certificate failure rather than a
+        # generic length violation.
         from api.v1.serializers import _MAX_CERTIFICATE_CONTENT_LENGTH
 
         serializer = AzureProviderSecret(
@@ -384,6 +387,38 @@ class TestAzureProviderSecret:
 
         assert not serializer.is_valid()
         assert "certificate_content" in serializer.errors
+        assert (
+            serializer.errors["certificate_content"][0].code
+            == "azure-certificate-content"
+        )
+
+    def test_tolerates_whitespace_in_certificate_content(self):
+        # A base64 payload with embedded whitespace (CRLF from a Windows
+        # terminal, wrapped copy-paste) must not be rejected as "invalid
+        # base64" — whitespace carries no information in the encoding.
+        import base64
+
+        bundle_b64 = self.certificate_bundle()
+        # Insert CRLF every 64 chars and leading/trailing spaces to mimic
+        # a copy-paste from a terminal export.
+        wrapped = (
+            "  "
+            + "\r\n".join(bundle_b64[i : i + 64] for i in range(0, len(bundle_b64), 64))
+            + "  "
+        )
+
+        serializer = AzureProviderSecret(
+            data={**self.BASE, "certificate_content": wrapped}
+        )
+
+        assert serializer.is_valid(), serializer.errors
+        # The stored value is the whitespace-stripped payload, so the SDK
+        # sees exactly the bytes it would from a clean base64 upload.
+        assert serializer.validated_data["certificate_content"] == bundle_b64
+        # And it still decodes to the original bundle unchanged.
+        assert base64.b64decode(
+            serializer.validated_data["certificate_content"]
+        ) == base64.b64decode(bundle_b64)
 
     def test_mutex_errors_carry_stable_codes(self):
         # JSON:API clients key on `code`; without it they cannot tell the
