@@ -111,7 +111,6 @@ export function ImportFindingsModal() {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [state, setState] = useState<ImportState>({ type: IMPORT_STATE.IDLE });
-  const [hasAbandonedImport, setHasAbandonedImport] = useState(false);
   const polling = useIngestionPolling({
     onCompleted: (ingestion, completedWhileHidden) => {
       router.refresh();
@@ -199,7 +198,6 @@ export function ImportFindingsModal() {
     }
 
     const payload = (await response.json()) as IngestionResponse;
-    setHasAbandonedImport(false);
     const target: IngestionPollingTarget = { file, ingestion: payload.data };
     if (!polling.start(target)) return;
     setState({ type: IMPORT_STATE.TRACKING, ...target });
@@ -260,15 +258,6 @@ export function ImportFindingsModal() {
                   }
                 />
               </div>
-              {hasAbandonedImport &&
-                (state.type === IMPORT_STATE.IDLE ||
-                  state.type === IMPORT_STATE.READY ||
-                  state.type === IMPORT_STATE.INVALID) && (
-                  <p role="status">
-                    The abandoned import may still be running. Importing the
-                    same report again can duplicate its findings.
-                  </p>
-                )}
               {state.type === IMPORT_STATE.INVALID && (
                 <p role="alert">{state.error}</p>
               )}
@@ -308,17 +297,6 @@ export function ImportFindingsModal() {
                     }}
                   >
                     Retry status
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={() => {
-                      polling.stop();
-                      setHasAbandonedImport(true);
-                      setState({ type: IMPORT_STATE.IDLE });
-                    }}
-                  >
-                    Stop tracking and start over
                   </Button>
                 </>
               )}

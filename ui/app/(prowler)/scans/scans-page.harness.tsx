@@ -235,8 +235,8 @@ export class ScansPageHarness extends BrowserHarness<IngestionFixture> {
     return this.containsText(/Import completed:/i);
   }
 
-  hasDuplicateImportWarning(): boolean {
-    return this.containsText(/The abandoned import may still be running/i);
+  hasStopTrackingAction(): boolean {
+    return this.buttonByText(/Stop tracking/i) !== null;
   }
 
   async waitForCompletionNotification(): Promise<void> {
@@ -288,15 +288,6 @@ export class ScansPageHarness extends BrowserHarness<IngestionFixture> {
   /** Outlast an uncancelled poll: its response lands, then the modal's 5s interval passes and the next would fire. */
   async waitPastTheNextPoll(): Promise<void> {
     await this.waitForTransition(this.statusDelayMs + 5700);
-  }
-
-  async stopTracking(): Promise<void> {
-    await this.clickButton(/Stop tracking and start over/i);
-    await this.waitFor(
-      () => !this.containsText(/Unable to retrieve the import status/i),
-      5000,
-      "the stuck import to be abandoned",
-    );
   }
 
   get ingestionPostCount(): number {

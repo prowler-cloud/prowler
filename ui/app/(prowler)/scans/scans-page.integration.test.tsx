@@ -274,7 +274,7 @@ describe("Scans page import findings", () => {
     expect(harness.ingestionPostCount).toBe(1);
   });
 
-  it("abandons a stuck import and starts over", async () => {
+  it("holds a stuck import instead of freeing a second upload", async () => {
     const harness = new ScansPageHarness(ingestionFixture());
     await harness.mount({ statusErrorAt: 1 });
     await harness.openImportFindings();
@@ -282,15 +282,13 @@ describe("Scans page import findings", () => {
     await harness.submitImport();
     await harness.waitForStatusError();
 
-    await harness.stopTracking();
-    expect(harness.isDropzoneFrozen()).toBe(false);
-    expect(harness.selectedFileName()).toBeNull();
-    // The backend job survives the reset, so a second upload can duplicate it.
-    expect(harness.hasDuplicateImportWarning()).toBe(true);
+    // The ingestion API has no cancellation and every POST opens a new job, so
+    // letting go of an accepted one would only duplicate it.
+    expect(harness.hasStopTrackingAction()).toBe(false);
+    expect(harness.isDropzoneFrozen()).toBe(true);
+    expect(harness.isImportEnabled()).toBe(false);
 
-    await harness.selectFile(new File(["[]"], "another.ocsf.json"));
-    expect(harness.selectedFileName()).toBe("another.ocsf.json");
-    expect(harness.isImportEnabled()).toBe(true);
+    await harness.retryStatus();
     expect(harness.ingestionPostCount).toBe(1);
   });
 
