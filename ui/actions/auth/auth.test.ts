@@ -132,6 +132,29 @@ describe("auth actions", () => {
     expect(requestUrl.searchParams.get("utm_source")).toBe("blackhat");
   });
 
+  it("should carry manage_ingestions into the session permissions", async () => {
+    // Given
+    mockUserMe({ manage_ingestions: true });
+
+    // When
+    const result = await getUserByMe("access-token");
+
+    // Then
+    expect(result.permissions.manage_ingestions).toBe(true);
+  });
+
+  it("should default manage_ingestions to false when the role omits it", async () => {
+    // Given
+    mockUserMe({ manage_scans: true });
+
+    // When
+    const result = await getUserByMe("access-token");
+
+    // Then
+    expect(result.permissions.manage_ingestions).toBe(false);
+    expect(result.permissions.manage_scans).toBe(true);
+  });
+
   it("should carry manage_lighthouse_ai_configuration into the session permissions", async () => {
     // Given
     mockUserMe({ manage_lighthouse_ai_configuration: true });
