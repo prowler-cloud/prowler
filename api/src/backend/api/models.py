@@ -46,7 +46,8 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MinLengthValidator
 from django.db import models
 from django.db.models import Q
-from django.db.models.functions import Upper
+from django.db.models.fields.json import KeyTextTransform
+from django.db.models.functions import Lower, Upper
 from django.utils import timezone as django_timezone
 from django.utils.translation import gettext_lazy as _
 from django_celery_beat.models import PeriodicTask
@@ -1966,6 +1967,12 @@ class Integration(RowLevelSecurityProtectedModel):
         db_table = "integrations"
 
         constraints = [
+            models.UniqueConstraint(
+                models.F("tenant_id"),
+                Lower(KeyTextTransform("domain", "configuration")),
+                condition=Q(integration_type="jira"),
+                name="unique_jira_site_per_tenant",
+            ),
             RowLevelSecurityConstraint(
                 field="tenant_id",
                 name="rls_on_%(class)s",
@@ -3116,19 +3123,28 @@ class TenantComplianceSummary(RowLevelSecurityProtectedModel):
 
 
 class JiraIssue(RowLevelSecurityProtectedModel):
-    """Jira issue created from a finding through a Jira integration.
+    """Current Jira delivery state for one finding and Jira integration.
 
     One row per (integration, provider, finding uid). Keyed on the finding ``uid``
-    rather than the per-scan finding id so the link survives rescans, which is
-    what lets a repeated send be recognised as already ticketed. Only the latest
-    ticket is kept: when a linked issue is closed or deleted in Jira and the
-    finding is sent again, the row is updated to point at the new issue.
+    rather than the per-scan finding id so the link survives rescans. The current
+    link stays populated while a replacement attempt is in progress.
     """
 
     class StatusCategoryChoices(models.TextChoices):
         NEW = "new", _("New")
         INDETERMINATE = "indeterminate", _("In progress")
         DONE = "done", _("Done")
+
+    class AttemptStateChoices(models.TextChoices):
+        IDLE = "idle", _("Idle")
+        CREATING = "creating", _("Creating")
+        UNCERTAIN = "uncertain", _("Uncertain")
+        RETRYABLE_FAILURE = "retryable_failure", _("Retryable failure")
+        TERMINAL_FAILURE = "terminal_failure", _("Terminal failure")
+
+    class AttemptOperationChoices(models.TextChoices):
+        INITIAL = "initial", _("Initial")
+        REPLACEMENT = "replacement", _("Replacement")
 
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
@@ -3140,20 +3156,42 @@ class JiraIssue(RowLevelSecurityProtectedModel):
         Provider, on_delete=models.CASCADE, related_name="jira_issues"
     )
     finding_uid = models.CharField(max_length=300)
-    # Last finding record that was sent; informational, findings are partitioned
-    # and rotate per scan so this is not a foreign key
+    # Findings are partitioned and rotate per scan, so this is not a foreign key.
     finding_id = models.UUIDField()
-    # Empty while the issue is being created (reservation), filled after Jira
-    # confirms the creation
-    issue_key = models.CharField(max_length=64, blank=True, default="")
-    issue_id = models.CharField(max_length=64, blank=True, default="")
-    issue_url = models.URLField(max_length=2048, blank=True, default="")
-    project_key = models.CharField(max_length=64)
-    issue_status = models.CharField(max_length=64, blank=True, default="")
+    issue_id = models.CharField(max_length=64, null=True, blank=True)
+    issue_key = models.CharField(max_length=64, null=True, blank=True)
+    issue_url = models.URLField(max_length=2048, null=True, blank=True)
+    project_key = models.CharField(max_length=64, null=True, blank=True)
+    issue_type = models.CharField(max_length=64, null=True, blank=True)
+    issue_status = models.CharField(max_length=64, null=True, blank=True)
     issue_status_category = models.CharField(
-        max_length=16, choices=StatusCategoryChoices.choices, blank=True, default=""
+        max_length=16,
+        choices=StatusCategoryChoices.choices,
+        null=True,
+        blank=True,
     )
     status_synced_at = models.DateTimeField(null=True, blank=True)
+    attempt_state = models.CharField(
+        max_length=32,
+        choices=AttemptStateChoices.choices,
+        default=AttemptStateChoices.IDLE,
+    )
+    claim_token = models.CharField(max_length=255, null=True, blank=True)
+    claim_expires_at = models.DateTimeField(null=True, blank=True)
+    delivery_attempt_token = models.UUIDField(null=True, blank=True)
+    attempt_operation = models.CharField(
+        max_length=16,
+        choices=AttemptOperationChoices.choices,
+        null=True,
+        blank=True,
+    )
+    attempt_project_key = models.CharField(max_length=64, null=True, blank=True)
+    attempt_issue_type = models.CharField(max_length=64, null=True, blank=True)
+    attempt_count = models.PositiveIntegerField(default=0)
+    last_attempt_at = models.DateTimeField(null=True, blank=True)
+    last_error_code = models.CharField(max_length=128, null=True, blank=True)
+    last_error_message = models.TextField(null=True, blank=True)
+    next_reconcile_at = models.DateTimeField(null=True, blank=True)
 
     class Meta(RowLevelSecurityProtectedModel.Meta):
         db_table = "jira_issues"
@@ -3161,7 +3199,114 @@ class JiraIssue(RowLevelSecurityProtectedModel):
         constraints = [
             models.UniqueConstraint(
                 fields=("tenant_id", "integration_id", "provider_id", "finding_uid"),
+                include=(
+                    "id",
+                    "finding_id",
+                    "issue_id",
+                    "issue_key",
+                    "issue_status_category",
+                    "attempt_state",
+                    "claim_expires_at",
+                ),
                 name="unique_jira_issue_per_finding",
+            ),
+            models.UniqueConstraint(
+                fields=("delivery_attempt_token",),
+                condition=Q(delivery_attempt_token__isnull=False),
+                name="unique_jira_delivery_attempt",
+            ),
+            models.UniqueConstraint(
+                fields=("tenant_id", "integration_id", "issue_id"),
+                condition=Q(issue_id__isnull=False),
+                name="unique_jira_issue_identity",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    Q(
+                        issue_id__isnull=True,
+                        issue_key__isnull=True,
+                        issue_url__isnull=True,
+                    )
+                    | (
+                        Q(
+                            issue_id__isnull=False,
+                            issue_key__isnull=False,
+                            issue_url__isnull=False,
+                        )
+                        & ~Q(issue_id="")
+                        & ~Q(issue_key="")
+                        & ~Q(issue_url="")
+                    )
+                ),
+                name="jira_issue_link_all_or_none",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    Q(claim_token__isnull=True, claim_expires_at__isnull=True)
+                    | (
+                        Q(claim_token__isnull=False, claim_expires_at__isnull=False)
+                        & ~Q(claim_token="")
+                    )
+                ),
+                name="jira_issue_claim_all_or_none",
+            ),
+            models.CheckConstraint(
+                condition=Q(
+                    attempt_state__in=(
+                        "idle",
+                        "creating",
+                        "uncertain",
+                        "retryable_failure",
+                        "terminal_failure",
+                    )
+                ),
+                name="jira_issue_valid_attempt_state",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    Q(attempt_operation__isnull=True)
+                    | Q(attempt_operation__in=("initial", "replacement"))
+                ),
+                name="jira_issue_valid_operation",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    Q(attempt_state="idle")
+                    | (
+                        Q(
+                            delivery_attempt_token__isnull=False,
+                            attempt_operation__isnull=False,
+                            attempt_project_key__isnull=False,
+                            attempt_issue_type__isnull=False,
+                        )
+                        & ~Q(attempt_project_key="")
+                        & ~Q(attempt_issue_type="")
+                    )
+                ),
+                name="jira_issue_attempt_fields",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    ~Q(attempt_state="creating")
+                    | Q(claim_token__isnull=False, claim_expires_at__isnull=False)
+                ),
+                name="jira_issue_creating_has_claim",
+            ),
+            models.CheckConstraint(
+                condition=(Q(claim_token__isnull=True) | Q(attempt_state="creating")),
+                name="jira_issue_claim_only_creating",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    ~Q(attempt_operation="replacement") | Q(issue_id__isnull=False)
+                ),
+                name="jira_issue_replacement_has_link",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    Q(next_reconcile_at__isnull=True) | Q(attempt_state="uncertain")
+                ),
+                name="jira_issue_reconcile_uncertain",
             ),
             RowLevelSecurityConstraint(
                 field="tenant_id",
@@ -3171,8 +3316,34 @@ class JiraIssue(RowLevelSecurityProtectedModel):
         ]
         indexes = [
             models.Index(
-                fields=["tenant_id", "provider_id", "finding_uid"],
-                name="ji_tenant_prov_uid_idx",
+                fields=["tenant_id", "provider_id", "finding_uid", "integration_id"],
+                include=[
+                    "id",
+                    "finding_id",
+                    "issue_id",
+                    "issue_key",
+                    "issue_status_category",
+                    "attempt_state",
+                ],
+                name="ji_ui_lookup_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "claim_expires_at"],
+                condition=Q(
+                    attempt_state="creating",
+                    claim_expires_at__isnull=False,
+                ),
+                include=["id"],
+                name="ji_stale_claim_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "next_reconcile_at"],
+                condition=Q(
+                    attempt_state="uncertain",
+                    next_reconcile_at__isnull=False,
+                ),
+                include=["id"],
+                name="ji_reconcile_due_idx",
             ),
         ]
 
@@ -3181,8 +3352,7 @@ class JiraIssue(RowLevelSecurityProtectedModel):
 
     @property
     def is_linked(self) -> bool:
-        """Whether the row points at a confirmed Jira issue (not a reservation)."""
-        return bool(self.issue_key)
+        return self.issue_id is not None
 
     @property
     def is_done(self) -> bool:

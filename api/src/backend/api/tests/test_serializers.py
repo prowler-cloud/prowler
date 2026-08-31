@@ -375,5 +375,6 @@ class TestIntegrationSerializerJiraDomain:
 
         assert representation["configuration"]["domain"] == "test"
         assert jira_integration_fixture.configuration == {
-            "projects": {"TEST": "Test project"}
+            "projects": {"TEST": "Test project"},
+            "domain": "test",
         }

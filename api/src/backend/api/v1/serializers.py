@@ -2895,12 +2895,12 @@ class BaseWriteIntegrationSerializer(BaseWriteSerializer):
                 pointer="/data/attributes/configuration",
             )
 
-        if (
-            integration_type == Integration.IntegrationChoices.JIRA
-            and Integration.objects.filter(
-                configuration__contains={
-                    "domain": attrs.get("configuration").get("domain")
-                }
+        configuration = attrs.get("configuration") or {}
+        if integration_type == Integration.IntegrationChoices.JIRA and (
+            Integration.objects.filter(
+                tenant_id=self.context.get("tenant_id"),
+                integration_type=Integration.IntegrationChoices.JIRA,
+                configuration__domain__iexact=configuration.get("domain"),
             ).exists()
         ):
             raise ConflictException(
@@ -2977,6 +2977,9 @@ class BaseWriteIntegrationSerializer(BaseWriteSerializer):
                     }
                 )
             config_serializer = JiraConfigSerializer
+            domain = credentials.get("domain")
+            if isinstance(domain, str):
+                credentials["domain"] = domain.strip().lower()
             # Create non-editable configuration for JIRA integration
             # issue_types will be populated per project when connection is tested
             configuration.update(
@@ -3041,19 +3044,7 @@ class IntegrationSerializer(IntegrationProviderVisibilityMixin, RLSSerializer):
     }
 
     def to_representation(self, instance):
-        representation = self.hide_restricted_providers(
-            super().to_representation(instance)
-        )
-        # `configuration` is missing when the request asks for a subset of the fields
-        if (
-            instance.integration_type == Integration.IntegrationChoices.JIRA
-            and "configuration" in representation
-        ):
-            representation["configuration"] = {
-                **representation["configuration"],
-                "domain": instance.credentials.get("domain"),
-            }
-        return representation
+        return self.hide_restricted_providers(super().to_representation(instance))
 
 
 class IntegrationCreateSerializer(
@@ -3109,11 +3100,28 @@ class IntegrationCreateSerializer(
         tenant_id = self.context.get("tenant_id")
 
         providers = validated_data.pop("providers", [])
-        with transaction.atomic():
-            integration = Integration.objects.create(
-                tenant_id=tenant_id, **validated_data
+        try:
+            with transaction.atomic():
+                integration = Integration.objects.create(
+                    tenant_id=tenant_id, **validated_data
+                )
+                replace_integration_providers(integration, providers, tenant_id)
+        except IntegrityError as error:
+            constraint_name = getattr(
+                getattr(getattr(error, "__cause__", None), "diag", None),
+                "constraint_name",
+                None,
             )
-            replace_integration_providers(integration, providers, tenant_id)
+            if (
+                validated_data.get("integration_type")
+                == Integration.IntegrationChoices.JIRA
+                and constraint_name == "unique_jira_site_per_tenant"
+            ):
+                raise ConflictException(
+                    detail="This integration already exists.",
+                    pointer="/data/attributes/configuration",
+                ) from error
+            raise
 
         return integration
 
@@ -3156,6 +3164,19 @@ class IntegrationUpdateSerializer(
         else:
             configuration = attrs.get("configuration", {})
         credentials = attrs.get("credentials") or self.instance.credentials
+        if integration_type == Integration.IntegrationChoices.JIRA:
+            current_domain = self.instance.configuration.get(
+                "domain"
+            ) or self.instance.credentials.get("domain")
+            current_domain = current_domain.strip().lower()
+            requested_domain = credentials.get("domain")
+            if isinstance(requested_domain, str):
+                requested_domain = requested_domain.strip().lower()
+            if requested_domain != current_domain:
+                raise serializers.ValidationError(
+                    {"credentials": {"domain": "The Jira site cannot be changed."}}
+                )
+            credentials["domain"] = current_domain
 
         self.validate_integration_data(
             integration_type, providers, configuration, credentials
@@ -3183,20 +3204,7 @@ class IntegrationUpdateSerializer(
         return super().update(instance, validated_data)
 
     def to_representation(self, instance):
-        representation = self.hide_restricted_providers(
-            super().to_representation(instance)
-        )
-        # Ensure JIRA integrations show updated domain in configuration from credentials.
-        # `configuration` is missing when the request asks for a subset of the fields
-        if (
-            instance.integration_type == Integration.IntegrationChoices.JIRA
-            and "configuration" in representation
-        ):
-            representation["configuration"] = {
-                **representation["configuration"],
-                "domain": instance.credentials.get("domain"),
-            }
-        return representation
+        return self.hide_restricted_providers(super().to_representation(instance))
 
 
 class IntegrationJiraIssueTypesSerializer(BaseSerializerV1):

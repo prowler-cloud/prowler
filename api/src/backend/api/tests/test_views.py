@@ -79,7 +79,7 @@ from conftest import (
     today_after_n_days,
 )
 from django.conf import settings
-from django.db import close_old_connections, connection, connections
+from django.db import IntegrityError, close_old_connections, connection, connections
 from django.db.models import Count
 from django.db.models.signals import pre_delete
 from django.http import JsonResponse
@@ -13901,7 +13901,7 @@ class TestIntegrationViewSet:
                     "integration_type": Integration.IntegrationChoices.JIRA,
                     "configuration": {},
                     "credentials": {
-                        "domain": "prowlerdomain",
+                        "domain": " ProwlerDomain ",
                         "api_token": "this-is-an-api-token-for-jira-that-works-for-sure",
                         "user_mail": "testing@prowler.com",
                     },
@@ -13922,7 +13922,9 @@ class TestIntegrationViewSet:
         ]
         assert "projects" in integration_configuration
         assert "issue_types" in integration_configuration
-        assert "domain" in integration_configuration
+        assert integration_configuration["domain"] == "prowlerdomain"
+        assert integration.configuration["domain"] == "prowlerdomain"
+        assert integration.credentials["domain"] == "prowlerdomain"
         assert integration.enabled == data["data"]["attributes"]["enabled"]
         assert (
             integration.integration_type
@@ -14350,6 +14352,40 @@ class TestIntegrationViewSet:
             == "/data/attributes/configuration"
         )
 
+    @patch("api.v1.serializers.Integration.objects.create")
+    def test_integrations_create_jira_database_race_returns_conflict(
+        self, mock_create, authenticated_client
+    ):
+        error = IntegrityError()
+        cause = Exception()
+        cause.diag = SimpleNamespace(constraint_name="unique_jira_site_per_tenant")
+        error.__cause__ = cause
+        mock_create.side_effect = error
+        data = {
+            "data": {
+                "type": "integrations",
+                "attributes": {
+                    "integration_type": Integration.IntegrationChoices.JIRA,
+                    "configuration": {},
+                    "credentials": {
+                        "user_mail": "test@example.com",
+                        "api_token": "fake-api-token",
+                        "domain": "prowlerdomain",
+                    },
+                    "enabled": True,
+                },
+            }
+        }
+
+        response = authenticated_client.post(
+            reverse("integration-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_409_CONFLICT
+        mock_create.assert_called_once()
+
     def test_integrations_create_duplicate_jira(self, authenticated_client):
         # Create first JIRA integration
         data = {
@@ -14376,7 +14412,8 @@ class TestIntegrationViewSet:
         )
         assert response.status_code == status.HTTP_201_CREATED
 
-        # Attempt to create duplicate should return 409
+        # Site identity is case-insensitive.
+        data["data"]["attributes"]["credentials"]["domain"] = "PROWLERDOMAIN"
         response = authenticated_client.post(
             reverse("integration-list"),
             data=json.dumps(data),
@@ -14390,6 +14427,39 @@ class TestIntegrationViewSet:
             response.json()["errors"][0]["source"]["pointer"]
             == "/data/attributes/configuration"
         )
+
+    def test_integrations_create_different_jira_sites(self, authenticated_client):
+        data = {
+            "data": {
+                "type": "integrations",
+                "attributes": {
+                    "integration_type": Integration.IntegrationChoices.JIRA,
+                    "configuration": {},
+                    "credentials": {
+                        "user_mail": "test@example.com",
+                        "api_token": "fake-api-token",
+                        "domain": "first-site",
+                    },
+                    "enabled": True,
+                },
+            }
+        }
+
+        first_response = authenticated_client.post(
+            reverse("integration-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        data["data"]["attributes"]["credentials"]["domain"] = "second-site"
+        second_response = authenticated_client.post(
+            reverse("integration-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+
+        assert first_response.status_code == status.HTTP_201_CREATED
+        assert second_response.status_code == status.HTTP_201_CREATED
+        assert Integration.objects.count() == 2
 
     def test_integrations_update_jira_configuration_readonly(
         self, authenticated_client
@@ -14442,7 +14512,7 @@ class TestIntegrationViewSet:
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_integrations_update_jira_credentials_domain_reflects_in_configuration(
+    def test_integrations_update_jira_credentials_for_same_site(
         self, authenticated_client
     ):
         # Create JIRA integration first
@@ -14478,7 +14548,7 @@ class TestIntegrationViewSet:
             == "original-domain"
         )
 
-        # Update credentials with new domain
+        # Rotate the email and token while preserving the canonical site.
         update_data = {
             "data": {
                 "type": "integrations",
@@ -14487,7 +14557,7 @@ class TestIntegrationViewSet:
                     "credentials": {
                         "user_mail": "updated@example.com",
                         "api_token": "updated-api-token",
-                        "domain": "updated-domain",
+                        "domain": "ORIGINAL-DOMAIN",
                     }
                 },
             }
@@ -14500,14 +14570,67 @@ class TestIntegrationViewSet:
         )
         assert response.status_code == status.HTTP_200_OK
 
-        # Verify the new domain is reflected in configuration
         updated_integration = response.json()["data"]
         configuration = updated_integration["attributes"]["configuration"]
-        assert configuration["domain"] == "updated-domain"
+        assert configuration["domain"] == "original-domain"
 
         # Verify other configuration fields are preserved
         assert "projects" in configuration
         assert "issue_types" in configuration
+        integration = Integration.objects.get(id=integration_id)
+        assert integration.credentials == {
+            "user_mail": "updated@example.com",
+            "api_token": "updated-api-token",
+            "domain": "original-domain",
+        }
+
+    def test_integrations_update_jira_rejects_site_change(self, authenticated_client):
+        create_data = {
+            "data": {
+                "type": "integrations",
+                "attributes": {
+                    "integration_type": Integration.IntegrationChoices.JIRA,
+                    "configuration": {},
+                    "credentials": {
+                        "user_mail": "test@example.com",
+                        "api_token": "fake-api-token",
+                        "domain": "original-domain",
+                    },
+                    "enabled": True,
+                },
+            }
+        }
+        create_response = authenticated_client.post(
+            reverse("integration-list"),
+            data=json.dumps(create_data),
+            content_type="application/vnd.api+json",
+        )
+        assert create_response.status_code == status.HTTP_201_CREATED
+        integration_id = create_response.json()["data"]["id"]
+
+        update_data = {
+            "data": {
+                "type": "integrations",
+                "id": integration_id,
+                "attributes": {
+                    "credentials": {
+                        "user_mail": "updated@example.com",
+                        "api_token": "updated-api-token",
+                        "domain": "different-domain",
+                    }
+                },
+            }
+        }
+        response = authenticated_client.patch(
+            reverse("integration-detail", kwargs={"pk": integration_id}),
+            data=json.dumps(update_data),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        integration = Integration.objects.get(id=integration_id)
+        assert integration.configuration["domain"] == "original-domain"
+        assert integration.credentials["domain"] == "original-domain"
 
     def test_integrations_update_jira_rejects_invalid_domain(
         self, authenticated_client

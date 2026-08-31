@@ -1453,8 +1453,7 @@ def integrations_fixture(aws_provider_pair):
 
 @pytest.fixture
 def jira_integration_fixture(tenants_fixture):
-    # Jira is a tenant-wide integration: it is not attached to any provider, and its
-    # `domain` is read from the credentials when the integration is serialized
+    # Jira is a tenant-wide integration and is not attached to any provider.
     tenant_id = tenants_fixture[0].id
     with rls_transaction(str(tenant_id)):
         return Integration.objects.create(
@@ -1462,7 +1461,10 @@ def jira_integration_fixture(tenants_fixture):
             enabled=True,
             connected=True,
             integration_type=Integration.IntegrationChoices.JIRA,
-            configuration={"projects": {"TEST": "Test project"}},
+            configuration={
+                "projects": {"TEST": "Test project"},
+                "domain": "test",
+            },
             credentials={
                 "domain": "test",
                 "user_mail": "a@b.com",
@@ -1488,6 +1490,7 @@ def jira_issues_fixture(jira_integration_fixture, aws_provider_pair, findings_fi
             issue_id="10001",
             issue_url="https://test.atlassian.net/browse/TEST-1",
             project_key="TEST",
+            issue_type="Task",
             issue_status="To Do",
             issue_status_category=JiraIssue.StatusCategoryChoices.NEW,
             status_synced_at=datetime.now(UTC),
@@ -1502,6 +1505,7 @@ def jira_issues_fixture(jira_integration_fixture, aws_provider_pair, findings_fi
             issue_id="10002",
             issue_url="https://test.atlassian.net/browse/TEST-2",
             project_key="TEST",
+            issue_type="Task",
             issue_status="Done",
             issue_status_category=JiraIssue.StatusCategoryChoices.DONE,
             status_synced_at=datetime.now(UTC),
@@ -1512,7 +1516,13 @@ def jira_issues_fixture(jira_integration_fixture, aws_provider_pair, findings_fi
             provider=provider,
             finding_uid=finding2.uid,
             finding_id=finding2.id,
-            project_key="TEST",
+            attempt_state=JiraIssue.AttemptStateChoices.CREATING,
+            claim_token="fixture-task-id",
+            claim_expires_at=datetime.now(UTC) + timedelta(minutes=15),
+            delivery_attempt_token=uuid4(),
+            attempt_operation=JiraIssue.AttemptOperationChoices.INITIAL,
+            attempt_project_key="TEST",
+            attempt_issue_type="Task",
         )
     return linked, hidden_provider_issue, reservation
 
