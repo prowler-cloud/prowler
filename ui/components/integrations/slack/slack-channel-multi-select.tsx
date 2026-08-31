@@ -2,6 +2,7 @@
 
 import { Lock, RefreshCw } from "lucide-react";
 
+import { SlackInlineCode } from "@/components/integrations/slack/slack-inline-code";
 import {
   Alert,
   AlertDescription,
@@ -19,8 +20,13 @@ import {
 } from "@/components/shadcn/select/multiselect";
 import type { SlackChannelOption } from "@/types/integrations";
 
-const INVITE_HINT =
-  "A private channel only appears here after someone invites @Prowler to it in Slack. Invite it, then refresh.";
+const INVITE_HINT = (
+  <>
+    A private channel only appears here after someone invites{" "}
+    <SlackInlineCode>@Prowler</SlackInlineCode> to it in Slack. Invite it, then
+    refresh.
+  </>
+);
 
 interface SlackChannelMultiSelectProps {
   options: SlackChannelOption[];
@@ -104,9 +110,8 @@ export const SlackChannelMultiSelect = ({
           <AlertTitle>No channels available yet</AlertTitle>
           <AlertDescription>
             Prowler cannot see a single channel in this workspace. Create a
-            public channel, or invite @Prowler to a private one in Slack with
-            <span className="font-medium"> /invite @Prowler</span>, then
-            refresh.
+            public channel, or invite @Prowler to a private one in Slack with{" "}
+            <SlackInlineCode>/invite @Prowler</SlackInlineCode>, then refresh.
           </AlertDescription>
         </Alert>
       ) : (

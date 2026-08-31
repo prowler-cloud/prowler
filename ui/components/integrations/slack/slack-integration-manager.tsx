@@ -2,7 +2,7 @@
 
 import { format, isValid, parseISO } from "date-fns";
 import { TestTube, Unplug } from "lucide-react";
-import { useEffect, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 
 import { testIntegrationConnection } from "@/actions/integrations/integrations";
 import {
@@ -14,6 +14,7 @@ import {
 import { SlackIcon } from "@/components/icons/services/IconServices";
 import { IntegrationCardHeader } from "@/components/integrations/shared";
 import { SlackChannelMultiSelect } from "@/components/integrations/slack/slack-channel-multi-select";
+import { SlackInlineCode } from "@/components/integrations/slack/slack-inline-code";
 import {
   Alert,
   AlertDescription,
@@ -129,10 +130,39 @@ const recordedFromSelection = (
     ];
   });
 
+const CHANNEL_LIST_FORMAT = new Intl.ListFormat("en", {
+  style: "long",
+  type: "conjunction",
+});
+
+const channelTokens = (names: string[]): string[] =>
+  names.map((name) => `#${name}`);
+
+/** For the copy that travels as plain text: toasts, the deauthorize warning. */
 const channelList = (names: string[]): string =>
-  new Intl.ListFormat("en", { style: "long", type: "conjunction" }).format(
-    names.map((name) => `#${name}`),
-  );
+  CHANNEL_LIST_FORMAT.format(channelTokens(names));
+
+interface StyledChannelListProps {
+  names: string[];
+}
+
+/**
+ * The same list as `channelList()`, each channel set apart. `formatToParts`
+ * emits exactly the literals `format` joins, so the rendered text is unchanged
+ * (design D3) — the copy is read as text content, here and by the tests.
+ */
+const StyledChannelList = ({ names }: StyledChannelListProps) => (
+  <>
+    {CHANNEL_LIST_FORMAT.formatToParts(channelTokens(names)).map(
+      (part, index) =>
+        part.type === "element" ? (
+          <SlackInlineCode key={index}>{part.value}</SlackInlineCode>
+        ) : (
+          part.value
+        ),
+    )}
+  </>
+);
 
 /**
  * Slack's own reason, when the string is one: the connection check reports a
@@ -317,15 +347,22 @@ export const SlackIntegrationManager = ({
     (channel) => !selectedChannelIds.includes(channel.id),
   );
 
-  const checkHint = (): string => {
+  const checkHint = (): ReactNode => {
     if (authorizedChannels.length === 0) {
       return "Authorize at least one destination channel below to enable this check.";
     }
-    return unconfirmedChannels.length > 0
-      ? `Checks every authorized channel and posts “${CONFIRMATION_MESSAGE}” once to ${channelList(
-          unconfirmedChannels.map((channel) => channel.name),
-        )}.`
-      : "Checks every authorized channel. Each was confirmed once already, so nothing is posted.";
+    return unconfirmedChannels.length > 0 ? (
+      <>
+        Checks every authorized channel and posts “{CONFIRMATION_MESSAGE}” once
+        to{" "}
+        <StyledChannelList
+          names={unconfirmedChannels.map((channel) => channel.name)}
+        />
+        .
+      </>
+    ) : (
+      "Checks every authorized channel. Each was confirmed once already, so nothing is posted."
+    );
   };
 
   const handleSaveChannels = async () => {
@@ -714,11 +751,19 @@ export const SlackIntegrationManager = ({
                   className="text-text-neutral-secondary text-xs"
                   data-authorized-channels
                 >
-                  {authorizedChannels.length > 0
-                    ? `Prowler posts to ${channelList(
-                        authorizedChannels.map((channel) => channel.name),
-                      )}.`
-                    : "No destination channels authorized yet."}
+                  {authorizedChannels.length > 0 ? (
+                    <>
+                      Prowler posts to{" "}
+                      <StyledChannelList
+                        names={authorizedChannels.map(
+                          (channel) => channel.name,
+                        )}
+                      />
+                      .
+                    </>
+                  ) : (
+                    "No destination channels authorized yet."
+                  )}
                 </p>
                 <Button
                   size="sm"
