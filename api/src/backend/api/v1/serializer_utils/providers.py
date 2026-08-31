@@ -78,6 +78,69 @@ from rest_framework_json_api import serializers
             },
             {
                 "type": "object",
+                "title": "AWS Assume Role Chain",
+                "description": "AWS credentials with an ordered chain of role assumptions. "
+                "Use when multiple sequential sts:AssumeRole hops are needed "
+                "to reach the target account (e.g. hub-spoke models).",
+                "properties": {
+                    "aws_access_key_id": {
+                        "type": "string",
+                        "description": "The AWS access key ID for the initial credentials.",
+                    },
+                    "aws_secret_access_key": {
+                        "type": "string",
+                        "description": "The AWS secret access key for the initial credentials.",
+                    },
+                    "aws_session_token": {
+                        "type": "string",
+                        "description": "The session token for temporary initial credentials, if applicable.",
+                    },
+                    "role_chain": {
+                        "type": "array",
+                        "description": "Ordered list of IAM roles to assume sequentially. "
+                        "Each hop's output credentials become the input for the next hop.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "role_arn": {
+                                    "type": "string",
+                                    "description": "The ARN of the role to assume at this step.",
+                                },
+                                "external_id": {
+                                    "type": "string",
+                                    "description": "External ID for this assumption step.",
+                                },
+                                "role_session_name": {
+                                    "type": "string",
+                                    "description": "Session name for this step.",
+                                    "pattern": "^[a-zA-Z0-9=,.@_-]+$",
+                                },
+                                "session_duration": {
+                                    "type": "integer",
+                                    "minimum": 900,
+                                    "maximum": 43200,
+                                    "default": 3600,
+                                    "description": "Session duration in seconds for this step.",
+                                },
+                                "sts_region": {
+                                    "type": "string",
+                                    "description": "AWS region for the STS endpoint of this step.",
+                                },
+                            },
+                            "required": ["role_arn"],
+                        },
+                        "minItems": 1,
+                        "maxItems": 10,
+                    },
+                },
+                "required": [
+                    "aws_access_key_id",
+                    "aws_secret_access_key",
+                    "role_chain",
+                ],
+            },
+            {
+                "type": "object",
                 "title": "Azure Static Credentials",
                 "properties": {
                     "client_id": {

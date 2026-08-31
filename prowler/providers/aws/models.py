@@ -1,12 +1,16 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
+from typing import Optional
 
 from boto3.session import Session
 from botocore.config import Config
 
 from prowler.config.config import output_file_timestamp
-from prowler.providers.aws.config import AWS_STS_GLOBAL_ENDPOINT_REGION
+from prowler.providers.aws.config import (
+    AWS_STS_GLOBAL_ENDPOINT_REGION,
+    ROLE_SESSION_NAME,
+)
 from prowler.providers.aws.lib.arn.models import ARN
 from prowler.providers.common.models import ProviderOutputOptions
 
@@ -48,6 +52,22 @@ class AWSAssumeRoleConfiguration:
 
 
 @dataclass
+class AWSRoleChainStep:
+    """A single hop in an ordered role assumption chain.
+
+    Each step defines the parameters for one ``sts:AssumeRole`` call.  Steps
+    are executed sequentially — the credentials produced by step *N* become the
+    input session for step *N+1*.
+    """
+
+    role_arn: ARN
+    external_id: Optional[str] = None
+    session_duration: int = 3600
+    role_session_name: str = ROLE_SESSION_NAME
+    sts_region: str = AWS_STS_GLOBAL_ENDPOINT_REGION
+
+
+@dataclass
 class AWSIdentityInfo:
     account: str
     account_arn: str
@@ -69,6 +89,7 @@ class AWSSession:
     current_session: Session
     original_session: Session
     session_config: Config
+    role_chain: list = field(default_factory=list)
 
 
 @dataclass

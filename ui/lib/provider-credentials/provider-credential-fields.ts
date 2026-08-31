@@ -23,6 +23,8 @@ export const ProviderCredentialFields = {
   EXTERNAL_ID: "external_id",
   SESSION_DURATION: "session_duration",
   ROLE_SESSION_NAME: "role_session_name",
+  ROLE_CHAIN: "role_chain",
+  ROLE_CHAIN_JSON: "role_chain_json",
 
   // Azure/M365 fields
   CLIENT_ID: "client_id",

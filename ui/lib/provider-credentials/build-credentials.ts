@@ -10,7 +10,7 @@ import { ProviderCredentialFields } from "./provider-credential-fields";
 // Helper functions for each provider type
 export const buildAWSSecret = (formData: FormData, isRole: boolean) => {
   if (isRole) {
-    const secret = {
+    const secret: Record<string, any> = {
       [ProviderCredentialFields.ROLE_ARN]: getFormValue(
         formData,
         ProviderCredentialFields.ROLE_ARN,
@@ -44,6 +44,42 @@ export const buildAWSSecret = (formData: FormData, isRole: boolean) => {
         ProviderCredentialFields.ROLE_SESSION_NAME,
       ),
     };
+
+    // Parse role_chain from the hidden JSON field
+    const chainJson = getFormValue(
+      formData,
+      ProviderCredentialFields.ROLE_CHAIN_JSON,
+    ) as string | null;
+    if (chainJson && chainJson.trim().length > 0) {
+      try {
+        const parsed = JSON.parse(chainJson);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // Build the chain from the parsed steps
+          const chain = parsed.map((step: any) => {
+            const chainStep: Record<string, any> = {
+              role_arn: step.role_arn,
+            };
+            if (step.external_id) chainStep.external_id = step.external_id;
+            if (step.role_session_name)
+              chainStep.role_session_name = step.role_session_name;
+            if (step.session_duration)
+              chainStep.session_duration = parseInt(step.session_duration, 10) || 3600;
+            if (step.sts_region) chainStep.sts_region = step.sts_region;
+            return chainStep;
+          });
+          secret[ProviderCredentialFields.ROLE_CHAIN] = chain;
+          // When a chain is provided, the top-level role_arn is not needed
+          // (the chain defines all hops). Remove it to avoid API confusion.
+          delete secret[ProviderCredentialFields.ROLE_ARN];
+          delete secret[ProviderCredentialFields.EXTERNAL_ID];
+          delete secret.session_duration;
+          delete secret[ProviderCredentialFields.ROLE_SESSION_NAME];
+        }
+      } catch {
+        // Invalid JSON; skip chain and let the API validate
+      }
+    }
+
     return filterEmptyValues(secret);
   }
 

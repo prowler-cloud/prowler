@@ -217,6 +217,15 @@ export type AWSCredentialsRole = {
   [ProviderCredentialFields.ROLE_SESSION_NAME]?: string;
   [ProviderCredentialFields.SESSION_DURATION]?: number;
   [ProviderCredentialFields.CREDENTIALS_TYPE]?: AWSCredentialsType;
+  [ProviderCredentialFields.ROLE_CHAIN]?: AWSRoleChainStep[];
+};
+
+export type AWSRoleChainStep = {
+  role_arn: string;
+  external_id?: string;
+  role_session_name?: string;
+  session_duration?: number;
+  sts_region?: string;
 };
 
 export type AzureCredentials = {

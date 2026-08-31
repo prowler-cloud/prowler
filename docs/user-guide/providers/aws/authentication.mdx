@@ -28,6 +28,8 @@ For certain checks, additional read-only permissions are required. Attach the fo
 
 This method grants permanent access and is the recommended setup for production environments.
 
+For environments that require multiple sequential role hops to reach the target account (hub-spoke models), Prowler supports ordered role assumption chains. See [Ordered Role Assumption Chain](/user-guide/providers/aws/role-assumption#ordered-role-assumption-chain) for details.
+
 <Tabs>
   <Tab title="CloudFormation">
     1. Download the [Prowler Scan Role Template](https://raw.githubusercontent.com/prowler-cloud/prowler/refs/heads/master/permissions/templates/cloudformation/prowler-scan-role.yml)

@@ -46,4 +46,6 @@ export const PROVIDER_CREDENTIALS_ERROR_MAPPING: Record<string, string> = {
     ProviderCredentialFields.GOOGLEWORKSPACE_CREDENTIALS_CONTENT,
   [ErrorPointers.GOOGLEWORKSPACE_DELEGATED_USER]:
     ProviderCredentialFields.GOOGLEWORKSPACE_DELEGATED_USER,
+  "/data/attributes/secret/role_chain":
+    ProviderCredentialFields.ROLE_CHAIN_JSON,
 };

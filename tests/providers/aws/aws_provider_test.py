@@ -25,6 +25,7 @@ from prowler.providers.aws.config import (
 )
 from prowler.providers.aws.exceptions.exceptions import (
     AWSArgumentTypeValidationError,
+    AWSAssumeRoleChainError,
     AWSIAMRoleARNInvalidResourceTypeError,
     AWSInvalidPartitionError,
     AWSInvalidProviderIdError,
@@ -38,6 +39,7 @@ from prowler.providers.aws.models import (
     AWSCredentials,
     AWSMFAInfo,
     AWSOrganizationsInfo,
+    AWSRoleChainStep,
 )
 from prowler.providers.common.models import Connection
 from prowler.providers.common.provider import Provider
@@ -2358,3 +2360,151 @@ aws:
 
         assert len(session_token) == 356
         assert search(r"^FQoGZXIvYXdzE.*$", session_token)
+
+    @mock_aws
+    def test_assume_role_chain_two_hops(self):
+        """A two-step chain should land in the final role's account."""
+        role_name_hop1 = "chain-hop-1"
+        role_name_hop2 = "chain-hop-2"
+        hop1_arn = create_role(AWS_REGION_US_EAST_1, role_name=role_name_hop1)
+        hop2_arn = create_role(AWS_REGION_US_EAST_1, role_name=role_name_hop2)
+
+        chain = [
+            {"role_arn": hop1_arn, "session_duration": 900},
+            {"role_arn": hop2_arn, "session_duration": 900},
+        ]
+
+        aws_provider = AwsProvider(role_chain=chain)
+
+        # Provider identity should reflect the last hop
+        assert aws_provider.identity.account == AWS_ACCOUNT_NUMBER
+        assert aws_provider.identity.partition == AWS_COMMERCIAL_PARTITION
+
+        # Backwards-compatible attribute should reference the last hop
+        assert aws_provider._assumed_role_configuration.info.role_arn == ARN(hop2_arn)
+
+        # Chain should be stored on the session for refresh
+        assert len(aws_provider._session.role_chain) == 2
+        assert aws_provider._session.role_chain[0].role_arn == ARN(hop1_arn)
+        assert aws_provider._session.role_chain[1].role_arn == ARN(hop2_arn)
+
+        # Credentials should be valid
+        creds = aws_provider._assumed_role_configuration.credentials
+        assert isinstance(creds, AWSCredentials)
+        assert creds.aws_access_key_id
+        assert creds.aws_secret_access_key
+        assert creds.aws_session_token
+        assert creds.expiration
+
+    @mock_aws
+    def test_assume_role_chain_single_hop(self):
+        """A single-element chain should behave like role_arn."""
+        role_name = "chain-single"
+        role_arn = create_role(AWS_REGION_US_EAST_1, role_name=role_name)
+
+        chain = [{"role_arn": role_arn, "session_duration": 900}]
+        aws_provider = AwsProvider(role_chain=chain)
+
+        assert aws_provider.identity.account == AWS_ACCOUNT_NUMBER
+        assert aws_provider._assumed_role_configuration.info.role_arn == ARN(role_arn)
+        assert len(aws_provider._session.role_chain) == 1
+
+    @mock_aws
+    def test_role_chain_and_role_arn_mutually_exclusive(self):
+        """Passing both role_arn and role_chain should raise."""
+        role_arn = create_role(AWS_REGION_US_EAST_1)
+
+        with raises(AWSArgumentTypeValidationError):
+            AwsProvider(
+                role_arn=role_arn,
+                role_chain=[{"role_arn": role_arn}],
+            )
+
+    @mock_aws
+    def test_role_chain_exceeds_max_steps(self):
+        """More than MAX_ROLE_CHAIN_STEPS steps should raise."""
+        role_arn = create_role(AWS_REGION_US_EAST_1)
+        chain = [{"role_arn": role_arn} for _ in range(11)]
+
+        with raises(AWSArgumentTypeValidationError):
+            AwsProvider(role_chain=chain)
+
+    @mock_aws
+    def test_role_chain_missing_role_arn_in_step(self):
+        """A step without role_arn should raise."""
+        with raises(AWSArgumentTypeValidationError):
+            AwsProvider(role_chain=[{"external_id": "some-id"}])
+
+    @mock_aws
+    def test_assume_role_chain_method_two_hops(self):
+        """assume_role_chain() should return the final session and credentials."""
+        from boto3 import session as boto3_session
+
+        role_name_hop1 = "method-hop-1"
+        role_name_hop2 = "method-hop-2"
+        hop1_arn = create_role(AWS_REGION_US_EAST_1, role_name=role_name_hop1)
+        hop2_arn = create_role(AWS_REGION_US_EAST_1, role_name=role_name_hop2)
+
+        base_session = boto3_session.Session(region_name=AWS_REGION_US_EAST_1)
+        steps = [
+            AWSRoleChainStep(
+                role_arn=ARN(hop1_arn),
+                session_duration=900,
+            ),
+            AWSRoleChainStep(
+                role_arn=ARN(hop2_arn),
+                session_duration=900,
+            ),
+        ]
+
+        final_session, final_creds = AwsProvider.assume_role_chain(base_session, steps)
+
+        assert final_session is not None
+        assert isinstance(final_creds, AWSCredentials)
+        assert final_creds.aws_access_key_id
+        assert final_creds.aws_session_token
+        assert final_creds.expiration
+
+    @mock_aws
+    def test_refresh_credentials_with_chain(self):
+        """refresh_credentials should re-walk the chain when role_chain is set."""
+        role_name = "refresh-chain"
+        role_arn = create_role(AWS_REGION_US_EAST_1, role_name=role_name)
+
+        chain = [{"role_arn": role_arn, "session_duration": 900}]
+        aws_provider = AwsProvider(role_chain=chain)
+
+        # Expire the credentials
+        aws_provider._assumed_role_configuration.credentials.expiration = datetime.now(
+            get_localzone()
+        ) - timedelta(hours=1)
+
+        refreshed = AwsProvider.refresh_credentials(
+            aws_provider._assumed_role_configuration,
+            aws_provider._session,
+        )
+
+        assert "access_key" in refreshed
+        assert "secret_key" in refreshed
+        assert "token" in refreshed
+        assert "expiry_time" in refreshed
+        assert refreshed["access_key"] != ""
+        assert refreshed["secret_key"] != ""
+        assert refreshed["token"] != ""
+
+    @mock_aws
+    def test_backward_compat_role_arn_still_works(self):
+        """Existing role_arn kwarg should still work as before."""
+        role_name = "compat-role"
+        role_arn = create_role(AWS_REGION_US_EAST_1, role_name=role_name)
+
+        aws_provider = AwsProvider(role_arn=role_arn, session_duration=900)
+
+        assert aws_provider.identity.account == AWS_ACCOUNT_NUMBER
+        assert aws_provider._assumed_role_configuration.info.role_arn == ARN(role_arn)
+        # role_chain should be empty list (default), not None
+        assert aws_provider._session.role_chain == []
+
+        creds = aws_provider._assumed_role_configuration.credentials
+        assert isinstance(creds, AWSCredentials)
+        assert creds.aws_access_key_id
