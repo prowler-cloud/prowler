@@ -467,7 +467,7 @@ class Test_iam_policy_no_agentcore_workload_access_token_wildcard:
             "arn:aws:bedrock-agentcore:eu-central-1:*",
             "arn:aws-cn:bedrock-agentcore:*",
             f"arn:aws:bedrock-agentcore:us-east-1:{AWS_ACCOUNT_ID}*",
-            "arn:aws:bedrock-agentcore:us-east-1:178113193057*",
+            "arn:aws:bedrock-agentcore:us-east-1:555555555555*",
         ],
     )
     def test_a_truncated_arn_reaches_workload_identities_in_any_region_or_account(

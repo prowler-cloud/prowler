@@ -107,10 +107,10 @@ def _grants_agentcore_action(document: dict) -> bool:
     "*" is again excluded, so an administrator policy is not pulled in on that basis.
 
     The service field is matched as an IAM pattern, as it is everywhere else these checks read
-    one. It matters most here: `bedrock-*:CreateAgentRuntime` is a plausible thing to write,
-    since one prefix covers bedrock and bedrock-agentcore together, and a literal comparison
-    read it as no AgentCore reach -- which left an unpinned PassRole grant beside it out of
-    scope entirely, so the policy PASSed.
+    one. It matters most here: ``bedrock-*:CreateAgentRuntime`` is a plausible thing to write, since
+    one prefix covers bedrock and bedrock-agentcore together. A literal comparison would read it as
+    no AgentCore reach, which takes an unpinned PassRole grant beside it out of scope entirely and
+    clears the policy.
     """
     for statement in _statements(document):
         if statement.get("Effect") != "Allow":
@@ -129,20 +129,20 @@ def _grants_agentcore_action(document: dict) -> bool:
 def _passed_to_service_values(statement: dict) -> list:
     """Collect the services a statement's iam:PassedToService condition names.
 
-    Read through the allow-list above rather than by rejecting operator names. The deny-list this
-    replaced skipped every *IfExists spelling, and because _targets_agentcore treats "no values" as
-    "reaches every service" and then consults the whole document, skipping the condition inverted
-    the verdict in both directions on a one-word change:
+    Read through the allow-list above rather than by rejecting operator names. An operator this code
+    does not recognise must never be silently skipped, because ``_targets_agentcore`` treats "no
+    values" as "reaches every service" and then consults the whole document. So a skipped condition
+    inverts the verdict in BOTH directions, on nothing more than a one-word change of operator:
 
-    - ``StringEqualsIfExists`` naming AgentCore, on ``Resource: "*"``, produced no values, so a
-      policy carrying no other AgentCore action fell out of scope and PASSed -- a PassRole grant on
-      every role in the account, cleared by a high-severity privilege-escalation check.
-    - ``StringEqualsIfExists`` naming another service produced no values too, so the document-wide
-      fallback pulled the statement back in beside any AgentCore action and it FAILed, when a
+    - ``StringEqualsIfExists`` naming AgentCore, on ``Resource: "*"``, yields no values, so a policy
+      carrying no other AgentCore action falls out of scope entirely -- a PassRole grant on every
+      role in the account, cleared by a high-severity privilege-escalation check.
+    - ``StringEqualsIfExists`` naming another service yields no values too, so the document-wide
+      fallback pulls the statement back in beside any AgentCore action and reports it, when a
       statement pinned to sagemaker is out of scope by the same rule spelled ``StringEquals``.
 
-    A negated operator is still not read: it names the services the statement will NOT pass to, and
-    the set it does reach is everything else, which is what "no values" already means here.
+    A negated operator is deliberately not read: it names the services the statement will NOT pass
+    to, and the set it does reach is everything else, which is what "no values" already means here.
     """
     values = []
     condition = statement.get("Condition", {})
@@ -170,10 +170,10 @@ def _null_guarded_keys(condition: dict) -> set:
     A JSON ``false`` counts as well as the string ``"false"``, because on THIS check's surface IAM
     stores and returns both. Measured on a customer-managed policy, which is exactly this check's
     population: ``create_policy`` with ``{"Null": {"iam:PassedToService": false}}`` is accepted and
-    ``get_policy_version`` returns a Python ``bool``, unconverted. Reading only the string made the
-    guard invisible, so a pin AWS's own simulator holds to one service -- absent key
-    ``implicitDeny``, AgentCore ``implicitDeny`` -- was reported as passing every role to AgentCore.
-    That is the AWS-prescribed hardening, and the check FAILed it.
+    ``get_policy_version`` returns a Python ``bool``, unconverted. Reading only the string leaves the
+    guard invisible, and the consequence is a false report on AWS's own prescribed hardening: a pin
+    AWS's simulator holds to one service -- absent key ``implicitDeny``, AgentCore ``implicitDeny``
+    -- would be reported as passing every role to AgentCore.
 
     The trust sibling stays string-only ON PURPOSE, because a trust policy normalizes its scalars
     and no bool can reach it: the divergence is measured, not drift.
@@ -202,12 +202,12 @@ def _null_guarded_keys(condition: dict) -> set:
     ``0``, ``""``, ``None`` and ``[]`` as guards, since ``isinstance(False, int)`` is True in Python
     and falsiness is not the question being asked.
 
-    ACCESS ANALYZER DOES NOT CORROBORATE THIS BOUNDARY, and an earlier version of this docstring
-    claimed it did. Measured: it reports TYPE_MISMATCH_BOOLEAN for ``"FALSE"`` and for ``" false "``,
-    both of which this helper CREDITS, as well as for ``0``, which it does not. So its type-checking is
-    stricter than this helper's casing tolerance in both directions, and the boundary drawn here is
-    this check's own decision rather than an external one. Over-recognising is the dangerous direction,
-    because crediting a guard turns a FAIL into a PASS.
+    ACCESS ANALYZER DOES NOT CORROBORATE THIS BOUNDARY, so do not cite it as support. Measured: it
+    reports TYPE_MISMATCH_BOOLEAN for ``"FALSE"`` and for ``" false "``, both of which this helper
+    CREDITS, as well as for ``0``, which it does not. Its type-checking is therefore stricter than
+    this helper's casing tolerance in one direction and looser in the other, and the boundary drawn
+    here is this check's own decision rather than an external one. Over-recognising is the dangerous
+    direction, because crediting a guard turns a FAIL into a PASS.
     """
     guarded = set()
     for operator, block in condition.items():
@@ -237,11 +237,10 @@ def _passed_to_service_pin_is_defeasible(statement: dict) -> bool:
     and cannot be treated as confined to it.
 
     UNLESS the same statement carries ``Null: "false"`` on the same key, which forces the key to be
-    present and removes the skip. That rescue was applied to the trust check's collector in this PR
-    and never here, so a statement written the way AWS prescribes -- "You should always include the
-    Null condition operator ... with a false value" -- was read as unconfined and the policy FAILed.
-    It penalised the hardened spelling: adding the guard to a pinned statement changed nothing, and
-    a caller cannot omit a key the guard requires.
+    present and removes the skip. Reading that guard is what stops the check penalising the spelling
+    AWS prescribes -- "You should always include the Null condition operator ... with a false value".
+    Without it the hardened form scores worse than the plain one, which is backwards: a caller cannot
+    omit a key the guard requires, so the guard can only narrow the grant.
 
     Conditions are ANDed, so one non-defeasible operator naming the key holds the request to that
     key's values whatever else the statement carries; the pin is defeasible only if all of them are.
@@ -284,10 +283,10 @@ def _names_agentcore(values: list) -> bool:
       runtime-identity.*                         covers runtime-identity     read as another service
       *.bedrock-agentcore.*                      covers 2                    read as another service
 
-    Each was treated as pinning iam:PassedToService to something other than AgentCore, so the
-    statement left scope and the policy PASSed -- while both the narrower literal and the
-    no-condition case FAIL. Broadening the grant flipped the verdict the safe way round, which is
-    the shape that never self-corrects.
+    Read that way each would pin iam:PassedToService to something other than AgentCore, taking the
+    statement out of scope -- while both the narrower literal and the no-condition case are reported.
+    Broadening the grant would flip the verdict the safe way round, which is the shape that never
+    self-corrects.
 
     So the value is now matched as a pattern against several concrete principals, not one, and a
     literal outside that list is still caught by the family regex. ``?`` covers nothing here on
@@ -313,10 +312,9 @@ def _targets_agentcore(statement: dict, document: dict) -> bool:
     Three cases, in the order they are decided:
 
     1. A condition NAMES AgentCore. The statement is in scope on its own terms, under any operator
-       that compares the key -- including *IfExists, which used to be dropped before the value was
-       ever read. That drop is what let a PassRole grant on every role in the account PASS: with no
-       values the statement looked unpinned, so scope fell to a document that allowed no AgentCore
-       action, and the check cleared it.
+       that compares the key, *IfExists included. Dropping a spelling before its value is read is
+       what would clear a PassRole grant on every role in the account: with no values the statement
+       looks unpinned, so scope falls to a document that allows no AgentCore action.
     2. A condition pins the key elsewhere and cannot be skipped. The statement cannot reach
        AgentCore however the rest of the policy is shaped, so it is out of scope -- this is what
        keeps a grant pinned to sagemaker.amazonaws.com out of the check.
@@ -356,11 +354,12 @@ def _names_every_role(resource: str) -> bool:
     64 characters, which is a set no operator writes by hand.
 
     A pattern with fewer than six fields is decided structurally, and NOT by probing concrete ARNs.
-    Probing pinned the partition and account, so the six-field branch ignored both while the short
-    branch did not: ``arn:aws:iam::555555555555*`` was read as specific while the identical shape in
-    the probe's own account FAILed, and ``arn:aws-us-gov:iam::*`` and ``arn:aws-cn:iam::*`` were
-    read as specific because no probe carried those partitions. No probe corpus fixes an account
-    PREFIX -- there is nothing to enumerate. So: a star in the LAST spelled-out field spans every
+    A probe corpus pins the partition and account it happens to carry, which makes both load-bearing
+    in the short branch while the six-field branch ignores them: ``arn:aws:iam::555555555555*`` reads
+    as specific while the identical shape in the probe's own account is reported, and
+    ``arn:aws-us-gov:iam::*`` and ``arn:aws-cn:iam::*`` read as specific merely because no probe
+    carries those partitions. No probe corpus can fix an account PREFIX -- there is nothing to
+    enumerate. So: a star in the LAST spelled-out field spans every
     field after it, because IAM wildcards match the colon, and what remains is that the fields
     actually spelled out must be able to name a role ARN.
 

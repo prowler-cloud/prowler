@@ -20,12 +20,12 @@ WORKLOAD_IDENTITY_SEGMENT = "workload-identity-directory"
 # types collapsing to 23 distinct leading segments, of which workload-identity-directory is the only
 # one hosting the two in-scope types.
 #
-# SEGMENTS, NOT NAMES, and that distinction is the whole point. This replaced four concrete probe
-# resources -- token-vault/default, gateway/my-gateway, runtime/my-runtime and one workload identity
-# called another-workload -- whose example NAMES were load-bearing. A resource field keyed on any
-# other name matched none of them, so the check concluded it was confined to the workload-identity
-# namespace and PASSed: "...:*prod-*" reaches runtime/prod-chatbot, gateway/prod-chatbot-gw,
-# memory/prod-chatbot-mem and two distinct workload identities, and was reported as reaching none of
+# SEGMENTS, NOT NAMES, and that distinction is the whole point. Probing concrete resources -- say
+# token-vault/default, gateway/my-gateway, runtime/my-runtime and a workload identity called
+# another-workload -- makes their example NAMES load-bearing. A resource field keyed on any other name
+# then matches none of them, and the check concludes it is confined to the workload-identity
+# namespace: "...:*prod-*" reaches runtime/prod-chatbot, gateway/prod-chatbot-gw,
+# memory/prod-chatbot-mem and two distinct workload identities, while reading as reaching none of
 # them. Names cannot be enumerated -- the AgentCore devguide's own examples are prod-chatbot,
 # dev-chatbot and customer-support-agent, and its own example policy wildcards on the name -- so no
 # probe corpus can be completed. Resource TYPES can be enumerated, and are, above.
@@ -206,12 +206,13 @@ def _reaches_other_workload_identities(resource: str) -> bool:
     A pattern with fewer than six fields reaches a workload identity when a star in its LAST
     spelled-out field can span the fields it never spells out, because IAM wildcards match the
     colon. That question is answered structurally rather than by probing a concrete ARN, and
-    deliberately so: matching against one ``us-east-1``/``123456789012`` ARN made the region,
-    account and partition load-bearing, so ``arn:aws:bedrock-agentcore:us-west-2:*`` was read as
-    reaching nothing while the byte-identical ``us-east-1`` spelling FAILed. No finite probe corpus
-    fixes that -- ``arn:aws:bedrock-agentcore:us-east-1:178113193057*`` is an account PREFIX and
-    there is nothing to enumerate. What the fields it does spell out must still do is name an ARN
-    at all: ``arn:aws:s3:*`` is short and starred but names another service.
+    deliberately so: matching against one ``us-east-1``/``123456789012`` ARN makes the region,
+    account and partition load-bearing, so ``arn:aws:bedrock-agentcore:us-west-2:*`` reads as
+    reaching nothing while the byte-identical ``us-east-1`` spelling is reported. No finite probe
+    corpus fixes that -- an account PREFIX such as
+    ``arn:aws:bedrock-agentcore:us-east-1:111122223333*`` has nothing to enumerate. What the fields
+    it does spell out must still do is name an ARN at all: ``arn:aws:s3:*`` is short and starred but
+    names another service.
 
     ``arn:aws:bedrock-agentcore`` and ``arn:aws:bedrock-agentcore:us-east-1`` carry no star, so they
     match no ARN and reach nothing. The star is what separates them from the cases above, not the
@@ -224,12 +225,12 @@ def _reaches_other_workload_identities(resource: str) -> bool:
     produce a false verdict. That premise does not hold:
 
     ``arn:aws:bedrock-agentcore:us-east-1:123456789012:*prod-*`` is not confined to the namespace, yet
-    it matched none of the four probes, so the namespace test intercepted it anyway and the check
-    PASSed a statement reaching ``runtime/prod-chatbot``, ``gateway/prod-chatbot-gw``,
+    it matches none of a four-resource probe corpus, so the namespace test intercepts it anyway and
+    clears a statement reaching ``runtime/prod-chatbot``, ``gateway/prod-chatbot-gw``,
     ``memory/prod-chatbot-mem``, a token vault, a custom browser, and two distinct workload
-    identities. Driven, the pair that shows it has no defensible boundary: resource field ``*``
-    FAILed while ``*prod-*`` PASSed, and nothing stated anywhere in this file separated them. The only
-    rule that did was "matches one of four example NAMES", which is an implementation artifact.
+    identities. The pair that shows such a corpus has no defensible boundary: resource field ``*`` is
+    reported while ``*prod-*`` is not, and no rule stated anywhere separates them except "matches one
+    of four example NAMES", which is an artifact of the corpus rather than a property of IAM.
 
     So the lesson is the one the short-ARN branches already record, one level down: a probe corpus can
     only decide a question whose answer space it enumerates. Regions, accounts and partitions could
