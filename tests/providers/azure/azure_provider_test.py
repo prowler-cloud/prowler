@@ -3242,6 +3242,23 @@ class TestValidateCertificateBundleMultiKey:
             validate_certificate_bundle(cert_pem + encrypted_key_pem)
 
 
+class TestValidateCertificateBundleSizeCap:
+    """Legitimate PEM/PFX bundles are well under 10 KiB. A multi-MB payload
+    would waste memory on base64 decoding + PKCS#12/PEM parsing before the
+    validator rejects it, so the size check runs before any parsing."""
+
+    def test_rejects_bundle_larger_than_the_cap(self):
+        from prowler.providers.azure.lib.certificate import (
+            _MAX_CERTIFICATE_BUNDLE_BYTES,
+            validate_certificate_bundle,
+        )
+
+        oversized = b"\x00" * (_MAX_CERTIFICATE_BUNDLE_BYTES + 1)
+
+        with pytest.raises(ValueError, match="maximum bundle size"):
+            validate_certificate_bundle(oversized)
+
+
 def serialization_no_encryption():
     # Kept out of the test method so the PKCS#12 test reads cleanly. Wraps
     # the deliberate "no password" export path.

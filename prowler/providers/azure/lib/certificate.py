@@ -7,6 +7,11 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.serialization import pkcs12
 
+# Reject bundles larger than this before parsing: legitimate PEM and PFX
+# bundles are under ~10 KiB, and a multi-MB payload would waste memory on
+# the doubling that base64 decoding plus PKCS#12/PEM parsing perform.
+_MAX_CERTIFICATE_BUNDLE_BYTES = 50 * 1024
+
 _CERTIFICATE_BLOCK_RE = re.compile(
     rb"-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----",
     re.DOTALL,
@@ -27,9 +32,10 @@ def validate_certificate_bundle(certificate_data: bytes) -> bytes:
 
     Accepts either a PKCS#12/PFX blob (encrypted or unencrypted with a null
     password) or a concatenated PEM bundle. Raises ``ValueError`` when the
-    payload is missing a certificate, missing a private key, or contains a
-    pair whose public keys do not match. Raises ``TypeError`` for
-    password-protected PEM private keys, which cryptography surfaces from
+    payload exceeds the maximum bundle size, is missing a certificate,
+    missing a private key, or contains a pair whose public keys do not
+    match. Raises ``TypeError`` for password-protected PEM private keys,
+    which cryptography surfaces from
     ``load_pem_private_key(..., password=None)``.
 
     The normalized bytes always place the leaf certificate before the private
@@ -38,6 +44,11 @@ def validate_certificate_bundle(certificate_data: bytes) -> bytes:
     picks an intermediate CA over the matching leaf. PKCS#12 blobs are
     returned as-is.
     """
+    if len(certificate_data) > _MAX_CERTIFICATE_BUNDLE_BYTES:
+        raise ValueError(
+            f"the payload exceeds the maximum bundle size of "
+            f"{_MAX_CERTIFICATE_BUNDLE_BYTES} bytes"
+        )
     try:
         private_key, certificate, additional_certs = pkcs12.load_key_and_certificates(
             certificate_data, None, default_backend()
