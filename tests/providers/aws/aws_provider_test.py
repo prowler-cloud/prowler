@@ -2378,6 +2378,75 @@ aws:
             assumed_role_info = mock_assume_role.call_args.args[1]
             assert assumed_role_info.sts_region == AWS_REGION_GOV_CLOUD_US_EAST_1
 
+    def test_get_aws_region_for_sts_env_partition_commercial(self):
+        with mock.patch.dict(
+            os.environ,
+            {"PROWLER_AWS_PARTITION": AWS_COMMERCIAL_PARTITION},
+            clear=False,
+        ):
+            assert get_aws_region_for_sts(None, None) == AWS_REGION_US_EAST_1
+
+    def test_get_aws_region_for_sts_env_partition_excluded_region_stays_in_partition(
+        self,
+    ):
+        with mock.patch.dict(
+            os.environ,
+            {"PROWLER_AWS_PARTITION": AWS_GOV_CLOUD_PARTITION},
+            clear=False,
+        ):
+            assert (
+                get_aws_region_for_sts(None, None, {AWS_REGION_GOV_CLOUD_US_EAST_1})
+                == "us-gov-west-1"
+            )
+
+    def test_get_aws_region_for_sts_env_partition_all_regions_excluded_stays_in_partition(
+        self,
+    ):
+        with mock.patch.dict(
+            os.environ,
+            {"PROWLER_AWS_PARTITION": AWS_GOV_CLOUD_PARTITION},
+            clear=False,
+        ):
+            assert (
+                get_aws_region_for_sts(
+                    None, None, {AWS_REGION_GOV_CLOUD_US_EAST_1, "us-gov-west-1"}
+                )
+                == AWS_REGION_GOV_CLOUD_US_EAST_1
+            )
+
+    @mock_aws
+    def test_setup_session_mfa_uses_env_partition_sts_region(self):
+        with (
+            mock.patch.dict(
+                os.environ,
+                {"PROWLER_AWS_PARTITION": AWS_GOV_CLOUD_PARTITION},
+                clear=False,
+            ),
+            mock.patch.object(
+                AwsProvider,
+                "input_role_mfa_token_and_code",
+                return_value=AWSMFAInfo(
+                    arn=f"arn:{AWS_GOV_CLOUD_PARTITION}:iam::{AWS_ACCOUNT_NUMBER}:mfa/test",
+                    totp="123456",
+                ),
+            ),
+            mock.patch.object(
+                AwsProvider,
+                "create_sts_session",
+                side_effect=AwsProvider.create_sts_session,
+            ) as mock_create_sts_session,
+        ):
+            AwsProvider.setup_session(
+                mfa=True,
+                aws_access_key_id="test-access-key",
+                aws_secret_access_key="test-secret-key",
+            )
+
+            assert (
+                mock_create_sts_session.call_args.args[1]
+                == AWS_REGION_GOV_CLOUD_US_EAST_1
+            )
+
     @mock_aws
     def test_test_connection_env_partition_mismatch(self):
         with (
