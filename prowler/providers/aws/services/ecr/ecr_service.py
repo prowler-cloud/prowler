@@ -62,6 +62,12 @@ class ECR(AWSService):
                                 immutability=repository.get(
                                     "imageTagMutability", "MUTABLE"
                                 ),
+                                encryption_type=repository.get(
+                                    "encryptionConfiguration", {}
+                                ).get("encryptionType", "AES256"),
+                                kms_key=repository.get(
+                                    "encryptionConfiguration", {}
+                                ).get("kmsKey"),
                                 policy=None,
                                 images_details=[],
                                 lifecycle_policy=None,
@@ -311,10 +317,10 @@ class ECR(AWSService):
                 ).get("scanType", "BASIC")
                 self.registries[regional_client.region].rules = rules
         except ClientError as error:
-            if error.response["Error"][
-                "Code"
-            ] == "ValidationException" and "GetRegistryScanningConfiguration operation: This feature is disabled" in str(
-                error
+            if (
+                error.response["Error"]["Code"] == "ValidationException"
+                and "GetRegistryScanningConfiguration operation: This feature is disabled"
+                in str(error)
             ):
                 self.registries[regional_client.region].scan_type = "BASIC"
                 self.registries[regional_client.region].rules = []
@@ -545,6 +551,8 @@ class Repository(BaseModel):
     registry_id = str
     scan_on_push: bool
     immutability: Optional[str]
+    encryption_type: str = "AES256"
+    kms_key: Optional[str] = None
     policy: Optional[dict]
     images_details: Optional[list[ImageDetails]]
     lifecycle_policy: Optional[str]
