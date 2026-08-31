@@ -80,11 +80,13 @@ class security_2sv_hardware_keys_admins(Check):
                 issues.append(
                     (
                         "security.two_step_verification_enforcement_factor",
-                        "the accepted method is not configured and defaults to "
-                        "any method, including SMS and phone call"
-                        if factor_set is None
-                        else f"the accepted method is {factor_set} "
-                        f"(should be {SECURITY_KEYS_ONLY})",
+                        (
+                            "the accepted method is not configured and defaults to "
+                            "any method, including SMS and phone call"
+                            if factor_set is None
+                            else f"the accepted method is {factor_set} "
+                            f"(should be {SECURITY_KEYS_ONLY})"
+                        ),
                     )
                 )
 

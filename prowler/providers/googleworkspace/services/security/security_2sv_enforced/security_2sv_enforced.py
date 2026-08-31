@@ -121,9 +121,11 @@ class security_2sv_enforced(Check):
                 issues.append(
                     (
                         "security.two_step_verification_device_trust",
-                        "users are allowed to trust their device"
-                        if policies.two_sv_allow_trusting_device
-                        else "device trust is not configured and defaults to allowed",
+                        (
+                            "users are allowed to trust their device"
+                            if policies.two_sv_allow_trusting_device
+                            else "device trust is not configured and defaults to allowed"
+                        ),
                     )
                 )
 
@@ -132,12 +134,14 @@ class security_2sv_enforced(Check):
                 issues.append(
                     (
                         "security.two_step_verification_enforcement_factor",
-                        "the allowed methods are not configured and default to "
-                        "any method, including verification codes via text and "
-                        "phone call"
-                        if factor_set is None
-                        else f"the allowed methods are {factor_set}, which does "
-                        f"not exclude verification codes via text and phone call",
+                        (
+                            "the allowed methods are not configured and default to "
+                            "any method, including verification codes via text and "
+                            "phone call"
+                            if factor_set is None
+                            else f"the allowed methods are {factor_set}, which does "
+                            f"not exclude verification codes via text and phone call"
+                        ),
                     )
                 )
 
@@ -161,8 +165,7 @@ class security_2sv_enforced(Check):
                 report.status = "FAIL"
                 report.status_extended = (
                     f"2-Step Verification is not enforced as required in domain "
-                    f"{domain}: {reasons}."
-                    + (f" Note: {caveat}." if caveat else "")
+                    f"{domain}: {reasons}." + (f" Note: {caveat}." if caveat else "")
                 )
             elif caveat:
                 report.status = "MANUAL"
