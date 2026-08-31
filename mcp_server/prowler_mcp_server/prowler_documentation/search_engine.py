@@ -2,6 +2,7 @@ import httpx
 from pydantic import BaseModel, Field
 
 from prowler_mcp_server import __version__
+from prowler_mcp_server.lib.errors import parse_json_response
 
 
 class SearchResult(BaseModel):
@@ -72,6 +73,8 @@ class ProwlerDocsSearchEngine:
         Raises:
             httpx.HTTPError: If the search request failed, which is not the same
                 answer as no matches
+            UpstreamInvalidResponse: If the answer is not JSON, which is the
+                documentation site's fault and not the search term's
         """
         # Make request to Mintlify API
         response = self.mintlify_client.post(
@@ -79,7 +82,10 @@ class ProwlerDocsSearchEngine:
             json={"query": query, "filters": {}},
         )
         response.raise_for_status()
-        data = response.json()
+        # Not `response.json()`: the decode error it raises is a ValueError, which
+        # the shared classifier reads as a malformed argument and answers by
+        # telling the caller to fix a search term that was never the problem.
+        data = parse_json_response(response)
 
         # Parse results
         results = []

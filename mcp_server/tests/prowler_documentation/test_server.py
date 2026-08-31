@@ -153,3 +153,22 @@ async def test_a_fetch_that_failed_is_not_reported_as_a_missing_page(
 
     assert result.isError is True
     assert "no page at" not in result.content[0].text
+
+
+async def test_an_unreadable_body_is_not_reported_as_a_bad_search_term(
+    mcp_root_server, docs_router
+):
+    """An edge serving HTML is the site's fault; the caller has no term to fix."""
+    docs_router.add("POST", SEARCH, status=200, text="<html>edge error page</html>")
+
+    async with Client(mcp_root_server) as client:
+        result = await client.call_tool_mcp("prowler_docs_search", {"term": "install"})
+
+    assert result.isError is True
+    message = result.content[0].text
+    # Named as the upstream at fault, and explicitly not the caller's arguments,
+    # which is the story the shared ValueError branch would otherwise tell.
+    assert "leaves.mintlify.com" in message
+    assert "changing them will not help" in message
+    # The body it choked on is upstream text, which this server never relays.
+    assert "edge error page" not in message
