@@ -65,6 +65,7 @@ export function FindingDetailDrawer({
         currentResource={drawer.currentResource}
         currentFinding={drawer.currentFinding}
         otherFindings={drawer.otherFindings}
+        jiraIssue={drawer.jiraIssue}
         onNavigatePrev={drawer.navigatePrev}
         onNavigateNext={drawer.navigateNext}
         onMuteComplete={handleMuteComplete}
@@ -91,6 +92,7 @@ export function FindingDetailDrawer({
         currentResource={drawer.currentResource}
         currentFinding={drawer.currentFinding}
         otherFindings={drawer.otherFindings}
+        jiraIssue={drawer.jiraIssue}
         onNavigatePrev={drawer.navigatePrev}
         onNavigateNext={drawer.navigateNext}
         onMuteComplete={handleMuteComplete}
