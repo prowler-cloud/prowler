@@ -164,7 +164,7 @@ export const getUserByMe = async (
           ? "Invalid or expired token"
           : response.status === 404
             ? "User not found"
-            : parsedResponse.errors?.[0]?.detail || "Unknown error";
+            : parsedResponse?.errors?.[0]?.detail || "Unknown error";
       throw new UserMeError(errorMessage, response.status);
     }
 

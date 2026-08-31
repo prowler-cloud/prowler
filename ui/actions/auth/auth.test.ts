@@ -207,4 +207,18 @@ describe("auth actions", () => {
       status: 401,
     });
   });
+
+  it("should preserve a 403 status when the error body is not JSON", async () => {
+    // Given
+    fetchMock.mockResolvedValue(new Response("Forbidden", { status: 403 }));
+
+    // When
+    const result = getUserByMe("access-token");
+
+    // Then
+    await expect(result).rejects.toMatchObject({
+      message: "Unknown error",
+      status: 403,
+    });
+  });
 });
