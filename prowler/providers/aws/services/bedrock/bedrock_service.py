@@ -10,6 +10,7 @@ from prowler.providers.aws.lib.service.service import AWSService
 
 class Bedrock(AWSService):
     def __init__(self, provider):
+        """Initialize Bedrock service."""
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.logging_configurations = {}
@@ -272,6 +273,7 @@ class BedrockAgent(AWSService):
         self.__threading_call__(self._get_data_source, self.data_sources.values())
 
     def _list_agents(self, regional_client):
+        """List Bedrock Agents in a region."""
         logger.info("Bedrock Agent - Listing Agents...")
         try:
             paginator = regional_client.get_paginator("list_agents")
