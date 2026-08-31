@@ -17,10 +17,25 @@ class githubactions_workflow_security_scan(Check):
         if not githubactions_client.scan_enabled:
             return findings
 
+        scan_errors = getattr(githubactions_client, "scan_errors", {})
+        if not isinstance(scan_errors, dict):
+            scan_errors = {}
+
         for repo_id, repo in repository_client.repositories.items():
             repo_findings = githubactions_client.findings.get(repo_id, [])
 
-            if not repo_findings:
+            if repo_id in scan_errors:
+                report = CheckReportGithub(
+                    metadata=self.metadata(),
+                    resource=repo,
+                )
+                report.status = "MANUAL"
+                report.status_extended = (
+                    f"GitHub Actions workflow security scan for repository {repo.name} "
+                    f"could not be completed: {scan_errors[repo_id]}"
+                )
+                findings.append(report)
+            elif not repo_findings:
                 report = CheckReportGithub(
                     metadata=self.metadata(),
                     resource=repo,

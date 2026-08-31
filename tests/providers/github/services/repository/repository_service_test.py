@@ -162,6 +162,44 @@ class Test_Repository_GraphQL:
                 mock_graphql_call.assert_called_once()
                 mock_client.get_repo.assert_called_once_with("owner1/repo1")
 
+    def test_graphql_discovery_paginates_all_accessible_repositories(self):
+        provider = set_mocked_github_provider()
+        repository_service = Repository.__new__(Repository)
+        repository_service.provider = provider
+
+        first_response = MagicMock()
+        first_response.json.return_value = {
+            "data": {
+                "viewer": {
+                    "repositories": {
+                        "nodes": [{"nameWithOwner": "owner/repo-1"}],
+                        "pageInfo": {"hasNextPage": True, "endCursor": "cursor-1"},
+                    }
+                }
+            }
+        }
+        second_response = MagicMock()
+        second_response.json.return_value = {
+            "data": {
+                "viewer": {
+                    "repositories": {
+                        "nodes": [{"nameWithOwner": "owner/repo-2"}],
+                        "pageInfo": {"hasNextPage": False, "endCursor": None},
+                    }
+                }
+            }
+        }
+
+        with patch("requests.post", side_effect=[first_response, second_response]) as post:
+            repositories = repository_service._get_accessible_repos_graphql()
+
+        assert repositories == ["owner/repo-1", "owner/repo-2"]
+        assert post.call_count == 2
+        assert post.call_args_list[0].kwargs["json"]["variables"] == {"after": None}
+        assert post.call_args_list[1].kwargs["json"]["variables"] == {
+            "after": "cursor-1"
+        }
+
     def test_graphql_call_api_error(self):
         """Test that an error during the GraphQL call is handled gracefully"""
         provider = set_mocked_github_provider()

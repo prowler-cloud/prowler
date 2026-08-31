@@ -65,11 +65,19 @@ class Repository(GithubService):
             "Content-Type": "application/json",
         }
         query = """
-        {
+        query($after: String) {
           viewer {
-            repositories(first: 100, affiliations: [OWNER, ORGANIZATION_MEMBER]) {
+            repositories(
+              first: 100,
+              after: $after,
+              affiliations: [OWNER, ORGANIZATION_MEMBER]
+            ) {
               nodes {
                 nameWithOwner
+              }
+              pageInfo {
+                hasNextPage
+                endCursor
               }
             }
           }
@@ -77,23 +85,40 @@ class Repository(GithubService):
         """
 
         try:
-            response = requests.post(
-                graphql_url, json={"query": query}, headers=headers
-            )
-            response.raise_for_status()
-            data = response.json()
+            repositories = []
+            cursor = None
 
-            if "errors" in data:
-                logger.error(f"Error in GraphQL query: {data['errors']}")
-                return []
+            while True:
+                response = requests.post(
+                    graphql_url,
+                    json={"query": query, "variables": {"after": cursor}},
+                    headers=headers,
+                )
+                response.raise_for_status()
+                data = response.json()
 
-            repo_nodes = (
-                data.get("data", {})
-                .get("viewer", {})
-                .get("repositories", {})
-                .get("nodes", [])
-            )
-            return [repo["nameWithOwner"] for repo in repo_nodes]
+                if "errors" in data:
+                    logger.error(f"Error in GraphQL query: {data['errors']}")
+                    return []
+
+                repository_data = (
+                    data.get("data", {}).get("viewer", {}).get("repositories", {})
+                )
+                repositories.extend(
+                    repo["nameWithOwner"]
+                    for repo in repository_data.get("nodes", [])
+                )
+
+                page_info = repository_data.get("pageInfo", {})
+                if not page_info.get("hasNextPage"):
+                    return repositories
+
+                cursor = page_info.get("endCursor")
+                if not cursor:
+                    logger.error(
+                        "GraphQL repository discovery returned a next page without a cursor."
+                    )
+                    return repositories
 
         except requests.exceptions.RequestException as error:
             logger.error(
