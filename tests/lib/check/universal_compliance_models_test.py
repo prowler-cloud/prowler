@@ -908,13 +908,34 @@ class TestCyberEssentialsFramework:
         )
         return os.path.normpath(base)
 
-    def test_loads_and_supports_azure(self):
+    def test_loads_and_supports_providers(self):
         fw = load_compliance_framework_universal(self._path())
         assert fw is not None
         assert fw.framework == "Cyber-Essentials"
         assert fw.version == "3.3"
-        assert fw.get_providers() == ["azure"]
+        assert "azure" in fw.get_providers()
+        assert "alibabacloud" in fw.get_providers()
         assert fw.supports_provider("azure")
+        assert fw.supports_provider("alibabacloud")
+
+    def test_alibabacloud_check_ids_exist(self):
+        # Nothing validates check IDs at load time, so a typo silently
+        # produces a requirement that never matches any finding.
+        fw = load_compliance_framework_universal(self._path())
+        services_dir = os.path.normpath(
+            os.path.join(
+                os.path.dirname(self._path()), "..", "providers", "alibabacloud", "services"
+            )
+        )
+        real = {
+            f.replace(".metadata.json", "")
+            for _, _, files in os.walk(services_dir)
+            for f in files
+            if f.endswith(".metadata.json")
+        }
+        refs = {c for req in fw.requirements for c in req.checks.get("alibabacloud", [])}
+        assert refs, "expected alibabacloud mappings"
+        assert refs <= real, f"unknown alibabacloud check IDs: {sorted(refs - real)}"
 
     def test_covers_all_five_themes(self):
         fw = load_compliance_framework_universal(self._path())
