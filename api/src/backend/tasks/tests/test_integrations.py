@@ -11,6 +11,7 @@ from prowler.lib.outputs.jira.exceptions.exceptions import (
     JiraRefreshTokenError,
     JiraRequiredCustomFieldsError,
 )
+from prowler.lib.outputs.jira.jira import Jira
 from prowler.providers.aws.lib.security_hub.security_hub import SecurityHubConnection
 from prowler.providers.common.models import Connection
 from tasks.jobs.integrations import (
@@ -19,8 +20,6 @@ from tasks.jobs.integrations import (
     get_s3_client_from_integration,
     get_security_hub_client_from_integration,
     get_tenant_name,
-    sanitize_jira_label,
-    sanitize_jira_labels,
     send_findings_to_jira,
     upload_s3_integration,
     upload_security_hub_integration,
@@ -2241,29 +2240,6 @@ class TestJiraIntegration:
 class TestJiraFindingReference:
     """Helpers that give Jira issues a stable reference back to the finding."""
 
-    def test_sanitize_jira_label(self):
-        assert sanitize_jira_label("") == ""
-        assert sanitize_jira_label(None) == ""
-        assert sanitize_jira_label("   ") == ""
-        assert sanitize_jira_label("simple") == "simple"
-        assert sanitize_jira_label("with space") == "with_space"
-        assert sanitize_jira_label(" many   spaces \t tabs\nnewline ") == (
-            "many_spaces_tabs_newline"
-        )
-        assert sanitize_jira_label("ctrl\x00char\x07here") == "ctrlcharhere"
-        assert sanitize_jira_label("arn:aws:iam::123456789012:role/Admin") == (
-            "arn:aws:iam::123456789012:role/Admin"
-        )
-        assert sanitize_jira_label("x" * 300) == "x" * 255
-        # Deterministic and idempotent
-        once = sanitize_jira_label("a b\tc")
-        assert sanitize_jira_label(once) == once
-
-    def test_sanitize_jira_labels(self):
-        assert sanitize_jira_labels([]) == []
-        assert sanitize_jira_labels(None) == []
-        assert sanitize_jira_labels(["b", "a b", "b", "", "a_b"]) == ["b", "a_b"]
-
     def test_build_jira_issue_labels(self):
         assert build_jira_issue_labels(
             finding_uid="prowler-aws-check-123-eu-west-1-hub/unknown",
@@ -2283,12 +2259,55 @@ class TestJiraFindingReference:
             finding_uid="", provider="", severity="", check_id=""
         ) == ["prowler"]
 
-    def test_build_jira_issue_labels_truncates_long_uid(self):
-        labels = build_jira_issue_labels(
-            finding_uid="u" * 300, provider="gcp", severity="low", check_id="c"
-        )
-        assert labels[-1] == ("prowler-finding-" + "u" * 300)[:255]
-        assert all(len(label) <= 255 for label in labels)
+    def test_build_jira_issue_labels_sanitizes_metadata(self):
+        assert build_jira_issue_labels(
+            finding_uid=" uid\x00 with spaces ",
+            provider="aws cloud",
+            severity="high severity",
+            check_id="check id",
+        ) == [
+            "prowler",
+            "prowler-aws_cloud",
+            "prowler-high_severity",
+            "prowler-check_id",
+            "prowler-finding-uid_with_spaces",
+        ]
+
+    def test_build_jira_issue_labels_preserves_maximum_length_uid(self):
+        finding_uid = "u" * (Jira.LABEL_MAX_LENGTH - len(Jira.FINDING_LABEL_PREFIX) - 1)
+        finding_label = build_jira_issue_labels(
+            finding_uid=finding_uid,
+            provider="gcp",
+            severity="low",
+            check_id="check",
+        )[-1]
+
+        assert finding_label == f"{Jira.FINDING_LABEL_PREFIX}-{finding_uid}"
+        assert len(finding_label) == Jira.LABEL_MAX_LENGTH
+
+    def test_build_jira_issue_labels_distinguishes_long_uids(self):
+        common_prefix = "u" * 300
+        first_uid = f"{common_prefix}-first"
+        second_uid = f"{common_prefix}-second"
+
+        first_label = build_jira_issue_labels(
+            finding_uid=first_uid,
+            provider="gcp",
+            severity="low",
+            check_id="check",
+        )[-1]
+        second_label = build_jira_issue_labels(
+            finding_uid=second_uid,
+            provider="gcp",
+            severity="low",
+            check_id="check",
+        )[-1]
+
+        assert first_label == Jira.build_finding_label(first_uid)
+        assert second_label == Jira.build_finding_label(second_uid)
+        assert first_label != second_label
+        assert len(first_label) == Jira.LABEL_MAX_LENGTH
+        assert len(second_label) == Jira.LABEL_MAX_LENGTH
 
     @override_settings(UI_BASE_URL="")
     def test_build_jira_finding_url_without_base_url(self):

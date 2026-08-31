@@ -19,6 +19,7 @@ from prowler.lib.outputs.csv.csv import CSV
 from prowler.lib.outputs.finding import Finding as FindingOutput
 from prowler.lib.outputs.html.html import HTML
 from prowler.lib.outputs.jira.exceptions.exceptions import JiraBaseException
+from prowler.lib.outputs.jira.jira import Jira
 from prowler.lib.outputs.ocsf.ocsf import OCSF
 from prowler.providers.aws.aws_provider import AwsProvider
 from prowler.providers.aws.lib.s3.s3 import S3
@@ -481,32 +482,6 @@ def upload_security_hub_integration(
 
 
 JIRA_LABEL_PREFIX = "prowler"
-JIRA_LABEL_MAX_LENGTH = 255
-
-
-def sanitize_jira_label(label: str) -> str:
-    """Make a value safe to use as a Jira label.
-
-    Jira rejects labels containing whitespace or longer than 255 characters. The
-    transformation is deterministic so the same finding always yields the same
-    label: whitespace runs become a single underscore, control characters are
-    dropped and the result is truncated. Mirrors ``Jira.sanitize_label`` in the
-    SDK; kept local so the API does not depend on an unreleased SDK symbol.
-    """
-    if not label:
-        return ""
-    cleaned = "".join(ch for ch in str(label) if ch.isprintable() or ch.isspace())
-    return "_".join(cleaned.split())[:JIRA_LABEL_MAX_LENGTH]
-
-
-def sanitize_jira_labels(labels: list[str]) -> list[str]:
-    """Sanitize a list of labels, dropping empties and duplicates (order kept)."""
-    result: list[str] = []
-    for label in labels or []:
-        sanitized = sanitize_jira_label(label)
-        if sanitized and sanitized not in result:
-            result.append(sanitized)
-    return result
 
 
 def build_jira_finding_url(finding_uid: str) -> str:
@@ -535,9 +510,9 @@ def build_jira_issue_labels(
         f"{JIRA_LABEL_PREFIX}-{provider}" if provider else "",
         f"{JIRA_LABEL_PREFIX}-{severity}" if severity else "",
         f"{JIRA_LABEL_PREFIX}-{check_id}" if check_id else "",
-        f"{JIRA_LABEL_PREFIX}-finding-{finding_uid}" if finding_uid else "",
+        Jira.build_finding_label(finding_uid),
     ]
-    return sanitize_jira_labels(raw_labels)
+    return Jira.sanitize_labels(raw_labels)
 
 
 def get_tenant_name(tenant_id: str) -> str:
