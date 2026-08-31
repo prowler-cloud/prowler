@@ -126,8 +126,6 @@ export function RegistryExplorer({ initialState }: RegistryExplorerProps) {
   );
 
   async function handleAdd(artifact: RegistryMarketplaceArtifact) {
-    if (artifact.isBuiltin) return;
-
     const { normalizedName } = artifact;
     const generation = operationGeneration.current;
     setOperationMessage(undefined);

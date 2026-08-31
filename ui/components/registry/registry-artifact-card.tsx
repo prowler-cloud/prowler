@@ -241,17 +241,15 @@ export function RegistryArtifactCard({
                 </Button>
               </>
             ) : (
-              !artifact.isBuiltin && (
-                <Button
-                  aria-label={`Add ${displayName}`}
-                  disabled={isAddPending}
-                  onClick={onAdd}
-                  size="sm"
-                  type="button"
-                >
-                  {isAddPending ? "Adding…" : "Add"}
-                </Button>
-              )
+              <Button
+                aria-label={`Add ${displayName}`}
+                disabled={isAddPending}
+                onClick={onAdd}
+                size="sm"
+                type="button"
+              >
+                {isAddPending ? "Adding…" : "Add"}
+              </Button>
             )}
           </span>
         </div>

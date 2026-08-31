@@ -41,7 +41,7 @@ export function buildRegistryMarketplaceModel(catalog: RegistryCatalogResult, my
   return { isComplete: true, canExplore: true, artifacts,
     providers: Array.from(new Set(catalog.artifacts.flatMap((artifact) => artifact.providers))).sort(compare),
     myArtifacts: myArtifacts.map(({ normalizedName, versionSpec }) => ({ normalizedName, versionSpec, catalogArtifact: merged.get(normalizedName) })).sort((left, right) => compare(left.normalizedName, right.normalizedName)),
-    metrics: { providers: new Set(catalog.artifacts.flatMap((artifact) => artifact.providers)).size, availableArtifacts: catalog.artifacts.filter(({ isBuiltin, normalizedName }) => !isBuiltin && !specs.has(normalizedName)).length, myArtifacts: myArtifacts.length, officialArtifacts: catalog.artifacts.filter((artifact) => artifact.isOfficial).length },
+    metrics: { providers: new Set(catalog.artifacts.flatMap((artifact) => artifact.providers)).size, availableArtifacts: catalog.artifacts.filter(({ normalizedName }) => !specs.has(normalizedName)).length, myArtifacts: myArtifacts.length, officialArtifacts: catalog.artifacts.filter((artifact) => artifact.isOfficial).length },
   };
 }
 

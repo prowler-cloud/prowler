@@ -132,21 +132,19 @@ export class RegistryPage extends BasePage {
     await expect(this.page.getByText("Community Fixtures")).toBeVisible();
   }
 
-  async verifyBuiltInArtifactIsNonInstallable(name: string): Promise<void> {
+  async verifyBuiltInArtifactIsAddable(name: string): Promise<void> {
     const card = this.artifactCardFor(name);
-    const builtInStatus = card.getByRole("status", { name: "Built in" });
 
-    await expect(builtInStatus).toBeVisible();
-    await expect(card.getByRole("button", { name: `Add ${name}` })).toHaveCount(
-      0,
-    );
-    await builtInStatus.click();
+    await expect(card.getByRole("status", { name: "Built in" })).toBeVisible();
+    await expect(
+      card.getByRole("button", { name: `Add ${name}` }),
+    ).toBeVisible();
   }
 
   async addLatest(name: string): Promise<void> {
     await this.addButtonFor(name).click();
     await expect(
-      this.page.getByText("Artifact added", { exact: true }),
+      this.artifactCardFor(name).getByText("Added", { exact: true }),
     ).toBeVisible();
   }
 

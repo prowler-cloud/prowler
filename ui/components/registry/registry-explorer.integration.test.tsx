@@ -8,7 +8,6 @@ import type { RegistryBootstrapState } from "@/types/registry";
 import { RegistryExplorer } from "./registry-explorer";
 
 const {
-  builtInOnAddCallbacks,
   disconnectRegistryCredentialMock,
   executeRegistryArtifactAdditionMock,
   refreshRegistryCollectionsMock,
@@ -17,7 +16,6 @@ const {
   submitRegistryCredentialMock,
   trackAndPollTaskMock,
 } = vi.hoisted(() => ({
-  builtInOnAddCallbacks: [] as Array<() => void>,
   disconnectRegistryCredentialMock: vi.fn(),
   executeRegistryArtifactAdditionMock: vi.fn(),
   refreshRegistryCollectionsMock: vi.fn(),
@@ -41,20 +39,6 @@ vi.mock("@/actions/registry/registry", () => ({
 vi.mock("@/lib/registry-artifact-execution", () => ({
   executeRegistryArtifactAddition: executeRegistryArtifactAdditionMock,
 }));
-
-vi.mock("./registry-artifact-card", async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import("./registry-artifact-card")>();
-  return {
-    ...actual,
-    RegistryArtifactCard: (
-      props: Parameters<typeof actual.RegistryArtifactCard>[0],
-    ) => {
-      if (props.artifact.isBuiltin) builtInOnAddCallbacks.push(props.onAdd);
-      return <actual.RegistryArtifactCard {...props} />;
-    },
-  };
-});
 
 vi.mock("@/store/task-watcher/store", () => ({
   TASK_WATCHER_STATUS: { PENDING: "pending", READY: "ready", ERROR: "error" },
@@ -192,7 +176,6 @@ function cardFor(name: string) {
 
 describe("RegistryExplorer", () => {
   beforeEach(() => {
-    builtInOnAddCallbacks.length = 0;
     disconnectRegistryCredentialMock.mockReset();
     executeRegistryArtifactAdditionMock.mockReset();
     refreshRegistryCollectionsMock.mockReset();
@@ -915,8 +898,14 @@ describe("RegistryExplorer", () => {
       ).toBeNull();
     });
 
-    it("shows built-ins as non-installable even when their add callback is forced", async () => {
+    it("adds non-member built-ins through the standard Add flow", async () => {
       // Given
+      executeRegistryArtifactAdditionMock.mockResolvedValue({
+        status: "confirmed",
+        tenantArtifacts: [
+          { normalizedName: "built-in-guard", versionSpec: "latest" },
+        ],
+      });
       const builtInState: RegistryBootstrapState = {
         ...readyState,
         catalog: {
@@ -935,26 +924,26 @@ describe("RegistryExplorer", () => {
       const screen = await render(
         <RegistryExplorer initialState={builtInState} />,
       );
+      const addButton = screen.getByRole("button", {
+        name: "Add Built in guard",
+      });
+
+      // When
+      await addButton.click();
 
       // Then
       await expect
+        .poll(() => executeRegistryArtifactAdditionMock.mock.calls)
+        .toEqual([[{ normalizedName: "built-in-guard" }]]);
+      await expect
+        .poll(() => document.body.textContent)
+        .toContain("Artifact added");
+      await expect
         .element(screen.getByRole("status", { name: "Built in" }))
         .toBeVisible();
-      expect(
-        screen.container.ownerDocument.querySelector(
-          '[aria-label="Add Built in guard"]',
-        ),
-      ).toBeNull();
-      const onAdd = builtInOnAddCallbacks.at(-1);
-      if (!onAdd) throw new Error("expected the built-in card callback");
-
-      // When
-      await onAdd();
-
-      // Then
-      expect(executeRegistryArtifactAdditionMock).not.toHaveBeenCalled();
-      expect(document.body.textContent).not.toContain("Adding…");
-      expect(document.body.textContent).not.toContain("Artifact added");
+      await expect
+        .element(screen.getByRole("button", { name: "Remove Built in guard" }))
+        .toBeVisible();
     });
 
     it("keeps an authoritative built-in membership removable", async () => {

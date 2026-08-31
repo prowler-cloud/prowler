@@ -128,23 +128,30 @@ test.describe.serial("Registry", () => {
       await registryPage.dismissWelcomeDialog();
       await registryPage.verifyCompleteCatalogSearchAndFilters();
       await registryPage.verifyOwnerRows();
-      const builtInSnapshotBefore = await controlledRegistryFixture.snapshot();
-      await registryPage.verifyBuiltInArtifactIsNonInstallable(
+      await registryPage.verifyBuiltInArtifactIsAddable(
         "Fixture built-in provider",
       );
+      const builtInSnapshotBefore = await controlledRegistryFixture.snapshot();
+      await registryPage.addLatest("Fixture built-in provider");
       const builtInSnapshotAfter = await controlledRegistryFixture.snapshot();
       expect(builtInSnapshotAfter.artifactSubmissionCount).toBe(
-        builtInSnapshotBefore.artifactSubmissionCount,
+        builtInSnapshotBefore.artifactSubmissionCount + 1,
       );
-      expect(builtInSnapshotAfter.artifactTaskReadCount).toBe(
-        builtInSnapshotBefore.artifactTaskReadCount,
-      );
-      expect(builtInSnapshotAfter.artifactReadCount).toBe(
+      expect(builtInSnapshotAfter.artifactTaskReadCount).toBe(2);
+      expect(builtInSnapshotAfter.artifactReadCount).toBeGreaterThan(
         builtInSnapshotBefore.artifactReadCount,
       );
-      expect(builtInSnapshotAfter.artifactEvents).toEqual(
-        builtInSnapshotBefore.artifactEvents,
-      );
+      expect(
+        builtInSnapshotAfter.artifactEvents.slice(
+          builtInSnapshotBefore.artifactEvents.length,
+        ),
+      ).toEqual(["submission", "task-poll", "task-poll", "authoritative-read"]);
+      await expect(
+        registryPage
+          .artifactCardFor("Fixture built-in provider")
+          .getByText("Added", { exact: true }),
+      ).toBeVisible();
+      await registryPage.removeArtifact("Fixture built-in provider");
       const artifactSnapshotBefore = await controlledRegistryFixture.snapshot();
       await registryPage.addLatest("Fixture network audit");
       const artifactSnapshotAfter = await controlledRegistryFixture.snapshot();

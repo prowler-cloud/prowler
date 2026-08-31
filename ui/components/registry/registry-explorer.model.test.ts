@@ -66,7 +66,7 @@ describe("Registry marketplace model", () => {
     );
   });
 
-  it("keeps non-member built-ins discoverable without counting them as available", () => {
+  it("counts non-member built-ins as available to add", () => {
     // Given
     const catalog = {
       status: "complete" as const,
@@ -96,7 +96,7 @@ describe("Registry marketplace model", () => {
         isBuiltin: true,
       }),
     ]);
-    expect(model.metrics.availableArtifacts).toBe(0);
+    expect(model.metrics.availableArtifacts).toBe(1);
     expect(model.myArtifacts).toEqual([]);
   });
 
