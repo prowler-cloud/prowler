@@ -41,6 +41,7 @@ import {
   buildRegistryMarketplaceModel,
   REGISTRY_MARKETPLACE_SORT,
   type RegistryExplorerFilters,
+  type RegistryMarketplaceArtifact,
   type RegistryMarketplaceSort,
 } from "./registry-explorer.model";
 import { RegistryRemoveDialog } from "./registry-remove-dialog";
@@ -124,7 +125,10 @@ export function RegistryExplorer({ initialState }: RegistryExplorerProps) {
     [],
   );
 
-  async function handleAdd(normalizedName: string) {
+  async function handleAdd(artifact: RegistryMarketplaceArtifact) {
+    if (artifact.isBuiltin) return;
+
+    const { normalizedName } = artifact;
     const generation = operationGeneration.current;
     setOperationMessage(undefined);
     setPendingAddName(normalizedName);
@@ -446,7 +450,7 @@ export function RegistryExplorer({ initialState }: RegistryExplorerProps) {
                 <RegistryArtifactCard
                   artifact={artifact}
                   isAddPending={pendingAddName === artifact.normalizedName}
-                  onAdd={() => handleAdd(artifact.normalizedName)}
+                  onAdd={() => handleAdd(artifact)}
                   onRemove={(trigger) =>
                     openRemoveDialog(artifact.normalizedName, trigger)
                   }
@@ -466,7 +470,7 @@ export function RegistryExplorer({ initialState }: RegistryExplorerProps) {
                   <RegistryArtifactCard
                     artifact={myArtifact.catalogArtifact}
                     isAddPending={pendingAddName === myArtifact.normalizedName}
-                    onAdd={() => handleAdd(myArtifact.normalizedName)}
+                    onAdd={() => handleAdd(myArtifact.catalogArtifact!)}
                     onRemove={(trigger) =>
                       openRemoveDialog(myArtifact.normalizedName, trigger)
                     }

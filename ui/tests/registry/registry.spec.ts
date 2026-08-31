@@ -128,6 +128,23 @@ test.describe.serial("Registry", () => {
       await registryPage.dismissWelcomeDialog();
       await registryPage.verifyCompleteCatalogSearchAndFilters();
       await registryPage.verifyOwnerRows();
+      const builtInSnapshotBefore = await controlledRegistryFixture.snapshot();
+      await registryPage.verifyBuiltInArtifactIsNonInstallable(
+        "Fixture built-in provider",
+      );
+      const builtInSnapshotAfter = await controlledRegistryFixture.snapshot();
+      expect(builtInSnapshotAfter.artifactSubmissionCount).toBe(
+        builtInSnapshotBefore.artifactSubmissionCount,
+      );
+      expect(builtInSnapshotAfter.artifactTaskReadCount).toBe(
+        builtInSnapshotBefore.artifactTaskReadCount,
+      );
+      expect(builtInSnapshotAfter.artifactReadCount).toBe(
+        builtInSnapshotBefore.artifactReadCount,
+      );
+      expect(builtInSnapshotAfter.artifactEvents).toEqual(
+        builtInSnapshotBefore.artifactEvents,
+      );
       const artifactSnapshotBefore = await controlledRegistryFixture.snapshot();
       await registryPage.addLatest("Fixture network audit");
       const artifactSnapshotAfter = await controlledRegistryFixture.snapshot();

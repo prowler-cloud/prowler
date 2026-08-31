@@ -30,6 +30,12 @@ export class RegistryPage extends BasePage {
     await super.goto("/registry");
   }
 
+  artifactCardFor(name: string): Locator {
+    return this.page
+      .getByRole("listitem")
+      .filter({ has: this.page.getByText(name, { exact: true }) });
+  }
+
   addButtonFor(name: string): Locator {
     return this.page.getByRole("button", { name: `Add ${name}` });
   }
@@ -124,6 +130,17 @@ export class RegistryPage extends BasePage {
     await expect(this.page.getByText("Prowler Fixtures")).toBeVisible();
     await expect(this.page.locator('img[src*="owner-logo.png"]')).toBeVisible();
     await expect(this.page.getByText("Community Fixtures")).toBeVisible();
+  }
+
+  async verifyBuiltInArtifactIsNonInstallable(name: string): Promise<void> {
+    const card = this.artifactCardFor(name);
+    const builtInStatus = card.getByRole("status", { name: "Built in" });
+
+    await expect(builtInStatus).toBeVisible();
+    await expect(card.getByRole("button", { name: `Add ${name}` })).toHaveCount(
+      0,
+    );
+    await builtInStatus.click();
   }
 
   async addLatest(name: string): Promise<void> {

@@ -5,7 +5,7 @@ import type { RegistryCatalogArtifact } from "@/types/registry";
 import { buildRegistryMarketplaceModel } from "./registry-explorer.model";
 
 // prettier-ignore
-const artifact = (normalizedName: string, overrides: Partial<RegistryCatalogArtifact> = {}): RegistryCatalogArtifact => ({ normalizedName, name: normalizedName, providers: [], isVerified: false, isOfficial: false, isMeta: false, hasProvider: false, hasChecks: false, hasCompliance: false, versionCount: 0, totalDownloads: 0, owners: [], ...overrides });
+const artifact = (normalizedName: string, overrides: Partial<RegistryCatalogArtifact> = {}): RegistryCatalogArtifact => ({ normalizedName, name: normalizedName, providers: [], isVerified: false, isOfficial: false, isBuiltin: false, isMeta: false, hasProvider: false, hasChecks: false, hasCompliance: false, versionCount: 0, totalDownloads: 0, owners: [], ...overrides });
 
 describe("Registry marketplace model", () => {
   it("keeps the full catalog visible with tenant membership merged in", () => {
@@ -64,6 +64,89 @@ describe("Registry marketplace model", () => {
     expect(model.artifacts.map(({ normalizedName }) => normalizedName)).toEqual(
       ["delta", "alpha", "beta"],
     );
+  });
+
+  it("keeps non-member built-ins discoverable without counting them as available", () => {
+    // Given
+    const catalog = {
+      status: "complete" as const,
+      artifacts: [
+        artifact("built-in-provider", {
+          isBuiltin: true,
+          providers: ["aws"],
+          hasProvider: true,
+        }),
+      ],
+    };
+
+    // When
+    const model = buildRegistryMarketplaceModel(
+      catalog,
+      [],
+      { search: "built", provider: "aws", capabilities: ["provider"] },
+      "name",
+    );
+
+    // Then
+    if (!model.isComplete) throw new Error("expected complete model");
+    expect(model.artifacts).toEqual([
+      expect.objectContaining({
+        normalizedName: "built-in-provider",
+        isAdded: false,
+        isBuiltin: true,
+      }),
+    ]);
+    expect(model.metrics.availableArtifacts).toBe(0);
+    expect(model.myArtifacts).toEqual([]);
+  });
+
+  it("preserves authoritative membership for a built-in artifact", () => {
+    // Given
+    const catalog = {
+      status: "complete" as const,
+      artifacts: [
+        artifact("built-in-member", {
+          isBuiltin: true,
+          isOfficial: true,
+          providers: ["aws"],
+        }),
+      ],
+    };
+
+    // When
+    const model = buildRegistryMarketplaceModel(
+      catalog,
+      [{ normalizedName: "built-in-member", versionSpec: "2.0.0" }],
+      {},
+      "name",
+    );
+
+    // Then
+    if (!model.isComplete) throw new Error("expected complete model");
+    expect(model.artifacts).toEqual([
+      expect.objectContaining({
+        normalizedName: "built-in-member",
+        isAdded: true,
+        isBuiltin: true,
+        addedVersionSpec: "2.0.0",
+      }),
+    ]);
+    expect(model.myArtifacts).toEqual([
+      expect.objectContaining({
+        normalizedName: "built-in-member",
+        versionSpec: "2.0.0",
+        catalogArtifact: expect.objectContaining({
+          isAdded: true,
+          isBuiltin: true,
+        }),
+      }),
+    ]);
+    expect(model.metrics).toEqual({
+      providers: 1,
+      availableArtifacts: 0,
+      myArtifacts: 1,
+      officialArtifacts: 1,
+    });
   });
 
   it("keeps incomplete catalogs out of complete-only controls and selectors", () => {

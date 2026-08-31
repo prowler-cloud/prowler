@@ -67,6 +67,14 @@ const catalogPages = [
       owner_type: "organization",
       providers: ["aws"],
     }),
+    catalogArtifact("fixture-built-in-provider", {
+      description: "Synthetic Registry fixture built-in provider",
+      has_provider: true,
+      is_builtin: true,
+      latest_version: "1.0.0",
+      name: "Fixture built-in provider",
+      providers: ["aws"],
+    }),
     catalogArtifact("fixture-shared-policy", {
       description: "Synthetic Registry fixture shared policy",
       has_compliance: true,
@@ -357,7 +365,7 @@ async function handleApiRequest(
     }
     sendJson(response, 200, {
       data,
-      meta: { pagination: { count: 3, page, pages: 2 } },
+      meta: { pagination: { count: 4, page, pages: 2 } },
     });
     return;
   }

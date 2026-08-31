@@ -219,6 +219,11 @@ export function RegistryArtifactCard({
           </span>
           <RegistryProviderCluster providers={artifact.providers} />
           <span className="ml-auto flex items-center gap-2">
+            {artifact.isBuiltin && (
+              <Badge aria-label="Built in" role="status" variant="tag">
+                Built in
+              </Badge>
+            )}
             {artifact.isAdded ? (
               <>
                 <Badge variant="outline">
@@ -236,15 +241,17 @@ export function RegistryArtifactCard({
                 </Button>
               </>
             ) : (
-              <Button
-                aria-label={`Add ${displayName}`}
-                disabled={isAddPending}
-                onClick={onAdd}
-                size="sm"
-                type="button"
-              >
-                {isAddPending ? "Adding…" : "Add"}
-              </Button>
+              !artifact.isBuiltin && (
+                <Button
+                  aria-label={`Add ${displayName}`}
+                  disabled={isAddPending}
+                  onClick={onAdd}
+                  size="sm"
+                  type="button"
+                >
+                  {isAddPending ? "Adding…" : "Add"}
+                </Button>
+              )
             )}
           </span>
         </div>
