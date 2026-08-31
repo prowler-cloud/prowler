@@ -276,3 +276,60 @@ async def test_a_check_source_url_confines_the_provider_and_the_check_alike(
         == github_check("..%2F..%2F..%2F..%2Fevil").encode()
     )
     assert result.isError is True
+
+
+async def test_a_hub_body_that_is_not_json_is_not_blamed_on_the_arguments(
+    mcp_root_server, hub_router
+):
+    """An edge answering 200 with an HTML page decodes to the same
+    `JSONDecodeError` a malformed argument does, and the two mean opposite
+    things: nothing in this call can be corrected."""
+    hub_router.add("GET", CHECKS, text="<html><body>502 Bad Gateway</body></html>")
+
+    async with Client(mcp_root_server) as client:
+        result = await client.call_tool_mcp("prowler_hub_list_checks", {})
+
+    assert result.isError is True
+    message = result.content[0].text
+    assert "hub.prowler.com" in message
+    assert "could not read as JSON" in message
+    assert "Bad Gateway" not in message
+    assert "Send it as a real object" not in message
+
+
+async def test_an_unreadable_hub_answer_does_not_become_an_unknown_check(
+    mcp_root_server, hub_router
+):
+    """The 404 branch is the only one that may claim the ID does not exist. A
+    body that could not be read says nothing about the ID."""
+    hub_router.add("GET", HUB_CHECK, text="<html>not json</html>")
+
+    async with Client(mcp_root_server) as client:
+        result = await client.call_tool_mcp(
+            "prowler_hub_get_check_details", {"check_id": CHECK_ID}
+        )
+
+    assert result.isError is True
+    message = result.content[0].text
+    assert "could not read as JSON" in message
+    assert "No check with the ID" not in message
+
+
+async def test_an_unreadable_hub_answer_leaves_a_missing_check_file_unexplained(
+    mcp_root_server, hub_router
+):
+    """The Hub is asked which provider owns the check. A body it could not read
+    is no more of an answer than an outage, so it hedges the same way."""
+    hub_router.add("GET", github_check("azure"), status=404)
+    hub_router.add("GET", HUB_CHECK, text="<html>not json</html>")
+
+    async with Client(mcp_root_server) as client:
+        result = await client.call_tool_mcp(
+            "prowler_hub_get_check_code",
+            {"provider_id": "azure", "check_id": CHECK_ID},
+        )
+
+    assert result.isError is True
+    message = result.content[0].text
+    assert "No check with the ID" not in message
+    assert "prowler_hub_get_check_details" in message

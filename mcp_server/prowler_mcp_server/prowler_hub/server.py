@@ -10,6 +10,10 @@ from fastmcp.exceptions import ToolError
 from pydantic import Field
 
 from prowler_mcp_server import __version__
+from prowler_mcp_server.lib.errors import (
+    UpstreamInvalidResponse,
+    parse_json_response,
+)
 from prowler_mcp_server.lib.types import NonBlankStr
 from prowler_mcp_server.lib.urls import url_path
 
@@ -58,17 +62,19 @@ github_raw_client = httpx.Client(
 )
 
 
-def _hub_get(*path: str, params: dict[str, str] | None = None) -> httpx.Response:
+def _get_hub_endpoint(
+    *path_segments: str, params: dict[str, str] | None = None
+) -> httpx.Response:
     """GET a Prowler Hub endpoint, named as one argument per path segment.
 
     Args:
-        *path: The endpoint path segments, in order.
+        *path_segments: The endpoint path segments, in order.
         params: Query parameters for the request.
 
     Returns:
         The response unread, so a caller can tell a 404 from a failed request.
     """
-    return prowler_hub_client.get(url_path(*path), params=params)
+    return prowler_hub_client.get(url_path(*path_segments), params=params)
 
 
 def github_check_path(provider_id: str, check_id: str, suffix: str) -> str:
@@ -97,13 +103,14 @@ def _hub_provider_for_check(check_id: str) -> str | None:
 
     Raises:
         httpx.HTTPError: The Hub could not be reached.
+        UpstreamInvalidResponse: The Hub answered with a body that is not JSON.
         ValueError: The Hub answered with something that names no provider.
     """
-    response = _hub_get("check", check_id)
+    response = _get_hub_endpoint("check", check_id)
     if response.status_code == 404:
         return None
     response.raise_for_status()
-    check = response.json()
+    check = parse_json_response(response)
 
     # An empty body is how the Hub reports an unknown ID on some routes, so it
     # is read the same way get_check_details reads it: no such check.
@@ -145,7 +152,7 @@ def _explain_missing_check_file(
     """
     try:
         hub_provider = _hub_provider_for_check(check_id)
-    except (httpx.HTTPError, ValueError):
+    except (httpx.HTTPError, UpstreamInvalidResponse, ValueError):
         return when_unverified
 
     if hub_provider is None:
@@ -226,9 +233,9 @@ async def list_checks(
     if compliances:
         params["compliances"] = ",".join(compliances)
 
-    response = _hub_get("check", params=params)
+    response = _get_hub_endpoint("check", params=params)
     response.raise_for_status()
-    checks = response.json()
+    checks = parse_json_response(response)
 
     # Return checks as a lightweight list
     checks_list = []
@@ -278,9 +285,9 @@ async def semantic_search_checks(
     2. Use `prowler_hub_list_checks` with filters for more targeted browsing
     3. Use `prowler_hub_get_check_details` to get complete information for a specific check
     """
-    response = _hub_get("check", "search", params={"term": term})
+    response = _get_hub_endpoint("check", "search", params={"term": term})
     response.raise_for_status()
-    checks = response.json()
+    checks = parse_json_response(response)
 
     # Return checks as a lightweight list
     checks_list = []
@@ -363,7 +370,7 @@ async def get_check_details(
     2. Use this tool with the check 'id' to get complete information including remediation guidance
     """
     try:
-        response = _hub_get("check", check_id)
+        response = _get_hub_endpoint("check", check_id)
         response.raise_for_status()
     except httpx.HTTPStatusError as e:
         if e.response.status_code == 404:
@@ -371,7 +378,7 @@ async def get_check_details(
             raise ToolError(_CHECK_NOT_FOUND.format(check_id=check_id))
         raise
 
-    check = response.json()
+    check = parse_json_response(response)
 
     if not check:
         raise ToolError(_CHECK_NOT_FOUND.format(check_id=check_id))
@@ -586,9 +593,9 @@ async def list_compliances(
     if provider:
         params["provider"] = ",".join(provider)
 
-    response = _hub_get("compliance", params=params)
+    response = _get_hub_endpoint("compliance", params=params)
     response.raise_for_status()
-    compliances = response.json()
+    compliances = parse_json_response(response)
 
     # Return compliances as a lightweight list
     compliances_list = []
@@ -630,9 +637,9 @@ async def semantic_search_compliances(
             ]
         }
     """
-    response = _hub_get("compliance", "search", params={"term": term})
+    response = _get_hub_endpoint("compliance", "search", params={"term": term})
     response.raise_for_status()
-    compliances = response.json()
+    compliances = parse_json_response(response)
 
     # Return compliances as a lightweight list
     compliances_list = []
@@ -679,14 +686,14 @@ async def get_compliance_details(
         }
     """
     try:
-        response = _hub_get("compliance", compliance_id)
+        response = _get_hub_endpoint("compliance", compliance_id)
         response.raise_for_status()
     except httpx.HTTPStatusError as e:
         if e.response.status_code == 404:
             raise ToolError(_COMPLIANCE_NOT_FOUND.format(compliance_id=compliance_id))
         raise
 
-    compliance = response.json()
+    compliance = parse_json_response(response)
 
     if not compliance:
         raise ToolError(_COMPLIANCE_NOT_FOUND.format(compliance_id=compliance_id))
@@ -761,9 +768,9 @@ async def list_providers() -> dict:
             ]
         }
     """
-    response = _hub_get("providers")
+    response = _get_hub_endpoint("providers")
     response.raise_for_status()
-    providers = response.json()
+    providers = parse_json_response(response)
 
     providers_list = []
     for provider in providers:
@@ -798,9 +805,9 @@ async def get_provider_services(
             "services": ["s3", "ec2", "iam", "rds", "lambda", ...]
         }
     """
-    response = _hub_get("providers")
+    response = _get_hub_endpoint("providers")
     response.raise_for_status()
-    providers = response.json()
+    providers = parse_json_response(response)
 
     for provider in providers:
         if provider["id"] == provider_id:
