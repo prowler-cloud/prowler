@@ -132,6 +132,12 @@
           "network_ssh_internet_access_restricted",
           "network_udp_internet_access_restricted",
           "network_http_internet_access_restricted"
+        ],
+        "cloudflare": [
+          "dns_record_proxied",
+          "zone_firewall_blocking_rules_configured",
+          "zone_waf_enabled",
+          "zone_waf_owasp_ruleset_enabled"
         ]
       }
     },
@@ -147,7 +153,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "cloudflare": []
       }
     },
     {
@@ -168,7 +175,8 @@
           "keyvault_access_only_through_private_endpoints",
           "network_rdp_internet_access_restricted",
           "network_ssh_internet_access_restricted"
-        ]
+        ],
+        "cloudflare": []
       }
     },
     {
@@ -189,6 +197,11 @@
           "network_udp_internet_access_restricted",
           "network_http_internet_access_restricted",
           "storage_account_public_network_access_disabled"
+        ],
+        "cloudflare": [
+          "zone_firewall_blocking_rules_configured",
+          "zone_waf_enabled",
+          "zone_waf_owasp_ruleset_enabled"
         ]
       }
     },
@@ -204,7 +217,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "cloudflare": []
       }
     },
     {
@@ -219,7 +233,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "cloudflare": []
       }
     },
     {
@@ -234,7 +249,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "cloudflare": []
       }
     },
     {
@@ -252,7 +268,8 @@
         "azure": [
           "entra_policy_guest_users_access_restrictions",
           "entra_policy_guest_invite_only_for_admin_roles"
-        ]
+        ],
+        "cloudflare": []
       }
     },
     {
@@ -269,7 +286,8 @@
       "checks": {
         "azure": [
           "entra_security_defaults_enabled"
-        ]
+        ],
+        "cloudflare": []
       }
     },
     {
@@ -284,7 +302,10 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "cloudflare": [
+          "zone_development_mode_disabled"
+        ]
       }
     },
     {
@@ -299,7 +320,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "cloudflare": []
       }
     },
     {
@@ -320,6 +342,14 @@
           "storage_account_public_network_access_disabled",
           "storage_ensure_minimum_tls_version_12",
           "keyvault_rbac_enabled"
+        ],
+        "cloudflare": [
+          "zone_hsts_enabled",
+          "zone_https_redirect_enabled",
+          "zone_min_tls_version_secure",
+          "zone_ssl_strict",
+          "zone_tls_1_3_enabled",
+          "zone_universal_ssl_enabled"
         ]
       }
     },
@@ -335,7 +365,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "cloudflare": []
       }
     },
     {
@@ -350,7 +381,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "cloudflare": []
       }
     },
     {
@@ -365,7 +397,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "cloudflare": []
       }
     },
     {
@@ -380,7 +413,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "cloudflare": []
       }
     },
     {
@@ -398,7 +432,8 @@
         "azure": [
           "defender_ensure_system_updates_are_applied",
           "defender_auto_provisioning_vulnerabilty_assessments_machines_on"
-        ]
+        ],
+        "cloudflare": []
       }
     },
     {
@@ -413,7 +448,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "cloudflare": []
       }
     },
     {
@@ -431,7 +467,8 @@
         "azure": [
           "entra_security_defaults_enabled",
           "storage_default_to_entra_authorization_enabled"
-        ]
+        ],
+        "cloudflare": []
       }
     },
     {
@@ -446,7 +483,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "cloudflare": []
       }
     },
     {
@@ -467,7 +505,8 @@
           "entra_conditional_access_policy_require_mfa_for_admin_portals",
           "entra_conditional_access_policy_require_mfa_for_management_api",
           "entra_user_with_vm_access_has_mfa"
-        ]
+        ],
+        "cloudflare": []
       }
     },
     {
@@ -486,7 +525,8 @@
           "entra_global_admin_in_less_than_five_users",
           "iam_role_user_access_admin_restricted",
           "iam_subscription_roles_owner_custom_not_created"
-        ]
+        ],
+        "cloudflare": []
       }
     },
     {
@@ -504,7 +544,8 @@
         "azure": [
           "entra_global_admin_in_less_than_five_users",
           "iam_role_user_access_admin_restricted"
-        ]
+        ],
+        "cloudflare": []
       }
     },
     {
@@ -522,7 +563,8 @@
         "azure": [
           "entra_security_defaults_enabled",
           "entra_privileged_user_has_mfa"
-        ]
+        ],
+        "cloudflare": []
       }
     },
     {
@@ -541,7 +583,8 @@
           "entra_security_defaults_enabled",
           "entra_privileged_user_has_mfa",
           "entra_non_privileged_user_has_mfa"
-        ]
+        ],
+        "cloudflare": []
       }
     },
     {
@@ -560,7 +603,8 @@
           "defender_assessments_vm_endpoint_protection_installed",
           "defender_ensure_wdatp_is_enabled",
           "defender_ensure_defender_for_server_is_on"
-        ]
+        ],
+        "cloudflare": []
       }
     },
     {
@@ -579,7 +623,8 @@
           "defender_ensure_wdatp_is_enabled",
           "defender_ensure_defender_for_server_is_on",
           "defender_ensure_defender_for_storage_is_on"
-        ]
+        ],
+        "cloudflare": []
       }
     },
     {
@@ -594,7 +639,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "cloudflare": []
       }
     }
   ]
