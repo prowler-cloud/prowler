@@ -141,8 +141,8 @@ class TestSecurity2svHardwareKeysAdmins:
         assert findings[0].status == "FAIL"
         assert "role-specific 2SV enforcement" in findings[0].status_extended
 
-    def test_manual_when_a_group_or_sub_ou_overrides_the_policy(self):
-        """The customer-level policy is not what every user gets, so do not judge it"""
+    def test_manual_when_a_group_or_sub_ou_overrides_a_passing_policy(self):
+        """A passing domain-wide policy cannot be confirmed for the overridden users"""
         findings = run_check(
             **{
                 **COMPLIANT,
@@ -152,18 +152,80 @@ class TestSecurity2svHardwareKeysAdmins:
 
         assert len(findings) == 1
         assert findings[0].status == "MANUAL"
-        assert "overridden for some groups" in findings[0].status_extended
-        assert "security keys only" in findings[0].status_extended
+        assert "security.two_step_verification_enforcement is also overridden" in (
+            findings[0].status_extended
+        )
 
-    def test_manual_takes_precedence_over_a_domain_wide_failure(self):
-        """An override makes even a failing domain-wide value inconclusive"""
+    def test_a_domain_wide_failure_is_reported_even_with_an_override(self):
+        """Whoever no override reaches still gets the failing domain-wide policy"""
         findings = run_check(
-            two_sv_enforced_from=None,
-            overridden_settings={"security.two_step_verification_enforcement_factor"},
+            **{
+                **COMPLIANT,
+                "two_sv_enforced_from": None,
+                "overridden_settings": {
+                    "security.two_step_verification_enforcement_factor"
+                },
+            }
+        )
+
+        assert len(findings) == 1
+        assert findings[0].status == "FAIL"
+        assert "enforcement is not configured" in findings[0].status_extended
+
+    def test_manual_when_a_setting_only_exists_below_the_domain(self):
+        """No domain-wide value was reported, so the defaults would fabricate issues"""
+        findings = run_check(
+            **{
+                **COMPLIANT,
+                "two_sv_allowed_factor_set": None,
+                "overridden_settings": [
+                    "security.two_step_verification_enforcement_factor"
+                ],
+                "unobserved_settings": [
+                    "security.two_step_verification_enforcement_factor"
+                ],
+            }
         )
 
         assert len(findings) == 1
         assert findings[0].status == "MANUAL"
+        assert "no domain-wide value was reported" in findings[0].status_extended
+
+    def test_manual_when_the_policy_scope_could_not_be_resolved(self):
+        """Every value was dropped, so none of them can be judged"""
+        findings = run_check(**{**COMPLIANT, "unresolved_scope": True})
+
+        assert len(findings) == 1
+        assert findings[0].status == "MANUAL"
+        assert "root organizational unit could not be resolved" in (
+            findings[0].status_extended
+        )
+
+    def test_a_failure_keeps_the_override_caveat(self):
+        findings = run_check(
+            **{
+                **COMPLIANT,
+                "two_sv_allowed_factor_set": "ALL",
+                "overridden_settings": ["security.two_step_verification_enforcement"],
+            }
+        )
+
+        assert len(findings) == 1
+        assert findings[0].status == "FAIL"
+        assert "accepted method is ALL" in findings[0].status_extended
+        assert "also overridden" in findings[0].status_extended
+
+    def test_an_override_on_a_setting_this_check_ignores_does_not_apply(self):
+        """Device trust belongs to 4.1.1.1 and 4.1.1.3, not to 4.1.1.2"""
+        findings = run_check(
+            **{
+                **COMPLIANT,
+                "overridden_settings": {"security.two_step_verification_device_trust"},
+            }
+        )
+
+        assert len(findings) == 1
+        assert findings[0].status == "PASS"
 
     def test_no_findings_when_fetch_failed(self):
         """No findings returned when the API fetch failed"""

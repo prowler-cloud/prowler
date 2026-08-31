@@ -7,11 +7,12 @@ from prowler.providers.googleworkspace.services.security.lib.durations import (
     format_duration,
     parse_duration_seconds,
 )
+from prowler.providers.googleworkspace.services.security.lib.scope import (
+    override_caveat,
+    unevaluable_reason,
+)
 from prowler.providers.googleworkspace.services.security.security_client import (
     security_client,
-)
-from prowler.providers.googleworkspace.services.security.security_service import (
-    TWO_SV_SETTING_TYPES,
 )
 
 # "Methods: Only security key". The values that also accept security codes are
@@ -19,6 +20,16 @@ from prowler.providers.googleworkspace.services.security.security_service import
 # requiring this one covers the benchmark's "don't allow users to generate
 # security codes" step as well.
 SECURITY_KEYS_ONLY = "PASSKEY_ONLY"
+
+# The settings this check reads, to tell whether an override reaches it.
+EVALUATED_SETTINGS = frozenset(
+    {
+        "security.two_step_verification_enrollment",
+        "security.two_step_verification_enforcement",
+        "security.two_step_verification_enforcement_factor",
+        "security.two_step_verification_sign_in_code",
+    }
+)
 
 
 class security_2sv_hardware_keys_admins(Check):
@@ -50,21 +61,17 @@ class security_2sv_hardware_keys_admins(Check):
             policies = security_client.policies
             domain = security_client.provider.identity.domain
 
-            # A group or sub-OU can override the domain-wide policy, and the
-            # Policy API does not resolve which users each override reaches, so
-            # the customer-level values below are not the effective ones.
-            overridden = sorted(policies.overridden_settings & TWO_SV_SETTING_TYPES)
-            if overridden:
+            unevaluable = unevaluable_reason(policies, EVALUATED_SETTINGS)
+            if unevaluable:
                 report.status = "MANUAL"
                 report.status_extended = (
-                    f"2-Step Verification is overridden for some groups or organizational "
-                    f"units in domain {domain} ({', '.join(overridden)}), so the "
-                    f"effective configuration could not be determined. Review it "
-                    f"in the Admin console: administrative accounts should accept security keys only, with enforcement already started and a policy suspension grace period of at most one day."
+                    f"2-Step Verification could not be evaluated in domain "
+                    f"{domain}: {unevaluable}. Review it in the Admin console."
                 )
                 findings.append(report)
                 return findings
 
+            caveat = override_caveat(policies, EVALUATED_SETTINGS)
             issues = []
 
             factor_set = policies.two_sv_allowed_factor_set
@@ -104,21 +111,29 @@ class security_2sv_hardware_keys_admins(Check):
                     f"(should not exceed 1 day)"
                 )
 
-            if not issues:
+            if issues:
+                report.status = "FAIL"
+                report.status_extended = (
+                    f"2-Step Verification does not require security keys as "
+                    f"configured in domain {domain}: {'; '.join(issues)}. "
+                    + (f"Note: {caveat}. " if caveat else "")
+                    + "Note: this check evaluates the domain-wide policy, the "
+                    "Policy API does not expose role-specific 2SV enforcement."
+                )
+            elif caveat:
+                report.status = "MANUAL"
+                report.status_extended = (
+                    f"2-Step Verification meets the benchmark in the domain-wide "
+                    f"policy of {domain}, but {caveat}. Review those overrides "
+                    f"in the Admin console."
+                )
+            else:
                 report.status = "PASS"
                 report.status_extended = (
                     f"2-Step Verification requires security keys only in domain "
                     f"{domain}, enforcement is on or scheduled and the policy "
                     f"suspension grace period is "
                     f"{format_duration(policies.two_sv_backup_code_exception_period)}. "
-                    f"Note: this check evaluates the domain-wide policy, the "
-                    f"Policy API does not expose role-specific 2SV enforcement."
-                )
-            else:
-                report.status = "FAIL"
-                report.status_extended = (
-                    f"2-Step Verification does not require security keys as "
-                    f"configured in domain {domain}: {'; '.join(issues)}. "
                     f"Note: this check evaluates the domain-wide policy, the "
                     f"Policy API does not expose role-specific 2SV enforcement."
                 )

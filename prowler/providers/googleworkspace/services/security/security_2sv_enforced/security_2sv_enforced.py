@@ -7,11 +7,12 @@ from prowler.providers.googleworkspace.services.security.lib.durations import (
     format_duration,
     parse_duration_seconds,
 )
+from prowler.providers.googleworkspace.services.security.lib.scope import (
+    override_caveat,
+    unevaluable_reason,
+)
 from prowler.providers.googleworkspace.services.security.security_client import (
     security_client,
-)
-from prowler.providers.googleworkspace.services.security.security_service import (
-    TWO_SV_SETTING_TYPES,
 )
 
 # "Methods: Any except verification codes via text, phone call". Listed as an
@@ -22,6 +23,17 @@ TELEPHONY_FREE_FACTOR_SETS = {
     "PASSKEY_PLUS_SECURITY_CODE",
     "PASSKEY_PLUS_IP_BOUND_SECURITY_CODE",
 }
+
+# The settings this check reads, to tell whether an override reaches it.
+EVALUATED_SETTINGS = frozenset(
+    {
+        "security.two_step_verification_enrollment",
+        "security.two_step_verification_enforcement",
+        "security.two_step_verification_enforcement_factor",
+        "security.two_step_verification_device_trust",
+        "security.two_step_verification_grace_period",
+    }
+)
 
 
 class security_2sv_enforced(Check):
@@ -53,21 +65,17 @@ class security_2sv_enforced(Check):
             policies = security_client.policies
             domain = security_client.provider.identity.domain
 
-            # A group or sub-OU can override the domain-wide policy, and the
-            # Policy API does not resolve which users each override reaches, so
-            # the customer-level values below are not the effective ones.
-            overridden = sorted(policies.overridden_settings & TWO_SV_SETTING_TYPES)
-            if overridden:
+            unevaluable = unevaluable_reason(policies, EVALUATED_SETTINGS)
+            if unevaluable:
                 report.status = "MANUAL"
                 report.status_extended = (
-                    f"2-Step Verification enforcement is overridden for some groups or organizational "
-                    f"units in domain {domain} ({', '.join(overridden)}), so the "
-                    f"effective configuration could not be determined. Review it "
-                    f"in the Admin console: it should be enforced for every user, with device trust disabled and verification codes via text or phone call excluded from the accepted methods."
+                    f"2-Step Verification could not be evaluated in domain "
+                    f"{domain}: {unevaluable}. Review it in the Admin console."
                 )
                 findings.append(report)
                 return findings
 
+            caveat = override_caveat(policies, EVALUATED_SETTINGS)
             issues = []
 
             enforced_from = policies.two_sv_enforced_from
@@ -112,19 +120,27 @@ class security_2sv_enforced(Check):
                     f"exclude verification codes via text and phone call"
                 )
 
-            if not issues:
+            if issues:
+                report.status = "FAIL"
+                report.status_extended = (
+                    f"2-Step Verification is not enforced as required in domain "
+                    f"{domain}: {'; '.join(issues)}."
+                    + (f" Note: {caveat}." if caveat else "")
+                )
+            elif caveat:
+                report.status = "MANUAL"
+                report.status_extended = (
+                    f"2-Step Verification meets the benchmark in the domain-wide "
+                    f"policy of {domain}, but {caveat}. Review those overrides "
+                    f"in the Admin console."
+                )
+            else:
                 report.status = "PASS"
                 report.status_extended = (
                     f"2-Step Verification is enforced in domain {domain} "
                     f"(enforced from {enforced_from}), device trust is disabled "
                     f"and verification codes via text or phone call are not an "
                     f"accepted method."
-                )
-            else:
-                report.status = "FAIL"
-                report.status_extended = (
-                    f"2-Step Verification is not enforced as required in domain "
-                    f"{domain}: {'; '.join(issues)}."
                 )
 
             findings.append(report)

@@ -1,22 +1,12 @@
-from typing import Optional, Set
+from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
 from prowler.lib.logger import logger
-from prowler.providers.googleworkspace.lib.service.service import GoogleWorkspaceService
-
-# The settings behind the CIS 2-Step Verification recommendations. When any of
-# them is overridden by a group or a sub-OU, the customer-level policy no longer
-# describes what every user, administrators included, actually gets.
-TWO_SV_SETTING_TYPES = frozenset(
-    {
-        "security.two_step_verification_enrollment",
-        "security.two_step_verification_enforcement",
-        "security.two_step_verification_enforcement_factor",
-        "security.two_step_verification_device_trust",
-        "security.two_step_verification_grace_period",
-        "security.two_step_verification_sign_in_code",
-    }
+from prowler.providers.googleworkspace.lib.service.service import (
+    CUSTOMER_SCOPE,
+    UNKNOWN_SCOPE,
+    GoogleWorkspaceService,
 )
 
 
@@ -32,6 +22,8 @@ class Security(GoogleWorkspaceService):
         super().__init__(provider)
         self.policies = SecurityPolicies()
         self.policies_fetched = False
+        self._overridden = set()
+        self._observed = set()
         self._fetch_security_policies()
 
     def _fetch_security_policies(self):
@@ -62,6 +54,10 @@ class Security(GoogleWorkspaceService):
                 service, 'setting.type.matches("rule.dlp")', fetch_succeeded
             )
 
+            self.policies.overridden_settings = sorted(self._overridden)
+            self.policies.unobserved_settings = sorted(
+                self._overridden - self._observed
+            )
             self.policies_fetched = fetch_succeeded
 
             if fetch_succeeded:
@@ -96,12 +92,15 @@ class Security(GoogleWorkspaceService):
                         setting = policy.get("setting", {})
                         setting_type = setting.get("type", "").removeprefix("settings/")
 
-                        if not self._is_customer_level_policy(policy):
-                            # A group or sub-OU overrides this setting, so the
-                            # customer-level value is not what every user gets.
-                            self.policies.overridden_settings.add(setting_type)
+                        scope = self._policy_scope(policy)
+                        if scope != CUSTOMER_SCOPE:
+                            if scope == UNKNOWN_SCOPE:
+                                self.policies.unresolved_scope = True
+                            elif setting_type:
+                                self._overridden.add(setting_type)
                             continue
 
+                        self._observed.add(setting_type)
                         value = setting.get("value", {})
 
                         self._process_setting(setting_type, value)
@@ -257,9 +256,16 @@ class Security(GoogleWorkspaceService):
 class SecurityPolicies(BaseModel):
     """Model for domain-level Security policy settings."""
 
-    # Setting types that a group or a sub-OU overrides. The customer-level
-    # value is still recorded, but it is not the effective policy for everyone.
-    overridden_settings: Set[str] = Field(default_factory=set)
+    # Setting types that a group or a sub-OU overrides. Sorted lists rather than
+    # sets: a set reaches the OCSF output as its Python repr, in a different
+    # order on every scan.
+    overridden_settings: List[str] = Field(default_factory=list)
+    # Overridden settings with no domain-wide policy of their own, so the values
+    # below are Prowler's defaults and not something the domain reported.
+    unobserved_settings: List[str] = Field(default_factory=list)
+    # True when a policy's scope could not be determined because the root
+    # organizational unit id is unknown, which blanks the values below.
+    unresolved_scope: bool = False
 
     # security.two_step_verification_enrollment
     two_sv_allow_enrollment: Optional[bool] = None
