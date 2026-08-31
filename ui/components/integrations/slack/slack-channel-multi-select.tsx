@@ -1,6 +1,6 @@
 "use client";
 
-import { Lock, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 
 import { SlackInlineCode } from "@/components/integrations/slack/slack-inline-code";
 import {
@@ -53,15 +53,15 @@ interface SlackChannelMultiSelectProps {
   describedBy?: string;
 }
 
+/** Marked exactly as the listing marks it, so the chip is the row it came from. */
 const chipLabel = (option: SlackChannelOption) => (
   <span className="flex min-w-0 items-center gap-1">
-    {option.is_private && (
-      <>
-        <Lock size={12} aria-hidden="true" />
-        <span className="sr-only">Private</span>
-      </>
-    )}
     <span className="truncate">#{option.name}</span>
+    {option.is_private && (
+      <Badge variant="tag" size="sm">
+        Private
+      </Badge>
+    )}
   </span>
 );
 

@@ -783,11 +783,16 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
       "the authorized channel chips",
     );
 
+    // Order-insensitive: where the chip puts its "Private" marker relative to
+    // the name is a presentation choice, not something to assert through.
     return chips.map((chip) => {
       const text = (chip.textContent ?? "").trim();
       return {
-        name: text.replace(/^Private/, "").replace(/^#/, ""),
-        isPrivate: /^Private/.test(text),
+        name: text
+          .replace(/Private/g, "")
+          .replace(/^#/, "")
+          .trim(),
+        isPrivate: /Private/.test(text),
       };
     });
   }
