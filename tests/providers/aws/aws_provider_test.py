@@ -1784,6 +1784,17 @@ aws:
         assert sts_session._endpoint.host == f"https://sts.{aws_region}.amazonaws.eu"
 
     @mock_aws
+    def test_create_sts_session_iso(self):
+        current_session = session.Session()
+        aws_region = "us-iso-east-1"
+        sts_session = AwsProvider.create_sts_session(current_session, aws_region)
+
+        assert sts_session._service_model.service_name == "sts"
+        assert sts_session._client_config.region_name == aws_region
+        assert sts_session._endpoint._endpoint_prefix == "sts"
+        assert sts_session._endpoint.host == f"https://sts.{aws_region}.c2s.ic.gov"
+
+    @mock_aws
     @patch(
         "prowler.lib.check.utils.recover_checks_from_provider",
         new=mock_recover_checks_from_aws_provider_elb_service,

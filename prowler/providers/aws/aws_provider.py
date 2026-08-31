@@ -1643,14 +1643,9 @@ class AwsProvider(Provider):
             sts_client = create_sts_session(session, 'us-west-2')
         """
         try:
-            if os.environ.get("AWS_ENDPOINT_URL"):
-                sts_endpoint_url = os.environ["AWS_ENDPOINT_URL"]
-            elif aws_region.startswith("cn-"):
-                sts_endpoint_url = f"https://sts.{aws_region}.amazonaws.com.cn"
-            elif aws_region.startswith("eusc-"):
-                sts_endpoint_url = f"https://sts.{aws_region}.amazonaws.eu"
-            else:
-                sts_endpoint_url = f"https://sts.{aws_region}.amazonaws.com"
+            # Botocore resolves the regional STS endpoint for every partition
+            # (China, EUSC, GovCloud, ISO); AWS_ENDPOINT_URL overrides it
+            sts_endpoint_url = os.environ.get("AWS_ENDPOINT_URL")
             return session.client("sts", aws_region, endpoint_url=sts_endpoint_url)
         except Exception as error:
             logger.critical(
