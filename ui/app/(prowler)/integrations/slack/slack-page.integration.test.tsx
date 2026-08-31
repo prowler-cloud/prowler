@@ -205,6 +205,10 @@ describe("a connected workspace", () => {
 
     expect(await harness.connectedWorkspaceName()).toBe(WORKSPACE_NAME);
     expect(await harness.connectionBadge()).toBe("Connected");
+    // Read positively as well as negatively (:254): without this, a reworded
+    // line the harness stops recognising would leave that null-only check
+    // passing vacuously.
+    expect(harness.lastCheckedLine()).toMatch(/2026\/08\/10/);
     expect(await harness.offersConnectionTest()).toBe(true);
     expect(await harness.testConnection()).toBe(CONNECTION_OUTCOME.SUCCESS);
     // One workspace per tenant (design D10): no second install on offer, and no
@@ -703,7 +707,7 @@ describe("authorizing destination channels", () => {
 
     // Then — checking again posts nothing: the confirmation is one-time
     // (design D7), not a fresh message every run.
-    expect(harness.connectionCheckHint()).toMatch(/nothing is posted/);
+    expect(harness.connectionCheckHint()).toMatch(/Nothing is posted/);
     expect(harness.connectionCheckHint()).not.toMatch(/test message/i);
 
     // When — a second channel is authorized.
@@ -725,7 +729,7 @@ describe("authorizing destination channels", () => {
     expect(await harness.connectionOutcome()).toBe(CONNECTION_OUTCOME.SUCCESS);
     await harness.refreshPageData();
     expect(
-      await harness.connectionCheckHintMatching(/nothing is posted/),
+      await harness.connectionCheckHintMatching(/Nothing is posted/),
     ).toMatch(/every authorized channel/);
   }, 60000);
 
@@ -845,7 +849,7 @@ describe("authorizing destination channels", () => {
     // Given — a finished setup whose channel an earlier check confirmed.
     const harness = new SlackIntegrationHarness(configuredSlackFixture());
     await harness.mount();
-    expect(harness.connectionCheckHint()).toMatch(/nothing is posted/);
+    expect(harness.connectionCheckHint()).toMatch(/Nothing is posted/);
 
     // When — the same workspace is approved again. The exchange is the
     // callback route's doing (covered in `callback/route.test.ts`); here it

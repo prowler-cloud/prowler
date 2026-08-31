@@ -342,7 +342,7 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
   lastCheckedLine(): string | null {
     const line = Array.from(
       this.container.querySelectorAll<HTMLElement>("p"),
-    ).find((p) => /^Last checked:/.test((p.textContent ?? "").trim()));
+    ).find((p) => /^Last checked\b/.test((p.textContent ?? "").trim()));
     return line ? (line.textContent ?? "").trim() : null;
   }
 

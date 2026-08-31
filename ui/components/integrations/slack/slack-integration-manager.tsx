@@ -14,6 +14,11 @@ import {
 import { SlackIcon } from "@/components/icons/services/IconServices";
 import { IntegrationCardHeader } from "@/components/integrations/shared";
 import { SlackChannelMultiSelect } from "@/components/integrations/slack/slack-channel-multi-select";
+import {
+  CHECK_STATUS,
+  type CheckStatus,
+  SlackConnectionCheckStatus,
+} from "@/components/integrations/slack/slack-connection-check-status";
 import { SlackInlineCode } from "@/components/integrations/slack/slack-inline-code";
 import {
   Alert,
@@ -75,6 +80,20 @@ const CONFIRMATION_MESSAGE =
  */
 interface UnconfirmedRevocation {
   workspace: string | null;
+}
+
+/**
+ * What the last check found, together with what it was measured against. Both
+ * ride with the finding so it can never outlive them: a green line vouching for
+ * a channel nothing ever reached is worse than no line at all, and so is one
+ * standing over a notice saying the credential is dead.
+ */
+interface ConnectionCheckOutcome {
+  reachable: boolean;
+  summary: string;
+  channelIds: string[];
+  /** The credential verdict the check was run under. */
+  credentialFailure: SlackTokenErrorCode | null;
 }
 
 /** Order-insensitive: the mirror must not re-seed on a mere reordering. */
@@ -190,6 +209,10 @@ export const SlackIntegrationManager = ({
   loadError,
 }: SlackIntegrationManagerProps) => {
   const [isTesting, setIsTesting] = useState(false);
+  // A check's finding outlives its toast: the card keeps saying where the
+  // workspace stands until a change to the channels makes the finding moot.
+  const [checkOutcome, setCheckOutcome] =
+    useState<ConnectionCheckOutcome | null>(null);
   const [isDisconnectOpen, setIsDisconnectOpen] = useState(false);
   const [isDisconnecting, setIsDisconnecting] = useState(false);
   // The row is gone the moment the API says so; the server component's
@@ -347,6 +370,39 @@ export const SlackIntegrationManager = ({
     (channel) => !selectedChannelIds.includes(channel.id),
   );
 
+  const authorizedChannelIds = authorizedChannels.map((channel) => channel.id);
+
+  /**
+   * Derived, not stored, so a finding retires on its own the moment anything it
+   * was measured against moves: a channel authorized or dropped leaves a set no
+   * check has covered, and a credential verdict that has since changed leaves a
+   * finding taken under conditions that no longer hold.
+   */
+  const coveredOutcome =
+    checkOutcome &&
+    sameChannelIds(checkOutcome.channelIds, authorizedChannelIds) &&
+    checkOutcome.credentialFailure === credentialFailure
+      ? checkOutcome
+      : null;
+
+  const checkStatus = (): CheckStatus => {
+    if (isTesting) return CHECK_STATUS.RUNNING;
+    if (!coveredOutcome) return CHECK_STATUS.IDLE;
+    return coveredOutcome.reachable ? CHECK_STATUS.PASSED : CHECK_STATUS.FAILED;
+  };
+
+  // Deliberately not a second telling of the caption below it: the button
+  // already reads "Testing...", so this only has to say a check is under way.
+  const checkSummary = isTesting
+    ? "Checking the connection..."
+    : coveredOutcome?.summary;
+
+  /** What a passing check proves, said in terms of what was actually reached. */
+  const reachableSummary = (channels: SlackAuthorizedChannel[]): string =>
+    channels.length === 1
+      ? `#${channels[0].name} is reachable.`
+      : `All ${channels.length} channels are reachable.`;
+
   const checkHint = (): ReactNode => {
     if (authorizedChannels.length === 0) {
       return "Authorize at least one destination channel below to enable this check.";
@@ -361,7 +417,7 @@ export const SlackIntegrationManager = ({
         .
       </>
     ) : (
-      "Checks every authorized channel. Each was confirmed once already, so nothing is posted."
+      "Checks every authorized channel. Nothing is posted."
     );
   };
 
@@ -432,12 +488,24 @@ export const SlackIntegrationManager = ({
     // Passed in by a chained check: it runs before the save's state lands.
     channels: SlackAuthorizedChannel[] = authorizedChannels,
   ) => {
+    const checkedChannelIds = channels.map((channel) => channel.id);
+
     setIsTesting(true);
     try {
       const result = await testIntegrationConnection(id);
 
       if (result.success) {
         provedCredentialAlive();
+        setCheckOutcome({
+          reachable: true,
+          // Prowler's own count, not the API's prose: the line has to keep
+          // meaning the same thing every time it is read.
+          summary: reachableSummary(channels),
+          channelIds: checkedChannelIds,
+          // An answer at all clears the verdict, so a pass is always taken
+          // under a live credential.
+          credentialFailure: null,
+        });
         toast({
           title: "Connection test successful!",
           description:
@@ -448,8 +516,13 @@ export const SlackIntegrationManager = ({
         // A dead credential named here is not a failure checking again can
         // fix, so the reason is recorded and not only reported.
         const reason = result.error?.trim() || null;
+        const reasonCode = asReasonCode(reason);
 
-        recordRefusal(asReasonCode(reason));
+        recordRefusal(reasonCode);
+
+        // The verdict this check leaves behind: its own reason when it named
+        // one, else the last answer's, which nothing here contradicted.
+        const codeAfterCheck = reasonCode ?? lastRefusalCode;
 
         const explanation = reason
           ? slackErrorMessage({ code: reason, detail: reason })
@@ -461,15 +534,32 @@ export const SlackIntegrationManager = ({
           ? channels.find((channel) => channel.id === result.failedChannelId)
           : undefined;
 
+        const refusal = refusedChannel
+          ? `Slack refused #${refusedChannel.name}: ${explanation}`
+          : explanation;
+
+        setCheckOutcome({
+          reachable: false,
+          summary: refusal,
+          channelIds: checkedChannelIds,
+          credentialFailure: isSlackTokenErrorCode(codeAfterCheck)
+            ? codeAfterCheck
+            : null,
+        });
         toast({
           variant: "destructive",
           title: "Connection test failed",
-          description: refusedChannel
-            ? `Slack refused #${refusedChannel.name}: ${explanation}`
-            : explanation,
+          description: refusal,
         });
       }
     } catch (_error) {
+      setCheckOutcome({
+        reachable: false,
+        summary: "Prowler could not reach Slack to run the check.",
+        channelIds: checkedChannelIds,
+        // Never an answer from Slack, so the standing verdict is untouched.
+        credentialFailure,
+      });
       toast({
         variant: "destructive",
         title: "Error",
@@ -644,11 +734,18 @@ export const SlackIntegrationManager = ({
         </Alert>
       ) : integration && !disconnected ? (
         <Card variant="base">
-          <CardHeader>
+          <CardHeader className="gap-3">
             <IntegrationCardHeader
               icon={<SlackIcon size={32} />}
               title={`Connected to ${workspaceName ?? "your Slack workspace"}`}
               subtitle="Prowler posts to this workspace only."
+              meta={
+                lastCheckedOn && (
+                  <p className="text-text-neutral-tertiary font-mono text-xs">
+                    Last checked {lastCheckedOn}
+                  </p>
+                )
+              }
               connectionStatus={{
                 // A dead token outranks the state the page was loaded with.
                 connected:
@@ -656,21 +753,8 @@ export const SlackIntegrationManager = ({
                     ? integration.attributes.connected
                     : false,
               }}
-            />
-          </CardHeader>
-
-          <CardContent className="pt-0">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-              <div className="text-xs text-gray-500 dark:text-gray-300">
-                {lastCheckedOn && (
-                  <p>
-                    <span className="font-medium">Last checked:</span>{" "}
-                    {lastCheckedOn}
-                  </p>
-                )}
-              </div>
-              <div className="flex flex-col items-start gap-1 sm:items-end">
-                <div className="flex items-center gap-2">
+              actions={
+                <>
                   {/* The check reaches the authorized channels: the API
                       answers 400 while the set is empty. */}
                   <Button
@@ -698,17 +782,23 @@ export const SlackIntegrationManager = ({
                     <Unplug size={14} />
                     Disconnect
                   </Button>
-                </div>
-                <p
-                  id={CHECK_HINT_ID}
-                  className="max-w-prose text-xs text-gray-500 sm:text-right dark:text-gray-300"
-                >
-                  {checkHint()}
-                </p>
-              </div>
-            </div>
+                </>
+              }
+            />
 
-            <div className="border-border-neutral-secondary mt-6 flex flex-col gap-4 border-t pt-6">
+            {/* Below the row, not beside the buttons: the width is what lets
+                the check say what it did without wrapping into a column. */}
+            <SlackConnectionCheckStatus
+              status={checkStatus()}
+              outcome={checkSummary}
+              captionId={CHECK_HINT_ID}
+            >
+              {checkHint()}
+            </SlackConnectionCheckStatus>
+          </CardHeader>
+
+          <CardContent className="pt-0">
+            <div className="border-border-neutral-secondary flex flex-col gap-4 border-t pt-6">
               <SlackChannelMultiSelect
                 options={channelOptions}
                 values={selectedChannelIds}
@@ -768,10 +858,7 @@ export const SlackIntegrationManager = ({
                 <Button
                   size="sm"
                   disabled={
-                    sameChannelIds(
-                      selectedChannelIds,
-                      authorizedChannels.map((channel) => channel.id),
-                    ) ||
+                    sameChannelIds(selectedChannelIds, authorizedChannelIds) ||
                     isSavingChannels ||
                     isTesting
                   }
