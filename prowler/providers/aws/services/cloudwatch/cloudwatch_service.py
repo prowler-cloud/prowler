@@ -96,6 +96,9 @@ class Logs(AWSService):
         # index for cross-service evidence lookups.
         self.all_log_groups = {}
         self.log_groups = {}
+        # True when DescribeLogGroups was denied in at least one audited
+        # region, so the log group inventory may be incomplete.
+        self.log_groups_unavailable = False
         self._log_groups_hydrated = set()
         self.log_group_limit = get_resource_scan_limit(
             self.audit_config, "max_cloudwatch_log_groups"
@@ -173,6 +176,9 @@ class Logs(AWSService):
                                 arn=arn,
                                 name=filter["filterName"],
                                 metric=filter["metricTransformations"][0]["metricName"],
+                                metric_namespace=filter["metricTransformations"][0].get(
+                                    "metricNamespace"
+                                ),
                                 pattern=filter.get("filterPattern", ""),
                                 log_group=log_group,
                                 region=regional_client.region,
@@ -232,6 +238,7 @@ class Logs(AWSService):
                 logger.error(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
+                self.log_groups_unavailable = True
                 if not self.log_groups:
                     self.all_log_groups = None
                     self.log_groups = None
@@ -362,6 +369,7 @@ class MetricFilter(BaseModel):
     arn: str
     name: str
     metric: str
+    metric_namespace: Optional[str] = None
     pattern: str
     log_group: Optional[LogGroup] = None
     region: str

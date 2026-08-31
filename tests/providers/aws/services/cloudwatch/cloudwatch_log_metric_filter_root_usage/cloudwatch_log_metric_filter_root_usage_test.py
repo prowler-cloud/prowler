@@ -758,6 +758,51 @@ class Test_cloudwatch_log_metric_filter_root_usage:
         assert "cloudtrail:DescribeTrails" in result[0].status_extended
 
     @mock_aws
+    def test_cloudwatch_log_groups_access_denied(self):
+        """logs:DescribeLogGroups denied -> MANUAL."""
+        from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
+            Cloudtrail,
+        )
+        from prowler.providers.aws.services.cloudwatch.cloudwatch_service import (
+            CloudWatch,
+            Logs,
+        )
+
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
+        logs = Logs(aws_provider)
+        logs.log_groups_unavailable = True
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_root_usage.cloudwatch_log_metric_filter_root_usage.logs_client",
+                new=logs,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_root_usage.cloudwatch_log_metric_filter_root_usage.cloudwatch_client",
+                new=CloudWatch(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_root_usage.cloudwatch_log_metric_filter_root_usage.cloudtrail_client",
+                new=Cloudtrail(aws_provider),
+            ),
+        ):
+            from prowler.providers.aws.services.cloudwatch.cloudwatch_log_metric_filter_root_usage.cloudwatch_log_metric_filter_root_usage import (
+                cloudwatch_log_metric_filter_root_usage,
+            )
+
+            result = cloudwatch_log_metric_filter_root_usage().execute()
+
+        assert len(result) == 1
+        assert result[0].status == "MANUAL"
+        assert "logs:DescribeLogGroups" in result[0].status_extended
+
+    @mock_aws
     def test_cloudwatch_metric_alarms_access_denied(self):
         """cloudwatch:DescribeAlarms denied -> MANUAL, not FAIL."""
         result = self._run_with_unavailable_data(

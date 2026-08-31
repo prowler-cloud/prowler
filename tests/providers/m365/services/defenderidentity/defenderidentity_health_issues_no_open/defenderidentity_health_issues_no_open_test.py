@@ -647,3 +647,33 @@ class Test_defenderidentity_health_issues_no_open:
             )
             assert result[0].resource_id == health_issue_id
             assert result[0].resource_name == health_issue_name
+
+    def test_sensors_api_failed_with_empty_health_issues(self):
+        """sensors=None (API failed) + health_issues=[]: PASS cannot be trusted -> MANUAL."""
+        defenderidentity_client = mock.MagicMock()
+        defenderidentity_client.audited_tenant = "audited_tenant"
+        defenderidentity_client.audited_domain = DOMAIN
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.m365.services.defenderidentity.defenderidentity_health_issues_no_open.defenderidentity_health_issues_no_open.defenderidentity_client",
+                new=defenderidentity_client,
+            ),
+        ):
+            from prowler.providers.m365.services.defenderidentity.defenderidentity_health_issues_no_open.defenderidentity_health_issues_no_open import (
+                defenderidentity_health_issues_no_open,
+            )
+
+            defenderidentity_client.sensors = None
+            defenderidentity_client.health_issues = []
+
+            result = defenderidentity_health_issues_no_open().execute()
+
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert "sensor deployment" in result[0].status_extended
+            assert "SecurityIdentitiesSensors.Read.All" in result[0].status_extended

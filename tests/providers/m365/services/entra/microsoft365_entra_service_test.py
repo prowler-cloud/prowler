@@ -1951,3 +1951,24 @@ class Test_Entra_Service:
         assert [policy.id for policy in policies] == ["policy-1", "policy-2"]
         with_url_mock.assert_called_once_with("next-link")
         next_page_builder.get.assert_awaited_once()
+
+
+class TestGetOAuthApps:
+    @staticmethod
+    def _entra_with_hunting_response(response):
+        service = entra_service.Entra.__new__(entra_service.Entra)
+        post = AsyncMock(return_value=response)
+        service.client = MagicMock()
+        service.client.security.microsoft_graph_security_run_hunting_query.post = post
+        return service
+
+    def test_null_response_returns_none_not_empty(self):
+        """A null hunting response must propagate as None (MANUAL), not {} (PASS)."""
+        service = self._entra_with_hunting_response(None)
+        assert asyncio.run(service._get_oauth_apps()) is None
+
+    def test_empty_results_is_confirmed_empty(self):
+        response = MagicMock()
+        response.results = []
+        service = self._entra_with_hunting_response(response)
+        assert asyncio.run(service._get_oauth_apps()) == {}

@@ -1151,7 +1151,15 @@ OAuthAppInfo
                 request_body
             )
 
-            if result and result.results:
+            if result is None:
+                # A null response object is not a successful empty query:
+                # the OAuth app inventory could not be retrieved.
+                logger.warning(
+                    "Entra - Advanced Hunting returned a null response for OAuthAppInfo."
+                )
+                return None
+
+            if result.results:
                 for row in result.results:
                     row_data = row.additional_data
                     raw_app_id = row_data.get("OAuthAppId", "")

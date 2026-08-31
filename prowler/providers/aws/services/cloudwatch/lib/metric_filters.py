@@ -58,6 +58,11 @@ def check_cloudwatch_log_metric_filter(
                 log_groups.append(trail.log_group_arn.split(":")[6])
         # 2. Describe metric filters for previous log groups
         for metric_filter in metric_filters:
+            # log_group can be None when DescribeLogGroups was denied while
+            # the metric filter listing succeeded; such a filter cannot be
+            # matched to a trail log group.
+            if metric_filter.log_group is None:
+                continue
             if metric_filter.log_group.name in log_groups and re.search(
                 metric_filter_pattern, metric_filter.pattern, flags=re.DOTALL
             ):
@@ -66,9 +71,20 @@ def check_cloudwatch_log_metric_filter(
                 )
                 report.status = "FAIL"
                 report.status_extended = f"CloudWatch log group {metric_filter.log_group.name} found with metric filter {metric_filter.name} but no alarms associated."
-                # 3. Check if there is an alarm for the metric
+                # 3. Check if there is an alarm for the metric. The alarm must
+                # watch the same metric name in the same region, and the same
+                # namespace when both sides expose one — a same-named metric
+                # in another namespace or region is a different metric.
                 for alarm in metric_alarms:
-                    if alarm.metric == metric_filter.metric:
+                    if (
+                        alarm.metric == metric_filter.metric
+                        and alarm.region == metric_filter.region
+                        and (
+                            not metric_filter.metric_namespace
+                            or not alarm.name_space
+                            or alarm.name_space == metric_filter.metric_namespace
+                        )
+                    ):
                         report.status = "PASS"
                         report.status_extended = f"CloudWatch log group {metric_filter.log_group.name} found with metric filter {metric_filter.name} and alarms set."
                         break

@@ -20,8 +20,9 @@ class cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk(Chec
 
     - PASS: A matching metric filter with an associated alarm exists.
     - FAIL: No matching metric filter, or a filter without an alarm, was found.
-    - MANUAL: CloudTrail trails, metric filters or alarms could not be listed in
-      at least one region, so the absence of a filter/alarm cannot be asserted.
+    - MANUAL: CloudTrail trails, log groups, metric filters or alarms could
+      not be listed in at least one region, so the absence of a filter/alarm
+      cannot be asserted.
     """
 
     def execute(self) -> list[Check_Report_AWS]:
@@ -46,6 +47,7 @@ class cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk(Chec
 
         inventory_unavailable = (
             cloudtrail_client.trails_unavailable
+            or logs_client.log_groups_unavailable
             or logs_client.metric_filters_unavailable
             or cloudwatch_client.metric_alarms_unavailable
         )
@@ -64,7 +66,7 @@ class cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk(Chec
         # found, or a filter found without its alarm) cannot be trusted.
         if report.status == "FAIL" and inventory_unavailable:
             report.status = "MANUAL"
-            report.status_extended = "Cannot evaluate CloudWatch metric filters and alarms: CloudTrail trails, metric filters or alarms could not be listed in at least one region. Verify that the scanning credentials are allowed to call cloudtrail:DescribeTrails, logs:DescribeMetricFilters and cloudwatch:DescribeAlarms."
+            report.status_extended = "Cannot evaluate CloudWatch metric filters and alarms: CloudTrail trails, log groups, metric filters or alarms could not be listed in at least one region. Verify that the scanning credentials are allowed to call cloudtrail:DescribeTrails, logs:DescribeLogGroups, logs:DescribeMetricFilters and cloudwatch:DescribeAlarms."
 
         findings.append(report)
 

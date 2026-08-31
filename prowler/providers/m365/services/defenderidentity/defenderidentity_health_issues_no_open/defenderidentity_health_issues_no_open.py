@@ -97,7 +97,9 @@ class defenderidentity_health_issues_no_open(Check):
             findings.append(report)
             return findings
 
-        # If health_issues is empty list - no issues exist, this is compliant
+        # If health_issues is empty list - no issues exist. This is only
+        # compliant when sensor deployment could actually be verified: with
+        # the sensors API failed, an empty issue list cannot be trusted.
         if not defenderidentity_client.health_issues:
             report = CheckReportM365(
                 metadata=self.metadata(),
@@ -105,10 +107,20 @@ class defenderidentity_health_issues_no_open(Check):
                 resource_name="Defender for Identity",
                 resource_id="defenderIdentity",
             )
-            report.status = "PASS"
-            report.status_extended = (
-                "No open health issues found in Defender for Identity."
-            )
+            if sensors_api_failed:
+                report.status = "MANUAL"
+                report.status_extended = (
+                    "Cannot evaluate Defender for Identity health issues: no "
+                    "open health issues were returned but sensor deployment "
+                    "could not be verified (sensors API not accessible). Ensure "
+                    "the scanning application has the "
+                    "SecurityIdentitiesSensors.Read.All permission granted."
+                )
+            else:
+                report.status = "PASS"
+                report.status_extended = (
+                    "No open health issues found in Defender for Identity."
+                )
             findings.append(report)
             return findings
 
