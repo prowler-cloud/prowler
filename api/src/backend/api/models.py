@@ -3113,3 +3113,77 @@ class TenantComplianceSummary(RowLevelSecurityProtectedModel):
                 statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
             ),
         ]
+
+
+class JiraIssue(RowLevelSecurityProtectedModel):
+    """Jira issue created from a finding through a Jira integration.
+
+    One row per (integration, provider, finding uid). Keyed on the finding ``uid``
+    rather than the per-scan finding id so the link survives rescans, which is
+    what lets a repeated send be recognised as already ticketed. Only the latest
+    ticket is kept: when a linked issue is closed or deleted in Jira and the
+    finding is sent again, the row is updated to point at the new issue.
+    """
+
+    class StatusCategoryChoices(models.TextChoices):
+        NEW = "new", _("New")
+        INDETERMINATE = "indeterminate", _("In progress")
+        DONE = "done", _("Done")
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+    integration = models.ForeignKey(
+        Integration, on_delete=models.CASCADE, related_name="jira_issues"
+    )
+    provider = models.ForeignKey(
+        Provider, on_delete=models.CASCADE, related_name="jira_issues"
+    )
+    finding_uid = models.CharField(max_length=300)
+    # Last finding record that was sent; informational, findings are partitioned
+    # and rotate per scan so this is not a foreign key
+    finding_id = models.UUIDField()
+    # Empty while the issue is being created (reservation), filled after Jira
+    # confirms the creation
+    issue_key = models.CharField(max_length=64, blank=True, default="")
+    issue_id = models.CharField(max_length=64, blank=True, default="")
+    issue_url = models.URLField(max_length=2048, blank=True, default="")
+    project_key = models.CharField(max_length=64)
+    issue_status = models.CharField(max_length=64, blank=True, default="")
+    issue_status_category = models.CharField(
+        max_length=16, choices=StatusCategoryChoices.choices, blank=True, default=""
+    )
+    status_synced_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "jira_issues"
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=("tenant_id", "integration_id", "provider_id", "finding_uid"),
+                name="unique_jira_issue_per_finding",
+            ),
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+        indexes = [
+            models.Index(
+                fields=["tenant_id", "provider_id", "finding_uid"],
+                name="ji_tenant_prov_uid_idx",
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "jira-issues"
+
+    @property
+    def is_linked(self) -> bool:
+        """Whether the row points at a confirmed Jira issue (not a reservation)."""
+        return bool(self.issue_key)
+
+    @property
+    def is_done(self) -> bool:
+        return self.issue_status_category == self.StatusCategoryChoices.DONE

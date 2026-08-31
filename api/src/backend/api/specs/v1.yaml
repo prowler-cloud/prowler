@@ -7107,6 +7107,405 @@ paths:
               schema:
                 $ref: '#/components/schemas/OpenApiResponseResponse'
           description: ''
+  /api/v1/jira-issues:
+    get:
+      operationId: api_v1_jira_issues_list
+      description: Retrieve the Jira issues created from findings through Jira integrations.
+        Each entry links a finding UID to the latest Jira issue created for it, with
+        the last status observed in Jira. Use `filter[finding_uid__in]` and `filter[provider_id]`
+        to check whether specific findings already have a ticket.
+      summary: List Jira issues linked to findings
+      parameters:
+      - in: query
+        name: fields[jira-issues]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - inserted_at
+            - updated_at
+            - finding_uid
+            - finding_id
+            - issue_key
+            - issue_id
+            - issue_url
+            - project_key
+            - issue_status
+            - issue_status_category
+            - status_synced_at
+            - integration
+            - provider
+            - url
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[finding_id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[finding_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[finding_uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[finding_uid__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[inserted_at__date]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at__gte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[inserted_at__lte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[integration]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[integration__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[issue_key]
+        schema:
+          type: string
+      - in: query
+        name: filter[issue_key__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[issue_status_category]
+        schema:
+          type: string
+          x-spec-enum-id: 6e5c623f6bbdd92d
+          enum:
+          - done
+          - indeterminate
+          - new
+        description: |-
+          * `new` - New
+          * `indeterminate` - In progress
+          * `done` - Done
+      - in: query
+        name: filter[issue_status_category__in]
+        schema:
+          type: array
+          items:
+            type: string
+            x-spec-enum-id: 6e5c623f6bbdd92d
+            enum:
+            - done
+            - indeterminate
+            - new
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `new` - New
+          * `indeterminate` - In progress
+          * `done` - Done
+        explode: false
+        style: form
+      - in: query
+        name: filter[project_key]
+        schema:
+          type: string
+      - in: query
+        name: filter[project_key__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_groups]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_groups__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+          x-spec-enum-id: 203afc16daac9b64
+          enum:
+          - alibabacloud
+          - aws
+          - azure
+          - cloudflare
+          - gcp
+          - github
+          - googleworkspace
+          - iac
+          - image
+          - kubernetes
+          - m365
+          - mongodbatlas
+          - okta
+          - openstack
+          - oraclecloud
+          - vercel
+        description: |-
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
+          * `okta` - Okta
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            x-spec-enum-id: 203afc16daac9b64
+            enum:
+            - alibabacloud
+            - aws
+            - azure
+            - cloudflare
+            - gcp
+            - github
+            - googleworkspace
+            - iac
+            - image
+            - kubernetes
+            - m365
+            - mongodbatlas
+            - okta
+            - openstack
+            - oraclecloud
+            - vercel
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
+          * `okta` - Okta
+        explode: false
+        style: form
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: filter[updated_at__date]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[updated_at__gte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[updated_at__lte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - provider
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
+      - name: page[number]
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page[size]
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - inserted_at
+            - -inserted_at
+            - updated_at
+            - -updated_at
+            - issue_key
+            - -issue_key
+            - project_key
+            - -project_key
+            - issue_status
+            - -issue_status
+            - status_synced_at
+            - -status_synced_at
+        explode: false
+      tags:
+      - Integration
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/PaginatedJiraIssueList'
+          description: ''
+  /api/v1/jira-issues/{id}:
+    get:
+      operationId: api_v1_jira_issues_retrieve
+      description: Fetch the Jira issue linked to a finding by the link ID.
+      summary: Retrieve a Jira issue link
+      parameters:
+      - in: query
+        name: fields[jira-issues]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - inserted_at
+            - updated_at
+            - finding_uid
+            - finding_id
+            - issue_key
+            - issue_id
+            - issue_url
+            - project_key
+            - issue_status
+            - issue_status_category
+            - status_synced_at
+            - integration
+            - provider
+            - url
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this jira issue.
+        required: true
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - provider
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
+      tags:
+      - Integration
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/JiraIssueResponse'
+          description: ''
   /api/v1/lighthouse-configurations:
     get:
       operationId: api_v1_lighthouse_configurations_list
@@ -18618,6 +19017,134 @@ components:
           $ref: '#/components/schemas/InvitationUpdate'
       required:
       - data
+    JiraIssue:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - jira-issues
+        id:
+          type: string
+          format: uuid
+        attributes:
+          type: object
+          properties:
+            inserted_at:
+              type: string
+              format: date-time
+              readOnly: true
+            updated_at:
+              type: string
+              format: date-time
+              readOnly: true
+            finding_uid:
+              type: string
+              readOnly: true
+            finding_id:
+              type: string
+              format: uuid
+              readOnly: true
+            issue_key:
+              type: string
+              readOnly: true
+            issue_id:
+              type: string
+              readOnly: true
+            issue_url:
+              type: string
+              format: uri
+              readOnly: true
+            project_key:
+              type: string
+              readOnly: true
+            issue_status:
+              type: string
+              readOnly: true
+            issue_status_category:
+              enum:
+              - new
+              - indeterminate
+              - done
+              type: string
+              description: |-
+                * `new` - New
+                * `indeterminate` - In progress
+                * `done` - Done
+              x-spec-enum-id: 6e5c623f6bbdd92d
+              readOnly: true
+            status_synced_at:
+              type: string
+              format: date-time
+              readOnly: true
+              nullable: true
+        relationships:
+          type: object
+          properties:
+            integration:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    type:
+                      type: string
+                      enum:
+                      - integrations
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
+              required:
+              - data
+              description: The identifier of the related object.
+              title: Resource Identifier
+              readOnly: true
+            provider:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    type:
+                      type: string
+                      enum:
+                      - providers
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
+              required:
+              - data
+              description: The identifier of the related object.
+              title: Resource Identifier
+              readOnly: true
+    JiraIssueResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/JiraIssue'
+      required:
+      - data
     LighthouseConfig:
       type: object
       required:
@@ -20225,6 +20752,15 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Invitation'
+      required:
+      - data
+    PaginatedJiraIssueList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/JiraIssue'
       required:
       - data
     PaginatedLighthouseConfigList:
