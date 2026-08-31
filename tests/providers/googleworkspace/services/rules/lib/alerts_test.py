@@ -34,7 +34,6 @@ def configured(**overrides):
         severity="MEDIUM",
         email_notifications_enabled=True,
         all_super_admins=True,
-        alert_center_status="ENABLED",
     )
     values.update(overrides)
     return SystemDefinedAlert(**values)
@@ -125,14 +124,11 @@ class TestEvaluateSystemDefinedAlert:
         assert findings[0].status == "FAIL"
         assert "not sent to the alert center" in findings[0].status_extended
 
-    def test_manual_when_the_alert_center_status_is_not_reported(self):
-        """Rule state and delivery are separate settings, absence proves neither"""
+    def test_pass_when_the_alert_center_status_is_not_reported(self):
+        """The API never returns this field, so its absence cannot fail a rule"""
         findings = run([configured(alert_center_status=None)], "MEDIUM")
 
-        assert findings[0].status == "MANUAL"
-        assert "did not report whether the alert is sent to the alert center" in (
-            findings[0].status_extended
-        )
+        assert findings[0].status == "PASS"
 
     def test_a_failing_condition_wins_over_an_unreported_delivery(self):
         findings = run([configured(severity="LOW", alert_center_status=None)], "MEDIUM")

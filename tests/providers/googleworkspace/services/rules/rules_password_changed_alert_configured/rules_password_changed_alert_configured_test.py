@@ -38,7 +38,6 @@ class TestRulesPasswordChangedAlertConfigured:
                     severity="MEDIUM",
                     email_notifications_enabled=True,
                     all_super_admins=True,
-                    alert_center_status="ENABLED",
                 )
             ]
 
@@ -75,7 +74,6 @@ class TestRulesPasswordChangedAlertConfigured:
                     severity="LOW",
                     email_notifications_enabled=True,
                     all_super_admins=True,
-                    alert_center_status="ENABLED",
                 )
             ]
 
@@ -112,7 +110,6 @@ class TestRulesPasswordChangedAlertConfigured:
                     state="ACTIVE",
                     email_notifications_enabled=True,
                     all_super_admins=True,
-                    alert_center_status="ENABLED",
                 )
             ]
 
@@ -183,7 +180,6 @@ class TestRulesPasswordChangedAlertConfigured:
                     severity="MEDIUM",
                     email_notifications_enabled=False,
                     all_super_admins=False,
-                    alert_center_status="ENABLED",
                 )
             ]
 
@@ -220,7 +216,6 @@ class TestRulesPasswordChangedAlertConfigured:
                     severity="MEDIUM",
                     email_notifications_enabled=True,
                     all_super_admins=False,
-                    alert_center_status="ENABLED",
                 )
             ]
 
