@@ -20,10 +20,12 @@ if TYPE_CHECKING:
     import requests
 
 
+OCI_MANIFEST_MEDIA_TYPE = "application/vnd.oci.image.manifest.v1+json"
+
 MANIFEST_ACCEPT_TYPES = (
     "application/vnd.docker.distribution.manifest.v2+json",
     "application/vnd.docker.distribution.manifest.list.v2+json",
-    "application/vnd.oci.image.manifest.v1+json",
+    OCI_MANIFEST_MEDIA_TYPE,
     "application/vnd.oci.image.index.v1+json",
 )
 
@@ -151,22 +153,28 @@ class OciRegistryAdapter(RegistryAdapter):
             )
             return True
 
-        content_type = resp.headers.get("Content-Type", "").split(";")[0].strip()
-        if content_type in INDEX_MEDIA_TYPES:
-            return True
+        # RFC 9110: media type tokens are case-insensitive
+        content_type = (
+            resp.headers.get("Content-Type", "").split(";")[0].strip().lower()
+        )
         if content_type == "application/vnd.docker.distribution.manifest.v2+json":
             return True
-        if content_type == "application/vnd.oci.image.manifest.v1+json":
-            # Helm charts, cosign signatures, SBOMs... all use this manifest
-            # media type; only artifactType/config.mediaType tells them apart.
+        if content_type in INDEX_MEDIA_TYPES or content_type == OCI_MANIFEST_MEDIA_TYPE:
+            # Helm charts, cosign signatures, SBOMs... reuse the OCI manifest
+            # media type, and since image-spec v1.1 an index can also represent
+            # a non-image artifact; only artifactType (or, for manifests,
+            # config.mediaType) tells them apart.
             try:
                 manifest = resp.json()
             except ValueError:
                 return True
-            artifact_type = manifest.get("artifactType")
+            artifact_type = (manifest.get("artifactType") or "").lower()
             if artifact_type:
                 return artifact_type in IMAGE_CONFIG_MEDIA_TYPES
-            config_type = manifest.get("config", {}).get("mediaType", "")
+            if content_type in INDEX_MEDIA_TYPES:
+                # Plain multi-arch index
+                return True
+            config_type = (manifest.get("config", {}).get("mediaType") or "").lower()
             return config_type in IMAGE_CONFIG_MEDIA_TYPES
         logger.info(
             f"Skipping {repository}:{tag} — manifest media type {content_type or 'unknown'} is not a container image"

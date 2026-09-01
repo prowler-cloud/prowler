@@ -1277,3 +1277,51 @@ class TestOciAdapterPickle:
         assert result.status_code == 200
         retry_headers = mock_request.call_args_list[2].kwargs["headers"]
         assert retry_headers["Authorization"] == "Bearer fresh-token"
+
+
+class TestOciAdapterArtifactIndexAndCaseInsensitivity:
+    def _adapter(self):
+        return OciRegistryAdapter("reg.io", token="t")
+
+    @staticmethod
+    def _manifest_resp(content_type, body=None):
+        resp = MagicMock(status_code=200, headers={"Content-Type": content_type})
+        resp.json.return_value = body or {}
+        return resp
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_artifact_index_is_not_image(self, mock_request):
+        # image-spec v1.1: an index can represent a non-image artifact
+        mock_request.return_value = self._manifest_resp(
+            "application/vnd.oci.image.index.v1+json",
+            {
+                "artifactType": "application/vnd.cncf.helm.config.v1+json",
+                "manifests": [],
+            },
+        )
+        assert self._adapter().is_container_image("charts/app", "1.0") is False
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_multiarch_index_without_artifact_type_is_image(self, mock_request):
+        mock_request.return_value = self._manifest_resp(
+            "application/vnd.oci.image.index.v1+json",
+            {"schemaVersion": 2, "manifests": [{"platform": {"os": "linux"}}]},
+        )
+        assert self._adapter().is_container_image("app", "latest") is True
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_mixed_case_media_type_is_normalized(self, mock_request):
+        # RFC 9110: type/subtype are case-insensitive
+        mock_request.return_value = self._manifest_resp(
+            "Application/vnd.OCI.Image.Manifest.v1+JSON",
+            {"config": {"mediaType": "application/vnd.oci.image.config.v1+json"}},
+        )
+        assert self._adapter().is_container_image("app", "1.0") is True
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_mixed_case_artifact_type_still_rejected(self, mock_request):
+        mock_request.return_value = self._manifest_resp(
+            "application/vnd.oci.image.manifest.v1+json",
+            {"artifactType": "Application/vnd.CNCF.Helm.Config.v1+json"},
+        )
+        assert self._adapter().is_container_image("charts/app", "1.0") is False
