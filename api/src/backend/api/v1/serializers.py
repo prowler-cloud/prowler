@@ -2163,11 +2163,24 @@ class ProviderSecretCreateSerializer(
         validated_secret = self.validate_secret_based_on_provider(
             provider.provider, secret_type, secret
         )
-        # Persist the per-provider validator's normalized output (e.g.
-        # `AzureProviderSecret` strips whitespace inside `certificate_content`).
-        # Previously this reassignment only happened for OCI, so every
-        # per-provider validator's normalization was discarded on write.
-        validated_attrs["secret"] = validated_secret
+        # OCI persists the full validated dict on purpose (its serializer
+        # already performs the sanitization it wants). For Azure, only the
+        # `certificate_content` field must be replaced with the normalized
+        # (whitespace-stripped) value; the rest of the dict is left as the
+        # caller submitted it so opaque credentials elsewhere in the payload
+        # keep whatever whitespace they carried. Every other provider stays
+        # on the outer JSONField's raw dict — DRF's `CharField.trim_whitespace`
+        # would otherwise silently mutate opaque tokens/passwords.
+        if provider.provider == Provider.ProviderChoices.ORACLECLOUD.value:
+            validated_attrs["secret"] = validated_secret
+        elif (
+            provider.provider == Provider.ProviderChoices.AZURE.value
+            and validated_secret.get("certificate_content")
+        ):
+            validated_attrs["secret"] = {
+                **secret,
+                "certificate_content": validated_secret["certificate_content"],
+            }
         return validated_attrs
 
 
@@ -2202,9 +2215,21 @@ class ProviderSecretUpdateSerializer(BaseWriteProviderSecretSerializer):
         validated_secret = self.validate_secret_based_on_provider(
             provider.provider, secret_type, secret
         )
-        # Persist the per-provider validator's normalized output — same
-        # rationale as `ProviderSecretCreateSerializer.validate`.
-        validated_attrs["secret"] = validated_secret
+        # Same targeted persistence as `ProviderSecretCreateSerializer.validate`:
+        # OCI keeps its full validated dict, Azure replaces only
+        # `certificate_content`, and every other provider stays on the raw
+        # submitted dict so opaque credentials do not get their whitespace
+        # silently trimmed.
+        if provider.provider == Provider.ProviderChoices.ORACLECLOUD.value:
+            validated_attrs["secret"] = validated_secret
+        elif (
+            provider.provider == Provider.ProviderChoices.AZURE.value
+            and validated_secret.get("certificate_content")
+        ):
+            validated_attrs["secret"] = {
+                **secret,
+                "certificate_content": validated_secret["certificate_content"],
+            }
         return validated_attrs
 
 
