@@ -9,7 +9,6 @@
       "Id": "GWS.COMMONCONTROLS.1.1",
       "Description": "Phishing-resistant MFA SHALL be required for all users",
       "Checks": [
-        "security_2sv_enforced",
         "security_2sv_hardware_keys_admins"
       ],
       "Attributes": [
