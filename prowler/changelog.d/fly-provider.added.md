@@ -1,0 +1,1 @@
+Fly.io provider with the `app`, `machine` and `volume` services and six checks covering public IP exposure, dedicated 6PN networking, image digest pinning, plaintext secrets in machine configuration, published edge ports and volume encryption at rest, mapped to CIS Controls 8.1

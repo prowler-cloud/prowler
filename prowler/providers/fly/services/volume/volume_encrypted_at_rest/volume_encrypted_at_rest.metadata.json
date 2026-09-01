@@ -1,0 +1,38 @@
+{
+  "Provider": "fly",
+  "CheckID": "volume_encrypted_at_rest",
+  "CheckTitle": "Fly.io volume is encrypted at rest",
+  "CheckType": [],
+  "ServiceName": "volume",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "FlyVolume",
+  "ResourceGroup": "storage",
+  "Description": "**Fly.io volumes** are assessed for **encryption at rest**. Volumes hold the persistent state of an app, such as database data directories, object storage buckets and uploaded evidence, and can be created with encryption disabled.",
+  "Risk": "An unencrypted volume stores tenant data in clear text on the host. Anyone able to read the underlying block device, including through a host-level compromise or a mishandled decommission, recovers the full contents of the database or object store, which also breaks the encryption-at-rest commitments made under SOC 2, ISO 27001 and GDPR.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://fly.io/docs/volumes/overview/",
+    "https://fly.io/docs/flyctl/volumes-create/",
+    "https://fly.io/docs/volumes/snapshots/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "fly volumes create <name> -a <app> -r <region> -s <size>",
+      "NativeIaC": "",
+      "Other": "1. Create a replacement encrypted volume (encryption is the default for 'fly volumes create')\n2. Copy the data from the unencrypted volume into the encrypted one\n3. Attach the machine to the encrypted volume and verify the workload\n4. Destroy the unencrypted volume once the restore has been verified",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Create every volume with encryption enabled and migrate any existing unencrypted volume to an encrypted replacement, verifying the restore before destroying the original.",
+      "Url": "https://hub.prowler.com/check/volume_encrypted_at_rest"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

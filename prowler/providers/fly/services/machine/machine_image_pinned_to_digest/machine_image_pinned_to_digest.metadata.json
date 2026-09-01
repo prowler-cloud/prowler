@@ -1,0 +1,38 @@
+{
+  "Provider": "fly",
+  "CheckID": "machine_image_pinned_to_digest",
+  "CheckTitle": "Fly.io machine runs an image pinned to an immutable digest",
+  "CheckType": [],
+  "ServiceName": "machine",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "FlyMachine",
+  "ResourceGroup": "compute",
+  "Description": "**Fly.io machines** are assessed for **image provenance**. The image reference stored in the machine configuration is compared against the immutable `@sha256:` digest form. Only a digest reference guarantees that the artifact running today is the artifact that was built, scanned and reviewed.",
+  "Risk": "A machine configured with a mutable tag such as `latest` pulls whatever the registry currently serves for that tag. An attacker who can publish to the registry, or a maintainer who republishes a tag, changes the running code without any change to the deployment configuration, and incident responders cannot reconstruct which artifact was running.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://fly.io/docs/machines/api/machines-resource/",
+    "https://slsa.dev/spec/v1.0/provenance",
+    "https://fly.io/docs/reference/configuration/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "fly machine update <machine-id> -a <app> --image <repo>@sha256:<digest>",
+      "NativeIaC": "",
+      "Other": "1. Resolve the tag to a digest, for example with 'skopeo inspect docker://<repo>:<tag>'\n2. Record the digest in the deployment configuration\n3. Deploy or update machines using the '<repo>@sha256:<digest>' reference\n4. Verify with the Machines API that config.image contains the digest",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Deploy machines from digest-pinned image references and record the digest in the release artifact so the running workload is reproducible and auditable.",
+      "Url": "https://hub.prowler.com/check/machine_image_pinned_to_digest"
+    }
+  },
+  "Categories": [
+    "software-supply-chain"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

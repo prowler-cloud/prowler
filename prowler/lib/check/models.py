@@ -1448,6 +1448,57 @@ class CheckReportVercel(Check_Report):
 
 
 @dataclass
+class CheckReportFly(Check_Report):
+    """Contains the Fly.io Check's finding information.
+
+    Fly.io resources belong to an organization and live in a Fly.io region;
+    app-level resources without a region are reported as global.
+    """
+
+    resource_name: str
+    resource_id: str
+    org_slug: str
+    app_name: str
+
+    def __init__(
+        self,
+        metadata: Dict,
+        resource: Any,
+        resource_name: str = None,
+        resource_id: str = None,
+        org_slug: str = None,
+        app_name: str = None,
+        region: str = None,
+    ) -> None:
+        """Initialize the Fly.io Check's finding information.
+
+        Args:
+            metadata: Check metadata dictionary
+            resource: The Fly.io resource being checked
+            resource_name: Override for resource name
+            resource_id: Override for resource ID
+            org_slug: Override for the organization slug
+            app_name: Override for the owning app name
+            region: Override for the Fly.io region
+        """
+        super().__init__(metadata, resource)
+        self.resource_name = resource_name or getattr(
+            resource, "name", getattr(resource, "resource_name", "")
+        )
+        self.resource_id = resource_id or getattr(
+            resource, "id", getattr(resource, "resource_id", "")
+        )
+        self.org_slug = org_slug or getattr(resource, "org_slug", "")
+        self.app_name = app_name or getattr(resource, "app_name", self.resource_name)
+        self._region = region or getattr(resource, "region", "") or "global"
+
+    @property
+    def region(self) -> str:
+        """Fly.io region of the resource, or 'global' for app-level findings."""
+        return self._region
+
+
+@dataclass
 class CheckReportScaleway(Check_Report):
     """Contains the Scaleway Check's finding information.
 

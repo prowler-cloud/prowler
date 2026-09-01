@@ -822,6 +822,10 @@
           "vm_ensure_attached_disks_encrypted_with_cmk",
           "vm_ensure_unattached_disks_encrypted_with_cmk"
         ],
+        "fly": [
+          "volume_encrypted_at_rest",
+          "machine_no_plaintext_secrets_in_env"
+        ],
         "gcp": [
           "bigquery_dataset_cmk_encryption",
           "bigquery_table_cmk_encryption",
@@ -1093,6 +1097,9 @@
           "network_rdp_internet_access_restricted",
           "network_ssh_internet_access_restricted"
         ],
+        "fly": [
+          "machine_no_public_non_http_ports"
+        ],
         "gcp": [
           "compute_firewall_rdp_access_from_the_internet_allowed",
           "compute_firewall_ssh_access_from_the_internet_allowed"
@@ -1195,6 +1202,9 @@
           "zone_https_redirect_enabled",
           "zone_min_tls_version_secure",
           "zone_ssl_strict"
+        ],
+        "fly": [
+          "app_no_public_ip_address"
         ],
         "gcp": [
           "compute_instance_block_project_wide_ssh_keys_disabled",
@@ -3199,6 +3209,9 @@
           "storage_account_public_network_access_disabled",
           "storage_ensure_private_endpoints_in_storage_accounts"
         ],
+        "fly": [
+          "app_uses_dedicated_private_network"
+        ],
         "gcp": [
           "cloudfunction_function_inside_vpc",
           "cloudsql_instance_private_ip_assignment",
@@ -4135,6 +4148,9 @@
           "app_ensure_using_http20",
           "app_ftp_deployment_disabled",
           "app_minimum_tls_version_12"
+        ],
+        "fly": [
+          "machine_image_pinned_to_digest"
         ],
         "gcp": [
           "cloudsql_instance_mysql_local_infile_flag",

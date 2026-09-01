@@ -436,6 +436,15 @@ class Finding(BaseModel):
                 output_data["resource_uid"] = check_output.resource_id
                 output_data["region"] = check_output.zone_name
 
+            elif provider.type == "fly":
+                output_data["auth_method"] = "api_token"
+                organization = get_nested_attribute(provider, "identity.organization")
+                output_data["account_uid"] = organization.id if organization else ""
+                output_data["account_name"] = organization.slug if organization else ""
+                output_data["resource_name"] = check_output.resource_name
+                output_data["resource_uid"] = check_output.resource_id
+                output_data["region"] = check_output.region
+
             elif provider.type == "vercel":
                 output_data["auth_method"] = "api_token"
                 team = get_nested_attribute(provider, "identity.team")

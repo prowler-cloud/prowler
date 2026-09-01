@@ -1,0 +1,93 @@
+---
+title: 'Getting Started With Fly.io on Prowler'
+---
+
+import { VersionBadge } from "/snippets/version-badge.mdx"
+
+<VersionBadge version="5.41.0" />
+
+Prowler for Fly.io scans a Fly.io organization for security misconfigurations across apps, machines, and volumes, covering internet exposure, private networking, secrets handling, image provenance, and encryption at rest.
+
+<Note>
+Fly.io support in Prowler is community-maintained. For commercial support or to request additional service coverage, [contact us](https://prowler.com/contact).
+</Note>
+
+## Prerequisites
+
+Set up authentication for Fly.io with the [Fly.io Authentication](/user-guide/providers/fly/authentication) guide before starting:
+
+- Create an organization-scoped read-only Fly.io access token
+- Note the slug of the organization to scan
+
+## Prowler CLI
+
+### Run Prowler for Fly.io
+
+Once authenticated, export the credentials as environment variables and run Prowler for Fly.io. Environment variables keep secrets out of shell history and process listings:
+
+```bash
+export FLY_API_TOKEN="your-fly-access-token"
+export FLY_ORG="your-organization-slug"
+prowler fly
+```
+
+The organization can also be selected with `--organization` (alias `--org`). When neither the flag nor `FLY_ORG` is set, Prowler scans the only organization the token can read, and stops with an error when the token can read several.
+
+### Run Specific Checks
+
+```bash
+prowler fly --checks app_no_public_ip_address volume_encrypted_at_rest
+```
+
+### Run a Specific Service
+
+```bash
+prowler fly --services machine
+```
+
+### Scan Specific Apps
+
+Use `--app` (alias `--apps`) to limit the scan to one or more apps of the organization. When the flag is omitted, every app of the organization is scanned.
+
+```bash
+prowler fly --app api-gateway worker-pool
+```
+
+## Available Services
+
+Prowler for Fly.io currently supports the following services:
+
+| Service | Description |
+|---------|-------------|
+| `app` | Apps with their allocated public IP addresses and private 6PN network assignment |
+| `machine` | Machines with their image reference, published services, and plain configuration |
+| `volume` | Volumes with their encryption state |
+
+## Available Checks
+
+| Check | Severity | Description |
+|-------|----------|-------------|
+| `app_no_public_ip_address` | high | App holds no public IPv4 or IPv6 address and is only reachable over the private network |
+| `app_uses_dedicated_private_network` | medium | App runs on a dedicated 6PN network instead of the shared organization network |
+| `machine_image_pinned_to_digest` | medium | Machine runs an image pinned to an immutable digest instead of a mutable tag |
+| `machine_no_plaintext_secrets_in_env` | high | Machine keeps secret-like values in Fly secrets instead of its plain configuration |
+| `machine_no_public_non_http_ports` | high | Machine publishes only HTTP and HTTPS ports to the internet |
+| `volume_encrypted_at_rest` | high | Volume is encrypted at rest |
+
+## Configuration
+
+Several checks read optional values from the `fly` section of the Prowler configuration file, so an environment can describe its intended posture instead of muting findings:
+
+```yaml
+fly:
+  # Apps that are expected to serve public traffic and may hold a public IP address
+  public_apps: ["api-gateway"]
+  # Edge ports a machine service may publish
+  allowed_public_ports: [80, 443]
+  # Substrings that mark a machine env variable name as secret-like
+  secret_env_name_patterns: ["PASSWORD", "SECRET", "TOKEN", "API_KEY"]
+```
+
+```bash
+prowler fly --config-file ./prowler-config.yaml
+```

@@ -625,6 +625,14 @@ class Provider(ABC):
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
                     )
+                elif arguments.provider == "fly":
+                    provider_class(
+                        organization=getattr(arguments, "organization", None),
+                        apps=getattr(arguments, "app", None),
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
+                        fixer_config=fixer_config,
+                    )
                 elif arguments.provider == "e2enetworks":
                     provider_class(
                         api_key=getattr(arguments, "e2e_networks_api_key", None),

@@ -1,0 +1,76 @@
+---
+title: "Fly.io Authentication in Prowler"
+---
+
+import { VersionBadge } from "/snippets/version-badge.mdx"
+
+<VersionBadge version="5.41.0" />
+
+Prowler for Fly.io authenticates against the Fly.io Machines API and GraphQL API with a **Fly.io access token**. Set the token as an environment variable to avoid exposing it in shell history or process listings. Every request Prowler sends is a read operation, so an organization-scoped read-only token is enough to run the whole scan.
+
+## Required Credentials
+
+| Credential | Environment Variable | Description |
+|------------|----------------------|-------------|
+| Access Token | `FLY_API_TOKEN` | Token authorizing read access to the organization |
+| Organization | `FLY_ORG` | Optional slug of the organization to scan |
+
+<Warning>
+Do not use a personal account token. An account token can read and modify every organization the account belongs to, which is far more access than a scan needs.
+</Warning>
+
+---
+
+## API Credentials
+
+### Step 1: Create an Organization Read-Only Token
+
+Create the token with flyctl:
+
+```bash
+fly tokens create readonly <organization-slug> --name prowler-scan --expiry 720h
+```
+
+The token is printed once. Copy it immediately.
+
+Organization tokens can also be created from the Fly.io dashboard under **Organization Settings > Tokens**.
+
+### Step 2: Configure Authentication
+
+Export the token and, optionally, the organization slug:
+
+```bash
+export FLY_API_TOKEN="your-fly-access-token"
+export FLY_ORG="your-organization-slug"
+```
+
+Then run Prowler:
+
+```bash
+prowler fly
+```
+
+When `FLY_ORG` is not set and `--organization` is not passed, Prowler scans the only organization the token can read. A token that can read several organizations requires the slug, so the scope of the scan is always explicit.
+
+---
+
+## Verifying Authentication
+
+Prowler resolves the organization before the first check runs and prints the audited organization in the credentials box at the start of the scan:
+
+```bash
+prowler fly --organization <organization-slug>
+```
+
+A token that cannot read the requested organization stops the scan with an authentication error, and an expired or malformed token stops it with a credentials error, in both cases before any resource is read.
+
+---
+
+## Token Scope and Least Privilege
+
+| Practice | Reason |
+|----------|--------|
+| Use an organization token, not an account token | Limits the scan to a single organization |
+| Use a read-only token | Prowler never writes; a read-only token makes that guarantee enforceable |
+| Set an expiry | Limits how long a leaked token remains usable |
+| Store the token in a secret manager | Keeps the value out of shell history, scripts, and CI logs |
