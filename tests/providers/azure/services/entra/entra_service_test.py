@@ -317,10 +317,10 @@ class TestGetUsersSignInActivity:
         return error
 
     @staticmethod
-    def _users_response():
+    def _users_response(value=None, next_link=None):
         from types import SimpleNamespace
 
-        return SimpleNamespace(value=[], odata_next_link=None)
+        return SimpleNamespace(value=value or [], odata_next_link=next_link)
 
     def _service(self, side_effect):
         # SimpleNamespace instead of MagicMock: several check tests assign
@@ -369,6 +369,38 @@ class TestGetUsersSignInActivity:
         assert "503" in service.users_retrieval_errors["tenant.onmicrosoft.com"]
         assert users == {"tenant.onmicrosoft.com": {}}
         assert service.clients["tenant.onmicrosoft.com"].users.get.await_count == 1
+
+    def test_failing_second_page_records_users_retrieval_error(self):
+        import asyncio
+        from types import SimpleNamespace
+        from unittest.mock import AsyncMock
+
+        service = self._service(
+            side_effect=[
+                self._users_response(
+                    value=[
+                        SimpleNamespace(
+                            id="user-1",
+                            display_name="user-1",
+                            account_enabled=True,
+                            sign_in_activity=None,
+                        )
+                    ],
+                    next_link="https://graph.microsoft.com/v1.0/users?$skiptoken=page2",
+                )
+            ]
+        )
+        service.clients["tenant.onmicrosoft.com"].users.with_url = lambda _: (
+            SimpleNamespace(get=AsyncMock(side_effect=self._graph_error(503)))
+        )
+        users = asyncio.run(service._get_users())
+
+        # The first page made it into the inventory, but the tenant is marked
+        # unavailable: a partial inventory must not be evaluated as complete.
+        assert "user-1" in users["tenant.onmicrosoft.com"]
+        assert "tenant.onmicrosoft.com" in service.users_retrieval_errors
+        assert "503" in service.users_retrieval_errors["tenant.onmicrosoft.com"]
+        assert service.sign_in_activity_errors == {}
 
     def test_403_with_failing_retry_records_users_retrieval_error(self):
         import asyncio

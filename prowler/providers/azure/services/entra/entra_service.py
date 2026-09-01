@@ -89,9 +89,10 @@ class Entra(AzureService):
         ``self.sign_in_activity_errors`` and the users are fetched again
         without ``signInActivity`` so the remaining user checks can still run.
 
-        Any other failure to retrieve the users (throttling, 5xx, network)
-        is recorded in ``self.users_retrieval_errors`` so the user-based
-        checks report MANUAL instead of evaluating an empty inventory.
+        Any other failure to retrieve the users (throttling, 5xx, network),
+        including a failure on a later page of the paginated response, is
+        recorded in ``self.users_retrieval_errors`` so the user-based checks
+        report MANUAL instead of evaluating an empty or partial inventory.
 
         Returns:
             dict: Tenant domain mapped to a dict of user id -> ``User``. A
@@ -187,8 +188,15 @@ class Entra(AzureService):
                         users_response = await client.users.with_url(next_link).get()
 
                 except Exception as error:
+                    # A failed page (throttling, 5xx, network) leaves the
+                    # inventory incomplete: the users retrieved so far must
+                    # not be treated as the whole tenant, so record the error
+                    # and let the user-based checks report MANUAL.
+                    self.users_retrieval_errors[tenant] = self._describe_graph_error(
+                        error
+                    )
                     logger.error(
-                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        f"{tenant} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
         except Exception as error:
             logger.error(
