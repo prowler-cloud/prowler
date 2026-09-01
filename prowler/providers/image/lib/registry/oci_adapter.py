@@ -131,6 +131,16 @@ class OciRegistryAdapter(RegistryAdapter):
             )
         realm = self._validate_outbound_url(match.group(1))
         realm_is_http = urlparse(realm).scheme == "http"
+        if realm_is_http and urlparse(self._base_url).scheme == "https":
+            # Transport downgrade: an on-path attacker could read or replace
+            # the token. An all-HTTP registry is an explicit operator choice.
+            raise ImageRegistryAuthError(
+                file=__file__,
+                message=(
+                    f"Registry {self.registry_url} uses HTTPS but its token realm "
+                    f"{realm} uses HTTP; refusing to exchange a token over cleartext."
+                ),
+            )
         if realm_is_http:
             logger.warning(f"Bearer token realm uses HTTP (not HTTPS): {realm}")
         params: dict = {}
@@ -144,17 +154,7 @@ class OciRegistryAdapter(RegistryAdapter):
             params["scope"] = f"repository:{repository}:pull"
         auth = None
         if self.username and self.password:
-            # An HTTPS registry pointing at an HTTP realm is a transport
-            # downgrade: never send credentials in cleartext there. An
-            # all-HTTP registry is an explicit operator choice, so keep them.
-            registry_is_http = urlparse(self._base_url).scheme == "http"
-            if realm_is_http and not registry_is_http:
-                logger.warning(
-                    f"Withholding credentials from HTTP token realm {realm}: "
-                    f"registry {self.registry_url} uses HTTPS"
-                )
-            else:
-                auth = (self.username, self.password)
+            auth = (self.username, self.password)
         resp = self._request_with_retry("GET", realm, params=params, auth=auth)
         if resp.status_code != 200:
             raise ImageRegistryAuthError(

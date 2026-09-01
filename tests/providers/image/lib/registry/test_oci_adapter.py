@@ -98,21 +98,19 @@ class TestOciAdapterAuth:
         assert adapter._bearer_token == "bearer-tok"
 
     @patch("prowler.providers.image.lib.registry.base.requests.request")
-    def test_http_realm_from_https_registry_gets_no_credentials(self, mock_request):
+    def test_http_realm_from_https_registry_raises(self, mock_request):
         ping_resp = MagicMock(
             status_code=401,
             headers={
                 "Www-Authenticate": 'Bearer realm="http://auth.reg.io/token",service="registry"'
             },
         )
-        token_resp = MagicMock(status_code=200)
-        token_resp.json.return_value = {"token": "bearer-tok"}
-        mock_request.side_effect = [ping_resp, token_resp]
+        mock_request.return_value = ping_resp
         adapter = OciRegistryAdapter("https://reg.io", username="u", password="p")
-        adapter._ensure_auth()
-        assert adapter._bearer_token == "bearer-tok"
-        token_call = mock_request.call_args_list[1]
-        assert token_call.kwargs.get("auth") is None
+        with pytest.raises(ImageRegistryAuthError, match="cleartext"):
+            adapter._ensure_auth()
+        # The token exchange must never happen: only the /v2/ ping went out
+        assert mock_request.call_count == 1
 
     @patch("prowler.providers.image.lib.registry.base.requests.request")
     def test_http_realm_from_http_registry_keeps_credentials(self, mock_request):
