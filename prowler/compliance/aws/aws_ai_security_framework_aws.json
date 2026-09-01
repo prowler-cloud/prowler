@@ -241,6 +241,7 @@
         "iam_inline_policy_no_administrative_privileges",
         "iam_policy_allows_privilege_escalation",
         "iam_inline_policy_allows_privilege_escalation",
+        "iam_policy_passrole_to_bedrock_agentcore_restricted",
         "iam_role_administratoraccess_policy",
         "iam_user_administrator_access_policy",
         "iam_group_administrator_access_policy",
@@ -269,6 +270,7 @@
         "iam_user_no_setup_initial_access_key",
         "iam_user_two_active_access_key",
         "iam_user_console_access_unused",
+        "iam_policy_no_agentcore_workload_access_token_wildcard",
         "bedrock_api_key_no_long_term_credentials"
       ]
     },
@@ -305,6 +307,7 @@
       ],
       "Checks": [
         "iam_role_cross_service_confused_deputy_prevention",
+        "iam_role_service_trust_restricts_source_to_account",
         "iam_role_access_not_stale_to_bedrock",
         "iam_user_access_not_stale_to_bedrock",
         "iam_role_cross_account_readonlyaccess_policy"
