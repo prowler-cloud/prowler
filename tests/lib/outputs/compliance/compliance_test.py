@@ -5,6 +5,7 @@ from prowler.lib.check.compliance_models import (
     CIS_Requirement_Attribute,
     Compliance,
     Compliance_Requirement,
+    Generic_Compliance_Requirement_Attribute,
 )
 from prowler.lib.check.models import Check_Report, load_check_metadata
 from prowler.lib.outputs.compliance.compliance import get_check_compliance
@@ -390,6 +391,56 @@ class TestCompliance:
 
         assert get_check_compliance(finding, "github", bulk_checks_metadata) == {
             "CIS-1.0": ["1.1.11"],
+        }
+
+
+    def test_get_check_compliance_azure_mitre_d3fend(self):
+        check_compliance = [
+            Compliance(
+                Framework="MITRE-D3FEND",
+                Name="MITRE D3FEND compliance framework",
+                Provider="Azure",
+                Version="",
+                Description="MITRE D3FEND Azure mappings",
+                Requirements=[
+                    Compliance_Requirement(
+                        Checks=[],
+                        Id="D3-MFA",
+                        Description="Requiring proof of two or more pieces of evidence in order to authenticate a user.",
+                        Attributes=[
+                            Generic_Compliance_Requirement_Attribute(
+                                Section="Harden",
+                                SubSection="Credential Hardening",
+                                SubGroup="Multi-factor Authentication",
+                                Service="Microsoft Entra ID",
+                                Type="Automated",
+                                Comment="MFA requirement for Entra identities.",
+                            )
+                        ],
+                    )
+                ],
+            )
+        ]
+
+        finding = Check_Report(
+            metadata=load_check_metadata(
+                f"{path.dirname(path.realpath(__file__))}/../fixtures/metadata.json"
+            ).json(),
+            resource={},
+        )
+        finding.resource_details = "Test resource details"
+        finding.resource_id = "test-resource"
+        finding.resource_arn = "test-arn"
+        finding.region = "eu-west-1"
+        finding.status = "PASS"
+        finding.status_extended = "This is a test"
+
+        bulk_checks_metadata = {}
+        bulk_checks_metadata["iam_user_accesskey_unused"] = mock.MagicMock()
+        bulk_checks_metadata["iam_user_accesskey_unused"].Compliance = check_compliance
+
+        assert get_check_compliance(finding, "azure", bulk_checks_metadata) == {
+            "MITRE-D3FEND": ["D3-MFA"],
         }
 
 
