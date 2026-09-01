@@ -21369,9 +21369,8 @@ components:
                           where the application is registered.
                       certificate_content:
                         type: string
-                        description: Base64-encoded PEM or PKCS#12/PFX bundle containing the certificate
-                          and its matching private key for certificate-based authentication.
-                        maxLength: 68268
+                        description: The certificate content in base64 format for certificate-based
+                          authentication.
                     required:
                     - client_id
                     - tenant_id
@@ -23520,9 +23519,8 @@ components:
                       the application is registered.
                   certificate_content:
                     type: string
-                    description: Base64-encoded PEM or PKCS#12/PFX bundle containing the certificate
-                      and its matching private key for certificate-based authentication.
-                    maxLength: 68268
+                    description: The certificate content in base64 format for certificate-based
+                      authentication.
                 required:
                 - client_id
                 - tenant_id
@@ -23987,9 +23985,8 @@ components:
                           where the application is registered.
                       certificate_content:
                         type: string
-                        description: Base64-encoded PEM or PKCS#12/PFX bundle containing the certificate
-                          and its matching private key for certificate-based authentication.
-                        maxLength: 68268
+                        description: The certificate content in base64 format for certificate-based
+                          authentication.
                     required:
                     - client_id
                     - tenant_id
@@ -24476,9 +24473,8 @@ components:
                       the application is registered.
                   certificate_content:
                     type: string
-                    description: Base64-encoded PEM or PKCS#12/PFX bundle containing the certificate
-                      and its matching private key for certificate-based authentication.
-                    maxLength: 68268
+                    description: The certificate content in base64 format for certificate-based
+                      authentication.
                 required:
                 - client_id
                 - tenant_id

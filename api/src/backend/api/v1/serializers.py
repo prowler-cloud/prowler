@@ -1871,20 +1871,16 @@ class M365ProviderSecret(serializers.Serializer):
     tenant_id = serializers.CharField()
     user = serializers.EmailField(required=False)
     password = serializers.CharField(required=False)
-    certificate_content = serializers.CharField(
-        required=False, max_length=_MAX_CERTIFICATE_CONTENT_LENGTH
-    )
+    certificate_content = serializers.CharField(required=False)
 
     def validate(self, attrs):
         if attrs.get("client_secret") and attrs.get("certificate_content"):
             raise serializers.ValidationError(
-                "You cannot provide both client_secret and certificate_content.",
-                code="m365-credential-mutex",
+                "You cannot provide both client_secret and certificate_content."
             )
         if not attrs.get("client_secret") and not attrs.get("certificate_content"):
             raise serializers.ValidationError(
-                "You must provide either client_secret or certificate_content.",
-                code="m365-credential-required",
+                "You must provide either client_secret or certificate_content."
             )
         return super().validate(attrs)
 
@@ -1893,13 +1889,13 @@ class M365ProviderSecret(serializers.Serializer):
         if certificate_content:
             try:
                 base64.b64decode(certificate_content, validate=True)
-            # `base64.b64decode(validate=True)` raises `binascii.Error`; the
-            # legacy alias `ValueError` is preserved for older builds.
-            except (binascii.Error, ValueError) as e:
-                # DRF field validators are already keyed to `certificate_content`,
-                # so raising a dict here would double-nest the JSON:API pointer.
-                raise serializers.ValidationError(
-                    f"The provided certificate content is not valid base64 encoded data: {str(e)}",
+            except Exception as e:
+                raise ValidationError(
+                    {
+                        "certificate_content": [
+                            f"The provided certificate content is not valid base64 encoded data: {str(e)}"
+                        ]
+                    },
                     code="m365-certificate-content",
                 )
         return certificate_content
@@ -2167,8 +2163,11 @@ class ProviderSecretCreateSerializer(
         validated_secret = self.validate_secret_based_on_provider(
             provider.provider, secret_type, secret
         )
-        if provider.provider == Provider.ProviderChoices.ORACLECLOUD.value:
-            validated_attrs["secret"] = validated_secret
+        # Persist the per-provider validator's normalized output (e.g.
+        # `AzureProviderSecret` strips whitespace inside `certificate_content`).
+        # Previously this reassignment only happened for OCI, so every
+        # per-provider validator's normalization was discarded on write.
+        validated_attrs["secret"] = validated_secret
         return validated_attrs
 
 
@@ -2203,8 +2202,9 @@ class ProviderSecretUpdateSerializer(BaseWriteProviderSecretSerializer):
         validated_secret = self.validate_secret_based_on_provider(
             provider.provider, secret_type, secret
         )
-        if provider.provider == Provider.ProviderChoices.ORACLECLOUD.value:
-            validated_attrs["secret"] = validated_secret
+        # Persist the per-provider validator's normalized output — same
+        # rationale as `ProviderSecretCreateSerializer.validate`.
+        validated_attrs["secret"] = validated_secret
         return validated_attrs
 
 
