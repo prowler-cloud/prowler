@@ -274,3 +274,15 @@ class TestNonImageArtifactFiltering:
         provider = _build_provider(images=["nginx:latest"])
         assert "myregistry.io/app:latest" in provider._registry_discovered
         assert "nginx:latest" not in provider._registry_discovered
+
+    @patch("prowler.providers.image.image_provider.create_registry_adapter")
+    def test_explicit_image_also_discovered_keeps_hard_failure(self, mock_factory):
+        adapter = MagicMock()
+        adapter.list_repositories.return_value = ["myapp"]
+        adapter.list_tags.return_value = ["latest"]
+        adapter.is_container_image.return_value = True
+        mock_factory.return_value = adapter
+
+        provider = _build_provider(images=["myregistry.io/myapp:latest"])
+        # The user asked for it explicitly: no error degradation
+        assert "myregistry.io/myapp:latest" not in provider._registry_discovered

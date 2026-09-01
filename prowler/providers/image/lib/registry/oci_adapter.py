@@ -59,6 +59,15 @@ class OciRegistryAdapter(RegistryAdapter):
         # exchanges so N concurrent 401s don't trigger N auth round-trips.
         self._auth_lock = threading.Lock()
 
+    def __getstate__(self) -> dict:
+        state = super().__getstate__()
+        del state["_auth_lock"]
+        return state
+
+    def __setstate__(self, state: dict) -> None:
+        self.__dict__.update(state)
+        self._auth_lock = threading.Lock()
+
     @staticmethod
     def _normalise_url(url: str) -> str:
         url = url.rstrip("/")
@@ -285,11 +294,22 @@ class OciRegistryAdapter(RegistryAdapter):
     def _authed_request(self, method: str, url: str, **kwargs) -> requests.Response:
         resp = self._do_authed_request(method, url, **kwargs)
         if resp.status_code == 401 and self._bearer_token:
-            logger.debug(
-                f"Bearer token rejected (HTTP 401), re-authenticating to {self.registry_url}"
+            challenge = self._find_challenge(
+                resp.headers.get("Www-Authenticate", ""), "Bearer"
             )
-            self._bearer_token = None
-            self._ensure_auth()
+            if challenge and self._is_same_origin_as_registry(url):
+                # The cached token may be scoped to another repository; the
+                # response challenge names the exact scope this endpoint needs.
+                logger.debug(
+                    f"Bearer token rejected (HTTP 401), re-authenticating with response challenge scope for {url}"
+                )
+                self._bearer_token = self._obtain_bearer_token(challenge)
+            else:
+                logger.debug(
+                    f"Bearer token rejected (HTTP 401), re-authenticating to {self.registry_url}"
+                )
+                self._bearer_token = None
+                self._ensure_auth()
             resp = self._do_authed_request(method, url, **kwargs)
         if (
             resp.status_code == 401

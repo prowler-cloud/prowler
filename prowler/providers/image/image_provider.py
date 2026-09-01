@@ -943,7 +943,9 @@ class ImageProvider(Provider):
             if img not in existing:
                 self.images.append(img)
                 existing.add(img)
-            self._registry_discovered.add(img)
+                # Only enumeration-added images get error degradation; an image
+                # the user also requested explicitly keeps failing hard.
+                self._registry_discovered.add(img)
 
         logger.info(
             f"Discovered {len(discovered_images)} images from registry {self.registry} "

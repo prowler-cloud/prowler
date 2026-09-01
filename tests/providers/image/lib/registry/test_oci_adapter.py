@@ -225,8 +225,8 @@ class TestOciAdapterAuth:
     def test_authed_request_retries_on_401_with_bearer(self, mock_request):
         adapter = OciRegistryAdapter("reg.io", username="u", password="p")
         adapter._bearer_token = "expired-token"
-        # First request: 401 (expired token)
-        resp_401 = MagicMock(status_code=401)
+        # First request: 401 without a challenge -> blind re-auth fallback
+        resp_401 = MagicMock(status_code=401, headers={})
         # _ensure_auth ping: 401 with bearer challenge
         ping_resp = MagicMock(
             status_code=401,
@@ -905,11 +905,10 @@ class TestBasicAuthFallback:
         mock_request.side_effect = [
             ping,
             token,
-            catalog_401,
-            ping,
-            token,
-            catalog_401,
-            catalog_ok,
+            catalog_401,  # bearer without catalog scope
+            token,  # re-auth straight from the response's Bearer challenge
+            catalog_401,  # scoped bearer retry, same result
+            catalog_ok,  # basic fallback
         ]
 
         adapter = OciRegistryAdapter("reg.io", username="admin", password="secret")
@@ -1204,3 +1203,43 @@ class TestOciAdapterIsContainerImage:
         adapter._ensure_auth(repository="app")
         adapter._ensure_auth(repository="other")
         assert mock_request.call_count == 1
+
+
+class TestOciAdapterScopedReauth:
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_401_with_challenge_reauths_with_response_scope(self, mock_request):
+        adapter = OciRegistryAdapter("reg.io", username="u", password="p")
+        adapter._bearer_token = "token-scoped-to-other-repo"
+        resp_401 = MagicMock(
+            status_code=401,
+            headers={
+                "Www-Authenticate": 'Bearer realm="https://auth.reg.io/token",service="registry",scope="repository:myapp:pull"'
+            },
+        )
+        token_resp = MagicMock(status_code=200)
+        token_resp.json.return_value = {"token": "myapp-scoped-token"}
+        resp_200 = MagicMock(status_code=200)
+        mock_request.side_effect = [resp_401, token_resp, resp_200]
+
+        result = adapter._authed_request(
+            "GET", "https://reg.io/v2/myapp/manifests/latest"
+        )
+
+        assert result.status_code == 200
+        assert adapter._bearer_token == "myapp-scoped-token"
+        # Token exchange used the scope from the response challenge, no blind /v2/ ping
+        token_call = mock_request.call_args_list[1]
+        assert token_call.kwargs["params"]["scope"] == "repository:myapp:pull"
+        assert mock_request.call_count == 3
+
+
+class TestOciAdapterPickle:
+    def test_adapter_is_picklable_despite_auth_lock(self):
+        import pickle
+
+        adapter = OciRegistryAdapter("reg.io", username="u", password="p")
+        restored = pickle.loads(pickle.dumps(adapter))
+        assert restored._base_url == "https://reg.io"
+        # The lock is recreated, not carried over
+        assert restored._auth_lock is not adapter._auth_lock
+        restored._ensure_auth  # attribute access must not blow up
