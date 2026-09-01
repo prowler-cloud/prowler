@@ -1,9 +1,10 @@
 import json
+import re
 from datetime import datetime, timezone
 from typing import Optional
 
 from botocore.exceptions import ClientError
-from pydantic.v1 import BaseModel
+from pydantic.v1 import BaseModel, Field
 
 from prowler.lib.logger import logger
 from prowler.lib.resource_limit import (
@@ -13,16 +14,81 @@ from prowler.lib.resource_limit import (
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
+_QUERY_ID = re.compile(r"\b[a-z][A-Za-z0-9_]*\b")
+_QUOTED_TEXT = re.compile(r"""(?:"[^"]*"|'[^']*')""")
+_METRICS_CALL = re.compile(r"""\bMETRICS\(\s*(?:(["'])(.*?)\1)?\s*\)""", re.IGNORECASE)
+
+
+def _watched_metric_ids(queries):
+    queries_by_id = {query["Id"]: query for query in queries if query.get("Id")}
+    metric_ids = {
+        query_id for query_id, query in queries_by_id.items() if "MetricStat" in query
+    }
+    pending = [
+        query_id
+        for query_id, query in queries_by_id.items()
+        if query.get("ReturnData", True)
+    ]
+    watched = set()
+    visited = set()
+
+    while pending:
+        query_id = pending.pop()
+        if query_id in visited:
+            continue
+        visited.add(query_id)
+        query = queries_by_id[query_id]
+        if "MetricStat" in query:
+            watched.add(query_id)
+            continue
+
+        expression = query.get("Expression", "")
+        for match in _METRICS_CALL.finditer(expression):
+            needle = match.group(2)
+            pending.extend(
+                metric_id
+                for metric_id in metric_ids
+                if needle is None or needle in metric_id
+            )
+
+        expression = _QUOTED_TEXT.sub("", expression)
+        pending.extend(set(_QUERY_ID.findall(expression)) & queries_by_id.keys())
+
+    return watched
+
+
+def _metric_reference(metric, account_id=None):
+    namespace = metric.get("Namespace")
+    name = metric.get("MetricName")
+    if not namespace or not name:
+        return None
+    dimensions = tuple(
+        sorted(
+            (dimension["Name"], dimension["Value"])
+            for dimension in metric.get("Dimensions", [])
+        )
+    )
+    return namespace, name, dimensions, account_id
+
 
 class CloudWatch(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.metric_alarms = []
+        self.all_metric_alarms = []
         # True when DescribeAlarms was denied in at least one audited region,
         # so the alarm inventory may be incomplete.
         self.metric_alarms_unavailable = False
+        self.metric_alarms_scanned_regions = set()
+        self.metric_alarms_scan_errors = {}
         self.__threading_call__(self._describe_alarms)
+        if (
+            not self.metric_alarms
+            and not self.metric_alarms_scanned_regions
+            and "AccessDenied" in self.metric_alarms_scan_errors.values()
+        ):
+            self.metric_alarms = None
         if self.metric_alarms:
             self._list_tags_for_resource()
 
@@ -32,46 +98,78 @@ class CloudWatch(AWSService):
             describe_alarms_paginator = regional_client.get_paginator("describe_alarms")
             for page in describe_alarms_paginator.paginate():
                 for alarm in page["MetricAlarms"]:
+                    metric_name = alarm.get("MetricName")
+                    namespace = alarm.get("Namespace")
+                    namespaces = {namespace} if namespace else set()
+                    metric_references = set()
+                    direct_reference = _metric_reference(alarm)
+                    if direct_reference:
+                        metric_references.add(direct_reference)
+                    queries = alarm.get("Metrics", [])
+                    for query in queries:
+                        metric = query.get("MetricStat", {}).get("Metric", {})
+                        query_namespace = metric.get("Namespace")
+                        if query_namespace:
+                            namespaces.add(query_namespace)
+                    watched_metric_ids = _watched_metric_ids(queries)
+                    for query in queries:
+                        if query.get("Id") not in watched_metric_ids:
+                            continue
+                        metric = query.get("MetricStat", {}).get("Metric", {})
+                        reference = _metric_reference(metric, query.get("AccountId"))
+                        if reference:
+                            metric_references.add(reference)
+                    metric_alarm = MetricAlarm(
+                        arn=alarm["AlarmArn"],
+                        name=alarm["AlarmName"],
+                        metric=metric_name,
+                        name_space=namespace,
+                        namespaces=sorted(namespaces),
+                        metric_references=[
+                            MetricReference(
+                                namespace=reference[0],
+                                name=reference[1],
+                                dimensions=dict(reference[2]),
+                                account_id=reference[3],
+                            )
+                            for reference in sorted(
+                                metric_references,
+                                key=lambda item: (
+                                    item[0],
+                                    item[1],
+                                    item[2],
+                                    item[3] or "",
+                                ),
+                            )
+                        ],
+                        region=regional_client.region,
+                        alarm_actions=alarm.get("AlarmActions", []),
+                        actions_enabled=alarm.get("ActionsEnabled", False),
+                    )
+                    self.all_metric_alarms.append(metric_alarm)
                     if not self.audit_resources or (
                         is_resource_filtered(alarm["AlarmArn"], self.audit_resources)
                     ):
-                        metric_name = None
-                        if "MetricName" in alarm:
-                            metric_name = alarm["MetricName"]
-                        namespace = None
-                        if "Namespace" in alarm:
-                            namespace = alarm["Namespace"]
-                        if self.metric_alarms is None:
-                            self.metric_alarms = []
-                        self.metric_alarms.append(
-                            MetricAlarm(
-                                arn=alarm["AlarmArn"],
-                                name=alarm["AlarmName"],
-                                metric=metric_name,
-                                name_space=namespace,
-                                region=regional_client.region,
-                                alarm_actions=alarm.get("AlarmActions", []),
-                                actions_enabled=alarm.get("ActionsEnabled", False),
-                            )
-                        )
+                        self.metric_alarms.append(metric_alarm)
         except ClientError as error:
-            if error.response["Error"]["Code"] == "AccessDenied":
-                logger.error(
-                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                )
-                self.metric_alarms_unavailable = True
-                if not self.metric_alarms:
-                    self.metric_alarms = None
-            else:
-                self.metric_alarms_unavailable = True
-                logger.error(
-                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                )
-        except Exception as error:
+            error_code = error.response.get("Error", {}).get(
+                "Code", error.__class__.__name__
+            )
             self.metric_alarms_unavailable = True
+            self.metric_alarms_scan_errors[regional_client.region] = error_code
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+        except Exception as error:
+            self.metric_alarms_unavailable = True
+            self.metric_alarms_scan_errors[regional_client.region] = (
+                error.__class__.__name__
+            )
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        else:
+            self.metric_alarms_scanned_regions.add(regional_client.region)
 
     def _list_tags_for_resource(self):
         logger.info("CloudWatch - List Tags...")
@@ -357,11 +455,20 @@ class Logs(AWSService):
             )
 
 
+class MetricReference(BaseModel):
+    namespace: str
+    name: str
+    dimensions: dict[str, str] = Field(default_factory=dict)
+    account_id: Optional[str] = None
+
+
 class MetricAlarm(BaseModel):
     arn: str
     name: str
     metric: Optional[str] = None
     name_space: Optional[str] = None
+    namespaces: list[str] = Field(default_factory=list)
+    metric_references: list[MetricReference] = Field(default_factory=list)
     region: str
     tags: Optional[list] = []
     alarm_actions: list
