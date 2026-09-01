@@ -3,9 +3,25 @@ from unittest import mock
 import pytest
 
 from prowler.providers.aws.services.iam.iam_service import Policy
+from prowler.providers.aws.services.iam.lib.policy import iam_pattern_matches
 from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
 
 AWS_ACCOUNT_ID = "123456789012"
+# Role ARNs IAM actually returns, used to ask whether a REPORTED resource names any role at all.
+# Concrete ARNs rather than a list of shapes that cannot name a role: the impossible shapes cannot
+# be enumerated -- botocore models no ARN format for any service, so there is nothing to derive
+# them from -- while these are simply true. Empty region, twelve-digit account, a bare name, a
+# path, a service-linked path, the 64-character maximum, and the two non-commercial partitions.
+REAL_ROLE_ARNS = (
+    f"arn:aws:iam::{AWS_ACCOUNT_ID}:role/a",
+    f"arn:aws:iam::{AWS_ACCOUNT_ID}:role/AgentCoreRuntimeRole",
+    f"arn:aws:iam::{AWS_ACCOUNT_ID}:role/service-role/AgentCoreRuntimeRole",
+    f"arn:aws:iam::{AWS_ACCOUNT_ID}:role/aws-service-role/config.amazonaws.com/AWSServiceRoleForConfig",
+    f"arn:aws:iam::{AWS_ACCOUNT_ID}:role/" + "r0le-name-" * 6 + "abcd",
+    "arn:aws:iam::999999999999:role/Prod",
+    f"arn:aws-us-gov:iam::{AWS_ACCOUNT_ID}:role/GovRole",
+    f"arn:aws-cn:iam::{AWS_ACCOUNT_ID}:role/CnRole",
+)
 AGENTCORE_PRINCIPAL = "bedrock-agentcore.amazonaws.com"
 EVALUATION_ROLE_PREFIX_ARN = "arn:aws:iam::*:role/AgentCoreEvaluationRole*"
 ANY_ROLE_IN_ACCOUNT_ARN = f"arn:aws:iam::{AWS_ACCOUNT_ID}:role/*"
@@ -56,6 +72,23 @@ def _passrole(resource, condition: dict = None, action="iam:PassRole") -> dict:
     if condition is not None:
         statement["Condition"] = condition
     return statement
+
+
+def _reach_grid() -> list:
+    """Every combination of the two ARN positions whose reach the check has to decide.
+
+    Generated rather than listed so the cases are not the ones somebody thought to write down.
+    The region and account fields are the two an IAM role ARN constrains -- region always empty,
+    account always twelve digits -- so varying only those two, against a resource field that is
+    unambiguously unbounded, isolates the question the invariant below asks.
+    """
+    regions = ("", "*", "?", "us-east-1")
+    accounts = ("", "*", AWS_ACCOUNT_ID, "12345", "????????????", "1234567890*")
+    return [
+        f"arn:aws:iam:{region}:{account}:role/*"
+        for region in regions
+        for account in accounts
+    ]
 
 
 def _passed_to(service) -> dict:
@@ -797,6 +830,57 @@ class Test_iam_policy_passrole_to_bedrock_agentcore_restricted:
         """
         policy = _policy([_passrole(resource), AGENTCORE_ACTION_STATEMENT])
         assert _run([policy])[0].status == "FAIL"
+
+    def test_every_reported_resource_names_at_least_one_real_role(self):
+        """A resource this check reports must name some role. Anything else is a finding on nothing.
+
+        The general form of the defect the two tests above pin by example. Rather than enumerating
+        ARN shapes that can name no role -- which cannot be derived, since botocore models no ARN
+        format for any service -- this asks the question the other way round: a resource the check
+        reports as naming EVERY role must match at least one ARN that IAM really returns. A
+        privilege-escalation FAIL on a pattern matching nothing is a false report whatever spelling
+        produced it, and this catches every such spelling at once instead of the six now listed.
+
+        Measured on the state this branch was reviewed at: all 24 grid shapes were reported and 16
+        of them matched none of REAL_ROLE_ARNS. Now 8 are reported and none is unreachable. The
+        two tests above name six of those 16 by hand; this covers the rest without listing them.
+
+        ONE DIRECTION ONLY, and worth stating plainly: this cannot see the opposite error, a
+        resource that names every role while the check clears it. That is the more dangerous
+        direction and it needs a different invariant, which this does not supply.
+        """
+        by_arn = {}
+        policies = []
+        for index, resource in enumerate(_reach_grid()):
+            policy = _policy(
+                [_passrole(resource), AGENTCORE_ACTION_STATEMENT],
+                name=f"reach-grid-{index}",
+            )
+            by_arn[policy.arn] = resource
+            policies.append(policy)
+
+        reported = [
+            by_arn[report.resource_arn]
+            for report in _run(policies)
+            if report.status == "FAIL"
+        ]
+        unreachable = [
+            resource
+            for resource in reported
+            if not any(iam_pattern_matches(resource, arn) for arn in REAL_ROLE_ARNS)
+        ]
+        assert not unreachable, (
+            f"reported as naming every role, but matching none of the "
+            f"{len(REAL_ROLE_ARNS)} role ARNs IAM really returns: {unreachable}"
+        )
+        # Guard on the assertion above, which says nothing about a resource the check clears: if
+        # the grid stopped being reported at all the invariant would hold vacuously. Any positive
+        # floor proves that; 6 sits below today's 8 so a legitimate narrowing of the check does not
+        # trip it, while still being far enough from 0 that the invariant cannot go quiet.
+        assert len(reported) >= 6, (
+            f"only {len(reported)} of {len(_reach_grid())} grid shapes were reported, so the "
+            f"invariant above examined almost nothing -- the grid or the check has drifted"
+        )
 
     def test_iam_service_wildcard_action_fails(self):
         """iam:* covers iam:PassRole, so the statement must FAIL."""
