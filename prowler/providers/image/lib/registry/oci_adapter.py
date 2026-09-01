@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 import re
+import threading
 from typing import TYPE_CHECKING
 from urllib.parse import urlparse
 
@@ -17,6 +18,25 @@ from prowler.providers.image.lib.registry.base import RegistryAdapter
 
 if TYPE_CHECKING:
     import requests
+
+
+MANIFEST_ACCEPT_TYPES = (
+    "application/vnd.docker.distribution.manifest.v2+json",
+    "application/vnd.docker.distribution.manifest.list.v2+json",
+    "application/vnd.oci.image.manifest.v1+json",
+    "application/vnd.oci.image.index.v1+json",
+)
+
+# Multi-arch indexes: their children are resolved by trivy itself.
+INDEX_MEDIA_TYPES = (
+    "application/vnd.docker.distribution.manifest.list.v2+json",
+    "application/vnd.oci.image.index.v1+json",
+)
+
+IMAGE_CONFIG_MEDIA_TYPES = (
+    "application/vnd.oci.image.config.v1+json",
+    "application/vnd.docker.container.image.v1+json",
+)
 
 
 class OciRegistryAdapter(RegistryAdapter):
@@ -34,6 +54,10 @@ class OciRegistryAdapter(RegistryAdapter):
         self._base_url = self._normalise_url(registry_url)
         self._bearer_token: str | None = None
         self._basic_auth_verified = False
+        self._anonymous_verified = False
+        # Enumeration inspects manifests from a thread pool; serialise token
+        # exchanges so N concurrent 401s don't trigger N auth round-trips.
+        self._auth_lock = threading.Lock()
 
     @staticmethod
     def _normalise_url(url: str) -> str:
@@ -94,17 +118,72 @@ class OciRegistryAdapter(RegistryAdapter):
             params = {}
         return tags
 
+    def is_container_image(self, repository: str, tag: str) -> bool:
+        """Inspect the manifest to tell container images apart from other OCI artifacts.
+
+        Uncertainty (network error, unparseable manifest) resolves to True so a
+        transient failure never silently drops a real image — trivy gives the
+        final verdict.
+        """
+        url = f"{self._base_url}/v2/{repository}/manifests/{tag}"
+        try:
+            self._ensure_auth(repository=repository)
+            resp = self._authed_request(
+                "GET", url, headers={"Accept": ", ".join(MANIFEST_ACCEPT_TYPES)}
+            )
+        except Exception as error:
+            logger.warning(
+                f"Could not fetch manifest for {repository}:{tag}, assuming image: {error}"
+            )
+            return True
+        if resp.status_code != 200:
+            logger.warning(
+                f"Manifest request for {repository}:{tag} returned HTTP {resp.status_code}, assuming image"
+            )
+            return True
+
+        content_type = resp.headers.get("Content-Type", "").split(";")[0].strip()
+        if content_type in INDEX_MEDIA_TYPES:
+            return True
+        if content_type == "application/vnd.docker.distribution.manifest.v2+json":
+            return True
+        if content_type == "application/vnd.oci.image.manifest.v1+json":
+            # Helm charts, cosign signatures, SBOMs... all use this manifest
+            # media type; only artifactType/config.mediaType tells them apart.
+            try:
+                manifest = resp.json()
+            except ValueError:
+                return True
+            artifact_type = manifest.get("artifactType")
+            if artifact_type:
+                return artifact_type in IMAGE_CONFIG_MEDIA_TYPES
+            config_type = manifest.get("config", {}).get("mediaType", "")
+            return config_type in IMAGE_CONFIG_MEDIA_TYPES
+        logger.info(
+            f"Skipping {repository}:{tag} — manifest media type {content_type or 'unknown'} is not a container image"
+        )
+        return False
+
     def _ensure_auth(self, repository: str | None = None) -> None:
-        if self._bearer_token:
+        if self._bearer_token or self._basic_auth_verified or self._anonymous_verified:
             return
-        if self._basic_auth_verified:
-            return
+        with self._auth_lock:
+            if (
+                self._bearer_token
+                or self._basic_auth_verified
+                or self._anonymous_verified
+            ):
+                return
+            self._authenticate(repository=repository)
+
+    def _authenticate(self, repository: str | None = None) -> None:
         if self.token:
             self._bearer_token = self.token
             return
         ping_url = f"{self._base_url}/v2/"
         resp = self._request_with_retry("GET", ping_url)
         if resp.status_code == 200:
+            self._anonymous_verified = True
             return
         if resp.status_code == 401:
             www_auth = resp.headers.get("Www-Authenticate", "")

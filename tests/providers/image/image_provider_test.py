@@ -1452,3 +1452,43 @@ class TestConnectionPrivateNetworkAllowlist:
             result = ImageProvider.test_connection(image="harbor.internal")
 
         assert result.is_connected is True
+
+
+class TestRegistryScanErrorDegradation:
+    @patch("subprocess.run")
+    def test_registry_discovered_image_scan_error_is_skipped(self, mock_subprocess):
+        provider = _make_provider(images=["reg.io/chart:1.0", "alpine:3.18"])
+        provider._registry_discovered = {"reg.io/chart:1.0"}
+        mock_subprocess.side_effect = [
+            MagicMock(returncode=1, stdout="", stderr="unsupported media type"),
+            MagicMock(returncode=0, stdout=get_sample_trivy_json_output(), stderr=""),
+        ]
+
+        reports = []
+        for batch in provider.run_scan():
+            reports.extend(batch)
+
+        assert len(reports) == 1
+        assert reports[0].check_metadata.CheckID == "CVE-2024-1234"
+
+    @patch("subprocess.run")
+    def test_explicit_image_scan_error_still_raises(self, mock_subprocess):
+        provider = _make_provider(images=["alpine:3.18"])
+        mock_subprocess.return_value = MagicMock(
+            returncode=1, stdout="", stderr="unsupported media type"
+        )
+
+        with pytest.raises(ImageScanError):
+            for _ in provider.run_scan():
+                pass
+
+    @patch("subprocess.run")
+    def test_scan_per_image_degrades_registry_discovered_error(self, mock_subprocess):
+        provider = _make_provider(images=["reg.io/chart:1.0"])
+        provider._registry_discovered = {"reg.io/chart:1.0"}
+        mock_subprocess.return_value = MagicMock(
+            returncode=1, stdout="", stderr="unsupported media type"
+        )
+
+        results = list(provider.scan_per_image())
+        assert results == [("reg.io/chart:1.0", [])]

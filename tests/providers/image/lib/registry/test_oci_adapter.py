@@ -1125,3 +1125,82 @@ class TestBearerAuthSwitch:
         adapter = OciRegistryAdapter("reg.io", username="admin", password="wrong")
         with pytest.raises(ImageRegistryAuthError, match="bearer token"):
             adapter.list_repositories()
+
+
+class TestOciAdapterIsContainerImage:
+    def _adapter(self):
+        return OciRegistryAdapter("reg.io", token="t")
+
+    @staticmethod
+    def _manifest_resp(content_type, body=None):
+        resp = MagicMock(status_code=200, headers={"Content-Type": content_type})
+        resp.json.return_value = body or {}
+        return resp
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_docker_v2_manifest_is_image(self, mock_request):
+        mock_request.return_value = self._manifest_resp(
+            "application/vnd.docker.distribution.manifest.v2+json"
+        )
+        assert self._adapter().is_container_image("app", "1.0") is True
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_oci_index_is_image(self, mock_request):
+        mock_request.return_value = self._manifest_resp(
+            "application/vnd.oci.image.index.v1+json"
+        )
+        assert self._adapter().is_container_image("app", "1.0") is True
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_oci_manifest_with_image_config_is_image(self, mock_request):
+        mock_request.return_value = self._manifest_resp(
+            "application/vnd.oci.image.manifest.v1+json",
+            {"config": {"mediaType": "application/vnd.oci.image.config.v1+json"}},
+        )
+        assert self._adapter().is_container_image("app", "1.0") is True
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_helm_chart_is_not_image(self, mock_request):
+        mock_request.return_value = self._manifest_resp(
+            "application/vnd.oci.image.manifest.v1+json",
+            {"config": {"mediaType": "application/vnd.cncf.helm.config.v1+json"}},
+        )
+        assert self._adapter().is_container_image("charts/app", "1.0") is False
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_artifact_type_wins_over_config(self, mock_request):
+        mock_request.return_value = self._manifest_resp(
+            "application/vnd.oci.image.manifest.v1+json",
+            {
+                "artifactType": "application/vnd.dev.cosign.artifact.sig.v1+json",
+                "config": {"mediaType": "application/vnd.oci.image.config.v1+json"},
+            },
+        )
+        assert self._adapter().is_container_image("app", "sig") is False
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_unknown_media_type_is_not_image(self, mock_request):
+        mock_request.return_value = self._manifest_resp(
+            "application/vnd.cncf.helm.chart.content.v1.tar+gzip"
+        )
+        assert self._adapter().is_container_image("charts/app", "1.0") is False
+
+    @patch("prowler.providers.image.lib.registry.base.time.sleep")
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_manifest_error_assumes_image(self, mock_request, _mock_sleep):
+        mock_request.side_effect = requests.exceptions.ConnectionError("boom")
+        assert self._adapter().is_container_image("app", "1.0") is True
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_manifest_404_assumes_image(self, mock_request):
+        mock_request.return_value = MagicMock(status_code=404, headers={})
+        assert self._adapter().is_container_image("app", "1.0") is True
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_anonymous_auth_pings_only_once(self, mock_request):
+        mock_request.return_value = MagicMock(status_code=200, headers={})
+        adapter = OciRegistryAdapter("reg.io")
+        adapter._ensure_auth()
+        adapter._ensure_auth(repository="app")
+        adapter._ensure_auth(repository="other")
+        assert mock_request.call_count == 1
