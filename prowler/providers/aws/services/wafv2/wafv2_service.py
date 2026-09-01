@@ -148,6 +148,21 @@ class WAFv2(AWSService):
                         else:
                             acl.rules.append(new_rule)
 
+                        # Recursively parse the rule statement to retain managed rule
+                        # groups (vendor/name/overrides/exclusions) and detect custom
+                        # XssMatchStatements, including nested statements.
+                        override_to_count = "Count" in rule.get(
+                            "OverrideAction", {}
+                        )
+                        rule_blocks = self._rule_action_blocks(rule.get("Action", {}))
+                        has_xss = self._parse_statement(
+                            rule.get("Statement", {}),
+                            acl,
+                            override_to_count,
+                        )
+                        if has_xss and rule_blocks:
+                            acl.rules_with_xss_match.append(new_rule.name)
+
                     firewall_manager_managed_rg = get_web_acl.get("WebACL", {}).get(
                         "PreProcessFirewallManagerRuleGroups", []
                     ) + get_web_acl.get("WebACL", {}).get(
@@ -173,6 +188,88 @@ class WAFv2(AWSService):
             logger.error(
                 f"{acl.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
+    @staticmethod
+    def _rule_action_blocks(action: dict) -> bool:
+        """Return True if a custom rule action blocks or challenges the request.
+
+        Count and Allow actions do not protect against a matched request, so a rule with
+        those actions is not considered active protection.
+        """
+        if not action:
+            # Managed rule group / rule group reference rules use OverrideAction instead of
+            # Action; a custom XssMatchStatement rule must define an Action, so an empty
+            # Action means this is not an effective custom protection rule.
+            return False
+        return any(effective in action for effective in ("Block", "Captcha", "Challenge"))
+
+    def _parse_statement(self, statement: dict, acl, override_to_count: bool) -> bool:
+        """Recursively walk a rule Statement.
+
+        Retains any managed rule groups found on the given ``acl`` and returns whether an
+        ``XssMatchStatement`` was found anywhere in the (possibly nested) statement tree.
+        """
+        found_xss = False
+        if not isinstance(statement, dict):
+            return False
+
+        if "XssMatchStatement" in statement:
+            found_xss = True
+
+        managed = statement.get("ManagedRuleGroupStatement")
+        if managed:
+            excluded_rules = [
+                excluded.get("Name")
+                for excluded in managed.get("ExcludedRules", [])
+                if excluded.get("Name")
+            ]
+            for override in managed.get("RuleActionOverrides", []):
+                if "Count" in override.get("ActionToUse", {}) and override.get("Name"):
+                    excluded_rules.append(override["Name"])
+            acl.managed_rule_groups.append(
+                ManagedRuleGroup(
+                    vendor_name=managed.get("VendorName", ""),
+                    name=managed.get("Name", ""),
+                    override_to_count=override_to_count,
+                    excluded_rules=excluded_rules,
+                )
+            )
+            if managed.get("ScopeDownStatement"):
+                found_xss = (
+                    self._parse_statement(
+                        managed["ScopeDownStatement"], acl, override_to_count
+                    )
+                    or found_xss
+                )
+
+        for logical in ("AndStatement", "OrStatement"):
+            if logical in statement:
+                for sub_statement in statement[logical].get("Statements", []):
+                    found_xss = (
+                        self._parse_statement(sub_statement, acl, override_to_count)
+                        or found_xss
+                    )
+
+        if "NotStatement" in statement:
+            found_xss = (
+                self._parse_statement(
+                    statement["NotStatement"].get("Statement", {}),
+                    acl,
+                    override_to_count,
+                )
+                or found_xss
+            )
+
+        rate_based = statement.get("RateBasedStatement", {})
+        if rate_based.get("ScopeDownStatement"):
+            found_xss = (
+                self._parse_statement(
+                    rate_based["ScopeDownStatement"], acl, override_to_count
+                )
+                or found_xss
+            )
+
+        return found_xss
 
     def _list_tags(self, resource: any):
         logger.info("WAFv2 - Listing tags...")
@@ -207,6 +304,19 @@ class Rule(BaseModel):
     cloudwatch_metrics_enabled: bool = False
 
 
+class ManagedRuleGroup(BaseModel):
+    """Model representing an AWS/Marketplace managed rule group referenced by a Web ACL."""
+
+    vendor_name: str
+    name: str
+    # Whether the whole rule group action is overridden to Count (i.e. excluded wholesale
+    # from blocking) via the rule's OverrideAction.
+    override_to_count: bool = False
+    # Names of individual rules within the group that are excluded from blocking, either via
+    # (deprecated) ExcludedRules or via RuleActionOverrides that set the action to Count.
+    excluded_rules: list[str] = []
+
+
 class WebAclv2(BaseModel):
     """Model representing a Web ACL for WAFv2."""
 
@@ -221,3 +331,8 @@ class WebAclv2(BaseModel):
     scope: Scope = Scope.REGIONAL
     rules: list[Rule] = []
     rule_groups: list[Rule] = []
+    # Managed rule groups (AWS/Marketplace) referenced by the Web ACL, collected recursively.
+    managed_rule_groups: list[ManagedRuleGroup] = []
+    # Names of custom rules that contain an XssMatchStatement (found recursively) and whose
+    # action blocks/challenges the request (Block, Captcha or Challenge).
+    rules_with_xss_match: list[str] = []
