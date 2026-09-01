@@ -218,9 +218,7 @@ class OciRegistryAdapter(RegistryAdapter):
             and self.username
             and self.password
             and self._is_same_origin_as_registry(url)
-            and self._find_challenge(
-                resp.headers.get("Www-Authenticate", ""), "Basic"
-            )
+            and self._find_challenge(resp.headers.get("Www-Authenticate", ""), "Basic")
         ):
             # Registries like Harbor guard some endpoints (e.g. /_catalog) with
             # Basic even when /v2/ negotiates Bearer.

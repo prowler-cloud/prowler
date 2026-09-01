@@ -971,9 +971,7 @@ class TestBasicAuthFallback:
 class TestBearerAuthSwitch:
     """Registries that negotiate Basic on /v2/ but demand Bearer on other endpoints."""
 
-    _BEARER_CHALLENGE = (
-        'Bearer realm="https://reg.io/token",service="registry",scope="registry:catalog:*"'
-    )
+    _BEARER_CHALLENGE = 'Bearer realm="https://reg.io/token",service="registry",scope="registry:catalog:*"'
 
     @patch("prowler.providers.image.lib.registry.base.requests.request")
     def test_catalog_switches_to_bearer_when_basic_rejected(self, mock_request):
@@ -1087,7 +1085,9 @@ class TestBearerAuthSwitch:
         catalog_ok.json.return_value = {"repositories": ["library/debian"]}
         mock_request.side_effect = [ping, catalog_401, token, catalog_ok]
 
-        adapter = OciRegistryAdapter("http://reg.io", username="admin", password="secret")
+        adapter = OciRegistryAdapter(
+            "http://reg.io", username="admin", password="secret"
+        )
         repos = adapter.list_repositories()
 
         assert repos == ["library/debian"]
