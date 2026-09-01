@@ -1,0 +1,1 @@
+`guardduty_runtime_monitoring_enabled` check for AWS provider, flagging GuardDuty detectors without unified Runtime Monitoring, the only feature that covers Amazon EC2 instances and Amazon ECS on AWS Fargate tasks in addition to Amazon EKS

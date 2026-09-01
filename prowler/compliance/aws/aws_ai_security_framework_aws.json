@@ -878,9 +878,11 @@
         "guardduty_s3_protection_enabled",
         "guardduty_eks_audit_log_enabled",
         "guardduty_eks_runtime_monitoring_enabled",
+        "guardduty_runtime_monitoring_enabled",
         "guardduty_lambda_protection_enabled",
         "guardduty_rds_protection_enabled",
-        "guardduty_ec2_malware_protection_enabled"
+        "guardduty_ec2_malware_protection_enabled",
+        "guardduty_ai_protection_enabled"
       ],
       "ConfigRequirements": [
         {

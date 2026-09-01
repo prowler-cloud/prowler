@@ -1,0 +1,1 @@
+`guardduty_ai_protection_enabled` check for AWS provider, flagging GuardDuty detectors without AI Protection, which analyzes AWS CloudTrail data events from Amazon Bedrock, Amazon Bedrock AgentCore and Amazon SageMaker AI; a detector that does not report the feature is `MANUAL` rather than `FAIL`
