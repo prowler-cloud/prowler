@@ -33,5 +33,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "The signInActivity resource requires Microsoft Entra ID P1 or P2 license. Tenants without this license will not have sign-in activity data available, and all users will be reported as never having signed in."
+  "Notes": "The signInActivity resource requires Microsoft Entra ID P1 or P2 license. When Microsoft Graph rejects the sign-in activity request (tenant without Entra ID P1/P2 or missing AuditLog.Read.All), the check reports a single tenant-level MANUAL finding."
 }

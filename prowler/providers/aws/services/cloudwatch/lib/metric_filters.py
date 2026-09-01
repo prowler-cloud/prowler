@@ -62,7 +62,8 @@ def check_cloudwatch_log_metric_filter(
             against each filter's pattern with ``re.DOTALL``.
         trails: CloudTrail trails keyed by ARN; only those with a log group count.
         metric_filters: CloudWatch Logs metric filters to evaluate.
-        metric_alarms: CloudWatch alarms, matched to a filter by metric name.
+        metric_alarms: CloudWatch alarms, matched to a filter by metric name and
+            region, and by namespace when both sides expose one.
         metadata: check metadata for the emitted report.
 
     Returns:
@@ -90,9 +91,20 @@ def check_cloudwatch_log_metric_filter(
                 )
                 report.status = "FAIL"
                 report.status_extended = f"CloudWatch log group {metric_filter.log_group.name} found with metric filter {metric_filter.name} but no alarms associated."
-                # 3. Check if there is an alarm for the metric
+                # 3. Check if there is an alarm for the metric. The alarm must
+                # watch the same metric name in the same region, and the same
+                # namespace when both sides expose one — a same-named metric
+                # in another namespace or region is a different metric.
                 for alarm in metric_alarms:
-                    if alarm.metric == metric_filter.metric:
+                    if (
+                        alarm.metric == metric_filter.metric
+                        and alarm.region == metric_filter.region
+                        and (
+                            not metric_filter.metric_namespace
+                            or not alarm.name_space
+                            or alarm.name_space == metric_filter.metric_namespace
+                        )
+                    ):
                         report.status = "PASS"
                         report.status_extended = f"CloudWatch log group {metric_filter.log_group.name} found with metric filter {metric_filter.name} and alarms set."
                         break

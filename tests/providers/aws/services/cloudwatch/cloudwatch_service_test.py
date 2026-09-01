@@ -173,6 +173,7 @@ class Test_CloudWatch_Service:
         assert logs.metric_filters[0].log_group is None
         assert logs.metric_filters[0].name == "test-filter"
         assert logs.metric_filters[0].metric == "my-metric"
+        assert logs.metric_filters[0].metric_namespace == "my-namespace"
         assert logs.metric_filters[0].pattern == "test-pattern"
         assert logs.metric_filters[0].region == AWS_REGION_US_EAST_1
 
@@ -535,3 +536,39 @@ class Test_build_metric_filter_pattern:
                 event_names=["ConsoleLogin"],
                 extra_clauses=[("errorMessage", bad_operator, "Failed authentication")],
             )
+
+    @mock_aws
+    def test_describe_log_groups_access_denied_sets_flag(self):
+        """A denied DescribeLogGroups must raise log_groups_unavailable."""
+        from unittest import mock
+
+        from botocore.client import BaseClient
+        from botocore.exceptions import ClientError
+
+        orig = BaseClient._make_api_call
+
+        def deny_describe_log_groups(self, operation_name, kwarg):
+            if operation_name == "DescribeLogGroups":
+                raise ClientError(
+                    {
+                        "Error": {
+                            "Code": "AccessDeniedException",
+                            "Message": "Access Denied",
+                        }
+                    },
+                    operation_name,
+                )
+            return orig(self, operation_name, kwarg)
+
+        aws_provider = set_mocked_aws_provider(
+            expected_checks=["cloudwatch_log_group_no_secrets_in_logs"]
+        )
+        with mock.patch(
+            "botocore.client.BaseClient._make_api_call",
+            new=deny_describe_log_groups,
+        ):
+            logs = Logs(aws_provider)
+
+        assert logs.log_groups_unavailable is True
+        assert logs.log_groups is None
+        assert logs.all_log_groups is None

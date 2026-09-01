@@ -662,9 +662,11 @@ class Test_cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_c
                 cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled()
             )
             cloudtrail_client.trails = None
+            cloudtrail_client.trails_unavailable = True
             result = check.execute()
 
-            assert len(result) == 0
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
 
     @mock_aws
     def test_cloudwatch_trail_with_log_group_with_metric_and_alarm_reversed_clauses(
