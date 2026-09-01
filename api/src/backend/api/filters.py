@@ -1920,14 +1920,8 @@ class JiraIssueFilter(BaseProviderFilter):
         field_name="issue_status_category",
         lookup_expr="in",
     )
-    attempt_state = ChoiceFilter(choices=JiraIssue.AttemptStateChoices.choices)
-    attempt_state__in = ChoiceInFilter(
-        choices=JiraIssue.AttemptStateChoices.choices,
-        field_name="attempt_state",
-        lookup_expr="in",
-    )
 
-    class Meta:
+    class Meta(BaseProviderFilter.Meta):
         model = JiraIssue
         fields = {
             "inserted_at": ["date", "gte", "lte"],

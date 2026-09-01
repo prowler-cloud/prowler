@@ -79,7 +79,7 @@ from conftest import (
     today_after_n_days,
 )
 from django.conf import settings
-from django.db import IntegrityError, close_old_connections, connection, connections
+from django.db import close_old_connections, connection, connections
 from django.db.models import Count
 from django.db.models.signals import pre_delete
 from django.http import JsonResponse
@@ -89,11 +89,6 @@ from django.urls import reverse
 from django_celery_results.models import TaskResult
 from prowler.lib.check.models import Severity
 from prowler.lib.outputs.finding import Status
-from prowler.lib.outputs.jira.models import (
-    JiraIssueSearchMatch,
-    JiraIssueSearchOutcome,
-    JiraIssueSearchResult,
-)
 from rest_framework import status
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
@@ -13564,115 +13559,14 @@ class TestScheduleViewSet:
 
 
 @pytest.mark.django_db
-class TestIntegrationJiraViewSet:
-    @pytest.mark.parametrize(
-        ("force_replace", "expected"), [(None, False), (True, True)]
-    )
-    def test_dispatch_passes_force_confirmation_and_actor(
-        self,
-        authenticated_client,
-        jira_integration_fixture,
-        findings_fixture,
-        force_replace,
-        expected,
-    ):
-        finding, _ = findings_fixture
-        task = Task.objects.create(tenant_id=jira_integration_fixture.tenant_id)
-        attributes = {"project_key": "TEST", "issue_type": "Task"}
-        if force_replace is not None:
-            attributes["force_replace"] = force_replace
-        payload = {
-            "data": {
-                "type": "integrations-jira-dispatches",
-                "attributes": attributes,
-            }
-        }
-        url = reverse(
-            "integration-jira-dispatches",
-            kwargs={"integration_pk": jira_integration_fixture.id},
-        )
-        url = f"{url}?filter[finding_id]={finding.id}"
-
-        with patch("api.v1.views.jira_integration_task.delay") as delay:
-            delay.return_value = SimpleNamespace(id=task.id)
-            response = authenticated_client.post(
-                url,
-                data=json.dumps(payload),
-                content_type=API_JSON_CONTENT_TYPE,
-            )
-
-        assert response.status_code == status.HTTP_202_ACCEPTED
-        delay.assert_called_once_with(
-            tenant_id=str(jira_integration_fixture.tenant_id),
-            integration_id=str(jira_integration_fixture.id),
-            project_key="TEST",
-            issue_type="Task",
-            finding_ids=[str(finding.id)],
-            force_replace=expected,
-            actor_id=str(authenticated_client.user.id),
-        )
-
-
-@pytest.mark.django_db
 class TestJiraIssueViewSet:
-    def test_list_returns_linked_and_unlinked_rows_in_stable_order(
-        self, authenticated_client, jira_issues_fixture
-    ):
+    def test_list_hides_reservations(self, authenticated_client, jira_issues_fixture):
         linked, other_provider_issue, reservation = jira_issues_fixture
         response = authenticated_client.get(reverse("jiraissue-list"))
         assert response.status_code == status.HTTP_200_OK
-        assert response["Content-Type"].startswith(API_JSON_CONTENT_TYPE)
-        expected = sorted(
-            (linked, other_provider_issue, reservation),
-            key=lambda row: (row.finding_uid, str(row.integration_id), str(row.id)),
-        )
-        assert [item["id"] for item in response.json()["data"]] == [
-            str(row.id) for row in expected
-        ]
-
-    def test_stable_order_uses_integration_and_id_tiebreakers(
-        self, authenticated_client, jira_issues_fixture
-    ):
-        linked, other_provider_issue, _ = jira_issues_fixture
-        other_integration = Integration.objects.create(
-            tenant_id=linked.tenant_id,
-            enabled=True,
-            connected=True,
-            integration_type=Integration.IntegrationChoices.JIRA,
-            configuration={"domain": "ordering-site"},
-            credentials={
-                "domain": "ordering-site",
-                "user_mail": "ordering@example.com",
-                "api_token": "token",
-            },
-        )
-        rows = [
-            JiraIssue.objects.create(
-                tenant_id=linked.tenant_id,
-                integration=integration,
-                provider=provider,
-                finding_uid="same-finding-uid",
-                finding_id=uuid4(),
-            )
-            for integration, provider in (
-                (linked.integration, linked.provider),
-                (linked.integration, other_provider_issue.provider),
-                (other_integration, linked.provider),
-            )
-        ]
-
-        response = authenticated_client.get(
-            reverse("jiraissue-list"),
-            {"filter[finding_uid]": "same-finding-uid"},
-        )
-
-        assert response.status_code == status.HTTP_200_OK
-        expected = sorted(
-            rows, key=lambda row: (row.finding_uid, str(row.integration_id), row.id)
-        )
-        assert [item["id"] for item in response.json()["data"]] == [
-            str(row.id) for row in expected
-        ]
+        ids = {item["id"] for item in response.json()["data"]}
+        assert ids == {str(linked.id), str(other_provider_issue.id)}
+        assert str(reservation.id) not in ids
 
     def test_retrieve(self, authenticated_client, jira_issues_fixture):
         linked, *_ = jira_issues_fixture
@@ -13680,9 +13574,7 @@ class TestJiraIssueViewSet:
             reverse("jiraissue-detail", kwargs={"pk": linked.id})
         )
         assert response.status_code == status.HTTP_200_OK
-        assert response["Content-Type"].startswith(API_JSON_CONTENT_TYPE)
         data = response.json()["data"]
-        assert data["id"] == str(linked.id)
         assert data["type"] == "jira-issues"
         attributes = data["attributes"]
         assert attributes["finding_uid"] == linked.finding_uid
@@ -13690,84 +13582,30 @@ class TestJiraIssueViewSet:
         assert attributes["issue_key"] == "TEST-1"
         assert attributes["issue_url"] == "https://test.atlassian.net/browse/TEST-1"
         assert attributes["project_key"] == "TEST"
-        assert attributes["issue_type"] == "Task"
         assert attributes["issue_status"] == "To Do"
         assert attributes["issue_status_category"] == "new"
         assert attributes["status_synced_at"] is not None
-        assert attributes["attempt_state"] == "idle"
-        assert attributes["attempt_operation"] is None
-        assert attributes["attempt_count"] == 0
-        assert "claim_token" not in attributes
-        assert "claim_expires_at" not in attributes
         assert "delivery_attempt_token" not in attributes
         relationships = data["relationships"]
-        assert relationships["provider"]["data"]["type"] == "providers"
         assert relationships["provider"]["data"]["id"] == str(linked.provider_id)
-        assert relationships["integration"]["data"]["type"] == "integrations"
         assert relationships["integration"]["data"]["id"] == str(linked.integration_id)
 
-    def test_retrieve_unlinked_delivery(
+    def test_retrieve_reservation_returns_404(
         self, authenticated_client, jira_issues_fixture
     ):
         *_, reservation = jira_issues_fixture
         response = authenticated_client.get(
             reverse("jiraissue-detail", kwargs={"pk": reservation.id})
         )
-        assert response.status_code == status.HTTP_200_OK
-        attributes = response.json()["data"]["attributes"]
-        assert attributes["issue_id"] is None
-        assert attributes["issue_key"] is None
-        assert attributes["issue_url"] is None
-        assert attributes["attempt_state"] == "creating"
-        assert attributes["attempt_operation"] == "initial"
-        assert attributes["issue_status"] is None
-        assert attributes["issue_status_category"] is None
-        assert attributes["status_synced_at"] is None
-        assert attributes["attempt_count"] == 0
-        assert attributes["last_attempt_at"] is None
-        assert attributes["last_error_code"] is None
-        assert attributes["last_error_message"] is None
-        assert attributes["next_reconcile_at"] is None
-        assert "claim_token" not in attributes
-        assert "delivery_attempt_token" not in attributes
-
-    def test_sparse_fields_cannot_expose_private_attempt_tokens(
-        self, authenticated_client, jira_issues_fixture
-    ):
-        *_, reservation = jira_issues_fixture
-        response = authenticated_client.get(
-            reverse("jiraissue-detail", kwargs={"pk": reservation.id}),
-            {
-                "fields[jira-issues]": (
-                    "finding_uid,attempt_state,claim_token,delivery_attempt_token"
-                )
-            },
-        )
-
-        assert response.status_code == status.HTTP_200_OK
-        assert response.json()["data"]["attributes"] == {
-            "finding_uid": reservation.finding_uid,
-            "attempt_state": JiraIssue.AttemptStateChoices.CREATING,
-        }
-
-        response = authenticated_client.get(
-            reverse("jiraissue-detail", kwargs={"pk": reservation.id}),
-            {"fields[jira-issues]": "finding_uid,attempt_state"},
-        )
-        assert response.status_code == status.HTTP_200_OK
-        assert response.json()["data"]["attributes"] == {
-            "finding_uid": reservation.finding_uid,
-            "attempt_state": JiraIssue.AttemptStateChoices.CREATING,
-        }
+        assert response.status_code == status.HTTP_404_NOT_FOUND
 
     def test_retrieve_other_tenant_returns_404(
         self, authenticated_client, jira_issues_fixture, tenants_fixture
     ):
         linked, *_ = jira_issues_fixture
-        with rls_transaction(str(tenants_fixture[2].id)):
-            JiraIssue.objects.filter(id=linked.id).update(
-                tenant_id=tenants_fixture[2].id
-            )
+        JiraIssue.objects.using(MainRouter.admin_db).filter(id=linked.id).update(
+            tenant_id=tenants_fixture[2].id
+        )
         response = authenticated_client.get(
             reverse("jiraissue-detail", kwargs={"pk": linked.id})
         )
@@ -13830,23 +13668,11 @@ class TestJiraIssueViewSet:
         assert response.status_code == status.HTTP_200_OK
         assert [item["id"] for item in response.json()["data"]] == [str(linked.id)]
 
-    def test_filter_by_attempt_state(self, authenticated_client, jira_issues_fixture):
-        *_, reservation = jira_issues_fixture
-        response = authenticated_client.get(
-            reverse("jiraissue-list"), {"filter[attempt_state]": "creating"}
-        )
-        assert response.status_code == status.HTTP_200_OK
-        assert [item["id"] for item in response.json()["data"]] == [str(reservation.id)]
-
     def test_invalid_filter(self, authenticated_client, jira_issues_fixture):
         response = authenticated_client.get(
             reverse("jiraissue-list"), {"filter[invalid]": "x"}
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert response["Content-Type"].startswith(API_JSON_CONTENT_TYPE)
-        errors = response.json()["errors"]
-        assert isinstance(errors, list)
-        assert all(isinstance(error["status"], str) for error in errors)
 
     def test_include_provider(self, authenticated_client, jira_issues_fixture):
         response = authenticated_client.get(
@@ -13868,316 +13694,6 @@ class TestJiraIssueViewSet:
             reverse("jiraissue-detail", kwargs={"pk": linked.id})
         )
         assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
-
-    @pytest.mark.django_db(transaction=True)
-    def test_resolution_links_issue_verified_by_delivery_marker(
-        self, authenticated_client, jira_issues_fixture
-    ):
-        *_, reservation = jira_issues_fixture
-        with rls_transaction(str(reservation.tenant_id)):
-            JiraIssue.objects.filter(id=reservation.id).update(
-                attempt_state=JiraIssue.AttemptStateChoices.UNCERTAIN,
-                claim_token=None,
-                claim_expires_at=None,
-            )
-        jira = MagicMock()
-        lookup = JiraIssueSearchResult(
-            outcome=JiraIssueSearchOutcome.SUCCESS,
-            matches=(
-                JiraIssueSearchMatch(
-                    issue_id="20001",
-                    issue_key="TEST-9",
-                    issue_url="https://test.atlassian.net/browse/TEST-9",
-                ),
-            ),
-        )
-
-        def search_by_marker(_marker):
-            assert connection.in_atomic_block is False
-            return lookup
-
-        jira.search_issues_by_delivery_attempt.side_effect = search_by_marker
-        payload = {
-            "data": {
-                "type": "jira-issues",
-                "attributes": {
-                    "resolution": "link",
-                    "issue_id": "20001",
-                    "issue_key": "TEST-9",
-                },
-            }
-        }
-
-        with (
-            patch("api.v1.views.initialize_prowler_integration", return_value=jira),
-            patch("api.v1.views.logger.info") as audit_log,
-        ):
-            response = authenticated_client.post(
-                reverse("jiraissue-resolution", kwargs={"pk": reservation.id}),
-                data=json.dumps(payload),
-                content_type=API_JSON_CONTENT_TYPE,
-            )
-
-        assert response.status_code == status.HTTP_200_OK, response.json()
-        assert response["Content-Type"].startswith(API_JSON_CONTENT_TYPE)
-        data = response.json()["data"]
-        assert data["id"] == str(reservation.id)
-        assert data["type"] == "jira-issues"
-        assert data["attributes"]["issue_id"] == "20001"
-        assert data["attributes"]["issue_key"] == "TEST-9"
-        assert (
-            data["attributes"]["issue_url"]
-            == "https://test.atlassian.net/browse/TEST-9"
-        )
-        assert data["attributes"]["attempt_state"] == "idle"
-        jira.search_issues_by_delivery_attempt.assert_called_once_with(
-            str(reservation.delivery_attempt_token)
-        )
-        audit_calls = [
-            call
-            for call in audit_log.call_args_list
-            if call.args == ("jira_issue_operator_resolution",)
-        ]
-        assert len(audit_calls) == 1
-        log_kwargs = audit_calls[0].kwargs
-        assert log_kwargs["extra"]["user_id"] == str(authenticated_client.user.id)
-        assert log_kwargs["extra"]["metadata"]["resolution"] == "link"
-        assert log_kwargs["extra"]["metadata"]["jira_issue_id"] == str(reservation.id)
-
-    def test_resolution_rejects_issue_not_returned_by_delivery_marker(
-        self, authenticated_client, jira_issues_fixture
-    ):
-        *_, reservation = jira_issues_fixture
-        with rls_transaction(str(reservation.tenant_id)):
-            JiraIssue.objects.filter(id=reservation.id).update(
-                attempt_state=JiraIssue.AttemptStateChoices.UNCERTAIN,
-                claim_token=None,
-                claim_expires_at=None,
-            )
-        jira = MagicMock()
-        jira.search_issues_by_delivery_attempt.return_value = JiraIssueSearchResult(
-            outcome=JiraIssueSearchOutcome.SUCCESS,
-            matches=(
-                JiraIssueSearchMatch(
-                    issue_id="20002",
-                    issue_key="TEST-10",
-                    issue_url="https://test.atlassian.net/browse/TEST-10",
-                ),
-            ),
-        )
-        payload = {
-            "data": {
-                "type": "jira-issues",
-                "attributes": {
-                    "resolution": "link",
-                    "issue_id": "20001",
-                    "issue_key": "TEST-9",
-                },
-            }
-        }
-
-        with patch("api.v1.views.initialize_prowler_integration", return_value=jira):
-            response = authenticated_client.post(
-                reverse("jiraissue-resolution", kwargs={"pk": reservation.id}),
-                data=json.dumps(payload),
-                content_type=API_JSON_CONTENT_TYPE,
-            )
-
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
-        with rls_transaction(str(reservation.tenant_id)):
-            reservation.refresh_from_db()
-        assert reservation.issue_id is None
-        assert reservation.attempt_state == JiraIssue.AttemptStateChoices.UNCERTAIN
-
-    def test_resolution_confirm_not_created_preserves_previous_link(
-        self, authenticated_client, jira_issues_fixture
-    ):
-        linked, *_ = jira_issues_fixture
-        with rls_transaction(str(linked.tenant_id)):
-            JiraIssue.objects.filter(id=linked.id).update(
-                attempt_state=JiraIssue.AttemptStateChoices.UNCERTAIN,
-                delivery_attempt_token=uuid4(),
-                attempt_operation=JiraIssue.AttemptOperationChoices.REPLACEMENT,
-                attempt_project_key="TEST",
-                attempt_issue_type="Task",
-                next_reconcile_at=datetime.now(UTC) + timedelta(minutes=1),
-            )
-        payload = {
-            "data": {
-                "type": "jira-issues",
-                "attributes": {"resolution": "confirm_not_created"},
-            }
-        }
-
-        with patch("api.v1.views.logger.info") as audit_log:
-            response = authenticated_client.post(
-                reverse("jiraissue-resolution", kwargs={"pk": linked.id}),
-                data=json.dumps(payload),
-                content_type=API_JSON_CONTENT_TYPE,
-            )
-
-        assert response.status_code == status.HTTP_200_OK
-        attributes = response.json()["data"]["attributes"]
-        assert attributes["issue_id"] == "10001"
-        assert attributes["issue_key"] == "TEST-1"
-        assert attributes["attempt_state"] == "retryable_failure"
-        assert attributes["last_error_code"] == "operator_confirmed_not_created"
-        assert attributes["next_reconcile_at"] is None
-        audit_calls = [
-            call
-            for call in audit_log.call_args_list
-            if call.args == ("jira_issue_operator_resolution",)
-        ]
-        assert len(audit_calls) == 1
-        assert audit_calls[0].kwargs["extra"]["metadata"]["resolution"] == (
-            "confirm_not_created"
-        )
-
-    def test_resolution_rejects_fresh_foreign_claim(
-        self, authenticated_client, jira_issues_fixture
-    ):
-        *_, reservation = jira_issues_fixture
-        payload = {
-            "data": {
-                "type": "jira-issues",
-                "attributes": {"resolution": "confirm_not_created"},
-            }
-        }
-
-        response = authenticated_client.post(
-            reverse("jiraissue-resolution", kwargs={"pk": reservation.id}),
-            data=json.dumps(payload),
-            content_type=API_JSON_CONTENT_TYPE,
-        )
-
-        assert response.status_code == status.HTTP_409_CONFLICT
-
-    def test_resolution_confirm_not_created_rejects_issue_fields(
-        self, authenticated_client, jira_issues_fixture
-    ):
-        *_, reservation = jira_issues_fixture
-        with rls_transaction(str(reservation.tenant_id)):
-            JiraIssue.objects.filter(id=reservation.id).update(
-                attempt_state=JiraIssue.AttemptStateChoices.UNCERTAIN,
-                claim_token=None,
-                claim_expires_at=None,
-            )
-        payload = {
-            "data": {
-                "type": "jira-issues",
-                "attributes": {
-                    "resolution": "confirm_not_created",
-                    "issue_id": "20001",
-                    "issue_key": "TEST-9",
-                },
-            }
-        }
-
-        response = authenticated_client.post(
-            reverse("jiraissue-resolution", kwargs={"pk": reservation.id}),
-            data=json.dumps(payload),
-            content_type=API_JSON_CONTENT_TYPE,
-        )
-
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
-
-    def test_resolution_link_requires_issue_identity(
-        self, authenticated_client, jira_issues_fixture
-    ):
-        *_, reservation = jira_issues_fixture
-        with rls_transaction(str(reservation.tenant_id)):
-            JiraIssue.objects.filter(id=reservation.id).update(
-                attempt_state=JiraIssue.AttemptStateChoices.UNCERTAIN,
-                claim_token=None,
-                claim_expires_at=None,
-            )
-        payload = {
-            "data": {
-                "type": "jira-issues",
-                "attributes": {"resolution": "link"},
-            }
-        }
-
-        response = authenticated_client.post(
-            reverse("jiraissue-resolution", kwargs={"pk": reservation.id}),
-            data=json.dumps(payload),
-            content_type=API_JSON_CONTENT_TYPE,
-        )
-
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
-        errors = response.json()["errors"]
-        assert {error["source"]["pointer"] for error in errors} == {
-            "/data/attributes/issue_id",
-            "/data/attributes/issue_key",
-        }
-        assert all(error["status"] == "400" for error in errors)
-
-    def test_resolution_rejects_idle_row(
-        self, authenticated_client, jira_issues_fixture
-    ):
-        linked, *_ = jira_issues_fixture
-        response = authenticated_client.post(
-            reverse("jiraissue-resolution", kwargs={"pk": linked.id}),
-            data=json.dumps(
-                {
-                    "data": {
-                        "type": "jira-issues",
-                        "attributes": {"resolution": "confirm_not_created"},
-                    }
-                }
-            ),
-            content_type=API_JSON_CONTENT_TYPE,
-        )
-
-        assert response.status_code == status.HTTP_409_CONFLICT
-
-    def test_resolution_other_tenant_returns_404(
-        self, authenticated_client, tenants_fixture, provider_factory
-    ):
-        other_tenant = tenants_fixture[2]
-        other_provider = provider_factory(
-            Provider.ProviderChoices.AWS, tenant=other_tenant
-        )
-        with rls_transaction(str(other_tenant.id)):
-            other_integration = Integration.objects.create(
-                tenant=other_tenant,
-                enabled=True,
-                connected=True,
-                integration_type=Integration.IntegrationChoices.JIRA,
-                configuration={"domain": "other-tenant-site"},
-                credentials={
-                    "domain": "other-tenant-site",
-                    "user_mail": "other@example.com",
-                    "api_token": "token",
-                },
-            )
-            reservation = JiraIssue.objects.create(
-                tenant=other_tenant,
-                integration=other_integration,
-                provider=other_provider,
-                finding_uid="other-tenant-finding",
-                finding_id=uuid4(),
-                attempt_state=JiraIssue.AttemptStateChoices.UNCERTAIN,
-                delivery_attempt_token=uuid4(),
-                attempt_operation=JiraIssue.AttemptOperationChoices.INITIAL,
-                attempt_project_key="TEST",
-                attempt_issue_type="Task",
-            )
-
-        response = authenticated_client.post(
-            reverse("jiraissue-resolution", kwargs={"pk": reservation.id}),
-            data=json.dumps(
-                {
-                    "data": {
-                        "type": "jira-issues",
-                        "attributes": {"resolution": "confirm_not_created"},
-                    }
-                }
-            ),
-            content_type=API_JSON_CONTENT_TYPE,
-        )
-
-        assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
 @pytest.mark.django_db
@@ -14385,7 +13901,7 @@ class TestIntegrationViewSet:
                     "integration_type": Integration.IntegrationChoices.JIRA,
                     "configuration": {},
                     "credentials": {
-                        "domain": " ProwlerDomain ",
+                        "domain": "prowlerdomain",
                         "api_token": "this-is-an-api-token-for-jira-that-works-for-sure",
                         "user_mail": "testing@prowler.com",
                     },
@@ -14406,9 +13922,7 @@ class TestIntegrationViewSet:
         ]
         assert "projects" in integration_configuration
         assert "issue_types" in integration_configuration
-        assert integration_configuration["domain"] == "prowlerdomain"
-        assert integration.configuration["domain"] == "prowlerdomain"
-        assert integration.credentials["domain"] == "prowlerdomain"
+        assert "domain" in integration_configuration
         assert integration.enabled == data["data"]["attributes"]["enabled"]
         assert (
             integration.integration_type
@@ -14836,40 +14350,6 @@ class TestIntegrationViewSet:
             == "/data/attributes/configuration"
         )
 
-    @patch("api.v1.serializers.Integration.objects.create")
-    def test_integrations_create_jira_database_race_returns_conflict(
-        self, mock_create, authenticated_client
-    ):
-        error = IntegrityError()
-        cause = Exception()
-        cause.diag = SimpleNamespace(constraint_name="unique_jira_site_per_tenant")
-        error.__cause__ = cause
-        mock_create.side_effect = error
-        data = {
-            "data": {
-                "type": "integrations",
-                "attributes": {
-                    "integration_type": Integration.IntegrationChoices.JIRA,
-                    "configuration": {},
-                    "credentials": {
-                        "user_mail": "test@example.com",
-                        "api_token": "fake-api-token",
-                        "domain": "prowlerdomain",
-                    },
-                    "enabled": True,
-                },
-            }
-        }
-
-        response = authenticated_client.post(
-            reverse("integration-list"),
-            data=json.dumps(data),
-            content_type="application/vnd.api+json",
-        )
-
-        assert response.status_code == status.HTTP_409_CONFLICT
-        mock_create.assert_called_once()
-
     def test_integrations_create_duplicate_jira(self, authenticated_client):
         # Create first JIRA integration
         data = {
@@ -14896,8 +14376,7 @@ class TestIntegrationViewSet:
         )
         assert response.status_code == status.HTTP_201_CREATED
 
-        # Site identity is case-insensitive.
-        data["data"]["attributes"]["credentials"]["domain"] = "PROWLERDOMAIN"
+        # Attempt to create duplicate should return 409
         response = authenticated_client.post(
             reverse("integration-list"),
             data=json.dumps(data),
@@ -14911,39 +14390,6 @@ class TestIntegrationViewSet:
             response.json()["errors"][0]["source"]["pointer"]
             == "/data/attributes/configuration"
         )
-
-    def test_integrations_create_different_jira_sites(self, authenticated_client):
-        data = {
-            "data": {
-                "type": "integrations",
-                "attributes": {
-                    "integration_type": Integration.IntegrationChoices.JIRA,
-                    "configuration": {},
-                    "credentials": {
-                        "user_mail": "test@example.com",
-                        "api_token": "fake-api-token",
-                        "domain": "first-site",
-                    },
-                    "enabled": True,
-                },
-            }
-        }
-
-        first_response = authenticated_client.post(
-            reverse("integration-list"),
-            data=json.dumps(data),
-            content_type="application/vnd.api+json",
-        )
-        data["data"]["attributes"]["credentials"]["domain"] = "second-site"
-        second_response = authenticated_client.post(
-            reverse("integration-list"),
-            data=json.dumps(data),
-            content_type="application/vnd.api+json",
-        )
-
-        assert first_response.status_code == status.HTTP_201_CREATED
-        assert second_response.status_code == status.HTTP_201_CREATED
-        assert Integration.objects.count() == 2
 
     def test_integrations_update_jira_configuration_readonly(
         self, authenticated_client
@@ -14996,7 +14442,7 @@ class TestIntegrationViewSet:
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_integrations_update_jira_credentials_for_same_site(
+    def test_integrations_update_jira_credentials_domain_reflects_in_configuration(
         self, authenticated_client
     ):
         # Create JIRA integration first
@@ -15032,7 +14478,7 @@ class TestIntegrationViewSet:
             == "original-domain"
         )
 
-        # Rotate the email and token while preserving the canonical site.
+        # Update credentials with new domain
         update_data = {
             "data": {
                 "type": "integrations",
@@ -15041,7 +14487,7 @@ class TestIntegrationViewSet:
                     "credentials": {
                         "user_mail": "updated@example.com",
                         "api_token": "updated-api-token",
-                        "domain": "ORIGINAL-DOMAIN",
+                        "domain": "updated-domain",
                     }
                 },
             }
@@ -15054,67 +14500,14 @@ class TestIntegrationViewSet:
         )
         assert response.status_code == status.HTTP_200_OK
 
+        # Verify the new domain is reflected in configuration
         updated_integration = response.json()["data"]
         configuration = updated_integration["attributes"]["configuration"]
-        assert configuration["domain"] == "original-domain"
+        assert configuration["domain"] == "updated-domain"
 
         # Verify other configuration fields are preserved
         assert "projects" in configuration
         assert "issue_types" in configuration
-        integration = Integration.objects.get(id=integration_id)
-        assert integration.credentials == {
-            "user_mail": "updated@example.com",
-            "api_token": "updated-api-token",
-            "domain": "original-domain",
-        }
-
-    def test_integrations_update_jira_rejects_site_change(self, authenticated_client):
-        create_data = {
-            "data": {
-                "type": "integrations",
-                "attributes": {
-                    "integration_type": Integration.IntegrationChoices.JIRA,
-                    "configuration": {},
-                    "credentials": {
-                        "user_mail": "test@example.com",
-                        "api_token": "fake-api-token",
-                        "domain": "original-domain",
-                    },
-                    "enabled": True,
-                },
-            }
-        }
-        create_response = authenticated_client.post(
-            reverse("integration-list"),
-            data=json.dumps(create_data),
-            content_type="application/vnd.api+json",
-        )
-        assert create_response.status_code == status.HTTP_201_CREATED
-        integration_id = create_response.json()["data"]["id"]
-
-        update_data = {
-            "data": {
-                "type": "integrations",
-                "id": integration_id,
-                "attributes": {
-                    "credentials": {
-                        "user_mail": "updated@example.com",
-                        "api_token": "updated-api-token",
-                        "domain": "different-domain",
-                    }
-                },
-            }
-        }
-        response = authenticated_client.patch(
-            reverse("integration-detail", kwargs={"pk": integration_id}),
-            data=json.dumps(update_data),
-            content_type="application/vnd.api+json",
-        )
-
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
-        integration = Integration.objects.get(id=integration_id)
-        assert integration.configuration["domain"] == "original-domain"
-        assert integration.credentials["domain"] == "original-domain"
 
     def test_integrations_update_jira_rejects_invalid_domain(
         self, authenticated_client

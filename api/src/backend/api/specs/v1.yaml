@@ -19068,6 +19068,7 @@ components:
             issue_status:
               type: string
               readOnly: true
+              nullable: true
             issue_status_category:
               enum:
               - new
@@ -19080,6 +19081,7 @@ components:
                 * `done` - Done
               x-spec-enum-id: 6e5c623f6bbdd92d
               readOnly: true
+              nullable: true
             status_synced_at:
               type: string
               format: date-time

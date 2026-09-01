@@ -32,7 +32,6 @@ from api.db_router import MainRouter
 from api.db_utils import rls_transaction
 from api.exceptions import (
     ComplianceWarmingError,
-    ConflictException,
     TaskFailedException,
     UpstreamAccessDeniedError,
     UpstreamAuthenticationError,
@@ -182,7 +181,6 @@ from api.v1.serializers import (
     InvitationCreateSerializer,
     InvitationSerializer,
     InvitationUpdateSerializer,
-    JiraIssueResolutionSerializer,
     JiraIssueSerializer,
     LighthouseConfigCreateSerializer,
     LighthouseConfigSerializer,
@@ -262,7 +260,7 @@ from django.conf import settings as django_settings
 from django.contrib.postgres.aggregates import ArrayAgg, BoolAnd, StringAgg
 from django.contrib.postgres.search import SearchQuery
 from django.core.exceptions import ValidationError as DjangoValidationError
-from django.db import IntegrityError, transaction
+from django.db import transaction
 from django.db.models import (
     BooleanField,
     Case,
@@ -305,10 +303,6 @@ from drf_spectacular.utils import (
 )
 from drf_spectacular.views import SpectacularAPIView
 from drf_spectacular_jsonapi.schemas.openapi import JsonApiAutoSchema
-from prowler.lib.outputs.jira.models import (
-    JiraIssueSearchOutcome,
-    JiraIssueSearchResult,
-)
 from prowler.providers.aws.exceptions.exceptions import (
     AWSAssumeRoleError,
     AWSCredentialsError,
@@ -7010,7 +7004,6 @@ class IntegrationJiraViewSet(BaseRLSViewSet):
 
         project_key = serializer.validated_data["project_key"]
         issue_type = serializer.validated_data["issue_type"]
-        force_replace = serializer.validated_data["force_replace"]
 
         with transaction.atomic():
             task = jira_integration_task.delay(
@@ -7019,8 +7012,6 @@ class IntegrationJiraViewSet(BaseRLSViewSet):
                 project_key=project_key,
                 issue_type=issue_type,
                 finding_ids=finding_ids,
-                force_replace=force_replace,
-                actor_id=str(request.user.id),
             )
         prowler_task = Task.objects.get(id=task.id)
         serializer = TaskSerializer(prowler_task)
@@ -7502,234 +7493,50 @@ class TenantApiKeyViewSet(BaseRLSViewSet):
 @extend_schema_view(
     list=extend_schema(
         tags=["Integration"],
-        summary="List Jira issue delivery records",
+        summary="List Jira issues linked to findings",
         description=(
-            "Retrieve Jira delivery records for findings, including attempts without a "
-            "confirmed Jira issue. Linked records include the last status observed in "
-            "Jira; status fields are cached and may be stale."
+            "Retrieve the Jira issues created from findings through Jira integrations. "
+            "Each entry links a finding UID to the latest Jira issue created for it, "
+            "with the last status observed in Jira. Use `filter[finding_uid__in]` "
+            "and `filter[provider_id]` to check whether specific findings already "
+            "have a ticket."
         ),
     ),
     retrieve=extend_schema(
         tags=["Integration"],
-        summary="Retrieve a Jira issue delivery record",
-        description="Fetch a Jira delivery record by its ledger ID.",
-    ),
-    resolution=extend_schema(
-        tags=["Integration"],
-        summary="Resolve an uncertain Jira delivery",
-        description=(
-            "Link an issue verified through the delivery marker, or confirm that Jira "
-            "did not create an issue so the finding can be retried."
-        ),
-        request=JiraIssueResolutionSerializer,
-        responses={200: JiraIssueSerializer},
+        summary="Retrieve a Jira issue link",
+        description="Fetch the Jira issue linked to a finding by the link ID.",
     ),
 )
 class JiraIssueViewSet(BaseRLSViewSet):
     queryset = JiraIssue.objects.all()
     serializer_class = JiraIssueSerializer
     filterset_class = JiraIssueFilter
-    http_method_names = ["get", "post"]
+    http_method_names = ["get"]
     search_fields = ["finding_uid", "issue_key"]
-    ordering = ["finding_uid", "integration_id", "id"]
+    ordering = ["-inserted_at"]
     ordering_fields = [
-        "id",
         "inserted_at",
         "updated_at",
-        "finding_uid",
-        "finding_id",
-        "integration",
-        "provider",
         "issue_key",
         "project_key",
         "issue_status",
-        "issue_status_category",
         "status_synced_at",
-        "attempt_state",
-        "next_reconcile_at",
     ]
     # RBAC required permissions (implicit -> MANAGE_PROVIDERS enables unlimited
     # visibility or check visibility via provider group, like findings)
     required_permissions = []
-    # Jira verification must not hold a database transaction open during HTTP I/O.
-    non_atomic_url_names = frozenset({"jiraissue-resolution"})
-
-    def set_required_permissions(self):
-        self.required_permissions = (
-            [Permissions.MANAGE_INTEGRATIONS] if self.action == "resolution" else []
-        )
-
-    @extend_schema(exclude=True)
-    def create(self, request, *args, **kwargs):
-        raise MethodNotAllowed(method="POST")
 
     def get_queryset(self):
         if getattr(self, "swagger_fake_view", False):
             return JiraIssue.objects.none()
-        queryset = JiraIssue.objects.filter(tenant_id=self.request.tenant_id)
+        # Pending reservations have no confirmed Jira issue and are private.
+        queryset = JiraIssue.objects.filter(
+            tenant_id=self.request.tenant_id, issue_id__isnull=False
+        )
         if not self.user_role.unlimited_visibility:
             queryset = queryset.filter(provider__in=get_providers(self.user_role))
         return queryset.select_related("provider", "integration")
-
-    @staticmethod
-    def _resolution_queryset(instance):
-        return JiraIssue.objects.filter(
-            id=instance.id,
-            tenant_id=instance.tenant_id,
-            attempt_state=instance.attempt_state,
-            delivery_attempt_token=instance.delivery_attempt_token,
-            issue_id=instance.issue_id,
-            claim_token=instance.claim_token,
-            claim_expires_at=instance.claim_expires_at,
-        )
-
-    @staticmethod
-    def _validate_resolution_state(instance):
-        if (
-            instance.attempt_state
-            not in {
-                JiraIssue.AttemptStateChoices.CREATING,
-                JiraIssue.AttemptStateChoices.UNCERTAIN,
-            }
-            or instance.delivery_attempt_token is None
-        ):
-            raise ConflictException(
-                detail="This Jira delivery does not require operator resolution."
-            )
-        if (
-            instance.attempt_state == JiraIssue.AttemptStateChoices.CREATING
-            and instance.claim_token
-            and instance.claim_expires_at
-            and instance.claim_expires_at > datetime.now(UTC)
-        ):
-            raise ConflictException(
-                detail="Another Jira delivery task still owns this attempt."
-            )
-
-    def _log_resolution(self, instance, resolution, old_issue):
-        logger.info(
-            "jira_issue_operator_resolution",
-            extra={
-                "user_id": str(self.request.user.id),
-                "tenant_id": str(instance.tenant_id),
-                "metadata": {
-                    "resolution": resolution,
-                    "jira_issue_id": str(instance.id),
-                    "integration_id": str(instance.integration_id),
-                    "provider_id": str(instance.provider_id),
-                    "finding_uid": instance.finding_uid,
-                    "old_issue_id": old_issue[0],
-                    "old_issue_key": old_issue[1],
-                    "resolved_issue_id": instance.issue_id,
-                    "resolved_issue_key": instance.issue_key,
-                },
-            },
-        )
-
-    @action(detail=True, methods=["post"], url_path="resolution")
-    def resolution(self, request, pk=None):
-        with rls_transaction(str(self.request.tenant_id), using=MainRouter.default_db):
-            instance = self.get_object()
-        self._validate_resolution_state(instance)
-        serializer = JiraIssueResolutionSerializer(
-            data=request.data, context=self.get_serializer_context()
-        )
-        serializer.is_valid(raise_exception=True)
-        resolution = serializer.validated_data["resolution"]
-        old_issue = (instance.issue_id, instance.issue_key)
-        now = datetime.now(UTC)
-
-        if resolution == "link":
-            try:
-                jira = initialize_prowler_integration(instance.integration)
-                lookup = jira.search_issues_by_delivery_attempt(
-                    str(instance.delivery_attempt_token)
-                )
-            except Exception:
-                logger.exception(
-                    "Jira marker lookup failed during operator resolution for %s",
-                    instance.id,
-                )
-                raise ValidationError(
-                    {"resolution": "Jira could not verify the selected issue."}
-                )
-
-            if (
-                not isinstance(lookup, JiraIssueSearchResult)
-                or lookup.outcome != JiraIssueSearchOutcome.SUCCESS
-                or not isinstance(lookup.matches, tuple)
-            ):
-                raise ValidationError(
-                    {"resolution": "Jira could not verify the selected issue."}
-                )
-
-            issue_id = serializer.validated_data["issue_id"]
-            issue_key = serializer.validated_data["issue_key"]
-            matches = [
-                match
-                for match in lookup.matches
-                if getattr(match, "issue_id", None) == issue_id
-                and getattr(match, "issue_key", None) == issue_key
-            ]
-            if len(matches) != 1 or not getattr(matches[0], "issue_url", None):
-                raise ValidationError(
-                    {
-                        "issue_id": (
-                            "The selected issue does not match this delivery attempt."
-                        )
-                    }
-                )
-
-            match = matches[0]
-            updates = {
-                "issue_id": match.issue_id[:64],
-                "issue_key": match.issue_key[:64],
-                "issue_url": match.issue_url[:2048],
-                "project_key": instance.attempt_project_key,
-                "issue_type": instance.attempt_issue_type,
-                "issue_status": None,
-                "issue_status_category": None,
-                "status_synced_at": None,
-                "attempt_state": JiraIssue.AttemptStateChoices.IDLE,
-                "claim_token": None,
-                "claim_expires_at": None,
-                "last_error_code": None,
-                "last_error_message": None,
-                "next_reconcile_at": None,
-                "updated_at": now,
-            }
-        else:
-            updates = {
-                "attempt_state": JiraIssue.AttemptStateChoices.RETRYABLE_FAILURE,
-                "claim_token": None,
-                "claim_expires_at": None,
-                "last_error_code": "operator_confirmed_not_created",
-                "last_error_message": (
-                    "An operator confirmed that Jira did not create the issue."
-                ),
-                "next_reconcile_at": None,
-                "updated_at": now,
-            }
-
-        try:
-            with rls_transaction(str(instance.tenant_id), using=MainRouter.default_db):
-                updated = self._resolution_queryset(instance).update(**updates)
-        except IntegrityError as error:
-            raise ConflictException(
-                detail="The selected Jira issue is already linked."
-            ) from error
-        if not updated:
-            raise ConflictException(
-                detail="The Jira delivery state changed during resolution."
-            )
-
-        for field, value in updates.items():
-            setattr(instance, field, value)
-        self._log_resolution(instance, resolution, old_issue)
-        response_serializer = JiraIssueSerializer(
-            instance, context=self.get_serializer_context()
-        )
-        return Response(response_serializer.data, status=status.HTTP_200_OK)
 
 
 # MuteRules

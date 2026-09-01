@@ -1,14 +1,10 @@
-import importlib
-import json
-from datetime import UTC, datetime, timedelta
-from types import SimpleNamespace
+from datetime import UTC, datetime
 from uuid import uuid4
 
 import pytest
 from allauth.socialaccount.models import SocialApp
 from api.db_router import MainRouter
 from api.models import (
-    Integration,
     JiraIssue,
     ProviderComplianceScore,
     Resource,
@@ -19,11 +15,8 @@ from api.models import (
     StatusChoices,
     TenantComplianceSummary,
 )
-from cryptography.fernet import Fernet
-from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError, connection, transaction
-from django.utils import timezone
+from django.db import IntegrityError, transaction
 
 
 @pytest.mark.django_db
@@ -537,50 +530,38 @@ class TestTenantComplianceSummaryModel:
 
 @pytest.mark.django_db
 class TestJiraIssueModel:
-    @staticmethod
-    def _common(jira_integration, provider, finding):
-        return {
-            "tenant_id": jira_integration.tenant_id,
-            "integration": jira_integration,
-            "provider": provider,
-            "finding_uid": finding.uid,
-            "finding_id": finding.id,
-        }
-
-    @staticmethod
-    def _link(issue_number):
-        return {
-            "issue_id": str(10000 + issue_number),
-            "issue_key": f"TEST-{issue_number}",
-            "issue_url": f"https://test.atlassian.net/browse/TEST-{issue_number}",
-            "project_key": "TEST",
-            "issue_type": "Task",
-        }
-
     def test_create_jira_issue(
         self, jira_integration_fixture, aws_provider, findings_fixture
     ):
         finding = findings_fixture[0]
         issue = JiraIssue.objects.create(
-            **self._common(jira_integration_fixture, aws_provider, finding),
-            **self._link(1),
+            tenant_id=jira_integration_fixture.tenant_id,
+            integration=jira_integration_fixture,
+            provider=aws_provider,
+            finding_uid=finding.uid,
+            finding_id=finding.id,
+            issue_id="10001",
+            issue_key="TEST-1",
+            issue_url="https://test.atlassian.net/browse/TEST-1",
+            project_key="TEST",
         )
         assert issue.is_linked
         assert not issue.is_done
         assert issue.issue_status_category is None
-        assert issue.attempt_state == JiraIssue.AttemptStateChoices.IDLE
 
-    def test_idle_row_is_not_linked(
+    def test_reservation_is_not_linked(
         self, jira_integration_fixture, aws_provider, findings_fixture
     ):
         finding = findings_fixture[0]
         issue = JiraIssue.objects.create(
-            **self._common(jira_integration_fixture, aws_provider, finding),
+            tenant_id=jira_integration_fixture.tenant_id,
+            integration=jira_integration_fixture,
+            provider=aws_provider,
+            finding_uid=finding.uid,
+            finding_id=finding.id,
+            delivery_attempt_token=uuid4(),
         )
         assert not issue.is_linked
-        assert issue.issue_id is None
-        assert issue.issue_key is None
-        assert issue.issue_url is None
 
     def test_unique_per_integration_provider_and_finding_uid(
         self, jira_integration_fixture, aws_provider_pair, findings_fixture
@@ -592,413 +573,66 @@ class TestJiraIssueModel:
             "integration": jira_integration_fixture,
             "finding_uid": finding.uid,
             "finding_id": finding.id,
+            "project_key": "TEST",
         }
-        JiraIssue.objects.create(provider=provider, **common)
+        JiraIssue.objects.create(
+            provider=provider,
+            issue_id="10001",
+            issue_key="TEST-1",
+            issue_url="https://test.atlassian.net/browse/TEST-1",
+            **common,
+        )
         # Same finding uid on another provider is a different finding
-        JiraIssue.objects.create(provider=provider2, **common)
+        JiraIssue.objects.create(
+            provider=provider2,
+            issue_id="10002",
+            issue_key="TEST-2",
+            issue_url="https://test.atlassian.net/browse/TEST-2",
+            **common,
+        )
         with pytest.raises(IntegrityError), transaction.atomic():
-            JiraIssue.objects.create(provider=provider, **common)
+            JiraIssue.objects.create(
+                provider=provider,
+                issue_id="10003",
+                issue_key="TEST-3",
+                issue_url="https://test.atlassian.net/browse/TEST-3",
+                **common,
+            )
 
-    def test_identity_and_issue_id_are_independent_across_integrations(
+    def test_delivery_attempt_token_is_unique_when_present(
+        self, jira_integration_fixture, aws_provider_pair, findings_fixture
+    ):
+        provider, provider2 = aws_provider_pair
+        attempt_token = uuid4()
+        common = {
+            "tenant_id": jira_integration_fixture.tenant_id,
+            "integration": jira_integration_fixture,
+            "finding_id": findings_fixture[0].id,
+            "delivery_attempt_token": attempt_token,
+        }
+        JiraIssue.objects.create(
+            provider=provider,
+            finding_uid="finding-one",
+            **common,
+        )
+
+        with pytest.raises(IntegrityError), transaction.atomic():
+            JiraIssue.objects.create(
+                provider=provider2,
+                finding_uid="finding-two",
+                **common,
+            )
+
+    def test_link_fields_are_all_or_none(
         self, jira_integration_fixture, aws_provider, findings_fixture
     ):
         finding = findings_fixture[0]
-        other_integration = Integration.objects.create(
-            tenant_id=jira_integration_fixture.tenant_id,
-            enabled=True,
-            connected=True,
-            integration_type=Integration.IntegrationChoices.JIRA,
-            configuration={"domain": "other-site"},
-            credentials={
-                "domain": "other-site",
-                "user_mail": "other@example.com",
-                "api_token": "token",
-            },
-        )
-        JiraIssue.objects.create(
-            **self._common(jira_integration_fixture, aws_provider, finding),
-            **self._link(1),
-        )
-
-        other_issue = JiraIssue.objects.create(
-            **self._common(other_integration, aws_provider, finding),
-            **self._link(1),
-        )
-
-        assert other_issue.integration_id == other_integration.id
-        assert JiraIssue.objects.filter(finding_uid=finding.uid).count() == 2
-
-    def test_delivery_attempt_token_is_unique(
-        self, jira_integration_fixture, aws_provider_pair, findings_fixture
-    ):
-        provider, provider2 = aws_provider_pair
-        finding1, finding2 = findings_fixture
-        token = uuid4()
-        attempt = {
-            "attempt_state": JiraIssue.AttemptStateChoices.RETRYABLE_FAILURE,
-            "delivery_attempt_token": token,
-            "attempt_operation": JiraIssue.AttemptOperationChoices.INITIAL,
-            "attempt_project_key": "TEST",
-            "attempt_issue_type": "Task",
-        }
-        JiraIssue.objects.create(
-            **self._common(jira_integration_fixture, provider, finding1),
-            **attempt,
-        )
         with pytest.raises(IntegrityError), transaction.atomic():
             JiraIssue.objects.create(
-                **self._common(jira_integration_fixture, provider2, finding2),
-                **attempt,
-            )
-
-    def test_issue_identity_is_unique_per_integration(
-        self, jira_integration_fixture, aws_provider_pair, findings_fixture
-    ):
-        provider, provider2 = aws_provider_pair
-        finding1, finding2 = findings_fixture
-        JiraIssue.objects.create(
-            **self._common(jira_integration_fixture, provider, finding1),
-            **self._link(1),
-        )
-        duplicate_link = self._link(2) | {"issue_id": "10001"}
-        with pytest.raises(IntegrityError), transaction.atomic():
-            JiraIssue.objects.create(
-                **self._common(jira_integration_fixture, provider2, finding2),
-                **duplicate_link,
-            )
-
-    def test_link_fields_are_all_populated_or_all_null(
-        self, jira_integration_fixture, aws_provider, findings_fixture
-    ):
-        with pytest.raises(IntegrityError), transaction.atomic():
-            JiraIssue.objects.create(
-                **self._common(
-                    jira_integration_fixture, aws_provider, findings_fixture[0]
-                ),
+                tenant_id=jira_integration_fixture.tenant_id,
+                integration=jira_integration_fixture,
+                provider=aws_provider,
+                finding_uid=finding.uid,
+                finding_id=finding.id,
                 issue_id="10001",
             )
-
-    def test_creating_attempt_requires_complete_claim_and_destination(
-        self, jira_integration_fixture, aws_provider, findings_fixture
-    ):
-        common = self._common(
-            jira_integration_fixture, aws_provider, findings_fixture[0]
-        )
-        with pytest.raises(IntegrityError), transaction.atomic():
-            JiraIssue.objects.create(
-                **common,
-                attempt_state=JiraIssue.AttemptStateChoices.CREATING,
-                delivery_attempt_token=uuid4(),
-                attempt_operation=JiraIssue.AttemptOperationChoices.INITIAL,
-                attempt_project_key="TEST",
-                attempt_issue_type="Task",
-            )
-
-        issue = JiraIssue.objects.create(
-            **common,
-            attempt_state=JiraIssue.AttemptStateChoices.CREATING,
-            claim_token="task-id",
-            claim_expires_at=timezone.now() + timedelta(minutes=15),
-            delivery_attempt_token=uuid4(),
-            attempt_operation=JiraIssue.AttemptOperationChoices.INITIAL,
-            attempt_project_key="TEST",
-            attempt_issue_type="Task",
-        )
-        assert issue.claim_token == "task-id"
-
-    @pytest.mark.parametrize("missing_field", ["claim_token", "claim_expires_at"])
-    def test_claim_fields_are_all_populated_or_all_null(
-        self,
-        jira_integration_fixture,
-        aws_provider,
-        findings_fixture,
-        missing_field,
-    ):
-        claim = {
-            "claim_token": "task-id",
-            "claim_expires_at": timezone.now() + timedelta(minutes=15),
-        }
-        claim.pop(missing_field)
-        with pytest.raises(IntegrityError), transaction.atomic():
-            JiraIssue.objects.create(
-                **self._common(
-                    jira_integration_fixture, aws_provider, findings_fixture[0]
-                ),
-                **claim,
-            )
-
-    def test_claim_requires_creating_state(
-        self, jira_integration_fixture, aws_provider, findings_fixture
-    ):
-        with pytest.raises(IntegrityError), transaction.atomic():
-            JiraIssue.objects.create(
-                **self._common(
-                    jira_integration_fixture, aws_provider, findings_fixture[0]
-                ),
-                attempt_state=JiraIssue.AttemptStateChoices.RETRYABLE_FAILURE,
-                claim_token="task-id",
-                claim_expires_at=timezone.now() + timedelta(minutes=15),
-                delivery_attempt_token=uuid4(),
-                attempt_operation=JiraIssue.AttemptOperationChoices.INITIAL,
-                attempt_project_key="TEST",
-                attempt_issue_type="Task",
-            )
-
-    @pytest.mark.parametrize(
-        ("field", "value"),
-        [("attempt_state", "invalid"), ("attempt_operation", "invalid")],
-    )
-    def test_attempt_enums_are_enforced_by_the_database(
-        self,
-        jira_integration_fixture,
-        aws_provider,
-        findings_fixture,
-        field,
-        value,
-    ):
-        values = {
-            "attempt_state": JiraIssue.AttemptStateChoices.RETRYABLE_FAILURE,
-            "delivery_attempt_token": uuid4(),
-            "attempt_operation": JiraIssue.AttemptOperationChoices.INITIAL,
-            "attempt_project_key": "TEST",
-            "attempt_issue_type": "Task",
-            field: value,
-        }
-        with pytest.raises(IntegrityError), transaction.atomic():
-            JiraIssue.objects.create(
-                **self._common(
-                    jira_integration_fixture, aws_provider, findings_fixture[0]
-                ),
-                **values,
-            )
-
-    @pytest.mark.parametrize(
-        "missing_field",
-        [
-            "delivery_attempt_token",
-            "attempt_operation",
-            "attempt_project_key",
-            "attempt_issue_type",
-        ],
-    )
-    def test_non_idle_attempt_requires_delivery_fields(
-        self,
-        jira_integration_fixture,
-        aws_provider,
-        findings_fixture,
-        missing_field,
-    ):
-        attempt = {
-            "attempt_state": JiraIssue.AttemptStateChoices.RETRYABLE_FAILURE,
-            "delivery_attempt_token": uuid4(),
-            "attempt_operation": JiraIssue.AttemptOperationChoices.INITIAL,
-            "attempt_project_key": "TEST",
-            "attempt_issue_type": "Task",
-        }
-        attempt.pop(missing_field)
-        with pytest.raises(IntegrityError), transaction.atomic():
-            JiraIssue.objects.create(
-                **self._common(
-                    jira_integration_fixture, aws_provider, findings_fixture[0]
-                ),
-                **attempt,
-            )
-
-    def test_replacement_attempt_requires_current_link(
-        self, jira_integration_fixture, aws_provider, findings_fixture
-    ):
-        with pytest.raises(IntegrityError), transaction.atomic():
-            JiraIssue.objects.create(
-                **self._common(
-                    jira_integration_fixture, aws_provider, findings_fixture[0]
-                ),
-                attempt_state=JiraIssue.AttemptStateChoices.RETRYABLE_FAILURE,
-                delivery_attempt_token=uuid4(),
-                attempt_operation=JiraIssue.AttemptOperationChoices.REPLACEMENT,
-                attempt_project_key="TEST",
-                attempt_issue_type="Task",
-            )
-
-    def test_valid_replacement_retains_current_link(
-        self, jira_integration_fixture, aws_provider, findings_fixture
-    ):
-        issue = JiraIssue.objects.create(
-            **self._common(jira_integration_fixture, aws_provider, findings_fixture[0]),
-            **self._link(1),
-            attempt_state=JiraIssue.AttemptStateChoices.RETRYABLE_FAILURE,
-            delivery_attempt_token=uuid4(),
-            attempt_operation=JiraIssue.AttemptOperationChoices.REPLACEMENT,
-            attempt_project_key="TEST",
-            attempt_issue_type="Task",
-        )
-
-        assert issue.issue_id == "10001"
-        assert issue.attempt_operation == JiraIssue.AttemptOperationChoices.REPLACEMENT
-
-    def test_reconciliation_time_requires_uncertain_state(
-        self, jira_integration_fixture, aws_provider, findings_fixture
-    ):
-        with pytest.raises(IntegrityError), transaction.atomic():
-            JiraIssue.objects.create(
-                **self._common(
-                    jira_integration_fixture, aws_provider, findings_fixture[0]
-                ),
-                next_reconcile_at=timezone.now(),
-            )
-
-
-@pytest.mark.django_db
-class TestJiraMigrations:
-    def test_jira_ledger_constraints_indexes_and_rls_policies_exist(self):
-        with connection.cursor() as cursor:
-            constraints = connection.introspection.get_constraints(
-                cursor, JiraIssue._meta.db_table
-            )
-            cursor.execute(
-                "SELECT cmd FROM pg_policies WHERE tablename = %s",
-                [JiraIssue._meta.db_table],
-            )
-            policy_commands = {row[0] for row in cursor.fetchall()}
-
-        assert {
-            "unique_jira_issue_per_finding",
-            "unique_jira_delivery_attempt",
-            "unique_jira_issue_identity",
-            "jira_issue_link_all_or_none",
-            "jira_issue_claim_all_or_none",
-            "jira_issue_valid_attempt_state",
-            "jira_issue_valid_operation",
-            "jira_issue_attempt_fields",
-            "jira_issue_creating_has_claim",
-            "jira_issue_claim_only_creating",
-            "jira_issue_replacement_has_link",
-            "jira_issue_reconcile_uncertain",
-            "ji_ui_lookup_idx",
-            "ji_stale_claim_idx",
-            "ji_reconcile_due_idx",
-        } <= constraints.keys()
-        assert policy_commands == {"SELECT", "INSERT", "UPDATE", "DELETE"}
-
-    def test_jira_site_data_migration_normalizes_configuration_and_credentials(self):
-        migration = importlib.import_module("api.migrations.0100_jira_site_identity")
-        cipher = Fernet(settings.SECRETS_ENCRYPTION_KEY.encode())
-        integration = SimpleNamespace(
-            id=uuid4(),
-            tenant_id=uuid4(),
-            configuration={"projects": {"TEST": "Test"}},
-            _credentials=cipher.encrypt(
-                json.dumps(
-                    {
-                        "domain": " Example-Site ",
-                        "user_mail": "jira@example.com",
-                        "api_token": "token",
-                    }
-                ).encode()
-            ),
-        )
-
-        class FakeManager:
-            def __init__(self):
-                self.bulk_update_args = None
-
-            def using(self, _alias):
-                return self
-
-            def filter(self, **_kwargs):
-                return self
-
-            def only(self, *_fields):
-                return [integration]
-
-            def bulk_update(self, *args, **kwargs):
-                self.bulk_update_args = (args, kwargs)
-
-        manager = FakeManager()
-        apps = SimpleNamespace(
-            get_model=lambda *_args: SimpleNamespace(objects=manager)
-        )
-
-        migration.normalize_jira_domains(apps, None)
-
-        credentials = json.loads(cipher.decrypt(integration._credentials).decode())
-        assert integration.configuration == {
-            "projects": {"TEST": "Test"},
-            "domain": "example-site",
-        }
-        assert credentials["domain"] == "example-site"
-        assert manager.bulk_update_args[0][0] == [integration]
-
-    def test_jira_site_data_migration_rejects_case_insensitive_duplicates(self):
-        migration = importlib.import_module("api.migrations.0100_jira_site_identity")
-        cipher = Fernet(settings.SECRETS_ENCRYPTION_KEY.encode())
-        tenant_id = uuid4()
-        integrations = [
-            SimpleNamespace(
-                id=uuid4(),
-                tenant_id=tenant_id,
-                configuration={},
-                _credentials=cipher.encrypt(json.dumps({"domain": domain}).encode()),
-            )
-            for domain in ("Example-Site", "example-site")
-        ]
-
-        class FakeManager:
-            def using(self, _alias):
-                return self
-
-            def filter(self, **_kwargs):
-                return self
-
-            def only(self, *_fields):
-                return integrations
-
-            def bulk_update(self, *_args, **_kwargs):
-                raise AssertionError("duplicates must fail before writing")
-
-        apps = SimpleNamespace(
-            get_model=lambda *_args: SimpleNamespace(objects=FakeManager())
-        )
-
-        with pytest.raises(RuntimeError, match="Duplicate Jira integrations"):
-            migration.normalize_jira_domains(apps, None)
-
-    def test_jira_site_constraint_is_case_insensitive_per_tenant(self, tenants_fixture):
-        tenant, other_tenant, *_ = tenants_fixture
-        attributes = {
-            "enabled": True,
-            "connected": True,
-            "integration_type": Integration.IntegrationChoices.JIRA,
-            "configuration": {"domain": "Example-Site"},
-            "credentials": {
-                "domain": "Example-Site",
-                "user_mail": "jira@example.com",
-                "api_token": "token",
-            },
-        }
-        Integration.objects.create(tenant=tenant, **attributes)
-
-        with pytest.raises(IntegrityError), transaction.atomic():
-            Integration.objects.create(
-                tenant=tenant,
-                **(
-                    attributes
-                    | {
-                        "configuration": {"domain": "example-site"},
-                        "credentials": attributes["credentials"]
-                        | {"domain": "example-site"},
-                    }
-                ),
-            )
-
-        other = Integration.objects.create(
-            tenant=other_tenant,
-            **(
-                attributes
-                | {
-                    "configuration": {"domain": "example-site"},
-                    "credentials": attributes["credentials"]
-                    | {"domain": "example-site"},
-                }
-            ),
-        )
-        assert other.tenant_id == other_tenant.id
