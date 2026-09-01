@@ -409,7 +409,7 @@ class Testm365PowerShell:
         mock_popen.return_value = mock_process
 
         # Mock the execute method to simulate successful module installation
-        def mock_execute(command, *args, **kwargs):
+        def mock_execute(command, *_args, **_kwargs):
             if "Get-Module" in command:
                 return None  # Module not installed
             elif "Install-Module" in command:
@@ -436,6 +436,20 @@ class Testm365PowerShell:
             assert (
                 mock_execute_obj.call_count == 3 * 3
             )  # number of modules * 3 commands each
+            mock_execute_obj.assert_any_call(
+                (
+                    "Install-Module ExchangeOnlineManagement -RequiredVersion 3.9.2 "
+                    "-Force -AllowClobber -Scope CurrentUser"
+                ),
+                timeout=60,
+            )
+            mock_execute_obj.assert_any_call(
+                (
+                    'Import-Module "ExchangeOnlineManagement" '
+                    "-RequiredVersion 3.9.2 -Force"
+                ),
+                timeout=1,
+            )
             # Verify success messages were logged
             mock_info.assert_any_call(
                 "Successfully installed module ExchangeOnlineManagement"
@@ -449,7 +463,7 @@ class Testm365PowerShell:
         mock_popen.return_value = mock_process
 
         # Mock the execute method to simulate installation failure
-        def mock_execute(command, *args, **kwargs):
+        def mock_execute(command, *_args, **_kwargs):
             if "Get-Module" in command:
                 return None  # Module not installed
             elif "Install-Module" in command:
@@ -484,7 +498,7 @@ class Testm365PowerShell:
         mock_popen.return_value = mock_process
 
         # Mock the execute method to simulate successful module installation
-        def mock_execute(command, *args, **kwargs):
+        def mock_execute(command, *_args, **_kwargs):
             if "Get-Module" in command:
                 return None  # Module not installed
             elif "Install-Module" in command:
@@ -522,7 +536,7 @@ class Testm365PowerShell:
         mock_popen.return_value = mock_process
 
         # Mock the execute method to simulate installation failure
-        def mock_execute(command, *args, **kwargs):
+        def mock_execute(command, *_args, **_kwargs):
             if "Get-Module" in command:
                 return None  # Module not installed
             elif "Install-Module" in command:
@@ -670,7 +684,7 @@ class Testm365PowerShell:
         session = M365PowerShell(credentials, identity)
 
         # Mock execute to return valid responses
-        def mock_execute(command, *args, **kwargs):
+        def mock_execute(command, *_args, **_kwargs):
             if "Write-Output $exchangeToken" in command:
                 return "valid_exchange_token"
             return None
@@ -720,7 +734,7 @@ class Testm365PowerShell:
         session = M365PowerShell(credentials, identity)
 
         # Mock execute to return valid token but decode returns no permissions
-        def mock_execute(command, *args, **kwargs):
+        def mock_execute(command, *_args, **_kwargs):
             if "Write-Output $exchangeToken" in command:
                 return "valid_exchange_token"
             return None

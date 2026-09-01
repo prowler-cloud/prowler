@@ -1148,6 +1148,7 @@ def initialize_m365_powershell_modules():
         "MicrosoftTeams",
         "MSAL.PS",
     ]
+    REQUIRED_MODULE_VERSIONS = {"ExchangeOnlineManagement": "3.9.2"}
 
     pwsh = PowerShellSession()
     try:
@@ -1158,8 +1159,18 @@ def initialize_m365_powershell_modules():
 
                 # Install module if not installed
                 if not result:
+                    required_version = REQUIRED_MODULE_VERSIONS.get(module)
+                    version_parameter = (
+                        f" -RequiredVersion {required_version}"
+                        if required_version
+                        else ""
+                    )
+                    install_command = (
+                        f"Install-Module {module}{version_parameter} "
+                        "-Force -AllowClobber -Scope CurrentUser"
+                    )
                     install_result = pwsh.execute(
-                        f"Install-Module {module} -Force -AllowClobber -Scope CurrentUser",
+                        install_command,
                         timeout=60,
                     )
                     if install_result:
@@ -1170,7 +1181,10 @@ def initialize_m365_powershell_modules():
                         logger.info(f"Successfully installed module {module}")
 
                     # Import module
-                    pwsh.execute(f'Import-Module "{module}" -Force', timeout=1)
+                    pwsh.execute(
+                        f'Import-Module "{module}"{version_parameter} -Force',
+                        timeout=1,
+                    )
 
             except Exception as error:
                 logger.error(f"Failed to initialize module {module}: {str(error)}")
