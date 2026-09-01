@@ -215,6 +215,19 @@ class OciRegistryAdapter(RegistryAdapter):
                 # skip the doomed Bearer round-trips.
                 self._basic_auth_verified = True
                 self._bearer_token = None
+        if (
+            resp.status_code == 401
+            and not self._bearer_token
+            and self._is_same_origin_as_registry(url)
+            and resp.headers.get("Www-Authenticate", "").lower().startswith("bearer")
+        ):
+            # The inverse switch: /v2/ negotiated Basic (or anonymous) but this
+            # endpoint demands Bearer. The challenge carries the right scope.
+            logger.debug(f"Basic auth not accepted for {url}, switching to Bearer")
+            self._bearer_token = self._obtain_bearer_token(
+                resp.headers.get("Www-Authenticate", "")
+            )
+            resp = self._do_authed_request(method, url, **kwargs)
         return resp
 
     def _do_authed_request(self, method: str, url: str, **kwargs) -> requests.Response:
