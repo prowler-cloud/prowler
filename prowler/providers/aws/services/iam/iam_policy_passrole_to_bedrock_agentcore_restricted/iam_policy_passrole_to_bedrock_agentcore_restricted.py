@@ -363,18 +363,36 @@ def _names_every_role(resource: str) -> bool:
     field after it, because IAM wildcards match the colon, and what remains is that the fields
     actually spelled out must be able to name a role ARN.
 
-    Two positions get an extra test, and both rest on a fixed property of an IAM ARN rather than on a
-    corpus:
+    The region and account positions get an extra test, and both rest on a fixed property of an IAM
+    ARN rather than on a corpus:
 
-      account (5 fields)  an account is twelve digits, so a literal head that is not digits names no
-                          account. This is what keeps ``arn:aws:iam::role/Prod*`` specific.
-      region  (4 fields)  every IAM ARN has an EMPTY region, so ANY literal head there names no
-                          region. This is what keeps ``arn:aws:iam:role/Prod*`` specific -- the same
-                          shape one colon short, which without this test read as naming every role
-                          and drew a FAIL on a pattern matching no role ARN at all.
+      account   an account is twelve digits, so a literal that is not twelve digits names no
+                account. This is what keeps ``arn:aws:iam::role/Prod*`` and
+                ``arn:aws:iam::12345:role/*`` specific.
+      region    every IAM ARN has an EMPTY region, so any region pattern that cannot match the
+                empty string names no region. This is what keeps ``arn:aws:iam:role/Prod*``
+                specific -- the same shape one colon short -- and, at six fields,
+                ``arn:aws:iam:us-east-1:123456789012:role/*``.
 
-    ``arn:aws:iam:*`` and ``arn:aws:iam:?*`` still name every role, because their literal head is
-    empty once ``?`` is discounted, and ``?`` matches the colon.
+    BOTH BRANCHES APPLY BOTH TESTS, and the six-field branch not applying them was the defect that
+    reached review. It tested only that the partition and service fields could name an IAM ARN and
+    then probed the resource field, so a fully spelled-out ARN naming a region IAM does not have, or
+    an account of the wrong length, was read as naming every role: a high-severity
+    privilege-escalation FAIL on a pattern matching no role ARN at all. That is the same defect the
+    short branch had already been fixed for, surviving in the branch nobody re-read.
+
+    The two branches phrase the SAME question differently because the field means something
+    different in each, and this is the part that is easy to get wrong:
+
+      short branch  the last spelled-out field carries a star that spans every field after it, so
+                    only its literal HEAD is pinned to a position. ``?`` is discounted there because
+                    it can match the colon and slide the rest of the pattern into a later field --
+                    which is what keeps ``arn:aws:iam:?*`` naming every role.
+      six fields    the field is delimited on both sides, so the WHOLE field must be able to name a
+                    region or an account, and ``?`` is NOT discounted -- it has no colon to match
+                    and must consume exactly one character of a region that has none. That is why
+                    ``arn:aws:iam:?:123456789012:role/*`` names no role while ``arn:aws:iam:?*``
+                    names every one.
 
     The PARTITION position deliberately gets no such test, which is why ``arn:xyz*`` still reads as
     naming every role. A partition is not a fixed shape -- ``aws``, ``aws-cn``, ``aws-us-gov`` and the
@@ -412,6 +430,24 @@ def _names_every_role(resource: str) -> bool:
     if not iam_pattern_matches(arn_fields[0], "arn"):
         return False
     if not iam_pattern_matches(arn_fields[2], "iam"):
+        return False
+    # Every IAM ARN has an EMPTY region, so a region field that cannot match the empty string names
+    # no region and the pattern reaches no role. Asked as a pattern match against "" rather than by
+    # stripping metacharacters, because that is the whole question here: "" and "*" match it, while
+    # "us-east-1" and "?" do not. ? is deliberately NOT discounted, unlike the short branch above --
+    # this field is delimited on both sides, so there is no colon for it to match and it must consume
+    # one character of a region that has none.
+    if not iam_pattern_matches(arn_fields[3], ""):
+        return False
+    account_field = arn_fields[4]
+    # An account is twelve digits. Two ways a spelled-out field can fail to name one, and the second
+    # is unreachable in the short branch, where a trailing star always spans the field:
+    #   a literal head that is not digits    role/Prod in arn:aws:iam::role/Prod:...
+    #   a starless field of the wrong width  12345, which is digits but names no account
+    account_head = account_field.split("*", 1)[0].replace("?", "")
+    if account_head and not account_head.isdigit():
+        return False
+    if "*" not in account_field and len(account_field) != 12:
         return False
     return all(
         iam_pattern_matches(arn_fields[5], probe)

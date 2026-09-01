@@ -746,6 +746,58 @@ class Test_iam_policy_passrole_to_bedrock_agentcore_restricted:
         policy = _policy([_passrole(resource), AGENTCORE_ACTION_STATEMENT])
         assert _run([policy])[0].status == "PASS"
 
+    @pytest.mark.parametrize(
+        "resource",
+        [
+            f"arn:aws:iam:us-east-1:{AWS_ACCOUNT_ID}:role/*",
+            f"arn:aws:iam:?:{AWS_ACCOUNT_ID}:role/*",
+            f"arn:aws:iam:us-east-1:{AWS_ACCOUNT_ID}:role/?*",
+            "arn:aws:iam::12345:role/*",
+            "arn:aws:iam:::role/*",
+            "arn:aws:iam::?????:role/*",
+        ],
+    )
+    def test_a_six_field_arn_that_names_no_role_passes(self, resource):
+        """A fully spelled-out ARN naming no role must PASS, as the short spellings already do.
+
+        The six-field branch applied neither the region test nor the account one, so every resource
+        here drew a high-severity privilege-escalation FAIL on a pattern matching no role ARN at
+        all -- the same defect the four- and five-field branches had already been fixed for,
+        surviving in the branch that was not re-read.
+
+        Every IAM ARN has an EMPTY region, so `us-east-1` in that position names nothing, and `?`
+        names nothing either: unlike the short branch, this field is delimited on both sides, so
+        there is no colon for `?` to match and it must consume one character of a region that has
+        none. An account is twelve digits, so `12345`, the empty field and five `?` each name no
+        account however the resource field is spelled.
+        """
+        policy = _policy([_passrole(resource), AGENTCORE_ACTION_STATEMENT])
+        assert _run([policy])[0].status == "PASS"
+
+    @pytest.mark.parametrize(
+        "resource",
+        [
+            f"arn:aws:iam:*:{AWS_ACCOUNT_ID}:role/*",
+            "arn:aws:iam::1234567890*:role/*",
+            ANY_ROLE_IN_ACCOUNT_ARN,
+            "arn:aws:iam::????????????:role/*",
+            "arn:aws:iam::12345678901?:role/*",
+            "arn:aws:iam:*:*:role/*",
+        ],
+    )
+    def test_a_six_field_arn_that_names_every_role_still_fails(self, resource):
+        """The guard on the fix above: the region and account tests must reject only unnameable
+        shapes, never a wildcard that spans a real region or account.
+
+        `*` matches the empty region IAM ARNs carry, an account prefix followed by a star spans
+        every account sharing it, and twelve `?` spans every account there is -- one `?` short of
+        twelve names none, which is the pair that pins the width rule rather than assuming it.
+        `ANY_ROLE_IN_ACCOUNT_ARN` is here because it FAILed correctly before the fix and must go on
+        doing so: it is the shape the check exists to report.
+        """
+        policy = _policy([_passrole(resource), AGENTCORE_ACTION_STATEMENT])
+        assert _run([policy])[0].status == "FAIL"
+
     def test_iam_service_wildcard_action_fails(self):
         """iam:* covers iam:PassRole, so the statement must FAIL."""
         policy = _policy(
