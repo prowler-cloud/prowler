@@ -138,6 +138,8 @@ Prowler Cloud always includes the Finding URL. In Prowler Local Server, set `DJA
 
 ### Sending a Finding That Already Has a Jira Issue
 
+<VersionBadge version="5.42.0" />
+
 Prowler remembers each confirmed Jira issue created for a Finding, keyed by the Finding UID, so sending the same Finding again does not create a duplicate issue:
 
 * If the linked issue is still open in Jira, the Finding is skipped and the existing issue key is reported in the task result (`skipped_count`, `skipped`).

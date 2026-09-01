@@ -544,6 +544,7 @@ def get_tenant_name(tenant_id: str) -> str:
 # Findings are pre-checked in bounded index lookups however many a dispatch carries.
 JIRA_DEDUP_CHUNK_SIZE = 500
 JIRA_SKIPPED_REPORT_LIMIT = 100
+JIRA_ERROR_REPORT_MAX_LENGTH = 8192
 
 
 def _load_finding_refs(finding_ids: list[str]) -> dict[str, tuple[str, str]]:
@@ -688,6 +689,8 @@ def _apply_jira_issue_status(
 def _update_latest_jira_finding_id(
     tenant_id: str, row: JiraIssue, finding_id: str
 ) -> None:
+    # Finding IDs are monotonic UUIDv7 values, so ordering reflects scan recency
+    # and prevents stale dispatches from moving the ledger pointer backward.
     with rls_transaction(tenant_id, using=MainRouter.default_db):
         JiraIssue.objects.filter(id=row.id, finding_id__lt=finding_id).update(
             finding_id=finding_id,
@@ -1110,7 +1113,9 @@ def send_findings_to_jira(
         "skipped_count": skipped_count,
     }
     if error_messages:
-        result["error"] = "; ".join(dict.fromkeys(error_messages))
+        result["error"] = "; ".join(dict.fromkeys(error_messages))[
+            :JIRA_ERROR_REPORT_MAX_LENGTH
+        ]
     if skipped:
         result["skipped"] = skipped
     return result

@@ -4,6 +4,7 @@ from uuid import uuid4
 import pytest
 from allauth.socialaccount.models import SocialApp
 from api.db_router import MainRouter
+from api.db_utils import rls_transaction
 from api.models import (
     JiraIssue,
     ProviderComplianceScore,
@@ -534,17 +535,18 @@ class TestJiraIssueModel:
         self, jira_integration_fixture, aws_provider, findings_fixture
     ):
         finding = findings_fixture[0]
-        issue = JiraIssue.objects.create(
-            tenant_id=jira_integration_fixture.tenant_id,
-            integration=jira_integration_fixture,
-            provider=aws_provider,
-            finding_uid=finding.uid,
-            finding_id=finding.id,
-            issue_id="10001",
-            issue_key="TEST-1",
-            issue_url="https://test.atlassian.net/browse/TEST-1",
-            project_key="TEST",
-        )
+        with rls_transaction(str(jira_integration_fixture.tenant_id)):
+            issue = JiraIssue.objects.create(
+                tenant_id=jira_integration_fixture.tenant_id,
+                integration=jira_integration_fixture,
+                provider=aws_provider,
+                finding_uid=finding.uid,
+                finding_id=finding.id,
+                issue_id="10001",
+                issue_key="TEST-1",
+                issue_url="https://test.atlassian.net/browse/TEST-1",
+                project_key="TEST",
+            )
         assert issue.is_linked
         assert not issue.is_done
         assert issue.issue_status_category is None
@@ -553,14 +555,15 @@ class TestJiraIssueModel:
         self, jira_integration_fixture, aws_provider, findings_fixture
     ):
         finding = findings_fixture[0]
-        issue = JiraIssue.objects.create(
-            tenant_id=jira_integration_fixture.tenant_id,
-            integration=jira_integration_fixture,
-            provider=aws_provider,
-            finding_uid=finding.uid,
-            finding_id=finding.id,
-            delivery_attempt_token=uuid4(),
-        )
+        with rls_transaction(str(jira_integration_fixture.tenant_id)):
+            issue = JiraIssue.objects.create(
+                tenant_id=jira_integration_fixture.tenant_id,
+                integration=jira_integration_fixture,
+                provider=aws_provider,
+                finding_uid=finding.uid,
+                finding_id=finding.id,
+                delivery_attempt_token=uuid4(),
+            )
         assert not issue.is_linked
 
     def test_unique_per_integration_provider_and_finding_uid(
@@ -575,29 +578,30 @@ class TestJiraIssueModel:
             "finding_id": finding.id,
             "project_key": "TEST",
         }
-        JiraIssue.objects.create(
-            provider=provider,
-            issue_id="10001",
-            issue_key="TEST-1",
-            issue_url="https://test.atlassian.net/browse/TEST-1",
-            **common,
-        )
-        # Same finding uid on another provider is a different finding
-        JiraIssue.objects.create(
-            provider=provider2,
-            issue_id="10002",
-            issue_key="TEST-2",
-            issue_url="https://test.atlassian.net/browse/TEST-2",
-            **common,
-        )
-        with pytest.raises(IntegrityError), transaction.atomic():
+        with rls_transaction(str(jira_integration_fixture.tenant_id)):
             JiraIssue.objects.create(
                 provider=provider,
-                issue_id="10003",
-                issue_key="TEST-3",
-                issue_url="https://test.atlassian.net/browse/TEST-3",
+                issue_id="10001",
+                issue_key="TEST-1",
+                issue_url="https://test.atlassian.net/browse/TEST-1",
                 **common,
             )
+            # Same finding uid on another provider is a different finding
+            JiraIssue.objects.create(
+                provider=provider2,
+                issue_id="10002",
+                issue_key="TEST-2",
+                issue_url="https://test.atlassian.net/browse/TEST-2",
+                **common,
+            )
+            with pytest.raises(IntegrityError), transaction.atomic():
+                JiraIssue.objects.create(
+                    provider=provider,
+                    issue_id="10003",
+                    issue_key="TEST-3",
+                    issue_url="https://test.atlassian.net/browse/TEST-3",
+                    **common,
+                )
 
     def test_delivery_attempt_token_is_unique_when_present(
         self, jira_integration_fixture, aws_provider_pair, findings_fixture
@@ -610,29 +614,31 @@ class TestJiraIssueModel:
             "finding_id": findings_fixture[0].id,
             "delivery_attempt_token": attempt_token,
         }
-        JiraIssue.objects.create(
-            provider=provider,
-            finding_uid="finding-one",
-            **common,
-        )
-
-        with pytest.raises(IntegrityError), transaction.atomic():
+        with rls_transaction(str(jira_integration_fixture.tenant_id)):
             JiraIssue.objects.create(
-                provider=provider2,
-                finding_uid="finding-two",
+                provider=provider,
+                finding_uid="finding-one",
                 **common,
             )
+
+            with pytest.raises(IntegrityError), transaction.atomic():
+                JiraIssue.objects.create(
+                    provider=provider2,
+                    finding_uid="finding-two",
+                    **common,
+                )
 
     def test_link_fields_are_all_or_none(
         self, jira_integration_fixture, aws_provider, findings_fixture
     ):
         finding = findings_fixture[0]
-        with pytest.raises(IntegrityError), transaction.atomic():
-            JiraIssue.objects.create(
-                tenant_id=jira_integration_fixture.tenant_id,
-                integration=jira_integration_fixture,
-                provider=aws_provider,
-                finding_uid=finding.uid,
-                finding_id=finding.id,
-                issue_id="10001",
-            )
+        with rls_transaction(str(jira_integration_fixture.tenant_id)):
+            with pytest.raises(IntegrityError), transaction.atomic():
+                JiraIssue.objects.create(
+                    tenant_id=jira_integration_fixture.tenant_id,
+                    integration=jira_integration_fixture,
+                    provider=aws_provider,
+                    finding_uid=finding.uid,
+                    finding_id=finding.id,
+                    issue_id="10001",
+                )

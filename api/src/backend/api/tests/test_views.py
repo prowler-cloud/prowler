@@ -13599,15 +13599,50 @@ class TestJiraIssueViewSet:
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_retrieve_other_tenant_returns_404(
+    def test_other_tenant_issue_is_hidden(
         self, authenticated_client, jira_issues_fixture, tenants_fixture
     ):
         linked, *_ = jira_issues_fixture
-        JiraIssue.objects.using(MainRouter.admin_db).filter(id=linked.id).update(
-            tenant_id=tenants_fixture[2].id
-        )
+        other_tenant = tenants_fixture[2]
+        with rls_transaction(str(other_tenant.id)):
+            other_provider = Provider.objects.create(
+                tenant_id=other_tenant.id,
+                provider=Provider.ProviderChoices.AWS,
+                uid="999999999999",
+                alias="other-tenant-provider",
+            )
+            other_integration = Integration.objects.create(
+                tenant_id=other_tenant.id,
+                enabled=True,
+                connected=True,
+                integration_type=Integration.IntegrationChoices.JIRA,
+                configuration={"projects": {"OTHER": "Other project"}},
+                credentials={
+                    "domain": "other-tenant",
+                    "user_mail": "other-tenant@example.com",
+                    "api_token": "fake-token",
+                },
+            )
+            other_issue = JiraIssue.objects.create(
+                tenant_id=other_tenant.id,
+                integration=other_integration,
+                provider=other_provider,
+                finding_uid="other-tenant-finding",
+                finding_id=datetime_to_uuid7(datetime.now(UTC)),
+                issue_id="20001",
+                issue_key="OTHER-1",
+                issue_url="https://other-tenant.atlassian.net/browse/OTHER-1",
+                project_key="OTHER",
+            )
+
+        response = authenticated_client.get(reverse("jiraissue-list"))
+        assert response.status_code == status.HTTP_200_OK
+        ids = {item["id"] for item in response.json()["data"]}
+        assert str(linked.id) in ids
+        assert str(other_issue.id) not in ids
+
         response = authenticated_client.get(
-            reverse("jiraissue-detail", kwargs={"pk": linked.id})
+            reverse("jiraissue-detail", kwargs={"pk": other_issue.id})
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
 

@@ -2669,6 +2669,35 @@ class TestJiraIssueDedup:
                 finding_uid__in=[finding.uid for finding in findings]
             ).exists()
 
+    def test_error_summary_is_bounded(
+        self,
+        jira_mock,
+        jira_integration_fixture,
+        findings_fixture,
+        monkeypatch,
+    ):
+        max_length = 96
+        monkeypatch.setattr(
+            "tasks.jobs.integrations.JIRA_ERROR_REPORT_MAX_LENGTH", max_length
+        )
+        messages = ["First Jira error " * 8, "Second Jira error " * 8]
+        jira_mock.send_finding.side_effect = None
+        jira_mock.send_finding.side_effect = [
+            JiraCreationResult(
+                outcome=JiraCreationOutcome.CONFIRMED_REJECTION,
+                error_message=message,
+            )
+            for message in messages
+        ]
+
+        result = self._send(
+            jira_integration_fixture,
+            jira_mock,
+            [finding.id for finding in findings_fixture],
+        )
+
+        assert result["error"] == "; ".join(messages)[:max_length]
+
     def test_uncertain_initial_send_retains_reservation(
         self, jira_mock, jira_integration_fixture, findings_fixture
     ):
