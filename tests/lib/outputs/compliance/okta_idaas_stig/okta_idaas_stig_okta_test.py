@@ -1,4 +1,3 @@
-from datetime import datetime
 from io import StringIO
 from unittest import mock
 
@@ -6,9 +5,7 @@ from freezegun import freeze_time
 from mock import patch
 
 from prowler.lib.check.compliance_config_eval import CONFIG_NOT_VALID_PREFIX
-from prowler.lib.check.compliance_models import (
-    Compliance_Requirement_ConfigConstraint,
-)
+from prowler.lib.check.compliance_models import Compliance_Requirement_ConfigConstraint
 from prowler.lib.outputs.compliance.okta_idaas_stig.models import OktaIDaaSSTIGModel
 from prowler.lib.outputs.compliance.okta_idaas_stig.okta_idaas_stig_okta import (
     OktaIDaaSSTIG,
@@ -138,7 +135,7 @@ class TestOktaIDaaSSTIG:
 
         mock_file.seek(0)
         content = mock_file.read()
-        expected_csv = f"PROVIDER;DESCRIPTION;ORGANIZATIONDOMAIN;ASSESSMENTDATE;REQUIREMENTS_ID;REQUIREMENTS_NAME;REQUIREMENTS_DESCRIPTION;REQUIREMENTS_ATTRIBUTES_SECTION;REQUIREMENTS_ATTRIBUTES_SEVERITY;REQUIREMENTS_ATTRIBUTES_RULEID;REQUIREMENTS_ATTRIBUTES_STIGID;REQUIREMENTS_ATTRIBUTES_CCI;REQUIREMENTS_ATTRIBUTES_CHECKTEXT;REQUIREMENTS_ATTRIBUTES_FIXTEXT;STATUS;STATUSEXTENDED;RESOURCEID;RESOURCENAME;CHECKID;MUTED;FRAMEWORK;NAME\r\nokta;Defense Information Systems Agency (DISA) Security Technical Implementation Guide (STIG) for Okta Identity as a Service (IDaaS).;{OKTA_ORG_DOMAIN};{datetime.now()};OKTA-APP-000020;Okta must log out a session after a 15-minute period of inactivity.;A session timeout lock is a temporary action taken when a user stops work and moves away from the immediate vicinity of the information system.;CAT II (Medium);medium;SV-273186r1098825_rule;OKTA-APP-000020;['CCI-000057', 'CCI-001133'];Verify the Global Session Policy logs out a session after 15 minutes of inactivity.;From the Admin Console configure the Global Session Policy idle timeout to 15 minutes.;PASS;;okta-global-session-policy;Default Policy;signon_global_session_idle_timeout_15min;False;Okta-IDaaS-STIG;DISA Okta Identity as a Service (IDaaS) STIG V1R2\r\nokta;Defense Information Systems Agency (DISA) Security Technical Implementation Guide (STIG) for Okta Identity as a Service (IDaaS).;;{datetime.now()};OKTA-APP-000650;Okta must enforce a minimum 15-character password length.;The shorter the password, the lower the number of possible combinations that need to be tested before the password is compromised.;CAT II (Medium);medium;SV-273209r1098894_rule;OKTA-APP-000650;['CCI-000205'];Verify the password policy enforces a minimum length of 15 characters.;From the Admin Console set the minimum password length to 15 characters.;MANUAL;Manual check;manual_check;Manual check;manual;False;Okta-IDaaS-STIG;DISA Okta Identity as a Service (IDaaS) STIG V1R2\r\n"
+        expected_csv = f"PROVIDER;DESCRIPTION;ORGANIZATIONDOMAIN;ASSESSMENTDATE;REQUIREMENTS_ID;REQUIREMENTS_NAME;REQUIREMENTS_DESCRIPTION;REQUIREMENTS_ATTRIBUTES_SECTION;REQUIREMENTS_ATTRIBUTES_SEVERITY;REQUIREMENTS_ATTRIBUTES_RULEID;REQUIREMENTS_ATTRIBUTES_STIGID;REQUIREMENTS_ATTRIBUTES_CCI;REQUIREMENTS_ATTRIBUTES_CHECKTEXT;REQUIREMENTS_ATTRIBUTES_FIXTEXT;STATUS;STATUSEXTENDED;RESOURCEID;RESOURCENAME;CHECKID;MUTED;FRAMEWORK;NAME\r\nokta;Defense Information Systems Agency (DISA) Security Technical Implementation Guide (STIG) for Okta Identity as a Service (IDaaS).;{OKTA_ORG_DOMAIN};2025-01-01 00:00:00;OKTA-APP-000020;Okta must log out a session after a 15-minute period of inactivity.;A session timeout lock is a temporary action taken when a user stops work and moves away from the immediate vicinity of the information system.;CAT II (Medium);medium;SV-273186r1098825_rule;OKTA-APP-000020;['CCI-000057', 'CCI-001133'];Verify the Global Session Policy logs out a session after 15 minutes of inactivity.;From the Admin Console configure the Global Session Policy idle timeout to 15 minutes.;PASS;;okta-global-session-policy;Default Policy;signon_global_session_idle_timeout_15min;False;Okta-IDaaS-STIG;DISA Okta Identity as a Service (IDaaS) STIG V1R2\r\nokta;Defense Information Systems Agency (DISA) Security Technical Implementation Guide (STIG) for Okta Identity as a Service (IDaaS).;;2025-01-01 00:00:00;OKTA-APP-000650;Okta must enforce a minimum 15-character password length.;The shorter the password, the lower the number of possible combinations that need to be tested before the password is compromised.;CAT II (Medium);medium;SV-273209r1098894_rule;OKTA-APP-000650;['CCI-000205'];Verify the password policy enforces a minimum length of 15 characters.;From the Admin Console set the minimum password length to 15 characters.;MANUAL;Manual check;manual_check;Manual check;manual;False;Okta-IDaaS-STIG;DISA Okta Identity as a Service (IDaaS) STIG V1R2\r\n"
 
         assert content == expected_csv
 

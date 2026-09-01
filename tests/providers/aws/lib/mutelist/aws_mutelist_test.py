@@ -3,11 +3,11 @@ from json import dumps
 from os import path
 
 import botocore
+import pytest
 import yaml
 from boto3 import client, resource
 from mock import MagicMock, patch
 from moto import mock_aws
-import pytest
 
 from prowler.config.config import encoding_format_utf_8
 from prowler.providers.aws.lib.mutelist.mutelist import AWSMutelist
@@ -1321,7 +1321,7 @@ class TestAWSMutelist:
                         "check_test": {
                             "Regions": [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1],
                             "Resources": ["*"],
-                            "Tags": ["environment=dev", "project=test(?!\.)"],
+                            "Tags": ["environment=dev", r"project=test(?!\.)"],
                         }
                     }
                 }
