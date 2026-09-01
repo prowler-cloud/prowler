@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Optional
 
 from botocore.exceptions import ClientError
@@ -270,6 +271,7 @@ class BedrockAgent(AWSService):
         self.__threading_call__(self._list_knowledge_bases)
         self.__threading_call__(self._list_data_sources, self.knowledge_bases.values())
         self.__threading_call__(self._get_data_source, self.data_sources.values())
+        self.__threading_call__(self._list_ingestion_jobs, self.data_sources.values())
 
     def _list_agents(self, regional_client):
         logger.info("Bedrock Agent - Listing Agents...")
@@ -541,6 +543,47 @@ class BedrockAgent(AWSService):
                 f"{data_source.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _list_ingestion_jobs(self, data_source):
+        """Record the timestamp of a data source's most recent successful ingestion job.
+
+        Findings are per data source, so a failed ListIngestionJobs is recorded on the
+        data source itself rather than dropping it from the report.
+        """
+        logger.info("Bedrock Agent - Listing Ingestion Jobs...")
+        try:
+            paginator = self.regional_clients[data_source.region].get_paginator(
+                "list_ingestion_jobs"
+            )
+            latest_completed = None
+            for page in paginator.paginate(
+                knowledgeBaseId=data_source.knowledge_base_id,
+                dataSourceId=data_source.id,
+            ):
+                for ingestion_job in page.get("ingestionJobSummaries", []):
+                    if ingestion_job.get("status") != "COMPLETE":
+                        continue
+                    updated_at = ingestion_job.get("updatedAt") or ingestion_job.get(
+                        "startedAt"
+                    )
+                    if updated_at and (
+                        latest_completed is None or updated_at > latest_completed
+                    ):
+                        latest_completed = updated_at
+            data_source.last_successful_ingestion_at = latest_completed
+            data_source.ingestion_jobs_listed = True
+        except ClientError as error:
+            data_source.ingestion_jobs_error = error.response["Error"].get(
+                "Code", error.__class__.__name__
+            )
+            logger.error(
+                f"{data_source.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        except Exception as error:
+            data_source.ingestion_jobs_error = error.__class__.__name__
+            logger.error(
+                f"{data_source.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
     def _list_tags_for_resource(self, resource):
         """List tags for a Bedrock Agent resource."""
         logger.info("Bedrock Agent - Listing Tags for Resource...")
@@ -616,3 +659,10 @@ class KnowledgeBaseDataSource(BaseModel):
     kms_key_arn: Optional[str] = None
     # False when GetDataSource failed: absent key is unknown, not unset.
     detail_retrieved: bool = False
+    # False when ListIngestionJobs failed: no successful job is unknown, not none.
+    ingestion_jobs_listed: bool = False
+    # The error code from a failed ListIngestionJobs, for the finding message.
+    ingestion_jobs_error: Optional[str] = None
+    # updatedAt of the most recent ingestion job with status COMPLETE, or None when the
+    # data source has no successfully completed ingestion job.
+    last_successful_ingestion_at: Optional[datetime] = None

@@ -366,6 +366,12 @@ aws:
   # Whether to check RDS instance replicas or not
   check_rds_instance_replicas: False
 
+  # AWS Bedrock Configuration
+  # aws.bedrock_knowledge_base_ingestion_recently_completed
+  # Maximum age, in days, of the latest successful knowledge base data source
+  # ingestion job before it is considered stale. Defaults to 7 days.
+  bedrock_knowledge_base_ingestion_max_age_in_days: 7
+
   # AWS ACM Configuration
   # aws.acm_certificates_expiration_check
   days_to_expire_threshold: 7
