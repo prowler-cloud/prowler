@@ -18333,19 +18333,14 @@ class TestMuteRuleViewSet:
         assert len(data) == 2
         assert data[0]["id"] == str(mute_rules_fixture[first_index].id)
 
-    @patch("api.v1.views.chain")
-    @patch("api.v1.views.reaggregate_all_finding_group_summaries_task.si")
-    @patch("api.v1.views.mute_historical_findings_task.si")
+    @patch("api.v1.views.mute_findings_in_latest_scans_task.apply_async")
     @patch("api.v1.views.transaction.on_commit", side_effect=lambda fn: fn())
     def test_mute_rules_create_valid(
         self,
         _mock_on_commit,
-        mock_mute_signature,
-        mock_reaggregate_signature,
-        mock_chain,
+        mock_mute_task,
         authenticated_client,
         findings_fixture,
-        create_test_user,
     ):
         """Test creating a valid mute rule."""
         finding_ids = [str(findings_fixture[0].id)]
@@ -18372,24 +18367,20 @@ class TestMuteRuleViewSet:
         assert response_data["attributes"]["name"] == "New Mute Rule"
         assert response_data["attributes"]["reason"] == "Security exception approved"
 
-        # Verify the finding was immediately muted
-        from api.models import Finding
-
         finding = Finding.objects.get(id=findings_fixture[0].id)
-        assert finding.muted is True
-        assert finding.muted_at is not None
-        assert finding.muted_reason == "Security exception approved"
+        assert finding.muted is False
+        assert finding.muted_at is None
+        assert finding.muted_reason is None
 
-        # Verify background task chain was called: mute → reaggregate all
-        mock_mute_signature.assert_called_once()
-        mock_reaggregate_signature.assert_called_once()
-        mock_chain.assert_called_once_with(
-            mock_mute_signature.return_value,
-            mock_reaggregate_signature.return_value,
+        mock_mute_task.assert_called_once_with(
+            kwargs={
+                "tenant_id": str(finding.tenant_id),
+                "mute_rule_id": response_data["id"],
+                "provider_ids": [str(finding.scan.provider_id)],
+            }
         )
-        mock_chain.return_value.apply_async.assert_called_once()
 
-    @patch("tasks.tasks.mute_historical_findings_task.apply_async")
+    @patch("api.v1.views.mute_findings_in_latest_scans_task.apply_async")
     def test_mute_rules_create_converts_finding_ids_to_uids(
         self,
         mock_task,
@@ -18425,7 +18416,7 @@ class TestMuteRuleViewSet:
         ]
         assert set(mute_rule.finding_uids) == set(expected_uids)
 
-    @patch("tasks.tasks.mute_historical_findings_task.apply_async")
+    @patch("api.v1.views.mute_findings_in_latest_scans_task.apply_async")
     def test_mute_rules_deduplicates_uids(
         self,
         mock_task,
@@ -18492,10 +18483,10 @@ class TestMuteRuleViewSet:
 
         finding1.refresh_from_db()
         finding2.refresh_from_db()
-        assert finding1.muted is True
-        assert finding2.muted is True
+        assert finding1.muted is False
+        assert finding2.muted is False
 
-    @patch("tasks.tasks.mute_historical_findings_task.apply_async")
+    @patch("api.v1.views.mute_findings_in_latest_scans_task.apply_async")
     def test_mute_rules_create_overlap_detection_active(
         self,
         mock_task,
@@ -18528,7 +18519,7 @@ class TestMuteRuleViewSet:
             "already muted" in error_detail.lower() or "overlap" in error_detail.lower()
         )
 
-    @patch("tasks.tasks.mute_historical_findings_task.apply_async")
+    @patch("api.v1.views.mute_findings_in_latest_scans_task.apply_async")
     def test_mute_rules_create_no_overlap_with_inactive(
         self,
         mock_task,
@@ -18584,7 +18575,7 @@ class TestMuteRuleViewSet:
             == "/data/attributes/finding_ids"
         )
 
-    @patch("tasks.tasks.mute_historical_findings_task.apply_async")
+    @patch("api.v1.views.mute_findings_in_latest_scans_task.apply_async")
     def test_mute_rules_create_invalid_finding_ids(
         self, mock_task, authenticated_client
     ):
