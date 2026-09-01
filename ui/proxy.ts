@@ -46,6 +46,7 @@ const withSecurityHeaders = (response: NextResponse): NextResponse => {
         "UI_POSTHOG_HOST",
         "POSTHOG_HOST",
       ),
+      posthogUiHost: readGatedEnv("UI_POSTHOG_ENABLED", "UI_POSTHOG_UI_HOST"),
       posthogToolbarEnabled: process.env.NODE_ENV === "development",
     }),
   );

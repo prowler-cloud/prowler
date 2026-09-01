@@ -17,6 +17,7 @@ const ENABLED_POSTHOG_CONFIG = {
   posthogEnabled: true,
   posthogKey: "phc_key",
   posthogIngestionHost: "https://eu.i.posthog.com",
+  posthogUiHost: null,
   posthogToolbarEnabled: false,
 };
 
@@ -87,6 +88,7 @@ describe("PostHog Content Security Policy", () => {
         posthogEnabled: false,
         posthogKey: null,
         posthogIngestionHost: null,
+        posthogUiHost: null,
         posthogToolbarEnabled: false,
       }),
     );
@@ -129,6 +131,47 @@ describe("PostHog Content Security Policy", () => {
     expect(csp["media-src"]).toContain(POSTHOG_WILDCARD);
     expect(csp["worker-src"]).toEqual(["'self'", "blob:", "data:"]);
     expect(csp["frame-ancestors"]).toEqual(["'self'", POSTHOG_WILDCARD]);
+  });
+
+  it("allows the resolved UI origin for a self-hosted Toolbar", () => {
+    // Given
+    const selfHostedUiOrigin = "https://posthog.internal.example";
+    const toolbarConfig = {
+      ...ENABLED_POSTHOG_CONFIG,
+      posthogIngestionHost: `${selfHostedUiOrigin}/ingest`,
+      posthogUiHost: `${selfHostedUiOrigin}/app/`,
+      posthogToolbarEnabled: true,
+    };
+
+    // When
+    const csp = parseCsp(getCspHeader(toolbarConfig));
+
+    // Then
+    expect(csp["script-src"]).toContain(selfHostedUiOrigin);
+    expect(csp["connect-src"]).toContain(selfHostedUiOrigin);
+    expect(csp["img-src"]).toContain(selfHostedUiOrigin);
+    expect(csp["style-src"]).toContain(selfHostedUiOrigin);
+    expect(csp["font-src"]).toContain(selfHostedUiOrigin);
+    expect(csp["media-src"]).toContain(selfHostedUiOrigin);
+    expect(csp["frame-src"]).toContain(selfHostedUiOrigin);
+    expect(csp["frame-ancestors"]).toContain(selfHostedUiOrigin);
+  });
+
+  it("does not add a non-HTTP PostHog UI host to the CSP", () => {
+    // Given
+    const unsafeUiHost = "data:text/plain,toolbar";
+    const toolbarConfig = {
+      ...ENABLED_POSTHOG_CONFIG,
+      posthogUiHost: unsafeUiHost,
+      posthogToolbarEnabled: true,
+    };
+
+    // When
+    const csp = parseCsp(getCspHeader(toolbarConfig));
+
+    // Then
+    expect(Object.values(csp).flat()).not.toContain(unsafeUiHost);
+    expect(Object.values(csp).flat()).not.toContain("null");
   });
 
   it("keeps Toolbar permissions closed when PostHog is not fully enabled", () => {
