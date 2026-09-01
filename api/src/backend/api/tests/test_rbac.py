@@ -1594,14 +1594,55 @@ class TestLimitedVisibility:
     def test_jira_issues_limited_to_visible_providers(
         self, authenticated_client_rbac_limited, jira_issues_fixture
     ):
-        linked, other_provider_issue, _ = jira_issues_fixture
+        linked, other_provider_issue, unlinked = jira_issues_fixture
         response = authenticated_client_rbac_limited.get(reverse("jiraissue-list"))
         assert response.status_code == status.HTTP_200_OK
-        assert [item["id"] for item in response.json()["data"]] == [str(linked.id)]
+        assert {item["id"] for item in response.json()["data"]} == {
+            str(linked.id),
+            str(unlinked.id),
+        }
 
         response = authenticated_client_rbac_limited.get(
             reverse("jiraissue-detail", kwargs={"pk": other_provider_issue.id})
         )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_jira_issue_resolution_requires_manage_integrations(
+        self, authenticated_client_no_permissions_rbac, jira_issues_fixture
+    ):
+        *_, unlinked = jira_issues_fixture
+        response = authenticated_client_no_permissions_rbac.post(
+            reverse("jiraissue-resolution", kwargs={"pk": unlinked.id}),
+            data=json.dumps(
+                {
+                    "data": {
+                        "type": "jira-issues",
+                        "attributes": {"resolution": "confirm_not_created"},
+                    }
+                }
+            ),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_jira_issue_resolution_hides_out_of_scope_provider(
+        self, authenticated_client_rbac_limited, jira_issues_fixture
+    ):
+        _, other_provider_issue, _ = jira_issues_fixture
+        response = authenticated_client_rbac_limited.post(
+            reverse("jiraissue-resolution", kwargs={"pk": other_provider_issue.id}),
+            data=json.dumps(
+                {
+                    "data": {
+                        "type": "jira-issues",
+                        "attributes": {"resolution": "confirm_not_created"},
+                    }
+                }
+            ),
+            content_type="application/vnd.api+json",
+        )
+
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     def test_jira_issue_types_allowed_without_unlimited_visibility(

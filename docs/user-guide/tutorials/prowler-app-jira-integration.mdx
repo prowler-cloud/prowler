@@ -138,12 +138,51 @@ Prowler Cloud always includes the Finding URL. In Prowler Local Server, set `DJA
 
 ### Sending a Finding That Already Has a Jira Issue
 
-Prowler remembers the Jira issue created for each Finding, keyed by the Finding UID, so sending the same Finding again does not create a duplicate issue:
+Prowler keeps one Jira delivery record for each Finding UID, Provider, and Jira integration. Sending the same Finding again follows the current Jira state:
 
-* If the linked issue is still open in Jira, the Finding is skipped and the existing issue key is reported in the task result (`skipped_count`, `skipped`).
-* If the linked issue is closed (any Jira status in the **Done** category) or was deleted, a new issue is created and becomes the linked issue for that Finding.
+* If the linked issue is open, Prowler refreshes its cached status and skips the Finding.
+* If Jira moved or renamed the issue, Prowler updates the key and URL after confirming the immutable Jira issue ID, then skips the Finding.
+* If the linked issue is in the **Done** category, Prowler creates one replacement. The previous link remains available until Jira confirms the replacement.
+* If Jira reports the issue as missing or forbidden, or cannot determine its state, Prowler preserves the existing link and skips the Finding. API clients can send `force_replace: true` to confirm the duplicate risk and request one replacement. This option never replaces an issue that Jira confirms is open.
+* If Jira cannot confirm whether a create request succeeded, Prowler records the attempt as `uncertain` and searches Jira by the persisted delivery marker before any retry. It does not send another create request blindly.
 
-The link, and the last status observed in Jira, are available through the API at `GET /api/v1/jira-issues` (filter by `finding_uid`, `finding_uid__in`, `provider_id`, `integration` or `issue_key`). Each Jira integration keeps its own links, so the same Finding can have one issue per integration.
+`GET /api/v1/jira-issues` returns both linked and unlinked delivery records. It exposes the current link, attempt state, safe delivery error, and next reconciliation time. It does not expose claim tokens or delivery markers. Filter by `finding_uid`, `finding_uid__in`, `finding_id`, `provider_id`, `integration`, `issue_key`, `issue_status_category`, or `attempt_state`.
+
+The Jira status in this response is the last status Prowler observed during a dispatch. It is cached and may be stale between dispatches. Each Jira integration keeps its own delivery record, so the same Finding can have one issue per integration.
+
+### Recovering an Uncertain Jira Delivery
+
+Users with the **Manage Integrations** permission can resolve an uncertain delivery through `POST /api/v1/jira-issues/{id}/resolution`. Provider visibility still applies.
+
+Use `resolution: "link"` with the Jira issue ID and key when Jira created the issue. Prowler searches by the persisted delivery marker and links only an issue returned by Jira:
+
+```json
+{
+  "data": {
+    "type": "jira-issues",
+    "attributes": {
+      "resolution": "link",
+      "issue_id": "10001",
+      "issue_key": "SEC-42"
+    }
+  }
+}
+```
+
+Use `resolution: "confirm_not_created"` without issue fields after confirming that Jira did not create the issue. Prowler clears the claim, preserves any previous link, and marks the attempt as retryable:
+
+```json
+{
+  "data": {
+    "type": "jira-issues",
+    "attributes": {
+      "resolution": "confirm_not_created"
+    }
+  }
+}
+```
+
+Prowler rejects operator resolution while a delivery task still owns a valid claim.
 
 ## Integration Status
 
@@ -162,7 +201,7 @@ Each Jira integration provides management actions through dedicated buttons:
 | Button | Purpose | Available Actions | Notes |
 |--------|---------|------------------|-------|
 | **Test** | Verify integration connectivity | • Test Jira API access<br/>• Validate credentials<br/>• Check project permissions<br/>• Verify work item creation capability | Results displayed in notification message |
-| **Credentials** | Update authentication settings | • Change API token<br/>• Update email<br/>• Update Jira domain | Click "Update Credentials" to save changes |
+| **Credentials** | Update authentication settings | • Change API token<br/>• Update email | The Jira domain identifies the integration and cannot be changed after creation |
 | **Enable/Disable** | Toggle integration status | • Enable or disable integration<br/>| Status change takes effect immediately |
 | **Delete** | Remove integration permanently | • Permanently delete integration<br/>• Remove all configuration data | ⚠️ **Cannot be undone** - confirm before deleting |
 
@@ -296,5 +335,10 @@ If you don't have `jq` installed, run the command without `| jq`.
 
 How to read it:
 
-* "created_count": number of Jira issues successfully created.
-* "failed_count": number of Jira issues that could not be created. If `failed_count > 0` or the issue does not appear in Jira, please contact us so we can assist while detailed logs are not available through the UI.
+* `created_count`: Jira issues that were confirmed and linked.
+* `skipped_count`: Findings that kept an existing Jira issue.
+* `deferred_count`: Findings currently owned by another delivery task.
+* `uncertain_count`: Attempts that need delivery-marker reconciliation or operator recovery.
+* `failed_count`: Attempts that Jira rejected or that can be retried later.
+
+The `results` list contains safe per-Finding details and is capped at 100 entries. The counters remain exact when `truncated` is `true`.

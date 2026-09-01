@@ -1475,7 +1475,7 @@ def jira_integration_fixture(tenants_fixture):
 
 @pytest.fixture
 def jira_issues_fixture(jira_integration_fixture, aws_provider_pair, findings_fixture):
-    """Two linked issues (one per provider) and one in-flight reservation."""
+    """Two linked issues (one per provider) and one in-flight delivery."""
     provider, provider2 = aws_provider_pair
     finding1, finding2 = findings_fixture
     tenant_id = jira_integration_fixture.tenant_id

@@ -63,6 +63,8 @@ class BaseViewSet(ModelViewSet):
 
 
 class BaseRLSViewSet(BaseViewSet):
+    non_atomic_url_names = frozenset()
+
     def dispatch(self, request, *args, **kwargs):
         self.db_alias = self._get_request_db_alias(request)
         alias_token = None
@@ -72,6 +74,12 @@ class BaseRLSViewSet(BaseViewSet):
 
             if request is not None:
                 request.db_alias = self.db_alias
+
+            url_name = getattr(
+                getattr(request, "resolver_match", None), "url_name", None
+            )
+            if url_name in self.non_atomic_url_names:
+                return super().dispatch(request, *args, **kwargs)
 
             with transaction.atomic(using=self.db_alias):
                 return super().dispatch(request, *args, **kwargs)

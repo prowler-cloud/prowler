@@ -1333,6 +1333,7 @@ def _process_jira_delivery_page(
     finding_ids: list[str],
     claim_token: str,
     force_replace: bool,
+    actor_id: str | None,
 ) -> list[dict]:
     findings, ledger = _load_jira_delivery_page(tenant_id, integration_id, finding_ids)
     linked_idle_rows = [
@@ -1501,6 +1502,22 @@ def _process_jira_delivery_page(
             if claimed is None:
                 results.append(_deferred_result(finding, row, "claim_conflict"))
             else:
+                if unknown_status and force_replace:
+                    logger.warning(
+                        "jira_force_replacement",
+                        extra={
+                            "user_id": actor_id,
+                            "tenant_id": str(tenant_id),
+                            "metadata": {
+                                "integration_id": str(integration_id),
+                                "provider_id": str(finding.scan.provider_id),
+                                "finding_uid": finding.uid,
+                                "old_issue_id": row.issue_id,
+                                "old_issue_key": row.issue_key,
+                                "old_issue_url": row.issue_url,
+                            },
+                        },
+                    )
                 results.append(
                     _send_claimed_finding(
                         tenant_id,
@@ -1548,6 +1565,7 @@ def send_findings_to_jira(
     *,
     task_id: str | None = None,
     force_replace: bool = False,
+    actor_id: str | None = None,
 ) -> dict:
     """Deliver findings through the concurrency-safe Jira issue ledger."""
     claim_token = str(task_id or uuid4())
@@ -1575,6 +1593,7 @@ def send_findings_to_jira(
             page,
             claim_token,
             force_replace,
+            actor_id,
         )
         for result in page_results:
             _record_delivery_result(summary, result)

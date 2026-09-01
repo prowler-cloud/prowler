@@ -1395,6 +1395,7 @@ def jira_integration_task(
     issue_type: str,
     finding_ids: list[str],
     force_replace: bool = False,
+    actor_id: str | None = None,
 ):
     return send_findings_to_jira(
         tenant_id,
@@ -1404,6 +1405,7 @@ def jira_integration_task(
         finding_ids,
         task_id=self.request.id,
         force_replace=force_replace,
+        actor_id=actor_id,
     )
 
 

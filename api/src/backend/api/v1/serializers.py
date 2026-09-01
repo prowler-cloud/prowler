@@ -3226,6 +3226,7 @@ class IntegrationJiraDispatchSerializer(BaseSerializerV1):
 
     project_key = serializers.CharField(required=True)
     issue_type = serializers.CharField(required=True)
+    force_replace = serializers.BooleanField(required=False, default=False)
 
     class JSONAPIMeta:
         resource_name = "integrations-jira-dispatches"
@@ -4160,11 +4161,11 @@ class LighthouseProviderModelsUpdateSerializer(BaseWriteSerializer):
 
 class JiraIssueSerializer(RLSSerializer):
     """
-    Read-only view of a Jira issue linked to a finding by a Jira integration.
+    Read-only view of a Jira delivery ledger row for a finding.
 
-    Rows are keyed on the finding ``uid`` so the same finding maps to the same
-    issue across scans. ``issue_status`` is the last status Prowler observed in
-    Jira (refreshed whenever a dispatch touches the finding), not a live value.
+    Rows are keyed on the finding ``uid`` so delivery state survives scans.
+    Current-link fields stay null until Jira creation is confirmed.
+    ``issue_status`` is cached rather than fetched when this resource is read.
     """
 
     class Meta:
@@ -4179,9 +4180,17 @@ class JiraIssueSerializer(RLSSerializer):
             "issue_id",
             "issue_url",
             "project_key",
+            "issue_type",
             "issue_status",
             "issue_status_category",
             "status_synced_at",
+            "attempt_state",
+            "attempt_operation",
+            "attempt_count",
+            "last_attempt_at",
+            "last_error_code",
+            "last_error_message",
+            "next_reconcile_at",
             "integration",
             "provider",
             "url",
@@ -4191,6 +4200,43 @@ class JiraIssueSerializer(RLSSerializer):
     included_serializers = {
         "provider": "api.v1.serializers.ProviderIncludeSerializer",
     }
+
+
+class JiraIssueResolutionSerializer(BaseSerializerV1):
+    """Validate an operator decision for an uncertain Jira delivery."""
+
+    resolution = serializers.ChoiceField(
+        choices=("link", "confirm_not_created"), required=True
+    )
+    issue_id = serializers.CharField(required=False, allow_blank=False, max_length=64)
+    issue_key = serializers.CharField(required=False, allow_blank=False, max_length=64)
+
+    class JSONAPIMeta:
+        resource_name = "jira-issues"
+
+    def validate(self, attrs):
+        resolution = attrs["resolution"]
+        issue_id = attrs.get("issue_id")
+        issue_key = attrs.get("issue_key")
+
+        if resolution == "link":
+            missing_fields = {
+                field: "This field is required when linking a Jira issue."
+                for field, value in (("issue_id", issue_id), ("issue_key", issue_key))
+                if not value
+            }
+            if missing_fields:
+                raise ValidationError(missing_fields)
+        if resolution == "confirm_not_created" and (issue_id or issue_key):
+            raise ValidationError(
+                {
+                    "resolution": (
+                        "Issue fields are not accepted when confirming that Jira did "
+                        "not create an issue."
+                    )
+                }
+            )
+        return attrs
 
 
 class MuteRuleSerializer(RLSSerializer):

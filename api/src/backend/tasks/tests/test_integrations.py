@@ -1798,6 +1798,7 @@ class TestSafeJiraDelivery:
         *,
         task_id="jira-task-1",
         force_replace=False,
+        actor_id=None,
     ):
         with patch(
             "tasks.jobs.integrations.initialize_prowler_integration",
@@ -1811,6 +1812,7 @@ class TestSafeJiraDelivery:
                 [str(finding_id) for finding_id in finding_ids],
                 task_id=task_id,
                 force_replace=force_replace,
+                actor_id=actor_id,
             )
 
     @staticmethod
@@ -2082,17 +2084,33 @@ class TestSafeJiraDelivery:
         assert skipped["skipped_count"] == 1
         jira_mock.send_finding.assert_not_called()
 
-        forced = self._send(
-            jira_integration_fixture,
-            jira_mock,
-            [finding.id],
-            task_id="jira-task-3",
-            force_replace=True,
-        )
+        with patch("tasks.jobs.integrations.logger.warning") as warning:
+            forced = self._send(
+                jira_integration_fixture,
+                jira_mock,
+                [finding.id],
+                task_id="jira-task-3",
+                force_replace=True,
+                actor_id="operator-1",
+            )
         assert forced["created_count"] == 1
         row = self._row(jira_integration_fixture, finding)
         assert row.issue_key == "TEST-2"
         assert row.delivery_attempt_token != original_marker
+        warning.assert_called_once()
+        _, log_kwargs = warning.call_args
+        assert log_kwargs["extra"]["user_id"] == "operator-1"
+        assert log_kwargs["extra"]["tenant_id"] == str(
+            jira_integration_fixture.tenant_id
+        )
+        assert log_kwargs["extra"]["metadata"] == {
+            "integration_id": str(jira_integration_fixture.id),
+            "provider_id": str(finding.scan.provider_id),
+            "finding_uid": finding.uid,
+            "old_issue_id": original.issue_id,
+            "old_issue_key": original.issue_key,
+            "old_issue_url": original.issue_url,
+        }
 
     def test_retryable_failure_reuses_delivery_marker(
         self, jira_mock, jira_integration_fixture, findings_fixture
