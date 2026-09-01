@@ -337,6 +337,7 @@ class TestGetUsersSignInActivity:
         )
         service.clients = {"tenant.onmicrosoft.com": client}
         service.sign_in_activity_errors = {}
+        service.users_retrieval_errors = {}
         service._get_user_registration_details = AsyncMock(return_value={})
         return service
 
@@ -350,6 +351,7 @@ class TestGetUsersSignInActivity:
 
         assert "tenant.onmicrosoft.com" in service.sign_in_activity_errors
         assert "403" in service.sign_in_activity_errors["tenant.onmicrosoft.com"]
+        assert service.users_retrieval_errors == {}
         assert users == {"tenant.onmicrosoft.com": {}}
         assert service.clients["tenant.onmicrosoft.com"].users.get.await_count == 2
 
@@ -359,6 +361,25 @@ class TestGetUsersSignInActivity:
         service = self._service(side_effect=[self._graph_error(503)])
         users = asyncio.run(service._get_users())
 
+        # The failure is not attributed to licensing/permissions, but the
+        # empty inventory is not trusted either: the tenant is recorded so
+        # the user-based checks report MANUAL.
         assert service.sign_in_activity_errors == {}
+        assert "tenant.onmicrosoft.com" in service.users_retrieval_errors
+        assert "503" in service.users_retrieval_errors["tenant.onmicrosoft.com"]
         assert users == {"tenant.onmicrosoft.com": {}}
         assert service.clients["tenant.onmicrosoft.com"].users.get.await_count == 1
+
+    def test_403_with_failing_retry_records_users_retrieval_error(self):
+        import asyncio
+
+        service = self._service(
+            side_effect=[self._graph_error(403), self._graph_error(503)]
+        )
+        users = asyncio.run(service._get_users())
+
+        assert "tenant.onmicrosoft.com" in service.sign_in_activity_errors
+        assert "tenant.onmicrosoft.com" in service.users_retrieval_errors
+        assert "503" in service.users_retrieval_errors["tenant.onmicrosoft.com"]
+        assert users == {"tenant.onmicrosoft.com": {}}
+        assert service.clients["tenant.onmicrosoft.com"].users.get.await_count == 2

@@ -45,6 +45,12 @@ class Entra(AzureService):
         # lacks AuditLog.Read.All, so users are re-fetched without
         # signInActivity and the tenant is recorded here.
         self.sign_in_activity_errors: dict[str, str] = {}
+        # Tenants (keyed by domain) whose users could not be retrieved at all
+        # (throttling, 5xx, network failures), mapped to the reason. An empty
+        # inventory caused by such an error is not evidence that the tenant
+        # has no users, so the user-based checks report MANUAL instead of
+        # evaluating it.
+        self.users_retrieval_errors: dict[str, str] = {}
         # Get users first alone because it is a dependency for other attributes
         self.users = loop.run_until_complete(self._get_users())
 
@@ -83,9 +89,14 @@ class Entra(AzureService):
         ``self.sign_in_activity_errors`` and the users are fetched again
         without ``signInActivity`` so the remaining user checks can still run.
 
+        Any other failure to retrieve the users (throttling, 5xx, network)
+        is recorded in ``self.users_retrieval_errors`` so the user-based
+        checks report MANUAL instead of evaluating an empty inventory.
+
         Returns:
             dict: Tenant domain mapped to a dict of user id -> ``User``. A
-            tenant whose users could not be retrieved maps to an empty dict.
+            tenant whose users could not be retrieved maps to an empty dict
+            and is recorded in ``self.users_retrieval_errors``.
         """
         logger.info("Entra - Getting users...")
         users = {}
@@ -106,8 +117,11 @@ class Entra(AzureService):
                     reason = self._describe_graph_error(error)
                     if status != 403:
                         # Transient or unexpected failure (throttling, 5xx,
-                        # network): do not blame licensing/permissions and do
-                        # not degrade the tenant's sign-in evaluation to MANUAL.
+                        # network): do not blame licensing/permissions, but
+                        # record that the tenant's users are unknown so the
+                        # user-based checks report MANUAL instead of
+                        # evaluating an empty inventory.
+                        self.users_retrieval_errors[tenant] = reason
                         logger.error(
                             f"{tenant} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
@@ -129,6 +143,9 @@ class Entra(AzureService):
                             )
                         )
                     except Exception as retry_error:
+                        self.users_retrieval_errors[tenant] = (
+                            self._describe_graph_error(retry_error)
+                        )
                         logger.error(
                             f"{tenant} -- {retry_error.__class__.__name__}[{retry_error.__traceback__.tb_lineno}]: {retry_error}"
                         )

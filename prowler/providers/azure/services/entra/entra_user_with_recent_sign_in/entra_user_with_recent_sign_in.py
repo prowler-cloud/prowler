@@ -14,13 +14,28 @@ class entra_user_with_recent_sign_in(Check):
 
     - PASS: The enabled user signed in within the last 90 days.
     - FAIL: The enabled user has not signed in for more than 90 days, or has no recorded sign-in.
-    - MANUAL (tenant-level): Microsoft Graph refused to return sign-in activity for the tenant (missing Entra ID P1/P2 licensing or the AuditLog.Read.All permission), so the check cannot be evaluated; reported once per tenant.
+    - MANUAL (tenant-level): Microsoft Graph refused to return sign-in activity for the tenant (missing Entra ID P1/P2 licensing or the AuditLog.Read.All permission), or the tenant's users could not be retrieved at all, so the check cannot be evaluated; reported once per tenant.
     """
 
     def execute(self) -> list[Check_Report_Azure]:
         findings = []
 
         for tenant_domain, users in entra_client.users.items():
+            if tenant_domain in entra_client.users_retrieval_errors:
+                report = Check_Report_Azure(metadata=self.metadata(), resource={})
+                report.subscription = f"Tenant: {tenant_domain}"
+                report.resource_name = tenant_domain
+                report.resource_id = entra_client.tenant_ids[0]
+                report.status = "MANUAL"
+                report.status_extended = (
+                    f"Cannot evaluate sign-in activity for tenant {tenant_domain}: "
+                    f"Microsoft Graph did not return the tenant's users "
+                    f"({entra_client.users_retrieval_errors[tenant_domain]}). "
+                    f"Retry the scan or review the tenant's users manually."
+                )
+                findings.append(report)
+                continue
+
             if tenant_domain in entra_client.sign_in_activity_errors:
                 report = Check_Report_Azure(metadata=self.metadata(), resource={})
                 report.subscription = f"Tenant: {tenant_domain}"
