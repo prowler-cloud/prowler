@@ -98,6 +98,39 @@ class TestOciAdapterAuth:
         assert adapter._bearer_token == "bearer-tok"
 
     @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_http_realm_from_https_registry_gets_no_credentials(self, mock_request):
+        ping_resp = MagicMock(
+            status_code=401,
+            headers={
+                "Www-Authenticate": 'Bearer realm="http://auth.reg.io/token",service="registry"'
+            },
+        )
+        token_resp = MagicMock(status_code=200)
+        token_resp.json.return_value = {"token": "bearer-tok"}
+        mock_request.side_effect = [ping_resp, token_resp]
+        adapter = OciRegistryAdapter("https://reg.io", username="u", password="p")
+        adapter._ensure_auth()
+        assert adapter._bearer_token == "bearer-tok"
+        token_call = mock_request.call_args_list[1]
+        assert token_call.kwargs.get("auth") is None
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_http_realm_from_http_registry_keeps_credentials(self, mock_request):
+        ping_resp = MagicMock(
+            status_code=401,
+            headers={
+                "Www-Authenticate": 'Bearer realm="http://reg.io/token",service="registry"'
+            },
+        )
+        token_resp = MagicMock(status_code=200)
+        token_resp.json.return_value = {"token": "bearer-tok"}
+        mock_request.side_effect = [ping_resp, token_resp]
+        adapter = OciRegistryAdapter("http://reg.io", username="u", password="p")
+        adapter._ensure_auth()
+        token_call = mock_request.call_args_list[1]
+        assert token_call.kwargs.get("auth") == ("u", "p")
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
     def test_ensure_auth_403_raises(self, mock_request):
         resp = MagicMock(status_code=403)
         mock_request.return_value = resp
@@ -858,6 +891,39 @@ class TestBasicAuthFallback:
         adapter = OciRegistryAdapter("reg.io")
         with pytest.raises(ImageRegistryAuthError, match="catalog listing"):
             adapter.list_repositories()
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_multi_page_catalog_falls_back_only_once(self, mock_request):
+        ping, token, catalog_401 = self._harbor_responses()
+        page1 = MagicMock(
+            status_code=200,
+            ok=True,
+            headers={"Link": '<https://reg.io/v2/_catalog?n=200&last=a>; rel="next"'},
+        )
+        page1.json.return_value = {"repositories": ["a"]}
+        page2 = MagicMock(status_code=200, ok=True, headers={})
+        page2.json.return_value = {"repositories": ["b"]}
+        mock_request.side_effect = [
+            ping,
+            token,
+            catalog_401,  # bearer without catalog scope
+            ping,
+            token,
+            catalog_401,  # bearer retry, same result
+            page1,  # basic fallback succeeds -> basic mode persists
+            page2,  # second page goes straight to basic
+        ]
+
+        adapter = OciRegistryAdapter("reg.io", username="admin", password="secret")
+        repos = adapter.list_repositories()
+
+        assert repos == ["a", "b"]
+        assert mock_request.call_count == 8
+        assert adapter._basic_auth_verified is True
+        assert adapter._bearer_token is None
+        page2_call = mock_request.call_args_list[-1]
+        assert page2_call.kwargs.get("auth") == ("admin", "secret")
+        assert "Authorization" not in page2_call.kwargs.get("headers", {})
 
     @patch("prowler.providers.image.lib.registry.base.requests.request")
     def test_basic_fallback_not_sent_cross_origin(self, mock_request):

@@ -130,7 +130,8 @@ class OciRegistryAdapter(RegistryAdapter):
                 message=f"Cannot parse token endpoint from registry {self.registry_url}. Www-Authenticate: {www_authenticate[:200]}",
             )
         realm = self._validate_outbound_url(match.group(1))
-        if urlparse(realm).scheme == "http":
+        realm_is_http = urlparse(realm).scheme == "http"
+        if realm_is_http:
             logger.warning(f"Bearer token realm uses HTTP (not HTTPS): {realm}")
         params: dict = {}
         service_match = re.search(r'service="([^"]+)"', www_authenticate)
@@ -143,7 +144,17 @@ class OciRegistryAdapter(RegistryAdapter):
             params["scope"] = f"repository:{repository}:pull"
         auth = None
         if self.username and self.password:
-            auth = (self.username, self.password)
+            # An HTTPS registry pointing at an HTTP realm is a transport
+            # downgrade: never send credentials in cleartext there. An
+            # all-HTTP registry is an explicit operator choice, so keep them.
+            registry_is_http = urlparse(self._base_url).scheme == "http"
+            if realm_is_http and not registry_is_http:
+                logger.warning(
+                    f"Withholding credentials from HTTP token realm {realm}: "
+                    f"registry {self.registry_url} uses HTTPS"
+                )
+            else:
+                auth = (self.username, self.password)
         resp = self._request_with_retry("GET", realm, params=params, auth=auth)
         if resp.status_code != 200:
             raise ImageRegistryAuthError(
@@ -199,6 +210,11 @@ class OciRegistryAdapter(RegistryAdapter):
             )
             user, pwd = self._resolve_basic_credentials()
             resp = self._request_with_retry(method, url, auth=(user, pwd), **kwargs)
+            if resp.ok:
+                # Stay in Basic mode so later requests (e.g. catalog pages)
+                # skip the doomed Bearer round-trips.
+                self._basic_auth_verified = True
+                self._bearer_token = None
         return resp
 
     def _do_authed_request(self, method: str, url: str, **kwargs) -> requests.Response:
