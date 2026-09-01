@@ -38,6 +38,20 @@ class CloudWatch(AWSService):
                         namespace = None
                         if "Namespace" in alarm:
                             namespace = alarm["Namespace"]
+                        # Metric-math alarms carry no top-level Namespace: each
+                        # component metric is listed under Metrics[].MetricStat
+                        # instead, so a namespace-based check must inspect both.
+                        namespaces = set()
+                        if namespace:
+                            namespaces.add(namespace)
+                        for metric in alarm.get("Metrics", []):
+                            component_namespace = (
+                                metric.get("MetricStat", {})
+                                .get("Metric", {})
+                                .get("Namespace")
+                            )
+                            if component_namespace:
+                                namespaces.add(component_namespace)
                         if self.metric_alarms is None:
                             self.metric_alarms = []
                         self.metric_alarms.append(
@@ -46,6 +60,7 @@ class CloudWatch(AWSService):
                                 name=alarm["AlarmName"],
                                 metric=metric_name,
                                 name_space=namespace,
+                                namespaces=sorted(namespaces),
                                 region=regional_client.region,
                                 alarm_actions=alarm.get("AlarmActions", []),
                                 actions_enabled=alarm.get("ActionsEnabled", False),
@@ -324,6 +339,9 @@ class MetricAlarm(BaseModel):
     name: str
     metric: Optional[str] = None
     name_space: Optional[str] = None
+    # Every namespace the alarm reads from: name_space for a plain alarm, plus
+    # one entry per Metrics[].MetricStat.Metric.Namespace for a metric-math one.
+    namespaces: list[str] = []
     region: str
     tags: Optional[list] = []
     alarm_actions: list

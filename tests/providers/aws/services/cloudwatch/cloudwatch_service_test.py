@@ -141,6 +141,43 @@ class Test_CloudWatch_Service:
         ]
         assert cloudwatch.metric_alarms[0].alarm_actions == ["arn:alarm"]
         assert cloudwatch.metric_alarms[0].actions_enabled
+        assert cloudwatch.metric_alarms[0].namespaces == ["test_namespace"]
+
+    # Test CloudWatch metric-math alarms: no top-level Namespace, so the
+    # namespace has to be read from each component metric instead.
+    @mock_aws
+    def test_describe_alarms_metric_math(self):
+        cw_client = client("cloudwatch", region_name=AWS_REGION_US_EAST_1)
+        cw_client.put_metric_alarm(
+            AlarmName="math-alarm",
+            AlarmActions=["arn:alarm"],
+            ComparisonOperator="GreaterThanOrEqualToThreshold",
+            EvaluationPeriods=1,
+            Threshold=1,
+            ActionsEnabled=True,
+            Metrics=[
+                {
+                    "Id": "m1",
+                    "MetricStat": {
+                        "Metric": {
+                            "Namespace": "AWS/Bedrock",
+                            "MetricName": "Invocations",
+                        },
+                        "Period": 60,
+                        "Stat": "Sum",
+                    },
+                    "ReturnData": True,
+                }
+            ],
+        )
+        aws_provider = set_mocked_aws_provider(
+            expected_checks=["cloudwatch_log_group_no_secrets_in_logs"]
+        )
+        cloudwatch = CloudWatch(aws_provider)
+        assert len(cloudwatch.metric_alarms) == 1
+        assert cloudwatch.metric_alarms[0].name == "math-alarm"
+        assert cloudwatch.metric_alarms[0].name_space is None
+        assert cloudwatch.metric_alarms[0].namespaces == ["AWS/Bedrock"]
 
     # Test Logs Filters
     @mock_aws
