@@ -45,6 +45,22 @@ class OciRegistryAdapter(RegistryAdapter):
     def _origin_url(self) -> str:
         return self._base_url
 
+    @staticmethod
+    def _find_challenge(www_authenticate: str, scheme: str) -> str | None:
+        """Extract one scheme's challenge from a (possibly multi-challenge) header.
+
+        RFC 7235 allows several comma-separated challenges in any order, e.g.
+        ``Basic realm="registry", Bearer realm="...",service="..."``.
+        """
+        match = re.search(
+            rf'(?:^|,)\s*{scheme}\b((?:\s*[\w-]+="[^"]*"\s*,?)*)',
+            www_authenticate,
+            re.IGNORECASE,
+        )
+        if not match:
+            return None
+        return f"{scheme} {match.group(1).strip().rstrip(',')}"
+
     def list_repositories(self) -> list[str]:
         self._ensure_auth()
         repositories: list[str] = []
@@ -93,7 +109,8 @@ class OciRegistryAdapter(RegistryAdapter):
         if resp.status_code == 401:
             www_auth = resp.headers.get("Www-Authenticate", "")
 
-            if not www_auth.lower().startswith("bearer"):
+            bearer_challenge = self._find_challenge(www_auth, "Bearer")
+            if not bearer_challenge:
                 # Basic auth challenge (e.g., AWS ECR)
                 if self.username and self.password:
                     self._basic_auth_verified = True
@@ -108,7 +125,7 @@ class OciRegistryAdapter(RegistryAdapter):
                 )
 
             # Bearer token exchange (standard OCI flow)
-            self._bearer_token = self._obtain_bearer_token(www_auth, repository)
+            self._bearer_token = self._obtain_bearer_token(bearer_challenge, repository)
             return
         if resp.status_code == 403:
             raise ImageRegistryAuthError(
@@ -201,7 +218,9 @@ class OciRegistryAdapter(RegistryAdapter):
             and self.username
             and self.password
             and self._is_same_origin_as_registry(url)
-            and resp.headers.get("Www-Authenticate", "").lower().startswith("basic")
+            and self._find_challenge(
+                resp.headers.get("Www-Authenticate", ""), "Basic"
+            )
         ):
             # Registries like Harbor guard some endpoints (e.g. /_catalog) with
             # Basic even when /v2/ negotiates Bearer.
@@ -215,6 +234,17 @@ class OciRegistryAdapter(RegistryAdapter):
                 # skip the doomed Bearer round-trips.
                 self._basic_auth_verified = True
                 self._bearer_token = None
+        if resp.status_code == 401 and not self._bearer_token:
+            bearer_challenge = self._find_challenge(
+                resp.headers.get("Www-Authenticate", ""), "Bearer"
+            )
+            if bearer_challenge and self._is_same_origin_as_registry(url):
+                # The inverse switch: /v2/ negotiated Basic (or anonymous) but
+                # this endpoint demands Bearer. The challenge carries the right
+                # scope.
+                logger.debug(f"Basic auth not accepted for {url}, switching to Bearer")
+                self._bearer_token = self._obtain_bearer_token(bearer_challenge)
+                resp = self._do_authed_request(method, url, **kwargs)
         return resp
 
     def _do_authed_request(self, method: str, url: str, **kwargs) -> requests.Response:

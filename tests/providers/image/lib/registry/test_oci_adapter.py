@@ -250,7 +250,7 @@ class TestOciAdapterAuth:
         adapter = OciRegistryAdapter("reg.io", username="u", password="p")
         adapter._basic_auth_verified = True
         # No bearer token — using basic auth
-        resp_401 = MagicMock(status_code=401)
+        resp_401 = MagicMock(status_code=401, headers={})
         mock_request.return_value = resp_401
         result = adapter._authed_request("GET", "https://reg.io/v2/_catalog")
         assert result.status_code == 401
@@ -891,6 +891,34 @@ class TestBasicAuthFallback:
             adapter.list_repositories()
 
     @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_fallback_with_combined_multi_challenge_header(self, mock_request):
+        # Basic not first in the header must still trigger the fallback
+        ping, token, _ = self._harbor_responses()
+        catalog_401 = MagicMock(
+            status_code=401,
+            headers={
+                "Www-Authenticate": f'{self._BEARER_CHALLENGE}, Basic realm="harbor"'
+            },
+        )
+        catalog_ok = MagicMock(status_code=200, headers={})
+        catalog_ok.json.return_value = {"repositories": ["library/debian"]}
+        mock_request.side_effect = [
+            ping,
+            token,
+            catalog_401,
+            ping,
+            token,
+            catalog_401,
+            catalog_ok,
+        ]
+
+        adapter = OciRegistryAdapter("reg.io", username="admin", password="secret")
+        repos = adapter.list_repositories()
+
+        assert repos == ["library/debian"]
+        assert mock_request.call_args.kwargs.get("auth") == ("admin", "secret")
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
     def test_multi_page_catalog_falls_back_only_once(self, mock_request):
         ping, token, catalog_401 = self._harbor_responses()
         page1 = MagicMock(
@@ -938,3 +966,162 @@ class TestBasicAuthFallback:
         assert all(
             call.kwargs.get("auth") is None for call in mock_request.call_args_list
         )
+
+
+class TestBearerAuthSwitch:
+    """Registries that negotiate Basic on /v2/ but demand Bearer on other endpoints."""
+
+    _BEARER_CHALLENGE = (
+        'Bearer realm="https://reg.io/token",service="registry",scope="registry:catalog:*"'
+    )
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_catalog_switches_to_bearer_when_basic_rejected(self, mock_request):
+        ping = MagicMock(
+            status_code=401, headers={"Www-Authenticate": 'Basic realm="registry"'}
+        )
+        catalog_401 = MagicMock(
+            status_code=401, headers={"Www-Authenticate": self._BEARER_CHALLENGE}
+        )
+        token = MagicMock(status_code=200)
+        token.json.return_value = {"token": "switched-tok"}
+        catalog_ok = MagicMock(status_code=200, headers={})
+        catalog_ok.json.return_value = {"repositories": ["library/debian"]}
+        mock_request.side_effect = [ping, catalog_401, token, catalog_ok]
+
+        adapter = OciRegistryAdapter("reg.io", username="admin", password="secret")
+        repos = adapter.list_repositories()
+
+        assert repos == ["library/debian"]
+        assert adapter._bearer_token == "switched-tok"
+        # Token exchange carries the credentials
+        token_call = mock_request.call_args_list[2]
+        assert token_call.kwargs.get("auth") == ("admin", "secret")
+        assert token_call.kwargs.get("params", {}).get("scope") == "registry:catalog:*"
+        # The retry uses the Bearer header, not Basic
+        retry_call = mock_request.call_args_list[3]
+        assert retry_call.kwargs.get("auth") is None
+        assert (
+            retry_call.kwargs.get("headers", {}).get("Authorization")
+            == "Bearer switched-tok"
+        )
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_multi_page_catalog_switches_only_once(self, mock_request):
+        ping = MagicMock(
+            status_code=401, headers={"Www-Authenticate": 'Basic realm="registry"'}
+        )
+        catalog_401 = MagicMock(
+            status_code=401, headers={"Www-Authenticate": self._BEARER_CHALLENGE}
+        )
+        token = MagicMock(status_code=200)
+        token.json.return_value = {"token": "switched-tok"}
+        page1 = MagicMock(
+            status_code=200,
+            headers={"Link": '<https://reg.io/v2/_catalog?n=200&last=a>; rel="next"'},
+        )
+        page1.json.return_value = {"repositories": ["a"]}
+        page2 = MagicMock(status_code=200, headers={})
+        page2.json.return_value = {"repositories": ["b"]}
+        mock_request.side_effect = [ping, catalog_401, token, page1, page2]
+
+        adapter = OciRegistryAdapter("reg.io", username="admin", password="secret")
+        repos = adapter.list_repositories()
+
+        assert repos == ["a", "b"]
+        assert mock_request.call_count == 5
+        page2_call = mock_request.call_args_list[-1]
+        assert (
+            page2_call.kwargs.get("headers", {}).get("Authorization")
+            == "Bearer switched-tok"
+        )
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_anonymous_switch_to_bearer(self, mock_request):
+        ping = MagicMock(status_code=200)
+        catalog_401 = MagicMock(
+            status_code=401, headers={"Www-Authenticate": self._BEARER_CHALLENGE}
+        )
+        token = MagicMock(status_code=200)
+        token.json.return_value = {"token": "anon-tok"}
+        catalog_ok = MagicMock(status_code=200, headers={})
+        catalog_ok.json.return_value = {"repositories": ["public/app"]}
+        mock_request.side_effect = [ping, catalog_401, token, catalog_ok]
+
+        adapter = OciRegistryAdapter("reg.io")
+        repos = adapter.list_repositories()
+
+        assert repos == ["public/app"]
+        token_call = mock_request.call_args_list[2]
+        assert token_call.kwargs.get("auth") is None
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_switch_not_attempted_cross_origin(self, mock_request):
+        catalog_401 = MagicMock(
+            status_code=401, headers={"Www-Authenticate": self._BEARER_CHALLENGE}
+        )
+        mock_request.return_value = catalog_401
+
+        adapter = OciRegistryAdapter("reg.io", username="admin", password="secret")
+        adapter._basic_auth_verified = True
+        resp = adapter._authed_request("GET", "https://other.example.com/v2/_catalog")
+
+        assert resp.status_code == 401
+        assert adapter._bearer_token is None
+        assert mock_request.call_count == 1
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_switch_with_combined_multi_challenge_header(self, mock_request):
+        # RFC 7235: multiple challenges in one header, Basic first
+        combined = (
+            'Basic realm="registry", '
+            'Bearer realm="http://reg.io/token",service="registry",scope="registry:catalog:*"'
+        )
+        ping = MagicMock(
+            status_code=401, headers={"Www-Authenticate": 'Basic realm="registry"'}
+        )
+        catalog_401 = MagicMock(status_code=401, headers={"Www-Authenticate": combined})
+        token = MagicMock(status_code=200)
+        token.json.return_value = {"token": "combined-tok"}
+        catalog_ok = MagicMock(status_code=200, headers={})
+        catalog_ok.json.return_value = {"repositories": ["library/debian"]}
+        mock_request.side_effect = [ping, catalog_401, token, catalog_ok]
+
+        adapter = OciRegistryAdapter("http://reg.io", username="admin", password="secret")
+        repos = adapter.list_repositories()
+
+        assert repos == ["library/debian"]
+        # The token exchange must hit the Bearer realm, not Basic's realm="registry"
+        token_call = mock_request.call_args_list[2]
+        assert token_call.args[1] == "http://reg.io/token"
+        assert token_call.kwargs.get("params", {}).get("scope") == "registry:catalog:*"
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_ping_with_combined_multi_challenge_prefers_bearer(self, mock_request):
+        combined = 'Basic realm="registry", Bearer realm="https://auth.reg.io/token",service="registry"'
+        ping = MagicMock(status_code=401, headers={"Www-Authenticate": combined})
+        token = MagicMock(status_code=200)
+        token.json.return_value = {"token": "bearer-tok"}
+        mock_request.side_effect = [ping, token]
+
+        adapter = OciRegistryAdapter("reg.io", username="u", password="p")
+        adapter._ensure_auth()
+
+        assert adapter._bearer_token == "bearer-tok"
+        token_call = mock_request.call_args_list[1]
+        assert token_call.args[1] == "https://auth.reg.io/token"
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_failed_token_exchange_raises_auth_error(self, mock_request):
+        ping = MagicMock(
+            status_code=401, headers={"Www-Authenticate": 'Basic realm="registry"'}
+        )
+        catalog_401 = MagicMock(
+            status_code=401, headers={"Www-Authenticate": self._BEARER_CHALLENGE}
+        )
+        token_denied = MagicMock(status_code=401)
+        mock_request.side_effect = [ping, catalog_401, token_denied]
+
+        adapter = OciRegistryAdapter("reg.io", username="admin", password="wrong")
+        with pytest.raises(ImageRegistryAuthError, match="bearer token"):
+            adapter.list_repositories()
