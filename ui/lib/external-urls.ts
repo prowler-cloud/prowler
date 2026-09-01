@@ -40,8 +40,12 @@ export const getAttackPathHubUrl = (queryId: string): string =>
 export const PROWLER_CF_TEMPLATE_URL =
   "https://prowler-cloud-public.s3.eu-west-1.amazonaws.com/permissions/templates/aws/cloudformation/prowler-scan-role.yml";
 
+// Stopgap: point the Azure Portal at the raw template on GitHub until the
+// docs deploy publishes the file under `docs.prowler.com/assets/...`.
+// The Portal fetches this URL over HTTPS, so `raw.githubusercontent.com`
+// works exactly the same for the Deploy-to-Azure flow.
 export const PROWLER_AZURE_ARM_TEMPLATE_URL =
-  "https://docs.prowler.com/assets/templates/azure/prowler-scan.json";
+  "https://raw.githubusercontent.com/prowler-cloud/prowler/master/permissions/templates/azure/bicep/prowler-scan.json";
 
 // Prowler Cloud billing/subscription management page.
 export const BILLING_URL = "https://cloud.prowler.com/billing";

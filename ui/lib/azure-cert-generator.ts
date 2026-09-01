@@ -20,8 +20,10 @@
 import "reflect-metadata";
 
 import {
+  BasicConstraintsExtension,
   cryptoProvider,
-  Extension,
+  KeyUsageFlags,
+  KeyUsagesExtension,
   X509CertificateGenerator,
 } from "@peculiar/x509";
 
@@ -131,7 +133,13 @@ export async function generateProwlerCertificate(
       hash: "SHA-256",
     },
     keys: keyPair,
-    extensions: [] as Extension[],
+    // Match `openssl x509 -req` defaults: mark the leaf as end-entity
+    // (`cA=false`) and declare `digitalSignature` so audit tooling and
+    // strict CA validators don't flag the certificate as unusual.
+    extensions: [
+      new BasicConstraintsExtension(false, undefined, true),
+      new KeyUsagesExtension(KeyUsageFlags.digitalSignature, true),
+    ],
   });
 
   const certPem = cert.toString("pem");

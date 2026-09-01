@@ -7,6 +7,16 @@ import { MAX_SAML_ADDITIONAL_EMAIL_DOMAINS } from "@/types/saml";
 
 import { PROVIDER_TYPES, ProviderType } from "./providers";
 
+// Matches the API's `_MAX_CERTIFICATE_CONTENT_LENGTH` in
+// `api/src/backend/api/v1/serializers.py`, i.e. base64 of the SDK's 50 KiB
+// `_MAX_CERTIFICATE_BUNDLE_BYTES` cap. Reject oversized certificate
+// content client-side so the user sees the error inline before a
+// round-trip that the API would 400 with the same message.
+export const MAX_CERTIFICATE_CONTENT_LENGTH = 68268;
+
+export const CERTIFICATE_CONTENT_MAX_SIZE_ERROR =
+  "Certificate content exceeds the maximum size.";
+
 export const KUBECONFIG_UNSUPPORTED_COMMAND_AUTHENTICATION_ERROR =
   "Kubernetes kubeconfig command-based authentication is not supported in Prowler Cloud for security reasons.";
 
@@ -241,6 +251,10 @@ export const addCredentialsFormSchema = (
               [ProviderCredentialFields.CLIENT_SECRET]: z.string().optional(),
               [ProviderCredentialFields.CERTIFICATE_CONTENT]: z
                 .string()
+                .max(
+                  MAX_CERTIFICATE_CONTENT_LENGTH,
+                  CERTIFICATE_CONTENT_MAX_SIZE_ERROR,
+                )
                 .optional(),
               [ProviderCredentialFields.TENANT_ID]: z.guid({
                 error: "Tenant ID must be a valid GUID",
@@ -284,6 +298,10 @@ export const addCredentialsFormSchema = (
                       .optional(),
                     [ProviderCredentialFields.CERTIFICATE_CONTENT]: z
                       .string()
+                      .max(
+                        MAX_CERTIFICATE_CONTENT_LENGTH,
+                        CERTIFICATE_CONTENT_MAX_SIZE_ERROR,
+                      )
                       .optional(),
                     [ProviderCredentialFields.TENANT_ID]: z
                       .string()

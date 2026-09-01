@@ -16,6 +16,8 @@ export const PROVIDER_CREDENTIALS_ERROR_MAPPING: Record<string, string> = {
   [ErrorPointers.AWS_SESSION_TOKEN]: ProviderCredentialFields.AWS_SESSION_TOKEN,
   [ErrorPointers.CLIENT_ID]: ProviderCredentialFields.CLIENT_ID,
   [ErrorPointers.CLIENT_SECRET]: ProviderCredentialFields.CLIENT_SECRET,
+  [ErrorPointers.CERTIFICATE_CONTENT]:
+    ProviderCredentialFields.CERTIFICATE_CONTENT,
   [ErrorPointers.USER]: ProviderCredentialFields.USER,
   [ErrorPointers.PASSWORD]: ProviderCredentialFields.PASSWORD,
   [ErrorPointers.TENANT_ID]: ProviderCredentialFields.TENANT_ID,

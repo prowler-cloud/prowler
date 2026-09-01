@@ -294,10 +294,10 @@ describe("getAzureDeploymentQuickLink", () => {
 
     // Then
     expect(PROWLER_AZURE_ARM_TEMPLATE_URL).toBe(
-      "https://docs.prowler.com/assets/templates/azure/prowler-scan.json",
+      "https://raw.githubusercontent.com/prowler-cloud/prowler/master/permissions/templates/azure/bicep/prowler-scan.json",
     );
     expect(url).toBe(
-      "https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fdocs.prowler.com%2Fassets%2Ftemplates%2Fazure%2Fprowler-scan.json",
+      "https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fprowler-cloud%2Fprowler%2Fmaster%2Fpermissions%2Ftemplates%2Fazure%2Fbicep%2Fprowler-scan.json",
     );
     expect(url).not.toContain("localhost");
     expect(url).not.toContain("prowler-cloud-public.s3");
