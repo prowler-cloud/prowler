@@ -1,6 +1,6 @@
 services:
   api-dev-init:
-    image: busybox:1.37.0@sha256:9532d8c39891ca2ecde4d30d7710e01fb739c87a8b9299685c63704296b16028
+    image: busybox:1.38.0@sha256:dc2d74b28e4cf8984fa52af1f39bc7c3d9c73760b41a74d629f5d11b1ab28616
     volumes:
       - ./_data/api:/data
     command: ["sh", "-c", "chown -R 1000:1000 /data"]
