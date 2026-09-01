@@ -41,7 +41,10 @@ class bedrock_agent_idle_session_ttl_not_excessive(Check):
             )
             report.region = region
             report.resource_id = "agent/unknown"
-            report.resource_arn = f"arn:{bedrock_agent_client.audited_partition}:bedrock:{region}:{bedrock_agent_client.audited_account}:agent/unknown"
+            report.resource_arn = (
+                f"arn:{bedrock_agent_client.audited_partition}:bedrock:{region}:"
+                f"{bedrock_agent_client.audited_account}:agent/unknown"
+            )
             report.status = "MANUAL"
             report.status_extended = (
                 f"Bedrock Agents could not be listed in region {region} ({error}); "
@@ -60,7 +63,10 @@ class bedrock_agent_idle_session_ttl_not_excessive(Check):
 
             if not detail_ok or ttl is None:
                 report.status = "MANUAL"
-                report.status_extended = f"Bedrock Agent {agent.name} idle session TTL could not be determined."
+                report.status_extended = (
+                    f"Bedrock Agent {agent.name} idle session TTL could not "
+                    "be determined."
+                )
             elif ttl > max_ttl:
                 report.status = "FAIL"
                 report.status_extended = (
@@ -71,7 +77,8 @@ class bedrock_agent_idle_session_ttl_not_excessive(Check):
                 report.status = "PASS"
                 report.status_extended = (
                     f"Bedrock Agent {agent.name} idle session TTL is {ttl} seconds, "
-                    f"which does not exceed the configured maximum of {max_ttl} seconds."
+                    f"which does not exceed the configured maximum of "
+                    f"{max_ttl} seconds."
                 )
             findings.append(report)
         return findings
