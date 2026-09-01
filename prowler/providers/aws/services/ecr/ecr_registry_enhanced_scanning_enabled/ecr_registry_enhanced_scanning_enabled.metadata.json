@@ -23,7 +23,7 @@
   "Remediation": {
     "Code": {
       "CLI": "aws ecr put-registry-scanning-configuration --scan-type ENHANCED --rules 'scanFrequency=CONTINUOUS_SCAN,repositoryFilters=[{filter=*,filterType=WILDCARD}]'",
-      "NativeIaC": "",
+      "NativeIaC": "```yaml\nResources:\n  RegistryScanningConfiguration:\n    Type: AWS::ECR::RegistryScanningConfiguration\n    Properties:\n      ScanType: ENHANCED  # Critical: BASIC limits the registry to operating-system coverage\n      Rules:\n        - ScanFrequency: CONTINUOUS_SCAN\n          RepositoryFilters:\n            - Filter: \"*\"  # Critical: coverage comes from the filters, so * is what reaches every repository\n              FilterType: WILDCARD\n```",
       "Other": "1. Open the AWS Management Console and go to Amazon ECR\n2. In the left menu, click Private registry, then Scanning\n3. Click Edit\n4. Set Scanning type to Enhanced scanning\n5. Under Enhanced scanning, add or keep a repository filter matching every repository that must be scanned. Coverage comes from the filters, not from the frequency: a filter of * covers the whole registry, and any repository no filter matches is left unscanned\n6. Set the scan frequency for those filters, either Continuous scanning or Scan on push\n7. Click Save",
       "Terraform": "```hcl\nresource \"aws_ecr_registry_scanning_configuration\" \"<example_resource_name>\" {\n  scan_type = \"ENHANCED\"\n\n  rule {\n    scan_frequency = \"CONTINUOUS_SCAN\"\n    repository_filter {\n      filter      = \"*\"\n      filter_type = \"WILDCARD\"\n    }\n  }\n}\n```"
     },
