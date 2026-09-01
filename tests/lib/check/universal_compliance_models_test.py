@@ -926,7 +926,11 @@ class TestCyberEssentialsFramework:
         fw = load_compliance_framework_universal(self._path())
         services_dir = os.path.normpath(
             os.path.join(
-                os.path.dirname(self._path()), "..", "providers", "alibabacloud", "services"
+                os.path.dirname(self._path()),
+                "..",
+                "providers",
+                "alibabacloud",
+                "services",
             )
         )
         real = {
@@ -935,7 +939,9 @@ class TestCyberEssentialsFramework:
             for f in files
             if f.endswith(".metadata.json")
         }
-        refs = {c for req in fw.requirements for c in req.checks.get("alibabacloud", [])}
+        refs = {
+            c for req in fw.requirements for c in req.checks.get("alibabacloud", [])
+        }
         assert refs, "expected alibabacloud mappings"
         assert refs <= real, f"unknown alibabacloud check IDs: {sorted(refs - real)}"
 
