@@ -35,7 +35,10 @@ class Test_bedrock_agent_idle_session_ttl_not_excessive:
     @mock_aws
     def test_agent_ttl_pass_below_default(self):
         """Test PASS when TTL below default 3600."""
-        from prowler.providers.aws.services.bedrock.bedrock_service import Agent, BedrockAgent
+        from prowler.providers.aws.services.bedrock.bedrock_service import (
+            Agent,
+            BedrockAgent,
+        )
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
@@ -76,14 +79,20 @@ class Test_bedrock_agent_idle_session_ttl_not_excessive:
                 == "Bedrock Agent test-agent-pass idle session TTL is 1800 seconds, which does not exceed the configured maximum of 3600 seconds."
             )
             assert result[0].resource_id == "agent-1"
-            assert result[0].resource_arn == f"arn:aws:bedrock:{AWS_REGION_US_EAST_1}:123456789012:agent/agent-1"
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:bedrock:{AWS_REGION_US_EAST_1}:123456789012:agent/agent-1"
+            )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == [{"Key": "env", "Value": "test"}]
 
     @mock_aws
     def test_agent_ttl_pass_exactly_default(self):
         """Test PASS when TTL exactly at 3600 boundary."""
-        from prowler.providers.aws.services.bedrock.bedrock_service import Agent, BedrockAgent
+        from prowler.providers.aws.services.bedrock.bedrock_service import (
+            Agent,
+            BedrockAgent,
+        )
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
@@ -123,7 +132,10 @@ class Test_bedrock_agent_idle_session_ttl_not_excessive:
     @mock_aws
     def test_agent_ttl_fail_above_default(self):
         """Test FAIL when TTL exceeds default."""
-        from prowler.providers.aws.services.bedrock.bedrock_service import Agent, BedrockAgent
+        from prowler.providers.aws.services.bedrock.bedrock_service import (
+            Agent,
+            BedrockAgent,
+        )
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
@@ -168,12 +180,17 @@ class Test_bedrock_agent_idle_session_ttl_not_excessive:
     @mock_aws
     def test_custom_audit_config_override(self):
         """Test custom audit config overrides default threshold."""
-        from prowler.providers.aws.services.bedrock.bedrock_service import Agent, BedrockAgent
+        from prowler.providers.aws.services.bedrock.bedrock_service import (
+            Agent,
+            BedrockAgent,
+        )
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         bedrock_agent_client = BedrockAgent(aws_provider)
-        bedrock_agent_client.audit_config = {"max_bedrock_agent_idle_session_ttl_seconds": 600}
+        bedrock_agent_client.audit_config = {
+            "max_bedrock_agent_idle_session_ttl_seconds": 600
+        }
         bedrock_agent_client.agents = {
             "arn:aws:bedrock:us-east-1:123456789012:agent/agent-4": Agent(
                 id="agent-4",
@@ -221,7 +238,10 @@ class Test_bedrock_agent_idle_session_ttl_not_excessive:
     @mock_aws
     def test_missing_ttl_returns_manual(self):
         """Test MANUAL when TTL missing."""
-        from prowler.providers.aws.services.bedrock.bedrock_service import Agent, BedrockAgent
+        from prowler.providers.aws.services.bedrock.bedrock_service import (
+            Agent,
+            BedrockAgent,
+        )
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
@@ -265,7 +285,10 @@ class Test_bedrock_agent_idle_session_ttl_not_excessive:
     @mock_aws
     def test_failed_get_agent_returns_manual_not_pass(self):
         """Test MANUAL when GetAgent failed, not PASS."""
-        from prowler.providers.aws.services.bedrock.bedrock_service import Agent, BedrockAgent
+        from prowler.providers.aws.services.bedrock.bedrock_service import (
+            Agent,
+            BedrockAgent,
+        )
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
@@ -302,3 +325,121 @@ class Test_bedrock_agent_idle_session_ttl_not_excessive:
             assert len(result) == 1
             assert result[0].status == "MANUAL"
             assert result[0].status != "PASS"
+
+    @mock_aws
+    def test_list_agents_failure_returns_manual(self):
+        """Test MANUAL when ListAgents fails for a region."""
+        from prowler.providers.aws.services.bedrock.bedrock_service import BedrockAgent
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        bedrock_agent_client = BedrockAgent(aws_provider)
+        bedrock_agent_client.agents = {}
+        bedrock_agent_client.agents_scan_errors = {
+            AWS_REGION_US_EAST_1: "AccessDeniedException"
+        }
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.bedrock.bedrock_agent_idle_session_ttl_not_excessive.bedrock_agent_idle_session_ttl_not_excessive.bedrock_agent_client",
+                new=bedrock_agent_client,
+            ),
+        ):
+            from prowler.providers.aws.services.bedrock.bedrock_agent_idle_session_ttl_not_excessive.bedrock_agent_idle_session_ttl_not_excessive import (
+                bedrock_agent_idle_session_ttl_not_excessive,
+            )
+
+            check = bedrock_agent_idle_session_ttl_not_excessive()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert result[0].region == AWS_REGION_US_EAST_1
+            assert "could not be listed" in result[0].status_extended
+            assert result[0].status != "PASS"
+
+    @mock_aws
+    def test_partial_inventory_continues_and_reports_both(self):
+        """Test partial inventory still evaluates agents and reports errors."""
+        from prowler.providers.aws.services.bedrock.bedrock_service import (
+            Agent,
+            BedrockAgent,
+        )
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        bedrock_agent_client = BedrockAgent(aws_provider)
+        bedrock_agent_client.agents = {
+            "arn:aws:bedrock:us-east-1:123456789012:agent/agent-pass": Agent(
+                id="agent-pass",
+                name="test-agent-partial-pass",
+                arn=f"arn:aws:bedrock:us-east-1:123456789012:agent/agent-pass",
+                region=AWS_REGION_US_EAST_1,
+                tags=[],
+                detail_retrieved=True,
+                idle_session_ttl_seconds=1800,
+            )
+        }
+        bedrock_agent_client.agents_scan_errors = {"us-west-2": "AccessDeniedException"}
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.bedrock.bedrock_agent_idle_session_ttl_not_excessive.bedrock_agent_idle_session_ttl_not_excessive.bedrock_agent_client",
+                new=bedrock_agent_client,
+            ),
+        ):
+            from prowler.providers.aws.services.bedrock.bedrock_agent_idle_session_ttl_not_excessive.bedrock_agent_idle_session_ttl_not_excessive import (
+                bedrock_agent_idle_session_ttl_not_excessive,
+            )
+
+            check = bedrock_agent_idle_session_ttl_not_excessive()
+            result = check.execute()
+
+            assert len(result) == 2
+            statuses = {r.status for r in result}
+            assert "MANUAL" in statuses
+            assert "PASS" in statuses
+
+    @mock_aws
+    def test_no_false_pass_when_only_scan_errors(self):
+        """Test no PASS when only ListAgents errors present."""
+        from prowler.providers.aws.services.bedrock.bedrock_service import BedrockAgent
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        bedrock_agent_client = BedrockAgent(aws_provider)
+        bedrock_agent_client.agents = {}
+        bedrock_agent_client.agents_scan_errors = {
+            "us-east-1": "AccessDeniedException",
+            "us-west-2": "InternalServerException",
+        }
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.bedrock.bedrock_agent_idle_session_ttl_not_excessive.bedrock_agent_idle_session_ttl_not_excessive.bedrock_agent_client",
+                new=bedrock_agent_client,
+            ),
+        ):
+            from prowler.providers.aws.services.bedrock.bedrock_agent_idle_session_ttl_not_excessive.bedrock_agent_idle_session_ttl_not_excessive import (
+                bedrock_agent_idle_session_ttl_not_excessive,
+            )
+
+            check = bedrock_agent_idle_session_ttl_not_excessive()
+            result = check.execute()
+
+            assert len(result) == 2
+            assert all(r.status == "MANUAL" for r in result)
+            assert all(r.status != "PASS" for r in result)
+            assert all(r.status != "FAIL" for r in result)

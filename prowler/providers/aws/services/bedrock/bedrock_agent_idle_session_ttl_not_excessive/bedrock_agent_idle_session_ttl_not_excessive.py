@@ -60,9 +60,7 @@ class bedrock_agent_idle_session_ttl_not_excessive(Check):
 
             if not detail_ok or ttl is None:
                 report.status = "MANUAL"
-                report.status_extended = (
-                    f"Bedrock Agent {agent.name} idle session TTL could not be determined."
-                )
+                report.status_extended = f"Bedrock Agent {agent.name} idle session TTL could not be determined."
             elif ttl > max_ttl:
                 report.status = "FAIL"
                 report.status_extended = (
