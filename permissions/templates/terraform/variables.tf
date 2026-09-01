@@ -27,6 +27,12 @@ variable "iam_principal" {
   default     = "role/prowler*"
 }
 
+variable "region" {
+  type        = string
+  description = "AWS region to deploy to. Only relevant for real-time detection: the EventBridge rules are regional, so deploy once per region you want covered."
+  default     = "us-east-1"
+}
+
 variable "enable_organizations" {
   type        = bool
   description = "Enable AWS Organizations discovery permissions. Set to true only when deploying this role in the management account."
@@ -59,4 +65,28 @@ variable "s3_integration_bucket_account_id" {
     condition     = var.s3_integration_bucket_account_id == "" || (length(var.s3_integration_bucket_account_id) == 12 && can(tonumber(var.s3_integration_bucket_account_id)))
     error_message = "s3_integration_bucket_account_id must be a valid 12-digit AWS Account ID or empty."
   }
+}
+
+variable "enable_realtime_detection" {
+  type        = bool
+  description = "Enable real-time detection. Forwards the tracked CloudTrail management events to Prowler Cloud through an EventBridge API destination. Adds no new read permissions to the ProwlerScan role."
+  default     = false
+}
+
+variable "prowler_webhook_url" {
+  type        = string
+  description = "Prowler Cloud endpoint that receives the events. Defaults to the Prowler Cloud ingest endpoint; change it only for a self-hosted deployment or for testing."
+  default     = "https://api.prowler.com/api/v1/realtime/events"
+
+  validation {
+    condition     = var.prowler_webhook_url == "" || can(regex("^https://", var.prowler_webhook_url))
+    error_message = "prowler_webhook_url must be an HTTPS URL or empty."
+  }
+}
+
+variable "prowler_api_key" {
+  type        = string
+  description = "Prowler Cloud API key used to authenticate the events sent to the endpoint above. Shown once during Prowler Cloud onboarding. Required if enable_realtime_detection is true."
+  default     = ""
+  sensitive   = true
 }
