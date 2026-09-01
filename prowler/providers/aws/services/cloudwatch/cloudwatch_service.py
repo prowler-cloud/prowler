@@ -111,6 +111,9 @@ class Logs(AWSService):
             ):
                 self.__threading_call__(self._get_log_events, self.log_groups.values())
             self.__threading_call__(
+                self._get_data_protection_policy, self.log_groups.values()
+            )
+            self.__threading_call__(
                 self._list_tags_for_resource, self.log_groups.values()
             )
 
@@ -260,6 +263,37 @@ class Logs(AWSService):
                 f"{log_group.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _get_data_protection_policy(self, log_group):
+        """Retrieve the data protection policy for a selected log group.
+
+        Args:
+            log_group: Log group selected for bounded analysis.
+        """
+        logger.info(
+            f"CloudWatch Logs - Getting data protection policy for log group {log_group.name}..."
+        )
+        try:
+            regional_client = self.regional_clients[log_group.region]
+            policy_document = regional_client.get_data_protection_policy(
+                logGroupIdentifier=log_group.arn
+            ).get("policyDocument")
+            if policy_document:
+                log_group.data_protection_policy = json.loads(policy_document)
+        except ClientError as error:
+            # A log group without a data protection policy returns ResourceNotFoundException.
+            if error.response["Error"]["Code"] == "ResourceNotFoundException":
+                logger.info(
+                    f"{log_group.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{log_group.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+        except Exception as error:
+            logger.error(
+                f"{log_group.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
     def _describe_resource_policies(self, regional_client):
         logger.info("CloudWatch Logs - Describing resource policies...")
         try:
@@ -341,6 +375,9 @@ class LogGroup(BaseModel):
     log_streams: dict[str, list[str]] = (
         {}
     )  # Log stream name as the key, array of events as the value
+    # Parsed data protection policy document (from GetDataProtectionPolicy) or None when
+    # the log group has no data protection policy configured.
+    data_protection_policy: Optional[dict] = None
     tags: Optional[list] = []
 
 

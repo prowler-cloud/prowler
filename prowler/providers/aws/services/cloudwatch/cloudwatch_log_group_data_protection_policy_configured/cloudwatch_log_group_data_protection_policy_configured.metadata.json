@@ -1,0 +1,41 @@
+{
+  "Provider": "aws",
+  "CheckID": "cloudwatch_log_group_data_protection_policy_configured",
+  "CheckTitle": "CloudWatch Log Group has a data protection policy configured",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Effects/Data Exposure"
+  ],
+  "ServiceName": "cloudwatch",
+  "SubServiceName": "logs",
+  "ResourceIdTemplate": "arn:partition:logs:region:account-id:log-group:log-group-name",
+  "Severity": "high",
+  "ResourceType": "AwsCloudWatchLogGroup",
+  "ResourceGroup": "monitoring",
+  "Description": "This check ensures that Amazon CloudWatch log groups have an active data protection policy that audits and/or de-identifies sensitive data identifiers (such as email addresses, credentials, and PII) found in log events.",
+  "Risk": "Application and infrastructure logs frequently capture sensitive data such as credentials, personal information, and financial data. Without a data protection policy that audits and de-identifies sensitive data identifiers, this data is stored in plaintext and can be exposed to anyone with read access to the log group, leading to privacy violations and compliance failures.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/mask-sensitive-log-data.html",
+    "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/mask-sensitive-log-data-types.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws logs put-data-protection-policy --log-group-identifier <log_group_name> --policy-document '{\"Name\":\"data-protection-policy\",\"Version\":\"2021-06-01\",\"Statement\":[{\"Sid\":\"audit\",\"DataIdentifier\":[\"arn:aws:dataprotection::aws:data-identifier/EmailAddress\"],\"Operation\":{\"Audit\":{\"FindingsDestination\":{}}}},{\"Sid\":\"redact\",\"DataIdentifier\":[\"arn:aws:dataprotection::aws:data-identifier/EmailAddress\"],\"Operation\":{\"Deidentify\":{\"MaskConfig\":{}}}}]}'",
+      "NativeIaC": "```yaml\n# CloudFormation: attach a data protection policy to a CloudWatch log group\nResources:\n  <example_resource_name>:\n    Type: AWS::Logs::LogGroup\n    Properties:\n      LogGroupName: <example_resource_name>\n      DataProtectionPolicy:\n        Name: data-protection-policy\n        Version: \"2021-06-01\"\n        Statement:\n          - Sid: audit\n            DataIdentifier:\n              - arn:aws:dataprotection::aws:data-identifier/EmailAddress\n            Operation:\n              Audit:\n                FindingsDestination: {}\n          - Sid: redact\n            DataIdentifier:\n              - arn:aws:dataprotection::aws:data-identifier/EmailAddress\n            Operation:\n              Deidentify:\n                MaskConfig: {}\n```",
+      "Other": "1. In the AWS Console, go to CloudWatch > Log groups and select the log group.\n2. On the log group page, open the 'Data protection' tab and choose 'Create/Edit policy'.\n3. Select the managed and/or custom data identifiers to detect (e.g. Email address, AWS secret key), and enable both Audit and Masking (de-identification).\n4. Optionally configure an audit findings destination (S3, Firehose, or another log group), then Save.",
+      "Terraform": "```hcl\n# Terraform: attach a data protection policy to a CloudWatch log group\nresource \"aws_cloudwatch_log_data_protection_policy\" \"<example_resource_name>\" {\n  log_group_name = aws_cloudwatch_log_group.<example_resource_name>.name\n\n  policy_document = jsonencode({\n    Name    = \"data-protection-policy\"\n    Version = \"2021-06-01\"\n    Statement = [\n      {\n        Sid            = \"audit\"\n        DataIdentifier = [\"arn:aws:dataprotection::aws:data-identifier/EmailAddress\"]\n        Operation      = { Audit = { FindingsDestination = {} } }\n      },\n      {\n        Sid            = \"redact\"\n        DataIdentifier = [\"arn:aws:dataprotection::aws:data-identifier/EmailAddress\"]\n        Operation      = { Deidentify = { MaskConfig = {} } }\n      }\n    ]\n  })\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Attach a data protection policy to log groups that may contain sensitive data. Configure both an Audit statement (to detect and report sensitive-data findings) and a Deidentify statement (to mask the data at rest) covering the relevant managed and custom data identifiers.",
+      "Url": "https://hub.prowler.com/check/cloudwatch_log_group_data_protection_policy_configured"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

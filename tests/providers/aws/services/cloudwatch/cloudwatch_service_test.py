@@ -1,3 +1,7 @@
+import json
+from unittest import mock
+
+import botocore
 import pytest
 from boto3 import client
 from moto import mock_aws
@@ -225,6 +229,81 @@ class Test_CloudWatch_Service:
         assert logs.log_groups[arn].kms_id == "test_kms_id"
         assert logs.log_groups[arn].region == AWS_REGION_US_EAST_1
         assert logs.log_groups[arn].tags == [{}]
+
+    @mock_aws
+    def test_get_data_protection_policy(self):
+        logs_client = client("logs", region_name=AWS_REGION_US_EAST_1)
+        logs_client.create_log_group(logGroupName="/log-group/test")
+
+        aws_provider = set_mocked_aws_provider(
+            expected_checks=["cloudwatch_log_group_no_secrets_in_logs"]
+        )
+        arn = f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test:*"
+
+        policy = {
+            "Name": "data-protection-policy",
+            "Version": "2021-06-01",
+            "Statement": [
+                {
+                    "Sid": "audit",
+                    "DataIdentifier": [
+                        "arn:aws:dataprotection::aws:data-identifier/EmailAddress"
+                    ],
+                    "Operation": {"Audit": {"FindingsDestination": {}}},
+                }
+            ],
+        }
+
+        # moto does not implement GetDataProtectionPolicy, so intercept just that call and
+        # delegate the rest to moto's patched client.
+        orig_make_api_call = botocore.client.BaseClient._make_api_call
+
+        def mock_make_api_call(self, operation_name, kwarg):
+            if operation_name == "GetDataProtectionPolicy":
+                return {
+                    "logGroupIdentifier": kwarg.get("logGroupIdentifier"),
+                    "policyDocument": json.dumps(policy),
+                }
+            return orig_make_api_call(self, operation_name, kwarg)
+
+        with mock.patch(
+            "botocore.client.BaseClient._make_api_call", new=mock_make_api_call
+        ):
+            logs = Logs(aws_provider)
+
+        assert logs.log_groups[arn].data_protection_policy == policy
+
+    @mock_aws
+    def test_get_data_protection_policy_none_when_absent(self):
+        logs_client = client("logs", region_name=AWS_REGION_US_EAST_1)
+        logs_client.create_log_group(logGroupName="/log-group/test")
+
+        aws_provider = set_mocked_aws_provider(
+            expected_checks=["cloudwatch_log_group_no_secrets_in_logs"]
+        )
+        arn = f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test:*"
+
+        orig_make_api_call = botocore.client.BaseClient._make_api_call
+
+        def mock_make_api_call(self, operation_name, kwarg):
+            if operation_name == "GetDataProtectionPolicy":
+                raise botocore.exceptions.ClientError(
+                    {
+                        "Error": {
+                            "Code": "ResourceNotFoundException",
+                            "Message": "No data protection policy",
+                        }
+                    },
+                    operation_name,
+                )
+            return orig_make_api_call(self, operation_name, kwarg)
+
+        with mock.patch(
+            "botocore.client.BaseClient._make_api_call", new=mock_make_api_call
+        ):
+            logs = Logs(aws_provider)
+
+        assert logs.log_groups[arn].data_protection_policy is None
 
     def test_log_group_limit_exposes_only_selected_resources(self):
         class FakeLogsClient:
