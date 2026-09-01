@@ -306,8 +306,20 @@ prowler image --registry internal-registry.local --registry-insecure
 ```
 
 <Warning>
-Skipping TLS verification disables certificate validation for registry connections. Use this flag only for trusted internal registries with self-signed certificates.
+Skipping TLS verification disables certificate validation for registry connections, including the Trivy image pull (`TRIVY_INSECURE`). Use this flag only for trusted internal registries with self-signed certificates.
 </Warning>
+
+#### On-Premises Registries and Private Networks
+
+<VersionBadge version="5.42.0" />
+
+By default, Prowler rejects registry-provided URLs (token endpoints, pagination links) that resolve to non-public addresses, as an SSRF defense. On-premises registries live on private networks by definition, so to scan them declare the trusted ranges explicitly:
+
+```bash
+export PROWLER_IMAGE_PROVIDER_ALLOWED_PRIVATE_NETWORKS="192.168.65.254/32,10.20.0.0/16"
+```
+
+The value is a comma-separated list of IPs and CIDRs. A resolved address inside an allowlisted range is permitted; every other non-public address stays blocked, so link-local (`169.254.169.254`), loopback, and the rest of the internal network remain protected. The variable applies to registry enumeration and to the connection test. Malformed entries fail at startup, and a non-empty allowlist is logged as a relaxed security control. When unset, behavior is unchanged: only public addresses are followed.
 
 #### Supported Registries
 

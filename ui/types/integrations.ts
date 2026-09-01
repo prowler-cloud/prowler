@@ -115,7 +115,7 @@ export interface IntegrationProps {
 
 /**
  * A channel Prowler can post to: every active public channel, plus the private
- * ones `@Prowler` was invited to. `is_private` keeps the API's own naming.
+ * ones `@Prowler Cloud` was invited to. `is_private` keeps the API's own naming.
  */
 export interface SlackChannelOption {
   id: string;

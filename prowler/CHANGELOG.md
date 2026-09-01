@@ -4,6 +4,43 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [5.40.0] (Prowler v5.40.0)
+
+### 🚀 Added
+
+- NCSC Cyber Essentials 3.3 compliance framework with Azure provider coverage across the five Cyber Essentials themes [(#11588)](https://github.com/prowler-cloud/prowler/pull/11588)
+- `oss_bucket_versioning_enabled` check for Alibaba Cloud provider, verifying that OSS buckets have versioning enabled to allow recovery from accidental or malicious object overwrite and deletion [(#11913)](https://github.com/prowler-cloud/prowler/pull/11913)
+- `defender_domain_dmarc_records_published` checks that every Exchange Online domain publishes a DMARC record with an enforcing policy (`p=quarantine` or `p=reject`) [(#11936)](https://github.com/prowler-cloud/prowler/pull/11936)
+- `ske_cluster_no_public_endpoint` check for STACKIT provider, flagging SKE clusters whose Kubernetes API endpoint is reachable from the whole internet because the ACL extension is disabled or its allowed CIDR list contains `0.0.0.0/0` or `::/0` [(#11943)](https://github.com/prowler-cloud/prowler/pull/11943)
+- `oss_bucket_server_side_encryption_enabled` check for Alibaba Cloud provider, verifying that OSS buckets have a default server-side encryption rule (AES256 or KMS) [(#11981)](https://github.com/prowler-cloud/prowler/pull/11981)
+- `organization_default_workflow_permissions_read_only` check for GitHub provider, verifying that organizations grant GitHub Actions workflows a read-only default `GITHUB_TOKEN` [(#12122)](https://github.com/prowler-cloud/prowler/pull/12122)
+- `ecr_repository_image_no_secrets` check for AWS provider, scanning the latest ECR repository image's configuration and filesystem layers for hardcoded secrets [(#12123)](https://github.com/prowler-cloud/prowler/pull/12123)
+- `repository_default_workflow_permissions_read_only` check for GitHub provider, verifying that repositories grant GitHub Actions workflows a read-only default `GITHUB_TOKEN` [(#12143)](https://github.com/prowler-cloud/prowler/pull/12143)
+- `vpc_security_group_open_egress` check for Huawei Cloud provider: VPC security groups do not allow open egress to the internet [(#12209)](https://github.com/prowler-cloud/prowler/pull/12209)
+- `organization_actions_pull_request_approval_disabled` check for GitHub provider, verifying that organizations prevent GitHub Actions from creating and approving pull requests [(#12394)](https://github.com/prowler-cloud/prowler/pull/12394)
+- Add the `iam_workload_identity_pool_provider_attribute_condition` check to flag GCP Workload Identity Federation providers that trust a multi-tenant issuer without an attribute condition restricting which external identities can impersonate federated principals [(#12416)](https://github.com/prowler-cloud/prowler/pull/12416)
+- Add the `rolesanywhere_profile_restricts_session_permissions` check to flag AWS IAM Roles Anywhere profiles that reference an administrative role without scoping down the vended session with a session policy or managed policies [(#12416)](https://github.com/prowler-cloud/prowler/pull/12416)
+- `bedrock_guardrail_contextual_grounding_filter_enabled`, `bedrock_custom_model_encrypted_with_cmk`, `bedrock_knowledge_base_encrypted_with_cmk` and `bedrock_agent_role_not_shared_across_agents` are four new AWS Bedrock checks covering guardrail contextual grounding, custom model encryption, knowledge-base data-source encryption, and non-shared agent execution roles. [(#12459)](https://github.com/prowler-cloud/prowler/pull/12459)
+- `Cluster` column in Kubernetes CIS, ISO27001, Prowler ThreatScore, and universal compliance outputs, populated with the resolved cluster name so multi-cluster scans can be told apart in the output [(#12506)](https://github.com/prowler-cloud/prowler/pull/12506)
+
+### 🐞 Fixed
+
+- Kubernetes `kubelet` checks no longer disappear from the scan with `TypeError: 'NoneType' object is not iterable` when a `kubelet-config` ConfigMap is broken: one with malformed YAML is logged and skipped while the valid ones are still evaluated, one without kubelet data is evaluated with an empty configuration instead of crashing the checks, and the `apiserver`, `controllermanager`, `etcd` and `scheduler` pod gatherers now always return a list [(#12225)](https://github.com/prowler-cloud/prowler/pull/12225)
+- IaC provider now raises typed `IacBaseException` errors (repository clone, Trivy missing, scan and output processing failures) instead of calling `sys.exit(1)`; the CLI still stops with the logged message, and API scans fail as regular task errors instead of a `SystemExit` escaping the worker [(#12227)](https://github.com/prowler-cloud/prowler/pull/12227)
+- CLI Slack integration (`--slack`) no longer fails when a scan produces no findings: the pass and fail percentages are guarded against a `findings_count` of 0, which previously raised `ZeroDivisionError` and sent `blocks=None` to Slack instead of the summary [(#12229)](https://github.com/prowler-cloud/prowler/pull/12229)
+- AWS FSBP compliance mapping for `IAM.9` and `EKS.1` referenced missing/renamed checks; both now point to their real, existing check IDs [(#12372)](https://github.com/prowler-cloud/prowler/pull/12372)
+- `ec2_securitygroup_not_used` no longer reports a false positive for security groups attached only to an AWS Batch compute environment, which holds them in configuration without creating a network interface while scaled down to zero instances [(#12458)](https://github.com/prowler-cloud/prowler/pull/12458)
+- Bedrock Agent ARNs are now built from the audited partition instead of a hardcoded `arn:aws:`, so findings in GovCloud and China carry a resolvable ARN and `--resource-arn` scoping matches agents in those partitions. [(#12459)](https://github.com/prowler-cloud/prowler/pull/12459)
+- `push-to-cloud` now validates Private Cloud TLS certificates with the operating system trust store without changing provider HTTP clients [(#12485)](https://github.com/prowler-cloud/prowler/pull/12485)
+- `prowler.compliance.universal` entry point directories are resolved through a single shared helper and deduplicated by resolved path, so a directory reached through two entry points is parsed once and a package that fails to import no longer hides the rest [(#12536)](https://github.com/prowler-cloud/prowler/pull/12536)
+- OSS bucket logging, versioning, default encryption and ACL configurations are now read correctly from the Alibaba Cloud SDK, so `oss_bucket_logging_enabled`, `oss_bucket_versioning_enabled`, `oss_bucket_server_side_encryption_enabled` and `oss_bucket_not_publicly_accessible` no longer report every bucket as unconfigured [(#12546)](https://github.com/prowler-cloud/prowler/pull/12546)
+
+### 🔐 Security
+
+- `openssl`, `libssl3t64` and `openssl-provider-legacy` upgraded to 3.5.7-1~deb13u2 in the SDK container image, patching ten high OpenSSL CVEs [(#12549)](https://github.com/prowler-cloud/prowler/pull/12549)
+
+---
+
 ## [5.39.1] (Prowler v5.39.1)
 
 ### 🐞 Fixed

@@ -678,6 +678,18 @@ class TestImageProviderRegistryAuth:
 
         assert env["TRIVY_REGISTRY_TOKEN"] == "my-token"
 
+    def test_build_trivy_env_registry_insecure_sets_trivy_insecure(self):
+        provider = _make_provider(registry_insecure=True)
+        env = provider._build_trivy_env()
+
+        assert env["TRIVY_INSECURE"] == "true"
+
+    def test_build_trivy_env_secure_registry_leaves_trivy_insecure_unset(self):
+        provider = _make_provider()
+        env = provider._build_trivy_env()
+
+        assert "TRIVY_INSECURE" not in env
+
     @patch("subprocess.run")
     def test_execute_trivy_sets_trivy_env_with_basic_auth(self, mock_subprocess):
         """Test that _execute_trivy sets TRIVY_USERNAME/PASSWORD for native Trivy auth."""
@@ -1381,3 +1393,62 @@ class TestRegistryListMode:
             # This is the line that crashes: global_provider is None so
             # .print_credentials() raises AttributeError.
             global_provider.print_credentials()
+
+
+class TestConnectionPrivateNetworkAllowlist:
+    """PROWLER_IMAGE_PROVIDER_ALLOWED_PRIVATE_NETWORKS applies to test_connection."""
+
+    ENV = "PROWLER_IMAGE_PROVIDER_ALLOWED_PRIVATE_NETWORKS"
+
+    @staticmethod
+    def _private_dns(host_to_ip):
+        def _stub(host, *_args, **_kwargs):
+            return [(2, 1, 6, "", (host_to_ip[host], 0))]
+
+        return _stub
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_private_registry_rejected_without_allowlist(
+        self, mock_request, monkeypatch
+    ):
+        monkeypatch.delenv(self.ENV, raising=False)
+        ping = MagicMock(
+            status_code=401,
+            headers={
+                "Www-Authenticate": 'Bearer realm="https://harbor.internal/service/token",service="harbor-registry"'
+            },
+        )
+        mock_request.return_value = ping
+
+        with patch(
+            "prowler.providers.image.lib.registry.base.socket.getaddrinfo",
+            side_effect=self._private_dns({"harbor.internal": "10.20.0.5"}),
+        ):
+            result = ImageProvider.test_connection(
+                image="harbor.internal", raise_on_exception=False
+            )
+
+        assert result.is_connected is False
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_private_registry_permitted_with_allowlist(self, mock_request, monkeypatch):
+        monkeypatch.setenv(self.ENV, "10.20.0.0/16")
+        ping = MagicMock(
+            status_code=401,
+            headers={
+                "Www-Authenticate": 'Bearer realm="https://harbor.internal/service/token",service="harbor-registry"'
+            },
+        )
+        token = MagicMock(status_code=200)
+        token.json.return_value = {"token": "tok"}
+        catalog = MagicMock(status_code=200, headers={})
+        catalog.json.return_value = {"repositories": ["app"]}
+        mock_request.side_effect = [ping, token, catalog]
+
+        with patch(
+            "prowler.providers.image.lib.registry.base.socket.getaddrinfo",
+            side_effect=self._private_dns({"harbor.internal": "10.20.0.5"}),
+        ):
+            result = ImageProvider.test_connection(image="harbor.internal")
+
+        assert result.is_connected is True

@@ -58,12 +58,14 @@ Two of these read more broadly than they behave, and both are worth understandin
 
 On the consent screen, `chat:write.public` reads as permission to post in any public channel. Prowler never uses it that way: **Prowler only ever posts to the channels authorized on the integration.** The scope exists so that authorizing a public channel does not also require someone to invite the Prowler app to it first.
 
+{/* The Prowler UI deep-links to this heading's anchor, so rewording the heading breaks that link. */}
+
 ### Why a Private Channel Is Missing From the Channel List
 
-`groups:read` reveals only the private channels the Prowler app is already a member of. A private channel therefore appears in the channel list only after someone invites `@Prowler` to it in Slack:
+`groups:read` reveals only the private channels the Prowler app is already a member of. A private channel therefore appears in the channel list only after someone invites `@Prowler Cloud` to it in Slack:
 
 ```text
-/invite @Prowler
+/invite @Prowler Cloud
 ```
 
 That invite is issued in Slack, by that channel's own members, and **the invite itself is the permission grant** — no scope bypasses it. Prowler ships no in-product flow to get the app invited, because the decision belongs to the channel's members. After inviting the app, click **Refresh channels** to re-read the list.
@@ -100,14 +102,14 @@ Prowler posts to the channels authorized on the integration. Several channels ca
 
     ![Destination channels selection listing public channels and an invited private channel marked Private](/images/prowler-app/slack/channel-picker.png)
 
-2. Select one or more channels. A selected private channel keeps its lock and **Private** identification with the list closed, so the authorized set stays readable at a glance.
+2. Select one or more channels. A selected private channel keeps the same **Private** marking with the list closed, so the authorized set stays readable at a glance.
 3. Click **Save channels**.
 
 Prowler validates the selection against Slack and derives each channel name itself, so a recorded name can never drift from the channel it belongs to. Once the set is saved, the page reports where Prowler posts and runs the connection check over it.
 
-If the selection reports that no channels are available, the workspace exposes nothing Prowler can see. Create a public channel, or invite `@Prowler` to a private one, then click **Refresh channels**.
+If the selection reports that no channels are available, the workspace exposes nothing Prowler can see. Create a public channel, or invite `@Prowler Cloud` to a private one, then click **Refresh channels**.
 
-A workspace can hold more channels than Prowler reads in one go. When that happens, the selection says so and lists what was read: every listed channel is usable, and a channel missing from a partial list is not necessarily one `@Prowler` has to be invited to. Only listed channels can be selected: **Refresh channels** repeats the same bounded read rather than reading further, and the selection's search filters what was already read, so neither surfaces a channel the read left out.
+A workspace can hold more channels than Prowler reads in one go. When that happens, the selection says so and lists what was read: every listed channel is usable, and a channel missing from a partial list is not necessarily one `@Prowler Cloud` has to be invited to. Only listed channels can be selected: **Refresh channels** repeats the same bounded read rather than reading further, and the selection's search filters what was already read, so neither surfaces a channel the read left out.
 
 Saving a new selection replaces the authorized set: channels left out of it stop being authorized, and channels added to it are authorized but not yet confirmed. Changing which channels are in the set also resets the integration's connection state, so the check runs again over the new set — reordering the same channels does not. Saving an empty selection leaves the integration with no authorized channels, and **Test connection** cannot be run again until at least one channel is authorized.
 
@@ -159,7 +161,7 @@ The Slack management page reports the state of the connection and offers these a
 | Button | Purpose | Notes |
 |--------|---------|-------|
 | **Test connection** | Verify the credential and every authorized channel, and confirm the ones not confirmed yet | Posts the confirmation message once per channel and updates the last-checked time. Cannot be run until at least one channel is authorized |
-| **Refresh channels** | Re-read the workspace's channel list | Use after inviting `@Prowler` to a private channel |
+| **Refresh channels** | Re-read the workspace's channel list | Use after inviting `@Prowler Cloud` to a private channel |
 | **Save channels** | Record the selected channels as the integration's authorized set | Enabled once the selection differs from the authorized set |
 | **Disconnect** | Remove the integration and attempt to revoke access at Slack | ⚠️ **Cannot be undone** — confirm before disconnecting |
 
@@ -171,7 +173,7 @@ The Prowler Slack app is not configured for the deployment being used, so no wor
 
 ### A Private Channel Does Not Appear in the Channel List
 
-The Prowler app has not been invited to it. In Slack, run `/invite @Prowler` in that channel, then click **Refresh channels**. Membership is the permission: no scope reveals a private channel the app is not in.
+The Prowler app has not been invited to it. In Slack, run `/invite @Prowler Cloud` in that channel, then click **Refresh channels**. Membership is the permission: no scope reveals a private channel the app is not in.
 
 ### Connection Test Fails
 

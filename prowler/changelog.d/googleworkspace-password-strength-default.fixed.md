@@ -1,0 +1,1 @@
+`security_password_policy_strong` no longer fails a domain that never touched the password strength setting: Google enforces strong passwords by default, so an unset value is the secure default and not a missing configuration

@@ -6,6 +6,7 @@ import pytest
 import requests
 
 from prowler.providers.image.exceptions.exceptions import (
+    ImageInvalidAllowedNetworksError,
     ImageRegistryAuthError,
     ImageRegistryCatalogError,
     ImageRegistryNetworkError,
@@ -95,6 +96,37 @@ class TestOciAdapterAuth:
         adapter = OciRegistryAdapter("reg.io", username="u", password="p")
         adapter._ensure_auth()
         assert adapter._bearer_token == "bearer-tok"
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_http_realm_from_https_registry_raises(self, mock_request):
+        ping_resp = MagicMock(
+            status_code=401,
+            headers={
+                "Www-Authenticate": 'Bearer realm="http://auth.reg.io/token",service="registry"'
+            },
+        )
+        mock_request.return_value = ping_resp
+        adapter = OciRegistryAdapter("https://reg.io", username="u", password="p")
+        with pytest.raises(ImageRegistryAuthError, match="cleartext"):
+            adapter._ensure_auth()
+        # The token exchange must never happen: only the /v2/ ping went out
+        assert mock_request.call_count == 1
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_http_realm_from_http_registry_keeps_credentials(self, mock_request):
+        ping_resp = MagicMock(
+            status_code=401,
+            headers={
+                "Www-Authenticate": 'Bearer realm="http://reg.io/token",service="registry"'
+            },
+        )
+        token_resp = MagicMock(status_code=200)
+        token_resp.json.return_value = {"token": "bearer-tok"}
+        mock_request.side_effect = [ping_resp, token_resp]
+        adapter = OciRegistryAdapter("http://reg.io", username="u", password="p")
+        adapter._ensure_auth()
+        token_call = mock_request.call_args_list[1]
+        assert token_call.kwargs.get("auth") == ("u", "p")
 
     @patch("prowler.providers.image.lib.registry.base.requests.request")
     def test_ensure_auth_403_raises(self, mock_request):
@@ -218,7 +250,7 @@ class TestOciAdapterAuth:
         adapter = OciRegistryAdapter("reg.io", username="u", password="p")
         adapter._basic_auth_verified = True
         # No bearer token — using basic auth
-        resp_401 = MagicMock(status_code=401)
+        resp_401 = MagicMock(status_code=401, headers={})
         mock_request.return_value = resp_401
         result = adapter._authed_request("GET", "https://reg.io/v2/_catalog")
         assert result.status_code == 401
@@ -709,3 +741,387 @@ class TestCredentialRedaction:
         adapter = OciRegistryAdapter("reg.io", password="secret", token="tok")
         assert adapter.password == "secret"
         assert adapter.token == "tok"
+
+
+class TestAllowedPrivateNetworks:
+    """PROWLER_IMAGE_PROVIDER_ALLOWED_PRIVATE_NETWORKS: explicit CIDR allowlist
+    consulted by the SSRF guard; unset preserves the default rejection."""
+
+    ENV = "PROWLER_IMAGE_PROVIDER_ALLOWED_PRIVATE_NETWORKS"
+
+    def test_unset_env_keeps_private_origin_rejected(self, monkeypatch):
+        monkeypatch.delenv(self.ENV, raising=False)
+        adapter = OciRegistryAdapter("https://10.0.0.5:5000")
+        with pytest.raises(ImageRegistryAuthError, match="non-public"):
+            adapter._validate_outbound_url("https://10.0.0.5:5000/v2/_catalog?last=x")
+
+    def test_empty_env_keeps_private_origin_rejected(self, monkeypatch):
+        monkeypatch.setenv(self.ENV, "  ")
+        adapter = OciRegistryAdapter("https://10.0.0.5:5000")
+        with pytest.raises(ImageRegistryAuthError, match="non-public"):
+            adapter._validate_outbound_url("https://10.0.0.5:5000/v2/_catalog?last=x")
+
+    def test_allowlisted_literal_ip_permitted(self, monkeypatch):
+        monkeypatch.setenv(self.ENV, "192.168.65.254/32,10.20.0.0/16")
+        adapter = OciRegistryAdapter("https://10.20.0.5:5000")
+        url = adapter._validate_outbound_url(
+            "https://10.20.0.5:5000/v2/_catalog?last=x"
+        )
+        assert url == "https://10.20.0.5:5000/v2/_catalog?last=x"
+
+    def test_allowlisted_resolved_hostname_permitted(self, monkeypatch):
+        monkeypatch.setenv(self.ENV, "10.20.0.0/16")
+        adapter = OciRegistryAdapter("https://harbor.internal")
+        with patch(
+            "prowler.providers.image.lib.registry.base.socket.getaddrinfo",
+            side_effect=_fake_getaddrinfo({"harbor.internal": "10.20.0.5"}),
+        ):
+            url = adapter._validate_outbound_url(
+                "https://harbor.internal/service/token"
+            )
+        assert url == "https://harbor.internal/service/token"
+
+    def test_private_ip_outside_allowlist_rejected(self, monkeypatch):
+        monkeypatch.setenv(self.ENV, "10.20.0.0/16")
+        adapter = OciRegistryAdapter("https://harbor.internal")
+        with patch(
+            "prowler.providers.image.lib.registry.base.socket.getaddrinfo",
+            side_effect=_fake_getaddrinfo(
+                {"harbor.internal": "10.20.0.5", "evil.internal": "192.168.1.99"}
+            ),
+        ):
+            with pytest.raises(ImageRegistryAuthError, match="non-public"):
+                adapter._validate_outbound_url("https://evil.internal/token")
+
+    def test_metadata_ip_rejected_unless_allowlisted(self, monkeypatch):
+        monkeypatch.setenv(self.ENV, "10.20.0.0/16")
+        adapter = OciRegistryAdapter("https://harbor.internal")
+        with patch(
+            "prowler.providers.image.lib.registry.base.socket.getaddrinfo",
+            side_effect=_fake_getaddrinfo({"harbor.internal": "10.20.0.5"}),
+        ):
+            with pytest.raises(ImageRegistryAuthError, match="non-public"):
+                adapter._validate_outbound_url("https://169.254.169.254/latest")
+
+    def test_private_link_from_public_origin_still_rejected(self, monkeypatch):
+        """Regression: the allowlist does not open ranges it does not name."""
+        monkeypatch.setenv(self.ENV, "10.20.0.0/16")
+        adapter = OciRegistryAdapter("https://reg.example.com")
+        with patch(
+            "prowler.providers.image.lib.registry.base.socket.getaddrinfo",
+            side_effect=_fake_getaddrinfo({"reg.example.com": "8.8.8.8"}),
+        ):
+            with pytest.raises(ImageRegistryAuthError, match="non-public"):
+                adapter._validate_outbound_url("http://192.168.0.99/v2/_catalog")
+
+    def test_local_tld_origin_enforcement_falls_back_to_allowlist(self, monkeypatch):
+        """Hosts without a registrable domain pass only if they resolve into the allowlist."""
+        monkeypatch.setenv(self.ENV, "10.20.0.0/16")
+        adapter = OciRegistryAdapter("https://registry.corp.local")
+        with patch(
+            "prowler.providers.image.lib.registry.base.socket.getaddrinfo",
+            side_effect=_fake_getaddrinfo(
+                {"registry.corp.local": "10.20.2.3", "auth.corp.local": "10.20.2.4"}
+            ),
+        ):
+            url = adapter._validate_outbound_url("https://auth.corp.local/token")
+        assert url == "https://auth.corp.local/token"
+
+    def test_malformed_allowlist_fails_loudly(self, monkeypatch):
+        monkeypatch.setenv(self.ENV, "10.20.0.0/16,banana")
+        with pytest.raises(ImageInvalidAllowedNetworksError, match="banana"):
+            OciRegistryAdapter("https://reg.example.com")
+
+    def test_allowlist_logged_as_relaxed_control(self, monkeypatch, caplog):
+        monkeypatch.setenv(self.ENV, "10.20.0.0/16")
+        with caplog.at_level("WARNING"):
+            OciRegistryAdapter("https://reg.example.com")
+        assert any(
+            "10.20.0.0/16" in message and "SSRF" in message
+            for message in caplog.messages
+        )
+
+
+class TestBasicAuthFallback:
+    """Registries like Harbor guard /_catalog behind Basic even when /v2/ negotiates Bearer."""
+
+    _BEARER_CHALLENGE = (
+        'Bearer realm="https://reg.io/service/token",service="harbor-registry"'
+    )
+
+    def _harbor_responses(self):
+        ping = MagicMock(
+            status_code=401, headers={"Www-Authenticate": self._BEARER_CHALLENGE}
+        )
+        token = MagicMock(status_code=200)
+        token.json.return_value = {"token": "tok"}
+        catalog_401 = MagicMock(
+            status_code=401, headers={"Www-Authenticate": 'Basic realm="harbor"'}
+        )
+        return ping, token, catalog_401
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_catalog_falls_back_to_basic_when_bearer_rejected(self, mock_request):
+        ping, token, catalog_401 = self._harbor_responses()
+        catalog_ok = MagicMock(status_code=200, headers={})
+        catalog_ok.json.return_value = {"repositories": ["library/debian"]}
+        mock_request.side_effect = [
+            ping,
+            token,
+            catalog_401,  # bearer without catalog scope
+            ping,
+            token,
+            catalog_401,  # bearer retry, same result
+            catalog_ok,  # basic fallback
+        ]
+
+        adapter = OciRegistryAdapter("reg.io", username="admin", password="secret")
+        repos = adapter.list_repositories()
+
+        assert repos == ["library/debian"]
+        assert mock_request.call_args.kwargs.get("auth") == ("admin", "secret")
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_basic_challenge_without_credentials_still_fails(self, mock_request):
+        ping, token, catalog_401 = self._harbor_responses()
+        mock_request.side_effect = [ping, token, catalog_401, ping, token, catalog_401]
+
+        adapter = OciRegistryAdapter("reg.io")
+        with pytest.raises(ImageRegistryAuthError, match="catalog listing"):
+            adapter.list_repositories()
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_fallback_with_combined_multi_challenge_header(self, mock_request):
+        # Basic not first in the header must still trigger the fallback
+        ping, token, _ = self._harbor_responses()
+        catalog_401 = MagicMock(
+            status_code=401,
+            headers={
+                "Www-Authenticate": f'{self._BEARER_CHALLENGE}, Basic realm="harbor"'
+            },
+        )
+        catalog_ok = MagicMock(status_code=200, headers={})
+        catalog_ok.json.return_value = {"repositories": ["library/debian"]}
+        mock_request.side_effect = [
+            ping,
+            token,
+            catalog_401,
+            ping,
+            token,
+            catalog_401,
+            catalog_ok,
+        ]
+
+        adapter = OciRegistryAdapter("reg.io", username="admin", password="secret")
+        repos = adapter.list_repositories()
+
+        assert repos == ["library/debian"]
+        assert mock_request.call_args.kwargs.get("auth") == ("admin", "secret")
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_multi_page_catalog_falls_back_only_once(self, mock_request):
+        ping, token, catalog_401 = self._harbor_responses()
+        page1 = MagicMock(
+            status_code=200,
+            ok=True,
+            headers={"Link": '<https://reg.io/v2/_catalog?n=200&last=a>; rel="next"'},
+        )
+        page1.json.return_value = {"repositories": ["a"]}
+        page2 = MagicMock(status_code=200, ok=True, headers={})
+        page2.json.return_value = {"repositories": ["b"]}
+        mock_request.side_effect = [
+            ping,
+            token,
+            catalog_401,  # bearer without catalog scope
+            ping,
+            token,
+            catalog_401,  # bearer retry, same result
+            page1,  # basic fallback succeeds -> basic mode persists
+            page2,  # second page goes straight to basic
+        ]
+
+        adapter = OciRegistryAdapter("reg.io", username="admin", password="secret")
+        repos = adapter.list_repositories()
+
+        assert repos == ["a", "b"]
+        assert mock_request.call_count == 8
+        assert adapter._basic_auth_verified is True
+        assert adapter._bearer_token is None
+        page2_call = mock_request.call_args_list[-1]
+        assert page2_call.kwargs.get("auth") == ("admin", "secret")
+        assert "Authorization" not in page2_call.kwargs.get("headers", {})
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_basic_fallback_not_sent_cross_origin(self, mock_request):
+        catalog_401 = MagicMock(
+            status_code=401, headers={"Www-Authenticate": 'Basic realm="other"'}
+        )
+        mock_request.return_value = catalog_401
+
+        adapter = OciRegistryAdapter("reg.io", username="admin", password="secret")
+        adapter._bearer_token = "tok"
+        resp = adapter._authed_request("GET", "https://other.example.com/v2/_catalog")
+
+        assert resp.status_code == 401
+        assert all(
+            call.kwargs.get("auth") is None for call in mock_request.call_args_list
+        )
+
+
+class TestBearerAuthSwitch:
+    """Registries that negotiate Basic on /v2/ but demand Bearer on other endpoints."""
+
+    _BEARER_CHALLENGE = 'Bearer realm="https://reg.io/token",service="registry",scope="registry:catalog:*"'
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_catalog_switches_to_bearer_when_basic_rejected(self, mock_request):
+        ping = MagicMock(
+            status_code=401, headers={"Www-Authenticate": 'Basic realm="registry"'}
+        )
+        catalog_401 = MagicMock(
+            status_code=401, headers={"Www-Authenticate": self._BEARER_CHALLENGE}
+        )
+        token = MagicMock(status_code=200)
+        token.json.return_value = {"token": "switched-tok"}
+        catalog_ok = MagicMock(status_code=200, headers={})
+        catalog_ok.json.return_value = {"repositories": ["library/debian"]}
+        mock_request.side_effect = [ping, catalog_401, token, catalog_ok]
+
+        adapter = OciRegistryAdapter("reg.io", username="admin", password="secret")
+        repos = adapter.list_repositories()
+
+        assert repos == ["library/debian"]
+        assert adapter._bearer_token == "switched-tok"
+        # Token exchange carries the credentials
+        token_call = mock_request.call_args_list[2]
+        assert token_call.kwargs.get("auth") == ("admin", "secret")
+        assert token_call.kwargs.get("params", {}).get("scope") == "registry:catalog:*"
+        # The retry uses the Bearer header, not Basic
+        retry_call = mock_request.call_args_list[3]
+        assert retry_call.kwargs.get("auth") is None
+        assert (
+            retry_call.kwargs.get("headers", {}).get("Authorization")
+            == "Bearer switched-tok"
+        )
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_multi_page_catalog_switches_only_once(self, mock_request):
+        ping = MagicMock(
+            status_code=401, headers={"Www-Authenticate": 'Basic realm="registry"'}
+        )
+        catalog_401 = MagicMock(
+            status_code=401, headers={"Www-Authenticate": self._BEARER_CHALLENGE}
+        )
+        token = MagicMock(status_code=200)
+        token.json.return_value = {"token": "switched-tok"}
+        page1 = MagicMock(
+            status_code=200,
+            headers={"Link": '<https://reg.io/v2/_catalog?n=200&last=a>; rel="next"'},
+        )
+        page1.json.return_value = {"repositories": ["a"]}
+        page2 = MagicMock(status_code=200, headers={})
+        page2.json.return_value = {"repositories": ["b"]}
+        mock_request.side_effect = [ping, catalog_401, token, page1, page2]
+
+        adapter = OciRegistryAdapter("reg.io", username="admin", password="secret")
+        repos = adapter.list_repositories()
+
+        assert repos == ["a", "b"]
+        assert mock_request.call_count == 5
+        page2_call = mock_request.call_args_list[-1]
+        assert (
+            page2_call.kwargs.get("headers", {}).get("Authorization")
+            == "Bearer switched-tok"
+        )
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_anonymous_switch_to_bearer(self, mock_request):
+        ping = MagicMock(status_code=200)
+        catalog_401 = MagicMock(
+            status_code=401, headers={"Www-Authenticate": self._BEARER_CHALLENGE}
+        )
+        token = MagicMock(status_code=200)
+        token.json.return_value = {"token": "anon-tok"}
+        catalog_ok = MagicMock(status_code=200, headers={})
+        catalog_ok.json.return_value = {"repositories": ["public/app"]}
+        mock_request.side_effect = [ping, catalog_401, token, catalog_ok]
+
+        adapter = OciRegistryAdapter("reg.io")
+        repos = adapter.list_repositories()
+
+        assert repos == ["public/app"]
+        token_call = mock_request.call_args_list[2]
+        assert token_call.kwargs.get("auth") is None
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_switch_not_attempted_cross_origin(self, mock_request):
+        catalog_401 = MagicMock(
+            status_code=401, headers={"Www-Authenticate": self._BEARER_CHALLENGE}
+        )
+        mock_request.return_value = catalog_401
+
+        adapter = OciRegistryAdapter("reg.io", username="admin", password="secret")
+        adapter._basic_auth_verified = True
+        resp = adapter._authed_request("GET", "https://other.example.com/v2/_catalog")
+
+        assert resp.status_code == 401
+        assert adapter._bearer_token is None
+        assert mock_request.call_count == 1
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_switch_with_combined_multi_challenge_header(self, mock_request):
+        # RFC 7235: multiple challenges in one header, Basic first
+        combined = (
+            'Basic realm="registry", '
+            'Bearer realm="http://reg.io/token",service="registry",scope="registry:catalog:*"'
+        )
+        ping = MagicMock(
+            status_code=401, headers={"Www-Authenticate": 'Basic realm="registry"'}
+        )
+        catalog_401 = MagicMock(status_code=401, headers={"Www-Authenticate": combined})
+        token = MagicMock(status_code=200)
+        token.json.return_value = {"token": "combined-tok"}
+        catalog_ok = MagicMock(status_code=200, headers={})
+        catalog_ok.json.return_value = {"repositories": ["library/debian"]}
+        mock_request.side_effect = [ping, catalog_401, token, catalog_ok]
+
+        adapter = OciRegistryAdapter(
+            "http://reg.io", username="admin", password="secret"
+        )
+        repos = adapter.list_repositories()
+
+        assert repos == ["library/debian"]
+        # The token exchange must hit the Bearer realm, not Basic's realm="registry"
+        token_call = mock_request.call_args_list[2]
+        assert token_call.args[1] == "http://reg.io/token"
+        assert token_call.kwargs.get("params", {}).get("scope") == "registry:catalog:*"
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_ping_with_combined_multi_challenge_prefers_bearer(self, mock_request):
+        combined = 'Basic realm="registry", Bearer realm="https://auth.reg.io/token",service="registry"'
+        ping = MagicMock(status_code=401, headers={"Www-Authenticate": combined})
+        token = MagicMock(status_code=200)
+        token.json.return_value = {"token": "bearer-tok"}
+        mock_request.side_effect = [ping, token]
+
+        adapter = OciRegistryAdapter("reg.io", username="u", password="p")
+        adapter._ensure_auth()
+
+        assert adapter._bearer_token == "bearer-tok"
+        token_call = mock_request.call_args_list[1]
+        assert token_call.args[1] == "https://auth.reg.io/token"
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_failed_token_exchange_raises_auth_error(self, mock_request):
+        ping = MagicMock(
+            status_code=401, headers={"Www-Authenticate": 'Basic realm="registry"'}
+        )
+        catalog_401 = MagicMock(
+            status_code=401, headers={"Www-Authenticate": self._BEARER_CHALLENGE}
+        )
+        token_denied = MagicMock(status_code=401)
+        mock_request.side_effect = [ping, catalog_401, token_denied]
+
+        adapter = OciRegistryAdapter("reg.io", username="admin", password="wrong")
+        with pytest.raises(ImageRegistryAuthError, match="bearer token"):
+            adapter.list_repositories()

@@ -384,7 +384,7 @@ export class AlertsPageHarness extends BrowserHarness<AlertsFixture> {
     ).map((chip) => (chip.textContent ?? "").replace(/\s+/g, " ").trim());
   }
 
-  /** The chip renders `#name` with an sr-only "Private" marker. */
+  /** The chip renders `#name` followed by a "Private" badge when it is one. */
   private static toChannelChip(text: string): SelectedChannelChip {
     return {
       isPrivate: /Private/.test(text),

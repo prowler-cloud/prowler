@@ -718,6 +718,8 @@ class ImageProvider(Provider):
             env["TRIVY_PASSWORD"] = self.registry_password
         elif self.registry_token:
             env["TRIVY_REGISTRY_TOKEN"] = self.registry_token
+        if self.registry_insecure:
+            env["TRIVY_INSECURE"] = "true"
         return env
 
     def _execute_trivy(self, command: list, image: str) -> subprocess.CompletedProcess:
