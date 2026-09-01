@@ -188,6 +188,17 @@ class Logs(AWSService):
             )
 
     def _describe_log_groups(self, regional_client):
+        """List the log groups in a region into the complete and the analysed indexes.
+
+        A denied DescribeLogGroups sets both indexes to None, but only while nothing has been
+        collected yet: that None is the state checks read as "inventory unknown", and it must stay
+        distinguishable from an account that genuinely has no log groups. Any other failure leaves
+        the indexes as they are, so a partial inventory reads as a smaller one.
+
+        dataProtectionStatus and inheritedProperties are stored as reported. An absent
+        dataProtectionStatus is the API saying the log group has never had a policy, and it is kept
+        as None rather than a status string so a check can tell "never configured" from DISABLED.
+        """
         logger.info("CloudWatch Logs - Describing log groups...")
         try:
             describe_log_groups_paginator = regional_client.get_paginator(
@@ -215,6 +226,12 @@ class Logs(AWSService):
                             never_expire=never_expire,
                             kms_id=kms,
                             creation_time=log_group.get("creationTime"),
+                            data_protection_status=log_group.get(
+                                "dataProtectionStatus"
+                            ),
+                            inherited_properties=log_group.get(
+                                "inheritedProperties", []
+                            ),
                             region=regional_client.region,
                         )
                         self.all_log_groups[log_group_object.arn] = log_group_object
@@ -337,6 +354,11 @@ class LogGroup(BaseModel):
     never_expire: bool
     kms_id: Optional[str]
     creation_time: Optional[int] = None
+    # None when the log group has never had a data protection policy, otherwise
+    # ACTIVATED, DELETED, ARCHIVED or DISABLED.
+    data_protection_status: Optional[str] = None
+    # Properties inherited from account-level settings, e.g. ACCOUNT_DATA_PROTECTION.
+    inherited_properties: list[str] = []
     region: str
     log_streams: dict[str, list[str]] = (
         {}

@@ -487,7 +487,8 @@
         "awslambda_function_no_secrets_in_variables",
         "ecs_task_definitions_no_environment_secrets",
         "ec2_instance_secrets_user_data",
-        "cloudwatch_log_group_no_secrets_in_logs"
+        "cloudwatch_log_group_no_secrets_in_logs",
+        "cloudwatch_log_group_agentcore_data_protection_policy_enabled"
       ]
     },
     {
