@@ -9,7 +9,6 @@ from prowler.providers.cloudflare.exceptions.exceptions import (
     CloudflareInvalidAPIKeyError,
     CloudflareInvalidAPITokenError,
     CloudflareNoAccountsError,
-    CloudflareUserTokenRequiredError,
 )
 from prowler.providers.cloudflare.models import (
     CloudflareAccount,
@@ -308,8 +307,8 @@ class TestCloudflareValidateCredentials:
         CloudflareProvider.validate_credentials(session)
         mock_client.user.get.assert_called_once()
 
-    def test_validate_credentials_user_token_required(self):
-        """Test that user token required error is raised for Account tokens."""
+    def test_validate_credentials_account_token_without_accounts(self):
+        """Test that account tokens fall back to account discovery."""
         mock_client = MagicMock()
         # Simulate error code 9109 - user-level authentication required
         from cloudflare._exceptions import PermissionDeniedError
@@ -327,8 +326,9 @@ class TestCloudflareValidateCredentials:
             api_email=None,
         )
 
-        with pytest.raises(CloudflareUserTokenRequiredError):
+        with pytest.raises(CloudflareNoAccountsError):
             CloudflareProvider.validate_credentials(session)
+        mock_client.accounts.list.assert_called_once()
 
     def test_validate_credentials_invalid_api_token(self):
         """Test that invalid API token error is raised."""
@@ -487,8 +487,8 @@ class TestCloudflareTestConnection:
             assert connection.is_connected is False
             assert isinstance(connection.error, CloudflareInvalidAPITokenError)
 
-    def test_test_connection_user_token_required(self):
-        """Test that user token required error is properly returned."""
+    def test_test_connection_account_token_without_accounts(self):
+        """Test that account tokens without accessible accounts return an error."""
         mock_client = MagicMock()
         from cloudflare._exceptions import PermissionDeniedError
 
@@ -512,9 +512,9 @@ class TestCloudflareTestConnection:
             )
 
             assert connection.is_connected is False
-            assert isinstance(connection.error, CloudflareUserTokenRequiredError)
-            # Verify the error message is user-friendly
-            assert "User-level API token required" in str(connection.error)
+            assert isinstance(connection.error, CloudflareNoAccountsError)
+            assert "No Cloudflare accounts found" in str(connection.error)
+            mock_client.accounts.list.assert_called_once()
 
     def test_test_connection_invalid_api_key(self):
         """Test that invalid API key error is properly returned."""
