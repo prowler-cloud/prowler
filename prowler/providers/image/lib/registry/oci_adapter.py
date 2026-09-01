@@ -303,14 +303,20 @@ class OciRegistryAdapter(RegistryAdapter):
                 logger.debug(
                     f"Bearer token rejected (HTTP 401), re-authenticating with response challenge scope for {url}"
                 )
-                self._bearer_token = self._obtain_bearer_token(challenge)
+                fresh_token = self._obtain_bearer_token(challenge)
+                self._bearer_token = fresh_token
             else:
                 logger.debug(
                     f"Bearer token rejected (HTTP 401), re-authenticating to {self.registry_url}"
                 )
                 self._bearer_token = None
                 self._ensure_auth()
-            resp = self._do_authed_request(method, url, **kwargs)
+                fresh_token = self._bearer_token
+            # Retry with the token this request obtained: a concurrent worker
+            # may have already replaced the shared one with another scope.
+            resp = self._do_authed_request(
+                method, url, bearer_token=fresh_token, **kwargs
+            )
         if (
             resp.status_code == 401
             and self._bearer_token
@@ -340,15 +346,21 @@ class OciRegistryAdapter(RegistryAdapter):
                 # this endpoint demands Bearer. The challenge carries the right
                 # scope.
                 logger.debug(f"Basic auth not accepted for {url}, switching to Bearer")
-                self._bearer_token = self._obtain_bearer_token(bearer_challenge)
-                resp = self._do_authed_request(method, url, **kwargs)
+                fresh_token = self._obtain_bearer_token(bearer_challenge)
+                self._bearer_token = fresh_token
+                resp = self._do_authed_request(
+                    method, url, bearer_token=fresh_token, **kwargs
+                )
         return resp
 
-    def _do_authed_request(self, method: str, url: str, **kwargs) -> requests.Response:
+    def _do_authed_request(
+        self, method: str, url: str, bearer_token: str | None = None, **kwargs
+    ) -> requests.Response:
         headers = kwargs.pop("headers", {})
         if self._is_same_origin_as_registry(url):
-            if self._bearer_token:
-                headers["Authorization"] = f"Bearer {self._bearer_token}"
+            token = bearer_token or self._bearer_token
+            if token:
+                headers["Authorization"] = f"Bearer {token}"
             elif self.username and self.password:
                 user, pwd = self._resolve_basic_credentials()
                 kwargs.setdefault("auth", (user, pwd))

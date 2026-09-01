@@ -1243,3 +1243,37 @@ class TestOciAdapterPickle:
         # The lock is recreated, not carried over
         assert restored._auth_lock is not adapter._auth_lock
         restored._ensure_auth  # attribute access must not blow up
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_retry_uses_own_token_despite_concurrent_overwrite(self, mock_request):
+        adapter = OciRegistryAdapter("reg.io", username="u", password="p")
+        adapter._bearer_token = "stale-token"
+        resp_401 = MagicMock(
+            status_code=401,
+            headers={
+                "Www-Authenticate": 'Bearer realm="https://auth.reg.io/token",service="registry",scope="repository:myapp:pull"'
+            },
+        )
+        token_resp = MagicMock(status_code=200)
+        token_resp.json.return_value = {"token": "fresh-token"}
+        resp_200 = MagicMock(status_code=200)
+        mock_request.side_effect = [resp_401, token_resp, resp_200]
+
+        # Another worker replaces the shared token right after this request's
+        # token exchange
+        original = adapter._obtain_bearer_token
+
+        def clobbering(challenge, repository=None):
+            token = original(challenge, repository)
+            adapter._bearer_token = "other-repo-token"
+            return token
+
+        adapter._obtain_bearer_token = clobbering
+
+        result = adapter._authed_request(
+            "GET", "https://reg.io/v2/myapp/manifests/latest"
+        )
+
+        assert result.status_code == 200
+        retry_headers = mock_request.call_args_list[2].kwargs["headers"]
+        assert retry_headers["Authorization"] == "Bearer fresh-token"
